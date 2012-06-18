@@ -1,0 +1,6 @@
+This module matches the current transfer rate in a connection.
+.TP
+.BI "--connrate " "[!] [\fIfrom\fP]:[\fIto\fP]"
+Match against the current connection transfer rate being within 'from'
+and 'to' bytes per second. When the "!" argument is used before the
+range, the sense of the match is inverted.

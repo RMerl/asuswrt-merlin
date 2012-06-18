@@ -1,0 +1,4 @@
+BUSYBOX=$(type -p busybox)
+SAVED_PATH=$PATH
+unset PATH
+$BUSYBOX which ls

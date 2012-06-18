@@ -1,0 +1,60 @@
+DEVPATH is set, ACTION == add {
+	makedev /dev/%DEVICENAME% 0644
+}
+
+SUBSYSTEM ~~ ^(usb|tty|block|scsi_generic)$, ACTION == remove {
+	remove /dev/%DEVICENAME%
+}
+
+MODALIAS is set, ACTION == add {
+	exec /sbin/modprobe -q %MODALIAS% ;
+}
+
+SUBSYSTEM == usb, DEVICENAME ~~ ^([1-2]-[1-2]:[1-9].[0-9]+)$, ACTION ~~ ^(add|remove)$ {
+	exec /sbin/asus_usb_interface %DEVICENAME% %ACTION% ;
+}
+
+SUBSYSTEM == usb, DEVICENAME ~~ ^([1-2]-[1-2].[0-9]:[1-9].[0-9]+)$, ACTION ~~ ^(add|remove)$ {
+	exec /sbin/asus_usb_interface %DEVICENAME% %ACTION% ;
+}
+
+SUBSYSTEM == usb, DEVICENAME ~~ ^(lp[0-9]+)$, ACTION ~~ ^(add|remove)$ {
+	exec /sbin/asus_lp %DEVICENAME% %ACTION% ;
+}
+
+SUBSYSTEM == tty, DEVICENAME ~~ ^(ttyUSB[0-9]+)$, ACTION ~~ ^(add|remove)$ {
+	exec /sbin/asus_tty %DEVICENAME% %ACTION% ;
+}
+
+SUBSYSTEM == tty, DEVICENAME ~~ ^(ttyACM[0-9]+)$, ACTION ~~ ^(add|remove)$ {
+	exec /sbin/asus_tty %DEVICENAME% %ACTION% ;
+}
+
+DEVICENAME ~~ ^(sg[0-9]+)$, ACTION == add {
+	exec /sbin/asus_sg %DEVICENAME% %ACTION% ;
+}
+
+SUBSYSTEM == block, DEVICENAME ~~ ^(sr[0-9]+)$, ACTION == add {
+	exec /sbin/asus_sr %DEVICENAME% %ACTION% ;
+}
+
+SUBSYSTEM == block, DEVICENAME ~~ ^(sd[a-z]+)$, ACTION ~~ ^(add|remove)$ {
+	exec /sbin/asus_sd %DEVICENAME% %ACTION% ;
+}
+
+SUBSYSTEM == block, DEVICENAME ~~ ^(sd[a-z][0-9]+)$, ACTION ~~ ^(add|remove)$ {
+	exec /sbin/asus_sd %DEVICENAME% %ACTION% ;
+}
+
+SUBSYSTEM == usb, DEVICENAME == usbbcm, ACTION == add {
+	exec /sbin/asus_usbbcm %DEVICENAME% %ACTION% ;
+}
+
+SUBSYSTEM == net, ACTION is set {
+	exec /sbin/hotplug %SUBSYSTEM% ;
+}
+
+SUBSYSTEM == misc, DEVICENAME ~~ ^(tun|tap)$, DEVPATH is set, ACTION == add {
+	exec mkdir -p -m 0777 /dev/net ;
+	symlink /dev/%DEVICENAME% /dev/net/%DEVICENAME%
+}

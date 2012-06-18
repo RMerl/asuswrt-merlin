@@ -1,0 +1,15 @@
+This module sets the netfilter mark value associated with a connection
+.TP
+.B --set-mark mark[/mask]
+Set connection mark. If a mask is specified then only those bits set in the
+mask is modified.
+.TP
+.B --save-mark [--mask mask]
+Copy the netfilter packet mark value to the connection mark. If a mask
+is specified then only those bits are copied.
+.TP
+.B --restore-mark [--mask mask]
+Copy the connection mark value to the packet. If a mask is specified
+then only those bits are copied. This is only valid in the
+.B mangle
+table.

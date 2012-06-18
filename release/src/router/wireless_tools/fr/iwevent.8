@@ -1,0 +1,131 @@
+.\" Jean Tourrilhes - HPL - 2002 - 2004
+.\" iwevent.8
+.\"
+.\" Traduction 2003/08/17 Maxime CHARPENNE (voir
+.\" http://www.delafond.org/traducmanfr/)
+.\" 1ère traduction        : version 26
+.\" Manuel identique pour la version 27-pre9 (beta)
+.\" Mise à jour 2004/02/26 : version 27-pre11 (alpha)
+.\" Mise à jour 2004/08/23 : version 27-pre25
+.\"
+.TH IWEVENT 8 "23 juin 2004" "net-tools" "Manuel du Programmeur Linux"
+.\"
+.\" NAME part
+.\"
+.SH NOM
+iwevent \- Affiche les Événements Wireless (Wireless Events) générés par les
+pilotes et les changements de paramètres.
+.\"
+.\" SYNOPSIS part
+.\"
+.SH SYNOPSIS
+.BI "iwevent "
+.br
+.\"
+.\" DESCRIPTION part
+.\"
+.SH DESCRIPTION
+.B iwevent
+affiche les «\ Wireless Events\ » (événements du système Wireless) reçu par le
+socket RTNetlink. Chaque ligne affiche le Wireless Event spécifique qui décrit
+ce qui s'est passé sur l'interface sans fil spécifiée.
+.br
+Cette commande ne prend aucun argument.
+.\"
+.\" DISPLAY part
+.\"
+.SH AFFICHAGE
+Il y a deux classes de Wireless Events.
+.PP
+La première classe regroupe les événements relatifs à un changement des
+paramètres du sans fil sur l'interface (typiquement fait par
+.B iwconfig
+ou un script appelant
+.BR iwconfig ).
+Seuls les paramètres qui peuvent entraîner une perturbation de la connectivité
+sont rapportés. Les événements actuellement rapportés changent un des paramètres
+suivants\ :
+.br
+.I "	Network ID"
+.br
+.I "	ESSID"
+.br
+.I "	Frequency"
+.br
+.I "	Mode"
+.br
+.I "	Encryption"
+.br
+Tous ces événements seront générer sur toutes les interfaces sans fil par le
+sous-système «\ wireless\ » du noyau (mais seulement si le pilote a été converti
+àl'API du nouveau pilote).
+.PP
+La deuxième classe d'événements concerne ceux générés par le matériel, lorsque
+quelque chose arrive ou qu'une tâche s'est terminée. Ces événements incluent\ :
+.TP
+.B New Access Point/Cell address
+L'interface a joint un nouveau point d'accès ou cellule ad hoc, ou perdu son
+association avec. Il s'agit de la même adresse MAC affiché par
+.BR iwconfig .
+.TP
+.B Scan request completed
+Une requête de balayage (scanning) a été achevée, les résultats du «\ scan\ »
+sont disponibles (voir
+.BR iwlist ).
+.TP
+.B Tx packet dropped
+Un paquet à destination de cette adresse a été rejeté car l'interface croit que
+ce noeud ne répond plus (habituellement, le seuil maximum des émissions de la
+couche MAC est atteint). C'est habituellement la première indication pouvant
+révéler que le noeud a quitté la cellule ou est hors de portée, mais cela peut
+être due à une atténuation ou une contention excessive.
+.TP
+.B Custom driver event
+Événement spécifique au pilote. Veuillez consulter la documentation du pilote.
+.TP
+.B Registered node
+L'interface a réussi à enregistrer un nouveau client/paire sans fil. Sera
+généré la plupart du temps quand l'interface agit comme un point d'accès (mode
+master).
+.TP
+.B Expired node
+L'enregistrement d'un client/paire sur cette interface a expiré. Sera généré la
+plupart du temps quand l'interface agit comme un point d'accès (mode master).
+.TP
+.B Spy threshold crossed
+La force du signal pour une des adresses de la «\ spy list\ » (NDT\ : voir
+iwspy(8)) est passé en-dessous du seuil bas, ou est passé au-dessus du seuil
+haut.
+.PP
+La plupart des pilotes wireless génèrent seulement un sous-ensemble de ces
+événements, pas tous, la liste exacte dépendant de la combinaison spécifique
+matériel/pilote. Veuillez consulter la documentation du pilote pour les détails
+de ce qui les génèrent, et utilisez
+.IR iwlist (8)
+pour vérifier ce que le pilote supporte.
+.\"
+.\" AUTHOR part
+.\"
+.SH AUTEUR
+Jean Tourrilhes \- jt@hpl.hp.com
+.\"
+.\" TRADUCTION part
+.\"
+.SH TRADUCTION
+Maxime CHARPENNE, août 2004 (wireless_tools.27-pre25).
+.\"
+\" AVERTISSEMENT part
+.\"
+.SH AVERTISSEMENT SUR LA TRADUCTION
+Il est possible que cette traduction soit imparfaite ou périmée. En cas de
+doute, veuillez vous reporter au document original en langue anglaise fourni
+avec le programme.
+.\"
+.\" SEE ALSO part
+.\"
+.SH VOIR AUSSI
+.BR iwconfig (8),
+.BR iwlist (8),
+.BR iwspy (8),
+.BR iwpriv (8),
+.BR wireless (7).

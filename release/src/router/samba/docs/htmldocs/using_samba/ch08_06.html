@@ -1,0 +1,509 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 8] 8.6 Miscellaneous Options</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:35:56Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_05.html" TITLE="8.5 Recently Added Options">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 8.5 Recently Added Options" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch08_01.html" TITLE="8. Additional Samba Information ">
+Chapter 8<br>
+Additional Samba Information </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_07.html" TITLE="8.7 Backups with smbtar">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 8.7 Backups with smbtar" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch08-70923">
+8.6 Miscellaneous Options</a></h2><P CLASS="para">Many Samba options are present to deal with operating system issues on either  Unix or Windows. The options shown in <A CLASS="xref" HREF="ch08_06.html#ch08-83566">
+Table 8.10</a> deal specifically with some of these known problems. We usually don't change these and we recommend the same to you. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch08-83566">
+Table 8.10: Miscellaneous Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+deadtime</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">numerical (number of minutes)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the number of minutes of inactivity before a connection should be terminated.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+0</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+dfree command</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (command)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Used to provide a command that returns disk free space in a format recognized by Samba.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+fstype</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+NTFS</code>, <CODE CLASS="literal">
+FAT</code>, or <CODE CLASS="literal">
+Samba</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the filesystem type reported by the server to the client.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+NTFS</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+keep alive</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+seconds</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the number of seconds between checks for an inoperative client.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+0 (none)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+max disk size</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical (size in MB)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the largest disk size to return to a client, some of which have limits. Does not affect actual operations on the disk.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+0 (infinity)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+max mux</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the maximum number of simultaneous SMB operations that clients may make.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+50</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+max open files</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Limits number of open files to be below Unix limits.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+10,000</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+max xmit</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the maximum packet size that Samba will send.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+65,535</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+nt pipe support</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Turns off an experimental NT feature, for benchmarking or in case of an error.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+nt smb support</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Turns off an experimental NT feature, for benchmarking or in case of an error.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ole locking compatib-ility</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Remaps out-of-range lock requests used on Windows to fit in allowable range on Unix. Turning it off causes Unix lock errors.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+panic action</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+command</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Program to run if Samba server fails; for debugging.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+set directory</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, allows VMS clients to issue <CODE CLASS="literal">
+set</code> <CODE CLASS="literal">
+dir</code> commands.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+smbrun</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified command)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the command Samba uses as a wrapper for shell commands.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+status</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, allows Samba to monitor status for <CODE CLASS="literal">
+smbstatus</code> command.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+strict sync</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+no</code>, ignores Windows applications requests to perform a sync-to-disk.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+sync always</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, forces all client writes to be committed to disk before returning from the call.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+strip dot</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, strips trailing dots from Unix filenames. </p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr></tbody></table><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960795">
+8.6.1 deadtime</a></h3><P CLASS="para">
+This global option sets the number of minutes that Samba will wait for an inactive client before closing its session with the Samba server. A client is considered inactive when it has no open files and there is no data being sent from it. The default value for this option is 0, which means that Samba never closes any connections no matter how long they have been inactive. You can override it as follows:</p><PRE CLASS="programlisting">
+[global]
+	deadtime = 10</pre><P CLASS="para">
+This tells Samba to terminate any inactive client sessions after 10 minutes. For most networks, setting this option as such will work because reconnections from the client are generally performed transparently to the user.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960118">
+8.6.2 dfree command</a></h3><P CLASS="para">This global option is used on systems that incorrectly determine the free space left on the disk. So far, the only confirmed system that needs this option set is Ultrix. There is no default value for this option, which means that Samba already knows how to compute the free disk space on its own and the results are considered reliable. You can override it as follows:</p><PRE CLASS="programlisting">
+[global]
+	dfree command = /usr/local/bin/dfree</pre><P CLASS="para">
+This option should point to a script that should return the total disk space in a block, and the number of available blocks. The Samba documentation recommends the following as a usable script:</p><PRE CLASS="programlisting">
+#!/bin/sh
+df $1 | tail -1 | awk '{print $2&quot; &quot;$4}'</pre><P CLASS="para">
+On System V machines, the following will work:</p><PRE CLASS="programlisting">
+#!/bin/sh
+/usr/bin/df $1 | tail -1 | awk '{print $3&quot; &quot;$5}'</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960122">
+8.6.3 fstype</a></h3><P CLASS="para">
+This share-level option sets the type of filesystem that Samba reports when queried by the client. There are three strings that can be used as a value to this configuration option, as listed in <A CLASS="xref" HREF="ch08_06.html#ch08-80519">
+Table 8.11</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch08-80519">
+Table 8.11: Filesystem Types </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Variable</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Definition</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+NTFS</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">Microsoft Windows NT filesystem</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+FAT</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+DOS FAT filesystem</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Samba</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Samba filesystem</p></td></tr></tbody></table><P CLASS="para">
+The default value for this option is <CODE CLASS="literal">
+NTFS</code>, which represents a Windows NT filesystem. There probably isn't a need to specify any other type of filesystem. However, if you need to, you can override it per share as follows:</p><PRE CLASS="programlisting">
+[data]
+	fstype = FAT</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960124">
+8.6.4 keep alive</a></h3><P CLASS="para">This global option specifies the number of seconds that Samba waits between sending NetBIOS <EM CLASS="emphasis">
+keep-alive packets</em>. These packets are used to ping a client to detect whether it is still alive and on the network. The default value for this option is <CODE CLASS="literal">
+0</code>, which means that Samba will not send any such packets at all. You can override it as follows:</p><PRE CLASS="programlisting">
+[global]
+	keep alive = 10</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960128">
+8.6.5 max disk size</a></h3><P CLASS="para">This global option specifies an illusory limit, in megabytes, for each of the shares that Samba is using. You would typically set this option to prevent clients with older operating systems from incorrectly processing large disk spaces, such as those over one gigabyte.</p><P CLASS="para">
+The default value for this option is <CODE CLASS="literal">
+0</code>, which means there is no upper limit at all. You can override it as follows:</p><PRE CLASS="programlisting">
+[global]
+	max disk size = 1000</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960130">
+8.6.6 max mux</a></h3><P CLASS="para">This global option specifies the maximum number of concurrent SMB operations that Samba allows. The default value for this option is <CODE CLASS="literal">
+50</code>. You can override it as follows:</p><PRE CLASS="programlisting">
+[global]
+	max mux = 100</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960132">
+8.6.7 max open files</a></h3><P CLASS="para">This global option specifies the maximum number of open files that Samba should allow at any given time for all processes. This value must be equal to or less than the amount allowed by the operating system, which varies from system to system. The default value for this option is <CODE CLASS="literal">
+10,000</code>. You can override it as follows:</p><PRE CLASS="programlisting">
+[global]
+	max open files = 8000</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960136">
+8.6.8 max xmit</a></h3><P CLASS="para">This global option sets the maximum size of packets that Samba exchanges with a client. In some cases, setting a smaller maximum packet size can increase performance, especially with Windows for Workgroups. The default value for this option is <CODE CLASS="literal">
+65535</code>. You can override it as follows:</p><PRE CLASS="programlisting">
+[global]
+	max xmit = 4096</pre><P CLASS="para">
+
+The section <a href="appb_02.html#b226"><b>Section B.2.2.6, The TCP receive window</b></a> in <a href="appb_01.html"><b>Appendix B,<CITE CLASS="appendix">
+Samba Performance Tuning</cite></b></a>,
+
+shows some uses for this option.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960138">
+8.6.9 nt pipe support</a></h3><P CLASS="para">This global option is used by developers to allow or disallow Windows NT clients the ability to make connections to the NT SMB-specific IPC$ pipes. As a user, you should never need to override the default:</p><PRE CLASS="programlisting">
+[global]
+	nt pipe support = yes</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960140">
+8.6.10 nt smb support</a></h3><P CLASS="para">This global option is used by developers to negotiate NT-specific SMB options with Windows NT clients. The Samba team has discovered that slightly better performance comes from setting this value to <CODE CLASS="literal">
+no</code>. However, as a user, you should probably not override the default:</p><PRE CLASS="programlisting">
+[global]
+	nt smb support = yes</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960178">
+8.6.11 ole locking compatibility</a></h3><P CLASS="para">
+This global option turns off Samba's internal byte-range locking manipulation in files, which gives compatibility with Object Linking and Embedding (OLE) applications that use high byte-range locks as a method of interprocess communication. The default value for this option is <CODE CLASS="literal">
+yes</code>. If you trust your Unix locking mechanisms, you can override it as follows:</p><PRE CLASS="programlisting">
+[global]
+	ole locking compatibility = no</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960182">
+8.6.12 panic action</a></h3><P CLASS="para">This global option specifies a command to execute in the event that Samba itself encounters a fatal error when loading or running. There is no default value for this option. You can specify an action as follows:</p><PRE CLASS="programlisting">
+[global]
+	panic action = /bin/csh -c
+          'xedit &lt; &quot;Samba has shutdown unexpectedly!'</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960190">
+8.6.13 set directory</a></h3><P CLASS="para">
+This boolean share-level option allows Digital Pathworks clients to use the <CODE CLASS="literal">
+setdir</code> command to change directories on the server. If you are not using the Digital Pathworks client, you should not need to alter this option. The default value for this option is <CODE CLASS="literal">
+no</code>. You can override it per share as follows:</p><PRE CLASS="programlisting">
+[data]
+	set directory = yes</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960192">
+8.6.14 smbrun</a></h3><P CLASS="para">
+This option sets the location of the <EM CLASS="emphasis">
+smbrun</em> executable, which Samba uses as a wrapper to run shell commands. The default value for this option is automatically configured by Samba when it is compiled. If you did not install Samba to the standard directory, you can specify where the binary is as follows:</p><PRE CLASS="programlisting">
+[global]
+	smbrun = /usr/local/bin/smbrun</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960194">
+8.6.15 status</a></h3><P CLASS="para">
+This global option indicates whether Samba should log all active connections to   a status file. This file is used only by the <EM CLASS="emphasis">
+smbstatus</em> command. If you have no intentions of using this command, you can set this option to <CODE CLASS="literal">
+no</code>, which can result in a small increase of speed on the server. The default value for this option is <CODE CLASS="literal">
+yes</code>. You can override it as follows:</p><PRE CLASS="programlisting">
+[global]
+	status = no</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960196">
+8.6.16 strict sync</a></h3><P CLASS="para">
+This share-level option determines whether Samba honors all requests to perform a disk sync when requested to do so by a client. Many clients request a disk sync when they are really just trying to flush data to their own open files. As a result, this can substantially slow a Samba server down. The default value for this option is <CODE CLASS="literal">
+no</code>. You can override it as follows:</p><PRE CLASS="programlisting">
+[data]
+	strict sync = yes</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960202">
+8.6.17 sync always</a></h3><P CLASS="para">
+This share-level option decides whether every write to disk should be followed by a disk synchronization before the write call returns control to the client. Even if the value of this option is <CODE CLASS="literal">
+no</code>, clients can request a disk synchronization; see the <CODE CLASS="literal">
+strict</code> <CODE CLASS="literal">
+sync</code> option above. The default value for this option is <CODE CLASS="literal">
+no</code>. You can override it per share as follows:</p><PRE CLASS="programlisting">
+[data]
+	sync always = yes</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-960204">
+8.6.18 strip dot</a></h3><P CLASS="para">
+This global option determines whether to remove the trailing dot from Unix filenames that are formatted with a dot at the end. The default value for this option is <CODE CLASS="literal">
+no</code>. You can override it per share as follows:</p><PRE CLASS="programlisting">
+[global]
+	strip dot = yes</pre><P CLASS="para">
+This option is now considered obsolete; the user should use the <CODE CLASS="literal">
+mangled</code> <CODE CLASS="literal">
+map</code> option insead. </p></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_05.html" TITLE="8.5 Recently Added Options">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 8.5 Recently Added Options" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_07.html" TITLE="8.7 Backups with smbtar">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 8.7 Backups with smbtar" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+8.5 Recently Added Options</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+8.7 Backups with smbtar</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

@@ -1,0 +1,121 @@
+!==
+!== DOMAIN_CONTROL.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Initial Release:	August 22, 1996
+Contributor:		John H Terpstra <samba@samba.org>
+			Copyright (C) 1996-1997 - John H Terpstra
+Updated:		July 5, 1998
+Status:			Current
+
+Subject:     Windows NT Domain Control & Samba
+============================================================================
+
+****NOTE:****
+=============
+The term "Domain Controller" and those related to it refer to one specific
+method of authentication that can underly an SMB domain. Domain Controllers
+prior to Windows NT Server 3.1 were sold by various companies and based on 
+private extensions to the LAN Manager 2.1 protocol. Windows NT introduced
+Microsoft-specific ways of distributing the user authentication database.
+See DOMAIN.txt for examples of how Samba can participate in or create
+SMB domains based on shared authentication database schemes other than the 
+Windows NT SAM.
+
+Microsoft Windows NT Domain Control is an extremely complex protocol.
+We have received countless requests to implement Domain Control in Samba.
+The 1.9.18 release of Samba contains experimental code to implement
+this. Please read the file docs/NTDOMAIN.txt for more information on this.
+============================================================================
+
+Windows NT Server can be installed as either a plain file and print server
+(WORKGROUP workstation or server) or as a server that participates in Domain
+Control (DOMAIN member, Primary Domain controller or Backup Domain controller).
+
+The same is true for OS/2 Warp Server, Digital Pathworks and other similar
+products, all of which can participate in Domain Control along with Windows NT.
+However only those servers which have licenced Windows NT code in them can be
+a primary Domain Controller (eg Windows NT Server, Advanced Server for Unix.)
+
+To many people these terms can be confusing, so let's try to clear the air.
+
+Every Windows NT system (workstation or server) has a registry database.
+The registry contains entries that describe the initialisation information
+for all services (the equivalent of Unix Daemons) that run within the Windows
+NT environment. The registry also contains entries that tell application
+software where to find dynamically loadable libraries that they depend upon.
+In fact, the registry contains entries that describes everything that anything
+may need to know to interact with the rest of the system.
+
+The registry files can be located on any Windows NT machine by opening a
+command prompt and typing:
+	dir %SystemRoot%\System32\config
+
+The environment variable %SystemRoot% value can be obtained by typing:
+	echo %SystemRoot%
+
+The active parts of the registry that you may want to be familiar with are
+the files called: default, system, software, sam and security.
+
+In a domain environment, Microsoft Windows NT domain controllers participate
+in replication of the SAM and SECURITY files so that all controllers within
+the domain have an exactly identical copy of each.
+
+The Microsoft Windows NT system is structured within a security model that
+says that all applications and services must authenticate themselves before
+they can obtain permission from the security manager to do what they set out
+to do.
+
+The Windows NT User database also resides within the registry. This part of
+the registry contains the user's security identifier, home directory, group
+memberships, desktop profile, and so on.
+
+Every Windows NT system (workstation as well as server) will have its own
+registry. Windows NT Servers that participate in Domain Security control
+have a database that they share in common - thus they do NOT own an
+independent full registry database of their own, as do Workstations and
+plain Servers.
+
+The User database is called the SAM (Security Access Manager) database and
+is used for all user authentication as well as for authentication of inter-
+process authentication (ie: to ensure that the service action a user has
+requested is permitted within the limits of that user's privileges).
+
+The Samba team have produced a utility that can dump the Windows NT SAM into 
+smbpasswd format: see ENCRYPTION.txt for information on smbpasswd and
+/pub/samba/pwdump on your nearest Samba mirror for the utility. This 
+facility is useful but cannot be easily used to implement SAM replication
+to Samba systems.
+
+Windows for Workgroups, Windows 95, and Windows NT Workstations and Servers
+can participate in a Domain security system that is controlled by Windows NT
+servers that have been correctly configured. At most every domain will have
+ONE Primary Domain Controller (PDC). It is desirable that each domain will
+have at least one Backup Domain Controller (BDC).
+
+The PDC and BDCs then participate in replication of the SAM database so that
+each Domain Controlling participant will have an up to date SAM component
+within its registry.
+
+Samba can NOT at this time function as a Domain Controller for any of these
+security services, but like all other domain members can interact with the
+Windows NT security system for all access authentication.
+
+When Samba is configured with the 'security = server' option and the
+'password server = Your_Windows_NT_Server_Name' option, then it will
+redirect all access authentication to that server. This way you can
+use Windows NT to act as your password server with full support for
+Microsoft encrypted passwords.
+
+Note also, that since release of samba-1.9.18 we now support native encrypted
+passwords too. To enable encrypted password handling several things need to be
+done:
+	1) In smb.conf [globals]:
+		encrypt passwords = yes
+		smbpasswd file = /path/smbpasswd
+the standard path is /usr/local/samba/private/smbpasswd but this may be
+platform specific.
+
+	2) Use "smbpasswd -a" to add all users to the smbpasswd file.
+
+Above all read all the documentation for encrypted password support - you will
+need it!

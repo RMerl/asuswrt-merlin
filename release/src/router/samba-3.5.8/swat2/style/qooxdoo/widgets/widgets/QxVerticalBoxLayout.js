@@ -1,0 +1,2 @@
+/* Copyright (c): 2002-2005 (Germany): United Internet, 1&1, GMX, Schlund+Partner, Alturo */
+function QxVerticalBoxLayout(vBlockAlign,vChildrenAlign){QxBoxLayout.call(this,"vertical",vBlockAlign,vChildrenAlign);};QxVerticalBoxLayout.extend(QxBoxLayout,"QxVerticalBoxLayout");proto._checkOrientation=function(_b1,_b2,propData,_b4){if(_b1!="vertical"){throw new Error("Orientation is not configurable in QxVerticalBoxLayout!");};return _b1;};

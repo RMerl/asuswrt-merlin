@@ -1,0 +1,140 @@
+mailto(samba@samba.org) 
+
+manpage(smbtar htmlcommand((1)))(1)(23 Oct 1998)(Samba)(SAMBA)
+
+label(NAME)
+manpagename(smbtar)(shell script for backing up SMB/CIFS shares directly to UNIX tape drives)
+
+label(SYNOPSIS)
+manpagesynopsis()
+
+bf(smbtar) link(-s server)(minuss) [link(-p password)(minusp)] [link(-x service)(minusx)] [link(-X)(minusX)] [link(-d directory)(minusd)] [link(-u user)(minusu)] [link(-t tape)(minust)] [link(-b blocksize)(minusb)] [link(-N filename)(minusN)] [link(-i)(minusi)] [link(-r)(minusr)] [link(-l log level)(minusl)] [link(-v)(minusv)] filenames
+
+label(DESCRIPTION)
+manpagedescription()
+
+This program is part of the bf(Samba) suite.
+
+bf(smbtar) is a very small shell script on top of
+url(bf(smbclient))(smbclient.1.html) which dumps SMB shares directly
+to tape.
+
+label(OPTIONS)
+manpageoptions()
+
+startdit()
+
+label(minuss)
+dit(bf(-s server)) The SMB/CIFS server that the share resides upon.
+
+label(minusx)
+dit(bf(-x service)) The share name on the server to connect
+to. The default is tt(backup).
+
+label(minusX)
+dit(bf(-X)) Exclude mode. Exclude filenames... from tar create or
+restore.
+
+label(minusd)
+dit(bf(-d directory)) Change to initial em(directory) before restoring
+/ backing up files.
+
+label(minusv)
+dit(bf(-v)) Verbose mode.
+
+label(minusp)
+dit(bf(-p password)) The password to use to access a share. Default:
+none
+
+label(minusu)
+dit(bf(-u user)) The user id to connect as. Default: UNIX login name.
+
+label(minust)
+dit(bf(-t tape)) Tape device. May be regular file or tape
+device. Default: em(TAPE) environmental variable; if not set, a file
+called tt(tar.out).
+
+label(minusb)
+dit(bf(-b blocksize)) Blocking factor. Defaults to 20. See bf(tar (1))
+for a fuller explanation.
+
+label(minusN)
+dit(bf(-N filename)) Backup only files newer than filename. Could be
+used (for example) on a log file to implement incremental backups.
+
+label(minusi)
+dit(bf(-i)) Incremental mode; tar files are only backed up if they
+have the archive bit set. The archive bit is reset after each file is
+read.
+
+label(minusr)
+dit(bf(-r)) Restore. Files are restored to the share from the tar
+file.
+
+label(minusl)
+dit(bf(-l log level)) Log (debug) level. Corresponds to the
+url(bf(-d))(smbclient.1.html#minusd) flag of url(bf(smbclient
+(1)))(smbclient.1.html).
+
+enddit()
+
+label(ENVIRONMENTVARIABLES)
+manpagesection(ENVIRONMENT VARIABLES)
+
+The TAPE variable specifies the default tape device to write to. May
+be overridden with the link(bf(-t))(minust) option.
+
+label(BUGS)
+manpagesection(BUGS)
+
+The bf(smbtar) script has different options from ordinary tar and tar
+called from url(bf(smbclient))(smbclient.1.html).
+
+label(CAVEATS)
+manpagesection(CAVEATS)
+
+Sites that are more careful about security may not like the way the
+script handles PC passwords. Backup and restore work on entire shares,
+should work on file lists. bf(smbtar) works best with GNU tar and may
+not work well with other versions.
+
+label(VERSION)
+manpagesection(VERSION)
+
+This man page is correct for version 2.0 of the Samba suite.
+
+label(SEEALSO)
+manpageseealso()
+
+url(bf(smbclient (1)))(smbclient.1.html), url(bf(smb.conf
+(5)))(smb.conf.5.html)
+
+label(DIAGNOSTICS)
+manpagesection(DIAGNOSTICS)
+
+See the url(bf(DIAGNOSTICS))(smbclient.1.html#DIAGNOSTICS) section for
+the url(bf(smbclient))(smbclient.1.html) command.
+
+label(AUTHOR)
+manpageauthor()
+
+The original Samba software and related utilities were created by
+Andrew Tridgell email(samba@samba.org). Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+
+Ricky Poulten email(poultenr@logica.co.uk) wrote the tar extension and
+this man page. The bf(smbtar) script was heavily rewritten and
+improved by Martin Kraemer email(Martin.Kraemer@mch.sni.de). Many
+thanks to everyone who suggested extensions, improvements, bug fixes,
+etc. The man page sources were converted to YODL format (another
+excellent piece of Open Source software available at
+url(bf(ftp://ftp.icce.rug.nl/pub/unix/))(ftp://ftp.icce.rug.nl/pub/unix/))
+and updated for the Samba2.0 release by Jeremy Allison,
+email(samba@samba.org).
+ 
+See url(bf(samba (7)))(samba.7.html) to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+
+

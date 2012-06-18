@@ -1,0 +1,41 @@
+[PATCH] linuxthreads: mips: fix errno setting after syscall
+
+If there was an error during syscall then after it's completion a3
+register holds a non-zero value and v0 holds an actual error code which
+should be saved in errno. This can be achieved by calling
+__syscall_error with the value from v0 as a parameter. So this value
+should be stored in a0, but the appropriate assembly instructions are
+missing. Fixed this now by adding "move a0, v0".
+
+I think it was once fixed by 58c5f8ba4cdf62342d05a546d15404cbbb3c4e07
+but then something went wrong. Again...
+
+Signed-off-by: Alexander Gordeev <lasaine at lvk.cs.msu.su>
+---
+
+diff --git a/libpthread/linuxthreads/sysdeps/unix/sysv/linux/mips/sysdep-cancel.h b/libpthread/linuxthreads/sysdeps/unix/sysv/linux/mips/sysdep-cancel.h
+--- a/libpthread/linuxthreads/sysdeps/unix/sysv/linux/mips/sysdep-cancel.h
++++ b/libpthread/linuxthreads/sysdeps/unix/sysv/linux/mips/sysdep-cancel.h
+@@ -28,7 +28,8 @@
+ # undef PSEUDO
+ # define PSEUDO(name, syscall_name, args)				      \
+   .align 2;								      \
+-  99: la t9,__syscall_error;						      \
++  99: move a0, v0; 							      \
++  la t9,__syscall_error;						      \
+   jr t9;								      \
+   ENTRY (name)								      \
+     .set noreorder;							      \
+diff --git a/libpthread/linuxthreads/sysdeps/unix/sysv/linux/mips/mips64/sysdep-cancel.h b/libpthread/linuxthreads/sysdeps/unix/sysv/linux/mips/mips64/sysdep-cancel.h
+--- a/libpthread/linuxthreads/sysdeps/unix/sysv/linux/mips/mips64/sysdep-cancel.h
++++ b/libpthread/linuxthreads/sysdeps/unix/sysv/linux/mips/mips64/sysdep-cancel.h
+@@ -32,6 +32,7 @@
+ # define PSEUDO(name, syscall_name, args)				      \
+   .align 2;								      \
+   99:									      \
++  move a0, v0;								      \
+   PTR_LA t9,__syscall_error;					 	      \
+   /* manual cpreturn.  */						      \
+   REG_L gp, STKOFF_GP(sp);						      \
+-- 
+1.7.1

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="idmap_tdb.8">
+
+<refmeta>
+	<refentrytitle>idmap_tdb</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>idmap_tdb</refname>
+	<refpurpose>Samba's idmap_tdb Backend for Winbind</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<title>DESCRIPTION</title>
+
+	<para>The idmap_tdb plugin is the default backend used by winbindd
+	for storing SID/uid/gid mapping tables and implements
+	both the &quot;idmap&quot; and &quot;idmap alloc&quot; APIs.
+	</para>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>IDMAP OPTIONS</title>
+
+	<variablelist>
+                <varlistentry>
+		<term>range = low - high</term>
+                <listitem><para>
+			Defines the available matching uid and gid range for which the
+			backend is authoritative.  Note that the range commonly matches
+			the allocation range due to the fact that the same backend will
+			store and retrieve SID/uid/gid mapping entries.  If the parameter
+			is absent, Winbind fail over to use the &quot;idmap uid&quot; and
+			&quot;idmap gid&quot; options from smb.conf.
+                </para></listitem>
+                </varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>IDMAP ALLOC OPTIONS</title>
+
+	<variablelist>
+                <varlistentry>
+		<term>range = low - high</term>
+                <listitem><para>
+			Defines the available matching uid and gid range from which
+			winbindd can allocate for users and groups.  If the parameter
+			is absent, Winbind fail over to use the &quot;idmap uid&quot;
+			and &quot;idmap gid&quot; options from smb.conf.
+                </para></listitem>
+                </varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>
+	The following example is equivalent to the pre-3.0.25 default idmap
+	configuration using the &quot;idmap backend = tdb&quot; setting.
+	</para>
+
+	<programlisting>
+	[global]
+	    idmap domains = ALLDOMAINS
+	    idmap config ALLDOMAINS:default = yes
+	    idmap config ALLDOMAINS:backend = tdb
+	    idmap config ALLDOMAINS:range   = 10000 - 50000
+
+	    idmap alloc backend = tdb
+	    idmap alloc config:range = 10000 - 50000
+	</programlisting>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>
+	The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.
+	</para>
+</refsect1>
+
+</refentry>

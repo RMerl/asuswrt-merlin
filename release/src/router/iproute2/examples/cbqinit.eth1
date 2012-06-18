@@ -1,0 +1,76 @@
+#! /bin/sh
+
+TC=/home/root/tc
+IP=/home/root/ip
+DEVICE=eth1
+BANDWIDTH="bandwidth 10Mbit"
+
+# Attach CBQ on $DEVICE. It will have handle 1:.
+#   $BANDWIDTH is real $DEVICE bandwidth (10Mbit).
+#   avpkt is average packet size.
+#   mpu is minimal packet size.
+
+$TC qdisc add dev $DEVICE  root  handle 1:  cbq \
+$BANDWIDTH avpkt 1000 mpu 64
+
+# Create root class with classid 1:1. This step is not necessary.
+#   bandwidth is the same as on CBQ itself.
+#   rate == all the bandwidth
+#   allot is MTU + MAC header
+#   maxburst measure allowed class burstiness (please,read S.Floyd and VJ papers)
+#   est 1sec 8sec means, that kernel will evaluate average rate
+#                 on this class with period 1sec and time constant 8sec.
+#                 This rate is viewed with "tc -s class ls dev $DEVICE"
+
+$TC class add dev $DEVICE parent 1:0 classid :1 est 1sec 8sec cbq \
+$BANDWIDTH rate 10Mbit allot 1514 maxburst 50 avpkt 1000
+
+# Bulk.
+#    New parameters are: 
+#    weight, which is set to be proportional to
+#            "rate". It is not necessary, weight=1 will work as well.
+#    defmap and split say that best effort ttraffic, not classfied
+#            by another means will fall to this class.
+
+$TC class add dev $DEVICE parent 1:1 classid :2 est 1sec 8sec cbq \
+$BANDWIDTH rate 4Mbit allot 1514 weight 500Kbit \
+prio 6 maxburst 50 avpkt 1000 split 1:0 defmap ff3d
+
+# OPTIONAL.
+# Attach "sfq" qdisc to this class, quantum is MTU, perturb
+# gives period of hash function perturbation in seconds.
+#
+$TC qdisc add dev $DEVICE parent 1:2 sfq quantum 1514b perturb 15
+
+# Interactive-burst class
+
+$TC class add dev $DEVICE parent 1:1 classid :3 est 2sec 16sec cbq \
+$BANDWIDTH rate 1Mbit allot 1514 weight 100Kbit \
+prio 2 maxburst 100 avpkt 1000 split 1:0 defmap c0
+
+$TC qdisc add dev $DEVICE parent 1:3 sfq quantum 1514b perturb 15
+
+# Background.
+
+$TC class add dev $DEVICE parent 1:1 classid :4 est 1sec 8sec cbq \
+  $BANDWIDTH rate 100Kbit allot 1514 weight 10Mbit \
+  prio 7 maxburst 10 avpkt 1000 split 1:0 defmap 2
+
+$TC qdisc add dev $DEVICE parent 1:4 sfq quantum 1514b perturb 15
+
+# Realtime class for RSVP
+
+$TC class add dev $DEVICE parent 1:1 classid 1:7FFE cbq \
+rate 5Mbit $BANDWIDTH allot 1514b avpkt 1000 \
+maxburst 20
+
+# Reclassified realtime traffic
+#
+# New element: split is not 1:0, but 1:7FFE. It means,
+#     that only real-time packets, which violated policing filters
+#     or exceeded reshaping buffers will fall to it.
+
+$TC class add dev $DEVICE parent 1:7FFE classid 1:7FFF  est 4sec 32sec cbq \
+rate 1Mbit $BANDWIDTH allot 1514b avpkt 1000 weight 10Kbit \
+prio 6 maxburst 10 split 1:7FFE defmap ffff
+

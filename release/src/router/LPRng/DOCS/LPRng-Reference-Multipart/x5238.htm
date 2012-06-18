@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Printing to AppleTalk Printers</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printer Communication and Protocols "
+    href="printercomm.htm">
+    <link rel="PREVIOUS" title=
+    "Printing to a SMB (MicroSoft) Printer" href="x5224.htm">
+    <link rel="NEXT" title="Parallel Port Printers" href=
+    "x5262.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x5224.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          11. Printer Communication and Protocols</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x5262.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN5238">11.10. Printing to
+      AppleTalk Printers</a></h1>
+
+      <p>The <a href="appletalk.htm">netatalk</a> package comes
+      with the <b class="APPLICATION">pap</b> program that can be
+      used to transfer jobs using the AppleTalk protocol. A
+      printcap entry for a network printer looks like the
+      following:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5243"></a>
+<pre class="SCREEN">
+    atalk:
+      :lp=| -$ /usr/local/atalk/bin/pap -e -p "npbname"
+      :sd=/var/spool/lpd/atalk
+      :ifhp=model=ps,status@
+      :filter=/usr/local/libexec/filters/ifhp
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <var class="LITERAL">-$</var> suppress the addition of
+      extra parameters to the <b class="APPLICATION">pap</b>
+      command line. The <b class="APPLICATION">pap</b> program must
+      be SETUID root and executable only by root or group <var
+      class="LITERAL">daemon</var>. This can be done by using the
+      following script:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5250"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {309}</samp> <kbd class=
+"USERINPUT">cd /usr/local/atalk/bin</kbd>
+    <samp class="PROMPT">h4: {310}</samp> <kbd class=
+"USERINPUT">chown root pap</kbd>
+    <samp class="PROMPT">h4: {311}</samp> <kbd class=
+"USERINPUT">chgrp daemon pap</kbd>
+    <samp class="PROMPT">h4: {312}</samp> <kbd class=
+"USERINPUT">chmod 550 pap</kbd>
+    <samp class="PROMPT">h4: {313}</samp> <kbd class=
+"USERINPUT">chmod s+u pap</kbd>
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x5224.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x5262.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Printing to a
+          SMB (MicroSoft) Printer</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printercomm.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Parallel Port
+          Printers</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,18 @@
+<samba:parameter name="ldap machine suffix"
+		context="G"
+		advanced="1"
+		developer="1"
+		type="string"
+		xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+
+<description>
+	<para>
+	It specifies where machines should be added to the ldap tree.  If this parameter is unset, the value of
+	<smbconfoption name="ldap suffix"/> will be used instead.  The suffix string is pre-pended to the
+	<smbconfoption name="ldap suffix"/> string so use a partial DN.
+	</para>
+</description>
+
+<value type="default"/>
+<value type="example">ou=Computers</value>
+</samba:parameter>

@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Remote Printer Using Socket API</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Remote Printer Using RFC1179" href=
+    "x5787.htm">
+    <link rel="NEXT" title="Parallel Printer" href="x5848.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x5787.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x5848.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN5821">12.8. Remote Printer
+      Using Socket API</a></h1>
+
+      <p>If the spool queue destination is a remote printer
+      supporting the Socket API, then you can have <b class=
+      "APPLICATION">LPRng</b> open a connection directly to the
+      printer. These include the older Apple printers with TCP/IP
+      support and the HP JetDirect supported printers.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5825"></a>
+<pre class="SCREEN">
+    # Simplest
+    remote
+       :lp=10.24.2.3%9100
+</pre>
+      </div>
+
+      <ol type="1">
+        <li>
+          <p>The <var class="LITERAL">lp=server%port</var> or <var
+          class="LITERAL">lp=IPaddr%port</var> format specifies
+          that <b class="APPLICATION">lpd</b> should open a TCP/IP
+          connection to the remote host and simply transfer
+          verbatum the files to be printed.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">sh</var> and <var class=
+          "LITERAL">sf</var> will prevent <b class=
+          "APPLICATION">lpd</b> from trying to generate banner
+          pages or put form feeds between jobs.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>While this is the simplest printcap, it is also the most
+      dangerous as there is nothing to prevent a malformed job from
+      being sent to the printer. The next printcap example is much
+      more robust:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5839"></a>
+<pre class="SCREEN">
+    # Simplest
+    remote
+       :lp=10.24.2.3%9100
+       :of=/usr/local/libexec/filters/ifhp
+       :filter=/usr/local/libexec/filters/ifhp
+</pre>
+      </div>
+
+      <ol type="1">
+        <li>
+          <p>This version will use the <b class=
+          "APPLICATION">ifhp</b> filter to precondition the printer
+          and to process jobs. See <a href="ifhp.htm"><b class=
+          "APPLICATION">ifhp</b> Filter</a> for details. The <b
+          class="APPLICATION">ifhp</b> filter will perform the
+          appropriate printer resets, translate job information,
+          and ensure correct printer operation in the presence of
+          errors. It will also produce voluminous error messages
+          and status information.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x5787.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x5848.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Remote Printer
+          Using RFC1179</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Parallel
+          Printer</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

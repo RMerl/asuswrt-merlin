@@ -1,0 +1,8 @@
+This code was written to test the different library functions. However, a simple example of almost every libmsrpc call can be found
+in this code.
+
+notes: most of the programs use a modified smbc_get_auth_data_fn which will not prompt for a user/domain/password so expect flaky results 
+if you run the tests with just a server, ie: svc remote_machine
+   
+
+If you get errors about the libmsrpc.so object, make sure your LD_LIBRARY_PATH points to /path/to/samba3/source/bin

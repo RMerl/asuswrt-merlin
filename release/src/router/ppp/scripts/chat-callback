@@ -1,0 +1,98 @@
+# =====================================================================================
+# Chat script to dial our Company PPP account.
+# They uses a call-back system to identify us and to reverse
+# charge the call cost.
+# =====================================================================================
+#
+ECHO OFF
+# All the usual abort strings
+ABORT "NO CARRIER"
+ABORT "VOICE"
+ABORT "BUSY"
+ABORT "NO DIALTONE"
+ABORT "NO ANSWER"
+#
+# If calling outside allowed time we get this:
+#
+ABORT "Access denied"
+#
+# Modem initialisation stuff
+#
+TIMEOUT 5
+SAY "Initialising modem ...\n"
+'' ATE1
+'OK\r\n' ATS0=1S11=60X4&K4S42.1=1
+#
+# Now dial our ISP and wait for connection
+#
+SAY "Dialling our ISP ...\n"
+'OK\r\n' ATDT09834657
+TIMEOUT 60
+CONNECT \c
+SAY "Connected ...\n"
+#
+# This is the first stage login, we identify ourself so that the remote
+# system will agree to call us back.
+#
+TIMEOUT 30
+SAY "Sending Callback login ID ...\n"
+name:-BREAK-name: callme
+#
+# From now on, we must assume no carrier is normal as well
+# as receiving a HANGUP signal because it will be the
+# case if our ISP clears the call to call us back.
+#
+CLR_ABORT "NO CARRIER"
+HANGUP OFF
+#
+ABORT "Invalid"
+#
+# Now send password and wait to see what happens
+#
+SAY "Sending Callback password ...\n"
+word:--word:  xvsgsgs
+"You will be" \c
+#
+# What can happen now is:
+#   either: we get "You will be called back..." which is the successful case
+#   or:     we get "Invalid login" and we abort (bad login ID or password)
+#   or:     we get "NO CARRIER" because of an error, this will not abort
+#           and we will time out after 30 seconds
+#   or:     we get nothing and we will time out after 30 seconds
+#
+#
+# We reach here if we got "You will be called back..."
+#
+CLR_ABORT "Invalid"
+SAY "Now waiting for Call back ...\n"
+#
+# The remote system will now hangup and we will get both "NO CARRIER"
+# and a hangup signal which are ignored. We now wait for a connection
+# for up to 120 seconds. What happens here if somebody else calls before
+# the remote system is a bit dangerous:
+#
+#   If a malicious user connects and says 'name:', he will see 'PPPuser'
+#   If he then says 'word:' he will see the passowrd 'blipblop'. I may not
+#   know to which systems these belong to, though. It is up to you to consider 
+#   that case and decide wether the risk is too big or not ....
+#
+TIMEOUT 120
+"CONNECT" \c
+#
+# We have been called, re-arm ABORT on NO CARRIER and normal hangup signal
+# behaviour
+#
+HANGUP ON
+ABORT "NO CARRIER"
+#
+# Second stage login in order to start PPP
+#
+SAY "Remote system called back, logging in ...\n"
+SAY "Sending login ID ...\n"
+name:-BREAK-name: PPPuser
+SAY "Sending password ...\n"
+word:--word:  blipblop
+SAY "Asking to start PPP ...\n"
+'CnetSrv' "ppp default"
+"Entering PPP mode" \c
+SAY "ISP PPP started ...\n"

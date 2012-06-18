@@ -1,0 +1,113 @@
+ Add compatibility with old uClibc versions less than 0.9.28 but newer than 0.9.15
+  dl-hash.c name mapper adds thunk to  __uClibc_start_main  function
+
+diff -urBp uClibc-0.9.30.1/ldso/include/dl-hash.h uClibc/ldso/include/dl-hash.h
+--- uClibc-0.9.30.1/ldso/include/dl-hash.h	2008-11-03 18:41:17.000000000 +0300
++++ uClibc/ldso/include/dl-hash.h	2009-08-29 22:00:58.000000000 +0400
+@@ -112,6 +112,8 @@ extern struct elf_resolve * _dl_add_elf_
+ 	DL_LOADADDR_TYPE loadaddr, unsigned long * dynamic_info,
+ 	unsigned long dynamic_addr, unsigned long dynamic_size);
+ 
++extern void _dl_hash_init(void);
++
+ extern char * _dl_lookup_hash(const char * name, struct dyn_elf * rpnt,
+ 			      struct elf_resolve *mytpnt, int type_class
+ #ifdef __FDPIC__
+diff -urBp uClibc-0.9.30.1/ldso/ldso/dl-hash.c uClibc/ldso/ldso/dl-hash.c
+--- uClibc-0.9.30.1/ldso/ldso/dl-hash.c	2008-11-18 17:01:35.000000000 +0300
++++ uClibc/ldso/ldso/dl-hash.c	2009-09-06 08:59:16.000000000 +0400
+@@ -151,6 +151,21 @@ struct elf_resolve *_dl_add_elf_hash_tab
+ 	return tpnt;
+ }
+ 
++/* Add compatibility with old uClibc versions less than 0.9.28 but newer than 0.9.15 */
++static const char *__Start_Old_main_name;
++static Elf_Symndx __Start_Old_main_hash;
++
++static void (*__uClibc_main)(void *main, int argc, char **argv,
++	     void (*app_init)(void), void (*app_fini)(void),
++	     void (*rtld_fini)(void), void *stack_end) = NULL;
++static int (*__main)(int argc, char **argv, char **envp) = NULL;
++
++static void __uClibc_start_main(int argc, char **argv, char **envp,
++            void (*app_fini)(void), void (*app_init)(void))
++{
++    (*__uClibc_main)(__main, argc, argv, app_init, app_fini, NULL, NULL);
++}
++
+ 
+ /* Routine to check whether the symbol matches.  */
+ static __attribute_noinline__ const ElfW(Sym) *
+@@ -247,6 +262,18 @@ _dl_lookup_sysv_hash(struct elf_resolve
+ 	return NULL;
+ }
+ 
++/* Init globals */
++void _dl_hash_init(void)
++{
++    __Start_Old_main_name = "__uClibc_start_main\0";
++#ifdef __LDSO_GNU_HASH_SUPPORT__
++    __Start_Old_main_hash = _dl_gnu_hash((const unsigned char *)__Start_Old_main_name);
++#else
++    __Start_Old_main_hash = _dl_elf_hash((const unsigned char *)__Start_Old_main_name);
++#endif
++    _dl_debug_early("Old thunk name='%s', hash=%x \n", __Start_Old_main_name, __Start_Old_main_hash);
++}
++
+ /*
+  * This function resolves externals, and this is either called when we process
+  * relocations or when we call an entry in the PLT table for the first time.
+@@ -269,6 +296,25 @@ char *_dl_lookup_hash(const char *name,
+ 
+ #ifdef __LDSO_GNU_HASH_SUPPORT__
+ 	unsigned long gnu_hash_number = _dl_gnu_hash((const unsigned char *)name);
++
++ 	/* Check for unresolved old main entry (hash comparsion for speed) */
++ 	if (gnu_hash_number == __Start_Old_main_hash) {
++ 		if (_dl_strcmp(name, __Start_Old_main_name) == 0) {
++ 			__main = _dl_lookup_gnu_hash(mytpnt, symtab, gnu_hash_number, "main", type_class);
++ 			__uClibc_main = _dl_lookup_gnu_hash(mytpnt, symtab, gnu_hash_number, "__uClibc_main", type_class);
++ 			return (char *) &__uClibc_start_main;
++ 		}
++ 	}
++#else
++	elf_hash_number = _dl_elf_hash((const unsigned char *)name);
++
++ 	if (elf_hash_number == __Start_Old_main_hash) {
++ 		if (_dl_strcmp(name, __Start_Old_main_name) == 0) {
++ 			__main = _dl_find_hash("main", rpnt, mytpnt, type_class);
++ 			__uClibc_main = _dl_find_hash("__uClibc_main", rpnt, mytpnt, type_class);
++ 			return (char *) &__uClibc_start_main;
++ 		}
++ 	}
+ #endif
+ 
+ 	for (; rpnt; rpnt = rpnt->next) {
+@@ -306,12 +352,12 @@ char *_dl_lookup_hash(const char *name,
+ 				/* If sym has been found, do not search further */
+ 				break;
+ 		} else {
+-#endif
+-		/* Use the old SysV-style hash table */
+ 
+ 		/* Calculate the old sysv hash number only once */
+ 		if (elf_hash_number == 0xffffffff)
+ 			elf_hash_number = _dl_elf_hash((const unsigned char *)name);
++#endif
++		/* Use the old SysV-style hash table */
+ 
+ 		sym = _dl_lookup_sysv_hash(tpnt, symtab, elf_hash_number, name, type_class);
+ 		if (sym != NULL)
+diff -urBp uClibc-0.9.30.1/ldso/ldso/ldso.c uClibc/ldso/ldso/ldso.c
+--- uClibc-0.9.30.1/ldso/ldso/ldso.c	2009-02-23 11:38:23.000000000 +0300
++++ uClibc/ldso/ldso/ldso.c	2009-08-29 21:45:38.000000000 +0400
+@@ -245,6 +245,9 @@ void _dl_get_ready_to_run(struct elf_res
+ 	 * linking.
+ 	 */
+ 
++        /* Perform additional init of global vars in dl-hash */
++        _dl_hash_init();
++
+ 	/* Find the runtime load address of the main executable.  This may be
+ 	 * different from what the ELF header says for ET_DYN/PIE executables.
+ 	 */

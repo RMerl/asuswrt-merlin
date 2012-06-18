@@ -1,0 +1,392 @@
+!==
+!== SSLeay.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor: Christian Starkjohann <cs@obdev.at>
+Date:        May 29, 1998
+Status:      
+
+Subject:     Compiling and using samba with SSL support
+============================================================================
+
+What is SSL and SSLeay?
+=======================
+SSL (Secure Socket Layer) is a protocol for encrypted and authenticated data
+transport. It is used by secure web servers for shopping malls, telebanking
+and things like that.
+
+SSLeay is a free implementation of the SSL protocol. It is available from
+
+    ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/
+
+The current version while these lines are written is 0.9.0. Encryption is
+plagued by legal problems of all kinds. For a discussion of these please
+read the documentation of SSLeay, which is available at
+
+    http://www.psy.uq.edu.au/~ftp/Crypto/
+
+To compile samba with SSL support, you must first compile and install SSLeay.
+SSLeay consists of a library (which can be linked to other applications like
+samba) and several utility programs needed for key generation, certification
+etc. SSLeay installs to /usr/local/ssl/ by default.
+
+
+Compiling samba with SSLeay
+===========================
+1. Get and install SSLeay. The rest of this documentation assumes that you
+   have installed it at the default location, which is /usr/local/ssl/.
+   I have used SSLeay 0.9.0, but samba will probably also work with other
+   versions (but not with versions older than 0.6).
+2. Modify the Makefile. At the end of the configurable section you can find
+   the SSL definitions. You can find them quickly by searching for SSL_ROOT.
+   Unremark the definitions and modify SSL_ROOT if necessary.
+3. Compile and install as usual.
+
+
+Configuring SSL in samba
+========================
+Before you configure SSL, you should know the basics of cryptography and how
+SSL relates to all of this. A basic introduction can be found further down in
+this document. The following variables in the "[global]" section of the
+configuration file are used to configure SSL:
+
+ssl                     = yes
+   This variable enables or disables the entire SSL mode. If it is set to
+   "no", the SSL enabled samba behaves exactly like the non-SSL samba. If set
+   to "yes", it depends on the variables "ssl hosts" and "ssl hosts resign"
+   whether an SSL connection will be required.
+ssl hosts               = 
+ssl hosts resign        = 192.168.
+   These two variables define whether samba will go into SSL mode or not. If
+   none of them is defined, samba will allow only SSL connections. If the
+   "ssl hosts" variable lists hosts (by IP-address, IP-address range, net
+   group or name), only these hosts will be forced into SSL mode. If the
+   "ssl hosts resign" variable lists hosts, only these hosts will NOT be
+   forced into SSL mode. The syntax for these two variables is the same as
+   for the "hosts allow" and "hosts deny" pair of variables, only that the
+   subject of the decision is different: It's not the access right but
+   whether SSL is used or not. See the man page of smb.conf (section about
+   "allow hosts") for details. The above example requires SSL connections
+   from all hosts outside the local net (which is 192.168.*.*).
+ssl CA certDir          = /usr/local/ssl/certs
+   This variable defines where to look up the Certification Autorities. The
+   given directory should contain one file for each CA that samba will trust.
+   The file name must be the hash value over the "Distinguished Name" of the
+   CA. How this directory is set up is explained later in this document. All
+   files within the directory that don't fit into this naming scheme are
+   ignored. You don't need this variable if you don't verify client
+   certificates.
+ssl CA certFile         = /usr/local/ssl/certs/trustedCAs.pem
+   This variable is a second way to define the trusted CAs. The certificates
+   of the trusted CAs are collected in one big file and this variable points
+   to the file. You will probably only use one of the two ways to define your
+   CAs. The first choice is preferable if you have many CAs or want to be
+   flexible, the second is perferable if you only have one CA and want to
+   keep things simple (you won't need to create the hashed file names). You
+   don't need this variable if you don't verify client certificates.
+ssl server cert         = /usr/local/ssl/certs/samba.pem
+   This is the file containing the server's certificate. The server _must_
+   have a certificate. The file may also contain the server's private key.
+   See later for how certificates and private keys are created.
+ssl server key          = /usr/local/ssl/private/samba.pem
+   This file contains the private key of the server. If this variable is not
+   defined, the key is looked up in the certificate file (it may be appended
+   to the certificate). The server _must_ have a private key and the
+   certificate _must_ match this private key.
+ssl client cert         = /usr/local/ssl/certs/smbclient.pem
+   The certificate in this file is used by smbclient if it exists. It's needed
+   if the server requires a client certificate.
+ssl client key          = /usr/local/ssl/private/smbclient.pem
+   This is the private key for smbclient. It's only needed if the client
+   should have a certificate.
+ssl require clientcert  = yes
+   If this variable is set to "yes", the server will not tolerate connections
+   from clients that don't have a valid certificate. The directory/file
+   given in "ssl CA certDir" and "ssl CA certFile" will be used to look up
+   the CAs that issued the client's certificate. If the certificate can't be
+   verified positively, the connection will be terminated.
+   If this variable is set to "no", clients don't need certificates. Contrary
+   to web applications you really _should_ require client certificates. In
+   the web environment the client's data is sensitive (credit card numbers)
+   and the server must prove to be trustworthy. In a file server environment
+   the server's data will be sensitive and the clients must prove to be
+   trustworthy.
+ssl require servercert  = yes
+   If this variable is set to "yes", the smbclient will request a certificate
+   from the server. Same as "ssl require clientcert" for the server.
+ssl ciphers             = ???
+   This variable defines the ciphers that should be offered during SSL
+   negotiation. You should not set this variable unless you know what you do.
+ssl version             = ssl2or3
+   This enumeration variable defines the versions of the SSL protocol that
+   will be used. "ssl2or3" allows dynamic negotiation of SSL v2 or v3, "ssl2"
+   results SSL v2, "ssl3" results in SSL v3 and "tls1" results in TLS v1. TLS
+   (Transport Layer Security) is the (proposed?) new standard for SSL. The
+   default value is "ssl2or3".
+ssl compatibility       = no
+   This variable defines whether SSLeay should be configured for bug
+   compatibility with other SSL implementations. This is probably not
+   desirable because currently no clients with SSL implementations other than
+   SSLeay exist.
+
+
+Running samba with SSLeay
+=========================
+Samba is started as usual. The daemon will ask for the private key's pass
+phrase before it goes to background if the private key has been encrypted.
+If you start smbd from inetd, this won't work. Therefore you must not encrypt
+your private key if you run smbd from inetd.
+
+Windows clients will try to connect to the SSL enabled samba daemon and they
+will fail. This can fill your log with failed SSL negotiation messages. To
+avoid this, you can either not run nmbd (if all clients use DNS to look up
+the server), which will leave the Windows machine unaware of the server, or
+list all (local) Windows machines in the "ssl hosts resign" variable.
+
+
+About certificates
+==================
+Secure samba servers will not be set up for public use as it is the case with
+secure web servers. Most installations will probably use it for distributed
+offices that use parts of the internet for their intranet, for access to a
+web server that's physically hosted by the provider or simply for teleworking.
+All these applications work with a known group of users that can easily agree
+on a certification authority. The CA can be operated by the company and the
+policy for issuing certificates can be determined by the company. If samba is
+configured to verify client certificates, it (currently) only verifies
+whether a valid certificate exists. It does not verify any of the data within
+the certificate (although it prints some of the data to the log file).
+
+
+Which clients are available that support SSL?
+=============================================
+Currently there are only smbclient which is part of the samba package and
+Sharity. Shariy versions newer than 0.14 in the beta branch and 1.01 in the
+main branch can be compiled with SSLeay. Sharity is a CIFS/SMB client
+implementation for Unix. It is a commercial product, but it is available in
+source code and the demo-mode allows access to the first three layers of the
+mounted directory hierarchy. Licenses for universities and students are free.
+Sharity is available at
+
+    http://www.obdev.at/Products/Sharity.html
+
+
+
+###########################################################################
+Basics about Cryptography and SSL(eay)
+###########################################################################
+
+There are many good introductions to cryptography. I assume that the reader
+is familiar with the words "encryption", "digital signature" and RSA. If you
+don't know these terms, please read the cryptography FAQ part 6 and 7, which
+is posted to the usenet newsgroup sci.crypt. It is also available from
+
+    ftp://rtfm.mit.edu/pub/usenet/news.answers/cryptography-faq
+and
+    http://www.cis.ohio-state.edu/hypertext/faq/usenet/cryptography-faq
+
+I'll concentrate on the questions specific to SSL and samba here.
+
+
+What is a certificate?
+======================
+A certificate is issued by an issuer, usually a "Certification Authority"
+(CA), who confirms something by issuing the certificate. The subject of this
+confirmation depends on the CA's policy. CAs for secure web servers (used for
+shopping malls etc.) usually only attest that the given public key belongs the
+the given domain name. Company-wide CAs might attest that you are an employee
+of the company, that you have permissions to use a server or whatever.
+
+
+What is an X.509 certificate technically?
+=========================================
+Technically, the certificate is a block of data signed by the certificate
+issuer (the CA). The relevant fields are:
+   - unique identifier (name) of the certificate issuer
+   - time range during that the certificate is valid
+   - unique identifier (name) of the certified subject
+   - public key of the certified subject
+   - the issuer's signature over all of the above
+If this certificate should be verified, the verifier must have a table of the
+names and public keys of trusted CAs. For simplicity, these tables are lists
+of certificates issued by the respective CAs for themselves (self-signed
+certificates).
+
+
+What are the implications of this certificate structure?
+========================================================
+  - Because the certificate contains the subject's public key, the
+    certificate and the private key together are all that's needed to encrypt
+    and decrypt.
+  - To verify certificates, you need the certificates of all CAs you trust.
+  - The simplest form of a dummy-certificate is one that's signed by the
+    subject itself.
+  - A CA is needed. The client can't simply issue local certificates for
+    servers it trusts because the server determines which certificate it
+    presents.
+
+
+
+###########################################################################
+Setting up files and directories for SSLeay
+###########################################################################
+
+The first thing you should do is to change your PATH environment variable to
+include the bin directory of SSLeay. E.g.:
+
+    PATH=$PATH:/usr/local/ssl/bin   
+
+Then you should set up SSLeay's random number generator. The state of this
+random number generator is held in the file ".rnd" in your home directory. To
+set a reasonable random seed, you need random data. Create a random file with
+    
+    cat >/tmp/rfile.txt
+
+Then type random keys on your keyboard for about one minute. Then type the
+EOF character (^D) to terminate input. You may also use your favorite editor
+to create the random file, of course. Now you can create a dummy key to
+initialize the random number generator:
+    
+    ssleay genrsa -rand /tmp/rfile.txt > /dev/null
+    rm -f /tmp/rfile.txt
+
+Don't forget to delete the file /tmp/rfile.txt. It's more or less equivalent
+to your private key!
+
+
+How to create a keypair
+=======================
+This is done with 'genrsa' for RSA keys and 'gendsa' for DSA keys. For an RSA
+key with 512 bits which is written to the file "key.pem" type:
+
+    ssleay genrsa -des3 512 > key.pem
+
+You will be asked for a pass phrase to protect this key. If you don't want to
+protect your private key with a pass phrase, just omit the parameter "-des3".
+If you want a different key size, replace the parameter "512". You really
+should use a pass phrase.
+
+If you want to remove the pass phrase from a key use:
+
+    ssleay rsa -in key.pem -out newkey.pem
+
+And to add or change a pass phrase:
+
+    ssleay rsa -des3 -in key.pem -out newkey.pem
+
+
+How to create a dummy certificate
+=================================
+If you still have your keypair in the file "key.pem", the command
+
+    ssleay req -new -x509 -key key.pem -out cert.pem
+
+will write a self-signed dummy certificate to the file "cert.pem". This can
+be used for testing or if only encryption and no certification is needed.
+Please bear in mind that encryption without authentication (certification)
+can never be secure. It's open to (at least) "man-in-the-middle" attacks.
+
+
+How to create a certificate signing request
+===========================================
+You must not simply send your keypair to the CA for signing because it
+contains the private key which _must_ be kept secret. A signing request
+consists of your public key and some additional information you want to have
+bound to that key by the certificate. If you operate a secure web server,
+this additional information will (among other things) contain the URL of
+your server in the field "Common Name". The certificate signing request is
+created from the keypair with the following command (assuming that the key
+pair is still in "key.pem"):
+
+    ssleay req -new -key key.pem -out csr.pem
+
+This command will ask you for the information which must be included in the
+certificate and will write the signing request to the file "csr.pem". This
+signing request is all the CA needs for signing, at least technically. Most
+CAs will demand bureaucratic material and money, too.
+
+
+How to set up a Certification Authority (CA)
+============================================
+Being a certification authority requires a database that holds the CA's
+keypair, the CA's certificate, a list of all signed certificates and other
+information. This database is kept in a directory hierarchy below a
+configurable starting point. The starting point must be configured in the
+ssleay.conf file. This file is at /usr/local/ssl/lib/ssleay.conf if you have
+not changed the default installation path.
+
+The first thing you should do is to edit this file according to your needs.
+Let's  assume that you want to hold the CA's database at the directory
+"/usr/local/ssl/CA". Change the variable "dir" in section "CA_default" to
+this path. You may also want to edit the default settings for some variables,
+but the values given should be OK. This path is also contained in the shell
+script CA.sh, which should be at "/usr/local/ssl/bin/CA.sh". Change the path
+in the shell script:
+
+    CATOP=/usr/local/ssl/CA
+    CAKEY=./cakey.pem           # relative to $CATOP/
+    CACERT=./cacert.pem         # relative to $CATOP/private/
+
+Then create the directory "/usr/local/ssl/CA" and make it writable for the
+user that operates the CA. You should also initialize SSLeay as CA user (set
+up the random number generator). Now you should call the shell script CA.sh
+to set up the initial database:
+
+    CA.sh -newca
+
+This command will ask you whether you want to use an existing certificate or
+create one. Just press enter to create a new key pair and certificate. You
+will be asked the usual questions for certificates: the country, state, city,
+"Common Name", etc. Enter the appropriate values for the CA. When CA.sh
+finishes, it has set up a bunch of directories and files. A CA must publish
+it's certificate, which is in the file "/usr/local/ssl/CA/cacert.pem".
+
+
+How to sign a certificate request
+=================================
+After setting up the CA stuff, you can start signing certificate requests.
+Make sure that the SSLeay utilities know where the configuration file is.
+The default is compiled in, if you don't use the default location, add the
+parameter "-config <cfg-file>". Make also sure that the configuration file
+contains the correct path to the CA database. If all this is set up properly,
+you can sign the request in the file "csr.pem" with the command:
+
+    ssleay ca -policy policy_anything -days 365 -infiles csr.pem >cert.pem
+
+The resulting certificate (and additional information) will be in "cert.pem".
+If you want the certificate to be valid for a period different from 365 days,
+simply change the "-days" parameter.
+
+
+How to install a new CA certificate
+===================================
+Whereever a certificate must be checked, the CA's certificate must be
+available. Let's take the common case where the client verifies the server's
+certificate. The case where the server verfies the client's certificate works
+the same way. The client receives the server's certificate, which contains
+the "Distinguished Name" of the CA. To verify whether the signature in this
+certificate is OK, it must look up the public key of that CA. Therefore each
+client must hold a database of CAs, indexed by CA name. This database is best
+kept in a directory where each file contains the certificate of one CA and is
+named after the hashvalue (checksum) of the CA's name. This section describes
+how such a database is managed technically. Whether or not to install (and
+thereby trust) a CA is a totally different matter.
+
+The client must know the directory of the CA database. This can be configured.
+There may also be a configuration option to set up a CA database file which
+contains all CA certs in one file. Let's assume that the CA database is kept
+in the directory "/usr/local/ssl/certs". The following example assumes that
+the CA's certificate is in the file "cacert.pem" and the CA is known as
+"myCA". To install the certificate, do the following:
+
+    cp cacert.pem /usr/local/ssl/cers/myCA.pem
+    cd /usr/local/ssl/certs
+    ln -s myCA.pem `ssleay x509 -noout -hash < myCA.pem`.0
+
+The last command creates a link from the hashed name to the real file.
+
+From now on all certificates signed by the myCA authority will be accepted by
+clients that use the directory "/usr/local/ssl/certs/" as their CA certificate
+database.
+
+
+

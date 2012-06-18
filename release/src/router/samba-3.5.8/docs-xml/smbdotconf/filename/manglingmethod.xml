@@ -1,0 +1,18 @@
+<samba:parameter name="mangling method"
+			 context="G"
+				 type="string"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para> controls the algorithm used for the generating
+	the mangled names. Can take two different values, &quot;hash&quot; and
+	&quot;hash2&quot;. &quot;hash&quot; is the algorithm that was used
+	used in Samba for many years and was the default in Samba 2.2.x &quot;hash2&quot; is
+        now the default and is newer and considered a better algorithm (generates less collisions) in
+        the names. Many Win32 applications store the mangled names and so
+	changing to algorithms must not be done lightly as these applications
+        may break unless reinstalled.</para>
+</description>
+<value type="default">hash2</value>
+<value type="example">hash</value>
+</samba:parameter>

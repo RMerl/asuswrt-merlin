@@ -1,0 +1,56 @@
+GNU dbm is a set of database routines that use extendible hashing and
+works similar to the standard UNIX dbm routines.
+
+This is release 1.8.3 of GNU dbm.
+
+To compile gdbm:
+
+   a)  configure <config parameters like -prefix ... see INSTALL>
+   b)  make 
+
+To compile the optional test and conversion programs:
+
+   a)  make progs
+
+To install the basic package:
+
+   a)  make install
+
+To install the optional dbm and ndbm API compatibility library and headers:
+
+   a)  make install-compat
+
+Please report bugs to
+	bug-gnu-utils@gnu.org
+
+------------------------------------------
+
+The files are:
+
+INSTALL		- Installation tips and information.
+NEWS		- New and changed things.
+COPYING		- Copying information.
+README		- This file.
+
+bucket.c, extern.h, falloc.c, findkey.c, gdbm.proto, gdbmclose.c,
+gdbmconst.h gdbmdefs.h, gdbmdelete.c, gdbmerrno.h, gdbmfdesc.c, gdbmfetch.c,
+gdbmsync.c, gdbmopen.c, gdbmreorg.c, gdbmseq.c, gdbmstore.c, global.c, gdbm.h,
+hash.c systems.h, update.c, version.c - Source for GNU dbm library.
+
+dbm.h dbminit.c, delete.c, fetch.c, seq.c, store.c - Source for the
+DBM interface.
+
+dbmclose.c, dbmdelete.c, dbmdirfno.c, dbmfetch.c, dbmopen.c, dbmpagfno.c
+dbmseq.c, dbmstore.c, ndbm.h - Source for the NDBM interface.
+
+Makefile 	- Makefile, will make gdbm.a  (BSD and SYSV)
+testgdbm.c	- A simple test program.
+testdbm.c	- A simple test program.
+testndbm.c	- A simple test program.
+conv2gdbm.c	- A dbm database conversion program.
+
+gdbm.3, gdbm.texinfo - Documentation for gdbm.
+
+The author of GNU dbm may be reached via e-mail to <phil@cs.wwu.edu>,
+and the current maintainer may be reached at <downsj@downsj.com>.
+E-mail may be sent to either, or both, of these people.

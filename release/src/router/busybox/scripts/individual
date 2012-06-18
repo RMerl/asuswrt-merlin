@@ -1,0 +1,129 @@
+#!/bin/sh
+
+# Compile individual versions of each busybox applet.
+
+if [ $# -eq 0 ]
+then
+
+# Clear out the build directory.  (Make clean should do this instead of here.)
+
+rm -rf build
+mkdir build
+
+# Make our prerequisites.
+
+make busybox.links include/bb_config.h $(pwd)/{libbb/libbb.a,archival/libunarchive/libunarchive.a,coreutils/libcoreutils/libcoreutils.a,networking/libiproute/libiproute.a}
+
+else
+# Could very well be that we want to build an individual applet but have no
+# 'build' dir yet..
+
+test -d ./build || mkdir build
+
+fi
+
+# About 3/5 of the applets build from one .c file (with the same name as the
+# corresponding applet), and all it needs to link against.  However, to build
+# them all we need more than that.
+
+# Figure out which applets need extra libraries added to their command line.
+
+function substithing()
+{
+  if [ "${1/ $3 //}" != "$1" ]
+  then
+    echo $2
+  fi
+}
+
+function extra_libraries()
+{
+  # gzip needs gunzip.c (when gunzip is enabled, anyway).
+  substithing " gzip " "archival/gunzip.c archival/uncompress.c" "$1"
+
+  # init needs init_shared.c
+  substithing " init " "init/init_shared.c" "$1"
+
+  # ifconfig needs interface.c
+  substithing " ifconfig " "networking/interface.c" "$1"
+
+  # Applets that need libunarchive.a
+  substithing " ar bunzip2 unlzma cpio dpkg gunzip rpm2cpio rpm tar uncompress unzip dpkg_deb gzip " "archival/libunarchive/libunarchive.a" "$1"
+
+  # Applets that need libcoreutils.a
+  substithing " cp mv " "coreutils/libcoreutils/libcoreutils.a" "$1"
+
+  # Applets that need libiproute.a
+  substithing " ip " "networking/libiproute/libiproute.a" "$1"
+
+  # What needs -libm?
+  substithing " awk dc " "-lm" "$1"
+
+  # What needs -lcrypt?
+  substithing " httpd vlock " "-lcrypt" "$1"
+}
+
+# Query applets.h to figure out which applets need special treatment
+
+strange_names=`sed -rn -e 's/\#.*//' -e 's/.*APPLET_NOUSAGE\(([^,]*),([^,]*),.*/\1 \2/p' -e 's/.*APPLET_ODDNAME\(([^,]*),([^,]*),.*, *([^)]*).*/\1 \2@\3/p' include/applets.h`
+
+function bonkname()
+{
+  while [ $# -gt 0 ]
+  do
+    if [ "$APPLET" == "$1" ]
+    then
+      APPFILT="${2/@*/}"
+      if [ "${APPFILT}" == "$2" ]
+      then
+        HELPNAME='"nousage\n"'   # These should be _fixed_.
+      else
+        HELPNAME="${2/*@/}"_full_usage
+      fi
+      break
+    fi
+    shift 2
+  done
+#echo APPLET=${APPLET} APPFILT=${APPFILT} HELPNAME=${HELPNAME} 2=${2}
+}
+
+# Iterate through every name in busybox.links
+
+function buildit ()
+{
+  export APPLET="$1"
+  export APPFILT=${APPLET}
+  export HELPNAME=${APPLET}_full_usage
+
+  bonkname $strange_names
+
+  j=`find archival console-tools coreutils debianutils editors findutils init loginutils miscutils modutils networking procps shell sysklogd util-linux -name "${APPFILT}.c"`
+  if [ -z "$j" ]
+  then
+    echo no file for $APPLET
+  else
+    echo "Building $APPLET"
+    gcc -Os -o build/$APPLET applets/individual.c $j \
+	`extra_libraries $APPFILT` libbb/libbb.a -Iinclude \
+	-DBUILD_INDIVIDUAL \
+	'-Drun_applet_and_exit(...)' '-Dfind_applet_by_name(...)=0' \
+	-DAPPLET_main=${APPFILT}_main -DAPPLET_full_usage=${HELPNAME}
+    if [ $? -ne 0 ];
+    then
+      echo "Failed $APPLET"
+    fi
+  fi
+}
+
+if [ $# -eq 0 ]
+then
+  for APPLET in `sed 's .*/  ' busybox.links`
+  do
+    buildit "$APPLET"
+  done
+else
+  buildit "$1"
+fi
+
+
+strip build/*

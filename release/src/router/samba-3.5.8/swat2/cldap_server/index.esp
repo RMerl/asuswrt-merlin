@@ -1,0 +1,13 @@
+<% page_header("columns", "CLDAP Server", "servers"); 
+
+  libinclude("base.js");
+  libinclude("management.js");
+%>
+
+<h1>CLDAP Server</h1>
+
+<%
+writefln("Status: %s\n", server_status("cldap"));
+%>
+
+<% page_footer(); %>

@@ -1,0 +1,166 @@
+USR 1 quadong@hotmail.com 628030951.225204228.212171253
+
+USR 1 OK quadong@hotmail.com quadong
+
+CAL 2 minotaurb@hotmail.com
+
+CAL 2 RINGING 628030951
+
+JOI minotaurb@hotmail.com Bobo 1616756772
+
+MSG 3 U 92
+MIME-Version: 1.0
+Content-Type: text/x-msmsgscontrol
+TypingUser: quadong@hotmail.com
+
+
+
+MSG 4 N 139
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+X-MMS-IM-Format: FN=MS%20Shell%20Dlg; EF=; CO=0; CS=0; PF=0
+
+neutrino to bobo
+MSG minotaurb@hotmail.com Bobo 1346
+MIME-Version: 1.0
+Content-Type: application/x-msnmsgrp2p
+P2P-Dest: quadong@hotmail.com
+
+.....g"...........................@.............INVITE MSNMSGR:quadong@hotmail.com MSNSLP/1.0
+To: <msnmsgr:quadong@hotmail.com>
+From: <msnmsgr:minotaurb@hotmail.com>
+Via: MSNSLP/1.0/TLP ;branch={22CB2F1C-39CB-4AA2-923A-1F591F9F5592}
+CSeq: 0 
+Call-ID: {CBBC97B7-0274-4AA6-8070-218C050E48B4}
+Max-Forwards: 0
+Content-Type: application/x-msnmsgr-sessionreqbody
+Content-Length: 966
+
+EUF-GUID: {5D3E02AB-6190-11D3-BBBB-00C04F795683}
+SessionID: 452864154
+SChannelState: 0
+AppID: 2
+Context: fgIAAAMAAAAVAAAAAAAAAAEAAABOAGUAdwAgAFQAZQB4AHQAIABEAG8AYwB1AG0AZQBuAHQALgB0AHgAdAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA....
+MSG minotaurb@hotmail.com Bobo 248
+MIME-Version: 1.0
+Content-Type: application/x-msnmsgrp2p
+P2P-Dest: quadong@hotmail.com
+
+.....g".................h.........@.............AAAAAAA/////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+
+.....
+MSG 5 D 146
+MIME-Version: 1.0
+Content-Type: application/x-msnmsgrp2p
+P2P-Dest: minotaurb@hotmail.com
+
+....P............................g"...@.............
+ACK 5
+
+MSG 6 D 500
+MIME-Version: 1.0
+Content-Type: application/x-msnmsgrp2p
+P2P-Dest: minotaurb@hotmail.com
+
+....Q...........b.......b.......................MSNSLP/1.0 200 OK
+To: <msnmsgr:minotaurb@hotmail.com>
+From: <msnmsgr:quadong@hotmail.com>
+Via: MSNSLP/1.0/TLP ;branch={22CB2F1C-39CB-4AA2-923A-1F591F9F5592}
+CSeq: 1 
+Call-ID: {CBBC97B7-0274-4AA6-8070-218C050E48B4}
+Max-Forwards: 0
+Content-Type: application/x-msnmsgr-sessionreqbody
+Content-Length: 43
+
+SessionID: 452864154
+SChannelState: 0
+
+.....
+ACK 6
+
+MSG minotaurb@hotmail.com Bobo 144
+MIME-Version: 1.0
+Content-Type: application/x-msnmsgrp2p
+P2P-Dest: quadong@hotmail.com
+
+.....g".........................Q.......b...........
+MSG minotaurb@hotmail.com Bobo 668
+MIME-Version: 1.0
+Content-Type: application/x-msnmsgrp2p
+P2P-Dest: quadong@hotmail.com
+
+.....g"...........................@.............INVITE MSNMSGR:quadong@hotmail.com MSNSLP/1.0
+To: <msnmsgr:quadong@hotmail.com>
+From: <msnmsgr:minotaurb@hotmail.com>
+Via: MSNSLP/1.0/TLP ;branch={D93272E0-ED36-447B-9362-A1FBB26CDCEC}
+CSeq: 0 
+Call-ID: {CBBC97B7-0274-4AA6-8070-218C050E48B4}
+Max-Forwards: 0
+Content-Type: application/x-msnmsgr-transreqbody
+Content-Length: 186
+
+Bridges: TRUDPv1 TCPv1
+NetID: 0
+Conn-Type: Direct-Connect
+UPnPNat: false
+ICF: false
+Hashed-Nonce: {DE369EDA-E922-D0DC-4AD5-37104DEBA851}
+SessionID: 452864154
+SChannelState: 0
+
+.....
+MSG 7 D 146
+MIME-Version: 1.0
+Content-Type: application/x-msnmsgrp2p
+P2P-Dest: minotaurb@hotmail.com
+
+....S............................g"...@.............
+ACK 7
+
+MSG 8 D 648
+MIME-Version: 1.0
+Content-Type: application/x-msnmsgrp2p
+P2P-Dest: minotaurb@hotmail.com
+
+....R...........................................MSNSLP/1.0 200 OK
+To: <msnmsgr:minotaurb@hotmail.com>
+From: <msnmsgr:quadong@hotmail.com>
+Via: MSNSLP/1.0/TLP ;branch={D93272E0-ED36-447B-9362-A1FBB26CDCEC}
+CSeq: 1 
+Call-ID: {CBBC97B7-0274-4AA6-8070-218C050E48B4}
+Max-Forwards: 0
+Content-Type: application/x-msnmsgr-transrespbody
+Content-Length: 191
+
+Bridge: TCPv1
+Listening: true
+Hashed-Nonce: {41120FAC-CF14-6399-D3BE-3990B364A764}
+IPv4Internal-Addrs: 128.101.223.128
+IPv4Internal-Port: 2694
+SessionID: 452864154
+SChannelState: 0
+
+.....
+ACK 8
+
+MSG minotaurb@hotmail.com Bobo 144
+MIME-Version: 1.0
+Content-Type: application/x-msnmsgrp2p
+P2P-Dest: quadong@hotmail.com
+
+.....g".........................R...................
+MSG minotaurb@hotmail.com Bobo 165
+MIME-Version: 1.0
+Content-Type: application/x-msnmsgrp2p
+P2P-Dest: quadong@hotmail.com
+
+.(...g".....................0.....A.............This is a short file.....
+MSG 9 D 146
+MIME-Version: 1.0
+Content-Type: application/x-msnmsgrp2p
+P2P-Dest: minotaurb@hotmail.com
+
+.(..T............................g"...A.............
+ACK 9
+

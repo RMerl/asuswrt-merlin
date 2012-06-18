@@ -1,0 +1,59 @@
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=38850
+
+2009-01-15  Jason Merrill  <jason@redhat.com>
+
+	PR c++/38850
+gcc/cp/
+	* pt.c (tsubst_copy_and_build): Tell finish_call_expr to
+	accept hidden friends.
+gcc/testsuite/
+	* g++.dg/template/koenig6.C: New test.
+
+--- gcc-4_2-branch/gcc/cp/pt.c	2009/01/16 05:04:26	143422
++++ gcc-4_2-branch/gcc/cp/pt.c	2009/01/16 06:08:09	143423
+@@ -9317,9 +9317,12 @@
+ 		       qualified_p ? LOOKUP_NONVIRTUAL : LOOKUP_NORMAL,
+ 		       /*fn_p=*/NULL));
+ 	  }
++	/* Pass true for koenig_p so that build_new_function_call will
++	   allow hidden friends found by arg-dependent lookup at template
++	   parsing time.  */
+ 	return finish_call_expr (function, call_args,
+ 				 /*disallow_virtual=*/qualified_p,
+-				 koenig_p);
++				 /*koenig_p*/true);
+       }
+ 
+     case COND_EXPR:
+--- gcc-4_2-branch/gcc/testsuite/g++.dg/template/koenig6.C	1970-01-01 03:00:00.000000000 +0300
++++ gcc-4_2-branch/gcc/testsuite/g++.dg/template/koenig6.C	2009-12-05 15:26:50.000000000 +0300
+@@ -0,0 +1,29 @@
++// PR c++/38850
++
++template <typename VType>
++class Vector2 {
++ private:
++  VType c_[2];
++ public:
++  typedef Vector2<VType> Self;
++
++  Vector2(const VType x, const VType y) {
++    c_[0] = x;
++    c_[1] = y;
++  }
++
++  friend inline Self Max(const Self &v1, const Self &v2) {
++    return Self(v1.c_[0], v1.c_[1]);
++  }
++};
++
++template <class T>
++Vector2<float> foo(T x) {
++  Vector2<float> y(0,0);
++  return Max(y, y);
++}
++
++int main() {
++  foo(3);
++  return 0;
++}

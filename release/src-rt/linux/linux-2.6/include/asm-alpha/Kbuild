@@ -1,0 +1,11 @@
+include include/asm-generic/Kbuild.asm
+
+header-y += gentrap.h
+header-y += regdef.h
+header-y += pal.h
+header-y += reg.h
+
+unifdef-y += console.h
+unifdef-y += fpu.h
+unifdef-y += sysinfo.h
+unifdef-y += compiler.h

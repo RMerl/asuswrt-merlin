@@ -1,0 +1,737 @@
+/*
+ * Copyright (c) 2006 QLogic, Inc. All rights reserved.
+ * Copyright (c) 2005, 2006 PathScale, Inc. All rights reserved.
+ *
+ * This software is available to you under a choice of one of two
+ * licenses.  You may choose to be licensed under the terms of the GNU
+ * General Public License (GPL) Version 2, available from the file
+ * COPYING in the main directory of this source tree, or the
+ * OpenIB.org BSD license below:
+ *
+ *     Redistribution and use in source and binary forms, with or
+ *     without modification, are permitted provided that the following
+ *     conditions are met:
+ *
+ *      - Redistributions of source code must retain the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer.
+ *
+ *      - Redistributions in binary form must reproduce the above
+ *        copyright notice, this list of conditions and the following
+ *        disclaimer in the documentation and/or other materials
+ *        provided with the distribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#include "ipath_verbs.h"
+#include "ipath_kernel.h"
+
+/*
+ * Convert the AETH RNR timeout code into the number of milliseconds.
+ */
+const u32 ib_ipath_rnr_table[32] = {
+	656,			/* 0 */
+	1,			/* 1 */
+	1,			/* 2 */
+	1,			/* 3 */
+	1,			/* 4 */
+	1,			/* 5 */
+	1,			/* 6 */
+	1,			/* 7 */
+	1,			/* 8 */
+	1,			/* 9 */
+	1,			/* A */
+	1,			/* B */
+	1,			/* C */
+	1,			/* D */
+	2,			/* E */
+	2,			/* F */
+	3,			/* 10 */
+	4,			/* 11 */
+	6,			/* 12 */
+	8,			/* 13 */
+	11,			/* 14 */
+	16,			/* 15 */
+	21,			/* 16 */
+	31,			/* 17 */
+	41,			/* 18 */
+	62,			/* 19 */
+	82,			/* 1A */
+	123,			/* 1B */
+	164,			/* 1C */
+	246,			/* 1D */
+	328,			/* 1E */
+	492			/* 1F */
+};
+
+/**
+ * ipath_insert_rnr_queue - put QP on the RNR timeout list for the device
+ * @qp: the QP
+ *
+ * XXX Use a simple list for now.  We might need a priority
+ * queue if we have lots of QPs waiting for RNR timeouts
+ * but that should be rare.
+ */
+void ipath_insert_rnr_queue(struct ipath_qp *qp)
+{
+	struct ipath_ibdev *dev = to_idev(qp->ibqp.device);
+	unsigned long flags;
+
+	spin_lock_irqsave(&dev->pending_lock, flags);
+	if (list_empty(&dev->rnrwait))
+		list_add(&qp->timerwait, &dev->rnrwait);
+	else {
+		struct list_head *l = &dev->rnrwait;
+		struct ipath_qp *nqp = list_entry(l->next, struct ipath_qp,
+						  timerwait);
+
+		while (qp->s_rnr_timeout >= nqp->s_rnr_timeout) {
+			qp->s_rnr_timeout -= nqp->s_rnr_timeout;
+			l = l->next;
+			if (l->next == &dev->rnrwait)
+				break;
+			nqp = list_entry(l->next, struct ipath_qp,
+					 timerwait);
+		}
+		list_add(&qp->timerwait, l);
+	}
+	spin_unlock_irqrestore(&dev->pending_lock, flags);
+}
+
+static int init_sge(struct ipath_qp *qp, struct ipath_rwqe *wqe)
+{
+	int user = to_ipd(qp->ibqp.pd)->user;
+	int i, j, ret;
+	struct ib_wc wc;
+
+	qp->r_len = 0;
+	for (i = j = 0; i < wqe->num_sge; i++) {
+		if (wqe->sg_list[i].length == 0)
+			continue;
+		/* Check LKEY */
+		if ((user && wqe->sg_list[i].lkey == 0) ||
+		    !ipath_lkey_ok(qp, &qp->r_sg_list[j], &wqe->sg_list[i],
+				   IB_ACCESS_LOCAL_WRITE))
+			goto bad_lkey;
+		qp->r_len += wqe->sg_list[i].length;
+		j++;
+	}
+	qp->r_sge.sge = qp->r_sg_list[0];
+	qp->r_sge.sg_list = qp->r_sg_list + 1;
+	qp->r_sge.num_sge = j;
+	ret = 1;
+	goto bail;
+
+bad_lkey:
+	wc.wr_id = wqe->wr_id;
+	wc.status = IB_WC_LOC_PROT_ERR;
+	wc.opcode = IB_WC_RECV;
+	wc.vendor_err = 0;
+	wc.byte_len = 0;
+	wc.imm_data = 0;
+	wc.qp = &qp->ibqp;
+	wc.src_qp = 0;
+	wc.wc_flags = 0;
+	wc.pkey_index = 0;
+	wc.slid = 0;
+	wc.sl = 0;
+	wc.dlid_path_bits = 0;
+	wc.port_num = 0;
+	/* Signal solicited completion event. */
+	ipath_cq_enter(to_icq(qp->ibqp.recv_cq), &wc, 1);
+	ret = 0;
+bail:
+	return ret;
+}
+
+/**
+ * ipath_get_rwqe - copy the next RWQE into the QP's RWQE
+ * @qp: the QP
+ * @wr_id_only: update wr_id only, not SGEs
+ *
+ * Return 0 if no RWQE is available, otherwise return 1.
+ *
+ * Can be called from interrupt level.
+ */
+int ipath_get_rwqe(struct ipath_qp *qp, int wr_id_only)
+{
+	unsigned long flags;
+	struct ipath_rq *rq;
+	struct ipath_rwq *wq;
+	struct ipath_srq *srq;
+	struct ipath_rwqe *wqe;
+	void (*handler)(struct ib_event *, void *);
+	u32 tail;
+	int ret;
+
+	if (qp->ibqp.srq) {
+		srq = to_isrq(qp->ibqp.srq);
+		handler = srq->ibsrq.event_handler;
+		rq = &srq->rq;
+	} else {
+		srq = NULL;
+		handler = NULL;
+		rq = &qp->r_rq;
+	}
+
+	spin_lock_irqsave(&rq->lock, flags);
+	wq = rq->wq;
+	tail = wq->tail;
+	/* Validate tail before using it since it is user writable. */
+	if (tail >= rq->size)
+		tail = 0;
+	do {
+		if (unlikely(tail == wq->head)) {
+			spin_unlock_irqrestore(&rq->lock, flags);
+			ret = 0;
+			goto bail;
+		}
+		wqe = get_rwqe_ptr(rq, tail);
+		if (++tail >= rq->size)
+			tail = 0;
+	} while (!wr_id_only && !init_sge(qp, wqe));
+	qp->r_wr_id = wqe->wr_id;
+	wq->tail = tail;
+
+	ret = 1;
+	qp->r_wrid_valid = 1;
+	if (handler) {
+		u32 n;
+
+		/*
+		 * validate head pointer value and compute
+		 * the number of remaining WQEs.
+		 */
+		n = wq->head;
+		if (n >= rq->size)
+			n = 0;
+		if (n < tail)
+			n += rq->size - tail;
+		else
+			n -= tail;
+		if (n < srq->limit) {
+			struct ib_event ev;
+
+			srq->limit = 0;
+			spin_unlock_irqrestore(&rq->lock, flags);
+			ev.device = qp->ibqp.device;
+			ev.element.srq = qp->ibqp.srq;
+			ev.event = IB_EVENT_SRQ_LIMIT_REACHED;
+			handler(&ev, srq->ibsrq.srq_context);
+			goto bail;
+		}
+	}
+	spin_unlock_irqrestore(&rq->lock, flags);
+
+bail:
+	return ret;
+}
+
+/**
+ * ipath_ruc_loopback - handle UC and RC lookback requests
+ * @sqp: the loopback QP
+ *
+ * This is called from ipath_do_uc_send() or ipath_do_rc_send() to
+ * forward a WQE addressed to the same HCA.
+ * Note that although we are single threaded due to the tasklet, we still
+ * have to protect against post_send().  We don't have to worry about
+ * receive interrupts since this is a connected protocol and all packets
+ * will pass through here.
+ */
+static void ipath_ruc_loopback(struct ipath_qp *sqp)
+{
+	struct ipath_ibdev *dev = to_idev(sqp->ibqp.device);
+	struct ipath_qp *qp;
+	struct ipath_swqe *wqe;
+	struct ipath_sge *sge;
+	unsigned long flags;
+	struct ib_wc wc;
+	u64 sdata;
+	atomic64_t *maddr;
+
+	qp = ipath_lookup_qpn(&dev->qp_table, sqp->remote_qpn);
+	if (!qp) {
+		dev->n_pkt_drops++;
+		return;
+	}
+
+again:
+	spin_lock_irqsave(&sqp->s_lock, flags);
+
+	if (!(ib_ipath_state_ops[sqp->state] & IPATH_PROCESS_SEND_OK) ||
+	    qp->s_rnr_timeout) {
+		spin_unlock_irqrestore(&sqp->s_lock, flags);
+		goto done;
+	}
+
+	/* Get the next send request. */
+	if (sqp->s_last == sqp->s_head) {
+		/* Send work queue is empty. */
+		spin_unlock_irqrestore(&sqp->s_lock, flags);
+		goto done;
+	}
+
+	/*
+	 * We can rely on the entry not changing without the s_lock
+	 * being held until we update s_last.
+	 */
+	wqe = get_swqe_ptr(sqp, sqp->s_last);
+	spin_unlock_irqrestore(&sqp->s_lock, flags);
+
+	wc.wc_flags = 0;
+	wc.imm_data = 0;
+
+	sqp->s_sge.sge = wqe->sg_list[0];
+	sqp->s_sge.sg_list = wqe->sg_list + 1;
+	sqp->s_sge.num_sge = wqe->wr.num_sge;
+	sqp->s_len = wqe->length;
+	switch (wqe->wr.opcode) {
+	case IB_WR_SEND_WITH_IMM:
+		wc.wc_flags = IB_WC_WITH_IMM;
+		wc.imm_data = wqe->wr.imm_data;
+		/* FALLTHROUGH */
+	case IB_WR_SEND:
+		if (!ipath_get_rwqe(qp, 0)) {
+		rnr_nak:
+			/* Handle RNR NAK */
+			if (qp->ibqp.qp_type == IB_QPT_UC)
+				goto send_comp;
+			if (sqp->s_rnr_retry == 0) {
+				wc.status = IB_WC_RNR_RETRY_EXC_ERR;
+				goto err;
+			}
+			if (sqp->s_rnr_retry_cnt < 7)
+				sqp->s_rnr_retry--;
+			dev->n_rnr_naks++;
+			sqp->s_rnr_timeout =
+				ib_ipath_rnr_table[qp->r_min_rnr_timer];
+			ipath_insert_rnr_queue(sqp);
+			goto done;
+		}
+		break;
+
+	case IB_WR_RDMA_WRITE_WITH_IMM:
+		wc.wc_flags = IB_WC_WITH_IMM;
+		wc.imm_data = wqe->wr.imm_data;
+		if (!ipath_get_rwqe(qp, 1))
+			goto rnr_nak;
+		/* FALLTHROUGH */
+	case IB_WR_RDMA_WRITE:
+		if (wqe->length == 0)
+			break;
+		if (unlikely(!ipath_rkey_ok(qp, &qp->r_sge, wqe->length,
+					    wqe->wr.wr.rdma.remote_addr,
+					    wqe->wr.wr.rdma.rkey,
+					    IB_ACCESS_REMOTE_WRITE))) {
+		acc_err:
+			wc.status = IB_WC_REM_ACCESS_ERR;
+		err:
+			wc.wr_id = wqe->wr.wr_id;
+			wc.opcode = ib_ipath_wc_opcode[wqe->wr.opcode];
+			wc.vendor_err = 0;
+			wc.byte_len = 0;
+			wc.qp = &sqp->ibqp;
+			wc.src_qp = sqp->remote_qpn;
+			wc.pkey_index = 0;
+			wc.slid = sqp->remote_ah_attr.dlid;
+			wc.sl = sqp->remote_ah_attr.sl;
+			wc.dlid_path_bits = 0;
+			wc.port_num = 0;
+			spin_lock_irqsave(&sqp->s_lock, flags);
+			ipath_sqerror_qp(sqp, &wc);
+			spin_unlock_irqrestore(&sqp->s_lock, flags);
+			goto done;
+		}
+		break;
+
+	case IB_WR_RDMA_READ:
+		if (unlikely(!(qp->qp_access_flags &
+			       IB_ACCESS_REMOTE_READ)))
+			goto acc_err;
+		if (unlikely(!ipath_rkey_ok(qp, &sqp->s_sge, wqe->length,
+					    wqe->wr.wr.rdma.remote_addr,
+					    wqe->wr.wr.rdma.rkey,
+					    IB_ACCESS_REMOTE_READ)))
+			goto acc_err;
+		qp->r_sge.sge = wqe->sg_list[0];
+		qp->r_sge.sg_list = wqe->sg_list + 1;
+		qp->r_sge.num_sge = wqe->wr.num_sge;
+		break;
+
+	case IB_WR_ATOMIC_CMP_AND_SWP:
+	case IB_WR_ATOMIC_FETCH_AND_ADD:
+		if (unlikely(!(qp->qp_access_flags &
+			       IB_ACCESS_REMOTE_ATOMIC)))
+			goto acc_err;
+		if (unlikely(!ipath_rkey_ok(qp, &qp->r_sge, sizeof(u64),
+					    wqe->wr.wr.atomic.remote_addr,
+					    wqe->wr.wr.atomic.rkey,
+					    IB_ACCESS_REMOTE_ATOMIC)))
+			goto acc_err;
+		/* Perform atomic OP and save result. */
+		maddr = (atomic64_t *) qp->r_sge.sge.vaddr;
+		sdata = wqe->wr.wr.atomic.compare_add;
+		*(u64 *) sqp->s_sge.sge.vaddr =
+			(wqe->wr.opcode == IB_WR_ATOMIC_FETCH_AND_ADD) ?
+			(u64) atomic64_add_return(sdata, maddr) - sdata :
+			(u64) cmpxchg((u64 *) qp->r_sge.sge.vaddr,
+				      sdata, wqe->wr.wr.atomic.swap);
+		goto send_comp;
+
+	default:
+		goto done;
+	}
+
+	sge = &sqp->s_sge.sge;
+	while (sqp->s_len) {
+		u32 len = sqp->s_len;
+
+		if (len > sge->length)
+			len = sge->length;
+		BUG_ON(len == 0);
+		ipath_copy_sge(&qp->r_sge, sge->vaddr, len);
+		sge->vaddr += len;
+		sge->length -= len;
+		sge->sge_length -= len;
+		if (sge->sge_length == 0) {
+			if (--sqp->s_sge.num_sge)
+				*sge = *sqp->s_sge.sg_list++;
+		} else if (sge->length == 0 && sge->mr != NULL) {
+			if (++sge->n >= IPATH_SEGSZ) {
+				if (++sge->m >= sge->mr->mapsz)
+					break;
+				sge->n = 0;
+			}
+			sge->vaddr =
+				sge->mr->map[sge->m]->segs[sge->n].vaddr;
+			sge->length =
+				sge->mr->map[sge->m]->segs[sge->n].length;
+		}
+		sqp->s_len -= len;
+	}
+
+	if (wqe->wr.opcode == IB_WR_RDMA_WRITE ||
+	    wqe->wr.opcode == IB_WR_RDMA_READ)
+		goto send_comp;
+
+	if (wqe->wr.opcode == IB_WR_RDMA_WRITE_WITH_IMM)
+		wc.opcode = IB_WC_RECV_RDMA_WITH_IMM;
+	else
+		wc.opcode = IB_WC_RECV;
+	wc.wr_id = qp->r_wr_id;
+	wc.status = IB_WC_SUCCESS;
+	wc.vendor_err = 0;
+	wc.byte_len = wqe->length;
+	wc.qp = &qp->ibqp;
+	wc.src_qp = qp->remote_qpn;
+	/* XXX do we know which pkey matched? Only needed for GSI. */
+	wc.pkey_index = 0;
+	wc.slid = qp->remote_ah_attr.dlid;
+	wc.sl = qp->remote_ah_attr.sl;
+	wc.dlid_path_bits = 0;
+	/* Signal completion event if the solicited bit is set. */
+	ipath_cq_enter(to_icq(qp->ibqp.recv_cq), &wc,
+		       wqe->wr.send_flags & IB_SEND_SOLICITED);
+
+send_comp:
+	sqp->s_rnr_retry = sqp->s_rnr_retry_cnt;
+
+	if (!(sqp->s_flags & IPATH_S_SIGNAL_REQ_WR) ||
+	    (wqe->wr.send_flags & IB_SEND_SIGNALED)) {
+		wc.wr_id = wqe->wr.wr_id;
+		wc.status = IB_WC_SUCCESS;
+		wc.opcode = ib_ipath_wc_opcode[wqe->wr.opcode];
+		wc.vendor_err = 0;
+		wc.byte_len = wqe->length;
+		wc.qp = &sqp->ibqp;
+		wc.src_qp = 0;
+		wc.pkey_index = 0;
+		wc.slid = 0;
+		wc.sl = 0;
+		wc.dlid_path_bits = 0;
+		wc.port_num = 0;
+		ipath_cq_enter(to_icq(sqp->ibqp.send_cq), &wc, 0);
+	}
+
+	/* Update s_last now that we are finished with the SWQE */
+	spin_lock_irqsave(&sqp->s_lock, flags);
+	if (++sqp->s_last >= sqp->s_size)
+		sqp->s_last = 0;
+	spin_unlock_irqrestore(&sqp->s_lock, flags);
+	goto again;
+
+done:
+	if (atomic_dec_and_test(&qp->refcount))
+		wake_up(&qp->wait);
+}
+
+static int want_buffer(struct ipath_devdata *dd)
+{
+	set_bit(IPATH_S_PIOINTBUFAVAIL, &dd->ipath_sendctrl);
+	ipath_write_kreg(dd, dd->ipath_kregs->kr_sendctrl,
+			 dd->ipath_sendctrl);
+
+	return 0;
+}
+
+/**
+ * ipath_no_bufs_available - tell the layer driver we need buffers
+ * @qp: the QP that caused the problem
+ * @dev: the device we ran out of buffers on
+ *
+ * Called when we run out of PIO buffers.
+ */
+void ipath_no_bufs_available(struct ipath_qp *qp, struct ipath_ibdev *dev)
+{
+	unsigned long flags;
+
+	spin_lock_irqsave(&dev->pending_lock, flags);
+	if (list_empty(&qp->piowait))
+		list_add_tail(&qp->piowait, &dev->piowait);
+	spin_unlock_irqrestore(&dev->pending_lock, flags);
+	/*
+	 * Note that as soon as want_buffer() is called and
+	 * possibly before it returns, ipath_ib_piobufavail()
+	 * could be called.  If we are still in the tasklet function,
+	 * tasklet_hi_schedule() will not call us until the next time
+	 * tasklet_hi_schedule() is called.
+	 * We clear the tasklet flag now since we are committing to return
+	 * from the tasklet function.
+	 */
+	clear_bit(IPATH_S_BUSY, &qp->s_busy);
+	tasklet_unlock(&qp->s_task);
+	want_buffer(dev->dd);
+	dev->n_piowait++;
+}
+
+/**
+ * ipath_post_ruc_send - post RC and UC sends
+ * @qp: the QP to post on
+ * @wr: the work request to send
+ */
+int ipath_post_ruc_send(struct ipath_qp *qp, struct ib_send_wr *wr)
+{
+	struct ipath_swqe *wqe;
+	unsigned long flags;
+	u32 next;
+	int i, j;
+	int acc;
+	int ret;
+
+	/*
+	 * Don't allow RDMA reads or atomic operations on UC or
+	 * undefined operations.
+	 * Make sure buffer is large enough to hold the result for atomics.
+	 */
+	if (qp->ibqp.qp_type == IB_QPT_UC) {
+		if ((unsigned) wr->opcode >= IB_WR_RDMA_READ) {
+			ret = -EINVAL;
+			goto bail;
+		}
+	} else if ((unsigned) wr->opcode > IB_WR_ATOMIC_FETCH_AND_ADD) {
+		ret = -EINVAL;
+		goto bail;
+	} else if (wr->opcode >= IB_WR_ATOMIC_CMP_AND_SWP &&
+		   (wr->num_sge == 0 ||
+		    wr->sg_list[0].length < sizeof(u64) ||
+		    wr->sg_list[0].addr & (sizeof(u64) - 1))) {
+		ret = -EINVAL;
+		goto bail;
+	} else if (wr->opcode >= IB_WR_RDMA_READ && !qp->s_max_rd_atomic) {
+		ret = -EINVAL;
+		goto bail;
+	}
+	/* IB spec says that num_sge == 0 is OK. */
+	if (wr->num_sge > qp->s_max_sge) {
+		ret = -ENOMEM;
+		goto bail;
+	}
+	spin_lock_irqsave(&qp->s_lock, flags);
+	next = qp->s_head + 1;
+	if (next >= qp->s_size)
+		next = 0;
+	if (next == qp->s_last) {
+		spin_unlock_irqrestore(&qp->s_lock, flags);
+		ret = -EINVAL;
+		goto bail;
+	}
+
+	wqe = get_swqe_ptr(qp, qp->s_head);
+	wqe->wr = *wr;
+	wqe->ssn = qp->s_ssn++;
+	wqe->sg_list[0].mr = NULL;
+	wqe->sg_list[0].vaddr = NULL;
+	wqe->sg_list[0].length = 0;
+	wqe->sg_list[0].sge_length = 0;
+	wqe->length = 0;
+	acc = wr->opcode >= IB_WR_RDMA_READ ? IB_ACCESS_LOCAL_WRITE : 0;
+	for (i = 0, j = 0; i < wr->num_sge; i++) {
+		if (to_ipd(qp->ibqp.pd)->user && wr->sg_list[i].lkey == 0) {
+			spin_unlock_irqrestore(&qp->s_lock, flags);
+			ret = -EINVAL;
+			goto bail;
+		}
+		if (wr->sg_list[i].length == 0)
+			continue;
+		if (!ipath_lkey_ok(qp, &wqe->sg_list[j], &wr->sg_list[i],
+				   acc)) {
+			spin_unlock_irqrestore(&qp->s_lock, flags);
+			ret = -EINVAL;
+			goto bail;
+		}
+		wqe->length += wr->sg_list[i].length;
+		j++;
+	}
+	wqe->wr.num_sge = j;
+	qp->s_head = next;
+	spin_unlock_irqrestore(&qp->s_lock, flags);
+
+	ipath_do_ruc_send((unsigned long) qp);
+
+	ret = 0;
+
+bail:
+	return ret;
+}
+
+/**
+ * ipath_make_grh - construct a GRH header
+ * @dev: a pointer to the ipath device
+ * @hdr: a pointer to the GRH header being constructed
+ * @grh: the global route address to send to
+ * @hwords: the number of 32 bit words of header being sent
+ * @nwords: the number of 32 bit words of data being sent
+ *
+ * Return the size of the header in 32 bit words.
+ */
+u32 ipath_make_grh(struct ipath_ibdev *dev, struct ib_grh *hdr,
+		   struct ib_global_route *grh, u32 hwords, u32 nwords)
+{
+	hdr->version_tclass_flow =
+		cpu_to_be32((6 << 28) |
+			    (grh->traffic_class << 20) |
+			    grh->flow_label);
+	hdr->paylen = cpu_to_be16((hwords - 2 + nwords + SIZE_OF_CRC) << 2);
+	/* next_hdr is defined by C8-7 in ch. 8.4.1 */
+	hdr->next_hdr = 0x1B;
+	hdr->hop_limit = grh->hop_limit;
+	/* The SGID is 32-bit aligned. */
+	hdr->sgid.global.subnet_prefix = dev->gid_prefix;
+	hdr->sgid.global.interface_id = dev->dd->ipath_guid;
+	hdr->dgid = grh->dgid;
+
+	/* GRH header size in 32-bit words. */
+	return sizeof(struct ib_grh) / sizeof(u32);
+}
+
+/**
+ * ipath_do_ruc_send - perform a send on an RC or UC QP
+ * @data: contains a pointer to the QP
+ *
+ * Process entries in the send work queue until credit or queue is
+ * exhausted.  Only allow one CPU to send a packet per QP (tasklet).
+ * Otherwise, after we drop the QP s_lock, two threads could send
+ * packets out of order.
+ */
+void ipath_do_ruc_send(unsigned long data)
+{
+	struct ipath_qp *qp = (struct ipath_qp *)data;
+	struct ipath_ibdev *dev = to_idev(qp->ibqp.device);
+	unsigned long flags;
+	u16 lrh0;
+	u32 nwords;
+	u32 extra_bytes;
+	u32 bth0;
+	u32 bth2;
+	u32 pmtu = ib_mtu_enum_to_int(qp->path_mtu);
+	struct ipath_other_headers *ohdr;
+
+	if (test_and_set_bit(IPATH_S_BUSY, &qp->s_busy))
+		goto bail;
+
+	if (unlikely(qp->remote_ah_attr.dlid == dev->dd->ipath_lid)) {
+		ipath_ruc_loopback(qp);
+		goto clear;
+	}
+
+	ohdr = &qp->s_hdr.u.oth;
+	if (qp->remote_ah_attr.ah_flags & IB_AH_GRH)
+		ohdr = &qp->s_hdr.u.l.oth;
+
+again:
+	/* Check for a constructed packet to be sent. */
+	if (qp->s_hdrwords != 0) {
+		/*
+		 * If no PIO bufs are available, return.  An interrupt will
+		 * call ipath_ib_piobufavail() when one is available.
+		 */
+		if (ipath_verbs_send(dev->dd, qp->s_hdrwords,
+				     (u32 *) &qp->s_hdr, qp->s_cur_size,
+				     qp->s_cur_sge)) {
+			ipath_no_bufs_available(qp, dev);
+			goto bail;
+		}
+		dev->n_unicast_xmit++;
+		/* Record that we sent the packet and s_hdr is empty. */
+		qp->s_hdrwords = 0;
+	}
+
+	/*
+	 * The lock is needed to synchronize between setting
+	 * qp->s_ack_state, resend timer, and post_send().
+	 */
+	spin_lock_irqsave(&qp->s_lock, flags);
+
+	if (!((qp->ibqp.qp_type == IB_QPT_RC) ?
+	       ipath_make_rc_req(qp, ohdr, pmtu, &bth0, &bth2) :
+	       ipath_make_uc_req(qp, ohdr, pmtu, &bth0, &bth2))) {
+		/*
+		 * Clear the busy bit before unlocking to avoid races with
+		 * adding new work queue items and then failing to process
+		 * them.
+		 */
+		clear_bit(IPATH_S_BUSY, &qp->s_busy);
+		spin_unlock_irqrestore(&qp->s_lock, flags);
+		goto bail;
+	}
+
+	spin_unlock_irqrestore(&qp->s_lock, flags);
+
+	/* Construct the header. */
+	extra_bytes = (4 - qp->s_cur_size) & 3;
+	nwords = (qp->s_cur_size + extra_bytes) >> 2;
+	lrh0 = IPATH_LRH_BTH;
+	if (unlikely(qp->remote_ah_attr.ah_flags & IB_AH_GRH)) {
+		qp->s_hdrwords += ipath_make_grh(dev, &qp->s_hdr.u.l.grh,
+						 &qp->remote_ah_attr.grh,
+						 qp->s_hdrwords, nwords);
+		lrh0 = IPATH_LRH_GRH;
+	}
+	lrh0 |= qp->remote_ah_attr.sl << 4;
+	qp->s_hdr.lrh[0] = cpu_to_be16(lrh0);
+	qp->s_hdr.lrh[1] = cpu_to_be16(qp->remote_ah_attr.dlid);
+	qp->s_hdr.lrh[2] = cpu_to_be16(qp->s_hdrwords + nwords +
+				       SIZE_OF_CRC);
+	qp->s_hdr.lrh[3] = cpu_to_be16(dev->dd->ipath_lid);
+	bth0 |= ipath_get_pkey(dev->dd, qp->s_pkey_index);
+	bth0 |= extra_bytes << 20;
+	ohdr->bth[0] = cpu_to_be32(bth0);
+	ohdr->bth[1] = cpu_to_be32(qp->remote_qpn);
+	ohdr->bth[2] = cpu_to_be32(bth2);
+
+	/* Check for more work to do. */
+	goto again;
+
+clear:
+	clear_bit(IPATH_S_BUSY, &qp->s_busy);
+bail:
+	return;
+}

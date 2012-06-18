@@ -1,0 +1,29 @@
+.\" .nh
+.\" .ad l
+.TH "hotplug2-modwrap" "8" "August 2006" "hotplug2-modwrap" "hotplug2-modwrap"
+.SH "NAME"
+hotplug2\-modwrap \- modalias wrapper binary for modprobe
+.SH "SYNOPSIS"
+\fBhotplug2\-modwrap\fR
+[modprobe options] <modalias>
+.SH "DESCRIPTION"
+.PP 
+The modutils (used on 2.4 and earlier kernels to load modules) do not use fnmatch to match alias to a module. The hotplug2\-modwrap application allows us to overcome this issue.
+.PP 
+.SH "PARAMETERS"
+.PP 
+The hotplug2\-modwrap itself does not take any parameters except for modalias.
+.PP 
+However, you can pass unlimited ammount of parameters for modprobe, which is being executed by hotplug2\-modwrap. Please note that modalias must be the last parameter.
+.PP 
+.SH "ENVIRONMENT VARIABLES"
+.TP 
+\fBMODPROBE_COMMAND\fR
+Sets the application used as modprobe. If not set, /sbin/modprobe is used.
+.SH "AUTHOR"
+.PP 
+Written by iSteve
+<isteve@bofh.cz>
+.SH "SEE ALSO"
+.PP 
+\fBhotplug2\fR(8)

@@ -1,0 +1,4 @@
+*.o
+dosfsck
+dosfslabel
+mkdosfs

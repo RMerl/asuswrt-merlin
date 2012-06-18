@@ -1,0 +1,53 @@
+<% page_header("columns", "ESP session test", "esptest"); 
+   include("/scripting/forms.js");
+%>
+
+<h1>Samba4 session test</h1>
+
+<%
+var f = FormObj("SessionTest", 3, 4);
+f.element[0].label = "Name";
+f.element[1].label = "Value";
+f.element[2].label = "Timeout";
+f.submit[0] = "Append";
+f.submit[1] = "Reset";
+f.submit[2] = "Destroy";
+f.submit[3] = "Cancel";
+
+f.display();
+
+  /* if its a post then the user has filled in the form, so
+     report the values 
+  */
+if (request['REQUEST_METHOD'] == "POST") {
+	/* if they cancelled then take them back to the list of tests */
+	if (form['submit'] == "Cancel") {
+		redirect("/");
+	}
+	
+	name  = form['Name'];
+	value = form['Value'];
+	timeout = form['Timeout'];
+	
+	if (timeout) {
+		useSession(timeout);
+	}
+	
+	if (form['submit'] == "Reset" && name) {
+		session[name] = null;
+	}
+	
+	if (form['submit'] == "Append" && name) {
+		session[name] = "" + session[name] + value;
+	}
+	
+	if (form['submit'] == "Destroy") {
+		destroySession();
+	}
+}
+
+simple_table(session);
+write("SessionId=" + request['SESSION_ID'] + "<br/>\n");
+%>
+
+<% page_footer(); %>

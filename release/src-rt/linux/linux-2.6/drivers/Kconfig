@@ -1,0 +1,87 @@
+# drivers/Kconfig
+
+menu "Device Drivers"
+
+source "drivers/base/Kconfig"
+
+source "drivers/connector/Kconfig"
+
+source "drivers/mtd/Kconfig"
+
+source "drivers/parport/Kconfig"
+
+source "drivers/pnp/Kconfig"
+
+source "drivers/block/Kconfig"
+
+# misc before ide - BLK_DEV_SGIIOC4 depends on SGI_IOC4
+
+source "drivers/misc/Kconfig"
+
+source "drivers/ide/Kconfig"
+
+source "drivers/scsi/Kconfig"
+
+source "drivers/ata/Kconfig"
+
+source "drivers/cdrom/Kconfig"
+
+source "drivers/md/Kconfig"
+
+source "drivers/message/fusion/Kconfig"
+
+source "drivers/ieee1394/Kconfig"
+
+source "drivers/message/i2o/Kconfig"
+
+source "drivers/macintosh/Kconfig"
+
+source "drivers/net/Kconfig"
+
+source "drivers/isdn/Kconfig"
+
+source "drivers/telephony/Kconfig"
+
+# input before char - char/joystick depends on it. As does USB.
+
+source "drivers/input/Kconfig"
+
+source "drivers/char/Kconfig"
+
+source "drivers/i2c/Kconfig"
+
+source "drivers/spi/Kconfig"
+
+source "drivers/w1/Kconfig"
+
+source "drivers/hwmon/Kconfig"
+
+source "drivers/mfd/Kconfig"
+
+source "drivers/media/Kconfig"
+
+source "drivers/video/Kconfig"
+
+source "sound/Kconfig"
+
+source "drivers/hid/Kconfig"
+
+source "drivers/usb/Kconfig"
+
+source "drivers/mmc/Kconfig"
+
+source "drivers/leds/Kconfig"
+
+source "drivers/infiniband/Kconfig"
+
+source "drivers/edac/Kconfig"
+
+source "drivers/rtc/Kconfig"
+
+source "drivers/dma/Kconfig"
+
+source "drivers/auxdisplay/Kconfig"
+
+source "drivers/kvm/Kconfig"
+
+endmenu

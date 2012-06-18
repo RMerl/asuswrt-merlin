@@ -1,0 +1,144 @@
+.TH MAKE_SMBCODEPAGE 1 "23 Jun 2001" "make_smbcodepage 2.0.10"
+.PP 
+.SH "NAME" 
+make_smbcodepage \- Construct a codepage file for Samba
+.PP 
+.SH "SYNOPSIS" 
+.PP 
+\fBmake_smbcodepage\fP [c|d] codepage inputfile outputfile
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+This program is part of the \fBSamba\fP suite\&.
+.PP 
+\fBmake_smbcodepage\fP compiles or de-compiles codepage files for use
+with the internationalization features of Samba 2\&.0
+.PP 
+.SH "OPTIONS" 
+.PP 
+.IP 
+.IP "c|d" 
+This tells \fBmake_smbcodepage\fP if it is compiling (\fBc\fP) a text
+format code page file to binary, or (\fBd\fP) de-compiling a binary codepage
+file to text\&.
+.IP 
+.IP "codepage" 
+This is the codepage we are processing (a number, e\&.g\&. 850)\&.
+.IP 
+.IP "inputfile" 
+This is the input file to process\&. In the \'\fBc\fP\' case this
+will be a text codepage definition file such as the ones found in the
+Samba \fIsource/codepages\fP directory\&. In the \'\fBd\fP\' case this will be the
+binary format codepage definition file normally found in the
+\fIlib/codepages\fP directory in the Samba install directory path\&.
+.IP 
+.IP "outputfile" 
+This is the output file to produce\&.
+.IP 
+.PP 
+.SH "Samba Codepage Files" 
+.PP 
+A text Samba codepage definition file is a description that tells
+Samba how to map from upper to lower case for characters greater than
+ascii 127 in the specified DOS code page\&.  Note that for certain DOS
+codepages (437 for example) mapping from lower to upper case may be
+non-symmetrical\&. For example, in code page 437 lower case a acute maps to
+a plain upper case A when going from lower to upper case, but
+plain upper case A maps to plain lower case a when lower casing a
+character\&.
+.PP 
+A binary Samba codepage definition file is a binary representation of
+the same information, including a value that specifies what codepage
+this file is describing\&.
+.PP 
+As Samba does not yet use UNICODE (current for Samba version 2\&.0) you
+must specify the client code page that your DOS and Windows clients
+are using if you wish to have case insensitivity done correctly for
+your particular language\&. The default codepage Samba uses is 850
+(Western European)\&. Text codepage definition sample files are
+provided in the Samba distribution for codepages 437 (USA), 737
+(Greek), 850 (Western European) 852 (MS-DOS Latin 2), 861 (Icelandic),
+866 (Cyrillic), 932 (Kanji SJIS), 936 (Simplified Chinese), 949
+(Hangul) and 950 (Traditional Chinese)\&. Users are encouraged to write
+text codepage definition files for their own code pages and donate
+them to samba@samba\&.org\&. All codepage files in the
+Samba \fIsource/codepages\fP directory are compiled and installed when a
+\fI\'make install\'\fP command is issued there\&.
+.PP 
+The client codepage used by the \fBsmbd\fP server is
+configured using the \fBclient code
+page\fP parameter in the
+\fBsmb\&.conf\fP file\&.
+.PP 
+.SH "FILES" 
+.PP 
+\fBcodepage_def\&.<codepage>\fP
+.PP 
+These are the input (text) codepage files provided in the Samba
+\fIsource/codepages\fP directory\&.
+.PP 
+A text codepage definition file consists of multiple lines
+containing four fields\&. These fields are : 
+.PP 
+.IP 
+.IP o 
+\fBlower\fP: which is the (hex) lower case character mapped on this
+line\&.
+.IP 
+.IP o 
+\fBupper\fP: which is the (hex) upper case character that the lower
+case character will map to\&.
+.IP 
+.IP o 
+\fBmap upper to lower\fP which is a boolean value (put either True
+or False here) which tells Samba if it is to map the given upper case
+character to the given lower case character when lower casing a
+filename\&.
+.IP 
+.IP o 
+\fBmap lower to upper\fP which is a boolean value (put either True
+or False here) which tells Samba if it is to map the given lower case
+character to the given upper case character when upper casing a
+filename\&.
+.IP 
+.PP 
+\fBcodepage\&.<codepage>\fP These are the output (binary) codepage files
+produced and placed in the Samba destination \fIlib/codepage\fP
+directory\&.
+.PP 
+.SH "INSTALLATION" 
+.PP 
+The location of the server and its support files is a matter for
+individual system administrators\&. The following are thus suggestions
+only\&.
+.PP 
+It is recommended that the \fBmake_smbcodepage\fP program be installed
+under the \fI/usr/local/samba\fP hierarchy, in a directory readable by
+all, writeable only by root\&. The program itself should be executable
+by all\&.  The program should NOT be setuid or setgid!
+.PP 
+.SH "VERSION" 
+.PP 
+This man page is correct for version 2\&.0 of the Samba suite\&.
+.PP 
+.SH "SEE ALSO" 
+.PP 
+\fBsmb\&.conf(5)\fP, \fBsmbd (8)\fP
+.PP 
+.SH "AUTHOR" 
+.PP 
+The original Samba software and related utilities were created by
+Andrew Tridgell samba@samba\&.org\&. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed\&.
+.PP 
+The original Samba man pages were written by Karl Auer\&. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+\fBftp://ftp\&.icce\&.rug\&.nl/pub/unix/\fP)
+and updated for the Samba2\&.0 release by Jeremy Allison\&.
+samba@samba\&.org\&.
+.PP 
+See \fBsamba (7)\fP to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc\&.

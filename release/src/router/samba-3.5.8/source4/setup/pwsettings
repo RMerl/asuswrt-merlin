@@ -1,0 +1,201 @@
+#!/usr/bin/python
+#
+# Sets password settings (Password complexity, history length, minimum password
+# length, the minimum and maximum password age) on a Samba4 server
+#
+# Copyright Matthias Dieter Wallnoefer 2009
+# Copyright Andrew Kroeger 2009
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import sys
+
+# Find right directory when running from source tree
+sys.path.insert(0, "bin/python")
+
+import samba.getopt as options
+import optparse
+import ldb
+
+from samba.auth import system_session
+from samba.samdb import SamDB
+from samba.dcerpc.samr import DOMAIN_PASSWORD_COMPLEX
+
+parser = optparse.OptionParser("pwsettings (show | set <options>)")
+sambaopts = options.SambaOptions(parser)
+parser.add_option_group(sambaopts)
+parser.add_option_group(options.VersionOptions(parser))
+credopts = options.CredentialsOptions(parser)
+parser.add_option_group(credopts)
+parser.add_option("-H", help="LDB URL for database or target server", type=str)
+parser.add_option("--quiet", help="Be quiet", action="store_true")
+parser.add_option("--complexity",
+  help="The password complexity (on | off | default). Default is 'on'", type=str)
+parser.add_option("--history-length",
+  help="The password history length (<integer> | default).  Default is 24.", type=str)
+parser.add_option("--min-pwd-length",
+  help="The minimum password length (<integer> | default).  Default is 7.", type=str)
+parser.add_option("--min-pwd-age",
+  help="The minimum password age (<integer in days> | default).  Default is 0.", type=str)
+parser.add_option("--max-pwd-age",
+  help="The maximum password age (<integer in days> | default).  Default is 43.", type=str)
+
+opts, args = parser.parse_args()
+
+#
+#  print a message if quiet is not set
+#
+def message(text):
+	if not opts.quiet:
+		print text
+
+if len(args) == 0:
+	parser.print_usage()
+	sys.exit(1)
+
+lp = sambaopts.get_loadparm()
+creds = credopts.get_credentials(lp)
+
+if opts.H is not None:
+	url = opts.H
+else:
+	url = lp.get("sam database")
+
+samdb = SamDB(url=url, session_info=system_session(), credentials=creds, lp=lp)
+
+domain_dn = SamDB.domain_dn(samdb)
+res = samdb.search(domain_dn, scope=ldb.SCOPE_BASE,
+  attrs=["pwdProperties", "pwdHistoryLength", "minPwdLength", "minPwdAge",
+  "maxPwdAge"])
+assert(len(res) == 1)
+try:
+	pwd_props = int(res[0]["pwdProperties"][0])
+	pwd_hist_len = int(res[0]["pwdHistoryLength"][0])
+	min_pwd_len = int(res[0]["minPwdLength"][0])
+	# ticks -> days
+	min_pwd_age = int(abs(int(res[0]["minPwdAge"][0])) / (1e7 * 60 * 60 * 24))
+	max_pwd_age = int(abs(int(res[0]["maxPwdAge"][0])) / (1e7 * 60 * 60 * 24))
+except:
+	print "ERROR: Could not retrieve password properties!"
+	if args[0] == "show":
+		print "So no settings can be displayed!"
+	sys.exit(1)
+
+if args[0] == "show":
+	message("Password informations for domain '" + domain_dn + "'")
+	message("")
+	if pwd_props & DOMAIN_PASSWORD_COMPLEX != 0:
+		message("Password complexity: on")
+	else:
+		message("Password complexity: off")
+	message("Password history length: " + str(pwd_hist_len))
+	message("Minimum password length: " + str(min_pwd_len))
+	message("Minimum password age (days): " + str(min_pwd_age))
+	message("Maximum password age (days): " + str(max_pwd_age))
+
+elif args[0] == "set":
+
+	msgs = []
+	m = ldb.Message()
+	m.dn = ldb.Dn(samdb, domain_dn)
+
+	if opts.complexity is not None:
+		if opts.complexity == "on" or opts.complexity == "default":
+			pwd_props = pwd_props | DOMAIN_PASSWORD_COMPLEX
+			msgs.append("Password complexity activated!")
+		elif opts.complexity == "off":
+			pwd_props = pwd_props & (~DOMAIN_PASSWORD_COMPLEX)
+			msgs.append("Password complexity deactivated!")
+		else:
+			print "ERROR: Wrong argument '" + opts.complexity + "'!"
+			sys.exit(1)
+
+		m["pwdProperties"] = ldb.MessageElement(str(pwd_props),
+		  ldb.FLAG_MOD_REPLACE, "pwdProperties")
+
+	if opts.history_length is not None:
+		if opts.history_length == "default":
+			pwd_hist_len = 24
+		else:
+			pwd_hist_len = int(opts.history_length)
+
+		if pwd_hist_len < 0 or pwd_hist_len > 24:
+			print "ERROR: Password history length must be in the range of 0 to 24!"
+			sys.exit(1)
+
+		m["pwdHistoryLength"] = ldb.MessageElement(str(pwd_hist_len),
+		  ldb.FLAG_MOD_REPLACE, "pwdHistoryLength")
+		msgs.append("Password history length changed!")
+
+	if opts.min_pwd_length is not None:
+		if opts.min_pwd_length == "default":
+			min_pwd_len = 7
+		else:
+			min_pwd_len = int(opts.min_pwd_length)
+
+		if min_pwd_len < 0 or min_pwd_len > 14:
+			print "ERROR: Minimum password length must be in the range of 0 to 14!"
+			sys.exit(1)
+
+		m["minPwdLength"] = ldb.MessageElement(str(min_pwd_len),
+		  ldb.FLAG_MOD_REPLACE, "minPwdLength")
+		msgs.append("Minimum password length changed!")
+
+	if opts.min_pwd_age is not None:
+		if opts.min_pwd_age == "default":
+			min_pwd_age = 0
+		else:
+			min_pwd_age = int(opts.min_pwd_age)
+
+		if min_pwd_age < 0 or min_pwd_age > 998:
+			print "ERROR: Minimum password age must be in the range of 0 to 998!"
+			sys.exit(1)
+
+		# days -> ticks
+		min_pwd_age_ticks = -int(min_pwd_age * (24 * 60 * 60 * 1e7))
+
+		m["minPwdAge"] = ldb.MessageElement(str(min_pwd_age_ticks),
+		  ldb.FLAG_MOD_REPLACE, "minPwdAge")
+		msgs.append("Minimum password age changed!")
+
+	if opts.max_pwd_age is not None:
+		if opts.max_pwd_age == "default":
+			max_pwd_age = 43
+		else:
+			max_pwd_age = int(opts.max_pwd_age)
+
+		if max_pwd_age < 0 or max_pwd_age > 999:
+			print "ERROR: Maximum password age must be in the range of 0 to 999!"
+			sys.exit(1)
+
+		# days -> ticks
+		max_pwd_age_ticks = -int(max_pwd_age * (24 * 60 * 60 * 1e7))
+
+		m["maxPwdAge"] = ldb.MessageElement(str(max_pwd_age_ticks),
+		  ldb.FLAG_MOD_REPLACE, "maxPwdAge")
+		msgs.append("Maximum password age changed!")
+
+	if max_pwd_age > 0 and min_pwd_age >= max_pwd_age:
+		print "ERROR: Maximum password age (%d) must be greater than minimum password age (%d)!" % (max_pwd_age, min_pwd_age)
+		sys.exit(1)
+
+	samdb.modify(m)
+
+	msgs.append("All changes applied successfully!")
+
+	message("\n".join(msgs))
+else:
+	print "ERROR: Wrong argument '" + args[0] + "'!"
+	sys.exit(1)

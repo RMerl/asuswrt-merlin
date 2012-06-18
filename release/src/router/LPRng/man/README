@@ -1,0 +1,24 @@
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1995 Patrick Powell, San Diego State University
+#     papowell@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: TESTSUPPORT/Makefile
+# PURPOSE: ./man/README
+# $Id: README,v 1.1.1.1 2008/10/15 03:28:26 james26_jang Exp $
+########################################################################## 
+
+These are the man pages for the LPRng software.
+
+Commentary
+Thu Jul 20 08:14:12 PDT 1995 Patrick Powell
+
+The man pages for the lpr, lpc, lpd, etc. have been modified
+to reflect the programs as of the above date.  This does not
+mean that they will not change again.
+
+Much thanks to Justin Mason  (jmason@iona.ie) for adding the
+various clarifications to these pages.

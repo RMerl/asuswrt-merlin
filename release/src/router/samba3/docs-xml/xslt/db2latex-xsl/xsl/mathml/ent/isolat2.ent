@@ -1,0 +1,148 @@
+
+<!--
+     File isolat2.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+<!ENTITY abreve           "&#x00103;" ><!--=small a, breve -->
+<!ENTITY Abreve           "&#x00102;" ><!--=capital A, breve -->
+<!ENTITY amacr            "&#x00101;" ><!--=small a, macron -->
+<!ENTITY Amacr            "&#x00100;" ><!--=capital A, macron -->
+<!ENTITY aogon            "&#x00105;" ><!--=small a, ogonek -->
+<!ENTITY Aogon            "&#x00104;" ><!--=capital A, ogonek -->
+<!ENTITY cacute           "&#x00107;" ><!--=small c, acute accent -->
+<!ENTITY Cacute           "&#x00106;" ><!--=capital C, acute accent -->
+<!ENTITY ccaron           "&#x0010D;" ><!--=small c, caron -->
+<!ENTITY Ccaron           "&#x0010C;" ><!--=capital C, caron -->
+<!ENTITY ccirc            "&#x00109;" ><!--=small c, circumflex accent -->
+<!ENTITY Ccirc            "&#x00108;" ><!--=capital C, circumflex accent -->
+<!ENTITY cdot             "&#x0010B;" ><!--=small c, dot above -->
+<!ENTITY Cdot             "&#x0010A;" ><!--=capital C, dot above -->
+<!ENTITY dcaron           "&#x0010F;" ><!--=small d, caron -->
+<!ENTITY Dcaron           "&#x0010E;" ><!--=capital D, caron -->
+<!ENTITY dstrok           "&#x00111;" ><!--=small d, stroke -->
+<!ENTITY Dstrok           "&#x00110;" ><!--=capital D, stroke -->
+<!ENTITY ecaron           "&#x0011B;" ><!--=small e, caron -->
+<!ENTITY Ecaron           "&#x0011A;" ><!--=capital E, caron -->
+<!ENTITY edot             "&#x00117;" ><!--=small e, dot above -->
+<!ENTITY Edot             "&#x00116;" ><!--=capital E, dot above -->
+<!ENTITY emacr            "&#x00113;" ><!--=small e, macron -->
+<!ENTITY Emacr            "&#x00112;" ><!--=capital E, macron -->
+<!ENTITY eng              "&#x0014B;" ><!--=small eng, Lapp -->
+<!ENTITY ENG              "&#x0014A;" ><!--=capital ENG, Lapp -->
+<!ENTITY eogon            "&#x00119;" ><!--=small e, ogonek -->
+<!ENTITY Eogon            "&#x00118;" ><!--=capital E, ogonek -->
+<!ENTITY gacute           "&#x001F5;" ><!--=small g, acute accent -->
+<!ENTITY gbreve           "&#x0011F;" ><!--=small g, breve -->
+<!ENTITY Gbreve           "&#x0011E;" ><!--=capital G, breve -->
+<!ENTITY Gcedil           "&#x00122;" ><!--=capital G, cedilla -->
+<!ENTITY gcirc            "&#x0011D;" ><!--=small g, circumflex accent -->
+<!ENTITY Gcirc            "&#x0011C;" ><!--=capital G, circumflex accent -->
+<!ENTITY gdot             "&#x00121;" ><!--=small g, dot above -->
+<!ENTITY Gdot             "&#x00120;" ><!--=capital G, dot above -->
+<!ENTITY hcirc            "&#x00125;" ><!--=small h, circumflex accent -->
+<!ENTITY Hcirc            "&#x00124;" ><!--=capital H, circumflex accent -->
+<!ENTITY hstrok           "&#x00127;" ><!--=small h, stroke -->
+<!ENTITY Hstrok           "&#x00126;" ><!--=capital H, stroke -->
+<!ENTITY Idot             "&#x00130;" ><!--=capital I, dot above -->
+<!ENTITY ijlig            "&#x00133;" ><!--=small ij ligature -->
+<!ENTITY IJlig            "&#x00132;" ><!--=capital IJ ligature -->
+<!ENTITY imacr            "&#x0012B;" ><!--=small i, macron -->
+<!ENTITY Imacr            "&#x0012A;" ><!--=capital I, macron -->
+<!ENTITY inodot           "&#x00131;" ><!--=small i without dot -->
+<!ENTITY iogon            "&#x0012F;" ><!--=small i, ogonek -->
+<!ENTITY Iogon            "&#x0012E;" ><!--=capital I, ogonek -->
+<!ENTITY itilde           "&#x00129;" ><!--=small i, tilde -->
+<!ENTITY Itilde           "&#x00128;" ><!--=capital I, tilde -->
+<!ENTITY jcirc            "&#x00135;" ><!--=small j, circumflex accent -->
+<!ENTITY Jcirc            "&#x00134;" ><!--=capital J, circumflex accent -->
+<!ENTITY kcedil           "&#x00137;" ><!--=small k, cedilla -->
+<!ENTITY Kcedil           "&#x00136;" ><!--=capital K, cedilla -->
+<!ENTITY kgreen           "&#x00138;" ><!--=small k, Greenlandic -->
+<!ENTITY lacute           "&#x0013A;" ><!--=small l, acute accent -->
+<!ENTITY Lacute           "&#x00139;" ><!--=capital L, acute accent -->
+<!ENTITY lcaron           "&#x0013E;" ><!--=small l, caron -->
+<!ENTITY Lcaron           "&#x0013D;" ><!--=capital L, caron -->
+<!ENTITY lcedil           "&#x0013C;" ><!--=small l, cedilla -->
+<!ENTITY Lcedil           "&#x0013B;" ><!--=capital L, cedilla -->
+<!ENTITY lmidot           "&#x00140;" ><!--=small l, middle dot -->
+<!ENTITY Lmidot           "&#x0013F;" ><!--=capital L, middle dot -->
+<!ENTITY lstrok           "&#x00142;" ><!--=small l, stroke -->
+<!ENTITY Lstrok           "&#x00141;" ><!--=capital L, stroke -->
+<!ENTITY nacute           "&#x00144;" ><!--=small n, acute accent -->
+<!ENTITY Nacute           "&#x00143;" ><!--=capital N, acute accent -->
+<!ENTITY napos            "&#x00149;" ><!--=small n, apostrophe -->
+<!ENTITY ncaron           "&#x00148;" ><!--=small n, caron -->
+<!ENTITY Ncaron           "&#x00147;" ><!--=capital N, caron -->
+<!ENTITY ncedil           "&#x00146;" ><!--=small n, cedilla -->
+<!ENTITY Ncedil           "&#x00145;" ><!--=capital N, cedilla -->
+<!ENTITY odblac           "&#x00151;" ><!--=small o, double acute accent -->
+<!ENTITY Odblac           "&#x00150;" ><!--=capital O, double acute accent -->
+<!ENTITY oelig            "&#x00153;" ><!--=small oe ligature -->
+<!ENTITY OElig            "&#x00152;" ><!--=capital OE ligature -->
+<!ENTITY omacr            "&#x0014D;" ><!--=small o, macron -->
+<!ENTITY Omacr            "&#x0014C;" ><!--=capital O, macron -->
+<!ENTITY racute           "&#x00155;" ><!--=small r, acute accent -->
+<!ENTITY Racute           "&#x00154;" ><!--=capital R, acute accent -->
+<!ENTITY rcaron           "&#x00159;" ><!--=small r, caron -->
+<!ENTITY Rcaron           "&#x00158;" ><!--=capital R, caron -->
+<!ENTITY rcedil           "&#x00157;" ><!--=small r, cedilla -->
+<!ENTITY Rcedil           "&#x00156;" ><!--=capital R, cedilla -->
+<!ENTITY sacute           "&#x0015B;" ><!--=small s, acute accent -->
+<!ENTITY Sacute           "&#x0015A;" ><!--=capital S, acute accent -->
+<!ENTITY scaron           "&#x00161;" ><!--=small s, caron -->
+<!ENTITY Scaron           "&#x00160;" ><!--=capital S, caron -->
+<!ENTITY scedil           "&#x0015F;" ><!--=small s, cedilla -->
+<!ENTITY Scedil           "&#x0015E;" ><!--=capital S, cedilla -->
+<!ENTITY scirc            "&#x0015D;" ><!--=small s, circumflex accent -->
+<!ENTITY Scirc            "&#x0015C;" ><!--=capital S, circumflex accent -->
+<!ENTITY tcaron           "&#x00165;" ><!--=small t, caron -->
+<!ENTITY Tcaron           "&#x00164;" ><!--=capital T, caron -->
+<!ENTITY tcedil           "&#x00163;" ><!--=small t, cedilla -->
+<!ENTITY Tcedil           "&#x00162;" ><!--=capital T, cedilla -->
+<!ENTITY tstrok           "&#x00167;" ><!--=small t, stroke -->
+<!ENTITY Tstrok           "&#x00166;" ><!--=capital T, stroke -->
+<!ENTITY ubreve           "&#x0016D;" ><!--=small u, breve -->
+<!ENTITY Ubreve           "&#x0016C;" ><!--=capital U, breve -->
+<!ENTITY udblac           "&#x00171;" ><!--=small u, double acute accent -->
+<!ENTITY Udblac           "&#x00170;" ><!--=capital U, double acute accent -->
+<!ENTITY umacr            "&#x0016B;" ><!--=small u, macron -->
+<!ENTITY Umacr            "&#x0016A;" ><!--=capital U, macron -->
+<!ENTITY uogon            "&#x00173;" ><!--=small u, ogonek -->
+<!ENTITY Uogon            "&#x00172;" ><!--=capital U, ogonek -->
+<!ENTITY uring            "&#x0016F;" ><!--=small u, ring -->
+<!ENTITY Uring            "&#x0016E;" ><!--=capital U, ring -->
+<!ENTITY utilde           "&#x00169;" ><!--=small u, tilde -->
+<!ENTITY Utilde           "&#x00168;" ><!--=capital U, tilde -->
+<!ENTITY wcirc            "&#x00175;" ><!--=small w, circumflex accent -->
+<!ENTITY Wcirc            "&#x00174;" ><!--=capital W, circumflex accent -->
+<!ENTITY ycirc            "&#x00177;" ><!--=small y, circumflex accent -->
+<!ENTITY Ycirc            "&#x00176;" ><!--=capital Y, circumflex accent -->
+<!ENTITY Yuml             "&#x00178;" ><!--=capital Y, dieresis or umlaut mark -->
+<!ENTITY zacute           "&#x0017A;" ><!--=small z, acute accent -->
+<!ENTITY Zacute           "&#x00179;" ><!--=capital Z, acute accent -->
+<!ENTITY zcaron           "&#x0017E;" ><!--=small z, caron -->
+<!ENTITY Zcaron           "&#x0017D;" ><!--=capital Z, caron -->
+<!ENTITY zdot             "&#x0017C;" ><!--=small z, dot above -->
+<!ENTITY Zdot             "&#x0017B;" ><!--=capital Z, dot above -->

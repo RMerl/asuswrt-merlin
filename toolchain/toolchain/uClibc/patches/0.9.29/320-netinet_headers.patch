@@ -1,0 +1,217 @@
+From e9ebf79704f64e1c2db90e83b8596a13a1342026 Mon Sep 17 00:00:00 2001
+From: Mike Frysinger
+Date: Sat, 05 Jan 2008 17:34:15 +0000
+Subject: Merge r19836 by vapier from trunk:
+
+sync with glibc
+---
+diff --git a/include/netinet/icmp6.h b/include/netinet/icmp6.h
+index c5138a3..0cb1aa6 100644
+--- a/include/netinet/icmp6.h
++++ b/include/netinet/icmp6.h
+@@ -1,4 +1,4 @@
+-/* Copyright (C) 1991,92,93,94,95,96,97,2000 Free Software Foundation, Inc.
++/* Copyright (C) 1991-1997,2000,2006 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+@@ -191,13 +191,13 @@ struct nd_opt_hdr             /* Neighbor discovery option header */
+     /* followed by option specific data */
+   };
+ 
+-#define  ND_OPT_SOURCE_LINKADDR       1
+-#define  ND_OPT_TARGET_LINKADDR       2
+-#define  ND_OPT_PREFIX_INFORMATION    3
+-#define  ND_OPT_REDIRECTED_HEADER     4
+-#define  ND_OPT_MTU                   5
+-#define  ND_OPT_RTR_ADV_INTERVAL      7
+-#define  ND_OPT_HOME_AGENT_INFO       8
++#define ND_OPT_SOURCE_LINKADDR		1
++#define ND_OPT_TARGET_LINKADDR		2
++#define ND_OPT_PREFIX_INFORMATION	3
++#define ND_OPT_REDIRECTED_HEADER	4
++#define ND_OPT_MTU			5
++#define ND_OPT_RTR_ADV_INTERVAL		7
++#define ND_OPT_HOME_AGENT_INFO		8
+ 
+ struct nd_opt_prefix_info     /* prefix information */
+   {
+@@ -211,9 +211,9 @@ struct nd_opt_prefix_info     /* prefix information */
+     struct in6_addr  nd_opt_pi_prefix;
+   };
+ 
+-#define ND_OPT_PI_FLAG_ONLINK        0x80
+-#define ND_OPT_PI_FLAG_AUTO          0x40
+-#define ND_OPT_PI_FLAG_RADDR         0x20
++#define ND_OPT_PI_FLAG_ONLINK	0x80
++#define ND_OPT_PI_FLAG_AUTO	0x40
++#define ND_OPT_PI_FLAG_RADDR	0x20
+ 
+ struct nd_opt_rd_hdr          /* redirected header */
+   {
+@@ -300,11 +300,11 @@ struct rr_pco_use      /* use prefix part */
+ #define ICMP6_RR_PCOUSE_RAFLAGS_AUTO    0x10
+ 
+ #if BYTE_ORDER == BIG_ENDIAN
+-# define ICMP6_RR_PCOUSE_DECRVLTIME      0x80000000
+-# define ICMP6_RR_PCOUSE_DECRPLTIME      0x40000000
++# define ICMP6_RR_PCOUSE_FLAGS_DECRVLTIME 0x80000000
++# define ICMP6_RR_PCOUSE_FLAGS_DECRPLTIME 0x40000000
+ #elif BYTE_ORDER == LITTLE_ENDIAN
+-# define ICMP6_RR_PCOUSE_DECRVLTIME      0x80
+-# define ICMP6_RR_PCOUSE_DECRPLTIME      0x40
++# define ICMP6_RR_PCOUSE_FLAGS_DECRVLTIME 0x80
++# define ICMP6_RR_PCOUSE_FLAGS_DECRPLTIME 0x40
+ #endif
+ 
+ struct rr_result       /* router renumbering result message */
+diff --git a/include/netinet/if_tr.h b/include/netinet/if_tr.h
+index 1a7bc68..45c3911 100644
+--- a/include/netinet/if_tr.h
++++ b/include/netinet/if_tr.h
+@@ -1,4 +1,4 @@
+-/* Copyright (C) 1997 Free Software Foundation, Inc.
++/* Copyright (C) 1997, 2005 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+@@ -21,13 +21,83 @@
+ 
+ #include <sys/cdefs.h>
+ #include <sys/types.h>
+-#include <asm/types.h>
+ 
+-#include <linux/if_tr.h>
++/* IEEE 802.5 Token-Ring magic constants.  The frame sizes omit the preamble
++   and FCS/CRC (frame check sequence). */
++#define TR_ALEN		6		/* Octets in one token-ring addr */
++#define TR_HLEN 	(sizeof (struct trh_hdr) + sizeof (struct trllc))
++#define AC		0x10
++#define LLC_FRAME 	0x40
++
++/* LLC and SNAP constants */
++#define EXTENDED_SAP 	0xAA
++#define UI_CMD       	0x03
++
++/* This is an Token-Ring frame header. */
++struct trh_hdr
++{
++  u_int8_t  ac;			/* access control field */
++  u_int8_t  fc;			/* frame control field */
++  u_int8_t  daddr[TR_ALEN];	/* destination address */
++  u_int8_t  saddr[TR_ALEN];	/* source address */
++  u_int16_t rcf;		/* route control field */
++  u_int16_t rseg[8];		/* routing registers */
++};
++
++/* This is an Token-Ring LLC structure */
++struct trllc
++{
++  u_int8_t  dsap;		/* destination SAP */
++  u_int8_t  ssap;		/* source SAP */
++  u_int8_t  llc;		/* LLC control field */
++  u_int8_t  protid[3];		/* protocol id */
++  u_int16_t ethertype;		/* ether type field */
++};
++
++/* Token-Ring statistics collection data. */
++struct tr_statistics
++{
++  unsigned long rx_packets;     /* total packets received	*/
++  unsigned long tx_packets;	/* total packets transmitted	*/
++  unsigned long rx_bytes;	/* total bytes received   	*/
++  unsigned long tx_bytes;	/* total bytes transmitted	*/
++  unsigned long rx_errors;	/* bad packets received		*/
++  unsigned long tx_errors;	/* packet transmit problems	*/
++  unsigned long rx_dropped;	/* no space in linux buffers	*/
++  unsigned long tx_dropped;	/* no space available in linux	*/
++  unsigned long multicast;	/* multicast packets received	*/
++  unsigned long transmit_collision;
++
++  /* detailed Token-Ring errors. See IBM Token-Ring Network
++     Architecture for more info */
++
++  unsigned long line_errors;
++  unsigned long internal_errors;
++  unsigned long burst_errors;
++  unsigned long A_C_errors;
++  unsigned long abort_delimiters;
++  unsigned long lost_frames;
++  unsigned long recv_congest_count;
++  unsigned long frame_copied_errors;
++  unsigned long frequency_errors;
++  unsigned long token_errors;
++  unsigned long dummy1;
++};
++
++/* source routing stuff */
++#define TR_RII 			0x80
++#define TR_RCF_DIR_BIT 		0x80
++#define TR_RCF_LEN_MASK 	0x1f00
++#define TR_RCF_BROADCAST 	0x8000	/* all-routes broadcast */
++#define TR_RCF_LIMITED_BROADCAST 0xC000	/* single-route broadcast */
++#define TR_RCF_FRAME2K 		0x20
++#define TR_RCF_BROADCAST_MASK 	0xC000
++#define TR_MAXRIFLEN 		18
+ 
+ #ifdef __USE_BSD
+ 
+-struct trn_hdr {
++struct trn_hdr
++{
+   u_int8_t trn_ac;                /* access control field */
+   u_int8_t trn_fc;                /* field control field */
+   u_int8_t trn_dhost[TR_ALEN];    /* destination host */
+diff --git a/include/netinet/ip6.h b/include/netinet/ip6.h
+index 0ad62f8..bef2af2 100644
+--- a/include/netinet/ip6.h
++++ b/include/netinet/ip6.h
+@@ -1,4 +1,4 @@
+-/* Copyright (C) 1991-1997, 2001, 2003 Free Software Foundation, Inc.
++/* Copyright (C) 1991-1997, 2001, 2003, 2006 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+@@ -89,7 +89,8 @@ struct ip6_rthdr0
+     uint8_t  ip6r0_segleft;	/* segments left */
+     uint8_t  ip6r0_reserved;	/* reserved field */
+     uint8_t  ip6r0_slmap[3];	/* strict/loose bit map */
+-    struct in6_addr  ip6r0_addr[1];  /* up to 23 addresses */
++    /* followed by up to 127 struct in6_addr */
++    struct in6_addr ip6r0_addr[0];
+   };
+ 
+ /* Fragment header */
+@@ -101,14 +102,14 @@ struct ip6_frag
+     uint32_t  ip6f_ident;	/* identification */
+   };
+ 
+-#if     BYTE_ORDER == BIG_ENDIAN
+-#define IP6F_OFF_MASK       0xfff8  /* mask out offset from _offlg */
+-#define IP6F_RESERVED_MASK  0x0006  /* reserved bits in ip6f_offlg */
+-#define IP6F_MORE_FRAG      0x0001  /* more-fragments flag */
++#if BYTE_ORDER == BIG_ENDIAN
++# define IP6F_OFF_MASK       0xfff8  /* mask out offset from _offlg */
++# define IP6F_RESERVED_MASK  0x0006  /* reserved bits in ip6f_offlg */
++# define IP6F_MORE_FRAG      0x0001  /* more-fragments flag */
+ #else   /* BYTE_ORDER == LITTLE_ENDIAN */
+-#define IP6F_OFF_MASK       0xf8ff  /* mask out offset from _offlg */
+-#define IP6F_RESERVED_MASK  0x0600  /* reserved bits in ip6f_offlg */
+-#define IP6F_MORE_FRAG      0x0100  /* more-fragments flag */
++# define IP6F_OFF_MASK       0xf8ff  /* mask out offset from _offlg */
++# define IP6F_RESERVED_MASK  0x0600  /* reserved bits in ip6f_offlg */
++# define IP6F_MORE_FRAG      0x0100  /* more-fragments flag */
+ #endif
+ 
+ /* IPv6 options */
+@@ -175,7 +176,7 @@ struct ip6_opt_router
+   };
+ 
+ /* Router alert values (in network byte order) */
+-#if     BYTE_ORDER == BIG_ENDIAN
++#if BYTE_ORDER == BIG_ENDIAN
+ # define IP6_ALERT_MLD	0x0000
+ # define IP6_ALERT_RSVP	0x0001
+ # define IP6_ALERT_AN	0x0002
+--
+cgit v0.8.2.1

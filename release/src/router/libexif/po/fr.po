@@ -1,0 +1,6187 @@
+# LIBEXIF PO FILE
+# Copyright: 
+#   Free Software Foundation, Inc., 2002
+#   Arnaud Launay <asl@launay.org>, 2002
+# This file is distributed under the same license as the libexif package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libexif\n"
+"Report-Msgid-Bugs-To: libexif-devel@lists.sourceforge.net\n"
+"POT-Creation-Date: 2009-11-12 22:15-0800\n"
+"PO-Revision-Date: 2005-03-12 05:42+0100\n"
+"Last-Translator: Arnaud Launay <asl@launay.org>\n"
+"Language-Team: Français <traduc@traduc.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: libexif/canon/mnote-canon-entry.c:40 libexif/fuji/mnote-fuji-entry.c:35
+#: libexif/olympus/mnote-olympus-entry.c:37
+#: libexif/pentax/mnote-pentax-entry.c:39
+#, c-format
+msgid "Invalid format '%s', expected '%s'."
+msgstr "Format invalide '%s', attendait '%s'."
+
+#: libexif/canon/mnote-canon-entry.c:52 libexif/fuji/mnote-fuji-entry.c:47
+#: libexif/olympus/mnote-olympus-entry.c:62
+#: libexif/pentax/mnote-pentax-entry.c:51
+#, c-format
+msgid "Invalid number of components (%i, expected %i)."
+msgstr "Nombre invalide de composants (%i, attendait %i)."
+
+#: libexif/canon/mnote-canon-entry.c:61
+#: libexif/olympus/mnote-olympus-entry.c:72
+#: libexif/pentax/mnote-pentax-entry.c:61
+#, c-format
+msgid "Invalid number of components (%i, expected %i or %i)."
+msgstr "Nombre invalide de composants (%i, attendait %i ou %i)."
+
+#: libexif/canon/mnote-canon-entry.c:76 libexif/canon/mnote-canon-entry.c:130
+#: libexif/canon/mnote-canon-entry.c:182 libexif/exif-entry.c:795
+#: libexif/olympus/mnote-olympus-entry.c:195
+#: libexif/olympus/mnote-olympus-tag.c:108
+#: libexif/pentax/mnote-pentax-entry.c:174
+#: libexif/pentax/mnote-pentax-entry.c:209
+#: libexif/pentax/mnote-pentax-entry.c:297
+msgid "Macro"
+msgstr "Macro"
+
+#: libexif/canon/mnote-canon-entry.c:77 libexif/canon/mnote-canon-entry.c:79
+#: libexif/canon/mnote-canon-entry.c:157 libexif/canon/mnote-canon-entry.c:160
+#: libexif/canon/mnote-canon-entry.c:163 libexif/exif-entry.c:675
+#: libexif/exif-entry.c:678 libexif/exif-entry.c:679 libexif/exif-entry.c:680
+#: libexif/exif-entry.c:744 libexif/fuji/mnote-fuji-entry.c:64
+#: libexif/olympus/mnote-olympus-entry.c:117
+#: libexif/olympus/mnote-olympus-entry.c:194
+#: libexif/olympus/mnote-olympus-entry.c:202
+#: libexif/olympus/mnote-olympus-entry.c:212
+#: libexif/pentax/mnote-pentax-entry.c:105
+#: libexif/pentax/mnote-pentax-entry.c:110
+#: libexif/pentax/mnote-pentax-entry.c:115
+#: libexif/pentax/mnote-pentax-entry.c:208
+msgid "Normal"
+msgstr "Normal"
+
+#: libexif/canon/mnote-canon-entry.c:78
+msgid "Economy"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:80
+#, fuzzy
+msgid "Fine"
+msgstr "pouces"
+
+#: libexif/canon/mnote-canon-entry.c:81 libexif/fuji/mnote-fuji-entry.c:178
+#: libexif/pentax/mnote-pentax-entry.c:141
+msgid "RAW"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:82
+msgid "Superfine"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:83 libexif/canon/mnote-canon-entry.c:301
+#: libexif/canon/mnote-canon-entry.c:304 libexif/canon/mnote-canon-entry.c:312
+#: libexif/canon/mnote-canon-entry.c:345 libexif/canon/mnote-canon-entry.c:357
+#: libexif/canon/mnote-canon-entry.c:370 libexif/canon/mnote-canon-entry.c:372
+#: libexif/canon/mnote-canon-entry.c:574 libexif/canon/mnote-canon-entry.c:671
+#: libexif/fuji/mnote-fuji-entry.c:70 libexif/fuji/mnote-fuji-entry.c:103
+#: libexif/fuji/mnote-fuji-entry.c:107 libexif/fuji/mnote-fuji-entry.c:115
+#: libexif/fuji/mnote-fuji-entry.c:142
+#: libexif/olympus/mnote-olympus-entry.c:177
+#: libexif/olympus/mnote-olympus-entry.c:185
+#: libexif/olympus/mnote-olympus-entry.c:250
+#: libexif/olympus/mnote-olympus-entry.c:529
+#: libexif/olympus/mnote-olympus-entry.c:546
+#: libexif/pentax/mnote-pentax-entry.c:195
+#: libexif/pentax/mnote-pentax-entry.c:260
+msgid "Off"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:84 libexif/canon/mnote-canon-entry.c:167
+#: libexif/canon/mnote-canon-entry.c:180 libexif/canon/mnote-canon-entry.c:328
+#: libexif/canon/mnote-canon-entry.c:400 libexif/fuji/mnote-fuji-entry.c:73
+#: libexif/fuji/mnote-fuji-entry.c:101 libexif/fuji/mnote-fuji-entry.c:111
+#: libexif/fuji/mnote-fuji-entry.c:119
+#: libexif/olympus/mnote-olympus-entry.c:130
+#: libexif/olympus/mnote-olympus-entry.c:182
+#: libexif/olympus/mnote-olympus-entry.c:198
+#: libexif/olympus/mnote-olympus-entry.c:243
+#: libexif/pentax/mnote-pentax-entry.c:77
+#: libexif/pentax/mnote-pentax-entry.c:88
+#: libexif/pentax/mnote-pentax-entry.c:91
+#: libexif/pentax/mnote-pentax-entry.c:97
+#: libexif/pentax/mnote-pentax-entry.c:131
+#: libexif/pentax/mnote-pentax-entry.c:229
+#: libexif/pentax/mnote-pentax-entry.c:245
+#: libexif/pentax/mnote-pentax-entry.c:290
+msgid "Auto"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:85 libexif/canon/mnote-canon-entry.c:302
+#: libexif/canon/mnote-canon-entry.c:347 libexif/canon/mnote-canon-entry.c:361
+#: libexif/canon/mnote-canon-entry.c:371 libexif/fuji/mnote-fuji-entry.c:102
+#: libexif/fuji/mnote-fuji-entry.c:108 libexif/fuji/mnote-fuji-entry.c:116
+#: libexif/fuji/mnote-fuji-entry.c:143
+#: libexif/olympus/mnote-olympus-entry.c:178
+#: libexif/olympus/mnote-olympus-entry.c:532
+#: libexif/olympus/mnote-olympus-entry.c:549
+#: libexif/pentax/mnote-pentax-entry.c:198
+#: libexif/pentax/mnote-pentax-entry.c:261
+msgid "On"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:86 libexif/fuji/mnote-fuji-entry.c:104
+#: libexif/olympus/mnote-olympus-entry.c:183
+#, fuzzy
+msgid "Red-eye reduction"
+msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#: libexif/canon/mnote-canon-entry.c:87
+msgid "Slow synchro"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:88
+#, fuzzy
+msgid "Auto + Red-eye reduction"
+msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#: libexif/canon/mnote-canon-entry.c:89
+#, fuzzy
+msgid "On + Red-eye reduction"
+msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#: libexif/canon/mnote-canon-entry.c:90
+#, fuzzy
+msgid "External flash"
+msgstr "Flash"
+
+#: libexif/canon/mnote-canon-entry.c:91 libexif/canon/mnote-canon-entry.c:101
+#: libexif/canon/mnote-canon-entry.c:294
+msgid "Single"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:92 libexif/canon/mnote-canon-entry.c:102
+#: libexif/canon/mnote-canon-entry.c:295
+msgid "Continuous"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:93
+msgid "Movie"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:94
+msgid "Continuous, speed priority"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:95
+msgid "Continuous, low"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:96
+msgid "Continuous, high"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:97
+msgid "One-shot AF"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:98
+msgid "AI servo AF"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:99
+msgid "AI focus AF"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:100 libexif/canon/mnote-canon-entry.c:103
+#, fuzzy
+msgid "Manual focus"
+msgstr "Exposition manuel"
+
+#: libexif/canon/mnote-canon-entry.c:104 libexif/canon/mnote-canon-entry.c:132
+#: libexif/canon/mnote-canon-entry.c:187
+#, fuzzy
+msgid "Pan focus"
+msgstr "Exposition manuel"
+
+#: libexif/canon/mnote-canon-entry.c:105
+msgid "JPEG"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:106
+msgid "CRW+THM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:107
+msgid "AVI+THM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:108
+msgid "TIF"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:109
+msgid "TIF+JPEG"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:110
+msgid "CR2"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:111
+msgid "CR2+JPEG"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:112
+#, fuzzy
+msgid "Large"
+msgstr "moyenne"
+
+#: libexif/canon/mnote-canon-entry.c:113
+msgid "Medium"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:114
+msgid "Small"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:115
+msgid "Medium 1"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:116
+msgid "Medium 2"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:117
+msgid "Medium 3"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:118
+msgid "Postcard"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:119
+msgid "Widescreen"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:120
+#, fuzzy
+msgid "Full auto"
+msgstr "action"
+
+#: libexif/canon/mnote-canon-entry.c:121 libexif/canon/mnote-canon-entry.c:179
+#: libexif/canon/mnote-canon-entry.c:201 libexif/canon/mnote-canon-entry.c:285
+#: libexif/canon/mnote-canon-entry.c:392 libexif/exif-entry.c:743
+#: libexif/fuji/mnote-fuji-entry.c:112
+#: libexif/olympus/mnote-olympus-entry.c:90
+#: libexif/olympus/mnote-olympus-entry.c:199
+#: libexif/pentax/mnote-pentax-entry.c:79
+#: libexif/pentax/mnote-pentax-entry.c:102
+#: libexif/pentax/mnote-pentax-entry.c:133
+#: libexif/pentax/mnote-pentax-entry.c:165
+#: libexif/pentax/mnote-pentax-entry.c:211
+#: libexif/pentax/mnote-pentax-entry.c:250
+msgid "Manual"
+msgstr "Manuel"
+
+#: libexif/canon/mnote-canon-entry.c:122 libexif/canon/mnote-canon-entry.c:430
+#: libexif/exif-entry.c:672 libexif/exif-entry.c:754
+#: libexif/fuji/mnote-fuji-entry.c:121 libexif/pentax/mnote-pentax-entry.c:167
+#: libexif/pentax/mnote-pentax-entry.c:301
+msgid "Landscape"
+msgstr "Paysage"
+
+#: libexif/canon/mnote-canon-entry.c:123
+#, fuzzy
+msgid "Fast shutter"
+msgstr "obturation"
+
+#: libexif/canon/mnote-canon-entry.c:124
+#, fuzzy
+msgid "Slow shutter"
+msgstr "obturation"
+
+#: libexif/canon/mnote-canon-entry.c:125 libexif/fuji/mnote-fuji-entry.c:123
+#: libexif/olympus/mnote-olympus-entry.c:253
+#, fuzzy
+msgid "Night"
+msgstr "Scène de nuit"
+
+#: libexif/canon/mnote-canon-entry.c:126
+msgid "Grayscale"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:127 libexif/canon/mnote-canon-entry.c:308
+#: libexif/pentax/mnote-pentax-entry.c:128
+msgid "Sepia"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:128 libexif/canon/mnote-canon-entry.c:429
+#: libexif/exif-entry.c:672 libexif/exif-entry.c:752
+#: libexif/fuji/mnote-fuji-entry.c:120 libexif/pentax/mnote-pentax-entry.c:166
+#: libexif/pentax/mnote-pentax-entry.c:291
+#: libexif/pentax/mnote-pentax-entry.c:294
+#: libexif/pentax/mnote-pentax-entry.c:300
+msgid "Portrait"
+msgstr "Portrait"
+
+#: libexif/canon/mnote-canon-entry.c:129 libexif/fuji/mnote-fuji-entry.c:122
+#, fuzzy
+msgid "Sports"
+msgstr "Spot"
+
+#: libexif/canon/mnote-canon-entry.c:131 libexif/canon/mnote-canon-entry.c:309
+#: libexif/canon/mnote-canon-entry.c:335 libexif/fuji/mnote-fuji-entry.c:89
+msgid "Black & white"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:133 libexif/canon/mnote-canon-entry.c:305
+msgid "Vivid"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:134 libexif/canon/mnote-canon-entry.c:306
+#: libexif/canon/mnote-canon-entry.c:431
+#, fuzzy
+msgid "Neutral"
+msgstr "Normal"
+
+#: libexif/canon/mnote-canon-entry.c:135
+#: libexif/pentax/mnote-pentax-entry.c:93
+#, fuzzy
+msgid "Flash off"
+msgstr "Flash"
+
+#: libexif/canon/mnote-canon-entry.c:136
+#, fuzzy
+msgid "Long shutter"
+msgstr "obturation"
+
+#: libexif/canon/mnote-canon-entry.c:137 libexif/canon/mnote-canon-entry.c:188
+msgid "Super macro"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:138
+msgid "Foliage"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:139
+msgid "Indoor"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:140 libexif/fuji/mnote-fuji-entry.c:135
+#: libexif/pentax/mnote-pentax-entry.c:175
+msgid "Fireworks"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:141 libexif/fuji/mnote-fuji-entry.c:133
+msgid "Beach"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:142 libexif/canon/mnote-canon-entry.c:344
+#: libexif/canon/mnote-canon-entry.c:416 libexif/fuji/mnote-fuji-entry.c:136
+#: libexif/pentax/mnote-pentax-entry.c:187
+#: libexif/pentax/mnote-pentax-entry.c:292
+#: libexif/pentax/mnote-pentax-entry.c:298
+#, fuzzy
+msgid "Underwater"
+msgstr "Temps clair"
+
+#: libexif/canon/mnote-canon-entry.c:143 libexif/fuji/mnote-fuji-entry.c:134
+msgid "Snow"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:144
+msgid "Kids & pets"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:145
+#, fuzzy
+msgid "Night snapshot"
+msgstr "Scène de nuit"
+
+#: libexif/canon/mnote-canon-entry.c:146
+#, fuzzy
+msgid "Digital macro"
+msgstr "Valeur du zoom numérique"
+
+#: libexif/canon/mnote-canon-entry.c:147
+msgid "My colors"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:148
+msgid "Still image"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:149
+#, fuzzy
+msgid "Color accent"
+msgstr "Espace des couleurs"
+
+#: libexif/canon/mnote-canon-entry.c:150
+#, fuzzy
+msgid "Color swap"
+msgstr "Espace des couleurs"
+
+#: libexif/canon/mnote-canon-entry.c:151
+msgid "Aquarium"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:152
+msgid "ISO 3200"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:153 libexif/canon/mnote-canon-entry.c:348
+#: libexif/canon/mnote-canon-entry.c:365 libexif/canon/mnote-canon-entry.c:417
+#: libexif/olympus/mnote-olympus-entry.c:188
+#: libexif/olympus/mnote-olympus-entry.c:225
+#: libexif/olympus/mnote-olympus-entry.c:451
+#: libexif/pentax/mnote-pentax-entry.c:242
+msgid "None"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:154
+msgid "2x"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:155
+msgid "4x"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:156 libexif/exif-entry.c:701
+#: libexif/exif-entry.c:731
+msgid "Other"
+msgstr "Autre"
+
+#: libexif/canon/mnote-canon-entry.c:158 libexif/canon/mnote-canon-entry.c:161
+#: libexif/canon/mnote-canon-entry.c:164 libexif/canon/mnote-canon-entry.c:398
+#: libexif/fuji/mnote-fuji-entry.c:86 libexif/pentax/mnote-pentax-entry.c:112
+#: libexif/pentax/mnote-pentax-entry.c:117
+msgid "High"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:159 libexif/canon/mnote-canon-entry.c:162
+#: libexif/canon/mnote-canon-entry.c:165 libexif/canon/mnote-canon-entry.c:396
+#: libexif/pentax/mnote-pentax-entry.c:111
+#: libexif/pentax/mnote-pentax-entry.c:116
+msgid "Low"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:166
+msgid "Auto high"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:168
+msgid "50"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:169
+#: libexif/pentax/mnote-pentax-entry.c:120
+#: libexif/pentax/mnote-pentax-entry.c:122
+msgid "100"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:170
+#: libexif/pentax/mnote-pentax-entry.c:121
+#: libexif/pentax/mnote-pentax-entry.c:123
+msgid "200"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:171
+msgid "400"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:172
+msgid "800"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:173
+msgid "Default"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:174 libexif/exif-entry.c:697
+msgid "Spot"
+msgstr "Spot"
+
+#: libexif/canon/mnote-canon-entry.c:175 libexif/exif-entry.c:695
+msgid "Average"
+msgstr "Moyenne"
+
+#: libexif/canon/mnote-canon-entry.c:176
+msgid "Evaluative"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:177 libexif/exif-entry.c:700
+msgid "Partial"
+msgstr "Partiel"
+
+#: libexif/canon/mnote-canon-entry.c:178
+#, fuzzy
+msgid "Center-weighted average"
+msgstr "Mesure pondérée centrale"
+
+#: libexif/canon/mnote-canon-entry.c:181
+#, fuzzy
+msgid "Not known"
+msgstr "Inconnu"
+
+#: libexif/canon/mnote-canon-entry.c:183
+msgid "Very close"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:184 libexif/exif-entry.c:796
+#, fuzzy
+msgid "Close"
+msgstr "Vue de près"
+
+#: libexif/canon/mnote-canon-entry.c:185
+msgid "Middle range"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:186
+#, fuzzy
+msgid "Far range"
+msgstr "Échelle de transfert"
+
+#: libexif/canon/mnote-canon-entry.c:189
+#: libexif/pentax/mnote-pentax-entry.c:210
+#, fuzzy
+msgid "Infinity"
+msgstr "Intel"
+
+#: libexif/canon/mnote-canon-entry.c:190
+#, fuzzy
+msgid "Manual AF point selection"
+msgstr "Balance des blancs manuelle"
+
+#: libexif/canon/mnote-canon-entry.c:191 libexif/canon/mnote-canon-entry.c:349
+msgid "None (MF)"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:192
+msgid "Auto-selected"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:193 libexif/canon/mnote-canon-entry.c:350
+#: libexif/pentax/mnote-pentax-entry.c:224
+#: libexif/pentax/mnote-pentax-entry.c:238
+#, fuzzy
+msgid "Right"
+msgstr "Lumière du jour"
+
+#: libexif/canon/mnote-canon-entry.c:194 libexif/canon/mnote-canon-entry.c:351
+#: libexif/pentax/mnote-pentax-entry.c:222
+#: libexif/pentax/mnote-pentax-entry.c:237
+#, fuzzy
+msgid "Center"
+msgstr "Centimère"
+
+#: libexif/canon/mnote-canon-entry.c:195 libexif/canon/mnote-canon-entry.c:353
+#: libexif/pentax/mnote-pentax-entry.c:220
+#: libexif/pentax/mnote-pentax-entry.c:236
+msgid "Left"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:196
+msgid "Auto AF point selection"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:197
+msgid "Easy shooting"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:198
+#: libexif/pentax/mnote-pentax-entry.c:163
+msgid "Program"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:199
+msgid "Tv-priority"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:200
+#, fuzzy
+msgid "Av-priority"
+msgstr "Priorité ouverture"
+
+#: libexif/canon/mnote-canon-entry.c:202
+msgid "A-DEP"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:203
+msgid "M-DEP"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:204
+msgid "Canon EF 50mm f/1.8"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:205
+msgid "Canon EF 28mm f/2.8"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:206
+msgid "Sigma UC Zoom 35-135mm f/4-5.6"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:207
+msgid "Tokina AF193-2 19-35mm f/3.5-4.5"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:208
+msgid "Canon EF 100-300mm F5.6L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:209
+msgid "Sigma 50mm f/2.8 EX or 28mm f/1.8"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:210
+msgid "Canon EF 35mm f/2"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:211
+msgid "Canon EF 15mm f/2.8"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:212
+msgid "Canon EF 80-200mm f/2.8L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:213
+msgid "Tokina AT-X280AF PRO 28-80mm F2.8 ASPHERICAL"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:214
+msgid "Cosina 100mm f/3.5 Macro AF"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:215
+msgid "Tamron AF Aspherical 28-200mm f/3.8-5.6"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:216
+msgid "Canon EF 50mm f/1.8 MkII"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:217
+msgid "Tamron SP AF 300mm f/2.8 LD IF"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:218
+msgid "Canon EF 24mm f/2.8 or Sigma 15mm f/2.8 EX Fisheye"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:219
+msgid "Canon EF 75-300mm f/4-5.6"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:220
+msgid "Canon EF 28-80mm f/3.5-5.6"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:221
+msgid "Canon EF 28-105mm f/4-5.6"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:222
+msgid "Canon EF-S 18-55mm f/3.5-5.6"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:223
+msgid "Canon MP-E 65mm f/2.8 1-5x Macro Photo"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:224
+msgid "Canon TS-E 24mm f/3.5L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:225
+msgid "Canon TS-E 45mm f/2.8"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:226
+msgid "Canon TS-E 90mm f/2.8"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:227
+msgid "Canon EF 50mm f/1.0L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:228
+msgid "Sigma 17-35mm f2.8-4 EX Aspherical HSM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:229
+msgid "Canon EF 600mm f/4L IS"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:230
+msgid "Canon EF 200mm f/1.8L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:231
+msgid "Canon EF 300mm f/2.8L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:232
+msgid "Canon EF 85mm f/1.2L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:233
+msgid "Canon EF 400mm f/2.8L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:234
+msgid "Canon EF 500mm f/4.5L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:235
+msgid "Canon EF 300mm f/2.8L IS"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:236
+msgid "Canon EF 500mm f/4L IS"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:237
+msgid "Canon EF 100mm f/2"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:238
+msgid "Sigma 20mm EX f/1.8"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:239
+msgid "Canon EF 200mm f/2.8L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:240
+msgid "Sigma 10-20mm F4-5.6 or 12-24mm f/4.5-5.6 or 14mm f/2.8"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:241
+msgid "Canon EF 35-350mm f/3.5-5.6L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:242
+msgid "Canon EF 85mm f/1.8 USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:243
+msgid "Canon EF 28-105mm f/3.5-4.5 USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:244
+msgid "Canon EF 20-35mm f/3.5-4.5 USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:245
+msgid "Canon EF 28-70mm f/2.8L or Sigma 24-70mm EX f/2.8"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:246
+msgid "Canon EF 70-200mm f/2.8 L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:247
+msgid "Canon EF 70-200mm f/2.8 L + x1.4"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:248
+msgid "Canon EF 70-200mm f/2.8 L + x2"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:249
+msgid "Canon EF 28mm f/1.8 USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:250
+msgid "Sigma 15-30mm f/3.5-4.5 EX DG Aspherical"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:251
+msgid "Canon EF 200mm f/2.8L II"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:252
+msgid "Canon EF 180mm Macro f/3.5L or Sigma 180mm EX HSM Macro f/3.5"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:253
+msgid "Canon EF 135mm f/2L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:254
+msgid "Canon EF 24-85mm f/3.5-4.5 USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:255
+msgid "Canon EF 300mm f/4L IS"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:256
+msgid "Canon EF 28-135mm f/3.5-5.6 IS"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:257
+msgid "Canon EF 35mm f/1.4L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:258
+msgid "Canon EF 100-400mm f/4.5-5.6L IS + x1.4"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:259
+msgid "Canon EF 100-400mm f/4.5-5.6L IS + x2"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:260
+msgid "Canon EF 100-400mm f/4.5-5.6L IS"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:261
+msgid "Canon EF 400mm f/2.8L + x2"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:262
+msgid "Canon EF 70-200mm f/4L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:263
+msgid "Canon EF 100mm f/2.8 Macro"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:264
+msgid "Canon EF 400mm f/4 DO IS"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:265
+msgid "Canon EF 75-300mm f/4-5.6 IS"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:266
+msgid "Canon EF 50mm f/1.4"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:267
+msgid "Canon EF 28-80 f/3.5-5.6 USM IV"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:268
+msgid "Canon EF 28-200mm f/3.5-5.6"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:269
+msgid "Canon EF 90-300mm f/4.5-5.6"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:270
+msgid "Canon EF-S 18-55mm f/3.5-4.5 USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:271
+msgid "Canon EF 70-200mm f/2.8L IS USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:272
+msgid "Canon EF 70-200mm f/2.8L IS USM + x1.4"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:273
+msgid "Canon EF 70-200mm f/2.8L IS USM + x2"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:274
+msgid "Canon EF 16-35mm f/2.8L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:275
+msgid "Canon EF 24-70mm f/2.8L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:276
+msgid "Canon EF 17-40mm f/4L"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:277
+msgid "Canon EF 70-300mm f/4.5-5.6 DO IS USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:278
+msgid "Canon EF-S 17-85mm f4-5.6 IS USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:279
+msgid "Canon EF-S10-22mm F3.5-4.5 USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:280
+msgid "Canon EF-S60mm F2.8 Macro USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:281
+msgid "Canon EF 24-105mm f/4L IS"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:282
+msgid "Canon EF 70-300mm F4-5.6 IS USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:283
+msgid "Canon EF 50mm F1.2L USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:284
+msgid "Canon EF 70-200mm f/4L IS USM"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:286
+msgid "TTL"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:287
+msgid "A-TTL"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:288
+msgid "E-TTL"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:289
+msgid "FP sync enabled"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:290
+msgid "2nd-curtain sync used"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:291
+msgid "FP sync used"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:292
+#: libexif/olympus/mnote-olympus-entry.c:189
+#, fuzzy
+msgid "Internal"
+msgstr "Intel"
+
+#: libexif/canon/mnote-canon-entry.c:293
+#: libexif/olympus/mnote-olympus-entry.c:190
+msgid "External"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:296
+#, fuzzy
+msgid "Normal AE"
+msgstr "Normal"
+
+#: libexif/canon/mnote-canon-entry.c:297
+#, fuzzy
+msgid "Exposure compensation"
+msgstr "Temps d'exposition"
+
+#: libexif/canon/mnote-canon-entry.c:298
+msgid "AE lock"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:299
+msgid "AE lock + Exposure compensation"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:300
+msgid "No AE"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:303
+msgid "On, shot only"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:307
+msgid "Smooth"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:310 libexif/canon/mnote-canon-entry.c:334
+#: libexif/canon/mnote-canon-entry.c:393 libexif/canon/mnote-canon-entry.c:406
+#: libexif/fuji/mnote-fuji-entry.c:81 libexif/pentax/mnote-pentax-entry.c:87
+#, fuzzy
+msgid "Custom"
+msgstr "Processus personnel"
+
+#: libexif/canon/mnote-canon-entry.c:311
+msgid "My color data"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:313 libexif/canon/mnote-canon-entry.c:375
+#: libexif/pentax/mnote-pentax-entry.c:126
+#: libexif/pentax/mnote-pentax-entry.c:145
+msgid "Full"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:314 libexif/canon/mnote-canon-entry.c:374
+msgid "2/3"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:315 libexif/canon/mnote-canon-entry.c:373
+msgid "1/3"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:321
+msgid "Fixed"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:322 libexif/pentax/mnote-pentax-tag.c:44
+msgid "Zoom"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:329
+#, fuzzy
+msgid "Sunny"
+msgstr "ensoleillé"
+
+#: libexif/canon/mnote-canon-entry.c:330 libexif/canon/mnote-canon-entry.c:402
+#: libexif/exif-entry.c:718 libexif/fuji/mnote-fuji-entry.c:75
+#: libexif/olympus/mnote-olympus-entry.c:135
+#: libexif/pentax/mnote-pentax-entry.c:255
+#, fuzzy
+msgid "Cloudy"
+msgstr "nuageux"
+
+#: libexif/canon/mnote-canon-entry.c:331 libexif/canon/mnote-canon-entry.c:403
+#: libexif/exif-entry.c:715 libexif/pentax/mnote-pentax-entry.c:100
+#: libexif/pentax/mnote-pentax-entry.c:249
+#, fuzzy
+msgid "Tungsten"
+msgstr "tungsten"
+
+#: libexif/canon/mnote-canon-entry.c:332 libexif/canon/mnote-canon-entry.c:404
+#: libexif/exif-entry.c:714 libexif/pentax/mnote-pentax-entry.c:101
+#: libexif/pentax/mnote-pentax-entry.c:248
+msgid "Fluorescent"
+msgstr "Fluorescent"
+
+#: libexif/canon/mnote-canon-entry.c:333 libexif/canon/mnote-canon-entry.c:405
+#: libexif/exif-entry.c:716 libexif/exif-tag.c:577
+#: libexif/fuji/mnote-fuji-entry.c:80 libexif/pentax/mnote-pentax-entry.c:254
+msgid "Flash"
+msgstr "Flash"
+
+#: libexif/canon/mnote-canon-entry.c:336 libexif/canon/mnote-canon-entry.c:408
+#: libexif/exif-entry.c:719 libexif/pentax/mnote-pentax-entry.c:99
+#: libexif/pentax/mnote-pentax-entry.c:247
+msgid "Shade"
+msgstr "Ombragé"
+
+#: libexif/canon/mnote-canon-entry.c:337
+msgid "Manual temperature (Kelvin)"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:338
+msgid "PC set 1"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:339
+msgid "PC set 2"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:340
+msgid "PC set 3"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:341 libexif/exif-entry.c:720
+msgid "Daylight fluorescent"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:342 libexif/canon/mnote-canon-entry.c:414
+#, fuzzy
+msgid "Custom 1"
+msgstr "Processus personnel"
+
+#: libexif/canon/mnote-canon-entry.c:343 libexif/canon/mnote-canon-entry.c:415
+#, fuzzy
+msgid "Custom 2"
+msgstr "Processus personnel"
+
+#: libexif/canon/mnote-canon-entry.c:346 libexif/exif-entry.c:673
+msgid "Night scene"
+msgstr "Scène de nuit"
+
+#: libexif/canon/mnote-canon-entry.c:352
+#, fuzzy
+msgid "Center + Right"
+msgstr "Centre pondéré"
+
+#: libexif/canon/mnote-canon-entry.c:354
+#, fuzzy
+msgid "Left + Right"
+msgstr "bas - droit"
+
+#: libexif/canon/mnote-canon-entry.c:355
+#, fuzzy
+msgid "Left + Center"
+msgstr "Centimère"
+
+#: libexif/canon/mnote-canon-entry.c:356
+msgid "All"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:358
+msgid "On (shot 1)"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:359
+msgid "On (shot 2)"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:360
+msgid "On (shot 3)"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:362
+msgid "EOS high-end"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:363
+msgid "Compact"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:364
+msgid "EOS mid-range"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:366
+msgid "Rotate 90 CW"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:367
+msgid "Rotate 180"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:368
+msgid "Rotate 270 CW"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:369
+msgid "Rotated by software"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:381
+#, fuzzy
+msgid "Left to right"
+msgstr "bas - droit"
+
+#: libexif/canon/mnote-canon-entry.c:382
+#, fuzzy
+msgid "Right to left"
+msgstr "droit - haut"
+
+#: libexif/canon/mnote-canon-entry.c:383
+#, fuzzy
+msgid "Bottom to top"
+msgstr "bas - gauche"
+
+#: libexif/canon/mnote-canon-entry.c:384
+#, fuzzy
+msgid "Top to bottom"
+msgstr "gauche - bas"
+
+#: libexif/canon/mnote-canon-entry.c:385
+msgid "2x2 matrix (clockwise)"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:391 libexif/canon/mnote-canon-entry.c:397
+#: libexif/canon/mnote-canon-entry.c:418 libexif/canon/mnote-canon-entry.c:428
+#: libexif/exif-entry.c:672 libexif/fuji/mnote-fuji-entry.c:84
+#: libexif/fuji/mnote-fuji-entry.c:93 libexif/fuji/mnote-fuji-entry.c:163
+#: libexif/olympus/mnote-olympus-entry.c:226
+msgid "Standard"
+msgstr "Standard"
+
+#: libexif/canon/mnote-canon-entry.c:394
+msgid "N/A"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:395
+#, fuzzy
+msgid "Lowest"
+msgstr "haut - gauche"
+
+#: libexif/canon/mnote-canon-entry.c:399
+#, fuzzy
+msgid "Highest"
+msgstr "Scène de nuit"
+
+#: libexif/canon/mnote-canon-entry.c:401 libexif/exif-entry.c:713
+#: libexif/fuji/mnote-fuji-entry.c:74
+#: libexif/olympus/mnote-olympus-entry.c:132
+#: libexif/pentax/mnote-pentax-entry.c:98
+#: libexif/pentax/mnote-pentax-entry.c:246
+msgid "Daylight"
+msgstr "Lumière du jour"
+
+#: libexif/canon/mnote-canon-entry.c:407
+#: libexif/pentax/mnote-pentax-entry.c:127
+msgid "Black & White"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:409
+msgid "Manual Temperature (Kelvin)"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:410
+msgid "PC Set1"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:411
+msgid "PC Set2"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:412
+msgid "PC Set3"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:413
+#: libexif/pentax/mnote-pentax-entry.c:251
+#, fuzzy
+msgid "Daylight Fluorescent"
+msgstr "Fluorescent"
+
+#: libexif/canon/mnote-canon-entry.c:419
+msgid "Set 1"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:420
+msgid "Set 2"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:421
+msgid "Set 3"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:422
+msgid "User Def. 1"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:423
+msgid "User Def. 2"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:424
+msgid "User Def. 3"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:425
+#, fuzzy
+msgid "External 1"
+msgstr "Flash"
+
+#: libexif/canon/mnote-canon-entry.c:426
+#, fuzzy
+msgid "External 2"
+msgstr "Flash"
+
+#: libexif/canon/mnote-canon-entry.c:427
+#, fuzzy
+msgid "External 3"
+msgstr "Flash"
+
+#: libexif/canon/mnote-canon-entry.c:432
+msgid "Faithful"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:433
+#: libexif/olympus/mnote-olympus-entry.c:114
+msgid "Monochrome"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:491
+msgid ", "
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:577 libexif/canon/mnote-canon-entry.c:674
+#, c-format
+msgid "%i (ms)"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:621
+#, c-format
+msgid "%.2f mm"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:645
+#, c-format
+msgid "%.2f EV"
+msgstr ""
+
+#: libexif/canon/mnote-canon-entry.c:655 libexif/exif-entry.c:1063
+#, fuzzy, c-format
+msgid "1/%i"
+msgstr "1/%d"
+
+#: libexif/canon/mnote-canon-entry.c:667
+#, c-format
+msgid "%u mm"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:35
+msgid "Settings (First Part)"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:36 libexif/canon/mnote-canon-tag.c:92
+#: libexif/exif-tag.c:581 libexif/pentax/mnote-pentax-tag.c:88
+msgid "Focal Length"
+msgstr "Longueur focale"
+
+#: libexif/canon/mnote-canon-tag.c:37
+msgid "Settings (Second Part)"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:38 libexif/pentax/mnote-pentax-entry.c:177
+msgid "Panorama"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:39
+#, fuzzy
+msgid "Image Type"
+msgstr "Hauteur de l'image"
+
+#: libexif/canon/mnote-canon-tag.c:40 libexif/olympus/mnote-olympus-tag.c:37
+#: libexif/olympus/mnote-olympus-tag.c:113
+#, fuzzy
+msgid "Firmware Version"
+msgstr "Version d'exif"
+
+#: libexif/canon/mnote-canon-tag.c:41
+#, fuzzy
+msgid "Image Number"
+msgstr "ID unique de l'image"
+
+#: libexif/canon/mnote-canon-tag.c:42
+#, fuzzy
+msgid "Owner Name"
+msgstr "Le nombre F."
+
+#: libexif/canon/mnote-canon-tag.c:43
+#, fuzzy
+msgid "Color Information"
+msgstr "Espace des couleurs"
+
+#: libexif/canon/mnote-canon-tag.c:44 libexif/fuji/mnote-fuji-tag.c:37
+#: libexif/olympus/mnote-olympus-tag.c:81
+#: libexif/olympus/mnote-olympus-tag.c:146
+#, fuzzy
+msgid "Serial Number"
+msgstr "Le nombre F."
+
+#: libexif/canon/mnote-canon-tag.c:45
+#, fuzzy
+msgid "Custom Functions"
+msgstr "Processus personnel"
+
+#: libexif/canon/mnote-canon-tag.c:56
+#, fuzzy
+msgid "Macro Mode"
+msgstr "Macro"
+
+#: libexif/canon/mnote-canon-tag.c:57 libexif/canon/mnote-canon-tag.c:117
+msgid "Self-timer"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:58 libexif/fuji/mnote-fuji-tag.c:38
+#: libexif/olympus/mnote-olympus-tag.c:40
+#: libexif/olympus/mnote-olympus-tag.c:94
+#: libexif/olympus/mnote-olympus-tag.c:107
+msgid "Quality"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:59 libexif/fuji/mnote-fuji-tag.c:43
+#: libexif/olympus/mnote-olympus-tag.c:45
+#: libexif/olympus/mnote-olympus-tag.c:127
+#: libexif/pentax/mnote-pentax-tag.c:38 libexif/pentax/mnote-pentax-tag.c:73
+#, fuzzy
+msgid "Flash Mode"
+msgstr "Flash"
+
+#: libexif/canon/mnote-canon-tag.c:60 libexif/pentax/mnote-pentax-tag.c:101
+#, fuzzy
+msgid "Drive Mode"
+msgstr "Mode de mesure"
+
+#: libexif/canon/mnote-canon-tag.c:61 libexif/canon/mnote-canon-tag.c:82
+#: libexif/olympus/mnote-olympus-tag.c:43
+#: libexif/olympus/mnote-olympus-tag.c:134
+#: libexif/olympus/mnote-olympus-tag.c:173
+#: libexif/pentax/mnote-pentax-tag.c:37 libexif/pentax/mnote-pentax-tag.c:74
+#: libexif/pentax/mnote-pentax-tag.c:130
+#, fuzzy
+msgid "Focus Mode"
+msgstr "Mode d'exposition"
+
+#: libexif/canon/mnote-canon-tag.c:62 libexif/pentax/mnote-pentax-tag.c:127
+#, fuzzy
+msgid "Record Mode"
+msgstr "Macro"
+
+#: libexif/canon/mnote-canon-tag.c:63 libexif/pentax/mnote-pentax-tag.c:71
+#, fuzzy
+msgid "Image Size"
+msgstr "Hauteur de l'image"
+
+#: libexif/canon/mnote-canon-tag.c:64
+msgid "Easy Shooting Mode"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:65 libexif/olympus/mnote-olympus-tag.c:64
+#: libexif/olympus/mnote-olympus-tag.c:101
+#: libexif/olympus/mnote-olympus-tag.c:110
+#: libexif/olympus/mnote-olympus-tag.c:180
+#: libexif/pentax/mnote-pentax-tag.c:89
+#, fuzzy
+msgid "Digital Zoom"
+msgstr "Valeur du zoom numérique"
+
+#: libexif/canon/mnote-canon-tag.c:66 libexif/exif-tag.c:829
+#: libexif/fuji/mnote-fuji-tag.c:42 libexif/pentax/mnote-pentax-tag.c:46
+#: libexif/pentax/mnote-pentax-tag.c:91
+msgid "Contrast"
+msgstr "Contraste"
+
+#: libexif/canon/mnote-canon-tag.c:67 libexif/exif-tag.c:833
+#: libexif/olympus/mnote-olympus-tag.c:75
+#: libexif/olympus/mnote-olympus-tag.c:87 libexif/pentax/mnote-pentax-tag.c:47
+#: libexif/pentax/mnote-pentax-tag.c:90
+msgid "Saturation"
+msgstr "Saturation"
+
+#: libexif/canon/mnote-canon-tag.c:68 libexif/exif-tag.c:837
+#: libexif/fuji/mnote-fuji-tag.c:39 libexif/pentax/mnote-pentax-tag.c:45
+#: libexif/pentax/mnote-pentax-tag.c:92
+msgid "Sharpness"
+msgstr "Netteté"
+
+#: libexif/canon/mnote-canon-tag.c:69
+msgid "ISO"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:70 libexif/exif-tag.c:571
+#: libexif/pentax/mnote-pentax-tag.c:82
+msgid "Metering Mode"
+msgstr "Mode de mesure"
+
+#: libexif/canon/mnote-canon-tag.c:71 libexif/olympus/mnote-olympus-tag.c:133
+#, fuzzy
+msgid "Focus Range"
+msgstr "Mode d'exposition"
+
+#: libexif/canon/mnote-canon-tag.c:72 libexif/canon/mnote-canon-tag.c:105
+#, fuzzy
+msgid "AF Point"
+msgstr "Mode d'exposition"
+
+#: libexif/canon/mnote-canon-tag.c:73 libexif/exif-tag.c:796
+msgid "Exposure Mode"
+msgstr "Mode d'exposition"
+
+#: libexif/canon/mnote-canon-tag.c:74 libexif/olympus/mnote-olympus-tag.c:61
+#: libexif/pentax/mnote-pentax-tag.c:106
+#, fuzzy
+msgid "Lens Type"
+msgstr "Type de scène"
+
+#: libexif/canon/mnote-canon-tag.c:75
+#, fuzzy
+msgid "Long Focal Length of Lens"
+msgstr "Longueur focale"
+
+#: libexif/canon/mnote-canon-tag.c:76
+#, fuzzy
+msgid "Short Focal Length of Lens"
+msgstr "Longueur focale"
+
+#: libexif/canon/mnote-canon-tag.c:77
+#, fuzzy
+msgid "Focal Units per mm"
+msgstr "Longueur focale"
+
+#: libexif/canon/mnote-canon-tag.c:78
+#, fuzzy
+msgid "Maximal Aperture"
+msgstr "ouverture"
+
+#: libexif/canon/mnote-canon-tag.c:79
+#, fuzzy
+msgid "Minimal Aperture"
+msgstr "ouverture"
+
+#: libexif/canon/mnote-canon-tag.c:80
+#, fuzzy
+msgid "Flash Activity"
+msgstr "Le flash s'est déclenché."
+
+#: libexif/canon/mnote-canon-tag.c:81
+#, fuzzy
+msgid "Flash Details"
+msgstr "Flash"
+
+#: libexif/canon/mnote-canon-tag.c:83
+#, fuzzy
+msgid "AE Setting"
+msgstr "Netteté"
+
+#: libexif/canon/mnote-canon-tag.c:84
+#, fuzzy
+msgid "Image Stabilization"
+msgstr "Description de l'image"
+
+#: libexif/canon/mnote-canon-tag.c:85
+#, fuzzy
+msgid "Display Aperture"
+msgstr "ouverture"
+
+#: libexif/canon/mnote-canon-tag.c:86
+msgid "Zoom Source Width"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:87
+#, fuzzy
+msgid "Zoom Target Width"
+msgstr "Hauteur de l'image"
+
+#: libexif/canon/mnote-canon-tag.c:88
+msgid "Photo Effect"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:89 libexif/canon/mnote-canon-tag.c:118
+msgid "Manual Flash Output"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:90
+#, fuzzy
+msgid "Color Tone"
+msgstr "Espace des couleurs"
+
+#: libexif/canon/mnote-canon-tag.c:91
+#, fuzzy
+msgid "Focal Type"
+msgstr "Longueur focale"
+
+#: libexif/canon/mnote-canon-tag.c:93
+#, fuzzy
+msgid "Focal Plane X Size"
+msgstr "x-Résolution du plan focal"
+
+#: libexif/canon/mnote-canon-tag.c:94
+#, fuzzy
+msgid "Focal Plane Y Size"
+msgstr "x-Résolution du plan focal"
+
+#: libexif/canon/mnote-canon-tag.c:95
+msgid "Auto ISO"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:96
+#, fuzzy
+msgid "Shot ISO"
+msgstr "Spot"
+
+#: libexif/canon/mnote-canon-tag.c:97
+msgid "Measured EV"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:98
+#, fuzzy
+msgid "Target Aperture"
+msgstr "ouverture"
+
+#: libexif/canon/mnote-canon-tag.c:99
+#, fuzzy
+msgid "Target Exposure Time"
+msgstr "Temps d'exposition"
+
+#: libexif/canon/mnote-canon-tag.c:100 libexif/olympus/mnote-olympus-tag.c:129
+#: libexif/pentax/mnote-pentax-tag.c:81
+#, fuzzy
+msgid "Exposure Compensation"
+msgstr "Temps d'exposition"
+
+#: libexif/canon/mnote-canon-tag.c:101 libexif/canon/mnote-canon-tag.c:123
+#: libexif/exif-tag.c:801 libexif/fuji/mnote-fuji-tag.c:40
+#: libexif/olympus/mnote-olympus-tag.c:41
+#: libexif/olympus/mnote-olympus-tag.c:98 libexif/pentax/mnote-pentax-tag.c:41
+#: libexif/pentax/mnote-pentax-tag.c:84 libexif/pentax/mnote-pentax-tag.c:124
+msgid "White Balance"
+msgstr "Balance des blancs"
+
+#: libexif/canon/mnote-canon-tag.c:102
+#, fuzzy
+msgid "Slow Shutter"
+msgstr "obturation"
+
+#: libexif/canon/mnote-canon-tag.c:103
+#, fuzzy
+msgid "Sequence Number"
+msgstr "Le nombre F."
+
+#: libexif/canon/mnote-canon-tag.c:104
+#, fuzzy
+msgid "Flash Guide Number"
+msgstr "Le nombre F."
+
+#: libexif/canon/mnote-canon-tag.c:106 libexif/olympus/mnote-olympus-tag.c:52
+#: libexif/pentax/mnote-pentax-tag.c:109
+#, fuzzy
+msgid "Flash Exposure Compensation"
+msgstr "Temps d'exposition"
+
+#: libexif/canon/mnote-canon-tag.c:107
+#, fuzzy
+msgid "AE Bracketing"
+msgstr "action"
+
+#: libexif/canon/mnote-canon-tag.c:108
+#, fuzzy
+msgid "AE Bracket Value"
+msgstr "Ouverture"
+
+#: libexif/canon/mnote-canon-tag.c:109
+#, fuzzy
+msgid "Focus Distance Upper"
+msgstr "Balance des blancs manuelle"
+
+#: libexif/canon/mnote-canon-tag.c:110
+#, fuzzy
+msgid "Focus Distance Lower"
+msgstr "Balance des blancs manuelle"
+
+#: libexif/canon/mnote-canon-tag.c:111 libexif/exif-tag.c:469
+#, fuzzy
+msgid "FNumber"
+msgstr "Le nombre F."
+
+#: libexif/canon/mnote-canon-tag.c:112 libexif/exif-tag.c:466
+#: libexif/pentax/mnote-pentax-tag.c:78
+msgid "Exposure Time"
+msgstr "Temps d'exposition"
+
+#: libexif/canon/mnote-canon-tag.c:113
+#, fuzzy
+msgid "Bulb Duration"
+msgstr "Saturation"
+
+#: libexif/canon/mnote-canon-tag.c:114
+msgid "Camera Type"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:115
+#, fuzzy
+msgid "Auto Rotate"
+msgstr "Bracketing automatique"
+
+#: libexif/canon/mnote-canon-tag.c:116
+#, fuzzy
+msgid "ND Filter"
+msgstr "Valeur du zoom numérique"
+
+#: libexif/canon/mnote-canon-tag.c:119
+#, fuzzy
+msgid "Panorama Frame"
+msgstr "normal"
+
+#: libexif/canon/mnote-canon-tag.c:120
+msgid "Panorama Direction"
+msgstr ""
+
+#: libexif/canon/mnote-canon-tag.c:121
+#, fuzzy
+msgid "Tone Curve"
+msgstr "Contraste"
+
+#: libexif/canon/mnote-canon-tag.c:122
+#, fuzzy
+msgid "Sharpness Frequency"
+msgstr "Netteté"
+
+#: libexif/canon/mnote-canon-tag.c:124
+#, fuzzy
+msgid "Picture Style"
+msgstr "Mode d'exposition"
+
+#: libexif/exif-byte-order.c:33
+msgid "Motorola"
+msgstr "Motorola"
+
+#: libexif/exif-byte-order.c:35
+msgid "Intel"
+msgstr "Intel"
+
+#: libexif/exif-data.c:784
+msgid "Size of data too small to allow for EXIF data."
+msgstr ""
+
+#: libexif/exif-data.c:845
+msgid "EXIF marker not found."
+msgstr ""
+
+#: libexif/exif-data.c:872
+msgid "EXIF header not found."
+msgstr ""
+
+#: libexif/exif-data.c:888
+#, fuzzy
+msgid "Unknown encoding."
+msgstr "Inconnu"
+
+#: libexif/exif-data.c:1200
+#, fuzzy
+msgid "Ignore unknown tags"
+msgstr "Inconnu"
+
+#: libexif/exif-data.c:1201
+msgid "Ignore unknown tags when loading EXIF data."
+msgstr ""
+
+#: libexif/exif-data.c:1202
+msgid "Follow specification"
+msgstr ""
+
+#: libexif/exif-data.c:1203
+msgid ""
+"Add, correct and remove entries to get EXIF data that follows the "
+"specification."
+msgstr ""
+
+#: libexif/exif-data.c:1205
+msgid "Do not change maker note"
+msgstr ""
+
+#: libexif/exif-data.c:1206
+msgid ""
+"When loading and resaving Exif data, save the maker note unmodified. Be "
+"aware that the maker note can get corrupted."
+msgstr ""
+
+#: libexif/exif-entry.c:234 libexif/exif-entry.c:303 libexif/exif-entry.c:336
+#, c-format
+msgid ""
+"Tag '%s' was of format '%s' (which is against specification) and has been "
+"changed to format '%s'."
+msgstr ""
+
+#: libexif/exif-entry.c:271
+#, c-format
+msgid ""
+"Tag '%s' is of format '%s' (which is against specification) but cannot be "
+"changed to format '%s'."
+msgstr ""
+
+#: libexif/exif-entry.c:354
+#, c-format
+msgid ""
+"Tag 'UserComment' had invalid format '%s'. Format has been set to "
+"'undefined'."
+msgstr ""
+
+#: libexif/exif-entry.c:381
+msgid ""
+"Tag 'UserComment' has been expanded to at least 8 bytes in order to follow "
+"the specification."
+msgstr ""
+
+#: libexif/exif-entry.c:396
+msgid ""
+"Tag 'UserComment' is not empty but does not start with a format identifier. "
+"This has been fixed."
+msgstr ""
+
+#: libexif/exif-entry.c:424
+msgid ""
+"Tag 'UserComment' did not start with a format identifier. This has been "
+"fixed."
+msgstr ""
+
+#: libexif/exif-entry.c:462
+#, fuzzy, c-format
+msgid "%i bytes undefined data"
+msgstr "%i de données inconnues"
+
+#: libexif/exif-entry.c:590
+#, fuzzy, c-format
+msgid "%i bytes unsupported data type"
+msgstr "%i de données inconnues"
+
+#: libexif/exif-entry.c:623
+#, fuzzy, c-format
+msgid "The tag '%s' contains data of an invalid format ('%s', expected '%s')."
+msgstr "Format invalide '%s', attendait '%s'."
+
+#: libexif/exif-entry.c:636
+#, c-format
+msgid ""
+"The tag '%s' contains an invalid number of components (%i, expected %i)."
+msgstr ""
+
+#: libexif/exif-entry.c:650
+msgid "chunky format"
+msgstr ""
+
+#: libexif/exif-entry.c:650
+msgid "planar format"
+msgstr ""
+
+#: libexif/exif-entry.c:652 libexif/exif-entry.c:742
+#: test/nls/test-codeset.c:54
+msgid "Not defined"
+msgstr "Non défini"
+
+#: libexif/exif-entry.c:652
+msgid "One-chip color area sensor"
+msgstr ""
+
+#: libexif/exif-entry.c:653
+msgid "Two-chip color area sensor"
+msgstr ""
+
+#: libexif/exif-entry.c:653
+msgid "Three-chip color area sensor"
+msgstr ""
+
+#: libexif/exif-entry.c:654
+msgid "Color sequential area sensor"
+msgstr ""
+
+#: libexif/exif-entry.c:654
+msgid "Trilinear sensor"
+msgstr "Capteur trilinéaire"
+
+#: libexif/exif-entry.c:655
+msgid "Color sequential linear sensor"
+msgstr "Capteur linéaire séquentiel de couleur"
+
+#: libexif/exif-entry.c:657
+msgid "top - left"
+msgstr "haut - gauche"
+
+#: libexif/exif-entry.c:657
+msgid "top - right"
+msgstr "haut - droit"
+
+#: libexif/exif-entry.c:657
+msgid "bottom - right"
+msgstr "bas - droit"
+
+#: libexif/exif-entry.c:658
+msgid "bottom - left"
+msgstr "bas - gauche"
+
+#: libexif/exif-entry.c:658
+msgid "left - top"
+msgstr "gauche - haut"
+
+#: libexif/exif-entry.c:658
+msgid "right - top"
+msgstr "droit - haut"
+
+#: libexif/exif-entry.c:659
+msgid "right - bottom"
+msgstr "droit - bas"
+
+#: libexif/exif-entry.c:659
+msgid "left - bottom"
+msgstr "gauche - bas"
+
+#: libexif/exif-entry.c:661
+msgid "centered"
+msgstr "centré"
+
+#: libexif/exif-entry.c:661
+msgid "co-sited"
+msgstr ""
+
+#: libexif/exif-entry.c:663
+msgid "Reversed mono"
+msgstr ""
+
+#: libexif/exif-entry.c:663
+#, fuzzy
+msgid "Normal mono"
+msgstr "Normal"
+
+#: libexif/exif-entry.c:663
+msgid "RGB"
+msgstr "RGB"
+
+#: libexif/exif-entry.c:663
+#, fuzzy
+msgid "Palette"
+msgstr "Motif"
+
+#: libexif/exif-entry.c:664
+msgid "CMYK"
+msgstr ""
+
+#: libexif/exif-entry.c:664
+msgid "YCbCr"
+msgstr "YCbCr"
+
+#: libexif/exif-entry.c:664
+msgid "CieLAB"
+msgstr ""
+
+#: libexif/exif-entry.c:666
+msgid "Normal process"
+msgstr "Processus normal"
+
+#: libexif/exif-entry.c:666
+msgid "Custom process"
+msgstr "Processus personnel"
+
+#: libexif/exif-entry.c:668
+msgid "Auto exposure"
+msgstr "Exposition automatique"
+
+#: libexif/exif-entry.c:668 libexif/fuji/mnote-fuji-entry.c:139
+msgid "Manual exposure"
+msgstr "Exposition manuel"
+
+#: libexif/exif-entry.c:668
+msgid "Auto bracket"
+msgstr "Bracketing automatique"
+
+#: libexif/exif-entry.c:670
+msgid "Auto white balance"
+msgstr "Balance des blancs automatique"
+
+#: libexif/exif-entry.c:670
+msgid "Manual white balance"
+msgstr "Balance des blancs manuelle"
+
+#: libexif/exif-entry.c:675
+msgid "Low gain up"
+msgstr ""
+
+#: libexif/exif-entry.c:675
+msgid "High gain up"
+msgstr ""
+
+#: libexif/exif-entry.c:676
+msgid "Low gain down"
+msgstr ""
+
+#: libexif/exif-entry.c:676
+msgid "High gain down"
+msgstr ""
+
+#: libexif/exif-entry.c:678
+msgid "Low saturation"
+msgstr "Saturation faible"
+
+#: libexif/exif-entry.c:678 test/nls/test-codeset.c:48
+#: test/nls/test-codeset.c:61
+msgid "High saturation"
+msgstr "Saturation forte"
+
+#: libexif/exif-entry.c:679 libexif/exif-entry.c:680
+#: libexif/fuji/mnote-fuji-entry.c:63
+#: libexif/olympus/mnote-olympus-entry.c:204
+#: libexif/olympus/mnote-olympus-entry.c:213
+#: libexif/pentax/mnote-pentax-entry.c:106
+#: libexif/pentax/mnote-pentax-entry.c:170
+msgid "Soft"
+msgstr "Doux"
+
+#: libexif/exif-entry.c:679 libexif/exif-entry.c:680
+#: libexif/fuji/mnote-fuji-entry.c:65 libexif/fuji/mnote-fuji-entry.c:95
+#: libexif/olympus/mnote-olympus-entry.c:203
+#: libexif/olympus/mnote-olympus-entry.c:211
+#: libexif/pentax/mnote-pentax-entry.c:107
+msgid "Hard"
+msgstr "Dur"
+
+#: libexif/exif-entry.c:694 libexif/exif-entry.c:712 libexif/exif-entry.c:794
+#: libexif/olympus/mnote-olympus-entry.c:682
+#: libexif/olympus/mnote-olympus-entry.c:737
+#: libexif/pentax/mnote-pentax-entry.c:256
+msgid "Unknown"
+msgstr "Inconnu"
+
+#: libexif/exif-entry.c:695
+#, fuzzy
+msgid "avg"
+msgstr "moyenne"
+
+#: libexif/exif-entry.c:696
+msgid "Center-Weighted Average"
+msgstr "Mesure pondérée centrale"
+
+#: libexif/exif-entry.c:696
+#, fuzzy
+msgid "Center-Weight"
+msgstr "Centre pondéré"
+
+#: libexif/exif-entry.c:698
+msgid "Multi Spot"
+msgstr "Multi spot"
+
+#: libexif/exif-entry.c:699
+msgid "Pattern"
+msgstr "Motif"
+
+#: libexif/exif-entry.c:704
+msgid "Uncompressed"
+msgstr "Non compressé"
+
+#: libexif/exif-entry.c:705
+msgid "LZW compression"
+msgstr "Compression LZW"
+
+#: libexif/exif-entry.c:706 libexif/exif-entry.c:707
+msgid "JPEG compression"
+msgstr "Compression JPEG"
+
+#: libexif/exif-entry.c:708
+msgid "Deflate/ZIP compression"
+msgstr "Compression Deflate/ZIP"
+
+#: libexif/exif-entry.c:709
+msgid "PackBits compression"
+msgstr "Compression PackBits"
+
+#: libexif/exif-entry.c:715
+#, fuzzy
+msgid "Tungsten incandescent light"
+msgstr "Tungstène (lumière incandescente)"
+
+#: libexif/exif-entry.c:717
+msgid "Fine weather"
+msgstr "Temps clair"
+
+#: libexif/exif-entry.c:718
+msgid "Cloudy weather"
+msgstr "Temps couvert"
+
+#: libexif/exif-entry.c:721
+msgid "Day white fluorescent"
+msgstr ""
+
+#: libexif/exif-entry.c:722
+msgid "Cool white fluorescent"
+msgstr ""
+
+#: libexif/exif-entry.c:723 libexif/fuji/mnote-fuji-entry.c:78
+msgid "White fluorescent"
+msgstr ""
+
+#: libexif/exif-entry.c:724
+msgid "Standard light A"
+msgstr "Lumière standard A"
+
+#: libexif/exif-entry.c:725
+msgid "Standard light B"
+msgstr "Lumière standard B"
+
+#: libexif/exif-entry.c:726
+msgid "Standard light C"
+msgstr "Lumière standard C"
+
+#: libexif/exif-entry.c:727
+msgid "D55"
+msgstr "D55"
+
+#: libexif/exif-entry.c:728
+msgid "D65"
+msgstr "D65"
+
+#: libexif/exif-entry.c:729
+msgid "D75"
+msgstr "D75"
+
+#: libexif/exif-entry.c:730
+msgid "ISO studio tungsten"
+msgstr "Tungstène de studio ISO"
+
+#: libexif/exif-entry.c:734 libexif/exif-entry.c:738
+msgid "Inch"
+msgstr "Pouce"
+
+#: libexif/exif-entry.c:734 libexif/exif-entry.c:738
+msgid "in"
+msgstr "pouces"
+
+#: libexif/exif-entry.c:735 libexif/exif-entry.c:739
+msgid "Centimeter"
+msgstr "Centimère"
+
+#: libexif/exif-entry.c:735 libexif/exif-entry.c:739
+msgid "cm"
+msgstr "cm"
+
+#: libexif/exif-entry.c:744
+msgid "Normal program"
+msgstr "Programme normal"
+
+#: libexif/exif-entry.c:745
+msgid "Aperture priority"
+msgstr "Priorité ouverture"
+
+#: libexif/exif-entry.c:745 libexif/exif-tag.c:550
+msgid "Aperture"
+msgstr "Ouverture"
+
+#: libexif/exif-entry.c:746
+msgid "Shutter priority"
+msgstr "Priorité obturation"
+
+#: libexif/exif-entry.c:746
+#, fuzzy
+msgid "Shutter"
+msgstr "obturation"
+
+#: libexif/exif-entry.c:747
+msgid "Creative program (biased toward depth of field)"
+msgstr "Programme créatif (grande profondeur de champ)"
+
+#: libexif/exif-entry.c:748
+#, fuzzy
+msgid "Creative"
+msgstr "créatif"
+
+#: libexif/exif-entry.c:749
+#, fuzzy
+msgid "Creative program (biased toward fast shutter speed)"
+msgstr "Programme action (vitesse d'obturation élevée)"
+
+#: libexif/exif-entry.c:750
+#, fuzzy
+msgid "Action"
+msgstr "action"
+
+#: libexif/exif-entry.c:751
+#, fuzzy
+msgid "Portrait mode (for closeup photos with the background out of focus)"
+msgstr "Mode portrait (photos en gros plan avec arrière-plan flou)"
+
+#: libexif/exif-entry.c:753
+#, fuzzy
+msgid "Landscape mode (for landscape photos with the background in focus)"
+msgstr "Mode paysage (paysages avec arrière-plan net)"
+
+#: libexif/exif-entry.c:757 libexif/exif-entry.c:762
+#: libexif/olympus/mnote-olympus-entry.c:96
+#, fuzzy
+msgid "Flash did not fire"
+msgstr "Le flash ne s'est pas déclenché."
+
+#: libexif/exif-entry.c:757
+#, fuzzy
+msgid "no flash"
+msgstr "Flash"
+
+#: libexif/exif-entry.c:758
+#, fuzzy
+msgid "Flash fired"
+msgstr "Le flash s'est déclenché."
+
+#: libexif/exif-entry.c:758
+#, fuzzy
+msgid "flash"
+msgstr "Flash"
+
+#: libexif/exif-entry.c:758 libexif/olympus/mnote-olympus-entry.c:169
+#: libexif/olympus/mnote-olympus-entry.c:174
+#: libexif/olympus/mnote-olympus-entry.c:208
+#: libexif/olympus/mnote-olympus-entry.c:217
+#: libexif/olympus/mnote-olympus-entry.c:240
+msgid "Yes"
+msgstr "oui"
+
+#: libexif/exif-entry.c:759
+#, fuzzy
+msgid "Strobe return light not detected"
+msgstr "Flash déclenché, mode auto, lumière de retour non détectée."
+
+#: libexif/exif-entry.c:759
+msgid "W/o strobe"
+msgstr ""
+
+#: libexif/exif-entry.c:761
+#, fuzzy
+msgid "Strobe return light detected"
+msgstr "Flash déclenché, mode auto, lumière de retour détectée."
+
+#: libexif/exif-entry.c:761
+msgid "W. strobe"
+msgstr ""
+
+#: libexif/exif-entry.c:763
+#, fuzzy
+msgid "Flash fired, compulsory flash mode"
+msgstr "Flash non déclenché, mode de flash obligatoire."
+
+#: libexif/exif-entry.c:764
+#, fuzzy
+msgid "Flash fired, compulsory flash mode, return light not detected"
+msgstr ""
+"Flash déclenché, mode de flash obligatoire, lumière de retour non détectée."
+
+#: libexif/exif-entry.c:766
+#, fuzzy
+msgid "Flash fired, compulsory flash mode, return light detected"
+msgstr ""
+"Flash déclenché, mode de flash obligatoire, lumière de retour détectée."
+
+#: libexif/exif-entry.c:768
+#, fuzzy
+msgid "Flash did not fire, compulsory flash mode"
+msgstr "Flash non déclenché, mode de flash obligatoire."
+
+#: libexif/exif-entry.c:769
+#, fuzzy
+msgid "Flash did not fire, auto mode"
+msgstr "Flash non déclenché, mode auto."
+
+#: libexif/exif-entry.c:770
+#, fuzzy
+msgid "Flash fired, auto mode"
+msgstr "Flash déclenché, mode auto."
+
+#: libexif/exif-entry.c:771
+#, fuzzy
+msgid "Flash fired, auto mode, return light not detected"
+msgstr "Flash déclenché, mode auto, lumière de retour non détectée."
+
+#: libexif/exif-entry.c:773
+#, fuzzy
+msgid "Flash fired, auto mode, return light detected"
+msgstr "Flash déclenché, mode auto, lumière de retour détectée."
+
+#: libexif/exif-entry.c:774
+#, fuzzy
+msgid "No flash function"
+msgstr "Pas de fonction flash."
+
+#: libexif/exif-entry.c:775
+#, fuzzy
+msgid "Flash fired, red-eye reduction mode"
+msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#: libexif/exif-entry.c:776
+#, fuzzy
+msgid "Flash fired, red-eye reduction mode, return light not detected"
+msgstr ""
+"Flash déclenché, mode anti-yeux rouges, lumière de retour non détectée."
+
+#: libexif/exif-entry.c:778
+#, fuzzy
+msgid "Flash fired, red-eye reduction mode, return light detected"
+msgstr "Flash déclenché, mode anti-yeux rouges, lumière de retour détectée."
+
+#: libexif/exif-entry.c:780
+#, fuzzy
+msgid "Flash fired, compulsory flash mode, red-eye reduction mode"
+msgstr "Flash déclenché, mode de flash obligatoire, mode anti-yeux rouges."
+
+#: libexif/exif-entry.c:782
+#, fuzzy
+msgid ""
+"Flash fired, compulsory flash mode, red-eye reduction mode, return light not "
+"detected"
+msgstr ""
+"Flash déclenché, mode de flash obligatoire, mode anti-yeux rouges, lumière "
+"de retour non détectée."
+
+#: libexif/exif-entry.c:784
+#, fuzzy
+msgid ""
+"Flash fired, compulsory flash mode, red-eye reduction mode, return light "
+"detected"
+msgstr ""
+"Flash déclenché, mode de flash obligatoire, mode anti-yeux rouges, lumière "
+"de retour non détectée."
+
+#: libexif/exif-entry.c:786
+#, fuzzy
+msgid "Flash did not fire, auto mode, red-eye reduction mode"
+msgstr "Flash déclenché, mode auto, mode anti-yeux rouges."
+
+#: libexif/exif-entry.c:787
+#, fuzzy
+msgid "Flash fired, auto mode, red-eye reduction mode"
+msgstr "Flash déclenché, mode auto, mode anti-yeux rouges."
+
+#: libexif/exif-entry.c:788
+#, fuzzy
+msgid ""
+"Flash fired, auto mode, return light not detected, red-eye reduction mode"
+msgstr ""
+"Flash déclenché, mode auto, lumière de retour non détectée, mode anti-yeux "
+"rouges."
+
+#: libexif/exif-entry.c:790
+#, fuzzy
+msgid "Flash fired, auto mode, return light detected, red-eye reduction mode"
+msgstr ""
+"Flash déclenché, mode auto, lumière de retour détectée, mode anti-yeux "
+"rouges."
+
+#: libexif/exif-entry.c:794
+msgid "?"
+msgstr ""
+
+#: libexif/exif-entry.c:796
+msgid "Close view"
+msgstr "Vue de près"
+
+#: libexif/exif-entry.c:797
+msgid "Distant view"
+msgstr "Vue de loin"
+
+#: libexif/exif-entry.c:797
+#, fuzzy
+msgid "Distant"
+msgstr "Vue de loin"
+
+#: libexif/exif-entry.c:800
+msgid "sRGB"
+msgstr "sRGB"
+
+#: libexif/exif-entry.c:801
+msgid "Adobe RGB"
+msgstr ""
+
+#: libexif/exif-entry.c:802
+msgid "Uncalibrated"
+msgstr "Non calibré"
+
+#: libexif/exif-entry.c:856
+#, c-format
+msgid "Invalid size of entry (%i, expected %li x %i)."
+msgstr "Nombre invalide de composants (%i, attendait %li x %i)."
+
+#: libexif/exif-entry.c:889
+msgid "Unsupported UNICODE string"
+msgstr ""
+
+#: libexif/exif-entry.c:897
+msgid "Unsupported JIS string"
+msgstr ""
+
+#: libexif/exif-entry.c:913
+msgid "Tag UserComment does not comply with standard but contains data."
+msgstr ""
+
+#: libexif/exif-entry.c:917
+#, c-format
+msgid "Byte at position %i: 0x%02x"
+msgstr ""
+
+#: libexif/exif-entry.c:926
+msgid "Unknown Exif Version"
+msgstr "Version d'exif inconnu"
+
+#: libexif/exif-entry.c:930
+#, c-format
+msgid "Exif Version %d.%d"
+msgstr "Version d'exif %d.%d"
+
+#: libexif/exif-entry.c:941
+msgid "FlashPix Version 1.0"
+msgstr ""
+
+#: libexif/exif-entry.c:943
+msgid "FlashPix Version 1.01"
+msgstr ""
+
+#: libexif/exif-entry.c:945
+msgid "Unknown FlashPix Version"
+msgstr ""
+
+#: libexif/exif-entry.c:958 libexif/exif-entry.c:971 libexif/exif-entry.c:1623
+#: libexif/exif-entry.c:1628 libexif/exif-entry.c:1631
+#: libexif/exif-entry.c:1636 libexif/exif-entry.c:1637
+msgid "[None]"
+msgstr ""
+
+#: libexif/exif-entry.c:960
+msgid "(Photographer)"
+msgstr ""
+
+#: libexif/exif-entry.c:974
+msgid "(Editor)"
+msgstr ""
+
+#: libexif/exif-entry.c:998
+#, c-format
+msgid "%.02lf EV"
+msgstr ""
+
+#: libexif/exif-entry.c:999
+#, c-format
+msgid " (f/%.01f)"
+msgstr ""
+
+#: libexif/exif-entry.c:1033
+#, c-format
+msgid " (35 equivalent: %d mm)"
+msgstr " (équivalent 35mm: %d mm)"
+
+#: libexif/exif-entry.c:1066 libexif/exif-entry.c:1067
+#, fuzzy
+msgid " sec."
+msgstr " sec."
+
+#: libexif/exif-entry.c:1078 libexif/exif-entry.c:1095
+#: libexif/exif-entry.c:1139
+#, c-format
+msgid "%.02f EV"
+msgstr ""
+
+#: libexif/exif-entry.c:1081
+#, fuzzy, c-format
+msgid " (1/%d sec.)"
+msgstr " 1/%d sec.)"
+
+#: libexif/exif-entry.c:1083
+#, fuzzy, c-format
+msgid " (%d sec.)"
+msgstr "%d sec.)"
+
+#: libexif/exif-entry.c:1096
+#, c-format
+msgid " (%.02f cd/m^2)"
+msgstr ""
+
+#: libexif/exif-entry.c:1106
+msgid "DSC"
+msgstr ""
+
+#: libexif/exif-entry.c:1108 libexif/exif-entry.c:1148
+#: libexif/exif-entry.c:1235 libexif/exif-entry.c:1286
+#: libexif/exif-entry.c:1295 libexif/exif-entry.c:1331
+#: libexif/fuji/mnote-fuji-entry.c:236 libexif/fuji/mnote-fuji-entry.c:245
+#: libexif/pentax/mnote-pentax-entry.c:350
+#: libexif/pentax/mnote-pentax-entry.c:359
+#, c-format
+msgid "Internal error (unknown value %i)"
+msgstr ""
+
+#: libexif/exif-entry.c:1116
+msgid "-"
+msgstr "-"
+
+#: libexif/exif-entry.c:1117
+msgid "Y"
+msgstr "Y"
+
+#: libexif/exif-entry.c:1118
+msgid "Cb"
+msgstr "Cb"
+
+#: libexif/exif-entry.c:1119
+msgid "Cr"
+msgstr "Cr"
+
+#: libexif/exif-entry.c:1120
+msgid "R"
+msgstr "R"
+
+#: libexif/exif-entry.c:1121
+msgid "G"
+msgstr "G"
+
+#: libexif/exif-entry.c:1122
+msgid "B"
+msgstr "B"
+
+#: libexif/exif-entry.c:1123
+msgid "reserved"
+msgstr "réservé"
+
+#: libexif/exif-entry.c:1146
+msgid "Directly photographed"
+msgstr ""
+
+#: libexif/exif-entry.c:1159
+msgid "YCbCr4:2:2"
+msgstr "YCbCr4:2:2"
+
+#: libexif/exif-entry.c:1161
+msgid "YCbCr4:2:0"
+msgstr "YCbCr4:2:0"
+
+#: libexif/exif-entry.c:1178
+#, c-format
+msgid "Within distance %i of (x,y) = (%i,%i)"
+msgstr "Dans la distance %i de (x,y) = (%i,%i)"
+
+#: libexif/exif-entry.c:1187
+#, c-format
+msgid "Within rectangle (width %i, height %i) around (x,y) = (%i,%i)"
+msgstr "Dans le rectangle (largeur %i, hauteur %i) autour de (x,y) = (%i,%i)"
+
+#: libexif/exif-entry.c:1193
+#, c-format
+msgid "Unexpected number of components (%li, expected 2, 3, or 4)."
+msgstr "Nombre inattendu de composants (%li, attendait 2, 3, ou 4)."
+
+#: libexif/exif-entry.c:1231
+#, fuzzy
+msgid "Sea level"
+msgstr "Niveau de charge"
+
+#: libexif/exif-entry.c:1233
+msgid "Sea level reference"
+msgstr ""
+
+#: libexif/exif-entry.c:1341
+#, fuzzy, c-format
+msgid "Unknown value %i"
+msgstr "Inconnu"
+
+#: libexif/exif-format.c:37
+#, fuzzy
+msgid "Short"
+msgstr "Spot"
+
+#: libexif/exif-format.c:38
+#, fuzzy
+msgid "Rational"
+msgstr "action"
+
+#: libexif/exif-format.c:39
+#, fuzzy
+msgid "SRational"
+msgstr "action"
+
+#: libexif/exif-format.c:40
+msgid "Undefined"
+msgstr "Non défini"
+
+#: libexif/exif-format.c:41
+msgid "ASCII"
+msgstr ""
+
+#: libexif/exif-format.c:42
+msgid "Long"
+msgstr ""
+
+#: libexif/exif-format.c:43
+#, fuzzy
+msgid "Byte"
+msgstr "Centimère"
+
+#: libexif/exif-format.c:44
+msgid "SByte"
+msgstr ""
+
+#: libexif/exif-format.c:45
+#, fuzzy
+msgid "SShort"
+msgstr "Spot"
+
+#: libexif/exif-format.c:46
+msgid "SLong"
+msgstr ""
+
+#: libexif/exif-format.c:47
+#, fuzzy
+msgid "Float"
+msgstr "Flash"
+
+#: libexif/exif-format.c:48
+msgid "Double"
+msgstr ""
+
+#: libexif/exif-loader.c:119
+#, c-format
+msgid "The file '%s' could not be opened."
+msgstr ""
+
+#: libexif/exif-loader.c:300
+msgid "The data supplied does not seem to contain EXIF data."
+msgstr ""
+
+#: libexif/exif-log.c:43
+msgid "Debugging information"
+msgstr ""
+
+#: libexif/exif-log.c:44
+msgid "Debugging information is available."
+msgstr ""
+
+#: libexif/exif-log.c:45
+msgid "Not enough memory"
+msgstr ""
+
+#: libexif/exif-log.c:46
+msgid "The system cannot provide enough memory."
+msgstr ""
+
+#: libexif/exif-log.c:47
+msgid "Corrupt data"
+msgstr ""
+
+#: libexif/exif-log.c:48
+msgid "The data provided does not follow the specification."
+msgstr ""
+
+#: libexif/exif-tag.c:62
+msgid "GPS tag version"
+msgstr ""
+
+#: libexif/exif-tag.c:63
+msgid ""
+"Indicates the version of <GPSInfoIFD>. The version is given as 2.0.0.0. This "
+"tag is mandatory when <GPSInfo> tag is present. (Note: The <GPSVersionID> "
+"tag is given in bytes, unlike the <ExifVersion> tag. When the version is "
+"2.0.0.0, the tag value is 02000000.H)."
+msgstr ""
+
+#: libexif/exif-tag.c:69
+msgid "Interoperability Index"
+msgstr ""
+
+#: libexif/exif-tag.c:70
+msgid ""
+"Indicates the identification of the Interoperability rule. Use \"R98\" for "
+"stating ExifR98 Rules. Four bytes used including the termination code "
+"(NULL). see the separate volume of Recommended Exif Interoperability Rules "
+"(ExifR98) for other tags used for ExifR98."
+msgstr ""
+"Indique l'identification de la règle d'interopérabilité. Utilisez \"R98\" "
+"pour préciser des règles ExifR98. Quatre octets sont utilisés, incluant le "
+"code de terminaison (NULL). Voyez le volume séparé des règles "
+"d'interopérabilité recommandées pour exif (ExifR98) pour les autres "
+"marqueurs utilisés pour ExifR98."
+
+#: libexif/exif-tag.c:76
+msgid "North or South Latitude"
+msgstr ""
+
+#: libexif/exif-tag.c:77
+msgid ""
+"Indicates whether the latitude is north or south latitude. The ASCII value "
+"'N' indicates north latitude, and 'S' is south latitude."
+msgstr ""
+
+#: libexif/exif-tag.c:81
+msgid "Interoperability Version"
+msgstr ""
+
+#: libexif/exif-tag.c:83
+msgid "Latitude"
+msgstr ""
+
+#: libexif/exif-tag.c:84
+msgid ""
+"Indicates the latitude. The latitude is expressed as three RATIONAL values "
+"giving the degrees, minutes, and seconds, respectively. When degrees, "
+"minutes and seconds are expressed, the format is dd/1,mm/1,ss/1. When "
+"degrees and minutes are used and, for example, fractions of minutes are "
+"given up to two decimal places, the format is dd/1,mmmm/100,0/1."
+msgstr ""
+
+#: libexif/exif-tag.c:91
+msgid "East or West Longitude"
+msgstr ""
+
+#: libexif/exif-tag.c:92
+msgid ""
+"Indicates whether the longitude is east or west longitude. ASCII 'E' "
+"indicates east longitude, and 'W' is west longitude."
+msgstr ""
+
+#: libexif/exif-tag.c:95
+msgid "Longitude"
+msgstr ""
+
+#: libexif/exif-tag.c:96
+msgid ""
+"Indicates the longitude. The longitude is expressed as three RATIONAL values "
+"giving the degrees, minutes, and seconds, respectively. When degrees, "
+"minutes and seconds are expressed, the format is ddd/1,mm/1,ss/1. When "
+"degrees and minutes are used and, for example, fractions of minutes are "
+"given up to two decimal places, the format is ddd/1,mmmm/100,0/1."
+msgstr ""
+
+#: libexif/exif-tag.c:103
+msgid "Altitude reference"
+msgstr ""
+
+#: libexif/exif-tag.c:104
+msgid ""
+"Indicates the altitude used as the reference altitude. If the reference is "
+"sea level and the altitude is above sea level, 0 is given. If the altitude "
+"is below sea level, a value of 1 is given and the altitude is indicated as "
+"an absolute value in the GSPAltitude tag. The reference unit is meters. Note "
+"that this tag is BYTE type, unlike other reference tags."
+msgstr ""
+
+#: libexif/exif-tag.c:110
+msgid "Altitude"
+msgstr ""
+
+#: libexif/exif-tag.c:111
+msgid ""
+"Indicates the altitude based on the reference in GPSAltitudeRef. Altitude is "
+"expressed as one RATIONAL value. The reference unit is meters."
+msgstr ""
+
+#: libexif/exif-tag.c:114
+msgid "GPS time (atomic clock)"
+msgstr ""
+
+#: libexif/exif-tag.c:115
+msgid ""
+"Indicates the time as UTC (Coordinated Universal Time). TimeStamp is "
+"expressed as three RATIONAL values giving the hour, minute, and second."
+msgstr ""
+
+#: libexif/exif-tag.c:118
+msgid "GPS satellites used for measurement"
+msgstr ""
+
+#: libexif/exif-tag.c:119
+msgid ""
+"Indicates the GPS satellites used for measurements. This tag can be used to "
+"describe the number of satellites, their ID number, angle of elevation, "
+"azimuth, SNR and other information in ASCII notation. The format is not "
+"specified. If the GPS receiver is incapable of taking measurements, value of "
+"the tag shall be set to NULL."
+msgstr ""
+
+#: libexif/exif-tag.c:125
+msgid "GPS receiver status"
+msgstr ""
+
+#: libexif/exif-tag.c:126
+msgid ""
+"Indicates the status of the GPS receiver when the image is recorded. 'A' "
+"means measurement is in progress, and 'V' means the measurement is "
+"Interoperability."
+msgstr ""
+
+#: libexif/exif-tag.c:129
+#, fuzzy
+msgid "GPS measurement mode"
+msgstr "Mode de mesure"
+
+#: libexif/exif-tag.c:130
+msgid ""
+"Indicates the GPS measurement mode. '2' means two-dimensional measurement "
+"and '3' means three-dimensional measurement is in progress."
+msgstr ""
+
+#: libexif/exif-tag.c:133
+msgid "Measurement precision"
+msgstr ""
+
+#: libexif/exif-tag.c:134
+msgid ""
+"Indicates the GPS DOP (data degree of precision). An HDOP value is written "
+"during two-dimensional measurement, and PDOP during three-dimensional "
+"measurement."
+msgstr ""
+
+#: libexif/exif-tag.c:137
+msgid "Speed unit"
+msgstr ""
+
+#: libexif/exif-tag.c:138
+msgid ""
+"Indicates the unit used to express the GPS receiver speed of movement. 'K', "
+"'M' and 'N' represent kilometers per hour, miles per hour, and knots."
+msgstr ""
+
+#: libexif/exif-tag.c:141
+msgid "Speed of GPS receiver"
+msgstr ""
+
+#: libexif/exif-tag.c:142
+msgid "Indicates the speed of GPS receiver movement."
+msgstr ""
+
+#: libexif/exif-tag.c:143
+msgid "Reference for direction of movement"
+msgstr ""
+
+#: libexif/exif-tag.c:144
+msgid ""
+"Indicates the reference for giving the direction of GPS receiver movement. "
+"'T' denotes true direction and 'M' is magnetic direction."
+msgstr ""
+
+#: libexif/exif-tag.c:147
+msgid "Direction of movement"
+msgstr ""
+
+#: libexif/exif-tag.c:148
+msgid ""
+"Indicates the direction of GPS receiver movement. The range of values is "
+"from 0.00 to 359.99."
+msgstr ""
+
+#: libexif/exif-tag.c:150
+msgid "GPS Img Direction Reference"
+msgstr ""
+
+#: libexif/exif-tag.c:151
+msgid ""
+"Indicates the reference for giving the direction of the image when it is "
+"captured. 'T' denotes true direction and 'M' is magnetic direction."
+msgstr ""
+
+#: libexif/exif-tag.c:153
+#, fuzzy
+msgid "GPS Img Direction"
+msgstr "Description de l'image"
+
+#: libexif/exif-tag.c:154
+msgid ""
+"Indicates the direction of the image when it was captured. The range of "
+"values is from 0.00 to 359.99."
+msgstr ""
+
+#: libexif/exif-tag.c:156
+msgid "Geodetic survey data used"
+msgstr ""
+
+#: libexif/exif-tag.c:157
+msgid ""
+"Indicates the geodetic survey data used by the GPS receiver. If the survey "
+"data is restricted to Japan, the value of this tag is 'TOKYO' or 'WGS-84'. "
+"If a GPS Info tag is recorded, it is strongly recommended that this tag be "
+"recorded."
+msgstr ""
+
+#: libexif/exif-tag.c:161
+msgid "Reference for latitude of destination"
+msgstr ""
+
+#: libexif/exif-tag.c:162
+msgid ""
+"Indicates whether the latitude of the destination point is north or south "
+"latitude. The ASCII value 'N' indicates north latitude, and 'S' is south "
+"latitude."
+msgstr ""
+
+#: libexif/exif-tag.c:165
+msgid "Latitude of destination"
+msgstr ""
+
+#: libexif/exif-tag.c:166
+msgid ""
+"Indicates the latitude of the destination point. The latitude is expressed "
+"as three RATIONAL values giving the degrees, minutes, and seconds, "
+"respectively. If latitude is expressed as degrees, minutes and seconds, a "
+"typical format would be dd/1,mm/1,ss/1. When degrees and minutes are used "
+"and, for example, fractions of minutes are given up to two decimal places, "
+"the format would be dd/1,mmmm/100,0/1."
+msgstr ""
+
+#: libexif/exif-tag.c:173
+msgid "Reference for longitude of destination"
+msgstr ""
+
+#: libexif/exif-tag.c:174
+msgid ""
+"Indicates whether the longitude of the destination point is east or west "
+"longitude. ASCII 'E' indicates east longitude, and 'W' is west longitude."
+msgstr ""
+
+#: libexif/exif-tag.c:177
+msgid "Longitude of destination"
+msgstr ""
+
+#: libexif/exif-tag.c:178
+msgid ""
+"Indicates the longitude of the destination point. The longitude is expressed "
+"as three RATIONAL values giving the degrees, minutes, and seconds, "
+"respectively. If longitude is expressed as degrees, minutes and seconds, a "
+"typical format would be ddd/1,mm/1,ss/1. When degrees and minutes are used "
+"and, for example, fractions of minutes are given up to two decimal places, "
+"the format would be ddd/1,mmmm/100,0/1."
+msgstr ""
+
+#: libexif/exif-tag.c:186
+msgid "Reference for bearing of destination"
+msgstr ""
+
+#: libexif/exif-tag.c:187
+msgid ""
+"Indicates the reference used for giving the bearing to the destination "
+"point. 'T' denotes true direction and 'M' is magnetic direction."
+msgstr ""
+
+#: libexif/exif-tag.c:190
+msgid "Bearing of destination"
+msgstr ""
+
+#: libexif/exif-tag.c:191
+msgid ""
+"Indicates the bearing to the destination point. The range of values is from "
+"0.00 to 359.99."
+msgstr ""
+
+#: libexif/exif-tag.c:193
+msgid "Reference for distance to destination"
+msgstr ""
+
+#: libexif/exif-tag.c:194
+msgid ""
+"Indicates the unit used to express the distance to the destination point. "
+"'K', 'M' and 'N' represent kilometers, miles and knots."
+msgstr ""
+
+#: libexif/exif-tag.c:197
+msgid "Distance to destination"
+msgstr ""
+
+#: libexif/exif-tag.c:198
+#, fuzzy
+msgid "Indicates the distance to the destination point."
+msgstr "Ce marqueur indique la distance au sujet."
+
+#: libexif/exif-tag.c:199
+msgid "Name of GPS processing method"
+msgstr ""
+
+#: libexif/exif-tag.c:200
+msgid ""
+"A character string recording the name of the method used for location "
+"finding. The first byte indicates the character code used, and this is "
+"followed by the name of the method. Since the Type is not ASCII, NULL "
+"termination is not necessary."
+msgstr ""
+
+#: libexif/exif-tag.c:205
+msgid "Name of GPS area"
+msgstr ""
+
+#: libexif/exif-tag.c:206
+msgid ""
+"A character string recording the name of the GPS area. The first byte "
+"indicates the character code used, and this is followed by the name of the "
+"GPS area. Since the Type is not ASCII, NULL termination is not necessary."
+msgstr ""
+
+#: libexif/exif-tag.c:210
+msgid "GPS date"
+msgstr ""
+
+#: libexif/exif-tag.c:211
+msgid ""
+"A character string recording date and time information relative to UTC "
+"(Coordinated Universal Time). The format is \"YYYY:MM:DD\". The length of "
+"the string is 11 bytes including NULL."
+msgstr ""
+
+#: libexif/exif-tag.c:215
+msgid "GPS differential correction"
+msgstr ""
+
+#: libexif/exif-tag.c:216
+msgid ""
+"Indicates whether differential correction is applied to the GPS receiver."
+msgstr ""
+
+#: libexif/exif-tag.c:220
+msgid "New Subfile Type"
+msgstr ""
+
+#: libexif/exif-tag.c:220
+msgid "A general indication of the kind of data contained in this subfile."
+msgstr ""
+
+#: libexif/exif-tag.c:222
+msgid "Image Width"
+msgstr "Hauteur de l'image"
+
+#: libexif/exif-tag.c:223
+#, fuzzy
+msgid ""
+"The number of columns of image data, equal to the number of pixels per row. "
+"In JPEG compressed data a JPEG marker is used instead of this tag."
+msgstr ""
+"Le nombre de colonnes des données de l'image, égal au nombre de pixels par "
+"ligne. Dans des données compressées en JPEG un marqueur JPEG est utilisé à "
+"la place de ce marqueur."
+
+#: libexif/exif-tag.c:227
+msgid "Image Length"
+msgstr "Longeur de l'image"
+
+#: libexif/exif-tag.c:228
+msgid ""
+"The number of rows of image data. In JPEG compressed data a JPEG marker is "
+"used instead of this tag."
+msgstr ""
+"Le nombre de lignes des données de l'image. Dans des données compressées en "
+"JPEG un marqueur JPEG est utilisé à la place de ce marqueur."
+
+#: libexif/exif-tag.c:231
+msgid "Bits per Sample"
+msgstr "Bits des échantillons"
+
+#: libexif/exif-tag.c:232
+#, fuzzy
+msgid ""
+"The number of bits per image component. In this standard each component of "
+"the image is 8 bits, so the value for this tag is 8. See also "
+"<SamplesPerPixel>. In JPEG compressed data a JPEG marker is used instead of "
+"this tag."
+msgstr ""
+"Le nombre de bits par composant d'image. Dans ce standard chaque composant "
+"de l'image fait 8 bits, donc la valeur de ce tag est 9. Voyez aussi "
+"<SamplesPerPixel>. Dans des données compressées en JPEG un marqueur JPEG est "
+"utilisé à la place de ce marqueur."
+
+#: libexif/exif-tag.c:237
+msgid "Compression"
+msgstr "Compression"
+
+#: libexif/exif-tag.c:238
+msgid ""
+"The compression scheme used for the image data. When a primary image is JPEG "
+"compressed, this designation is not necessary and is omitted. When "
+"thumbnails use JPEG compression, this tag value is set to 6."
+msgstr ""
+"Le schéma de compression utilisé par les données de l'image. Quand une image "
+"primaire est compressée en JPEG, cette désignation n'est pas nécessaire et "
+"est omise. Lorsque les vignettes utilisent la compression JPEG, la valeur de "
+"ce marqueur est de 6."
+
+#: libexif/exif-tag.c:244
+msgid "Photometric Interpretation"
+msgstr "Interprétation photométrique"
+
+#: libexif/exif-tag.c:245
+msgid ""
+"The pixel composition. In JPEG compressed data a JPEG marker is used instead "
+"of this tag."
+msgstr ""
+"La composition des pixels. Dans des données compressées en JPEG un marqueur "
+"JPEG est utilisé à la place de ce marqueur."
+
+#: libexif/exif-tag.c:249
+msgid "Fill Order"
+msgstr "Ordre de remplissage"
+
+#: libexif/exif-tag.c:251
+msgid "Document Name"
+msgstr "Nom du document"
+
+#: libexif/exif-tag.c:253
+msgid "Image Description"
+msgstr "Description de l'image"
+
+#: libexif/exif-tag.c:254
+msgid ""
+"A character string giving the title of the image. It may be a comment such "
+"as \"1988 company picnic\" or the like. Two-bytes character codes cannot be "
+"used. When a 2-bytes code is necessary, the Exif Private tag <UserComment> "
+"is to be used."
+msgstr ""
+"Une chaîne de caractères donnant le titre de l'image. Ce peut être un "
+"commentaire comme \"pique-nique société 1988\" ou approchant. Les codes de "
+"caractères sur deux octets ne peuvent être utilisés. Lorsqu'un code deux "
+"octets est nécessaire, le marqueur privé exif <UserComment> doit être "
+"utilisé."
+
+#: libexif/exif-tag.c:260
+msgid "Manufacturer"
+msgstr "Constructeur"
+
+#: libexif/exif-tag.c:261
+msgid ""
+"The manufacturer of the recording equipment. This is the manufacturer of the "
+"DSC, scanner, video digitizer or other equipment that generated the image. "
+"When the field is left blank, it is treated as unknown."
+msgstr ""
+"Le constructeur de l'équipement d'enregistrement. C'est le constructeur du "
+"DSC, scanner, enregistreur vidéo ou tout autre équipement ayant généré "
+"l'image. Quand ce champ est vide, il est traité en tant qu'inconnu."
+
+#: libexif/exif-tag.c:267
+msgid "Model"
+msgstr "Modèle"
+
+#: libexif/exif-tag.c:268
+msgid ""
+"The model name or model number of the equipment. This is the model name or "
+"number of the DSC, scanner, video digitizer or other equipment that "
+"generated the image. When the field is left blank, it is treated as unknown."
+msgstr ""
+"Le nom du modèle ou le numéro du modèle de l'équipement. C'est le nom du "
+"modèlé ou le numéro du DSC, scanner, enregistreur vidéo ou tout autre "
+"équipement ayant généré l'image. Quand ce champ est vide, il est traité en "
+"tant qu'inconnu."
+
+#: libexif/exif-tag.c:273
+msgid "Strip Offsets"
+msgstr ""
+
+#: libexif/exif-tag.c:274
+msgid ""
+"For each strip, the byte offset of that strip. It is recommended that this "
+"be selected so the number of strip bytes does not exceed 64 Kbytes. With "
+"JPEG compressed data this designation is not needed and is omitted. See also "
+"<RowsPerStrip> and <StripByteCounts>."
+msgstr ""
+
+#: libexif/exif-tag.c:280
+msgid "Orientation"
+msgstr "Orientation"
+
+#: libexif/exif-tag.c:281
+#, fuzzy
+msgid "The image orientation viewed in terms of rows and columns."
+msgstr "L'orientation de l'image vue en terme de lignes et colonnes."
+
+#: libexif/exif-tag.c:284
+msgid "Samples per Pixel"
+msgstr "Échantillons par pixel"
+
+#: libexif/exif-tag.c:285
+msgid ""
+"The number of components per pixel. Since this standard applies to RGB and "
+"YCbCr images, the value set for this tag is 3. In JPEG compressed data a "
+"JPEG marker is used instead of this tag."
+msgstr ""
+"Le nombre de composants par pixel. Puisque le standard s'applique aux images "
+"RGB et YCbCr, la valeur de ce marqueur est 3. Dans des données compressées "
+"en JPEG un marqueur JPEG est utilisé à la place de ce marqueur."
+
+#: libexif/exif-tag.c:290
+msgid "Rows per Strip"
+msgstr ""
+
+#: libexif/exif-tag.c:291
+msgid ""
+"The number of rows per strip. This is the number of rows in the image of one "
+"strip when an image is divided into strips. With JPEG compressed data this "
+"designation is not needed and is omitted. See also <StripOffsets> and "
+"<StripByteCounts>."
+msgstr ""
+
+#: libexif/exif-tag.c:297
+msgid "Strip Byte Count"
+msgstr ""
+
+#: libexif/exif-tag.c:298
+msgid ""
+"The total number of bytes in each strip. With JPEG compressed data this "
+"designation is not needed and is omitted."
+msgstr ""
+
+#: libexif/exif-tag.c:301
+msgid "x-Resolution"
+msgstr "x-résolution"
+
+#: libexif/exif-tag.c:302
+msgid ""
+"The number of pixels per <ResolutionUnit> in the <ImageWidth> direction. "
+"When the image resolution is unknown, 72 [dpi] is designated."
+msgstr ""
+"Le nombre de pixels par <ResolutionUnit> dans la direction <ImageWidth>."
+"Lorsque la résolution de l'image est inconnu, 72 [dpi] sont utilisés."
+
+#: libexif/exif-tag.c:306
+msgid "y-Resolution"
+msgstr "y-résolution"
+
+#: libexif/exif-tag.c:307
+msgid ""
+"The number of pixels per <ResolutionUnit> in the <ImageLength> direction. "
+"The same value as <XResolution> is designated."
+msgstr ""
+"Le nombre de pixels par <ResolutionUnit> dans la direction <ImageLength>.La "
+"même valeur que pour <XResolution> est utilisée."
+
+#: libexif/exif-tag.c:311
+msgid "Planar Configuration"
+msgstr "Configuration du plan"
+
+#: libexif/exif-tag.c:312
+msgid ""
+"Indicates whether pixel components are recorded in a chunky or planar "
+"format. In JPEG compressed files a JPEG marker is used instead of this tag. "
+"If this field does not exist, the TIFF default of 1 (chunky) is assumed."
+msgstr ""
+
+#: libexif/exif-tag.c:317
+msgid "Resolution Unit"
+msgstr "Unité de la résolution"
+
+#: libexif/exif-tag.c:318
+msgid ""
+"The unit for measuring <XResolution> and <YResolution>. The same unit is "
+"used for both <XResolution> and <YResolution>. If the image resolution is "
+"unknown, 2 (inches) is designated."
+msgstr ""
+"L'unité de mesure pour <XResolution> et <YResolution>. La même unité est "
+"utilisée pour <XResolution> et <YResolution>. Si la résolution de l'image "
+"est inconnue, 2 (pouces) sont utilisées."
+
+#: libexif/exif-tag.c:323
+msgid "Transfer Function"
+msgstr "Fonction de transfert"
+
+#: libexif/exif-tag.c:324
+msgid ""
+"A transfer function for the image, described in tabular style. Normally this "
+"tag is not necessary, since color space is specified in the color space "
+"information tag (<ColorSpace>)."
+msgstr ""
+"Une fonction de transfert pour l'image, décrite en style tableau. "
+"Normalement, ce marqueur n'est pas nécessaire, puisque l'espace des couleurs "
+"est spécifié dans le marqueur d'information sur l'espace des couleurs "
+"(<ColorSpace>)."
+
+#: libexif/exif-tag.c:328
+msgid "Software"
+msgstr "Logiciel"
+
+#: libexif/exif-tag.c:329
+msgid ""
+"This tag records the name and version of the software or firmware of the "
+"camera or image input device used to generate the image. The detailed format "
+"is not specified, but it is recommended that the example shown below be "
+"followed. When the field is left blank, it is treated as unknown."
+msgstr ""
+"Ce marqueur enregistre le nom et la version du logiciel ou du matériel de "
+"l'appareil ou du périphérique d'entrée utilisé pour générer l'image. Le "
+"format détaillé n'est pas spécifié, mais il est recommandé que l'exemple ci-"
+"dessous soit suivi. Lorsque le champ est vide, il est traité comme inconnu."
+
+#: libexif/exif-tag.c:336
+msgid "Date and Time"
+msgstr "Date et heure"
+
+#: libexif/exif-tag.c:337
+msgid ""
+"The date and time of image creation. In this standard (EXIF-2.1) it is the "
+"date and time the file was changed."
+msgstr ""
+"La date et l'heure de création de l'image. Dans ce standard (EXIF-2.1) il "
+"s'agit de la date et de l'heure de modification du fichier."
+
+#: libexif/exif-tag.c:340
+msgid "Artist"
+msgstr "Artiste"
+
+#: libexif/exif-tag.c:341
+msgid ""
+"This tag records the name of the camera owner, photographer or image "
+"creator. The detailed format is not specified, but it is recommended that "
+"the information be written as in the example below for ease of "
+"Interoperability. When the field is left blank, it is treated as unknown."
+msgstr ""
+"Ce marqueur enregistre le nom du propriétaire de l'appareil, du photographe "
+"ou du créateur de l'image. Le format détaillé n'est pas spécifié, mais il "
+"est recommandé que cette information soit écrite comme dans l'exemple ci-"
+"dessous pour faciliter l'interopérabilité. Lorsque le champ est laissé "
+"blanc, il est considéré comme inconnu."
+
+#: libexif/exif-tag.c:347 libexif/pentax/mnote-pentax-tag.c:113
+msgid "White Point"
+msgstr "Point blanc"
+
+#: libexif/exif-tag.c:348
+#, fuzzy
+msgid ""
+"The chromaticity of the white point of the image. Normally this tag is not "
+"necessary, since color space is specified in the color space information tag "
+"(<ColorSpace>)."
+msgstr ""
+"Une fonction de transfert pour l'image, décrite en style tableau. "
+"Normalement, ce marqueur n'est pas nécessaire, puisque l'espace des couleurs "
+"est spécifié dans le marqueur d'information sur l'espace des couleurs "
+"(<ColorSpace>)."
+
+#: libexif/exif-tag.c:353
+msgid "Primary Chromaticities"
+msgstr ""
+
+#: libexif/exif-tag.c:354
+#, fuzzy
+msgid ""
+"The chromaticity of the three primary colors of the image. Normally this tag "
+"is not necessary, since color space is specified in the color space "
+"information tag (<ColorSpace>)."
+msgstr ""
+"Une fonction de transfert pour l'image, décrite en style tableau. "
+"Normalement, ce marqueur n'est pas nécessaire, puisque l'espace des couleurs "
+"est spécifié dans le marqueur d'information sur l'espace des couleurs "
+"(<ColorSpace>)."
+
+#: libexif/exif-tag.c:359
+msgid "Defined by Adobe Corporation to enable TIFF Trees within a TIFF file."
+msgstr ""
+
+#: libexif/exif-tag.c:362
+msgid "Transfer Range"
+msgstr "Échelle de transfert"
+
+#: libexif/exif-tag.c:366
+msgid "JPEG Interchange Format"
+msgstr "Format d'échange JPEG"
+
+#: libexif/exif-tag.c:367
+msgid ""
+"The offset to the start byte (SOI) of JPEG compressed thumbnail data. This "
+"is not used for primary image JPEG data."
+msgstr ""
+
+#: libexif/exif-tag.c:372
+msgid "JPEG Interchange Format Length"
+msgstr "Longueur du format d'échange JPEG"
+
+#: libexif/exif-tag.c:373
+msgid ""
+"The number of bytes of JPEG compressed thumbnail data. This is not used for "
+"primary image JPEG data. JPEG thumbnails are not divided but are recorded as "
+"a continuous JPEG bitstream from SOI to EOI. Appn and COM markers should not "
+"be recorded. Compressed thumbnails must be recorded in no more than 64 "
+"Kbytes, including all other data to be recorded in APP1."
+msgstr ""
+"Le nombre d'octets de données des vignettes compressées JPEG. Ce n'est pas "
+"utilisé pour les données des images JPEG primaires. Les vignettes JPEG ne "
+"sont pas divisées mais sont enregistrées sous la forme d'un flux continu "
+"JPEG de SOI à EOI. Les marqueurs Appn et COM ne doivent pas être "
+"enregistrés. Les vignettes compressées doivent être enregistrées dans moins "
+"de 64 kilo-octets, incluant toutes les autres données devant être "
+"enregistrées dans APP1."
+
+#: libexif/exif-tag.c:382
+msgid "YCbCr Coefficients"
+msgstr "Coéfficients YCbCr"
+
+#: libexif/exif-tag.c:383
+#, fuzzy
+msgid ""
+"The matrix coefficients for transformation from RGB to YCbCr image data. No "
+"default is given in TIFF; but here the value given in \"Color Space "
+"Guidelines\", is used as the default. The color space is declared in a color "
+"space information tag, with the default being the value that gives the "
+"optimal image characteristics Interoperability this condition."
+msgstr ""
+"La valeur de référence des points noir et blanc. Nul défaut n'est donné en "
+"TIFF, mais les valeurs ci-dessous sont données comme défauts ici. L'espace "
+"des couleurs est déclaré dans le marqueur d'informations de l'espace des "
+"couleurs, avec la valeur par défaut étant celle donnant les caractéristiques "
+"optimales de l'image dans ces conditions."
+
+#: libexif/exif-tag.c:392
+msgid "YCbCr Sub-Sampling"
+msgstr ""
+
+#: libexif/exif-tag.c:393
+msgid ""
+"The sampling ratio of chrominance components in relation to the luminance "
+"component. In JPEG compressed data a JPEG marker is used instead of this tag."
+msgstr ""
+
+#: libexif/exif-tag.c:398
+msgid "YCbCr Positioning"
+msgstr "Positionnement YCbCr"
+
+#: libexif/exif-tag.c:399
+msgid ""
+"The position of chrominance components in relation to the luminance "
+"component. This field is designated only for JPEG compressed data or "
+"uncompressed YCbCr data. The TIFF default is 1 (centered); but when Y:Cb:Cr "
+"= 4:2:2 it is recommended in this standard that 2 (co-sited) be used to "
+"record data, in order to improve the image quality when viewed on TV "
+"systems. When this field does not exist, the reader shall assume the TIFF "
+"default. In the case of Y:Cb:Cr = 4:2:0, the TIFF default (centered) is "
+"recommended. If the reader does not have the capability of supporting both "
+"kinds of <YCbCrPositioning>, it shall follow the TIFF default regardless of "
+"the value in this field. It is preferable that readers be able to support "
+"both centered and co-sited positioning."
+msgstr ""
+
+#: libexif/exif-tag.c:414
+msgid "Reference Black/White"
+msgstr "Référence Noir/Blanc"
+
+#: libexif/exif-tag.c:415
+msgid ""
+"The reference black point value and reference white point value. No defaults "
+"are given in TIFF, but the values below are given as defaults here. The "
+"color space is declared in a color space information tag, with the default "
+"being the value that gives the optimal image characteristics "
+"Interoperability these conditions."
+msgstr ""
+"La valeur de référence des points noir et blanc. Nul défaut n'est donné en "
+"TIFF, mais les valeurs ci-dessous sont données comme défauts ici. L'espace "
+"des couleurs est déclaré dans le marqueur d'informations de l'espace des "
+"couleurs, avec la valeur par défaut étant celle donnant les caractéristiques "
+"optimales de l'image dans ces conditions."
+
+#: libexif/exif-tag.c:423
+msgid "XML Packet"
+msgstr ""
+
+#: libexif/exif-tag.c:423
+msgid "XMP Metadata"
+msgstr ""
+
+#: libexif/exif-tag.c:438 libexif/exif-tag.c:785
+msgid "CFA Pattern"
+msgstr "Motif CFA"
+
+#: libexif/exif-tag.c:439 libexif/exif-tag.c:786
+msgid ""
+"Indicates the color filter array (CFA) geometric pattern of the image sensor "
+"when a one-chip color area sensor is used. It does not apply to all sensing "
+"methods."
+msgstr ""
+
+#: libexif/exif-tag.c:443
+msgid "Battery Level"
+msgstr "Niveau de charge"
+
+#: libexif/exif-tag.c:444
+msgid "Copyright"
+msgstr "Copyright"
+
+#: libexif/exif-tag.c:445
+msgid ""
+"Copyright information. In this standard the tag is used to indicate both the "
+"photographer and editor copyrights. It is the copyright notice of the person "
+"or organization claiming rights to the image. The Interoperability copyright "
+"statement including date and rights should be written in this field; e.g., "
+"\"Copyright, John Smith, 19xx. All rights reserved.\". In this standard the "
+"field records both the photographer and editor copyrights, with each "
+"recorded in a separate part of the statement. When there is a clear "
+"distinction between the photographer and editor copyrights, these are to be "
+"written in the order of photographer followed by editor copyright, separated "
+"by NULL (in this case, since the statement also ends with a NULL, there are "
+"two NULL codes) (see example 1). When only the photographer is given, it is "
+"terminated by one NULL code (see example 2). When only the editor copyright "
+"is given, the photographer copyright part consists of one space followed by "
+"a terminating NULL code, then the editor copyright is given (see example 3). "
+"When the field is left blank, it is treated as unknown."
+msgstr ""
+
+#: libexif/exif-tag.c:467
+msgid "Exposure time, given in seconds (sec)."
+msgstr "Temps d'exposition, en secondes (sec)."
+
+#: libexif/exif-tag.c:470
+msgid "The F number."
+msgstr "Le nombre F."
+
+#: libexif/exif-tag.c:475
+msgid "Image Resources Block"
+msgstr ""
+
+#: libexif/exif-tag.c:477
+msgid ""
+"A pointer to the Exif IFD. Interoperability, Exif IFD has the same structure "
+"as that of the IFD specified in TIFF. ordinarily, however, it does not "
+"contain image data as in the case of TIFF."
+msgstr ""
+
+#: libexif/exif-tag.c:485
+#, fuzzy
+msgid "Exposure Program"
+msgstr "Mode d'exposition"
+
+#: libexif/exif-tag.c:486
+msgid ""
+"The class of the program used by the camera to set exposure when the picture "
+"is taken."
+msgstr ""
+"La classe du programme utilisé par l'appareil pour configurer l'exposition "
+"lorsque la photo a été prise."
+
+#: libexif/exif-tag.c:490
+msgid "Spectral Sensitivity"
+msgstr "Sensitivité spectrale"
+
+#: libexif/exif-tag.c:491
+msgid ""
+"Indicates the spectral sensitivity of each channel of the camera used. The "
+"tag value is an ASCII string compatible with the standard developed by the "
+"ASTM Technical Committee."
+msgstr ""
+
+#: libexif/exif-tag.c:497
+msgid ""
+"A pointer to the GPS Info IFD. The Interoperability structure of the GPS "
+"Info IFD, like that of Exif IFD, has no image data."
+msgstr ""
+
+#: libexif/exif-tag.c:503
+msgid "ISO Speed Ratings"
+msgstr ""
+
+#: libexif/exif-tag.c:504
+msgid ""
+"Indicates the ISO Speed and ISO Latitude of the camera or input device as "
+"specified in ISO 12232."
+msgstr ""
+
+#: libexif/exif-tag.c:507
+msgid "OECF"
+msgstr ""
+
+#: libexif/exif-tag.c:508
+msgid ""
+"Indicates the Opto-Electronic Conversion Function (OECF) specified in ISO "
+"14524. <OECF> is the relationship between the camera optical input and the "
+"image values."
+msgstr ""
+
+#: libexif/exif-tag.c:513
+msgid "Time Zone Offset"
+msgstr ""
+
+#: libexif/exif-tag.c:514
+msgid "Encodes time zone of camera clock relative to GMT."
+msgstr ""
+
+#: libexif/exif-tag.c:515
+msgid "Exif Version"
+msgstr "Version d'exif"
+
+#: libexif/exif-tag.c:516
+msgid ""
+"The version of this standard supported. Nonexistence of this field is taken "
+"to mean nonconformance to the standard."
+msgstr ""
+
+#: libexif/exif-tag.c:520
+msgid "Date and Time (original)"
+msgstr "Date et heure (originel)"
+
+#: libexif/exif-tag.c:521
+msgid ""
+"The date and time when the original image data was generated. For a digital "
+"still camera the date and time the picture was taken are recorded."
+msgstr ""
+
+#: libexif/exif-tag.c:526
+msgid "Date and Time (digitized)"
+msgstr "Date et heure (numérique)"
+
+#: libexif/exif-tag.c:527
+#, fuzzy
+msgid "The date and time when the image was stored as digital data."
+msgstr "La date et l'heure où l'image a été sauvée sous forme digitale."
+
+#: libexif/exif-tag.c:530
+#, fuzzy
+msgid "Components Configuration"
+msgstr "Configuration du plan"
+
+#: libexif/exif-tag.c:531
+msgid ""
+"Information specific to compressed data. The channels of each component are "
+"arranged in order from the 1st component to the 4th. For uncompressed data "
+"the data arrangement is given in the <PhotometricInterpretation> tag. "
+"However, since <PhotometricInterpretation> can only express the order of Y, "
+"Cb and Cr, this tag is provided for cases when compressed data uses "
+"components other than Y, Cb, and Cr and to enable support of other sequences."
+msgstr ""
+
+#: libexif/exif-tag.c:541
+msgid "Compressed Bits per Pixel"
+msgstr "Bits compressés par pixel"
+
+#: libexif/exif-tag.c:542
+msgid ""
+"Information specific to compressed data. The compression mode used for a "
+"compressed image is indicated in unit bits per pixel."
+msgstr ""
+
+#: libexif/exif-tag.c:546
+msgid "Shutter speed"
+msgstr "Vitesse d'obturation"
+
+#: libexif/exif-tag.c:547
+msgid ""
+"Shutter speed. The unit is the APEX (Additive System of Photographic "
+"Exposure) setting."
+msgstr ""
+
+#: libexif/exif-tag.c:551
+msgid "The lens aperture. The unit is the APEX value."
+msgstr "Ouverture de la lentille. L'unité est la valeur APEX."
+
+#: libexif/exif-tag.c:553
+msgid "Brightness"
+msgstr "Luminosité"
+
+#: libexif/exif-tag.c:554
+msgid ""
+"The value of brightness. The unit is the APEX value. Ordinarily it is given "
+"in the range of -99.99 to 99.99."
+msgstr ""
+
+#: libexif/exif-tag.c:558
+msgid "Exposure Bias"
+msgstr ""
+
+#: libexif/exif-tag.c:559
+msgid ""
+"The exposure bias. The units is the APEX value. Ordinarily it is given in "
+"the range of -99.99 to 99.99."
+msgstr ""
+
+#: libexif/exif-tag.c:562
+#, fuzzy
+msgid "Maximum Aperture Value"
+msgstr "Ouverture"
+
+#: libexif/exif-tag.c:563
+msgid ""
+"The smallest F number of the lens. The unit is the APEX value. Ordinarily it "
+"is given in the range of 00.00 to 99.99, but it is not limited to this range."
+msgstr ""
+
+#: libexif/exif-tag.c:568
+msgid "Subject Distance"
+msgstr "Distance au sujet"
+
+#: libexif/exif-tag.c:569
+msgid "The distance to the subject, given in meters."
+msgstr "La distance au sujet, donnée en mètres."
+
+#: libexif/exif-tag.c:572
+msgid "The metering mode."
+msgstr "Le mode de mesure."
+
+#: libexif/exif-tag.c:574
+msgid "Light Source"
+msgstr "Source lumineuse"
+
+#: libexif/exif-tag.c:575
+msgid "The kind of light source."
+msgstr "Le type de source lumineuse."
+
+#: libexif/exif-tag.c:578
+msgid ""
+"This tag is recorded when an image is taken using a strobe light (flash)."
+msgstr ""
+
+#: libexif/exif-tag.c:582
+msgid ""
+"The actual focal length of the lens, in mm. Conversion is not made to the "
+"focal length of a 35 mm film camera."
+msgstr ""
+
+#: libexif/exif-tag.c:585
+msgid "Subject Area"
+msgstr "Aire du sujet"
+
+#: libexif/exif-tag.c:586
+msgid ""
+"This tag indicates the location and area of the main subject in the overall "
+"scene."
+msgstr ""
+"Ce marqueur indique l'emplacement et l'aire du sujet principal dans la scène "
+"générale."
+
+#: libexif/exif-tag.c:590
+msgid "TIFF/EP Standard ID"
+msgstr ""
+
+#: libexif/exif-tag.c:591
+msgid "Maker Note"
+msgstr "Note du créateur"
+
+#: libexif/exif-tag.c:592
+msgid ""
+"A tag for manufacturers of Exif writers to record any desired information. "
+"The contents are up to the manufacturer."
+msgstr ""
+"Un marqueur pour les constructeurs des logiciels d'écriture Exif pour noter "
+"une information désirée. Le contenu dépend du constructeur."
+
+#: libexif/exif-tag.c:595
+msgid "User Comment"
+msgstr "Commentaire de l'utilisateur"
+
+#: libexif/exif-tag.c:596
+msgid ""
+"A tag for Exif users to write keywords or comments on the image besides "
+"those in <ImageDescription>, and without the character code limitations of "
+"the <ImageDescription> tag. The character code used in the <UserComment> tag "
+"is identified based on an ID code in a fixed 8-byte area at the start of the "
+"tag data area. The unused portion of the area is padded with NULL (\"00.h"
+"\"). ID codes are assigned by means of registration. The designation method "
+"and references for each character code are defined in the specification. The "
+"value of CountN is determined based on the 8 bytes in the character code "
+"area and the number of bytes in the user comment part. Since the TYPE is not "
+"ASCII, NULL termination is not necessary. The ID code for the <UserComment> "
+"area may be a Defined code such as JIS or ASCII, or may be Undefined. The "
+"Undefined name is UndefinedText, and the ID code is filled with 8 bytes of "
+"all \"NULL\" (\"00.H\"). An Exif reader that reads the <UserComment> tag "
+"must have a function for determining the ID code. This function is not "
+"required in Exif readers that do not use the <UserComment> tag. When a "
+"<UserComment> area is set aside, it is recommended that the ID code be ASCII "
+"and that the following user comment part be filled with blank characters [20."
+"H]."
+msgstr ""
+
+#: libexif/exif-tag.c:620
+msgid "A tag used to record fractions of seconds for the <DateTime> tag."
+msgstr ""
+"Marqueur utilisé pour enregistrer des fractions de secondes pour le marqueur "
+"<DateTime>."
+
+#: libexif/exif-tag.c:625
+msgid ""
+"A tag used to record fractions of seconds for the <DateTimeOriginal> tag."
+msgstr ""
+"Marqueur utilisé pour enregistrer des fractions de secondes pour le marqueur "
+"<DateTimeOriginal>."
+
+#: libexif/exif-tag.c:630
+msgid ""
+"A tag used to record fractions of seconds for the <DateTimeDigitized> tag."
+msgstr ""
+"Marqueur utilisé pour enregistrer des fractions de secondes pour le marqueur "
+"<DateTimeDigitized>."
+
+#: libexif/exif-tag.c:634
+msgid "XP Title"
+msgstr ""
+
+#: libexif/exif-tag.c:635
+msgid "A character string giving the title of the image, encoded in UTF-16LE."
+msgstr ""
+
+#: libexif/exif-tag.c:639
+#, fuzzy
+msgid "XP Comment"
+msgstr "Commentaire de l'utilisateur"
+
+#: libexif/exif-tag.c:640
+msgid ""
+"A character string containing a comment about the image, encoded in UTF-16LE."
+msgstr ""
+
+#: libexif/exif-tag.c:644
+msgid "XP Author"
+msgstr ""
+
+#: libexif/exif-tag.c:645
+msgid ""
+"A character string containing the name of the image creator, encoded in UTF-"
+"16LE."
+msgstr ""
+
+#: libexif/exif-tag.c:649
+msgid "XP Keywords"
+msgstr ""
+
+#: libexif/exif-tag.c:650
+msgid ""
+"A character string containing key words describing the image, encoded in UTF-"
+"16LE."
+msgstr ""
+
+#: libexif/exif-tag.c:654
+#, fuzzy
+msgid "XP Subject"
+msgstr "Aire du sujet"
+
+#: libexif/exif-tag.c:655
+msgid "A character string giving the image subject, encoded in UTF-16LE."
+msgstr ""
+
+#: libexif/exif-tag.c:659
+msgid "The FlashPix format version supported by a FPXR file."
+msgstr ""
+
+#: libexif/exif-tag.c:661 libexif/pentax/mnote-pentax-tag.c:102
+msgid "Color Space"
+msgstr "Espace des couleurs"
+
+#: libexif/exif-tag.c:662
+msgid ""
+"The color space information tag is always recorded as the color space "
+"specifier. Normally sRGB (=1) is used to define the color space based on the "
+"PC monitor conditions and environment. If a color space other than sRGB is "
+"used, Uncalibrated (=FFFF.H) is set. Image data recorded as Uncalibrated can "
+"be treated as sRGB when it is converted to FlashPix."
+msgstr ""
+
+#: libexif/exif-tag.c:671
+msgid ""
+"Information specific to compressed data. When a compressed file is recorded, "
+"the valid width of the meaningful image must be recorded in this tag, "
+"whether or not there is padding data or a restart marker. This tag should "
+"not exist in an uncompressed file."
+msgstr ""
+
+#: libexif/exif-tag.c:678
+msgid ""
+"Information specific to compressed data. When a compressed file is recorded, "
+"the valid height of the meaningful image must be recorded in this tag, "
+"whether or not there is padding data or a restart marker. This tag should "
+"not exist in an uncompressed file. Since data padding is unnecessary in the "
+"vertical direction, the number of lines recorded in this valid image height "
+"tag will in fact be the same as that recorded in the SOF."
+msgstr ""
+
+#: libexif/exif-tag.c:689
+msgid ""
+"This tag is used to record the name of an audio file related to the image "
+"data. The only relational information recorded here is the Exif audio file "
+"name and extension (an ASCII string consisting of 8 characters + '.' + 3 "
+"characters). The path is not recorded. Stipulations on audio and file naming "
+"conventions are defined in the specification. When using this tag, audio "
+"files must be recorded in conformance to the Exif audio format. Writers are "
+"also allowed to store the data such as Audio within APP2 as FlashPix "
+"extension stream data. Audio files must be recorded in conformance to the "
+"Exif audio format. The mapping of Exif image files and audio files is done "
+"in any of three ways, [1], [2] and [3]. If multiple files are mapped to one "
+"file as in [2] or [3], the above format is used to record just one audio "
+"file name. If there are multiple audio files, the first recorded file is "
+"given. In the case of [3], for example, for the Exif image file \"DSC00001."
+"JPG\" only  \"SND00001.WAV\" is given as the related Exif audio file. When "
+"there are three Exif audio files \"SND00001.WAV\", \"SND00002.WAV\" and "
+"\"SND00003.WAV\", the Exif image file name for each of them, \"DSC00001.JPG"
+"\", is indicated. By combining multiple relational information, a variety of "
+"playback possibilities can be supported. The method of using relational "
+"information is left to the implementation on the playback side. Since this "
+"information is an ASCII character string, it is terminated by NULL. When "
+"this tag is used to map audio files, the relation of the audio file to image "
+"data must also be indicated on the audio file end."
+msgstr ""
+
+#: libexif/exif-tag.c:721
+msgid ""
+"Interoperability IFD is composed of tags which stores the information to "
+"ensure the Interoperability and pointed by the following tag located in Exif "
+"IFD. The Interoperability structure of Interoperability IFD is the same as "
+"TIFF defined IFD structure but does not contain the image data "
+"characteristically compared with normal TIFF IFD."
+msgstr ""
+
+#: libexif/exif-tag.c:730
+msgid "Flash Energy"
+msgstr ""
+
+#: libexif/exif-tag.c:731
+msgid ""
+"Indicates the strobe energy at the time the image is captured, as measured "
+"in Beam Candle Power Seconds (BCPS)."
+msgstr ""
+
+#: libexif/exif-tag.c:735
+msgid "Spatial Frequency Response"
+msgstr ""
+
+#: libexif/exif-tag.c:736
+msgid ""
+"This tag records the camera or input device spatial frequency table and SFR "
+"values in the direction of image width, image height, and diagonal "
+"direction, as specified in ISO 12233."
+msgstr ""
+
+#: libexif/exif-tag.c:742
+msgid "Focal Plane x-Resolution"
+msgstr "x-Résolution du plan focal"
+
+#: libexif/exif-tag.c:743
+msgid ""
+"Indicates the number of pixels in the image width (X) direction per "
+"<FocalPlaneResolutionUnit> on the camera focal plane."
+msgstr ""
+"Indique le nombre de pixels de largeur (X) de l'image par "
+"<FocalPlaneResolutionUnit> sur le plan focal de l'appareil."
+
+#: libexif/exif-tag.c:747
+msgid "Focal Plane y-Resolution"
+msgstr "y-Résolution du plan focal"
+
+#: libexif/exif-tag.c:748
+msgid ""
+"Indicates the number of pixels in the image height (V) direction per "
+"<FocalPlaneResolutionUnit> on the camera focal plane."
+msgstr ""
+"Indique le nombre de pixels de hauteur (Y) de l'image par "
+"<FocalPlaneResolutionUnit> sur le plan focal de l'appareil."
+
+#: libexif/exif-tag.c:752
+msgid "Focal Plane Resolution Unit"
+msgstr "Unité de résolution du plan focal"
+
+#: libexif/exif-tag.c:753
+msgid ""
+"Indicates the unit for measuring <FocalPlaneXResolution> and "
+"<FocalPlaneYResolution>. This value is the same as the <ResolutionUnit>."
+msgstr ""
+"Indique l'unité de mesure de <FocalPlaneXResolution> et de "
+"<FocalPlaneYResolution>. Cette valeur est la même que <ResolutionUnit>."
+
+#: libexif/exif-tag.c:758
+msgid "Subject Location"
+msgstr "Emplacement du sujet"
+
+#: libexif/exif-tag.c:759
+msgid ""
+"Indicates the location of the main subject in the scene. The value of this "
+"tag represents the pixel at the center of the main subject relative to the "
+"left edge, prior to rotation processing as per the <Rotation> tag. The first "
+"value indicates the X column number and the second indicates the Y row "
+"number."
+msgstr ""
+
+#: libexif/exif-tag.c:766
+#, fuzzy
+msgid "Exposure Index"
+msgstr "Index d'exposition"
+
+#: libexif/exif-tag.c:767
+msgid ""
+"Indicates the exposure index selected on the camera or input device at the "
+"time the image is captured."
+msgstr ""
+
+#: libexif/exif-tag.c:770
+msgid "Sensing Method"
+msgstr ""
+
+#: libexif/exif-tag.c:771
+msgid "Indicates the image sensor type on the camera or input device."
+msgstr ""
+
+#: libexif/exif-tag.c:774 libexif/fuji/mnote-fuji-tag.c:64
+msgid "File Source"
+msgstr "Source du fichier"
+
+#: libexif/exif-tag.c:775
+#, fuzzy
+msgid ""
+"Indicates the image source. If a DSC recorded the image, the tag value of "
+"this tag always be set to 3, indicating that the image was recorded on a DSC."
+msgstr ""
+"Indique la source de l'image. Si un DSC a enregistré l'image, la valeur de "
+"ce marqueur doit toujours être de 3, indiquant que l'image a été directement "
+"photographiée."
+
+#: libexif/exif-tag.c:779
+msgid "Scene Type"
+msgstr "Type de scène"
+
+#: libexif/exif-tag.c:780
+msgid ""
+"Indicates the type of scene. If a DSC recorded the image, this tag value "
+"must always be set to 1, indicating that the image was directly photographed."
+msgstr ""
+"Indique le type de scène. Si un DSC a enregistré l'image, la valeur de ce "
+"marqueur doit toujours être de 1, indiquant que l'image a été directement "
+"photographiée."
+
+#: libexif/exif-tag.c:790
+msgid "Custom Rendered"
+msgstr "Rendu personnalisé"
+
+#: libexif/exif-tag.c:791
+msgid ""
+"This tag indicates the use of special processing on image data, such as "
+"rendering geared to output. When special processing is performed, the reader "
+"is expected to disable or minimize any further processing."
+msgstr ""
+
+#: libexif/exif-tag.c:797
+msgid ""
+"This tag indicates the exposure mode set when the image was shot. In auto-"
+"bracketing mode, the camera shoots a series of frames of the same scene at "
+"different exposure settings."
+msgstr ""
+
+#: libexif/exif-tag.c:802
+msgid "This tag indicates the white balance mode set when the image was shot."
+msgstr ""
+"Ce marqueur indique le mode de balance des blancs positionné lorsque l'image "
+"a été enregistrée."
+
+#: libexif/exif-tag.c:806
+msgid "Digital Zoom Ratio"
+msgstr "Valeur du zoom numérique"
+
+#: libexif/exif-tag.c:807
+msgid ""
+"This tag indicates the digital zoom ratio when the image was shot. If the "
+"numerator of the recorded value is 0, this indicates that digital zoom was "
+"not used."
+msgstr ""
+"Ce marqueur indique la valeur du zoom numérique lorsque l'image a été prise."
+"Si le numérateur de la valeur enregistrée est 0, celà signifie que le zoom "
+"numérique n'a pas été utilisé."
+
+#: libexif/exif-tag.c:812
+msgid "Focal Length In 35mm Film"
+msgstr "Longueur focale dans un film de 35mm"
+
+#: libexif/exif-tag.c:813
+msgid ""
+"This tag indicates the equivalent focal length assuming a 35mm film camera, "
+"in mm. A value of 0 means the focal length is unknown. Note that this tag "
+"differs from the FocalLength tag."
+msgstr ""
+"Ce marqueur indique la longueur focale équivalente en assumant un appareil "
+"avec un film de 35mm, en mm. Une valeur de 0 indique que la longueur focale "
+"est inconnue. Notez que ce marqueur est différent du marqueur FocalLength."
+
+#: libexif/exif-tag.c:819
+msgid "Scene Capture Type"
+msgstr "Type de capture de la scène"
+
+#: libexif/exif-tag.c:820
+msgid ""
+"This tag indicates the type of scene that was shot. It can also be used to "
+"record the mode in which the image was shot. Note that this differs from the "
+"scene type <SceneType> tag."
+msgstr ""
+
+#: libexif/exif-tag.c:825
+msgid "Gain Control"
+msgstr "Contrôle du gain"
+
+#: libexif/exif-tag.c:826
+msgid "This tag indicates the degree of overall image gain adjustment."
+msgstr "Ce marqueur indique le degré général d'ajustement du gain de l'image."
+
+#: libexif/exif-tag.c:830
+msgid ""
+"This tag indicates the direction of contrast processing applied by the "
+"camera when the image was shot."
+msgstr ""
+
+#: libexif/exif-tag.c:834
+msgid ""
+"This tag indicates the direction of saturation processing applied by the "
+"camera when the image was shot."
+msgstr ""
+
+#: libexif/exif-tag.c:838
+msgid ""
+"This tag indicates the direction of sharpness processing applied by the "
+"camera when the image was shot."
+msgstr ""
+
+#: libexif/exif-tag.c:842
+msgid "Device Setting Description"
+msgstr "Description des paramètres du périphérique"
+
+#: libexif/exif-tag.c:843
+msgid ""
+"This tag indicates information on the picture-taking conditions of a "
+"particular camera model. The tag is used only to indicate the picture-taking "
+"conditions in the reader."
+msgstr ""
+"Ce marqueur indique les informations sur les conditions lors de la prise de "
+"vue pour un modèle particulier d'appareil. Ce marqueur n'est utilisé que "
+"pour indiquer les paramètres de prise de vue au lecteur."
+
+#: libexif/exif-tag.c:849
+msgid "Subject Distance Range"
+msgstr "Échelle de distance au sujet"
+
+#: libexif/exif-tag.c:850
+msgid "This tag indicates the distance to the subject."
+msgstr "Ce marqueur indique la distance au sujet."
+
+#: libexif/exif-tag.c:852
+msgid "Image Unique ID"
+msgstr "ID unique de l'image"
+
+#: libexif/exif-tag.c:853
+msgid ""
+"This tag indicates an identifier assigned uniquely to each image. It is "
+"recorded as an ASCII string equivalent to hexadecimal notation and 128-bit "
+"fixed length."
+msgstr ""
+"Ce marqueur indique un identificateur unique assigné à chaque image. Il est "
+"enregistré sous la forme d'une chaîne ASCII équivalente à la notation "
+"hexadécimale et d'une longueur fixe de 128 bits."
+
+#: libexif/exif-tag.c:858
+msgid "Gamma"
+msgstr ""
+
+#: libexif/exif-tag.c:859
+msgid "Indicates the value of coefficient gamma."
+msgstr ""
+
+#: libexif/exif-tag.c:861
+msgid "PRINT Image Matching"
+msgstr ""
+
+#: libexif/exif-tag.c:862
+msgid "Related to Epson's PRINT Image Matching technology"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:62
+#, fuzzy
+msgid "Softest"
+msgstr "Doux"
+
+#: libexif/fuji/mnote-fuji-entry.c:66
+#, fuzzy
+msgid "Hardest"
+msgstr "Dur"
+
+#: libexif/fuji/mnote-fuji-entry.c:67 libexif/fuji/mnote-fuji-entry.c:96
+msgid "Medium soft"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:68 libexif/fuji/mnote-fuji-entry.c:94
+msgid "Medium hard"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:69 libexif/fuji/mnote-fuji-entry.c:90
+#: libexif/fuji/mnote-fuji-entry.c:98 libexif/fuji/mnote-fuji-entry.c:182
+msgid "Film simulation mode"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:76
+#, fuzzy
+msgid "Daylight-color fluorescent"
+msgstr "Fluorescent"
+
+#: libexif/fuji/mnote-fuji-entry.c:77
+#, fuzzy
+msgid "DayWhite-color fluorescent"
+msgstr "Fluorescent"
+
+#: libexif/fuji/mnote-fuji-entry.c:79
+msgid "Incandescent"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:85
+msgid "Medium high"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:87
+msgid "Medium low"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:88 libexif/fuji/mnote-fuji-entry.c:97
+msgid "Original"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:124 libexif/pentax/mnote-pentax-entry.c:164
+#: libexif/pentax/mnote-pentax-entry.c:299
+#, fuzzy
+msgid "Program AE"
+msgstr "Programme normal"
+
+#: libexif/fuji/mnote-fuji-entry.c:125
+#, fuzzy
+msgid "Natural photo"
+msgstr "Saturation"
+
+#: libexif/fuji/mnote-fuji-entry.c:126
+#, fuzzy
+msgid "Vibration reduction"
+msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#: libexif/fuji/mnote-fuji-entry.c:127
+msgid "Sunset"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:128 libexif/pentax/mnote-pentax-entry.c:181
+msgid "Museum"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:129
+#, fuzzy
+msgid "Party"
+msgstr "Partiel"
+
+#: libexif/fuji/mnote-fuji-entry.c:130
+msgid "Flower"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:131 libexif/pentax/mnote-pentax-entry.c:176
+msgid "Text"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:132
+#, fuzzy
+msgid "NP & flash"
+msgstr "Flash"
+
+#: libexif/fuji/mnote-fuji-entry.c:137
+#, fuzzy
+msgid "Aperture priority AE"
+msgstr "Priorité ouverture"
+
+#: libexif/fuji/mnote-fuji-entry.c:138
+#, fuzzy
+msgid "Shutter priority AE"
+msgstr "Priorité obturation"
+
+#: libexif/fuji/mnote-fuji-entry.c:146
+#, fuzzy
+msgid "F-Standard"
+msgstr "Standard"
+
+#: libexif/fuji/mnote-fuji-entry.c:147
+msgid "F-Chrome"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:148
+msgid "F-B&W"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:151
+msgid "No blur"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:152
+msgid "Blur warning"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:155
+#, fuzzy
+msgid "Focus good"
+msgstr "Mode d'exposition"
+
+#: libexif/fuji/mnote-fuji-entry.c:156
+msgid "Out of focus"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:159
+msgid "AE good"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:160
+msgid "Over exposed"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:164
+msgid "Wide"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:167
+#, fuzzy
+msgid "F0/Standard"
+msgstr "Standard"
+
+#: libexif/fuji/mnote-fuji-entry.c:168
+#, fuzzy
+msgid "F1/Studio portrait"
+msgstr "portrait"
+
+#: libexif/fuji/mnote-fuji-entry.c:169
+msgid "F1a/Professional portrait"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:170
+msgid "F1b/Professional portrait"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:171
+msgid "F1c/Professional portrait"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:172
+msgid "F2/Fujichrome"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:173
+msgid "F3/Studio portrait Ex"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:174
+msgid "F4/Velvia"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:177
+msgid "Auto (100-400%)"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:179
+#, fuzzy
+msgid "Standard (100%)"
+msgstr "Standard"
+
+#: libexif/fuji/mnote-fuji-entry.c:180
+msgid "Wide1 (230%)"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:181
+msgid "Wide2 (400%)"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:263
+#, c-format
+msgid "%2.2f mm"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-entry.c:298 libexif/pentax/mnote-pentax-entry.c:399
+#: libexif/pentax/mnote-pentax-entry.c:451
+#, c-format
+msgid "%i bytes unknown data"
+msgstr "%i de données inconnues"
+
+#: libexif/fuji/mnote-fuji-tag.c:36
+#, fuzzy
+msgid "Maker Note Version"
+msgstr "Note du créateur"
+
+#: libexif/fuji/mnote-fuji-tag.c:37
+msgid "This number is unique, it contains the date of manufacture."
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:41
+#, fuzzy
+msgid "Chromaticity Saturation"
+msgstr "Saturation"
+
+#: libexif/fuji/mnote-fuji-tag.c:44
+msgid "Flash Firing Strength Compensation"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:45
+#, fuzzy
+msgid "Macro mode"
+msgstr "Macro"
+
+#: libexif/fuji/mnote-fuji-tag.c:46
+#, fuzzy
+msgid "Focusing Mode"
+msgstr "Mode d'exposition"
+
+#: libexif/fuji/mnote-fuji-tag.c:47
+#, fuzzy
+msgid "Focus Point"
+msgstr "Mode d'exposition"
+
+#: libexif/fuji/mnote-fuji-tag.c:48
+msgid "Slow Synchro Mode"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:49
+#, fuzzy
+msgid "Picture Mode"
+msgstr "Mode d'exposition"
+
+#: libexif/fuji/mnote-fuji-tag.c:50
+msgid "Continuous Taking"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:51
+msgid "Continuous Sequence Number"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:52
+msgid "FinePix Color"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:53
+msgid "Blur Check"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:54
+msgid "Auto Focus Check"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:55
+#, fuzzy
+msgid "Auto Exposure Check"
+msgstr "Exposition automatique"
+
+#: libexif/fuji/mnote-fuji-tag.c:56
+msgid "Dynamic Range"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:57
+msgid "Film Simulation Mode"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:58
+msgid "Dynamic Range Wide Mode"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:59
+msgid "Development Dynamic Range Wide Mode"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:60
+#, fuzzy
+msgid "Minimum Focal Length"
+msgstr "Longueur focale"
+
+#: libexif/fuji/mnote-fuji-tag.c:61
+#, fuzzy
+msgid "Maximum Focal Length"
+msgstr "Longueur focale"
+
+#: libexif/fuji/mnote-fuji-tag.c:62
+msgid "Maximum Aperture at Minimum Focal"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:63
+msgid "Maximum Aperture at Maximum Focal"
+msgstr ""
+
+#: libexif/fuji/mnote-fuji-tag.c:65
+#, fuzzy
+msgid "Order Number"
+msgstr "Le nombre F."
+
+#: libexif/fuji/mnote-fuji-tag.c:66 libexif/pentax/mnote-pentax-tag.c:98
+#, fuzzy
+msgid "Frame Number"
+msgstr "Le nombre F."
+
+#: libexif/olympus/mnote-olympus-entry.c:49
+#, fuzzy, c-format
+msgid "Invalid format '%s', expected '%s' or '%s'."
+msgstr "Format invalide '%s', attendait '%s'."
+
+#: libexif/olympus/mnote-olympus-entry.c:89
+msgid "AF non D Lens"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:91
+msgid "AF-D or AF-S Lens"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:92
+msgid "AF-D G Lens"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:93
+msgid "AF-D VR Lens"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:97
+msgid "Flash unit unknown"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:98
+msgid "Flash is external"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:99
+msgid "Flash is on Camera"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:102
+msgid "VGA Basic"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:103
+#, fuzzy
+msgid "VGA Normal"
+msgstr "Normal"
+
+#: libexif/olympus/mnote-olympus-entry.c:104
+msgid "VGA Fine"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:105
+msgid "SXGA Basic"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:106
+#, fuzzy
+msgid "SXGA Normal"
+msgstr "Normal"
+
+#: libexif/olympus/mnote-olympus-entry.c:107
+msgid "SXGA Fine"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:108
+msgid "2 MPixel Basic"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:109
+msgid "2 MPixel Normal"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:110
+msgid "2 MPixel Fine"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:113
+#, fuzzy
+msgid "Color"
+msgstr "Espace des couleurs"
+
+#: libexif/olympus/mnote-olympus-entry.c:118
+#, fuzzy
+msgid "Bright+"
+msgstr "Copyright"
+
+#: libexif/olympus/mnote-olympus-entry.c:119
+#, fuzzy
+msgid "Bright-"
+msgstr "Copyright"
+
+#: libexif/olympus/mnote-olympus-entry.c:120
+#, fuzzy
+msgid "Contrast+"
+msgstr "Contraste"
+
+#: libexif/olympus/mnote-olympus-entry.c:121
+#, fuzzy
+msgid "Contrast-"
+msgstr "Contraste"
+
+#: libexif/olympus/mnote-olympus-entry.c:124
+msgid "ISO 80"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:125
+msgid "ISO 160"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:126
+msgid "ISO 320"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:127
+#: libexif/olympus/mnote-olympus-entry.c:245
+msgid "ISO 100"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:131
+msgid "Preset"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:133
+msgid "Incandescence"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:134
+#, fuzzy
+msgid "Fluorescence"
+msgstr "Fluorescent"
+
+#: libexif/olympus/mnote-olympus-entry.c:136
+msgid "SpeedLight"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:139
+msgid "No Fisheye"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:140
+#, fuzzy
+msgid "Fisheye On"
+msgstr "Flash"
+
+#: libexif/olympus/mnote-olympus-entry.c:143
+#, fuzzy
+msgid "Normal, SQ"
+msgstr "Normal"
+
+#: libexif/olympus/mnote-olympus-entry.c:144
+#, fuzzy
+msgid "Normal, HQ"
+msgstr "Normal"
+
+#: libexif/olympus/mnote-olympus-entry.c:145
+#, fuzzy
+msgid "Normal, SHQ"
+msgstr "Normal"
+
+#: libexif/olympus/mnote-olympus-entry.c:146
+#, fuzzy
+msgid "Normal, RAW"
+msgstr "Normal"
+
+#: libexif/olympus/mnote-olympus-entry.c:147
+#, fuzzy
+msgid "Normal, SQ1"
+msgstr "Normal"
+
+#: libexif/olympus/mnote-olympus-entry.c:148
+#, fuzzy
+msgid "Normal, SQ2"
+msgstr "Normal"
+
+#: libexif/olympus/mnote-olympus-entry.c:149
+#, fuzzy
+msgid "Normal, super high"
+msgstr "Programme normal"
+
+#: libexif/olympus/mnote-olympus-entry.c:150
+msgid "Normal, standard"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:151
+#, fuzzy
+msgid "Fine, SQ"
+msgstr "pouces"
+
+#: libexif/olympus/mnote-olympus-entry.c:152
+#, fuzzy
+msgid "Fine, HQ"
+msgstr "pouces"
+
+#: libexif/olympus/mnote-olympus-entry.c:153
+#, fuzzy
+msgid "Fine, SHQ"
+msgstr "pouces"
+
+#: libexif/olympus/mnote-olympus-entry.c:154
+#, fuzzy
+msgid "Fine, RAW"
+msgstr "pouces"
+
+#: libexif/olympus/mnote-olympus-entry.c:155
+#, fuzzy
+msgid "Fine, SQ1"
+msgstr "pouces"
+
+#: libexif/olympus/mnote-olympus-entry.c:156
+#, fuzzy
+msgid "Fine, SQ2"
+msgstr "pouces"
+
+#: libexif/olympus/mnote-olympus-entry.c:157
+msgid "Fine, super high"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:158
+msgid "Super fine, SQ"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:159
+msgid "Super fine, HQ"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:160
+msgid "Super fine, SHQ"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:161
+msgid "Super fine, RAW"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:162
+msgid "Super fine, SQ1"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:163
+msgid "Super fine, SQ2"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:164
+msgid "Super fine, super high"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:165
+msgid "Super fine, high"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:168
+#: libexif/olympus/mnote-olympus-entry.c:173
+#: libexif/olympus/mnote-olympus-entry.c:207
+#: libexif/olympus/mnote-olympus-entry.c:216
+#: libexif/olympus/mnote-olympus-entry.c:239
+msgid "No"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:170
+#, fuzzy
+msgid "Super Macro"
+msgstr "Macro"
+
+#: libexif/olympus/mnote-olympus-entry.c:179
+msgid "On (Preset)"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:184
+msgid "Fill"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:191
+msgid "Internal + External"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:220
+#, fuzzy
+msgid "Interlaced"
+msgstr "Intel"
+
+#: libexif/olympus/mnote-olympus-entry.c:221
+msgid "Progressive"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:227
+#: libexif/pentax/mnote-pentax-entry.c:85
+#: libexif/pentax/mnote-pentax-entry.c:139
+msgid "Best"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:228
+#, fuzzy
+msgid "Adjust Exposure"
+msgstr "Exposition automatique"
+
+#: libexif/olympus/mnote-olympus-entry.c:231
+#, fuzzy
+msgid "Spot Focus"
+msgstr "Mode d'exposition"
+
+#: libexif/olympus/mnote-olympus-entry.c:232
+#, fuzzy
+msgid "Normal Focus"
+msgstr "Processus normal"
+
+#: libexif/olympus/mnote-olympus-entry.c:235
+msgid "Record while down"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:236
+msgid "Press start, press stop"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:244
+msgid "ISO 50"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:246
+msgid "ISO 200"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:247
+msgid "ISO 400"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:251
+#: libexif/pentax/mnote-pentax-entry.c:168
+#, fuzzy
+msgid "Sport"
+msgstr "Spot"
+
+#: libexif/olympus/mnote-olympus-entry.c:252
+msgid "TV"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:254
+msgid "User 1"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:255
+msgid "User 2"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:256
+msgid "Lamp"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:259
+msgid "5 frames/sec"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:260
+msgid "10 frames/sec"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:261
+msgid "15 frames/sec"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:262
+msgid "20 frames/sec"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:374
+#, c-format
+msgid "Red Correction %f, Blue Correction %f"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:382
+#, c-format
+msgid "%2.2f meters"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:384
+#, fuzzy
+msgid "No manual focus selection"
+msgstr "Balance des blancs manuelle"
+
+#: libexif/olympus/mnote-olympus-entry.c:410
+msgid "AF Position: Center"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:411
+msgid "AF Position: Top"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:412
+msgid "AF Position: Bottom"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:413
+msgid "AF Position: Left"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:414
+#, fuzzy
+msgid "AF Position: Right"
+msgstr "Positionnement YCbCr"
+
+#: libexif/olympus/mnote-olympus-entry.c:415
+msgid "AF Position: Upper-left"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:416
+msgid "AF Position: Upper-right"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:417
+msgid "AF Position: Lower-left"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:418
+msgid "AF Position: Lower-right"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:419
+msgid "AF Position: Far Left"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:420
+msgid "AF Position: Far Right"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:421
+msgid "Unknown AF Position"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:432
+#: libexif/olympus/mnote-olympus-entry.c:502
+#, c-format
+msgid "Internal error (unknown value %hi)"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:440
+#: libexif/olympus/mnote-olympus-entry.c:510
+#, c-format
+msgid "Unknown value %hi"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:535
+#: libexif/olympus/mnote-olympus-entry.c:555
+#, fuzzy, c-format
+msgid "Unknown %hu"
+msgstr "Inconnu"
+
+#: libexif/olympus/mnote-olympus-entry.c:552
+#, fuzzy
+msgid "2 sec."
+msgstr " sec."
+
+#: libexif/olympus/mnote-olympus-entry.c:585
+msgid "normal"
+msgstr "normal"
+
+#: libexif/olympus/mnote-olympus-entry.c:588
+msgid "unknown"
+msgstr "inconnu"
+
+#: libexif/olympus/mnote-olympus-entry.c:591
+msgid "fast"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:594
+#, fuzzy
+msgid "panorama"
+msgstr "normal"
+
+#: libexif/olympus/mnote-olympus-entry.c:605
+#, fuzzy
+msgid "left to right"
+msgstr "bas - droit"
+
+#: libexif/olympus/mnote-olympus-entry.c:608
+#, fuzzy
+msgid "right to left"
+msgstr "droit - haut"
+
+#: libexif/olympus/mnote-olympus-entry.c:611
+#, fuzzy
+msgid "bottom to top"
+msgstr "bas - gauche"
+
+#: libexif/olympus/mnote-olympus-entry.c:614
+#, fuzzy
+msgid "top to bottom"
+msgstr "gauche - bas"
+
+#: libexif/olympus/mnote-olympus-entry.c:695
+msgid "Automatic"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:725
+#, fuzzy, c-format
+msgid "Manual: %liK"
+msgstr "Manuel"
+
+#: libexif/olympus/mnote-olympus-entry.c:728
+#, fuzzy
+msgid "Manual: Unknown"
+msgstr "inconnu"
+
+#: libexif/olympus/mnote-olympus-entry.c:734
+msgid "One-touch"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:790
+#: libexif/olympus/mnote-olympus-entry.c:800
+msgid "Infinite"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-entry.c:808
+#, c-format
+msgid "%i bytes unknown data: "
+msgstr "%i de données inconnues: "
+
+#: libexif/olympus/mnote-olympus-tag.c:38
+#: libexif/olympus/mnote-olympus-tag.c:53
+#, fuzzy
+msgid "ISO Setting"
+msgstr "Netteté"
+
+#: libexif/olympus/mnote-olympus-tag.c:39
+#, fuzzy
+msgid "Color Mode (?)"
+msgstr "Espace des couleurs"
+
+#: libexif/olympus/mnote-olympus-tag.c:42
+#, fuzzy
+msgid "Image Sharpening"
+msgstr "Longeur de l'image"
+
+#: libexif/olympus/mnote-olympus-tag.c:44
+#, fuzzy
+msgid "Flash Setting"
+msgstr "Contraste"
+
+#: libexif/olympus/mnote-olympus-tag.c:46
+#, fuzzy
+msgid "White Balance Fine Adjustment"
+msgstr "Balance des blancs"
+
+#: libexif/olympus/mnote-olympus-tag.c:47
+#, fuzzy
+msgid "White Balance RB"
+msgstr "Balance des blancs"
+
+#: libexif/olympus/mnote-olympus-tag.c:49
+#, fuzzy
+msgid "ISO Selection"
+msgstr "Netteté"
+
+#: libexif/olympus/mnote-olympus-tag.c:50
+msgid "Preview Image IFD"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:51
+#, fuzzy
+msgid "Exposurediff ?"
+msgstr "Mode d'exposition"
+
+#: libexif/olympus/mnote-olympus-tag.c:54
+#, fuzzy
+msgid "Image Boundary"
+msgstr "ID unique de l'image"
+
+#: libexif/olympus/mnote-olympus-tag.c:56
+#, fuzzy
+msgid "Flash Exposure Bracket Value"
+msgstr "Mode d'exposition"
+
+#: libexif/olympus/mnote-olympus-tag.c:57
+#, fuzzy
+msgid "Exposure Bracket Value"
+msgstr "Temps d'exposition"
+
+#: libexif/olympus/mnote-olympus-tag.c:58
+#: libexif/olympus/mnote-olympus-tag.c:96
+#, fuzzy
+msgid "Image Adjustment"
+msgstr "Longeur de l'image"
+
+#: libexif/olympus/mnote-olympus-tag.c:59
+#, fuzzy
+msgid "Tone Compensation"
+msgstr "Temps d'exposition"
+
+#: libexif/olympus/mnote-olympus-tag.c:60
+msgid "Adapter"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:62
+msgid "Lens"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:63
+#: libexif/olympus/mnote-olympus-tag.c:135
+#: libexif/olympus/mnote-olympus-tag.c:185
+#, fuzzy
+msgid "Manual Focus Distance"
+msgstr "Balance des blancs manuelle"
+
+#: libexif/olympus/mnote-olympus-tag.c:65
+#, fuzzy
+msgid "Flash Used"
+msgstr "Le flash s'est déclenché."
+
+#: libexif/olympus/mnote-olympus-tag.c:66
+#, fuzzy
+msgid "AF Focus Position"
+msgstr "Mode d'exposition"
+
+#: libexif/olympus/mnote-olympus-tag.c:67
+#, fuzzy
+msgid "Bracketing"
+msgstr "action"
+
+#: libexif/olympus/mnote-olympus-tag.c:69
+#, fuzzy
+msgid "Lens F Stops"
+msgstr "Type de scène"
+
+#: libexif/olympus/mnote-olympus-tag.c:70
+#, fuzzy
+msgid "Contrast Curve"
+msgstr "Contraste"
+
+#: libexif/olympus/mnote-olympus-tag.c:71
+#: libexif/olympus/mnote-olympus-tag.c:95
+#: libexif/pentax/mnote-pentax-tag.c:134
+#, fuzzy
+msgid "Color Mode"
+msgstr "Espace des couleurs"
+
+#: libexif/olympus/mnote-olympus-tag.c:72
+#, fuzzy
+msgid "Light Type"
+msgstr "Scène de nuit"
+
+#: libexif/olympus/mnote-olympus-tag.c:74
+msgid "Hue Adjustment"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:76
+#, fuzzy
+msgid "Noisereduction"
+msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#: libexif/olympus/mnote-olympus-tag.c:79
+msgid "Sensor Pixel Size"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:82
+#, fuzzy
+msgid "Image Datasize"
+msgstr "Hauteur de l'image"
+
+#: libexif/olympus/mnote-olympus-tag.c:82
+msgid "Size of compressed image data in bytes."
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:84
+msgid "Total Number of Pictures Taken"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:86
+msgid "Optimize Image"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:88
+#, fuzzy
+msgid "Vari Program"
+msgstr "Programme normal"
+
+#: libexif/olympus/mnote-olympus-tag.c:89
+msgid "Capture Editor Data"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:90
+msgid "Capture Editor Version"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:97
+#: libexif/olympus/mnote-olympus-tag.c:183
+#, fuzzy
+msgid "CCD Sensitivity"
+msgstr "Sensitivité spectrale"
+
+#: libexif/olympus/mnote-olympus-tag.c:99
+#, fuzzy
+msgid "Focus"
+msgstr "Mode d'exposition"
+
+#: libexif/olympus/mnote-olympus-tag.c:102
+#, fuzzy
+msgid "Converter"
+msgstr "Centimère"
+
+#: libexif/olympus/mnote-olympus-tag.c:105
+msgid "Thumbnail Image"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:106
+msgid "Speed/Sequence/Panorama Direction"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:109
+#, fuzzy
+msgid "B&W Mode"
+msgstr "Modèle"
+
+#: libexif/olympus/mnote-olympus-tag.c:111
+#, fuzzy
+msgid "Focal Plane Diagonal"
+msgstr "x-Résolution du plan focal"
+
+#: libexif/olympus/mnote-olympus-tag.c:112
+msgid "Lens Distortion Parameters"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:114
+msgid "Info"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:115
+msgid "Camera ID"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:116
+msgid "Precapture Frames"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:117
+#, fuzzy
+msgid "White Board"
+msgstr "Balance des blancs"
+
+#: libexif/olympus/mnote-olympus-tag.c:118
+#, fuzzy
+msgid "One Touch White Balance"
+msgstr "Balance des blancs"
+
+#: libexif/olympus/mnote-olympus-tag.c:119
+#, fuzzy
+msgid "White Balance Bracket"
+msgstr "Balance des blancs"
+
+#: libexif/olympus/mnote-olympus-tag.c:120
+#: libexif/pentax/mnote-pentax-tag.c:123
+#, fuzzy
+msgid "White Balance Bias"
+msgstr "Balance des blancs"
+
+#: libexif/olympus/mnote-olympus-tag.c:121
+msgid "Data Dump"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:123
+#, fuzzy
+msgid "Shutter Speed"
+msgstr "Vitesse d'obturation"
+
+#: libexif/olympus/mnote-olympus-tag.c:124
+msgid "ISO Value"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:125
+#, fuzzy
+msgid "Aperture Value"
+msgstr "Ouverture"
+
+#: libexif/olympus/mnote-olympus-tag.c:126
+#, fuzzy
+msgid "Brightness Value"
+msgstr "Luminosité"
+
+#: libexif/olympus/mnote-olympus-tag.c:128
+#, fuzzy
+msgid "Flash Device"
+msgstr "Le flash s'est déclenché."
+
+#: libexif/olympus/mnote-olympus-tag.c:130
+msgid "Sensor Temperature"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:131
+msgid "Lens Temperature"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:132
+msgid "Light Condition"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:136
+msgid "Zoom Step Count"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:137
+msgid "Focus Step Count"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:138
+#, fuzzy
+msgid "Sharpness Setting"
+msgstr "Netteté"
+
+#: libexif/olympus/mnote-olympus-tag.c:139
+msgid "Flash Charge Level"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:140
+#, fuzzy
+msgid "Color Matrix"
+msgstr "Espace des couleurs"
+
+#: libexif/olympus/mnote-olympus-tag.c:141
+#, fuzzy
+msgid "Black Level"
+msgstr "Niveau de charge"
+
+#: libexif/olympus/mnote-olympus-tag.c:142
+#, fuzzy
+msgid "White Balance Setting"
+msgstr "Balance des blancs"
+
+#: libexif/olympus/mnote-olympus-tag.c:143
+#: libexif/pentax/mnote-pentax-tag.c:87
+#, fuzzy
+msgid "Red Balance"
+msgstr "Balance des blancs"
+
+#: libexif/olympus/mnote-olympus-tag.c:144
+#: libexif/pentax/mnote-pentax-tag.c:86
+#, fuzzy
+msgid "Blue Balance"
+msgstr "Balance des blancs"
+
+#: libexif/olympus/mnote-olympus-tag.c:145
+msgid "Color Matrix Number"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:147
+#, fuzzy
+msgid "Flash Exposure Comp"
+msgstr "Mode d'exposition"
+
+#: libexif/olympus/mnote-olympus-tag.c:148
+#, fuzzy
+msgid "Internal Flash Table"
+msgstr "Flash"
+
+#: libexif/olympus/mnote-olympus-tag.c:149
+#, fuzzy
+msgid "External Flash G Value"
+msgstr "Flash"
+
+#: libexif/olympus/mnote-olympus-tag.c:150
+#, fuzzy
+msgid "External Flash Bounce"
+msgstr "Flash"
+
+#: libexif/olympus/mnote-olympus-tag.c:151
+#, fuzzy
+msgid "External Flash Zoom"
+msgstr "Flash"
+
+#: libexif/olympus/mnote-olympus-tag.c:152
+#, fuzzy
+msgid "External Flash Mode"
+msgstr "Flash"
+
+#: libexif/olympus/mnote-olympus-tag.c:153
+#, fuzzy
+msgid "Contrast Setting"
+msgstr "Contraste"
+
+#: libexif/olympus/mnote-olympus-tag.c:154
+#, fuzzy
+msgid "Sharpness Factor"
+msgstr "Netteté"
+
+#: libexif/olympus/mnote-olympus-tag.c:155
+#, fuzzy
+msgid "Color Control"
+msgstr "Espace des couleurs"
+
+#: libexif/olympus/mnote-olympus-tag.c:156
+#, fuzzy
+msgid "Olympus Image Width"
+msgstr "Hauteur de l'image"
+
+#: libexif/olympus/mnote-olympus-tag.c:157
+msgid "Olympus Image Height"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:158
+#, fuzzy
+msgid "Scene Detect"
+msgstr "Type de scène"
+
+#: libexif/olympus/mnote-olympus-tag.c:159
+#, fuzzy
+msgid "Compression Ratio"
+msgstr "Compression"
+
+#: libexif/olympus/mnote-olympus-tag.c:160
+msgid "Preview Image Valid"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:161
+msgid "AF Result"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:162
+msgid "CCD Scan Mode"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:163
+#: libexif/pentax/mnote-pentax-tag.c:108
+#, fuzzy
+msgid "Noise Reduction"
+msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#: libexif/olympus/mnote-olympus-tag.c:164
+#, fuzzy
+msgid "Infinity Lens Step"
+msgstr "Intel"
+
+#: libexif/olympus/mnote-olympus-tag.c:165
+#, fuzzy
+msgid "Near Lens Step"
+msgstr "Type de scène"
+
+#: libexif/olympus/mnote-olympus-tag.c:166
+#, fuzzy
+msgid "Light Value Center"
+msgstr "Centimère"
+
+#: libexif/olympus/mnote-olympus-tag.c:167
+msgid "Light Value Periphery"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:170
+msgid "Sequential Shot"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:171
+#, fuzzy
+msgid "Wide Range"
+msgstr "Balance des blancs"
+
+#: libexif/olympus/mnote-olympus-tag.c:172
+#, fuzzy
+msgid "Color Adjustment Mode"
+msgstr "Espace des couleurs"
+
+#: libexif/olympus/mnote-olympus-tag.c:174
+#, fuzzy
+msgid "Quick Shot"
+msgstr "Multi spot"
+
+#: libexif/olympus/mnote-olympus-tag.c:175
+#: libexif/pentax/mnote-pentax-tag.c:128
+msgid "Self Timer"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:176
+msgid "Voice Memo"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:177
+msgid "Record Shutter Release"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:178
+msgid "Flicker Reduce"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:179
+#, fuzzy
+msgid "Optical Zoom"
+msgstr "Valeur du zoom numérique"
+
+#: libexif/olympus/mnote-olympus-tag.c:181
+#, fuzzy
+msgid "Light Source Special"
+msgstr "Source lumineuse"
+
+#: libexif/olympus/mnote-olympus-tag.c:182
+#, fuzzy
+msgid "Resaved"
+msgstr "réservé"
+
+#: libexif/olympus/mnote-olympus-tag.c:184
+#, fuzzy
+msgid "Scene Select"
+msgstr "Type de scène"
+
+#: libexif/olympus/mnote-olympus-tag.c:186
+msgid "Sequence Shot Interval"
+msgstr ""
+
+#: libexif/olympus/mnote-olympus-tag.c:189
+#, fuzzy
+msgid "Epson Image Width"
+msgstr "Hauteur de l'image"
+
+#: libexif/olympus/mnote-olympus-tag.c:190
+#, fuzzy
+msgid "Epson Image Height"
+msgstr "Longeur de l'image"
+
+#: libexif/olympus/mnote-olympus-tag.c:191
+#, fuzzy
+msgid "Epson Software Version"
+msgstr "Version d'exif"
+
+#: libexif/pentax/mnote-pentax-entry.c:78
+#: libexif/pentax/mnote-pentax-entry.c:132
+#, fuzzy
+msgid "Night-scene"
+msgstr "Scène de nuit"
+
+#: libexif/pentax/mnote-pentax-entry.c:80
+#: libexif/pentax/mnote-pentax-entry.c:134
+#, fuzzy
+msgid "Multi-exposure"
+msgstr "Exposition manuel"
+
+#: libexif/pentax/mnote-pentax-entry.c:83
+#: libexif/pentax/mnote-pentax-entry.c:137
+msgid "Good"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:84
+#: libexif/pentax/mnote-pentax-entry.c:138
+#, fuzzy
+msgid "Better"
+msgstr "Centimère"
+
+#: libexif/pentax/mnote-pentax-entry.c:92
+#, fuzzy
+msgid "Flash on"
+msgstr "Flash"
+
+#: libexif/pentax/mnote-pentax-entry.c:94
+msgid "Red-eye Reduction"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:140
+msgid "TIFF"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:150
+msgid "2560x1920 or 2304x1728"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:156
+msgid "2304x1728 or 2592x1944"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:158
+msgid "2816x2212 or 2816x2112"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:169
+#: libexif/pentax/mnote-pentax-entry.c:295
+#, fuzzy
+msgid "Night Scene"
+msgstr "Scène de nuit"
+
+#: libexif/pentax/mnote-pentax-entry.c:171
+msgid "Surf & Snow"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:172
+msgid "Sunset or Candlelight"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:173
+msgid "Autumn"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:178
+#, fuzzy
+msgid "Self Portrait"
+msgstr "Portrait"
+
+#: libexif/pentax/mnote-pentax-entry.c:179
+#, fuzzy
+msgid "Illustrations"
+msgstr "Saturation"
+
+#: libexif/pentax/mnote-pentax-entry.c:180
+#, fuzzy
+msgid "Digital Filter"
+msgstr "Valeur du zoom numérique"
+
+#: libexif/pentax/mnote-pentax-entry.c:182
+msgid "Food"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:183
+#, fuzzy
+msgid "Green Mode"
+msgstr "Mode de mesure"
+
+#: libexif/pentax/mnote-pentax-entry.c:184
+#, fuzzy
+msgid "Light Pet"
+msgstr "Scène de nuit"
+
+#: libexif/pentax/mnote-pentax-entry.c:185
+msgid "Dark Pet"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:186
+msgid "Medium Pet"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:188
+#: libexif/pentax/mnote-pentax-entry.c:296
+#, fuzzy
+msgid "Candlelight"
+msgstr "Lumière du jour"
+
+#: libexif/pentax/mnote-pentax-entry.c:189
+msgid "Natural Skin Tone"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:190
+msgid "Synchro Sound Record"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:191
+msgid "Frame Composite"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:194
+#, fuzzy
+msgid "Auto, Did not fire"
+msgstr "Le flash ne s'est pas déclenché."
+
+#: libexif/pentax/mnote-pentax-entry.c:196
+#, fuzzy
+msgid "Auto, Did not fire, Red-eye reduction"
+msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#: libexif/pentax/mnote-pentax-entry.c:197
+#, fuzzy
+msgid "Auto, Fired"
+msgstr "Bracketing automatique"
+
+#: libexif/pentax/mnote-pentax-entry.c:199
+#, fuzzy
+msgid "Auto, Fired, Red-eye reduction"
+msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#: libexif/pentax/mnote-pentax-entry.c:200
+#, fuzzy
+msgid "On, Red-eye reduction"
+msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#: libexif/pentax/mnote-pentax-entry.c:201
+msgid "On, Wireless"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:202
+#, fuzzy
+msgid "On, Soft"
+msgstr "Doux"
+
+#: libexif/pentax/mnote-pentax-entry.c:203
+msgid "On, Slow-sync"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:204
+#, fuzzy
+msgid "On, Slow-sync, Red-eye reduction"
+msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#: libexif/pentax/mnote-pentax-entry.c:205
+msgid "On, Trailing-curtain Sync"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:212
+#, fuzzy
+msgid "Pan Focus"
+msgstr "Exposition manuel"
+
+#: libexif/pentax/mnote-pentax-entry.c:213
+msgid "AF-S"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:214
+msgid "AF-C"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:217
+#, fuzzy
+msgid "Upper-left"
+msgstr "haut - gauche"
+
+#: libexif/pentax/mnote-pentax-entry.c:218
+msgid "Top"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:219
+#, fuzzy
+msgid "Upper-right"
+msgstr "haut - droit"
+
+#: libexif/pentax/mnote-pentax-entry.c:221
+msgid "Mid-left"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:223
+#, fuzzy
+msgid "Mid-right"
+msgstr "Copyright"
+
+#: libexif/pentax/mnote-pentax-entry.c:225
+#, fuzzy
+msgid "Lower-left"
+msgstr "haut - gauche"
+
+#: libexif/pentax/mnote-pentax-entry.c:226
+#, fuzzy
+msgid "Bottom"
+msgstr "bas - gauche"
+
+#: libexif/pentax/mnote-pentax-entry.c:227
+#, fuzzy
+msgid "Lower-right"
+msgstr "haut - droit"
+
+#: libexif/pentax/mnote-pentax-entry.c:228
+#, fuzzy
+msgid "Fixed Center"
+msgstr "Temps clair"
+
+#: libexif/pentax/mnote-pentax-entry.c:232
+#, fuzzy
+msgid "Multiple"
+msgstr "Multi spot"
+
+#: libexif/pentax/mnote-pentax-entry.c:233
+#, fuzzy
+msgid "Top-left"
+msgstr "haut - gauche"
+
+#: libexif/pentax/mnote-pentax-entry.c:234
+#, fuzzy
+msgid "Top-center"
+msgstr "centré"
+
+#: libexif/pentax/mnote-pentax-entry.c:235
+#, fuzzy
+msgid "Top-right"
+msgstr "haut - droit"
+
+#: libexif/pentax/mnote-pentax-entry.c:239
+#, fuzzy
+msgid "Bottom-left"
+msgstr "bas - gauche"
+
+#: libexif/pentax/mnote-pentax-entry.c:240
+#, fuzzy
+msgid "Bottom-center"
+msgstr "centré"
+
+#: libexif/pentax/mnote-pentax-entry.c:241
+#, fuzzy
+msgid "Bottom-right"
+msgstr "bas - droit"
+
+#: libexif/pentax/mnote-pentax-entry.c:252
+#, fuzzy
+msgid "Daywhite Fluorescent"
+msgstr "Fluorescent"
+
+#: libexif/pentax/mnote-pentax-entry.c:253
+#, fuzzy
+msgid "White Fluorescent"
+msgstr "Fluorescent"
+
+#: libexif/pentax/mnote-pentax-entry.c:257
+msgid "User Selected"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:282
+msgid "3008x2008 or 3040x2024"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-entry.c:293
+#, fuzzy
+msgid "Digital Filter?"
+msgstr "Valeur du zoom numérique"
+
+#: libexif/pentax/mnote-pentax-entry.c:374
+#: libexif/pentax/mnote-pentax-entry.c:383
+#, c-format
+msgid "Internal error (unknown value %i %i)"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:35 libexif/pentax/mnote-pentax-tag.c:63
+#, fuzzy
+msgid "Capture Mode"
+msgstr "Mode d'exposition"
+
+#: libexif/pentax/mnote-pentax-tag.c:36 libexif/pentax/mnote-pentax-tag.c:70
+#: libexif/pentax/mnote-pentax-tag.c:129
+#, fuzzy
+msgid "Quality Level"
+msgstr "Niveau de charge"
+
+#: libexif/pentax/mnote-pentax-tag.c:54
+msgid "ISOSpeed"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:56
+#, fuzzy
+msgid "Colors"
+msgstr "Espace des couleurs"
+
+#: libexif/pentax/mnote-pentax-tag.c:59
+msgid "PrintIM Settings"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:60 libexif/pentax/mnote-pentax-tag.c:131
+msgid "Time Zone"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:61
+#, fuzzy
+msgid "Daylight Savings"
+msgstr "Lumière du jour"
+
+#: libexif/pentax/mnote-pentax-tag.c:64
+msgid "Preview Size"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:65
+#, fuzzy
+msgid "Preview Length"
+msgstr "Longeur de l'image"
+
+#: libexif/pentax/mnote-pentax-tag.c:66 libexif/pentax/mnote-pentax-tag.c:122
+msgid "Preview Start"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:67
+msgid "Model Identification"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:68
+msgid "Date"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:69
+msgid "Time"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:72
+#, fuzzy
+msgid "PictureMode"
+msgstr "Mode d'exposition"
+
+#: libexif/pentax/mnote-pentax-tag.c:75
+#, fuzzy
+msgid "AF Point Selected"
+msgstr "Balance des blancs manuelle"
+
+#: libexif/pentax/mnote-pentax-tag.c:76
+msgid "Auto AF Point"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:77
+#, fuzzy
+msgid "Focus Position"
+msgstr "Mode d'exposition"
+
+#: libexif/pentax/mnote-pentax-tag.c:79
+#, fuzzy
+msgid "F-Number"
+msgstr "Le nombre F."
+
+#: libexif/pentax/mnote-pentax-tag.c:80
+#, fuzzy
+msgid "ISO Number"
+msgstr "Le nombre F."
+
+#: libexif/pentax/mnote-pentax-tag.c:83
+#, fuzzy
+msgid "Auto Bracketing"
+msgstr "Bracketing automatique"
+
+#: libexif/pentax/mnote-pentax-tag.c:85
+#, fuzzy
+msgid "White Balance Mode"
+msgstr "Balance des blancs"
+
+#: libexif/pentax/mnote-pentax-tag.c:93
+msgid "World Time Location"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:94
+msgid "Hometown City"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:95
+msgid "Destination City"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:96
+msgid "Hometown DST"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:96
+#, fuzzy
+msgid "Home Daylight Savings Time"
+msgstr "Lumière du jour"
+
+#: libexif/pentax/mnote-pentax-tag.c:97
+msgid "Destination DST"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:97
+#, fuzzy
+msgid "Destination Daylight Savings Time"
+msgstr "Lumière du jour"
+
+#: libexif/pentax/mnote-pentax-tag.c:99
+#, fuzzy
+msgid "Image Processing"
+msgstr "Longeur de l'image"
+
+#: libexif/pentax/mnote-pentax-tag.c:100
+#, fuzzy
+msgid "Picture Mode (2)"
+msgstr "Mode d'exposition"
+
+#: libexif/pentax/mnote-pentax-tag.c:103
+#, fuzzy
+msgid "Image Area Offset"
+msgstr "Longeur de l'image"
+
+#: libexif/pentax/mnote-pentax-tag.c:104
+#, fuzzy
+msgid "Raw Image Size"
+msgstr "Hauteur de l'image"
+
+#: libexif/pentax/mnote-pentax-tag.c:105
+#, fuzzy
+msgid "Autofocus Points Used"
+msgstr "Mode d'exposition"
+
+#: libexif/pentax/mnote-pentax-tag.c:107
+#, fuzzy
+msgid "Camera Temperature"
+msgstr "ouverture"
+
+#: libexif/pentax/mnote-pentax-tag.c:110
+#, fuzzy
+msgid "Image Tone"
+msgstr "ID unique de l'image"
+
+#: libexif/pentax/mnote-pentax-tag.c:111
+#, fuzzy
+msgid "Shake Reduction Info"
+msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#: libexif/pentax/mnote-pentax-tag.c:112
+#, fuzzy
+msgid "Black Point"
+msgstr "Mode d'exposition"
+
+#: libexif/pentax/mnote-pentax-tag.c:114
+msgid "AE Info"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:115
+msgid "Lens Info"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:116
+#, fuzzy
+msgid "Flash Info"
+msgstr "Flash"
+
+#: libexif/pentax/mnote-pentax-tag.c:117
+msgid "Camera Info"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:118
+#, fuzzy
+msgid "Battery Info"
+msgstr "Niveau de charge"
+
+#: libexif/pentax/mnote-pentax-tag.c:119
+msgid "Hometown City Code"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:120
+msgid "Destination City Code"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:125
+#, fuzzy
+msgid "Object Distance"
+msgstr "Distance au sujet"
+
+#: libexif/pentax/mnote-pentax-tag.c:125
+#, fuzzy
+msgid "Distance of photographed object in millimeters."
+msgstr "La distance au sujet, donnée en mètres."
+
+#: libexif/pentax/mnote-pentax-tag.c:126
+#, fuzzy
+msgid "Flash Distance"
+msgstr "Le flash s'est déclenché."
+
+#: libexif/pentax/mnote-pentax-tag.c:132
+#, fuzzy
+msgid "Bestshot Mode"
+msgstr "Flash"
+
+#: libexif/pentax/mnote-pentax-tag.c:133
+#, fuzzy
+msgid "CCS ISO Sensitivity"
+msgstr "Sensitivité spectrale"
+
+#: libexif/pentax/mnote-pentax-tag.c:135
+msgid "Enhancement"
+msgstr ""
+
+#: libexif/pentax/mnote-pentax-tag.c:136
+#, fuzzy
+msgid "Finer"
+msgstr "pouces"
+
+# This is a very special string. It is used for test purposes, and
+# we only test the de locale as a proof-of-concept example. There is
+# no need for anybody to translate it.
+#: test/nls/test-nls.c:20 test/nls/test-nls.c:23 test/nls/test-nls.c:24
+msgid "[DO_NOT_TRANSLATE_THIS_MARKER]"
+msgstr ""
+
+#, fuzzy
+#~ msgid "Focal length"
+#~ msgstr "Longueur focale"
+
+#, fuzzy
+#~ msgid "Flash mode"
+#~ msgstr "Flash"
+
+#, fuzzy
+#~ msgid "Focus mode"
+#~ msgstr "Mode d'exposition"
+
+#, fuzzy
+#~ msgid "Digital zoom"
+#~ msgstr "Valeur du zoom numérique"
+
+#, fuzzy
+#~ msgid "Metering mode"
+#~ msgstr "Mode de mesure"
+
+#, fuzzy
+#~ msgid "Focus range"
+#~ msgstr "Mode d'exposition"
+
+#, fuzzy
+#~ msgid "Focal plane y size"
+#~ msgstr "y-Résolution du plan focal"
+
+#, fuzzy
+#~ msgid "White balance"
+#~ msgstr "Balance des blancs"
+
+#~ msgid "Flash did not fire."
+#~ msgstr "Le flash ne s'est pas déclenché."
+
+#, fuzzy
+#~ msgid "Whitebalance"
+#~ msgstr "Balance des blancs"
+
+#, fuzzy
+#~ msgid "Manual Focus"
+#~ msgstr "Exposition manuel"
+
+#, fuzzy
+#~ msgid ""
+#~ "Flash fired, compulsory flash mode, red-eye reduction, return light "
+#~ "detected."
+#~ msgstr ""
+#~ "Flash déclenché, mode de flash obligatoire, mode anti-yeux rouges, "
+#~ "lumière de retour détectée."
+
+#, fuzzy
+#~ msgid "Flash not fired"
+#~ msgstr "Le flash ne s'est pas déclenché."
+
+#, fuzzy
+#~ msgid "red eyes reduction"
+#~ msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#, fuzzy
+#~ msgid "on + red eyes reduction"
+#~ msgstr "Flash déclenché, mode anti-yeux rouges."
+
+#, fuzzy
+#~ msgid "Center-weighted"
+#~ msgstr "Centre pondéré"
+
+#, fuzzy
+#~ msgid " / Contrast : "
+#~ msgstr "Contraste"
+
+#, fuzzy
+#~ msgid " / Saturation : "
+#~ msgstr "Saturation"
+
+#, fuzzy
+#~ msgid " / Sharpness : "
+#~ msgstr "Netteté"
+
+#, fuzzy
+#~ msgid " / Metering mode : "
+#~ msgstr "Mode de mesure"
+
+#, fuzzy
+#~ msgid " / Exposure mode : "
+#~ msgstr "Mode d'exposition"
+
+#, fuzzy
+#~ msgid " / Focus mode2 : "
+#~ msgstr "Mode d'exposition"
+
+#, fuzzy
+#~ msgid "White balance : "
+#~ msgstr "Balance des blancs"
+
+#, fuzzy
+#~ msgid "Flourescent"
+#~ msgstr "Fluorescent"
+
+#, fuzzy
+#~ msgid " / Flash bias : %.2f EV"
+#~ msgstr "Flash"
+
+#, fuzzy
+#~ msgid " / Subject Distance (mm) : %u"
+#~ msgstr "Distance au sujet"
+
+#~ msgid "center-weight"
+#~ msgstr "Centre pondéré"
+
+#~ msgid "spot"
+#~ msgstr "spot"
+
+#~ msgid "multi-spot"
+#~ msgstr "multi-spots"
+
+#~ msgid "matrix"
+#~ msgstr "matrice"
+
+#~ msgid "partial"
+#~ msgstr "partiel"
+
+#~ msgid "other"
+#~ msgstr "autre"
+
+#~ msgid "sunny"
+#~ msgstr "ensoleillé"
+
+#~ msgid "fluorescent"
+#~ msgstr "fluorescent"
+
+#~ msgid "tungsten"
+#~ msgstr "tungsten"
+
+#~ msgid "manual"
+#~ msgstr "manuel"
+
+#~ msgid "landscape"
+#~ msgstr "paysage"
+
+#~ msgid "yes"
+#~ msgstr "oui"
+
+#, fuzzy
+#~ msgid "Unknown 2"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 3"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 4"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 5"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 6"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 8"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 9"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 14"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 15"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 16"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 17"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 18"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 19"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 21"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 24"
+#~ msgstr "Inconnu"
+
+#, fuzzy
+#~ msgid "Unknown 25"
+#~ msgstr "Inconnu"

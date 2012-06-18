@@ -1,0 +1,130 @@
+
+
+ 
+
+
+
+<html><head><title>smbtar (1)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>smbtar (1)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    smbtar - shell script for backing up SMB/CIFS shares directly to UNIX tape drives
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+    
+<p><strong>smbtar</strong> <a href="smbtar.1.html#minuss">-s server</a> [<a href="smbtar.1.html#minusp">-p password</a>] [<a href="smbtar.1.html#minusx">-x service</a>] [<a href="smbtar.1.html#minusX">-X</a>] [<a href="smbtar.1.html#minusd">-d directory</a>] [<a href="smbtar.1.html#minusu">-u user</a>] [<a href="smbtar.1.html#minust">-t tape</a>] [<a href="smbtar.1.html#minusb">-b blocksize</a>] [<a href="smbtar.1.html#minusN">-N filename</a>] [<a href="smbtar.1.html#minusi">-i</a>] [<a href="smbtar.1.html#minusr">-r</a>] [<a href="smbtar.1.html#minusl">-l log level</a>] [<a href="smbtar.1.html#minusv">-v</a>] filenames
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This program is part of the <strong>Samba</strong> suite.
+<p><strong>smbtar</strong> is a very small shell script on top of
+<a href="smbclient.1.html"><strong>smbclient</strong></a> which dumps SMB shares directly
+to tape.
+<p><a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+    
+<p><dl>
+<p><a name="minuss"></a>
+<p></p><dt><strong><strong>-s server</strong></strong><dd> The SMB/CIFS server that the share resides upon.
+<p><a name="minusx"></a>
+<p></p><dt><strong><strong>-x service</strong></strong><dd> The share name on the server to connect
+to. The default is <code>backup</code>.
+<p><a name="minusX"></a>
+<p></p><dt><strong><strong>-X</strong></strong><dd> Exclude mode. Exclude filenames... from tar create or
+restore.
+<p><a name="minusd"></a>
+<p></p><dt><strong><strong>-d directory</strong></strong><dd> Change to initial <em>directory</em> before restoring
+/ backing up files.
+<p><a name="minusv"></a>
+<p></p><dt><strong><strong>-v</strong></strong><dd> Verbose mode.
+<p><a name="minusp"></a>
+<p></p><dt><strong><strong>-p password</strong></strong><dd> The password to use to access a share. Default:
+none
+<p><a name="minusu"></a>
+<p></p><dt><strong><strong>-u user</strong></strong><dd> The user id to connect as. Default: UNIX login name.
+<p><a name="minust"></a>
+<p></p><dt><strong><strong>-t tape</strong></strong><dd> Tape device. May be regular file or tape
+device. Default: <em>TAPE</em> environmental variable; if not set, a file
+called <code>tar.out</code>.
+<p><a name="minusb"></a>
+<p></p><dt><strong><strong>-b blocksize</strong></strong><dd> Blocking factor. Defaults to 20. See <strong>tar (1)</strong>
+for a fuller explanation.
+<p><a name="minusN"></a>
+<p></p><dt><strong><strong>-N filename</strong></strong><dd> Backup only files newer than filename. Could be
+used (for example) on a log file to implement incremental backups.
+<p><a name="minusi"></a>
+<p></p><dt><strong><strong>-i</strong></strong><dd> Incremental mode; tar files are only backed up if they
+have the archive bit set. The archive bit is reset after each file is
+read.
+<p><a name="minusr"></a>
+<p></p><dt><strong><strong>-r</strong></strong><dd> Restore. Files are restored to the share from the tar
+file.
+<p><a name="minusl"></a>
+<p></p><dt><strong><strong>-l log level</strong></strong><dd> Log (debug) level. Corresponds to the
+<a href="smbclient.1.html#minusd"><strong>-d</strong></a> flag of <a href="smbclient.1.html"><strong>smbclient
+(1)</strong></a>.
+<p></dl>
+<p><a name="ENVIRONMENTVARIABLES"></a>
+<h2>ENVIRONMENT VARIABLES</h2>
+    
+<p>The TAPE variable specifies the default tape device to write to. May
+be overridden with the <a href="smbtar.1.html#minust"><strong>-t</strong></a> option.
+<p><a name="BUGS"></a>
+<h2>BUGS</h2>
+    
+<p>The <strong>smbtar</strong> script has different options from ordinary tar and tar
+called from <a href="smbclient.1.html"><strong>smbclient</strong></a>.
+<p><a name="CAVEATS"></a>
+<h2>CAVEATS</h2>
+    
+<p>Sites that are more careful about security may not like the way the
+script handles PC passwords. Backup and restore work on entire shares,
+should work on file lists. <strong>smbtar</strong> works best with GNU tar and may
+not work well with other versions.
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite.
+<p><a name="SEEALSO"></a>
+<h2>SEE ALSO</h2>
+    
+<p><a href="smbclient.1.html"><strong>smbclient (1)</strong></a>, <a href="smb.conf.5.html"><strong>smb.conf
+(5)</strong></a>
+<p><a name="DIAGNOSTICS"></a>
+<h2>DIAGNOSTICS</h2>
+    
+<p>See the <a href="smbclient.1.html#DIAGNOSTICS"><strong>DIAGNOSTICS</strong></a> section for
+the <a href="smbclient.1.html"><strong>smbclient</strong></a> command.
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>Ricky Poulten <a href="mailto:poultenr@logica.co.uk"><em>poultenr@logica.co.uk</em></a> wrote the tar extension and
+this man page. The <strong>smbtar</strong> script was heavily rewritten and
+improved by Martin Kraemer <a href="mailto:Martin.Kraemer@mch.sni.de"><em>Martin.Kraemer@mch.sni.de</em></a>. Many
+thanks to everyone who suggested extensions, improvements, bug fixes,
+etc. The man page sources were converted to YODL format (another
+excellent piece of Open Source software available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison,
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+<p></body>
+</html>

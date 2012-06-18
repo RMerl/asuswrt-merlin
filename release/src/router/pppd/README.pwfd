@@ -1,0 +1,174 @@
+
+	Support to pass the password via a pipe to the pppd
+	---------------------------------------------------
+
+	Arvin Schnell <arvin@suse.de>
+	2002-02-08
+
+
+1. Introduction
+---------------
+
+Normally programs like wvdial or kppp read the online password from their
+config file and store them in the pap- and chap-secrets before they start the
+pppd and remove them afterwards. Sure they need special privileges to do so.
+
+The passwordfd feature offers a simpler and more secure solution. The program
+that starts the pppd opens a pipe and writes the password into it. The pppd
+simply reads the password from that pipe.
+
+This methods is used for quite a while on SuSE Linux by the programs wvdial,
+kppp and smpppd.
+
+
+2. Example
+----------
+
+Here is a short C program that uses the passwordfd feature. It starts the pppd
+to buildup a pppoe connection.
+
+
+--snip--
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+#include <string.h>
+#include <paths.h>
+
+#ifndef _PATH_PPPD
+#define _PATH_PPPD "/usr/sbin/pppd"
+#endif
+
+
+// Of course these values can be read from a configuration file or
+// entered in a graphical dialog.
+char *device = "eth0";
+char *username = "1122334455661122334455660001@t-online.de";
+char *password = "hello";
+
+pid_t pid = 0;
+
+
+void
+sigproc (int src)
+{
+    fprintf (stderr, "Sending signal %d to pid %d\n", src, pid);
+    kill (pid, src);
+    exit (EXIT_SUCCESS);
+}
+
+
+void
+sigchild (int src)
+{
+    fprintf (stderr, "Daemon died\n");
+    exit (EXIT_SUCCESS);
+}
+
+
+int
+start_pppd ()
+{
+    signal (SIGINT, &sigproc);
+    signal (SIGTERM, &sigproc);
+    signal (SIGCHLD, &sigchild);
+
+    pid = fork ();
+    if (pid < 0) {
+	fprintf (stderr, "unable to fork() for pppd: %m\n");
+	return 0;
+    }
+
+    if (pid == 0) {
+
+	int i, pppd_argc = 0;
+	char *pppd_argv[20];
+	char buffer[32] = "";
+	int pppd_passwdfd[2];
+
+	for (i = 0; i < 20; i++)
+	    pppd_argv[i] = NULL;
+
+	pppd_argv[pppd_argc++] = "pppd";
+
+	pppd_argv[pppd_argc++] = "call";
+	pppd_argv[pppd_argc++] = "pwfd-test";
+
+	// The device must be after the call, since the call loads the plugin.
+	pppd_argv[pppd_argc++] = device;
+
+	pppd_argv[pppd_argc++] = "user";
+	pppd_argv[pppd_argc++] = username;
+
+	// Open a pipe to pass the password to pppd.
+	if (pipe (pppd_passwdfd) == -1) {
+	    fprintf (stderr, "pipe failed: %m\n");
+	    exit (EXIT_FAILURE);
+	}
+
+	// Of course this only works it the password is shorter
+	// than the pipe buffer. Otherwise you have to fork to
+	// prevent that your main program blocks.
+	write (pppd_passwdfd[1], password, strlen (password));
+	close (pppd_passwdfd[1]);
+
+	// Tell the pppd to read the password from the fd.
+	pppd_argv[pppd_argc++] = "passwordfd";
+	snprintf (buffer, 32, "%d", pppd_passwdfd[0]);
+	pppd_argv[pppd_argc++] = buffer;
+
+	if (execv (_PATH_PPPD, (char **) pppd_argv) < 0) {
+	    fprintf (stderr, "cannot execl %s: %m\n", _PATH_PPPD);
+	    exit (EXIT_FAILURE);
+	}
+    }
+
+    pause ();
+
+    return 1;
+}
+
+
+int
+main (int argc, char **argv)
+{
+    if (start_pppd ())
+	exit (EXIT_SUCCESS);
+
+    exit (EXIT_FAILURE);
+}
+
+---snip---
+
+
+Copy this file to /etc/ppp/peers/pwfd-test. The plugins can't be loaded on the
+command line (unless you are root) since the plugin option is privileged.
+
+
+---snip---
+
+#
+# PPPoE plugin for kernel 2.4
+#
+plugin pppoe.so
+
+#
+# This plugin enables us to pipe the password to pppd, thus we don't have
+# to fiddle with pap-secrets and chap-secrets. The user is also passed
+# on the command line.
+#
+plugin passwordfd.so
+
+noauth
+usepeerdns
+defaultroute
+hide-password
+nodetach
+nopcomp
+novjccomp
+noccp
+
+---snip---
+

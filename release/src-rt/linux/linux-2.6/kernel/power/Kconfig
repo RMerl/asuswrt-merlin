@@ -1,0 +1,169 @@
+config PM
+	bool "Power Management support"
+	depends on !IA64_HP_SIM
+	---help---
+	  "Power Management" means that parts of your computer are shut
+	  off or put into a power conserving "sleep" mode if they are not
+	  being used.  There are two competing standards for doing this: APM
+	  and ACPI.  If you want to use either one, say Y here and then also
+	  to the requisite support below.
+
+	  Power Management is most important for battery powered laptop
+	  computers; if you have a laptop, check out the Linux Laptop home
+	  page on the WWW at <http://www.linux-on-laptops.com/> or
+	  Tuxmobil - Linux on Mobile Computers at <http://www.tuxmobil.org/>
+	  and the Battery Powered Linux mini-HOWTO, available from
+	  <http://www.tldp.org/docs.html#howto>.
+
+	  Note that, even if you say N here, Linux on the x86 architecture
+	  will issue the hlt instruction if nothing is to be done, thereby
+	  sending the processor to sleep and saving power.
+
+config PM_LEGACY
+	bool "Legacy Power Management API (DEPRECATED)"
+	depends on PM
+	default n
+	---help---
+	   Support for pm_register() and friends.  This old API is obsoleted
+	   by the driver model.
+
+	   If unsure, say N.
+
+config PM_DEBUG
+	bool "Power Management Debug Support"
+	depends on PM
+	---help---
+	This option enables verbose debugging support in the Power Management
+	code. This is helpful when debugging and reporting various PM bugs, 
+	like suspend support.
+
+config DISABLE_CONSOLE_SUSPEND
+	bool "Keep console(s) enabled during suspend/resume (DANGEROUS)"
+	depends on PM && PM_DEBUG
+	default n
+	---help---
+	This option turns off the console suspend mechanism that prevents
+	debug messages from reaching the console during the suspend/resume
+	operations.  This may be helpful when debugging device drivers'
+	suspend/resume routines, but may itself lead to problems, for example
+	if netconsole is used.
+
+config PM_TRACE
+	bool "Suspend/resume event tracing"
+	depends on PM && PM_DEBUG && X86_32 && EXPERIMENTAL
+	default n
+	---help---
+	This enables some cheesy code to save the last PM event point in the
+	RTC across reboots, so that you can debug a machine that just hangs
+	during suspend (or more commonly, during resume).
+
+	To use this debugging feature you should attempt to suspend the machine,
+	then reboot it, then run
+
+		dmesg -s 1000000 | grep 'hash matches'
+
+	CAUTION: this option will cause your machine's real-time clock to be
+	set to an invalid time after a resume.
+
+config PM_SYSFS_DEPRECATED
+	bool "Driver model /sys/devices/.../power/state files (DEPRECATED)"
+	depends on PM && SYSFS
+	default n
+	help
+	  The driver model started out with a sysfs file intended to provide
+	  a userspace hook for device power management.  This feature has never
+	  worked very well, except for limited testing purposes, and so it will
+	  be removed.   It's not clear that a generic mechanism could really
+	  handle the wide variability of device power states; any replacements
+	  are likely to be bus or driver specific.
+
+config SOFTWARE_SUSPEND
+	bool "Software Suspend (Hibernation)"
+	depends on PM && SWAP && (((X86 || PPC64_SWSUSP) && (!SMP || SUSPEND_SMP)) || ((FRV || PPC32) && !SMP))
+	---help---
+	  Enable the suspend to disk (STD) functionality, which is usually
+	  called "hibernation" in user interfaces.  STD checkpoints the
+	  system and powers it off; and restores that checkpoint on reboot.
+
+	  You can suspend your machine with 'echo disk > /sys/power/state'.
+	  Alternatively, you can use the additional userland tools available
+	  from <http://suspend.sf.net>.
+
+	  In principle it does not require ACPI or APM, although for example
+	  ACPI will be used for the final steps when it is available.  One
+	  of the reasons to use software suspend is that the firmware hooks
+	  for suspend states like suspend-to-RAM (STR) often don't work very
+	  well with Linux.
+
+	  It creates an image which is saved in your active swap. Upon the next
+	  boot, pass the 'resume=/dev/swappartition' argument to the kernel to
+	  have it detect the saved image, restore memory state from it, and
+	  continue to run as before. If you do not want the previous state to
+	  be reloaded, then use the 'noresume' kernel command line argument.
+	  Note, however, that fsck will be run on your filesystems and you will
+	  need to run mkswap against the swap partition used for the suspend.
+
+	  It also works with swap files to a limited extent (for details see
+	  <file:Documentation/power/swsusp-and-swap-files.txt>).
+
+	  Right now you may boot without resuming and resume later but in the
+	  meantime you cannot use the swap partition(s)/file(s) involved in
+	  suspending.  Also in this case you must not use the filesystems
+	  that were mounted before the suspend.  In particular, you MUST NOT
+	  MOUNT any journaled filesystems mounted before the suspend or they
+	  will get corrupted in a nasty way.
+
+	  For more information take a look at <file:Documentation/power/swsusp.txt>.
+
+config PM_STD_PARTITION
+	string "Default resume partition"
+	depends on SOFTWARE_SUSPEND
+	default ""
+	---help---
+	  The default resume partition is the partition that the suspend-
+	  to-disk implementation will look for a suspended disk image. 
+
+	  The partition specified here will be different for almost every user. 
+	  It should be a valid swap partition (at least for now) that is turned
+	  on before suspending. 
+
+	  The partition specified can be overridden by specifying:
+
+		resume=/dev/<other device> 
+
+	  which will set the resume partition to the device specified. 
+
+	  Note there is currently not a way to specify which device to save the
+	  suspended image to. It will simply pick the first available swap 
+	  device.
+
+config SUSPEND_SMP
+	bool
+	depends on HOTPLUG_CPU && (X86 || PPC64) && PM
+	default y
+
+config APM_EMULATION
+	tristate "Advanced Power Management Emulation"
+	depends on PM && SYS_SUPPORTS_APM_EMULATION
+	help
+	  APM is a BIOS specification for saving power using several different
+	  techniques. This is mostly useful for battery powered laptops with
+	  APM compliant BIOSes. If you say Y here, the system time will be
+	  reset after a RESUME operation, the /proc/apm device will provide
+	  battery status information, and user-space programs will receive
+	  notification of APM "events" (e.g. battery status change).
+
+	  In order to use APM, you will need supporting software. For location
+	  and more information, read <file:Documentation/pm.txt> and the
+	  Battery Powered Linux mini-HOWTO, available from
+	  <http://www.tldp.org/docs.html#howto>.
+
+	  This driver does not spin down disk drives (see the hdparm(8)
+	  manpage ("man 8 hdparm") for that), and it doesn't turn off
+	  VESA-compliant "green" monitors.
+
+	  Generally, if you don't have a battery in your machine, there isn't
+	  much point in using this driver and you should say N. If you get
+	  random kernel OOPSes or reboots that don't seem to be related to
+	  anything, try disabling/enabling this option (or disabling/enabling
+	  APM in your BIOS).

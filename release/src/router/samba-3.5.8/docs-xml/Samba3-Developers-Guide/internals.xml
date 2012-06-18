@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="internals">
+<chapterinfo>
+	<author>
+		<firstname>David</firstname><surname>Chappell</surname>
+		<affiliation>
+			<address><email>David.Chappell@mail.trincoll.edu</email></address>
+		</affiliation>
+	</author>
+	<pubdate>8 May 1996</pubdate>
+</chapterinfo>
+
+<title>Samba Internals</title>
+
+<sect1>
+<title>Character Handling</title>
+<para>
+This section describes character set handling in Samba, as implemented in
+Samba 3.0 and above
+</para>
+
+<para>
+In the past Samba had very ad-hoc character set handling. Scattered
+throughout the code were numerous calls which converted particular
+strings to/from DOS codepages. The problem is that there was no way of
+telling if a particular char* is in dos codepage or unix
+codepage. This led to a nightmare of code that tried to cope with
+particular cases without handlingt the general case.
+</para>
+</sect1>
+
+<sect1>
+<title>The new functions</title>
+
+<para>
+The new system works like this:
+</para>
+
+<orderedlist>
+<listitem><para>
+	all char* strings inside Samba are "unix" strings. These are
+	multi-byte strings that are in the charset defined by the "unix
+	charset" option in smb.conf. 
+</para></listitem>
+
+<listitem><para>
+	there is no single fixed character set for unix strings, but any
+	character set that is used does need the following properties:
+	</para>
+	<orderedlist>
+	
+	<listitem><para>
+		must not contain NULLs except for termination
+	</para></listitem>
+
+	<listitem><para>
+		must be 7-bit compatible with C strings, so that a constant
+		string or character in C will be byte-for-byte identical to the
+		equivalent string in the chosen character set. 
+	</para></listitem>
+	
+	<listitem><para>
+		when you uppercase or lowercase a string it does not become
+		longer than the original string
+	</para></listitem>
+
+	<listitem><para>
+		must be able to correctly hold all characters that your client
+		will throw at it
+	</para></listitem>
+	</orderedlist>
+	
+	<para>
+	For example, UTF-8 is fine, and most multi-byte asian character sets
+	are fine, but UCS2 could not be used for unix strings as they
+	contain nulls.
+	</para>
+</listitem>
+
+<listitem><para>
+	when you need to put a string into a buffer that will be sent on the
+	wire, or you need a string in a character set format that is
+	compatible with the clients character set then you need to use a
+	pull_ or push_ function. The pull_ functions pull a string from a
+	wire buffer into a (multi-byte) unix string. The push_ functions
+	push a string out to a wire buffer. 
+</para></listitem>
+
+<listitem><para>
+	the two main pull_ and push_ functions you need to understand are
+	pull_string and push_string. These functions take a base pointer
+	that should point at the start of the SMB packet that the string is
+	in. The functions will check the flags field in this packet to
+	automatically determine if the packet is marked as a unicode packet,
+	and they will choose whether to use unicode for this string based on
+	that flag. You may also force this decision using the STR_UNICODE or
+	STR_ASCII flags. For use in smbd/ and libsmb/ there are wrapper
+	functions clistr_ and srvstr_ that call the pull_/push_ functions
+	with the appropriate first argument.
+	</para>
+	
+	<para>
+	You may also call the pull_ascii/pull_ucs2 or push_ascii/push_ucs2
+	functions if you know that a particular string is ascii or
+	unicode. There are also a number of other convenience functions in
+	charcnv.c that call the pull_/push_ functions with particularly
+	common arguments, such as pull_ascii_pstring()
+	</para>
+</listitem>
+
+<listitem><para>
+	The biggest thing to remember is that internal (unix) strings in Samba
+	may now contain multi-byte characters. This means you cannot assume
+	that characters are always 1 byte long. Often this means that you will
+	have to convert strings to ucs2 and back again in order to do some
+	(seemingly) simple task. For examples of how to do this see functions
+	like strchr_m(). I know this is very slow, and we will eventually
+	speed it up but right now we want this stuff correct not fast.
+</para></listitem>
+
+<listitem><para>
+	all lp_ functions now return unix strings. The magic "DOS" flag on
+	parameters is gone.
+</para></listitem>
+
+<listitem><para>
+	all vfs functions take unix strings. Don't convert when passing to them
+</para></listitem>
+
+</orderedlist>
+
+</sect1>
+
+<sect1>
+<title>Macros in byteorder.h</title>
+
+<para>
+This section describes the macros defined in byteorder.h.  These macros 
+are used extensively in the Samba code.
+</para>
+
+<sect2>
+<title>CVAL(buf,pos)</title>
+
+<para>
+returns the byte at offset pos within buffer buf as an unsigned character.
+</para>
+</sect2>
+
+<sect2>
+<title>PVAL(buf,pos)</title>
+<para>returns the value of CVAL(buf,pos) cast to type unsigned integer.</para>
+</sect2>
+
+<sect2>
+<title>SCVAL(buf,pos,val)</title>
+<para>sets the byte at offset pos within buffer buf to value val.</para>
+</sect2>
+
+<sect2>
+<title>SVAL(buf,pos)</title>
+<para>
+	returns the value of the unsigned short (16 bit) little-endian integer at 
+	offset pos within buffer buf.  An integer of this type is sometimes
+	refered to as "USHORT".
+</para>
+</sect2>
+
+<sect2>
+<title>IVAL(buf,pos)</title>
+<para>returns the value of the unsigned 32 bit little-endian integer at offset 
+pos within buffer buf.</para>
+</sect2>
+
+<sect2>
+<title>SVALS(buf,pos)</title>
+<para>returns the value of the signed short (16 bit) little-endian integer at 
+offset pos within buffer buf.</para>
+</sect2>
+
+<sect2>
+<title>IVALS(buf,pos)</title>
+<para>returns the value of the signed 32 bit little-endian integer at offset pos
+within buffer buf.</para>
+</sect2>
+
+<sect2>
+<title>SSVAL(buf,pos,val)</title>
+<para>sets the unsigned short (16 bit) little-endian integer at offset pos within 
+buffer buf to value val.</para>
+</sect2>
+
+<sect2>
+<title>SIVAL(buf,pos,val)</title>
+<para>sets the unsigned 32 bit little-endian integer at offset pos within buffer 
+buf to the value val.</para>
+</sect2>
+
+<sect2>
+<title>SSVALS(buf,pos,val)</title>
+<para>sets the short (16 bit) signed little-endian integer at offset pos within 
+buffer buf to the value val.</para>
+</sect2>
+
+<sect2>
+<title>SIVALS(buf,pos,val)</title>
+<para>sets the signed 32 bit little-endian integer at offset pos withing buffer
+buf to the value val.</para>
+</sect2>
+
+<sect2>
+<title>RSVAL(buf,pos)</title>
+<para>returns the value of the unsigned short (16 bit) big-endian integer at 
+offset pos within buffer buf.</para>
+</sect2>
+
+<sect2>
+<title>RIVAL(buf,pos)</title>
+<para>returns the value of the unsigned 32 bit big-endian integer at offset 
+pos within buffer buf.</para>
+</sect2>
+
+<sect2>
+<title>RSSVAL(buf,pos,val)</title>
+<para>sets the value of the unsigned short (16 bit) big-endian integer at 
+offset pos within buffer buf to value val.
+refered to as "USHORT".</para>
+</sect2>
+
+<sect2>
+<title>RSIVAL(buf,pos,val)</title>
+<para>sets the value of the unsigned 32 bit big-endian integer at offset 
+pos within buffer buf to value val.</para>
+</sect2>
+
+</sect1>
+
+
+<sect1>
+<title>LAN Manager Samba API</title>
+
+<para>
+This section describes the functions need to make a LAN Manager RPC call.
+This information had been obtained by examining the Samba code and the LAN
+Manager 2.0 API documentation.  It should not be considered entirely
+reliable.
+</para>
+
+<para>
+<programlisting>
+call_api(int prcnt, int drcnt, int mprcnt, int mdrcnt, 
+	char *param, char *data, char **rparam, char **rdata);
+</programlisting>
+</para>
+
+<para>
+This function is defined in client.c.  It uses an SMB transaction to call a
+remote api.
+</para>
+
+<sect2>
+<title>Parameters</title>
+
+<para>The parameters are as follows:</para>
+
+<orderedlist>
+<listitem><para>
+	prcnt: the number of bytes of parameters begin sent.
+</para></listitem>
+<listitem><para>
+	drcnt:   the number of bytes of data begin sent.
+</para></listitem>
+<listitem><para>
+	mprcnt:  the maximum number of bytes of parameters which should be returned
+</para></listitem>
+<listitem><para>
+	mdrcnt:  the maximum number of bytes of data which should be returned
+</para></listitem>
+<listitem><para>
+	param:   a pointer to the parameters to be sent.
+</para></listitem>
+<listitem><para>
+	data:    a pointer to the data to be sent.
+</para></listitem>
+<listitem><para>
+	rparam:  a pointer to a pointer which will be set to point to the returned
+	parameters.  The caller of call_api() must deallocate this memory.
+</para></listitem>
+<listitem><para>
+	rdata:   a pointer to a pointer which will be set to point to the returned 
+	data.  The caller of call_api() must deallocate this memory.
+</para></listitem>
+</orderedlist>
+
+<para>
+These are the parameters which you ought to send, in the order of their
+appearance in the parameter block:
+</para>
+
+<orderedlist>
+
+<listitem><para>
+An unsigned 16 bit integer API number.  You should set this value with
+SSVAL().  I do not know where these numbers are described.
+</para></listitem>
+
+<listitem><para>
+An ASCIIZ string describing the parameters to the API function as defined
+in the LAN Manager documentation.  The first parameter, which is the server
+name, is ommited.  This string is based uppon the API function as described
+in the manual, not the data which is actually passed.
+</para></listitem>
+
+<listitem><para>
+An ASCIIZ string describing the data structure which ought to be returned.
+</para></listitem>
+
+<listitem><para>
+Any parameters which appear in the function call, as defined in the LAN
+Manager API documentation, after the "Server" and up to and including the
+"uLevel" parameters.
+</para></listitem>
+
+<listitem><para>
+An unsigned 16 bit integer which gives the size in bytes of the buffer we
+will use to receive the returned array of data structures.  Presumably this
+should be the same as mdrcnt.  This value should be set with SSVAL().
+</para></listitem>
+
+<listitem><para>
+An ASCIIZ string describing substructures which should be returned.  If no 
+substructures apply, this string is of zero length.
+</para></listitem>
+
+</orderedlist>
+
+<para>
+The code in client.c always calls call_api() with no data.  It is unclear
+when a non-zero length data buffer would be sent.
+</para>
+
+</sect2>
+
+<sect2>
+<title>Return value</title>
+
+<para>
+The returned parameters (pointed to by rparam), in their order of appearance
+are:</para>
+
+<orderedlist>
+
+<listitem><para>
+An unsigned 16 bit integer which contains the API function's return code. 
+This value should be read with SVAL().
+</para></listitem>
+
+<listitem><para>
+An adjustment which tells the amount by which pointers in the returned
+data should be adjusted.  This value should be read with SVAL().  Basically, 
+the address of the start of the returned data buffer should have the returned
+pointer value added to it and then have this value subtracted from it in
+order to obtain the currect offset into the returned data buffer.
+</para></listitem>
+
+<listitem><para>
+A count of the number of elements in the array of structures returned. 
+It is also possible that this may sometimes be the number of bytes returned.
+</para></listitem>
+</orderedlist>
+
+<para>
+When call_api() returns, rparam points to the returned parameters.  The
+first if these is the result code.  It will be zero if the API call
+suceeded.  This value by be read with "SVAL(rparam,0)".
+</para>
+
+<para>
+The second parameter may be read as "SVAL(rparam,2)".  It is a 16 bit offset
+which indicates what the base address of the returned data buffer was when
+it was built on the server.  It should be used to correct pointer before
+use.
+</para>
+
+<para>
+The returned data buffer contains the array of returned data structures. 
+Note that all pointers must be adjusted before use.  The function
+fix_char_ptr() in client.c can be used for this purpose.
+</para>
+
+<para>
+The third parameter (which may be read as "SVAL(rparam,4)") has something to
+do with indicating the amount of data returned or possibly the amount of
+data which can be returned if enough buffer space is allowed.
+</para>
+
+</sect2>
+</sect1>
+
+<sect1>
+<title>Code character table</title>
+<para>
+Certain data structures are described by means of ASCIIz strings containing
+code characters.  These are the code characters:
+</para>
+
+<orderedlist>
+<listitem><para>
+W	a type byte little-endian unsigned integer
+</para></listitem>
+<listitem><para>
+N	a count of substructures which follow
+</para></listitem>
+<listitem><para>
+D	a four byte little-endian unsigned integer
+</para></listitem>
+<listitem><para>
+B	a byte (with optional count expressed as trailing ASCII digits)
+</para></listitem>
+<listitem><para>
+z	a four byte offset to a NULL terminated string
+</para></listitem>
+<listitem><para>
+l	a four byte offset to non-string user data
+</para></listitem>
+<listitem><para>
+b	an offset to data (with count expressed as trailing ASCII digits)
+</para></listitem>
+<listitem><para>
+r	pointer to returned data buffer???
+</para></listitem>
+<listitem><para>
+L	length in bytes of returned data buffer???
+</para></listitem>
+<listitem><para>
+h	number of bytes of information available???
+</para></listitem>
+</orderedlist>
+
+</sect1>
+</chapter>

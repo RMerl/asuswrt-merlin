@@ -1,0 +1,11 @@
+stopped at ch12
+-- needs examples for ecc/dsa!!! (and for asn.1)
+
+must have for v1.16
+- document PK build flags
+- document makefile flags [INSTALL_* for instance]
+- prepare manual for printing (both soft and hard cover)
+
+Nice to have [in order of precedence]
+- add X9.63 IES
+- add CPP macros like OpenSSL has for ASN1 (e.g. encode/decode functions, etc) shameless ripoff :-)

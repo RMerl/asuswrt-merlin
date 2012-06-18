@@ -1,0 +1,72 @@
+BCrelay v0.5 by Richard de Vroede <r.devroede@linvision.com>
+Original program by: TheyCallMeLuc(at)yahoo.com.au
+-------------------------------------------------------------------------------
+Index
+1. License
+2. What is it?
+3. Usage
+4. Contact
+
+-------------------------------------------------------------------------------
+1. License
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+Your copy is available at: http://www.gnu.org/licenses/gpl.html
+
+-------------------------------------------------------------------------------
+2. What is it?
+
+A broadcast packet repeater. This packet repeater (currently designed
+for udp packets) will listen for broadcast packets. When it receives
+the packets on the incoming interface, it will then re-broadcast them
+to the outgoing interface.
+
+-------------------------------------------------------------------------------
+3. Usage
+
+Usage: /usr/sbin/bcrelay [options], where options are:
+
+ [-d] [--daemon]           Run as daemon.
+ [-h] [--help]             Displays this help message.
+ [-i] [--incoming]         Defines from which interface broadcasts will be
+                           relayed.
+ [-o] [--outgoing]         Defines to which interface broadcasts will be
+                           relayed.
+ [-s] [--ipsec]            Defines an ipsec tunnel to be relayed to.
+                           Since ipsec tunnels terminate on the same
+                           interface, we need to define the broadcast
+                           address of the other end-point of the
+                           tunnel.  This is done as ipsec0:x.x.x.255
+ [-v] [--version]          Displays the BCrelay version number.
+
+Logs and debugging go to syslog as DAEMON.
+
+Interfaces can be specified as regexpressions, ie. ppp[0-9]+
+
+-------------------------------------------------------------------------------
+4. Contact
+
+All comments, patches, improvements can be mailed to me, or the
+mailing list.  If it makes sense, I will update this package.
+
+Richard de Vroede          : r.devroede@linvision.com
+Original author            : TheyCallMeLuc@yahoo.com.au
+Poptop Mailinglist         : poptop-server@lists.sourceforge.net
+Official Poptop website    : http://www.poptop.org
+SourceForge Poptop website : http://sourgeforge.net/projects/poptop
+
+-------------------------------------------------------------------------------
+
+

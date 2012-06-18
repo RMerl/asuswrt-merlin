@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Accounting Information</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Accounting " href="accountingref.htm">
+    <link rel="PREVIOUS" title="Accounting " href=
+    "accountingref.htm">
+    <link rel="NEXT" title="Accounting File" href="x9696.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "accountingref.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          18. Accounting</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x9696.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN9682">18.2. Accounting
+      Information</a></h1>
+
+      <p>The <var class="LITERAL">:as=...</var> and <var class=
+      "LITERAL">:ae=...</var> options specify the the start of job
+      and end of job accounting information or a set of programs to
+      be run to record the start and end of job accounting
+      information. The option values are expanded using the same
+      methods as for the filter options. For example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN9687"></a>
+<pre class="SCREEN">
+    :as=jobstart $H $n $P $k $b $t
+      jobstart '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
+        '-b1093' '-tNov  5 19:39:25'
+    :ae=jobend $H $n $P $k $b $t
+      jobend '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
+        '-b1093' '-tNov  5 19:39:59'
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If the options have the form <var class=
+      "LITERAL">:as=|/path ...</var>, then the specified program is
+      run to record the information. By convention the accounting
+      information is passed as command line values to the program.
+      The programs are run in the same manner as a print filter.
+      When the <var class="LITERAL">:as</var> or <var class=
+      "LITERAL">:ae</var> value specifies a program then logging
+      using the <var class="LITERAL">:af</var> option values in the
+      next section is not performed. For example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN9694"></a>
+<pre class="SCREEN">
+    :as=|/usr/local/libexec/jobstart $H $n $P $k $b $t
+      /usr/local/libexec/jobstart '-Hh4.private' '-nroot' \
+      '-Pps' '-kcfA938h4.private' '-b1093' '-tNov  5 19:39:25'
+    :ae=jobend $H $n $P $k $b $t
+      jobend '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
+        '-b1093' '-tNov  5 19:39:59'
+</pre>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "accountingref.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x9696.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Accounting</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "accountingref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Accounting
+          File</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

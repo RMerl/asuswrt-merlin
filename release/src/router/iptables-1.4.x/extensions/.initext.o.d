@@ -1,0 +1,1 @@
+initext.o: initext.c

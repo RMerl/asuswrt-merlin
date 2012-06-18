@@ -1,0 +1,339 @@
+# LIC: GPL
+
+Changes from Version 3.9 to 3.10: (30 June 2008)
+
+- Fixed compilation problems on various platforms.
+
+- The Makefiles now use (standard) DESTDIR instead of (non-standard)
+  RPM_INSTALL_ROOT to relocate installed files.
+
+- Spec file has been updated (it had languished since 3.6.)
+
+Changes from Version 3.8 to 3.9: (21 June 2008)
+
+- pppoe-server has new "-x" option to limit the number of sessions per
+  MAC address.
+
+- Added proper timeout handling while waiting for PADO/PADS.
+
+- Fix race condition with some access concentrators that move very quickly
+  into session mode (problem noted by Luigi Sgro)
+
+- Fixed compilation problem on BSD.
+
+- Fixed compilation problems with old versions of gcc
+
+- Remove superfluous options in scripts/pppoe-connect.in
+
+Changes from Version 3.7 to 3.8: (2 April 2006)
+
+- Adjusted code and made it possible to disable debugging code to shrink
+  size of pppoe executable.
+
+- Fixed bug in MD5 code that caused pppoe-server to segfault on 64-bit
+  machines.
+
+- Made various functions and variables static that didn't need to be visible
+  outside their source files.
+
+Changes from Version 3.6 to 3.7:
+
+- Fixed typo in the firewall-standalone sample firewall script.
+  Fix courtesy of Robert Vogelgesang <vogel@users.sourceforge.net>
+
+- Added -O option to pppoe-server to let you specify a different default
+  options file for pppd instead of /etc/ppp/pppoe-server-options
+  Feature courtesy of Robert Vogelgesang <vogel@users.sourceforge.net>
+
+- Fixed some silliness and incorrectness in configure.in.
+  Feature courtesy of Robert Vogelgesang <vogel@users.sourceforge.net>
+
+- Fixed a typo in pppoe-connect.in that made it fail if used with the
+  kernel-mode plugin.
+
+- Make pppoe-server prepend "nic-" to interface name if used with
+  kernel-mode plugin.  This lets you use interfaces that don't start
+  with "eth" more easily.
+
+
+Changes from Version 3.5 to 3.6:
+
+- Changed the names of commands from adsl-* to pppoe-* to more logically
+  name the scripts.  NOTE INCOMPATIBILITY:
+
+  OLD NAME                   NEW NAME
+  adsl-start                 pppoe-start
+  adsl-stop                  pppoe-stop
+  adsl-status                pppoe-status
+  adsl-connect               pppoe-connect
+  adsl-setup                 pppoe-setup
+
+- Changed sample firewall scripts to use iptables instead of the old ipchains
+  command.
+
+- Updated KERNEL-MODE-PPPOE instructions to reflect more modern pppd that
+  is commonly distributed.
+
+- Make the userland pppoe daemon run as "nobody" if possible, once session
+  has started.
+
+- Make userland pppoe program somewhat safe if it is installed SUID or
+  SGID.  Note that I still do *NOT* recommend a SUID/SGID pppoe.
+
+- Fix long-standing bug in pppoe-server that passed arguments to pppd in the
+  wrong order.
+
+- Fix kernel-mode plugin.  It was broken by changes to pppd.  The pppd
+  maintainers fixed their version of the plugin, but neglected to inform me.
+  Thanks a lot, guys!
+
+- Make plugin accept argument of the form "nix-XXXX" to force it to use
+  device "XXXX" as the Ethernet interface.  This allows the use of devices
+  whose names do not start with "eth"
+
+
+Changes from Version 3.4 to 3.5:
+
+- Fixes for compilation on Solaris.
+
+
+Changes from Version 3.3 to 3.4:
+
+- INCOMPATIBILITY WITH EARLIER VERSIONS:
+  Kernel-mode plugin now is built against latest CVS ppp source rather than
+  Michal Ostrowski's patched version.  If you use kernel-mode PPPoE, you
+  MUST use the CVS version of the ppp source code with rp-pppoe 3.4.
+
+- Print PPPoE session number when connection terminates.  Thanks to
+  Alexander Dalloz for suggesting this.
+
+- Fixed a bug in MSS clamping -- it now works with protocol-field compression.
+  Thanks to Gerd v. Egidy for the patch.
+
+- Ignore SIGINT and SIGTERM so LCP termination packets make it out.
+
+
+Changes from Version 3.2 to 3.3:
+
+- Client works on Solaris again.  It was broken in 3.2.
+
+- Added DEFAULTROUTE=yes|no option to configuration file.
+
+- Server parses address pool file better.
+
+- Server address pool allows ranges of addresses on a line: a.b.c.d-e
+
+- Added "-d" (=debug) and "-P" (=check pool file syntax) options to
+  pppoe-server.
+
+
+Changes from Version 3.1 to 3.2:
+
+- Client now ignores PADT's if they are from the wrong source MAC address
+  or to the wrong destination MAC address.
+
+- Minor fixes to Makefile.in for Turbolinux.
+
+
+Changes from Version 3.0 to 3.1:
+
+- Improved KERNEL-MODE-PPPOE instructions
+
+- Works with patched pppd 2.4.1
+
+- Many improvements to server:  Added "-u" and "-r" options; server can
+  now respond to request on multiple Ethernet interfaces.
+
+- SECURITY BUG FIX: Server now ignores PADT's if they are from the wrong
+  source MAC address.  You are STRONGLY RECOMMENDED to upgrade to 3.1
+  if you use pppoe-server in production.
+
+
+Changes from Version 2.8 to 3.0:
+
+- Many small improvements to server.  Server now only makes one
+  discovery socket, systemwide, with addition of "-n" option to pppoe.
+
+- Fixes for compilation problems on BSD, Solaris and some Linux platforms.
+
+- Added "-p" option to pppoe-server to allow you to specify a pool of
+  IP addresses to assign to clients.
+
+- Added GUI system (tkpppoe).  This work was funded by Iospan
+  Wireless, Inc.  The GUI includes a Set-UID wrapper (pppoe-wrapper)
+  which allows ordinary users to control a link (if so authorized.)
+  I believe the wrapper script is secure, but please audit the
+  source code (gui/wrapper.c) if you have any concerns.
+
+- Changes to scripts and pppoe.conf.  DNS setup is now dynamic (happens
+  each time adsl-connect runs.)
+
+- Made relay.c check packet lengths rigorously; made it throw out Ethernet
+  frame padding on session packets as well as discovery packets.
+
+
+Changes from Version 2.7 to 2.8:
+
+- Added init scripts for TurboLinux, courtesy of Yasuhiro Sumi.
+
+- Made relay.c check packet lengths rigorously; made it throw out Ethernet
+  frame padding on discovery packets.
+
+*** NOTE: 2.7 was not released publicly
+
+
+Changes from Version 2.6 to 2.7:
+
+- Completely restructured source file tree.
+
+- Much internal restructuring to eliminate a bunch of global variables.
+
+- adsl-connect now executes /etc/ppp/adsl-lost whenever connection is dropped
+  or cannot be established.
+
+- Split pppoe.c into pppoe.c and discovery.c.
+
+- Added relay agent (pppoe-relay).
+
+- Made adsl-connect script use the "-U" (host-unique) option to better support
+  multiple PPPoE links.
+
+- Added support for kernel-mode PPPoE (EXPERIMENTAL, UNSUPPORTED!)
+
+- Added "-o" option to PPPoE server; encoded server PID in pppoe-server
+  cookie.
+
+
+Changes from Version 2.5 to 2.6:
+
+- Code should now compile cleanly on Caldera and Slackware Linux
+
+- Fixed rp-pppoe.spec file to work on Mandrake and Red Hat.
+
+- Deleted some obsolete files
+
+- Fixed bug in Solaris/x86 port (thanks to Philippe Levan)
+
+- Made shell scripts nicer under Solaris (again, Philippe Levan)
+
+- Made adsl-status look under /var/run and /etc/ppp for PID files.  Should
+  fix problems with NetBSD.
+
+- Added PPPD_EXTRA to pppoe.conf; made the PID file depend on the config
+  file name.  This makes it easier to run multiple PPPoE sessions.
+
+
+Changes from Version 2.4 to 2.5:
+
+- Tested for zero-length TCP option-length field, and for reverse-packing
+  of type/code bitfields.  Thanks to Robert Schlabbach for pointing out
+  these problems.
+
+- Set umask to 077 in adsl-setup.in to protect created files like
+  /etc/ppp/pap-secrets.
+
+
+Changes from Version 2.3 to 2.4:
+
+- Fixed spec file to automatically add .gz extension to man files as required
+
+- Tightened firewall rules.
+
+- Better check for /var/run in adsl-status; minor shell script fixes and
+  cleanups for NetBSD and Solaris.
+
+- Added FAQ to HOW-TO-CONNECT regarding running a script each time a
+  connection is made.
+
+
+Changes from Version 2.2 to 2.3:
+
+- Fixed the init script to create/remove /var/lock/subsys/adsl (patch
+  courtesy of Charley Carter.)
+
+- Added support (under Linux) for N_HDLC line discipline which should
+  greatly reduce CPU usage.  My tests show it cuts CPU usage in half.
+  My 486 DX2/66 gets 800 kb/s at 22% CPU usage.
+
+- adsl-connect uses "setsid" (if available) so that adsl-stop doesn't kill
+  its caller.  There is (IMO) a bug in pppd which kills all processes in
+  its process group if the "pty" option is used.  The setsid program gets
+  around this bug, on Linux at least.
+
+- Port to Solaris, courtesy of David Holland.
+
+- Renamed spec file from "spec" to "rp-pppoe.spec" and made some cleanups.
+  NOTE: Red Hat, in their infinite wisdom, decided to make the new RPM
+  compress man pages automatically.  You may have problems building RPM's
+  from source unless you get the latest rpm package and make sure it
+  compresses man pages.
+
+
+Changes from Version 2.1 to 2.2:
+
+- Added "-f" option to pppoe to allow use of any Ethernet frame type
+  for PPPoE.  USE WITH CAUTION -- this is a workaround for broken DSL
+  providers, not something you should monkey with freely!
+
+- Added pppoe-sniff program to help expose non-standard PPPoE implementations.
+
+
+Changes from Version 2.0 to 2.1:
+
+- Fixed minor bugs in bounds-checking
+
+- Modified adsl-status to use output of "netstat -r -n" to determine whether
+  or not link is up.  This should make it independent of locale, I hope!
+
+- Added "-k" and "-d" options to pppoe.
+
+
+Changes from Version 1.9 to 2.0:
+
+- Addition of pppoe-server
+
+- Massive internal code restructuring
+
+- Zealous bounds-checking everywhere.
+
+- adsl-setup now quotes user name and password in /etc/ppp/pap-secrets.
+
+- Ported to OpenBSD, FreeBSD and NetBSD, courtesy of Geoff Mottram
+  and Yannis Sismanis.
+
+- Rearranged adsl-* shell scripts, courtesy of Heiko Schlittermann.
+
+- Fixed bug in which Host-Uniq did not work if access concentrator sent
+  a cookie.
+
+- Addition of SuSE-specific "init" script, courtesy of Gary Cameron.
+
+
+Changes from Version 1.8 to 1.9:
+
+- Added some more documentation to HOW-TO-CONNECT
+
+- Demand-dialling option now works correctly
+
+- SIGHUP terminates pppoe after sending a PADT to the access concentrator
+
+- Minor cleanups to connection shell scripts
+
+
+Changes from Version 1.7 to 1.8:
+
+- Added demand-dialling option
+
+- Clarified HOW-TO-CONNECT
+
+- Added adsl-status script
+
+- Added "restart" and "status" options to Red Hat /etc/rc.d/init.d/adsl script
+
+- Made adsl-setup check for existence of pppd
+
+- Wildcarded external interface in firewall rules
+
+- Made pppoe send a PADT frame if connection is terminated
+
+$Id$

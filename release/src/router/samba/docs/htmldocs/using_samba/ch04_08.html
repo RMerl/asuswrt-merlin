@@ -1,0 +1,423 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 4] 4.8 Logging Configuration Options</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:32:18Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_07.html" TITLE="4.7 Virtual Servers">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.7 Virtual Servers" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch04_01.html" TITLE="4. Disk Shares ">
+Chapter 4<br>
+Disk Shares </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="chapter" HREF="ch05_01.html" TITLE="5. Browsing and Advanced Disk Shares ">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 5. Browsing and Advanced Disk Shares " BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch04-29331">
+4.8 Logging Configuration Options</a></h2><P CLASS="para">Occasionally, we need to find out what Samba is up to. This is especially true when Samba is performing an unexpected action or is not performing at all. To find out this information, we need to check Samba's log files to see exactly why it did what it did.</p><P CLASS="para">
+Samba log files can be as brief or verbose as you like. Here is an example of what a Samba log file looks like:</p><PRE CLASS="programlisting">
+[1999/07/21 13:23:25, 3] smbd/service.c:close_cnum(514)
+  phoenix (192.168.220.101) closed connection to service IPC$
+[1999/07/21 13:23:25, 3] smbd/connection.c:yield_connection(40)
+  Yielding connection to IPC$
+[1999/07/21 13:23:25, 3] smbd/process.c:process_smb(615)
+  Transaction 923 of length 49
+[1999/07/21 13:23:25, 3] smbd/process.c:switch_message(448)
+  switch message SMBread (pid 467)
+[1999/07/21 13:23:25, 3] lib/doscalls.c:dos_ChDir(336)
+  dos_ChDir to /home/samba
+[1999/07/21 13:23:25, 3] smbd/reply.c:reply_read(2199)
+  read fnum=4207 num=2820 nread=2820
+[1999/07/21 13:23:25, 3] smbd/process.c:process_smb(615)
+  Transaction 924 of length 55
+[1999/07/21 13:23:25, 3] smbd/process.c:switch_message(448)
+  switch message SMBreadbraw (pid 467)
+[1999/07/21 13:23:25, 3] smbd/reply.c:reply_readbraw(2053)
+  readbraw fnum=4207 start=130820 max=1276 min=0 nread=1276
+[1999/07/21 13:23:25, 3] smbd/process.c:process_smb(615)
+  Transaction 925 of length 55
+[1999/07/21 13:23:25, 3] smbd/process.c:switch_message(448)
+  switch message SMBreadbraw (pid 467)                          </pre><P CLASS="para">
+Many of these options are of use only to Samba programmers. However, we will go over the meaning of some of these entries in more detail in <a href="ch09_01.html"><b>Chapter 9, <CITE CLASS="chapter">Troubleshooting Samba</cite></b></a>.</p><P CLASS="para">
+Samba contains six options that allow users to describe how and where logging information should be written. Each of these options are global options and cannot appear inside a share definition. Here is an up-to-date configuration file that covers each of the share and logging options that we've seen so far:</p><PRE CLASS="programlisting">
+[global]
+	netbios name = HYDRA
+	server string = Samba %v on (%I)
+	workgroup = SIMPLE
+
+	#  Networking configuration options
+	hosts allow = 192.168.220. 134.213.233. localhost
+	hosts deny = 192.168.220.102
+	interfaces = 192.168.220.100/255.255.255.0 \
+					134.213.233.110/255.255.255.0
+	bind interfaces only = yes
+
+	# Debug logging information
+	log level = 2
+	log file = /var/log/samba.log.%m
+	max log size = 50
+	debug timestamp = yes
+
+[data]
+	path = /home/samba/data
+	browseable = yes
+	guest ok = yes
+	comment = Data Drive
+	volume = Sample-Data-Drive
+	writeable = yes
+	</pre><P CLASS="para">
+	Here, we've added a custom log file that reports information up to debug level 2. This is a relatively light debugging level. The logging level ranges from 1 to 10, where level 1 provides only a small amount of information and level 10 provides a plethora of low-level information. Level 2 will provide us with useful debugging information without wasting disk space on our server. In practice, you should avoid using log levels greater than 3 unless you are programming Samba.</p><P CLASS="para">
+This file is located in the <I CLASS="filename">
+/var/log</i> directory thanks to the <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+file</code> configuration option. However, we can use variable substitution to create log files specifically for individual users or clients, such as with the <CODE CLASS="literal">
+%m</code> variable in the following line:</p><PRE CLASS="programlisting">
+log file = /usr/local/logs/samba.log.%m</pre><P CLASS="para">
+Isolating the log messages can be invaluable in tracking down a network error if you know the problem is coming from a specific machine or user.</p><P CLASS="para">
+We've added another precaution to the log files: no one log file can exceed 50 kilobytes in size, as specified by the <CODE CLASS="literal">
+max</code> <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+size</code> option. If a log file exceeds this size, the contents are moved to a file with the same name but with the suffix <EM CLASS="emphasis">
+.old</em> appended. If the <EM CLASS="emphasis">
+.old</em> file already exists, it is overwritten and its contents are lost. The original file is cleared, waiting to receive new logging information. This prevents the hard drive from being overwhelmed with Samba log files during the life of our daemons.</p><P CLASS="para">
+For convenience, we have decided to leave the debug timestamp in the logs with the <CODE CLASS="literal">
+debug</code> <CODE CLASS="literal">
+timestamp</code> option, which is the default behavior. This will place a timestamp next to each message in the logging file. If we were not interested in this information, we could specify <CODE CLASS="literal">
+no</code> for this option instead.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-97929">
+4.8.1 Using syslog</a></h3><P CLASS="para">
+If you wish to use the system logger (<I CLASS="filename">syslog</i>) in addition to or in place of the standard Samba logging file, Samba provides options for this as well. However, to use <I CLASS="filename">
+syslog</i>, the first thing you will have to do is make sure that Samba was built with the <CODE CLASS="literal">
+configure</code> <CODE CLASS="literal">
+--with-syslog</code> option. See <a href="ch02_01.html"><b>Chapter 2</b></a> for more information on configuring and compiling Samba.</p><P CLASS="para">
+Once that is done, you will need to configure your <I CLASS="filename">
+/etc/syslog.conf</i> to accept logging information from Samba. If there is not already a <CODE CLASS="literal">
+daemon.*</code> entry in the <CODE CLASS="replaceable">
+<I>
+/etc/syslog.conf</i></code> file, add the following:</p><PRE CLASS="programlisting">
+daemon.*        /var/log/daemon.log</pre><P CLASS="para">
+This specifies that any logging information from system daemons will be stored in the <I CLASS="filename">
+/var/log/daemon.log</i> file. This is where the Samba information will be stored as well. From there, you can specify the following global option in your configuration file:</p><PRE CLASS="programlisting">
+syslog = 2</pre><P CLASS="para">
+This specifies that any logging messages with a level of 1 will be sent to both the <I CLASS="filename">
+syslog</i> and the Samba logging files. (The mappings to <I CLASS="filename">
+syslog</i> priorities are described in the upcoming section "syslog.") Let's assume that we set the regular <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+level</code> option above to 4. Any logging messages with a level of 2, 3, or 4 will be sent to the Samba logging files, but not to the <I CLASS="filename">
+syslog</i>. Only level 1 logging messages will be sent to both. If the <CODE CLASS="literal">
+syslog</code> value exceeds the <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+level</code> value, nothing will be written to the <I CLASS="filename">
+syslog</i>.</p><P CLASS="para">
+If you want to specify that messages be sent only to <I CLASS="filename">
+syslog</i>&nbsp;- and not to the standard Samba logging files&nbsp;- you can place this option in the configuration file:</p><PRE CLASS="programlisting">
+syslog only = yes</pre><P CLASS="para">
+If this is the case, any logging information above the number specified in the <CODE CLASS="literal">
+syslog</code> option will be discarded, just like the <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+level</code> option.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-pgfId-961771">
+4.8.2 Logging Configuration Options</a></h3><P CLASS="para">
+<A CLASS="xref" HREF="ch04_08.html#ch04-92838">
+Table 4.7</a> lists each of the logging configuration options that Samba can use. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch04-92838">
+Table 4.7: Global Configuration Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+log file</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified filename)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the name and location of the log file that Samba is to use. Uses standard variables.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specified in Samba makefile</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+log level</code></p><P CLASS="para">
+<CODE CLASS="literal">
+(debug level)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical (0-10)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the amount of log/debug messages that are sent to the log file. 0 is none, 3 is considerable.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+1</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+max log size</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical (size in KB)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the maximum size of log file. After the log exceeds this size, the file will be renamed to <EM CLASS="emphasis">
+.bak </em>and a new log file started.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+5000</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+debug</code></p><P CLASS="para">
+<CODE CLASS="literal">
+timestamp (timestamp logs)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If no, doesn't timestamp logs, making them easier to read during heavy debugging.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+syslog</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical (0-10)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets level of messages sent to <EM CLASS="emphasis">
+syslog</em>. Those levels below <CODE CLASS="literal">
+syslog level</code> will be sent to the system logger.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+1</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+syslog only</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If yes, uses <EM CLASS="emphasis">
+syslog</em> entirely and sends no output to the standard Samba log files.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-log-file-option">
+4.8.2.1 log file</a></h4><P CLASS="para">
+On our server, Samba outputs log information to text files in the <I CLASS="filename">
+var</i> subdirectory of the Samba home directory, as set by the makefile during the build. The <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+file</code> option can be used to reset the name of the log file to another location. For example, to reset the name and location of the Samba log file to <I CLASS="filename">
+/usr/local/logs/samba.log</i>, you could use the following:</p><PRE CLASS="programlisting">
+[global]
+	log file = /usr/local/logs/samba.log</pre><P CLASS="para">
+You may use variable substitution to create log files specifically for individual users or clients.</p><P CLASS="para">
+You can override the default log file location using the <CODE CLASS="literal">
+-l</code> command-line switch when either daemon is started. However, this does not override the <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+file</code> option. If you do specify this parameter, initial logging information will be sent to the file specified after <CODE CLASS="literal">
+-l</code> (or the default specified in the Samba makefile) until the daemons have processed the <I CLASS="filename">
+smb.conf</i> file and know to redirect it to a new log file.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-953284">
+4.8.2.2 log level</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+level</code> option sets the amount of data to be logged. Normally this is left at 0 or 1. However, if you have a specific problem you may want to set it at 3, which provides the most useful debugging information you would need to track down a problem. Levels above 3 provide information that's primarily for the developers to use for chasing internal bugs, and slows down the server considerably. Therefore, we recommend that you avoid setting this option to anything above 3. </p><PRE CLASS="programlisting">
+[global]
+log file = /usr/local/logs/samba.log.%m
+log level = 3</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-960212">
+4.8.2.3 max log size</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+max</code> <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+size</code> option sets the maximum size, in kilobytes, of the debugging log file that Samba keeps. When the log file exceeds this size, the current log file is renamed to add an <EM CLASS="emphasis">
+.old</em> extension (erasing any previous file with that name) and a new debugging log file is started with the original name. For example:</p><PRE CLASS="programlisting">
+[global]
+log file = /usr/local/logs/samba.log.%m
+max log size = 1000</pre><P CLASS="para">
+Here, if the size of any log file exceeds one megabyte in size, Samba renames the log file <EM CLASS="emphasis">
+samba.log. </em><CODE CLASS="replaceable">
+<I>
+machine-name</i></code><EM CLASS="emphasis">
+.old</em> and a new log file is generated. If there was a file there previously with the <EM CLASS="emphasis">
+.old</em> extension, Samba deletes it. We highly recommend setting this option in your configuration files because debug logging (even at lower levels) can covertly eat away at your available disk space. Using this option protects unwary administrators from suddenly discovering that most of their disk space has been swallowed up by a single Samba log file.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-953294">
+4.8.2.4 debug timestamp or timestamp logs</a></h4><P CLASS="para">
+If you happen to be debugging a network problem and you find that the date-stamp and timestamp information within the Samba log lines gets in the way, you can turn it off by giving either the <CODE CLASS="literal">
+timestamp</code> <CODE CLASS="literal">
+logs</code> or the <CODE CLASS="literal">
+debug</code> <CODE CLASS="literal">
+timestamp</code> option (they're synonymous) a value of <CODE CLASS="literal">
+no</code>. For example, a regular Samba log file presents its output in the following form:</p><PRE CLASS="programlisting">
+12/31/98 12:03:34 hydra (192.168.220.101) connect to server network as user davecb</pre><P CLASS="para">
+With a <CODE CLASS="literal">
+no</code> value for this option, the output would appear without the datestamp or  the timestamp:</p><PRE CLASS="programlisting">
+hydra (192.168.220.101) connect to server network as user davecb</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-78696">
+4.8.2.5 syslog</a></h4><P CLASS="para">The <CODE CLASS="literal">
+syslog</code> option causes Samba log messages to be sent to the Unix system logger. The type of log information to be sent is specified as the parameter for this argument. Like the <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+level</code> option, it can be a number from 0 to 10. Logging information with a level less than the number specified will be sent to the system logger. However, debug logs equal to or above the <CODE CLASS="literal">
+syslog</code> level, but less than log level, will still be sent to the standard Samba log files. To get around this, use the <CODE CLASS="literal">
+syslog</code> <CODE CLASS="literal">
+only</code> option. For example:</p><PRE CLASS="programlisting">
+[global]
+	log level = 3
+	syslog = 1</pre><P CLASS="para">
+With this, all logging information with a level of 0 would be sent to the standard Samba logs and the system logger, while information with levels 1, 2, and 3 would be sent only to the standard Samba logs. Levels above 3 are not logged at all. Note that all messages sent to the system logger are mapped to a priority level that the <EM CLASS="emphasis">
+syslog</em> process understands, as shown in <A CLASS="xref" HREF="ch04_08.html#ch04-80576">
+Table 4.8</a>. The default level is 1.    </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch04-80576">
+Table 4.8: Syslog Priority Conversion </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Log Level</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Syslog Priority</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+0</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+LOG_ERR</code></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+LOG_WARNING</code></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+2</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+LOG_NOTICE</code></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+3</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+LOG_INFO</code></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+4 and above</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+LOG_DEBUG</code></p></td></tr></tbody></table><P CLASS="para">
+If you wish to use <EM CLASS="emphasis">
+syslog</em>, you will have to run <CODE CLASS="literal">
+configure</code> <CODE CLASS="literal">
+--with-syslog</code> when compiling Samba, and you will need to configure your <I CLASS="filename">
+/etc/syslog.conf</i> to suit. (See the section <A CLASS="xref" HREF="ch04_08.html#ch04-97929">
+Section 4.8.1, Using syslog</a>, earlier in this chapter.)</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-953338">
+4.8.2.6 syslog only</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+syslog</code> <CODE CLASS="literal">
+only</code> option tells Samba not to use the regular logging files&nbsp;- the system logger only. To enable this, specify the following option in the global ection of the Samba configuration file:</p><PRE CLASS="programlisting">
+[global]
+	syslog only = yes </pre></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_07.html" TITLE="4.7 Virtual Servers">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.7 Virtual Servers" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="chapter" HREF="ch05_01.html" TITLE="5. Browsing and Advanced Disk Shares ">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 5. Browsing and Advanced Disk Shares " BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+4.7 Virtual Servers</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+5. Browsing and Advanced Disk Shares </td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

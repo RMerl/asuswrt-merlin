@@ -1,0 +1,786 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 5] Browsing and Advanced Disk Shares </title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:32:41Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_08.html" TITLE="4.8 Logging Configuration Options">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.8 Logging Configuration Options" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+Chapter 5</font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_02.html" TITLE="5.2 Filesystem Differences">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 5.2 Filesystem Differences" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div class="samplechapter">
+<H1 CLASS="chapter">
+<A CLASS="title" NAME="ch05-51347">
+5. Browsing and Advanced Disk Shares </a></h1><DIV CLASS="htmltoc">
+<P>
+<B>
+Contents:</b><br>
+<A CLASS="sect1" HREF="#ch05-23763" TITLE="5.1 Browsing">
+Browsing</a><br>
+<A CLASS="sect1" HREF="ch05_02.html" TITLE="5.2 Filesystem Differences">
+Filesystem Differences</a><br>
+<A CLASS="sect1" HREF="ch05_03.html" TITLE="5.3 File Permissions and Attributes on MS-DOS and Unix">
+File Permissions and Attributes on MS-DOS and Unix</a><br>
+<A CLASS="sect1" HREF="ch05_04.html" TITLE="5.4 Name Mangling and Case">
+Name Mangling and Case</a><br>
+<A CLASS="sect1" HREF="ch05_05.html" TITLE="5.5 Locks and Oplocks">
+Locks and Oplocks</a></p><P>
+</p></div><P CLASS="para">This chapter continues our discussion of disk shares from the previous chapter. Here, we will discuss various differences between the Windows and Unix filesystems&nbsp;- and how Samba works to bridge the gap. There are a surprising number of inconsistencies between a DOS filesystem and a Unix filesystem. In addition, we will talk briefly about name mangling, file locking, and a relatively new feature for Samba: opportunistic locking, or oplocks. However, before we move into that territory, we should first discuss the somewhat arcane topic of browsing with Samba.</p><DIV CLASS="sect1">
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="s1"></a>
+<A CLASS="title" NAME="ch05-23763">
+5.1 Browsing</a></h2><P CLASS="para">
+Browsing is the ability to examine the servers and shares that are currently available on your network. On a Windows NT 4.0 or 95/98 client, a user can browse network servers through the Network Neighborhood folder. By double-clicking  the icon representing the server, the user should be able to see the printer and disk share resources available on that machine as well. (If you have Windows NT 3.<EM CLASS="emphasis">
+x</em>, you can use the Disk-Connect Network Drive menu in the File Manager to display the available shares on a server.) </p><P CLASS="para">
+From the Windows command line, you can also use the <CODE CLASS="literal">
+net</code> <CODE CLASS="literal">
+view</code> option to see which servers are currently on the network. Here is an example of the <CODE CLASS="literal">
+net</code> <CODE CLASS="literal">
+view</code> command in action:</p><PRE CLASS="programlisting">C:\&gt;<CODE CLASS="userinput"><B> net view</b></code>
+Servers available in workgroup SIMPLE
+Server name            Remark
+----------------------------------------------------------
+\\CHIMAERA             Windows NT 4.0
+\\HYDRA                Samba 2.0.4 on (hydra)
+\\PHOENIX              Windows 98</pre><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-962596">
+5.1.1 Preventing Browsing</a></h3><P CLASS="para">You can restrict a share from being in a browse list by using the <CODE CLASS="literal">
+browseable</code> option. This boolean option prevents a share from being seen in the Network Neighborhood at all. For example, to prevent the <CODE CLASS="literal">
+[data]</code> share from the previous chapter from being visible, we could write:</p><PRE CLASS="programlisting">
+[data]
+	path = /home/samba/data
+	browseable = no
+	guest ok = yes
+	comment = Data Drive
+	volume = Sample-Data-Drive
+	writeable = yes</pre><P CLASS="para">
+Although you typically don't want to do this to an ordinary disk share, the browseable option is useful in the event that you need to create a share with contents that you do not want others to see, such as a <CODE CLASS="literal">
+[netlogin]</code> share for storing logon scripts for Windows domain control (see <a href="ch06_01.html"><b>Chapter 6, <CITE CLASS="chapter">Users, Security, and Domains</cite></b></a> for more information on logon scripts).</p><P CLASS="para">
+Another example is the <CODE CLASS="literal">
+[homes]</code> share. This share is often marked non-browsable so that a share named <CODE CLASS="literal">
+[homes]</code> won't appear when its machine's resources are browsed. However, if a user <CODE CLASS="literal">
+alice</code> logs on and looks at the machine's shares, an <CODE CLASS="literal">
+[alice]</code> share will appear under the machine. What if we wanted to make sure <CODE CLASS="literal">
+alice</code>'s share appeared to everyone before she logs in? This could be done with the global <CODE CLASS="literal">
+auto</code> <CODE CLASS="literal">
+services</code> option. This option preloads shares into the browse list to ensure that they are always visible: </p><PRE CLASS="programlisting">
+[global]
+	...
+	auto services = alice
+	...</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-962409">
+5.1.2 Default Services</a></h3><P CLASS="para">
+In the event that a user cannot successfully connect to a share, you can specify a default share to which they can connect. Since you do not know who will default to this share at any time, you will probably want to set the <CODE CLASS="literal">
+guest</code> <CODE CLASS="literal">
+ok</code> option to <CODE CLASS="literal">
+yes</code> for this share. Specifying a <CODE CLASS="literal">
+default</code> <CODE CLASS="literal">
+service</code> can be useful when sending the utterly befuddled to a directory of help files. For example:</p><PRE CLASS="programlisting">
+[global]
+	...
+	default service = helpshare
+	...
+	
+[helpshare]
+	path = /home/samba/helpshare/%S
+	browseable = yes
+	guest ok = yes
+	comment = Default Share for Unsuccessful Connections
+	volume = Sample-Data-Drive
+	writeable = no</pre><P CLASS="para">
+Note that we used the <CODE CLASS="literal">
+%S</code> variable in the <CODE CLASS="literal">
+path</code> option. If you use the <CODE CLASS="literal">
+%S</code> variable, it will refer to the requested nonexistent share (the original share requested by the user), not the name of the resulting default share. This allows us to create different paths with the names of each server, which can provide more customized help files for users. In addition, any underscores (_) specified in the requested share will be converted to slashes (/) when the <CODE CLASS="literal">
+%S</code> variable is used.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-969505">
+5.1.3 Browsing Elections</a></h3><P CLASS="para">As mentioned in <a href="ch01_01.html"><b>Chapter 1, <CITE CLASS="chapter">Learning the Samba</cite></b></a>, one machine in each subnet always keeps a list of the currently active machines. This list is called the <I CLASS="firstterm">
+browse list</i> and the server that maintains it is called the <I CLASS="firstterm">local master browser</i>. As machines come on and off the network, the local master browser continually updates the information in the browse list and provides it to any machine that requests it.</p><P CLASS="para">
+A computer becomes a local master browser by holding a browsing election on the local subnet. Browsing elections can be called at any time. Samba can rig a browsing election for a variety of outcomes, including always becoming the local master browser of the subnet or never becoming it. For example, the following options, which we've added to the configuration file from <a href="ch04_01.html"><b>Chapter 4, <CITE CLASS="chapter">Disk Shares</cite></b></a>, will ensure that Samba always wins the election for local master browser no matter which machines are also present:</p><PRE CLASS="programlisting">
+[global]
+	netbios name = HYDRA
+	server string = Samba %v on (%L)
+	workgroup = SIMPLE
+
+	#  Browsing election options
+	os level = 34
+	local master = yes
+
+	#  Networking configuration options
+	hosts allow = 192.168.220. 134.213.233. localhost
+	hosts deny = 192.168.220.102
+	interfaces = 192.168.220.100/255.255.255.0 \
+					134.213.233.110/255.255.255.0
+
+	# Debug logging information
+	log level = 2
+	log file = /var/log/samba.log.%m
+	max log size = 50
+	debug timestamp = yes
+
+[data]
+	path = /home/samba/data
+	browseable = yes
+	guest ok = yes
+	comment = Data Drive
+	volume = Sample-Data-Drive
+	writable = yes</pre><P CLASS="para">
+However, what if we didn't always want to win the election? What if we wanted to yield browsing to a Windows NT Server if present? In order to do that, we need to learn how browsing elections work. As you already know, each machine that takes place in the election must broadcast information about itself. This information includes the following:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-962259">
+</a>The version of the election protocol used</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-962260">
+</a>The operating system on the machine</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-962261">
+</a>The amount of time the client has been on the network</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-962267">
+</a>The hostname of the client</p></li></ul><P CLASS="para">
+Here is how the election is decided. Operating systems are assigned a binary value according to their version, as shown in <A CLASS="xref" HREF="ch05_01.html#ch05-51423">
+Table 5.1</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch05-51423">
+Table 5.1: Operating System Values in an Election </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Operating System</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Value</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">Windows NT Server 4.0</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+33</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Windows NT Server 3.51</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+32</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Windows NT Workstation 4.0</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+17</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Windows NT Workstation 3.51</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+16</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Windows 98</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+2</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Windows 95</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Windows 3.1 for Workgroups</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1</p></td></tr></tbody></table><P CLASS="para">
+Following that, each computer on the network is assigned a separate value according to its role, as shown in <A CLASS="xref" HREF="ch05_01.html#ch05-pgfId-962213">
+Table 5.2</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch05-pgfId-962213">
+Table 5.2: Computer Role Settings in an Election </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Role</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Value</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">Primary Domain Controller</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+128</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+WINS Client</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+32</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Preferred Master Browser</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+8</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Active Master Browser</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+4</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Standby Browser</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+2</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Active Backup Browser</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1</p></td></tr></tbody></table><P CLASS="para">Elections are decided in the following order:</p><OL CLASS="orderedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-962245">
+</a>The machine with the highest version of the election protocol will win. (So far, this is meaningless, as all Windows clients have version 1 of the election protocol.)</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-962246">
+</a>The machine with the highest operating system value wins the election.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-962247">
+</a>If there is a tie, the machine with the setting of Preferred Master Browser (role 8) wins the election.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-962248">
+</a>If there is still a tie, the client who has been online the longest wins the election.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-962282">
+</a>And finally, if there is still a tie, the client name that comes first alphabetically wins.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-969905">
+</a>The machine that is the "runner-up" can become a backup browser.</p></li></ol><P CLASS="para">
+As a result, if you want Samba to take the role of a local master browser, but only if there isn't a Windows NT Server (4.0 or 3.51) on the network, you could change the <CODE CLASS="literal">
+os</code> <CODE CLASS="literal">
+level</code> parameter in the previous example to:</p><PRE CLASS="programlisting">
+os level = 31</pre><P CLASS="para">
+This will cause Samba to immediately lose the election to a Windows NT 4.0 or  Windows NT 3.5 Server, both of which have a higher operating systems level. On the other hand, if you wanted to decide the local master browser on the basis of the network role, such as which machine is the primary domain controller, you could set the <CODE CLASS="literal">
+os</code> <CODE CLASS="literal">
+level</code> to match the highest type of operating system on the network and let the election protocol fall down to the next level.</p><P CLASS="para">How can you can tell if a machine is a local master browser? By using the <CODE CLASS="literal">
+nbtstat</code> command. Place the NetBIOS name of the machine you wish to check after the <CODE CLASS="literal">
+-a</code> option:</p><PRE CLASS="programlisting">C:\&gt;<CODE CLASS="userinput"><B> nbtstat -a hydra</b></code>
+
+       NetBIOS Remote Machine Name Table
+
+ Name                            Type         Status
+----------------------------------------------------------
+ HYDRA                     &lt;00&gt;  UNIQUE       Registered
+ HYDRA                     &lt;03&gt;  UNIQUE       Registered
+ HYDRA                     &lt;20&gt;  UNIQUE       Registered
+ ..__MSBROWSE__.           &lt;01&gt;  GROUP        Registered
+ SIMPLE                    &lt;00&gt;  GROUP        Registered
+ SIMPLE                    &lt;1D&gt;  UNIQUE       Registered
+ SIMPLE                    &lt;1E&gt;  GROUP        Registered
+
+ MAC Address = 00-00-00-00-00-00</pre><P CLASS="para">
+The resource entry that you're looking for is the <CODE CLASS="literal">
+..__MSBROWSE__.&lt;01&gt;</code>. This indicates that the server is currently acting as the local master browser for the current subnet. In addition, if the machine is a Samba server, you can check the Samba <I CLASS="filename">
+nmbd</i> log file for an entry such as:</p><PRE CLASS="programlisting">
+nmbd/nmbd_become_lmb.c:become_local_master_stage2(406)
+*****
+Samba name server HYDRA is now a local master browser for
+workgroup SIMPLE on subnet 192.168.220.100
+****</pre><P CLASS="para">
+Finally, Windows NT servers serving as primary domain controllers contain a sneak that allows them to assume the role of the local master browser in certain conditions; this is called the <EM CLASS="emphasis">
+preferred</em> <EM CLASS="emphasis">
+master browser</em> bit. Earlier, we mentioned that Samba could set this bit on itself as well. You can enable it with the <CODE CLASS="literal">
+preferred</code> <CODE CLASS="literal">
+master</code> option:</p><PRE CLASS="programlisting">
+#  Browsing election options
+os level = 33
+local master = yes
+preferred master = yes</pre><P CLASS="para">
+If the preferred master bit is set, the machine will force a browsing election at startup. Of course, this is needed only if you set the <CODE CLASS="literal">
+os</code> <CODE CLASS="literal">
+level</code> option to match the Windows NT machine. We recommend that you don't use this option if another machine also has the role of preferred master, such as an NT server. </p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-962289">
+5.1.4 Domain Master Browser</a></h3><P CLASS="para">In the opening chapter, we mentioned that in order for a Windows workgroup or domain to extend into multiple subnets, one machine would have to take the role of the <I CLASS="firstterm">
+domain master browser</i>. The domain master browser propagates browse lists across each of the subnets in the workgroup. This works because each local master browser periodically synchronizes its browse list with the domain master browser. During this synchronization, the local master browser passes on any server that the domain master browser does not have in its browse list, and vice versa. In a perfect world, each local master browser would eventually have the browse list for the entire domain.</p><P CLASS="para">
+Unlike the local master browser, there is no election to determine which machine assumes the role of the domain master browser. Instead, the administrator has to set it manually. By Microsoft design, however, the domain master browser and the primary domain controller (PDC) both register a resource type of &lt;1B&gt;, so the roles&nbsp;- and the machines&nbsp;- are inseparable. </p><P CLASS="para">
+If you have a Windows NT server on the network acting as a PDC, we recommend that you do not use Samba to become the domain master browser. The reverse is true as well: if Samba is taking on the responsibilities of a PDC, we recommend making it the domain master browser as well. Although it is possible to split the roles with Samba, this is not a good idea. Using two different machines to serve as the PDC and the domain master browser can cause random errors to occur on a Windows workgroup.</p><P CLASS="para">
+Samba can assume the role of a domain master browser for all subnets in the workgroup with the following option:</p><PRE CLASS="programlisting">
+domain master = yes</pre><P CLASS="para">
+You can verify that a Samba machine is in fact the domain master browser by checking the <EM CLASS="emphasis">
+nmbd</em> log file:</p><PRE CLASS="programlisting">
+nmbd/nmbd_become_dmb.c:become_domain_master_stage2(118)
+*****
+Samba name server HYDRA is now a domain master browser for
+workgroup SIMPLE on subnet 192.168.220.100
+*****</pre><P CLASS="para">
+Or you can use the <CODE CLASS="literal">nmblookup</code> command that comes with the Samba distribution to query for a unique &lt;1B&gt; resource type in the workgroup:</p><PRE CLASS="programlisting"># <CODE CLASS="userinput"><B>nmblookup SIMPLE#1B</b></code>
+Sending queries to 192.168.220.255
+192.168.220.100 SIMPLE&lt;1b&gt;</pre><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-963109">
+5.1.4.1 Multiple subnets</a></h4><P CLASS="para">There are three rules that you must remember when creating a workgroup/domain that spans more than one subnet:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-962339">
+</a>You must have either a Windows NT or Samba machine acting as a local master browser on each subnet in the workgroup/domain. (If you have a domain master browser in a subnet, a local master browser is not needed.)</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-962340">
+</a>You must have a Windows NT Server or a Samba machine acting as a domain master browser somewhere in the workgroup.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-962343">
+</a>Each local master browser must be instructed to synchronize with the domain master browser.</p></li></ul><P CLASS="para">
+Samba has a few other features in this arena in the event that you don't have or want a domain master browser on your network. Consider the subnets shown in <A CLASS="xref" HREF="ch05_01.html#ch05-15706">
+Figure 5.1</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch05-15706">
+Figure 5.1: Multiple subnets with Samba servers</a></h4><IMG CLASS="graphic" SRC="figs/sam.0501.gif" ALT="Figure 5.1"><P CLASS="para">
+First, a Samba server that is a local master browser can use the <CODE CLASS="literal">
+remote</code> <CODE CLASS="literal">
+announce</code> configuration option to make sure that computers in different subnets are sent broadcast announcements about the server. This has the effect of ensuring that the Samba server appears in the browse lists of foreign subnets. To achieve this, however, the directed broadcasts must reach the local master browser on the other subnet. Be aware that many routers do not allow directed broadcasts by default; you may have to change this setting on the router for the directed broadcasts to get through to its subnet.</p><P CLASS="para">
+With the <CODE CLASS="literal">
+remote</code> <CODE CLASS="literal">
+announce</code> option, list the subnets and the workgroup that should receive the broadcast. For example, to ensure that machines in the 192.168.221 and 192.168.222 subnets and SIMPLE workgroup are sent broadcast information from our Samba server, we could specify the following:</p><PRE CLASS="programlisting">
+#  Browsing election options
+os level = 34
+local master = yes
+remote announce = 192.168.221.255/SIMPLE \
+	192.168.222.255/SIMPLE</pre><P CLASS="para">
+In addition, you are allowed to specify the exact address to send broadcasts to if the local master browser on the foreign subnet is guaranteed to always have a fixed IP address.</p><P CLASS="para">
+A Samba local master browser can synchronize its browse list directly with another Samba server acting as a local master browser on a different subnet. For example, let's assume that Samba is configured as a local master browser, and Samba local master browsers exist at 192.168.221.130 and 192.168.222.120. We can use the <CODE CLASS="literal">
+remote</code> <CODE CLASS="literal">
+browse</code> <CODE CLASS="literal">
+sync</code> option to sync directly with the Samba servers, as follows:</p><PRE CLASS="programlisting">
+#  Browsing election options
+os level = 34
+local master = yes
+remote browse sync = 192.168.221.130 192.168.222.120</pre><P CLASS="para">
+In order for this to work, the other Samba machines must also be local master browsers. You can also use directed broadcasts with this option if you do not know specific IP addresses of local master browsers. </p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-969941">
+5.1.5 Browsing Options</a></h3><P CLASS="para">
+<A CLASS="xref" HREF="ch05_01.html#ch05-81028">Table 5.3</a> shows 14 options that define how Samba handles browsing tasks. We recommend the defaults for a site that prefers to be easy on its users with respect to locating shares and printers. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch05-81028">
+Table 5.3: Browsing Configuration Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+announce as</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+NT</code> or <CODE CLASS="literal">
+Win95</code> or <CODE CLASS="literal">
+WfW</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the operating system that Samba will announce itself as.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+NT</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+announce version</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the version of the operating system that Samba will announce itself as.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+4.2</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+browseable (browsable)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Allows share to be displayed in list of machine resources.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+browse list</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, Samba will provide a browse list on this server.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+auto services (preload)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (share list)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets a list of shares that will always appear in the browse list.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+default service (default)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (share name)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Names a share (service) that will be provided if the client requests a share not listed in <EM CLASS="emphasis">
+smb.conf.</em></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+local master</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, Samba will try to become a master browser on the local subnet.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+lm announce</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code> or <CODE CLASS="literal">
+no</code> or <CODE CLASS="literal">
+auto</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Enables or disables LAN Manager style host announcements.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+auto</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+lm interval</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the frequency in seconds that LAN Manager announcements will be made if activated.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+60</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+preferred master (prefered master)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, Samba will use the preferred master browser bit to attempt to become the local master browser.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+domain master</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, Samba will try to become the main browser master for the workgroup.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+os level</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the operating system level of Samba in an election for local master browser.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+0</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+remote browse sync</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (list of IP addresses)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Lists Samba servers to synchronize browse lists with.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+remote announce</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (IP address/ workgroup pairs)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Lists subnets and workgroups to send directed broadcast packets to, allowing Samba to appear to browse lists.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-959886">
+5.1.5.1 announce as</a></h4><P CLASS="para">
+This global configuration option specifies the type of operating system that Samba will announce to other machines on the network. The default value for this option is <CODE CLASS="literal">
+NT</code>, which represents a Windows NT operating system. Other possible values are <CODE CLASS="literal">
+Win95</code>, which represents a Windows 95 operating system, and <CODE CLASS="literal">
+WfW</code> for a Windows for Workgroup operating system. You can override the default value with the following:</p><PRE CLASS="programlisting">
+[global]
+	announce as = Win95</pre><P CLASS="para">
+We recommend against changing the default value of this configuration option.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-959896">
+5.1.5.2 announce version</a></h4><P CLASS="para">
+This global option is frequently used with the <CODE CLASS="literal">
+announce</code> <CODE CLASS="literal">
+as</code> configuration option; it specifies the version of the operating system that Samba will announce to other machines on the network. The default value of this options is 4.2, which places itself above the current Windows NT version of 4.0. You can specify a new value with a global entry such as the following:</p><PRE CLASS="programlisting">
+[global]
+	announce version = 4.3</pre><P CLASS="para">
+We recommend against changing the default value of this configuration option.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-38345">
+5.1.5.3 browseable</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+browseable</code> option (also spelled <CODE CLASS="literal">
+browsable</code>) indicates whether the share referenced should appear in the list of available resources of the machine on which it resides. This option is always set to <CODE CLASS="literal">
+yes</code> by default. If you wish to prevent the share from being seen in a client's browser, you can reset this option to <CODE CLASS="literal">
+no</code>.</p><P CLASS="para">
+Note that this does not prevent someone from accessing the share using other means, such as specifying a UNC location (<CODE CLASS="literal">//server/accounting)</code> in Windows Explorer. It only prevents the share from being listed under the machine's resources when being browsed.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-959474">
+5.1.5.4 browse list</a></h4><P CLASS="para">You should never need to change this parameter from its default value of <CODE CLASS="literal">
+yes</code>. If your Samba server is acting as a local master browser (i.e., it has won the browsing election), you can use the global <CODE CLASS="literal">
+browse</code> <CODE CLASS="literal">
+list</code> option to instruct Samba to provide or withhold its browse list to all clients. By default, Samba always provides a browse list. You can withhold this information by specifying the following:</p><PRE CLASS="programlisting">
+[global]
+	browse list = no</pre><P CLASS="para">
+If you disable the browse list, clients cannot browse the names of other machines, their services, and other domains currently available on the network. Note that this won't make any particular machine inaccessible; if someone knows a valid machine name/address and a share on that machine, they can still connect to it explicitly using NET USE or by mapping a drive letter to it using Windows Explorer. It simply prevents information in the browse list from being retrieved by any client that requests it.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-957885">
+5.1.5.5 auto services</a></h4><P CLASS="para">
+The global <CODE CLASS="literal">
+auto</code> <CODE CLASS="literal">
+services</code> option, which is also called <CODE CLASS="literal">
+preload</code>, ensures that the specified shares are always visible in the browse list. One common use for this option is to advertise specific user or printer shares that are created by the <CODE CLASS="literal">
+[homes]</code> or <CODE CLASS="literal">
+[printers]</code> shares, but are not otherwise browsable.</p><P CLASS="para">
+This option works best with disk shares. If you wish to force each of your system printers (i.e., those listed in the printer capabilities file) into the browse list using this option, we recommend using the <CODE CLASS="literal">
+load</code> <CODE CLASS="literal">
+printers</code> option instead. Any shares listed with the <CODE CLASS="literal">
+auto</code> <CODE CLASS="literal">
+services</code> option will not be displayed if the <CODE CLASS="literal">
+browse</code> <CODE CLASS="literal">
+list</code> option is set to <CODE CLASS="literal">
+no</code>.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-962615">
+5.1.5.6 default service</a></h4><P CLASS="para">
+The global <CODE CLASS="literal">
+default</code> <CODE CLASS="literal">
+service</code> option (sometimes called <CODE CLASS="literal">
+default</code>) names a "last-ditch" share. If set to an existing share name, and a client requests a nonexistent disk or printer share, Samba will attempt to connect the user to the share specified by this option instead. The option is specified as follows:</p><PRE CLASS="programlisting">
+default service = helpshare</pre><P CLASS="para">
+Note that there are no braces surrounding the share name <CODE CLASS="literal">
+helpshare</code>, even though the definition of the share later in the Samba configuration file will have braces. Also, if you use the <CODE CLASS="literal">
+%S</code> variable in the share specified by this option, it will represent the requested, nonexistent share, not the default service. Any underscores (<CODE CLASS="literal">_</code>) specified in the request share will be converted to slashes (<CODE CLASS="literal">/</code>) when the variable is used.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-957903">
+5.1.5.7 local master</a></h4><P CLASS="para">This global option specifies whether Samba will attempt to become the local master browser for the subnet when it starts up. If this option is set to <CODE CLASS="literal">
+yes</code>, Samba will take place in elections. However, setting this option by itself does not guarantee victory. (Other parameters, such as <CODE CLASS="literal">
+preferred</code> <CODE CLASS="literal">
+master</code> and <CODE CLASS="literal">
+os</code> <CODE CLASS="literal">
+level</code> help Samba win browsing elections.) If this option is set to <CODE CLASS="literal">
+no</code>, Samba will lose all browsing elections, no matter which values are specified by the other configuration options. The default value is <CODE CLASS="literal">
+yes</code>.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-957907">
+5.1.5.8 lm announce</a></h4><P CLASS="para">
+The global <CODE CLASS="literal">
+lm</code> <CODE CLASS="literal">
+announce</code> option tells Samba's <EM CLASS="emphasis">
+nmbd</em> whether or not to send LAN Manager host announcements on behalf of the server. These host announcements may be required by older clients, such as IBM's OS/2 operating system. This announcement allows the server to be added to the browse lists of the client. If activated, Samba will announce itself repetitively at the number of seconds specified by the <CODE CLASS="literal">
+lm</code> <CODE CLASS="literal">
+interval</code> option.</p><P CLASS="para">
+This configuration option takes the standard boolean values, <CODE CLASS="literal">
+yes</code> and <CODE CLASS="literal">
+no</code>, which engage or disengage LAN Manager announcements, respectively. In addition, there is a third option, <CODE CLASS="literal">
+auto</code>, which causes <EM CLASS="emphasis">
+nmbd</em> to passively listen for LAN Manager announcements, but not send any of its own initially. If LAN Manager announcements are detected for another machine on the network, <EM CLASS="emphasis">
+nmbd</em> will start sending its own LAN Manager announcements to ensure that it is visible. You can specify the option as follows:</p><PRE CLASS="programlisting">
+[global]
+	lm announce = yes</pre><P CLASS="para">
+The default value is <CODE CLASS="literal">
+auto</code>. You probably won't need to change this value from its default.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-959967">
+5.1.5.9 lm interval</a></h4><P CLASS="para">
+This option, which is used in conjunction with <CODE CLASS="literal">
+lm</code> <CODE CLASS="literal">
+announce</code>, indicates the number of seconds <EM CLASS="emphasis">
+nmbd</em> will wait before repeatedly broadcasting LAN Manager-style announcements. Remember that LAN Manager announcements must be activated in order for this option to be used. The default value is 60 seconds. If you set this value to 0, Samba will not send any LAN Manager host announcements, no matter what the value of the <CODE CLASS="literal">
+lm</code> <CODE CLASS="literal">
+announce</code> option. You can reset the value of this option as follows:</p><PRE CLASS="programlisting">
+[global]
+	lm interval = 90</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-959947">
+5.1.5.10 preferred master</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+preferred</code> <CODE CLASS="literal">
+master</code> option requests that Samba set the preferred master bit when participating in an election. This gives the server a higher preferred status in the workgroup than other machines at the same operating system level. If you are configuring your Samba machine to become the local master browser, it is wise to set the following value:</p><PRE CLASS="programlisting">
+[global]
+	preferred master = yes</pre><P CLASS="para">
+Otherwise, you should leave it set to its default, <CODE CLASS="literal">
+no</code>. If Samba is configured as a preferred master browser, it will force an election when it first comes online.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-957912">
+5.1.5.11 os level</a></h4><P CLASS="para">
+The global <CODE CLASS="literal">
+os</code> <CODE CLASS="literal">
+level</code> option dictates the operating system level at which Samba will masquerade during a browser election. If you wish to have Samba win an election and become the master browser, you can set the level above that of the operating system on your network with the highest current value. The values are shown in Table 5-1. The default level is 0, which means that Samba will lose all elections. If you wish Samba to win all elections, you can reset its value as follows:</p><PRE CLASS="programlisting">
+os level = 34</pre><P CLASS="para">
+This means that the server will vote for itself 34 times each time an election is called, which ensures a victory.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-957960">
+5.1.5.12 domain master</a></h4><P CLASS="para">
+If Samba is the primary domain controller for your workgroup or NT domain, it should also be the  domain master browser. The domain master browser is a special machine that has the NetBIOS resource type &lt;1B&gt; and is used to propagate browse lists to and from each of the local master browsers in individual subnets across the domain. To force Samba to become the domain master browser, set the following in the <CODE CLASS="literal">
+[global]</code> section of the <I CLASS="filename">
+smb.conf</i>:</p><PRE CLASS="programlisting">
+[global]
+	domain master = yes</pre><P CLASS="para">
+If you have a Windows NT server on the network acting as a primary domain controller (PDC), we recommend that you do not use Samba to become the domain master browser. The reverse is true as well: if Samba is taking on the responsibilities of a PDC, we recommend making it the domain master browser. Splitting the PDC and the domain master browser will cause unpredictable errors to occur on the network.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-957965">
+5.1.5.13 remote browse sync</a></h4><P CLASS="para">
+The global <CODE CLASS="literal">
+remote</code> <CODE CLASS="literal">
+browse</code> <CODE CLASS="literal">
+sync</code> option specifies that Samba should synchronize its browse lists with local master browsers in other subnets. However, the synchronization can occur only with other Samba servers, and not with Windows computers. For example, if your Samba server was a master browser on the subnet 192.168.235, and Samba local master browsers existed on other subnets at 192.168.234.92 and 192.168.236.2, you could specify the following:</p><PRE CLASS="programlisting">
+remote browse sync = 192.168.234.92 192.168.236.2 </pre><P CLASS="para">
+The Samba server would then directly contact the other machines on the address list and synchronize browse lists. You can also say:</p><PRE CLASS="programlisting">
+remote browse sync = 192.168.234.255 192.168.236.255</pre><P CLASS="para">
+This forces Samba to broadcast queries to determine the IP addresses of the local master browser on each subnet, with which it will then synchronize browse lists. This only works, however, if your router doesn't block directed broadcast requests ending in 255.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-957971">
+5.1.5.14 remote announce</a></h4><P CLASS="para">
+Samba servers are capable of providing browse lists to foreign subnets with the <CODE CLASS="literal">
+remote</code> <CODE CLASS="literal">
+announce</code> option. This is typically sent to the local master browser of the foreign subnet in question. However, if you do not know the address of the local master browser, you can do the following:</p><PRE CLASS="programlisting">
+[global]
+    remote announce = 192.168.234.255/ACCOUNTING \       
+						192.168.236.255/ACCOUNTING</pre><P CLASS="para">
+With this, Samba will broadcast host announcements to all machines on subnets 192.168.234 and 192.168.236, which will hopefully reach the local master browser of the subnet. You can also specify exact IP addresses, if they are known.</p></div></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_08.html" TITLE="4.8 Logging Configuration Options">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.8 Logging Configuration Options" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_02.html" TITLE="5.2 Filesystem Differences">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 5.2 Filesystem Differences" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+4.8 Logging Configuration Options</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+5.2 Filesystem Differences</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

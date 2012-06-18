@@ -1,0 +1,164 @@
+.TH dropbear 8
+.SH NAME
+dropbear \- lightweight SSH2 server
+.SH SYNOPSIS
+.B dropbear
+[\-FEmwsgjki] [\-b
+.I banner\fR] [\-d
+.I dsskey\fR] [\-r
+.I rsakey\fR] [\-p
+.IR port ]
+.SH DESCRIPTION
+.B dropbear
+is a SSH 2 server designed to be small enough to be used in small memory
+environments, while still being functional and secure enough for general use.
+.SH OPTIONS
+.TP
+.B \-b \fIbanner
+bannerfile.
+Display the contents of the file
+.I banner
+before user login (default: none).
+.TP
+.B \-d \fIdsskey
+dsskeyfile.
+Use the contents of the file
+.I dsskey
+for the DSS host key (default: /etc/dropbear/dropbear_dss_host_key). 
+Note that 
+some SSH implementations
+use the term "DSA" rather than "DSS", they mean the same thing.
+This file is generated with
+.BR dropbearkey (8).
+.TP
+.B \-r \fIrsakey
+rsakeyfile.
+Use the contents of the file
+.I rsakey
+for the rsa host key (default: /etc/dropbear/dropbear_rsa_host_key).
+This file is generated with
+.BR dropbearkey (8).
+.TP
+.B \-F
+Don't fork into background.
+.TP
+.B \-E
+Log to standard error rather than syslog.
+.TP
+.B \-m
+Don't display the message of the day on login.
+.TP
+.B \-w
+Disallow root logins.
+.TP
+.B \-s
+Disable password logins.
+.TP
+.B \-g
+Disable password logins for root.
+.TP
+.B \-j
+Disable local port forwarding.
+.TP
+.B \-k
+Disable remote port forwarding.
+.TP
+.B \-p \fI[address:]port
+Listen on specified 
+.I address
+and TCP
+.I port.
+If just a port is given listen
+on all addresses.
+up to 10 can be specified (default 22 if none specified).
+.TP
+.B \-i
+Service program mode.
+Use this option to run
+.B dropbear
+under TCP/IP servers like inetd, tcpsvd, or tcpserver.
+In program mode the \-F option is implied, and \-p options are ignored.
+.TP
+.B \-P \fIpidfile
+Specify a pidfile to create when running as a daemon. If not specified, the 
+default is /var/run/dropbear.pid
+.TP
+.B \-a
+Allow remote hosts to connect to forwarded ports.
+.TP
+.B \-W \fIwindowsize
+Specify the per-channel receive window buffer size. Increasing this 
+may improve network performance at the expense of memory use. Use -h to see the
+default buffer size.
+.TP
+.B \-K \fItimeout_seconds
+Ensure that traffic is transmitted at a certain interval in seconds. This is
+useful for working around firewalls or routers that drop connections after
+a certain period of inactivity. The trade-off is that a session may be
+closed if there is a temporary lapse of network connectivity. A setting
+if 0 disables keepalives.
+.TP
+.B \-I \fIidle_timeout
+Disconnect the session if no traffic is transmitted or received for \fIidle_timeout\fR seconds.
+.SH FILES
+
+.TP
+Authorized Keys
+
+~/.ssh/authorized_keys can be set up to allow remote login with a RSA or DSS
+key. Each line is of the form
+.TP
+[restrictions] ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIgAsp... [comment]
+
+and can be extracted from a Dropbear private host key with "dropbearkey -y". This is the same format as used by OpenSSH, though the restrictions are a subset (keys with unknown restrictions are ignored).
+Restrictions are comma separated, with double quotes around spaces in arguments.
+Available restrictions are:
+
+.TP
+.B no-port-forwarding
+Don't allow port forwarding for this connection
+
+.TP
+.B no-agent-forwarding
+Don't allow agent forwarding for this connection
+
+.TP
+.B no-X11-forwarding
+Don't allow X11 forwarding for this connection
+
+.TP
+.B no-pty
+Disable PTY allocation. Note that a user can still obtain most of the
+same functionality with other means even if no-pty is set.
+
+.TP
+.B command="\fIforced_command\fR"
+Disregard the command provided by the user and always run \fIforced_command\fR.
+
+The authorized_keys file and its containing ~/.ssh directory must only be
+writable by the user, otherwise Dropbear will not allow a login using public
+key authentication.
+
+.TP
+Host Key Files
+
+Host key files are read at startup from a standard location, by default
+/etc/dropbear/dropbear_dss_host_key and /etc/dropbear/dropbear_rsa_host_key
+or specified on the commandline with -d or -r. These are of the form generated
+by dropbearkey.
+
+.TP
+Message Of The Day
+
+By default the file /etc/motd will be printed for any login shell (unless 
+disabled at compile-time). This can also be disabled per-user
+by creating a file ~/.hushlogin .
+
+.SH AUTHOR
+Matt Johnston (matt@ucc.asn.au).
+.br
+Gerrit Pape (pape@smarden.org) wrote this manual page.
+.SH SEE ALSO
+dropbearkey(8), dbclient(1)
+.P
+http://matt.ucc.asn.au/dropbear/dropbear.html

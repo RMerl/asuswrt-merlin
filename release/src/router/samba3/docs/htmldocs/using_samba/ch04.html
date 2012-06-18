@@ -1,0 +1,2556 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Chapter 4. Windows NT Domains</h1>
+
+
+
+<p><a name="INDEX-1"/>In previous
+chapters, we've focused on workgroup networking to
+keep things simple and introduce you to networking with Samba in the
+most painless manner we could find. However, workgroup computing has
+its drawbacks, and for many computing environments, the greater
+security and single logon of the Windows NT domain make it worthwhile
+to spend the extra effort to implement a domain.</p>
+
+<p>In addition to the domain features of
+<a name="INDEX-2"/>that we discussed in <a href="ch01.html">Chapter 1</a>, having a domain makes it possible to use
+<em class="firstterm">logon scripts</em><a name="INDEX-3"/> and <em class="firstterm">roaming profiles
+</em><a name="INDEX-4"/>(also called<em class="firstterm"> roving
+profiles</em><a name="INDEX-5"/>). A logon
+script is a text file of commands that are run during startup, and a
+profile is a collection of information regarding the desktop
+environment, including the contents of the Start menu, icons that
+appear on the desktop, and other characteristics about the GUI
+environment that users are allowed to customize. A roaming profile
+can follow its owner from computer to computer, allowing her to have
+the same familiar interface appear wherever she logs on.</p>
+
+<p>A Windows NT domain offers centralized control over the network.
+<em class="firstterm">Policies</em><a name="INDEX-6"/> can be set up by an administrator to
+define aspects of the users' environment and limit
+the amount of control they have over the network and their computers.
+It is also possible for administrators to perform remote
+administration of the domain controllers from any Windows NT/2000/XP
+workstation.</p>
+
+<p>Samba 2.2 has the ability to act as a primary domain controller,
+supporting domain logons from Windows 95/98/Me/NT/2000/XP computers
+and allowing Windows NT/2000/XP<a name="FNPTR-1"/><a href="#FOOTNOTE-1">[1]</a> systems to join the domain as domain
+member servers. Samba can also join a domain as a member server,
+allowing the primary domain controller to be a Windows NT/2000 system
+or another Samba server.</p>
+
+<a name="samba2-CHP-4-NOTE-100"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>Samba 2.2 does not support <a name="INDEX-7"/><a name="INDEX-8"/><a name="INDEX-9"/>LDAP and <a name="INDEX-10"/>Kerberos authentication of Active
+Directory, so it cannot act as a Windows 2000 Active Directory domain
+controller. However, Samba can be added to an Active Directory domain
+as a member server, with the Windows 2000 domain controllers running
+in either mixed or native mode. The Windows 2000 server (even if it
+is running in native mode) supports the Samba server by acting as a
+<a name="INDEX-11"/><a name="INDEX-12"/>PDC emulator, using the Windows NT
+style of authentication rather than the Kerberos style.</p>
+</blockquote>
+
+<p>If you're adding a Samba server to a network that
+has already been set up, you won't have to decide
+whether to use a workgroup or a domain; you will simply have to be
+compatible with what's already in place. If you do
+have a choice, we suggest you evaluate both workgroup and domain
+computing carefully before rolling out a big installation. You will
+have a lot of work to do if you later need to convert one to the
+other. One last thought on this matter is that Microsoft is
+developing Windows in the direction of increased use of domains and
+is intending that eventually Windows networks be composed solely of
+Active Directory domains. If you implement a Windows NT domain now,
+you'll be in a better position to transition to
+Active Directory later, after Samba has better support for it.</p>
+
+<p>In this chapter, we cover various topics directly related to using
+Samba in a Windows NT domain, including:</p>
+
+<ul><li>
+<p>Configuring and using Samba as the primary domain controller</p>
+</li><li>
+<p>Setting up Windows 95/98/Me systems to log on to the domain</p>
+</li><li>
+<p>Implementing user-level security on Windows 95/98/Me</p>
+</li><li>
+<p>Adding Windows NT/2000/XP systems to the domain</p>
+</li><li>
+<p>Configuring logon scripts, roaming profiles, and system policies</p>
+</li><li>
+<p>Adding a Samba server to a domain as a member server</p>
+</li></ul>
+
+
+
+
+<div class="sect1"><a name="samba2-CHP-4-SECT-1"/>
+
+<h2 class="head1">Samba as the Primary Domain Controller</h2>
+
+<p><a name="INDEX-13"/>Samba 2.2
+is able to handle the most desired functions of a primary domain
+controller in a Windows NT domain, handling domain logons and
+authentication for accessing shared resources, as well as supporting
+logon scripts, roaming profiles, and system policies.</p>
+
+<a name="samba2-CHP-4-NOTE-101"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>You will need to use at least Samba 2.2 to ensure that PDC
+functionality for Windows NT/2000/XP clients is present. Prior to
+Samba 2.2, only limited user authentication for NT clients was
+present.</p>
+</blockquote>
+
+<p>In this section, we will show you how to configure Samba as a PDC for
+use with Windows 95/98/Me and Windows NT/2000/XP clients. The two
+groups of Windows versions interact differently within domains, and
+in some cases are supported in slightly different ways. If you know
+you are going to be using only Windows 95/98/Me or Windows
+NT/2000/XP, you can set up Samba to support only that group. However,
+there isn't any harm in supporting both at the same
+time.</p>
+
+<a name="samba2-CHP-4-NOTE-102"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>If you would like more information on how to set up
+<a name="INDEX-14"/>domains, see the file
+<em class="filename">Samba-PDC-HOWTO.html</em><a name="INDEX-15"/>
+in the <em class="filename">docs/htmldocs</em> directory of the Samba
+source distribution.</p>
+</blockquote>
+
+<p>Samba must be the only domain controller for the domain. Make sure
+that a PDC isn't already active, and that there are
+no backup domain controllers. Samba 2.2 is not able to communicate
+with backup domain controllers, and having domain controllers in your
+domain with unsynchronized data would result in a very dysfunctional
+network.</p>
+
+<a name="samba2-CHP-4-NOTE-103"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>Although Samba 2.2 cannot function as, or work with, a Windows NT
+<a name="INDEX-16"/><a name="INDEX-17"/>BDC, it is possible to set up
+another Samba server to act as a backup for a Samba PDC. For further
+information, see the file
+<em class="filename">Samba-BDC-HOWTO.html</em><a name="INDEX-18"/>
+in the <em class="filename">docs/htmldocs</em> directory of the Samba
+source distribution.</p>
+</blockquote>
+
+<p>Configuring Samba to be a PDC is a matter of modifying the
+<em class="filename">smb.conf</em> file, creating some directories, and
+restarting the server.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-1.1"/>
+
+<h3 class="head2">Modifying smb.conf</h3>
+
+<p>First you will need to start with an
+<em class="filename">smb.conf</em><a name="INDEX-19"/><a name="INDEX-20"/> file that correctly configures Samba for
+workgroup computing, such as the one we created in <a href="ch02.html">Chapter 2</a>, and insert the following lines into the
+<tt class="literal">[global]</tt> section:</p>
+
+<blockquote><pre class="code">[global]
+    ; use the name of your Samba server instead of toltec
+    ; and your own workgroup instead of METRAN
+    netbios name = toltec
+    workgroup = METRAN
+    encrypt passwords = yes
+        
+    domain master = yes
+    local master = yes
+    preferred master = yes
+    os level = 65
+
+    security = user
+    domain logons = yes
+    
+    ; logon path tells Samba where to put Windows NT/2000/XP roaming profiles
+    logon path = \\%L\profiles\%u\%m
+    logon script = logon.bat
+
+    logon drive = H:
+    ; logon home is used to specify home directory and
+    ; Windows 95/98/Me roaming profile location
+    logon home = \\%L\%u\.win_profile\%m
+    
+    time server = yes
+
+    ; instead of jay, use the names of all users in the Windows NT/2000/XP
+    ; Administrators group who log on to the domain
+    domain admin group = root jay
+
+    ; the below works on Red Hat Linux - other OSs might need a different command
+    add user script = /usr/sbin/useradd -d /dev/null -g 100 -s /bin/false -M %u</pre></blockquote>
+
+<p>And after the <tt class="literal">[global]</tt> section, add these three
+new shares:</p>
+
+<blockquote><pre class="code">[netlogon]
+    path = /usr/local/samba/lib/netlogon
+    writable = no
+    browsable = no
+
+[profiles]
+    ; you might wish to use a different directory for your
+    ; Windows NT/2000/XP roaming profiles
+    path = /home/samba-ntprof
+    browsable = no
+    writable = yes
+    create mask = 0600
+    directory mask = 0700
+
+[homes]
+    read only = no
+    browsable = no
+    guest ok = no
+    map archive = yes</pre></blockquote>
+
+<p>Now for the explanation. If you are comparing this example to the
+configuration file presented in <a href="ch02.html">Chapter 2</a>, you
+will notice that the first three parameter settings are similar. We
+start out in the <tt class="literal">[global]</tt> section by setting the
+NetBIOS name of the Samba server. We are using the default, which is
+the DNS hostname, but are being explicit because the NetBIOS name is
+used in UNCs that appear later in <em class="filename">smb.conf</em>. The
+next two lines, setting the workgroup name and choosing to use
+encrypted passwords, are identical to our
+<em class="filename">smb.conf</em> file from <a href="ch02.html">Chapter 2</a>.
+However, things are now a little different: even though it still
+reads &quot;workgroup&quot;, we are actually
+setting the name of the domain. For a workgroup, using encrypted
+passwords is optional; when using a domain, they are required.</p>
+
+<p>The next four lines set up our Samba PDC to handle browsing services.
+The line <tt class="literal">domain</tt> <tt class="literal">master</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt> causes Samba to be the
+domain master browser, which handles browsing services for the domain
+across multiple subnets if necessary. Although it looks very similar,
+<tt class="literal">local</tt> <tt class="literal">master</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt> does not cause Samba to
+be the master browser on the subnet, but merely tells it to
+participate in browser elections and allow itself to win. (These two
+lines are yet more default settings that we include to be clear.) The
+next two lines ensure that Samba wins the elections. Setting the
+<tt class="literal">preferred</tt> <tt class="literal">master</tt> parameter
+makes Samba force an election when it starts up. The
+<tt class="literal">os</tt> <tt class="literal">level</tt> parameter is set
+higher than that of any other system, which results in Samba winning
+that election. (At the time of this writing, an <tt class="literal">os</tt>
+level of 65 was sufficient to win over all versions of
+Windows&mdash;but make sure no other Samba server is set higher!) We
+make sure Samba is both the <a name="INDEX-21"/><a name="INDEX-22"/>domain and local master browser
+because Windows NT/2000 PDCs always reserve the domain master browser
+role for themselves and because Windows clients require things to be
+that way to find the primary domain controller. It is possible to
+allow another computer on the network to win the role of local master
+browser, but having the same server act as both domain and local
+masters is simpler and more efficient.</p>
+
+<p>The next two lines in the <tt class="literal">[global]</tt> section set up
+Samba to handle the actual domain logons. We set
+<tt class="literal">security</tt> <tt class="literal">=</tt>
+<tt class="literal">user</tt> so that Samba will require a username and
+password. This is actually the same as in the workgroup setup we
+covered in <a href="ch01.html">Chapter 1</a> and <a href="ch02.html">Chapter 2</a> because it is the default. The only
+reason we're including it explicitly is to avoid
+confusion: another valid setting is <tt class="literal">security</tt>
+<tt class="literal">=</tt> <tt class="literal">domain</tt>, but that is for
+having another (Windows or Samba) domain controller handle the logons
+and should never be found in the <em class="filename">smb.conf</em> of a
+Samba PDC. The next line, <tt class="literal">domain</tt>
+<tt class="literal">logons</tt> <tt class="literal">=</tt>
+<tt class="literal">yes</tt>, is what tells Samba we want this server to
+handle domain logons.</p>
+
+<p>Defining a logon path is necessary for supporting
+<a name="INDEX-23"/><a name="INDEX-24"/>roaming profiles for
+Windows NT/2000/XP clients. The UNC
+<tt class="literal">\\%L\profiles\%u</tt> refers to a share held on the
+Samba server where the profiles are kept. The variables
+<tt class="literal">%L</tt> and <tt class="literal">%u</tt> are replaced by Samba
+with the name of the server and the username of the logged on user,
+respectively. The section in <em class="filename">smb.conf</em> defining
+the <tt class="literal">[profiles]</tt> share contains the definition of
+exactly where the profiles are kept on the server.
+We'll get back to this topic a bit later in this
+chapter.</p>
+
+<p>The <tt class="literal">logon</tt> <tt class="literal">script</tt>
+<tt class="literal">=</tt> <tt class="literal">logon.bat</tt> line specifies the
+name of an MS-DOS batch file that will be executed when the client
+logs on to the domain. The path specified here is relative to the
+<tt class="literal">[netlogon]</tt> share that is defined later in the
+<em class="filename">smb.conf</em> file.</p>
+
+<p>The settings of <tt class="literal">logon</tt> <tt class="literal">drive</tt> and
+<tt class="literal">logon</tt> <tt class="literal">home</tt> have a couple of
+purposes. Setting <tt class="literal">logon</tt> <tt class="literal">drive</tt>
+<tt class="literal">=</tt> <tt class="literal">H</tt>: allows the home directory
+of the user to be connected to drive letter H on the client. The
+<tt class="literal">logon</tt> <tt class="literal">home</tt> parameter is set to
+the location of the home directory on the server, and again,
+<tt class="literal">%u</tt> is replaced at runtime by the logged on
+user's username. The home directory is used to store
+roaming profiles for Windows 95/98/Me clients. These parameters tie
+into the <tt class="literal">[homes]</tt> share that we are adding, as we
+will explain a bit later.</p>
+
+<p>Setting <tt class="literal">time</tt> <tt class="literal">server</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt> causes Samba to advertise
+itself as a <a name="INDEX-25"/>time service for the network. This is
+optional.</p>
+
+<p>The <tt class="literal">domain</tt> <tt class="literal">admin</tt>
+<tt class="literal">group</tt> parameter exists as a short-term measure in
+Samba 2.2 to give Samba a list of users who have administrative
+privileges in the domain. The list should contain any Samba users who
+log on from Windows NT/2000/XP systems and are members of the
+Administrators or Domain Admins groups, if roaming profiles are to
+work correctly.</p>
+
+<p>The last parameter to add to the <tt class="literal">[global]</tt> section
+is <tt class="literal">add</tt> <tt class="literal">user</tt>
+<tt class="literal">script</tt>, and you will need it only if one or more
+of your clients is a Windows NT/2000/XP system. We will tell you more
+about this in <a href="ch04.html#samba2-CHP-4-SECT-2">Section 4.2</a> later in this chapter.</p>
+
+<p>The rest of the additions to <em class="filename">smb.conf</em> are the
+definitions for three <a name="INDEX-26"/><a name="INDEX-27"/>shares. The
+<tt class="literal">[netlogon]</tt><a name="INDEX-28"/> share is necessary for Samba to
+handle domain logons because Windows clients need to connect to it
+during the logon process and will fail if the share does not exist.
+Other than that, the only function of <tt class="literal">[netlogon]</tt>
+is to be a repository for logon scripts and system-policy files,
+which we shall cover in detail later in this chapter. The path to a
+directory on the Samba server is given, and because the clients only
+read logon scripts and system-policy files from the share, the
+<tt class="literal">writable</tt> <tt class="literal">=</tt>
+<tt class="literal">no</tt> definition is used to make the share read-only.
+Users do not need to see the share, so we set
+<tt class="literal">browsable</tt> <tt class="literal">=</tt>
+<tt class="literal">no</tt> to make the share invisible.</p>
+
+<p>The <tt class="literal">[profiles]</tt><a name="INDEX-29"/> share is needed for use with
+Windows NT/2000/XP roaming profiles. The path points to a directory
+on the Samba server where the profiles are kept, and in this case,
+the clients must be able to read and write the profile data. The
+<tt class="literal">create</tt> <tt class="literal">mask</tt> (read and write
+permitted for the owner only) and <tt class="literal">directory</tt>
+<tt class="literal">mask</tt> (read, write, and search permitted for the
+owner only) are set up such that a user's profile
+data can be read and written only by the user and not accessed or
+modified by anyone else.</p>
+
+<p>The <tt class="literal">[homes]</tt><a name="INDEX-30"/> share is necessary for our
+definitions of <tt class="literal">logon</tt> <tt class="literal">drive</tt> and
+<tt class="literal">logon</tt> <tt class="literal">home</tt> to work. Samba uses
+the <tt class="literal">[homes]</tt> share to add the home directory of the
+user (found in <em class="filename">/etc/passwd</em> ) as a share. Instead
+of appearing as &quot;homes&quot;, the share
+will be accessible on the client through a folder having the same
+name as the user's username. We will cover this
+topic in more detail in <a href="ch09.html">Chapter 9</a>.</p>
+
+<p>At this point, you might want to run
+<em class="filename">testparm</em><a name="INDEX-31"/> to check your
+<em class="filename">smb.conf</em> file. <a name="INDEX-32"/><a name="INDEX-33"/></p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-1.2"/>
+
+<h3 class="head2">Creating Directories on the Samba Server</h3>
+
+<p><a name="INDEX-34"/><a name="INDEX-35"/>The
+<tt class="literal">[netlogon]</tt> and <tt class="literal">[profiles]</tt>
+shares defined in our new <em class="filename">smb.conf</em> file
+reference directories on the Samba server, and it is necessary to
+create those directories with the proper permissions:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>mkdir /usr/local/samba/lib/netlogon</b></tt>
+# <tt class="userinput"><b>chmod 775 /usr/local/samba/lib/netlogon</b></tt>
+# <tt class="userinput"><b>mkdir /home/samba-ntprof</b></tt>
+# <tt class="userinput"><b>chmod 777 /home/samba-ntprof</b></tt></pre></blockquote>
+
+<p>The directory names we use are just examples. You are free to choose
+your own.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-1.3"/>
+
+<h3 class="head2">Restarting the Samba Server</h3>
+
+<p><a name="INDEX-36"/>At this
+point, the only thing left to do is restart the Samba server, and the
+changes will be put into effect:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>/etc/rc.d/init.d/smb restart</b></tt></pre></blockquote>
+
+<p>(or use whatever method works on your system, as discussed in <a href="ch02.html">Chapter 2</a>.) The server is now ready to accept domain
+logons. <a name="INDEX-37"/></p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-4-SECT-2"/>
+
+<h2 class="head1">Adding Computer Accounts</h2>
+
+<p>To interact in a domain, a Windows NT/2000/XP system must be a member
+of the domain. <a name="INDEX-38"/>Domain membership is implemented
+using <em class="firstterm">computer
+accounts,</em><a name="INDEX-39"/><a name="INDEX-40"/> which are similar to user
+accounts and allow a domain controller to keep information with which
+to authenticate computers on the network. That is, the domain
+controller must be able to tell if requests that arrive from a
+computer are coming from a computer that it
+&quot;knows&quot; as being part of the
+domain. Each Windows NT/2000/XP system in the domain has a computer
+account in the domain controllers' database, which
+on a Windows NT/2000 hosted domain is the <a name="INDEX-41"/>SAM
+database. Although Samba uses a different method (involving the
+<em class="filename">smbpasswd</em><a name="INDEX-42"/> file), it also treats computer accounts
+similarly to user accounts.</p>
+
+<p>To create a computer account, an administrator configures a Windows
+NT/2000/XP system to be part of the domain. For Samba 2.2, the
+&quot;<a name="INDEX-43"/><a name="INDEX-44"/>domain
+administrator&quot; is the <a name="INDEX-45"/><a name="INDEX-46"/>root account on the Samba
+server, and you will need to run the command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbpasswd -a root</b></tt></pre></blockquote>
+
+<p>to add the root user to Samba's password database.
+In this case, do not provide <em class="filename">smbpasswd</em> with the
+same password as the actual root account on the server. Create a
+different password to be used solely for creating computer accounts.
+This will reduce the possibility of compromising the root password.</p>
+
+<p>When the computer account is created, two things must happen on the
+Samba server. An entry is added to the <em class="filename">smbpasswd</em>
+file, with a &quot;username&quot; that is the
+NetBIOS name of the computer with a dollar sign
+(<tt class="literal">$</tt>) appended to it. This part is handled by the
+<em class="emphasis">smbpasswd</em> command, and you do not need to
+perform any additional action to implement it.</p>
+
+<p>With Samba 2.2, an entry is also required in the
+<em class="filename">/etc/passwd</em> file<a name="FNPTR-2"/><a href="#FOOTNOTE-2">[2]</a> to give the computer account a
+user ID (UID) on the Samba server.</p> 
+
+<p>This account will never be used to
+log in to the Unix system, so it should not be given a valid home
+directory or login shell. To make this part work, you must set the
+<tt class="literal">add</tt> <tt class="literal">user</tt>
+<tt class="literal">script</tt> parameter in your Samba configuration file,
+using a command that adds the entry in the proper manner. On our Red
+Hat Linux system, we set <tt class="literal">add</tt>
+<tt class="literal">user</tt> <tt class="literal">script</tt> to:</p>
+
+<blockquote><pre class="code">/usr/sbin/useradd -d /dev/null -g 100 -s /bin/false -M %u</pre></blockquote>
+
+<p>This command adds an entry in <em class="filename">/etc/passwd</em>
+similar to the following:</p>
+
+<blockquote><pre class="code">aztec$:x:505:100::/dev/null:/bin/false</pre></blockquote>
+
+<p>Again, notice that the username ends in a dollar sign. The user
+account shown has a &quot;home
+directory&quot; of <em class="filename">/dev/null</em>, a
+group ID (GID) of 100, and a &quot;login
+shell&quot; of <em class="filename">/bin/false</em>. The
+<em class="emphasis">-M</em> flag in our <em class="emphasis">useradd</em>
+command prevents it from creating the home directory. Samba replaces
+the <tt class="literal">%u</tt> variable in the
+<em class="emphasis">useradd</em> command with the NetBIOS name of the
+computer, including the trailing dollar sign. The basic idea here is
+to create an entry with a valid username and UID. These are the only
+parts that Samba uses. It is important that the UID be unique, not
+also used for other accounts&mdash;especially ones that are
+associated with Samba users.</p>
+
+<p>If you are using some other variety of Unix, you will need to replace
+our <em class="emphasis">useradd</em> command with a command that performs
+the same function on your system. If a command such as
+<em class="emphasis">useradd</em> does not come with your system, you can
+write a shell script yourself that performs the same function. In any
+case, the command should add a password hash that does not correspond
+to any valid password. For example, in the<em class="filename">
+/etc/shadow</em> file of our Linux server, we find the
+following two lines:</p>
+
+<blockquote><pre class="code">jay:%1%zQ7j7ok8$D/IubyRAY5ovM3bTrpUCn1:11566:0:99999:7:::
+zapotec$:!!:11625:0:99999:7:::</pre></blockquote>
+
+<p>The first line is for <tt class="literal">jay</tt>'s user
+account. The second field is the password hash&mdash;the long string
+between the first and second colons. The second line is for the
+computer account of <tt class="literal">zapotec</tt>, a domain member
+server. Its &quot;username&quot; ends with a
+dollar sign (<tt class="literal">$</tt>), and the second field in this case
+has been set to &quot;!!&quot;, which is an
+arbitrary string not produced from any password. Therefore, there is
+no valid password for this account on the Linux host. Just about any
+ASCII string can be used instead of
+&quot;!!&quot;. For example, you could use
+&quot;DISABLED&quot; instead.</p>
+
+<a name="samba2-CHP-4-NOTE-104"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>It is possible to <a name="INDEX-47"/><a name="INDEX-48"/><a name="INDEX-49"/><a name="INDEX-50"/>create the entries for
+<em class="filename">/etc/passwd</em> and <em class="filename">smbpasswd</em>
+manually; however, we suggest this method be used very carefully, and
+only for initial testing, or as a last resort. The reason for this is
+to maintain security. After the computer account has been created on
+the server, the next Windows NT/2000/XP system on the network with a
+matching NetBIOS name to log on to the domain will be associated with
+this account. This allows crackers a window of opportunity to take
+over computer accounts for their own purposes.</p>
+</blockquote>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-4-SECT-3"/>
+
+<h2 class="head1">Configuring Windows Clients for Domain Logons</h2>
+
+<p><a name="INDEX-51"/>The client-side configuration for Windows
+clients is really simple. All you have to do is switch from workgroup
+to domain networking by enabling domain logons, and in the case of
+Windows NT/2000/XP, also provide the root password you gave
+<em class="filename">smbpasswd</em> for creating computer accounts. This
+results in the Windows NT/2000/XP system becoming a member of the
+domain.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-3.1"/>
+
+<h3 class="head2">Windows 95/98/Me</h3>
+
+<p><a name="INDEX-52"/><a name="INDEX-53"/>To
+enable domain logons with Windows 95/98/Me, open the Control Panel
+and double-click the Network icon. Then click Client for Microsoft
+Networks, and click the Properties button. At this point, you should
+see a dialog box similar to <a href="ch04.html#samba2-CHP-4-FIG-1">Figure 4-1</a>. Select the
+Logon to Windows Domain checkbox at the top of the dialog box, and
+enter the name of the domain as you have defined it with the
+<tt class="literal">workgroup</tt> parameter in the Samba configuration
+file. Then click OK, and reboot the machine when asked.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-1"/><img src="figs/sam2_0401.gif"/></div><h4 class="head4">Figure 4-1. Configuring a Windows 95/98 client for domain logons</h4>
+<a name="samba2-CHP-4-NOTE-105"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>If <a name="INDEX-54"/>Windows complains that you are already
+logged into the domain, you probably have an active connection to a
+share in the workgroup (such as a mapped network drive). Simply
+disconnect the resource temporarily by right-clicking its icon and
+choosing the Disconnect pop-up menu item.</p>
+</blockquote>
+
+<p>When Windows reboots, you should see the standard logon dialog with
+an addition: a field for a domain. The domain name should already be
+filled in, so simply enter your password and click the OK button. At
+this point, Windows should consult the primary domain controller
+(Samba) to see if the password is correct. (You can check the log
+files if you want to see this in action.) If it worked,
+congratulations! You have properly configured Samba to act as a
+domain controller for Windows 95/98/Me machines, and your client is
+successfully connected.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-3.2"/>
+
+<h3 class="head2">User-Level Security for Windows 95/98/Me</h3>
+
+<p><a name="INDEX-55"/><a name="INDEX-56"/><a name="INDEX-57"/>Now that you have a primary domain
+controller to authenticate users, you can implement much better
+security for shares that reside on Windows 95/98/Me
+systems.<a name="FNPTR-3"/><a href="#FOOTNOTE-3">[3]</a> To enable this functionality, open the
+Control Panel, double-click the Network icon, and click the Access
+Control tab in the dialog box. The window should now look like <a href="ch04.html#samba2-CHP-4-FIG-2">Figure 4-2</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-2"/><img src="figs/sam2_0402.gif"/></div><h4 class="head4">Figure 4-2. Setting user-level access control</h4>
+
+<p>Click the User-level access control radio button, and type in the
+name of your domain in the text area. Click the OK button. If you get
+the dialog box shown in <a href="ch04.html#samba2-CHP-4-FIG-3">Figure 4-3</a>, it means that
+shares are already on the system.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-3"/><img src="figs/sam2_0403.gif"/></div><h4 class="head4">Figure 4-3. Error dialog while changing to user-level access control</h4>
+
+<p>In that case, you might want to cancel the operation and make a
+record of each of the computer's shares, making it
+easier to re-create them, and then redo this part. (To get a list of
+shares, open an MS-DOS prompt window and run the
+<tt class="literal">net</tt> <tt class="literal">view</tt>
+<tt class="literal">\\</tt><em class="replaceable">computer_name</em>
+command.) Otherwise, you will get a message asking you to reboot to
+put the change in configuration into effect.</p>
+
+<p>After rebooting, you can create shares with user-level access
+control. To do this, right-click the folder you wish to share, and
+select Sharing.... This will bring up the Shared Properties dialog
+box, shown in <a href="ch04.html#samba2-CHP-4-FIG-4">Figure 4-4</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-4"/><img src="figs/sam2_0404.gif"/></div><h4 class="head4">Figure 4-4. The Shared Properties dialog</h4>
+
+<p>Click the Shared As: radio button, and give the share a name and
+comment. Then click the Add... button, and you will see the Add Users
+dialog box, shown in <a href="ch04.html#samba2-CHP-4-FIG-5">Figure 4-5</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-5"/><img src="figs/sam2_0405.gif"/></div><h4 class="head4">Figure 4-5. The Add Users dialog</h4>
+
+<p>What has happened is that Windows has contacted the primary domain
+controller (in this case, Samba) and requested a list of domain users
+and groups. You can now select a user or group and add it to one or
+more of the three lists on the righthand side of the window&mdash;for
+Read Only, Full Access, or Custom Control&mdash;by clicking the
+buttons in the middle of the window. When you are done, click the OK
+button. If you added any users or groups to the Custom Control list,
+you will be presented with the Change Access Rights dialog box, shown
+in <a href="ch04.html#samba2-CHP-4-FIG-6">Figure 4-6</a>, in which you can specify the rights
+you wish to allow. Then click the OK button to close the dialog box.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-6"/><img src="figs/sam2_0406.gif"/></div><h4 class="head4">Figure 4-6. The Change Access Rights dialog</h4>
+
+<p>You are now returned to the Shared Properties dialog box, where you
+will see the Name: and Access Rights: columns filled in with the
+permissions that you just created. Click the OK button to finalize
+the process. Remember, you will have to perform these actions on any
+folders that you had previously shared using share-level security.
+<a name="INDEX-58"/><a name="INDEX-59"/></p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-3.3"/>
+
+<h3 class="head2">Windows NT 4.0</h3>
+
+<p><a name="INDEX-60"/><a name="INDEX-61"/>To
+configure Windows NT for domain logons, log in to the computer as
+Administrator or another user in the Administrators group, open the
+Control Panel, and double-click the Network icon. If it
+isn't already selected, click on the Network
+Identification tab.</p>
+
+<p>Click the Change... button, and you should see the dialog box shown
+in <a href="ch04.html#samba2-CHP-4-FIG-7">Figure 4-7</a>. In this dialog box, you can choose
+to have the Windows NT client become a member of the domain by
+clicking the checkbox marked Domain: in the Member of box. Then type
+in the name of the domain to which you wish the client to log on; it
+should be the same as the one you specified using the
+<tt class="literal">workgroup</tt> parameter in the Samba configuration
+file. Click the checkbox marked Create a Computer Account in the
+Domain, and fill in &quot;root&quot; for the
+text area labeled User Name:. In the Password: text area, fill in the
+root password you gave <em class="emphasis">smbpasswd</em> for creating
+computer accounts.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-7"/><img src="figs/sam2_0407.gif"/></div><h4 class="head4">Figure 4-7. Configuring a Windows NT client for domain logons</h4>
+<a name="samba2-CHP-4-NOTE-106"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>If Windows complains that you are already logged in, you probably
+have an active connection to a share in the workgroup (such as a
+mapped network drive). Disconnect the resource temporarily by
+right-clicking its icon and choosing the Disconnect pop-up menu item.</p>
+</blockquote>
+
+<p>After you press the OK button, Windows should present you with a
+small dialog box welcoming you to the domain. Click the Close button
+in the Network dialog box, and reboot the computer as requested. When
+the system comes up again, the machine will automatically present you
+with a logon screen similar to the one for Windows 95/98/Me clients,
+except that the domain text area has a drop-down menu so that you can
+opt to log on to either the local system or the domain. Make sure
+your domain is selected, and log on to the domain using any
+Samba-enabled user account on the Samba server.</p>
+<a name="samba2-CHP-4-NOTE-107"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>Be sure to select the correct domain in the Windows NT logon dialog
+box. Once it is selected, it might take a moment for Windows NT to
+build the list of available domains.</p>
+</blockquote>
+
+<p>After you enter the password, Windows NT should consult the primary
+domain controller (Samba) to see if the password is correct. Again,
+you can check the log files if you want to see this in action. If it
+worked, you have successfully configured Samba to act as a domain
+controller for Windows NT machines. <a name="INDEX-62"/><a name="INDEX-63"/></p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-3.4"/>
+
+<h3 class="head2">Windows 2000</h3>
+
+<p><a name="INDEX-64"/><a name="INDEX-65"/>To
+configure Windows 2000 for domain logons, log in to the computer as
+Administrator or another user in the Administrators group, open the
+Control Panel, and double-click the System icon to open the System
+Properties dialog box. Click the Network Identification tab, and then
+click the Properties button. You should now see the Identification
+Changes dialog box shown in <a href="ch04.html#samba2-CHP-4-FIG-8">Figure 4-8</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-8"/><img src="figs/sam2_0408.gif"/></div><h4 class="head4">Figure 4-8. The Identification Changes dialog</h4>
+
+<p>Click the radio button labeled
+&quot;Domain:&quot; and fill in the name of
+your domain in the text-entry area. Then click the OK button. This
+will bring up the Domain Username and Password dialog box. Enter
+&quot;root&quot; for the username. For the
+password, use the password that you gave to
+<em class="emphasis">smbpasswd</em> for the root account.</p>
+<a name="samba2-CHP-4-NOTE-108"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>If Windows complains that you are already logged in, you probably
+have an active connection to a share in the workgroup (such as a
+mapped network drive). Disconnect the resource temporarily by
+right-clicking its icon and choosing the Disconnect pop-up menu item.</p>
+</blockquote>
+
+<p>After you press the OK button, Windows should present you with a
+small dialog box welcoming you to the domain. When you click the OK
+button in this dialog box, you will be told that you need to reboot
+the computer. Click the OK button in the System Properties dialog
+box, and reboot the computer as requested. When the system comes up
+again, the machine will automatically present you with a Log On to
+Windows dialog box similar to the one shown in <a href="ch04.html#samba2-CHP-4-FIG-9">Figure 4-9</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-9"/><img src="figs/sam2_0409.gif"/></div><h4 class="head4">Figure 4-9. The Windows 2000 logon window</h4>
+
+<p>If you do not see the Log on to: drop-down menu, click the Options
+&lt;&lt; button and it will appear. Select your domain, rather than
+the local computer, from the menu.</p>
+<a name="samba2-CHP-4-NOTE-109"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>Be sure to select the correct domain in the logon dialog box. Once it
+is selected, it might take a moment for Windows to build the list of
+available domains.</p>
+</blockquote>
+
+<p>Enter the username and password of any Samba-enabled user in the User
+name: and Password: fields, and either press the Enter key or click
+the OK button. If it worked, your Windows session will start up with
+no error dialogs. <a name="INDEX-66"/><a name="INDEX-67"/></p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-3.5"/>
+
+<h3 class="head2">Windows XP Home</h3>
+
+<p><a name="INDEX-68"/>You have our
+condolences if you are trying to use the Home edition of Windows XP
+in a domain environment! Microsoft has omitted support for Windows NT
+domains from Windows XP Home, resulting in a product that is
+ill-suited for use in a domain-based network.</p>
+
+<p>On the client side, Windows XP Home users cannot log on to a Windows
+NT domain. Although it is still possible to access domain resources,
+a username and password must be supplied each time the user connects
+to a resource, rather than the &quot;single
+signon&quot; of a domain logon. Domain features such as
+logon scripts and roaming profiles are not supported.</p>
+
+<p>As a server, Windows XP Home cannot join a Windows NT domain as a
+domain member server. It can serve files and printers, but only using
+share-mode (&quot;workgroup&quot;) security.
+It can't even use user-mode security, as Windows
+95/98/Me can.</p>
+
+<p>Considering these limitations, we do not recommend Windows XP Home
+for any kind of local area network computing.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-3.6"/>
+
+<h3 class="head2">Windows XP Professional</h3>
+
+<p><a name="INDEX-69"/><a name="INDEX-70"/>To configure Windows XP
+Professional for domain logons, log in to the computer as
+Administrator or another user in the Administrators group, open the
+Control Panel in Classic View, and double-click the System icon to
+open the System Properties dialog box. Click the Computer Name tab
+and then click the Change... button. You should now see the Computer
+Name Changes dialog box shown in <a href="ch04.html#samba2-CHP-4-FIG-10">Figure 4-10</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-10"/><img src="figs/sam2_0410.gif"/></div><h4 class="head4">Figure 4-10. The Computer Name Changes dialog</h4>
+
+<p>Click the radio button labeled
+&quot;Domain:&quot;, and fill in the name of
+your domain in the text-entry area. Then click the OK button. This
+will bring up the Domain Username and Password dialog box. Enter
+&quot;root&quot; for the username. For the
+password, use the password that you gave to
+<em class="emphasis">smbpasswd</em> for the root account.</p>
+<a name="samba2-CHP-4-NOTE-110"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>If Windows complains that you are already logged in, you probably
+have an active connection to a share in the workgroup (such as a
+mapped network drive). Disconnect the resource temporarily by
+right-clicking its icon and choosing the Disconnect pop-up menu item.</p>
+</blockquote>
+
+<p>After you press the OK button, Windows should present you with a
+small dialog box welcoming you to the domain. When you click the OK
+button in this dialog box, you will be told that you need to reboot
+the computer to put the changes into effect. Click the OK buttons in
+the dialog boxes to close them, and reboot the computer as requested.
+When the system comes up again, the machine will automatically
+present you with a Log On to Windows dialog box similar to the one
+shown in <a href="ch04.html#samba2-CHP-4-FIG-11">Figure 4-11</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-11"/><img src="figs/sam2_0411.gif"/></div><h4 class="head4">Figure 4-11. The Windows XP logon window</h4>
+
+<p>If you get a dialog box at this point that tells you the domain
+controller cannot be found, the solution is to change a registry
+setting as follows.</p>
+
+<p>Open the Start Menu and click the Run... menu item. In the text area
+in the dialog box that opens, type in
+&quot;regedit&quot; and click the OK button
+to start the Registry Editor. You will be editing the registry, so
+follow the rest of the directions very carefully. Click the
+&quot;<tt class="literal">+</tt>&quot; button next
+to the HKEY_LOCAL_MACHINE folder, and in the contents that open up,
+click the &quot;<tt class="literal">+</tt>&quot;
+button next to the SYSTEM folder. Continue in the same manner to open
+CurrentControlSet, then Services, then Netlogon. (You will have to
+scroll down many times to find Netlogon in the list of services.)
+Then click the Parameters folder, and you will see items appear in
+the right side of the window. Double-click
+&quot;requiresignorseal&quot;, and a dialog
+box will open. In the Value data: text area, change the
+&quot;1&quot; to a
+&quot;0&quot; (zero), and click the OK
+button, which modifies the registry both in memory and on disk. Now
+close the Registry Editor and log off and back on again.</p>
+
+<p>If you do not see the Log on to: drop-down menu, click the Options
+&lt;&lt; button and it will appear. Select your domain from the menu,
+rather than the local computer.</p>
+<a name="samba2-CHP-4-NOTE-111"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>Be sure to select the correct domain in the logon dialog box. Once it
+is selected, it might take a moment for Windows to build the list of
+available domains.</p>
+</blockquote>
+
+<p>Enter the username and password of any Samba-enabled user in the User
+name: and Password: fields, and either press the Enter key or click
+the OK button. If it worked, your Windows session will start up with
+no error dialogs. <a name="INDEX-71"/> <a name="INDEX-72"/><a name="INDEX-73"/></p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-4-SECT-4"/>
+
+<h2 class="head1">Logon Scripts</h2>
+
+<p><a name="INDEX-74"/>After a Windows client connects with a
+domain controller (either to authenticate a user, in the case of
+Windows 95/98/Me, or to log on to the domain, in the case of Windows
+NT/2000/XP), the client downloads an MS-DOS batch file to run. The
+domain controller supplies the file assuming one has been made
+available for it. This batch file is the logon script and is useful
+in setting up an initial environment for the user.</p>
+
+<p>In a Unix environment, the ability to run such a script might lead to
+a very complex initialization and deep customization. However, the
+Windows environment is mainly oriented to the GUI, and the
+command-line functions are more limited. Most commonly, the logon
+script is used to run a <em class="emphasis">net</em> command, such as
+<em class="emphasis">net use</em><a name="INDEX-75"/>, to connect a network drive letter,
+like this:</p>
+
+<blockquote><pre class="code">net use T: \\toltec\test</pre></blockquote>
+
+<p>This command will make our <tt class="literal">[test]</tt> share (from
+<a href="ch02.html">Chapter 2</a>) show up as the T: drive in My Computer.
+This will happen automatically, and T: will be available to the user
+at the beginning of her session, instead of requiring her to run the
+<em class="emphasis">net use</em> command or connect the T: drive using
+the Map Network Drive function of Windows Explorer.</p>
+
+<p>Another useful command is:</p>
+
+<blockquote><pre class="code">net use H: /home</pre></blockquote>
+
+<p>which <a name="INDEX-76"/><a name="INDEX-77"/>connects the
+user's home directory to a drive letter (which can
+be H:, as shown here, or some other letter, as defined by
+<tt class="literal">logon</tt> <tt class="literal">drive</tt>). For this to work,
+you must have a <tt class="literal">[homes]</tt> share defined in your
+<em class="filename">smb.conf</em> file.</p>
+
+<p>If you are using <a name="INDEX-78"/><a name="INDEX-79"/>roaming profiles, you should definitely
+have:</p>
+
+<a name="INDEX-80"/><blockquote><pre class="code">net time \\<em class="replaceable">toltec</em> /set /yes</pre></blockquote>
+
+<p>in your logon script. (As usual, replace
+&quot;toltec&quot; with the name of your
+Samba PDC.) This will make sure the clocks of the Windows clients are
+synchronized with the PDC, which is important for roaming profiles to
+work correctly.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-4.1"/>
+
+<h3 class="head2">Creating a Logon Script</h3>
+
+<p><a name="INDEX-81"/>In our
+<em class="filename">smb.conf</em> file, we have the line:</p>
+
+<a name="INDEX-82"/><blockquote><pre class="code">logon script = logon.bat</pre></blockquote>
+
+<p>This defines the location and name of the logon script batch file on
+the Samba server. The path is relative to the
+<tt class="literal">[netlogon]</tt><a name="INDEX-83"/> share, defined later in the
+file like this:</p>
+
+<blockquote><pre class="code">[netlogon]
+    path = /usr/local/samba/lib/netlogon
+    writable = no
+    browsable = no</pre></blockquote>
+
+<p>With this example, the logon script is
+<em class="filename">/user/local/samba/lib/netlogon/logon.bat</em>. We
+include the directives <tt class="literal">writable</tt>
+<tt class="literal">=</tt> <tt class="literal">no</tt>, to make sure network
+clients cannot change anything in the <tt class="literal">[netlogon]</tt>
+share, and also <tt class="literal">browsable</tt> <tt class="literal">=</tt>
+<tt class="literal">no</tt>, which keeps them from even seeing the share
+when they browse the contents of the server. Nothing in
+<tt class="literal">[netlogon]</tt> should ever be modified by
+nonadministrative users. Also, the permissions on the directory for
+<tt class="literal">[netlogon]</tt> should be set appropriately (no write
+permissions for &quot;other&quot; users), as
+we showed you earlier in this chapter.</p>
+
+<p>Notice also that the extension of our logon script is
+<em class="filename">.bat</em><a name="INDEX-84"/>. Be careful about this&mdash;an extension
+of <em class="filename">.cmd</em><a name="INDEX-85"/> will work for Windows NT/2000/XP clients,
+but will result in errors for Windows 95/98/Me clients, which do not
+recognize <em class="filename">.cmd</em> as an extension for batch files.</p>
+
+<p>Because the logon script will be executed on a Windows system, it
+must be in MS-DOS text-file format, with the end of line composed of
+a carriage return followed by a linefeed. The Unix convention is a
+newline, which is simply a linefeed character, so if you use a Unix
+text editor to create your logon script, you must somehow make it use
+the appropriate characters. With
+<em class="emphasis">vim</em><a name="INDEX-86"/><a name="INDEX-87"/> (a clone of the <em class="emphasis">vi</em>
+editor that is distributed with Red Hat Linux), the method is to
+create a new file and use the command:</p>
+
+<blockquote><pre class="code">:se ff=dos</pre></blockquote>
+
+<p>to set the file format to MS-DOS style before typing in any text.
+With <em class="emphasis">emacs</em><a name="INDEX-88"/>, the same can be done using the command:</p>
+
+<blockquote><pre class="code">^X <em class="replaceable">Enter</em> f dos <em class="replaceable">Enter</em></pre></blockquote>
+
+<p>where <tt class="literal">^X</tt> is a Control-X character and
+<tt class="literal">Enter</tt> is a press of the Enter key. Another method
+is to create a Unix-format file in any text editor and then convert
+it to MS-DOS format using the
+<em class="emphasis">unix2dos</em><a name="INDEX-89"/> program:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>unix2dos unix_file &gt;logon.bat</b></tt></pre></blockquote>
+
+<p>If your system does not have <em class="emphasis">unix2dos</em>,
+don't worry. You can implement it yourself with the
+following two-line Perl script:</p>
+
+<blockquote><pre class="code">#!/usr/bin/perl
+open FILE, $ARGV[0];
+while (&lt;FILE&gt;) { s/$/\r/; print }</pre></blockquote>
+
+<p>Or, you can use Notepad on a Windows system to write your script and
+then drag the logon script over to a folder on the Samba server. In
+any case, you can <a name="INDEX-90"/>check the format of your script using
+the <em class="emphasis">od</em><a name="INDEX-91"/> command, like this:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>od -c logon.bat</b></tt></pre></blockquote>
+
+<p>You should see output resembling this:</p>
+
+<blockquote><pre class="code">0000000   n  e  t     u  s  e      T   :    \  \  t  o  l
+0000020   t  e  c  \  t  e  s  t  \r  \n
+0000032</pre></blockquote>
+
+<p>The important detail here is that at the end of each line is a
+<tt class="literal">\r</tt> <tt class="literal">\n</tt>, which is a carriage
+return followed by a linefeed.</p>
+
+<p>Our example logon script, containing a single <em class="emphasis">net
+use</em> command, was created and set up in a way that allows
+it to be run successfully on any Windows client, regardless of which
+Windows version is installed on the client and which user is
+authenticating or logging on to the domain. But what if we need to
+have different users, computers, or Windows versions running
+different logon scripts?</p>
+
+<p>One method is to use variables inside the <a name="INDEX-92"/>logon script that cause commands to be
+conditionally executed. For details on how to do this, you can
+consult a reference on batch-file programming for MS-DOS and Windows
+NT command language. One such reference is <em class="citetitle">Windows NT
+System Administration</em>, published by
+O'Reilly.</p>
+
+<p>Windows batch-command language is very limited in functionality.
+Fortunately, Samba also supports a means by which customization can
+be handled. The
+<em class="filename">smb.conf</em><a name="INDEX-93"/><a name="INDEX-94"/> file contains variables that can be
+used to insert (at runtime) the name of the server
+(<tt class="literal">%L</tt><a name="INDEX-95"/>), the username of the person who is
+accessing the server's resources
+(<tt class="literal">%u</tt><a name="INDEX-96"/>), or the computer name of the client
+system (<tt class="literal">%m</tt><a name="INDEX-97"/>). To give an example, if we set up the
+path to the logon script as:</p>
+
+<blockquote><pre class="code">logon script = %u/logon.bat</pre></blockquote>
+
+<p>we would then put a directory for each user in the
+<tt class="literal">[netlogon]</tt> share, with each directory named the
+same as the user's username, and in each directory
+we would put a customized <em class="filename">logon.bat</em> file. Then
+each user would have his own custom logon script. We will give you a
+better example of how to do this kind of thing in the next section,
+<a href="ch04.html#samba2-CHP-4-SECT-5">Section 4.5</a>.</p>
+
+<a name="samba2-CHP-4-NOTE-112"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>For more information on Samba configuration file variables, such as
+the <tt class="literal">%L</tt>, <tt class="literal">%u</tt>, and
+<tt class="literal">%m</tt> variables we just used, see <a href="ch06.html">Chapter 6</a> and <a href="appb.html">Appendix B</a>.</p>
+</blockquote>
+
+<p>When modifying and testing your logon script, don't
+just log off of your Windows session and log back on to make your
+script run. Instead, restart (reboot) your system before logging back
+on. Because Windows often keeps the <tt class="literal">[netlogon]</tt>
+share open across logon sessions, the reboot ensures that Windows and
+Samba have completely released and reconnected the
+<tt class="literal">[netlogon]</tt> share, and the new version of the logon
+script is being run while logging on.</p>
+
+<p>More information regarding <a name="INDEX-98"/>logon scripts can be found in the
+O'Reilly book, <em class="emphasis">Managing Windows NT
+Logons</em>. <a name="INDEX-99"/> <a name="INDEX-100"/><a name="INDEX-101"/></p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-4-SECT-5"/>
+
+<h2 class="head1">Roaming Profiles</h2>
+
+<p><a name="INDEX-102"/>One benefit of the centralized
+authentication of Windows NT domains is that a user
+<a name="INDEX-103"/>can log on from more than just one
+computer. To help users feel more &quot;at
+home&quot; when logged on at a computer other than their
+usual one, Microsoft has added the ability for
+users' personal settings to
+&quot;roam&quot; from one computer to
+another.</p>
+
+<p>All Windows versions can be configured individually for each user of
+the computer. Windows NT/2000/XP supports the ability to handle
+multiple user accounts, and Windows 95/98/Me can be configured for
+use by multiple users, keeping the configuration settings for each
+user separate. Each user can configure the
+computer's settings to her liking, and the system
+saves these settings as the user's
+<em class="firstterm">profile</em>, such that upon logging on to the
+system, the user is presented with her familiar desktop.</p>
+
+<p>Some of the settings, such as folder options or the image used for
+the desktop background, are held in the registry. Others, including
+the documents and folders appearing on the desktop and the contents
+of the Start menu, are stored as folders and files in the filesystem.</p>
+
+<p>When the profile is stored on the local system, it is called a
+<em class="firstterm">local profile</em><a name="INDEX-104"/>. On Windows NT, local profiles are
+stored in <em class="filename">C:\winnt\profiles</em>. On Windows 2000/XP,
+they can be found in <em class="filename">C:\Documents and Settings.
+</em>On Windows 95/98/Me, when configured for a single user
+(the default case), the local profile is scattered in places such as
+the registry and directories such as
+<em class="filename">C:\Windows\Desktop</em> and
+<em class="filename">C:\Windows\Start Menu</em>. When Windows 95/98/Me is
+configured for multiple users, the local profile of the preexisting
+user is moved to a folder in <em class="filename">C:\Windows\Profiles</em>
+that has the same name as the user, and any users that are
+subsequently added to the computer have their local profiles created
+in that directory as well. You can browse through the local profiles
+to see their structure&mdash;each has a <a name="INDEX-105"/><a name="INDEX-106"/><a name="INDEX-107"/><a name="INDEX-108"/><a name="INDEX-109"/>registry file
+(<em class="filename">USER.DAT</em><a name="INDEX-110"/><a name="INDEX-111"/> for Windows 95/98/Me and
+<em class="filename">NTUSER.DAT</em><a name="INDEX-112"/><a name="INDEX-113"/> for Windows NT/2000/XP) and some folders
+that contain shortcuts and documents.</p>
+
+<p>A roaming profile is a user profile that is stored on a server and
+&quot;follows&quot; its owner around the
+network so that when the user logs on to the domain from another
+computer, his profile is downloaded from the server and his familiar
+desktop appears on that computer as well.</p>
+<a name="samba2-CHP-4-NOTE-113"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p><a name="INDEX-114"/>Samba can
+support roaming profiles, and it is a fairly simple matter to
+configure it for them. However, this is one feature that we recommend
+you <em class="emphasis">do not</em> use, at least until you are sure you
+understand roaming profiles well and are very confident that you can
+implement them with no harm incurred. If you want to (or are required
+to) implement roaming profiles for your Windows clients, we suggest
+you first set up a small domain with a Samba server and a few Windows
+clients exclusively for the purposes of research and testing.
+<em class="emphasis">Under no circumstances should you attempt to implement
+roaming profiles in a careless or frivolous manner</em>.</p>
+</blockquote>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-5.1"/>
+
+<h3 class="head2">How Roaming Profiles work</h3>
+
+<p><a name="INDEX-115"/>We will start out by explaining to you
+how roaming profiles work when set up correctly. You will need a
+clear understanding of them to tell the difference between when they
+are working as they are designed and when they are not. In addition,
+roaming profiles can be a source of confusion for your users in many
+ways, and you should know how to detect when a problem with a client
+is related to roaming profile function or dysfunction.</p>
+
+<a name="samba2-CHP-4-NOTE-114"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p><a name="INDEX-116"/>A definitive source of
+documentation on Windows NT roaming profiles is the Microsoft white
+paper <em class="citetitle">Implementing Policies and Profiles for Windows NT
+4.0</em><a name="INDEX-117"/>, which can be found at
+<a href="http://www.microsoft.com/ntserver/techresources/management/prof_policies.asp">http://www.microsoft.com/ntserver/techresources/management/prof_policies.asp</a>.</p>
+</blockquote>
+
+<p>During the domain logon process, the roaming profile is copied from
+the domain controller and used as a local profile during the
+user's logon session. When the user logs off the
+domain, the local profile is copied back to the domain controller and
+stored as the new roaming profile. When the local profile is changed,
+the server does not receive an update until the user logs off the
+domain or shuts down or reboots the client. The client does not send
+an update to the server during the logon session, and a client does
+not receive an update of a setting changed on another client during a
+logon session. When the user does log off, changes in the
+configuration settings in the local profile are sent to the server,
+and the updates of the roaming profile are available for the next
+logon session.</p>
+
+<p>This simple behavior can lead to unexpected results when users are
+<a name="INDEX-118"/>logged on to the domain
+on more than one client at a time. If a user makes a change to the
+configuration settings on one client and then logs off, the settings
+can result in the roaming profile being modified accordingly. But the
+next client that logs off might cause those changes to be
+overwritten, and if so, the settings from the first client will be
+lost. The behavior of different Windows versions varies with regard
+to this, and we've seen a wide variety of
+behaviors&mdash;not always in alignment with
+Microsoft's documentation or even working the same
+way on separate occasions. Sometimes Windows will refuse to overwrite
+a profile, perhaps giving an &quot;access
+denied&quot; error, and at other times it will seem to
+work while producing odd side effects. A common source of confusion
+is what happens if a file is added to or deleted from the desktop,
+which is by default configured to be part of the profile. A deleted
+file might later reappear, and it is even possible for a file to
+irrecoverably disappear without warning (on Windows 95/98). Or maybe
+a file that is added to the desktop on one client never gets added to
+the roaming profile and fails to propagate to other clients. This
+behavior is somewhat improved on Windows 2000/XP, which attempts to
+merge items into the profile that are added on concurrently logged-on
+clients.</p>
+
+<p>One factor that comes into play is that Windows compares the
+<a name="INDEX-119"/>timestamps of the local and roaming
+profiles and can refuse to overwrite a roaming profile if it is newer
+than the local profile on the client, or vice versa. For this reason,
+it is important to keep the clocks of the Windows clients and the
+Samba PDC synchronized. We have already shown you how to do this,
+using the <em class="emphasis">net time
+\\</em><em class="replaceable">server</em>
+<em class="emphasis">/set</em> <em class="emphasis">/yes</em> command in the
+logon script.</p>
+
+<p><a name="INDEX-120"/>Even when the server and clients are
+correctly configured, a number of things that can happen make things
+seem &quot;broken.&quot; The most common
+occurrence is that some shortcuts on clients other than the one that
+created the roaming profile will not work. These shortcuts can exist
+on the desktop or as items in the Start menu. This behavior is a
+result of applications or files that exist on one computer but not
+others. Windows will display these shortcuts, but if they appear on
+the desktop, they will have a generic icon and will bring up an error
+message if a user double-clicks them.</p>
+
+<a name="samba2-CHP-4-NOTE-115"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>Because profiles can and usually do include the contents of the
+desktop and other folders, it is possible for the roaming profile to
+grow to a huge size due to actions of a user, such as creating new
+files on the desktop or copying files there. By default, Internet
+Explorer keeps its disk cache in the <em class="filename">Temporary Internet
+Files</em><a name="INDEX-121"/><a name="INDEX-122"/> folder in the profile and has been
+known to populate this directory with thousands of files. This can
+result in a huge roaming profile that causes network congestion and
+very large delays while users are logging on to the domain. (A fix
+for this can be found in article Q185255 in the Microsoft Knowledge
+Base.)</p>
+</blockquote>
+
+<p>One behavior we've seen a few times is that if, for
+some reason (e.g., a network error or misconfiguration), the roaming
+profile is not available during the logon process, Windows will use
+the local profile on the client instead. When this happens, the user
+might receive an unfamiliar profile, and all the benefits of roaming
+profiles are lost for that logon session.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-5.2"/>
+
+<h3 class="head2">Configuring Samba for Roaming Profiles</h3>
+
+<p><a name="INDEX-123"/><a name="INDEX-124"/>In an ideal world, different Windows
+versions would share the same roaming profile, allowing users to log
+on to the domain from any Windows client system, ranging from Windows
+95 to Windows XP, and enjoy their familiar settings. It would even be
+possible to be logged on concurrently from multiple clients, and a
+change made to the profile on any of them would quickly propagate to
+all the others. Settings in a roaming profile made on a client that
+didn't apply to another would be handled sanely.</p>
+
+<p>Unfortunately, this scenario does not work in reality, and it is
+important to maintain separate roaming profiles to prevent different
+Windows versions from using or modifying a roaming profile created
+by, and/or in use by, another version.</p>
+
+<p>We do this by using configuration file variables to point to
+different profile directories. If you look at <a href="appb.html#samba2-APP-B-TABLE-1">Table B-1</a> in <a href="appb.html#samba2-APP-B#samba2-APP-B">Appendix B</a>, which shows
+the variables that can be used, you might be tempted to use the
+<a name="INDEX-125"/><tt class="literal">%a</tt> variable, which
+is replaced by the name of the operating system the client is
+running. However, this does not work because all of Windows 95/98/Me
+will be seen as the same operating system, and likewise for Windows
+2000/XP. So, we use <a name="INDEX-126"/><tt class="literal">%m</tt> to get the
+NetBIOS name of the client, and combine that with a symbolic link to
+point to the directory containing the profile for the Windows version
+that particular client is running.</p>
+
+<p>Our additions to <em class="filename">smb.conf</em> that appeared earlier
+in this chapter included the two lines:</p>
+
+<blockquote><pre class="code">logon path = \\%L\profiles\%u\%m
+logon home = \\%L\%u\.win_profile\%m</pre></blockquote>
+
+<p>The first line specifies where the roaming profiles for Windows
+NT/2000/XP clients are kept, and the second line performs the same
+function for Windows 95/98/Me clients. In both cases, the location is
+specified as a UNC, but
+<tt class="literal">logon</tt><a name="INDEX-127"/> <tt class="literal">path</tt> (for Windows
+NT/2000/XP) is specified relative to the
+<tt class="literal">[profiles]</tt> share, while
+<tt class="literal">logon</tt><a name="INDEX-128"/> <tt class="literal">home</tt> (for Windows
+95/98/Me) is specified relative to the user's home
+directory. This is done to comply with Samba's
+emulation of Windows NT/2000 PDC behavior.</p>
+
+<p>The <tt class="literal">logon</tt> <tt class="literal">home</tt> UNC must begin
+by specifying the user's home directory, which in
+our previous example would be <tt class="literal">\\%L\%u</tt>. The
+variable <tt class="literal">%L</tt><a name="INDEX-129"/> expands to the NetBIOS name of the
+server (in this case, toltec), and
+<tt class="literal">%u</tt><a name="INDEX-130"/> expands to the name of the user. This
+must be done to allow the command:</p>
+
+<a name="INDEX-131"/><blockquote><pre class="code">C:\&gt;<tt class="userinput"><b>net use h: /home</b></tt></pre></blockquote>
+
+<p>to function correctly to connect the user's home
+directory to drive letter H: on all Windows clients. (The drive
+letter used for this purpose is defined by <tt class="literal">logon</tt>
+<tt class="literal">drive</tt>.) We add the directory
+<em class="filename">.win_profile</em><a name="INDEX-132"/> to the UNC to put the Windows
+95/98/Me roaming profile in a subdirectory of the
+user's home directory.</p>
+<a name="samba2-CHP-4-NOTE-116"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>Note that in both <tt class="literal">logon path</tt> and <tt class="literal">logon
+home</tt>, we absolutely avoid making the profile directory the
+same as the user's home directory, and the directory
+that contains the profile is not used for any other purpose. This is
+because when the roaming profile is updated, all directories and
+files in the roaming-profile directory that are not part of the
+roaming profile are deleted.</p>
+</blockquote>
+
+<p>In the <tt class="literal">logon</tt> <tt class="literal">path</tt> line in
+<em class="filename">smb.conf</em>, we use <tt class="literal">%u</tt> to put
+the profiles directory in a subdirectory in the
+<tt class="literal">[profiles]</tt> share, such that each user gets her own
+directory that holds her roaming profiles.</p>
+
+<p>We define the <tt class="literal">[profiles]</tt> share like this:</p>
+
+<blockquote><pre class="code">[profiles]
+    writable = yes
+    create mask = 0600
+    directory mask = 0700
+    browsable = no
+    path = /home/samba-ntprof</pre></blockquote>
+
+<p>The first four parameters in the previous share definition specify to
+allow roaming profiles to be written with the users'
+permissions, to create files with read and write permissions for the
+owner, and to create directories with read, write, and search
+permissions for the owner and no access allowed for other users. As
+with the <tt class="literal">[netlogon]</tt> share, we set
+<tt class="literal">browsable</tt> <tt class="literal">=</tt>
+<tt class="literal">no</tt> so that the share will not show up on the
+clients in Windows Explorer.</p>
+
+<p>We've decided to put our Windows NT/2000/XP profiles
+in <em class="filename">/home</em>, the default location of the home
+directories on Linux. This will make it simple to include the roaming
+profiles in backups of the home directories. You can use another
+directory if you like.</p>
+
+<p>Notice that in both <tt class="literal">logon</tt> <tt class="literal">path</tt>
+and <tt class="literal">logon</tt> <tt class="literal">home</tt>, the directory
+we specify ends in <tt class="literal">%m</tt>, which Samba replaces with
+the NetBIOS name of the client. We are using the
+client's computer name to identify indirectly which
+version of Windows it is running.</p>
+
+<p>Initially, the directories you specify to hold the roaming profiles
+will be empty and will become populated as clients log off for the
+first time. (Samba will even create the directories if they do not
+already exist.) At first, the directories will simply contain
+profiles that are identical to the clients' local
+profiles, and we highly recommend that you make a backup at this
+point before things get complicated. A listing of the roaming profile
+directory for user <tt class="literal">iman</tt>, after she has logged off
+from Windows 98 clients <tt class="literal">mixtec</tt> and
+<tt class="literal">pueblo</tt> and Windows Me clients
+<tt class="literal">huastec</tt> and <tt class="literal">navajo</tt>, might look
+something like the following:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>ls -l /home/iman/.win_profile</b></tt>
+total 4
+drwx------    6 iman      iman          4096 Dec  8 18:09 huastec
+drwx------    9 iman      iman          4096 Dec  7 03:47 mixtec
+drwx------   11 iman      iman          4096 Dec  7 03:05 navajo
+drwx------   11 iman      iman          4096 Dec  7 03:05 pueblo</pre></blockquote>
+
+<p>If things were left like this, the clients would not share their
+roaming profiles, so next we change from using separate directories
+to having symbolic links point to common directories:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>mv mixtec Win98</b></tt>
+# <tt class="userinput"><b>mv navajo WinMe</b></tt>
+# <tt class="userinput"><b>rm huastec pueblo</b></tt>
+# <tt class="userinput"><b>ln -s Win98 pueblo</b></tt>
+# <tt class="userinput"><b>ln -s WinMe huastec</b></tt>
+# <tt class="userinput"><b>chown iman:iman *</b></tt>
+# <tt class="userinput"><b>ls -l /home/iman/.win_profile</b></tt>
+total 6
+lrwxrwxrwx    1 iman      iman             5 Nov 16 01:40 huastec -&gt; WinMe
+lrwxrwxrwx    1 iman      iman             5 Nov 16 01:40 mixtec -&gt; Win98
+lrwxrwxrwx    1 iman      iman             5 Nov 21 17:24 navajo -&gt; WinMe
+lrwxrwxrwx    1 iman      iman             5 Nov 23 01:16 pueblo -&gt; Win98
+drwx------    9 iman      iman          4096 Dec  7 03:47 Win98
+drwx------   11 iman      iman          4096 Dec  7 03:05 WinMe</pre></blockquote>
+
+<p>Now when <tt class="literal">iman</tt> logs on to the domain from either
+Windows 98 system, the client from which she is logging on will get
+the profile stored in the <em class="filename">Win98</em> directory (that
+started out as her local profile on <tt class="literal">mixtec</tt>). This
+works likewise for the Windows Me clients.</p>
+
+<p>To show a more complete example, here is a listing of a fully
+operational Windows 95/98/Me profiles directory:</p>
+
+<a name="INDEX-133"/><blockquote><pre class="code">$ <tt class="userinput"><b>ls -l /home/jay/.win_profile</b></tt>
+total 12
+lrwxrwxrwx    1 jay      jay             9 Nov 16 22:14 aztec -&gt; /home/jay
+lrwxrwxrwx    1 jay      jay             5 Nov 16 01:40 hopi -&gt; Win95
+lrwxrwxrwx    1 jay      jay             5 Nov 16 01:40 huastec -&gt; WinMe
+lrwxrwxrwx    1 jay      jay             5 Nov 16 01:38 maya -&gt; Win98
+lrwxrwxrwx    1 jay      jay             5 Nov 16 01:40 mixtec -&gt; Win98
+lrwxrwxrwx    1 jay      jay             5 Nov 21 17:24 navajo -&gt; WinMe
+lrwxrwxrwx    1 jay      jay             5 Nov 23 01:16 pueblo -&gt; Win98
+lrwxrwxrwx    1 jay      jay             5 Nov 22 02:06 ute -&gt; Win95
+drwx------    6 jay      jay          4096 Dec  8 18:09 Win95
+drwx------    9 jay      jay          4096 Dec  7 03:47 Win98
+drwx------   11 jay      jay          4096 Dec  7 03:05 WinMe
+lrwxrwxrwx    1 jay      jay             5 Nov 21 22:48 yaqui -&gt; Win98
+lrwxrwxrwx    1 jay      jay             9 Nov 16 22:14 zuni -&gt; /home/jay</pre></blockquote>
+
+<p>Again, the computer name of each client exists in this directory as a
+symbolic link that points to the directory containing the actual
+roaming profile. For example, <tt class="literal">maya</tt>, a client that
+runs Windows 98, has a symbolic link named <em class="filename">maya</em>
+to the <em class="filename">Win98</em> directory. A listing of
+<em class="filename">Win98</em> shows:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>ls -l Win98</b></tt>
+total 148
+drwxr-xr-x    3 jay      jay          4096 Nov 23 01:30 Application Data
+drwxr-xr-x    2 jay      jay          4096 Nov 23 01:30 Cookies
+drwxr-xr-x    3 jay      jay          4096 Dec  7 03:47 Desktop
+drwxr-xr-x    3 jay      jay          4096 Nov 23 01:30 History
+drwxr-xr-x    2 jay      jay          4096 Nov 23 01:30 NetHood
+drwxr-xr-x    2 jay      jay          4096 Dec  7 03:47 Recent
+drwxr-xr-x    3 jay      jay          4096 Nov 23 01:30 Start Menu
+-rw-r--r--    1 jay      jay        114720 Dec  7 03:46 USER.DAT</pre></blockquote>
+
+<p>The contents of the <em class="filename">Win95</em> and
+<em class="filename">WinMe</em> directories appear similar and contain
+roaming profiles that work exactly as they should on their respective
+operating systems.</p>
+
+<p>Notice in the previous listing that <em class="filename">aztec</em> and
+<em class="filename">zuni</em> are symbolic links to
+<em class="filename">/home/jay</em>. We've cautioned you
+never to configure a roaming profile directory to be a
+user's home directory, but this is to handle
+something different. The clients <tt class="literal">aztec</tt> and
+<tt class="literal">zuni</tt> are Windows XP systems, which handle
+<tt class="literal">logon</tt> <tt class="literal">home</tt> differently than
+other versions of Windows. We have set <tt class="literal">logon</tt>
+<tt class="literal">home</tt> <tt class="literal">=</tt>
+<tt class="literal">\\%L\%u\</tt>.<tt class="literal">win</tt>
+<tt class="literal">profile</tt>, and all versions of Windows except for
+Windows XP strip off everything after <tt class="literal">\\%L\%u</tt> and
+correctly locate the home directory&mdash;in this case,
+<em class="filename">/home/jay</em>. Windows XP uses the full UNC, so we
+simply add a symbolic link to redirect it to the correct directory to
+get the <em class="emphasis">net use H: /home</em> command to work as it
+should. The roaming profiles for Windows XP systems are not affected
+by this and are kept with the other roaming profiles in the Windows
+NT/2000/XP family, as shown in this listing:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>ls -l /home/samba-ntprof/jay</b></tt>
+total 16
+lrwxrwxrwx    1 jay      jay             5 Nov 20 03:45 apache -&gt; Win2K
+lrwxrwxrwx    1 jay      jay             5 Nov 13 12:35 aztec -&gt; WinXP
+lrwxrwxrwx    1 jay      jay             5 Nov 13 12:34 dine -&gt; WinNT
+lrwxrwxrwx    1 jay      jay             5 Nov 24 03:44 inca -&gt; Win2K
+lrwxrwxrwx    1 jay      jay             5 Nov 13 12:34 pima -&gt; Win2K
+drwx------   13 jay      jay          4096 Dec  3 15:24 qero
+drwx------   13 jay      jay          4096 Dec  1 20:31 Win2K
+drwx------   12 jay      jay          4096 Nov 30 17:04 WinNT
+drwx------   13 jay      jay          4096 Nov 20 01:23 WinXP
+lrwxrwxrwx    1 jay      jay             5 Nov 20 06:09 yavapai -&gt; WinXP
+lrwxrwxrwx    1 jay      jay             5 Nov 13 12:34 zapotec -&gt; Win2K
+lrwxrwxrwx    1 jay      jay             5 Nov 13 12:35 zuni -&gt; WinXP</pre></blockquote>
+
+<p>As you can see, we are using a similar method for the Windows
+NT/2000/XP roaming profiles. In the listing,
+<em class="filename">qero</em> is not a symbolic link, but rather a
+directory that holds the roaming profile for <tt class="literal">qero</tt>,
+a Windows 2000 client that has recently been added. We had not
+created a symbolic link called <em class="filename">qero</em> before
+installing Windows 2000, so when jay logged off for the first time,
+Samba created a directory named <em class="filename">qero</em> and copied
+the roaming profile received from the client to the new directory.
+Because this is a separate directory from <em class="filename">Win2K</em>,
+which all other Windows 2000 clients are using to share their roaming
+profiles, the roaming profile for <tt class="literal">qero</tt> works like
+a local profile, except that it is stored on the primary domain
+controller.</p>
+
+<p>This might seem like an odd thing to do, but it has some purpose.
+Sometimes you might wish to isolate a client in this manner,
+especially while the operating system is being installed and
+initially configured. Remember, if that client, with its default
+local profile, is logged off the domain, the local profile will be
+written to the roaming profile directory. If the client were using
+the shared roaming profile directory, the effect could be
+undesirable, to say the least. Using our method, the
+<em class="filename">qero</em> directory can later be renamed to make it
+into an archival backup, or it can just be deleted. Then a new
+symlink named <em class="filename">qero</em> can be created to point to
+the <em class="filename">Win2K</em> directory, and <tt class="literal">qero</tt>
+will share the roaming profile in <em class="filename">Win2K</em> with the
+other Windows 2000 clients.</p>
+
+<p>An alternative method is simply to create the
+<a name="INDEX-134"/>symbolic
+links before the clients are added to the network. After you become
+more comfortable with the way roaming profiles work, you might find
+this method to be simpler and quicker.</p>
+
+<p>Again, we urge you to be careful about letting different versions of
+Windows share the same roaming profile. The method of configuring
+roaming profiles we've shown you here allows you to
+test a configuration for a few clients at a time without affecting
+your whole network of clients. For example, we could install a small
+number of Windows 2000 and Windows XP systems in the domain for
+testing purposes and then create symlinks for them that point to a
+directory called <em class="filename">Win2KXP</em> to find out if sharing
+roaming profiles between our Windows 2000 and Windows XP systems
+meets our expectations. The <em class="filename">Win2KXP</em> directory
+could be created as an empty directory, in which case it would have a
+roaming profile written to it by the first of the clients to log off.
+Or, <em class="filename">Win2KXP</em> could simply be a renamed roaming
+profile directory that was created by one of the clients when it was
+added to the domain. <a name="INDEX-135"/><a name="INDEX-136"/></p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-5.3"/>
+
+<h3 class="head2">Configuring Windows 95/98/Me for Roaming Profiles</h3>
+
+<p><a name="INDEX-137"/><a name="INDEX-138"/>For roaming profiles to work on
+Windows 95/98/Me clients, all you need to do is change one setting to
+allow each user to have a separate local profile. This has the side
+effect of enabling roaming profiles as well.</p>
+
+<p>Open the Control Panel and double-click the Passwords icon to open
+the Passwords Properties dialog box. Click the User Profiles tab, and
+the dialog box will appear as shown in <a href="ch04.html#samba2-CHP-4-FIG-12">Figure 4-12</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-12"/><img src="figs/sam2_0412.gif"/></div><h4 class="head4">Figure 4-12. The Windows 98 Passwords Properties dialog</h4>
+
+<p>Click the button labeled &quot;Users can customize their
+preferences and desktop settings.&quot; In the User
+profile settings box, you can check the options you prefer. When
+done, click the OK button and reboot as requested. During this first
+reboot, Windows will copy the local profile data to
+<em class="filename">C:\windows\profiles</em> but will not attempt to copy
+the roaming profile from the server. The next time the system is shut
+down, the local profile will be copied to the server, and when
+Windows reboots, it will copy the roaming profile from the server.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-5.4"/>
+
+<h3 class="head2">Configuring Windows NT/2000/XP for Roaming Profiles</h3>
+
+<p><a name="INDEX-139"/><a name="INDEX-140"/><a name="INDEX-141"/><a name="INDEX-142"/>Roaming profiles are enabled by
+default on Windows NT/2000/XP. In case you would like to check or
+modify your settings, follow these directions.</p>
+
+<p>Make sure you are logged in to the local system as Administrator or
+another user in the Administrators group. Open the Control Panel and
+double-click the System icon. On Windows NT/2000, click the User
+Profiles tab, or on Windows XP, click the Advanced tab and then the
+Settings button in the User Profiles box. You should see the dialog
+box in <a href="ch04.html#samba2-CHP-4-FIG-13">Figure 4-13</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-13"/><img src="figs/sam2_0413.gif"/></div><h4 class="head4">Figure 4-13. The Windows 2000 System Properties, User Profiles tab</h4>
+
+<p>Notice in the figure that there are two entries for the username
+<tt class="literal">jay</tt>. The entry ZAPOTEC\jay refers to the account
+on the local system, and METRAN\jay refers to the domain account.
+Recall that when a user logs on, a drop-down menu in the dialog box
+allows him to log on to a domain or log in to the local system. When
+<tt class="literal">jay</tt> logs in to the local machine, only the local
+profile is used. When logged on to the domain, the configuration
+shown will use the roaming profile. To switch a
+user's profile type for a domain logon account,
+click the account name to select it, then click the Change Type...
+button near the bottom of the dialog box. The Change Profile Type
+dialog box will appear. Click the radio button for either roaming or
+local profile, and then click the OK buttons for each dialog box.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-5.5"/>
+
+<h3 class="head2">Mandatory Profiles</h3>
+
+<p><a name="INDEX-143"/>With a simple
+modification, a <a name="INDEX-144"/>roaming profile can be made into a
+<a name="INDEX-145"/>mandatory
+profile, which has the quality of being unmodifiable by its owner.
+Mandatory profiles are used in some computing environments to
+simplify administration. The theory is that if users cannot modify
+their profiles, less can go wrong, and it is also possible to use the
+same standardized profile for all users.</p>
+
+<p>In practice, some issues come up. Because the users can still modify
+the configuration settings in their local profile during their logon
+session, confusion can result the next time they log on to the domain
+and discover their changes have been
+&quot;lost.&quot; If the user of a client
+reinstalls an application in a different place, the shortcuts to the
+program on the desktop, in the Start menu, or in a Quick Launch bar
+cannot be permanently deleted. They will reappear every time the user
+logs back on to the domain. Essentially, a mandatory profile is a
+roaming profile that always fails to update to the server upon
+logging off!</p>
+
+<p>Another complication is that different versions of Windows behave
+differently with mandatory profiles. If a user who has a mandatory
+profile creates a new file on her desktop, the file might be missing
+the next time the user logs off and on again or reboots. Some Windows
+versions preserve desktop files in the local profile (even if the
+file does not exist in the mandatory profile), whereas others do not.</p>
+
+<p>To change a <a name="INDEX-146"/><a name="INDEX-147"/>roaming profile to a mandatory
+profile, all you have to do is rename the
+<em class="filename">.dat</em><a name="INDEX-148"/><a name="INDEX-149"/> file in the roaming profile directory
+on the server to have a <em class="filename">.man</em> extension instead.
+For a Windows 95/98/Me roaming profile, you would rename
+<em class="filename">USER.DAT</em> to <em class="filename">USER.MAN</em>, and
+for a Windows NT/2000/XP roaming profile, you would rename
+<em class="filename">NTUSER.DAT</em> to <em class="filename">NTUSER.MAN</em>.
+Also, you might want to make the roaming-profile directory and its
+contents read-only, to make sure that a user can't
+change it by logging into his Unix user account on the Samba host
+system.</p>
+
+<p>If you want to have all your users share a mandatory profile, you can
+change the definitions of <tt class="literal">logon</tt>
+<tt class="literal">path</tt> and <tt class="literal">logon</tt>
+<tt class="literal">home</tt> in your <em class="filename">smb.conf</em> file to
+point to a shared mandatory profile on the server and adjust your
+directory structure and symbolic links accordingly. For example,
+<tt class="literal">logon</tt> <tt class="literal">path</tt> and
+<tt class="literal">logon</tt> <tt class="literal">home</tt> might be defined
+like this:</p>
+
+<blockquote><pre class="code">logon path = \\%L\profiles\%m
+logon home = \\%L\%u\.win_profile\%m</pre></blockquote>
+
+<p>Notice that we've removed the <tt class="literal">%u</tt>
+part of the path for <tt class="literal">logon</tt>
+<tt class="literal">path</tt>, and we would also change the directory
+structure on the server to do away with the separation of the
+profiles by username and have just one profile for each Windows
+NT/2000/XP version.</p>
+
+<p>We cannot use the same treatment for <tt class="literal">logon</tt>
+<tt class="literal">home</tt> because it is also used to specify the home
+directory. In this case, we would change the symbolic links in each
+user's <em class="filename">.win_profile</em> directory
+to point to a common mandatory profile directory containing the
+mandatory profiles for each of Windows 95/98/Me. Again, check the
+ownership and permissions on the files in the directory, and modify
+them if necessary to make sure a user can't modify
+any files by logging into her Unix account on the Samba host system.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-5.6"/>
+
+<h3 class="head2">Logon Script and Roaming-Profile Options</h3>
+
+<p><a href="ch04.html#samba2-CHP-4-TABLE-1">Table 4-1</a> summarizes the options commonly used in
+association with Windows NT domain <a name="INDEX-150"/><a name="INDEX-151"/>logon
+scripts and roaming profiles.</p>
+
+<a name="samba2-CHP-4-TABLE-1"/><h4 class="head4">Table 4-1. Logon-script options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">logon</tt> <tt class="literal">script</tt></p>
+</td>
+<td>
+<p>string (MS-DOS path)</p>
+</td>
+<td>
+<p>Name of logon script batch file</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">logon</tt> <tt class="literal">path</tt></p>
+</td>
+<td>
+<p>string (UNC server and share name)</p>
+</td>
+<td>
+<p>Location of roaming profile</p>
+</td>
+<td>
+<p><tt class="literal">\\%N\%U\profile</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">logon</tt> <tt class="literal">drive</tt></p>
+</td>
+<td>
+<p>string (drive letter)</p>
+</td>
+<td>
+<p>Specifies the logon drive for a home directory</p>
+</td>
+<td>
+<p><tt class="literal">Z</tt>:</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">logon</tt> <tt class="literal">home</tt></p>
+</td>
+<td>
+<p>string (UNC server and share name)</p>
+</td>
+<td>
+<p>Specifies a location for home directories for clients logging on to
+the domain</p>
+</td>
+<td>
+<p><tt class="literal">\\%N\%U</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-4-SECT-5.6.1"/>
+
+<a name="INDEX-152"/><h3 class="head3">logon script</h3>
+
+<p>This option specifies a Windows batch file that will be executed on
+the client after a user has logged on to the domain. Each logon
+script should be stored in the root directory of the
+<tt class="literal">[netlogon]</tt> share or a subdirectory. This option
+frequently uses the <tt class="literal">%U</tt> or <tt class="literal">%m</tt>
+variables (user or NetBIOS name) to point to an individual script.
+For example:</p>
+
+<blockquote><pre class="code">[global]
+    logon script = %U.bat</pre></blockquote>
+
+<p>will execute a script based on the username. If the user who is
+connecting is <tt class="literal">fred</tt> and the path of the
+<tt class="literal">[netlogon]</tt> share maps to the directory
+<em class="filename">/export/samba/netlogon</em>, the script should be
+<em class="filename">/export/samba/netlogon/fred.bat</em>. Because these
+scripts are downloaded to the client and executed on the Windows
+side, they must have MS-DOS-style newline characters rather than Unix
+newlines.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-4-SECT-5.6.2"/>
+
+<a name="INDEX-153"/><h3 class="head3">logon path</h3>
+
+<p>This option specifies the location where roaming profiles are kept.
+When the user logs on, a roaming profile will be downloaded from the
+server to the client and used as the local profile during the logon
+session. When the user logs off, the contents of the local profile
+will be uploaded back to the server until the next time the user
+connects.</p>
+
+<p>It is often more secure to create a separate share exclusively for
+storing user profiles:</p>
+
+<blockquote><pre class="code">[global]
+    logon path = \\hydra\profile\%U</pre></blockquote>
+
+<p>For more information on this option, see <a href="ch04.html#samba2-CHP-4-SECT-5">Section 4.5</a> earlier in this chapter.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-4-SECT-5.6.3"/>
+
+<a name="INDEX-154"/><h3 class="head3">logon drive</h3>
+
+<p>This option specifies the drive letter on a Windows NT/2000/XP client
+to which the home directory specified with the
+<tt class="literal">logon</tt> <tt class="literal">home</tt> option will be
+mapped. Note that this option will work with Windows NT/2000/XP
+clients only. For example:</p>
+
+<blockquote><pre class="code">[global]
+    logon drive = I:</pre></blockquote>
+
+<p>You should always use drive letters that will not conflict with fixed
+drives on the client machine. The default is Z:, which is a good
+choice because it is as far away from A:, C:, and D: as possible.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-4-SECT-5.6.4"/>
+
+<a name="INDEX-155"/><h3 class="head3">logon home</h3>
+
+<p>This option specifies the location of a user's home
+directory for use by the MS-DOS <em class="emphasis">net</em> commands.
+For example, to specify a home directory as a share on a Samba
+server, use the following:</p>
+
+<blockquote><pre class="code">[global]
+    logon home = \\hydra\%U</pre></blockquote>
+
+<p>Note that this works nicely with the <tt class="literal">[homes]</tt>
+service, although you can specify any directory you wish. Home
+directories can be mapped with a logon script using the following
+command:</p>
+
+<a name="INDEX-156"/><blockquote><pre class="code">C:\&gt;<tt class="userinput"><b>net use i: /home  </b></tt></pre></blockquote>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-4-SECT-6"/>
+
+<h2 class="head1">System Policies</h2>
+
+<p>A <a name="INDEX-157"/>system policy can be used in a Windows
+NT domain as a remote administration tool for implementing a similar
+computing environment on all clients and limiting the abilities of
+users to change configuration settings on their systems or allowing
+them to run only a limited set of programs. One application of system
+policies is to use them along with mandatory profiles to implement a
+collection of computers for public use, such as in a library, school,
+or Internet cafe.</p>
+
+<p>A system policy is a collection of registry settings that is stored
+in a file on the PDC and is automatically downloaded to the clients
+when users log on to the domain. The file containing the settings is
+created on a Windows system using the <a name="INDEX-158"/>System Policy Editor. Because the format
+of the registry is different between Windows 95/98/Me and Windows
+NT/2000/XP, it is necessary to make sure that the file that is
+created is in the proper format. This is a very simple matter because
+when the System Policy Editor runs on Windows 95/98/Me, it will
+create a file in the format for Windows 95/98/Me, and if it is run on
+Windows NT/2000/XP, it will use the format needed by those versions.
+After the policy file is created with the System Policy Editor, it is
+stored on the primary domain controller and is automatically
+downloaded by the clients during the logon process, and the policies
+are applied to the client system.</p>
+
+<p>On Windows NT 4.0 Server, you can run the System Policy Editor by
+logging in to the system as Administrator or another user in the
+Administrators group, opening the Start menu, and selecting Programs,
+then Administrative Tools, then System Policy Editor. On Windows 2000
+Advanced Server, open the Start menu and click Run . . . . In the
+dialog box that comes up, type in
+<tt class="literal">C:\winnt\poledit.exe</tt>, and click the OK button.</p>
+
+<p>If you are using a Windows version other than NT Server or Windows
+2000 Advanced Server, you must install the System Policy Editor, and
+getting a copy of it can be a little tricky. If you are running
+Windows NT 4.0 Workstation or Windows 2000 Professional and have a
+Windows NT 4.0 Server installation CD-ROM, you can run the file
+<em class="filename">\Clients\Svrtools\Winnt\Setup.bat</em> from that CD
+to install the Client-based Network Administration Tools, which
+includes <em class="emphasis">poledit.exe</em>. Then open the Start menu,
+click Run..., type <tt class="literal">C:\winnt\system32\poledit.exe</tt>
+into the text area, and click the OK button.</p>
+
+<p>If you are using Windows 95/98, insert a Windows 95 or Windows 98
+distribution CD-ROM<a name="FNPTR-4"/><a href="#FOOTNOTE-4">[4]</a> into your CD-ROM drive,
+then open the Control Panel and double-click the Add/Remove Programs
+button.</p>
+
+<p>Click the Windows Setup tab, and then click the Have Disk...
+button. In the new dialog box that appears, click the Browse...
+button, then select the CD-ROM drive from the Drives drop-down menu.
+Then:</p>
+
+<ul><li>
+<p>If you are using a Windows 95 installation CD-ROM, double-click the
+admin, then apptools, then poledit folder icons.</p>
+</li><li>
+<p>If you are using a Windows 98 installation CD-ROM, double-click the
+tools, then reskit, then netadmin, then poledit folder icons.</p>
+</li></ul>
+<p>You should see &quot;<a name="INDEX-159"/>grouppol.inf&quot; appear in
+the File name: text area on the left of the dialog box. Click the OK
+buttons in two dialog boxes, and you will be presented with a dialog
+box in which you should select both the Group Policies and System
+Policy Editor checkboxes. Then click the Install button. Close the
+remaining dialog box, and you can now run the System Policy Editor by
+opening the Start menu and selecting Programs, then Accessories, then
+System Tools, then System Policy Editor. Or click the Run... item in
+the Start Menu, and enter <tt class="literal">C:\Windows\Poledit</tt>.</p>
+
+<p>When the System Policy Editor starts up, select New Policy from the
+File menu, and you will see a window similar to that in <a href="ch04.html#samba2-CHP-4-FIG-14">Figure 4-14</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-14"/><img src="figs/sam2_0414.gif"/></div><h4 class="head4">Figure 4-14. The System Policy Editor window</h4>
+
+<p>The next step is to make a selection from the File menu to add
+policies for users, groups, and computers. For each item you add, you
+will be asked for the username, or name of the group or computer, and
+a new icon will appear in the window. Double-clicking one of the
+icons will bring up the Properties dialog box, such as the one shown
+in <a href="ch04.html#samba2-CHP-4-FIG-15">Figure 4-15</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-15"/><img src="figs/sam2_0415.gif"/></div><h4 class="head4">Figure 4-15. The Properties dialog of System Policy Editor</h4>
+
+<p>The upper window in the dialog shows the registry settings that can
+be modified as part of the system policy, and the lower window shows
+descriptive information or more settings pertaining to the one
+selected in the upper window. Notice in the figure that there are
+three checkboxes and that they are all in different states:</p>
+
+<dl>
+<dt><b>Checked</b></dt>
+<dd>
+<p>Meaning that the registry setting is enabled in the policy</p>
+</dd>
+
+
+
+<dt><b>White (unchecked)</b></dt>
+<dd>
+<p>Which clears the registry setting</p>
+</dd>
+
+
+
+<dt><b>Gray</b></dt>
+<dd>
+<p>Which causes the registry setting on the client to be unmodified</p>
+</dd>
+
+</dl>
+
+<p>Basically, if all the items are left gray (the default), the system
+policy will have no effect. The registry of the logged-on client will
+not be modified. However, if any of the items are either checked or
+unchecked (white), the registry on the client will be modified to
+enable the setting or clear it.</p>
+<a name="samba2-CHP-4-NOTE-117"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>In this section, we are giving you enough information on using the
+System Policy Editor to get you started&mdash;or, should we say,
+enough rope with which to hang yourself. Remember that a system
+policy, once put into action, will be modifying the registries of all
+clients who log on to the domain. The usual warnings about editing a
+Windows registry apply here with even greater importance. Consider
+how difficult (or even impossible) it will be for you to restore the
+registries on all those clients if anything happens to go wrong.
+<em class="emphasis">As with roaming profiles, casual or careless implementation
+of system policies can easily lead to domain-wide
+disaster</em>.</p>
+
+<p>Creating a good system policy file is a complex topic, which we
+cannot cover in detail here. It would take a whole book, and yes,
+there happens to be an O'Reilly book on the subject,
+<em class="citetitle">Windows System Policy Editor</em>. Another
+definitive source of documentation on Windows NT system policies and
+the System Policy Editor is the Microsoft white paper
+<em class="citetitle">Implementing Policies and Profiles for Windows NT
+4.0</em>, which can be found at <a href="http://www.microsoft.com/ntserver/techresources/management/prof_policies.asp">http://www.microsoft.com/ntserver/techresources/management/prof_policies.asp</a>.</p>
+</blockquote>
+
+<p>Once you have created a policy, click the OK button and use the Save
+As... item from the File menu to save it. Use the filename
+<em class="filename">config.pol</em><a name="INDEX-160"/> for a Windows 95/98 system policy and
+<em class="filename">ntconfig.pol</em><a name="INDEX-161"/> for a policy that will be used on Windows
+NT/2000/XP clients. Finally, copy the <em class="filename">.pol</em> file
+to the directory used for the <tt class="literal">[netlogon]</tt> share on
+the Samba PDC. The <em class="filename">config.pol</em> and
+<em class="filename">ntconfig.pol</em> files must go in this
+directory&mdash;unlike roaming profiles and logon scripts, there is
+no way to specify the location of the system policy files in
+<em class="filename">smb.conf</em>. If you want to have different system
+policies for different users or computers, you must perform that part
+of the configuration within the System Policy Editor.</p>
+
+<a name="samba2-CHP-4-NOTE-118"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>If you have, or will have, any <a name="INDEX-162"/><a name="INDEX-163"/>Windows Me clients on your network,
+be careful. Microsoft has stated that Windows Me does not support
+system policies. The odd thing about this is that it will download
+the policy from a <em class="filename">config.pol</em> file on the PDC,
+but there is no guarantee that the results will be what was intended.
+Check the effect of your system policy carefully on your Windows Me
+clients to make sure it is working how you want.</p>
+</blockquote>
+
+<p>When a user logs on to the domain, her Windows client will download
+the <em class="filename">.pol</em> file from the server, and the settings
+in it (that is, the items either checked or cleared in the System
+Policy Editor) will override the client's settings.</p>
+
+<p>If things &quot;should work&quot; but
+don't, try shutting down the Windows client and
+restarting, rather than just logging off and on again. Windows
+sometimes will hold the <tt class="literal">[netlogon]</tt> share open
+across logon sessions, and this can prevent the client from getting
+the updated <em class="filename">.pol</em> file from the server.
+<a name="INDEX-164"/>
+<a name="INDEX-165"/></p>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-4-SECT-7"/>
+
+<h2 class="head1">Samba as a Domain Member Server</h2>
+
+<p><a name="INDEX-166"/>Up to now,
+we've focused on configuring and using Samba as the
+primary domain controller. If you already have a domain controller on
+your network, either a Windows NT/2000 Server system or a Samba PDC,
+you can add a Samba server to the domain as a domain member server.
+This involves setting up the Samba server to have a computer account
+with the primary domain controller, in a similar way that Windows
+NT/2000/XP clients can have computer accounts on a Samba PDC. When a
+client accesses shares on the Samba domain member server, Samba will
+pass off the authentication to the domain controller rather than
+performing the task on the local system. If the PDC is a Windows
+server, any number of Windows BDCs might exist that can handle the
+authentication instead of the PDC.</p>
+
+<p>The first step is to add the Samba server to the domain by creating a
+computer account for it on the primary domain controller. You can do
+this using the <em class="emphasis">smbpasswd</em> command, as follows:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbpasswd -j <em class="replaceable">DOMAIN</em> -r <em class="replaceable">PDCNAME</em> -U<em class="replaceable">admin_acct</em>%<em class="replaceable">password</em></b></tt></pre></blockquote>
+
+<p>In this command, <em class="replaceable">DOMAIN</em> is replaced by the
+name of the domain the Samba host is joining,
+<em class="replaceable">PDCNAME</em> is replaced by the computer name
+of the primary domain controller,
+<em class="replaceable">admin_acct</em> is replaced by the username of
+an administrative account on the domain controller (either
+Administrator&mdash;or another user in the Administrators
+group&mdash;on Windows NT/2000, and root on Samba), and
+<em class="replaceable">password</em> is replaced with the password of
+that user. To give a more concrete example, on our domain that has a
+Windows NT 4 Server primary domain controller or a Windows 2000
+Active Directory domain controller named <tt class="literal">SINAGUA</tt>,
+the command would be:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbpasswd -j METRAN -r SINAGUA -UAdministrator%hup8ter</b></tt></pre></blockquote>
+
+<p>and if the PDC is a Samba system, we would use the command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbpasswd -j METRAN -r toltec -Uroot%jwun83jb</b></tt></pre></blockquote>
+
+<p>where <tt class="literal">jwun83jb</tt> is the password for the root user
+that is contained in the<em class="filename"> smbpasswd</em> file, as we
+explained earlier in this chapter.</p>
+
+<p>If you did it right, <em class="emphasis">smbpasswd</em> will respond with
+a message saying the domain has been joined. The security
+identifier<a name="FNPTR-5"/><a href="#FOOTNOTE-5">[5]</a> returned to Samba from the PDC is kept in
+the file <em class="filename">/usr/local/samba/private/secrets.tdb</em>.
+The information in
+<em class="filename">secrets.tdb</em><a name="INDEX-167"/> is security-sensitive, so make sure to
+protect <em class="filename">secrets.tdb</em> in the same way you would
+treat Samba's password file.</p>
+
+<p>The next step is to modify the
+<em class="filename">smb.conf</em><a name="INDEX-168"/> file. Assuming you are starting with a
+valid <em class="filename">smb.conf</em> file that correctly configures
+Samba to function in a workgroup, such as the one we used in <a href="ch02.html">Chapter 2</a>, it is simply a matter of adding the following
+three lines to the <tt class="literal">[global]</tt> section:</p>
+
+<blockquote><pre class="code">workgroup = METRAN
+security = domain
+password server = *</pre></blockquote>
+
+<p>The first line establishes the name of the domain (even though it
+says &quot;workgroup&quot;). Instead of
+METRAN, use the name of the domain you are joining. Setting security
+to &quot;domain&quot; causes Samba to hand
+off authentication to a domain controller, and the
+<tt class="literal">password</tt> <tt class="literal">server</tt>
+<tt class="literal">=</tt> <tt class="literal">*</tt> line tells Samba to find
+the domain controller for authentication (which could be the primary
+domain controller or a backup domain controller) by querying the WINS
+server or using broadcast packets if a WINS server is not available.</p>
+
+<p>At this point, it would be prudent to run
+<em class="emphasis">testparm</em> to check that your
+<em class="filename">smb.conf</em> is free of errors. Then restart the
+Samba daemons.</p>
+
+<p>If the PDC is a Windows NT system, you can use Server Manager to
+check that the Samba server has been added successfully. Open the
+Start menu, then select Programs, then Administrative Tools (Common),
+and then Server Manager. Server Manager starts up with a window that
+looks like <a href="ch04.html#samba2-CHP-4-FIG-16">Figure 4-16</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-16"/><img src="figs/sam2_0416.gif"/></div><h4 class="head4">Figure 4-16. The Windows NT Server Manager window</h4>
+
+<p>As you can see, we've added both
+<tt class="literal">toltec</tt> and <tt class="literal">mixtec</tt> to a domain
+for which the Windows NT 4.0 Server system,
+<tt class="literal">sinagua</tt>, is the primary domain controller.</p>
+
+<p>You can check your setup on Windows 2000 Advanced Server by opening
+the Start menu and selecting Programs, then Administrative Tools,
+then Active Directory Users and Computers. The window that opens up
+will look like <a href="ch04.html#samba2-CHP-4-FIG-17">Figure 4-17</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-4-FIG-17"/><img src="figs/sam2_0417.gif"/></div><h4 class="head4">Figure 4-17. The Windows 2000 Active Directory Users and Computers window</h4>
+
+<p>Click Computers in the left side of the window with the Tree tab. You
+should see your Samba system listed in the right pane of the window.
+<a name="INDEX-169"/></p>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-4-SECT-8"/>
+
+<h2 class="head1">Windows NT Domain Options</h2>
+
+<p><a href="ch04.html#samba2-CHP-4-TABLE-2">Table 4-2</a> shows the options that are commonly used
+in association with Samba on a Windows NT domain.</p>
+
+<a name="samba2-CHP-4-TABLE-2"/><h4 class="head4">Table 4-2. Windows NT domain options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">domain logons</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>Indicates whether Windows domain logons are to be used</p>
+</td>
+<td>
+<p><tt class="literal">No</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">domain master</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>For telling Samba to take the role of domain master browser</p>
+</td>
+<td>
+<p>Auto</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">add user script</tt></p>
+</td>
+<td>
+<p>string (command)</p>
+</td>
+<td>
+<p>Script to run to add a user or computer account</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">delete user</tt> <tt class="literal">script</tt></p>
+</td>
+<td>
+<p>string (command)</p>
+</td>
+<td>
+<p>Script to run to delete a user or computer account</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">domain admin group</tt></p>
+</td>
+<td>
+<p>string (list of users)</p>
+</td>
+<td>
+<p>Users that are in the Domain Admins group</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">domain guest group</tt></p>
+</td>
+<td>
+<p>string (list of users)</p>
+</td>
+<td>
+<p>Users that are in the Domain Guests group</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">password server</tt></p>
+</td>
+<td>
+<p>string (list of computers)</p>
+</td>
+<td>
+<p>List of domain controllers used for authentication when Samba is
+running as a domain member server</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">machine password timeout</tt></p>
+</td>
+<td>
+<p>numeric (seconds)</p>
+</td>
+<td>
+<p>Sets the renewal interval for NT domain machine passwords</p>
+</td>
+<td>
+<p><tt class="literal">604,800</tt> (1 week )</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+<p>Here are detailed explanations of each <a name="INDEX-170"/>Windows NT domain option listed
+in <a href="ch04.html#samba2-CHP-4-TABLE-2">Table 4-2</a>.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-4-SECT-8.1"/>
+
+<a name="INDEX-171"/><h3 class="head2">domain logons</h3>
+
+<p>This option configures Samba to accept domain logons as a primary
+domain controller. When a client successfully logs on to the domain,
+Samba will return a special token to the client that allows the
+client to access domain shares without consulting the PDC again for
+authentication. Note that the Samba machine must employ user-level
+security (<tt class="literal">security</tt> <tt class="literal">=</tt>
+<tt class="literal">user</tt>) and must be the PDC for this option to
+function. In addition, Windows machines will expect a
+<tt class="literal">[netlogon]</tt> share to exist on the Samba server.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-4-SECT-8.1.1"/>
+
+<a name="INDEX-172"/><h3 class="head3">domain master</h3>
+
+<p>In a Windows network, a local master browser handles browsing within
+a subnet. A Windows domain can be made up of a number of subnets,
+each of which has its own local master browser. The primary domain
+controller serves the function of domain master browser, collecting
+the browse lists from the local master browser of each subnet. Each
+local master browser queries the domain master browser and adds the
+information about other subnets to their own browse lists. When Samba
+is configured as a primary domain controller, it automatically sets
+<tt class="literal">domain</tt> <tt class="literal">master</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt>, making itself the domain
+master browser.</p>
+
+<p>Because Windows NT PDCs always claim the role of domain master
+browser, Samba should never be allowed to be domain master if there
+is a Windows PDC in the domain.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-4-SECT-8.1.2"/>
+
+<a name="INDEX-173"/><h3 class="head3">add user script</h3>
+
+<p>There are two ways in which <tt class="literal">add</tt>
+<tt class="literal">user</tt> <tt class="literal">script</tt> can be used. When
+the Samba server is set up as a primary domain controller, it can be
+assigned to a command that will run on the Samba server to add a
+Windows NT/2000/XP computer account to Samba's
+password database. When the user on the Windows system changes the
+computer's settings to join a domain, he is asked
+for the username and password of a user who has administrative rights
+on the domain controller. Samba authenticates this user and then runs
+the <tt class="literal">add</tt> <tt class="literal">user</tt>
+<tt class="literal">script</tt> with root permissions.</p>
+
+<p>When Samba is configured as a domain member server, the
+<tt class="literal">add</tt> <tt class="literal">user</tt>
+<tt class="literal">script</tt> can be assigned to a command to add a user
+to the system. This allows Windows clients to add users that can
+access shares on the Samba system without requiring an administrator
+to create the account manually on the Samba host.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-4-SECT-8.1.3"/>
+
+<a name="INDEX-174"/><h3 class="head3">delete user script</h3>
+
+<p>There are times when users are automatically deleted from the domain,
+and the <tt class="literal">delete</tt> <tt class="literal">user</tt>
+<tt class="literal">script</tt> can be assigned to a command that removes a
+user from the Samba host as a Windows server would do. However, you
+might not want this to happen, because the Unix user might need the
+account for reasons other than use with Samba. Therefore, we
+recommend that you be very careful about using this option.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-4-SECT-8.1.4"/>
+
+<a name="INDEX-175"/><h3 class="head3">domain admin group</h3>
+
+<p>In a domain of Windows systems, it is possible for a server to get a
+list of the members of the Domain Admins group from a domain
+controller. Samba 2.2 does not have the ability to handle this, and
+the <tt class="literal">domain</tt> <tt class="literal">admin</tt>
+<tt class="literal">group</tt> parameter exists as a manual means of
+informing Samba who is in the group. The list should contain root
+(necessary for adding computer accounts) and any users on Windows
+NT/2000/XP clients in the domain who are in the Domain Admins group.
+These users must be recognized by the primary controller in order for
+them to perform some administrative duties such as adding users to
+the domain.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-4-SECT-8.1.5"/>
+
+<a name="INDEX-176"/><h3 class="head3">password server</h3>
+
+<p>In a Windows domain in which the domain controllers are a Windows
+primary domain controller, along with any number of Windows backup
+domain controllers, clients and domain member servers authenticate
+users by querying either the PDC or any of the BDCs. When Samba is
+configured as a domain member server, the <tt class="literal">password</tt>
+<tt class="literal">server</tt> parameter allows some control over how
+Samba finds a domain controller. Earlier versions of Samba could not
+use the same method that Windows systems use, and it was necessary to
+specify a list of systems to try. When you set
+<tt class="literal">password</tt> <tt class="literal">server</tt>
+<tt class="literal">=</tt> <tt class="literal">*</tt>, Samba 2.2 is able to find
+the domain controller in the same manner that Windows does, which
+helps to spread the requests over several backup domain controllers,
+minimizing the possibility of them becoming overloaded with
+authentication requests. We recommend that you use this method.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-4-SECT-8.1.6"/>
+
+<a name="INDEX-177"/><h3 class="head3">machine password timeout</h3>
+
+<p>The <tt class="literal">machine</tt> <tt class="literal">password</tt>
+<tt class="literal">timeout</tt> global option sets a retention period for
+Windows NT domain machine passwords. The default is currently set to
+the same time period that Windows NT 4.0 uses: 604,800 seconds (one
+week). Samba will periodically attempt to change the
+<em class="firstterm">machine account password</em>, which is a password
+used specifically by another server to report changes to it. This
+option specifies the number of seconds that Samba should wait before
+attempting to change that password. The timeout period can be changed
+to a single day by specifying the following:</p>
+
+<blockquote><pre class="code">[global]
+    machine password timeout = 86400</pre></blockquote>
+
+<a name="samba2-CHP-4-NOTE-119"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>If you would like more information on how Windows NT uses domain
+usernames and groups, we recommend Eric <a name="INDEX-178"/>Pearce's
+<em class="citetitle">Windows NT in a Nutshell</em>, published by
+O'Reilly. <a name="INDEX-179"/></p>
+</blockquote>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<hr/><h4 class="head4">Footnotes</h4><blockquote><a name="FOOTNOTE-1"/> <p><a href="#FNPTR-1">[1]</a> When we include
+Windows XP in discussions of Windows NT domains in this book, we are
+referring to Windows XP Professional and not to the Home edition. The
+reason for this is explained in the section on Windows XP later in
+this chapter.</p> <a name="FOOTNOTE-2"/> <p><a href="#FNPTR-2">[2]</a> The entry in
+<em class="filename">/etc/passwd</em> might not be required in future
+Samba versions.</p> <a name="FOOTNOTE-3"/> <p><a href="#FNPTR-3">[3]</a> If you want to follow our example in this
+section, and your network doesn't have any Windows
+systems offering shares, see <a href="ch05.html">Chapter 5</a> for
+directions on how to create one. Make sure you understand how to set
+up shares before continuing with the directions presented
+here!</p> <a name="FOOTNOTE-4"/> <p><a href="#FNPTR-4">[4]</a> The version of the System Policy
+Editor distributed with Windows 98 is an update of the version
+shipped with Windows 95. Use the version from the Windows 98
+distribution if you can.</p> <a name="FOOTNOTE-5"/> <p><a href="#FNPTR-5">[5]</a> This security identifier (SID) is part of
+an access token that allows the PDC to identify and authenticate the
+client.</p> </blockquote><hr/><h4 class="head4"><a href="toc.html">TOC</a></h4></body></html>

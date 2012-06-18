@@ -1,0 +1,17 @@
+  <title>Introduction</title>
+  <chapter id="intro-overview">
+    <title>Overview</title>
+    <para>This documentation will give an overview of how the v0.1 libusb API works and relates to &usb;. Work is rapidly progressing on a newer version of libusb, to be v1.0, which will be a redesigned API and is intended to obsolete v0.1. You may want to check the <ulink url="http://libusb.sourceforge.net/">libusb</ulink> website to see if it is stable and recommended.</para>
+    <para>This documentation assumes that you have a good understanding of &usb; and how it works. If you don't have a good understanding of USB, it is recommended you obtain the USB <ulink url="http://www.usb.org/developers/docs/usbspec.zip">v1.1</ulink> and/or <ulink url="http://www.usb.org/developers/docs/usb_20.zip">v2.0</ulink> specs and read them.</para>
+    <para>libusb is geared towards &usb; 1.1, however from the perspective of libusb, &usb; 2.0 won't be a significant change for libusb</para>
+  </chapter>
+
+  <chapter id="intro-support">
+    <title>Current OS support</title>
+    <itemizedlist>
+      <listitem><para><ulink url="http://www.kernel.org/">Linux</ulink> (2.2, 2.4 and on)</para></listitem>
+      <listitem><para><ulink url="http://www.freebsd.org/">FreeBSD</ulink>, <ulink url="http://www.netbsd.org/">NetBSD</ulink> and <ulink url="http://www.openbsd.org/">OpenBSD</ulink></para></listitem>
+      <listitem><para><ulink url="http://developer.apple.com/darwin/">Darwin</ulink>/<ulink url="http://developer.apple.com/macosx/">MacOS X</ulink></para></listitem>
+    </itemizedlist>
+  </chapter>
+

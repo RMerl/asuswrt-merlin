@@ -1,0 +1,414 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 4] 4.6 Networking Options with Samba</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:32:15Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_05.html" TITLE="4.5 Disk Share Configuration">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.5 Disk Share Configuration" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch04_01.html" TITLE="4. Disk Shares ">
+Chapter 4<br>
+Disk Shares </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_07.html" TITLE="4.7 Virtual Servers">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.7 Virtual Servers" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch04-86705">
+4.6 Networking Options with Samba</a></h2><P CLASS="para">If you're running Samba on a multi-homed machine (that is, one on multiple subnets), or even if you want to implement a security policy on your own subnet, you should take a close look at the networking configuration options: </p><P CLASS="para">
+For the purposes of this exercise, let's assume that our Samba server is connected to a network with more than one subnet. Specifically, the machine can access both the 192.168.220.* and 134.213.233.* subnets. Here are our additions to the ongoing configuration file for the networking configuration options:</p><PRE CLASS="programlisting">
+[global]
+	netbios name = HYDRA
+	server string = Samba %v on (%L)
+	workgroup = SIMPLE
+
+	#  Networking configuration options
+	hosts allow = 192.168.220. 134.213.233. localhost
+	hosts deny = 192.168.220.102
+	interfaces = 192.168.220.100/255.255.255.0 \
+					134.213.233.110/255.255.255.0
+	bind interfaces only = yes
+
+[data]
+	path = /home/samba/data
+	guest ok = yes
+	comment = Data Drive
+	volume = Sample-Data-Drive
+	writeable = yes
+	</pre><P CLASS="para">Let's first talk about the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> and <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> options. If these options sound familiar, you're probably thinking of the <I CLASS="filename">
+hosts.allow</i> and <I CLASS="filename">
+hosts.deny</i> files that are found in the <I CLASS="filename">
+/etc</i> directories of many Unix systems. The purpose of these options is identical to those files; they provide a means of security by allowing or denying the connections of other hosts based on their IP addresses. Why not just use the <I CLASS="filename">
+hosts.allow</i> and <I CLASS="filename">
+hosts.deny</i> files themselves? Because there may be services on the server that you want others to access without giving them access Samba's disk or printer shares</p><P CLASS="para">
+With the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> option above, we've specified a cropped IP address: 192.168.220. (Note that there is still a third period; it's just missing the fourth number.) This is equivalent to saying: "All hosts on the 192.168.220 subnet." However, we've explicitly specified in a hosts deny line that 192.168.220.102 is not to be allowed access.</p><P CLASS="para">
+You might be wondering: why will 192.168.220.102 be denied even though it is still in the subnet matched by the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> option? Here is how Samba sorts out the rules specified by <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> and <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code>:</p><OL CLASS="orderedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch04-pgfId-961914">
+</a>If there are no <CODE CLASS="literal">
+allow</code> or <CODE CLASS="literal">
+deny</code> options defined anywhere in <I CLASS="filename">
+smb.conf</i>, Samba will allow connections from any machine allowed by the system itself.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch04-pgfId-961915">
+</a>If there are <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> or <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> options defined in the <CODE CLASS="literal">
+[global]</code> section of <I CLASS="filename">
+smb.conf</i>, they will apply to all shares, even if the shares have an overriding option defined.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch04-pgfId-961916">
+</a>If there is only a <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> option defined for a share, only the hosts listed will be allowed to use the share. All others will be denied.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch04-pgfId-961917">
+</a>If there is only a <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> option defined for a share, any machine which is not on the list will be able to use the share.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch04-pgfId-961918">
+</a>If both a <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> and <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> option are defined, a host must appear in the allow list and not appear in the deny list (in any form) in order to access the share. Otherwise, the host will not be allowed.</p><BLOCKQUOTE CLASS="warning">
+<P CLASS="para">
+<STRONG>
+WARNING:</strong> Take care that you don't explicitly allow a host to access a share, but then deny access to the entire subnet of which the host is part.</p></blockquote></li></ol><P CLASS="para">
+Let's look at another example of that final item. Consider the following options:</p><PRE CLASS="programlisting">
+hosts allow = 111.222.
+hosts deny = 111.222.333.</pre><P CLASS="para">
+In this case, only the hosts that belong to the subnet 111.222.*.* will be allowed access to the Samba shares. However, if a client belongs to the 111.222.333.* subnet, it will be denied access, even though it still matches the qualifications outlined by <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code>. The client must appear on the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> list and <EM CLASS="emphasis">
+must not</em> appear on the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> list in order to gain access to a Samba share. If a computer attempts to access a share to which it is not allowed access, it will receive an error message.</p><P CLASS="para">
+The other two options that we've specified are the <CODE CLASS="literal">
+interfaces</code> and the <CODE CLASS="literal">
+bind</code> <CODE CLASS="literal">
+interface</code> <CODE CLASS="literal">
+only</code> address. Let's look at the <CODE CLASS="literal">
+interfaces</code> option first. Samba, by default, sends data only from the primary network interface, which in our example is the 192.168.220.100 subnet. If we would like it to send data to more than that one interface, we need to specify the complete list with the <CODE CLASS="literal">
+interfaces</code> option. In the previous example, we've bound Samba to interface with both subnets (192.168.220 and 134.213.233) on which the machine is operating by specifying the other network interface address: 134.213.233.100. If you have more than one interface on your computer, you should always set this option as there is no guarantee that the primary interface that Samba chooses will be the right one.</p><P CLASS="para">
+Finally, the <CODE CLASS="literal">
+bind</code> <CODE CLASS="literal">
+interfaces</code> <CODE CLASS="literal">
+only</code> option instructs the <I CLASS="filename">
+nmbd</i> process not to accept any broadcast messages other than those subnets specified with the <CODE CLASS="literal">
+interfaces</code> option. Note that this is different from the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> and <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> options, which prevent machines from making connections to services, but not from receiving broadcast messages. Using the <CODE CLASS="literal">
+bind</code> <CODE CLASS="literal">
+interfaces</code> <CODE CLASS="literal">
+only</code> option is a way to shut out even datagrams from foreign subnets from being received by the Samba server. In addition, it instructs the <EM CLASS="emphasis">
+smbd </em>process to bind to only the interface list given by the <EM CLASS="emphasis">
+interfaces</em> option. This restricts the networks that Samba will serve.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-pgfId-961674">
+4.6.1 Networking Options</a></h3><P CLASS="para">The networking options we introduced above are summarized in <A CLASS="xref" HREF="ch04_06.html#ch04-32963">
+Table 4.5</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch04-32963">
+Table 4.5: Networking Configuration Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+hosts allow (allow hosts)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (list of hostnames)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the machines that can connect to Samba.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+none</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+hosts deny (deny hosts)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (list of hostnames)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the machines that cannot connect to Samba.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+none</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+interfaces</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (list of IP/netmask combinations)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the network interfaces Samba will respond to. Allows correcting defaults.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+system-dependent</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+bind</code></p><P CLASS="para">
+<CODE CLASS="literal">
+interfaces only</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If set to <CODE CLASS="literal">
+yes</code>, Samba will bind only to those interfaces specified by the <CODE CLASS="literal">
+interfaces</code> option.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+socket</code></p><P CLASS="para">
+<CODE CLASS="literal">
+address</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (IP address)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets IP address to listen on, for use with multiple virtual interfaces on a server.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+none</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-961754">
+4.6.1.1 hosts allow</a></h4><P CLASS="para">The <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> option (sometimes written as <CODE CLASS="literal">
+allow</code> <CODE CLASS="literal">
+hosts</code>) specifies the machines that have permission to access shares on the Samba server, written as a comma- or space-separated list of names of machines or their IP addresses. You can gain quite a bit of security by simply placing your LAN's subnet address in this option. For example, we specified the following in our example:</p><PRE CLASS="programlisting">
+hosts allow = 192.168.220. localhost</pre><P CLASS="para">
+Note that we placed <CODE CLASS="literal">
+localhost</code> after the subnet address. One of the most common mistakes when attempting to use the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> option is to accidentally disallow the Samba server from communicating with itself. The <I CLASS="filename">
+smbpasswd</i> program will occasionally need to connect to the Samba server as a client in order to change a user's encrypted password. In addition, local browsing propagation requires local host access. If this option is enabled and the localhost address is not specified, the locally-generated packets requesting the change of the encrypted password will be discarded by Samba, and browsing propagation will not work properly. To avoid this, explicitly allow the loopback address (either <CODE CLASS="literal">
+localhost</code> or <CODE CLASS="literal">
+127.0.0.1</code>) to be used.[<A CLASS="footnote" HREF="#ch04-pgfId-965714">3</a>] </p><BLOCKQUOTE CLASS="footnote">
+<DIV CLASS="footnote">
+<P CLASS="para">
+<A CLASS="footnote" NAME="ch04-pgfId-965714">[3]</a> Starting with Samba 2.0.5, <CODE CLASS="literal">
+localhost</code> will automatically be allowed unless it is explicitly denied.</p></div></blockquote><P CLASS="para">
+You can specify any of the following formats for this option: </p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch04-pgfId-959824">
+</a>Hostnames, such as <CODE CLASS="literal">
+ftp.example.com</code>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch04-pgfId-959825">
+</a>IP addresses, like <CODE CLASS="literal">
+130.63.9.252</code>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch04-pgfId-959826">
+</a>Domain names, which can be differentiated from individual hostnames because they start with a dot. For example, <CODE CLASS="literal">.ora.com</code> represents all machines within the <EM CLASS="emphasis">
+ora.com</em> domain.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch04-pgfId-959827">
+</a>Netgroups, which start with an at-sign, such as <CODE CLASS="literal">
+@printerhosts</code>. Netgroups are available on systems running yellow pages/NIS or NIS+, but rarely otherwise. If netgroups are supported on your system, there should be a <CODE CLASS="literal">
+netgroups</code> manual page that describes them in more detail.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch04-pgfId-959828">
+</a>Subnets, which end with a dot. For example, <CODE CLASS="literal">
+130.63.9.</code> means all the machines whose IP addresses begin with 130.63.9.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch04-pgfId-959830">
+</a>The keyword <CODE CLASS="literal">
+ALL</code>, which allows any client access.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch04-pgfId-959831">
+</a>The keyword <CODE CLASS="literal">
+EXCEPT</code> followed by more one or more names, IP addresses, domain names, netgroups, or subnets. For example, you could specify that Samba allow all hosts except those on the 192.168.110 subnet with <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+ALL</code> <CODE CLASS="literal">
+EXCEPT</code> <CODE CLASS="literal">
+192.168.110.</code> (remember the trailing dot).</p></li></ul><P CLASS="para">
+Using the <CODE CLASS="literal">
+ALL</code> keyword is almost always a bad idea, since it means that anyone on any network can browse your files if they guess the name of your server. </p><P CLASS="para">
+Note that there is no default value for the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> configuration option, although the default course of action in the event that neither option is specified is to allow access from all sources. In addition, if you specify this option in the <CODE CLASS="literal">
+[global]</code> section of the configuration file, it will override any <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> options defined shares.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-959836">
+4.6.1.2 hosts deny</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> option (also <CODE CLASS="literal">
+deny</code> <CODE CLASS="literal">
+hosts</code>) specifies machines that do not have permission to access a share, written as a comma- or space-separated list of machine names or their IP addresses. Use the same format as specifying clients as the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> option above. For example, to restrict access to the server from everywhere but <I CLASS="filename">
+example.com</i>, you could write:</p><PRE CLASS="programlisting">
+hosts deny = ALL EXCEPT .example.com</pre><P CLASS="para">
+Like <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code>, there is no default value for the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> configuration option, although the default course of action in the event that neither option is specified is to allow access from all sources. Also, if you specify this option in the <CODE CLASS="literal">
+[global]</code> section of the configuration file, it will override any <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> options defined in shares. If you wish to deny <EM CLASS="emphasis">
+hosts</em> access to specific shares, omit both the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> and <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> options in the <CODE CLASS="literal">
+[global]</code> section of the configuration file.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-958192">
+4.6.1.3 interfaces</a></h4><P CLASS="para">The <CODE CLASS="literal">
+interfaces</code> option outlines the network addresses to which you want the Samba server to recognize and respond. This option is handy if you have a computer that resides on more than one network subnet. If this option is not set, Samba searches for the primary network interface of the server (typically the first Ethernet card) upon startup and configures itself to operate on only that subnet. If the server is configured for more than one subnet and you do not specify this option, Samba will only work on the first subnet it encounters. You must use this option to force Samba to serve the other subnets on your network.</p><P CLASS="para">
+The value of this option is one or more sets of IP address/netmask pairs, such as the following:</p><PRE CLASS="programlisting">
+interfaces = 192.168.220.100/255.255.255.0 192.168.210.30/255.255.255.0</pre><P CLASS="para">
+You can optionally specify a CIDR format bitmask, as follows:</p><PRE CLASS="programlisting">
+interfaces = 192.168.220.100/24 192.168.210.30/24</pre><P CLASS="para">
+The bitmask number specifies the first number of bits that will be turned on in the netmask. For example, the number 24 means that the first 24 (of 32) bits will be activated in the bit mask, which is the same as saying 255.255.255.0. Likewise, 16 would be equal to 255.255.0.0, and 8 would be equal to 255.0.0.0.</p><P CLASS="para">
+This option may not work correctly if you are using DHCP.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-968052">
+4.6.1.4 bind interfaces only</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+bind</code> <CODE CLASS="literal">
+interfaces</code> <CODE CLASS="literal">
+only</code> option can be used to force the <EM CLASS="emphasis">
+smbd</em> and <EM CLASS="emphasis">
+nmbd</em> processes to serve SMB requests to only those addresses specified by the <CODE CLASS="literal">
+interfaces</code> option. The <EM CLASS="emphasis">
+nmbd</em> process normally binds to the all addresses interface (0.0.0.0.) on ports 137 and 138, allowing it to receive broadcasts from anywhere. However, you can override this behavior with the following:</p><PRE CLASS="programlisting">
+bind interfaces only = yes</pre><P CLASS="para">
+This will cause both Samba processes to ignore any packets whose origination address does not match the broadcast address(es) specified by the <CODE CLASS="literal">
+interfaces</code> option, including broadcast packets. With <EM CLASS="emphasis">
+smbd</em>, this option will cause Samba to not serve file requests to subnets other than those listed in the <CODE CLASS="literal">
+interfaces</code> option. You should avoid using this option if you want to allow temporary network connections, such as those created through SLIP or PPP. It's very rare that this option is needed, and it should only be used by experts.</p><P CLASS="para">
+If you set <CODE CLASS="literal">
+bind interfaces only</code> to <CODE CLASS="literal">
+yes</code>, you should add the localhost address (127.0.01) to the "interfaces" list. Otherwise, <EM CLASS="emphasis">
+smbpasswd</em> will be unable to connect to the server using its default mode in order to change a password. </p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-958204">
+4.6.1.5 socket address</a></h4><P CLASS="para">The <CODE CLASS="literal">
+socket</code> <CODE CLASS="literal">
+address</code> option dictates which of the addresses specified with the <CODE CLASS="literal">
+interfaces</code> parameter Samba should listen on for connections. Samba accepts connections on all addresses specified by default. When used in an <I CLASS="filename">
+smb.conf</i>  file, this option will force Samba to listen on only one IP address. For example:</p><PRE CLASS="programlisting">
+interfaces = 192.168.220.100/24 192.168.210.30/24
+socket address = 192.168.210.30</pre><P CLASS="para">
+This option is a programmer's tool and we recommend that you do not use it. </p></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_05.html" TITLE="4.5 Disk Share Configuration">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.5 Disk Share Configuration" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_07.html" TITLE="4.7 Virtual Servers">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.7 Virtual Servers" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+4.5 Disk Share Configuration</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+4.7 Virtual Servers</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

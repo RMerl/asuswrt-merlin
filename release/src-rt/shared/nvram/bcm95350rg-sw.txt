@@ -1,0 +1,57 @@
+# BCM95350RG sdram board
+# $Copyright Open Broadcom Corporation$
+# $Id: bcm95350rg-sw.txt,v 1.4 2004-12-15 21:09:46 rtrask Exp $
+boardtype=0x456
+boardnum=${serno}
+# Board revision 1.0
+boardrev=0x25
+boardflags=0x0e58
+sromrev=2
+
+# MIPS clock frequency in MHz
+clkfreq=200
+
+# 64 MB SDR SDRAM (16 Meg x 16 x 2)
+sdram_init=0x2008
+sdram_config=0x32
+sdram_refresh=0x0
+sdram_ncdl=0
+
+# Ethernet w/Robo switch
+et0macaddr=00:90:4c:7d:${maclo}
+et0phyaddr=30
+et0mdcport=0
+
+# Bootloader variables
+dl_ram_addr=a0001000
+os_ram_addr=80001000
+os_flash_addr=bfc40000
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+scratch=a0180000
+boot_wait=on
+reset_gpio=7
+
+# Watchdog timer in ms
+watchdog=3000
+
+# Make the d11 i/f single band
+wl0id=0x4320
+
+# 5350 802.11g parameters
+il0macaddr=00:90:4c:7e:${maclo}
+aa0=1
+ag0=255
+pa0maxpwr=76
+pa0itssit=62
+pa0b0=0x15ca
+pa0b1=0xfa7d
+pa0b2=0xfe81
+opo=16
+
+# Commons wireless parameters
+ccode=0
+
+# Bootloader and OS glue
+landevs=et0 wl0
+wandevs=

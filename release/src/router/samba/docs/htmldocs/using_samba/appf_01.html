@@ -1,0 +1,315 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Appendix F] Sample Configuration File
+</title>
+<META NAME="DC.title" CONTENT="">
+<META NAME="DC.creator" CONTENT="">
+<META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc.">
+<META NAME="DC.date" CONTENT="1999-11-08T16:28:53Z">
+<META NAME="DC.type" CONTENT="Text.Monograph">
+<META NAME="DC.format" CONTENT="text/html" SCHEME="MIME">
+<META NAME="DC.source" CONTENT="" SCHEME="ISBN">
+<META NAME="DC.language" CONTENT="en-US">
+<META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0">
+</head>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<A HREF="index.html">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</a>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appd_01.html" TITLE="D. Downloading Samba with CVS">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: D. Downloading Samba with CVS" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+Appendix F</font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+&nbsp;</td></tr></table>&nbsp;
+
+<hr noshade size=1></center>
+
+</div>
+<blockquote>
+<div class="samplechapter">
+<H1 CLASS="appendix">
+<A CLASS="title" NAME="appf-10509">
+F. Sample Configuration File</a></h1><P CLASS="para">This appendix gives an example of a production <I CLASS="filename">
+smb.conf</i> file and looks at how many of the options are used in practice. The following is a slightly disguised version of one we used at a corporation with five Linux servers, five Windows for Workgroups clients and three NT Workstation clients:</p><PRE CLASS="programlisting">
+# smb.conf -- File Server System for: 1 Example.COM  BSC &amp; Management Office 
+[globals]
+	workgroup = 1EG_BSC
+	interfaces = 10.10.1.14/24 </pre><P CLASS="para">
+We provide this service on only one of the machine's interfaces. The <CODE CLASS="literal">
+interfaces</code> option sets its address and netmask, where <CODE CLASS="literal">
+/24</code> is the same as using the netmask 255.255.255.0:</p><PRE CLASS="programlisting">
+	comment = Samba ver. %v
+	preexec = csh -c `echo /usr/samba/bin/smbclient \
+                     -M %m -I %I` &amp;</pre><P CLASS="para">
+We use the <KBD CLASS="command">
+preexec</kbd> command to log information about all connections by machine name (<CODE CLASS="literal">%m</code>) and IP address (<CODE CLASS="literal">%I)</code>:</p><PRE CLASS="programlisting">
+	# smbstatus will output various info on current status
+	status = yes
+	browseable = yes
+	printing = bsd
+
+	# the username that will be used for access to services
+	# specified with 'guest = ok'
+	guest account = samba </pre><P CLASS="para">
+The default guest account was <CODE CLASS="literal">
+nobody</code>, uid -1, which produced log messages on one of our machines saying "your server is being unfriendly," so we created a specific Samba guest account for browsing and printing:</p><PRE CLASS="programlisting">
+	# superuser account - admin privilages to shares, with no
+	# restrictions
+	# WARNING - use this with care: files can be modified,
+	# regardless of file permissions
+	admin users = root
+
+	# who is NOT allowed to connect to ANY service
+	invalid users = @wheel, mail, deamon, adt</pre><P CLASS="para">
+Daemons can't use Samba, only people. The <CODE CLASS="literal">
+invalid</code> <CODE CLASS="literal">
+users</code> option closes a security hole; it prevents intruders from breaking in by pretending to be a daemon process.</p><PRE CLASS="programlisting">
+	# hosts that are ALLOWED or DENIED from connecting to ANY service
+	hosts allow = 10.10.1.
+	hosts deny = 10.10.1.6
+	
+	# where the lock files will be located
+	lock directory = /var/lock/samba/locks
+		
+	# debug log files 
+	# %m = separate log for each NetBIOS name (each machine)
+	log file = /var/log/samba/log.%m
+
+	# We send priority 0, 1 and 2 messages to the system logs
+	syslog = 2
+		
+	# If a WinPopup message is sent to the server,
+	# redirect it to a user via e-mail
+	
+	message command = /bin/mail -s 'message from #% on %m' \
+						 pkelly &lt; %s; rm %s
+
+# ---------------------------------------------------
+# [globals] Performance Tuning
+# ---------------------------------------------------
+	
+	# caching algorithm to reduce time doing getwd() calls.  
+	getwd cache = yes
+
+	socket options = TCP_NODELAY
+
+	# tell the server whether the client is present and
+	# responding in seconds
+	keep alive = 60
+
+	# num minutes of inactivity before a connection is
+	# considered dead
+	dead time = 30 
+
+	read prediction = yes
+	share modes = yes
+	max xmit = 17384 
+	read size = 512</pre><P CLASS="para">
+The <CODE CLASS="literal">
+share</code> <CODE CLASS="literal">
+modes</code>, <CODE CLASS="literal">
+max</code>, <CODE CLASS="literal">
+xinit</code>, and <CODE CLASS="literal">
+read</code> <CODE CLASS="literal">
+size</code> options are machine-specific (see <a href="appb_01.html"><b>Appendix B, <CITE CLASS="appendix">Samba Performance Tuning</cite></b></a>): </p><PRE CLASS="programlisting">
+	# locking is done by the server
+	locking = yes
+
+	# control whether dos style attributes should be mapped
+	# to unix execute bits
+	map hidden = yes
+	map archive = yes
+	map system = yes</pre><P CLASS="para">
+The three <CODE CLASS="literal">
+map</code> options will work only on shares with a create mode that includes the execute bits (0111). Our <CODE CLASS="literal">
+homes</code> and <CODE CLASS="literal">
+printers</code> shares won't honor them, but the [<CODE CLASS="literal">www]</code> share will:</p><PRE CLASS="programlisting">
+# ---------------------------------------------------------
+# [globals] Security and Domain Logon Services
+# ---------------------------------------------------------	
+# connections are made with UID and GID, not as shares
+	security = user
+
+# boolean variable that controls whether passwords
+# will be encrypted
+	encrypt passwords = yes
+	passwd chat = &quot;*New password:*&quot; %n\r &quot;*New password (again):*&quot; %n\r \ &quot;*Password changed*&quot;
+	passwd program = /usr/bin/passwd %u
+	
+# Always become the local master browser
+	domain master = yes
+	preferred master = yes
+	os level = 34
+	
+# For domain logons to work correctly. Samba acts as a
+# primary domain controller.
+	domain logons = yes
+	
+# Logon script to run for user off the server each time
+# username (%U) logs in.  Set the time, connect to shares,
+# virus checks, etc.
+	logon script = scripts\%U.bat
+
+[netlogon]
+	comment = &quot;Domain Logon Services&quot;
+	path = /u/netlogon
+	writable = yes
+	create mode = 444
+	guest ok = no
+	volume = &quot;Network&quot;</pre><P CLASS="para">
+This share, discussed in <a href="ch06_01.html"><b>Chapter 6, <CITE CLASS="chapter">Users, Security, and Domains</cite></b></a>, is required for Samba to work smoothly in a Windows NT domain:</p><PRE CLASS="programlisting">
+# -----------------------------------------------------------
+# [homes] User Home Directories
+# -----------------------------------------------------------
+[homes]
+	comment = &quot;Home Directory for : %u &quot;
+	path = /u/users/%u</pre><P CLASS="para">
+The password file of the Samba server specifies each person's home directory as   <EM CLASS="emphasis">
+/home/</em><CODE CLASS="replaceable"><I>machine_name</i></code><EM CLASS="emphasis">/</em><CODE CLASS="replaceable"><I>person</i></code>, which NFS converts to point to the actual physicl location under <EM CLASS="emphasis">
+/u/users</em>. The <CODE CLASS="literal">
+path</code> option in the <CODE CLASS="literal">
+[homes]</code> share tells Samba the actual (non-NFS) location:</p><PRE CLASS="programlisting">
+	guest ok = no
+	read only = no
+	create mode = 644
+	writable = yes
+	browseable = no 
+
+# -----------------------------------------------------------
+# [printers] System Printers
+# -----------------------------------------------------------
+[printers]
+	comment = &quot;Printers&quot;
+	path = /var/spool/lpd/samba
+	printcap name = /etc/printcap
+	printable = yes
+	public = no 
+	writable = no
+
+	lpq command = /usr/bin/lpq -P%p
+	lprm command = /usr/bin/lprm -P%p %j
+	lppause command = /usr/sbin/lpc stop %p
+	lpresume command = /usr/sbin/lpc start %p
+
+	create mode = 0700
+
+	browseable = no 
+	load printers = yes  
+
+# -----------------------------------------------------------
+# Specific Descriptions: [programs] [data] [retail]
+# -----------------------------------------------------------
+[programs]
+	comment = &quot;Shared Programs %T&quot;
+	volume = &quot;programs&quot;</pre><P CLASS="para">
+Shared Programs shows up in the Network Neighborhood, and <CODE CLASS="literal">
+programs</code> is the volume name you specify when an installation program wants to know the label of the CD-ROM from which it thinks it's loading:</p><PRE CLASS="programlisting">
+	path = /u/programs
+	public = yes
+	writeable = yes
+	printable = no
+	create mode = 664
+[cdrom]
+	comment = &quot;Unix CDROM&quot;
+	path = /u/cdrom
+	public = no 
+	writeable = no 
+	printable = no
+	volume = &quot;cdrom&quot;
+
+[data]
+	comment =  &quot;Data Directories %T&quot;
+	path = /u/data
+	public = no
+	create mode = 770
+	writeable = yes
+	volume = &quot;data&quot;
+
+[nt4]
+	comment =  &quot;NT4 Server&quot;
+	path = /u/systems/nt4
+	public = yes 
+	create mode = 770
+	writeable = yes
+	volume = &quot;nt4_server&quot;
+
+[www]
+	comment =  &quot;WWW System&quot;
+	path = /usr/www/http
+	public = yes 
+	create mode = 775
+	writeable = yes
+	volume = &quot;www_system&quot;</pre><P CLASS="para">
+The <CODE CLASS="literal">
+[www]</code> share is the directory used on the Unix server to serve web pages. Samba makes the directory available to local PC users so the art department can update web pages.</p></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appd_01.html" TITLE="D. Downloading Samba with CVS">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: D. Downloading Samba with CVS" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">&nbsp;</td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+D. Downloading Samba with CVS</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+&nbsp;</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

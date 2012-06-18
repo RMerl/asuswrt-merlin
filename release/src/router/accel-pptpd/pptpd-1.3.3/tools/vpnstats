@@ -1,0 +1,55 @@
+#!/bin/bash
+#
+# vpnstats	Get commaseparated file and mail it to the admin
+# Version 1.0 beta by Richard de Vroede - Linvision BV <richard@linvision.com>
+#
+
+# check for conf file, else create with defaults
+CONF=/etc/vpnstats.conf
+if [ ! -f $CONF ]; then
+    echo "LOGFILE=/var/log/messages.1" > $CONF
+    echo "STATFILE=/var/log/vpnstats" >> $CONF
+    echo "TEMPFILE=/tmp/tmpvpnstats" >> $CONF
+    echo "SMTP=localhost" >> $CONF
+    echo "FROM=" >> $CONF
+    echo "TO=" >> $CONF
+fi
+. $CONF
+
+# check for weekly crontab, else create it
+CRON=/etc/cron.weekly/vpnstats.cron
+if [ ! -f $CRON ]; then
+    echo "#!/bin/bash" > $CRON
+    echo "$0" >> $CRON
+    chmod 755 $CRON
+fi
+
+echo "Name,Login,Logout,Connected Minutes,Recieved Bytes,Transmitted Bytes" > $STATFILE
+PPPDPID=$(grep "peer authentication succeeded" $LOGFILE | cut -d [ -f2 | cut -d ] -f 1)
+while [ "$PPPDPID" != "" ]; do
+    PID=$(echo $PPPDPID | awk '{print $1}')
+    grep $PID $LOGFILE | grep pppd | grep -v pptpd > $TEMPFILE
+    NAME=$(grep "succeeded for" $TEMPFILE | awk -F "succeeded for" '{print $2}' | cut -d " " -f 2)
+    LOGIN=$(grep "succeeded for" $TEMPFILE | cut -d " " -f 1-3)
+    LOGOUT=$(grep "Connect time" $TEMPFILE | cut -d " " -f 1-3)
+    CONNECT=$(grep "Connect time" $TEMPFILE | cut -d ] -f 2 | cut -d " " -f 4)
+    RXB=$(grep "Sent" $TEMPFILE | cut -d ] -f 2 | cut -d " " -f 3)
+    TXB=$(grep "Sent" $TEMPFILE | cut -d ] -f 2 | cut -d " " -f 6)
+    echo "$NAME,$LOGIN,$LOGOUT,$CONNECT,$RXB,$TXB" >> $STATFILE
+    PPPDPID=$(echo $PPPDPID | sed "s%$PID%%")
+    rm -f $TEMPFILE
+done
+
+MAILER=$(echo $(locate sendEmail) | awk '{print$1}')
+if [ "$MAILER" != "" ]; then
+    if [ "$FROM" = "" ]; then FROM=root@`uname -n`; fi
+    if [ "$TO" = "" ]; then TO=root@localhost; fi
+    $MAILER -s $SMTP -u "VPNstats" -f $FROM -t $TO -m " " -a $STATFILE
+else
+    if [ -f "/bin/mail" ]; then
+       cat $STATFILE | /bin/mail -s "VPNstats" $TO
+    else
+       echo "You need /bin/mail OR"
+       echo "the Perl program sendEmail located at http://freshmeat.net/projects/sendemail/"
+    fi
+fi

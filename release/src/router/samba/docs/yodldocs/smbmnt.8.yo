@@ -1,0 +1,36 @@
+mailto(samba@samba.org) 
+
+manpage(smbmnt htmlcommand((1)))(1)(25 September 1999)(Samba)(SAMBA)
+
+label(NAME)
+manpagename(smbmnt)(helper utility for mounting SMB filesystems)
+
+label(SYNOPSIS)
+manpagesynopsis()
+bf(smbmnt) mount-point [ -s share ] [ -r ] [ -u uid ] [ -g gid ] [ -f mask ] [ -d mask ] 
+
+label(DESCRIPTION)
+manpagedescription()
+
+smbmnt is a helper application used by the smbmount program to do the
+actual mounting of SMB shares. smbmnt is meant to be installed setuid
+root so that normal users can mount their smb shares. It checks
+whether the user has write permissions on the mount point and then
+mounts the directory.
+
+The smbmnt program is normally invoked by smbmount. It should not be
+invoked directly by users.
+
+dit(bf(-r)) mount the filesystem read-only
+
+dit(bf(-u uid)) specify the uid that the files will be owned by
+
+dit(bf(-g gid)) specify the gid that the files will be owned by
+
+dit(bf(-f mask)) specify the octal file mask applied 
+
+dit(bf(-d mask)) specify the octal directory mask applied 
+
+manpageauthor()
+The maintainer of smbfs, smbmnt and smbmount is Andrew Tridgell
+email(tridge@samba.org)

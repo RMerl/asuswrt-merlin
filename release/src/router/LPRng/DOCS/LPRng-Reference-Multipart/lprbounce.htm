@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Job Filtering By LPR</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="lpr - Job Spooler Program" href=
+    "lpr.htm">
+    <link rel="PREVIOUS" title="Check For Nonprintable File " href=
+    "checkfornonprintable.htm">
+    <link rel="NEXT" title="Restrict Queue Use to Group Members "
+    href="rg.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "checkfornonprintable.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 6.
+          <b class="APPLICATION">lpr</b> - Job Spooler Program</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "rg.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="LPRBOUNCE">6.10. Job Filtering By
+      LPR</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">lpr_bounce</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">lpr does
+          filtering</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>Some users would like the advantages of the filtering and
+      processing capabilities of a lpd daemon without running a <b
+      class="APPLICATION">lpd</b> daemon on their system. By having
+      the <b class="APPLICATION">lpr</b> program process the job by
+      passing it through the various filters and then send the
+      output of the filters as the print job you can get the
+      desired effect.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN4479"></a>
+<pre class="SCREEN">
+    # Simple example of an lpr_bounce entry
+    bounce
+      :lpr_bounce
+      :lp=lp@remote
+      :filter=/usr/local/bin/lpf
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <var class="LITERAL">lpr_bounce</var> flag, if present
+      in the printcap entry, will force <b class=
+      "APPLICATION">lpr</b> to process the job using the specified
+      filters and send the outputs of the filters to the remote
+      printer for further processing.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "checkfornonprintable.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "rg.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Check For
+          Nonprintable File</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "lpr.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Restrict Queue
+          Use to Group Members</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

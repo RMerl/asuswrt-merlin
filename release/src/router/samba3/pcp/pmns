@@ -1,0 +1,45 @@
+/*
+ * Metrics for samba PMDA
+ *
+ */
+
+samba {
+	smbd
+	statcache
+	writecache
+	counts				SAMBA:3:0
+	times				SAMBA:4:0
+	bytes				SAMBA:5:0
+}
+
+samba.smbd {
+	smb_count			SAMBA:0:0
+	uid_changes			SAMBA:0:1
+}
+
+samba.statcache {
+	lookups				SAMBA:1:0
+	misses				SAMBA:1:1
+	hits				SAMBA:1:2
+}
+
+samba.writecache {
+	num_caches			SAMBA:2:0
+	allocated_caches		SAMBA:2:1
+	read_hits			SAMBA:2:2
+	total_writes			SAMBA:2:3
+	init_writes			SAMBA:2:4
+	abutted_writes			SAMBA:2:5
+	perfect_writes			SAMBA:2:6
+	direct_writes			SAMBA:2:7
+	non_oplock_writes		SAMBA:2:8
+	seek_flush			SAMBA:2:9
+	read_flush			SAMBA:2:10
+	write_flush			SAMBA:2:11
+	readraw_flush			SAMBA:2:12
+	oplock_rel_flush		SAMBA:2:13
+	close_flush			SAMBA:2:14
+	sync_flush			SAMBA:2:15
+	size_change_flush		SAMBA:2:16
+}
+

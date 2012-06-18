@@ -1,0 +1,397 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 9] Troubleshooting Samba</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:36:14Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_07.html" TITLE="8.7 Backups with smbtar">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 8.7 Backups with smbtar" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+Chapter 9</font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch09_02.html" TITLE="9.2 The Fault Tree">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 9.2 The Fault Tree" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div class="samplechapter">
+<H1 CLASS="chapter">
+<A CLASS="title" NAME="ch09-80975">
+9. Troubleshooting Samba</a></h1><DIV CLASS="htmltoc">
+<P>
+<B>
+Contents:</b><br>
+<A CLASS="sect1" HREF="#ch09-36385" TITLE="9.1 The Tool Bag">
+The Tool Bag</a><br>
+<A CLASS="sect1" HREF="ch09_02.html" TITLE="9.2 The Fault Tree">
+The Fault Tree</a><br>
+<A CLASS="sect1" HREF="ch09_03.html" TITLE="9.3 Extra Resources">
+Extra Resources</a></p><P>
+</p></div><P CLASS="para">Samba is extremely robust. Once you've got everything set up the way you want, you'll probably forget that it is running. When trouble occurs, it's typically during installation or when you're trying to add something new to the server. Fortunately, there are a wide variety of resources that you can use to diagnose these troubles. While we can't describe in detail the solution to every problem that you might encounter, you should be able to get a good start at a resolution by following the advice given in this chapter.</p><P CLASS="para">
+The first section of the chapter lists the tool bag, a collection of tools available for troubleshooting Samba; the second section is a detailed how-to, and the last section lists extra resources you may need to track down particularly stubborn problems.</p><DIV CLASS="sect1">
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="s1"></a>
+<A CLASS="title" NAME="ch09-36385">
+9.1 The Tool Bag</a></h2><P CLASS="para">Sometimes Unix seems to be made up of a handful of applications and tools. There are tools to troubleshoot tools. And of course, there are several ways to accomplish the same task. When you are trying to solve a problem related to Samba, a good plan of attack is to check the following:</p><OL CLASS="orderedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-944982">
+</a>Samba logs </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-944983">
+</a>Fault tree </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-944984">
+</a>Unix utilities </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-944985">
+</a>Samba test utilities </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-944986">
+</a>Documentation and FAQs </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-944987">
+</a>Searchable archives </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-944988">
+</a>Samba newsgroups</p></li></ol><P CLASS="para">
+Let's go over each of these one by one in the following sections.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-pgfId-950956">
+9.1.1 Samba Logs</a></h3><P CLASS="para">Your first line of attack should always be to check the log files. The Samba log files can help diagnose the vast majority of the problems that beginning to intermediate Samba administrators are likely to face. Samba is quite flexible when it comes to logging. You can set up the server to log as little or as much as you want. Substitution variables that allow you to isolate individual logs for each machine, share, or combination thereof.</p><P CLASS="para">
+By default, logs are placed in <CODE CLASS="replaceable">
+<I>
+samba_directory</i></code><EM CLASS="emphasis">
+/var/smbd.log</em> and <CODE CLASS="replaceable">
+<I>
+samba_directory</i></code><EM CLASS="emphasis">
+/var/nmbd.log</em>, where <CODE CLASS="literal">
+samba_directory</code> is the location where Samba was installed (typically, <I CLASS="filename">
+/usr/local/samba</i>). As we mentioned in <a href=ch04_01.html><b>Chapter 4, <CITE CLASS="chapter">Disk Shares</cite></b></a>, you can override the location and name using the <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+file</code> configuration option in <I CLASS="filename">
+smb.conf</i>. This option accepts all of the substitution variables mentioned in <a href="ch02_01.html"><b>Chapter 2, <CITE CLASS="chapter">Installing Samba on a Unix System</cite></b></a>, so you could easily have the server keep a separate log for each connecting client by specifying the following in the <CODE CLASS="literal">
+[global]</code> section of <I CLASS="filename">
+smb.conf</i>:</p><PRE CLASS="programlisting">
+log file = %m.log</pre><P CLASS="para">
+Alternatively, you can specify a log directory to use with the <CODE CLASS="literal">
+-l</code> flag on the command line. For example:</p><PRE CLASS="programlisting">
+smbd -l /usr/local/var/samba</pre><P CLASS="para">
+Another useful trick is to have the server keep a log for each service (share) that is offered, especially if you suspect a particular share is causing trouble. Use the <CODE CLASS="literal">
+%S</code> variable to set this up in the <CODE CLASS="literal">
+[global]</code> section of the configuration file:</p><PRE CLASS="programlisting">
+log file = %S.log</pre><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-28969">
+9.1.1.1 Log levels</a></h4><P CLASS="para">The level of logging that Samba uses can be set in the <I CLASS="filename">
+smb.conf</i> file using the global <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+level</code> or <CODE CLASS="literal">
+debug</code> <CODE CLASS="literal">
+level</code> option; they are equivalent. The logging level is an integer which ranges from 0 (no logging), and increases the logging to voluminous by <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+level</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+3</code>. For example, let's assume that we are going to use a Windows client to browse a directory on a Samba server. For a small amount of log information, you can use <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+level</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+1</code>, which instructs Samba to show only cursory information, in this case only the connection itself: </p><PRE CLASS="programlisting">
+105/25/98 22:02:11 server (192.168.236.86) connect to service public as user pcguest (uid=503,gid=100) (pid 3377) </pre><P CLASS="para">
+Higher debug levels produce more detailed information. Usually you won't need any more than level 3; this is more than adequate for most Samba administrators. Levels above 3 are for use by the developers and dump enormous amounts of cryptic information.</p><P CLASS="para">
+Here is example output at levels 2 and 3 for the same operation. Don't worry if you don't understand the intricacies of an SMB connection; the point is simply to show you what types of information are shown at the different logging levels: </p><PRE CLASS="programlisting">
+ /* Level 2 */
+Got SIGHUP
+Processing section &quot;[homes]&quot;
+Processing section &quot;[public]&quot;
+Processing section &quot;[temp]&quot;
+Allowed connection from 192.168.236.86 (192.168.236.86) to IPC$
+Allowed connection from 192.168.236.86 (192.168.236.86) to IPC/
+
+
+/* Level 3 */
+05/25/98 22:15:09 Transaction 63 of length 67
+switch message SMBtconX (pid 3377)
+Allowed connection from 192.168.236.86 (192.168.236.86) to IPC$
+ACCEPTED: guest account and guest ok
+found free connection number 105
+Connect path is /tmp
+chdir to /tmp
+chdir to /
+05/25/98 22:15:09 server (192.168.236.86) connect to service IPC$ as user pcguest (uid=503,gid=100) (pid 3377)
+05/25/98 22:15:09 tconX service=ipc$ user=pcguest cnum=105
+05/25/98 22:15:09 Transaction 64 of length 99
+switch message SMBtrans (pid 3377)
+chdir to /tmp
+trans &lt;\PIPE\LANMAN&gt; data=0 params=19 setup=0
+Got API command 0 of form &lt;WrLeh&gt; &lt;B13BWz&gt; (tdscnt=0,tpscnt=19,mdrcnt=4096,mprcnt=8)
+Doing RNetShareEnum
+RNetShareEnum gave 4 entries of 4 (1 4096 126 4096)
+05/25/98 22:15:11 Transaction 65 of length 99
+switch message SMBtrans (pid 3377)
+chdir to /
+chdir to /tmp
+trans &lt;\PIPE\LANMAN&gt; data=0 params=19 setup=0
+Got API command 0 of form &lt;WrLeh&gt; &lt;B13BWz&gt; (tdscnt=0,tpscnt=19,mdrcnt=4096,mprcnt=8)
+Doing RNetShareEnum
+RNetShareEnum gave 4 entries of 4 (1 4096 126 4096)
+05/25/98 22:15:11 Transaction 66 of length 95
+switch message SMBtrans2 (pid 3377)
+chdir to /
+chdir to /pcdisk/public
+call_trans2findfirst: dirtype = 0, maxentries = 6, close_after_first=0, close_if_end = 0 requires_resume_key = 0 level = 260, max_data_bytes = 2432
+unix_clean_name [./DESKTOP.INI]
+unix_clean_name [desktop.ini]
+unix_clean_name [./]
+creating new dirptr 1 for path ./, expect_close = 1
+05/25/98 22:15:11 Transaction 67 of length 53
+switch message SMBgetatr (pid 3377)
+chdir to /
+
+[...]</pre><P CLASS="para">
+We cut off this listing after the first packet because it runs on for many pages. However, you should be aware that log levels above 3 will quickly fill your disk with megabytes of excruciating detail concerning Samba internal operations. Log level 3 is extremely useful for following exactly what the server is doing, and most of the time it will be obvious where an error is occurring by glancing through the log file.</p><P CLASS="para">
+A word of warning: using a high log level (3 or above) will <EM CLASS="emphasis">
+seriously</em> slow down the Samba server. Remember that every log message generated causes a write to disk (an inherently slow operation) and log levels greater than 2 produce massive amounts of data. Essentially, you should turn on logging level 3 only when you're actively tracking a problem in the Samba server.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-946537">9.1.1.2 Activating and deactivating logging</a></h4><P CLASS="para">To turn logging on and off, set the appropriate level in the <CODE CLASS="literal">
+[global]</code> section of <I CLASS="filename">
+smb.conf</i>. Then, you can either restart Samba, or force the current daemon to reprocess the configuration file. You also can send the <EM CLASS="emphasis">
+smbd</em> process a SIGUSR1 signal to increase its log level by one while it's running, and a SIGUSR2 signal to decrease it by one:</p><PRE CLASS="programlisting">
+# Increase the logging level by 1
+kill -SIGUSR1 1234
+
+# Decrease the logging level by 1
+kill -SIGUSR2 1234</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-34448">
+9.1.1.3 Logging by individual client machines or users</a></h4><P CLASS="para">An effective way to diagnose problems without hampering other users is to assign different log levels for different machines in <CODE CLASS="literal">
+[global]</code> section of the <I CLASS="filename">
+smb.conf</i> file. We can do this by building on the strategy we presented earlier:</p><PRE CLASS="programlisting">
+[global]
+	log level = 0
+	log file = /usr/local/samba/lib/log.%m
+	include = /usr/local/samba/lib/smb.conf.%m</pre><P CLASS="para">
+These options instruct Samba to use unique configuration and log files for each client that connects. Now all you have to do is create an <I CLASS="filename">
+smb.conf</i> file for a specific client machine with a <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+level</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+3</code> entry in it (the others will pick up the default log level of 0) and use that log file to track down the problem.</p><P CLASS="para">
+Similarly, if only particular users are experiencing a problem, and it travels from machine to machine with them, you can isolate logging to a specific user by adding the following to the <I CLASS="filename">
+smb.conf</i> file:</p><PRE CLASS="programlisting">
+[global]
+	log level = 0
+	log file = /usr/local/samba/lib/log.%u
+	include = /usr/local/samba/lib/smb.conf.%u</pre><P CLASS="para">
+Then you can create a unique <I CLASS="filename">
+smb.conf</i> file for each user (e.g., <I CLASS="filename">
+/usr/local/samba/lib/smb.conf.tim</i>) files containing the configuration option <CODE CLASS="literal">
+log</code> <CODE CLASS="literal">
+level</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+3</code> and only those users will get more detailed logging.</p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-pgfId-945079">9.1.2 Samba Test Utilities</a></h3><P CLASS="para">A rigorous set of tests that exercise the major parts of Samba are described in various files in the <EM CLASS="emphasis">
+/docs/textdocs</em> directory of the Samba distribution kit, starting with <EM CLASS="emphasis">
+DIAGNOSIS.TXT.</em> The fault tree in this chapter is a more detailed version of the basic tests suggested by the Samba team, but covers only installation and reconfiguration diagnosis, like <EM CLASS="emphasis">
+DIAGNOSIS.TXT.</em> The other files in the <EM CLASS="emphasis">
+/docs</em> subdirectoryies address specific problems (such as Windows NT clients) and instruct you how to troubleshoot items not included in this book. If the fault tree doesn't suffice, be sure to look at <EM CLASS="emphasis">
+DIAGNOSIS.TXT</em> and its friends.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-pgfId-945083">
+9.1.3 Unix Utilities</a></h3><P CLASS="para">Sometimes it's useful to use a tool outside of the Samba suite to examine what's happening inside the server. Unix has always been a "kitchen-sink" operating system. Two diagnostic tools can be of particular help in debugging Samba troubles: <EM CLASS="emphasis">
+trace</em> and <EM CLASS="emphasis">
+tcpdump</em>.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-945085">
+9.1.3.1 Using trace</a></h4><P CLASS="para">
+The <EM CLASS="emphasis">
+trace</em> command masquerades under several different names, depending on the operating system that you are using. On Linux it will be <EM CLASS="emphasis">
+strace</em>, on Solaris you'll use <EM CLASS="emphasis">
+truss</em>, and SGI will have <EM CLASS="emphasis">
+padc</em> and <EM CLASS="emphasis">
+par</em>. All have essentially the same function, which is to display each operating system function call as it is executed. This allows you to follow the execution of a program, such as the Samba server, and will often pinpoint the exact call that is causing the difficulty.</p><P CLASS="para">
+One problem that <EM CLASS="emphasis">
+trace</em> can highlight is the location of an incorrect version of a dynamically linked library. This can happen if you've downloaded prebuilt binaries of Samba. You'll typically see the offending call at the end of the <EM CLASS="emphasis">
+trace</em>, just before the program terminates.</p><P CLASS="para">
+A sample <CODE CLASS="literal">
+strace</code> output for the Linux operating system follows. This is a small section of a larger file created during the opening of a directory on the Samba server. Each line is a system-call name, and includes its parameters and the return value. If there was an error, the error value (e.g., <CODE CLASS="literal">
+ENOENT</code>) and its explanation are also shown. You can look up the parameter types and the errors that can occur in the appropriate <CODE CLASS="literal">
+trace</code> manual page for the operating system that you are using.</p><PRE CLASS="programlisting">
+chdir(&quot;/pcdisk/public&quot;)                 = 0
+stat(&quot;mini/desktop.ini&quot;, 0xbffff7ec)    = -1 ENOENT (No such file or directory)
+stat(&quot;mini&quot;, {st_mode=S_IFDIR|0755, st_size=1024, ...}) = 0
+stat(&quot;mini/desktop.ini&quot;, 0xbffff7ec)    = -1 ENOENT (No such file or directory)
+open(&quot;mini&quot;, O_RDONLY)                  = 5
+fcntl(5, F_SETFD, FD_CLOEXEC)           = 0
+fstat(5, {st_mode=S_IFDIR|0755, st_size=1024, ...}) = 0
+lseek(5, 0, SEEK_CUR)                   = 0
+SYS_141(0x5, 0xbfffdbbc, 0xedc, 0xbfffdbbc, 0x80ba708) = 196
+lseek(5, 0, SEEK_CUR)                   = 1024
+SYS_141(0x5, 0xbfffdbbc, 0xedc, 0xbfffdbbc, 0x80ba708) = 0
+close(5)                                = 0
+stat(&quot;mini/desktop.ini&quot;, 0xbffff86c)    = -1 ENOENT (No such file or directory)
+write(3, &quot;\0\0\0#\377SMB\10\1\0\2\0\200\1\0&quot;..., 39) = 39
+SYS_142(0xff, 0xbffffc3c, 0, 0, 0xbffffc08) = 1
+read(3, &quot;\0\0\0?&quot;, 4)                   = 4
+read(3, &quot;\377SMBu\0\0\0\0\0\0\0\0\0\0\0\0&quot;..., 63) = 63
+time(NULL)                              = 896143871</pre><P CLASS="para">
+This example shows several <CODE CLASS="literal">
+stat</code> calls failing to find the files they were expecting. You don't have to be a expert to see that the file <EM CLASS="emphasis">
+desktop.ini</em> is missing from that directory. In fact, many difficult problems can be identified by looking for obvious, repeatable errors with <EM CLASS="emphasis">
+trace</em>. Often, you need not look farther than the last message before a crash.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-945114">
+9.1.3.2 Using tcpdump</a></h4><P CLASS="para">
+The <EM CLASS="emphasis">
+tcpdump</em> program, written by Van Jacobson, Craig Leres, and Steven McCanne, and extended by Andrew Tridgell, allows you to monitor network traffic in real time. A variety of output formats are available and you can filter the output to look at only a particular type of traffic. The <EM CLASS="emphasis">
+tcpdump</em> program lets you examine all conversations between client and server, including SMB and NMB broadcast messages. While its troubleshooting capabilities lie mainly at the OSI network layer, you can still use its output to get a general idea of what the server and client are attempting to accomplish.</p><P CLASS="para">
+A sample <EM CLASS="emphasis">
+tcpdump</em> log follows. In this instance, the client has requested a directory listing and the server has responded appropriately, giving the directory names <CODE CLASS="literal">
+homes</code>, <CODE CLASS="literal">
+public</code>, <CODE CLASS="literal">
+IPC$</code>, and <CODE CLASS="literal">
+temp</code> (we've added a few explanations on the right):</p><PRE CLASS="programlisting">$<CODE CLASS="userinput"><B> tcpdump -v -s 255 -i eth0 port not telnet</b></code>
+SMB PACKET: SMBtrans (REQUEST)	                        <CODE CLASS="replaceable">
+<I>
+Request packet</i></code>
+SMB Command   =  0x25                                 <CODE CLASS="replaceable">
+<I>
+Request was ls or dir</i></code>.
+
+[000] 01 00 00 10                                     ....
+
+
+&gt;&gt;&gt; NBT Packet                                                                 <CODE CLASS="replaceable">
+<I>
+Outer frame of SMB packe</i></code>t
+NBT Session Packet
+Flags=0x0
+Length=226
+[lines skipped]
+                         
+SMB PACKET: SMBtrans (REPLY)	                           <CODE CLASS="replaceable">
+<I>
+Beginning of a reply to  request </i></code>
+SMB Command   =  0x25			                                  <CODE CLASS="replaceable">
+<I>
+Command was an ls or dir</i></code>
+Error class   =  0x0			 
+Error code    =  0                                                                    <CODE CLASS="replaceable">
+<I>
+No errors</i></code>
+Flags1        =  0x80
+Flags2        =  0x1
+Tree ID       =  105
+Proc ID       =  6075
+UID           =  100
+MID           =  30337
+Word Count    =  10
+TotParamCnt=8 
+TotDataCnt=163 
+Res1=0
+ParamCnt=8 
+ParamOff=55 
+Res2=0 
+DataCnt=163 
+DataOff=63 
+Res3=0
+Lsetup=0
+Param Data: (8 bytes)
+[000] 00 00 00 00 05 00 05 00                           ........ 
+
+Data Data: (135 bytes)                                                        <CODE CLASS="replaceable">
+<I>
+			Actual directory contents:</i></code>
+[000] 68 6F 6D 65 73 00 00 00  00 00 00 00 00 00 00 00  homes... ........
+[010] 64 00 00 00 70 75 62 6C  69 63 00 00 00 00 00 00  d...publ ic......
+[020] 00 00 00 00 75 00 00 00  74 65 6D 70 00 00 00 00  ....u... temp....
+[030] 00 00 00 00 00 00 00 00  76 00 00 00 49 50 43 24  ........ v...IPC$
+[040] 00 00 00 00 00 00 00 00  00 00 03 00 77 00 00 00  ........ ....w...
+[050] 64 6F 6E 68 61 6D 00 00  00 00 00 00 00 00 00 00  donham.. ........
+[060] 92 00 00 00 48 6F 6D 65  20 44 69 72 65 63 74 6F  ....Home  Directo
+[070] 72 69 65 73 00 00 00 49  50 43 20 53 65 72 76 69  ries...I PC Servi
+[080] 63 65 20 28 53 61 6D                              ce (Sam</pre><P CLASS="para">
+This is more of the same debugging session as with the 
+<i>trace</i> command; the listing of a directory. The options we used were <CODE CLASS="literal">
+-v</code> (verbose), <CODE CLASS="literal">
+-i</code> <CODE CLASS="literal">
+eth0</code> to tell <EM CLASS="emphasis">
+tcpdump</em> the interface to listen on (an Ethernet port), and <CODE CLASS="literal">
+-s</code> <CODE CLASS="literal">
+255</code> to tell it to save the first 255 bytes of each packet instead of the default: the first 68. The option <CODE CLASS="literal">
+port</code> <CODE CLASS="literal">
+not</code> <CODE CLASS="literal">
+telnet</code> is used to avoid screens of telnet traffic, since we were logged in to the server remotely. The <EM CLASS="emphasis">
+tcpdump</em> program actually has quite a number of options to filter just the traffic you want to look at. If you've used <EM CLASS="emphasis">
+snoop</em> or <EM CLASS="emphasis">
+etherdump</em>, they'll look vaguely familiar.</p><P CLASS="para">
+You can download the modified <EM CLASS="emphasis">
+tcpdump</em> from the Samba FTP server at <I CLASS="filename">
+<a href="ftp://samba.anu.edu.au/pub/samba/tcpdump-smb">ftp://samba.anu.edu.au/pub/samba/tcpdump-smb</i></a>. Other versions don't include support for the SMB protocol; if you don't see output such as that shown in the example, you'll need to<EM CLASS="emphasis">
+</em> use the SMB-enabled version.</p></div></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_07.html" TITLE="8.7 Backups with smbtar">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 8.7 Backups with smbtar" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch09_02.html" TITLE="9.2 The Fault Tree">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 9.2 The Fault Tree" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">8.7 Backups with smbtar</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+9.2 The Fault Tree</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

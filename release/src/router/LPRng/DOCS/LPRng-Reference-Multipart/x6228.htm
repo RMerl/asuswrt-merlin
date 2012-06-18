@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Lexmark Printers</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title=
+    "Using Programs To Get Printcap Information " href=
+    "secnis.htm">
+    <link rel="NEXT" title="Tektronix Phaser Printers " href=
+    "p450.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "secnis.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "p450.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN6228">12.19. Lexmark
+      Printers</a></h1>
+
+      <p>Some Lexmark printers do not send <span class=
+      "emphasis"><i class="EMPHASIS">end of job</i></span> status
+      back unless configured to do so. Here is what is needed to
+      force this. (This capability has been incorporated into the
+      <b class="APPLICATION">ifhp</b> filter.)</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6233"></a>
+<pre class="SCREEN">
+    From: Matt White &lt;whitem@bofh.usask.ca&gt;
+    To: lprng@lprng.com
+    Date: Wed, 21 Jan 1998 18:25:50 -0600 (CST)
+    Subject: Re: [LPRng] ifhp with Lexmark Optra N printer
+    
+    On Wed, 21 Jan 1998, Simon Greaves wrote:
+    
+    &gt; Apologies in advance if this is way off mark, but we've been
+    &gt; evaluating a commercial print charging package (Geomica) which
+    &gt; works by talking to the printer in what I think is a similar way
+    &gt; to the ifhp filters. Lexmarks are currently a big headache because
+    &gt; they seem to fail to return the message that they have finished
+    &gt; printing which screws things up somewhat. In our case, it is believed
+    &gt; to be a problem with the Lexmark firmware which they are looking
+    &gt; into.
+    
+    There is a fix for that...it is originally from the Lexmark 4039
+    series, but it still works on the Optra S 1650 machines that we
+    have (and should work on the rest of the optra line).  Just send
+    this little chunk of postscript to the printer once:
+    
+    -----------snip----------
+    %! Postscript to set the 4039 printer into synchronous mode
+    serverdict begin 0 exitserver
+    statusdict begin true setenginesync end
+    -----------snip----------
+    
+    Basically, it causes the printer to wait until it is finished
+    printing before actually reporting that it is done.  I've got 3
+    Optra S printers running with ifhp right now with no extra options
+    (just defaults).
+    
+    -----------------------------------------------------------
+    - Matt White                  whitem@arts.usask.ca
+    - Network Technical Support   http://arts.usask.ca/~whitem
+    - College of Arts &amp; Science  University of Saskatchewan
+    -----------------------------------------------------------
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "secnis.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "p450.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Using Programs
+          To Get Printcap Information</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Tektronix
+          Phaser Printers</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

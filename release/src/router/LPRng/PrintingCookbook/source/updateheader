@@ -1,0 +1,19 @@
+#!/usr/bin/perl -spi
+	if( $found and /^$/ ){
+		print <<EOF;
+<table><tr valign=top>
+<td width=25%>
+<a href="http://www.lprng.com">
+<img align=left SRC="LPRng.jpg" ALT="LPRngLogo" height=60>
+</a>
+</td>
+<td width=50%></td><td width=25% >
+<a href="http://www.lprng.com">
+<img align=right SRC="LPRngT-L.jpg" ALT="LPRngTool" height=75>
+</a>
+</td></tr></table>
+EOF
+		$found = 0;
+	} elsif( m,<body, ){
+		$found = 1;
+	}

@@ -1,0 +1,14 @@
+This module matches every `n'th packet
+.TP
+.BI "--every " "value"
+Match every `value' packet
+.TP
+.BI "[" "--counter " "num" "]"
+Use internal counter number `num'.  Default is `0'.
+.TP
+.BI "[" "--start " "num" "]"
+Initialize the counter at the number `num' insetad of `0'.  Most between `0'
+and `value'-1.
+.TP
+.BI "[" "--packet " "num" "]"
+Match on `num' packet.  Most be between `0' and `value'-1.

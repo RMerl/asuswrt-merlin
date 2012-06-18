@@ -1,0 +1,50 @@
+udhcp server/client package readme
+-------------------------
+
+The udhcp server/client package is primarily geared towards embedded
+systems. It does however, strive to be fully functional, and RFC
+compliant.
+
+
+compile time options
+-------------------
+
+The Makefile contains three of the compile time options:
+	
+	DEBUG: If DEBUG is defined, udhcpd will output extra debugging
+	output, compile with -g, and not fork to the background when run.
+	SYSLOG: If SYSLOG is defined, udhcpd will log all its messages
+	syslog, otherwise, it will attempt to log them to stdout.
+	
+	COMBINED_BINARY: If COMBINED_BINARY is define, one binary, udhcpd,
+	is created. If called as udhcpd, the dhcp server will be started.
+	If called as udhcpc, the dhcp client will be started.
+	
+dhcpd.h contains the other two compile time options:
+	
+	LEASE_TIME: The default lease time if not specified in the config
+	file.
+	
+	DHCPD_CONFIG_FILE: The defualt config file to use.
+	
+options.c contains a set of dhcp options for the client:
+
+	name[10]: The name of the option as it will appear in scripts
+	
+	flags: The type of option, as well as if it will be requested
+	by the client (OPTION_REQ)
+
+	code: The DHCP code for this option
+
+
+busybox drop-in
+--------------
+udhcp is now a drop-in component for busybox (http://busybox.net).
+To update busybox to the latest revision, simply do a:
+
+cp *.[ch] README AUTHORS COPYING ChangeLog TODO \ 
+	<busybox_source>/networking/udhcp
+
+The only two files udhcp does not provide are config.in and
+Makefile.in, so these may need to be updated from time to time.
+

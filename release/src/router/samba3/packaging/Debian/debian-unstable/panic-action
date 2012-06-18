@@ -1,0 +1,48 @@
+#!/bin/sh
+
+# Redirect all output to our mail command
+(
+	# We must be given a pid to look at
+	if [ -z "$1" ]; then
+		echo "$0 called with no arguments."
+		exit 1
+	fi
+
+	if [ ! -d "/proc/$1" ]; then
+		echo "$0: No such process: $1"
+		exit 1
+	fi
+
+	# Find out what binary we're debugging
+	BINARYNAME=`readlink "/proc/$1/exe"`
+
+	# Generic header for our email
+	echo "The Samba 'panic action' script, $0,"
+	echo "was called for pid $1 ($BINARYNAME)."
+	echo
+
+	if [ -z "$BINARYNAME" ]; then
+		echo "This means there was a problem with the program, such as a segfault."
+		echo "However, the executable could not be found for process $1."
+		echo "It may have died unexpectedly, or you may not have permission to"
+		echo "debug the process."
+		exit 1
+	fi
+
+	# No debugger
+	if [ ! -x /usr/bin/gdb ]; then
+		echo "This means there was a problem with the program, such as a segfault."
+		echo "However, gdb was not found on your system, so the error could not be"
+		echo "debugged.  Please install the gdb package so that debugging information is"
+		echo "available the next time such a problem occurs."
+		exit 1
+	fi
+
+	echo "Below is a backtrace for this process generated with gdb, which shows"
+	echo "the state of the program at the time the error occured.  You are"
+	echo "encouraged to submit this information as a bug report to Debian.  For"
+	echo "information about the procedure for submitting bug reports , please see"
+	echo "http://www.debian.org/Bugs/Reporting or the reportbug(1) manpage."
+	echo
+	gdb -x /etc/samba/gdbcommands -batch "$BINARYNAME" "$1"
+) | mail -s "Segfault in Samba" root

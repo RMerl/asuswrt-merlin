@@ -1,0 +1,7 @@
+# -*- Makefile -*-
+noinst_LTLIBRARIES += libmnote-olympus.la
+libmnote_olympus_la_SOURCES = \
+	olympus/mnote-olympus-entry.c olympus/mnote-olympus-entry.h \
+	olympus/exif-mnote-data-olympus.c olympus/exif-mnote-data-olympus.h \
+	olympus/mnote-olympus-tag.c olympus/mnote-olympus-tag.h
+libmnote_olympus_la_LIBADD = $(LTLIBINTL)

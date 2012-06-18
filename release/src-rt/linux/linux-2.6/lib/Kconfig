@@ -1,0 +1,133 @@
+#
+# Library configuration
+#
+
+menu "Library routines"
+
+config BITREVERSE
+	tristate
+
+config CRC_CCITT
+	tristate "CRC-CCITT functions"
+	help
+	  This option is provided for the case where no in-kernel-tree
+	  modules require CRC-CCITT functions, but a module built outside
+	  the kernel tree does. Such modules that use library CRC-CCITT
+	  functions require M here.
+
+config CRC16
+	tristate "CRC16 functions"
+	help
+	  This option is provided for the case where no in-kernel-tree
+	  modules require CRC16 functions, but a module built outside
+	  the kernel tree does. Such modules that use library CRC16
+	  functions require M here.
+
+config CRC_ITU_T
+	tristate "CRC ITU-T V.41 functions"
+	help
+	  This option is provided for the case where no in-kernel-tree
+	  modules require CRC ITU-T V.41 functions, but a module built outside
+	  the kernel tree does. Such modules that use library CRC ITU-T V.41
+	  functions require M here.
+
+config CRC32
+	tristate "CRC32 functions"
+	default y
+	select BITREVERSE
+	help
+	  This option is provided for the case where no in-kernel-tree
+	  modules require CRC32 functions, but a module built outside the
+	  kernel tree does. Such modules that use library CRC32 functions
+	  require M here.
+
+config LIBCRC32C
+	tristate "CRC32c (Castagnoli, et al) Cyclic Redundancy-Check"
+	help
+	  This option is provided for the case where no in-kernel-tree
+	  modules require CRC32c functions, but a module built outside the
+	  kernel tree does. Such modules that use library CRC32c functions
+	  require M here.  See Castagnoli93.
+	  Module will be libcrc32c.
+
+config AUDIT_GENERIC
+	bool
+	depends on AUDIT && !AUDIT_ARCH
+	default y
+
+#
+# compression support is select'ed if needed
+#
+config ZLIB_INFLATE
+	tristate
+
+config ZLIB_DEFLATE
+	tristate
+
+config LZO_COMPRESS
+	tristate
+
+config LZO_DECOMPRESS
+	tristate
+
+#
+# Generic allocator support is selected if needed
+#
+config GENERIC_ALLOCATOR
+	boolean
+
+#
+# reed solomon support is select'ed if needed
+#
+config REED_SOLOMON
+	tristate
+	
+config REED_SOLOMON_ENC8
+	boolean
+
+config REED_SOLOMON_DEC8
+	boolean
+
+config REED_SOLOMON_ENC16
+	boolean
+
+config REED_SOLOMON_DEC16
+	boolean
+
+#
+# Textsearch support is select'ed if needed
+#
+config TEXTSEARCH
+	boolean
+
+config TEXTSEARCH_KMP
+	tristate
+
+config TEXTSEARCH_BM
+	tristate
+
+config TEXTSEARCH_FSM
+	tristate
+
+#
+# plist support is select#ed if needed
+#
+config PLIST
+	boolean
+
+config HAS_IOMEM
+	boolean
+	depends on !NO_IOMEM
+	default y
+
+config HAS_IOPORT
+	boolean
+	depends on HAS_IOMEM && !NO_IOPORT
+	default y
+
+config HAS_DMA
+	boolean
+	depends on !NO_DMA
+	default y
+
+endmenu

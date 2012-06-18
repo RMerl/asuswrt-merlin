@@ -1,0 +1,217 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Configuration File, Defaults and Overrides</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="Job Identifier " href=
+    "useidentifier.htm">
+    <link rel="NEXT" title="Legacy Compatibility" href="x6798.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "useidentifier.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x6798.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="CONFIGFILE"></a>Chapter 14. Configuration File,
+      Defaults and Overrides</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>14.1. <a href="configfile.htm#AEN6784">Configuration
+          File Format</a></dt>
+
+          <dt>14.2. <a href="x6798.htm">Legacy
+          Compatibility</a></dt>
+        </dl>
+      </div>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">allow_getenv</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">use GETENV
+          environment variable</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The <b class="APPLICATION">LPRng</b> options are obtained
+      as follows:</p>
+
+      <ul>
+        <li>
+          <p>The compile time defaults. These are in the <tt class=
+          "FILENAME">LPRng/src/common/vars.c</tt> file.</p>
+        </li>
+
+        <li>
+          <p>If the <b class="APPLICATION">LPRng</b> software has
+          been compiled with the regression testing <acronym class=
+          "ACRONYM">GETENV</acronym> option enabled, the
+          configuration information in the file specified by the
+          <var class="LITERAL">LPD_CONF</var> environment variable
+          will be used. This can only be used if you are not setuid
+          ROOT or as ROOT as it opens severe security
+          loopholes.</p>
+        </li>
+
+        <li>
+          <p>The file specified by the <var class=
+          "LITERAL">config_file</var> compile time option, usually
+          <tt class="FILENAME">/etc/lpd.conf</tt> or <tt class=
+          "FILENAME">/usr/local/etc/lpd.conf</tt>, and referred to
+          a the <tt class="FILENAME">lpd.conf</tt> file. If the
+          <var class="LITERAL">config_file</var> option value has
+          the form <tt class="FILENAME">|/pathname</tt>, then <tt
+          class="FILENAME">/pathname</tt> must be an executable
+          program and will be run with the standard set of filter
+          options. It must write configuration option values to its
+          <acronym class="ACRONYM">STDOUT</acronym> and exit with a
+          0 status.</p>
+        </li>
+
+        <li>
+          <p>In order to protect system security, the <tt class=
+          "FILENAME">lpd.conf</tt> (and the <tt class=
+          "FILENAME">printcap</tt>) file should be read only.</p>
+        </li>
+
+        <li>
+          <p>If the <var class="LITERAL">require_configfiles</var>
+          option is set in the compile time options, then the
+          preceeding step must be successful, i.e. - there must be
+          a configuration file or the program must execute and exit
+          with a 0 status.</p>
+        </li>
+
+        <li>
+          <p>If a printer or spooling operation is done, then the
+          values in the <tt class="FILENAME">printcap</tt> entry
+          for the spooler are used to override the default and <tt
+          class="FILENAME">ifhp.conf</tt> file values.</p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="AEN6784">14.1. Configuration
+        File Format</a></h1>
+
+        <p>The configuration file format is similar to a the fields
+        of a printcap entry with the difference that the leading
+        colon is optional and there can only be one option per
+        line:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN6787"></a>
+<pre class="SCREEN">
+    # comment
+    # set option value to 1 or ON
+    ab
+    :ab
+    # set option value to 0 or OFF
+    ab@
+    :ab
+    # set option value to string
+    str=name
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>During system installation the <b class=
+        "APPLICATION">LPRng</b> software processes the default
+        values in the <tt class=
+        "FILENAME">LPRng/src/common/vars.c</tt> file and generates
+        a sample <tt class="FILENAME">lpd.conf</tt> file that has
+        the format:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN6793"></a>
+<pre class="SCREEN">
+    # Purpose: always print banner, ignore lpr -h option
+    #   default ab@ (FLAG off)
+    # Purpose: query accounting server when connected
+    #   default achk@ (FLAG off)
+    # Purpose: accounting at end (see also af, la, ar, as)
+    #   default ae=jobend $H $n $P $k $b $t  (STRING)
+    # Purpose: name of accounting file (see also la, ar)
+    #   default af=acct  (STRING)
+    
+    # change:
+    # --- we change the af value to none, i.e. - no accounting
+    # --- file by default
+    af=
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>You can change option values by editing the file as
+        shown above then then to force the <b class=
+        "APPLICATION">lpd</b> server to use the new options, use
+        the <tt class="COMMAND">lpc reread</tt> command.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "useidentifier.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x6798.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Job
+          Identifier</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Legacy
+          Compatibility</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

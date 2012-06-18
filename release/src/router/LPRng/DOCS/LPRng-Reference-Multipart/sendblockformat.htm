@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Block Job Transfer</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="RFC 1179 - Line Printer Daemon Protocol "
+    href="rfc1179ref.htm">
+    <link rel="PREVIOUS" title="LPC Requests " href=
+    "lpcreread.htm">
+    <link rel="NEXT" title="Authenticated Transfer" href=
+    "x10656.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "lpcreread.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          19. RFC 1179 - Line Printer Daemon Protocol</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x10656.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="SENDBLOCKFORMAT">19.9. Block Job
+      Transfer</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">send_block_format</var> FLAG
+          <span class="emphasis"><i class="EMPHASIS">Transfer job
+          as a block</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>In normal job transfer operations, the sender and receiver
+      have a handshake interaction in order to transfer a print
+      job. Each file is sent individually. The <var class=
+      "LITERAL">send_block_format</var> option forces a Block Job
+      Transfer operation. This causes the sender to transfer a
+      single file containing all the job printing information,
+      including control file and data files.</p>
+
+      <p>The transfer command line has the form:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10652"></a>
+<pre class="SCREEN">
+    \007printer size\n
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The receiver will return any acknowledgement of a single 0
+      octet, and then the size bytes of the job will be transferred
+      by the sender. At the end of the transfer a single 0 octet is
+      added, and the receiver will indicate success by returning a
+      single 0 octet. Any other value returned by the receiver
+      indicates an error condition.</p>
+
+      <p>The file transferred by the sender is simply the command
+      lines that it would have normally sent for job transfer,
+      followed by the control or data file values.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "lpcreread.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x10656.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">LPC
+          Requests</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "rfc1179ref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Authenticated
+          Transfer</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

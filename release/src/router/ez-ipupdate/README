@@ -1,0 +1,27 @@
+"ez-ipupdate"
+
+Ez-ipupdate is a client for the dynamic IP service offered by 
+http://www.ez-ip.net.
+
+It has several options and is quite complete. It is written in pure
+C and supports a daemon mode (Linux only right now).
+
+This program has been tested under Linux and Solaris.
+
+See the file INSTALL for compilation and installation instructions.
+
+For more info check "http://www.gusnet.cx/proj/ez-ipupdate"
+For user contributed documentation check
+"http://www.gusnet.cx/proj/ez-ipupdate/userdoc.php"
+
+When setting it up please try to use daemon mode WITH A CACHE FILE!
+This will be much apreciated by all the people offering dynamic DNS services.
+
+INCOMPATIBILITIES
+ -With version 3.0.0 you must specify a service-type (no more default to
+ ez-ip.net) and you must specify an interface (no more default to eth0)
+ -With version 2.9.2 the justlinux service became the name of the 
+  justlinux v2.0 service and pgpow is still the same old justlinux v1.0
+  service.
+
+Angus Mackay

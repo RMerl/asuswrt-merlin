@@ -1,0 +1,2053 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Media.Marketing.Consulting - DIGITIMES</title>
+<META NAME="keywords" CONTENT="DIGITIMES, 電子時報, 新聞, 媒體, 市場營銷, 顧問, 諮詢, 科技, 國際財經, 國際, 財經, 企業IT, 知識服務, 商情, 產業情報, 企業IT情報, 即時新聞">
+<META NAME="description" CONTENT="DIGITIMES報導台灣地區及全球資訊電子產業界的新聞">
+<link rel="Icon" href="http://mms.digitimes.com/tw/x/img/favicon.ico">
+<link rel="SHORTCUT ICON" href="http://mms.digitimes.com/tw/x/img/favicon.ico">
+<link rel="Bookmark" href="http://mms.digitimes.com/tw/x/img/DLogo.gif" type="image/gif">
+<link rel="stylesheet" href="http://mms.digitimes.com/tw/x/css/css4defaults3.css">
+<script language="javascript" src="http://mms.digitimes.com/tw/x/js/jquery.js"></script>
+<script type="text/javascript" src="http://mms.digitimes.com/tw/x/js/util.js"></script>
+<script type="text/javascript" src="http://mms.digitimes.com/tw/x/js/XMLHttp.js"></script>
+<script type="text/javascript" src="http://mms.digitimes.com/tw/x/js/jquery.simpletip-1.3.1.pack.js"></script>
+<style>
+.tooltip{
+background-color: #FFEECC;
+border:1px solid #330000;
+padding:5px;
+width:250px;
+position: absolute;
+top: 0;
+left: 0;
+z-index: 3;
+display: none;
+}
+.channel_breadcrumb {
+font-size:9pt;
+color:#808080;
+}
+#custom_news_right .rnewsUL {
+margin-left:-40px;
+#margin-left:0px;
+margin-top:0px;
+}
+#custom_news_right .rnewsUL li{
+background-position: 4px 8px;
+}
+#bigNewsAtTopFullColumn .rnewsUL {
+margin-left:-39px;
+#margin-left:2px;
+}
+#bigNewsAtTopFullColumn .rnewsUL li{
+background-position: 4px 8px;
+}
+#custom_news_top { width:610px;background-color:#333;height:210px;overflow:hidden;clear:both; }
+#custom_news_top_border {
+height:4px;
+background-color:#f08200;
+}
+#custom_news_top_border div{
+height:4px;
+width:0px;
+background-color:#ffad53;
+}
+#custom_news_top a, #custom_news_top div { color:white;font-size:10pt;line-height:20px; }
+#custom_news_top a { font-size:14pt;font-weight:bold;line-height:28px;padding-bottom:8px; }
+#custom_news_top a:hover { text-decoration:none; color:#f08200; }
+.arrowr,.arrowl,.arrows,.arrowp {cursor:pointer;}
+</style>
+<style>
+.xxxx {
+TEXT-JUSTIFY: newspaper;
+TEXT-ALIGN: left;
+#TEXT-ALIGN: justify;
+LINE-HEIGHT: 1.2;
+OVERFLOW-X: hidden;
+OVERFLOW-Y: hidden;
+LIST-STYLE-TYPE: none
+}
+.adul {
+MARGIN-TOP: 8px;
+MARGIN-BOTTOM: 8px;
+MARGIN-LEFT: 10px;
+#MARGIN-LEFT: 25px
+}
+.adlitop {
+TEXT-ALIGN: left;
+LIST-STYLE-TYPE: none;
+MARGIN-LEFT: -40px;
+#MARGIN-LEFT: -15px;
+FONT-SIZE: 12pt;
+FONT-WEIGHT: bold;
+PADDING-TOP: 0px;
+color: #000;
+margin-bottom: 8px;
+}
+.adli {
+TEXT-ALIGN: left;
+MARGIN-LEFT: -20px;
+MARGIN-LEFT: 5px;
+list-style-image: url(http://mms.digitimes.com/tw/x/img/2010WebPage/org_li.gif);
+}
+.tBG{
+background: #000;
+filter:alpha(opacity=80);
+-moz-opacity: 0.8;
+opacity: 0.8;
+}
+.tCT{
+filter:alpha(opacity=100);
+-moz-opacity: 1;
+opacity: 1;
+color:#FFF;
+}
+.tCT a:link, .tCT a:visited {color: #FFF; text-decoration: none;}
+.tCT a:hover, .tCT a:active {color: #FFF; text-decoration: underline;}
+.tBGv{
+background: #FFF7EE;
+/*filter:alpha(opacity=100);
+-moz-opacity: 1.0;
+opacity: 1.0;*/
+}
+.tCTv{
+text-align: left;
+/*filter:alpha(opacity=100);
+-moz-opacity: 1;
+opacity: 1; */
+}
+.headslideV{
+margin-left:5px;
+/*filter:alpha(opacity=100);
+-moz-opacity: 1;
+opacity: 1; */
+}
+.headslideV2{
+margin-left:5px;
+/*filter:alpha(opacity=100);
+-moz-opacity: 1;
+opacity: 1; */
+}
+.trendsImage {
+display:none;
+}
+.trendsImage img{
+}
+.trendsImageSubject {
+margin-top: 5px; font-size: 12pt; font-weight: bold;
+}
+.trendsImageTitle{
+TEXT-ALIGN: left;
+PADDING-BOTTOM: 1px;
+PADDING-LEFT: 4px;
+PADDING-RIGHT: 4px;
+FONT-SIZE: 11pt;
+BORDER-TOP: #f08200 3px solid;
+PADDING-TOP: 4px;
+font-weight: bold;
+height: 22px;
+}
+.trendsImageTitle img{
+cursor:pointer;
+}
+</style>
+</head>
+<body id="page_Home">
+<div id="memberPromotionBlock" style="display:none;">
+<style type=text/css media=screen>
+#top-panel {
+TEXT-ALIGN: right; PADDING-BOTTOM:5px; PADDING-LEFT: 0px; WIDTH: 100%; PADDING-RIGHT: 0px; BORDER-TOP: #1e4061 4px solid; PADDING-TOP: 5px;
+}
+.topPageAdTitle {
+PADDING-BOTTOM: 5px; PADDING-LEFT: 5px; PADDING-RIGHT: 5px; FONT-SIZE: 11pt; PADDING-TOP: 5px;color:red;text-align:center;
+}
+.promotionheader {list-style-image:url('/tw/rpt/img/triangle2.gif');margin-left:-14px;#margin-left:20px;margin-top:8px;text-align:left;font-size:10pt;line-height:20px;margin-bottom:0px;}
+.promotionheader li {margin-bottom:2px;}
+</style>
+<center>
+<div id="top-panel-outer" style="display:none;" style="width:990px;">
+<div id="top-panel">
+<table width="990" border="0" align="center" cellpadding="0" cellspacing="0" style="width:990px;background-color:#F2F7FB;">
+<tr>
+<th width="300" valign="middle" scope="row" style="border-right:#000 0px solid">
+<div align="left" class="topPageAdTitle" style="display:none;">DIGITIMES 超值放送，開放不限人數使用會員權益！</div>
+<div align="left" class="topPageAdTitle">「DIGITIMES會員服務開放專案」</div>
+</th>
+<td align="left" valign="bottom" style="border-left:#1e4061 1px solid; padding:5px;">
+<span style="font-size:10pt;float:left;">
+<ul class="promotionheader">
+<li>您看到本服務訊息，表示貴公司已加入DIGITIMES會員，您目前所在「IP位址」可以使用此項服務，若您還未曾登錄「個人帳號」，歡迎您<a href="#" onclick="$('#topPageAdForm').submit();" style="font-weight:bold;">[馬上申請]</a>。</li>
+<li>本訊息是不定期推廣，請掌握機會！</li>
+</ul>
+</span>
+<span style="margin-left:26px;font-weight:bold;color:red;float:left;margin-top:6px;">
+<form id="topPageAdForm" action="/tw/mypg/reg_chk.asp" method=post>
+<input type="hidden" id="topPageAdID" name="id" value="">
+<input type="hidden" id="topPageAdPass" name="Password" value="">
+<input type="hidden" id="promotion" name="promotion" value="Y">
+<input type="hidden" id="reg_ip" name="reg_ip">
+<a href-"#" style="cursor:pointer;display:none;" onclick="$('#topPageAdForm').submit();"><img src="http://mms.digitimes.com/tw/x/img/button/b01_over.gif" width="77" height="20" /></a>
+</form>
+</span>
+</td>
+<td width="24" align="left" valign="middle" style="border-left:#1e4061 1px solid;padding:5px;padding-left:5px;padding-right:2px;">
+<img src="http://mms.digitimes.com/tw/x/img/close.gif" width="16" height="16" style="cursor:pointer;" onclick="$('#top-panel-outer').animate({marginTop:'-106px'});$('#topPageAdBtn').show();">
+</td>
+</tr>
+</table>
+<table id="topPageShadow" width="990" border="0" align="center" cellpadding="0" cellspacing="0">
+<tr>
+<td style="height:8px; background-image: url(http://mms.digitimes.com/tw/x/img/L-2_220_3.jpg); background-repeat: repeat;background-color:white;" scope="row"></td>
+</tr>
+</table>
+</div>
+</div>
+</center>
+<script type="text/javascript">
+var topPageAdCounter=0;
+$(document).ready(function(){
+$.ajax({
+type: "POST",
+url: "/tw/ajax/ajax4default.asp",
+data: "t=2",
+cache:false,
+error: function(response){
+$("#top-panel-outer").hide();
+},
+success: function(response){
+if (response !="" && response.indexOf("|||")){
+var tmp = response.split("|||");
+$('#topPageAdID').val(tmp[0]);
+$('#topPageAdPass').val(tmp[1]);
+$('#reg_ip').val(tmp[3]);
+if (tmp[2]=="Y"){
+$('#top-panel-outer').css("margin-top","-106px").show();
+$('#topPageAdBtn').show();
+} else {
+$('#top-panel-outer').slideDown(1500);
+}
+} else {
+$("#top-panel-outer").hide();
+}
+}
+});
+});
+function hideTopPageAdSpace(){ $('#top-panel').animate({"height": "-106px"}, "slow"); }
+function rotateTopPageAd(){
+$(".topPageAdItem").hide();
+if (topPageAdCounter<2){
+topPageAdCounter++;
+} else {
+topPageAdCounter=0;
+}
+$(".topPageAdItem:eq(" + topPageAdCounter + ")").show();
+}
+</script>
+<div style="height:1px;">&nbsp;</div>
+</div>
+<div id="bodycontainer">
+<script type="text/javascript">
+String.prototype.Blength = function() {
+var arr = this.match(/[^\x00-\xff]/ig);
+return  arr == null ? this.length : this.length + arr.length;
+}
+function checkSearchLen(obj){
+if (obj.value.Blength()>40){
+obj.value=obj.value.substr(0,obj.value.length-1);
+alert('只能輸入20個中文字或40個英文字！');
+}
+}
+</script>
+<script type="text/javascript" src="/tw/x/js/jquery.newsticker.js"></script>
+<script language="javascript" src="/tw/x/js/plugins/cookies.js"></script>
+<style>
+.headerlinks a { text-decoration:none; }
+.headerlinks a:visited { text-decoration:none; }
+.headerlinks a:hover { text-decoration:none;color:#f08200; }
+#TextAdBlock {float:right;}
+#TextAdBlock a { color:rgb(14,90,204);}
+#TextAdBlock a:visited { color:rgb(14,90,204);}
+#biggerTextAd a { color:rgb(14,90,204);}
+#biggerTextAd a:visited { color:rgb(14,90,204);}
+.newsticker {
+list-style-type: none;
+margin:0px;
+margin-left:-36px;
+#margin-left:0px;
+width:430px;
+}
+.newsticker span {margin-right:8px;}
+.newsticker li{
+width:420px;
+overflow-x: hidden;
+overflow-y: hidden;
+text-align:justify;
+white-space:nowrap;
+text-justify:newspaper;
+text-overflow:ellipsis;
+}
+</style>
+<TABLE cellSpacing=0 cellPadding=3 width=990 border=0>
+<TR>
+<TD style="PADDING-RIGHT: 2px; PADDING-LEFT: 8px; PADDING-BOTTOM: 2px; BORDER-LEFT: #727377 0px solid; PADDING-TOP: 2px; BORDER-BOTTOM: #727377 1px solid"    vAlign=bottom align=left bgColor=#ffffff nowrap="nowrap">
+<SPAN style="COLOR: #004dbf">
+<FONT style="FONT-SIZE: 8pt; COLOR: #0066ff">
+<SPAN class="style1 style10">■</SPAN> <A class=hp href="/tw/lgn/lgn.asp?tourl=/tw/default.asp?">登入</A>&nbsp;<SPAN class="style1 style10">■</SPAN> <A class=hp href="/tw/mypg/index.asp">MY DIGITIMES</A>&nbsp;&nbsp;<span style="color:white;">6</span><SPAN class="style1 style10">■</SPAN> <A class=hp href="http://gb-www.digitimes.com.tw" target=_blank>&#20013;&#25991;&#31616;&#20307;&#29256;</A><!--//myip:192.168.11.236-->
+&nbsp;
+<SPAN class="style1 style10">■</SPAN> <a href="http://www.digitimes.com/en" target="_blank">English</a>
+</FONT>
+</SPAN>
+</TD>
+<TD width="70%" style="BORDER-RIGHT: #727377 0px solid; PADDING-RIGHT: 2px; PADDING-LEFT: 2px; PADDING-BOTTOM: 2px; PADDING-TOP: 2px; BORDER-BOTTOM: #727377 1px solid;font-size:8pt;" vAlign=center align=right bgColor=#ffffff>
+<STRONG>
+星期四,
+10月 20日, 2011 (台北)</STRONG></SPAN><FONT style="FONT-SIZE: 8pt; COLOR: #0066ff">&nbsp;&nbsp;</FONT>
+<span id="topPageAdBtn" style="display:none;font-weight:bold;color:red;margin-left:8px;cursor:pointer;" onclick="$('#top-panel-outer').animate({marginTop:'0px'});$(this).hide();">會員獨享</span>
+</TD>
+</TR>
+</TABLE>
+<script language="javascript">
+function setHomepage()
+{
+if (document.all)
+{
+document.body.style.behavior='url(#default#homepage)';
+document.body.setHomePage('http://www.digitimes.com.tw');
+}
+else if (window.sidebar)
+{
+if(window.netscape)
+{
+}
+var prefs = Components.classes['@mozilla.org/preferences-service;1'].getService(Components. interfaces.nsIPrefBranch);
+prefs.setCharPref('browser.startup.homepage','http://www.digitimes.com.tw');
+}
+}
+</script>
+<TABLE cellSpacing=0 cellPadding=0 width=990 border=0 style="border-bottom:solid 1px #727377;">
+<TR>
+<TD style="PADDING-RIGHT:0px;BORDER-TOP:#d4d4d4 0px solid;PADDING-LEFT:14px;PADDING-BOTTOM:8px; BORDER-LEFT:#727377 1px solid;PADDING-TOP:10px" width=250>
+<a href="/">
+<IMG height=61 src="http://mms.digitimes.com/tw/default_files/L-2_220.gif" width=220>
+</a>
+</TD>
+<TD style="BORDER-RIGHT: #d4d4d4 1px solid; BORDER-TOP: #d4d4d4 0px solid; padding:0;padding-left:10px;" align="left" width=485>
+<table border="0" cellspacing="0" cellpadding="0">
+<tr><td>
+<TABLE cellSpacing=0 border=0 align="left" class="headerlinks" style="margin:0 0 2px 0;float:left;">
+<TR>
+<TD width="75"><font style="font-family:arial;">●</font> <A href="/tw/learning/">知識服務</A></TD>
+<TD width="80"><font style="font-family:arial;">●</font> <A href="/tw/bizinfo/">科技商情</A></TD>
+<TD width="90"><font style="font-family:arial;">●</font> <A href="/tw/appinfo/">企業IT商情</A></TD>
+<TD width="85"><font style="font-family:arial;">●</font> <A href="/tw/iot/">物聯網</A></TD>
+</TR>
+</TABLE>
+</td></tr>
+<tr><td>
+<TABLE cellSpacing=0 align=left height="30" class="headerlinks" border=0 style="width:432px;#width:420px;">
+<TR>
+<TD height="20" class="hp style2" style="BORDER-TOP: #8b8b8b 1px solid; BORDER-LEFT: #8b8b8b 1px solid;BORDER-BOTTOM: #f08200 3px solid;#padding-top:4px;" vAlign="middle" align="center" width=83 background="http://mms.digitimes.com/tw/default_files/b1.jpg">
+<a href="/" style="font-weight:bold;color:#f08200;" style="font-size:10pt;">首頁</a>
+</TD>
+<TD class=style2 style="BORDER-TOP: #8b8b8b 1px solid; BORDER-LEFT: #8b8b8b 1px solid;BORDER-BOTTOM: #8b8b8b 3px solid;#padding-top:4px;" vAlign="middle" align="center" width=87 background="http://mms.digitimes.com/tw/default_files/b1.jpg" bgColor=#ffffff onmouseover="mover(this);" onmouseout="mout(this);"><SPAN class=style17>
+<a href="/tw/tech/" style="font-size:10pt;">科技</a>
+</SPAN></TD>
+<TD style="BORDER-TOP:#8b8b8b 1px solid;BORDER-LEFT: #8b8b8b 1px solid;BORDER-BOTTOM: #8b8b8b 3px solid;#padding-top:4px;" vAlign="middle" align="center" width=103 background="http://mms.digitimes.com/tw/default_files/b1.jpg" onmouseover="mover(this);" onmouseout="mout(this);"><SPAN class=style2 style2>
+<a href="/tw/biz/" style="font-size:10pt;">國際財經</a>
+</SPAN> </TD>
+<TD style="BORDER-RIGHT: #8b8b8b 1px solid; BORDER-TOP: #8b8b8b 1px solid; BORDER-LEFT: #8b8b8b 1px solid; BORDER-BOTTOM: #8b8b8b 3px solid;" vAlign="middle" align="center" width=101 background="http://mms.digitimes.com/tw/default_files/b1.jpg" onmouseover="mover(this);" onmouseout="mout(this);"><SPAN class=style2>
+<a href="/tw/research/" style="font-size:10pt;">Research</a>
+</SPAN>
+</TD>
+</TR>
+</TABLE>
+</td></tr>
+<tr><td>
+<TABLE cellSpacing=0 cellspacing=5 border=0 align="left" class="headerlinks" style="padding:0px;margin:2px 0 0 0px;#margin:2px 0 0 0px;font-size:8pt;">
+<TR>
+<TD align=left>■ <a href="/tw/dt/dtpage_cold.asp">電子時報</A>&nbsp;</TD>
+<TD align=left width="55">■ <a href="/tw/dt/p360.asp?CnlID=10">360°</A>&nbsp;</TD>
+<TD align=left width="55">■ <a href="/tw/topics/home.asp">主題</A>&nbsp;</TD>
+<TD align=left>■ <a href="/tw/indepth/home.asp">深度專輯</A>&nbsp;</TD>
+<TD align=left>■ <a href="/tw/multimedia/index.asp">多媒體</A>&nbsp;</TD>
+<TD align=left>■ <a href="/tw/dt/mainpopular.asp">熱門報導</a>&nbsp;</TD>
+<TD align=left>■ <a href="/tw/dt/allnewslist.asp">報導總覽</a></TD>
+</TR>
+</TABLE>
+</td></tr>
+</table>
+</TD>
+<form id="frmSearch" name="frmSearch" mehtod="post">
+<TD valign="middle" style="BORDER-RIGHT:#727377 1px solid;BORDER-TOP:#d4d4d4 0px solid;PADDING:6px 0 0 6px;width:230px;" align="LEFT">
+<div style="padding-left:8px;">
+<INPUT onkeydown="if(event.keyCode==13) {gochannelheader();ckSH();return false;}" style="FONT-SIZE:10pt;MARGIN: 0px 0px 0px 0px;width:92px;#width:92px;height:17px;" name="query" id="query" maxlength="40">
+<select id="headerselchannel" name="selchannel" style="width:60px;#width:65px;height:21px;font-size:9pt;font-family: Arial, Verdana, sans-serif;" onchange="gochannelheader();">
+<option value="G"  selected>全網</option>
+<option value="1" >科技</option>
+<option value="9" >國際財經</option>
+<option value="3" >Research</option>
+<option value="I" >商情 (Free)</option>
+<option value="D" >360° (Free)</option>
+<option value="H" >圖表</option>
+</select>
+<img src="http://mms.digitimes.com/tw/x/img/inquire_off2.gif" onclick="gochannelheader();ckSH();" class="searchImgBtn" align="absmiddle" />
+<input type="hidden" id="headersrch" name="srch" />
+<input type="hidden" id="headerquerytype" name="querytype" />
+</div>
+<div style="width:207px;margin-left:8px;">
+<div style="width:210px;height:1px;border-bottom:solid 1px silver;margin:8px 0 4px 0;"></div>
+<a href="/tw/share/svc/svc_abs.asp?showType=70" target="_blank">服務說明</a>│<a href="/tw/dtbrief/brief.html" target="_blank">關於DIGITIMES</a>
+</div>
+</div>
+</TD>
+</form>
+<script>
+function gup( name ){
+name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+var regexS = "[\\?&]"+name+"=([^&#]*)";
+var regex = new RegExp( regexS );
+var results = regex.exec( window.location.href );
+if( results == null )
+return "";
+else
+return results[1];
+}
+function gochannelheader() {
+var v=$("#headerselchannel").val();
+if ( v== 'G')  {
+$("#headerquerytype").val('');
+$("#headersrch").val('');
+$("#frmSearch").attr("action","/tw/searchnew/srchlst_main.asp");
+} else if (v == 'D') {
+$("#headerquerytype").val(v);
+$("#headersrch").val('');
+$("#frmSearch").attr("action","/tw/searchnew/srchlst_main2.asp");
+} else if (v == 'I') {
+$("#headerquerytype").val(v);
+$("#headersrch").val('');
+$("#frmSearch").attr("action","/tw/searchnew/srchlst_main2.asp");
+} else if (v == 'H') {
+$("#headerquerytype").val(v);
+$("#headersrch").val();
+$("#frmSearch").attr("action","/tw/searchnew/srchlst_main2.asp");
+} else if (v == '3') {
+$("#headerquerytype").val('');
+$("#headersrch").val('3');
+$("#frmSearch").attr("action","/tw/searchnew/srchlst_main2.asp");
+} else {
+$("#headerquerytype").val('');
+$("#headersrch").val(v);
+$("#frmSearch").attr("action","/tw/searchnew/srchlst_main2.asp");
+}
+}
+function mover(obj){
+$(obj).css("border-bottom","#f08200 3px solid");
+$(obj).css("color","#f08200");
+}
+function mout(obj){
+if ($(obj).find("a").hasClass("focusthis")==false) {
+$(obj).css("border-bottom","#8b8b8b 3px solid");
+$(obj).css("color","black");
+}
+}
+function ckSH(){
+gochannelheader();
+if (CheckSearchBar(document.frmSearch)) {
+document.frmSearch.submit();
+} else {
+return false;
+}
+}
+function ckSHBottom(){
+if (CheckSearchBar(document.frmSearch2)) {
+document.frmSearch2.submit();
+}
+return false;
+}
+function ckSHimg(){
+if (CheckSearchBar(document.mform))
+document.mform.submit();
+}
+function goSrh(Kwd) {
+document.frmSearch.query.value = Kwd;
+ckSH();
+}
+function CheckSearchBar(oForm) {
+var oKeyword = oForm.query;
+var bChk = false;
+if (oKeyword.value == "請輸入搜尋詞" || oKeyword.value == "")
+{
+alert("對不起，您未輸入任何查詢詞");
+oKeyword.focus();
+return false;
+} else {
+if ((CheckSymbols(oKeyword,"*/,~!@#$%^=_:;`?<>")) || (CheckSymbolsAt1(oKeyword,"-+."))) {
+alert("對不起，我們不支援特殊字元的搜尋！\n請改輸入英文字母或中文字");
+oKeyword.focus();
+oKeyword.value = '';
+return false;
+}
+if(GetLengthFromText(oKeyword)>40){
+alert("對不起，搜尋的關鍵詞請勿超過20個中文字！");
+oKeyword.focus();
+return false;
+}
+}
+return true;
+}
+</script>
+</TR>
+</TABLE>
+<!--開始 page_head_ad-->
+<table width="990" cellpadding=3 cellspacing=0 border=0><tr><td align=center valign=absmiddle style="border-left:solid 1px #727377;border-bottom:solid 1px #727377;"><fjtignoreurl><a href='/tw/webad/click.asp?Seq=45239' target='_blank' align=absmiddle><img src='http://ad.digitimes.com.tw/111012_advantech_leaderboard.jpg' width=728 height=90 border=0 alt='研華'></a></fjtignoreurl></td><td align=center valign=absmiddle style="border:solid 1px #727377;border-top:0px;border-left:solid 1px silver;width:229px;"><fjtignoreurl><a href='/tw/webad/click.asp?Seq=45431' target='_blank' align=absmiddle><img src='http://ad.digitimes.com.tw/111011_TCA_button210x90.gif' width=210 height=90 border=0 alt='台北市電腦商業同業公會'></a></fjtignoreurl></td></tr></table>
+<!--結束 page_head_ad-->
+<input type="hidden" id="flagfield" >
+<TABLE id="promobar" cellSpacing="0" cellPadding="0" width="990" border="0" style="BORDER-RIGHT: #727377 1px solid;BORDER-left: #727377 1px solid;">
+<tr>
+<td>
+<div style="padding:3px 7px 3px 7px;height:17px;width:972px;border:0px;">
+<style type="text/css" media="screen">
+#adholder div a{ padding:4px 6px; }
+#adholder div a:hover{ background-color:#f39700;color:white;padding:4px 6px;text-decoration:none; }
+</style>
+<span id="adholder" style="float:left;width:495px;#width:485px;margin-left:6px;height:16px;">
+<div style="color:silver;font-size:8pt;margin-left:4px;padding-top:1px;float:left;"><span style="color:#f08200;"><b>推薦議題：</b></span><a href="/tw/dt/most.asp?CnlID=9&cat=150&cat1=15&PACK=5130">把脈南韓經濟</a> | <a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&cat1=25&id=0000253476_F9O51X7T61VPE572RMO8I&PACKAGEID=5136">佔領華爾街行動</a> </div>
+</span>
+<span id="rotatingad" style="float:right;width:400px;padding-top:4px;font-size:9pt;height:18px;text-align:justify;text-justify:newspaper;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;margin-right:6px;padding-top:2px;">
+<div id="TextAdBlock"></div>
+</span>
+</div>
+<div style=""><IMG height="8" src="http://mms.digitimes.com/tw/x/img/L-2_220_3.jpg" width=988></div>
+</td>
+</tr>
+</TABLE>
+<script type="text/javascript">
+var t_num = 0;
+$(document).ready(function (){
+doRotatingAd();
+})
+var TextAdOverTimer;
+var canKillAdOverTimer=0;
+function TextAdOver() {
+var s = $("#TextAdBlock");
+var t = $("#biggerTextAd");
+var a = $("#promobar");
+var pos = s.offset();
+var apos = a.offset();
+t.html(s.html());
+t.css("top",pos.top-10 + "px");
+t.css("left",(screen.width-960)/2 + 810 - t.width() + "px");
+t.show();
+} // End of TextAdOver
+function setTextAdOverTimer(){
+clearTimeout(TextAdOverTimer);
+TextAdOverTimer=null;
+TextAdOverTimer = setInterval(killTextAdOver, 2000);
+canKillAdOverTimer=1;
+}
+function keepTextAdOver(){
+canKillAdOverTimer=0;
+}
+function killTextAdOver(){
+if (canKillAdOverTimer==1){
+$("#biggerTextAd").hide();
+clearTimeout(TextAdOverTimer);
+TextAdOverTimer=null;
+canKillAdOverTimer=1;
+}
+} // End of killTextAdOver
+function doRotatingAd(){
+$.ajax({
+type: "GET",
+url: "/tw/ajax/default_textad.asp",
+cache:false,
+error: function(response){
+$("#TextAdBlock").hide();
+},
+success: function(response){
+$('#TextAdBlock').html(response);
+}
+});
+}
+$.ajax({
+type: "GET",
+url: "/tw/ajax/input_counter.asp?cat1=0&cat2=&cat3=&cat4=",
+cache:false
+});
+</script>
+<div id="container_body" style="margin:0 0 0 0;">
+<div id="pageleft" style="width:610px;margin-top: 5px;margin-right: 0px;margin-bottom: 0;margin-left: 14px;">
+<div id="custom_news">
+<div id="custom_news_left" style="float:left;width:210px;">
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td valign="top" style="padding:0 0px 4px 0px;">
+<div style="padding:0px;font-weight:bold;font-size:14pt;text-align:left;letter-spacing:1px;">
+<a href="/tw/dt/n/shwnws.asp?CnlID=1&Cat=60&Cat1=30&id=0000255523_FK46TELF17R7OH432Y952" style="color:#1e4061;text-align:center;"><b>傳微軟與其他投資機構攜手競標雅虎</b></a>
+</div>
+<div class="channel_breadcrumb">
+科技-網通/軟體
+</div>
+<div style="width:210px;TEXT-ALIGN:left;#text-align:justify;text-justify:newspaper;overflow-y:hidden;font-size: 12px; line-height: 20px; letter-spacing: 1px;">
+有意競標雅虎(Yahoo!)的買家又多了1個，這次是由微軟(Microsoft)、加拿大退休金計畫投資...
+</div>
+</td>
+</tr>
+</table>
+<DIV style="BORDER-TOP:silver 1px dotted;margin:4px 0 8px 0;"></DIV>
+<div style="text-align:left;">
+<a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&cat1=15&id=0000255598_HIR4FYTXLXP21E773L38Y&ct=1" style='font-size: 11pt;font-weight:bold;line-height:20px;'>洪流步步進犯　曼谷恐仍難逃水劫</a>
+</div>
+<div class="channel_breadcrumb">
+國際財經-全球經濟
+</div>
+<div style="width:210px;height:60px;TEXT-ALIGN:left;#text-align:justify;text-justify:newspaper;overflow-y:hidden;font-size: 12px; line-height: 20px; letter-spacing: 1px;">
+彭博(Bloomberg)報導，泰國政府警告，洪水可能會淹進曼谷市內部分地區，泰國股市及泰銖匯率應...
+</div>
+<div style='margin-bottom:8px;'></div>
+<DIV style="BORDER-TOP:silver 1px dotted;margin:4px 0 8px 0;"></DIV>
+<div style="text-align:left;">
+<a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&cat1=25&id=0000255602_Y3J5OYD01FE89I1076H0F&ct=1" style='font-size: 11pt;font-weight:bold;line-height:20px;'>巴西再降息2碼　緩和全球景氣趨緩衝擊</a>
+</div>
+<div class="channel_breadcrumb">
+國際財經-全球經濟
+</div>
+<div style="width:210px;height:60px;TEXT-ALIGN:left;#text-align:justify;text-justify:newspaper;overflow-y:hidden;font-size: 12px; line-height: 20px; letter-spacing: 1px;">
+巴西央行於10月19日宣布降息2碼，從12%下調至11.5%，理由是歐洲主權債務危機影響巴西經濟成...
+</div>
+<div style='margin-bottom:8px;'></div>
+</div>
+<div id="custom_news_separator" style="float:left;border-left:dotted 1px #666;margin:0 8px 0 8px;height:380px;width:1px;"></div>
+<div id="custom_news_right" style="float:left;width:375px;">
+<table width="375" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td>
+<!--★★開始中間圖片★★-->
+<a href="/tw/rpt/rpt_slideshow5.asp?CnlID=3&v=20111020-558&n=1"><img id="rptImgBlockTop" src="http://mms.digitimes.com/report/2011/20111020-558/0000020112381_2_xe2qy4vtng_W375.png" /></a>
+<style type="text/css" media="screen">
+.rptImgSwaper { padding:1px 4px;border:solid 1px #999;margin-right:4px; }
+.rptImgSwaperSelected { font-weight:bold;border:solid 1px silver;color:#999;background-color:#f08200;color:white; }
+.rptImgSwaperSelected:link {color:white;}
+.rptImgSwaperSelected:hover {color:white;}
+.rptImgSwaperSelected:visited {color:white;}
+.rptImgSwaperSelected:active {color:white;}
+</style>
+<script type="text/javascript">
+function doSwapRtpImg(obj,v1,v2,v3){
+$("#dynamicImgTitle").text(v1 + v3);
+$("#rptImgBlockTop").attr("src",v2);
+$("#rptMultiImgBlock a.rptImgSwaperSelected").removeClass("rptImgSwaperSelected");
+$(obj).addClass("rptImgSwaperSelected");
+}
+function doSwapNextRtpImg(){
+var count=parseInt($("#rptMultiImgBlock a.rptImgSwaperSelected").attr("eq"));
+if (count==5){
+$("#rptMultiImgBlock a:eq(0)").click();
+} else {
+$("#rptMultiImgBlock a:eq(" + count + ")").click();
+}
+}
+</script>
+<!--★★結束中間圖片★★-->
+</td>
+</tr>
+<tr>
+<td valign="top" style="padding:2px 0 4px 0px;">
+<div style="width:375px;padding:0px;font-weight:bold;font-size:14pt;text-align:left;">
+<a href="/tw/rpt/rpt_slideshow5.asp?CnlID=3&v=20111020-558&n=1" style="color:#1e4061;text-align:center;"><b>奇美電淡出監視器代工<br/>3Q'11台廠液晶監視器出貨量季減0.9%</b></a>
+</div>
+<div class="channel_breadcrumb">
+Research-電腦運算
+</div>
+<div style="width:375px;TEXT-ALIGN:left;#text-align:justify;text-justify:newspaper;overflow-y:hidden;font-size:12px;line-height:20px;letter-spacing:1px;">
+2011年第3季台廠液晶監視器(LCD Monitor)出貨量2,938萬台，較前季減少0.9%，低於全球平均值，台廠液晶監視器出貨量已連續第3個季度出貨量呈現衰退，使得在全球出貨量佔...
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div id="separatortop" style="clear:both;">&nbsp;</div>
+<!-- <div style="border-top:solid 3px #ff9900;height:4px;">&nbsp;</div> -->
+<div id="middleblock">
+</div>
+<div style="width:610px;">
+<div style="float:left;width:610px;">
+<table width="610" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td valign="top" align="left" width="294">
+<table border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td>
+<DIV style="WIDTH: 294px; FLOAT: left" id=whats_new9>
+<DIV style="WIDTH: 100%; BORDER-TOP: #f08200 3px solid">
+<DIV style="">
+<table id="___01" width="290" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td>
+<img src="http://mms.digitimes.com/tw/x/img/2010WebPage/DUI2_01.jpg" width="294" height="43" alt="" usemap="#RTNewsBannerMap"></td>
+</tr>
+<tr>
+<td colspan="3" style="background-image:url(http://mms.digitimes.com/tw/x/img/2010WebPage/DUI2_02_2.jpg)"><DIV><DIV ><DIV style="WIDTH: 100%"><DIV style="padding: 0; padding-left: 10px; padding-right: 10px;"><DIV class="rnDiv" seq="1" style="TEXT-ALIGN: left; FONT-SIZE: 10pt"><B>低階手機銷售強勁 諾基亞3Q虧損低於預期<span style="font-size:9px; padding-left: 5px; color: #F30; font-weight: normal;">18:49</span></B></DIV><DIV style="MARGIN-TOP: 4px; MARGIN-BOTTOM: 4px; BORDER-TOP: silver 1px dotted"></DIV><DIV class="rnDiv" seq="2" style="TEXT-ALIGN: left; FONT-SIZE: 10pt"><B>愛立信3Q獲利成長4%　手機寬頻服務營收雙雙勁揚<span style="font-size:9px; padding-left: 5px; color: #F30; font-weight: normal;">18:04</span></B></DIV><DIV style="MARGIN-TOP: 4px; MARGIN-BOTTOM: 4px; BORDER-TOP: silver 1px dotted"></DIV><DIV class="rnDiv" seq="3" style="TEXT-ALIGN: left; FONT-SIZE: 10pt"><B>韓系面板大廠LG Display 20日下午發布2011年第3季財報。LG D...<span style="font-size:9px; padding-left: 5px; color: #F30; font-weight: normal;"></span></B></DIV><script type="text/javascript">$('.rnDiv[seq=3]').simpletip({content:'韓系面板大廠LG Display 20日下午發布2011年第3季財報。LG Display第3季營收6.27兆韓元，較2010年同期減少6%，營損4,921億韓元，已連續4季出現赤字。',fixed: true,position: 'right',offset:[-220,40]});</SCRIPT><DIV style="MARGIN-TOP: 4px; MARGIN-BOTTOM: 4px; BORDER-TOP: silver 1px dotted"></DIV><DIV class="rnDiv" seq="4" style="TEXT-ALIGN: left; FONT-SIZE: 10pt"><B>歐盟高峰會前夕，德法雙方領袖再就擴大EFSF基金救援火力方式...<span style="font-size:9px; padding-left: 5px; color: #F30; font-weight: normal;"></span></B></DIV><script type="text/javascript">$('.rnDiv[seq=4]').simpletip({content:'歐盟高峰會前夕，德法雙方領袖再就擴大EFSF基金救援火力方式進行討論，但雙方仍未能解決爭論、定下結論，外界也多不看好高峰會結果。',fixed: true,position: 'right',offset:[-220,40]});</SCRIPT><DIV style="MARGIN-TOP: 4px; MARGIN-BOTTOM: 4px; BORDER-TOP: silver 1px dotted"></DIV><DIV class="rnDiv" seq="5" style="TEXT-ALIGN: left; FONT-SIZE: 10pt"><B>2010年諾貝爾經濟學獎得主Dale T. Mortensen表示，因歐元區沒...<span style="font-size:9px; padding-left: 5px; color: #F30; font-weight: normal;"></span></B></DIV><script type="text/javascript">$('.rnDiv[seq=5]').simpletip({content:'2010年諾貝爾經濟學獎得主Dale T. Mortensen表示，因歐元區沒有統一的財政機構，歐債危機在未來一年內若無法解決，經濟將陷入衰退；而美聯準會的政策工具已用盡，但人民不願消費、企業不願投資，經濟復甦仍將趨緩。',fixed: true,position: 'right',offset:[-220,40]});</SCRIPT></DIV>
+</DIV>
+</DIV>
+</DIV>
+</td>
+</tr>
+<tr>
+<td>
+<img src="http://mms.digitimes.com/tw/x/img/2010WebPage/DUI2_03.jpg" width="294" height="16" alt=""></td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<map name="RTNewsBannerMap"><area shape="rect" coords="8,5,92,31" href="/tw/dt/allnewslist.asp?webpage=Y" alt="" /></map>
+<div id="separatortop1" style="line-height: 8px;">&nbsp;</div>
+<!-- lineCount = 23 -->
+</td>
+</tr>
+<tr>
+<td>
+<div id="whats_new" style="float:left;width:290px;">
+<div style='width:100%;border-top:3px solid #f08200;'><DIV style="border-bottom:1px solid #f08200;padding:0 10px 0px 10px;TEXT-ALIGN:left;font-size:16px;padding: 4px 0px 0px 0px;font-weight:bold;"> 最新報導 </DIV><div style='padding:8px 2px;'><DIV style="TEXT-ALIGN:left;font-size:11pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255617_02B7SBVV0BC71Q8QCWIM7&ct=1">歐債與泰國水災加上外資賣超匯出　亞幣驟貶</A></DIV><div class="channel_breadcrumb">國際財經-全球經濟<span class="subtitletime" k="1" t="2011/10/20 19:14" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="TEXT-JUSTIFY: newspaper; text-align:left;#text-align:justify; LINE-HEIGHT: 20px; OVERFLOW-Y: hidden; LETTER-SPACING: 1px; FONT-SIZE: 12px;;"><A href="/tw/dt/n/shwnws.asp?id=0000255617_02B7SBVV0BC71Q8QCWIM7&ct=1"></a>由於歐元區23日週末的高峰會目前仍未形成共識，而泰國水災令全球產業供應鏈斷裂將拖累經濟成長，亞洲貨幣20日回吐近期對美元的漲幅...</div><div></div><DIV style="BORDER-TOP: silver 1px dotted; margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:11pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255587_WYI4385J9KL30D6J9MFZC&ct=1">江丙坤：兩岸投保協議已有階段性成果</A></DIV><div class="channel_breadcrumb">國際財經-全球經濟<span class="subtitletime" k="1" t="2011/10/20 17:40" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="TEXT-JUSTIFY: newspaper; text-align:left;#text-align:justify; LINE-HEIGHT: 20px; OVERFLOW-Y: hidden; LETTER-SPACING: 1px; FONT-SIZE: 12px;;"><A href="/tw/dt/n/shwnws.asp?id=0000255587_WYI4385J9KL30D6J9MFZC&ct=1"></a>兩岸第7次「江陳會談」20日順利登場。海基會董事長江丙坤表示，過去3年多來，兩會舉行6次「江陳會談」，完成15項協議的簽署，制度化...</div><div></div><DIV style="BORDER-TOP: silver 1px dotted; margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:11pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255611_0ET5DXOA27ULM90VAEKB5&ct=1">日本擬追加外匯干預基金至10兆日圓</A></DIV><div class="channel_breadcrumb">國際財經-全球經濟<span class="subtitletime" k="1" t="2011/10/20 17:32" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="TEXT-JUSTIFY: newspaper; text-align:left;#text-align:justify; LINE-HEIGHT: 20px; OVERFLOW-Y: hidden; LETTER-SPACING: 1px; FONT-SIZE: 12px;;"><A href="/tw/dt/n/shwnws.asp?id=0000255611_0ET5DXOA27ULM90VAEKB5&ct=1"></a>彭博(Bloomberg)報導指出，日圓持續走強，日本政府為協助企業應對，有意擴大外匯干預基金規模，從原本的8兆日圓擴大到10兆日圓，相...</div><div></div><DIV style="BORDER-TOP: silver 1px dotted; margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:11pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255516_9TQ4MP6U2414LH5LUHUI9&ct=1">三星、蘋果法律戰持續　三星計劃聲請南韓禁賣iPhone 4S</A></DIV><div class="channel_breadcrumb">科技-網通/軟體<span class="subtitletime" k="1" t="2011/10/20 17:12" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="TEXT-JUSTIFY: newspaper; text-align:left;#text-align:justify; LINE-HEIGHT: 20px; OVERFLOW-Y: hidden; LETTER-SPACING: 1px; FONT-SIZE: 12px;;"><A href="/tw/dt/n/shwnws.asp?id=0000255516_9TQ4MP6U2414LH5LUHUI9&ct=1"></a>眼見蘋果(Apple)iPhone 4S將在11月中於南韓開賣，為了防堵對手入侵自家主場，三星電子(Samsung Electronics)通訊事業部社長申宗...</div><div></div><DIV style="BORDER-TOP: silver 1px dotted; margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:11pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255585_5WM6X55H7XXRYQ6VYH1L6&ct=1">第7次江陳會完成簽署核安協議</A></DIV><div class="channel_breadcrumb">國際財經-全球經濟<span class="subtitletime" k="1" t="2011/10/20 16:57" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="TEXT-JUSTIFY: newspaper; text-align:left;#text-align:justify; LINE-HEIGHT: 20px; OVERFLOW-Y: hidden; LETTER-SPACING: 1px; FONT-SIZE: 12px;;"><A href="/tw/dt/n/shwnws.asp?id=0000255585_5WM6X55H7XXRYQ6VYH1L6&ct=1"></a>台灣海基會和大陸海協會20日正式簽署兩岸核電安全合作協議，海基會董事長江丙坤表示，2011年3月日本遭逢強震與海嘯，引發福島核電...</div><div></div><DIV style="BORDER-TOP: silver 1px dotted; margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:10pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255573_6UM6JNPK65J1YB4G9EWB3&ct=1">兩岸產業合作納入LED照明、無線城市與TFT-LCD</A><span class="subtitletime" k="1" t="2011/10/20 16:39" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="BORDER-TOP: silver 1px dotted;margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:10pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255472_KLS5SN92654L7T39YY5N0&ct=1">Google購併案　摩托羅拉解決方案執行長：當年分拆是正確決定</A><span class="subtitletime" k="1" t="2011/10/20 16:02" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="BORDER-TOP: silver 1px dotted;margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:10pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255464_FBZ3S55M7UG63Y3QWJ4WD&ct=1">亞馬遜預定2011年底前揮軍日本電子書市場</A><span class="subtitletime" k="1" t="2011/10/20 15:16" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="BORDER-TOP: silver 1px dotted;margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:10pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255528_DDT6I1JX1OBPQK91M3CA8&ct=1">雅虎共同創辦人楊致遠：雅虎正進行策略評估　出售公司只是選擇之一</A><span class="subtitletime" k="1" t="2011/10/20 15:13" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="BORDER-TOP: silver 1px dotted;margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:10pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255529_W1164HJ7147B3OLX6NXR2&ct=1">傳Jobs病逝前一日致電Cook談iPhone 5</A><span class="subtitletime" k="1" t="2011/10/20 15:08" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="BORDER-TOP: silver 1px dotted;margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:10pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255512_4JT4UZ0S26H79T1PBSUYQ&ct=1">ARM推出高效率智慧型手機處理器</A><span class="subtitletime" k="1" t="2011/10/20 14:55" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="BORDER-TOP: silver 1px dotted;margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:10pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255504_YM74PQMK1UY5TW3LZ4P6J&ct=1">三星：Galaxy Nexus已經盡力避開蘋果專利</A><span class="subtitletime" k="1" t="2011/10/20 13:33" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="BORDER-TOP: silver 1px dotted;margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:10pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255498_S3M52DJW8R2HCO9OPV0C3&ct=1">世銀經商環境報告出爐　各國持續改革商業監管</A><span class="subtitletime" k="1" t="2011/10/20 13:31" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="BORDER-TOP: silver 1px dotted;margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:10pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255503_15P495DR19SMPK2SA00I2&ct=1">Android主管：摩托羅拉不會有特別待遇</A><span class="subtitletime" k="1" t="2011/10/20 12:01" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="BORDER-TOP: silver 1px dotted;margin-bottom:5px;margin-top:5px;"></DIV><DIV style="TEXT-ALIGN:left;font-size:10pt;font-weight:bold;"><A href="/tw/dt/n/shwnws.asp?id=0000255501_A2F4S4PI1YO8MK03JBXZ3&ct=1">大陸商務部稱廣交會成交不佳　進出口形勢嚴峻</A><span class="subtitletime" k="1" t="2011/10/20 12:00" style="font-size:8pt;font-weight:normal"></span></DIV><DIV style="BORDER-TOP: silver 1px dotted;margin-bottom:5px;margin-top:5px;"></DIV></div></div>
+</div>
+</td>
+</tr>
+</table>
+</td>
+<td valign="top" align="right">
+<table cellspacing="0" cellpadding="0" >
+<tr>
+<td>
+<div id="editorpicks" style="width:300px;margin-left:8px;#margin-left:8px;margin-right:0px;border-top:3px solid #f08200;text-align:center;padding:0px 4px 0px 4px;background-color:#fff7ee;">
+<DIV style="TEXT-ALIGN:left;font-size:12pt;padding:4px 0 0 0;border-bottom:silver 1px dotted;margin-bottom:5px;font-weight:bold;width:280px;padding:4px 4px 4px 8px;#padding:4px 4px 4px 4px;"><a href='/tw/dt/most.asp?pack=5174&cnlid=1&cat=10'>外商企業大陸市場頻觸礁</a></DIV><a href="/tw/dt/n/shwnws.asp?id=0000255331_WXU2URRB4WO7JO05M5OR1&packageid=5174&cnlid=1&cat=10&ct=1"><img src="http://mms.digitimes.com/NewsImg/PACKAGE/5174B_W280.jpg" width="280"></a><DIV style='width:280px;margin-top:4px;TEXT-ALIGN:left;padding:2px 4px 2px 8px;#padding:2px 4px 2px 4px;'><B><A href="/tw/dt/n/shwnws.asp?id=0000255331_WXU2URRB4WO7JO05M5OR1&packageid=5174&cnlid=1&cat=10&ct=1" style='font-size:12pt;font-weight:bold;'>為爭食大陸市場大餅　外資企業忍氣吞聲</A></B><div class="channel_breadcrumb" style="text-align:left;">國際財經-全球經濟</div></DIV><DIV style="width:280px;TEXT-JUSTIFY:newspaper;TEXT-ALIGN:left;#TEXT-ALIGN:justify;LINE-HEIGHT:20px;OVERFLOW-Y:hidden;LETTER-SPACING:1px;HEIGHT:60px;FONT-SIZE:12px;text-align:left;padding:2px 4px 2px 8px;#padding:2px 4px 2px 4px;">從大陸改革開放以來，人民的財富也隨著增加，廣大的人口加上日益成長的中產階級，使得大陸從世界工廠轉變成了世界市場，許多產...</DIV><DIV style="width:280px;height:1px;BORDER-TOP:silver 1px dotted;margin:4px 10 4px 10;"></DIV><DIV style="width:280px;TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 4px 8px;#padding:2px 4px 2px 4px;"><B><A href="/tw/dt/n/shwnws.asp?id=0000255351_2LJ42MV64YT2K622QJNRJ&packageid=5174&cnlid=1&cat=10&ct=1">外資、台商大陸市場頻觸礁　經營障礙日增</A></B></DIV><DIV style="width:280px;height:1px;BORDER-TOP:silver 1px dotted;margin-bottom:5px;"></DIV><DIV style="width:280px;TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 4px 8px;#padding:2px 4px 2px 4px;"><B><A href="/tw/dt/n/shwnws.asp?id=0000255393_HG44U3XW8XRF5C4BU38QE&packageid=5174&cnlid=1&cat=10&ct=1">可成大陸廠停工牽連廣　供應鏈業者噤聲</A></B></DIV><DIV style="width:280px;height:1px;BORDER-TOP:silver 1px dotted;margin-bottom:5px;"></DIV><DIV style="width:280px;TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 4px 8px;#padding:2px 4px 2px 4px;"><B><A href="/tw/dt/n/shwnws.asp?id=0000255394_O7J4518D899C1H52KIS81&packageid=5174&cnlid=1&cat=10&ct=1">毒蘋果事件連環爆　市場傳出陰謀論</A></B></DIV><DIV style="width:280px;height:1px;BORDER-TOP:silver 1px dotted;margin-bottom:5px;"></DIV><div style='margin-top:8px;'></div><DIV style="border-top:3px solid #f08200;TEXT-ALIGN:left;font-size:12pt;padding:4px 4px 4px 8px;#padding:4px 4px 4px 4px; border-bottom:silver 1px dotted; margin-bottom:5px;font-weight:bold;text-align:left;width:280px;"><a href='/tw/dt/most.asp?pack=5175&cnlid=1&cat=40'>台系DRAM廠3Q大虧</a></DIV><DIV style='TEXT-ALIGN:left;width:280px;padding:2px 4px 2px 8px;#padding:2px 4px 2px 4px;'><B><A href="/tw/dt/n/shwnws.asp?id=0000255342_CIP2CHS05EVILQ1TXOIJT&packageid=5175&cnlid=1&cat=40&ct=1" style='font-size:12pt;letter-spacing:1pt;font-weight:bold;'>DRAM續唱悲歌　台系3大廠3Q虧損達256億元</A></B><div class="channel_breadcrumb" style="text-align:left;">科技-半導體/零組件</div></DIV><DIV style="TEXT-JUSTIFY:newspaper;TEXT-ALIGN:left;#TEXT-ALIGN:justify;LINE-HEIGHT:20px;OVERFLOW-Y:hidden;LETTER-SPACING:1px;width:280px;HEIGHT:78px;FONT-SIZE:12px;width:280px;padding:2px 4px 2px 8px;#padding:2px 4px 2px 4px;"><a href="/tw/dt/n/shwnws.asp?id=0000255342_CIP2CHS05EVILQ1TXOIJT&packageid=5175&cnlid=1&cat=40&ct=1"><img src="http://mms.digitimes.com/NewsImg/PACKAGE/5175_0_W100.jpg" width="100" height="75" align='right' style='border:solid 1px black;margin-left:4px;'></a>DRAM廠第3季財報陸續公布，在價格崩盤、減產導致出貨減少下，各廠第3季虧損金額都持續擴大，南亞科和華亞科合計單季虧損將...</DIV><DIV style="width:280px;height:1px;BORDER-TOP:silver 1px dotted;margin:4px 0 4px 0;"></DIV><DIV style="width:280px;TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 4px 8px;#padding:2px 4px 2px 4px;"><B><A href="/tw/dt/n/shwnws.asp?id=0000255341_ECU4B3JO3SXMYI298DQH5&packageid=5175&cnlid=1&cat=40&ct=1">PC DRAM前途茫茫　南亞科、力晶轉攻利基型記憶體</A></B></DIV><DIV style="width:280px;height:1px;BORDER-TOP:silver 1px dotted;margin-bottom:5px;"></DIV><div style='margin-top:8px;'></div><DIV style="border-top:3px solid #f08200;TEXT-ALIGN:left;font-size:12pt;padding:4px 4px 4px 8px;#padding:4px 4px 4px 4px; border-bottom:silver 1px dotted; margin-bottom:5px;font-weight:bold;text-align:left;width:280px;"><a href='/tw/dt/most.asp?pack=5173&cnlid=1&cat=60'>Andorid 4.0登場</a></DIV><DIV style='TEXT-ALIGN:left;width:280px;padding:2px 4px 2px 8px;#padding:2px 4px 2px 4px;'><B><A href="/tw/dt/n/shwnws.asp?id=0000255374_8P54NDLZ6584CB53R1RNR&packageid=5173&cnlid=1&cat=60&ct=1" style='font-size:12pt;letter-spacing:1pt;font-weight:bold;'>Android 4.0迎頭趕上iOS　加速模糊手機、平板市場界線</A></B><div class="channel_breadcrumb" style="text-align:left;">科技-網通/軟體</div></DIV><DIV style="TEXT-JUSTIFY:newspaper;TEXT-ALIGN:left;#TEXT-ALIGN:justify;LINE-HEIGHT:20px;OVERFLOW-Y:hidden;LETTER-SPACING:1px;width:280px;HEIGHT:78px;FONT-SIZE:12px;width:280px;padding:2px 4px 2px 8px;#padding:2px 4px 2px 4px;"><a href="/tw/dt/n/shwnws.asp?id=0000255374_8P54NDLZ6584CB53R1RNR&packageid=5173&cnlid=1&cat=60&ct=1"><img src="http://mms.digitimes.com/NewsImg/PACKAGE/5173_W100.jpg" width="100" height="75" align='right' style='border:solid 1px black;margin-left:4px;'></a>Google攜手三星電子(Samsung Electronics)發表首款搭載Android 4.0作業系統Galaxy Nexus，由於代號Ice Cream Sandwich...</DIV><DIV style="width:280px;height:1px;BORDER-TOP:silver 1px dotted;margin:4px 0 4px 0;"></DIV><DIV style="width:280px;TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 4px 8px;#padding:2px 4px 2px 4px;"><B><A href="/tw/dt/n/shwnws.asp?id=0000255348_O3C20YTP5IS9OY7V8E2UL&packageid=5173&cnlid=1&cat=60&ct=1">Android 4.0未見驚人創新　3大平台戰局短期變化不大</A></B></DIV><DIV style="width:280px;height:1px;BORDER-TOP:silver 1px dotted;margin-bottom:5px;"></DIV><DIV style="width:280px;TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 4px 8px;#padding:2px 4px 2px 4px;"><B><A href="/tw/dt/n/shwnws.asp?id=0000255363_PQO48ZBU560W7W4WJSYDA&packageid=5173&cnlid=1&cat=60&ct=1">Android Beam淡化行動支付　強調社群功能</A></B></DIV><DIV style="width:280px;height:1px;BORDER-TOP:silver 1px dotted;margin-bottom:5px;"></DIV><DIV style="width:280px;TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 4px 8px;#padding:2px 4px 2px 4px;"><B><A href="/tw/dt/n/shwnws.asp?id=0000255379_XP14YMWY65KQUILN88SOW&packageid=5173&cnlid=1&cat=60&ct=1">Galaxy Nexus vs. iPhone 4S</A></B></DIV><DIV style="width:280px;height:1px;BORDER-TOP:silver 1px dotted;margin-bottom:5px;"></DIV><div style='margin-top:8px;'></div><DIV style="border-top:3px solid #f08200;TEXT-ALIGN:left;font-size:12pt;padding:4px 4px 4px 8px;#padding:4px 4px 4px 4px; border-bottom:silver 1px dotted; margin-bottom:5px;font-weight:bold;text-align:left;width:280px;"><a href='/tw/dt/most.asp?pack=5171&cnlid=1&cat=90'>太陽光電產業更迭</a></DIV><DIV style='TEXT-ALIGN:left;width:280px;padding:2px 4px 2px 8px;#padding:2px 4px 2px 4px;'><B><A href="/tw/dt/n/shwnws.asp?id=0000255146_MXC0V5BM53J2OB50I18KC&packageid=5171&cnlid=1&cat=90&ct=1" style='font-size:12pt;letter-spacing:1pt;font-weight:bold;'>產業鉅子伺機而動　太陽光電外患壓力增</A></B><div class="channel_breadcrumb" style="text-align:left;">科技-綠色節能</div></DIV><DIV style="TEXT-JUSTIFY:newspaper;TEXT-ALIGN:left;#TEXT-ALIGN:justify;LINE-HEIGHT:20px;OVERFLOW-Y:hidden;LETTER-SPACING:1px;width:280px;HEIGHT:78px;FONT-SIZE:12px;width:280px;padding:2px 4px 2px 8px;#padding:2px 4px 2px 4px;"><a href="/tw/dt/n/shwnws.asp?id=0000255146_MXC0V5BM53J2OB50I18KC&packageid=5171&cnlid=1&cat=90&ct=1"><img src="http://mms.digitimes.com/NewsImg/PACKAGE/5171_W100.jpg" width="100" height="75" align='right' style='border:solid 1px black;margin-left:4px;'></a>2011年太陽光電受到供過於求影響，諸多業者在成本、技術不敵市場要求下，漸臨被淘汰邊緣，在場外已觀望多時的各產業鉅子見時...</DIV><DIV style="width:280px;height:1px;BORDER-TOP:silver 1px dotted;margin:4px 0 4px 0;"></DIV><DIV style="width:280px;TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 4px 8px;#padding:2px 4px 2px 4px;"><B><A href="/tw/dt/n/shwnws.asp?id=0000255145_E650OJH75V76I84KXYT3M&packageid=5171&cnlid=1&cat=90&ct=1">太陽能高效率壓力直撲　單晶HIT、IBC、MWT動向備受矚目</A></B></DIV><DIV style="width:280px;height:1px;BORDER-TOP:silver 1px dotted;margin-bottom:5px;"></DIV><div style='margin-top:8px;'></div>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<!-- <div id="separatortop" style="clear:both;">&nbsp;</div> -->
+<div id="MiddleBlockAD" style="width:610px;">
+<div class="pt_ad"></div><div class="pt_ad"><div class="pt_ad"><fjtignoreurl><a href='/tw/webad/click.asp?Seq=45381' target='_blank' align=absmiddle><img src='http://ad.digitimes.com.tw/111011_exhibition_banner610x75.gif' width=610 height=75 border=0 alt='exhibition'></a></fjtignoreurl></div></div>
+</div>
+<div id="sparator" style="clear:both;margin-top:8px;"></div>
+<table width="610" border="0" cellspacing="0" cellpadding="0" style="border-top:0px dotted #555; margin-top: 8px;">
+<tr>
+<td width="197" valign="top" style="padding-right: 8px; text-align: left; padding-top: 0px; border-right: 1px solid #ccc;">
+<div id="view_point">
+<TABLE width="197" border=0 cellPadding=0 cellSpacing=0><TR><td valign="top" style="text-align:left;background-color:#FFF;"><div style="BORDER-BOTTOM: silver 1px dotted; TEXT-ALIGN: left; PADDING-LEFT: 3px; PADDING-RIGHT: 3px; FONT-SIZE: 12pt; BORDER-TOP: #f29600 3px solid; FONT-WEIGHT: bold; margin-bottom: 5px; height: 24px; padding-top: 4px;">觀點 </div></td></tr><tr><td style="border-bottom:1px dotted #CCC;padding-top:10px;padding-bottom: 10px;"><table cellspacing="0" cellpadding="0" border="0" width="190" align="left"><tr><td width="85" VALIGN='top' style="padding-right:0px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=140&cat1=90&id=0000255106_RED072C51CKA8M5F183W7&ct=1"><img src="http://mms.digitimes.com/tw/x/img/viewpoint/sketch/980415Z_W85.jpg" /></a><!-- http://mms.digitimes.com/tw/x/img/viewpoint/sketch/980415Z_W85.jpg --></td><td align="left" VALIGN='top' style="padding-top:5px;"><div style="font-size:11pt;font-weight:bold;text-align:left;">智富集<BR>周延鵬</div><div class="latestrpt" style="text-align:left;font-size:10pt;padding-top:10px;padding-bottom: 5px;"><b><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=140&cat1=90&id=0000255106_RED072C51CKA8M5F183W7&ct=1">台灣產業聯盟百花齊放　但小心別成為「慘業聯盟」！</a></b></div></td></tr></table></td></tr><tr><td style="border-bottom:1px dotted #CCC;padding-top:10px;padding-bottom: 10px;"><table cellspacing="0" cellpadding="0" border="0" width="190" align="left"><tr><td width="85" VALIGN='top' style="padding-right:0px;"><a href="/tw/dt/itcategory.asp?CnlID=1&cat=140&SVR=890203A"><img src="http://mms.digitimes.com/tw/x/img/viewpoint/sketch/890203A_W85.jpg" /></a><!-- http://mms.digitimes.com/tw/x/img/viewpoint/sketch/890203A_W85.jpg --></td><td align="left" VALIGN='top' style="padding-top:5px;"><div style="font-size:12pt;font-weight:bold;"><a href="/tw/dt/itcategory.asp?CnlID=1&cat=140&SVR=890203A">王君毅</a></div><div class="latestrpt" style="text-align:left;font-size:10pt;padding-top:10px;padding-bottom: 5px;"><b><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=140&cat1=10&id=0000255376_TYA2IOPC8K7CQN5I3X6W5&ct=1">兩邊都是娘　中美貿易商戰台廠沒得喊苦</a></b></div></td></tr></table></td></tr></table><!-- 觀點結束 ~VPCnt:2 -->
+</div>
+</td>
+<td width="413" valign="top" style="padding-left:8px; text-align: left; padding-top: 0px; border-left: 0px solid #ccc;">
+<!-- 2011/10/20 -->
+<!-- Research開始 -->
+<div id="regionResearchModule"><TABLE border="0" cellPadding="0" cellSpacing="0" style="border-top:3px solid #f29600; text-align: left;">
+<TR>
+<TD>
+<DIV>
+<DIV style="TEXT-ALIGN: left; font-size: 11pt; padding: 4px 4px 0 4px; border-bottom: silver 1px dotted; margin-bottom: 5px;height:24px;" class="latestrpt"><B>Research</B></DIV>
+<DIV style="TEXT-ALIGN: left" class="latestrpt">
+<B><A href="/tw/rpt/rpt_show.asp?cnlid=3&v=20111020-560&n=1">淡季效應影響　市場需求普遍不振　4Q'11台灣中小尺寸TFT LCD出貨量將衰退7.5%</A></B>
+</DIV>
+<div>
+<A href="/tw/rpt/rpt_show.asp?cnlid=3&v=20111020-560&n=1">
+<IMG style="MARGIN-TOP: 3px; MARGIN-LEFT: 8px;border:1px solid black;" align=right src="http://mms.digitimes.com/report/2011/20111020-560/0000020112382_3_3ZSRSAQI7L_W100.png" width="100" height="75">
+</A>
+<DIV class="channel_breadcrumb">Research-中小尺寸FPD</DIV>
+<DIV style="TEXT-JUSTIFY: newspaper; text-align:left;#text-align:justify; LINE-HEIGHT: 20px; OVERFLOW-Y: hidden; LETTER-SPACING: 1px; FONT-SIZE: 12px">
+第4季為中小尺寸TFT LCD面板傳統淡季，在歐美經濟問題未解決、市場前景不明下，淡季效應將相當明顯，2011年第4季台廠中小尺寸...
+</DIV></div><div style="line-height: 10px;">&nbsp;</div>
+<DIV style="TEXT-ALIGN: left" class="latestrpt">
+<B><A href="/tw/rpt/rpt_show.asp?cnlid=3&v=20111020-559&n=1">清華同方加大投資LED磊晶片製造　2012年產品中自製晶片比重目標將提升至5成</A></B>
+</DIV>
+<div>
+<A href="/tw/rpt/rpt_show.asp?cnlid=3&v=20111020-559&n=1">
+<IMG style="MARGIN-TOP: 3px; MARGIN-LEFT: 8px;border:1px solid black;" align=right src="http://mms.digitimes.com/report/2011/20111020-559/0000020112377_0_1BPXNYIMDL_W100.png" width="100" height="75">
+</A>
+<DIV class="channel_breadcrumb">Research-LED</DIV>
+<DIV style="TEXT-JUSTIFY: newspaper; text-align:left;#text-align:justify; LINE-HEIGHT: 20px; OVERFLOW-Y: hidden; LETTER-SPACING: 1px; FONT-SIZE: 12px">
+清華同方事業範圍廣泛，LED相關產業分屬多媒體產業及半導體照明產業兩個事業群，此兩個事業群共佔清華同方2011年上半營收的25.1...
+</DIV></div><div style="line-height: 10px;">&nbsp;</div>
+</DIV>
+</TD>
+</TR>
+</TBODY>
+</TABLE></div>
+<!-- Research結束 -->
+<!-- 企業IT NoData ~*skip* -->
+</DIV>
+</DIV>
+</DIV>
+</td>
+</tr>
+</table>
+<div id="sparator" style="clear:both;margin-top:8px;"></div>
+<div id="ad2">
+<table width="610" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:10px; margin-top: 10px; border-top: #f08200 3px solid;">
+<tr>
+<td width="190" align="center" style=""><img src="http://mms.digitimes.com//NewsImg/PACKAGE/5167.jpg" width="206" height="78"></td>
+<td valign="top" style="background-color:#EFEFEF">
+<DIV style="BORDER-BOTTOM: silver 1px dotted; TEXT-ALIGN: left; PADDING-BOTTOM: 2px; MARGIN: 15px 5px 5px; PADDING-LEFT: 5px; WIDTH: 350px; PADDING-RIGHT: 0px; FLOAT: left; COLOR: #000; FONT-SIZE: 10pt; PADDING-TOP: 4px" class=latestrpt>科技 - 產業觀察</DIV>
+<DIV style="TEXT-ALIGN: left; PADDING-LEFT: 10px; PADDING-RIGHT: 0px; LETTER-SPACING: 1px; FONT-SIZE: 12pt; FONT-WEIGHT: bold; PADDING-TOP: 0px; color: #000; float: left; width: 350px;" class=latestrpt>
+<B><a href="/tw/dt/n/shwnws.asp?CnlID=1&Cat=130&Cat1=30&id=0000249239_9J91W5WD47O70T8LH6J0W">液晶電視慘澹經營　力拼價格成王道</a> </B>
+</DIV>
+</td>
+</tr>
+</table>
+</div>
+<div id="sparator" style="clear:both;margin-top:8px;"></div>
+<div id="channel_lists">
+<div style='float:left;width:195px;border-top:3px solid #f29600;;margin:0 12px 8px 0'><DIV style="TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 0px 4px;border-bottom:silver 0px dotted;margin-bottom:4px;font-weight:bold;"><a href="/tw/dt/SubChannel_1_40.asp?CnlID=1&cat=40">科技-半導體/零組件</a><!-- 科技-半導體/零組件 --></DIV><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=40&cat1=40&id=0000255456_5TC36L2664O6XY59I1LMZ&ct=1">自7月以來　日本半導體製造設備B/B值連續3度下滑</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=40&cat1=10&id=0000255378_D442RJZI8WI8OW786R8UR&ct=1">大陸智慧型手機熱銷　中小尺寸驅動IC需求增溫</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=40&cat1=35&id=0000255292_2ZP33CQW8EWX1Y3Q8SXAB&ct=1">台軟性銅箔基板廠自製配方比重提升　期降低成本</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=40&cat1=40&id=0000255354_TI222SHY68UOFS3JVA37B&ct=1">淡季到、景氣弱　聚鼎估4Q營收季減10%</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=40&cat1=35&id=0000255291_SHY3XZFU84VCDW2RBVJSM&ct=1">亞電第3季營運創新高　第4季略回檔</a></div></div><div style='float:left;width:195px;border-top:3px solid #f29600;;margin:0 12px 8px 0'><DIV style="TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 0px 4px;border-bottom:silver 0px dotted;margin-bottom:4px;font-weight:bold;"><a href="/tw/dt/SubChannel_1_30.asp?CnlID=1&cat=30">科技-平面顯示器</a><!-- 科技-平面顯示器 --></DIV><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=30&cat1=25&id=0000255385_7KM4YL8D7RG6DP61C6GGE&ct=1">傳鴻海觸控產線投資巴西　供應鏈：多方考量仍不明</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=30&cat1=20&id=0000255386_F774PB6T7NIMHW79BW8M9&ct=1">三星樂金力推　8.9吋特殊觸控面板明年放量</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=30&cat1=25&id=0000255308_4VE2C3FD1PEPF970FX3MB&ct=1">三星康寧進軍AMOLED玻璃基板市場</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=30&cat1=25&id=0000255395_FZN2NN5WLUKA5D4J2WYC1&ct=1">愛普生VI企畫設計部部長豐澤吉彌、業務暨行銷部經理稻穗孝：3D家用投影機預料將持續成長</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=30&cat1=25&id=0000255399_GTS251HWLTBV7Q87PL6BC&ct=1">搶佔3D商機　愛普生奪台灣1080P家用投影機5成市佔</a></div></div><div style='float:left;width:195px;border-top:3px solid #f29600;;margin:0 0 8px 0;'><DIV style="TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 0px 4px;border-bottom:silver 0px dotted;margin-bottom:4px;font-weight:bold;"><a href="/tw/dt/SubChannel_1_90.asp?CnlID=1&cat=90">科技-綠色節能</a><!-- 科技-綠色節能 --></DIV><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=90&cat1=15&id=0000255490_28I53C7E87U9Q21Y5PEJY&ct=1">太陽能大廠SolarWorld在美控訴大陸傾銷與補貼</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=90&cat1=15&id=0000255337_7XF4UZRK2KHKKO86M2EEV&ct=1">矽晶圓業者強推類單晶　成本、效率為發展關鍵</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=90&cat1=15&id=0000255338_HTR2LS4G4ZFWDN7EC1VDZ&ct=1">類單晶報價介於單多晶　客戶端等待降價時機</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=90&cat1=15&id=0000255373_QL82OG4R8WO8IR2ZWY4UJ&ct=1">南韓業者挑戰高效能太陽能電池研發</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=90&cat1=10&id=0000255421_DVP5O80D1MMC8S20OTF65&ct=1">LED球泡燈9月價格持續下探</a></div></div><div style='clear:both;'></div><div style='float:left;width:195px;border-top:3px solid #f29600;;margin:0 12px 8px 0'><DIV style="TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 0px 4px;border-bottom:silver 0px dotted;margin-bottom:4px;font-weight:bold;"><a href="/tw/dt/SubChannel_1_10.asp?CnlID=1&cat=10">科技-資訊</a><!-- 科技-資訊 --></DIV><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=10&cat1=10&id=0000255481_9FA536EF7OOEBS297HPNY&ct=1">英特爾稱Ultrabook將於明年進入Windows 8世代</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=10&cat1=25&id=0000255479_5PO39T568H6D478LEFGSH&ct=1">超微聘任Mark Papermaster為技術長</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=10&cat1=15&id=0000255468_NWZ3UOUG7NPHN37KOWYBL&ct=1">英特爾股價上漲3.6%　受樂觀業績展望提振</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=10&id=0000255469_68B5VJEE52OY0JLPX9NZG&ct=1">蘋果股價重挫5.6%　創金融海嘯以來單日最高跌幅</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=10&cat1=10&id=0000255400_CCM5V30BL2XI0R1YELGPY&ct=1">Android手機大軍振翅　平板陣營落寞</a></div></div><div style='float:left;width:195px;border-top:3px solid #f29600;;margin:0 12px 8px 0'><DIV style="TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 0px 4px;border-bottom:silver 0px dotted;margin-bottom:4px;font-weight:bold;"><a href="/tw/dt/SubChannel_1_20.asp?CnlID=1&cat=20">科技-消費性電子</a><!-- 科技-消費性電子 --></DIV><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=20&cat1=10&id=0000255489_Q5B3FGRA96DN0D84O7ZTE&ct=1">Panasonic縮編電視業務　1,000名員工遭解雇</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=20&id=0000255483_XGB3SYJM9C0CJU2YKZEW6&ct=1">Sony平板現在也能玩PS遊戲</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=20&cat1=20&id=0000255390_LGY2R3W9L7UEHCL6I7DZP&ct=1">蘋果超越微軟　新目標瞄準大陸</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=20&cat1=20&id=0000255410_XNA3UW1B2I0M4JLK8S7VP&ct=1">7吋平板成殺戮戰場　價格底線瀕臨失守</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=20&cat1=10&id=0000255301_RO42N8T61BYQMT0AJ06NA&ct=1">CHIMEI下修液晶監視器出貨　今年預估出貨量不到60萬台</a></div></div><div style='float:left;width:195px;border-top:3px solid #f29600;;margin:0 0 8px 0;'><DIV style="TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 0px 4px;border-bottom:silver 0px dotted;margin-bottom:4px;font-weight:bold;"><a href="/tw/dt/SubChannel_1_60.asp?CnlID=1&cat=60">科技-網通/軟體</a><!-- 科技-網通/軟體 --></DIV><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=60&cat1=20&id=0000255500_YW566T8RLUO85M1R5846D&ct=1">抗衡語音辨識　Google、三星押寶臉部辨識</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=60&cat1=20&id=0000255486_WCK3T4Z69NP2I05QU1AO0&ct=1">Mango升級將導致虛擬鍵盤問題</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=60&cat1=20&id=0000255497_SH73YPFILTWP956I8QUFP&ct=1">微軟Ballmer：幸好沒買雅虎、Android太難用</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=60&cat1=20&id=0000255478_9KX50EQZ6AKLHV9VR4YUE&ct=1">Siri再出包　不用解鎖就可以用iPhone 4S</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=60&cat1=20&id=0000255480_AL65B1BD7ZLE6K1Z066IK&ct=1">iPhone 4S元件成本大拆解</a></div></div><div style='clear:both;'></div><div style='float:left;width:195px;border-top:3px solid #f29600;;margin:0 12px 8px 0'><DIV style="TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 0px 4px;border-bottom:silver 0px dotted;margin-bottom:4px;font-weight:bold;"><a href="/tw/dt/SubChannel_9_180.asp?CnlID=9&cat=180">國際財經-金融市場</a><!-- 國際財經-金融市場 --></DIV><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&cat1=20&id=0000255458_W0V39WHD6B91YU71UDF2Q&ct=1">Fed悲觀　歐美股漲跌互見</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=180&id=0000255442_N6I346DW5EB8QU1E18LH1&ct=1">摩根士丹利轉盈為虧　唯營收不如市場預期</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&cat1=15&id=0000255434_ZSA5D3WP23BF1O5XLM1U7&ct=1">日圓先生：內需支撐　日圓6年無憂</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&cat1=20&id=0000255357_24I2KU3Y6FZRQU6JX1PX0&ct=1">歐債危機有解報導一出　美國企業信用風險頓減</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&cat1=25&id=0000255365_YIW2340M7AI6G44I44ZBJ&ct=1">美聯準會有意提高政策目標透明度</a></div></div><div style='float:left;width:195px;border-top:3px solid #f29600;;margin:0 12px 8px 0'><DIV style="TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 0px 4px;border-bottom:silver 0px dotted;margin-bottom:4px;font-weight:bold;"><a href="/tw/dt/SubChannel_9_150.asp?CnlID=9&cat=150">國際財經-全球經濟</a><!-- 國際財經-全球經濟 --></DIV><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&cat1=10&id=0000255466_PKK39OYT7GK1JQ5MFUNSP&ct=1">大陸9月外商直接投資增速放緩</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&cat1=25&id=0000255463_HFZ363FW7VWEX722SCKAC&ct=1">美國9月新房開工成長15%  通膨微升0.3%</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&cat1=25&id=0000255462_OX13J5UG7Y80ZM1NK5RKB&ct=1">褐皮書指美國經濟溫和成長</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&cat1=15&id=0000255461_ON53DSO57C7JJM091CG78&ct=1">日韓貨幣互換規模增加至700億美元</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&cat1=20&id=0000255459_SZS3M2W36WVUB48V7KR6U&ct=1">希臘罷工變暴動　全國癱瘓</a></div></div><div style='float:left;width:195px;border-top:3px solid #f29600;;margin:0 0 8px 0;'><DIV style="TEXT-ALIGN:left;font-size:10pt;padding:4px 4px 0px 4px;border-bottom:silver 0px dotted;margin-bottom:4px;font-weight:bold;"><a href="/tw/dt/SubChannel_9_190.asp?CnlID=9&cat=190">國際財經-商品市場</a><!-- 國際財經-商品市場 --></DIV><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&id=0000255333_GVK4OZHD2M9LO14BOMSNC&ct=1">鋼鐵價格下探　全球景氣再亮紅燈</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=190&cat1=10&id=0000255153_MRX2OUL64VPZEE4S0UW9W&ct=1">全球再生能源投資創新高　太陽能與風電受惠於成本降低</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=150&id=0000255143_SBY2GW4E3R7R1644SYTBY&ct=1">可再生能源實用化　儲存技術是關鍵</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=190&cat1=20&id=0000254873_MOA70HLF8DD9I02S4UHAA&ct=1">趨勢圖示：咖啡豆近10年價格成長</a></div><div style="border-bottom:dotted 0px silver;border-top:dotted 1px silver;padding:4px 2px;"><a href="/tw/dt/n/shwnws.asp?CnlID=9&cat=190&cat1=10&id=0000255088_ORR1E7NQ7O4Y0I9O49TVJ&ct=1">歐債疑慮再起　油價欲振乏力</a></div></div><div style='clear:both;'></div>
+</div>
+<!-- 知識服務開始 -->
+<div id="channel_lists">
+<TABLE style="BORDER-TOP: #555 3px solid; margin-bottom: 8px; border-bottom: silver 1px dotted;" border=0 cellSpacing=0 cellPadding=0 width="610">
+<TBODY>
+<TR>
+<TD vAlign=top style="TEXT-ALIGN: left">
+<DIV style="PADDING-BOTTOM: 0px; PADDING-LEFT: 4px; PADDING-RIGHT: 4px; MARGIN-BOTTOM: 4px; FONT-SIZE: 12pt; FONT-WEIGHT: bold; PADDING-TOP: 4px; float: left; width: 550px;">知識服務</DIV>
+<DIV style="FONT-SIZE: 8pt; FONT-WEIGHT: bold; color: #666; text-align: right; float: right; height: 20px; padding-top: 7px; padding-right: 6px;">廣告</DIV>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<DIV style="WIDTH: 295px; FLOAT: left">
+<DIV style="MARGIN-BOTTOM: 8px; border: #ccc 1px solid;">
+<A HREF="http://www.digitimes.com.tw/seminar/Chipsip_20111110/index.asp" target=_blank>
+<img src="http://mms.digitimes.com/tw/x/img/ad/extra/2011-10-12_200619.jpg" width="293" height="66">
+</A>
+</DIV>
+<DIV style="POSITION: relative; MARGIN-BOTTOM: 4px; FONT-SIZE: 12pt; FONT-WEIGHT: bold">
+<A href="http://www.digitimes.com.tw/seminar/Chipsip_20111110/index.asp" target=_blank>
+11/10 打造行動智慧生活雲 SiP 技術研討會
+</A>
+</DIV>
+<DIV style="TEXT-JUSTIFY: newspaper; text-align:left;#text-align:justify; LINE-HEIGHT: 20px; OVERFLOW-Y: hidden; LETTER-SPACING: 1px; FONT-SIZE: 12px">SiP還能有什麼樣的變形可為我們帶來超越蘋果的秘密武器？台灣第一家以提供專業SiP微型化解決方案的鉅景科技以SiP為基礎，結合...</DIV>
+</DIV>
+<DIV style="WIDTH: 18px; FLOAT: left">&nbsp;</DIV>
+<DIV style="WIDTH: 295px; FLOAT: left">
+<DIV style="MARGIN-BOTTOM: 8px; border: #ccc 1px solid;">
+<A HREF="http://www.digitimes.com.tw/seminar/dois_20111019.htm" target=_blank>
+<img src="http://mms.digitimes.com/tw/x/img/ad/extra/293X66_20111019.gif" width="293" height="66">
+</A>
+</DIV>
+<DIV style="POSITION: relative; MARGIN-BOTTOM: 4px; FONT-SIZE: 12pt; FONT-WEIGHT: bold">
+<A href="http://www.digitimes.com.tw/seminar/dois_20111019.htm" target=_blank>
+10月19日 2011 投資台灣高峰會
+</A>
+</DIV>
+<DIV style="TEXT-JUSTIFY: newspaper; text-align:left;#text-align:justify; LINE-HEIGHT: 20px; OVERFLOW-Y: hidden; LETTER-SPACING: 1px; FONT-SIZE: 12px">「兩岸經濟合作架構協議(ECFA)」簽署生效後，台灣地緣經濟戰略位置凸顯，有助於美歐日企業選擇將台灣作為進入中國大陸暨亞洲市場...</DIV>
+</DIV>
+</div>
+<!-- 知識服務結束 -->
+<DIV style="float: left; margin-top: 8px; border-bottom: silver 1px dotted;">
+<TABLE style="BORDER-TOP: #555 3px solid; margin-bottom: 8px; border-bottom: silver 1px dotted;" border=0 cellSpacing=0 cellPadding=0 width="610"><TBODY><TR>
+<TD vAlign=top style="TEXT-ALIGN: left"><DIV style="PADDING-BOTTOM: 0px; PADDING-LEFT: 4px; PADDING-RIGHT: 4px; MARGIN-BOTTOM: 4px; FONT-SIZE: 12pt; FONT-WEIGHT: bold; PADDING-TOP: 4px; float: left; width: 550px;">商情</DIV>
+<DIV style="FONT-SIZE: 8pt; FONT-WEIGHT: bold; color: #666; text-align: right; float: right; height: 20px; padding-top: 7px; padding-right: 6px;">廣告</DIV></TD>
+</TR>
+</TBODY>
+</TABLE>
+<TABLE border=0 cellSpacing=0 cellPadding=0 width=190 align=left style="margin-right:6px; margin-left: 6px;">
+<TBODY>
+<TR>
+<TD style="">
+<a href="/tw/dt/newpromo_pkg.asp?cnlid=13&channel=130&cat=&category=10&package_id=5172">
+<img src="http://mms.digitimes.com/newsimg/PACKAGE/5172B_W190.jpg" width="190" height="104">
+</a>
+</TD>
+</TR>
+<TR>
+<TD align=left valign="top">
+<DIV style="FONT-SIZE: 12pt; FONT-WEIGHT: bold; margin-top: 5px; border-top: 0px dotted #ccc;">
+<a href="/tw/dt/newpromo_pkg.asp?cnlid=13&channel=130&cat=&category=10&package_id=5172">電源管理技術趨勢專輯</a>
+</DIV>
+<DIV style="TEXT-JUSTIFY: newspaper; TEXT-ALIGN:left;#TEXT-ALIGN: justify; LINE-HEIGHT: 20px; OVERFLOW-Y: hidden; LETTER-SPACING: 1px; FONT-SIZE: 12px; margin-bottom: 5px;">
+越來越多行動裝置採鋰電池作為主要電力來源，因其具備體積小、高能量密度等優點，但也...
+</DIV>
+<DIV style="FLOAT: left">
+<DIV style="BORDER-BOTTOM: silver 0px dotted; PADDING-BOTTOM: 4px; PADDING-LEFT: 2px; PADDING-RIGHT: 2px; PADDING-TOP: 4px; border-top: silver 1px dotted;">
+<A href="/tw/dt/n/shwnws.asp?CnlID=13&cat=150&id=0000255266_BF61KN5076SY3S5GLKESD&ct=1">
+兼具安全與效率考量的行動裝置電源設計
+</A>
+</DIV>
+<DIV style="BORDER-BOTTOM: silver 0px dotted; PADDING-BOTTOM: 4px; PADDING-LEFT: 2px; PADDING-RIGHT: 2px; PADDING-TOP: 4px; border-top: silver 1px dotted;">
+<A href="/tw/dt/n/shwnws.asp?CnlID=13&cat=150&id=0000255268_ZL93927C5N9RDK9MKOW22&ct=1">
+可攜式產品的電源管理策略
+</A>
+</DIV>
+<DIV style="BORDER-BOTTOM: silver 0px dotted; PADDING-BOTTOM: 4px; PADDING-LEFT: 2px; PADDING-RIGHT: 2px; PADDING-TOP: 4px; border-top: silver 1px dotted;">
+<A href="/tw/dt/n/shwnws.asp?CnlID=13&cat=150&id=0000255267_QMU1JIWK7UDCE36J5BO3U&ct=1">
+強化傳輸效能與電源管理優勢的USB 3.0介面設計
+</A>
+</DIV>
+</DIV>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<TABLE border=0 cellSpacing=0 cellPadding=0 width=190 align=left style="margin-right:6px; margin-left: 6px;">
+<TBODY>
+<TR>
+<TD style="">
+<a href="/tw/dt/newpromo_pkg.asp?cnlid=13&channel=130&cat=&category=40&package_id=5165">
+<img src="http://mms.digitimes.com/newsimg/PACKAGE/5165B_W190.jpg" width="190" height="104">
+</a>
+</TD>
+</TR>
+<TR>
+<TD align=left valign="top">
+<DIV style="FONT-SIZE: 12pt; FONT-WEIGHT: bold; margin-top: 5px; border-top: 0px dotted #ccc;">
+<a href="/tw/dt/newpromo_pkg.asp?cnlid=13&channel=130&cat=&category=40&package_id=5165">企業虛擬桌面導入評估調查專輯</a>
+</DIV>
+<DIV style="TEXT-JUSTIFY: newspaper; TEXT-ALIGN:left;#TEXT-ALIGN: justify; LINE-HEIGHT: 20px; OVERFLOW-Y: hidden; LETTER-SPACING: 1px; FONT-SIZE: 12px; margin-bottom: 5px;">
+為瞭解台灣企業用戶對於桌面虛擬化的導入意願及應用需求，DIGITIMES進行「企...
+</DIV>
+<DIV style="FLOAT: left">
+<DIV style="BORDER-BOTTOM: silver 0px dotted; PADDING-BOTTOM: 4px; PADDING-LEFT: 2px; PADDING-RIGHT: 2px; PADDING-TOP: 4px; border-top: silver 1px dotted;">
+<A href="/tw/dt/n/shwnws.asp?CnlID=13&cat=150&id=0000254316_E1I2S1I72NU56556UGL8L&ct=1">
+企業虛擬桌面導入評估調查專輯_2　傳產及服務業導入桌面虛擬化意願稍高
+</A>
+</DIV>
+<DIV style="BORDER-BOTTOM: silver 0px dotted; PADDING-BOTTOM: 4px; PADDING-LEFT: 2px; PADDING-RIGHT: 2px; PADDING-TOP: 4px; border-top: silver 1px dotted;">
+<A href="/tw/dt/n/shwnws.asp?CnlID=13&cat=150&id=0000254346_FGX2BG0R5RPX7X5Y8E9FI&ct=1">
+企業虛擬桌面導入評估調查專輯_3　桌面虛擬化投資回報期長達1~3年
+</A>
+</DIV>
+<DIV style="BORDER-BOTTOM: silver 0px dotted; PADDING-BOTTOM: 4px; PADDING-LEFT: 2px; PADDING-RIGHT: 2px; PADDING-TOP: 4px; border-top: silver 1px dotted;">
+<A href="/tw/dt/n/shwnws.asp?CnlID=13&cat=150&id=0000254661_DWA7YN3X5SBQ8H2L12T7M&ct=1">
+微軟MDOP 2010桌面虛擬化工具降低整體IT管理成本
+</A>
+</DIV>
+</DIV>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+<TABLE border=0 cellSpacing=0 cellPadding=0 width=190 align=left style="margin-right:6px; margin-left: 6px;">
+<TBODY>
+<TR>
+<TD style="">
+<a href="/tw/dt/newpromo_pkg.asp?cnlid=13&channel=130&cat=&category=10&package_id=5162">
+<img src="http://mms.digitimes.com/newsimg/PACKAGE/5162B_W190.jpg" width="190" height="104">
+</a>
+</TD>
+</TR>
+<TR>
+<TD align=left valign="top">
+<DIV style="FONT-SIZE: 12pt; FONT-WEIGHT: bold; margin-top: 5px; border-top: 0px dotted #ccc;">
+<a href="/tw/dt/newpromo_pkg.asp?cnlid=13&channel=130&cat=&category=10&package_id=5162">微控制器技術趨勢專輯</a>
+</DIV>
+<DIV style="TEXT-JUSTIFY: newspaper; TEXT-ALIGN:left;#TEXT-ALIGN: justify; LINE-HEIGHT: 20px; OVERFLOW-Y: hidden; LETTER-SPACING: 1px; FONT-SIZE: 12px; margin-bottom: 5px;">
+在可攜式消費電子產品領域中，使用者對電子產品的強烈需求，推動了積體電路製造商不斷...
+</DIV>
+<DIV style="FLOAT: left">
+<DIV style="BORDER-BOTTOM: silver 0px dotted; PADDING-BOTTOM: 4px; PADDING-LEFT: 2px; PADDING-RIGHT: 2px; PADDING-TOP: 4px; border-top: silver 1px dotted;">
+<A href="/tw/dt/n/shwnws.asp?CnlID=13&cat=150&id=0000254348_RPH2RPHM53OXDY7ZL1AG4&ct=1">
+電能計量IC配合快閃記憶體微控制器　實現創新彈性的電錶設計
+</A>
+</DIV>
+<DIV style="BORDER-BOTTOM: silver 0px dotted; PADDING-BOTTOM: 4px; PADDING-LEFT: 2px; PADDING-RIGHT: 2px; PADDING-TOP: 4px; border-top: silver 1px dotted;">
+<A href="/tw/dt/n/shwnws.asp?CnlID=13&cat=150&id=0000252089_MSTLOXLE90TD0H8P3VAHK&ct=1">
+瑞薩電子推出SuperH微控制器　結合USB連線功能與單晶片上的系統控制能力
+</A>
+</DIV>
+<DIV style="BORDER-BOTTOM: silver 0px dotted; PADDING-BOTTOM: 4px; PADDING-LEFT: 2px; PADDING-RIGHT: 2px; PADDING-TOP: 4px; border-top: silver 1px dotted;">
+<A href="/tw/dt/n/shwnws.asp?CnlID=13&cat=150&id=0000252571_5516RQT96MQFT52YGU2FP&ct=1">
+意法半導體推出迄今全球性能最高、基於Cortex-M的微控制器
+</A>
+</DIV>
+</DIV>
+</TD>
+</TR>
+</TBODY>
+</TABLE>
+</DIV>
+</div>
+</div>
+<div id="pageright" style="margin-top: 5px;margin-right: 10px;margin-bottom: 0;margin-left: 0px;">
+<!--//開始－以下放頁面右邊的廣告與其他方塊模組-->
+<!-- <div style="line-height: 10px;">&nbsp;</div> -->
+<TABLE width="336" border=0 cellPadding=0 cellSpacing=0 style="">
+<TR>
+<TD>
+<DIV style="TEXT-ALIGN: left; PADDING-BOTTOM: 1px; PADDING-LEFT: 4px; PADDING-RIGHT: 4px; FONT-SIZE: 11pt; BORDER-TOP: #f08200 3px solid; PADDING-TOP: 4px; font-weight: bold; height: 22px; border-bottom: silver 1px dotted;" class=latestrpt>今日數字&nbsp;</DIV>
+<DIV style="float:left; font-size: 20pt; margin-right: 10px; color: #F60; font-weight: bold;">930</DIV>
+<DIV style="TEXT-ALIGN: left; font-size: 10pt; margin-bottom: 10px; padding-top: 9px;" class=latestrpt><B><A href="/tw/dt/n/shwnws.asp?CnlID=9&Cat=150&Cat1=15&id=0000255287_Y7J34S2Y7Z4GXW81UJYEH&ct=1">泰國洪災至少有930家工廠受創</A></B></DIV>
+<DIV style="BORDER-TOP: silver 1px dotted; margin-bottom: 5px;" id=top1_b5></DIV>
+<DIV style="float:left; font-size: 20pt; margin-right: 10px; color: #F60; font-weight: bold;">256</DIV>
+<DIV style="TEXT-ALIGN: left; font-size: 10pt; margin-bottom: 10px; padding-top: 9px;" class=latestrpt><B><A href="/tw/dt/n/shwnws.asp?CnlID=1&Cat=40&Cat1=30&id=0000255342_CIP2CHS05EVILQ1TXOIJT&ct=1">DRAM台系3大廠3Q虧損達256億元</A></B></DIV>
+<DIV style="BORDER-TOP: silver 1px dotted; margin-bottom: 5px;" id=top1_b5></DIV>
+<DIV style="float:left; font-size: 20pt; margin-right: 10px; color: #F60; font-weight: bold;">17.7</DIV>
+<DIV style="TEXT-ALIGN: left; font-size: 10pt; margin-bottom: 10px; padding-top: 9px;" class=latestrpt><B><A href="/tw/dt/n/shwnws.asp?CnlID=1&Cat=10&Cat1=10&id=0000255402_78E31WHZ1MG6W31PSC4OX&ct=1">惠普PC第3季市佔率達17.7%全球第1</A></B></DIV>
+<DIV style="BORDER-TOP: silver 1px dotted; margin-bottom: 5px;" id=top1_b5></DIV>
+<DIV style="float:left; font-size: 20pt; margin-right: 10px; color: #F60; font-weight: bold;">15</DIV>
+<DIV style="TEXT-ALIGN: left; font-size: 10pt; margin-bottom: 10px; padding-top: 9px;" class=latestrpt><B><A href="/tw/dt/n/shwnws.asp?CnlID=1&Cat=60&Cat1=25&id=0000255451_5B23JHKW6L3QPE02SPCUW&ct=1">阿爾卡特朗訊以15億美元出售旗下客服中心部門</A></B></DIV>
+<DIV style="BORDER-TOP: silver 1px dotted; margin-bottom: 5px;" id=top1_b5></DIV>
+</TD>
+</TR>
+</TABLE>
+<div style="line-height: 10px;">&nbsp;</div>
+<div class="pt_ad"></div><div class="pt_ad"><div class="pt_ad"><fjtignoreurl><a href='/tw/webad/click.asp?Seq=45368' target='_blank' align=absmiddle><img src='http://ad.digitimes.com.tw/111011_greenpage_bigbutton.gif' width=336 height=280 border=0 alt='greenpage'></a></fjtignoreurl></div></div>
+<DIV style="LINE-HEIGHT: 10px">&nbsp;</DIV>
+<!--Modify by March 20110612 讀者問與答-->
+<table width="336" border="0" cellspacing="0" cellpadding="0" style="margin-bottom:8px;">
+<tr>
+<td><img src="http://mms.digitimes.com/tw/x/img/icon/qa_title.jpg" border="0" usemap="#Map" /></td>
+</tr>
+<tr>
+<td id="qa_td" style="border-bottom:#F08200 1px solid; padding:5px; background:url(http://mms.digitimes.com/tw/x/img/icon/qa_bg.jpg) center bottom no-repeat;">
+<div style="TEXT-ALIGN: left; FONT-SIZE: 10pt;border-bottom:dotted 1px silver;padding:4px 0;">泰國近期適逢罕見大水災，導致日本零組件及消費性電子大廠當地產線被迫停工部分零組件訂單甚至已有轉單台廠效應出現。對此DIGITIMES歡迎您提出疑問，我們將為您進行解說。</div>
+<div style="TEXT-ALIGN: left; FONT-SIZE: 10pt;border-bottom:dotted 1px silver;padding:4px 0;"><a href="/tw/RQA/index.asp?DataID=40&pid=4641" target="_blank"><b>1.是否提供泰國洪災對台商之影響程度
+...</a><span style="font-size:10px; padding-left: 5px; color: #F30; font-weight: normal;">(1)</span></b></div>
+<div style="TEXT-ALIGN: left; FONT-SIZE: 10pt;border-bottom:dotted 1px silver;padding:4px 0;"><a href="/tw/RQA/index.asp?DataID=40&pid=4639" target="_blank"><b>消&#36153;&#31867;&#30005;子大...</a><span style="font-size:10px; padding-left: 5px; color: #F30; font-weight: normal;">(1)</span></b></div>
+<div style="TEXT-ALIGN: left; FONT-SIZE: 10pt;border-bottom:dotted 1px silver;padding:4px 0;"><a href="/tw/RQA/index.asp?DataID=40&pid=4616" target="_blank"><b>HDD沒有所謂台廠, 所以怎麼解??</a><span style="font-size:10px; padding-left: 5px; color: #F30; font-weight: normal;">(1)</span></b></div>
+<div style="TEXT-ALIGN: left; FONT-SIZE: 10pt;border-bottom:dotted 1px silver;padding:4px 0;"><a href="/tw/RQA/index.asp?DataID=40&pid=4619" target="_blank"><b>Nikon大多數產能停工對台灣廠商有何影響...</a><span style="font-size:10px; padding-left: 5px; color: #F30; font-weight: normal;">(2)</span></b></div>
+<div style="TEXT-ALIGN: left; FONT-SIZE: 10pt;"><a href="/tw/RQA/index.asp?DataID=40&pid=4637" target="_blank"><b>可否提供電子業的哪些主要廠商located o...</a><span style="font-size:10px; padding-left: 5px; color: #F30; font-weight: normal;">(2)</span></b></div>
+</td>
+</tr>
+</table>
+<map name="Map" id="Map">
+<area shape="rect" coords="269,13,330,37" href="http://www.digitimes.com.tw/tw/RQA/index.asp?DataID=40" target="_blank" />
+</map>
+<div style="line-height: 10px;">&nbsp;</div>
+<link rel="stylesheet" href="http://mms.digitimes.com/tw/x/css/promotion.css" type="text/css">
+<table width=336 height=280 id=promote cellpadding=0 border=0 cellspacing=0>
+<tr><td><div class=adtitletop>Jobs逝世專輯</div></td></tr>
+<tr><td height=155><a class=adtop href="http://www.digitimes.com.tw/tw/dt/most.asp?pack=5152&CnlID=9&cat=150" target="_blank"><img src="http://ad.digitimes.com.tw/upimg/45403_GBZdCy.jpg" border=0 width=336 height=135></a></td></tr>
+<tr><td >
+<ul class=adul>
+<li class=adli>議題精選：<a class=adpromote href="http://www.digitimes.com.tw/tw/dt/most.asp?pack=5152&CnlID=9&cat=150" target="_blank">Jobs逝世專輯</a></li>
+<li class=adli>深度專輯：<a class=adpromote href="http://www.digitimes.com.tw/tw/indepth/index.asp?tid=MTcy" target="_blank">Jobs還是走了　但造就新世界身影未走遠</a></li>
+<li class=adli><a class=adpromote href="http://www.digitimes.com.tw/tw/dt/n/shwnws.asp?id=254098" target="_blank">Jobs雖已逝　仍形塑NB產業未來</a></li>
+</ul>
+</td></tr>
+<tr><td><a href="http://www.digitimes.com.tw" target="_blank"><img src="http://ad.digitimes.com.tw/upimg/footlogo.jpg" border="0" width=336 height=17></a></td></tr>
+</table>
+<div style="line-height: 10px;">&nbsp;</div>
+<div class="pt_ad"></div><div class="pt_ad"><div class="pt_ad"><fjtignoreurl><a href='/tw/webad/click.asp?Seq=45299' target='_blank' align=absmiddle><img src='http://ad.digitimes.com.tw/111001_promate_bigbutton.gif' width=336 height=280 border=0 alt='promate'></a></fjtignoreurl></div></div>
+<div style="line-height: 10px;">&nbsp;</div>
+<!--div style="margin: 0pt; padding: 0pt;" style="background:transparent url('/tw/x/img/vv2.gif') repeat-x scroll left center;border-width:0 !important;clear:both;height:4px;"></div-->
+<table border="0" cellpadding="0" cellspacing="0" width="99%">
+<tr><td valign="top">
+<table border="0" width="100%" cellspacing="0" cellpadding="0" style="text-align:left;font-size:9pt;padding:0px;#padding:0px;border-top:solid 3px #555">
+<tr>
+<td id="c1a_info" name="c1a_info" width="50%" align="center" style="line-height:25px;font-size:10pt;border-right:1px solid #B4B4B4"><a href="javascript:{void(0)}" onclick="selectedItem('c1a_info','c2a_info');Get_ServerDataa_info('a_info')">企業IT商情 </a></td>
+<td id="c2a_info" name="c2a_info" width="50%" align="center" style="line-height:25px;font-size:10pt;background-color:#F4F4F4;border-bottom:1px solid #B4B4B4"><a href="javascript:{void(0)}" onclick="selectedItem('c2a_info','c1a_info');Get_ServerDataa_info('p_info')">企業IT專輯</a></td>
+</tr>
+<tr><td colspan="5" style="padding:5px;background-color:#FFFFFF" ID="Get_HotArea_Contenta_info" name="Get_HotArea_Contenta_info">
+<table width="100%" cellspacing="0" cellpadding="3"><tr><td colspan="2" style="color:#000000;line-height:16px;text-align:left;background-color:#FFFFFF;border-width:0px" align="left" valign="top"><a href=/tw/dt/n/shwnws.asp?CnlID=13&id=0000253945_EGV8UES45LR0SX47SFEXA&ct=1 target="_blank"><b>Websense TRITON方案獲SC Magazine和IT Pro完美產品評論</b></a></td></tr><tr><td colspan="2" style="border-bottom:1px dotted #B0CADA" align="left"><div class ="newspaperjustify"><div class="fxcontent" >持續出現的最新及熱門資料侵害，和受矚目的Web攻擊事件，從消費者到經營者，每個人對於是否可能反制日益猖獗的進階網路犯罪而感到疑慮。根據SC Magazine和IT Pro UK...</div></div></td></tr><tr><td valign="top" style="padding-left:10px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" class="rpt_dot"><img src="http://mms.digitimes.com/tw/x/img/icon/orange_bullet.gif" style="padding:6px 6px 0 6px;" /></td><td width="95%" style="color:#000000;line-height:16px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" align="left" valign="top"><a href="/tw/dt/n/shwnws.asp?CnlID=13&id=0000254599_R1E66VIO8F1KWOLS0TEDA&ct=1" target="_blank">BMC軟體全面支援IBM zEnterprise大型主機　性能提升</a></td></tr><tr><td></td></tr><tr><td valign="top" style="padding-left:10px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" class="rpt_dot"><img src="http://mms.digitimes.com/tw/x/img/icon/orange_bullet.gif" style="padding:6px 6px 0 6px;" /></td><td width="95%" style="color:#000000;line-height:16px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" align="left" valign="top"><a href="/tw/dt/n/shwnws.asp?CnlID=13&id=0000254697_9J050HSUL5ID7Y6L01KSP&ct=1" target="_blank">智慧型電源分配器扮演機房節能重要功能角色</a></td></tr><tr><td></td></tr><tr><td valign="top" style="padding-left:10px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" class="rpt_dot"><img src="http://mms.digitimes.com/tw/x/img/icon/orange_bullet.gif" style="padding:6px 6px 0 6px;" /></td><td width="95%" style="color:#000000;line-height:16px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" align="left" valign="top"><a href="/tw/dt/n/shwnws.asp?CnlID=13&id=0000255043_EHZ141SN3LJSG74X8KQWT&ct=1" target="_blank">艾訊推出寬溫強固型無風扇嵌入式Din-rail系統rBOX101　適合電力及交通應用</a></td></tr><tr><td></td></tr><tr><td valign="top" style="padding-left:10px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" class="rpt_dot"><img src="http://mms.digitimes.com/tw/x/img/icon/orange_bullet.gif" style="padding:6px 6px 0 6px;" /></td><td width="95%" style="color:#000000;line-height:16px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" align="left" valign="top"><a href="/tw/dt/n/shwnws.asp?CnlID=13&id=0000254969_NDLL3S7L5W4Z1HLX9CD1T&ct=1" target="_blank">物聯網之智慧電網技術應用：AMI/AMR自動讀錶的通訊技術(上)</a></td></tr><tr><td></td></tr><tr><td colspan="2" align="right"><a href="/tw/dt/SubChannel_13.asp?CnlID=13">更多</a></td></tr></table>
+</td></tr>
+</table>
+</td></tr>
+</table>
+<label id="xxarea"></label>
+<script language="javascript">
+function Get_ServerDataa_info(Kind){
+var pkl = '';
+$("#Get_HotArea_Contenta_info").html('<img src="/tw/x/img/24-1.gif">')
+$.ajax({
+url : '/tw/ajax/NewsModule.asp?kind=' + Kind + '&CnlID=&cat=' + '&pkl=' + pkl,
+error : function (err) {$("#Get_HotArea_Contenta_info").html("擷取資料時發生錯誤!")},
+success : function (response) {
+$("#Get_HotArea_Contenta_info").html(response);
+}
+})
+}
+</script>
+<div style="line-height: 10px;">&nbsp;</div>
+<DIV style="TEXT-ALIGN: left; PADDING-BOTTOM: 1px; PADDING-LEFT: 4px; PADDING-RIGHT: 4px; FONT-SIZE: 11pt; BORDER-TOP: #f08200 3px solid; BORDER-BOTTOM: silver 1px dotted; PADDING-TOP: 4px; font-weight: bold; height: 22px;" class=latestrpt>趨勢圖示&nbsp;</DIV><div style="FONT-SIZE: 12pt; FONT-WEIGHT: bold; margin-top: 5px;"><a href="/tw/multimedia/mlutimedia.asp?mcat1=10&mcat2=&news_key=255116&shtype=3">泰國HDD組裝線全球佔比</a></div><DIV style=""><a href="/tw/multimedia/mlutimedia.asp?mcat1=10&mcat2=&news_key=255116&shtype=3"><img src="http://mms.digitimes.com/NewsImg//2011/1020/255116-1-LJAG7_W336.jpg" width="336"></a></DIV>
+<div style="line-height: 10px;">&nbsp;</div>
+<div class="pt_ad"></div><div class="pt_ad"><div class="pt_ad"><link rel="stylesheet" href="http://mms.digitimes.com/tw/x/css/promotion.css" type="text/css">
+<table width=336 height=280 id=promote cellpadding=0 border=0 cellspacing=0>
+<tr><td><div class=adtitletop>iPhone 4S上市專輯</div></td></tr>
+<tr><td height=155><a class=adtop href="http://www.digitimes.com.tw/tw/dt/most.asp?pack=5140&CnlID=1&cat=60" target="_blank"><img src="http://ad.digitimes.com.tw/upimg/45404_auPuyA.jpg" border=0 width=336 height=135></a></td></tr>
+<tr><td >
+<ul class=adul>
+<li class=adli>議題精選：<a class=adpromote href="http://www.digitimes.com.tw/tw/dt/most.asp?pack=5140&CnlID=1&cat=60" target="_blank">iPhone 4S噓聲四起　蘋果熟透了</a></li>
+<li class=adli><a class=adpromote href="http://www.digitimes.com.tw/tw/dt/n/shwnws.asp?id=254479" target="_blank">iPhone 4S聲控超炫　媒體試用佳評如潮</a></li>
+<li class=adli><a class=adpromote href="http://www.digitimes.com.tw/tw/dt/n/shwnws.asp?id=254019" target="_blank">蘋果：iPhone 4S預購首日破100萬支創紀錄</a></li>
+</ul>
+</td></tr>
+<tr><td><a href="http://www.digitimes.com.tw" target="_blank"><img src="http://ad.digitimes.com.tw/upimg/footlogo.jpg" border="0" width=336 height=17></a></td></tr>
+</table>
+</div></div>
+<div style="line-height: 10px;">&nbsp;</div>
+<!-- MulitMedia開始 -->
+<div id="regionMultimediaModule">
+<TABLE width="336" border="0" cellPadding="0" cellSpacing="0" style="border-top:3px solid  #f29600;">
+<TR>
+<TD>
+<DIV>
+<DIV style="TEXT-ALIGN: left; font-size: 11pt; padding: 4px 4px 0 4px; border-bottom: silver 1px dotted; margin-bottom: 5px;" class="latestrpt"><B>多媒體</B></DIV>
+<table width="100%" border="0" cellspacing="0" cellpadding="4">
+<tr>
+<td align="center">
+<img src="http://mms.digitimes.com/NewsImg/2011/1020/255609-2-CV684_W160.jpg" width="160" height="93">
+</td>
+<td align="center">
+<img src="http://mms.digitimes.com/NewsImg/2011/1020/255610-1-2ZULP_W160.jpg" width="160" height="92">
+</td>
+</tr>
+<tr>
+<td align="left" valign="top">
+<DIV style="TEXT-ALIGN: left; font-size: 10pt;" class="latestrpt">
+<B><A href="/TW/multimedia/mlutimedia.asp?news_key=2011/10/20&shtype=1&imgseq=5">北京建築設計貿易展開跑</A></B>
+</DIV>
+</td>
+<td align="left" valign="top">
+<DIV style="TEXT-ALIGN: left; font-size: 10pt;" class="latestrpt">
+<B><A href="/TW/multimedia/mlutimedia.asp?news_key=2011/10/20&shtype=1&imgseq=6">戴爾新研發中心正式開始開幕</A></B>
+</DIV>
+</td>
+</tr>
+</table>
+</DIV>
+</TD>
+</TR>
+</TABLE>
+</div>
+<!-- MulitMedia結束 -->
+<div style="line-height: 10px;">&nbsp;</div>
+<!-- 360andEpaper開始 -->
+<div id="region360andEpaperModule">
+<table width="336" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 8px; border: #ccc 0px solid;">
+<tr>
+<td width="167" valign="top" style="background-color:#FFF;border-top: 3px solid  #f29600;">
+<DIV style="TEXT-ALIGN: left; font-size: 11pt; padding: 4px 0px 2px 5px; color: #000; border-bottom: silver 1px dotted; margin-left: 2px; margin-right: 2px;" class="latestrpt"><B>360&deg; </B></DIV>
+<DIV style="TEXT-ALIGN: left; PADDING-LEFT: 10px; PADDING-RIGHT: 0px; LETTER-SPACING: 1px; FONT-WEIGHT: bold; PADDING-TOP: 0px; color: #000;" class="latestrpt">
+<table width="164" cellpadding="3" cellspacing="0" >
+<TR sizcache="0" sizset="8">
+<TD style="padding: 10px 5px 0px 5px;#padding: 0px 5px 0px 5px;" vAlign="top">
+<IMG src="http://mms.digitimes.com/tw/x/img/2010WebPage/orange_bullet.gif">
+</TD>
+<TD sizcache="0" sizset="8">
+<DIV>
+<strong><A class="latestrpt" style="FONT-SIZE: 10pt;" href="/tw/dt/n/shwnws.asp?CnlID=10&cat=25&id=0000255377_3W249B6K6TJZ208929DHT&ct=1">Galaxy Nexus</A></strong>
+</DIV>
+</TD>
+</TR>
+<TR sizcache="0" sizset="8">
+<TD style="padding: 10px 5px 0px 5px;#padding: 0px 5px 0px 5px;" vAlign="top">
+<IMG src="http://mms.digitimes.com/tw/x/img/2010WebPage/orange_bullet.gif">
+</TD>
+<TD sizcache="0" sizset="8">
+<DIV>
+<strong><A class="latestrpt" style="FONT-SIZE: 10pt;" href="/tw/dt/n/shwnws.asp?CnlID=10&cat=35&id=0000255409_LRN5QHTSLSALY1LEY418B&ct=1">英特爾2011年第3季業績</A></strong>
+</DIV>
+</TD>
+</TR>
+<TR sizcache="0" sizset="8">
+<TD style="padding: 10px 5px 0px 5px;#padding: 0px 5px 0px 5px;" vAlign="top">
+<IMG src="http://mms.digitimes.com/tw/x/img/2010WebPage/orange_bullet.gif">
+</TD>
+<TD sizcache="0" sizset="8">
+<DIV>
+<strong><A class="latestrpt" style="FONT-SIZE: 10pt;" href="/tw/dt/n/shwnws.asp?CnlID=10&cat=15&id=0000255406_AK45PVIHL9EIUC70L7RO0&ct=1">蘋果2011年4Q財報</A></strong>
+</DIV>
+</TD>
+</TR>
+<TR sizcache="0" sizset="8">
+<TD style="padding: 10px 5px 0px 5px;#padding: 0px 5px 0px 5px;" vAlign="top">
+<IMG src="http://mms.digitimes.com/tw/x/img/2010WebPage/orange_bullet.gif">
+</TD>
+<TD sizcache="0" sizset="8">
+<DIV>
+<strong><A class="latestrpt" style="FONT-SIZE: 10pt;" href="/tw/dt/n/shwnws.asp?CnlID=10&cat=35&id=0000255411_Q1S5FZFA0WO2LW2GQMQ9K&ct=1">PC週邊裝置無線趨勢</A></strong>
+</DIV>
+</TD>
+</TR>
+<TR sizcache="0" sizset="8">
+<TD style="padding: 10px 5px 0px 5px;#padding: 0px 5px 0px 5px;" vAlign="top">
+<IMG src="http://mms.digitimes.com/tw/x/img/2010WebPage/orange_bullet.gif">
+</TD>
+<TD sizcache="0" sizset="8">
+<DIV>
+<strong><A class="latestrpt" style="FONT-SIZE: 10pt;" href="/tw/dt/n/shwnws.asp?CnlID=10&cat=15&id=0000255403_T5H3ZPR918IY1U2ZURVJF&ct=1">聚鼎</A></strong>
+</DIV>
+</TD>
+</TR>
+<TR sizcache="0" sizset="8">
+<TD style="padding: 10px 5px 0px 5px;#padding: 0px 5px 0px 5px;" vAlign="top">
+<IMG src="http://mms.digitimes.com/tw/x/img/2010WebPage/orange_bullet.gif">
+</TD>
+<TD sizcache="0" sizset="8">
+<DIV>
+<strong><A class="latestrpt" style="FONT-SIZE: 10pt;" href="/tw/dt/n/shwnws.asp?CnlID=10&cat=35&id=0000255343_2JA4GZTQ3LHRS441UK2QN&ct=1">台3大DRAM廠2011年3Q財報</A></strong>
+</DIV>
+</TD>
+</TR>
+<TR sizcache="0" sizset="8">
+<TD style="padding: 10px 5px 0px 5px;#padding: 0px 5px 0px 5px;" vAlign="top">
+<IMG src="http://mms.digitimes.com/tw/x/img/2010WebPage/orange_bullet.gif">
+</TD>
+<TD sizcache="0" sizset="8">
+<DIV>
+<strong><A class="latestrpt" style="FONT-SIZE: 10pt;" href="/tw/dt/n/shwnws.asp?CnlID=10&cat=15&id=0000255293_W1D1MRHYL3T97X2NSSYJK&ct=1">鐘淵化學</A></strong>
+</DIV>
+</TD>
+</TR>
+<TR sizcache="0" sizset="8">
+<TD style="padding: 10px 5px 0px 5px;#padding: 0px 5px 0px 5px;" vAlign="top">
+<IMG src="http://mms.digitimes.com/tw/x/img/2010WebPage/orange_bullet.gif">
+</TD>
+<TD sizcache="0" sizset="8">
+<DIV>
+<strong><A class="latestrpt" style="FONT-SIZE: 10pt;" href="/tw/dt/n/shwnws.asp?CnlID=10&cat=35&id=0000255339_ZKM2ZHRF4SSV8788R0PEL&ct=1">類單晶(Mono-like)走勢</A></strong>
+</DIV>
+</TD>
+</TR>
+<TR sizcache="0" sizset="8">
+<TD colspan="2" sizcache="0" sizset="8" align="right">
+<DIV>
+<strong><A class="latestrpt" style="FONT-SIZE: 10pt;" href="/tw/dt/p360.asp?CnlID=10">更多...</A></strong>
+</DIV>
+</TD>
+</TR>
+</table>
+</DIV>
+</td>
+<td width="8px" style="">&nbsp;</td>
+<td width="158px" align="center" valign="top" style="background-color:#FFF;border-top: 3px solid  #f29600; padding-top: 5px;">
+<DIV style="TEXT-ALIGN: left; font-size: 11pt; color: #000; padding-bottom: 2px;" class="latestrpt"><span style="float:left;"><B>電子時報</B></span>
+<!-- <span class="xmsopen" style="display:none;float: right;" >
+<a href="http://mms.digitimes.com/printimg/2011/20111020_dt.pdf" target="_blank" >
+<img src=/tw/x/img/enlarge_icon.gif align=absmiddle border=0/>放大</a></span> -->
+</DIV>
+<A HREF="/tw/dt/dtpage_cold.asp"><img src="http://mms.digitimes.com/printimg/2011/20111020_dt_s_W158.jpg" width="158" height="234"></A>
+</td>
+</tr>
+</table>
+</div>
+<script type="text/javascript">
+var userid = '';
+if (userid!=''){
+$(document).ready(function(){
+$(".classFunction").css("display","");
+$(".defchko").css("display","");
+$(".updatediv").css("display","");
+$(".xmsopen").css("display","");
+$(".rpt_dtlist").css("display","none");
+});
+}
+</script>
+<!-- 360andEpaper結束 -->
+<DIV style="LINE-HEIGHT: 7px">&nbsp;</DIV>
+<!-- TodayNewsPhoto開始 -->
+<div id="regionTodayNewsPhotoModule">
+<TABLE width="336" border="0" cellPadding="0" cellSpacing="0" >
+<TBODY>
+<TR>
+<TD>
+<DIV>
+<DIV style="TEXT-ALIGN: left; font-size: 11pt; padding: 4px 4px 0px 4px; border-bottom: 1px dotted silver; margin-bottom: 5px;border-top:3px solid  #f29600;padding-bottom:1px;"  class="latestrpt"><B>照片新聞</B>&nbsp;</DIV>
+<!-- TodayNewsPhoto開始 -->
+<div style="width:336px;" align="center">
+<div class="xx01"  style="width:336px;height:253px;#height:256px;overflow:hidden;text-align:left;display:block;" seq="1">
+<div style='width:336px;height:220px;overflow:hidden;'><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=90&cat1=15&id=0000255146_MXC0V5BM53J2OB50I18KC&ct=1">
+<img src="http://mms.digitimes.com/NewsImg/2011/1019/255146-1-I18KC_W335.jpg" align="center" style="margin-top:2px;" width="336px">
+</a></div>
+<span style="text-align:left;">太陽光電雖臨產業整合期，但諸多其它領域的產業鉅子可是摩拳擦掌積極規劃更大幅度的切入。</span>
+</div>
+<div class="xx01"  style="width:336px;height:253px;#height:256px;overflow:hidden;text-align:left;display:none;" seq="2">
+<div style='width:336px;height:220px;overflow:hidden;'><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=30&cat1=15&id=0000253693_7QW5JU7GL6AZ2U21UDHP9&ct=1">
+<img src="http://mms.digitimes.com/NewsImg/2011/1007/253693-1-UDHP9_W335.jpg" align="center" style="margin-top:2px;" width="336px">
+</a></div>
+<span style="text-align:left;">目前主流尺寸32吋TV面板最新報價，已相當貼近面板廠現金成本。</span>
+</div>
+<div class="xx01"  style="width:336px;height:253px;#height:256px;overflow:hidden;text-align:left;display:none;" seq="3">
+<div style='width:336px;height:220px;overflow:hidden;'><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=90&cat1=15&id=0000253583_R2R4AIHX9XJY0B2S0O5XZ&ct=1">
+<img src="http://mms.digitimes.com/NewsImg/2011/1007/253583-1-0O5XZ_W335.jpg" align="center" style="margin-top:2px;" width="336px">
+</a></div>
+<span style="text-align:left;">第4季即將邁入太陽能傳統淡季，需求恐因天候因素而下滑，諸多業者極低價拋出庫存好過冬，「跳樓價」成交...</span>
+</div>
+<div class="xx01"  style="width:336px;height:253px;#height:256px;overflow:hidden;text-align:left;display:none;" seq="4">
+<div style='width:336px;height:220px;overflow:hidden;'><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=90&cat1=15&id=0000253045_R0L1UCHT3EYUAN6LZTB46&ct=1">
+<img src="http://mms.digitimes.com/NewsImg/2011/1005/253045-1-ZTB46_W335.jpg" align="center" style="margin-top:2px;" width="336px">
+</a></div>
+<span style="text-align:left;">PV Taiwan 2011開展，2011年展覽規模將較2010年成長近30%。</span>
+</div>
+<div class="xx01"  style="width:336px;height:253px;#height:256px;overflow:hidden;text-align:left;display:none;" seq="5">
+<div style='width:336px;height:220px;overflow:hidden;'><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=30&cat1=25&id=0000253030_YDP1FOR8247HBF1XR98LP&ct=1">
+<img src="http://mms.digitimes.com/NewsImg/2011/1004/253030-1-R98LP_W335.jpg" align="center" style="margin-top:2px;" width="336px">
+</a></div>
+<span style="text-align:left;">面板市況不如以往，玻璃基板業者思產品新方向。</span>
+</div>
+<div class="xx01"  style="width:336px;height:253px;#height:256px;overflow:hidden;text-align:left;display:none;" seq="6">
+<div style='width:336px;height:220px;overflow:hidden;'><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=30&cat1=20&id=0000253040_HX91IPBZ3ZOIGN1OTT0QJ&ct=1">
+<img src="http://mms.digitimes.com/NewsImg/2011/1004/253040-1-TT0QJ_W335.jpg" align="center" style="margin-top:2px;" width="336px">
+</a></div>
+<span style="text-align:left;">南韓三星Galaxy Tab推出少見的8.9吋版，尺寸相當齊全，5吋、7吋、8.9吋及10.1吋已都有。</span>
+</div>
+<div class="xx01"  style="width:336px;height:253px;#height:256px;overflow:hidden;text-align:left;display:none;" seq="7">
+<div style='width:336px;height:220px;overflow:hidden;'><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=40&cat1=10&id=0000251879_BA99K4EE6VAUK5L77FXBX&ct=1">
+<img src="http://mms.digitimes.com/NewsImg/2011/0926/251879-1-7FXBX_W335.jpg" align="center" style="margin-top:2px;" width="336px">
+</a></div>
+<span style="text-align:left;">大陸及新興市場中低價3C產品熱賣，可望帶動台系IC設計業者新成長動能。</span>
+</div>
+<div class="xx01"  style="width:336px;height:253px;#height:256px;overflow:hidden;text-align:left;display:none;" seq="8">
+<div style='width:336px;height:220px;overflow:hidden;'><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=40&cat1=10&id=0000251717_AJM8TZUU0XRDUE8ZXPIZB&ct=1">
+<img src="http://mms.digitimes.com/NewsImg/2011/0923/251717-1-XPIZB_W335.jpg" align="center" style="margin-top:2px;" width="336px">
+</a></div>
+<span style="text-align:left;">針對晨星第4季後續營運表現，晨星董事長梁公偉表示不會有驚喜及意外。</span>
+</div>
+<div class="xx01"  style="width:336px;height:253px;#height:256px;overflow:hidden;text-align:left;display:none;" seq="9">
+<div style='width:336px;height:220px;overflow:hidden;'><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=10&cat1=10&id=0000251640_LZK5DDMV506ATKLL1S69T&ct=1">
+<img src="http://mms.digitimes.com/NewsImg/2011/0923/251640-1-1S69T_W335.jpg" align="center" style="margin-top:2px;" width="336px">
+</a></div>
+<span style="text-align:left;">消息人士透露，惠普可能聘請現任董事、eBay前執行長Meg Whitman代理CEO一職。</span>
+</div>
+<div class="xx01"  style="width:336px;height:253px;#height:256px;overflow:hidden;text-align:left;display:none;" seq="10">
+<div style='width:336px;height:220px;overflow:hidden;'><a href="/tw/dt/n/shwnws.asp?CnlID=1&cat=40&cat1=35&id=0000251120_OFH0YIWP3THCETLIHKRNF&ct=1">
+<img src="http://mms.digitimes.com/NewsImg/2011/0920/251120-1-HKRNF_W335.jpg" align="center" style="margin-top:2px;" width="336px">
+</a></div>
+<span style="text-align:left;">亞電董事長兼總經理李建輝表示，軟板未來可望迎接6~7年的好光景。</span>
+</div>
+</div>
+<script>
+setInterval("xxSwapNextImg()",3000);
+var xImgNextSeq=1;
+function xxSwapNextImg(){
+var maxXImg=8;
+$(".xx01").hide();
+if (xImgNextSeq==maxXImg){
+$(".xx01[seq='1']").show();
+xImgNextSeq=1;
+} else {
+xImgNextSeq+=1;
+$(".xx01[seq='" + xImgNextSeq + "']").show();
+}
+}
+</script>
+<DIV style="width:280px;height:1px;BORDER-TOP:silver 0px dotted;margin-bottom:5px;"></DIV>
+<link rel="stylesheet" type="text/css" media="all" href="http://mms.digitimes.com/tw/x/js/jquery_pane/demoStyles.css" />
+<link rel="stylesheet" type="text/css" media="all" href="http://mms.digitimes.com/tw/x/js/jquery_pane/jScrollPane.css" />
+<script type="text/javascript" src="http://mms.digitimes.com/tw/x/js/jquery_pane/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="http://mms.digitimes.com/tw/x/js/jquery_pane/jScrollPane.js"></script>
+<style type="text/css" media="screen" id="test">
+.aaanewstickerblock{
+width:320px;
+overflow-x: hidden;
+overflow-y: hidden;
+text-align:justify;
+white-space:nowrap;
+text-justify:newspaper;
+text-overflow:ellipsis;
+}
+.scroll-pane {
+width: 375px;
+height: 150px;
+overflow: auto;
+float: left;
+}
+</style>
+</div><!-- </div> -->
+</td></tr></tbody></table></div>
+<!-- TodayNewsPhoto結束 -->
+<DIV style="LINE-HEIGHT: 7px">&nbsp;</DIV>
+<DIV style="LINE-HEIGHT: 7px">&nbsp;</DIV>
+<div>
+<div class="pt_ad"></div><div class="pt_ad"><div class="pt_ad"><OBJECT classid='clsid:D27CDB6E-AE6D-11cf-96B8-444553540000' codebase='http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,0,0' WIDTH=336 HEIGHT=280><PARAM NAME=movie VALUE='http://ad.digitimes.com.tw/110622_Alliance_bigbutton.swf?clickTAG=http://www.digitimes.com.tw/tw/webad/click.asp?Seq=44604'><PARAM NAME=lostrPosition VALUE=true><PARAM NAME=menu VALUE=false><PARAM NAME=quality VALUE=high><param name=wmode value=opaque><EMBED src='http://ad.digitimes.com.tw/110622_Alliance_bigbutton.swf?clickTAG=http://www.digitimes.com.tw/tw/webad/click.asp?Seq=44604' lostrPosition=true menu=false quality=high WIDTH=336 HEIGHT=280 TYPE='application/x-shockwave-flash' PLUGINSPAGE='http://www.macromedia.com/go/getflashplayer'></EMBED></OBJECT></div></div>
+</div>
+<div style="line-height: 10px;">&nbsp;</div>
+<div>
+<table border="0" cellpadding="3" cellspacing="0" width="100%">
+<tr><td colspan="20" bgcolorXXX="#F6F6F6" style="font-weight:bold;font-size:9pt;padding:3px;#padding:3px 3px 2px 3px;border-top:solid 3px  #f29600;border-bottom:solid 1px #AFAFAF;"><table width="100%" cellspacing="0"><tr><td align="left" style="line-height:18px">&nbsp;熱門報導-Research</td><td align="right" style="line-height:18px">
+<img src="/tw/x/img/moth_reverse.gif" width="15" class="top_down" style="cursor:pointer">&nbsp;
+<img src="/tw/x/img/moth_forward.gif" width="15" class="top_down" style="cursor:pointer">
+</td></tr></table></td></tr>
+<tr>
+<td style="line-height:18px" width="25%" align="center" value="1" class="research_css" style="cursor:pointer"><a href="javascript:{void(0)}">資訊</a></td><td style="line-height:18px" width="25%" align="center" value="2" class="research_css" style="cursor:pointer"><a href="javascript:{void(0)}">消費性電子</a></td><td style="line-height:18px" width="25%" align="center" value="3" class="research_css" style="cursor:pointer"><a href="javascript:{void(0)}">通訊</a></td><td style="line-height:18px" width="25%" align="center" value="4" class="research_css" style="cursor:pointer"><a href="javascript:{void(0)}">平面顯示器</a></td><td style="line-height:18px;display:none" width="25%" align="center" value="9" class="research_css" style="cursor:pointer"><a href="javascript:{void(0)}">半導體</a></td><td style="line-height:18px;display:none" width="25%" align="center" value="10" class="research_css" style="cursor:pointer"><a href="javascript:{void(0)}">綠色節能</a></td>
+</tr>
+<tr><td colspan="20" id="showhotdata" height="180" valign="top" width="300">
+</td></tr>
+</table>
+<script language="javascript">
+$(document).ready(function(){
+get_researchnews("1");
+hidall();
+$(".research_css:first").css("backgroundColor","#FFFFFF").css("borderBottom","0px solid #C5C5C5");
+$(".research_css").click(function(){
+hidall();
+showobj($(this));
+});
+})
+function get_researchnews(cat1){
+$.ajax({
+url:'/tw/ajax/NewsModule_New.asp?channel=3&cat1=' + cat1,
+error:function(){},
+success:function(res){
+$("#showhotdata").html(res);
+}
+});
+}
+var total = '6';
+var pagesize = 4
+var nowid = 4;
+var firstid = 1
+$(".top_down").eq(0).click(function(){
+nowid = nowid - pagesize;
+if (nowid <= pagesize) {
+nowid = pagesize;
+}
+gopage();
+})
+$(".top_down").eq(1).click(function(){
+nowid = nowid + pagesize;
+if (nowid >= total) {
+nowid = total;
+}
+gopage();
+})
+function hidall(){
+$(".research_css").css("backgroundColor","#F4F4F4").css("borderBottom","1px solid #C5C5C5").css("borderRight","1px solid #C5C5C5");
+}
+function showobj(obj){
+obj.css("backgroundColor","#FFFFFF").css("borderBottom","0px solid #C5C5C5");
+get_researchnews(obj.attr("value"));
+}
+function gopage(){
+i = 0;
+if (nowid<=pagesize) {
+firstid = 1
+} else {
+firstid = 3
+}
+hidall();
+showobj($(".research_css").eq(firstid - 1));
+$(".research_css").hide();
+$(".research_css").each(function(){
+if (i >= nowid-pagesize && i < nowid) {
+$(this).show();
+}
+i = i + 1;
+})
+}
+</script>
+</div>
+<div style="line-height: 10px;">&nbsp;</div>
+<!-- <DIV style="LINE-HEIGHT: 7px">&nbsp;</DIV> -->
+<!-- <div style="line-height: 10px;">&nbsp;</div>  -->
+<!-- <div style="line-height: 10px;">&nbsp;</div>  -->
+<!-- <div style="line-height: 10px;">&nbsp;</div> -->
+<DIV style="LINE-HEIGHT: 7px">&nbsp;</DIV>
+<div>
+<div class="pt_ad"></div><div class="pt_ad"><div class="pt_ad"></div></div>
+</div>
+<DIV style="LINE-HEIGHT: 7px">&nbsp;</DIV>
+<div>
+<!--div style="margin: 0pt; padding: 0pt;" style="background:transparent url('/tw/x/img/vv2.gif') repeat-x scroll left center;border-width:0 !important;clear:both;height:4px;"></div-->
+<table border="0" cellpadding="0" cellspacing="0" width="99%">
+<tr><td bgcolorXXX="#F6F6F6" style="text-align:left;font-weight:bold;font-size:9pt;padding:3px;#padding:4px 3px 4px 3px;border-top:solid 3px #f29600;border-bottom:solid 1px #AFAFAF;">&nbsp;國際讀者關切議題</td></tr>
+<tr><td valign="top">
+<table border="0" width="100%" cellspacing="0" cellpadding="0">
+<tr>
+<td id="c1eng_top" name="c1eng_top" width="50%" align="center" style="line-height:25px;font-size:9pt;border-right:1px solid #B4B4B4"><a href="javascript:{void(0)}" onclick="selectedItem('c1eng_top','c2eng_top');Get_ServerDataeng_top('eng_top')">熱門報導</a></td>
+<td id="c2eng_top" name="c2eng_top" width="50%" align="center" style="line-height:25px;font-size:9pt;background-color:#F4F4F4;border-bottom:1px solid #B4B4B4"><a href="javascript:{void(0)}" onclick="selectedItem('c2eng_top','c1eng_top');makeRequest('/tw/ajax/cloudkeyword.asp?website=1&lan=eng','Get_HotArea_Contenteng_top');">熱門關鍵字</a></td>
+</tr>
+<tr><td colspan="5" style="padding:5px;background-color:#FFFFFF" ID="Get_HotArea_Contenteng_top" name="Get_HotArea_Contenteng_top">
+<table width="100%" cellspacing="0" cellpadding="3"><tr><td  valign="top" style="padding-left:15px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA;background: url(http://mms.digitimes.com/tw/x/img/2010WebPage/sprite_icos_100812v2.png) no-repeat 5px 2px;" class="rpt_dot">&nbsp;</td><td width="95%" style="font-size:8pt;color:#000000;line-height:16px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" align="left" valign="top"><a href="http://www.digitimes.com/news/a20111013PD220.html" target="_blank">Apple likely to launch transitional tablet PC between iPad 2 and iPad 3, say sources</a></td></tr><tr><td  valign="top" style="padding-left:15px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA;background: url(http://mms.digitimes.com/tw/x/img/2010WebPage/sprite_icos_100812v2.png) no-repeat 5px -50px;" class="rpt_dot">&nbsp;</td><td width="95%" style="font-size:8pt;color:#000000;line-height:16px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" align="left" valign="top"><a href="http://www.digitimes.com/news/a20111017PD204.html" target="_blank">Some PC vendors switching to Windows 8-based tablet PCs</a></td></tr><tr><td  valign="top" style="padding-left:15px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA;background: url(http://mms.digitimes.com/tw/x/img/2010WebPage/sprite_icos_100812v2.png) no-repeat 5px -100px;" class="rpt_dot">&nbsp;</td><td width="95%" style="font-size:8pt;color:#000000;line-height:16px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" align="left" valign="top"><a href="http://www.digitimes.com/news/a20111017PR200.html" target="_blank">iPhone 4S shows key design and component changes, says IHS</a></td></tr><tr><td  valign="top" style="padding-left:15px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA;background: url(http://mms.digitimes.com/tw/x/img/2010WebPage/sprite_icos_100812v2.png) no-repeat 5px -150px;" class="rpt_dot">&nbsp;</td><td width="95%" style="font-size:8pt;color:#000000;line-height:16px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" align="left" valign="top"><a href="http://www.digitimes.com/news/a20111012PB200.html" target="_blank">Pegatron lands higher-than-expected iPhone 4S orders, says paper</a></td></tr><tr><td  valign="top" style="padding-left:15px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA;background: url(http://mms.digitimes.com/tw/x/img/2010WebPage/sprite_icos_100812v2.png) no-repeat 5px -200px;" class="rpt_dot">&nbsp;</td><td width="95%" style="font-size:8pt;color:#000000;line-height:16px;text-align:left;background-color:#FFFFFF;border-width:0px;border-bottom:1px dotted #B0CADA" align="left" valign="top"><a href="http://www.digitimes.com/news/a20111014VL201.html" target="_blank">Digitimes Research: Taiwan notebook shipments to decline 1.3% sequentially</a></td></tr></table>
+</td></tr>
+</table>
+</td></tr>
+</table>
+<label id="xxarea"></label>
+<script language="javascript">
+function Get_ServerDataeng_top(Kind){
+var pkl = '';
+$("#Get_HotArea_Contenteng_top").html('<img src="/tw/x/img/24-1.gif">')
+$.ajax({
+url : '/tw/ajax/NewsModule.asp?kind=' + Kind + '&CnlID=&cat=' + '&pkl=' + pkl,
+error : function (err) {$("#Get_HotArea_Contenteng_top").html("擷取資料時發生錯誤!")},
+success : function (response) {
+$("#Get_HotArea_Contenteng_top").html(response);
+}
+})
+}
+</script>
+</div>
+<!--//結束－以上放頁面右邊的廣告與其他方塊模組-->
+</div>
+<div style="clear:both;"></div>
+<TABLE cellSpacing=0 cellPadding=3 width="987" border=0 style="border-top:solid 1px #727377;">
+<TR>
+<TD style="padding:2px;" vAlign="middle"" align="left" width="452" bgColor="#f0f0f0">
+&nbsp;&nbsp;
+<INPUT onkeydown="if(event.keyCode==13) {$('#query').val(this.value);gochannelheader();ckSH();return false;}" style="FONT-SIZE:10pt;MARGIN:0px;width:100px;#width:100px;height:16px;" name="querybtm" id="querybtm" maxlength="40">
+<select id="headerselchannelbtm" name="selchannelbtm" style="width:60px;#width:65px;height:21px;font-size:9pt;font-family: Arial, Verdana, sans-serif;" onchange="$('#headerselchannel').val(this.value);gochannelheader();">
+<option value="G" selected>全網</option>
+<option value="1">科技</option>
+<option value="9">國際財經</option>
+<option value="3">Research</option>
+<option value="I">商情 (Free)</option>
+<option value="D">360° (Free)</option>
+<option value="H">圖表</option>
+</select>
+<img src="http://mms.digitimes.com/tw/x/img/inquire_off2.gif" onclick="$('#query').val($('#querybtm').val());gochannelheader();ckSH();" class="searchImgBtn" align="absmiddle" />
+</TD>
+<TD style="PADDING:2px;" vAlign=center align=right width=526 bgColor="#f0f0f0">
+■&nbsp;<A class=hp href="/tw/mypg/index.asp">MY DIGITIMES</A>&nbsp;&nbsp;
+■
+<A class=hp href="http://gb-www.digitimes.com.tw" target=_blank>&#20013;&#25991;&#31616;&#20307;&#29256;</A>
+&nbsp;
+■&nbsp;<A class=hp href="http://www.digitimes.com/en" target="_blank">English</A>&nbsp;&nbsp;
+</TD>
+</TR>
+</TABLE>
+<TABLE cellSpacing=0 cellPadding=8 width="987" border=0>
+<TR>
+<TD class="footertd" style="BORDER-RIGHT: #727377 0px solid; PADDING-RIGHT: 2px; PADDING-LEFT: 2px; PADDING-BOTTOM: 2px; PADDING-TOP: 2px;" vAlign=center align=left bgColor=#FFFFFF>
+<span style="float:left;PADDING-RIGHT: 5px; PADDING-LEFT: 20px; PADDING-BOTTOM: 3px; PADDING-TOP: 2px;font-size:10pt;">
+<A href="/tw/dtbrief/brief.html" target=_blank>公司簡介</A> &nbsp;|&nbsp;
+<A href="/tw/svc/cprgt.asp" target=_blank>著作權</A> &nbsp;|&nbsp;
+<A href="/tw/share/Faq/faq.asp" target=_blank>常見問題</A> &nbsp;|&nbsp;
+發布新聞稿( <A href="mailto:newsroom@digitimes.com">中文</A> 、 <A href="mailto:editor@digitimes.com">English</A> ) &nbsp;|&nbsp;
+<A href="/tw/dtbrief/brief.html?v=1" target=_blank>人才招募</A>&nbsp;|&nbsp;
+<A href="/tw/rss/rss.asp" target=_blank><IMG src="http://mms.digitimes.com/tw/rss/img/rss.gif" align="absbottom" border=0 style="margin-bottom:0px;"></A>&nbsp;
+<A href="#">Top</A>&nbsp;
+</span>
+</TD>
+</TR>
+</TABLE>
+<TABLE cellSpacing=0 cellPadding=10 width=986 bgColor=#cccccc border=0>
+<TR>
+<TD vAlign=top scope=row width=8 bgColor=#FAFAFA>&nbsp;</TD>
+<TD vAlign=top scope=row width=120 bgColor=#FAFAFA>
+<DIV class=style5 align=center>
+<DIV align=left><SPAN class=style9>
+<A style="COLOR: black" href="/tw/tech/">科技</A>
+</SPAN><BR></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_1_40.asp?CnlID=1&cat=40">半導體/零組件</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_1_90.asp?CnlID=1&cat=90">綠色節能</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_1_10.asp?CnlID=1&cat=10">資訊</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_1_20.asp?CnlID=1&cat=20">消費性電子</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_1_30.asp?CnlID=1&cat=30">平面顯示器</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_1_60.asp?CnlID=1&cat=60">網通/軟體</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_1_80.asp?CnlID=1&cat=80">通路</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_1_130.asp?CnlID=1&cat=130">產業觀察</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_1_170.asp?CnlID=1&cat=170">CEO</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_1_140.asp?CnlID=1&cat=140">觀點</A></DIV></DIV>
+<DIV align=left></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/piclist.asp?CnlID=1">圖表</A></DIV></DIV>
+<DIV align=left><BR></DIV></DIV></TD>
+<TD vAlign=top width=90 bgColor=#FAFAFA>
+<DIV class=style5 align=center>
+<DIV align=left><SPAN class=style9>
+<A style="COLOR: black" href="/tw/biz/">國際財經</A>
+</SPAN><BR></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_9_150.asp?CnlID=9&cat=150">全球經濟</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_9_180.asp?CnlID=9&cat=180">金融市場</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/SubChannel_9_190.asp?CnlID=9&cat=190">商品市場</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/piclist.asp?CnlID=9">圖表</A></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV><BR></DIV></DIV></DIV></TD>
+<TD vAlign=top width=130 bgColor=#FAFAFA>
+<DIV class=style5 align=center>
+<DIV align=left><SPAN class=style9>
+<A style="COLOR: black" href="/tw/research/">Research</A>
+</SPAN><BR></DIV>
+<DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/rpt/SubChannel_3_CMP.asp?CnlID=3&cat=CMP">電腦運算</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/rpt/SubChannel_3_DHM.asp?CnlID=3&cat=DHM">數位家庭</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/rpt/SubChannel_3_PCE.asp?CnlID=3&cat=PCE">可攜式CE</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/rpt/SubChannel_3_MCN.asp?CnlID=3&cat=MCN">行動通訊</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/rpt/SubChannel_3_BWC.asp?CnlID=3&cat=BWC">寬頻與無線</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/rpt/SubChannel_3_LSF.asp?CnlID=3&cat=LSF">大尺寸FPD</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/rpt/SubChannel_3_SMF.asp?CnlID=3&cat=SMF">中小尺寸FPD</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/rpt/SubChannel_3_ICD.asp?CnlID=3&cat=ICD">IC設計</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/rpt/SubChannel_3_ICM.asp?CnlID=3&cat=ICM">IC製造</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/rpt/SubChannel_3_LED.asp?CnlID=3&cat=LED">LED</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/rpt/SubChannel_3_SOR.asp?CnlID=3&cat=SOR">太陽能</A></DIV></DIV>
+<DIV>
+<DIV align=left></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV></DIV></DIV></DIV></DIV></TD>
+<TD vAlign=top align=middle width=80 bgColor=#FAFAFA>
+<DIV align=left>
+<DIV class=style5 align=center>
+<DIV align=left><SPAN class=style9><A style="COLOR: black" href="/tw/topics/home.asp">主題</A></SPAN><BR></DIV>
+<DIV align=left><SPAN class=style9><A style="COLOR: black" href="/tw/indepth/home.asp">深度專輯</A></SPAN><BR></DIV>
+<DIV align=left><SPAN class=style9><A style="COLOR: black" href="/tw/multimedia/index.asp">多媒體</A></SPAN><BR></DIV>
+<DIV align=left><SPAN class=style9><A style="COLOR: black" href="/tw/dt/p360.asp?CnlID=10">360°</A></SPAN><BR></DIV>
+<DIV>
+<DIV>
+<DIV align=left>
+<DIV>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/c360.asp?CnlID=10&cat=10">人物</A>
+</DIV>
+<DIV>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/c360.asp?CnlID=10&cat=15">公司</A>
+</DIV>
+<DIV>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/c360.asp?CnlID=10&cat=20">組織</A>
+</DIV>
+<DIV>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/c360.asp?CnlID=10&cat=25">產品</A>
+</DIV>
+<DIV>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/c360.asp?CnlID=10&cat=30">技術</A>
+</DIV>
+<DIV>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/c360.asp?CnlID=10&cat=35">事件</A>
+</DIV>
+<DIV>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/c360.asp?CnlID=10&cat=40">法規</A>
+</DIV>
+<DIV>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/c360.asp?CnlID=10&cat=45">城市地區</A>
+</DIV>
+<DIV>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/c360.asp?CnlID=10&cat=50">財經</A>
+</DIV>
+<DIV>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/c360.asp?CnlID=10&cat=55">企業應用</A>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV><BR></DIV></DIV></DIV>
+<DIV></DIV></DIV></DIV></DIV></TD>
+<TD vAlign=top width=120 bgColor=#FAFAFA>
+<DIV class=style5 align=center>
+<DIV align=left><SPAN class=style9><A style="COLOR: black"
+href="/tw/learning/">知識服務</A></SPAN><BR></DIV>
+<DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/b2b/seminar/actcat.asp?CnlID=17&cat=1">客製化活動行銷</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/B2B/Seminar/actcat.asp?CnlID=17&cat=2">企業產品說明會</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/B2B/Seminar/actcat.asp?CnlID=17&cat=3">DTF</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/B2B/Seminar/actcat.asp?CnlID=17&cat=4">DAF</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/B2B/Seminar/actcat.asp?CnlID=17&cat=5">科技大勢講座</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/b2b/seminar/activity.asp?CnlID=17">全部活動</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="http://www.digitimes.com.tw/tw/dt/ICpopular.asp?CnlID=17&cat=140">科技行腳</A></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV></DIV></DIV></DIV></DIV></TD>
+<TD vAlign=top width=100 bgColor=#FAFAFA>
+<DIV class=style5 align=center>
+<DIV align=left><SPAN class=style9><A style="COLOR: black"
+href="/tw/dt/newpromo.asp?cnlid=13">科技商情</A></SPAN><BR></DIV>
+<DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/newpromo_child.asp?CnlID=13&cat=10">半導體</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/newpromo_child.asp?CnlID=13&cat=15">零組件</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/newpromo_child.asp?CnlID=13&cat=20">光電/顯示</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/newpromo_child.asp?CnlID=13&cat=65">綠能節能</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/newpromo_child.asp?CnlID=13&cat=30">IPC</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/newpromo_child.asp?CnlID=13&cat=25">設備材料</A></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV></DIV></DIV></DIV></DIV></TD>
+<TD vAlign=top width=100 bgColor=#FAFAFA>
+<DIV class=style5 align=center>
+<DIV align=left><SPAN class=style9><A style="COLOR: black"
+href="/tw/dt/bizpromo.asp?cnlid=13">企業IT商情</A></SPAN><BR></DIV>
+<DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/bizpromo_child.asp?CnlID=13&cat=35">伺服</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/bizpromo_child.asp?CnlID=13&cat=70">儲存</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/bizpromo_child.asp?CnlID=13&cat=50">軟體/服務</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/bizpromo_child.asp?CnlID=13&cat=60">資安</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/bizpromo_child.asp?CnlID=13&cat=45">網通</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dt/bizpromo_child.asp?CnlID=13&cat=40">PC/CE/週邊</A></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV></DIV></DIV></DIV></DIV></TD>
+<TD vAlign=top width=115 bgColor=#FAFAFA>
+<DIV class=style5
+style="BORDER-TOP-STYLE: none; BORDER-RIGHT-STYLE: none; BORDER-LEFT-STYLE: none; BORDER-BOTTOM-STYLE: none"
+align=center>
+<DIV align=left><SPAN
+class=style2><STRONG>DIGITIMES</STRONG></SPAN><BR></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dtbrief/brief.html" target="_blank">公司簡介</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<a href="/tw/share/svc/svc_abs.asp?showtype=100" target="_blank">會員服務</a></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<a href="/tw/svc/email/register.asp" target="_blank">商情電子報訂閱</a></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/svc/order/dt.html" target="_blank">訂閱電子時報</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/advertising/" target="_blank">廣告刊登</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<A href="/tw/dtbrief/brief.html?v=1" target="_blank">人才招募</A></DIV></DIV>
+<DIV>
+<DIV align=left>
+<font style="font-family:arial;">●</font>&nbsp;<a href="/tw/svc/contactus.asp" target="_blank">聯絡我們 </a>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV>
+<DIV>
+<DIV align=left><BR></DIV></DIV><BR></DIV></DIV></DIV></TD></TR></TABLE>
+<img src="http://mms.digitimes.com/tw/x/img/footerline.jpg" width="987" />
+<!--ColdDown(2011/10/20 下午 07:30:23)-->
+<TABLE cellSpacing=0 cellPadding=3 width="987" border=0>
+<TR>
+<TD height="20" bgColor="#f0f0f0" style="PADDING:2px; BORDER-BOTTOM: #727377 1px solid;">
+<div align="center"><span class="style2">本網站內之全部圖文，係屬於大椽股份有限公司所有，非經本公司同意不得將全部或部分內容轉載於任何形式之媒體&nbsp;&copy;&nbsp;DIGITIMES Inc. 版權所有 </span></div>
+</TD>
+</TR>
+</TABLE>
+<script type="text/javascript" src="http://mms.digitimes.com/tw/x/js/cookie.js"></script>
+<script type="text/javascript">
+$(".searchImgBtn").hover(
+function (){
+$(this).attr("src","http://mms.digitimes.com/tw/x/img/inquire_over2.gif");
+},
+function (){
+$(this).attr("src","http://mms.digitimes.com/tw/x/img/inquire_off2.gif");
+}
+);
+</script>
+<script type="text/javascript" src="http://mms.digitimes.com/tw/x/js/cookie.js"></script>
+<script type="text/javascript">
+function doChangeBodyFontFamily(){
+if (fontFamily==""){
+fontFamily="1";
+} else {
+if (fontFamily=="2"){
+fontFamily="1";
+} else {
+fontFamily="2";
+}
+}
+setCookie("bodyFontFamilyAssign", fontFamily, 30);
+changeBodyFontFamily(fontFamily);
+}
+function changeBodyFontFamily(newFont){
+if (newFont=="2"){
+$("body, select, input").css("font-family", "Verdana,Arial,新細明體");
+} else {
+$("body, select, input").css("font-family", "微軟正黑體");
+}
+}
+var fontFamily=getCookieValue("bodyFontFamilyAssign");
+if (fontFamily == ""){
+doChangeBodyFontFamily();
+} else {
+changeBodyFontFamily(fontFamily);
+}
+$("td.footertd").append("<span style='color:#1e4061;font-size:10pt;cursor:pointer;float:right;padding-right:8px;padding-top:2px;' onclick='doChangeBodyFontFamily();'>切換網頁字型</span>");
+</script>
+<fjtignoreurl>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-7422658-1");
+pageTracker._setCustomVar(2, "SubChannel", "_", 3);
+pageTracker._setCustomVar(1, "Logined", "N", 2);
+pageTracker._setDomainName(".digitimes.com.tw");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+</fjtignoreurl>
+</div>
+</div>
+<script type="text/javascript">
+$("#topBigNewsSubjectVer2").prependTo("#bigNewsAtTopFullColumn");
+</script>
+<!--//autorefresh page-->
+<script type="text/javascript" src="http://mms.digitimes.com/tw/x/js/jquery.countdown/jquery.countdown.js"></script>
+<script type="text/javascript" src="http://mms.digitimes.com/tw/x/js/jquery.countdown/jquery.countdown-zh-TW.js"></script>
+<script type="text/javascript">
+$(function() {
+$('#autorefreshtimer').countdown({until: +1980, format: 'S', onExpiry: doAutoRefreshPage});
+$.cookie("autorefresh", null);
+function doAutoRefreshPage(){
+$.cookie("autorefresh", "Y");
+location.replace("http://www.digitimes.com.tw/");
+}
+});
+</script>
+<script type="text/javascript">
+$(window).load(function() {
+var offseta=$("#custom_news").offset();
+var offsetb=$("#middleblock").offset();
+var offsetsheight=(offsetb.top - offseta.top)-20;
+if (offsetsheight<330){
+offsetsheight=(offsetb.top - offseta.top)-20;
+}
+$("#custom_news_separator").css("height",offsetsheight + "px");
+});
+function reCalculateAllTimeUi(currentTime){
+var newsTime;
+var isK;
+var onewsTime;
+var sysdate="2011/10/20";
+$(".subtitletime").each(function(){
+newsTime = $(this).attr("t");
+isK = $(this).attr("k");
+onewsTime = newsTime.substr(11,5);
+if (isK=="1"){
+isK="&nbsp;&nbsp;"
+} else {
+isK="-"
+}
+if (newsTime.indexOf(":")>0 && sysdate==newsTime.substr(0,10)){
+newsTime = newsTime.substr(11,5).split(":");
+diff = Math.abs(currentTime - Math.abs(((parseInt(newsTime[0],10) * 60) + parseInt(newsTime[1],10))));
+if (diff/60 <= 3){
+if (diff/60 < 1){
+$(this).html(isK + "<span style='color:red;font-size:0.9em;'>" + diff%60 + "分前</span>");
+recordCalculation(diff%60+",currenttime="+currentTime+",sysdate="+sysdate+",newstime="+newsTime);
+} else {
+$(this).html(isK + "<span style='color:red;font-size:0.9em;'>" + onewsTime + "</span>");
+recordCalculation(onewsTime+",currenttime="+currentTime+",sysdate="+sysdate+",newstime="+newsTime);
+}
+}
+}
+});
+}
+function recordCalculation(v1){
+}
+</script>
+<div id="autorefreshtimer" style="color:white;display:none;"></div>
+<!--div style="color:white;">cold:2011/10/20 下午 07:30:23</div-->
+<!--div id="refresht" style="color:white;"></div-->
+</body>
+<!--modify by marchli FlashAD-->
+<div class="pt_ad"></div><div class="pt_ad"><div class="pt_ad"></div></div>
+<div id="DT_FlashAD" style="width:100%;float:left;left:200px;top:100px;position:absolute;display:none;"></div>
+<!--modify by marchli FlashAD-->
+</html>
+<script type="text/javascript">
+var currentTrendPic=1;
+function changeTrendPic(obj){
+var imgsrc= obj.attr("src");
+var maxpager=parseInt($(".trendsImage:last").attr("p"));
+$(".trendsImage[p]").hide();
+if (imgsrc.indexOf("left")>0){
+if (currentTrendPic<=1){
+$(".trendsImage[p='" + maxpager + "']").show();
+currentTrendPic=maxpager;
+} else {
+$(".trendsImage[p='" + (currentTrendPic-1) + "']").show();
+currentTrendPic=currentTrendPic-1;
+}
+} else {
+if (currentTrendPic>=maxpager){
+$(".trendsImage[p='1']").show();
+currentTrendPic=1;
+} else {
+$(".trendsImage[p='" + (currentTrendPic+1) + "']").show();
+currentTrendPic=currentTrendPic+1;
+}
+}
+}
+$(".trendsImageTitle div img").click(function(){
+changeTrendPic($(this));
+});
+$(".trendsImage[p='1']").show();
+function autoChangeTrendPic(){
+var maxpager=parseInt($(".trendsImage:last").attr("p"));
+$(".trendsImage[p]").hide();
+if (currentTrendPic>=maxpager){
+$(".trendsImage[p='1']").show();
+currentTrendPic=1;
+} else {
+$(".trendsImage[p='" + (currentTrendPic+1) + "']").show();
+currentTrendPic=currentTrendPic+1;
+}
+setTimeout("autoChangeTrendPic();", 5000);
+}
+autoChangeTrendPic();
+</script>
+<script>
+var headSlideCntV = $(".headslideV").length - 1;
+var curCntV = Math.ceil(Math.random()*headSlideCntV);
+$(document).ready(function(){
+switchHeadSlideV();
+})
+function switchHeadSlideV(){
+curCntV++;
+if (curCntV > headSlideCntV){curCntV = 0;}
+$(".headslideV").hide();
+$(".headslideV").eq(curCntV).show();
+}
+function slideFWDV(){
+curCntV++;
+if (curCntV > headSlideCntV){curCntV = 0;}
+if (curCntV < 0){curCntV = headSlideCntV;}
+$(".headslideV").hide();
+$(".headslideV").eq(curCntV).show();
+}
+function slideBAKV(){
+curCntV--;
+if (curCntV > headSlideCntV){curCntV = 0;}
+if (curCntV < 0){curCntV = headSlideCntV;}
+$(".headslideV").hide();
+$(".headslideV").eq(curCntV).show();
+}
+</script>
+<script>
+var headSlideCntV2 = $(".headslideV2").length - 1;
+var curCntV2 = -1;
+$(document).ready(function(){
+switchHeadSlideV2();
+})
+function switchHeadSlideV2(){
+curCntV2++;
+if (curCntV2 > headSlideCntV2){curCntV2 = 0;}
+$(".headslideV2").hide();
+$(".headslideV2").eq(curCntV2).show();
+setTimeout("switchHeadSlideV2();", 10000);
+}
+function slideFWDV2(){
+curCntV2++;
+if (curCntV2 > headSlideCntV2){curCntV2 = 0;}
+if (curCntV2 < 0){curCntV2 = headSlideCntV2;}
+$(".headslideV2").hide();
+$(".headslideV2").eq(curCntV2).show();
+}
+function slideBAKV2(){
+curCntV2--;
+if (curCntV2 > headSlideCntV2){curCntV2 = 0;}
+if (curCntV2 < 0){curCntV2 = headSlideCntV2;}
+$(".headslideV2").hide();
+$(".headslideV2").eq(curCntV2).show();
+}
+</script>

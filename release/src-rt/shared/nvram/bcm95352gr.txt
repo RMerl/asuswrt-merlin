@@ -1,0 +1,65 @@
+# bcm95352rg sdram board
+# $Copyright Open Broadcom Corporation$
+# $Id: bcm95352gr.txt,v 1.9 2010-12-23 05:37:37 dedelson Exp $
+
+boardtype=0x0467
+boardnum=${serno}
+# Board revision 3.0
+boardrev=0x30
+# NO_EXTLNA, NOPCI, ENETVLAN, CCKHIPWR, ENETROBO, ADC.
+boardflags=0x758
+sromrev=2
+
+# MIPS clock frequency in MHz
+clkfreq=200
+
+# 16 MB SDR SDRAM (4 Meg x 16 x 2)
+sdram_init=0
+sdram_config=0x22
+sdram_refresh=0
+sdram_ncdl=0
+
+# Integrated Ethernet switch
+et0macaddr=00:90:4c:91:${maclo}
+et0phyaddr=30
+et0mdcport=0
+
+# single band d11 interface
+wl0id=0x4318
+
+# 802.11g parameters
+il0macaddr=00:90:4c:92:${maclo}
+aa0=3
+ag0=2
+pa0maxpwr=72
+pa0itssit=62
+pa0b0=0x169f
+pa0b1=0xfa5e
+pa0b2=0xfe8a
+opo=12
+
+# Commons wireless parameters
+wl0gpio2=0
+wl0gpio3=0
+cctl=0
+ccode=0
+
+# Ethernet switch config (vlan0:LAN, vlan1:WAN)
+vlan0ports=1 2 3 4 5*
+vlan0hwname=et0
+vlan1ports=0 5u
+
+# Bootloader and OS glue
+landevs=vlan0 wl0
+wandevs=et0
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+boot_wait=on
+reset_gpio=7
+
+# Watchdog timer in ms
+watchdog=3000
+
+# SES parameters
+gpio13=ses_led
+gpio14=ses_button

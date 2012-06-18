@@ -1,0 +1,216 @@
+#!/usr/bin/python
+#
+# Raises domain and forest function levels
+#
+# Copyright Matthias Dieter Wallnoefer 2009
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import sys
+
+# Find right directory when running from source tree
+sys.path.insert(0, "bin/python")
+
+import samba.getopt as options
+import optparse
+import ldb
+
+from samba.auth import system_session
+from samba.samdb import SamDB
+from samba import DS_DOMAIN_FUNCTION_2000, DS_DOMAIN_FUNCTION_2003
+from samba import DS_DOMAIN_FUNCTION_2003_MIXED, DS_DOMAIN_FUNCTION_2008
+from samba import DS_DOMAIN_FUNCTION_2008_R2
+
+parser = optparse.OptionParser("domainlevel (show | raise <options>)")
+sambaopts = options.SambaOptions(parser)
+parser.add_option_group(sambaopts)
+parser.add_option_group(options.VersionOptions(parser))
+credopts = options.CredentialsOptions(parser)
+parser.add_option_group(credopts)
+parser.add_option("-H", help="LDB URL for database or target server", type=str)
+parser.add_option("--quiet", help="Be quiet", action="store_true")
+parser.add_option("--forest",
+  help="The forest function level (2000 | 2003 | 2008 | 2008_R2). We don't support the 2003 with mixed domains (NT4 DC support) level.", type=str)
+parser.add_option("--domain",
+  help="The domain function level (2000 | 2003 | 2008 | 2008_R2). We don't support mixed/interim (NT4 DC support) levels.", type=str)
+opts, args = parser.parse_args()
+
+#
+#  print a message if quiet is not set
+#
+def message(text):
+	if not opts.quiet:
+		print text
+
+if len(args) == 0:
+	parser.print_usage()
+	sys.exit(1)
+
+lp = sambaopts.get_loadparm()
+creds = credopts.get_credentials(lp)
+
+if opts.H is not None:
+	url = opts.H
+else:
+	url = lp.get("sam database")
+
+samdb = SamDB(url=url, session_info=system_session(), credentials=creds, lp=lp)
+
+domain_dn = SamDB.domain_dn(samdb)
+
+res_forest = samdb.search("CN=Partitions,CN=Configuration," + domain_dn,
+  scope=ldb.SCOPE_BASE, attrs=["msDS-Behavior-Version"])
+assert(len(res_forest) == 1)
+
+res_domain = samdb.search(domain_dn, scope=ldb.SCOPE_BASE,
+  attrs=["msDS-Behavior-Version", "nTMixedDomain"])
+assert(len(res_domain) == 1)
+
+try:
+	level_forest = int(res_forest[0]["msDS-Behavior-Version"][0])
+	level_domain = int(res_domain[0]["msDS-Behavior-Version"][0])
+	level_domain_mixed = int(res_domain[0]["nTMixedDomain"][0])
+
+	if level_forest < 0 or level_domain < 0:
+		print "ERROR: Domain and/or forest functional level(s) is/are invalid. Correct them or reprovision!"
+		sys.exit(1)
+	if level_forest > level_domain:
+		print "ERROR: Forest function level is higher than the domain level(s). That can't be. Correct this or reprovision!"
+		sys.exit(1)
+except:
+	print "ERROR: Could not retrieve the actual domain and/or forest level!"
+	if args[0] == "show":
+		print "So the levels can't be displayed!"
+	sys.exit(1)
+
+if args[0] == "show":
+	message("Domain and forest function level for domain '" + domain_dn + "'")
+	if level_forest == DS_DOMAIN_FUNCTION_2003_MIXED:
+		message("\nATTENTION: You run SAMBA 4 on the 2003 with mixed domains (NT4 DC support) forest level. This isn't supported! Please raise!")
+	if (level_domain == DS_DOMAIN_FUNCTION_2000 and level_domain_mixed != 0) or level_domain == DS_DOMAIN_FUNCTION_2003_MIXED:
+		message("\nATTENTION: You run SAMBA 4 on a mixed/interim (NT4 DC support) domain level. This isn't supported! Please raise!")
+
+	message("")
+
+	if level_forest == DS_DOMAIN_FUNCTION_2000:
+		outstr = "2000"
+	elif level_forest == DS_DOMAIN_FUNCTION_2003_MIXED:
+		outstr = "2003 with mixed domains/interim (NT4 DC support)"
+	elif level_forest == DS_DOMAIN_FUNCTION_2003:
+		outstr = "2003"
+	elif level_forest == DS_DOMAIN_FUNCTION_2008:
+		outstr = "2008"
+	elif level_forest == DS_DOMAIN_FUNCTION_2008_R2:
+		outstr = "2008 R2"
+	else:
+		outstr = "higher than 2008 R2"
+	message("Forest function level: (Windows) " + outstr)
+
+	if level_domain == DS_DOMAIN_FUNCTION_2000 and level_domain_mixed != 0:
+		outstr = "2000 mixed (NT4 DC support)"
+	elif level_domain == DS_DOMAIN_FUNCTION_2000 and level_domain_mixed == 0:
+		outstr = "2000"
+	elif level_domain == DS_DOMAIN_FUNCTION_2003_MIXED:
+		outstr = "2003 with mixed domains/interim (NT4 DC support)"
+	elif level_domain == DS_DOMAIN_FUNCTION_2003:
+		outstr = "2003"
+	elif level_domain == DS_DOMAIN_FUNCTION_2008:
+		outstr = "2008"
+	elif level_domain == DS_DOMAIN_FUNCTION_2008_R2:
+		outstr = "2008 R2"
+	else:
+		outstr = "higher than 2008 R2"
+	message("Domain function level: (Windows) " + outstr)
+
+elif args[0] == "raise":
+	msgs = []
+
+	if opts.domain is not None:
+		arg = opts.domain
+
+		if arg == "2000":
+			new_level_domain = DS_DOMAIN_FUNCTION_2000	
+		elif arg == "2003":
+			new_level_domain = DS_DOMAIN_FUNCTION_2003
+		elif arg == "2008":
+			new_level_domain = DS_DOMAIN_FUNCTION_2008
+		elif arg == "2008_R2":
+			new_level_domain = DS_DOMAIN_FUNCTION_2008_R2
+		else:
+			print "ERROR: Wrong argument '" + arg + "'!"
+			sys.exit(1)
+
+		if new_level_domain <= level_domain and level_domain_mixed == 0:
+			print "ERROR: Domain function level can't be smaller equal to the actual one!"
+			sys.exit(1)
+
+		# Deactivate mixed/interim domain support
+		if level_domain_mixed != 0:
+			m = ldb.Message()
+			m.dn = ldb.Dn(samdb, domain_dn)
+			m["nTMixedDomain"] = ldb.MessageElement("0",
+			  ldb.FLAG_MOD_REPLACE, "nTMixedDomain")
+			samdb.modify(m)
+
+		m = ldb.Message()
+		m.dn = ldb.Dn(samdb, domain_dn)
+		m["msDS-Behavior-Version"]= ldb.MessageElement(
+		  str(new_level_domain), ldb.FLAG_MOD_REPLACE,
+                  "msDS-Behavior-Version")
+		samdb.modify(m)
+
+		level_domain = new_level_domain
+
+		msgs.append("Domain function level changed!")
+
+	if opts.forest is not None:
+		arg = opts.forest
+
+		if arg == "2000":
+			new_level_forest = DS_DOMAIN_FUNCTION_2000	
+		elif arg == "2003":
+			new_level_forest = DS_DOMAIN_FUNCTION_2003
+		elif arg == "2008":
+			new_level_forest = DS_DOMAIN_FUNCTION_2008
+		elif arg == "2008_R2":
+			new_level_forest = DS_DOMAIN_FUNCTION_2008_R2
+		else:
+			print "ERROR: Wrong argument '" + arg + "'!"
+			sys.exit(1)
+
+		if new_level_forest <= level_forest:
+			print "ERROR: Forest function level can't be smaller equal to the actual one!"
+			sys.exit(1)
+
+		if new_level_forest > level_domain:
+			print "ERROR: Forest function level can't be higher than the domain function level(s). Please raise it/them first!"
+			sys.exit(1)
+
+		m = ldb.Message()
+		m.dn = ldb.Dn(samdb, "CN=Partitions,CN=Configuration,"
+		  + domain_dn)
+		m["msDS-Behavior-Version"]= ldb.MessageElement(
+		  str(new_level_forest), ldb.FLAG_MOD_REPLACE,
+                  "msDS-Behavior-Version")
+		samdb.modify(m)
+
+		msgs.append("Forest function level changed!")
+
+	msgs.append("All changes applied successfully!")
+
+	message("\n".join(msgs))
+else:
+	print "ERROR: Wrong argument '" + args[0] + "'!"
+	sys.exit(1)

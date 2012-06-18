@@ -1,0 +1,21 @@
+diff -BurpN ppp-2.4.5-pre/pppd/auth.c ppp/pppd/auth.c
+--- ppp-2.4.5-pre/pppd/auth.c	2009-09-06 17:33:14.000000000 +0000
++++ ppp/pppd/auth.c	2009-09-06 17:35:56.000000000 +0000
+@@ -555,6 +555,9 @@ void start_link(unit)
+ {
+     char *msg;
+ 
++     /* we are called via link_terminated, must be ignored */
++    if (phase == PHASE_DISCONNECT)
++	return;
+     new_phase(PHASE_SERIALCONN);
+ 
+     hungup = 0;
+@@ -665,6 +668,7 @@ link_terminated(unit)
+ 	the_channel->disconnect();
+ 	devfd = -1;
+     }
++    /* not only disconnect, cleanup should also be called to close the devices */
+     if (the_channel->cleanup)
+ 	(*the_channel->cleanup)();
+ 

@@ -1,0 +1,1 @@
+EXTRA_DIST = gp-byteorder.m4 gp-check-library.m4 gp-check-popt.m4 gp-check-shell-environment.m4 gp-config-msg.m4 gp-documentation.m4 gp-gettext-hack.m4 gp-packaging.m4 gp-pkg-config.m4 gp-references.m4 stdint.m4

@@ -1,0 +1,254 @@
+
+
+
+
+
+
+<html><head><title>Viewing and changing UNIX permissions using the NT security dialogs in Samba 2.0.4</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>Viewing and changing UNIX permissions using the NT security dialogs in Samba 2.0.4</h1>
+<h2>Jeremy Allison, Samba Team</h2>
+<h2>12th April 1999</h2>
+
+<h1>Table of Contents </h1><p></p>
+ 
+<p><hr><p><br>
+<p><center><strong>Viewing and changing UNIX permissions using the NT security dialogs</strong> </center><br>
+<center><strong>-------------------------------------------------------------------</strong> </center>
+<p>New in the <strong>Samba 2.0.4</strong> release is the
+ability for Windows NT clients to use their native security
+settings dialog box to view and modify the underlying UNIX
+permissions.
+<p>Note that this ability is careful not to compromise the security
+of the UNIX host Samba is running on, and still obeys all the
+file permission rules that a Samba administrator can set.
+<p>In Samba 2.0.4 and above the default value of the parameter
+<a href="smb.conf.5.html#ntaclsupport"><strong>"nt acl support"</strong></a> has been
+changed from "false" to "true", so manipulation of permissions is
+turned on by default.
+<p><strong>How to view file security on a Samba share</strong><br>
+<strong>------------------------------------------</strong>
+<p>From an NT 4.0 client, single-click with the right mouse button on
+any file or directory in a Samba mounted drive letter or UNC path.
+When the menu pops-up, click on the <code>Properties</code> entry at the 
+bottom of the menu. This brings up the normal file properties dialog
+box, but with Samba 2.0.4 this will have a new tab along the top
+marked <code>Security</code>. Click on this tab and you will see three buttons,
+<em>Permissions</em>, <em>Auditing</em>, and <em>Ownership</em>. The <em>Auditing</em>
+button will cause either an error message <code>"A requested privilege is
+not held by the client"</code> to appear if the user is not the NT Administrator,
+or a dialog which is intended to allow an Administrator to add
+auditing requirements to a file if the user is logged on as the
+NT Administrator. This dialog is non-functional with a Samba
+share at this time, as the only useful button, the <code>Add</code> button
+will not currently allow a list of users to be seen.
+<p><strong>Viewing file ownership</strong><br>
+<strong>----------------------</strong>
+<p>Clicking on the <code>"Ownership"</code> button brings up a dialog box telling
+you who owns the given file. The owner name will be of the form :
+<p><code>"SERVER\user (Long name)"</code>
+<p>Where <code>SERVER</code> is the NetBIOS name of the Samba server, <code>user</code>
+is the user name of the UNIX user who owns the file, and <code>(Long name)</code>
+is the discriptive string identifying the user (normally found in the
+GECOS field of the UNIX password database). Click on the <code>Close</code>
+button to remove this dialog.
+<p>If the parameter <a href="smb.conf.5.html#ntaclsupport"><strong>"nt acl support"</strong></a>
+is set to "false" then the file owner will be shown as the NT user
+<code>"Everyone"</code>.
+<p>The <code>Take Ownership</code> button will not allow you to change the
+ownership of this file to yourself (clicking on it will display a
+dialog box complaining that the user you are currently logged onto
+the NT client cannot be found). The reason for this is that changing
+the ownership of a file is a privilaged operation in UNIX, available
+only to the <em>root</em> user. As clicking on this button causes NT to
+attempt to change the ownership of a file to the current user logged
+into the NT client this will not work with Samba at this time.
+<p>There is an NT chown command that will work with Samba and allow
+a user with Administrator privillage connected to a Samba 2.0.4
+server as root to change the ownership of files on both a local NTFS
+filesystem or remote mounted NTFS or Samba drive. This is available
+as part of the <strong>Seclib</strong> NT security library written by Jeremy
+Allison of the Samba Team, available from the main Samba ftp site.
+<p><strong>Viewing file or directory permissions</strong><br>
+<strong>-------------------------------------</strong>
+<p>The third button is the <code>"Permissions"</code> button. Clicking on this
+brings up a dialog box that shows both the permissions and the UNIX
+owner of the file or directory. The owner is displayed in the form :
+<p><code>"SERVER\user (Long name)"</code>
+<p>Where <code>SERVER</code> is the NetBIOS name of the Samba server, <code>user</code>
+is the user name of the UNIX user who owns the file, and <code>(Long name)</code>
+is the discriptive string identifying the user (normally found in the
+GECOS field of the UNIX password database).
+<p>If the parameter <a href="smb.conf.5.html#ntaclsupport"><strong>"nt acl support"</strong></a>
+is set to "false" then the file owner will be shown as the NT user
+<code>"Everyone"</code> and the permissions will be shown as NT <code>"Full Control"</code>.
+<p>The permissions field is displayed differently for files and directories,
+so I'll describe the way file permissions are displayed first.
+<p><strong>File Permissions</strong><br>
+<strong>----------------</strong>
+<p>The standard UNIX user/group/world triple and the correspinding
+"read", "write", "execute" permissions triples are mapped by Samba
+into a three element NT ACL with the 'r', 'w', and 'x' bits mapped
+into the corresponding NT permissions. The UNIX world permissions are mapped
+into the global NT group <code>Everyone</code>, followed by the list of permissions
+allowed for UNIX world. The UNIX owner and group permissions
+are displayed as an NT <code>user</code> icon and an NT <code>local group</code> icon
+respectively followed by the list of permissions allowed for the
+UNIX user and group.
+<p>As many UNIX permission sets don't map into common NT names such as
+<code>"read"</code>, <code>"change"</code> or <code>"full control"</code> then usually the permissions
+will be prefixed by the words <code>"Special Access"</code> in the NT display 
+list.
+<p>But what happens if the file has no permissions allowed for a
+particular UNIX user group or world component ? In order to 
+allow "no permissions" to be seen and modified then Samba overloads
+the NT <code>"Take Ownership"</code> ACL attribute (which has no meaning in
+UNIX) and reports a component with no permissions as having the NT
+<code>"O"</code> bit set. This was chosen of course to make it look like a
+zero, meaning zero permissions. More details on the decision behind
+this will be given below.
+<p><strong>Directory Permissions</strong><br>
+<strong>---------------------</strong>
+<p>Directories on an NT NTFS file system have two different sets of
+permissions. The first set of permissions is the ACL set on the
+directory itself, this is usually displayed in the first set of
+parentheses in the normal <code>"RW"</code> NT style. This first set of
+permissions is created by Samba in exactly the same way as normal
+file permissions are, described above, and is displayed in the
+same way.
+<p>The second set of directory permissions has no real meaning in the
+UNIX permissions world and represents the <code>"inherited"</code> permissions
+that any file created within this directory would inherit.
+<p>Samba synthesises these inherited permissions for NT by returning as
+an NT ACL the UNIX permission mode that a new file created by Samba
+on this share would receive.
+<p><strong>Modifying file or directory permissions</strong><br>
+<strong>---------------------------------------</strong>
+<p>Modifying file and directory permissions is as simple as changing
+the displayed permissions in the dialog box, and clicking the <code>OK</code>
+button. However, there are limitations that a user needs to be aware
+of, and also interactions with the standard Samba permission masks
+and mapping of DOS attributes that need to also be taken into account.
+<p>If the parameter <a href="smb.conf.5.html#ntaclsupport"><strong>"nt acl support"</strong></a>
+is set to "false" then any attempt to set security permissions will
+fail with an <code>"Access Denied"</code> message.
+<p>The first thing to note is that the <code>"Add"</code> button will not return
+a list of users in Samba 2.0.4 (it will give an error message of
+<code>"The remote proceedure call failed and did not execute"</code>). This
+means that you can only manipulate the current user/group/world
+permissions listed in the dialog box. This actually works quite well
+as these are the only permissions that UNIX actually has.
+<p>If a permission triple (either user, group, or world) is removed from
+the list of permissions in the NT dialog box, then when the <code>"OK"</code>
+button is pressed it will be applied as "no permissions" on the UNIX
+side. If you then view the permissions again the "no permissions" entry
+will appear as the NT <code>"O"</code> flag, as described above. This allows you
+to add permissions back to a file or directory once you have removed
+them from a triple component.
+<p>As UNIX supports only the "r", "w" and "x" bits of an NT ACL
+then if other NT security attributes such as "Delete access"
+are selected then they will be ignored when applied on the 
+Samba server.
+<p>When setting permissions on a directory the second set of permissions
+(in the second set of parentheses) is by default applied to all
+files within that directory. If this is not what you want you
+must uncheck the <code>"Replace permissions on existing files"</code> checkbox
+in the NT dialog before clicking <code>"OK"</code>.
+<p>If you wish to remove all permissions from a user/group/world 
+component then you may either highlight the component and click
+the <code>"Remove"</code> button, or set the component to only have the special
+<code>"Take Ownership"</code> permission (dsplayed as <code>"O"</code>) highlighted.
+<p><strong>Interaction with the standard Samba create mask parameters</strong><br>
+<strong>----------------------------------------------------------</strong>
+<p>Note that with Samba 2.0.5 there are four new parameters to
+control this interaction.
+<p>These are :
+<p><code>security mask</code>
+<code>force security mode</code>
+<code>directory security mask</code>
+<code>force directory security mode</code>
+<p>Once a user clicks <code>"OK"</code> to apply the permissions Samba maps
+the given permissions into a user/group/world r/w/x triple set,
+and then will check the changed permissions for a file against
+the bits set in the <a href="smb.conf.5.html#securitymask"><strong>"security mask"</strong></a>
+parameter. Any bits that were changed that are not set to '1'
+in this parameter are left alone in the file permissions.
+<p>Essentially, zero bits in the <a href="smb.conf.5.html#securitymask"><strong>"security mask"</strong></a>
+mask may be treated as a set of bits the user is <em>not</em> allowed to change,
+and one bits are those the user is allowed to change.
+<p>If not set explicitly this parameter is set to the same value as the
+<a href="smb.conf.5.html#createmask"><strong>"create mask"</strong></a> parameter to provide compatibility
+with Samba 2.0.4 where this permission change facility was introduced.
+To allow a user to modify all the user/group/world permissions on a file,
+set this parameter to 0777.
+<p>Next Samba checks the changed permissions for a file against the
+bits set in the <a href="smb.conf.5.html#forcesecuritymode"><strong>"force security mode"</strong></a>
+parameter. Any bits that were changed that correspond to bits set
+to '1' in this parameter are forced to be set.
+<p>Essentially, bits set in the <a href="smb.conf.5.html#forcesecuritymode"><strong>"force security mode"</strong></a>
+parameter may be treated as a set of bits that, when modifying security on a file, the
+user has always set to be 'on'.
+<p>If not set explicitly this parameter is set to the same value as the
+<a href="smb.conf.5.html#forcecreatemode"><strong>"force create mode"</strong></a> parameter to provide compatibility
+with Samba 2.0.4 where the permission change facility was introduced.
+To allow a user to modify all the user/group/world permissions on a file,
+with no restrictions set this parameter to 000.
+<p>The <a href="smb.conf.5.html#securitymask"><strong>"security mask"</strong></a> and
+<a href="smb.conf.5.html#forcesecuritymode"><strong>"force security mode"</strong></a> parameters
+are applied to the change request in that order.
+<p>For a directory Samba will perform the same operations as described above
+for a file except using the parameter <a href="smb.conf.5.html#directorysecuritymask"><strong>"directory security mask"</strong></a>
+instead of <a href="smb.conf.5.html#securitymask"><strong>"security mask"</strong></a>, and 
+<a href="smb.conf.5.html#forcedirectorysecuritymode"><strong>"force directory security mode"</strong></a> parameter instead
+of <a href="smb.conf.5.html#forcesecuritymode"><strong>"force security mode"</strong></a>.
+<p>The <a href="smb.conf.5.html#directorysecuritymask"><strong>"directory security mask"</strong></a>
+parameter by default is set to the same value as the <a href="smb.conf.5.html#directorymask"><strong>"directory mask"</strong></a>
+parameter and the <a href="smb.conf.5.html#forcedirectorysecuritymode"><strong>"force directory security mode"</strong></a>
+parameter by default is set to the same value as the 
+iurl(<strong>"force directory mode"</strong>)(smb.conf.5.html#forcedirectorymode) parameter
+to provide compatibility with Samba 2.0.4 where the permission change facility was introduced.
+<p>In this way Samba enforces the permission restrictions that an administrator
+can set on a Samba share, whilst still allowing users to modify the
+permission bits within that restriction.
+<p>If you want to set up a share that allows users full control
+in modifying the permission bits on their files and directories and
+doesn't force any particular bits to be set 'on', then set the following
+parameters in the <a href="smb.conf.5.html"><strong>smb.conf.5</strong></a> file in
+that share specific section :
+<p><code>security mask = 0777</code>
+<code>force security mode = 0</code>
+<code>directory security mask = 0777</code>
+<code>force directory security mode = 0</code>
+<p>As described, in Samba 2.0.4 the parameters :
+<p><code>create mask</code>
+<code>force create mode</code>
+<code>directory mask</code>
+<code>force directory mode</code>
+<p>were used instead of the parameters discussed here.
+<p><strong>Interaction with the standard Samba file attribute mapping</strong><br>
+<strong>----------------------------------------------------------</strong>
+<p>Samba maps some of the DOS attribute bits (such as "read only")
+into the UNIX permissions of a file. This means there can be a
+conflict between the permission bits set via the security dialog
+and the permission bits set by the file attribute mapping.
+<p>One way this can show up is if a file has no UNIX read access
+for the owner it will show up as "read only" in the standard 
+file attributes tabbed dialog. Unfortunately this dialog is
+the same one that contains the security info in another tab.
+<p>What this can mean is that if the owner changes the permissions
+to allow themselves read access using the security dialog, clicks
+<code>"OK"</code> to get back to the standard attributes tab dialog, and
+then clicks <code>"OK"</code> on that dialog, then NT will set the file
+permissions back to read-only (as that is what the attributes
+still say in the dialog). This means that after setting permissions
+and clicking <code>"OK"</code> to get back to the attributes dialog you
+should always hit <code>"Cancel"</code> rather than <code>"OK"</code> to ensure
+that your changes are not overridden.
+</body>
+</html>

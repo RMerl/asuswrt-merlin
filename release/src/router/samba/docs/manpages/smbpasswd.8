@@ -1,0 +1,308 @@
+.TH SMBPASSWD 8 "23 Jun 2001" "smbpasswd 2.0.10"
+.PP 
+.SH "NAME" 
+smbpasswd \- change a users SMB password
+.PP 
+.SH "SYNOPSIS" 
+.PP 
+\fBsmbpasswd\fP [-a] [-x] [-d] [-e] [-D debug level] [-n] [-r remote_machine] [-R name resolve order] [-m] [-j DOMAIN] [-U username] [-h] [-s] username
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+This program is part of the \fBSamba\fP suite\&.
+.PP 
+The \fBsmbpasswd\fP program has several different functions, depending
+on whether it is run by the \fIroot\fP user or not\&. When run as a normal
+user it allows the user to change the password used for their SMB
+sessions on any machines that store SMB passwords\&.
+.PP 
+By default (when run with no arguments) it will attempt to change the
+current users SMB password on the local machine\&. This is similar to
+the way the \fBpasswd (1)\fP program works\&. \fBsmbpasswd\fP differs from how
+the \fBpasswd\fP program works however in that it is not \fIsetuid root\fP
+but works in a client-server mode and communicates with a locally
+running \fBsmbd\fP\&. As a consequence in order for this
+to succeed the \fBsmbd\fP daemon must be running on
+the local machine\&. On a UNIX machine the encrypted SMB passwords are
+usually stored in the \fBsmbpasswd (5)\fP file\&.
+.PP 
+When run by an ordinary user with no options\&. \fBsmbpasswd\fP will
+prompt them for their old smb password and then ask them for their new
+password twice, to ensure that the new password was typed
+correctly\&. No passwords will be echoed on the screen whilst being
+typed\&. If you have a blank smb password (specified by the string "NO
+PASSWORD" in the \fBsmbpasswd\fP file) then just
+press the <Enter> key when asked for your old password\&.
+.PP 
+\fBsmbpasswd\fP can also be used by a normal user to change their SMB
+password on remote machines, such as Windows NT Primary Domain
+Controllers\&. See the (\fB-r\fP) and
+\fB-U\fP options below\&.
+.PP 
+When run by root, \fBsmbpasswd\fP allows new users to be added and
+deleted in the \fBsmbpasswd\fP file, as well as
+allows changes to the attributes of the user in this file to be made\&. When
+run by root, \fBsmbpasswd\fP accesses the local
+\fBsmbpasswd\fP file directly, thus enabling
+changes to be made even if \fBsmbd\fP is not running\&.
+.PP 
+.SH "OPTIONS" 
+.PP 
+.IP 
+.IP "\fB-a\fP" 
+This option specifies that the username following should
+be added to the local \fBsmbpasswd\fP file, with
+the new password typed (type <Enter> for the old password)\&. This
+option is ignored if the username following already exists in the
+\fBsmbpasswd\fP file and it is treated like a
+regular change password command\&. Note that the user to be added
+\fBmust\fP already exist in the system password file (usually /etc/passwd)
+else the request to add the user will fail\&.
+.IP 
+This option is only available when running \fBsmbpasswd\fP as
+root\&.
+.IP 
+.IP "\fB-x\fP" 
+This option specifies that the username following should
+be deleted from the local \fBsmbpasswd\fP file\&.
+.IP 
+This option is only available when running \fBsmbpasswd\fP as
+root\&.
+.IP 
+.IP "\fB-d\fP" 
+This option specifies that the username following should be
+\fIdisabled\fP in the local \fBsmbpasswd\fP file\&.
+This is done by writing a \fI\'D\'\fP flag into the account control space
+in the \fBsmbpasswd\fP file\&. Once this is done
+all attempts to authenticate via SMB using this username will fail\&.
+.IP 
+If the \fBsmbpasswd\fP file is in the \'old\'
+format (pre-Samba 2\&.0 format) there is no space in the users password
+entry to write this information and so the user is disabled by writing
+\'X\' characters into the password space in the
+\fBsmbpasswd\fP file\&. See \fBsmbpasswd
+(5)\fP for details on the \'old\' and new password file
+formats\&.
+.IP 
+This option is only available when running \fBsmbpasswd\fP as root\&.
+.IP 
+.IP "\fB-e\fP" 
+This option specifies that the username following should be
+\fIenabled\fP in the local \fBsmbpasswd\fP file,
+if the account was previously disabled\&. If the account was not
+disabled this option has no effect\&. Once the account is enabled
+then the user will be able to authenticate via SMB once again\&.
+.IP 
+If the smbpasswd file is in the \'old\' format then \fBsmbpasswd\fP will
+prompt for a new password for this user, otherwise the account will be
+enabled by removing the \fI\'D\'\fP flag from account control space in the
+\fBsmbpasswd\fP file\&. See \fBsmbpasswd
+(5)\fP for details on the \'old\' and new password file
+formats\&.
+.IP 
+This option is only available when running \fBsmbpasswd\fP as root\&.
+.IP 
+.IP "\fB-D debuglevel\fP" 
+debuglevel is an integer from 0
+to 10\&.  The default value if this parameter is not specified is zero\&.
+.IP 
+The higher this value, the more detail will be logged to the log files
+about the activities of smbpasswd\&. At level 0, only critical errors
+and serious warnings will be logged\&.
+.IP 
+Levels above 1 will generate considerable amounts of log data, and
+should only be used when investigating a problem\&. Levels above 3 are
+designed for use only by developers and generate HUGE amounts of log
+data, most of which is extremely cryptic\&.
+.IP 
+.IP "\fB-n\fP" 
+This option specifies that the username following should
+have their password set to null (i\&.e\&. a blank password) in the local
+\fBsmbpasswd\fP file\&. This is done by writing the
+string "NO PASSWORD" as the first part of the first password stored in
+the \fBsmbpasswd\fP file\&.
+.IP 
+Note that to allow users to logon to a Samba server once the password
+has been set to "NO PASSWORD" in the
+\fBsmbpasswd\fP file the administrator must set
+the following parameter in the [global] section of the
+\fBsmb\&.conf\fP file :
+.IP 
+null passwords = true
+.IP 
+This option is only available when running \fBsmbpasswd\fP as root\&.
+.IP 
+.IP "\fB-r remote machine name\fP" 
+This option allows a
+user to specify what machine they wish to change their password
+on\&. Without this parameter \fBsmbpasswd\fP defaults to the local
+host\&. The \fI"remote machine name"\fP is the NetBIOS name of the
+SMB/CIFS server to contact to attempt the password change\&. This name
+is resolved into an IP address using the standard name resolution
+mechanism in all programs of the \fBSamba\fP
+suite\&. See the \fB-R name resolve order\fP parameter for details on changing this resolving
+mechanism\&.
+.IP 
+The username whose password is changed is that of the current UNIX
+logged on user\&. See the \fB-U username\fP
+parameter for details on changing the password for a different
+username\&.
+.IP 
+Note that if changing a Windows NT Domain password the remote machine
+specified must be the Primary Domain Controller for the domain (Backup
+Domain Controllers only have a read-only copy of the user account
+database and will not allow the password change)\&.
+.IP 
+\fINote\fP that Windows 95/98 do not have a real password database
+so it is not possible to change passwords specifying a Win95/98 
+machine as remote machine target\&.
+.IP 
+.IP "\fB-R name resolve order\fP" 
+This option allows the user of
+smbclient to determine what name resolution services to use when
+looking up the NetBIOS name of the host being connected to\&.
+.IP 
+The options are :"lmhosts", "host",
+"wins" and "bcast"\&. They cause names to be
+resolved as follows :
+.IP 
+.IP 
+.IP o 
+\fBlmhosts\fP : Lookup an IP address in the Samba lmhosts file\&.
+.IP 
+.IP o 
+\fBhost\fP : Do a standard host name to IP address resolution,
+using the system /etc/hosts, NIS, or DNS lookups\&. This method of name
+resolution is operating system dependent\&. For instance on IRIX or
+Solaris, this may be controlled by the \fI/etc/nsswitch\&.conf\fP file)\&.
+.IP 
+.IP o 
+\fBwins\fP : Query a name with the IP address listed in the 
+\fBwins server\fP parameter in the 
+\fBsmb\&.conf file\fP\&. If 
+no WINS server has been specified this method will be ignored\&.
+.IP 
+.IP o 
+\fBbcast\fP : Do a broadcast on each of the known local interfaces
+listed in the \fBinterfaces\fP parameter
+in the smb\&.conf file\&. This is the least reliable of the name resolution
+methods as it depends on the target host being on a locally connected
+subnet\&.
+.IP 
+.IP 
+If this parameter is not set then the name resolve order defined
+in the \fBsmb\&.conf\fP file parameter 
+\fBname resolve order\fP
+will be used\&.
+.IP 
+The default order is lmhosts, host, wins, bcast and without this
+parameter or any entry in the \fBsmb\&.conf\fP 
+file the name resolution methods will be attempted in this order\&.
+.IP 
+.IP "\fB-m\fP" 
+This option tells \fBsmbpasswd\fP that the account being
+changed is a \fIMACHINE\fP account\&. Currently this is used when Samba is
+being used as an NT Primary Domain Controller\&. PDC support is not a
+supported feature in Samba2\&.0 but will become supported in a later
+release\&. If you wish to know more about using Samba as an NT PDC then
+please subscribe to the mailing list
+samba-ntdom@samba\&.org\&.
+.IP 
+This option is only available when running \fBsmbpasswd\fP as root\&.
+.IP 
+.IP "\fB-j DOMAIN\fP" 
+This option is used to add a Samba server into a
+Windows NT Domain, as a Domain member capable of authenticating user
+accounts to any Domain Controller in the same way as a Windows NT
+Server\&. See the \fBsecurity=domain\fP
+option in the \fBsmb\&.conf (5)\fP man page\&.
+.IP 
+In order to be used in this way, the Administrator for the Windows
+NT Domain must have used the program \fI"Server Manager for Domains"\fP
+to add the primary NetBIOS name of 
+the Samba server as a member of the Domain\&.
+.IP 
+After this has been done, to join the Domain invoke \fBsmbpasswd\fP with
+this parameter\&. \fBsmbpasswd\fP will then look up the Primary Domain
+Controller for the Domain (found in the
+\fBsmb\&.conf\fP file in the parameter
+\fBpassword server\fP and change
+the machine account password used to create the secure Domain
+communication\&.  This password is then stored by \fBsmbpasswd\fP in a
+file, read only by root, called \f(CW<Domain>\&.<Machine>\&.mac\fP where
+\f(CW<Domain>\fP is the name of the Domain we are joining and \f(CW<Machine>\fP
+is the primary NetBIOS name of the machine we are running on\&.
+.IP 
+Once this operation has been performed the
+\fBsmb\&.conf\fP file may be updated to set the
+\fBsecurity=domain\fP option and all
+future logins to the Samba server will be authenticated to the Windows
+NT PDC\&.
+.IP 
+Note that even though the authentication is being done to the PDC all
+users accessing the Samba server must still have a valid UNIX account
+on that machine\&.
+.IP 
+This option is only available when running \fBsmbpasswd\fP as root\&.
+.IP 
+.IP "\fB-U username\fP" 
+This option may only be used in
+conjunction with the \fB-r\fP
+option\&. When changing a password on a remote machine it allows the
+user to specify the user name on that machine whose password will be
+changed\&. It is present to allow users who have different user names on
+different systems to change these passwords\&.
+.IP 
+.IP "\fB-h\fP" 
+This option prints the help string for \fBsmbpasswd\fP, 
+selecting the correct one for running as root or as an ordinary user\&.
+.IP 
+.IP "\fB-s\fP" 
+This option causes \fBsmbpasswd\fP to be silent (i\&.e\&. not
+issue prompts) and to read it\'s old and new passwords from standard 
+input, rather than from \f(CW/dev/tty\fP (like the \fBpasswd (1)\fP program
+does)\&. This option is to aid people writing scripts to drive \fBsmbpasswd\fP
+.IP 
+.IP "\fBusername\fP" 
+This specifies the username for all of the \fIroot
+only\fP options to operate on\&. Only root can specify this parameter as
+only root has the permission needed to modify attributes directly
+in the local \fBsmbpasswd\fP file\&.
+.IP 
+.SH "NOTES" 
+.IP 
+Since \fBsmbpasswd\fP works in client-server mode communicating with a
+local \fBsmbd\fP for a non-root user then the \fBsmbd\fP
+daemon must be running for this to work\&. A common problem is to add a
+restriction to the hosts that may access the \fBsmbd\fP running on the
+local machine by specifying a \fB"allow
+hosts"\fP or \fB"deny
+hosts"\fP entry in the
+\fBsmb\&.conf\fP file and neglecting to allow
+\fI"localhost"\fP access to the \fBsmbd\fP\&.
+.IP 
+In addition, the \fBsmbpasswd\fP command is only useful if \fBSamba\fP has
+been set up to use encrypted passwords\&. See the file \fBENCRYPTION\&.txt\fP
+in the docs directory for details on how to do this\&.
+.IP 
+.SH "VERSION" 
+.IP 
+This man page is correct for version 2\&.0 of the Samba suite\&.
+.IP 
+.SH "AUTHOR" 
+.IP 
+The original Samba software and related utilities were created by
+Andrew Tridgell samba@samba\&.org\&. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed\&.
+.IP 
+The original Samba man pages were written by Karl Auer\&. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+\fBftp://ftp\&.icce\&.rug\&.nl/pub/unix/\fP)
+and updated for the Samba2\&.0 release by Jeremy Allison\&.
+samba@samba\&.org\&.
+.IP 
+See \fBsamba (7)\fP to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc\&.

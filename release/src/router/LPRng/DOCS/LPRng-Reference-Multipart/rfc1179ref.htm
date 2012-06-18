@@ -1,0 +1,419 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>RFC 1179 - Line Printer Daemon Protocol</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="LPRng accounting.pl Utility" href=
+    "x9787.htm">
+    <link rel="NEXT" title="Protocol Requests and Replies " href=
+    "remotesupport.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x9787.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "remotesupport.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="RFC1179REF"></a>Chapter 19. RFC 1179 - Line
+      Printer Daemon Protocol</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>19.1. <a href="rfc1179ref.htm#LPDPORT">Ports and
+          Connections</a></dt>
+
+          <dt>19.2. <a href="remotesupport.htm">Protocol Requests
+          and Replies</a></dt>
+
+          <dt>19.3. <a href="jobtransfer.htm">Job Transfer</a></dt>
+
+          <dt>19.4. <a href="x10191.htm">Data File
+          Transfer</a></dt>
+
+          <dt>19.5. <a href="x10227.htm">Control File
+          Contents</a></dt>
+
+          <dt>19.6. <a href="x10430.htm"><b class=
+          "APPLICATION">lpq</b> Requests</a></dt>
+
+          <dt>19.7. <a href="x10453.htm"><b class=
+          "APPLICATION">lprm</b> Requests</a></dt>
+
+          <dt>19.8. <a href="lpcreread.htm">LPC Requests</a></dt>
+
+          <dt>19.9. <a href="sendblockformat.htm">Block Job
+          Transfer</a></dt>
+
+          <dt>19.10. <a href="x10656.htm">Authenticated
+          Transfer</a></dt>
+        </dl>
+      </div>
+
+      <p>RFC1179 can be obtained from the <b class=
+      "APPLICATION">LPRng</b> distribution, in the
+      LPRng_DOC/rfc1179 directory, or from one of many sites which
+      mirror the RFCs.</p>
+
+      <p>This RFC is an <span class="emphasis"><i class=
+      "EMPHASIS">informational</i></span> RFC, which means that the
+      information in it is meant as a guide to users, and not as a
+      fixed standard. In addition, the RFC tried to document the
+      behavior of the BSD <b class="APPLICATION">lpd</b> print
+      server, and left out many details dealing with error recover,
+      error messages, extensions to the protocol, etc.</p>
+
+      <p>In this section, I will try to explain what RFC1179
+      specifies as a protocol, and many of the problems encountered
+      in trying to use it.</p>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="LPDPORT">19.1. Ports and
+        Connections</a></h1>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">lpd_port=</var><span class=
+            "emphasis"><i class="EMPHASIS">Port for <b class=
+            "APPLICATION">lpd</b> connections</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">lpd_listen_port=</var><span
+            class="emphasis"><i class="EMPHASIS">Port for <b class=
+            "APPLICATION">lpd</b> to accept
+            connection</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">originate_port=</var><span
+            class="emphasis"><i class="EMPHASIS">Ports to originate
+            connections on</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">reuse_addr</var> FLAG <span
+            class="emphasis"><i class="EMPHASIS">Set SO_REUSEADDR
+            flag on connection</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">retry_econnrefused</var> FLAG
+            <span class="emphasis"><i class="EMPHASIS">Retry on
+            connect ECONNREFUSED error</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">retry_nolink</var> FLAG <span
+            class="emphasis"><i class="EMPHASIS">Retry on device
+            open or connection ffailure</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">unix_socket_path</var> PATH
+            <span class="emphasis"><i class="EMPHASIS">UNIX FIFO
+            pathname for local connections</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">socket_linger=</var><span
+            class="emphasis"><i class="EMPHASIS">socket linger
+            timeout</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>RFC1179 requires that the <b class="APPLICATION">lpd</b>
+        server listen for TCP/IP connections on port 515. This port
+        is registered with the Internet Naming Authority, and the
+        <tt class="FILENAME">/etc/services</tt> file or TCP/IP
+        services database usually has an entry:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9880"></a>
+<pre class="SCREEN">
+    printer     515/tcp     spooler     # line printer spooler
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>RFC1179 explicitly states that all connections to port
+        515 must originate from ports 721-731. The reason for this
+        restriction is due to the UNIX concept of <span class=
+        "emphasis"><i class="EMPHASIS">reserved</i></span> and
+        <span class="emphasis"><i class=
+        "EMPHASIS">privileged</i></span> ports. By convention,
+        ports in the range 1-1023 can only <span class=
+        "emphasis"><i class="EMPHASIS">bound</i></span> by
+        processes whose Effective User ID (EUID) is 0 (root). This,
+        ordinary users could not originate a connection from the
+        reserved or privileged port range.</p>
+
+        <p>In a UNIX environment, this means that the user programs
+        <b class="APPLICATION">lpr</b>, <b class=
+        "APPLICATION">lpq</b>, <b class="APPLICATION">lprm</b>, and
+        <b class="APPLICATION">lpc</b> would have to be SETUID
+        root.</p>
+
+        <p>As experience has shown, for security purposes, the
+        fewer programs that need to have privileged status, the
+        better. <b class="APPLICATION">LPRng</b> uses the <var
+        class="LITERAL">lpd_port=printer</var> configuration option
+        to set the port for the connections to a <b class=
+        "APPLICATION">lpd</b> server. By default, this is port 515,
+        but can be set to other values. This port value is used to
+        make connections to a remote <b class="APPLICATION">lpd</b>
+        server. The <var class=
+        "LITERAL">lpd_listen_port=printer</var> configuration
+        option can be used to specify a port for the <b class=
+        "APPLICATION">lpd</b> to listen for incoming requests. If
+        no <var class="LITERAL">lpd_listen_port</var> value is
+        specified the <var class="LITERAL">lpd_port</var> value
+        will be used as the <b class="APPLICATION">lpd</b>
+        listening port.</p>
+
+        <p>The <var class="LITERAL">unix_socket_path</var> option
+        specifies the pathname of a UNIX FIFO or socket that can be
+        used for connections the <b class="APPLICATION">lpd</b>
+        server if the client and server are on the same host. The
+        use of a local FIFO restricts connections from outside
+        hosts. The UNIX FIFO path should be to a node in a
+        directory that is writable by by the <b class=
+        "APPLICATION">lpd</b> server and not other non-privileged
+        processes.</p>
+
+        <p>The restriction of originating ports to 721-731 causes
+        another set of problems. Part of the TCP/IP protocol is
+        concerned with avoiding communications problems resulting
+        from the arrival of old or <span class="emphasis"><i class=
+        "EMPHASIS">stale</i></span> packets. When a connection
+        between <var class="LITERAL">sourcehost, sourceport</var>
+        and <var class="LITERAL">desthost, destport</var> is made,
+        a set of sequence numbers is established and used for
+        sending and acknowledgement of data. When the connection
+        terminates, the TCP/IP protocol restricts the establishment
+        of a new connection between <var class=
+        "LITERAL">sourcehost, sourceport</var> and <var class=
+        "LITERAL">desthost, destport</var> for a period long enough
+        for all <span class="emphasis"><i class=
+        "EMPHASIS">stale</i></span> packets to be removed from the
+        system. This is approximately 10 minutes long.</p>
+
+        <p>In order to simplify assignments of ports, timing out
+        connections, and other matters, many TCP/IP packages do
+        keep track of explicit connections <span class=
+        "emphasis"><i class="EMPHASIS">originating</i></span> from
+        a port, but simply prevent the port from being reused for
+        either origination or reception of a connection. They do,
+        however, keep track of the active connections <span class=
+        "emphasis"><i class="EMPHASIS">to</i></span> a port, and
+        perform timeouts on these. This is usually much simpler to
+        implement, as it can be done with a list attached to the
+        port.</p>
+
+        <p>This implementation method creates some problems when a
+        large number of connections must be originated from a
+        relatively small number of port numbers. Observe what
+        happens when host 1 tries to send a large number of jobs to
+        a server 2. The following connections are established and
+        terminated: <var class="LITERAL">host 1, port 721</var> and
+        <var class="LITERAL">host 2, port 515</var> <var class=
+        "LITERAL">host 1, port 722</var> and <var class=
+        "LITERAL">host 2, port 515</var> <var class="LITERAL">host
+        1, port 723</var> and <var class="LITERAL">host 2, port
+        515</var> <var class="LITERAL">host 1, port 724</var> and
+        <var class="LITERAL">host 2, port 515</var> <var class=
+        "LITERAL">host 1, port 725</var> and <var class=
+        "LITERAL">host 2, port 515</var> <var class="LITERAL">host
+        1, port 726</var> and <var class="LITERAL">host 2, port
+        515</var> <var class="LITERAL">host 1, port 727</var> and
+        <var class="LITERAL">host 2, port 515</var> <var class=
+        "LITERAL">host 1, port 728</var> and <var class=
+        "LITERAL">host 2, port 515</var> <var class="LITERAL">host
+        1, port 729</var> and <var class="LITERAL">host 2, port
+        515</var> <var class="LITERAL">host 1, port 730</var> and
+        <var class="LITERAL">host 2, port 515</var> <var class=
+        "LITERAL">host 1, port 731</var> and <var class=
+        "LITERAL">host 2, port 515</var></p>
+
+        <p>Now according to the RFC1179 rules and the TCP/IP
+        protocol, we will have to wait until one of these
+        connections terminates before we can make another. On the
+        originating system, if the TCP/IP implementation does
+        timeouts on the originating port, we will have to wait for
+        the timeout to elapse before we can make a new connection.
+        Unfortunately, there is no way to find out what the status
+        of the port is, so we will have to try them each in turn
+        until we get a successful connection.</p>
+
+        <p>The <b class="APPLICATION">LPRng</b> code has tried to
+        provide several methods to deal with these problems.
+        Firstly, the <var class="LITERAL">originate_port=512
+        1023</var> option specifies the range of ports used to
+        originate connections when the software is running either
+        as ROOT or SETUID root. By strict RFC1179 rules, this
+        should be <var class="LITERAL">originate_port=721
+        731</var>, but it turns out that most BSD <b class=
+        "APPLICATION">lpd</b> based implementations only check for
+        a <span class="emphasis"><i class=
+        "EMPHASIS">reserved</i></span> originating port. By using
+        512 ports we get a greatly reduced rate of errors due to
+        lack of ports due to pending timeouts.</p>
+
+        <p>However, on some systems which are acting as servers for
+        a large number of printers even increasing this port range
+        is insufficient, and steps need to be taken use the
+        originating port numbers more efficiently. The Berkeley
+        TCP/IP implementation <code class=
+        "FUNCTION">getsockopt()</code> and <code class=
+        "FUNCTION">setsockopt()</code> allows the user to
+        manipulate some of the underlying timeouts and options of
+        the TCP/IP network. When a TCP/IP connection is
+        established, the <code class="FUNCTION">setsockopt()</code>
+        facility can be used to set the <var class=
+        "LITERAL">SO_REUSEADDR</var> flag on the connection. This
+        flag effectively sets the timeout value on the ports and
+        connections to 0, allowing immediate reuse of the ports.
+        When done on an originating end of a connection, this will
+        allow the originating port number to be reused
+        immediately.</p>
+
+        <p>It would appear that by setting <var class=
+        "LITERAL">SO_REUSEADDR</var> on the originating end that we
+        have solved our problems. However, unless the destination
+        end of the connection sets its <var class=
+        "LITERAL">SO_REUSEADDR</var> flag on the connection, it
+        will still do a timeout. Thus when we try to make a
+        connection from a port that was active within a short
+        period of time to the same host, then it will reject the
+        connection until the timeout is over.</p>
+
+        <p>The <var class="LITERAL">reuse_addr</var> flag (default
+        off) forces the <b class="APPLICATION">LPRng</b> software
+        to set the <var class="LITERAL">SO_REUSEADDR</var> flag on
+        originating connections. As indicated, this will allow
+        ports to be reused immediately for outgoing connections,
+        rather than waiting for a timeout.</p>
+
+        <p>While the <var class="LITERAL">reuse_addr</var> flag
+        usually allows us to reuse ports, there is still the
+        problem of dealing with connections failing due to the
+        remote site rejecting the connection due to a pending
+        timeout from a previous connection. A careful study of the
+        original BSD TCP/IP network code and of some others
+        indicates that when a connection fails due to a pending
+        timeout, an ECONNREFUSED error code is returned to a <code
+        class="FUNCTION">connect()</code> system call. If this
+        happens and we suspect that the remote site is rejecting
+        the connection due to a timeout problem, then we should
+        retry making the connection but from a new port, and
+        continue retrying until all possible ports are used.</p>
+
+        <p>The <var class="LITERAL">retry_econnrefused</var>
+        (default on) flag is used to specify that we retry
+        connections in this manner. When this is set, a <var class=
+        "LITERAL">connection refused</var> error causes the
+        connection to be retried using a new port. This will be
+        repeated until all available ports have been tried.</p>
+
+        <p>When printing a job and the <b class=
+        "APPLICATION">lpd</b> server connection to a remote site or
+        device open fails, the <var class=
+        "LITERAL">retry_nolink</var> (default on) will cause the
+        attempt to be retried indefinitely. The combination of <var
+        class="LITERAL">retry_econnrefused</var> and <var class=
+        "LITERAL">retry_nolink</var> will provide robust connection
+        attempts to remote systems.</p>
+
+        <p>While the above problems cause difficulties when making
+        connections, there are also problems when terminating
+        connections. After closing a socket, the TCP/IP software
+        will try to flush any pending data to the destination.
+        Unfortunately, on some systems it will only do this while
+        the process is active. This has caused problems on systems
+        which terminate a process it has received an abnormal
+        (signal caused) termination.</p>
+
+        <p>The <code class="FUNCTION">setsockopt()</code> SO_LINGER
+        option allows the user to specify that when a socket is
+        closed normally, that the process should block until
+        pending data is flushed or for the <var class=
+        "LITERAL">socket_linger</var> period. If <var class=
+        "LITERAL">socket_linger</var> is 0, then no SO_LINGER
+        operation is done.</p>
+
+        <p>In summary, if you experience problems with connection
+        failures due to port exhaustion, first try setting the <var
+        class="LITERAL">reuse_port</var> flag, and you should see a
+        reduction. Check to ensure that the <var class=
+        "LITERAL">retry_econnrefused</var> and <var class=
+        "LITERAL">retry_nolink</var> flags are set, and the error
+        code in the log and status files. If the failures continue,
+        then the problem is caused by the remote end having timeout
+        limitations and there is little you can do except to set a
+        very long <var class="LITERAL">connect_retry</var>
+        interval, say <var class="LITERAL">connect_retry=120</var>
+        (2 minutes).</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x9787.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "remotesupport.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top"><b class=
+          "APPLICATION">LPRng</b> accounting.pl Utility</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Protocol
+          Requests and Replies</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

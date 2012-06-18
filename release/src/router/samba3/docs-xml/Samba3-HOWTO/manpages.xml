@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE reference PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<reference xmlns:xi="http://www.w3.org/2003/XInclude">
+	<title>Manual pages</title>
+
+	<para>This chapter contains most of the manual pages from the official Samba distribution.
+		All manual pages have been written by members of 
+		<ulink url="http://www.samba.org/samba/team.html">the Samba Team</ulink>.</para>
+
+	<xi:include href="../manpages-3/eventlogadm.8.xml"/>
+	<xi:include href="../manpages-3/findsmb.1.xml"/>
+	<xi:include href="../manpages-3/idmap_ad.8.xml"/>
+	<xi:include href="../manpages-3/idmap_ldap.8.xml"/>
+	<xi:include href="../manpages-3/idmap_nss.8.xml"/>
+	<xi:include href="../manpages-3/idmap_rid.8.xml"/>
+	<xi:include href="../manpages-3/idmap_tdb.8.xml"/>
+	<xi:include href="../manpages-3/libsmbclient.7.xml"/>
+	<xi:include href="../manpages-3/lmhosts.5.xml"/>
+	<xi:include href="../manpages-3/log2pcap.1.xml"/>
+	<xi:include href="../manpages-3/mount.cifs.8.xml"/>
+	<xi:include href="../manpages-3/net.8.xml"/>
+	<xi:include href="../manpages-3/nmbd.8.xml"/>
+	<xi:include href="../manpages-3/nmblookup.1.xml"/>
+	<xi:include href="../manpages-3/ntlm_auth.1.xml"/>
+	<xi:include href="../manpages-3/pam_winbind.7.xml"/>
+	<xi:include href="../manpages-3/pdbedit.8.xml"/>
+	<xi:include href="../manpages-3/profiles.1.xml"/>
+	<xi:include href="../manpages-3/rpcclient.1.xml"/>
+	<xi:include href="../manpages-3/smbcacls.1.xml"/>
+	<xi:include href="../manpages-3/smbclient.1.xml"/>
+	<xi:include href="../manpages-3/smb.conf.5.xml"/>
+	<xi:include href="../manpages-3/smbcontrol.1.xml"/>
+	<xi:include href="../manpages-3/smbcquotas.1.xml"/>
+	<xi:include href="../manpages-3/smbd.8.xml"/>
+	<xi:include href="../manpages-3/smbget.1.xml"/>
+	<xi:include href="../manpages-3/smbgetrc.5.xml"/>
+	<xi:include href="../manpages-3/smbpasswd.5.xml"/>
+	<xi:include href="../manpages-3/smbpasswd.8.xml"/>
+	<xi:include href="../manpages-3/smbsh.1.xml"/>
+	<xi:include href="../manpages-3/smbstatus.1.xml"/>
+	<xi:include href="../manpages-3/smbtar.1.xml"/>
+	<xi:include href="../manpages-3/smbtree.1.xml"/>
+	<xi:include href="../manpages-3/smbumount.8.xml"/>
+	<xi:include href="../manpages-3/swat.8.xml"/>
+	<xi:include href="../manpages-3/tdbbackup.8.xml"/>
+	<xi:include href="../manpages-3/tdbdump.8.xml"/>
+	<xi:include href="../manpages-3/tdbtool.8.xml"/>
+	<xi:include href="../manpages-3/testparm.1.xml"/>
+	<xi:include href="../manpages-3/wbinfo.1.xml"/>
+	<xi:include href="../manpages-3/winbindd.8.xml"/>
+	<xi:include href="../manpages-3/umount.cifs.8.xml"/>
+	<xi:include href="../manpages-3/vfs_audit.8.xml"/>
+	<xi:include href="../manpages-3/vfs_cacheprime.8.xml"/>
+	<xi:include href="../manpages-3/vfs_cap.8.xml"/>
+	<xi:include href="../manpages-3/vfs_catia.8.xml"/>
+	<xi:include href="../manpages-3/vfs_commit.8.xml"/>
+	<xi:include href="../manpages-3/vfs_default_quota.8.xml"/>
+	<xi:include href="../manpages-3/vfs_extd_audit.8.xml"/>
+	<xi:include href="../manpages-3/vfs_fake_perms.8.xml"/>
+	<xi:include href="../manpages-3/vfs_full_audit.8.xml"/>
+	<xi:include href="../manpages-3/vfs_gpfs.8.xml"/>
+	<xi:include href="../manpages-3/vfs_netatalk.8.xml"/>
+	<xi:include href="../manpages-3/vfs_notify_fam.8.xml"/>
+	<xi:include href="../manpages-3/vfs_prealloc.8.xml"/>
+	<xi:include href="../manpages-3/vfs_readahead.8.xml"/>
+	<xi:include href="../manpages-3/vfs_readonly.8.xml"/>
+	<xi:include href="../manpages-3/vfs_recycle.8.xml"/>
+	<xi:include href="../manpages-3/vfs_shadow_copy.8.xml"/>
+	<xi:include href="../manpages-3/vfstest.1.xml"/>
+	<xi:include href="../manpages-3/wbinfo.1.xml"/>
+	<xi:include href="../manpages-3/winbindd.8.xml"/>
+
+</reference>

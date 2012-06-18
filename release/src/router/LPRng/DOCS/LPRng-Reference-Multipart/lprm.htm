@@ -1,0 +1,129 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>lprm - Job Removal Program</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title=
+    "Configuring Format and Displayed Information" href=
+    "x4619.htm">
+    <link rel="NEXT" title="lprm Job Selection" href="x4719.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x4619.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x4719.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="LPRM"></a>Chapter 8. <b class=
+      "APPLICATION">lprm</b> - Job Removal Program</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>8.1. <a href="lprm.htm#AEN4713"><b class=
+          "APPLICATION">lprm</b> Queue Selection (lprm -Pprinter,
+          lprm -a)</a></dt>
+
+          <dt>8.2. <a href="x4719.htm"><b class=
+          "APPLICATION">lprm</b> Job Selection</a></dt>
+        </dl>
+      </div>
+
+      <p>The <b class="APPLICATION">lprm</b> program is used to
+      remove jobs from a print queue. You can obtain the available
+      options by using:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN4709"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {307} %</samp> <kbd class=
+"USERINPUT">lprm -=</kbd>
+    lprm: Illegal option '='
+     usage: lprm [-A] [-a | -Pprinter] [-Ddebuglevel] (jobid|user|'all')*
+      -a           - all printers
+      -A           - use authentication
+      -Pprinter    - printer (default PRINTER environment variable)
+      -Uuser       - impersonate this user (root or privileged user only)
+      -Ddebuglevel - debug level
+      -V           - show version information
+      user           removes user jobs
+      all            removes all jobs
+      jobid          removes job number jobid
+     Example:
+        'lprm -Plp 30' removes job 30 on printer lp
+        'lprm -a'      removes all your jobs on all printers
+        'lprm -a all'  removes all jobs on all printers
+      Note: lprm removes only jobs for which you have removal permission
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="AEN4713">8.1. <b class=
+        "APPLICATION">lprm</b> Queue Selection (lprm -Pprinter,
+        lprm -a)</a></h1>
+
+        <p>If no queue is specified, then the default queue is
+        used, with <var class="LITERAL">-Pprinter@host</var>
+        causing a direct connection to the named host. The <var
+        class="LITERAL">-a</var> literal selects all queues.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x4619.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x4719.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Configuring
+          Format and Displayed Information</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top"><b class=
+          "APPLICATION">lprm</b> Job Selection</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

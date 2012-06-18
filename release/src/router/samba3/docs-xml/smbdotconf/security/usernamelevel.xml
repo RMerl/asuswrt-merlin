@@ -1,0 +1,27 @@
+<samba:parameter name="username level"
+                 context="G"
+                 advanced="1" developer="1"
+				 type="integer"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This option helps Samba to try and 'guess' at 
+    the real UNIX username, as many DOS clients send an all-uppercase 
+    username. By default Samba tries all lowercase, followed by the 
+    username with the first letter capitalized, and fails if the 
+    username is not found on the UNIX machine.</para>
+
+    <para>If this parameter is set to non-zero the behavior changes. 
+    This parameter is a number that specifies the number of uppercase
+    combinations to try while trying to determine the UNIX user name. The
+    higher the number the more combinations will be tried, but the slower
+    the discovery of usernames will be. Use this parameter when you have
+    strange usernames on your UNIX machine, such as <constant>AstrangeUser
+    </constant>.</para>
+
+    <para>This parameter is needed only on UNIX systems that have case
+    sensitive usernames.</para>
+</description>
+
+<value type="default">0</value>
+<value type="example">5</value>
+</samba:parameter>

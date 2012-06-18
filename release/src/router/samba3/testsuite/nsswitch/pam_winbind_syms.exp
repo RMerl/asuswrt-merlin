@@ -1,0 +1,44 @@
+#
+# @(#) Test nss functions are exported from the pam_winbind.so library
+# @(#) Test there are no external dependencies in the pam_winbind.so library
+#
+# We expect the following symbols to be exported:
+#
+#    pam_sm_acct_mgmt
+#    pam_sm_authenticate
+#    pam_sm_setcred
+#
+# This test also has the nice side-effect of showing any unresolved symbols 
+# in the library.
+#
+
+load_lib util-defs.exp
+
+# Compile pam_winbind_syms.c
+
+set output [target_compile "$srcdir/$subdir/pam_winbind_syms.c" \
+        "$srcdir/$subdir/pam_winbind_syms" executable \
+        {"libs=-ldl -lpam" "additional_flags=-g"}]
+
+if {$output != ""} {
+    perror "compile pam_winbind_syms.c"
+    puts $output
+    return
+}
+
+# Run load-dl.c
+
+set output [util_start "$srcdir/$subdir/pam_winbind_syms" \
+        "bin/pam_winbind.so"]
+
+if {[regexp "FAIL:" $output]} {
+    fail "run pam_winbind_syms"
+    puts $output
+    return
+}
+
+pass "pam_winbind_syms"
+
+# Clean up
+
+file delete "$srcdir/$subdir/pam_winbind_syms"

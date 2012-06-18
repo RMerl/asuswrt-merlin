@@ -1,0 +1,72 @@
+!==
+!== DNIX.txt for Samba release 2.0.10 23 Jun 2001
+!==
+DNIX has a problem with seteuid() and setegid(). These routines are
+needed for Samba to work correctly, but they were left out of the DNIX
+C library for some reason.
+
+For this reason Samba by default defines the macro NO_EID in the DNIX
+section of includes.h. This works around the problem in a limited way,
+but it is far from ideal, some things still won't work right.
+
+To fix the problem properly you need to assemble the following two
+functions and then either add them to your C library or link them into
+Samba.
+
+put this in the file setegid.s:
+
+        .globl  _setegid
+_setegid:
+        moveq   #47,d0
+        movl    #100,a0
+        moveq   #1,d1
+        movl    4(sp),a1
+        trap    #9
+        bccs    1$
+        jmp     cerror
+1$:
+        clrl    d0
+        rts
+
+
+put this in the file seteuid.s:
+
+        .globl  _seteuid
+_seteuid:
+        moveq   #47,d0
+        movl    #100,a0
+        moveq   #0,d1
+        movl    4(sp),a1
+        trap    #9
+        bccs    1$
+        jmp     cerror
+1$:
+        clrl    d0
+        rts
+
+after creating the above files you then assemble them using
+
+as seteuid.s
+as setegid.s
+
+that should produce the files seteuid.o and setegid.o
+
+then you need to add these to the LIBSM line in the DNIX section of
+the Samba Makefile. Your LIBSM line will then look something like this:
+
+LIBSM = setegid.o seteuid.o -ln
+
+You should then remove the line:
+
+#define NO_EID
+
+from the DNIX section of includes.h
+
+Then recompile and try it out!
+
+Note that this file was derived from an email from Peter Olsson
+<pol@leissner.se>. I don't have DNIX myself, so you're probably better
+off contacting Peter if you have problems.
+
+Andrew
+

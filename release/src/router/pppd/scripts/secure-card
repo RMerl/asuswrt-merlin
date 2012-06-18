@@ -1,0 +1,111 @@
+#!/usr/local/bin/expect -f
+#
+# This  script was  written  by  Jim Isaacson  <jcisaac@crl.com>.  It is
+# designed to work  as a script to use the  SecureCARD(tm) device.  This
+# little device is mated with a central controller. The number displayed
+# on this card changes every so often and  you need to enter  the number
+# along with your user account name in order to gain access.  Since chat
+# is based upon fixed strings this procedure will not work with chat.
+#
+# It is included by permission. An excellent reference for the expect
+# program used by this script is in the book:
+#
+# "Exploring Expect"
+# by Don Libes
+# Published by O'Rielly and Associates
+#
+
+send_user "hello, starting ppp\n"
+
+system "stty 19200 -echoe -echo raw < /dev/ttyS3 > /dev/ttyS3"
+
+#
+# These are the parameters for the program.
+#
+set user      Pxxxxxx
+set password  xxxxxxx 
+set modem     /dev/ttyS3
+set dialup    <put phone number here>
+set timeout   60
+
+spawn -noecho -open [open $modem "r+"]
+
+send "AT&F\r"
+expect "OK"
+
+send "ATe0v1x4&c1q0&d2&c1s2=128s0=0DT $dialup\r"
+set timeout 15
+set counter 0
+
+set still_connecting 1
+
+expect {
+	-re ".*CONNECT.*\n" {
+		set timeout 5
+		set still_connecting 0
+		continue -expect
+	}
+	-re ".*CONNECT.*\r" {
+		set timeout 5
+		set still_connecting 0
+		continue -expect
+	}
+        -re ".*NO.*CARRIER" {
+		send_user "Failed to Connect, exiting...\n"
+		exit
+        }
+        -re ".*NO.*DIAL.*TONE" {
+		send_user "Failed to Connect, exiting...\n"
+		exit
+        }
+        -re ".*VOICE" {
+		send_user "Failed to Connect, exiting...\n"
+		exit
+        }
+	-re ".*sscode:.*\n" {
+		continue -expect
+	}
+	-re ".*sscode:" {
+                set timeout -1
+		expect_user -re "(.*)\n"
+		send "$expect_out(1,string)\r"
+		set timeout 30
+		continue -expect
+	}
+	-re ".*Next.*:" {
+                set timeout -1
+		expect_user -re "(.*)\n"
+		send "$expect_out(1,string)\r"
+		set timeout 30
+		continue -expect
+	}
+	-re "Your.*" {
+		send "\r"
+		continue -expect
+	}
+	-re ".*in:" {
+		send "$user\r"
+		continue -expect
+	}
+	-re ".*word:" {
+		send "$password\r"
+	}
+
+	timeout {
+		if { $still_connecting > 0 } {
+			continue -expect 
+			}
+		set timeout 15
+		send "\r"
+		incr counter
+		if { $counter > 8 } {
+			send_user "Cannot Connect\n"
+			exit
+		} else {
+			continue -expect
+		}
+	}
+}
+
+overlay -0 $spawn_id -1 $spawn_id pppd /dev/ttyS3 19200 192.111.187.215: \
+	crtscts modem defaultroute debug 

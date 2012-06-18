@@ -1,0 +1,33 @@
+Utilities for LPRng
+
+README - this file
+Makefile - does various operations
+accounting.pl - accounting script in Perl
+   See the documentation in the script.  You should use this as follows:
+   printcap:
+		:af=accnt
+		:as=|/.../accounting.pl start
+		:ae=|/.../accounting.pl end
+
+lpr_in_perl, lpq_in_porl - perl scripts to do really simple LPQ, LPR
+   simulation.  Can also be extended  to lprm, lpc, etc.
+
+remote_active: script to do checking for a remote active printer
+
+linetest.c - test a serial line
+make_lpd_conf - makes the sample lpd.conf file from the src/vars.c file
+makeinc - makes the various dependencies.  Used by 'make depend'
+test_rw_pipe.c - tests read-write pipe support
+xlate.c        - translates xf,xc,... printcap to sy format
+
+update_z   - control file filter that updates the Z options according
+  to the queue name.  Replacement for apsfilter,  when used with the
+  wildcard queue name matching.
+  Example:
+    pr|pr_*:lp=%P@server
+    pr|pr_*
+     :incoming_control_filter=/.../update_z
+     :filter=/.../ifhp
+     :sd=/var/spool/lpd/%P
+     :lp=....
+    

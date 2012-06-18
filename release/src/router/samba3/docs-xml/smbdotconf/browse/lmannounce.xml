@@ -1,0 +1,26 @@
+<samba:parameter name="lm announce"
+                 context="G"
+				 type="boolean-auto"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter determines if <citerefentry><refentrytitle>nmbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> will produce Lanman announce 
+	broadcasts that are needed by OS/2 clients in order for them to see 
+	the Samba server in their browse list. This parameter can have three 
+	values, <constant>yes</constant>, <constant>no</constant>, or
+	<constant>auto</constant>. The default is <constant>auto</constant>.  
+	If set to <constant>no</constant> Samba will never produce these 
+	broadcasts. If set to <constant>yes</constant> Samba will produce 
+	Lanman announce broadcasts at a frequency set by the parameter 
+	<smbconfoption name="lm interval"/>. If set to <constant>auto</constant> 
+	Samba will not send Lanman announce broadcasts by default but will 
+	listen for them. If it hears such a broadcast on the wire it will 
+	then start sending them at a frequency set by the parameter 
+	<smbconfoption name="lm interval"/>.</para>
+</description>
+
+<related>lm interval</related>
+<value type="default">auto</value>
+<value type="example">yes</value>
+</samba:parameter>

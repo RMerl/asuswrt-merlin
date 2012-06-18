@@ -1,0 +1,16 @@
+# udev rules file for madwimax supported devices
+SUBSYSTEM!="usb|usb_device", GOTO="madwimax_rules_end"
+ACTION!="add", GOTO="madwimax_rules_end"
+
+# detach buggy disk
+ATTRS{idVendor}=="04e8", ATTRS{idProduct}=="6761", ATTR{bInterfaceNumber}=="01", RUN+="/bin/sh -c '/bin/echo -n $kernel > /sys/$devpath/driver/unbind'"
+ATTRS{idVendor}=="04e9", ATTRS{idProduct}=="6761", ATTR{bInterfaceNumber}=="01", RUN+="/bin/sh -c '/bin/echo -n $kernel > /sys/$devpath/driver/unbind'"
+ATTRS{idVendor}=="04e8", ATTRS{idProduct}=="6780", ATTR{bInterfaceNumber}=="01", RUN+="/bin/sh -c '/bin/echo -n $kernel > /sys/$devpath/driver/unbind'"
+
+# run madwimax
+ATTR{idVendor}=="04e8", ATTR{idProduct}=="6761", RUN+="@SBINDIR@/madwimax -qd --exact-device=$attr{busnum}/$attr{devnum}"
+ATTR{idVendor}=="04e9", ATTR{idProduct}=="6761", RUN+="@SBINDIR@/madwimax -qd --exact-device=$attr{busnum}/$attr{devnum}"
+ATTR{idVendor}=="04e8", ATTR{idProduct}=="6731", RUN+="@SBINDIR@/madwimax -qd --exact-device=$attr{busnum}/$attr{devnum}"
+ATTR{idVendor}=="04e8", ATTR{idProduct}=="6780", RUN+="@SBINDIR@/madwimax -qd --exact-device=$attr{busnum}/$attr{devnum}"
+
+LABEL="madwimax_rules_end"

@@ -1,0 +1,8 @@
+U32 allows you to extract quantities of up to 4 bytes from a packet,
+AND them with specified masks, shift them by specified amounts and
+test whether the results are in any of a set of specified ranges.
+The specification of what to extract is general enough to skip over
+headers with lengths stored in the packet, as in IP or TCP header
+lengths.
+
+Details and examples are in the kernel module source.

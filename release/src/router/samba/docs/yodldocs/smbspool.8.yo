@@ -1,0 +1,91 @@
+mailto(samba@samba.org) 
+
+manpage(smbspool htmlcommand((1)))(1)(11 October 1999)(Samba)(SAMBA)
+
+label(NAME)
+
+label(NAME)
+manpagename(smbspool)(mount an SMB filesystem)
+
+label(SYNOPSIS)
+manpagesynopsis()
+bf(smbspool) job user title copies options [filename]
+
+label(DESCRIPTION)
+manpagedescription()
+
+This program is part of the Samba suite.
+
+smbspool is a very small print spooling program that sends a print
+file to a SMB printer. The command-line arguments are position-dependent for
+compatibility with the Common UNIX Printing System, but you can use
+smbspool with any printing system or from a program or script.
+
+manpagesection(DEVICE URI)
+
+smbspool specifies the destination using a Uniform Resource Identifier
+("URI") with a method of "smb". This string can take a number of
+forms:
+
+startit()
+it() smb://server/printer
+
+it() smb://workgroup/server/printer
+
+it() smb://username:password@server/printer
+
+it() smb://username:password@workgroup/server/printer
+
+endit()
+
+smbspool tries to get the URI from argv[0]. If argv[0] contains the
+name of the program then it looks in the DEVICE_URI environment variable.
+
+Programs using the exec(2) functions can pass the URI in argv[0],
+while shell scripts must set the DEVICE_URI environment variable prior to
+running smbspool.
+
+manpagesection(OPTIONS)
+
+The job argument (argv[1]) contains the job ID number and is presently
+not used by smbspool.
+
+The user argument (argv[2]) contains the print user's name and is
+presently not used by smbspool.
+
+The title argument (argv[3]) contains the job title string and is
+passed as the remote file name when sending the print job.
+
+The copies argument (argv[4]) contains the number of copies to be
+printed of the named file. If no filename is provided than this argument is
+not used by smbspool.
+
+The options argument (argv[5]) contains the print options in a single
+string and is presently not used by smbspool.
+
+The filename argument (argv[6]) contains the name of the file to print.
+If this argument is not specified then the print file is read from the
+standard input.
+
+label(VERSION)
+manpagesection(VERSION)
+
+This man page is correct for version 2\&.0 of the Samba suite\&.
+
+label(SEEALSO)
+manpagesection(SEE ALSO)
+url(bf(smbd (8)))(smbd.8.html)
+
+label(AUTHOR)
+manpageauthor()
+
+smbspool was written by Michael Sweet at Easy Software Products.
+
+The original Samba software and related utilities were created by
+Andrew Tridgell samba@samba.org. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+
+See samba (7) to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.

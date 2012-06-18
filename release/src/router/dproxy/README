@@ -1,0 +1,86 @@
+dproxy
+------
+
+dproxy is a small, smart caching nameserver for use on gateway machines with
+non-permenant connections. It includes support for PPP, Ethernet, ISDN and
+DHCP connections.  dproxy safely returns a DNS error, when it detects no 
+connection to the outside network,  preventing programs like Netscape
+from hanging as happens when BIND is used in the same situation. 
+
+dproxy also  pre-caches all the entries in /etc/hosts, and provides access to 
+all cache entries when offline. This means dproxy can be used as a DNS server 
+for small networks.  The cache is stored in human readable text file format 
+and has mechanisms to allow either pre-set times for cache expiries, or to 
+allow expires to be calculated from TTL returned on DNS lookups.
+
+It is also suitable for use on stand alone workstations for
+accelerating slower Internet connections.
+
+Installing dproxy
+-----------------
+
+First build and install dproxy.
+make
+make install
+
+You have to kill any existing named services on you gateway.
+
+Edit the dproxy configuration file. By default this is installed as 
+/etc/dproxy.conf
+
+See the next section on configuring dproxy.
+
+You may want to add all the local machines to your /etc/hosts file so
+dproxy can cache the names of those too.
+
+On RedHat systems Makefile will have installed the init script in 
+/etc/rc.d/init.d/. Run "/sbin/chkconfig --del named" (to remove named service),
+then  "/sbin/chkconfig --level 345 dproxy on" to let dproxy start in runlevels 
+3, 4 and 5 (this works for RedHat 6.1, untested on other distributions.)
+Shut down your named (if running) with "/etc/rc.d/init.d/named stop".
+
+Then start dproxy on the gateway machine. (using 
+"/etc/rc.d/init.d/dproxy start".)
+
+Next time you start your connection dproxy will pass all requests onto the 
+nameservers in /etc/resolv.conf and store the results of any queries before
+passing the result back to the requesting client.
+
+dproxy will also return cached entries when offline, but this
+usually wont serve much purpose as the hosts will be unreachable anyway.
+
+Configuring
+-----------
+
+Most of dproxy's configuration is done through its configuration file which
+is usually installed in /etc/dproxy.conf
+
+The configuration file can be generated from dproxy it self using the '-P' 
+option on the command line. For example:
+
+# dproxy -P >/etc/dproxy.conf
+
+Acknowledgements
+----------------
+
+Two other open source programs helped my immensely to write this program even
+though I didn't end up using much code from them.
+
+- Ethereal network analyser
+        The best packet sniffer / analyser out there. It actully
+        disassembles the DNS packets and displays the contents.
+        http://ethereal.zing.org
+                                                
+- Dents, dns server
+        Well written and documented code. Wish mine was as good.
+        http://www.dents.org/
+
+Thanx to people involved in both those projects.
+
+Individuals who have contributed bug fixes, patches, bugs reports, or thanks 
+can be found in the CREDITS file.
+
+Matthew Pratt <mattpratt@yahoo.com>
+
+
+

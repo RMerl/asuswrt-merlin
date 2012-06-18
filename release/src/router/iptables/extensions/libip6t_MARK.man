@@ -1,0 +1,6 @@
+This is used to set the netfilter mark value associated with the
+packet.  It is only valid in the
+.B mangle
+table.
+.TP
+.BI "--set-mark " "mark"

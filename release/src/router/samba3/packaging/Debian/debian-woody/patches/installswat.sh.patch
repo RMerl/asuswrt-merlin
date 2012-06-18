@@ -1,0 +1,51 @@
+--- samba-3.0.1/source/script/installswat.sh.orig	Fri Dec 19 14:49:40 2003
++++ samba-3.0.1/source/script/installswat.sh	Fri Dec 19 14:48:49 2003
+@@ -9,7 +9,7 @@
+ echo Installing the Samba Web Administration Tool
+ 
+ LANGS=". `cd $SRCDIR../swat/; /bin/echo lang/??`"
+-echo Installing langs are `cd $SRCDIR../swat/lang/; /bin/echo ??`
++echo Installing the following additional langs: `cd $SRCDIR../swat/lang/; /bin/echo ??`
+ 
+ for ln in $LANGS; do 
+  SWATLANGDIR=$SWATDIR/$ln
+@@ -23,11 +23,8 @@
+ 	fi
+     fi
+  done
+-done
+-
+-# Install images
+-for ln in $LANGS; do
+ 
++  # Install images
+   for f in $SRCDIR../swat/$ln/images/*.gif; do
+       if [ ! -f $f ] ; then
+ 	continue
+@@ -38,8 +35,7 @@
+       chmod 0644 $FNAME
+   done
+ 
+-  # Install html help
+-
++  # Install html hel
+   for f in $SRCDIR../swat/$ln/help/*.html; do
+       if [ ! -f $f ] ; then
+ 	continue
+@@ -58,7 +54,6 @@
+   done
+ 
+   # Install "server-side" includes
+-
+   for f in $SRCDIR../swat/$ln/include/*.html; do
+       if [ ! -f $f ] ; then
+ 	continue
+@@ -78,7 +73,7 @@
+     for f in $SRCDIR../docs/htmldocs/*.html; do
+ 	FNAME=$SWATDIR/help/`basename $f`
+ 	echo $FNAME
+-	cp $f $FNAME || echo Cannot install $FNAME. Does $USER have privileges?
++	ln -s ../../../doc/samba-doc/htmldocs/`basename $f` $FNAME || echo Cannot install $FNAME. Does $USER have privileges?
+ 	chmod 0644 $FNAME
+     done
+ fi

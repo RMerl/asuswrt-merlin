@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!DOCTYPE xsa PUBLIC "-//LM Garshol//DTD XML Software Autoupdate 1.0//EN//XML" "http://www.garshol.priv.no/download/xsa/xsa.dtd">
+<xsa>
+  <vendor>
+    <name>Daniel Veillard</name>
+    <email>daniel@veillard.com</email>
+    <url>http://veillard.com/</url>
+  </vendor>
+  <product id="libxml2">
+    <name>libxml2</name>
+    <version>2.7.5</version>
+    <last-release> Sep 24 2009</last-release>
+    <info-url>http://xmlsoft.org/</info-url>
+    <changes>   -  Bug Fixes:
+    Restore behavior of --with-threads without argument (Andrew W. Nosenko),
+    Fix memory leak when doc is NULL (Rob Richards),
+    595792 fixing a RelaxNG bug introduced in 2.7.4 (Daniel Veillard),
+    Fix a Relaxng bug raised by libvirt test suite (Daniel Veillard),
+    Fix a parsing problem with little data at startup (Daniel Veillard),
+    link python module with python library (Frederic Crozat),
+    594874 Forgot an fclose in xmllint (Daniel Veillard)
+  
+   -  Cleanup:
+    Adding symbols.xml to EXTRA_DIST (Daniel Veillard)
+  
+
+</changes>
+  </product>
+</xsa>

@@ -1,0 +1,178 @@
+				    libexif
+				    -------
+
+DESCRIPTION
+-----------
+
+libexif is a library for parsing, editing, and saving EXIF data. It is
+intended to replace lots of redundant implementations in command-line
+utilities and programs with GUIs.
+
+
+FEATURES
+--------
+
+libexif supports parsing, editing and saving of EXIF data. In addition, it
+has gettext support. All EXIF tags described in EXIF standard 2.1 (and most
+from 2.2) are supported.  Many maker notes from Canon, Casio, Epson,
+Fuji, Nikon, Olympus, Pentax and Sanyo cameras are also supported.
+
+
+REQUIREMENTS
+------------
+
+libexif is written in plain C and does not require any additional library.
+GNU gettext will be used for language translation, if available.
+
+
+LIMITATIONS
+-----------
+
+libexif can only handle some maker notes, and even those not very well. More
+work needs to be done. Note that libmnote has been merged with libexif - it
+is no longer needed.
+
+
+USAGE
+-----
+
+We have started documenting the libexif API using doxygen and are making
+the results available at http://libexif.sourceforge.net/api/
+
+Until someone writes some better documentation however, you need to refer
+to the header files.
+
+The short test-program test/test-mem illustrates how to create valid
+EXIF data from scratch, how to save EXIF data and how to load EXIF data 
+from data in memory. There are also a few simple example programs available
+in the contrib/examples/ directory.  Don't hesitate to contact us 
+(<libexif-devel@lists.sourceforge.net>) if you've got any questions
+on how to use libexif.
+
+To link to libexif into your own package, we recommend using the
+pkgconfig utility (cf. http://pkg-config.freedesktop.org/wiki/). For
+your convenience, libexif both provides libexif-uninstalled.pc and
+installs libexif.pc.
+
+
+FRONTENDS
+---------
+
+Right now, I know of the following frontends to libexif:
+ - exif:     A small command-line utility to show EXIF information in JPEG
+             files (http://www.sourceforge.net/projects/libexif).
+ - gexif:    A GTK+ frontend for editing EXIF data
+             (http://www.sourceforge.net/projects/libexif).
+ - gphoto2:  A command-line frontend to libgphoto2, a library to access a 
+             wide range of digital cameras (http://www.gphoto.org).
+ - gtkam:    A GTK+ frontend to libgphoto2 (http://www.topfrose.de).
+ - thirdeye: Digital photos organizer and driver for eComStation
+             (http://ecomstation.ru/thirdeye).
+ - digicam:  
+If you would like to migrate your program to use libexif or add EXIF support
+to it, don't hesitate to contact the authors.
+
+
+LIBRARIES
+---------
+
+I know of the following libraries that use or have been inspired by libexif:
+ - libexif-gtk: library of widgets to help display EXIF tags in GTK
+   programs (part of the libexif project)
+ - pel: PHP-Code (http://pel.sourceforge.net)
+
+
+BUILDING
+--------
+
+It really depends on your environment what to do in order to get libexif
+to build. Building from the source tar ball usually involves the commands:
+
+  ./configure
+  make
+  sudo make install
+
+When building from source out of CVS, something like the following will be
+necessary:
+
+  gettextize
+  mv po/Makevars.template po/Makevars
+  aclocal -I auto-m4 -I m4m
+  autoheader
+  libtoolize --force
+  automake --add-missing
+  autoconf
+  ./configure
+  make
+
+Or, possibly just:
+
+  autoreconf -i
+  ./configure
+  make
+
+Besides the standard arguments, configure takes several specific to libexif:
+
+  --disable-docs          To disable producing any documentation
+  --enable-internal-docs  Build internal code docs if Doxygen available
+  --enable-ship-binaries  To include Windows DLLs in 'make dist'
+
+Certain specialized applications can reduce the size of the libexif
+binary by setting one or both of the following macros in the CPPFLAGS
+environment variable at configure time.  Each one removes certain kinds of
+text strings and constants from the binary.  Applications which need
+to access specific, known EXIF tags and know in advance the meaning of
+their data have no need of those strings and can save considerable space
+by eliminating them.
+
+ -DNO_VERBOSE_TAG_STRINGS Names and descriptions of EXIF tags, debug messages,
+                          mandatory EXIF fields (disabling auto-tag-fixup)
+ -DNO_VERBOSE_TAG_DATA    Names of enumerated tag data contents
+
+
+INTERNATIONALIZATION
+--------------------
+
+The libexif translations are made by volunteers working on their own,
+either directly with the libexif project or through one of two translation
+coordination sites, the Translation Project
+<http://translationproject.org/domain/libexif.html> and Launchpad
+<https://translations.edge.launchpad.net/ubuntu/karmic/+source/libexif>.
+Any updates to language translations coordinated by the Translation Project
+must be made through their web site, but all other languages can be
+updated either through Launchpad (preferred) or by sending updates to
+the libexif developers mailing list directly.  As of this writing, the
+following languages must be updated through the Translation Project:
+da de es fr nl pl sk sv vi
+
+If you are interested in translating libexif into a new language, we
+recommend that you join one of the above translation groups and take
+advantage of the systems they have built to help you.  A translation
+disclaimer is NOT required for libexif at the Translation Project; by making
+a translation, you agree implicitly to provide it under the same license
+terms as the rest of libexif (LGPL).
+
+
+AUTHORS
+-------
+
+libexif has originally been written by Curtis Galloway
+<curtisg@users.sourceforge.net>. Because of the original design not
+supporting editing and saving, Lutz Mueller <lutz@users.sourceforge.net>
+rewrote libexif from scratch.
+
+
+LINKS
+-----
+
+Some links you might want to check out if you are interested in further
+information about EXIF.
+
+ - http://drewnoakes.com/code/exif: metadata extraction framework in Java
+ - http://www.pima.net: This is where I got the exif standard from. Site is
+   down as of 2002/12/31.
+ - http://www.jeida.or.jp: Can't remember any more. Site is down as of
+   2002/12/31.
+ - http://www.exif.org: information about the EXIF standard.
+ - http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/index.html: Looks
+   like libexif in Perl. Seems to support a lot of MakerNotes.

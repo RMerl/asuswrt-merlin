@@ -1,0 +1,29 @@
+#
+# MMC subsystem configuration
+#
+
+menuconfig MMC
+	tristate "MMC/SD card support"
+	depends on HAS_IOMEM
+	help
+	  MMC is the "multi-media card" bus protocol.
+
+	  If you want MMC support, you should say Y here and also
+	  to the specific driver for your MMC interface.
+
+config MMC_DEBUG
+	bool "MMC debugging"
+	depends on MMC != n
+	help
+	  This is an option for use by developers; most people should
+	  say N here.  This enables MMC core and driver debugging.
+
+if MMC
+
+source "drivers/mmc/core/Kconfig"
+
+source "drivers/mmc/card/Kconfig"
+
+source "drivers/mmc/host/Kconfig"
+
+endif # MMC

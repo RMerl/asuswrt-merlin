@@ -1,0 +1,71 @@
+#!/bin/sh
+#
+# firewall-masq		This script sets up firewall rules for a machine
+#                       acting as a masquerading gateway
+#
+# Copyright (C) 2000 Roaring Penguin Software Inc.  This software may
+# be distributed under the terms of the GNU General Public License, version
+# 2 or any later version.
+# LIC: GPL
+
+# Interface to Internet
+EXTIF=ppp+
+
+# NAT-Tables are different, so we can use ACCEPT everywhere (?)
+iptables -t nat -P PREROUTING ACCEPT
+iptables -t nat -P OUTPUT ACCEPT
+iptables -t nat -P POSTROUTING ACCEPT
+
+# Flush the NAT-Table
+iptables -t nat -F
+
+iptables -t filter -P INPUT DROP
+iptables -t filter -F
+
+# Allow incoming SSH
+#iptables -t filter -A INPUT -i $EXTIF -p tcp --dport 22 -j ACCEPT
+
+# Log & Deny the rest of the privileged ports
+iptables -t filter -A INPUT -i $EXTIF -p tcp --dport 0:1023 -j LOG
+iptables -t filter -A INPUT -i $EXTIF -p udp --dport 0:1023 -j LOG
+iptables -t filter -A INPUT -i $EXTIF -p tcp --dport 0:1023 -j DROP
+iptables -t filter -A INPUT -i $EXTIF -p udp --dport 0:1023 -j DROP
+
+# Log & Deny NFS
+iptables -t filter -A INPUT -i $EXTIF -p udp --dport 2049 -j LOG
+iptables -t filter -A INPUT -i $EXTIF -p tcp --dport 2049 -j LOG
+iptables -t filter -A INPUT -i $EXTIF -p udp --dport 2049 -j DROP
+iptables -t filter -A INPUT -i $EXTIF -p tcp --dport 2049 -j DROP
+
+# Log & Deny X11
+iptables -t filter -A INPUT -i $EXTIF -p tcp --dport 6000:6063 -j LOG
+iptables -t filter -A INPUT -i $EXTIF -p tcp --dport 6000:6063 -j DROP
+
+# Log & Deny XFS
+iptables -t filter -A INPUT -i $EXTIF -p tcp --dport 7100 -j LOG
+iptables -t filter -A INPUT -i $EXTIF -p tcp --dport 7100 -j DROP
+
+# Deny TCP connection attempts
+iptables -t filter -A INPUT -i $EXTIF -p tcp --syn -j LOG
+iptables -t filter -A INPUT -i $EXTIF -p tcp --syn -j DROP
+
+# Deny ICMP echo-requests
+iptables -t filter -A INPUT -i $EXTIF -p icmp --icmp-type echo-request -j DROP
+
+# Do masquerading
+iptables -t nat -A POSTROUTING -o $EXTIF -j MASQUERADE
+
+# Enable forwarding
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+# no IP spoofing
+if [ -e /proc/sys/net/ipv4/conf/all/rp_filter ] ; then
+   for i in /proc/sys/net/ipv4/conf/*/rp_filter; do
+      echo 1 > $i
+   done
+fi
+
+# Disable Source Routed Packets
+for i in /proc/sys/net/ipv4/conf/*/accept_source_route; do
+   echo 0 > $i
+done

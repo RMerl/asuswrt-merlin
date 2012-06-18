@@ -1,0 +1,203 @@
+!==
+!== DHCP-Server-Configuration.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Subject:	DHCP Server Configuration for SMB Clients
+Date:		March 1, 1998
+Contributor:	John H Terpstra <jht@samba.org>
+Support:	This is an unsupported document. Refer to documentation that is
+		supplied with the ISC DHCP Server. Do NOT email the contributor
+		for ANY assistance.
+===============================================================================
+
+Background:
+===========
+
+We wish to help those folks who wish to use the ISC DHCP Server and provide
+sample configuration settings. Red Hat Linux 5.0 is one operating system that
+comes supplied with the ISC DHCP Server. ISC DHCP is available from
+		ftp://ftp.isc.org/isc/dhcp
+
+Incorrect configuration of MS Windows clients (Windows95, Windows NT Server and
+Workstation) will lead to problems with browsing and with general network
+operation. Windows 95 users often report problems where the TCP/IP and related
+network settings will inadvertantly become reset at machine start-up resulting
+in loss of configuration settings. This results in increased maintenance
+overheads as well as serious user frustration.
+
+In recent times users on one mailing list incorrectly attributed the cause of
+network operating problems to incorrect configuration of Samba.
+
+One user insisted that the only way to provent Windows95 from periodically
+performing a full system reset and hardware detection process on start-up was
+to install the NetBEUI protocol in addition to TCP/IP.
+
+In the first place, there is NO need for NetBEUI. All Microsoft Windows clients
+natively run NetBIOS over TCP/IP, and that is the only protocol that is
+recognised by Samba. Installation of NetBEUI and/or NetBIOS over IPX will
+cause problems with browse list operation on most networks. Even Windows NT
+networks experience these problems when incorrectly configured Windows95
+systems share the same name space. It is important that only those protocols
+that are strictly needed for site specific reasons should EVER be installed.
+
+Secondly, and totally against common opinion, DHCP is NOT an evil design but is
+an extension of the BOOTP protocol that has been in use in Unix environments
+for many years without any of the melt-down problems that some sensationalists
+would have us believe can be experienced with DHCP. In fact, DHCP in covered by
+rfc1541 and is a very safe method of keeping an MS Windows desktop environment
+under control and for ensuring stable network operation.
+
+While it is true that the Microsoft DHCP server that comes with Windows NT
+Server provides only a sub-set of rfc1533 functionality this is hardly an issue
+in those sites that already have a large investment and commitment to Unix
+systems and technologies. The current state of the art of the DHCP Server
+specification in covered in rfc2132.
+
+This document aims to provide enough background information so that the
+majority of site can without too much hardship get the Internet Software
+Consortium's (ISC) DHCP Server into operation. The key benefits of using DHCP
+includes:
+
+1) Automated IP Address space management and maximised re-use of available IP
+Addresses,
+
+2) Automated control of MS Windows client TCP/IP network configuration,
+
+3) Automatic recovery from start-up and run-time problems with Windows95.
+
+
+
+Client Configuration for SMB Networking:
+========================================
+SMB network clients need to be configured so that all standard TCP/IP name to
+address resolution works correctly. Once this has been achieved the SMB
+environment provides additional tools and services that act as helper agents in
+the translation of SMB (NetBIOS) names to their appropriate IP Addresses. One
+such helper agent is the NetBIOS Name Server (NBNS) or as Microsoft called it
+in their Windows NT Server implementation WINS (Windows Internet Name Server).
+
+A client needs to be configured so that it has a unique Machine (Computer)
+Name. This can NOT be done via DHCP and must be assigned when MS Windows
+networking is first installed. All remaining TCP/IP networking parameters can
+be assigned via DHCP. These include:
+
+a) IP Address,
+b) Netmask,
+c) Gateway (Router) Address,
+d) DNS Domain Name,
+e) DNS Server addresses,
+f) WINS (NBNS) Server addresses,
+g) IP Forwarding,
+h) Timezone offset, 
+i) Node Type,
+
+Other assignments can be made from a DHCP server too, but the above cover the
+major needs.
+
+
+DHCP Server Installation:
+=========================
+It is assumed that you will have obtained a copy of the GPL'd ISC DHCP server
+source files from ftp://ftp.isc.org/isc/dhcp, it is also assumed that you have
+compiled the sources and have installed the binary files.
+
+The following simply serves to provide sample configuration files to enable
+dhcpd to operate. The sample files assume that your site is configured to use
+private IP network address space using the Class B range of 172.16.1.0 -
+172.16.1.255 and is using a netmask of 255.255.255.0 (ie:24 bits). It is
+assumed that your router to the outside world is at 172.16.1.254 and that your
+Internet Domain Name is bestnet.com.au. The IP Address range 172.16.1.100 to
+172.16.1.240 has been set aside as your dynamically allocated range. In
+addition, bestnet.com.au have two print servers that need to obtain settings
+via BOOTP. The machine linux.bestnet.com.au has IP address 172.16.1.1 and is
+you primary Samba server with WINS support enabled by adding the parameter to
+the /etc/smb.conf file: [globals] wins support = yes. The dhcp lease time will
+be set to 20 hours.
+
+Configuration Files:
+====================
+Before dhcpd will run you need to install a file that speifies the
+configuration settings, and another that holds the database of issued IP
+addresses. On many systems these are stored in the /etc directory on the Unix
+system.
+
+Example /etc/dhcpd.conf:
+========================
+server-identifier linux.bestnet.com.au;
+
+subnet 172.16.1.0 netmask 255.255.255.0 {
+	range 172.16.1.100 172.16.1.240;
+	default-lease-time 72000;
+	max-lease-time 144000;
+	option subnet-mask 255.255.255.0;
+	option broadcast-address 172.16.1.255;
+	option routers 172.16.1.254;
+	option domain-name-servers 172.16.1.1, 172.16.1.2;
+	option domain-name "bestnet.com.au";
+	option time-offset 39600;
+	option ip-forwarding off;
+	option netbios-name-servers 172.16.0.1;
+	option netbios-dd-server 172.16.0.1;
+	option netbios-node-type 8;
+}
+
+group {
+	next-server 172.16.1.10;
+	option subnet-mask 255.255.255.0;
+	option domain-name "bestnet.com.au";
+	option domain-name-servers 172.16.1.1, 172.16.0.2;
+	option netbios-name-servers 172.16.0.1;
+	option netbios-dd-server 172.16.0.1;
+	option netbios-node-type 8;
+	option routers 172.16.1.240;
+	option time-offset 39600;
+	host lexmark1 {
+		hardware ethernet 06:07:08:09:0a:0b;
+		fixed-address 172.16.1.245;
+	}
+	host epson4 {
+		hardware ethernet 01:02:03:04:05:06;
+		fixed-address 172.16.1.242;
+	}
+}
+
+
+Creating the /etc/dhcpd.leases file:
+====================================
+At a Unix shell create an empty dhcpd.leases file in the /etc directory.
+You can do this by typing:	cp /dev/null /etc/dhcpd.leases
+
+
+Setting up a route table for all-ones addresses:
+================================================
+Quoting from the README file that comes with th eISC DHCPD Server:
+
+                              BROADCAST
+
+In order for dhcpd to work correctly with picky DHCP clients (e.g.,
+Windows 95), it must be able to send packets with an IP destination
+address of 255.255.255.255.  Unfortunately, Linux insists on changing
+255.255.255.255 into the local subnet broadcast address (here, that's
+192.5.5.223).  This results in a DHCP protocol violation, and while
+many DHCP clients don't notice the problem, some (e.g., all Microsoft
+DHCP clients) do.  Clients that have this problem will appear not to
+see DHCPOFFER messages from the server.
+
+It is possible to work around this problem on some versions of Linux
+by creating a host route from your network interface address to
+255.255.255.255.   The command you need to use to do this on Linux
+varies from version to version.   The easiest version is:
+
+	route add -host 255.255.255.255 dev eth0
+
+On some older Linux systems, you will get an error if you try to do
+this.   On those systems, try adding the following entry to your
+/etc/hosts file:
+
+255.255.255.255	all-ones
+
+Then, try:
+
+	route add -host all-ones dev eth0
+
+
+For more information please refer to the ISC DHCPD Server documentation.

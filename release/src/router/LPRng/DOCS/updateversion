@@ -1,0 +1,24 @@
+#!/usr/bin/perl -i
+use POSIX;
+my $v = ` cat ../VERSION `; chomp $v;
+#$v="XXXXX";
+#print "$v\n";
+my $s = ctime( time );
+#print "$s\n";
+my @s = split ' ', $s;
+my $w = '<subtitle> ' ."$s[2] $s[1] $s[4] (For $v)" . '</subtitle>' . "\n";
+my $wd = '<date> ' ."$s[2] $s[1] $s[4] (For $v)" . '</date>' . "\n";
+#print $w;
+while ( <> ){
+	if( /h4: {/ ){
+		++$x;
+		s/{\d+}/{$x}/;
+		print;
+	}elsif( /^<subtitle>/ ){
+		print $w ;
+	}elsif( /^<date>/ ){
+		print $wd ;
+	} else {
+		print ;
+	}
+}

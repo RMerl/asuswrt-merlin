@@ -1,0 +1,67 @@
+.\" manual page [] for RADIUS plugin for pppd 2.4
+.\" $Id: pppd-radius.8,v 1.5 2004/03/26 13:27:17 kad Exp $
+.\" SH section heading
+.\" SS subsection heading
+.\" LP paragraph
+.\" IP indented paragraph
+.\" TP hanging label
+.TH PPPD-RADIUS 8
+.SH NAME
+radius.so \- RADIUS authentication plugin for
+.BR pppd (8)
+.SH SYNOPSIS
+.B pppd
+[
+.I options
+]
+plugin radius.so
+.SH DESCRIPTION
+.LP
+The RADIUS plugin for pppd permits pppd to perform PAP, CHAP, MS-CHAP and
+MS-CHAPv2 authentication against a RADIUS server instead of the usual
+.I /etc/ppp/pap-secrets
+and
+.I /etc/ppp/chap-secrets
+files.
+.LP
+The RADIUS plugin is built on a library called
+.B radiusclient
+which has its own configuration files (usually in \fI/etc/radiusclient\fR),
+consult those files for more information on configuring the RADIUS
+plugin
+
+.SH OPTIONS
+The RADIUS plugin introduces one additional pppd option:
+.TP
+.BI "radius-config-file " filename
+The file
+.I filename
+is taken as the radiusclient configuration file.  If this option is not
+used, then the plugin uses
+.I /etc/radiusclient/radiusclient.conf
+as the configuration file.
+.TP
+.BI "avpair " attribute=value
+Adds an Attribute-Value pair to be passed on to the RADIUS server on each request.
+.TP
+.BI map-to-ifname
+Sets Radius NAS-Port attribute to number equal to interface name (Default)
+.TP
+.BI map-to-ttyname
+Sets Radius NAS-Port attribute value via libradiusclient library
+
+.SH USAGE
+To use the plugin, simply supply the
+.B plugin radius.so
+option to pppd, and edit
+.I /etc/radiusclient/radiusclient.conf
+appropriately.  If you use the RADIUS plugin, the normal pppd authentication
+schemes (login, checking the /etc/ppp/*-secrets files) are skipped.  The
+RADIUS server should assign an IP address to the peer using the RADIUS
+Framed-IP-Address attribute.
+
+.SH SEE ALSO
+.BR pppd (8) " pppd-radattr" (8)
+
+.SH AUTHOR
+David F. Skoll <dfs@roaringpenguin.com>

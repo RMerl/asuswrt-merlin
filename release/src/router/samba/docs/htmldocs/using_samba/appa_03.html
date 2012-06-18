@@ -1,0 +1,325 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Appendix A] A.3 Installing SSLeay</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:41:37Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_02.html" TITLE="A.2 Requirements">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: A.2 Requirements" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="appendix" REL="up" HREF="appa_01.html" TITLE="A. Configuring Samba with SSL">
+Appendix A<br>
+Configuring Samba with SSL</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_04.html" TITLE="A.4 Setting Up SSL Proxy">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: A.4 Setting Up SSL Proxy" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="appa-pgfId-985777">
+A.3 Installing SSLeay</a></h2><P CLASS="para">
+Samba uses the SSLeay package, written by Eric Young, to provide Secure Sockets Layer support on the server side. Because of U.S. export law, however, the SSLeay package cannot be shipped with Samba distributions that are based in the United States. For that reason, the Samba creators decided to leave it as a separate package entirely. You can download the SSLeay distribution from any of the following sites:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-985779">
+</a><A CLASS="systemitem.url" HREF="ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/">
+ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/</a></p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-985781">
+</a><A CLASS="systemitem.url" HREF="ftp://ftp.uni-mainz.de/pub/internet/security/ssl">
+ftp://ftp.uni-mainz.de/pub/internet/security/ssl</a></p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-985782">
+</a><A CLASS="systemitem.url" HREF="ftp://ftp.cert.dfn.de/pub/tools/crypt/sslapps">
+ftp://ftp.cert.dfn.de/pub/tools/crypt/sslapps</a></p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-985783">
+</a><A CLASS="systemitem.url" HREF="ftp://ftp.funet.fi/pub/crypt/mirrors/ftp.psy.uq.oz.au">
+ftp://ftp.funet.fi/pub/crypt/mirrors/ftp.psy.uq.oz.au</a></p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-985784">
+</a><A CLASS="systemitem.url" HREF="ftp://ftp.sunet.se/ftp/pub/security/tools/crypt/ssleay">
+ftp://ftp.sunet.se/ftp/pub/security/tools/crypt/ssleay</a></p></li></ul><P CLASS="para">
+The latest version as of this printing is 0.9.0b. Download it to the same server as the Samba distribution, then uncompress and untar it. You should be left with a directory entitled <I CLASS="filename">
+SSLeay-0.9.0b</i>. After changing to that directory, you will need to configure and build the SSL encryption package in the same way that you did with Samba.</p><P CLASS="para">
+SSLeay uses a Perl-based <I CLASS="filename">
+configure</i> script. This script modifies the Makefile that constructs the utilities and libraries of the SSLeay package. However, the default script is hardcoded to find Perl at <I CLASS="filename">
+/usr/local/bin/perl</i>. You may need to change the <I CLASS="filename">
+configure</i> script to point to the location of the Perl executable file on your Unix system. For example, you can type the following to locate the Perl executable:</p><PRE CLASS="programlisting"># <CODE CLASS="userinput"><B>which perl</b></code>
+/usr/bin/perl</pre><P CLASS="para">
+Then modify the first line of the <I CLASS="filename">
+configure</i> script to force it to use the correct Perl executable. For example, on our Red Hat Linux system:</p><PRE CLASS="programlisting">
+#!/usr/bin/perl
+#
+# see PROBLEMS for instructions on what sort of things to do
+# when tracking a bug -tjh
+...</pre><P CLASS="para">
+After that, you need to run the <I CLASS="filename">
+configure</i> script by specifying a target platform for the distribution. This target platform can be any of the following:</p><PRE CLASS="programlisting">
+BC-16              BC-32              FreeBSD            NetBSD-m86
+NetBSD-sparc       NetBSD-x86         SINIX-N            VC-MSDOS
+VC-NT              VC-W31-16          VC-W31-32          VC-WIN16
+VC-WIN32           aix-cc             aix-gcc            alpha-cc
+alpha-gcc          alpha400-cc        cc                 cray-t90-cc
+debug              debug-irix-cc      debug-linux-elf    dgux-R3-gcc
+dgux-R4-gcc        dgux-R4-x86-gcc    dist               gcc
+hpux-cc            hpux-gcc           hpux-kr-cc         irix-cc
+irix-gcc           linux-aout         linux-elf          ncr-scde
+nextstep           purify             sco5-cc            solaris-sparc-cc
+solaris-sparc-gcc  solaris-sparc-sc4  solaris-usparc-sc4 solaris-x86-gcc
+sunos-cc           sunos-gcc          unixware-2.0       unixware</pre><P CLASS="para">
+For our system, we would enter the following:</p><PRE CLASS="programlisting">
+# <CODE CLASS="userinput"><B>./Configure linux-elf</b></code>
+CC            =gcc
+CFLAG         =-DL_ENDIAN -DTERMIO -DBN_ASM -O3 -fomit-frame-pointer 
+EX_LIBS       =
+BN_MULW       =asm/bn86-elf.o
+DES_ENC       =asm/dx86-elf.o asm/yx86-elf.o
+BF_ENC        =asm/bx86-elf.o
+CAST_ENC      =asm/cx86-elf.o
+RC4_ENC       =asm/rx86-elf.o
+RC5_ENC       =asm/r586-elf.o
+MD5_OBJ_ASM   =asm/mx86-elf.o
+SHA1_OBJ_ASM  =asm/sx86-elf.o
+RMD160_OBJ_ASM=asm/rm86-elf.o
+THIRTY_TWO_BIT mode
+DES_PTR used
+DES_RISC1 used
+DES_UNROLL used
+BN_LLONG mode
+RC4_INDEX mode		</pre><P CLASS="para">
+After the package has been configured, you can build it by typing <CODE CLASS="literal">
+make</code>. If the build did not successfully complete, consult the documentation that comes with the distribution or the FAQ at <a href="http://www.cryptsoft.com/ssleay/"><I CLASS="filename">http://www.cryptsoft.com/ssleay/</i></a> for more information on what may have happened. If the build did complete, type <CODE CLASS="literal">
+make</code> <CODE CLASS="literal">
+install</code> to install the libraries on the system. Note that the makefile installs the package in <I CLASS="filename">
+/usr/local/ssl</i> by default. If you decide to install it in another directory, remember the directory when configuring Samba to use SSL.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-985829">
+A.3.1 Configuring SSLeay for Your System</a></h3><P CLASS="para">
+The first thing you need to do is to set the <CODE CLASS="literal">
+PATH</code> environment variable on your system to include the <I CLASS="filename">
+/bin</i> directory of the SSL distribution. This can be done with the following statement:</p><PRE CLASS="programlisting">
+PATH=$PATH:/usr/local/ssl/bin</pre><P CLASS="para">
+That's the easy part. Following that, you will need to create a random series of characters that will be used to prime SSLeay's random number generator. The random number generator will be used to create key pairs for both the clients and the server. You can create this random series by filling a text file of a long series of random characters. For example, you can use your favorite editor to create a text file with random characters, or use this command and enter arbitrary characters at the standard input:</p><PRE CLASS="programlisting">
+cat &gt;/tmp/private.txt</pre><P CLASS="para">
+The Samba documentation recommends that you type characters for longer than a minute before interrupting the input stream by hitting Control-D. Try not to type only the characters that are under your fingers on the keyboard; throw in some symbols and numbers as well. Once you've completed the random file, you can prime the random number generator with the following command:</p><PRE CLASS="programlisting">
+# ssleay genrsa -rand /tmp/private.txt &gt;/dev/null
+2451 semi-random bytes loaded
+Generating RSA private key, 512 bit long modulus
+..+++++
+.................................+++++
+e is 65537 (0x10001)</pre><P CLASS="para">
+You can safely ignore the output of this command. After it has completed, remove the series of characters used to create the key because this could be used to recreate any private keys that were generated from this random number generator:</p><PRE CLASS="programlisting">
+rm -f /tmp/private.txt</pre><P CLASS="para">
+The result of this command is the hidden file .<EM CLASS="emphasis">
+rnd</em>, which is stored in your home directory. SSLeay will use this file when creating key pairs in the future.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-985843">
+A.3.2 Configuring Samba to use SSL</a></h3><P CLASS="para">At this point, you can compile Samba to use SSL. Recall that in <a href="ch02_01.html"><b>Chapter 2, <CITE CLASS="chapter">Installing Samba on a Unix System</cite></b></a>, we said you have to first run the configure script, which initializes the makefile, before you compile Samba. In order to use SSL with Samba, you will need to reconfigure the makefile:</p><PRE CLASS="programlisting">
+./configure --with-ssl</pre><P CLASS="para">
+After that, you can compile Samba with the following commands:</p><PRE CLASS="programlisting"># <CODE CLASS="userinput"><B>make clean</b></code>
+# <CODE CLASS="userinput"><B>make all</b></code></pre><P CLASS="para">
+If you encounter an error that says the <I CLASS="filename">
+smbd</i> executable is missing the file <I CLASS="filename">
+ssl.h</i>, you probably didn't install SSLeay in the default directory. Use the configure option <CODE CLASS="literal">
+--with-sslinc</code> to point to the base directory of the SSL distribution&nbsp;- in this case, the directory that contains <EM CLASS="emphasis">
+include/ssl.h</em>.</p><P CLASS="para">
+On the other hand, if you have a clean compile, you're ready to move on to the next step: creating certificates.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-62097">
+A.3.3 Becoming a Certificate Authority</a></h3><P CLASS="para">
+<I CLASS="firstterm">
+</i>The SSL protocol requires the use of X.509 certificates in the protocol handshake to ensure that either one or both parties involved in the communication are indeed who they say they are. Certificates in real life, such as those use for SSL connections on public web sites, can cost in the arena of $300 a year. This is because the certificate must have a digital signature placed on it by a <I CLASS="firstterm">
+certificate authority</i>. A certificate authority is an entity that vouches for the authenticity of a digital certificate by signing it with its own private key. This way, anyone who wishes to check the authenticity of the certificate can simply use the certificate authority's public key to check the signature.</p><P CLASS="para">
+You are allowed to use a public certificate authority with SSLeay. However, you don't have to. Instead, SSLeay will allow you to declare yourself a trusted certificate authority&nbsp;- specifying which clients you choose to trust and which clients you do not. In order to do this, you will need to perform several tasks with the SSLeay distribution.</p><P CLASS="para">
+The first thing you need to do is specify a secure location where the certificates of the clients and potentially the server will be stored. We have chosen <I CLASS="filename">
+/etc/certificates</i> as our default. Execute the following commands as <CODE CLASS="literal">
+root</code>: </p><PRE CLASS="programlisting"># <CODE CLASS="userinput"><B>cd /etc</b></code>
+# <CODE CLASS="userinput"><B>mkdir certificates</b></code>
+# <CODE CLASS="userinput"><B>chmod 700 certificates</b></code></pre><P CLASS="para">
+Note that we shut out all access to users other than <CODE CLASS="literal">
+root</code> for this directory. This is very important.</p><P CLASS="para">
+Next, you need to set up the SSLeay scripts and configuration files to use the certificates stored in this directory. In order to do this, first modify the <I CLASS="filename">
+CA.sh</i> script located at <EM CLASS="emphasis">
+/usr/local/ssl/bin/CA.sh</em> to specify the location of the directory you just created. Find the line that contains the following entry:</p><PRE CLASS="programlisting">
+CATOP=./demoCA</pre><P CLASS="para">
+Then change it to:</p><PRE CLASS="programlisting">
+CATOP=/etc/certificates</pre><P CLASS="para">
+Next, you need to modify the <EM CLASS="emphasis">
+/usr/local/ssl/lib/ssleay.cnf</em> file to specify the same directory. Find the entry:</p><PRE CLASS="programlisting">
+[ CA_default ]
+dir     = ./demoCA             # Where everything is kept</pre><P CLASS="para">
+Then change it to:</p><PRE CLASS="programlisting">
+[ CA_default ]
+dir     =  /etc/certificates   # Where everything is kept</pre><P CLASS="para">
+Next, run the certificate authority setup script, <I CLASS="filename">
+CA.sh</i>, in order to create the certificates. Be sure to do this as the same user that you used to prime the random number generator above:</p><PRE CLASS="programlisting">
+/usr/local/ssl/bin/CA.sh -newca
+mkdir: cannot make directory '/etc/certificates': File exists
+CA certificate filename (or enter to create)</pre><P CLASS="para">
+Press the Enter key to create a certificate for the CA. You should then see:</p><PRE CLASS="programlisting">
+Making CA certificate ...
+Using configuration from /usr/local/ssl/lib/ssleay.cnf
+Generating a 1024 bit RSA private key
+.............................+++++
+.....................+++++
+writing new private key to /etc/certificates/private/cakey.pem
+Enter PEM pass phrase:</pre><P CLASS="para">
+Enter a new pass phrase for your certificate. You will need to enter it twice correctly before SSLeay will accept it:</p><PRE CLASS="programlisting">
+Enter PEM pass phrase:
+Verifying password - Enter PEM pass phrase:</pre><P CLASS="para">
+Be sure to remember this pass phrase. You will need it to sign the client certificates in the future. Once SSLeay has accepted the pass phrase, it will continue on with a series of questions for each of the fields in the X509 certificate:</p><PRE CLASS="programlisting">
+You are about to be asked to enter information that will be
+incorporated into your certificate request.
+What you are about to enter is what is called a Distinguished
+Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.</pre><P CLASS="para">
+Fill out the remainder of the fields with information about your organization. For example, our certificate looks like this:</p><PRE CLASS="programlisting">
+Country Name (2 letter code) [AU]:<CODE CLASS="userinput">
+<B>
+US</b></code>
+State or Province Name (full name) [Some-State]:<CODE CLASS="userinput">
+<B>
+California</b></code>
+Locality Name (eg, city) []:<CODE CLASS="userinput">
+<B>
+Sebastopol</b></code>
+Organization Name (eg, company) []:<CODE CLASS="userinput">
+<B>
+O'Reilly</b></code>
+Organizational Unit Name (eg, section) []:<CODE CLASS="userinput">
+<B>
+Books</b></code>
+Common Name (eg, YOUR name) []:<CODE CLASS="userinput">
+<B>
+John Doe</b></code>
+Email Address []:<CODE CLASS="userinput">
+<B>
+doe@ora.com</b></code></pre><P CLASS="para">
+After that, SSLeay will be configured as a certificate authority and can be used to sign certificates for client machines that will be connecting to the Samba server.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986381">
+A.3.4 Creating Certificates for Clients</a></h3><P CLASS="para">
+It's simple to create a certificate for a client machine. First, you need to generate a public/private key pair for each entity, create a certificate request file, and then use <EM CLASS="emphasis">
+SSLeay</em> to sign the file as a trusted authority.</p><P CLASS="para">
+For our example client <CODE CLASS="literal">
+phoenix</code>, this boils down to three SSLeay commands. The first generates a key pair for the client and places it in the file <I CLASS="filename">
+phoenix.key</i>. The private key will be encrypted, in this case using triple DES. Enter a pass phrase when requested below&nbsp;- you'll need it for the next step:</p><PRE CLASS="programlisting">
+# ssleay genrsa -des3 1024 &gt;phoenix.key
+1112 semi-random bytes loaded
+Generating RSA private key, 1024 bit long modulus
+........................................+++++
+.............+++++
+e is 65537 (0x10001)
+Enter PEM pass phrase:
+Verifying password - Enter PEM pass phrase:</pre><P CLASS="para">
+After that command has completed, type in the following command:</p><PRE CLASS="programlisting"># <CODE CLASS="userinput"><B>ssleay req -new -key phoenix.key -out phoenix-csr</b></code>
+Enter PEM pass phrase:</pre><P CLASS="para">
+Enter the pass phrase for the client certificate you just created (not the certificate authority). At this point, you will need to answer the questionnaire again, this time for the client machine. In addition, you must type in a challenge password and an optional company name&nbsp;- those do not matter here. When the command completes, you will have a certificate request in the file <EM CLASS="emphasis">
+phoenix-csr.</em></p><P CLASS="para">
+Then, you must sign the certificate request as the trusted certificate authority. Type in the following command:</p><PRE CLASS="programlisting"># <CODE CLASS="userinput"><B>ssleay ca -days 1000 -inflies phoenix-csr &gt;phoenix.pem</b></code></pre><P CLASS="para">
+This command will prompt you to enter the PEM pass phrase of the <EM CLASS="emphasis">
+certificate authority</em>. Be sure that you do not enter the PEM pass phrase of the client certificate that you just created. After entering the correct pass phrase, you should see the following:</p><PRE CLASS="programlisting">
+Check that the request matches the signature
+Signature ok
+The Subjects Distinguished Name is as follows:
+...</pre><P CLASS="para">
+This will be followed by the information that you just entered for the client certificate. If there is an error in the fields, the program will notify you. On the other hand, if everything is fine, SSLeay will confirm that it should sign the certificate and commit it to the database. This adds a record of the certificate to the <I CLASS="filename">
+/etc/certificates/newcerts</i> directory.</p><P CLASS="para">
+The operative files at the end of this exercise are the <EM CLASS="emphasis">
+phoenix.key</em> and <EM CLASS="emphasis">
+phoenix.pem </em>files, which reside in the current directory. These files will be passed off to the client with whom the SSL-enabled Samba server will interact, and will be used by SSL Proxy.<I CLASS="firstterm">
+</i></p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986754">A.3.5 Configuring the Samba Server</a></h3><P CLASS="para">
+The next step is to modify the Samba configuration file to include the following setup options. These options assume that you created the certificates directory for the certificate authority at <I CLASS="filename">
+/etc/certificates </i>:</p><PRE CLASS="programlisting">
+[global]
+	ssl = yes
+	ssl server cert = /etc/certificates/cacert.pem
+	ssl server key = /etc/certificates/private/cakey.pem
+	ssl CA certDir = /etc/certificates</pre><P CLASS="para">
+At this point, you will need to kill the Samba daemons and restart them manually:</p><PRE CLASS="programlisting">
+# <CODE CLASS="userinput"><B>nmbd -D</b></code>
+# <CODE CLASS="userinput"><B>smbd -D</b></code>
+Enter PEM pass phrase:</pre><P CLASS="para">
+You will need to enter the PEM pass phrase of the certificate authority to start up the Samba daemons. Note that this may present a problem in terms of starting the program using ordinary means. However, you can get around this using advanced scripting languages, such as Expect or Python.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986870">
+A.3.6 Testing with smbclient</a></h3><P CLASS="para">
+A good way to test whether Samba is working properly is to use the<EM CLASS="emphasis">
+ smbclient</em> program. On the Samba server, enter the following command, substituting the appropriate share and user for a connection:</p><PRE CLASS="programlisting">
+# <CODE CLASS="userinput"><B>smbclient //hydra/data -U tom</b></code></pre><P CLASS="para">
+You should see several debugging statements followed by a line indicating the negotiated cipher, such as:</p><PRE CLASS="programlisting">
+SSL: negotiated cipher: DES-CBC3-SHA</pre><P CLASS="para">
+After that, you can enter your password and connect to the share normally. If this works, you can be sure that Samba is correctly supporting SSL connections. Now, on to the client setup.  </p></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_02.html" TITLE="A.2 Requirements">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: A.2 Requirements" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_04.html" TITLE="A.4 Setting Up SSL Proxy">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: A.4 Setting Up SSL Proxy" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+A.2 Requirements</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+A.4 Setting Up SSL Proxy</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

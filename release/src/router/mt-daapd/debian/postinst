@@ -1,0 +1,23 @@
+#!/bin/sh -e
+
+action="$1"
+CONF=/etc/mt-daapd.conf
+PLAY=/etc/mt-daapd.playlist
+CACHE=/var/cache/mt-daapd
+
+case "$1" in
+    configure)
+	if [ -x /etc/init.d/daap ]; then
+	    if ( grep "mt-daapd" /etc/init.d/daap > /dev/null 2>&1 ); then
+		echo "Removing /etc/init.d/daap.  New startup script is mt-daapd."
+		rm /etc/init.d/daap
+	    fi
+	fi
+        if [ ! -f $CONF ] ; then cp /usr/share/doc/mt-daapd/mt-daapd.conf $CONF; fi
+        if [ ! -f $PLAY ] ; then cp /usr/share/doc/mt-daapd/mt-daapd.playlist $PLAY; fi
+	if [ ! -d $CACHE ] ; then mkdir -p $CACHE; fi
+    ;;
+esac
+
+
+

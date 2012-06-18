@@ -1,0 +1,1772 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 9] 9.2 The Fault Tree</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:36:27Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch09_01.html" TITLE="9.1 The Tool Bag">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 9.1 The Tool Bag" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch09_01.html" TITLE="9. Troubleshooting Samba">
+Chapter 9<br>
+Troubleshooting Samba</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch09_03.html" TITLE="9.3 Extra Resources">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 9.3 Extra Resources" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch09-29538">
+9.2 The Fault Tree</a></h2><P CLASS="para">The fault tree is for diagnosing and fixing problems that occur when you're installing and reconfiguring Samba. It's an expanded form of a trouble and diagnostic document that is part of the Samba distribution.</p><P CLASS="para">Before you set out to troubleshoot any part of the Samba suite, you should know the following information:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945178">
+</a> Your client IP address (we use 192.168.236.10) </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945179">
+</a> Your server IP address (we use 192.168.236.86) </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945180">
+</a> The netmask for your network (typically 255.255.255.0)</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945181">
+</a> Whether the machines are all on the same subnet (ours are)</p></li></ul><P CLASS="para">
+For clarity, we've renamed the server in the following examples to <EM CLASS="emphasis">
+server.example.com</em>, and the client machine to <EM CLASS="emphasis">
+client.example.com</em>.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-pgfId-945183">
+9.2.1 How to use the fault tree</a></h3><P CLASS="para">Start the tests here, without skipping forward; it won't take long (about five minutes) and may actually save you time backtracking. Whenever a test succeeds, you will be given a section name and page number to which you can safely skip.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-pgfId-953555">
+9.2.2 Troubleshooting Low-level IP </a></h3><P CLASS="para">The first series of tests is that of the low-level services that Samba needs in order to run. The tests in this section will verify that:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945191">
+</a> The IP software works</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945192">
+</a> The Ethernet hardware works</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945193">
+</a> Basic name service is in place</p></li></ul><P CLASS="para">
+Subsequent sections will add TCP software, the Samba daemons <EM CLASS="emphasis">
+smbd</em> and <EM CLASS="emphasis">
+nmbd</em>, host-based access control, authentication and per-user access control, file services, and browsing. The tests are described in considerable detail in order to make them understandable by both technically oriented end users and experienced systems and network administrators.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-945197">
+9.2.2.1 Testing the networking software with ping </a></h4><P CLASS="para">
+The first command to enter on both the server and the client is <CODE CLASS="literal">
+ping 127.0.0.1</code>. This is the <I CLASS="firstterm">
+loopback</i> <EM CLASS="emphasis">
+address</em> and testing it will indicate whether any networking support is functioning at all. On Unix, you can use <CODE CLASS="literal">
+ping</code> <CODE CLASS="literal">
+127.0.0.1</code> with the statistics option and interrupt it after a few lines. On Sun workstations, the command is typically <CODE CLASS="literal">
+/usr/etc/ping</code> <CODE CLASS="literal">
+-s</code> <CODE CLASS="literal">
+127.0.0.1</code>; on Linux, just <CODE CLASS="literal">
+ping</code> <CODE CLASS="literal">
+127.0.0.1</code>. On Windows clients, run <CODE CLASS="literal">
+ping</code> <CODE CLASS="literal">
+127.0.0.1</code> in an MS-DOS window and it will stop by itself after four lines.</p><P CLASS="para">
+Here is an example on a Linux server:</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">server%</code> ping 127.0.0.1 </b>
+</pre><PRE CLASS="programlisting">
+PING localhost: 56 data bytes 64 bytes from localhost (127.0.0.1): 
+icmp-seq=0. time=1. ms 64 bytes from localhost (127.0.0.1): 
+icmp-seq=1. time=0. ms 64 bytes from localhost (127.0.0.1): 
+icmp-seq=2. time=1. ms ^C 
+----127.0.0.1 PING Statistics---- 
+3 packets transmitted, 3 packets received, 0% packet loss round-trip (ms)  
+min/avg/max = 0/0/1  </pre><P CLASS="para">
+If you get "ping: no answer from..." or "100% packet loss," you have no IP networking at all installed on the machine. The address <CODE CLASS="literal">
+127.0.0.1</code> is the internal loopback address and doesn't depend on the computer being physically connected to a network. If this test fails, you have a serious local problem. TCP/IP either isn't installed or is seriously misconfigured. See your operating system documentation if it is a Unix server. If it is a Windows client, follow the instructions in <a href="ch03_01.html"><b>Chapter 3, <CITE CLASS="chapter">Configuring Windows Clients</cite></b></a>, to install networking support.</p><P CLASS="para">
+If <EM CLASS="emphasis">
+you're</em> the network manager, some good references are Craig Hunt's <EM CLASS="emphasis">
+TCP/IP Network Administration</em>, Chapter 11, and Craig Hunt &amp; Robert Bruce Thompson's new book, <EM CLASS="emphasis">
+Windows NT TCP/IP Network Administration, </em>both published by O'Reilly.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-20350">
+9.2.2.2 Testing local name services with ping </a></h4><P CLASS="para">Next, try to ping <CODE CLASS="literal">
+localhost</code> on the Samba server. <CODE CLASS="literal">
+localhost</code> is the conventional hostname for the 127.0.0.1 loopback, and it should resolve to that address. After typing <CODE CLASS="literal">
+ping</code> <CODE CLASS="literal">
+localhost</code>, you should see output similar to the following:</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">server%</code> ping localhost  </b>
+</pre><PRE CLASS="programlisting">
+PING localhost: 56 data bytes  64 bytes from localhost (127.0.0.1):
+icmp-seq=0. time=0. ms  64 bytes from localhost (127.0.0.1): 
+icmp-seq=1. time=0. ms  64 bytes from localhost (127.0.0.1): 
+icmp-seq=2. time=0. ms  ^C</pre><P CLASS="para">
+If this succeeds, try the same test on the client. Otherwise:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-951025">
+</a>If you get "unknown host: localhost," there is a problem resolving the host name localhost into a valid IP address. (This may be as simple as a missing entry in a local <EM CLASS="emphasis">
+hosts</em> file.) From here, skip down to the section <A CLASS="xref" HREF="ch09_02.html#ch09-23768">
+Section 9.2.8, Troubleshooting Name Services</a>. </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946775">
+</a>If you get "ping: no answer," or "100% packet loss," but pinging 127.0.0.1 worked, then name services is resolving to an address, but it isn't the correct one. Check the file or database (typically <I CLASS="filename">
+/etc/hosts</i> on a Unix system) that the name service is using to resolve addresses to ensure that the entry is corrected.</p></li></ul></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-946776">
+9.2.2.3 Testing the networking hardware with ping </a></h4><P CLASS="para">Next, ping the server's network IP address from itself. This should get you exactly the same results as pinging 127.0.0.1:</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">server%</code> ping 192.168.236.86 </b>
+</pre><PRE CLASS="programlisting">
+PING 192.168.236.86: 56 data bytes 64 bytes from 192.168.236.86 (192.168.236.86): 
+icmp-seq=0. time=1. ms 64 bytes from 192.168.236.86 (192.168.236.86): 
+icmp-seq=1. time=0. ms 64 bytes from 192.168.236.86 (192.168.236.86): 
+icmp-seq=2. time=1. ms ^C 
+----192.168.236.86 PING Statistics---- 
+3 packets transmitted, 3 packets received, 0% packet loss round-trip (ms)  
+min/avg/max = 0/0/1</pre><P CLASS="para">
+If this works on the server, repeat it for the client. Otherwise:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945243">
+</a>If <CODE CLASS="literal">
+ping</code> <CODE CLASS="replaceable">
+<I>
+network_ip</i></code> fails on either the server or client, but ping 127.0.0.1 works on that machine, you have a TCP/IP problem that is specific to the Ethernet network interface card on the computer. Check with the documentation for the network card or the host operating system to determine how to correctly configure it. However, be aware that on some operating systems, the <EM CLASS="emphasis">
+ping</em> command appears to work even if the network is disconnected, so this test doesn't always diagnose all hardware problems. </p></li></ul></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-84079">
+9.2.2.4 Testing connections with ping</a></h4><P CLASS="para">Now, ping the server by name (instead of its IP address), once from the server and once from the client. This is the general test for working network hardware:</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">server%</code> ping server </b>
+</pre><PRE CLASS="programlisting">
+PING server.example.com: 56 data bytes 64 bytes from server.example.com (192.168.236.86): 
+icmp-seq=0. time=1. ms 64 bytes from server.example.com (192.168.236.86): 
+icmp-seq=1. time=0. ms 64 bytes from server.example.com (192.168.236.86): 
+icmp-seq=2. time=1. ms ^C 
+----server.example.com PING Statistics---- 
+3 packets transmitted, 3 packets received, 0% packet loss round-trip (ms)  
+min/avg/max = 0/0/1</pre><P CLASS="para">
+On Microsoft Windows, a ping of the server would look like <A CLASS="xref" HREF="ch09_02.html#ch09-91668">
+Figure 9.1</a>.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch09-91668">
+Figure 9.1: Pinging the Samba server from a Windows client</a></h4><IMG CLASS="graphic" SRC="figs/sam.0901.gif" ALT="Figure 9.1"><P CLASS="para">
+If successful, this test tells us five things:</p><OL CLASS="orderedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946836">
+</a>The hostname (e.g., "server") is being found by your local nameserver.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946837">
+</a>The hostname has been expanded to the full name (e.g., <A CLASS="email" HREF="mailto:server.example.com" TITLE="server.example.com">
+server.example.com</a>).</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945264">
+</a>Its address is being returned (192.168.236.86).</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945265">
+</a>The client has sent the Samba server four 56-byte UDP/IP packets.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945266">
+</a>The Samba server has replied to all four packets.</p></li></ol><P CLASS="para">
+If this test isn't successful, there can be one of several things wrong with the network:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945267">
+</a>First, if you get "ping: no answer," or "100% packet loss," you're not connecting to the network, the other machine isn't connecting, or one of the addresses is incorrect. Check the addresses that the <CODE CLASS="literal">
+ping</code> command reports on each machine, and ensure that they match the ones you set up initially.</p><P CLASS="para">
+If not, there is at least one mismatched address between the two machines. Try entering the command <CODE CLASS="literal">
+arp</code> <CODE CLASS="literal">
+-a</code>, and see if there is an entry for the other machine. The <CODE CLASS="literal">
+arp</code> command stands for the Address Resolution Protocol. The <CODE CLASS="literal">
+arp</code> <CODE CLASS="literal">
+-a</code> command lists all the addresses known on the local machine. Here are some things to try:</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946854">
+</a>If you receive a message like "192.168.236.86 at (incomplete)," the Ethernet address of 192.168.236.86 is unknown. This indicates a complete lack of connectivity, and you're likely having a problem at the very bottom of the TCP/IP Network Administration protocol stack, at the Ethernet-interface layer. This is discussed in Chapters 5 and 6 of <CITE CLASS="citetitle">
+TCP/IP Network Administration </cite>(O'Reilly).</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945274">
+</a>If you receive a response similar to "server (192.168.236.86) at 8:0:20:12:7c:94," then the server has been reached at some time, or another machine is answering on its behalf. However, this means that <EM CLASS="emphasis">
+ping</em> should have worked: you may have an intermittent networking or ARP problem.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945275">
+</a>If the IP address from ARP doesn't match the addresses you expected, investigate and correct the addresses manually.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945284">
+</a>If each machine can ping itself but not another, something is wrong on the network between them.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945287">
+</a>If you get "ping: network unreachable" or "ICMP Host Unreachable," then you're not receiving an answer and there is likely more than one network involved.</p><P CLASS="para">
+In principle, you shouldn't try to troubleshoot SMB clients and servers on different networks. Try to test a server and client on the same network. The three tests that follow assume you might be testing between two networks:</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-951057">
+</a>First, perform the tests for no answer described earlier in this section. If this doesn't identify the problem, the remaining possibilities are the following: an address is wrong, your netmask is wrong, a network is down, or just possibly you've been stopped by a firewall.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-951077">
+</a>Check both the address and the netmasks on source and destination machines to see if something is obviously wrong. Assuming both machines really are on the same network, they both should have the same netmasks and <EM CLASS="emphasis">
+ping</em> should report the correct addresses. If the addresses are wrong, you'll need to correct them. If they're right, the programs may be confused by an incorrect netmask. See <A CLASS="xref" HREF="ch09_02.html#ch09-21203">
+Section 9.2.9.1, Netmasks</a>, later in this chapter.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945300">
+</a>If the commands are still reporting that the network is unreachable and neither of the previous two conditions is in error, one network really may be unreachable from the other. This, too, is a network manager issue.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946936">
+</a>If you get "ICMP Administratively Prohibited," you've struck a firewall of some sort or a misconfigured router. You will need to speak to your network security officer.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946938">
+</a>If you get "ICMP Host redirect," and <EM CLASS="emphasis">
+ping</em> reports packets getting through, this is generally harmless: you're simply being rerouted over the network.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945305">
+</a>If you get a host redirect and no <EM CLASS="emphasis">
+ping</em> responses, you are being redirected, but no one is responding. Treat this just like the "Network unreachable" response   and check your addresses and netmasks.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945308">
+</a>If you get "ICMP Host Unreachable from gateway <EM CLASS="emphasis">
+gateway_name</em>," ping packets are being routed to another network, but the other machine isn't responding and the router is reporting the problem on its behalf. Again, treat this like a "Network unreachable" response and start checking addresses and netmasks.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946955">
+</a>If you get "ping: unknown host <EM CLASS="emphasis">
+hostname</em>," your machine's name is not known. This tends to indicate a name-service problem, which didn't affect <CODE CLASS="literal">
+localhost</code>. Have a look at <A CLASS="xref" HREF="ch09_02.html#ch09-23768">
+Section 9.2.8</a>, later in this chapter.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946959">
+</a>If you get a partial success, with some pings failing but others succeeding, you either have an intermittent problem between the machines or an overloaded network. Ping for longer, and see if more than about 3 percent of the packets fail. If so, check it with your network manager: a problem may just be starting. However, if only a few fail, or if you happen to know some massive network program is running, don't worry unduly. Ping's ICMP (and UDP) are designed to drop occasional packets.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945319">
+</a>If you get a response like "smtsvr.antares.net is alive" when you actually pinged <EM CLASS="emphasis">
+client.example.com</em>, you're either using someone else's address or the machine has multiple names and addresses. If the address is wrong, name service is clearly the culprit; you'll need to change the address in the name service database to refer to the right machine. This is discussed in <A CLASS="xref" HREF="ch09_02.html#ch09-23768">
+Section 9.2.8</a>, later in this chapter.</p><P CLASS="para">
+Server machines are often <EM CLASS="emphasis">
+multihomed</em> : connected to more than one network, with different names on each net. If you are getting a response from an unexpected name on a multihomed server, look at the address and see if it's on your network (see the section <A CLASS="xref" HREF="ch09_02.html#ch09-21203">
+Section 9.2.9.1</a>, later in this chapter). If so, you should use that address, rather than one on a different network, for both performance and reliability reasons.</p><P CLASS="para">
+Servers may also have multiple names for a single Ethernet address, especially if they are web servers. This is harmless, if otherwise startling. You probably will want to use the official (and permanent) name, rather than an alias which may change.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945333">
+</a>If everything works, but the IP address reported is 127.0.0.1, you have a name service error. This typically occurs when a operating system installation program generates an <I CLASS="filename">
+/etc/hosts</i> line similar to <CODE CLASS="literal">
+127.0.0.1</code> <CODE CLASS="literal">
+localhost</code> <EM CLASS="emphasis">
+hostnamedomainname</em>. The localhost line should say <CODE CLASS="literal">
+127.0.0.1</code> <CODE CLASS="literal">
+localhost</code> or <CODE CLASS="literal">
+127.0.0.1</code> <CODE CLASS="literal">
+localhost</code> <CODE CLASS="literal">
+loghost</code>. Correct it, lest it cause failures to negotiate who is the master browse list holder and who is the master browser. It can, also cause (ambiguous) errors in later tests.</p></li></ul><P CLASS="para">
+If this worked from the server, repeat it from the client.</p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-pgfId-945336">9.2.3 Troubleshooting TCP</a></h3><P CLASS="para">Now that you've tested IP, UDP, and a name service with <EM CLASS="emphasis">
+ping</em>, it's time to test TCP. <EM CLASS="emphasis">
+ping</em> and browsing use ICMP and UDP; file and print services (shares) use TCP. Both depend on IP as a lower layer and all four depend on name services. Testing TCP is most conveniently done using the FTP (file transfer protocol) program.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-78512">
+9.2.3.1 Testing TCP with FTP </a></h4><P CLASS="para">
+Try connecting via FTP, once from the server to itself, and once from the client to the server: </p><PRE CLASS="programlisting">
+server% <CODE CLASS="userinput"><B>ftp server</b></code>
+Connected to server.example.com. 
+220 server.example.com FTP server (Version 6.2/OpenBSD/Linux-0.10) ready.
+ Name (server:davecb): 
+331 Password required for davecb. 
+Password: 
+230 User davecb logged in.
+ ftp&gt;<CODE CLASS="userinput"><B> quit </b></code>
+221 Goodbye. </pre><P CLASS="para">
+If this worked, skip to the section <A CLASS="xref" HREF="ch09_02.html#ch09-88968">
+Section 9.2.4, Troubleshooting Server Daemons</a>. Otherwise:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945357">
+</a>If you received the message "server: unknown host," then nameservice has failed. Go back to the corresponding <EM CLASS="emphasis">
+ping</em> step, <A CLASS="xref" HREF="ch09_02.html#ch09-20350">
+Section 9.2.2.2, Testing local name services with ping </a>, and rerun those tests to see why name lookup failed.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945362">
+</a>If you received "ftp: connect: Connection refused," the machine isn't running an FTP daemon. This is mildly unusual on Unix servers. Optionally, you might try this test by connecting to the machine using telnet instead of FTP; the messages are very similar and telnet uses TCP as well.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945364">
+</a>If there was a long pause, then "ftp: connect: Connection timed out," the machine isn't reachable. Return to the section <A CLASS="xref" HREF="ch09_02.html#ch09-84079">
+Section 9.2.2.4, Testing connections with ping</a>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945369">
+</a>If you received "530 Logon Incorrect," you connected successfully, but you've just found a different problem. You likely provided an incorrect username or password. Try again, making sure you use your username from the Unix server and type your password correctly.</p></li></ul></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-88968">
+9.2.4 Troubleshooting Server Daemons</a></h3><P CLASS="para">Once you've confirmed that TCP networking is working properly, the next step is to make sure the daemons are running on the server. This takes three separate tests because no single one of the following will decisively prove that they're working correctly.</p><P CLASS="para">
+To be sure they're running, you need to find out if:</p><OL CLASS="orderedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945374">
+</a>The daemon has started</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945375">
+</a>The daemons are registered or bound to a TCP/IP port by the operating system</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945376">
+</a>They're actually paying attention</p></li></ol><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-947020">
+9.2.4.1 Before you start</a></h4><P CLASS="para">
+First, check the logs. If you've started the daemons, the message "smbd version <EM CLASS="emphasis">
+some_number</em> started" should appear. If it doesn't, you will need to restart the Samba daemons.</p><P CLASS="para">
+If the daemon reports that it has indeed started, look out for "bind failed on port 139 socket_addr=0 (Address already in use)". This means another daemon has been started on port 139 (<EM CLASS="emphasis">smbd</em>). Also, <EM CLASS="emphasis">
+nmbd</em> will report a similar failure if it cannot bind to port 137. Either you've started them twice, or the <EM CLASS="emphasis">
+inetd</em> server has tried to provide a daemon for you. If it's the latter, we'll diagnose that in a moment.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-49239">
+9.2.4.2 Looking for daemon processes with ps</a></h4><P CLASS="para">
+Next, you need to see if the daemons have been started. Use the <CODE CLASS="literal">
+ps</code> command on the server with the <CODE CLASS="literal">
+long</code> option for your machine type (commonly <CODE CLASS="literal">
+ps</code> <CODE CLASS="literal">
+ax</code> or <CODE CLASS="literal">
+ps</code>    <CODE CLASS="literal">
+-ef</code>), and see if you have either <EM CLASS="emphasis">
+smbd</em> and <EM CLASS="emphasis">
+nmbd</em> already running. This often looks like the following:</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">server%</code> ps ax</b>
+</pre><PRE CLASS="programlisting">
+ PID TTY STAT TIME   COMMAND
+ 1   ?   S    0:03   init [2] 
+ 2   ?   SW   0:00   (kflushd)
+<EM CLASS="emphasis">
+(...many lines of processes...)</em> 
+ 234 ?   S    0:14   nmbd -D3
+ 237 ?   S    0:11   smbd -D3
+<EM CLASS="emphasis">
+(...more lines, possibly including more smbd lines...) </em></pre><P CLASS="para">
+This example illustrates that <EM CLASS="emphasis">
+smbd</em> and <EM CLASS="emphasis">
+nmbd</em> have already started as stand-alone daemons (the <CODE CLASS="literal">
+-D</code> option) at log level 3.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-945392">
+9.2.4.3 Looking for daemons bound to ports</a></h4><P CLASS="para">
+Next, the daemons have to be registered with the operating system so they can get access to TCP/IP ports. The <CODE CLASS="literal">
+netstat</code> command will tell you if this has been done. Run the command <CODE CLASS="literal">
+netstat</code> <CODE CLASS="literal">
+-a</code> on the server, and look for lines mentioning <CODE CLASS="literal">
+netbios</code>, <CODE CLASS="literal">
+137</code> or <CODE CLASS="literal">
+139</code>:</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">server%</code> netstat -a </b>
+</pre><PRE CLASS="programlisting">
+Active Internet connections (including servers) 
+Proto Recv-Q Send-Q  Local Address          Foreign Address      (state) 
+udp   0      0       *.netbios-             *.* 
+tcp   0      0       *.netbios-             *.*                  LISTEN 
+tcp   8370   8760    server.netbios-        client.1439               
+ESTABLISHED </pre><P CLASS="para">
+or:</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">server%</code> netstat -a </b>
+</pre><PRE CLASS="programlisting">
+Active Internet connections (including servers) 
+Proto Recv-Q Send-Q  Local Address          Foreign Address        (state) 
+udp   0      0       *.137                  *.* 
+tcp   0      0       *.139                  *.*                    LISTEN 
+tcp   8370   8760    server.139             client.1439            ESTABLISHED </pre><P CLASS="para">
+Among many similar lines, there should be at least one UDP line for <CODE CLASS="literal">
+*.netbios-</code> or <CODE CLASS="literal">
+*.137</code>. This indicates that the <EM CLASS="emphasis">
+nmbd</em> server is registered and (we hope) is waiting to answer requests. There should also be at least one TCP line mentioning    <CODE CLASS="literal">
+*.netbios-</code> or <CODE CLASS="literal">
+*.139</code>, and it will probably be in the LISTENING state. This means that <EM CLASS="emphasis">
+smbd</em> is up and listening for connections.</p><P CLASS="para">
+There may be other TCP lines indicating connections from <EM CLASS="emphasis">
+smbd</em> to clients, one for each client. These are usually in the ESTABLISHED state. If there are <EM CLASS="emphasis">
+smbd</em> lines in the ESTABLISHED state, <EM CLASS="emphasis">
+smbd</em> is definitely running. If there is only one line in the LISTENING state, we're not sure yet. If both of the lines is missing, a daemon has not succeeded in starting, so it's time to check the logs and then go back to <a href="ch02_01.html"><b>Chapter 2</b></a>.</p><P CLASS="para">
+If there is a line for each client, it may be coming either from a Samba daemon or from the master IP daemon, <EM CLASS="emphasis">
+inetd</em>. It's quite possible that your <EM CLASS="emphasis">
+inetd</em> startup file contains lines that start Samba daemons without your realizing it; for instance, the lines may have been placed there if you installed Samba as part of a Linux distribution. The daemons started by <EM CLASS="emphasis">
+inetd</em> prevent ours from running. This problem typically produces log messages such as "bind failed on port 139 socket_addr=0 (Address already in use)."</p><P CLASS="para">
+Check your <I CLASS="filename">
+/etc/inetd.conf</i> ; unless you're intentionally starting the daemons from there, there <EM CLASS="emphasis">
+must not</em> be any <CODE CLASS="literal">
+netbios-ns</code> (udp port 137) or <CODE CLASS="literal">
+netbios-ssn</code> (tcp port 139) servers mentioned there. <EM CLASS="emphasis">
+inetd</em> is a daemon that provides numerous services, controlled by entries in <EM CLASS="emphasis">
+/etc/inetd.conf</em>. If your system is providing an SMB daemon via <EM CLASS="emphasis">
+inetd</em>, there will be lines like the following in the file:</p><PRE CLASS="programlisting">
+netbios-ssn stream tcp nowait root /usr/local/samba/bin/smbd smbd
+netbios-ns dgram udp wait root /usr/local/samba/bin/nmbd nmbd</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-945425">
+9.2.4.4 Checking smbd with telnet</a></h4><P CLASS="para">
+Ironically, the easiest way to test that the <EM CLASS="emphasis">
+smbd</em> server is actually working is to send it a meaningless message and see if it rejects it. Try something like the following:</p><PRE CLASS="programlisting"><CODE CLASS="userinput"><B>echo hello | telnet localhost 139</b></code></pre><P CLASS="para">
+This sends an erroneous but harmless message to <EM CLASS="emphasis">
+smbd</em>. The <CODE CLASS="literal">
+hello</code> message is important. Don't try telneting to the port and typing just anything; you'll probably just hang your process. <CODE CLASS="literal">
+hello</code>, however, is generally a harmless message.</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">server%</code> echo &quot;hello&quot; | telnet localhost 139 </b>
+</pre><PRE CLASS="programlisting">
+Trying
+Trying 192.168.236.86 ... 
+Connected to localhost. Escape character is '^]'. 
+Connection closed by foreign host. </pre><P CLASS="para">
+If you get a "Connected" message followed by a "Connection closed" message, the test was a success. You have an <EM CLASS="emphasis">
+smbd</em> daemon listening on the port and rejecting improper connection messages. On the other hand, if you get "telnet: connect: Connection refused," there is probably no daemon present. Check the logs and go back to <a href="ch01_01.html"><b>Chapter 2</b></a>.</p><P CLASS="para">
+Regrettably, there isn't an easy test for <EM CLASS="emphasis">
+nmbd</em>. If the <CODE CLASS="literal">
+telnet</code> test and the <CODE CLASS="literal">
+netstat</code> test both say that there is an <EM CLASS="emphasis">
+smbd</em> running, there is a good chance that <CODE CLASS="literal">
+netstat</code> will also be correct about <EM CLASS="emphasis">
+nmbd</em> running.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-67494">
+9.2.4.5 Testing daemons with testparm</a></h4><P CLASS="para">Once you know there's a daemon, you should always run <CODE CLASS="literal">
+testparm</code>, in hopes of getting:</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">server%</code> testparm </b>
+</pre><PRE CLASS="programlisting">
+Load smb config files from /opt/samba/lib/smb.conf
+Processing section &quot;[homes]&quot; 
+Processing section &quot;[printers]&quot; ... 
+Processing section &quot;[tmp]&quot; 
+Loaded services file OK. ... </pre><P CLASS="para">
+The <CODE CLASS="literal">
+testparm</code> program normally reports processing a series of sections, and responds with "Loaded services file OK" if it succeeds. If not, it will report one or more of the following messages, which will also appear in the logs as noted:</p><DL CLASS="variablelist">
+<DT CLASS="term">
+<EM CLASS="emphasis">
+"Allow/Deny connection from account (n) to service"</em></dt><DD CLASS="listitem">
+<P CLASS="para">
+A <EM CLASS="emphasis">
+testparm</em>-only message produced if you have valid/invalid user options set in your <EM CLASS="emphasis">
+smb.conf</em>. You will want to make sure that you are on the valid user list, and that root, bin, etc., are on the invalid user list. If you don't, you will not be able to connect, or folks who shouldn't <EM CLASS="emphasis">
+will</em> be able to.</p></dd><DT CLASS="term">
+<EM CLASS="emphasis">
+"Warning: You have some share names that are longer than eight chars"</em></dt><DD CLASS="listitem">
+<P CLASS="para">
+For anyone using Windows for Workgroups and older clients. They will fail to connect to shares with long names, producing an overflow message that sounds confusingly like a memory overflow.</p></dd><DT CLASS="term">
+"Warning: [name] service MUST be printable!"</dt><DD CLASS="listitem">
+<P CLASS="para">
+A printer share lacks a <CODE CLASS="literal">
+printable</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code> option.</p></dd><DT CLASS="term">
+"No path in service name using [name]"</dt><DD CLASS="listitem">
+<P CLASS="para">
+A file share doesn't know which directory to provide to the user, or a print share doesn't know which directory to use for spooling. If no path is specified, the service will try to run with a path of <EM CLASS="emphasis">
+/tmp</em>, which may not be what you want.</p></dd><DT CLASS="term">
+"Note: Servicename is flagged unavailable"</dt><DD CLASS="listitem">
+<P CLASS="para">
+Just a reminder that you have used the <CODE CLASS="literal">
+available</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+no</code> option in a share.</p></dd><DT CLASS="term">
+"Can't find include file [name]" </dt><DD CLASS="listitem">
+<P CLASS="para">
+A configuration file referred to by an <CODE CLASS="literal">
+include</code> option did not exist. If you were including the file unconditionally, this is an error and probably a serious one: the share will not have the configuration you intended. If you were including it based one of the <CODE CLASS="literal">
+%</code> variables, such as <CODE CLASS="literal">
+%a</code> (architecture), you will need to decide if, for example, a missing Windows for Workgroups configuration file is a problem. It often isn't.</p></dd><DT CLASS="term">
+"Can't copy service name, unable to copy to itself"</dt><DD CLASS="listitem">
+<P CLASS="para">
+You tried to copy a <I CLASS="filename">
+smb.conf</i> section into itself.</p></dd><DT CLASS="term">
+"Unable to copy service&nbsp;- source not found: [name]"</dt><DD CLASS="listitem">
+<P CLASS="para">
+Indicates a missing or misspelled section in a <CODE CLASS="literal">
+copy</code> <CODE CLASS="literal">
+=</code> option.</p></dd><DT CLASS="term">
+"Ignoring unknown parameter name" </dt><DD CLASS="listitem">
+<P CLASS="para">
+Typically indicates an obsolete, misspelled or unsupported option.</p></dd><DT CLASS="term">
+"Global parameter name found in service section" </dt><DD CLASS="listitem">
+<P CLASS="para">
+Indicates a global-only parameter has been used in an individual share. Samba will ignore the parameter.</p></dd></dl><P CLASS="para">
+After the <CODE CLASS="literal">
+testparm</code> test, repeat it with (exactly) three parameters: the name of your <I CLASS="filename">
+smb.conf</i> file, the name of your client, and its IP address:</p><PRE CLASS="programlisting">testparm <CODE CLASS="replaceable"><I>samba_directory</i></code>/lib/smb.conf client 192.168.236.10</pre><P CLASS="para">
+This will run one more test that checks the host name and address against <CODE CLASS="literal">
+host</code> <CODE CLASS="literal">
+allow</code> and <CODE CLASS="literal">
+host</code> <CODE CLASS="literal">
+deny</code> options and may produce the "Allow/Deny connection from account account_name" to service message for the client machine. This message indicates you have valid/invalid host options in your <I CLASS="filename">
+smb.conf</i>, and they prohibit access from the client machine. Entering <CODE CLASS="literal">
+testparm</code> <CODE CLASS="literal">
+/usr/local/lib/experimental.conf</code> is also an effective way to test an experimental <I CLASS="filename">
+smb.conf</i> file before putting it into production.</p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-pgfId-945478">9.2.5 Troubleshooting SMB Connections</a></h3><P CLASS="para">Now that you know the servers are up, you need to make sure that they're running properly. We start with the <I CLASS="filename">
+smb.conf</i> file in the <CODE CLASS="replaceable">
+<I>
+samba_directory</i></code><I CLASS="filename">
+/lib</i> directory.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-67928">
+9.2.5.1 A minimal smb.conf file</a></h4><P CLASS="para">
+In the following tests, we assume you have a <CODE CLASS="literal">
+[temp]</code> share suitable for testing, plus at least one account. An <I CLASS="filename">
+smb.conf</i> file that includes just these is:</p><PRE CLASS="programlisting">
+[global] 
+    workgroup = <CODE CLASS="replaceable">
+<I>
+EXAMPLE</i></code> 
+    security = user
+    browsable = yes 
+    local master = yes 
+[homes] 
+    guest ok = no 
+    browseble = no
+[temp] 
+    path = /tmp 
+    public = yes </pre><P CLASS="para">
+A word of warning: the <CODE CLASS="literal">
+public</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code> option in the <CODE CLASS="literal">
+[temp]</code> share is just for testing. You probably don't want people without accounts to be able to store things on your Samba server, so you should comment it out when you're done.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-40595">
+9.2.5.2 Testing locally with smbclient</a></h4><P CLASS="para">The first test is to ensure the server can list its own services (shares). Run the command <CODE CLASS="literal">
+smbclient</code> with a <CODE CLASS="literal">
+-L</code> option of <CODE CLASS="literal">
+localhost</code> to connect to itself, and a <CODE CLASS="literal">
+-U</code> option of just <CODE CLASS="literal">
+%</code> to specify the guest user. You should see the following: </p><PRE CLASS="programlisting">server% <CODE CLASS="userinput"><B>smbclient -L localhost -U% </b></code>
+Server time is Wed May 27 17:57:40 1998 Timezone is UTC-4.0
+Server=[localhost] 
+User=[davecb] 
+Workgroup=[EXAMPLE] 
+Domain=[EXAMPLE]
+	Sharename      Type      Comment 
+	---------           -----       ----------
+	temp               Disk
+	IPC$               IPC       IPC Service (Samba 1.9.18) 
+	homes            Disk       Home directories
+This machine does not have a browse list </pre><P CLASS="para">
+If you received this output, move on to the next test, <A CLASS="xref" HREF="ch09_02.html#ch09-77154">
+Section 9.2.5.3, Testing connections with smbclient</a>. On the other hand, if you receive an error, check the following:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-950443">
+</a>If you get "Get_hostbyname: unknown host localhost," either you've spelled its name wrong or there actually is a problem (which should have been seen back in <A CLASS="xref" HREF="ch09_02.html#ch09-20350">
+Section 9.2.2.2</a>) In the latter case, move on to "Troubleshooting Name Services."</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945526">
+</a>If you get "Connect error: Connection refused," the server machine was found, but it wasn't running an <EM CLASS="emphasis">
+nmbd</em> daemon. Skip back to <A CLASS="xref" HREF="ch09_02.html#ch09-88968">
+Section 9.2.4</a>, and retest the daemons.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945531">
+</a>If you get the message "Your server software is being unfriendly," the initial session request packet got a garbage response from the server. The server may have crashed or started improperly. The common causes of this can be discovered by scanning the logs for:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945533">
+</a>Invalid command-line parameters to <EM CLASS="emphasis">
+smbd</em>; see the <EM CLASS="emphasis">
+smbd</em> manual page.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945534">
+</a>A fatal problem with the <I CLASS="filename">
+smb.conf</i> file that prevents the startup of <EM CLASS="emphasis">
+smbd</em>. Always check your changes, as was done in the section <A CLASS="xref" HREF="ch09_02.html#ch09-67494">
+Section 9.2.4.5, Testing daemons with testparm</a>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947160">
+</a>The directories where Samba keeps its log and lock files are missing.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947165">
+</a>There is already a server on the port (139 for <EM CLASS="emphasis">
+smbd</em>, 137 for <EM CLASS="emphasis">
+nmbd  </em>), preventing it from starting.</p></li></ul></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945543">
+</a>If you're using <EM CLASS="emphasis">
+inetd</em> instead of stand-alone daemons, check your <I CLASS="filename">
+/etc/inetd.conf</i> and <I CLASS="filename">
+/etc/services</i> entries against their manual pages for errors as well.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945544">
+</a>If you get a <CODE CLASS="literal">
+Password:</code> prompt, your guest account is not set up properly. The <CODE CLASS="literal">
+%U</code> option tells <EM CLASS="emphasis">
+smbclient</em> to do a "null login," which requires that the guest account be present but does not require it to have any privileges.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947172">
+</a>If you get the message "SMBtconX failed. ERRSRV&nbsp;- ERRaccess," you aren't permitted access to the server. This normally means you have a <CODE CLASS="literal">
+valid</code> <CODE CLASS="literal">
+hosts</code> option that doesn't include the server, or an <CODE CLASS="literal">
+invalid</code> <CODE CLASS="literal">
+hosts</code> option  that does. Recheck with the command <CODE CLASS="literal">
+testparm</code> <CODE CLASS="literal">
+smb.conf</code> <CODE CLASS="replaceable">
+<I>
+your_hostname</i></code> <CODE CLASS="replaceable">
+<I>
+your_ip_address</i></code> (see the section <A CLASS="xref" HREF="ch09_02.html#ch09-67494">
+Section 9.2.4.5</a>) and correct any unintended prohibitions. </p></li></ul></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-77154">
+9.2.5.3 Testing connections with smbclient</a></h4><P CLASS="para">Run the command <CODE CLASS="literal"> smbclient</code><CODE CLASS="literal">\\</code><CODE CLASS="replaceable"><I>server</i></code><CODE CLASS="literal">\temp</code>, which connects to your server's   <I CLASS="filename">
+/tmp</i> share, to see if you can connect to a file service. You should get the following response:</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">server% </code>smbclient '\\server\temp' </b>
+</pre><PRE CLASS="programlisting">
+Server time is Tue May  5 09:49:32 1998 Timezone is UTC-4.0 Password:
+<B CLASS="emphasis.bold"><CODE CLASS="literal">
+smb:\&gt;</code> quit</b></pre><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947183">
+</a>If you get "Get_Hostbyname: Unknown host name," "Connect error: Connection refused," or "Your server software is being unfriendly," see the section <A CLASS="xref" HREF="ch09_02.html#ch09-40595">
+Section 9.2.5.2, Testing locally with smbclient</a> for the diagnoses.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947188">
+</a>If you get the message "servertemp: Not enough `\' characters in service," you likely didn't quote the address, so Unix stripped off backslashes. You can also write the command:</p></li></ul><PRE CLASS="programlisting"><CODE CLASS="literal">smbclient</code> <CODE CLASS="literal">\\\\</code><CODE CLASS="replaceable"><I>server</i></code><CODE CLASS="literal">\\temp</code> </pre><P CLASS="para">
+or: </p><PRE CLASS="programlisting">smbclient //<CODE CLASS="replaceable"><I>server</i></code>/temp </pre><P CLASS="para">
+Now, provide your Unix account password to the <CODE CLASS="literal">
+Password</code> prompt. If you then get an <CODE CLASS="literal">
+smb\&gt;</code> prompt, it worked. Enter <CODE CLASS="literal">
+quit</code>, and continue on to <A CLASS="xref" HREF="ch09_02.html#ch09-97081">
+Section 9.2.5.4, Testing connections with NET USE</a>. If you then get "SMBtconX failed. ERRSRV&nbsp;- ERRinvnetname," the problem can be any of the following:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947201">
+</a>A wrong share name: you may have spelled it wrong, it may be too long, it may be in mixed case, or it may not be available. Check that it's what you expect with testparm (see the section <A CLASS="xref" HREF="ch09_02.html#ch09-67494">
+Section 9.2.4.5</a>.)</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947205">
+</a><CODE CLASS="literal">
+security</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+share</code>, in which you may have to add <CODE CLASS="replaceable">
+<I>
+-U your_account</i></code> to the <EM CLASS="emphasis">
+smbclient</em> command, or know the password of a Unix account named temp. </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945578">
+</a>An erroneous username.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945579">
+</a>An erroneous password.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945580">
+</a>An <CODE CLASS="literal">
+invalid</code> <CODE CLASS="literal">
+users</code> or <CODE CLASS="literal">
+valid</code> <CODE CLASS="literal">
+users</code> option in your <EM CLASS="emphasis">
+smb.conf</em> file that doesn't allow your account to connect. Recheck with <CODE CLASS="literal">
+testparm</code> <CODE CLASS="literal">
+smb.conf</code> <CODE CLASS="replaceable">
+<I>
+your_hostname your_ip_address</i></code> (see <A CLASS="xref" HREF="ch09_02.html#ch09-67494">
+Section 9.2.4.5</a>).</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945584">
+</a>A <CODE CLASS="literal">
+valid</code> <CODE CLASS="literal">
+hosts</code> option that doesn't include the server, or an <CODE CLASS="literal">
+invalid</code> <CODE CLASS="literal">
+hosts</code> option that does. Also test this with <EM CLASS="emphasis">
+testparm</em>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945585">
+</a>A problem in authentication, such as if shadow passwords or the PAM (Password Authentication Module) is used on the server, but Samba is not compiled to use it. This is rare, but occasionally happens when a SunOS 4 Samba binary (no shadow passwords) is run without recompilation on a Solaris system (with shadow passwords).</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945586">
+</a>The <CODE CLASS="literal">
+encrypted</code> <CODE CLASS="literal">
+passwords</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code> option in the configuration file, but no password for your account in the <EM CLASS="emphasis">
+smbpasswd</em> file.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945587">
+</a>You have a null password entry, either in Unix <I CLASS="filename">
+/etc/passwd</i> or in the <EM CLASS="emphasis">
+smbpasswd</em> file.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945588">
+</a>You are connecting to <CODE CLASS="literal">
+[temp]</code>, and you do not have the <CODE CLASS="literal">
+guest</code> <CODE CLASS="literal">
+ok</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code> option in the <CODE CLASS="literal">
+[temp]</code> section of the <EM CLASS="emphasis">
+smb.conf</em> file.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947992">
+</a>You are connecting to <CODE CLASS="literal">
+[temp]</code> before connecting to your home directory, and your guest account isn't set up correctly. If you can connect to your home directory and then connect to <CODE CLASS="literal">
+[temp]</code>, that's the problem. See <a href="ch02_01.html"><b>Chapter 2</b></a> for more information on creating a basic Samba configuration file.</p><P CLASS="para">
+A bad guest account will also prevent you from printing or browsing until after you've logged in to your home directory. </p></li></ul><P CLASS="para">
+There is one more reason for this failure that has nothing at all to do with passwords: the <CODE CLASS="literal">
+path</code> <CODE CLASS="literal">
+=</code>  line in your <I CLASS="filename">
+smb.conf</i> file may point somewhere that doesn't exist. This will not be diagnosed by <EM CLASS="emphasis">
+testparm</em>, and most SMB clients can't tell it from other types of bad user accounts. You will have to check it manually.</p><P CLASS="para">
+Once you have connected to <CODE CLASS="literal">
+[temp]</code> successfully, repeat the test, this time logging in to your home directory (e.g., map network drive <CODE CLASS="replaceable">
+<I>
+server</i></code><CODE CLASS="literal">
+\davecb</code>) looking for failures in doing that. If you have to change anything to get that to work, re-test <CODE CLASS="literal">
+[temp]</code> again afterwards.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-97081">
+9.2.5.4 Testing connections with NET USE</a></h4><P CLASS="para">Run the command <CODE CLASS="literal">
+net</code> <CODE CLASS="literal">use</code> <CODE CLASS="literal">* </code><CODE CLASS="literal">\</code><CODE CLASS="replaceable"><I>server</i></code><CODE CLASS="literal">\temp</code> on the DOS or Windows client to see if it can connect to the server. You should be prompted for a password, then receive the response "The command was completed successfully," as shown in <A CLASS="xref" HREF="ch09_02.html#ch09-99328">
+Figure 9.2</a>.    </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch09-99328">
+Figure 9.2: Results of the NET USE command</a></h4><IMG CLASS="graphic" SRC="figs/sam.0902.gif" ALT="Figure 9.2"><P CLASS="para">
+If that succeeded, continue with the steps in the section <A CLASS="xref" HREF="ch09_02.html#ch09-57065">
+Section 9.2.5.5, Testing connections with Windows Explorer</a>. Otherwise:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945608">
+</a>If you get "The specified shared directory cannot be found," or "Cannot locate specified share name," the directory name is either misspelled or not in the <EM CLASS="emphasis">
+smb.conf</em> file. This message can also warn of a name in mixed case, including spaces, or is longer than eight characters.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945610">
+</a>If you get "The computer name specified in the network path cannot be located," or "Cannot locate specified computer," the directory name has been misspelled, the name service has failed, there is a networking problem, or the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> <CODE CLASS="literal">
+=</code> option includes your host.</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945612">
+</a>If it is not a spelling mistake, you need to double back to at least the section <A CLASS="xref" HREF="ch09_02.html#ch09-77154">
+Section 9.2.5.3</a>, to investigate why it doesn't connect.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945617">
+</a>If <EM CLASS="emphasis">
+smbclient</em> does work, it's a name service problem with the client name service, and you need to go forward to the section <A CLASS="xref" HREF="ch09_02.html#ch09-12446">
+Section 9.2.6.2, Testing the server with nmblookup</a>, and see if you can look up both client and server with <EM CLASS="emphasis">
+nmblookup</em>.</p></li></ul></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945622">
+</a>If you get "The password is invalid for <CODE CLASS="literal">\</code><CODE CLASS="replaceable"><I>server</i></code><CODE CLASS="literal">\</code><CODE CLASS="replaceable"><I>username</i></code>," your locally cached copy on the client doesn't match the one on the server. You will be prompted for a replacement.</p></li></ul><P CLASS="para">
+Windows 95 and 98 clients keep a local <EM CLASS="emphasis">
+password</em> file, but it's really just a cached copy of the password it sends to Samba and NT servers to authenticate you. That's what is being prompted for here. You can still log on to a Windows machine without a password (but not to NT).</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+If you provide your password, and it still fails, your password is not being matched on the server, you have a <CODE CLASS="literal">
+valid</code> <CODE CLASS="literal">
+users</code> or <CODE CLASS="literal">
+invalid</code> <CODE CLASS="literal">
+users</code> list denying you permission, NetBEUI is interfering, or the encrypted password problem described in the next paragraph exists.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945627">
+</a>If your client is NT 4.0, NT 3.5 with Patch 3, Windows 95 with Patch 3, Windows 98 or any of these with Internet Explorer 4.0, these default to using Microsoft encryption for passwords (discussed in <a href="ch06_01.html"><b>Chapter 6, <CITE CLASS="chapter">Users, Security, and Domains</cite></b></a>'s <a href="ch06_04.html"><b>Section 6.4, Passwords</b> in <b>Chapter 6</b></a> section, along with the alternatives). In general, if you have installed a major Microsoft product recently, you may have applied an update and turned on encrypted passwords.</p></li></ul><P CLASS="para">
+Because of Internet Explorer's willingness to honor URLs such as <I CLASS="filename">
+file://somehost/somefile</i> by making SMB connections, clients up to and including Windows 95 Patch Level 2 would happily send your password, in plaintext, to SMB servers anywhere on the Internet. This was considered a bad idea, and Microsoft quite promptly switched to using only encrypted passwords in the SMB protocol. All subsequent releases of their products have included this correction. Encrypted passwords aren't actually needed unless you're using Internet Explorer 4.0 without a firewall, so it's reasonable to keep using unencrypted passwords on your own networks.</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-953889">
+</a>If you have a mixed-case password on Unix, the client is probably sending it in all one case. If changing your password to all one case works, this was the problem. Regrettably, all but the oldest clients support uppercase passwords, so Samba will try once with it in uppercase and once in lower case. If you wish to use mixed-case passwords, see the <CODE CLASS="literal">
+password</code> <CODE CLASS="literal">
+level</code> option in  <a href="ch06_01.html"><b>Chapter 6</b></a> for a workaround.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-953895">
+</a>You may have a <CODE CLASS="literal">
+valid</code> <CODE CLASS="literal">
+users</code> problem, as tested with <EM CLASS="emphasis">
+smbclient</em> (see <A CLASS="xref" HREF="ch09_02.html#ch09-77154">
+Section 9.2.5.3</a>).</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945642">
+</a>You may have the NetBEUI protocol bound to the Microsoft client. This often produces long timeouts and erratic failures, and is known to have caused failures to accept passwords in the past.</p></li></ul><P CLASS="para">
+The term "bind" is used to mean connecting a piece of software to another in this case. The Microsoft SMB client is "bound to" TCP/IP in the bindings section of the TCP/IP properties panel under the Windows 95/98 Network icon in the Control Panel. TCP/IP in turn is bound to an Ethernet card. This is not the same sense of the word as binding an SMB daemon to a TCP/IP port.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-57065">9.2.5.5 Testing connections with Windows Explorer</a></h4><P CLASS="para">Start Windows Explorer or NT Explorer (not Internet Explorer), select Tools&#8594;Map Network Drive and specify \\<CODE CLASS="replaceable">
+<I>
+server</i></code>\<CODE CLASS="literal">
+temp</code> to see if you can make Explorer connect to the <I CLASS="filename">
+/tmp</i> directory. You should see a screen similar to the one in <A CLASS="xref" HREF="ch09_02.html#ch09-74414">
+Figure 9.3</a>. If so, you've succeeded and can skip to <A CLASS="xref" HREF="ch09_02.html#ch09-23573">
+Section 9.2.6, Troubleshooting Browsing </a>.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch09-74414">
+Figure 9.3: Accessing the /tmp directory with Windows Explorer</a></h4><IMG CLASS="graphic" SRC="figs/sam.0903.gif" ALT="Figure 9.3"><P CLASS="para">
+A word of caution: Windows Explorer and NT Explorer are rather poor as diagnostic tools: they do tell you that something's wrong, but rarely what it is. If you get a failure, you'll need to track it down with the NET USE command, which has far superior error reporting:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945661">
+</a>If you get "The password for this connection that is in your password file is no longer correct," you may have any of the following:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945662">
+</a>Your locally cached copy on the client doesn't match the one on the server.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945663">
+</a>You didn't provide a username and password when logging on to the client. Most Explorers will continue to send a username and password of null, even if you provide a password.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945664">
+</a>You have misspelled the password.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945665">
+</a>You have an <CODE CLASS="literal">
+invalid</code> <CODE CLASS="literal">
+users</code> or <CODE CLASS="literal">
+valid</code> <CODE CLASS="literal">
+users</code> list denying permission.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945666">
+</a>Your client is NT 4.0, NT 3.5 with Patch 3, Windows 95 with Patch 3, Windows 98, or any of these with Internet Explorer 4. They will all want encrypted passwords.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945667">
+</a>You have a mixed-case password, which the client is supplying in all one case.</p></li></ul></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945669">
+</a>If you get "The network name is either incorrect, or a network to which you do not have full access," or "Cannot locate specified computer," you may have any of the following:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945671">
+</a> Misspelled name</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945672">
+</a> Malfunctioning service </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945673">
+</a> Failed share</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945674">
+</a> Networking problem</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945675">
+</a> Bad <CODE CLASS="literal">
+path</code> line</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945676">
+</a> <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> line that excludes you</p></li></ul></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945677">
+</a>If you get "You must supply a password to make this connection," the password on the client is out of synchronization with the server, or this is the first time you've tried from this client machine and the client hasn't cached it locally yet.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945681">
+</a>If you get "Cannot locate specified share name," you have a wrong share name or a syntax error in specifying it, a share name longer than eight characters, or one containing spaces or in mixed case.</p></li></ul><P CLASS="para">
+Once you can reliably connect to the <CODE CLASS="literal">
+[temp]</code> directory, try once again, this time using your home directory. If you have to change something to get home directories working, then retest with <CODE CLASS="literal">
+[temp]</code>, and vice versa, as we showed in the section <A CLASS="xref" HREF="ch09_02.html#ch09-97081">
+Section 9.2.5.4</a>. As always, if Explorer fails, drop back to that section and debug it there.</p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-23573">9.2.6 Troubleshooting Browsing </a></h3><P CLASS="para">Finally, we come to browsing. This was left to last, not because it is hardest, but because it's both optional and partially dependent on a protocol that doesn't guarantee delivery of a packet. Browsing is hard to diagnose if you don't already know all the other services are running. </p><P CLASS="para">
+Browsing is purely optional: it's just a way to find the servers on your net and the shares that they provide. Unix has nothing of the sort and happily does without. Browsing also assumes all your machines are on a local area network (LAN) where broadcasts are allowable.</p><P CLASS="para">
+First, the browsing mechanism identifies a machine using the unreliable UDP protocol; then it makes a normal (reliable) TCP/IP connection to list the shares the machine provides.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-96207">
+9.2.6.1 Testing browsing with smbclient </a></h4><P CLASS="para">We'll start with testing the reliable connection first. From the server, try listing its own shares via <EM CLASS="emphasis">
+smbclient</em> with a <CODE CLASS="literal">
+-L</code> option of your server's name. You should get: </p><PRE CLASS="programlisting">server% <CODE CLASS="userinput"><B>smbclient -L server</b></code> 
+Added interface ip=192.168.236.86 bcast=192.168.236.255 nmask=255.255.255.0 Server time is Tue Apr 28 09:57:28 1998 Timezone is UTC-4.0 
+Password: 
+Domain=[EXAMPLE] 
+OS=[Unix] 
+Server=[Samba 1.9.18]
+Server=[server] 
+User=[davecb] 
+Workgroup=[EXAMPLE] 
+Domain=[EXAMPLE]
+   Sharename      Type      Comment    
+   ---------      ----      -------    
+    cdrom          Disk      CD-ROM    
+    cl             Printer   Color Printer 1    
+    davecb         Disk      Home Directories
+
+ This machine has a browse list:
+   Server         Comment    
+   ---------      -------    
+   SERVER          Samba 1.9.18
+
+ This machine has a workgroup list:
+   Workgroup      Master    
+    ---------      -------    
+    EXAMPLE        SERVER</pre><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-950922">
+</a>If you didn't get a Sharename list, the server is not allowing you to browse any shares. This should not be the case if you've tested any of the shares with Windows Explorer or the NET USE command. If you haven't done the <CODE CLASS="literal">
+smbclient</code> <CODE CLASS="literal">
+-L</code> <CODE CLASS="literal">
+localhost</code> <CODE CLASS="literal">
+-U%</code> test yet (see <A CLASS="xref" HREF="ch09_02.html#ch09-40595">
+Section 9.2.5.2</a>), do it now. An erroneous guest account can prevent the shares from being seen. Also, check the <I CLASS="filename">
+smb.conf</i> file to make sure you do not have the option <CODE CLASS="literal">
+browsable</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+no</code> anywhere in it: we suggest a minimal <I CLASS="filename">
+smb.conf</i> file (see <A CLASS="xref" HREF="ch09_02.html#ch09-67928">
+Section 9.2.5.1, A minimal smb.conf file</a>) for you to steal from. You need to have <CODE CLASS="literal">
+browseable</code> enabled in order to be able to see at least the <CODE CLASS="literal">
+[temp]</code> share.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945728">
+</a>If you didn't get a browse list, the server is not providing information about the machines on the network. At least one machine on the net must support browse lists. Make sure you have <CODE CLASS="literal">
+local</code> <CODE CLASS="literal">
+master</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code> in the <I CLASS="filename">
+smb.conf</i> file if you want Samba be the local master browser.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945730">
+</a>If you got a browse list but didn't get <EM CLASS="emphasis">
+/tmp</em>, you probably have a <I CLASS="filename">
+smb.conf</i> problem. Go back to <A CLASS="xref" HREF="ch09_02.html#ch09-67494">
+Section 9.2.4.5</a>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945734">
+</a>If you didn't get a workgroup list with your workgroup name in it, it is possible that your workgroup is set incorrectly in the <I CLASS="filename">
+smb.conf</i> file.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945735">
+</a>If you didn't get a workgroup list at all, ensure that <CODE CLASS="literal">
+workgroup</code> <CODE CLASS="literal">
+=EXAMPLE</code> is present in the <I CLASS="filename">
+smb.conf</i> file.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945736">
+</a>If you get nothing, try once more with the options <CODE CLASS="literal">
+-I</code> <CODE CLASS="replaceable">
+<I>
+ip_address</i></code> <CODE CLASS="literal">
+-n</code> <CODE CLASS="replaceable">
+<I>
+netbios_name</i></code> <CODE CLASS="literal">
+-W</code> <CODE CLASS="replaceable">
+<I>
+workgroup</i></code> <CODE CLASS="literal">
+-d3</code> with the NetBIOS and workgroup name in uppercase. (The <CODE CLASS="literal">
+-d</code> <CODE CLASS="literal">
+3</code> option sets the log /debugging level to 3.)</p></li></ul><P CLASS="para">
+If you're still getting nothing, you shouldn't have gotten this far. Double back to at least <A CLASS="xref" HREF="ch09_02.html#ch09-78512">
+Section 9.2.3.1, Testing TCP with FTP </a>, or perhaps <A CLASS="xref" HREF="ch09_02.html#ch09-84079">
+Section 9.2.2.4</a>. On the other hand:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945746">
+</a>If you get "SMBtconX failed. ERRSRV&nbsp;- ERRaccess," you aren't permitted access to the server. This normally means you have a <CODE CLASS="literal">
+valid</code> <CODE CLASS="literal">
+hosts</code> option that doesn't include the server, or an invalid hosts option that does.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945748">
+</a> If you get "Bad password," then you presumably have one of the following:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945749">
+</a> An incorrect <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> or <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> line</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945750">
+</a> An incorrect <CODE CLASS="literal">
+invalid</code> <CODE CLASS="literal">
+users</code> or <CODE CLASS="literal">
+valid</code> <CODE CLASS="literal">
+users</code> line</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945751">
+</a> A lowercase password and OS/2 or Windows for Workgroups clients</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945752">
+</a> A missing or invalid guest account</p></li></ul></li><LI CLASS="listitem">
+<P CLASS="para">
+Check what your guest account is (see <A CLASS="xref" HREF="ch09_02.html#ch09-40595">
+Section 9.2.5.2</a>) and verify your <I CLASS="filename">
+smb.conf</i> file with <CODE CLASS="literal">
+testparm</code> <CODE CLASS="literal">
+smb.conf</code> <CODE CLASS="replaceable">
+<I>
+your_hostname your_ip_address</i></code> (see <A CLASS="xref" HREF="ch09_02.html#ch09-67494">
+Section 9.2.4.5</a>) and change or comment out any <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code>, <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code>, <CODE CLASS="literal">
+valid</code> <CODE CLASS="literal">
+users</code> or <CODE CLASS="literal">
+invalid</code> <CODE CLASS="literal">
+users</code> lines.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945761">
+</a>If you get "Connection refused," the <EM CLASS="emphasis">
+smbd</em> server is not running or has crashed. Check that it's up, running, and listening to the network with <EM CLASS="emphasis">
+netstat</em>, see step <A CLASS="xref" HREF="ch09_02.html#ch09-67494">
+Section 9.2.4.5</a>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-952948">
+</a>If you get "Get_Hostbyname: Unknown host name," you've made a spelling error, there is a mismatch between Unix and NetBIOS hostname, or there is a name service problem. Start nameservice debugging with <A CLASS="xref" HREF="ch09_02.html#ch09-97081">
+Section 9.2.5.4</a>. If this works, suspect a name mismatch and go to step <A CLASS="xref" HREF="ch09_02.html#ch09-35552">
+Section 9.2.10, Troubleshooting NetBIOS Names</a>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945777">
+</a>If you get "Session request failed," the server refused the connection. This usually indicates an internal error, such as insufficient memory to fork a process.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945778">
+</a>If you get "Your server software is being unfriendly," the initial session request packet received a garbage response from the server. The server may have crashed or started improperly. Go back to <A CLASS="xref" HREF="ch09_02.html#ch09-40595">
+Section 9.2.5.2</a>, where the problem is first analyzed.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945785">
+</a>If you suspect the server is not running, go back to <A CLASS="xref" HREF="ch09_02.html#ch09-49239">
+Section 9.2.4.2, Looking for daemon processes with ps</a> to see why the server daemon isn't responding.</p></li></ul></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-12446">9.2.6.2 Testing the server with nmblookup</a></h4><P CLASS="para">
+This will test the "advertising" system used for Windows name services and browsing. Advertising works by broadcasting one's presence or willingness to provide services. It is the part of browsing that uses an unreliable protocol (UDP), and works only on broadcast networks like Ethernets. The <EM CLASS="emphasis">
+nmblookup</em> program broadcasts name queries for the hostname you provide, and returns its IP address and the name of the machine, much like <EM CLASS="emphasis">
+nslookup</em> does with DNS. Here, the <CODE CLASS="literal">
+-d</code> (debug- or log-level) option, and the <CODE CLASS="literal">
+-B</code> (broadcast address) options direct queries to specific machines.</p><P CLASS="para">
+First, we check the server from itself. Run <EM CLASS="emphasis">
+nmblookup</em> with a <CODE CLASS="literal">
+-B</code> option of your server's name to tell it to send the query to the Samba server, and a parameter of  <CODE CLASS="literal">
+__SAMBA__</code> as the symbolic name to look up. You should get: </p><PRE CLASS="programlisting">server% <B CLASS="emphasis.bold">nmblookup -B </b><CODE CLASS="replaceable"><I>server</i></code> <B CLASS="emphasis.bold">__SAMBA__ </b>
+Added interface ip=192.168.236.86 bcast=192.168.236.255 nmask=255.255.255.0 
+Sending queries to 192.168.236.86 192.168.236.86 __SAMBA__ </pre><P CLASS="para">
+You should get the IP address of the server, followed by the name <CODE CLASS="literal">
+__SAMBA__ </code>, which means that the server has successfully advertised that it has a service called <CODE CLASS="literal">
+__SAMBA__ </code>, and therefore at least part of NetBIOS nameservice works.</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945802">
+</a>If you get "Name_query failed to find name __SAMBA__" you may have specified the wrong address to the <CODE CLASS="literal">
+-B</code> option, or <EM CLASS="emphasis">
+nmbd</em> is not running. The <CODE CLASS="literal">
+-B</code> option actually takes a broadcast address: we're using a machine-name to get a unicast address, and to ask server if it has claimed <CODE CLASS="literal">
+__SAMBA__</code>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947471">
+</a>Try again with <CODE CLASS="literal">
+-B</code><CODE CLASS="replaceable">
+<I>
+ ip_address</i></code>, and if that fails too, <EM CLASS="emphasis">
+nmbd</em> isn't claiming the name. Go back briefly to "Testing daemons with testparm" to see if <EM CLASS="emphasis">
+nmbd</em> is running. If so, it may not claiming names; this means that Samba is not providing the browsing service&nbsp;- a configuratiuon problem. If that is the case, make sure that <I CLASS="filename">
+smb.conf</i> doesn't contain the option <CODE CLASS="literal">
+browsing</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+no</code>.</p></li></ul></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-32122">
+9.2.6.3 Testing the client with nmblookup</a></h4><P CLASS="para">
+Next, check the IP address of the client from the server with <EM CLASS="emphasis">
+nmblookup</em> using <CODE CLASS="literal">
+-B</code> option for the client's name and a parameter of <CODE CLASS="literal">
+'*'</code> meaning "anything," as shown here: </p><PRE CLASS="programlisting">server% <B CLASS="emphasis.bold">nmblookup -B client '*'</b> 
+Sending queries to 192.168.236.10 192.168.236.10 *
+Got a positive name query response from 192.168.236.10 (192.168.236.10)</pre><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945817">
+</a>If you receive "Name-query failed to find name *," you have made a spelling mistake, or the client software on the PC isn't installed, started, or bound to TCP/IP. Double back to <a href="ch02_01.html"><b>Chapter 2</b></a> or <a href="ch03_01.html"><b>Chapter 3</b></a> and ensure you have a client installed and listening to the network. </p></li></ul><P CLASS="para">
+Repeat the command with the following options if you had any failures:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945824">
+</a>If <CODE CLASS="literal">
+nmblookup</code> <CODE CLASS="literal">
+-B</code> <CODE CLASS="replaceable">
+<I>
+client_IP_address</i></code>  succeeds but <CODE CLASS="literal">
+-B</code> <CODE CLASS="replaceable">
+<I>
+client_name</i></code> fails, there is a name service problem with the client's name; go to <A CLASS="xref" HREF="ch09_02.html#ch09-23768">
+Section 9.2.8</a>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945825">
+</a>If <CODE CLASS="literal">
+nmblookup</code> <CODE CLASS="literal">
+-B</code> <CODE CLASS="literal">
+127.0.0.1'*'</code> succeeds, but <CODE CLASS="literal">
+-B</code> <CODE CLASS="replaceable">
+<I>
+client_IP_address</i></code> fails, there is a hardware problem and ping should have failed. See your network manager. </p></li></ul></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-98123">
+9.2.6.4 Testing the network with nmblookup</a></h4><P CLASS="para">
+Run the command <EM CLASS="emphasis">
+nmblookup</em> again with a <CODE CLASS="literal">
+-d</code> option (debug level) of 2 and a parameter of <CODE CLASS="literal">
+'*'</code> again. This time we are testing the ability of programs (such as <EM CLASS="emphasis">
+nmbd </em>) to use broadcast. It's essentially a connectivity test, done via a broadcast to the default broadcast address. </p><P CLASS="para">
+A number of NetBIOS/TCP-IP hosts on the network should respond with "got a positive name query response" messages. Samba may not catch all of the responses in the short time it listens, so you won't always see all the SMB clients on the network. However, you should see most of them:</p><PRE CLASS="programlisting">server% <B CLASS="emphasis.bold">nmblookup -d 2 '*' </b>
+Added interface ip=192.168.236.86 bcast=192.168.236.255 nmask=255.255.255.0 Sending queries to 192.168.236.255 
+Got a positive name query response from 192.168.236.191 (192.168.236.191) 
+Got a positive name query response from 192.168.236.228 (192.168.236.228) 
+Got a positive name query response from 192.168.236.75 (192.168.236.75) 
+Got a positive name query response from 192.168.236.79 (192.168.236.79) 
+Got a positive name query response from 192.168.236.206 (192.168.236.206) 
+Got a positive name query response from 192.168.236.207 (192.168.236.207) 
+Got a positive name query response from 192.168.236.217 (192.168.236.217) 
+Got a positive name query response from 192.168.236.72 (192.168.236.72) 192.168.236.86 * </pre><P CLASS="para">
+However:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945841">
+</a>If this doesn't give at least the client address you previously tested, the default broadcast address is wrong. Try <CODE CLASS="literal">
+nmblookup</code> <CODE CLASS="literal">
+-B</code> <CODE CLASS="literal">
+255.255.255.255</code> <CODE CLASS="literal">
+-d</code> <CODE CLASS="literal">
+2</code> <CODE CLASS="literal">
+'*'</code>, which is a last-ditch variant (a broadcast address of all ones). If this draws responses, the broadcast address you've been using before is wrong. Troubleshooting these is discussed in the <A CLASS="xref" HREF="ch09_02.html#ch09-45060">
+Section 9.2.9.2, Broadcast addresses</a> section, later in this chapter.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-951306">
+</a>If the address 255.255.255.255 fails too, check your notes to see if your PC and server are on different subnets, as discovered in <A CLASS="xref" HREF="ch09_02.html#ch09-84079">
+Section 9.2.2.4</a>. You should try to diagnose this with a server and client on the same subnet, but if you can't, you can try specifying the remote subnet's broadcast address with <CODE CLASS="literal">
+-B</code>. Finding that address is discussed in the same place as troubleshooting broadcast addresses, in the section <A CLASS="xref" HREF="ch09_02.html#ch09-45060">
+Section 9.2.9.2</a>, later in this chapter. The <CODE CLASS="literal">
+-B</code> option will work if your router supports directed broadcasts; if it doesn't, you may be forced to test with a client on the same network.</p></li></ul></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-947520">
+9.2.6.5 Testing client browsing with net view</a></h4><P CLASS="para">On the client, run the command <CODE CLASS="replaceable"><I>net view \\server</i></code> in a DOS window to see if you can connect to the client and ask what shares it provides. You should get back a list of available shares on the server, as shown in <A CLASS="xref" HREF="ch09_02.html#ch09-83710">
+Figure 9.4</a>.   </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch09-83710">
+Figure 9.4: Using the net view command</a></h4><IMG CLASS="graphic" SRC="figs/sam.0904.gif" ALT="Figure 9.4"><P CLASS="para">
+If you received this, continue with the section <A CLASS="xref" HREF="ch09_02.html#ch09-21713">
+Section 9.2.7, Other Things that Fail</a>.</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-953009">
+</a>If you get "Network name not found" for the name you just tested in the section <A CLASS="xref" HREF="ch09_02.html#ch09-32122">
+Section 9.2.6.3, Testing the client with nmblookup</a>, there is a problem with the client software itself. Double-check this by running <EM CLASS="emphasis">
+nmblookup</em> on the client; if it works and NET VIEW doesn't, the client is at fault.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945868">
+</a>Of course, if <EM CLASS="emphasis">
+nmblookup</em> fails, there is a NetBIOS nameservice problem, as discussed in the section <A CLASS="xref" HREF="ch09_02.html#ch09-35552">
+Section 9.2.10</a>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945874">
+</a>If you get "You do not have the necessary access rights," or "This server is not configured to list shared resources," either your guest account is misconfigured (see <A CLASS="xref" HREF="ch09_02.html#ch09-40595">
+Section 9.2.5.2</a>), or you have a <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> or <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> line that prohibits connections from your machine. These problems should have been detected by the <EM CLASS="emphasis">
+smbclient</em> tests starting in the section <A CLASS="xref" HREF="ch09_02.html#ch09-96207">
+Section 9.2.6.1, Testing browsing with smbclient </a>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945882">
+</a>If you get "The specified computer is not receiving requests," you have misspelled the name, the machine is unreachable by broadcast (tested in "Testing the network with nmblookup"), or it's not running <EM CLASS="emphasis">
+nmbd</em>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-954090">
+</a>If you get "Bad password error," you're probably encountering the Microsoft-encrypted password problem, as discussed in <a href="ch06_01.html"><b>Chapter 6</b></a>, with its corrections.</p></li></ul></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-954094">
+9.2.6.6 Browsing the server from the client</a></h4><P CLASS="para">From the Network Neighborhood (File Manager in older releases), try to browse the server. Your Samba server should appear in the browse list of your local workgroup. You should be able to double click on the name of the server and get a list of shares, as illustrated in <A CLASS="xref" HREF="ch09_02.html#ch09-60004">
+Figure 9.5</a>.   </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch09-60004">
+Figure 9.5: List of shares on a server</a></h4><IMG CLASS="graphic" SRC="figs/sam.0905.gif" ALT="Figure 9.5"><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945897">
+</a>If you get an "Invalid password" error with NT 4.0, NT 3.5 with Patch 3, Windows 95 with Patch 3, Windows 98 or any of these with Internet Explorer 4.0, it's most likely the encryption problem again. All of these clients default to using Microsoft encryption for passwords (see <a href="ch06_01.html"><b>Chapter 6</b></a>).</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945903">
+</a>If you receive an "Unable to browse the network" error, one of the following has ocurred:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945904">
+</a>You have looked too soon, before the broadcasts and updates have completed; try waiting 30 seconds before re-attempting.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945905">
+</a>There is a network problem you've not yet diagnosed.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945906">
+</a>There is no browse master. Add the configuration option <CODE CLASS="literal">
+local</code> <CODE CLASS="literal">
+master</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code> to your <EM CLASS="emphasis">
+smb.conf</em> file.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945907">
+</a>No shares are marked <CODE CLASS="literal">
+browsable</code> in the <EM CLASS="emphasis">
+smb.conf</em> file.</p></li></ul></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945909">
+</a>If you receive the message "\\server is not accessible," then:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945910">
+</a> You have the encrypted password problem</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945911">
+</a> The machine really isn't accessible </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945912">
+</a> The machine doesn't support browsing</p></li></ul></li></ul></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-21713">9.2.7 Other Things that Fail </a></h3><P CLASS="para">
+If you've made it here, either the problem is solved or it's not one we've seen. The next sections cover troubleshooting tasks that are required to have the infrastructure to run Samba, not Samba itself.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-945916">
+9.2.7.1 Not logging on</a></h4><P CLASS="para">An occasional problem is forgetting to log in to the client or logging in as a wrong (account-less) person. The former is not diagnosed at all: Windows tries to be friendly and lets you on. Locally! The only warning of the latter is that Windows welcomes you and asks about your new account. Either of these leads to repeated refusals to connect and endless requests for passwords. If nothing else seems to work, try logging out or shutting down and logging in again.</p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-23768">
+9.2.8 Troubleshooting Name Services</a></h3><P CLASS="para">This section looks at simple troubleshooting of all the name services that you will encounter, but only for the common problems that affect Samba.</p><P CLASS="para">
+There are several good references for troubleshooting particular name services: Paul Albitz and Cricket Liu's <EM CLASS="emphasis">
+DNS and Bind</em> covers the Domain Name Service (DNS), Hal Stern's <EM CLASS="emphasis">
+NFS and NIS</em> (both from O'Reilly) covers NIS ("Yellow pages") while WINS (Windows Internet Name Service), <I CLASS="filename">
+hosts/LMHOSTS</i> files and NIS+ are best covered by their respective vendor's manuals.</p><P CLASS="para">
+The problems addressed in this section are:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945926">
+</a>Identifying name services</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945927">
+</a>A hostname can't be looked up</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945928">
+</a>The long (FQDN) form of a hostname works but the short form doesn't </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945929">
+</a>The short form of the name works, but the long form doesn't</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945930">
+</a>A long delay ocurrs before the expected result </p></li></ul><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-945931">
+9.2.8.1 Identifying what's in use</a></h4><P CLASS="para">First, see if both the server and the client are using DNS, WINS, NIS, or <I CLASS="filename">
+hosts</i> files to look up IP addresses when you give them a name. Each kind of machine will have a different preference: </p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945934">
+</a>Windows 95 and 98 machines will look in WINS and <I CLASS="filename">
+LMHOSTS</i> files first, then broadcast, and finally try DNS and <I CLASS="filename">
+hosts</i> files.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945935">
+</a>NT will look in WINS, then broadcast, LMHOSTS files, and finally <I CLASS="filename">
+hosts</i> and DNS.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945936">
+</a>Windows programs using the WINSOCK standard (like PC-NFSs) will use hosts files, DNS, WINS, and then broadcast. Don't assume that if a different program's name service works, the SMB client program's name service will!</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945937">
+</a>Samba daemons will use <I CLASS="filename">
+LMHOSTS</i>, WINS, the Unix host's preference, and then broadcast.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945938">
+</a>Unix hosts can be configured to use any combination of DNS, <I CLASS="filename">
+hosts</i> files, and NIS and NIS+, generally in any order.</p></li></ul><P CLASS="para">
+We recommend that the client machines be configured to use WINS and DNS, the Samba daemons to use WINS and DNS, and the Unix server to use DNS. You'll have to look at your notes and the actual machines to see which is in use.</p><P CLASS="para">
+On the clients, the name services are all set in the TCP/IP Properties panel of the Networking Control Panel, as discussed in <a href="ch03_01.html"><b>Chapter 3</b></a>. You may need to check there to see what you've actually turned on. On the server, see if an <I CLASS="filename">
+/etc/resolv.conf</i> file exists. If it does, you're using DNS. You may be using the others as well, though. You'll need to check for NIS and combinations of services.</p><P CLASS="para">
+Check for an <I CLASS="filename">
+/etc/nsswitch.conf</i> file on Solaris and other System V Unix operating systems. If you have one, look for a line that begins <CODE CLASS="literal">
+host</code>:, followed by one or more of <CODE CLASS="literal">
+files</code>, <CODE CLASS="literal">
+bind</code>, <CODE CLASS="literal">
+nis</code> or <CODE CLASS="literal">
+nis+</code>. These are the name services to use, in order, with optional extra material in square brackets. <EM CLASS="emphasis">
+files</em> stands for using<EM CLASS="emphasis">
+ hosts</em> files, while <EM CLASS="emphasis">
+bind</em> (the Berkeley Internet Name Daemon) stands for using DNS.</p><P CLASS="para">
+If the client and server differ, the first thing to do is to get them in sync. Clients can only use only DNS, WINS, <EM CLASS="emphasis">
+hosts </em>files and <EM CLASS="emphasis">
+lmhosts</em> files, not NIS or NIS+. Servers can use <EM CLASS="emphasis">
+hosts</em> files, DNS, and NIS or NIS+, but not WINS&nbsp;- even if your Samba server provides WINS services. If you can't get all the systems to use the same services, you'll have to carefully check the server and the client for the same data.</p><P CLASS="para">
+Samba 2.0 (and late 1.9 versions) added a <CODE CLASS="literal">
+-R</code><I CLASS="option">
+ </i>(resolve order) option to <EM CLASS="emphasis">
+smbclient</em>. If you want to troubleshoot WINS, for example, you'd say:</p><PRE CLASS="programlisting"> smbclient -L <CODE CLASS="replaceable"><I>server</i></code> -R wins</pre><P CLASS="para">
+The possible settings are <CODE CLASS="literal">
+hosts</code> (which means whatever the Unix machine is using, not just<I CLASS="filename">
+ /etc/hosts</i> files), <CODE CLASS="literal">
+lmhosts</code>, <CODE CLASS="literal">
+wins</code> and <CODE CLASS="literal">
+bcast</code> (broadcast).</p><P CLASS="para">
+In the following sections, we use the term <EM CLASS="emphasis">
+long name</em> for a fully-qualified domain name (FQDN), like <CODE CLASS="literal">
+server.example.com</code>, and the term <EM CLASS="emphasis">
+short name</em> for the host part of a FQDN, like <CODE CLASS="literal">
+server</code>.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-947590">
+9.2.8.2 Cannot look up hostnames</a></h4><P CLASS="para">
+ Try the following:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945950">
+</a>In DNS:</p><P CLASS="para">
+Run <CODE CLASS="literal">
+nslookup</code> <CODE CLASS="replaceable">
+<I>
+name</i></code>. If this fails, look for a <I CLASS="filename">
+resolv.conf</i> error, a downed DNS server, or a short/long name problem (see the next section). Try the following:</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945952">
+</a>Your <I CLASS="filename">
+/etc/resolv.conf</i> should contain one or more name-server lines, each with an IP address. These are the addresses of your DNS servers.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947597">
+</a>ping each of the server addresses you find. If this fails for one, suspect the machine. If it fails for each, suspect your network.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947600">
+</a>Retry the lookup using the full domain name (e.g., <EM CLASS="emphasis">
+server.example.com</em>) if you tried the short name first, or the short name if you tried the long name first. If results differ, skip to the next section. </p></li></ul><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945958">
+</a>In Broadcast/ WINS:</p><P CLASS="para">
+Broadcast/ WINS does only short names such as <CODE CLASS="literal">
+server</code>, (not long ones, such as <CODE CLASS="literal">
+server.example.com)</code>. Run <CODE CLASS="literal">
+nmblookup</code> <CODE CLASS="literal">
+-S</code> <CODE CLASS="replaceable">
+<I>
+server</i></code>.<CODE CLASS="replaceable">
+<I>
+ </i></code>This reports everything broadcast has registered for the name. In our example, it looks like this:</p></li></ul><PRE CLASS="programlisting">
+Looking up status of 192.168.236.86
+received 10 names
+        SERVER           &lt;00&gt; -         M &lt;ACTIVE&gt; 
+        SERVER           &lt;03&gt; -         M &lt;ACTIVE&gt; 
+        SERVER           &lt;1f&gt; -         M &lt;ACTIVE&gt; 
+        SERVER           &lt;20&gt; -         M &lt;ACTIVE&gt; 
+        ..__MSBROWSE__.  &lt;01&gt; - &lt;GROUP&gt; M &lt;ACTIVE&gt; 
+        MYGROUP          &lt;00&gt; - &lt;GROUP&gt; M &lt;ACTIVE&gt; 
+        MYGROUP          &lt;1b&gt; -         M &lt;ACTIVE&gt; 
+        MYGROUP          &lt;1c&gt; - &lt;GROUP&gt; M &lt;ACTIVE&gt; 
+        MYGROUP          &lt;1d&gt; -         M &lt;ACTIVE&gt; 
+        MYGROUP          &lt;1e&gt; - &lt;GROUP&gt; M &lt;ACTIVE&gt;</pre><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+The required entry is <CODE CLASS="literal">
+SERVER</code> <CODE CLASS="literal">
+&lt;00&gt;</code>, which identifies <CODE CLASS="replaceable">
+<I>
+server</i></code> as being this machine's NetBIOS name. You should also see your workgroup mentioned one or more times. If these lines are missing, Broadcast/WINS cannot look up names and will need attention.</p></li></ul><P CLASS="para">
+The numbers in angle brackets in the previous output identify NetBIOS names as being workgroups, workstations, and file users of the messenger service, master browsers, domain master browsers, domain controllers and a plethora of others. We primarily use <CODE CLASS="literal">
+&lt;00&gt;</code> to identify machine and workgroup names and <CODE CLASS="literal">
+&lt;20&gt;</code> to identify machines as servers. The complete list is available at <A CLASS="systemitem.url" HREF="http://support.microsoft.com/support/kb/articles/q163/4/09.asp">
+http://support.microsoft.com/support/kb/articles/q163/4/09.asp</a>.</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945982">
+</a>In NIS:</p><P CLASS="para">
+Try <CODE CLASS="literal">
+ypmatch</code> <CODE CLASS="literal">
+name</code> <CODE CLASS="literal">
+hosts</code>. If this fails, NIS is down. Find out the NIS server's name by running<EM CLASS="emphasis">
+ ypwhich</em>, and ping the machine it to see if it's accessible.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945985">
+</a>In NIS+:</p><P CLASS="para">
+If you're running NIS+, try <CODE CLASS="literal">
+nismatch</code> <CODE CLASS="literal">
+name</code> <CODE CLASS="literal">
+hosts</code>. If this fails, NIS is down. Find out the NIS server's name by running <EM CLASS="emphasis">
+niswhich</em>, and ping that machine to see if it's accessible.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-945988">
+</a>In <I CLASS="filename">
+hosts</i> files:</p><P CLASS="para">
+Inspect <I CLASS="filename">
+/etc/hosts</i> on the client (<CODE CLASS="literal">C:\WINDOWS\HOSTS</code>). Each line should have an IP number and one or more names, the primary name first, then any optional aliases. An example follows:</p></li></ul><PRE CLASS="programlisting">
+        127.0.0.1         localhost
+        192.168.236.1     dns.svc.example.com 
+        192.168.236.10    client.example.com client 
+        192.168.236.11    backup.example.com loghost 
+        192.168.236.86    server.example.com server 
+        192.168.236.254   router.svc.example.com </pre><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+On Unix, <CODE CLASS="literal">
+localhost</code> should always be 127.0.0.1, although it may be just an alias for a hostname on the PC. On the client, check that there are no <CODE CLASS="literal">
+#XXX</code> directives at the ends of the lines; these are LAN Manager/NetBIOS directives, and should appear only in <EM CLASS="emphasis">
+LMHOSTS</em> files (<CODE CLASS="literal">C:\WINDOWS\LMHOSTS</code>). </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946000">
+</a>In <EM CLASS="emphasis">
+LMHOSTS</em> files:</p><P CLASS="para">
+This file is a local source for LAN Manager (NetBIOS) names. It has a format very similar to <I CLASS="filename">
+/etc/hosts</i> files, but does not support long-form domain names (e.g., <CODE CLASS="literal">
+server.example.com</code>), and may have a number of optional <CODE CLASS="literal">
+#XXX</code> directives following the names. Note there usually is a <EM CLASS="emphasis">
+lmhosts.sam</em> (for sample) file in <CODE CLASS="literal">
+C:\WINDOWS</code>, but it's not used unless renamed to <CODE CLASS="literal">
+C:\WINDOWS\LMHOSTS</code>.</p></li></ul></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-946005">
+9.2.8.3 Long and short hostnames</a></h4><P CLASS="para">Where the long (FQDN) form of a hostname works but the short name doesn't (for example, <CODE CLASS="literal">
+client.example.com</code> works but <CODE CLASS="literal">
+client</code> doesn't), consider the following:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946007">
+</a>DNS: </p><P CLASS="para">
+This usually indicates there is no default domain in which to look up the short names. Look for a <CODE CLASS="literal">
+default</code> line in <I CLASS="filename">
+/etc/resolv.conf</i> on the Samba server with your domain in it, or a <CODE CLASS="literal">
+search</code> line with one or more domains in it. One or the other may need to be present to make short names usable; which one depends on vendor and version of the DNS resolver. Try adding <CODE CLASS="literal">
+domain</code> <CODE CLASS="replaceable">
+<I>
+your domain</i></code> to <I CLASS="filename">
+resolv.conf</i> and ask your network or DNS administrator what should have been in the file.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946010">
+</a>Broadcast/WINS: </p><P CLASS="para">
+Broadcast/WINS doesn't support long names; it won't suffer from this problem. </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946012">
+</a>NIS: </p><P CLASS="para">
+Try the command <CODE CLASS="literal">
+ypmatch</code> <CODE CLASS="literal">
+hostname</code> <CODE CLASS="literal">
+hosts</code>. If you don't get a match, your tables don't include short names. Speak to your network manager; short names may be missing by accident, or may be unsupported as a matter of policy. Some sites don't ever use (ambiguous) short names.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946014">
+</a>NIS+ :</p><P CLASS="para">
+Try <CODE CLASS="literal">
+nismatch</code> <CODE CLASS="replaceable">
+<I>
+hostname</i></code> <CODE CLASS="literal">
+hosts</code>, and treat failure exactly as with NIS above.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946016">
+</a><EM CLASS="emphasis">
+hosts:</em> </p><P CLASS="para">
+If the short name is not in <I CLASS="filename">
+/etc/hosts</i>, consider adding it as an alias. Avoid, if you can, short names as primary names (the first one on a line). Have them as aliases if your system permits.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946018">
+</a><I CLASS="filename">
+LMHOSTS</i>: </p><P CLASS="para">
+LAN Manager doesn't support long names, so it won't suffer from this problem. </p></li></ul><P CLASS="para">
+On the other hand, if the short form of the name works and the long doesn't, consider the following:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946022">
+</a>DNS: </p><P CLASS="para">
+This is bizarre; see your network or DNS administrator, as this is probably a DNS setup bug.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947697">
+</a>Broadcast/WINS: </p><P CLASS="para">
+This is a normal bug; Broadcast/WINS can't use the long form. Optionally, consider DNS. Microsoft has stated that they will switch to DNS, though it's not providing name types like &lt;00&gt;.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947709">
+</a>NIS:</p><P CLASS="para">
+If you can use <CODE CLASS="literal">
+ypmatch</code> to look up the short form but not the long, consider adding the long form to the table as at least an alias.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947718">
+</a>NIS+: </p><P CLASS="para">
+Same as NIS, except you use <CODE CLASS="literal">
+nismatch</code> instead of <CODE CLASS="literal">
+ypmatch</code> to look up names.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947720">
+</a><I CLASS="filename">
+hosts:</i></p><P CLASS="para">
+Add the long name as at least an alias, and preferably as the primary form. Also consider using DNS if it's practical.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947727">
+</a><I CLASS="filename">
+LMHOSTS</i>: </p><P CLASS="para">
+This is a normal bug. LAN Manager can't use the long form; consider switching to DNS or <I CLASS="filename">
+hosts</i>.</p></li></ul></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-946040">
+9.2.8.4 Unusual delays</a></h4><P CLASS="para">When there is a long delay before the expected result: </p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-947733">
+</a>DNS: </p><P CLASS="para">
+Test the same name with the <KBD CLASS="command">
+nslookup</kbd> command on the machine (client or server) that is slow. If <KBD CLASS="command">
+nslookup</kbd> is also slow, you have a DNS problem. If it's slower on a client, you have too many protocols bound to the Ethernet card. Eliminate NetBEUI, which is infamously slow, and optionally, Novel, assuming you don't need them. This is especially important on Windows 95, which is particularly sensitive to excess protocols.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946044">
+</a>Broadcast/ WINS:</p><P CLASS="para">
+Test the client using <CODE CLASS="literal">
+nmblookup</code>, and if it's faster, you probably have the protocols problem as  mentioned in the previous item.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946047">
+</a>NIS:</p><P CLASS="para">
+Try <CODE CLASS="literal">
+ypmatch</code>, and if it's slow, report the problem to your network manager.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946049">
+</a>NIS+: </p><P CLASS="para">
+Try <CODE CLASS="literal">
+nismatch</code>, similarly.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946051">
+</a><EM CLASS="emphasis">
+hosts</em>:</p><P CLASS="para">
+<EM CLASS="emphasis">
+hosts</em> files, if of reasonable size, are always fast. You probably have the protocols problem mentioned under DNS, above.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946053">
+</a><EM CLASS="emphasis">
+LMHOSTS</em>:</p><P CLASS="para">
+This is not a name lookup problem; <EM CLASS="emphasis">
+LMHOSTS</em> files are as fast as <EM CLASS="emphasis">
+hosts</em> files.</p></li></ul></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-946055">
+9.2.8.5 Localhost issues</a></h4><P CLASS="para">When a localhost isn't 127.0.0.1, try the following:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946056">
+</a>DNS:</p><P CLASS="para">
+There is probably no record for <CODE CLASS="literal">
+localhost.</code> <CODE CLASS="literal">
+A</code> <CODE CLASS="literal">
+127.0.0.1</code>. Arrange to add one, and a reverse entry, <CODE CLASS="literal">
+1.0.0.127.IN-ADDR.ARPA</code> <CODE CLASS="literal">
+PTR</code> <CODE CLASS="literal">
+127.0.0.1</code>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946058">
+</a>Broadcast/WINS:</p><P CLASS="para">
+Not applicable.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946060">
+</a>NIS:</p><P CLASS="para">
+If <CODE CLASS="literal">
+localhost</code> isn't in the table, add it.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946062">
+</a>NIS+: </p><P CLASS="para">
+If <CODE CLASS="literal">
+localhost</code> isn't in the table, add it.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946064">
+</a><I CLASS="filename">
+hosts:</i></p><P CLASS="para">
+Add a line is the <EM CLASS="emphasis">
+hosts</em> file that says <CODE CLASS="literal">
+127.0.0.1</code> <CODE CLASS="literal">
+localhost</code></p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946066">
+</a><I CLASS="filename">
+LMHOSTS</i>:</p><P CLASS="para">
+Not applicable.</p></li></ul></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-pgfId-953970">9.2.9 Troubleshooting Network Addresses</a></h3><P CLASS="para">
+A number of common problems are caused by incorrect Internet address routing or the incorrect assignment of addresses. This section helps you determine what your addresses are.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-21203">
+9.2.9.1 Netmasks</a></h4><P CLASS="para">The netmasks tell each machine which addresses can be reached directly (are on your local network) and which addresses require forwarding packets through a router. If the netmask is wrong, the machines will make one of two mistakes. One is to try to route local packets via a router, which is an expensive way to waste time&nbsp;- it may work reasonably fast, it may run slowly, or it may fail utterly. The second mistake is to fail to send packets for a remote machine to the router, which will prevent them from being forwarded to the remote machine.</p><P CLASS="para">
+The netmask is a number like an IP address, with one-bits for the network part of an address and zero-bits for the host portion. The netmask is literally used to mask off parts of the address inside the TCP/IP code. If the mask is 255.255.0.0, the first 2 bytes are the network part and the last 2 are the host part. More common is 255.255.255.0, in which the first 3 bytes are the network part and the last one is the host part.</p><P CLASS="para">
+For example, let's say your IP address is 192.168.0.10 and the Samba server is 192.168.236.86. If your netmask happens to be 255.255.255.0, the network part of the addresses is the first 3 bytes and the host part is the last byte. In this case, the network parts are different, and the machines are on different networks: </p><TABLE CLASS="informaltable" BORDER="1" CELLPADDING="3">
+<THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Network Part</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Host Part</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+192 168 000</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+10</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+192 168 235</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+86</p></td></tr></tbody></table><P CLASS="para">
+If your netmask happens to be 255.255.0.0, the network part is just the first two bytes. In this case, the network parts match and so the two machines are on the same network: </p><TABLE CLASS="informaltable" BORDER="1" CELLPADDING="3">
+<THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Network Part</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Host Part</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+192 168</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+000 10</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+192 168</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+236 86</p></td></tr></tbody></table><P CLASS="para">
+Of course, if your netmask says one thing and your network manager says another, the netmask is wrong.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-45060">
+9.2.9.2 Broadcast addresses</a></h4><P CLASS="para">
+The broadcast address is a normal address, with the hosts part all one-bits. It means "all hosts on your network." You can compute it easily from your netmask and address: take the address and put one-bits in it for all the bits that are zero at the end of the netmask (the host part). The following table illustrates this: </p><TABLE CLASS="informaltable" BORDER="1" CELLPADDING="3">
+<THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Network Part</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Host Part</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<B CLASS="emphasis.bold">
+IP address</b></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+192 168 236</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+86</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<B CLASS="emphasis.bold">
+Netmask</b></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+255 255 255</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+000</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<B CLASS="emphasis.bold">
+Broadcast</b></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+192 168 236</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+255</p></td></tr></tbody></table><P CLASS="para">
+In this example, the broadcast address on the 192.168.236 network is 192.168.236.255. There is also an old "universal" broadcast address, 255.255.255.255. Routers are prohibited from forwarding these, but most machines on your local network will respond to broadcasts to this address.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-946136">
+9.2.9.3 Network address ranges</a></h4><P CLASS="para">A number of address ranges have been reserved for testing and for non-connected networks; we use one of these for the book. If you don't have an address yet, feel free to use one of these to start with. They include one class A (large) network, 10.*.*.*, and 254 class C (smaller) networks, 192.168.1.* through to 192.168.254.*. In this book we use one of the latter, 192.168.236.*. The domain <I CLASS="filename">
+example.com</i> is also reserved for unconnected networks, explanatory examples, and books.</p><P CLASS="para">
+If you're actually connecting to the Internet, you'll need to get a real network and a domain name, probably through the same company that provides your connection.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch09-pgfId-947786">
+9.2.9.4 Finding your network address</a></h4><P CLASS="para">If you haven't recorded your IP address, it will be displayed by the <KBD CLASS="command">
+ifconfig</kbd> command on Unix or by the IPCONFIG command on Windows 95 and NT. (Check your manual pages for any options required by your brand of Unix: Sun wants <CODE CLASS="literal">
+ifconfig</code> <CODE CLASS="literal">
+-a</code>). You should see output similar to the following:</p><PRE CLASS="programlisting">
+server% ifconfig -a 
+le0: flags=63&lt;UP,BROADCAST,NOTRAILERS,RUNNING &gt; 
+      inet 192.168.236.11 netmask ffffff00 broadcast 192.168.236.255 
+lo0: flags=49&lt;&amp;lt&gt;UP,LOOPBACK,RUNNING&lt;&amp;gt&gt; 		
+      inet 127.0.0.1 netmask ff000000</pre><P CLASS="para">
+One of the interfaces will be loopback (in our examples <CODE CLASS="literal">
+lo0</code>), and the other will be the regular IP interface. The flags should show that the interface is running, and Ethernet interfaces will also say they support broadcasts (PPP interfaces don't). The other places to look for IP addresses are <I CLASS="filename">
+/etc/hosts</i> files, Windows <EM CLASS="emphasis">
+HOSTS</em> files, Windows <EM CLASS="emphasis">
+LMHOSTS</em> files, NIS, NIS+ and DNS.</p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch09-35552">9.2.10 Troubleshooting NetBIOS Names</a></h3><P CLASS="para">Historically, SMB protocols have depended on the NetBIOS name system, also called the LAN Manager name system. This was a simple scheme where each machine had a unique 20-character name and broadcast it on the LAN for everyone to know. With TCP/IP, we tend to use names like <EM CLASS="emphasis">
+client.example.com</em> stored in <I CLASS="filename">
+/etc/hosts</i> files, through DNS or WINS.</p><P CLASS="para">
+The usual mapping to domain names such as <EM CLASS="emphasis">
+server.example.com</em> simply uses the <EM CLASS="emphasis">
+server</em> part as the NetBIOS name and converts it to uppercase. Alas, this doesn't always work, especially if you have a machine with a 21-character name; not everyone uses the same NetBIOS and DNS names. For example, <EM CLASS="emphasis">
+corpvm1</em> along with <EM CLASS="emphasis">
+vm1.corp.com</em> is not unusual.</p><P CLASS="para">
+A machine with a different NetBIOS name and domain name is confusing when you're troubleshooting; we recommend that you try to avoid this wherever possible. NetBIOS names are discoverable with <EM CLASS="emphasis">
+smbclient </em>:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946160">
+</a>If you can list shares on your Samba server with <EM CLASS="emphasis">
+smbclient</em> and a <CODE CLASS="literal">
+-L</code> option (list shares) of <CODE CLASS="replaceable">
+<I>
+short_name_of_server</i></code>, the short name is the NetBIOS name.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946161">
+</a>If you get "Get_Hostbyname: Unknown host name," there is probably a mismatch. Check in the <I CLASS="filename">
+smb.conf</i> file to see if the NetBIOS name is explicitly set.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946162">
+</a>Try again, specifying <CODE CLASS="literal">
+-I</code> and the IP address of the Samba server (e.g., <CODE CLASS="literal">
+smbclient</code> <CODE CLASS="literal">
+-L</code> <CODE CLASS="literal">
+server</code> <CODE CLASS="literal">
+-I</code> <CODE CLASS="literal">
+192.168.236.86</code>). This overrides the name lookup and forces the packets to go to the IP address. If this works, there was a mismatch.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946163">
+</a>Try with <CODE CLASS="literal">
+-I</code> and the full domain name of the server (e.g., <CODE CLASS="literal">
+smbclient</code> <CODE CLASS="literal">
+-L</code> <CODE CLASS="literal">
+server</code> <CODE CLASS="literal">
+-I</code> <CODE CLASS="literal">
+server.example.com</code>). This tests the lookup of the domain name, using whatever scheme the Samba server uses (e.g., DNS). If it fails, you have a name service problem. You should reread the section <A CLASS="xref" HREF="ch09_02.html#ch09-23768">
+Section 9.2.8</a> after you finish troubleshooting the NetBIOS names.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946168">
+</a>Try with <CODE CLASS="literal">
+-n</code> (NetBIOS name) and the name you expect to work (e.g., <CODE CLASS="literal">
+smbclient</code> <CODE CLASS="literal">
+-n</code> <CODE CLASS="literal">
+server</code> <CODE CLASS="literal">
+-L</code> <CODE CLASS="literal">
+server-12</code>) but without overriding the IP address through <CODE CLASS="literal">
+-I</code>. If this works, the name you specified with <CODE CLASS="literal">
+-n</code> is the actual NetBIOS name of the server. If you receive "Get-Hostbyname: Unknown host MARY," it's not the right server yet.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-946169">
+</a>If nothing is working so far, repeat the tests specifying <CODE CLASS="literal">
+-U</code> <CODE CLASS="replaceable">
+<I>
+username</i></code> and <CODE CLASS="literal">
+-W</code> <CODE CLASS="replaceable">
+<I>
+workgroup</i></code>, with the username and workgroup in uppercase, to make sure you're not being derailed by a user or workgroup mismatch.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch09-pgfId-953522">
+</a>If nothing works still and you had evidence of a name service problem, troubleshoot name service in the section <A CLASS="xref" HREF="ch09_02.html#ch09-23768">
+Section 9.2.8</a>, and then return to NetBIOS name service.</p></li></ul></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch09_01.html" TITLE="9.1 The Tool Bag">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 9.1 The Tool Bag" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch09_03.html" TITLE="9.3 Extra Resources">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 9.3 Extra Resources" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">9.1 The Tool Bag</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+9.3 Extra Resources</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

@@ -1,0 +1,23 @@
+
+  Introduction
+
+The Linux 2.6 hotplug interface introduced a new approach. Instead of spawning
+a new process for each event, thus possibly creating an unmanagably large
+ammount of processes, the events (uevents) are written into a PF_NETLINK 
+socket.
+
+The uevent has following format:
+actiontype@ENVVAR=VALUE\0[ENVVAR=VALUE\0[...]]
+
+The actiontype might be "add" or "remove". The action is also exported in an
+environmental variable ACTION.
+
+Reading these events by a single daemon that performs relevant actions is a
+far better approach, as it also allows smart distribution of resources and
+processing by rules, both of these features being used in both udev and
+hotplug2.
+
+The old /proc/sys/kernel/hotplug interface is still kept though, and can be 
+used. If a valid value is passed to it, the application specified in the procfs
+entry gets executed along with the new method of sending event through netlink
+socket.

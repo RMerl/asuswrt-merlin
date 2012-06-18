@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Problems With Network Print Servers</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printer Communication and Protocols "
+    href="printercomm.htm">
+    <link rel="PREVIOUS" title="HP JetDirect Interface" href=
+    "x5157.htm">
+    <link rel="NEXT" title="Printing to a SMB (MicroSoft) Printer"
+    href="x5224.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x5157.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          11. Printer Communication and Protocols</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x5224.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN5193">11.8. Problems With
+      Network Print Servers</a></h1>
+
+      <p>Most of the Network Print Servers are implemented using
+      extremely simply software. The following is a list of some
+      problems and what options the <b class=
+      "APPLICATION">LPRng</b> software uses to handle them.</p>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN5197">11.8.1. Network Print
+        Server Not Responding</a></h2>
+
+        <p>Only a single TCP/IP connection is accepted at a time.
+        This means that when one user is sending a job then the
+        unit will not accept other connections. There is another
+        side effect of this problem, which is that some
+        implementations will accept a network connection but not
+        read any data from the connection until the previous
+        connection is finished.</p>
+
+        <p>The deal with these problems the <var class=
+        "LITERAL">connect_timeout</var>, <var class=
+        "LITERAL">send_job_rw_timeout</var>, and <var class=
+        "LITERAL">send_query_rw_timeout</var> are used to control
+        job transfer and lpq status gathering. See <a href=
+        "printingjob.htm">Printing Job Files</a> and <a href=
+        "opendevice.htm">Opening the Output Device</a> for
+        details.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN5206">11.8.2. Network Print
+        Server Does Not Handle LPQ, LPRM</a></h2>
+
+        <p>Some Network Print Servers do not respond to <var class=
+        "LITERAL">lpq</var> or <var class="LITERAL">lprm</var>
+        queries correctly. The <var class=
+        "LITERAL">remote_support</var> option can be used to solve
+        this problem by specifying what operations the remote print
+        server can handle:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN5212"></a>
+<pre class="SCREEN">
+    :remote_support=RMQVC
+      R = lpr, M = lprmg, Q = lpq, V = lpq -v, C = lpc
+      :remote_support=R  # printer only handles LPR
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN5214">11.8.3. Incomplete Job
+        Transfers</a></h2>
+
+        <p>This is the result of a defective or buggy TCP/IP
+        stacks. A common problem is the habit that some Network
+        Print Servers occaisionally discard data at the end of a
+        print job when a network connection is <span class=
+        "emphasis"><i class="EMPHASIS">half-closed</i></span>. A
+        <span class="emphasis"><i class=
+        "EMPHASIS">half-closed</i></span> connection is one where
+        one end of the sending connection indicates that no further
+        data will be sent. Unfortunately, the Network Print Server
+        will then try to close the connection in the other
+        direction. When this does not immediately succeed, it will
+        terminate the network connection, discarding any unprinted
+        data.</p>
+
+        <p>The <var class="LITERAL">half_close</var> flag can be
+        used to solve this problem. See <a href=
+        "normalterm.htm">Normal Termination</a> for more
+        details.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN5222"></a>
+<pre class="SCREEN">
+    lp:lp=lp@remote        # shutdown(fd,WRITE) connection, wait for end
+    lp:lp=lp@remote:half_close@    # close() connection and do not wait
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x5157.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x5224.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">HP JetDirect
+          Interface</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printercomm.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Printing to a
+          SMB (MicroSoft) Printer</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

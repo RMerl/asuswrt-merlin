@@ -1,0 +1,15 @@
+This modules matches a given string by using some pattern matching strategy. It requires a linux kernel >= 2.6.14.
+.TP
+.BI "--algo  " "bm|kmp"
+Select the pattern matching strategy. (bm = Boyer-Moore, kmp = Knuth-Pratt-Morris)
+.TP
+.BI "--from " "offset"
+Set the offset from which it starts looking for any matching. If not passed, default is 0.
+.TP
+.BI "--to " "offset"
+Set the offset from which it starts looking for any matching. If not passed, default is the packet size.
+.TP
+.BI "--string " "pattern"
+Matches the given pattern.
+.BI "--hex-string " "pattern"
+Matches the given pattern in hex notation.

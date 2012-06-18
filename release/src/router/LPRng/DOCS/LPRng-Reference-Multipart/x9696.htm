@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Accounting File</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Accounting " href="accountingref.htm">
+    <link rel="PREVIOUS" title="Accounting Information" href=
+    "x9682.htm">
+    <link rel="NEXT" title="Authorization and Quotas" href=
+    "x9736.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x9682.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          18. Accounting</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x9736.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN9696">18.3. Accounting
+      File</a></h1>
+
+      <p>The Accounting File (<var class="LITERAL">:af=</var>)
+      option value specifies the destination of accounting
+      information. If the format of the <var class=
+      "LITERAL">:af</var> option is <var class="LITERAL">:as=|
+      ...</var> , then the value is assumed to be a program to be
+      run to record start and end of job information. The program
+      is run in the same manner as a print filter. The values of
+      the <var class="LITERAL">:as</var> and <var class=
+      "LITERAL">:ae</var> options are written to the program's <var
+      class="LITERAL">STDIN</var> and the output from the program's
+      <var class="LITERAL">STDOUT</var> is used as described below
+      for authorization.</p>
+
+      <p>If the <var class="LITERAL">:af=</var> option has the
+      format <var class="LITERAL">host%port</var> then a TCP/IP
+      connection is opened to the specified port on the indicated
+      host. The values of the <var class="LITERAL">:as</var> and
+      <var class="LITERAL">:ae</var> options are written to the
+      remote host. The port that the connection originates from
+      will be in the range set by the configuration or printcap
+      <span class="emphasis"><i class="EMPHASIS"><a href=
+      "rfc1179ref.htm#LPDPORT">originate_port</a></i></span>
+      option.</p>
+
+      <p>Finally, if the <var class="LITERAL">:af=</var> has
+      neither of these formats then it will be treated as a
+      pathname to a file. If the file exists or the <var class=
+      "LITERAL">create_files</var> option is true, then the file
+      will be opened and the values of the <var class=
+      "LITERAL">:as</var> and <var class="LITERAL">:ae</var>
+      options are written to the file. The accounting file should
+      be periodically truncated.&#13;</p>
+
+      <p>&#13;By convention the <var class="LITERAL">:af=</var>
+      value is passed to filters as a command line option. LPRng
+      will pass the option value only if it is specifies a file or
+      network destination. This implies that accounting information
+      can be written to the accounting file or network destinations
+      by the print spooler, <var class="LITERAL">:of</var> filters,
+      or print file filters. The filters are responsible for
+      opening the accounting file or network connection.</p>
+
+      <p>The following is an example of information written to the
+      accounting file:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN9722"></a>
+<pre class="SCREEN">
+    jobstart '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
+    '-b1093' '-tNov  5 19:39:25'
+    start '-p12942' '-kcfA938h4.private' '-nroot' '-hh4.private' '-Pps' \
+    '-c0' '-Fo' '-tSun Nov  5 19:39:25 1995'
+    filestart '-p12944' '-kcfA938h4.private' '-nroot' '-hh4.private' '-Pps' \
+    '-c0' '-Ff' '-tSun Nov  5 19:39:27 1995'
+    fileend '-p12944' '-kcfA938h4.private' '-nroot' '-hh4.private' '-Pps' \
+    '-b3' '-c0' '-Ff' '-tSun Nov  5 19:39:58 1995'
+    end '-p12942' '-kcfA938h4.private' '-nroot' '-hh4.private' '-Pps' \
+    '-b2' '-c0' '-Fo' '-tSun Nov  5 19:39:59 1995'
+    jobend '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
+    '-b1093' '-tNov  5 19:39:59'
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <var class="LITERAL">jobstart</var> and <var class=
+      "LITERAL">jobend</var> lines are written by <b class=
+      "APPLICATION">lpd</b> and are the expanded <var class=
+      "LITERAL">:as</var> and <var class="LITERAL">:ae</var>
+      values. The <var class="LITERAL">start</var> and <var class=
+      "LITERAL">end</var> line are added by the <var class=
+      "LITERAL">:of</var> filter. This filter usually queries the
+      printer and gets printer dependent accounting information
+      such as the pagecounter value. The <var class=
+      "LITERAL">:of</var> filter is then suspended and the job is
+      processed by the various format dependent filters. The the
+      <var class="LITERAL">filestart</var> and <var class=
+      "LITERAL">fileend</var> lines are produced by the other
+      filters.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x9682.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x9736.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Accounting
+          Information</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "accountingref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Authorization
+          and Quotas</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

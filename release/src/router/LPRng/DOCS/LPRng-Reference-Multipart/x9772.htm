@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Reliable Accounting</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Accounting " href="accountingref.htm">
+    <link rel="PREVIOUS" title=
+    "Accessing Printer Hardware Pagecounters" href="x9761.htm">
+    <link rel="NEXT" title="LPRng accounting.pl Utility" href=
+    "x9787.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x9761.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          18. Accounting</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x9787.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN9772">18.6. Reliable
+      Accounting</a></h1>
+
+      <p>In order to do reliable accounting, the printer must be
+      queueried for the current value of the pagecounter at the
+      start and end of jobs and this information stored in the
+      accounting file. The <b class="APPLICATION">ifhp</b> filter
+      can be configured to obtain the pagecounter values and to
+      record them at the start and end of each part of a print job.
+      We can use the <var class="LITERAL">:of</var> filter to read
+      the pagecounter value at the start and end of a job, and have
+      the other file files record information as well. The <var
+      class="LITERAL">ifhp</var> filter will record the pagecounter
+      information with the <var class="LITERAL">-p</var> option. We
+      need simply take the difference of the starting and ending
+      pagecounter values to find the number of pages used by a
+      job.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN9779"></a>
+<pre class="SCREEN">
+    Example:
+     lpd generates:  
+      jobstart  - from the lpd.conf 'as=' option
+      jobend    - from the lpd.conf 'ae=' option
+        -H   - host name
+        -n   - user name
+        -P   - printer
+        -k   - control file name
+        -b   - byte count of job/file
+        -t   - current printing time
+    
+     ifhp filter generates:
+       start/end         - of filter, for entire job
+       filestart/fileend - if or other filter, for each file
+       (options above are same)
+        -A  - identifier information
+        -q  - process id of filter
+        -p  - current value of page counter, 0 indicates no
+              page counter on printer or it is not readable
+    
+    jobstart '-Hh110.private' '-nroot' '-Plp' \
+       '-kcfA129h110.private' '-b48780' '-t2001-10-19-09:36:36.000'
+                               ^^^ bytes in file
+    
+    start '-q26130' '-p105340' '-t2001-10-19-09:36:38.330' \
+                     ^^^^^^^  starting page counter value for job
+        '-Aroot@h110+129' '-nroot' '-Plp' 
+    filestart '-q26132' '-p105340' '-t2001-10-19-09:36:38.350' \
+                          ^^^^^^^  starting page counter value for file
+        '-Aroot@h110+129' '-nroot' '-Plp' 
+    fileend '-b19' '-T435' '-q26132' '-p105359' '-t2001-10-19-09:43:51.504'
+                                      ^^^^^^^  ending page countvalue for file
+             ^^^ number of pages printed for this file
+        '-Aroot@h110+129' '-nroot' '-Plp'
+    end '-b19' '-T435' '-q26130' '-p105359' '-t2001-10-19-09:43:51.504'
+                                      ^^^^^^^  ending page countvalue for job
+         ^^^ number of pages printed for this job
+        '-Aroot@h110+129' '-nroot' '-Plp'
+    jobend '-Hh110.private' '-nroot' '-Plp' \
+        '-kcfA129h110.private' '-b48780' '-t2001-10-19-09:43:51.000'
+                               ^^^ bytes in file
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If for some reason the job is killed or terminates due to
+      error conditions, the <var class="LITERAL">:of</var> filter
+      may not get to record the ending value for the job. This can
+      lead to accounting files with the following entries:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN9783"></a>
+<pre class="SCREEN">
+    start '-p100' '-q20005' '-Fo' '-kcfA100taco' '-uuser' '-hhost' '-R...
+    filestart '-p101' '-q20005' '-Ff' '-kcfA100taco' '-uuser' '-hhost' '-R...
+    start '-p110' '-q20005' '-Fo' '-kcfA101taco' '-uuser' '-hhost' '-R...
+    filestart '-p112' '-q20010' '-Fo' '-kcfA101taco' '-uuser' '-hhost' '-R...
+    end '-p112' '-q20010' '-Fo' '-kcfA101taco' '-uuser' '-hhost' '-R...
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The missing <var class="LITERAL">end</var> is a clear
+      indication that the user's job has been terminated. We simply
+      use the pagecounter value determined at the start of the next
+      job to find the numbers of pages used for this job.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x9761.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x9787.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Accessing
+          Printer Hardware Pagecounters</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "accountingref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top"><b class=
+          "APPLICATION">LPRng</b> accounting.pl Utility</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

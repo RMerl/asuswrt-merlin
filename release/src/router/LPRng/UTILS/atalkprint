@@ -1,0 +1,47 @@
+#!/bin/sh
+# $Id: atalkprint,v 1.1.1.1 2008/10/15 03:28:26 james26_jang Exp $
+# This is a template file for hooking up printing to a remote
+#  printer that needs a communication program
+#
+#  Modified by Patrick Powell <papowell@astart.com> for the LPRngTool
+#   Note 1: the general.config file is assumed to be in the current directory
+#   Note 2: entries can be in any order in the file
+#
+# This script is an input filter for printcap printing on a unix machine. It
+# uses the smbclient program to print the file to the specified smb-based 
+# server and service.
+# For example you could have a printcap entry like this
+#
+# atalk:lp=/dev/null:sd=/usr/spool/lpd/atalk:if=/usr/local/filters/atalkprint
+# 
+# which would create a unix printer called "atalk" that will print via this 
+# script.
+#
+# The script gets its information from the general.config file
+# file in the printer spool directory or the atalk_options line
+# or from the printcap 'atalk_options' line
+# The options used are:
+#   host=host           host for printing
+#   printer=printer     printer
+#   username=printer     printer
+# example: general.config file -
+#    host="host"
+#    printer="lp"
+#
+# :atalk_options= host="host" printer="lp"
+#
+# Should read the following variables set in the auth file:
+#   username=username       for authentication
+#   password=password   for authentication
+
+if [ -f ./general.cfg ] ; then
+	. ./general.cfg
+fi
+options=`echo "${PRINTCAP_ENTRY}" | sed -n 's/:atalk_options=//p' `
+if [ -n "$options" ] ; then
+	eval export $options
+fi
+
+# now you simply use the paramters you have extracted
+#
+/usr/bin/pap -p "$username:$printer@$host"

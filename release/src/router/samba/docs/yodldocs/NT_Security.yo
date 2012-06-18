@@ -1,0 +1,292 @@
+mailto(samba@samba.org)
+
+article(Viewing and changing UNIX permissions using the NT security dialogs in Samba 2.0.4)(Jeremy Allison, Samba Team)(12th April 1999)
+
+center(bf(Viewing and changing UNIX permissions using the NT security dialogs))nl()
+center(bf(-------------------------------------------------------------------))
+
+New in the bf(Samba 2.0.4) release is the
+ability for Windows NT clients to use their native security
+settings dialog box to view and modify the underlying UNIX
+permissions.
+
+Note that this ability is careful not to compromise the security
+of the UNIX host Samba is running on, and still obeys all the
+file permission rules that a Samba administrator can set.
+
+In Samba 2.0.4 and above the default value of the parameter
+url(bf("nt acl support"))(smb.conf.5.html#ntaclsupport) has been
+changed from "false" to "true", so manipulation of permissions is
+turned on by default.
+
+bf(How to view file security on a Samba share)nl()
+bf(------------------------------------------)
+
+From an NT 4.0 client, single-click with the right mouse button on
+any file or directory in a Samba mounted drive letter or UNC path.
+When the menu pops-up, click on the tt(Properties) entry at the 
+bottom of the menu. This brings up the normal file properties dialog
+box, but with Samba 2.0.4 this will have a new tab along the top
+marked tt(Security). Click on this tab and you will see three buttons,
+em(Permissions), em(Auditing), and em(Ownership). The em(Auditing)
+button will cause either an error message tt("A requested privilege is
+not held by the client") to appear if the user is not the NT Administrator,
+or a dialog which is intended to allow an Administrator to add
+auditing requirements to a file if the user is logged on as the
+NT Administrator. This dialog is non-functional with a Samba
+share at this time, as the only useful button, the tt(Add) button
+will not currently allow a list of users to be seen.
+
+bf(Viewing file ownership)nl()
+bf(----------------------)
+
+Clicking on the tt("Ownership") button brings up a dialog box telling
+you who owns the given file. The owner name will be of the form :
+
+tt("SERVER\user (Long name)")
+
+Where tt(SERVER) is the NetBIOS name of the Samba server, tt(user)
+is the user name of the UNIX user who owns the file, and tt((Long name))
+is the discriptive string identifying the user (normally found in the
+GECOS field of the UNIX password database). Click on the tt(Close)
+button to remove this dialog.
+
+If the parameter url(bf("nt acl support"))(smb.conf.5.html#ntaclsupport)
+is set to "false" then the file owner will be shown as the NT user
+tt("Everyone").
+
+The tt(Take Ownership) button will not allow you to change the
+ownership of this file to yourself (clicking on it will display a
+dialog box complaining that the user you are currently logged onto
+the NT client cannot be found). The reason for this is that changing
+the ownership of a file is a privilaged operation in UNIX, available
+only to the em(root) user. As clicking on this button causes NT to
+attempt to change the ownership of a file to the current user logged
+into the NT client this will not work with Samba at this time.
+
+There is an NT chown command that will work with Samba and allow
+a user with Administrator privillage connected to a Samba 2.0.4
+server as root to change the ownership of files on both a local NTFS
+filesystem or remote mounted NTFS or Samba drive. This is available
+as part of the bf(Seclib) NT security library written by Jeremy
+Allison of the Samba Team, available from the main Samba ftp site.
+
+bf(Viewing file or directory permissions)nl()
+bf(-------------------------------------)
+
+The third button is the tt("Permissions") button. Clicking on this
+brings up a dialog box that shows both the permissions and the UNIX
+owner of the file or directory. The owner is displayed in the form :
+
+tt("SERVER\user (Long name)")
+
+Where tt(SERVER) is the NetBIOS name of the Samba server, tt(user)
+is the user name of the UNIX user who owns the file, and tt((Long name))
+is the discriptive string identifying the user (normally found in the
+GECOS field of the UNIX password database).
+
+If the parameter url(bf("nt acl support"))(smb.conf.5.html#ntaclsupport)
+is set to "false" then the file owner will be shown as the NT user
+tt("Everyone") and the permissions will be shown as NT tt("Full Control").
+
+The permissions field is displayed differently for files and directories,
+so I'll describe the way file permissions are displayed first.
+
+bf(File Permissions)nl()
+bf(----------------)
+
+The standard UNIX user/group/world triple and the correspinding
+"read", "write", "execute" permissions triples are mapped by Samba
+into a three element NT ACL with the 'r', 'w', and 'x' bits mapped
+into the corresponding NT permissions. The UNIX world permissions are mapped
+into the global NT group tt(Everyone), followed by the list of permissions
+allowed for UNIX world. The UNIX owner and group permissions
+are displayed as an NT tt(user) icon and an NT tt(local group) icon
+respectively followed by the list of permissions allowed for the
+UNIX user and group.
+
+As many UNIX permission sets don't map into common NT names such as
+tt("read"), tt("change") or tt("full control") then usually the permissions
+will be prefixed by the words tt("Special Access") in the NT display 
+list.
+
+But what happens if the file has no permissions allowed for a
+particular UNIX user group or world component ? In order to 
+allow "no permissions" to be seen and modified then Samba overloads
+the NT tt("Take Ownership") ACL attribute (which has no meaning in
+UNIX) and reports a component with no permissions as having the NT
+tt("O") bit set. This was chosen of course to make it look like a
+zero, meaning zero permissions. More details on the decision behind
+this will be given below.
+
+bf(Directory Permissions)nl()
+bf(---------------------)
+
+Directories on an NT NTFS file system have two different sets of
+permissions. The first set of permissions is the ACL set on the
+directory itself, this is usually displayed in the first set of
+parentheses in the normal tt("RW") NT style. This first set of
+permissions is created by Samba in exactly the same way as normal
+file permissions are, described above, and is displayed in the
+same way.
+
+The second set of directory permissions has no real meaning in the
+UNIX permissions world and represents the tt("inherited") permissions
+that any file created within this directory would inherit.
+
+Samba synthesises these inherited permissions for NT by returning as
+an NT ACL the UNIX permission mode that a new file created by Samba
+on this share would receive.
+
+bf(Modifying file or directory permissions)nl()
+bf(---------------------------------------)
+
+Modifying file and directory permissions is as simple as changing
+the displayed permissions in the dialog box, and clicking the tt(OK)
+button. However, there are limitations that a user needs to be aware
+of, and also interactions with the standard Samba permission masks
+and mapping of DOS attributes that need to also be taken into account.
+
+If the parameter url(bf("nt acl support"))(smb.conf.5.html#ntaclsupport)
+is set to "false" then any attempt to set security permissions will
+fail with an tt("Access Denied") message.
+
+The first thing to note is that the tt("Add") button will not return
+a list of users in Samba 2.0.4 (it will give an error message of
+tt("The remote proceedure call failed and did not execute")). This
+means that you can only manipulate the current user/group/world
+permissions listed in the dialog box. This actually works quite well
+as these are the only permissions that UNIX actually has.
+
+If a permission triple (either user, group, or world) is removed from
+the list of permissions in the NT dialog box, then when the tt("OK")
+button is pressed it will be applied as "no permissions" on the UNIX
+side. If you then view the permissions again the "no permissions" entry
+will appear as the NT tt("O") flag, as described above. This allows you
+to add permissions back to a file or directory once you have removed
+them from a triple component.
+
+As UNIX supports only the "r", "w" and "x" bits of an NT ACL
+then if other NT security attributes such as "Delete access"
+are selected then they will be ignored when applied on the 
+Samba server.
+
+When setting permissions on a directory the second set of permissions
+(in the second set of parentheses) is by default applied to all
+files within that directory. If this is not what you want you
+must uncheck the tt("Replace permissions on existing files") checkbox
+in the NT dialog before clicking tt("OK").
+
+If you wish to remove all permissions from a user/group/world 
+component then you may either highlight the component and click
+the tt("Remove") button, or set the component to only have the special
+tt("Take Ownership") permission (dsplayed as tt("O")) highlighted.
+
+bf(Interaction with the standard Samba create mask parameters)nl()
+bf(----------------------------------------------------------)
+
+Note that with Samba 2.0.5 there are four new parameters to
+control this interaction.
+
+These are :
+
+tt(security mask)
+tt(force security mode)
+tt(directory security mask)
+tt(force directory security mode)
+
+Once a user clicks tt("OK") to apply the permissions Samba maps
+the given permissions into a user/group/world r/w/x triple set,
+and then will check the changed permissions for a file against
+the bits set in the url(bf("security mask"))(smb.conf.5.html#securitymask)
+parameter. Any bits that were changed that are not set to '1'
+in this parameter are left alone in the file permissions.
+
+Essentially, zero bits in the url(bf("security mask"))(smb.conf.5.html#securitymask)
+mask may be treated as a set of bits the user is em(not) allowed to change,
+and one bits are those the user is allowed to change.
+
+If not set explicitly this parameter is set to the same value as the
+url(bf("create mask"))(smb.conf.5.html#createmask) parameter to provide compatibility
+with Samba 2.0.4 where this permission change facility was introduced.
+To allow a user to modify all the user/group/world permissions on a file,
+set this parameter to 0777.
+
+Next Samba checks the changed permissions for a file against the
+bits set in the url(bf("force security mode"))(smb.conf.5.html#forcesecuritymode)
+parameter. Any bits that were changed that correspond to bits set
+to '1' in this parameter are forced to be set.
+
+Essentially, bits set in the url(bf("force security mode"))(smb.conf.5.html#forcesecuritymode)
+parameter may be treated as a set of bits that, when modifying security on a file, the
+user has always set to be 'on'.
+
+If not set explicitly this parameter is set to the same value as the
+url(bf("force create mode"))(smb.conf.5.html#forcecreatemode) parameter to provide compatibility
+with Samba 2.0.4 where the permission change facility was introduced.
+To allow a user to modify all the user/group/world permissions on a file,
+with no restrictions set this parameter to 000.
+
+The url(bf("security mask"))(smb.conf.5.html#securitymask) and
+url(bf("force security mode"))(smb.conf.5.html#forcesecuritymode) parameters
+are applied to the change request in that order.
+
+For a directory Samba will perform the same operations as described above
+for a file except using the parameter url(bf("directory security mask"))(smb.conf.5.html#directorysecuritymask)
+instead of url(bf("security mask"))(smb.conf.5.html#securitymask), and 
+url(bf("force directory security mode"))(smb.conf.5.html#forcedirectorysecuritymode) parameter instead
+of url(bf("force security mode"))(smb.conf.5.html#forcesecuritymode).
+
+The url(bf("directory security mask"))(smb.conf.5.html#directorysecuritymask)
+parameter by default is set to the same value as the url(bf("directory mask"))(smb.conf.5.html#directorymask)
+parameter and the url(bf("force directory security mode"))(smb.conf.5.html#forcedirectorysecuritymode)
+parameter by default is set to the same value as the 
+iurl(bf("force directory mode"))(smb.conf.5.html#forcedirectorymode) parameter
+to provide compatibility with Samba 2.0.4 where the permission change facility was introduced.
+
+In this way Samba enforces the permission restrictions that an administrator
+can set on a Samba share, whilst still allowing users to modify the
+permission bits within that restriction.
+
+If you want to set up a share that allows users full control
+in modifying the permission bits on their files and directories and
+doesn't force any particular bits to be set 'on', then set the following
+parameters in the url(bf(smb.conf.5))(smb.conf.5.html) file in
+that share specific section :
+
+tt(security mask = 0777)
+tt(force security mode = 0)
+tt(directory security mask = 0777)
+tt(force directory security mode = 0)
+
+As described, in Samba 2.0.4 the parameters :
+
+tt(create mask)
+tt(force create mode)
+tt(directory mask)
+tt(force directory mode)
+
+were used instead of the parameters discussed here.
+
+bf(Interaction with the standard Samba file attribute mapping)nl()
+bf(----------------------------------------------------------)
+
+Samba maps some of the DOS attribute bits (such as "read only")
+into the UNIX permissions of a file. This means there can be a
+conflict between the permission bits set via the security dialog
+and the permission bits set by the file attribute mapping.
+
+One way this can show up is if a file has no UNIX read access
+for the owner it will show up as "read only" in the standard 
+file attributes tabbed dialog. Unfortunately this dialog is
+the same one that contains the security info in another tab.
+
+What this can mean is that if the owner changes the permissions
+to allow themselves read access using the security dialog, clicks
+tt("OK") to get back to the standard attributes tab dialog, and
+then clicks tt("OK") on that dialog, then NT will set the file
+permissions back to read-only (as that is what the attributes
+still say in the dialog). This means that after setting permissions
+and clicking tt("OK") to get back to the attributes dialog you
+should always hit tt("Cancel") rather than tt("OK") to ensure
+that your changes are not overridden.

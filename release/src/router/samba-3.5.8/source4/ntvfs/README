@@ -1,0 +1,26 @@
+This is the base of the new NTVFS subsystem for Samba. The model for
+NTVFS backends is quite different than for the older style VFS
+backends, in particular:
+
+- the NTVFS backends receive windows style file names, although they
+  are in the unix charset (usually UTF8). This means the backend is
+  responsible for mapping windows filename conventions to unix
+  filename conventions if necessary
+
+- the NTVFS backends are responsible for changing effective UID before
+  calling any OS local filesystem operations (if needed). The
+  become_*() functions are provided to make this easier.
+
+- the NTVFS backends are responsible for resolving DFS paths
+
+- each NTVFS backend handles either disk, printer or IPC$ shares,
+  rather than one backend handling all types
+
+- the entry points of the NTVFS backends correspond closely with basic
+  SMB operations, wheres the old VFS was modelled directly on the
+  POSIX filesystem interface.
+
+- the NTVFS backends are responsible for all semantic mappings, such
+  as mapping dos file attributes, ACLs, file ownership and file times
+
+

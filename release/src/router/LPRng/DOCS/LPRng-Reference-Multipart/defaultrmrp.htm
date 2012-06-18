@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Default Printer and Server Host</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title=
+    "LPRng Clients - lpr, lprm, lpq, lpc, lpstat " href=
+    "lprngclients.htm">
+    <link rel="PREVIOUS" title="First Printcap Entry" href=
+    "x4148.htm">
+    <link rel="NEXT" title="Force Connection to Localhost " href=
+    "forcelocalhost.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x4148.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 5.
+          <b class="APPLICATION">LPRng</b> Clients - lpr, lprm,
+          lpq, lpc, lpstat</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "forcelocalhost.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="DEFAULTRMRP">5.7. Default Printer
+      and Server Host</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">default_remotehost=</var><span
+          class="emphasis"><i class="EMPHASIS">default rm (remote
+          host)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">default_printer=</var><span
+          class="emphasis"><i class="EMPHASIS">default rp (remote
+          printer)</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>If the preceding steps do not yield a printer name and the
+      <var class="LITERAL">require_explicit_q</var> flag is not set
+      then the <var class="LITERAL">default_printer</var> and <var
+      class="LITERAL">default_remote_host</var> values from the <tt
+      class="FILENAME">lpd.conf</tt> configuration file will be
+      used. If there is no configuration file, then the compile
+      time defaults will be used.</p>
+
+      <p>Using the fallback values is usually not a desirable event
+      and may indicate that you have a misconfigured host, so the
+      compile time defaults are usually set to <var class=
+      "LITERAL">missingprinter@localhost</var> to provide an
+      annoying message for users.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x4148.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "forcelocalhost.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">First Printcap
+          Entry</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "lprngclients.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Force
+          Connection to Localhost</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

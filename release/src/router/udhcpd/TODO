@@ -1,0 +1,14 @@
+TODO
+----
++ Integrade README.*'s with manpages
++ using time(0) breaks if the system clock changes, find a portable solution
++ make failure of reading functions revert to previous value, not the default
++ sanity code for option[OPT_LEN]
++ fix aliasing (ie: eth0:0)
++ better standard linux distro support
++ make sure packet generation works on a wide varitey of arches
++ Interoperability testing
++ Hooks within the DHCP server
++ Additional bootp support in client/server
++ Make serverid option in server configurable
++ Possibly add failure message to DHCP NAK

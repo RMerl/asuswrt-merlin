@@ -1,0 +1,14 @@
+<samba:parameter name="max ttl"
+                 context="G"
+				 type="integer"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This option tells <citerefentry><refentrytitle>nmbd</refentrytitle>
+    <manvolnum>8</manvolnum></citerefentry> what the default 'time to live' 
+    of NetBIOS names should be (in seconds) when <command moreinfo="none">nmbd</command> is 
+    requesting a name using either a broadcast packet or from a WINS server. You should 
+	never need to change this parameter. The default is 3 days.</para>
+</description>
+<value type="default">259200</value>
+</samba:parameter>

@@ -1,0 +1,18 @@
+From e4adfdc4128c5909adeefecdaf870e30172922a9
+From: Bernhard Reutner-Fischer
+Date: Wed, 18 Nov 2009 12:24:07 +0000
+Subject: _Exit(): add weak alias to _exit() for C99
+
+Signed-off-by: Bernhard Reutner-Fischer <rep.dot.nop@gmail.com>
+---
+diff --git a/libc/sysdeps/linux/common/_exit.c b/libc/sysdeps/linux/common/_exit.c
+index 4a654a6..9e6d586 100644
+--- a/libc/sysdeps/linux/common/_exit.c
++++ b/libc/sysdeps/linux/common/_exit.c
+@@ -28,3 +28,4 @@ void attribute_noreturn _exit(int status)
+ 		INLINE_SYSCALL(exit, 1, status);
+ }
+ libc_hidden_def(_exit)
++weak_alias(_exit,_Exit)
+--
+cgit v0.8.2.1

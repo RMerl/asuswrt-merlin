@@ -1,0 +1,113 @@
+mailto(samba@samba.org) 
+
+manpage(make_unicodemap htmlcommand((1)))(1)(23 Oct 1998)(Samba)(SAMBA)
+
+label(NAME)
+manpagename(make_unicodemap)(Construct a unicode map file for Samba)
+
+label(SYNOPSIS)
+manpagesynopsis() 
+
+bf(make_unicodemap) link(codepage)(codepage) link(inputfile)(inputfile) link(outputfile)(outputfile)
+
+label(DESCRIPTION)
+manpagedescription()
+
+This program is part of the bf(Samba) suite.
+
+bf(make_unicodemap) compiles text unicode map files into binary unicode
+map files for use with the internationalization features of Samba 2.0
+
+label(OPTIONS)
+manpageoptions()
+
+startdit()
+
+label(codepage)
+dit(codepage) This is the codepage or UNIX character set we are processing (a number, e.g. 850).
+
+label(inputfile)
+dit(inputfile) This is the input file to process. This is a text unicode map file
+such as the ones found in the Samba em(source/codepages) directory.
+
+label(outputfile)
+dit(outputfile) This is the binary output file to produce.
+
+endit()
+
+label(SambaCodepageFiles)
+manpagesection(Samba Unicode Map Files)
+
+A text Samba unicode map file is a description that tells
+Samba how to map characters from a specified DOS code page or UNIX character
+set to 16 bit unicode.
+
+A binary Samba unicode map file is a binary representation of
+the same information, including a value that specifies what codepage
+or UNIX character set this file is describing.
+
+label(FILES)
+manpagefiles()
+
+bf(CP<codepage>.TXT)
+
+These are the input (text) unicode map files provided in the Samba
+em(source/codepages) directory.
+
+A text unicode map file consists of multiple lines
+containing two fields. These fields are : 
+
+startit()
+
+it() bf(character): which is the (hex) character mapped on this
+line.
+
+it() bf(unicode): which is the (hex) 16 bit unicode character that the
+character will map to.
+
+endit()
+
+bf(unicode_map.<codepage>) These are the output (binary) unicode map files
+produced and placed in the Samba destination em(lib/codepage)
+directory.
+
+label(INSTALLATION)
+manpagesection(INSTALLATION)
+
+The location of the server and its support files is a matter for
+individual system administrators. The following are thus suggestions
+only.
+
+It is recommended that the bf(make_unicodemap) program be installed
+under the em(/usr/local/samba) hierarchy, in a directory readable by
+all, writeable only by root. The program itself should be executable
+by all.  The program should NOT be setuid or setgid!
+
+label(VERSION)
+manpagesection(VERSION)
+
+This man page is correct for version 2.0 of the Samba suite.
+
+label(SEEALSO)
+manpageseealso()
+
+url(bf(smb.conf(5)))(smb.conf.5.html), url(bf(smbd (8)))(smbd.8.html)
+
+label(AUTHOR)
+manpageauthor()
+
+The original Samba software and related utilities were created by
+Andrew Tridgell email(samba@samba.org). Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+
+The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+url(bf(ftp://ftp.icce.rug.nl/pub/unix/))(ftp://ftp.icce.rug.nl/pub/unix/))
+and updated for the Samba2.0 release by Jeremy Allison.
+email(samba@samba.org).
+
+See url(bf(samba (7)))(samba.7.html) to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.

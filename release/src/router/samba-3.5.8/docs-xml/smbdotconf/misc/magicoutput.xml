@@ -1,0 +1,18 @@
+<samba:parameter name="magic output"
+		 context="S"
+		 type="string"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This parameter specifies the name of a file which will contain output created by a magic script (see the 
+	<smbconfoption name="magic script"/> parameter below).
+	</para>
+
+	<warning><para>If two clients use the same <parameter moreinfo="none">magic script
+	</parameter> in the same directory the output file content is undefined.
+	</para></warning>
+</description>
+
+<value type="default">&lt;magic script name&gt;.out</value>
+<value type="example">myfile.txt</value>
+</samba:parameter>

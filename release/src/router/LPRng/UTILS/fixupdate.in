@@ -1,0 +1,69 @@
+#!@PERL@
+use strict;
+for (@ARGV){
+	my($hfile,$cfile,$s,$t,$h);
+	#print "arg '$_'\n";
+	$hfile = $_;
+	($cfile = $hfile) =~ s/.*\///;
+	$cfile =~ s/\.h$/.c/;
+	if( not -f $cfile ){
+		my @files = glob( "*/$cfile" );
+		if( @files > 1 ){
+			warn "too many matching sourc3 files - @files\n";
+			exit 1;
+		}
+		if( @files == 0 ){
+			warn "no matching source files\n";
+			next;
+		}
+		$cfile = $files[0];
+	}
+	#print "cfile '$cfile', hfile '$hfile'\n";
+	if( !open( CFILE, "<$cfile") ){
+		warn "cannot open '$cfile'";
+		next;
+	}
+	while (<CFILE>) {
+		chomp;	# strip record separator
+		if (/^[A-Za-z]/ .. /^{/) {
+			chomp;
+			if( /{/ ){
+				$s .= ";\n";
+				$t .= $s;
+				$s = "";
+			} elsif( $s ){
+				$s .= "\n" . $_;
+			} else {
+				$s = $_;
+			}
+		}
+		if (/VARARGS[0-9]/ .. /^{/) {
+			chomp;
+			if( /{/ ){
+				$s .= "\n;\n";
+				$t .= $s;
+				$s = "";
+			} elsif( $s ){
+				$s .= "\n" . $_;
+			} else {
+				$s = $_;
+			}
+		}
+	}
+	close CFILE ;
+	$t .= "\n#endif\n";
+	#print $t;
+	open( HFILE, "<$hfile") or die "cannot open '$hfile'";
+	while( <HFILE> ){
+		$h .= $_;
+		if( /PROTOTYPE/ ) {
+			$h .= $t;
+			last;
+		}
+	}
+	# print $h;
+	`cp $hfile $hfile.bak`;
+	open( HFILE,">$hfile") or die "cannot open '$hfile'";
+	print HFILE $h;
+	close HFILE;
+}

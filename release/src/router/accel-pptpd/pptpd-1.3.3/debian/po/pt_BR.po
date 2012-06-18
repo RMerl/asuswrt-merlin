@@ -1,0 +1,204 @@
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+#    Developers do not need to manually edit POT or PO files.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pptpd_1.1.4-0.b3.2\n"
+"POT-Creation-Date: 2003-05-02 20:05-0300\n"
+"PO-Revision-Date: 2003-05-02 20:26-0300\n"
+"Last-Translator: André Luís Lopes <andrelop@ig.com.br>\n"
+"Language-Team: Debian-BR Project <debian-l10n-portuguese@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Description
+#: ../templates:3
+msgid "The local IP address of the virtual connections"
+msgstr "O endereço IP local das conexões virtuais"
+
+#. Description
+#: ../templates:3
+msgid "Specify the local IP address for the virtual connections."
+msgstr "Especifique o endereço IP local para as conexões virtuais."
+
+#. Description
+#: ../templates:3
+msgid ""
+"Please note that any address works as long as the local machine takes care "
+"of the routing. But if you want to use MS-Windows networking, you should use "
+"an IP address out of the LAN address space."
+msgstr ""
+"Por favor note que qualquer endereço funcionará contanto que o máquina "
+"local gerencie o roteamento. Mas caso você queira usar a rede "
+"MS-Windows você deverá usar um endereço IP fora do espaço de endereços "
+"da LAN."
+
+#. Description
+#: ../templates:3
+msgid ""
+"You can give only one address or you can give multiple addresses if you want "
+"to, although they are really not needed. Multiple addresses can be given as "
+"either \"10.0.0.1,10.0.0.2,10.0.0.3\" or \"10.0.0.1-3\". No spaces should be "
+"used between commas or within addresses."
+msgstr ""
+"Você pode fornecer somente um endereço ou você pode fornecer diversos "
+"endereços caso deseje, porém eles realmente não são necessários. "
+"Múltiplos endereços podem ser fornecidos informados como "
+"\"10.0.0.1,10.0.0.3\" ou \"10.0.0.1-3\". Nenhum espaço deve ser "
+"informado entre as vírgulas ou como parte dos endereços."
+
+#. Description
+#: ../templates:17
+msgid "A list of remote IP addresses for the virtual connections."
+msgstr "Uma lista de endereços IP remotos para as conexões virtuais."
+
+#. Description
+#: ../templates:17
+msgid "Specify the remote IP addresses for the virtual connections."
+msgstr "Especifique os endereços IP remotos para as conexões virtuais."
+
+#. Description
+#: ../templates:17
+msgid ""
+"Please note that any addresses work as long as the local machine takes care "
+"of the routing. But if you want to use MS-Windows networking, you should use "
+"IP addresses out of the LAN address space."
+msgstr ""
+"Por favor note que qualquer endereço funcionará contanto que o máquina "
+"local gerencie o roteamento. Mas caso você queira usar a rede "
+"MS-Windows você deverá usar endereços IP fora do espaço de endereços "
+"da LAN."
+
+#. Description
+#: ../templates:17
+msgid ""
+"You have to give one address for every concurrent connection. This will "
+"depend on how many clients you expect to be online at the same time. "
+"Multiple addresses can be given as either \"10.0.0.1,10.0.0.2,10.0.0.3\" or "
+"\"10.0.0.1-3\". No spaces should be used between commas or within addresses."
+msgstr ""
+"Você precisa fornecer um endereço para cada conexão concorrente. Isso "
+"dependerá de quantos clientes você espera que estejam on-line ao mesmo "
+"tempo. Diversos endereços podem ser informados como "
+"\"10.0.0.1,10.0.0.2,10.0.0.3\" ou \"10.0.0.1-3\". Nenhum espaço deverá "
+"ser usado entre as vírgulas ou como parte dos endereços."
+
+#. Description
+#: ../templates:31
+msgid "The netmask used for virtual connections."
+msgstr "A máscara de rede usada para conexões virtuais."
+
+#. Description
+#: ../templates:31
+msgid ""
+"If you use IP addresses from the LAN address space, please use the same "
+"netmask as on your LAN."
+msgstr ""
+"Caso você utilize endereços IP do espaço de endereços da LAN por favor "
+"usae a mesma máscara de rede usada em sua LAN."
+
+#. Description
+#: ../templates:37
+msgid "The IP address of your WINS server."
+msgstr "O endereço IP de seu servidor WINS."
+
+#. Description
+#: ../templates:37
+msgid ""
+"A WINS server is used for browsing available Computers in MS-Windows "
+"networking. This address is transmitted to the clients,"
+msgstr ""
+"Um servidor WINS é usado para navegar pelos computadores disponíveis "
+"em rede MS-Windows. Esse endereço é transmitido para os clientes."
+
+#. Description
+#: ../templates:43
+msgid "The IP address of your DNS server."
+msgstr "O endereço IP de seu servidor DNS."
+
+#. Description
+#: ../templates:43
+msgid "This address is transmitted to the clients."
+msgstr "Esse endereço é transmitido para os clientes."
+
+#. Description
+#: ../templates:49
+msgid "Do you want to use MPPE data encryption ?"
+msgstr "Você deseja usar encriptação de dados MPPE ?"
+
+#. Description
+#: ../templates:49
+msgid ""
+"The recommended way is to use the data encryption as it is one of the main "
+"benefits of a VPN. When you want to use MPPE (Microsoft Point-to-Point "
+"Encryption), you also  have to use CHAPMSv2 for authentication. . Note that "
+"you have to install the modified ppp packages if you want to use this data "
+"encryption."
+msgstr ""
+"A maneira recomendada é usar a encriptação de dados uma vez que esse é "
+"um dos principais benefícios de um VPN. Quando usar MPPE (Microsoft "
+"Point-to-Point Encryption) você terá também que usar CHAPMSv2 para "
+"autenticação. Note que você precisa instalar os pacotes ppp modificados "
+"caso você queira usar essa encriptação de dados."
+
+#. Description
+#: ../templates:58
+msgid "Warning: data encryption is disabled."
+msgstr "Aviso : a encriptação de dados está desabilitada."
+
+#. Description
+#: ../templates:58
+msgid ""
+"All data transferred between the local network and the client will be "
+"transmitted without encryption ! This is a security hole."
+msgstr ""
+"Todos os dados transferidos entre a rede local e o cliente serão "
+"transferidos sem encriptação ! Isto é uma falha de segurança."
+
+#. Description
+#: ../templates:58
+msgid "You have been warned. Now you loose your product warranty :)"
+msgstr "Você foi avisado. Agora você perdeu a garantia do produto :)"
+
+#. Choices
+#: ../templates:66
+msgid "pap, chap, chapms, chapms-v2"
+msgstr "pap, chap, chapms, chapms-v2"
+
+#. Description
+#: ../templates:68
+msgid "Which authentication method do you want to use ?"
+msgstr "Qual método de autenticação você deseja usar ?"
+
+#. Description
+#: ../templates:68
+msgid ""
+"Possible authentication methods are: - PAP - CHAP - CHAP with Microsoft "
+"extensions - CHAP with Microsoft extensions v2"
+msgstr ""
+"Os métodos de autenticação possíveis são : PAP - CHAP - CHAP com "
+"extensões Microsoft - CHAP com extensões Microsoft v2"
+
+#. Description
+#: ../templates:68
+msgid ""
+"The recommended authentication method is one of the CHAP methods. However, "
+"you have to use a separate database (/etc/ppp/chap-secrets) if you want to "
+"use these. If you use PAP, you can use the standard system passwords when "
+"the ppp-pam package is installed."
+msgstr ""
+"O método de autenticação recomendado é um dos métodos CHAP. Porém, você "
+"precisará usar uma base de dados separada (/etc/ppp/chap-secrets) caso "
+"você queira usá-los. Caso você use PAP, você poderá usar o sistema de "
+"senhas padrão quando o pacote ppp-pam for instalado."

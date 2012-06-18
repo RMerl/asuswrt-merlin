@@ -1,0 +1,42 @@
+This target allows to alter the MSS value of TCP SYN packets, to control
+the maximum size for that connection (usually limiting it to your
+outgoing interface's MTU minus 60).  Of course, it can only be used
+in conjunction with
+.BR "-p tcp" .
+It is only valid in the
+.BR mangle
+table.
+.br
+This target is used to overcome criminally braindead ISPs or servers
+which block ICMPv6 Packet Too Big packets or are unable to send them.
+The symptoms of this problem are that everything works fine from your 
+Linux firewall/router, but machines behind it can never exchange large
+packets:
+.PD 0
+.RS 0.1i
+.TP 0.3i
+1)
+Web browsers connect, then hang with no data received.
+.TP
+2)
+Small mail works fine, but large emails hang.
+.TP
+3)
+ssh works fine, but scp hangs after initial handshaking.
+.RE
+.PD
+Workaround: activate this option and add a rule to your firewall
+configuration like:
+.nf
+ ip6tables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN \\
+             -j TCPMSS --clamp-mss-to-pmtu
+.fi
+.TP
+.BI "--set-mss " "value"
+Explicitly set MSS option to specified value.
+.TP
+.B "--clamp-mss-to-pmtu"
+Automatically clamp MSS value to (path_MTU - 60).
+.TP
+These options are mutually exclusive.
+

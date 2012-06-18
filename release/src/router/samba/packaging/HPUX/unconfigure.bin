@@ -1,0 +1,8 @@
+# Samba.core unconfigure script
+
+rm -f /sbin/rc3.d/S911samba
+rm -f /sbin/rc2.d/K130samba
+
+/usr/sbin/userdel -r pcguest
+
+exit 0

@@ -1,0 +1,58 @@
+choice
+	prompt "Machine Type"
+	depends on PPC_85xx
+	default MPC8540_ADS
+
+config MPC8540_ADS
+	bool "Freescale MPC8540 ADS"
+	select DEFAULT_UIMAGE
+	help
+	  This option enables support for the MPC 8540 ADS board
+
+config MPC8560_ADS
+	bool "Freescale MPC8560 ADS"
+	select DEFAULT_UIMAGE
+	help
+	  This option enables support for the MPC 8560 ADS board
+
+config MPC85xx_CDS
+	bool "Freescale MPC85xx CDS"
+	select DEFAULT_UIMAGE
+	help
+	  This option enables support for the MPC85xx CDS board
+
+config MPC85xx_MDS
+	bool "Freescale MPC85xx MDS"
+	select DEFAULT_UIMAGE
+#	select QUICC_ENGINE
+	help
+	  This option enables support for the MPC85xx MDS board
+
+config MPC8544_DS
+	bool "Freescale MPC8544 DS"
+	select DEFAULT_UIMAGE
+	help
+	  This option enables support for the MPC8544 DS board
+
+endchoice
+
+config MPC8540
+	bool
+	select PPC_UDBG_16550
+	select PPC_INDIRECT_PCI
+	default y if MPC8540_ADS || MPC85xx_CDS
+
+config MPC8560
+	bool
+	select CPM2
+	default y if MPC8560_ADS
+
+config MPC85xx
+	bool
+	select PPC_UDBG_16550
+	select PPC_INDIRECT_PCI
+	select PPC_INDIRECT_PCI_BE
+	select MPIC
+	select SERIAL_8250_SHARE_IRQ if SERIAL_8250
+	default y if MPC8540_ADS || MPC85xx_CDS || MPC8560_ADS \
+		|| MPC85xx_MDS || MPC8544_DS

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<refentry id="ldbrename.1">
+
+<refmeta>
+	<refentrytitle>ldbrename</refentrytitle>
+	<manvolnum>1</manvolnum>
+</refmeta>
+
+
+<refnamediv>
+	<refname>ldbrename</refname>
+	<refpurpose>Edit LDB databases using your favorite editor</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>ldbrename</command>
+		<arg choice="opt">-h</arg>
+		<arg choice="opt">-o options</arg>
+		<arg choice="req">olddn</arg>
+		<arg choice="req">newdb</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>ldbrename is a utility that allows you to rename trees in 
+		an LDB database based by DN. This utility takes 
+		two arguments: the original 
+		DN name of the top element and the DN to change it to.
+	</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>-h</term>
+		<listitem><para>
+		Show list of available options.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>-H &lt;ldb-url&gt;</term>
+			<listitem><para>
+				LDB URL to connect to. See ldb(7) for details.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>-o options</term>
+			<listitem><para>Extra ldb options, such as 
+			modules.</para></listitem>
+		</varlistentry>
+		
+	</variablelist>
+	
+</refsect1>
+
+<refsect1>
+	<title>ENVIRONMENT</title>
+
+	<variablelist>
+		<varlistentry><term>LDB_URL</term>
+			<listitem><para>LDB URL to connect to (can be overrided by using the 
+					-H command-line option.)</para></listitem>
+		</varlistentry>
+	</variablelist>
+	
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 4.0 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+
+	<para>ldb(7), ldbmodify, ldbdel, ldif(5)</para>
+
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para> ldb was written by 
+		 <ulink url="http://samba.org/~tridge/">Andrew Tridgell</ulink>.
+	</para>
+
+	<para>
+If you wish to report a problem or make a suggestion then please see
+the <ulink url="http://ldb.samba.org/"/> web site for
+current contact and maintainer information.
+	</para>
+
+	<para>This manpage was written by Jelmer Vernooij.</para>
+	
+</refsect1>
+
+</refentry>

@@ -1,0 +1,26 @@
+#!/bin/sh
+M4PATH=/usr/local/share/aclocal
+export M4PATH
+set -e
+rm -f aclocal.m4 libtool config.cache config.status
+aclocal
+grep 'libtool.m4 - Configure' aclocal.m4 || {
+cat /usr/local/share/aclocal/libtool14.m4 >>aclocal.m4
+}
+autoconf
+#autoreconf --force --install
+gettextize --force --copy </dev/null
+rm -f po/Makevars
+mv po/Makevars.template po/Makevars
+libtoolize14 --force --copy
+grep 'SED=' ltmain.sh || {
+ (	head -1 ltmain.sh ; echo "SED=sed"; cat ltmain.sh ) >ltmain
+	rm -f ltmain.sh
+	mv ltmain ltmain.sh
+}
+
+perl -spi.bak -e '
+	if(/--disable-nls.*Native/){s/--disable/--enable/; s/do not //;}
+	s/, USE_NLS=yes/, USE_NLS=no/; ' aclocal.m4
+autoconf
+autoheader

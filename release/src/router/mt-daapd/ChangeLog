@@ -1,0 +1,83 @@
+2004-10-15  Ron Pedde <ron@pedde.com>
+	* src/dynamic-art.c: merged in patch from Paul Kim
+	(mr.pickles.esq@gmail.com) for dynamic cover art on aac
+	files (like the stuff from Hiren).
+	
+2004-09-08  Ron Pedde <ron@pedde.com>
+	* mp3-scanner.c: decode more aac tags.  Feature request #990546
+	* mp3-scanner.c: support for bitrate on playlsits. FR #996506
+	
+2004-05-21  Ron Pedde  <ron@pedde.com>
+	* everywhere: fixes for more conformant protocol handling,
+	support for index tag, meta tag, bug fixes for configuration file
+	overwriting, many other fixes and improvements from David
+	W. Berry (dwb@greenwing.com)
+
+2004-05-07  Ron Pedde  <ron@pedde.com>
+
+	* configure.in: Solaris fixes from ian (?)
+
+2004-04-28  Ron Pedde  <ron@pedde.com>
+
+	* src/daap.c: iTunes 4.5 compatibility
+
+2004-04-13  Ron Pedde  <ron@pedde.com>
+
+	* src/dynamic-art.c: merged in patch from Hiren Joshi
+	(hirenj@mooh.org) to allow .jpg files to be transparently
+	streamed into the id3 tag.  ubercool.
+
+2004-04-11  Ron Pedde  <ron@pedde.com>
+
+	* src/err.c: add in support for a logfile.  Feature request #916153
+
+2004-04-04  Ron Pedde  <ron@pedde.com>
+
+	* src/mp3-scanner.c: add support for MPEG v 2 and 2.5.  Feature
+	request #916151
+
+2004-03-13  Ron Pedde  <ron@pedde.com>
+
+	* src/mp3-scanner.c: fix static playlists - untracked bug
+
+2004-03-10  Ron Pedde  <ron@pedde.com>
+
+	* src/daap.c: make "smart" playlists show the smart playlist icon
+
+2004-03-07  Ron Pedde  <ron@pedde.com>
+
+	* src/playlist.c: add support for "path" in playlist
+
+2004-03-06  Ron Pedde  <ron@pedde.com>
+
+	* src/mp3-scanner.c: first pass at .m4a support
+
+2004-03-03  Ron Pedde  <ron@pedde.com>
+
+	* src/db-gdbm.c: Add gdbm backed database
+
+2004-03-01  Ron Pedde  <ron@pedde.com>
+
+	* src/rend-posix.c: merge Apple's Rendezvous drop 58.3 (bug #902244)
+	
+2004-02-24  Ron Pedde  <ron@pedde.com>
+
+	* src/db-memory.c: code cleanups from David Imhoff
+	* contrib/mt-daapd: fix init script (bug #902248)
+
+2004-02-18  Ron Pedde  <ron@pedde.com>
+
+	* src/mp3-scanner.c: Support TPOS tag (feature #898348)
+
+2004-02-09  Ron Pedde  <ron@pedde.com>
+
+	* src/mp3-scanner.c: Fix for genre > 148 (bug #900664)
+	
+2004-01-29  Ron Pedde  <ron@pedde.com>
+
+	* Bump version number to 0.1.1
+	* Add support for Solaris
+	* Fix format string problem
+	* Add support for Howl (> 0.9)
+	* Fix renedezvous advertising problem
+

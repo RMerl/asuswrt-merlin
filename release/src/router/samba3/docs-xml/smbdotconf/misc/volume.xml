@@ -1,0 +1,12 @@
+<samba:parameter name="volume"
+		 context="S"
+		 type="string"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This allows you to override the volume label 
+	returned for a share. Useful for CDROMs with installation programs 
+	that insist on a particular volume label.</para>
+</description>
+
+<value type="default"><comment>the name of the share</comment></value>
+</samba:parameter>

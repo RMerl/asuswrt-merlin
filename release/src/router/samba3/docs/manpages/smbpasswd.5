@@ -1,0 +1,315 @@
+.\"     Title: smbpasswd
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: File Formats and Conventions
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "SMBPASSWD" "5" "09/30/2009" "Samba 3\&.0" "File Formats and Conventions"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+smbpasswd \- The Samba encrypted password file
+.SH "Synopsis"
+.PP
+\FCsmbpasswd\F[]
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+smbpasswd is the Samba encrypted password file\&. It contains the username, Unix user id and the SMB hashed passwords of the user, as well as account flag information and the time the password was last changed\&. This file format has been evolving with Samba and has had several different formats in the past\&.
+.SH "FILE FORMAT"
+.PP
+The format of the smbpasswd file used by Samba 2\&.2 is very similar to the familiar Unix
+\FCpasswd(5)\F[]
+file\&. It is an ASCII file containing one line for each user\&. Each field ithin each line is separated from the next by a colon\&. Any entry beginning with \'#\' is ignored\&. The smbpasswd file contains the following information for each user:
+.PP
+name
+.RS 4
+This is the user name\&. It must be a name that already exists in the standard UNIX passwd file\&.
+.RE
+.PP
+uid
+.RS 4
+This is the UNIX uid\&. It must match the uid field for the same user entry in the standard UNIX passwd file\&. If this does not match then Samba will refuse to recognize this smbpasswd file entry as being valid for a user\&.
+.RE
+.PP
+Lanman Password Hash
+.RS 4
+This is the LANMAN hash of the user\'s password, encoded as 32 hex digits\&. The LANMAN hash is created by DES encrypting a well known string with the user\'s password as the DES key\&. This is the same password used by Windows 95/98 machines\&. Note that this password hash is regarded as weak as it is vulnerable to dictionary attacks and if two users choose the same password this entry will be identical (i\&.e\&. the password is not "salted" as the UNIX password is)\&. If the user has a null password this field will contain the characters "NO PASSWORD" as the start of the hex string\&. If the hex string is equal to 32 \'X\' characters then the user\'s account is marked as
+\fBdisabled\fR
+and the user will not be able to log onto the Samba server\&.
+.sp
+\fIWARNING !!\fR
+Note that, due to the challenge\-response nature of the SMB/CIFS authentication protocol, anyone with a knowledge of this password hash will be able to impersonate the user on the network\&. For this reason these hashes are known as
+\fIplain text equivalents\fR
+and must
+\fINOT\fR
+be made available to anyone but the root user\&. To protect these passwords the smbpasswd file is placed in a directory with read and traverse access only to the root user and the smbpasswd file itself must be set to be read/write only by root, with no other access\&.
+.RE
+.PP
+NT Password Hash
+.RS 4
+This is the Windows NT hash of the user\'s password, encoded as 32 hex digits\&. The Windows NT hash is created by taking the user\'s password as represented in 16\-bit, little\-endian UNICODE and then applying the MD4 (internet rfc1321) hashing algorithm to it\&.
+.sp
+This password hash is considered more secure than the LANMAN Password Hash as it preserves the case of the password and uses a much higher quality hashing algorithm\&. However, it is still the case that if two users choose the same password this entry will be identical (i\&.e\&. the password is not "salted" as the UNIX password is)\&.
+.sp
+\fIWARNING !!\fR\&. Note that, due to the challenge\-response nature of the SMB/CIFS authentication protocol, anyone with a knowledge of this password hash will be able to impersonate the user on the network\&. For this reason these hashes are known as
+\fIplain text equivalents\fR
+and must
+\fINOT\fR
+be made available to anyone but the root user\&. To protect these passwords the smbpasswd file is placed in a directory with read and traverse access only to the root user and the smbpasswd file itself must be set to be read/write only by root, with no other access\&.
+.RE
+.PP
+Account Flags
+.RS 4
+This section contains flags that describe the attributes of the users account\&. This field is bracketed by \'[\' and \']\' characters and is always 13 characters in length (including the \'[\' and \']\' characters)\&. The contents of this field may be any of the following characters:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIU\fR
+\- This means this is a "User" account, i\&.e\&. an ordinary user\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIN\fR
+\- This means the account has no password (the passwords in the fields LANMAN Password Hash and NT Password Hash are ignored)\&. Note that this will only allow users to log on with no password if the
+\fI null passwords\fR
+parameter is set in the
+\fBsmb.conf\fR(5)
+config file\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fID\fR
+\- This means the account is disabled and no SMB/CIFS logins will be allowed for this user\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIX\fR
+\- This means the password does not expire\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIW\fR
+\- This means this account is a "Workstation Trust" account\&. This kind of account is used in the Samba PDC code stream to allow Windows NT Workstations and Servers to join a Domain hosted by a Samba PDC\&.
+.sp
+.RE
+Other flags may be added as the code is extended in future\&. The rest of this field space is filled in with spaces\&. For further information regarding the flags that are supported please refer to the man page for the
+\FCpdbedit\F[]
+command\&.
+.RE
+.PP
+Last Change Time
+.RS 4
+This field consists of the time the account was last modified\&. It consists of the characters \'LCT\-\' (standing for "Last Change Time") followed by a numeric encoding of the UNIX time in seconds since the epoch (1970) that the last change was made\&.
+.RE
+.PP
+All other colon separated fields are ignored at this time\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+\fBsmbpasswd\fR(8),
+\fBSamba\fR(7), and the Internet RFC1321 for details on the MD4 algorithm\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original Samba man pages were written by Karl Auer\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\&.icce\&.rug\&.nl/pub/unix/) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

@@ -1,0 +1,29 @@
+How 2 use slirp with pptpd-0.9.0
+
+o Grab the slirp-1.0c package and install it
+  ftp://blitzen.canberra.edu.au/pub/slirp/slirp-1.0c.tar.gz
+  (other versions might work also, but were not tested)
+
+Then install pptpd
+
+o ./configure --with-slirp
+
+o Set path to slirp in config.h right
+
+o Be sure to have a HOME variable set when you start 
+  pptpd, because slirp reads the HOME/.chap-secrets file
+  for authentication
+  This file must be filled in the same way as the 
+  chap-secrets for pppd
+
+o For the rest follow the pptpd instructions
+
+o I have tested this with a Solaris 2.4 server, gcc and 
+  pptpd running on this configuration. As client I used 
+  Win95 DUN 1.3. I only tested this on a local network because 
+  our routers still block port 47.
+  With this test I get a clean authentication.
+
+Harald Vogt, vogt@serc.nl
+Mon Jun 14 09:49:40 MET DST 1999
+

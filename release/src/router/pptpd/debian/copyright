@@ -1,0 +1,11 @@
+This package was debianized by Rene Mayrhofer rene.mayrhofer@gibraltar.at on
+Mon, 16 Aug 1999 11:27:43 +0200.
+
+It was downloaded from 'http://www.moretonbay.com/vpn/pptp.html'
+
+Upstream Authors: Please look at file AUTHORS
+
+Copyright:
+
+PPTPd is released under the GPL. You should find a copy of the GPL in
+'/usr/share/common-licenses/GPL' on Debian systems.

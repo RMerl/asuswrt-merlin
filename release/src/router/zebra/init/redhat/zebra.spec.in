@@ -1,0 +1,128 @@
+%define version @VERSION@
+
+Summary:	Zebra routing engine
+Name:		zebra
+Version:	%{version}
+Release:	1
+Source:		zebra-%{version}.tar.gz
+URL:		http://www.zebra.org
+Copyright:	GPL
+Group:		System Environment/Daemons
+BuildRoot:	/tmp/zebra-%{version}-root
+
+%description
+GNU Zebra is free software (distributed under GNU Generic Public License)
+that manages TCP/IP based routing protocols. It supports BGP-4 protocol as
+described in RFC1771 (A Border Gateway Protocol 4) as well as RIPv1, RIPv2
+and OSPFv2. Unlike traditional, Gated based, monolithic architectures and
+even the so-called "new modular architectures" that remove the burden of
+processing routing functions from the cpu and utilize special ASIC chips
+instead, Zebra software offers true modularity.
+
+%prep
+%setup
+
+%build
+#./configure --enable-snmp --prefix=/usr --sysconfdir=/etc
+./configure --prefix=/usr --sysconfdir=/etc
+make
+
+%install
+rm -rf $RPM_BUILD_ROOT
+make DESTDIR=$RPM_BUILD_ROOT install
+rm -f $RPM_BUILD_ROOT/usr/info/dir
+rm -f $RPM_BUILD_ROOT/usr/man/man8/ospf6*
+rm -f $RPM_BUILD_ROOT/usr/man/man8/ripng*
+rm -f $RPM_BUILD_ROOT/usr/sbin/ospf6d
+rm -f $RPM_BUILD_ROOT/usr/sbin/ripngd
+strip $RPM_BUILD_ROOT/usr/sbin/*
+
+mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
+install -m755 init/redhat/bgpd.init $RPM_BUILD_ROOT/etc/rc.d/init.d/bgpd
+#install -m755 init/redhat/ospf6d.init $RPM_BUILD_ROOT/etc/rc.d/init.d/ospf6d
+install -m755 init/redhat/ospfd.init $RPM_BUILD_ROOT/etc/rc.d/init.d/ospfd
+install -m755 init/redhat/ripd.init $RPM_BUILD_ROOT/etc/rc.d/init.d/ripd
+#install -m755 init/redhat/ripngd.init $RPM_BUILD_ROOT/etc/rc.d/init.d/ripngd
+install -m755 init/redhat/zebra.init $RPM_BUILD_ROOT/etc/rc.d/init.d/zebra 
+
+mkdir -p $RPM_BUILD_ROOT/etc/logrotate.d
+install -m644 init/redhat/zebra.logrotate $RPM_BUILD_ROOT/etc/logrotate.d/zebra
+
+
+%post
+# zebra_spec_add_service <sercice name> <port/proto> <comment>
+# e.g. zebra_spec_add_service zebrasrv 2600/tcp "zebra service"
+
+zebra_spec_add_service ()
+{
+  # Add port /etc/services entry if it isn't already there 
+  if [ -f /etc/services ] && ! grep -q "^$1[^a-zA-Z0-9]" /etc/services ; then
+    echo "$1            $2              # $3"  >> /etc/services
+  fi
+}
+
+zebra_spec_add_service zebrasrv 2600/tcp "zebra service"
+zebra_spec_add_service zebra    2601/tcp "zebra vty"
+zebra_spec_add_service ripd     2602/tcp "RIPd vty"
+zebra_spec_add_service ripngd   2603/tcp "RIPngd vty"
+zebra_spec_add_service ospfd    2604/tcp "OSPFd vty"
+zebra_spec_add_service bgpd     2605/tcp "BGPd vty"
+zebra_spec_add_service ospf6d   2606/tcp "OSPF6d vty"
+
+#Install info
+/sbin/install-info /usr/info/zebra.info /usr/info/dir
+
+if [ -x /sbin/chkconfig ]; then
+  chkconfig --add bgpd
+#  chkconfig --add ospf6d
+  chkconfig --add ospfd
+  chkconfig --add ripd
+#  chkconfig --add ripngd
+  chkconfig --add zebra
+fi
+
+
+%preun
+if [ "$1" = 0 ] ; then
+  /sbin/install-info --delete /usr/info/zebra.info /usr/info/dir
+
+  if [ -x /sbin/chkconfig ]; then
+    chkconfig --del bgpd
+#    chkconfig --del ospf6d
+    chkconfig --del ospfd
+    chkconfig --del ripd
+#    chkconfig --del ripngd
+    chkconfig --del zebra
+  fi
+fi
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_DIR/%{name}-%{version}
+
+%files
+%attr(-,root,root) %doc AUTHORS COPYING ChangeLog INSTALL NEWS README SERVICES TODO bgpd/bgpd.conf.sample ospfd/ospfd.conf.sample ripd/ripd.conf.sample zebra/zebra.conf.sample
+%attr(-,root,root) %config /etc/rc.d/init.d/*
+%attr(-,root,root) %config /etc/logrotate.d/*
+%attr(-,root,root) /usr/info/*
+#%attr(-,root,root) /usr/man/*      # Not man1 to exclude vtysh man page as
+                                    # it is not build by default (for now)
+%attr(-,root,root) /usr/man/man8/*
+%attr(-,root,root) /usr/sbin/*
+
+%changelog
+* Mon Nov 6 2000 Lennert Buytenhek <buytenh@gnu.org>
+- Don't include ospf6d and ripngd in package.
+- Fix logrotate file (add ospf.log).
+* Mon Oct 2 2000 Horms <horms@valinux.com>
+- Install and uninstall info in %post and %preun respectively
+- Moved chkconfig --del operations from %postun to %preun, as
+  chkconfig needs to run while the init files are still present on
+  the system.
+- Don't install vtysh man page as vtysh is not build by default
+- Added logrotate script so logs won't grow without bound
+* Wed Sep 27 2000 Horms <horms@vergenet.net>
+- Add ports to /etc/services if they aren't there
+- forcibly remove $RPM_BUILD_ROOT/usr/info/dir and friends so
+  there is no error if it does not exist when rm is run.
+- Clean up the zebra build dir 

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="14.175cm"
+   height="7.1500001cm"
+   viewBox="4.175 2.15 18.35 9.3"
+   id="svg2">
+  <defs
+     id="defs47" />
+  <rect
+     width="4.2249999"
+     height="1.825"
+     x="4.2249999"
+     y="4.4749999"
+     id="rect4"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="4.2249999"
+     height="1.825"
+     x="4.2249999"
+     y="4.4749999"
+     id="rect6"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <rect
+     width="6.1750002"
+     height="2.825"
+     x="12.1"
+     y="2.2"
+     id="rect8"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="6.1750002"
+     height="2.825"
+     x="12.1"
+     y="2.2"
+     id="rect10"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="5.4169998"
+     y="5.5999999"
+     id="text12"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">Samba</text>
+  <text
+     x="14.296"
+     y="3.0250001"
+     id="text14"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">master</text>
+  <text
+     x="13.676"
+     y="3.825"
+     id="text16"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">LDAP server</text>
+  <text
+     x="13.84"
+     y="4.625"
+     id="text18"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">Directory A</text>
+  <line
+     x1="9"
+     y1="5.3790002"
+     x2="10.9"
+     y2="5.3499999"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line20"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="8.996,5.129 8.5,5.387 9.004,5.629 8.996,5.129 "
+     id="polygon22"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <rect
+     width="6.1750002"
+     height="2.605"
+     x="12.125"
+     y="6.52"
+     id="rect24"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="6.1750002"
+     height="2.605"
+     x="12.125"
+     y="6.52"
+     id="rect26"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="14.575"
+     y="7.25"
+     id="text28"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">slave</text>
+  <text
+     x="13.776"
+     y="8.0500002"
+     id="text30"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">LDAP server</text>
+  <text
+     x="13.941"
+     y="8.8500004"
+     id="text32"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">Directory B</text>
+  <line
+     x1="11.55"
+     y1="3.618"
+     x2="10.925"
+     y2="3.625"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line34"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="11.553,3.868 12.05,3.613 11.547,3.368 11.553,3.868 "
+     id="polygon36"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <line
+     x1="10.95"
+     y1="3.575"
+     x2="10.925"
+     y2="7.8499999"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line38"
+     style="stroke:#000000;stroke-width:0.1" />
+  <line
+     x1="11.575"
+     y1="7.8239999"
+     x2="10.95"
+     y2="7.8249998"
+     stroke="#000000"
+     stroke-width="0.100"
+     id="line40"
+     style="stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="11.576,8.074 12.075,7.823 11.574,7.574 11.576,8.074 "
+     id="polygon42"
+     style="fill:#000000;stroke:none;stroke-width:0.1" />
+  <text
+     x="14.331"
+     y="5.9749999"
+     id="text44"
+     style="font-size:0.60000002px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:arial">additive</text>
+</svg>

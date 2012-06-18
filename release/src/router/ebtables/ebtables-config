@@ -1,0 +1,37 @@
+# Save (and possibly restore) in text format.
+#   Value: yes|no,  default: yes
+# Save the firewall rules in text format to __SYSCONFIG__/ebtables
+# If EBTABLES_BINARY_FORMAT="no" then restoring the firewall rules
+# is done using this text format.
+EBTABLES_TEXT_FORMAT="yes"
+
+# Save (and restore) in binary format.
+#   Value: yes|no,  default: yes
+# Save (and restore) the firewall rules in binary format to (and from)
+# __SYSCONFIG__/ebtables.<chain>. Enabling this option will make
+# firewall initialisation a lot faster.
+EBTABLES_BINARY_FORMAT="yes"
+
+# Unload modules on restart and stop
+#   Value: yes|no,  default: yes
+# This option has to be 'yes' to get to a sane state for a firewall
+# restart or stop. Only set to 'no' if there are problems unloading netfilter
+# modules.
+EBTABLES_MODULES_UNLOAD="yes"
+
+# Save current firewall rules on stop.
+#   Value: yes|no,  default: no
+# Saves all firewall rules if firewall gets stopped
+# (e.g. on system shutdown).
+EBTABLES_SAVE_ON_STOP="no"
+
+# Save current firewall rules on restart.
+#   Value: yes|no,  default: no
+# Saves all firewall rules if firewall gets restarted.
+EBTABLES_SAVE_ON_RESTART="no"
+
+# Save (and restore) rule counters.
+#   Value: yes|no,  default: no
+# Save rule counters when saving a kernel table to a file. If the
+# rule counters were saved, they will be restored when restoring the table.
+EBTABLES_SAVE_COUNTER="no"

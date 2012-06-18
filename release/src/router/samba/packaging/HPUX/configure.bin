@@ -1,0 +1,44 @@
+# Samba.core configure script
+
+RC=0
+
+addUser()
+{
+     if grep -q '^pcguest:' /etc/passwd
+     then
+         cat <<__EOF__
+NOTE:    Username pcguest already exists in /etc/passwd file.
+__EOF__
+        return
+    fi
+
+    /usr/sbin/useradd -g users -d /home/pcguest -c "Samba Guest" \
+		      -s /usr/bin/true -m pcguest
+
+
+    if [ $? -ne 0 ]
+    then
+        cat >&2 <<__EOF__
+ERROR:   Failed to create username pcguest. 
+__EOF__
+        RC=1
+    else
+        cat <<__EOF__
+NOTE:    The configure script has added username pcguest in /etc/passwd file.
+         You must set the password for user pcguest in order to activate it.
+__EOF__
+    fi
+}
+
+
+addUser
+
+ln -s /sbin/init.d/samba /sbin/rc3.d/S911samba
+ln -s /sbin/init.d/samba /sbin/rc2.d/K130samba
+
+if [ ! -f /etc/rc.config.d/samba ]
+then
+  cp /opt/samba/newconfig/samba.config /etc/rc.config.d/samba
+fi
+
+exit 0

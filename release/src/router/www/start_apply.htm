@@ -1,0 +1,205 @@
+﻿<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="shortcut icon" href="images/favicon.png">
+<link rel="icon" href="images/favicon.png">
+<script type="text/javascript">
+var page_modified = 0;
+var restart_time = 0;
+var rc_support = "<% nvram_get("rc_support"); %>"; 
+var dsl_support = rc_support.search("dsl");
+
+var current_page = '<% get_parameter("current_page"); %>';
+var next_page = '<% get_parameter("next_page"); %>';
+var action_script = '<% get_parameter("action_script"); %>';
+var action_mode = '<% get_parameter("action_mode"); %>';
+var action_wait = '<% get_parameter("action_wait"); %>';
+var group_id = '<% get_parameter("group_id"); %>';
+var getflag = '<% get_parameter("flag"); %>';
+
+function started_validating(){
+}
+
+function done_validating(action){
+	parent.done_validating(action, group_id);
+}
+
+function started_committing(){
+}
+
+function done_committing(){
+	page_modified = 1;
+}
+
+function no_changes_and_no_committing(){
+}
+
+function invalid_variable_value(variable, bad_value, message){
+}
+
+function restart_needed_time(second){
+	restart_time = second;
+}
+
+function delay_redirect(next_url){
+	document.redirectForm.action = next_url;
+	document.redirectForm.target = "";
+	document.redirectForm.submit();
+}
+
+function top_delay_redirect(next_url){
+	document.redirectForm.action = next_url;
+	document.redirectForm.target = "_parent";
+	document.redirectForm.submit();
+}
+
+function qis_delay_redirect(next_url){
+	parent.parent.document.redirectForm.action = next_url;
+	parent.parent.document.redirectForm.target = "contentM";
+	parent.parent.document.redirectForm.submit();
+}
+
+function redirect(){
+	parent.location.href = 'http://'+parent.document.form.lan_ipaddr.value+'/QIS_wizard.htm?flag=detect';
+}
+
+function redirect_qis(){
+	parent.location.href = 'http://'+parent.document.form.lan_ipaddr.value+'/index.asp';
+}
+
+function initial(){
+	if(getflag == "set_language"){
+		if(navigator.appName.indexOf("Microsoft") >= 0)
+			parent.parent.location.reload();
+		else
+			parent.parent.location.href = parent.parent.location.href;
+	}
+	else if(next_page.indexOf("QIS_") >= 0){
+		if(dsl_support != -1){
+			setTimeout("delay_redirect('"+next_page+"');", restart_time*1000);
+		}
+		else {
+			if(getflag.length > 0)
+				document.redirectForm.flag.value = getflag;
+	
+			if(parent.document.getElementById("hidden_frame")){
+				setTimeout("qis_delay_redirect('/qis/QIS_verify_detect.htm');", restart_time*1000);
+			}
+			else{
+				if(getflag == "auto_way_vpn"){
+					parent.showLoading(restart_time);
+					setTimeout("delay_redirect('/qis/QIS_verify_detect.htm');", restart_time*1000);
+					return;
+				}
+				else if(getflag == "detect"){
+					parent.showLoading(restart_time);
+					setTimeout("delay_redirect('/qis/QIS_detect.htm');", restart_time*1000);
+					return;
+				}		
+				else if(getflag == "verify_detect"){
+					parent.showLoading(restart_time);
+					setTimeout("delay_redirect('/qis/QIS_verify_detect.htm');", restart_time*1000);
+					return;
+				}
+				else{
+					parent.showLoading(restart_time, "waiting");
+					if(parent.parent.isWLclient())
+						setTimeout("parent.parent.detectLANstatus('"+next_page+"', '"+getflag+"');", restart_time*1000);
+					else
+						setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
+				}
+			}
+		}
+	}
+	else if(getflag == "ddnscheck"){
+		setTimeout("parent.go_index_page();", 2000);
+	}
+	else if(getflag == "aidisk"){
+		parent.Webdav_status = (parent.Webdav_status == 1) ? 0 : 1;
+		parent.resultOfSwitchWebdavStatus();
+	}
+	else if(action_script.indexOf("aidisk_asusddns_register") >= 0){
+		setTimeout("parent.checkDDNSReturnCode();", 1000);
+	}
+  else if(action_script.indexOf("adm_asusddns_register") >= 0) {
+  	setTimeout("parent.parent.checkDDNSReturnCode();", 1000);
+	}
+	else if(action_script.indexOf("start_webs_upgrade") >= 0) {
+		setTimeout("parent.showLoadingBar(restart_time);", 1000); 
+	}
+	else if(action_script == "restart_cloudsync"){
+		/* if multi-rule
+		setTimeout("parent.isonEdit=0;", restart_time*1000);
+		setTimeout("parent.document.getElementById('update_scan').style.display = 'none';", restart_time*1000);*/
+		/* if one rule */
+		parent.showLoading(restart_time, "waiting");
+		setTimeout("top_delay_redirect('"+current_page+"');", restart_time*1000); 
+	}
+	else if(page_modified == 1){
+		parent.showLoading(restart_time, "waiting");
+		if(current_page.length > 0){
+			if(current_page.indexOf("clients.asp") >= 0){
+				document.redirectForm.flag.value = "Client";
+				setTimeout("top_delay_redirect('/');", restart_time*1000);
+			}
+			else if(current_page.indexOf("Advanced_OperationMode_Content.asp") >= 0){
+				parent.document.getElementById('drword').innerHTML = "<#LAN_IP_changed_suggedtion1#>"+parent.document.form.lan_ipaddr.value+"<#LAN_IP_changed_suggedtion2#><br/>";
+				setTimeout("hideLoading()	",20000);
+				setTimeout("parent.dr_advise();",20000);
+				setTimeout("redirect()",35000);
+			}
+			else if(current_page.indexOf("Advanced_LAN_Content.asp") >= 0){
+				parent.document.getElementById('drword').innerHTML = "<#LAN_IP_changed_suggedtion1#>"+parent.document.form.lan_ipaddr.value+"<#LAN_IP_changed_suggedtion2#><br/>";
+				setTimeout("hideLoading()	",20000);
+				setTimeout("parent.dr_advise();",20000);
+				setTimeout("redirect_qis()",35000);
+			}
+			else if(getflag == "nodetect"){
+				setTimeout("top_delay_redirect('"+current_page+"');", restart_time*1000);
+			}
+			/*else if(action_script == "restart_webdav"){
+				setTimeout("top_delay_redirect('"+current_page+"');", restart_time*1000);
+			}*/
+			else{
+				setTimeout("parent.parent.detectLANstatus('"+current_page+"', '');", restart_time*1000);
+			}
+		}
+	}
+	else if(action_script == "reboot"){
+		parent.stopFlag = 1;
+		parent.showLoading(restart_time);
+		setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
+	}
+	else{
+		if(current_page.length > 0){
+			setTimeout("top_delay_redirect('"+current_page+"');", restart_time*1000);
+		}
+		else if(next_page.length > 0){
+			setTimeout("delay_redirect('"+next_page+"');", restart_time*1000);
+		}
+	}
+}
+
+function hideLoading(){
+	parent.document.getElementById("loadingBlock").style.visibility = "hidden";
+	//parent.htmlbodyforIE[0].style.overflow = "";	  //hidden the Y-scrollbar for preventing from user scroll it.
+}
+</script>
+</head>
+
+<body onload="initial();">
+<form method="post" name="redirectForm" action="" target="">
+<input type="hidden" name="flag" value="">
+<input type="hidden" name="prev_page" value="">
+</form>
+
+<% update_variables(); %>
+<% convert_asus_variables(); %>
+<% asus_nvram_commit(); %>
+<% notify_services(); %>
+
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Using :oh To Select Printcap Information</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Simple Server Printcap Example"
+    href="cm.htm">
+    <link rel="NEXT" title="Using the Wildcard Printcap Entry"
+    href="x5758.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "cm.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x5758.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN5732">12.4. Using :oh To Select
+      Printcap Information</a></h1>
+
+      <p>When administering a large number of printers over a large
+      area, it is sometimes desirable to have a <span class=
+      "emphasis"><i class="EMPHASIS">default</i></span> printer for
+      each host. This default printer may be different for each
+      host, and can be selected by using the <var class=
+      "LITERAL">oh</var> entry. The <var class="LITERAL">oh</var>
+      value is a list of the following entries</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5738"></a>
+<pre class="SCREEN">
+    [!] IP/n     - address + mask length    10.0.0.0/8
+    [!] IP/IP    - address + mask           10.0.0.0/255.0.0.0
+    [!] vvv      - glob for hostname        pc*.org.com
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <b class="APPLICATION">LPRng</b> software will
+      determine the hostnames and IP addresses assigned to the host
+      and then check to see if there is a match in the listed
+      hostnames or IP addresses. The optional test inversion (<var
+      class="LITERAL">!</var>) causes the sense of the match to be
+      inverted. The list of addresses or entries are tested in
+      sequence until a match is found. If no match is found the
+      printcap entry will not be used. For example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5743"></a>
+<pre class="SCREEN">
+    lp:oh=*.admin.org.com,10.0.0.5,10.2.0.0/16:lp=pr1@server1
+    lp:oh=*.eng.org.com:lp=hp@server2
+    color:oh=*.eng.org.com:lp=color@server3
+    color:oh=!*.eng.org.com:lp=color@server4
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>In the above example, if our host name is <tt class=
+      "FILENAME">booster.admin.org.com</tt>, then we would use <var
+      class="LITERAL">lp=pr1@server1</var>, as the <tt class=
+      "FILENAME">*.admin.org.com</tt> glob pattern would match our
+      host name.</p>
+
+      <p>if our host name is <tt class=
+      "FILENAME">booster.dev.org.com</tt> and our IP address is
+      10.2.0.1, then we would use <var class=
+      "LITERAL">lp=pr1@server1</var>, as the <tt class=
+      "FILENAME">10.2.0.0/16</tt> ip address would be in the
+      specified address range.</p>
+
+      <p>Finally we have an example of the use of the match
+      inversion operator (<var class="LITERAL">!</var>). All hosts
+      whose name matches <tt class="FILENAME">*.eng.org.com</tt>
+      will use <var class="LITERAL">color@server3</var> and the
+      others will use <var class="LITERAL">color@server4</var>.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "cm.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x5758.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Simple Server
+          Printcap Example</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Using the
+          Wildcard Printcap Entry</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

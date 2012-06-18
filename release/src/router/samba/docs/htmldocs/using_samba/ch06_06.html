@@ -1,0 +1,537 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 6] 6.6 Logon Scripts</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:34:19Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch06_05.html" TITLE="6.5 Windows Domains">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 6.5 Windows Domains" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch06_01.html" TITLE="6. Users, Security, and Domains ">
+Chapter 6<br>
+Users, Security, and Domains </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="chapter" HREF="ch07_01.html" TITLE="7. Printing and Name Resolution">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 7. Printing and Name Resolution" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch06-38153">
+6.6 Logon Scripts</a></h2><P CLASS="para">Samba supports the execution of Windows logon scripts, which are scripts (.BAT or .CMD) that are executed on the client when a user logs on to a Windows domain. Note that these scripts are stored on the Unix side, but are transported across the network to the client side and executed once a user logs on. These scripts are invaluable for dynamically setting up network configurations for users when they log on. The downside is that because they run on Windows, they must use the Windows network configuration commands.</p><P CLASS="para">
+If you would like more information on NET commands, we recommend the following O'Reilly handbooks: <EM CLASS="emphasis">
+Windows NT in a Nutshell</em>, <EM CLASS="emphasis">
+Windows 95 in a Nutshell</em>, and <EM CLASS="emphasis">
+Windows 98 in a Nutshell.</em></p><P CLASS="para">
+You can instruct Samba to use a logon script with the <CODE CLASS="literal">
+logon</code> <CODE CLASS="literal">
+script</code> option, as follows:</p><PRE CLASS="programlisting">
+[global]
+	domain logons = yes
+	security = user
+	workgroup = SIMPLE
+
+	os level = 34
+	local master = yes
+	preferred master = yes
+	domain master = yes
+	logon script = %U.bat
+
+[netlogon]
+	comment = The domain logon service
+	path = /export/samba/logon
+	public = no
+	writeable = no
+	browsable = no</pre><P CLASS="para">
+Note that this example uses the <CODE CLASS="literal">
+%U</code> variable, which will individualize the script based on the user that is logging in. It is common to customize logon scripts based on the user or machine name that is logging onto the domain. These scripts can then be used to configure individual settings for users or clients.</p><P CLASS="para">
+Each logon script should be stored at the base of the <CODE CLASS="literal">
+[netlogon]</code> share. For example, if the base of the <CODE CLASS="literal">
+[netlogon]</code> share is <I CLASS="filename">
+/export/samba/logon</i> and the logon script is <I CLASS="filename">
+jeff.bat</i>, the file should be located at <I CLASS="filename">
+/export/samba/logon/jeff.bat</i>. When a user logs on to a domain that contains a startup script, he or she will see a small dialog that informs them that the script is executing, as well as any output the script generates in an MS-DOS-like box.</p><P CLASS="para">
+One warning: because these scripts are loaded by Windows and executed on the Windows side, they must consist of DOS formatted carriage-return/linefeed characters instead of Unix carriage returns. It's best to use a DOS- or Windows-based editor to create them.</p><P CLASS="para">
+Here is an example of a logon script that sets the current time to match that of the Samba server and maps two network drives, <CODE CLASS="literal">
+h</code> and <CODE CLASS="literal">
+i</code>, to individual shares on the server:</p><PRE CLASS="programlisting">
+#  Reset the current time to that shown by the server.
+#  We must have the &quot;time server = yes&quot; option in the
+#  smb.conf for this to work.
+
+echo Setting Current Time...
+net time \\hydra /set /yes
+
+#  Here we map network drives to shares on the Samba
+#  server
+echo Mapping Network Drives to Samba Server Hydra...
+net use h: \\hydra\data
+net use i: \\hydra\network</pre><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch06-pgfId-960385">
+6.6.1 Roaming profiles</a></h3><P CLASS="para">
+<I CLASS="firstterm">
+</i>In Windows 95 and NT, each user can have his or her own <I CLASS="firstterm">
+profile</i>. A profile bundles information such as: the appearance of a user's desktop, the applications that appear on the start menus, the background, and other miscellaneous items. If the profile is stored on a local disk, it's called a <I CLASS="firstterm">
+local profile</i>, since it describes what a user's environment is like on one machine. If the profile is stored on a server, on the other hand, the user can download the same profile to any client machine that is connected to the server. The latter is called a <I CLASS="firstterm">
+roaming profile</i> because the user can roam around from machine to machine and still use the same profile. This makes it particularly convenient when someone might be logging in from his or her desk one day and from a portable in the field the next. <A CLASS="xref" HREF="ch06_06.html#ch06-71393">
+Figure 6.6</a> illustrates local and roaming profiles.   </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch06-71393">
+Figure 6.6: Local profiles versus roaming profiles</a></h4><IMG CLASS="graphic" SRC="figs/sam.0606.gif" ALT="Figure 6.6"><P CLASS="para">
+
+
+<!-- 2.0.7 amendment begins, davecb -->
+<P>Samba will provide roaming profiles if it is configured for domain logons
+and you set <CODE CLASS="literal">logon path</CODE> to the user's home
+directory and <CODE CLASS="literal">logon home </CODE> to a
+subdirectory of the user's home directory used to store profiles. These
+options are typically used with one of the user variables, as shown in this
+example:
+<PRE CLASS="programlisting">
+[global]
+        domain logons = yes
+        security = user
+	workgroup = SIMPLE
+	os level = 34
+	local master = yes
+	preferred master = yes
+	domain master = yes
+
+	logon home = \\%N\%U
+	logon path = \\%N\%U\profile <!-- from the man page -->
+</PRE>
+<P> Samba versions previous to 2.0.6 allowed Win9X machines to store
+profiles in separate shares, but that prevented the clients from setting
+their <CODE CLASS="literal">logon path</CODE> so they could get their home
+directory mounted by saying "net use /home".  This was corrected in
+2.0.6.</P>
+
+<!-- end of profiles modification -->
+<!-- WARNING: we never warn anywhere that "Windows clients can sometimes
+maintain a connection to the [homes] share, even though there is 
+no user logged in. Therefore, it is vital that the logon path does not 
+include a reference to the homes share."  I read the above as being
+equivalen to the homes share, just not leiterally [homes]. I expect
+the bug will persist. davecb-->
+
+
+Once a user initially logs on, the Windows client will create a <I CLASS="filename">
+user.dat</i> or <I CLASS="filename">
+ntuser.dat</i> file&nbsp;- depending on which operating system the client is running. The client then uploads the contents of the desktop, the Start Menu, the Network Neighborhood, and the programs folders in individual folders in the directory. When the user subsequently logs on, those contents will be downloaded from the server and activated for the client machine with which the user is logging on. When he or she logs off, those contents will be uploaded back on the server until the next time the user connects. If you look at the directory listing of a profile folder, you'll see the following:</p><PRE CLASS="programlisting">
+# ls -al 
+
+total 321
+drwxrwxr-x   9 root  simple    Jul 21 20:44 .
+drwxrwxr-x   4 root  simple    Jul 22 14:32 ..
+drwxrwx---   3 fred  develope  Jul 12 07:15 Application Data
+drwxrwx---   3 fred  develope  Jul 12 07:15 Start Menu
+drwxrwx---   2 fred  develope  Jul 12 07:15 cookies
+drwxrwx---   2 fred  develope  Jul 12 07:15 desktop
+drwxrwx---   7 fred  develope  Jul 12 07:15 history
+drwxrwx---   2 fred  develope  Jul 12 07:15 nethood
+drwxrwx---   2 fred  develope  Jul 19 21:05 recent
+-rw-------   1 fred  develope  Jul 21 21:59 user.dat</pre><P CLASS="para">
+The <I CLASS="filename">
+user.dat</i> files are binary configuration files, created automatically by Windows. They can be edited with the Profile Editor on a Windows client, but they can be somewhat tricky to get correct. Samba supports them correctly for all clients up to NT 5.0 beta, but they're still relatively new<I CLASS="firstterm"></i>.</p><P CLASS="para">
+Hints and HOWTOs for handling logon scripts are available in the Samba documentation tree, in both <I CLASS="filename">
+docs/textdocs/DOMAIN.txt</i> and <I CLASS="filename">
+docs/textdocs/PROFILES.txt</i>.<I CLASS="firstterm">
+</i> </p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch06-pgfId-961462">
+6.6.2 Mandatory profiles</a></h3><P CLASS="para">Users can also have <I CLASS="firstterm">
+mandatory profiles</i>, which are roaming profiles that they cannot change. For example, with a mandatory profile, if a user adds a command to the Start Menu on Tuesday, it will be gone when he or she logs in again on Wednesday. The mandatory profile is simply a <I CLASS="filename">
+user.dat</i> file that has been renamed to <I CLASS="filename">
+user.man</i> and made read-only on the Unix server. It normally contains settings that the administrator wishes to ensure the user always executes. For example, if an administrator wants to create a fixed user configuration, he or she can do the following:</p><OL CLASS="orderedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-957763">
+</a>Create the read-write directory on the Samba server. </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-957764">
+</a>Set the <CODE CLASS="literal">
+logon</code> <CODE CLASS="literal">
+path</code> option in the <EM CLASS="emphasis">
+smb.conf</em> file to point to this directory.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-957765">
+</a>Logon as the user from Windows 95/98 to have the client populate the directory. </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-957766">
+</a>Rename the resulting <I CLASS="filename">
+user.dat</i> to <I CLASS="filename">
+user.man</i>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-957767">
+</a>Make the directory and its contents read only.</p></li></ol><P CLASS="para">
+Mandatory profiles are fairly unusual. Roaming profiles, on the other hand, are one of the more desirable features of Windows that Samba can support.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch06-pgfId-962637">
+6.6.3 Logon Script Options</a></h3><P CLASS="para">
+<A CLASS="xref" HREF="ch06_06.html#ch06-46661">Table 6.10</a> summarizes the options commonly used in association with Windows domain logon scripts. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch06-46661">
+Table 6.10: Logon Script Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+logon script</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (DOS path)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Name of DOS/NT batch file</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+logon path</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (UNC server and share name)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Location of roaming profile for user</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+\\%N\%U\profile</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+logon drive</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (drive letter)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the logon drive for a home directory (NT only)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+Z</code>:</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+logon home</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (UNC server and share name)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies a location for home directories for clients logging on to the domain</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+\\%N\%U</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-962334">
+6.6.3.1 logon script</a></h4><P CLASS="para">
+This option specifies a Windows .BAT or .CMD file with lines ending in carriage-return/line feed that will be executed on the client after a user has logged on to the domain. Each logon script should be stored at the base of a share entitled <CODE CLASS="literal">
+[netlogin]</code> (see the section <A CLASS="xref" HREF="ch06_05.html#ch06-36822">
+Section 6.5.1</a> for details.) This option frequently uses the <CODE CLASS="literal">
+%U</code> or <CODE CLASS="literal">
+%m</code> variables (user or NetBIOS name) to point to an individual script. For example:</p><PRE CLASS="programlisting">
+logon script = %U.bat</pre><P CLASS="para">
+will execute a script based on the username located at the base of the <CODE CLASS="literal">
+[netlogin]</code> share. If the user who is connecting is <CODE CLASS="literal">
+fred</code> and the path of the <CODE CLASS="literal">
+[netlogin]</code> share maps to the directory <I CLASS="filename">
+/export/samba/netlogin</i>, the script should be <I CLASS="filename">
+/export/samba/netlogin/fred.bat</i>. Because these scripts are downloaded to the client and executed on the Windows side, they must consist of DOS formatted carriage-return/linefeed characters instead of Unix carriage returns.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-962671">
+6.6.3.2 logon path</a></h4><P CLASS="para">
+This option provides a location for roaming profiles. When the user logs on, a roaming profile will be downloaded from the server to the client and activated for the user who is logging on. When the user logs off, those contents will be uploaded back on the server until the next time the user connects. </p><P CLASS="para">
+It is often more secure to create a separate share exclusively for storing user profiles:</p><PRE CLASS="programlisting">
+logon path = \\hydra\profile\%U</pre><P CLASS="para">
+For more informaiton on this option, see the section <A CLASS="xref" HREF="ch06_06.html">
+Section 6.6, Logon Scripts</a>, earlier in this chapter.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-962332">
+6.6.3.3 logon drive</a></h4><P CLASS="para">
+This option specifies the drive letter on an NT client to which the home directory specified with the <CODE CLASS="literal">
+logon</code> <CODE CLASS="literal">
+home</code> option will be mapped. Note that this option will work with Windows NT clients only. For example:</p><PRE CLASS="programlisting">
+logon home = I:</pre><P CLASS="para">
+You should always use drive letters that will not conflict with fixed drives on the client machine. The default is Z:, which is a good choice because it is as far away from A:, C:, and D: as possible.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-962319">
+6.6.3.4 logon home </a></h4><P CLASS="para">
+This option specifies the location of a user's home directory for use by the DOS NET commands. For example, to specify a home directory as a share on a Samba server, use the following:</p><PRE CLASS="programlisting">
+logon home = \\hydra\%U</pre><P CLASS="para">
+Note that this works nicely with the <CODE CLASS="literal">
+[homes]</code> service, although you can specify any directory you wish. Home directories can be mapped with a logon script using the following command:</p><PRE CLASS="programlisting">
+NET USE I: /HOME</pre><P CLASS="para">
+In addition, you can use the User Environment Profile under User Properties in the Windows NT User Manager to verify that the home directory has automatically been set. </p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch06-pgfId-960476">
+6.6.4 Other Connection Scripts</a></h3><P CLASS="para">After a user successfully makes a connection to any Samba share, you may want the Samba server to execute a program on its side to prepare the share for use. Samba allows scripts to be executed before and after someone connects to a share. You do not need to be using Windows domains to take advantage of the options. <A CLASS="xref" HREF="ch06_06.html#ch06-67528">
+Table 6.11</a> introduces some of the configuration options provided for setting up users.  </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch06-67528">
+Table 6.11: Connection Script Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+root preexec</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (Unix command)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets a command to run as <CODE CLASS="literal">
+root</code>, before connecting to the share.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+preexec (exec)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (Unix command)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets a Unix command to run as the user before connecting to the share.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+postexec</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (Unix command)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets a Unix command to run as the user after disconnecting from the share.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+root postexec</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (Unix command)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets a Unix command to run as <CODE CLASS="literal">
+root</code> after disconnecting from the share.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-960575">
+6.6.4.1 root preexec</a></h4><P CLASS="para">
+The first form of the logon command is called <CODE CLASS="literal">
+root</code> <CODE CLASS="literal">
+preexec</code>. This option specifies a Unix command as its value that will be run <EM CLASS="emphasis">
+as the root user</em> before any connection to a share is completed. You should use this option specifically for performing actions that require root privilege. For example, <CODE CLASS="literal">
+root</code> <CODE CLASS="literal">
+preexec</code> can be used to mount CD-ROMs for a share that makes them available to the clients, or to create necessary directories. If no <CODE CLASS="literal">
+root</code> <CODE CLASS="literal">
+preexec</code> option is specified, there is no default action. Here is an example of how you can use the command to mount a CD-ROM:</p><PRE CLASS="programlisting">
+[homes]
+	browseable = no
+	writeable = yes
+	root preexec = /etc/mount /dev/cdrom2</pre><P CLASS="para">
+Remember that these commands will be run as the root user. Therefore, in order to ensure security, users should never be able to modify the target of the <CODE CLASS="literal">
+root</code> <CODE CLASS="literal">
+preexec</code> command.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-960582">
+6.6.4.2 preexec</a></h4><P CLASS="para">
+The next option run before logon is the <CODE CLASS="literal">
+preexec</code> option, sometimes just called <CODE CLASS="literal">
+exec</code>. This is an ordinary unprivileged command run by Samba as the user specified by the variable <CODE CLASS="literal">
+%u</code>. For example, a common use of this option is to perform logging, such as the following:</p><PRE CLASS="programlisting">
+[homes]
+<CODE CLASS="userinput"><B>preexec = echo &quot;%u connected to %S from %m (%I)\&quot; &gt;&gt;/tmp/.log</b></code> </pre><P CLASS="para">
+Be warned that any information the command sends to standard output will not be seen by the user, but is instead thrown away. If you intend to use a <CODE CLASS="literal">
+preexec</code> script, you should ensure that it will run correctly before having Samba invoke it.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-960594">
+6.6.4.3 postexec</a></h4><P CLASS="para">
+Once the user disconnects from the share, the command specified with <CODE CLASS="literal">
+postexec</code> is run as the user on the Samba server to do any necessary cleanup. This option is essentially the same as the <CODE CLASS="literal">
+preexec</code> option. Again, remember that the command is run as the user represented by <CODE CLASS="literal">
+%u</code> and any information sent to standard output will be ignored.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-960596">
+6.6.4.4 root postexec</a></h4><P CLASS="para">
+Following the <CODE CLASS="literal">
+postexec</code> option, the <CODE CLASS="literal">
+root</code> <CODE CLASS="literal">
+postexec</code> command is run, if one has been specified. Again, this option specifies a Unix command as its value that will be run <EM CLASS="emphasis">
+as the </em><EM CLASS="emphasis">root user</em> before disconnecting from a share. You should use this option specifically for performing actions that require root privilege.</p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch06-pgfId-960610">
+6.6.5 Working with NIS and NFS</a></h3><P CLASS="para">
+Finally, Samba has the ability to work with NIS and NIS+. If there is more than one file server, and each runs Samba, it may be desirable to have the SMB client connect to the server whose disks actually house the user's home directory. It isn't normally a good idea to ship files across the network once via NFS to a Samba server, only to be sent across the network once again to the client via SMB. (For one thing, it's slow&nbsp;- about 30 percent of normal Samba speed). Therefore, there are a pair of options to tell Samba that NIS knows the name of the right server and indicate in which NIS map the information lives.</p><P CLASS="para">
+<A CLASS="xref" HREF="ch06_06.html#ch06-27466">
+Table 6.12</a> introduces some of the other configuration options specifically for setting up users. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch06-27466">
+Table 6.12: NIS Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+nis homedir</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, use NIS instead of <I CLASS="filename">
+/etc/passwd</i> to look up the path of a user's home directory</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+homedir map</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (NIS map name)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the NIS map to use to look up a user's home directory</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-960612">
+6.6.5.1 nis homedir and homedir map</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+nis</code> <CODE CLASS="literal">
+homedir</code> and <CODE CLASS="literal">
+homedir</code> <CODE CLASS="literal">
+map</code> options are for Samba servers on network sites where Unix home directories are provided using NFS, the automounter, and NIS (Yellow Pages).</p><P CLASS="para">
+The <CODE CLASS="literal">
+nis</code> <CODE CLASS="literal">
+homedir</code> option indicates that the home directory server for the user needs to be looked up in NIS. The <CODE CLASS="literal">
+homedir</code> <CODE CLASS="literal">
+map</code> option tells Samba what NIS map to look in for the server that has the user's home directory. The server needs to be a Samba server, so the client can do an SMB connect to it, and the other Samba servers need to have NIS installed so they can do the lookup.</p><P CLASS="para">
+For example, if user <CODE CLASS="literal">
+joe</code> asks for a share called <CODE CLASS="literal">
+[joe]</code>, and the <CODE CLASS="literal">
+nis</code> <CODE CLASS="literal">
+homedir</code> option is set to <CODE CLASS="literal">
+yes</code>, Samba will look in the file specified by <CODE CLASS="literal">
+homedir</code> <CODE CLASS="literal">
+map</code> for a home directory for <CODE CLASS="literal">
+joe</code>. If it finds one, Samba will return the associated machine name to the client. The client will then try to connect to <EM CLASS="emphasis">
+that</em> machine and get the share from there. Enabling NIS lookups looks like the following:</p><PRE CLASS="programlisting">
+[globals]
+	nis homedir = yes
+	homedir map = amd.map</pre></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch06_05.html" TITLE="6.5 Windows Domains">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 6.5 Windows Domains" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="chapter" HREF="ch07_01.html" TITLE="7. Printing and Name Resolution">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 7. Printing and Name Resolution" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+6.5 Windows Domains</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+7. Printing and Name Resolution</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

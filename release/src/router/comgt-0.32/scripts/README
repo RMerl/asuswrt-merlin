@@ -1,0 +1,17 @@
+####################################################
+#
+# comgt script files
+#  To be placed in /etc/comgt
+#
+# Copyright (C) 2006  Paul Hardwick <paul@peck.org>
+#
+###################################################
+This directory contains scripts for execution by the comgt utility
+`man comgt` for more info on the syntax.
+
+The scripts provided:
+
+command     - Provides an interactive session to let the user send AT commands manually
+dump        - Prints the result of AT&V to the console - useful for debugging device configurations
+sigmon      - Continuosly monitors the signal strength - `man sigmon` for more info
+operator    - Gets a list of operators and allows the user to do a manual selection - useful for roaming abroad.

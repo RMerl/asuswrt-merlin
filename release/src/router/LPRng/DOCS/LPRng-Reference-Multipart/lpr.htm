@@ -1,0 +1,239 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>lpr - Job Spooler Program</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="User Identification " href=
+    "allowusersetting.htm">
+    <link rel="NEXT" title=
+    "Job Pretty Printing, Banners, Priority, and Accounting" href=
+    "x4267.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "allowusersetting.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x4267.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="LPR"></a>Chapter 6. <b class=
+      "APPLICATION">lpr</b> - Job Spooler Program</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>6.1. <a href="lpr.htm#DEFAULTFORMAT">Job Format
+          Options</a></dt>
+
+          <dt>6.2. <a href="x4267.htm">Job Pretty Printing,
+          Banners, Priority, and Accounting</a></dt>
+
+          <dt>6.3. <a href="classpriority.htm">Job Class and
+          Priority</a></dt>
+
+          <dt>6.4. <a href="jobcopies.htm">Job Copies and Job
+          Size</a></dt>
+
+          <dt>6.5. <a href="jobcompletion.htm">Job Completion
+          Notification Requested</a></dt>
+
+          <dt>6.6. <a href="x4373.htm">Remove Files After
+          Spooling</a></dt>
+
+          <dt>6.7. <a href="append-z.htm">The -Z Passthrough to
+          Filter Options</a></dt>
+
+          <dt>6.8. <a href="qq.htm">Record Queue Name in Control
+          File</a></dt>
+
+          <dt>6.9. <a href="checkfornonprintable.htm">Check For
+          Nonprintable File</a></dt>
+
+          <dt>6.10. <a href="lprbounce.htm">Job Filtering By
+          LPR</a></dt>
+
+          <dt>6.11. <a href="rg.htm">Restrict Queue Use to Group
+          Members</a></dt>
+
+          <dt>6.12. <a href="safechars.htm">Fixing Bad Control
+          Files and Metacharacters</a></dt>
+
+          <dt>6.13. <a href="minfree.htm">Minimum Spool Queue Free
+          Space</a></dt>
+
+          <dt>6.14. <a href="forcefqdnhostname.htm">FQDN Host
+          Information</a></dt>
+        </dl>
+      </div>
+
+      <p>The <b class="APPLICATION">lpr</b> client program is used
+      to submit a job to a print spooler. It does this by
+      collecting information about the job, putting it in a control
+      file, and then sending the control file and files to be
+      printed to the print server. The <b class=
+      "APPLICATION">lpr</b> command line options are used to
+      control or specify the values placed in the control file and
+      how the job is to be transferred to the remote host. In
+      addition, there are printcap or configuration level options
+      that provide a further degree of administrative control over
+      additional facilities. You can get the currently supported
+      command line options by using the following command:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN4226"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {305} %</samp> <kbd class=
+"USERINPUT">lpr -=</kbd>
+    lpr: Illegal option '='
+     usage summary: lpr [-Pprinter[@host]] [-A] [-B] [-Cclass] [-Fformat]
+       [-Jinfo] [-(K|#)copies] [-Q] [-Raccountname]  [-Ttitle]
+       [-Uuser[@host]] [-V] [-Zoptions] [-b] [-m mailaddr] [-h]
+       [-i indent] [-l] [-w num ] [-r] [-Ddebugopt ] [ filenames ...  ]
+     -A          - use authentication specified by AUTH environment variable
+     -B          - filter job before sending
+     -C class    - job class
+     -D debugopt - debugging flags
+     -F format   - job format
+       -b,-l        - binary or literal format
+        c,d,f,g,l,m,p,t,v are also format options
+     -J info     - banner and job information
+     -K copies, -# copies   - number of copies
+     -P printer[@host] - printer on host
+     -Q          - put 'queuename' in control file
+     -Raccntname - accounting information
+     -T title    - title for 'pr' (-p) formatting
+     -U username - override user name (restricted)
+     -V          - Verbose information during spooling
+     -Z options  - options to pass to filter
+     -h          - no header or banner page
+     -i indent   - indentation
+     -m mailaddr - mail final status to mailaddr
+     -r          - remove files after spooling
+     -w width    - width to use
+     PRINTER, NPRINTER environment variables set default printer.
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If you are interested in the exact details of the job
+      transfer, control file, and data file formats, please see <a
+      href="rfc1179ref.htm">RFC 1179 - Line Printer Daemon
+      Protocol</a> for the exact details.</p>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="DEFAULTFORMAT">6.1. Job Format
+        Options</a></h1>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">default_format=</var><span
+            class="emphasis"><i class="EMPHASIS">default print job
+            format (f)</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">fx=</var><span class=
+            "emphasis"><i class="EMPHASIS">supported formats for
+            printing</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>The legacy or vintage BSD print spooling system assigned
+        each job a format. This format was used by the <b class=
+        "APPLICATION">lpd</b> server to select an appropriate
+        filter program that would process the job and format it
+        correctly for the printer. By convention, lower case
+        letters were used to specify job formats.</p>
+
+        <p>The <b class="APPLICATION">LPRng</b> <b class=
+        "APPLICATION">lpr</b> client supports the legacy or vintage
+        BSD formats, and also provides the <var class=
+        "LITERAL">-Fx</var> literal to allow addition formats to be
+        specified. If a format is specified the <var class=
+        "LITERAL">default_format</var> value (usually <var class=
+        "LITERAL">f</var>) is used. The <var class=
+        "LITERAL">fx=...</var> option value is a list of the (lower
+        case) characters corresponding to the formats allowed for a
+        spool queue. For example, <var class="LITERAL">fx=flv</var>
+        would allow only jobs with format <var class=
+        "LITERAL">f</var>, <var class="LITERAL">l</var>, or <var
+        class="LITERAL">v</var> to be spooled to a queue. By
+        default, all job formats are allowed.</p>
+
+        <p>A couple of job formats that require special treatment:
+        the <var class="LITERAL">b</var> (binary) and its alias the
+        <var class="LITERAL">l</var> (literal) format, and the <var
+        class="LITERAL">p</var> (pretty print) format. The <var
+        class="LITERAL">-b</var> or <var class="LITERAL">-l</var>
+        command line literal will select job format <var class=
+        "LITERAL">l</var> (literal) for the job. By default, jobs
+        marked with <var class="LITERAL">l</var> format are
+        supposed to have a minimum amount of handling and passed
+        directly to a printer. The <var class="LITERAL">p</var>
+        (pretty print) format is just the opposite - these jobs are
+        supposed to be pretty printed according to the various
+        facilities available to the <b class="APPLICATION">lpd</b>
+        print spooler.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "allowusersetting.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x4267.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">User
+          Identification</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Job Pretty
+          Printing, Banners, Priority, and Accounting</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

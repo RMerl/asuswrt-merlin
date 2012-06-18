@@ -1,0 +1,66 @@
+!==
+!== RoutedNetworks.txt for Samba release 2.0.10 23 Jun 2001
+!==
+#NOFNR Flag in LMHosts to Communicate Across Routers
+
+  Last reviewed: May 5, 1997 
+  Article ID: Q103765 
+  The information in this article applies to: 
+
+       Microsoft Windows NT operating system version 3.1 
+       Microsoft Windows NT Advanced Server version 3.1 
+
+  SUMMARY
+
+  Some of the LAN Manager for UNIX and Pathworks servers may have
+problems in communicating across routers with
+  Windows NT workstations. The use of #NOFNR flag in the LMHosts
+file solves the problem. 
+
+  MORE INFORMATION
+
+  When you are communicating with a server across a router in a IP
+routed environment, the LMHosts file is used to
+  resolve Workstation name-to-IP address mapping. The LMHosts
+entry for a remote machine name provides the IP
+  address for the remote machine. In Lan Manager 2.x, providing
+the LMHosts entry eliminates the need to do a Name
+  Query broadcast to the local domain and instead a TCP session is
+established with the remote machine. Windows NT
+  performs the same function in a different way. 
+
+  When an LMHosts entry exists for a remote server, Windows NT
+will not send a Name Query broadcast to the local
+  subnet and instead send a directed Name Query to the remote
+server. If the remote server does not respond to the Name
+  Query, further communications (TCP SYN, and so on) will not take
+place. This was done to eliminate the performance
+  issues when trying to connect to a remote machine when it was
+not available (down). 
+
+  Some of the older LAN Manager for UNIX and DEC Pathworks servers
+do not respond to directed Name Queries sent
+  by Windows NT. In that case, the users will see an error 53
+(Path not found), even though they have specified the
+  LMHosts entries correctly. A new LMHosts flag #NOFNR was added
+to solve this problem. By specifying the
+  #NOFNR flag on the same line where the name resolution
+information for the server is provided, the directed Name
+  Query can be avoided. For example: 
+
+     130.20.1.1   mylmxserver   #PRE  #NOFNR
+
+
+  Note that this will only apply to mylmxserver and not to any
+other entries in the LMHosts file. To set
+  a global flag, an entry could be added in the registry. To
+completely remove any directed Name
+  Queries sent from a Windows NT machine, create the following
+value in
+ 
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Nbt\Parameters: 
+
+     NoDirectedFNR   REG_DWORD   1
+
+
+  This will cause the directed Name Queries to not go out for any

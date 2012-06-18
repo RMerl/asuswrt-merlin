@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Poptop MSCHAP2 ADS Howto</title>
+</head>
+
+<body>
+<p><strong><a name="mppe"></a>6. Install MPPE Kernel Module </strong></p>
+<p>MPPE support is required for MSCHAPv2. Depending on the kernel version, you may or may not require to perform this step. Kernel version 2.6.15 or above has MPPE built-in. If you are using the latest FC4 2.6.15 kernel, you can go to <a href="#pppd_pptpd">step 7</a> now. If you are using an older kernel  which  does not support MPPE, you will have to add this feature to it. </p>
+<p>To test if your kernel supports MPPE:</p>
+<blockquote>
+  <pre>[root@pptp ~]# modprobe ppp-compress-18 &amp;&amp; echo ok</pre>
+</blockquote>
+<p>If it returns an &quot;ok&quot;, you can safely skip this step and move to <a href="#pppd_pptpd">step 7</a>. If you see &quot;FATAL: Module ppp_mppe not found.&quot;, install MPPE support as described in the following procedure:</p>
+<p>  Download the MPPE module builder in rpm format from <a href="http://sourceforge.net/project/showfiles.php?group_id=44827">here</a>. The required RPMs are::</p>
+<blockquote>
+  <pre>dkms-2.0.6-1.noarch.rpm
+kernel_ppp_mppe-1.0.2-3dkms.noarch.rpm</pre>
+</blockquote>
+<p>Install them with command &quot;rpm -ivh&quot;.</p>
+<blockquote>
+  <pre>[root@pptp ~]# rpm -ivh dkms-2.0.6-1.noarch.rpm
+[root@pptp ~]# rpm -ivh kernel_ppp_mppe-1.0.2-3dkms.noarch.rpm </pre>
+</blockquote>
+<p>If you upgrade your kernel to 2.6.13 or above, kernel_ppp_mppe version 1.0.2 or above must be used. Otherwise, the pptp tunnel will not connect and you will see error message &quot;This system lacks kernel support for PPP.&quot; in /var/log/messages.</p>
+<dt><strong>Note:</strong></dt>
+<dd>(1) Fedora Extra provides also a dkms rpm, dkms-2.0.6-3.fc4.noarch.rpm. I have not tested it. You may want to use the one I mentioned above to make sure the installation will work. </dd>
+<br><hr>
+<strong><a name="autoinstaller"></a>6.1 Kernel Upgrade and dkms_autoinstaller</strong>
+<p>If you upgrade your kernel after installing dkms, thanks to the dkms_autoinstaller service, you will not have to worry about the dkms kernel module. dkms_autoinstaller runs on every bootup. It checks  the dkms module to ensure it match the kernel version. If a mismatch is found, it will create a proper one for the boot kernel. </p>
+<p>For dkms_autoinstaller to work, you will need the correct kernel-devel version installed in your system. It is always a good idea to install the kernel-devel rpm alongside with your new kernel. </p>
+<hr>
+<strong><a name="pppd_pptpd" id="pppd_pptpd"></a>7. pppd and  pptpd</strong>
+<p><a name="pppd"><strong>7.1 Upgrade pppd </strong></a></p>
+<p>FC4 comes with ppp-2.4.2-7. It is required to be upgraded to a patched version which supports MPPE. The patched version can be found in <a href="http://sourceforge.net/project/showfiles.php?group_id=44827">here</a>. Download the rpm for FC4. At the time of writing, the latest version is 2.4.3-5. Get the FC4 rpm: </p>
+<blockquote>
+  <pre>ppp-2.4.3-5.fc4.i386.rpm</pre>
+</blockquote>
+<p>Upgrade the ppp with the downloaded version:</p>
+<blockquote>
+  <pre>[root@pptp ~]# rpm -Uvh ppp-2.4.3-5.fc4.i386.rpm</pre>
+</blockquote>
+<p><strong>Note</strong>: If you are a Gentoo user, and are using kernel v2.6.15, the ppp-2.4.3-5 does NOT work because of MPPC. You may find more information from <a href="http://kernel-bugs.osdl.org/show_bug.cgi?id=5827">here</a>.</p>
+<hr>
+<a name="pptpd"></a><strong>7.2 Install pptpd</strong>
+<p>In the <a href="http://sourceforge.net/project/showfiles.php?group_id=44827">same page</a> download the pptpd rpm, pptpd-1.3.1-0.i386.rpm, and install it.</p>
+<blockquote>
+  <pre>[root@pptp ~]# rpm -ivh pptpd-1.3.1-0.i386.rpm</pre>
+</blockquote>
+<p><strong>Note</strong>: pptpd-1.3.1 is an experimental version. The stable version is 1.3.0. Both versions work fine for me. It is up to you to choose which one to use. </p>
+<hr>
+<a href="poptop_ads_howto_5.htm">Next</a> &nbsp;&nbsp;<a href="poptop_ads_howto_3.htm">Previous</a>&nbsp;&nbsp;<a href="poptop_ads_howto_1.htm#toc">Content</a>
+</body>
+</html>

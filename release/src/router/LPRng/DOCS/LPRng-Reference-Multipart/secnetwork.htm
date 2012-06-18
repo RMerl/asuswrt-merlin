@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Network Print Server Boxes</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printer Communication and Protocols "
+    href="printercomm.htm">
+    <link rel="PREVIOUS" title="AppSocket TCP/IP Protocol " href=
+    "appsocket.htm">
+    <link rel="NEXT" title=
+    "Network Print Server Configuration Information" href=
+    "x4976.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "appsocket.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          11. Printer Communication and Protocols</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x4976.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="SECNETWORK">11.5. Network Print
+      Server Boxes</a></h1>
+
+      <p>A <span class="emphasis"><i class="EMPHASIS">network print
+      server</i></span> is usually a box (external model) or card
+      in a printer (internal model) which has a network connection
+      to a TCP network and software to implement a LPD print
+      server. If it is an external model, The parallel or serial
+      port of the printer is connected to the box, and the print
+      server may support multiple printers. If it is an internal
+      model, the server is usually nothing more than a Network
+      Interface Controller and a ROM containing software that the
+      microprocessor in the printer uses.</p>
+
+      <p>The print server may support multiple printing protocols,
+      such as <a href="rfc1179.htm">RFC1179</a> (TCP/IP printing
+      using the LPD print protocol), Novell Printer Protocols, SMB
+      print protocols, and AppleTalk protocols. One of the observed
+      problems with Network Print servers is that while they can
+      usually support one protocol and one user at a time quite
+      well, when you try to use multiple protocols and/or multiple
+      users try to transfer print jobs to the printer, the printer
+      may behave in a very odd manner. Usually this results in a
+      printer failing to finish a job currently being printed, and
+      unable to accept new jobs.</p>
+
+      <p>Several of the newer models of print servers have Simple
+      Network Management Protocol (SNMP) agents built into them,
+      and can provide detailed information about their internal
+      functions. By using a SNMP manager such as SunNetmanage or
+      HP-Openview, you can monitor your network printers
+      activities.</p>
+
+      <p>I recommend that you use only a single protocol to send
+      jobs to the printer. If you can, I also recommend that you
+      use a print spooler and have only a single host system send a
+      job to the printer.</p>
+
+      <p>My best advice on connecting to network printers is not to
+      use the the built-in LPD server, but to use the direct TCP/IP
+      connection to the print engine. Usually this is done to
+      particular TCP/IP port on the printer. For the HP JetDirect
+      and other HP products, this is usually TCP port 9100.</p>
+
+      <p>Once you have the direct connection, you can now use
+      various filters to preprocess the print job, insert PJL and
+      PCL commands, or convert text to PostScript or PCL for better
+      print quality.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "appsocket.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x4976.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">AppSocket
+          TCP/IP Protocol</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printercomm.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Network Print
+          Server Configuration Information</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

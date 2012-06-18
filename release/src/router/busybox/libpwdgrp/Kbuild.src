@@ -1,0 +1,9 @@
+# Makefile for busybox
+#
+# Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
+#
+# Licensed under the GPL v2, see the file LICENSE in this tarball.
+
+lib-y := uidgid_get.o
+
+lib-$(CONFIG_USE_BB_PWD_GRP) += pwd_grp.o

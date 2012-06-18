@@ -1,0 +1,57 @@
+0.9 - 1.0:
+* Add --set-rules-file.
+* Allow any ACTION.
+* Add 'printdebug' rule.
+* Fix chmod, chown, chgrp.
+* Use octal for chmod and makedev.
+* Add 'nothrottle' flag, allowing overriding max-children from a rule
+* Various bugfixes
+* Code comments
+
+0.8 - 0.9:
+* Use signals to handle children.
+* Separate info and debugging output.
+* Minor cleanups.
+
+0.7 - 0.8:
+* Added 2.4 coldplug binary, hotplug2-coldplug-2.4.
+* Added generate_alias utility to create modaliases out of busmaps.
+* Added hotplug2-dnode to convert /proc/sys/kernel/hotplug events into uevents.
+* Added hotplug2-modwrap for modutils, which do not use fnmatch to match 
+  aliases.
+* Effectively started supporting 2.4 hotplug.
+* In dumb mode, detect whether we should use /sbin/modprobe or 
+  /sbin/hotplug2-modwrap. Allow to override using --set-modprobe-cmd.
+* Added 'setenv' action in rules.
+* Written documentation about 2.4 hotplug, 2.6 hotplug and usage of hotplug2.
+* Minor bugfixes.
+* Added --set-coldplug-cmd parameter, renamed --udevtrigger to --coldplug (and
+  kept the old name for compatibility)
+* Support comments in rules file.
+* Add Makefile (thanks to Liskni_si)
+
+0.6 - 0.7:
+* Do not print errors for missing rules if in dumb mode (thanks to lefti).
+* Add signal handlers:
+  - SIGUSR1 now allows switching persistency.
+* Updated documentation
+
+0.5 - 0.6:
+* Fixed bug in variable parameters parsing.
+
+0.4 - 0.5:
+* Compile cleanly (thanks to Aras Vaichas).
+* Add 'symlink', 'next' and 'next_if_failed' actions.
+* Update documentation.
+* Fix several bugs, perform significant cleanup.
+
+0.3 - 0.4:
+* Added compatibility definitions to hotplug2.h (thanks to Aras Vaichas).
+* Fixed few bugs in documentation.
+
+0.2 - 0.3:
+* Add variable substitution.
+* Add more actions.
+* Significant cleanup of rules handling.
+* Better error reporting.
+ 

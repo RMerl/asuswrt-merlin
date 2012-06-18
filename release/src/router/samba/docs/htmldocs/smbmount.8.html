@@ -1,0 +1,76 @@
+
+
+ 
+
+
+
+<html><head><title>smbmount (1)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>smbmount (1)</h1>
+<h2>Samba</h2>
+<h2>25 September 1999</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    smbmount - mount an SMB filesystem
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+    
+<strong>smbmount</strong> service mountpoint [ -o options ]
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>smbmount mounts a SMB filesystem. It is usually invoked as mount.smbfs
+from the mount(8) command when using the "-t smbfs" option. The kernel
+must support the smbfs filesystem.
+<p>Options to smbmount are specified as a comma separated list of
+key=value pairs. 
+<p>NOTE: smbmount calls smbmnt to do the actual mount. You must make sure
+that smbmnt is in the path so that it can be found.
+<p><dl>
+<p></p><dt><strong><strong>username=&lt;arg&gt;</strong></strong><dd> specifies the username to connect as. If this is
+not given then the environment variable USER is used. This option can
+also take the form user%password or user/workgroup or
+user/workgroup%password to allow the password and workgroup to be
+specified as part of the username.
+<p><p></p><dt><strong><strong>password=&lt;arg&gt;</strong></strong><dd> specifies the SMB password. If not given then
+smbmount will prompt for a passeword, unless the guest option is
+given.
+<p><p></p><dt><strong><strong>netbiosname=&lt;arg&gt;</strong></strong><dd> sets the source NetBIOS name. It defaults to
+the local hostname.
+<p><p></p><dt><strong><strong>uid=&lt;arg&gt;</strong></strong><dd> sets the uid that files will be mounted as. It may be
+specified as either a username or a numeric uid.
+<p><p></p><dt><strong><strong>gid=&lt;arg&gt;</strong></strong><dd> sets the gid that files will be mounted as. It may be
+specified as either a groupname or a numeric gid.
+<p><p></p><dt><strong><strong>port=&lt;arg&gt;</strong></strong><dd> sets the remote SMB port number. The default is 139.
+<p><p></p><dt><strong><strong>fmask=&lt;arg&gt;</strong></strong><dd> sets the file mask. This deterines the permissions
+that remote files have in the local filesystem. The default is based
+on the current umask.
+<p><p></p><dt><strong><strong>dmask=&lt;arg&gt;</strong></strong><dd> sets the directory mask. This deterines the
+permissions that remote directories have in the local filesystem. The
+default is based on the current umask.
+<p><p></p><dt><strong><strong>debug=&lt;arg&gt;</strong></strong><dd> sets the debug level. This is useful for tracking
+down SMB connection problems.
+<p><p></p><dt><strong><strong>ip=&lt;arg&gt;</strong></strong><dd> sets the destination host or IP address.
+<p><p></p><dt><strong><strong>workgroup=&lt;arg&gt;</strong></strong><dd> sets the workgroup on the destination
+<p><p></p><dt><strong><strong>sockopt=&lt;arg&gt;</strong></strong><dd> sets the TCP socket options. See the smb.conf
+"socket options" option.
+<p><p></p><dt><strong><strong>scope=&lt;arg&gt;</strong></strong><dd> sets the NetBIOS scope
+<p><p></p><dt><strong><strong>guest</strong></strong><dd>    don't prompt for a password
+<p><p></p><dt><strong><strong>ro</strong></strong><dd>       mount read-only
+<p><p></p><dt><strong><strong>rw</strong></strong><dd>       mount read-write
+<p></dl>
+<p><h2>AUTHOR</h2>
+    
+The maintainer of smbfs, smbmnt and smbmount is Andrew Tridgell
+<a href="mailto:tridge@samba.org"><em>tridge@samba.org</em></a>
+</body>
+</html>

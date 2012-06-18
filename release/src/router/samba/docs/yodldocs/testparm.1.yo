@@ -1,0 +1,116 @@
+mailto(samba@samba.org) 
+
+manpage(testparm htmlcommand((1)))(1)(23 Oct 1998)(Samba)(SAMBA)
+
+label(NAME)
+manpagename(testparm)(check an smb.conf configuration file for internal correctness)
+
+label(SYNOPSIS)
+manpagesynopsis() 
+
+bf(testparm) [link(-s)(minuss)] [link(-h)(minush)] [link(-L servername)(minusL)] [link(configfilename)(configfilename)] [link(hostname)(hostname) link(hostIP)(hostIP)]
+
+label(DESCRIPTION)
+manpagedescription()
+
+This program is part of the bf(Samba) suite.
+
+bf(testparm) is a very simple test program to check an
+url(bf(smbd))(smbd.8.html) configuration file for internal
+correctness. If this program reports no problems, you can use the
+configuration file with confidence that url(bf(smbd))(smbd.8.html)
+will successfully load the configuration file.
+
+Note that this is em(NOT) a guarantee that the services specified in the
+configuration file will be available or will operate as expected.
+
+If the optional host name and host IP address are specified on the
+command line, this test program will run through the service entries
+reporting whether the specified host has access to each service.
+
+If bf(testparm) finds an error in the url(bf(smb.conf))(smb.conf.5.html)
+file it returns an exit code of 1 to the calling program, else it returns
+an exit code of 0. This allows shell scripts to test the output from
+bf(testparm).
+
+label(OPTIONS)
+manpageoptions()
+
+startdit()
+
+label(minuss)
+dit(bf(-s)) Without this option, bf(testparm) will prompt for a
+carriage return after printing the service names and before dumping
+the service definitions.
+
+label(minush)
+dit(bf(-h)) Print usage message
+
+label(minusL)
+dit(bf(-L servername)) Sets the value of the %L macro to servername. This
+is useful for testing include files specified with the %L macro.
+
+label(configfilename)
+dit(bf(configfilename)) This is the name of the configuration file to
+check. If this parameter is not present then the default
+url(bf(smb.conf))(smb.conf.5.html) file will be checked.
+
+label(hostname)
+dit(bf(hostname)) If this parameter and the following are specified,
+then testparm will examine the url(bf("hosts
+allow"))(smb.conf.5.html#hostsallow) and url(bf("hosts
+deny"))(smb.conf.5.html#hostsdeny) parameters in the
+url(bf(smb.conf))(smb.conf.5.html) file to determine if the hostname
+with this IP address would be allowed access to the
+url(bf(smbd))(smbd.8.html) server. If this parameter is supplied, the
+link(hostIP)(hostIP) parameter must also be supplied.
+
+label(hostIP)
+dit(bf(hostIP)) This is the IP address of the host specified in the
+previous parameter. This address must be supplied if the hostname
+parameter is supplied.
+
+enddit()
+
+label(FILES)
+manpagesection(FILES)
+
+url(bf(smb.conf))(smb.conf.5.html). This is usually the name of the
+configuration file used by url(bf(smbd))(smbd.8.html).
+
+label(DIAGNOSTICS)
+manpagesection(DIAGNOSTICS)
+
+The program will issue a message saying whether the configuration file
+loaded OK or not. This message may be preceded by errors and warnings
+if the file did not load. If the file was loaded OK, the program then
+dumps all known service details to stdout.
+
+label(VERSION)
+manpagesection(VERSION)
+
+This man page is correct for version 2.0 of the Samba suite.
+
+label(SEEALSO)
+manpageseealso()
+
+url(bf(smb.conf (5)))(smb.conf.5.html), url(bf(smbd (8)))(smbd.8.html)
+
+label(AUTHOR)
+manpageauthor()
+
+The original Samba software and related utilities were created by
+Andrew Tridgell email(samba@samba.org). Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+
+The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+url(bf(ftp://ftp.icce.rug.nl/pub/unix/))(ftp://ftp.icce.rug.nl/pub/unix/))
+and updated for the Samba2.0 release by Jeremy Allison.
+email(samba@samba.org).
+
+See url(bf(samba (7)))(samba.7.html) to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.

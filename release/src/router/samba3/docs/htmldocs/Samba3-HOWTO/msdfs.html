@@ -1,0 +1,56 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 41. Managing TDB Files</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"><link rel="home" href="index.html" title="The Official Samba 3.0.x HOWTO and Reference Guide"><link rel="up" href="troubleshooting.html" title="Part V. Troubleshooting"><link rel="prev" href="bugreport.html" title="Chapter 40. Reporting Bugs"><link rel="next" href="Appendix.html" title="Part VI. Reference Section"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 41. Managing TDB Files</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="bugreport.html">Prev</a> </td><th width="60%" align="center">Part V. Troubleshooting</th><td width="20%" align="right"> <a accesskey="n" href="Appendix.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="msdfs"></a>Chapter 41. Managing TDB Files</h2></div><div><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="othername">H.</span> <span class="orgname">Samba Team</span> <span class="surname">Terpstra</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jht@samba.org">jht@samba.org</a>&gt;</code></p></div></div></div></div><div><p class="pubdate">May 28, 2008</p></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="msdfs.html#id2686880">Features and Benefits</a></span></dt><dt><span class="sect1"><a href="msdfs.html#id2687341">Managing TDB Files</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2686880"></a>Features and Benefits</h2></div></div></div><p>
+<a class="indexterm" name="id2686888"></a>
+<a class="indexterm" name="id2686894"></a>
+	Samba uses a lightweight database called Trivial Database (tdb) in which it stores persistent and transient data.
+	Some tdb files can be disposed of before restarting Samba, but others are used to store information that is vital
+	to Samba configuration and behavior. The following information is provided to help administrators who are seeking
+	to better manage their Samba installations.
+	</p><p>
+<a class="indexterm" name="id2686911"></a>
+<a class="indexterm" name="id2686918"></a>
+<a class="indexterm" name="id2686925"></a>
+<a class="indexterm" name="id2686931"></a>
+	Those who package Samba for commercial distribution with operating systems and appliances would do well to take
+	note that tdb files can get corrupted, and for this reason ought to be backed up regularly.  An appropriate time
+	is at system shutdown (backup) and startup (restore from backup).
+	</p><div class="table"><a name="TOSH-TDB"></a><p class="title"><b>Table 41.1. Samba's Trivial Database Files</b></p><div class="table-contents"><table summary="Samba's Trivial Database Files" border="1"><colgroup><col><col></colgroup><thead><tr><th align="center">File name</th><th align="center">Preserve</th><th align="center">Description</th></tr></thead><tbody><tr><td align="center">account_policy.tdb</td><td align="center">Y</td><td align="center"><p>NT account policy settings such as pw expiration, etc...</p></td></tr><tr><td align="center">brlock.tdb</td><td align="center">N</td><td align="center"><p>Byte range locks.</p></td></tr><tr><td align="center">browse.dat</td><td align="center">N</td><td align="center"><p>Browse lists - gets rebuilt automatically.</p></td></tr><tr><td align="center">connections.tdb</td><td align="center">N</td><td align="center"><p>Share connections. Used to enforce max connections, etc.</p></td></tr><tr><td align="center">gencache.tdb</td><td align="center">N</td><td align="center"><p>Generic caching database.</p></td></tr><tr><td align="center">group_mapping.tdb</td><td align="center">Y</td><td align="center"><p>Stores group mapping information. Not used when using LDAP backend.</p></td></tr><tr><td align="center">  lang_en.tdb</td><td align="center">Y</td><td align="center"><p>Stores language encoding information.</p></td></tr><tr><td align="center">locking.tdb</td><td align="center">N</td><td align="center"><p>Stores share mode and oplock information.</p></td></tr><tr><td align="center">login_cache.tdb</td><td align="center">N</td><td align="center"><p>Keeps a log of bad pw attempts.</p></td></tr><tr><td align="center">messages.tdb</td><td align="center">N</td><td align="center"><p>Used to keep track of Samba internal messaging.</p></td></tr><tr><td align="center">netsamlogon_cache.tdb</td><td align="center">Y</td><td align="center"><p>
+					Cache of user net_info_3 struct from <span class="emphasis"><em>net_samlogon()</em></span>
+					requests from domain member machines.
+				</p></td></tr><tr><td align="center">ntdrivers.tdb</td><td align="center">Y</td><td align="center"><p>Stores installed printer driver information.</p></td></tr><tr><td align="center">ntforms.tdb</td><td align="center">Y</td><td align="center"><p>Stores installed printer forms information.</p></td></tr><tr><td align="center">ntprinters.tdb</td><td align="center">Y</td><td align="center"><p>Stores installed printers information.</p></td></tr><tr><td align="center">printing directory</td><td align="center">Y</td><td align="center"><p>Directory containing tdb per print queue of cached lpq output.</p></td></tr><tr><td align="center">registry.tdb</td><td align="center">Y</td><td align="center"><p>Windows registry skeleton (connect via regedit.exe).</p></td></tr><tr><td align="center">sessionid.tdb</td><td align="center">N</td><td align="center"><p>Session information to support <code class="literal">utmp = yes</code> capabilities.</p></td></tr><tr><td align="center">share_info.tdb</td><td align="center">Y</td><td align="center"><p>Stores share-level ACL configuration settings.
+					Default ACL is <span class="emphasis"><em>Everyone - Full Control</em></span>.
+				</p></td></tr><tr><td align="center">unexpected.tdb</td><td align="center">N</td><td align="center"><p>
+					Unexpected packet queue needed to support windows clients that respond on a 
+					different port that the originating reques.
+				</p></td></tr><tr><td align="center">winbindd_cache.tdb</td><td align="center">N</td><td align="center"><p>Winbind's cache of user lists.</p></td></tr><tr><td align="center">winbindd_idmap.tdb</td><td align="center">Y</td><td align="center"><p>Winbind's local IDMAP database.</p></td></tr><tr><td align="center">wins.dat</td><td align="center">N</td><td align="center"><p>
+				WINS database iused only when <em class="parameter"><code>wins support = yes</code></em>
+				has been set. This gets rebuilt or updated at every restart.
+				</p></td></tr><tr><td align="center">wins.tdb</td><td align="center">Y</td><td align="center"><p>
+				The working permanent storage for all WINS data. This database is used only
+				when <em class="parameter"><code>wins support = yes</code></em> has been set in the <code class="filename">smb.conf</code> file.
+				Note: This retains all manually configured WINS entries. Manual setting can be done use the net utility.
+				</p></td></tr><tr><td align="center">secrets.tdb</td><td align="center">Y</td><td align="center"><p>
+				This tdb file stores internal settings such as the machine and the domain SID, secret passwords
+				that are used with LDAP, the machine secret token, etc. This is an essential file that is stored
+				in a secure area. Vendors locate this in various folders. Check <code class="literal">smbd -b</code> to
+				find its location on your system.
+				</p></td></tr><tr><td align="center">schannel_store.tdb</td><td align="center">Y</td><td align="center"><p>
+				This stores secure channel access token information used with SMB signing.
+				</p></td></tr><tr><td align="center">passdb.tdb</td><td align="center">Y</td><td align="center"><p>
+				This stores the Samba SAM account information when using a tdbsam password backend.
+				</p></td></tr></tbody></table></div></div><br class="table-break"></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2687341"></a>Managing TDB Files</h2></div></div></div><p>
+	The <code class="literal">tdbbackup</code> utility is a tool that may be used to backup samba tdb files.
+	This tool may also be used to verify the integrity of the tdb files prior to Samba startup or
+	during normal operation. If it finds file damage it will search for a prior backup the backup
+	file from which the damaged tdb file will be restored. The <code class="literal">tdbbackup</code>
+	utility can safely be run at any time. It was designed so that it can be used at any time to
+	validate the integrity of tdb files, even during Samba operation.
+	</p><p>
+	It is recommended to backup all tdb files as part of the Samba start-up scripts on a Samba
+	server. The following command syntax can be used:
+	</p><pre class="screen">
+myserver# &gt; cd /var/lib/samba
+myserver@ &gt; tdbbackup *.tdb
+</pre><p>
+	The default extension is <code class="filename">.bak</code>. Any alternate extension can be specified
+	by executing <code class="literal">tdbbackup -s 'new_extension' *.tdb</code> as part of your startup script.
+	</p></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="bugreport.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="troubleshooting.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="Appendix.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 40. Reporting Bugs </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Part VI. Reference Section</td></tr></table></div></body></html>

@@ -1,0 +1,151 @@
+Very important note :
+-------------------
+	This release of the Wireless Tools is not compatible with
+Wireless Extensions earlier than 9. Version 9 and 10 should work fine
+but are not recommended. Version 8 and earlier will not work.
+	Kernels that support this version of the Wireless Tools are
+listed below. For all kernels before that, see at the end.
+
+You need :
+--------
+	o Compiler and development environment
+	o A kernel supporting wireless extensions version 11 or higher
+		-> from 2.4.4 onward (including 2.6.X)
+		Note : CONFIG_NET_RADIO must be enabled
+	o (Optional) A Pcmcia package supporting Wireless Extension
+	o A driver supporting wireless extensions
+		-> Check my web pages for status of various drivers.
+	Note : more recent kernels and drivers are likely to support
+		more wireless extension features...
+
+Compile wireless tools :
+----------------------
+	In theory, a "make" should suffice to create the tools.
+
+Installation :
+------------
+	"make install" should do the right thing for you, and install
+the tools, their library and the man pages. You can also uninstall the
+tools via "make uninstall".
+	Note that the default installation is in the directory
+'/usr/local/sbin'. This may not be in your path. Also, other version
+of the tools may exist on the system, so double check which version is
+the default and adjust your path as necessary.
+
+Create a local copy of the tools :
+--------------------------------
+	By default, the package is built with iwlib as a dynamic
+library, and the tool will expect to use the default version of libiw
+on the system. This means you can't use the tools until they are
+properly installed.
+	If you just want to experiment with a "local" version of the
+tools, you may want to pass the BUILD_STATIC flag to Makefile. It will
+create a self contained version of the tools.
+		-------------
+		make clean
+		make BUILD_STATIC='y'
+		-------------
+	The resulting binary can be used in the compilation directory
+or installed in any place you like.
+
+Other useful Makefile options :
+-----------------------------
+	PREFIX : where the tools will be installed (default : /usr/local)
+	CC : Compiler to use (defaul : gcc)
+	BUILD_STATIC : build tools with a static version of the wireless lib
+	BUILD_NOLIBM : build tools without mathematical lib (slower)
+	BUILD_STRIPPING : strip symbols from tools/lib.
+	BUILD_WE_ESSENTIAL : remove less used and obsolete features.
+
+	You can pass those options on the command line of make, or
+modify the top of the Makefile. You can also set them as environment
+variable, but this is not recommended.
+	If you pass those options on the command line, you should pass
+the same command line options for all invocations of make ("make" and
+"make install").
+
+Memory footprint reduction :
+--------------------------
+	The Wireless Tools are used in various embedded systems where
+memory footprint is a great concern. The Wireless Tools package offer
+multiple options to customise the compilation depending on the level
+of features you want.
+	The list below details the must useful combinations of these
+options, from the largest footprint to the smallest. Footprint depend
+on lot's of factor and is purely indicative (version 29-pre7+, i386,
+glibc, gcc 3.3.5).
+
+	1) Static build
+	Command line : make BUILD_STATIC='y'
+	- : Largest footprint
+	- : libiw not included (other third party tools may depend on it)
+	Size : ~280 kB
+
+	2) Default build
+	Command line : make
+	+ : Fully featured version of the tools
+	- : Largest footprint (except for static version of tools)
+	Size : ~190 kB (libiw : ~29 kB ; ifrename : ~29 kB)
+
+	3) Stripping (remove function symbols)
+	Command line : make BUILD_STRIPPING='y'
+	+ : Fully featured version of the tools
+	- : Still quite large
+	Size : ~110 kB (libiw : ~23 kB ; ifrename : ~17 kB)
+
+	4) Multicall version (include stripping)
+	Command line : make iwmulticall ; make install-iwmulticall
+	+ : Fully featured version of the tools
+	+ : Small
+	- : libiw not included (other third party tools may depend on it)
+	- : ifrename is not included
+	Size : ~55 kB
+
+	5) Multicall + Essential
+	Command line : make BUILD_WE_ESSENTIAL='y' iwmulticall
+	+ : Smaller
+	- : Some less used features are left out 
+	- : libiw not included (other third party tools may depend on it)
+	- : ifrename is not included
+	Size : ~44 kB
+
+	6) iwconfig only + essential + static
+	Command line : make BUILD_WE_ESSENTIAL='y'  BUILD_STATIC='y' BUILD_STRIPPING='y' iwconfig
+	+ : Very small
+	- : Very limited functionality : no scanning, no event, no iwpriv
+	- : libiw not included (other third party tools may depend on it)
+	- : ifrename is not included
+	Size : ~28 kB
+
+Wireless headers (past history) :
+-------------------------------
+	Previous version of the Wireless Tools had to be compiled with
+the same version of Wireless Extension that the kernel was using, and
+that was a major source of troubles.
+	Starting with version 27, Wireless Tools include all the ugly
+code to deal with any version of Wireless Extensions, so now you can
+compile a single "generic" version of the tools for any kernel.
+	Well, there are some limits, Wireless Extensions earlier than
+v11 are not supported (v9 and v10 should work fine), and versions
+later than the latest definition in the package are not
+supported. Once compile, the command "iwconfig --version" should tell
+you that.
+	Note that the previous option to make versioned installed of
+the tools no longer make sense and therefore is gone.
+
+Old kernel with older Wireless Extensions :
+-----------------------------------------
+	Kernel prior to 2.2.14 : Those kernels include Wireless
+Extensions v8 or earlier. Those versions don't have proper support for
+802.11b, so are not very useful. You may want to consider upgrading.
+	Kernel 2.2.19 to 2.2.25 : Those kernels include Wireless
+Extensions v10. The tools should mostly work with it, but many drivers
+won't. You can upgrade those kernel to WE v15 with a patch on my web
+page.
+	Kernel 2.2.14 to 2.2.18 : Those kernels include Wireless
+Extensions v9. Same as above, you may want to upgrade to a later 2.2.X
+kernel and then apply the patch.
+	Kernel 2.0.X : Those kernels include very old version of
+Wireless Extensions. Same deal as old 2.2.X kernels.
+
+	Jean <jt@hpl.hp.com>

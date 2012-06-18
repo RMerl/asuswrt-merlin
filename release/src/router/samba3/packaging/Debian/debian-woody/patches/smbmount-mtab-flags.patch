@@ -1,0 +1,15 @@
+diff -ur samba-2.2.4.orig/source/client/smbmnt.c samba-2.2.4/source/client/smbmnt.c
+--- samba-2.2.4.orig/source/client/smbmnt.c	Sun Apr  8 15:22:51 2001
++++ samba-2.2.4/source/client/smbmnt.c	Sun May  5 16:42:29 2002
+@@ -259,7 +259,10 @@
+         ment.mnt_fsname = share_name ? share_name : "none";
+         ment.mnt_dir = mount_point;
+         ment.mnt_type = "smbfs";
+-        ment.mnt_opts = "";
++	if (mount_ro)
++                ment.mnt_opts = "ro";
++        else
++                ment.mnt_opts = "rw";
+         ment.mnt_freq = 0;
+         ment.mnt_passno= 0;
+ 

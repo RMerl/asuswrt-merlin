@@ -1,0 +1,840 @@
+.\"     Title: rpcclient
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: User Commands
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "RPCCLIENT" "1" "09/30/2009" "Samba 3\&.0" "User Commands"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+rpcclient \- tool for executing client side MS\-RPC functions
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCrpcclient\F[] [\-A\ authfile] [\-c\ <command\ string>] [\-d\ debuglevel] [\-h] [\-l\ logdir] [\-N] [\-s\ <smb\ config\ file>] [\-U\ username[%password]] [\-W\ workgroup] [\-N] [\-I\ destinationIP] {server}
+.fam
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+\FCrpcclient\F[]
+is a utility initially developed to test MS\-RPC functionality in Samba itself\&. It has undergone several stages of development and stability\&. Many system administrators have now written scripts around it to manage Windows NT clients from their UNIX workstation\&.
+.SH "OPTIONS"
+.PP
+server
+.RS 4
+NetBIOS name of Server to which to connect\&. The server can be any SMB/CIFS server\&. The name is resolved using the
+\m[blue]\fBname resolve order\fR\m[]
+line from
+\fBsmb.conf\fR(5)\&.
+.RE
+.PP
+\-c|\-\-command=\'command string\'
+.RS 4
+execute semicolon separated commands (listed below))
+.RE
+.PP
+\-I IP\-address
+.RS 4
+\fIIP address\fR
+is the address of the server to connect to\&. It should be specified in standard "a\&.b\&.c\&.d" notation\&.
+.sp
+Normally the client would attempt to locate a named SMB/CIFS server by looking it up via the NetBIOS name resolution mechanism described above in the
+\fIname resolve order\fR
+parameter above\&. Using this parameter will force the client to assume that the server is on the machine with the specified IP address and the NetBIOS name component of the resource being connected to will be ignored\&.
+.sp
+There is no default for this parameter\&. If not supplied, it will be determined automatically by the client as described above\&.
+.RE
+.PP
+\-d|\-\-debuglevel=level
+.RS 4
+\fIlevel\fR
+is an integer from 0 to 10\&. The default value if this parameter is not specified is 0\&.
+.sp
+The higher this value, the more detail will be logged to the log files about the activities of the server\&. At level 0, only critical errors and serious warnings will be logged\&. Level 1 is a reasonable level for day\-to\-day running \- it generates a small amount of information about operations carried out\&.
+.sp
+Levels above 1 will generate considerable amounts of log data, and should only be used when investigating a problem\&. Levels above 3 are designed for use only by developers and generate HUGE amounts of log data, most of which is extremely cryptic\&.
+.sp
+Note that specifying this parameter here will override the
+\m[blue]\fBlog level\fR\m[]
+parameter in the
+\FCsmb\&.conf\F[]
+file\&.
+.RE
+.PP
+\-V
+.RS 4
+Prints the program version number\&.
+.RE
+.PP
+\-s <configuration file>
+.RS 4
+The file specified contains the configuration details required by the server\&. The information in this file includes server\-specific information such as what printcap file to use, as well as descriptions of all the services that the server is to provide\&. See
+\FCsmb\&.conf\F[]
+for more information\&. The default configuration file name is determined at compile time\&.
+.RE
+.PP
+\-l|\-\-log\-basename=logdirectory
+.RS 4
+Base directory name for log/debug files\&. The extension
+\fB"\&.progname"\fR
+will be appended (e\&.g\&. log\&.smbclient, log\&.smbd, etc\&.\&.\&.)\&. The log file is never removed by the client\&.
+.RE
+.PP
+\-N
+.RS 4
+If specified, this parameter suppresses the normal password prompt from the client to the user\&. This is useful when accessing a service that does not require a password\&.
+.sp
+Unless a password is specified on the command line or this parameter is specified, the client will request a password\&.
+.sp
+If a password is specified on the command line and this option is also defined the password on the command line will be silently ingnored and no password will be used\&.
+.RE
+.PP
+\-k
+.RS 4
+Try to authenticate with kerberos\&. Only useful in an Active Directory environment\&.
+.RE
+.PP
+\-A|\-\-authentication\-file=filename
+.RS 4
+This option allows you to specify a file from which to read the username and password used in the connection\&. The format of the file is
+.sp
+.if n \{\
+.RS 4
+.\}
+.fam C
+.ps -1
+.nf
+.if t \{\
+.sp -1
+.\}
+.BB lightgray adjust-for-leading-newline
+.sp -1
+
+username = <value>
+password = <value>
+domain   = <value>
+.EB lightgray adjust-for-leading-newline
+.if t \{\
+.sp 1
+.\}
+.fi
+.fam
+.ps +1
+.if n \{\
+.RE
+.\}
+.sp
+Make certain that the permissions on the file restrict access from unwanted users\&.
+.RE
+.PP
+\-U|\-\-user=username[%password]
+.RS 4
+Sets the SMB username or username and password\&.
+.sp
+If %password is not specified, the user will be prompted\&. The client will first check the
+\fBUSER\fR
+environment variable, then the
+\fBLOGNAME\fR
+variable and if either exists, the string is uppercased\&. If these environmental variables are not found, the username
+\fBGUEST\fR
+is used\&.
+.sp
+A third option is to use a credentials file which contains the plaintext of the username and password\&. This option is mainly provided for scripts where the admin does not wish to pass the credentials on the command line or via environment variables\&. If this method is used, make certain that the permissions on the file restrict access from unwanted users\&. See the
+\fI\-A\fR
+for more details\&.
+.sp
+Be cautious about including passwords in scripts\&. Also, on many systems the command line of a running process may be seen via the
+\FCps\F[]
+command\&. To be safe always allow
+\FCrpcclient\F[]
+to prompt for a password and type it in directly\&.
+.RE
+.PP
+\-n <primary NetBIOS name>
+.RS 4
+This option allows you to override the NetBIOS name that Samba uses for itself\&. This is identical to setting the
+\m[blue]\fBnetbios name\fR\m[]
+parameter in the
+\FCsmb\&.conf\F[]
+file\&. However, a command line setting will take precedence over settings in
+\FCsmb\&.conf\F[]\&.
+.RE
+.PP
+\-i <scope>
+.RS 4
+This specifies a NetBIOS scope that
+\FCnmblookup\F[]
+will use to communicate with when generating NetBIOS names\&. For details on the use of NetBIOS scopes, see rfc1001\&.txt and rfc1002\&.txt\&. NetBIOS scopes are
+\fIvery\fR
+rarely used, only set this parameter if you are the system administrator in charge of all the NetBIOS systems you communicate with\&.
+.RE
+.PP
+\-W|\-\-workgroup=domain
+.RS 4
+Set the SMB domain of the username\&. This overrides the default domain which is the domain defined in smb\&.conf\&. If the domain specified is the same as the servers NetBIOS name, it causes the client to log on using the servers local SAM (as opposed to the Domain SAM)\&.
+.RE
+.PP
+\-O socket options
+.RS 4
+TCP socket options to set on the client socket\&. See the socket options parameter in the
+\FCsmb\&.conf\F[]
+manual page for the list of valid options\&.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\&.
+.RE
+.SH "COMMANDS"
+.SS "LSARPC"
+.PP
+lsaquery
+.RS 4
+Query info policy
+.RE
+.PP
+lookupsids
+.RS 4
+Resolve a list of SIDs to usernames\&.
+.RE
+.PP
+lookupnames
+.RS 4
+Resolve a list of usernames to SIDs\&.
+.RE
+.PP
+enumtrusts
+.RS 4
+Enumerate trusted domains
+.RE
+.PP
+enumprivs
+.RS 4
+Enumerate privileges
+.RE
+.PP
+getdispname
+.RS 4
+Get the privilege name
+.RE
+.PP
+lsaenumsid
+.RS 4
+Enumerate the LSA SIDS
+.RE
+.PP
+lsaenumprivsaccount
+.RS 4
+Enumerate the privileges of an SID
+.RE
+.PP
+lsaenumacctrights
+.RS 4
+Enumerate the rights of an SID
+.RE
+.PP
+lsaenumacctwithright
+.RS 4
+Enumerate accounts with a right
+.RE
+.PP
+lsaaddacctrights
+.RS 4
+Add rights to an account
+.RE
+.PP
+lsaremoveacctrights
+.RS 4
+Remove rights from an account
+.RE
+.PP
+lsalookupprivvalue
+.RS 4
+Get a privilege value given its name
+.RE
+.PP
+lsaquerysecobj
+.RS 4
+Query LSA security object
+.RE
+.SS "LSARPC\-DS"
+.PP
+dsroledominfo
+.RS 4
+Get Primary Domain Information
+.RE
+.PP
+.PP
+\fIDFS\fR
+.PP
+dfsexist
+.RS 4
+Query DFS support
+.RE
+.PP
+dfsadd
+.RS 4
+Add a DFS share
+.RE
+.PP
+dfsremove
+.RS 4
+Remove a DFS share
+.RE
+.PP
+dfsgetinfo
+.RS 4
+Query DFS share info
+.RE
+.PP
+dfsenum
+.RS 4
+Enumerate dfs shares
+.RE
+.SS "REG"
+.PP
+shutdown
+.RS 4
+Remote Shutdown
+.RE
+.PP
+abortshutdown
+.RS 4
+Abort Shutdown
+.RE
+.SS "SRVSVC"
+.PP
+srvinfo
+.RS 4
+Server query info
+.RE
+.PP
+netshareenum
+.RS 4
+Enumerate shares
+.RE
+.PP
+netfileenum
+.RS 4
+Enumerate open files
+.RE
+.PP
+netremotetod
+.RS 4
+Fetch remote time of day
+.RE
+.SS "SAMR"
+.PP
+queryuser
+.RS 4
+Query user info
+.RE
+.PP
+querygroup
+.RS 4
+Query group info
+.RE
+.PP
+queryusergroups
+.RS 4
+Query user groups
+.RE
+.PP
+querygroupmem
+.RS 4
+Query group membership
+.RE
+.PP
+queryaliasmem
+.RS 4
+Query alias membership
+.RE
+.PP
+querydispinfo
+.RS 4
+Query display info
+.RE
+.PP
+querydominfo
+.RS 4
+Query domain info
+.RE
+.PP
+enumdomusers
+.RS 4
+Enumerate domain users
+.RE
+.PP
+enumdomgroups
+.RS 4
+Enumerate domain groups
+.RE
+.PP
+enumalsgroups
+.RS 4
+Enumerate alias groups
+.RE
+.PP
+createdomuser
+.RS 4
+Create domain user
+.RE
+.PP
+samlookupnames
+.RS 4
+Look up names
+.RE
+.PP
+samlookuprids
+.RS 4
+Look up names
+.RE
+.PP
+deletedomuser
+.RS 4
+Delete domain user
+.RE
+.PP
+samquerysecobj
+.RS 4
+Query SAMR security object
+.RE
+.PP
+getdompwinfo
+.RS 4
+Retrieve domain password info
+.RE
+.PP
+lookupdomain
+.RS 4
+Look up domain
+.RE
+.SS "SPOOLSS"
+.PP
+adddriver <arch> <config> [<version>]
+.RS 4
+Execute an AddPrinterDriver() RPC to install the printer driver information on the server\&. Note that the driver files should already exist in the directory returned by
+\FCgetdriverdir\F[]\&. Possible values for
+\fIarch\fR
+are the same as those for the
+\FCgetdriverdir\F[]
+command\&. The
+\fIconfig\fR
+parameter is defined as follows:
+.sp
+.if n \{\
+.RS 4
+.\}
+.fam C
+.ps -1
+.nf
+.if t \{\
+.sp -1
+.\}
+.BB lightgray adjust-for-leading-newline
+.sp -1
+
+Long Printer Name:\e
+Driver File Name:\e
+Data File Name:\e
+Config File Name:\e
+Help File Name:\e
+Language Monitor Name:\e
+Default Data Type:\e
+Comma Separated list of Files
+.EB lightgray adjust-for-leading-newline
+.if t \{\
+.sp 1
+.\}
+.fi
+.fam
+.ps +1
+.if n \{\
+.RE
+.\}
+.sp
+Any empty fields should be enter as the string "NULL"\&.
+.sp
+Samba does not need to support the concept of Print Monitors since these only apply to local printers whose driver can make use of a bi\-directional link for communication\&. This field should be "NULL"\&. On a remote NT print server, the Print Monitor for a driver must already be installed prior to adding the driver or else the RPC will fail\&.
+.sp
+The
+\fIversion\fR
+parameter lets you specify the printer driver version number\&. If omitted, the default driver version for the specified architecture will be used\&. This option can be used to upload Windows 2000 (version 3) printer drivers\&.
+.RE
+.PP
+addprinter <printername> <sharename> <drivername> <port>
+.RS 4
+Add a printer on the remote server\&. This printer will be automatically shared\&. Be aware that the printer driver must already be installed on the server (see
+\FCadddriver\F[]) and the
+\fIport\fRmust be a valid port name (see
+\FCenumports\F[]\&.
+.RE
+.PP
+deldriver
+.RS 4
+Delete the specified printer driver for all architectures\&. This does not delete the actual driver files from the server, only the entry from the server\'s list of drivers\&.
+.RE
+.PP
+deldriverex <driver> [architecture] [version]
+.RS 4
+Delete the specified printer driver including driver files\&. You can limit this action to a specific architecture and a specific version\&. If no architecure is given, all driver files of that driver will be deleted\&.
+.RE
+.PP
+enumdata
+.RS 4
+Enumerate all printer setting data stored on the server\&. On Windows NT clients, these values are stored in the registry, while Samba servers store them in the printers TDB\&. This command corresponds to the MS Platform SDK GetPrinterData() function (* This command is currently unimplemented)\&.
+.RE
+.PP
+enumdataex
+.RS 4
+Enumerate printer data for a key
+.RE
+.PP
+enumjobs <printer>
+.RS 4
+List the jobs and status of a given printer\&. This command corresponds to the MS Platform SDK EnumJobs() function
+.RE
+.PP
+enumkey
+.RS 4
+Enumerate printer keys
+.RE
+.PP
+enumports [level]
+.RS 4
+Executes an EnumPorts() call using the specified info level\&. Currently only info levels 1 and 2 are supported\&.
+.RE
+.PP
+enumdrivers [level]
+.RS 4
+Execute an EnumPrinterDrivers() call\&. This lists the various installed printer drivers for all architectures\&. Refer to the MS Platform SDK documentation for more details of the various flags and calling options\&. Currently supported info levels are 1, 2, and 3\&.
+.RE
+.PP
+enumprinters [level]
+.RS 4
+Execute an EnumPrinters() call\&. This lists the various installed and share printers\&. Refer to the MS Platform SDK documentation for more details of the various flags and calling options\&. Currently supported info levels are 1, 2 and 5\&.
+.RE
+.PP
+getdata <printername> <valuename;>
+.RS 4
+Retrieve the data for a given printer setting\&. See the
+\FCenumdata\F[]
+command for more information\&. This command corresponds to the GetPrinterData() MS Platform SDK function\&.
+.RE
+.PP
+getdataex
+.RS 4
+Get printer driver data with keyname
+.RE
+.PP
+getdriver <printername>
+.RS 4
+Retrieve the printer driver information (such as driver file, config file, dependent files, etc\&.\&.\&.) for the given printer\&. This command corresponds to the GetPrinterDriver() MS Platform SDK function\&. Currently info level 1, 2, and 3 are supported\&.
+.RE
+.PP
+getdriverdir <arch>
+.RS 4
+Execute a GetPrinterDriverDirectory() RPC to retrieve the SMB share name and subdirectory for storing printer driver files for a given architecture\&. Possible values for
+\fIarch\fR
+are "Windows 4\&.0" (for Windows 95/98), "Windows NT x86", "Windows NT PowerPC", "Windows Alpha_AXP", and "Windows NT R4000"\&.
+.RE
+.PP
+getprinter <printername>
+.RS 4
+Retrieve the current printer information\&. This command corresponds to the GetPrinter() MS Platform SDK function\&.
+.RE
+.PP
+getprintprocdir
+.RS 4
+Get print processor directory
+.RE
+.PP
+openprinter <printername>
+.RS 4
+Execute an OpenPrinterEx() and ClosePrinter() RPC against a given printer\&.
+.RE
+.PP
+setdriver <printername> <drivername>
+.RS 4
+Execute a SetPrinter() command to update the printer driver associated with an installed printer\&. The printer driver must already be correctly installed on the print server\&.
+.sp
+See also the
+\FCenumprinters\F[]
+and
+\FCenumdrivers\F[]
+commands for obtaining a list of of installed printers and drivers\&.
+.RE
+.PP
+addform
+.RS 4
+Add form
+.RE
+.PP
+setform
+.RS 4
+Set form
+.RE
+.PP
+getform
+.RS 4
+Get form
+.RE
+.PP
+deleteform
+.RS 4
+Delete form
+.RE
+.PP
+enumforms
+.RS 4
+Enumerate form
+.RE
+.PP
+setprinter
+.RS 4
+Set printer comment
+.RE
+.PP
+setprinterdata
+.RS 4
+Set REG_SZ printer data
+.RE
+.PP
+setprintername <printername> <newprintername>
+.RS 4
+Set printer name
+.RE
+.PP
+rffpcnex
+.RS 4
+Rffpcnex test
+.RE
+.SS "NETLOGON"
+.PP
+logonctrl2
+.RS 4
+Logon Control 2
+.RE
+.PP
+logonctrl
+.RS 4
+Logon Control
+.RE
+.PP
+samsync
+.RS 4
+Sam Synchronisation
+.RE
+.PP
+samdeltas
+.RS 4
+Query Sam Deltas
+.RE
+.PP
+samlogon
+.RS 4
+Sam Logon
+.RE
+.SS "GENERAL COMMANDS"
+.PP
+debuglevel
+.RS 4
+Set the current debug level used to log information\&.
+.RE
+.PP
+help (?)
+.RS 4
+Print a listing of all known commands or extended help on a particular command\&.
+.RE
+.PP
+quit (exit)
+.RS 4
+Exit
+\FCrpcclient \F[]\&.
+.RE
+.SH "BUGS"
+.PP
+\FCrpcclient\F[]
+is designed as a developer testing tool and may not be robust in certain areas (such as command line parsing)\&. It has been known to generate a core dump upon failures when invalid parameters where passed to the interpreter\&.
+.PP
+From Luke Leighton\'s original rpcclient man page:
+.PP
+\fIWARNING!\fR
+The MSRPC over SMB code has been developed from examining Network traces\&. No documentation is available from the original creators (Microsoft) on how MSRPC over SMB works, or how the individual MSRPC services work\&. Microsoft\'s implementation of these services has been demonstrated (and reported) to be\&.\&.\&. a bit flaky in places\&.
+.PP
+The development of Samba\'s implementation is also a bit rough, and as more of the services are understood, it can even result in versions of
+\fBsmbd\fR(8)
+and
+\fBrpcclient\fR(1)
+that are incompatible for some commands or services\&. Additionally, the developers are sending reports to Microsoft, and problems found or reported to Microsoft are fixed in Service Packs, which may result in incompatibilities\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original rpcclient man page was written by Matthew Geddes, Luke Kenneth Casson Leighton, and rewritten by Gerald Carter\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

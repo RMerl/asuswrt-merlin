@@ -1,0 +1,173 @@
+#!gmake
+#
+CC = @CC@
+GCOV = @GCOV@
+XSLTPROC = @XSLTPROC@
+DOXYGEN = @DOXYGEN@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+datarootdir = @datarootdir@
+includedir = @includedir@
+libdir = @libdir@
+bindir = @bindir@
+mandir = @mandir@
+VPATH = @srcdir@:@tdbdir@:@tallocdir@:@libreplacedir@:@poptdir@
+srcdir = @srcdir@
+builddir = @builddir@
+SLAPD = @SLAPD@
+EXTRA_OBJ=@EXTRA_OBJ@
+TESTS=test-tdb.sh @TESTS@
+
+CFLAGS=-g -I$(srcdir)/include -Iinclude -I$(srcdir) -I$(srcdir)/.. \
+       @POPT_CFLAGS@ -I@tallocdir@ -I@tdbdir@/include -I@libreplacedir@ \
+	-DLIBDIR=\"$(libdir)\" -DSHLIBEXT=\"@SHLIBEXT@\" -DUSE_MMAP=1 @CFLAGS@
+
+LIB_FLAGS=@LDFLAGS@ -Llib -lldb @LIBS@ @POPT_LIBS@
+
+LDB_TDB_DIR=ldb_tdb
+LDB_TDB_OBJ=$(LDB_TDB_DIR)/ldb_tdb.o \
+	$(LDB_TDB_DIR)/ldb_pack.o $(LDB_TDB_DIR)/ldb_search.o $(LDB_TDB_DIR)/ldb_index.o \
+	$(LDB_TDB_DIR)/ldb_cache.o $(LDB_TDB_DIR)/ldb_tdb_wrap.o
+
+COMDIR=common
+COMMON_OBJ=$(COMDIR)/ldb.o $(COMDIR)/ldb_ldif.o \
+	   $(COMDIR)/ldb_parse.o $(COMDIR)/ldb_msg.o $(COMDIR)/ldb_utf8.o \
+	   $(COMDIR)/ldb_debug.o $(COMDIR)/ldb_modules.o \
+	   $(COMDIR)/ldb_dn.o $(COMDIR)/ldb_match.o $(COMDIR)/ldb_attributes.o \
+	   $(COMDIR)/attrib_handlers.o $(COMDIR)/ldb_controls.o $(COMDIR)/qsort.o
+
+MODDIR=modules
+MODULES_OBJ=$(MODDIR)/operational.o $(MODDIR)/rdn_name.o \
+	   $(MODDIR)/objectclass.o \
+	   $(MODDIR)/paged_results.o $(MODDIR)/sort.o $(MODDIR)/asq.o
+
+NSSDIR=nssldb
+NSS_OBJ= $(NSSDIR)/ldb-nss.o $(NSSDIR)/ldb-pwd.o $(NSSDIR)/ldb-grp.o
+NSS_LIB = lib/libnss_ldb.so.2
+
+OBJS = $(MODULES_OBJ) $(COMMON_OBJ) $(LDB_TDB_OBJ) @TDBOBJ@ @TALLOCOBJ@ @POPTOBJ@ @LIBREPLACEOBJ@ $(EXTRA_OBJ) 
+
+LDB_LIB = lib/libldb.a
+
+BINS = bin/ldbadd bin/ldbsearch bin/ldbdel bin/ldbmodify bin/ldbedit bin/ldbrename bin/ldbtest bin/oLschema2ldif
+
+LIBS = $(LDB_LIB)
+
+EXAMPLES = examples/ldbreader examples/ldifreader
+
+DIRS = lib bin common ldb_tdb ldb_ldap ldb_sqlite3 modules tools examples
+
+default: all
+
+nss: nssdir all $(NSS_LIB)
+
+nssdir:
+	@mkdir -p $(NSSDIR)
+
+all: showflags dirs $(OBJS) $(LDB_LIB) $(BINS) $(EXAMPLES) manpages
+
+showflags:
+	@echo 'ldb will be compiled with flags:'
+	@echo '  CFLAGS = $(CFLAGS)'
+	@echo '  LIBS = $(LIBS)'
+
+.c.o:
+	@echo Compiling $*.c
+	@mkdir -p `dirname $@`
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+dirs:
+	@mkdir -p $(DIRS)
+
+lib/libldb.a: $(OBJS)
+	ar -rv $@ $(OBJS)
+	@-ranlib $@
+
+lib/libnss_ldb.so.2: $(NSS_OBJ) $(LIBS)
+	$(CC) -shared -Wl,-soname,libnss_ldb.so.2 -o lib/libnss_ldb.so.2 $(NSS_OBJ) $(OBJS) $(LIB_FLAGS)
+
+bin/ldbadd: tools/ldbadd.o tools/cmdline.o $(LIBS)
+	$(CC) -o bin/ldbadd tools/ldbadd.o tools/cmdline.o $(LIB_FLAGS)
+
+bin/ldbsearch: tools/ldbsearch.o tools/cmdline.o $(LIBS)
+	$(CC) -o bin/ldbsearch tools/ldbsearch.o tools/cmdline.o $(LIB_FLAGS)
+
+bin/ldbdel: tools/ldbdel.o tools/cmdline.o $(LIBS)
+	$(CC) -o bin/ldbdel tools/ldbdel.o tools/cmdline.o $(LIB_FLAGS)
+
+bin/ldbmodify: tools/ldbmodify.o tools/cmdline.o $(LIBS)
+	$(CC) -o bin/ldbmodify tools/ldbmodify.o tools/cmdline.o $(LIB_FLAGS)
+
+bin/ldbedit: tools/ldbedit.o tools/cmdline.o $(LIBS)
+	$(CC) -o bin/ldbedit tools/ldbedit.o tools/cmdline.o $(LIB_FLAGS)
+
+bin/ldbrename: tools/ldbrename.o tools/cmdline.o $(LIBS)
+	$(CC) -o bin/ldbrename tools/ldbrename.o tools/cmdline.o $(LIB_FLAGS)
+
+bin/ldbtest: tools/ldbtest.o tools/cmdline.o $(LIBS)
+	$(CC) -o bin/ldbtest tools/ldbtest.o tools/cmdline.o $(LIB_FLAGS)
+
+bin/oLschema2ldif: tools/oLschema2ldif.o tools/cmdline.o tools/convert.o $(LIBS)
+	$(CC) -o bin/oLschema2ldif tools/oLschema2ldif.o tools/cmdline.o tools/convert.o $(LIB_FLAGS)
+
+examples/ldbreader: examples/ldbreader.o $(LIBS)
+	$(CC) -o examples/ldbreader examples/ldbreader.o $(LIB_FLAGS)
+
+examples/ldifreader: examples/ldifreader.o $(LIBS)
+	$(CC) -o examples/ldifreader examples/ldifreader.o $(LIB_FLAGS)
+
+.SUFFIXES: .1 .1.xml .3 .3.xml .xml .html
+
+manpages:
+	@$(srcdir)/docs/builddocs.sh "$(XSLTPROC)" "$(srcdir)"
+
+doxygen:
+	test -z "$(DOXYGEN)" || (cd $(srcdir) && "$(DOXYGEN)")
+
+clean:
+	rm -f *.o */*.o *.gcov */*.gc?? tdbtest.ldb*
+	rm -f $(BINS) $(TDB_OBJ) $(TALLOC_OBJ) $(LDB_LIB) $(NSS_LIB)
+	rm -f man/*.1 man/*.3 man/*.html
+	rm -f $(EXAMPLES)
+	rm -rf apidocs/
+	rm -rf tests/schema/
+
+distclean: clean
+	rm -f *~ */*~
+	rm -rf bin lib
+	rm -f config.log config.status config.cache include/config.h
+	rm -f ldb.pc
+	rm -f Makefile
+
+realdistclean: distclean
+	rm -f configure.in include/config.h.in
+
+test: all
+	for t in $(TESTS); do echo STARTING $${t}; $(srcdir)/tests/$${t} || exit 1; done
+
+valgrindtest: all
+	for t in $(TESTS); do echo STARTING $${t}; VALGRIND="valgrind -q --db-attach=yes --num-callers=30" $(srcdir)/tests/$${t} || exit 1; done
+
+installcheck: install test
+
+install: all
+	mkdir -p $(includedir) $(libdir)/pkgconfig $(libdir) $(bindir)
+	cp $(srcdir)/include/ldb.h $(srcdir)/include/ldb_errors.h $(includedir)
+	cp $(LDB_LIB) $(libdir)
+	cp $(BINS) $(bindir)
+	cp ldb.pc $(libdir)/pkgconfig
+	$(srcdir)/docs/installdocs.sh $(mandir)
+
+gcov:
+	$(GCOV) -po ldb_sqlite3 $(srcdir)/ldb_sqlite3/*.c 2| tee ldb_sqlite3.report.gcov
+	$(GCOV) -po ldb_ldap $(srcdir)/ldb_ldap/*.c 2| tee ldb_ldap.report.gcov
+	$(GCOV) -po ldb_tdb $(srcdir)/ldb_tdb/*.c 2| tee ldb_tdb.report.gcov
+	$(GCOV) -po common $(srcdir)/common/*.c 2| tee common.report.gcov
+	$(GCOV) -po modules $(srcdir)/modules/*.c 2| tee modules.report.gcov
+	$(GCOV) -po tools $(srcdir)/tools/*.c 2| tee tools.report.gcov
+
+etags:
+	etags `find $(srcdir) -name "*.[ch]"`
+
+ctags:
+	ctags `find $(srcdir) -name "*.[ch]"`

@@ -1,0 +1,58 @@
+FOLLOW THESE SIMPLE GUIDELINES:
+-------------------------------
+
+Compiling the source code:
+%make
+Put the files in the right directories:
+%make install
+
+If you are using the CVS code or need your own kernel includes, do this
+instead (change the include directory to the appropriate one):
+%make install KERNEL_INCLUDES=/usr/src/linux/include
+
+If you want to make a static binary for ebtables, containing all the
+extensions, without shared libraries, do this (this will make a
+binary called 'static', which you can rename):
+%make static
+
+WHAT GETS INSTALLED?
+--------------------
+
+- The ebtables manual gets installed in /usr/local/man/man8
+  To put the manual somewhere else, include MANDIR=<<man-path/man>> as
+  option on the command line.
+  The Makefile will append /man8/ebtables.8.
+- ethertypes is by default placed in /etc/, if you
+  want to change this, include ETHERTYPESPATH=<<path>>.
+- The userspace programs ebtables ebtables-save and ebtables-restore are
+  are copied by default to /usr/local/sbin/ebtables. If you want to put
+  the executables somewhere else, include BINPATH=<<path>>.
+- The ebtables initialisation file (enabling use of 'service ebtables') is
+  copied to /etc/rc.d/init.d (change with option INITDIR)
+- The ebtables configuration file (ebtables-config) is copied to /etc/sysconfig
+
+That's all
+
+You can also use a base directory different from the root directory (/),
+using the DESTDIR option. See the Makefile for more details.
+
+
+ADDITIONAL PROGRAM(S):
+----------------------
+-- examples/ulog/test_ulog.c --
+
+Contains an example to receive and parse netlink messages containing
+packets seen by the ebtables ulog watcher.
+
+Compile with:
+%make test_ulog KERNEL_INCLUDES=/usr/src/linux/include
+
+Usage:
+%examples/ulog/test_ulog NETLINK_GROUP
+%ebtables -A chain --ulog-nlgroup NETLINK_GROUP
+
+-- examples/perf_test/perf_test --
+
+A test script to compare the performance for the different ways to
+construct an ebtables table. This is deprecated and should probably
+be ignored.

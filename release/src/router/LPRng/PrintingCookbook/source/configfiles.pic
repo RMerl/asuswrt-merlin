@@ -1,0 +1,24 @@
+.PS
+ w = 1.0;
+ Conf: box wid w "/etc/lpd.conf";
+ Printcap: box wid w "/etc/printcap" with .n at Conf.s + (0,-.25);
+ Perms: box wid w "/etc/lpd.perms" with .n at Printcap.s + (0,-.25);
+ m = ( Conf.n.y + Perms.s.y )/2;
+ Lpd: box "lpd" with .w at (Conf.e.x+.5,m) ;
+ A: [ line from (0,0) to (-.25,0) to (-.25,1) to (0,1) ] with .w at Lpd.e + (.5,0.75); 
+ B: [ line from (0,0) to (-.25,0) to (-.25,1) to (0,1) ] with .w at Lpd.e + (.5,-0.75); 
+
+ La: box ht 0.001 wid 0.001 with .nw at A.ne + (1,0);
+ Lb: box ht 0.001 wid 0.001 with .nw at B.se + (1,0);
+ "Spool Directory: /var/spool/lpd/lp" at A.nw + (0.125,-.125) ljust;
+ "lp" rjust at A.w+(-.25,0);
+ box invis "cfA001h114 " " dfA001h114" " dfB001h114" with .nw at A.nw + (0.125,-.25);
+ "Spool Directory: /var/spool/lpd/lp0" at B.nw + (0.125,-.125) ljust;
+ "lp0" rjust at B.w+(-.25,0);
+ box invis "cfA001h114 " " dfA001h114" " dfB001h114" with .nw at B.nw + (0.125,-.25);
+	arrow from Lpd.nw to Conf.se;
+	arrow from Lpd.w to Printcap.e;
+	arrow from Lpd.sw to Perms.ne;
+	arrow from Lpd.ne to A.sw+(0,.125);
+	arrow from Lpd.se to B.nw+(0,-.125);
+.PE

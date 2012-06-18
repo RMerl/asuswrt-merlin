@@ -1,0 +1,12 @@
+# Samba.man configure script
+
+
+grep -q '/opt/samba/man' /etc/MANPATH
+if [ $? -eq 1 ]
+then
+  echo "`cat /etc/MANPATH`:/opt/samba/man" >/tmp/$$.PATH
+  cp /tmp/$$.PATH /etc/MANPATH
+  rm -f /tmp/$$.PATH
+fi
+
+exit 0

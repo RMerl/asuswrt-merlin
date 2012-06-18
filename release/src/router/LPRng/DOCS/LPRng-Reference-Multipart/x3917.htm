@@ -1,0 +1,438 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Debugging, Tracing, and Log Files</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title="Interfacing to Non-LPRng Spoolers"
+    href="x3885.htm">
+    <link rel="NEXT" title=
+    "LPRng Clients - lpr, lprm, lpq, lpc, lpstat " href=
+    "lprngclients.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x3885.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "lprngclients.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN3917">4.21. Debugging, Tracing,
+      and Log Files</a></h1>
+
+      <p>The <b class="APPLICATION">LPRng</b> software was designed
+      and written to provide as high a level of diagnostic
+      information as possible. This was largely in part due to the
+      problems with portability, coding errors, and other human
+      frailties. Approximately 80% of the <b class=
+      "APPLICATION">LPRng</b> source code concerns itself with
+      checking return values from system functions and producing
+      error messages, debugging and tracing information, and
+      various facilities used for regression testing and
+      diagnosis.</p>
+
+      <p>The approach used by <b class="APPLICATION">LPRng</b> is
+      to produce <span class="emphasis"><i class=
+      "EMPHASIS">trace</i></span> output for the <b class=
+      "APPLICATION">LPRng</b> clients or <span class="emphasis"><i
+      class="EMPHASIS">log</i></span> files for the <b class=
+      "APPLICATION">lpd</b> server that show the various events or
+      flow of information through the <b class=
+      "APPLICATION">LPRng</b> system. There are several classes or
+      types of actions that can be traced, and various levels of
+      trace information generated. The interface used to control
+      these actions are the command line <var class="LITERAL">-D
+      literals</var> flags and the <tt class="COMMAND">lpc
+      debug</tt> command.</p>
+
+      <p>First, we will look at how you can use the debugging
+      facilities for the clients. Enter the following commands:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3932"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {292} %</samp> <kbd class=
+"USERINPUT">lpr -D=</kbd>
+    debug usage: -D [ num | key=num | key=str | flag | flag@ | flag+N ]*
+      keys recognized: network[+N,@], database[+N,@], lpr[+N,@],
+       lpc[+N,@], lprm[+N,@], lpq[+N,@], test=num, job=num, log[+N,@]
+    <samp class="PROMPT">h4: {293} %</samp> <kbd class=
+"USERINPUT">lpr -V /tmp/hi</kbd>
+    LPRng-3.7.2, Copyright 1988-2000 Patrick Powell, &lt;papowell@lprng.com&gt;
+    sending job 'papowell@h4+981' to lp@localhost
+    connecting to 'localhost', attempt 1
+    connected to 'localhost'
+    requesting printer lp@localhost
+    sending control file 'cfA981h4.private' to lp@localhost
+    completed sending 'cfA981h4.private' to lp@localhost
+    sending data file 'dfA981h4.private' to lp@localhost
+    completed sending 'dfA981h4.private' to lp@localhost
+    done job 'papowell@h4+981' transfer to lp@localhost
+    <samp class="PROMPT">h4: {294} %</samp> <kbd class=
+"USERINPUT">lpr -D1 /tmp/hi</kbd>
+    09:38:08.707 h4 [13991] lpr  Get_printer: original printer '&lt;NULL&gt;'
+    09:38:08.708 h4 [13991] lpr  Get_all_printcap_entries: starting
+    09:38:08.708 h4 [13991] lpr  Select_pc_info: looking for 'all', depth 0
+    09:38:08.708 h4 [13991] lpr  Select_pc_info: returning '&lt;NULL&gt;'
+    09:38:08.708 h4 [13991] lpr  Select_pc_info: looking for '*', depth 0
+    09:38:08.708 h4 [13991] lpr  Select_pc_info: returning '&lt;NULL&gt;'
+    09:38:08.708 h4 [13991] lpr  Dump_line_list: Get_all_printcap_entries
+    ...
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <tt class="COMMAND">lpr -D=</tt> causes the <b class=
+      "APPLICATION">lpr</b> (and other <b class=
+      "APPLICATION">LPRng</b> programs) to show what debugging
+      flags are available. The <tt class="COMMAND">lpr -V</tt> flag
+      causes <b class="APPLICATION">lpr</b> to run in verbose mode
+      and show its activities. Finally, we use <tt class=
+      "COMMAND">lpr -D1</tt> to enable the simplest level of
+      debugging. This will produce a trace of the various
+      activities that <b class="APPLICATION">lpr</b> carries out.
+      Try <tt class="COMMAND">lpr -D2</tt>, <tt class="COMMAND">lpr
+      -D3</tt>, and so forth to see the increasing amount of detail
+      that you get.</p>
+
+      <p>The <span class="emphasis"><i class=
+      "EMPHASIS">network</i></span> and <span class="emphasis"><i
+      class="EMPHASIS">database</i></span> debug flags turn on
+      debugging for the network facilities and the database (<tt
+      class="FILENAME">lpd.conf</tt>, <tt class=
+      "FILENAME">printcap</tt>, and <tt class=
+      "FILENAME">lpd.perms</tt>) lookups. Lets see what <tt class=
+      "COMMAND">lpr -Dnetwork</tt> shows us:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3957"></a>
+<pre class="SCREEN">
+    C<samp class="PROMPT">h4: {295} %</samp> <kbd class=
+"USERINPUT">lpr -Dnetwork /tmp/hi</kbd>
+    lp: getconnection: START host localhost, timeout 10, connection_type 1
+    lp: getconnection: fqdn found localhost.private, h_addr_list count 1
+    lp: Link_dest_port_num: port 2000 = 2000
+    lp: getconnection: sock 3, src ip 127.0.0.1, port 65209
+    lp: getconnection: dest ip 127.0.0.1, port 2000
+    lp: getconnection: connection to 'localhost' sock 3, errmsg 'No Error'
+    lp: Link_send: host 'localhost' socket 3, timeout 6000
+    lp: Link_send: str '^Blp
+    ', count 4, ack 0x80447a0
+    lp: Link_send: final status NO ERROR
+    lp: Link_send: host 'localhost' socket 3, timeout 6000
+    lp: Link_send: str '^B135 cfA276h4.private
+    ', count 22, ack 0x8044370
+    lp: Link_send: final status NO ERROR
+    lp: Link_send: host 'localhost' socket 3, timeout 6000
+    lp: Link_send: str 'Hh4.private
+    Ppapowell
+    J/tmp/hi
+    CA
+    Lpapowell
+    Apapowell@h4+276
+    D2000-06-02-09:44:52.369
+    Qlp
+    N/tmp/hi
+    fdfA276h4.private
+    UdfA276h4.private
+    ', count 136, ack 0x8044370
+    lp: Link_send: final status NO ERROR
+    lp: Link_send: host 'localhost' socket 3, timeout 6000
+    lp: Link_send: str '^C3 dfA276h4.private
+    ', count 20, ack 0x8044310
+    lp: Link_send: final status NO ERROR
+    lp: Link_send: host 'localhost' socket 3, timeout 6000
+    lp: Link_send: str '', count 1, ack 0x8044310
+    lp: Link_send: final status NO ERROR
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>As we see, we get a detailed exposition of the network
+      connection and transfer steps. If you need or want more
+      detail, try using <tt class="COMMAND">lpr -Dnetwork+2</tt> or
+      <tt class="COMMAND">lpr -Dnetwork+3</tt>. You may want to try
+      <tt class="COMMAND">lpr -Ddatabase</tt> and observe the
+      actions of the <b class="APPLICATION">lpr</b> program as it
+      extracts information from the <tt class=
+      "FILENAME">lpd.conf</tt> and <tt class=
+      "FILENAME">printcap</tt> files. If you need or want more
+      detail, try using <tt class="COMMAND">lpr -Ddatabase+2</tt>
+      or <tt class="COMMAND">lpr -Ddatabase+3</tt>.</p>
+
+      <p>If you need to trace the activities of the <b class=
+      "APPLICATION">lpd</b> server, it becomes a little more
+      complex. The lpd server has a single <span class=
+      "emphasis"><i class="EMPHASIS">listening</i></span> process
+      that forks and creates individual processes to handle
+      incoming requests. Debug or diagnose the main process actions
+      by using <tt class="COMMAND">lpd -D...</tt>. You may also
+      want to use <tt class="COMMAND">lpd -F</tt> to keep the
+      server in the foreground so you can kill it off easily.
+      Needless to say, you should also redirect the <acronym class=
+      "ACRONYM">STDERR</acronym> and <acronym class=
+      "ACRONYM">STDOUT</acronym> so that it goes to a file so that
+      you can examine the voluminous records at your leisure. The
+      following shows a typical main <b class="APPLICATION">lpd</b>
+      process debugging session using the C Shell.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3978"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {296} %</samp> <kbd class=
+"USERINPUT">lpd -F -D1 &gt;&amp;/tmp/logfile &amp;</kbd>
+    [2] 14299
+    <samp class="PROMPT">h4: {297} %</samp> <kbd class=
+"USERINPUT">tail -f /tmp/logfile</kbd>
+    2000-06-02-09:53:39.716 h4 [1200] Waiting Read_server_status: \
+                             select status 1
+    2000-06-02-09:53:39.716 h4 [1200] Waiting Read_server_status: \
+                             read status 1
+    2000-06-02-09:53:39.716 h4 [1200] Waiting Dump_line_list: \
+        Read_server_status - input - 0x8047980, count 0, max 0, list 0x0
+    2000-06-02-09:53:39.716 h4 [1200] Waiting Read_server_status: \
+                             select status 0
+    2000-06-02-09:53:39.716 h4 [1200] Waiting lpd: LOOP START
+    2000-06-02-09:53:39.716 h4 [1200] Waiting Get_max_servers: \ 
+                             getrlimit returns 64
+    2000-06-02-09:53:39.716 h4 [1200] Waiting Get_max_servers: \
+                             returning 32
+    2000-06-02-09:53:39.716 h4 [1200] Waiting lpd: \
+                             max_servers 32, active 0
+    2000-06-02-09:53:39.716 h4 [1200] Waiting lpd: \
+                             starting select timeout 'yes'
+    
+    ^C
+    <samp class="PROMPT">h4: {298} %</samp> <kbd class=
+"USERINPUT">jobs</kbd>
+    [1]  - Running                lpd -F -D1 &gt;&amp; /tmp/logfile
+    <samp class="PROMPT">h4: {299} %</samp> <kbd class=
+"USERINPUT">kill %1</kbd>
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>We start the debugging session by running the <b class=
+      "APPLICATION">lpd</b> server in foreground mode. This causes
+      it to send its output to <acronym class=
+      "ACRONYM">STDOUT</acronym> and <acronym class=
+      "ACRONYM">STDERR</acronym>. We redirect both of these to a
+      file and put the <b class="APPLICATION">lpd</b> server in the
+      background. Then we use <tt class="COMMAND">tail -f</tt> to
+      read from the log file. Finally, we kill off the <b class=
+      "APPLICATION">lpd</b> server.</p>
+
+      <p>This method is extremely difficult to use, as all of the
+      output produced by the server and its subprocesses is sent to
+      a single output file. If we want to debug the actions
+      concerning a single queue, then we can use the queue <span
+      class="emphasis"><i class="EMPHASIS">log file</i></span> and
+      <tt class="COMMAND">lpc debug</tt> command instead. The
+      following options control debugging of an individual print
+      queue.</p>
+
+      <div class="VARIABLELIST">
+        <dl>
+          <dt>lf=log</dt>
+
+          <dd>
+            <p>The log file for the queue. The queue server process
+            will open this file and place debugging information
+            into this file.</p>
+          </dd>
+
+          <dt>max_log_file_size=nnn</dt>
+
+          <dd>
+            <p>The maximum size of the log file in K bytes. When
+            the queue server process first opens this file it will
+            check to see if the file is larger than the maximum
+            size. If it is, then it will truncate it. A zero (0)
+            value suppress truncation.</p>
+          </dd>
+
+          <dt>min_log_file_size=nnn</dt>
+
+          <dd>
+            <p>When the log file is truncated only the the last nnn
+            K bytes are retained.</p>
+          </dd>
+
+          <dt>db=options</dt>
+
+          <dd>
+            <p>These are debugging options for the spool queue.
+            These options are permanent and cannot be changed by
+            using the <tt class="COMMAND">lpc debug</tt>
+            facility.</p>
+          </dd>
+        </dl>
+      </div>
+      <br>
+      <br>
+
+      <p>The <tt class="COMMAND">lpc debug</tt> command is used to
+      set the debugging options in force for the spool queue. This
+      is done by writing the debug options into the spool queue
+      control file. Let us see how we can use this facility to
+      trace the actions of printing a file.</p>
+
+      <p>Edit the printcap file so it have the contents indicated
+      below, create the <tt class="FILENAME">/tmp/lp</tt> and <tt
+      class="FILENAME">/tmp/lp2</tt> files with <var class=
+      "LITERAL">0777</var> permissions. Use <tt class=
+      "COMMAND">checkpc -f</tt> to check the printcap, and then use
+      <tt class="COMMAND">lpc reread</tt> to restart the <b class=
+      "APPLICATION">lpd</b> server.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN4025"></a>
+<pre class="SCREEN">
+    # printcap
+    lp:force_localhost
+    lp:server
+      :lp=/dev/null
+      :sd=/var/spool/lpd/%P
+      :lf=log
+    lp2:force_localhost
+    lp2:server
+      :sd=/var/spool/lpd/%P
+      :lp=/tmp/lp2
+      :lf=log
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Now execute the following commands:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN4028"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {300} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+    <samp class="PROMPT">h4: {301} %</samp> <kbd class=
+"USERINPUT">lpc debug lp 1</kbd>
+    Printer: lp@h4
+    debugging override set to '1'
+    lp@h4.private: updated
+    <samp class="PROMPT">h4: {302} %</samp> <kbd class=
+"USERINPUT">lpc status</kbd>
+     Printer Printing Spooling Jobs Server Subserver Redirect Status/(Debug)
+    lp@h4    enabled  enabled    0    none    none          (1)
+    <samp class="PROMPT">h4: {303} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {304} %</samp> <kbd class=
+"USERINPUT">more /var/spool/lpd/lp2/log</kbd>
+    2000-06-02-10:10:50.589 h4 [1201] (Server) lp: \
+       Update_spool_info: printer 'lp'
+    2000-06-02-10:10:50.590 h4 [1201] (Server) lp: \
+       Do_queue_jobs: printable 1, held 0, move 0
+    2000-06-02-10:10:50.590 h4 [1201] (Server) lp: \
+       Do_queue_jobs: after Scan_queue next fd 5
+    2000-06-02-10:10:50.590 h4 [1201] (Server) lp: \
+       Do_queue_jobs: MAIN LOOP
+    2000-06-02-10:10:50.590 h4 [1201] (Server) lp: \
+       Do_queue_jobs: Susr1 before scan 0
+    2000-06-02-10:10:50.591 h4 [1201] (Server) lp: \
+       Do_queue_jobs: chooser '&lt;NULL&gt;', chooser_routine 0
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <tt class="COMMAND">lpc debug</tt> command sets the
+      debug level to 1. We can use the <tt class="COMMAND">lpc
+      status</tt> command to see what debug flags or actions are
+      currently specified for the spool queue. We then send a job
+      to the spool queue and examine the log file contents.</p>
+
+      <p>Each line in the log file has a timestamp, the name of the
+      host, the process id that produced it, and a heading that
+      tells the action or activity that the process is performing,
+      and the name of the print queue that is being processed and a
+      trace message. By convention, the trace message lists the
+      name of the routine that processed it and then the actual
+      information. Some messages may extend over several lines, but
+      each line has the standard header at the start of the
+      line.</p>
+
+      <p>The default debug or trace actions were designed to trace
+      problems with printing, as these are the most common.
+      However, you can also use the <b class="APPLICATION">lpr</b>,
+      <b class="APPLICATION">lpc</b>, <b class=
+      "APPLICATION">lprm</b>, or <b class="APPLICATION">lpq</b>
+      option to cause the <b class="APPLICATION">lpd</b> server to
+      trace the actions during the execution of an <b class=
+      "APPLICATION">lpr</b>, <b class="APPLICATION">lpc</b>, <b
+      class="APPLICATION">lprm</b>, or <b class=
+      "APPLICATION">lpq</b> request.</p>
+
+      <p>The <span class="emphasis"><i class=
+      "EMPHASIS">log</i></span> option is used to test various
+      logging facilities and is usually not used for general
+      purpose debugging.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x3885.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "lprngclients.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Interfacing to
+          Non-LPRng Spoolers</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top"><b class=
+          "APPLICATION">LPRng</b> Clients - lpr, lprm, lpq, lpc,
+          lpstat</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

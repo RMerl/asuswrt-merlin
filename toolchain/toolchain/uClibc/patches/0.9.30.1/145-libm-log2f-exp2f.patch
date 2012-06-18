@@ -1,0 +1,66 @@
+>From af843d0a18279725cedb51e00209457e8d0281c0
+From: Aurelien Jacobs
+Date: Fri, 15 Jan 2010 19:43:06 +0100
+Subject: [PATCH] enable log2f and exp2f
+
+Signed-off-by: Aurelien Jacobs <aurel@gnuage.org>
+---
+ libm/float_wrappers.c    |    4 ++--
+
+diff --git a/libm/float_wrappers.c b/libm/float_wrappers.c
+index 93d56c3..e1ab8b5 100644
+--- a/libm/float_wrappers.c
++++ b/libm/float_wrappers.c
+@@ -15,12 +15,10 @@
+ 
+ /* For the time being, do _NOT_ implement these functions
+  * that are defined by SuSv3 */
+-#undef L_exp2f         /*float       exp2f(float);*/
+ #undef L_fdimf         /*float       fdimf(float, float);*/
+ #undef L_fmaf          /*float       fmaf(float, float, float);*/
+ #undef L_fmaxf         /*float       fmaxf(float, float);*/
+ #undef L_fminf         /*float       fminf(float, float);*/
+-#undef L_log2f         /*float       log2f(float);*/
+ #undef L_nearbyintf    /*float       nearbyintf(float);*/
+ #undef L_nexttowardf   /*float       nexttowardf(float, long double);*/
+ #undef L_remquof       /*float       remquof(float, float, int *);*/
+@@ -70,6 +68,7 @@
+ float       coshf(float);
+ float       erfcf(float);
+ float       erff(float);
++float       exp2f(float);
+ float       expf(float);
+ float       expm1f(float);
+ float       fabsf(float);
+@@ -83,6 +82,7 @@
+ long long   llroundf(float);
+ float       log10f(float);
+ float       log1pf(float);
++float       log2f(float);
+ float       logbf(float);
+ float       logf(float);
+ long        lroundf(float);
+diff --git a/test/math/compile_test.c b/test/math/compile_test.c
+index 6148885..ab8c40c 100644
+--- a/test/math/compile_test.c
++++ b/test/math/compile_test.c
+@@ -18,7 +18,7 @@ r += cosf(float_x);
+ r += coshf(float_x);
+ r += erfcf(float_x);
+ r += erff(float_x);
+-/*r += exp2f(float_x); - uclibc does not have it (yet?) */
++r += exp2f(float_x);
+ r += expf(float_x);
+ r += expm1f(float_x);
+ r += fabsf(float_x);
+@@ -38,7 +38,7 @@ r += llrintf(float_x);
+ r += llroundf(float_x);
+ r += log10f(float_x);
+ r += log1pf(float_x);
+-/*r += log2f(float_x); - uclibc does not have it (yet?) */
++r += log2f(float_x);
+ r += logbf(float_x);
+ r += logf(float_x);
+ r += lrintf(float_x);
+-- 
+1.6.0.4

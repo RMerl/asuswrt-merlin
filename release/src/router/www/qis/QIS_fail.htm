@@ -1,0 +1,161 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="stylesheet" type="text/css" href="../form_style.css">
+<link rel="stylesheet" type="text/css" href="qis_style.css">
+<style>
+span{
+	border:0px solid #FFFFFF;
+	color:#FFFFFF;
+	font-size:14px;
+	font-family:Arial, Helvetica, sans-serif;
+	/*width:27px;*/
+	text-align:right;
+	margin:0px auto;
+	ime-mode:disabled;
+}
+</style>
+<script>
+var wantype = '';
+var wanstate = -1;
+var wansbstate = -1;
+var wanauxstate = -1;
+<% wanlink(); %>
+<% wanstate(); %>
+
+function QKfinish_load_body(){
+	parent.document.title = "<#Web_Title#> - <#QKSet_all_title#>";
+	parent.set_step("t3");
+	wantype = wanlink_type();
+
+	if( wansbstate == 2 && wantype != "dhcp" && wantype != "static"){
+		document.getElementById("FailReason").innerHTML = "<#qis_fail_desc1#>";
+		document.getElementById("AuthFail").style.display = "";
+	}
+	else if(wansbstate == 1 && wantype != "dhcp" && wantype != "static"){
+		document.getElementById("FailReason").innerHTML = "<#qis_fail_desc9#>";
+		document.getElementById("PPPConnFail").style.display = "";
+
+		if(wantype == "pppoe")
+			document.getElementById("wanproto").innerHTML = "PPPoE";
+		else if(wantype == "pptp")
+			document.getElementById("wanproto").innerHTML = "PPTP";
+		else if(wantype == "l2tp")
+			document.getElementById("wanproto").innerHTML = "L2TP";
+		else
+			document.getElementById("wanproto").innerHTML = "<#qis_fail_desc8#>";
+	}
+	else{
+		document.getElementById("FailReason").innerHTML = "<#qis_fail_desc7#>";
+		document.getElementById("ConnFail").style.display = "";
+	}
+}
+
+function redirect_page(redirect_flag){
+	document.redirectForm.action = "/qis/QIS_"+redirect_flag+".htm";
+	document.redirectForm.submit();
+}
+
+function goWireless(){
+	location.href = 'QIS_wireless.htm';
+}
+</script>
+</head>
+
+<body onLoad="QKfinish_load_body();" >
+<form method="post" name="redirectForm" action="" target="">
+<input type="hidden" name="prev_page" value="">
+<input type="hidden" name="current_page" value="/qis/QIS_fail.htm">
+<input type="hidden" name="next_page" value="">
+<input type="hidden" name="action_mode" value="">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_wait" value="">
+
+<div class="QISmain">
+	<div class="formfonttitle" style="padding:0 0 0 10;" id="FailReason"><#qis_fail_desc7#></div>
+	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img style="width: 700px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+	<br/>
+	
+	<div id="ConnFail" style="display:none;">
+		<p class="QISGeneralFont"><#qis_fail_desc5#></p>
+		<div>
+			<p class='QISGeneralFont'>
+				<#qis_fail_desc3#>
+				<#qis_fail_desc4#>
+			</p>
+		</div>
+	
+		<div class="apply_gen" style="margin-top:30px">
+			<input type="button" id="nextButton" value="<#QIS_type_title#>" onclick="redirect_page('internet_type');" class="button_gen_long" >
+			<input type="button" id="nextButton" value="<#QKSet_wireless_webtitle#>" onclick="goWireless();" class="button_gen_long">
+		</div>
+	</div>
+	
+	<div id="AuthFail" style="display:none;">
+		<p class="QISGeneralFont"><#qis_fail_desc2#></p>
+		<div>
+			<p class='QISGeneralFont'>
+				<#qis_fail_desc3#>
+				<#qis_fail_desc4#>
+			</p>
+		</div>
+	
+		<div class="apply_gen" style="margin-top:30px">
+			<input type="button" id="nextButton" value="<#QIS_type_title#>" onclick="redirect_page('internet_type');" class="button_gen_long" >
+			<input type="button" id="nextButton" value="<#QKSet_wireless_webtitle#>" onclick="goWireless();" class="button_gen_long">
+		</div>
+	<div>
+	
+	<div id="PPPConnFail" style="display:none;">
+		<p class="QISGeneralFont"><#qis_fail_desc6#></p>
+		<table class="QISform_finish" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
+			<tr>
+		  <th width="180"><span>Internet Type</span></th>
+		  <td class="QISformtd"><span id="wanproto"></span></td>
+			</tr>
+	
+			<tr>
+		  <th width="180"><span>Account Name</span></th>
+		  <td class="QISformtd"><span><% nvram_get("wan_pppoe_username"); %></span></td>
+			</tr>
+		
+			<tr>
+		  <th width="180"><span>Password</span></th>
+		  <td class="QISformtd"><span><% nvram_get("wan_pppoe_passwd"); %></span></td>
+			</tr>
+		
+			<tr>
+		  <th width="180"><span>WAN IP</span></th>
+		  <td class="QISformtd"><span><% nvram_get("wan_ipaddr_x"); %></span></td>
+			</tr>
+		
+			<tr>
+		  <th width="180"><span>LAN IP</span></th>
+		  <td class="QISformtd"><span><% nvram_get("lan_ipaddr"); %></span></td>
+			</tr>
+		
+			<tr>
+		  <th width="180"><span>MAC</span></th>
+		  <td class="QISformtd"><span><% nvram_get("et0macaddr"); %></span></td>
+			</tr>
+		</table>
+		<div>
+			<p class='QISGeneralFont'>
+				<#qis_fail_desc3#>
+				<#qis_fail_desc4#>
+			</p>
+		</div>
+	
+		<div class="apply_gen" style="margin-top:30px">
+			<input type="button" id="nextButton" value="<#QIS_type_title#>" onclick="redirect_page('internet_type');" class="button_gen_long" >
+			<input type="button" id="nextButton" value="<#QKSet_wireless_webtitle#>" onclick="goWireless();" class="button_gen_long">
+		</div>
+	<div>
+		
+</div>
+</form>
+</body>
+</html>

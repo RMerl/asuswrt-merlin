@@ -1,0 +1,12 @@
+#
+# linux/drivers/mtd/47xxnand/Kconfig
+#
+
+config MTD_BRCMNAND
+	tristate "Broadcom NAND Device Support"
+	default n
+	depends on MTD
+	help
+	  This enables support for accessing selected types of NAND flash
+	  devices through the Broadcom NAND controller.
+

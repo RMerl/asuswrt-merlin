@@ -1,0 +1,17 @@
+#***********************************************************************
+#
+# Makefile
+#
+#***********************************************************************
+CC = gcc
+
+CFLAGS = -g -rdynamic
+LIBS = -lpthread
+
+all: inotify
+inotify: event_queue.o inotify_utils.o inotify.o
+	$(CC) $(CFLAGS) $(LIBS)  $^ -o $@
+
+.PHONY: clean
+clean:
+	-rm -rf *.o inotify

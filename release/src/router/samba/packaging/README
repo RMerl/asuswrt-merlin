@@ -1,0 +1,38 @@
+Copyright (C) 1997-1998 Samba-Team
+Date:		November 16, 1998
+Updates:	First Release - 19970819
+		19981116
+===============================================================================
+
+Note:
+=====
+This directory is a public repository for platform specific files including
+build files for binary package distributions for specific operating systems
+as well as for source file distribution packages for those systems.
+
+The Example directory should be used as a guide for preparation of binary
+packages for distribution via the official samba ftp sites.
+
+The files contained here are intended for use only by those wishing to build
+distribution packages and are NOT considered suitable material for anyone who
+wants to just install Samba from the pristine source files contained under
+the ~/source directory.
+
+All contributions / modifications / additions / etc. to the packaging files
+should be sent to samba-bugs@samba.org with the subject marked:
+	PACKAGING: [add|mod|contrib] Your subject.
+
+Should you, or anyone you know of, have package build instructions and/or files
+that may be of use to the wider community of Samba users please mail the above
+account with subject:  PACKAGING: [avail] OS xxxxxxxxxx
+where xxxxxxxxxx is the operating system platform that may be contributed.
+
+We will contact the person who is offering to contribute package build details
+to ensure that their contribution can be included in the official Samba sources.
+
+In the event that anyone wishes to contribute package build information please
+indicate in your response how we may access a suitable system to ensure our
+ability to keep the binary distribution itself current with the released source.
+
+The future of cooperatively developed software such as Samba depends on the
+willingness of all partners to share the fruit of their labours.

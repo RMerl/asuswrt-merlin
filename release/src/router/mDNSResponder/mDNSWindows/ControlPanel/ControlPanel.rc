@@ -1,0 +1,252 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+#include "WinVersRes.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif\r\n"
+    "#include ""res\\ControlPanel.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_APPLET              ICON                    "res\\controlpanel.ico"
+IDI_FAILURE             ICON                    "res\\failure.ico"
+IDI_SUCCESS             ICON                    "res\\success.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDR_APPLET_PAGE1 DIALOGEX 0, 0, 262, 140
+STYLE DS_SETFONT | WS_CHILD | WS_CAPTION
+CAPTION "Hostname"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    LTEXT           "Enter a hostname for this computer. Other computers on the Internet will be able to reach your computer using this hostname.",
+                    IDC_STATIC,10,19,245,28
+    LTEXT           "Hostname:",IDC_STATIC,13,55,35,8
+    EDITTEXT        IDC_EDIT1,55,53,184,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Password...",IDC_BUTTON1,55,72,65,14
+    ICON            IDI_FAILURE,IDC_FAILURE,240,50,20,20,SS_CENTERIMAGE | 
+                    SS_REALSIZEIMAGE
+    ICON            IDI_SUCCESS,IDC_SUCCESS,240,50,20,20,SS_CENTERIMAGE | 
+                    SS_REALSIZEIMAGE | NOT WS_VISIBLE
+END
+
+IDR_APPLET_PAGE2 DIALOGEX 0, 0, 262, 140
+STYLE DS_SETFONT | WS_CHILD | WS_CAPTION
+CAPTION "Registration"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    CONTROL         "Domain:",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,13,54,41,10
+    COMBOBOX        IDC_COMBO2,55,53,193,46,CBS_DROPDOWN | CBS_SORT | 
+                    WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Password...",IDC_BUTTON1,55,72,65,14
+    LTEXT           "Check the box and enter a registration domain to enable Bonjour advertising beyond the local subnet. ",
+                    IDC_STATIC,10,19,233,23
+END
+
+IDR_SECRET DIALOGEX 0, 0, 251, 90
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Password"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,139,69,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,194,69,50,14
+    LTEXT           "Name:",IDC_STATIC,9,28,22,8
+    EDITTEXT        IDC_KEY,49,26,195,14,ES_AUTOHSCROLL
+    LTEXT           "Password:",IDC_STATIC,9,44,32,8
+    EDITTEXT        IDC_SECRET,49,42,195,14,ES_PASSWORD | ES_AUTOHSCROLL
+    LTEXT           "Enter a Password if your DNS server requires authentication.",
+                    IDC_STATIC,7,7,237,15
+END
+
+IDR_APPLET_PAGE3 DIALOGEX 0, 0, 262, 140
+STYLE DS_SETFONT | WS_CHILD | WS_CAPTION
+CAPTION "Browsing"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    LTEXT           "Choose which domains to browse using Wide-Area Bonjour",
+                    -1,7,16,248,12
+    CONTROL         "",IDC_BROWSE_LIST,"SysListView32",LVS_REPORT | 
+                    LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | WS_BORDER | 
+                    WS_TABSTOP,7,37,248,57
+    PUSHBUTTON      "Add",IDC_ADD_BROWSE_DOMAIN,152,100,50,14
+    PUSHBUTTON      "Remove",IDC_REMOVE_BROWSE_DOMAIN,205,100,50,14
+END
+
+IDR_APPLET_PAGE4 DIALOGEX 0, 0, 262, 140
+STYLE DS_SETFONT | WS_CHILD | WS_CAPTION
+CAPTION "Power Management"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    CONTROL         "Allow Bonjour to wake this machine on network access.",IDC_POWER_MANAGEMENT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,19,199,8
+    LTEXT           "Warning: Allowing Bonjour to bring the computer out of standby may cause this computer to periodically wakeup to refresh its network state.",IDC_STATIC,13,41,227,20
+END
+
+IDR_ADD_BROWSE_DOMAIN DIALOGEX 0, 0, 230, 95
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Add Browse Domain"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,117,74,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,173,74,50,14
+    COMBOBOX        IDC_COMBO1,35,42,188,100,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Domain:",IDC_STATIC,7,43,27,8
+    LTEXT           "The following domain will be added to your list of Bonjour browse domains.",
+                    IDC_STATIC,7,15,216,16
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDR_APPLET_PAGE1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 255
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 133
+    END
+
+    IDR_APPLET_PAGE2, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 255
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 133
+    END
+
+    IDR_SECRET, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 244
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 83
+    END
+
+    IDR_APPLET_PAGE3, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 255
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 133
+    END
+
+    IDR_ADD_BROWSE_DOMAIN, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 223
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 88
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDR_APPLET              "Bonjour"
+    IDS_APPLET_DESCRIPTION  "Wide-Area Bonjour Control Panel"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif
+#include "res\ControlPanel.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

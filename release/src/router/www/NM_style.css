@@ -1,0 +1,397 @@
+﻿/* CSS Document */
+.statusbody {
+	margin:5px auto 0px auto;	
+	background-color:#2A3539;
+}
+.statusTitle{	
+	font-family: "Times New Roman", Times, serif;
+	background: url(/images/statusTitle_gray.gif) repeat-x;
+	/*background-color: #2A3539; */
+	letter-spacing:1px;
+	font-weight: bold;
+	font-size:14px;
+	text-align:center;
+	height:36px;	
+	width:320px;
+	margin-left:45px;
+	-webkit-border-top-left-radius: 10px;
+	-webkit-border-top-right-radius: 10px;
+	-moz-border-radius-topleft: 10px;
+	-moz-border-radius-topright: 10px;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	-moz-box-shadow: 5px 5px 10px #333;
+	-webkit-box-shadow: 5px 5px 10px #333;
+	box-shadow: 5px 5px 10px #333;
+	behavior: url(/PIE.htc);
+	border-radius: 10px 10px 0 0;
+}
+
+.input{color:#3b5f71;border:1px solid #7398ac;background-color:#cae9f3;font-family :Verdana;font-size : 11px;padding-left:5px;}
+
+.NMdesp{
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-size:11px;
+	line-height:180%;
+	text-align:left;
+}
+
+.bgarrow{
+	/*background:url(images/bg-arrow.gif) no-repeat right 0px;*/
+}
+
+.bgarrow a:link, .bgarrow a:visited{
+	color:transparent;
+	border:0px;
+}
+
+.mapgroup{border: 2px dotted #999; width:250px;}
+
+#diskquota{
+	width:100px;
+	height:13px;
+	/*border:1px solid #999;*/
+	background:url(images/quotabar_bg.gif);
+}
+
+#iconRemote{ background:url(images/map-iconRemote.gif) no-repeat;	width:87px;	height:77px; cursor:pointer; display:none}
+
+#iconInternet{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 0%;	width:107px;	height:95px; cursor:pointer;}
+#iconInternet a:link{ background:url(images/New_ui/networkmap/map-iconInternet.png) no-repeat 0% 100%;	width:107px;	height:95px; cursor:pointer;}
+
+
+#iconRouter{ background:url(images/New_ui/networkmap/map-iconRouter.png) no-repeat 0% 100%;	width:107px;	height:95px; cursor:pointer; margin:0px 0px 0px 0px;}
+
+#iflock{ 
+}
+
+.iconUSBdisk{ background:url(images/New_ui/networkmap/map-iconUSBdisk.png) no-repeat 0% 0%;	width:91px; height:96px; cursor:pointer;}
+
+#iconClient{ background:url(images/New_ui/networkmap/map-iconClient.png) no-repeat 0% 0%; width:95px; height:95px; cursor:pointer;}
+.iconPrinter{ background:url(images/New_ui/networkmap/map-iconPrinter.png) no-repeat 0% 0%;	width:91px; height:96px; cursor:pointer;}
+.iconmodem{ background:url(images/New_ui/networkmap/map-iconmodem.png) no-repeat 0% 0%;	width:95px; height:96px; cursor:pointer;}
+#iconWebcam{ background:url(images/New_ui/networkmap/map-iconWebcam.png) no-repeat 0% 0%; width:89px; height:89px; cursor:pointer;}
+.iconNo{ background:url(images/New_ui/networkmap/devicebt_default.png) no-repeat; width:91px; height:91px;}
+
+.table1px{
+	border:1px solid #4d595d; 
+	background-color:#4d595d;
+	border-collapse: collapse;
+}
+.table1px img{	
+	margin:0px auto;
+	text-align:center;
+}
+.table1px tr, .table1px td{
+	border:1px solid #4d595d;	
+}
+.table1px tfoot{
+	color: #669900;
+	font-size:10px;
+}
+
+.table1px tbody td{font-size:11px; font-family:Verdana, Arial, Helvetica, sans-serif;}
+.table1px th{font-size:11px; font-family:Verdana, Arial, Helvetica, sans-serif;color:#FFFFFF;  background-color:#4d595d; text-align:left;}
+
+.Tablehead {font-family :Verdana;font-size : 11px;text-align:center;color:#000000; font-weight:bold;  line-height:190%; background-color:#6692B0;}
+.Tabletitle td{font-family :Verdana;font-size : 11px;text-align:center; color:#000000;line-height:190%;  background-color:#7aa3bd; }
+
+.top-message1 {font-family :Verdana;font-size : 11px;text-align:left;font-weight:normal;background-color:#7aa3bd}
+.top-message2 {font-family :Verdana;font-size : 11px;text-align:left;color:#23344d;font-weight:normal;background:#a7d2e2;}
+
+.clients{
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-size:13px;
+	line-height:150%;
+	margin-top:10px;
+}
+
+.clients span{
+	font-family:Arial Black, Verdana, Arial, Helvetica, sans-serif;
+	color:#569AC7;
+	font-size:15px;
+}
+
+.ifconnect{
+	width:14px;
+	height:14px;
+	background:url(images/disconnect.gif) no-repeat;
+	margin:0px 0 0 135px;
+	display:none;
+}
+
+.DMhint{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size:12px;	
+	line-height:150%;
+	display:none;
+	color:#FFCC00;
+	border:1px dashed #333;
+	background-color:#FFFFFF;
+	margin:5px;
+	padding:5px;
+}
+
+.navtext {
+	font-size:8pt; 
+	border: 1px double #999;
+	background-color: #FFC; 
+	color: #003366;
+	text-align:left;
+	width:auto;
+	padding:3px;
+	line-height:150%;
+}
+
+.hackiframe{	/* iframe for Hack IE 6.0 to avoid select menu over DIV layer. */
+	display:none;/*sorry for IE5*/
+	display/**/:block;/*sorry for IE5*/
+	position:absolute;/*must have*/
+	top:0;/*must have*/
+	left:0;/*must have*/
+	z-index:-1;/*must have*/
+	filter:mask();/*must have*/
+	width:3000px;/*must have for any big value*/
+	height:3000px/*must have for any big value*/;
+}
+
+.popup_bar_bg{
+	position:absolute;	
+	margin: auto;
+	top: 5px;
+	left: 0;
+	height:20px;
+	z-index:99;
+	background-color:red;
+	overflow:hidden;
+	font-size:12px;
+	color:#FFF;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	line-height:20px;
+	padding:2px;
+}
+
+.loadingBarBlock{
+	position:absolute;	
+	top: 0;
+	left: 0;
+	margin:100px auto;
+	width:99%;
+	z-index:100;
+	font-size:11px;	
+	line-height:16px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	color:#000;	
+}
+.hardware_title{
+	font-family:Verdana, Arial;
+	font-size:11px;
+	border-bottom:2px dotted #999;
+	text-align:left;
+	font-weight:bold;
+	width:95%;
+	margin:5px 0px 0px 5px;
+}
+
+.system_disk{
+	font-family:Verdana, Arial;
+	font-size:11px;
+	width:95%;
+	height:80px;
+	margin:5px 0px 10px 5px;
+}
+
+.system_disk_desc{ 
+	float:left;
+	width:auto;
+	text-align:left;
+	line-height:180%;
+}
+
+#mode_tag{
+	-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)"; /* IE8 */
+	filter:alpha(opacity=80);  /* IE5、IE5.5、IE6、IE7 */
+	opacity: .8;  /* Opera9.0+、Firefox1.5+、Safari、Chrome */
+	border:1px solid #999;
+	background-color:#FFFF15;
+	width:80px;
+	font-size:11px;
+	position:absolute;
+	margin:-18px 0px 0px 2px;
+	text-align:center;
+	font-family: Arial, Verdana;
+	z-index:1000;
+	color:#000;
+	cursor:pointer;
+	text-decoration:none;
+}
+.NMitem a{
+	color:#A7D2E2;
+}
+#arrow_down{
+	background: url(/images/arrow-down.gif) no-repeat center center; 
+	width:10px;
+	height:12px;
+	float:right;
+	position:absolute;
+}
+
+.statusTitle #helpname{
+	text-shadow: 1px 1px 0px black;
+	font-weight: bolder;
+	font-family:verdana;
+	text-align:center;
+	border:0px solid #333;
+}
+#statusIcon{
+	background:url(images/iframe-iconRouter.gif) no-repeat;
+	width:45px;
+	height:40px;
+	border:0px solid #999;
+	position:absolute;
+	margin:0 0 0 30px;
+}
+
+/*========================== router Tab =================================*/
+.r1{
+	padding-top:3px;
+	padding-bottom:0px;
+	padding-left:10px;
+	padding-right:10px;
+	height:25px;
+	width:50px;
+	background:url(images/tag-router2.gif) 0 bottom no-repeat;
+	font-weight:bold;
+	font-family :Verdana;
+	font-size : 12px;
+	color:#000000
+}
+
+.r2{
+	padding-top:3px;
+	padding-bottom:0px;
+	padding-left:10px;
+	padding-right:10px;
+	height:25px;
+	width:50px;
+	background-color:#A7D2E2;
+	background:url(images/tag-router1.gif) 0 bottom no-repeat;
+	font-weight:bold;
+	font-family:Verdana;
+	font-size:12px;
+	color:#b7e1f7;
+	text-decoration:none;
+	cursor:pointer;
+}
+
+.r2 a:link{font-family :Verdana;font-size : 12px;color:#6b8fa3;text-decoration:none;}
+.r2 a:visited{font-family :Verdana;font-size : 12px;color:#6b8fa3;text-decoration:none;}
+.r2 a:active{font-family :Verdana;font-size : 12px;color:#6b8fa3;text-decoration:none;}
+.r2 a:hover{font-family :Verdana;font-size : 12px;color:#ffffff;position:relative;top:1px;left:1px}
+
+.NM_radius_left{
+	-webkit-border-top-left-radius: 10px;
+	-webkit-border-bottom-left-radius: 10px;
+	-moz-border-radius-topleft: 10px;
+	-moz-border-radius-bottomleft: 10px;
+	border-top-left-radius: 10px;
+	border-bottom-left-radius: 10px;
+	
+	-moz-box-shadow: 12px 5px 10px #333;
+	-webkit-box-shadow: 12px 5px 10px #333;
+	box-shadow: 12px 5px 10px #333;
+	/*filter: alpha(opacity=98);
+	opacity: .98;*/
+	behavior: url(/PIE.htc);
+	-webkit-border-radius: 10px 0 0 10px;
+	-moz-border-radius: 10px 0 0 10px;	
+	border-radius: 10px 0 0 10px;
+}
+.NM_radius_right{
+	cursor:pointer;
+	-webkit-border-top-right-radius: 10px;
+	-webkit-border-bottom-right-radius: 10px;
+	-moz-border-radius-topright: 10px;
+	-moz-border-radius-bottomright: 10px;
+	border-top-right-radius: 10px;
+	border-bottom-right-radius: 10px;
+	
+	-moz-box-shadow: 10px 5px 10px #333;
+	-webkit-box-shadow: 10px 5px 10px #333;
+	box-shadow: 10px 5px 10px #333;
+	/*filter: alpha(opacity=98);
+	opacity: .98;*/
+	behavior: url(/PIE.htc);
+	-webkit-border-radius: 0 10px 10px 0;
+	-moz-border-radius: 0 10px 10px 0;	
+	border-radius: 0 10px 10px 0;
+}
+.NM_radius_top{
+	-webkit-border-top-left-radius: 10px;
+	-webkit-border-top-right-radius: 10px;
+	-moz-border-radius-topleft: 10px;
+	-moz-border-radius-topright: 10px;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	
+	-moz-box-shadow: 3px 10px 10px #333;
+	-webkit-box-shadow: 3px 10px 10px #333;
+	box-shadow: 3px 10px 10px #333;
+	/*filter: alpha(opacity=98);
+	opacity: .98;*/
+	behavior: url(/PIE.htc);
+	-webkit-border-radius: 10px 10px 0 0;
+	-moz-border-radius: 10px 10px 0 0;
+	border-radius: 10px 10px 0 0;
+}
+.NM_radius_bottom{
+	-webkit-border-bottom-right-radius: 10px;
+	-webkit-border-bottom-left-radius: 10px;
+	-moz-border-radius-bottomright: 10px;
+	-moz-border-radius-bottomleft: 10px;
+	border-bottom-right-radius: 10px;
+	border-bottom-left-radius: 10px;
+
+	-moz-box-shadow: 3px 8px 10px #333;
+	-webkit-box-shadow: 3px 8px 10px #333;
+	box-shadow: 3px 8px 10px #333;
+
+	/*filter: alpha(opacity=98);
+	opacity: .98;*/
+	behavior: url(/PIE.htc);
+	-webkit-border-radius: 0 0 10px 10px;
+	-moz-border-radius: 0 0 10px 10px;
+	border-radius: 0 0 10px 10px;
+}
+.NM_radius{
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	
+	-moz-box-shadow: 3px 11px 10px #333;
+	-webkit-box-shadow: 3px 11px 10px #333;
+	box-shadow: 3px 11px 10px #333;
+	
+	behavior: url(/PIE.htc);
+	border-radius: 10px 10px 10px 10px;
+}
+
+.style1 {color: #569AC7}
+.style4 {color: #333333}
+.style5 {
+	color: #FFF;
+	font-weight: bold;
+}
+.NM_table{
+	padding:10px; 
+	padding-top:15px;
+	position:relative;
+	width:740px;
+	background-color:#606E73;
+	border-width:0;
+	background: url(/images/wall0.gif) repeat;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	behavior: url(/PIE.htc);
+}

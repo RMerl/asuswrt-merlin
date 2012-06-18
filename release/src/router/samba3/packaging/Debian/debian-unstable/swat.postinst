@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+#
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+case "$1" in
+	configure)
+		;;
+	abort-upgrade|abort-remove|abort-deconfigure)
+		exit 0
+		;;
+	*)
+		echo "$0: Unknown action \"$1\""
+		exit 0
+		;;
+esac
+
+# Set up swat, turned off by default.
+update-inetd --group OTHER --add \
+ '#<off># swat\t\tstream\ttcp\tnowait.400\troot\t/usr/sbin/tcpd\t/usr/sbin/swat'
+
+#DEBHELPER#

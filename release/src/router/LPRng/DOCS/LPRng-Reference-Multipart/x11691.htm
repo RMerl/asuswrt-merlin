@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Running the Test Version Software</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Testing and Diagnostic Facilities" href=
+    "testing.htm">
+    <link rel="PREVIOUS" title=
+    "Setting Up The Test Version Spool Queues" href="x11663.htm">
+    <link rel="NEXT" title="Index" href="i11720.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x11663.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Appendix
+          C. Testing and Diagnostic Facilities</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "i11720.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN11691">C.3. Running the Test
+      Version Software</a></h1>
+
+      <p>Set your current directory to the location of the compiled
+      <var class="LITERAL">Test Version</var> executables. Execute
+      the various executables using <tt class=
+      "FILENAME">./cmd</tt>, or set <var class="LITERAL">.</var>
+      <span class="emphasis"><i class="EMPHASIS">as the first entry
+      in the PATH</i></span> . If it is not the first entry, then
+      the standard system executables will be used.</p>
+
+      <ol type="1">
+        <li>
+          <p>Run <tt class="FILENAME">./checkpc</tt>. this will
+          print out the various values for the spool queues in the
+          <var class="LITERAL">Test Version</var> setup. If the
+          <var class="LITERAL">t1</var>, <var class=
+          "LITERAL">t2</var>,... spool queues are not displayed,
+          make sure that the LPD_CONF environment variable is set
+          correctly and that you are using the <var class=
+          "LITERAL">Test Version</var> executable.</p>
+        </li>
+
+        <li>
+          <p>Run <var class="LITERAL">./checkpc -f</var>. This will
+          fix up the (deliberately introduced) problems in the
+          spool queues.</p>
+        </li>
+
+        <li>
+          <p>Next, run <var class="LITERAL">./lpd -F</var> in one
+          window, and then run <var class="LITERAL">./lpq -a</var>
+          in another window. This will check that the server is
+          working.</p>
+        </li>
+
+        <li>
+          <p>You can now amuse yourself by sending jobs, setting up
+          permissions checking, and other chores.</p>
+        </li>
+
+        <li>
+          <p>When everything appears to be working correctly, you
+          can then remove the <var class="LITERAL">Test
+          Version</var> flag from the <tt class=
+          "FILENAME">src/Makefile</tt>, recompile, and install the
+          <b class="APPLICATION">LPRng</b> software.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x11663.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "i11720.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Setting Up The
+          Test Version Spool Queues</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "testing.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Index</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

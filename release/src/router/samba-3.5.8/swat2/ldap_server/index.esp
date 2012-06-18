@@ -1,0 +1,13 @@
+<% page_header("columns", "LDAP Server", "servers"); 
+
+  libinclude("base.js");
+  libinclude("management.js");
+%>
+
+<h1>LDAP Server</h1>
+
+<%
+writefln("Status: %s\n", stream_server_status("ldap"));
+%>
+
+<% page_footer(); %>

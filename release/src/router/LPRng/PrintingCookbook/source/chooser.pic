@@ -1,0 +1,19 @@
+.PS
+C1: box wid 1.5 "lpr -Pmain";
+
+B1: box wid 1.5 "main" with .w at C1.e+(.5,0);
+
+P1: box wid 1.5 with .w at B1.e+(.5,0) "s1:";
+P2: box wid 1.5 with .n at P1.s+(0,-.5) "s2:";
+P3: box wid 1.5 with .n at P2.s+(0,-.5) "s2:";
+
+arrow from C1.e to B1.w;
+arrow dashed from B1.e to P1.w;
+arrow dashed from B1.e to P2.w;
+arrow dashed from B1.e to P3.w;
+
+"main:" ljust at C1.sw+(0,-.5);
+"  :chooser=/.../chooser" ljust at C1.sw+(.125,-.5-.2);
+"  :destinations=s1@host1,s2@host2,s3@host3" ljust at C1.sw+(.125,-.5-.4);
+"Queues can be on different servers" ljust at C1.sw+(0,-1.25);
+.PE

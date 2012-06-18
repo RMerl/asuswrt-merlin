@@ -1,0 +1,84 @@
+
+                       NOTE WELL
+                       =========
+
+	*NONE* of the items are being actively worked on.
+        So, if you're interested in one of these features,
+        it means you'll have to submit a patch... :-)
+
+
+read list of interfaces with SIOCGIFCONF (AF_INET6 support in the kernel would
+be nice) or from /proc
+
+Quoting Peter Bieringer (peter@bieringer.de):
+> Das war's schon. Ach ja, wenn Du mal eine neue Version machst, kannst Du
+> noch einen Schalter einbauen, damit radvd trotz debug-level >0 auf Wunsch
+> als daemon in den Hintergrund starten kann?
+[ Peter wants that a debugging level greater than 0 doesn't stop radvd
+from forking.]
+
+support for few protocol constants defined in RFC 4861 Sec 10 is missing.
+
+consider whether UnicastOnly flag should be detected by radvdump.
+
+read the man pages one more time and make sure their are understandable
+and English is correct
+
+The following parts of RFC4861 are not implemented:
+ - section 6.2.5: when AdvSendAdvertisements changes to FALSE, we don't send 
+   a final RA with zero Router Lifetime (we just send it when shutting down).
+   (SHOULD)
+ - section 6.2.8: if the link-local address of the router changes, it should
+   multicast a few RAs from the old address with zero router lifetime, and a
+   few from the new address. (SHOULD).
+
+Consider whether to support RFC 4286 (Multicast Router Discovery).
+
+Consider whether to support multiple IPv4 addresses with Base6to4Interface
+(currently the code just picks one).
+
+Consider whether to support multiple prefixes and routes with a single
+configuration line (instead of having to specify each prefix/route
+separately) somewhat similar to how RDNSS configuration already supports.
+
+Consider whether to support a generalization of Base6to4Interface for
+arbitrary IPv6 prefixes, to be used for automatic generation of downstream
+prefixes.  Also consider whether this would need to support multiple IPv6
+prefixes on the upstream interfaces.  See question 3 in README for more on
+this.
+
+Use getifaddrs() instead of ioctl SIOCGIFADDR and other friends.  The
+problem with this is that e.g. RHL73's glibc didn't support getifaddrs(),
+and before glibc 2.3.3 getifaddrs() didn't use netlink so it didn't work
+well with IPv6.  These old compat concerns are likely moot now..
+
+Consider whether radvd should work around missing/broken interfaces by
+default, especially if a previously working interface gets disabled.
+
+Implement Secure Neighbor Discovery (RFC 3971).
+
+Interface reconfiguration is only supported on Linux.  Consider whether to
+support that (and privilege separation as a result) on BSD as well.
+
+The restrictions of the (privilege separation) master process could
+be restricted as currently it basically only needs to write to /proc,
+do some logging and nothing else.
+
+radvd does not support splitting up RAs to multiple packets (RFC4861 6.2.3
+last paragraph). In practise this limits advertising to ~45 prefixes on a 
+link, but there is no reason to be able to so.  In order to avoid
+fragmenting packets yet support receiving full-size frames, our hack is to
+have a bigger receive than send buffer. We could try using setsockopt
+IPV6_DONTFRAG, but at least Linux glibc doesn't appear to support it yet.
+
+Triggered by: https://bugzilla.redhat.com/show_bug.cgi?id=554125
+Known problems (probably can't do anything about these):
+ - If interface MAC address changes, radvd will keep sending the old MAC
+   in its LL option (until HUP signal).  The kernel will keep sending
+   Ethernet frames with the old MAC until interface is flapped.
+   More: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=508466
+
+http://lists.litech.org/pipermail/radvd-devel-l/2009-August/000420.html
+localtime() used in vlog() is not reentrant, and is not safe in signal
+handling context.  There may be other such functions as well. It's not clear
+what could be done about that.

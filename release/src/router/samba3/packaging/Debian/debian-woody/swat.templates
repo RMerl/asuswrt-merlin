@@ -1,0 +1,6 @@
+Template: swat/smb_conf_warn
+Type: note
+Description: Your smb.conf will be re-written!
+ SWAT will rewrite your smb.conf file. It will rearrange the entries and
+ delete all comments, include= and copy= options. If you have a carefully
+ crafted smb.conf then back it up or don't use SWAT!

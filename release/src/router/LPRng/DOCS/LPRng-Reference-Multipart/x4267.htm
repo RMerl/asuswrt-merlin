@@ -1,0 +1,129 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Job Pretty Printing, Banners, Priority, and
+    Accounting</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="lpr - Job Spooler Program" href=
+    "lpr.htm">
+    <link rel="PREVIOUS" title="lpr - Job Spooler Program" href=
+    "lpr.htm">
+    <link rel="NEXT" title="Job Class and Priority " href=
+    "classpriority.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "lpr.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 6.
+          <b class="APPLICATION">lpr</b> - Job Spooler Program</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "classpriority.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN4267">6.2. Job Pretty Printing,
+      Banners, Priority, and Accounting</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">ab</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">always print
+          banner</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">sh</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">suppress header
+          (banner)</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The legacy or vintage BSD pretty printing facility support
+      allowed users to specify the title (<var class="LITERAL">-T
+      title</var>), indentation (<var class="LITERAL">-i
+      indent</var>), width (<var class="LITERAL">-i indent</var>)
+      of output for pretty printing. These probably will not have
+      any effect, but their values are placed in the control file
+      and sent to the <b class="APPLICATION">lpd</b> server.</p>
+
+      <p>The job name (<var class="LITERAL">-J name</var>) and no
+      banner page (<var class="LITERAL">-h</var>) literals also
+      cause information to be placed in the control file. The <var
+      class="LITERAL">-J</var> value is used to specify a job name
+      on a banner page, and is placed in the control file. The <var
+      class="LITERAL">-h</var> (no header) has the strange effect
+      of <span class="emphasis"><i class="EMPHASIS">not</i></span>
+      putting <span class="emphasis"><i class="EMPHASIS">banner
+      name</i></span> information in the control file. Apparently,
+      if you do not have a name for your banner then no name will
+      be sent.</p>
+
+      <p>If the <var class="LITERAL">:sh</var> option is explicitly
+      specified in a printcap entry for the <b class=
+      "APPLICATION">lpr</b> client, then it has the effect of the
+      <var class="LITERAL">-h</var> literal. However, the <var
+      class="LITERAL">:ab</var> (Always Print Banner) option can be
+      used on the print server to always force a banner to be
+      printed even if the user does not specify a banner.</p>
+
+      <p>Finally, the <var class="LITERAL">-R</var> literal allows
+      additional accounting information to be placed in the control
+      file.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "lpr.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "classpriority.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top"><b class=
+          "APPLICATION">lpr</b> - Job Spooler Program</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "lpr.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Job Class and
+          Priority</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

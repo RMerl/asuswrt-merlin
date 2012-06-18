@@ -1,0 +1,57 @@
+!==
+!== UNIX_SECURITY.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:	John H Terpstra <jht@samba.org>
+Date:		July 5, 1998
+Status:		Current
+
+Subject:	SETTING UNIX FILE SYSTEM SECURITY
+===============================================================================
+The following excerpt from a bug report demonstrates the need to
+understand Unix file system security and to manage it correctly.
+
+Quote:
+======
+> We are unable to keep individual users from mapping to any other user's
+> home directory once they have supplied a valid password! They only need
+> to enter their own password. I have not found *any* method that I can
+> use to configure samba to enforce that only a user may map their own
+> home directory.
+> 
+> User xyzzy can map his home directory. Once mapped user xyzzy can also map
+> *anyone* elses home directory!
+
+ANSWER:
+=======
+This is not a security flaw, it is by design. Samba allows
+users to have *exactly* the same access to the UNIX filesystem
+as they would if they were logged onto the UNIX box, except
+that it only allows such views onto the file system as are
+allowed by the defined shares.
+
+This means that if your UNIX home directories are set up
+such that one user can happily cd into another users
+directory and do an ls, the UNIX security solution is to 
+change the UNIX file permissions on the users home directories
+such that the cd and ls would be denied.
+
+Samba tries very had not to second guess the UNIX administrators
+security policies, and trusts the UNIX admin to set
+the policies and permissions he or she desires.
+
+Samba does allow the setup you require when you have set the
+"only user = yes" option on the share, is that you have not set the
+valid users list for the share.
+
+Note that only user works in conjunction with the users= list,
+so to get the behavior you require, add the line :
+
+users = %S
+
+this is equivalent to:
+
+valid users = %S
+
+to the definition of the [homes] share, as recommended in
+the smb.conf man page.
+

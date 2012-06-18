@@ -1,0 +1,8 @@
+!==
+!== Support.txt for Samba release 2.0.10 23 Jun 2001
+!==
+The Samba Consultants List
+==========================
+
+This list has now moved to the support page of the 
+Samba web pages at http://samba.org.au/samba/

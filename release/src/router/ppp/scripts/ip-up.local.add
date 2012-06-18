@@ -1,0 +1,24 @@
+
+#
+# This sample code shows you one way to modify your setup to allow automatic
+# configuration of your resolv.conf for peer supplied DNS addresses when using
+# the `usepeerdns' option.
+#
+# In my case I just added this to my /etc/ppp/ip-up.local script. You may need to 
+# create an executable script if one does not exist.
+#
+# Nick Walker (nickwalker@email.com)
+#
+
+if [ -n "$USEPEERDNS" -a -f /etc/ppp/resolv.conf ]; then
+	rm -f /etc/ppp/resolv.prev
+	if [ -f /etc/resolv.conf ]; then
+		cp /etc/resolv.conf /etc/ppp/resolv.prev
+		grep domain /etc/ppp/resolv.prev > /etc/resolv.conf
+		grep search /etc/ppp/resolv.prev >> /etc/resolv.conf
+		cat /etc/ppp/resolv.conf >> /etc/resolv.conf
+	else
+		cp /etc/ppp/resolv.conf /etc
+	fi
+fi
+

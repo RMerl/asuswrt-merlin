@@ -1,0 +1,22 @@
+#!/bin/sh -e
+# Rene Mayrhofer <rmayr@vianova.at>, Oct. 1999
+# I hereby put this script under the Artistic License.
+
+. /usr/share/debconf/confmodule.sh
+
+db_input high pptpd/localip
+db_input high pptpd/remoteip
+
+# ask if mppe encryption should be used
+db_input pptpd/mppe
+db_go
+
+# check the answer(s)
+db_get pptpd/mppe
+if [ "$RET" = "false" ]; then
+	# display a warning
+	db_input high pptpd/no-mppe
+	db_go
+fi
+
+

@@ -1,0 +1,11 @@
+
+prefix=/usr
+exec_prefix=${prefix}
+libdir=/usr/lib
+includedir=${prefix}/include
+
+Name:		libipq
+Description:	Interface to the (old) ip_queue mechanism
+Version:	1.4.12.1
+Libs:		-L${libdir} -lipq
+Cflags:		-I${includedir}

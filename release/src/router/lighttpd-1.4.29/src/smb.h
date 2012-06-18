@@ -1,0 +1,2 @@
+
+void smbtest(int a);

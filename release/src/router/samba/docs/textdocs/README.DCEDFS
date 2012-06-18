@@ -1,0 +1,78 @@
+Contributor:	Jim Doyle <doyle@oec.com>
+Date:		06-02-95
+Status:		Current but needs updating
+
+Subject:	Basic DCE/DFS Support for SAMBA 1.9.13
+=============================================================================
+
+Functionality:
+--------------
+	
+	Per-instance authentication for DCE/DFS.
+ 
+Missing Functionality in this Implementation:
+---------------------------------------------
+
+	* No automatic refresh of credentials
+
+	  To do so would not be that hard.. One could simply
+	  stash the clear-text key in memory, spawn a key management
+	  thread to wake up right before credentials expire and
+	  refresh the login context.
+
+	* No UNIX Signals support (SIGCLD, SIGPIPE, SIGHUP, SIGBUS, SIGSEGV)
+
+
+	  There is no support for signal processing in Samba daemons
+	  that need to authenticate with DCE. The explanation for this
+	  is that the smbd is linked against thread-safe libraries in
+	  order to be able to use DCE authentication mechanisms. 
+	  Because smbd uses signal() and fork(), it represents the
+	  worst case scenario for DCE portability. In order
+	  to properly support signals in a forked server environment,
+	  some rework of smbd is needed in order to properly
+	  construct, shutdown and reconstruct asynchronous signal
+	  handling threads and synchronous signal traps across the
+	  parent and child. I have not had contiguous time to work
+	  on it, I expect it to be a weeks worth of work to cleanly
+	  integrate thread-safe signal handing into the code and 
+	  test it. Until I can get to this task, I will leave it up
+	  to someone adventurous enough to engineer it and negotiate
+	  with Andrew to integrate the changes into the mainline branch.
+
+	  The lack of full signal support means that you cannot
+	  rely upon SIGHUP-ing the parent daemon to refresh
+          the configuration data. Likewise, you cannot take advantage
+	  of the builtin SIGBUS/SIGSEGV traps to diagnose failures.
+	  You will have to halt Samba in order to make changes
+	  and then have them take effect.
+
+	  The SMBD server as it stands is suitable to use if you
+	  already have experience with configuring and running
+	  SAMBA.
+
+Tested Platforms:
+-----------------
+
+		HP-UX 9.05 / HP-UX DCE 1.2.1
+		AIX 3.2.5  / AIX DCE/6000 1.3
+		DEC OSF-1 3.0 / DEC DCE 1.3
+
+Building:
+---------
+
+	- Uncomment the the appropriate block in the Makefile
+	  for the platform you wish to build on.
+
+	- Samples of Samba server configuration files for our
+	  DFS environment are included in samples.dcedfs/
+
+
+
+Bugs, Suggestions, etc..
+--------------------------
+
+	Please post them to the mailing list. 
+	That way I will see them and they will become part of 
+	the archives so others can share the knowledge.
+

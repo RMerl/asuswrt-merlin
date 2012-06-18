@@ -1,0 +1,178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Debugging</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Job Processing" href="jobsteps.htm">
+    <link rel="PREVIOUS" title="Forwarding Jobs" href="bk.htm">
+    <link rel="NEXT" title="Filters " href="filters.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "bk.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          15. Job Processing</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "filters.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="DEBUGGING">15.12.
+      Debugging</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">debugging=</var><span class=
+          "emphasis"><i class="EMPHASIS">debugging
+          options</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">full_time</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">full or extended time
+          format</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">ms_time_resolution</var> FLAG
+          <span class="emphasis"><i class="EMPHASIS">millisecond
+          time resolution</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">syslog_device=</var><span class=
+          "emphasis"><i class="EMPHASIS">syslog alternative
+          device</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">use_info_cache</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">cache printcap and
+          other information</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The <b class="APPLICATION">LPRng</b> software has a very
+      powerful debugging capability. Since most printing problems
+      occur on remote systems where it is impossible to run
+      debuggers, and since most systems do not do core dumps of
+      SETUID ROOT programs, the <b class="APPLICATION">LPRng</b>
+      software provides a very verbose set of log file trace
+      messages.</p>
+
+      <p>First, serious errors or other information are logged
+      using the <code class="FUNCTION">syslog()</code> facilities.
+      If these are not present on a system, then the messages are
+      logged to the device specified by <var class=
+      "LITERAL">syslog_device</var>.</p>
+
+      <p>For client programs, the debugging options are specified
+      on the command line and output is directed to <acronym class=
+      "ACRONYM">STDERR</acronym>. For the <b class=
+      "APPLICATION">lpd</b> server, debugging commands can be
+      specified on the command line OR as the <var class=
+      "LITERAL">db=options</var> printcap value. Output is directed
+      to the log file (<var class="LITERAL">lf</var> option value,
+      default log).</p>
+
+      <p>A typical debug entry has the format <var class=
+      "LITERAL">2,network+1,database</var>. This sets the general
+      debugging level to 2, network debugging to 1 and the database
+      debugging level to the default. The following debugging
+      options and levels are supported.</p>
+
+      <ul>
+        <li>
+          <p>nnn - general purpose debugging level</p>
+        </li>
+
+        <li>
+          <p>network - network debugging</p>
+        </li>
+
+        <li>
+          <p>database - database debugging</p>
+        </li>
+
+        <li>
+          <p>receive - job or command reception debugging</p>
+        </li>
+
+        <li>
+          <p>print - detailed job printing debugging</p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The <var class="LITERAL">full_time</var> flag forces the
+      logging and other information which has timestamps to have a
+      full (year, month, day, etc.) timestamp. The <var class=
+      "LITERAL">ms_time_resolution</var> flag forces millisecond
+      time resolution in the time stamp.</p>
+
+      <p>The <var class="LITERAL">use_info_cache</var> (default ON)
+      causes <b class="APPLICATION">lpd</b> to cache printcap and
+      configuration information. This is desirable except when
+      trying to change values in printcap files and test the
+      results. By using <var class="LITERAL">use_info_cache@</var>
+      in the configuration information, you can get immediate
+      responses. Also, see <a href="lpcreread.htm">lpc reread</a>
+      for another method.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "bk.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "filters.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Forwarding
+          Jobs</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "jobsteps.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Filters</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

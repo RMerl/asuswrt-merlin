@@ -1,0 +1,28 @@
+<samba:parameter name="homedir map"
+	         context="G"
+			 type="string"
+		 advanced="1" developer="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+ <description>
+	<para>
+	If <smbconfoption name="nis homedir"/> is <constant>yes</constant>, and <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> is also acting 	as a Win95/98 <parameter moreinfo="none">logon server</parameter> 
+	then this parameter specifies the NIS (or YP) map from which the server for the user's 	home directory should be extracted.  
+	At present, only the Sun auto.home map format is understood. The form of the map is:
+<programlisting>
+<command moreinfo="none">username server:/some/file/system</command>
+</programlisting>
+	and the program will extract the servername from before the first ':'.  There should probably be a better parsing system 
+	that copes with different map formats and also Amd (another automounter) maps.
+	</para>
+		
+	<note><para>
+	A working NIS client is required on the system for this option to work.
+	</para></note>
+</description>
+<related>nis homedir</related>
+<related>domain logons</related>
+
+<value type="default"></value>
+<value type="example">amd.homedir</value>
+</samba:parameter>

@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Data File Transfer</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="RFC 1179 - Line Printer Daemon Protocol "
+    href="rfc1179ref.htm">
+    <link rel="PREVIOUS" title="Job Transfer " href=
+    "jobtransfer.htm">
+    <link rel="NEXT" title="Control File Contents" href=
+    "x10227.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "jobtransfer.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          19. RFC 1179 - Line Printer Daemon Protocol</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x10227.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN10191">19.4. Data File
+      Transfer</a></h1>
+
+      <p>As mentioned before a data file is transferred using the
+      command below.</p>
+
+      <div class="INFORMALTABLE">
+        <a name="AEN10194"></a>
+
+        <table border="1" frame="border" rules="all" class=
+        "CALSTABLE">
+          <col>
+          <col>
+
+          <thead>
+            <tr>
+              <th>Command</th>
+
+              <th>Purpose</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>\003nnnn dfname</td>
+
+              <td>data file transfer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <br>
+      <br>
+
+      <p>From RFC1179: <a name="AEN10205"></a></p>
+
+      <blockquote class="BLOCKQUOTE">
+        <p>The data file may contain any 8 bit values at all. The
+        total number of bytes in the stream may be sent as the
+        first operand, otherwise the field should be cleared to 0.
+        The name of the data file should start with ASCII "dfA".
+        This should be followed by a three digit job number. The
+        job number should be followed by the host name which has
+        constructed the data file. Interpretation of the contents
+        of the data file is determined by the contents of the
+        corresponding control file.</p>
+      </blockquote>
+      <br>
+      <br>
+
+      <p>There are several surprises in RFC1179.</p>
+
+      <ol type="1">
+        <li>
+          <p>Apparently a job should only consist of a single data
+          file. This is a severe limitation, and in fact the BSD <b
+          class="APPLICATION">lpr</b> and other print spoolers
+          process jobs with multiple data files. By convention,
+          these data files have names of the form <var class=
+          "LITERAL">dfA</var>, <var class="LITERAL">dfB</var>, ...
+          <var class="LITERAL">dfZ</var>, <var class=
+          "LITERAL">dfa</var>, <var class="LITERAL">dfz</var>.</p>
+        </li>
+
+        <li>
+          <p>The RFC does not specify that the control file and
+          data file job numbers must be identical. Most
+          implementations follow this convention, which simplifies
+          life tremendously.</p>
+        </li>
+
+        <li>
+          <p>The RFC does not specify that the control file and
+          data file job host names must be identical. Most
+          implementations follow this convention, which simplifies
+          life tremendously.</p>
+        </li>
+
+        <li>
+          <p>A zero length data file does not cause a data transfer
+          to take place. <b class="APPLICATION">LPRng</b> modifies
+          this action to be slightly different. When a zero length
+          data file transfer is indicated, all of the input until
+          the connection is closed is used as the contents of the
+          data file.</p>
+
+          <p>When <span class="emphasis"><i class=
+          "EMPHASIS">piping</i></span> into the <b class=
+          "APPLICATION">lpr</b> program, this can be very useful as
+          it eliminates the need to create temporary files on the
+          local host. Note that some print spoolers do not use this
+          interpretation, and this option should be used
+          carefully.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "jobtransfer.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x10227.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Job
+          Transfer</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "rfc1179ref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Control File
+          Contents</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,45 @@
+Allows you to mark a received packet basing on its IP address. This
+can replace many mangle/mark entries with only one, if you use
+firewall based classifier.
+
+This target is to be used inside the mangle table, in the PREROUTING,
+POSTROUTING or FORWARD hooks.
+.TP
+.BI "--addr " "src/dst"
+Use source or destination IP address.
+.TP
+.BI "--and-mask " "mask"
+Perform bitwise `and' on the IP address and this mask.
+.TP
+.BI "--or-mask " "mask"
+Perform bitwise `or' on the IP address and this mask.
+.P
+The order of IP address bytes is reversed to meet "human order of bytes":
+192.168.0.1 is 0xc0a80001. At first the `and' operation is performed, then
+`or'.
+
+Examples:
+
+We create a queue for each user, the queue number is adequate
+to the IP address of the user, e.g.: all packets going to/from 192.168.5.2
+are directed to 1:0502 queue, 192.168.5.12 -> 1:050c etc.
+
+We have one classifier rule:
+.IP
+tc filter add dev eth3 parent 1:0 protocol ip fw
+.P
+Earlier we had many rules just like below:
+.IP
+iptables -t mangle -A POSTROUTING -o eth3 -d 192.168.5.2 -j MARK
+--set-mark 0x10502
+.IP
+iptables -t mangle -A POSTROUTING -o eth3 -d 192.168.5.3 -j MARK
+--set-mark 0x10503
+.P
+Using IPMARK target we can replace all the mangle/mark rules with only one:
+.IP
+iptables -t mangle -A POSTROUTING -o eth3 -j IPMARK --addr=dst
+--and-mask=0xffff --or-mask=0x10000
+.P
+On the routers with hundreds of users there should be significant load
+decrease (e.g. twice).

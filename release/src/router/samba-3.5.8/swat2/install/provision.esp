@@ -1,0 +1,90 @@
+<% page_header("columns", "Provisioning", "install"); 
+
+  include("/scripting/forms.js");
+  libinclude("base.js");
+  libinclude("provision.js");
+%>
+
+<h1>Samba4 provisioning</h1>
+
+<%
+var f = FormObj("Provisioning", 0, 2);
+var i;
+var lp = loadparm_init();
+if ((session.authinfo.user_class == "ADMINISTRATOR")
+	 || (session.authinfo.user_class == "SYSTEM")) {
+
+	if (lp.get("realm") == "") {
+		lp.set("realm", lp.get("workgroup") + ".example.com");
+	}
+
+	var subobj = provision_guess();
+	/* Don't supply default password for web interface */
+	subobj.ADMINPASS = "";
+
+	f.add("REALM", "DNS Domain Name");
+	f.add("DOMAIN", "NetBIOS Domain Name");
+	f.add("HOSTNAME", "Hostname");
+	f.add("ADMINPASS", "Administrator Password", "password");
+	f.add("CONFIRM", "Confirm Password", "password");
+	f.add("DOMAINSID", "Domain SID");
+	f.add("HOSTIP", "Host IP");
+	f.add("DEFAULTSITE", "Default Site");
+	f.submit[0] = "Provision";
+	f.submit[1] = "Cancel";
+
+	if (form['submit'] == "Cancel") {
+		redirect("/");
+	}
+
+	if (form['submit'] == "Provision") {
+		for (r in form) {
+			subobj[r] = form[r];
+		}
+	}
+
+	for (i=0;i<f.element.length;i++) {
+		f.element[i].value = subobj[f.element[i].name];
+	}
+
+	if (form['submit'] == "Provision") {
+	
+        	/* overcome an initially blank smb.conf */
+		lp.set("realm", subobj.REALM);
+		lp.set("workgroup", subobj.DOMAIN);
+		lp.reload();
+		var goodpass = (subobj.CONFIRM == subobj.ADMINPASS);
+
+		var paths = provision_default_paths(subobj);
+		provision_fix_subobj(subobj, paths);
+
+		if (!goodpass) {
+			write("<h3>Passwords don't match.  Please try again.</h3>");
+			f.display();
+		} else if (subobj.ADMINPASS == "") {
+			write("<h3>You must choose an administrator password.  Please try again.</h3>");
+			f.display();
+		} else if (!provision_validate(subobj, writefln)) {
+			f.display();
+		} else {
+			if (!provision(subobj, writefln, false, paths, 
+				       session.authinfo.session_info, session.authinfo.credentials, false)) {
+				writefln("Provision failed!");
+			} else if (!provision_dns(subobj, writefln, paths,
+						  session.authinfo.session_info, session.authinfo.credentials)) {
+				writefln("DNS Provision failed!");
+			} else {
+				writefln("Provision Complete!");
+			}
+		}
+	} else {
+		f.display();
+	}
+} else {
+	redirect("/");
+}
+
+%>
+
+
+<% page_footer(); %>

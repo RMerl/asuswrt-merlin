@@ -1,0 +1,86 @@
+
+
+ 
+
+
+
+<html><head><title>smbstatus (1)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>smbstatus (1)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    smbstatus - report on current Samba connections
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+     
+<p><strong>smbstatus</strong> [<a href="smbstatus.1.html#minusP">-P</a>] [<a href="smbstatus.1.html#minusb">-b</a>] [<a href="smbstatus.1.html#minusd">-d</a>] [<a href="smbstatus.1.html#minusL">-L</a>] [<a href="smbstatus.1.html#minusp">-p</a>] [<a href="smbstatus.1.html#minusS">-S</a>] [<a href="smbstatus.1.html#minuss">-s configuration file</a>] [<a href="smbstatus.1.html#minusu">-u username</a>]
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This program is part of the <strong>Samba</strong> suite.
+<p><strong>smbstatus</strong> is a very simple program to list the current Samba
+connections.
+<p><a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+    
+<p><dl>
+<p><a name="minusP"></a>
+<p></p><dt><strong><strong>-P</strong></strong><dd> If samba has been compiled with the profiling option,
+print only the contents of the profiling shared memory area.
+<p><a name="minusb"></a>
+<p></p><dt><strong><strong>-b</strong></strong><dd> gives brief output.
+<p><a name="minusd"></a>
+<p></p><dt><strong><strong>-d</strong></strong><dd> gives verbose output.
+<p><a name="minusL"></a>
+<p></p><dt><strong><strong>-L</strong></strong><dd> causes smbstatus to only list locks.
+<p><a name="minusp"></a>
+<p></p><dt><strong><strong>-p</strong></strong><dd> print a list of <a href="smbd.8.html"><strong>smbd</strong></a>
+processes and exit. Useful for scripting.
+<p><a name="minusS"></a>
+<p></p><dt><strong><strong>-S</strong></strong><dd> causes smbstatus to only list shares.
+<p><a name="minuss"></a>
+<p></p><dt><strong><strong>-s configuration file</strong></strong><dd> The default configuration file name is
+determined at compile time. The file specified contains the
+configuration details required by the server. See <a href="smb.conf.5.html"><strong>smb.conf
+(5)</strong></a> for more information.
+<p><a name="minusu"></a>
+<p></p><dt><strong><strong>-u username</strong></strong><dd> selects information relevant to <em>username</em>
+only.
+<p></dl>
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite.
+<p><a name="SEEALSO"></a>
+<h2>SEE ALSO</h2>
+    
+<p><a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a>, <a href="smbd.8.html"><strong>smbd (8)</strong></a>
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+</body>
+</html>

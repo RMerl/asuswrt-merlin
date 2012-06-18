@@ -1,0 +1,20 @@
+Source: dropbear
+Section: net
+Priority: optional
+Maintainer: Gerrit Pape <pape@smarden.org>
+Build-Depends: libz-dev
+Standards-Version: 3.7.3.0
+
+Package: dropbear
+Architecture: any
+Depends: ${shlibs:Depends}
+Suggests: openssh-client, runit
+Description: lightweight SSH2 server and client
+ dropbear is a SSH 2 server and client designed to be small enough to
+ be used in small memory environments, while still being functional and
+ secure enough for general use.
+ .
+ It implements most required features of the SSH 2 protocol, and other
+ features such as X11 and authentication agent forwarding.
+ .
+ See http://matt.ucc.asn.au/dropbear/dropbear.html

@@ -1,0 +1,13 @@
+<samba:parameter name="idmap cache time"
+                 context="G"
+		 type="integer"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter specifies the number of seconds that Winbind's
+	idmap interface will cache positive SID/uid/gid query results.
+	</para>
+</description>
+
+<value type="default">604800 (one week)</value>
+</samba:parameter>

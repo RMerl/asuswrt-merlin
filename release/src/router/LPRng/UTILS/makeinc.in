@@ -1,0 +1,42 @@
+#!@SHELL@
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1995 Patrick Powell, San Diego State University
+#     papowell@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: UTILS/makeinc
+# PURPOSE: find dependencies for files
+#   NOTE: uses GCC to expand the files
+#   Usage: cd source_directory;  makeinc *.o
+#  Note: you have to modify the -I. -I./include line
+#     if you change structure
+# makeinc,v 3.1 1996/12/28 21:40:52 papowell Exp
+########################################################################## 
+for i in $* ; do
+	lo=`echo $i | sed -e 's/\.o/.lo/g'`
+	o=`echo $i | sed -e 's/\.lo/.o/g'`
+	I=`echo $i | sed -e 's/\.lo/.c/' -e 's/\.o/.c/' `
+	#echo "# doing '$i' LO '$lo' O '$o' C '$I'"
+	II=`ls ./*/$I 2>/dev/null`
+	if [ ! -n "$II" ]; then II=`ls ./$I 2>/dev/null`; fi;
+	#echo "# II $II"
+	gcc ${CFLAGS} -E \
+	-I. -I./include -I.. \
+	$II >/tmp/s
+	awk '
+/^# [0-9]/ {
+if( $3 ~ /usr/ ) next;
+l = substr( $3, 2); l = substr( l, 1, length(l)-1);
+if( l ~ /\.c$/ ) next;
+print l; }
+
+{ next; }' </tmp/s >/tmp/t
+	sort /tmp/t |uniq | sed -e 's,.*/,,' >/tmp/w
+	echo -n $o $lo ":"
+	awk 'BEGIN { printf "\t" }
+		{printf "%s ", $0}
+	END { print }' < /tmp/w
+done

@@ -1,0 +1,151 @@
+PPP Support for Microsoft's CHAP-80
+===================================
+
+Eric Rosenquist          rosenqui@strataware.com
+(updated by Paul Mackerras)
+(updated by Al Longyear)
+(updated by Farrell Woods)
+(updated by Frank Cusack)
+
+INTRODUCTION
+
+Microsoft has introduced an extension to the Challenge/Handshake
+Authentication Protocol (CHAP) which avoids storing cleartext
+passwords on a server.  (Unfortunately, this is not as secure as it
+sounds, because the encrypted password stored on a server can be used
+by a bogus client to gain access to the server just as easily as if
+the password were stored in cleartext.)  The details of the Microsoft
+extensions can be found in the document:
+
+    <http://www.ietf.org/rfc/rfc2433.txt>
+
+In short, MS-CHAP is identified as <auth chap 80> since the hex value
+of 80 is used to designate Microsoft's scheme.  Standard PPP CHAP uses
+a value of 5.  If you enable PPP debugging with the "debug" option and
+see something like the following in your logs, the remote server is
+requesting MS-CHAP:
+
+  rcvd [LCP ConfReq id=0x2 <asyncmap 0x0> <auth MS> <magic 0x46a3>]
+                                           ^^^^^^^
+
+MS-CHAP is enabled by default under Linux in pppd/Makefile.linux by
+the line "CHAPMS=y".
+
+
+CONFIGURATION
+
+If you've never used PPPD with CHAP before, read the man page (type
+"man pppd") and read the description in there.  Basically, you need to
+edit the "chap-secrets" file typically named /etc/ppp/chap-secrets.
+This should contain the following two lines for each system with which
+you use CHAP (with no leading blanks):
+
+    RemoteHost  Account     Secret
+    Account     RemoteHost  Secret
+
+Note that you need both lines and that item 1 and 2 are swapped in the
+second line.  I'm not sure why you need it twice, but it works and I didn't
+have time to look into it further.  The "RemoteHost" is a somewhat
+arbitrary name for the remote Windows NT system you're dialing.  It doesn't
+have to match the NT system's name, but it *does* have to match what you
+use with the "remotename" parameter.  The "Account" is the Windows NT
+account name you have been told to use when dialing, and the "Secret" is
+the password for that account.  For example, if your service provider calls
+their machine "DialupNT" and tells you your account and password are
+"customer47" and "foobar", add the following to your chap-secrets file:
+
+    DialupNT    customer47  foobar
+    customer47  DialupNT    foobar
+
+The only other thing you need to do for MS-CHAP (compared to normal CHAP)
+is to always use the "remotename" option, either on the command line or in
+your "options" file (see the pppd man page for details).  In the case of
+the above example, you would need to use the following command line:
+
+    pppd name customer47 remotename DialupNT <other options>
+
+or add:
+
+    name customer47
+    remotename DialupNT
+
+to your PPPD "options" file.
+
+The "remotename" option is required for MS-CHAP since Microsoft PPP servers
+don't send their system name in the CHAP challenge packet.
+
+
+E=691 (AUTHENTICATION_FAILURE) ERRORS WHEN YOU HAVE THE VALID SECRET (PASSWORD)
+
+If your RAS server is not the domain controller and is not a 'stand-alone'
+server then it must make a query to the domain controller for your domain.
+
+You need to specify the domain name with the user name when you attempt to
+use this type of a configuration. The domain name is specified with the
+local name in the chap-secrets file and with the option for the 'name'
+parameter.
+
+For example, the previous example would become:
+
+    DialupNT            domain\\customer47   foobar
+    domain\\customer47  DialupNT             foobar
+
+and
+
+    pppd name 'domain\\customer47' remotename DialupNT <other options>
+
+or add:
+
+    name domain\\customer47
+    remotename DialupNT
+
+when the Windows NT domain name is simply called 'domain'.
+
+
+TROUBLESHOOTING
+
+Assuming that everything else has been configured correctly for PPP and
+CHAP, the MS-CHAP-specific problems you're likely to encounter are mostly
+related to your Windows NT account and its settings.  A Microsoft server
+returns error codes in its CHAP response.  The following are extracted from
+RFC 2433:
+
+ 646 ERROR_RESTRICTED_LOGON_HOURS
+ 647 ERROR_ACCT_DISABLED
+ 648 ERROR_PASSWD_EXPIRED
+ 649 ERROR_NO_DIALIN_PERMISSION
+ 691 ERROR_AUTHENTICATION_FAILURE
+ 709 ERROR_CHANGING_PASSWORD
+
+You'll see these in your pppd log as a line similar to:
+
+   Remote message: E=649 R=0
+
+The "E=" is the error number from the table above, and the "R=" flag
+indicates whether the error is transient and the client should retry.  If
+you consistently get error 691, then either you're using the wrong account
+name/password, or the DES library or MD4 hashing (in md4.c) aren't working
+properly.  Verify your account name and password (use a Windows NT or
+Windows 95 system to dial-in if you have one available).  If that checks
+out, test the DES library with the "destest" program included with the DES
+library.  If DES checks out, the md4.c routines are probably failing
+(system byte ordering may be a problem) or my code is screwing up.  I've
+only got access to a Linux system, so you're on your own for anything else.
+
+Another thing that might cause problems is that some RAS servers won't
+respond at all to LCP config requests without seeing the word "CLIENT"
+from the other end.  If you see pppd sending out LCP config requests
+without getting any reply, try putting something in your chat script
+to send the word CLIENT after the modem has connected.
+
+STILL TO DO
+
+A site using only MS-CHAP to authenticate has no need to store cleartext
+passwords in the "chap-secrets" file.  A utility that spits out the ASCII
+hex MD4 hash of a given password would be nice, and would allow that hash
+to be used in chap-secrets in place of the password.  The code to do this
+could quite easily be lifted from chap_ms.c (you have to convert the
+password to Unicode before hashing it).  The chap_ms.c file would also have
+to be changed to recognize a password hash (16 binary bytes == 32 ASCII hex
+characters) and skip the hashing stage.  This would have no real security
+value as the hash is plaintext-equivalent.

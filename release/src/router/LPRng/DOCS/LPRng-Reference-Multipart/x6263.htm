@@ -1,0 +1,236 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Solaris, Newsprint and FrameMaker</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Duplex Printing" href="x6242.htm">
+    <link rel="NEXT" title="Spool Queues and Files" href=
+    "spoolqueue.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x6242.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "spoolqueue.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN6263">12.22. Solaris, Newsprint
+      and FrameMaker</a></h1>
+
+      <p>The following is a guide to using <b class=
+      "APPLICATION">LPRng</b> and Sun Microsystems Newsprint by
+      Christopher Hylands, Ptolemy Project Manager of the
+      University of California.</p>
+
+      <p>The Sun Newsprint printer is actually an OEM version of
+      the Tektronix PhaserII; Sun Microsystems appears to have
+      dropped support for Newsprint, and the recommended migration
+      path is to buy a PostScript printer. If you want more
+      information on using the Newsprint system, notes are
+      available via <tt class=
+      "FILENAME">http://ptolemy.eecs.berkeley.edu/~cxh/lprng.html</tt>.</p>
+
+      <p>Looking through the mailing list logs, it looks like
+      everyone was having a hard time getting lprng to work with
+      Sun's brain-dead newsprinters. I tried using GhostScript, but
+      the fonts were, IMHO, ugly, so I spent a little time getting
+      the newsprint fonts to work.</p>
+
+      <p>The key thing was to grab the file <tt class=
+      "FILENAME">/usr/newsprint/lpd/if</tt> from a SunOS4.1.3
+      newsprint installation. If you cannot get this code, then the
+      installation will be extremely difficult.</p>
+
+      <p>To install lprng on a Solaris2.x machine, you need to
+      first stop the existing print services and install the
+      startup scripts for <b class="APPLICATION">LPRng</b>. Note
+      that if there is a local printer, you may have to also fix
+      the permissions of the device. Typical commands are:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6274"></a>
+<pre class="SCREEN">
+    chown daemon /devices/sbus@1,f8000000/SUNW,lpvi@1,300000:lpvi0
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>We use the following simple <var class="LITERAL">:if</var>
+      script.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6278"></a>
+<pre class="SCREEN">
+    #/bin/sh
+    # extremely simple filter script
+    /bin/cat
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The Sparcprinters use licensed fonts from NeWSprint. To
+      use the licensed fonts, you must have the lprng spool
+      directory for the sparcprinter in the same location as spool
+      directory of the brain dead Solaris lp system. If your
+      printer is named xsp524, then this directory would be <tt
+      class="COMMAND">/etc/lp/printers/xsp524</tt>.</p>
+
+      <p>The printcap entry looks like:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6283"></a>
+<pre class="SCREEN">
+    sp524|524:
+        :mx=0
+        :lp=:rm=doppler:rp=xsp524:
+        :sd=/var/spool/lpd/sp524d:
+        :lf=/var/spool/lpd/sp524d/log:
+    xsp524|Sun SPARCprinter NeWSprint printer:
+        :mx=0:rs:
+        :lp=/dev/lpvi0:
+        :sd=/etc/lp/printers/xsp524:
+        :lf=/etc/lp/printers/xsp524/log:
+        :af=/var/spool/lpd/xsp524/acct:
+        :filter=/usr/local/libexec/newsprint/if:
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <tt class=
+      "FILENAME">/usr/local/libexec/newsprint/if</tt> was copied
+      from <tt class="FILENAME">/usr/newsprint/lpd/if</tt> in a
+      SunOS4.x installation of the newsprint software.
+      Unfortunately, the newsprint engine is so brain dead that it
+      needs many environment variables set, so it is fairly
+      difficult to come up with a clean script to start the engine.
+      I made the following changes to the file.</p>
+
+      <ol type="1">
+        <li>
+          <p>First, set the path in the script. You may also need
+          to change defaults to suit your preferences:</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN6291"></a>
+<pre class="SCREEN">
+    PATH=/usr/ucb:/usr/bin:/etc:/usr/etc:\
+      /opt/NeWSprint/bin:/opt/NeWSprint/np/bin:
+    PATH=$PATH:$NPHOME/pl.$ARCH/bin:$NPHOME/np/bin; export PATH
+</pre>
+          </div>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>You will also need a <tt class=
+          "FILENAME">/etc/lp/printers/printername/.params</tt>
+          file. If you are using the same spooler directory as the
+          directory that the Solaris lp system uses, then the
+          .param file should appear there. If you are using a
+          different spooler directory, then you will need to copy
+          the .param file from elsewhere and edit it
+          accordingly.</p>
+        </li>
+
+        <li>
+          <p>If you are going to move a license to a new printer,
+          you should probably save the .param file in the old
+          printer spooler directory. Run
+          /opt/NeWSprint/bin/fp_install and remove the license from
+          the old printer and assign it to the new printer. You
+          could run /opt/NeWSprint/bin/rm_np_printer and remove the
+          printer, but that will get rid of the .param file</p>
+        </li>
+
+        <li>
+          <p>FrameMaker under Solaris2.x uses the lp command. The
+          fix is to edit $FMHOME/fminit/FMlpr and comment out the
+          lp line and add an lpr line</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN6300"></a>
+<pre class="SCREEN">
+    sunxm.s5.sparc)
+        lpr -P"$PRINTER" "$FILE"
+        #lp -c -d"$PRINTER" "$FILE"
+</pre>
+          </div>
+          <br>
+          <br>
+        </li>
+      </ol>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6302"></a>
+<pre class="SCREEN">
+    Christopher Hylands, Ptolemy Project Manager  University of California
+    cxh@eecs.berkeley.edu                 US Mail: 558 Cory Hall #1770
+    ph: (510)643-9841 fax:(510)642-2739       Berkeley, CA 94720-1770
+    home: (510)526-4010 (if busy -4068)       (Office: 493 Cory)
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x6242.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "spoolqueue.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Duplex
+          Printing</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Spool Queues
+          and Files</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

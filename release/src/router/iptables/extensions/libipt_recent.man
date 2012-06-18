@@ -1,0 +1,93 @@
+Allows you to dynamically create a list of IP addresses and then match
+against that list in a few different ways.
+
+For example, you can create a `badguy' list out of people attempting
+to connect to port 139 on your firewall and then DROP all future
+packets from them without considering them.
+.TP
+.BI "--name " "name"
+Specify the list to use for the commands. If no name is given then 'DEFAULT'
+will be used.
+.TP
+[\fB!\fR] \fB--set\fR
+This will add the source address of the packet to the list. If the
+source address is already in the list, this will update the existing
+entry. This will always return success (or failure if `!' is passed
+in).
+.TP
+[\fB!\fR] \fB--rcheck\fR
+Check if the source address of the packet is currently in
+the list.
+.TP
+[\fB!\fR] \fB--update\fR
+Like \fB--rcheck\fR, except it will update the "last seen" timestamp if it
+matches.
+.TP
+[\fB!\fR] \fB--remove\fR
+Check if the source address of the packet is currently in the list and
+if so that address will be removed from the list and the rule will
+return true. If the address is not found, false is returned.
+.TP
+[\fB!\fR] \fB--seconds \fIseconds\fR
+This option must be used in conjunction with one of \fB--rcheck\fR or
+\fB--update\fR. When used, this will narrow the match to only happen
+when the address is in the list and was seen within the last given
+number of seconds.
+.TP
+[\fB!\fR] \fB--hitcount \fIhits\fR
+This option must be used in conjunction with one of \fB--rcheck\fR or
+\fB--update\fR. When used, this will narrow the match to only happen
+when the address is in the list and packets had been received greater
+than or equal to the given value. This option may be used along with
+\fB--seconds\fR to create an even narrower match requiring a certain
+number of hits within a specific time frame.
+.TP
+\fB--rttl\fR
+This option must be used in conjunction with one of \fB--rcheck\fR or
+\fB--update\fR. When used, this will narrow the match to only happen
+when the address is in the list and the TTL of the current packet
+matches that of the packet which hit the \fB--set\fR rule. This may be
+useful if you have problems with people faking their source address in
+order to DoS you via this module by disallowing others access to your
+site by sending bogus packets to you.
+.P
+Examples:
+.IP
+# iptables -A FORWARD -m recent --name badguy --rcheck --seconds 60 -j DROP
+
+# iptables -A FORWARD -p tcp -i eth0 --dport 139 -m recent --name badguy --set -j DROP
+.P
+Official website (http://snowman.net/projects/ipt_recent/) also has
+some examples of usage.
+
+/proc/net/ipt_recent/* are the current lists of addresses and information 
+about each entry of each list.
+
+Each file in /proc/net/ipt_recent/ can be read from to see the current list
+or written two using the following commands to modify the list:
+.TP
+echo xx.xx.xx.xx > /proc/net/ipt_recent/DEFAULT
+to Add to the DEFAULT list
+.TP
+echo -xx.xx.xx.xx > /proc/net/ipt_recent/DEFAULT
+to Remove from the DEFAULT list
+.TP
+echo clear > /proc/net/ipt_recent/DEFAULT
+to empty the DEFAULT list.
+.P
+The module itself accepts parameters, defaults shown:
+.TP
+.BI "ip_list_tot=" "100"
+Number of addresses remembered per table
+.TP
+.BI "ip_pkt_list_tot=" "20"
+Number of packets per address remembered
+.TP
+.BI "ip_list_hash_size=" "0"
+Hash table size. 0 means to calculate it based on ip_list_tot, default: 512
+.TP
+.BI "ip_list_perms=" "0644"
+Permissions for /proc/net/ipt_recent/* files
+.TP
+.BI "debug=" "0"
+Set to 1 to get lots of debugging info

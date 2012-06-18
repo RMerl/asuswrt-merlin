@@ -1,0 +1,13 @@
+To use the pretty graphs you have to first build/run the ltmtest from the root directory of the package.  
+Todo this type 
+
+make timing ; ltmtest
+
+in the root.  It will run for a while [about ten minutes on most PCs] and produce a series of .log files in logs/.
+
+After doing that run "gnuplot graphs.dem" to make the PNGs.  If you managed todo that all so far just open index.html to view
+them all :-)
+
+Have fun
+
+Tom

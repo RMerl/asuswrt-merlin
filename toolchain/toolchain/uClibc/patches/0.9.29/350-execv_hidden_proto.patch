@@ -1,0 +1,38 @@
+From 7dc0e12e84f2fc172ffcc6849e5affecd62ef7d1 Mon Sep 17 00:00:00 2001
+From: Mike Frysinger
+Date: Sat, 05 Jan 2008 17:57:46 +0000
+Subject: Merge r20663 by vapier from trunk:
+
+add hidden defs for execv/execlp for completeness
+---
+diff --git a/libc/unistd/exec.c b/libc/unistd/exec.c
+index b2817af..b91ce0c 100644
+--- a/libc/unistd/exec.c
++++ b/libc/unistd/exec.c
+@@ -29,6 +29,8 @@
+ 
+ libc_hidden_proto(execl)
+ libc_hidden_proto(execle)
++libc_hidden_proto(execlp)
++libc_hidden_proto(execv)
+ libc_hidden_proto(execvp)
+ 
+ libc_hidden_proto(memcpy)
+@@ -129,6 +131,7 @@ int execv(__const char *path, char *__const argv[])
+ {
+ 	return execve(path, argv, __environ);
+ }
++libc_hidden_def(execv)
+ 
+ #endif
+ /**********************************************************************/
+@@ -204,6 +207,7 @@ int execlp(const char *file, const char *arg, ...)
+ 
+ 	return n;
+ }
++libc_hidden_def(execlp)
+ 
+ #endif
+ /**********************************************************************/
+--
+cgit v0.8.2.1

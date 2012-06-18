@@ -1,0 +1,139 @@
+% Style file for Roaring Penguin software maintenance documents
+% Please use these macros in your LaTeX documentation:
+% \tclok             -- expands to TCL_OK in fixed-width font
+% \tclerr            -- expands to TCL_ERROR in fixed-width font
+% \squiggle          -- Outputs "~" (tilde)
+% \type{foo}         -- Use for C++ types.  e.g.:  \type{unsigned char}
+% \param{bar}        -- Use for function parameters
+% \incfile{foo/b.h}  -- Use for C++ header files
+% \name{func}        -- Use for function and method names.
+\newcommand{\tclok}{\texttt{TCL\_OK}}
+\newcommand{\tclerr}{\texttt{TCL\_ERROR}}
+\newcommand{\squiggle}{\symbol{"7E}}% \tilde was already taken...
+\newcommand{\type}[1]{\textit{#1}}
+\newcommand{\param}[1]{\texttt{#1}}
+\newcommand{\incfile}[1]{\texttt{#1}}
+\newcommand{\name}[1]{\textbf{#1}}
+
+% \function{type}{name}{(arglist)}{description}{returns}
+%
+% Example:
+% \function{int}{abs}{(\type{int} \param{j})}
+% {Computes the absolute value of \param{j}.}    % Description
+% {The absolute value of \param{j}.}             % Returns
+% \begin{itemize}                                % Arguments
+% \item \param{j} -- The number whose absolute value is needed
+% \end{itemize}
+%
+% Note that ``arglist'' is typeset in a tabbing environment; you
+% can do this to align arguments:
+% \function{int}{frob}{(\=\type{int} \param{arg1},\\
+% \>\type{char *} \param{arg2}, \\
+% \>\type{double} \param{arg3})} ...
+
+\newcommand{\function}[5]{%
+  \begin{tabbing}{\rule{\linewidth}{0.5pt}}\\%
+    \type{#1} \name{#2}#3\end{tabbing}%
+  \begin{description}%
+  \item[Description:] {#4}%
+  \item[Returns:] {#5}%
+  \item[Arguments:]%
+  \end{description}%
+}
+% \method{type}{class}{name}{(arglist)}{description}{returns}
+%
+% Example:
+% \method{void}{Box}{engulf}{(\type{Point} \param{p})}
+% {Enlarges \param{self} to include \param{p}}   % Description
+% {Nothing.}                                     % Returns
+% \begin{itemize}                                % Arguments
+% \item \param{p} -- A point to be included in the box.
+% \end{itemize}
+%
+% Note that ``arglist'' is typeset in a tabbing environment as with
+% \function
+
+\newcommand{\method}[6]{%
+  \begin{tabbing}\rule{\linewidth}{0.5pt}\\%
+  \type{#1} \name{#2}::\name{#3}#4\end{tabbing}%
+  \begin{description}%
+  \item[Description:] {#5}%
+  \item[Returns:] {#6}%
+  \item[Arguments:] %
+  \end{description}%
+}
+
+% \simplemethod{type}{class}{name}{(arglist)}{description}
+%
+% Simpler version when \method is overkill.  Just includes description.
+% Example:
+% \simplemethod{void}{Box}{engulf}{(\type{Point} \param{p})}
+% {Enlarges \param{self} to include \param{p}}   % Description
+% Note that ``arglist'' is typeset in a tabbing environment as with
+% \function
+
+\newcommand{\simplemethod}[5]{%
+  \begin{tabbing}\rule{\linewidth}{0.5pt}\\%
+  \type{#1} \name{#2}::\name{#3}#4\end{tabbing}%
+  \begin{description}%
+  \item[Description:] {#5}%
+  \end{description}%
+}
+
+% \simplefunction{type}{name}{(arglist)}{description}
+%
+% Simpler version when \function is overkill.  Just includes description.
+% Example:
+% \simplefunction{void}{Box}{engulf}{(\type{Point} \param{p})}
+% {Enlarges \param{self} to include \param{p}}   % Description
+% Note that ``arglist'' is typeset in a tabbing environment as with
+% \function
+
+\newcommand{\simplefunction}[4]{%
+  \begin{tabbing}\rule{\linewidth}{0.5pt}\\%
+  \type{#1} \name{#2}#3\end{tabbing}%
+  \begin{description}%
+  \item[Description:] {#4}%
+  \end{description}%
+}
+
+% \tclmethod -- like \method, but for Tcl methods.
+\newcommand{\tclmethod}[6]{%
+  \begin{tabbing}\rule{\linewidth}{0.5pt}\\%
+  \type{#1} \name{#2}.\name{#3} #4\end{tabbing}%
+  \begin{description}%
+  \item[Description:] {#5}%
+  \item[Returns:] {#6}%
+  \item[Arguments:]
+  \end{description}%
+}
+% \variable{type}{name}{description}
+% Use this for global variables.
+%
+% Example:
+% \variable{int}{Timeout}
+% {The timeout value of frobnosticate in seconds.}
+
+\newcommand{\variable}[3]{\rule{\linewidth}{0.5pt}\\%
+  \type{#1} \name{#2}%
+  \begin{description}%
+  \item[Description:] {#3}%
+  \end{description}%
+}
+
+\newcommand{\synopsis}[3]{\rule{\linewidth}{0.5pt}%
+\\%
+\begin{tabular}{l@@{ }l@@{}p{4in}}
+\name{#1} & \texttt{#2} & \texttt{#3}%
+\end{tabular}
+\\%
+\raisebox{5pt}{\rule{\linewidth}{0.5pt}}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+
+\ifx\pdfoutput\undefined
+\newcommand{\eps}{eps}
+\else
+\newcommand{\eps}{pdf}
+\fi

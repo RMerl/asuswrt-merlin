@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Selecting the Print Queue</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title=
+    "Printing a File and Checking Status" href=
+    "printingandchecking.htm">
+    <link rel="NEXT" title="Controlling the Print Queue" href=
+    "controllingprintqueue.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "printingandchecking.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "controllingprintqueue.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="SELECTINGPRINTQUEUE">4.6.
+      Selecting the Print Queue</a></h1>
+
+      <p>In the previous section we used the default print queue.
+      How does <b class="APPLICATION">LPRng</b> determine what
+      print queue to use? First, you can explicitly specify the
+      printer using the <tt class="COMMAND">lpq -Pprintqueue</tt>
+      option and the <tt class="COMMAND">lpq -a</tt> or <tt class=
+      "COMMAND">lpq -Pall</tt> to select all print queues:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1953"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {111} %</samp> <kbd class=
+"USERINPUT">lpq -Plp</kbd>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+    <samp class="PROMPT">h4: {112} %</samp> <kbd class=
+"USERINPUT">lpq -Plp2</kbd>
+    Printer: lp2@h4
+     Queue: no printable jobs in queue
+    <samp class="PROMPT">h4: {113} %</samp> <kbd class=
+"USERINPUT">lpq -a</kbd>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+    Printer: lp2@h4
+     Queue: no printable jobs in queue
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>You can combine the <tt class="COMMAND">lpq -a</tt> with
+      the <tt class="COMMAND">lpq -s</tt> option for a summary
+      listing:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1964"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {114} %</samp> <kbd class=
+"USERINPUT">lpq -a</kbd>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+    Printer: lp2@h4
+     Queue: no printable jobs in queue
+    <samp class="PROMPT">h4: {115} %</samp> <kbd class=
+"USERINPUT">lpq -s -a</kbd>
+    lp@h4  0 jobs
+    lp2@h4  0 jobs
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>There is another way to explicitly specify the printqueues
+      listed by <tt class="COMMAND">lpq -a</tt>; see the <a href=
+      "printcappath.htm#ALLPC"><var class="LITERAL">all</var>
+      Printcap Entry</a> for details.</p>
+
+      <p>Users can set their default printer by using the <var
+      class="ENVAR">PRINTER</var> (highest priority), <var class=
+      "ENVAR">LPDEST</var> (next), <var class=
+      "ENVAR">NPRINTER</var> (next), and <var class=
+      "ENVAR">NGPRINTER</var> (lowest priority), environment
+      variables. For example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1979"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {116} %</samp> <kbd class=
+"USERINPUT">setenv PRINTER lp2</kbd>
+    <samp class="PROMPT">h4: {117} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp2@h4
+     Queue: no printable jobs in queue
+    <samp class="PROMPT">h4: {118} %</samp> <kbd class=
+"USERINPUT">unsetenv PRINTER</kbd>
+    <samp class="PROMPT">h4: {119} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If the printer is not specified on the command line or by
+      the environment variables, then the first printer in the
+      printcap database will be used and then the default printer
+      in the configuration database, and finally the compile time
+      default. <a href="lprngclients.htm#PRINTERINFO">Printer and
+      Server Information</a> for details.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "printingandchecking.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "controllingprintqueue.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Printing a File
+          and Checking Status</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Controlling
+          the Print Queue</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

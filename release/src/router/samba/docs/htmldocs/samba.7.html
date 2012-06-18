@@ -1,0 +1,140 @@
+
+
+
+
+
+<html><head><title>Samba (7)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>Samba (7)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    Samba - A Windows SMB/CIFS fileserver for UNIX
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+    
+<strong>Samba</strong>
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>The Samba software suite is a collection of programs that implements
+the Server Message Block(commonly abbreviated as SMB) protocol for
+UNIX systems. This protocol is sometimes also referred to as the
+Common Internet File System (CIFS), LanManager or NetBIOS protocol.
+<p><a name="COMPONENTS"></a>
+<h2>COMPONENTS</h2>
+    
+<p>The Samba suite is made up of several components. Each component is
+described in a separate manual page. It is strongly recommended that
+you read the documentation that comes with Samba and the manual pages
+of those components that you use. If the manual pages aren't clear
+enough then please send a patch or bug report
+to <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p><dl> 
+<p><p></p><dt><strong><a href="smbd.8.html"><strong>smbd</strong></a></strong><dd> <br> <br> The <a href="smbd.8.html"><strong>smbd</strong>
+(8)</a> daemon provides the file and print services to SMB
+clients, such as Windows 95/98, Windows NT, Windows for Workgroups or
+LanManager. The configuration file for this daemon is described in
+<a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a>.
+<p><p></p><dt><strong><a href="nmbd.8.html"><strong>nmbd</strong></a></strong><dd> <br> <br> The <a href="nmbd.8.html"><strong>nmbd</strong>
+(8)</a> daemon provides NetBIOS nameserving and browsing
+support. The configuration file for this daemon is described in
+<a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a>.
+<p><p></p><dt><strong><a href="smbclient.1.html"><strong>smbclient</strong></a></strong><dd> <br> <br> The <a href="smbclient.1.html"><strong>smbclient</strong>
+(1)</a> program implements a simple ftp-like
+client. This is useful for accessing SMB shares on other compatible
+servers (such as Windows NT), and can also be used to allow a UNIX box
+to print to a printer attached to any SMB server (such as a PC running
+Windows NT).
+<p><p></p><dt><strong><a href="testparm.1.html"><strong>testparm</strong></a></strong><dd> <br> <br> The <a href="testparm.1.html"><strong>testparm
+(1)</strong></a> utility allows you to test your <a href="smb.conf.5.html"><strong>smb.conf
+(5)</strong></a> configuration file.
+<p><p></p><dt><strong><a href="testprns.1.html"><strong>testprns</strong></a></strong><dd> <br> <br> the <a href="testprns.1.html"><strong>testprns
+(1)</strong></a> utility allows you to test the printers defined
+in your printcap file.
+<p><p></p><dt><strong><a href="smbstatus.1.html"><strong>smbstatus</strong></a></strong><dd> <br> <br> The <a href="smbstatus.1.html"><strong>smbstatus</strong>
+(1)</a> utility allows you list current connections to the 
+<a href="smbd.8.html"><strong>smbd (8)</strong></a> server.
+<p><p></p><dt><strong><a href="nmblookup.1.html"><strong>nmblookup</strong></a></strong><dd> <br> <br> the
+<a href="nmblookup.1.html"><strong>nmblookup (1)</strong></a> utility allows NetBIOS name
+queries to be made from the UNIX machine.
+<p><p></p><dt><strong><a href="make_smbcodepage.1.html"><strong>make_smbcodepage</strong></a></strong><dd> <br> <br> The
+<a href="make_smbcodepage.1.html"><strong>make_smbcodepage (1)</strong></a> utility allows
+you to create SMB code page definition files for your <a href="smbd.8.html"><strong>smbd
+(8)</strong></a> server.
+<p><p></p><dt><strong><a href="smbpasswd.8.html"><strong>smbpasswd</strong></a></strong><dd> <br> <br> The <a href="smbpasswd.8.html"><strong>smbpasswd
+(8)</strong></a> utility allows you to change SMB encrypted
+passwords on Samba and Windows NT(tm) servers.
+<p></dl>
+<p><a name="AVAILABILITY"></a>
+<h2>AVAILABILITY</h2>
+    
+<p>The Samba software suite is licensed under the GNU Public License
+(GPL). A copy of that license should have come with the package in the
+file COPYING. You are encouraged to distribute copies of the Samba
+suite, but please obey the terms of this license.
+<p>The latest version of the Samba suite can be obtained via anonymous
+ftp from samba.org in the directory pub/samba/. It is
+also available on several mirror sites worldwide.
+<p>You may also find useful information about Samba on the newsgroup
+comp.protocols.smb and the Samba mailing list. Details on how to join
+the mailing list are given in the README file that comes with Samba.
+<p>If you have access to a WWW viewer (such as Netscape or Mosaic) then
+you will also find lots of useful information, including back issues
+of the Samba mailing list, at
+<a href="http://samba.org/samba/">http://samba.org/samba/</a>.
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite. 
+<p><a name="CONTRIBUTIONS"></a>
+<h2>CONTRIBUTIONS</h2>
+    
+<p>If you wish to contribute to the Samba project, then I suggest you
+join the Samba mailing list at <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. See the
+Web page at
+<a href="http://samba.org/listproc">http://samba.org/listproc</a>
+for details on how to do this.
+<p>If you have patches to submit or bugs to report then you may mail them
+directly to <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Note, however, that due to
+the enormous popularity of this package the Samba Team may take some
+time to respond to mail. We prefer patches in <em>diff -u</em> format.
+<p><a name="CREDITS"></a>
+<h2>CREDITS</h2>
+    
+<p>Contributors to the project are now too numerous to mention here but
+all deserve the thanks of all Samba users. To see a full list, look at
+<a href="ftp://samba.org/pub/samba/alpha/change-log">ftp://samba.org/pub/samba/alpha/change-log</a>
+for the pre-CVS changes and at
+<a href="ftp://samba.org/pub/samba/alpha/cvs.log">ftp://samba.org/pub/samba/alpha/cvs.log</a>
+for the contributors to Samba post-CVS. CVS is the Open Source source
+code control system used by the Samba Team to develop Samba. The
+project would have been unmanageable without it.
+<p>In addition, several commercial organizations now help fund the Samba
+Team with money and equipment. For details see the Samba Web pages at
+<a href="http://samba.org/samba/samba-thanks.html">http://samba.org/samba/samba-thanks.html</a>.
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+</body>
+</html>

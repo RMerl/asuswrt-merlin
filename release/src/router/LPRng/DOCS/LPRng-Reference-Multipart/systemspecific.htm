@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>System Specific Notes</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="Security Concerns " href=
+    "setuid.htm">
+    <link rel="NEXT" title="Linux" href="linux.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "setuid.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "linux.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="SYSTEMSPECIFIC"></a>Chapter 3. System Specific
+      Notes</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>3.1. <a href=
+          "systemspecific.htm#SOLARIS">Solaris</a></dt>
+
+          <dt>3.2. <a href="linux.htm">Linux</a></dt>
+
+          <dt>3.3. <a href="aix.htm">AIX</a></dt>
+
+          <dt>3.4. <a href="appletalk.htm">AppleTalk
+          Support</a></dt>
+        </dl>
+      </div>
+
+      <p>The following are a set of suggestions and recommendations
+      for specific systems.</p>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="SOLARIS">3.1. Solaris</a></h1>
+
+        <p>The Sun Microsystems Solaris printing system is derived
+        from the System V UNIX system. Please see the <a href=
+        "update.htm#SOLARISINSTALL">Solaris, HP, and SysVR4 Derived
+        Systems</a> installation information for a detailed
+        description of how to install <b class=
+        "APPLICATION">LPRng</b> and remove the Solaris Print
+        Services.</p>
+
+        <p>If you want to simply forward jobs from a Solaris system
+        to a BSD print spooling system you can use the following
+        commands to create a printer. Check your specific system
+        references and man pages for options:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1496"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {67} #</samp> <kbd class=
+"USERINPUT">lpsystem -t bsd servername</kbd>   # add server
+    <samp class="PROMPT">h4: {68} #</samp> <kbd class=
+"USERINPUT">lpadmin -p pr -s servername -T unknown -I any</kbd> # set up printer
+    <samp class="PROMPT">h4: {69} #</samp> <kbd class=
+"USERINPUT">accept pr</kbd>   # enable queueing
+    <samp class="PROMPT">h4: {70} #</samp> <kbd class=
+"USERINPUT">enable pr</kbd>   # enable printing
+    <samp class="PROMPT">h4: {71} #</samp> <kbd class=
+"USERINPUT">lpstat -t</kbd>   # show status
+    scheduler is running
+    system for pr: servername
+    lp accepting requests since Mon Aug  6 12:00:00 PST 2000
+    Printer: pr@servername  'Hp : Laserwriter' (printing disabled)
+     Queue: 1 printable job
+     Rank  Owner/ID            Class Job Files            Size Time
+    1      papowell@h4+207       A   207 h4.023205           3 18:24:54
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The above commands will create the necessary directories
+        and files for the printer. If you want to use the <var
+        class="LITERAL">lp -o option</var> syntax to pass options
+        to the LPRng print spooler you will have to enable this by
+        hand. The <tt class="FILENAME">/etc/printers.conf</tt>
+        (this may be in some other directory besides <tt class=
+        "FILENAME">/etc</tt>) needs to be modified so that it
+        allows options to be passed using the Solaris convention,
+        which is to put them on the <var class="LITERAL">S</var> or
+        <var class="LITERAL">O</var> line of the control file. For
+        example:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1514"></a>
+<pre class="SCREEN">
+    #
+    # The preferred method of modifying this file is through the use of
+    # lpset(1M) or fncreate_printer(1M)
+    #
+    pr:bsdaddr=servername,pr,Solaris:
+    _default:use=pr:
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The <var class=
+        "LITERAL">bsdaddr=host,printer[,Solaris]</var> indicates
+        that the entry is for a remote RFC1179 printer on server
+        <var class="LITERAL">host</var> with name <var class=
+        "LITERAL">printer</var>. The <var class=
+        "LITERAL">Solaris</var> option indicates that the Solars
+        extensions to the RFC1179 protocol are to be used.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "setuid.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "linux.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Security
+          Concerns</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Linux</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

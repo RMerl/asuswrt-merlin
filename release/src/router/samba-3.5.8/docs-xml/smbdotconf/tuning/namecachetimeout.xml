@@ -1,0 +1,15 @@
+<samba:parameter name="name cache timeout"
+                 context="G"
+				 type="integer"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>Specifies the number of seconds it takes before 
+    entries in samba's hostname resolve cache time out. If 
+    the timeout is set to 0. the caching is disabled.
+</para>
+</description>
+
+<value type="default">660</value>
+<value type="example">0</value>
+</samba:parameter>

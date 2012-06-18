@@ -1,0 +1,44 @@
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1995 Patrick Powell, San Diego State University
+#     papowell@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: UTILS/Makefile
+# PURPOSE: generate utilities
+# Makefile,v 3.3 1998/03/30 02:33:23 papowell Exp
+########################################################################## 
+
+SRC=.
+AWK=gawk
+
+
+all clean:
+
+.PHONY: all clean ci cifast install realclean mostlyclean distclean
+
+realclean mostlyclean distclean:
+	for i in ${SRC}/*.in; do \
+		f=`basename $$i .in`; \
+		rm -f $$f; \
+	done
+	rm -f *.old *.bak ? ?.* core 
+
+install:
+
+CI=
+CO=-kv
+
+cifast ci:
+	checkin() { \
+		(set +e; rcs -l $$1; exit 0); \
+		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
+	}; \
+	for i in *; do \
+		echo $$i ; \
+		if [ -f "$$i" ] ; then \
+			checkin $$i; \
+		fi; \
+	done;

@@ -1,0 +1,384 @@
+<HTML>
+<HEAD>
+<TITLE> Samba meta FAQ: General Information</TITLE>
+</HEAD>
+<BODY>
+<A HREF="Samba-meta-FAQ-1.html">Previous</A>
+<A HREF="Samba-meta-FAQ-3.html">Next</A>
+<A HREF="Samba-meta-FAQ.html#toc2">Table of Contents</A>
+<HR>
+<H2><A NAME="s2">2. General Information</A></H2>
+
+<P>
+<A NAME="general_info"></A> 
+</P>
+<P>All about Samba - what it is, how to get it, related sources of
+information, how to understand the numbering scheme, pizza
+details.</P>
+
+<H2><A NAME="ss2.1">2.1 What is Samba?</A></H2>
+
+<P>
+<A NAME="introduction"></A> 
+</P>
+<P>Samba is a suite of programs which work together to allow clients to
+access to a server's filespace and printers via the SMB (Server Message
+Block) and CIFS (Common Internet Filesystem) protocols. Initially
+written for Unix, Samba now also runs on Netware, OS/2, VMS, StratOS and
+Amigas. Ports to BeOS and other operating systems are underway. Samba
+gives the capability for these operating systems to behave much like a
+LAN Server, Windows NT Server or Pathworks machine, only with added
+functionality and flexibility designed to make life easier for
+administrators. </P>
+<P>This means that using Samba you can share a server's disks and printers
+to many sorts of network clients, including Lan Manager, Windows for
+Workgroups, Windows NT, Linux, OS/2, and AIX. There is also a generic
+client program supplied as part of the Samba suite which gives a user on
+the server an ftp-like interface to access filespace and printers on any
+other SMB/CIFS servers.</P>
+<P>SMB has been implemented over many protocols, including XNS, NBT, IPX,
+NetBEUI and TCP/IP. Samba only uses TCP/IP. This is not likely to change
+although there have been some requests for NetBEUI support.</P>
+<P>Many users report that compared to other SMB implementations Samba is
+more stable, faster, and compatible with more clients. Administrators of
+some large installations say that Samba is the only SMB server available
+which will scale to many tens of thousands of users without crashing.
+The easy way to test these claims is to download it and try it for
+yourself!</P>
+<P>The suite is supplied with full source code under the 
+<A HREF="../COPYING">GNU Public License</A>. The GPL means that you can
+use Samba for whatever purpose you wish (including changing the source
+or selling it for money) but under all circumstances the source code
+must be made freely available. A copy of the GPL must always be included
+in any copy of the package.</P>
+<P>The primary creator of the Samba suite is Andrew Tridgell. Later
+versions incorporate much effort by many net.helpers. The man pages
+and this FAQ were originally written by Karl Auer.</P>
+
+
+<H2><A NAME="ss2.2">2.2 What is the current version of Samba?</A></H2>
+
+<P>
+<A NAME="current_version"></A> 
+</P>
+<P>At time of writing, the current version was 1.9.17. If you want to be
+sure check the bottom of the change-log file. 
+<A HREF="ftp://samba.org/pub/samba/alpha/change-log">ftp://samba.org/pub/samba/alpha/change-log</A></P>
+<P>For more information see 
+<A HREF="#version_nums">What do the version numbers mean?</A></P>
+
+
+<H2><A NAME="ss2.3">2.3 Where can I get it? </A></H2>
+
+<P>
+<A NAME="WhereFrom"></A> 
+</P>
+<P>The Samba suite is available via anonymous ftp from samba.org and
+many 
+<A HREF="../MIRRORS">mirror</A> sites. You will get much
+faster performance if you use a mirror site. The latest and greatest
+versions of the suite are in the directory:</P>
+<P>/pub/samba/</P>
+<P>Development (read "alpha") versions, which are NOT necessarily stable
+and which do NOT necessarily have accurate documentation, are available
+in the directory:</P>
+<P>/pub/samba/alpha</P>
+<P>Note that binaries are NOT included in any of the above. Samba is
+distributed ONLY in source form, though binaries may be available from
+other sites. Most Linux distributions, for example, do contain Samba
+binaries for that platform. The VMS, OS/2, Netware and Amiga and other
+ports typically have binaries made available.</P>
+<P>A special case is vendor-provided binary packages. Samba binaries and
+default configuration files are put into packages for a specific
+operating system. RedHat Linux and Sun Solaris (Sparc and x86) is
+already included, and others such as OS/2 may follow. All packages are
+in the directory:</P>
+<P>/pub/samba/Binary_Packages/"OS_Vendor"</P>
+
+
+<H2><A NAME="ss2.4">2.4 What do the version numbers mean?</A></H2>
+
+<P>
+<A NAME="version_nums"></A> 
+</P>
+<P>It is not recommended that you run a version of Samba with the word
+"alpha" in its name unless you know what you are doing and are willing
+to do some debugging. Many, many people just get the latest
+recommended stable release version and are happy. If you are brave, by
+all means take the plunge and help with the testing and development -
+but don't install it on your departmental server. Samba is typically
+very stable and safe, and this is mostly due to the policy of many
+public releases.</P>
+<P>How the scheme works:</P>
+<P>
+<OL>
+<LI>When major changes are made the version number is increased. For
+example, the transition from 1.9.16 to 1.9.17. However, this version
+number will not appear immediately and people should continue to use
+1.9.15 for production systems (see next point.)
+</LI>
+<LI>Just after major changes are made the software is considered
+unstable, and a series of alpha releases are distributed, for example
+1.9.16alpha1. These are for testing by those who know what they are
+doing.  The "alpha" in the filename will hopefully scare off those who
+are just looking for the latest version to install.
+</LI>
+<LI>When Andrew thinks that the alphas have stabilised to the point
+where he would recommend new users install it, he renames it to the
+same version number without the alpha, for example 1.9.17.
+</LI>
+<LI>Inevitably bugs are found in the "stable" releases and minor patch
+levels are released which give us the pXX series, for example 1.9.17p2.
+</LI>
+</OL>
+</P>
+<P>So the progression goes:</P>
+<P>
+<PRE>
+                1.9.16p10       (production)
+                1.9.16p11       (production)
+                1.9.17alpha1    (test sites only)
+                  :
+                1.9.17alpha20   (test sites only)
+                1.9.17          (production)
+                1.9.17p1        (production)
+</PRE>
+</P>
+<P>The above system means that whenever someone looks at the samba ftp
+site they will be able to grab the highest numbered release without an
+alpha in the name and be sure of getting the current recommended
+version.</P>
+
+
+<H2><A NAME="ss2.5">2.5 Where can I go for further information?</A></H2>
+
+<P>
+<A NAME="more"></A> 
+</P>
+<P>There are a number of places to look for more information on Samba,
+including:</P>
+<P>
+<UL>
+<LI>Two mailing lists devoted to discussion of Samba-related matters.
+See below for subscription information.
+</LI>
+<LI>The newsgroup comp.protocols.smb, which has a great deal of
+discussion about Samba. 
+</LI>
+<LI>The WWW site 'SAMBA Web Pages' at 
+<A HREF="http://samba.org/samba/">http://samba.org/samba/</A> includes:
+
+<UL>
+<LI>Links to man pages and documentation, including this FAQ</LI>
+<LI>A comprehensive survey of Samba users</LI>
+<LI>A searchable hypertext archive of the Samba mailing list</LI>
+<LI>Links to Samba source code, binaries, and mirrors of both</LI>
+<LI>This FAQ and the rest in its family</LI>
+</UL>
+
+</LI>
+</UL>
+</P>
+
+
+<H2><A NAME="ss2.6">2.6 How do I subscribe to the Samba Mailing Lists?</A></H2>
+
+<P>
+<A NAME="mailinglist"></A> 
+</P>
+<P>Send email to 
+<A HREF="mailto:listproc@samba.org">listproc@samba.org</A>. Make sure the subject line is blank,
+and include the following two lines in the body of the message:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+subscribe samba Firstname Lastname
+subscribe samba-announce Firstname Lastname
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+<P>Obviously you should substitute YOUR first name for "Firstname" and
+YOUR last name for "Lastname"! Try not to send any signature, it
+sometimes confuses the list processor.</P>
+<P>The samba list is a digest list - every eight hours or so it sends a
+single message containing all the messages that have been received by
+the list since the last time and sends a copy of this message to all
+subscribers. There are thousands of people on this list.</P>
+<P>If you stop being interested in Samba, please send another email to
+<A HREF="mailto:listproc@samba.org">listproc@samba.org</A>. Make sure the subject line is blank, and
+include the following two lines in the body of the message:</P>
+<P>
+<BLOCKQUOTE><CODE>
+<PRE>
+unsubscribe samba
+unsubscribe samba-announce
+</PRE>
+</CODE></BLOCKQUOTE>
+</P>
+<P>The <B>From:</B> line in your message <EM>MUST</EM> be the same
+address you used when you subscribed.</P>
+
+
+<H2><A NAME="ss2.7">2.7 Something's gone wrong - what should I do?</A></H2>
+
+<P>
+<A NAME="wrong"></A> 
+</P>
+<P><B><F>#</F> *** IMPORTANT! *** <F>#</F></B></P>
+
+<P>DO NOT post messages on mailing lists or in newsgroups until you have
+carried out the first three steps given here!</P>
+<P>
+<OL>
+<LI> See if there are any likely looking entries in this FAQ!
+If you have just installed Samba, have you run through the checklist in
+<A HREF="ftp://samba.org/pub/samba/DIAGNOSIS.txt">DIAGNOSIS.txt</A>? It can save you a lot of time and effort.
+DIAGNOSIS.txt can also be found in the docs directory of the Samba
+distribution.
+</LI>
+<LI> Read the man pages for smbd, nmbd and smb.conf, looking for
+topics that relate to what you are trying to do.
+</LI>
+<LI> If there is no obvious solution to hand, try to get a look at
+the log files for smbd and/or nmbd for the period during which you
+were having problems. You may need to reconfigure the servers to
+provide more extensive debugging information - usually level 2 or
+level 3 provide ample debugging info. Inspect these logs closely,
+looking particularly for the string "Error:".
+</LI>
+<LI> If you need urgent help and are willing to pay for it see 
+<A HREF="#PaidSupport">Paid Support</A>.
+</LI>
+</OL>
+</P>
+<P>If you still haven't got anywhere, ask the mailing list or newsgroup. In
+general nobody minds answering questions provided you have followed the
+preceding steps. It might be a good idea to scan the archives of the
+mailing list, which are available through the Samba web site described
+in the previous section. When you post be sure to include a good
+description of your environment and your problem.</P>
+<P>If you successfully solve a problem, please mail the FAQ maintainer a
+succinct description of the symptom, the problem and the solution, so
+that an explanation can be incorporated into the next version.</P>
+
+
+<H2><A NAME="ss2.8">2.8 How do I submit patches or bug reports?</A></H2>
+
+
+<P>If you make changes to the source code, <EM>please</EM> submit these patches
+so that everyone else gets the benefit of your work. This is one of
+the most important aspects to the maintainence of Samba. Send all
+patches to 
+<A HREF="mailto:samba@samba.org">samba@samba.org</A>. Do not send patches to Andrew Tridgell or any
+other individual, they may be lost if you do.</P>
+<P>Patch format
+------------</P>
+<P>If you are sending a patch to fix a problem then please don't just use
+standard diff format. As an example, samba received this patch from
+someone:</P>
+<P>382a
+#endif
+..
+381a
+#if !defined(NEWS61)</P>
+<P>How are we supposed to work out what this does and where it goes? These
+sort of patches only work if we both have identical files in the first
+place. The Samba sources are constantly changing at the hands of multiple
+developers, so it doesn't work.</P>
+<P>Please use either context diffs or (even better) unified diffs. You
+get these using "diff -c4" or "diff -u". If you don't have a diff that
+can generate these then please send manualy commented patches to I
+know what is being changed and where. Most patches are applied by hand so
+the info must be clear.</P>
+<P>This is a basic guideline that will assist us with assessing your problem
+more efficiently :</P>
+<P>Machine Arch:
+Machine OS:
+OS Version:
+Kernel:</P>
+<P>Compiler:
+Libc Version:</P>
+<P>Samba Version:</P>
+<P>Network Layout (description):</P>
+<P>What else is on machine (services, etc):</P>
+<P>Some extras :</P>
+<P>
+<UL>
+<LI> what you did and what happened
+</LI>
+<LI> relevant parts of a debugging output file with debuglevel higher.
+If you can't find the relevant parts, please ask before mailing
+huge files.
+</LI>
+<LI> anything else you think is useful to trace down the bug
+</LI>
+</UL>
+</P>
+
+
+<H2><A NAME="ss2.9">2.9 What if I have an URGENT message for the developers?</A></H2>
+
+
+<P>If you have spotted something very serious and believe that it is
+important to contact the developers quickly send a message to
+samba-urgent@samba.org. This will be processed more quickly than
+mail to samba. Please think carefully before using this address. An
+example of its use might be to report a security hole.</P>
+<P>Examples of things <EM>not</EM> to send to samba-urgent include problems
+getting Samba to work at all and bugs that cannot potentially cause damage.</P>
+
+
+<H2><A NAME="ss2.10">2.10 What if I need paid-for support?</A></H2>
+
+<P>
+<A NAME="PaidSupport"></A> 
+</P>
+<P>Samba has a large network of consultants who provide Samba support on a
+commercial basis. The list is included in the package in 
+<A HREF="../Support.txt">../Support.txt</A>, and the latest version will always be on the main
+samba ftp site. Any company in the world can request that the samba team
+include their details in Support.txt so we can give no guarantee of
+their services.</P>
+
+
+<H2><A NAME="ss2.11">2.11 Pizza supply details</A></H2>
+
+<P>
+<A NAME="pizza"></A> 
+
+Those who have registered in the Samba survey as "Pizza Factory" will
+already know this, but the rest may need some help. Andrew doesn't ask
+for payment, but he does appreciate it when people give him
+pizza. This calls for a little organisation when the pizza donor is
+twenty thousand kilometres away, but it has been done.</P>
+<P>
+<OL>
+<LI> Ring up your local branch of an international pizza chain
+and see if they honour their vouchers internationally. Pizza Hut do,
+which is how the entire Canberra Linux Users Group got to eat pizza
+one night, courtesy of someone in the US.
+</LI>
+<LI>Ring up a local pizza shop in Canberra and quote a credit
+card number for a certain amount, and tell them that Andrew will be
+collecting it (don't forget to tell him.) One kind soul from Germany
+did this.
+</LI>
+<LI>Purchase a pizza voucher from your local pizza shop that has
+no international affiliations and send it to Andrew. It is completely
+useless but he can hang it on the wall next to the one he already has
+from Germany :-)
+</LI>
+<LI>Air freight him a pizza with your favourite regional
+flavours. It will probably get stuck in customs or torn apart by
+hungry sniffer dogs but it will have been a noble gesture.
+</LI>
+</OL>
+</P>
+
+
+<HR>
+<A HREF="Samba-meta-FAQ-1.html">Previous</A>
+<A HREF="Samba-meta-FAQ-3.html">Next</A>
+<A HREF="Samba-meta-FAQ.html#toc2">Table of Contents</A>
+</BODY>
+</HTML>

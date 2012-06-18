@@ -1,0 +1,467 @@
+﻿<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!--
+	Tomato GUI
+	Copyright (C) 2006-2009 Jonathan Zarate
+	http://www.polarcloud.com/tomato/
+
+	For use with Tomato Firmware only.
+	No part of this file may be used without permission.
+-->
+<svg width="100%" height="100%" version="1.1" 
+xmlns="http://www.w3.org/2000/svg" 
+id="svgraph" 
+onload="init()">
+
+<style type='text/css'>
+* {
+	cursor: help;
+}
+line {
+	stroke: #AAAAAA	stroke-width: 1;
+}
+line.a {
+	stroke: #AAAAAA;
+}
+#crossX, #crossY {
+	stroke: #FFFFFF;
+	stroke-width: 1;
+}
+text {
+	font: 11px Lucida Sans Unicode;
+	fill: #FFFFFF;}
+.tickH {
+	text-anchor: middle;
+	fill: #569AC7;
+}
+#pointText {
+	font: 11px Lucida Sans Unicode;
+	fill: #ffffff;
+	text-anchor: end;
+}
+.back {
+	fill: #CCCCCC;
+	filter: alpha(opacity=30);
+	opacity: 0.3;
+	isShadow: true;
+}
+#crossText {
+	font: 11px Lucida Sans Unicode;
+	fill: #ffffff;
+}
+#crossTime {
+	font: 11px Lucida Sans Unicode;
+	fill: #ffffff;
+}
+#pointTextBack {
+	fill: #ffffff;
+}
+#pointText {
+	fill: #FFFFFF;
+}
+</style>
+
+<script type='text/ecmascript'><![CDATA[
+
+/*
+
+	Hi there! What are you looking at? Messy isn't it?
+
+			^_^
+
+*/
+
+var week = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var pointLoc = 0;
+var vWidth = 730;
+var vHeight = 350;
+var crossH = 0;
+var crossV = 0;
+var maxV = 0;
+var maxL = 0;
+var time24 = 0;
+var advX = 1;
+var interval = 0;
+var hours = 0;
+var xpstVis = 1;
+var ignoreNext = 0;
+var eraseL = 0;
+var samp = 1;
+
+function E(id)
+{
+	return document.getElementById(id);
+}
+
+function pad(n)
+{
+	n = n.toString();
+	while (n.length < 2) n = '0' + n;
+	return n;
+}
+
+function xps(n)
+{
+	n /= 1024;
+	return n.toFixed(2) + ' KB/s';
+}
+
+function setText(e, text)
+{
+	// Adobe/IE doesn't do textContent=
+	if (e.firstChild) e.removeChild(e.firstChild);
+	e.appendChild(document.createTextNode(text));
+}
+
+function init(ev)
+{
+	var n;	
+	
+	var obj = E('svgraph');
+	obj.addEventListener("mousemove", mMove, false);
+	obj.addEventListener("mousedown", mClick, false);
+	
+//  if (typeof(svgDocument) == 'undefined') svgDocument = ev.srcElement.ownerDocument;
+
+	crossX = E('crossX');
+	crossY = E('crossY');
+	polyRx = E('polyRx');
+	polyTx = E('polyTx');
+
+//	pointTextBack = E('pointTextBack');
+
+	pointText = E('pointText');
+	pointG = E('pointGroup');
+	crossTextBack = E('crossTextBack');
+	crossText = E('crossText');
+	crossTime = E('crossTime');
+	background = E('background');
+  hori = E('hori');
+  
+	tickLines = [];
+	for (n = 0; n < 24; ++n) {
+		tickLines[n] = E('tick' + n);
+	}
+	tickHours = [];
+	for (n = 0; n < 12; ++n) {
+		tickHours[n] = E('h' + n);
+	}
+
+	xpst = [];
+	for (n = 0; n < 4; ++n)
+		xpst[n] = E('xpst' + n);
+
+	time24 = ((new Date(2000, 0, 1, 23, 0, 0, 0)).toLocaleString().indexOf('23') != -1);
+
+	top.updateSVG = updateSVG;
+	top.svgReady = 1;
+	top.initData();
+}
+
+function drawData(poly, data, mode, color)
+{
+	var i;
+	var pt;
+	var x, y;
+	var d, j;
+
+	if (data.length == 0) return;
+
+	x = 0;
+	if (mode == 0) {
+		poly.setAttribute('fill-opacity', '0.5');
+		pt = '0,' + vHeight;
+	}
+	else {
+		poly.setAttribute('fill-opacity', '0');
+		pt = '';
+	}
+	poly.setAttribute('stroke', color);
+	poly.setAttribute('fill', color);
+
+	for (i = data.length - maxL; i < data.length; ++i) {
+		if (i < 0) {
+			d = 0;
+		}
+		else if (i >= samp) {
+			d = 0;
+			for (j = samp - 1; j >= 0; --j) {
+				d += data[i - j];
+			}
+			d /= (dataDiv * samp);
+		}
+		else {
+			d = data[i] / dataDiv;
+		}
+		y = (vHeight - Math.floor((d * vHeight) / maxV))
+		pt += ' ' + Math.floor(x) + ',' + y;
+		x += advX;
+	}
+	pt += ' ' + (vWidth + 5) + ',' + y + ' ' + (vWidth + 10) + ',' + vHeight;
+	poly.setAttribute('points', pt);
+}
+
+function updateSVG(rxData, txData, maxValue, mode, rxColor, txColor, intv, maxLen, dataD, avgSamp, clock)
+{
+	var x, y, z, i;
+	var v, e;
+
+	maxV = maxValue;
+	interval = intv;
+	maxL = maxLen;
+	advX = vWidth / maxL;
+	dataDiv = dataD;
+	samp = avgSamp;
+	tockD = clock;
+	tock = tockD.getTime();
+
+	if (intv < 5) {
+		// realtime
+		x = z = (vWidth / 5);
+		for (i = 0; i < 4; ++i) {
+			tickLines[i].setAttribute('x1', Math.round(x));
+			tickLines[i].setAttribute('x2', Math.round(x));
+			x += z;
+		}
+	}
+	else {
+		advM = (60 / interval) * advX;
+		x = (60 - tockD.getMinutes()) * advM;
+		v = advM * 60;
+		for (i = 0; i < 24; ++i) {
+			z = Math.round(x);
+			y = (new Date(tock - (Math.round((vWidth - z - 1) / advX) * interval * 1000))).getHours();
+			x += v;
+			e = tickLines[i];
+			e.setAttribute('x1', z);
+			e.setAttribute('x2', z);
+			e.setAttribute('class', (y & 1) ? 'a' : 'b');
+
+			if ((y & 1) == 0) {
+				e = tickHours[i >> 1];
+				e.setAttribute('x', z);
+				z = y % 24;
+				if (!time24) {
+					if (z < 12) {
+						if (z == 0) z = 12;
+						z += ' am';
+					}
+					else {
+						z -= 12;
+						if (z == 0) z = 12;
+						z += ' pm';
+					}
+				}
+				setText(e, z);
+			}
+		}
+	}
+
+	if (maxV <= 0) {
+		polyRx.setAttribute('points', '');
+		polyTx.setAttribute('points', '');
+		return;
+	}
+
+	if (crossV > 0) drawCross(crossH, vHeight - Math.floor((crossV / maxV) * vHeight));
+	drawData(polyRx, rxData, mode, rxColor);
+	drawData(polyTx, txData, mode, txColor);
+
+	setText(xpst[0], xps(maxV * 0.70));
+	setText(xpst[1], xps(maxV * 0.5));
+	setText(xpst[2], xps(maxV * 0.25));
+	setText(xpst[3], xps(maxV));
+	if (eraseL > 0) {
+		if (--eraseL == 0) pointG.setAttribute('visibility', 'visible');
+	}
+}
+
+function vY(y)
+{
+	return maxV - (maxV * (y / vHeight))
+}
+
+function pointTime(x)
+{
+	var t, hh, h, s;
+
+	t = new Date(tock - (Math.round((vWidth - x - 1) / advX) * interval * 1000));
+	h = t.getHours();
+	s = week[t.getDay()] + ' ';
+	if (time24)	{
+		s += pad(h) + ':' + pad(t.getMinutes());
+	}
+	else {
+		hh = h % 12;
+		s += pad((hh == 0) ? 12 : hh) + ':' + pad(t.getMinutes()) + ((h < 12) ? ' am' : ' pm');
+	}
+
+	return s;
+}
+
+function mMove(ev)
+{
+	var x;
+	
+	if (maxV <= 0) return;
+	if (ev.clientX > (vWidth - 120)) {
+		if (pointLoc == 0) {
+			if (ev.clientY < 30) {
+				pointLoc = 1;
+				pointText.setAttribute('y', '98%');
+//				pointTextBack.setAttribute('y', '283');
+			}
+		}
+		else {
+			if (ev.clientY > (vHeight - 30)) {
+				pointLoc = 0;
+				pointText.setAttribute('y', '5%');
+//				pointTextBack.setAttribute('y', '1%');
+			}
+		}
+	}
+  
+	setText(pointText, pointTime(ev.clientX) + ' / ' + xps(vY(ev.clientY)));
+
+	x = 230;
+//	pointTextBack.setAttribute('x', (vWidth - x) - 22);
+//	pointTextBack.setAttribute('width', x + 20);
+  pointText.setAttribute('style', 'text-anchor:end');
+  pointG.setAttribute('visibility', 'visible');
+	eraseL = 5;
+}
+
+function setXY(e, x, y)
+{
+	e.setAttribute('x', x);
+	e.setAttribute('y', y);
+}
+
+function drawCross(x, y)
+{
+	var n;
+
+	crossX.setAttribute('x1', x - 5);
+	crossX.setAttribute('x2', x + 5);
+	crossX.setAttribute('y1', y);
+	crossX.setAttribute('y2', y);
+
+	crossY.setAttribute('x1', x);
+	crossY.setAttribute('x2', x);
+	crossY.setAttribute('y1', y - 5);
+	crossY.setAttribute('y2', y + 5);
+
+//	n = Math.max(crossText.getComputedTextLength(), crossTime.getComputedTextLength()) + 20;
+  n = 100;
+
+	crossTextBack.setAttribute('width', n);
+
+	if (x > (vWidth - n - 10)) {
+		crossText.setAttribute('style', 'text-anchor:end');
+		crossTime.setAttribute('style', 'text-anchor:end');
+		crossTextBack.setAttribute('x', (x - n) - 10);
+		x -= 20;
+	}
+	else {
+		crossText.setAttribute('style', '');
+		crossTime.setAttribute('style', '');
+		crossTextBack.setAttribute('x', x + 10);
+		x += 20;
+	}
+
+	crossTextBack.setAttribute('y', y - 17);
+	setXY(crossTime, x, y - 5);
+	setXY(crossText, x, y + 10);
+}
+
+function mClick(ev)
+{
+	if (ignoreNext) {
+		ignoreNext = 0;
+		return;
+	}
+	if (maxV <= 0) return;
+
+	crossH = ev.clientX;
+	crossV = vY(ev.clientY);
+	setText(crossText, xps(crossV));
+	setText(crossTime, pointTime(crossH));
+	drawCross(ev.clientX, ev.clientY);
+
+
+}
+
+]]></script>
+
+<rect x="0" y="0" width="100%" height="100%" fill="#111" id="background"/>
+
+<g id="hori">
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="25%" x2="100%" y2="25%" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="50%" x2="100%" y2="50%" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="75%" x2="100%" y2="75%" />
+</g>
+
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick0" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick1" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick2" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick3" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick4" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick5" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick6" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick7" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick8" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick9" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick10" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick11" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick12" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick13" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick14" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick15" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick16" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick17" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick18" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick19" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick20" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick21" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick22" />
+<line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="0" y1="0%" x2="0" y2="100%" id="tick23" />
+
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h0" />
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h1" />
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h2" />
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h3" />
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h4" />
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h5" />
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h6" />
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h7" />
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h8" />
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h9" />
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h10" />
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h11" />
+<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="0" y="98%" class="tickH" id="h12" />
+
+<g id="xpst">
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="10" y="28%" id="xpst0" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="10" y="53%" id="xpst1" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="10" y="78%" id="xpst2" />
+	<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="10" y="3%" id="xpst3" />
+</g>
+
+<polyline id="polyTx" fill="#FFFFFF" style="stroke-width:1" stroke-opacity="0.9" points="" />
+<polyline id="polyRx" fill="#FFFFFF" style="stroke-width:1" stroke-opacity="0.9" points="" />
+
+<g id="pointGroup">
+	<text font-family="Verdana" font-size="11" fill="#FFFFFF" x="99%" y="12" id="pointText" />
+</g>
+
+<g id="cross">
+	<line stroke-width="1" stroke="#FFFFFF" x1="0" y1="0" x2="0" y2="0" id="crossX" />
+	<line stroke-width="1" stroke="#FFFFFF" x1="0" y1="0" x2="0" y2="0" id="crossY" />
+	<rect x="0" y="100" rx="5" ry="5" width="0" height="35" id="crossTextBack" class="back" />
+	<text font-family="Verdana" font-size="11" fill="#fff" x="0" y="-50" id="crossTime" />
+	<text font-family="Verdana" font-size="11" fill="#fff" x="0" y="0" id="crossText" />
+</g>
+
+</svg>
+
+

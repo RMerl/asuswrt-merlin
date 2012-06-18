@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="smbumount.8">
+
+<refmeta>
+	<refentrytitle>smbumount</refentrytitle>
+	<manvolnum>8</manvolnum>
+</refmeta>
+
+
+<refnamediv>
+	<refname>smbumount</refname>
+	<refpurpose>smbfs umount for normal users</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>smbumount</command>
+		<arg choice="req">mount-point</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>With this program, normal users can unmount smb-filesystems, 
+	provided that it is suid root.  <command>smbumount</command> has 
+	been written to give normal Linux users more control over their 
+	resources. It is safe to install this program suid root, because only 
+	the user who has mounted a filesystem is allowed to unmount it again.  
+	For root it is not necessary to use smbumount. The normal umount 
+	program works perfectly well.</para>  
+
+	<para>WARNING: <command>smbumount</command> is deprecated and not
+        maintained any longer. <command>umount.cifs</command> 
+        should be used instead of <command>smbumount</command>.</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>mount-point</term>
+		<listitem><para>The directory to unmount.</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+
+<refsect1>
+	<title>SEE ALSO</title>
+	
+	<para><citerefentry><refentrytitle>smbmount</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>Volker Lendecke, Andrew Tridgell, Michael H. Warfield 
+	and others.</para>
+	
+	<para>The current maintainer of smbfs and the userspace
+	tools <command>smbmount</command>, <command>smbumount</command>,
+	and <command>smbmnt</command> is <ulink 
+	url="mailto:urban@teststation.com">Urban Widmark</ulink>.
+	The <ulink url="mailto:samba@samba.org">SAMBA Mailing list</ulink>
+	is the preferred place to ask questions regarding these programs.
+	</para>
+	
+	<para>The conversion of this manpage for Samba 2.2 was performed 
+	by Gerald Carter. The conversion to DocBook XML 4.2 for Samba 3.0
+	was done by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

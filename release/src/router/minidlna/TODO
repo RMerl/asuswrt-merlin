@@ -1,0 +1,9 @@
+Things left to do:
+
+* Persistent HTTP connection (Keep-Alive) support
+* PNG image support
+* SortCriteria support
+* Upload support
+
+Wishlist:
+* Transcoding

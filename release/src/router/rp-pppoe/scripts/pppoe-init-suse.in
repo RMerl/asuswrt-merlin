@@ -1,0 +1,64 @@
+#!/bin/sh
+#
+# pppoe                     This script starts or stops a PPPoE connection
+#
+# chkconfig: 2345 99 01
+# description: Connects to PPPoE provider
+#
+# LIC: GPL
+#
+# Copyright (C) 2000 Roaring Penguin Software Inc.  This software may
+# be distributed under the terms of the GNU General Public License, version
+# 2 or any later version.
+# Modifed to work with SuSE 6.4 linux by Gary Cameron.
+#
+# Source function library.
+#. /etc/rc.d/init.d/functions  # For red hat?
+. /etc/rc.config               # For SuSE, enables setting from /etc/rc.config
+
+#Tweak this
+restart_time=120
+
+# From AUTOCONF
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+
+# Paths to programs
+START=@sbindir@/pppoe-start
+STOP=@sbindir@/pppoe-stop
+STATUS=@sbindir@/pppoe-status
+
+test "$PPPoE_START" = "yes" || exit 0
+
+# The echo return value for success (defined in /etc/rc.config).
+return=$rc_done
+case "$1" in
+    start)
+        echo -n "Bringing up PPPoE link"
+        $START  > /dev/null 2>&1 || return=$rc_failed
+        echo -e "$return"
+        ;;
+
+    stop)
+        echo -n "Shutting down PPPoE link"
+        $STOP > /dev/null 2>&1 || return=$rc_failed
+        echo -e "$return"
+        ;;
+
+    restart)
+        $0 stop
+        echo "Waiting" $restart_time "seconds for the host to reset itself"
+        sleep $restart_time  #Note: Need time for host to reset itself
+        $0 start
+        ;;
+
+    status)
+        $STATUS
+        ;;
+
+    *)
+        echo "Usage: pppoe {start|stop|restart|status}"
+        exit 1
+esac
+
+exit 0

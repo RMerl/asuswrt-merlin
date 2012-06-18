@@ -1,0 +1,426 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 5] 5.3 File Permissions and Attributes on MS-DOS and Unix</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:32:58Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_02.html" TITLE="5.2 Filesystem Differences">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 5.2 Filesystem Differences" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch05_01.html" TITLE="5. Browsing and Advanced Disk Shares ">
+Chapter 5<br>
+Browsing and Advanced Disk Shares </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_04.html" TITLE="5.4 Name Mangling and Case">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 5.4 Name Mangling and Case" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch05-34062">
+5.3 File Permissions and Attributes on MS-DOS and Unix</a></h2><P CLASS="para">DOS was never intended to be a multiuser, networked operating system. Unix, on the other hand, was designed that way from the start. Consequently, there are inconsistencies and gaps in coverage between the two filesystems that Samba must not only be aware of, but also provide solutions for. One of the biggest gaps is how Unix and DOS handle permissions with files.</p><P CLASS="para">
+Let's take a look at how Unix assigns permissions. All Unix files have read, write, and execute bits for three classifications of users: owner, group, and world. These permissions can be seen at the extreme left-hand side when a <CODE CLASS="literal">
+ls</code> <CODE CLASS="literal">
+-al</code> command is issued in a Unix directory. For example:</p><PRE CLASS="programlisting">
+-rwxr--r--   1 tom     users   2014 Apr 13 14:11 access.conf     </pre><P CLASS="para">
+Windows, on the other hand, has four principal bits that it uses with any file: read-only, system, hidden, and archive. You can view these bits by right-clicking on the file and choosing the Properties menu item. You should see a dialog similar to <A CLASS="xref" HREF="ch05_03.html#ch05-76568">
+Figure 5.6</a>.[<A CLASS="footnote" HREF="#ch05-pgfId-964268">1</a>] </p><BLOCKQUOTE CLASS="footnote">
+<DIV CLASS="footnote">
+<P CLASS="para">
+<A CLASS="footnote" NAME="ch05-pgfId-964268">[1]</a> The system checkbox will probably be greyed for your file. Don't worry about that&nbsp;- you should still be able to see when the box is checked and when it isn't.</p></div></blockquote><H4 CLASS="figure">
+<A CLASS="title" NAME="ch05-76568">
+Figure 5.6: DOS and Windows file properties</a></h4><IMG CLASS="graphic" SRC="figs/sam.0506.gif" ALT="Figure 5.6"><P CLASS="para">
+The definition of each of those bits follows:</p><DL CLASS="variablelist">
+<DT CLASS="term">Read-only</dt><DD CLASS="listitem">
+<P CLASS="para">
+The file's contents can be read by a user but cannot be written to. </p></dd><DT CLASS="term">System</dt><DD CLASS="listitem">
+<P CLASS="para">
+This file has a specific purpose required by the operating system.</p></dd><DT CLASS="term">Hidden</dt><DD CLASS="listitem">
+<P CLASS="para">
+This file has been marked to be invisible to the user, unless the operating systems is explicitly set to show it.</p></dd><DT CLASS="term">Archive</dt><DD CLASS="listitem">
+<P CLASS="para">
+This file has been touched since the last DOS backup was performed on it.</p></dd></dl><P CLASS="para">
+Note that there is no bit to specify that a file is executable. DOS and Windows NT filesystems identify executable files by giving them the extensions .EXE, .COM, .CMD, or .BAT.</p><P CLASS="para">
+Consequently, there is no use for any of the three Unix executable bits that are present on a file in a Samba disk share. DOS files, however, have their own attributes that need to be preserved when they are stored in a Unix environment: the archive, system, and hidden bits. Samba can preserve these bits by reusing the executable permission bits of the file on the Unix side&nbsp;- if it is instructed to do so. Mapping these bits, however, has an unfortunate side-effect: if a Windows user stores a file in a Samba share, and you view it on Unix with the <CODE CLASS="literal">
+ls</code> <CODE CLASS="literal">
+-al</code> command, some of the executable bits won't mean what you'd expect them to.</p><P CLASS="para">
+Three Samba options decide whether the bits are mapped: <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+archive</code>, <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+system</code>, and <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+hidden</code>. These options map the archive, system, and hidden attributes to the owner, group, and world execute bits of the file, respectively. You can add these options to the <CODE CLASS="literal">
+[data]</code> share, setting each of their values as follows:</p><PRE CLASS="programlisting">
+[data]
+	path = /home/samba/data
+	browseable = yes
+	guest ok = yes
+	writeable = yes
+	map archive = yes
+	map system = yes
+	map hidden = yes</pre><P CLASS="para">
+After that, try creating a file in the share under Unix&nbsp;- such as <CODE CLASS="literal">
+hello.java</code>&nbsp;- and change the permissions of the file to 755. With these Samba options set, you should be able to check the permissions on the Windows side and see that each of the three values has been checked in the Properties dialog box. What about the read-only attribute? By default, Samba 2.0 sets this whenever a file does not have the Unix owner write permission bit set. In other words, you can set this bit by changing the permissions of the file to 555.</p><P CLASS="para">
+We should warn you that the default value of the <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+archive</code> option is <CODE CLASS="literal">
+yes</code>, while the other two options have a default value of <CODE CLASS="literal">
+no</code>. This is because many programs do not work properly if the archive bit is not stored correctly for DOS and Windows files. The system and hidden attributes, however, are not critical for a program's operation and are left to the discretion of the administrator.</p><P CLASS="para">
+<A CLASS="xref" HREF="ch05_03.html#ch05-56404">
+Figure 5.7</a> summarizes the Unix permission bits and illustrates how Samba maps those bits to DOS attributes. Note that the group read/write and world read/write bits do not directly translate to a DOS attribute, but they still retain their original Unix definitions on the Samba server. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch05-56404">
+Figure 5.7: How Samba and Unix view the permissions of a file</a></h4><IMG CLASS="graphic" SRC="figs/sam.0507.gif" ALT="Figure 5.7"><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-964095">
+5.3.1 Creation masks</a></h3><P CLASS="para">
+Samba has several options to help with file creation masks. File creation masks (or <I CLASS="firstterm">
+umasks</i>) help to define the permissions a file or directory will receive at the time it is created. In Unix, this means that you can control what permissions a file or directory does not have when it is created. For files accessed from Windows, this means you can disable the read-only, archive, system, and hidden attributes of a file as well.</p><P CLASS="para">
+For example, the <CODE CLASS="literal">
+create</code> <CODE CLASS="literal">
+mask</code> option will force the permissions of a file created by a Windows client to be at most 744:</p><PRE CLASS="programlisting">
+[data]
+	path = /home/samba/data
+	browseable = yes
+	guest ok = yes
+	writeable = yes
+	create mask = 744</pre><P CLASS="para">
+while the <CODE CLASS="literal">
+directory</code> <CODE CLASS="literal">
+mask</code> option shown here will force the permissions of a newly created directory to be at most 755:</p><PRE CLASS="programlisting">
+[data]
+	path = /home/samba/data
+	browseable = yes
+	guest ok = yes
+	writeable = yes
+	directory mask = 755</pre><P CLASS="para">
+Alternatively, you can also force various bits with the <CODE CLASS="literal">
+force</code> <CODE CLASS="literal">
+create</code> <CODE CLASS="literal">
+mode</code> and <CODE CLASS="literal">
+force</code> <CODE CLASS="literal">
+directory</code> <CODE CLASS="literal">
+mode</code> options. These options will perform a logical OR against the file and directory creation masks, ensuring that those bits that are specified will always be set. You would typically set these options globally in order to ensure that group and world read/write permissions have been set appropriately for new files or directories in each share.</p><P CLASS="para">
+In the same spirit, if you wish to explicitly set the Unix user and group attributes of a file that is created on the Windows side, you can use the <CODE CLASS="literal">
+force</code> <CODE CLASS="literal">
+user</code> and <CODE CLASS="literal">
+force</code> <CODE CLASS="literal">
+group</code> options. For example:</p><PRE CLASS="programlisting">
+[data]
+	path = /home/samba/data
+	browseable = yes
+	guest ok = yes
+	writeable = yes
+
+	create mask = 744
+	directory mask = 755
+	force user = joe
+	force group = accounting</pre><P CLASS="para">
+These options actually assign a static Unix user and group to each connection that is made to a share. However, this occurs <EM CLASS="emphasis">
+after</em> the client authenticates; it does not allow free access to a share. These options are frequently used for their side effects of assigning a specific user and group to each new file or directory that is created in a share. Use these options with discretion.</p><P CLASS="para">
+Finally, one of the capabilities of Unix that DOS lacks is the ability to delete a read-only file from a writable directory. In Unix, if a directory is writable, a read-only file in that directory can still be removed. This could permit you to delete files in any of your directories, even if the file was left by someone else.</p><P CLASS="para">
+DOS filesystems are not designed for multiple users, and so its designers decided that read-only means "protected against accidental change, including deletion," rather than "protected against some other user on a single-user machine." So the designers of DOS prohibited removal of a read-only file. Even today, Windows file systems exhibit the same behavior.</p><P CLASS="para">
+Normally, this is harmless. Windows programs don't try to remove read-only files because they know it's a bad idea. However, a number of source-code control programs&nbsp;- which were first written for Unix&nbsp;- run on Windows and require the ability to delete read-only files. Samba permits this behavior with the <CODE CLASS="literal">
+delete</code> <CODE CLASS="literal">
+readonly</code> option. In order to enable this functionality, set the option to <CODE CLASS="literal">
+yes</code>:</p><PRE CLASS="programlisting">
+[data]
+	path = /home/samba/data
+	browseable = yes
+	guest ok = yes
+	writeable = yes
+
+	create mask = 744
+	directory mask = 755
+	force user = joe
+	force group = accounting
+	delete readonly = yes</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-964323">
+5.3.2 File and Directory Permission Options</a></h3><P CLASS="para">The options for file and directory permissions are summarized in <A CLASS="xref" HREF="ch05_03.html#ch05-96508">
+Table 5.5</a>; each option is then described in detail. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch05-96508">
+Table 5.5: File and Directory Permission Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+map archive</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Preserve DOS archive attribute in user execute bit (0100).</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+map system</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Preserve DOS system attribute in group execute bit (0010).</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+map hidden</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Preserve DOS hidden attribute in world execute bit (0001).</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+create mask (create mode)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numeric</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the maximum permissions for files created by Samba.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+0744</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+directory mask (directory mode)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numeric</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the maximum permissions for directories created by Samba.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+0755</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+force create mode</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numeric</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Forces the specified permissions (bitwise or) for directories created by Samba.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+0000</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+force directory mode</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numeric</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Forces the specified permissions (bitwise or) for directories created by Samba.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+0000</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+force group (group)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (group name)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the effective group for a user accessing this share.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+force user</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (username)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the effective username for a user accessing this share.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+delete readonly</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Allows a user to delete a read-only file from a writable directory.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-961746">
+5.3.2.1 create mask</a></h4><P CLASS="para">
+The argument for this option is an octal number indicating which permission flags may be set at file creation by a client in a share. The default is 0755, which means the Unix owner can at most read, write, and optionally execute his or her own files, while members of the user's group and others can only read or execute them. If you need to change it for non-executable files, we recommend 0644, or <CODE CLASS="literal">
+rw-r--r--</code>. Keep in mind that the execute bits may be used by the server to map certain DOS file attributes, as described earlier. If you're altering the create mask, those bits have to be part of the create mask as well.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-961749">
+5.3.2.2 directory mask</a></h4><P CLASS="para">
+The argument for this option is an octal number indicating which permission flags may be set at directory creation by a client in a share. The default is 0755, which allows everyone on the Unix side to at most read and traverse the directories, but allows only you to modify them. We recommend the mask 0750, removing access by world users.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-961751">
+5.3.2.3 force create mode</a></h4><P CLASS="para">
+This option sets the permission bits that Samba will force to be set when a file permission change is made. It's often used to force group permissions, mentioned previously. It can also be used to preset any of the DOS attributes we mentioned: archive (0100), system (0010), or hidden (0001). This option always takes effect after the <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+archive</code>, <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+system </code>, <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+hidden</code>, and <CODE CLASS="literal">
+create</code> <CODE CLASS="literal">
+mask</code> options.</p><P CLASS="para">
+Many Windows applications rename their data files to <EM CLASS="emphasis">
+datafile.bak</em> and create new ones, thus changing their ownership and permissions so that members of the same Unix group can't edit them. Setting <CODE CLASS="literal">
+force create mask = 0660</code> will keep the new file editable by members of the group.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-961753">
+5.3.2.4 force directory mode</a></h4><P CLASS="para">
+This option sets the permission bits which Samba will force when a directory permission change is made or a directory is created. It's often used to force group permissions, as mentioned previously. This option defaults to 0000, and can be used just like the <CODE CLASS="literal">
+force</code> <CODE CLASS="literal">
+create</code> <CODE CLASS="literal">
+mode</code> to add group or other permissions if needed. This option always takes effect after the <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+archive</code>, <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+system</code>, <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+hidden</code>, and <CODE CLASS="literal">
+directory</code> <CODE CLASS="literal">
+mask</code> options.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-961755">
+5.3.2.5 force group</a></h4><P CLASS="para">
+This option, sometimes called <CODE CLASS="literal">
+group</code>, assigns a static group ID that will be used on all connections to a service after the client has successfully authenticated. This assigns a specific group to each new file or directory created from an SMB client.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-961757">
+5.3.2.6 force user</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+force</code> <CODE CLASS="literal">
+user</code> option assigns a static user ID that will be used on all connections to a service after the client has successfully authenticated. This assigns a specific user to each new file or directory created from an SMB client.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-961759">
+5.3.2.7 delete readonly</a></h4><P CLASS="para">This option allows a user to delete a directory containing a read-only file. By default, DOS and Windows will not allow such an operation. You probably will want to leave this option turned off unless a program needs this capability; many Windows users would be appalled to find that they'd accidentally deleted a file which they had set read-only. In fact, even the Unix <CODE CLASS="literal">
+rm</code> command will ask users if they really want to override the protection and delete read-only files. It's a good idea to have Samba be at least as cautious. </p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-961826">
+5.3.2.8 map archive</a></h4><P CLASS="para">
+The DOS archive bit is used to flag a file that has been changed since it was last archived (e.g., backed up with the DOS archive program.) Setting the Samba option <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+archive</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code> causes the DOS archive flag to be mapped to the Unix execute-by-owner (0100) bit. It's best to leave this option on if your Windows users are doing their own backups, or are using programs that require the archive bit. Unix lacks the notion of an archive bit entirely. Backup programs typically keep a file that lists what files were backed up on what date, so comparing file modification dates serves the same purpose.</p><P CLASS="para">
+Setting this option to <CODE CLASS="literal">
+yes</code> causes an occasional surprise on Unix when a user notices that a data file is marked as executable, but rarely causes harm. If a user tries to run it, he or she will normally get a string of error messages as the shell tries to execute the first few lines as commands. The reverse is also possible; an executable Unix program looks like it hasn't been backed up recently on Windows. But again, this is rare, and is usually harmless. </p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-961836">
+5.3.2.9 map system</a></h4><P CLASS="para">
+The DOS system attribute is used to indicate files that are required by the operating system, and should not be deleted, renamed, or moved without special effort. Set this option only if you need to store Windows system files on the Unix file server. Executable Unix programs will appear to be non-removable special Windows files when viewed from Windows clients. This may prove mildly inconvenient if you want to move or remove one. For most sites, however, this is fairly harmless.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-961845">
+5.3.2.10 map hidden</a></h4><P CLASS="para">DOS uses the hidden attribute to indicate that a file should not ordinarily be visible in directory listings. Unix doesn't have such a facility; it's up to individual programs (notably the shell) to decide what to display and what not to display. Normally, you won't have any DOS files that need to be hidden, so the best thing to do is to leave this option turned off.</p><P CLASS="para">
+Setting this option to <CODE CLASS="literal">
+yes</code> causes the server to map the hidden flag onto the executable-by-others bit (0001). This feature can produce a rather startling effect. Any Unix program that is executable by world seems to vanish when you look for it from a Windows client. If this option is not set, however, and a Windows user attempts to mark a file hidden on a Samba share, it will not work&nbsp;- Samba has no place to store the hidden attribute! </p></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_02.html" TITLE="5.2 Filesystem Differences">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 5.2 Filesystem Differences" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_04.html" TITLE="5.4 Name Mangling and Case">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 5.4 Name Mangling and Case" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+5.2 Filesystem Differences</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+5.4 Name Mangling and Case</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Configuring Format and Displayed Information</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="lpq - Status Monitoring Program " href=
+    "lpq.htm">
+    <link rel="PREVIOUS" title="Job Taking Too Long - Stalled "
+    href="stalledtime.htm">
+    <link rel="NEXT" title="lprm - Job Removal Program " href=
+    "lprm.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "stalledtime.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 7.
+          <b class="APPLICATION">lpq</b> - Status Monitoring
+          Program</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "lprm.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN4619">7.7. Configuring Format
+      and Displayed Information</a></h1>
+
+      <p>The following sections describe options that are used by
+      the <b class="APPLICATION">lpd</b> server to control how it
+      will return status information to a <b class=
+      "APPLICATION">lpq</b> request.</p>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="CLASSINSTATUS">7.7.1. Display
+        Class Information</a></h2>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">class_in_status</var> FLAG
+            <span class="emphasis"><i class="EMPHASIS">show class
+            name in status</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>Setting the <var class="LITERAL">class_in_status</var>
+        option causes the class name rather than priority to be
+        displayed in the status information.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="REVERSELPQFORMAT">7.7.2. Reverse
+        Short and Long <b class="APPLICATION">lpq</b>
+        Formats</a></h2>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">reverse_lpq_format=</var> FLAG
+            <span class="emphasis"><i class="EMPHASIS">reverse <b
+            class="APPLICATION">lpq</b> status format for specified
+            remote systems</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>Various Solaris and other System V implementations
+        support an RFC1179 interface to remote printers.
+        Unfortunately, there is a problem in that when they send a
+        status request, the status format is reversed. That is,
+        when LONG status format is wanted, they send SHORT, and
+        vice versa.</p>
+
+        <p>The <var class="LITERAL">reverse_lpq_format=</var>
+        specifies a list of printers or IP addresses for which the
+        <b class="APPLICATION">lpd</b> server will return LONG
+        status when SHORT is requested, and vice versa. For
+        example:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN4648"></a>
+<pre class="SCREEN">
+    reverse_lpq_format=*.eng.com,130.192.0.0/16
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>will cause hosts whose Fully Qualified Domain Name
+        (FQDN) ends in <tt class="FILENAME">eng.com</tt> or from
+        subnet <var class="LITERAL">130.192.0.0</var> to have
+        reversed status returned.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="SHORTSTATUS">7.7.3. Status Line
+        Length and Line Count</a></h2>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">return_short_status=</var><span
+            class="emphasis"><i class="EMPHASIS">return short <b
+            class="APPLICATION">lpq</b> status for specified remote
+            systems</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">short_status_length=</var><span
+            class="emphasis"><i class="EMPHASIS">short <b class=
+            "APPLICATION">lpq</b> status length in
+            lines</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>In order to be compatible with non-<b class=
+        "APPLICATION">LPRng</b> client programs, some
+        administrators would like <b class="APPLICATION">lpd</b> to
+        return a short or brief status to normal status
+        queries.</p>
+
+        <p>The <var class="LITERAL">return_short_status=</var>
+        specifies a list of printers or IP addresses for which the
+        <b class="APPLICATION">lpd</b> server will return an
+        abbreviated status when LONG status is requested. For
+        example:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN4673"></a>
+<pre class="SCREEN">
+    return_short_status=*.eng.com,130.192.0.0/16
+    short_status_length#3
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>will cause hosts whose Fully Qualified Domain Name
+        (FQDN) ends in <tt class="FILENAME">eng.com</tt> or from
+        subnet <var class="LITERAL">130.192.0.0</var> to get only 3
+        lines of detailed status returned.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="FORCELPQSTATUS">7.7.4. <b class=
+        "APPLICATION">lpq</b> Status Format Determined by
+        Requesting Host Address</a></h2>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">force_lpq_status=</var><span
+            class="emphasis"><i class="EMPHASIS">force <b class=
+            "APPLICATION">lpq</b> status format for specified
+            remote systems</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>In order to be compatible with non-<b class=
+        "APPLICATION">LPRng</b> client programs which are totally
+        unpredictable, this allows the administrator to specify the
+        format for <b class="APPLICATION">lpq</b> status when
+        requests arrive.</p>
+
+        <p>The <var class="LITERAL">force_lpq_status=</var>
+        specifies a list of formats and printers or IP addresses
+        for which the <b class="APPLICATION">lpd</b> server will
+        return status in the specified format. The entry has the
+        format <var class="LITERAL">KEY=list;KEY=list...</var>
+        where <acronym class="ACRONYM">KEY</acronym> is <var class=
+        "LITERAL">s</var> for short and <var class=
+        "LITERAL">l</var> for long format, and list is a list of
+        hosts or IP addresses. For example:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN4698"></a>
+<pre class="SCREEN">
+    force_lpq_status=s=pc*.eng.com,130.192.12.0/24,l=sun*.eng.com
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>will cause hosts whose Fully Qualified Domain Name
+        (FQDN) matches <tt class="FILENAME">pc*eng.com</tt> or from
+        subnet <var class="LITERAL">130.192.12.0</var> to get short
+        status returned and hosts which match <tt class=
+        "FILENAME">sun*.eng.com</tt> get long status.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "stalledtime.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "lprm.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Job Taking Too
+          Long - Stalled</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "lpq.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top"><b class=
+          "APPLICATION">lprm</b> - Job Removal Program</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

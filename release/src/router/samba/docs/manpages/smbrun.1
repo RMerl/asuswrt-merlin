@@ -1,0 +1,69 @@
+.TH SMBRUN 1 "23 Jun 2001" "smbrun 2.0.10"
+.PP 
+.SH "NAME" 
+smbrun \- interface program between smbd and external programs
+.PP 
+.SH "SYNOPSIS" 
+.PP 
+\fBsmbrun\fP shell-command
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+This program is part of the \fBSamba\fP suite\&.
+.PP 
+\fBsmbrun\fP is a very small \'glue\' program, which runs shell commands
+for the \fBsmbd\fP daemon \fBsmbd
+(8)\fP\&.
+.PP 
+It first changes to the highest effective user and group ID that it
+can, then runs the command line provided using the system() call\&. This
+program is necessary to allow some operating systems to run external
+programs as non-root\&.
+.PP 
+.SH "OPTIONS" 
+.PP 
+.IP 
+.IP "\fBshell-command\fP" 
+The shell command to execute\&.  The command
+should have a fully-qualified path\&.
+.IP 
+.PP 
+.SH "ENVIRONMENT VARIABLES" 
+.PP 
+The \fIPATH\fP variable set for the environment in which \fBsmbrun\fP is
+executed will affect what executables are located and executed if a
+fully-qualified path is not given in the command\&.
+.PP 
+.SH "DIAGNOSTICS" 
+.PP 
+If \fBsmbrun\fP cannot be located or cannot be executed by
+\fBsmbd\fP then appropriate messages will be found in
+the \fBsmbd\fP logs\&. Other diagnostics are dependent
+on the shell-command being run\&. It is advisable for your shell
+commands to issue suitable diagnostics to aid trouble-shooting\&.
+.PP 
+.SH "VERSION" 
+.PP 
+This man page is correct for version 2\&.0 of the Samba suite\&.
+.PP 
+.SH "SEE ALSO" 
+.PP 
+\fBsmb\&.conf (5)\fP, \fBsmbd (8)\fP
+.PP 
+.SH "AUTHOR" 
+.PP 
+The original Samba software and related utilities were created by
+Andrew Tridgell samba@samba\&.org\&. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed\&.
+.PP 
+The original Samba man pages were written by Karl Auer\&. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+\fBftp://ftp\&.icce\&.rug\&.nl/pub/unix/\fP)
+and updated for the Samba2\&.0 release by Jeremy Allison\&.
+samba@samba\&.org\&.
+.PP 
+See \fBsamba (7)\fP to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc\&.

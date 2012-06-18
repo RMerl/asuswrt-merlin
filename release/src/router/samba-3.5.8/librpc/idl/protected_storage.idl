@@ -1,0 +1,14 @@
+/*
+  protected_storage interface definitions
+  Also seen with UUID: 
+*/
+
+[ uuid("c9378ff1-16f7-11d0-a0b2-00aa0061426a"),
+  version(1.0),
+  pointer_default(unique)
+] interface protected_storage
+{
+	/*****************************/
+	/* Function        0x00      */
+	WERROR ps_XXX ();
+}

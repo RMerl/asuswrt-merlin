@@ -1,0 +1,106 @@
+#!/usr/bin/make -f
+
+#export DH_OPTIONS
+DEB_HOST_GNU_TYPE ?=$(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE ?=$(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+STRIP =strip
+ifneq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+  STRIP =: nostrip
+endif
+
+CFLAGS =-Wall -g
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+  CFLAGS +=-O0
+else
+  CFLAGS +=-O2
+endif
+
+CONFFLAGS =
+CC =gcc
+ifneq (,$(findstring diet,$(DEB_BUILD_OPTIONS)))
+  CONFFLAGS =--disable-zlib
+  CC =diet -v -Os gcc -nostdinc
+endif
+
+DIR =$(shell pwd)/debian/dropbear
+
+patch: deb-checkdir patch-stamp
+patch-stamp:
+	for i in `ls -1 debian/diff/*.diff || :`; do \
+	  patch -p1 <$$i || exit 1; \
+	done
+	touch patch-stamp
+
+config.status: patch-stamp configure
+	CC='$(CC)' \
+	CFLAGS='$(CFLAGS)'' -DSFTPSERVER_PATH="\"/usr/lib/sftp-server\""' \
+	  ./configure --host='$(DEB_HOST_GNU_TYPE)' \
+	    --build='$(DEB_BUILD_GNU_TYPE)' --prefix=/usr \
+	    --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info \
+	    $(CONFFLAGS)
+
+build: deb-checkdir build-stamp
+build-stamp: config.status
+	$(MAKE) CC='$(CC)' LD='$(CC)'
+	touch build-stamp
+
+clean: deb-checkdir deb-checkuid
+	test ! -r Makefile || $(MAKE) distclean
+	rm -f libtomcrypt/Makefile libtommath/Makefile
+	test ! -e patch-stamp || \
+	  for i in `ls -1r debian/diff/*.diff || :`; do \
+	    patch -p1 -R <$$i; \
+	  done
+	rm -f patch-stamp build-stamp config.log config.status
+	rm -rf '$(DIR)'
+	rm -f debian/files debian/substvars debian/copyright changelog
+
+install: deb-checkdir deb-checkuid build-stamp
+	rm -rf '$(DIR)'
+	install -d -m0755 '$(DIR)'/etc/dropbear
+	# programs
+	install -d -m0755 '$(DIR)'/usr/sbin
+	install -m0755 dropbear '$(DIR)'/usr/sbin/dropbear
+	install -d -m0755 '$(DIR)'/usr/bin
+	install -m0755 dbclient '$(DIR)'/usr/bin/dbclient
+	install -m0755 dropbearkey '$(DIR)'/usr/bin/dropbearkey
+	install -d -m0755 '$(DIR)'/usr/lib/dropbear
+	install -m0755 dropbearconvert \
+	  '$(DIR)'/usr/lib/dropbear/dropbearconvert
+	$(STRIP) -R .comment -R .note '$(DIR)'/usr/sbin/* \
+	  '$(DIR)'/usr/bin/* '$(DIR)'/usr/lib/dropbear/*
+	# init and run scripts
+	install -d -m0755 '$(DIR)'/etc/init.d
+	install -m0755 debian/dropbear.init '$(DIR)'/etc/init.d/dropbear
+	install -m0755 debian/service/run '$(DIR)'/etc/dropbear/run
+	install -d -m0755 '$(DIR)'/etc/dropbear/log
+	install -m0755 debian/service/log '$(DIR)'/etc/dropbear/log/run
+	ln -s /var/log/dropbear '$(DIR)'/etc/dropbear/log/main
+	# man pages
+	install -d -m0755 '$(DIR)'/usr/share/man/man8
+	for i in dropbear.8 dropbearkey.8; do \
+	  install -m644 $$i '$(DIR)'/usr/share/man/man8/ || exit 1; \
+	done
+	gzip -9 '$(DIR)'/usr/share/man/man8/*.8
+	install -d -m0755 '$(DIR)'/usr/share/man/man1
+	install -m644 dbclient.1 '$(DIR)'/usr/share/man/man1/
+	gzip -9 '$(DIR)'/usr/share/man/man1/*.1
+	# copyright, changelog
+	cat debian/copyright.in LICENSE >debian/copyright
+	test -r changelog || ln -s CHANGES changelog
+
+binary-indep:
+
+binary-arch: install dropbear.deb
+	test '$(CC)' != 'gcc' || \
+	  dpkg-shlibdeps '$(DIR)'/usr/sbin/* '$(DIR)'/usr/bin/* \
+	    '$(DIR)'/usr/lib/dropbear/*
+	dpkg-gencontrol -isp -pdropbear -P'$(DIR)'
+	dpkg -b '$(DIR)' ..
+
+binary: binary-arch binary-indep
+
+.PHONY: patch build clean install binary-indep binary-arch binary
+
+include debian/implicit

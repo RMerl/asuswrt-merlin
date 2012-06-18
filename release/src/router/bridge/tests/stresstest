@@ -1,0 +1,66 @@
+#! /bin/bash
+
+BR=${1:-"br549"}
+ETH0=${2:-"eth0"}
+ETH1=${3:-"eth1"}
+ETH2=${4:-"eth1"}
+
+echo "Ethernet Bridge stress test"
+
+IP=`/sbin/ifconfig $ETH0 | sed -n -e 's/^.*inet addr:\([0-9][0-9\.]*\).*$/\1/p'`
+echo $IP
+
+inout() {
+    while true;
+    do
+	brctl addif $1 $2
+	sleep $(($RANDOM % 10))
+	brctl delif $1 $2
+    done
+}
+
+newdel() {
+    while true;
+    do
+	brctl addbr $1
+	brctl delbr $1
+    done
+}
+
+updown() {
+    while true;
+    do
+      	ifconfig $1 down
+	ifconfig $1 up
+	sleep 11
+    done
+}
+
+echo "1. Creating bridge $BR"
+brctl addbr $BR
+
+echo -n "2. Add ethernets"
+ifconfig $ETH0 0.0.0.0
+brctl addif $BR $ETH0
+echo -n $ETH0
+ifconfig $ETH2 0.0.0.0
+brctl addif $BR $ETH2
+echo $ETH2
+
+echo "4. Starting add/del interface" $ETH1
+ifconfig $ETH1 0.0.0.0
+inout $BR $ETH1 &
+ipid=$!
+
+echo "5. Starting add/remove bridge"
+newdel brtmp1 &
+npid=$!
+
+echo "6. Starting up/down" $ETH1
+updown $BR $ETH1 &
+upid=$!
+
+trap "kill $ipid $npid $upid" 1 2 3 15
+
+echo " Waiting"
+wait

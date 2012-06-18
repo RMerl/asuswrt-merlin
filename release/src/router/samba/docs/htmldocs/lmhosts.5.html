@@ -1,0 +1,94 @@
+
+
+
+
+
+
+<html><head><title>lmhosts (5)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>lmhosts (5)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    lmhosts - The Samba NetBIOS hosts file
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+     
+<p>lmhosts is the <strong>Samba</strong> NetBIOS name to IP address mapping file.
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This file is part of the <strong>Samba</strong> suite.
+<p><strong>lmhosts</strong> is the <strong>Samba</strong> NetBIOS name to IP address mapping file.  It
+is very similar to the <strong>/etc/hosts</strong> file format, except that the
+hostname component must correspond to the NetBIOS naming format.
+<p><a name="FILEFORMAT"></a>
+<h2>FILE FORMAT</h2>
+    
+<p>It is an ASCII file containing one line for NetBIOS name. The two
+fields on each line are separated from each other by white space. Any
+entry beginning with # is ignored. Each line in the lmhosts file
+contains the following information :
+<p><dl>
+<p><li > <strong>IP Address</strong> - in dotted decimal format.
+<p><li > <strong>NetBIOS Name</strong> - This name format is a maximum fifteen
+character host name, with an optional trailing <code>'#'</code> character
+followed by the NetBIOS name type as two hexadecimal digits.
+<p>If the trailing <code>'#'</code> is omitted then the given IP address will be
+returned for all names that match the given name, whatever the NetBIOS
+name type in the lookup.
+<p></dl>
+<p>An example follows :
+<p># <br>
+# Sample Samba lmhosts file. <br>
+# <br>
+192.9.200.1	TESTPC <br>
+192.9.200.20	NTSERVER#20 <br>
+192.9.200.21	SAMBASERVER <br>
+<p>Contains three IP to NetBIOS name mappings. The first and third will
+be returned for any queries for the names <code>"TESTPC"</code> and
+<code>"SAMBASERVER"</code> respectively, whatever the type component of the
+NetBIOS name requested.
+<p>The second mapping will be returned only when the <code>"0x20"</code> name type
+for a name <code>"NTSERVER"</code> is queried. Any other name type will not be
+resolved.
+<p>The default location of the <strong>lmhosts</strong> file is in the same directory
+as the <a href="smb.conf.html"><strong>smb.conf</strong></a> file.
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite.
+<p><a name="SEEALSO"></a>
+<h2>SEE ALSO</h2>
+    
+<p><a href="smb.conf.5.html#nameresolveorder"><strong>smb.conf (5)</strong></a>,
+<a href="smbclient.1.html#minusR"><strong>smbclient (1)</strong></a>,
+<a href="smbpasswd.8.html#minusR"><strong>smbpasswd (8)</strong></a>, <a href="samba.7.html"><strong>samba (7)</strong></a>.
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+</body>
+</html>

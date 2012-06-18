@@ -1,0 +1,35 @@
+<samba:parameter name="cups options"
+                 context="S"
+		 type="string"
+		 print="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>
+    This parameter is only applicable if <smbconfoption name="printing"/> is 
+    set to <constant>cups</constant>.  Its value is a free form string of options
+    passed directly to the cups library.  
+    </para>
+
+   <para>
+   You can pass any generic print option known to CUPS (as listed
+   in the CUPS "Software Users' Manual").  You can also pass any printer
+   specific option (as listed in "lpoptions -d printername -l")
+   valid for the target queue.
+   Multiple parameters should be space-delimited name/value pairs according to
+   the PAPI text option ABNF specification. Collection values
+   ("name={a=... b=... c=...}") are stored with the curley brackets intact.
+   </para>
+
+   <para>
+   You should set this parameter to <constant>raw</constant> if your CUPS server 
+   <filename>error_log</filename> file contains messages such as
+   "Unsupported format 'application/octet-stream'" when printing from a Windows client 
+   through Samba.  It is no longer necessary to enable
+   system wide raw printing in <filename>/etc/cups/mime.{convs,types}</filename>.
+   </para>
+
+</description>
+
+<value type="default">""</value>
+<value type="example">"raw media=a4"</value>
+</samba:parameter>

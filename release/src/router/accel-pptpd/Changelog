@@ -1,0 +1,45 @@
+------------------------------------------------------------------------
+r9 | xebd | 2007-10-16 16:59:50 +0400 (Tue, 16 Oct 2007) | 2 lines
+
+0.7.11 release
+* fixed bug of receiving packets
+------------------------------------------------------------------------
+r8 | xebd | 2007-10-16 11:00:39 +0400 (Tue, 16 Oct 2007) | 2 lines
+
+0.7.10 release
+* only minor fixes for 0.7.9
+------------------------------------------------------------------------
+r7 | xebd | 2007-10-16 10:55:06 +0400 (Tue, 16 Oct 2007) | 1 line
+
+* updated gentoo ebuild
+------------------------------------------------------------------------
+r6 | xebd | 2007-10-16 10:54:09 +0400 (Tue, 16 Oct 2007) | 2 lines
+
+* fixed compilation bug for kernels <2.6.20
+* reverted receive method
+------------------------------------------------------------------------
+r5 | xebd | 2007-10-15 13:21:22 +0400 (Mon, 15 Oct 2007) | 1 line
+
+fixed Makefile
+------------------------------------------------------------------------
+r4 | xebd | 2007-10-15 11:12:26 +0400 (Mon, 15 Oct 2007) | 6 lines
+
+0.7.9 release
+* fixed bug which causes kernel panic when network is under heavy load
+* added keep option which informs pptpd daemon to do not terminate pptpctrl processes after exit
+* added some statistics collection (/proc/net/pptp/stat)
+* client can setup multiple connections to same server now
+* some cleanups
+------------------------------------------------------------------------
+r3 | xebd | 2007-07-12 10:08:38 +0400 (Thu, 12 Jul 2007) | 1 line
+
+changed makefile rules for installation
+------------------------------------------------------------------------
+r2 | xebd | 2007-07-11 16:39:59 +0400 (Wed, 11 Jul 2007) | 1 line
+
+added support for kernel 2.6.22
+------------------------------------------------------------------------
+r1 | xebd | 2007-04-23 16:16:06 +0400 (Mon, 23 Apr 2007) | 1 line
+
+initial import
+------------------------------------------------------------------------

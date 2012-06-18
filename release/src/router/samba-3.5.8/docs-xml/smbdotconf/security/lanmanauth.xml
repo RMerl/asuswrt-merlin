@@ -1,0 +1,40 @@
+<samba:parameter name="lanman auth"
+                 context="G"
+				 type="boolean"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This parameter determines whether or not <citerefentry><refentrytitle>smbd</refentrytitle>
+    <manvolnum>8</manvolnum></citerefentry> will attempt to
+    authenticate users or permit password changes
+    using the LANMAN password hash. If disabled, only clients which support NT 
+    password hashes (e.g. Windows NT/2000 clients, smbclient, but not 
+    Windows 95/98 or the MS DOS network client) will be able to
+    connect to the Samba host.</para>
+
+    <para>The LANMAN encrypted response is easily broken, due to its
+    case-insensitive nature, and the choice of algorithm.  Servers
+    without Windows 95/98/ME or MS DOS clients are advised to disable
+    this option.  </para>
+
+    <para>When this parameter is set to <value>no</value> this
+    will also result in sambaLMPassword in Samba's passdb being
+    blanked after the next password change. As a result of that
+    lanman clients won't be able to authenticate, even if lanman
+    auth is reenabled later on.
+    </para>
+		
+    <para>Unlike the <command moreinfo="none">encrypt
+    passwords</command> option, this parameter cannot alter client
+    behaviour, and the LANMAN response will still be sent over the
+    network.  See the <command moreinfo="none">client lanman
+    auth</command> to disable this for Samba's clients (such as smbclient)</para>
+
+    <para>If this option, and <command moreinfo="none">ntlm
+    auth</command> are both disabled, then only NTLMv2 logins will be
+    permited.  Not all clients support NTLMv2, and most will require
+    special configuration to use it.</para>
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

@@ -1,0 +1,28 @@
+# Choose uclibc version.
+
+choice
+	prompt "uClibc Version" if TOOLCHAINOPTS
+	default UCLIBC_VERSION_0_9_29
+	help
+	  Select the version of uClibc you wish to use.
+	  Default is 0.9.29 .
+
+	config UCLIBC_VERSION_SNAPSHOT
+		bool "uClibc snapshot"
+
+	config UCLIBC_VERSION_0_9_29
+		bool "uClibc 0.9.29"
+
+	config UCLIBC_VERSION_0_9_30
+		bool "uClibc 0.9.30"
+endchoice
+
+config UCLIBC_EXTRA_VERSION
+	string
+	prompt "Extra uClibc version" if TOOLCHAINOPTS
+	default "snapshot"   if UCLIBC_VERSION_SNAPSHOT
+	default ".1"         if UCLIBC_VERSION_0_9_30
+	default ""
+	help
+	    Default for version 0.9.28 is ".02", for daily snapshot it's just "snapshot"
+	    For all other versions the default string is empty.

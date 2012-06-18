@@ -1,0 +1,167 @@
+.\" LIC: GPL
+.TH PPPOE.CONF 5 "21 February 2000"
+.UC 4
+.SH NAME
+pppoe.conf \- Configuration file used by \fBpppoe-start\fR(8),
+\fBpppoe-stop\fR(8), \fBpppoe-status(8)\fR and \fBpppoe-connect\fR(8).
+
+.SH DESCRIPTION
+\fB/etc/ppp/pppoe.conf\fR is a shell script which contains configuration
+information for Roaring Penguin's PPPoE scripts.  Note that \fBpppoe.conf\fR
+is used only by the various pppoe-* shell scripts, not by \fBpppoe\fR
+itself.
+
+\fBpppoe.conf\fR consists of a sequence of shell variable assignments.
+The variables and their meanings are:
+
+.TP
+.B ETH
+The Ethernet interface connected to the DSL modem (for example, eth0).
+
+.TP
+.B USER
+The PPPoE user-id (for example, b1xxnxnx@sympatico.ca).
+
+.TP
+.B SERVICENAME
+If this is not blank, then it is passed with the \fB\-S\fR option to
+\fBpppoe\fR.  It specifies a service name to ask for.  Usually, you
+should leave it blank.
+
+.TP
+.B ACNAME
+If this is not blank, then it is passed with the \fB\-C\fR option to
+\fBpppoe\fR.  It specifies the name of the access concentrator to connect
+to.  Usually, you should leave it blank.
+
+.TP
+.B DEMAND
+If set to a number, the link is activated on demand and brought down
+after after \fBDEMAND\fR seconds.  If set to \fBno\fR, the link is kept
+up all the time rather than being activated on demand.
+
+.TP
+.B DNSTYPE
+One of \fBNOCHANGE\fR, \fBSPECIFY\fR or \fBSERVER\fR.  If
+set to NOCHANGE, \fBpppoe-connect\fR will not adjust the DNS setup in
+any way.  If set to SPECIFY, it will re-write /etc/resolv.conf with
+the values of DNS1 and DNS2.  If set to \fBSERVER\fR, it will
+supply the \fIusepeerdns\fR option to \fBpppd\fR, and make a symlink
+from /etc/resolv.conf to /etc/ppp/resolv.conf.
+
+.TP
+.B DNS1, DNS2
+IP addresses of DNS servers if you use DNSTYPE=SPECIFY.
+
+.TP
+.B NONROOT
+If the line \fBNONROOT=OK\fR (exactly like that; no whitespace or comments)
+appears in the configuration file, then \fBpppoe-wrapper\fR will allow
+non-root users to bring the conneciton up or down.  The wrapper is installed
+only if you installed the rp-pppoe-gui package.
+
+.TP
+.B USEPEERDNS
+If set to "yes", then \fBpppoe-connect\fR will supply the \fIusepeerdns\fR
+option to \fBpppd\fR, which causes it to obtain DNS server addresses
+from the peer and create a new \fB/etc/resolv.conf\fR file.  Otherwise,
+\fBpppoe-connect\fR will not supply this option, and \fBpppd\fR will not
+modify \fB/etc/resolv.conf\fR.
+
+.TP
+.B CONNECT_POLL
+How often (in seconds) \fBpppoe-start\fR should check to see if a new PPP
+interface has come up.  If this is set to 0, the \fBpppoe-start\fR simply
+initiates the PPP session, but does not wait to see if it comes up
+successfully.
+
+.TP
+.B CONNECT_TIMEOUT
+How long (in seconds) \fBpppoe-start\fR should wait for a new PPP interface
+to come up before concluding that \fBpppoe-connect\fR has failed and killing
+the session.
+
+.TP
+.B PING
+A character which is echoed every \fBCONNECT_POLL\fR seconds while
+\fBpppoe-start\fR is waiting for the PPP interface to come up.
+
+.TP
+.B FORCEPING
+A character which is echoed every \fBCONNECT_POLL\fR seconds while
+\fBpppoe-start\fR is waiting for the PPP interface to come up.  Similar
+to \fBPING\fR, but the character is echoed even if \fBpppoe-start\fR's
+standard output is not a tty.
+
+.TP
+.B PIDFILE
+A file in which to write the process-ID of the pppoe-connect process
+(for example, \fB/var/run/pppoe.pid\fR).  Two additional files
+($PIDFILE.pppd and $PIDFILE.pppoe) hold the process-ID's of the
+\fBpppd\fR and \fBpppoe\fR processes, respectively.
+
+.TP
+.B SYNCHRONOUS
+An indication of whether or not to use synchronous PPP (\fByes\fR or
+\fBno\fR).  Synchronous PPP is safe on Linux machines with the n_hdlc
+line discipline.  (If you have a file called "n_hdlc.o" in your
+modules directory, you have the line discipline.)  It is \fInot
+recommended\fR on other machines or on Linux machines without the
+n_hdlc line discipline due to some known and unsolveable race
+conditions in a user-mode client.
+
+.TP
+.B CLAMPMSS
+The value at which to "clamp" the advertised MSS for TCP sessions.  The
+default of 1412 should be fine.
+
+.TP
+.B LCP_INTERVAL
+How often (in seconds) \fBpppd\fR sends out LCP echo-request packets.
+
+.TP
+.B LCP_FAILURE
+How many unanswered LCP echo-requests must occur before \fBpppd\fR
+concludes the link is dead.
+
+.TP
+.B PPPOE_TIMEOUT
+If this many seconds elapse without any activity seen by \fBpppoe\fR,
+then \fBpppoe\fR exits.
+
+.TP
+.B FIREWALL
+One of NONE, STANDALONE or MASQUERADE.  If NONE, then \fBpppoe-connect\fR does
+not add any firewall rules.  If STANDALONE, then it clears existing firewall
+rules and sets up basic rules for a standalone machine.  If MASQUERADE, then
+it clears existing firewall rules and sets up basic rules for an Internet
+gateway.  If you run services on your machine, these simple firewall scripts
+are inadequate; you'll have to make your own firewall rules and set FIREWALL
+to NONE.
+
+.TP
+.B PPPOE_EXTRA
+Any extra arguments to pass to \fBpppoe\fR
+
+.TP
+.B PPPD_EXTRA
+Any extra arguments to pass to \fBpppd\fR
+
+.TP
+.B LINUX_PLUGIN
+If non-blank, the full path of the Linux kernel-mode PPPoE plugin
+(typically \fB/etc/ppp/plugins/rp-pppoe.so\fR.)  This forces
+\fBpppoe-connect\fR to use kernel-mode PPPoE on Linux 2.4.x systems.
+This code is experimental and unsupported.  Use of the plugin causes
+\fBpppoe-connect\fR to ignore CLAMPMSS, PPPOE_EXTRA, SYNCHRONOUS and
+PPPOE_TIMEOUT.
+
+.P
+By using different configuration files with different PIDFILE
+settings, you can manage multiple PPPoE connections.  Just specify the
+configuration file as an argument to \fBpppoe-start\fR and \fBpppoe-stop\fR.
+
+.SH SEE ALSO
+pppoe(8), pppoe-connect(8), pppoe-start(8), pppoe-stop(8), pppd(8), pppoe-setup(8),
+pppoe-wrapper(8)
+

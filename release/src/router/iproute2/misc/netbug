@@ -1,0 +1,53 @@
+#! /bin/bash
+
+echo -n "Send network configuration summary to [ENTER means kuznet@ms2.inr.ac.ru] "
+IFS="" read mail || exit 1
+[ -z "$mail" ] && mail=kuznet@ms2.inr.ac.ru
+
+
+netbug=""
+while [ "$netbug" = "" ]; do
+	netbug=`echo netbug.$$.$RANDOM`
+	if [ -e /tmp/$netbug ]; then
+		netbug=""
+	fi
+done
+
+tmppath=/tmp/$netbug
+
+trap "rm -rf $tmppath $tmppath.tar.gz" 0 SIGINT
+
+mkdir $tmppath
+mkdir $tmppath/net
+
+cat /proc/slabinfo > $tmppath/slabinfo
+cat /proc/net/netstat > $tmppath/net/netstat
+cat /proc/net/unix > $tmppath/net/unix
+cat /proc/net/packet > $tmppath/net/packet
+cat /proc/net/netlink > $tmppath/net/netlink
+cat /proc/net/psched > $tmppath/net/psched
+cat /proc/net/softnet_stat > $tmppath/net/softnet_stat
+cat /proc/net/sockstat > $tmppath/net/sockstat
+cat /proc/net/tcp > $tmppath/net/tcp
+cat /proc/net/udp > $tmppath/net/udp
+cat /proc/net/raw > $tmppath/net/raw
+cat /proc/net/snmp > $tmppath/net/snmp
+
+ss -aioem -D $tmppath/tcpdiag
+
+if [ -e /proc/net/tcp6 ]; then
+	cat /proc/net/sockstat6 > $tmppath/net/sockstat6
+	cat /proc/net/tcp6 > $tmppath/net/tcp6
+	cat /proc/net/udp6 > $tmppath/net/udp6
+	cat /proc/net/raw6 > $tmppath/net/raw6
+	cat /proc/net/snmp6 > $tmppath/net/snmp6
+fi
+
+cd /tmp
+tar c $netbug | gzip -9c > $netbug.tar.gz
+
+uuencode $netbug.tar.gz $netbug.tar.gz | mail -s $netbug "$mail"
+
+echo "Sending to <$mail>; subject is $netbug"
+
+exit 0

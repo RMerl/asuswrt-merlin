@@ -1,0 +1,11 @@
+#Set GPRS only mode
+# $Id: gprs.txt,v 1.1 2008-12-04 12:29:16 michael Exp $
+set com 115200n81
+set senddelay 0.05
+waitquiet 1 0.2
+send "AT_OPSYS=0^m"
+print "Setting GPRS only mode\n"
+    get 2 "^m" $s
+    get 2 "^m" $s
+print $s
+

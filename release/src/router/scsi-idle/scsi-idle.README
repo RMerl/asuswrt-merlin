@@ -1,0 +1,254 @@
+The scsi-idle package contains small programs to start and stop SCSI disks
+and a daemon that spins down drives when idle. You must apply the supplied
+kernel patch in order to add drive spin-up functionality. NB: scsi-idle will
+currently only spin down 1 scsi disk at a time. please feel free to patch!
+
+To install: 
+1. obtain kernel and untar in /usr/src
+
+2. apply the kernel patch
+$ cd /usr/src/linux-2.4.23
+$ patch -p1 < scsi-idle-2.4.23.patch
+
+3. install new kernel (read README from kernel) and reboot using it
+
+4. run "make" to create scsi-idle utilities
+$ cd ~/scsi-idle-2.4.23
+$ make
+
+5. run "make install" as root
+# cd ~/scsi-idle-2.4.23
+# make install
+
+To use:
+To immediately stop scsi drive /dev/sda:
+# /usr/local/sbin/scsi-stop /dev/sda
+
+To immediately start scsi drive /dev/sda:
+# /usr/local/sbin/scsi-start /dev/sda
+
+To automatically stop scsi drive /dev/sda after 30 minutes of inactivity:
+# /usr/local/sbin/scsi-idle /dev/sda 1800
+This loads the scsi-idle daemon which monitors drive's idle time and stops the
+drive accordingly. On access, the drive spins back up, and the daemon will
+notice this and continue monitoring.
+
+Just place the line to start the daemon in your init scripts. 
+
+Read the rest of this README for some more hints with scsi-idle...
+
+I do not know of a patch for linux kernel 2.6. I will work on this when I
+get a chance.. 
+
+Email me (Daniel Sterling) at dan@lost-habit.com if you have something to
+say. Patches welcome :)
+
+December 2003:
+
+Thanks to Dirk Jagdmann ( doj at cubic org ) for fixing up the Makefile and
+includes.
+
+Updated against stock 2.4.23.
+
+After a long hiatus, my email works again. If you tried to email me while it
+was out, I apologize. Try again if you like. All emails welcome.
+
+August 2002:
+
+Updated the patch for stock 2.4.19 (this was trivial).
+
+Commented out logging of spin-down, as this will spin the drive back up
+as your log file is written to!
+
+Gernot Zander had changed the scsi-idle daemon to send SCSI_STOP only
+once, ever. Unfortunately, this meant if the drive spun back up, the daemon
+wouldn't spin it back down again. I added a line so now the daemon notices
+if the drive has spun back up, and will spin it back down again after the
+timeout (as one would expect).
+
+I am using this to spin down my main drive, mounted on /. It seems to work
+alright for me. In order for the drive to sit mostly idle:
+I told syslogd not to write -- MARK -- (syslogd -m 0)
+crond only runs jobs once per day (for locate etc)
+no atd
+a tmpfs for dnetc's buffers and ntpd's drift file (copy to tmpfs on startup,
+and from it to disk daily and on shutdown)
+
+Note that smbfs likes to access the local disk, so if you have a program
+running on a smbfs mounted drive, your local disk might not sit idle.
+
+Note that this still is a "dirty hack", so use it at your own risk. It works
+for me.
+
+Let me know if it works, or doesn't, for you, or if you have suggestions or
+improvements.
+
+Daniel Sterling (dan@lost-habit.com)
+
+*********************************************************************
+Changed the patch to work with 2.4.18. Because the kernel's scsi
+structure has changed a lot, the old concept of starting the disk
+doesn't work anymore. To start the disk sd_init_onedisk is called
+instead, which re-reads the sector size, capacity and so on, too,
+but this shouldn't hurt. The SCSI command, which caused the
+access, is saved during the init.
+Instead of running into the NOT READY error and spinning up the
+drive then, the state of the drive is saved, so the spinup is
+done _before_ any other command is sent to the drive.
+Added logging output of up and down.
+Changed the scsi-idle daemon not to send the stop command
+again and again, but only once, if the idle time is exceeded.
+
+WARNING: This is something like a dirty hack. I'm far away
+of understanding all the SCSI stuff in the kernel source, I just
+looked for a place to drop this in, I don't know if there are
+side effects. Don't blame me if it causes data lost or crashes!
+
+I don't recommand it at devices the system itself is running
+at. I use it for a drive where I keep archive files (and there
+is a backup of it), and to spin down a drive with windows,
+if I run linux on this machine. This works fine at least for me.
+
+Tell me if you have problems or improvements.
+
+Gernot Zander <hifi at scorpio dot in-berlin de> 2002-07-31
+-------------------------------------------------------------------------------
+Changed the kernel patch so it would work with the 2.2.10 kernel.  Also had to
+fix the user space programs to work with the new kernel includes. 
+scsi-start/scsi-stop is now a single program that looks at its name to see
+what effect it should have.
+
+Trent Piepho <xyzzy@speakeasy.org>
+-------------------------------------------------------------------------------
+
+I patched this so it would apply to the 2.0.36 kernel.  I also made two
+programs called 'scsi-start' and 'scsi-stop' which will start/stop a SCSI
+device.  You don't need to apply the patch to use these programs.  The patch
+is needed if you want to use the idle timeout program, scsi-idle, or if you
+want your drives to spin up automatically when accessed.
+
+Note that the auto spin up part of the patch doesn't work so well.  If you
+access a spun down drive directly via the device file, e.g "cat /dev/sda1" or
+"mount /dev/sdb2" you might end up hanging the SCSI bus and have to reset!
+
+Trent Piepho <xyzzy@u.washington.edu>
+-------------------------------------------------------------------------------
+
+I attempted to get a hold of the originator of this patch a while back,
+but was completely unsuccessful, so here's my update.
+
+I've simply updated this patch so it can be easily be applied to 
+kernel 2.0.30 source. I've not tested it on any other kernel versions and
+make no guarantees. I've had a bit of trouble with one of my drives,
+a Seagate ST51080N. It won't spin back up after being spun down. I have 
+no idea why this is and probably won't look into it, since it's
+not a very noisy drive.
+
+Below is the original README file contents.
+
+Matthew Jachimstal
+jachim@jachsys.resnet.mtu.edu
+
+------------------------------------------------------------------------
+Original README:
+----------------
+
+
+`scsi-idle' is another attempt to spin down SCSI-disks after a period
+of inactivity.  Some people have had trouble with my earlier patch, so
+I'm trying to to things differently this time.
+
+scsi-idle-x.y.z.patch is the kernel patch, where x.y.z is the kernel
+version it was made for.  To apply the patch, cd to /usr/src and type:
+
+$ patch -p <scsi-idle.x.y.z.patch
+
+scsi-idle.c is a small user-level program which decides when to spin
+down disks, compile it with:
+
+$ gcc -o scsi-idle scsi-idle.c
+
+When invoked with only one paramer -- a device name -- scsi-idle shows
+how long the disk has been idle:
+
+$ scsi-idle /dev/sda 
+/dev/sda has been idle for 78 seconds
+
+When invoked with two parameters, a device name and a timeout,
+scsi-idle does one of two things.  A timeout of zero will spin down
+the disk immediately, anything else will place the program in the
+background, where it will monitor the disk and spin it down when it
+has been idle for timeout seconds.
+
+$ scsi-idle /dev/sda 0
+[the disk will hopefully spin down]
+$ scsi-idle /dev/sda 300
+[starts scsi-idle in the background and spins down the disk after 5 minutes]
+
+Any comments or bugreports are very welcome.  Have fun!
+
+  /Christer (wingel@ctrl-c.liu.se)
+
+DISCLAIMER: This stuff works for me, but I can't give you any
+guarantees.  If it breaks something, it's not my fault.
+
+Micro-FAQ:
+
+1)  The disk keeps spinning up all the time
+
+    If you're using scsi-idle on your root disk, it's probably
+    spinning up all the time.  This is because `crond' runs `atrun' as
+    a cron job every 10 minutes, and for each cron job, `crond' writes
+    a temporary file which is saved to disk.  Making /tmp a ram-disk
+    will probably cure this problem.  If you can survive without `at',
+    just run `crontab -e' as root and comment out the line with
+    `atrun' in it.  If you can live without `crond' altogheter, feel
+    free to comment out the line which starts it in `/etc/rc.d/rc.M'
+    (at least, this is where you find it on Slackware system).
+
+2) The disk still spins up but not as often
+
+   There are quite a few programs which access the disk every now and
+   then, `crond' does some periodic housekeeping once every hour which
+   might spin up the disk, `sendmail' might also be a culprit.  Other
+   than that, if you're sitting on a busy network, broadcasts, bad
+   network packets and whatnot can cause `syslogd' to make an entry in
+   the /var/log/messages-file which (of course) will make the disk
+   spin up again.  If you have a system which is short on memory,
+   random events (such as network activity, timer interrupts or the
+   phase of the moon) might cause a program to get swapped in which
+   will (surprise) start the disk.  Since Linux is a multitasking,
+   multiuser system, there really is no way that you can win, the disk
+   will spin up every now and then.
+
+3) What use is it then?
+
+   Well, it's perfect if you have a new, quiet and power-efficient
+   SCSI or IDE disk as your root disk and have some old noisy monsters
+   for FTP, storage, or backup purposes.  Personally, I have a DEC
+   RZ25 (not all that new or quiet, but the newest one I have) for my
+   root and /usr partitions, a Fujitsu full height 5"25 for my /home
+   partition and an old Maxtor disk which sounds like jet engine when
+   running.  My root disk runs continuously, the home-disk spins down
+   after 30 minutes and the FTP-disk spins down after 3 minutes.  Then
+   there are all those disks that I connect externally every now that
+   tend to be a bit on the noisy side too.
+
+4) How is it different from the old scsi-idle (1.2.x) stuff?
+   (not really interesting but some people were wondering)
+
+   The main changes are that I've moved the `stop-disks' functionality
+   to a user process and implemented a new SCSI-ioctl to stop or start
+   a SCSI-unit immediately (this works for any SCSI-device).  This
+   way, it's much easier to change the behaviour of the idle-
+   algorithms since I don't have to recompile the kernel and reboot
+   each time.  The functions which restarts disks has also undergone
+   major changes.  Most importantly, it has been changed to check the
+   return status from the drive and if the drive reports "NOT READY",
+   the function tries to restart it. This way, disks which have spun
+   down for any reason are automatically restarted. I have an external
+   disk with a flakey power supply, and quite naturally this disk
+   doesn't spin up on power up; the old version just set a flag when
+   a disk was spun down and got confused when a disk which was
+   supposed to be running wasn't.
+

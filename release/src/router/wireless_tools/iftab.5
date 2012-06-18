@@ -1,0 +1,313 @@
+.\" Jean II - HPL - 2004-2007
+.\" iftab.5
+.\"
+.TH IFTAB 5 "26 February 2007" "wireless-tools" "Linux Programmer's Manual"
+.\"
+.\" NAME part
+.\"
+.SH NAME
+iftab \- static information about the network interfaces
+.\"
+.\" DESCRIPTION part
+.\"
+.SH DESCRIPTION
+The file
+.B /etc/iftab
+contains descriptive information about the various network interfaces.
+.B iftab
+is only used by the program
+.IR ifrename (8)
+to assign a consistent network interface name to each network interface.
+.PP
+.B /etc/iftab
+defines a set of
+.IR mappings .
+Each mapping contains an interface name and a set of selectors. The
+selectors allow
+.B ifrename
+to identify each network interface on the system. If a network
+interface matches all descriptors of a mapping,
+.B ifrename
+attempt to change the name of the interface to the interface name
+given by the mapping.
+.\"
+.\" MAPPINGS part
+.\"
+.SH MAPPINGS
+Each mapping is described on a separate line, it starts with an
+.IR "interface name" ,
+and contains a set of
+.IR descriptors ,
+separated by space or tabs.
+.PP
+The relationship between descriptors of a mapping is a
+.IR "logical and" .
+A mapping matches a network interface only is all the descriptors
+match. If a network interface doesn't support a specific descriptor,
+it won't match any mappings using this descriptor.
+.PP
+If you want to use alternate descriptors for an interface name
+(logical or), specify two different mappings with the same interface
+name (one on each line).
+.B Ifrename
+always use the first matching mapping starting from the
+.I end
+of
+.BR iftab ,
+therefore more restrictive mapping should be specified last.
+.\"
+.\" INTERFACE NAME part
+.\"
+.SH INTERFACE NAME
+The first part of each mapping is an interface name. If a network
+interface matches all descriptors of a mapping,
+.B ifrename
+attempt to change the name of the interface to the interface name
+given by the mapping.
+.PP
+The interface name of a mapping is either a plain interface name (such as
+.IR eth2 " or " wlan1 )
+or a interface name pattern containing a single wildcard (such as
+.IR eth* " or " wlan* ).
+In case of wildcard, the kernel replace the '*' with the lowest
+available integer making this interface name unique. Note that
+wildcard is only supported for kernel 2.6.1 and 2.4.30 and later.
+.PP
+It is discouraged to try to map interfaces to default interfaces names
+such as
+.IR eth0 ", " wlan0 " or " ppp0 .
+The kernel use those as the default name for any new interface,
+therefore most likely an interface will already use this name and
+prevent ifrename to use it. Even if you use takeover, the interface
+may already be up in some cases. Not using those name will allow you
+to immediately spot unconfigured or new interfaces.
+.br
+Good names are either totally unique and meaningfull,
+such as
+.IR mydsl " or " privatehub ,
+or use larger integer, such as
+.IR eth5 " or " wlan5 .
+The second type is usually easier to integrate in various network utilities.
+.\"
+.\" DESCRIPTORS part
+.\"
+.SH DESCRIPTORS
+Each descriptor is composed of a descriptor name and descriptor
+value. Descriptors specify a static attribute of a network interface,
+the goal is to uniquely identify each piece of hardware.
+.PP
+Most users will only use the
+.B mac
+selector despite its potential problems, other selectors are for more
+specialised setup. Most selectors accept a '*' in the selector value
+for wilcard matching, and most selectors are case insensitive.
+.TP
+.BI mac " mac address"
+Matches the MAC Address of the interface with the specified MAC
+address. The MAC address of the interface can be shown using
+.IR ifconfig (8)
+or
+.IR ip (8).
+.br
+This is the most common selector, as most interfaces have a unique MAC
+address allowing to identify network interfaces without ambiguity.
+However, some interfaces don't have a valid MAC address until they are
+brought up, in such case using this selector is tricky or impossible.
+.TP
+.BI arp " arp type"
+Matches the ARP Type (also called Link Type) of the interface with the
+specified ARP type as a number. The ARP Type of the interface can be
+shown using
+.IR ifconfig (8)
+or
+.IR ip (8),
+the
+.B link/ether
+type correspond to
+.B 1
+and the
+.B link/ieee802.11
+type correspond to
+.BR 801 .
+.br
+This selector is useful when a driver create multiple network
+interfaces for a single network card.
+.TP
+.BI driver " driver name"
+Matches the Driver Name of the interface with the specified driver
+name. The Driver Name of the interface can be shown using
+.IR "ethtool -i" (8).
+.TP
+.BI businfo " bus information"
+Matches the Bus Information of the interface with the specified bus
+information. The Bus Information of the interface can be shown using
+.IR "ethtool -i" (8).
+.TP
+.BI firmware " firmware revision"
+Matches the Firmware Revision of the interface with the firmware
+revision information. The Firmware Revision of the interface can be
+shown using
+.IR "ethtool -i" (8).
+.TP
+.BI baseaddress " base address"
+Matches the Base Address of the interface with the specified base
+address. The Base Address of the interface can be shown using
+.IR ifconfig (8).
+.br
+Because most cards use dynamic allocation of the Base Address, this
+selector is only useful for ISA and EISA cards.
+.TP
+.BI irq " irq line"
+Matches the IRQ Line (interrupt) of the interface with the specified
+IRQ line. The IRQ Line of the interface can be shown using
+.IR ifconfig (8).
+.br
+Because there are IRQ Lines may be shared, this selector is usually
+not sufficient to uniquely identify an interface.
+.TP
+.BI iwproto " wireless protocol"
+Matches the Wireless Protocol of the interface with the specified
+wireless protocol. The Wireless Protocol of the interface can be shown
+using
+.IR iwconfig (8)
+or
+.IR iwgetid (8).
+.br
+This selector is only supported on wireless interfaces and is not
+sufficient to uniquely identify an interface.
+.TP
+.BI pcmciaslot " pcmcia slot"
+Matches the Pcmcia Socket number of the interface with the specified
+slot number. Pcmcia Socket number of the interface can be shown
+using
+.IR "cardctl ident" (8).
+.br
+This selector is usually only supported on 16 bits cards, for 32 bits
+cards it is advised to use the selector
+.BR businfo .
+.TP
+.BI prevname " previous interface name"
+Matches the name of the interface prior to renaming with the specified
+oldname.
+.br
+This selector should be avoided as the previous interface name may
+vary depending on various condition. A system/kernel/driver update may
+change the original name. Then, ifrename or another tool may rename it
+prior to the execution of this selector.
+.TP
+.BI SYSFS{ filename } " value"
+Matches the content the sysfs attribute given by filename to the
+specified value. For symlinks and parents directories, match the
+actual directory name of the sysfs attribute given by filename to the
+specified value.
+.br
+A list of the most useful sysfs attributes is given in the next
+section.
+.\"
+.\" SYSFS DESCRIPTORS part
+.\"
+.SH SYSFS DESCRIPTORS
+Sysfs attributes for a specific interface are located on most systems
+in the directory named after that interface at
+.IR /sys/class/net/ .
+Most sysfs attribute are files, and their values can be read using
+.IR cat "(1) or " more (1).
+It is also possible to match attributes in subdirectories.
+.PP
+Some sysfs attributes are symlinks, pointing to another directory in
+sysfs. If the attribute filename is a symlink the sysfs attribute
+resolves to the name of the directory pointed by the symlink using
+.IR readlink (1).
+The location is a directory in the sysfs tree is also important. If
+the attribute filename ends with
+.IR /.. ,
+the sysfs attribute resolves to the real name of the parent directory
+using
+.IR pwd (1).
+.PP
+The sysfs filesystem is only supported with 2.6.X kernel and need to
+be mounted (usually in 
+.IR /sys ).
+sysfs selectors are not as efficient as other selectors, therefore
+they should be avoided for maximum performance.
+.PP
+These are common sysfs attributes and their corresponding ifrename
+descriptors.
+.TP
+.BI SYSFS{address} " value"
+Same as the
+.B mac
+descriptor.
+.TP
+.BI SYSFS{type} " value"
+Same as the
+.B arp
+descriptor.
+.TP
+.BI SYSFS{device} " value"
+Valid only up to kernel 2.6.20. Same as the
+.B businfo
+descriptor.
+.TP
+.BI SYSFS{..} " value"
+Valid only from kernel 2.6.21. Same as the
+.B businfo
+descriptor.
+.TP
+.BI SYSFS{device/driver} " value"
+Valid only up to kernel 2.6.20. Same as the
+.B driver
+descriptor.
+.TP
+.BI SYSFS{../driver} " value"
+Valid only from kernel 2.6.21. Same as the
+.B driver
+descriptor.
+.TP
+.BI SYSFS{device/irq} " value"
+Valid only up to kernel 2.6.20. Same as the
+.B irq
+descriptor.
+.TP
+.BI SYSFS{../irq} " value"
+Valid only from kernel 2.6.21. Same as the
+.B irq
+descriptor.
+.\"
+.\" EXAMPLES part
+.\"
+.SH EXAMPLES
+# This is a comment
+.br
+eth2		mac 08:00:09:DE:82:0E
+.br
+eth3		driver wavelan interrupt 15 baseaddress 0x390
+.br
+eth4		driver pcnet32 businfo 0000:02:05.0
+.br
+air*		mac 00:07:0E:* arp 1
+.br
+myvpn	SYSFS{address} 00:10:83:* SYSFS{type} 1
+.br
+bcm*		SYSFS{device} 0000:03:00.0 SYSFS{device/driver} bcm43xx
+.br
+bcm*		SYSFS{..} 0000:03:00.0 SYSFS{../driver} bcm43xx
+.\"
+.\" AUTHOR part
+.\"
+.SH AUTHOR
+Jean Tourrilhes \- jt@hpl.hp.com
+.\"
+.\" FILES part
+.\"
+.SH FILES
+.I /etc/iftab
+.\"
+.\" SEE ALSO part
+.\"
+.SH SEE ALSO
+.BR ifrename (8),
+.BR ifconfig (8),
+.BR ip (8),
+.BR ethtool (8),
+.BR iwconfig (8).

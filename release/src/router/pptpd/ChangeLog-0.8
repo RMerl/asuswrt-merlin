@@ -1,0 +1,196 @@
+PoPToP ChangeLog
+
+---------------------------------------------------------------------------
+v0.8.13 -> v0.9.0
+11th June, 1999
+
+- possibly fixed the 'error 629 on startup' bug.  this fix is incompatible
+  with the 'silent' option of pppd, so don't use the 'silent' option.
+- support a single localip with a range of remoteip's
+- new, small, fast, simple get_call_id() function
+- removed a few hardcoded values in ctrlpacket and replaced with defines
+- new pptp_read_header() - slightly more 'expensive' but should be much more
+  robust
+- use openpty() if possible, internalize tty opening, startCall much more
+  simple
+
+---------------------------------------------------------------------------
+v0.8.12 -> v0.8.13
+10th June, 1999
+
+- removed ctrl-manager pipe completely
+- moved awareness of pppd-ip-alloc option to manager only
+- if using pppd-ip-alloc, manager runs more efficiently
+- made pptpctrl able to have a none, one or both of local/remote addresses
+  rather than only both or none
+- great code simplicication
+- re-did IP parser; less potential segfaults from bad config
+- correctly calculate max connections based on number of IP addresses given
+  and statically configured maximum
+- no max connections for the pppd-ip-alloc case
+- properly permit hostnames in IP parser
+- always use fd 0 for network connection
+- fixed -c option
+- note - this version changes the 'run from inetd' options.  re-read
+  README.inetd if you use it
+
+---------------------------------------------------------------------------
+v0.8.11 -> v0.8.12
+8th June, 1999
+
+- made autoconf actually check the relevant headers
+- made config.embed.h and removed most #if EMBED in favour of using this
+- fixed some includes and re-arranged things to be a bit cleaner
+- minor cosmetic fixes
+- fixed compilation on StarOS 4 (and hence SunOS 4)
+- documentation on running from ientd
+- removed ctrl-manager pipe by default
+
+---------------------------------------------------------------------------
+v0.8.10 -> v0.8.11
+8th June, 1999
+
+- now only two executables, pptpd and pptpctrl
+- re-did dependency generation
+- minor include cleanups
+
+---------------------------------------------------------------------------
+v0.8.9 -> v0.8.10
+8th June, 1999
+
+- added getopt_long() from GNU libc for use on non-Linux platforms
+- fixed compilation on FreeBSD, Digital Unix and Solaris
+- replaced PPTPD_DEBUG define with configuration option (debug) and
+  command line option (-d/--debug)
+
+---------------------------------------------------------------------------
+v0.8.8 -> v0.8.9
+7th June, 1999
+
+- unified CTRL and GRE processes (removed pptpgre), without the vfork
+  problem since this is not forking
+- changed process name for child processes to pptpd [ip.address.here]
+- moved INTERNAL_IP_ALLOCATION to a configure option (see configure --help)
+- added support for libwrap tcp wrappers
+- made sure pppd doesn't get copies of file descriptors it shouldn't, so
+  it closes down properly
+- lots of other misc fixes
+
+---------------------------------------------------------------------------
+v0.8.7 -> v0.8.8
+4th June, 1999
+
+- increased MAX number of clients to 100
+- layout and comments have been tidied up extensively throughout code
+- new function in ctrlpacket.c for making Control Message headers
+- openBSD fixes
+- many other minor bug fixes
+- some portability issues addressed
+- accept() moved into pptpmanager.
+- pptpmanager closes one side of socketpair server fd and passes client fd
+    other side of socketpair to pptpctrl.
+- pptpmanager main loop changed to select without timeout and made to
+    watch ALL appropriate file descriptors.
+- also made resiliant against some potential error modes, eg, if we are
+    full don't select on new connections descriptor, if accept() fails
+    ignore it cleanly, etc.
+- should be more 'resource friendly' now.
+- Make error state filename instead of just CONFIG FILE: file not found.
+- Limit packet size to PACKET_MAX instead of permitting 4 more if no ACK
+    is bundled (for consistency of packet size limit).
+
+---------------------------------------------------------------------------
+v0.8.6 -> v0.8.7
+1st June, 1999
+
+- GRE seperated from pptpctrl to support vforking
+- adds link status detection (ie if a link goes down, we can figure it out
+    and deal with it) (Kevin)
+- Solaris/Slirp port (Harald Vogt)
+- cleaned up comments a lot (move towards C style to permit compiling in 
+    older compilers/increase portablity)
+- standardized #ifndef #define #endif defines in header files
+- stop inststr from nuking environment (hopefully)
+- use longer argv[0] in exec()s to make inststr much nicer
+- make inststr wipe args other than argv[0]
+- #define to remove some debugging (PPTPD_DEBUG) and to remove the
+    IP address allocation code so PPPD can be used to allocate IP addresses
+    (INTERNAL_IP_ALLOCATION)
+- in pptpctrl.c, main()'s addrlen was uninitialized - yuck, was causing
+    random variable overwriting
+- clean up some wasteful memory copying and so on, as well as remove some
+    copies into small static buffers
+- clean up some blank lines - increasing the amount of code visible one
+    screen is good if it can be done without making the formatting ugly.
+- use exit() not _exit() in pptpd - the fear of this closing fork()d
+    filedescriptors is wrong.  both have the same file descriptor closing
+    properties.
+- remove a potential leak of 2 filedescriptors in option parsing (checks
+    of optional file names).
+- miscellaneous EMBED support for syslog etc.
+- many other misc changes.
+
+---------------------------------------------------------------------------
+v0.8.5 -> v0.8.6
+21st May 1999
+
+- added new ip address reading from config file (for multiple connections)
+    there is a new pptpd configuration file example in samples/
+- pptpdebug.* is no longer... syslog now handles ALL debugging
+
+---------------------------------------------------------------------------
+v0.8.4 -> v0.8.5
+18th May 1999
+
+- command line args/config file options are broken (everything hardcoded)
+- many, many, many structural changes for a multiple connection hack
+- multiple connection support
+- reconnect support
+- OpenBSD port (may be broken for this release... Peter?)
+- logging now to syslog DAEMON|DEBUG
+
+---------------------------------------------------------------------------
+v0.8.3 -> v0.8.4
+13th May 1999
+
+- call_id/peer_id issues addressed in OUT_CALL packets
+- bug in debug log time fixed
+- local added by default to the pppd launcher
+- call_disconnect_notify bug fixed
+- -p command line arg broken
+
+---------------------------------------------------------------------------
+v0.8.2 -> v0.8.3
+11th May 1999
+
+- a few minor multiple connection hacks.. still nowhere near ready to
+    handle more than one client
+- pptpd -p logfile bug fix
+
+---------------------------------------------------------------------------
+v0.8.1 -> v0.8.2
+11th May 1999
+
+- Server will no longer die if client disconnects
+- pppd is closed down cleanly now
+- autoconf/automake is back.. but still needs some work
+- a number of minor CTRL establishment bugs fixed
+- callid assignment modified slightly in manager
+
+---------------------------------------------------------------------------
+v0.8.0 -> v0.8.1
+4th May 1999
+
+- PPTPD no longer relies on a signal (which had the potential to cause
+    a race condition) to know when to launch PPPD/GRE. The CTRL session
+    no longer relies on a signal to return from a fork. Signalling has
+    now been replaced with IPC between PPTPD and CTRL sessions.
+- The GRE/PPPD sessions are now launched *after* an OUT_CALL_RPLY is sent
+    not before it.
+- CTRL and PPTP managers are now seperate from PPTPD
+
+---------------------------------------------------------------------------
+v0.8.0
+30th April 1999
+
+PoPToP now works with windows 95/98/NT and Linux clients.

@@ -1,0 +1,245 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>AIX</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="System Specific Notes " href=
+    "systemspecific.htm">
+    <link rel="PREVIOUS" title="Linux" href="linux.htm">
+    <link rel="NEXT" title="AppleTalk Support " href=
+    "appletalk.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "linux.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 3.
+          System Specific Notes</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "appletalk.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AIX">3.3. AIX</a></h1>
+
+      <p>This information was supplied by <a href=
+      "mailto:nitschke@math.unihamburg.de" target="_top">Dirk
+      Nitschke</a>, as of August 1997, and describes how to install
+      the <b class="APPLICATION">LPRng</b> package on a workstation
+      running AIX 4.1.x and possibly 3.x.x as well. Dirk would be
+      interested in any comments or corrections.</p>
+
+      <p>Printing on AIX systems is different. AIX provides a
+      general queueing facility and printing is only one way to use
+      it. You submit a print job to a print queue using one of the
+      commands <tt class="COMMAND">qprt</tt> or <tt class=
+      "COMMAND">enq</tt>. You can use the BSD or System V printing
+      commands <b class="APPLICATION">lpr</b> or <b class=
+      "APPLICATION">lp</b>, too. The <tt class=
+      "COMMAND">qdaemon</tt> watches all (general) queues and knows
+      how to handle your job. A (general) queue is defined in the
+      file <tt class="FILENAME">/etc/qconfig</tt>. The format of
+      this file is different from the <tt class=
+      "FILENAME">printcap</tt> format.</p>
+
+      <p>OK, how to replace the AIX printing system? There is no
+      group <var class="LITERAL">daemon</var> on AIX. Therefore you
+      have to change the default group for file ownership and
+      process permissions or create a <var class=
+      "LITERAL">daemon</var> user and group. We decided to use the
+      <var class="LITERAL">printq</var> group; on reflection it
+      would have been easier to have created a <var class=
+      "LITERAL">daemon</var> group. The user <var class=
+      "LITERAL">daemon</var> exists on AIX but we have chosen <b
+      class="APPLICATION">lpd</b> as the user who runs <b class=
+      "APPLICATION">lpd</b> and all filters and owns the spooling
+      directories. You can change the values for <var class=
+      "LITERAL">group</var> and <var class="LITERAL">user</var> in
+      your <tt class="FILENAME">lpd.conf</tt> file or in the
+      sources <tt class="FILENAME">src/common/vars.c</tt>. This is
+      an example for <tt class="FILENAME">lpd.conf</tt>:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1576"></a>
+<pre class="SCREEN">
+    # Purpose: group to run SUID ROOT programs
+    #   default group=daemon
+    group=printq
+    # Purpose: server user for SUID purposes
+    #   default user=daemon
+    user=lpd
+</pre>
+      </div>
+      Compile and install the <b class="APPLICATION">LPRng</b>
+      package. Create your <tt class="FILENAME">printcap</tt>,
+      spooling directories, accounting and logfiles and so on.
+      Don't forget to use <a href="checkpc.htm">checkpc</a> to make
+      sure that all the permissions are set correctly and the
+      necessary files are created.<br>
+      <br>
+
+      <p>Then stop all print queues defined on your workstation.
+      Use</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1582"></a>
+<pre class="SCREEN">
+    # chque -q queuename -a "up = FALSE"
+</pre>
+      </div>
+      for this (yes, blanks around <var class="LITERAL">=</var> are
+      needed).<br>
+      <br>
+
+      <p>If you have local printers attached to your system you
+      will have an <b class="APPLICATION">lpd</b> running. Stop
+      this daemon using SMIT (Print Spooling, Manage Print Server,
+      Stop the Print Server Subsystem). Choosing <span class=
+      "emphasis"><i class="EMPHASIS">both</i></span> also removes
+      <b class="APPLICATION">lpd</b> from <tt class=
+      "FILENAME">/etc/inittab</tt>. Maybe it's faster to do this by
+      hand:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1590"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {75} #</samp> <kbd class=
+"USERINPUT">topsrc -p'pid of /usr/sbin/lpd'</kbd>
+    <samp class="PROMPT">h4: {76} #</samp> <kbd class=
+"USERINPUT">rmitab "lpd"</kbd>
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Now delete all print queues managed by <var class=
+      "LITERAL">qdaemon</var> defined on your system. You can use
+      <tt class="COMMAND">SMIT</tt> for this or the commands <tt
+      class="COMMAND">{mk,ch,rm}que</tt>, <tt class=
+      "COMMAND">{mk,ch,rm}quedev</tt>, <tt class=
+      "COMMAND">{mk,ch,rm}virprt</tt>. The <tt class=
+      "COMMAND">SMIT</tt> fast path is <tt class="COMMAND">smit
+      rmpq</tt>.</p>
+
+      <p>To start the new <b class="APPLICATION">lpd</b> at system
+      startup you have to add an entry to <tt class=
+      "FILENAME">/etc/inittab</tt>:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1607"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {77} #</samp> <kbd class=
+"USERINPUT">mkitab "lpd:2:once:/full/path/lpd"</kbd>
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Some work has to be done if have have a local printer
+      attached to your workstation. You have to create a device
+      file like <tt class="FILENAME">/dev/lp0</tt>. The <tt class=
+      "COMMAND">SMIT</tt> fast path for this is <tt class=
+      "COMMAND">smit mkdev</tt>. Choose <var class=
+      "LITERAL">Printer/Plotter</var>, then <var class=
+      "LITERAL">Printer/Plotter Devices</var>, then <var class=
+      "LITERAL">Add a Printer/Plotter</var>. To create a parallel
+      printer device select the following:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1618"></a>
+<pre class="SCREEN">
+    Plotter type:              opp Other parallel printer
+    Printer/Plotter Interface: parallel
+    Parent Adapter:            ppa0 Available
+</pre>
+      </div>
+      Now define the characteristics of the device: 
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1620"></a>
+<pre class="SCREEN">
+    Port Number: p
+</pre>
+      </div>
+      Option <var class="LITERAL">p</var> is for parallel. Go to
+      the field: 
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1623"></a>
+<pre class="SCREEN">
+    Send all characters to printer UNMODIFIED   no
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>and select <var class="LITERAL">yes</var>! We have had a
+      lot of trouble with <var class="LITERAL">no</var>. This is
+      very important! Expect erroneous output if you choose <var
+      class="LITERAL">no</var>. If you have already created a
+      device file, change the characteristics! SMIT's fast path is
+      <tt class="COMMAND">smit chdev</tt>.</p>
+
+      <p>Finally remove all AIX printing commands like <b class=
+      "APPLICATION">qprt</b>, <b class="APPLICATION">lp</b>, <b
+      class="APPLICATION">cancel</b>, <b class=
+      "APPLICATION">lpq</b>, and <b class="APPLICATION">lprm</b>.
+      You will find a lot of them in <tt class=
+      "FILENAME">/usr/bin</tt>. Do not remove <b class=
+      "APPLICATION">enq</b> and friends if you want to use the
+      general queueing facility.</p>
+
+      <p>Now you can start your new <b class=
+      "APPLICATION">lpd</b>.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "linux.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "appletalk.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Linux</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "systemspecific.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">AppleTalk
+          Support</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

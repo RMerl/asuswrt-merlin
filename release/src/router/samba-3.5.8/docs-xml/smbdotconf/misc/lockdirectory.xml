@@ -1,0 +1,21 @@
+<samba:parameter name="lock directory"
+                 context="G"
+                 advanced="1" developer="1"
+				 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<synonym>lock dir</synonym>
+<description>
+	<para>This option specifies the directory where lock 
+	files will be placed.  The lock files are used to implement the 
+	<smbconfoption name="max connections"/> option.
+	</para>
+
+	<para>
+		Note: This option can not be set inside registry
+		configurations.
+	</para>
+</description>
+
+<value type="default">${prefix}/var/locks</value>
+<value type="example">/var/run/samba/locks</value>
+</samba:parameter>

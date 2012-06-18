@@ -1,0 +1,65 @@
+<samba:parameter name="idmap config"
+                 context="G"
+		 type="string"
+                 advanced="1" developer="1" hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+	<para>
+	The idmap config prefix provides a means of managing each trusted
+        domain separately. The idmap config prefix should be followed by the
+        name of the domain, a colon, and a setting specific to the chosen
+        backend. There are three options available for all domains:
+	</para>
+
+	<variablelist>  
+		<varlistentry>
+		<term>backend = backend_name</term>
+		<listitem><para>
+			Specifies the name of the idmap plugin to use as the 
+			SID/uid/gid backend for this domain.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>range = low - high</term>
+                <listitem><para>
+		Defines the available matching uid and gid range for which the
+		backend is authoritative.  Note that the range commonly
+		matches the allocation range due to the fact that the same
+		backend will store and retrieve SID/uid/gid mapping entries.
+                </para>
+		<para>
+		winbind uses this parameter to find the backend that is
+                authoritative for a unix ID to SID mapping, so it must be set
+                for each individually configured domain, and it must be
+                disjoint from the ranges set via <smbconfoption name="idmap
+                uid"/> and <smbconfoption name="idmap gid"/>.
+		</para></listitem>
+
+		</varlistentry>
+	</variablelist>
+
+	<para>
+	The following example illustrates how to configure the <citerefentry>
+	<refentrytitle>idmap_ad</refentrytitle> <manvolnum>8</manvolnum>
+	</citerefentry> for the CORP domain and the
+	<citerefentry><refentrytitle>idmap_tdb</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> backend for all other
+	domains. This configuration assumes that the admin of CORP assigns
+	unix ids below 1000000 via the SFU extensions, and winbind is supposed
+	to use the next million entries for its own mappings from trusted
+	domains and for local groups for example.
+	</para>
+
+	<programlisting>
+	idmap backend = tdb
+	idmap uid = 1000000-1999999
+	idmap gid = 1000000-1999999
+
+	idmap config CORP : backend  = ad
+	idmap config CORP : range = 1000-999999
+	</programlisting>
+	
+</description>
+</samba:parameter>

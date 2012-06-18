@@ -1,0 +1,25 @@
+<samba:parameter name="enumports command"
+                 context="G"
+				 type="string"
+		 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>The concept of a &quot;port&quot; is fairly foreign
+    to UNIX hosts.  Under Windows NT/2000 print servers, a port
+    is associated with a port monitor and generally takes the form of
+    a local port (i.e. LPT1:, COM1:, FILE:) or a remote port
+    (i.e. LPD Port Monitor, etc...).  By default, Samba has only one
+    port defined--<constant>&quot;Samba Printer Port&quot;</constant>.  Under 
+    Windows NT/2000, all printers must have a valid port name.  
+    If you wish to have a list of ports displayed (<command moreinfo="none">smbd
+    </command> does not use a port name for anything) other than 
+    the default <constant>&quot;Samba Printer Port&quot;</constant>, you 
+    can define <parameter moreinfo="none">enumports command</parameter> to point to
+    a program which should generate a list of ports, one per line,
+    to standard output.  This listing will then be used in response
+    to the level 1 and 2 EnumPorts() RPC.</para>
+</description>
+
+<value type="default"></value>
+<value type="example">/usr/bin/listports</value>
+</samba:parameter>

@@ -1,0 +1,107 @@
+# MiniDLNA translation template file
+# Copyright (C) 2010 NETGEAR
+# This file is distributed under the same license as the MiniDLNA package.
+# Justin Maggard <jmaggard@users.sourceforge.net>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: minidlna 1.0.18\n"
+"Report-Msgid-Bugs-To: jmaggard@users.sourceforge.net\n"
+"POT-Creation-Date: 2010-07-19 10:50-0700\n"
+"PO-Revision-Date: 2010-07-23 15:57-0800\n"
+"Last-Translator: r2d2 <ntgrr2d2@gmail.com>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: scanner.c:163
+msgid "Unknown Date"
+msgstr "日付不明"
+
+#: scanner.c:191
+msgid "Unknown Camera"
+msgstr "カメラ名不明"
+
+#: scanner.c:282
+msgid "- All Albums -"
+msgstr "- すべてのアルバム -"
+
+#: scanner.c:290 scanner.c:297 scanner.c:300
+msgid "Unknown Album"
+msgstr "アルバム名不明"
+
+#: scanner.c:323
+msgid "- All Artists -"
+msgstr "- すべてのアーティスト -"
+
+#: scanner.c:331 scanner.c:337 scanner.c:340
+msgid "Unknown Artist"
+msgstr "アーティスト名不明"
+
+#: scanner.c:543
+msgid "Music"
+msgstr "ミュージック"
+
+#: scanner.c:544
+msgid "All Music"
+msgstr "すべてのミュージック"
+
+#: scanner.c:545
+msgid "Genre"
+msgstr "ジャンル"
+
+#: scanner.c:546
+msgid "Artist"
+msgstr "アーティスト"
+
+#: scanner.c:547
+msgid "Album"
+msgstr "アルバム"
+
+#: scanner.c:548 scanner.c:552 scanner.c:557
+msgid "Folders"
+msgstr "フォルダ"
+
+#: scanner.c:549
+msgid "Playlists"
+msgstr "プレイリスト"
+
+#: scanner.c:550
+msgid "Video"
+msgstr "ビデオ"
+
+#: scanner.c:551
+msgid "All Video"
+msgstr "すべてのビデオ"
+
+#: scanner.c:553
+msgid "Pictures"
+msgstr "写真"
+
+#: scanner.c:554
+msgid "All Pictures"
+msgstr "すべての写真"
+
+#: scanner.c:555
+msgid "Date Taken"
+msgstr "撮影日"
+
+#: scanner.c:556
+msgid "Camera"
+msgstr "カメラ"
+
+#: scanner.c:558
+msgid "Browse Folders"
+msgstr "フォルダ"
+
+#: scanner.c:721
+#, c-format
+msgid "Scanning %s\n"
+msgstr "%s を検索中\n"
+
+#: scanner.c:789
+#, c-format
+msgid "Scanning %s finished (%llu files)!\n"
+msgstr "%s (%llu ファイル) の検索終了!\n"

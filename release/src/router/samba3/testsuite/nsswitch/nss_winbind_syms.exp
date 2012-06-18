@@ -1,0 +1,42 @@
+#
+# @(#) Test nss functions are exported from the libnss_winbind.so library
+# @(#) Test there are no external dependencies in the libnss_winbind.so library
+#
+# We expect the following symbols to be exported:
+#
+#    _nss_winbind_getgrent_r
+#    _nss_winbind_endgrent
+#    _nss_winbind_endpwent
+#    _nss_winbind_getgrgid_r
+#    _nss_winbind_getgrnam_r
+#    _nss_winbind_getpwent_r
+#    _nss_winbind_getpwnam_r
+#    _nss_winbind_getpwuid_r
+#    _nss_winbind_setgrent
+#    _nss_winbind_setpwent
+#    _nss_winbind_initgroups
+#
+# This test also has the nice side-effect of showing any unresolved symbols 
+# in the library.
+#
+
+load_lib util-defs.exp
+load_lib compile.exp
+
+simple_compile "nss_winbind_syms" "-ldl"
+
+set output [util_start "$srcdir/$subdir/nss_winbind_syms" \
+        "nsswitch/libnss_winbind.so"]
+
+verbose $output
+
+if { [regexp "FAIL:" $output] } {
+    fail "run nss_winbind_syms"
+    return
+}
+
+pass "nss_winbind_syms"
+
+# Clean up
+
+file delete "$srcdir/$subdir/nss_winbind_syms"

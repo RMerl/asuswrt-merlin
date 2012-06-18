@@ -1,0 +1,27 @@
+#
+# general
+#
+
+.*.cmd
+*~
+
+#
+# asuswrt
+#
+
+.config
+.config.old
+config_
+mipsel-uclibc
+
+#
+# asuswrt test
+#
+
+libfoo_xref.txt
+target.info
+Makefile.2011-11-10
+Makefile.org
+Makefile.orig
+Makefile_20111026
+stamp-h1

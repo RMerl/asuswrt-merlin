@@ -1,0 +1,4 @@
+This allows you to DNAT connections in a round-robin way over a given range of destination addresses.
+.TP
+.BI "--to-destination " "ipaddr-ipaddr"
+Address range to round-robin over.

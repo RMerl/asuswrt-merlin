@@ -1,0 +1,21 @@
+<samba:parameter name="ldap ssl ads"
+		 context="G"
+		 type="boolean"
+                 advanced="1" developer="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This option is used to define whether or not Samba should
+	use SSL when connecting to the ldap server using
+	<emphasis>ads</emphasis> methods.
+	Rpc methods are not affected by this parameter. Please note, that
+	this parameter won't have any effect if <smbconfoption name="ldap ssl"/>
+	is set to <parameter>no</parameter>.
+	</para>
+
+	<para>See <refentrytitle>smb.conf</refentrytitle><manvolnum>5</manvolnum>
+	for more information on <smbconfoption name="ldap ssl"/>.
+	</para>
+
+</description>
+<value type="default">no</value>
+</samba:parameter>

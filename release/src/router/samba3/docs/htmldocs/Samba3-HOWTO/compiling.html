@@ -1,0 +1,330 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 42. How to Compile Samba</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"><link rel="home" href="index.html" title="The Official Samba 3.0.x HOWTO and Reference Guide"><link rel="up" href="Appendix.html" title="Part VI. Reference Section"><link rel="prev" href="Appendix.html" title="Part VI. Reference Section"><link rel="next" href="Portability.html" title="Chapter 43. Portability"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 42. How to Compile Samba</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="Appendix.html">Prev</a> </td><th width="60%" align="center">Part VI. Reference Section</th><td width="20%" align="right"> <a accesskey="n" href="Portability.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="compiling"></a>Chapter 42. How to Compile Samba</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Jelmer</span> <span class="othername">R.</span> <span class="orgname">The Samba Team</span> <span class="surname">Vernooij</span></h3><div class="affiliation"><span class="orgname">The Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jelmer@samba.org">jelmer@samba.org</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="othername">H.</span> <span class="orgname">Samba Team</span> <span class="surname">Terpstra</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jht@samba.org">jht@samba.org</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">Andrew</span> <span class="orgname">Samba Team</span> <span class="surname">Tridgell</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:tridge@samba.org">tridge@samba.org</a>&gt;</code></p></div></div></div></div><div><p class="pubdate"> 22 May 2001 </p></div><div><p class="pubdate"> 18 March 2003 </p></div><div><p class="pubdate"> June 2005 </p></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="compiling.html#id2687532">Access Samba Source Code via Subversion</a></span></dt><dd><dl><dt><span class="sect2"><a href="compiling.html#id2687538">Introduction</a></span></dt><dt><span class="sect2"><a href="compiling.html#id2687579">Subversion Access to samba.org</a></span></dt></dl></dd><dt><span class="sect1"><a href="compiling.html#id2687771">Accessing the Samba Sources via rsync and ftp</a></span></dt><dt><span class="sect1"><a href="compiling.html#id2687845">Verifying Samba's PGP Signature</a></span></dt><dt><span class="sect1"><a href="compiling.html#id2687983">Building the Binaries</a></span></dt><dd><dl><dt><span class="sect2"><a href="compiling.html#id2688221">Compiling Samba with Active Directory Support</a></span></dt></dl></dd><dt><span class="sect1"><a href="compiling.html#startingSamba">Starting the smbd nmbd and winbindd</a></span></dt><dd><dl><dt><span class="sect2"><a href="compiling.html#id2688491">Starting from inetd.conf</a></span></dt><dt><span class="sect2"><a href="compiling.html#id2688711">Alternative: Starting smbd as a Daemon</a></span></dt></dl></dd></dl></div><p>
+You can obtain the Samba source file from the
+<a class="ulink" href="http://samba.org/" target="_top">Samba Web site</a>. To obtain a development version, 
+you can download Samba from Subversion or using <code class="literal">rsync</code>.
+</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2687532"></a>Access Samba Source Code via Subversion</h2></div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2687538"></a>Introduction</h3></div></div></div><p>
+<a class="indexterm" name="id2687546"></a>
+Samba is developed in an open environment. Developers use a
+Subversion to &#8220;<span class="quote">checkin</span>&#8221; (also known as 
+&#8220;<span class="quote">commit</span>&#8221;) new source code. Samba's various Subversion branches can
+be accessed via anonymous Subversion using the instructions
+detailed in this chapter.
+</p><p>
+This chapter is a modified version of the instructions found at the
+<a class="ulink" href="http://samba.org/samba/subversion.html" target="_top">Samba</a> Web site.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2687579"></a>Subversion Access to samba.org</h3></div></div></div><p>
+The machine samba.org runs a publicly accessible Subversion
+repository for access to the source code of several packages, 
+including Samba, rsync, distcc, ccache, and jitterbug. There are two main ways
+of accessing the Subversion server on this host.
+</p><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2687593"></a>Access via ViewCVS</h4></div></div></div><p>
+<a class="indexterm" name="id2687601"></a>
+You can access the source code via your favorite WWW browser. This allows you to access
+the contents of individual files in the repository and also to look at the revision 
+history and commit logs of individual files. You can also ask for a diff 
+listing between any two versions on the repository.
+</p><p>
+Use the URL
+<a class="ulink" href="http://viewcvs.samba.org/" target="_top">http://viewcvs.samba.org/</a>.
+</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2687628"></a>Access via Subversion</h4></div></div></div><p>
+<a class="indexterm" name="id2687636"></a>
+You can also access the source code via a normal Subversion client. This gives you much more control over what
+you can do with the repository and allows you to check out whole source trees and keep them up to date via
+normal Subversion commands. This is the preferred method of access if you are a developer and not just a
+casual browser.
+</p><p>In order to be able to download the Samba sources off Subversion, you need 
+a Subversion client. Your distribution might include one, or you can download the 
+sources from <a class="ulink" href="http://subversion.tigris.org/" target="_top">http://subversion.tigris.org/</a>.
+</p><p>
+To gain access via anonymous Subversion, use the following steps. 
+</p><div class="procedure"><a name="id2687670"></a><p class="title"><b>Procedure 42.1. Retrieving Samba using Subversion</b></p><ol type="1"><li><p>
+	Install a recent copy of Subversion. All you really need is a 
+	copy of the Subversion client binary. 
+	</p></li><li><p>
+	Run the command 
+	</p><pre class="screen">
+	<strong class="userinput"><code>svn co svn://svnanon.samba.org/samba/trunk samba</code></strong>.
+	</pre><p>
+	</p><p>
+	This will create a directory called <code class="filename">samba</code> containing the 
+	latest Samba source code (usually the branch that is going to be the next major release). This 
+	currently corresponds to the 3.1 development tree. 
+	</p><p>
+	Subversion branches other then trunk can be obtained by adding branches/BRANCH_NAME to the URL you check
+	out. A list of branch names can be found on the &#8220;<span class="quote">Development</span>&#8221; page of the Samba Web site. A
+	common request is to obtain the latest 3.0 release code. This could be done by using the following command:
+	</p><pre class="screen">
+	<strong class="userinput"><code>svn co svn://svnanon.samba.org/samba/branches/SAMBA_3_0 samba_3</code></strong>.
+	</pre><p>
+	</p></li><li><p>
+	Whenever you want to merge in the latest code changes, use the following command from within the Samba
+	directory:
+	</p><pre class="screen">
+	<strong class="userinput"><code>svn update</code></strong>
+	</pre><p>
+	</p></li></ol></div></div></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2687771"></a>Accessing the Samba Sources via rsync and ftp</h2></div></div></div><p>
+	<a class="indexterm" name="id2687779"></a>
+	<a class="indexterm" name="id2687786"></a>
+	<em class="parameter"><code>pserver.samba.org</code></em> also exports unpacked copies of most parts of the Subversion tree
+	at the Samba <a class="ulink" href="ftp://pserver.samba.org/pub/unpacked" target="_top">pserver</a> location and also
+	via anonymous rsync at the Samba <a class="ulink" href="rsync://pserver.samba.org/ftp/unpacked/" target="_top">rsync</a> server location.  I recommend using rsync rather
+	than ftp, because rsync is capable of compressing data streams, but it is also more useful than FTP because
+	during a partial update it will transfer only the data that is missing plus a small overhead.  See <a class="ulink" href="http://rsync.samba.org/" target="_top">the rsync home page</a> for more info on rsync.
+	</p><p>
+	The disadvantage of the unpacked trees is that they do not support automatic
+	merging of local changes as Subversion does. <code class="literal">rsync</code> access is most convenient 
+	for an initial install.                      
+	</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2687845"></a>Verifying Samba's PGP Signature</h2></div></div></div><p>
+<a class="indexterm" name="id2687853"></a>
+<a class="indexterm" name="id2687860"></a>
+It is strongly recommended that you verify the PGP signature for any source file before
+installing it. Even if you're not downloading from a mirror site, verifying PGP signatures
+should be a standard reflex. Many people today use the GNU GPG tool set in place of PGP.
+GPG can substitute for PGP.
+</p><p>
+With that said, go ahead and download the following files:
+</p><pre class="screen">
+<code class="prompt">$ </code><strong class="userinput"><code>wget http://us1.samba.org/samba/ftp/samba-3.0.20.tar.asc</code></strong>
+<code class="prompt">$ </code><strong class="userinput"><code>wget http://us1.samba.org/samba/ftp/samba-pubkey.asc</code></strong>
+</pre><p>
+<a class="indexterm" name="id2687908"></a>
+The first file is the PGP signature for the Samba source file; the other is the Samba public
+PGP key itself. Import the public PGP key with:
+</p><pre class="screen">
+<code class="prompt">$ </code><strong class="userinput"><code>gpg --import samba-pubkey.asc</code></strong>
+</pre><p>
+and verify the Samba source code integrity with:
+</p><pre class="screen">
+<code class="prompt">$ </code><strong class="userinput"><code>gzip -d samba-3.0.20.tar.gz</code></strong>
+<code class="prompt">$ </code><strong class="userinput"><code>gpg --verify samba-3.0.20.tar.asc</code></strong>
+</pre><p>
+</p><p>
+If you receive a message like, &#8220;<span class="quote">Good signature from Samba Distribution Verification Key...,</span>&#8221;
+then all is well. The warnings about trust relationships can be ignored. An
+example of what you would not want to see would be:
+</p><pre class="screen">
+gpg: BAD signature from &#8220;<span class="quote">Samba Distribution Verification Key</span>&#8221;
+</pre><p>
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2687983"></a>Building the Binaries</h2></div></div></div><p>
+	<a class="indexterm" name="id2687991"></a>
+<a class="indexterm" name="id2687998"></a>
+	After the source tarball has been unpacked, the next step involves
+	configuration to match Samba to your operating system platform.
+	If your source directory does not contain the <code class="literal">configure</code> script,
+	it is necessary to build it before you can continue. Building of
+	the configure script requires the correct version of the autoconf
+	tool kit. Where the necessary version of autoconf is present,
+	the configure script can be generated by executing the following:
+</p><pre class="screen">
+<code class="prompt">root# </code> cd samba-3.0.20/source
+<code class="prompt">root# </code> ./autogen.sh
+</pre><p>
+	</p><p>
+	<a class="indexterm" name="id2688040"></a>
+	To build the binaries, run the program <strong class="userinput"><code>./configure
+	</code></strong> in the source directory. This should automatically 
+	configure Samba for your operating system. If you have unusual 
+	needs, then you may wish to first run:
+</p><pre class="screen">
+<code class="prompt">root# </code><strong class="userinput"><code>./configure --help</code></strong>
+</pre><p>
+</p><p>
+	This will help you to see what special options can be enabled. Now execute
+	<strong class="userinput"><code>./configure</code></strong> with any arguments it might need:
+</p><pre class="screen">
+<code class="prompt">root# </code><strong class="userinput"><code>./configure <em class="replaceable"><code>[... arguments ...]</code></em></code></strong>
+</pre><p>
+	</p><p>
+	<a class="indexterm" name="id2688105"></a>
+	Execute the following create the binaries:
+</p><pre class="screen">
+<code class="prompt">root# </code> <strong class="userinput"><code>make</code></strong>
+</pre><p>
+	Once it is successfully compiled, you can execute the command shown here to
+	install the binaries and manual pages:
+</p><pre class="screen">
+<code class="prompt">root# </code> <strong class="userinput"><code>make install</code></strong>
+</pre><p>
+	</p><p>
+	Some people prefer to install binary files and man pages separately. If this is
+	your wish, the binary files can be installed by executing:
+</p><pre class="screen">
+<code class="prompt">root# </code> <strong class="userinput"><code>make installbin</code></strong>
+</pre><p>
+	The man pages can be installed using this command:
+</p><pre class="screen">
+<code class="prompt">root# </code> <strong class="userinput"><code>make installman</code></strong>
+</pre><p>
+	</p><p>
+	Note that if you are upgrading from a previous version of Samba the old
+	versions of the binaries will be renamed with an &#8220;<span class="quote">.old</span>&#8221; extension.
+	You can go back to the previous version by executing:
+</p><pre class="screen">
+<code class="prompt">root# </code> <strong class="userinput"><code>make revert</code></strong>
+</pre><p>
+	As you can see from this, building and installing Samba does not need to
+	result in disaster!
+	</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2688221"></a>Compiling Samba with Active Directory Support</h3></div></div></div><p>
+	In order to compile Samba with ADS support, you need to have installed
+	on your system:
+	</p><div class="itemizedlist"><ul type="disc"><li><p>
+		The MIT or Heimdal Kerberos development libraries
+	    (either install from the sources or use a package).
+		</p></li><li><p>
+		The OpenLDAP development libraries.
+		</p></li></ul></div><p>
+	If your Kerberos libraries are in a nonstandard location, then
+	remember to add the configure option
+	<code class="option">--with-krb5=<em class="replaceable"><code>DIR</code></em></code>.
+	</p><p>
+	After you run configure, make sure that the 
+	<code class="filename">include/config.h</code> it generates contain lines like this:
+</p><pre class="programlisting">
+#define HAVE_KRB5 1
+#define HAVE_LDAP 1
+</pre><p>
+	</p><p>
+	If it does not, configure did not find your KRB5 libraries or
+	your LDAP libraries. Look in <code class="filename">config.log</code> to figure
+	out why and fix it.
+	</p><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2688286"></a>Installing the Required Packages for Debian</h4></div></div></div><p>On Debian, you need to install the following packages:</p><p>
+		</p><div class="itemizedlist"><ul type="disc"><li><p>libkrb5-dev</p></li><li><p>krb5-user</p></li></ul></div><p>
+	</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2688313"></a>Installing the Required Packages for Red Hat Linux</h4></div></div></div><p>On Red Hat Linux, this means you should have at least: </p><p>
+		</p><div class="itemizedlist"><ul type="disc"><li><p>krb5-workstation (for kinit)</p></li><li><p>krb5-libs (for linking with)</p></li><li><p>krb5-devel (because you are compiling from source)</p></li></ul></div><p>
+	</p><p>in addition to the standard development environment.</p><p>If these files are not installed on your system, you should check the installation
+	CDs to find which has them and install the files using your tool of choice. If in doubt
+	about what tool to use, refer to the Red Hat Linux documentation.</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2688358"></a>SuSE Linux Package Requirements</h4></div></div></div><p>
+	SuSE Linux installs Heimdal packages that may be required to allow you to build
+	binary packages. You should verify that the development libraries have been installed on
+	your system.
+	</p><p>
+	SuSE Linux Samba RPMs support Kerberos. Please refer to the documentation for
+	your SuSE Linux system for information regarding SuSE Linux specific configuration.
+	Additionally, SuSE is very active in the maintenance of Samba packages that provide
+	the maximum capabilities that are available. You should consider using SuSE-provided
+	packages where they are available.
+	</p></div></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="startingSamba"></a>Starting the <span class="application">smbd</span> <span class="application">nmbd</span> and <span class="application">winbindd</span></h2></div></div></div><p>
+	<a class="indexterm" name="id2688412"></a>
+	You must choose to start <span class="application">smbd</span>, <span class="application">winbindd</span>  and <span class="application">nmbd</span> either as daemons or from
+	<span class="application">inetd</span>. Don't try to do both!  Either you can put
+	them in <code class="filename"> inetd.conf</code> and have them started on demand by
+	<span class="application">inetd</span> or <span class="application">xinetd</span>, or you
+	can start them as daemons either from the command-line or in
+	<code class="filename">/etc/rc.local</code>. See the man pages for details on the
+	command line options. Take particular care to read the bit about what user
+	you need to have to start Samba. In many cases, you must be root.
+	</p><p>
+	The main advantage of starting <span class="application">smbd</span> and <span class="application">nmbd</span> using the recommended daemon method
+	is that they will respond slightly more quickly to an initial connection request.
+	</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2688491"></a>Starting from inetd.conf</h3></div></div></div><a class="indexterm" name="id2688497"></a><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>The following will be different if 
+	you use NIS, NIS+, or LDAP to distribute services maps.</p></div><p>Look at your <code class="filename">/etc/services</code>. 
+	What is defined at port 139/tcp? If nothing is defined, 
+	then add a line like this:</p><pre class="programlisting">netbios-ssn     139/tcp</pre><p>Similarly for 137/udp, you should have an entry like:</p><pre class="programlisting">netbios-ns	137/udp</pre><p>
+	Next, edit your <code class="filename">/etc/inetd.conf</code> and add two lines like this:
+</p><pre class="programlisting">
+netbios-ssn stream tcp nowait root /usr/local/samba/sbin/smbd smbd 
+netbios-ns dgram udp wait root /usr/local/samba/sbin/nmbd nmbd 
+</pre><p>
+	</p><a class="indexterm" name="id2688560"></a><p>
+	The exact syntax of <code class="filename">/etc/inetd.conf</code> 
+	varies between UNIXes. Look at the other entries in inetd.conf 
+	for a guide.
+	</p><p>
+	<a class="indexterm" name="id2688580"></a>
+	Some distributions use xinetd instead of inetd. Consult the 
+	xinetd manual for configuration information.
+	</p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>Some UNIXes already have entries like netbios_ns 
+	(note the underscore) in <code class="filename">/etc/services</code>. 
+	You must edit <code class="filename">/etc/services</code> or
+	<code class="filename">/etc/inetd.conf</code> to make them consistent.
+	</p></div><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+	<a class="indexterm" name="id2688618"></a>
+	On many systems you may need to use the
+	<a class="link" href="smb.conf.5.html#INTERFACES" target="_top">interfaces</a> option in <code class="filename">smb.conf</code> to specify
+	the IP address and netmask of your interfaces. Run 
+	<span class="application">ifconfig</span> as root if you do
+	not know what the broadcast is for your net. <span class="application">nmbd</span> tries
+	to determine it at runtime, but fails on some UNIXes. 
+	</p></div><div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Warning</h3><p>
+	Many UNIXes only accept around five parameters on the command
+	line in <code class="filename">inetd.conf</code>.  This means you shouldn't
+	use spaces between the options and arguments, or you should use
+	a script and start the script from <code class="literal">inetd</code>.
+	</p></div><p>
+	Restart <span class="application">inetd</span>, perhaps just send it a HUP,
+	like this:
+<a class="indexterm" name="id2688686"></a>
+</p><pre class="screen">
+<code class="prompt">root# </code><strong class="userinput"><code>killall -HUP inetd</code></strong>
+</pre><p>
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2688711"></a>Alternative: Starting <span class="application">smbd</span> as a Daemon</h3></div></div></div><p>
+	<a class="indexterm" name="id2688726"></a>
+<a class="indexterm" name="id2688732"></a>
+	To start the server as a daemon, you should create a script something
+	like this one, perhaps calling it <code class="filename">startsmb</code>.
+	</p><pre class="programlisting">
+#!/bin/sh
+/usr/local/samba/sbin/smbd -D
+/usr/local/samba/sbin/winbindd -D
+/usr/local/samba/sbin/nmbd -D
+</pre><p>
+	Make it executable with <code class="literal">chmod +x startsmb</code>.
+	</p><p>
+	You can then run <code class="literal">startsmb</code> by hand or execute
+	it from <code class="filename">/etc/rc.local</code>.
+	</p><p>
+	To kill it, send a kill signal to the processes <span class="application">nmbd</span> and <span class="application">smbd</span>.
+	</p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+	If you use the SVR4-style init system, you may like to look at the
+	<code class="filename">examples/svr4-startup</code> script to make Samba fit
+	into that system.
+	</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2688810"></a>Starting Samba for Red Hat Linux</h4></div></div></div><p>
+	Red Hat Linux has not always included all Samba components in the standard installation.
+	So versions of Red Hat Linux do not install the winbind utility, even though it is present
+	on the installation CDROM media. Check to see if the <code class="literal">winbindd</code> is present
+	on the system:
+</p><pre class="screen">
+<code class="prompt">root# </code> ls /usr/sbin/winbindd
+/usr/sbin/winbindd
+</pre><p>
+	This means that the appropriate RPM package was installed. The following response means
+	that it is not installed:
+</p><pre class="screen">
+/bin/ls: /usr/sbin/winbind: No such file or directory
+</pre><p>
+	In this case, it should be installed if you intend to use <code class="literal">winbindd</code>. Search
+	the CDROM installation media for the samba-winbind RPM and install it following Red Hat
+	guidelines.
+	</p><p>
+	The process for starting Samba will now be outlined. Be sure to configure Samba's <code class="filename">smb.conf</code>
+	file before starting Samba. When configured, start Samba by executing:
+</p><pre class="screen">
+<code class="prompt">root# </code> service smb start
+<code class="prompt">root# </code> service winbind start
+</pre><p>
+	These steps will start <span class="application">nmbd</span>, <span class="application">smbd</span> and <span class="application">winbindd</span>.
+	</p><p>
+	To ensure that these services will be automatically restarted when the system is rebooted
+	execute:
+</p><pre class="screen">
+<code class="prompt">root# </code> chkconfig smb on
+<code class="prompt">root# </code> chkconfig winbind on
+</pre><p>
+	Samba will be started automatically at every system reboot.
+	</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2688933"></a>Starting Samba for Novell SUSE Linux</h4></div></div></div><p>
+	Novell SUSE Linux products automatically install all essential Samba components in a default installation.
+	Configure your <code class="filename">smb.conf</code> file, then execute the following to start Samba:
+</p><pre class="screen">
+<code class="prompt">root# </code> rcnmb start
+<code class="prompt">root# </code> rcsmb start
+<code class="prompt">root# </code> rcwinbind start
+</pre><p>
+	Now execute these commands so that Samba will be started automatically following a system
+	reboot:
+</p><pre class="screen">
+<code class="prompt">root# </code> chkconfig nmb on
+<code class="prompt">root# </code> chkconfig smb on
+<code class="prompt">root# </code> chkconfig winbind on
+</pre><p>
+	The Samba services will now be started automatically following a system reboot.
+	</p></div></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="Appendix.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="Appendix.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="Portability.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Part VI. Reference Section </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 43. Portability</td></tr></table></div></body></html>

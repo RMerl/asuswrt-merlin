@@ -1,0 +1,71 @@
+!==
+!== File-Cacheing.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Some people report problems with "cacheing" of data. Generally the bug report 
+goes like this:
+
+- create a file on a unix box
+- view the file on a PC via Samba
+- change the file on the unix box
+- look at the file again on the PC via Samba and the changes are not visible
+
+The first thing to realise is that this is the expected behaviour! The SMB protocol
+uses a thing called "opportunistic locking". This allows the client to "safely"
+do client side cacheing of file data. The problem is that this cacheing is only
+safe if all programs access the files via SMB. As soon as you access the data
+via a non-SMB client then you will get data inconsistencies.
+
+There are two solutions. Firstly, Samba has added a kernel level
+interface that allows access from a UNIX client either via NFS
+or a local process to notify Samba to 'break' the oplock, and
+thus force the correct data to be seen. Currently the only UNIX
+operating system that supports this interface is SGI IRIX 6.5.3f
+and above. However, this interface is currently being discussed
+for inclusion in both Linux and FreeBSD, and some of the other
+UNIX vendors are also interested in supporting it.
+
+The second solution is to disable oplocks in smb.conf for those shares
+that need to be accessed simutaneously from unix and windows. See the
+"oplocks" and "veto oplock files" options in smb.conf(5). Unfortunately
+this will cause a speed penalty but with the non-kernel method this
+cannot be avoided if up to date data is required for files accessed
+from both Windows and UNIX.
+
+Two more data points :
+
+Samba-1.9.18 and later series supports oplocks.
+Samba-1.9.17 series does NOT.
+
+In addition, the following registry entries under MS Windows NT4 will
+turn off oplocks on a client. WARNING !!!! This is *NOT* recommended
+and will turn off oplocks for *all* servers aceessed from this client.
+
+===================================================================================
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Paramete
+rs]
+"BufFilesDenyWrite"=dword:00000000
+"BufNamedPipes"=dword:00000000
+"UseOpportunisticLocking"=dword:00000000
+"DormantFileLimit"=dword:00000000
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Paramete
+rs\Linkage]
+"UtilizeNtCaching"=dword:00000000
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Filesystem]
+"Win95TruncateExtensions"=dword:00000000
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanManServer\Parameters]
+"EnableOpLockForceClose"=dword:00000001
+"EnableOpLocks"=dword:00000000
+
+
+==================================================================================
+
+The following registry entry does the same under Windows 9X also:
+
+
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\VxD\VREDIR]
+"DiscardCacheOnOpen"=string:00000001
+

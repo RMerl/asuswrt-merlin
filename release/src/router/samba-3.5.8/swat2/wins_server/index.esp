@@ -1,0 +1,13 @@
+<% page_header("columns", "WINS Server", "servers"); 
+
+  libinclude("base.js");
+  libinclude("management.js");
+%>
+
+<h1>WINS Server</h1>
+
+<%
+writefln("Status: %s\n", server_status("wins"));
+%>
+
+<% page_footer(); %>

@@ -1,0 +1,9 @@
+ABORT 	ERROR
+TIMEOUT	10
+""	ATZ
+OK      "AT+CPIN=\"$PIN\"^m"
+OK      "AT+COPS=0^m"
+OK	"\d\d\d\d\d\d\dAT+COPS=?^m"
+OK      "AT+CGDCONT=1,,\"$APN\"^m"
+OK	"AT\$QCPDPP=1,1,\"$PAS\",\"$USR\"^m"
+OK      ""

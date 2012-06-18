@@ -1,0 +1,81 @@
+.\" .br - line break (nothing else on the line)
+.\" .B  - bold
+.\" .I  - green or kursive (on HTML)
+.\" .TP - paragraph ? (header line, followed by indented lines)
+.\"
+.TH igmpproxy 8 "" "@PACKAGE_STRING@"
+.SH NAME
+igmpproxy \- Multicast router utilizing IGMP forwarding
+
+.SH SYNOPSIS
+.B igmpproxy [-h] [-d] [-v [-v]]
+.I config-file
+
+
+.SH DESCRIPTION
+.B igmpproxy
+is a simple multicast routing daemon which uses IGMP forwarding to
+dynamically route multicast traffic. Routing is done by defining an
+"upstream" interface on which the daemon act as a normal Multicast
+client, and one or more "downstream" interfaces that serves clients
+on the destination networks. This is useful in situations where other
+dynamic multicast routers (like 'mrouted' or 'pimd') cannot be used.
+
+Since 
+.B igmpproxy
+only uses IGMP signalling, the daemon is only suited for situations
+where multicast traffic comes from only one neighbouring network.
+In more advanced cases, 'mrouted' or 'pimd' is probably more suited.
+The daemon is not designed for cascading, and probably won't scale
+very well.
+
+Currently only IGMPv1 and v2 is supported on downstream interfaces.
+On the upstream interface the kernel IGMP client implementation is used,
+and supported IGMP versions is therefore limited to that supported by the
+kernel.
+
+
+.SH OPTIONS
+.IP -h
+Display help.
+.IP -v
+Verbose logging. Set logging level to INFO instead of WARNING used by default. 
+.IP -vv
+More verbose logging. Set logging level to DEBUG.
+.IP -d
+Output log messages to STDERR instead of to
+.BR syslog (3).
+
+
+.SH LIMITS
+The current version compiles and runs fine with the Linux kernel version 2.4. The known limits are:
+
+.B Multicast routes:
+more then 200
+
+.B Multicast group membership:
+max. 20
+.SH FILES
+.TP
+.B /proc/net/ip_mr_cache 
+- contains the active multicast routes
+.TP
+.B /proc/net/ip_mr_vif 
+- contains the 'virtual' interfaces used by the active multicast routing daemon
+.TP
+.B /proc/sys/net/ipv4/conf/<ifname>/force_igmp_version 
+- can be set to control what IGMP version the kernel should use on the upstream interface.
+Ex.: 'echo 2 > /proc/sys/net/ipv4/conf/eth0/force_igmp_version' will force the kernel to
+use IGMPv2 on eth0 (provided this is the upstream interface).
+
+
+.SH SEE ALSO
+.BR igmpproxy.conf (5),
+.BR mrouted,
+.BR pimd,
+.BR smcroute
+
+.SH BUGS
+Currently none (but there probably will be :-/ )
+.SH AUTHOR
+Originally written by Johnny Egeland <johnny@rlo.org>.

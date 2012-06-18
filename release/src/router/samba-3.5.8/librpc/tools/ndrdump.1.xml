@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="ndrdump.1">
+
+<refmeta>
+	<refentrytitle>ndrdump</refentrytitle>
+	<manvolnum>1</manvolnum>
+</refmeta>
+
+
+<refnamediv>
+	<refname>ndrdump</refname>
+	<refpurpose>DCE/RPC Packet Parser and Dumper</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>ndrdump</command>
+		<arg choice="opt">-c context</arg>
+		<arg choice="req">pipe</arg>
+		<arg choice="req">function</arg>
+		<arg choice="req">in|out</arg>
+		<arg choice="req">filename</arg>
+	</cmdsynopsis>
+	<cmdsynopsis>
+		<command>ndrdump</command>
+		<arg choice="opt">pipe</arg>
+	</cmdsynopsis>
+	<cmdsynopsis>
+		<command>ndrdump</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>ndrdump tries to parse the specified <replaceable>filename</replaceable>
+		using Samba's parser for the specified pipe and function. The 
+		third argument should be 
+		either <emphasis>in</emphasis> or <emphasis>out</emphasis>, depending 
+		on whether the data should be parsed as a request or a reply.</para>
+
+	<para>Running ndrdump without arguments will list the pipes for which 
+		parsers are available.</para>
+
+	<para>Running ndrdump with one argument will list the functions that 
+		Samba can parse for the specified pipe.</para>
+
+	<para>The primary function of ndrdump is debugging Samba's internal 
+		DCE/RPC parsing functions. The file being parsed is usually 
+		one exported by wiresharks <quote>Export selected packet bytes</quote> 
+		function.</para>
+
+	<para>The context argument can be used to load context data from the request 
+		packet when parsing reply packets (such as array lengths).</para>
+
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 4.0 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+
+	<para>wireshark, pidl</para>
+
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>This utility is part of the <ulink url="http://www.samba.org/">Samba</ulink> suite, which is developed by the global <ulink url="http://www.samba.org/samba/team/">Samba Team</ulink>.</para>
+
+	<para>ndrdump was written by Andrew Tridgell. </para>
+
+	<para>This manpage was written by Jelmer Vernooij. </para>
+	
+</refsect1>
+
+</refentry>

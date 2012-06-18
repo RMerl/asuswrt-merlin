@@ -1,0 +1,74 @@
+From 0f0cf7ec49719ab3c357813689bf1095234d6533
+From: Bernhard Reutner-Fischer
+Date: Thu, 10 Jun 2010 20:20:17 +0000
+Subject: lgamma: fix sign handling
+
+add testcase from
+http://sourceware.org/bugzilla/show_bug.cgi?id=4407
+
+Signed-off-by: Bernhard Reutner-Fischer <rep.dot.nop@gmail.com>
+---
+diff --git a/libm/e_lgamma_r.c b/libm/e_lgamma_r.c
+index 2b1fde7..23c96d8 100644
+--- a/libm/e_lgamma_r.c
++++ b/libm/e_lgamma_r.c
+@@ -208,7 +208,11 @@ double attribute_hidden __ieee754_lgamma_r(double x, int *signgamp)
+ 	*signgamp = 1;
+ 	ix = hx&0x7fffffff;
+ 	if(ix>=0x7ff00000) return x*x;
+-	if((ix|lx)==0) return one/zero;
++	if((ix|lx)==0) {
++	    if (signbit(x))
++	        *signgamp = -1;
++	    return one/zero;
++	}
+ 	if(ix<0x3b900000) {	/* |x|<2**-70, return -log(|x|) */
+ 	    if(hx<0) {
+ 	        *signgamp = -1;
+diff --git a/test/math/Makefile b/test/math/Makefile
+index b160c87..8a46e77 100644
+--- a/test/math/Makefile
++++ b/test/math/Makefile
+@@ -3,7 +3,7 @@
+ 
+ include ../../.config
+ 
+-TESTS := basic-test rint tst-definitions test-fpucw test-float test-ifloat test-double test-idouble
++TESTS := basic-test rint signgam tst-definitions test-fpucw test-float test-ifloat test-double test-idouble
+ ifeq ($(UCLIBC_HAS_LONG_DOUBLE_MATH),y)
+ TESTS += test-ldouble test-ildoubl compile_test
+ else
+@@ -9,6 +9,7 @@ CFLAGS_basic-test := -DNO_LONG_DOUBLE
+ include ../Test.mak
+ 
+ DODIFF_rint     := 1
++DODIFF_signgam  := 1
+ 
+ # NOTE: For basic-test we must disable the floating point optimization.
+ #       Only for sh architecture because in the other architecture are disabled.
+diff --git a/test/math/signgam.c b/test/math/signgam.c
+new file mode 100644
+index 0000000..c60375a
+--- a/dev/null
++++ b/test/math/signgam.c
+@@ -0,0 +1,18 @@
++#define _XOPEN_SOURCE 600
++#include <math.h>
++#include <stdio.h>
++
++double zero = 0.0;
++double mzero;
++
++int
++main (void)
++{
++  double d;
++  mzero = copysign (zero, -1.0);
++  d = lgamma (zero);
++  printf ("%g %d\n", d, signgam);
++  d = lgamma (mzero);
++  printf ("%g %d\n", d, signgam);
++  return 0;
++}
+--
+cgit v0.8.2.1

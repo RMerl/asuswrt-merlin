@@ -1,0 +1,261 @@
+<% 
+libinclude("base.js");
+	page_header("desktop", "Virtual Desktop Design Test", "desktop");
+%>
+
+<script type="text/javascript" src="/scripting/client/encoder.js"></script>
+<script type="text/javascript" src="/scripting/client/call.js"></script>
+<script type="text/javascript" src="/scripting/client/js_scripts.js"></script>
+<script type="text/javascript" src="/scripting/client/desktop.js"></script>
+<script type="text/javascript" src="/scripting/client/status.js"></script>
+<script type="text/javascript" src="/scripting/client/regedit.js"></script>
+
+<script type="text/javascript">
+
+function showMessage(m)
+{
+	var message = new QxWindow();
+	with(message) {
+		setWidth(300);
+		setTop("35%");
+		setLeft("35%");
+		setShowMaximize(false);
+		setShowMinimize(false);
+	}
+
+	var note = new QxAtom(m);
+	with(note) {
+		setTop(10);
+		setLeft(10);
+	}
+
+	var ok = new QxButton("OK");
+	with(ok) {
+		setLeft("42%");
+		setBottom(2);
+	}
+	ok.addEventListener("click", function() {
+		doc.remove(message);
+	});
+
+	message.add(note);
+	message.add(ok);
+	doc.add(message);
+	message.setVisible(true);
+}
+
+function blankW()
+{
+	var blank = new Window.standard('SWAT');
+	doc.add(blank);
+	blank.setVisible(true);
+}
+
+function showReg()
+{
+	document.js.add('/scripting/client/regedit.js');
+
+	var regWin = new QxWindow("Registry Editor");
+	regWin._onclosebuttonclick = function(e)
+	{
+		this.close();
+		e.stopPropagation();
+		document.js.remove('/scripting/client/regedit.js');
+	};
+	with(regWin) {
+		setTop(100);
+		setLeft(100);
+		setMinWidth(450);
+		setMinHeight(450);
+	}
+	
+	var regedit = regedit_widget("ncalrpc:");
+	regWin.add(regedit);
+	doc.add(regWin);
+	regWin.setVisible('true');
+}
+
+function clientContextMenu(e)
+{
+	var aboutCmd = new QxCommand();
+	aboutCmd.addEventListener("execute", function() {
+		showMessage("SWAT, the Samba Web Administration Tool.<br/>This tool is currently under development.");
+	});
+
+	var newWin = new QxCommand();
+	newWin.addEventListener("execute", blankW);
+
+	var cmenu = new QxMenu;
+
+	var sub1 = new QxMenuButton("About SWAT", null, aboutCmd);
+	var sep = new QxMenuSeparator();
+	var sub2 = new QxMenuButton("New Window", null, newWin);
+
+	cmenu.add(sub1, sep, sub2);
+
+	cmenu.setLeft(e.getClientX());
+	cmenu.setTop(e.getClientY());
+	doc.add(cmenu);
+	cmenu.setVisible(true);
+}
+
+function windowContextMenu(t, e)
+{
+	var WinWin = new QxCommand();
+	WinWin.addEventListener("execute", function() {
+		var blank = new QxWindow();
+		t.add(blank);
+		blank.setVisible(true);
+	}); 
+
+	var inset = new QxMenu;
+	var sub1 = new QxMenuButton("Open window in a window", null, WinWin);
+
+	inset.add(sub1);
+	t.add(inset)
+
+	inset.setVisible(true);
+}
+
+function startMenu() 
+{
+	var sMenu = new QxMenu;
+	with(sMenu) {
+		setWidth(150);
+		setHeight(150);
+	}
+
+	var srvMenu = new QxMenu;
+	var srv1 = new QxMenuButton("LDAP Server", null);
+	var srv2 = new QxMenuButton("CDAP Server", null);
+	var srv3 = new QxMenuButton("RPC Server", null);
+	var srv4 = new QxMenuButton("NBT Server", null);
+	var srv5 = new QxMenuButton("WINS Server", null);
+	var srv6 = new QxMenuButton("Kerberos Server", null);
+	srvMenu.add(srv1, srv2, srv3, srv4, srv5, srv6);
+	doc.add(srvMenu);
+	srvMenu.setVisible(false);
+
+	var editReg = new QxCommand;
+	editReg.addEventListener("execute", function() {
+		showReg();
+	});
+
+	var espMenu = new QxMenu;
+	var esp1 = new QxMenuButton("Registry Editor", null, editReg);
+	espMenu.add(esp1);
+	doc.add(espMenu);
+	espMenu.setVisible(false);
+
+	var opt1 = new QxMenuButton("Servers", null)
+	opt1.addEventListener("mouseover", function() {
+		srvMenu.setVisible(true);
+		srvMenu.setLeft(this.getComputedPageBoxRight() + 4);
+		srvMenu.setTop(this.getComputedPageBoxTop() - 3);
+		if (espMenu.getVisible()) {
+			espMenu.setVisible(false);
+		} else if (newMenu.getVisible()) {
+			newMenu.setVisible(false);
+		}
+	}); 
+
+	var openWin = new QxCommand;
+	openWin.addEventListener("execute", function() {
+		blankW();
+	});
+
+	var newMenu = new QxMenu;
+	var new1 = new QxMenuButton("Window", null, openWin);
+	newMenu.add(new1);
+	doc.add(newMenu);
+	newMenu.setVisible(false);
+
+	var opt2 = new QxMenuButton("Installation", null);
+	var opt3 = new QxMenuButton("Configuration", null);
+	var opt4 = new QxMenuButton("ESP Tests", null);
+	opt4.addEventListener("mouseover", function() {
+		espMenu.setVisible(true);
+		espMenu.setLeft(this.getComputedPageBoxRight() + 4);
+		espMenu.setTop(this.getComputedPageBoxTop() - 3);
+		if (srvMenu.getVisible()) {
+			srvMenu.setVisible(false);
+		} else if (newMenu.getVisible()) {
+			newMenu.setVisible(false);
+		}
+	}); 
+	var opt5 = new QxMenuButton("Documentation", null);
+	var opt6 = new QxMenuButton("New", null);
+	opt6.addEventListener("mouseover", function() {
+		newMenu.setVisible(true);
+		newMenu.setLeft(this.getComputedPageBoxRight() + 4);
+		newMenu.setTop(this.getComputedPageBoxTop() - 3);
+		if (srvMenu.getVisible()) {
+			srvMenu.setVisible(false);
+		} else if (espMenu.getVisible()) {
+			espMenu.setVisible(false);
+		}
+	}); 
+	var sep1 = new QxMenuSeparator();
+	var sep2 = new QxMenuSeparator();
+
+	sMenu.add(opt1, opt2, opt3, sep1, opt4, sep2, opt5, opt6);
+	sMenu.setLeft(0);
+	sMenu.setTop(docY() - 150);
+	doc.add(sMenu);
+	sMenu.setVisible(true);
+}
+
+function contextMenu(e)
+{	
+	var t = e.getTarget()
+	var tObj = t.getHtmlAttribute("class")
+
+	if (tObj == 'QxClientDocument QxThemeWin9x') {
+		clientContextMenu(e);
+	} else if (tObj == 'QxWindowPane') {
+		windowContextMenu(t, e);
+	}
+}
+
+window.application.main = function()
+{
+	doc = this.getClientWindow().getClientDocument();
+	doc.addEventListener("contextmenu", contextMenu);
+
+	var bar = new QxMenuBar;
+	with (bar) {
+		setBottom(0);
+		setLeft(0);
+		setWidth("100%");
+		setHeight(25);
+		setBackgroundColor("ThreeDFace");
+	}
+
+	var start = new QxMenuButton("START");
+	start.addEventListener("click", function() {
+		startMenu();
+	});
+	bar.add(start);
+
+	doc.add(bar);
+
+	// Always open with stats
+	var win = new QxWindow();
+	document.js.add('/scripting/client/status.js');
+	win._onclosebuttonclick = function(e)
+	{
+		this.close();
+		e.stopPropagation();
+		document.js.remove('/scripting/client/status.js');
+	};
+	with(win) {
+		setTop(50);
+		setRight(50);
+		setHeight(175);
+	}
+	doc.add(win);
+	getServerStatus(win);
+}
+</script>
+
+<% page_footer(); %>

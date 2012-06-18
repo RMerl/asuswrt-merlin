@@ -1,0 +1,150 @@
+diff -urbBN gcc-4.1.2.orig/gcc/config/mips/mips.c gcc-4.1.2.brcm/gcc/config/mips/mips.c
+--- gcc-4.1.2.orig/gcc/config/mips/mips.c	2006-09-10 23:30:53.000000000 +0400
++++ gcc-4.1.2.brcm/gcc/config/mips/mips.c	2008-12-12 12:06:45.000000000 +0300
+@@ -4720,7 +4720,8 @@
+ 	 -mbranch-likely.  */
+       if (ISA_HAS_BRANCHLIKELY
+ 	  && !(ISA_MIPS32 || ISA_MIPS32R2 || ISA_MIPS64)
+-	  && !(TUNE_MIPS5500 || TUNE_SB1))
++	  && !(TUNE_MIPS5500 || TUNE_SB1)
++	  && !(TARGET_FIX_4710A0))
+ 	target_flags |= MASK_BRANCHLIKELY;
+       else
+ 	target_flags &= ~MASK_BRANCHLIKELY;
+diff -urbBN gcc-4.1.2.orig/gcc/config/mips/mips.opt gcc-4.1.2.brcm/gcc/config/mips/mips.opt
+--- gcc-4.1.2.orig/gcc/config/mips/mips.opt	2005-07-23 12:36:54.000000000 +0400
++++ gcc-4.1.2.brcm/gcc/config/mips/mips.opt	2008-12-12 11:59:48.000000000 +0300
+@@ -93,6 +93,14 @@
+ Target Report Var(TARGET_FIX_SB1)
+ Work around errata for early SB-1 revision 2 cores
+ 
++m4710a0
++Target Report Mask(FIX_4710A0)
++Work around BCM4710A0 hardware bugs
++
++m4710a0kern
++Target Report RejectNegative InverseMask(FIX_4710A0)
++Don't work around BCM4710A0 hardware bugs
++
+ mfix-vr4120
+ Target Report Var(TARGET_FIX_VR4120)
+ Work around certain VR4120 errata
+diff -urbBN gcc-4.1.2.orig/gcc/config/mips/vxmips.h gcc-4.1.2.brcm/gcc/config/mips/vxmips.h
+--- gcc-4.1.2.orig/gcc/config/mips/vxmips.h	1970-01-01 03:00:00.000000000 +0300
++++ gcc-4.1.2.brcm/gcc/config/mips/vxmips.h	2008-12-12 11:28:33.000000000 +0300
+@@ -0,0 +1,44 @@
++/* Definitions of target machine for GNU compiler.  VxWorks MIPS version.
++   Copyright (C) 1996,2001 Free Software Foundation, Inc.
++
++This file is part of GNU CC.
++
++GNU CC is free software; you can redistribute it and/or modify
++it under the terms of the GNU General Public License as published by
++the Free Software Foundation; either version 2, or (at your option)
++any later version.
++
++GNU CC is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with GNU CC; see the file COPYING.  If not, write to
++the Free Software Foundation, 59 Temple Place - Suite 330,
++Boston, MA 02111-1307, USA.  */
++
++
++#undef SUBTARGET_CPP_SPEC
++#define SUBTARGET_CPP_SPEC "%{!DCPU=*:			\
++  %{!mips1: %{!mips2: %{!mips3: %{!mips4:  -DCPU=MIPS32}}}}     \
++  %{mips1: -DCPU=MIPS32}                                        \
++  %{mips2: -DCPU=MIPS32}                                        \
++  %{mips3: -DCPU=MIPS64}                                        \
++  %{mips4: -DCPU=MIPS64}} -D__CPU__=CPU"
++
++#undef CPP_PREDEFINES
++#define CPP_PREDEFINES "-D__vxworks -D__mips__ -D__MIPSEB__ -Asystem(vxworks)"
++
++/* There is no OS support for this, yet.  */
++#undef MIPS_DEFAULT_GVALUE
++#define MIPS_DEFAULT_GVALUE	0
++
++/* VxWorks uses object files, not loadable images.  make linker just
++   combine objects. */
++#undef LINK_SPEC
++#define LINK_SPEC "-r"
++
++  /* Use GNU soft FP naming conventions */
++#undef INIT_SUBTARGET_OPTABS
++#define INIT_SUBTARGET_OPTABS
+diff -urbBN gcc-4.1.2.orig/gcc/config.gcc gcc-4.1.2.brcm/gcc/config.gcc
+--- gcc-4.1.2.orig/gcc/config.gcc	2006-10-16 03:12:23.000000000 +0400
++++ gcc-4.1.2.brcm/gcc/config.gcc	2008-12-12 11:28:33.000000000 +0300
+@@ -1567,7 +1567,7 @@
+ mips-wrs-vxworks)
+ 	# We want vxworks.h after mips/elf.h, which unfortunately means we
+ 	# have to redo the tm_file list from scratch.
+-	tm_file="elfos.h mips/mips.h svr4.h mips/elf.h vxworks.h mips/vxworks.h"
++	tm_file="elfos.h mips/mips.h svr4.h mips/elf.h vxworks.h mips/vxmips.h"
+ 	tmake_file="${tmake_file} mips/t-vxworks"
+ 	;;
+ mips-wrs-windiss)	# Instruction-level simulator for VxWorks.
+diff -urbBN gcc-4.1.2.orig/gcc/config.in gcc-4.1.2.brcm/gcc/config.in
+--- gcc-4.1.2.orig/gcc/config.in	2007-02-14 08:17:22.000000000 +0300
++++ gcc-4.1.2.brcm/gcc/config.in	2008-12-12 11:30:54.000000000 +0300
+@@ -1371,3 +1371,6 @@
+ #undef vfork
+ #endif
+ 
++
++/* Define to 1 for BCM4710A0 compiler workarounds */
++#undef BCM4710A0
+diff -urbBN gcc-4.1.2.orig/gcc/configure gcc-4.1.2.brcm/gcc/configure
+--- gcc-4.1.2.orig/gcc/configure	2006-11-14 01:09:55.000000000 +0300
++++ gcc-4.1.2.brcm/gcc/configure	2008-12-12 11:28:34.000000000 +0300
+@@ -911,6 +911,7 @@
+ Optional Packages:
+   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
++  --with-bcm4710a0        enable BCM4710A0 compiler workarounds
+   --with-local-prefix=DIR specifies directory to put local include
+   --with-gxx-include-dir=DIR
+                           specifies directory to put g++ header files
+@@ -1615,6 +1616,20 @@
+ # Directories
+ # -----------
+ 
++# With BCM4710A0 compiler workarounds
++
++# Check whether --with-bcm4710a0 or --without-bcm4710a0 was given.
++if test "${with_bcm4710a0+set}" = set; then
++  withval="$with_bcm4710a0"
++  case "${withval}" in
++  yes)
++cat >>confdefs.h <<\_ACEOF
++#define BCM4710A0 1
++_ACEOF
++ ;;
++esac
++fi;
++
+ # Specify the local prefix
+ local_prefix=
+ 
+diff -urbBN gcc-4.1.2.orig/gcc/configure.ac gcc-4.1.2.brcm/gcc/configure.ac
+--- gcc-4.1.2.orig/gcc/configure.ac	2006-11-14 01:09:55.000000000 +0300
++++ gcc-4.1.2.brcm/gcc/configure.ac	2008-12-12 11:28:33.000000000 +0300
+@@ -103,6 +103,13 @@
+ # Directories
+ # -----------
+ 
++# With BCM4710A0 compiler workarounds
++AC_ARG_WITH(bcm4710a0,
++[  --with-bcm4710a0        enable BCM4710A0 compiler workarounds],
++[case "${withval}" in
++  yes) AC_DEFINE(BCM4710A0, 1, [BCM4710A0 support?]) ;;
++esac])
++
+ # Specify the local prefix
+ local_prefix=
+ AC_ARG_WITH(local-prefix,

@@ -1,0 +1,32 @@
+<% page_header("columns", "ESP Exception test", "esptest"); 
+   include("/scripting/forms.js");
+%>
+
+<h1>Samba4 exception test</h1>
+
+
+<%
+var f = FormObj("ExceptionTest", 0, 2);
+f.submit[0] = "Generate Exception";
+f.submit[1] = "No Exception";
+
+f.display();
+
+if (request['REQUEST_METHOD'] == "POST") {
+	function TestFunction(arg1, arg2) {
+		 return "OK";
+	}
+
+	if (form['submit'] == "Generate Exception") {
+	    write("I expect you to die Mr Bond!<br>\n");
+	    TestFunction("foo");
+	} else {
+	    write("no exception<br>\n");
+	    TestFunction("foo", "bar");
+	}
+}
+%>
+
+and here is some filler text ...
+
+<% page_footer(); %>

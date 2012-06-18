@@ -1,0 +1,15 @@
+Begin
+Title:          ez-ipupdate
+Version:        2.9.0
+Entered-date:   
+Description:    A client for automaticly updating your EZ-IP.net,
+                justlinux.com, dhs.org, dyndns.org, ods.org, gnudip.cheapnet.net, tzo.com,
+                easydns.com dynamic hostname parameters. Includes daemon support that only
+                sends updates if your IP address changes.
+Keywords:       EZ-IP, dynamic, hostname, DNS
+Author:         amackay@gusnet.cx (Angus Mackay)
+Maintained-by:  amackay@gusnet.cx (Angus Mackay)
+Primary-site:   http://www.gusnet.cx/proj/ez-ipupdate/
+Platforms:      Linux, *BSD, Solaris, Unix
+Copying-policy: GPL
+End

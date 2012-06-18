@@ -1,0 +1,393 @@
+December 24th, 2006
+v0.40  -- Updated makefile to properly support LIBNAME
+       -- Fixed bug in fast_s_mp_mul_high_digs() which overflowed (line 83), thanks Valgrind!
+
+April 4th, 2006
+v0.39  -- Jim Wigginton pointed out my Montgomery examples in figures 6.4 and 6.6 were off by one, k should be 9 not 8
+       -- Bruce Guenter suggested I use --tag=CC for libtool builds where the compiler may think it's C++.
+       -- "mm" from sci.crypt pointed out that my mp_gcd was sub-optimal (I also updated and corrected the book)
+       -- updated some of the @@ tags in tommath.src to reflect source changes.
+       -- updated email and url info in all source files
+
+Jan 26th, 2006
+v0.38  -- broken makefile.shared fixed
+       -- removed some carry stores that were not required [updated text]
+       
+November 18th, 2005
+v0.37  -- [Don Porter] reported on a TCL list [HEY SEND ME BUGREPORTS ALREADY!!!] that mp_add_d() would compute -0 with some inputs.  Fixed.
+       -- [rinick@gmail.com] reported the makefile.bcc was messed up.  Fixed.
+       -- [Kevin Kenny] reported some issues with mp_toradix_n().  Now it doesn't require a min of 3 chars of output.  
+       -- Made the make command renamable.  Wee
+
+August 1st, 2005
+v0.36  -- LTM_PRIME_2MSB_ON was fixed and the "OFF" flag was removed.
+       -- [Peter LaDow] found a typo in the XREALLOC macro
+       -- [Peter LaDow] pointed out that mp_read_(un)signed_bin should have "const" on the input
+       -- Ported LTC patch to fix the prime_random_ex() function to get the bitsize correct [and the maskOR flags]
+       -- Kevin Kenny pointed out a stray //
+       -- David Hulton pointed out a typo in the textbook [mp_montgomery_setup() pseudo-code]
+       -- Neal Hamilton (Elliptic Semiconductor) pointed out that my Karatsuba notation was backwards and that I could use 
+          unsigned operations in the routine.  
+       -- Paul Schmidt pointed out a linking error in mp_exptmod() when BN_S_MP_EXPTMOD_C is undefined (and another for read_radix)
+       -- Updated makefiles to be way more flexible
+
+March 12th, 2005
+v0.35  -- Stupid XOR function missing line again... oops.
+       -- Fixed bug in invmod not handling negative inputs correctly [Wolfgang Ehrhardt]
+       -- Made exteuclid always give positive u3 output...[ Wolfgang Ehrhardt ]
+       -- [Wolfgang Ehrhardt] Suggested a fix for mp_reduce() which avoided underruns.  ;-)
+       -- mp_rand() would emit one too many digits and it was possible to get a 0 out of it ... oops
+       -- Added montgomery to the testing to make sure it handles 1..10 digit moduli correctly
+       -- Fixed bug in comba that would lead to possible erroneous outputs when "pa < digs" 
+       -- Fixed bug in mp_toradix_size for "0" [Kevin Kenny]
+       -- Updated chapters 1-5 of the textbook ;-) It now talks about the new comba code!
+
+February 12th, 2005
+v0.34  -- Fixed two more small errors in mp_prime_random_ex()
+       -- Fixed overflow in mp_mul_d() [Kevin Kenny]
+       -- Added mp_to_(un)signed_bin_n() functions which do bounds checking for ya [and report the size]
+       -- Added "large" diminished radix support.  Speeds up things like DSA where the moduli is of the form 2^k - P for some P < 2^(k/2) or so
+          Actually is faster than Montgomery on my AMD64 (and probably much faster on a P4)
+       -- Updated the manual a bit
+       -- Ok so I haven't done the textbook work yet... My current freelance gig has landed me in France till the 
+          end of Feb/05.  Once I get back I'll have tons of free time and I plan to go to town on the book.
+          As of this release the API will freeze.  At least until the book catches up with all the changes.  I welcome
+          bug reports but new algorithms will have to wait.
+
+December 23rd, 2004
+v0.33  -- Fixed "small" variant for mp_div() which would munge with negative dividends...
+       -- Fixed bug in mp_prime_random_ex() which would set the most significant byte to zero when
+          no special flags were set
+       -- Fixed overflow [minor] bug in fast_s_mp_sqr()
+       -- Made the makefiles easier to configure the group/user that ltm will install as
+       -- Fixed "final carry" bug in comba multipliers. (Volkan Ceylan)
+       -- Matt Johnston pointed out a missing semi-colon in mp_exptmod
+
+October 29th, 2004
+v0.32  -- Added "makefile.shared" for shared object support
+       -- Added more to the build options/configs in the manual
+       -- Started the Depends framework, wrote dep.pl to scan deps and 
+          produce "callgraph.txt" ;-)
+       -- Wrote SC_RSA_1 which will enable close to the minimum required to perform
+          RSA on 32-bit [or 64-bit] platforms with LibTomCrypt
+       -- Merged in the small/slower mp_div replacement.  You can now toggle which
+          you want to use as your mp_div() at build time.  Saves roughly 8KB or so.
+       -- Renamed a few files and changed some comments to make depends system work better.
+          (No changes to function names)
+       -- Merged in new Combas that perform 2 reads per inner loop instead of the older 
+          3reads/2writes per inner loop of the old code.  Really though if you want speed
+          learn to use TomsFastMath ;-)
+
+August 9th, 2004
+v0.31  -- "profiled" builds now :-) new timings for Intel Northwoods
+       -- Added "pretty" build target
+       -- Update mp_init() to actually assign 0's instead of relying on calloc()
+       -- "Wolfgang Ehrhardt" <Wolfgang.Ehrhardt@munich.netsurf.de> found a bug in mp_mul() where if
+          you multiply a negative by zero you get negative zero as the result.  Oops.
+       -- J Harper from PeerSec let me toy with his AMD64 and I got 60-bit digits working properly
+          [this also means that I fixed a bug where if sizeof(int) < sizeof(mp_digit) it would bug]
+
+April 11th, 2004
+v0.30  -- Added "mp_toradix_n" which stores upto "n-1" least significant digits of an mp_int
+       -- Johan Lindh sent a patch so MSVC wouldn't whine about redefining malloc [in weird dll modes]
+       -- Henrik Goldman spotted a missing OPT_CAST in mp_fwrite()
+       -- Tuned tommath.h so that when MP_LOW_MEM is defined MP_PREC shall be reduced.
+          [I also allow MP_PREC to be externally defined now]
+       -- Sped up mp_cnt_lsb() by using a 4x4 table [e.g. 4x speedup]
+       -- Added mp_prime_random_ex() which is a more versatile prime generator accurate to
+          exact bit lengths (unlike the deprecated but still available mp_prime_random() which
+          is only accurate to byte lengths).  See the new LTM_PRIME_* flags ;-)
+       -- Alex Polushin contributed an optimized mp_sqrt() as well as mp_get_int() and mp_is_square().
+          I've cleaned them all up to be a little more consistent [along with one bug fix] for this release.
+       -- Added mp_init_set and mp_init_set_int to initialize and set small constants with one function
+          call.
+       -- Removed /etclib directory [um LibTomPoly deprecates this].
+       -- Fixed mp_mod() so the sign of the result agrees with the sign of the modulus.
+       ++ N.B.  My semester is almost up so expect updates to the textbook to be posted to the libtomcrypt.org 
+          website.  
+
+Jan 25th, 2004
+v0.29  ++ Note: "Henrik" from the v0.28 changelog refers to Henrik Goldman ;-)
+       -- Added fix to mp_shrink to prevent a realloc when used == 0 [e.g. realloc zero bytes???]
+       -- Made the mp_prime_rabin_miller_trials() function internal table smaller and also
+          set the minimum number of tests to two (sounds a bit safer).
+       -- Added a mp_exteuclid() which computes the extended euclidean algorithm.
+       -- Fixed a memory leak in s_mp_exptmod() [called when Barrett reduction is to be used] which would arise
+          if a multiplication or subsequent reduction failed [would not free the temp result].
+       -- Made an API change to mp_radix_size().  It now returns an error code and stores the required size
+          through an "int star" passed to it.
+
+Dec 24th, 2003
+v0.28  -- Henrik Goldman suggested I add casts to the montomgery code [stores into mu...] so compilers wouldn't
+          spew [erroneous] diagnostics... fixed.
+       -- Henrik Goldman also spotted two typos.  One in mp_radix_size() and another in mp_toradix().
+       -- Added fix to mp_shrink() to avoid a memory leak.
+       -- Added mp_prime_random() which requires a callback to make truly random primes of a given nature
+          (idea from chat with Niels Ferguson at Crypto'03)
+       -- Picked up a second wind.  I'm filled with Gooo.  Mission Gooo!
+       -- Removed divisions from mp_reduce_is_2k()
+       -- Sped up mp_div_d() [general case] to use only one division per digit instead of two.
+       -- Added the heap macros from LTC to LTM.  Now you can easily [by editing four lines of tommath.h]
+          change the name of the heap functions used in LTM [also compatible with LTC via MPI mode]
+       -- Added bn_prime_rabin_miller_trials() which gives the number of Rabin-Miller trials to achieve
+          a failure rate of less than 2^-96
+       -- fixed bug in fast_mp_invmod().  The initial testing logic was wrong.  An invalid input is not when
+          "a" and "b" are even it's when "b" is even [the algo is for odd moduli only].
+       -- Started a new manual [finally].  It is incomplete and will be finished as time goes on.  I had to stop
+          adding full demos around half way in chapter three so I could at least get a good portion of the
+          manual done.   If you really need help using the library you can always email me!
+       -- My Textbook is now included as part of the package [all Public Domain]
+
+Sept 19th, 2003
+v0.27  -- Removed changes.txt~ which was made by accident since "kate" decided it was
+          a good time to re-enable backups... [kde is fun!]
+       -- In mp_grow() "a->dp" is not overwritten by realloc call [re: memory leak]
+          Now if mp_grow() fails the mp_int is still valid and can be cleared via
+          mp_clear() to reclaim the memory.
+       -- Henrik Goldman found a buffer overflow bug in mp_add_d().  Fixed.
+       -- Cleaned up mp_mul_d() to be much easier to read and follow.
+
+Aug 29th, 2003
+v0.26  -- Fixed typo that caused warning with GCC 3.2
+       -- Martin Marcel noticed a bug in mp_neg() that allowed negative zeroes.
+          Also, Martin is the fellow who noted the bugs in mp_gcd() of 0.24/0.25.
+       -- Martin Marcel noticed an optimization [and slight bug] in mp_lcm().
+       -- Added fix to mp_read_unsigned_bin to prevent a buffer overflow.
+       -- Beefed up the comments in the baseline multipliers [and montgomery]
+       -- Added "mont" demo to the makefile.msvc in etc/
+       -- Optimized sign compares in mp_cmp from 4 to 2 cases.
+
+Aug 4th, 2003
+v0.25  -- Fix to mp_gcd again... oops (0,-a) == (-a, 0) == a
+       -- Fix to mp_clear which didn't reset the sign  [Greg Rose]
+       -- Added mp_error_to_string() to convert return codes to strings.  [Greg Rose]
+       -- Optimized fast_mp_invmod() to do the test for invalid inputs [both even]
+          first so temps don't have to be initialized if it's going to fail.
+       -- Optimized mp_gcd() by removing mp_div_2d calls for when one of the inputs
+          is odd.
+       -- Tons of new comments, some indentation fixups, etc.
+       -- mp_jacobi() returns MP_VAL if the modulus is less than or equal to zero.
+       -- fixed two typos in the header of each file :-)
+       -- LibTomMath is officially Public Domain [see LICENSE]
+
+July 15th, 2003
+v0.24  -- Optimized mp_add_d and mp_sub_d to not allocate temporary variables
+       -- Fixed mp_gcd() so the gcd of 0,0 is 0.  Allows the gcd operation to be chained
+          e.g. (0,0,a) == a [instead of 1]
+       -- Should be one of the last release for a while.  Working on LibTomMath book now.
+       -- optimized the pprime demo [/etc/pprime.c] to first make a huge table of single
+          digit primes then it reads them randomly instead of randomly choosing/testing single
+          digit primes.
+
+July 12th, 2003
+v0.23  -- Optimized mp_prime_next_prime() to not use mp_mod [via is_divisible()] in each
+          iteration.  Instead now a smaller table is kept of the residues which can be updated
+          without division.
+       -- Fixed a bug in next_prime() where an input of zero would be treated as odd and
+          have two added to it [to move to the next odd].
+       -- fixed a bug in prime_fermat() and prime_miller_rabin() which allowed the base
+          to be negative, zero or one.  Normally the test is only valid if the base is
+          greater than one.
+       -- changed the next_prime() prototype to accept a new parameter "bbs_style" which
+          will find the next prime congruent to 3 mod 4.  The default [bbs_style==0] will
+          make primes which are either congruent to 1 or 3 mod 4.
+       -- fixed mp_read_unsigned_bin() so that it doesn't include both code for
+          the case DIGIT_BIT < 8 and >= 8
+       -- optimized div_d() to easy out on division by 1 [or if a == 0] and use
+          logical shifts if the divisor is a power of two.
+       -- the default DIGIT_BIT type was not int for non-default builds.  Fixed.
+
+July 2nd, 2003
+v0.22  -- Fixed up mp_invmod so the result is properly in range now [was always congruent to the inverse...]
+       -- Fixed up s_mp_exptmod and mp_exptmod_fast so the lower half of the pre-computed table isn't allocated
+          which makes the algorithm use half as much ram.
+       -- Fixed the install script not to make the book :-) [which isn't included anyways]
+       -- added mp_cnt_lsb() which counts how many of the lsbs are zero
+       -- optimized mp_gcd() to use the new mp_cnt_lsb() to replace multiple divisions by two by a single division.
+       -- applied similar optimization to mp_prime_miller_rabin().
+       -- Fixed a bug in both mp_invmod() and fast_mp_invmod() which tested for odd
+          via "mp_iseven() == 0" which is not valid [since zero is not even either].
+
+June 19th, 2003
+v0.21  -- Fixed bug in mp_mul_d which would not handle sign correctly [would not always forward it]
+       -- Removed the #line lines from gen.pl [was in violation of ISO C]
+
+June 8th, 2003
+v0.20  -- Removed the book from the package.  Added the TDCAL license document.
+       -- This release is officially pure-bred TDCAL again [last officially TDCAL based release was v0.16]
+
+June 6th, 2003
+v0.19  -- Fixed a bug in mp_montgomery_reduce() which was introduced when I tweaked mp_rshd() in the previous release.
+          Essentially the digits were not trimmed before the compare which cause a subtraction to occur all the time.
+       -- Fixed up etc/tune.c a bit to stop testing new cutoffs after 16 failures [to find more optimal points].
+          Brute force ho!
+
+
+May 29th, 2003
+v0.18  -- Fixed a bug in s_mp_sqr which would handle carries properly just not very elegantly.
+          (e.g. correct result, just bad looking code)
+       -- Fixed bug in mp_sqr which still had a 512 constant instead of MP_WARRAY
+       -- Added Toom-Cook multipliers [needs tuning!]
+       -- Added efficient divide by 3 algorithm mp_div_3
+       -- Re-wrote mp_div_d to be faster than calling mp_div
+       -- Added in a donated BCC makefile and a single page LTM poster (ahalhabsi@sbcglobal.net)
+       -- Added mp_reduce_2k which reduces an input modulo n = 2**p - k for any single digit k
+       -- Made the exptmod system be aware of the 2k reduction algorithms.
+       -- Rewrote mp_dr_reduce to be smaller, simpler and easier to understand.
+
+May 17th, 2003
+v0.17  -- Benjamin Goldberg submitted optimized mp_add and mp_sub routines.  A new gen.pl as well
+          as several smaller suggestions.  Thanks!
+       -- removed call to mp_cmp in inner loop of mp_div and put mp_cmp_mag in its place :-)
+       -- Fixed bug in mp_exptmod that would cause it to fail for odd moduli when DIGIT_BIT != 28
+       -- mp_exptmod now also returns errors if the modulus is negative and will handle negative exponents
+       -- mp_prime_is_prime will now return true if the input is one of the primes in the prime table
+       -- Damian M Gryski (dgryski@uwaterloo.ca) found a index out of bounds error in the
+          mp_fast_s_mp_mul_high_digs function which didn't come up before.  (fixed)
+       -- Refactored the DR reduction code so there is only one function per file.
+       -- Fixed bug in the mp_mul() which would erroneously avoid the faster multiplier [comba] when it was
+          allowed.  The bug would not cause the incorrect value to be produced just less efficient (fixed)
+       -- Fixed similar bug in the Montgomery reduction code.
+       -- Added tons of (mp_digit) casts so the 7/15/28/31 bit digit code will work flawlessly out of the box.
+          Also added limited support for 64-bit machines with a 60-bit digit.  Both thanks to Tom Wu (tom@arcot.com)
+       -- Added new comments here and there, cleaned up some code [style stuff]
+       -- Fixed a lingering typo in mp_exptmod* that would set bitcnt to zero then one.  Very silly stuff :-)
+       -- Fixed up mp_exptmod_fast so it would set "redux" to the comba Montgomery reduction if allowed.  This
+          saves quite a few calls and if statements.
+       -- Added etc/mont.c a test of the Montgomery reduction [assuming all else works :-| ]
+       -- Fixed up etc/tune.c to use a wider test range [more appropriate] also added a x86 based addition which
+          uses RDTSC for high precision timing.
+       -- Updated demo/demo.c to remove MPI stuff [won't work anyways], made the tests run for 2 seconds each so its
+          not so insanely slow.  Also made the output space delimited [and fixed up various errors]
+       -- Added logs directory, logs/graph.dem which will use gnuplot to make a series of PNG files
+          that go with the pre-made index.html.  You have to build [via make timing] and run ltmtest first in the
+          root of the package.
+       -- Fixed a bug in mp_sub and mp_add where "-a - -a" or "-a + a" would produce -0 as the result [obviously invalid].
+       -- Fixed a bug in mp_rshd.  If the count == a.used it should zero/return [instead of shifting]
+       -- Fixed a "off-by-one" bug in mp_mul2d.  The initial size check on alloc would be off by one if the residue
+          shifting caused a carry.
+       -- Fixed a bug where s_mp_mul_digs() would not call the Comba based routine if allowed.  This made Barrett reduction
+          slower than it had to be.
+
+Mar 29th, 2003
+v0.16  -- Sped up mp_div by making normalization one shift call
+       -- Sped up mp_mul_2d/mp_div_2d by aliasing pointers :-)
+       -- Cleaned up mp_gcd to use the macros for odd/even detection
+       -- Added comments here and there, mostly there but occasionally here too.
+
+Mar 22nd, 2003
+v0.15  -- Added series of prime testing routines to lib
+       -- Fixed up etc/tune.c
+       -- Added DR reduction algorithm
+       -- Beefed up the manual more.
+       -- Fixed up demo/demo.c so it doesn't have so many warnings and it does the full series of
+          tests
+       -- Added "pre-gen" directory which will hold a "gen.pl"'ed copy of the entire lib [done at
+          zipup time so its always the latest]
+       -- Added conditional casts for C++ users [boo!]
+
+Mar 15th, 2003
+v0.14  -- Tons of manual updates
+       -- cleaned up the directory
+       -- added MSVC makefiles
+       -- source changes [that I don't recall]
+       -- Fixed up the lshd/rshd code to use pointer aliasing
+       -- Fixed up the mul_2d and div_2d to not call rshd/lshd unless needed
+       -- Fixed up etc/tune.c a tad
+       -- fixed up demo/demo.c to output comma-delimited results of timing
+          also fixed up timing demo to use a finer granularity for various functions
+       -- fixed up demo/demo.c testing to pause during testing so my Duron won't catch on fire
+          [stays around 31-35C during testing :-)]
+
+Feb 13th, 2003
+v0.13  -- tons of minor speed-ups in low level add, sub, mul_2 and div_2 which propagate
+          to other functions like mp_invmod, mp_div, etc...
+       -- Sped up mp_exptmod_fast by using new code to find R mod m [e.g. B^n mod m]
+       -- minor fixes
+
+Jan 17th, 2003
+v0.12  -- re-wrote the majority of the makefile so its more portable and will
+          install via "make install" on most *nix platforms
+       -- Re-packaged all the source as seperate files.  Means the library a single
+          file packagage any more.  Instead of just adding "bn.c" you have to add
+          libtommath.a
+       -- Renamed "bn.h" to "tommath.h"
+       -- Changes to the manual to reflect all of this
+       -- Used GNU Indent to clean up the source
+
+Jan 15th, 2003
+v0.11  -- More subtle fixes
+       -- Moved to gentoo linux [hurrah!] so made *nix specific fixes to the make process
+       -- Sped up the montgomery reduction code quite a bit
+       -- fixed up demo so when building timing for the x86 it assumes ELF format now
+
+Jan 9th, 2003
+v0.10  -- Pekka Riikonen suggested fixes to the radix conversion code.
+       -- Added baseline montgomery and comba montgomery reductions, sped up exptmods
+          [to a point, see bn.h for MONTGOMERY_EXPT_CUTOFF]
+
+Jan 6th, 2003
+v0.09  -- Updated the manual to reflect recent changes.  :-)
+       -- Added Jacobi function (mp_jacobi) to supplement the number theory side of the lib
+       -- Added a Mersenne prime finder demo in ./etc/mersenne.c
+
+Jan 2nd, 2003
+v0.08  -- Sped up the multipliers by moving the inner loop variables into a smaller scope
+       -- Corrected a bunch of small "warnings"
+       -- Added more comments
+       -- Made "mtest" be able to use /dev/random, /dev/urandom or stdin for RNG data
+       -- Corrected some bugs where error messages were potentially ignored
+       -- add etc/pprime.c program which makes numbers which are provably prime.
+
+Jan 1st, 2003
+v0.07  -- Removed alot of heap operations from core functions to speed them up
+       -- Added a root finding function [and mp_sqrt macro like from MPI]
+       -- Added more to manual
+
+Dec 31st, 2002
+v0.06  -- Sped up the s_mp_add, s_mp_sub which inturn sped up mp_invmod, mp_exptmod, etc...
+       -- Cleaned up the header a bit more
+
+Dec 30th, 2002
+v0.05  -- Builds with MSVC out of the box
+       -- Fixed a bug in mp_invmod w.r.t. even moduli
+       -- Made mp_toradix and mp_read_radix use char instead of unsigned char arrays
+       -- Fixed up exptmod to use fewer multiplications
+       -- Fixed up mp_init_size to use only one heap operation
+          -- Note there is a slight "off-by-one" bug in the library somewhere
+             without the padding (see the source for comment) the library
+             crashes in libtomcrypt.  Anyways a reasonable workaround is to pad the
+             numbers which will always correct it since as the numbers grow the padding
+             will still be beyond the end of the number
+       -- Added more to the manual
+
+Dec 29th, 2002
+v0.04  -- Fixed a memory leak in mp_to_unsigned_bin
+       -- optimized invmod code
+       -- Fixed bug in mp_div
+       -- use exchange instead of copy for results
+       -- added a bit more to the manual
+
+Dec 27th, 2002
+v0.03  -- Sped up s_mp_mul_high_digs by not computing the carries of the lower digits
+       -- Fixed a bug where mp_set_int wouldn't zero the value first and set the used member.
+       -- fixed a bug in s_mp_mul_high_digs where the limit placed on the result digits was not calculated properly
+       -- fixed bugs in add/sub/mul/sqr_mod functions where if the modulus and dest were the same it wouldn't work
+       -- fixed a bug in mp_mod and mp_mod_d concerning negative inputs
+       -- mp_mul_d didn't preserve sign
+       -- Many many many many fixes
+       -- Works in LibTomCrypt now :-)
+       -- Added iterations to the timing demos... more accurate.
+       -- Tom needs a job.
+
+Dec 26th, 2002
+v0.02  -- Fixed a few "slips" in the manual.  This is "LibTomMath" afterall :-)
+       -- Added mp_cmp_mag, mp_neg, mp_abs and mp_radix_size that were missing.
+       -- Sped up the fast [comba] multipliers more [yahoo!]
+
+Dec 25th,2002
+v0.01  -- Initial release.  Gimme a break.
+       -- Todo list,
+           add details to manual [e.g. algorithms]
+           more comments in code
+           example programs

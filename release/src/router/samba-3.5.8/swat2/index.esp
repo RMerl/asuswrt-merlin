@@ -1,0 +1,30 @@
+<% page_header("columns", "Server Status", "main");
+  libinclude("base.js");
+  libinclude("management.js");
+  libinclude("provision.js");
+
+  if (install_ok(session.authinfo.session_info, session.authinfo.credentials) == false) {
+	  redirect("/install/");
+  }
+
+%>
+
+<h1>Server Status</h1>
+
+<%
+var servers = new Array("nbt_server", "smb_server", "ldap_server", "cldap_server", "kdc_server");
+var i;
+var info = new Object();
+
+info["NBT Server"]      = server_status("nbt");
+info["WINS Server"]     = server_status("wins");
+info["CLDAP Server"]    = server_status("cldap");
+info["Kerberos Server"] = server_status("kdc");
+info["SMB Server"]      = stream_server_status("smb");
+info["LDAP Server"]     = stream_server_status("ldap");
+info["RPC Server"]      = stream_server_status("rpc");
+
+simple_table(info);
+%>
+
+<% page_footer(); %>

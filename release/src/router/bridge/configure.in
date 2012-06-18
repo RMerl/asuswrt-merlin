@@ -1,0 +1,39 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(brctl/brctl.c)
+AC_CONFIG_HEADER(libbridge/config.h)
+AM_INIT_AUTOMAKE(bridge-utils,1.0.6)
+
+AC_ARG_WITH( linux-headers, [  --with-linux-headers     Location of the linux headers to use], 
+    KERNEL_HEADERS=$withval, KERNEL_HEADERS="/usr/src/linux/include")
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_RANLIB
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(sys/ioctl.h sys/time.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_HEADER_TIME
+
+dnl Checks for library functions.
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_MEMCMP
+AC_CHECK_FUNCS(gethostname socket strdup uname)
+AC_CHECK_FUNCS(if_nametoindex if_indextoname)
+
+dnl Check for libsysfs
+AC_CHECK_HEADER(sysfs/libsysfs.h,
+	[AC_CHECK_LIB(sysfs, sysfs_open_directory, 
+	              [AC_DEFINE(HAVE_LIBSYSFS)
+		       LIBS="$LIBS -lsysfs"],
+		      [AC_MSG_WARN([Missing sysfs library!])])],
+	[AC_MSG_WARN([Missing /usr/include/sysfs/libsysfs.h])])
+
+
+AC_SUBST(KERNEL_HEADERS)
+
+AC_OUTPUT(doc/Makefile libbridge/Makefile brctl/Makefile Makefile bridge-utils.spec)

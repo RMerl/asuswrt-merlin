@@ -1,0 +1,162 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Appendix B] Samba Performance Tuning</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:42:02Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_05.html" TITLE="A.5 SSL Configuration Options">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: A.5 SSL Configuration Options" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+Appendix B</font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appb_02.html" TITLE="B.2 Samba Tuning">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: B.2 Samba Tuning" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div class="samplechapter">
+<H1 CLASS="appendix">
+<A CLASS="title" NAME="appb-66714">
+B. Samba Performance Tuning</a></h1><DIV CLASS="htmltoc">
+<P>
+<B>
+Contents:</b><br>
+<A CLASS="sect1" HREF="#appb-47134" TITLE="B.1 A Simple Benchmark">
+A Simple Benchmark</a><br>
+<A CLASS="sect1" HREF="appb_02.html" TITLE="B.2 Samba Tuning">
+Samba Tuning</a><br>
+<A CLASS="sect1" HREF="appb_03.html" TITLE="B.3 Sizing Samba Servers">
+Sizing Samba Servers</a></p><P>
+</p></div><P CLASS="para">This appendix discusses various ways of performance tuning and system sizing with Samba. <I CLASS="firstterm">
+Performance tuning</i> is the art of finding bottlenecks and adjusting to eliminate them. <EM CLASS="emphasis">
+Sizing</em> is the practice of eliminating bottlenecks by spending money to avoid having them in the first place. Normally, you won't have to worry about either with Samba. On a completely untuned server, Samba will happily support a small community of users. However, on a properly tuned server, Samba will support at least twice as many users. This chapter is devoted to outlining various performance-tuning and sizing techniques that you can use if you want to stretch your Samba server to the limit.</p><DIV CLASS="sect1">
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="appb-47134">
+B.1 A Simple Benchmark</a></h2><P CLASS="para">How do you know if you're getting reasonable performance? A simple benchmark is to compare Samba with FTP. <A CLASS="xref" HREF="appb_01.html#appb-73167">
+Table B.1</a> shows the throughput, in kilobytes per second, of a pair of servers: a medium-size Sun SPARC Ultra and a small Linux Pentium server. Numbers are reported in kilobytes per second (KB/s).  </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="appb-73167">
+Table B.1: Sample Benchmark Benchmarks </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Command</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+FTP</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Untuned Samba</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Tuned Samba</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sparc get</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1014.5</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+645.3</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+866.7</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sparc put</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+379.8 </p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+386.1</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+329.5</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Pentium get</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+973.27</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+N/A</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+725</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Pentium put</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1014.5</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+N/A</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1100</p></td></tr></tbody></table><P CLASS="para">
+If you run the same tests on your server, you probably won't see the same numbers. However, you <EM CLASS="emphasis">
+should </em>see similar ratios of Samba to FTP, probably in the range of 68 to 80 percent. It's not a good idea to base <EM CLASS="emphasis">
+all</em> of Samba's throughput against FTP. The golden rule to remember is this: if Samba is much slower than FTP, it's time to tune it.</p><P CLASS="para">
+You might think that an equivalent test would be to compare Samba to NFS. In reality, however, it's much less useful to compare their speeds. Depending entirely on whose version of NFS you have and how well it's tuned, Samba can be slower or faster than NFS. We usually find that Samba is faster, but watch out; NFS uses a different algorithm from Samba, so tuning options that are optimal for NFS may be detrimental for Samba. If you run Samba on a well-tuned NFS server, Samba may perform rather badly.</p><P CLASS="para">
+A more popular benchmark is Ziff-Davis' <EM CLASS="emphasis">
+NetBench, </em>a simulation of many users on client machines running word processors and accessing data on the SMB server. It's not a prefect measure (each NetBench client does about ten times the work of a normal user on our site), but it is a fair comparison of similar servers. In tests performed by Jeremy Allison in November 1998, Samba 2.0 on a SGI multiprocessor outperformed NT Server 4.0 (Patch Level 2) on an equivalent high-end Compaq. This was confirmed and strengthened by a Sm@rt Reseller test of NT and Linux on identical hardware in February 1999.  </p><P CLASS="para">
+In April 1999, the Mindcraft test lab released a report about a test showing that Samba on a four-processor Linux machine was significantly slower than native file serving on the same machine running Windows NT. While the original report was slammed by the Open Source community because it was commissioned by Microsoft and tuned the systems to favor Windows NT, a subsequent test was fairer and generally admitted to reveal some areas where Linux needed to improve its performance, especially on multiprocessors. Little was said about Samba itself. Samba is known to scale well on multiprocessors, and exceeds 440MB/s on a four-processor SGI O200, beating Mindcraft's 310MB/s.</p><P CLASS="para">
+Relative performance will probably change as NT and PC hardware get faster, of course, but Samba is improving as well. For example, Samba 1.9.18 was faster only with more than 35 clients. Samba 2.0, however, is faster regardless of the number of clients. In short, Samba is very competitive with the best networking software in the industry, and is only getting better. </p><P CLASS="para">
+As we went to press, Andrew Tridgell released the alpha-test version suite of benchmarking programs for Samba and SMB networks. Expect even more work on performance from the Samba team in the future.</p></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_05.html" TITLE="A.5 SSL Configuration Options">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: A.5 SSL Configuration Options" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appb_02.html" TITLE="B.2 Samba Tuning">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: B.2 Samba Tuning" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+A.5 SSL Configuration Options</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+B.2 Samba Tuning</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

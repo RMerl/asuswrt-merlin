@@ -1,0 +1,7 @@
+# -*- Makefile -*-
+noinst_LTLIBRARIES += libmnote-fuji.la
+libmnote_fuji_la_SOURCES = \
+	fuji/mnote-fuji-entry.c fuji/mnote-fuji-entry.h \
+	fuji/exif-mnote-data-fuji.c fuji/exif-mnote-data-fuji.h \
+	fuji/mnote-fuji-tag.c fuji/mnote-fuji-tag.h
+libmnote_fuji_la_LIBADD = $(LTLIBINTL)

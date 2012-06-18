@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="umount.cifs.8">
+
+<refmeta>
+	<refentrytitle>umount.cifs</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>umount.cifs</refname>
+	<refpurpose>for normal, non-root users, to unmount their own Common Internet File System (CIFS) mounts</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+
+		<command>umount.cifs</command>
+		<arg choice="req">mount-point</arg>	
+		<arg choice="opt">-nVvhfle</arg>	
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>umount.cifs unmounts a Linux CIFS filesystem. It can be invoked
+indirectly by the
+<citerefentry><refentrytitle>umount</refentrytitle><manvolnum>8</manvolnum></citerefentry> command 
+when umount.cifs is in /sbin directory, unless you specify the "-i" option to umount.  Specifying -i to umount avoids execution of umount helpers such as umount.cifs. The umount.cifs command only works in Linux, and the kernel must
+support the cifs filesystem. The CIFS protocol is the successor to the 
+SMB protocol and is supported by most Windows servers and many other
+commercial servers and Network Attached Storage appliances as well as 
+by the popular Open Source server Samba.
+	</para>
+
+	<para>
+	The umount.cifs utility detaches the local directory <emphasis>mount-point</emphasis> from the corresponding UNC name (exported network resource) and frees the associated kernel resources.
+It is possible to set the mode for umount.cifs to 
+setuid root (or equivalently update the /etc/permissions file) to allow non-root users to umount shares to directories for which they have write permission.  The umount.cifs utility is typically
+not needed if unmounts need only be performed by root users, or if user mounts and unmounts
+can rely on specifying explicit entries in /etc/fstab See</para>
+        <para><citerefentry><refentrytitle>fstab</refentrytitle>
+        <manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+	<variablelist>
+        <varlistentry>
+                <term>--verbose</term>
+                <listitem><para>print additional debugging information</para></listitem>
+        </varlistentry>
+        <varlistentry>
+                <term>--no-mtab</term>
+                <listitem><para>Do not update the mtab even if unmount completes successfully (/proc/mounts will still display the correct information)</para></listitem>
+        </varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>NOTES</title>
+	
+	<para>This command is normally intended to be installed setuid (since root users can already run unmount).  An alternative to using umount.cifs is to add specfic entries for the user mounts that you wish a particular user or users to mount and unmount to /etc/fstab</para>
+</refsect1>
+
+<refsect1>
+	<title>CONFIGURATION</title>
+		<para>
+The primary mechanism for making configuration changes and for reading 
+debug information for the cifs vfs is via the Linux /proc filesystem.
+In the directory <filename>/proc/fs/cifs</filename> are various 
+configuration files and pseudo files which can display debug information.  
+For more information see the kernel file <filename>fs/cifs/README</filename>.
+</para>
+</refsect1>
+
+<refsect1>
+	<title>BUGS</title>
+
+	<para>At this time umount.cifs does not lock the mount table using the same lock as the umount utility does, so do not attempt to do multiple unmounts from different processes (and in particular unmounts of a cifs mount and another type of filesystem mount at the same time).
+	</para>
+
+	<para>If the same mount point is mounted multiple times by cifs, umount.cifs will remove all of the matching entries from the mount table (although umount.cifs will actually only unmount the last one), rather than only removing the last matching entry in /etc/mtab.  The pseudofile /proc/mounts will display correct information though, and the lack of an entry in /etc/mtab does not prevent subsequent unmounts.</para>
+
+	<para>
+Note that the typical response to a bug report is a suggestion
+to try the latest version first. So please try doing that first,
+and always include which versions you use of relevant software
+when reporting bugs (minimum: umount.cifs (try umount.cifs -V), kernel (see /proc/version) and
+server type you are trying to contact.
+</para>
+</refsect1>
+
+
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 1.34 of 
+	the cifs vfs filesystem (roughly Linux kernel 2.6.12).</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para>
+	Documentation/filesystems/cifs.txt and fs/cifs/README in the linux kernel
+	source tree may contain additional options and information.
+</para>
+        <para><citerefentry><refentrytitle>mount.cifs</refentrytitle>
+        <manvolnum>8</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>Steve French</para>
+
+	<para>The syntax was loosely based on the umount utility and the manpage was loosely based on that of mount.cifs.8. The man page was created by Steve French</para> 
+	<para>The maintainer of the Linux cifs vfs and the userspace
+		tool <emphasis>umount.cifs</emphasis> is <ulink url="mailto:sfrench@samba.org">Steve French</ulink>.
+		The <ulink url="mailto:linux-cifs-client@lists.samba.org">Linux CIFS Mailing list</ulink> 
+		is the preferred place to ask questions regarding these programs. 
+	</para>
+
+</refsect1>
+
+</refentry>

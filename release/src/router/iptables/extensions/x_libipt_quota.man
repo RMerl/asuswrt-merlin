@@ -1,0 +1,7 @@
+Implements network quotas by decrementing a byte counter with each
+packet.
+.TP
+.BI "--quota " "bytes"
+The quota in bytes.
+.P
+KNOWN BUGS: this does not work on SMP systems.

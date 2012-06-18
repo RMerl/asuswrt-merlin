@@ -1,0 +1,942 @@
+/* 
+** Plone style sheet for CSS2-capable browsers.
+** Copyright Alexander Limi, 2002-2003 - http://www.plonesolutions.com
+**
+** Thanks to Geir Bkholt, Stian Siland for input and guidance.
+**
+** Style sheet documentation can be found at http://plone.org/documentation
+**
+** You should preferrably use ploneCustom.css to add your own CSS classes and to
+** customize your portal, as these are the base fundaments of Plone, and will 
+** change and be refined in newer versions. Keeping your changes in
+** ploneCustom.css will make it easier to upgrade. 
+**
+** Feel free to use whole or parts of this for your own designs, but give credit
+** where credit is due.
+**
+*/
+
+
+/*
+**  DTML instructions to set caching headers. Inside comments area to play nicer with CSS editors.
+**
+** **   
+**   
+**   
+**   
+** */
+/*  */
+
+
+ 
+body {
+    font: 0.7em Verdana, Helvetica, Arial, sans-serif;
+    background: White;
+    color: Black;
+    margin: 0;
+    padding: 0;
+/* These work in IE only, changes the look of the scrollbar + textareas */
+    scrollbar-base-color: #DEE7EC;
+    scrollbar-highlight-color: #DEE7EC;
+    scrollbar-track-color: #F7F9FA;
+    scrollbar-darkshadow-color: #F7F9FA;
+    scrollbar-3dlight-color: #8CACBB;
+    scrollbar-shadow-color: #8CACBB;
+    scrollbar-arrow-color: #436976;
+}
+
+table {
+    font-size: 100%;
+}
+
+a {
+	text-decoration: none;
+    color: #436976;
+    background-color: transparent;
+}
+
+table {
+
+}
+
+
+img {
+    border: none;
+	vertical-align: middle;
+}
+
+p {
+    margin: 0.5em 0em 1em 0em;
+    text-align: justify;
+    line-height: 1.5em;
+}
+
+p a {
+    text-decoration: underline;
+}
+
+p a:visited {
+	color: Purple;
+    background-color: transparent;
+}
+
+p a:active {
+	color: Red;
+    background-color: transparent;
+}
+
+p img {
+    border: 0;
+    margin: 0;
+}
+
+
+hr {
+    clear: both;
+    height: 1px;
+    color: #8CACBB;
+    background-color: transparent;
+}
+
+
+h1, h2, h3, h4, h5, h6 {
+    color: Black;
+    clear: left;
+    font: 100% Verdana, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding-top: 0.5em;
+    border-bottom: 1px solid #8CACBB;
+}
+
+h1 a,
+h2 a,
+h3 a,
+h4 a,
+h5 a,
+h6 a { color: Black ! important; }
+
+
+h1 {
+    font-size: 160%;
+}
+
+h2 {
+    font-size: 150%;
+}
+
+h3 {
+    font-size: 140%;
+}
+
+h4 {
+    font-size: 120%;
+}
+
+h5 {
+    font-size: 100%;
+}
+
+h6 {
+    font-size: 80%;
+}
+
+ul { 
+    line-height: 1.5em;
+    list-style-type: square;
+    margin: 0.5em 0 0 2em;
+    padding:0;
+}
+
+ol {
+    line-height: 1.5em;
+    margin: 0.5em 0 0 2em;
+    padding:0;
+}
+
+ul a, ol a {
+    text-decoration: underline;
+}
+
+li {
+    margin-bottom: 1em;
+}
+
+dl {
+}
+
+dt {
+    font-weight: bold;    
+}
+
+dt a {
+    text-decoration: underline;
+}
+
+
+dd {
+    line-height: 1.5em;
+    margin-bottom: 1em;
+}
+
+d a {
+    text-decoration: underline;
+}
+
+
+fieldset {
+    border: 1px solid #8cacbb;
+    margin: 2em 0em 1em 0em;
+    padding: 1em 0em;
+}
+
+legend {
+    background: White;
+    padding: 0.5em;
+}
+
+
+form {
+    border: none;
+    margin: 0;
+}
+
+textarea {
+    border: 1px solid #8cacbb;  
+    color: Black;
+    background-color: white;
+    width: 88%;
+    padding: 0.1em;
+}
+
+input {
+    font: 100% Verdana, Helvetica, Arial, sans-serif;
+    border: 1px solid #8cacbb;  
+    color: Black;
+    background-color: white;
+    vertical-align: middle;
+    margin-bottom: 1px; /* IE bug fix */
+    padding: 0.1em;
+}
+
+select {
+    font: 100% Verdana, Helvetica, Arial, sans-serif;
+    border: 1px solid #8cacbb;  
+    vertical-align: top;
+}
+
+abbr, acronym, .explain {
+    border-bottom: 1px dotted Black;
+    color: Black;
+    background-color: transparent;
+    cursor: help;
+}
+
+q {
+    font-family: Times, "Times New Roman", serif;
+    font-style: italic;
+    font-size: 120%;
+}
+
+blockquote {
+    font-family: Times, "Times New Roman", serif; 
+    font-style: italic;
+    font-size: 120%;
+}
+
+code {
+    font-size: 120%;
+    color: Black;
+    background-color: #dee7ec;
+}
+
+pre {
+    font-size: 120%;
+    padding: 1em;
+    border: 1px solid #8cacbb;
+    color: Black;
+    background-color: #dee7ec;
+}
+
+.netscape4 {
+    display: none;
+}
+
+/*
+** Structural Elements
+*/
+
+div.top {
+    /* Top section */
+    background: transparent;
+    margin: 0;
+    padding: 0;
+}
+
+.logo {
+    /* Logo properties */
+    margin: 1em 0em 1em 2em;
+    padding: 0;
+}
+
+div.searchBox {
+    /*searchbox style and positioning */
+    background-color: transparent;
+    color: Black;
+    float: right;
+    margin: 3em 0em 0em 0em;
+    padding: 0em 2em 0em 0em;
+    text-align: right;
+    text-transform: lowercase;
+    width: 30%;
+}
+
+input.searchButton {
+    font-size: 100% ! important;
+    margin-bottom: 1px ! important;
+}
+
+div.tabs {
+    /* Navigational Plone Tabs(tm), implemented by customizing the a tag - they are surprisingly elegant. The power of CSS runs strong in these :) */
+    background: transparent;
+    border-collapse: collapse;
+    border-bottom-color: #8CACBB;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    padding: 0.5em 0em 0em 2em;
+    white-space: nowrap;
+}
+
+div.tabs a {
+    /* The normal, unselected tabs. They are all links */
+    background: transparent;
+    border-color: #8CACBB;
+    border-width: 1px; 
+    border-style: solid solid none solid;
+    color: #436976;
+    font-weight: normal;
+    height: 1.2em;
+    margin-right: 0.5em;
+    padding: 0em 2em;
+    text-transform: lowercase;
+}
+
+div.tabs a.selected {
+    /* The selected tab. There's only one of this */
+    background: #DEE7EC;
+    border: 1px solid #8CACBB;
+    border-bottom: #DEE7EC 1px solid;
+    color: #436976;
+    font-weight: normal;
+}
+
+div.tabs a:hover {
+    background: #DEE7EC;
+    border-color: #8CACBB;
+    border-bottom-color: #DEE7EC;
+    color: #436976;
+}
+
+div.personalBar {
+    /* Bar with personalized menu (user preferences, favorites etc) */
+    background: #DEE7EC;
+    border-bottom-color: #8CACBB;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    color: Black;
+    padding-right: 3em;
+    text-align: right;
+    text-transform: lowercase;
+}
+
+div.personalBar a {
+    background-color: transparent;
+	color: #436976;
+    font-weight: normal;
+    margin-left: 1em;
+}
+
+div.personalBar img {
+    vertical-align: top;
+}
+.caseSensitive {
+    text-transform: none;
+}
+
+div.pathBar {
+    /* The path bar, including breadcrumbs and add to favorites */
+    border-bottom-color: #8CACBB;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    padding-left: 2em;
+    padding-right: 2em;
+    text-transform: lowercase;
+}
+
+.breadcrumbs {
+    float: left;
+    text-transform: lowercase;
+}
+
+.addFavorite {
+    vertical-align: bottom;
+}
+
+table.columns {
+	width: 100%;
+}
+
+table.columns td.left {
+    vertical-align: top;
+    width: 15%;
+    padding: 2em 0em 1em 2em;
+}
+
+table.columns td.main {
+    vertical-align: top;
+    padding: 0em 2em 1em 2em;
+    margin: 0;
+
+}
+
+table.columns td.right {
+    vertical-align: top;
+    width: 15%;
+    padding: 2em 2em 1em 0em;
+}
+
+#contentTabs {
+    background: transparent;
+    border-collapse: collapse;
+    border-bottom: 1px solid #74AE0B;
+    padding-left: 1em;
+    margin-top: 2em;
+    white-space: nowrap;
+}
+
+#contentTabs a {
+    background: transparent;
+    border: 1px solid #74AE0B;
+    border-style: solid solid none solid;
+    color: #578308;
+    font-weight: normal;
+    height: 1.2em;
+    margin-right: 0.5em;
+    padding: 0em 2em;
+    text-transform: lowercase;
+}
+
+#contentTabs a.selected {
+    background: #CDE2A7;
+    border-bottom: #CDE2A7 1px solid;
+    color: #578308;
+    font-weight: normal;
+}
+
+#contentTabs a:hover {
+    background-color: #CDE2A7;
+    color: #578308;
+}
+
+#contentBar {
+    background: #CDE2A7;
+    border-left: 1px solid #74AE0B;
+    border-right: 1px solid #74AE0B;
+    color: #578308;
+    text-align: right;
+    text-transform: lowercase;
+}
+
+/* Fix for IE6 disappearing float bug */
+#content {  
+    height: 100%; 
+}
+
+
+div.document {
+    background: White;
+    font: 120% Verdana, Helvetica, Arial, sans-serif;
+    padding: 0;
+    margin: 0em 0em 2em 0em;
+}
+
+div.editableDocument {
+    background: White;
+    border: 1px solid #74AE0B;
+    font: 120% Verdana, Helvetica, Arial, sans-serif;
+    margin: 0em 0em 2em 0em;
+    padding: 0em 1em 2em 1em;
+}
+
+div.documentActions {
+    float: right; 
+    margin-top: 1.5em;
+}
+
+div.message {
+    background: #FFCE7B;
+    border: 1px solid #FFA500;
+    color: Black;
+    font: bold 80% Verdana, Helvetica, Arial, sans-serif;
+    margin: 2em 0em 1em 0em;
+    padding: 0.5em 1em;
+    vertical-align: middle;
+}
+
+div.message a {
+	color: Black;
+    text-decoration: underline;
+}
+
+
+
+div.title {
+    margin-top: 1em;
+}
+
+.description {
+    /* The summary text describing the document */
+    font: bold 100% Verdana, Helvetica, Arial, sans-serif;
+    display: block;
+    margin: 1em 0em;
+    line-height: 1.5em;
+}
+
+.footer {
+    background: #DEE7EC;
+    border-top: 1px solid #8CACBB;
+    border-bottom: 1px solid #8CACBB;
+    color: Black;
+    clear: both;
+    float: none;
+    margin: 2em 0em;
+    padding: 0.5em 0em 1em 0em;
+    text-align: center;
+}
+
+
+/* Accessibility and visual enhancement elements */
+
+a.skipnav {
+    visibility: hidden;
+    position: absolute;
+} 
+
+
+/*
+** Widgets
+*/
+
+input.standalone {
+    background: #DEE7EC url(linkOpaque.gif) 9px 1px no-repeat;
+    color: Black;
+    cursor: pointer;
+    font-size: 80%;
+    font-weight: normal;
+    margin-bottom: 1em;
+    padding: 1px 1px 1px 15px;
+    text-transform: lowercase;
+}
+
+input.context {
+    background: White url(linkTransparent.gif) 9px 1px no-repeat;
+    color: Black;
+    cursor: pointer;
+    font-size: 80%;
+    font-weight: normal;
+    margin-bottom: 1em;
+    padding: 1px 1px 1px 15px;
+    text-transform: lowercase;
+}
+
+input.destructive {
+    background: #FFCE7B url(linkTransparent.gif) 9px 1px no-repeat;
+    border: 1px solid #FFA500;  
+    color: Black;
+    cursor: pointer;
+    font-size: 80%;
+    font-weight: normal;
+    margin-bottom: 1em;
+    padding: 1px 1px 1px 15px;
+    text-transform: lowercase;
+}
+
+input.noborder {
+    border: none;
+    margin: 0;
+    background-color: transparent;
+}
+
+div.row {
+    clear: both;
+    min-height: 4em;
+    margin: 0em 0em 1em 0em;
+    position: relative;
+}
+
+.group {
+    border: 1px solid #8cacbb;
+    margin: 1em 0em 1em 0em;
+    padding: 0em 1em;
+}
+span.legend {
+    background: White;
+    font-size: 80%;
+    padding: 0.5em;
+    position : relative;
+    top: -0.8em;
+    left: 0em;
+}
+
+div.label {
+    font-weight: bold;
+    display: inline;
+    padding-right: 0.5em;
+}
+
+div.field {
+    margin-top: 0.2em;
+}
+
+div.help {
+    background-color: #FFFFE1; 
+    border: 1px solid black; 
+    font-size: 80%;
+    font-weight: normal;
+    line-height: normal;
+    text-align: left;
+    position: absolute;
+    left: -18em;
+    top: 1.5em;
+    width: 16em;
+    padding: 0.5em;
+}
+
+.error {
+    /* Class for error indication in forms */
+    background: #FFCE7B;
+    border: 1px solid #FFA500;
+    padding: 1em;
+    margin: 0;
+    width: 68% !important;
+}
+
+.required {
+    /* Used in addition to class "label" on required elements */
+    background: url(required.gif) right no-repeat;
+}
+
+span.card {
+    background: #DEE7EC;
+    border-color: #8CACBB;
+    border-width: 1px;
+    border-style: solid;
+    float: left;
+    margin: 1em;
+    padding: 1em;
+    text-align: center;
+    width: 15%;
+}
+
+table.listing,
+div.stx table {
+    /* The default table for document listings. Contains name, document types, modification times etc in a file-browser-like fashion */
+    border-collapse: collapse;
+    border-left: 1px solid #8CACBB;
+    border-bottom: 1px solid #8CACBB;
+    font-size: 80%;
+    margin: 1em 0em 1em 0em;
+    clear: both;
+}
+
+table.listing th,
+div.stx table th {
+    background: #DEE7EC;
+    border-top: 1px solid #8CACBB;
+    border-bottom: 1px solid #8CACBB;
+    border-right: 1px solid #8CACBB;
+    color: Black;
+    font-weight: normal;
+    padding: 0em 1em 0em 1em;
+    text-transform: lowercase;
+    white-space: nowrap;
+}
+
+table.listing td.top {
+    border-left: 1px solid White;
+    border-top: 1px solid White ! important;
+    border-right: 1px solid White ! important;
+    text-align: right ! important;
+    padding: 0em 0em 1em 0em;
+    /* insane IE row bug workaround */
+    position: relative;
+    left: -1px;
+    top: -1px;
+}
+
+table.listing tr.odd {
+    /*every second line should be shaded */
+    background: transparent;
+}
+
+table.listing tr.even {
+    background: #F7F9FA;
+}
+
+table.listing td,
+div.stx table td {
+    border-right: 1px solid #8CACBB;
+    padding: 0em 1em;
+    text-align: left;
+}
+
+table.listing a:hover {
+    text-decoration: underline;
+}
+
+table.listing img {
+	vertical-align: middle;
+}
+
+/* Additional STX workaround classes */
+
+div.stx table p /* stupid STX table workaround */
+{
+    margin: 0;
+    padding: 0;
+}
+
+div.stx table  /* stupid STX table workaround */
+{
+    border: 1px solid #8CACBB ! important;
+}
+div.stx table td {
+    border-bottom: 1px solid #8CACBB;
+}
+
+
+div.box {
+    border: none;
+    margin: 0em 0em 2em 0em;
+    padding: 0;
+}
+
+div.box h4 {
+    font-size: 1em;
+}
+
+div.box h5 { 
+    background: #DEE7EC;
+    border: 1px solid #8CACBB;
+    border-style: solid solid none solid;
+    color: Black;
+    padding: 0em 1em 0em 1em;
+    text-transform: lowercase;
+    display: inline;
+    font-size: 1em;
+    height: 1em;
+}
+
+div.box h6 { 
+    background: #DEE7EC;
+    border: 1px solid #8CACBB;
+    border-style: solid solid none solid;
+    color: Black;
+    padding: 0em 1em 0em 1em;
+    text-transform: lowercase;
+    display: block;
+    font-size: 1em;
+    height: 1.2em;
+}
+
+
+div.box div.body {
+    background: transparent;
+    border-collapse: collapse;
+    border: 1px solid #8CACBB;
+}
+
+.boxDetails {
+    text-align: right;
+}
+
+div.box .content {
+    padding: 1em;
+}
+
+div.box a.close {
+    float: right;
+    text-transform: none;
+    border-left: 1px solid #8CACBB;
+    padding: 0em 0.2em;
+}
+
+div.box h1, 
+div.box h2, 
+div.box h3, 
+div.box h4 {
+    margin: 0;
+    padding: 0;
+}
+
+div.box .even {
+    background-color: #F7F9FA;
+}
+
+div.box .odd {
+    background-color: transparent;
+}
+
+div.box input {
+    font-size: 100%;
+}
+
+div.spacer {
+	margin: 1em;
+}
+
+.currentNavItem {
+    color: Black;
+    font-weight: bold;
+}
+
+.private {
+    color: Black;
+}
+
+.published {
+    color: #74AE0B;
+}
+
+.pending {
+    color: #FFA500;
+}
+
+.syndicated {
+    color: #008000;
+}
+
+.expired {
+    color: Red;
+}
+
+.even {
+    background-color: #F7F9FA;
+}
+
+.odd {
+    background-color: transparent;
+}
+
+.highlight {
+    background-color: #F7F9FA;
+}
+
+div.listingBar {
+    background: #DEE7EC;
+    border-color: #8CACBB;
+    border-style: solid;
+    border-width: 1px;
+    padding: 0em 1em;
+    text-align: center;
+    text-transform: lowercase;
+    clear: both;
+    vertical-align: top;
+    margin: 1em 0em;
+}
+
+div.listingBar span.previous {
+    text-align: left;
+    float: left;
+}
+
+div.listingBar span.next {
+    text-align: right;
+    float: right;
+}
+
+div listingBar img {
+	vertical-align: middle;
+}
+
+
+/*
+** Calendar elements - used in the calendar rendering 
+*/
+
+div.day {
+    background-color: #FFFFBB;
+    border: 1px solid Black;
+    padding: 0.2em;
+    position: absolute;
+    visibility: hidden;
+    width: 12em;
+    z-index: 2;
+}
+
+div.date {
+    font-weight: bold;
+}
+
+  
+table.calendar {
+    border: 1px solid #8CACBB;
+    margin: 0em 1em 2em 0em;
+    text-align: right;
+}
+
+table.calendar a {
+    text-decoration: none;
+    color: #436976;
+}
+
+table.calendar a:hover {
+    text-decoration: none;
+}
+
+table.calendar th {
+    background-color: #DEE7EC;
+    color: Black;
+    font-weight: bold;
+    text-align: center;
+}
+
+table.calendar td {
+    background-color: transparent;
+    width: 1.5em;
+    padding: 2px;
+}
+
+table.calendar td.weekdays {
+    background-color: #DEE7EC;
+    border: 1px solid #8CACBB;
+    border-style: solid none;
+    text-align: center;
+}
+
+table.calendar td.event {
+    background-color: #DEE7EC;
+    font-weight: bold;
+}
+
+table.calendar td.noevent {
+    background-color: transparent;
+}
+
+table.calendar td.todayevent {
+    background-color: #DEE7EC;
+    border: 2px solid #FFA500;
+    font-weight: bold;
+}
+
+table.calendar td.todaynoevent {
+    border-collapse: collapse;
+    border: 2px solid #FFA500;
+}
+
+
+
+
+
+
+/*  */
+

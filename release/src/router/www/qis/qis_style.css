@@ -1,0 +1,361 @@
+﻿body {         
+	margin-left: 0px;
+	margin-top: 15px;
+	background-color:#4D595D; /*#AAD1E0*/
+}
+
+fieldset{
+	margin-left:20px;
+	margin-right:20px;	
+	margin-top:10px;
+}
+legend {
+	color:#FFFFFF;	
+	font-weight:bold;
+	font-size:14px;
+}
+
+/*.LevelQIS {  
+	margin-top: 5px;
+	background-image: url(/images/bg.gif);	
+}*/
+
+.LevelQIS {  
+	margin-left: 0px;
+	margin-top: 5px;
+	margin-top: -15px \9;
+	background-color:#21333e; /*#AAD1E0*/
+}
+
+.qis_title{
+	background-image: url(/images/New_ui/title_bg.png);	/*0121*/
+	width:998px;
+	background-repeat:no-repeat;
+}
+
+.qis_title{
+	width:660px;
+	height:19px;
+	float:left;
+	text-align:left;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 14px;
+	font-weight: bold;
+	border-bottom:1px solid #CCC;
+	line-height:19px;
+	color:#FFFFFF;	/*1023*/
+}
+
+.QISmain{
+	width:730px;
+	/*font-family:Verdana, Arial, Helvetica, sans-serif;*/
+	font-size:14px;
+	z-index:400;
+	position:relative;
+}
+
+.QISfoot{
+	width:730px;
+	height:60px;
+	text-align:right;
+	line-height:30px;
+	position:absolute;
+	top:350px;
+}
+.QISfoot input{
+	border: 1px solid #416492;
+	background:url(/images/bgaibutton.gif) #ACCCE1;
+	height:20px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size:12px;
+	margin:10px 0px 0px 10px;
+	padding:0px 10px 0px 10px;
+}
+
+.QISfoot .sbtn{  /*Lock 1206 modified*/
+	border: 1px outset #333;
+	background:url(/images/sbtn0.gif) #FFCC66;
+	height:20px;
+	font-family:Verdana;
+	font-size:12px;
+	margin-right:5px;
+	margin-left:5px;	
+  padding:0 .70em 0 .70em;
+  width:auto;
+  overflow:visible;
+	cursor:pointer;
+}
+.QISfoot .sbtn:hover{
+	background:url(/images/sbtn.gif) #FFCC66;
+	color:#FFFFFF;
+}
+
+/*   0831 added for setting Form table in QIS iframe*/
+.QISform{
+	width:600px;
+	font-size:13px;
+	color:#FFFFFF;
+}
+
+.QISform thead{
+	font-size:15px;
+	line-height:20px;
+	color:#FFFFFF;	
+}
+
+.QISform th{
+	padding-left:10px;
+	font-size:13px;
+	font-weight:normal;
+	color: #FFFFFF;
+	text-align:left; 
+}
+               
+.QISform li{	
+	margin-top:10px;
+}
+
+.QISform_finish{
+	width:600px;
+	font-size:13px;
+	color:#FFFFFF;
+}
+.QISform_finish thead{
+	font-size:15px;
+	line-height:20px;
+	color:#FFFFFF;	
+}
+.QISform_finish th{
+	padding-left:10px;
+	font-size:13px;
+	font-weight:border;
+	color: #FFFFFF;
+	text-align:left; 
+}              
+.QISform_finish li{	
+	margin-top:10px;
+}
+.QISform_finish td span{	
+	color: #FFF;	
+}
+
+.QISform_wireless{
+	width:600px;
+	font-size:12px;
+	color:#FFFFFF;
+}
+
+.QISform_wireless thead{
+	font-size:15px;
+	line-height:20px;
+	color:#FFFFFF;	
+}
+
+.QISform_wireless th{
+	padding-left:10px;
+	font-size:12px;
+	font-weight:bolder;
+	color: #FFFFFF;
+	text-align:left; 
+}
+               
+.QISform_wireless li{	
+	margin-top:10px;
+}
+
+.QISform2{
+	width:600px;
+	font-size:12px;
+	color:#FFFFFF;
+	line-height:110%;
+}
+
+.QISform2 thead{
+	font-size:13px;
+	line-height:20px;
+}
+
+.QISform2 th{
+	padding-left:10px;
+	font-size:12px;
+	font-weight:bolder;
+	color: #FFFFFF;
+	width:70%;
+	text-align:right; 
+	font-size:13px;
+	line-height:20px;
+}
+
+.QISalert{	
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-size:12px;
+}
+
+.description_down{
+	margin-left:10px;
+	padding-left:5px;
+	font-weight:bold;
+	line-height:140%;	
+}
+
+.hackiframe{	/* iframe for Hack IE 6.0 to avoid select menu over DIV layer. */
+	display:none;/*sorry for IE5*/
+	display/**/:block;/*sorry for IE5*/
+	position:absolute;/*must have*/
+	top:0;/*must have*/
+	left:0;/*must have*/
+	z-index:-1;/*must have*/
+	filter:mask();/*must have*/
+	width:3000px;/*must have for any big value*/
+	height:3000px/*must have for any big value*/;
+}
+.auto_way{
+ border:2px solid #CE1E1E;
+ background-color:#FFFFCC;
+}
+.navtext {
+	font-size:8pt; 
+	border: 1px double #999;
+	background-color: #FFC; 
+	color: #003366;
+	text-align:left;
+	width:auto;
+	padding:3px;
+	line-height:150%;
+}
+.mode_desc{
+	font-family:Georgia, Arial, sans-serif;
+	font-size:8pt;
+	color:#333;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	line-height:130%;
+	padding:2px;
+}
+
+.lefttabhead {margin-top:12px;width:190px;text-align:center;font-family:Verdana ;color: #94ccf2;background:url(/images/New_ui/lefttabhead.png) no-repeat; color:#ffffff;font-weight:bold; padding-top:0px;	position:relative;}
+.lefttabmidfocus {margin-top: -2px; width:203px;height: 52px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(/images/New_ui/lefttabdown_f.png) no-repeat; color:#ffffff;font-weight:bold; padding-left:0px; position:relative;}
+.lefttabmid {
+	width:189px;
+	height:52px;
+	font-family:Verdana;
+	font-size:12px;
+	text-align:left;
+	position:relative;
+	margin-top: -2px;
+	background: url(/images/New_ui/lefttabdown_n.png);
+}
+
+/* show loading */ 
+.popup_bg{
+	position:absolute;	
+	margin: auto;
+	top: 0;
+	left: 0;
+	width:1003px;
+	height:303px;
+	z-index:99;
+	background-color: #444F53;
+	filter:alpha(opacity=94);  /*IE5、IE5.5、IE6、IE7*/
+	opacity: .94;  /*Opera9.0+、Firefox1.5+、Safari、Chrome*/
+	background-repeat: repeat;
+	visibility:hidden;
+	overflow:hidden;
+	font-family:Arial, Helvetica, sans-serif;
+}
+.loadingBlock{
+	filter:alpha(opacity=90);
+	opacity:.90;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	behavior: url(/PIE.htc);
+	border-radius: 10px 10px 10px 10px;
+	border: 0px;
+	margin-top:200px;
+	width:400px;
+	font-size:20px;
+	color:#FFFFFF;
+	font-weight:bolder;
+	background-color:#000000;
+	font-family:Arial, Helvetica, sans-serif;
+}
+
+.dr_sweet_advise{
+	filter:alpha(opacity=90);
+	opacity:.90;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	behavior: url(/PIE.htc);
+	border-radius: 10px 10px 10px 10px;
+	border: 0px;
+	margin-top:200px;
+	width:500px;
+	font-size:20px;
+	color:#FFFFFF;
+	background-color:#000000;
+	font-family:Arial, Helvetica, sans-serif;
+}
+
+.IPaddr_qis{
+	font-size:12px;
+	font-weight:normal;
+	font-family:Arial, Helvetica, sans-serif;
+	color:#000000;
+	border: 2px inset #F4F4F4;
+	background-color:#4D595D;
+	/*background-image:url(/images/New_ui/inputbg.png);*/
+	width:170px;
+	*width:175px;
+	display: inline-block;
+}
+.IPaddr_qis input{
+	border:0px solid #CCC;
+	font-size:12px;
+	font-family:Arial, Helvetica, sans-serif;
+	width:25px;
+	text-align:center;
+	margin:0px auto;
+	ime-mode:disabled;
+	background-color:#4D595D;
+}
+
+.QISGeneralFont{
+	font-family:Georgia, Arial, sans-serif;
+	margin-left:70px;
+	*margin-left:80px;
+	margin-right:30px;
+	color:white;
+	LINE-HEIGHT:18px;
+}
+
+.contentM_qis{
+	margin-top:-160px;
+	position:relative;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+}
+
+.QIS_survey{
+	text-align:left;
+	color:#FFFFFF;
+	height:30px;
+	font-family: Verdana;
+	font-size:12px;
+	/*background-color:#1f2d35;*/
+	background-color:#2B373B;
+	border-collapse: collapse;
+}
+
+.QIS_survey th{
+	height:30px;
+	border: 1px solid #334044;
+	background-color:#151E21;
+}
+
+.QIS_survey td{
+	color:#7EA2AE;
+	height:30px;
+	border: 1px solid #334044;
+}

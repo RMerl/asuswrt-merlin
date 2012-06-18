@@ -1,0 +1,169 @@
+.TH BGPD 8 "July 2000" "Zebra Beast - BGPD" "Version 0.88"
+
+.SH NAME
+bgpd \- a BGPv4, BGPv4+, BGPv4- routing engine for use with Zebra
+
+.SH SYNOPSIS
+.B bgpd
+[
+.B \-dhpPv
+]
+[
+.B \-f config-file
+]
+[
+.B \-i pid-file
+]
+[
+.B \-p bgp-port-number
+]
+[
+.B \--bgp_port=port-number
+]
+[
+.B \-P vty-port-number
+]
+
+.SH DESCRIPTION
+.B bgpd 
+is a routing component that works with the 
+.B zebra
+routing engine.
+
+
+.SH OPTIONS
+
+.TP
+\fB\-d\fR, \fB\-\-daemon\fR
+Runs in daemon mode, forking and exiting from tty.
+
+.TP
+\fB\-f\fR, \fB\-\-config-file \fR\fIconfig-file\fR 
+Specifies the config file to use for startup. If not specified this
+option will likely default to \fB\fI/usr/local/etc/bgpd.conf\fR.
+
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+A brief message.
+
+.TP
+\fB\-i\fR, \fB\-\-pid_file \fR\fIpid-file\fR
+When bgpd starts its process idenifier is written to
+\fB\fIpid-file\fR.  The init system uses the recorded PID to stop or
+restart bgpd.  The likely default is \fB\fI/var/run/bgpd.pid\fR.
+
+.TP
+\fB\-p\fR, \fB\-\-bgp_port=\fR\fIport\fR
+Set the port that bgpd will listen to for bgp data.  
+
+.TP
+\fB\-P\fR, \fB\-\-vty_port \fR\fIport-number\fR 
+Specify the port that the bgpd VTY will listen on. This defaults to
+2605, as specified in \fI/etc/services\fR.
+
+.TP
+\fB\-r\fR, \fB\-\-retain\fR 
+When the program terminates, retain routes added by \fBbgpd\fR.
+
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Print the version and exit.
+
+
+.SH COMMANDS
+
+\fB router zebra \fR -- (Move routes into kernel table)
+\fB router bgp [AS-NUMBER] \fR
+
+\fB bgp router-id [BGP-ROUTER-ID] \fR
+
+\fB network [NETWORK] area [BGP-AREA-ID] \fR
+\fB no network [NETWORK] \fR
+
+\fB aggregate-address [NETWORK] \fR
+
+\fB neighbor [PEER-IP-ADDRESS] remote-as [REMOTE-AS] \fR
+\fB neighbor [PEER-IP-ADDRESS] version [ 4 | 4+ | 4- ] \fR
+
+\fB neighbor [PEER-IP-ADDRESS] description \fR
+\fB no neighbor [PEER-IP-ADDRESS] description \fR
+
+\fB neighbor [PEER-IP-ADDRESS] route-map [in | out] \fR
+\fB neighbor [PEER-IP-ADDRESS] distribute-list [in | out] \fR
+\fB neighbor [PEER-IP-ADDRESS] next-hop-self \fR
+\fB neighbor [PEER-IP-ADDRESS] weight [WEIGHT] \fR
+\fB neighbor [PEER-IP-ADDRESS] default-originate \fR
+\fB neighbor [PEER-IP-ADDRESS] ebgp-multihop \fR
+
+\fB neighbor [PEER-IP-ADDRESS] shutdown \fR
+\fB no neighbor [PEER-IP-ADDRESS] shutdown \fR
+
+\fB clear ip bgp [PEER-IP-ADDRESS] \fR
+
+\fB show ip bgp [NETWORK] \fR
+\fB show ip bgp reg-exp [AS-REGEXP] \fR
+\fB show ip bgp summary \fR
+\fB show ip bgp neighbor [PEER-IP-ADDRESS] \fR
+\fB show ip bgp route \fR
+
+\fB show debug \fR
+
+\fB debug bgp \fR
+\fB debug event \fR
+\fB debug update \fR
+\fB debug keepalive \fR
+
+\fB no debug event \fR
+\fB no debug update \fR
+\fB no debug keepalive \fR
+
+
+.SH FILES
+
+.TP
+.BI /usr/local/sbin/bgpd
+The default location of the 
+.B bgpd
+binary.
+
+.TP
+.BI /usr/local/etc/bgpd.conf
+The default location of the 
+.B bgpd
+config file.
+
+.TP
+.BI $(PWD)/bgpd.log 
+If the 
+.B bgpd
+process is config'd to output logs to a file, then you will find this
+file in the directory where you started \fBbgpd\fR.
+
+
+.SH WARNING
+This man page is intended as a quick reference for command line
+options, and for config file commands. The definitive document is the
+Info file \fBzebra\fR.
+
+
+.SH DIAGNOSTICS
+The bgpd process may log to standard output, to a VTY, to a log
+file, or through syslog to the system logs. \fBbgpd\fR supports many
+debugging options, see the Info file, or the source for details.
+
+
+.SH "SEE ALSO"
+References to other related man pages:
+
+ripd(8), ripngd(8), ospfd(8), ospf6d(8), zebra(8), vtysh(1)
+
+
+.SH BUGS
+.B bgpd
+eats bugs for breakfast. If you have food for the maintainers try 
+.BI <bug-zebra@gnu.org>
+
+
+.SH AUTHOR[S]
+See <\fBwww.zebra.org\fR>, or the Info file for an accurate list of authors.
+

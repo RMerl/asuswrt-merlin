@@ -1,0 +1,138 @@
+!==
+!== BUGS.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:	Samba Team
+Updated:	June 27, 1997
+
+Subject: This file describes how to report Samba bugs. 
+============================================================================
+
+>> The email address for bug reports is samba@samba.org <<
+
+Please take the time to read this file before you submit a bug
+report. Also, please see if it has changed between releases, as we
+may be changing the bug reporting mechanism at some time.
+
+Please also do as much as you can yourself to help track down the
+bug. Samba is maintained by a dedicated group of people who volunteer
+their time, skills and efforts. We receive far more mail about it than
+we can possibly answer, so you have a much higher chance of an answer
+and a fix if you send us a "developer friendly" bug report that lets
+us fix it fast. 
+
+Do not assume that if you post the bug to the comp.protocols.smb
+newsgroup or the mailing list that we will read it. If you suspect that your 
+problem is not a bug but a configuration problem then it is better to send 
+it to the Samba mailing list, as there are (at last count) 5000 other users on
+that list that may be able to help you.
+
+You may also like to look though the recent mailing list archives,
+which are conveniently accessible on the Samba web pages
+at http://samba.org/samba/ 
+
+
+GENERAL INFO
+------------
+
+Before submitting a bug report check your config for silly
+errors. Look in your log files for obvious messages that tell you that
+you've misconfigured something and run testparm to test your config
+file for correct syntax.
+
+Have you run through DIAGNOSIS.txt? This is very important.
+
+If you include part of a log file with your bug report then be sure to
+annotate it with exactly what you were doing on the client at the
+time, and exactly what the results were.
+
+
+DEBUG LEVELS
+------------
+
+If the bug has anything to do with Samba behaving incorrectly as a
+server (like refusing to open a file) then the log files will probably
+be very useful. Depending on the problem a log level of between 3 and
+10 showing the problem may be appropriate. A higher level givesmore
+detail, but may use too much disk space.
+
+To set the debug level use "log level =" in your smb.conf. You may
+also find it useful to set the log level higher for just one machine
+and keep separate logs for each machine. To do this use:
+
+log level = 10
+log file = /usr/local/samba/lib/log.%m
+include = /usr/local/samba/lib/smb.conf.%m
+
+then create a file "/usr/local/samba/lib/smb.conf.machine" where
+"machine" is the name of the client you wish to debug. In that file
+put any smb.conf commands you want, for example "log level=" may be
+useful. This also allows you to experiment with different security
+systems, protocol levels etc on just one machine.
+
+The smb.conf entry "log level =" is synonymous with the entry
+"debuglevel =" that has been used in older versions of Samba and
+is being retained for backwards compatibility of smb.conf files.
+
+As the "log level =" value is increased you will record a significantly
+increasing level of debugging information. For most debugging operations
+you may not need a setting higher than 3. Nearly all bugs can be tracked
+at a setting of 10, but be prepared for a VERY large volume of log data.
+
+
+INTERNAL ERRORs
+---------------
+
+If you get a "INTERNAL ERROR" message in your log files it means that
+Samba got an unexpected signal while running. It is probably a
+segmentation fault and almost certainly means a bug in Samba (unless
+you have faulty hardware or system software)
+
+If the message came from smbd then it will probably be accompanied by
+a message which details the last SMB message received by smbd. This
+info is often very useful in tracking down the problem so please
+include it in your bug report.
+
+You should also detail how to reproduce the problem, if
+possible. Please make this reasonably detailed.
+
+You may also find that a core file appeared in a "corefiles"
+subdirectory of the directory where you keep your samba log
+files. This file is the most useful tool for tracking down the bug. To
+use it you do this:
+
+gdb smbd core
+
+adding appropriate paths to smbd and core so gdb can find them. If you
+don't have gdb then try "dbx". Then within the debugger use the
+command "where" to give a stack trace of where the problem
+occurred. Include this in your mail.
+
+If you known any assembly language then do a "disass" of the routine
+where the problem occurred (if its in a library routine then
+disassemble the routine that called it) and try to work out exactly
+where the problem is by looking at the surrounding code. Even if you
+don't know assembly then incuding this info in the bug report can be
+useful. 
+
+
+ATTACHING TO A RUNNING PROCESS
+------------------------------
+
+Unfortunately some unixes (in particular some recent linux kernels)
+refuse to dump a core file if the task has changed uid (which smbd
+does often). To debug with this sort of system you could try to attach
+to the running process using "gdb smbd PID" where you get PID from
+smbstatus. Then use "c" to continue and try to cause the core dump
+using the client. The debugger should catch the fault and tell you
+where it occurred.
+
+
+PATCHES
+-------
+
+The best sort of bug report is one that includes a fix! If you send us
+patches please use "diff -u" format if your version of diff supports
+it, otherwise use "diff -c4". Make sure your do the diff against a
+clean version of the source and let me know exactly what version you
+used. 
+

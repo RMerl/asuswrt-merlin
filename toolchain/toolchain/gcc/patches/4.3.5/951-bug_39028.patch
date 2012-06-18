@@ -1,0 +1,86 @@
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=39028
+
+--- trunk/gcc/cp/ChangeLog	2009/01/30 16:00:47	143796
++++ trunk/gcc/cp/ChangeLog	2009/01/30 16:17:30	143797
+@@ -223,6 +223,12 @@
+ 	* parser.c (cp_parser_unqualified_id): Don't wrap error_mark_node 
+ 	in BIT_NOT_EXPR.
+ 
++2009-01-30  Jakub Jelinek  <jakub@redhat.com>
++
++	PR c++/39028
++	* parser.c (cp_parser_already_scoped_statement): Handle __label__
++	declarations.
++
+ 2009-01-26  Jason Merrill  <jason@redhat.com>
+ 
+ 	PR c++/23287
+--- trunk/gcc/cp/parser.c	2009/01/30 16:00:47	143796
++++ trunk/gcc/cp/parser.c	2009/01/30 16:17:30	143797
+@@ -7600,6 +7600,10 @@
+       /* Avoid calling cp_parser_compound_statement, so that we
+ 	 don't create a new scope.  Do everything else by hand.  */
+       cp_parser_require (parser, CPP_OPEN_BRACE, "`{'");
++      /* If the next keyword is `__label__' we have a label declaration.  */
++      while (cp_lexer_next_token_is_keyword (parser->lexer, RID_LABEL))
++	cp_parser_label_declaration (parser);
++      /* Parse an (optional) statement-seq.  */
+       cp_parser_statement_seq_opt (parser, NULL_TREE);
+       cp_parser_require (parser, CPP_CLOSE_BRACE, "`}'");
+     }
+--- trunk/gcc/testsuite/ChangeLog	2009/01/30 16:00:47	143796
++++ trunk/gcc/testsuite/ChangeLog	2009/01/30 16:17:30	143797
+@@ -1018,6 +1018,11 @@
+ 	PR tree-optimization/39041
+ 	* gcc.c-torture/compile/pr39041.c: New testcase.
+ 
++2009-01-30  Jakub Jelinek  <jakub@redhat.com>
++
++	PR c++/39028
++	* g++.dg/ext/label12.C: New test.
++
+ 2009-01-30  H.J. Lu  <hongjiu.lu@intel.com>
+ 
+ 	Backport from mainline:
+--- /dev/null
++++ trunk/gcc/testsuite/g++.dg/ext/label12.C	2009/01/30 16:17:30	143797
+@@ -0,0 +1,39 @@
++// PR c++/39028
++// { dg-do compile }
++// Origin: Stephan Springl <springl@bfw-online.de>
++
++void
++f ()
++{
++  int i;
++  for (i = 0; i < 2; i++)
++    {
++      __label__ l;
++      goto l;
++      l:;
++    }
++  while (i++ < 5)
++    {
++      __label__ l;
++      goto l;
++      l:;
++    }
++  do
++    {
++      __label__ l;
++      goto l;
++      l:;
++    }
++  while (i++ < 8);
++  if (1)
++    {
++      __label__ l;
++      goto l;
++      l:;
++    }
++  {
++    __label__ l;
++    goto l;
++    l:;
++  }
++}

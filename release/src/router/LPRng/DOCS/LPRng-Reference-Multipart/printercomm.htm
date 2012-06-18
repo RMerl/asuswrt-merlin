@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Printer Communication and Protocols</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="Printcap Information" href=
+    "x4851.htm">
+    <link rel="NEXT" title="RFC1179 (LPD) Connection" href=
+    "x4867.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x4851.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x4867.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="PRINTERCOMM"></a>Chapter 11. Printer
+      Communication and Protocols</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>11.1. <a href=
+          "printercomm.htm#NETWORKPRINTER">Network
+          Printers</a></dt>
+
+          <dt>11.2. <a href="x4867.htm">RFC1179 (LPD)
+          Connection</a></dt>
+
+          <dt>11.3. <a href="socketapi.htm">Socket API</a></dt>
+
+          <dt>11.4. <a href="appsocket.htm">AppSocket TCP/IP
+          Protocol</a></dt>
+
+          <dt>11.5. <a href="secnetwork.htm">Network Print Server
+          Boxes</a></dt>
+
+          <dt>11.6. <a href="x4976.htm">Network Print Server
+          Configuration Information</a></dt>
+
+          <dt>11.7. <a href="x5157.htm">HP JetDirect
+          Interface</a></dt>
+
+          <dt>11.8. <a href="x5193.htm">Problems With Network Print
+          Servers</a></dt>
+
+          <dt>11.9. <a href="x5224.htm">Printing to a SMB
+          (MicroSoft) Printer</a></dt>
+
+          <dt>11.10. <a href="x5238.htm">Printing to AppleTalk
+          Printers</a></dt>
+
+          <dt>11.11. <a href="x5262.htm">Parallel Port
+          Printers</a></dt>
+
+          <dt>11.12. <a href="secserial.htm">Serial
+          Printers</a></dt>
+        </dl>
+      </div>
+
+      <p>Common communication methods between a printer and a host
+      system are network connections, parallel ports, or serial
+      ports; while Fibre Channel, SCSI, USB, FireWire, InfraRed,
+      and other interesting technologies have been used, they are
+      either very specialized or not directly support by the <b
+      class="APPLICATION">LPRng</b> software. In this section we
+      will discuss Network, Parallel Port, and Serial Printers, as
+      well as the different protocols and standards that apply to
+      them.</p>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="NETWORKPRINTER">11.1. Network
+        Printers</a></h1>
+
+        <p>The most flexible and highest throughput printer
+        interface is via a network (TCP/IP) connection. Most high
+        performance printers have a built in network interface, or
+        you can attach them to a <span class="emphasis"><i class=
+        "EMPHASIS">printer server</i></span> box which provides a
+        network interface. The network interface usually supports
+        multiple network printing protocols. The most common are
+        the LPD (RFC1179), Socket API, AppSocket, SMB, and Novell
+        Netware interfaces. <b class="APPLICATION">LPRng</b>
+        directly supports the LPD (RFC1179) and Socket API
+        interfaces, and you can use the <b class=
+        "APPLICATION">smbclient</b> program from the <a href=
+        "smb.htm">Samba Software Package</a> for the SMB
+        interface.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x4851.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x4867.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Printcap
+          Information</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">RFC1179 (LPD)
+          Connection</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

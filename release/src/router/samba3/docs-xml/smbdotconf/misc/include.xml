@@ -1,0 +1,20 @@
+<samba:parameter name="include"
+	         context="G"
+		 type="string"
+		 hide="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This allows you to include one config file inside another.  The file is included literally, as though typed 
+	in place.
+	</para>
+
+	<para>
+	It takes the standard substitutions, except <parameter moreinfo="none">%u</parameter>, 
+	<parameter moreinfo="none">%P</parameter> and <parameter moreinfo="none">%S</parameter>.
+	</para>
+</description>
+
+<value type="default"></value>
+<value type="example">/usr/local/samba/lib/admin_smb.conf</value>
+</samba:parameter>

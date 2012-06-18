@@ -1,0 +1,242 @@
+#!/usr/bin/perl
+eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
+    if $running_under_some_shell;
+            # this emulates #! processing on NIH machines.
+            # (remove #! line above if indigestible)
+
+
+# accounting.pl.in,v 5.5 2000/06/09 21:55:12 papowell Exp
+# LPRng based accounting script.
+#  Version Thu Apr 13 21:00:20 PDT 2000
+# LPRng 3.6.14
+#
+# stdin = /dev/null
+# stdout = accounting file
+# stderr = log file
+#  
+#  command line format:
+#   accounting [start|end] [-options] [accounting file]
+#     -Tdebug will turn on debugging
+#     start - at start of job; scan accounting file, fix up,
+#         put in START entry
+#     end  - at end of job; scan accounting file, fix up,
+#         put in END entry
+#
+# Accounting File has format:
+# start '-ppagecounter' '-Athis' -P'that'  <- startpage
+# ...
+# end   '-ppagecounter'                    <- lastpage
+# END 't=$elapsed' 'p=$pages' 'q=$lastpage' 's=$startpage' 'A=$opt{A}' 'P=$opt{P}' 'n=$opt{n}' 'H=$opt{H}' 'D=$time' 'S=$starttime'
+#               --- end of a job
+# START 'A=$opt{A}' 'P=$opt{P}' 'n=$opt{n}' 'H=$opt{H}' 'D=$time'
+# start '-ppagecounter' '-Athis' -P'that'    <- startpage
+# ...
+# end   '-ppagecounter'                        <- lastpage
+# END 't=$elapsed' 'p=$pages' 'q=$lastpage' 's=$startpage' 'A=$opt{A}' 'P=$opt{P}' 'n=$opt{n}' 'H=$opt{H}' 'D=$time' 'S=$starttime'
+#
+# We implement a stack based FSM to do the following:
+# Stack = NULL, state = FIND_START
+#   
+#  FIND_START - find the first START
+#   START -> push START line
+#         -> FIND_start
+#
+#  FIND_start - find the first 'start' entry with page
+#   start -> push start
+#         -> FIND_end
+#
+#  FIND_end   - find the first 'end' entry for this job
+#   end   -> push end line
+#         -> FOUND_end
+#   START -> push START line
+#         -> FIND_start
+#
+#  FOUND_end  - keep looking for 'end' entries
+#   end   -> pop stack
+#         -> push end line
+#   START -> push START line
+#         -> FIND_start
+#
+# All states:
+#
+#   END   -> clear stack
+#         -> FIND_START
+#   START -> push START line
+#         -> FIND_start
+#
+#
+#  At end, if you do not have state FOUND_end you do not have a
+#  valid accounting file so you have to wait.
+#  Stack will have contents:
+#      ((START*  start )* end) *
+#                ^ start page count
+#                         ^ end page count
+#   we start from the bottom of the stack;
+#    - end entry sets end page count for job
+#    - start entry sets start page count for job
+#    - START assigns pagecount as difference between start and end
+#            end page count = start page count
+#
+# seq   START START START start end
+# pages   0     0      end - start       
+#
+# seq   START START start1         START START start2 end2
+# pages   0     start2-start1       0      start2-end2
+#
+
+use strict;
+use Getopt::Std;
+use FileHandle;
+
+my($JFAIL, $JABORT, $JREMOVE, $JHOLD) = ( 32, 33, 34, 37);
+my(%opt, $action, $acct_h, $debug,$state,@stack);
+my($FIND_START,$FIND_start,$FIND_end,$FOUND_end)=(0,1,2,3,4,5);
+
+
+$debug = 0;
+
+# print STDERR "$0: '" . join("' '",@ARGV) . "'\n" if $debug;
+$action = "";
+if( @ARGV ){
+    if( $ARGV[0] !~ /^-/ ){
+        $action = shift @ARGV;
+    }
+    print STDERR "action $action\n" if $debug;
+}
+if( $action ne "start" and $action ne "end" ){
+    print STDERR "$0: invalid action '$action'\n";
+    exit $JABORT;
+}
+
+# pull out the options
+
+getopts( 'A:B:C:D:E:F:G:H:I:J:K:L:M:N:O:P:Q:R:T:S:U:V:W:X:Y:Z:'
+. 'a:b:cd:e:f:g:h:i:j:k:l:m:n:o:p:q:r:t:s:u:v:w:x:y:z:', \%opt );
+
+my($acct_file) = "";
+if( @ARGV ){
+    $acct_file = shift @ARGV;
+} else {
+    $acct_file = $opt{'a'};
+}
+if( exists( $opt{T} ) && $opt{T} =~ m/debug/ ){
+    $debug = 1;
+}
+if( !$acct_file ){
+    print STDERR "$0: no accounting file\n";
+    exit( $JABORT );
+}
+
+my($time) = time;
+print STDERR "$0: $action 'A=$opt{A}' 'P=$opt{P}' 'n=$opt{n}' 'H=$opt{H}' 'D=$time'\n" if $debug;
+
+print STDERR "accounting file '$acct_file'\n" if $debug;
+
+if( $action eq "start" ){
+    $acct_h = new FileHandle ">>$acct_file" ;
+    print $acct_h "START 'A=$opt{A}' 'P=$opt{P}' 'n=$opt{n}' 'H=$opt{H}' 'D=$time'\n";
+    print STDERR "START 'A=$opt{A}' 'P=$opt{P}' 'n=$opt{n}' 'H=$opt{H}' 'D=$time'\n" if $debug;
+    $acct_h->close();
+    exit 0;
+}
+
+$acct_h = new FileHandle "+<$acct_file" ;
+if( ! defined($acct_h) ){
+    print STDERR "$0: cannot open $acct_file r/w - $!\n";
+    exit( $JABORT );
+}
+
+# now we read the last line from the accounting file
+my($size) = -s $acct_file;
+my($max_seek) = 2048;
+my($read_all) = 0;
+
+if( $size > $max_seek  && not $acct_h->seek( -$max_seek, 2 )
+){
+    print STDERR "$0: lseek $acct_file failed - $!\n";
+    exit( $JABORT );
+}
+
+again:
+
+@stack = ();
+$state = $FIND_START;
+
+while( <$acct_h> ){
+    chomp;
+    print STDERR "STATE '$state' LINE '$_'\n" if $debug;
+    print STDERR "STACK\n " . join("\n ",@stack) . "\n" if $debug;
+    if( /^END / ){
+        $state = $FIND_START;
+        @stack = ();
+        next;
+    }
+    if( /^START / ){
+        push @stack, $_;
+        $state = $FIND_start;
+        next;
+    }
+    if( $state == $FIND_start ){
+        if( /^(file)?start .*-p\d+/ ){
+            push @stack, $_;
+            $state = $FIND_end;
+        }
+    } elsif( $state == $FIND_end ){
+        if( /^(file)?end .*-p\d+/ ){
+            push @stack, $_;
+            $state = $FOUND_end;
+        }
+    } elsif( $state == $FOUND_end ){
+        if( /^(file)?end .*-p\d+/ ){
+            pop @stack;
+            push @stack, $_;
+            $state = $FOUND_end;
+        }
+    }
+}
+
+if( $state != $FOUND_end ){
+    if( $read_all ){
+        print STDERR "$0: did not find end record in file";
+        exit 0;
+    }
+    $acct_h->close();
+    $acct_h = new FileHandle "+<$acct_file" ;
+    if( ! defined($acct_h) ){
+        print STDERR "$0: cannot open $acct_file r/w - $!\n";
+        exit( $JABORT );
+    }
+    $read_all = 1;
+}
+
+print STDERR "FINAL STATE '$state'\n" if $debug;
+print STDERR "FINAL STACK\n " . join("\n ",@stack) . "\n" if $debug;
+my($end_counter,$start_counter,$start_time,$count,$out,$elapsed);
+
+$end_counter = $start_counter = 0;
+$out = "";
+
+for( my $i = @stack -1; $i >= 0 ; --$i ){
+    $_ = $stack[$i];
+    print STDERR "stack [$i] '$_'\n" if $debug;
+    if( /^[a-z]*end .*-p(\d+)/ ){
+        $end_counter = $1;
+    } elsif( /^[a-z]*start .*-p(\d+)/ ){
+        $start_counter = $1;
+    } elsif( /^START/ ){
+        # we now update the accounting information
+        ($start_time) = /D=(\d+)/;
+        s/D=(\d+)/S=$1/;
+        $count = $end_counter - $start_counter;
+        $elapsed = $time - $start_time;
+        # you should put your make update record stuff here
+        s/^START/END 't=$elapsed' 'p=$count' 's=$start_counter' 'q=$end_counter' 'D=$time'/;
+        $out = $_ . "\n" . $out;
+        $end_counter = $start_counter;
+        $time = $start_time;
+    }
+}
+
+# update the file and the database at this point
+print STDERR "APPEND $out" if $debug;
+print $acct_h $out;

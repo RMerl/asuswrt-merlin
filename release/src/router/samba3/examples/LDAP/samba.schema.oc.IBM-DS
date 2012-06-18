@@ -1,0 +1,23 @@
+## Samba 3.0 schema for IBM Directory Server 5.1 - object classes only
+
+objectclasses=( 1.3.6.1.4.1.7165.2.2.6 NAME 'sambaSamAccount' SUP top AUXILIARY DESC 'Samba 3.0 Auxilary SAM Account' MUST ( uid $ sambaSID ) MAY (  cn $ sambaLMPassword $ sambaNTPassword $ sambaPwdLastSet $ sambaLogonTime $ sambaLogoffTime $ sambaKickoffTime $ sambaPwdCanChange $ sambaPwdMustChange $ sambaAcctFlags $ displayName $ sambaHomePath $ sambaHomeDrive $ sambaLogonScript $ sambaProfilePath $ description $ sambaUserWorkstations $ sambaPrimaryGroupSID $ sambaDomainName $ sambaMungedDial $ sambaBadPasswordCount $ sambaBadPasswordTime $ sambaPasswordHistory $ sambaLogonHours))
+
+objectclasses=( 1.3.6.1.4.1.7165.2.2.4 NAME 'sambaGroupMapping' SUP top AUXILIARY DESC 'Samba Group Mapping' MUST ( gidNumber $ sambaSID $ sambaGroupType ) MAY  ( displayName $ description $ sambaSIDList ))
+
+objectclasses=( 1.3.6.1.4.1.7165.2.2.5 NAME 'sambaDomain' SUP top STRUCTURAL DESC 'Samba Domain Information' MUST ( sambaDomainName $ sambaSID ) MAY ( sambaNextRid $ sambaNextGroupRid $ sambaNextUserRid $ sambaAlgorithmicRidBase $ sambaMinPwdLength $ sambaPwdHistoryLength $ sambaLogonToChgPwd $ sambaMaxPwdAge $ sambaMinPwdAge $ sambaLockoutDuration $ sambaLockoutObservationWindow $ sambaLockoutThreshold $ sambaForceLogoff $ sambaRefuseMachinePwdChange ) )
+
+objectclasses=( 1.3.6.1.4.1.7165.1.2.2.7 NAME 'sambaUnixIdPool' SUP top AUXILIARY DESC 'Pool for allocating UNIX uids/gids'     MUST ( uidNumber $ gidNumber ) )
+
+objectclasses=( 1.3.6.1.4.1.7165.1.2.2.8 NAME 'sambaIdmapEntry' SUP top AUXILIARY DESC 'Mapping from a SID to an ID' MUST ( sambaSID ) MAY ( uidNumber $ gidNumber ) )
+
+objectclasses=( 1.3.6.1.4.1.7165.1.2.2.9 NAME 'sambaSidEntry' SUP top STRUCTURAL DESC 'Structural Class for a SID' MUST ( sambaSID ) )
+
+objectclasses=( 1.3.6.1.4.1.7165.2.2.10 NAME 'sambaConfig' SUP top AUXILIARY DESC 'Samba Configuration Section' MAY ( description ) )
+
+objectclasses=( 1.3.6.1.4.1.7165.2.2.11 NAME 'sambaShare' SUP top STRUCTURAL DESC 'Samba Share Section' MUST ( sambaShareName ) MAY ( description ) )
+
+objectclasses=( 1.3.6.1.4.1.7165.2.2.12 NAME 'sambaConfigOption' SUP top STRUCTURAL DESC 'Samba Configuration Option' MUST ( sambaOptionName ) MAY ( sambaBoolOption $ sambaIntegerOption $ sambaStringOption $ sambaStringListoption $ description ) )
+
+objectclasses=( 1.3.6.1.4.1.7165.2.2.14 NAME 'sambaTrustPassword' SUP top STRUCTURAL DESC 'Samba Trust Password' MUST ( sambaDomainName $ sambaNTPassword $ sambaTrustFlags ) MAY ( sambaSID $ sambaPwdLastSet ))
+
+objectclasses=( 1.3.6.1.4.1.7165.2.2.15 NAME 'sambaAccountPolicy' SUP top STRUCTURAL DESC 'Samba Account Policy' MUST ( sambaAccountPolicyName $ sambaAccountPolicyValue ) MAY ( description ) )

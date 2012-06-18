@@ -1,0 +1,46 @@
+#
+# ppp top level makefile
+#
+
+include sunos4/Makedefs
+
+all:
+	cd chat; $(MAKE) all
+	cd pppd; $(MAKE) all
+	cd pppstats; $(MAKE) all
+	cd sunos4; $(MAKE) all
+	cd pppdump; $(MAKE) all
+
+install: $(BINDIR) $(MANDIR)/man8 install-progs install-etcppp
+
+install-progs:
+	cd chat; $(MAKE) install
+	cd pppd; $(MAKE) install
+	cd pppstats; $(MAKE) install
+	cd pppdump; $(MAKE) install
+	cd sunos4; $(MAKE) install
+
+install-etcppp: $(ETCDIR) $(ETCDIR)/options $(ETCDIR)/pap-secrets \
+	$(ETCDIR)/chap-secrets
+
+$(ETCDIR)/options:
+	$(INSTALL) -c -m 644 etc.ppp/options $@
+$(ETCDIR)/pap-secrets:
+	$(INSTALL) -c -m 600 etc.ppp/pap-secrets $@
+$(ETCDIR)/chap-secrets:
+	$(INSTALL) -c -m 600 etc.ppp/chap-secrets $@
+
+$(BINDIR):
+	$(INSTALL) -d -m 755 $@
+$(MANDIR)/man8:
+	$(INSTALL) -d -m 755 $@
+$(ETCDIR):
+	$(INSTALL) -d -m 755 $@
+
+clean:
+	rm -f *~
+	cd chat; $(MAKE) clean
+	cd pppd; $(MAKE) clean
+	cd pppstats; $(MAKE) clean
+	cd sunos4; $(MAKE) clean
+

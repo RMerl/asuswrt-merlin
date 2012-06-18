@@ -1,0 +1,44 @@
+.\" manual page [] for RADATTR plugin for pppd 2.4
+.\" $Id: pppd-radattr.8,v 1.2 2003/04/25 07:33:20 fcusack Exp $
+.\" SH section heading
+.\" SS subsection heading
+.\" LP paragraph
+.\" IP indented paragraph
+.\" TP hanging label
+.TH PPPD-RADATTR 8
+.SH NAME
+radattr.so \- RADIUS utility plugin for
+.BR pppd (8)
+.SH SYNOPSIS
+.B pppd
+[
+.I options
+]
+plugin radius.so plugin radattr.so
+.SH DESCRIPTION
+.LP
+The radattr plugin for pppd causes all radius attributes returned by
+the RADIUS server at authentication time to be stored in the file
+.I /var/run/radattr.pppN
+where
+.I pppN
+is the name of the PPP interface.  The RADIUS attributes are stored
+one per line in the format "Attribute-Name Attribute-Value".  This
+format is convenient for use in /etc/ppp/ip-up and /etc/ppp/ip-down
+scripts.
+.LP
+Note that you
+.I must
+load the radius.so plugin before loading the radattr.so plugin;
+radattr.so depends on symbols defined in radius.so.
+
+.SH USAGE
+To use the plugin, simply supply the
+.B plugin radius.so plugin radattr.so
+options to pppd.
+
+.SH SEE ALSO
+.BR pppd (8) " pppd-radius" (8)
+
+.SH AUTHOR
+David F. Skoll <dfs@roaringpenguin.com>

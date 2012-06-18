@@ -1,0 +1,6 @@
+winbind: ldconfig-symlink-missing-for-shlib lib/libnss_winbind.so lib/libnss_winbind.so.2 libnss_winbind.so
+winbind: ldconfig-symlink-missing-for-shlib lib/libnss_wins.so lib/libnss_wins.so.2 libnss_wins.so
+winbind: no-shlibs-control-file lib/libnss_winbind.so.2
+winbind: no-shlibs-control-file lib/libnss_wins.so.2
+winbind: postinst-must-call-ldconfig lib/libnss_wins.so.2
+winbind: postrm-should-call-ldconfig lib/libnss_wins.so.2

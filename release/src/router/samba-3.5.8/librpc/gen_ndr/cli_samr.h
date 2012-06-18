@@ -1,0 +1,1046 @@
+#include "../librpc/gen_ndr/ndr_samr.h"
+#ifndef __CLI_SAMR__
+#define __CLI_SAMR__
+struct tevent_req *rpccli_samr_Connect_send(TALLOC_CTX *mem_ctx,
+					    struct tevent_context *ev,
+					    struct rpc_pipe_client *cli,
+					    uint16_t *_system_name /* [in] [unique] */,
+					    uint32_t _access_mask /* [in]  */,
+					    struct policy_handle *_connect_handle /* [out] [ref] */);
+NTSTATUS rpccli_samr_Connect_recv(struct tevent_req *req,
+				  TALLOC_CTX *mem_ctx,
+				  NTSTATUS *result);
+NTSTATUS rpccli_samr_Connect(struct rpc_pipe_client *cli,
+			     TALLOC_CTX *mem_ctx,
+			     uint16_t *system_name /* [in] [unique] */,
+			     uint32_t access_mask /* [in]  */,
+			     struct policy_handle *connect_handle /* [out] [ref] */);
+struct tevent_req *rpccli_samr_Close_send(TALLOC_CTX *mem_ctx,
+					  struct tevent_context *ev,
+					  struct rpc_pipe_client *cli,
+					  struct policy_handle *_handle /* [in,out] [ref] */);
+NTSTATUS rpccli_samr_Close_recv(struct tevent_req *req,
+				TALLOC_CTX *mem_ctx,
+				NTSTATUS *result);
+NTSTATUS rpccli_samr_Close(struct rpc_pipe_client *cli,
+			   TALLOC_CTX *mem_ctx,
+			   struct policy_handle *handle /* [in,out] [ref] */);
+struct tevent_req *rpccli_samr_SetSecurity_send(TALLOC_CTX *mem_ctx,
+						struct tevent_context *ev,
+						struct rpc_pipe_client *cli,
+						struct policy_handle *_handle /* [in] [ref] */,
+						uint32_t _sec_info /* [in]  */,
+						struct sec_desc_buf *_sdbuf /* [in] [ref] */);
+NTSTATUS rpccli_samr_SetSecurity_recv(struct tevent_req *req,
+				      TALLOC_CTX *mem_ctx,
+				      NTSTATUS *result);
+NTSTATUS rpccli_samr_SetSecurity(struct rpc_pipe_client *cli,
+				 TALLOC_CTX *mem_ctx,
+				 struct policy_handle *handle /* [in] [ref] */,
+				 uint32_t sec_info /* [in]  */,
+				 struct sec_desc_buf *sdbuf /* [in] [ref] */);
+struct tevent_req *rpccli_samr_QuerySecurity_send(TALLOC_CTX *mem_ctx,
+						  struct tevent_context *ev,
+						  struct rpc_pipe_client *cli,
+						  struct policy_handle *_handle /* [in] [ref] */,
+						  uint32_t _sec_info /* [in]  */,
+						  struct sec_desc_buf **_sdbuf /* [out] [ref] */);
+NTSTATUS rpccli_samr_QuerySecurity_recv(struct tevent_req *req,
+					TALLOC_CTX *mem_ctx,
+					NTSTATUS *result);
+NTSTATUS rpccli_samr_QuerySecurity(struct rpc_pipe_client *cli,
+				   TALLOC_CTX *mem_ctx,
+				   struct policy_handle *handle /* [in] [ref] */,
+				   uint32_t sec_info /* [in]  */,
+				   struct sec_desc_buf **sdbuf /* [out] [ref] */);
+struct tevent_req *rpccli_samr_Shutdown_send(TALLOC_CTX *mem_ctx,
+					     struct tevent_context *ev,
+					     struct rpc_pipe_client *cli,
+					     struct policy_handle *_connect_handle /* [in] [ref] */);
+NTSTATUS rpccli_samr_Shutdown_recv(struct tevent_req *req,
+				   TALLOC_CTX *mem_ctx,
+				   NTSTATUS *result);
+NTSTATUS rpccli_samr_Shutdown(struct rpc_pipe_client *cli,
+			      TALLOC_CTX *mem_ctx,
+			      struct policy_handle *connect_handle /* [in] [ref] */);
+struct tevent_req *rpccli_samr_LookupDomain_send(TALLOC_CTX *mem_ctx,
+						 struct tevent_context *ev,
+						 struct rpc_pipe_client *cli,
+						 struct policy_handle *_connect_handle /* [in] [ref] */,
+						 struct lsa_String *_domain_name /* [in] [ref] */,
+						 struct dom_sid2 **_sid /* [out] [ref] */);
+NTSTATUS rpccli_samr_LookupDomain_recv(struct tevent_req *req,
+				       TALLOC_CTX *mem_ctx,
+				       NTSTATUS *result);
+NTSTATUS rpccli_samr_LookupDomain(struct rpc_pipe_client *cli,
+				  TALLOC_CTX *mem_ctx,
+				  struct policy_handle *connect_handle /* [in] [ref] */,
+				  struct lsa_String *domain_name /* [in] [ref] */,
+				  struct dom_sid2 **sid /* [out] [ref] */);
+struct tevent_req *rpccli_samr_EnumDomains_send(TALLOC_CTX *mem_ctx,
+						struct tevent_context *ev,
+						struct rpc_pipe_client *cli,
+						struct policy_handle *_connect_handle /* [in] [ref] */,
+						uint32_t *_resume_handle /* [in,out] [ref] */,
+						struct samr_SamArray **_sam /* [out] [ref] */,
+						uint32_t _buf_size /* [in]  */,
+						uint32_t *_num_entries /* [out] [ref] */);
+NTSTATUS rpccli_samr_EnumDomains_recv(struct tevent_req *req,
+				      TALLOC_CTX *mem_ctx,
+				      NTSTATUS *result);
+NTSTATUS rpccli_samr_EnumDomains(struct rpc_pipe_client *cli,
+				 TALLOC_CTX *mem_ctx,
+				 struct policy_handle *connect_handle /* [in] [ref] */,
+				 uint32_t *resume_handle /* [in,out] [ref] */,
+				 struct samr_SamArray **sam /* [out] [ref] */,
+				 uint32_t buf_size /* [in]  */,
+				 uint32_t *num_entries /* [out] [ref] */);
+struct tevent_req *rpccli_samr_OpenDomain_send(TALLOC_CTX *mem_ctx,
+					       struct tevent_context *ev,
+					       struct rpc_pipe_client *cli,
+					       struct policy_handle *_connect_handle /* [in] [ref] */,
+					       uint32_t _access_mask /* [in]  */,
+					       struct dom_sid2 *_sid /* [in] [ref] */,
+					       struct policy_handle *_domain_handle /* [out] [ref] */);
+NTSTATUS rpccli_samr_OpenDomain_recv(struct tevent_req *req,
+				     TALLOC_CTX *mem_ctx,
+				     NTSTATUS *result);
+NTSTATUS rpccli_samr_OpenDomain(struct rpc_pipe_client *cli,
+				TALLOC_CTX *mem_ctx,
+				struct policy_handle *connect_handle /* [in] [ref] */,
+				uint32_t access_mask /* [in]  */,
+				struct dom_sid2 *sid /* [in] [ref] */,
+				struct policy_handle *domain_handle /* [out] [ref] */);
+struct tevent_req *rpccli_samr_QueryDomainInfo_send(TALLOC_CTX *mem_ctx,
+						    struct tevent_context *ev,
+						    struct rpc_pipe_client *cli,
+						    struct policy_handle *_domain_handle /* [in] [ref] */,
+						    enum samr_DomainInfoClass _level /* [in]  */,
+						    union samr_DomainInfo **_info /* [out] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_QueryDomainInfo_recv(struct tevent_req *req,
+					  TALLOC_CTX *mem_ctx,
+					  NTSTATUS *result);
+NTSTATUS rpccli_samr_QueryDomainInfo(struct rpc_pipe_client *cli,
+				     TALLOC_CTX *mem_ctx,
+				     struct policy_handle *domain_handle /* [in] [ref] */,
+				     enum samr_DomainInfoClass level /* [in]  */,
+				     union samr_DomainInfo **info /* [out] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_SetDomainInfo_send(TALLOC_CTX *mem_ctx,
+						  struct tevent_context *ev,
+						  struct rpc_pipe_client *cli,
+						  struct policy_handle *_domain_handle /* [in] [ref] */,
+						  enum samr_DomainInfoClass _level /* [in]  */,
+						  union samr_DomainInfo *_info /* [in] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_SetDomainInfo_recv(struct tevent_req *req,
+					TALLOC_CTX *mem_ctx,
+					NTSTATUS *result);
+NTSTATUS rpccli_samr_SetDomainInfo(struct rpc_pipe_client *cli,
+				   TALLOC_CTX *mem_ctx,
+				   struct policy_handle *domain_handle /* [in] [ref] */,
+				   enum samr_DomainInfoClass level /* [in]  */,
+				   union samr_DomainInfo *info /* [in] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_CreateDomainGroup_send(TALLOC_CTX *mem_ctx,
+						      struct tevent_context *ev,
+						      struct rpc_pipe_client *cli,
+						      struct policy_handle *_domain_handle /* [in] [ref] */,
+						      struct lsa_String *_name /* [in] [ref] */,
+						      uint32_t _access_mask /* [in]  */,
+						      struct policy_handle *_group_handle /* [out] [ref] */,
+						      uint32_t *_rid /* [out] [ref] */);
+NTSTATUS rpccli_samr_CreateDomainGroup_recv(struct tevent_req *req,
+					    TALLOC_CTX *mem_ctx,
+					    NTSTATUS *result);
+NTSTATUS rpccli_samr_CreateDomainGroup(struct rpc_pipe_client *cli,
+				       TALLOC_CTX *mem_ctx,
+				       struct policy_handle *domain_handle /* [in] [ref] */,
+				       struct lsa_String *name /* [in] [ref] */,
+				       uint32_t access_mask /* [in]  */,
+				       struct policy_handle *group_handle /* [out] [ref] */,
+				       uint32_t *rid /* [out] [ref] */);
+struct tevent_req *rpccli_samr_EnumDomainGroups_send(TALLOC_CTX *mem_ctx,
+						     struct tevent_context *ev,
+						     struct rpc_pipe_client *cli,
+						     struct policy_handle *_domain_handle /* [in] [ref] */,
+						     uint32_t *_resume_handle /* [in,out] [ref] */,
+						     struct samr_SamArray **_sam /* [out] [ref] */,
+						     uint32_t _max_size /* [in]  */,
+						     uint32_t *_num_entries /* [out] [ref] */);
+NTSTATUS rpccli_samr_EnumDomainGroups_recv(struct tevent_req *req,
+					   TALLOC_CTX *mem_ctx,
+					   NTSTATUS *result);
+NTSTATUS rpccli_samr_EnumDomainGroups(struct rpc_pipe_client *cli,
+				      TALLOC_CTX *mem_ctx,
+				      struct policy_handle *domain_handle /* [in] [ref] */,
+				      uint32_t *resume_handle /* [in,out] [ref] */,
+				      struct samr_SamArray **sam /* [out] [ref] */,
+				      uint32_t max_size /* [in]  */,
+				      uint32_t *num_entries /* [out] [ref] */);
+struct tevent_req *rpccli_samr_CreateUser_send(TALLOC_CTX *mem_ctx,
+					       struct tevent_context *ev,
+					       struct rpc_pipe_client *cli,
+					       struct policy_handle *_domain_handle /* [in] [ref] */,
+					       struct lsa_String *_account_name /* [in] [ref] */,
+					       uint32_t _access_mask /* [in]  */,
+					       struct policy_handle *_user_handle /* [out] [ref] */,
+					       uint32_t *_rid /* [out] [ref] */);
+NTSTATUS rpccli_samr_CreateUser_recv(struct tevent_req *req,
+				     TALLOC_CTX *mem_ctx,
+				     NTSTATUS *result);
+NTSTATUS rpccli_samr_CreateUser(struct rpc_pipe_client *cli,
+				TALLOC_CTX *mem_ctx,
+				struct policy_handle *domain_handle /* [in] [ref] */,
+				struct lsa_String *account_name /* [in] [ref] */,
+				uint32_t access_mask /* [in]  */,
+				struct policy_handle *user_handle /* [out] [ref] */,
+				uint32_t *rid /* [out] [ref] */);
+struct tevent_req *rpccli_samr_EnumDomainUsers_send(TALLOC_CTX *mem_ctx,
+						    struct tevent_context *ev,
+						    struct rpc_pipe_client *cli,
+						    struct policy_handle *_domain_handle /* [in] [ref] */,
+						    uint32_t *_resume_handle /* [in,out] [ref] */,
+						    uint32_t _acct_flags /* [in]  */,
+						    struct samr_SamArray **_sam /* [out] [ref] */,
+						    uint32_t _max_size /* [in]  */,
+						    uint32_t *_num_entries /* [out] [ref] */);
+NTSTATUS rpccli_samr_EnumDomainUsers_recv(struct tevent_req *req,
+					  TALLOC_CTX *mem_ctx,
+					  NTSTATUS *result);
+NTSTATUS rpccli_samr_EnumDomainUsers(struct rpc_pipe_client *cli,
+				     TALLOC_CTX *mem_ctx,
+				     struct policy_handle *domain_handle /* [in] [ref] */,
+				     uint32_t *resume_handle /* [in,out] [ref] */,
+				     uint32_t acct_flags /* [in]  */,
+				     struct samr_SamArray **sam /* [out] [ref] */,
+				     uint32_t max_size /* [in]  */,
+				     uint32_t *num_entries /* [out] [ref] */);
+struct tevent_req *rpccli_samr_CreateDomAlias_send(TALLOC_CTX *mem_ctx,
+						   struct tevent_context *ev,
+						   struct rpc_pipe_client *cli,
+						   struct policy_handle *_domain_handle /* [in] [ref] */,
+						   struct lsa_String *_alias_name /* [in] [ref] */,
+						   uint32_t _access_mask /* [in]  */,
+						   struct policy_handle *_alias_handle /* [out] [ref] */,
+						   uint32_t *_rid /* [out] [ref] */);
+NTSTATUS rpccli_samr_CreateDomAlias_recv(struct tevent_req *req,
+					 TALLOC_CTX *mem_ctx,
+					 NTSTATUS *result);
+NTSTATUS rpccli_samr_CreateDomAlias(struct rpc_pipe_client *cli,
+				    TALLOC_CTX *mem_ctx,
+				    struct policy_handle *domain_handle /* [in] [ref] */,
+				    struct lsa_String *alias_name /* [in] [ref] */,
+				    uint32_t access_mask /* [in]  */,
+				    struct policy_handle *alias_handle /* [out] [ref] */,
+				    uint32_t *rid /* [out] [ref] */);
+struct tevent_req *rpccli_samr_EnumDomainAliases_send(TALLOC_CTX *mem_ctx,
+						      struct tevent_context *ev,
+						      struct rpc_pipe_client *cli,
+						      struct policy_handle *_domain_handle /* [in] [ref] */,
+						      uint32_t *_resume_handle /* [in,out] [ref] */,
+						      struct samr_SamArray **_sam /* [out] [ref] */,
+						      uint32_t _max_size /* [in]  */,
+						      uint32_t *_num_entries /* [out] [ref] */);
+NTSTATUS rpccli_samr_EnumDomainAliases_recv(struct tevent_req *req,
+					    TALLOC_CTX *mem_ctx,
+					    NTSTATUS *result);
+NTSTATUS rpccli_samr_EnumDomainAliases(struct rpc_pipe_client *cli,
+				       TALLOC_CTX *mem_ctx,
+				       struct policy_handle *domain_handle /* [in] [ref] */,
+				       uint32_t *resume_handle /* [in,out] [ref] */,
+				       struct samr_SamArray **sam /* [out] [ref] */,
+				       uint32_t max_size /* [in]  */,
+				       uint32_t *num_entries /* [out] [ref] */);
+struct tevent_req *rpccli_samr_GetAliasMembership_send(TALLOC_CTX *mem_ctx,
+						       struct tevent_context *ev,
+						       struct rpc_pipe_client *cli,
+						       struct policy_handle *_domain_handle /* [in] [ref] */,
+						       struct lsa_SidArray *_sids /* [in] [ref] */,
+						       struct samr_Ids *_rids /* [out] [ref] */);
+NTSTATUS rpccli_samr_GetAliasMembership_recv(struct tevent_req *req,
+					     TALLOC_CTX *mem_ctx,
+					     NTSTATUS *result);
+NTSTATUS rpccli_samr_GetAliasMembership(struct rpc_pipe_client *cli,
+					TALLOC_CTX *mem_ctx,
+					struct policy_handle *domain_handle /* [in] [ref] */,
+					struct lsa_SidArray *sids /* [in] [ref] */,
+					struct samr_Ids *rids /* [out] [ref] */);
+struct tevent_req *rpccli_samr_LookupNames_send(TALLOC_CTX *mem_ctx,
+						struct tevent_context *ev,
+						struct rpc_pipe_client *cli,
+						struct policy_handle *_domain_handle /* [in] [ref] */,
+						uint32_t _num_names /* [in] [range(0,1000)] */,
+						struct lsa_String *_names /* [in] [length_is(num_names),size_is(1000)] */,
+						struct samr_Ids *_rids /* [out] [ref] */,
+						struct samr_Ids *_types /* [out] [ref] */);
+NTSTATUS rpccli_samr_LookupNames_recv(struct tevent_req *req,
+				      TALLOC_CTX *mem_ctx,
+				      NTSTATUS *result);
+NTSTATUS rpccli_samr_LookupNames(struct rpc_pipe_client *cli,
+				 TALLOC_CTX *mem_ctx,
+				 struct policy_handle *domain_handle /* [in] [ref] */,
+				 uint32_t num_names /* [in] [range(0,1000)] */,
+				 struct lsa_String *names /* [in] [length_is(num_names),size_is(1000)] */,
+				 struct samr_Ids *rids /* [out] [ref] */,
+				 struct samr_Ids *types /* [out] [ref] */);
+struct tevent_req *rpccli_samr_LookupRids_send(TALLOC_CTX *mem_ctx,
+					       struct tevent_context *ev,
+					       struct rpc_pipe_client *cli,
+					       struct policy_handle *_domain_handle /* [in] [ref] */,
+					       uint32_t _num_rids /* [in] [range(0,1000)] */,
+					       uint32_t *_rids /* [in] [length_is(num_rids),size_is(1000)] */,
+					       struct lsa_Strings *_names /* [out] [ref] */,
+					       struct samr_Ids *_types /* [out] [ref] */);
+NTSTATUS rpccli_samr_LookupRids_recv(struct tevent_req *req,
+				     TALLOC_CTX *mem_ctx,
+				     NTSTATUS *result);
+NTSTATUS rpccli_samr_LookupRids(struct rpc_pipe_client *cli,
+				TALLOC_CTX *mem_ctx,
+				struct policy_handle *domain_handle /* [in] [ref] */,
+				uint32_t num_rids /* [in] [range(0,1000)] */,
+				uint32_t *rids /* [in] [length_is(num_rids),size_is(1000)] */,
+				struct lsa_Strings *names /* [out] [ref] */,
+				struct samr_Ids *types /* [out] [ref] */);
+struct tevent_req *rpccli_samr_OpenGroup_send(TALLOC_CTX *mem_ctx,
+					      struct tevent_context *ev,
+					      struct rpc_pipe_client *cli,
+					      struct policy_handle *_domain_handle /* [in] [ref] */,
+					      uint32_t _access_mask /* [in]  */,
+					      uint32_t _rid /* [in]  */,
+					      struct policy_handle *_group_handle /* [out] [ref] */);
+NTSTATUS rpccli_samr_OpenGroup_recv(struct tevent_req *req,
+				    TALLOC_CTX *mem_ctx,
+				    NTSTATUS *result);
+NTSTATUS rpccli_samr_OpenGroup(struct rpc_pipe_client *cli,
+			       TALLOC_CTX *mem_ctx,
+			       struct policy_handle *domain_handle /* [in] [ref] */,
+			       uint32_t access_mask /* [in]  */,
+			       uint32_t rid /* [in]  */,
+			       struct policy_handle *group_handle /* [out] [ref] */);
+struct tevent_req *rpccli_samr_QueryGroupInfo_send(TALLOC_CTX *mem_ctx,
+						   struct tevent_context *ev,
+						   struct rpc_pipe_client *cli,
+						   struct policy_handle *_group_handle /* [in] [ref] */,
+						   enum samr_GroupInfoEnum _level /* [in]  */,
+						   union samr_GroupInfo **_info /* [out] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_QueryGroupInfo_recv(struct tevent_req *req,
+					 TALLOC_CTX *mem_ctx,
+					 NTSTATUS *result);
+NTSTATUS rpccli_samr_QueryGroupInfo(struct rpc_pipe_client *cli,
+				    TALLOC_CTX *mem_ctx,
+				    struct policy_handle *group_handle /* [in] [ref] */,
+				    enum samr_GroupInfoEnum level /* [in]  */,
+				    union samr_GroupInfo **info /* [out] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_SetGroupInfo_send(TALLOC_CTX *mem_ctx,
+						 struct tevent_context *ev,
+						 struct rpc_pipe_client *cli,
+						 struct policy_handle *_group_handle /* [in] [ref] */,
+						 enum samr_GroupInfoEnum _level /* [in]  */,
+						 union samr_GroupInfo *_info /* [in] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_SetGroupInfo_recv(struct tevent_req *req,
+				       TALLOC_CTX *mem_ctx,
+				       NTSTATUS *result);
+NTSTATUS rpccli_samr_SetGroupInfo(struct rpc_pipe_client *cli,
+				  TALLOC_CTX *mem_ctx,
+				  struct policy_handle *group_handle /* [in] [ref] */,
+				  enum samr_GroupInfoEnum level /* [in]  */,
+				  union samr_GroupInfo *info /* [in] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_AddGroupMember_send(TALLOC_CTX *mem_ctx,
+						   struct tevent_context *ev,
+						   struct rpc_pipe_client *cli,
+						   struct policy_handle *_group_handle /* [in] [ref] */,
+						   uint32_t _rid /* [in]  */,
+						   uint32_t _flags /* [in]  */);
+NTSTATUS rpccli_samr_AddGroupMember_recv(struct tevent_req *req,
+					 TALLOC_CTX *mem_ctx,
+					 NTSTATUS *result);
+NTSTATUS rpccli_samr_AddGroupMember(struct rpc_pipe_client *cli,
+				    TALLOC_CTX *mem_ctx,
+				    struct policy_handle *group_handle /* [in] [ref] */,
+				    uint32_t rid /* [in]  */,
+				    uint32_t flags /* [in]  */);
+struct tevent_req *rpccli_samr_DeleteDomainGroup_send(TALLOC_CTX *mem_ctx,
+						      struct tevent_context *ev,
+						      struct rpc_pipe_client *cli,
+						      struct policy_handle *_group_handle /* [in,out] [ref] */);
+NTSTATUS rpccli_samr_DeleteDomainGroup_recv(struct tevent_req *req,
+					    TALLOC_CTX *mem_ctx,
+					    NTSTATUS *result);
+NTSTATUS rpccli_samr_DeleteDomainGroup(struct rpc_pipe_client *cli,
+				       TALLOC_CTX *mem_ctx,
+				       struct policy_handle *group_handle /* [in,out] [ref] */);
+struct tevent_req *rpccli_samr_DeleteGroupMember_send(TALLOC_CTX *mem_ctx,
+						      struct tevent_context *ev,
+						      struct rpc_pipe_client *cli,
+						      struct policy_handle *_group_handle /* [in] [ref] */,
+						      uint32_t _rid /* [in]  */);
+NTSTATUS rpccli_samr_DeleteGroupMember_recv(struct tevent_req *req,
+					    TALLOC_CTX *mem_ctx,
+					    NTSTATUS *result);
+NTSTATUS rpccli_samr_DeleteGroupMember(struct rpc_pipe_client *cli,
+				       TALLOC_CTX *mem_ctx,
+				       struct policy_handle *group_handle /* [in] [ref] */,
+				       uint32_t rid /* [in]  */);
+struct tevent_req *rpccli_samr_QueryGroupMember_send(TALLOC_CTX *mem_ctx,
+						     struct tevent_context *ev,
+						     struct rpc_pipe_client *cli,
+						     struct policy_handle *_group_handle /* [in] [ref] */,
+						     struct samr_RidTypeArray **_rids /* [out] [ref] */);
+NTSTATUS rpccli_samr_QueryGroupMember_recv(struct tevent_req *req,
+					   TALLOC_CTX *mem_ctx,
+					   NTSTATUS *result);
+NTSTATUS rpccli_samr_QueryGroupMember(struct rpc_pipe_client *cli,
+				      TALLOC_CTX *mem_ctx,
+				      struct policy_handle *group_handle /* [in] [ref] */,
+				      struct samr_RidTypeArray **rids /* [out] [ref] */);
+struct tevent_req *rpccli_samr_SetMemberAttributesOfGroup_send(TALLOC_CTX *mem_ctx,
+							       struct tevent_context *ev,
+							       struct rpc_pipe_client *cli,
+							       struct policy_handle *_group_handle /* [in] [ref] */,
+							       uint32_t _unknown1 /* [in]  */,
+							       uint32_t _unknown2 /* [in]  */);
+NTSTATUS rpccli_samr_SetMemberAttributesOfGroup_recv(struct tevent_req *req,
+						     TALLOC_CTX *mem_ctx,
+						     NTSTATUS *result);
+NTSTATUS rpccli_samr_SetMemberAttributesOfGroup(struct rpc_pipe_client *cli,
+						TALLOC_CTX *mem_ctx,
+						struct policy_handle *group_handle /* [in] [ref] */,
+						uint32_t unknown1 /* [in]  */,
+						uint32_t unknown2 /* [in]  */);
+struct tevent_req *rpccli_samr_OpenAlias_send(TALLOC_CTX *mem_ctx,
+					      struct tevent_context *ev,
+					      struct rpc_pipe_client *cli,
+					      struct policy_handle *_domain_handle /* [in] [ref] */,
+					      uint32_t _access_mask /* [in]  */,
+					      uint32_t _rid /* [in]  */,
+					      struct policy_handle *_alias_handle /* [out] [ref] */);
+NTSTATUS rpccli_samr_OpenAlias_recv(struct tevent_req *req,
+				    TALLOC_CTX *mem_ctx,
+				    NTSTATUS *result);
+NTSTATUS rpccli_samr_OpenAlias(struct rpc_pipe_client *cli,
+			       TALLOC_CTX *mem_ctx,
+			       struct policy_handle *domain_handle /* [in] [ref] */,
+			       uint32_t access_mask /* [in]  */,
+			       uint32_t rid /* [in]  */,
+			       struct policy_handle *alias_handle /* [out] [ref] */);
+struct tevent_req *rpccli_samr_QueryAliasInfo_send(TALLOC_CTX *mem_ctx,
+						   struct tevent_context *ev,
+						   struct rpc_pipe_client *cli,
+						   struct policy_handle *_alias_handle /* [in] [ref] */,
+						   enum samr_AliasInfoEnum _level /* [in]  */,
+						   union samr_AliasInfo **_info /* [out] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_QueryAliasInfo_recv(struct tevent_req *req,
+					 TALLOC_CTX *mem_ctx,
+					 NTSTATUS *result);
+NTSTATUS rpccli_samr_QueryAliasInfo(struct rpc_pipe_client *cli,
+				    TALLOC_CTX *mem_ctx,
+				    struct policy_handle *alias_handle /* [in] [ref] */,
+				    enum samr_AliasInfoEnum level /* [in]  */,
+				    union samr_AliasInfo **info /* [out] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_SetAliasInfo_send(TALLOC_CTX *mem_ctx,
+						 struct tevent_context *ev,
+						 struct rpc_pipe_client *cli,
+						 struct policy_handle *_alias_handle /* [in] [ref] */,
+						 enum samr_AliasInfoEnum _level /* [in]  */,
+						 union samr_AliasInfo *_info /* [in] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_SetAliasInfo_recv(struct tevent_req *req,
+				       TALLOC_CTX *mem_ctx,
+				       NTSTATUS *result);
+NTSTATUS rpccli_samr_SetAliasInfo(struct rpc_pipe_client *cli,
+				  TALLOC_CTX *mem_ctx,
+				  struct policy_handle *alias_handle /* [in] [ref] */,
+				  enum samr_AliasInfoEnum level /* [in]  */,
+				  union samr_AliasInfo *info /* [in] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_DeleteDomAlias_send(TALLOC_CTX *mem_ctx,
+						   struct tevent_context *ev,
+						   struct rpc_pipe_client *cli,
+						   struct policy_handle *_alias_handle /* [in,out] [ref] */);
+NTSTATUS rpccli_samr_DeleteDomAlias_recv(struct tevent_req *req,
+					 TALLOC_CTX *mem_ctx,
+					 NTSTATUS *result);
+NTSTATUS rpccli_samr_DeleteDomAlias(struct rpc_pipe_client *cli,
+				    TALLOC_CTX *mem_ctx,
+				    struct policy_handle *alias_handle /* [in,out] [ref] */);
+struct tevent_req *rpccli_samr_AddAliasMember_send(TALLOC_CTX *mem_ctx,
+						   struct tevent_context *ev,
+						   struct rpc_pipe_client *cli,
+						   struct policy_handle *_alias_handle /* [in] [ref] */,
+						   struct dom_sid2 *_sid /* [in] [ref] */);
+NTSTATUS rpccli_samr_AddAliasMember_recv(struct tevent_req *req,
+					 TALLOC_CTX *mem_ctx,
+					 NTSTATUS *result);
+NTSTATUS rpccli_samr_AddAliasMember(struct rpc_pipe_client *cli,
+				    TALLOC_CTX *mem_ctx,
+				    struct policy_handle *alias_handle /* [in] [ref] */,
+				    struct dom_sid2 *sid /* [in] [ref] */);
+struct tevent_req *rpccli_samr_DeleteAliasMember_send(TALLOC_CTX *mem_ctx,
+						      struct tevent_context *ev,
+						      struct rpc_pipe_client *cli,
+						      struct policy_handle *_alias_handle /* [in] [ref] */,
+						      struct dom_sid2 *_sid /* [in] [ref] */);
+NTSTATUS rpccli_samr_DeleteAliasMember_recv(struct tevent_req *req,
+					    TALLOC_CTX *mem_ctx,
+					    NTSTATUS *result);
+NTSTATUS rpccli_samr_DeleteAliasMember(struct rpc_pipe_client *cli,
+				       TALLOC_CTX *mem_ctx,
+				       struct policy_handle *alias_handle /* [in] [ref] */,
+				       struct dom_sid2 *sid /* [in] [ref] */);
+struct tevent_req *rpccli_samr_GetMembersInAlias_send(TALLOC_CTX *mem_ctx,
+						      struct tevent_context *ev,
+						      struct rpc_pipe_client *cli,
+						      struct policy_handle *_alias_handle /* [in] [ref] */,
+						      struct lsa_SidArray *_sids /* [out] [ref] */);
+NTSTATUS rpccli_samr_GetMembersInAlias_recv(struct tevent_req *req,
+					    TALLOC_CTX *mem_ctx,
+					    NTSTATUS *result);
+NTSTATUS rpccli_samr_GetMembersInAlias(struct rpc_pipe_client *cli,
+				       TALLOC_CTX *mem_ctx,
+				       struct policy_handle *alias_handle /* [in] [ref] */,
+				       struct lsa_SidArray *sids /* [out] [ref] */);
+struct tevent_req *rpccli_samr_OpenUser_send(TALLOC_CTX *mem_ctx,
+					     struct tevent_context *ev,
+					     struct rpc_pipe_client *cli,
+					     struct policy_handle *_domain_handle /* [in] [ref] */,
+					     uint32_t _access_mask /* [in]  */,
+					     uint32_t _rid /* [in]  */,
+					     struct policy_handle *_user_handle /* [out] [ref] */);
+NTSTATUS rpccli_samr_OpenUser_recv(struct tevent_req *req,
+				   TALLOC_CTX *mem_ctx,
+				   NTSTATUS *result);
+NTSTATUS rpccli_samr_OpenUser(struct rpc_pipe_client *cli,
+			      TALLOC_CTX *mem_ctx,
+			      struct policy_handle *domain_handle /* [in] [ref] */,
+			      uint32_t access_mask /* [in]  */,
+			      uint32_t rid /* [in]  */,
+			      struct policy_handle *user_handle /* [out] [ref] */);
+struct tevent_req *rpccli_samr_DeleteUser_send(TALLOC_CTX *mem_ctx,
+					       struct tevent_context *ev,
+					       struct rpc_pipe_client *cli,
+					       struct policy_handle *_user_handle /* [in,out] [ref] */);
+NTSTATUS rpccli_samr_DeleteUser_recv(struct tevent_req *req,
+				     TALLOC_CTX *mem_ctx,
+				     NTSTATUS *result);
+NTSTATUS rpccli_samr_DeleteUser(struct rpc_pipe_client *cli,
+				TALLOC_CTX *mem_ctx,
+				struct policy_handle *user_handle /* [in,out] [ref] */);
+struct tevent_req *rpccli_samr_QueryUserInfo_send(TALLOC_CTX *mem_ctx,
+						  struct tevent_context *ev,
+						  struct rpc_pipe_client *cli,
+						  struct policy_handle *_user_handle /* [in] [ref] */,
+						  enum samr_UserInfoLevel _level /* [in]  */,
+						  union samr_UserInfo **_info /* [out] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_QueryUserInfo_recv(struct tevent_req *req,
+					TALLOC_CTX *mem_ctx,
+					NTSTATUS *result);
+NTSTATUS rpccli_samr_QueryUserInfo(struct rpc_pipe_client *cli,
+				   TALLOC_CTX *mem_ctx,
+				   struct policy_handle *user_handle /* [in] [ref] */,
+				   enum samr_UserInfoLevel level /* [in]  */,
+				   union samr_UserInfo **info /* [out] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_SetUserInfo_send(TALLOC_CTX *mem_ctx,
+						struct tevent_context *ev,
+						struct rpc_pipe_client *cli,
+						struct policy_handle *_user_handle /* [in] [ref] */,
+						enum samr_UserInfoLevel _level /* [in]  */,
+						union samr_UserInfo *_info /* [in] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_SetUserInfo_recv(struct tevent_req *req,
+				      TALLOC_CTX *mem_ctx,
+				      NTSTATUS *result);
+NTSTATUS rpccli_samr_SetUserInfo(struct rpc_pipe_client *cli,
+				 TALLOC_CTX *mem_ctx,
+				 struct policy_handle *user_handle /* [in] [ref] */,
+				 enum samr_UserInfoLevel level /* [in]  */,
+				 union samr_UserInfo *info /* [in] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_ChangePasswordUser_send(TALLOC_CTX *mem_ctx,
+						       struct tevent_context *ev,
+						       struct rpc_pipe_client *cli,
+						       struct policy_handle *_user_handle /* [in] [ref] */,
+						       uint8_t _lm_present /* [in]  */,
+						       struct samr_Password *_old_lm_crypted /* [in] [unique] */,
+						       struct samr_Password *_new_lm_crypted /* [in] [unique] */,
+						       uint8_t _nt_present /* [in]  */,
+						       struct samr_Password *_old_nt_crypted /* [in] [unique] */,
+						       struct samr_Password *_new_nt_crypted /* [in] [unique] */,
+						       uint8_t _cross1_present /* [in]  */,
+						       struct samr_Password *_nt_cross /* [in] [unique] */,
+						       uint8_t _cross2_present /* [in]  */,
+						       struct samr_Password *_lm_cross /* [in] [unique] */);
+NTSTATUS rpccli_samr_ChangePasswordUser_recv(struct tevent_req *req,
+					     TALLOC_CTX *mem_ctx,
+					     NTSTATUS *result);
+NTSTATUS rpccli_samr_ChangePasswordUser(struct rpc_pipe_client *cli,
+					TALLOC_CTX *mem_ctx,
+					struct policy_handle *user_handle /* [in] [ref] */,
+					uint8_t lm_present /* [in]  */,
+					struct samr_Password *old_lm_crypted /* [in] [unique] */,
+					struct samr_Password *new_lm_crypted /* [in] [unique] */,
+					uint8_t nt_present /* [in]  */,
+					struct samr_Password *old_nt_crypted /* [in] [unique] */,
+					struct samr_Password *new_nt_crypted /* [in] [unique] */,
+					uint8_t cross1_present /* [in]  */,
+					struct samr_Password *nt_cross /* [in] [unique] */,
+					uint8_t cross2_present /* [in]  */,
+					struct samr_Password *lm_cross /* [in] [unique] */);
+struct tevent_req *rpccli_samr_GetGroupsForUser_send(TALLOC_CTX *mem_ctx,
+						     struct tevent_context *ev,
+						     struct rpc_pipe_client *cli,
+						     struct policy_handle *_user_handle /* [in] [ref] */,
+						     struct samr_RidWithAttributeArray **_rids /* [out] [ref] */);
+NTSTATUS rpccli_samr_GetGroupsForUser_recv(struct tevent_req *req,
+					   TALLOC_CTX *mem_ctx,
+					   NTSTATUS *result);
+NTSTATUS rpccli_samr_GetGroupsForUser(struct rpc_pipe_client *cli,
+				      TALLOC_CTX *mem_ctx,
+				      struct policy_handle *user_handle /* [in] [ref] */,
+				      struct samr_RidWithAttributeArray **rids /* [out] [ref] */);
+struct tevent_req *rpccli_samr_QueryDisplayInfo_send(TALLOC_CTX *mem_ctx,
+						     struct tevent_context *ev,
+						     struct rpc_pipe_client *cli,
+						     struct policy_handle *_domain_handle /* [in] [ref] */,
+						     uint16_t _level /* [in]  */,
+						     uint32_t _start_idx /* [in]  */,
+						     uint32_t _max_entries /* [in]  */,
+						     uint32_t _buf_size /* [in]  */,
+						     uint32_t *_total_size /* [out] [ref] */,
+						     uint32_t *_returned_size /* [out] [ref] */,
+						     union samr_DispInfo *_info /* [out] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_QueryDisplayInfo_recv(struct tevent_req *req,
+					   TALLOC_CTX *mem_ctx,
+					   NTSTATUS *result);
+NTSTATUS rpccli_samr_QueryDisplayInfo(struct rpc_pipe_client *cli,
+				      TALLOC_CTX *mem_ctx,
+				      struct policy_handle *domain_handle /* [in] [ref] */,
+				      uint16_t level /* [in]  */,
+				      uint32_t start_idx /* [in]  */,
+				      uint32_t max_entries /* [in]  */,
+				      uint32_t buf_size /* [in]  */,
+				      uint32_t *total_size /* [out] [ref] */,
+				      uint32_t *returned_size /* [out] [ref] */,
+				      union samr_DispInfo *info /* [out] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_GetDisplayEnumerationIndex_send(TALLOC_CTX *mem_ctx,
+							       struct tevent_context *ev,
+							       struct rpc_pipe_client *cli,
+							       struct policy_handle *_domain_handle /* [in] [ref] */,
+							       uint16_t _level /* [in]  */,
+							       struct lsa_String *_name /* [in] [ref] */,
+							       uint32_t *_idx /* [out] [ref] */);
+NTSTATUS rpccli_samr_GetDisplayEnumerationIndex_recv(struct tevent_req *req,
+						     TALLOC_CTX *mem_ctx,
+						     NTSTATUS *result);
+NTSTATUS rpccli_samr_GetDisplayEnumerationIndex(struct rpc_pipe_client *cli,
+						TALLOC_CTX *mem_ctx,
+						struct policy_handle *domain_handle /* [in] [ref] */,
+						uint16_t level /* [in]  */,
+						struct lsa_String *name /* [in] [ref] */,
+						uint32_t *idx /* [out] [ref] */);
+struct tevent_req *rpccli_samr_TestPrivateFunctionsDomain_send(TALLOC_CTX *mem_ctx,
+							       struct tevent_context *ev,
+							       struct rpc_pipe_client *cli,
+							       struct policy_handle *_domain_handle /* [in] [ref] */);
+NTSTATUS rpccli_samr_TestPrivateFunctionsDomain_recv(struct tevent_req *req,
+						     TALLOC_CTX *mem_ctx,
+						     NTSTATUS *result);
+NTSTATUS rpccli_samr_TestPrivateFunctionsDomain(struct rpc_pipe_client *cli,
+						TALLOC_CTX *mem_ctx,
+						struct policy_handle *domain_handle /* [in] [ref] */);
+struct tevent_req *rpccli_samr_TestPrivateFunctionsUser_send(TALLOC_CTX *mem_ctx,
+							     struct tevent_context *ev,
+							     struct rpc_pipe_client *cli,
+							     struct policy_handle *_user_handle /* [in] [ref] */);
+NTSTATUS rpccli_samr_TestPrivateFunctionsUser_recv(struct tevent_req *req,
+						   TALLOC_CTX *mem_ctx,
+						   NTSTATUS *result);
+NTSTATUS rpccli_samr_TestPrivateFunctionsUser(struct rpc_pipe_client *cli,
+					      TALLOC_CTX *mem_ctx,
+					      struct policy_handle *user_handle /* [in] [ref] */);
+struct tevent_req *rpccli_samr_GetUserPwInfo_send(TALLOC_CTX *mem_ctx,
+						  struct tevent_context *ev,
+						  struct rpc_pipe_client *cli,
+						  struct policy_handle *_user_handle /* [in] [ref] */,
+						  struct samr_PwInfo *_info /* [out] [ref] */);
+NTSTATUS rpccli_samr_GetUserPwInfo_recv(struct tevent_req *req,
+					TALLOC_CTX *mem_ctx,
+					NTSTATUS *result);
+NTSTATUS rpccli_samr_GetUserPwInfo(struct rpc_pipe_client *cli,
+				   TALLOC_CTX *mem_ctx,
+				   struct policy_handle *user_handle /* [in] [ref] */,
+				   struct samr_PwInfo *info /* [out] [ref] */);
+struct tevent_req *rpccli_samr_RemoveMemberFromForeignDomain_send(TALLOC_CTX *mem_ctx,
+								  struct tevent_context *ev,
+								  struct rpc_pipe_client *cli,
+								  struct policy_handle *_domain_handle /* [in] [ref] */,
+								  struct dom_sid2 *_sid /* [in] [ref] */);
+NTSTATUS rpccli_samr_RemoveMemberFromForeignDomain_recv(struct tevent_req *req,
+							TALLOC_CTX *mem_ctx,
+							NTSTATUS *result);
+NTSTATUS rpccli_samr_RemoveMemberFromForeignDomain(struct rpc_pipe_client *cli,
+						   TALLOC_CTX *mem_ctx,
+						   struct policy_handle *domain_handle /* [in] [ref] */,
+						   struct dom_sid2 *sid /* [in] [ref] */);
+struct tevent_req *rpccli_samr_QueryDomainInfo2_send(TALLOC_CTX *mem_ctx,
+						     struct tevent_context *ev,
+						     struct rpc_pipe_client *cli,
+						     struct policy_handle *_domain_handle /* [in] [ref] */,
+						     enum samr_DomainInfoClass _level /* [in]  */,
+						     union samr_DomainInfo **_info /* [out] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_QueryDomainInfo2_recv(struct tevent_req *req,
+					   TALLOC_CTX *mem_ctx,
+					   NTSTATUS *result);
+NTSTATUS rpccli_samr_QueryDomainInfo2(struct rpc_pipe_client *cli,
+				      TALLOC_CTX *mem_ctx,
+				      struct policy_handle *domain_handle /* [in] [ref] */,
+				      enum samr_DomainInfoClass level /* [in]  */,
+				      union samr_DomainInfo **info /* [out] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_QueryUserInfo2_send(TALLOC_CTX *mem_ctx,
+						   struct tevent_context *ev,
+						   struct rpc_pipe_client *cli,
+						   struct policy_handle *_user_handle /* [in] [ref] */,
+						   enum samr_UserInfoLevel _level /* [in]  */,
+						   union samr_UserInfo **_info /* [out] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_QueryUserInfo2_recv(struct tevent_req *req,
+					 TALLOC_CTX *mem_ctx,
+					 NTSTATUS *result);
+NTSTATUS rpccli_samr_QueryUserInfo2(struct rpc_pipe_client *cli,
+				    TALLOC_CTX *mem_ctx,
+				    struct policy_handle *user_handle /* [in] [ref] */,
+				    enum samr_UserInfoLevel level /* [in]  */,
+				    union samr_UserInfo **info /* [out] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_QueryDisplayInfo2_send(TALLOC_CTX *mem_ctx,
+						      struct tevent_context *ev,
+						      struct rpc_pipe_client *cli,
+						      struct policy_handle *_domain_handle /* [in] [ref] */,
+						      uint16_t _level /* [in]  */,
+						      uint32_t _start_idx /* [in]  */,
+						      uint32_t _max_entries /* [in]  */,
+						      uint32_t _buf_size /* [in]  */,
+						      uint32_t *_total_size /* [out] [ref] */,
+						      uint32_t *_returned_size /* [out] [ref] */,
+						      union samr_DispInfo *_info /* [out] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_QueryDisplayInfo2_recv(struct tevent_req *req,
+					    TALLOC_CTX *mem_ctx,
+					    NTSTATUS *result);
+NTSTATUS rpccli_samr_QueryDisplayInfo2(struct rpc_pipe_client *cli,
+				       TALLOC_CTX *mem_ctx,
+				       struct policy_handle *domain_handle /* [in] [ref] */,
+				       uint16_t level /* [in]  */,
+				       uint32_t start_idx /* [in]  */,
+				       uint32_t max_entries /* [in]  */,
+				       uint32_t buf_size /* [in]  */,
+				       uint32_t *total_size /* [out] [ref] */,
+				       uint32_t *returned_size /* [out] [ref] */,
+				       union samr_DispInfo *info /* [out] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_GetDisplayEnumerationIndex2_send(TALLOC_CTX *mem_ctx,
+								struct tevent_context *ev,
+								struct rpc_pipe_client *cli,
+								struct policy_handle *_domain_handle /* [in] [ref] */,
+								uint16_t _level /* [in]  */,
+								struct lsa_String *_name /* [in] [ref] */,
+								uint32_t *_idx /* [out] [ref] */);
+NTSTATUS rpccli_samr_GetDisplayEnumerationIndex2_recv(struct tevent_req *req,
+						      TALLOC_CTX *mem_ctx,
+						      NTSTATUS *result);
+NTSTATUS rpccli_samr_GetDisplayEnumerationIndex2(struct rpc_pipe_client *cli,
+						 TALLOC_CTX *mem_ctx,
+						 struct policy_handle *domain_handle /* [in] [ref] */,
+						 uint16_t level /* [in]  */,
+						 struct lsa_String *name /* [in] [ref] */,
+						 uint32_t *idx /* [out] [ref] */);
+struct tevent_req *rpccli_samr_CreateUser2_send(TALLOC_CTX *mem_ctx,
+						struct tevent_context *ev,
+						struct rpc_pipe_client *cli,
+						struct policy_handle *_domain_handle /* [in] [ref] */,
+						struct lsa_String *_account_name /* [in] [ref] */,
+						uint32_t _acct_flags /* [in]  */,
+						uint32_t _access_mask /* [in]  */,
+						struct policy_handle *_user_handle /* [out] [ref] */,
+						uint32_t *_access_granted /* [out] [ref] */,
+						uint32_t *_rid /* [out] [ref] */);
+NTSTATUS rpccli_samr_CreateUser2_recv(struct tevent_req *req,
+				      TALLOC_CTX *mem_ctx,
+				      NTSTATUS *result);
+NTSTATUS rpccli_samr_CreateUser2(struct rpc_pipe_client *cli,
+				 TALLOC_CTX *mem_ctx,
+				 struct policy_handle *domain_handle /* [in] [ref] */,
+				 struct lsa_String *account_name /* [in] [ref] */,
+				 uint32_t acct_flags /* [in]  */,
+				 uint32_t access_mask /* [in]  */,
+				 struct policy_handle *user_handle /* [out] [ref] */,
+				 uint32_t *access_granted /* [out] [ref] */,
+				 uint32_t *rid /* [out] [ref] */);
+struct tevent_req *rpccli_samr_QueryDisplayInfo3_send(TALLOC_CTX *mem_ctx,
+						      struct tevent_context *ev,
+						      struct rpc_pipe_client *cli,
+						      struct policy_handle *_domain_handle /* [in] [ref] */,
+						      uint16_t _level /* [in]  */,
+						      uint32_t _start_idx /* [in]  */,
+						      uint32_t _max_entries /* [in]  */,
+						      uint32_t _buf_size /* [in]  */,
+						      uint32_t *_total_size /* [out] [ref] */,
+						      uint32_t *_returned_size /* [out] [ref] */,
+						      union samr_DispInfo *_info /* [out] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_QueryDisplayInfo3_recv(struct tevent_req *req,
+					    TALLOC_CTX *mem_ctx,
+					    NTSTATUS *result);
+NTSTATUS rpccli_samr_QueryDisplayInfo3(struct rpc_pipe_client *cli,
+				       TALLOC_CTX *mem_ctx,
+				       struct policy_handle *domain_handle /* [in] [ref] */,
+				       uint16_t level /* [in]  */,
+				       uint32_t start_idx /* [in]  */,
+				       uint32_t max_entries /* [in]  */,
+				       uint32_t buf_size /* [in]  */,
+				       uint32_t *total_size /* [out] [ref] */,
+				       uint32_t *returned_size /* [out] [ref] */,
+				       union samr_DispInfo *info /* [out] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_AddMultipleMembersToAlias_send(TALLOC_CTX *mem_ctx,
+							      struct tevent_context *ev,
+							      struct rpc_pipe_client *cli,
+							      struct policy_handle *_alias_handle /* [in] [ref] */,
+							      struct lsa_SidArray *_sids /* [in] [ref] */);
+NTSTATUS rpccli_samr_AddMultipleMembersToAlias_recv(struct tevent_req *req,
+						    TALLOC_CTX *mem_ctx,
+						    NTSTATUS *result);
+NTSTATUS rpccli_samr_AddMultipleMembersToAlias(struct rpc_pipe_client *cli,
+					       TALLOC_CTX *mem_ctx,
+					       struct policy_handle *alias_handle /* [in] [ref] */,
+					       struct lsa_SidArray *sids /* [in] [ref] */);
+struct tevent_req *rpccli_samr_RemoveMultipleMembersFromAlias_send(TALLOC_CTX *mem_ctx,
+								   struct tevent_context *ev,
+								   struct rpc_pipe_client *cli,
+								   struct policy_handle *_alias_handle /* [in] [ref] */,
+								   struct lsa_SidArray *_sids /* [in] [ref] */);
+NTSTATUS rpccli_samr_RemoveMultipleMembersFromAlias_recv(struct tevent_req *req,
+							 TALLOC_CTX *mem_ctx,
+							 NTSTATUS *result);
+NTSTATUS rpccli_samr_RemoveMultipleMembersFromAlias(struct rpc_pipe_client *cli,
+						    TALLOC_CTX *mem_ctx,
+						    struct policy_handle *alias_handle /* [in] [ref] */,
+						    struct lsa_SidArray *sids /* [in] [ref] */);
+struct tevent_req *rpccli_samr_OemChangePasswordUser2_send(TALLOC_CTX *mem_ctx,
+							   struct tevent_context *ev,
+							   struct rpc_pipe_client *cli,
+							   struct lsa_AsciiString *_server /* [in] [unique] */,
+							   struct lsa_AsciiString *_account /* [in] [ref] */,
+							   struct samr_CryptPassword *_password /* [in] [unique] */,
+							   struct samr_Password *_hash /* [in] [unique] */);
+NTSTATUS rpccli_samr_OemChangePasswordUser2_recv(struct tevent_req *req,
+						 TALLOC_CTX *mem_ctx,
+						 NTSTATUS *result);
+NTSTATUS rpccli_samr_OemChangePasswordUser2(struct rpc_pipe_client *cli,
+					    TALLOC_CTX *mem_ctx,
+					    struct lsa_AsciiString *server /* [in] [unique] */,
+					    struct lsa_AsciiString *account /* [in] [ref] */,
+					    struct samr_CryptPassword *password /* [in] [unique] */,
+					    struct samr_Password *hash /* [in] [unique] */);
+struct tevent_req *rpccli_samr_ChangePasswordUser2_send(TALLOC_CTX *mem_ctx,
+							struct tevent_context *ev,
+							struct rpc_pipe_client *cli,
+							struct lsa_String *_server /* [in] [unique] */,
+							struct lsa_String *_account /* [in] [ref] */,
+							struct samr_CryptPassword *_nt_password /* [in] [unique] */,
+							struct samr_Password *_nt_verifier /* [in] [unique] */,
+							uint8_t _lm_change /* [in]  */,
+							struct samr_CryptPassword *_lm_password /* [in] [unique] */,
+							struct samr_Password *_lm_verifier /* [in] [unique] */);
+NTSTATUS rpccli_samr_ChangePasswordUser2_recv(struct tevent_req *req,
+					      TALLOC_CTX *mem_ctx,
+					      NTSTATUS *result);
+NTSTATUS rpccli_samr_ChangePasswordUser2(struct rpc_pipe_client *cli,
+					 TALLOC_CTX *mem_ctx,
+					 struct lsa_String *server /* [in] [unique] */,
+					 struct lsa_String *account /* [in] [ref] */,
+					 struct samr_CryptPassword *nt_password /* [in] [unique] */,
+					 struct samr_Password *nt_verifier /* [in] [unique] */,
+					 uint8_t lm_change /* [in]  */,
+					 struct samr_CryptPassword *lm_password /* [in] [unique] */,
+					 struct samr_Password *lm_verifier /* [in] [unique] */);
+struct tevent_req *rpccli_samr_GetDomPwInfo_send(TALLOC_CTX *mem_ctx,
+						 struct tevent_context *ev,
+						 struct rpc_pipe_client *cli,
+						 struct lsa_String *_domain_name /* [in] [unique] */,
+						 struct samr_PwInfo *_info /* [out] [ref] */);
+NTSTATUS rpccli_samr_GetDomPwInfo_recv(struct tevent_req *req,
+				       TALLOC_CTX *mem_ctx,
+				       NTSTATUS *result);
+NTSTATUS rpccli_samr_GetDomPwInfo(struct rpc_pipe_client *cli,
+				  TALLOC_CTX *mem_ctx,
+				  struct lsa_String *domain_name /* [in] [unique] */,
+				  struct samr_PwInfo *info /* [out] [ref] */);
+struct tevent_req *rpccli_samr_Connect2_send(TALLOC_CTX *mem_ctx,
+					     struct tevent_context *ev,
+					     struct rpc_pipe_client *cli,
+					     const char *_system_name /* [in] [unique,charset(UTF16)] */,
+					     uint32_t _access_mask /* [in]  */,
+					     struct policy_handle *_connect_handle /* [out] [ref] */);
+NTSTATUS rpccli_samr_Connect2_recv(struct tevent_req *req,
+				   TALLOC_CTX *mem_ctx,
+				   NTSTATUS *result);
+NTSTATUS rpccli_samr_Connect2(struct rpc_pipe_client *cli,
+			      TALLOC_CTX *mem_ctx,
+			      const char *system_name /* [in] [unique,charset(UTF16)] */,
+			      uint32_t access_mask /* [in]  */,
+			      struct policy_handle *connect_handle /* [out] [ref] */);
+struct tevent_req *rpccli_samr_SetUserInfo2_send(TALLOC_CTX *mem_ctx,
+						 struct tevent_context *ev,
+						 struct rpc_pipe_client *cli,
+						 struct policy_handle *_user_handle /* [in] [ref] */,
+						 enum samr_UserInfoLevel _level /* [in]  */,
+						 union samr_UserInfo *_info /* [in] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_SetUserInfo2_recv(struct tevent_req *req,
+				       TALLOC_CTX *mem_ctx,
+				       NTSTATUS *result);
+NTSTATUS rpccli_samr_SetUserInfo2(struct rpc_pipe_client *cli,
+				  TALLOC_CTX *mem_ctx,
+				  struct policy_handle *user_handle /* [in] [ref] */,
+				  enum samr_UserInfoLevel level /* [in]  */,
+				  union samr_UserInfo *info /* [in] [ref,switch_is(level)] */);
+struct tevent_req *rpccli_samr_SetBootKeyInformation_send(TALLOC_CTX *mem_ctx,
+							  struct tevent_context *ev,
+							  struct rpc_pipe_client *cli,
+							  struct policy_handle *_connect_handle /* [in] [ref] */,
+							  uint32_t _unknown1 /* [in]  */,
+							  uint32_t _unknown2 /* [in]  */,
+							  uint32_t _unknown3 /* [in]  */);
+NTSTATUS rpccli_samr_SetBootKeyInformation_recv(struct tevent_req *req,
+						TALLOC_CTX *mem_ctx,
+						NTSTATUS *result);
+NTSTATUS rpccli_samr_SetBootKeyInformation(struct rpc_pipe_client *cli,
+					   TALLOC_CTX *mem_ctx,
+					   struct policy_handle *connect_handle /* [in] [ref] */,
+					   uint32_t unknown1 /* [in]  */,
+					   uint32_t unknown2 /* [in]  */,
+					   uint32_t unknown3 /* [in]  */);
+struct tevent_req *rpccli_samr_GetBootKeyInformation_send(TALLOC_CTX *mem_ctx,
+							  struct tevent_context *ev,
+							  struct rpc_pipe_client *cli,
+							  struct policy_handle *_domain_handle /* [in] [ref] */,
+							  uint32_t *_unknown /* [out] [ref] */);
+NTSTATUS rpccli_samr_GetBootKeyInformation_recv(struct tevent_req *req,
+						TALLOC_CTX *mem_ctx,
+						NTSTATUS *result);
+NTSTATUS rpccli_samr_GetBootKeyInformation(struct rpc_pipe_client *cli,
+					   TALLOC_CTX *mem_ctx,
+					   struct policy_handle *domain_handle /* [in] [ref] */,
+					   uint32_t *unknown /* [out] [ref] */);
+struct tevent_req *rpccli_samr_Connect3_send(TALLOC_CTX *mem_ctx,
+					     struct tevent_context *ev,
+					     struct rpc_pipe_client *cli,
+					     const char *_system_name /* [in] [unique,charset(UTF16)] */,
+					     uint32_t _unknown /* [in]  */,
+					     uint32_t _access_mask /* [in]  */,
+					     struct policy_handle *_connect_handle /* [out] [ref] */);
+NTSTATUS rpccli_samr_Connect3_recv(struct tevent_req *req,
+				   TALLOC_CTX *mem_ctx,
+				   NTSTATUS *result);
+NTSTATUS rpccli_samr_Connect3(struct rpc_pipe_client *cli,
+			      TALLOC_CTX *mem_ctx,
+			      const char *system_name /* [in] [unique,charset(UTF16)] */,
+			      uint32_t unknown /* [in]  */,
+			      uint32_t access_mask /* [in]  */,
+			      struct policy_handle *connect_handle /* [out] [ref] */);
+struct tevent_req *rpccli_samr_Connect4_send(TALLOC_CTX *mem_ctx,
+					     struct tevent_context *ev,
+					     struct rpc_pipe_client *cli,
+					     const char *_system_name /* [in] [unique,charset(UTF16)] */,
+					     enum samr_ConnectVersion _client_version /* [in]  */,
+					     uint32_t _access_mask /* [in]  */,
+					     struct policy_handle *_connect_handle /* [out] [ref] */);
+NTSTATUS rpccli_samr_Connect4_recv(struct tevent_req *req,
+				   TALLOC_CTX *mem_ctx,
+				   NTSTATUS *result);
+NTSTATUS rpccli_samr_Connect4(struct rpc_pipe_client *cli,
+			      TALLOC_CTX *mem_ctx,
+			      const char *system_name /* [in] [unique,charset(UTF16)] */,
+			      enum samr_ConnectVersion client_version /* [in]  */,
+			      uint32_t access_mask /* [in]  */,
+			      struct policy_handle *connect_handle /* [out] [ref] */);
+struct tevent_req *rpccli_samr_ChangePasswordUser3_send(TALLOC_CTX *mem_ctx,
+							struct tevent_context *ev,
+							struct rpc_pipe_client *cli,
+							struct lsa_String *_server /* [in] [unique] */,
+							struct lsa_String *_account /* [in] [ref] */,
+							struct samr_CryptPassword *_nt_password /* [in] [unique] */,
+							struct samr_Password *_nt_verifier /* [in] [unique] */,
+							uint8_t _lm_change /* [in]  */,
+							struct samr_CryptPassword *_lm_password /* [in] [unique] */,
+							struct samr_Password *_lm_verifier /* [in] [unique] */,
+							struct samr_CryptPassword *_password3 /* [in] [unique] */,
+							struct samr_DomInfo1 **_dominfo /* [out] [ref] */,
+							struct samr_ChangeReject **_reject /* [out] [ref] */);
+NTSTATUS rpccli_samr_ChangePasswordUser3_recv(struct tevent_req *req,
+					      TALLOC_CTX *mem_ctx,
+					      NTSTATUS *result);
+NTSTATUS rpccli_samr_ChangePasswordUser3(struct rpc_pipe_client *cli,
+					 TALLOC_CTX *mem_ctx,
+					 struct lsa_String *server /* [in] [unique] */,
+					 struct lsa_String *account /* [in] [ref] */,
+					 struct samr_CryptPassword *nt_password /* [in] [unique] */,
+					 struct samr_Password *nt_verifier /* [in] [unique] */,
+					 uint8_t lm_change /* [in]  */,
+					 struct samr_CryptPassword *lm_password /* [in] [unique] */,
+					 struct samr_Password *lm_verifier /* [in] [unique] */,
+					 struct samr_CryptPassword *password3 /* [in] [unique] */,
+					 struct samr_DomInfo1 **dominfo /* [out] [ref] */,
+					 struct samr_ChangeReject **reject /* [out] [ref] */);
+struct tevent_req *rpccli_samr_Connect5_send(TALLOC_CTX *mem_ctx,
+					     struct tevent_context *ev,
+					     struct rpc_pipe_client *cli,
+					     const char *_system_name /* [in] [unique,charset(UTF16)] */,
+					     uint32_t _access_mask /* [in]  */,
+					     uint32_t _level_in /* [in]  */,
+					     union samr_ConnectInfo *_info_in /* [in] [ref,switch_is(level_in)] */,
+					     uint32_t *_level_out /* [out] [ref] */,
+					     union samr_ConnectInfo *_info_out /* [out] [ref,switch_is(*level_out)] */,
+					     struct policy_handle *_connect_handle /* [out] [ref] */);
+NTSTATUS rpccli_samr_Connect5_recv(struct tevent_req *req,
+				   TALLOC_CTX *mem_ctx,
+				   NTSTATUS *result);
+NTSTATUS rpccli_samr_Connect5(struct rpc_pipe_client *cli,
+			      TALLOC_CTX *mem_ctx,
+			      const char *system_name /* [in] [unique,charset(UTF16)] */,
+			      uint32_t access_mask /* [in]  */,
+			      uint32_t level_in /* [in]  */,
+			      union samr_ConnectInfo *info_in /* [in] [ref,switch_is(level_in)] */,
+			      uint32_t *level_out /* [out] [ref] */,
+			      union samr_ConnectInfo *info_out /* [out] [ref,switch_is(*level_out)] */,
+			      struct policy_handle *connect_handle /* [out] [ref] */);
+struct tevent_req *rpccli_samr_RidToSid_send(TALLOC_CTX *mem_ctx,
+					     struct tevent_context *ev,
+					     struct rpc_pipe_client *cli,
+					     struct policy_handle *_domain_handle /* [in] [ref] */,
+					     uint32_t _rid /* [in]  */,
+					     struct dom_sid2 **_sid /* [out] [ref] */);
+NTSTATUS rpccli_samr_RidToSid_recv(struct tevent_req *req,
+				   TALLOC_CTX *mem_ctx,
+				   NTSTATUS *result);
+NTSTATUS rpccli_samr_RidToSid(struct rpc_pipe_client *cli,
+			      TALLOC_CTX *mem_ctx,
+			      struct policy_handle *domain_handle /* [in] [ref] */,
+			      uint32_t rid /* [in]  */,
+			      struct dom_sid2 **sid /* [out] [ref] */);
+struct tevent_req *rpccli_samr_SetDsrmPassword_send(TALLOC_CTX *mem_ctx,
+						    struct tevent_context *ev,
+						    struct rpc_pipe_client *cli,
+						    struct lsa_String *_name /* [in] [unique] */,
+						    uint32_t _unknown /* [in]  */,
+						    struct samr_Password *_hash /* [in] [unique] */);
+NTSTATUS rpccli_samr_SetDsrmPassword_recv(struct tevent_req *req,
+					  TALLOC_CTX *mem_ctx,
+					  NTSTATUS *result);
+NTSTATUS rpccli_samr_SetDsrmPassword(struct rpc_pipe_client *cli,
+				     TALLOC_CTX *mem_ctx,
+				     struct lsa_String *name /* [in] [unique] */,
+				     uint32_t unknown /* [in]  */,
+				     struct samr_Password *hash /* [in] [unique] */);
+struct tevent_req *rpccli_samr_ValidatePassword_send(TALLOC_CTX *mem_ctx,
+						     struct tevent_context *ev,
+						     struct rpc_pipe_client *cli,
+						     enum samr_ValidatePasswordLevel _level /* [in]  */,
+						     union samr_ValidatePasswordReq *_req /* [in] [ref,switch_is(level)] */,
+						     union samr_ValidatePasswordRep **_rep /* [out] [ref,switch_is(level)] */);
+NTSTATUS rpccli_samr_ValidatePassword_recv(struct tevent_req *req,
+					   TALLOC_CTX *mem_ctx,
+					   NTSTATUS *result);
+NTSTATUS rpccli_samr_ValidatePassword(struct rpc_pipe_client *cli,
+				      TALLOC_CTX *mem_ctx,
+				      enum samr_ValidatePasswordLevel level /* [in]  */,
+				      union samr_ValidatePasswordReq *req /* [in] [ref,switch_is(level)] */,
+				      union samr_ValidatePasswordRep **rep /* [out] [ref,switch_is(level)] */);
+#endif /* __CLI_SAMR__ */

@@ -1,0 +1,228 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Normal Termination</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Job Processing" href="jobsteps.htm">
+    <link rel="PREVIOUS" title="Printing Banner At End of Job "
+    href="x7427.htm">
+    <link rel="NEXT" title="Abnormal Termination " href=
+    "abnormalterm.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x7427.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          15. Job Processing</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "abnormalterm.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="NORMALTERM">15.9. Normal
+      Termination</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">fq</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Form Feed on
+          Close</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">la</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Local Printer
+          Accounting</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">tr=</var><span class=
+          "emphasis"><i class="EMPHASIS">Trailer on
+          Close</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">ae=</var><span class=
+          "emphasis"><i class="EMPHASIS">Accounting at
+          end</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">save_when_done</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Save when
+          done</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">save_on_error</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Do not delete on
+          error</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">done_jobs=N</var><span class=
+          "emphasis"><i class="EMPHASIS">Save status of last N
+          jobs</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">wait_for_eof</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Wait for EOF before
+          closing device</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">socket_linger</var><span class=
+          "emphasis"><i class="EMPHASIS">socket linger
+          timeout</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">half_close</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">use shutdown() and
+          not close()</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>Sequence of Operations:</p>
+
+      <ol type="1">
+        <li>
+          <p>If we are printing and the <var class=
+          "LITERAL">fq</var> flag is set and the <var class=
+          "LITERAL">sf</var> (suppress interfile FF) flag is set,
+          then the <var class="LITERAL">ff</var> (form feed) string
+          will be interpreted and sent to the of_fd.</p>
+        </li>
+
+        <li>
+          <p>If we are printing, the <var class="LITERAL">tr</var>
+          (trailer) string will be interpreted and sent to the
+          of_fd.</p>
+        </li>
+
+        <li>
+          <p>If printing and the <var class="LITERAL">la</var>
+          (local printer accounting) flag is set or transferring a
+          job and the <var class="LITERAL">ar</var> (remote
+          accounting) flag is set, the <var class=
+          "LITERAL">ae</var> is examined and accounting is done as
+          described for the <span class="emphasis"><i class=
+          "EMPHASIS"><a href="opendevice.htm#ACCOUNTSTART">as</a>
+          field.</i></span></p>
+        </li>
+
+        <li>
+          <p>If the <var class="LITERAL">:of</var> filter is
+          present, its <acronym class="ACRONYM">STDIN</acronym> is
+          closed, and the <b class="APPLICATION">lpd</b> server
+          waits for it to exit. The exit status is used as
+          described above.</p>
+        </li>
+
+        <li>
+          <p>If the device is a socket or network connection, the
+          socket linger time is set to <var class=
+          "LITERAL">socket_linger</var> value if nonzero.</p>
+        </li>
+
+        <li>
+          <p>If the <var class="LITERAL">half_shut</var> flag is
+          set, then a <var class=
+          "LITERAL">shutdown(fd,WR_DONE)</var> will be done on the
+          connection. This tells the TCP/IP stack that all data
+          transmission has been completed. Errors or other
+          information can still be read from the connection. If the
+          <var class="LITERAL">half_shut</var> flag is clear, then
+          a <var class="LITERAL">close(fd)</var> will be done and
+          no errors or other information will be read.</p>
+        </li>
+
+        <li>
+          <p>If the <var class="LITERAL">wait_for_eof</var> option
+          is true (default) then a read is done on the connection
+          until an EOF is found. The device (io_fd) is then
+          closed.</p>
+        </li>
+
+        <li>
+          <p>The job is marked as completed in the spool queue.</p>
+        </li>
+
+        <li>
+          <p>If the <var class="LITERAL">save_when_done</var> flag
+          is clear and the <var class="LITERAL">done_jobs</var> and
+          <var class="LITERAL">done_jobs_max_age</var> values are
+          zero (0), the job is removed.</p>
+        </li>
+
+        <li>
+          <p>If the <var class="LITERAL">done_jobs</var> or <var
+          class="LITERAL">done_jobs_max_age</var> values are
+          nonzero, the spool queue is periodically checked and for
+          an excess number of jobs or jobs with old status. This
+          action is suppressed if either the <var class=
+          "LITERAL">save_when_done</var> or <var class=
+          "LITERAL">save_on_error</var> flag is set.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x7427.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "abnormalterm.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Printing Banner
+          At End of Job</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "jobsteps.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Abnormal
+          Termination</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

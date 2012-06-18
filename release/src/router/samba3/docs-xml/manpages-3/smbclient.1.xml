@@ -1,0 +1,1144 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="smbclient.1">
+
+<refmeta>
+	<refentrytitle>smbclient</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">User Commands</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>smbclient</refname>
+	<refpurpose>ftp-like client to access SMB/CIFS resources
+	on servers</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>smbclient</command>
+		<arg choice="opt">-b &lt;buffer size&gt;</arg>
+		<arg choice="opt">-d debuglevel</arg>
+		<arg choice="opt">-e</arg>
+		<arg choice="opt">-L &lt;netbios name&gt;</arg>
+		<arg choice="opt">-U username</arg>
+		<arg choice="opt">-I destinationIP</arg>
+		<arg choice="opt">-M &lt;netbios name&gt;</arg>
+		<arg choice="opt">-m maxprotocol</arg>
+		<arg choice="opt">-A authfile</arg>
+		<arg choice="opt">-N</arg>
+		<arg choice="opt">-g</arg>
+		<arg choice="opt">-i scope</arg>
+		<arg choice="opt">-O &lt;socket options&gt;</arg>
+		<arg choice="opt">-p port</arg>
+		<arg choice="opt">-R &lt;name resolve order&gt;</arg>
+		<arg choice="opt">-s &lt;smb config file&gt;</arg>
+		<arg choice="opt">-k</arg>
+		<arg choice="opt">-P</arg>
+		<arg choice="opt">-c &lt;command&gt;</arg>
+	</cmdsynopsis>
+
+	<cmdsynopsis>
+		<command>smbclient</command>
+		<arg choice="req">servicename</arg>
+		<arg choice="opt">password</arg>
+		<arg choice="opt">-b &lt;buffer size&gt;</arg>
+		<arg choice="opt">-d debuglevel</arg>
+		<arg choice="opt">-e</arg>
+		<arg choice="opt">-D Directory</arg>
+		<arg choice="opt">-U username</arg>
+		<arg choice="opt">-W workgroup</arg>
+		<arg choice="opt">-M &lt;netbios name&gt;</arg>
+		<arg choice="opt">-m maxprotocol</arg>
+		<arg choice="opt">-A authfile</arg>
+		<arg choice="opt">-N</arg>
+		<arg choice="opt">-g</arg>
+		<arg choice="opt">-l log-basename</arg>
+		<arg choice="opt">-I destinationIP</arg>
+		<arg choice="opt">-E</arg>
+		<arg choice="opt">-c &lt;command string&gt;</arg>
+		<arg choice="opt">-i scope</arg>
+		<arg choice="opt">-O &lt;socket options&gt;</arg>
+		<arg choice="opt">-p port</arg>
+		<arg choice="opt">-R &lt;name resolve order&gt;</arg>
+		<arg choice="opt">-s &lt;smb config file&gt;</arg>
+		<arg choice="opt">-T&lt;c|x&gt;IXFqgbNan</arg>
+		<arg choice="opt">-k</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para><command>smbclient</command> is a client that can 
+	'talk' to an SMB/CIFS server. It offers an interface
+	similar to that of the ftp program (see <citerefentry><refentrytitle>ftp</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>).  
+	Operations include things like getting files from the server 
+	to the local machine, putting files from the local machine to 
+	the server, retrieving directory information from the server 
+	and so on. </para>
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+	
+	<variablelist>
+		<varlistentry>
+		<term>servicename</term>
+		<listitem><para>servicename is the name of the service 
+		you want to use on the server. A service name takes the form
+		<filename>//server/service</filename> where <parameter>server
+		</parameter> is the NetBIOS name of the SMB/CIFS server 
+		offering the desired service and <parameter>service</parameter> 
+		is the name of the service offered.  Thus to connect to 
+		the service "printer" on the SMB/CIFS server "smbserver",
+		you would use the servicename <filename>//smbserver/printer
+		</filename></para>
+
+		<para>Note that the server name required is NOT necessarily 
+		the IP (DNS) host name of the server !  The name required is 
+		a NetBIOS server name, which may or may not be the
+		same as the IP hostname of the machine running the server.
+		</para>
+
+		<para>The server name is looked up according to either 
+		the <parameter>-R</parameter> parameter to <command>smbclient</command> or 
+		using the name resolve order parameter in 
+		the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry> file, 
+		allowing an administrator to change the order and methods 
+		by which server names are looked up. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>password</term>
+		<listitem><para>The password required to access the specified 
+		service on the specified server. If this parameter is 
+		supplied, the <parameter>-N</parameter> option (suppress 
+		password prompt) is assumed. </para>
+
+		<para>There is no default password. If no password is supplied 
+		on the command line (either by using this parameter or adding 
+		a password to the <parameter>-U</parameter> option (see 
+		below)) and the <parameter>-N</parameter> option is not 
+		specified, the client will prompt for a password, even if 
+		the desired service does not require one. (If no password is 
+		required, simply press ENTER to provide a null password.)
+		</para>
+
+		<para>Note: Some servers (including OS/2 and Windows for 
+		Workgroups) insist on an uppercase password. Lowercase 
+		or mixed case passwords may be rejected by these servers. 		
+		</para>
+
+		<para>Be cautious about including passwords in scripts.
+		</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-R &lt;name resolve order&gt;</term> 
+		<listitem><para>This option is used by the programs in the Samba 
+		suite to determine what naming services and in what order to resolve 
+		host names to IP addresses. The option takes a space-separated 
+		string of different name resolution options.</para>
+
+		<para>The options are :"lmhosts", "host", "wins" and "bcast". They 
+		cause names to be resolved as follows:</para>
+
+		<itemizedlist>
+			<listitem><para><constant>lmhosts</constant>: Lookup an IP 
+			address in the Samba lmhosts file. If the line in lmhosts has 
+			no name type attached to the NetBIOS name (see 
+			the <citerefentry><refentrytitle>lmhosts</refentrytitle>
+			<manvolnum>5</manvolnum></citerefentry> for details) then
+			any name type matches for lookup.</para>
+			</listitem>
+			
+			<listitem><para><constant>host</constant>: Do a standard host 
+			name to IP address resolution, using the system <filename>/etc/hosts
+			</filename>, NIS, or DNS lookups. This method of name resolution 
+			is operating system dependent, for instance on IRIX or Solaris this 
+			may be controlled by the <filename>/etc/nsswitch.conf</filename> 
+			file).  Note that this method is only used if the NetBIOS name 
+			type being queried is the 0x20 (server) name type, otherwise 
+			it is ignored.</para>
+			</listitem>
+			
+			<listitem><para><constant>wins</constant>: Query a name with 
+			the IP address listed in the <parameter>wins server</parameter>
+			parameter.  If no WINS server has
+			been specified this method will be ignored.</para>
+			</listitem>
+			
+			<listitem><para><constant>bcast</constant>: Do a broadcast on 
+			each of the known local interfaces listed in the 
+			<parameter>interfaces</parameter>
+			parameter. This is the least reliable of the name resolution 
+			methods as it depends on the target host being on a locally 
+			connected subnet.</para>
+			</listitem>
+		</itemizedlist>
+
+		<para>If this parameter is not set then the name resolve order 
+		defined in the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry> file parameter  
+		(name resolve order) will be used. </para>
+
+		<para>The default order is lmhosts, host, wins, bcast and without 
+		this parameter or any entry in the <parameter>name resolve order
+		</parameter> parameter of the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry> file the name resolution
+		methods will be attempted in this order. </para></listitem>
+		</varlistentry>
+		
+		
+		<varlistentry>
+		<term>-M NetBIOS name</term>
+		<listitem><para>This options allows you to send messages, using 
+		the "WinPopup" protocol, to another computer. Once a connection is 
+		established you then type your message, pressing ^D (control-D) to 
+		end. </para>
+
+		<para>If the receiving computer is running WinPopup the user will 
+		receive the message and probably a beep. If they are not running 
+		WinPopup the message will be lost, and no error message will 
+		occur. </para>
+
+		<para>The message is also automatically truncated if the message 
+		is over 1600 bytes, as this is the limit of the protocol. 
+		</para>
+
+		<para>
+		One useful trick is to pipe the message through <command>smbclient</command>. 
+		For example: smbclient -M FRED &lt; mymessage.txt will send the 
+		message in the file <filename>mymessage.txt</filename> to the 
+		machine FRED.
+		</para>
+
+		<para>You may also find the <parameter>-U</parameter> and 
+		<parameter>-I</parameter> options useful, as they allow you to 
+		control the FROM and TO parts of the message. </para>
+
+		<para>See the <parameter>message command</parameter> parameter in the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry> for a description of how to handle incoming 
+		WinPopup messages in Samba. </para>
+
+		<para><emphasis>Note</emphasis>: Copy WinPopup into the startup group 
+		on your WfWg PCs if you want them to always be able to receive 
+		messages. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-p port</term>
+		<listitem><para>This number is the TCP port number that will be used 
+		when making connections to the server. The standard (well-known)
+		TCP port number for an SMB/CIFS server is 139, which is the 
+		default. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-g</term>
+		<listitem><para>This parameter provides combined with
+		<parameter>-L</parameter> easy parseable output	that allows processing
+		with utilities such as grep and cut.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-P</term>
+		<listitem><para>
+		Make queries to the external server using the machine account of the local server.
+		</para></listitem>
+		</varlistentry>
+
+		&stdarg.help;
+
+		<varlistentry>
+		<term>-I IP-address</term>
+		<listitem><para><replaceable>IP address</replaceable> is the address of the server to connect to.
+		It should be specified in standard "a.b.c.d" notation. </para>
+
+		<para>Normally the client would attempt to locate a named 
+		SMB/CIFS server by looking it up via the NetBIOS name resolution 
+		mechanism described above in the <parameter>name resolve order</parameter> 
+		parameter above. Using this parameter will force the client
+		to assume that the server is on the machine with the specified IP 
+		address and the NetBIOS name component of the resource being 
+		connected to will be ignored. </para>
+
+		<para>There is no default for this parameter. If not supplied, 
+		it will be determined automatically by the client as described 
+		above. </para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-E</term>
+		<listitem><para>This parameter causes the client to write messages 
+		to the standard error stream (stderr) rather than to the standard 
+		output stream. </para>
+		
+		<para>By default, the client writes messages to standard output 
+		- typically the user's tty. </para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-L</term>
+		<listitem><para>This option allows you to look at what services 
+		are available on a server. You use it as <command>smbclient -L 
+		host</command> and a list should appear.  The <parameter>-I
+		</parameter> option may be useful if your NetBIOS names don't 
+		match your TCP/IP DNS host names or if you are trying to reach a 
+		host on another network. </para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-t terminal code</term>
+		<listitem><para>This option tells <command>smbclient</command> how to interpret 
+		filenames coming from the remote server. Usually Asian language 
+		multibyte UNIX implementations use different character sets than 
+		SMB/CIFS servers (<emphasis>EUC</emphasis> instead of <emphasis>
+		SJIS</emphasis> for example). Setting this parameter will let 
+		<command>smbclient</command> convert between the UNIX filenames and 
+		the SMB filenames correctly. This option has not been seriously tested 
+		and may have some problems. </para>
+
+		<para>The terminal codes include CWsjis, CWeuc, CWjis7, CWjis8,
+		CWjunet, CWhex, CWcap. This is not a complete list, check the Samba 
+		source code for the complete list. </para></listitem>
+		</varlistentry>
+			
+		<varlistentry>	
+		<term>-b buffersize</term>
+		<listitem><para>This option changes the transmit/send buffer 
+		size when getting or putting a file from/to the server. The default 
+		is 65520 bytes. Setting this value smaller (to 1200 bytes) has been 
+		observed to speed up file transfers to and from a Win9x server. 
+		</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-e</term>
+		<listitem><para>This command line parameter requires the remote
+		server support the UNIX extensions. Request that the connection be
+		encrypted. This is new for Samba 3.2 and will only work with Samba
+		3.2 or above servers. Negotiates SMB encryption using GSSAPI. Uses
+		the given credentials for the encryption negotiaion (either kerberos
+		or NTLMv1/v2 if given domain/username/password triple. Fails the
+		connection if encryption cannot be negotiated.
+		</para></listitem>
+		</varlistentry>
+		
+		&stdarg.client.debug;
+		&popt.common.samba;
+		&popt.common.credentials;
+		&popt.common.connection;
+		
+		<varlistentry>
+		<term>-T tar options</term>
+		<listitem><para>smbclient may be used to create <command>tar(1)
+		</command> compatible backups of all the files on an SMB/CIFS
+		share. The secondary tar flags that can be given to this option 
+		are : </para>
+		
+		<itemizedlist>
+			<listitem><para><parameter>c</parameter> - Create a tar file on UNIX. 
+			Must be followed by the name of a tar file, tape device
+			or "-" for standard output. If using standard output you must 
+			turn the log level to its lowest value -d0 to avoid corrupting 
+			your tar file. This flag is mutually exclusive with the 
+			<parameter>x</parameter> flag. </para></listitem>
+			
+			<listitem><para><parameter>x</parameter> - Extract (restore) a local 
+			tar file back to a share. Unless the -D option is given, the tar 
+			files will be restored from the top level of the share. Must be 
+			followed by the name of the tar file, device or "-" for standard 
+			input. Mutually exclusive with the <parameter>c</parameter> flag. 
+			Restored files have their creation times (mtime) set to the
+			date saved in the tar file. Directories currently do not get 
+			their creation dates restored properly. </para></listitem>
+			
+			<listitem><para><parameter>I</parameter> - Include files and directories. 
+			Is the default behavior when filenames are specified above. Causes 
+			files to be included in an extract or create (and therefore 
+			everything else to be excluded). See example below.  Filename globbing 
+			works  in one of two ways.  See <parameter>r</parameter> below. </para></listitem>
+			
+			<listitem><para><parameter>X</parameter> - Exclude files and directories. 
+			Causes files to be excluded from an extract or create. See 
+			example below.  Filename globbing works in one of two ways now. 
+			See <parameter>r</parameter> below. </para></listitem>
+			
+			<listitem><para><parameter>F</parameter> - File containing a list of files and directories.
+			The <parameter>F</parameter> causes the name following the tarfile to
+			create to be read as a filename that contains a list of files and directories to 
+			be included in an extract or create (and therefore everything else to be excluded).
+			See example below. Filename globbing works in one of two ways.
+			See <parameter>r</parameter> below.
+			</para></listitem>
+			
+			<listitem><para><parameter>b</parameter> - Blocksize. Must be followed 
+			by a valid (greater than zero) blocksize.  Causes tar file to be 
+			written out in blocksize*TBLOCK (usually 512 byte) blocks. 
+			</para></listitem>
+			
+			<listitem><para><parameter>g</parameter> - Incremental. Only back up 
+			files that have the archive bit set. Useful only with the 
+			<parameter>c</parameter> flag. </para></listitem>
+
+			<listitem><para><parameter>q</parameter> - Quiet. Keeps tar from printing 
+			diagnostics as it works.  This is the same as tarmode quiet. 
+			</para></listitem>
+			
+			<listitem><para><parameter>r</parameter> - Regular expression include
+			or exclude.  Uses regular  expression matching for 
+			excluding or excluding files if  compiled with HAVE_REGEX_H. 
+			However this mode can be very slow. If  not compiled with 
+			HAVE_REGEX_H, does a limited wildcard match on '*' and  '?'. 
+			</para></listitem>
+			
+			<listitem><para><parameter>N</parameter> - Newer than. Must be followed 
+			by the name of a file whose date is compared against files found 
+			on the share during a create. Only files newer than the file 
+			specified are backed up to the tar file. Useful only with the 
+			<parameter>c</parameter> flag. </para></listitem>
+			
+			<listitem><para><parameter>a</parameter> - Set archive bit. Causes the 
+			archive bit to be reset when a file is backed up. Useful with the 
+			<parameter>g</parameter> and <parameter>c</parameter> flags. 
+			</para></listitem>
+		</itemizedlist>
+			
+		<para><emphasis>Tar Long File Names</emphasis></para>
+			
+		<para><command>smbclient</command>'s tar option now supports long 
+		file names both on backup and restore. However, the full path 
+		name of the file must be less than 1024 bytes.  Also, when
+		a tar archive is created, <command>smbclient</command>'s tar option places all 
+		files in the archive with relative names, not absolute names. 
+		</para>
+
+		<para><emphasis>Tar Filenames</emphasis></para>
+			
+		<para>All file names can be given as DOS path names (with '\\' 
+		as the component separator) or as UNIX path names (with '/' as 
+		the component separator). </para>
+			
+		<para><emphasis>Examples</emphasis></para>
+		
+		<para>Restore from tar file <filename>backup.tar</filename> into myshare on mypc 
+		(no password on share). </para>
+		
+		<para><command>smbclient //mypc/yshare "" -N -Tx backup.tar
+		</command></para>
+		
+		<para>Restore everything except <filename>users/docs</filename>
+		</para>
+		
+		<para><command>smbclient //mypc/myshare "" -N -TXx backup.tar 
+		users/docs</command></para>
+		
+		<para>Create a tar file of the files beneath <filename>
+		users/docs</filename>. </para>
+		
+		<para><command>smbclient //mypc/myshare "" -N -Tc
+		backup.tar users/docs </command></para>
+		
+		<para>Create the same tar file as above, but now use 
+		a DOS path name. </para>
+		
+		<para><command>smbclient //mypc/myshare "" -N -tc backup.tar 
+		users\edocs </command></para>
+		
+		<para>Create a tar file of the files listed in the file <filename>tarlist</filename>.</para>
+		
+		<para><command>smbclient //mypc/myshare "" -N -TcF
+		backup.tar tarlist</command></para>
+		
+		<para>Create a tar file of all the files and directories in 
+		the share. </para>
+		
+		<para><command>smbclient //mypc/myshare "" -N -Tc backup.tar *
+		</command></para>
+		</listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-D initial directory</term>
+		<listitem><para>Change to initial directory before starting. Probably 
+		only of any use with the tar -T option. </para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-c command string</term>
+		<listitem><para>command string is a semicolon-separated list of 
+		commands to be executed instead of prompting from stdin. <parameter>
+		-N</parameter> is implied by <parameter>-c</parameter>.</para>
+
+		<para>This is particularly useful in scripts and for printing stdin 
+		to the server, e.g. <command>-c 'print -'</command>. </para></listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+
+<refsect1>
+	<title>OPERATIONS</title>
+
+	<para>Once the client is running, the user is presented with 
+	a prompt : </para>
+
+	<para><prompt>smb:\&gt; </prompt></para>
+
+	<para>The backslash ("\\") indicates the current working directory 
+	on the server, and will change if the current working directory 
+	is changed. </para>
+
+	<para>The prompt indicates that the client is ready and waiting to 
+	carry out a user command. Each command is a single word, optionally 
+	followed by parameters specific to that command. Command and parameters 
+	are space-delimited unless these notes specifically
+	state otherwise. All commands are case-insensitive.  Parameters to 
+	commands may or may not be case sensitive, depending on the command. 
+	</para>
+
+	<para>You can specify file names which have spaces in them by quoting 
+	the name with double quotes, for example "a long file name". </para>
+
+	<para>Parameters shown in square brackets (e.g., "[parameter]") are 
+	optional.  If not given, the command will use suitable defaults. Parameters 
+	shown in angle brackets (e.g., "&lt;parameter&gt;") are required.
+	</para>
+
+
+	<para>Note that all commands operating on the server are actually 
+	performed by issuing a request to the server. Thus the behavior may 
+	vary from server to server, depending on how the server was implemented. 
+	</para>
+
+	<para>The commands available are given here in alphabetical order. </para>
+
+	<variablelist>
+		<varlistentry>
+		<term>? [command]</term>
+		<listitem><para>If <replaceable>command</replaceable> is specified, the ? command will display
+		a brief informative message about the specified command.  If no
+		command is specified, a list of available commands will
+		be displayed. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>! [shell command]</term>
+		<listitem><para>If <replaceable>shell command</replaceable> is specified, the !
+		command will execute a shell locally and run the specified shell
+		command. If no command is specified, a local shell will be run.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>allinfo file</term>
+		<listitem><para>The client will request that the server return
+		all known information about a file or directory (including streams).
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>altname file</term>
+		<listitem><para>The client will request that the server return
+		the "alternate" name (the 8.3 name) for a file or directory.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>archive &lt;number&gt;</term>
+		<listitem><para>Sets the archive level when operating on files.
+		0 means ignore the archive bit, 1 means only operate on files with this bit set,
+		2 means only operate on files with this bit set and reset it after operation,
+		3 means operate on all files and reset it after operation. The default is 0.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>blocksize &lt;number&gt;</term>
+		<listitem><para>Sets the blocksize parameter for a tar operation. The default is 20.
+		Causes tar file to be written out in blocksize*TBLOCK (normally 512 byte) units.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>cancel jobid0 [jobid1] ... [jobidN]</term>
+		<listitem><para>The client will request that the server cancel
+		the printjobs identified by the given numeric print job ids.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>case_sensitive</term>
+		<listitem><para>Toggles the setting of the flag in SMB packets that
+		tells the server to treat filenames as case sensitive. Set to OFF by
+		default (tells file server to treat filenames as case insensitive). Only
+		currently affects Samba 3.0.5 and above file servers with the case sensitive
+		parameter set to auto in the smb.conf.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>cd &lt;directory name&gt;</term>
+		<listitem><para>If "directory name" is specified, the current
+		working directory on the server will be changed to the directory
+		specified. This operation will fail if for any reason the specified
+		directory is inaccessible. </para>
+
+		<para>If no directory name is specified, the current working
+		directory on the server will be reported. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>chmod file mode in octal</term>
+		<listitem><para>This command depends on the server supporting the CIFS
+		UNIX extensions and will fail if the server does not. The client requests that the server
+		change the UNIX permissions to the given octal mode, in standard UNIX format.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>chown file uid gid</term>
+		<listitem><para>This command depends on the server supporting the CIFS
+		UNIX extensions and will fail if the server does not. The client requests that the server
+		change the UNIX user and group ownership to the given decimal values. Note there is
+		currently no way to remotely look up the UNIX uid and gid values for a given name.
+		This may be addressed in future versions of the CIFS UNIX extensions.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>close &lt;fileid&gt;</term>
+		<listitem><para>Closes a file explicitly opened by the open command. Used for
+		internal Samba testing purposes.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>del &lt;mask&gt;</term>
+		<listitem><para>The client will request that the server attempt
+		to delete all files matching <replaceable>mask</replaceable> from the current working
+		directory on the server. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>dir &lt;mask&gt;</term>
+		<listitem><para>A list of the files matching <replaceable>mask</replaceable> in the current
+		working directory on the server will be retrieved from the server
+		and displayed. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>du &lt;filename&gt;</term>
+		<listitem><para>Does a directory listing and then prints out the current disk useage and free space on a share.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>echo &lt;number&gt; &lt;data&gt;</term>
+		<listitem><para>Does an SMBecho request to ping the server. Used for internal Samba testing purposes.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>exit</term>
+		<listitem><para>Terminate the connection with the server and exit
+		from the program. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>get &lt;remote file name&gt; [local file name]</term>
+		<listitem><para>Copy the file called <filename>remote file name</filename> from
+		the server to the machine running the client. If specified, name
+		the local copy <filename>local file name</filename>.  Note that all transfers in
+		<command>smbclient</command> are binary. See also the
+		lowercase command. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>getfacl &lt;filename&gt;</term>
+		<listitem><para>Requires the server support the UNIX extensions. Requests and prints
+		the POSIX ACL on a file.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>hardlink &lt;src&gt; &lt;dest&gt;</term>
+		<listitem><para>Creates a hardlink on the server using Windows CIFS semantics.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>help [command]</term>
+		<listitem><para>See the ? command above. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>history</term> <listitem><para>Displays the command history.</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>iosize &lt;bytes&gt;</term>
+		<listitem><para>When sending or receiving files, smbclient uses an
+		internal memory buffer by default of size 64512 bytes. This command
+		allows this size to be set to any range between 16384 (0x4000) bytes
+		and 16776960 (0xFFFF00) bytes. Larger sizes may mean more efficient
+		data transfer as smbclient will try and use the most efficient
+		read and write calls for the connected server.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>lcd [directory name]</term>
+		<listitem><para>If <replaceable>directory name</replaceable> is specified, the current
+		working directory on the local machine will be changed to
+		the directory specified. This operation will fail if for any
+		reason the specified directory is inaccessible. </para>
+
+		<para>If no directory name is specified, the name of the
+		current working directory on the local machine will be reported.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>link target linkname</term>
+		<listitem><para>This command depends on the server supporting the CIFS
+		UNIX extensions and will fail if the server does not. The client requests that the server
+		create a hard link between the linkname and target files. The linkname file
+		must not exist.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>listconnect</term>
+		<listitem><para>Show the current connections held for DFS purposes.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>lock &lt;filenum&gt; &lt;r|w&gt; &lt;hex-start&gt; &lt;hex-len&gt;</term>
+		<listitem><para>This command depends on the server supporting the CIFS
+		UNIX extensions and will fail if the server does not. Tries to set a POSIX
+		fcntl lock of the given type on the given range. Used for internal Samba testing purposes.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>logon &lt;username&gt; &lt;password&gt;</term>
+		<listitem><para>Establishes a new vuid for this session by logging on again.
+		Replaces the current vuid. Prints out the new vuid. Used for internal Samba testing purposes.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>lowercase</term>
+		<listitem><para>Toggle lowercasing of filenames for the get and
+		mget commands.		
+		</para>	
+
+		<para>When lowercasing is toggled ON, local filenames are converted
+		to lowercase when using the get and mget commands. This is
+		often useful when copying (say) MSDOS files from a server, because
+		lowercase filenames are the norm on UNIX systems. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>ls &lt;mask&gt;</term>
+		<listitem><para>See the dir command above. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>mask &lt;mask&gt;</term>
+		<listitem><para>This command allows the user to set up a mask
+		which will be used during recursive operation of the mget and
+		mput commands. </para>
+
+		<para>The masks specified to the mget and mput commands act as
+		filters for directories rather than files when recursion is
+		toggled ON. </para>
+
+		<para>The mask specified with the mask command is necessary
+		to filter files within those directories. For example, if the
+		mask specified in an mget command is "source*" and the mask
+		specified with the mask command is "*.c" and recursion is
+		toggled ON, the mget command will retrieve all files matching
+		"*.c" in all directories below and including all directories
+		matching "source*" in the current working directory. </para>
+
+		<para>Note that the value for mask defaults to blank (equivalent
+		to "*") and remains so until the mask command is used to change it.
+		It retains the most recently specified value indefinitely. To
+		avoid unexpected results it would be wise to change the value of
+		mask back to "*" after using the mget or mput commands. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>md &lt;directory name&gt;</term>
+		<listitem><para>See the mkdir command. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>mget &lt;mask&gt;</term>
+		<listitem><para>Copy all files matching <replaceable>mask</replaceable> from the server to
+		the machine running the client. </para>
+
+		<para>Note that <replaceable>mask</replaceable> is interpreted differently during recursive
+		operation and non-recursive operation - refer to the recurse and
+		mask commands for more information. Note that all transfers in
+		<command>smbclient</command> are binary. See also the lowercase command. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>mkdir &lt;directory name&gt;</term>
+		<listitem><para>Create a new directory on the server (user access
+		privileges permitting) with the specified name. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>more &lt;file name&gt;</term>
+		<listitem><para>Fetch a remote file and view it with the contents
+		of your PAGER environment variable.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>mput &lt;mask&gt;</term>
+		<listitem><para>Copy all files matching <replaceable>mask</replaceable> in the current working
+		directory on the local machine to the current working directory on
+		the server. </para>
+
+		<para>Note that <replaceable>mask</replaceable> is interpreted differently during recursive
+		operation and non-recursive operation - refer to the recurse and mask
+		commands for more information. Note that all transfers in <command>smbclient</command>
+		are binary. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>posix</term>
+		<listitem><para>Query the remote server to see if it supports the CIFS UNIX
+		extensions and prints out the list of capabilities supported. If so, turn
+		on POSIX pathname processing and large file read/writes (if available),.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>posix_encrypt &lt;domain&gt; &lt;username&gt; &lt;password&gt;</term>
+		<listitem><para>This command depends on the server supporting the CIFS
+		UNIX extensions and will fail if the server does not. Attempt to negotiate
+		SMB encryption on this connection. If smbclient connected with kerberos
+		credentials (-k) the arguments to this command are ignored and the kerberos
+		credentials are used to negotiate GSSAPI signing and sealing instead. See
+		also the -e option to smbclient to force encryption on initial connection.
+		This command is new with Samba 3.2.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>posix_open &lt;filename&gt; &lt;octal mode&gt;</term>
+		<listitem><para>This command depends on the server supporting the CIFS
+		UNIX extensions and will fail if the server does not. Opens a remote file
+		using the CIFS UNIX extensions and prints a fileid. Used for internal Samba
+		testing purposes.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>posix_mkdir &lt;directoryname&gt; &lt;octal mode&gt;</term>
+		<listitem><para>This command depends on the server supporting the CIFS
+		UNIX extensions and will fail if the server does not. Creates a remote directory
+		using the CIFS UNIX extensions with the given mode.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>posix_rmdir &lt;directoryname&gt;</term>
+		<listitem><para>This command depends on the server supporting the CIFS
+		UNIX extensions and will fail if the server does not. Deletes a remote directory
+		using the CIFS UNIX extensions.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>posix_unlink &lt;filename&gt;</term>
+		<listitem><para>This command depends on the server supporting the CIFS
+		UNIX extensions and will fail if the server does not. Deletes a remote file
+		using the CIFS UNIX extensions.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>print &lt;file name&gt;</term>
+		<listitem><para>Print the specified file from the local machine
+		through a printable service on the server. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>prompt</term>
+		<listitem><para>Toggle prompting for filenames during operation
+		of the mget and mput commands. </para>
+
+		<para>When toggled ON, the user will be prompted to confirm
+		the transfer of each file during these commands. When toggled
+		OFF, all specified files will be transferred without prompting.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>put &lt;local file name&gt; [remote file name]</term>
+		<listitem><para>Copy the file called <filename>local file name</filename> from the
+		machine running the client to the server. If specified,
+		name the remote copy <filename>remote file name</filename>. Note that all transfers
+		in <command>smbclient</command> are binary. See also the lowercase command.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>queue</term>
+		<listitem><para>Displays the print queue, showing the job id,
+		name, size and current status. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>quit</term>
+		<listitem><para>See the exit command. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>rd &lt;directory name&gt;</term>
+		<listitem><para>See the rmdir command. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>recurse</term>
+		<listitem><para>Toggle directory recursion for the commands mget
+		and mput. </para>
+
+		<para>When toggled ON, these commands will process all directories
+		in the source directory (i.e., the directory they are copying
+		from ) and will recurse into any that match the mask specified
+		to the command. Only files that match the mask specified using
+		the mask command will be retrieved. See also the mask command.
+		</para>
+
+		<para>When recursion is toggled OFF, only files from the current
+		working directory on the source machine that match the mask specified
+		to the mget or mput commands will be copied, and any mask specified
+		using the mask command will be ignored. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>rm &lt;mask&gt;</term>
+		<listitem><para>Remove all files matching <replaceable>mask</replaceable> from the current
+		working directory on the server. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>rmdir &lt;directory name&gt;</term>
+ 		<listitem><para>Remove the specified directory (user access
+		privileges permitting) from the server. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>setmode &lt;filename&gt; &lt;perm=[+|\-]rsha&gt;</term>
+		<listitem><para>A version of the DOS attrib command to set
+		file permissions. For example: </para>
+
+		<para><command>setmode myfile +r </command></para>
+
+		<para>would make myfile read only. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>showconnect</term>
+		<listitem><para>Show the currently active connection held for DFS purposes.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>stat file</term>
+		<listitem><para>This command depends on the server supporting the CIFS
+		UNIX extensions and will fail if the server does not. The client requests the
+		UNIX basic info level and prints out the same info that the Linux stat command
+		would about the file. This includes the size, blocks used on disk, file type,
+		permissions, inode number, number of links and finally the three timestamps
+		(access, modify and change). If the file is a special file (symlink, character or
+		block device, fifo or socket) then extra information may also be printed.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>symlink target linkname</term>
+		<listitem><para>This command depends on the server supporting the CIFS
+		UNIX extensions and will fail if the server does not. The client requests that the server
+		create a symbolic hard link between the target and linkname files. The linkname file
+		must not exist. Note that the server will not create a link to any path that lies
+		outside the currently connected share. This is enforced by the Samba server.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>tar &lt;c|x&gt;[IXbgNa]</term>
+		<listitem><para>Performs a tar operation - see the <parameter>-T
+		</parameter> command line option above. Behavior may be affected
+		by the tarmode command (see below). Using g (incremental) and N
+		(newer) will affect tarmode settings. Note that using the "-" option
+		with tar x may not work - use the command line option instead.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>blocksize &lt;blocksize&gt;</term>
+		<listitem><para>Blocksize. Must be followed by a valid (greater
+		than zero) blocksize. Causes tar file to be written out in
+		<replaceable>blocksize</replaceable>*TBLOCK (usually 512 byte) blocks. </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>tarmode &lt;full|inc|reset|noreset&gt;</term>
+		<listitem><para>Changes tar's behavior with regard to archive
+		bits. In full mode, tar will back up everything regardless of the
+		archive bit setting (this is the default mode). In incremental mode,
+		tar will only back up files with the archive bit set. In reset mode,
+		tar will reset the archive bit on all files it backs up (implies
+		read/write share). </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>unlock &lt;filenum&gt; &lt;hex-start&gt; &lt;hex-len&gt;</term>
+		<listitem><para>This command depends on the server supporting the CIFS
+		UNIX extensions and will fail if the server does not. Tries to unlock a POSIX
+		fcntl lock on the given range. Used for internal Samba testing purposes.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>volume</term>
+		<listitem><para>Prints the current volume name of the share.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>vuid &lt;number&gt;</term>
+		<listitem><para>Changes the currently used vuid in the protocol to
+		the given arbitrary number. Without an argument prints out the current
+		vuid being used. Used for internal Samba testing purposes.
+		</para></listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>NOTES</title>
+
+	<para>Some servers are fussy about the case of supplied usernames,
+	passwords, share names (AKA service names) and machine names.
+	If you fail to connect try giving all parameters in uppercase.
+	</para>
+
+	<para>It is often necessary to use the -n option when connecting
+	to some types of servers. For example OS/2 LanManager insists
+	on a valid NetBIOS name being used, so you need to supply a valid
+	name that would be known to the server.</para>
+
+	<para>smbclient supports long file names where the server 
+	supports the LANMAN2 protocol or above. </para>
+</refsect1>
+
+<refsect1>
+	<title>ENVIRONMENT VARIABLES</title>
+
+	<para>The variable <envar>USER</envar> may contain the 
+	username of the person  using the client. This information is 
+	used only if the protocol  level is high enough to support 
+	session-level passwords.</para>
+
+
+	<para>The variable <envar>PASSWD</envar> may contain 
+	the password of the person using the client.  This information is 
+	used only if the protocol level is high enough to support 
+	session-level passwords. </para>
+
+	<para>The variable <envar>LIBSMB_PROG</envar> may contain 
+	the path, executed with system(), which the client should connect 
+        to instead of connecting to a server.  This functionality is primarily
+        intended as a development aid, and works best when using a LMHOSTS 
+        file</para>
+</refsect1>
+
+
+<refsect1>
+	<title>INSTALLATION</title>
+
+	<para>The location of the client program is a matter for 
+	individual system administrators. The following are thus
+	suggestions only. </para>
+
+	<para>It is recommended that the smbclient software be installed
+	in the <filename>/usr/local/samba/bin/</filename> or <filename>
+	/usr/samba/bin/</filename> directory, this directory readable 
+	by all, writeable only by root. The client program itself should 
+	be executable by all. The client should <emphasis>NOT</emphasis> be 
+	setuid or setgid! </para>
+
+	<para>The client log files should be put in a directory readable 
+	and writeable only by the user. </para>
+
+	<para>To test the client, you will need to know the name of a 
+	running SMB/CIFS server. It is possible to run <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> as an ordinary user - running that server as a daemon 
+	on a user-accessible port (typically any port number over 1024)
+	would provide a suitable test server. </para>
+</refsect1>
+
+
+<refsect1>
+	<title>DIAGNOSTICS</title>
+
+	<para>Most diagnostics issued by the client are logged in a 
+	specified log file. The log file name is specified at compile time, 
+	but may be overridden on the command line. </para>
+
+	<para>The number and nature of diagnostics available depends 
+	on the debug level used by the client. If you have problems, 
+	set the debug level to 3 and peruse the log files. </para>
+</refsect1>
+
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.2 of the Samba suite.</para>
+</refsect1>
+
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para>The original Samba man pages were written by Karl Auer. 
+	The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at <ulink url="ftp://ftp.icce.rug.nl/pub/unix/">
+	ftp://ftp.icce.rug.nl/pub/unix/</ulink>) and updated for the Samba 2.0 
+	release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook XML 4.2 for Samba 3.0
+	was done by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

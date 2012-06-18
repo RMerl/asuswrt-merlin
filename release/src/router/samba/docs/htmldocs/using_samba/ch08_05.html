@@ -1,0 +1,396 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 8] 8.5 Recently Added Options</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:35:55Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_04.html" TITLE="8.4 WinPopup Messages">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 8.4 WinPopup Messages" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch08_01.html" TITLE="8. Additional Samba Information ">
+Chapter 8<br>
+Additional Samba Information </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_06.html" TITLE="8.6 Miscellaneous Options">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 8.6 Miscellaneous Options" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch08-pgfId-958954">
+
+<!-- 2.0.7 amendments begin, davecb --> 8.5 Recently Added
+Options</a></h2><P CLASS="para">Samba has several options that appeared
+around the time of Samba 2.0, but either were not entirely supported or were
+in the process of being developed.  With Samba 2.0.7, several more were
+introduced. We will give you a brief overview of their workings in this
+section. These options are shown in <A CLASS="xref"
+HREF="ch08_05.html#ch08-72538">
+<!-- end of first addition -->
+
+Table 8.9</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch08-72538">
+Table 8.9: Recently Added Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+change notify timeout</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical (number of seconds)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the interval between checks when a client asks to wait for a change in a specified directory.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+60</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr>
+
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+machine password timeout</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical (number of seconds)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the renewal interval for NT domain machine passwords.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+604,800</code> (1 week)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+stat cache</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, Samba will cache recent name mappings.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+stat cache size</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the size of the stat cache.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+50</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr>
+
+<!-- 2.0.7 table insertions begin -->
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+utmp</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Turns on logging of Samba users in the utmp file. Requires --with-utmp. </p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr>
+
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+utmp dir</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the directory where Samba expects to find the utmp/utmpx file.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+None</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr>
+
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+inherit permissions</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the permissions of newly created directories to the same as their parent.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr>
+
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+write cache size</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical (bytes)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the size of a write cache (buffer) used for oplocked files.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+0</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr>
+
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+source environment</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets a file to read environment variable from.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+None</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr>
+
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+min password length</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical (number of characters)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the minimum length of a new password which Samba will try to update the password file with .</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+5</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr>
+
+
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+netbios scope</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the NetBIOS scope.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+None</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr>
+<!-- end of 2.0.7 insertions-->
+</tbody></table>
+
+<DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-959050">
+8.5.1 change notify timeout</a></h3><P CLASS="para">
+The <CODE CLASS="literal">
+change</code> <CODE CLASS="literal">
+notify</code> <CODE CLASS="literal">
+timeout</code> global option emulates a Windows NT SMB feature called <I CLASS="firstterm">
+change notification</i>. This allows a client to request that a Windows NT server periodically monitor a specific directory on a share for any changes. If any changes occur, the server will notify the client.</p><P CLASS="para">
+As of version 2.0, Samba will perform this function for its clients. However, performing these checks too often can slow the server down considerably. This option sets the time period that Samba should wait between such checks. The default is one minute (60 seconds); however, you can use this option to specify an alternate time that Samba should wait between performing checks:</p><PRE CLASS="programlisting">
+[global]
+	change notify timeout = 30</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-959054">
+8.5.2 machine password timeout</a></h3><P CLASS="para">
+The <CODE CLASS="literal">
+machine</code> <CODE CLASS="literal">
+password</code> <CODE CLASS="literal">
+timeout</code> global option sets a retention period for NT domain machine passwords. The default is currently set to the same time period that Windows NT 4.0 uses: 604,800 seconds (one week). Samba will periodically attempt to change the <I CLASS="firstterm">
+machine account password</i>, which is a password used specifically by another server to report changes to it. This option specifies the number of seconds that Samba should wait before attempting to change that password. The following example changes it to a single day, by specifying the following:</p><PRE CLASS="programlisting">
+[global]
+	machine password timeout = 86400</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-959058">
+8.5.3 stat cache</a></h3><P CLASS="para">
+The <CODE CLASS="literal">
+stat</code> <CODE CLASS="literal">
+cache</code> global option turns on caching of recent case-insensitive name mappings. The default is <CODE CLASS="literal">
+yes</code>. The Samba team recommends that you never change this parameter.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-959060">
+8.5.4 stat cache size</a></h3><P CLASS="para">The <CODE CLASS="literal">
+stat</code> <CODE CLASS="literal">
+cache</code> <CODE CLASS="literal">
+size</code> global option sets the size of the cache entries to be used for the <CODE CLASS="literal">
+stat</code> <CODE CLASS="literal">
+cache</code> option. The default here is 50. Again, the Samba team recommends that you never change this parameter.</p>
+
+===
+
+<H3 CLASS="sect2"> <A CLASS="title" NAME="ch08-pgfId-959060-add1"> 
+8.5.5 utmp</a></h3> 
+<P CLASS="para">If you specified <CODE CLASS="literal">
+--with-utmp </CODE> when configuring, this option will turn on utmp logging
+of users: they will appear in the utmp file and you will be able to see if
+they are on with <I>last(1)</I>.  It defaults to <CODE
+CLASS="literal">no</code>.</p>
+
+<H3 CLASS="sect2"> <A CLASS="title" NAME="ch08-pgfId-959060-add2"> 
+8.5.6 utmp dir</a></h3> 
+<P CLASS="para">
+If <CODE CLASS="literal">utmp</CODE> is set, the utmp dir option will change the directory Samba
+looks in for the utmp files.  If it is not set, the default system 
+location will be used.</p>
+
+<H3 CLASS="sect2"> <A CLASS="title" NAME="ch08-pgfId-959060-add3"> 
+8.5.7 inherit permissions</a></h3> 
+<P CLASS="para">
+This option causes new files and directories to be created with
+the same permissions as the directory they're in. For example, 
+subdirectories will inherit setgid bits from their parents.
+This option will override the <CODE CLASS="literal">create
+mask, directory mask, force create mode</CODE> and <CODE CLASS="literal">
+force directory mode</CODE> options, but not the <CODE CLASS="literal">
+map archive, map hidden</CODE> and <CODE CLASS="literal">map system</CODE>
+options. It will never set the <CODE CLASS="literal">setuid</CODE> bit.
+This option defaults to off.</p>
+
+<H3 CLASS="sect2"> <A CLASS="title" NAME="ch08-pgfId-959060-add4"> 
+8.5.8 write cache size</a></h3> 
+<P CLASS="para">The <CODE CLASS="literal">write cache size</code> 
+share option sets the size of a cache used by Samba while
+writing oplocked files.  The files will be written in <I>cachesize</I>
+blocks, so you can tune Samba's write size to the optimum size for
+your filesystem or RAID disk array.</p>
+
+<p>The caching applies to the first 10 files opened with oplocks if set,
+and defaults to zero (off) initially.</p>
+
+<p>As with all caching schemes, data that hasn't been written 
+will be lost if the system crashes.</p>
+
+<H3 CLASS="sect2"> <A CLASS="title" NAME="ch08-pgfId-959060-add5"> 
+8.5.9 source environment</a></h3> 
+<P CLASS="para">
+This options specifies a file of environment variables that Samba
+will read on startup. <!-- and when else? When an smb.conf is read?
+when a child  server process is started? --> The variables set in this
+files can then be used in smb.conf files as $%<I>name</I>.  For example,
+HOME=/home/sofia in the environment file could be used in a smb.conf
+file as "path = "$HOME"</p>
+
+<p>If the pathname begins with a "|" (pipe) symbol, Samba will attempt
+to run it and read its standard output.</p>
+
+<H3 CLASS="sect2"> <A CLASS="title" NAME="ch08-pgfId-959060-add6"> 
+8.5.10 min password length</a></h3> 
+<P CLASS="para">This option sets the minimum length, in characters,
+of a plain text password that Samba will accept when performing UNIX 
+password changing. This is used to tell Samba about system-defined
+minimums, so it can return an appropriate error to the client.</p>
+
+
+<H3 CLASS="sect2"> <A CLASS="title" NAME="ch08-pgfId-959060-add1"> 
+8.5.11 netbios scope</a></h3> 
+<P CLASS="para">
+This sets the NetBIOS scope that Samba will operate under: Samba
+will not communicate with any machine with a different scope.
+This should not be set unless every machine on your LAN also sets 
+this value.  It was a predecessor to workgroups, and the Samba
+team recommends against using it.</p>
+
+<!-- end of 2.0.7 additions. -->
+
+<div></div></div></blockquote>
+
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_04.html" TITLE="8.4 WinPopup Messages">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 8.4 WinPopup Messages" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_06.html" TITLE="8.6 Miscellaneous Options">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 8.6 Miscellaneous Options" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+8.4 WinPopup Messages</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+8.6 Miscellaneous Options</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

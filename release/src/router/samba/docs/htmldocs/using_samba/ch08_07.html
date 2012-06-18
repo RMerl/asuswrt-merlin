@@ -1,0 +1,143 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 8] 8.7 Backups with smbtar</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:36:02Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_06.html" TITLE="8.6 Miscellaneous Options">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 8.6 Miscellaneous Options" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch08_01.html" TITLE="8. Additional Samba Information ">
+Chapter 8<br>
+Additional Samba Information </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="chapter" HREF="ch09_01.html" TITLE="9. Troubleshooting Samba">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 9. Troubleshooting Samba" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch08-74829">
+8.7 Backups with smbtar</a></h2><P CLASS="para">Our final topic in this chapter is the <I CLASS="filename">
+smbtar</i> tool. One common problem with modem PCs is that floppies and even CD-ROMs are often too small to use for backups. However, buying one tape drive per machine would also be silly. Consequently, many sites don't back up their PCs at all. Instead, they reinstall them using floppy disks and CD-ROMs when they fail.</p><P CLASS="para">
+Thankfully, Samba provides us with another option: you can back up PCs' data using the <I CLASS="filename">
+smbtar</i> tool. This can be done on a regular basis if you keep user data on your Samba system, or only occasionally, to save the local applications and configuration files and thus make repairs and reinstallations quicker.</p><P CLASS="para">
+To back up PCs from a Unix server, you need to do three things:</p><OL CLASS="orderedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch08-pgfId-961555">
+</a>Ensure that File and Printer Sharing is installed on the PC and is bound to the TCP/IP protocol.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch08-pgfId-961564">
+</a>Explicitly share a disk on the PC so it can be read from the server.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch08-pgfId-961567">
+</a>Set up the backup scripts on the server.</p></li></ol><P CLASS="para">
+We'll use Windows 95/98 to illustrate the first two steps. Go to the Networking icon in the Control Panel window, and check that File and Printer Sharing for Microsoft Networks is currently listed in the top window, as shown in <A CLASS="xref" HREF="ch08_07.html#ch08-18303">
+Figure 8.2</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch08-18303">
+Figure 8.2: The Networking window</a></h4><IMG CLASS="graphic" SRC="figs/sam.0802.gif" ALT="Figure 8.2"><P CLASS="para">
+If "File and printer sharing for Microsoft Networks" isn't installed, you can install it  by clicking on the Add button on the Network panel. After pressing it, you will be asked what service to add. Select Service and move forward, and you will be asked for a vendor and a service to install. Finally, select "File and printer sharing for Microsoft Networks," and click on Done to install the service.</p><P CLASS="para">
+Once you've installed "File and printer sharing for Microsoft Networks," return to the Network panel and select the TCP/IP protocol that is tied to your Samba network adapter. Then, click on the Properties button and choose the Bindings tab at the top. You should see a dialog box similar to <A CLASS="xref" HREF="ch08_07.html#ch08-41042">
+Figure 8.3</a>. Here, you'll need to verify that the "File and Printer Sharing" checkbox is checked, giving it access to TCP/IP. At this point you can share disks with other machines on the net.   </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch08-41042">
+Figure 8.3: TCP/IP Bindings</a></h4><IMG CLASS="graphic" SRC="figs/sam.0803.gif" ALT="Figure 8.3"><P CLASS="para">
+The next step is to share the disk you want to back up with the tape server. Go to My Computer and select, for example, the My Documents directory. Then right-click on the icon and select its Properties. This should yield the dialog box in <A CLASS="xref" HREF="ch08_07.html#ch08-64918">
+Figure 8.4</a>.   </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch08-64918">
+Figure 8.4: My Documents Properties</a></h4><IMG CLASS="graphic" SRC="figs/sam.0804.gif" ALT="Figure 8.4"><P CLASS="para">
+Select the Sharing tab and turn file sharing on. You now have the choice to share the disk as read-only, read-write (Full), or either, each with separate password. This is the Windows 95/98 version, so it provides only share-level security. In this example, we made it read/write and set a password, as shown in <A CLASS="xref" HREF="ch08_07.html#ch08-29192">
+Figure 8.5</a>. When you enter the password and click on OK, you'll be prompted to re-enter it. After that, you have finished the second step. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch08-29192">
+Figure 8.5: MyFiles Properties as shared</a></h4><IMG CLASS="graphic" SRC="figs/sam.0805.gif" ALT="Figure 8.5"><P CLASS="para">
+Finally, the last step is to set up a backup script on the tape server, using the <I CLASS="filename">
+smbtar</i> program. The simplest script might contain only a single line and would be something like the following:</p><PRE CLASS="programlisting">
+smbtar -s client -t /dev/rst0 -x &quot;My Documents&quot; -p <CODE CLASS="replaceable"><I>password</i></code></pre><P CLASS="para">
+This unconditionally backs up the <EM CLASS="emphasis">
+//client/My Documents</em> share to the device <I CLASS="filename">
+/dev/rst0</i>. Of course, this is excessively simple and quite insecure. What you will want to do will depend on your existing backup scheme. </p><P CLASS="para">
+However, to whet your appetite, here are some possibilities of what <I CLASS="filename">
+smbtar</i> can do:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch08-pgfId-961280">
+</a>Back up files incrementally using the DOS archive bit (the <CODE CLASS="literal">
+-i</code> option). This requires the client share to be accessed read-write so the bit can be cleared by <I CLASS="filename">
+smbtar</i></p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch08-pgfId-961281">
+</a>Back up only files that have changed since a specified date (using the <CODE CLASS="literal">
+-N</code> <CODE CLASS="replaceable">
+<I>
+filename </i></code>option)</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch08-pgfId-961282">
+</a>Back up entire PC drives, by sharing all of C: or D:, for example, and backing that up</p></li></ul><P CLASS="para">
+Except for the first example, each of these can be done with the PC sharing set to read-only, reducing the security risk of having passwords in scripts and passing them on the command line. </p></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_06.html" TITLE="8.6 Miscellaneous Options">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 8.6 Miscellaneous Options" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="chapter" HREF="ch09_01.html" TITLE="9. Troubleshooting Samba">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 9. Troubleshooting Samba" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+8.6 Miscellaneous Options</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+9. Troubleshooting Samba</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

@@ -1,0 +1,287 @@
+Starting with version 2.3.10, pppd includes support for `plugins' -
+pieces of code which can be loaded into pppd at runtime and which can
+affect its behaviour in various ways.  The idea of plugins is to
+provide a way for people to customize the behaviour of pppd without
+having to either apply local patches to each version or get their
+patches accepted into the standard distribution.
+
+A plugin is a standard shared library object, typically with a name
+ending in .so.  They are loaded using the standard dlopen() library
+call, so plugins are only supported on systems which support shared
+libraries and the dlopen call.  At present pppd is compiled with
+plugin support only under Linux and Solaris.
+
+Plugins are loaded into pppd using the `plugin' option, which takes
+one argument, the name of a shared object file.  The plugin option is
+a privileged option.  If the name given does not contain a slash, pppd
+will look in the /usr/lib/pppd/<version> directory for the file, where
+<version> is the version number of pppd, for example, 2.4.2.  I
+suggest that you either give the full path name of the shared object
+file or just the base name; if you don't, it may be possible for
+unscrupulous users to substitute another shared object file for the
+one you mean to load, e.g. by setting the LD_LIBRARY_PATH variable.
+
+Plugins are usually written in C and compiled and linked to a shared
+object file in the appropriate manner for your platform.  Using gcc
+under Linux, a plugin called `xyz' could be compiled and linked with
+the following commands:
+
+	gcc -c -O xyz.c
+	gcc -shared -o xyz.so xyz.o
+
+There are some example plugins in the pppd/plugins directory in the
+ppp distribution.  Currently there is one example, minconn.c, which
+implements a `minconnect' option, which specifies a minimum connect
+time before the idle timeout applies.
+
+Plugins can access global variables within pppd, so it is useful for
+them to #include "pppd.h" from the pppd source directory.
+
+Every plugin must contain a global procedure called `plugin_init'.
+This procedure will get called (with no arguments) immediately after
+the plugin is loaded.  Every plugin should also contain a variable
+called pppd_version declared as follows:
+
+char pppd_version[] = VERSION;
+
+If this declaration is included, pppd will not load the module if its
+version number differs from that compiled into the plugin binary.
+
+Plugins can affect the behaviour of pppd in at least four ways:
+
+1. They can add extra options which pppd will then recognize.  This is
+   done by calling the add_options() procedure with a pointer to an
+   array of option_t structures.  The last entry in the array must
+   have its name field set to NULL.
+
+2. Pppd contains `hook' variables which are procedure pointers.  If a
+   given hook is not NULL, pppd will call the procedure it points to
+   at the appropriate point in its processing.  The plugin can set any
+   of these hooks to point to its own procedures.  See below for a
+   description of the hooks which are currently implemented.
+
+3. Plugin code can call any global procedures and access any global
+   variables in pppd.
+
+4. Plugins can register procedures to be called when particular events
+   occur, using the `notifier' mechanism in pppd.  The differences
+   between hooks and notifiers are that a hook will only call one
+   function, whereas a notifier can call an arbitrary number, and that
+   a hook usually returns some value to pppd, whereas a notifier
+   function returns nothing.
+
+Here is a list of the currently implemented hooks in pppd.
+
+
+int (*idle_time_hook)(struct ppp_idle *idlep);
+
+The idle_time_hook is called when the link first comes up (i.e. when
+the first network protocol comes up) and at intervals thereafter.  On
+the first call, the idlep parameter is NULL, and the return value is
+the number of seconds before pppd should check the link activity, or 0
+if there is to be no idle timeout.
+
+On subsequent calls, idlep points to a structure giving the number of
+seconds since the last packets were sent and received.  If the return
+value is > 0, pppd will wait that many seconds before checking again.
+If it is <= 0, that indicates that the link should be terminated due
+to lack of activity.
+
+
+int (*holdoff_hook)(void);
+
+The holdoff_hook is called when an attempt to bring up the link fails,
+or the link is terminated, and the persist or demand option was used.
+It returns the number of seconds that pppd should wait before trying
+to reestablish the link (0 means immediately).
+
+
+int (*pap_check_hook)(void);
+int (*pap_passwd_hook)(char *user, char *passwd);
+int (*pap_auth_hook)(char *user, char *passwd, char **msgp,
+		     struct wordlist **paddrs,
+		     struct wordlist **popts);
+void (*pap_logout_hook)(void);
+
+These hooks are designed to allow a plugin to replace the normal PAP
+password processing in pppd with something different (e.g. contacting
+an external server).
+
+The pap_check_hook is called to check whether there is any possibility
+that the peer could authenticate itself to us.  If it returns 1, pppd
+will ask the peer to authenticate itself.  If it returns 0, pppd will
+not ask the peer to authenticate itself (but if authentication is
+required, pppd may exit, or terminate the link before network protocol
+negotiation).  If it returns -1, pppd will look in the pap-secrets
+file as it would normally.
+
+The pap_passwd_hook is called to determine what username and password
+pppd should use in authenticating itself to the peer with PAP.  The
+user string will already be initialized, by the `user' option, the
+`name' option, or from the hostname, but can be changed if necessary.
+MAXNAMELEN bytes of space are available at *user, and MAXSECRETLEN
+bytes of space at *passwd.  If this hook returns 0, pppd will use the
+values at *user and *passwd; if it returns -1, pppd will look in the
+pap-secrets file, or use the value from the +ua or password option, as
+it would normally.
+
+The pap_auth_hook is called to determine whether the username and
+password supplied by the peer are valid.  user and passwd point to
+null-terminated strings containing the username and password supplied
+by the peer, with non-printable characters converted to a printable
+form.  The pap_auth_hook function should set msg to a string to be
+returned to the peer and return 1 if the username/password was valid
+and 0 if not.  If the hook returns -1, pppd will look in the
+pap-secrets file as usual.
+
+If the username/password was valid, the hook can set *paddrs to point
+to a wordlist containing the IP address(es) which the peer is
+permitted to use, formatted as in the pap-secrets file.  It can also
+set *popts to a wordlist containing any extra options for this user
+which pppd should apply at this point.
+
+The pap_logout_hook is called when the link is terminated, instead of
+pppd's internal `plogout' function.  It can be used for accounting
+purposes.  This hook is deprecated and will be replaced by a notifier.
+
+
+int (*chap_check_hook)(void);
+int (*chap_passwd_hook)(char *user, char *passwd);
+int (*chap_verify_hook)(char *name, char *ourname, int id,
+			struct chap_digest_type *digest,
+			unsigned char *challenge, unsigned char *response,
+			char *message, int message_space)
+
+These hooks are designed to allow a plugin to replace the normal CHAP
+password processing in pppd with something different (e.g. contacting
+an external server).
+
+The chap_check_hook is called to check whether there is any possibility
+that the peer could authenticate itself to us.  If it returns 1, pppd
+will ask the peer to authenticate itself.  If it returns 0, pppd will
+not ask the peer to authenticate itself (but if authentication is
+required, pppd may exit, or terminate the link before network protocol
+negotiation).  If it returns -1, pppd will look in the chap-secrets
+file as it would normally.
+
+The chap_passwd_hook is called to determine what password
+pppd should use in authenticating itself to the peer with CHAP.  The
+user string will already be initialized, by the `user' option, the
+`name' option, or from the hostname, but can be changed if necessary.
+This hook is called only if pppd is a client, not if it is a server.
+
+MAXSECRETLEN bytes of space are available at *passwd.  If this hook
+returns 0, pppd will use the value *passwd; if it returns -1, pppd
+will fail to authenticate.
+
+The chap_verify_hook is called to determine whether the peer's
+response to our CHAP challenge is valid -- it should return 1 if valid
+or 0 if not.  The parameters are:
+
+* name points to a null-terminated string containing the username
+  supplied by the peer, or the remote name specified with the
+  "remotename" option.
+* ourname points to a null-terminated string containing the name of
+  the local machine (the hostname, or the name specified with the
+  "name" option).
+* id is the value of the id field from the challenge.
+* digest points to a chap_digest_type struct, which contains an
+  identifier for the type of digest in use plus function pointers for
+  functions for dealing with digests of that type.
+* challenge points to the challenge as a counted string (length byte
+  followed by the actual challenge bytes).
+* response points to the response as a counted string.
+* message points to an area of message_space bytes in which to store
+  any message that should be returned to the peer.
+
+
+int (*null_auth_hook)(struct wordlist **paddrs,
+		      struct wordlist **popts);
+
+This hook allows a plugin to determine what the policy should be if
+the peer refuses to authenticate when it is requested to.  If the
+return value is 0, the link will be terminated; if it is 1, the
+connection is allowed to proceed, and in this case *paddrs and *popts
+can be set as for pap_auth_hook, to specify what IP addresses are
+permitted and any extra options to be applied.  If the return value is
+-1, pppd will look in the pap-secrets file as usual.
+
+
+void (*ip_choose_hook)(u_int32_t *addrp);
+
+This hook is called at the beginning of IPCP negotiation.  It gives a
+plugin the opportunity to set the IP address for the peer; the address
+should be stored in *addrp.  If nothing is stored in *addrp, pppd will
+determine the peer's address in the usual manner.
+
+
+int (*allowed_address_hook)(u_int32_t addr)
+
+This hook is called to see if a peer is allowed to use the specified
+address.  If the hook returns 1, the address is accepted.  If it returns
+0, the address is rejected.  If it returns -1, the address is verified
+in the normal away against the appropriate options and secrets files.
+
+
+void (*snoop_recv_hook)(unsigned char *p, int len)
+void (*snoop_send_hook)(unsigned char *p, int len)
+
+These hooks are called whenever pppd receives or sends a packet.  The
+packet is in p; its length is len.  This allows plugins to "snoop in"
+on the pppd conversation.  The hooks may prove useful in implmenting
+L2TP.
+
+
+void (*multilink_join_hook)();
+
+This is called whenever a new link completes LCP negotiation and joins
+the bundle, if we are doing multilink.
+
+
+A plugin registers itself with a notifier by declaring a procedure of
+the form:
+
+void my_notify_proc(void *opaque, int arg);
+
+and then registering the procedure with the appropriate notifier with
+a call of the form
+
+	add_notifier(&interesting_notifier, my_notify_proc, opaque);
+
+The `opaque' parameter in the add_notifier call will be passed to
+my_notify_proc every time it is called.  The `arg' parameter to
+my_notify_proc depends on the notifier.
+
+A notify procedure can be removed from the list for a notifier with a
+call of the form
+
+	remove_notifier(&interesting_notifier, my_notify_proc, opaque);
+
+Here is a list of the currently-implemented notifiers in pppd.
+
+* pidchange.  This notifier is called in the parent when pppd has
+  forked and the child is continuing pppd's processing, i.e. when pppd
+  detaches from its controlling terminal.  The argument is the pid of
+  the child.
+
+* phasechange.  This is called when pppd moves from one phase of
+  operation to another.  The argument is the new phase number.
+
+* exitnotify.  This is called just before pppd exits.  The argument is
+  the status with which pppd will exit (i.e. the argument to exit()).
+
+* sigreceived.  This is called when a signal is received, from within
+  the signal handler.  The argument is the signal number.
+
+* ip_up_notifier.  This is called when IPCP has come up.
+
+* ip_down_notifier.  This is called when IPCP goes down.
+
+* auth_up_notifier.  This is called when the peer has successfully
+  authenticated itself.
+
+* link_down_notifier.  This is called when the link goes down.
+
+
+
+## $Id: PLUGINS,v 1.8 2008/06/15 07:02:18 paulus Exp $ ##

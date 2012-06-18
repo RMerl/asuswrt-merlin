@@ -1,0 +1,145 @@
+#!/bin/bash
+#
+# init script for the Ethernet Bridge filter tables
+#
+# Written by Dag Wieers <dag@wieers.com>
+# Modified by Rok Papez <rok.papez@arnes.si>
+#             Bart De Schuymer <bdschuym@pandora.be>
+#
+# chkconfig: - 15 85
+# description: Ethernet Bridge filtering tables
+#
+# config: __SYSCONFIG__/ebtables         (text)
+#         __SYSCONFIG__/ebtables.<table> (binary)
+
+source /etc/init.d/functions
+source /etc/sysconfig/network
+
+# Check that networking is up.
+[ ${NETWORKING} = "no" ] && exit 0
+
+[ -x __EXEC_PATH__/ebtables ] || exit 1
+[ -x __EXEC_PATH__/ebtables-save ] || exit 1
+[ -x __EXEC_PATH__/ebtables-restore ] || exit 1
+
+RETVAL=0
+prog="ebtables"
+desc="Ethernet bridge filtering"
+umask 0077
+
+#default configuration
+EBTABLES_TEXT_FORMAT="yes"
+EBTABLES_BINARY_FORMAT="yes"
+EBTABLES_MODULES_UNLOAD="yes"
+EBTABLES_SAVE_ON_STOP="no"
+EBTABLES_SAVE_ON_RESTART="no"
+EBTABLES_SAVE_COUNTER="no"
+
+config=__SYSCONFIG__/$prog-config
+[ -f "$config" ] && . "$config"
+
+start() {
+	echo -n $"Starting $desc ($prog): "
+	if [ "$EBTABLES_BINARY_FORMAT" = "yes" ]; then
+		for table in $(ls __SYSCONFIG__/ebtables.* 2>/dev/null | sed -e 's/.*ebtables\.//' -e '/save/d' ); do
+			__EXEC_PATH__/ebtables -t $table --atomic-file __SYSCONFIG__/ebtables.$table --atomic-commit || RETVAL=1
+		done
+	else
+		__EXEC_PATH__/ebtables-restore < /etc/sysconfig/ebtables || RETVAL=1
+	fi
+
+	if [ $RETVAL -eq 0 ]; then
+		success "$prog startup"
+		rm -f /var/lock/subsys/$prog
+	else
+		failure "$prog startup"
+	fi
+	echo
+}
+
+stop() {
+	echo -n $"Stopping $desc ($prog): "
+	for table in $(grep '^ebtable_' /proc/modules | sed -e 's/ebtable_\([^ ]*\).*/\1/'); do
+		__EXEC_PATH__/ebtables -t $table --init-table || RETVAL=1
+	done
+
+	if [ "$EBTABLES_MODULES_UNLOAD" = "yes" ]; then
+		for mod in $(grep -E '^(ebt|ebtable)_' /proc/modules | cut -f1 -d' ') ebtables; do
+			rmmod $mod 2> /dev/null
+		done
+	fi
+
+	if [ $RETVAL -eq 0 ]; then
+		success "$prog shutdown"
+		rm -f /var/lock/subsys/$prog
+	else
+		failure "$prog shutdown"
+	fi
+	echo
+}
+
+restart() {
+	stop
+	start
+}
+
+save() {
+	echo -n $"Saving $desc ($prog): "
+	if [ "$EBTABLES_TEXT_FORMAT" = "yes" ]; then
+		if [ -e __SYSCONFIG__/ebtables ]; then
+			chmod 0600 __SYSCONFIG__/ebtables
+			mv -f __SYSCONFIG__/ebtables __SYSCONFIG__/ebtables.save
+		fi
+		__EXEC_PATH__/ebtables-save > __SYSCONFIG__/ebtables || RETVAL=1
+	fi
+	if [ "$EBTABLES_BINARY_FORMAT" = "yes" ]; then
+		rm -f __SYSCONFIG__/ebtables.*.save
+		for oldtable in $(ls __SYSCONFIG__/ebtables.* 2>/dev/null | grep -vF 'ebtables.save'); do
+			chmod 0600 $oldtable
+			mv -f $oldtable $oldtable.save
+		done
+		for table in $(grep '^ebtable_' /proc/modules | sed -e 's/ebtable_\([^ ]*\).*/\1/'); do
+			__EXEC_PATH__/ebtables -t $table --atomic-file __SYSCONFIG__/ebtables.$table --atomic-save || RETVAL=1
+			if [ "$EBTABLES_SAVE_COUNTER" = "no" ]; then
+				__EXEC_PATH__/ebtables -t $table --atomic-file __SYSCONFIG__/ebtables.$table -Z || RETVAL=1
+			fi
+		done
+	fi
+
+	if [ $RETVAL -eq 0 ]; then
+		success "$prog saved"
+	else
+		failure "$prog saved"
+	fi
+	echo
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	[ "$EBTABLES_SAVE_ON_STOP" = "yes" ] && save
+	stop
+	;;
+  restart|reload)
+	[ "$EBTABLES_SAVE_ON_RESTART" = "yes" ] && save
+	restart
+	;;
+  condrestart)
+	[ -e /var/lock/subsys/$prog ] && restart
+	RETVAL=$?
+	;;
+  save)
+	save
+	;;
+  status)
+	__EXEC_PATH__/ebtables-save
+	RETVAL=$?
+	;;
+  *)
+	echo $"Usage $0 {start|stop|restart|condrestart|save|status}"
+	RETVAL=1
+esac
+
+exit $RETVAL

@@ -1,0 +1,12 @@
+[
+	pointer_default(unique)
+]
+interface server_id
+{
+	/* id used to identify a endpoint, possibly in a cluster */
+	typedef [public] struct {
+		hyper id;
+		uint32 id2;
+		uint32 node;
+	} server_id;
+}

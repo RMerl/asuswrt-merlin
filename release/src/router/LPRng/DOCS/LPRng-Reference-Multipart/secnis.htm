@@ -1,0 +1,483 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Using Programs To Get Printcap Information</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title=
+    "Management Strategies for Large Installations" href=
+    "x6118.htm">
+    <link rel="NEXT" title="Lexmark Printers" href="x6228.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x6118.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x6228.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="SECNIS">12.18. Using Programs To
+      Get Printcap Information</a></h1>
+
+      <p>In the <tt class="FILENAME">lpd.conf</tt> file you can
+      specify:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6130"></a>
+<pre class="SCREEN">
+    printcap_path=|program
+</pre>
+      </div>
+      This will cause the <b class="APPLICATION">LPRng</b> software
+      to execute the specified program, which should then provide
+      the printcap information. The program is invoked with the
+      standard filter options, and has the name of the printcap
+      entry provided on <acronym class="ACRONYM">STDIN</acronym>.
+      The filter should supply the printcap information on <var
+      class="LITERAL">stdout</var> and exit with a 0 (success)
+      error code. By convention, the printcap name 'all' requests a
+      printcap entry that lists all printers.<br>
+      <br>
+
+      <p>This technique has been used to interface to the Sun
+      Microsystem NIS and NIS+ databases with great success. By
+      having the invoked program a simple shell script or front end
+      to the <var class="LITERAL">nismatch</var> or <var class=
+      "LITERAL">ypmatch</var> programs, the complexity of
+      incorporating vendor specific code is avoided.</p>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN6138">12.18.1. How to use NIS
+        and <b class="APPLICATION">LPRng</b></a></h2>
+
+        <p>This note is based on material sent to the <a href=
+        "maillist.htm">lprng@lprng.com</a> mailing list by Paul
+        Haldane <code class="EMAIL">&lt;<a href=
+        "mailto:paul@ucs.ed.ac.uk">paul@ucs.ed.ac.uk</a>&gt;</code>.</p>
+
+        <p>We generally don't use NIS for printcap files (we've
+        moved to hesiod) but I can show you what we've done in the
+        past.</p>
+
+        <p>The input to NIS is a normal printcap file:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN6146"></a>
+<pre class="SCREEN">
+    # Classical printcap entry
+    lp23a|lp23|lp|main printhost printer - KB, EUCS front Door:\
+            :lp=lp23a@printhost:\
+            :sd=/var/spool/lpr/lp23a:
+    
+    #lprng printcap entry
+    lplabel|lpl|TEST - Labels printer:
+            :lp=:rm=printhost:rp=lplabel:
+            :sd=/var/spool/lpr/lplabel:
+            :rg=lpadm:mx=1:
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>To build the NIS printcap.byname map we add the
+        following to the NIS makefile (along the other bits and
+        pieces that the makefile needs to know about a new
+        map).</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN6149"></a>
+<pre class="SCREEN">
+    PRINTCAP=${sysconfdir}/printcap
+    # warning : [  ] is actually [&lt;space&gt;&lt;tab&gt;] in the script
+    printcap.time: $(PRINTCAP) Makefile
+      if [ -f $(PRINTCAP) ]; then \
+        sed &lt; $(PRINTCAP) \
+          -e 's/[   ][  ]*$$//' -e '/\\$$/s/\\$$/ /' \
+        | awk '$$1 ~ /^#/{next;} $$1 ~ /^[:|]/ {printf "%s", $$0; next;} \
+            {printf "\n%s", $$0 }' \
+        | sed -e 's/[   ]*:[  ]*:/:/g' -e 's/[  ]*|[  ]*/|/g' \
+          -e '/^[   ]*$$/d' &gt; .printcap.$$$$; \
+        cat .printcap.$$$$; \
+        if [ $$? = 0 -a -s .printcap.$$$$ ]; then \
+          awk &lt;.printcap.$$$$ '{ FS=":"; OFS="\t"; } { \
+              n = split($$1, names, "|"); \
+              for (i=1; i&lt;=n; i++) \
+                  if (length(names[i]) &gt; 0 \
+                  &amp;&amp; names[i] !~ /[ \t]/) \
+                      print names[i], $$0; \
+          }' | $(MAKEDBM) - $(YPDBDIR)/$(DOM)/printcap.byname; \
+          awk &lt;.printcap.$$$$ '{ FS=":"; OFS="\t"; } { \
+              n = split($$1, names, "|"); \
+              if (n &amp;&amp; length(names[1]) &gt; 0 &amp;&amp; names[1] !~ /[ \t]/) \
+                  print names[1], $$0; \
+          }' | $(MAKEDBM) - $(YPDBDIR)/$(DOM)/printcap.bykey; \
+          rm -f .printcap.$$$$; \
+          touch printcap.time; echo "updated printcap"; \
+        fi \
+      fi
+      @if [ ! $(NOPUSH) -a -f $(PRINTCAP) ]; then \
+          $(YPPUSH) printcap.byname; \
+          $(YPPUSH) printcap.bykey; \
+          touch printcap.time; echo "pushed printcap"; \
+      fi
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>To specify that you want YP database rather than file
+        access, use the following entry in your <tt class=
+        "FILENAME">/etc/lpd.conf</tt> file:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN6153"></a>
+<pre class="SCREEN">
+    printcap_path |/usr/local/libexec/pcfilter
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Put the following shell script in
+        /usr/local/libexec/pcfilter</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN6156"></a>
+<pre class="SCREEN">
+    #!/bin/sh
+    #/usr/local/libexec/filters/pcfilter
+    read key
+    # specify the full pathname to the ypmatch program
+    # the location depends on the version of Solaris or your
+    # system install
+    /full/pathname/to/ypmatch "$key" printcap.byname
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>You can test this by using:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN6159"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {314} #</samp> <kbd class=
+"USERINPUT">lpc client pr</kbd>
+    pr
+     :lp=pr@server
+    <samp class="PROMPT">h4: {315} #</samp> <kbd class=
+"USERINPUT">lpc server pr</kbd>
+    pr
+     :lp=pr@server
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN6165">12.18.2. How to use NIS
+        and <b class="APPLICATION">LPRng</b> - Sven
+        Rudolph</a></h2>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN6169"></a>
+<pre class="SCREEN">
+     Date: Wed, 11 Sep 1996 00:11:02 +0200
+    From: Sven Rudolph &lt;sr1@os.inf.tu-dresden.de&gt;
+    To: lprng@lprng.com
+    Subject: Using :oh=server: with NIS
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>When I use a cluster-wide printcap, I want the entries
+        for each printer to appear, e.g.:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN6172"></a>
+<pre class="SCREEN">
+    ---------- start of printcap snippet
+    lp1
+     :lp=lp1@server
+    lp2
+     :lp=lp2@server
+    lp1
+     :server:oh=servername
+     :sd=/var/spool/lpd/lp1
+     :lp=/dev/lp1
+     :mx=0
+    ---------- end of printcap snippet
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>When I create a NIS map out of this the printer name is
+        used as a key and must be unique. The NIS makedbm will drop
+        all but the last entry for each printer. This makes the
+        printer on the clients unavailable. I solved this by a hack
+        where the second entry is called lp1.server and the NIS
+        client script has to request the right entry.</p>
+
+        <ol type="1">
+          <li>
+            <p>Assumptions</p>
+
+            <p>Perl is available at the YP server in <tt class=
+            "COMMAND">/usr/bin/perl</tt>. A Bourne Shell is
+            available at all clients in <tt class=
+            "COMMAND">/bin/sh</tt> The printcap that is to be
+            exported is in <tt class="FILENAME">/etc/printcap</tt>.
+            The printcap is written in the new format. In the
+            examples the printer is called lp1.</p>
+          </li>
+
+          <li>
+            <p>Add the following to your YP <tt class=
+            "FILENAME">Makefile</tt> (<tt class=
+            "FILENAME">/var/yp/Makefile</tt>) on the YP server
+            (these lines are for Debian GNU/Linux, other systems
+            might require other modifications):</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN6186"></a>
+<pre class="SCREEN">
+    ---------- start of /var/yp/Makefile snippet
+    PRINTCAP  = /etc/printcap
+    printcap: $(PRINTCAP)
+        @echo "Updating $@..."
+        $(CAT) $(PRINTCAP) | \
+            /usr/lib/yp/normalize_printcap | $(DBLOAD) -i $(PRINTCAP) \
+            -o $(YPMAPDIR)/$@ - $@
+        @if [ ! $(NOPUSH) ]; then $(YPPUSH) -d $(DOMAIN) $@; fi
+        @if [ ! $(NOPUSH) ]; then echo "Pushed $@ map." ; fi
+    ---------- end of /var/yp/Makefile snippet
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>Install the programs <b class=
+            "APPLICATION">match_printcap</b> and <b class=
+            "APPLICATION">normalize_printcap</b> in the <tt class=
+            "FILENAME">/usr/lib/yp</tt> directory; <b class=
+            "APPLICATION">normalize_printcap</b> is only required
+            on the YP server. The <b class=
+            "APPLICATION">normalize_printcap</b> processes only the
+            <b class="APPLICATION">LPRng</b> printcap format.</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN6196"></a>
+<pre class="SCREEN">
+    ---------- start of /usr/lib/yp/normalize_printcap
+    #! /usr/bin/perl
+    $debug = 0;
+    $line = "";
+    $new = "";
+    while (&lt;&gt;) {
+        chomp;
+        next if ( /^\s*\#.*/ );
+        s/^\s*$//;
+        next if ( $_ eq '' );
+        print "new: " . $_ . "\n" if $debug;;
+        if (/^\s/) { # continuation line
+            $line = $line.$_;
+            print "continued: $line\n" if $debug;
+            next;
+        } else {
+            $line =~ s/\s+\:/:/g;
+            $line =~ s/\:\s+/:/g;
+            $line =~ s/\:\s*\:/:/g;
+            print "line: $line\n" if $debug;
+            push(@lines, $line) if $line;
+            $line = $_;
+        }
+    }
+    $line =~ s/\s+\:/:/g;
+    $line =~ s/\:\s+/:/g;
+    $line =~ s/\:\s*\:/:/g;
+    push(@lines,$line) if $line;
+    @lines = sort(@lines);
+    foreach $line (@lines) {
+        ($printers) = split(/\:/,$line);
+        @printers = split(/\|/,$printers);
+        foreach $printer (@printers) {
+          $num{$printer}++;
+          push(@allprinters,$printer);
+          print "allprinters: @allprinters\n" if $debug;
+          print $printer."_".$num{$printer}."\t$line\n";
+        }
+    }
+    @pr = keys %num;
+    print "printers @pr\n" if $debug;
+    if ($#allprinters &gt;=0) {
+        print "all_1\tall:all=".join(",",@pr)."\n";
+    }
+    ---------- end of /usr/lib/yp/normalize_printcap
+</pre>
+            </div>
+            &#13;<br>
+            <br>
+
+            <p>The result of processing the sample printcap file
+            is:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN6199"></a>
+<pre class="SCREEN">
+    lp1_1 lp1:lp=lp1@server
+    lp1_2 lp1:server:oh=servername:sd=/var/spool/lpd/lp1:lp=/dev/lp1:mx=0
+    lp2_1 lp2:lp=lp2@server
+    all_1 all:all=lp1,lp2
+</pre>
+            </div>
+            <br>
+            <br>
+
+            <p>Observe that each of the real printer entries has a
+            key consisting of the printer name with a numerical
+            suffix. This leads to the following method of
+            extracting the printcap information using <var class=
+            "LITERAL">ypmatch</var>:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN6203"></a>
+<pre class="SCREEN">
+    ---------- start of /usr/lib/yp/match_printcap
+    #!/bin/sh
+    read p
+    n=1
+    # specify the full pathname to ypmatch - this depends on your
+    # OS version and installation
+    while /full/pathname/to/ypmatch "${p}_${n}" printcap 2&gt;/dev/null; do
+        n=`expr $n + 1`
+    done
+    ---------- end of /usr/lib/yp/match_printcap
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>Now test the YP arrangement:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN6207"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {316} #</samp>  cd /var/yp; make
+        # this should create the printcap map
+    <samp class="PROMPT">h4: {317} #</samp>  ypcat printcap
+        # should provide the whole normalized printcap
+    <samp class=
+"PROMPT">h4: {318} #</samp>  echo lp1 |/usr/lib/yp/match_printcap
+        # yields lp1 printcap
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>Modify the <var class="LITERAL">printcap_path</var>
+            entry in the <tt class="FILENAME">lpd.conf</tt>
+            file:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN6216"></a>
+<pre class="SCREEN">
+    printcap_path=|/usr/lib/yp/match_printcap
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>Test the use of the printcap path entry:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN6220"></a>
+<pre class="SCREEN">
+    <samp class=
+"PROMPT">h4: {319} #</samp>  lpc client lp1 # shows the printcap for lp1
+    <samp class=
+"PROMPT">h4: {320} #</samp>  lpc server lp1 # shows the printcap for lp1
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>Restart the lpd server and check to see that it
+            accesses the right printcap information. Use the same
+            <b class="APPLICATION">lpq</b> command, and then try
+            <tt class="COMMAND">lpc printcap lp1</tt>.</p>
+          </li>
+        </ol>
+        <br>
+        <br>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x6118.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x6228.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Management
+          Strategies for Large Installations</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Lexmark
+          Printers</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

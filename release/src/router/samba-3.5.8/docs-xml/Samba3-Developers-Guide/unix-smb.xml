@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="unix-smb">
+<chapterinfo>
+	<author>
+		<firstname>Andrew</firstname><surname>Tridgell</surname>
+	</author>
+	<pubdate>April 1995</pubdate>
+</chapterinfo>
+
+<title>NetBIOS in a Unix World</title>
+
+<sect1>
+<title>Introduction</title>
+<para>
+This is a short document that describes some of the issues that
+confront a SMB implementation on unix, and how Samba copes with
+them. They may help people who are looking at unix&lt;-&gt;PC
+interoperability.
+</para>
+
+<para>
+It was written to help out a person who was writing a paper on unix to
+PC connectivity.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Usernames</title>
+<para>
+The SMB protocol has only a loose username concept. Early SMB
+protocols (such as CORE and COREPLUS) have no username concept at
+all. Even in later protocols clients often attempt operations
+(particularly printer operations) without first validating a username
+on the server.
+</para>
+
+<para>
+Unix security is based around username/password pairs. A unix box
+should not allow clients to do any substantive operation without some
+sort of validation. 
+</para>
+
+<para>
+The problem mostly manifests itself when the unix server is in "share
+level" security mode. This is the default mode as the alternative
+"user level" security mode usually forces a client to connect to the
+server as the same user for each connected share, which is
+inconvenient in many sites.
+</para>
+
+<para>
+In "share level" security the client normally gives a username in the
+"session setup" protocol, but does not supply an accompanying
+password. The client then connects to resources using the "tree
+connect" protocol, and supplies a password. The problem is that the
+user on the PC types the username and the password in different
+contexts, unaware that they need to go together to give access to the
+server. The username is normally the one the user typed in when they
+"logged onto" the PC (this assumes Windows for Workgroups). The
+password is the one they chose when connecting to the disk or printer.
+</para>
+
+<para>
+The user often chooses a totally different username for their login as
+for the drive connection. Often they also want to access different
+drives as different usernames. The unix server needs some way of
+divining the correct username to combine with each password.
+</para>
+
+<para>
+Samba tries to avoid this problem using several methods. These succeed
+in the vast majority of cases. The methods include username maps, the
+service%user syntax, the saving of session setup usernames for later
+validation and the derivation of the username from the service name
+(either directly or via the user= option).
+</para>
+
+</sect1>
+
+<sect1>
+<title>File Ownership</title>
+
+<para>
+The commonly used SMB protocols have no way of saying "you can't do
+that because you don't own the file". They have, in fact, no concept
+of file ownership at all.
+</para>
+
+<para>
+This brings up all sorts of interesting problems. For example, when
+you copy a file to a unix drive, and the file is world writeable but
+owned by another user the file will transfer correctly but will
+receive the wrong date. This is because the utime() call under unix
+only succeeds for the owner of the file, or root, even if the file is
+world writeable. For security reasons Samba does all file operations
+as the validated user, not root, so the utime() fails. This can stuff
+up shared development diectories as programs like "make" will not get
+file time comparisons right.
+</para>
+
+<para>
+There are several possible solutions to this problem, including
+username mapping, and forcing a specific username for particular
+shares.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Passwords</title>
+
+<para>
+Many SMB clients uppercase passwords before sending them. I have no
+idea why they do this. Interestingly WfWg uppercases the password only
+if the server is running a protocol greater than COREPLUS, so
+obviously it isn't just the data entry routines that are to blame.
+</para>
+
+<para>
+Unix passwords are case sensitive. So if users use mixed case
+passwords they are in trouble.
+</para>
+
+<para>
+Samba can try to cope with this by either using the "password level"
+option which causes Samba to try the offered password with up to the
+specified number of case changes, or by using the "password server"
+option which allows Samba to do its validation via another machine
+(typically a WinNT server).
+</para>
+
+<para>
+Samba supports the password encryption method used by SMB
+clients. Note that the use of password encryption in Microsoft
+networking leads to password hashes that are "plain text equivalent".
+This means that it is *VERY* important to ensure that the Samba
+smbpasswd file containing these password hashes is only readable
+by the root user. See the documentation ENCRYPTION.txt for more
+details.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Locking</title>
+<para>
+Since samba 2.2, samba supports other types of locking as well. This 
+section is outdated.
+</para>
+
+<para>
+The locking calls available under a DOS/Windows environment are much
+richer than those available in unix. This means a unix server (like
+Samba) choosing to use the standard fcntl() based unix locking calls
+to implement SMB locking has to improvise a bit.
+</para>
+
+<para>
+One major problem is that dos locks can be in a 32 bit (unsigned)
+range. Unix locking calls are 32 bits, but are signed, giving only a 31
+bit range. Unfortunately OLE2 clients use the top bit to select a
+locking range used for OLE semaphores.
+</para>
+
+<para>
+To work around this problem Samba compresses the 32 bit range into 31
+bits by appropriate bit shifting. This seems to work but is not
+ideal. In a future version a separate SMB lockd may be added to cope
+with the problem.
+</para>
+
+<para>
+It also doesn't help that many unix lockd daemons are very buggy and
+crash at the slightest provocation. They normally go mostly unused in
+a unix environment because few unix programs use byte range
+locking. The stress of huge numbers of lock requests from dos/windows
+clients can kill the daemon on some systems.
+</para>
+
+<para>
+The second major problem is the "opportunistic locking" requested by
+some clients. If a client requests opportunistic locking then it is
+asking the server to notify it if anyone else tries to do something on
+the same file, at which time the client will say if it is willing to
+give up its lock. Unix has no simple way of implementing
+opportunistic locking, and currently Samba has no support for it.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Deny Modes</title>
+
+<para>
+When a SMB client opens a file it asks for a particular "deny mode" to
+be placed on the file. These modes (DENY_NONE, DENY_READ, DENY_WRITE,
+DENY_ALL, DENY_FCB and DENY_DOS) specify what actions should be
+allowed by anyone else who tries to use the file at the same time. If
+DENY_READ is placed on the file, for example, then any attempt to open
+the file for reading should fail.
+</para>
+
+<para>
+Unix has no equivalent notion. To implement this Samba uses either lock
+files based on the files inode and placed in a separate lock
+directory or a shared memory implementation. The lock file method 
+is clumsy and consumes processing and file resources,
+the shared memory implementation is vastly prefered and is turned on
+by default for those systems that support it.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Trapdoor UIDs</title>
+<para>
+A SMB session can run with several uids on the one socket. This
+happens when a user connects to two shares with different
+usernames. To cope with this the unix server needs to switch uids
+within the one process. On some unixes (such as SCO) this is not
+possible. This means that on those unixes the client is restricted to
+a single uid.
+</para>
+
+<para>
+Note that you can also get the "trapdoor uid" message for other
+reasons. Please see the FAQ for details.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Port numbers</title>
+<para>
+There is a convention that clients on sockets use high "unprivileged"
+port numbers (>1000) and connect to servers on low "privilegedg" port
+numbers. This is enforced in Unix as non-root users can't open a
+socket for listening on port numbers less than 1000.
+</para>
+
+<para>
+Most PC based SMB clients (such as WfWg and WinNT) don't follow this
+convention completely. The main culprit is the netbios nameserving on
+udp port 137. Name query requests come from a source port of 137. This
+is a problem when you combine it with the common firewalling technique
+of not allowing incoming packets on low port numbers. This means that
+these clients can't query a netbios nameserver on the other side of a
+low port based firewall.
+</para>
+
+<para>
+The problem is more severe with netbios node status queries. I've
+found that WfWg, Win95 and WinNT3.5 all respond to netbios node status
+queries on port 137 no matter what the source port was in the
+request. This works between machines that are both using port 137, but
+it means it's not possible for a unix user to do a node status request
+to any of these OSes unless they are running as root. The answer comes
+back, but it goes to port 137 which the unix user can't listen
+on. Interestingly WinNT3.1 got this right - it sends node status
+responses back to the source port in the request.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Protocol Complexity</title>
+<para>
+There are many "protocol levels" in the SMB protocol. It seems that
+each time new functionality was added to a Microsoft operating system,
+they added the equivalent functions in a new protocol level of the SMB
+protocol to "externalise" the new capabilities.
+</para>
+
+<para>
+This means the protocol is very "rich", offering many ways of doing
+each file operation. This means SMB servers need to be complex and
+large. It also means it is very difficult to make them bug free. It is
+not just Samba that suffers from this problem, other servers such as
+WinNT don't support every variation of every call and it has almost
+certainly been a headache for MS developers to support the myriad of
+SMB calls that are available.
+</para>
+
+<para>
+There are about 65 "top level" operations in the SMB protocol (things
+like SMBread and SMBwrite). Some of these include hundreds of
+sub-functions (SMBtrans has at least 120 sub-functions, like
+DosPrintQAdd and NetSessionEnum). All of them take several options
+that can change the way they work. Many take dozens of possible
+"information levels" that change the structures that need to be
+returned. Samba supports all but 2 of the "top level" functions. It
+supports only 8 (so far) of the SMBtrans sub-functions. Even NT
+doesn't support them all.
+</para>
+
+<para>
+Samba currently supports up to the "NT LM 0.12" protocol, which is the
+one preferred by Win95 and WinNT3.5. Luckily this protocol level has a
+"capabilities" field which specifies which super-duper new-fangled
+options the server suports. This helps to make the implementation of
+this protocol level much easier.
+</para>
+
+<para>
+There is also a problem with the SMB specications. SMB is a X/Open
+spec, but the X/Open book is far from ideal, and fails to cover many
+important issues, leaving much to the imagination. Microsoft recently
+renamed the SMB protocol CIFS (Common Internet File System) and have 
+published new specifications. These are far superior to the old 
+X/Open documents but there are still undocumented calls and features. 
+This specification is actively being worked on by a CIFS developers 
+mailing list hosted by Microsft.
+</para>
+</sect1>
+</chapter>
+

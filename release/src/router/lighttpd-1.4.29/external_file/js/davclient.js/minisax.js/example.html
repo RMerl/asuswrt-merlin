@@ -1,0 +1,69 @@
+<!-- 
+
+    example.html - example for minisax.js
+    Copyright (C) 2004-2005 Guido Wesdorp
+    email johnny@debris.demon.nl
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    
+-->
+<html>
+  <head>
+    <title>MiniSAX test</title>
+    <script type="text/javascript" src="../jsbase/string.js"></script>
+    <script type="text/javascript" src="minisax.js"></script>
+    <script type="text/javascript" src="testhandler.js"></script>
+    <script type="text/javascript">
+    // <![CDATA[
+
+        function run() {
+            // some XML
+            var xml = '<?xml version="1.0" ?>' +
+                        '<foo xmlns="http://debris.demon.nl/foo"\n' + 
+                        '  xmlns:baz="http://debris.demon.nl/baz"\n' + 
+                        '  xmlns:quux="http://debris.demon.nl/quux"\n' + 
+                        '  quuux="quu&amp;uux">\n' +
+                        ' <baz:bar quux:quuux="quuuux">&lt;Qux!&gt;</baz:bar>\n' +
+                        '</foo>\n';
+            document.getElementById('startxml').appendChild(
+                document.createTextNode(xml)
+            );
+            // first create an instance of a handler, the testhandler will
+            // build do nothing more than serializing the events that come
+            // in as XML again (so the result should be the same as what is
+            // put in)
+            var handler = new TestHandler();
+            // create a parser instance
+            var parser = new SAXParser();
+            // pass the xml and the handler to the parser
+            parser.initialize(xml, handler);
+            // parse the document
+            parser.parse();
+            // now we can 'harvest' the results from the handler
+            document.getElementById('resultxml').appendChild(
+                document.createTextNode(handler.xml)
+            );
+        };
+
+    // ]]>
+    </script>
+  </head>
+  <body onload="run();">
+    <h4>Start data:</h4>
+    <pre id="startxml"></pre>
+    <h4>Result:</h4>
+    <pre id="resultxml"></pre>
+  </body>
+</html>

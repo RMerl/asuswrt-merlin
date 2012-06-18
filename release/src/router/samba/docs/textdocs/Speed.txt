@@ -1,0 +1,341 @@
+!==
+!== Speed.txt for Samba release 2.0.10 23 Jun 2001
+!==
+
+Subject:	Samba performance issues
+============================================================================
+
+This file tries to outline the ways to improve the speed of a Samba server.
+
+COMPARISONS
+-----------
+
+The Samba server uses TCP to talk to the client. Thus if you are
+trying to see if it performs well you should really compare it to
+programs that use the same protocol. The most readily available
+programs for file transfer that use TCP are ftp or another TCP based
+SMB server.
+
+If you want to test against something like a NT or WfWg server then
+you will have to disable all but TCP on either the client or
+server. Otherwise you may well be using a totally different protocol
+(such as Netbeui) and comparisons may not be valid.
+
+Generally you should find that Samba performs similarly to ftp at raw
+transfer speed. It should perform quite a bit faster than NFS,
+although this very much depends on your system.
+
+Several people have done comparisons between Samba and Novell, NFS or
+WinNT. In some cases Samba performed the best, in others the worst. I
+suspect the biggest factor is not Samba vs some other system but the
+hardware and drivers used on the various systems. Given similar
+hardware Samba should certainly be competitive in speed with other
+systems.
+
+
+OPLOCKS
+-------
+
+Oplocks are the way that SMB clients get permission from a server to
+locally cache file operations. If a server grants an oplock
+(opportunistic lock) then the client is free to assume that it is the
+only one accessing the file and it will agressively cache file
+data. With some oplock types the client may even cache file open/close
+operations. This can give enormous performance benefits.
+
+With the release of Samba 1.9.18 we now correctly support opportunistic 
+locks. This is turned on by default, and can be turned off on a share-
+by-share basis by setting the parameter :
+
+oplocks = False
+
+We recommend that you leave oplocks on however, as current benchmark
+tests with NetBench seem to give approximately a 30% improvement in
+speed with them on. This is on average however, and the actual 
+improvement seen can be orders of magnitude greater, depending on
+what the client redirector is doing.
+
+Previous to Samba 1.9.18 there was a 'fake oplocks' option. This
+option has been left in the code for backwards compatibility reasons
+but it's use is now deprecated. A short summary of what the old
+code did follows.
+
+LEVEL2 OPLOCKS
+--------------
+
+With Samba 2.0.5 a new capability - level2 (read only) oplocks is
+supported (although the option is off by default - see the smb.conf
+man page for details). Turning on level2 oplocks (on a share-by-share basis)
+by setting the parameter :
+
+level2 oplocks = true 
+
+should speed concurrent access to files that are not commonly written
+to, such as application serving shares (ie. shares that contain common
+.EXE files - such as a Microsoft Office share) as it allows clients to
+read-ahread cache copies of these files.
+
+Old 'fake oplocks' option - deprecated.
+---------------------------------------
+
+Samba can also fake oplocks, by granting a oplock whenever a client 
+asks for one. This is controlled using the smb.conf option "fake 
+oplocks". If you set "fake oplocks = yes" then you are telling the 
+client that it may agressively cache the file data for all opens.
+
+Enabling 'fake oplocks' on all read-only shares or shares that you know
+will only be accessed from one client at a time you will see a big
+performance improvement on many operations. If you enable this option
+on shares where multiple clients may be accessing the files read-write
+at the same time you can get data corruption.
+
+SOCKET OPTIONS
+--------------
+
+There are a number of socket options that can greatly affect the
+performance of a TCP based server like Samba.
+
+The socket options that Samba uses are settable both on the command
+line with the -O option, or in the smb.conf file.
+
+The "socket options" section of the smb.conf manual page describes how
+to set these and gives recommendations.
+
+Getting the socket options right can make a big difference to your
+performance, but getting them wrong can degrade it by just as
+much. The correct settings are very dependent on your local network.
+
+The socket option TCP_NODELAY is the one that seems to make the
+biggest single difference for most networks. Many people report that
+adding "socket options = TCP_NODELAY" doubles the read performance of
+a Samba drive. The best explanation I have seen for this is that the
+Microsoft TCP/IP stack is slow in sending tcp ACKs.
+
+
+READ SIZE
+---------
+
+The option "read size" affects the overlap of disk reads/writes with
+network reads/writes. If the amount of data being transferred in
+several of the SMB commands (currently SMBwrite, SMBwriteX and
+SMBreadbraw) is larger than this value then the server begins writing
+the data before it has received the whole packet from the network, or
+in the case of SMBreadbraw, it begins writing to the network before
+all the data has been read from disk.
+
+This overlapping works best when the speeds of disk and network access
+are similar, having very little effect when the speed of one is much
+greater than the other.
+
+The default value is 16384, but very little experimentation has been
+done yet to determine the optimal value, and it is likely that the best
+value will vary greatly between systems anyway. A value over 65536 is
+pointless and will cause you to allocate memory unnecessarily.
+
+
+MAX XMIT
+--------
+
+At startup the client and server negotiate a "maximum transmit" size,
+which limits the size of nearly all SMB commands. You can set the
+maximum size that Samba will negotiate using the "max xmit = " option
+in smb.conf. Note that this is the maximum size of SMB request that 
+Samba will accept, but not the maximum size that the *client* will accept.
+The client maximum receive size is sent to Samba by the client and Samba
+honours this limit.
+
+It defaults to 65536 bytes (the maximum), but it is possible that some
+clients may perform better with a smaller transmit unit. Trying values
+of less than 2048 is likely to cause severe problems.
+
+In most cases the default is the best option.
+
+
+LOCKING
+-------
+
+By default Samba does not implement strict locking on each read/write
+call (although it did in previous versions). If you enable strict
+locking (using "strict locking = yes") then you may find that you
+suffer a severe performance hit on some systems.
+
+The performance hit will probably be greater on NFS mounted
+filesystems, but could be quite high even on local disks.
+
+
+SHARE MODES
+-----------
+
+Some people find that opening files is very slow. This is often
+because of the "share modes" code needed to fully implement the dos
+share modes stuff. You can disable this code using "share modes =
+no". This will gain you a lot in opening and closing files but will
+mean that (in some cases) the system won't force a second user of a
+file to open the file read-only if the first has it open
+read-write. For many applications that do their own locking this
+doesn't matter, but for some it may. Most Windows applications
+depend heavily on "share modes" working correctly and it is
+recommended that the Samba share mode support be left at the
+default of "on".
+
+The share mode code in Samba has been re-written in the 1.9.17
+release following tests with the Ziff-Davis NetBench PC Benchmarking
+tool. It is now believed that Samba 1.9.17 implements share modes
+similarly to Windows NT.
+
+NOTE: In the most recent versions of Samba there is an option to use
+shared memory via mmap() to implement the share modes. This makes
+things much faster. See the Makefile for how to enable this.
+
+
+LOG LEVEL
+---------
+
+If you set the log level (also known as "debug level") higher than 2
+then you may suffer a large drop in performance. This is because the
+server flushes the log file after each operation, which can be very
+expensive. 
+
+
+WIDE LINKS
+----------
+
+The "wide links" option is now enabled by default, but if you disable
+it (for better security) then you may suffer a performance hit in
+resolving filenames. The performance loss is lessened if you have
+"getwd cache = yes", which is now the default.
+
+
+READ RAW
+--------
+
+The "read raw" operation is designed to be an optimised, low-latency
+file read operation. A server may choose to not support it,
+however. and Samba makes support for "read raw" optional, with it
+being enabled by default.
+
+In some cases clients don't handle "read raw" very well and actually
+get lower performance using it than they get using the conventional
+read operations. 
+
+So you might like to try "read raw = no" and see what happens on your
+network. It might lower, raise or not affect your performance. Only
+testing can really tell.
+
+
+WRITE RAW
+---------
+
+The "write raw" operation is designed to be an optimised, low-latency
+file write operation. A server may choose to not support it,
+however. and Samba makes support for "write raw" optional, with it
+being enabled by default.
+
+Some machines may find "write raw" slower than normal write, in which
+case you may wish to change this option.
+
+READ PREDICTION
+---------------
+
+Samba can do read prediction on some of the SMB commands. Read
+prediction means that Samba reads some extra data on the last file it
+read while waiting for the next SMB command to arrive. It can then
+respond more quickly when the next read request arrives.
+
+This is disabled by default. You can enable it by using "read
+prediction = yes".
+
+Note that read prediction is only used on files that were opened read
+only.
+
+Read prediction should particularly help for those silly clients (such
+as "Write" under NT) which do lots of very small reads on a file.
+
+Samba will not read ahead more data than the amount specified in the
+"read size" option. It always reads ahead on 1k block boundaries.
+
+
+MEMORY MAPPING
+--------------
+
+Samba supports reading files via memory mapping them. One some
+machines this can give a large boost to performance, on others it
+makes not difference at all, and on some it may reduce performance.
+
+To enable you you have to recompile Samba with the -DUSE_MMAP option
+on the FLAGS line of the Makefile.
+
+Note that memory mapping is only used on files opened read only, and
+is not used by the "read raw" operation. Thus you may find memory
+mapping is more effective if you disable "read raw" using "read raw =
+no".
+
+
+SLOW CLIENTS
+------------
+
+One person has reported that setting the protocol to COREPLUS rather
+than LANMAN2 gave a dramatic speed improvement (from 10k/s to 150k/s).
+
+I suspect that his PC's (386sx16 based) were asking for more data than
+they could chew. I suspect a similar speed could be had by setting
+"read raw = no" and "max xmit = 2048", instead of changing the
+protocol. Lowering the "read size" might also help.
+
+
+SLOW LOGINS
+-----------
+
+Slow logins are almost always due to the password checking time. Using
+the lowest practical "password level" will improve things a lot. You
+could also enable the "UFC crypt" option in the Makefile.
+
+CLIENT TUNING
+-------------
+
+Often a speed problem can be traced to the client. The client (for
+example Windows for Workgroups) can often be tuned for better TCP
+performance.
+
+See your client docs for details. In particular, I have heard rumours
+that the WfWg options TCPWINDOWSIZE and TCPSEGMENTSIZE can have a
+large impact on performance.
+
+Also note that some people have found that setting DefaultRcvWindow in
+the [MSTCP] section of the SYSTEM.INI file under WfWg to 3072 gives a
+big improvement. I don't know why.
+
+My own experience wth DefaultRcvWindow is that I get much better
+performance with a large value (16384 or larger). Other people have
+reported that anything over 3072 slows things down enourmously. One
+person even reported a speed drop of a factor of 30 when he went from
+3072 to 8192. I don't know why.
+
+It probably depends a lot on your hardware, and the type of unix box
+you have at the other end of the link.
+
+
+MY RESULTS
+----------
+
+Some people want to see real numbers in a document like this, so here
+they are. I have a 486sx33 client running WfWg 3.11 with the 3.11b
+tcp/ip stack. It has a slow IDE drive and 20Mb of ram. It has a SMC
+Elite-16 ISA bus ethernet card. The only WfWg tuning I've done is to
+set DefaultRcvWindow in the [MSTCP] section of system.ini to 16384. My
+server is a 486dx3-66 running Linux. It also has 20Mb of ram and a SMC
+Elite-16 card. You can see my server config in the examples/tridge/
+subdirectory of the distribution.
+
+I get 490k/s on reading a 8Mb file with copy.
+I get 441k/s writing the same file to the samba server.
+
+Of course, there's a lot more to benchmarks than 2 raw throughput
+figures, but it gives you a ballpark figure.
+
+I've also tested Win95 and WinNT, and found WinNT gave me the best
+speed as a samba client. The fastest client of all (for me) is
+smbclient running on another linux box. Maybe I'll add those results
+here someday ...
+
+

@@ -1,0 +1,130 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 1] 1.5 An Overview of the Samba Distribution</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:30:00Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch01_04.html" TITLE="1.4 Microsoft Implementations">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 1.4 Microsoft Implementations" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch01_01.html" TITLE="1. Learning the Samba">
+Chapter 1<br>
+Learning the Samba</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch01_06.html" TITLE="1.6 How Can I Get Samba?">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 1.6 How Can I Get Samba?" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch01-32691">
+1.5 An Overview of the Samba Distribution</a></h2><P CLASS="para">
+As mentioned earlier, Samba actually contains several programs that serve different but related purposes. Let's introduce each of them briefly, and show how they work together. The majority of the programs that come with the Samba distribution center on its two daemons. Let's take a refined look at the responsibilities of each daemon:</p><DL CLASS="variablelist">
+<DT CLASS="term">
+<EM CLASS="emphasis">
+smbd</em></dt><DD CLASS="listitem">
+<P CLASS="para">
+The <EM CLASS="emphasis">
+smbd</em> daemon is responsible for managing the shared resources between the Samba server machine and its clients. It provides file, print, and browser services to <SPAN CLASS="acronym">
+SMB</span> clients across one or more networks. <EM CLASS="emphasis">
+smdb</em> handles all notifications between the Samba server and the network clients. In addition, it is responsible for user authentication, resource locking, and data sharing through the <SPAN CLASS="acronym">
+SMB</span> protocol.</p></dd><DT CLASS="term">
+<EM CLASS="emphasis">
+nmbd</em></dt><DD CLASS="listitem">
+<P CLASS="para">
+The <EM CLASS="emphasis">
+nmbd</em> daemon is a simple nameserver that mimics the WINS and NetBIOS name server functionality, as you might expect to encounter with the LAN Manager package. This daemon listens for nameserver requests and provides the appropriate information when called upon. It also provides browse lists for the Network Neighborhood and participates in browsing elections.</p></dd></dl><P CLASS="para">
+The Samba distribution also comes with a small set of Unix command-line tools:</p><DL CLASS="variablelist">
+<DT CLASS="term">
+<i>smbclient</i></dt><DD CLASS="listitem">
+<P CLASS="para">
+An FTP-like Unix client that can be used to connect to Samba shares</p></dd><DT CLASS="term">
+<i>smbtar</i></dt><DD CLASS="listitem">
+<P CLASS="para">
+A program for backing up data in shares, similar to the Unix <I CLASS="filename">
+tar</i> command</p></dd><DT CLASS="term">
+<i>nmblookup</i></dt><DD CLASS="listitem">
+<P CLASS="para">
+A program that provides NetBIOS over TCP/IP name lookups</p></dd><DT CLASS="term">
+<i>smbpasswd</i></dt><DD CLASS="listitem">
+<P CLASS="para">
+A program that allows an administrator to change the encrypted passwords used by Samba</p></dd><DT CLASS="term">
+<i>smbstatus</i></dt><DD CLASS="listitem">
+<P CLASS="para">
+A program for reporting the current network connections to the shares on a Samba server</p></dd><DT CLASS="term">
+<i>testparm</i></dt><DD CLASS="listitem">
+<P CLASS="para">
+A simple program to validate the Samba configuration file</p></dd><DT CLASS="term">
+<i>testprns</i></dt><DD CLASS="listitem">
+<P CLASS="para">
+A program that tests whether various printers are recognized by the <I CLASS="filename">
+smbd</i> daemon</p></dd></dl><P CLASS="para">
+Each significant release of Samba goes through a significant exposure test before it's announced. In addition, it is quickly updated afterward if problems or unwanted side-effects are found. The latest stable distribution as of this writing is Samba 2.0.5, the long-awaited production version of Samba 2.0. This book focuses on the functionality supported in Samba 2.0, as opposed to the older 1.9.<EM CLASS="emphasis">
+x</em> versions of Samba, which are now obsolete.</p></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch01_04.html" TITLE="1.4 Microsoft Implementations">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 1.4 Microsoft Implementations" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch01_06.html" TITLE="1.6 How Can I Get Samba?">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 1.6 How Can I Get Samba?" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+1.4 Microsoft Implementations</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+1.6 How Can I Get Samba?</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

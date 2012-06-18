@@ -1,0 +1,21 @@
+Allows you to restrict the number of parallel TCP connections to a
+server per client IP address (or address block).
+.TP
+[\fB!\fR] \fB--connlimit-above \fIn\fR
+match if the number of existing tcp connections is (not) above n
+.TP
+.BI "--connlimit-mask " "bits"
+group hosts using mask
+.P
+Examples:
+.TP
+# allow 2 telnet connections per client host
+iptables -A INPUT -p tcp --syn --dport 23 -m connlimit --connlimit-above 2 -j REJECT
+.TP
+# you can also match the other way around:
+iptables -A INPUT -p tcp --syn --dport 23 -m connlimit ! --connlimit-above 2 -j ACCEPT
+.TP
+# limit the nr of parallel http requests to 16 per class C sized \
+network (24 bit netmask)
+iptables -p tcp --syn --dport 80 -m connlimit --connlimit-above 16
+--connlimit-mask 24 -j REJECT

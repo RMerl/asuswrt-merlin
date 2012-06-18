@@ -1,0 +1,102 @@
+@node OSPFv3, BGP, OSPFv2, Top
+@comment  node-name,  next,  previous,  up
+@chapter OSPFv3
+
+@command{ospf6d} is a daemon support OSPF version 3 for IPv6 network.
+OSPF for IPv6 is described in RFC2740.
+
+@menu
+* OSPF6 router::                
+* OSPF6 area::                  
+* OSPF6 interface::             
+* Redistribute routes to OSPF6::  
+* Showing OSPF6 information::   
+@end menu
+
+@node OSPF6 router, OSPF6 area, OSPFv3, OSPFv3
+@comment  node-name,  next,  previous,  up
+@section OSPF6 router
+
+@deffn {Command} {router ospf6} {}
+@end deffn
+
+@deffn {OSPF6 Command} {router-id @var{a.b.c.d}} {}
+Set router's Router-ID.
+@end deffn
+
+@deffn {OSPF6 Command} {interface @var{ifname} area @var{area}} {}
+Bind interface to specified area, and start sending OSPF packets.  @var{area} can
+be specified as 0.
+@end deffn
+
+@node OSPF6 area, OSPF6 interface, OSPF6 router, OSPFv3
+@comment  node-name,  next,  previous,  up
+@section OSPF6 area
+
+Area support for OSPFv3 is not yet implemented.
+
+@node OSPF6 interface, Redistribute routes to OSPF6, OSPF6 area, OSPFv3
+@comment  node-name,  next,  previous,  up
+@section OSPF6 interface
+
+@deffn {Interface Command} {ipv6 ospf6 cost COST} {}
+Sets interface's output cost.  Default value is 1.
+@end deffn
+
+@deffn {Interface Command} {ipv6 ospf6 hello-interval HELLOINTERVAL} {}
+Sets interface's Hello Interval.  Default 40
+@end deffn
+
+@deffn {Interface Command} {ipv6 ospf6 dead-interval DEADINTERVAL} {}
+Sets interface's Router Dead Interval.  Default value is 40.
+@end deffn
+
+@deffn {Interface Command} {ipv6 ospf6 retransmit-interval RETRANSMITINTERVAL} {}
+Sets interface's Rxmt Interval.  Default value is 5.
+@end deffn
+
+@deffn {Interface Command} {ipv6 ospf6 priority PRIORITY} {}
+Sets interface's Router Priority.  Default value is 1.
+@end deffn
+
+@deffn {Interface Command} {ipv6 ospf6 transmit-delay TRANSMITDELAY} {}
+Sets interface's Inf-Trans-Delay.  Default value is 1.
+@end deffn
+
+@node Redistribute routes to OSPF6, Showing OSPF6 information, OSPF6 interface, OSPFv3
+@comment  node-name,  next,  previous,  up
+@section Redistribute routes to OSPF6
+
+@deffn {OSPF6 Command} {redistribute static} {}
+@deffnx {OSPF6 Command} {redistribute connected} {}
+@deffnx {OSPF6 Command} {redistribute ripng} {}
+@end deffn
+
+@node Showing OSPF6 information,  , Redistribute routes to OSPF6, OSPFv3
+@comment  node-name,  next,  previous,  up
+@section Showing OSPF6 information
+
+@deffn {Command} {show ipv6 ospf6 [INSTANCE_ID]} {}
+INSTANCE_ID is an optional OSPF instance ID. To see router ID and OSPF
+instance ID, simply type "show ipv6 ospf6 <cr>".
+@end deffn
+
+@deffn {Command} {show ipv6 ospf6 database} {}
+This command shows LSA database summary.  You can specify the type of LSA.
+@end deffn
+
+@deffn {Command} {show ipv6 ospf6 interface} {}
+To see OSPF interface configuration like costs.
+@end deffn
+
+@deffn {Command} {show ipv6 ospf6 neighbor} {}
+Shows state and chosen (Backup) DR of neighbor.
+@end deffn
+
+@deffn {Command} {show ipv6 ospf6 request-list A.B.C.D} {}
+Shows requestlist of neighbor.
+@end deffn
+
+@deffn {Command} {show ipv6 route ospf6} {}
+This command shows internal routing table.
+@end deffn

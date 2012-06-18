@@ -1,0 +1,1128 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 9. Migrating NT4 Domain to Samba-3</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"><link rel="home" href="index.html" title="Samba-3 by Example"><link rel="up" href="DMSMig.html" title="Part II. Domain Members, Updating Samba and Migration"><link rel="prev" href="upgrades.html" title="Chapter 8. Updating Samba-3"><link rel="next" href="nw4migration.html" title="Chapter 10. Migrating NetWare Server to Samba-3"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 9. Migrating NT4 Domain to Samba-3</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="upgrades.html">Prev</a> </td><th width="60%" align="center">Part II. Domain Members, Updating Samba and Migration</th><td width="20%" align="right"> <a accesskey="n" href="nw4migration.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="ntmigration"></a>Chapter 9. Migrating NT4 Domain to Samba-3</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="ntmigration.html#id2601336">Introduction</a></span></dt><dd><dl><dt><span class="sect2"><a href="ntmigration.html#id2601421">Assignment Tasks</a></span></dt></dl></dd><dt><span class="sect1"><a href="ntmigration.html#id2601476">Dissection and Discussion</a></span></dt><dd><dl><dt><span class="sect2"><a href="ntmigration.html#id2601662">Technical Issues</a></span></dt><dt><span class="sect2"><a href="ntmigration.html#id2601985">Political Issues</a></span></dt></dl></dd><dt><span class="sect1"><a href="ntmigration.html#id2602011">Implementation</a></span></dt><dd><dl><dt><span class="sect2"><a href="ntmigration.html#id2602152">NT4 Migration Using LDAP Backend</a></span></dt><dt><span class="sect2"><a href="ntmigration.html#id2604610">NT4 Migration Using tdbsam Backend</a></span></dt><dt><span class="sect2"><a href="ntmigration.html#id2605017">Key Points Learned</a></span></dt></dl></dd><dt><span class="sect1"><a href="ntmigration.html#id2605055">Questions and Answers</a></span></dt></dl></div><p>
+	Ever since Microsoft announced that it was discontinuing support for Windows
+	NT4, Samba users started to ask for detailed instructions on how to migrate
+	from NT4 to Samba-3. This chapter provides background information that should
+	meet these needs.
+	</p><p>
+	One wonders how many NT4 systems will be left in service by the time you read this
+	book though.
+	</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2601336"></a>Introduction</h2></div></div></div><p><a class="indexterm" name="id2601342"></a>
+	Network administrators who want to migrate off a Windows NT4 environment know
+	one thing with certainty. They feel that NT4 has been abandoned, and they want
+	to update. The desire to get off NT4 and to not adopt Windows 200x and Active
+	Directory is driven by a mixture of concerns over complexity, cost, fear of
+	failure, and much more.
+	</p><p>
+	<a class="indexterm" name="id2601360"></a>
+	<a class="indexterm" name="id2601367"></a>
+	<a class="indexterm" name="id2601376"></a>
+	<a class="indexterm" name="id2601386"></a>
+	The migration from NT4 to Samba-3 can involve a number of factors, including
+	migration of data to another server, migration of network environment controls
+	such as group policies, and migration of the users, groups, and machine
+	accounts.
+	</p><p>
+	<a class="indexterm" name="id2601402"></a>
+	It should be pointed out now that it is possible to migrate some systems from
+	a Windows NT4 domain environment to a Samba-3 domain environment. This is certainly
+	not possible in every case. It is possible to just migrate the domain accounts
+	to Samba-3 and then to switch machines, but as a hands-off transition, this is more
+	the exception than the rule. Most systems require some tweaking after
+	migration before an environment that is acceptable for immediate use
+	is obtained.
+	</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2601421"></a>Assignment Tasks</h3></div></div></div><p>
+	<a class="indexterm" name="id2601429"></a>
+	<a class="indexterm" name="id2601436"></a>
+	<a class="indexterm" name="id2601442"></a>
+	You are about to migrate an MS Windows NT4 domain accounts database to
+	a Samba-3 server. The Samba-3 server is using a 
+	<em class="parameter"><code>passdb backend</code></em> based on LDAP. The 
+	<code class="constant">ldapsam</code> is ideal because an LDAP backend can be distributed
+	for use with BDCs  generally essential for larger networks.
+	</p><p>
+	Your objective is to document the process of migrating user and group accounts
+	from several NT4 domains into a single Samba-3 LDAP backend database.
+	</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2601476"></a>Dissection and Discussion</h2></div></div></div><p>
+	<a class="indexterm" name="id2601483"></a>
+	<a class="indexterm" name="id2601490"></a>
+	<a class="indexterm" name="id2601497"></a>
+	<a class="indexterm" name="id2601508"></a>
+	<a class="indexterm" name="id2601520"></a>
+	<a class="indexterm" name="id2601526"></a>
+	The migration process takes a snapshot of information that is stored in the
+	Windows NT4 registry-based accounts database. That information resides in
+	the Security Account Manager (SAM) portion of the NT4 registry under keys called
+	<code class="constant">SAM</code> and <code class="constant">SECURITY</code>.
+	</p><div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Warning</h3><p>
+	<a class="indexterm" name="id2601551"></a>
+	<a class="indexterm" name="id2601558"></a>
+	The Windows NT4 registry keys called <code class="constant">SAM</code> and <code class="constant">SECURITY</code>
+	are protected so that you cannot view the contents. If you change the security setting
+	to reveal the contents under these hive keys, your Windows NT4 domain is crippled. Do not
+	do this unless you are willing to render your domain controller inoperative.
+	</p></div><p>
+	<a class="indexterm" name="id2601580"></a>
+	<a class="indexterm" name="id2601589"></a>
+	Before commencing an NT4 to Samba-3 migration, you should consider what your objectives are.
+	While in some cases it is possible simply to migrate an NT4 domain to a single Samba-3 server,
+	that may not be a good idea from an administration perspective. Since the process involves going
+	through a certain amount of disruptive activity anyhow, why not take this opportunity to
+	review the structure of the network, how Windows clients are controlled and how they
+	interact with the network environment.
+	</p><p>
+	<a class="indexterm" name="id2601608"></a>
+	<a class="indexterm" name="id2601617"></a>
+	<a class="indexterm" name="id2601624"></a>
+	MS Windows NT4 was introduced some time around 1996. Many environments in which NT4 was deployed
+	have done little to keep the NT4 server environment up to date with more recent Windows releases, 
+	particularly Windows XP Professional. The migration provides opportunity to revise and update 
+	roaming profile deployment as well as folder redirection. Given that you must port the 
+	greater network configuration of this from the old NT4 server to the new Samba-3 server.
+	Do not forget to validate the security descriptors in the profiles share as well as network logon
+	scripts. Feedback from sites that are migrating to Samba-3 suggests that many are using this
+	as a good time to update desktop systems also. In all, the extra effort should constitute no
+	real disruption to users, but rather, with due diligence and care, should make their network experience
+	a much happier one.
+	</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2601662"></a>Technical Issues</h3></div></div></div><p>
+	<a class="indexterm" name="id2601670"></a>
+	<a class="indexterm" name="id2601676"></a>
+	Migration of an NT4 domain user and group database to Samba-3 involves a certain strategic
+	element. Many sites have asked for instructions regarding merging of multiple NT4
+	domains into one Samba-3 LDAP database. It seems that this is viewed as a significant
+	added value compared with the alternative of migration to Windows Server 200x and Active
+	Directory. The diagram in <a class="link" href="ntmigration.html#ch8-migration" title="Figure 9.1. Schematic Explaining the net rpc vampire Process">&#8220;Schematic Explaining the net rpc vampire Process&#8221;</a> illustrates the effect of migration
+	from a Windows NT4 domain to a Samba domain.
+	</p><div class="figure"><a name="ch8-migration"></a><p class="title"><b>Figure 9.1. Schematic Explaining the <code class="literal">net rpc vampire</code> Process</b></p><div class="figure-contents"><div class="mediaobject"><img src="images/ch8-migration.png" width="297" alt="Schematic Explaining the net rpc vampire Process"></div></div></div><br class="figure-break"><p>
+	<a class="indexterm" name="id2601750"></a>
+	<a class="indexterm" name="id2601756"></a>
+	If you want to merge multiple NT4 domain account databases into one Samba domain,
+	you must now dump the contents of the first migration and edit it as appropriate. Now clean
+	out (remove) the tdbsam backend file (<code class="filename">passdb.tdb</code>) or the LDAP database
+	files. You must start each migration with a new database into which you merge your NT4 
+	domains.
+	</p><p><a class="indexterm" name="id2601777"></a>
+	At this point, you are ready to perform the second migration, following the same steps as
+	for the first. In other words, dump the database, edit it, and then you may merge the
+	dump for the first and second migrations.
+	</p><p><a class="indexterm" name="id2601792"></a><a class="indexterm" name="id2601800"></a><a class="indexterm" name="id2601808"></a>
+	You must be careful. If you choose to migrate to an LDAP backend, your dump file
+	now contains the full account information, including the domain SID. The domain SID for each 
+	of the two NT4 domains will be different. You must choose one and change the domain 
+	portion of the account SIDs so that all are the same.
+	</p><p>
+	<a class="indexterm" name="id2601825"></a>
+	<a class="indexterm" name="id2601832"></a>
+	<a class="indexterm" name="id2601839"></a>
+	<a class="indexterm" name="id2601846"></a>
+	<a class="indexterm" name="id2601852"></a>
+	<a class="indexterm" name="id2601859"></a>
+	<a class="indexterm" name="id2601866"></a>
+	<a class="indexterm" name="id2601873"></a>
+	<a class="indexterm" name="id2601880"></a>
+	<a class="indexterm" name="id2601887"></a>
+	<a class="indexterm" name="id2601894"></a>
+	<a class="indexterm" name="id2601900"></a>
+	If you choose to use a tdbsam (<code class="filename">passdb.tdb</code>) backend file, your best choice
+	is to use <code class="literal">pdbedit</code> to export the contents of the tdbsam file into an
+	smbpasswd data file. This automatically strips out all domain-specific information,
+	such as logon hours, logon machines, logon script, profile path, as well as the domain SID.
+	The resulting file can be easily merged with other migration attempts (each of which must start
+	with a clean file). It should also be noted that all users who end up in the merged smbpasswd
+	file must have an account in <code class="filename">/etc/passwd</code>. The resulting smbpasswd file
+	may be exported or imported into either a tdbsam (<code class="filename">passdb.tdb</code>) or
+	an LDAP backend.
+	</p><div class="figure"><a name="NT4DUM"></a><p class="title"><b>Figure 9.2. View of Accounts in NT4 Domain User Manager</b></p><div class="figure-contents"><div class="mediaobject"><img src="images/UserMgrNT4.png" width="270" alt="View of Accounts in NT4 Domain User Manager"></div></div></div><br class="figure-break"></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2601985"></a>Political Issues</h3></div></div></div><p>
+	The merging of multiple Windows NT4-style domains into a single LDAP-backend-based Samba-3
+	domain may be seen by those who had power over them as a loss of prestige or a loss of
+	power. The imposition of a single domain may even be seen as a threat. So in migrating and
+	merging account databases, be consciously aware of the political fall-out in which you
+	may find yourself entangled when key staff feel a loss of prestige.
+	</p><p>
+	The best advice that can be given to those who set out to merge NT4 domains into a single
+	Samba-3 domain is to promote (sell) the action as one that reduces costs and delivers
+	greater network interoperability and manageability.
+	</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2602011"></a>Implementation</h2></div></div></div><p>
+	From feedback on the Samba mailing lists, it seems that most Windows NT4 migrations
+	to Samba-3 are being performed using a new server or a new installation of a Linux or UNIX
+	server. If you contemplate doing this, please note that the steps that follow in this
+	chapter assume familiarity with the information that has been previously covered in this
+	book. You are particularly encouraged to be familiar with <a class="link" href="secure.html" title="Chapter 3. Secure Office Networking">&#8220;Secure Office Networking&#8221;</a>,
+	<a class="link" href="Big500users.html" title="Chapter 4. The 500-User Office">&#8220;The 500-User Office&#8221;</a> and <a class="link" href="happy.html" title="Chapter 5. Making Happy Users">&#8220;Making Happy Users&#8221;</a>.
+	</p><p>
+	We present here the steps and example output for two NT4 to Samba-3 domain migrations. The
+	first uses an LDAP-based backend, and the second uses a tdbsam backend. In each case the
+	scripts you specify in the <code class="filename">smb.conf</code> file for the <em class="parameter"><code>add user script</code></em>
+	collection of parameters are used to effect the addition of accounts into the passdb backend.
+	</p><p>
+	Before proceeding to NT4 migration using either a tdbsam or ldapsam, it is most strongly recommended to
+	review <a class="link" href="Big500users.html#ch5-dnshcp-setup" title="Installation of DHCP, DNS, and Samba Control Files">&#8220;Installation of DHCP, DNS, and Samba Control Files&#8221;</a> for DNS and DHCP configuration. The importance of correctly
+	functioning name resolution must be recognized. This applies equally for both hostname and NetBIOS names
+	(machine names, computer names, domain names, workgroup names  ALL names!).
+	</p><p>
+	The migration process involves the following steps:
+	</p><div class="itemizedlist"><ul type="disc"><li><p>
+		Prepare the target Samba-3 server. This involves configuring Samba-3 for
+		migration to either a tdbsam or an ldapsam backend.
+		</p></li><li><p>
+		<a class="indexterm" name="id2602098"></a>
+		<a class="indexterm" name="id2602104"></a>
+		<a class="indexterm" name="id2602111"></a>
+		Clean up the source NT4 PDC. Delete all accounts that need not be migrated.
+		Delete all files that should not be migrated. Where possible, change NT group
+		names so there are no spaces or uppercase characters. This is important if
+		the target UNIX host insists on POSIX-compliant all lowercase user and group
+		names.
+		</p></li><li><p>
+		Step through the migration process.
+		</p></li><li><p><a class="indexterm" name="id2602132"></a>
+		Remove the NT4 PDC from the network.
+		</p></li><li><p>
+		Upgrade the Samba-3 server from a BDC to a PDC, and validate all account
+		information.
+		</p></li></ul></div><p>
+	It may help to use the above outline as a pre-migration checklist.
+	</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2602152"></a>NT4 Migration Using LDAP Backend</h3></div></div></div><p>
+	In this example, the migration is of an NT4 PDC to a Samba-3 PDC with an LDAP backend. The accounts about
+	to be migrated are shown in <a class="link" href="ntmigration.html#NT4DUM" title="Figure 9.2. View of Accounts in NT4 Domain User Manager">&#8220;View of Accounts in NT4 Domain User Manager&#8221;</a>. In this example use is made of the
+	smbldap-tools scripts to add the accounts that are migrated into the ldapsam passdb backend.
+	Four scripts are essential to the migration process. Other scripts will be required
+	for daily management, but these are not critical to migration. The critical scripts are dependant
+	on which passdb backend is being used. Refer to <a class="link" href="ntmigration.html#ch8-vampire" title="Table 9.1. Samba smb.conf Scripts Essential to Samba Operation">&#8220;Samba smb.conf Scripts Essential to Samba Operation&#8221;</a> to see which scripts
+	must be provided so that the migration process can complete.
+	</p><p>
+	Verify that you have correctly specified in the <code class="filename">smb.conf</code> file the scripts and arguments 
+	that should be passed to them before attempting to perform the account migration. Note also
+	that the deletion scripts must be commented out during migration. These should be uncommented
+	following successful migration of the NT4 Domain accounts.
+	</p><div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Warning</h3><p>
+	Under absolutely no circumstances should the Samba daemons be started until instructed to do so.
+	Delete the <code class="filename">/etc/samba/secrets.tdb</code> file and all Samba control tdb files
+	before commencing the following configuration steps.
+	</p></div><div class="table"><a name="ch8-vampire"></a><p class="title"><b>Table 9.1. Samba <code class="filename">smb.conf</code> Scripts Essential to Samba Operation</b></p><div class="table-contents"><table summary="Samba smb.conf Scripts Essential to Samba Operation" border="1"><colgroup><col align="left"><col align="center"><col align="center"></colgroup><thead><tr><th align="left">Entity</th><th align="center">ldapsam Script</th><th align="center">tdbsam Script</th></tr></thead><tbody><tr><td align="left">Add User Accounts</td><td align="center">smbldap-useradd</td><td align="center">useradd</td></tr><tr><td align="left">Delete User Accounts</td><td align="center">smbldap-userdel</td><td align="center">userdel</td></tr><tr><td align="left">Add Group Accounts</td><td align="center">smbldap-groupadd</td><td align="center">groupadd</td></tr><tr><td align="left">Delete Group Accounts</td><td align="center">smbldap-groupdel</td><td align="center">groupdel</td></tr><tr><td align="left">Add User to Group</td><td align="center">smbldap-groupmod</td><td align="center">usermod (See Note)</td></tr><tr><td align="left">Add Machine Accounts</td><td align="center">smbldap-useradd</td><td align="center">useradd</td></tr></tbody></table></div></div><br class="table-break"><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+	<a class="indexterm" name="id2602354"></a>
+	<a class="indexterm" name="id2602361"></a>
+	<a class="indexterm" name="id2602368"></a>
+	The UNIX/Linux <code class="literal">usermod</code> utility does not permit simple user addition to (or deletion
+	of users from) groups. This is a feature provided by the smbldap-tools scripts. If you want this
+	capability, you must create your own tool to do this. Alternately, you can search the Web
+	to locate a utility called <code class="literal">groupmem</code> (by George Kraft) that provides this functionality.
+	The <code class="literal">groupmem</code> utility was contributed to the shadow package but has not surfaced
+	in the formal commands provided by Linux distributions (March 2004).
+	</p></div><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+	<a class="indexterm" name="id2602405"></a>
+	The <code class="literal">tdbdump</code> utility is a utility that you can build from the Samba source-code tree. Not all Linux binary distributions include this tool. If it is missing from your
+	Linux distribution, you will need to build this yourself or else forgo its use.
+	</p></div><p>
+	<a class="indexterm" name="id2602425"></a>
+	Before starting the migration, all dead accounts were removed from the NT4 domain using the User Manager for Domains.
+	</p><div class="procedure"><a name="id2602435"></a><p class="title"><b>Procedure 9.1. User Migration Steps</b></p><div class="example"><a name="sbent4smb"></a><p class="title"><b>Example 9.1. NT4 Migration Samba-3 Server <code class="filename">smb.conf</code>  Part: A</b></p><div class="example-contents"><table class="simplelist" border="0" summary="Simple list"><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td><a class="indexterm" name="id2602495"></a><em class="parameter"><code>workgroup = DAMNATION</code></em></td></tr><tr><td><a class="indexterm" name="id2602507"></a><em class="parameter"><code>netbios name = MERLIN</code></em></td></tr><tr><td><a class="indexterm" name="id2602519"></a><em class="parameter"><code>passdb backend = ldapsam:ldap://localhost</code></em></td></tr><tr><td><a class="indexterm" name="id2602531"></a><em class="parameter"><code>log level = 1</code></em></td></tr><tr><td><a class="indexterm" name="id2602543"></a><em class="parameter"><code>syslog = 0</code></em></td></tr><tr><td><a class="indexterm" name="id2602554"></a><em class="parameter"><code>log file = /var/log/samba/%m</code></em></td></tr><tr><td><a class="indexterm" name="id2602566"></a><em class="parameter"><code>max log size = 0</code></em></td></tr><tr><td><a class="indexterm" name="id2602578"></a><em class="parameter"><code>smb ports = 139 445</code></em></td></tr><tr><td><a class="indexterm" name="id2602589"></a><em class="parameter"><code>name resolve order = wins bcast hosts</code></em></td></tr><tr><td><a class="indexterm" name="id2602601"></a><em class="parameter"><code>add user script = /opt/IDEALX/sbin/smbldap-useradd -m '%u'</code></em></td></tr><tr><td><a class="indexterm" name="id2602614"></a><em class="parameter"><code>#delete user script = /opt/IDEALX/sbin/smbldap-userdel '%u'</code></em></td></tr><tr><td><a class="indexterm" name="id2602626"></a><em class="parameter"><code>add group script = /opt/IDEALX/sbin/smbldap-groupadd '%g'</code></em></td></tr><tr><td><a class="indexterm" name="id2602639"></a><em class="parameter"><code>#delete group script = /opt/IDEALX/sbin/smbldap-groupdel '%g'</code></em></td></tr><tr><td><a class="indexterm" name="id2602651"></a><em class="parameter"><code>add user to group script = /opt/IDEALX/sbin/ smbldap-groupmod -m '%u' '%g'</code></em></td></tr><tr><td><a class="indexterm" name="id2602664"></a><em class="parameter"><code>#delete user from group script = /opt/IDEALX/sbin/smbldap-groupmod -x '%u' '%g'</code></em></td></tr><tr><td><a class="indexterm" name="id2602677"></a><em class="parameter"><code>set primary group script = /opt/IDEALX/sbin/smbldap-usermod -g '%g' '%u'</code></em></td></tr><tr><td><a class="indexterm" name="id2602690"></a><em class="parameter"><code>add machine script = /opt/IDEALX/sbin/smbldap-useradd -w '%u'</code></em></td></tr><tr><td><a class="indexterm" name="id2602702"></a><em class="parameter"><code>logon script = scripts\logon.cmd</code></em></td></tr><tr><td><a class="indexterm" name="id2602714"></a><em class="parameter"><code>logon path = \\%L\profiles\%U</code></em></td></tr><tr><td><a class="indexterm" name="id2602726"></a><em class="parameter"><code>logon home = \\%L\%U</code></em></td></tr><tr><td><a class="indexterm" name="id2602738"></a><em class="parameter"><code>logon drive = X:</code></em></td></tr><tr><td><a class="indexterm" name="id2602750"></a><em class="parameter"><code>domain logons = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2602761"></a><em class="parameter"><code>domain master = No</code></em></td></tr><tr><td><a class="indexterm" name="id2602773"></a><em class="parameter"><code>#wins support = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2602785"></a><em class="parameter"><code>wins server = 192.168.123.124</code></em></td></tr><tr><td><a class="indexterm" name="id2602797"></a><em class="parameter"><code>ldap admin dn = cn=Manager,dc=terpstra-world,dc=org</code></em></td></tr><tr><td><a class="indexterm" name="id2602809"></a><em class="parameter"><code>ldap group suffix = ou=Groups</code></em></td></tr><tr><td><a class="indexterm" name="id2602821"></a><em class="parameter"><code>ldap idmap suffix = ou=Idmap</code></em></td></tr><tr><td><a class="indexterm" name="id2602833"></a><em class="parameter"><code>ldap machine suffix = ou=People</code></em></td></tr><tr><td><a class="indexterm" name="id2602845"></a><em class="parameter"><code>ldap passwd sync = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2602857"></a><em class="parameter"><code>ldap suffix = dc=terpstra-world,dc=org</code></em></td></tr><tr><td><a class="indexterm" name="id2602869"></a><em class="parameter"><code>ldap ssl = no</code></em></td></tr><tr><td><a class="indexterm" name="id2602880"></a><em class="parameter"><code>ldap timeout = 20</code></em></td></tr><tr><td><a class="indexterm" name="id2602892"></a><em class="parameter"><code>ldap user suffix = ou=People</code></em></td></tr><tr><td><a class="indexterm" name="id2602904"></a><em class="parameter"><code>idmap backend = ldap:ldap://localhost</code></em></td></tr><tr><td><a class="indexterm" name="id2602916"></a><em class="parameter"><code>idmap uid = 15000-20000</code></em></td></tr><tr><td><a class="indexterm" name="id2602928"></a><em class="parameter"><code>idmap gid = 15000-20000</code></em></td></tr><tr><td><a class="indexterm" name="id2602940"></a><em class="parameter"><code>winbind nested groups = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2602952"></a><em class="parameter"><code>ea support = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2602963"></a><em class="parameter"><code>map acl inherit = Yes</code></em></td></tr></table></div></div><br class="example-break"><div class="example"><a name="sbent4smb2"></a><p class="title"><b>Example 9.2. NT4 Migration Samba-3 Server <code class="filename">smb.conf</code>  Part: B</b></p><div class="example-contents"><table class="simplelist" border="0" summary="Simple list"><tr><td> </td></tr><tr><td><em class="parameter"><code>[apps]</code></em></td></tr><tr><td><a class="indexterm" name="id2603009"></a><em class="parameter"><code>comment = Application Data</code></em></td></tr><tr><td><a class="indexterm" name="id2603020"></a><em class="parameter"><code>path = /data/home/apps</code></em></td></tr><tr><td><a class="indexterm" name="id2603032"></a><em class="parameter"><code>read only = No</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[homes]</code></em></td></tr><tr><td><a class="indexterm" name="id2603053"></a><em class="parameter"><code>comment = Home Directories</code></em></td></tr><tr><td><a class="indexterm" name="id2603064"></a><em class="parameter"><code>path = /home/users/%U/Documents</code></em></td></tr><tr><td><a class="indexterm" name="id2603076"></a><em class="parameter"><code>valid users = %S</code></em></td></tr><tr><td><a class="indexterm" name="id2603088"></a><em class="parameter"><code>read only = No</code></em></td></tr><tr><td><a class="indexterm" name="id2603100"></a><em class="parameter"><code>browseable = No</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[printers]</code></em></td></tr><tr><td><a class="indexterm" name="id2603120"></a><em class="parameter"><code>comment = SMB Print Spool</code></em></td></tr><tr><td><a class="indexterm" name="id2603132"></a><em class="parameter"><code>path = /var/spool/samba</code></em></td></tr><tr><td><a class="indexterm" name="id2603144"></a><em class="parameter"><code>guest ok = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2603155"></a><em class="parameter"><code>printable = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2603167"></a><em class="parameter"><code>use client driver = No</code></em></td></tr><tr><td><a class="indexterm" name="id2603179"></a><em class="parameter"><code>browseable = No</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[netlogon]</code></em></td></tr><tr><td><a class="indexterm" name="id2603199"></a><em class="parameter"><code>comment = Network Logon Service</code></em></td></tr><tr><td><a class="indexterm" name="id2603211"></a><em class="parameter"><code>path = /var/lib/samba/netlogon</code></em></td></tr><tr><td><a class="indexterm" name="id2603223"></a><em class="parameter"><code>guest ok = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2603234"></a><em class="parameter"><code>locking = No</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[profiles]</code></em></td></tr><tr><td><a class="indexterm" name="id2603255"></a><em class="parameter"><code>comment = Profile Share</code></em></td></tr><tr><td><a class="indexterm" name="id2603267"></a><em class="parameter"><code>path = /var/lib/samba/profiles</code></em></td></tr><tr><td><a class="indexterm" name="id2603279"></a><em class="parameter"><code>read only = No</code></em></td></tr><tr><td><a class="indexterm" name="id2603290"></a><em class="parameter"><code>profile acls = Yes</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[profdata]</code></em></td></tr><tr><td><a class="indexterm" name="id2603311"></a><em class="parameter"><code>comment = Profile Data Share</code></em></td></tr><tr><td><a class="indexterm" name="id2603323"></a><em class="parameter"><code>path = /var/lib/samba/profdata</code></em></td></tr><tr><td><a class="indexterm" name="id2603335"></a><em class="parameter"><code>read only = No</code></em></td></tr><tr><td><a class="indexterm" name="id2603346"></a><em class="parameter"><code>profile acls = Yes</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[print$]</code></em></td></tr><tr><td><a class="indexterm" name="id2603367"></a><em class="parameter"><code>comment = Printer Drivers</code></em></td></tr><tr><td><a class="indexterm" name="id2603379"></a><em class="parameter"><code>path = /var/lib/samba/drivers</code></em></td></tr></table></div></div><br class="example-break"><div class="example"><a name="sbentslapd"></a><p class="title"><b>Example 9.3. NT4 Migration LDAP Server Configuration File: <code class="filename">/etc/openldap/slapd.conf</code>  Part A</b></p><div class="example-contents"><pre class="screen">
+include         /etc/openldap/schema/core.schema
+include         /etc/openldap/schema/cosine.schema
+include         /etc/openldap/schema/inetorgperson.schema
+include         /etc/openldap/schema/nis.schema
+include         /etc/openldap/schema/samba3.schema
+
+pidfile         /var/run/slapd/slapd.pid
+argsfile        /var/run/slapd/slapd.args
+
+access to dn.base=""
+                by self write
+                by * auth
+
+access to attr=userPassword
+                by self write
+                by * auth
+
+access to attr=shadowLastChange
+                by self write
+                by * read
+
+access to *
+                by * read
+                by anonymous auth
+</pre></div></div><br class="example-break"><div class="example"><a name="sbentslapd2"></a><p class="title"><b>Example 9.4. NT4 Migration LDAP Server Configuration File: <code class="filename">/etc/openldap/slapd.conf</code>  Part B</b></p><div class="example-contents"><pre class="screen">
+#loglevel       256
+
+#schemacheck     on
+idletimeout     30
+#backend         bdb
+database        bdb
+checkpoint      1024 5
+cachesize       10000
+
+suffix          "dc=terpstra-world,dc=org"
+rootdn          "cn=Manager,dc=terpstra-world,dc=org"
+
+# rootpw = not24get
+rootpw          {SSHA}86kTavd9Dw3FAz6qzWTrCOKX/c0Qe+UV
+
+directory       /var/lib/ldap
+
+# Indices to maintain
+index objectClass           eq
+index cn                    pres,sub,eq
+index sn                    pres,sub,eq
+index uid                   pres,sub,eq
+index displayName           pres,sub,eq
+index uidNumber             eq
+index gidNumber             eq
+index memberUID             eq
+index sambaSID              eq
+index sambaPrimaryGroupSID  eq
+index sambaDomainName       eq
+index default               sub
+</pre></div></div><br class="example-break"><div class="example"><a name="sbrntldapconf"></a><p class="title"><b>Example 9.5. NT4 Migration NSS LDAP File: <code class="filename">/etc/ldap.conf</code></b></p><div class="example-contents"><pre class="screen">
+host    127.0.0.1
+
+base    dc=terpstra-world,dc=org
+
+ldap_version    3
+
+binddn cn=Manager,dc=terpstra-world,dc=org
+bindpw not24get
+
+pam_password exop
+
+nss_base_passwd         ou=People,dc=terpstra-world,dc=org?one
+nss_base_shadow         ou=People,dc=terpstra-world,dc=org?one
+nss_base_group          ou=Groups,dc=terpstra-world,dc=org?one
+
+ssl off
+</pre></div></div><br class="example-break"><div class="example"><a name="sbentnss"></a><p class="title"><b>Example 9.6. NT4 Migration NSS Control File: <code class="filename">/etc/nsswitch.conf</code> (Stage:1)</b></p><div class="example-contents"><pre class="screen">
+passwd:         files #ldap
+shadow:         files #ldap
+group:          files #ldap
+
+hosts:          files dns wins
+networks:       files dns
+
+services:       files
+protocols:      files
+rpc:            files
+ethers:         files
+netmasks:       files
+netgroup:       files
+publickey:      files
+
+bootparams:     files
+automount:      files nis
+aliases:        files
+#passwd_compat: ldap       #Not needed.
+#group_compat:  ldap      #Not needed.
+</pre></div></div><br class="example-break"><div class="example"><a name="sbentnss2"></a><p class="title"><b>Example 9.7. NT4 Migration NSS Control File: <code class="filename">/etc/nsswitch.conf</code> (Stage:2)</b></p><div class="example-contents"><pre class="screen">
+passwd:         files ldap
+shadow:         files ldap
+group:          files ldap
+
+hosts:          files dns wins
+networks:       files dns
+
+services:       files
+protocols:      files
+rpc:            files
+ethers:         files
+netmasks:       files
+netgroup:       files
+publickey:      files
+
+bootparams:     files
+automount:      files nis
+aliases:        files
+#passwd_compat: ldap       #Not needed.
+#group_compat:  ldap      #Not needed.
+</pre></div></div><br class="example-break"><ol type="1"><li><p>
+		Configure the Samba <code class="filename">smb.conf</code> file to create a BDC. An example configuration is
+		given in <a class="link" href="ntmigration.html#sbent4smb" title="Example 9.1. NT4 Migration Samba-3 Server smb.conf Part: A">&#8220;NT4 Migration Samba-3 Server smb.conf  Part: A&#8221;</a>.
+		The delete scripts are commented out so that during the process of migration
+		no account information can be deleted.
+		</p></li><li><p>
+		<a class="indexterm" name="id2603397"></a>
+		Configure OpenLDAP in preparation for the migration. An example
+		<code class="filename">sladp.conf</code> file is shown in <a class="link" href="ntmigration.html#sbentslapd" title="Example 9.3. NT4 Migration LDAP Server Configuration File: /etc/openldap/slapd.conf Part A">&#8220;NT4 Migration LDAP Server Configuration File: /etc/openldap/slapd.conf  Part A&#8221;</a>.
+		The <code class="constant">rootpw</code> value is an encrypted password string that can
+		be obtained by executing the <code class="literal">slappasswd</code> command.
+		</p></li><li><p>
+		<a class="indexterm" name="id2603511"></a>
+		<a class="indexterm" name="id2603517"></a>
+		Install the PADL <code class="literal">nss_ldap</code> tool set, then configure the <code class="filename">/etc/ldap.conf</code>
+		as shown in <a class="link" href="ntmigration.html#sbrntldapconf" title="Example 9.5. NT4 Migration NSS LDAP File: /etc/ldap.conf">&#8220;NT4 Migration NSS LDAP File: /etc/ldap.conf&#8221;</a>.
+		</p></li><li><p>
+		<a class="indexterm" name="id2603578"></a>
+		Edit the <code class="filename">/etc/nsswitch.conf</code> file so it has the entries shown
+		in <a class="link" href="ntmigration.html#sbentnss" title="Example 9.6. NT4 Migration NSS Control File: /etc/nsswitch.conf (Stage:1)">&#8220;NT4 Migration NSS Control File: /etc/nsswitch.conf (Stage:1)&#8221;</a>. Note that the LDAP entries have been commented out.
+		This is deliberate. If these entries are active (not commented out), and the
+		<code class="filename">/etc/ldap.conf</code> file has been configured, when the LDAP server
+		is started, the process of starting the LDAP server will cause LDAP lookups. This
+		causes the LDAP server <code class="literal">slapd</code> to hang because it finds port 389
+		open and therefore cannot gain exclusive control of it. By commenting these entries
+		out, it is possible to avoid this gridlock situation and thus the overall
+		installation and configuration will progress more smoothly.
+		</p></li><li><p>
+		Validate the the target NT4 PDC name is being correctly resolved to its IP address by
+		executing the following:
+</p><pre class="screen">
+<code class="prompt">root# </code> ping transgression
+PING transgression.terpstra-world.org (192.168.1.5) 56(84) bytes of data.
+64 bytes from (192.168.1.5): icmp_seq=1 ttl=128 time=0.159 ms
+64 bytes from (192.168.1.5): icmp_seq=2 ttl=128 time=0.192 ms
+64 bytes from (192.168.1.5): icmp_seq=3 ttl=128 time=0.141 ms
+
+--- transgression.terpstra-world.org ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2000ms
+rtt min/avg/max/mdev = 0.141/0.164/0.192/0.021 ms
+</pre><p>
+		Do not proceed to the next step if this step fails. It is imperative that the name of the PDC
+		can be resolved to its IP address. If this is broken, fix it.
+		</p></li><li><p>
+		Pull the domain SID from the NT4 domain that is being migrated as follows:
+</p><pre class="screen">
+<code class="prompt">root# </code> net rpc getsid -S TRANGRESSION -U Administrator%not24get
+Storing SID S-1-5-21-1385457007-882775198-1210191635 \
+                     for Domain DAMNATION in secrets.tdb
+</pre><p>
+		</p><p>
+		Another way to obtain the domain SID from the target NT4 domain that is being
+		migrated to Samba-3 is by executing the following:
+</p><pre class="screen">
+<code class="prompt">root# </code> net rpc info -S TRANSGRESSION
+</pre><p>
+		If this method is used, do not forget to store the SID obtained into the
+		<code class="filename">secrets.tdb</code> file. This can be done by executing:
+</p><pre class="screen">
+<code class="prompt">root# </code> net setlocalsid S-1-5-21-1385457007-882775198-1210191635
+</pre><p>
+		</p></li><li><p>
+		<a class="indexterm" name="id2603748"></a>
+		<a class="indexterm" name="id2603754"></a>
+		<a class="indexterm" name="id2603761"></a>
+		<a class="indexterm" name="id2603768"></a>
+		Install the Idealx <code class="literal">smbldap-tools</code> software package, following
+		the instructions given in <a class="link" href="happy.html#sbeidealx" title="Install and Configure Idealx smbldap-tools Scripts">&#8220;Install and Configure Idealx smbldap-tools Scripts&#8221;</a>. The resulting perl scripts
+		should be located in the <code class="filename">/opt/IDEALX/sbin</code> directory.
+		Change into that location, or wherever the scripts have been installed. Execute the
+		<code class="filename">configure.pl</code> script to configure the Idealx package for use.
+		Note: Use the domain SID obtained from the step above. The following is
+		an example configuration session:
+</p><pre class="screen">
+<code class="prompt">root# </code> ./configure.pl
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+       smbldap-tools script configuration
+       -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Before starting, check
+ . if your samba controller is up and running.
+ . if the domain SID is defined
+                           (you can get it with the 'net getlocalsid')
+
+ . you can leave the configuration using the Crtl-c key combination
+ . empty value can be set with the "." character
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Looking for configuration files...
+
+Samba Config File Location [/etc/samba/smb.conf] &gt;
+smbldap Config file Location (global parameters)
+           [/etc/smbldap-tools/smbldap.conf] &gt;
+smbldap Config file Location (bind parameters)
+      [/etc/smbldap-tools/smbldap_bind.conf] &gt;
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Let's start configuring the smbldap-tools scripts ...
+
+. workgroup name: name of the domain Samba act as a PDC
+  workgroup name [DAMNATION] &gt;
+. netbios name: netbios name of the samba controller
+  netbios name [MERLIN] &gt;
+. logon drive: local path to which the home directory
+         will be connected (for NT Workstations). Ex: 'H:'
+  logon drive [X:] &gt; H:
+. logon home: home directory location (for Win95/98 or NT Workstation)
+  (use %U as username) Ex:'\\MERLIN\home\%U'
+  logon home (leave blank if you don't want homeDirectory)
+                                       [\\MERLIN\home\%U] &gt; \\%L\%U
+. logon path: directory where roaming profiles are stored.
+                                     Ex:'\\MERLIN\profiles\%U'
+  logon path (leave blank if you don't want roaming profile)
+                          [\\MERLIN\profiles\%U] &gt; \\%L\profiles\%U
+. home directory prefix (use %U as username) [/home/%U] &gt;
+                                                        /home/users/%U
+. default user netlogon script (use %U as username) 
+                               [%U.cmd] &gt; scripts\logon.cmd
+  default password validation time (time in days) [45] &gt; 180
+. ldap suffix [dc=terpstra-world,dc=org] &gt;
+. ldap group suffix [ou=Groups] &gt;
+. ldap user suffix [ou=People] &gt;
+. ldap machine suffix [ou=People] &gt;
+. Idmap suffix [ou=Idmap] &gt;
+. sambaUnixIdPooldn: object where you want to store the next uidNumber
+  and gidNumber available for new users and groups
+  sambaUnixIdPooldn object (relative to ${suffix}) 
+                                         [sambaDomainName=DAMNATION] &gt;
+. ldap master server: 
+           IP address or DNS name of the master (writable) ldap server
+  ldap master server [] &gt; 127.0.0.1
+. ldap master port [389] &gt;
+. ldap master bind dn [cn=Manager,dc=terpstra-world,dc=org] &gt;
+. ldap master bind password [] &gt;
+. ldap slave server: IP address or DNS name of the slave ldap server:
+                                         can also be the master one
+  ldap slave server [] &gt; 127.0.0.1
+. ldap slave port [389] &gt;
+. ldap slave bind dn [cn=Manager,dc=terpstra-world,dc=org] &gt;
+. ldap slave bind password [] &gt;
+. ldap tls support (1/0) [0] &gt;
+. SID for domain DAMNATION: SID of the domain 
+                       (can be obtained with 'net getlocalsid MERLIN')
+  SID for domain DAMNATION []
+        &gt; S-1-5-21-1385457007-882775198-1210191635
+. unix password encryption: encryption used for unix passwords
+unix password encryption (CRYPT, MD5, SMD5, SSHA, SHA) [SSHA] &gt; MD5
+. default user gidNumber [513] &gt;
+. default computer gidNumber [515] &gt;
+. default login shell [/bin/bash] &gt;
+. default domain name to append to mail address [] &gt;
+                                                    terpstra-world.org
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+backup old configuration files:
+  /etc/smbldap-tools/smbldap.conf-&gt;
+                              /etc/smbldap-tools/smbldap.conf.old
+  /etc/smbldap-tools/smbldap_bind.conf-&gt;
+                              /etc/smbldap-tools/smbldap_bind.conf.old
+writing new configuration file:
+  /etc/smbldap-tools/smbldap.conf done.
+  /etc/smbldap-tools/smbldap_bind.conf done.
+</pre><p>
+		<a class="indexterm" name="id2603918"></a>
+		<a class="indexterm" name="id2603925"></a>
+		<a class="indexterm" name="id2603932"></a>
+		<a class="indexterm" name="id2603939"></a>
+		Note that the NT4 domain SID that was previously obtained was entered above. Also,
+		the sambaUnixIdPooldn object was specified as sambaDomainName=DAMNATION. This is
+		the location into which the Idealx smbldap-tools store the next available UID/GID
+		information. It is also where Samba stores domain specific information such as the
+		next RID, the SID, and so on. In older version of the smbldap-tools this information
+		was stored in the sambaUnixIdPooldn DIT location cn=NextFreeUnixId. Where smbldap-tools
+		are being upgraded to version 0.9.1 it is appropriate to update this to the new location
+		only if the directory information is also relocated.
+		</p></li><li><p>
+		Start the LDAP server using the system interface script. On Novell SLES9
+		this is done as shown here:
+</p><pre class="screen">
+<code class="prompt">root# </code> rcldap start
+</pre><p>
+		</p></li><li><p>
+		Edit the <code class="filename">/etc/nsswitch.conf</code> file so it has the entries shown in
+		<a class="link" href="ntmigration.html#sbentnss2" title="Example 9.7. NT4 Migration NSS Control File: /etc/nsswitch.conf (Stage:2)">&#8220;NT4 Migration NSS Control File: /etc/nsswitch.conf (Stage:2)&#8221;</a>. Note that the LDAP entries have now been uncommented.
+		</p></li><li><p>
+		The LDAP management password must be installed into the <code class="filename">secrets.tdb</code>
+		file as follows:
+</p><pre class="screen">
+<code class="prompt">root# </code> smbpasswd -w not24get
+Setting stored password for 
+            "cn=Manager,dc=terpstra-world,dc=org" in secrets.tdb
+</pre><p>
+		</p></li><li><p>
+		Populate the LDAP directory as shown here:
+</p><pre class="screen">
+<code class="prompt">root# </code> /opt/IDEALX/sbin/smbldap-populate -a root -k 0 -m 0
+Using workgroup name from sambaUnixIdPooldn (smbldap.conf):
+                          sambaDomainName=DAMNATION
+Using builtin directory structure
+adding new entry: dc=terpstra-world,dc=org
+adding new entry: ou=People,dc=terpstra-world,dc=org
+adding new entry: ou=Groups,dc=terpstra-world,dc=org
+entry ou=People,dc=terpstra-world,dc=org already exist.
+adding new entry: ou=Idmap,dc=terpstra-world,dc=org
+adding new entry: sambaDomainName=DAMNATION,dc=terpstra-world,dc=org
+adding new entry: uid=root,ou=People,dc=terpstra-world,dc=org
+adding new entry: uid=nobody,ou=People,dc=terpstra-world,dc=org
+adding new entry: cn=Domain Admins,ou=Groups,dc=terpstra-world,dc=org
+adding new entry: cn=Domain Users,ou=Groups,dc=terpstra-world,dc=org
+adding new entry: cn=Domain Guests,ou=Groups,dc=terpstra-world,dc=org
+adding new entry: cn=Domain Computers,ou=Groups,dc=terpstra-world,dc=org
+adding new entry: cn=Administrators,ou=Groups,dc=terpstra-world,dc=org
+adding new entry: cn=Print Operators,ou=Groups,dc=terpstra-world,dc=org
+adding new entry: cn=Backup Operators,ou=Groups,dc=terpstra-world,dc=org
+adding new entry: cn=Replicators,ou=Groups,dc=terpstra-world,dc=org
+</pre><p>
+		The script tries to add the ou=People container twice, hence the error message.
+		This is expected behavior.
+		</p></li><li><p>
+		<a class="indexterm" name="id2604103"></a>
+		Restart the LDAP server following initialization of the LDAP directory. Execute the
+		system control script provided on your system. The following steps can be used on
+		Novell SUSE SLES 9:
+</p><pre class="screen">
+<code class="prompt">root# </code> rcldap restart
+<code class="prompt">root# </code> chkconfig ldap on
+</pre><p>
+		</p></li><li><p>
+		Verify that the new user accounts that have been added to the LDAP directory can be
+		resolved as follows:
+</p><pre class="screen">
+<code class="prompt">root# </code> getent passwd
+...
+nobody:x:65534:65533:nobody:/var/lib/nobody:/bin/bash
+man:x:13:62:Manual pages viewer:/var/cache/man:/bin/bash
+news:x:9:13:News system:/etc/news:/bin/bash
+uucp:x:10:14:Unix-to-Unix CoPy system:/etc/uucp:/bin/bash
++::0:0:::
+root:x:0:0:Netbios Domain Administrator:/home/users/root:/bin/false
+nobody:x:999:514:nobody:/dev/null:/bin/false
+</pre><p>
+		Now repeat this for the group accounts as shown here:
+</p><pre class="screen">
+<code class="prompt">root# </code> getent group
+...
+nobody:x:65533:
+nogroup:x:65534:nobody
+users:x:100:
++::0:
+Domain Admins:x:512:root
+Domain Users:x:513:
+Domain Guests:x:514:
+Domain Computers:x:515:
+Administrators:x:544:
+Print Operators:x:550:
+Backup Operators:x:551:
+Replicators:x:552:
+</pre><p>
+		In both cases the LDAP accounts follow the &#8220;<span class="quote">+::0:</span>&#8221; entry.
+		</p></li><li><p>
+		Now it is time to join the Samba BDC to the target NT4 domain that is being
+		migrated to Samba-3 by executing the following:
+</p><pre class="screen">
+<code class="prompt">root# </code> net rpc join -S TRANSGRESSION -U Administrator%not24get
+merlin:/opt/IDEALX/sbin # net rpc join -S TRANSGRESSION \
+                         -U Administrator%not24get
+Joined domain DAMNATION.
+</pre><p>
+		</p></li><li><p>
+		Set the new domain administrator (root) password for both UNIX and Windows as shown here:
+</p><pre class="screen">
+<code class="prompt">root# </code> /opt/IDEALX/sbin/smbldap-passwd root
+Changing password for root
+New password : ********
+Retype new password : ********
+</pre><p>
+		Note: During account migration, the Windows Administrator account will not be migrated
+		to the Samba server.
+		</p></li><li><p>
+		Now validate that these accounts can be resolved using Samba's tools as
+		shown here for user accounts:
+</p><pre class="screen">
+<code class="prompt">root# </code> pdbedit -Lw
+root:0:84B0D8E14D158FF8417EAF50CFAC29C3:
+        AF6DD3FD4E2EA8BDE1695A3F05EFBF52:[U          ]:LCT-425F6467:
+nobody:65534:NO PASSWORDXXXXXXXXXXXXXXXXXXXXX:
+        NO PASSWORDXXXXXXXXXXXXXXXXXXXXX:[NU         ]:LCT-00000000:
+</pre><p>
+		Now complete the following step to validate that group account mappings have
+		been correctly set:
+</p><pre class="screen">
+<code class="prompt">root# </code> net groupmap list
+Domain Admins (S-1-5-21-1385457007-882775198-1210191635-512)
+                                            -&gt; Domain Admins
+Domain Users (S-1-5-21-1385457007-882775198-1210191635-513) 
+                                             -&gt; Domain Users
+Domain Guests (S-1-5-21-1385457007-882775198-1210191635-514) 
+                                            -&gt; Domain Guests
+Domain Computers (S-1-5-21-1385457007-882775198-1210191635-515) 
+                                          -&gt; Domain Computers
+Administrators (S-1-5-32-544) -&gt; Administrators
+Print Operators (S-1-5-32-550) -&gt; Print Operators
+Backup Operators (S-1-5-32-551) -&gt; Backup Operators
+Replicators (S-1-5-32-552) -&gt; Replicators
+</pre><p>
+		These are the expected results for a correctly configured system.
+		</p></li><li><p>
+		Commence migration as shown here:
+</p><pre class="screen">
+<code class="prompt">root# </code> net rpc vampire -S TRANSGRESSION \
+       -U Administrator%not24get &gt; /tmp/vampire.log 2&gt;1
+</pre><p>
+		Check the vampire log to confirm that only expected errors have been
+		reported. See <a class="link" href="ntmigration.html#sbevam1" title="Migration Log Validation">&#8220;Migration Log Validation&#8221;</a>.
+		</p></li><li><p>
+		The migration of user accounts can be quickly validated as follows:
+</p><pre class="screen">
+<code class="prompt">root# </code> pdbedit -Lw
+root:0:84B0D8E14D158FF8417EAF50CFAC29C3:...
+nobody:65534:NO PASSWORDXXXXXXXXXXXXXXXXXXXXX:...
+Administrator:0:84B0D8E14D158FF8417EAF50CFAC29C3:...
+Guest:1:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:...
+TRANSGRESSION$:2:CC044B748CEE294CE76B6B0D1B86C1A8:...
+IUSR_TRANSGRESSION:3:64046AC81B056C375F9537FC409085F8:...
+MIDEARTH$:4:E93186E5819706D2AAD3B435B51404EE:...
+atrickhoffer:5:DC08CFE0C12B2867352502E32A407F23:...
+barryf:6:B829BCDE01FF24376E45D5F10408CFBD:...
+fsellerby:7:6A97CBEBE8F9826B417EAF50CFAC29C3:...
+gdaison:8:48F6A8C8A900024351DA8C2061C5F1D3:...
+hrambotham:9:7330D9EA0964465EAAD3B435B51404EE:...
+jrhapsody:10:ACBA7D207E2BA35D9BD41A26B01626BD:...
+maryk:11:293B5A4CA41F6CA1A7D80430B8342B73:...
+jacko:12:8E8982D86BD037C364BBD09A598E07AD:...
+bridge:13:0D2CA7D2BE67FE2193BE3A377C968336:...
+sharpec:14:8841A75CAC19D2855D8B73B1F4D430F8:...
+jimbo:15:6E8BDC904FD9EC5C17306D272A9441BB:...
+dhenwick:16:D1694A03C33584BDAAD3B435B51404EE:...
+dork:17:69E2D19E69A593D5AAD3B435B51404EE:...
+blue:18:E355EBF9559979FEAAD3B435B51404EE:...
+billw:19:EE35C3481CF7F7DB484448BC86A641A5:...
+rfreshmill:20:7EC033B58661B60CAAD3B435B51404EE:...
+MAGGOT$:21:A3B9334765AD30F7AAD3B435B51404EE:...
+TRENTWARE$:22:1D92C8DD5E7F0DDF93BE3A377C968336:...
+MORTON$:23:89342E69DCA9D3F8AAD3B435B51404EE:...
+NARM$:24:2B93E2D1D25448BDAAD3B435B51404EE:...
+LAPDOG$:25:14AA535885120943AAD3B435B51404EE:...
+SCAVENGER$:26:B6288EB6D147B56F8963805A19B0ED49:...
+merlin$:27:820C50523F368C54AB9D85AE603AD09D:...
+</pre><p>
+		</p></li><li><p>
+		The mapping of UNIX and Windows groups can be validated as show here:
+</p><pre class="screen">
+<code class="prompt">root# </code> net groupmap list
+Domain Admins (S-1-5-21-1385457007-882775198-1210191635-512)
+                                                     -&gt; Domain Admins
+Domain Users (S-1-5-21-1385457007-882775198-1210191635-513)
+                                                      -&gt; Domain Users
+Domain Guests (S-1-5-21-1385457007-882775198-1210191635-514)
+                                                     -&gt; Domain Guests
+Domain Computers (S-1-5-21-1385457007-882775198-1210191635-515)
+                                                   -&gt; Domain Computers
+Administrators (S-1-5-32-544) -&gt; Administrators
+Print Operators (S-1-5-32-550) -&gt; Print Operators
+Backup Operators (S-1-5-32-551) -&gt; Backup Operators
+Replicator (S-1-5-32-552) -&gt; Replicators
+Engineers (S-1-5-21-1385457007-882775198-1210191635-1020) -&gt; Engineers
+Marketoids (S-1-5-21-1385457007-882775198-1210191635-1022) -&gt; Marketoids
+Gnomes (S-1-5-21-1385457007-882775198-1210191635-1023) -&gt; Gnomes
+Catalyst (S-1-5-21-1385457007-882775198-1210191635-1024) -&gt; Catalyst
+Recieving (S-1-5-21-1385457007-882775198-1210191635-1025) -&gt; Recieving
+Rubberboot (S-1-5-21-1385457007-882775198-1210191635-1026) -&gt; Rubberboot
+Sales (S-1-5-21-1385457007-882775198-1210191635-1027) -&gt; Sales
+Accounting (S-1-5-21-1385457007-882775198-1210191635-1028) -&gt; Accounting
+Shipping (S-1-5-21-1385457007-882775198-1210191635-1029) -&gt; Shipping
+Account Operators (S-1-5-32-548) -&gt; Account Operators
+Guests (S-1-5-32-546) -&gt; Guests
+Server Operators (S-1-5-32-549) -&gt; Server Operators
+Users (S-1-5-32-545) -&gt; Users
+</pre><p>
+		It is of vital importance that the domain SID portions of all group
+		accounts are identical.
+		</p></li><li><p>
+		The final responsibility in the migration process is to create identical
+		shares and printing resources on the new Samba-3 server, copy all data
+		across, set up privileges, and set share and file/directory access controls.
+		</p></li><li><p>
+		<a class="indexterm" name="id2604417"></a>
+		<a class="indexterm" name="id2604424"></a>
+		Edit the <code class="filename">smb.conf</code> file to  reset the parameter 
+		<a class="link" href="smb.conf.5.html#DOMAINMASTER" target="_top">domain master = Yes</a> so that
+		the Samba server functions as a PDC for the purpose of migration.
+		Also, uncomment the deletion scripts so they will now be fully functional,
+		enable the <em class="parameter"><code>wins support = yes</code></em> parameter and
+		comment out the <em class="parameter"><code>wins server</code></em>. Validate the configuration
+		with the <code class="literal">testparm</code> utility as shown here:
+</p><pre class="screen">
+<code class="prompt">root# </code> testparm
+Load smb config files from /etc/samba/smb.conf
+Processing section "[apps]"
+Processing section "[media]"
+Processing section "[homes]"
+Processing section "[printers]"
+Processing section "[netlogon]"
+Processing section "[profiles]"
+Processing section "[profdata]"
+Processing section "[print$]"
+Loaded services file OK.
+Server role: ROLE_DOMAIN_PDC
+Press enter to see a dump of your service definitions
+</pre><p>
+                </p></li><li><p>
+		Now shut down the old NT4 PDC. Only when the old NT4 PDC and all
+		NT4 BDCs have been shut down can the Samba-3 PDC be started.
+		</p></li><li><p>
+		All workstations should function as they did with the old NT4 PDC. All
+		interdomain trust accounts should remain in place and fully functional.
+		All machine accounts and user logon accounts should also function correctly.
+		</p></li><li><p>
+		The configuration of Samba-3 BDC servers can be accomplished now or at any
+		convenient time in the future. Please refer to the carefully detailed process
+		for doing so is outlined in <a class="link" href="happy.html#sbehap-bldg1" title="Samba-3 BDC Configuration">&#8220;Samba-3 BDC Configuration&#8221;</a>.
+		</p></li></ol></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="sbevam1"></a>Migration Log Validation</h4></div></div></div><p>
+	The following <code class="filename">vampire.log</code> file is typical of a valid migration.
+</p><pre class="screen">
+adding user Administrator to group Domain Admins
+adding user atrickhoffer to group Engineers
+adding user dhenwick to group Engineers
+adding user dork to group Engineers
+adding user rfreshmill to group Marketoids
+adding user jacko to group Gnomes
+adding user jimbo to group Gnomes
+adding user maryk to group Gnomes
+adding user gdaison to group Gnomes
+adding user dhenwick to group Catalyst
+adding user jacko to group Catalyst
+adding user jacko to group Recieving
+adding user blue to group Recieving
+adding user hrambotham to group Rubberboot
+adding user billw to group Sales
+adding user bridge to group Sales
+adding user jrhapsody to group Sales
+adding user maryk to group Sales
+adding user rfreshmill to group Sales
+adding user fsellerby to group Sales
+adding user sharpec to group Sales
+adding user jimbo to group Accounting
+adding user gdaison to group Accounting
+adding user jacko to group Shipping
+adding user blue to group Shipping
+Fetching DOMAIN database
+Creating unix group: 'Engineers'
+Creating unix group: 'Marketoids'
+Creating unix group: 'Gnomes'
+Creating unix group: 'Catalyst'
+Creating unix group: 'Recieving'
+Creating unix group: 'Rubberboot'
+Creating unix group: 'Sales'
+Creating unix group: 'Accounting'
+Creating unix group: 'Shipping'
+Creating account: Administrator
+Creating account: Guest
+Creating account: TRANSGRESSION$
+Creating account: IUSR_TRANSGRESSION
+Creating account: MIDEARTH$
+Creating account: atrickhoffer
+Creating account: barryf
+Creating account: fsellerby
+Creating account: gdaison
+Creating account: hrambotham
+Creating account: jrhapsody
+Creating account: maryk
+Creating account: jacko
+Creating account: bridge
+Creating account: sharpec
+Creating account: jimbo
+Creating account: dhenwick
+Creating account: dork
+Creating account: blue
+Creating account: billw
+Creating account: rfreshmill
+Creating account: MAGGOT$
+Creating account: TRENTWARE$
+Creating account: MORTON$
+Creating account: NARM$
+Creating account: LAPDOG$
+Creating account: SCAVENGER$
+Creating account: merlin$
+Group members of Domain Admins: Administrator,
+Group members of Domain Users: Administrator(primary),
+TRANSGRESSION$(primary),IUSR_TRANSGRESSION(primary),
+MIDEARTH$(primary),atrickhoffer(primary),barryf(primary),
+fsellerby(primary),gdaison(primary),hrambotham(primary),
+jrhapsody(primary),maryk(primary),jacko(primary),bridge(primary),
+sharpec(primary),jimbo(primary),dhenwick(primary),dork(primary),
+blue(primary),billw(primary),rfreshmill(primary),MAGGOT$(primary),
+TRENTWARE$(primary),MORTON$(primary),NARM$(primary),
+LAPDOG$(primary),SCAVENGER$(primary),merlin$(primary),
+Group members of Domain Guests: Guest(primary),
+Group members of Engineers: atrickhoffer,dhenwick,dork,
+Group members of Marketoids: rfreshmill,
+Group members of Gnomes: jacko,jimbo,maryk,gdaison,
+Group members of Catalyst: dhenwick,jacko,
+Group members of Recieving: jacko,blue,
+Group members of Rubberboot: hrambotham,
+Group members of Sales: billw,bridge,jrhapsody,maryk,
+rfreshmill,fsellerby,sharpec,
+Group members of Accounting: jimbo,gdaison,
+Group members of Shipping: jacko,blue,
+Fetching BUILTIN database
+skipping SAM_DOMAIN_INFO delta for 'Builtin' (is not my domain)
+Creating unix group: 'Account Operators'
+Creating unix group: 'Guests'
+Creating unix group: 'Server Operators'
+Creating unix group: 'Users'
+</pre><p>
+	</p></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2604610"></a>NT4 Migration Using tdbsam Backend</h3></div></div></div><p>
+	In this example, we change the domain name of the NT4 server from
+	<code class="constant">DRUGPREP</code> to <code class="constant">MEGANET</code> prior to the use
+	of the vampire (migration) tool. This migration process makes use of Linux system tools
+	(like <code class="literal">useradd</code>) to add the accounts that are migrated into the 
+	UNIX/Linux <code class="filename">/etc/passwd</code> and <code class="filename">/etc/group</code>
+	databases. These entries must therefore be present, and correct options specified,
+	in your <code class="filename">smb.conf</code> file, or else the migration does not work as it should.
+	</p><div class="procedure"><a name="id2604657"></a><p class="title"><b>Procedure 9.2. Migration Steps Using tdbsam</b></p><ol type="1"><li><p>
+		Prepare a Samba-3 server precisely per the instructions shown in <a class="link" href="Big500users.html" title="Chapter 4. The 500-User Office">&#8220;The 500-User Office&#8221;</a>.
+		Set the workgroup name to <code class="constant">MEGANET</code>.
+		</p></li><li><p><a class="indexterm" name="id2604685"></a><a class="indexterm" name="id2604693"></a>
+		Edit the <code class="filename">smb.conf</code> file to temporarily change the parameter 
+		<a class="link" href="smb.conf.5.html#DOMAINMASTER" target="_top">domain master = No</a> so
+		the Samba server functions as a BDC for the purpose of migration.
+                </p></li><li><p>
+		Start Samba as you have done previously.
+		</p></li><li><p><a class="indexterm" name="id2604735"></a>
+		Join the NT4 Domain as a BDC, as shown here:
+</p><pre class="screen">
+<code class="prompt">root# </code> net rpc join -S oldnt4pdc -W MEGANET -UAdministrator%not24get
+Joined domain MEGANET.
+</pre><p>
+		</p></li><li><p><a class="indexterm" name="id2604770"></a>
+		You may vampire the accounts from the NT4 PDC by executing the command, as shown here:
+</p><pre class="screen">
+<code class="prompt">root# </code> net rpc vampire -S oldnt4pdc -U Administrator%not24get
+Fetching DOMAIN database
+SAM_DELTA_DOMAIN_INFO not handled
+Creating unix group: 'Domain Admins'
+Creating unix group: 'Domain Users'
+Creating unix group: 'Domain Guests'
+Creating unix group: 'Engineers'
+Creating unix group: 'Marketoids'
+Creating unix group: 'Account Operators'
+Creating unix group: 'Administrators'
+Creating unix group: 'Backup Operators'
+Creating unix group: 'Guests'
+Creating unix group: 'Print Operators'
+Creating unix group: 'Replicator'
+Creating unix group: 'Server Operators'
+Creating unix group: 'Users'
+Creating account: Administrator
+Creating account: Guest
+Creating account: oldnt4pdc$
+Creating account: jacko
+Creating account: maryk
+Creating account: bridge
+Creating account: sharpec
+Creating account: jimbo
+Creating account: dhenwick
+Creating account: dork
+Creating account: blue
+Creating account: billw
+Creating account: massive$
+Group members of Engineers: Administrator,
+                 sharpec(primary),bridge,billw(primary),dhenwick
+Group members of Marketoids: Administrator,jacko(primary),
+                maryk(primary),jimbo,blue(primary),dork(primary)
+Creating unix group: 'Gnomes'
+Fetching BUILTIN database
+SAM_DELTA_DOMAIN_INFO not handled
+</pre><p>
+		</p></li><li><p><a class="indexterm" name="id2604824"></a>
+		At this point, we can validate our migration. Let's look at the accounts
+		in the form in which they are seen in a smbpasswd file. This achieves that:
+</p><pre class="screen">
+<code class="prompt">root# </code> pdbedit -Lw
+Administrator:505:84B0D8E14D158FF8417EAF50CFAC29C3:
+     AF6DD3FD4E2EA8BDE1695A3F05EFBF52:[UX         ]:LCT-3DF7AA9F:
+jimbo:512:6E9A2A51F64A1BD5C187B8085FE1D9DF:
+     CDF7E305E639966E489A0CEFB95EE5E0:[UX         ]:LCT-3E9362BC:
+sharpec:511:E4301A7CD8FDD1EC6BBF9BC19CDF8151:
+     7000255938831D5B948C95C1931534C5:[UX         ]:LCT-3E8B42C4:
+dhenwick:513:DCD8886141E3F892AAD3B435B51404EE:
+     2DB36465949CB938DD98C312EFDC2639:[UX         ]:LCT-3E939F41:
+bridge:510:3FE6873A43101B46417EAF50CFAC29C3:
+     891741F481AF111B4CAA09A94016BD01:[UX         ]:LCT-3E8B4291:
+blue:515:256D41D2559BB3D2AAD3B435B51404EE:
+     9CCADDA4F7D281DD0FAD321478C6F971:[UX         ]:LCT-3E939FDC:
+diamond$:517:6C8E7B64EDCDBC4218B6345447A4454B:
+     3323AC63C666CFAACB60C13F65D54E9A:[S          ]:LCT-00000000:
+oldnt4pdc$:507:3E39430CDCABB5B09ED320D0448AE568:
+     95DBAF885854A919C7C7E671060478B9:[S          ]:LCT-3DF7AA9F:
+Guest:506:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:
+     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:[DUX        ]:LCT-3E93A008:
+billw:516:85380CA7C21B6EBE168C8150662AF11B:
+     5D7478508293709937E55FB5FBA14C17:[UX         ]:LCT-3FED7CA1:
+dork:514:78C70DDEC35A35B5AAD3B435B51404EE:
+     0AD886E015AC595EC0AF40E6C9689E1A:[UX         ]:LCT-3E939F9A:
+jacko:508:BC472F3BF9A0A5F63832C92FC614B7D1:
+     0C6822AAF85E86600A40DC73E40D06D5:[UX         ]:LCT-3E8B4242:
+maryk:509:3636AB7E12EBE79AB79AE2610DD89D4C:
+     CF271B744F7A55AFDA277FF88D80C527:[UX         ]:LCT-3E8B4270:
+</pre><p>
+		</p></li><li><p><a class="indexterm" name="id2604901"></a>
+		An expanded view of a user account entry shows more of what was
+		obtained from the NT4 PDC:
+</p><pre class="screen">
+sleeth:~ # pdbedit -Lv maryk
+Unix username:        maryk
+NT username:          maryk
+Account Flags:        [UX         ]
+User SID:             S-1-5-21-1988699175-926296742-1295600288-1003
+Primary Group SID:    S-1-5-21-1988699175-926296742-1295600288-1007
+Full Name:            Mary Kathleen
+Home Directory:       \\diamond\maryk
+HomeDir Drive:        X:
+Logon Script:         scripts\logon.bat
+Profile Path:         \\diamond\profiles\maryk
+Domain:               MEGANET
+Account desc:         Peace Maker
+Workstations:
+Munged dial:
+Logon time:           0
+Logoff time:          Mon, 18 Jan 2038 20:14:07 GMT
+Kickoff time:         Mon, 18 Jan 2038 20:14:07 GMT
+Password last set:    Wed, 02 Apr 2003 13:05:04 GMT
+Password can change:  0
+Password must change: Mon, 18 Jan 2038 20:14:07 GMT
+</pre><p>
+		</p></li><li><p><a class="indexterm" name="id2604936"></a>
+		The following command lists the long names of the groups that have been
+		imported (vampired) from the NT4 PDC:
+</p><pre class="screen">
+<code class="prompt">root# </code> net group -l -Uroot%not24get -Smassive
+
+Group name            Comment
+-----------------------------
+Engineers             Snake Oil Engineers
+Marketoids            Untrustworthy Hype Vendors
+Gnomes                Plain Vanilla Garden Gnomes
+Replicator            Supports file replication in a domain
+Guests                Users granted guest access to the computer/domain
+Administrators        Members can fully administer the computer/domain
+Users                 Ordinary users
+</pre><p>
+		Everything looks well and in order.
+		</p></li><li><p><a class="indexterm" name="id2604976"></a><a class="indexterm" name="id2604984"></a>
+		Edit the <code class="filename">smb.conf</code> file to  reset the parameter 
+		<a class="link" href="smb.conf.5.html#DOMAINMASTER" target="_top">domain master = Yes</a> so
+		the Samba server functions as a PDC for the purpose of migration.
+                </p></li></ol></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2605017"></a>Key Points Learned</h3></div></div></div><p>
+		Migration of an NT4 PDC database to a Samba-3 PDC is possible.
+		</p><div class="itemizedlist"><ul type="disc"><li><p>
+			An LDAP backend is a suitable vehicle for NT4 migrations.
+			</p></li><li><p>
+			A tdbsam backend can be used to perform a migration.
+			</p></li><li><p>
+			Multiple NT4 domains can be merged into a single Samba-3
+			domain.
+			</p></li><li><p>
+			The net Samba-3 domain most likely requires some
+			administration and updating before going live.
+			</p></li></ul></div></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2605055"></a>Questions and Answers</h2></div></div></div><p>
+	</p><div class="qandaset"><dl><dt> <a href="ntmigration.html#id2605070">
+		Why must I start each migration with a clean database?
+		</a></dt><dt> <a href="ntmigration.html#id2605111">
+		Is it possible to set my domain SID to anything I like?
+		</a></dt><dt> <a href="ntmigration.html#id2605168">
+		When using a tdbsam passdb backend, why must I have all domain user and group accounts
+		in /etc/passwd and /etc/group?
+		</a></dt><dt> <a href="ntmigration.html#id2605348">
+		Why did you validate connectivity before attempting migration?
+		</a></dt><dt> <a href="ntmigration.html#id2605393">
+		How would you merge 10 tdbsam-based domains into an LDAP database?
+		</a></dt><dt> <a href="ntmigration.html#id2605516">
+		I want to change my domain name after I migrate all accounts from an NT4 domain to a 
+		Samba-3 domain. Does it make any sense to migrate the machine accounts in that case?
+		</a></dt><dt> <a href="ntmigration.html#id2605591">
+		After merging multiple NT4 domains into a Samba-3 domain, I lost all multiple group mappings. Why?
+		</a></dt><dt> <a href="ntmigration.html#id2605656">
+		How can I reset group membership after loading the account information into the LDAP database?
+		</a></dt><dt> <a href="ntmigration.html#id2605691">
+		What are the limits or constraints that apply to group names?
+		</a></dt><dt> <a href="ntmigration.html#id2605795">
+		My Windows NT4 PDC has 323,000 user accounts. How long will it take to migrate them to a Samba-3
+		LDAP backend system using the vampire process?
+		</a></dt></dl><table border="0" summary="Q and A Set"><col align="left" width="1%"><tbody><tr class="question"><td align="left" valign="top"><a name="id2605070"></a><a name="id2605072"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2605076"></a>
+		Why must I start each migration with a clean database?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2605091"></a>
+		This is a recommendation that permits the data from each NT4 domain to
+		be kept separate until you are ready to merge them. Also, if you do not start with a clean database,
+		you may find errors due to users or groups from multiple domains having the
+		same name but different SIDs. It is better to permit each migration to complete
+		without undue errors and then to handle the merging of vampired data under
+		proper supervision.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2605111"></a><a name="id2605113"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2605116"></a>
+		Is it possible to set my domain SID to anything I like?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2605132"></a><a class="indexterm" name="id2605140"></a><a class="indexterm" name="id2605147"></a>
+		Yes, so long as the SID you create has the same structure as an autogenerated SID.
+		The typical SID looks like this: S-1-5-21-XXXXXXXXXX-XXXXXXXXXX-XXXXXXXXXX, where
+		the XXXXXXXXXX can be any number with from 6 to 10 digits. On the other hand, why
+		would you really want to create your own SID? I cannot think of a good reason.
+		You may want to set the SID to one that is already in use somewhere on your network,
+		but that is a little different from straight out creating your own domain SID.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2605168"></a><a name="id2605170"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2605173"></a><a class="indexterm" name="id2605181"></a><a class="indexterm" name="id2605188"></a><a class="indexterm" name="id2605196"></a><a class="indexterm" name="id2605204"></a><a class="indexterm" name="id2605215"></a><a class="indexterm" name="id2605227"></a>
+		When using a tdbsam passdb backend, why must I have all domain user and group accounts
+		in <code class="filename">/etc/passwd</code> and <code class="filename">/etc/group</code>?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2605258"></a><a class="indexterm" name="id2605266"></a><a class="indexterm" name="id2605273"></a><a class="indexterm" name="id2605281"></a><a class="indexterm" name="id2605289"></a><a class="indexterm" name="id2605297"></a>
+		Samba-3 must be able to tie all user and group account SIDs to a UNIX UID or GID. Samba
+		does not fabricate the UNIX IDs from thin air, but rather requires them to be located
+		in a suitable place. 
+		</p><p>
+		When migrating a <code class="filename">smbpasswd</code> file to an LDAP backend, the
+		UID of each account is taken together with the account information in the 
+		<code class="filename">/etc/passwd</code>, and both sets of data are used to create the account
+		entry in the LDAP database. 
+		</p><p>
+		If you elect to create the POSIX account also, the entire UNIX account is copied to the 
+		LDAP backend. The same occurs with NT groups and UNIX groups. At the conclusion of 
+		migration to the LDAP database, the accounts may be removed from the UNIX database files. 
+		In short then, all UNIX and Windows networking accounts, both in tdbsam as well as in 
+		LDAP, require UIDs/GIDs.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2605348"></a><a name="id2605350"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2605353"></a><a class="indexterm" name="id2605361"></a><a class="indexterm" name="id2605369"></a>
+		Why did you validate connectivity before attempting migration?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		Access validation before attempting to migrate NT4 domain accounts helps to pinpoint
+		potential problems that may otherwise affect or impede account migration. I am always
+		mindful of the 4 P's of migration: Planning Prevents Poor Performance.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2605393"></a><a name="id2605395"></a></td><td align="left" valign="top"><p>
+		How would you merge 10 tdbsam-based domains into an LDAP database?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2605406"></a><a class="indexterm" name="id2605414"></a><a class="indexterm" name="id2605422"></a><a class="indexterm" name="id2605430"></a><a class="indexterm" name="id2605438"></a><a class="indexterm" name="id2605446"></a><a class="indexterm" name="id2605453"></a><a class="indexterm" name="id2605461"></a><a class="indexterm" name="id2605469"></a><a class="indexterm" name="id2605477"></a><a class="indexterm" name="id2605485"></a>
+		If you have 10 tdbsam Samba domains, there is considerable risk that there are a number of
+		accounts that have the same UNIX identifier (UID/GID). This means that you almost 
+		certainly have to edit a lot of data. It would be easiest to dump each database in smbpasswd
+		file format and then manually edit all records to ensure that each has a unique UID. Each
+		file can then be imported a number of ways. You can use the <code class="literal">pdbedit</code> tool
+		to affect a transfer from the smbpasswd file to LDAP, or you can migrate them en masse to
+		tdbsam and then to LDAP. The final choice is yours. Just remember to verify all accounts that
+		you have migrated before handing over access to a user. After all, too many users with a bad
+		migration experience may threaten your career.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2605516"></a><a name="id2605518"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2605521"></a><a class="indexterm" name="id2605529"></a>
+		I want to change my domain name after I migrate all accounts from an NT4 domain to a 
+		Samba-3 domain. Does it make any sense to migrate the machine accounts in that case?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2605550"></a><a class="indexterm" name="id2605558"></a><a class="indexterm" name="id2605566"></a><a class="indexterm" name="id2605573"></a>
+		I would recommend not to migrate the machine account. The machine accounts should still work, but there are registry entries
+		on each Windows NT4 and upward client that have a tattoo of the old domain name. If you
+		unjoin the domain and then rejoin the newly renamed Samba-3 domain, you can be certain to avoid
+		this tattooing effect.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2605591"></a><a name="id2605594"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2605597"></a>
+		After merging multiple NT4 domains into a Samba-3 domain, I lost all multiple group mappings. Why?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2605613"></a><a class="indexterm" name="id2605621"></a>
+		Samba-3 currently does not implement multiple group membership internally. If you use the Windows 
+		NT4 Domain User Manager to manage accounts and you have an LDAP backend, the multiple group
+		membership is stored in the POSIX groups area. If you use either tdbsam or smbpasswd backend,
+		then multiple group membership is handled through the UNIX groups file. When you dump the user
+		accounts, no group account information is provided. When you edit (change) UIDs and GIDs in each
+		file to which you migrated the NT4 Domain data, do not forget to edit the UNIX <code class="filename">/etc/passwd</code>
+		and <code class="filename">/etc/group</code> information also. That is where the multiple group information
+		is most closely at your fingertips.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2605656"></a><a name="id2605658"></a></td><td align="left" valign="top"><p>
+		How can I reset group membership after loading the account information into the LDAP database?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2605670"></a>
+		You can use the NT4 Domain User Manager that can be downloaded from the Microsoft Web site. The
+		installation file is called <code class="filename">SRVTOOLS.EXE</code>.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2605691"></a><a name="id2605693"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2605696"></a>
+		What are the limits or constraints that apply to group names?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p><a class="indexterm" name="id2605711"></a><a class="indexterm" name="id2605719"></a><a class="indexterm" name="id2605727"></a><a class="indexterm" name="id2605735"></a><a class="indexterm" name="id2605743"></a><a class="indexterm" name="id2605751"></a>
+		A Windows 200x group name can be up to 254 characters long, while in Windows NT4 the group
+		name is limited to 20 characters. Most UNIX systems limit this to 32 characters. Windows 
+		groups can contain upper- and lowercase characters, as well as spaces.
+		Many UNIX system do not permit the use of uppercase characters, and some do not permit the
+		space character either. A number of systems (i.e., Linux) work fine with both uppercase
+		and space characters in group names, but the shadow-utils package that provides the group
+		control functions (<code class="literal">groupadd</code>, <code class="literal">groupmod</code>, <code class="literal">groupdel</code>, and so on) do not permit them.
+		Also, a number of UNIX systems management tools enforce their own particular interpretation
+		of the POSIX standards and likewise do not permit uppercase or space characters in group
+		or user account names. You have to experiment with your system to find what its 
+		peculiarities are.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2605795"></a><a name="id2605797"></a></td><td align="left" valign="top"><p><a class="indexterm" name="id2605801"></a>
+		My Windows NT4 PDC has 323,000 user accounts. How long will it take to migrate them to a Samba-3
+		LDAP backend system using the vampire process?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		UNIX UIDs and GIDs on most UNIX systems use an unsigned short or an unsigned integer. Recent Linux
+		kernels support at least a much larger number. On systems that have a 16-bit constraint on UID/GIDs,
+		you would not be able to migrate 323,000 accounts because this number cannot fit into a 16-bit unsigned
+		integer. UNIX/Linux systems that have a 32-bit UID/GID can easily handle this number of accounts. 
+		Please check this carefully before you attempt to effect a migration using the vampire process.
+		</p><p><a class="indexterm" name="id2605838"></a>
+		Migration speed depends much on the processor speed, the network speed, disk I/O capability, and
+		LDAP update overheads. On a dual processor AMD MP1600+ with 1 GB memory that was mirroring LDAP
+		to a second identical system over 1 Gb Ethernet, I was able to migrate around 180 user accounts
+		per minute. Migration would obviously go much faster if LDAP mirroring were turned off during the migration.
+		</p></td></tr></tbody></table></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="upgrades.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="DMSMig.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="nw4migration.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 8. Updating Samba-3 </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 10. Migrating NetWare Server to Samba-3</td></tr></table></div></body></html>

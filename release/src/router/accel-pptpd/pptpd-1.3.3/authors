@@ -1,0 +1,52 @@
+ACCEL-PPTP - The PPTP Client/Server
+-------------------------
+
+Current Maintainer:
+Kozlov D. xeb@mail.ru
+
+Previous Maintainer:
+James Cameron <james.cameron at hp dot com>
+Richard de Vroede <r.devroede at linvision dot com>
+
+Original Authors:
+Matthew Ramsay <matthewr at lineo dot com>
+Kevin Thayer <tmk at netmagic.net>
+David Luyer <luyer at ucs.uwa.edu.au>
+Peter Galbavy <Peter.Galbavy at knowledge dot com>
+
+Other Contributors:
+Ron O'Hara <rono at sentuny dot com.au>
+Allan Clark <allanc at sco dot com>
+Harald Vogt <vogt at serc.nl>
+Bruno Lopes F. Cabral <bruno at openline dot com.br> [!3runo]
+Peter Stamfest <poptop at stamfest dot at>
+Sergio M. Ammirata
+Norbert van Bolhuis
+Visarion Mandzgaladze
+Hernan Otero
+Jan Dubiec
+Pawel Guraj
+Chris Wilson
+Anton Gorlov
+
+The Linux PPTP Server takes advantage of some Linux PPTP client code
+written by C. Scott Ananian <cananian at alumni.princeton.edu>
+
+Other Credits:
+Moreton Bay <http://www.moretonbay.com>
+Lineo       <http://www.lineo.com>
+Snapgear    <http://www.snapgear.com>
+Linvision   <http://www.linvision.com>
+
+SourceForge <http://sourceforge.net> - Current host for the mailing
+list and CVS repository.
+
+Christopher Schulte <christopher at schulte.org> - Previous host for the
+PPTP Mailing List (sadly missed, in James' opinion).
+
+Peter Galbavy <Peter.Galbavy at knowledge dot com> - Previous host for the
+PPTP CVS server.
+
+Luc Richards <theycallmeluc at yahoo dot com.au> - The author of bcrelay.
+
+Wing Kwok <skwok at acnielsen dot com.au> - The author of ADS howto.

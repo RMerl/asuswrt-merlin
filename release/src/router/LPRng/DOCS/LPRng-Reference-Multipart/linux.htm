@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Linux</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="System Specific Notes " href=
+    "systemspecific.htm">
+    <link rel="PREVIOUS" title="System Specific Notes " href=
+    "systemspecific.htm">
+    <link rel="NEXT" title="AIX" href="aix.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "systemspecific.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 3.
+          System Specific Notes</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "aix.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="LINUX">3.2. Linux</a></h1>
+
+      <p>There is no universal way to install <b class=
+      "APPLICATION">LPRng</b> cleanly on all of the different Linux
+      systems. The major difficulty is the fragmentation in the
+      various libraries, location of files, and system
+      dependencies. If the <b class="APPLICATION">LPRng</b>
+      installation procedure does not install the software
+      correctly, please use the following remedial steps.</p>
+
+      <ol type="1">
+        <li>
+          <p>Check the <b class="APPLICATION">LPRng</b> web site <a
+          href="http://www.lprng.com" target=
+          "_top">http://www.lprng.com</a> and see if there is a
+          Linux Release RPM or other binary distribution for your
+          version of Linux. If not, then you will have to do a
+          source install.</p>
+        </li>
+
+        <li>
+          <p>Obtain the source distribution and follow the
+          instructions outlined in other sections to compile and
+          install the software. Use the following configuration
+          options which correspond to Linux:</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN1533"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {72} #</samp> <kbd class=
+"USERINPUT">./configure --prefix=/usr \
+  --sysconfdir=/etc --mandir=/usr/share/man</kbd>
+    <samp class="PROMPT">h4: {73} #</samp> <kbd class=
+"USERINPUT">make clean all install</kbd>
+    <samp class="PROMPT">h4: {74} #</samp> <kbd class=
+"USERINPUT">checkpc -f</kbd>
+</pre>
+          </div>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>You may need to modify your existing printcap file by
+          adding the <var class="OPTION">:bkf</var> flag as shown
+          below, or replace the entries with other filters.</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN1544"></a>
+<pre class="SCREEN">
+    lp:\
+      :if=/usr/local/libexec/lpr/hplaserjet3:\
+      :bkf:\     # added to the printcap by hand
+      :...
+</pre>
+          </div>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>Test the system by printing a file. If this does not
+          work, then you will have to determine if the problem is
+          in the print spooling software or in the filter. See the
+          section on <b class="APPLICATION">ifhp</b> for directions
+          on how to replace the vendor supplied filters with <b
+          class="APPLICATION">ifhp</b>.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "systemspecific.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "aix.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">System Specific
+          Notes</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "systemspecific.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">AIX</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

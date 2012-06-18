@@ -1,0 +1,197 @@
+#
+# SPI driver configuration
+#
+# NOTE:  the reason this doesn't show SPI slave support is mostly that
+# nobody's needed a slave side API yet.  The master-role API is not
+# fully appropriate there, so it'd need some thought to do well.
+#
+menu "SPI support"
+	depends on HAS_IOMEM
+
+config SPI
+	bool "SPI support"
+	help
+	  The "Serial Peripheral Interface" is a low level synchronous
+	  protocol.  Chips that support SPI can have data transfer rates
+	  up to several tens of Mbit/sec.  Chips are addressed with a
+	  controller and a chipselect.  Most SPI slaves don't support
+	  dynamic device discovery; some are even write-only or read-only.
+
+	  SPI is widely used by microcontrollers to talk with sensors,
+	  eeprom and flash memory, codecs and various other controller
+	  chips, analog to digital (and d-to-a) converters, and more.
+	  MMC and SD cards can be accessed using SPI protocol; and for
+	  DataFlash cards used in MMC sockets, SPI must always be used.
+
+	  SPI is one of a family of similar protocols using a four wire
+	  interface (select, clock, data in, data out) including Microwire
+	  (half duplex), SSP, SSI, and PSP.  This driver framework should
+	  work with most such devices and controllers.
+
+config SPI_DEBUG
+	boolean "Debug support for SPI drivers"
+	depends on SPI && DEBUG_KERNEL
+	help
+	  Say "yes" to enable debug messaging (like dev_dbg and pr_debug),
+	  sysfs, and debugfs support in SPI controller and protocol drivers.
+
+#
+# MASTER side ... talking to discrete SPI slave chips including microcontrollers
+#
+
+config SPI_MASTER
+#	boolean "SPI Master Support"
+	boolean
+	default SPI
+	help
+	  If your system has an master-capable SPI controller (which
+	  provides the clock and chipselect), you can enable that
+	  controller and the protocol drivers for the SPI slave chips
+	  that are connected.
+
+comment "SPI Master Controller Drivers"
+	depends on SPI_MASTER
+
+config SPI_ATMEL
+	tristate "Atmel SPI Controller"
+	depends on (ARCH_AT91 || AVR32) && SPI_MASTER
+	help
+	  This selects a driver for the Atmel SPI Controller, present on
+	  many AT32 (AVR32) and AT91 (ARM) chips.
+
+config SPI_BFIN
+	tristate "SPI controller driver for ADI Blackfin5xx"
+	depends on SPI_MASTER && BFIN
+	help
+	  This is the SPI controller master driver for Blackfin 5xx processor.
+
+config SPI_AU1550
+	tristate "Au1550/Au12x0 SPI Controller"
+	depends on SPI_MASTER && (SOC_AU1550 || SOC_AU1200) && EXPERIMENTAL
+	select SPI_BITBANG
+	help
+	  If you say yes to this option, support will be included for the
+	  Au1550 SPI controller (may also work with Au1200,Au1210,Au1250).
+
+	  This driver can also be built as a module.  If so, the module
+	  will be called au1550_spi.
+
+config SPI_BITBANG
+	tristate "Bitbanging SPI master"
+	depends on SPI_MASTER && EXPERIMENTAL
+	help
+	  With a few GPIO pins, your system can bitbang the SPI protocol.
+	  Select this to get SPI support through I/O pins (GPIO, parallel
+	  port, etc).  Or, some systems' SPI master controller drivers use
+	  this code to manage the per-word or per-transfer accesses to the
+	  hardware shift registers.
+
+	  This is library code, and is automatically selected by drivers that
+	  need it.  You only need to select this explicitly to support driver
+	  modules that aren't part of this kernel tree.
+
+config SPI_BUTTERFLY
+	tristate "Parallel port adapter for AVR Butterfly (DEVELOPMENT)"
+	depends on SPI_MASTER && PARPORT && EXPERIMENTAL
+	select SPI_BITBANG
+	help
+	  This uses a custom parallel port cable to connect to an AVR
+	  Butterfly <http://www.atmel.com/products/avr/butterfly>, an
+	  inexpensive battery powered microcontroller evaluation board.
+	  This same cable can be used to flash new firmware.
+
+config SPI_IMX
+	tristate "Freescale iMX SPI controller"
+	depends on SPI_MASTER && ARCH_IMX && EXPERIMENTAL
+	help
+	  This enables using the Freescale iMX SPI controller in master
+	  mode.
+
+config SPI_MPC52xx_PSC
+	tristate "Freescale MPC52xx PSC SPI controller"
+	depends on SPI_MASTER && PPC_MPC52xx && EXPERIMENTAL
+	help
+	  This enables using the Freescale MPC52xx Programmable Serial
+	  Controller in master SPI mode.
+
+config SPI_MPC83xx
+	tristate "Freescale MPC83xx SPI controller"
+	depends on SPI_MASTER && PPC_83xx && EXPERIMENTAL
+	select SPI_BITBANG
+	help
+	  This enables using the Freescale MPC83xx SPI controller in master
+	  mode.
+
+	  Note, this driver uniquely supports the SPI controller on the MPC83xx
+	  family of PowerPC processors.  The MPC83xx uses a simple set of shift
+	  registers for data (opposed to the CPM based descriptor model).
+
+config SPI_OMAP_UWIRE
+	tristate "OMAP1 MicroWire"
+	depends on SPI_MASTER && ARCH_OMAP1
+	select SPI_BITBANG
+	help
+	  This hooks up to the MicroWire controller on OMAP1 chips.
+
+
+config SPI_PXA2XX
+	tristate "PXA2xx SSP SPI master"
+	depends on SPI_MASTER && ARCH_PXA && EXPERIMENTAL
+	help
+	  This enables using a PXA2xx SSP port as a SPI master controller.
+	  The driver can be configured to use any SSP port and additional
+	  documentation can be found a Documentation/spi/pxa2xx.
+
+config SPI_S3C24XX
+	tristate "Samsung S3C24XX series SPI"
+	depends on SPI_MASTER && ARCH_S3C2410 && EXPERIMENTAL
+	help
+	  SPI driver for Samsung S3C24XX series ARM SoCs
+
+config SPI_S3C24XX_GPIO
+	tristate "Samsung S3C24XX series SPI by GPIO"
+	depends on SPI_MASTER && ARCH_S3C2410 && SPI_BITBANG && EXPERIMENTAL
+	help
+	  SPI driver for Samsung S3C24XX series ARM SoCs using
+	  GPIO lines to provide the SPI bus. This can be used where
+	  the inbuilt hardware cannot provide the transfer mode, or
+	  where the board is using non hardware connected pins.
+#
+# Add new SPI master controllers in alphabetical order above this line
+#
+
+#
+# There are lots of SPI device types, with sensors and memory
+# being probably the most widely used ones.
+#
+comment "SPI Protocol Masters"
+	depends on SPI_MASTER
+
+config SPI_AT25
+	tristate "SPI EEPROMs from most vendors"
+	depends on SPI_MASTER && SYSFS
+	help
+	  Enable this driver to get read/write support to most SPI EEPROMs,
+	  after you configure the board init code to know about each eeprom
+	  on your target board.
+
+	  This driver can also be built as a module.  If so, the module
+	  will be called at25.
+
+config SPI_SPIDEV
+	tristate "User mode SPI device driver support"
+	depends on SPI_MASTER && EXPERIMENTAL
+	help
+	  This supports user mode SPI protocol drivers.
+
+	  Note that this application programming interface is EXPERIMENTAL
+	  and hence SUBJECT TO CHANGE WITHOUT NOTICE while it stabilizes.
+
+#
+# Add new SPI protocol masters in alphabetical order above this line
+#
+
+# (slave support would go here)
+
+endmenu # "SPI support"
+

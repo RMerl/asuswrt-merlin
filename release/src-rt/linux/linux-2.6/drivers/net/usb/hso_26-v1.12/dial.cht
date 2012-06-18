@@ -1,0 +1,7 @@
+ABORT 	ERROR
+TIMEOUT	10
+""	ATZ
+OK	"AT_OWANCALL=1,1,0^m"
+OK	"\d\d\d\d\d\d\d\dAT_OWANDATA=1^m"
+OK	""
+

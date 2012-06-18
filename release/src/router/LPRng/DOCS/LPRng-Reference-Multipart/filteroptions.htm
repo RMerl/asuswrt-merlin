@@ -1,0 +1,748 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Filter Command Line Options and Environment
+    Variables</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Filters " href="filters.htm">
+    <link rel="PREVIOUS" title="Chaining Filters " href=
+    "chainingfilters.htm">
+    <link rel="NEXT" title="LPRng Supported Filters" href=
+    "x8397.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "chainingfilters.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          16. Filters</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x8397.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="FILTEROPTIONS">16.8. Filter
+      Command Line Options and Environment Variables</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">bk_filter_options=</var><span
+          class="emphasis"><i class="EMPHASIS">Backwards Compatible
+          Filter options</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">bk_of_filter_options=</var><span
+          class="emphasis"><i class="EMPHASIS">Backwards Compatible
+          OF Filter options</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">bkf</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Backwards Compatible
+          Filters</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">filter_ld_path=</var><span class=
+          "emphasis"><i class="EMPHASIS">Filter LD_LIBRARY_PATH
+          environment</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">filter_options=</var><span class=
+          "emphasis"><i class="EMPHASIS">Filter
+          options</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">filter_path=</var><span class=
+          "emphasis"><i class="EMPHASIS">Filter PATH
+          environment</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">of_filter_options=</var><span
+          class="emphasis"><i class="EMPHASIS">OF Filter
+          options</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">pass_env=</var><span class=
+          "emphasis"><i class="EMPHASIS">Environment variables to
+          copy to Filter environment</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">pl=</var><span class=
+          "emphasis"><i class="EMPHASIS">line count for
+          page</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">pw=</var><span class=
+          "emphasis"><i class="EMPHASIS">column count for
+          page</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">px=</var><span class=
+          "emphasis"><i class="EMPHASIS">pixel width for
+          page</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">py=</var><span class=
+          "emphasis"><i class="EMPHASIS">pixel length for
+          page</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>A filter (or program) specification in the <b class=
+      "APPLICATION">LPRng</b> printcap database has the form:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN8055"></a>
+<pre class="SCREEN">
+    :option=| [flags] /path [argument | "argument" | 'argument' ]*
+    :option=[flags]   /path [argument | "argument" | 'argument' ]*
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The first case is used where the option value can be a
+      string or filter, and the second where a program is always
+      expected. The following procedure is used to run a filter
+      program. Arguments in single or double quotes are passed as a
+      single value, as for a shell.</p>
+
+      <p>The sequence of operations to run a filter is as
+      follows:</p>
+
+      <ol type="1">
+        <li>
+          <p>The program must be specified with an absolute path
+          name.</p>
+        </li>
+
+        <li>
+          <p>By default, the program is run as the user if invoked
+          from a client program such as <b class=
+          "APPLICATION">lpr</b>, <b class="APPLICATION">lpc</b>,
+          etc. If invoked from <b class="APPLICATION">lpd</b>, it
+          is run as the user ID specified by the <var class=
+          "LITERAL">:user</var> (default <var class=
+          "LITERAL">daemon</var>) configuration entry.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">filter_path</var> (default
+          <var class="LITERAL">/bin:/usr/bin:/usr/local/bin</var>,
+          and <var class="LITERAL">filter_ld_path</var> (default
+          <var class="LITERAL">/lib:/usr/lib:/usr/local/lib</var>,
+          configuration options specifies the value of the <var
+          class="LITERAL">PATH</var> and <var class=
+          "LITERAL">LD_LIBRARY_PATH</var> environment
+          variables.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">filter_path</var> (default
+          <var class="LITERAL">/bin:/usr/bin:/usr/local/bin</var>,
+          and <var class="LITERAL">filter_ld_path</var> (default
+          <var class="LITERAL">/lib:/usr/lib:/usr/local/lib</var>,
+          configuration option specifies the value of the <var
+          class="LITERAL">PATH</var> and <var class=
+          "LITERAL">LD_LIBRARY_PATH</var> environment variables.
+          The other enviroment variables are described in <a href=
+          "filteroptions.htm#FILTERENV"><b class=
+          "APPLICATION">LPRng</b> ftp mirror sites Filter
+          Environment Variables</a></p>
+        </li>
+
+        <li>
+          <p><acronym class="ACRONYM">ROOT</acronym> Flag. If the
+          ROOT flag is specified the filter is executed with Userid
+          and Effective Userid ROOT (User ID 0). By default it is
+          executed with the <var class="LITERAL">user</var> and
+          <var class="LITERAL">group</var> configuration option
+          user and group ids. Running a filter as ROOT is extremely
+          dangerous, and should only be used for programs that
+          require root permissions to open files or make network
+          connections from privileged ports.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">$-</var> or <var class=
+          "LITERAL">-$</var> Flag. This flag suppresses appending
+          options to the filter command line. If the <span class=
+          "emphasis"><i class="EMPHASIS">$-</i></span> or <var
+          class="LITERAL">-$</var> flag is not present, the <var
+          class="LITERAL">:filter_options</var> or <var class=
+          "LITERAL">:of_filter_options</var> for the <var class=
+          "OPTION">:of</var> filter values are appended to the
+          filter command line. If the <var class=
+          "LITERAL">:bkf</var> (Berkeley <b class=
+          "APPLICATION">lpd</b> filter compatible flag) is <var
+          class="LITERAL">TRUE</var> then the <var class=
+          "LITERAL">:bk_filter_options</var> and <var class=
+          "LITERAL">:bk_of_filter_options</var> values are used
+          instead of the <var class="LITERAL">:filter_options</var>
+          and <var class="LITERAL">:of_filter_options</var>
+          values.</p>
+
+          <div class="TABLE">
+            <a name="PRINTFILTERCOMMAND"></a>
+
+            <p><b>Table 16-1. Print Filter Command Line
+            Options</b></p>
+
+            <table border="1" class="CALSTABLE">
+              <col>
+              <col>
+
+              <thead>
+                <tr>
+                  <th>Option</th>
+
+                  <th>DefaultValue</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td>Option</td>
+
+                  <td>DefaultValue</td>
+                </tr>
+
+                <tr>
+                  <td><var class=
+                  "LITERAL">filter_options</var></td>
+
+                  <td>$C $F $H $J $L $P $Q $R $Z $a $c $d $e $f $h
+                  $i $j $k $l $n $p$r $s $w $x $y $-a</td>
+                </tr>
+
+                <tr>
+                  <td><var class=
+                  "LITERAL">of_filter_options</var></td>
+
+                  <td>(same as <var class=
+                  "LITERAL">filter_options</var>)</td>
+                </tr>
+
+                <tr>
+                  <td><var class=
+                  "LITERAL">bk_filter_options</var></td>
+
+                  <td>$P $w $l $x $y $F $c $L $i $J $C $0n $0h
+                  $-a</td>
+                </tr>
+
+                <tr>
+                  <td><var class=
+                  "LITERAL">bk_of_filter_options</var></td>
+
+                  <td>$w $l $x $y</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </li>
+
+        <li>
+          <p>By default, for programs that are not being invoked as
+          print job file filters, the <var class=
+          "LITERAL">filter_options</var> arguments are added. For
+          print job filters, if the <var class="LITERAL">:bkf</var>
+          flag is set, then the <var class=
+          "LITERAL">bk_filter_options</var> and <var class=
+          "LITERAL">bk_of_filter_options</var> entries are used.
+          The default <var class="LITERAL">bk</var> filter options
+          are the same as originally used with the BSD <b class=
+          "APPLICATION">lpr</b> filters. For the <var class=
+          "LITERAL">:of</var> filter, either the <var class=
+          "LITERAL">of_filter_options</var> or <var class=
+          "LITERAL">bk_of_filter_options</var> arguments will be
+          added.</p>
+        </li>
+
+        <li>
+          <p>The program arguments will then be scanned and
+          interpreted. Arguments of the form <var class=
+          "LITERAL">$</var><var class="LITERAL">letter</var> will
+          be translated into values from the print job control file
+          and/or printcap entry. The letters have the following
+          meaning:</p>
+
+          <div class="TABLE">
+            <a name="FILTEROPTIONFLAGS"></a>
+
+            <p><b>Table 16-2. Filter Command Line Options and
+            Values</b></p>
+
+            <table border="1" class="CALSTABLE">
+              <col>
+              <col>
+
+              <thead>
+                <tr>
+                  <th>Option</th>
+
+                  <th>Purpose or Value</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td><var class="LITERAL">a</var> </td>
+
+                  <td>printcap <var class="LITERAL">af</var>
+                  (accounting file name)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">b</var> </td>
+
+                  <td>job size (in K bytes)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">c</var> </td>
+
+                  <td>binary file (<var class="LITERAL">l</var>
+                  format for print file)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">d</var> </td>
+
+                  <td>printcap <var class="LITERAL">cd</var> or
+                  <var class="LITERAL">sd</var> entry</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">e</var> </td>
+
+                  <td>print job data file name (currently being
+                  processed)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">f</var> </td>
+
+                  <td>print job original name when spooled for
+                  printing (N info from control file)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">h</var> </td>
+
+                  <td>print job originating host (H info from
+                  control file)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">i</var> </td>
+
+                  <td>indent request (I info from control
+                  file)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">j</var> </td>
+
+                  <td>job number in spool queue</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">k</var> </td>
+
+                  <td>print job control file name</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">l</var> </td>
+
+                  <td>printcap <var class="LITERAL">pl</var> (page
+                  length)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">m</var> </td>
+
+                  <td>printcap <var class="LITERAL">co</var></td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">n</var> </td>
+
+                  <td>user name (L info from control file)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">p</var> </td>
+
+                  <td>remote printer (when processing for bounce
+                  queue)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">r</var> </td>
+
+                  <td>remote host (when processing for bounce
+                  queue)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">s</var> </td>
+
+                  <td>printcap <var class="LITERAL">sf</var>
+                  (status file)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">t</var> </td>
+
+                  <td>time in common UNIX format</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">w</var> </td>
+
+                  <td>printcap <var class="LITERAL">pw</var> (page
+                  width)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">x</var> </td>
+
+                  <td>printcap <var class="LITERAL">px</var> (page
+                  x dimension)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">y</var> </td>
+
+                  <td>printcap <var class="LITERAL">py</var> (page
+                  y dimension)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">F</var> </td>
+
+                  <td>print file format</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">P</var> </td>
+
+                  <td>printer name</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">S</var> </td>
+
+                  <td>printcap <var class="LITERAL">cm</var>
+                  (comment field)</td>
+                </tr>
+
+                <tr>
+                  <td>Capital letter</td>
+
+                  <td>Corresponding line from control file</td>
+                </tr>
+
+                <tr>
+                  <td>{key}</td>
+
+                  <td>printcap value for <var class=
+                  "LITERAL">key</var></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>If there is no value for the specified argument, then
+          the argument is removed from the list. If there is a
+          value, the actual form of the substitution is controlled
+          by additional flags as follows.</p>
+
+          <div class="TABLE">
+            <a name="AEN8271"></a>
+
+            <p><b>Table 16-3. Filter Command Line Option
+            Format</b></p>
+
+            <table border="1" frame="border" rules="all" class=
+            "CALSTABLE">
+              <col>
+              <col>
+
+              <thead>
+                <tr>
+                  <th>Form</th>
+
+                  <th>TranslatedValue</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td><var class="LITERAL">$x</var> </td>
+
+                  <td><var class="LITERAL">'-x</var><var class=
+                  "REPLACEABLE">value</var><var class=
+                  "LITERAL">'</var></td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">$-x</var> </td>
+
+                  <td><var class="LITERAL">'</var><var class=
+                  "REPLACEABLE">value</var><var class=
+                  "LITERAL">'</var></td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">$0x</var> </td>
+
+                  <td><var class="LITERAL">-x '</var><var class=
+                  "REPLACEABLE">value</var><var class=
+                  "LITERAL">'</var></td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">$'x</var> </td>
+
+                  <td><var class="LITERAL">-x</var> <var class=
+                  "REPLACEABLE">value</var></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <br>
+          <br>
+
+          <p>Each entry in quotes is treated as a single value, as
+          in /bin/sh. The <var class="LITERAL">$'x</var> does not
+          quote the value. Combinations of the various flags are
+          allowed. For example, <var class="LITERAL">$-x</var>
+          would simply substitute the value for <var class=
+          "LITERAL">x</var>, and then pass the whitespace separated
+          components as individual arguments. This last form is
+          useful for adding in additional flags on the command
+          line.</p>
+        </li>
+
+        <li>
+          <p>The command line is parsed, metacharacters are
+          ruthlessly stripped from all arguments and pathnames and
+          replaced by <var class="LITERAL">_</var> (underscores),
+          and an argument list suitable for the <var class=
+          "LITERAL">execve</var> system call is formed.</p>
+        </li>
+
+        <li>
+          <p>A sanitized environment is set up for the program
+          execution, with the following environment variables.</p>
+
+          <div class="TABLE">
+            <a name="FILTERENV"></a>
+
+            <p><b>Table 16-4. Filter Environment Variables</b></p>
+
+            <table border="1" frame="border" rules="all" class=
+            "CALSTABLE">
+              <col>
+              <col>
+
+              <thead>
+                <tr>
+                  <th>Variable Name</th>
+
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td><var class="LITERAL">CONTROL</var> </td>
+
+                  <td>control file name</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">DATAFILES</var> </td>
+
+                  <td>list of data file names</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">HOME</var> </td>
+
+                  <td>Home directory (client only)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">IFS</var> </td>
+
+                  <td><var class="LITERAL">" \t"</var></td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">LD_LIBRARY_PATH</var>
+                  </td>
+
+                  <td><var class="LITERAL">:filter_ld_path</var>
+                  configuration information</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">LOGDIR</var> </td>
+
+                  <td>Home directory (client only)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">LOGNAME</var> </td>
+
+                  <td><var class="LITERAL">L</var> control file
+                  line</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">PATH</var> </td>
+
+                  <td><var class="LITERAL">filter_path</var>
+                  configuration information</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">PRINTCAP_ENTRY</var>
+                  </td>
+
+                  <td>printcap information</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">SHELL</var> </td>
+
+                  <td><var class="OPTION">:sh</var> configuration
+                  information (default <tt class=
+                  "FILENAME">/bin/sh</tt>)</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">SPOOL_DIR</var> </td>
+
+                  <td><var class="LITERAL">:sd</var> printcap
+                  information</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">TZ</var> </td>
+
+                  <td>Time zone</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">USER</var> </td>
+
+                  <td>User name (client only)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>If the filter is to be run by a client program such as
+          <b class="APPLICATION">lpr</b>, then the environment
+          variables specified by the <var class=
+          "LITERAL">pass_env</var> configuration or printcap option
+          will be extracted from the environment, have any
+          metacharacters removed, and then placed in the
+          environment variable list. Commonly, the <acronym class=
+          "ACRONYM">PGPPASS</acronym>, <acronym class=
+          "ACRONYM">PGPPASSFD</acronym>, and <acronym class=
+          "ACRONYM">PGPPATH</acronym> are specified.</p>
+        </li>
+
+        <li>
+          <p>The program is started, with <acronym class=
+          "ACRONYM">STDIN</acronym>, <acronym class=
+          "ACRONYM">STDOUT</acronym>, and <acronym class=
+          "ACRONYM">STDERR</acronym> attached to the appropriate
+          files or file descriptors. If none is specified, then
+          they are attached to <tt class=
+          "FILENAME">/dev/null</tt>.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "chainingfilters.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x8397.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Chaining
+          Filters</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "filters.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top"><b class=
+          "APPLICATION">LPRng</b> Supported Filters</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

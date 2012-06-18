@@ -1,0 +1,105 @@
+Hello everybody,
+
+Although there is a man page which documents most of the actual
+commands, there is still a 'gap' concerning what bridges are, and how
+to set them up. This document attempts to fill this gap.
+
+In fact, this document is a 15-min hack, so feel free to {complain
+about,improve on} it. Especially if this document (or the FAQ) does
+not tell you what you want to know; I would consider that to be a bug.
+
+
+Have fun!
+Lennert Buytenhek
+
+
+<================= CUT HERE AND DAMAGE YOUR SCREEN =================>
+
+
+
+1. The basics
+-------------
+
+What does a bridge actually do? In plain English, a bridge connects
+two or more different physical ethernets together to form one large
+(logical) ethernet. The physical ethernets being connected together
+correspond to network interfaces in your linux box. The bigger
+(logical) ethernet corresponds to a virtual network interface in linux
+(often called br0, br1, br2, etc.)
+
+Let's say we want to tie eth0 and eth1 together, turning those
+networks into one larger network. What do we do? Well, we need to
+create an instance of the bridge first.
+
+	# brctl addbr br0
+
+(You can check that this gives you a network interface called br0.)
+Now we want to enslave eth0 and eth1 to this bridge.
+
+	# brctl addif br0 eth0
+	# brctl addif br0 eth1
+
+And now... because we connected the two ethernets together, they now
+form one large subnet. We are actually only on only one subnet, namely
+br0. We can forget about the fact that br0 is actually eth[01] in
+disguise; we will only deal with br0 from now on. Because we are only
+on one subnet, we only need one IP address for the bridge. This
+address we assign to br0. eth0 and eth1 should not have IP addresses
+allocated to them.
+
+	# ifconfig eth0 0.0.0.0
+	# ifconfig eth1 0.0.0.0
+	# ifconfig br0 my.ip.address.here
+
+The last command also puts the interface br0 into the 'up' state. This
+will activate the forwarding of packets, which in plain English means
+that from that point on, eth0 and eth1 will be 'joined'
+together. Hosts on eth0 should 'see' hosts on eth1 and vice versa.
+
+The bridge will also (automatically) activate the Spanning Tree
+Protocol: this is a network protocol spoken by switches for (roughly
+speaking) calculating the shortest distances and eliminating loops in
+the topology of the network. You can disable the stp if you really
+want/need to; see brctl(8) for details.
+
+
+
+2. More complicated setups
+--------------------------
+
+We can create multiple bridge port groups and do filtering/NATting
+between them, just like we can do that with ordinary network
+interfaces.
+
+For example: on a quadport network card, dedicate two ports to a LAN
+on which we have IP 10.16.0.254, and the other two ports to a LAN on
+which we have IP 192.168.10.1    (this is an actual setup)
+
+	# brctl addbr br_10
+	# brctl addif br_10 eth0
+	# brctl addif br_10 eth1
+	# ifconfig br_10 10.16.0.254
+
+	# brctl addbr br_192
+	# brctl addif br_192 eth2
+	# brctl addif br_192 eth3
+	# ifconfig br_192 192.168.10.1
+
+You now have logical network interfaces br_10 and br_192, which will
+act just like ordinary interfaces. The only difference is that they
+each correspond to two physical network interfaces, but nobody cares
+about that.
+
+So.. for example, if 192.168.10.2 is the only host on the 192.*
+network that is allowed to access the 10.* network, we would do:
+
+ipchains -P forward REJECT
+ipchains -A forward -s 192.168.10.2/32 -d 10.0.0.0/8 -i br_10 -j ACCEPT
+
+(just like you were used to).
+
+
+
+
+
+Hope this helped. If not, send a cry for help to the mailing list.

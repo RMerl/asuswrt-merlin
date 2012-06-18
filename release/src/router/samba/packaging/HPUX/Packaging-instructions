@@ -1,0 +1,65 @@
+Create Software Depot for Samba
+-------------------------------
+
+1. Compile the source code
+   The packaging assumes that the final product will install under /opt/samba
+   and will use /var/opt/samba for var directory. In order to support these
+   assumptions, run configure as follows:
+
+       ./configure --prefix /opt/samba --localstatedir /var/opt/samba
+
+   Afterwards compile the source code in a standard way.
+
+2. In packaging/HPUX directory run the following command:
+
+    $ create_package.sh
+
+3. Use resulting samba.depot file as the software depot for Samba.
+
+Brief Description of Depot
+--------------------------
+
+The software depot contains product Samba, which consists of the following
+three filesets:
+
+    Samba.core        Core samba server components, everything but SWAT
+                      and man pages
+
+    Samba.man         Man pages. Note that HP-UX uses different section
+                      numbering, so the man pages are moved and modified
+                      to correct the section references (i.e. nmbd(8) changed
+                      to nmbd(1m)).
+
+    Samba.swat        SWAT tool.
+
+The configure scripts will take care of the following:
+
+    Samba.core        1. create pcguest account should it not exist. The
+                         login shell is set to /usr/bin/true
+                      2. create startup/shutdown links at:
+                               /sbin/rc3.d/S911samba
+                               /sbin/rc2.d/K130samba
+                      3. copy boot configuration file from newconfig to
+                         /etc/rc.config.d, if one does not exist.
+
+   Samba.man          1. add /opt/samba/man to default man search path in
+                         /etc/MANPATH
+
+   Samba.swat         1. add swat service to /etc/services if necessary.
+                         Swat will run through port 901.
+                      2. add swat to /etc/inetd.conf, if necessary.
+                      3. signal (SIGHUP) inetd to reread configuration if
+                         1. or 2. were changed.
+
+The unconfigure scripts will, upon the product removal, do the following:
+
+   Samba.core         1. remove startup/shutdown links
+                      2. remove user pcguest
+
+   Samba.man          N/A
+
+   Samba.swat         1. remove swat from /etc/services
+                      2. remove swat from /etc/inetd.conf
+                      3. signal inetd (SIGHUP) to reread configuration
+
+Author: Leon Mlakar <leon@hermes.si>

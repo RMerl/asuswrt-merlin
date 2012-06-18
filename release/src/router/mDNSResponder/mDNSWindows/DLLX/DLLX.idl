@@ -1,0 +1,309 @@
+/* -*- Mode: C; tab-width: 4 -*-
+ *
+ * Copyright (c) 2009 Apple Computer, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+
+    Change History (most recent first):
+    
+$Log: DLLX.idl,v $
+Revision 1.1  2009/05/26 04:43:54  herscher
+<rdar://problem/3948252> COM component that can be used with any .NET language and VB.
+
+
+*/
+
+// This file will be processed by the MIDL tool to
+// produce the type library (DLLComponent.tlb) and marshalling code.
+
+typedef [ uuid(4085DD59-D0E1-4efe-B6EE-DDBF7631B9C0) ]
+enum DNSSDFlags
+{
+	kDNSSDFlagsMoreComing			= 0x0001,
+	kDNSSDFlagsDefault				= 0x0004,
+	kDNSSDFlagsNoAutoRename			= 0x0008,
+	kDNSSDFlagsShared				= 0x0010,
+	kDNSSDFlagsUnique				= 0x0020,
+	kDNSSDFlagsBrowseDomains		= 0x0040,
+	kDNSSDFlagsRegistrationDomains	= 0x0080,
+	kDNSSDFlagsLongLivedQuery		= 0x0100,
+	kDNSSDFlagsAllowRemoteQuery		= 0x0200,
+	kDNSSDFlagsForceMulticast		= 0x0400,
+	kDNSSDFlagsForce				= 0x0800,
+	kDNSSDFlagsReturnIntermediates	= 0x1000,
+	kDNSSDFlagsNonBrowsable			= 0x2000
+} DNSSDFlags;
+
+
+typedef [ uuid(30CDF335-CA52-4b17-AFF2-E83C64C450D4) ]
+enum DNSSDAddressFamily
+{
+	kDNSSDAddressFamily_IPv4 = 0x1,
+	kDNSSDAddressFamily_IPv6 = 0x2
+} DNSSDAddressFamily;
+
+
+typedef [ uuid(98FB4702-7374-4b16-A8DB-AD35BFB8364D) ]
+enum DNSSDProtocol
+{
+	kDNSSDProtocol_UDP	= 0x10,
+	kDNSSDProtocol_TCP	= 0x20
+} DNSSDProtocol;
+
+
+typedef [ uuid(72BF3EC3-19BC-47e5-8D95-3B73FF37D893) ]
+enum DNSSDRRClass
+{
+	kDNSSDClass_IN = 1
+} DNSSDRRClass;
+
+
+typedef [ uuid(08E362DF-5468-4c9a-AC66-FD4747B917BD) ]
+enum DNSSDRRType
+{
+	kDNSSDType_A         = 1,
+    kDNSSDType_NS        = 2,
+    kDNSSDType_MD        = 3,
+    kDNSSDType_MF        = 4,
+    kDNSSDType_CNAME     = 5,
+    kDNSSDType_SOA       = 6,
+    kDNSSDType_MB        = 7,
+    kDNSSDType_MG        = 8,
+    kDNSSDType_MR        = 9,
+    kDNSSDType_NULL      = 10,
+    kDNSSDType_WKS       = 11,
+    kDNSSDType_PTR       = 12,
+    kDNSSDType_HINFO     = 13,
+    kDNSSDType_MINFO     = 14,
+    kDNSSDType_MX        = 15,
+    kDNSSDType_TXT       = 16,
+    kDNSSDType_RP        = 17,
+    kDNSSDType_AFSDB     = 18,
+    kDNSSDType_X25       = 19,
+    kDNSSDType_ISDN      = 20,
+    kDNSSDType_RT        = 21,
+    kDNSSDType_NSAP      = 22,
+    kDNSSDType_NSAP_PTR  = 23,
+    kDNSSDType_SIG       = 24,
+    kDNSSDType_KEY       = 25,
+    kDNSSDType_PX        = 26,
+    kDNSSDType_GPOS      = 27,
+    kDNSSDType_AAAA      = 28,
+    kDNSSDType_LOC       = 29,
+    kDNSSDType_NXT       = 30,
+    kDNSSDType_EID       = 31,
+    kDNSSDType_NIMLOC    = 32,
+    kDNSSDType_SRV       = 33,
+    kDNSSDType_ATMA      = 34,
+    kDNSSDType_NAPTR     = 35,
+    kDNSSDType_KX        = 36,
+    kDNSSDType_CERT      = 37,
+    kDNSSDType_A6        = 38,
+    kDNSSDType_DNAME     = 39,
+    kDNSSDType_SINK      = 40,
+    kDNSSDType_OPT       = 41,
+    kDNSSDType_APL       = 42,
+    kDNSSDType_DS        = 43,
+    kDNSSDType_SSHFP     = 44,
+    kDNSSDType_IPSECKEY  = 45,
+    kDNSSDType_RRSIG     = 46,
+    kDNSSDType_NSEC      = 47,
+    kDNSSDType_DNSKEY    = 48,
+    kDNSSDType_DHCID     = 49,
+    kDNSSDType_NSEC3     = 50,
+    kDNSSDType_NSEC3PARAM= 51,
+    kDNSSDType_HIP       = 55,
+    kDNSSDType_SPF       = 99,
+    kDNSSDType_UINFO     = 100,
+    kDNSSDType_UID       = 101,
+    kDNSSDType_GID       = 102,
+    kDNSSDType_UNSPEC    = 103,
+    kDNSSDType_TKEY      = 249,
+    kDNSSDType_TSIG      = 250,
+    kDNSSDType_IXFR      = 251,
+    kDNSSDType_AXFR      = 252,
+    kDNSSDType_MAILB     = 253,
+    kDNSSDType_MAILA     = 254,
+    kDNSSDType_ANY       = 255
+} DNSSDRRType;
+
+
+typedef [ uuid(3B0059E7-5297-4301-9AAB-1522F31EC8A7) ]
+enum DNSSDError
+{
+	kDNSSDError_NoError                   = 0,
+	kDNSSDError_Unknown                   = -65537,
+	kDNSSDError_NoSuchName                = -65538,
+    kDNSSDError_NoMemory                  = -65539,
+    kDNSSDError_BadParam                  = -65540,
+    kDNSSDError_BadReference              = -65541,
+    kDNSSDError_BadState                  = -65542,
+    kDNSSDError_BadFlags                  = -65543,
+    kDNSSDError_Unsupported               = -65544,
+    kDNSSDError_NotInitialized            = -65545,
+    kDNSSDError_AlreadyRegistered         = -65547,
+    kDNSSDError_NameConflict              = -65548,
+    kDNSSDError_Invalid                   = -65549,
+    kDNSSDError_Firewall                  = -65550,
+    kDNSSDError_Incompatible              = -65551,
+    kDNSSDError_BadInterfaceIndex         = -65552,
+    kDNSSDError_Refused                   = -65553,
+    kDNSSDError_NoSuchRecord              = -65554,
+    kDNSSDError_NoAuth                    = -65555,
+    kDNSSDError_NoSuchKey                 = -65556,
+    kDNSSDError_NATTraversal              = -65557,
+    kDNSSDError_DoubleNAT                 = -65558,
+    kDNSSDError_BadTime                   = -65559,
+    kDNSSDError_BadSig                    = -65560,
+    kDNSSDError_BadKey                    = -65561,
+    kDNSSDError_Transient                 = -65562,
+    kDNSSDError_ServiceNotRunning         = -65563,  /* Background daemon not running */
+    kDNSSDError_NATPortMappingUnsupported = -65564,  /* NAT doesn't support NAT-PMP or UPnP */
+    kDNSSDError_NATPortMappingDisabled    = -65565,  /* NAT supports NAT-PMP or UPnP but it's disabled by the administrator */
+    kDNSSDError_NoRouter                  = -65566,  /* No router currently configured (probably no network connectivity) */
+    kDNSSDError_PollingMode               = -65567
+} DNSSDError;
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+
+[
+	object,
+	uuid(8FA0889C-5973-4FC9-970B-EC15C925D0CE),
+	dual,
+	nonextensible,
+	helpstring("ITXTRecord Interface"),
+	pointer_default(unique)
+]
+interface ITXTRecord : IDispatch{
+	[id(1), helpstring("method SetValue")] HRESULT SetValue([in] BSTR key, [in] VARIANT value);
+	[id(2), helpstring("method RemoveValue")] HRESULT RemoveValue([in] BSTR key);
+	[id(3), helpstring("method ContainsKey")] HRESULT ContainsKey([in] BSTR key, [out,retval] VARIANT_BOOL* retval);
+	[id(4), helpstring("method GetValueForKey")] HRESULT GetValueForKey([in] BSTR key, [out,retval] VARIANT* value);
+	[id(5), helpstring("method GetCount")] HRESULT GetCount([out,retval] ULONG* count);
+	[id(6), helpstring("method GetKeyAtIndex")] HRESULT GetKeyAtIndex([in] ULONG index, [out,retval] BSTR* retval);
+	[id(7), helpstring("method GetValueAtIndex")] HRESULT GetValueAtIndex([in] ULONG index, [out,retval] VARIANT* retval);
+};
+[
+	object,
+	uuid(9CE603A0-3365-4DA0-86D1-3F780ECBA110),
+	dual,
+	nonextensible,
+	helpstring("IDNSSDRecord Interface"),
+	pointer_default(unique)
+]
+interface IDNSSDRecord : IDispatch{
+	[id(1), helpstring("method Update")] HRESULT Update([in] DNSSDFlags flags, [in] VARIANT rdata, [in] ULONG ttl);
+	[id(2), helpstring("method Remove")] HRESULT Remove([in] DNSSDFlags flags);
+};
+[
+	object,
+	uuid(7FD72324-63E1-45AD-B337-4D525BD98DAD),
+	dual,
+	nonextensible,
+	helpstring("IDNSSDEventManager Interface"),
+	pointer_default(unique)
+]
+interface IDNSSDEventManager : IDispatch{
+};
+[
+	object,
+	uuid(29DE265F-8402-474F-833A-D4653B23458F),
+	dual,
+	nonextensible,
+	helpstring("IDNSSDService Interface"),
+	pointer_default(unique)
+]
+interface IDNSSDService : IDispatch{
+	[id(1), helpstring("method EnumerateDomains")] HRESULT EnumerateDomains([in] DNSSDFlags flags, [in] ULONG ifIndex, [in] IDNSSDEventManager* eventManager, [out,retval] IDNSSDService** service);
+	[id(2), helpstring("method Browse"), local] HRESULT Browse([in] DNSSDFlags flags, [in] ULONG interfaceIndex, [in] BSTR regtype, [in] BSTR domain, [in] IDNSSDEventManager* eventManager, [out,retval] IDNSSDService** sdref);
+	[id(3), helpstring("method Resolve")] HRESULT Resolve([in] DNSSDFlags flags, [in] ULONG ifIndex, [in] BSTR serviceName, [in] BSTR regType, [in] BSTR domain, [in] IDNSSDEventManager* eventManager, [out,retval] IDNSSDService** service);
+	[id(4), helpstring("method Register")] HRESULT Register([in] DNSSDFlags flags, [in] ULONG ifIndex, [in] BSTR name, [in] BSTR regType, [in] BSTR domain, [in] BSTR host, [in] USHORT port, [in] ITXTRecord* record, [in] IDNSSDEventManager* eventManager, [out,retval] IDNSSDService** service);
+	[id(5), helpstring("method QueryRecord")] HRESULT QueryRecord([in] DNSSDFlags flags, [in] ULONG ifIndex, [in] BSTR fullname, [in] DNSSDRRType rrtype, [in] DNSSDRRClass rrclass, [in] IDNSSDEventManager* eventManager, [out,retval] IDNSSDService** service);
+	[id(6), helpstring("method RegisterRecord")] HRESULT RegisterRecord([in] DNSSDFlags flags, [in] ULONG ifIndex, [in] BSTR fullname, [in] DNSSDRRType rrtype, [in] DNSSDRRClass rrclass, [in] VARIANT rdata, [in] ULONG ttl, [in] IDNSSDEventManager* eventManager, [out,retval] IDNSSDRecord** record);
+	[id(7), helpstring("method AddRecord")] HRESULT AddRecord([in] DNSSDFlags flags, [in] DNSSDRRType rrtype, [in] VARIANT rdata, [in] ULONG ttl, [out,retval] IDNSSDRecord** record);
+	[id(8), helpstring("method ReconfirmRecord")] HRESULT ReconfirmRecord([in] DNSSDFlags flags, [in] ULONG ifIndex, [in] BSTR fullname, [in] DNSSDRRType rrtype, [in] DNSSDRRClass rrclass, [in] VARIANT rdata);
+	[id(9), helpstring("method GetProperty")] HRESULT GetProperty([in] BSTR prop, [in,out] VARIANT * value );	
+	[id(10), helpstring("method GetAddrInfo")] HRESULT GetAddrInfo([in] DNSSDFlags flags, [in] ULONG ifIndex, [in] DNSSDAddressFamily addressFamily, [in] BSTR hostname, [in] IDNSSDEventManager* eventManager, [out,retval] IDNSSDService** service);
+	[id(11), helpstring("method NATPortMappingCreate")] HRESULT NATPortMappingCreate([in] DNSSDFlags flags, [in] ULONG ifIndex, [in] DNSSDAddressFamily addressFamily, [in] DNSSDProtocol protocol, [in] USHORT internalPort, [in] USHORT externalPort, [in] ULONG ttl, [in] IDNSSDEventManager* eventManager, [out,retval] IDNSSDService** service);
+	[id(12), helpstring("method Stop"), local] HRESULT Stop(void);
+};
+[
+	uuid(18FBED6D-F2B7-4EC8-A4A4-46282E635308),
+	version(1.0),
+	helpstring("Apple Bonjour Library 1.0")
+]
+library Bonjour
+{
+	importlib("stdole2.tlb");
+	[
+		uuid(21AE8D7F-D5FE-45cf-B632-CFA2C2C6B498),
+		helpstring("_IDNSSDEvents Interface")
+	]
+	dispinterface _IDNSSDEvents
+	{
+		properties:
+		methods:
+		[id(1), helpstring("method DomainFound")] void DomainFound([in] IDNSSDService* service, [in] DNSSDFlags flags, [in] ULONG ifIndex, [in] BSTR domain);
+		[id(2), helpstring("method DomainLost")] void DomainLost([in] IDNSSDService* service, [in] DNSSDFlags flags, [in] ULONG ifIndex, [in] BSTR domain);
+		[id(3), helpstring("method ServiceFound")] void ServiceFound([in] IDNSSDService* browser, [in] DNSSDFlags flags, [in] ULONG ifIndex, [in] BSTR serviceName, [in] BSTR regType, [in] BSTR domain);
+		[id(4), helpstring("method ServiceLost")] void ServiceLost([in] IDNSSDService* browser, [in] DNSSDFlags flags, [in] ULONG ifIndex, [in] BSTR serviceName, [in] BSTR regType, [in] BSTR domain);
+		[id(5), helpstring("method ServiceResolved")] void ServiceResolved([in] IDNSSDService* service, [in] DNSSDFlags flags, [in] ULONG ifIndex, [in] BSTR fullName, [in] BSTR hostName, [in] USHORT port, [in] ITXTRecord* record);
+		[id(6), helpstring("method ServiceRegistered")] void ServiceRegistered([in] IDNSSDService* service, [in] DNSSDFlags flags, [in] BSTR name, [in] BSTR regType, [in] BSTR domain);
+		[id(7), helpstring("method QueryRecordAnswered")] void QueryRecordAnswered([in] IDNSSDService* service, [in] DNSSDFlags flags, [in] ULONG ifIndex, [in] BSTR fullName, [in] DNSSDRRType rrtype, [in] DNSSDRRClass rrclass, [in] VARIANT rdata, [in] ULONG ttl);
+		[id(8), helpstring("method RecordRegistered")] void RecordRegistered([in] IDNSSDRecord* record, [in] DNSSDFlags flags);
+		[id(9), helpstring("method AddressFound")] void AddressFound([in] IDNSSDService* service, [in] DNSSDFlags flags, [in] ULONG ifIndex, [in] BSTR hostname, [in] DNSSDAddressFamily addressFamily, [in] BSTR address, [in] ULONG ttl);
+		[id(10), helpstring("method MappingCreated")] void MappingCreated([in] IDNSSDService* service, [in] DNSSDFlags flags, [in] ULONG ifIndex, [in] ULONG externalAddress, [in] DNSSDAddressFamily addressFamily, [in] DNSSDProtocol protocol, [in] USHORT internalPort, [in] USHORT externalPort, [in] ULONG ttl);
+		[id(11), helpstring("method OperationFailed")] void OperationFailed([in] IDNSSDService* service, [in] DNSSDError error);
+	};
+	[
+		uuid(24CD4DE9-FF84-4701-9DC1-9B69E0D1090A),
+		helpstring("DNSSDService Class")
+	]
+	coclass DNSSDService
+	{
+		[default] interface IDNSSDService;
+	};
+	[
+		uuid(AFEE063C-05BA-4248-A26E-168477F49734),
+		helpstring("TXTRecord Class")
+	]
+	coclass TXTRecord
+	{
+		[default] interface ITXTRecord;
+	};
+	[
+		uuid(5E93C5A9-7516-4259-A67B-41A656F6E01C),
+		helpstring("DNSSDRecord Class")
+	]
+	coclass DNSSDRecord
+	{
+		[default] interface IDNSSDRecord;
+	};
+	[
+		uuid(BEEB932A-8D4A-4619-AEFE-A836F988B221),
+		helpstring("DNSSDEventManager Class")
+	]
+	coclass DNSSDEventManager
+	{
+		[default] interface IDNSSDEventManager;
+		[default, source] dispinterface _IDNSSDEvents;
+	};
+	enum DNSSDFlags;
+	enum DNSSDAddressFamily;
+	enum DNSSDProtocol;
+	enum DNSSDRRClass;
+	enum DNSSDRRType;
+	enum DNSSDError;
+};

@@ -1,0 +1,134 @@
+--- a/configure
++++ b/configure
+@@ -1022,7 +1022,7 @@
+ 
+ # Some tools are only suitable for building in a "native" situation.
+ # Remove these if host!=target.  
+-native_only="autoconf automake libtool fileutils find gawk gettext gzip hello indent m4 rcs recode sed shellutils tar textutils uudecode wdiff gprof target-groff guile perl time ash bash bzip2 prms gnuserv target-gperf"
++native_only="autoconf automake libtool fileutils find gawk gettext gzip hello indent m4 rcs recode sed shellutils tar textutils uudecode wdiff target-groff guile perl time ash bash bzip2 prms gnuserv target-gperf"
+ 
+ # Similarly, some are only suitable for cross toolchains.
+ # Remove these if host=target.
+@@ -1276,7 +1276,7 @@
+   am33_2.0-*-linux*)
+     noconfigdirs="$noconfigdirs ${libgcj} target-newlib target-libgloss"
+     ;;
+-  sh-*-linux*)
++  sh*-*-linux*)
+     noconfigdirs="$noconfigdirs ${libgcj} target-newlib target-libgloss"
+     ;;    
+   sh*-*-pe|mips*-*-pe|*arm-wince-pe)
+@@ -1579,12 +1579,12 @@
+     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
+     ;;
+   mips*-*-*)
+-    noconfigdirs="$noconfigdirs gprof ${libgcj}"
++    noconfigdirs="$noconfigdirs ${libgcj}"
+     ;;
+   romp-*-*)
+     noconfigdirs="$noconfigdirs bfd binutils ld gas opcodes target-libgloss ${libgcj}"
+     ;;
+-  sh-*-* | sh64-*-*)
++  sh*-*-* | sh64-*-*)
+     case "${host}" in
+       i[3456789]86-*-vsta) ;; # don't add gprof back in
+       i[3456789]86-*-go32*) ;; # don't add gprof back in
+--- a/bfd/configure
++++ b/bfd/configure
+@@ -3576,7 +3576,7 @@ irix5* | irix6*)
+   ;;
+ 
+ # This must be Linux ELF.
+-linux-gnu*)
++linux-gnu*|linux-uclibc*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
+--- a/binutils/configure
++++ b/binutils/configure
+@@ -3411,7 +3411,7 @@ irix5* | irix6*)
+   ;;
+ 
+ # This must be Linux ELF.
+-linux-gnu*)
++linux-gnu*|linux-uclibc*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
+--- a/gas/configure
++++ b/gas/configure
+@@ -3411,7 +3411,7 @@ irix5* | irix6*)
+   ;;
+ 
+ # This must be Linux ELF.
+-linux-gnu*)
++linux-gnu*|linux-uclibc*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
+--- a/gprof/configure
++++ b/gprof/configure
+@@ -3414,6 +3414,11 @@ linux-gnu*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++linux-uclibc*)
++  lt_cv_deplibs_check_method=pass_all
++  lt_cv_file_magic_test_file=`echo /lib/libuClibc-*.so`
++  ;;
++
+ netbsd* | knetbsd*-gnu)
+   if echo __ELF__ | $CC -E - | grep __ELF__ > /dev/null; then
+     lt_cv_deplibs_check_method='match_pattern /lib[^/\.]+\.so\.[0-9]+\.[0-9]+$'
+--- a/ld/configure
++++ b/ld/configure
+@@ -3413,7 +3413,7 @@ irix5* | irix6*)
+   ;;
+ 
+ # This must be Linux ELF.
+-linux-gnu*)
++linux-gnu*|linux-uclibc*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
+--- a/libtool.m4
++++ b/libtool.m4
+@@ -739,7 +739,7 @@ irix5* | irix6*)
+   ;;
+ 
+ # This must be Linux ELF.
+-linux-gnu*)
++linux-gnu*|linux-uclibc*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
+--- a/ltconfig
++++ b/ltconfig
+@@ -602,6 +602,7 @@ host_os=`echo $host | sed 's/^\([^-]*\)-
+ 
+ # Transform linux* to *-*-linux-gnu*, to support old configure scripts.
+ case $host_os in
++linux-uclibc*) ;;
+ linux-gnu*) ;;
+ linux*) host=`echo $host | sed 's/^\(.*-.*-linux\)\(.*\)$/\1-gnu\2/'`
+ esac
+@@ -1247,7 +1248,7 @@ linux-gnuoldld* | linux-gnuaout* | linux
+   ;;
+ 
+ # This must be Linux ELF.
+-linux-gnu*)
++linux-gnu*|linux-uclibc*)
+   version_type=linux
+   need_lib_prefix=no
+   need_version=no
+--- a/opcodes/configure
++++ b/opcodes/configure
+@@ -3579,7 +3579,7 @@ irix5* | irix6*)
+   ;;
+ 
+ # This must be Linux ELF.
+-linux-gnu*)
++linux-gnu*|linux-uclibc*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 

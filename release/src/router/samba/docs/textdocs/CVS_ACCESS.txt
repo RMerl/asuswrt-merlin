@@ -1,0 +1,124 @@
+!==
+!== CVS_ACCESS.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:    Modified from the Web pages by Jeremy Allison.
+Date:           23 Dec 1997
+Status:         Current
+
+How to get access to Samba source code via cvs.
+===============================================
+
+CVS Access to samba.org
+------------------------------
+
+The machine samba.org runs a publicly accessible CVS 
+repository for access to the source code of several packages, 
+including samba, rsync and jitterbug. This document describes 
+how to get anonymous read-only access to this source code. 
+
+Access via cvsweb
+-----------------
+
+You can access the source code via your favourite WWW browser. 
+This allows you to access the contents of individual files in 
+the repository and also to look at the revision history and 
+commit logs of individual files. You can also ask for a diff 
+listing between any two versions on the repository.
+
+Use the URL : http://samba.org/cgi-bin/cvsweb
+
+Access via cvs
+--------------
+
+You can also access the source code via a normal cvs client. 
+This gives you much more control over you can do with the 
+repository and allows you to checkout whole source trees 
+and keep them uptodate via normal cvs commands. This is the 
+preferred method of access if you are a developer and not
+just a casual browser.
+
+To download the latest cvs source code, point your
+browser at the URL :
+
+http://www.cyclic.com/
+
+and click on the 'How to get cvs' link. CVS is free
+software under the GNU GPL (as is Samba).
+
+To gain access via anonymous cvs use the following steps. 
+For this example it is assumed that you want a copy of the 
+samba source code. For the other source code repositories 
+on this system just substitute the correct package name
+
+1. Install a recent copy of cvs. All you really need is a 
+  copy of the cvs client binary. 
+
+2. Run the command 
+
+  cvs -d :pserver:cvs@samba.org:/cvsroot login
+
+When it asks you for a password type 'cvs' (not including
+the quotes).
+
+3. Run the command 
+
+  cvs -d :pserver:cvs@samba.org:/cvsroot co samba
+
+This will create a directory called samba containing the 
+latest samba source code. This currently corresponds to the 
+1.9.18alpha development tree. 
+
+4. Whenever you want to merge in the latest code changes use 
+the following command from within the samba directory: 
+
+  cvs update -d -P
+
+NOTE: If you instead want the latest source code for the 
+1.9.17 stable tree then replace step 4 with the command: 
+
+  cvs -d :pserver:cvs@samba.org:/cvsroot co -r BRANCH_1_9_17 samba
+
+Access to the NT DOMAIN Controller code
+---------------------------------------
+
+The Samba PDC code is being separately developed on a
+branch named BRANCH_NTDOM. To gain access to the latest
+source code (this changes daily) do the following:
+
+1). Log onto cvs 
+
+  cvs -d :pserver:cvs@samba.org:/cvsroot login          
+  
+When it asks you for a password type 'cvs' (not including
+the quotes).
+
+2). Check out the BRANCH_NTDOM by typing :
+
+  cvs -d :pserver:cvs@samba.org:/cvsroot co -r BRANCH_NTDOM samba
+
+This will create a directory called samba containing the
+latest snapshot of the domain controller code.
+
+3). To keep this code up to date after it has been
+changed in the cvs repository, cd into the samba
+directory you created above and type :
+
+  cvs update -d -P
+
+How it's done.
+--------------
+
+If you are interested in how anonymous cvs access is set up and 
+want to set it up on your own system then you might like to checkout 
+the pserver source code using the the command :
+
+ cvs -d :pserver:cvs@samba.org:/cvsroot co pserver
+
+You really have to know what you are doing to do this. Please don't 
+email samba with basic cvs or unix security questions. 
+
+Reporting problems.
+-------------------
+
+If you have any problems with this system please email 
+samba@samba.org. 

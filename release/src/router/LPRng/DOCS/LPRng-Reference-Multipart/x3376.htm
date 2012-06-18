@@ -1,0 +1,203 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Printing from lpr Directly To A Device</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title="Banner Printing and the OF filter"
+    href="x3273.htm">
+    <link rel="NEXT" title=
+    "Moving Jobs From Queue to Queue and Redirecting Queues" href=
+    "x3423.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x3273.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x3423.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN3376">4.13. Printing from <b
+      class="APPLICATION">lpr</b> Directly To A Device</a></h1>
+
+      <p>While the most reliable way to print is to send jobs to a
+      print spooler, sometimes it is desirable to print directly to
+      a printer. This method is supported by the special <var
+      class="LITERAL">:direct</var> printcap flag or the <b class=
+      "APPLICATION">lpr</b> <var class="LITERAL">-Y</var> command
+      line flag. The following shows the effects of this flag:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3383"></a>
+<pre class="SCREEN">
+    lpr -Y -Phost%port file1 file2 ...
+    Eqivalent to:
+      ( for i in file1 file2 ... ; do
+        $filter $i
+      done ) | tcpip_connection( host%port)
+    
+    lpr -Y -P/dev/lp file1 file2 ...
+    Eqivalent to:
+      ( for i in file1 file2 ... ; do
+        $filter $i
+      done ) &gt;&gt;/dev/lp
+    
+    lpr -Y -P '|/program' file1 file2 ...
+    Eqivalent to:
+      ( for i in file1 file2 ... ; do
+        $filter $i
+      done ) | /program
+</pre>
+      </div>
+
+      <p>The above examples show how we can use the command line
+      options to send files directly to a printer. You can also
+      create a printcap that will do the same:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3386"></a>
+<pre class="SCREEN">
+    lp:direct:lp=/tmp/a:remote_support=R
+    Command:
+      lpr -Plp file1 file2 ...
+    Equivalent to:
+    lpr -P/tmp/a -Y file1 file2 ...
+    
+    Example:
+    <samp class="PROMPT">h4: {228} %</samp> <kbd class=
+"USERINPUT">lp -P/tmp/a /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {229} %</samp> <kbd class=
+"USERINPUT">cat /tmp/a /tmp/hi</kbd>
+    hi
+    <samp class="PROMPT">h4: {230} %</samp> <kbd class=
+"USERINPUT">lp -Plp /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {231} %</samp> <kbd class=
+"USERINPUT">cat /tmp/a /tmp/hi</kbd>
+    hi
+    hi
+</pre>
+      </div>
+
+      <p>The <b class="APPLICATION">lpr</b> <var class="LITERAL">-X
+      filter</var> option allows us to specify a user filter on the
+      command line. We will use a simple example to show how this
+      capability could be used in practice. Create the <tt class=
+      "FILENAME">/tmp/pass</tt> file with the following contents,
+      and give it executable permissions as shown below:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3400"></a>
+<pre class="SCREEN">
+    #!/bin/sh
+    # /tmp/pass file
+    echo LEADER
+    cat
+    echo TRAILER
+    exit 0
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Execute the following commands to print the <tt class=
+      "FILENAME">/tmp/hi</tt> file and observe the results:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3404"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {232} %</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/a</kbd>
+    <samp class="PROMPT">h4: {233} %</samp> <kbd class=
+"USERINPUT">lpr -P/tmp/a -X /tmp/pass /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {234} %</samp> <kbd class=
+"USERINPUT">cat /tmp/a</kbd>
+    LEADER
+    hi
+    TRAILER
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>As we see from the example, our filter has processed the
+      input file and added the <var class="LITERAL">LEADER</var>
+      and <var class="LITERAL">TRAILER</var> strings. In practice,
+      the actual processing of the input job would be far more
+      elaborate, and may do such things as incorporate files or
+      other material available only on the local system. We can
+      also use a printcap entry:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3415"></a>
+<pre class="SCREEN">
+    lp:direct:lp=/tmp/a:filter=/tmp/pass
+    
+    <samp class="PROMPT">h4: {235} %</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/a</kbd>
+    <samp class="PROMPT">h4: {236} %</samp> <kbd class=
+"USERINPUT">lpr -Plp /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {237} %</samp> <kbd class=
+"USERINPUT">cat /tmp/a</kbd>
+    LEADER
+    hi
+    TRAILER
+</pre>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x3273.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x3423.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Banner Printing
+          and the OF filter</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Moving Jobs
+          From Queue to Queue and Redirecting Queues</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,19 @@
+<samba:parameter name="host msdfs"
+                 context="G"
+				 type="boolean"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+ <description>
+	<para>
+	If set to <constant>yes</constant>, Samba will act as a Dfs server, and allow Dfs-aware clients to browse
+	Dfs trees hosted on the server.
+	</para>
+
+	<para>
+	See also the <smbconfoption name="msdfs root"/> share  level  parameter.  For more  information  on
+	setting  up a Dfs tree on Samba, refer to the MSFDS chapter in the book Samba3-HOWTO.
+	</para>
+</description>
+
+<value type="default">yes</value>
+</samba:parameter>

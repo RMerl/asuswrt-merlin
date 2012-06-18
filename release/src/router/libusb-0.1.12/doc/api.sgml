@@ -1,0 +1,38 @@
+<!-- FIXME: I want this to be displayed as one page, not seperate -->
+
+  <title>API</title>
+  <partintro>
+    <para>This is the external API for applications to use.</para>
+    <para>The API is relatively lean and designed to have close analogies to the USB specification. The v0.1 API was mostly hacked together and kludged together without much forethought and as a result, it's missing quite a few features. v1.0 is intended to rectify this.</para>
+  </partintro> 
+
+  <chapter id="api-device-interfaces">
+    <title>Devices and interfaces</title>
+
+    <para>The libusb API ties an open device to a specific interface. This means that if you want to claim multiple interfaces on a device, you should open the device multiple times to receive one usb_dev_handle for each interface you want to communicate with. Don't forget to call <xref linkend="function.usbclaiminterface">.</para>
+  </chapter>
+
+  <chapter id="api-timeouts">
+    <title>Timeouts</title>
+
+    <para>Timeout's in libusb are always specified in milliseconds.</para>
+  </chapter>
+
+  <chapter id="api-types">
+    <title>Data Types</title>
+
+    <para>libusb uses both abstracted and non abstracted structures to maintain portability.</para>
+  </chapter>
+
+  <chapter id="api-synchronous">
+    <title>Synchronous</title>
+ 
+    <para>All functions in libusb v0.1 are synchronous, meaning the functions block and wait for the operation to finish or timeout before returning execution to the calling application. Asynchronous operation will be supported in v1.0, but not v0.1.</para>
+  </chapter>
+
+  <chapter id="api-return-values">
+    <title>Return values</title>
+ 
+    <para>There are two types of return values used in libusb v0.1. The first is a handle returned by <xref linkend="function.usbopen">. The second is an int. In all cases where an int is returned, &gt;= 0 is a success and &lt; 0 is an error condition.</para>
+  </chapter>
+

@@ -1,0 +1,58 @@
+<samba:parameter name="mangled names"
+				 type="boolean"
+                 context="S"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This controls whether non-DOS names under UNIX 
+	should be mapped to DOS-compatible names (&quot;mangled&quot;) and made visible, 
+	or whether non-DOS names should simply be ignored.</para>
+
+	<para>See the section on <smbconfoption name="name mangling"/> for 
+	details on how to control the mangling process.</para>
+
+	<para>If mangling is used then the mangling method is as follows:</para>
+
+	<itemizedlist>
+		<listitem>
+			<para>The first (up to) five alphanumeric characters 
+			before the rightmost dot of the filename are preserved, forced 
+			to upper case, and appear as the first (up to) five characters 
+			of the mangled name.</para>
+		</listitem>
+		
+		<listitem>
+			<para>A tilde &quot;~&quot; is appended to the first part of the mangled
+			name, followed by a two-character unique sequence, based on the
+			original root name (i.e., the original filename minus its final
+			extension). The final extension is included in the hash calculation
+			only if it contains any upper case characters or is longer than three
+			characters.</para>
+
+			<para>Note that the character to use may be specified using 
+				the <smbconfoption name="mangling char"/>
+			option, if you don't like '~'.</para>
+		</listitem>
+
+		<listitem>
+			<para>Files whose UNIX name begins with a dot will be 
+			presented as DOS hidden files. The mangled name will be created as 
+			for other filenames, but with the leading dot removed and &quot;___&quot; as 
+			its extension regardless of actual original extension (that's three 
+			underscores).</para>
+		</listitem>
+	</itemizedlist>
+
+	<para>The two-digit hash value consists of upper case alphanumeric characters.</para>
+
+	<para>This algorithm can cause name collisions only if files 
+	in a directory share the same first five alphanumeric characters. 
+	The probability of such a clash is 1/1300.</para>
+
+	<para>The name mangling (if enabled) allows a file to be 
+	copied between UNIX directories from Windows/DOS while retaining 
+	the long UNIX filename. UNIX files can be renamed to a new extension 
+	from Windows/DOS and will retain the same basename. Mangled names 
+	do not change between sessions.</para>
+</description>
+<value type="default">yes</value>
+</samba:parameter>

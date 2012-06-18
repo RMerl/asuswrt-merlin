@@ -1,0 +1,26 @@
+
+http://git.uclibc.org/uClibc/patch/?id=a8e76cbe147263a58d9e70e426d295858f9cd308
+
+From: Denis Vlasenko
+Date: Tue, 10 Mar 2009 14:42:54 +0000
+Subject: resolver:
+
+res_query: do not unconditionally set h_errno to TRY_AGAIN (closes bug 173).
+
+---
+diff --git a/libc/inet/resolv.c b/libc/inet/resolv.c
+index 938fd8c..a8dace7 100644
+--- a/libc/inet/resolv.c
++++ b/libc/inet/resolv.c
+@@ -2875,7 +2819,8 @@ int res_query(const char *dname, int class, int type,
+ 	i = __dns_lookup(dname, type, &packet, &a);
+ 
+ 	if (i < 0) {
+-		h_errno = TRY_AGAIN;
++		if (!h_errno) /* TODO: can this ever happen? */
++			h_errno = TRY_AGAIN;
+ 		return -1;
+ 	}
+ 
+--
+cgit v0.8.2.1

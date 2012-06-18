@@ -1,0 +1,45 @@
+   Solaris PKG Generation
+        Patrick Powell
+    Tue Jun  6 17:52:53 PDT 2000
+    README,v 1.1 2000/06/09 21:55:42 papowell Exp
+
+This is a set of scripts to make a Solaris pkg distribtion
+
+UNPACK    - test script for regression testing
+            This allows you to copy the LPRng distribution
+            to a directory on a Solaris system and then
+            do 'sh UNPACK'.  This will generate a package
+
+Scripts used to generate the package
+   copyright
+   i.preserve
+   inetd.conf
+   prototype.pre
+   r.preserve
+
+Makefile  - makefile that does the work
+   make clean all
+      Builds a package.
+
+   In order to do this we horribly abuse the various
+   things that you would normally expect a Solaris Package
+   generation script to do.
+
+   a)  We first compile and install the LPRng software in
+       a temporary location (i.e. /var/tmp/LPRng-...) so that
+       this contains only the LPRng installation files
+   b)  We use this to generation a packing list
+   c)  We then get the various postinstall and preremove
+       scripts from the generated stuff and put them into
+       the files in the current directory.
+   d)  We make the package.
+
+You might also want to try:
+   make checkit
+    - checks build and makes package
+   make removeit
+    - removes package
+   make installit
+    - installs package
+
+Patrick ("Automate whereever possible") Powell

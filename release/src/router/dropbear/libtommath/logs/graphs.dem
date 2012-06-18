@@ -1,0 +1,17 @@
+set terminal png
+set size 1.75
+set ylabel "Cycles per Operation"
+set xlabel "Operand size (bits)"
+
+set output "addsub.png"
+plot 'add.log' smooth bezier title "Addition", 'sub.log' smooth bezier title "Subtraction"
+
+set output "mult.png"
+plot 'sqr.log' smooth bezier title "Squaring (without Karatsuba)", 'sqr_kara.log' smooth bezier title "Squaring (Karatsuba)", 'mult.log' smooth bezier title "Multiplication (without Karatsuba)", 'mult_kara.log' smooth bezier title "Multiplication (Karatsuba)"
+
+set output "expt.png"
+plot 'expt.log' smooth bezier title "Exptmod (Montgomery)", 'expt_dr.log' smooth bezier title "Exptmod (Dimminished Radix)", 'expt_2k.log' smooth bezier title "Exptmod (2k Reduction)"
+
+set output "invmod.png"
+plot 'invmod.log' smooth bezier title "Modular Inverse"
+

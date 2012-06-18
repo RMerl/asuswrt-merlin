@@ -1,0 +1,433 @@
+#!/bin/sh
+# Patrick Powell
+# Sat Aug 19 20:40:33 PDT 1995
+#
+#  psbanner [-FLAGvalue]* [accountingfile]
+#  
+#   Important flags:                 Postscript Variable
+#    -j number   - job number          /Seq
+#    -J banner   - banner              /Job
+#    -h host     - host                /Host
+#    -C class    - job class           /Class
+#    -n user     - user                /User
+#    -t date     - date                /Date
+#    -L name     - name                /Name
+#  
+#  Example:
+#  
+#  banner -Pt1 -w80 -l66 -x0 -y0 -Ff
+#      -kcfA684taco.astart.com -Lpapowell -J../VERSION -CA
+#      -npapowell -htaco.astart.com -Htaco.astart.com
+#      -d/tmp/LPD/t1/dfA684 taco.astart.com accnt
+#  
+#  Output needed:
+#  
+#  %!PS-Adobe-2.0
+#  /Seq (number) def
+#  /Job (banner) def  (with '()\' escaped )
+#  /Host (HOST) def  
+#  /Class (CLASS) def
+#  /User (USER) def
+#  /Date (DATE) def
+#  /Name (NAME) def
+#   < followed by the contents of the banner file >
+# These variables are used by the banner printing script to
+# produce output.
+##
+# ----------- start version 1 ------------
+#
+
+PATH=/bin:/usr/bin
+Args=""
+vAr=""
+vAlue=""
+iI=""
+Args="$@"
+while expr "$1" : '-.*' >/dev/null ; do
+  vAr=`expr "$1" : '-\(.\).*'`;
+  vAlue=`expr "$1" : '-.\(.*\)'`;
+  case "$vAr" in
+    - ) break;;
+    c ) c=1;;
+    [a-zA-Z] )
+      if test "X$vAlue" = "X" ; then shift; vAlue="$1"; fi;
+      eval $vAr='$vAlue';
+      #setvar $vAr "$vAlue"
+      ;;
+  esac;
+  shift;
+done
+
+number=0; if [ -n "$j" ] ; then number="$j"; fi
+banner=NONE; if [ -n "$J" ] ; then banner="$J"; fi
+host=UNKNOWN; if [ -n "$h" ] ; then host="$h"; fi
+class=UNKNOWN; if [ -n "$C" ] ; then class="$C"; fi
+user=UNKNOWN; if [ -n "$n" ] ; then user="$n"; fi
+date=`date`;
+name=UNKNOWN; if [ -n "$L" ] ; then name="$L"; fi
+# put out the values
+cat <<EOF ;
+%!PS-Adobe-2.0
+/Seq ($number) def
+/Job ($banner) def
+/Host ($host) def
+/Class ($class) def
+/User ($user) def
+/Date ($date) def
+/Name ($name) def
+EOF
+#
+# The following is the postscript file that uses the variables
+#
+# Note that dimensions are given in points (72/inch)
+# 8.5 x 11.0 => 612 x 792
+# a4 = 8.5 x 11.75 => 612 x 846
+cat <<'EOF' ;
+/entries [(User:) (Name:) (Host:) (Date:) (Job:) (Class:)] def
+/low-point-size 10 def
+%% /high-point-size 120 def
+/high-point-size 80 def
+/line-spacing low-point-size 1.2 mul def
+/left-margin 22 def
+% a4     /first-baseline 840 def
+% 8.5x11 /first-baseline 786 def
+/first-baseline 786 def
+/last-baseline 30 def
+/user-baseline 150 def
+/user-margin left-margin low-point-size 4.2 mul add def
+/banner-baseline 630 def
+/banner-line-spacing high-point-size 1.1 mul def
+
+/Courier findfont low-point-size scalefont setfont
+
+0 1 5 {
+ dup line-spacing mul exch 2 gt
+  { first-baseline exch sub }
+  { last-baseline add } ifelse
+ left-margin exch moveto
+ (****************************************) show
+ (**************************************** Id: ) show
+ Seq show
+} for
+
+0 1 5 {
+ dup line-spacing mul user-baseline exch sub
+ left-margin exch moveto
+ entries exch get show
+} for
+
+/i 0 def
+
+[User Name Host Date Job Class] {
+ user-margin user-baseline i line-spacing mul sub moveto
+ i 0 eq
+  { show (@) show Host } if
+ show
+ /i i 1 add def
+} forall
+
+/i 0 def
+%%%%%% FANCY HEADER %%%%%%%%%%%%%%%%%
+%%
+ [Seq User Host Job] {
+  gsave
+  left-margin banner-baseline banner-line-spacing i mul sub translate
+  0 0 moveto
+  i 0 eq i 3 eq or
+  { i 0 eq { /Helvetica } { /Courier /high-point-size 76 def } ifelse }
+  { /Palatino-Italic }
+  ifelse
+  findfont high-point-size scalefont setfont
+  {
+   /charcode exch def
+   /thechar (-) dup 0 charcode put def
+   thechar true charpath stroke
+   thechar stringwidth pop 0 translate 0 0 moveto
+  } forall
+  /i i 1 add def
+  grestore
+ } forall
+%%
+ 
+
+%%%% Neat little Printer ICON
+%%%% if you don't mind waiting, remove the comments
+%%%%
+%% gsave
+%% /$F2psDict 200 dict def 
+%% $F2psDict begin
+%% $F2psDict /mtrx matrix put
+%% /l {lineto} bind def
+%% /m {moveto} bind def
+%% /s {stroke} bind def
+%% /n {newpath} bind def
+%% /gs {gsave} bind def
+%% /gr {grestore} bind def
+%% /clp {closepath} bind def
+%% /graycol {dup dup currentrgbcolor 4 -2 roll mul 4 -2 roll mul
+%% 4 -2 roll mul setrgbcolor} bind def
+%% /col-1 {} def
+%% /col0 {0 0 0 setrgbcolor} bind def
+%% /col1 {0 0 1 setrgbcolor} bind def
+%% /col2 {0 1 0 setrgbcolor} bind def
+%% /col3 {0 1 1 setrgbcolor} bind def
+%% /col4 {1 0 0 setrgbcolor} bind def
+%% /col5 {1 0 1 setrgbcolor} bind def
+%% /col6 {1 1 0 setrgbcolor} bind def
+%% /col7 {1 1 1 setrgbcolor} bind def
+%% /col8 {.68 .85 .9 setrgbcolor} bind def
+%% /col9 {0 .39 0 setrgbcolor} bind def
+%% /col10 {.65 .17 .17 setrgbcolor} bind def
+%% /col11 {1 .51 0 setrgbcolor} bind def
+%% /col12 {.63 .13 .94 setrgbcolor} bind def
+%% /col13 {1 .75 .8 setrgbcolor} bind def
+%% /col14 {.7 .13 .13 setrgbcolor} bind def
+%% /col15 {1 .84 0 setrgbcolor} bind def
+%% 	end
+%% /$F2psBegin {$F2psDict begin /$F2psEnteredState save def} def
+%% /$F2psEnd {$F2psEnteredState restore end} def
+%% %%EndProlog
+%% 
+%% $F2psBegin
+%% 0 setlinecap 0 setlinejoin
+%% 412.0 205.0 translate 0.900 -0.900 scale
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 64 107 m 64 101 l  124 101 l  124 107 l gs col0 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 64 106 m 64 110 l gs col0 s gr
+%% % Polyline
+%% n 124 106 m 124 110 l gs col0 s gr
+%% % Polyline
+%% n 128 128 m 128 119 l  59 119 l  59 128 l  clp gs 0.00 setgray fill gr
+%% gs col-1 s gr
+%% % Polyline
+%% n 59 119 m 59 104 l  44 104 l  44 119 l  clp gs 0.00 setgray fill gr
+%% gs col-1 s gr
+%% % Polyline
+%% n 143 119 m 143 104 l  128 104 l  128 119 l  clp gs 0.00 setgray fill gr
+%% gs col-1 s gr
+%% % Polyline
+%% n 146 92 m 146 116 l  143 116 l  143 92 l  clp gs 0.00 setgray fill gr
+%% gs col-1 s gr
+%% % Polyline
+%% n 44 92 m 44 116 l  41 116 l  41 92 l  clp gs 0.00 setgray fill gr
+%% gs col-1 s gr
+%% % Polyline
+%% n 50 95 m 50 92 l  44 92 l  44 95 l  clp gs 0.00 setgray fill gr
+%% gs col-1 s gr
+%% % Polyline
+%% n 137 95 m 137 92 l  143 92 l  143 95 l  clp gs 0.00 setgray fill gr
+%% gs col-1 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 146 77 m 146 89 l  41 89 l  41 77 l  clp gs col-1 s gr
+%% % Polyline
+%% n 43 90 m 43 78 l gs col-1 s gr
+%% % Polyline
+%% n 144 89 m 144 77 l gs col-1 s gr
+%% % Polyline
+%% n 41 77 m 41 71 l gs col-1 s gr
+%% % Polyline
+%% n 146 77 m 146 71 l gs col-1 s gr
+%% % Polyline
+%% n 50 65 m 59 65 l gs col-1 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 59 70 m 128 70 l gs col-1 s gr
+%% % Polyline
+%% n 59 41 m 59 71 l gs col-1 s gr
+%% % Polyline
+%% n 59 71 m 128 71 l gs col-1 s gr
+%% % Polyline
+%% n 59 41 m 122 41 l gs col-1 s gr
+%% % Polyline
+%% n 128 48 m 128 71 l gs col-1 s gr
+%% % Polyline
+%% n 122 41 m 128 48 l gs col-1 s gr
+%% % Polyline
+%% n 116 41 m 116 53 l  128 53 l gs col-1 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 128 65 m 131 65 l gs col-1 s gr
+%% % Polyline
+%% n 129 65 m 140 65 l  146 72 l gs col-1 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 128 66 m 131 66 l gs col-1 s gr
+%% % Polyline
+%% n 128 67 m 131 67 l gs col-1 s gr
+%% % Polyline
+%% n 133 66 m 140 66 l gs col-1 s gr
+%% % Polyline
+%% n 133 67 m 141 67 l gs col-1 s gr
+%% % Polyline
+%% n 131 68 m 133 68 l gs col-1 s gr
+%% % Polyline
+%% n 131 69 m 133 69 l gs col-1 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 51 65 m 41 72 l gs 0.85 setgray fill gr
+%% gs col0 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 143 88 m 143 78 l  44 78 l  44 88 l  clp gs 0.60 setgray fill gr
+%% gs col0 s gr
+%% % Polyline
+%% n 132 77 m 41 77 l  41 72 l  51 65 l  59 65 l  59 71 l 
+%%  128 71 l  128 67 l  131 67 l gs 0.75 setgray fill gr
+%% gs col0 s gr
+%% % Polyline
+%% n 132 77 m 145 77 l  146 77 l  146 71 l  146 72 l  141 66 l 
+%%  133 66 l  133 68 l  133 68 l  133 69 l  131 69 l gs 0.75 setgray fill gr
+%% gs col0 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 141 89 m 141 92 l gs col0 s gr
+%% % Polyline
+%% n 46 89 m 46 93 l gs col0 s gr
+%% % Polyline
+%% n 138 80 m 140 80 l gs col0 s gr
+%% % Polyline
+%% n 138 85 m 140 85 l gs col0 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 128 104 m 143 104 l  143 95 l  137 95 l  137 92 l  141 92 l 
+%%  141 92 l  140 92 l  141 92 l  141 89 l  46 89 l 
+%%  46 92 l  50 92 l  50 95 l  44 95 l  44 104 l 
+%%  59 104 l gs 0.50 setgray fill gr
+%% gs col0 s gr
+%% % Polyline
+%% n 59 104 m 59 119 l  128 119 l  128 104 l gs 0.35 setgray fill gr
+%% gs col0 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 65 102 m 69 102 l gs col0 s gr
+%% % Polyline
+%% n 124 102 m 120 102 l gs col0 s gr
+%% % Polyline
+%% n 121 102 m 119 102 l gs col0 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 64 104 m 64 108 l gs col0 s gr
+%% % Polyline
+%% n 124 104 m 124 108 l gs col0 s gr
+%% % Polyline
+%% n 125 108 m 131 108 l gs col0 s gr
+%% % Polyline
+%% n 57 108 m 63 108 l gs col0 s gr
+%% % Polyline
+%% n 120 108 m 124 108 l gs col0 s gr
+%% % Polyline
+%% n 64 108 m 68 108 l gs col0 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 67 110 m 71 110 l gs col0 s gr
+%% % Polyline
+%% n 67 106 m 71 106 l gs col0 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 71 108 m 73 108 l gs col0 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 73 110 m 76 110 l gs col0 s gr
+%% % Polyline
+%% n 73 106 m 76 106 l gs col0 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 76 108 m 78 108 l gs col0 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 78 110 m 82 110 l gs col0 s gr
+%% % Polyline
+%% n 78 106 m 82 106 l gs col0 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 82 108 m 86 108 l gs col0 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 64 106 m 64 100 l  124 100 l  124 106 l gs col0 s gr
+%% % Polyline
+%% n 86 106 m 89 106 l gs col0 s gr
+%% % Polyline
+%% n 86 110 m 89 110 l gs col0 s gr
+%% % Polyline
+%% n 117 106 m 121 106 l gs col0 s gr
+%% % Polyline
+%% n 117 110 m 121 110 l gs col0 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 115 108 m 117 108 l gs col0 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 112 110 m 115 110 l gs col0 s gr
+%% % Polyline
+%% n 112 106 m 115 106 l gs col0 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 110 108 m 112 108 l gs col0 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 106 110 m 110 110 l gs col0 s gr
+%% % Polyline
+%% n 106 106 m 110 106 l gs col0 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 102 108 m 106 108 l gs col0 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 99 106 m 102 106 l gs col0 s gr
+%% % Polyline
+%% n 99 110 m 102 110 l gs col0 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 89 108 m 93 108 l gs col0 s gr
+%% % Polyline
+%% n 95 108 m 99 108 l gs col0 s gr
+%% 1.000 setlinewidth
+%% % Polyline
+%% n 77 101 m 77 105 l gs col0 s gr
+%% % Polyline
+%% n 72 101 m 72 105 l gs col0 s gr
+%% % Polyline
+%% n 83 101 m 83 105 l gs col0 s gr
+%% % Polyline
+%% n 85 101 m 85 105 l gs col0 s gr
+%% % Polyline
+%% n 103 101 m 103 105 l gs col0 s gr
+%% % Polyline
+%% n 105 101 m 105 105 l gs col0 s gr
+%% % Polyline
+%% n 111 101 m 111 105 l gs col0 s gr
+%% % Polyline
+%% n 116 101 m 116 105 l gs col0 s gr
+%% % Polyline
+%% n 90 101 m 90 105 l gs col0 s gr
+%% % Polyline
+%% n 92 101 m 92 105 l gs col0 s gr
+%% % Polyline
+%% n 96 101 m 96 105 l gs col0 s gr
+%% % Polyline
+%% n 98 101 m 98 105 l gs col0 s gr
+%% % Polyline
+%% n 94 104 m 94 107 l gs col0 s gr
+%% % Polyline
+%% n 94 108 m 94 111 l gs col0 s gr
+%% 0.500 setlinewidth
+%% % Polyline
+%% n 64 109 m 64 113 l gs col0 s gr
+%% % Polyline
+%% n 124 109 m 124 113 l gs col0 s gr
+%% % Polyline
+%% n 64 116 m 64 120 l gs col0 s gr
+%% %/Times-Roman findfont 24.00 scalefont setfont
+%% %69 64 m 
+%% /Times-Roman findfont 20.00 scalefont setfont
+%% 63 64 m 
+%% gs 1 -1 scale (LPRng) col0 show gr
+%% $F2psEnd
+%% grestore
+showpage
+
+EOF

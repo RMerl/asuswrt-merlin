@@ -1,0 +1,93 @@
+#!/bin/sh
+# LIC: GPL
+#***********************************************************************
+#
+# go-gui
+#
+# Quick-start shell script to set up PPPoE and GUI wrapper
+#
+# Copyright (C) 2000 Roaring Penguin Software Inc.
+#
+# $Id$
+#***********************************************************************
+
+# GUI only works on Linux
+if test "`uname`" != "Linux" ; then
+    echo "Sorry, the GUI only works on Linux."
+    exit 1
+fi
+
+# Figure out directory of script
+MYDIR=`dirname $0`
+cd $MYDIR/src
+
+echo "Running ./configure..."
+./configure
+if [ "$?" != 0 ] ; then
+    echo "Oops!  It looks like ./configure failed."
+    exit 1
+fi
+
+echo "Running make..."
+make
+if [ "$?" != 0 ] ; then
+    echo "Oops!  It looks like make failed."
+    exit 1
+fi
+
+echo "Running make install..."
+make install
+
+if [ "$?" != 0 ] ; then
+    echo "Oops!  It looks like make install failed."
+    exit 1
+fi
+
+echo "Building GUI wrapper..."
+cd ../gui
+make
+if [ "$?" != 0 ] ; then
+    echo "Oops!  It looks like make failed."
+    exit 1
+fi
+
+echo "Installing GUI..."
+make install
+
+if [ "$?" != 0 ] ; then
+    echo "Oops!  It looks like make install failed."
+    exit 1
+fi
+
+# Install entry in KDE menu
+if test -n "$KDEDIR" ; then
+    echo "Installing KDE menu entry Internet : TkPPPoE..."
+    mkdir -p "$KDEDIR/share/applnk/Internet"
+    cat <<EOF > "$KDEDIR/share/applnk/Internet/tkpppoe.kdelnk"
+# KDE Config File
+[KDE Desktop Entry]
+Name=TkPPPoE
+Comment=Start/Stop PPPoE connections
+Exec=tkpppoe
+Terminal=0
+Type=Application
+EOF
+fi
+
+# Install entry in GNOME menus
+GNOMEDIR=`gnome-config --datadir 2>/dev/null`
+if test -n "$GNOMEDIR" ; then
+    echo "Installing GNOME menu entry Internet : TkPPPoE..."
+    mkdir -p "$GNOMEDIR/gnome/apps/Internet"
+cat <<EOF > "$GNOMEDIR/gnome/apps/Internet/tkpppoe.desktop"
+[Desktop Entry]
+Name=TkPPPoE
+Comment=Start/Stop PPPoE connections
+Exec=tkpppoe
+Terminal=0
+Type=Application
+EOF
+fi
+echo "Running GUI configuration tool..."
+tkpppoe &
+exit 0

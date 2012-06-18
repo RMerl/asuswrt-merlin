@@ -1,0 +1,15 @@
+<!--############################################################################# 
+ |	$Id: AUTHOR,v 1.1.1.1 2003/03/14 10:42:51 rcasellas Exp $
+ |- #############################################################################
+ |	$Author: rcasellas $
+ |														
+ |   PURPOSE:
+ + ############################################################################## -->
+
+Ramon Casellas <casellas@aist.enst.fr>, <casellas@infres.enst.fr>
+	* Project manager and Developer.
+	* with the help of many other people <xref linkend="thanks"/> :)
+
+James Devenish <j-devenish@users.sourceforge.net> 
+	* Project manager and Developer.
+	* Patches and improvements. 

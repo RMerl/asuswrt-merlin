@@ -1,0 +1,117 @@
+MiniUPnP project.
+(c) 2006-2009 Thomas Bernard
+Homepage : http://miniupnp.free.fr/
+Mirror: http://miniupnp.tuxfamily.org/
+
+miniupnpd is still under active developpement. This documentation is
+likely to be a little outdated when you read it. So please go on the
+web forum http://miniupnp.tuxfamily.org/ if you need more information.
+
+================================ *BSD/pf =================================
+To Build and Install :
+
+- use BSD make to compile.
+- you can first 'make config.h' then edit config.h to your preferences and
+  finally 'make'
+- add "rdr-anchor miniupnpd" and "anchor miniupnpd" lines to /etc/pf.conf
+- some FreeBSD users reported that it is also necessary for them
+  to explicitly allow udp traffic on 239.0.0.0/8 by adding the two following
+  lines to /etc/pf.conf :
+   pass out on $int_if from any to 239.0.0.0/8 keep state
+   pass in on $int_if from any to 239.0.0.0/8 keep state
+- dont forget to " pfctl -f /etc/pf.conf "
+- you can check your modifications are taken into accout with
+  "pfctl -s nat" and "pfctl -s rule". Look for the "rdr-anchor miniupnpd"
+  and "anchor miniupnpd" lines.
+- install as root using :
+  # make install
+  or  
+  # PREFIX=/usr/local make install
+- run as root : The daemon needs rights to modify pf rules.
+
+edit the /etc/miniupnpd.conf file to set options. All options are also
+available through command line switches.
+To stop the daemon use :
+  > kill `cat /var/run/miniupnpd.pid`
+
+=========================== *BSD,*Solaris/ipf =============================
+
+genconfig.sh and the Makefile try to detect wether ipf or pf should be
+used. If it fails, edit config.h and Makefile by hand.
+In Makefile, the FWNAME variable value should be pf or ipf.
+Installation steps are allmost the same as with pf.
+
+*Solaris users would be interested in reading informations from :
+http://blogs.sun.com/avalon/category/IPFilter
+
+============================ Linux/netfilter ==============================
+To Build and install :
+
+- make sure you have libiptc available on your system :
+  if you are using debian, "apt-get install iptables-dev"
+  In anycase, libiptc is available in iptables sources packages
+  from http://netfilter.org
+- edit and run netfilter/iptables_init.sh shell script.
+  This script must allways be run before the daemon
+  to set up intial rules and chains.
+- Build and edit the config.h file
+  > make -f Makefile.linux config.h
+  > vi config.h
+- Build the daemon
+  > make -f Makefile.linux
+  If not using iptables from your system, 
+  > IPTABLESPATH=/path/to/iptables-1.4.1 make -f Makefile.linux
+  note : make sure you have iptables with static libraries compiled.
+  use "./configure --enable-static" before compiling iptables
+- install as root using :
+  > make -f Makefile.linux install
+- A miniupnpd script should be installed to /etc/init.d
+  and the configuration files to /etc/miniupnpd
+- anytime, you can use the netfilter/iptables_flush.sh
+  script to flush all rules added by the daemon.
+- after killing the daemon, you can get back to
+  iptables initial state by runing the netfilter/iptables_removeall.sh
+  script. Don't forget to edit the script to your convinience.
+
+NOTE: a /etc/init.d/miniupnpd script will be installed.
+  If it suits you, you can use is with start, stop or restart argument.
+  # /etc/init.d/miniupnpd restart
+
+=========================== Configuration =============================
+Edit the /etc/miniupnpd.conf file to set options. All options are also
+available through command line switches.
+
+Miniupnpd supports some kind of security check for allowing or disallowing
+redirection to be made. The UPnP permission rules are read from the
+miniupnpd.conf configuration file.
+When a new redirection is asked, permission rules are evaluated in top-down
+order and the first permission rule matched gives the answer : redirection
+allowed or denied. If no rule is matching, the redirection is allowed, so
+it is a good practice to have a "catch all" deny permission rule at the end
+of your mermission ruleset.
+Sample permission ruleset :
+allow 4662-4672 192.168.1.34/32 4662-4672
+deny 0-65535 192.168.1.34/32 0-65535
+allow 1024-65535 192.168.1.0/24 1024-65535
+deny 0-65535 0.0.0.0/0 0-65535
+With this ruleset, redirections are allowed only for host on the subnet
+192.168.1.0/255.255.255.0 for the ports 1024 or above. There is an exception
+for the host 192.168.1.34 for which only redirections from/to port 4662 to
+4672 are allowed.
+
+You can generate the uuid for your UPnP device with the uuidgen available
+under linux. The following following OpenBSD package is also providing
+a "uuid" tool :
+http://www.openbsd.org/4.0_packages/i386/uuid-1.5.0.tgz-long.html
+An web based uuid generator is also available :
+http://kruithof.xs4all.nl/uuid/uuidgen
+
+On linux systems, one could also use the command
+'cat /proc/sys/kernel/random/uuid' to generate an uuid.
+
+To stop the daemon use :
+  # kill `cat /var/run/miniupnpd.pid`
+or if your linux system use /etc/init.d/ 
+  # /etc/init.d/miniupnpd stop
+
+

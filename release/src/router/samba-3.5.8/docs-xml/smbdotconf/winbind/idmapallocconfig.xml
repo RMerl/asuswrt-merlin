@@ -1,0 +1,14 @@
+<samba:parameter name="idmap alloc config"
+                 context="G"
+		 type="string"
+                 advanced="1" developer="1" hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	The idmap alloc config prefix provides a means of managing settings
+	for the backend defined by the <smbconfoption name="idmap alloc backend"/> 
+	parameter.  Refer to the man page for each idmap plugin regarding
+	specific configuration details.
+	</para>
+</description>
+</samba:parameter>

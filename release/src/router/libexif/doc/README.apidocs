@@ -1,0 +1,7 @@
+Rules for the API docs:
+
+  1. Clearly distinguish between internal and the external API/ABI.
+  2. Mark internal stuff with \internal.
+  3. If this has been solved, start documenting the external interface.
+
+Thank you.

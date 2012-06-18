@@ -1,0 +1,7 @@
+*.orig
+*.diff
+*~
+*.o
+*.depend
+httpd
+test_apps

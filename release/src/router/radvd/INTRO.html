@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+<!-- $Id: INTRO.html,v 1.5 2008/03/31 09:18:15 psavola Exp $ -->
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>RADVD Introduction</title>
+</head>
+
+<body>
+<h1>RADVD Introduction</h1>
+
+<p>
+by <a href="mailto:lf@elemental.net">Lars Fenneberg</a> et al. Updated
+2002-01-12.
+</p>
+
+<p>
+<a href="http://www.ietf.org/rfc/rfc2460.txt">IPv6</a> has a lot more
+support for autoconfiguration than
+<a href="http://www.ietf.org/rfc/rfc791.txt">IPv4</a>. But for this
+autoconfiguration to work on the hosts of a network, the <em>routers</em>
+of the local network have to run a program which answers the
+autoconfiguration requests of the hosts.
+</p>
+
+<p>
+On Linux this program is called
+<a href="http://v6web.litech.org/radvd/">radvd</a>, which stands for
+Router ADVertisement Daemon. This daemon listens to Router Solicitations
+(RS) and answers with Router Advertisement (RA). Furthermore unsolicited
+RAs are also send from time to time.
+<a href="http://www.ietf.org/rfc/rfc4861.txt">RFC 4861</a> defines most
+functions of radvd.
+</p>
+
+<p>
+Router Advertisements contain information, which is used by hosts to
+configure their interfaces. This information includes address prefixes,
+the MTU of the link and information about default routers.
+</p>
+
+<p>
+Of course the routers can't autoconfigure themselves, so the information
+on the routers has to be provided by the administrator of the system.
+This is done by manually configuring the interfaces and routes and by
+configuring the router advertisement daemon.
+</p>
+
+<p>
+A small and simple configuration file for radvd might look like this:
+</p>
+
+<p>
+<pre>
+
+interface eth0
+{
+        AdvSendAdvert on;
+        prefix 2001:db8:0:1::/64
+        {
+                AdvOnLink on;
+                AdvAutonomous on;
+        };
+};
+
+</pre>
+
+<p>
+It says that radvd should advertise (AdvSendAdvert on) the prefix
+2001:db8:0:1:: which has a lenght of 64 on the interface eth0.
+Also the prefix is marked as autonomous (AdvAutonomous on) and as on-link
+(AdvOnLink on). The both currently default to enabled but are included
+here for introductory purposes; it isn't necessary to define them.
+All the other options are left on their default values.
+</p>
+
+<p>
+Autonomous means that the prefix can be used for automatic address
+configuration and on-link means that the hosts can assume that all the hosts
+which use this prefix are reachable via the interface on which the host
+received this RA.
+</p>
+
+<p>
+The prefix must be 64 bits long (apart from very few exceptions), as dictated by
+<a href="http://www.ietf.org/rfc/rfc2464.txt">RFC 2464</a> and other
+standards for different link-layer technologies. For more
+details, see <a href="http://www.ietf.org/rfc/rfc4862.txt">RFC 4862</a>
+(IPv6 Stateless Address Autoconfiguration) and
+<a href="http://www.ietf.org/rfc/rfc2464.txt">RFC 2464</a>
+(Transmission of IPv6 Packets over Ethernet Networks). For more information
+on configuring radvd please look at the manual pages which are included in
+the radvd distribution.
+</p>
+
+<p>
+So, when an interface on a hosts is UPed and a RA is received, the host
+can configure an address on the interface by using the prefix and
+appending the EUI-64 identifier derived from the hardware address
+(also called link-layer token). The EUI-64 identifier is simply appended
+after the prefix. For example:
+</p>
+
+<p>
+<pre>
+
+   Announced prefix:    2001:db8:0:1::
+
+   MAC address:         00:07:E9:7B:02:59
+
+   EUI-64 identifier:   0207:e9ff:fe7b:259
+
+   Configured address:  2001:db8:0:1:207:e9ff:fe7b:259
+
+</pre>
+
+<p>
+The host can also choose a default router by examining the RA.
+the rest works automatically.
+</p>
+
+<p>
+So now we've configured radvd, but we still need to configure the interfaces
+and set the routes (on the router).  There's a lot of good material on
+setting up IPv6, and the reader is encouraged to have a look
+at it; for example:
+</p>
+
+<p>
+<ul>
+<li><a href="http://www.bieringer.de/linux/IPv6/IPv6-HOWTO/IPv6-HOWTO.html">http://www.bieringer.de/linux/IPv6/IPv6-HOWTO/IPv6-HOWTO.html</a></li>
+<li><a href="http://people.debian.org/~csmall/ipv6/setup.html">http://people.debian.org/~csmall/ipv6/setup.html</a> (for non-Debian too)</li>
+</ul>
+
+<hr>
+
+<p>
+Copyright &copy; 1997 <a href="mailto:lf@elemental.net">Lars Fenneberg</a>
+</p>
+
+</body>
+</html>

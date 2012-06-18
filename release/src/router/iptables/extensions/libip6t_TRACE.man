@@ -1,0 +1,3 @@
+This target has no options.  It just turns on 
+.B packet tracing
+for all packets that match this rule.

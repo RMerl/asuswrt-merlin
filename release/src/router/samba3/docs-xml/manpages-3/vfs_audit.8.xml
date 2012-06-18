@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_audit.8">
+
+<refmeta>
+	<refentrytitle>vfs_audit</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_audit</refname>
+	<refpurpose>record selected Samba VFS operations in the system log</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = audit</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>vfs_audit</command> VFS module records selected
+	client operations to the system log using
+	<citerefentry><refentrytitle>syslog</refentrytitle>
+	<manvolnum>3</manvolnum></citerefentry>.</para>
+
+	<para>The following Samba VFS operations are recorded:</para>
+	<simplelist>
+	<member>connect</member>
+	<member>disconnect</member>
+	<member>opendir</member>
+	<member>mkdir</member>
+	<member>rmdir</member>
+	<member>open</member>
+	<member>close</member>
+	<member>rename</member>
+	<member>unlink</member>
+	<member>chmod</member>
+	<member>fchmod</member>
+	<member>chmod_acl</member>
+	<member>fchmod_acl</member>
+	</simplelist>
+
+	<para>This module is stackable.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+
+		<varlistentry>
+		<term>audit:facility = FACILITY</term>
+		<listitem>
+		<para>Log messages to the named
+		<citerefentry><refentrytitle>syslog</refentrytitle>
+		<manvolnum>3</manvolnum></citerefentry> facility.
+
+		</para>
+
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>audit:priority = PRIORITY</term>
+		<listitem>
+		<para>Log messages with the named
+		<citerefentry><refentrytitle>syslog</refentrytitle>
+		<manvolnum>3</manvolnum></citerefentry> priority.
+		</para>
+
+		</listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>Log operations on all shares using the LOCAL1 facility
+	and NOTICE priority:</para>
+
+<programlisting>
+        <smbconfsection name="[global]"/>
+	<smbconfoption name="vfs objects">audit</smbconfoption>
+	<smbconfoption name="audit:facility">LOCAL1</smbconfoption>
+	<smbconfoption name="audit:priority">NOTICE</smbconfoption>
+</programlisting>
+
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.0.25 of the Samba suite.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+</refsect1>
+
+</refentry>

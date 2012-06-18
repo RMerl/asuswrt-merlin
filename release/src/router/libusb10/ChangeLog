@@ -1,0 +1,1853 @@
+commit a04cbb0095a78aeed3f65aaf06c46069d0ac184a
+Author: Daniel Drake <dan@reactivated.net>
+Date:   Tue May 4 19:01:59 2010 -0300
+
+    v1.0.8 release
+
+commit 53b47299531974fa8901b74a163f3c8ebae4eec9
+Author: Daniel Drake <dan@reactivated.net>
+Date:   Thu Apr 22 18:12:51 2010 -0300
+
+    Linux: don't set SHORT_NOT_OK on bulk out URBs (#20
+    
+    Setting this flag is illegal, and the behaviour we're looking for
+    is already in place for host-to-device transfers without this flag.
+
+commit 1519828b7ee1fce46d4c51fc097d52e01b8e0bb4
+Author: Daniel Drake <dan@reactivated.net>
+Date:   Tue Apr 20 20:14:09 2010 -0300
+
+    Linux: Handle failure to read active configuration during enumeration
+
+commit 45168627cc15aee3875192f34286110dbbd27095
+Author: Nathan Hjelm <hjelmn@me.com>
+Date:   Tue Apr 20 19:43:06 2010 -0300
+
+    Darwin: don't reuse cached descriptors during enumeration
+    
+    Descriptor reuse was causing scans to return invalid information when
+    the device at a location has changed.
+
+commit 3af329db6dcbfb96d24867c757f9e125e5b7b0e5
+Author: Daniel Drake <dan@reactivated.net>
+Date:   Mon Apr 19 19:36:55 2010 -0300
+
+    v1.0.7 release
+
+commit ceb8cacd6d2a4189de0db2ee46d45217511c69be
+Author: Daniel Drake <dan@reactivated.net>
+Date:   Mon Apr 19 19:31:12 2010 -0300
+
+    Document that fd set contents are an internal implementation detail (#36)
+
+commit 9bea500b5747bdeba7c8251d45608558e71a1db5
+Author: Martin Koegler <mkoegler@auto.tuwien.ac.at>
+Date:   Mon Apr 19 19:22:46 2010 -0300
+
+    Linux: correct config descriptor endianness fix
+    
+    The seek_to_next_config codepath deals with both sysfs and usbfs;
+    make sure we only convert values in the usbfs path.
+
+commit 02df59a309e813c50b8230de99e69fb4e1814279
+Author: Martin Koegler <mkoegler@auto.tuwien.ac.at>
+Date:   Mon Apr 5 17:11:32 2010 +0200
+
+    Linux: Fix endianness handling of usbfs config descriptors (#27)
+    
+    driver/usb/core/devio.c function usbdev_read translate the follwing files
+    to CPU endianess:
+    
+    le16_to_cpus(&temp_desc.bcdUSB);
+    le16_to_cpus(&temp_desc.idVendor);
+    le16_to_cpus(&temp_desc.idProduct);
+    le16_to_cpus(&temp_desc.bcdDevice);
+    
+    All other data is passed without any change.
+    
+    libusb/os/linux_usbfs.c calls usbi_parse_descriptor with host_endian=1
+    for config descriptors. According to the kernel code, they must be
+    processed with host_endian=0, as they are not translated by the kernel.
+    
+    Signed-off-by: Martin Koegler <mkoegler@auto.tuwien.ac.at>
+
+commit ec303b01a5d4e51c000a283853af65059fa62285
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Tue Mar 23 16:22:08 2010 -0600
+
+    Darwin: fix enumeration of devices with non-consecutive addresses (#23)
+
+commit cd809e2f7cee3874b7ae16b2c482a8b63a90e4a5
+Author: Bastien Nocera <hadess@hadess.net>
+Date:   Mon Mar 8 10:50:51 2010 +0000
+
+    Add more interface classes
+    
+    As used in bluez.
+
+commit 1ce4aa67d849f5cad8a21072dc1c7b42158ce817
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Thu Mar 18 11:32:32 2010 -0600
+
+    Darwin: Cleanup async callback code, catch request timeouts
+
+commit 68af9f8d731f700267335941a8214d34ab518cc8
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Thu Mar 18 11:31:46 2010 -0600
+
+    Darwin: fix endianness of control setup packet
+    
+    IOUSBLib expects the control request to be in host byte order.
+    Swap the request into host byte order.
+
+commit cfce4d127184f4e4f334976151a0f80594bb5e22
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Mon Feb 15 14:10:08 2010 -0600
+
+    Darwin: fix memory leak in process_device
+    
+    Credit to Mike Colagrosso for finding this bug.
+
+commit 161893cfbefefe315f657677705abe090fc526f2
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Mon Feb 15 14:09:19 2010 -0600
+
+    Darwin: use logging functions
+    
+    Use usbi_warn, usbi_err, and usbi_info instead of _usbi_log.
+
+commit 2a72f38548208044dc3aa62681419d006c35732d
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Mon Feb 15 14:07:44 2010 -0600
+
+    Darwin: support multiple calls to libusb_init
+    
+    Credit to Orin Eman for finding this bug.
+
+commit a4186794d87124503db2f5f51f51ce90bb95daa7
+Author: Daniel Drake <dan@reactivated.net>
+Date:   Sun Nov 22 17:20:53 2009 +0000
+
+    v1.0.6 release
+
+commit 8392ff22136fccaf1e15d186157609b8dd127bc5
+Author: Ludovic Rousseau <rousseau@debian.org>
+Date:   Sun Oct 25 10:06:41 2009 +0100
+
+    lsusb example: make print_devs() static
+    
+    lsusb.c:26: warning: no previous prototype for ‘print_devs’
+
+commit 9cc6bfaa15239bb6db1c1570b9beb6df2f848951
+Author: Ludovic Rousseau <rousseau@debian.org>
+Date:   Sun Oct 25 10:05:10 2009 +0100
+
+    Darwin: fix warning in darwin_error_str()
+    
+    os/darwin_usb.c:63: warning: return discards qualifiers from pointer
+    target type
+
+commit 4c706d2fb6b2c43b10d72ac5dff51cac4d939f1a
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Sat Nov 21 17:06:43 2009 +0000
+
+    Darwin: allow devices to be opened multiple times
+    
+    Allows libusb applications to access multiple interfaces of the same
+    device in the same application.
+    
+    Also fixes a set alt interface bug.
+
+commit 0232fc559cdacb9561f982dd6d28feb4435b3e4e
+Author: Daniel Drake <dan@reactivated.net>
+Date:   Sat Nov 21 17:01:32 2009 +0000
+
+    Increase libusb_handle_events() timeout to 60 seconds
+    
+    The internal timing seems to be working, this will be a better test of
+    it before we make this timeout unlimited.
+
+commit 0bd7ef5d8697973a026c36c15d6276177b4ec4ea
+Author: Daniel Drake <dan@reactivated.net>
+Date:   Sat Nov 21 16:57:25 2009 +0000
+
+    Refine timerfd header check (#18)
+    
+    Require glibc-2.9 for the working timerfd support.
+
+commit 90d8fcab9018b8e6887a7e0592d1e5f692117234
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Nov 15 12:17:13 2009 +0000
+
+    v1.0.5 release
+
+commit 11d591058e3f105b0e90c23bbf58b18de691e690
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Nov 7 10:43:59 2009 +0000
+
+    Update documentation about early completion caveats
+
+commit f796c9528a71aa55326b6f0c9c7c5ec073d2bf92
+Author: Ludovic Rousseau <rousseau@debian.org>
+Date:   Sun Oct 25 09:59:51 2009 +0100
+
+    Add libusb_get_max_iso_packet_size() to libusb.h
+    
+    core.c:777: warning: no previous prototype for 'libusb_get_max_iso_packet_size'
+
+commit 4783008b7e711de9cb31631e60dda995f44068de
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Wed Oct 28 20:33:49 2009 +0545
+
+    Use timerfd for timeout handling
+    
+    Use a new file descriptor from the timerfd system calls to handle
+    timeouts. On supported systems, this means that there is less hassle
+    figuring out when the poll() timeout should be, since
+    libusb_get_next_timeout() will always return 0 and the timeout events will
+    be triggered as regular activity on the file descriptor set.
+    
+    Add API function libusb_pollfds_handle_timeouts() to detect whether
+    you're on a platform with the timing headache, and flesh out the
+    surrounding documentation.
+
+commit 9b120c2b3735566533c179aa8ca758fe45899a38
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Nov 7 10:03:07 2009 +0000
+
+    Use AM_SILENT_RULES for building
+
+commit ef6ea6c3ae38e4524f10e16e8cb88177d39c4826
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Nov 6 21:54:08 2009 +0000
+
+    v1.0.4 release
+
+commit 217f57617e0cff0d1bd6d726b243f04c6b179773
+Author: David Moore <dcm@acm.org>
+Date:   Fri Nov 6 21:37:25 2009 +0000
+
+    Linux: Add support for the new URB_BULK_CONTINUATION flag
+    
+    Add support for the new USBDEVFS_URB_BULK_CONTINUATION flag to libusb.
+    
+    This flag, which is expected to be available in usbfs starting with
+    kernel 2.6.32, allows the kernel to cancel multiple URBs upon receipt
+    of a short packet.  This capability allows libusb to preserve data
+    integrity of large bulk transfers that are split into multiple URBs.
+    Without this support, these URBs must be canceled in userspace upon
+    receipt of a short packet, a race condition against future transfers
+    which might partially fill these canceled URBs.
+    
+    This patch automatically detects whether a supported kernel is present
+    and enables the use of the flag when possible.
+    
+    [dsd: tweaks to supported kernel detection, and some inline
+     documentation of this mechanism]
+
+commit 69830057547396f893f0d7b3125a05d016313b10
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Wed Oct 28 15:13:22 2009 +0545
+
+    Transfer locking
+    
+    At least on Linux, there were some possible races that could occur if
+    a transfer is cancelled from one thread while another thread is handling
+    an event for that transfer, or for if a transfer completes while it is
+    still being submitted from another thread, etc.
+    
+    On the global level, transfers could be submitted and cancelled at the
+    same time.
+    
+    Fix those issues with transfer-level locks.
+
+commit 98f1b30d24359cb3185051b8df9ebb663cc10369
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon Sep 14 08:01:24 2009 +0100
+
+    Clarify that timeout 0 means unlimited timeout
+
+commit 858684f0dd25921e09565034a88709dbf6f6c61b
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Sep 11 22:09:12 2009 +0100
+
+    Linux: more flexibility with monotonic clock
+    
+    Some users have reported that CLOCK_MONOTONIC does not work on their
+    systems - I suspect it is available on x86 but perhaps not some
+    of the more uncommon architectures. We should fall back on
+    CLOCK_REALTIME in these cases.
+    
+    Also, CLOCK_MONOTONIC_RAW seems even more monotonic, so we should use
+    that if it is available.
+    
+    We now test different clock IDs during initialization to find the
+    best one that works.
+
+commit fe0d8dce1ed704915d501e7da700440c78144211
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Fri Sep 11 18:00:29 2009 +0100
+
+    Darwin: handle overflows
+
+commit f46716f42040986203fa6e873bfdabe1be2900ec
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Aug 27 21:14:54 2009 +0545
+
+    v1.0.3 release
+
+commit 5b489b8b2a5aba7b8b804e5af6d2628735548238
+Author: Toby Peterson <toby@macports.org>
+Date:   Sun Aug 23 10:04:59 2009 +0545
+
+    Darwin: 64-bit type fixes
+
+commit ad8ae04d0b52009af0b1180e005f7554d2bbb26c
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Sun Aug 23 10:02:55 2009 +0545
+
+    Darwin: fix crash when reading descriptors after close
+    
+    Fix a crash which occurs if the user does the following sequence on a
+    device: open, close, get_configuration_descriptor.
+
+commit 45ae2aecf5512dcff059b2a416534e81c6a00c88
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Aug 1 13:55:15 2009 +0545
+
+    move bug info to bug tracker
+    
+    Protection needed: http://www.libusb.org/ticket/4
+    Losing data: fixed in previous commit
+
+commit 126129e174062c2a27423817a459e5113f777789
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Jul 9 22:09:04 2009 +0100
+
+    Linux: try harder not to lose any data
+    
+    We would previously lose any data that was present on a cancelled URB.
+    Work harder to make sure this doesn't happen.
+
+commit 0334ee642b47dfe1ca9db64b22e7702ea14b3f09
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Jun 28 19:49:10 2009 +0100
+
+    Add libusb_get_max_iso_packet_size()
+    
+    As pointed out by Dennis Muhlestein, libusb_get_max_packet_size()
+    doesn't really do what the documentation might suggest because it
+    does not consider the number of transaction opportunities per
+    microframe.
+    
+    Add a new function to do what is useful for isochronous I/O.
+
+commit 615f18e64e96ae4ecc8e43d0de00933059a5209a
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jun 20 22:33:21 2009 +0100
+
+    Linux: fix sending of zero length bulk packets
+    
+    Note that there are is a kernel bug preventing this from working
+    properly at the moment, even after this fix.
+
+commit 86f79fbf61c2018bdf009c7ebf92b38f3a16fd0c
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Fri Jun 19 22:18:44 2009 +0100
+
+    Darwin: Don't cancel transfers on timeout
+    
+    ...because the OS does this for us.
+
+commit d4bd9ed4de19a9c766f7a23eea8c852cdd61c18f
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Jun 14 19:23:21 2009 +0100
+
+    Don't terminate enums with commas
+    
+    g++ -pedantic doesn't like this
+    Reported by Eberhard Mattes
+
+commit 8be256082eb9bd8e243d89529f742926bb29a21b
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jun 13 17:19:07 2009 +0100
+
+    v1.0.2 release
+
+commit 060e006e663fd59c281be29b71eb197e02b210e8
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Wed Jun 10 21:42:05 2009 +0100
+
+    Linux: fix config descriptor parsing on big-endian systems
+    
+    Multi-byte fields in the configuration descriptors that come back from
+    usbfs are always in bus endian format.
+    
+    Thanks to Joe Jezak for help investigating and fixing this.
+
+commit c4a905022f684da9a4a853eb9232a81a53df2652
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Sun Jun 7 22:29:35 2009 +0100
+
+    Darwin: improve handling of disconnected devices
+
+commit 6b69f54451762ef590b9c938ab000c07cf9099a3
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Sun Jun 7 22:26:37 2009 +0100
+
+    Darwin: fix parsing of config descriptors
+    
+    This was a confusion between configuration numbers and zero-based
+    configuration indexes.
+
+commit 2b3a9ffa776b383cb2dbc3c55e490e32e4c3c22b
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Jun 7 22:19:53 2009 +0100
+
+    Eliminate -Wsign-compare compiler warnings
+    
+    This was due to an API inconsistency which can be safely worked around.
+    Hopefully we'll remember to fix the API next time we come to break
+    things.
+
+commit cad5cb55c37137e94e35c74fdabfe42a5cbd229b
+Author: David Moore <dcm@acm.org>
+Date:   Wed May 27 23:15:54 2009 -0700
+
+    Make synchronous transfer APIs robust against signal interruption
+    
+    libusb_control_transfer and libusb_bulk_transfer are designed to be
+    synchronous such that control is not returned until the transfer
+    definitively succeeds or fails.  That assumption is violated if a signal
+    interrupts these functions because there is no way for the application
+    to continue waiting for the transfer without resubmitting it.  This
+    patch changes these synchronous APIs so they do not abort in the case of
+    a signal interruption.
+    
+    Signed-off-by: David Moore <dcm@acm.org>
+
+commit b501795985a23109f176d296e7b544b4c6354528
+Author: Alex Vatchenko <alex@fabulatech.com>
+Date:   Thu May 28 15:58:50 2009 -0400
+
+    pre-gcc-3.4 compatibility
+    
+    The -fvisibility and -Wno-pointer-sign options are not available on
+    old GCC versions.
+
+commit 00bb2805e994887f0a754a825c3ce03d22393386
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue May 26 15:53:26 2009 -0400
+
+    Fix memory leak in config descriptor parsing
+    
+    Pointed out by Martin Koegler.
+
+commit 068ff5b8a83fec0a9a91c80535a25b89a9ae64e8
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue May 12 19:20:51 2009 -0400
+
+    Update AUTHORS
+
+commit aa24c04e4043e39674b59ff0d302b2365cd0078f
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue May 12 19:03:37 2009 -0400
+
+    v1.0.1 release
+
+commit 44767677447fae4267131f99c591b14117486cac
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue May 12 19:01:44 2009 -0400
+
+    Add BUGS file
+    
+    Probably missed a couple of outstanding issues
+
+commit e0365a6f22e0e7f330ac931df031cf6f17f453d1
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Sun Mar 22 21:13:29 2009 -0400
+
+    Darwin: get_config_descriptor bugfixes
+
+commit 5fd0e8478240fece646a58a3c6114001a73be99f
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Wed Feb 25 12:33:33 2009 -0300
+
+    Fix compilation of Darwin backend
+    
+    My fault. Reported by ihryamzik@gmail.com
+
+commit b49f6bf5c910d0fd694ecf165d7927673707bff9
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Mon Feb 16 21:39:29 2009 -0300
+
+    Darwin backend
+
+commit d859158581e9a3250f36cdeeb8ea67cda04053bd
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Mon Feb 16 21:30:49 2009 -0300
+
+    Make endianness macros endian-independent
+    
+    Implementation suggested by David Moore. Needed for proper universal
+    code support on Darwin.
+
+commit 9196f58bdc8b9e967261df39865215faa5d39cfa
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Mon Feb 16 21:25:18 2009 -0300
+
+    Abstract clock reading into OS layer
+    
+    This will differ on Linux and Darwin, at least.
+    
+    [dsd: minor style tweaks]
+
+commit e91207860cac09b3afaafc4c14221b78d585c59a
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon Feb 16 21:20:28 2009 -0300
+
+    Fix endianness in device descriptors
+    
+    Pointed out by Nathan Hjelm.
+
+commit ccf6d3d2f6acf9b9a1cb5e1f1b03f382ae509b17
+Author: Nathan Hjelm <hjelmn@mac.com>
+Date:   Mon Feb 16 21:13:52 2009 -0300
+
+    Only link with librt on Linux
+    
+    [dsd: tweak configure.ac change]
+
+commit 894539931e4b4bd85708fe98b956049243cd6fb0
+Author: Hans Ulrich Niedermann <hun@n-dimensional.de>
+Date:   Mon Jan 26 00:31:48 2009 +0100
+
+    API docs: describe libusb_transfer_cb_fn type
+    
+    Add some text describing the libusb_transfer_cb_fn function type
+    with the semantics I have gathered from reading other parts of
+    the API docs, referring to the proper section for more details.
+    
+    [dsd: tweaked the description slightly]
+
+commit abe34a2656f8f9f21e53603796c536585e6233ef
+Author: Hans Ulrich Niedermann <hun@n-dimensional.de>
+Date:   Sun Jan 25 18:21:59 2009 +0100
+
+    Make empty array in struct compatible with C99
+    
+    If the compiler is known to be running in C99 mode,
+    use "flexible array members" ("foo[]").
+    
+    If the compiler is running in any other mode, continue
+    using the non-standard but widely common "foo[0]" syntax.
+
+commit 620075c7400764d9bb539b5c02065c45c2e8251e
+Author: Hans Ulrich Niedermann <hun@n-dimensional.de>
+Date:   Sun Jan 25 18:20:45 2009 +0100
+
+    Avoid signedness errors in API docs example code
+
+commit c754ae294cfe96ec4738d6641137c9e6c56330c7
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jan 17 00:25:40 2009 +0000
+
+    Decrement poll() result when internal pipe has been handled
+    
+    When we receive data on the internal control pipe, we need to correctly
+    decrement the number of ready file descriptors before passing on the
+    remaining work to the OS implementation.
+
+commit b9ca960f2ba271d2b1a58e22b7c70464d69f6c8a
+Author: David Moore <dcm@acm.org>
+Date:   Sun Jan 11 21:46:17 2009 -0800
+
+    Prevent transfer from being submitted twice or improperly canceled
+    
+    This ensures that tpriv->urbs and tpriv->iso_urbs are always set to NULL
+    whenever a transfer is not submitted.  In this way, submit_*_transfer()
+    and cancel_*_transfer() can error check to ensure that the transfer is
+    in the correct state to be either submitted or canceled, preventing
+    potential memory leaks or double frees.
+    
+    Signed-off-by: David Moore <dcm@acm.org>
+
+commit d2a8ec2da8abcd8f4648ed118da16191011982dd
+Author: David Moore <dcm@acm.org>
+Date:   Wed Jan 7 22:31:09 2009 -0800
+
+    Linux: Fix race condition in cancel_bulk_transfer()
+    
+    This fixes a race condition in cancel_bulk_transfer().  In the old
+    version, awaiting_reap and awaiting_discard are incremented in
+    cancel_bulk_transfer() and decremented in handle_bulk_completion().
+    However, since these events may take place in two different threads,
+    these variables may reach zero before all URBs have been canceled,
+    triggered spurious callbacks and duplicate frees.
+    
+    This changes the logic to use a single variable "num_retired" to replace
+    both awaiting_reap and awaiting_discard.  num_retired is incremented
+    only in handle_bulk_completion() and thus there is no race.  The handler
+    will know that all URBs have been canceled when num_retired becomes
+    equal to num_urbs.
+    
+    This change also simplifies a great deal of the logic in both functions
+    and is a net reduction in the amount of code.
+    
+    Note that some variables such as "reap_action" probably need to still be
+    protected by a mutex, and this patch does not address that issue.
+    
+    Signed-off-by: David Moore <dcm@acm.org>
+
+commit 34b9eebe35d8167d43cffb6ad6175f6b2251b572
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Dec 13 20:06:49 2008 +0000
+
+    v1.0.0 release
+    
+    It's here!
+
+commit b1d636dde418dc8fe6a8f037dea0d800e57c6b94
+Author: Mikhail Gusarov <dottedmag@dottedmag.ent>
+Date:   Wed Dec 10 15:24:05 2008 +0600
+
+    EOL-whitespace fixes
+    
+    Signed-off-by: Mikhail Gusarov <dottedmag@dottedmag.ent>
+
+commit 4a9ac382ba5149ae5b3d0962d6a840b5e0dc13aa
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue Dec 9 21:43:37 2008 +0000
+
+    Linux: fix reading of active configuration
+    
+    Shannon Chuang pointed out that we only read 1 byte into an
+    uninitialized integer, and then return the whole thing.
+
+commit 81a7310d92461ba7b1d98aeff7c4c007fab07120
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue Dec 9 21:39:11 2008 +0000
+
+    Fix double free in descriptor parsing error path
+    
+    Pointed out by Shannon Chuang.
+
+commit 9b4b53453db56ba9c1d707a645bbe6c7a02a3c81
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Nov 21 13:28:32 2008 +0000
+
+    Improvements to multi-threaded I/O system
+    
+    Documentation brushed up, and I realised that another function is
+    needed for tight event handling loops -- they must be able to check
+    if an open/close operation is trying to interrupt it.
+
+commit 0e5b0fcb77a90b8bd95ad23669da472af31ef069
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Nov 21 11:00:47 2008 +0000
+
+    SourceForge website upload system changed
+
+commit a133875e6e2f52eff53ac03f505d59cbdd33e178
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Nov 21 10:54:57 2008 +0000
+
+    v0.9.4 release
+
+commit c32aa662769b676ff3247778664fccc71fc427ec
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Nov 20 15:31:10 2008 +0000
+
+    Pause event handling while opening and closing devices
+    
+    Ludovic Rousseau found that crashes often occur if you close a device
+    while another thread is doing event handling.
+    
+    Fix this by adding an internal control pipe, which the close routines
+    use to interrupt the event handler and obtain the event handling lock,
+    ensuring that no other thread is handling events while the device is
+    closed. After the close completes, it signals all the event handlers
+    to start up again using the usual mechanism.
+    
+    Also modified libusb_open() to do a similar thing, so that event
+    handlers are interrupted in order to realise that a new poll fd has
+    appeared.
+
+commit 1d7cf3d0fa8698eae25097cbda1870be90ff6f5e
+Author: Bastien Nocera <hadess@hadess.net>
+Date:   Thu Oct 30 14:35:23 2008 +0000
+
+    Add libusb_attach_kernel_driver()
+    
+    Add support for re-attaching a driver to a device under Linux.
+    
+    [dsd: fixed handling of return value, and added LIBUSB_ERROR_BUSY case]
+
+commit 914a4e70657c86b5094770aa2d898c978b1cdf41
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Nov 2 21:45:54 2008 +0000
+
+    Linux: handle low-level transfer errors
+    
+    Handle more URB error status codes, thanks to Lou and Alan Stern.
+
+commit d25b566b3b8febafdda4211de724b4727dd4b7e0
+Author: Aurelien Jarno <aurelien@aurel32.net>
+Date:   Thu Sep 4 13:50:49 2008 +0200
+
+    Support for out-of-tree building
+    
+    Contrary to libusb 0.1, libusb 1.0 does not support out-of-tree building
+    for the documentation part. This patch fixes that by using a
+    doxygen.cfg.in file, which contains @top_srcdir@ to refer to the
+    location of the libusb source code.
+
+commit 8674c67ef78e1cf89db1fa584a4304f7c5ddcc5f
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Nov 2 15:00:39 2008 +0000
+
+    Document the logging style
+    
+    Suggested by Lou.
+
+commit 94936cbcfe3f02eb65c8b91e29896604316259d8
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Wed Aug 27 22:44:24 2008 -0500
+
+    Async I/O documentation touchups
+
+commit 2f8f1b1a900f5b9828e5e2ff93c2b26a44fd9de2
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Wed Aug 27 21:23:10 2008 -0500
+
+    Doc: fix typo in events lock section
+
+commit 046e681e4ac6b697e40458ee0f5baf3cd8763bb0
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Aug 23 01:00:21 2008 -0500
+
+    v0.9.3 release
+
+commit fec6eaa4eecdf7e0b8299157a5dabef94417f193
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Aug 23 00:57:44 2008 -0500
+
+    Reset internal transfer flags on submit
+    
+    This fixes a problem pointed out by Lou, where resubmitting a transfer
+    that previously timed out never timed out again, as if the timeout had
+    been set to 0.
+
+commit 81627bd38900ec9701ab69c141aa51a9abea1f60
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Aug 10 17:09:48 2008 -0500
+
+    Add libusb_get_configuration prototype
+    
+    Pointed out by Lou
+
+commit 1631eaefcc7cdf7047c6b9225618a9aa1b3d87d1
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jul 19 17:51:28 2008 -0500
+
+    v0.9.2 release
+
+commit 0d9c40d7f3eee15ada624b5caab2cfb912144fdc
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Wed Jul 16 09:22:12 2008 -0500
+
+    Linux: fix sysfs directory handling
+    
+    The length of the directory name varies, e.g. when you have nested hubs.
+    Use dynamic allocation to be able to deal with any length of name.
+
+commit 66c9847ad54b126ccafd4877292454ab57d0c115
+Author: David Engraf <dogge2k@gmx.de>
+Date:   Wed Jul 16 09:16:38 2008 -0500
+
+    Linux: correct usage of MAX_PATH
+    
+    Thanks to clarification from Artem Egorkine, MAX_PATH already includes
+    space for the trailing NULL.
+
+commit 6494f07a6d1b73ce786ae581c4ff691e39e61d19
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue Jul 8 21:15:54 2008 -0500
+
+    Linux: fix bulk/iso transfer double-cancellation
+    
+    Reset counters to 0 so that it's possible to cancel a transfer twice
+    without breaking things. Not sure that I want to support this properly,
+    but this makes it work at least.
+
+commit 9140f5b414e37a3714cde9c6d6c87c963338a83a
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jun 28 21:28:44 2008 -0500
+
+    v0.9.1 release
+
+commit 83a029062c1d2bfb584d7a6ee94915583d37464c
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jun 28 21:24:49 2008 -0500
+
+    Add missing GET_CONTEXT()
+
+commit fbad9a5426f0369394c88987355a8fb06a741ca1
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jun 28 21:18:41 2008 -0500
+
+    Linux: Compatibility with new sysfs descriptors file
+    
+    As of 2.6.26, the descriptors file now includes all descriptors, not
+    just the active one.
+
+commit 819e65f880ca43526036e56c65c415042c91f58f
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Jun 26 22:47:05 2008 -0500
+
+    Allow user data pointer to be passed through pollfd notification API
+
+commit 1df713d622ab4f0b03aad72d903ac7beb8fb3b90
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue Jun 24 23:01:51 2008 -0500
+
+    Introduce contexts to the API
+    
+    Suggested by David Zeuthen. This allows multiple libraries in the same
+    process to independently use libusb without interfering.
+
+commit 9818151c60a85aea6af24cb0996a92c3726c9864
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue Jun 24 21:31:13 2008 -0500
+
+    Revert "Temporary workaround for event handling serialization issue"
+    
+    This reverts commit 2d3a1111caff40ebb87983c861ff548cdc9e5946.
+    This was based on the assumption that dying threads would automatically
+    release mutexes, which is not the case.
+
+commit d5f82893fab3f1c13b1af4ba17aac72479bad7d5
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Jun 20 23:04:53 2008 -0500
+
+    Overflow handling
+
+commit 546dee211eefbdd280fd1fc9dee84a9b52105078
+Author: Artem Egorkine <arteme@gmail.com>
+Date:   Tue Jun 17 18:27:38 2008 -0500
+
+    a fix for SIGSEGV in handle_bulk_completion()
+    
+    We cannot dereference tpriv after calling
+    usbi_handle_transfer_cancellation() because that function may invoke
+    the user-supplied callback which may free the transfer.
+
+commit 947ba8056456a5215724fb502e3e09d50016f699
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon Jun 16 22:50:50 2008 -0500
+
+    Refine configuration selection again
+    
+    At Alan Stern's suggestion, just offer the bare "set configuration" and
+    "get configuration" functionality, and let applications worry about the
+    specific race conditions and unusual situations.
+
+commit e7a7a49d0331ee0e14145f6e7ec39763b36314ac
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Jun 15 15:29:38 2008 -0500
+
+    docs update
+    
+    Add a THANKS file, make copyright notices easily accessible, update TODO
+
+commit 217534e4b396081e038ee5f94c813d1668963673
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Jun 15 15:23:29 2008 -0500
+
+    round up poll timeout
+    
+    Pointed out by Richard Röjfors, otherwise we end up busy-looping with
+    a poll() timeout of 0.
+
+commit 5ad79b324bc5e11a75a585398a1e81c26f05e758
+Author: Felipe Balbi <me@felipebalbi.com>
+Date:   Sun Jun 8 12:34:48 2008 +0300
+
+    fix doc about libusb_open()
+    
+    libusb_open() returns int instead of libusb_device_handle.
+    
+    Signed-off-by: Felipe Balbi <me@felipebalbi.com>
+    [dsd: small correction]
+
+commit 2d3a1111caff40ebb87983c861ff548cdc9e5946
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu May 29 17:26:26 2008 +0100
+
+    Temporary workaround for event handling serialization issue
+    
+    Ludovic Rousseau pointed out that libusb_unlock_events() is not called
+    when a thread gets terminated with a signal, meaning that event waiters
+    will not be woken up in this case.
+    
+    Add a temporary hack to libusb_event_handler_active() so that at least
+    the other threads will realise on the next iteration of their event
+    handling loop.
+    
+    The real fix will likely involve reworking most of this.
+
+commit 514bb8790cfe8b93ccfff82bc17081b1030acce0
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu May 29 12:35:01 2008 +0100
+
+    Refine libusb_set_configuration() semantics
+    
+    Applications will generally want to set a configuration before claiming
+    interfaces. The problem is that the interface may already be set, and
+    someone else may have claimed an interface (meaning that all calls to
+    set_configuration will fail, even if it's for the same configuration).
+    
+    There are now 2 options:
+    1. Use the new libusb_get_configuration() to determine active
+       configuration before calling libusb_set_configuration()
+    2. Or just call libusb_set_configuration() as usual, which will do
+       nothing if that configuration is already active.
+
+commit d1292f8e7300051239a7ed2769d221dc7a6f9fca
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 25 23:42:42 2008 +0100
+
+    v0.9.0 release
+    
+    First libusb-1.0 beta release
+
+commit 4cd249388e4ed2ca03f1263984ab67df5030bb65
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 25 22:59:09 2008 +0100
+
+    Take lock before raising event waiters condition
+    
+    This avoids a race between the user checking for active event handler
+    and then blocking on the condition variable
+
+commit 7c525480ab3c4db9205bfe30bb0d2bef9096c444
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 23 15:57:07 2008 +0100
+
+    Implement serialization of event handlers
+    
+    Now offers a mechanism to wait for events while another thread is
+    doing the event handling. Complicates things for MT async apps, but
+    then again it's a bit of a tricky combination to start with.
+
+commit ff0660a415ecfd0879600eaad1c5899b6d93a30a
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 24 21:28:31 2008 +0100
+
+    allow LIBUSB_DEBUG env var to control message verbosity at runtime
+    
+    Based on ideas from Ludovic Rousseau
+
+commit 4d788967e3f8d75eaf3a1ac1ee8e2e8bed0601c1
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 23 15:58:11 2008 +0100
+
+    don't print messages by default
+    
+    Add libusb_set_debug() API to set message verbosity.
+    
+    Ludovic Rousseau pointed out that applications may close stdout/stderr
+    descriptors, which might then be reused.
+
+commit bef33bb9eba0da04ee7488d9cd5e6ab12bc61c0c
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 19 15:43:27 2008 +0100
+
+    Fix memory leak in libusb_control_transfer
+    
+    Pointed out by David Engraf: we weren't freeing the transfer buffer
+
+commit a345bacb6f07ebb2122402041a9e8092d4a20a4d
+Author: David Engraf <david.engraf@netcom.eu>
+Date:   Mon May 19 15:16:32 2008 +0100
+
+    Linux: fix handling of ioctl failure
+    
+    The return value of some ioctl commands in linux_usbfs.c are not
+    handeled correct. The ioctl function returns != 0 and errno is set with
+    the error code.
+
+commit e44396a458ecea9e5edd9a7577e617571c76860d
+Author: David Engraf <david.engraf@netcom.eu>
+Date:   Mon May 19 15:13:38 2008 +0100
+
+    critical memory leak in handle_events
+    
+    This patch closes a critical memory leak in handle_events. The fds
+    variable is malloced but never freed. When I'm calling
+    handle_events with a timeout of 0, my system runs out of memory after a
+    few seconds.
+
+commit eb25630f52bc9848b444e439632c899977d887b0
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 16 23:50:20 2008 +0100
+
+    More informative libusb_open() return code
+    
+    Hopefully one of the last API tweaks...
+
+commit 2b2e9c40b195261b09ac52ebdb93eef25c79de90
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 16 22:37:56 2008 +0100
+
+    Fix endianness with descriptor handling
+    
+    Alan Stern pointed out that usbfs gives host-endian data, but sysfs gives
+    bus-endian.
+
+commit 1298c51f516a7bf04ca9add1b7db14417cdc66f3
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 12 18:46:37 2008 +0100
+
+    Backend documentation for porting efforts
+    
+    Hopefully comprehensive enough for people to get started.
+
+commit ade26afc42c34ceb1c45afcadd2ea5e8240eaca4
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 12 15:43:30 2008 +0100
+
+    Linux: fix caching of guessed configuration
+    
+    Reported and tested by Xiaofan Chen
+
+commit e25d590a9198995b4f0b6afeb41ecae318715e7e
+Author: Rob Walker <rob@tenfoot.org.uk>
+Date:   Sun May 11 21:14:18 2008 +0100
+
+    Linux: fix bulk transfer early completion
+    
+    We were forgetting about the remaining urbs when a non-final urb
+    completed early.
+    
+    [dsd: some touchups and a warning message for a corner case that we don't handle]
+
+commit fec7c84163e25b8f811632828334d75da82bcb16
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 11 20:31:58 2008 +0100
+
+    Handle hot-unplugging
+    
+    This involved moving from select() to poll() because there is no way to
+    distinguish usbfs's POLLERR condition with select().
+
+commit aeb905fa5d78cdbba80a680aa7a2bb7338f27f65
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 11 16:04:35 2008 +0100
+
+    Documentation work
+
+commit ba5d9a45c06311204f51faef41d1ee215bb5b823
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 11 15:36:24 2008 +0100
+
+    Endianness of control setup packets
+    
+    Document behaviour where host-endian and bus-endian (little) should be
+    used respectively.
+    
+    Also remove packed attribute from libusb_control_setup as all fields
+    are naturally aligned.
+
+commit 7bedc3b2683f35ee1dd39a2ebe0ec05be0019f38
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 11 15:11:59 2008 +0100
+
+    Document that releasing interface causes SET_INTERFACE control request
+
+commit f2ede9876cd4f5cfa7751b975670fa449187fe3d
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 10 21:45:42 2008 +0100
+
+    Support unconfigured devices
+
+commit 8ebb4ccdfaf5f095a1c38787d909d280ea64405c
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 10 20:56:44 2008 +0100
+
+    Linux: fix caching of active configuration for non-sysfs
+
+commit c3844f7aeb2176636ce6e6ef697659fdb0b30048
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 10 14:42:43 2008 +0100
+
+    Fetch configurations by index (not value)
+    
+    Otherwise there is no way to know which values to look for.
+
+commit d77052c0d630e33737c38d601fd633155f6b2229
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 10 00:12:53 2008 +0100
+
+    Linux: comprehensive sysfs vs usbfs access
+    
+    Be more flexible when certain parts of sysfs are not available.
+
+commit 74bc842bac1a32a26323da6c3e8af2f66e1b5cfa
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 9 19:38:13 2008 +0100
+
+    Linux: no need to store usbfs node path
+    
+    This can be computed from bus number and device address
+
+commit fe4adcc99e30115204ab832ad3e0170c9aca7629
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 9 14:34:31 2008 +0100
+
+    Rework configuration handling
+    
+    libusb no longer caches descriptors in libusb_device but backends are
+    intended to be able to provide copies from memory. In the common linux
+    case we can use sysfs.
+
+commit 5741bfe01a2481b8c3830c80edc3637bf62a7e16
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 9 14:36:14 2008 +0100
+
+    libusb_get_device_list() can return negative error code
+
+commit 45413101b78298e9332b22a34bc6bc159000ad8a
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu May 8 23:09:21 2008 +0100
+
+    Linux: fix clear_halt implementation
+    
+    The ioctl expects an integer.
+    Bug found with the assistance of Soumen Mondal
+
+commit 10d4e427cc171dfd6ad7f43a33ce3cfebcd7aa04
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu May 8 23:04:52 2008 +0100
+
+    Documentation work
+    
+    Partially based on some libusb-devel discussions
+
+commit ded0a249322571a075e3ed3528021864247dfa55
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 22:57:48 2008 +0100
+
+    Linux: enumerate devices and descriptors from sysfs
+    
+    Suggested by Alan Stern. This avoids waking up any suspended USB devices.
+    sysfs is not available on all systems, so the usbfs mechanism is still
+    in place as a fallback.
+
+commit 885c2a5de69d6b7d8902bb55d6d83680a5a1a6e5
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 21:34:31 2008 +0100
+
+    documentation touchups
+
+commit 59c205d542b43d79fe28622dbe8f03a3a3300b6f
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 21:17:03 2008 +0100
+
+    more error code sanitization
+
+commit 88055d4b5913102a90ff666f75fd922c74860dc5
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 20:57:43 2008 +0100
+
+    Isochronous transfer helper functions
+
+commit a95c943ed301dcd20e92b0b3b255568899a4c42e
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 17:54:33 2008 +0100
+
+    free open devices on exit
+
+commit b27fff633843824744df7d334cb89ece329cafa6
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 17:47:49 2008 +0100
+
+    move descriptor parsing into main library
+    
+    OS modules now provide functionality for fetching device/config
+    descriptors
+
+commit a304eca71f22c6df7d70a901483b30f1b8e93378
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 16:22:33 2008 +0100
+
+    Detect endpoint halts and unsupported control requests
+
+commit 7da521954ba661d3f537440c31a84b66e974d56b
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 01:00:31 2008 +0100
+
+    Linux: fix logical URB allocation
+    
+    We were allocating the wrong number of URBs for transfers of size
+    multiples of 16k.
+
+commit 470b1bc42bf53373ce678fc76bab9160a54d6881
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 16:51:23 2008 +0100
+
+    add functionality for querying and detaching kernel driver
+
+commit 17ecfb0ecc833596c43755c80d461cddb9b3b0d7
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 16:20:46 2008 +0100
+
+    Descriptor reading functionality
+
+commit bdce367d1bd8691465844b2411c85215498f517d
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 14:22:16 2008 +0100
+
+    sanitized error returns from synchronous I/O functions
+
+commit bfe74e9cd9c17a40fff042ea0647326f51cfecae
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 14:10:19 2008 +0100
+
+    implement libusb_reset_device()
+
+commit c01f744ce07bbeccbe353e956479f0cc5a811a6f
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 13:46:41 2008 +0100
+
+    Add functionality to clear endpoint halt conditions
+
+commit 5878daa85e3364bb3885190425d4f9deaa2d8c36
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 00:51:59 2008 +0100
+
+    Fix libusb_get_device_list return value
+    
+    It was documented to return the list length, but was returning 0.
+
+commit a74106a9b48b88bae0e099be34a18d653a8f1238
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 3 16:50:58 2008 +0100
+
+    Well-defined error codes for some operations
+    
+    Also renamed set_interface_altsetting to set_interface_alt_setting for
+    better consistency
+
+commit 0f463fe671455670efcf4a93e526b2a9082b0afe
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 3 16:24:11 2008 +0100
+
+    Add libusb_set_configuration()
+
+commit e65608994f795f97e4d6adac20329ca08709db2d
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 3 15:40:23 2008 +0100
+
+    rename LIBUSB_ERROR_NOMEM to LIBUSB_ERROR_NO_MEM
+    improves consistency
+
+commit 5384bbf300779e7936eac9ebd33ee38f5b533f8e
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 3 14:34:54 2008 +0100
+
+    Linux: better EACCES handling
+
+commit 1936eeeba3f933a078df1005cc7c1533a8ec2bac
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 3 14:26:56 2008 +0100
+
+    Rename reference counting API
+    
+    This improves consistency with the naming style of other functions
+
+commit e2f822b4f17342f614ab2455179a80975fca6cb0
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 3 14:24:40 2008 +0100
+
+    Linux: use read-only access to enumerate devices and descriptors
+    
+    Write access is not needed until later.
+    Also fix handling of open() error code.
+
+commit 81204eed3d0a7744b89b68bd90d567b68d191a91
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 2 17:45:23 2008 +0100
+
+    document pollfd notifiers
+
+commit e20f8281fb7da32587f81b5eea5818af1eab0fe0
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 2 17:33:52 2008 +0100
+
+    Allow multiple interfaces to be claimed
+
+commit 66685ff25d81a1f1a2a3dbda882d407638d00672
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 2 16:55:36 2008 +0100
+
+    Documentation improvements
+
+commit 55bce39cbe0c9746a428b66751d1afe551d86381
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 2 12:55:34 2008 +0100
+
+    detect short descriptor reads
+
+commit f3f17846dcced6b2dc40f899ed6a2aba151c264b
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 2 12:32:46 2008 +0100
+
+    remove "references" and "referenced by" listings in documentation
+
+commit fbb017dd9a26ce449578482b95157b3c850fa446
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 2 12:32:08 2008 +0100
+
+    Use typedef ptr types in parameters and return types
+    
+    This is passed through to the docs
+
+commit 3675e978fb7a1042f8601931255658bcd14a2298
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 2 12:28:31 2008 +0100
+
+    Expose bus number and device address
+
+commit 2012898ffc492317cb428d97077bf5ee0e98e1da
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue Apr 29 15:26:46 2008 +0100
+
+    standardised error codes
+
+commit 0269c75ae3de7acb2dc555e45928750e35fdb320
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue Apr 29 13:34:26 2008 +0100
+
+    Fix descriptor handling memory leaks
+
+commit d3ab4e3bd4068cba41c1e12c4b175018dc3cb343
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Apr 27 23:50:01 2008 +0100
+
+    Rename endpoint_type to transfer_type
+    
+    Matches the USB specs more closely
+
+commit 379e90e0fdcef6f4db1849fa0a7fd524407cf564
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Apr 27 23:41:24 2008 +0100
+
+    Remove a FIXME comment
+    
+    it can't.
+
+commit 2ddf81420557d016bbcbf28dda0d8d1c64d16264
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Apr 27 23:30:34 2008 +0100
+
+    Fix unlocked flying_transfers list access
+
+commit 7ac0a405b4c57db42e88cbcba5f135697f03b646
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Apr 27 23:27:04 2008 +0100
+
+    Remove libusb_cancel_transfer_sync
+    
+    This wasn't a particularly nice API. Cancellation should be handled by
+    the completion handler.
+
+commit a5006fd7b9dae6f1db7969c8744086ba3a7c027b
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Apr 27 19:56:02 2008 +0100
+
+    remove extra timeout check
+    
+    If select() didn't timeout then don't check for more timeouts
+
+commit 3bdafaa359d9c65e1af360b5338e1f25528a8066
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Apr 27 19:53:51 2008 +0100
+
+    Documentation touchups
+    
+    Detail that interrupt polling interval is fixed to endpoint bInterval,
+    and that data may be transferred even on a timeout condition.
+
+commit e12618c79d520955b1abf80a277e881d91907162
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Apr 19 16:17:53 2008 +0100
+
+    add threaded example program
+
+commit 1fcdb0678b759569db7cd530457dbc0a5f86fb1d
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Apr 18 23:58:54 2008 +0100
+
+    libusb_device mutex protection
+
+commit 0efd2efa65d5513e5754d717d522b2c5c45332e2
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Apr 18 23:42:40 2008 +0100
+
+    mutex protection for device and handle lists
+
+commit d2ff2b14a15e5099ff0214502944de30f141a39c
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Apr 18 20:00:31 2008 +0100
+
+    lock flying_transfers during transfer removal
+
+commit 2569980762cb66804da31e54bef243702da8dfe9
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Apr 18 19:59:56 2008 +0100
+
+    pollfds mutex protection
+
+commit f5a33e08ec0da51ccb5e95a5adec50c5211a9bf5
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Apr 17 18:24:54 2008 +0100
+
+    flying_transfers mutex protection
+    
+    This marks the beginnings of thread safety
+
+commit 85e1994123545125ce0653415d122f9790f8d041
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Apr 17 17:44:28 2008 +0100
+
+    Linux: fix control transfer cancellation
+
+commit cf9b831f7bfd97ba88721c1d934aeda522f3692c
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon Apr 14 20:03:27 2008 +0100
+
+    set correct endpoint type for isochronous transfers
+    
+    Pointed out by Felix Domke
+
+commit ad6e2b712c5b54af44424e58a2776686314e26b7
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Apr 11 21:40:07 2008 +0100
+
+    Linux: fire multiple URBs at once for split transfers
+    
+    This results in a significant performance increase for bulk transfers
+    larger than 16kb, and fixes a bug where data would be spliced and mixed
+    between two simultaneously submitted transfers to the same endpoint.
+    
+    It also allows isochronous transfers larger than 16kb to be submitted.
+    
+    This commit also improves cancellation - the library now understands
+    what is going on.
+
+commit d9b2ce2894ed43d34de6850f2dac50ccabf1db55
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue Apr 1 23:28:32 2008 +0100
+
+    Constify some return data
+    
+    Make it clear that apps should not mess with these structures
+
+commit 8d809854e2b19c2b7c27ab05e5d76b34e2a5cead
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Mar 30 22:19:00 2008 +0100
+
+    Rename libusb_poll() to libusb_handle_events()
+
+commit 211f80c9f2a4a58cd2bbf5b7751f45089c8961e7
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue Mar 25 16:24:30 2008 +0000
+
+    Isochronous endpoint I/O
+    
+    Due to variable-sized structures, this involved changing allocation
+    mechanism. All transfers must now be allocated and freed through
+    libusb.
+    
+    A synchronous function is missing, and I could do with writing a few
+    more helper functions to simplify things.
+
+commit b1ade6fca668d8aa156d5b5bf3a933f116144dc2
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Mar 23 21:17:32 2008 +0000
+
+    distcheck fix for docs
+
+commit 62077b7fa5b222e1bb9dea3467585aed69d596e2
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Mar 23 21:13:14 2008 +0000
+
+    Support for changing altsetting
+    
+    Will probably be suject to later consideration w.r.t. claiming of endpoints
+
+commit 0499e9f418607b5786ac0c3e97bc46737a609ca3
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Mar 20 21:10:01 2008 +0000
+
+    it's called bmRequestType
+
+commit 88884ae4bbe721dac117d5190303cb67852fa5d3
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Mar 20 21:07:00 2008 +0000
+
+    Save transfer flags before invoking callback
+    
+    The callback may free the transfer, in which case we can't read the flags
+    after it has returned.
+
+commit ead09cde6895df0034a685516987ce253575e9a7
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Mar 15 16:35:12 2008 +0000
+
+    API documentation
+    
+    Hopefully mostly complete. Some constants were renamed and move into
+    enums.
+
+commit 285724cc14ea5f993e2c4c92fe0aaf6c335bc139
+Author: Vasily Khoruzhick <anarsoul@gmail.com>
+Date:   Sat Mar 15 13:50:53 2008 +0200
+
+    Fix get_device_list for realloc case
+    
+    get_device_list can modify pointer passed to it with realloc, but this
+    case wasn't handled and caused crash on my machine. Fixed
+    
+    Signed-off-by: Vasily Khoruzhick <anarsoul@gmail.com>
+
+commit c0c9432d38b22784070dce3a7874c62c31786a27
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Mar 13 12:36:56 2008 +0000
+
+    Beginnings of cross-platform abstraction
+    
+    This also includes a libusb_get_pollfds API change
+
+commit de4c5341d168697baa4c0901c406deb47e78aae7
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon Mar 10 18:38:15 2008 +0000
+
+    Add transfer flags
+
+commit aae05f688dc26a013166ab9436fd25018b49d76a
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon Mar 10 11:32:15 2008 +0000
+
+    Simplify libusb_fill_control_transfer()
+    
+    Transfer length can be inferred from the setup packet.
+
+commit 7c5ea95297c2f3f6afc42f60c1bf1bef777bb1fb
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon Mar 10 11:29:24 2008 +0000
+
+    get_device fixup
+    
+    Rename API away from "devh" and fix implementation to match header
+
+commit 9e89d1aa82cbe7e21672ee3e2e545238fffc5318
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Mar 9 16:27:06 2008 +0000
+
+    Rename descriptor-getting functions
+    
+    Based on feedback from Tim Roberts
+
+commit 283ae96c3ccbcee1c3950fce18ae47093ae8200e
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Mar 9 16:15:02 2008 +0000
+
+    Simplify cancellation API
+    
+    No need to provide the device here.
+
+commit ebad1c79688ba603ad017ed0fe2f3c0dc8edd1ad
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Mar 9 16:12:08 2008 +0000
+
+    Rename libusb_dev_handle to libusb_device_handle
+
+commit 1ac0a7d88f282b6f293c456fac8edb143cbaca3d
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Mar 9 01:01:57 2008 +0000
+
+    Move synchronous I/O implementation to its own file
+
+commit 66348c90ea4570bf999ac301089e006d0cce1926
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Mar 9 00:58:09 2008 +0000
+
+    Separate transfer allocation and submission
+    
+    Leads to some hefty API changes. Now we're much more similar to the
+    Linux kernel model.
+    
+    Problems with dealing with asynchronous control transfers are passed
+    on to the user, basically you must allocate a buffer, start with the
+    setup, and put the data after. This won't make much sense until
+    documented (soon...)
+
+commit d21ebe47ce578c93cd8969be1c933d503e32e5d4
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Mar 8 12:48:35 2008 +0000
+
+    Rework URB API naming
+    
+    Now refer to everything as "transfers" as consistent with the USB spec
+    libusb_transfer is now a kind of transfer handle. To reduce confusion
+    with libusb_bulk_transfer and libusb_control_transfer, those have been
+    renamed to libusb_{control,bulk}_transfer_request.
+
+commit fd6fb3cc093ad47271353a0e468d16547f991382
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Mar 8 11:53:33 2008 +0000
+
+    Add fallback on /proc/bus/usb
+    
+    /dev/bus/usb is a relatively new thing probably not present on every
+    system
+
+commit f3fdf447916289cd92b7190377681894e8ab611a
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Mar 8 00:10:16 2008 +0000
+
+    Persistent libusb_device storage
+    
+    Devices are now assigned a session ID (currently busnum:devaddr) which
+    is used to distinguish unique devices.
+    
+    Now multiple callers of libusb_get_device_list will get the same
+    libusb_device structure instances.
+
+commit 23f8fb8bafeeda93ce234cb40eb7219d2e36c19c
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Mar 6 23:43:57 2008 +0000
+
+    Add convenience function to find and open a device by USB VID+PID
+    
+    Lots of libusb apps I write are simple test apps not intended to be real
+    apps. Having a function available to quickly locate my device will be
+    handy in such situations.
+
+commit 9cfdb494fccac53a4277da7c8b6d15f1a72a4959
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Mar 6 23:25:20 2008 +0000
+
+    Rework device discovery API
+    
+    libusb_find_devices and libusb_get_devices are no more
+    
+    libusb_get_device_list obtains a list of libusb_device structures for all
+    known devices in the system.
+    
+    Each libusb_device now has a reference count, defaulting to 1 on
+    instantiation. The reference count of 1 refers to the fact that it is
+    present in the list in this scenario.
+    
+    Opening a device adds a pointer to the libusb_device structure in the
+    handle, so that also adds a reference. Closing the device removes that
+    reference.
+    
+    The function to free the device list can optionally unref all the devices
+    inside.
+    
+    In future we will make the libusb_device instances all "global" so that if
+    the app calls get_device_list twice it actually gets the same libusb_device
+    structure references back. This way we can start to track disconnects, and
+    we can investigate adding a unique "session ID" to each libusb_device, an
+    identifier guaranteed to be unique to that device until reboot.
+
+commit 77cea822788e024c848c7f554915f771a2dc1e0f
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Mar 6 17:05:04 2008 +0000
+
+    Remove ctrl debug code
+    
+    This was unintentionally committed
+
+commit b873521a6f575628d535f89278bb67888004d0ca
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue Feb 26 22:11:34 2008 +0000
+
+    Notifications for changes to the fd set
+    
+    Applications can now be notified when they should start and stop polling
+    new file descriptors.
+
+commit ca66e16a370c828d08a5bc3f9f203db145c81a4c
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Feb 1 12:20:20 2008 +0000
+
+    Fix header installation path
+
+commit e583100a4086c411093eef5c450880b965df6b1b
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Wed Jan 30 13:24:54 2008 +0000
+
+    TODO update
+
+commit 637a8d7ff8a11a23588925d9d3003a609bda8075
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Wed Jan 30 13:19:10 2008 +0000
+
+    Remove timers and signalfd
+    
+    Instead of timers, add a mechanism for informing the parent app when the
+    next timeout is due to happen, so that it can call us at that time.
+    
+    As we no longer use signals, signalfd has also been removed.
+
+commit 8c56abe2e13ed4dd8c15737c21be7b6b1e5cf2ac
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jan 26 18:16:56 2008 +0000
+
+    Poll usbfs descriptors directly
+    
+    We don't need to use signalfd for this functionality because we can poll
+    the file descriptors for write events.
+
+commit e3ce855acec33d37dd833bca5dad5e8c3773003a
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jan 26 17:26:40 2008 +0000
+
+    Fix dpfp example compilation
+
+commit 1d41a5cda2fefe826877ee4445199af30aa188b7
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jan 26 17:22:53 2008 +0000
+
+    C++ header safety
+    
+    Pointed out by JF
+
+commit 37b7f9a112eb1441d352467f661205b8872d0553
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jan 26 14:03:43 2008 +0000
+
+    Only use -fgnu89-inline when supported
+    
+    J F pointed out that this option only works on gcc 4.3 and newer.
+
+commit e3a09ca0b9cb6f46d54a0130f678c6097240a2bd
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jan 5 21:59:40 2008 +0000
+
+    Remove more fpusb remnants
+
+commit dcd5e0075fa84601d997d29bb60bc8370b97a375
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Jan 4 01:19:07 2008 +0000
+
+    TODO update
+    
+    Start listing the things I want to discuss/reconsider before 1.0 API
+    is final.
+
+commit de53d972ed9c1f21f86ffd585560520e986f212c
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Jan 4 01:17:06 2008 +0000
+
+    Rename some _devh_ functions
+    
+    Decided against naming functions in this style based on advice from
+    Tim Roberts. Still not really sure about devh naming in general.
+
+commit 132d84bf8ae34bd0892b3d8207a53d87cc0a9cba
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Jan 4 01:13:25 2008 +0000
+
+    Use "transfer" instead of "msg"
+    
+    Based on a discussion with Tim Roberts.
+
+commit ea6af58a8643137eb01eeb7d2f65404e390feb1b
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Jan 4 00:57:00 2008 +0000
+
+    Plural of bus is busses
+    
+    SF #1633043
+
+commit dbb3fd871e3972b4e670f3161e7cd2f58f357600
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Jan 4 00:54:57 2008 +0000
+
+    API renaming: remove fpi and usb_ stuff
+    
+    fpi changed to usbi.
+    
+    We should not expose structures with prefix "usb_" in the public
+    namespace as it is quite likely there will be some conflict somewhere.
+    Instead, using "libusb_" should be safer.
+
+commit e9364d72151ae1de9cce4175f330fe1529f02511
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Jan 4 00:40:49 2008 +0000
+
+    Rename to libusb-1.0
+    
+    I've taken over the libusb project, and what was previously known as fpusb
+    will eventually be released as libusb-1.0.
+
+commit f4ed0b6a3e0a20555fdfc9e9b8be7e8a2c8ae192
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Dec 30 22:09:50 2007 +0000
+
+    Compiler flags update
+    
+    Also fix some warnings
+
+commit d3d671efe27491baf1d2ceadbfeeb4e7428d6f9a
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Dec 30 22:05:17 2007 +0000
+
+    Fix signalfd structure size on x86
+    
+    ptr is a 64-bit value
+
+commit dfac6756faad76071a92945e3e3a16b8a841a7ea
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Wed Dec 12 23:32:54 2007 +0000
+
+    Don't pass ctrl_msg/bulk_msg structures through async paths
+    
+    These are easiest to construct on the stack, but in the async case it is
+    likely that the submitting function returns (hence stack is destroyed)
+    before URB completion.
+
+commit a8d2881eb7c273892acf2ff6e1f3f552631d1d11
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon Dec 3 23:29:22 2007 +0000
+
+    Add functionality to access device descriptors
+
+commit b5a7a411087b37a6bf56b4688a9e3290daaed153
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon Dec 3 22:27:21 2007 +0000
+
+    Rename fpusb_device_handle functions to devh
+    
+    Prevents confusion with functions that work on fpusb_dev structures.
+
+commit eacf4505a473df0f521d1b69d5b45448f0709e2d
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Dec 2 23:16:57 2007 +0000
+
+    Add API to access poll fd
+    
+    Almost forgot... :)
+
+commit 852bba4754ec57679c823f33e8feba6e4a564cbe
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Wed Nov 28 13:48:45 2007 +0000
+
+    Initial commit
+    
+    Basic library structure which supports enumerating detected USB devices

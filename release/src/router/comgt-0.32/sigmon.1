@@ -1,0 +1,40 @@
+.\" Paul Hardwick 
+.\" paul@peck.org.uk
+.TH sigmon 1 "22 January, 2005"
+.LO 1
+.SH NAME
+sigmon \- Vodafone 3G/GPRS datacard signal strength monitor
+.SH SYNOPSIS
+.B sigmon -?
+
+.SH OPTIONS
+.in +5
+.B \-?
+.in +10
+gives brief usage details
+.in -10
+
+.SH DESCRIPTION
+.B sigmon 
+is a command line tool for monitoring the signal strength seen by a Vodafone
+3G/GPRS datacard. Once started, it queries the datacard for the signal 
+strength and displays it every 5 seconds. Use 
+.I Ctrl/C
+to stop the signal strength display and exit from 
+.B sigmon 
+
+.SH BUGS
+.B sigmon
+is a simple script that assumes that the third port of the datacard is
+/dev/ttyUSB2. If the datacard is not the first USB device registered the
+script must be modified to correct the port name. Read /var/log/messages
+to find the correct port name.
+
+.SH DEPENDENCIES
+.B sigmon
+requires 
+.I comgt
+to be installed so that it appears in the current search path when 
+.B sigmon
+is run.
+

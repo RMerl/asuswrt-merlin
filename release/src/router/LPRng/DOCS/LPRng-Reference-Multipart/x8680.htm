@@ -1,0 +1,720 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Rule Matching Procedures</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title="Permissions and Authentication "
+    href="permsref.htm">
+    <link rel="NEXT" title="Permission File Location " href=
+    "permspath.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "permsref.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "permspath.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN8680">17.2. Rule Matching
+      Procedures</a></h1>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN8683"></a>
+<pre class="SCREEN">
+    [not] key                                 assigned value
+    [not] key=pattern                         substring match
+    [not] key=pattern1,pattern2,pattern3,...  glob and exact
+    [not] key=IP1/mask1,IP2/mask2,...         IP address
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Each of the indicated values is matched against a list of
+      patterns. The following types of matches are used:</p>
+
+      <ol type="1">
+        <li>
+          <p>assigned value. The keyword has an assigned value
+          which is true (match) or false (no match). Examples are
+          SAMEHOST and SERVER.</p>
+        </li>
+
+        <li>
+          <p>substring match. The indicated entry is present as a
+          substring in the pattern.</p>
+        </li>
+
+        <li>
+          <p>GLOB matches. The pattern is interpreted as a GLOB
+          style pattern, where * matches 0 or more characters, and
+          ? matches a single character, and <var class=
+          "LITERAL">[L-H]</var> specifies a range of characters
+          from <var class="LITERAL">L</var> to <var class=
+          "LITERAL">H</var>, in ASCII order.</p>
+        </li>
+
+        <li>
+          <p>IP address match. The address must be specified in the
+          standard <tt class="FILENAME">nn.nn.nn.nn</tt> format.
+          The mask must be either an integer number corresponding
+          to the number of significant bits, or in the standard <tt
+          class="FILENAME">nn.nn.nn.nn</tt> format. Addresses are
+          compared by doing</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN8700"></a>
+<pre class="SCREEN">
+    ( IPaddr XOR IP ) AND mask
+</pre>
+          </div>
+          &#13;<br>
+          <br>
+
+          <p>If the result is 0, then a match results. Note that
+          there may be one or more addresses being checked for;
+          this can occur when a host may have multiple IP addresses
+          assigned to it.</p>
+        </li>
+
+        <li>
+          <p>integer range match. The pattern has the form <var
+          class="LITERAL">low-high</var>, where low and high are
+          integer numbers. The match succeeds if the value is in
+          the specified range.</p>
+        </li>
+
+        <li>
+          <p>Same IP Address Match. This compares two lists of IP
+          addresses; a match is found when there is one or more
+          common addresses.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8708">17.2.1.
+        DEFAULT</a></h2>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8711"></a>
+<pre class="SCREEN">
+    DEFAULT ACCEPT
+    DEFAULT REJECT
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The DEFAULT rule specifies the default if no rule
+        matches. Normally, there is one DEFAULT entry in a
+        permissions file.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8714"></a>
+<pre class="SCREEN">
+    Example:
+    
+    DEFAULT ACCEPT
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8716">17.2.2.
+        SERVICE</a></h2>
+
+        <p>Match type: substring</p>
+
+        <p>The SERVICE key is based on the type of request.</p>
+
+        <div class="INFORMALTABLE">
+          <a name="AEN8720"></a>
+
+          <table border="1" frame="border" rules="all" class=
+          "CALSTABLE">
+            <col>
+            <col>
+
+            <thead>
+              <tr>
+                <th>Key</th>
+
+                <th>Request</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>Key</td>
+
+                <td>Request</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">C</var></td>
+
+                <td>LPC Control Request</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">M</var></td>
+
+                <td><b class="APPLICATION">lprm</b> Removal
+                Request</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">P</var></td>
+
+                <td>Printing</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">Q</var></td>
+
+                <td><b class="APPLICATION">lpq</b> Status
+                Request</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">R</var></td>
+
+                <td><b class="APPLICATION">lpr</b> Job
+                Transfer</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">X</var></td>
+
+                <td>Connection Request</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <br>
+        <br>
+
+        <p>Each of the above codes corresponds either directly to
+        the user command, or a set of subcommands.</p>
+
+        <p>If you have an LPC request, you can add an <var class=
+        "LITERAL">LPC=xxx</var> clause to refine the permissions
+        checking to allow or disallow <b class=
+        "APPLICATION">lpc</b> commands such as <tt class=
+        "COMMAND">lpc status, printcap, active,</tt> .</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8762"></a>
+<pre class="SCREEN">
+    Example:
+    
+    # control only from root on server
+    ACCEPT SERVICE=C SERVER USER=root
+    REJECT SERVICE=C
+    # accept all others
+    ACCEPT SERVICE=*
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8764">17.2.3. USER</a></h2>
+
+        <p>Match type: GLOB</p>
+
+        <p>The USER information is taken from the <var class=
+        "LITERAL">P</var> (person or logname) information in the
+        print job control file.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8769"></a>
+<pre class="SCREEN">
+    Example:
+    
+    # we allow jobs to be spooled
+    ACCEPT SERVICE=R
+    # now we do the checking at print time
+    ACCEPT SERVICE=P USER=root
+    REJECT SERVICE=P
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8771">17.2.4.
+        REMOTEUSER</a></h2>
+
+        <p>Match type: GLOB</p>
+
+        <p>The REMOTEUSER information is taken from the user
+        information sent with a service request.</p>
+
+        <p>Note that one of the flaws of <a href=
+        "rfc1179.htm">RFC1179</a> is that an <b class=
+        "APPLICATION">lpq</b> (print status) request does not
+        provide a REMOTEUSER name.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8778"></a>
+<pre class="SCREEN">
+    Example:
+    
+    ACCEPT SERVICE=C REMOTEUSER=root,papowell,admin SERVER
+    ACCEPT SERVICE=C LPC=status,lpd REMOTEUSER=admin
+    REJECT SERVICE=C
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8780">17.2.5. HOST</a></h2>
+
+        <p>Match type: GLOB</p>
+
+        <p>The <var class="LITERAL">H</var> (host) information in
+        the print job control file is used to do a DNS lookup, and
+        the resulting list of names and addresses is used for
+        matching purposes.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8785"></a>
+<pre class="SCREEN">
+    Example:
+    
+    # we allow jobs to be spooled
+    ACCEPT SERVICE=R
+    # now we do the checking at print time
+    # allow from our private subnet
+    ACCEPT SERVICE=P HOST=10.0.0.0/8,*.othernet.com
+    REJECT SERVICE=P
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8787">17.2.6.
+        REMOTEHOST</a></h2>
+
+        <p>Match type: GLOB</p>
+
+        <p>The REMOTEHOST information is obtained by doing a
+        reverse IP name lookup on the remote host IP address and
+        the resulting list of names and addresses is used for
+        matching purposes. If there is no FQDN available, then the
+        IP address in text form will be used.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8791"></a>
+<pre class="SCREEN">
+    Example:
+    
+    # allow from our private subnet
+    ACCEPT SERVICE=R REMOTEHOST=10.0.0.0/8,*.othernet.com
+    REJECT SERVICE=R
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8793">17.2.7.
+        REMOTEPORT</a></h2>
+
+        <p>Match type: integer range</p>
+
+        <p>The REMOTEPORT value is the originating port of the
+        TCP/IP connection. The match succeeds if it is in the
+        specified range.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8797"></a>
+<pre class="SCREEN">
+    Example:
+    
+    # require connections to originate from privileged port
+    ACCEPT SERVICE=X REMOTEPORT=1-1023
+    REJECT SERVICE=X
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8799">17.2.8. PORT</a></h2>
+
+        <p>Alias for REMOTEPORT.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8802">17.2.9. IP</a></h2>
+
+        <p>Alias for HOST.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8805">17.2.10.
+        REMOTEIP</a></h2>
+
+        <p>Alias for REMOTEHOST.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8808">17.2.11. LPC</a></h2>
+
+        <p>Match type: GLOB</p>
+
+        <p>The requested <b class="APPLICATION">lpc</b> command.
+        This allows the following permissions line to be used:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8813"></a>
+<pre class="SCREEN">
+    Example:
+    
+    #allow remoteuser admin on server to use LPC topq and hold
+    ACCEPT SERVICE=C SERVER REMOTEUSER=root
+    ACCEPT LPC=topq,hold SERVER REMOTEUSER=papowell
+    REJECT SERVICE=C
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8815">17.2.12.
+        SAMEUSER</a></h2>
+
+        <p>Match type: exact string match</p>
+
+        <p>Both the REMOTEUSER and USER information must be present
+        and identical.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8819"></a>
+<pre class="SCREEN">
+    Example:
+    
+    # LPC users can do anything
+    ACCEPT SERVICE=C SERVER REMOTEUSER=root
+    REJECT SERVICE=C
+    # allow users who sent jobs from the same host to remove them
+    ACCEPT SERVICE=M SAMEUSER SAMEHOST
+    REJECT SERVICE=M
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8821">17.2.13.
+        SAMEHOST</a></h2>
+
+        <p>Match type: Same IP Address</p>
+
+        <p>The REMOTEHOST and HOST address lists are checked; if
+        there is a common value the match succeeds.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8825"></a>
+<pre class="SCREEN">
+    Example:
+    
+    # allow root on the same host as user
+    # to remove files
+    ACCEPT SERVICE=M SAMEHOST REMOTEUSER=root
+    REJECT SERVICE=M
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8827">17.2.14.
+        SERVER</a></h2>
+
+        <p>Match type: Matching IP Address</p>
+
+        <p>One of the REMOTEHOST addresses must be the same as one
+        of the addresses of the <b class="APPLICATION">lpd</b>
+        server host, or must be one of the addresses found by
+        looking up the <var class="LITERAL">localhost</var> name
+        using <code class="FUNCTION">gethostbyname()</code>.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8834"></a>
+<pre class="SCREEN">
+    Example:
+    
+    # allow root on the server full LPC permissions
+    ACCEPT SERVICE=C SERVER REMOTEUSER=root
+    REJECT SERVICE=C
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8836">17.2.15.
+        FORWARD</a></h2>
+
+        <p>Match type: Address Match</p>
+
+        <p>The list of REMOTEHOST and HOST addresses must not have
+        a common entry. This is usually the case when a remote <b
+        class="APPLICATION">lpd</b> server is forwarding jobs to
+        the <b class="APPLICATION">lpd</b> server.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8842"></a>
+<pre class="SCREEN">
+    Example:
+    
+    # do not accept forwarded jobs or requests
+    REJECT SERVICE=* FORWARD
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8844">17.2.16. GROUP</a></h2>
+
+        <p>Match type: modified GLOB</p>
+
+        <p>The USER must be present in one of the groups in <tt
+        class="FILENAME">/etc/group</tt> or whatever permissions
+        mechanism is used to determine group ownership which
+        matches the GLOB pattern. If the pattern has the form <var
+        class="LITERAL">@name</var>, then a check to see if the
+        user is in the named netgroup is done.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8850"></a>
+<pre class="SCREEN">
+    Example:
+    
+    ACCEPT SERVICE=P GROUP=admin,@netgroup
+    REJECT SERVICE=P
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8852">17.2.17.
+        REMOTEGROUP</a></h2>
+
+        <p>The same rules as for GROUP, but using the REMOTEUSER
+        value.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8855"></a>
+<pre class="SCREEN">
+    Example:
+    
+    ACCEPT SERVICE=R REMOTEGROUP=admin,@netgroup
+    REJECT SERVICE=R
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8857">17.2.18.
+        CONTROLLINE</a></h2>
+
+        <p>Match type: GLOB</p>
+
+        <p>A <acronym class="ACRONYM">CONTROLLINE</acronym> pattern
+        has the form</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8862"></a>
+<pre class="SCREEN">
+    X=pattern1,pattern2,...
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>X is a single upper case letter. The corresponding line
+        must be present in a control file, and the pattern is
+        applied to the line contents.</p>
+
+        <p>This pattern can be used to select only files with
+        specific control file information for printing.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8866">17.2.19. AUTH</a></h2>
+
+        <p>Match type: value</p>
+
+        <p>If the current transfer or the transfer used to send a
+        job was authenticated, then AUTH is true or matches.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8870"></a>
+<pre class="SCREEN">
+    Example:
+    
+    # reject all non-authenticated transfers
+    REJECT NOT AUTH
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8872">17.2.20.
+        AUTHTYPE</a></h2>
+
+        <p>Match type: glob</p>
+
+        <p>If the current transfer or the transfer used to send a
+        job was authenticated, then AUTHTYPE is set to the name of
+        the authentication method.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8876"></a>
+<pre class="SCREEN">
+    Example:
+    
+    # require kerberos, pgp, or md5 authentication
+    REJECT NOT AUTHTYPE=kerberos*,pgp,md5
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8878">17.2.21.
+        AUTHUSER</a></h2>
+
+        <p>Match type: GLOB</p>
+
+        <p>The AUTHUSER rule will check to see if the authenticated
+        user identification matches the pattern.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN8882"></a>
+<pre class="SCREEN">
+    Example:
+    
+    ACCEPT SERVICE=C AUTHTYPE=kerberos* AUTHUSER=admin@ASTART.COM
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN8884">17.2.22. IFIP</a></h2>
+
+        <p>Match type: IPmatch, but for IPV6 as well as IPV4</p>
+
+        <p>There is a subtle problem with names and IP addresses
+        which are obtained for 'multi-homed hosts', i.e. - those
+        with multiple ethernet interfaces, and for IPV6 (IP Version
+        6), in which a host can have multiple addresses, and for
+        the normal host which can have both a short name and a
+        fully qualified domain name.</p>
+
+        <p>The IFIP (interface IP) field can be used to check the
+        IP address of the interface that accepted the network
+        connection, as reported by the information returned by the
+        accept() system call. Note that this information may be
+        IPV4 or IPV6 information, depending on the origination of
+        the system. This information is used by gethostbyaddr() to
+        obtain the originating host fully qualified domain name
+        (FQDN) and set of IP addresses. Note that this FQDN will be
+        for the originating interface, and may not be the canonical
+        host name. Some systems which use the Domain Name Server
+        (DNS) system may add the canonical system name as an
+        alias.</p>
+
+        <p>This entry is deprecated and may not be supported in
+        future releases.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "permsref.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "permspath.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Permissions and
+          Authentication</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Permission
+          File Location</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

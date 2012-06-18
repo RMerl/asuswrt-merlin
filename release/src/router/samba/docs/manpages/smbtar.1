@@ -1,0 +1,125 @@
+.TH SMBTAR 1 "23 Jun 2001" "smbtar 2.0.10"
+.PP 
+.SH "NAME" 
+smbtar \- shell script for backing up SMB/CIFS shares directly to UNIX tape drives
+.PP 
+.SH "SYNOPSIS" 
+.PP 
+\fBsmbtar\fP -s server [-p password] [-x service] [-X] [-d directory] [-u user] [-t tape] [-b blocksize] [-N filename] [-i] [-r] [-l log level] [-v] filenames
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+This program is part of the \fBSamba\fP suite\&.
+.PP 
+\fBsmbtar\fP is a very small shell script on top of
+\fBsmbclient\fP which dumps SMB shares directly
+to tape\&.
+.PP 
+.SH "OPTIONS" 
+.PP 
+.IP 
+.IP "\fB-s server\fP" 
+The SMB/CIFS server that the share resides upon\&.
+.IP 
+.IP "\fB-x service\fP" 
+The share name on the server to connect
+to\&. The default is \f(CWbackup\fP\&.
+.IP 
+.IP "\fB-X\fP" 
+Exclude mode\&. Exclude filenames\&.\&.\&. from tar create or
+restore\&.
+.IP 
+.IP "\fB-d directory\fP" 
+Change to initial \fIdirectory\fP before restoring
+/ backing up files\&.
+.IP 
+.IP "\fB-v\fP" 
+Verbose mode\&.
+.IP 
+.IP "\fB-p password\fP" 
+The password to use to access a share\&. Default:
+none
+.IP 
+.IP "\fB-u user\fP" 
+The user id to connect as\&. Default: UNIX login name\&.
+.IP 
+.IP "\fB-t tape\fP" 
+Tape device\&. May be regular file or tape
+device\&. Default: \fITAPE\fP environmental variable; if not set, a file
+called \f(CWtar\&.out\fP\&.
+.IP 
+.IP "\fB-b blocksize\fP" 
+Blocking factor\&. Defaults to 20\&. See \fBtar (1)\fP
+for a fuller explanation\&.
+.IP 
+.IP "\fB-N filename\fP" 
+Backup only files newer than filename\&. Could be
+used (for example) on a log file to implement incremental backups\&.
+.IP 
+.IP "\fB-i\fP" 
+Incremental mode; tar files are only backed up if they
+have the archive bit set\&. The archive bit is reset after each file is
+read\&.
+.IP 
+.IP "\fB-r\fP" 
+Restore\&. Files are restored to the share from the tar
+file\&.
+.IP 
+.IP "\fB-l log level\fP" 
+Log (debug) level\&. Corresponds to the
+\fB-d\fP flag of \fBsmbclient
+(1)\fP\&.
+.IP 
+.PP 
+.SH "ENVIRONMENT VARIABLES" 
+.PP 
+The TAPE variable specifies the default tape device to write to\&. May
+be overridden with the \fB-t\fP option\&.
+.PP 
+.SH "BUGS" 
+.PP 
+The \fBsmbtar\fP script has different options from ordinary tar and tar
+called from \fBsmbclient\fP\&.
+.PP 
+.SH "CAVEATS" 
+.PP 
+Sites that are more careful about security may not like the way the
+script handles PC passwords\&. Backup and restore work on entire shares,
+should work on file lists\&. \fBsmbtar\fP works best with GNU tar and may
+not work well with other versions\&.
+.PP 
+.SH "VERSION" 
+.PP 
+This man page is correct for version 2\&.0 of the Samba suite\&.
+.PP 
+.SH "SEE ALSO" 
+.PP 
+\fBsmbclient (1)\fP, \fBsmb\&.conf
+(5)\fP
+.PP 
+.SH "DIAGNOSTICS" 
+.PP 
+See the \fBDIAGNOSTICS\fP section for
+the \fBsmbclient\fP command\&.
+.PP 
+.SH "AUTHOR" 
+.PP 
+The original Samba software and related utilities were created by
+Andrew Tridgell samba@samba\&.org\&. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed\&.
+.PP 
+Ricky Poulten poultenr@logica\&.co\&.uk wrote the tar extension and
+this man page\&. The \fBsmbtar\fP script was heavily rewritten and
+improved by Martin Kraemer Martin\&.Kraemer@mch\&.sni\&.de\&. Many
+thanks to everyone who suggested extensions, improvements, bug fixes,
+etc\&. The man page sources were converted to YODL format (another
+excellent piece of Open Source software available at
+\fBftp://ftp\&.icce\&.rug\&.nl/pub/unix/\fP)
+and updated for the Samba2\&.0 release by Jeremy Allison,
+samba@samba\&.org\&.
+.PP 
+See \fBsamba (7)\fP to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc\&.
+.PP 

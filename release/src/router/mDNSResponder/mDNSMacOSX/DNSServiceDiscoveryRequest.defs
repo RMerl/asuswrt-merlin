@@ -1,0 +1,80 @@
+/* -*- Mode: C; tab-width: 4 -*-
+ *
+ * Copyright (c) 2002 Apple Computer, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+subsystem
+	DNSServiceDiscoveryRequest 7200;
+
+ServerPrefix provide_;
+
+#include <mach/std_types.defs>
+#include <mach/mach_types.defs>
+
+import "DNSServiceDiscoveryDefines.h";
+
+type DNSCString = c_string[*:1024];
+type record_data = ^ array [] of MACH_MSG_TYPE_BYTE
+				ctype: record_data_t;
+type IPPort = struct[4] of char ctype:IPPort;				
+
+simpleroutine DNSServiceBrowserCreate_rpc(
+				server: mach_port_t;
+                        in	client: mach_port_t;
+						in	regtype: DNSCString;
+						in	domain: DNSCString);
+                                                
+
+simpleroutine DNSServiceDomainEnumerationCreate_rpc(
+				server: mach_port_t;
+                        in	client: mach_port_t;
+						in	registrationDomains: int);
+
+simpleroutine DNSServiceRegistrationCreate_rpc(
+				server: mach_port_t;
+                        in	client: mach_port_t;
+                        in	name: DNSCString;
+                        in	regtype: DNSCString;
+                        in	domain: DNSCString;
+                        in	port: IPPort;
+                        in	txtRecord: DNSCString);
+
+                        
+simpleroutine DNSServiceResolverResolve_rpc(
+				server: mach_port_t;
+                        in	client: mach_port_t;
+                        in	name: DNSCString;
+                        in	regtype: DNSCString;
+                        in	domain: DNSCString);
+
+routine DNSServiceRegistrationAddRecord_rpc(
+				server: mach_port_t;
+						in client: mach_port_t;
+						in record_type: int;
+						in record_data: record_data;
+						in ttl: uint32_t;
+						out record_reference: natural_t);
+
+simpleroutine DNSServiceRegistrationUpdateRecord_rpc(
+				server: mach_port_t;
+						in client: mach_port_t;
+                                                in record_reference: natural_t;
+						in record_data: record_data;
+						in ttl: uint32_t);
+
+simpleroutine DNSServiceRegistrationRemoveRecord_rpc(
+				server: mach_port_t;
+						in client: mach_port_t;
+						in record_reference: natural_t);

@@ -1,0 +1,196 @@
+#!/bin/sh
+# @configure_input@
+#***********************************************************************
+#
+# pppoe-start
+#
+# Shell script to bring up a PPPoE connection
+#
+# Copyright (C) 2000 Roaring Penguin Software Inc.
+#
+# $Id$
+#
+# This file may be distributed under the terms of the GNU General
+# Public License.
+#
+# LIC: GPL
+#
+# Usage: pppoe-start [config_file]
+#        pppoe-start interface user [config_file]
+# Second form overrides USER and ETH from config file.
+# If config_file is omitted, defaults to /etc/ppp/pppoe.conf
+#
+#***********************************************************************
+
+# From AUTOCONF
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+
+# Paths to programs
+CONNECT=@sbindir@/pppoe-connect
+ECHO=@ECHO@
+IFCONFIG=/sbin/ifconfig
+
+# Set to "C" locale so we can parse messages from commands
+LANG=C
+export LANG
+
+# Defaults
+CONFIG=/etc/ppp/pppoe.conf
+USER=""
+ETH=""
+ME=`basename $0`
+# Must be root
+if [ "`@ID@ -u`" != 0 ] ; then
+    $ECHO "$ME: You must be root to run this script" >& 2
+    exit 1
+fi
+
+# Debugging
+if [ "$DEBUG" = "1" ] ; then
+    $ECHO "*** Running in debug mode... please be patient..."
+    DEBUG=/tmp/pppoe-debug-$$
+    export DEBUG
+    mkdir $DEBUG
+    if [ "$?" != 0 ] ; then
+	$ECHO "Could not create directory $DEBUG... exiting"
+	exit 1
+    fi
+    DEBUG=$DEBUG/pppoe-debug.txt
+
+    # Initial debug output
+    $ECHO "---------------------------------------------" > $DEBUG
+    $ECHO "* The following section contains information about your system" >> $DEBUG
+    date >> $DEBUG
+    $ECHO "Output of uname -a" >> $DEBUG
+    uname -a >> $DEBUG
+    $ECHO "---------------------------------------------" >> $DEBUG
+    $ECHO "* The following section contains information about your network" >> $DEBUG
+    $ECHO "* interfaces.  The one you chose for PPPoE should contain the words:" >> $DEBUG
+    $ECHO "* 'UP' and 'RUNNING'.  If it does not, you probably have an Ethernet" >> $DEBUG
+    $ECHO "* driver problem." >> $DEBUG
+    $ECHO "Output of ifconfig -a" >> $DEBUG
+    $IFCONFIG -a >> $DEBUG
+    $ECHO "---------------------------------------------" >> $DEBUG
+    if [ "`uname -s`" = "Linux" ] ; then
+        $ECHO "* The following section contains information about kernel modules" >> $DEBUG
+	$ECHO "* If the module for your Ethernet card is 'tulip', you might" >> $DEBUG
+	$ECHO "* want to look for an updated version at http://www.scyld.com" >> $DEBUG
+	$ECHO "Output of lsmod" >> $DEBUG
+	lsmod >> $DEBUG
+	$ECHO "---------------------------------------------" >> $DEBUG
+    fi
+    $ECHO "* The following section lists your routing table." >> $DEBUG
+    $ECHO "* If you have an entry which starts with '0.0.0.0', you probably" >> $DEBUG
+    $ECHO "* have defined a default route and gateway, and pppd will" >> $DEBUG
+    $ECHO "* not create a default route using your ISP.  Try getting" >> $DEBUG
+    $ECHO "* rid of this route." >> $DEBUG
+    $ECHO "Output of netstat -n -r" >> $DEBUG
+    netstat -n -r >> $DEBUG
+    $ECHO "---------------------------------------------" >> $DEBUG
+    $ECHO "Contents of /etc/resolv.conf" >> $DEBUG
+    $ECHO "* The following section lists DNS setup." >> $DEBUG
+    $ECHO "* If you can browse by IP address, but not name, suspect" >> $DEBUG
+    $ECHO "* a DNS problem." >> $DEBUG
+    cat /etc/resolv.conf >> $DEBUG
+    $ECHO "---------------------------------------------" >> $DEBUG
+    $ECHO "* The following section lists /etc/ppp/options." >> $DEBUG
+    $ECHO "* You should have NOTHING in that file." >> $DEBUG
+    $ECHO "Contents of /etc/ppp/options" >> $DEBUG
+    cat /etc/ppp/options >> $DEBUG 2>/dev/null
+    $ECHO "---------------------------------------------" >> $DEBUG
+else
+    DEBUG=""
+fi
+
+# Sort out command-line arguments
+case "$#" in
+    1)
+	CONFIG="$1"
+	;;
+    3)
+	CONFIG="$3"
+	;;
+esac
+
+if [ ! -f "$CONFIG" -o ! -r "$CONFIG" ] ; then
+    $ECHO "$ME: Cannot read configuration file '$CONFIG'" >& 2
+    exit 1
+fi
+export CONFIG
+. $CONFIG
+
+# Check for command-line overriding of ETH and USER
+case "$#" in
+    2|3)
+	ETH="$1"
+	USER="$2"
+	;;
+esac
+
+# Check for pidfile
+if [ -r "$PIDFILE" ] ; then
+    PID=`cat "$PIDFILE"`
+    # Check if still running
+    kill -0 $PID > /dev/null 2>&1
+    if [ $? = 0 ] ; then
+	$ECHO "$ME: There already seems to be a PPPoE connection up (PID $PID)" >& 2
+	exit 1
+    fi
+    # Delete bogus PIDFILE
+    rm -f "$PIDFILE" "$PIDFILE.pppd" "$PIDFILE.pppoe" "$PIDFILE.start"
+fi
+
+echo $$ > $PIDFILE.start
+
+# Start the connection in the background unless we're debugging
+if [ "$DEBUG" != "" ] ; then
+    $CONNECT "$@"
+    exit 0
+fi
+
+$CONNECT "$@" > /dev/null 2>&1 &
+CONNECT_PID=$!
+
+if [ "$CONNECT_TIMEOUT" = "" -o "$CONNECT_TIMEOUT" = 0 ] ; then
+    exit 0
+fi
+
+# Don't monitor connection if dial-on-demand
+if [ "$DEMAND" != "" -a "$DEMAND" != "no" ] ; then
+    exit 0
+fi
+
+# Monitor connection
+TIME=0
+while [ true ] ; do
+    @sbindir@/pppoe-status $CONFIG > /dev/null 2>&1
+
+    # Looks like the interface came up
+    if [ $? = 0 ] ; then
+	# Print newline if standard input is a TTY
+	tty -s && $ECHO " Connected!"
+	exit 0
+    fi
+
+    if test -n "$FORCEPING" ; then
+	printf "%s" "$FORCEPING"
+    else
+	tty -s && printf "%s" "$PING"
+    fi
+    sleep $CONNECT_POLL
+    TIME=`expr $TIME + $CONNECT_POLL`
+    if [ $TIME -gt $CONNECT_TIMEOUT ] ; then
+	break
+    fi
+done
+
+$ECHO "TIMED OUT" >& 2
+# Timed out!  Kill the pppoe-connect process and quit
+kill $CONNECT_PID > /dev/null 2>&1
+
+# Clean up PIDFILE(s)
+rm -f "$PIDFILE" "$PIDFILE.pppd" "$PIDFILE.pppoe" "$PIDFILE.start"
+
+exit 1
+

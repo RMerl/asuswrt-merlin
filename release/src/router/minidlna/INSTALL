@@ -1,0 +1,19 @@
+MiniDLNA project.
+(c) 2009 Justin Maggard
+Parts (c) 2006-2008 Thomas Bernard
+Homepage : http://sourceforge.net/projects/minidlna/
+
+Prerequisites :
+
+- libexif
+- libjpeg
+- libid3tag
+- libFLAC
+- libvorbis
+- sqlite3
+- libavformat (the ffmpeg libraries)
+- libuuid
+
+To Build and install :
+
+- Just run make, and hope it works. :)

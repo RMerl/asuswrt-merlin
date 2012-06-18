@@ -1,0 +1,28 @@
+<samba:parameter name="deadtime"
+                 context="G"
+                 developer="1"
+				 type="integer"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>The value of the parameter (a decimal integer) 
+    represents the number of minutes of inactivity before a connection 
+    is considered dead, and it is disconnected. The deadtime only takes 
+    effect if the number of open files is zero.</para>
+		
+    <para>This is useful to stop a server's resources being 
+    exhausted by a large number of inactive connections.</para>
+
+    <para>Most clients have an auto-reconnect feature when a 
+    connection is broken so in most cases this parameter should be 
+    transparent to users.</para>
+
+    <para>Using this parameter with a timeout of a few minutes 
+    is recommended for most systems.</para>
+
+    <para>A deadtime of zero indicates that no auto-disconnection 
+		should be performed.</para>
+</description>
+
+<value type="default">0</value>
+<value type="example">15</value>
+</samba:parameter>

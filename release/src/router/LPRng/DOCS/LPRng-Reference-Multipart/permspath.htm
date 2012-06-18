@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Permission File Location</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title="Rule Matching Procedures" href=
+    "x8680.htm">
+    <link rel="NEXT" title="Example Permission File" href=
+    "x8919.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x8680.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x8919.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="PERMSPATH">17.3. Permission File
+      Location</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">perms_path=</var><span class=
+          "emphasis"><i class="EMPHASIS">path</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The <var class="LITERAL">perms_path=</var> configuration
+      variable specifies the location of the default permissions
+      file. The default value is:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN8900"></a>
+<pre class="SCREEN">
+    perms_path=${sysconfdir}/lpd.perms
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <tt class="FILENAME">lpd.perms</tt> file can be
+      obtained by running a program, in a similar manner to the <tt
+      class="FILENAME">printcap</tt> file. See <a href=
+      "filters.htm">Filters</a> for details on how the program
+      would be invoked. For example, assume the configuration
+      information specified:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN8906"></a>
+<pre class="SCREEN">
+    perms_path=|/usr/local/libexec/get_perms
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <b class="APPLICATION">lpd</b> server will write
+      either a blank line for connection (<var class=
+      "LITERAL">SERVICE=X</var>) and global <b class=
+      "APPLICATION">lpc</b> permissions (<var class=
+      "LITERAL">SERVICE=C</var> and <var class=
+      "LITERAL">LPC=reread,lpd,default</var>) or the name of the
+      spool queue to the <var class="LITERAL">get_perms</var>
+      <acronym class="ACRONYM">STDIN</acronym>, and expects to read
+      permission information from its <acronym class=
+      "ACRONYM">STDOUT</acronym>. If the filter method is used, it
+      should always return the complete set of connection (<var
+      class="LITERAL">X</var>) and control (<var class=
+      "LITERAL">C</var> service values.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x8680.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x8919.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Rule Matching
+          Procedures</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Example
+          Permission File</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

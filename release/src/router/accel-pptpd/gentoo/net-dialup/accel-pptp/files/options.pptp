@@ -1,0 +1,32 @@
+#
+# Lock the port
+#
+#lock
+
+#
+# We don't need the tunnel server to authenticate itself
+#
+noauth
+
+#
+# Turn off transmission protocols we know won't be used
+#
+nobsdcomp
+nodeflate
+
+#
+# We want MPPE
+#
+require-mppe
+
+#
+# We want a sane mtu/mru
+#
+mtu 1437
+mru 1437
+
+#
+# Time this thing out of it goes poof
+#
+lcp-echo-failure 10
+lcp-echo-interval 10

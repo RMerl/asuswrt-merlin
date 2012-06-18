@@ -1,0 +1,8 @@
+*.o
+data.lds
+decompress
+decompress.image
+decompress.lds
+loader
+loader.gz
+loader.lds

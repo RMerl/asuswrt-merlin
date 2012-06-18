@@ -1,0 +1,47 @@
+/var/log/zebra/zebra.log {
+    notifempty
+    missingok
+    postrotate
+	/usr/bin/killall -USR1 zebra
+    endscript
+}
+
+/var/log/zebra/bgpd.log {
+    notifempty
+    missingok
+    postrotate
+	/usr/bin/killall -USR1 bgpd
+    endscript
+}
+
+/var/log/zebra/ospf.log {
+    notifempty
+    missingok
+    postrotate
+	/usr/bin/killall -USR1 ospfd
+    endscript
+}
+
+/var/log/zebra/ospf6.log {
+    notifempty
+    missingok
+    postrotate
+	/usr/bin/killall -USR1 ospf6d
+    endscript
+}
+
+/var/log/zebra/rip.log {
+    notifempty
+    missingok
+    postrotate
+	/usr/bin/killall -USR1 ripd
+    endscript
+}
+
+/var/log/zebra/ripng.log {
+    notifempty
+    missingok
+    postrotate
+	/usr/bin/killall -USR1 ripng
+    endscript
+}

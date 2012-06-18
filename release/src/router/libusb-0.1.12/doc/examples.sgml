@@ -1,0 +1,71 @@
+  <title>Examples</title>
+  <partintro>
+    <para>There are some nonintuitive parts of libusb v0.1 that aren't difficult, but are probably easier to understand with some examples.</para>
+  </partintro>
+
+  <chapter id="examples-code">
+    <title>Basic Examples</title>
+    <para>Before any communication can occur with a device, it needs to be found. This is accomplished by finding all of the busses and then finding all of the devices on all of the busses:</para>
+    <programlisting>
+<![CDATA[
+	struct usb_bus *busses;
+
+	usb_init();
+	usb_find_busses();
+	usb_find_devices();
+
+	busses = usb_get_busses();
+]]>
+    </programlisting>
+    <para>After this, the application should manually loop through all of the busess and all of the devices and matching the device by whatever criteria is needed:</para>
+    <programlisting>
+<![CDATA[
+	struct usb_bus *bus;
+	int c, i, a;
+
+	/* ... */
+
+	for (bus = busses; bus; bus = bus->next) {
+		struct usb_device *dev;
+
+		for (dev = bus->devices; dev; dev = dev->next) {
+			/* Check if this device is a printer */
+			if (dev->descriptor.bDeviceClass == 7) {
+				/* Open the device, claim the interface and do your processing */
+				...
+			}
+
+			/* Loop through all of the configurations */
+			for (c = 0; c < dev->descriptor.bNumConfigurations; c++) {
+				/* Loop through all of the interfaces */
+				for (i = 0; i < dev->config[c].bNumInterfaces; i++) {
+					/* Loop through all of the alternate settings */
+					for (a = 0; a < dev->config[c].interface[i].num_altsetting; a++) {
+						/* Check if this interface is a printer */
+						if (dev->config[c].interface[i].altsetting[a].bInterfaceClass == 7) {
+							/* Open the device, set the alternate setting, claim the interface and do your processing */
+							...
+						}
+					}
+				}
+			}
+		}
+	}
+]]>
+    </programlisting>
+  </chapter>
+
+  <chapter id="examples-tests">
+    <title>Examples in the source distribution</title>
+    <para>The tests directory has a program called testlibusb.c. It simply calls libusb to find all of the devices, then iterates through all of the devices and prints out the descriptor dump. It's very simple and as a result, it's of limited usefulness in itself. However, it could serve as a starting point for a new program.</para>
+  </chapter>
+
+  <chapter id="examples-other">
+    <title>Other Applications</title>
+    <para>Another source of examples can be obtained from other applications.</para>
+    <itemizedlist>
+      <listitem><para><ulink url="http://www.gphoto.org/">gPhoto</ulink> uses libusb to communicate with digital still cameras.</para></listitem>
+      <listitem><para><ulink url="http://rio500.sourceforge.net/">rio500</ulink> utils uses libusb to communicate with SONICblue Rio 500 Digital Audio Player.</para></listitem>
+    </itemizedlist>
+  </chapter>
+

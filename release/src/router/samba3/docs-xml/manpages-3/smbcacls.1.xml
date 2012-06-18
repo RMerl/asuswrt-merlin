@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="smbcacls.1">
+
+<refmeta>
+	<refentrytitle>smbcacls</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">User Commands</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>smbcacls</refname>
+	<refpurpose>Set or get ACLs on an NT file or directory names</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>smbcacls</command>
+		<arg choice="req">//server/share</arg>
+		<arg choice="req">filename</arg>
+		<arg choice="opt">-D acls</arg>
+		<arg choice="opt">-M acls</arg>
+		<arg choice="opt">-a acls</arg>
+		<arg choice="opt">-S acls</arg>
+		<arg choice="opt">-C name</arg>
+		<arg choice="opt">-G name</arg>
+		<arg choice="opt">--numeric</arg>
+		<arg choice="opt">-t</arg>
+		<arg choice="opt">-U username</arg>
+		<arg choice="opt">-h</arg>
+		<arg choice="opt">-d</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>smbcacls</command> program manipulates NT Access Control
+	Lists (ACLs) on SMB file shares. </para>
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<para>The following options are available to the <command>smbcacls</command> program.  
+	The format of ACLs is described in the section ACL FORMAT </para>
+
+
+	<variablelist>
+		<varlistentry>
+		<term>-a acls</term>
+		<listitem><para>Add the ACLs specified to the ACL list.  Existing 
+		access control entries are unchanged. </para></listitem>
+		</varlistentry>
+		
+		
+		
+		<varlistentry>
+		<term>-M acls</term>
+		<listitem><para>Modify the mask value (permissions) for the ACLs 
+		specified on the command line.  An error will be printed for each 
+		ACL specified that was not already present in the ACL list
+		</para></listitem>
+		</varlistentry>
+		
+		
+		
+		<varlistentry>
+		<term>-D acls</term>
+		<listitem><para>Delete any ACLs specified on the command line.  
+		An error will be printed for each ACL specified that was not 
+		already present in the ACL list. </para></listitem>
+		</varlistentry>
+		
+		
+		
+		<varlistentry>
+		<term>-S acls</term>
+		<listitem><para>This command sets the ACLs on the file with 
+		only the ones specified on the command line.  All other ACLs are 
+		erased. Note that the ACL specified must contain at least a revision,
+		type, owner and group for the call to succeed. </para></listitem>
+		</varlistentry>
+		
+		
+		
+		<varlistentry>
+		<term>-U username</term>
+		<listitem><para>Specifies a username used to connect to the 
+		specified service.  The username may be of the form "username" in 
+		which case the user is prompted to enter in a password and the 
+		workgroup specified in the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry> file is 
+		used, or "username%password"  or "DOMAIN\username%password" and the 
+		password and workgroup names are used as provided. </para></listitem>
+		</varlistentry>
+		
+		
+		
+		<varlistentry>
+		<term>-C name</term>
+		<listitem><para>The owner of a file or directory can be changed 
+		to the name given using the <parameter>-C</parameter> option.  
+		The name can be a sid in the form S-1-x-y-z or a name resolved 
+		against the server specified in the first argument. </para>
+		
+		<para>This command is a shortcut for -M OWNER:name. 
+		</para></listitem>
+		</varlistentry>
+		
+		
+		
+		<varlistentry>
+		<term>-G name</term>
+		<listitem><para>The group owner of a file or directory can 
+		be changed to the name given using the <parameter>-G</parameter> 
+		option.  The name can be a sid in the form S-1-x-y-z or a name 
+		resolved against the server specified n the first argument.
+		</para>
+		
+		<para>This command is a shortcut for -M GROUP:name.</para></listitem>
+		</varlistentry>
+		
+		
+		
+		<varlistentry>
+		<term>--numeric</term>
+		<listitem><para>This option displays all ACL information in numeric 
+		format.  The default is to convert SIDs to names and ACE types 
+		and masks to a readable string format.  </para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-t</term>
+		<listitem><para>
+		Don't actually do anything, only validate the correctness of 
+		the arguments.
+		</para></listitem>
+		</varlistentry>
+				
+		&stdarg.help;
+		&stdarg.server.debug;
+		&popt.common.samba;
+	</variablelist>
+</refsect1>
+
+
+<refsect1>
+	<title>ACL FORMAT</title>
+
+	<para>The format of an ACL is one or more ACL entries separated by 
+	either commas or newlines.  An ACL entry is one of the following: </para>
+
+<para><programlisting> 
+REVISION:&lt;revision number&gt;
+OWNER:&lt;sid or name&gt;
+GROUP:&lt;sid or name&gt;
+ACL:&lt;sid or name&gt;:&lt;type&gt;/&lt;flags&gt;/&lt;mask&gt;
+</programlisting></para>
+  
+
+	<para>The revision of the ACL specifies the internal Windows 
+	NT ACL revision for the security descriptor.  
+	If not specified it defaults to 1.  Using values other than 1 may 
+	cause strange behaviour. </para>
+
+	<para>The owner and group specify the owner and group sids for the 
+	object.  If a SID in the format S-1-x-y-z is specified this is used, 
+	otherwise the name specified is resolved using the server on which 
+	the file or directory resides. </para>
+
+	<para>ACLs specify permissions granted to the SID.  This SID again 
+	can be specified in S-1-x-y-z format or as a name in which case 
+	it is resolved against the server on which the file or directory 
+	resides.  The type, flags and mask values determine the type of 
+	access granted to the SID. </para>
+
+	<para>The type can be either 0 or 1 corresponding to ALLOWED or 
+	DENIED access to the SID.  The flags values are generally
+	zero for file ACLs and either 9 or 2 for directory ACLs.  Some 
+	common flags are: </para>
+
+	<itemizedlist> 
+		<listitem><para><constant>#define SEC_ACE_FLAG_OBJECT_INHERIT     	0x1</constant></para></listitem>
+		<listitem><para><constant>#define SEC_ACE_FLAG_CONTAINER_INHERIT  	0x2</constant></para></listitem>
+		<listitem><para><constant>#define SEC_ACE_FLAG_NO_PROPAGATE_INHERIT     0x4</constant></para></listitem>
+		<listitem><para><constant>#define SEC_ACE_FLAG_INHERIT_ONLY       	0x8</constant></para></listitem>
+ 	</itemizedlist>
+  
+	<para>At present flags can only be specified as decimal or 
+	hexadecimal values.</para>
+ 
+	<para>The mask is a value which expresses the access right 
+	granted to the SID. It can be given as a decimal or hexadecimal value, 
+	or by using one of the following text strings which map to the NT 
+	file permissions of the same name. </para>
+
+	<itemizedlist>
+		<listitem><para><emphasis>R</emphasis> - Allow read access </para></listitem>
+		<listitem><para><emphasis>W</emphasis> - Allow write access</para></listitem>
+		<listitem><para><emphasis>X</emphasis> - Execute permission on the object</para></listitem>
+		<listitem><para><emphasis>D</emphasis> - Delete the object</para></listitem>
+		<listitem><para><emphasis>P</emphasis> - Change permissions</para></listitem>
+		<listitem><para><emphasis>O</emphasis> - Take ownership</para></listitem>
+	</itemizedlist>
+
+
+	<para>The following combined permissions can be specified:</para>
+
+
+	<itemizedlist>
+		<listitem><para><emphasis>READ</emphasis> -  Equivalent to 'RX'
+		permissions</para></listitem>
+		<listitem><para><emphasis>CHANGE</emphasis> - Equivalent to 'RXWD' permissions
+		</para></listitem>
+		<listitem><para><emphasis>FULL</emphasis> - Equivalent to 'RWXDPO' 
+		permissions</para></listitem>
+	</itemizedlist>
+	</refsect1>
+
+<refsect1>
+	<title>EXIT STATUS</title>
+
+	<para>The <command>smbcacls</command> program sets the exit status 
+	depending on the success or otherwise of the operations performed.  
+	The exit status may be one of the following values. </para>
+
+	<para>If the operation succeeded, smbcacls returns and exit 
+	status of 0.  If <command>smbcacls</command> couldn't connect to the specified server, 
+	or there was an error getting or setting the ACLs, an exit status 
+	of 1 is returned.  If there was an error parsing any command line 
+	arguments, an exit status of 2 is returned. </para>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.0 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para><command>smbcacls</command> was written by Andrew Tridgell 
+	and Tim Potter.</para>
+	
+	<para>The conversion to DocBook for Samba 2.2 was done 
+	by Gerald Carter. The conversion to DocBook XML 4.2 for Samba 3.0 was done
+	by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

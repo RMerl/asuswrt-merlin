@@ -1,0 +1,132 @@
+# ==========================================================================
+# Build system
+# ==========================================================================
+
+BB_VER = $(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
+export BB_VER
+SKIP_STRIP = n
+
+# -std=gnu99 needed for [U]LLONG_MAX on some systems
+CPPFLAGS += $(call cc-option,-std=gnu99,)
+
+CPPFLAGS += \
+	-Iinclude -Ilibbb \
+	$(if $(KBUILD_SRC),-Iinclude2 -I$(srctree)/include -I$(srctree)/libbb) \
+	-include include/autoconf.h \
+	-D_GNU_SOURCE -DNDEBUG \
+	$(if $(CONFIG_LFS),-D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64) \
+	-D"BB_VER=KBUILD_STR($(BB_VER))" -DBB_BT=AUTOCONF_TIMESTAMP
+
+CFLAGS += $(call cc-option,-Wall,)
+CFLAGS += $(call cc-option,-Wshadow,)
+CFLAGS += $(call cc-option,-Wwrite-strings,)
+CFLAGS += $(call cc-option,-Wundef,)
+CFLAGS += $(call cc-option,-Wstrict-prototypes,)
+CFLAGS += $(call cc-option,-Wunused -Wunused-parameter,)
+CFLAGS += $(call cc-option,-Wunused-function -Wunused-value,)
+CFLAGS += $(call cc-option,-Wmissing-prototypes -Wmissing-declarations,)
+# warn about C99 declaration after statement
+CFLAGS += $(call cc-option,-Wdeclaration-after-statement,)
+# If you want to add more -Wsomething above, make sure that it is
+# still possible to build bbox without warnings.
+
+ifeq ($(CONFIG_WERROR),y)
+CFLAGS += $(call cc-option,-Werror,)
+## TODO:
+## gcc version 4.4.0 20090506 (Red Hat 4.4.0-4) (GCC) is a PITA:
+## const char *ptr; ... off_t v = *(off_t*)ptr; -> BOOM
+## and no easy way to convince it to shut the hell up.
+## We have a lot of such things all over the place.
+## Classic *(off_t*)(void*)ptr does not work,
+## and I am unwilling to do crazy gcc specific ({ void *ppp = ...; })
+## stuff in macros. This would obfuscate the code too much.
+## Maybe try __attribute__((__may_alias__))?
+#CFLAGS += $(call cc-ifversion, -eq, 0404, -fno-strict-aliasing)
+endif
+# gcc 3.x emits bogus "old style proto" warning on find.c:alloc_action()
+CFLAGS += $(call cc-ifversion, -ge, 0400, -Wold-style-definition)
+
+CFLAGS += $(call cc-option,-fno-builtin-strlen -finline-limit=0 -fomit-frame-pointer -ffunction-sections -fdata-sections,)
+# -fno-guess-branch-probability: prohibit pseudo-random guessing
+# of branch probabilities (hopefully makes bloatcheck more stable):
+CFLAGS += $(call cc-option,-fno-guess-branch-probability,)
+CFLAGS += $(call cc-option,-funsigned-char -shared-libgcc,)
+CFLAGS += $(call cc-option,-falign-functions=1 -falign-jumps=1 -falign-labels=1 -falign-loops=1,)
+
+# FIXME: These warnings are at least partially to be concerned about and should
+# be fixed..
+#CFLAGS += $(call cc-option,-Wconversion,)
+
+ifneq ($(CONFIG_DEBUG),y)
+CFLAGS += $(call cc-option,-Os,)
+else
+CFLAGS += $(call cc-option,-g,)
+#CFLAGS += "-D_FORTIFY_SOURCE=2"
+ifeq ($(CONFIG_DEBUG_PESSIMIZE),y)
+CFLAGS += $(call cc-option,-O0,)
+else
+CFLAGS += $(call cc-option,-Os,)
+endif
+endif
+
+# If arch/$(ARCH)/Makefile did not override it (with, say, -fPIC)...
+ARCH_FPIC ?= -fpic
+ARCH_FPIE ?= -fpie
+ARCH_PIE ?= -pie
+
+ifeq ($(CONFIG_BUILD_LIBBUSYBOX),y)
+# on i386: 14% smaller libbusybox.so
+# (code itself is 9% bigger, we save on relocs/PLT/GOT)
+CFLAGS += $(ARCH_FPIC)
+# and another 4% reduction of libbusybox.so:
+# (external entry points must be marked EXTERNALLY_VISIBLE)
+CFLAGS += $(call cc-option,-fvisibility=hidden)
+endif
+
+ifeq ($(CONFIG_STATIC),y)
+CFLAGS_busybox += -static
+endif
+
+ifeq ($(CONFIG_PIE),y)
+CFLAGS_busybox += $(ARCH_PIE)
+CFLAGS += $(ARCH_FPIE)
+endif
+
+ifneq ($(CONFIG_EXTRA_CFLAGS),)
+CFLAGS += $(strip $(subst ",,$(CONFIG_EXTRA_CFLAGS)))
+#"))
+endif
+
+LDLIBS += m crypt
+
+ifeq ($(CONFIG_PAM),y)
+LDLIBS += pam pam_misc
+endif
+
+ifeq ($(CONFIG_SELINUX),y)
+LDLIBS += selinux sepol
+endif
+
+ifeq ($(CONFIG_EFENCE),y)
+LDLIBS += efence
+endif
+
+ifeq ($(CONFIG_DMALLOC),y)
+LDLIBS += dmalloc
+endif
+
+# If a flat binary should be built, CFLAGS_busybox="-elf2flt"
+# env var should be set for make invocation.
+# Here we check whether CFLAGS_busybox indeed contains that flag.
+# (For historical reasons, we also check LDFLAGS, which doesn't
+# seem to be entirely correct variable to put "-elf2flt" into).
+W_ELF2FLT = -elf2flt
+ifneq (,$(findstring $(W_ELF2FLT),$(LDFLAGS) $(CFLAGS_busybox)))
+SKIP_STRIP = y
+endif
+
+# Busybox is a stack-fatty so make sure we increase default size
+# TODO: use "make stksizes" to find & fix big stack users
+# (we stole scripts/checkstack.pl from the kernel... thanks guys!)
+# Reduced from 20k to 16k in 1.9.0.
+FLTFLAGS += -s 16000

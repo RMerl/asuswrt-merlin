@@ -1,0 +1,55 @@
+#!@PERL@
+eval 'exec @PERL@ -S $0 ${1+"$@"}'
+    if $running_under_some_shell;
+            # this emulates #! processing on NIH machines.
+            # (remove #! line above if indigestible)
+
+
+use strict;
+use English;
+use Socket;
+use LPRng;
+use Sys::Hostname;
+use Getopt::Std;
+
+my(
+	$Printer, $Pc_value, $Debug, $pr, $remote, $port, $option,
+	$options, $SOCK, $line, $prefix, $firstpart, $count, $username, %Args
+);
+
+$| = 1;
+
+$Debug = 0;
+Set_Debug($Debug);
+getopts( "P:", \%Args );
+Setup_LPRng( %Args );
+
+# get the printer name
+$Printer = Get_printer_name(%Args);
+if( not $Printer ){
+	die "missing printer name";
+}
+
+print "Printer '$Printer'\n" if $Debug;
+
+$Pc_value = Setup_pc_entry( $Printer );
+
+($pr, $remote, $port ) = Get_remote_pr_host( $Printer, $Pc_value );
+print "pr '$pr', remote '$remote', port '$port'\n" if $Debug;
+
+$option = 5;
+
+$username = getpwuid($UID);
+
+$SOCK = getconnection( $remote, $port );
+
+$options =  join (" ", @ARGV);
+printf  "%d%s %s%s\n", $option, $pr, $username, $options ? (" " . $options) : "" if $Debug;
+printf $SOCK "%c%s %s%s\n", $option, $pr, $username, $options ? (" " . $options) : "";
+$prefix = "";
+
+while ( defined( $line = <$SOCK> ) ) { 
+	print $line; 
+} 
+close ($SOCK) or die "close: $!"; 
+exit 0;

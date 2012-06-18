@@ -1,0 +1,144 @@
+
+
+ 
+
+
+
+<html><head><title>make_smbcodepage (1)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>make_smbcodepage (1)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    make_smbcodepage - Construct a codepage file for Samba
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+     
+<p><strong>make_smbcodepage</strong> [<a href="make_smbcodepage.1.html#cord">c|d</a>] <a href="make_smbcodepage.1.html#codepage">codepage</a> <a href="make_smbcodepage.1.html#inputfile">inputfile</a> <a href="make_smbcodepage.1.html#outputfile">outputfile</a>
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This program is part of the <strong>Samba</strong> suite.
+<p><strong>make_smbcodepage</strong> compiles or de-compiles codepage files for use
+with the internationalization features of Samba 2.0
+<p><a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+    
+<p><dl>
+<p><a name="cord"></a>
+<p></p><dt><strong>c|d</strong><dd> This tells <strong>make_smbcodepage</strong> if it is compiling (<strong>c</strong>) a text
+format code page file to binary, or (<strong>d</strong>) de-compiling a binary codepage
+file to text.
+<p><a name="codepage"></a>
+<p></p><dt><strong>codepage</strong><dd> This is the codepage we are processing (a number, e.g. 850).
+<p><a name="inputfile"></a>
+<p></p><dt><strong>inputfile</strong><dd> This is the input file to process. In the '<strong>c</strong>' case this
+will be a text codepage definition file such as the ones found in the
+Samba <em>source/codepages</em> directory. In the '<strong>d</strong>' case this will be the
+binary format codepage definition file normally found in the
+<em>lib/codepages</em> directory in the Samba install directory path.
+<p><a name="outputfile"></a>
+<p></p><dt><strong>outputfile</strong><dd> This is the output file to produce.
+<p></dl>
+<p><a name="SambaCodepageFiles"></a>
+<h2>Samba Codepage Files</h2>
+    
+<p>A text Samba codepage definition file is a description that tells
+Samba how to map from upper to lower case for characters greater than
+ascii 127 in the specified DOS code page.  Note that for certain DOS
+codepages (437 for example) mapping from lower to upper case may be
+non-symmetrical. For example, in code page 437 lower case a acute maps to
+a plain upper case A when going from lower to upper case, but
+plain upper case A maps to plain lower case a when lower casing a
+character.
+<p>A binary Samba codepage definition file is a binary representation of
+the same information, including a value that specifies what codepage
+this file is describing.
+<p>As Samba does not yet use UNICODE (current for Samba version 2.0) you
+must specify the client code page that your DOS and Windows clients
+are using if you wish to have case insensitivity done correctly for
+your particular language. The default codepage Samba uses is 850
+(Western European). Text codepage definition sample files are
+provided in the Samba distribution for codepages 437 (USA), 737
+(Greek), 850 (Western European) 852 (MS-DOS Latin 2), 861 (Icelandic),
+866 (Cyrillic), 932 (Kanji SJIS), 936 (Simplified Chinese), 949
+(Hangul) and 950 (Traditional Chinese). Users are encouraged to write
+text codepage definition files for their own code pages and donate
+them to <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. All codepage files in the
+Samba <em>source/codepages</em> directory are compiled and installed when a
+<em>'make install'</em> command is issued there.
+<p>The client codepage used by the <a href="smbd.8.html"><strong>smbd</strong></a> server is
+configured using the <a href="smb.conf.5.html#clientcodepage"><strong>client code
+page</strong></a> parameter in the
+<a href="smb.conf.5.html"><strong>smb.conf</strong></a> file.
+<p><a name="FILES"></a>
+<h2>FILES</h2>
+    
+<p><strong>codepage_def.&lt;codepage&gt;</strong>
+<p>These are the input (text) codepage files provided in the Samba
+<em>source/codepages</em> directory.
+<p>A text codepage definition file consists of multiple lines
+containing four fields. These fields are : 
+<p><dl>
+<p><li > <strong>lower</strong>: which is the (hex) lower case character mapped on this
+line.
+<p><li > <strong>upper</strong>: which is the (hex) upper case character that the lower
+case character will map to.
+<p><li > <strong>map upper to lower</strong> which is a boolean value (put either True
+or False here) which tells Samba if it is to map the given upper case
+character to the given lower case character when lower casing a
+filename.
+<p><li > <strong>map lower to upper</strong> which is a boolean value (put either True
+or False here) which tells Samba if it is to map the given lower case
+character to the given upper case character when upper casing a
+filename.
+<p></dl>
+<p><strong>codepage.&lt;codepage&gt;</strong> These are the output (binary) codepage files
+produced and placed in the Samba destination <em>lib/codepage</em>
+directory.
+<p><a name="INSTALLATION"></a>
+<h2>INSTALLATION</h2>
+    
+<p>The location of the server and its support files is a matter for
+individual system administrators. The following are thus suggestions
+only.
+<p>It is recommended that the <strong>make_smbcodepage</strong> program be installed
+under the <em>/usr/local/samba</em> hierarchy, in a directory readable by
+all, writeable only by root. The program itself should be executable
+by all.  The program should NOT be setuid or setgid!
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite.
+<p><a name="SEEALSO"></a>
+<h2>SEE ALSO</h2>
+    
+<p><a href="smb.conf.5.html"><strong>smb.conf(5)</strong></a>, <a href="smbd.8.html"><strong>smbd (8)</strong></a>
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+</body>
+</html>

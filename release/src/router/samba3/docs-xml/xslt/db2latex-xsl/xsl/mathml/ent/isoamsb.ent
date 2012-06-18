@@ -1,0 +1,146 @@
+
+<!--
+     File isoamsb.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1991
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+<!ENTITY ac               "&#x0290F;" ><!--most positive -->
+<!ENTITY acE              "&#x029DB;" ><!--most positive, two lines below -->
+<!ENTITY amalg            "&#x02A3F;" ><!--/amalg B: amalgamation or coproduct -->
+<!ENTITY barvee           "&#x022BD;" ><!--bar, vee -->
+<!ENTITY barwed           "&#x022BC;" ><!--/barwedge B: logical and, bar above -->
+<!ENTITY Barwed           "&#x02306;" ><!--/doublebarwedge B: log and, dbl bar above -->
+<!ENTITY bsolb            "&#x029C5;" ><!--reverse solidus in square -->
+<!ENTITY Cap              "&#x022D2;" ><!--/Cap /doublecap B: dbl intersection -->
+<!ENTITY capand           "&#x02A44;" ><!--intersection, and -->
+<!ENTITY capbrcup         "&#x02A49;" ><!--intersection, bar, union -->
+<!ENTITY capcap           "&#x02A4B;" ><!--intersection, intersection, joined -->
+<!ENTITY capcup           "&#x02A47;" ><!--intersection above union -->
+<!ENTITY capdot           "&#x02A40;" ><!--intersection, with dot -->
+<!ENTITY caps             "&#x02229;&#x02063;" ><!--intersection, serifs -->
+<!ENTITY ccaps            "&#x02A4D;" ><!--closed intersection, serifs -->
+<!ENTITY ccups            "&#x02A4C;" ><!--closed union, serifs -->
+<!ENTITY ccupssm          "&#x02A50;" ><!--closed union, serifs, smash product -->
+<!ENTITY coprod           "&#x02210;" ><!--/coprod L: coproduct operator -->
+<!ENTITY Cup              "&#x022D3;" ><!--/Cup /doublecup B: dbl union -->
+<!ENTITY cupbrcap         "&#x02A48;" ><!--union, bar, intersection -->
+<!ENTITY cupcap           "&#x02A46;" ><!--union above intersection -->
+<!ENTITY cupcup           "&#x02A4A;" ><!--union, union, joined -->
+<!ENTITY cupdot           "&#x0228D;" ><!--union, with dot -->
+<!ENTITY cupor            "&#x02A45;" ><!--union, or -->
+<!ENTITY cups             "&#x0222A;&#x02063;" ><!--union, serifs -->
+<!ENTITY cuvee            "&#x022CE;" ><!--/curlyvee B: curly logical or -->
+<!ENTITY cuwed            "&#x022CF;" ><!--/curlywedge B: curly logical and -->
+<!ENTITY dagger           "&#x02020;" ><!--/dagger B: dagger relation -->
+<!ENTITY Dagger           "&#x02021;" ><!--/ddagger B: double dagger relation -->
+<!ENTITY diam             "&#x022C4;" ><!--/diamond B: open diamond -->
+<!ENTITY divonx           "&#x022C7;" ><!--/divideontimes B: division on times -->
+<!ENTITY eplus            "&#x02A71;" ><!--equal, plus -->
+<!ENTITY hercon           "&#x022B9;" ><!--hermitian conjugate matrix -->
+<!ENTITY intcal           "&#x022BA;" ><!--/intercal B: intercal -->
+<!ENTITY iprod            "&#x02A3C;" ><!--/intprod -->
+<!ENTITY loplus           "&#x02A2D;" ><!--plus sign in left half circle -->
+<!ENTITY lotimes          "&#x02A34;" ><!--multiply sign in left half circle  -->
+<!ENTITY lthree           "&#x022CB;" ><!--/leftthreetimes B: -->
+<!ENTITY ltimes           "&#x022C9;" ><!--/ltimes B: times sign, left closed -->
+<!ENTITY midast           "&#x0002A;" ><!--/ast B: asterisk -->
+<!ENTITY minusb           "&#x0229F;" ><!--/boxminus B: minus sign in box -->
+<!ENTITY minusd           "&#x02238;" ><!--/dotminus B: minus sign, dot above -->
+<!ENTITY minusdu          "&#x02A2A;" ><!--minus sign, dot below -->
+<!ENTITY ncap             "&#x02A43;" ><!--bar, intersection -->
+<!ENTITY ncup             "&#x02A42;" ><!--bar, union -->
+<!ENTITY oast             "&#x0229B;" ><!--/circledast B: asterisk in circle -->
+<!ENTITY ocir             "&#x0229A;" ><!--/circledcirc B: small circle in circle -->
+<!ENTITY odash            "&#x0229D;" ><!--/circleddash B: hyphen in circle -->
+<!ENTITY odiv             "&#x02A38;" ><!--divide in circle -->
+<!ENTITY odot             "&#x02299;" ><!--/odot B: middle dot in circle -->
+<!ENTITY odsold           "&#x029BC;" ><!--dot, solidus, dot in circle -->
+<!ENTITY ofcir            "&#x029BF;" ><!--filled circle in circle -->
+<!ENTITY ogt              "&#x029C1;" ><!--greater-than in circle -->
+<!ENTITY ohbar            "&#x029B5;" ><!--circle with horizontal bar -->
+<!ENTITY olcir            "&#x029BE;" ><!--large circle in circle -->
+<!ENTITY olt              "&#x029C0;" ><!--less-than in circle -->
+<!ENTITY omid             "&#x029B6;" ><!--vertical bar in circle -->
+<!ENTITY ominus           "&#x02296;" ><!--/ominus B: minus sign in circle -->
+<!ENTITY opar             "&#x029B7;" ><!--parallel in circle -->
+<!ENTITY operp            "&#x029B9;" ><!--perpendicular in circle -->
+<!ENTITY oplus            "&#x02295;" ><!--/oplus B: plus sign in circle -->
+<!ENTITY osol             "&#x02298;" ><!--/oslash B: solidus in circle -->
+<!ENTITY otimes           "&#x02297;" ><!--/otimes B: multiply sign in circle -->
+<!ENTITY Otimes           "&#x02A37;" ><!--multiply sign in double circle -->
+<!ENTITY otimesas         "&#x02A36;" ><!--multiply sign in circle, circumflex accent -->
+<!ENTITY ovbar            "&#x0233D;" ><!--circle with vertical bar -->
+<!ENTITY plusacir         "&#x02A23;" ><!--plus, circumflex accent above -->
+<!ENTITY plusb            "&#x0229E;" ><!--/boxplus B: plus sign in box -->
+<!ENTITY pluscir          "&#x02A22;" ><!--plus, small circle above -->
+<!ENTITY plusdo           "&#x02214;" ><!--/dotplus B: plus sign, dot above -->
+<!ENTITY plusdu           "&#x02A25;" ><!--plus sign, dot below -->
+<!ENTITY pluse            "&#x02A72;" ><!--plus, equals -->
+<!ENTITY plussim          "&#x02A26;" ><!--plus, similar below -->
+<!ENTITY plustwo          "&#x02A27;" ><!--plus, two; Nim-addition -->
+<!ENTITY prod             "&#x0220F;" ><!--/prod L: product operator -->
+<!ENTITY race             "&#x029DA;" ><!--reverse most positive, line below -->
+<!ENTITY roplus           "&#x02A2E;" ><!--plus sign in right half circle -->
+<!ENTITY rotimes          "&#x02A35;" ><!--multiply sign in right half circle -->
+<!ENTITY rthree           "&#x022CC;" ><!--/rightthreetimes B: -->
+<!ENTITY rtimes           "&#x022CA;" ><!--/rtimes B: times sign, right closed -->
+<!ENTITY sdot             "&#x022C5;" ><!--/cdot B: small middle dot -->
+<!ENTITY sdotb            "&#x022A1;" ><!--/dotsquare /boxdot B: small dot in box -->
+<!ENTITY setmn            "&#x02216;" ><!--/setminus B: reverse solidus -->
+<!ENTITY simplus          "&#x02A24;" ><!--plus, similar above -->
+<!ENTITY smashp           "&#x02A33;" ><!--smash product -->
+<!ENTITY solb             "&#x029C4;" ><!--solidus in square -->
+<!ENTITY sqcap            "&#x02293;" ><!--/sqcap B: square intersection -->
+<!ENTITY sqcaps           "&#x02293;&#x02063;" ><!--square intersection, serifs -->
+<!ENTITY sqcup            "&#x02294;" ><!--/sqcup B: square union -->
+<!ENTITY sqcups           "&#x02294;&#x02063;" ><!--square union, serifs -->
+<!ENTITY ssetmn           "&#x02216;" ><!--/smallsetminus B: sm reverse solidus -->
+<!ENTITY sstarf           "&#x022C6;" ><!--/star B: small star, filled -->
+<!ENTITY subdot           "&#x02ABD;" ><!--subset, with dot -->
+<!ENTITY sum              "&#x02211;" ><!--/sum L: summation operator -->
+<!ENTITY supdot           "&#x02ABE;" ><!--superset, with dot -->
+<!ENTITY timesb           "&#x022A0;" ><!--/boxtimes B: multiply sign in box -->
+<!ENTITY timesbar         "&#x02A31;" ><!--multiply sign, bar below -->
+<!ENTITY timesd           "&#x02A30;" ><!--times, dot -->
+<!ENTITY tridot           "&#x025EC;" ><!--dot in triangle -->
+<!ENTITY triminus         "&#x02A3A;" ><!--minus in triangle -->
+<!ENTITY triplus          "&#x02A39;" ><!--plus in triangle -->
+<!ENTITY trisb            "&#x029CD;" ><!--triangle, serifs at bottom -->
+<!ENTITY tritime          "&#x02A3B;" ><!--multiply in triangle -->
+<!ENTITY uplus            "&#x0228E;" ><!--/uplus B: plus sign in union -->
+<!ENTITY veebar           "&#x022BB;" ><!--/veebar B: logical or, bar below -->
+<!ENTITY wedbar           "&#x02A5F;" ><!--wedge, bar below -->
+<!ENTITY wreath           "&#x02240;" ><!--/wr B: wreath product -->
+<!ENTITY xcap             "&#x022C2;" ><!--/bigcap L: intersection operator -->
+<!ENTITY xcirc            "&#x025EF;" ><!--/bigcirc B: large circle -->
+<!ENTITY xcup             "&#x022C3;" ><!--/bigcup L: union operator -->
+<!ENTITY xdtri            "&#x025BD;" ><!--/bigtriangledown B: big dn tri, open -->
+<!ENTITY xodot            "&#x02299;" ><!--/bigodot L: circle dot operator -->
+<!ENTITY xoplus           "&#x02295;" ><!--/bigoplus L: circle plus operator -->
+<!ENTITY xotime           "&#x02297;" ><!--/bigotimes L: circle times operator -->
+<!ENTITY xsqcup           "&#x02294;" ><!--/bigsqcup L: square union operator -->
+<!ENTITY xuplus           "&#x0228E;" ><!--/biguplus L: -->
+<!ENTITY xutri            "&#x025B3;" ><!--/bigtriangleup B: big up tri, open -->
+<!ENTITY xvee             "&#x022C1;" ><!--/bigvee L: logical and operator -->
+<!ENTITY xwedge           "&#x022C0;" ><!--/bigwedge L: logical or operator -->

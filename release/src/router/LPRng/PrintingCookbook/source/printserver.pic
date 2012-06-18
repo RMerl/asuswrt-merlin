@@ -1,0 +1,20 @@
+.PS
+ Lpd: box ht 1.75 "Print" "Server";
+ arrow dashed from Lpd.w+(-.5i,0) to Lpd.w;
+ s = .300
+ p1 = Lpd.w.y + s
+ p2 = Lpd.w.y - s
+ arrow from (Lpd.e.x,p1) to (Lpd.e.x+.5,p1);
+ arrow from (Lpd.e.x,p2) to (Lpd.e.x+.5,p2);
+ t = .125
+ w = .125
+ v = .125+.25
+ m = .5 + .125
+ "Port 1" ljust at (Lpd.e.x+t,p1+w);
+ "port1@ipaddr" ljust at (Lpd.e.x+m,p1+v);
+ "ipaddr%9100" ljust at (Lpd.e.x+m,p1+v-.25);
+ "Port 2" ljust at (Lpd.e.x+t,p2+w);
+ box ht .001 wid .001 with .c at Lpd.e + (2.0,0);
+ "port2@ipaddr" ljust at (Lpd.e.x+m,p2+v);
+ "ipaddr%9101" ljust at (Lpd.e.x+m,p2+v-.25);
+.PE

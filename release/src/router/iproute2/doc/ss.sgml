@@ -1,0 +1,525 @@
+<!doctype linuxdoc system>
+
+<article>
+
+<title>SS Utility: Quick Intro
+<author>Alexey Kuznetosv, <tt/kuznet@ms2.inr.ac.ru/
+<date>some_negative_number, 20 Sep 2001
+<abstract>
+<tt/ss/ is one another utility to investigate sockets.
+Functionally it is NOT better than <tt/netstat/ combined
+with some perl/awk scripts and though it is surely faster
+it is not enough to make it much better. :-)
+So, stop reading this now and do not waste your time.
+Well, certainly, it proposes some functionality, which current
+netstat is still not able to do, but surely will soon.
+</abstract>
+
+<sect>Why?
+
+<p> <tt>/proc</tt> interface is inadequate, unfortunately.
+When amount of sockets is enough large, <tt/netstat/ or even
+plain <tt>cat /proc/net/tcp/</tt> cause nothing but pains and curses.
+In linux-2.4 the desease became worse: even if amount
+of sockets is small reading <tt>/proc/net/tcp/</tt> is slow enough.
+
+This utility presents a new approach, which is supposed to scale
+well. I am not going to describe technical details here and
+will concentrate on description of the command.
+The only important thing to say is that it is not so bad idea
+to load module <tt/tcp_diag/, which can be found in directory
+<tt/Modules/ of <tt/iproute2/. If you do not make this <tt/ss/
+will work, but it falls back to <tt>/proc</tt> and becomes slow
+like <tt/netstat/, well, a bit faster yet (see section "Some numbers"). 
+
+<sect>Old news
+
+<p>
+In the simplest form <tt/ss/ is equivalent to netstat
+with some small deviations.
+
+<itemize>
+<item><tt/ss -t -a/ dumps all TCP sockets
+<item><tt/ss -u -a/ dumps all UDP sockets
+<item><tt/ss -w -a/ dumps all RAW sockets
+<item><tt/ss -x -a/ dumps all UNIX sockets
+</itemize>
+
+<p>
+Option <tt/-o/ shows TCP timers state.
+Option <tt/-e/ shows some extended information.
+Etc. etc. etc. Seems, all the options of netstat related to sockets
+are supported. Though not AX.25 and other bizarres. :-)
+If someone wants, he can make support for decnet and ipx.
+Some rudimentary support for them is already present in iproute2 libutils,
+and I will be glad to see these new members.
+
+<p>
+However, standard functionality is a bit different:
+
+<p>
+The first: without option <tt/-a/ sockets in states
+<tt/TIME-WAIT/ and <tt/SYN-RECV/ are skipped too.
+It is more reasonable default, I think.
+
+<p>
+The second: format of UNIX sockets is different. It coincides
+with tcp/udp. Though standard kernel still does not allow to
+see write/read queues and peer address of connected UNIX sockets,
+the patch doing this exists.
+
+<p>
+The third: default is to dump only TCP sockets, rather than all of the types.
+
+<p>
+The next: by default it does not resolve numeric host addresses (like <tt/ip/)!
+Resolving is enabled with option <tt/-r/. Service names, usually stored
+in local files, are resolved by default. Also, if service database
+does not contain references to a port, <tt/ss/ queries system
+<tt/rpcbind/. RPC services are prefixed with <tt/rpc./
+Resolution of services may be suppressed with option <tt/-n/.
+
+<p>
+It does not accept "long" options (I dislike them, sorry).
+So, address family is given with family identifier following
+option <tt/-f/ to be algined to iproute2 conventions.
+Mostly, it is to allow option parser to parse
+addresses correctly, but as side effect it really limits dumping
+to sockets supporting only given family. Option <tt/-A/ followed
+by list of socket tables to dump is also supported.
+Logically, id of socket table is different of _address_ family, which is
+another point of incompatibility. So, id is one of
+<tt/all/, <tt/tcp/, <tt/udp/,
+<tt/raw/, <tt/inet/, <tt/unix/, <tt/packet/, <tt/netlink/. See?
+Well, <tt/inet/ is just abbreviation for <tt/tcp|udp|raw/
+and it is not difficult to guess that <tt/packet/ allows
+to look at packet sockets. Actually, there are also some other abbreviations,
+f.e. <tt/unix_dgram/ selects only datagram UNIX sockets.
+
+<p>
+The next: well, I still do not know. :-)
+
+
+
+
+<sect>Time to talk about new functionality.
+
+<p>It is builtin filtering of socket lists. 
+
+<sect1> Filtering by state.
+
+<p>
+<tt/ss/ allows to filter socket states, using keywords
+<tt/state/ and <tt/exclude/, followed by some state
+identifier.
+
+<p>
+State identifier are standard TCP state names (not listed,
+they are useless for you if you already do not know them)
+or abbreviations:
+
+<itemize>
+<item><tt/all/        - for all the states
+<item><tt/bucket/     - for TCP minisockets (<tt/TIME-WAIT|SYN-RECV/)
+<item><tt/big/	      - all except for minisockets
+<item><tt/connected/  - not closed and not listening
+<item><tt/synchronized/ - connected and not <tt/SYN-SENT/
+</itemize>
+
+<p>
+   F.e. to dump all tcp sockets except <tt/SYN-RECV/:
+
+<tscreen><verb>
+   ss exclude SYN-RECV
+</verb></tscreen>
+
+<p>
+   If neither <tt/state/ nor <tt/exclude/ directives
+   are present,
+   state filter defaults to <tt/all/ with option <tt/-a/
+   or to <tt/all/,
+   excluding listening, syn-recv, time-wait and closed sockets.
+
+<sect1> Filtering by addresses and ports.
+
+<p>
+Option list may contain address/port filter.
+It is boolean expression which consists of boolean operation
+<tt/or/, <tt/and/, <tt/not/ and predicates. 
+Actually, all the flavors of names for boolean operations are eaten:
+<tt/&amp/, <tt/&amp&amp/, <tt/|/, <tt/||/, <tt/!/, but do not forget
+about special sense given to these symbols by unix shells and escape
+them correctly, when used from command line.
+
+<p>
+Predicates may be of the folowing kinds:
+
+<itemize>
+<item>A. Address/port match, where address is checked against mask
+      and port is either wildcard or exact. It is one of:
+ 
+<tscreen><verb>
+	dst prefix:port
+	src prefix:port
+	src unix:STRING
+	src link:protocol:ifindex
+	src nl:channel:pid
+</verb></tscreen>
+
+      Both prefix and port may be absent or replaced with <tt/*/,
+      which means wildcard. UNIX socket use more powerful scheme
+      matching to socket names by shell wildcards. Also, prefixes
+      unix: and link: may be omitted, if address family is evident
+      from context (with option <tt/-x/ or with <tt/-f unix/
+      or with <tt/unix/ keyword) 
+
+<p>
+      F.e.
+
+<tscreen><verb>
+	dst 10.0.0.1
+	dst 10.0.0.1:
+	dst 10.0.0.1/32:
+	dst 10.0.0.1:*
+</verb></tscreen>
+   are equivalent and mean socket connected to
+	                 any port on host 10.0.0.1
+
+<tscreen><verb>
+	dst 10.0.0.0/24:22
+</verb></tscreen>
+   sockets connected to port 22 on network
+                          10.0.0.0...255.
+
+<p>
+      Note that port separated of address with colon, which creates
+      troubles with IPv6 addresses. Generally, we interpret the last
+      colon as splitting port. To allow to give IPv6 addresses,
+      trick like used in IPv6 HTTP URLs may be used:
+
+<tscreen><verb>
+      dst [::1]
+</verb></tscreen>
+       are sockets connected to ::1 on any port
+
+<p>
+      Another way is <tt/dst ::1/128/. / helps to understand that
+      colon is part of IPv6 address.
+
+<p>
+      Now we can add another alias for <tt/dst 10.0.0.1/:
+      <tt/dst [10.0.0.1]/. :-)
+
+<p>   Address may be a DNS name. In this case all the addresses are looked
+      up (in all the address families, if it is not limited by option <tt/-f/
+      or special address prefix <tt/inet:/, <tt/inet6/) and resulting
+      expression is <tt/or/ over all of them.  
+
+<item>   B. Port expressions:
+<tscreen><verb>
+      dport &gt= :1024
+      dport != :22
+      sport &lt :32000
+</verb></tscreen>
+      etc.
+
+      All the relations: <tt/&lt/, <tt/&gt/, <tt/=/, <tt/>=/, <tt/=/, <tt/==/,
+      <tt/!=/, <tt/eq/, <tt/ge/, <tt/lt/, <tt/ne/...
+      Use variant which you like more, but not forget to escape special
+      characters when typing them in command line. :-) 
+
+      Note that port number syntactically coincides to the case A!
+      You may even add an IP address, but it will not participate
+      incomparison, except for <tt/==/ and <tt/!=/, which are equivalent
+      to corresponding predicates of type A. F.e.
+<p>
+<tt/dst 10.0.0.1:22/
+    is equivalent to  <tt/dport eq 10.0.0.1:22/
+      and
+      <tt/not dst 10.0.0.1:22/     is equivalent to
+ <tt/dport neq 10.0.0.1:22/
+
+<item>C. Keyword <tt/autobound/. It matches to sockets bound automatically
+      on local system.
+
+</itemize>
+
+
+<sect> Examples
+
+<p>
+<itemize>
+<item>1. List all the tcp sockets in state <tt/FIN-WAIT-1/ for our apache
+   to network 193.233.7/24 and look at their timers:
+
+<tscreen><verb>
+   ss -o state fin-wait-1 \( sport = :http or sport = :https \) \
+                          dst 193.233.7/24
+</verb></tscreen>
+
+   Oops, forgot to say that missing logical operation is
+   equivalent to <tt/and/.
+
+<item> 2. Well, now look at the rest...
+
+<tscreen><verb>
+   ss -o excl fin-wait-1
+   ss state fin-wait-1 \( sport neq :http and sport neq :https \) \
+                       or not dst 193.233.7/24
+</verb></tscreen>
+
+   Note that we have to do _two_ calls of ss to do this.
+   State match is always anded to address/port match.
+   The reason for this is purely technical: ss does fast skip of
+   not matching states before parsing addresses and I consider the
+   ability to skip fastly gobs of time-wait and syn-recv sockets
+   as more important than logical generality.
+
+<item> 3. So, let's look at all our sockets using autobound ports:
+
+<tscreen><verb>
+   ss -a -A all autobound
+</verb></tscreen>
+
+
+<item> 4. And eventually find all the local processes connected
+   to local X servers:
+
+<tscreen><verb>
+   ss -xp dst "/tmp/.X11-unix/*"
+</verb></tscreen>
+
+   Pardon, this does not work with current kernel, patching is required.
+   But we still can look at server side:
+   
+<tscreen><verb>
+   ss -x src "/tmp/.X11-unix/*"
+</verb></tscreen>
+
+</itemize>
+
+
+<sect> Returning to ground: real manual  
+
+<p>
+<sect1> Command arguments
+
+<p> General format of arguments to <tt/ss/ is:
+
+<tscreen><verb>
+       ss [ OPTIONS ] [ STATE-FILTER ] [ ADDRESS-FILTER ]
+</verb></tscreen>
+
+<sect2><tt/OPTIONS/
+<p> <tt/OPTIONS/ is list of single letter options, using common unix
+conventions.
+
+<itemize>
+<item><tt/-h/  - show help page
+<item><tt/-?/  - the same, of course
+<item><tt/-v/, <tt/-V/  - print version of <tt/ss/ and exit
+<item><tt/-s/  - print summary statistics. This option does not parse
+socket lists obtaining summary from various sources. It is useful
+when amount of sockets is so huge that parsing <tt>/proc/net/tcp</tt>
+is painful.
+<item><tt/-D FILE/  - do not display anything, just dump raw information
+about TCP sockets to <tt/FILE/ after applying filters. If <tt/FILE/ is <tt/-/
+<tt/stdout/ is used. 
+<item><tt/-F FILE/  - read continuation of filter from <tt/FILE/.
+Each line of <tt/FILE/ is interpreted like single command line option.
+If <tt/FILE/ is <tt/-/ <tt/stdin/ is used. 
+<item><tt/-r/  - try to resolve numeric address/ports
+<item><tt/-n/  - do not try to resolve ports
+<item><tt/-o/  - show some optional information, f.e. TCP timers
+<item><tt/-i/  - show some infomration specific to TCP (RTO, congestion
+window, slow start threshould etc.)
+<item><tt/-e/  - show even more optional information
+<item><tt/-m/  - show extended information on memory used by the socket.
+It is available only with <tt/tcp_diag/ enabled.
+<item><tt/-p/  - show list of processes owning the socket
+<item><tt/-f FAMILY/ - default address family used for parsing addresses.
+                 Also this option limits listing to sockets supporting
+                 given address family. Currently the following families
+                 are supported: <tt/unix/, <tt/inet/, <tt/inet6/, <tt/link/,
+                 <tt/netlink/.
+<item><tt/-4/ - alias for <tt/-f inet/
+<item><tt/-6/ - alias for <tt/-f inet6/
+<item><tt/-0/ - alias for <tt/-f link/
+<item><tt/-A LIST-OF-TABLES/ - list of socket tables to dump, separated
+                 by commas. The following identifiers are understood:
+                 <tt/all/, <tt/inet/, <tt/tcp/, <tt/udp/, <tt/raw/,
+                 <tt/unix/, <tt/packet/, <tt/netlink/, <tt/unix_dgram/,
+                 <tt/unix_stream/, <tt/packet_raw/, <tt/packet_dgram/.
+<item><tt/-x/ - alias for <tt/-A unix/
+<item><tt/-t/ - alias for <tt/-A tcp/
+<item><tt/-u/ - alias for <tt/-A udp/
+<item><tt/-w/ - alias for <tt/-A raw/
+<item><tt/-a/ - show sockets of all the states. By default sockets
+                in states <tt/LISTEN/, <tt/TIME-WAIT/, <tt/SYN_RECV/
+                and <tt/CLOSE/ are skipped.
+<item><tt/-l/ - show only sockets in state <tt/LISTEN/ 
+</itemize>
+
+<sect2><tt/STATE-FILTER/
+
+<p><tt/STATE-FILTER/ allows to construct arbitrary set of
+states to match. Its syntax is sequence of keywords <tt/state/
+and <tt/exclude/ followed by identifier of state.
+Available identifiers are:
+
+<p>
+<itemize>
+<item> All standard TCP states: <tt/established/, <tt/syn-sent/,
+<tt/syn-recv/, <tt/fin-wait-1/, <tt/fin-wait-2/, <tt/time-wait/,
+<tt/closed/, <tt/close-wait/, <tt/last-ack/, <tt/listen/ and <tt/closing/.
+
+<item><tt/all/ - for all the states 
+<item><tt/connected/ - all the states except for <tt/listen/ and <tt/closed/ 
+<item><tt/synchronized/ - all the <tt/connected/ states except for 
+<tt/syn-sent/
+<item><tt/bucket/ - states, which are maintained as minisockets, i.e.
+<tt/time-wait/ and <tt/syn-recv/.
+<item><tt/big/ - opposite to <tt/bucket/
+</itemize>
+
+<sect2><tt/ADDRESS_FILTER/
+
+<p><tt/ADDRESS_FILTER/ is boolean expression with operations <tt/and/, <tt/or/
+and <tt/not/, which can be abbreviated in C style f.e. as <tt/&amp/,
+<tt/&amp&amp/.
+
+<p>
+Predicates check socket addresses, both local and remote.
+There are the following kinds of predicates:
+
+<itemize>
+<item> <tt/dst ADDRESS_PATTERN/ - matches remote address and port
+<item> <tt/src ADDRESS_PATTERN/ - matches local address and port
+<item> <tt/dport RELOP PORT/    - compares remote port to a number
+<item> <tt/sport RELOP PORT/    - compares local port to a number
+<item> <tt/autobound/           - checks that socket is bound to an ephemeral
+                                  port
+</itemize>
+
+<p><tt/RELOP/ is some of <tt/&lt=/, <tt/&gt=/, <tt/==/ etc.
+To make this more convinient for use in unix shell, alphabetic
+FORTRAN-like notations <tt/le/, <tt/gt/ etc. are accepted as well.
+
+<p>The format and semantics of <tt/ADDRESS_PATTERN/ depends on address
+family.
+
+<itemize>
+<item><tt/inet/ - <tt/ADDRESS_PATTERN/ consists of IP prefix, optionally
+followed by colon and port. If prefix or port part is absent or replaced
+with <tt/*/, this means wildcard match.
+<item><tt/inet6/ - The same as <tt/inet/, only prefix refers to an IPv6
+address. Unlike <tt/inet/ colon becomes ambiguous, so that <tt/ss/ allows
+to use scheme, like used in URLs, where address is suppounded with
+<tt/[/ ... <tt/]/.
+<item><tt/unix/ - <tt/ADDRESS_PATTERN/ is shell-style wildcard.
+<item><tt/packet/ - format looks like <tt/inet/, only interface index
+stays instead of port and link layer protocol id instead of address.
+<item><tt/netlink/ - format looks like <tt/inet/, only socket pid
+stays instead of port and netlink channel instead of address.
+</itemize>
+
+<p><tt/PORT/ is syntactically <tt/ADDRESS_PATTERN/ with wildcard
+address part. Certainly, it is undefined for UNIX sockets. 
+
+<sect1> Environment variables
+
+<p>
+<tt/ss/ allows to change source of information using various
+environment variables:
+
+<p>
+<itemize>
+<item> <tt/PROC_SLABINFO/  to override <tt>/proc/slabinfo</tt>
+<item> <tt/PROC_NET_TCP/  to override <tt>/proc/net/tcp</tt>
+<item> <tt/PROC_NET_UDP/  to override <tt>/proc/net/udp</tt>
+<item> etc.
+</itemize> 
+
+<p>
+Variable <tt/PROC_ROOT/ allows to change root of all the <tt>/proc/</tt>
+hierarchy.
+
+<p>
+Variable <tt/TCPDIAG_FILE/ prescribes to open a file instead of
+requesting kernel to dump information about TCP sockets.
+
+
+<p> This option is used mainly to investigate bug reports,
+when dumps of files usually found in <tt>/proc/</tt> are recevied
+by e-mail.
+
+<sect1> Output format
+
+<p>Six columns. The first is <tt/Netid/, it denotes socket type and
+transport protocol, when it is ambiguous: <tt/tcp/, <tt/udp/, <tt/raw/,
+<tt/u_str/ is abbreviation for <tt/unix_stream/, <tt/u_dgr/ for UNIX
+datagram sockets, <tt/nl/ for netlink, <tt/p_raw/ and <tt/p_dgr/ for
+raw and datagram packet sockets. This column is optional, it will
+be hidden, if filter selects an unique netid.
+
+<p>
+The second column is <tt/State/. Socket state is displayed here.
+The names are standard TCP names, except for <tt/UNCONN/, which
+cannot happen for TCP, but normal for not connected sockets
+of another types. Again, this column can be hidden.
+
+<p>
+Then two columns (<tt/Recv-Q/ and <tt/Send-Q/) showing amount of data
+queued for receive and transmit.
+
+<p>
+And the last two columns display local address and port of the socket
+and its peer address, if the socket is connected.
+
+<p>
+If options <tt/-o/, <tt/-e/ or <tt/-p/ were given, options are
+displayed not in fixed positions but separated by spaces pairs:
+<tt/option:value/. If value is not a single number, it is presented
+as list of values, enclosed to <tt/(/ ... <tt/)/ and separated with
+commas. F.e.
+
+<tscreen><verb>
+   timer:(keepalive,111min,0)
+</verb></tscreen>
+is typical format for TCP timer (option <tt/-o/).
+
+<tscreen><verb>
+   users:((X,113,3))
+</verb></tscreen>
+is typical for list of users (option <tt/-p/).
+
+
+<sect>Some numbers
+
+<p>
+Well, let us use <tt/pidentd/ and a tool <tt/ibench/ to measure
+its performance. It is 30 requests per second here. Nothing to test,
+it is too slow. OK, let us patch pidentd with patch from directory
+Patches. After this it handles about 4300 requests per second
+and becomes handy tool to pollute socket tables with lots of timewait
+buckets.
+
+<p>
+So, each test starts from pollution tables with 30000 sockets
+and then doing full dump of the table piped to wc and measuring
+timings with time:
+
+<p>Results:
+
+<itemize>
+<item> <tt/netstat -at/ - 15.6 seconds
+<item> <tt/ss -atr/, but without <tt/tcp_diag/     - 5.4 seconds
+<item> <tt/ss -atr/ with <tt/tcp_diag/     - 0.47 seconds
+</itemize>
+
+No comments. Though one comment is necessary, most of time
+without <tt/tcp_diag/ is wasted inside kernel with completely
+blocked networking. More than 10 seconds, yes. <tt/tcp_diag/
+does the same work for 100 milliseconds of system time.
+
+</article>

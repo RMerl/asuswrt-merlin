@@ -1,0 +1,17 @@
+libexif/canon/mnote-canon-entry.c
+libexif/canon/mnote-canon-tag.c
+libexif/exif-byte-order.c
+libexif/exif-data.c
+libexif/exif-entry.c
+libexif/exif-format.c
+libexif/exif-loader.c
+libexif/exif-log.c
+libexif/exif-tag.c
+libexif/fuji/mnote-fuji-entry.c
+libexif/fuji/mnote-fuji-tag.c
+libexif/olympus/mnote-olympus-entry.c
+libexif/olympus/mnote-olympus-tag.c
+libexif/pentax/mnote-pentax-entry.c
+libexif/pentax/mnote-pentax-tag.c
+test/nls/test-codeset.c
+test/nls/test-nls.c

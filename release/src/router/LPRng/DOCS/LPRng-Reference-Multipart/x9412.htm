@@ -1,0 +1,368 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Using SSL for Authentication</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title=
+    "Using Kerberos 4 for Authentication" href="x9386.htm">
+    <link rel="NEXT" title="Using MD5 for Authentication" href=
+    "x9489.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x9386.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x9489.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN9412">17.15. Using SSL for
+      Authentication</a></h1>
+
+      <p><b class="APPLICATION">LPRng</b> has built-in support for
+      using SSL as an authentication method. The implementation is
+      based on OpenSSL 0.9.6c and the associated libraries as of of
+      3 June 2002. The distribution was obtained from the OpenSSL
+      group from the <span class="emphasis"><i class="EMPHASIS"><a
+      href="http://www.openssl.org" target=
+      "_top">http://www.openssl.org</a></i></span> Website.</p>
+
+      <p>SSL authentication is based a private key/secret key
+      technology, where the various keys are placed in files (or
+      data structures) called <span class="emphasis"><i class=
+      "EMPHASIS">certificates</i></span> or <var class=
+      "LITERAL">certs</var>, and the certificates are <span class=
+      "emphasis"><i class="EMPHASIS">signed</i></span> by
+      calculating a checksum over the certificate, encypting the
+      checksum and other information using the private key of a
+      <span class="emphasis"><i class="EMPHASIS">signing</i></span>
+      certificate. The top level or <span class="emphasis"><i
+      class="EMPHASIS">root</i></span> certificate is signed by its
+      own key; lower level signing certificates can be created
+      which are signed by the top level or root certificate, and in
+      turn can sign other signing certificates. User certificates
+      can be created and signed by a signing certificate which can
+      be used in the SSL protocol for authentication purposes. The
+      following objects are needed to use SSL encryption.</p>
+
+      <ol type="1">
+        <li>
+          <p>A top level or root certificates and a set of signing
+          certificates. By convention, these are stored in the <tt
+          class="FILENAME">/etc/lpd/ssl.ca</tt> directory; the root
+          certificate is usually the <tt class=
+          "FILENAME">ca.crt</tt> file.</p>
+        </li>
+
+        <li>
+          <p>Each server has a certificate and private key file
+          which are used to identify the server and sign the SSL
+          messages. The private key file is usually stored in an
+          encrypted form and a password is required unlock the
+          file. By convention, the server files are stored in the
+          <tt class="FILENAME">/etc/lpd/ssl.server</tt> directory;
+          the <tt class="FILENAME">server.crt</tt> file contains
+          the server certificate and (encrypted) private key; the
+          <tt class="FILENAME">server.pwd</tt> file contains the
+          password to decrypt the private key.</p>
+        </li>
+
+        <li>
+          <p>Each user has a certificate and private key file which
+          are used to identify the user and sign the SSL messages.
+          The private key file is usually stored in an encrypted
+          form and a password is required unlock the file. By
+          convention, the user files are stored in the <tt class=
+          "FILENAME">${HOME}/.lpr</tt> directory; the <tt class=
+          "FILENAME">client.crt</tt> file contains the client
+          certificate and (encrypted) private key; the <tt class=
+          "FILENAME">client.pwd</tt> file contains the password to
+          decrypt the private key.</p>
+        </li>
+
+        <li>
+          <p>A utility to create and manage the SSL certificate
+          files.</p>
+        </li>
+      </ol>
+      &#13;<br>
+      <br>
+
+      <p>The locations of the SSL files can be specified by various
+      options to <b class="APPLICATION">configure</b> facility and
+      by values in the the <var class="LITERAL">lpd.conf</var>
+      file.</p>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9445">17.15.1. Certificate
+        Management</a></h2>
+
+        <p>The <b class="APPLICATION">lprng_cert</b> utility is
+        used to set up the various directories and files required
+        for SSL authentication. This code was derived from similar
+        facilities developed for the <var class=
+        "LITERAL">mod_ssl</var> extensions to the <b class=
+        "APPLICATION">Apache</b> web server. This interactive
+        utility is very verbose and has extensive comments and
+        assistance.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9451"></a>
+<pre class="SCREEN">
+    h110: {111} % lprng_certs
+    lprng_certs -- LPRng SSL Certificate Management
+    Copyright (c) 2002 Patrick Powell
+    Based on CCA by Ralf S. Engelschall
+    (Copyright (c) 1998-2001 Ralf S. Engelschall, All Rights Reserved.)
+    
+    usage: lprng_certs option
+      init              - make directory structure
+      newca             - make new root CA and default values for certs
+      defaults          - set new default values for certs
+      gen               - generate user, server, or signing cert
+      verify [cert]     - verify cert file
+      index [dir]       - make certificate index files in directory dir
+      encrypt keyfile   - set or change password on private key file
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The <var class="LITERAL">lprng_certs init</var> option
+        will create the necessary directories for the <b class=
+        "APPLICATION">LPRng</b> software on a system. The <var
+        class="LITERAL">lprng_certs newca</var> option will create
+        the root level certificate and set up a set of defaults for
+        the creation of other certificates. The <var class=
+        "LITERAL">lprng_certs defaults</var> option allows viewing
+        and editting of the various default values. The <var class=
+        "LITERAL">lprng_certs gen</var> option is used to create
+        and sign new certificate files. The OpenSSL software
+        assumes that the file names of the signing certificate
+        files have a special format; the <var class=
+        "LITERAL">lprng_certs index</var> creates links of the
+        required format to the certificate files. Finally, the <var
+        class="LITERAL">lprng_certs verify</var> and the <var
+        class="LITERAL">lprng_certs encrypt</var> facilities can be
+        used to verify that the certificate files have the proper
+        format and to change the private key password
+        respectively.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9462">17.15.2. Creating Root
+        Certificate</a></h2>
+
+        <p>The <var class="LITERAL">lprng_certs newca</var> option
+        is used to create a new root signing certificate and to
+        establish defaults.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9466"></a>
+<pre class="SCREEN">
+    h110: {112} #&gt; lprng_certs newca
+    lprng_certs -- LPRng SSL Certificate Management
+    Copyright (c) 2002 Patrick Powell
+    Based on CCA by Ralf S. Engelschall
+    (Copyright (c) 1998-2001 Ralf S. Engelschall, All Rights Reserved.)
+    
+    INITIALIZATION - SET DEFAULTS
+    ...  
+    ______________________________________________________________________
+    
+    STEP 1: Generating RSA private key for CA (1024 bit)
+    ______________________________________________________________________
+    
+    STEP 2: Generating X.509 certificate signing request for CA
+    ______________________________________________________________________
+    
+    STEP 3: Generating X.509 certificate for CA signed by itself
+    ______________________________________________________________________
+    
+    RESULT:
+    /etc/lpd/ssl.ca/ca.crt:
+    /C=US/ST=California/L=San Diego/O=Astart/OU=Certificate Authority/\
+     CN=Astart CA/Email=id@astart.com
+    error 18 at 0 depth lookup:self signed certificate
+    OK
+    ______________________________________________________________________
+    
+    STEP 4. Encrypting RSA private key with a pass phrase for security
+    The contents of the certificate key file (the generated private
+    key) should be echo kept secret, especially so if it is used to
+    sign Certificates or for User authentication.  SSL experts strongly
+    recommend you to encrypt the key file with a Triple-DES cipher and
+    a Pass Phrase.  When using LPRng, you provide the password via a
+    file specified by the LPR_SSL_PASSWORD environent variable, or in
+    the ${HOME}/.lpr/client.pwd file.  The LPD server uses the
+    ssl_server_password_file option to specify the location of a file
+    containing the password.  See the LPRng Reference Manual for details, or the
+    printcap(5) man page.
+    
+    key file is /etc/lpd/ssl.ca/ca.key
+    Encrypt the private key now? [Y/n]: y
+    Fine, you're using an encrypted private key to sign CERTS.
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9468">17.15.3. Creating
+        Client and Server Certificates</a></h2>
+
+        <p>The <var class="LITERAL">lprng_certs gen</var> option
+        allows the creation of client and server identification
+        certificates. By convention, these are created in a default
+        directory and the system administrator then copies them to
+        the appropriate client or server directory.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9472"></a>
+<pre class="SCREEN">
+    h110: {112} #&gt; lprng_certs gen
+    lprng_certs -- LPRng SSL Certificate Management
+    Copyright (c) 2002 Patrick Powell
+    Based on CCA by Ralf S. Engelschall
+    (Copyright (c) 1998-2001 Ralf S. Engelschall, All Rights Reserved.)
+    
+    CERTIFICATE GENERATION
+    What type of certificate? User/Server/Signing Authority/Help? [u/s/a/H]
+    Create in '/etc/lpd/ssl.certs' [return for yes, or specify directory]
+    CERT name 'user-10'? [return for yes, or specify name] papowell
+    CERT name 'papowell'? [return for yes, or specify name] 
+    Creating papowell in /etc/lpd/ssl.certs
+    Sign with Certificate '/etc/lpd/ssl.ca/ca.crt' \
+       [return for yes, ? for list, or specify cert file] ?
+    Possible CERTS in directory '/etc/lpd/ssl.ca' are:
+    /etc/lpd/ssl.ca/ca.crt
+    /etc/lpd/ssl.ca/signer1.crt
+    /etc/lpd/ssl.ca/tsign.crt
+    Sign with Certificate '/etc/lpd/ssl.ca/ca.crt'  \
+      [return for yes, ? for list, or specify cert file] signer1
+    Match Found /etc/lpd/ssl.ca/signer1.crt
+    Sign with Certificate '/etc/lpd/ssl.ca/signer1.crt'  \
+      [return for yes, ? for list, or specify cert file]
+    Private key in /etc/lpd/ssl.ca/signer1.crt
+    
+    Generating user Certificate [papowell] 
+    
+    STEP 1: Generating RSA private key for user (1024 bit)
+    
+    STEP 2: Generating X.509 certificate signing request for user
+    ....
+    
+    STEP 3: Generating X.509 certificate signed by /etc/lpd/ssl.ca/signer1.crt
+    ...
+    
+    RESULT:
+    /etc/lpd/ssl.certs/papowell.crt: OK
+    
+    STEP 4. Enrypting RSA private key /etc/lpd/ssl.certs/papowell.key
+      with a pass phrase for security
+    
+    Encrypt the private key now? [Y/n]: Fine, you're using an encrypted
+      private key to sign CERTS.
+    
+    STEP 5: Combine CERT and KEY file
+    Generate single CERT and KEY file? [Y/n] 
+    
+    Use the following commands to examine the CERT and KEY files:
+       openssl x509 -text -in /etc/lpd/ssl.certs/papowell.crt
+       openssl rsa -text -in /etc/lpd/ssl.certs/papowell.crt
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>After the certificate file has been created, then it
+        should be copied to the appropriate location: <tt class=
+        "FILENAME">/etc/lpd/ssl.server/server.crt</tt> and the
+        password in <tt class=
+        "FILENAME">/etc/lpd/ssl.server/server.pwd</tt>, for a
+        server or <tt class="FILENAME">${HOME}/.lpr/client.crt</tt>
+        and the password in <tt class=
+        "FILENAME">${HOME}/.lpr/client.pwd</tt> for a user.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9479">17.15.4. Creating
+        Signing Certificates</a></h2>
+
+        <p>Having only one signing certificate, i.e. - the root
+        certificate, may make it difficult to delegate authority
+        for the creation of user certificates and/or server
+        certificates. The <var class="LITERAL">lprng_certs
+        gen</var> facility can be used to create a certificate that
+        can be used to sign other certificates.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9483">17.15.5. Permissions
+        and Certificate Revocation</a></h2>
+
+        <p>The certificate revocation facility is not implemented
+        in <b class="APPLICATION">LPRng</b>, due to various
+        technical and management issues. Instead, the <var class=
+        "LITERAL">AUTHUSER</var> and <var class=
+        "LITERAL">AUTHCA</var> and</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x9386.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x9489.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Using Kerberos
+          4 for Authentication</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Using MD5 for
+          Authentication</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

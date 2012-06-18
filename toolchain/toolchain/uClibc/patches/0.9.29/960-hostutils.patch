@@ -1,0 +1,14 @@
+Allow hostutils to be build from top Makefile
+
+diff -urB uClibc-0.9.29/Makefile.in uClibc/Makefile.in
+--- uClibc-0.9.29/Makefile.in	2007-03-19 12:49:04.000000000 +0300
++++ uClibc/Makefile.in	2009-09-07 12:20:35.000000000 +0400
+@@ -272,6 +272,8 @@
+ 	fi
+ endif
+ 
++hostutils:
++	$(Q)$(MAKE) CROSS="$(CROSS)" CC="$(CC)" HOSTCC="$(HOSTCC)" -C utils hostutils
+ utils:
+ 	$(Q)$(MAKE) CROSS="$(CROSS)" CC="$(CC)" -C utils
+ 

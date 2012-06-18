@@ -1,0 +1,118 @@
+<!-- FreeBSD Documentation Project, Extended DocBook DTD
+
+     This DTD builds upon the DocBook 3.1 DTD. It extends it in order to
+     add some new elements.
+
+     The comment style and section headings are drawn from the DocBook DTD.
+
+     The FPI for this DTD is "-//FreeBSD//DTD DocBook V3.1-Based Extension//EN"
+
+     $FreeBSD: doc/share/sgml/freebsd.dtd,v 1.4 2000/02/14 01:30:48 nik Exp $
+-->
+
+<!-- ..................................................................... -->
+<!-- Parameter entities .................................................. -->
+
+<!-- These parameter entities have specific meanings, and default to 
+     "IGNORE". The SGML parser is free to redefine them to "INCLUDE" to
+     cause special processing.                                             -->
+
+<!ENTITY % output.html  "IGNORE">    <!-- HTML output is being generated   -->
+<!ENTITY % output.print "IGNORE">    <!-- Print output is being generated  -->
+
+<!-- ..................................................................... -->
+<!-- Entities for element classes and mixtures ........................... -->
+
+<!-- Object-level classes ................................................ -->
+
+<!ENTITY % local.list.class "|FAQList">
+
+<!-- Character level classes -->
+<!ENTITY % local.tech.char.class "|HostID|Username|Devicename|MakeTarget|MakeVar">
+
+<!-- OS Version attributes ...............................................
+
+     Each element has three attributes which specify which version(s) of
+     FreeBSD the element's content applies to.  It is up to the
+     pre-processor to include or exclude elements based on the value of
+     these attributes.                                                     -->
+<!ENTITY % local.common.attrib
+     "OSVersionMin        CDATA        #IMPLIED
+      OSVersionMax        CDATA        #IMPLIED
+      OSVersionIn         CDATA        #IMPLIED">
+
+<!-- Altered general entities ............................................
+
+     The HTML 4.0 DTD includes some new ISO entities. Most browsers don't
+     support them yet. Change the definition of some of these entities to
+     character strings that the browsers will support.
+
+     This does not apply when generating printed output, so these are 
+     contained within a %output.html; marked section.
+
+     As browser technology improves, these definitions can be removed.     -->
+
+<![ %output.html; [
+<!ENTITY ldquo  "``">
+<!ENTITY rdquo  "''">
+<!ENTITY lsquo  "`">
+<!ENTITY rsquo  "'">
+<!ENTITY mdash  "--">
+<!ENTITY ndash  "-">
+<!ENTITY hellip "...">
+<!ENTITY dollar "$">
+]]>
+
+<!-- Pull in the original DTD -->
+<!ENTITY % orig-docbook PUBLIC 
+  "-//OASIS//DTD DocBook V4.0//EN"
+>
+<!-- "-//OASIS//DTD DocBook V3.1//EN" -->
+%orig-docbook;
+
+<!-- ...................................................................... -->
+<!-- Inline, link, and ubiquitous elements ................................ -->
+
+<!-- Technical and computer terms ......................................... -->
+
+<!ELEMENT HostID - - ((%cptr.char.mix;)+)>
+<!ATTLIST HostID
+                --
+                Role: More specific information about this hostname.
+                If not specified then the default is 'hostname'.
+                --
+                Role    (Hostname
+                        |Domainname
+                        |FQDN
+                        |IPAddr
+                        |Netmask
+                        |MAC)      #IMPLIED
+                %common.attrib;
+>
+
+<!ELEMENT Username - - ((%cptr.char.mix;)+)>
+<!ATTLIST Username
+                %common.attrib;
+>
+
+<!ELEMENT Devicename - - ((%cptr.char.mix;)+)>
+<!ATTLIST Devicename
+                %common.attrib;
+>
+
+<!ELEMENT MakeTarget - - ((%cptr.char.mix;)+)>
+<!ATTLIST MakeTarget
+                %common.attrib;
+>
+
+<!ELEMENT MakeVar - - ((%cptr.char.mix;)+)>
+<!ATTLIST MakeVar
+                %common.attrib;
+>
+
+<!-- ...................................................................... -->
+<!-- General entities for reuse ........................................... -->
+
+<!ENTITY prompt.root		"<prompt>#</prompt>">
+<!ENTITY prompt.user		"<prompt>%</prompt>">
+

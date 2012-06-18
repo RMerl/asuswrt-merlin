@@ -1,0 +1,45 @@
+Version 0.1.1
+  - Added support for SWC-E100.
+  - Added support for Mezon (www.mezon.lt) version of SWC-U200. You
+    have to select the SSID from the command line at the moment, but
+    this will be handled somewhat better in the future.
+  - Updated udev rules to start madwimax by default when device is
+    plugged.
+  - Added madwimax manual page.
+  - Change the default installation path of madwimax config files from
+    $prefix/etc to $prefix/etc/madwimax.
+  - Added several new options.
+  - Lots of bugs fixed.
+  - Cleaned up some pieces of code.
+
+Version 0.1.0
+  - Added a table of supported devices (fixes inability to connect to
+    the devices with BL22 firmware out of the box).
+  - Also device mathcing can now be controlled by the command-line options
+    (namely --device and --exact-device). See the help.
+  - Added an option to detach pseudo-DVD kernel driver by the driver
+    itself (so it works without udev/sysfs).
+  - Now autotools are used for build system.
+  - The driver can run user-supplied scripts on network connect/disconnect.
+  - TAP interface mtu is set to 1386 at startup.
+  - Can now log to the specified file/syslog (when daemonized).
+  - Allocated network interface is called wimaxN instead of tapN.
+  - Various fixes and enhancements.
+
+Version 0.0.2
+  - Fixed reconnection issue. The driver was not able to repair a failed
+    connection at all.
+  - Fixed some rare startup problems. The driver now flushes the garbage
+    from the previous session.
+  - Added command-line options parsing.
+  - Added support for diode control.
+  - Added an option to daemonize the driver.
+  - The driver now brings the TAP interface up when the device connects
+    to the network and down when the connection is lost.
+  - The driver immediately exits when it founds device unplugged so now
+    it can be safely started by udev when device is plugged.
+  - Various minor fixes.
+  - Cleaned up code.
+
+Version 0.0.1
+  - Initial networking support.

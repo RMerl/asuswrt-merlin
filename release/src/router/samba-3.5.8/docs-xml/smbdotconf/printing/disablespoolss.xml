@@ -1,0 +1,23 @@
+<samba:parameter name="disable spoolss"
+                 context="G"
+				 type="boolean"
+		 print="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>Enabling this parameter will disable Samba's support
+    for the SPOOLSS set of MS-RPC's and will yield identical behavior
+    as Samba 2.0.x.  Windows NT/2000 clients will downgrade to using
+    Lanman style printing commands. Windows 9x/ME will be unaffected by
+    the parameter. However, this will also disable the ability to upload
+    printer drivers to a Samba server via the Windows NT Add Printer
+    Wizard or by using the NT printer properties dialog window.  It will
+    also disable the capability of Windows NT/2000 clients to download
+    print drivers from the Samba host upon demand.
+    <emphasis>Be very careful about enabling this parameter.</emphasis>
+</para>
+</description>
+
+<related>use client driver</related>
+
+<value type="default">no</value>
+</samba:parameter>

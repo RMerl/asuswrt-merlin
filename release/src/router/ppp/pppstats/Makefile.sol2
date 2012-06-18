@@ -1,0 +1,20 @@
+#
+# pppstats Makefile for SVR4 systems
+# $Id: Makefile.sol2,v 1.1.1.4 2003/10/14 08:09:54 sparq Exp $
+#
+
+include ../solaris/Makedefs
+
+CFLAGS = -DSTREAMS -I../include $(COPTS)
+
+all: pppstats
+
+pppstats: pppstats.c
+	$(CC) $(CFLAGS) -o pppstats pppstats.c
+
+install: pppstats
+	$(INSTALL) -f $(BINDIR) pppstats
+	$(INSTALL) -m 444 -f $(MANDIR)/man8 pppstats.8
+
+clean:
+	rm -f pppstats *~ core

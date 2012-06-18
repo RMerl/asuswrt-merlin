@@ -1,0 +1,75 @@
+<!-- 
+
+     File isogrk1.ent produced by the dsssl script ent.dsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments in the STIX proposal for characters
+     for Mathematics.
+
+     The STIX assignments are temporary and will change if
+     the proposal or some variant of it is adopted by the
+     Unicode Consortium.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+-->
+
+<!ENTITY agr        "&#945;"   ><!--U03B1 =small alpha, Greek -->
+<!ENTITY Agr        "&#913;"   ><!--U0391 =capital Alpha, Greek -->
+<!ENTITY bgr        "&#946;"   ><!--U03B2 =small beta, Greek -->
+<!ENTITY Bgr        "&#914;"   ><!--U0392 =capital Beta, Greek -->
+<!ENTITY dgr        "&#948;"   ><!--U03B4 =small delta, Greek -->
+<!ENTITY Dgr        "&#916;"   ><!--U0394 =capital Delta, Greek -->
+<!ENTITY eegr       "&#951;"   ><!--U03B7 =small eta, Greek -->
+<!ENTITY egr        "&#949;"   ><!--U03B5 =small epsilon, Greek -->
+<!ENTITY EEgr       "&#919;"   ><!--U0397 =capital Eta, Greek -->
+<!ENTITY Egr        "&#917;"   ><!--U0395 =capital Epsilon, Greek -->
+<!ENTITY ggr        "&#947;"   ><!--U03B3 =small gamma, Greek -->
+<!ENTITY Ggr        "&#915;"   ><!--U0393 =capital Gamma, Greek -->
+<!ENTITY igr        "&#953;"   ><!--U03B9 =small iota, Greek -->
+<!ENTITY Igr        "&#921;"   ><!--U0399 =capital Iota, Greek -->
+<!ENTITY kgr        "&#954;"   ><!--U03BA =small kappa, Greek -->
+<!ENTITY khgr       "&#967;"   ><!--U03C7 =small chi, Greek -->
+<!ENTITY Kgr        "&#922;"   ><!--U039A =capital Kappa, Greek -->
+<!ENTITY KHgr       "&#935;"   ><!--U03A7 =capital Chi, Greek -->
+<!ENTITY lgr        "&#955;"   ><!--U03BB =small lambda, Greek -->
+<!ENTITY Lgr        "&#923;"   ><!--U039B =capital Lambda, Greek -->
+<!ENTITY mgr        "&#956;"   ><!--U03BC =small mu, Greek -->
+<!ENTITY Mgr        "&#924;"   ><!--U039C =capital Mu, Greek -->
+<!ENTITY ngr        "&#957;"   ><!--U03BD =small nu, Greek -->
+<!ENTITY Ngr        "&#925;"   ><!--U039D =capital Nu, Greek -->
+<!ENTITY ogr        "&#959;"   ><!--U03BF =small omicron, Greek -->
+<!ENTITY ohgr       "&#969;"   ><!--U03C9 =small omega, Greek -->
+<!ENTITY Ogr        "&#927;"   ><!--U039F =capital Omicron, Greek -->
+<!ENTITY OHgr       "&#937;"   ><!--U03A9 =capital Omega, Greek -->
+<!ENTITY pgr        "&#960;"   ><!--U03C0 =small pi, Greek -->
+<!ENTITY phgr       "&#966;"   ><!--U03C6 =small phi, Greek -->
+<!ENTITY psgr       "&#968;"   ><!--U03C8 =small psi, Greek -->
+<!ENTITY Pgr        "&#928;"   ><!--U03A0 =capital Pi, Greek -->
+<!ENTITY PHgr       "&#934;"   ><!--U03A6 =capital Phi, Greek -->
+<!ENTITY PSgr       "&#936;"   ><!--U03A8 =capital Psi, Greek -->
+<!ENTITY rgr        "&#961;"   ><!--U03C1 =small rho, Greek -->
+<!ENTITY Rgr        "&#929;"   ><!--U03A1 =capital Rho, Greek -->
+<!ENTITY sfgr       "&#962;"   ><!--U03C2 =final small sigma, Greek -->
+<!ENTITY sgr        "&#963;"   ><!--U03C3 =small sigma, Greek -->
+<!ENTITY Sgr        "&#931;"   ><!--U03A3 =capital Sigma, Greek -->
+<!ENTITY tgr        "&#964;"   ><!--U03C4 =small tau, Greek -->
+<!ENTITY thgr       "&#952;"   ><!--U03B8 =small theta, Greek -->
+<!ENTITY Tgr        "&#932;"   ><!--U03A4 =capital Tau, Greek -->
+<!ENTITY THgr       "&#920;"   ><!--U0398 =capital Theta, Greek -->
+<!ENTITY ugr        "&#965;"   ><!--U03C5 =small upsilon, Greek -->
+<!ENTITY Ugr        "&#933;"   ><!--U03A5 =capital Upsilon, Greek -->
+<!ENTITY xgr        "&#958;"   ><!--U03BE =small xi, Greek -->
+<!ENTITY Xgr        "&#926;"   ><!--U039E =capital Xi, Greek -->
+<!ENTITY zgr        "&#950;"   ><!--U03B6 =small zeta, Greek -->
+<!ENTITY Zgr        "&#918;"   ><!--U0396 =capital Zeta, Greek -->

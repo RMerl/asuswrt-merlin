@@ -1,0 +1,218 @@
+@node  Installation, Basic commands, Overview, Top
+@comment  node-name,  next,  previous,  up
+@chapter Installation
+
+@cindex How to install Zebra
+@cindex Installation
+@cindex Installing Zebra
+@cindex Building the system
+@cindex Making Zebra
+
+  There are three steps for installing the software: configuration,
+compilation, and installation.
+
+@menu
+* Configure the Software::      
+* Build the Software::          
+* Install the Software::        
+@end menu
+
+  The easiest way to get Zebra running is to issue the following
+commands:
+
+@example
+% configure
+% make
+% make install
+@end example
+
+@node Configure the Software, Build the Software, Installation, Installation
+@comment  node-name,  next,  previous,  up
+@section Configure the Software
+
+@cindex Configuration options
+@cindex Options for configuring
+@cindex Build options
+@cindex Distribution configuration
+@cindex Options to @code{./configure}
+ 
+  Zebra has an excellent configure script which
+automatically detects most host configurations.  There are several
+additional configure options you can use to turn off IPv6 support, to
+disable the compilation of specific daemons, and to enable SNMP support.
+
+@table @option
+@item --enable-guile
+Turn on compilation of the zebra-guile interpreter.  You will need the
+guile library to make this.  zebra-guile implementation is not yet
+finished.  So this option is only useful for zebra-guile developers.
+@item --disable-ipv6
+Turn off IPv6 related features and daemons.  Zebra configure script
+automatically detects IPv6 stack.  But sometimes you might want to
+disable IPv6 support of Zebra.
+@item --disable-zebra
+Do not build zebra daemon.
+@item --disable-ripd
+Do not build ripd.
+@item --disable-ripngd
+Do not build ripngd.
+@item --disable-ospfd
+Do not build ospfd.
+@item --disable-ospf6d
+Do not build ospf6d.
+@item --disable-bgpd
+Do not build bgpd.
+@item --disable-bgp-announce
+Make @command{bgpd} which does not make bgp announcements at all.  This
+feature is good for using @command{bgpd} as a BGP announcement listener.
+@item --enable-netlink
+Force to enable @sc{gnu}/Linux netlink interface.  Zebra configure
+script detects netlink interface by checking a header file.  When the header
+file does not match to the current running kernel, configure script will
+not turn on netlink support.
+@item --enable-snmp
+Enable SNMP support.  By default, SNMP support is disabled.
+@end table
+
+You may specify any combination of the above options to the configure
+script.  By default, the executables are placed in @file{/usr/local/sbin} 
+and the configuration files in @file{/usr/local/etc}. The @file{/usr/local/}
+installation prefix and other directories may be changed using the following 
+options to the configuration script.
+
+@table @option
+@item --prefix=@var{prefix}
+Install architecture-independent files in @var{prefix} [/usr/local].
+@item --sysconfdir=@var{dir}
+Read-only sample configuration file in @var{dir} [@var{prefix}/etc].
+@end table
+
+@example
+% ./configure --disable-ipv6
+@end example
+
+This command will configure zebra and the routing daemons.
+
+@cindex Configuring Zebra
+@cindex Configuration the software build
+@cindex Building on Linux boxes
+@cindex Linux configurations
+
+There are several options available only to @sc{gnu}/Linux systems:
+@footnote{GNU/Linux has very flexible kernel configuration features.  If
+you use GNU/Linux, make sure that the current kernel configuration is
+what you want.  Zebra will run with any kernel configuration but some
+recommendations do exist.
+
+@table @var
+
+@item CONFIG_NETLINK
+Kernel/User netlink socket.  
+This is a brand new feature which enables
+an advanced interface between the Linux kernel and Zebra (@pxref{Kernel Interface}).
+
+@item CONFIG_RTNETLINK
+Routing messages.
+This makes it possible to receive netlink routing messages.  If you
+specify this option, @command{zebra} can detect routing information
+updates directly from the kernel (@pxref{Kernel Interface}).
+
+@item CONFIG_IP_MULTICAST
+IP: multicasting.  
+This option should be specified when you use @command{ripd} or
+@command{ospfd} because these protocols use multicast.
+
+@end table
+
+IPv6 support has been added in @sc{gnu}/Linux kernel version 2.2.  If you
+try to use the Zebra IPv6 feature on a @sc{gnu}/Linux kernel, please
+make sure the following libraries have been installed.  Please note that
+these libraries will not be needed when you uses @sc{gnu} C library 2.1
+or upper.
+
+@table @code
+
+@item inet6-apps
+The @code{inet6-apps} package includes basic IPv6 related libraries such
+as @code{inet_ntop} and @code{inet_pton}.  Some basic IPv6 programs such
+as @command{ping}, @command{ftp}, and @command{inetd} are also
+included. The @code{inet-apps} can be found at
+@url{ftp://ftp.inner.net/pub/ipv6/}.
+
+@item net-tools
+The @code{net-tools} package provides an IPv6 enabled interface and
+routing utility.  It contains @command{ifconfig}, @command{route},
+@command{netstat}, and other tools.  @code{net-tools} may be found at
+@url{http://www.tazenda.demon.co.uk/phil/net-tools/}.
+
+@end table
+@c A - end of footnote 
+}.
+
+@node Build the Software, Install the Software, Configure the Software, Installation
+@comment  node-name,  next,  previous,  up
+@section Build the Software
+
+After configuring the software, you will need to compile it for your
+system. Simply issue the command @command{make} in the root of the source
+directory and the software will be compiled. If you have *any* problems
+at this stage, be certain to send a bug report @xref{Bug Reports}.
+
+@example
+% ./configure
+.
+.
+.
+./configure output
+.
+.
+.
+% make
+@end example
+@c A - End of node, Building the Software
+
+
+@node Install the Software,  , Build the Software, Installation
+@comment  node-name,  next,  previous,  up
+@section Install the Software
+
+Installing the software to your system consists of copying the compiled
+programs and supporting files to a standard location. After the
+installation process has completed, these files have been copied
+from your work directory to @file{/usr/local/bin}, and @file{/usr/local/etc}.
+
+To install the Zebra suite, issue the following command at your shell
+prompt: @command{make install}.
+
+@example
+%
+% make install
+%
+@end example
+
+@c A - removed this section and placed it with Install the Software
+@c @node Additional Notes,  , Install the Software, Installation
+@comment  node-name,  next,  previous,  up
+@c @section Additional Notes
+
+Zebra daemons have their own terminal interface or VTY.  After
+installation, you have to setup each beast's port number to connect to
+them.  Please add the following entries to @file{/etc/services}.
+
+@example
+zebrasrv      2600/tcp		  # zebra service
+zebra         2601/tcp		  # zebra vty
+ripd          2602/tcp		  # RIPd vty
+ripngd        2603/tcp		  # RIPngd vty
+ospfd         2604/tcp		  # OSPFd vty
+bgpd          2605/tcp		  # BGPd vty
+ospf6d        2606/tcp		  # OSPF6d vty
+@end example
+
+If you use a FreeBSD newer than 2.2.8, the above entries are already
+added to @file{/etc/services} so there is no need to add it. If you
+specify a port number when starting the daemon, these entries may not be
+needed.
+
+You may need to make changes to the config files in
+@file{@value{INSTALL_PREFIX_ETC}/*.conf}. @xref{Config Commands}.

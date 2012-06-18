@@ -1,0 +1,77 @@
+!==
+!== Win95.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Copyright (C) 1997 - Samba-Team
+Contributed Date:	August 20, 1997
+Last Update:		August 20, 1997
+
+Subject:	Windows 95 and Samba Interoperability
+===============================================================================
+
+Password Handling:
+------------------
+Microsoft periodically release updates to all their operating systems. Some of
+these are welcomed while others cause us to change the way we do things. Few
+people like change, particularly if the change is unexpected. The best advice
+always is to read the documentation provided BEFORE applying an update.
+
+One of the recent Win95 updates (VRDRUPD.EXE) disables plain text (also called
+clear text) password authentication. The effects of this updates are desirable
+where MS Windows NT is providing the password authentication service. This
+update is most undesirable where Samba must provide the authentication service
+unless Samba has been specifically configured to use encrypted passwords _AND_
+has been linked with the libdes library.
+
+If the above conditions have not been complied with, and you are using Samba,
+then Windows 95 clients will NOT be able to authenticate to a Samba server.
+
+To re-enable plain text password capabilities AFTER applying this update
+you must create a new value in the Windows 95 registry.
+
+Either foillow the following procedure or just double click on the
+file Win95_PlainPassword.reg for an easier way to do this.
+
+Procedure:
+1)	Launch the Registry Editor as follows:
+	Click on:	/Start/Run
+	Type "regedit" and press enter.
+
+2)	Double click on:	HKEY_LOCAL_MACHINE
+
+3)	Locate the following Key:
+	/HKEY_LOCAL_MACHINE/System/CurrentControlSet/Services/VxD/VNETSUP
+
+4)	From the menu bar select Edit/New/DWORD Value
+
+5)	Rename the entry from "New Value #1" to:
+		EnablePlainTextPassword
+
+6)	Press Enter, then double click on the new entry.
+	A dialog box will pop up and enable you to set a value.
+	You must set this value to 1.
+
+-------------------------------------------------------------------------------
+
+Windows 95 Updates:
+-------------------
+When using Windows 95 OEM SR2 the following updates are recommended where Samba
+is being used. Please NOTE that the above change will affect you once these
+updates  have been installed.
+
+There are more updates than the ones mentioned here. You are referred to the
+Microsoft Web site for all currently available updates to your specific version
+of Windows 95.
+
+Kernel Update:	KRNLUPD.EXE
+Ping Fix:	PINGUPD.EXE
+RPC Update:	RPCRTUPD.EXE
+TCP/IP Update:	VIPUPD.EXE
+Redirector Update:	VRDRUPD.EXE
+
+Also, if using MS OutLook it is desirable to install the OLEUPD.EXE fix. This
+fix may stop your machine from hanging for an extended period when exiting
+OutLook and you may also notice a significant speedup when accessing network
+neighborhood services.
+
+-------------------------------------------------------------------------------
+The above password information was provided by: Jochen Huppertz <jhu@nrh.de>

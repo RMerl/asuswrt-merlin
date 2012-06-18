@@ -1,0 +1,800 @@
+head	1.58;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.58
+date	2003.09.05.20.07.15;	author papowell;	state Exp;
+branches;
+next	1.57;
+
+1.57
+date	2003.09.04.18.37.29;	author papowell;	state Exp;
+branches;
+next	1.56;
+
+1.56
+date	2003.09.04.18.01.42;	author papowell;	state Exp;
+branches;
+next	1.55;
+
+1.55
+date	2003.09.03.22.39.08;	author papowell;	state Exp;
+branches;
+next	1.54;
+
+1.54
+date	2003.09.03.20.23.13;	author papowell;	state Exp;
+branches;
+next	1.53;
+
+1.53
+date	2003.09.03.18.57.30;	author papowell;	state Exp;
+branches;
+next	1.52;
+
+1.52
+date	2003.09.03.18.11.59;	author papowell;	state Exp;
+branches;
+next	1.51;
+
+1.51
+date	2003.09.03.17.23.17;	author papowell;	state Exp;
+branches;
+next	1.50;
+
+1.50
+date	2003.08.29.01.28.37;	author papowell;	state Exp;
+branches;
+next	1.49;
+
+1.49
+date	2003.04.15.23.37.41;	author papowell;	state Exp;
+branches;
+next	1.48;
+
+1.48
+date	2003.04.15.22.41.37;	author papowell;	state Exp;
+branches;
+next	1.47;
+
+1.47
+date	2003.01.17.23.01.22;	author papowell;	state Exp;
+branches;
+next	1.46;
+
+1.46
+date	2003.01.16.05.10.39;	author papowell;	state Exp;
+branches;
+next	1.45;
+
+1.45
+date	2003.01.15.01.29.13;	author papowell;	state Exp;
+branches;
+next	1.44;
+
+1.44
+date	2003.01.14.22.58.59;	author papowell;	state Exp;
+branches;
+next	1.43;
+
+1.43
+date	2002.12.07.00.30.35;	author papowell;	state Exp;
+branches;
+next	1.42;
+
+1.42
+date	2002.12.04.21.12.15;	author papowell;	state Exp;
+branches;
+next	1.41;
+
+1.41
+date	2002.12.03.16.49.07;	author papowell;	state Exp;
+branches;
+next	1.40;
+
+1.40
+date	2002.12.02.22.30.53;	author papowell;	state Exp;
+branches;
+next	1.39;
+
+1.39
+date	2002.12.02.20.52.51;	author papowell;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2002.10.29.15.35.57;	author papowell;	state Exp;
+branches;
+next	1.37;
+
+1.37
+date	2002.08.12.00.01.41;	author papowell;	state Exp;
+branches;
+next	1.36;
+
+1.36
+date	2002.08.06.19.14.11;	author papowell;	state Exp;
+branches;
+next	1.35;
+
+1.35
+date	2002.08.06.18.49.59;	author papowell;	state Exp;
+branches;
+next	1.34;
+
+1.34
+date	2002.08.06.16.20.05;	author papowell;	state Exp;
+branches;
+next	1.33;
+
+1.33
+date	2002.07.22.16.11.23;	author papowell;	state Exp;
+branches;
+next	1.32;
+
+1.32
+date	2002.07.18.16.02.57;	author papowell;	state Exp;
+branches;
+next	1.31;
+
+1.31
+date	2002.05.06.16.03.42;	author papowell;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2002.05.06.01.06.38;	author papowell;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2002.05.05.20.06.37;	author papowell;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2002.04.08.01.30.09;	author papowell;	state Exp;
+branches;
+next	1.27;
+
+1.27
+date	2002.04.01.17.54.41;	author papowell;	state Exp;
+branches;
+next	1.26;
+
+1.26
+date	2002.04.01.16.33.09;	author papowell;	state Exp;
+branches;
+next	1.25;
+
+1.25
+date	2002.04.01.15.52.00;	author papowell;	state Exp;
+branches;
+next	1.24;
+
+1.24
+date	2002.04.01.03.56.01;	author papowell;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2002.04.01.03.49.38;	author papowell;	state Exp;
+branches;
+next	1.22;
+
+1.22
+date	2002.04.01.03.21.45;	author papowell;	state Exp;
+branches;
+next	1.21;
+
+1.21
+date	2002.04.01.01.53.10;	author papowell;	state Exp;
+branches;
+next	1.20;
+
+1.20
+date	2002.04.01.01.42.47;	author papowell;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2002.03.06.17.02.42;	author papowell;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2002.03.06.04.51.54;	author papowell;	state Exp;
+branches;
+next	1.17;
+
+1.17
+date	2002.03.04.21.54.01;	author papowell;	state Exp;
+branches;
+next	1.16;
+
+1.16
+date	2002.03.03.02.18.30;	author papowell;	state Exp;
+branches;
+next	1.15;
+
+1.15
+date	2002.03.03.00.38.27;	author papowell;	state Exp;
+branches;
+next	1.14;
+
+1.14
+date	2002.03.02.23.31.54;	author papowell;	state Exp;
+branches;
+next	1.13;
+
+1.13
+date	2002.02.28.18.11.58;	author papowell;	state Exp;
+branches;
+next	1.12;
+
+1.12
+date	2002.02.25.17.43.01;	author papowell;	state Exp;
+branches;
+next	1.11;
+
+1.11
+date	2002.02.23.03.45.07;	author papowell;	state Exp;
+branches;
+next	1.10;
+
+1.10
+date	2002.02.23.03.10.10;	author papowell;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2002.02.23.02.29.53;	author papowell;	state Exp;
+branches;
+next	1.8;
+
+1.8
+date	2002.02.23.00.41.53;	author papowell;	state Exp;
+branches;
+next	1.7;
+
+1.7
+date	2002.02.22.18.30.04;	author papowell;	state Exp;
+branches;
+next	1.6;
+
+1.6
+date	2002.02.20.13.19.10;	author papowell;	state Exp;
+branches;
+next	1.5;
+
+1.5
+date	2002.02.20.01.40.31;	author papowell;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2002.02.09.03.37.22;	author papowell;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2002.02.04.00.17.14;	author papowell;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2002.01.23.01.01.04;	author papowell;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.01.22.23.58.56;	author papowell;	state Exp;
+branches;
+next	;
+
+
+desc
+@Initial
+@
+
+
+1.58
+log
+@Update
+@
+text
+@# Generated automatically from Makefile.in by configure.
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1997 Patrick Powell, San Diego, California
+#     papowell@@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: DISTRIBUTIONS/Makefile
+# PURPOSE: generate distribution package and checkout
+# Makefile.in,v 3.7 1998/03/30 01:54:50 papowell Exp
+########################################################################## 
+
+all: ci
+
+.PHONY: all clean install ci realclean mostlyclean distclean clean
+
+CI=
+CO=-kv
+
+ci:
+	checkin() { \
+		(set +e; rcs -l $$1; exit 0); \
+		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
+	}; \
+	dirs=`find . -type d -name RCS -print | sed -e s/.RCS//`; \
+	echo dirs $$dirs; \
+	for i in $$dirs ; do \
+		(cd $$i; echo CWD `pwd`; \
+		for j in * ; do if [ -f $$j ] ; then checkin $$j; fi ; done; \
+	); done;
+
+realclean mostlyclean distclean clean:
+	cd FreeBSD-4.ports.systutils.LPRng; make clean
+@
+
+
+1.57
+log
+@Update
+@
+text
+@@
+
+
+1.56
+log
+@Update
+@
+text
+@@
+
+
+1.55
+log
+@Update
+@
+text
+@@
+
+
+1.54
+log
+@Update
+@
+text
+@@
+
+
+1.53
+log
+@Update
+@
+text
+@@
+
+
+1.52
+log
+@Update
+@
+text
+@@
+
+
+1.51
+log
+@Update
+@
+text
+@@
+
+
+1.50
+log
+@Update
+@
+text
+@@
+
+
+1.49
+log
+@Update
+@
+text
+@@
+
+
+1.48
+log
+@Update
+@
+text
+@@
+
+
+1.47
+log
+@Update
+@
+text
+@@
+
+
+1.46
+log
+@Update
+@
+text
+@@
+
+
+1.45
+log
+@Update
+@
+text
+@@
+
+
+1.44
+log
+@Update
+@
+text
+@@
+
+
+1.43
+log
+@Update
+@
+text
+@@
+
+
+1.42
+log
+@Update
+@
+text
+@@
+
+
+1.41
+log
+@Update
+@
+text
+@@
+
+
+1.40
+log
+@Update
+@
+text
+@@
+
+
+1.39
+log
+@Update
+@
+text
+@@
+
+
+1.38
+log
+@Update
+@
+text
+@@
+
+
+1.37
+log
+@Update
+@
+text
+@@
+
+
+1.36
+log
+@Update
+@
+text
+@@
+
+
+1.35
+log
+@Update
+@
+text
+@@
+
+
+1.34
+log
+@Update
+@
+text
+@@
+
+
+1.33
+log
+@Update
+@
+text
+@@
+
+
+1.32
+log
+@Update
+@
+text
+@@
+
+
+1.31
+log
+@Update
+@
+text
+@@
+
+
+1.30
+log
+@Update
+@
+text
+@@
+
+
+1.29
+log
+@Update
+@
+text
+@@
+
+
+1.28
+log
+@Update
+@
+text
+@@
+
+
+1.27
+log
+@Update
+@
+text
+@@
+
+
+1.26
+log
+@Update
+@
+text
+@@
+
+
+1.25
+log
+@Update
+@
+text
+@@
+
+
+1.24
+log
+@Update
+@
+text
+@@
+
+
+1.23
+log
+@Update
+@
+text
+@@
+
+
+1.22
+log
+@Update
+@
+text
+@@
+
+
+1.21
+log
+@Update
+@
+text
+@@
+
+
+1.20
+log
+@Update
+@
+text
+@@
+
+
+1.19
+log
+@Update
+@
+text
+@@
+
+
+1.18
+log
+@Update
+@
+text
+@@
+
+
+1.17
+log
+@Update
+@
+text
+@@
+
+
+1.16
+log
+@Update
+@
+text
+@@
+
+
+1.15
+log
+@Update
+@
+text
+@@
+
+
+1.14
+log
+@Update
+@
+text
+@@
+
+
+1.13
+log
+@Update
+@
+text
+@@
+
+
+1.12
+log
+@Update
+@
+text
+@@
+
+
+1.11
+log
+@Update
+@
+text
+@@
+
+
+1.10
+log
+@Update
+@
+text
+@@
+
+
+1.9
+log
+@Update
+@
+text
+@@
+
+
+1.8
+log
+@Update
+@
+text
+@@
+
+
+1.7
+log
+@Update
+@
+text
+@@
+
+
+1.6
+log
+@Update
+@
+text
+@@
+
+
+1.5
+log
+@Update
+@
+text
+@@
+
+
+1.4
+log
+@Update
+@
+text
+@@
+
+
+1.3
+log
+@Update
+@
+text
+@@
+
+
+1.2
+log
+@Update
+@
+text
+@@
+
+
+1.1
+log
+@Update
+@
+text
+@@

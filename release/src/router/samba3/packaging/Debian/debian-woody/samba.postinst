@@ -1,0 +1,228 @@
+#!/bin/sh -e
+#
+# Post-installation script for the Samba package for Debian GNU/Linux
+#
+#
+
+case "$1" in
+	configure)
+		# continue below
+	;;
+
+	abort-upgrade|abort-remove|abort-deconfigure)
+		exit 0
+	;;
+
+	*)
+		echo "postinst called with unknown argument \`$1'" >&2
+		exit 0
+	;;
+esac
+
+# Handle debconf
+. /usr/share/debconf/confmodule
+
+INITCONFFILE=/etc/default/samba
+
+# We generate several files during the postinst, and we don't want
+#	them to be readable only by root.
+umask 022
+
+
+# Generate configuration file if it does not exist, using default values.
+[ -r "${INITCONFFILE}" ] || {
+	echo Generating ${INITCONFFILE}... >&2
+	cat >${INITCONFFILE} <<'EOFMAGICNUMBER1234'
+# Defaults for samba initscript
+# sourced by /etc/init.d/samba
+# installed at /etc/default/samba by the maintainer scripts
+#
+
+#
+# This is a POSIX shell fragment
+#
+
+# How should Samba (smbd) run? Possible values are "daemons"
+#	or "inetd".
+RUN_MODE=""
+EOFMAGICNUMBER1234
+}
+
+# --- Begin of FHS migration code ---
+
+# Starting with Samba 2.2.3-4 the WINS database, the browse
+#	database and other important run-time files are stored in
+#	FHS-compliant directories. The following code takes care of
+#	moving the files in the old directories (/var/samba/ and
+#	/var/state/samba) to the new FHS-compliant directories.
+
+if [ -d /var/samba/ ]; then
+	mv /var/samba/* /var/lib/samba/ 2>/dev/null || true
+	rmdir /var/samba/
+fi
+
+# Default for anything we don't know about (see next two 'for' loops)
+#	is /var/lib/samba -- guaranteed not to accidentally tromp on any 
+#	files the admin thought were safe.
+if [ -d /var/state/samba ]; then
+	mv /var/state/samba/* /var/lib/samba/ 2>/dev/null || true
+	rmdir /var/state/samba/
+
+	# It's not FHS, and it's probably our fault this is here,
+	# so delete it if we can.
+	rmdir /var/state/ 2> /dev/null || true
+fi
+
+# All these files are now placed in their respective FHS-compliant
+#	directories.  Separate out the individual files accordingly.
+for F in browse.dat printing.tdb winbindd_cache.tdb
+do
+	if [ -e /var/lib/samba/"$F" ]; then
+		mv /var/lib/samba/"$F" /var/cache/samba/
+	fi
+done
+
+for F in brlock.tdb connections.tdb locking.tdb messages.tdb nmbd.pid \
+         sessionid.tdb smbd.pid unexpected.tdb 
+do
+	if [ -e /var/lib/samba/"$F" ]; then
+		mv /var/lib/samba/"$F" /var/run/samba/
+	fi
+done
+
+# Beginning with Samba 2.2.5-1, we also move the domain secrets file
+# to a more suitable location, since no one really edits this by hand.
+if [ -e /etc/samba/secrets.tdb -a ! -e /var/lib/samba/secrets.tdb ]
+then
+	mv /etc/samba/secrets.tdb /var/lib/samba/
+fi
+
+# If upgrading from a previous 2.999 snapshot, move the passdb.tdb
+# database into /var/lib.
+
+if [ -n "$2" ] && dpkg --compare-versions "$2" lt 2.999+3.0.alpha23-5 \
+   && [ -e /etc/samba/passdb.tdb -a ! -e /var/lib/samba/passdb.tdb ]
+then
+	mv /etc/samba/passdb.tdb /var/lib/samba/
+fi
+
+# --- End of FHS migration code ---
+
+# If upgrading from a previous 2.999 snapshot, clear the broken
+# registry.tdb file.
+if [ -n "$2" ] && dpkg --compare-versions "$2" gt 2.99.cvs.20020713-1 \
+   && dpkg --compare-versions "$2" lt 2.999+3.0cvs20020805-1
+then
+	rm -f /var/lib/samba/registry.tdb
+fi
+
+# ------------------------- Debconf questions start ---------------------
+
+# Run Samba as daemons or from inetd?
+db_get samba/run_mode || true
+RUN_MODE="${RET}"
+
+TMPFILE=/etc/default/samba.dpkg-tmp
+sed -e "s/^[[:space:]]*RUN_MODE[[:space:]]*=.*/RUN_MODE=\"${RUN_MODE}\"/" \
+        < ${INITCONFFILE} >${TMPFILE}
+chmod a+r ${TMPFILE}
+mv -f ${TMPFILE} ${INITCONFFILE}
+
+# Generate a smbpasswd file?
+db_get samba/generate_smbpasswd || true
+GENERATE_SMBPASSWD="${RET}"
+
+db_get samba/tdbsam || true
+PDB_MIGRATE="${RET}"
+
+# Done with debconf now.
+db_stop
+
+umask 066
+
+# FIXME: disable if ldapsam support is enabled?
+# FIXME: we don't want to pass these through the smbpasswd backend,
+# some of the faking can cause us problems!
+if [ "${GENERATE_SMBPASSWD}" = "true" -a ! -e /var/lib/samba/passdb.tdb -a ! -e /etc/samba/smbpasswd ]; then
+	getent passwd | /usr/sbin/mksmbpasswd > /etc/samba/smbpasswd
+	pdbedit -i smbpasswd -e tdbsam
+	rm /etc/samba/smbpasswd
+fi
+
+umask 022
+
+if [ -n "$2" -a -e /etc/samba/smbpasswd \
+     -a ! -e /var/lib/samba/passdb.tdb -a "$PDB_MIGRATE" = "true" ] \
+   && dpkg --compare-versions "$2" lt 2.99.cvs.20020713-2
+then
+	umask 066
+	pdbedit -i smbpasswd -e tdbsam
+	rm /etc/samba/smbpasswd
+	umask 022
+
+	# The database has been moved, now make sure we can still find it.
+	PASSDB=`sed -n -e"s/^[[:space:]]*\[global\]/\[global\]/i
+			/^\[global\]/,/^[[:space:]]*\[/ \
+				s/^[[:space:]]*passdb backend[[:space:]]*=[[:space:]]*//pi" \
+			< /etc/samba/smb.conf \
+	 | tail -n 1`
+	if echo "$PASSDB" | egrep -q "(^|[[:space:]])smbpasswd"; then
+		if ! echo "$PASSDB" | egrep -q "(^|[[:space:]])tdbsam"; then
+			PASSDB=`echo $PASSDB | sed -e's/\(^\|[[:space:]]\)smbpasswd/\1tdbsam/'`
+		fi
+	fi
+	if ! echo "$PASSDB" | egrep -q "(^|[[:space:]])tdbsam"; then
+		PASSDB="tdbsam $PASSDB"
+	fi
+	TMPFILE=/etc/samba/smb.conf.dpkg-tmp
+	sed -e "s/^\([[:space:]]*\)\[global\]/\1\[global\]/i
+		/^[[:space:]]*\[global\]/,/^[[:space:]]*\[/ \
+			s/^\([[:space:]]*\)passdb backend[[:space:]]*=.*/\1passdb backend = ${PASSDB}/i" \
+		< /etc/samba/smb.conf >${TMPFILE}
+	chmod a+r ${TMPFILE}
+	mv -f ${TMPFILE} /etc/samba/smb.conf
+fi
+
+# ------------------------- Debconf questions end ---------------------
+
+# Handle removal of nmbd from inetd.conf, which is no longer a supported
+#	configuration.
+if dpkg --compare-versions "$2" lt 2.999+3.0.alpha20-4; then
+	update-inetd --remove netbios-ns
+fi
+
+# We want to add these entries to inetd.conf commented out. Otherwise
+#	UDP traffic could make inetd to start nmbd or smbd right during
+#	the configuration stage.
+if [ -z "$2" ]; then
+	update-inetd --add "#<off># netbios-ssn	stream	tcp	nowait	root	/usr/sbin/tcpd	/usr/sbin/smbd"
+fi
+
+if [ "$RUN_MODE" = "daemons" ]; then
+	update-inetd --disable netbios-ssn
+else
+	update-inetd --enable netbios-ssn
+fi
+
+# This check is a safety net: the /etc/samba/smbpasswd file must have
+#	permissions 600.
+if [ -f /etc/samba/smbpasswd ]; then
+	chmod 600 /etc/samba/smbpasswd
+fi
+
+# Do the same check for /var/backup/smbpasswd.bak, just in case.
+if [ -f /var/backups/smbpasswd.bak ]; then
+	chmod 600 /var/backups/smbpasswd.bak
+fi
+
+# Delete old /etc/samba/debian_config file, which is not used anymore
+#	now that we are using debconf.
+rm -f /etc/samba/debian_config
+
+# Move old log files to the new location of Samba's log files
+mv -f /var/log/nmb* /var/log/samba/ 2> /dev/null || true
+mv -f /var/log/smb* /var/log/samba/ 2> /dev/null || true
+
+#DEBHELPER#
+
+exit 0

@@ -1,0 +1,34 @@
+#!/bin/sh
+
+netbios_setup() {
+	# No need to continue if we're called with an unsupported option
+
+	if [ "$reason" != BOUND ] && [ "$reason" != RENEW ] \
+	   && [ "$reason" != REBIND ] && [ "$reason" != REBOOT ] \
+	   && [ "$reason" != EXPIRE ] && [ "$reason" != FAIL ]
+	then
+		return
+	fi
+
+	umask 022
+
+	if [ -z "$new_netbios_name_servers" ] || [ "$reason" = FAIL ] \
+	   || [ "$reason" = EXPIRE ]
+	then
+		# FIXME: add sed magic to only remove wins servers
+		# associated with this interface
+		echo -n > /etc/samba/dhcp.conf
+	elif [ "$new_netbios_name_servers" != "$old_netbios_name_servers" ]
+	then
+		local serverlist=""
+		for server in $new_netbios_name_servers
+		do
+			serverlist="$serverlist $interface:$server"
+		done
+		# FIXME: add sed magic to only update wins servers
+		# associated with this interface
+		echo "   wins server =$serverlist" > /etc/samba/dhcp.conf
+	fi
+}
+
+netbios_setup

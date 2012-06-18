@@ -1,0 +1,27 @@
+HKCR
+{
+	Bonjour.DNSSDEventManager.1 = s 'DNSSDEventManager Class'
+	{
+		CLSID = s '{BEEB932A-8D4A-4619-AEFE-A836F988B221}'
+	}
+	Bonjour.DNSSDEventManager = s 'DNSSDEventManager Class'
+	{
+		CLSID = s '{BEEB932A-8D4A-4619-AEFE-A836F988B221}'
+		CurVer = s 'Bonjour.DNSSDEventManager.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {BEEB932A-8D4A-4619-AEFE-A836F988B221} = s 'DNSSDEventManager Class'
+		{
+			ProgID = s 'Bonjour.DNSSDEventManager.1'
+			VersionIndependentProgID = s 'Bonjour.DNSSDEventManager'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			val AppID = s '%APPID%'
+			'TypeLib' = s '{18FBED6D-F2B7-4EC8-A4A4-46282E635308}'
+		}
+	}
+}

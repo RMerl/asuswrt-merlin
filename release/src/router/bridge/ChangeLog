@@ -1,0 +1,124 @@
+2005-03-16  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Released bridge-utils 1.0.6
+	* Fix for libsys detection (for FC)
+	* Update autoconf usage
+	* Allow multiple interfaces for addif,delif
+
+2004-12-02  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Released bridge-utils 1.0.5
+	* Remove brctld out of date, buggy not used
+	* Cleanup command line help and error messages
+	* Fix segv with wrong # of args to 'brctl stp'
+	
+
+20040601	Stephen Hemminger <shemminger@osdl.org>
+	* Released bridge-utils 1.0.4
+	  - should build with out sysfs now.
+	  - report errors on foreach_port failing
+	  - more build cleanup
+
+20040525	Stephen Hemminger <shemminger@osdl.org>
+	* Released bridge-utils 1.0.1
+	  - Change configure option 
+	    from --with-linux=<path>
+	    to   --with-linux-headers=<path>
+	    so options match help message.
+	  - Fix so utilities work with earlier 2.6 kernels that
+	    have sysfs but not new ioctl's or directories yet.
+	  - Build spec file from template.
+	
+20040524	Stephen Hemminger <shemminger@osdl.org>
+	* Released bridge-utils 1.0
+	  - Use sysfs to control bridge parameters
+	  - Add new ioctl syntax to handle mixed 32/64 bit mode
+	    (Earlier method would not work on all platforms).
+	  - Change libbbridge API to do work as needed, rather
+	    than reading all bridges/ports at startup. Old way
+	    would not scale with 1000's of entries
+	  - Minor cleanups.
+
+20040401	Stephen Hemminger <shemminger@osdl.org>
+	* Releases bridge-utils 0.9.7
+	  - add -V option
+	  - support 100's of bridge ports
+	  - minor bug fixes
+
+20021002	Lennert Buytenhek <buytenh@gnu.org>
+
+	* Released bridge-utils 0.9.6.
+
+20020403	Lennert Buytenhek <buytenh@gnu.org>
+
+	* autoconfization by Andreas Hofmeister.
+
+20020116	Lennert Buytenhek <buytenh@gnu.org>
+
+	* On sparc, try to detect 32/64-bitness of the kernel at runtime.
+
+	* Released bridge-utils 0.9.5.
+
+20020106	Lennert Buytenhek <buytenh@gnu.org>
+
+	* Remove 'tap'.
+
+	* Added TODO list.
+
+	* Added extra check for argument count to brctl
+
+	* Added error message for circular bridge dev enslavement to brctl.
+
+	* Get rid of some compiler warnings.
+
+	* Steal Red Hat rawhide spec file.
+
+	* Added 'how to use libbridge_compat.c' explanation by Serge Caron.
+
+	* Try to work around sparc64 brokenness (FUCK ARGHH FUCK FUCK FUCK)
+
+	* Release bridge-utils 0.9.4.
+
+20011107	Lennert Buytenhek <buytenh@gnu.org>
+
+	* Moved FAQ to the website.
+
+	* Updated docs for 2.4 firewalling.
+
+	* Add out-of-date notice to the THANKS file.
+
+????????	Lennert Buytenhek <buytenh@gnu.org>
+
+	* Fixed brctl timeout 42.94s wrap buglet.
+
+	* Cleanup some docs.
+
+	* Released bridge-utils 0.9.3.
+
+20001002	Lennert Buytenhek <buytenh@gnu.org>
+
+	* Incorporated two cleanup patches from H. J. Lu (one splits
+	the CC define into CC and CFLAGS, the other one changes a few
+	occurances of __close into the libc5 compatibility stub to
+	close).
+
+	* Removed all RCS tags.
+
+	* Removed sample scripts dir.
+
+	* Tweaked THANKS file a bit (it needs updating as well..)
+
+	* Made 'show' command show an interface list.
+
+	* Changed the 'showbr' command to 'showstp'
+
+	* Tweaked FAQ.
+
+	* Added explanation for iptables firewalling.
+
+	* Released bridge-utils 0.9.2.
+
+20000905	Lennert Buytenhek <buytenh@gnu.org>
+
+	* Incorporated Roger Venning's patch to tap which will let you
+	specify a local address to be used for the 'tunnel'.

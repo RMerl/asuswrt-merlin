@@ -1,0 +1,433 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 5] 5.4 Name Mangling and Case</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:33:01Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_03.html" TITLE="5.3 File Permissions and Attributes on MS-DOS and Unix">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 5.3 File Permissions and Attributes on MS-DOS and Unix" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch05_01.html" TITLE="5. Browsing and Advanced Disk Shares ">
+Chapter 5<br>
+Browsing and Advanced Disk Shares </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_05.html" TITLE="5.5 Locks and Oplocks">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 5.5 Locks and Oplocks" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch05-30534">
+5.4 Name Mangling and Case</a></h2><P CLASS="para">Back in the days of DOS and Windows 3.1, every filename was limited to eight upper-case characters, followed by a dot, and three more uppercase characters. This was known as the <I CLASS="firstterm">
+8.3 format</i>, and was a huge nuisance. Windows 95/98, Windows NT, and Unix have since relaxed this problem by allowing many more case-sensitive characters to make up a filename. <A CLASS="xref" HREF="ch05_04.html#ch05-24354">
+Table 5.6</a> shows the current naming state of several popular operating systems. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch05-24354">
+Table 5.6: Operating System Filename Limitations </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Operating System</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+File Naming Rules</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+DOS 6.22 or below</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">Eight characters followed by a dot followed by a three-letter extension (8.3 format); case insensitive</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Windows 3.1 for Workgroups</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Eight characters followed by a dot followed by a three-letter extension (8.3 format); case insensitive</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Windows 95/98</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+127 characters; case sensitive</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Windows NT</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+127 characters; case sensitive</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Unix</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+255 characters; case sensitive</p></td></tr></tbody></table><P CLASS="para">Samba still has to remain backwards compatible with network clients who store files only in the 8.3 format, such as Windows for Workgroups. If a user creates a file on a share called <EM CLASS="emphasis">
+antidisestablishmentarianism.txt</em>, a Windows for Workgroups client couldn't tell it apart from another file in the same directory called <EM CLASS="emphasis">
+antidisease.txt</em>. Like Windows 95/98 and Windows NT, Samba has to employ a special methodology of translating a long filename to an 8.3 filename in such a way that similar filenames will not cause collisions. This is called <I CLASS="firstterm">
+name mangling</i>, and Samba deals with this in a manner that is similar, but not identical to, Windows 95 and its successors.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-959448">
+5.4.1 The Samba Mangling Operation</a></h3><P CLASS="para">Here is how Samba mangles a long filename into an 8.3 filename:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-959148">
+</a>If the original filename does not begin with a dot, up to the first five alphanumeric characters that occur before the last dot (if there is one) are converted to uppercase. These characters are used as the first five characters of the 8.3 mangled filename.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-959229">
+</a>If the original filename begins with a dot, the dot is removed and up to the first five alphanumeric characters that occur before the last dot (if there is one) are converted to uppercase. These characters are used as the first five characters of the 8.3 mangled filename.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-959228">
+</a>These characters are immediately followed a special mangling character: by default, a tilde (~), although Samba allows you to change this character.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-959149">
+</a>The base of the long filename before the last period is hashed into a two-character code; parts of the name after the last dot may be used if necessary. This two character code is appended to the 8.3 filename after the mangling character.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch05-pgfId-967828">
+</a>The first three characters after the last dot (if there is one) of the original filename are converted to uppercase and appended onto the mangled name as the extension. If the original filename began with a dot, three underscores (<CODE CLASS="literal">___</code>) are used as the extension instead.</p></li></ul><P CLASS="para">
+Here are some examples:</p><PRE CLASS="programlisting">
+virtuosity.dat                       VIRTU~F1.DAT
+.htaccess                            HTACC~U0.___
+hello.java                           HELLO~1F.JAV
+team.config.txt                      TEAMC~04.TXT
+antidisestablishmentarianism.txt     ANTID~E3.TXT
+antidiseast.txt                      ANTID~9K.TXT</pre><P CLASS="para">
+Using these rules will allow Windows for Workgroups to differentiate the two files on behalf of the poor individual who is forced to see the network through the eyes of that operating system. Note that the same long filename should always hash to the same mangled name with Samba; this doesn't always happen with Windows. The downside of this approach is that there can still be collisions; however, the chances are greatly reduced.</p><P CLASS="para">
+You generally want to use the mangling configuration options with only the oldest clients. We recommend doing this without disrupting other clients by adding an <CODE CLASS="literal">
+include</code> directive to the <I CLASS="filename">
+smb.conf</i> file:</p><PRE CLASS="programlisting">
+[global]
+	include = /ucsr/local/samba/lib/smb.conf.%m</pre><P CLASS="para">
+This resolves to <I CLASS="filename">
+smb.conf.WfWg</i> when a Window for Workgroups client attaches.  Now you can create a file <I CLASS="filename">
+/usr/local/samba/lib/smb.conf.WfWg</i> which might contain these options:</p><PRE CLASS="programlisting">
+[global]
+	case sensitive = no
+	default case = upper
+	preserve case = no
+	short preserve case = no
+	mangle case = yes
+	mangled names= yes</pre><P CLASS="para">
+If you are not using Windows for Workgroups 3.1, then you probably do not need to change any of these options from their defaults.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-959447">
+5.4.1.1 Representing and resolving filenames with Samba</a></h4><P CLASS="para">Another item that we should point out is that there is a difference between how an operating system <EM CLASS="emphasis">
+represents</em> a file and how it <EM CLASS="emphasis">
+resolves</em> it. For example, if you've used Windows 95/98/NT, you have likely run across a file called <I CLASS="filename">
+README.TXT</i>. The file can be represented by the operating system entirely in uppercase letters. However, if you open an MS-DOS prompt and enter the command <CODE CLASS="literal">
+edit</code> <CODE CLASS="literal">
+readme.txt</code>, the all-caps file is loaded into the editing program, even though you typed the name in lowercase letters!</p><P CLASS="para">
+This is because the Windows 95/98/NT family of operating systems resolves files in a case-insensitive manner, even though the files are represented it in a case-sensitive manner. Unix-based operating systems, on the other hand, always resolve files in a case-sensitive manner; if you try to edit <I CLASS="filename">
+README.TXT</i> with the command <CODE CLASS="literal">
+vi</code> <CODE CLASS="literal">
+readme.txt</code>, you will likely be editing the empty buffer of a new file.</p><P CLASS="para">
+Here is how Samba handles case: if the <CODE CLASS="literal">
+preserve</code> <CODE CLASS="literal">
+case</code> is set to <CODE CLASS="literal">
+yes</code>, Samba will always use the case provided by the operating system for representing (not resolving) filenames. If it is set to <CODE CLASS="literal">
+no</code>, it will use the case specified by the <CODE CLASS="literal">
+default</code> <CODE CLASS="literal">
+case</code> option. The same is true for <CODE CLASS="literal">
+short</code> <CODE CLASS="literal">
+preserve</code> <CODE CLASS="literal">
+case</code>. If this option is set to <CODE CLASS="literal">
+yes</code>, Samba will use the default case of the operating system for representing 8.3 filenames; otherwise it will use the case specified by the <CODE CLASS="literal">
+default</code> <CODE CLASS="literal">
+case</code> option. Finally, Samba will always resolve filenames in its shares based on the value of the <CODE CLASS="literal">
+case</code> <CODE CLASS="literal">
+sensitive</code> option.</p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-970053">
+5.4.2 Mangling Options</a></h3><P CLASS="para">Samba allows you to give it more refined instructions on how it should perform name mangling, including those controlling the case sensitivity, the character inserted to form a mangled name, and the ability to manually map filenames from one format to another. These options are shown in <A CLASS="xref" HREF="ch05_04.html#ch05-47431">
+Table 5.7</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch05-47431">
+Table 5.7: Name Mangling Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+case sensitive</code></p><P CLASS="para">
+<CODE CLASS="literal">
+(casesignames)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, Samba will treat filenames as case-sensitive (Windows doesn't).</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+default case</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+(<CODE CLASS="literal">upper</code> or <CODE CLASS="literal">
+lower</code>)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Case to assume as default (only used when preserve case is <CODE CLASS="literal">
+no</code>).</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Lower</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+preserve case</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, keep the case the client supplied (i.e., do not convert to <CODE CLASS="literal">
+default case</code>).</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+short preserve case</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, preserve case of 8.3-format names that the client provides.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+mangle case</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Mangle a name if it is mixed case.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+mangled names</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Mangles long names into 8.3 DOS format.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+mangling char</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (single character)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Gives mangling character.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+~</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+mangled stack</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Number of mangled names to keep on the local mangling stack.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+50</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+mangled map</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (list of patterns)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Allows mapping of filenames from one format into another.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-960977">
+5.4.2.1 case sensitive</a></h4><P CLASS="para">This share-level option, which has the obtuse synonym <CODE CLASS="literal">
+casesignames</code>, specifies whether Samba should preserve case when resolving filenames in a specific share. The default value for this option is <CODE CLASS="literal">
+no</code>, which is how Windows handles file resolution. If clients are using an operating system that takes advantage of case-sensitive filenames, you can set this configuration option to <CODE CLASS="literal">
+yes</code> as shown here:</p><PRE CLASS="programlisting">
+[accounting]
+	case sensitive = yes</pre><P CLASS="para">
+Otherwise, we recommend that you leave this option set to its default.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958897">
+5.4.2.2 default case</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+default</code> <CODE CLASS="literal">
+case</code> option is used with <CODE CLASS="literal">
+preserve</code> <CODE CLASS="literal">
+case</code>. This specifies the default case (upper or lower) that Samba will use when it creates a file on one of its shares on behalf of a client. The default case is <CODE CLASS="literal">
+lower</code>, which means that newly created files will use the mixed-case names given to them by the client. If you need to, you can override this global option by specifying the following:</p><PRE CLASS="programlisting">
+[global]
+	default case = upper</pre><P CLASS="para">
+If you specify this value, the names of newly created files will be translated into uppercase, and cannot be overridden in a program. We recommend that you use the default value unless you are dealing with a Windows for Workgroups or other 8.3 client, in which case it should be <CODE CLASS="literal">
+upper</code>.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958899">
+5.4.2.3 preserve case</a></h4><P CLASS="para">
+This option specifies whether a file created by Samba on behalf of the client is created with the case provided by the client operating system, or the case specified by the <CODE CLASS="literal">
+default</code> <CODE CLASS="literal">
+case</code> configuration option above. The default value is <CODE CLASS="literal">
+yes</code>, which uses the case provided by the client operating system. If it is set to <CODE CLASS="literal">
+no</code>, the value of the <CODE CLASS="literal">
+default</code> <CODE CLASS="literal">
+case</code> option is used.</p><P CLASS="para">
+Note that this option does not handle 8.3 file requests sent from the client&nbsp;- see the <CODE CLASS="literal">
+short</code> <CODE CLASS="literal">
+preserve</code> <CODE CLASS="literal">
+case</code> option below. You may want to set this option to <CODE CLASS="literal">
+yes</code> if applications that create files on the Samba server are sensitive to the case used when creating the file. If you want to force Samba, for example, to mimic the behavior of a Windows NT filesystem, you can leave this option to its default, <CODE CLASS="literal">
+yes</code>.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958901">
+5.4.2.4 short preserve case</a></h4><P CLASS="para">
+This option specifies whether an 8.3 filename created by Samba on behalf of the client is created with the default case of the client operating system, or the case specified by the <CODE CLASS="literal">
+default</code> <CODE CLASS="literal">
+case</code> configuration option. The default value is <CODE CLASS="literal">
+yes</code>, which uses the case provided by the client operating system. You can let Samba choose the case through the <CODE CLASS="literal">
+default</code> <CODE CLASS="literal">
+case</code> option by setting it as follows:</p><PRE CLASS="programlisting">
+[global]
+	short preserve case = no</pre><P CLASS="para">
+If you want to force Samba to mimic the behavior of a Windows NT filesystem, you can leave this option set to its default, <CODE CLASS="literal">
+yes</code>.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958984">
+5.4.2.5 mangled names</a></h4><P CLASS="para">
+This share-level option specifies whether Samba will mangle filenames for 8.3 clients in that share. If the option is set to <CODE CLASS="literal">
+no</code>, Samba will not mangle the names and (depending on the client), they will either be invisible or appear truncated to those using 8.3 operating systems. The default value is <CODE CLASS="literal">
+yes</code>. You can override it per share as follows:</p><PRE CLASS="programlisting">
+[data]
+	mangled names = no</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958903">
+5.4.2.6 mangle case</a></h4><P CLASS="para">
+This option tells Samba whether it should mangle filenames that are not composed entirely of the case specified using the <CODE CLASS="literal">
+default</code> <CODE CLASS="literal">
+case</code> configuration option. The default for this option is <CODE CLASS="literal">
+no</code>. If you set it to <CODE CLASS="literal">
+yes</code>, you should be sure that all clients will be able to handle the mangled filenames that result. You can override it per share as follows:</p><PRE CLASS="programlisting">
+[data]
+	mangle case = yes</pre><P CLASS="para">
+We recommend that you leave this option alone unless you have a well-justified need to change it.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958976">
+5.4.2.7 mangling char</a></h4><P CLASS="para">
+This share-level option specifies the mangling character used when Samba mangles filenames into the 8.3 format. The default character used is a tilde (~). You can reset it to whatever character you wish, for instance:</p><PRE CLASS="programlisting">
+[data]
+	mangling char = #</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-959322">
+5.4.2.8 mangled stack</a></h4><P CLASS="para">
+Samba maintains a local stack of recently mangled 8.3 filenames; this stack can be used to reverse map mangled filenames back to their original state. This is often needed by applications that create and save a file, close it, and need to modify it later. The default number of long filename/mangled filename pairs stored on this stack is 50. However, if you want to cut down on the amount of processor time used to mangle filenames, you can increase the size of the stack to whatever you wish, at the expense of memory and slightly slower file access.</p><PRE CLASS="programlisting">
+[global]
+	mangled stack = 100</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-959327">
+5.4.2.9 mangled map</a></h4><P CLASS="para">
+If the default behavior of name mangling is not sufficient, you can give Samba further instructions on how to behave using the <CODE CLASS="literal">
+mangled</code> <CODE CLASS="literal">
+map</code> option. This option allows you to specify mapping patterns that can be used before or even in place of name mangling performed by Samba. For example:</p><PRE CLASS="programlisting">
+[data]
+	mangled map =(*.database *.db) (*.class *.cls)</pre><P CLASS="para">
+Here, Samba is instructed to search each file it encounters for characters that match the first pattern specified in the parenthesis and convert them to the modified second pattern in the parenthesis for display on an 8.3 client. This is useful in the event that name mangling converts the filename incorrectly or to a format that the client cannot understand readily. Patterns are separated by whitespaces. </p></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_03.html" TITLE="5.3 File Permissions and Attributes on MS-DOS and Unix">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 5.3 File Permissions and Attributes on MS-DOS and Unix" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_05.html" TITLE="5.5 Locks and Oplocks">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 5.5 Locks and Oplocks" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+5.3 File Permissions and Attributes on MS-DOS and Unix</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+5.5 Locks and Oplocks</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

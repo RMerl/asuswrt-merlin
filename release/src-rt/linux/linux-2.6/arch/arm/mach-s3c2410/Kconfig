@@ -1,0 +1,113 @@
+# arch/arm/mach-s3c2410/Kconfig
+#
+# Copyright 2007 Simtec Electronics
+#
+# Licensed under GPLv2
+
+config CPU_S3C2410
+	bool
+	depends on ARCH_S3C2410
+	select S3C2410_CLOCK
+	select S3C2410_GPIO
+	select S3C2410_PM if PM
+	help
+	  Support for S3C2410 and S3C2410A family from the S3C24XX line
+	  of Samsung Mobile CPUs.
+
+config CPU_S3C2410_DMA
+	bool
+	depends on S3C2410_DMA && (CPU_S3C2410 || CPU_S3C2442)
+	default y if CPU_S3C2410 || CPU_S3C2442
+	help
+	  DMA device selection for S3C2410 and compatible CPUs
+
+config S3C2410_PM
+	bool
+	help
+	  Power Management code common to S3C2410 and better
+
+config S3C2410_GPIO
+	bool
+	help
+	  GPIO code for S3C2410 and similar processors
+
+config S3C2410_CLOCK
+	bool
+	help
+	  Clock code for the S3C2410, and similar processors
+
+
+menu "S3C2410 Machines"
+
+config ARCH_SMDK2410
+	bool "SMDK2410/A9M2410"
+	select CPU_S3C2410
+	select MACH_SMDK
+	help
+	   Say Y here if you are using the SMDK2410 or the derived module A9M2410
+           <http://www.fsforth.de>
+
+config ARCH_H1940
+	bool "IPAQ H1940"
+	select CPU_S3C2410
+	select PM_H1940 if PM
+	help
+	  Say Y here if you are using the HP IPAQ H1940
+
+config PM_H1940
+	bool
+	help
+	  Internal node for H1940 and related PM
+
+config MACH_N30
+	bool "Acer N30"
+	select CPU_S3C2410
+	help
+	  Say Y here if you are using the Acer N30
+
+config ARCH_BAST
+	bool "Simtec Electronics BAST (EB2410ITX)"
+	select CPU_S3C2410
+	select PM_SIMTEC if PM
+	select ISA
+	help
+	  Say Y here if you are using the Simtec Electronics EB2410ITX
+	  development board (also known as BAST)
+
+config MACH_OTOM
+ 	bool "NexVision OTOM Board"
+ 	select CPU_S3C2410
+	help
+ 	  Say Y here if you are using the Nex Vision OTOM board
+
+config MACH_AML_M5900
+	bool "AML M5900 Series"
+	select CPU_S3C2410
+	select PM_SIMTEC if PM
+	help
+	   Say Y here if you are using the American Microsystems M5900 Series
+           <http://www.amltd.com>
+
+config BAST_PC104_IRQ
+	bool "BAST PC104 IRQ support"
+	depends on ARCH_BAST
+	default y
+	help
+	  Say Y	here to enable the PC104 IRQ routing on the
+	  Simtec BAST (EB2410ITX)
+
+config MACH_VR1000
+	bool "Thorcom VR1000"
+	select PM_SIMTEC if PM
+	select CPU_S3C2410
+	help
+	  Say Y here if you are using the Thorcom VR1000 board.
+
+config MACH_QT2410
+	bool "QT2410"
+	select CPU_S3C2410
+	help
+	   Say Y here if you are using the Armzone QT2410
+
+endmenu
+

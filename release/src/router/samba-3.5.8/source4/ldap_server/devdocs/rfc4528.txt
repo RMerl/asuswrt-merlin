@@ -1,0 +1,339 @@
+
+
+
+
+
+
+Network Working Group                                        K. Zeilenga
+Request for Comments: 4528                           OpenLDAP Foundation
+Category: Standards Track                                      June 2006
+
+
+              Lightweight Directory Access Protocol (LDAP)
+                           Assertion Control
+
+
+Status of This Memo
+
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (2006).
+
+Abstract
+
+   This document defines the Lightweight Directory Access Protocol
+   (LDAP) Assertion Control, which allows a client to specify that a
+   directory operation should only be processed if an assertion applied
+   to the target entry of the operation is true.  It can be used to
+   construct "test and set", "test and clear", and other conditional
+   operations.
+
+Table of Contents
+
+   1. Overview ........................................................2
+   2. Terminology .....................................................2
+   3. The Assertion Control ...........................................2
+   4. Security Considerations .........................................3
+   5. IANA Considerations .............................................4
+      5.1. Object Identifier ..........................................4
+      5.2. LDAP Protocol Mechanism ....................................4
+      5.3. LDAP Result Code ...........................................4
+   6. Acknowledgements ................................................5
+   7. References ......................................................5
+      7.1. Normative References .......................................5
+      7.2. Informative References .....................................5
+
+
+
+
+
+
+
+Zeilenga                    Standards Track                     [Page 1]
+
+RFC 4528                 LDAP Assertion Control                June 2006
+
+
+1.  Overview
+
+   This document defines the Lightweight Directory Access Protocol
+   (LDAP) [RFC4510] assertion control.  The assertion control allows the
+   client to specify a condition that must be true for the operation to
+   be processed normally.  Otherwise, the operation is not performed.
+   For instance, the control can be used with the Modify operation
+   [RFC4511] to perform atomic "test and set" and "test and clear"
+   operations.
+
+   The control may be attached to any update operation to support
+   conditional addition, deletion, modification, and renaming of the
+   target object.  The asserted condition is evaluated as an integral
+   part the operation.
+
+   The control may also be used with the search operation.  Here, the
+   assertion is applied to the base object of the search before
+   searching for objects that match the search scope and filter.
+
+   The control may also be used with the compare operation.  Here, it
+   extends the compare operation to allow a more complex assertion.
+
+2. Terminology
+
+   Protocol elements are described using ASN.1 [X.680] with implicit
+   tags.  The term "BER-encoded" means the element is to be encoded
+   using the Basic Encoding Rules [X.690] under the restrictions
+   detailed in Section 5.1 of [RFC4511].
+
+   DSA stands for Directory System Agent (or server).
+   DSE stands for DSA-specific Entry.
+
+   In this document, the key words "MUST", "MUST NOT", "REQUIRED",
+   "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY",
+   and "OPTIONAL" are to be interpreted as described in BCP 14
+   [RFC2119].
+
+3.  The Assertion Control
+
+   The assertion control is an LDAP Control [RFC4511] whose controlType
+   is 1.3.6.1.1.12 and whose controlValue is a BER-encoded Filter
+   [Protocol, Section 4.5.1].  The criticality may be TRUE or FALSE.
+   There is no corresponding response control.
+
+   The control is appropriate for both LDAP interrogation and update
+   operations [RFC4511], including Add, Compare, Delete, Modify,
+   ModifyDN (rename), and Search.  It is inappropriate for Abandon,
+   Bind, Unbind, and StartTLS operations.
+
+
+
+Zeilenga                    Standards Track                     [Page 2]
+
+RFC 4528                 LDAP Assertion Control                June 2006
+
+
+   When the control is attached to an LDAP request, the processing of
+   the request is conditional on the evaluation of the Filter as applied
+   against the target of the operation.  If the Filter evaluates to
+   TRUE, then the request is processed normally.  If the Filter
+   evaluates to FALSE or Undefined, then assertionFailed (122)
+   resultCode is returned, and no further processing is performed.
+
+   For Add, Compare, and ModifyDN operations, the target is indicated by
+   the entry field in the request.  For Modify operations, the target is
+   indicated by the object field.  For Delete operations, the target is
+   indicated by the DelRequest type.  For Compare operations and all
+   update operations, the evaluation of the assertion MUST be performed
+   as an integral part of the operation.  That is, the evaluation of the
+   assertion and the normal processing of the operation SHALL be done as
+   one atomic action.
+
+   For Search operations, the target is indicated by the baseObject
+   field, and the evaluation is done after "finding" but before
+   "searching" [RFC4511].  Hence, no entries or continuations references
+   are returned if the assertion fails.
+
+   Servers implementing this technical specification SHOULD publish the
+   object identifier 1.3.6.1.1.12 as a value of the 'supportedControl'
+   attribute [RFC4512] in their root DSE.  A server MAY choose to
+   advertise this extension only when the client is authorized to use
+   it.
+
+   Other documents may specify how this control applies to other LDAP
+   operations.  In doing so, they must state how the target entry is
+   determined.
+
+4.  Security Considerations
+
+   The filter may, like other components of the request, contain
+   sensitive information.  When it does, this information should be
+   appropriately protected.
+
+   As with any general assertion mechanism, the mechanism can be used to
+   determine directory content.  Hence, this mechanism SHOULD be subject
+   to appropriate access controls.
+
+   Some assertions may be very complex, requiring significant time and
+   resources to evaluate.  Hence, this mechanism SHOULD be subject to
+   appropriate administrative controls.
+
+
+
+
+
+
+
+Zeilenga                    Standards Track                     [Page 3]
+
+RFC 4528                 LDAP Assertion Control                June 2006
+
+
+   Security considerations for the base operations [RFC4511] extended by
+   this control, as well as general LDAP security considerations
+   [RFC4510], generally apply to implementation and use of this
+   extension.
+
+5.  IANA Considerations
+
+5.1.  Object Identifier
+
+   The IANA has assigned an LDAP Object Identifier [RFC4520] to identify
+   the LDAP Assertion Control defined in this document.
+
+       Subject: Request for LDAP Object Identifier Registration
+       Person & email address to contact for further information:
+           Kurt Zeilenga <kurt@OpenLDAP.org>
+       Specification: RFC 4528
+       Author/Change Controller: IESG
+       Comments:
+           Identifies the LDAP Assertion Control
+
+5.2.  LDAP Protocol Mechanism
+
+   Registration of this protocol mechanism [RFC4520] is requested.
+
+       Subject: Request for LDAP Protocol Mechanism Registration
+       Object Identifier: 1.3.6.1.1.12
+       Description: Assertion Control
+       Person & email address to contact for further information:
+           Kurt Zeilenga <kurt@openldap.org>
+       Usage: Control
+       Specification: RFC 4528
+       Author/Change Controller: IESG
+       Comments: none
+
+5.3.  LDAP Result Code
+
+   The IANA has assigned an LDAP Result Code [RFC4520] called
+   'assertionFailed' (122).
+
+       Subject: LDAP Result Code Registration
+       Person & email address to contact for further information:
+           Kurt Zeilenga <kurt@OpenLDAP.org>
+       Result Code Name: assertionFailed
+       Specification: RFC 4528
+       Author/Change Controller: IESG
+       Comments:  none
+
+
+
+
+
+Zeilenga                    Standards Track                     [Page 4]
+
+RFC 4528                 LDAP Assertion Control                June 2006
+
+
+6.  Acknowledgements
+
+   The assertion control concept is attributed to Morteza Ansari.
+
+7.  References
+
+7.1.  Normative References
+
+   [RFC2119]     Bradner, S., "Key words for use in RFCs to Indicate
+                 Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [RFC4510]     Zeilenga, K., Ed., "Lightweight Directory Access
+                 Protocol (LDAP): Technical Specification Road Map", RFC
+                 4510, June 2006.
+
+   [RFC4511]     Sermersheim, J., Ed., "Lightweight Directory Access
+                 Protocol (LDAP): The Protocol", RFC 4511, June 2006.
+
+   [RFC4512]     Zeilenga, K., "Lightweight Directory Access Protocol
+                 (LDAP): Directory Information Models", RFC 4512, June
+                 2006.
+
+   [X.680]       International Telecommunication Union -
+                 Telecommunication Standardization Sector, "Abstract
+                 Syntax Notation One (ASN.1) - Specification of Basic
+                 Notation", X.680(2002) (also ISO/IEC 8824-1:2002).
+
+   [X.690]       International Telecommunication Union -
+                 Telecommunication Standardization Sector,
+                 "Specification of ASN.1 encoding rules: Basic Encoding
+                 Rules (BER), Canonical Encoding Rules (CER), and
+                 Distinguished Encoding Rules (DER)", X.690(2002) (also
+                 ISO/IEC 8825-1:2002).
+
+7.2.  Informative References
+
+   [RFC4520]     Zeilenga, K., "Internet Assigned Numbers Authority
+                 (IANA) Considerations for the Lightweight Directory
+                 Access Protocol (LDAP)", BCP 64, RFC 4520, June 2006.
+
+Author's Address
+
+   Kurt D. Zeilenga
+   OpenLDAP Foundation
+
+   EMail: Kurt@OpenLDAP.org
+
+
+
+
+
+Zeilenga                    Standards Track                     [Page 5]
+
+RFC 4528                 LDAP Assertion Control                June 2006
+
+
+Full Copyright Statement
+
+   Copyright (C) The Internet Society (2006).
+
+   This document is subject to the rights, licenses and restrictions
+   contained in BCP 78, and except as set forth therein, the authors
+   retain all their rights.
+
+   This document and the information contained herein are provided on an
+   "AS IS" basis and THE CONTRIBUTOR, THE ORGANIZATION HE/SHE REPRESENTS
+   OR IS SPONSORED BY (IF ANY), THE INTERNET SOCIETY AND THE INTERNET
+   ENGINEERING TASK FORCE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED,
+   INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE
+   INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED
+   WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Intellectual Property
+
+   The IETF takes no position regarding the validity or scope of any
+   Intellectual Property Rights or other rights that might be claimed to
+   pertain to the implementation or use of the technology described in
+   this document or the extent to which any license under such rights
+   might or might not be available; nor does it represent that it has
+   made any independent effort to identify any such rights.  Information
+   on the procedures with respect to rights in RFC documents can be
+   found in BCP 78 and BCP 79.
+
+   Copies of IPR disclosures made to the IETF Secretariat and any
+   assurances of licenses to be made available, or the result of an
+   attempt made to obtain a general license or permission for the use of
+   such proprietary rights by implementers or users of this
+   specification can be obtained from the IETF on-line IPR repository at
+   http://www.ietf.org/ipr.
+
+   The IETF invites any interested party to bring to its attention any
+   copyrights, patents or patent applications, or other proprietary
+   rights that may cover technology that may be required to implement
+   this standard.  Please address the information to the IETF at
+   ietf-ipr@ietf.org.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is provided by the IETF
+   Administrative Support Activity (IASA).
+
+
+
+
+
+
+
+Zeilenga                    Standards Track                     [Page 6]
+

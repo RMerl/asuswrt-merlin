@@ -1,0 +1,13 @@
+<samba:parameter name="max mux"
+                 context="G"
+                 advanced="1" developer="1"
+				 type="integer"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This option controls the maximum number of 
+    outstanding simultaneous SMB operations that Samba tells the client 
+	it will allow. You should never need to set this parameter.</para>
+</description>
+
+<value type="default">50</value>
+</samba:parameter>

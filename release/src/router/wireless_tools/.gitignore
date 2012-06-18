@@ -1,0 +1,13 @@
+*.d
+*.o
+*.a
+*.so.*
+wireless.h
+ifrename
+iwconfig
+iwevent
+iwgetid
+iwlib.so
+iwlist
+iwpriv
+iwspy

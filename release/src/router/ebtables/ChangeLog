@@ -1,0 +1,180 @@
+20100203
+	Changelog for v2.0.9-2
+	* fix unwanted zeroing of counters in the last user-defined chain
+	  (reported by Jon Lewis)
+	* fix hidden symbol compilation error when using ld directly
+	* fix return value checking of creat to give a correct error
+	  message if the atomic file couldn't be created
+	* correct info in INSTALL about compilation of ulog
+20090621
+	Changelog for v2.0.9 vs v2.0.8-2
+	* added ip6 module for filtering IPv6 traffic (Kuo-Lang Tseng,
+	  Manohar Castelino)
+	* added --log-ip6 option for logging IPv6 traffic (Kuo-Lang Tseng,
+	  Manohar Castelino)
+	* added nflog watcher for logging packets to userspace (Peter Warasin)
+	* bugfix in ebtables.sysv (Michal Soltys)
+	* bugfix for among match on x86-64 (reported by Pavel Emelyanov)
+20061217
+	Since last entry:
+	* fixed a few reported bugs
+	* ebt_among --among-dst-file and --among-src-file: allow
+	  the list to be given in a file (circumvents command line max.
+	  line length
+	* ebt_nat --snat-arp: if it's an arp packet, also change the source
+	  address in the arp header
+	* ebt_mark --mark-or, --mark-xor, --mark-and
+20051020
+	Since last entry:
+	* ebtables modules are now located in /usr/lib/ebtables/
+	* added '/sbin/service ebtables' support
+	* added ebtables-save (thanks to Rok Papez <rok.papez@arnes.si>)
+	  and ebtables-restore (the first one a perl script, the second
+	  one written in c (fast))
+	* optimized the code for the '-A' command, making ebtables-restore
+	  very fast.
+	* ebtablesd/ebtablesu is deprecated and not compiled by default
+	  the ebtables-save/ebtables-restore scheme is much better
+20050117
+	Since last entry:
+	* added ulog watcher
+	* made the ebtables code modular (make library functions).
+	* added the ebtablesd/ebtablesu scheme to allow faster
+	  addition of rules (and to test the modular code).
+	* some small fixes
+	* added -c option (initialize counters)
+	* added -C option (change counters)
+20031102
+	Since last entry:
+	* <grzes_at_gnu.univ.gda.pl> added arpreply and among modules
+	* <tommy_at_home.tig-grr.com> added limit match
+20030724
+	* added (automatic) Sparc64 support, thanks to Michael Bellion and
+	  Thomas Heinz from hipac.org for providing a test-box.
+20030717
+	* added stp frames match type
+20030713
+	* added support for deleting all user-defined chains (-X option
+	  without specified chain)
+20030601
+	* added --Lmac2
+	* <csv_at_bluetail.com> Chris Vitale: basic 802.3/802.2 filtering
+	  (experimental, kernel files are in the CVS)
+
+20030503
+	* added negative rule counter support
+	* bugfix: bcnt was not updated correctly
+	* <blancher_at_cartel-securite.fr> Cedric Blancher: add ARP MAC
+	  matching support
+	* added pkttype match
+20030402
+	* fixed check bug in ebt_ip.c (report from
+	  joe_judge_at_guardium.com).
+20030111
+	* fixed problem when removing a chain (report from
+	  ykphuah_at_greenpacket.com).
+	* Added --help list_extensions which, well, lists the extensions
+20021203
+	* changed the way to use the atomic operations. It's now possible
+	  to use the EBTABLES_ATOMIC_FILE environment variable, so it's no
+	  longer necessary to explicitly state the file name. See the man.
+20021120
+	* changed the way of compiling. New releases will now contain their
+	  own set of kernel includes. No more copying of kernel includes to
+	  /usr/include/linux
+	* added getethertype.c (Nick) and use it. Removed name_to_number()
+	  and number_to_name().
+20021106
+	* added possibility to specify a rule number interval when deleting
+	  rules
+20021102
+	* added ! - option possibility, which is equivalent to - ! option
+20021102
+	* since last entry: added byte counters and udp/tcp port matching
+20020830
+	* updated the kernel files for 2.4.20-pre5 and 2.5.32
+	* last big cleanup of kernel and userspace code just finished
+20020820
+	* ARP module bugfix
+	* IP module bugfix
+	* nat module bugfix
+20020730
+	* other things done before 2.0-rc1 that I can think of,
+	  including kernel:
+	* cache align counters for better smp performance
+	* simplify snat code
+	* check for --xxxx-target RETURN on base chain
+	* cleanup code
+	* minor bugfixes
+20020724
+	* code cleanup
+	* bugfix for --atomic-commit
+20020720
+	* added mark target+match
+20020714
+	* added --atomic options
+20020710
+	* some unlogged changes (due to lazyness)
+	* added --Lc, --Ln, --Lx
+20020625
+	* user defined chains support: added -N, -X, -E options.
+20020621
+	* some unlogged changes (due to lazyness)
+	* change the output for -L to make it look like it would look when
+	  the user inputs the command.
+	* try to autoload modules
+	* some minor bugfixes
+	* add user defined chains support (without new commands yet,
+	  deliberately)
+	* comparing rules didn't take the logical devices into account
+20020520
+	* update help for -s and -d
+	* add VLAN in ethertypes
+	* add SYMLINK option for compiling
+20020501
+	* allow -i and --logical-in in BROUTING
+	* update the manual page
+	* rename /etc/etherproto into /etc/ethertypes (seems to be a more
+	  standard name)
+	* add MAC mask for -s and -d, also added Unicast, Multicast and
+	  Broadcast specification for specifying a (family of) MAC
+	  addresses.
+20020427
+	* added broute table.
+	* added redirect target.
+	* added --redirect-target, --snat-target and --dnat-target options.
+	* added logical_out and logical_in
+	* snat bugfix (->size)
+20020414
+	* fixed some things in the manual.
+	* fixed -P problem.
+20020411
+	* -j standard no longer works, is this cryptic? good :)
+	* lots of beautification.
+	  - made some code smaller
+	  - made everything fit within 80 columns
+	* fix problems with -i and -o option
+	* print_memory now prints useful info
+	* trying to see the tables when ebtables is not loaded in kernel
+	  no longer makes this be seen as a bug.
+20020403
+	ebtables v2.0 released, changes:
+	* A complete rewrite, made everything modular.
+	* Fixed a one year old bug in br_db.c. A similar bug was present
+	  in ebtables.c. It was visible when the number of rules got
+	  bigger (around 90).
+	* Removed the option to allow/disallow counters. Frames passing
+	  by are always counted now.
+	* Didn't really add any new functionality. However, it will be
+	  _alot_ easier and prettier to do so now. Feel free to add an
+	  extension yourself.
+	* There are 4 types of extensions:
+	  - Tables.
+	  - Matches: like iptables has.
+	  - Watchers: these only watch frames that passed all the matches
+	    of the rule. They don't change the frame, nor give a verdict.
+	    The log extension is a watcher.
+	  - Targets.
+	* user32/kernel64 architectures like the Sparc64 are unsupported.
+	  If you want me to change this, give me access to such a box,
+	  and don't pressure me.

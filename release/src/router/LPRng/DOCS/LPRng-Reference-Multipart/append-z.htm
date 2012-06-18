@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>The -Z Passthrough to Filter Options</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="lpr - Job Spooler Program" href=
+    "lpr.htm">
+    <link rel="PREVIOUS" title="Remove Files After Spooling" href=
+    "x4373.htm">
+    <link rel="NEXT" title="Record Queue Name in Control File "
+    href="qq.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x4373.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 6.
+          <b class="APPLICATION">lpr</b> - Job Spooler Program</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "qq.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="APPEND-Z">6.7. The -Z Passthrough
+      to Filter Options</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">append_z=</var><span class=
+          "emphasis"><i class="EMPHASIS">Append values to Z options
+          list</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">prefix_z=</var><span class=
+          "emphasis"><i class="EMPHASIS">Prefix values to Z options
+          list</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">remove_z=</var><span class=
+          "emphasis"><i class="EMPHASIS">Remove values from Z
+          options list</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">prefix_s_to_z</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Prefix control file
+          S to Z information</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">prefix_s_to_z</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Prefix control file
+          Z to S information</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>By convention all of the values specified with the <tt
+      class="COMMAND">lpr -Z</tt> option are placed in the job
+      control file and passed to the <b class="APPLICATION">lpd</b>
+      server, which turn passes them to the print filters. This
+      allows users to pass options that are not part of the RFC1179
+      repetoire to filters.</p>
+
+      <p>In addition to this simple method of providing options, we
+      can have the <b class="APPLICATION">lpr</b> and <b class=
+      "APPLICATION">lpd</b> systems add options to the control file
+      information. The <var class="LITERAL">prefix_z</var> and <var
+      class="LITERAL">append_z</var> options allow us to put Z
+      options at the start or end of the user provided list; the
+      <var class="LITERAL">remove_z</var> removes specified options
+      from the list.</p>
+
+      <p>The <var class="LITERAL">prefix_s_to_z</var> and <var
+      class="LITERAL">prefix_z_to_s</var> options are usually used
+      by the <b class="APPLICATION">lpd</b> server, and provides a
+      simple way to have the SystemV <tt class="COMMAND">lp -o
+      option</tt> values put into the <var class="LITERAL">Z</var>
+      options value. This is very useful when existing SysV <b
+      class="APPLICATION">lp</b> print spooling systems need to be
+      interfaced to <b class="APPLICATION">LPRng</b> and the
+      options need to be handled in a meaningful manner. The <var
+      class="LITERAL">prefix_z_to_s</var> is similarly used when
+      you want to forward jobs to a SysV spooling system and have
+      the options passed correctly.</p>
+
+      <p>If present in the printer configuration, the various
+      requested actions are are done by the <b class=
+      "APPLICATION">lpr</b> client, the <b class=
+      "APPLICATION">lpd</b> server on job reception, and the <b
+      class="APPLICATION">lpd</b> server again on job processing.
+      This redundancy ensures that jobs which are sent to this
+      queue, arrive at this queue, or are processed by this queue
+      have the options set appropriately.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x4373.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "qq.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Remove Files
+          After Spooling</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "lpr.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Record Queue
+          Name in Control File</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

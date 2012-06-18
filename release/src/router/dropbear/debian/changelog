@@ -1,0 +1,298 @@
+dropbear (0.52-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Matt Johnston <matt@ucc.asn.au>  Wed, 12 Nov 2008 22:54:00 +0900
+
+dropbear (0.51-0.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Matt Johnston <matt@ucc.asn.au>  Thu, 27 Mar 2008 19:14:00 +0900
+
+dropbear (0.50-4) unstable; urgency=low
+
+  * debian/dropbear.init: apply patch from Petter Reinholdtsen: add LSB
+    formatted dependency info in init.d script (closes: #466257).
+  * debian/rules: no longer include symlinks for ./supervise/ subdirectories.
+  * debian/dropbear.postinst: upgrade from << 0.50-4: if dropbear is managed
+    by runit, remove service, and re-add using update-service(8).
+  * debian/control: Standards-Version: 3.7.3.0.
+  * debian/rules: target clean: don't ignore errors but check for readable
+    ./Makefile.
+
+ -- Gerrit Pape <pape@smarden.org>  Thu, 06 Mar 2008 19:06:58 +0000
+
+dropbear (0.50-3) unstable; urgency=low
+
+  * debian/dropbear.init: use the update-service(8) program from the runit
+    package instead of directly checking for the symlink in /var/service/.
+  * debian/README.runit: talk about update-service(8) instead of symlinks
+    in /var/service/.
+
+ -- Gerrit Pape <pape@smarden.org>  Fri, 15 Feb 2008 00:32:37 +0000
+
+dropbear (0.50-2) unstable; urgency=low
+
+  * debian/dropbear.README.Debian: no longer talk about entropy from
+    /dev/random, /dev/urandom is now used by default (thx Joey Hess,
+    closes: #441515).
+
+ -- Gerrit Pape <pape@smarden.org>  Mon, 24 Sep 2007 16:49:17 +0000
+
+dropbear (0.50-1) unstable; urgency=low
+
+  * debian/README.runit: minor.
+  * new upstream version.
+  * debian/diff/0001-options.h-use-dev-urandom-instead-of-dev-random-a.diff:
+    remove; fixed upstream.
+
+ -- Gerrit Pape <pape@smarden.org>  Thu, 09 Aug 2007 23:01:01 +0000
+
+dropbear (0.49-2) unstable; urgency=low
+
+  * debian/rules: apply diffs from debian/diff/ with patch -p1 instead of
+    -p0.
+  * debian/diff/0001-options.h-use-dev-urandom-instead-of-dev-random-a.diff:
+    new; options.h: use /dev/urandom instead of /dev/random as
+    DROPBEAR_RANDOM_DEV (closes: #386976).
+  * debian/rules: target clean: remove libtomcrypt/Makefile,
+    libtommath/Makefile.
+
+ -- Gerrit Pape <pape@smarden.org>  Sat, 09 Jun 2007 08:59:59 +0000
+
+dropbear (0.49-1) unstable; urgency=high
+
+  * new upstream release, fixes
+    * CVE-2007-1099: dropbear dbclient insufficient warning on hostkey
+      mismatch (closes: #412899).
+    * dbclient uses static "Password:" prompt instead of using the server's
+      prompt (closes: #394996).
+  * debian/control: Suggests: openssh-client, not ssh (closes: #405686);
+    Standards-Version: 3.7.2.2.
+  * debian/README.Debian: ssh -> openssh-server, openssh-client; remove
+    'Replacing OpenSSH "sshd" with Dropbear' part, this is simply done by not
+    installing the openssh-server package.
+  * debian/README.runit: runsvstat -> sv status.
+
+ -- Gerrit Pape <pape@smarden.org>  Fri,  2 Mar 2007 20:48:18 +0000
+
+dropbear (0.48.1-1) unstable; urgency=medium
+
+  * new upstream point release.
+    * Compile fix for scp
+  * debian/diff/dbclient.1.diff: new: document -R option to dbclient
+    accurately (thx Markus Schaber; closes: #351882).
+  * debian/dropbear.README.Debian: document a workaround for systems with
+    possibly blocking /dev/random device (closes: #355414)..
+
+ -- Gerrit Pape <pape@smarden.org>  Sun, 16 Apr 2006 16:16:40 +0000
+
+dropbear (0.48-1) unstable; urgency=medium
+
+  * New upstream release.
+  * SECURITY: Improve handling of denial of service attempts from a single
+    IP.
+
+  * debian/implicit: update to revision 1.11.
+  * new upstream release updates to scp from OpenSSH 4.3p2 - fixes a
+    security issue where use of system() could cause users to execute
+    arbitrary code through malformed filenames; CVE-2006-0225 (see also
+    #349645); the scp binary is not provided by this package though.
+
+ -- Gerrit Pape <pape@smarden.org>  Fri, 10 Mar 2006 22:00:32 +0000
+
+dropbear (0.47-1) unstable; urgency=high
+
+  * New upstream release.
+  * SECURITY: Fix incorrect buffer sizing; CVE-2005-4178.
+
+ -- Matt Johnston <matt@ucc.asn.au>  Thu, 8 Dec 2005 19:20:21 +0800
+
+dropbear (0.46-2) unstable; urgency=low
+
+  * debian/control: Standards-Version: 3.6.2.1; update descriptions to
+    mention included server and client (thx Tino Keitel).
+  * debian/dropbear.init: allow '/etc/init.d/dropbear stop' even though
+    'NO_START is not set to zero.' (closes: #336723).
+
+ -- Gerrit Pape <pape@smarden.org>  Tue,  6 Dec 2005 13:30:49 +0000
+
+dropbear (0.46-1) unstable; urgency=medium
+
+  * New upstream release, various fixes.
+  * debian/diff/dbclient-usage-typo.diff, debian/diff/manpages.diff: remove;
+    obsolete.
+  * debian/dbclient.1: move to ./dbclient.1.
+
+ -- Matt Johnston <matt@ucc.asn.au>  Fri, 8 July 2005 21:32:55 +0800
+
+dropbear (0.45-3) unstable; urgency=low
+
+  * debian/dropbear.init: init script prints human readable message in case
+    it's disabled (closes: #309099).
+  * debian/dropbear.postinst: configure: restart service through init script
+    instead of start.
+  * debian/dropbear.prerm: set -u -> set -e.
+
+ -- Gerrit Pape <pape@smarden.org>  Wed, 25 May 2005 22:38:17 +0000
+
+dropbear (0.45-2) unstable; urgency=low
+
+  * Matt Johnston:
+    * New upstream release, various fixes.
+
+ -- Gerrit Pape <pape@smarden.org>  Sat, 12 Mar 2005 15:17:55 +0000
+
+dropbear (0.44-1) unstable; urgency=low
+
+  * New upstream release.
+  * debian/rules: install /usr/bin/dbclient; handle possible patches more
+    gracefully; install debian/dbclient.1 man page; enable target patch;
+    minor.
+  * debian/implicit: update to revision 1.10.
+  * debian/dbclient.1: new; man page.
+  * debian/diff/dbclient-usage-typo.diff: new; fix typo.
+  * debian/diff/manpages.diff: new; add references to dbclient man page.
+
+ -- Gerrit Pape <pape@smarden.org>  Sat,  8 Jan 2005 22:50:43 +0000
+
+dropbear (0.43-2) unstable; urgency=high
+
+  * Matt Johnston:
+    * New upstream release 0.43
+    * SECURITY: Don't attempt to free uninitialised buffers in DSS verification
+      code
+    * Handle portforwarding to servers which don't send any initial data
+      (Closes: #258426)
+  * debian/dropbear.postinst: remove code causing bothersome warning on
+    package install (closes: #256752).
+  * debian/README.Debian.diet: new; how to build with the diet libc.
+  * debian/dropbear.docs: add debian/README.Debian.diet.
+  * debian/rules: support "diet" in DEB_BUILD_OPTIONS; minor cleanup.
+
+ -- Gerrit Pape <pape@smarden.org>  Sat, 17 Jul 2004 19:31:19 +0000
+
+dropbear (0.42-1) unstable; urgency=low
+
+  * New upstream release 0.42.
+  * debian/diff/cvs-20040520.diff: remove; obsolete.
+  * debian/rules: disable target patch.
+
+ -- Matt Johnston <matt@ucc.asn.au>  Wed, 16 June 2004 12:44:54 +0800
+
+dropbear (0.41-3) unstable; urgency=low
+
+  * 1st upload to the Debian archive (closes: #216553).
+  * debian/diff/cvs-20040520.diff: new; stable cvs snapshot.
+  * debian/rules: new target patch: apply diffs in debian/diff/, reverse
+    apply in target clean; install man pages.
+  * debian/control: Priority: optional.
+
+ -- Gerrit Pape <pape@smarden.org>  Sun, 23 May 2004 08:32:37 +0000
+
+dropbear (0.41-2) unstable; urgency=low
+
+  * new maintainer.
+  * debian/control: no longer Build-Depends: debhelper; Build-Depends:
+    libz-dev; Standards-Version: 3.6.1.0; Suggests: runit; update
+    descriptions.
+  * debian/rules: stop using debhelper, use implicit rules; cleanup;
+    install dropbearconvert into /usr/lib/dropbear/.
+  * debian/impicit: new; implicit rules.
+  * debian/copyright.in: adapt.
+  * debian/dropbear.init: minor adaptions; test for dropbear service
+    directory.
+  * debian/README.runit: new; how to use dropbear with runit.
+  * debian/README.Debian, debian/docs: rename to debian/dropbear.*.
+  * debian/dropbear.docs: add debian/README.runit
+  * debian/conffiles: rename to debian/dropbear.conffiles; add init
+    script, and run scripts.
+  * debian/postinst: rename to debian/dropbear.postinst; adapt; use
+    invloke-rc.d dropbear start.
+  * debian/dropbear.prerm: new; invoke-rc.d dropbear stop.
+  * debian/postrm: rename to debian/dropbear.postrm; adapt; clean up
+    service directories.
+  * debian/compat, debian/dirs, dropbear.default: remove; obsolete.
+
+ -- Gerrit Pape <pape@smarden.org>  Sun, 16 May 2004 16:50:55 +0000
+
+dropbear (0.41-1) unstable; urgency=low
+
+  * Updated to 0.41 release.
+  * Various minor fixes
+
+ -- Matt Johnston <matt@ucc.asn.au>  Mon, 19 Jan 2004 23:20:54 +0800
+
+dropbear (0.39-1) unstable; urgency=low
+
+  * updated to 0.39 release. Some new features, some bugfixes.
+
+ -- Matt Johnston <matt@ucc.asn.au>  Tue, 16 Dec 2003 16:20:54 +0800
+
+dropbear (0.38-1) unstable; urgency=medium
+
+  * updated to 0.38 release - various important bugfixes
+
+ -- Matt Johnston <matt@ucc.asn.au>  Sat, 11 Oct 2003 16:28:54 +0800
+
+dropbear (0.37-1) unstable; urgency=medium
+
+  * updated to 0.37 release - various important bugfixes
+
+ -- Matt Johnston <matt@ucc.asn.au>  Wed, 24 Sept 2003 19:43:54 +0800
+
+dropbear (0.36-1) unstable; urgency=high
+
+  * updated to 0.36 release - various important bugfixes
+
+ -- Matt Johnston <matt@ucc.asn.au>  Tues, 19 Aug 2003 12:20:54 +0800
+
+dropbear (0.35-1) unstable; urgency=high
+
+  * updated to 0.35 release - contains fix for remotely exploitable
+    vulnerability.
+
+ -- Matt Johnston <matt@ucc.asn.au>  Sun, 17 Aug 2003 05:37:47 +0800
+
+dropbear (0.34-1) unstable; urgency=medium
+
+  * updated to 0.34 release
+
+ -- Matt Johnston <matt@ucc.asn.au>  Fri, 15 Aug 2003 15:10:00 +0800
+
+dropbear (0.33-1) unstable; urgency=medium
+
+  * updated to 0.33 release
+
+ -- Matt Johnston <matt@ucc.asn.au>  Sun, 22 Jun 2003 22:22:00 +0800
+
+dropbear (0.32cvs-1) unstable; urgency=medium
+
+  * now maintained in UCC CVS
+  * debian/copyright.in file added, generated from LICENSE
+
+ -- Grahame Bowland <grahame@angrygoats.net>  Tue, 21 Jun 2003 17:57:02 +0800
+
+dropbear (0.32cvs-1) unstable; urgency=medium
+
+  * sync with CVS
+  * fixes X crash bug
+
+ -- Grahame Bowland <grahame@angrygoats.net>  Tue, 20 Jun 2003 15:04:47 +0800
+
+dropbear (0.32-2) unstable; urgency=low
+
+  * fix creation of host keys to use correct names in /etc/dropbear
+  * init script "restart" function fixed
+  * purging this package now deletes the host keys and /etc/dropbear
+  * change priority in debian/control to 'standard'
+
+ -- Grahame Bowland <grahame@angrygoats.net>  Tue, 17 Jun 2003 15:04:47 +0800
+
+dropbear (0.32-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Grahame Bowland <grahame@angrygoats.net>  Tue, 17 Jun 2003 15:04:47 +0800
+

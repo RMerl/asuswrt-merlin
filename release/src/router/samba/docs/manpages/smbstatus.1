@@ -1,0 +1,75 @@
+.TH SMBSTATUS 1 "23 Jun 2001" "smbstatus 2.0.10"
+.PP 
+.SH "NAME" 
+smbstatus \- report on current Samba connections
+.PP 
+.SH "SYNOPSIS" 
+.PP 
+\fBsmbstatus\fP [-P] [-b] [-d] [-L] [-p] [-S] [-s configuration file] [-u username]
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+This program is part of the \fBSamba\fP suite\&.
+.PP 
+\fBsmbstatus\fP is a very simple program to list the current Samba
+connections\&.
+.PP 
+.SH "OPTIONS" 
+.PP 
+.IP 
+.IP "\fB-P\fP" 
+If samba has been compiled with the profiling option,
+print only the contents of the profiling shared memory area\&.
+.IP 
+.IP "\fB-b\fP" 
+gives brief output\&.
+.IP 
+.IP "\fB-d\fP" 
+gives verbose output\&.
+.IP 
+.IP "\fB-L\fP" 
+causes smbstatus to only list locks\&.
+.IP 
+.IP "\fB-p\fP" 
+print a list of \fBsmbd\fP
+processes and exit\&. Useful for scripting\&.
+.IP 
+.IP "\fB-S\fP" 
+causes smbstatus to only list shares\&.
+.IP 
+.IP "\fB-s configuration file\fP" 
+The default configuration file name is
+determined at compile time\&. The file specified contains the
+configuration details required by the server\&. See \fBsmb\&.conf
+(5)\fP for more information\&.
+.IP 
+.IP "\fB-u username\fP" 
+selects information relevant to \fIusername\fP
+only\&.
+.IP 
+.PP 
+.SH "VERSION" 
+.PP 
+This man page is correct for version 2\&.0 of the Samba suite\&.
+.PP 
+.SH "SEE ALSO" 
+.PP 
+\fBsmb\&.conf (5)\fP, \fBsmbd (8)\fP
+.PP 
+.SH "AUTHOR" 
+.PP 
+The original Samba software and related utilities were created by
+Andrew Tridgell samba@samba\&.org\&. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed\&.
+.PP 
+The original Samba man pages were written by Karl Auer\&. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+\fBftp://ftp\&.icce\&.rug\&.nl/pub/unix/\fP)
+and updated for the Samba2\&.0 release by Jeremy Allison\&.
+samba@samba\&.org\&.
+.PP 
+See \fBsamba (7)\fP to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc\&.

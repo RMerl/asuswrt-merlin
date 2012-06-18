@@ -1,0 +1,77 @@
+#
+# The static prototype file for the Samba package.
+# For files that can't be dynamically added to the prototype file at 
+# package build time
+#
+# Information files.
+# 
+i pkginfo=./pkginfo
+i copyright=./copyright
+i request=./request
+#
+# Stuff that goes into the system areas of the filesystem.
+#
+d initscript /etc ? ? ?
+d initscript /etc/init.d ? ? ?
+f initscript /etc/init.d/samba.server=packaging/Solaris/samba.server 0744 root sys
+d initscript /etc/rc3.d ? ? ?
+l initscript /etc/rc3.d/S99samba.server=/etc/init.d/samba.server
+#
+# Create the samba subtree. (Usually /usr/local/samba )
+#
+d none samba 0755 root other
+d none samba/var 0755 root other
+d none samba/bin 0755 root other
+d none samba/lib 0755 root other
+d none samba/docs 0755 root other
+#
+# Scripts
+#
+f none samba/bin/smbtar=source/script/smbtar 0755 root other
+f none samba/bin/addtosmbpass=source/script/addtosmbpass 0755 root other
+f none samba/bin/convert_smbpasswd=source/script/convert_smbpasswd 0755 root other
+f none samba/bin/mksmbpasswd.sh=source/script/mksmbpasswd.sh 0755 root other
+#
+# man pages
+#
+d none /usr ? ? ?
+d none /usr/share ? ? ?
+d none /usr/share/man ? ? ?
+d none /usr/share/man/man1 ? ? ?
+d none /usr/share/man/man5 ? ? ?
+d none /usr/share/man/man7 ? ? ?
+d none /usr/share/man/man8 ? ? ?
+f none /usr/share/man/man1/make_smbcodepage.1=docs/manpages/make_smbcodepage.1 0644 root other
+f none /usr/share/man/man1/make_unicodemap.1=docs/manpages/make_unicodemap.1 0644 root other
+f none /usr/share/man/man1/nmblookup.1=docs/manpages/nmblookup.1 0644 root other
+f none /usr/share/man/man1/smbclient.1=docs/manpages/smbclient.1 0644 root other
+f none /usr/share/man/man1/smbrun.1=docs/manpages/smbrun.1 0644 root other
+f none /usr/share/man/man1/smbsh.1=docs/manpages/smbsh.1 0644 root other
+f none /usr/share/man/man1/smbstatus.1=docs/manpages/smbstatus.1 0644 root other
+f none /usr/share/man/man1/smbtar.1=docs/manpages/smbtar.1 0644 root other
+f none /usr/share/man/man1/testparm.1=docs/manpages/testparm.1 0644 root other
+f none /usr/share/man/man1/testprns.1=docs/manpages/testprns.1 0644 root other
+f none /usr/share/man/man5/lmhosts.5=docs/manpages/lmhosts.5 0644 root other
+f none /usr/share/man/man5/smb.conf.5=docs/manpages/smb.conf.5 0644 root other
+f none /usr/share/man/man5/smbpasswd.5=docs/manpages/smbpasswd.5 0644 root other
+f none /usr/share/man/man7/samba.7=docs/manpages/samba.7 0644 root other
+f none /usr/share/man/man8/nmbd.8=docs/manpages/nmbd.8 0644 root other
+f none /usr/share/man/man8/smbd.8=docs/manpages/smbd.8 0644 root other
+f none /usr/share/man/man8/smbmnt.8=docs/manpages/smbmnt.8 0644 root other
+f none /usr/share/man/man8/smbmount.8=docs/manpages/smbmount.8 0644 root other
+f none /usr/share/man/man8/smbpasswd.8=docs/manpages/smbpasswd.8 0644 root other
+f none /usr/share/man/man8/smbumount.8=docs/manpages/smbumount.8 0644 root other
+f none /usr/share/man/man8/swat.8=docs/manpages/swat.8 0644 root other
+f none /usr/share/man/man8/smbspool.8=docs/manpages/smbspool.8 0644 root other
+#
+# Stuff that goes into lib
+#
+f none samba/lib/smb.conf.example=examples/smb.conf.default 0644 root other
+d none samba/lib/regeditscripts 0755 root other
+f none samba/lib/regeditscripts/NT4_PlainPassword.reg=docs/NT4_PlainPassword.reg 0444 root other
+f none samba/lib/regeditscripts/Win95_PlainPassword.reg=docs/Win95_PlainPassword.reg 0444 root other
+f none samba/lib/regeditscripts/Win98_PlainPassword.reg=docs/Win98_PlainPassword.reg 0444 root other
+f none samba/lib/regeditscripts/Win2000_PlainPassword.reg=docs/Win2000_PlainPassword.reg 0444 root other
+#
+# Static part of prototype file ends.
+#

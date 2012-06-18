@@ -1,0 +1,15 @@
+samba3.smbconftort	# Errors, needs smb.conf file
+samba3.randomipc
+samba3.negnowait
+samba3.nbench
+samba3.errmapextract
+samba3.trans2scan
+samba3.nttransscan
+samba3.deny1
+samba3.deny2
+samba3.openattr
+samba3.casetable
+samba3.eatest
+samba3.mangle
+samba3.utable
+samba3.pipe_number

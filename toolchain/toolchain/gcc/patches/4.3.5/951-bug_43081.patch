@@ -1,0 +1,70 @@
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43081
+
+--- trunk/gcc/cp/ChangeLog	2010/03/20 17:45:37	157596
++++ trunk/gcc/cp/ChangeLog	2010/03/20 18:01:18	157597
+@@ -1,6 +1,12 @@
+ 	PR c++/35335
+ 	* error.c (dump_expr): Handle EXPR_STMT like BIND_EXPR.
+ 
++2010-03-20  Simon Martin  <simartin@users.sourceforge.net>
++
++	PR c++/43081:
++	* decl2.c (grokfield): Handle invalid initializers for member
++	functions.
++
+ 2009-11-13  Jason Merrill  <jason@redhat.com>
+ 
+ 	PR c++/21008, DR 515
+--- trunk/gcc/cp/decl2.c	2010/03/20 17:45:37	157596
++++ trunk/gcc/cp/decl2.c	2010/03/20 18:01:18	157597
+@@ -908,8 +908,13 @@
+ 	     If we get here, it must be a pure specifier for a method.  */
+ 	  if (TREE_CODE (TREE_TYPE (value)) == METHOD_TYPE)
+ 	    {
+-	      gcc_assert (error_operand_p (init) || integer_zerop (init));
+-	      DECL_PURE_VIRTUAL_P (value) = 1;
++	      if (integer_zerop (init))
++		DECL_PURE_VIRTUAL_P (value) = 1;
++	      else if (error_operand_p (init))
++		; /* An error has already been reported.  */
++	      else
++		error ("invalid initializer for member function %qD",
++		       value);
+ 	    }
+ 	  else
+ 	    {
+--- trunk/gcc/testsuite/ChangeLog	2010/03/20 17:45:37	157596
++++ trunk/gcc/testsuite/ChangeLog	2010/03/20 18:01:18	157597
+@@ -108,6 +108,12 @@
+ 	* gcc.target/powerpc/ppc-sdata-1.c: Require nonpic.
+ 	* gcc.target/powerpc/ppc-sdata-2.c: Likewise.
+ 
++2010-03-20  Simon Martin  <simartin@users.sourceforge.net>
++	    Michael Matz  <matz@suse.de>
++
++	PR c++/43081
++	* g++.dg/parse/crash56.C: New test.
++
+ 2010-03-18  H.J. Lu  <hongjiu.lu@intel.com>
+ 
+ 	Backport from mainline:
+--- /dev/null
++++ trunk/gcc/testsuite/g++.dg/parse/crash56.C	2010/03/20 18:01:18	157597
+@@ -0,0 +1,17 @@
++/* PR c++/43081 */
++/* { dg-do "compile" } */
++/* { dg-options "-std=c++0x" } */
++
++struct A
++{
++  typedef void (F)();
++  F f = []{}; /* { dg-error "invalid initializer" } */
++};
++
++struct B
++{
++  typedef void (F)();
++  F f = 1; /* { dg-error "invalid initializer" } */
++  virtual F f2 = 2; /* { dg-error "invalid initializer" } */
++  F f3 = 3; /* { dg-error "invalid initializer" } */
++};

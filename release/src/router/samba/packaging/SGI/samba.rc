@@ -1,0 +1,43 @@
+#! /bin/sh
+
+#
+# Samba server control
+#
+
+IS_ON=/etc/chkconfig
+KILLALL=/sbin/killall
+
+SAMBAD=/usr/samba/bin/smbd
+#SAMBA_OPTS=-d2
+NMBD=/usr/samba/bin/nmbd
+#NMBD_OPTS=-d1
+
+if test ! -x $IS_ON ; then
+    IS_ON=true
+fi
+
+if $IS_ON verbose ; then
+    ECHO=echo
+else		# For a quiet startup and shutdown
+    ECHO=:
+fi
+
+case $1 in
+'start')
+	if $IS_ON samba && test -x $SAMBAD; then
+	    $KILLALL -15 smbd nmbd
+	    $ECHO "Samba:\c"
+	    $SAMBAD $SAMBA_OPTS -D; $ECHO " smbd\c"
+	    $NMBD $NMBD_OPTS -D; $ECHO " nmbd\c"
+	    $ECHO "."
+	fi
+	;;
+'stop')
+	$ECHO "Stopping Samba Servers."
+	$KILLALL -15 smbd nmbd
+	exit 0
+	;;
+*)
+	echo "usage: /etc/init.d/samba {start|stop}"
+	;;
+esac

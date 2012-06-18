@@ -1,0 +1,45 @@
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=46538
+
+--- trunk/gcc/cp/ChangeLog	2010/11/20 01:38:43	166973
++++ trunk/gcc/cp/ChangeLog	2010/11/20 08:15:33	166974
+@@ -1,3 +1,9 @@
++2010-11-20  Jakub Jelinek  <jakub@redhat.com>
++
++	PR c++/46538
++	* decl.c (cp_make_fname_decl): Return error_mark_node if
++	current_binding_level has already sk_function_parms kind.
++
+ 2010-05-27  Jason Merrill  <jason@redhat.com>
+ 
+ 	PR c++/43555
+--- trunk/gcc/cp/decl.c	2010/11/20 01:38:43	166973
++++ trunk/gcc/cp/decl.c	2010/11/20 08:15:33	166974
+@@ -3687,6 +3687,8 @@
+   if (current_function_decl)
+     {
+       struct cp_binding_level *b = current_binding_level;
++      if (b->kind == sk_function_parms)
++	return error_mark_node;
+       while (b->level_chain->kind != sk_function_parms)
+ 	b = b->level_chain;
+       pushdecl_with_scope (decl, b, /*is_friend=*/false);
+--- trunk/gcc/testsuite/ChangeLog	2010/11/20 01:38:43	166973
++++ trunk/gcc/testsuite/ChangeLog	2010/11/20 08:15:33	166974
+@@ -1,5 +1,8 @@
+ 2010-11-18  Jakub Jelinek  <jakub@redhat.com>
+ 
++	PR c++/46538
++	* g++.dg/other/error34.C: New test.
++
+ 	PR middle-end/46534
+ 	* gcc.c-torture/compile/pr46534.c: New test.
+ 
+--- /dev/null	2010-11-24 19:34:26.597821952 +0300
++++ trunk/gcc/testsuite/g++.dg/other/error34.C	2010-11-24 22:41:04.000000000 +0300
+@@ -0,0 +1,6 @@
++// PR c++/46538
++// { dg-do compile }
++// { dg-options "" }
++
++S () : str(__PRETTY_FUNCTION__) {}	// { dg-error "forbids declaration" }
++// { dg-error "only constructors" "" { target *-*-* } 5 }

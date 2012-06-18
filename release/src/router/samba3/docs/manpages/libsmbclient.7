@@ -1,0 +1,238 @@
+.\"     Title: libsmbclient
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: 7
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "LIBSMBCLIENT" "7" "09/30/2009" "Samba 3\&.0" "7"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+libsmbclient \- An extension library for browsers and that can be used as a generic browsing API\&.
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+.PP
+Browser URL:
+\FCsmb://[[[domain:]user[:password@]]server[/share[/path[/file]]]] [?options] \F[]
+.fam
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+
+\FClibsmbclient\F[]
+is a library toolset that permits applications to manipulate CIFS/SMB network resources using many of the standards POSIX functions available for manipulating local UNIX/Linux files\&. It permits much more than just browsing, files can be opened and read or written, permissions changed, file times modified, attributes and ACL\'s can be manipulated, and so on\&. Of course, its functionality includes all the capabilities commonly called browsing\&.
+.PP
+
+\FClibsmbclient\F[]
+can not be used directly from the command line, instead it provides an extension of the capabilities of tools such as file managers and browsers\&. This man page describes the configuration options for this tool so that the user may obtain greatest utility of use\&.
+.SH "OPTIONS"
+.PP
+What the URLs mean:
+.PP
+smb://
+.RS 4
+Shows all workgroups or domains that are visible in the network\&. The behavior matches that of the Microsoft Windows Explorer\&.
+.sp
+The method of locating the list of workgroups (domains also) varies depending on the setting of the context variable
+\FC(context\->options\&.browse_max_lmb_count)\F[]\&. It is the responsibility of the application that calls this library to set this to a sensible value\&. This is a compile\-time option\&. This value determines the maximum number of local master browsers to query for the list of workgroups\&. In order to ensure that the list is complete for those present on the network, all master browsers must be querried\&. If there are a large number of workgroups on the network, the time spent querying will be significant\&. For small networks (just a few workgroups), it is suggested to set this value to 0, instructing libsmbclient to query all local master browsers\&. In an environment that has many workgroups a more reasonable setting may be around 3\&.
+.RE
+.PP
+smb://name/
+.RS 4
+This command causes libsmbclient to perform a name look\-up\&. If the NAME<1D> or NAME<1B> exists (workgroup name), libsmbclient will list all servers in the workgroup (or domain)\&. Otherwise, a name look\-up for the NAME<20> (machine name) will be performed, and the list of shared resources on the server will be displayed\&.
+.RE
+.PP
+When libsmbclient is invoked by an application it searches for a directory called
+\FC\&.smb\F[]
+in the $HOME directory that is specified in the users shell environment\&. It then searches for a file called
+\FCsmb\&.conf\F[]
+which, if present, will fully over\-ride the system
+\FC/etc/samba/smb\&.conf\F[]
+file\&. If instead libsmbclient finds a file called
+\FC~/\&.smb/smb\&.conf\&.append\F[], it will read the system
+\FC/etc/samba/smb\&.conf\F[]
+and then append the contents of the
+\FC~/\&.smb/smb\&.conf\&.append\F[]
+to it\&.
+.PP
+
+\FClibsmbclient\F[]
+will check the users shell environment for the
+\FCUSER\F[]
+parameter and will use its value when if the
+\FCuser\F[]
+parameter was not included in the URL\&.
+.SH "PROGRAMMERS GUIDE"
+.PP
+Watch this space for future updates\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The libsmbclient manpage page was written by John H Terpstra\&.

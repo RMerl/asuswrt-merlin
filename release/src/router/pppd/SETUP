@@ -1,0 +1,111 @@
+		Configuring a PPP link.
+
+After you have compiled and installed this package, there are some
+configuration files which will generally need to be set up.  The
+pppd(8) man page is the best reference for the full details; this file
+outlines the configuration process for the most common case, where
+this package is being used to enable a machine to dial an ISP and
+connect to the internet.  The FAQ and README.linux files also provide
+useful information about setting up PPP.
+
+Dialling an ISP.
+****************
+
+Usually, an ISP will assign an IP address to your machine, and will
+refuse to authenticate itself to you.  Some ISPs require a username
+and password to be entered before PPP service commences, while others
+use PPP authentication (using either the PAP or CHAP protocols).
+
+The recommended way to set up to dial an ISP is for the system
+administrator to create a file under /etc/ppp/peers, named for the ISP
+that you will be dialling.  For example, suppose the file is called
+/etc/ppp/peers/isp.  This file would contain something like this:
+
+ttyS0		# modem is connected to /dev/ttyS0
+38400		# run the serial port at 38400 baud
+crtscts		# use hardware flow control
+noauth		# don't require the ISP to authenticate itself
+defaultroute	# use the ISP as our default route
+connect '/usr/sbin/chat -v -f /etc/ppp/chat-isp'
+
+If there are any other pppd options that should apply when calling
+this ISP, they can also be placed in this file.
+
+The /etc/ppp/chat-isp file named in the last line contains the script
+for chat(8) to use to dial the ISP and go through any username/
+password authentication required before PPP service starts.  Here is
+an example (for dialling an Annex terminal server):
+
+ABORT "NO CARRIER"
+ABORT "NO DIALTONE"
+ABORT "ERROR"
+ABORT "NO ANSWER"
+ABORT "BUSY"
+ABORT "Username/Password Incorrect"
+"" "at"
+OK "at&d2&c1"
+OK "atdt2479381"
+"name:" "^Uusername"
+"word:" "\qpassword"
+"annex" "ppp"
+"Switching to PPP-ppp-Switching to PPP"
+
+See the chat(8) man page for details of the script.  If you are not
+sure how the initial dialog with your ISP will go, you could use
+a terminal emulator such as kermit or minicom to go through the
+process manually.
+
+If your ISP requires PAP or CHAP authentication, you will have to
+create a line in /etc/ppp/pap-secrets or /etc/ppp/chap-secrets like
+this:
+
+myhostname	*	"password"
+
+(Replace myhostname with the hostname of your machine.)
+
+At this point, you can initiate the link with the command:
+
+/usr/sbin/pppd call isp
+
+(N.B.: pppd might be installed in a different directory on some
+systems).
+
+This will return to the shell prompt immediately, as pppd will detach
+itself from its controlling terminal.  (If you don't want it to do
+this, use the "nodetach" option.)
+
+Pppd will log messages describing the progress of the connection and
+any errors using the syslog facility (see the syslogd(8) and
+syslog.conf(5) man pages).  Pppd issues messages using syslog facility
+daemon (or local2 if it has been compiled with debugging enabled);
+chat uses facility local2.  It is often useful to see messages of
+priority notice or higher on the console.  To see these, find the line
+in /etc/syslog.conf which has /dev/console on the right-hand side, and
+add `daemon.notice' on the left.  This line should end up something
+like this:
+
+*.err;kern.debug;daemon,local2,auth.notice;mail.crit	/dev/console
+
+If you want to see more messages from pppd, request messages of
+priority info or higher for facility daemon, like this:
+
+*.err;kern.debug;daemon.info;local2,auth.notice;mail.crit  /dev/console
+
+It is also useful to add a line like this:
+
+daemon,local2.debug		/etc/ppp/ppp-log
+
+If you do this, you will need to create an empty /etc/ppp/ppp-log
+file.
+
+After modifying syslog.conf, you will then need to send a HUP signal
+to syslogd (or reboot).
+
+When you wish terminate the PPP link, you should send a TERM or INTR
+signal to pppd.  Pppd writes its process ID to a file called
+ppp<n>.pid in /var/run (or /etc/ppp on older systems such as SunOS or
+Ultrix).  Here <n> is the PPP interface unit number, which will be 0
+unless you have more than one PPP link running simultaneously.  Thus
+you can terminate the link with a command like
+
+	kill `cat /var/run/ppp0.pid`

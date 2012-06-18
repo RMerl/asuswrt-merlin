@@ -1,0 +1,474 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Control File Contents</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="RFC 1179 - Line Printer Daemon Protocol "
+    href="rfc1179ref.htm">
+    <link rel="PREVIOUS" title="Data File Transfer" href=
+    "x10191.htm">
+    <link rel="NEXT" title="lpq Requests" href="x10430.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x10191.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          19. RFC 1179 - Line Printer Daemon Protocol</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x10430.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN10227">19.5. Control File
+      Contents</a></h1>
+
+      <p>The control file consists of a set of lines which either
+      provide printing information or specify data files to be
+      printed. The information lines start with upper case letters
+      or digits, while the data files lines start with lower case
+      letters. Here is a sample control file:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10230"></a>
+<pre class="SCREEN">
+    Hh4.private
+    J(stdin)
+    CA
+    Lpapowell
+    Apapowell@h4+955
+    Ppapowell
+    fdfA955h4.private
+    N(stdin)
+    UdfA955h4.private
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The following are the letters and their meanings in the
+      control file.</p>
+
+      <div class="TABLE">
+        <a name="CFLINES"></a>
+
+        <p><b>Table 19-2. Control File Lines and Purpose</b></p>
+
+        <table border="1" frame="border" rules="all" class=
+        "CALSTABLE">
+          <col>
+          <col>
+          <col>
+
+          <thead>
+            <tr>
+              <th>Letter</th>
+
+              <th>Defined</th>
+
+              <th>Purpose</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>A</td>
+
+              <td><b class="APPLICATION">LPRng</b></td>
+
+              <td>Identifier for job</td>
+            </tr>
+
+            <tr>
+              <td>C</td>
+
+              <td>RFC1179</td>
+
+              <td>Class for banner page</td>
+            </tr>
+
+            <tr>
+              <td>H</td>
+
+              <td>RFC1179</td>
+
+              <td>Host name</td>
+            </tr>
+
+            <tr>
+              <td>I</td>
+
+              <td>RFC1179</td>
+
+              <td>Indent Printing</td>
+            </tr>
+
+            <tr>
+              <td>J</td>
+
+              <td>RFC1179</td>
+
+              <td>Job name for banner page</td>
+            </tr>
+
+            <tr>
+              <td>L</td>
+
+              <td>RFC1179</td>
+
+              <td>Print banner page</td>
+            </tr>
+
+            <tr>
+              <td>M</td>
+
+              <td>RFC1179</td>
+
+              <td>Mail When Printed</td>
+            </tr>
+
+            <tr>
+              <td>N</td>
+
+              <td>RFC1179</td>
+
+              <td>Name of source file</td>
+            </tr>
+
+            <tr>
+              <td>P</td>
+
+              <td>RFC1179</td>
+
+              <td>User identification</td>
+            </tr>
+
+            <tr>
+              <td>Q</td>
+
+              <td><b class="APPLICATION">LPRng</b></td>
+
+              <td>Queue name</td>
+            </tr>
+
+            <tr>
+              <td>R</td>
+
+              <td><b class="APPLICATION">LPRng</b></td>
+
+              <td>Accounting info</td>
+            </tr>
+
+            <tr>
+              <td>S</td>
+
+              <td>RFC1179</td>
+
+              <td>Symbolic link data</td>
+            </tr>
+
+            <tr>
+              <td>T</td>
+
+              <td>RFC1179</td>
+
+              <td>Title for pr</td>
+            </tr>
+
+            <tr>
+              <td>U</td>
+
+              <td>RFC1179</td>
+
+              <td>Unlink data file</td>
+            </tr>
+
+            <tr>
+              <td>W</td>
+
+              <td>RFC1179</td>
+
+              <td>Width of output</td>
+            </tr>
+
+            <tr>
+              <td>Z</td>
+
+              <td><b class="APPLICATION">LPRng</b></td>
+
+              <td>Filter options</td>
+            </tr>
+
+            <tr>
+              <td>1</td>
+
+              <td>RFC1179</td>
+
+              <td>troff R font</td>
+            </tr>
+
+            <tr>
+              <td>2</td>
+
+              <td>RFC1179</td>
+
+              <td>troff I font</td>
+            </tr>
+
+            <tr>
+              <td>3</td>
+
+              <td>RFC1179</td>
+
+              <td>troff B font</td>
+            </tr>
+
+            <tr>
+              <td>4</td>
+
+              <td>RFC1179</td>
+
+              <td>troff S font</td>
+            </tr>
+
+            <tr>
+              <td>c</td>
+
+              <td>RFC1179</td>
+
+              <td>Plot CIF file</td>
+            </tr>
+
+            <tr>
+              <td>d</td>
+
+              <td>RFC1179</td>
+
+              <td>Print DVI file</td>
+            </tr>
+
+            <tr>
+              <td>f</td>
+
+              <td>RFC1179</td>
+
+              <td>Print formatted file</td>
+            </tr>
+
+            <tr>
+              <td>g</td>
+
+              <td>RFC1179</td>
+
+              <td>Plot file</td>
+            </tr>
+
+            <tr>
+              <td>k</td>
+
+              <td>RFC1179</td>
+
+              <td>Reserved for use by Kerberized <b class=
+              "APPLICATION">LPRng</b> clients and servers.</td>
+            </tr>
+
+            <tr>
+              <td>l</td>
+
+              <td>RFC1179</td>
+
+              <td>Print file leaving control characters</td>
+            </tr>
+
+            <tr>
+              <td>n</td>
+
+              <td>RFC1179</td>
+
+              <td>Print ditroff output file</td>
+            </tr>
+
+            <tr>
+              <td>o</td>
+
+              <td>RFC1179</td>
+
+              <td>Print Postscript output file</td>
+            </tr>
+
+            <tr>
+              <td>p</td>
+
+              <td>RFC1179</td>
+
+              <td>Print file with 'pr' format</td>
+            </tr>
+
+            <tr>
+              <td>t</td>
+
+              <td>RFC1179</td>
+
+              <td>Print troff output file</td>
+            </tr>
+
+            <tr>
+              <td>v</td>
+
+              <td>RFC1179</td>
+
+              <td>Print raster file</td>
+            </tr>
+
+            <tr>
+              <td>z</td>
+
+              <td>RFC1179</td>
+
+              <td>Reserved for future use with the Palladium print
+              system.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>The <var class="LITERAL">A</var> (Identifier) line was
+      introduced to record a unique system wide job identifier for
+      <b class="APPLICATION">LPRng</b> submitted jobs. This is
+      basically formed from the user name, job number, and host at
+      the time of submission. For example: <var class=
+      "LITERAL">papowell@h4+955</var> is job number 995 submitted
+      by papowell from host h4.</p>
+
+      <p>The <var class="LITERAL">C</var> (Class) line is set by
+      the <tt class="COMMAND">lpr -C class</tt> option, and the
+      value can be used to control printing. For example, the <tt
+      class="COMMAND">lpc class zone</tt> command would restrict
+      job printing to only jobs with class <var class=
+      "LITERAL">zone</var>.</p>
+
+      <p>The <var class="LITERAL">H</var> (hostname), <var class=
+      "LITERAL">P</var> (username), and <var class=
+      "LITERAL">J</var> (jobname) fields are used to identify the
+      host and user which sent the job, and to provide information
+      to be displayed by <b class="APPLICATION">lpq</b> when
+      reporting job status.</p>
+
+      <p>The <var class="LITERAL">L</var> (print banner page) field
+      is one that has caused many problems for users. RFC1179
+      indicates that its presence causes the banner page to be
+      printed, and its absence suppresses banner pages. The <tt
+      class="COMMAND">lpr -h</tt> option suppresses putting this
+      line into the control file. Usually the <var class=
+      "LITERAL">L</var> field is a duplicate of the <var class=
+      "LITERAL">P</var> field.</p>
+
+      <p>The <var class="LITERAL">M</var> (mail information) field
+      supplies a mail address for <b class="APPLICATION">LPRng</b>
+      to send mail to when a job is completed. See <a href=
+      "jobcompletion.htm">Job Completion Notification Requested</a>
+      for more details.</p>
+
+      <p>The <var class="LITERAL">N</var> (file name) field is
+      usually provided to identify the file name corresponding to
+      the data file. This can be used to print names on page
+      separators, etc. <b class="APPLICATION">LPRng</b> largely
+      ignores this line.</p>
+
+      <p>The <var class="LITERAL">I</var> (indent) and <var class=
+      "LITERAL">W</var> (width) fields are supposed to specify a
+      page indent and width for printing. These fields are passed
+      to filters if they are present.</p>
+
+      <p>The <var class="LITERAL">Q</var> (queue name) field is an
+      <b class="APPLICATION">LPRng</b> extension, and contains the
+      name of the print queue the job was originally sent to. See
+      <a href="qq.htm">qq printcap option</a> for details.</p>
+
+      <p>The <var class="LITERAL">R</var> (accounting info) field
+      was added by <b class="APPLICATION">LPRng</b> to allow a
+      specified account to be billed for job printing. The <tt
+      class="COMMAND">lpr -Rname</tt> option can be used to specify
+      the accounting name.</p>
+
+      <p>The <var class="LITERAL">S</var> (symbolic link) and <var
+      class="LITERAL">U</var> (unlink after printing) lines were
+      used by the original BSD <b class="APPLICATION">lpd</b> print
+      system to control how it passed files to the print server. <b
+      class="APPLICATION">LPRng</b> ignores these lines. In fact,
+      it will remove <var class="LITERAL">S</var> lines and force
+      the <var class="LITERAL">U</var> lines to refer only to job
+      data files. This closes a nasty security loophole on non-<b
+      class="APPLICATION">LPRng</b> print spoolers.</p>
+
+      <p>The <var class="LITERAL">T</var> (pr job title) is used
+      with the <tt class="COMMAND">lpr -p</tt> operation to supply
+      a banner to the <var class="LITERAL">pr</var> program.</p>
+
+      <p>The <var class="LITERAL">Z</var> (filter options) value is
+      specified with <tt class="COMMAND">lpr -Zoption</tt> and is
+      passed to the data file filters during the printing
+      operation. See <a href="filters.htm">Filters</a> for details
+      on how the this is used during the printing process.</p>
+
+      <p>All of the lower case letters are reserved for format
+      specifications for data files. In the control file, these are
+      followed by the name of the data file to which they
+      correspond. While in principle different data files in the
+      control file can have different formats, this has not been
+      implemented in any known spooling system. See <a href=
+      "filters.htm">Filters</a> for details on how the data file
+      formats are used during the printing process.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x10191.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x10430.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Data File
+          Transfer</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "rfc1179ref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top"><b class=
+          "APPLICATION">lpq</b> Requests</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

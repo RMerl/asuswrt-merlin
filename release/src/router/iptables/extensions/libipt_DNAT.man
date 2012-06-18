@@ -1,0 +1,36 @@
+This target is only valid in the
+.B nat
+table, in the
+.B PREROUTING
+and
+.B OUTPUT
+chains, and user-defined chains which are only called from those
+chains.  It specifies that the destination address of the packet
+should be modified (and all future packets in this connection will
+also be mangled), and rules should cease being examined.  It takes one
+type of option:
+.TP
+.BR "--to-destination " "[\fIipaddr\fP][-\fIipaddr\fP][:\fIport\fP-\fIport\fP]"
+which can specify a single new destination IP address, an inclusive
+range of IP addresses, and optionally, a port range (which is only
+valid if the rule also specifies
+.B "-p tcp"
+or
+.BR "-p udp" ).
+If no port range is specified, then the destination port will never be
+modified. If no IP address is specified then only the destination port
+will be modified.
+
+In Kernels up to 2.6.10 you can add several --to-destination options.  For
+those kernels, if you specify more than one destination address, either via an
+address range or multiple --to-destination options, a simple round-robin (one
+after another in cycle) load balancing takes place between these addresses.
+Later Kernels (>= 2.6.11-rc1) don't have the ability to NAT to multiple ranges
+anymore.
+.TP
+.BR "--random"
+If option
+.B "--random"
+is used then port mapping will be randomized (kernel >= 2.6.22).
+.RS
+.PP

@@ -1,0 +1,333 @@
+diff -urbB binutils-2.17.orig/gas/as.c binutils-2.17/gas/as.c
+--- binutils-2.17.orig/gas/as.c	2006-02-09 03:07:41.000000000 +0300
++++ binutils-2.17/gas/as.c	2008-06-28 14:44:50.000000000 +0400
+@@ -220,8 +220,9 @@
+     return;
+   printed = 1;
+ 
+-  fprintf (stderr, _("GNU assembler version %s (%s) using BFD version %s\n"),
++  fprintf (stderr, _("GNU assembler version %s (%s) using BFD version %s"),
+ 	   VERSION, TARGET_ALIAS, BFD_VERSION_STRING);
++  fprintf (stderr, _(" with Broadcom modifications\n"));
+ }
+ 
+ static void
+@@ -591,6 +592,7 @@
+ 	case OPTION_VERSION:
+ 	  /* This output is intended to follow the GNU standards document.  */
+ 	  printf (_("GNU assembler %s\n"), BFD_VERSION_STRING);
++	  printf (_(" with Broadcom modifications\n"));
+ 	  printf (_("Copyright 2005 Free Software Foundation, Inc.\n"));
+ 	  printf (_("\
+ This program is free software; you may redistribute it under the terms of\n\
+diff -urbB binutils-2.17.orig/gas/config/tc-mips.c binutils-2.17/gas/config/tc-mips.c
+--- binutils-2.17.orig/gas/config/tc-mips.c	2006-05-17 20:04:30.000000000 +0400
++++ binutils-2.17/gas/config/tc-mips.c	2008-06-28 14:46:50.000000000 +0400
+@@ -231,6 +231,8 @@
+   int arch;
+   /* True if ".set sym32" is in effect.  */
+   bfd_boolean sym32;
++/* WA_BCM4710A0 */
++  bfd_boolean wa_bcm4710a0;
+ };
+ 
+ /* True if -mgp32 was passed.  */
+@@ -245,7 +247,7 @@
+ 
+ static struct mips_set_options mips_opts =
+ {
+-  ISA_UNKNOWN, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, CPU_UNKNOWN, FALSE
++  ISA_UNKNOWN, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, CPU_UNKNOWN, FALSE, FALSE
+ };
+ 
+ /* These variables are filled in with the masks of registers used.
+@@ -2584,6 +2586,10 @@
+ 	  || (pinfo & INSN_COND_BRANCH_DELAY))
+ 	{
+ 	  if (mips_optimize < 2
++#ifdef BCM4710A0
++	      /* WA_BCM4710A0: Shortcut the whole conditional and always add nops */
++	      || mips_opts.wa_bcm4710a0
++#endif
+ 	      /* If we have seen .set volatile or .set nomove, don't
+ 		 optimize.  */
+ 	      || mips_opts.nomove != 0
+@@ -2733,6 +2739,12 @@
+ 		     slot, and bump the destination address.  */
+ 		  insert_into_history (0, 1, ip);
+ 		  emit_nop ();
++
++#ifdef BCM4710A0
++		  /* WA_BCM4710A0: Add another nop */
++		  if (mips_opts.wa_bcm4710a0)
++		    emit_nop ();
++#endif
+ 		}
+ 		
+ 	      if (mips_relax.sequence)
+@@ -2782,12 +2794,157 @@
+ 	     the next instruction.  */
+ 	  insert_into_history (0, 1, ip);
+ 	  emit_nop ();
++
++#ifdef BCM4710A0
++	  /* WA_BCM4710A0: Add another nop */
++	  if (mips_opts.wa_bcm4710a0)
++	    emit_nop ();
++#endif
+ 	}
+       else
+ 	insert_into_history (0, 1, ip);
+     }
+   else
++    {
++#ifdef BCM4710A0
++      if (mips_opts.wa_bcm4710a0) {
++	/* We took care above of adding noops when reordering, now
++	   need to do the same when not reordering. Unless this
++	   is already a nop.
++	   This means swapping the insn in the delay slot with the
++	   jump and adding the nops. */
++
++#define	MIPS_INSN_MOVE		0x00000021
++#define	MIPS_INSN_MOVE2		0x00000025
++#define	GLIBC_SET_GP		0x04100000
++
++	if (prev_pinfo & (INSN_UNCOND_BRANCH_DELAY | INSN_COND_BRANCH_DELAY | INSN_COND_BRANCH_LIKELY)) {
++
++	  /* Special case for glibc SET_GP macro */
++	  if (history[0].insn_opcode == GLIBC_SET_GP) {
++	    as_warn (_("bcm4710a0: NOT adding nop to glibc SET_GP macro (0x%lx %s)"),
++		     history[0].insn_opcode, history[0].insn_mo->name);
++	    goto skip_nop;
++	  }
++
++	  /* If it is a nop or just a move, let it go. XXX: we should add a flag to
++	     pinfo to let us know which insn's are ok, i.e. they don't
++	     cause any stalls. */
++	  if ((ip->insn_opcode != 0)
++	      && ((ip->insn_opcode & ip->insn_mo->mask) != MIPS_INSN_MOVE)
++	      && ((ip->insn_opcode & ip->insn_mo->mask) != MIPS_INSN_MOVE2)) {
++
++	    int	wreg = 0, wrsh = 0, rs = 0, rt = 0;
++	    unsigned long wrmsk = 0;
++
++	    /* Bad case: we cannot move a trap */
++	    if (pinfo & INSN_TRAP) {
++	      as_warn (_("bcm4710a0: Current insn (%s) is a trap, cannot swap with %s"),
++		       ip->insn_mo->name, history[0].insn_mo->name);
++	      goto skip_swap;
++	    }
++
++	    /* Another bad case: we cannot move stuff after a branch likely */
++	    if (pinfo &  INSN_COND_BRANCH_LIKELY) {
++	      as_warn (_("bcm4710a0: Current insn (%s) cannot be swaped with branch likely %s"),
++		       ip->insn_mo->name, history[0].insn_mo->name);
++	      goto skip_swap;
++	    }
++	    /* Also, we cannot move if there is a cc conflict */
++	    if ((pinfo & INSN_WRITE_COND_CODE) && (prev_pinfo & INSN_READ_COND_CODE)) {
++	      as_warn (_("bcm4710a0: Current insn (%s) writes CC, cannot swap with %s which reads CC"),
++		       ip->insn_mo->name, history[0].insn_mo->name);
++	      goto skip_swap;
++	    }
++
++	    /* or a hi conflict */
++	    if ((pinfo & INSN_WRITE_HI) && (prev_pinfo & INSN_READ_HI)) {
++	      as_warn (_("bcm4710a0: Current insn (%s) writes HI, cannot swap with %s which reads HI"),
++		       ip->insn_mo->name, history[0].insn_mo->name);
++	      goto skip_swap;
++	    }
++
++	    /* or a lo conflict */
++	    if ((pinfo & INSN_WRITE_LO) && (prev_pinfo & INSN_READ_LO)) {
++	      as_warn (_("bcm4710a0: Current insn (%s) writes LO, cannot swap with %s which reads LO"),
++		       ip->insn_mo->name, history[0].insn_mo->name);
++	      goto skip_swap;
++	    }
++
++	    /* Which register if any is modified by the current insn? */
++	    if (pinfo & INSN_WRITE_GPR_D) {
++	      wreg = (ip->insn_opcode >> OP_SH_RD) & OP_MASK_RD;
++	      wrsh = OP_SH_RD;
++	      wrmsk = OP_MASK_RD;
++	    } else if (pinfo & INSN_WRITE_GPR_T) {
++	      wreg = (ip->insn_opcode >> OP_SH_RT) & OP_MASK_RT;
++	      wrsh = OP_SH_RT;
++	      wrmsk = OP_MASK_RT;
++	    } else if (pinfo & INSN_WRITE_GPR_31)
++	      wreg = RA;
++
++	    if (wreg) {
++	      /* Is that reg used by the previous insn? */
++	      if (prev_pinfo & INSN_READ_GPR_S)
++		rs = (history[0].insn_opcode >> OP_SH_RS) & OP_MASK_RS;
++	      if (prev_pinfo & INSN_READ_GPR_T)
++		rt = (history[0].insn_opcode >> OP_SH_RT) & OP_MASK_RT;
++	      if ((wreg != rs) && (wreg != rt)) {
++		/* Nope, We *can* do the swap */
++		wreg = 0;
++	      } else {
++		/* Cannot swap without some more surgery,
++		   but do not swap at all if it is $at */
++		if (wreg == AT) {
++		  as_warn (_("bcm4710a0: Current insn (%s) uses reg%d, cannot swap with %s"),
++			   ip->insn_mo->name, wreg, history[0].insn_mo->name);
++		  goto skip_swap;
++		}
++		/* or if $at is not avaliable */
++		if (mips_opts.noat) {
++		  as_warn (_("bcm4710a0: .set noat in effect, cannot swap %s with %s"),
++			   ip->insn_mo->name, history[0].insn_mo->name);
++		  goto skip_swap;
++		}
++	      }
++	    }
++
++	    /* Swap the previous insn (a jump) and the current one */
++	    struct mips_cl_insn temp = history[0];
++	    assert (temp.frag != NULL);
++	    if (wreg) {
++	      /* Modify the instruction to use at */
++	      temp.insn_opcode = (temp.insn_opcode & ~(wrmsk << wrsh)) | (AT << wrsh);
++	    }
++	    move_insn (&temp, ip->frag, ip->where);
++	    move_insn (ip, history[0].frag, history[0].where);
++	    history[0] = *ip;
++	    temp.fixed_p = 1;
++	    insert_into_history (0, 1, &temp);
++
++	    /* Now put a nop or move after the jump ... */
++	    if (wreg) {
++	      /* A move if we modified the insn we moved. */
++	      md_number_to_chars (frag_more (4),
++				  (MIPS_INSN_MOVE | (wreg << OP_SH_RD) | (AT << OP_SH_RS)),
++				  4);
++	    } else {
++	      emit_nop ();
++	    }
++	  }
++skip_swap:
++	  /* And another nop */
++	  emit_nop ();
++	}
++skip_nop:
++	/* Remember stuff that is not normally remembered in the not-reordering
++	   case so we can swap with next insn */
++	;
++//	move_insn (ip, history[0].frag, history[0].where);
++      }
++#endif
+     insert_into_history (0, 1, ip);
++    }
+ 
+   /* We just output an insn, so the next one doesn't have a label.  */
+   mips_clear_insn_labels ();
+@@ -10629,10 +10786,15 @@
+ #define OPTION_MNO_SYM32 (OPTION_MISC_BASE + 15)
+   {"msym32", no_argument, NULL, OPTION_MSYM32},
+   {"mno-sym32", no_argument, NULL, OPTION_MNO_SYM32},
++#define OPTION_M4710A0 (OPTION_MISC_BASE + 16)
++#define OPTION_NO_M4710A0 (OPTION_MISC_BASE + 17)
++  {"m4710a0", no_argument, NULL, OPTION_M4710A0},
++  {"mno-4710a0", no_argument, NULL, OPTION_NO_M4710A0},
++  {"m4710a0kern", no_argument, NULL, OPTION_NO_M4710A0},
+ 
+   /* ELF-specific options.  */
+ #ifdef OBJ_ELF
+-#define OPTION_ELF_BASE    (OPTION_MISC_BASE + 16)
++#define OPTION_ELF_BASE    (OPTION_MISC_BASE + 18)
+ #define OPTION_CALL_SHARED (OPTION_ELF_BASE + 0)
+   {"KPIC",        no_argument, NULL, OPTION_CALL_SHARED},
+   {"call_shared", no_argument, NULL, OPTION_CALL_SHARED},
+@@ -10805,6 +10967,16 @@
+     case OPTION_NO_M3900:
+       break;
+ 
++#ifdef BCM4710A0
++    case OPTION_M4710A0:
++      mips_opts.wa_bcm4710a0 = TRUE;
++      break;
++
++    case OPTION_NO_M4710A0:
++      mips_opts.wa_bcm4710a0 = FALSE;
++      break;
++#endif
++
+     case OPTION_MDMX:
+       mips_opts.ase_mdmx = 1;
+       break;
+@@ -14549,6 +14721,11 @@
+ -n32			create n32 ABI object file\n\
+ -64			create 64 ABI object file\n"));
+ #endif
++#ifdef BCM4710A0
++  fprintf (stream, _("\
++-m4710a0, -mno-4710a0	disable/enable BCM4710A0 compiler workarounds\n\
++-m4710a0kern\n"));
++#endif
+ }
+ 
+ enum dwarf2_format
+diff -urbB binutils-2.17.orig/gas/config.in binutils-2.17/gas/config.in
+--- binutils-2.17.orig/gas/config.in	2006-02-14 11:59:09.000000000 +0300
++++ binutils-2.17/gas/config.in	2008-06-28 14:40:56.000000000 +0400
+@@ -199,6 +199,9 @@
+ /* Define if strstr is not declared in system header files. */
+ #undef NEED_DECLARATION_STRSTR
+ 
++/* Define to 1 for BCM4710A0 compiler workarounds */
++#undef BCM4710A0
++
+ /* a.out support? */
+ #undef OBJ_MAYBE_AOUT
+ 
+diff -urbB binutils-2.17.orig/gas/configure binutils-2.17/gas/configure
+--- binutils-2.17.orig/gas/configure	2006-04-07 01:49:31.000000000 +0400
++++ binutils-2.17/gas/configure	2008-06-28 14:46:05.000000000 +0400
+@@ -870,6 +870,7 @@
+   --with-gnu-ld           assume the C compiler uses GNU ld default=no
+   --with-pic              try to use only PIC/non-PIC objects default=use both
+   --with-included-gettext use the GNU gettext library included here
++  --with-bcm4710a0        enable BCM4710A0 compiler workarounds
+ 
+ Some influential environment variables:
+   CC          C compiler command
+@@ -4964,6 +4965,20 @@
+     ;;
+ esac
+ 
++# With BCM4710A0 compiler workarounds
++
++# Check whether --with-bcm4710a0 or --without-bcm4710a0 was given.
++if test "${with_bcm4710a0+set}" = set; then
++  withval="$with_bcm4710a0"
++  case "${withval}" in
++  yes)
++cat >>confdefs.h <<\_ACEOF
++#define BCM4710A0 1
++_ACEOF
++ ;;
++esac
++fi;
++
+ # Getting this done right is going to be a bitch.  Each configuration specified
+ # with --enable-targets=... should be checked for environment, format, cpu
+ # setting.
+diff -urbB binutils-2.17.orig/gas/configure.in binutils-2.17/gas/configure.in
+--- binutils-2.17.orig/gas/configure.in	2006-04-07 01:49:33.000000000 +0400
++++ binutils-2.17/gas/configure.in	2008-06-28 14:40:57.000000000 +0400
+@@ -466,6 +466,13 @@
+     ;;
+ esac
+ 
++# With BCM4710A0 compiler workarounds
++AC_ARG_WITH(bcm4710a0,
++[  --with-bcm4710a0        enable BCM4710A0 compiler workarounds],
++[case "${withval}" in
++  yes) AC_DEFINE(BCM4710A0, 1, [BCM4710A0 support?]) ;;
++esac])
++
+ # Getting this done right is going to be a bitch.  Each configuration specified
+ # with --enable-targets=... should be checked for environment, format, cpu
+ # setting.

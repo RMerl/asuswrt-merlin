@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Security Concerns</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Installation" href="installation.htm">
+    <link rel="PREVIOUS" title="SAMBA and LPRng" href="smb.htm">
+    <link rel="NEXT" title="System Specific Notes " href=
+    "systemspecific.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "smb.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 2.
+          Installation</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "systemspecific.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="SETUID">2.13. Security
+      Concerns</a></h1>
+
+      <p>While the <b class="APPLICATION">LPRng</b> software has
+      been written with security as the primary goal there is
+      always the problem with undetected errors in the <b class=
+      "APPLICATION">LPRng</b> software that when exploited could
+      compromise system security. The most serious concern is that
+      of gaining ROOT (UID 0) permissions.</p>
+
+      <p>The simplest way to handle this problem is to not install
+      LPRng with <var class="LITERAL">setuid ROOT</var>
+      permissions. Client programs will be able to connect to the
+      <b class="APPLICATION">lpd</b> server. Since the <b class=
+      "APPLICATION">lpd</b> server is started by the system startup
+      script with effective UID root, it is the only program in
+      this suite that will have an privileged user id.</p>
+
+      <p>A more radical step is to run the <b class=
+      "APPLICATION">lpd</b> server as a non-privileged user
+      entirely. However, the RFC1179 protocol specifies that the <b
+      class="APPLICATION">lpd</b> TCP/IP port is 515 and <b class=
+      "APPLICATION">lpd</b> requires root permissions to open and
+      bind to port 515. The <b class="APPLICATION">lpd</b> server
+      can use the <code class="FUNCTION">setuid()</code> system
+      call after binding to this port do drop ROOT capabilities.
+      However, in order to fully compatible with RFC1179, <b class=
+      "APPLICATION">lpd</b> must originate connections from a <span
+      class="emphasis"><i class="EMPHASIS">reserved</i></span> port
+      in the range 721-731, although in practice port 1-1023 seems
+      to be acceptable.</p>
+
+      <p>If inter-operability with non-<b class=
+      "APPLICATION">LPRng</b> print spoolers is not desired, then
+      it is <span class="emphasis"><i class=
+      "EMPHASIS">trivial</i></span> to configure <b class=
+      "APPLICATION">LPRng</b> to use a non-privileged port by using
+      the <tt class="FILENAME">lpd.conf</tt> file. For example, in
+      the <tt class="FILENAME">/etc/lpd.conf</tt> file, you only
+      need to change the indicated lines:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1463"></a>
+<pre class="SCREEN">
+    # Purpose: lpd port
+    #   default lpd_port=printer
+    lpd_port=2000
+    # or lpd_port=localhost%2000
+</pre>
+      </div>
+      The <var class="LITERAL">lpd_port</var> specifies the
+      (optional) IP address and port to which the <b class=
+      "APPLICATION">lpd</b> server binds and to which the clients
+      will connect. <b class="APPLICATION">LPRng</b> applications
+      will connect to port 2000 to transfer jobs and ask for
+      status. You can also use this facility to establish a <span
+      class="emphasis"><i class="EMPHASIS">private</i></span> set
+      of print spoolers which can be used for testing See <a href=
+      "testing.htm">Testing and Diagnostic Facilities</a> for more
+      details.<br>
+      <br>
+
+      <p>Some <span class="emphasis"><i class=
+      "EMPHASIS">legacy</i></span> print filters are not <span
+      class="emphasis"><i class=
+      "EMPHASIS">meta-char-escape</i></span> proof. For example,
+      suppose that a user decided to spool a job as follows:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1473"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {66} #</samp> <kbd class=
+"USERINPUT">lpr "-J`;rm -rf /;`" /tmp/a</kbd>
+</pre>
+      </div>
+      This would create a job file with the line: 
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1477"></a>
+<pre class="SCREEN">
+    J`rm -rf /;`
+</pre>
+      </div>
+      and gets passed to a print filter as 
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1479"></a>
+<pre class="SCREEN">
+    /usr/local/printfilter  -J`rm -rf /;`
+</pre>
+      </div>
+      The observant reader will observe that the above line may
+      have the most hideous consequences if it is processed by a
+      shell. For this reason the <b class="APPLICATION">LPRng</b>
+      software takes extreme precautions and <span class=
+      "emphasis"><i class="EMPHASIS">sanitizes</i></span> control
+      file contents and file names so that they do not contain any
+      control or metacharacters.<br>
+      <br>
+
+      <p>Finally, you can use a Unix socket (i.e. - FIFO) for
+      connections to the server on the localhost, and disable the
+      <b class="APPLICATION">lpd</b> listening socket by setting
+      the <var class="LITERAL">lpd_listen_port</var> value to <var
+      class="LITERAL">off</var>.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "smb.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "systemspecific.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">SAMBA and <b
+          class="APPLICATION">LPRng</b></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "installation.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">System
+          Specific Notes</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

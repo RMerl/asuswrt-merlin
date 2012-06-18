@@ -1,0 +1,2 @@
+/* Copyright (c): 2002-2005 (Germany): United Internet, 1&1, GMX, Schlund+Partner, Alturo */
+function QxTreeFile(vLabel,vIconURI){if(isValid(vIconURI)){this.setIconURI(vIconURI);};QxTreeElement.call(this,vLabel);};QxTreeFile.extend(QxTreeElement,"QxTreeFile");QxTreeFile.addProperty({ name : "iconURI", type : String, defaultValue : "icons/16/doc.png" });proto._renderImplIcon=function(){if(!this.isCreated()){return true;};this._iconImage.src=(new QxImageManager).buildURI(this.getIconURI());return true;};

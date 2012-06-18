@@ -1,0 +1,16 @@
+# Makefile for busybox
+#
+# Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
+#
+# Licensed under the GPL v2, see the file LICENSE in this tarball.
+
+NEEDED-$(CONFIG_MKE2FS) = y
+NEEDED-$(CONFIG_TUNE2FS) = y
+
+lib-y:=
+
+INSERT
+
+lib-$(NEEDED-y) += mntopts.o \
+           feature.o ls.o pe.o ostype.o ps.o hashstr.o \
+           parse_num.o

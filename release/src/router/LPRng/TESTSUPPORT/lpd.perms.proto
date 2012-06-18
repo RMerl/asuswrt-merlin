@@ -1,0 +1,122 @@
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1995 Patrick Powell, San Diego State University
+#     papowell@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: TESTSUPPORT/printer_perms.proto
+# PURPOSE: prototype printer permissions file
+# lpd.perms.proto,v 3.2 1997/12/20 21:16:26 papowell Exp
+########################################################################## 
+# Printer permissions data base
+#
+# Permissions are checked by the use of 'keys' and matches.  For each of
+# the following LPR activities,  the following keys have a value. 
+#
+#Key     Match  Connect Job    Job    Status Remove Control 
+#                       Accept Print
+#SERVICE  S     'X'     'R'   'P'     'Q'    'M'    'C,S`
+#USER     S            JUSR   JUSR          CUSR     CUSR
+#HOST     S     RH     JH     JH     RH     JH       JH
+#GROUP    S            JUSR   JUSR          CUSR     CUSR
+#IP       IP    RIP    JIP    JIP    RIP    JIP      RIP
+#PORT     N     PORT   PORT          PORT   PORT     PORT
+#REMOTEHOST S   RH     RH     JH     RH     RH       RH
+#REMOTEIP IP    RIP    RIP    JIP    RIP    RIP      RIP
+#PRINTER  S            PR     PR     PR     CPR      CPR
+#FORWARD               FW                   FW
+#SAMEHOST              SA                   SA
+#L=pattern             CFL    CFL
+#SAMEUSER                                   SU
+#SERVER  IP     RIP   JIP     JIP   RIP     JIP      RIP
+#
+#  KEY: RH = REMOTEHOST  - connecting host name (If no name, IP address)
+#       RIP= REMOTEIP    - connecting host IP
+#       PORT=            - connecting host origination port
+#       JH= Job HOST     - host name from job
+#       JIP= Job HOST IP - host name from job IP address
+#       JUSR= Job USER   - user name from job
+#       CUSR= Control USER   - user sent from remote host
+#       PR = Printer     - printer name from job
+#       CPR = Printer    - printer name sent from remote host
+#       FW = FORWARD     - RIP != JIP
+#       SA = SAMEHOST    - RIP == JIP   (i.e.- for job removal)
+#       SU               - CUSR == JUSR (i.e.- for job removal)
+#       L=pattern        - matches line starting with L in control file
+#                          L must be upper case
+#    SERVICE  MEANING
+#      C      lpc queue control operation
+#      M      lprm request from remote host
+#      P      printing job in spool queue
+#      Q      lpq (queue status) request from remote host
+#      R      spooling request from remote host
+#      S      lpc status request
+#      X      connection request from remote host
+#
+#A permission line consists of list of tests and an a result value
+#If all of the tests succeed,  then a match has been found and the
+#permission testing completes with the result value.  You use the
+#DEFAULT reserved word to set the default ACCEPT/DENY result.
+#The NOT keyword will reverse the sense of a test.
+#
+#Each test can have one or more optional values separated by
+#commas. For example USER=john,paul,mark has 3 test values.
+#
+#The Match type specifies how the matching is done.
+#S = string type match - string match with glob.
+#    Format:  string with wildcards (*)
+#             * matches 0 or more chars
+#    Character comparison is case insensitive.
+#    For example - USER=th*s matches uTHS, This, This, Theses
+#
+#IP = IP address and submask.  IP address must be in dotted form.
+#     Format: x.x.x.x[/y.y.y.y]  x.x.x.x is IP address
+#             y.y.y.y is optional submask, default is 255.255.255.255
+#     Match is done by converting to 32 bit x, y, and IP value and using:
+#        success = ((x ^ IP ) & y) == 0   (C language notation)
+#    i.e.- only bits where mask is non-zero are used in comparison.
+#    For example - IP=130.191.0.0/255.255.0.0 matches all address 130.191.X.X
+#         
+#N = numerical range  -  low-high integer range.
+#     Format: low[-high]
+#     Example: PORT=0-1023 matches a port in range 0 - 1023 (privileged)
+#
+#The SAMEUSER and SAMEHOST are options that form values from information
+#in control files or connections.  The GROUP entry searches the user group 
+#database for group names matching the pattern,  and then searches these
+#for the user name.  If the name is found,  the search is successful.
+#
+#Example Permissions
+#
+#Reject connections all users not on subnet 130.191.0.0
+#  REJECT SERVICE=X NOT IP=130.191.0.0/255.255.0.0
+#Do not allow anybody but root on dickory.sdsu.edu to use control
+#  facilities.  The first line accepts the user, second rejects
+#  all others
+#  ACCEPT SERVICE=C HOST=dickory.sdsu.edu USER=papowell
+#  REJECT SERVICE=C
+#
+#Allow root on talker.sdsu.edu to control printer hpjet
+#  ACCEPT SERVICE=C HOST=talker.sdsu.edu PRINTER=hpjet USER=root
+#
+#Do not allow forwarded jobs
+#  REJECT FORWARD
+#
+#start all
+DEFAULT ACCEPT
+# Default configuration: allow only root on server to do LPC functions
+ACCEPT SERVICE=C SERVER REMOTEUSER=root
+ACCEPT SERVICE=C SERVER REMOTEUSER=_USER_
+REJECT SERVICE=C
+#
+# allow same user on originating host to remove a job
+ACCEPT SERVICE=M SAMEHOST SAMEUSER
+# allow root on server to remove a job
+ACCEPT SERVICE=M SERVER REMOTEUSER=root
+REJECT SERVICE=M
+#end all
+#start t1
+PRINTER=t1 ACCEPT
+#end t1

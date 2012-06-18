@@ -1,0 +1,93 @@
+# $Id: implicit,v 1.11 2005/11/29 21:57:55 pape Exp $
+
+.PHONY: deb-checkdir deb-checkuid
+
+deb-checkdir:
+	@test -e debian/control || sh -cx '! : wrong directory'
+deb-checkuid:
+	@test "`id -u`" -eq 0 || sh -cx '! : need root privileges'
+
+%.deb: %.deb-docs %.deb-DEBIAN
+	@rm -f $*.deb $*.deb-checkdir $*.deb-docs $*.deb-docs-base \
+	  $*.deb-docs-docs $*.deb-docs-examples $*.deb-DEBIAN \
+	  $*.deb-DEBIAN-dir $*.deb-DEBIAN-scripts $*.deb-DEBIAN-md5sums
+
+%.udeb: %.deb-DEBIAN
+	@rm -f $*.deb $*.deb-checkdir $*.deb-DEBIAN $*.deb-DEBIAN-dir \
+	  $*.deb-DEBIAN-scripts $*.deb-DEBIAN-md5sums
+
+%.deb-checkdir:
+	@test -d debian/$* || sh -cx '! : directory debian/$* missing'
+	@test "`id -u`" -eq 0 || sh -cx '! : need root privileges'
+
+%.deb-docs-base:
+	: implicit
+	@rm -f debian/$*/usr/share/doc/$*/* || :
+	@install -d -m0755 debian/$*/usr/share/doc/$*
+	: debian/$*/usr/share/doc/$*/
+	@sh -cx 'install -m0644 debian/copyright debian/$*/usr/share/doc/$*/'
+	@sh -cx 'install -m0644 debian/changelog \
+	  debian/$*/usr/share/doc/$*/changelog.Debian'
+	@test ! -r changelog || \
+	  sh -cx 'install -m0644 changelog debian/$*/usr/share/doc/$*/'
+	@test -r debian/$*/usr/share/doc/$*/changelog || \
+	  sh -cx 'mv debian/$*/usr/share/doc/$*/changelog.Debian \
+	    debian/$*/usr/share/doc/$*/changelog'
+	@test -s debian/$*/usr/share/doc/$*/changelog || \
+	  sh -cx 'rm -f debian/$*/usr/share/doc/$*/changelog'
+	@gzip -9 debian/$*/usr/share/doc/$*/changelog*
+%.deb-docs-docs:
+	@for i in `cat debian/$*.docs 2>/dev/null || :`; do \
+	  if test -d $$i; then \
+	    sh -cx "install -d -m0755 debian/$*/usr/share/doc/$*/$${i##*/}" && \
+	    for j in $$i/*; do \
+	      sh -cx "install -m0644 $$j \
+	        debian/$*/usr/share/doc/$*/$${i##*/}/" || exit 1; \
+	    done || exit 1; \
+	    continue; \
+	  fi; \
+	  sh -cx "install -m0644 $$i debian/$*/usr/share/doc/$*/" || exit 1; \
+	done
+	@test ! -r debian/$*.README.Debian || \
+	  sh -cx 'install -m0644 debian/$*.README.Debian \
+	    debian/$*/usr/share/doc/$*/README.Debian'
+	@if test -r debian/$*.NEWS.Debian; then \
+	  sh -cx 'install -m0644 debian/$*.NEWS.Debian \
+	    debian/$*/usr/share/doc/$*/NEWS.Debian && \
+	      gzip -9 debian/$*/usr/share/doc/$*/NEWS.Debian'; \
+	fi
+%.deb-docs-examples:
+	@rm -rf debian/$*/usr/share/doc/$*/examples
+	: debian/$*/usr/share/doc/$*/examples/
+	@test ! -r debian/$*.examples || \
+	  install -d -m0755 debian/$*/usr/share/doc/$*/examples
+	@for i in `cat debian/$*.examples 2>/dev/null || :`; do \
+	  sh -cx "install -m0644 $$i debian/$*/usr/share/doc/$*/examples/" \
+	    || exit 1; \
+	done
+%.deb-docs: %.deb-checkdir %.deb-docs-base %.deb-docs-docs %.deb-docs-examples
+	: debian/$*/usr/share/doc/$*/ ok
+
+%.deb-DEBIAN-base:
+	@rm -rf debian/$*/DEBIAN
+	: debian/$*/DEBIAN/
+	@install -d -m0755 debian/$*/DEBIAN
+	@for i in conffiles shlibs templates; do \
+	  test ! -r debian/$*.$$i || \
+	    sh -cx "install -m0644 debian/$*.$$i debian/$*/DEBIAN/$$i" \
+	      || exit 1; \
+	done
+%.deb-DEBIAN-scripts:
+	@for i in preinst prerm postinst postrm config; do \
+	  test ! -r debian/$*.$$i || \
+	    sh -cx "install -m0755 debian/$*.$$i debian/$*/DEBIAN/$$i" \
+	      || exit 1; \
+	done
+%.deb-DEBIAN-md5sums:
+	: debian/$*/DEBIAN/md5sums
+	@rm -f debian/$*/DEBIAN/md5sums
+	@cd debian/$* && find * -path 'DEBIAN' -prune -o \
+	  -type f -exec md5sum {} >>DEBIAN/md5sums \;
+%.deb-DEBIAN: %.deb-checkdir %.deb-DEBIAN-base %.deb-DEBIAN-scripts \
+	  %.deb-DEBIAN-md5sums
+	: debian/$*/DEBIAN/ ok

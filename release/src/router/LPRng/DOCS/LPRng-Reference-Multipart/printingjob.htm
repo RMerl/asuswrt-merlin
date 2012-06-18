@@ -1,0 +1,236 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Printing Job Files &#13;</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Job Processing" href="jobsteps.htm">
+    <link rel="PREVIOUS" title="Printing Banners " href=
+    "bannerprinting.htm">
+    <link rel="NEXT" title="Printing Banner At End of Job " href=
+    "x7427.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "bannerprinting.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          15. Job Processing</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x7427.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="PRINTINGJOB">15.7. Printing Job
+      Files</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">Xf=</var><span class=
+          "emphasis"><i class="EMPHASIS">Format
+          Filter</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">sf</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Suppress Form Feed
+          Separators</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">if=</var><span class=
+          "emphasis"><i class="EMPHASIS">Default F Format
+          Filter</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">pr=</var><span class=
+          "emphasis"><i class="EMPHASIS">pr formatting
+          program</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">send_job_rw_timeout=</var><span
+          class="emphasis"><i class="EMPHASIS">print job read/write
+          timeout</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">send_query_rw_timeout=</var><span
+          class="emphasis"><i class="EMPHASIS">status query
+          operation read/write timeout</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">sf</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Suppress form feed between
+          job files</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>Sequence of Operations: for each job in listed in the
+      control file, the following operations are done in turn.</p>
+
+      <ol type="1">
+        <li>
+          <p>If there is an <var class="LITERAL">:of</var> filter
+          present, the suspend string <var class=
+          "LITERAL">\031\001</var> is written to of_fd and the no
+          further action is taken until the of filter is
+          suspended.</p>
+        </li>
+
+        <li>
+          <p>The control file line for the job is examined, and the
+          first letter of the data file specification is used as
+          the format.</p>
+        </li>
+
+        <li>
+          <p>If the format is <var class="LITERAL">p</var>, the job
+          is first processed by the program specified by the <var
+          class="LITERAL">pr</var> program, and the program output
+          used as the print file.</p>
+        </li>
+
+        <li>
+          <p>If the format is <var class="LITERAL">f</var>, <var
+          class="LITERAL">l</var>, or <var class="LITERAL">p</var>
+          then the <var class="LITERAL">:if</var> filter is used,
+          otherwise the keyword <var class="LITERAL">Xf</var> is
+          used. Note that certain formats such as <var class=
+          "LITERAL">p, a, l</var>, may not be used as formats.</p>
+        </li>
+
+        <li>
+          <p>The filter program is started with an appropriate set
+          of command line options (see <a href=
+          "filteroptions.htm">Filter Command Line Options and
+          Environment Variables</a> ), and with its <acronym class=
+          "ACRONYM">STDOUT</acronym> attached to the printing
+          device (io_fd), <acronym class="ACRONYM">STDERR</acronym>
+          to a pipe which results in the output being written to
+          the status file. If debugging is enabled, then the
+          <acronym class="ACRONYM">STDERR</acronym> output is also
+          written to the error log file (lf).</p>
+        </li>
+
+        <li>
+          <p>When doing a read/write operation to a device or
+          remote system, a timeout can be specified. When doing a
+          print or job transfer operation, the <var class=
+          "LITERAL">send_job_rw_timeout</var> value is used. When
+          doing a status or query operation, the <var class=
+          "LITERAL">send_query_rw_timeout</var> value is used. If a
+          write or write operation does not complete within the
+          specified timeout seconds, then we have an error
+          condition and job processing or the query operation is
+          terminated with JFAIL status. If the timeout value is 0,
+          then no timeout is done.</p>
+        </li>
+
+        <li>
+          <p><a name="ERRORCODES"></a> <b class=
+          "APPLICATION">lpd</b> will then wait for the filter to
+          exit. The following exit codes are used by <b class=
+          "APPLICATION">lpd</b>:</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN7415"></a>
+<pre class="SCREEN">
+    Key      Value   Meaning
+    JSUCC    0       Successful
+    JFAIL    1, 32   Failed - retry later
+    JABORT   2, 33   Abort - terminate queue processing
+    JREMOVE  3, 34   Failed - remove job
+    (Unused) 4, 35
+    (Unused) 5, 36
+    JHOLD    6, 37   Hold this job - reprint later
+    JNOSPOOL 7, 38   No spooling to this queue
+    JNOPRINT 8, 39   No printing from this queue
+    JSIGNAL  9,  40   Killed by unrecognized signal
+    JFAILNORETRY 10, 41 Failed, no retry
+    Other            Abort - terminate queue processing
+</pre>
+          </div>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>If the filter exit status was JSUCC (0), or no error
+          indicated, then processing will continue otherwise the
+          job termination takes (see <a href=
+          "abnormalterm.htm">Abnormal Termination</a> ).</p>
+        </li>
+
+        <li>
+          <p>If the <var class="LITERAL">:of</var> filter is
+          present, then it is reactivated with a <tt class=
+          "COMMAND">kill -CONT</tt> signal.</p>
+        </li>
+
+        <li>
+          <p>The the <var class="LITERAL">sf</var> (suppress FF
+          print file separators ) is turned off a form feed is sent
+          between each file of a job.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "bannerprinting.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x7427.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Printing
+          Banners</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "jobsteps.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Printing
+          Banner At End of Job</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

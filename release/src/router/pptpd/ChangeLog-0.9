@@ -1,0 +1,130 @@
+PoPToP ChangeLog
+
+---------------------------------------------------------------------------
+v0.9.12 -> v0.9.13
+17 August, 1999
+
+- added pptpd.8
+- added pptpd.conf.5
+
+---------------------------------------------------------------------------
+v0.9.11 -> v0.9.12
+16 August, 1999
+
+- hand fixed bug in Makefile.in to work around automake bug (distdir
+  target)
+- made 'make dist' work
+- added pptpctrl.8
+- added HOWTO/FAQ to html/ and removed old docs
+
+---------------------------------------------------------------------------
+v0.9.10 -> v0.9.11
+8 August, 1999
+
+- increased "receive window size" to match the other side
+- improved behaviour if a network write ever fails
+- minor changes to macro names and operation of functions
+- check call id on incoming GRE packets
+
+---------------------------------------------------------------------------
+v0.9.9 -> v0.9.10
+2 August, 1999
+
+- keep a pid file - /var/run/pptpd.pid by default, overriden by config
+  option pidfile or commandline option -p/--pidfile
+- added another TODO item
+
+---------------------------------------------------------------------------
+v0.9.8 -> v0.9.9
+29 July, 1999
+
+- move libutil.h to after sys/types.h (FreeBSD 3.1)
+- add option file passing to SLIRP
+- reduce the number of variables used for option parsing/storage
+- add option to set local address to bind to ("listen")
+- configure script forces pppd ip allocation when needed, rather than
+  exiting on an error
+
+---------------------------------------------------------------------------
+v0.9.7 -> v0.9.8
+26 July, 1999
+
+- zero sockaddr_in (to blank out sin_len on BSD)
+- include libutil.h if there is one for openpty() proto (FreeBSD)
+- attempt to continue after failed bind() (OpenBSD?)
+
+---------------------------------------------------------------------------
+v0.9.6 -> v0.9.7
+22 July, 1999
+
+- added doc for setting up MPPE
+- use error names rather than numbers where easily possible
+
+---------------------------------------------------------------------------
+v0.9.5 -> v0.9.6
+15 July, 1999
+
+- moved binaries to /usr/local/sbin (ie, configure's --sbindir)
+- some documentation fixes
+- big warning about having to delete old /usr/local/sbin/pptp{d,ctrl,...}
+
+---------------------------------------------------------------------------
+v0.9.4 -> v0.9.5
+7 July, 1999
+
+- bad sequence number message made to detect duplicates and out of order
+  and report appropriately
+- show if libwrap is selected in configure script output
+- completely re-did connection termination to match draft spec (unfortunately
+  generates a warning when talking to Win98) 
+- changed capabilities to be more realistic
+- fixed echo reply processing (should prevent death when idle)
+- made call id handling more sane
+- made us always use the right call id in the right place
+- print errno on GRE write failures
+- bind GRE to address connection was received on
+
+---------------------------------------------------------------------------
+v0.9.3 -> v0.9.4
+5 July, 1999
+
+- fixed to detect Slackware 4.0 needing -lintl for gettext()
+- better fix for using different binary locations (cover --bindir too)
+- removed select() in ctrlpacket.c in favour of setting control sockets
+  to be nonblocking (for performance - plain read() is cheaper than
+  select() especially when you're pretty sure of success)
+
+---------------------------------------------------------------------------
+v0.9.2 -> v0.9.3
+2 July, 1999
+
+- changes to configure to fix SLIRP option and print out options chosen
+- configure --prefix fix
+
+---------------------------------------------------------------------------
+v0.9.1 -> v0.9.2
+17th June, 1999
+
+- made usage info not show details which aren't relevant to current config
+- made configure force pppd-ip-alloc on systems where we don't yet support
+  passing IP addresses to pppd (SLIRP, BSDUSER_PPP)
+- minor slirp fix for pppd startup detection
+
+---------------------------------------------------------------------------
+v0.9.0 -> v0.9.1
+17th June, 1999
+
+- made a few minor changes for slirp
+- added macros for PPTP packet creation and removed memcpy() where simple
+  assignment is sufficient; CPU usage should be lower
+- cleaned up call_id to always be passed around as a network byte order
+  u_int16_t
+- added some missing ntoh32() in pptpgre.c (currently no effect as ack_recv
+  is ignored)
+- speedups in GRE routines
+- no longer close stderr (fd 2) in pptpctrl.c to overcome problems where
+  syslog() is absent
+- increased debugging in openpty()
+
+---------------------------------------------------------------------------
+

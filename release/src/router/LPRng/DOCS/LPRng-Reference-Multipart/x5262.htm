@@ -1,0 +1,272 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Parallel Port Printers</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printer Communication and Protocols "
+    href="printercomm.htm">
+    <link rel="PREVIOUS" title="Printing to AppleTalk Printers"
+    href="x5238.htm">
+    <link rel="NEXT" title="Serial Printers " href="secserial.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x5238.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          11. Printer Communication and Protocols</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "secserial.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN5262">11.11. Parallel Port
+      Printers</a></h1>
+
+      <p>When installing a parallel port printer, there are three
+      elements of concern: the physical hardware connection (cable
+      and connectors), the IO device and Operating System support,
+      and finally the print spooler support for the device.</p>
+
+      <p>Originally most parallel port devices were strictly <span
+      class="emphasis"><i class="EMPHASIS">write only</i></span>
+      with a minimum amount of error information - only hardware
+      signals for <span class="emphasis"><i class=
+      "EMPHASIS">online</i></span>, <span class="emphasis"><i
+      class="EMPHASIS">out of paper</i></span> and <span class=
+      "emphasis"><i class="EMPHASIS">fault</i></span> were present.
+      Due to the lack of any other way to interface devices to the
+      Intel based PC platform, desperate hardware designers in
+      search of a cheap (free?) way to interface their IO devices
+      developed ways to manipulate the signals and do <span class=
+      "emphasis"><i class="EMPHASIS">bidirectional</i></span>
+      communication. Needless to say, no two companies developed
+      the same methods, and no two companies were compatible with
+      any other companies method.</p>
+
+      <p>In 1994, the IEEE 1284 standard was first developed,. The
+      following information is courtesy of Warp Nine Engineering,
+      of San Diego, CA, from the <a href=
+      "http://www.fapo.com/1284int.htm" target=
+      "_top">http://www.fapo.com/1284int.htm</a> web page.</p>
+
+      <p>When IBM introduced the PC, in 1981, the parallel printer
+      port was included as an alternative to the slower serial port
+      as a means for driving the latest high performance dot matrix
+      printers. The parallel port had the capability to transfer 8
+      bits of data at time whereas the serial port transmitted one
+      bit at a time. When the PC was introduced, dot matrix
+      printers were the main peripheral that used the parallel
+      port. As technology progressed and the need for greater
+      external connectivity increased, the parallel port became the
+      means by which you could connect higher performance
+      peripherals. These peripherals now range from printer sharing
+      devices, portable disk drives and tape backup to local area
+      network adapters and CD ROM players.</p>
+
+      <p>The problems faced by developers and customers of these
+      peripherals fall into three categories. First, although the
+      performance of the PC has increased dramatically, there has
+      been virtually no change in the parallel port performance or
+      architecture. The maximum data transfer rate achievable with
+      this architecture is around 150 kilobytes per second and is
+      extremely software intensive. Second, there is no standard
+      for the electrical interface. This causes many problems when
+      attempting to guarantee operation across various platforms.
+      Finally, the lack of design standards forced a distance
+      limitation of only 6 feet for external cables.</p>
+
+      <p>In 1991 there was a meeting of printer manufacturers to
+      start discussions on developing a new standard for the
+      intelligent control of printers over a network. These
+      manufacturers, which included Lexmark, IBM, Texas Instruments
+      and others, formed the Network Printing Alliance. The NPA
+      defined a set of parameters that, when implemented in the
+      printer and host, will allow for the complete control of
+      printer applications and jobs. While this work was in
+      progress it became apparent that to fully implement this
+      standard would require a high performance bi-directional
+      connection to the PC. The usual means of connection, the
+      ordinary PC parallel port, did not have the capabilities
+      required to meet the full requirements or abilities of this
+      standard.</p>
+
+      <p>The NPA submitted a proposal to the IEEE for the creation
+      of a committee to develop a new standard for a high speed
+      bi-directional parallel port for the PC. It was a requirement
+      that this new standard would remain fully compatible with the
+      original parallel port software and peripherals, but would
+      increase the data rate capability to greater than 1M bytes
+      per second, both in and out of the computer. This committee
+      became the IEEE 1284 committee. The IEEE 1284 standard,
+      "Standard Signaling Method for a Bi-directional Parallel
+      Peripheral Interface for Personal Computers", was approved
+      for final release in March of 1994.</p>
+
+      <p>Even if your hardware has support for the IEEE 1284 high
+      speed bidirectional data transfers, your Operating System
+      drivers must support it. Unfortunately, there is no universal
+      agreement on the capabilities that should be provided by the
+      low level printer port device drivers, and the method for
+      supporting them. A good example of the problem of OS support
+      and drivers is given by the Linux Parallel Port group,
+      currently headed by Tim Waugh, and which is documented in the
+      <a href="http://people.redhat.com/twaugh/parport/" target=
+      "_top">http://people.redhat.com/twaugh/parport/</a> and <a
+      href=
+      "http://people.redhat.com/twaugh/parport/html/parportguide.html"
+       target=
+      "_top">http://people.redhat.com/twaugh/parport/html/parportguide.html</a>
+      web pages.</p>
+
+      <p>Given this state of affairs, it should be no surprise that
+      there is no support for bidirectional parallel port printers
+      in <b class="APPLICATION">LPRng</b>. In fact, it turns out
+      that there are severe problems with many Unix implementations
+      that cause extreme headaches. These include:</p>
+
+      <ul>
+        <li>
+          <p>While a parallel port may be opened Read/Write, a
+          <code class="FUNCTION">read()</code> will either block
+          indefinitely or cause a major system failure (crash).</p>
+        </li>
+
+        <li>
+          <p>There is no buffering of data in the low level driver;
+          that is, once a <code class="FUNCTION">write()</code>
+          starts, then the process will block until the data is
+          written out. If the <code class="FUNCTION">write()</code>
+          call is interrupted by a <span class="emphasis"><i class=
+          "EMPHASIS">signal</i></span> and not immediately
+          restarted, then the status returned by the <code class=
+          "FUNCTION">write()</code> may be an error indication
+          (<var class="LITERAL">-1</var>) or the numbers of bytes
+          that were actually written. If an error is returned, then
+          an unknown number were written and the print job must be
+          aborted.</p>
+        </li>
+
+        <li>
+          <p>Many Operating systems do not implement a <code class=
+          "FUNCTION">select()</code> functionality for the parallel
+          port, which means that it is difficult to do a
+          multi-threaded implementation. Instead, a polling method
+          must be used.</p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The good news is that on all known systems, if the
+      parallel port device is opened exclusively for writing, and a
+      blocking <code class="FUNCTION">write()</code> is used, and
+      the <code class="FUNCTION">write()</code> is not interrupted,
+      and there are no device errors, then data is delivered
+      correctly to the device.</p>
+
+      <p>In most UNIX systems the printer port has the name <tt
+      class="FILENAME">/dev/lpt</tt>, <tt class=
+      "FILENAME">/dev/prn</tt>, or something similar. On most
+      systems the <b class="APPLICATION">dmesg</b> utility will
+      print a list of IO devices found during system configuration.
+      Use the following commands to get the information and scan
+      for the device. You should also make sure that the printer
+      device is available.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5303"></a>
+<pre class="SCREEN">
+    dmesg &gt;/tmp/a
+    grep lp /tmp/a
+    ls /dev/lp*
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Gordon Haverland <code class="EMAIL">&lt;<a href=
+      "mailto:haverlan@agric.gov.ab.ca">haverlan@agric.gov.ab.ca</a>&gt;</code>
+      supplied this little script, that will assist with this:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5307"></a>
+<pre class="SCREEN">
+    #!/bin/sh
+    #set -v -x              # uncomment for debugging
+    PATH=/bin:/usr/bin
+    printer=
+    for printer in /dev/lp* ;
+    do
+        echo PRINTER TEST to $printer 1&gt;&amp;2
+        for i in 1 2 3 4 5 6 7 8 9;
+        do
+            echo PRINTER $printer $i &gt; $printer;
+        done
+        echo -e \\r\\f &gt; $printer
+    done
+    exit 0;
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If your printer is connected to the device name you
+      provided, then you should get a page of something out. If the
+      output suffers from the <span class="emphasis"><i class=
+      "EMPHASIS">staircase</i></span> effect, you will see the
+      numbers marching across the page, otherwise the numbers will
+      all be in a single column.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x5238.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "secserial.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Printing to
+          AppleTalk Printers</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printercomm.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Serial
+          Printers</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

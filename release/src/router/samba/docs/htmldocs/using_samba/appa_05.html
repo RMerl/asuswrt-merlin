@@ -1,0 +1,460 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Appendix A] A.5 SSL Configuration Options</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:41:44Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_04.html" TITLE="A.4 Setting Up SSL Proxy">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: A.4 Setting Up SSL Proxy" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="appendix" REL="up" HREF="appa_01.html" TITLE="A. Configuring Samba with SSL">
+Appendix A<br>
+Configuring Samba with SSL</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appb_01.html" TITLE="B. Samba Performance Tuning">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: B. Samba Performance Tuning" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="appa-pgfId-985845">
+A.5 SSL Configuration Options</a></h2><P CLASS="para">
+<A CLASS="xref" HREF="appa_05.html#appa-61150">Table A.1</a> summarizes the configuration options introduced in the previous section for using SSL. Note that all of these options are global in scope; in other words, they must appear in the <CODE CLASS="literal">
+[global]</code> section of the configuration file. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="appa-61150">
+Table A.1: SSL Configuration Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Indicates whether SSL mode is enabled with Samba.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl hosts</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (list of addresses)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies a list of hosts that must always connect using SSL.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl hosts resign</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (list of addresses)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies a list of hosts that never connect using SS.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl CA certDir</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the directory where the certificates are stored.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl CA certFile</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies a file that contains all of the certificates for Samba.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl server cert</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the location of the server's certificate.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl server key</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the location of the server's private key.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl client cert</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the location of the client's certificate.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl client key</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the location of the client's private key.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl require clientcert</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Indicates whether Samba should require each client to have a certificate.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl require servercert</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Indicates whether the server itself should have a certificate.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl ciphers</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+String </p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the cipher suite to use during protocol negotiation.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl version</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl2or3</code>, <CODE CLASS="literal">
+ssl3</code>, or <CODE CLASS="literal">
+tls1</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the version of SSL to use.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl2or3</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+ssl compatibility</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Indicates whether compatibility with other implementations of SSL should be activated.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr></tbody></table><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986013">
+A.5.1 ssl</a></h3><P CLASS="para">
+This global option configures Samba to use SSL for communication between itself and clients. The default value of this option is <CODE CLASS="literal">
+no</code>. You can reset it as follows:</p><PRE CLASS="programlisting">
+[global]
+	ssl = yes</pre><P CLASS="para">
+Note that in order to use this option, you must have a proxy for Windows 95/98 clients, such as in the model presented earlier in this chapter.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986018">
+A.5.2 ssl hosts</a></h3><P CLASS="para">
+This option specifies the hosts that will be forced into using SSL. The syntax for specifying hosts and addresses is the same as the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> and the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> configuration options. For example:</p><PRE CLASS="programlisting">
+[global]
+	ssl = yes
+	ssl hosts = 192.168.220.</pre><P CLASS="para">
+This example specifies that all hosts that fall into the 192.168.220 subnet must use SSL connections with the client. This type of structure is useful if you know that various connections will be made by a subnet that lies across an untrusted network, such as the Internet. If neither this option nor the <CODE CLASS="literal">
+ssl</code> <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+resign</code> option has been specified, and <CODE CLASS="literal">
+ssl</code> is set to <CODE CLASS="literal">
+yes</code>, Samba will allow only SSL connections from all clients.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986024">
+A.5.3 ssl hosts resign</a></h3><P CLASS="para">
+This option specifies the hosts that will <EM CLASS="emphasis">
+not</em> be forced into SSL mode. The syntax for specifying hosts and addresses is the same as the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+allow</code> and the <CODE CLASS="literal">
+hosts</code> <CODE CLASS="literal">
+deny</code> configuration options. For example:</p><PRE CLASS="programlisting">
+[global]
+	ssl = yes
+	ssl hosts resign = 160.2.310. 160.2.320.</pre><P CLASS="para">
+This example specifies that all hosts that fall into the 160.2.310 or 160.2.320 subnets will not use SSL connections with the client. If neither this option nor the <CODE CLASS="literal">
+ssl</code> <CODE CLASS="literal">
+hosts</code> option has been specified, and <CODE CLASS="literal">
+ssl</code> is set to <CODE CLASS="literal">
+yes</code>, Samba will allow only SSL connections from all clients.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986030">
+A.5.4 ssl CA certDir</a></h3><P CLASS="para">
+This option specifies the directory containing the certificate authority's certificates that Samba will use to authenticate clients. There must be one file in this directory for each certificate authority, named as specified earlier in this chapter. Any other files in this directory are ignored. For example:</p><PRE CLASS="programlisting">
+[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certDir = /usr/local/samba/cert</pre><P CLASS="para">
+There is no default for this option. You can alternatively use the option <CODE CLASS="literal">
+ssl</code> <CODE CLASS="literal">
+CA</code> <CODE CLASS="literal">
+certFile</code> if you wish to place all the certificate authority information in the same file.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986037">
+A.5.5 ssl CA certFile</a></h3><P CLASS="para">
+This option specifies a file that contains the certificate authority's certificates that Samba will use to authenticate clients. This option differs from <CODE CLASS="literal">
+ssl</code> <CODE CLASS="literal">
+CA</code> <CODE CLASS="literal">
+certDir</code> in that there is only one file used for all the certificate authorities. An example of its usage follows:</p><PRE CLASS="programlisting">
+[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certFile = /usr/local/samba/cert/certFile</pre><P CLASS="para">
+There is no default for this option. You can also use the option <CODE CLASS="literal">
+ssl</code> <CODE CLASS="literal">
+CA</code> <CODE CLASS="literal">
+certDir</code> if you wish to have a separate file for each certificate authority that Samba trusts.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986044">
+A.5.6 ssl server cert</a></h3><P CLASS="para">
+This option specifies the location of the server's certificate. This option is mandatory; the server must have a certificate in order to use SSL. For example: </p><PRE CLASS="programlisting">
+[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certFile = /usr/local/samba/cert/certFile
+	ssl server cert = /usr/local/samba/private/server.pem</pre><P CLASS="para">
+There is no default for this option. Note that the certificate may contain the private key for the server.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986052">
+A.5.7 ssl server key</a></h3><P CLASS="para">
+This option specifies the location of the server's private key. You should ensure that the location of the file cannot be accessed by anyone other than <CODE CLASS="literal">
+root</code>. For example:</p><PRE CLASS="programlisting">
+[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certFile = /usr/local/samba/cert/certFile
+	ssl server key = /usr/local/samba/private/samba.pem</pre><P CLASS="para">
+There is no default for this option. Note that the private key may be contained in the certificate for the server. </p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986060">
+A.5.8 ssl client cert</a></h3><P CLASS="para">
+This option specifies the location of the client's certificate. The certificate may be requested by the Samba server with the <CODE CLASS="literal">
+ssl</code> <CODE CLASS="literal">
+require</code> <CODE CLASS="literal">
+clientcert</code> option; the certificate is also used by <I CLASS="filename">
+smbclient</i>. For example: </p><PRE CLASS="programlisting">
+[global]
+    ssl = yes
+    ssl hosts = 192.168.220.
+    ssl CA certFile = /usr/local/samba/cert/certFile
+    ssl server cert = /usr/local/ssl/private/server.pem
+    ssl client cert= /usr/local/ssl/private/clientcert.pem</pre><P CLASS="para">
+There is no default for this option. </p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986069">
+A.5.9 ssl client key</a></h3><P CLASS="para">
+This option specifies the location of the client's private key. You should ensure that the location of the file cannot be accessed by anyone other than <CODE CLASS="literal">
+root</code>. For example:</p><PRE CLASS="programlisting">
+[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certDir = /usr/local/samba/cert/
+	ssl server key = /usr/local/ssl/private/samba.pem
+	ssl client key = /usr/local/ssl/private/clients.pem</pre><P CLASS="para">
+There is no default for this option. This option is only needed if the client has a certificate. </p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986078">
+A.5.10 ssl require clientcert</a></h3><P CLASS="para">
+This option specifies whether the client is required to have a certificate. The certificates listed with either the <CODE CLASS="literal">
+ssl</code> <CODE CLASS="literal">
+CA</code> <CODE CLASS="literal">
+certDir</code> or the <CODE CLASS="literal">
+ssl</code> <CODE CLASS="literal">
+CA</code> <CODE CLASS="literal">
+certFile</code> will be searched to confirm that the client has a valid certificate and is authorized to connect to the Samba server. The value of this option is a simple boolean. For example:</p><PRE CLASS="programlisting">
+[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certFile = /usr/local/samba/cert/certFile
+	ssl require clientcert = yes</pre><P CLASS="para">
+We recommend that you require certificates from all clients that could be connecting to the Samba server. The default value for this option is <CODE CLASS="literal">
+no</code>.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-990571">
+A.5.11 ssl require servercert</a></h3><P CLASS="para">
+This option specifies whether the server is required to have a certificate. Again, this will be used by the <I CLASS="filename">
+smbclient</i> program. The value of this option is a simple boolean. For example:</p><PRE CLASS="programlisting">
+[global]
+	ssl = yes
+	ssl hosts = 192.168.220.
+	ssl CA certFile = /usr/local/samba/cert/certFile
+	ssl require clientcert = yes
+	ssl require servercert = yes</pre><P CLASS="para">
+Although we recommend that you require certificates from all clients that could be connecting to the Samba server, a server certificate is not required. It is, however,  recommended. The default value for this option is <CODE CLASS="literal">
+no</code>.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986095">
+A.5.12 ssl ciphers</a></h3><P CLASS="para">
+This option sets the ciphers on which SSL will decide during the negotiation phase of the SSL connection. Samba can use any of the following ciphers:</p><PRE CLASS="programlisting">
+DEFAULT
+DES-CFB-M1
+NULL-MD5
+RC4-MD5
+EXP-RC4-MD5
+RC2-CBC-MD5
+EXP-RC2-CBC-MD5
+IDEA-CBC-MD5
+DES-CBC-MD5
+DES-CBC-SHA
+DES-CBC3-MD5
+DES-CBC3-SHA
+RC4-64-MD5
+NULL</pre><P CLASS="para">
+It is best not to set this option unless you are familiar with the SSL protocol and want to mandate a specific cipher suite.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-986097">
+A.5.13 ssl version</a></h3><P CLASS="para">
+This global option specifies the version of SSL that Samba will use when handling encrypted connections. The default value is <CODE CLASS="literal">
+ssl2or3</code>, which specifies that either version 2 or 3 of the SSL protocol can be used, depending on which version is negotiated in the handshake between the server and the client. However, if you want Samba to use only a specific version of the protocol, you can specify the following:</p><PRE CLASS="programlisting">
+[global]
+	ssl version = ssl3</pre><P CLASS="para">
+Again, it is best not to set this option unless you are familiar with the SSL protocol and want to mandate a specific version.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-990580">
+A.5.14 ssl compatibility</a></h3><P CLASS="para">
+This global option specifies whether Samba should be configured to use other versions of SSL. However, because no other versions exist at this writing, the issue is  moot and the variable should always be left at the default.</p></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_04.html" TITLE="A.4 Setting Up SSL Proxy">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: A.4 Setting Up SSL Proxy" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appb_01.html" TITLE="B. Samba Performance Tuning">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: B. Samba Performance Tuning" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">A.4 Setting Up SSL Proxy</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+B. Samba Performance Tuning</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

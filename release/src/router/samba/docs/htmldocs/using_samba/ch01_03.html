@@ -1,0 +1,444 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 1] 1.3 Getting Familiar with a SMB/CIFS Network</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:29:52Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch01_02.html" TITLE="1.2 What Can Samba Do For Me?">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 1.2 What Can Samba Do For Me?" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch01_01.html" TITLE="1. Learning the Samba">
+Chapter 1<br>
+Learning the Samba</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch01_04.html" TITLE="1.4 Microsoft Implementations">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 1.4 Microsoft Implementations" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch01-88536">
+1.3 Getting Familiar with a SMB/CIFS Network</a></h2><P CLASS="para">Now that you have had a brief tour of Samba, let's take some time to get familiar with Samba's adopted environment: an SMB/CIFS network. Networking with SMB is significantly different from working with a Unix TCP/IP network, because there are several new concepts to learn and a lot of information to cover. First, we will discuss the basic concepts behind an SMB network, followed by some Microsoft implementations of it, and finally we will show you where a Samba server can and cannot fit into the picture.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch01-pgfId-941409">
+1.3.1 Understanding NetBIOS</a></h3><P CLASS="para">
+To begin, let's step back in time. In 1984, IBM authored a simple application programming interface (API) for networking its computers called the <I CLASS="firstterm">
+Network Basic Input/Output System </i>(NetBIOS). The NetBIOS API provided a rudimentary design for an application to connect and share data with other computers.</p><P CLASS="para">
+It's helpful to think of the NetBIOS API as networking extensions to the standard BIOS API calls. With BIOS, each low-level call is confined to the hardware of the local machine and doesn't need any help traveling to its destination. NetBIOS, however, originally had to exchange instructions with computers across IBM PC or Token Ring networks. It therefore required a low-level transport protocol to carry its requests from one computer to the next.</p><P CLASS="para">
+In late 1985, IBM released one such protocol, which it merged with the NetBIOS API to become the <I CLASS="firstterm">
+NetBIOS Extended User Interface</i> (<EM CLASS="emphasis">NetBEUI</em>). NetBEUI was designed for small local area networks (LANs), and it let each machine claim a name (up to 15 characters) that wasn't already in use on the network. By a "small LAN," we mean fewer than 255 nodes on the network&nbsp;- which was considered a practical restriction in 1985!</p><P CLASS="para">
+The NetBEUI protocol was very popular with networking applications, including those running under Windows for Workgroups. Later, implementations of NetBIOS over Novell's IPX networking protocols also emerged, which competed with NetBEUI. However, the networking protocols of choice for the burgeoning Internet community were TCP/IP and UDP/IP, and implementing the NetBIOS APIs over those protocols soon became a necessity.</p><P CLASS="para">
+Recall that TCP/IP uses numbers to represent computer addresses, such as 192.168.220.100, while NetBIOS uses only names. This was a major issue when trying to mesh the two protocols together. In 1987, the Internet Engineering Task Force (IETF) published a series of standardization documents, titled RFC 1001 and 1002, that outlined how NetBIOS would work over a TCP/UDP network. This set of documents still governs each of the implementations that exist today, including those provided by Microsoft with their Windows operating systems as well as the Samba suite.</p><P CLASS="para">
+Since then, the standard this document governs has become known as <I CLASS="firstterm">
+NetBIOS over TCP/IP</i>, or NBT for short. The NBT standard (RFC 1001/1002) currently outlines a trio of services on a network:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-946789">
+</a>A name service</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-946790">
+</a>Two communication services: </p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-952037">
+</a>Datagrams </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-952038">
+</a>Sessions</p></li></ul></li></ul><P CLASS="para">
+The name service solves the name-to-address problem mentioned earlier; it allows each computer to declare a specific name on the network that can be translated to a machine-readable IP address, much like today's DNS on the Internet. The datagram and session services are both secondary communication protocols used to transmit data back and forth from NetBIOS machines across the network.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch01-pgfId-945521">
+1.3.2 Getting a Name</a></h3><P CLASS="para">For a human being, getting a name is easy. However, for a machine on a NetBIOS network, it can be a little more complicated. Let's look at a few of the issues.</p><P CLASS="para">
+In the NetBIOS world, when each machine comes online, it wants to claim a name for itself; this is called <I CLASS="firstterm">
+name registration</i>. However, no two machines in the same workgroup should be able to claim the same name; this would cause endless confusion for any machine that wanted to communicate with either machine. There are two different approaches to ensuring that this doesn't happen:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-945120">
+</a>Use a <I CLASS="firstterm">
+NetBIOS Name Server</i> (NBNS) to keep track of which hosts have registered a NetBIOS name. </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-945121">
+</a>Allow each machine on the network to defend its name in the event that another machine attempts to use it.</p></li></ul><P CLASS="para">
+<A CLASS="xref" HREF="ch01_03.html#ch01-86658">
+Figure 1.8</a> illustrates a (failed) name registration, with and without a NetBIOS Name Server. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch01-86658">
+Figure 1.8: NBNS versus non-NBNS name registration</a></h4><IMG CLASS="graphic" SRC="figs/sam.0108.gif" ALT="Figure 1.8"><P CLASS="para">
+In addition, there must be a way to resolve a NetBIOS name to a specific IP address as mentioned earlier; this is known as <I CLASS="firstterm">
+name resolution</i>. There are two different approaches with NBT here as well:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-945526">
+</a>Have each machine report back its IP address when it "hears" a broadcast request for its NetBIOS name.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-945527">
+</a>Use the NBNS to help resolve NetBIOS names to IP addresses. </p></li></ul><P CLASS="para">
+<A CLASS="xref" HREF="ch01_03.html#ch01-72484">
+Figure 1.9</a> illustrates the two types of name resolution. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch01-72484">
+Figure 1.9: NBNS versus non-NBNS name resolution</a></h4><IMG CLASS="graphic" SRC="figs/sam.0109.gif" ALT="Figure 1.9"><P CLASS="para">
+As you might expect, having an NBNS on your network can help out tremendously. To see exactly why, let's look at the non-NBNS method.</p><P CLASS="para">
+Here, when a client machine boots, it will broadcast a message declaring that it wishes to register a specified NetBIOS name as its own. If nobody objects to the use of the name after multiple registration attempts, it keeps the name. On the other hand, if another machine on the local subnet is currently using the requested name, it will send a message back to the requesting client that the name is already taken. This is known as <I CLASS="firstterm">
+defending</i> the hostname. This type of system comes in handy when one client has unexpectedly dropped off the network&nbsp;- another can take its name unchallenged&nbsp;- but it does incur an inordinate amount of traffic on the network for something as simple as name registration.</p><P CLASS="para">
+With an NBNS, the same thing occurs, except that the communication is confined to the requesting machine and the NBNS server. No broadcasting occurs when the machine wishes to register the name; the registration message is simply sent directly from the client to NBNS server and the NBNS server replies whether or not the name is already taken. This is known as <I CLASS="firstterm">
+point-to-point communication</i>, and is often beneficial on networks with more than one subnet. This is because routers are often preconfigured to block incoming packets that are broadcast to all machines in the subnet.</p><P CLASS="para">
+The same principles apply to name resolution. Without an NBNS, NetBIOS name resolution would also be done with a broadcast mechanism. All request packets would be sent to each computer in the network, with the hope that one machine that might be affected will respond directly back to the machine that asked. At this point, it's clear that using an NBNS server and point-to-point communication for this purpose is far less taxing on the network than flooding the network with broadcasts for every name resolution request. </p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch01-pgfId-945664">
+1.3.3 Node Types</a></h3><P CLASS="para">How can you tell what strategy each client on your network will use when performing name registration and resolution? Each machine on an NBT network earns one of the following designations, depending on how it handles name registration and resolution: b-node, p-node, m-node, and h-node. The behaviors of each type of node are summarized in <A CLASS="xref" HREF="ch01_03.html#ch01-91681">
+Table 1.1</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch01-91681">
+Table 1.1: NetBIOS Node Types </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Role</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Value</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+b-node</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Uses broadcast registration and resolution only.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+p-node</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Uses point-to-point registration and resolution only.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+m-node</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Uses broadcast for registration. If successful, it notifies the NBNS server of the result. Uses broadcast for resolution; uses NBNS server if broadcast is unsuccessful.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+h-node (hybrid)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Uses NBNS server for registration and resolution; uses broadcast if the NBNS server is unresponsive or inoperative.</p></td></tr></tbody></table><P CLASS="para">
+In the case of Windows clients, you will usually find them listed as <I CLASS="firstterm">
+h-nodes</i> or <I CLASS="firstterm">
+hybrid nodes</i>. Incidentally, h-nodes were invented later by Microsoft, as a more  fault-tolerant route, and do not appear in RFC 1001/1002.</p><P CLASS="para">
+You can find out the node type of any Windows machine by typing the command <CODE CLASS="literal">
+ipconfig</code> <CODE CLASS="literal">
+/all</code> and searching for the line that says <CODE CLASS="literal">
+Node Type</code>.</p>
+
+<PRE CLASS="programlisting"><B CLASS="emphasis.bold">C:\&gt; ipconfig /all</b>
+</pre><PRE CLASS="programlisting">
+Windows 98 IP Configuration
+...
+  Node Type .  .  .  .  .  .  .  .  .  .  : Hybrid
+...</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch01-pgfId-945128">
+1.3.4 What's in a Name?</a></h3><P CLASS="para">
+The names NetBIOS uses are quite different from the DNS hostnames you might be familiar with. First, NetBIOS names exist in a flat namespace. In other words, there are no qualifiers such as <i>ora.com</i> or <i>samba.org</i> to section off hostnames; there is only a single unique name to represent each computer. Second, NetBIOS names are allowed to be only 15 characters, may not begin with an asterisk (*), and can consist only of standard alphanumeric characters (a-z, A-Z, 0-9) and the following:</p><PRE CLASS="programlisting">
+! @ # $ % ^ &amp; ( ) - ' { } . ~ </pre><P CLASS="para">
+Although you are allowed to use a period (.) in a NetBIOS name, we recommend against it because those names are not guaranteed to work in future versions of NetBIOS over TCP/IP.</p><P CLASS="para">
+It's not a coincidence that all valid DNS names are also valid NetBIOS names. In fact, the DNS name for a Samba server is often reused as its NetBIOS name. For example, if you had a machine <CODE CLASS="literal">
+phoenix.ora.com</code>, its NetBIOS name would likely be PHOENIX (followed by 8 blanks).</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch01-pgfId-946016">
+1.3.4.1 Resource names and types</a></h4><P CLASS="para">
+With NetBIOS, a machine not only advertises its presence, but also tells others what types of services it offers. For example, <CODE CLASS="literal">
+phoenix</code> can indicate that it's not just a workstation, but is also a file server and can receive WinPopup messages. This is done by adding a 16th byte to the end of the machine (resource) name, called the <I CLASS="firstterm">resource type</i>, and registering the name more than once. See <A CLASS="xref" HREF="ch01_03.html#ch01-74707">
+Figure 1.10</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch01-74707">
+Figure 1.10: The structure of NetBIOS names</a></h4><IMG CLASS="graphic" SRC="figs/sam.0110.gif" ALT="Figure 1.10"><P CLASS="para">
+The one-byte resource type indicates a unique service the named machine provides. In this book, you will often see the resource type shown in angled brackets (&lt;&gt;) after the NetBIOS name, such as:</p><PRE CLASS="programlisting">PHOENIX&lt;00&gt;</pre><P CLASS="para">
+You can see which names are registered for a particular NBT machine using the Windows command-line NBTSTAT utility. Because these services are unique (i.e., there cannot be more than one registered), you will see them listed as type UNIQUE in the output. For example, the following partial output describes the <CODE CLASS="literal">
+hydra</code> server:</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold">D:\&gt; NBTSTAT -a hydra</b><B CLASS="emphasis.bold"></b></pre><PRE CLASS="programlisting">
+       NetBIOS Remote Machine Name Table
+   Name               Type         Status
+---------------------------------------------
+HYDRA          &lt;00&gt;  UNIQUE      Registered
+HYDRA          &lt;03&gt;  UNIQUE      Registered
+HYDRA          &lt;20&gt;  UNIQUE      Registered
+...</pre><P CLASS="para">
+This says the server has registered the NetBIOS name <CODE CLASS="literal">
+hydra</code> as a machine (workstation) name, a recipient of WinPopup messages, and a file server. Some possible attributes a name can have are listed in <A CLASS="xref" HREF="ch01_03.html#ch01-11471">
+Table 1.2</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch01-11471">
+Table 1.2: NetBIOS Unique Resource Types </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">Named Resource</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">Hexidecimal Byte Value</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Standard Workstation Service</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+00</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Messenger Service (WinPopup)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+03</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+RAS Server Service</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+06</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Domain Master Browser Service (associated with primary domain controller)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1B</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Master Browser name</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1D</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+NetDDE Service</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1F</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Fileserver (including printer server)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+20</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+RAS Client Service</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+21</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Network Monitor Agent</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+BE</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Network Monitor Utility</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+BF</p></td></tr></tbody></table><P CLASS="para">
+Note that because DNS names don't have resource types, the designers intentionally made hexidecimal value 20 (an ASCII space) default to the type for a file server.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch01-pgfId-946074">
+1.3.4.2 Group names and types</a></h4><P CLASS="para">SMB also uses the concept of groups, with which machines can register themselves. Earlier, we mentioned that the machines in our example belonged to a <I CLASS="firstterm">
+workgroup</i>, which is a partition of machines on the same network. For example, a business might very easily have an ACCOUNTING and a SALES workgroup, each with different servers and printers. In the Windows world, a workgroup and an SMB group are the same thing.</p><P CLASS="para">
+Continuing our NBTSTAT example, the <CODE CLASS="literal">
+hydra</code> Samba server is also a member of the SIMPLE workgroup (the GROUP attribute hex 00), and will stand for election as a browse master (GROUP attribute 1E). Here is the remainder of the NBTSTAT utility output:</p><PRE CLASS="programlisting">
+       NetBIOS Remote Machine Name Table, continued
+   Name               Type         Status
+---------------------------------------------
+SIMPLE           &lt;00&gt;  GROUP       Registered
+SIMPLE           &lt;1E&gt;  GROUP       Registered
+..__MSBROWSE__.  &lt;01&gt;  GROUP       Registered</pre><P CLASS="para">
+The possible group attributes a machine can have are illustrated in <A CLASS="xref" HREF="ch01_03.html#ch01-52395">
+Table 1.3</a>. More information is available in <i>Windows NT in a Nutshell</i> by Eric Pearce, also published by O'Reilly.  </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch01-52395">
+Table 1.3: NetBIOS Group Resource Types </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Named Resource	</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">Hexidecimal Byte Value</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Standard Workstation group</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+00</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Logon Server </p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1C</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Master Browser name </p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1D</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Normal Group name (used in browser elections)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+1E</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Internet Group name (administrative)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+20</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+&lt;01&gt;&lt;02&gt;__MSBROWSE__&lt;02&gt;</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+01</p></td></tr></tbody></table><P CLASS="para">
+The final entry, <CODE CLASS="literal">
+__MSBROWSE__</code>, is used to announce a group to other master browsers. The nonprinting characters in the name show up as dots in a NBTSTAT printout. Don't worry if you don't understand all of the resource or group types. Some of them you will not need with Samba, and others you will pick up as you move through the rest of the chapter. The important thing to remember here is the logistics of the naming mechanism. </p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch01-pgfId-946130">
+1.3.5 Datagrams and Sessions</a></h3><P CLASS="para">
+<I CLASS="firstterm">
+</i>At this point, let's digress to introduce another responsibility of NBT: to provide connection services between two NetBIOS machines. There are actually two services offered by NetBIOS over TCP/IP: the <I CLASS="firstterm">
+session service</i> and the <I CLASS="firstterm">
+datagram service</i>. Understanding how these two services work is not essential to using Samba, but it does give you an idea of how NBT works and how to troubleshoot Samba when it doesn't work.</p><P CLASS="para">
+The datagram service has no stable connection between one machine and another. Packets of data are simply sent or broadcast from one machine to another, without regard for the order that they arrive at the destination, or even if they arrive at all. The use of datagrams is not as network intensive as sessions, although they can bog down a network if used unwisely (remember broadcast name resolution earlier?) Datagrams, therefore, are used for quickly sending simple blocks of data to one or more machines. The datagram service communicates using the simple primitives shown in <A CLASS="xref" HREF="ch01_03.html#ch01-pgfId-946185">
+Table 1.4</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch01-pgfId-946185">
+Table 1.4: Datagram Primitives </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Primitive</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Description</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Send Datagram</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Send datagram packet to machine or groups of machines.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Send Broadcast Datagram</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Broadcast datagram to any machine waiting with a Receive Broadcast Datagram.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Receive Datagram</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Receive a datagram from a machine.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Receive Broadcast Datagram</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Wait for a broadcast datagram.</p></td></tr></tbody></table><P CLASS="para">
+The session service is more complex. Sessions are a communication method that, in theory, offers the ability to detect problematic or inoperable connections between two NetBIOS applications. It helps to think of an NBT session in terms of a telephone call.[<A CLASS="footnote" HREF="#ch01-pgfId-946249">5</a>] A full-duplex connection is opened between a caller machine and a called machine, and it must remain open throughout the duration of their conversation. Each side knows who the caller and the called machine is, and can communicate with the simple primitives shown in <A CLASS="xref" HREF="ch01_03.html#ch01-pgfId-946256">
+Table 1.5</a>. </p><BLOCKQUOTE CLASS="footnote">
+<DIV CLASS="footnote">
+<P CLASS="para">
+<A CLASS="footnote" NAME="ch01-pgfId-946249">[5]</a> As you can see in RFC 1001, the telephone analogy was strongly evident in the creation of the NBT service.</p></div></blockquote><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch01-pgfId-946256">
+Table 1.5: Session Primitives </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Primitive</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Description</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Call</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Initiate a session with a machine listening under a specified name.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Listen</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Wait for a call from a known caller or any caller.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Hang-up</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Exit a call.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Send</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Send data to the other machine.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Receive</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Receive data from the other machine.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Session Status</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Get information on requested sessions.</p></td></tr></tbody></table><P CLASS="para">
+Sessions are the backbone of resource sharing on an NBT network. They are typically used for establishing stable connections from client machines to disk or printer shares on a server. The client "calls" the server and starts trading information such as which files it wishes to open, which data it wishes to exchange, etc. These calls can last a long time&nbsp;- hours, even days&nbsp;- and all of this occurs within the context of a single connection. If there is an error, the session software (TCP) will retransmit until the data is received properly, unlike the "punt-and-pray" approach of the datagram service (UDP).</p><P CLASS="para">
+In truth, while sessions are supposed to be able to handle problematic communications, they often don't. As you've probably already discovered when using Windows networks, this is a serious detriment to using NBT sessions. If the connection is interrupted for some reason, session information that is open between the two computers can easily become invalidated. If that happens, the only way to regain the session information is for the same two computers to call each other again and start over.</p><P CLASS="para">
+If you want more information on each of these services, we recommend you look at RFC 1001. However, there are two important things to remember here:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-946210">
+</a>Sessions always occur between <EM CLASS="emphasis">
+two</em> NetBIOS machines&nbsp;- no more and no less. If a session service is interrupted, the client is supposed to store sufficient state information for it to re-establish the connection. However, in practice, this is rarely the case.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-946211">
+</a>Datagrams can be broadcast to multiple machines, but they are unreliable. In other words, there is no way for the source to know that the datagrams it sent have indeed arrived at their<I CLASS="firstterm">
+</i> destinations. </p></li></ul></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch01_02.html" TITLE="1.2 What Can Samba Do For Me?">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 1.2 What Can Samba Do For Me?" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch01_04.html" TITLE="1.4 Microsoft Implementations">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 1.4 Microsoft Implementations" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+1.2 What Can Samba Do For Me?</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+1.4 Microsoft Implementations</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

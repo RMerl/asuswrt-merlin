@@ -1,0 +1,88 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>swat</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="swat.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>swat &#8212; Samba Web Administration Tool</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">swat</code> [-s &lt;smb config file&gt;] [-a] [-P]</p></div></div><div class="refsect1" lang="en"><a name="id2522953"></a><h2>DESCRIPTION</h2><p>This tool is part of the <a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p><code class="literal">swat</code> allows a Samba administrator to 
+	configure the complex <a class="citerefentry" href="smb.conf.5.html"><span class="citerefentry"><span class="refentrytitle">smb.conf</span>(5)</span></a> file via a Web browser. In addition, 
+	a <code class="literal">swat</code> configuration page has help links 
+	to all the configurable options in the <code class="filename">smb.conf</code> file allowing an 
+	administrator to easily look up the effects of any change. </p><p><code class="literal">swat</code> is run from <code class="literal">inetd</code> </p></div><div class="refsect1" lang="en"><a name="id2483388"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">-s smb configuration file</span></dt><dd><p>The default configuration file path is 
+		determined at compile time.  The file specified contains 
+		the configuration details required by the <a class="citerefentry" href="smbd.8.html"><span class="citerefentry"><span class="refentrytitle">smbd</span>(8)</span></a> server. This is the file 
+		that <code class="literal">swat</code> will modify. 
+		The information in this file includes server-specific 
+		information such as what printcap file to use, as well as 
+		descriptions of all the services that the server is to provide.
+		See <code class="filename">smb.conf</code> for more information. 
+		</p></dd><dt><span class="term">-a</span></dt><dd><p>This option disables authentication and 
+		places <code class="literal">swat</code> in demo mode. In that mode anyone will be able to modify 
+		the <code class="filename">smb.conf</code> file. </p><p><span class="emphasis"><em>WARNING: Do NOT enable this option on a production 
+		server. </em></span></p></dd><dt><span class="term">-P</span></dt><dd><p>This option restricts read-only users to the password 
+        management page.  <code class="literal">swat</code> can then be used to change
+        user passwords without users seeing the "View" and "Status" menu 
+        buttons.</p></dd><dt><span class="term">-d|--debuglevel=level</span></dt><dd><p><em class="replaceable"><code>level</code></em> is an integer 
+from 0 to 10. The default value if this parameter is 
+not specified is 0.</p><p>The higher this value, the more detail will be 
+logged to the log files about the activities of the 
+server. At level 0, only critical errors and serious 
+warnings will be logged. Level 1 is a reasonable level for
+day-to-day running - it generates a small amount of 
+information about operations carried out.</p><p>Levels above 1 will generate considerable 
+amounts of log data, and should only be used when 
+investigating a problem. Levels above 3 are designed for 
+use only by developers and generate HUGE amounts of log
+data, most of which is extremely cryptic.</p><p>Note that specifying this parameter here will 
+override the <a class="link" href="smb.conf.5.html#LOGLEVEL" target="_top">log level</a> parameter
+in the <code class="filename">smb.conf</code> file.</p></dd><dt><span class="term">-V</span></dt><dd><p>Prints the program version number.
+</p></dd><dt><span class="term">-s &lt;configuration file&gt;</span></dt><dd><p>The file specified contains the 
+configuration details required by the server.  The 
+information in this file includes server-specific
+information such as what printcap file to use, as well 
+as descriptions of all the services that the server is 
+to provide. See <code class="filename">smb.conf</code> for more information.
+The default configuration file name is determined at 
+compile time.</p></dd><dt><span class="term">-l|--log-basename=logdirectory</span></dt><dd><p>Base directory name for log/debug files. The extension
+<code class="constant">".progname"</code> will be appended (e.g. log.smbclient, 
+log.smbd, etc...). The log file is never removed by the client.
+</p></dd><dt><span class="term">-h|--help</span></dt><dd><p>Print a summary of command line options.
+</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2481492"></a><h2>INSTALLATION</h2><p>Swat is included as binary package with most distributions. The 
+	package manager in this case takes care of the installation and 
+	configuration. This section is only for those who have compiled 
+	swat from scratch.
+	</p><p>After you compile SWAT you need to run <code class="literal">make install
+	</code> to install the <code class="literal">swat</code> binary
+	and the various help files and images. A default install would put 
+	these in: </p><div class="itemizedlist"><ul type="disc"><li><p>/usr/local/samba/sbin/swat</p></li><li><p>/usr/local/samba/swat/images/*</p></li><li><p>/usr/local/samba/swat/help/*</p></li></ul></div><div class="refsect2" lang="en"><a name="id2481539"></a><h3>Inetd Installation</h3><p>You need to edit your <code class="filename">/etc/inetd.conf
+		</code> and <code class="filename">/etc/services</code>
+		to enable SWAT to be launched via <code class="literal">inetd</code>.</p><p>In <code class="filename">/etc/services</code> you need to 
+		add a line like this: </p><p><code class="literal">swat            901/tcp</code></p><p>Note for NIS/YP and LDAP users - you may need to rebuild the 
+		NIS service maps rather than alter your local <code class="filename">
+		/etc/services</code> file. </p><p>the choice of port number isn't really important 
+		except that it should be less than 1024 and not currently 
+		used (using a number above 1024 presents an obscure security 
+		hole depending on the implementation details of your 
+		<code class="literal">inetd</code> daemon). </p><p>In <code class="filename">/etc/inetd.conf</code> you should 
+		add a line like this: </p><p><code class="literal">swat    stream  tcp     nowait.400  root
+		/usr/local/samba/sbin/swat swat</code></p><p>Once you have edited <code class="filename">/etc/services</code> 
+		and <code class="filename">/etc/inetd.conf</code> you need to send a 
+		HUP signal to inetd. To do this use <code class="literal">kill -1 PID
+		</code> where PID is the process ID of the inetd daemon. </p></div></div><div class="refsect1" lang="en"><a name="id2481651"></a><h2>LAUNCHING</h2><p>To launch SWAT just run your favorite web browser and 
+	point it at "http://localhost:901/".</p><p>Note that you can attach to SWAT from any IP connected 
+	machine but connecting from a remote machine leaves your 
+	connection open to password sniffing as passwords will be sent 
+	in the clear over the wire. </p></div><div class="refsect1" lang="en"><a name="id2481670"></a><h2>FILES</h2><div class="variablelist"><dl><dt><span class="term"><code class="filename">/etc/inetd.conf</code></span></dt><dd><p>This file must contain suitable startup 
+		information for the meta-daemon.</p></dd><dt><span class="term"><code class="filename">/etc/services</code></span></dt><dd><p>This file must contain a mapping of service name 
+		(e.g., swat) to service port (e.g., 901) and protocol type 
+		(e.g., tcp).  </p></dd><dt><span class="term"><code class="filename">/usr/local/samba/lib/smb.conf</code></span></dt><dd><p>This is the default location of the <a class="citerefentry" href="smb.conf.5.html"><span class="citerefentry"><span class="refentrytitle">smb.conf</span>(5)</span></a> server configuration file that swat edits. Other 
+		common places that systems install this file are <code class="filename">
+		/usr/samba/lib/smb.conf</code> and <code class="filename">/etc/smb.conf
+		</code>.  This file describes all the services the server 
+		is to make available to clients. </p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2481751"></a><h2>WARNINGS</h2><p><code class="literal">swat</code> will rewrite your <a class="citerefentry" href="smb.conf.5.html"><span class="citerefentry"><span class="refentrytitle">smb.conf</span>(5)</span></a> file. It will rearrange the entries and delete all 
+	comments, <em class="parameter"><code>include=</code></em> and <em class="parameter"><code>copy=
+	</code></em> options. If you have a carefully crafted <code class="filename">
+	smb.conf</code> then back it up or don't use swat! </p></div><div class="refsect1" lang="en"><a name="id2481795"></a><h2>VERSION</h2><p>This man page is correct for version 3.0 of the Samba suite.</p></div><div class="refsect1" lang="en"><a name="id2481806"></a><h2>SEE ALSO</h2><p><code class="literal">inetd(5)</code>, <a class="citerefentry" href="smbd.8.html"><span class="citerefentry"><span class="refentrytitle">smbd</span>(8)</span></a>, <a class="citerefentry" href="smb.conf.5.html"><span class="citerefentry"><span class="refentrytitle">smb.conf</span>(5)</span></a></p></div><div class="refsect1" lang="en"><a name="id2481836"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</p><p>The original Samba man pages were written by Karl Auer. 
+	The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at <a class="ulink" href="ftp://ftp.icce.rug.nl/pub/unix/" target="_top">
+	ftp://ftp.icce.rug.nl/pub/unix/</a>) and updated for the Samba 2.0 
+	release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook XML 4.2 for
+	Samba 3.0 was done by Alexander Bokovoy.</p></div></div></body></html>

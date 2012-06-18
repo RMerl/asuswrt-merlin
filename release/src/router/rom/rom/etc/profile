@@ -1,0 +1,12 @@
+export PATH="/bin:/usr/bin:/sbin:/usr/sbin:/home/$USER:/mmc/sbin:/mmc/bin:/mmc/usr/sbin:/mmc/usr/bin:/opt/sbin:/opt/bin:/opt/usr/sbin:/opt/usr/bin:`nvram get env_path`"
+export PS1='\u@\h:\w\$ '
+
+alias l='ls -lFA'
+alias ll='ls -lF'
+
+ldd() {
+	LD_TRACE_LOADED_OBJECTS=1 $*;
+}
+
+[ -f /jffs/etc/profile ] && . /jffs/etc/profile
+[ -f /opt/etc/profile ] && . /opt/etc/profile

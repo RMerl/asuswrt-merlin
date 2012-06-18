@@ -1,0 +1,255 @@
+.TH PPTPD.CONF 5 "29 December 2005"
+.SH NAME
+.B pptpd.conf
+- PPTP VPN daemon configuration
+.SH DESCRIPTION
+.BR pptpd (8)
+reads options from this file, usually
+.IR /etc/pptpd.conf .
+Most options can be overridden by the command line.  The local and
+remote IP addresses for clients must come from the configuration file
+or from
+.BR pppd (8)
+configuration files.
+.SH OPTIONS
+.TP
+.BI "option " option-file
+the name of an option file to be passed to
+.BR pppd (8)
+in place of the default
+.IR /etc/ppp/options 
+so that PPTP specific options can be given.
+Equivalent to the command line
+.B --option
+option.
+
+.TP
+.BI "stimeout " seconds
+number of seconds to wait for a PPTP packet before forking the
+.BR pptpctrl (8)
+program to handle the client.  The default is 10 seconds.  This is a
+denial of service protection feature.
+Equivalent to the command line 
+.B --stimeout
+option.
+
+.TP
+.BI "ptimeout " miliseconds
+number of miliseconds to wait for a PPTP "ack" packet after transmitting
+was stoped due to sliding window exceeded. The default is 1000 miliseconds.
+Equivalent to the command line 
+.B --ptimeout
+option.
+
+.TP
+.BI "keep"
+Keep connections after pptpd daemon exit. Default do not keep connections,
+all connections would be terminated on pptpd exit.
+Equivalent to the command line 
+.B --keep
+option.
+
+.TP
+.B debug
+turns on debugging mode, sending debugging information to 
+.BR syslog (3).
+Has no effect on
+.BR pppd (8)
+debugging.  Equivalent to the command line 
+.B --debug
+option.
+.TP
+.BI "bcrelay " internal-interface
+turns on broadcast relay mode, sending all broadcasts received on the server's
+internal interface to the clients.
+Equivalent to the command line 
+.B --bcrelay
+option.
+
+.TP
+.BI "connections " n
+limits the number of client connections that may be accepted.
+If pptpd is allocating IP addresses (e.g. 
+.BR delegate
+is not used) then the number of connections is also limited by the
+.BR remoteip
+option.  The default is 100.
+
+.TP
+.BI "delegate"
+delegates the allocation of client IP addresses to 
+.BR pppd (8).
+Without this option, which is the default, pptpd manages the list of
+IP addresses for clients and passes the next free address to pppd.
+With this option, pptpd does not pass an address, and so pppd may use
+radius or chap-secrets to allocate an address.
+
+.TP
+.BI "localip " ip-specification
+one or many IP addresses to be used at the local end of the
+tunnelled PPP links between the server and the client.  If one address only
+is given, this address is used for all clients.  Otherwise, one address
+per client must be given, and if there are no free addresses then any new
+clients will be refused.
+.B localip
+will be ignored if the
+.B delegate
+option is used.
+.TP
+.BI "remoteip " ip-specification
+a list of IP addresses to assign to remote PPTP clients. Each
+connected client must have a different address, so there must be
+at least as many addresses as you have simultaneous clients,
+and preferably some spare, since you cannot change this list
+without restarting pptpd. A warning will be sent to
+.BR syslog (3)
+when the IP address pool is exhausted.
+.B remoteip
+will be ignored if the
+.B delegate
+option is used.
+.TP
+.B noipparam
+by default, the original client IP address is given to
+ip-up scripts using the 
+.BR pppd (8) 
+option
+.B ipparam.
+The
+.B noipparam
+option prevents this.
+Equivalent to the command line
+.B --noipparam
+option.
+.TP
+.BI "listen " ip-address
+the local interface IP address to listen on for incoming PPTP
+connections (TCP port 1723). Equivalent to the command line
+.B --listen
+option.
+.TP
+.BI "pidfile " pid-file
+specifies an alternate location to store the process ID file
+(default /var/run/pptpd.pid).  Equivalent to the command line
+.B --pidfile
+option.
+.TP
+.BI "speed " speed
+specifies a speed (in bits per second) to pass to the PPP daemon as
+the interface speed for the tty/pty pair.  This is ignored by some PPP
+daemons, such as Linux's
+.BR pppd (8).
+The default is 115200 bytes per second, which some implementations
+interpret as meaning "no limit".  Equivalent to the command line
+.B --speed
+option.
+.SH NOTES
+An
+.I ip-specification
+above (for the
+.B localip
+and
+.B remoteip
+tags) may be a list of IP addresses (for example 192.168.0.2,192.168.0.3),
+a range (for example 192.168.0.1-254 or 192.168.0-255.2) or some combination
+(for example 192.168.0.2,192.168.0.5-8).  For some valid pairs might be
+(depending on use of the VPN):
+.P
+.BI "localip " 192.168.0.1
+.br
+.BI "remoteip " 192.168.0.2-254
+.P
+or
+.P
+.BI "localip " 192.168.1.2-254
+.br
+.BI "remoteip " 192.168.0.2-254
+
+.SH ROUTING CHECKLIST - PROXYARP
+Allocate a section of your LAN addresses for use by clients.
+.P
+In 
+.IR /etc/ppp/options.pptpd.
+set the
+.B proxyarp
+option.
+In
+.IR pptpd.conf
+do not set 
+.B localip
+option, but set
+.B remoteip
+to the allocated address range.
+Enable kernel forwarding of packets, (e.g. using
+.IR /proc/sys/net/ipv4/ip_forward
+).
+.P
+The server will advertise the clients to the LAN using ARP, providing
+it's own ethernet address.
+.BR bcrelay (8)
+should not be required.
+
+.SH ROUTING CHECKLIST - FORWARDING
+Allocate a subnet for the clients that is routable from your LAN, but
+is not part of your LAN.
+.P
+In
+.IR pptpd.conf
+set
+.B localip
+to a single address or range in the allocated subnet, set
+.B remoteip
+to a range in the allocated subnet.
+Enable kernel forwarding of packets, (e.g. using
+.IR /proc/sys/net/ipv4/ip_forward
+).
+The LAN must have a route to the clients using the server as gateway.
+.P
+The server will forward the packets unchanged between the clients and the LAN.
+.BR bcrelay (8)
+will be required to support broadcast protocols such as NETBIOS.
+
+.SH ROUTING CHECKLIST - MASQUERADE
+Allocate a subnet for the clients that is not routable from your LAN,
+and not otherwise routable from the server (e.g. 10.0.0.0/24).
+.P
+Set
+.B localip
+to a single address in the subnet (e.g. 10.0.0.1), set
+.B remoteip
+to a range for the rest of the subnet, (e.g. 10.0.0.2-200).
+Enable kernel forwarding of packets, (e.g. using
+.IR /proc/sys/net/ipv4/ip_forward
+).
+Enable masquerading on eth0 (e.g. 
+.I
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+).
+.P
+The server will translate the packets between the clients and the LAN.
+The clients will appear to the LAN as having the address
+corresponding to the server.  The LAN need not have an explicit route
+to the clients.
+.BR bcrelay (8)
+will be required to support broadcast protocols such as NETBIOS.
+
+.SH FIREWALL RULES
+.BR pptpd (8)
+accepts control connections on TCP port 1723, and then uses GRE
+(protocol 47) to exchange data packets.  Add these rules to your
+.BR iptables (8)
+configuration, or use them as the basis for your own rules:
+.P
+iptables --append INPUT --protocol 47 --jump ACCEPT 
+.br
+.nf
+iptables --append INPUT --protocol tcp --match tcp \\
+.br
+         --destination-port 1723 --jump ACCEPT 
+.fi
+.P
+
+.SH "SEE ALSO"
+.BR pppd (8),
+.BR pptpd (8),
+.BR pptpd.conf (5).

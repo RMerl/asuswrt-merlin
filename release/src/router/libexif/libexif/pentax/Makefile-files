@@ -1,0 +1,7 @@
+# -*- Makefile -*-
+noinst_LTLIBRARIES += libmnote-pentax.la
+libmnote_pentax_la_SOURCES = \
+	pentax/mnote-pentax-entry.c pentax/mnote-pentax-entry.h \
+	pentax/exif-mnote-data-pentax.c pentax/exif-mnote-data-pentax.h \
+	pentax/mnote-pentax-tag.c pentax/mnote-pentax-tag.h
+libmnote_pentax_la_LIBADD = $(LTLIBINTL)

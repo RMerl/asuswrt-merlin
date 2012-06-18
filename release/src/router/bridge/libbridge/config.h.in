@@ -1,0 +1,11 @@
+/* config.h.in.  Generated automatically from configure.in by autoheader.  */
+
+/* Define if you have libsysfs */
+#undef HAVE_LIBSYSFS
+
+/* Name of package */
+#undef PACKAGE
+
+/* Version number of package */
+#undef VERSION
+

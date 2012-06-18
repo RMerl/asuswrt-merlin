@@ -1,0 +1,30 @@
+<samba:parameter name="default service"
+                 context="G"
+                 advanced="1" developer="1"
+				 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<synonym>default</synonym>
+<description>
+	<para>This parameter specifies the name of a service
+	which will be connected to if the service actually requested cannot
+	be found. Note that the square brackets are <emphasis>NOT</emphasis>
+	given in the parameter value (see example below).</para>
+
+	<para>There is no default value for this parameter. If this 
+	parameter is not given, attempting to connect to a nonexistent 
+	service results in an error.</para>
+
+	<para>
+	Typically the default service would be a <smbconfoption name="guest ok"/>, <smbconfoption
+	name="read-only"/> service.</para> <para>Also note that the apparent service name will be changed to equal
+	that of the requested service, this is very useful as it allows you to use macros like <parameter
+	moreinfo="none">%S</parameter> to make a wildcard service.
+	</para>
+
+	<para>Note also that any &quot;_&quot; characters in the name of the service 
+	used in the default service will get mapped to a &quot;/&quot;. This allows for
+	interesting things.</para>
+</description>
+<value type="default"></value>
+<value type="example">pub</value>
+</samba:parameter>

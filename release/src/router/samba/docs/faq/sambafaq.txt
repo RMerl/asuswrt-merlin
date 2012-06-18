@@ -1,0 +1,1122 @@
+  Samba FAQ
+  Paul Blackman, ictinus@samba.org
+  v 0.8, June '97
+
+  This is the Frequently Asked Questions (FAQ) document for Samba, the
+  free and very popular SMB server product. An SMB server allows file
+  and printer connections from clients such as Windows, OS/2, Linux and
+  others. Current to version 1.9.17. Please send any corrections to the
+  author.
+  ______________________________________________________________________
+
+  Table of Contents:
+
+  1.      General Information
+
+  1.1.    What is Samba?
+
+  1.2.    What is the current version of Samba?
+
+  1.3.    Where can I get it?
+
+  1.4.    What do the version numbers mean?
+
+  1.5.    What platforms are supported?
+
+  1.6.    How can I find out more about Samba?
+
+  1.7.    How do I subscribe to the Samba Mailing Lists?
+
+  1.8.    Something's gone wrong - what should I do?
+
+  1.9.    Pizza supply details
+
+  2.      Compiling and installing Samba on a Unix host
+
+  2.1.    I can't see the Samba server in any browse lists!
+
+  2.2.    Some files that I KNOW are on the server doesn't show up when
+  I view the files from my client!
+
+  2.3.    Some files on the server show up with really wierd filenames
+  when I view the files from my client!
+
+  2.4.    My client reports "cannot locate specified computer" or
+  similar
+
+  2.5.    My client reports "cannot locate specified share name" or
+  similar
+
+  2.6.    My client reports "cannot find domain controller", "cannot log
+  on to the network" or similar
+
+  2.7.    Printing doesn't work :-(
+
+  2.8.    My programs install on the server OK, but refuse to work
+  properly
+
+  2.9.    My "server string" doesn't seem to be recognised
+
+  2.10.   My client reports "This server is not configured to list
+  shared resources"
+
+  2.11.   Log message "you appear to have a trapdoor uid system"
+
+  3.      Common client questions
+
+  3.1.    Are there any Macintosh clients for Samba?
+
+  3.2.    "Session request failed (131,130)" error
+
+  3.3.    How do I synchronise my PC's clock with my Samba server?
+
+  3.4.    Problems with WinDD, NTrigue, WinCenterPro etc
+
+  3.5.    Problem with printers under NT
+
+  3.6.    Why are my file's timestamps off by an hour, or by a few
+  hours?
+
+  3.7.    How do I set the printer driver name correctly?
+
+  3.8.    I've applied NT 4.0 SP3, and now I can't access Samba shares,
+  Why?
+
+  4.      Specific client application problems
+
+  4.1.    MS Office Setup reports "Cannot change properties of
+  'MSOFFICEUP.INI'"
+
+  5.      Miscellaneous
+
+  5.1.    Is Samba Year 2000 compliant?
+  ______________________________________________________________________
+
+  11..  GGeenneerraall IInnffoorrmmaattiioonn
+
+
+
+  All about Samba - what it is, how to get it, related sources of
+  information, how to understand the version numbering scheme, pizza
+  details
+
+
+  11..11..  WWhhaatt iiss SSaammbbaa??
+
+
+  Samba is a suite of programs which work together to allow clients to
+  access to a server's filespace and printers via the SMB (Server
+  Message Block) protocol. Initially written for Unix, Samba now also
+  runs on Netware, OS/2 and VMS.
+
+  In practice, this means that you can redirect disks and printers to
+  Unix disks and printers from Lan Manager clients, Windows for
+  Workgroups 3.11 clients, Windows NT clients, Linux clients and OS/2
+  clients. There is also a generic Unix client program supplied as part
+  of the suite which allows Unix users to use an ftp-like interface to
+  access filespace and printers on any other SMB servers. This gives the
+  capability for these operating systems to behave much like a LAN
+  Server or Windows NT Server machine, only with added functionality and
+  flexibility designed to make life easier for administrators.
+
+  The components of the suite are (in summary):
+
+
+  +o  ssmmbbdd, the SMB server. This handles actual connections from clients,
+     doing all the file, permission and username work
+
+  +o  nnmmbbdd, the Netbios name server, which helps clients locate servers,
+     doing the browsing work and managing domains as this capability is
+     being built into Samba
+
+
+  +o  ssmmbbcclliieenntt, the Unix-hosted client program
+
+  +o  ssmmbbrruunn, a little 'glue' program to help the server run external
+     programs
+
+  +o  tteessttpprrnnss, a program to test server access to printers
+
+  +o  tteessttppaarrmmss, a program to test the Samba configuration file for
+     correctness
+
+  +o  ssmmbb..ccoonnff, the Samba configuration file
+
+  +o  ssmmbbpprriinntt, a sample script to allow a Unix host to use smbclient to
+     print to an SMB server
+
+  +o  DDooccuummeennttaattiioonn!! DON'T neglect to read it - you will save a great
+     deal of time!
+
+  The suite is supplied with full source (of course!) and is GPLed.
+
+  The primary creator of the Samba suite is Andrew Tridgell. Later
+  versions incorporate much effort by many net.helpers. The man pages
+  and this FAQ were originally written by Karl Auer.
+
+
+  11..22..  WWhhaatt iiss tthhee ccuurrrreenntt vveerrssiioonn ooff SSaammbbaa??
+
+
+  At time of writing, the current version was 1.9.17. If you want to be
+  sure check the bottom of the change-log file.
+  <ftp://samba.org/pub/samba/alpha/change-log>
+
+  For more information see ``What do the version numbers mean?''
+
+
+  11..33..  WWhheerree ccaann II ggeett iitt??
+
+
+  The Samba suite is available via anonymous ftp from samba.org.
+  The latest and greatest versions of the suite are in the directory:
+
+  /pub/samba/
+
+  Development (read "alpha") versions, which are NOT necessarily stable
+  and which do NOT necessarily have accurate documentation, are
+  available in the directory:
+
+  /pub/samba/alpha
+
+  Note that binaries are NOT included in any of the above. Samba is
+  distributed ONLY in source form, though binaries may be available from
+  other sites. Recent versions of some Linux distributions, for example,
+  do contain Samba binaries for that platform.
+
+
+  11..44..  WWhhaatt ddoo tthhee vveerrssiioonn nnuummbbeerrss mmeeaann??
+
+
+  It is not recommended that you run a version of Samba with the word
+  "alpha" in its name unless you know what you are doing and are willing
+  to do some debugging. Many, many people just get the latest
+  recommended stable release version and are happy. If you are brave, by
+  all means take the plunge and help with the testing and development -
+  but don't install it on your departmental server. Samba is typically
+  very stable and safe, and this is mostly due to the policy of many
+  public releases.
+  How the scheme works:
+
+  1. When major changes are made the version number is increased. For
+     example, the transition from 1.9.15 to 1.9.16. However, this
+     version number will not appear immediately and people should
+     continue to use 1.9.15 for production systems (see next point.)
+
+  2. Just after major changes are made the software is considered
+     unstable, and a series of alpha releases are distributed, for
+     example 1.9.16alpha1. These are for testing by those who know what
+     they are doing.  The "alpha" in the filename will hopefully scare
+     off those who are just looking for the latest version to install.
+
+  3. When Andrew thinks that the alphas have stabilised to the point
+     where he would recommend new users install it, he renames it to the
+     same version number without the alpha, for example 1.9.16.
+
+  4. Inevitably bugs are found in the "stable" releases and minor patch
+     levels are released which give us the pXX series, for example
+     1.9.16p2.
+
+     So the progression goes:
+
+                     1.9.15p7        (production)
+                     1.9.15p8        (production)
+                     1.9.16alpha1    (test sites only)
+                       :
+                     1.9.16alpha20   (test sites only)
+                     1.9.16          (production)
+                     1.9.16p1        (production)
+
+
+  The above system means that whenever someone looks at the samba ftp
+  site they will be able to grab the highest numbered release without an
+  alpha in the name and be sure of getting the current recommended ver-
+  sion.
+
+
+  11..55..  WWhhaatt ppllaattffoorrmmss aarree ssuuppppoorrtteedd??
+
+
+  Many different platforms have run Samba successfully. The platforms
+  most widely used and thus best tested are Linux and SunOS.
+
+  At time of writing, the Makefile claimed support for:
+
+  +o  A/UX 3.0
+
+  +o  AIX
+
+  +o  Altos Series 386/1000
+
+  +o  Amiga
+
+  +o  Apollo Domain/OS sr10.3
+
+  +o  BSDI
+
+  +o  B.O.S. (Bull Operating System)
+
+  +o  Cray, Unicos 8.0
+
+  +o  Convex
+
+  +o  DGUX.
+
+  +o  DNIX.
+
+  +o  FreeBSD
+
+  +o  HP-UX
+
+  +o  Intergraph.
+
+  +o  Linux with/without shadow passwords and quota
+
+  +o  LYNX 2.3.0
+
+  +o  MachTen (a unix like system for Macintoshes)
+
+  +o  Motorola 88xxx/9xx range of machines
+
+  +o  NetBSD
+
+  +o  NEXTSTEP Release 2.X, 3.0 and greater (including OPENSTEP for
+     Mach).
+
+  +o  OS/2 using EMX 0.9b
+
+  +o  OSF1
+
+  +o  QNX 4.22
+
+  +o  RiscIX.
+
+  +o  RISCOs 5.0B
+
+  +o  SEQUENT.
+
+  +o  SCO (including: 3.2v2, European dist., OpenServer 5)
+
+  +o  SGI.
+
+  +o  SMP_DC.OSx v1.1-94c079 on Pyramid S series
+
+  +o  SONY NEWS, NEWS-OS (4.2.x and 6.1.x)
+
+  +o  SUNOS 4
+
+  +o  SUNOS 5.2, 5.3, and 5.4 (Solaris 2.2, 2.3, and '2.4 and later')
+
+  +o  Sunsoft ISC SVR3V4
+
+  +o  SVR4
+
+  +o  System V with some berkely extensions (Motorola 88k R32V3.2).
+
+  +o  ULTRIX.
+
+  +o  UNIXWARE
+
+  +o  UXP/DS
+
+
+  11..66..  HHooww ccaann II ffiinndd oouutt mmoorree aabboouutt SSaammbbaa??
+
+
+  There are a number of places to look for more information on Samba,
+  including:
+
+  +o  Two mailing lists devoted to discussion of Samba-related matters.
+
+  +o  The newsgroup, comp.protocols.smb, which has a great deal of
+     discussion on Samba.
+
+  +o  The WWW site 'SAMBA Web Pages' at  <http://samba.edu.au/samba/>
+     includes:
+
+  +o  Links to man pages and documentation, including this FAQ
+
+  +o  A comprehensive survey of Samba users.
+
+  +o  A searchable hypertext archive of the Samba mailing list.
+
+  +o  Links to Samba source code, binaries, and mirrors of both.
+
+  +o  The long list of topic documentation.  These files can be found in
+     the 'docs' directory of the Samba source, or at
+     <ftp://samba.org/pub/samba/docs/>
+
+  +o  Application_Serving.txt
+     <ftp://samba.org/pub/samba/docs/Application_Serving.txt>
+
+  +o  BROWSING.txt <ftp://samba.org/pub/samba/docs/BROWSING.txt>
+
+  +o  BUGS.txt <ftp://samba.org/pub/samba/docs/BUGS.txt>
+
+  +o  DIAGNOSIS.txt <ftp://samba.org/pub/samba/docs/DIAGNOSIS.txt>
+
+  +o  DNIX.txt <ftp://samba.org/pub/samba/docs/DNIX.txt>
+
+  +o  DOMAIN.txt <ftp://samba.org/pub/samba/docs/DOMAIN.txt>
+
+  +o  CONTROL.txt
+     <ftp://samba.org/pub/samba/docs/DOMAIN_CONTROL.txt>
+
+  +o  ENCRYPTION.txt
+     <ftp://samba.org/pub/samba/docs/ENCRYPTION.txt>
+
+  +o  Faxing.txt <ftp://samba.org/pub/samba/docs/Faxing.txt>
+
+  +o  GOTCHAS.txt <ftp://samba.org/pub/samba/docs/GOTCHAS.txt>
+
+  +o  HINTS.txt <ftp://samba.org/pub/samba/docs/HINTS.txt>
+
+  +o  INSTALL.sambatar
+     <ftp://samba.org/pub/samba/docs/INSTALL.sambatar>
+
+  +o  INSTALL.txt <ftp://samba.org/pub/samba/docs/INSTALL.txt>
+
+  +o  MIRRORS <ftp://samba.org/pub/samba/docs/MIRRORS>
+
+  +o  NetBIOS.txt <ftp://samba.org/pub/samba/docs/NetBIOS.txt>
+
+  +o  OS2.txt <ftp://samba.org/pub/samba/docs/OS2.txt>
+
+  +o  PROJECTS <ftp://samba.org/pub/samba/docs/PROJECTS>
+
+  +o  Passwords.txt <ftp://samba.org/pub/samba/docs/Passwords.txt>
+
+  +o  Printing.txt <ftp://samba.org/pub/samba/docs/Printing.txt>
+
+  +o  README.DCEDFS <ftp://samba.org/pub/samba/docs/README.DCEDFS>
+
+  +o  README.OS2 <ftp://samba.org/pub/samba/docs/README.OS2>
+
+  +o  README.jis <ftp://samba.org/pub/samba/docs/README.jis>
+
+  +o  README.sambatar
+     <ftp://samba.org/pub/samba/docs/README.sambatar>
+
+  +o  SCO.txt <ftp://samba.org/pub/samba/docs/SCO.txt>
+
+  +o  SMBTAR.notes <ftp://samba.org/pub/samba/docs/SMBTAR.notes>
+
+  +o  Speed.txt <ftp://samba.org/pub/samba/docs/Speed.txt>
+
+  +o  Support.txt <ftp://samba.org/pub/samba/docs/Support.txt>
+
+  +o  THANKS <ftp://samba.org/pub/samba/docs/THANKS>
+
+  +o  Tracing.txt <ftp://samba.org/pub/samba/docs/Tracing.txt>
+
+  +o  SMB.txt <ftp://samba.org/pub/samba/docs/UNIX-SMB.txt>
+
+  +o  Warp.txt <ftp://samba.org/pub/samba/docs/Warp.txt>
+
+  +o  WinNT.txt <ftp://samba.org/pub/samba/docs/WinNT.txt>
+
+  +o  history <ftp://samba.org/pub/samba/docs/history>
+
+  +o  level.txt
+     <ftp://samba.org/pub/samba/docs/security_level.txt>
+
+  +o  slip.htm <ftp://samba.org/pub/samba/docs/wfw_slip.htm>
+
+
+  11..77..  HHooww ddoo II ssuubbssccrriibbee ttoo tthhee SSaammbbaa MMaaiilliinngg LLiissttss??
+
+
+  Send email to listproc@samba.org. Make sure the subject line is
+  blank, and include the following two lines in the body of the message:
+
+
+       subscribe samba Firstname Lastname
+       subscribe samba-announce Firstname Lastname
+
+
+
+
+  Obviously you should substitute YOUR first name for "Firstname" and
+  YOUR last name for "Lastname"! Try not to send any signature stuff, it
+  sometimes confuses the list processor.
+
+  The samba list is a digest list - every eight hours or so it
+  regurgitates a single message containing all the messages that have
+  been received by the list since the last time and sends a copy of this
+  message to all subscribers.
+
+  If you stop being interested in Samba, please send another email to
+  listproc@samba.org. Make sure the subject line is blank, and
+  include the following two lines in the body of the message:
+
+
+       unsubscribe samba
+       unsubscribe samba-announce
+
+
+
+
+  The FFrroomm:: line in your message _M_U_S_T be the same address you used when
+  you subscribed.
+
+
+  11..88..  SSoommeetthhiinngg''ss ggoonnee wwrroonngg -- wwhhaatt sshhoouulldd II ddoo??
+
+
+  ## ****** IIMMPPOORRTTAANNTT!! ****** ##
+
+  DO NOT post messages on mailing lists or in newsgroups until you have
+  carried out the first three steps given here!
+
+  Firstly, see if there are any likely looking entries in this FAQ! If
+  you have just installed Samba, have you run through the checklist in
+  DIAGNOSIS.txt <ftp://samba.org/pub/samba/DIAGNOSIS.txt>? It can
+  save you a lot of time and effort.  DIAGNOSIS.txt can also be found in
+  the docs directory of the Samba distribution.
+
+  Secondly, read the man pages for smbd, nmbd and smb.conf, looking for
+  topics that relate to what you are trying to do.
+
+  Thirdly, if there is no obvious solution to hand, try to get a look at
+  the log files for smbd and/or nmbd for the period during which you
+  were having problems. You may need to reconfigure the servers to
+  provide more extensive debugging information - usually level 2 or
+  level 3 provide ample debugging info. Inspect these logs closely,
+  looking particularly for the string "Error:".
+
+  Fourthly, if you still haven't got anywhere, ask the mailing list or
+  newsgroup.  In general nobody minds answering questions provided you
+  have followed the preceding steps. It might be a good idea to scan the
+  archives of the mailing list, which are available through the Samba
+  web site described in the previous section.
+
+  If you successfully solve a problem, please mail the FAQ maintainer a
+  succinct description of the symptom, the problem and the solution, so
+  I can incorporate it in the next version.
+
+  If you make changes to the source code, _please_ submit these patches
+  so that everyone else gets the benefit of your work. This is one of
+  the most important aspects to the maintainence of Samba. Send all
+  patches to samba@samba.org. Do not send patches to Andrew
+  Tridgell or any other individual, they may be lost if you do.
+
+
+  11..99..  PPiizzzzaa ssuuppppllyy ddeettaaiillss
+
+
+  Those who have registered in the Samba survey as "Pizza Factory" will
+  already know this, but the rest may need some help. Andrew doesn't ask
+  for payment, but he does appreciate it when people give him pizza.
+  This calls for a little organisation when the pizza donor is twenty
+  thousand kilometres away, but it has been done.
+
+  Method 1: Ring up your local branch of an international pizza chain
+  and see if they honour their vouchers internationally. Pizza Hut do,
+  which is how the entire Canberra Linux Users Group got to eat pizza
+  one night, courtesy of someone in the US
+
+  Method 2: Ring up a local pizza shop in Canberra and quote a credit
+  card number for a certain amount, and tell them that Andrew will be
+  collecting it (don't forget to tell him.) One kind soul from Germany
+  did this.
+
+  Method 3: Purchase a pizza voucher from your local pizza shop that has
+  no international affiliations and send it to Andrew. It is completely
+  useless but he can hang it on the wall next to the one he already has
+  from Germany :-)
+
+
+  Method 4: Air freight him a pizza with your favourite regional
+  flavours. It will probably get stuck in customs or torn apart by
+  hungry sniffer dogs but it will have been a noble gesture.
+
+
+  22..  CCoommppiilliinngg aanndd iinnssttaalllliinngg SSaammbbaa oonn aa UUnniixx hhoosstt
+
+
+
+  22..11..  II ccaann''tt sseeee tthhee SSaammbbaa sseerrvveerr iinn aannyy bbrroowwssee lliissttss!!
+
+
+  See BROWSING.txt <ftp://samba.org/pub/samba/BROWSING.txt> for
+  more information on browsing.  Browsing.txt can also be found in the
+  docs directory of the Samba source.
+
+  If your GUI client does not permit you to select non-browsable
+  servers, you may need to do so on the command line. For example, under
+  Lan Manager you might connect to the above service as disk drive M:
+  thusly:
+
+
+          net use M: \\mary\fred
+
+
+
+
+  The details of how to do this and the specific syntax varies from
+  client to client - check your client's documentation.
+
+
+  22..22..  SSoommee ffiilleess tthhaatt II KKNNOOWW aarree oonn tthhee sseerrvveerr ddooeessnn''tt sshhooww uupp wwhheenn II
+  vviieeww tthhee ffiilleess ffrroomm mmyy cclliieenntt!!
+
+
+  See the next question.
+
+  22..33..  SSoommee ffiilleess oonn tthhee sseerrvveerr sshhooww uupp wwiitthh rreeaallllyy wwiieerrdd ffiilleennaammeess
+  wwhheenn II vviieeww tthhee ffiilleess ffrroomm mmyy cclliieenntt!!
+
+
+  If you check what files are not showing up, you will note that they
+  are files which contain upper case letters or which are otherwise not
+  DOS-compatible (ie, they are not legal DOS filenames for some reason).
+
+  The Samba server can be configured either to ignore such files
+  completely, or to present them to the client in "mangled" form. If you
+  are not seeing the files at all, the Samba server has most likely been
+  configured to ignore them.  Consult the man page smb.conf(5) for
+  details of how to change this - the parameter you need to set is
+  "mangled names = yes".
+
+
+  22..44..  MMyy cclliieenntt rreeppoorrttss ""ccaannnnoott llooccaattee ssppeecciiffiieedd ccoommppuutteerr"" oorr ssiimmiillaarr
+
+
+  This indicates one of three things: You supplied an incorrect server
+  name, the underlying TCP/IP layer is not working correctly, or the
+  name you specified cannot be resolved.
+
+  After carefully checking that the name you typed is the name you
+  should have typed, try doing things like pinging a host or telnetting
+  to somewhere on your network to see if TCP/IP is functioning OK. If it
+  is, the problem is most likely name resolution.
+
+
+  If your client has a facility to do so, hardcode a mapping between the
+  hosts IP and the name you want to use. For example, with Man Manager
+  or Windows for Workgroups you would put a suitable entry in the file
+  LMHOSTS. If this works, the problem is in the communication between
+  your client and the netbios name server. If it does not work, then
+  there is something fundamental wrong with your naming and the solution
+  is beyond the scope of this document.
+
+  If you do not have any server on your subnet supplying netbios name
+  resolution, hardcoded mappings are your only option. If you DO have a
+  netbios name server running (such as the Samba suite's nmbd program),
+  the problem probably lies in the way it is set up. Refer to Section
+  Two of this FAQ for more ideas.
+
+  By the way, remember to REMOVE the hardcoded mapping before further
+  tests :-)
+
+
+  22..55..  MMyy cclliieenntt rreeppoorrttss ""ccaannnnoott llooccaattee ssppeecciiffiieedd sshhaarree nnaammee"" oorr ssiimmii--
+  llaarr
+
+
+  This message indicates that your client CAN locate the specified
+  server, which is a good start, but that it cannot find a service of
+  the name you gave.
+
+  The first step is to check the exact name of the service you are
+  trying to connect to (consult your system administrator). Assuming it
+  exists and you specified it correctly (read your client's doco on how
+  to specify a service name correctly), read on:
+
+
+  +o  Many clients cannot accept or use service names longer than eight
+     characters.
+
+  +o  Many clients cannot accept or use service names containing spaces.
+
+  +o  Some servers (not Samba though) are case sensitive with service
+     names.
+
+  +o  Some clients force service names into upper case.
+
+
+  22..66..  MMyy cclliieenntt rreeppoorrttss ""ccaannnnoott ffiinndd ddoommaaiinn ccoonnttrroolllleerr"",, ""ccaannnnoott lloogg
+  oonn ttoo tthhee nneettwwoorrkk"" oorr ssiimmiillaarr
+
+
+  Nothing is wrong - Samba does not implement the primary domain name
+  controller stuff for several reasons, including the fact that the
+  whole concept of a primary domain controller and "logging in to a
+  network" doesn't fit well with clients possibly running on multiuser
+  machines (such as users of smbclient under Unix). Having said that,
+  several developers are working hard on building it in to the next
+  major version of Samba. If you can contribute, send a message to
+  samba@samba.org !
+
+  Seeing this message should not affect your ability to mount redirected
+  disks and printers, which is really what all this is about.
+
+  For many clients (including Windows for Workgroups and Lan Manager),
+  setting the domain to STANDALONE at least gets rid of the message.
+
+
+
+
+
+  22..77..  PPrriinnttiinngg ddooeessnn''tt wwoorrkk ::--((
+
+
+  Make sure that the specified print command for the service you are
+  connecting to is correct and that it has a fully-qualified path (eg.,
+  use "/usr/bin/lpr" rather than just "lpr").
+
+  Make sure that the spool directory specified for the service is
+  writable by the user connected to the service. In particular the user
+  "nobody" often has problems with printing, even if it worked with an
+  earlier version of Samba. Try creating another guest user other than
+  "nobody".
+
+  Make sure that the user specified in the service is permitted to use
+  the printer.
+
+  Check the debug log produced by smbd. Search for the printer name and
+  see if the log turns up any clues. Note that error messages to do with
+  a service ipc$ are meaningless - they relate to the way the client
+  attempts to retrieve status information when using the LANMAN1
+  protocol.
+
+  If using WfWg then you need to set the default protocol to TCP/IP, not
+  Netbeui. This is a WfWg bug.
+
+  If using the Lanman1 protocol (the default) then try switching to
+  coreplus.  Also not that print status error messages don't mean
+  printing won't work. The print status is received by a different
+  mechanism.
+
+
+  22..88..  MMyy pprrooggrraammss iinnssttaallll oonn tthhee sseerrvveerr OOKK,, bbuutt rreeffuussee ttoo wwoorrkk pprroopp--
+  eerrllyy
+
+
+  There are numerous possible reasons for this, but one MAJOR
+  possibility is that your software uses locking. Make sure you are
+  using Samba 1.6.11 or later. It may also be possible to work around
+  the problem by setting "locking=no" in the Samba configuration file
+  for the service the software is installed on. This should be regarded
+  as a strictly temporary solution.
+
+  In earlier Samba versions there were some difficulties with the very
+  latest Microsoft products, particularly Excel 5 and Word for Windows
+  6. These should have all been solved. If not then please let Andrew
+  Tridgell know via email at samba@samba.org.
+
+
+  22..99..  MMyy ""sseerrvveerr ssttrriinngg"" ddooeessnn''tt sseeeemm ttoo bbee rreeccooggnniisseedd
+
+
+  OR My client reports the default setting, eg. "Samba 1.9.15p4",
+  instead of what I have changed it to in the smb.conf file.
+
+  You need to use the -C option in nmbd. The "server string" affects
+  what smbd puts out and -C affects what nmbd puts out.
+
+  Current versions of Samba (1.9.16 +) have combined these options into
+  the "server string" field of smb.conf, -C for nmbd is now obsolete.
+
+
+  22..1100..  MMyy cclliieenntt rreeppoorrttss ""TThhiiss sseerrvveerr iiss nnoott ccoonnffiigguurreedd ttoo lliisstt sshhaarreedd
+  rreessoouurrcceess""
+
+
+  Your guest account is probably invalid for some reason. Samba uses the
+  guest account for browsing in smbd.  Check that your guest account is
+  valid.
+
+  See also 'guest account' in smb.conf man page.
+
+
+  22..1111..  LLoogg mmeessssaaggee ""yyoouu aappppeeaarr ttoo hhaavvee aa ttrraappddoooorr uuiidd ssyysstteemm""
+
+
+  This can have several causes. It might be because you are using a uid
+  or gid of 65535 or -1. This is a VERY bad idea, and is a big security
+  hole. Check carefully in your /etc/passwd file and make sure that no
+  user has uid 65535 or -1. Especially check the "nobody" user, as many
+  broken systems are shipped with nobody setup with a uid of 65535.
+
+  It might also mean that your OS has a trapdoor uid/gid system :-)
+
+  This means that once a process changes effective uid from root to
+  another user it can't go back to root. Unfortunately Samba relies on
+  being able to change effective uid from root to non-root and back
+  again to implement its security policy. If your OS has a trapdoor uid
+  system this won't work, and several things in Samba may break. Less
+  things will break if you use user or server level security instead of
+  the default share level security, but you may still strike problems.
+
+  The problems don't give rise to any security holes, so don't panic,
+  but it does mean some of Samba's capabilities will be unavailable.  In
+  particular you will not be able to connect to the Samba server as two
+  different uids at once. This may happen if you try to print as a
+  "guest" while accessing a share as a normal user. It may also affect
+  your ability to list the available shares as this is normally done as
+  the guest user.
+
+  Complain to your OS vendor and ask them to fix their system.
+
+  Note: the reason why 65535 is a VERY bad choice of uid and gid is that
+  it casts to -1 as a uid, and the setreuid() system call ignores (with
+  no error) uid changes to -1. This means any daemon attempting to run
+  as uid 65535 will actually run as root. This is not good!
+
+
+  33..  CCoommmmoonn cclliieenntt qquueessttiioonnss
+
+
+
+
+  33..11..  AArree tthheerree aannyy MMaacciinnttoosshh cclliieennttss ffoorr SSaammbbaa??
+
+
+  Yes! Thursby now have a CIFS Client / Server called DAVE - see
+  <http://www.thursby.com/>.  They test it against Windows 95, Windows
+  NT and samba for compatibility issues.  At the time of writing, DAVE
+  was at version 1.0.1. The 1.0.0 to 1.0.1 update is available as a free
+  download from the Thursby web site (the speed of finder copies has
+  been greatly enhanced, and there are bug-fixes included).
+
+  Alternatives - There are two free implementations of AppleTalk for
+  several kinds of UNIX machnes, and several more commercial ones.
+  These products allow you to run file services and print services
+  natively to Macintosh users, with no additional support required on
+  the Macintosh.  The two free omplementations are Netatalk,
+  <http://www.umich.edu/~rsug/netatalk/>, and CAP,
+  <http://www.cs.mu.oz.au/appletalk/atalk.html>.  What Samba offers MS
+  Windows users, these packages offer to Macs.  For more info on these
+  packages, Samba, and Linux (and other UNIX-based systems) see
+  <http://www.eats.com/linux_mac_win.html>
+  33..22..  SSeessssiioonn rreeqquueesstt ffaaiilleedd ((113311,,113300))"" eerrrroorr
+
+
+  The following answer is provided by John E. Miller:
+
+  I'll assume that you're able to ping back and forth between the
+  machines by IP address and name, and that you're using some security
+  model where you're confident that you've got user IDs and passwords
+  right.  The logging options (-d3 or greater) can help a lot with that.
+  DNS and WINS configuration can also impact connectivity as well.
+
+  Now, on to 'scope id's.  Somewhere in your Win95 TCP/IP network
+  configuration (I'm too much of an NT bigot to know where it's located
+  in the Win95 setup, but I'll have to learn someday since I teach for a
+  Microsoft Solution Provider Authorized Tech Education Center - what an
+  acronym...) Note: It's under Control Panel | Network | TCP/IP | WINS
+  Configuration there's a little text entry field called something like
+
+  This field essentially creates 'invisible' sub-workgroups on the same
+  wire.  Boxes can only see other boxes whose Scope IDs are set to the
+  exact same value - it's sometimes used by OEMs to configure their
+  boxes to browse only other boxes from the same vendor and, in most
+  environments, this field should be left blank.  If you, in fact, have
+  something in this box that EXACT value (case-sensitive!) needs to be
+  provided to smbclient and nmbd as the -i (lowercase) parameter. So, if
+  your Scope ID is configured as the string 'SomeStr' in Win95 then
+  you'd have to use smbclient -iSomeStr otherparms in connecting to it.
+
+
+  33..33..  HHooww ddoo II ssyynncchhrroonniissee mmyy PPCC''ss cclloocckk wwiitthh mmyy SSaammbbaa sseerrvveerr??
+
+
+  To syncronize your PC's clock with your Samba server:
+
+  +o  Copy timesync.pif to your windows directory
+
+  +o  timesync.pif can be found at:
+     <http://samba.org/samba/binaries/miscellaneous/timesync.pif>
+
+  +o  Add timesync.pif to your 'Start Up' group/folder
+
+  +o  Open the properties dialog box for the program/icon
+
+  +o  Make sure the 'Run Minimized' option is set in program 'Properties'
+
+  +o  Change the command line section that reads \sambahost to reflect
+     the name of your server.
+
+  +o  Close the properties dialog box by choosing 'OK'
+
+     Each time you start your computer (or login for Win95) your PC will
+     synchronize its clock with your Samba server.
+
+  Alternativley, if you clients support Domain Logons, you can setup
+  Domain Logons with Samba - see: BROWSING.txt
+  <ftp://samba.org/pub/samba/docs/BROWSING.txt> *** for more
+  information.
+
+  Then add
+
+
+       NET TIME \\%L /SET /YES
+
+
+
+
+  as one of the lines in the logon script.
+
+  33..44..  PPrroobblleemmss wwiitthh WWiinnDDDD,, NNTTrriigguuee,, WWiinnCCeenntteerrPPrroo eettcc
+
+
+  All of the above programs are applications that sit on an NT box and
+  allow multiple users to access the NT GUI applications from remote
+  workstations (often over X).
+
+  What has this got to do with Samba? The problem comes when these users
+  use filemanager to mount shares from a Samba server. The most common
+  symptom is that the first user to connect get correct file permissions
+  and has a nice day, but subsequent connections get logged in as the
+  same user as the first person to login. They find that they cannot
+  access files in their own home directory, but that they can access
+  files in the first users home directory (maybe not such a nice day
+  after all?)
+
+  Why does this happen? The above products all share a common heritage
+  (and code base I believe). They all open just a single TCP based SMB
+  connection to the Samba server, and requests from all users are piped
+  over this connection. This is unfortunate, but not fatal.
+
+  It means that if you run your Samba server in share level security
+  (the default) then things will definately break as described above.
+  The share level SMB security model has no provision for multiple user
+  IDs on the one SMB connection. See security_level.txt
+  <ftp://samba.org/pub/samba/docs/security_level.txt> in the docs
+  for more info on share/user/server level security.
+
+  If you run in user or server level security then you have a chance,
+  but only if you have a recent version of Samba (at least 1.9.15p6). In
+  older versions bugs in Samba meant you still would have had problems.
+
+  If you have a trapdoor uid system in your OS then it will never work
+  properly. Samba needs to be able to switch uids on the connection and
+  it can't if your OS has a trapdoor uid system. You'll know this
+  because Samba will note it in your logs.
+
+  Also note that you should not use the magic "homes" share name with
+  products like these, as otherwise all users will end up with the same
+  home directory. Use \serversername instead.
+
+
+  33..55..  PPrroobblleemm wwiitthh pprriinntteerrss uunnddeerr NNTT
+
+
+  This info from Stefan Hergeth hergeth@f7axp1.informatik.fh-muenchen.de
+  may be useful:
+
+  A network-printer (with ethernetcard) is connected to the NT-Clients
+  via our UNIX-Fileserver (SAMBA-Server), like the configuration told by
+  Matthew Harrell harrell@leech.nrl.navy.mil (see WinNT.txt)
+
+  1. If a user has choosen this printer as the default printer in his
+     NT-Session and this printer is not connected to the network (e.g.
+     switched off) than this user has a problem with the SAMBA-
+     connection of his filesystems. It's very slow.
+
+  2. If the printer is connected to the network everything works fine.
+
+  3. When the smbd ist started with debug level 3, you can see that the
+     NT spooling system try to connect to the printer many times. If the
+     printer ist not connected to the network this request fails and the
+     NT spooler is wasting a lot of time to connect to the printer
+     service.  This seems to be the reason for the slow network
+     connection.
+
+  4. Maybe it's possible to change this behaviour by setting different
+     printer properties in the Print-Manager-Menu of NT, but i didn't
+     try it yet.
+
+
+  33..66..  WWhhyy aarree mmyy ffiillee''ss ttiimmeessttaammppss ooffff bbyy aann hhoouurr,, oorr bbyy aa ffeeww hhoouurrss??
+
+
+  This is from Paul Eggert eggert@twinsun.com.
+
+  Most likely it's a problem with your time zone settings.
+
+  Internally, Samba maintains time in traditional Unix format, namely,
+  the number of seconds since 1970-01-01 00:00:00 Universal Time (or
+  ``GMT''), not counting leap seconds.
+
+  On the server side, Samba uses the Unix TZ variable to convert
+  internal timestamps to and from local time.  So on the server side,
+  there are two things to get right.
+
+  1. The Unix system clock must have the correct Universal time.  Use
+     the shell command "sh -c 'TZ=UTC0 date'" to check this.
+
+  2. The TZ environment variable must be set on the server before Samba
+     is invoked.  The details of this depend on the server OS, but
+     typically you must edit a file whose name is /etc/TIMEZONE or
+     /etc/default/init, or run the command `zic -l'.
+
+  3. TZ must have the correct value.
+
+     a. If possible, use geographical time zone settings (e.g.
+        TZ='America/Los_Angeles' or perhaps TZ=':US/Pacific').  These
+        are supported by most popular Unix OSes, are easier to get
+        right, and are more accurate for historical timestamps.  If your
+        operating system has out-of-date tables, you should be able to
+        update them from the public domain time zone tables at
+        <ftp://elsie.nci.nih.gov/pub/>.
+
+     b. If your system does not support geographical timezone settings,
+        you must use a Posix-style TZ strings, e.g.
+        TZ='PST8PDT,M4.1.0/2,M10.5.0/2' for US Pacific time.  Posix TZ
+        strings can take the following form (with optional items in
+        brackets):
+
+                StdOffset[Dst[Offset],Date/Time,Date/Time]
+
+
+     where:
+
+     +o  `Std' is the standard time designation (e.g. `PST').
+
+     +o  `Offset' is the number of hours behind UTC (e.g. `8').  Prepend
+        a `-' if you are ahead of UTC, and append `:30' if you are at a
+        half-hour offset.  Omit all the remaining items if you do not
+        use daylight-saving time.
+
+     +o  `Dst' is the daylight-saving time designation (e.g. `PDT').
+
+        The optional second `Offset' is the number of hours that
+        daylight-saving time is behind UTC.  The default is 1 hour ahead
+        of standard time.
+
+     +o  `Date/Time,Date/Time' specify when daylight-saving time starts
+        and ends.  The format for a date is `Mm.n.d', which specifies
+        the dth day (0 is Sunday) of the nth week of the mth month,
+        where week 5 means the last such day in the month.  The format
+        for a time is hh:mm[:ss], using a 24-hour clock.
+
+        Other Posix string formats are allowed but you don't want to
+        know about them.
+
+     On the client side, you must make sure that your client's clock and
+     time zone is also set appropriately.  [I don't know how to do
+     this.]  Samba traditionally has had many problems dealing with time
+     zones, due to the bizarre ways that Microsoft network protocols
+     handle time zones.  A common symptom is for file timestamps to be
+     off by an hour.  To work around the problem, try disconnecting from
+     your Samba server and then reconnecting to it; or upgrade your
+     Samba server to 1.9.16alpha10 or later.
+
+
+  33..77..  HHooww ddoo II sseett tthhee pprriinntteerr ddrriivveerr nnaammee ccoorrrreeccttllyy??
+
+
+  Question: On NT, I opened "Printer Manager" and "Connect to Printer".
+  Enter "\ptdi270s1"
+  in the box of printer. I got the following error message:
+
+
+            You do not have sufficient access to your machine
+            to connect to the selected printer, since a driver
+            needs to be installed locally.
+
+
+
+
+  Answer:
+
+  In the more recent versions of Samba you can now set the "printer
+  driver" in smb.conf. This tells the client what driver to use. For
+  example:
+
+
+            printer driver = HP LaserJet 4L
+
+
+
+
+  with this, NT knows to use the right driver. You have to get this
+  string exactly right.
+
+  To find the exact string to use, you need to get to the dialog box in
+  your client where you select which printer driver to install. The
+  correct strings for all the different printers are shown in a listbox
+  in that dialog box.
+
+  You could also try setting the driver to NULL like this:
+
+
+            printer driver = NULL
+
+
+
+
+  this is effectively what older versions of Samba did, so if that
+  worked for you then give it a go. If this does work then let us know
+  via samba@samba.org, and we'll make it the default. Cur-
+  rently the default is a 0 length string.
+
+
+  33..88..  II''vvee aapppplliieedd NNTT 44..00 SSPP33,, aanndd nnooww II ccaann''tt aacccceessss SSaammbbaa sshhaarreess,,
+  WWhhyy??
+
+
+  As of SP3, Microsoft has decided that they will no longer default to
+  passing clear text passwords over the network.  To enable access to
+  Samba shares from NT 4.0 SP3, you must do OONNEE of two things:
+
+  1. Set the Samba configuration option 'security = user' and implement
+     all of the stuff detailed in ENCRYPTION.txt
+     <ftp://samba.org/pub/samba/docs/ENCRYPTION.txt>.
+
+  2. Follow Microsoft's directions for setting your NT box to allow
+     plain text passwords. see Knowledge Base Article Q166730
+     <http://www.microsoft.com/kb/articles/q166/7/30.htm>
+
+
+  44..  SSppeecciiffiicc cclliieenntt aapppplliiccaattiioonn pprroobblleemmss
+
+
+
+
+  44..11..  MMSS OOffffiiccee SSeettuupp rreeppoorrttss ""CCaannnnoott cchhaannggee pprrooppeerrttiieess ooff ''MMSSOOFF--
+  FFIICCEEUUPP..IINNII''""
+
+
+  When installing MS Office on a Samba drive for which you have admin
+  user permissions, ie. admin users = username, you will find the setup
+  program unable to complete the installation.
+
+  To get around this problem, do the installation without admin user
+  permissions The problem is that MS Office Setup checks that a file is
+  rdonly by trying to open it for writing.
+
+  Admin users can always open a file for writing, as they run as root.
+  You just have to install as a non-admin user and then use "chown -R"
+  to fix the owner.
+
+
+  55..  MMiisscceellllaanneeoouuss
+
+
+
+  55..11..  IIss SSaammbbaa YYeeaarr 22000000 ccoommpplliiaanntt??
+
+
+  The CIFS protocol that Samba implements negotiates times in various
+  formats, all of which are able to cope with dates beyond 2000.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

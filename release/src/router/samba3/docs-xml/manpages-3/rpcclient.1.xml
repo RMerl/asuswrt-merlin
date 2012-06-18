@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="rpcclient.1">
+
+<refmeta>
+	<refentrytitle>rpcclient</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">User Commands</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>rpcclient</refname>
+	<refpurpose>tool for executing client side 
+	MS-RPC functions</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>rpcclient</command>
+		<arg choice="opt">-A authfile</arg>
+		<arg choice="opt">-c &lt;command string&gt;</arg>
+		<arg choice="opt">-d debuglevel</arg>
+		<arg choice="opt">-h</arg>
+		<arg choice="opt">-l logdir</arg>
+		<arg choice="opt">-N</arg>
+		<arg choice="opt">-s &lt;smb config file&gt;</arg>
+		<arg choice="opt">-U username[%password]</arg>
+		<arg choice="opt">-W workgroup</arg>
+		<arg choice="opt">-N</arg>
+		<arg choice="opt">-I destinationIP</arg>
+		<arg choice="req">server</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para><command>rpcclient</command> is a utility initially developed
+	to test MS-RPC functionality in Samba itself.  It has undergone 
+	several stages of development and stability.  Many system administrators
+	have now written scripts around it to manage Windows NT clients from 
+	their UNIX workstation. </para>
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>server</term>
+		<listitem><para>NetBIOS name of Server to which to connect. 
+		The server can be  any SMB/CIFS server.  The name is 
+		resolved using the <smbconfoption name="name resolve order"/> line from <citerefentry><refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry>.</para></listitem>
+	</varlistentry>
+
+
+		<varlistentry>
+		<term>-c|--command='command string'</term>
+		<listitem><para>execute semicolon separated commands (listed 
+		below)) </para></listitem>
+		</varlistentry>
+
+		
+		<varlistentry>
+		<term>-I IP-address</term>
+		<listitem><para><replaceable>IP address</replaceable> is the address of the server to connect to. 
+		It should be specified in standard "a.b.c.d" notation. </para>
+
+		<para>Normally the client would attempt to locate a named 
+		SMB/CIFS server by looking it up via the NetBIOS name resolution 
+		mechanism described above in the <parameter>name resolve order</parameter> 
+		parameter above. Using this parameter will force the client
+		to assume that the server is on the machine with the specified IP 
+		address and the NetBIOS name component of the resource being 
+		connected to will be ignored. </para>
+
+		<para>There is no default for this parameter. If not supplied, 
+		it will be determined automatically by the client as described 
+		above. </para></listitem>
+		</varlistentry>
+
+		&stdarg.server.debug;
+		&popt.common.samba;
+		&popt.common.credentials;		
+		&popt.common.connection;
+		&stdarg.help;
+	</variablelist>
+</refsect1>
+
+
+<refsect1>
+	<title>COMMANDS</title>
+
+	<refsect2>
+	<title>LSARPC</title>
+
+	<variablelist>
+		<varlistentry><term>lsaquery</term><listitem><para>Query info policy</para></listitem></varlistentry>
+		
+		<varlistentry><term>lookupsids</term><listitem><para>Resolve a list 
+		of SIDs to usernames.
+		</para></listitem></varlistentry>
+		
+		<varlistentry><term>lookupnames</term><listitem><para>Resolve a list 
+		of usernames to SIDs.
+		</para></listitem></varlistentry>
+		
+		<varlistentry><term>enumtrusts</term><listitem><para>Enumerate trusted domains</para></listitem></varlistentry>
+
+		<varlistentry><term>enumprivs</term><listitem><para>Enumerate privileges</para></listitem></varlistentry>
+
+		<varlistentry><term>getdispname</term><listitem><para>Get the privilege name</para></listitem></varlistentry>
+
+		<varlistentry><term>lsaenumsid</term><listitem><para>Enumerate the LSA SIDS</para></listitem></varlistentry>
+
+		<varlistentry><term>lsaenumprivsaccount</term><listitem><para>Enumerate the privileges of an SID</para></listitem></varlistentry>
+
+		<varlistentry><term>lsaenumacctrights</term><listitem><para>Enumerate the rights of an SID</para></listitem></varlistentry>
+
+		<varlistentry><term>lsaenumacctwithright</term><listitem><para>Enumerate accounts with a right</para></listitem></varlistentry>
+
+		<varlistentry><term>lsaaddacctrights</term><listitem><para>Add rights to an account</para></listitem></varlistentry>
+
+		<varlistentry><term>lsaremoveacctrights</term><listitem><para>Remove rights from an account</para></listitem></varlistentry>
+
+		<varlistentry><term>lsalookupprivvalue</term><listitem><para>Get a privilege value given its name</para></listitem></varlistentry>
+
+		<varlistentry><term>lsaquerysecobj</term><listitem><para>Query LSA security object</para></listitem></varlistentry>
+
+	</variablelist>	
+	</refsect2>
+	
+	<refsect2>
+	<title>LSARPC-DS</title>
+	
+	<variablelist>
+		<varlistentry><term>dsroledominfo</term><listitem><para>Get Primary Domain Information</para></listitem></varlistentry>
+	</variablelist>
+
+	<para> </para>
+
+	<para><emphasis>DFS</emphasis></para>
+	<variablelist>
+		<varlistentry><term>dfsexist</term><listitem><para>Query DFS support</para></listitem></varlistentry>
+		<varlistentry><term>dfsadd</term><listitem><para>Add a DFS share</para></listitem></varlistentry>
+		<varlistentry><term>dfsremove</term><listitem><para>Remove a DFS share</para></listitem></varlistentry>
+		<varlistentry><term>dfsgetinfo</term><listitem><para>Query DFS share info</para></listitem></varlistentry>
+		<varlistentry><term>dfsenum</term><listitem><para>Enumerate dfs shares</para></listitem></varlistentry>
+	</variablelist>
+
+	</refsect2>
+
+	<refsect2>
+	<title>REG</title>
+	<variablelist>
+		<varlistentry><term>shutdown</term><listitem><para>Remote Shutdown</para></listitem></varlistentry>
+		<varlistentry><term>abortshutdown</term><listitem><para>Abort Shutdown</para></listitem></varlistentry>
+	</variablelist>
+
+	</refsect2>
+
+	<refsect2>
+	<title>SRVSVC</title>
+
+	<variablelist>
+		<varlistentry><term>srvinfo</term><listitem><para>Server query info</para></listitem></varlistentry>
+		
+		<varlistentry><term>netshareenum</term><listitem><para>Enumerate shares</para></listitem></varlistentry>
+
+		<varlistentry><term>netfileenum</term><listitem><para>Enumerate open files</para></listitem></varlistentry>
+		
+		<varlistentry><term>netremotetod</term><listitem><para>Fetch remote time of day</para></listitem></varlistentry>
+		
+	</variablelist>
+
+	</refsect2>
+
+	<refsect2>
+	<title>SAMR</title>
+
+	<variablelist>
+		<varlistentry><term>queryuser</term><listitem><para>Query user info</para></listitem></varlistentry>
+		<varlistentry><term>querygroup</term><listitem><para>Query group info</para></listitem></varlistentry>
+		<varlistentry><term>queryusergroups</term><listitem><para>Query user groups</para></listitem></varlistentry>
+		<varlistentry><term>querygroupmem</term><listitem><para>Query group membership</para></listitem></varlistentry>
+		<varlistentry><term>queryaliasmem</term><listitem><para>Query alias membership</para></listitem></varlistentry>
+		<varlistentry><term>querydispinfo</term><listitem><para>Query display info</para></listitem></varlistentry>
+		<varlistentry><term>querydominfo</term><listitem><para>Query domain info</para></listitem></varlistentry>
+		<varlistentry><term>enumdomusers</term><listitem><para>Enumerate domain users</para></listitem></varlistentry>
+		<varlistentry><term>enumdomgroups</term><listitem><para>Enumerate domain groups</para></listitem></varlistentry>
+		<varlistentry><term>enumalsgroups</term><listitem><para>Enumerate alias groups</para></listitem></varlistentry>
+		<varlistentry><term>createdomuser</term><listitem><para>Create domain user</para></listitem></varlistentry>
+		<varlistentry><term>samlookupnames</term><listitem><para>Look up names</para></listitem></varlistentry>
+		<varlistentry><term>samlookuprids</term><listitem><para>Look up names</para></listitem></varlistentry>
+		<varlistentry><term>deletedomuser</term><listitem><para>Delete domain user</para></listitem></varlistentry>
+		<varlistentry><term>samquerysecobj</term><listitem><para>Query SAMR security object</para></listitem></varlistentry>
+		<varlistentry><term>getdompwinfo</term><listitem><para>Retrieve domain password info</para></listitem></varlistentry>
+		<varlistentry><term>lookupdomain</term><listitem><para>Look up domain</para></listitem></varlistentry>
+	</variablelist>
+
+	</refsect2>
+
+	<refsect2>
+	<title>SPOOLSS</title>
+
+	<variablelist>
+		<varlistentry><term>adddriver &lt;arch&gt; &lt;config&gt; [&lt;version&gt;]</term> 
+		<listitem><para>
+		Execute an AddPrinterDriver() RPC to install the printer driver 
+		information on the server.  Note that the driver files should 
+		already exist in the directory returned by  
+		<command>getdriverdir</command>.  Possible values for 
+		<parameter>arch</parameter> are the same as those for 
+		the <command>getdriverdir</command> command.
+		The <parameter>config</parameter> parameter is defined as 
+		follows: </para>
+		
+<para><programlisting>
+Long Printer Name:\
+Driver File Name:\
+Data File Name:\
+Config File Name:\
+Help File Name:\
+Language Monitor Name:\
+Default Data Type:\
+Comma Separated list of Files
+</programlisting></para>
+
+		<para>Any empty fields should be enter as the string "NULL". </para>
+		
+		<para>Samba does not need to support the concept of Print Monitors
+		since these only apply to local printers whose driver can make
+		use of a bi-directional link for communication.  This field should 
+		be "NULL".   On a remote NT print server, the Print Monitor for a 
+		driver must already be installed prior to adding the driver or 
+		else the RPC will fail. </para>
+
+		<para>The <parameter>version</parameter> parameter lets you
+		specify the printer driver version number.  If omitted, the
+		default driver version for the specified architecture will
+		be used.  This option can be used to upload Windows 2000
+		(version 3) printer drivers.</para></listitem></varlistentry>
+	
+		<varlistentry><term>addprinter &lt;printername&gt; 
+		&lt;sharename&gt; &lt;drivername&gt; &lt;port&gt;</term>
+		<listitem><para>
+		Add a printer on the remote server.  This printer 
+ 		will be automatically shared.  Be aware that the printer driver 
+		must already be installed on the server (see <command>adddriver</command>) 
+		and the <parameter>port</parameter>must be a valid port name (see
+		<command>enumports</command>.</para>
+		</listitem></varlistentry>
+
+
+		<varlistentry><term>deldriver</term><listitem><para>Delete the 
+		specified printer driver for all architectures.  This
+		does not delete the actual driver files from the server,
+		only the entry from the server's list of drivers.
+		</para></listitem></varlistentry>
+
+		<varlistentry><term>deldriverex &lt;driver&gt; [architecture] [version]
+		</term><listitem><para>Delete the specified printer driver including driver files. 
+		You can limit this action to a specific architecture and a specific version. 
+		If no architecure is given, all driver files of that driver will be deleted. 
+		</para></listitem></varlistentry>
+
+		<varlistentry><term>enumdata</term><listitem><para>Enumerate all 
+		printer setting data stored on the server. On Windows NT  clients, 
+		these values are stored  in the registry, while Samba servers 
+		store them in the printers TDB.  This command corresponds
+		to the MS Platform SDK GetPrinterData() function (* This
+		command is currently unimplemented).</para></listitem></varlistentry>
+
+		<varlistentry><term>enumdataex</term><listitem><para>Enumerate printer data for a key</para></listitem></varlistentry>
+
+		<varlistentry><term>enumjobs &lt;printer&gt;</term>
+		<listitem><para>List the jobs and status of a given printer. 
+		This command corresponds to the MS Platform SDK EnumJobs() 
+		function</para></listitem></varlistentry>
+
+		<varlistentry><term>enumkey</term><listitem><para>Enumerate
+		printer keys</para></listitem></varlistentry>
+		
+		<varlistentry><term>enumports [level]</term>
+		<listitem><para>
+		Executes an EnumPorts() call using the specified 
+		info level. Currently only info levels 1 and 2 are supported. 
+		</para></listitem></varlistentry>
+
+
+
+		<varlistentry><term>enumdrivers [level]</term> 
+		<listitem><para>
+		Execute an EnumPrinterDrivers() call.  This lists the various installed 
+		printer drivers for all architectures.  Refer to the MS Platform SDK 
+		documentation for more details of the various flags and calling 
+		options. Currently supported info levels are 1, 2, and 3.</para></listitem></varlistentry>
+
+
+
+		<varlistentry><term>enumprinters [level]</term>
+		<listitem><para>Execute an EnumPrinters() call.  This lists the various installed 
+		and share printers.  Refer to the MS Platform SDK documentation for 
+		more details of the various flags and calling options. Currently
+		supported info levels are 1, 2 and 5.</para></listitem></varlistentry>
+
+
+
+
+		<varlistentry><term>getdata &lt;printername&gt; &lt;valuename;&gt;</term> 
+		<listitem><para>Retrieve the data for a given printer setting.  See 
+		the  <command>enumdata</command> command for more information.  
+		This command corresponds to the GetPrinterData() MS Platform 
+		SDK function. </para></listitem></varlistentry>
+
+		<varlistentry><term>getdataex</term><listitem><para>Get
+		printer driver data with
+		keyname</para></listitem></varlistentry>
+
+		
+		<varlistentry><term>getdriver &lt;printername&gt;</term>
+		<listitem><para>
+		Retrieve the printer driver information (such as driver file, 
+		config file, dependent files, etc...) for 
+		the given printer. This command corresponds to the GetPrinterDriver()
+		MS Platform  SDK function. Currently info level 1, 2, and 3 are supported.
+		</para></listitem></varlistentry>
+	
+
+		<varlistentry><term>getdriverdir &lt;arch&gt;</term>
+		<listitem><para>
+		Execute a GetPrinterDriverDirectory()
+		RPC to retrieve the SMB share name and subdirectory for 
+		storing printer driver files for a given architecture.  Possible 
+		values for <parameter>arch</parameter> are "Windows 4.0" 
+		(for Windows 95/98), "Windows NT x86", "Windows NT PowerPC", "Windows
+		Alpha_AXP", and "Windows NT R4000". </para></listitem></varlistentry>
+
+
+
+		<varlistentry><term>getprinter &lt;printername&gt;</term> 
+		<listitem><para>Retrieve the current printer information.  This command 
+		corresponds to the GetPrinter() MS Platform SDK function. 
+		</para></listitem></varlistentry>
+
+		<varlistentry><term>getprintprocdir</term><listitem><para>Get
+		print processor
+		directory</para></listitem></varlistentry>
+		
+		<varlistentry><term>openprinter &lt;printername&gt;</term> 
+		<listitem><para>Execute an OpenPrinterEx() and ClosePrinter() RPC 
+		against a given printer. </para></listitem></varlistentry>
+
+		<varlistentry><term>setdriver &lt;printername&gt;
+		&lt;drivername&gt;</term>
+		<listitem><para>Execute a SetPrinter() command to update the printer driver
+		associated with an installed printer.  The printer driver must
+		already be correctly installed on the print server.  </para>
+
+		<para>See also the <command>enumprinters</command> and 
+		<command>enumdrivers</command> commands for obtaining a list of
+		of installed printers and drivers.</para></listitem></varlistentry>
+
+		<varlistentry><term>addform</term><listitem><para>Add form</para></listitem></varlistentry>
+		<varlistentry><term>setform</term><listitem><para>Set form</para></listitem></varlistentry>
+		<varlistentry><term>getform</term><listitem><para>Get form</para></listitem></varlistentry>
+		<varlistentry><term>deleteform</term><listitem><para>Delete form</para></listitem></varlistentry>
+		<varlistentry><term>enumforms</term><listitem><para>Enumerate form</para></listitem></varlistentry>
+		<varlistentry><term>setprinter</term><listitem><para>Set printer comment</para></listitem></varlistentry>
+		<varlistentry><term>setprinterdata</term><listitem><para>Set REG_SZ printer data</para></listitem></varlistentry>
+
+		<varlistentry><term>setprintername &lt;printername&gt;
+		&lt;newprintername&gt;</term>
+		<listitem><para>Set printer name</para></listitem></varlistentry>
+
+		<varlistentry><term>rffpcnex</term><listitem><para>Rffpcnex test</para></listitem></varlistentry>
+		
+
+	</variablelist>
+
+	</refsect2>
+
+	<refsect2>
+	<title>NETLOGON</title>
+
+	<variablelist>
+
+	<varlistentry><term>logonctrl2</term>
+	<listitem><para>Logon Control 2</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>logonctrl</term>
+	<listitem><para>Logon Control</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>samsync</term>
+	<listitem><para>Sam Synchronisation</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>samdeltas</term>
+	<listitem><para>Query Sam Deltas</para></listitem>
+	</varlistentry>
+
+	<varlistentry><term>samlogon</term>
+	<listitem><para>Sam Logon</para></listitem>
+	</varlistentry>
+
+	</variablelist>
+	</refsect2>
+
+	<refsect2>
+	<title>GENERAL COMMANDS</title>
+
+	<variablelist>
+		<varlistentry><term>debuglevel</term><listitem><para>Set the current
+		debug level used to log information.</para></listitem></varlistentry>
+
+		<varlistentry><term>help (?)</term><listitem><para>Print a listing of all 
+		known commands or extended help  on a particular command. 
+		</para></listitem></varlistentry>
+		
+		<varlistentry><term>quit (exit)</term><listitem><para>Exit <command>rpcclient
+		</command>.</para></listitem></varlistentry>
+	</variablelist>
+	</refsect2>
+
+</refsect1>
+
+<refsect1>
+	<title>BUGS</title>
+	
+	<para><command>rpcclient</command> is designed as a developer testing tool 
+	and may not be robust in certain areas (such as command line parsing).  
+	It has been known to  generate a core dump upon failures when invalid 
+	parameters where passed to the interpreter. </para>
+
+	<para>From Luke Leighton's original rpcclient man page:</para>
+	
+	<para><emphasis>WARNING!</emphasis> The MSRPC over SMB code has 
+	been developed from examining  Network traces. No documentation is 
+	available from the original creators  (Microsoft) on how MSRPC over 
+	SMB works, or how the individual MSRPC services  work. Microsoft's 
+	implementation of these services has been demonstrated  (and reported) 
+	to be... a bit flaky in places. </para>
+
+	<para>The development of Samba's implementation is also a bit rough, 
+	and as more of the services are understood, it can even result in 
+	versions of <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> and <citerefentry><refentrytitle>rpcclient</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry> that are incompatible for some commands or  services. Additionally, 
+	the developers are sending reports to Microsoft,  and problems found 
+	or reported to Microsoft are fixed in Service Packs,  which may 
+	result in incompatibilities.</para>
+</refsect1>
+
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.0 of the Samba 
+	suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para>The original rpcclient man page was written by Matthew 
+	Geddes, Luke Kenneth Casson Leighton, and rewritten by Gerald Carter.  
+	The conversion to DocBook for Samba 2.2 was done by Gerald 
+	Carter. The conversion to DocBook XML 4.2 for Samba 3.0 was
+	done by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

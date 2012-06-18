@@ -1,0 +1,584 @@
+Summary: Samba SMB client and server
+Name: samba
+Version: PVERSION
+Release: PRELEASE
+Copyright: GNU GPL version 2
+Group: Networking
+Source: ftp://samba.org/pub/samba/samba-PVERSION.tar.gz
+Patch: makefile-path.patch
+Patch1: smbw.patch
+Packager: John H Terpstra [Samba-Team] <jht@samba.org>
+Requires: pam >= 0.64
+Prereq: chkconfig fileutils
+BuildRoot: /var/tmp/samba
+Prefix: /usr
+
+%description
+Samba provides an SMB server which can be used to provide
+network services to SMB (sometimes called "Lan Manager")
+clients, including various versions of MS Windows, OS/2,
+and other Linux machines. Samba also provides some SMB
+clients, which complement the built-in SMB filesystem
+in Linux. Samba uses NetBIOS over TCP/IP (NetBT) protocols
+and does NOT need NetBEUI (Microsoft Raw NetBIOS frame)
+protocol.
+
+Samba-2 features an almost working NT Domain Control
+capability and includes the new SWAT (Samba Web Administration
+Tool) that allows samba's smb.conf file to be remotely managed
+using your favourite web browser. For the time being this is
+being enabled on TCP port 901 via inetd.
+
+Please refer to the WHATSNEW.txt document for fixup information.
+This binary release includes encrypted password support.
+Please read the smb.conf file and ENCRYPTION.txt in the
+docs directory for implementation details.
+
+NOTE: Red Hat Linux 5.X Uses PAM which has integrated support
+for Shadow passwords. Do NOT recompile with the SHADOW_PWD option
+enabled. Red Hat Linux has built in support for quotas in PAM.
+
+%changelog
+* Fri Apr 14 2000 John H Terpstra <jht@turbolinux.com>
+- Updated unicode map file generation
+
+* Thu Mar 30 2000 Jeremy Allison <jeremy@valinux.com>
+ - Added support for "Using Samba" and unicode maps.
+
+* Sat Nov 29 1999 Matthew Vanecek <mev0003@unt.edu>
+ - Added a Prefix and changed "/usr" to "%{prefix}"
+
+* Sat Nov 11 1999 Tridge <tridge@linuxcare.com>
+ - changed from mount.smb to mount.smbfs
+
+* Sat Oct 9 1999 Tridge <tridge@linuxcare.com>
+ - removed smbwrapper
+ - added smbmnt and smbmount
+
+* Sun Apr 25 1999 John H Terpstra <jht@samba.org>
+ - added smbsh.1 man page
+
+* Fri Mar 26 1999 Andrew Tridgell <tridge@samba.org>
+ - added --with-pam as pam is no longer used by default
+
+* Sat Jan 27 1999 Jeremy Allison <jra@samba.org>
+ - Removed smbrun binary and tidied up some loose ends
+
+* Sun Oct 25 1998 John H Terpstra <jht@samba.org>
+ - Added parameters to /config to ensure smb.conf, lmhosts, 
+	and smbusers never gets over-written.
+
+* Sat Oct 24 1998 John H Terpstra <jht@samba.org>
+ - removed README.smbsh file from docs area
+
+* Mon Oct 05 1998 John H Terpstra <jht@samba.org>
+ - Added rpcclient to binaries list
+ - Added smbwrapper stuff
+
+* Fri Aug 21 1998 John H Terpstra <jht@samba.org>
+ - Updated for Samba version 2.0 building
+
+* Tue Jul 07 1998 Erik Troan <ewt@redhat.com>
+  - updated postun triggerscript to check $0
+  - clear /etc/codepages from %preun instead of %postun
+
+* Sat Jul 04 1998 John H Terpstra <jht@samba.org>
+ - fixed codepage preservation during update via -Uvh
+
+* Mon Jun 08 1998 Erik Troan <ewt@redhat.com>
+  - made the %postun script a tad less agressive; no reason to remove
+    the logs or lock file 
+  - the %postun and %preun should only exectute if this is the final
+    removal
+  - migrated %triggerpostun from Red Hat's samba package to work around
+    packaging problems in some Red Hat samba releases
+
+* Sun Apr 26 1998 John H Terpstra <jht@samba.org>
+ - Tidy up for early alpha releases
+ - added findsmb from SGI packaging
+
+* Thu Apr 09 1998 John H Terpstra <jht@samba.org>
+ - Updated spec file
+ - Included new codepage.936
+
+* Sat Mar 20 1998 John H Terpstra <jht@samba.org>
+ - Added swat facility
+
+* Sat Jan 24 1998 John H Terpstra <jht@samba.org>
+ - Many optimisations (some suggested by Manoj Kasichainula <manojk@io.com>
+  - Use of chkconfig in place of individual symlinks to /etc/rc.d/init/smb
+  - Compounded make line
+  - Updated smb.init restart mechanism
+  - Use compound mkdir -p line instead of individual calls to mkdir
+  - Fixed smb.conf file path for log files
+  - Fixed smb.conf file path for incoming smb print spool directory
+  - Added a number of options to smb.conf file
+  - Added smbadduser command (missed from all previous RPMs) - Doooh!
+  - Added smbuser file and smb.conf file updates for username map
+
+%prep
+%setup
+%patch -p1
+%patch1 -p1
+
+%build
+cd source
+./configure --prefix=%{prefix} --libdir=/etc --with-lockdir=/var/lock/samba --with-privatedir=/etc --with-swatdir=%{prefix}/share/swat --with-smbmount --with-automount --with-quotas --with-pam
+make all
+
+%install
+rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT/etc/codepages/src
+mkdir -p $RPM_BUILD_ROOT/etc/{logrotate.d,pam.d}
+mkdir -p $RPM_BUILD_ROOT/etc/rc.d/{init.d,rc0.d,rc1.d,rc2.d,rc3.d,rc5.d,rc6.d}
+mkdir -p $RPM_BUILD_ROOT/home/samba
+mkdir -p $RPM_BUILD_ROOT%{prefix}/{bin,sbin}
+mkdir -p $RPM_BUILD_ROOT/sbin
+mkdir -p $RPM_BUILD_ROOT%{prefix}/share/swat/{images,help,include,using_samba}
+mkdir -p $RPM_BUILD_ROOT%{prefix}/share/swat/using_samba/{figs,gifs}
+mkdir -p $RPM_BUILD_ROOT%{prefix}/man/{man1,man5,man7,man8}
+mkdir -p $RPM_BUILD_ROOT/var/lock/samba
+mkdir -p $RPM_BUILD_ROOT/var/log/samba
+mkdir -p $RPM_BUILD_ROOT/var/spool/samba
+
+# Install standard binary files
+for i in nmblookup smbclient smbspool smbpasswd smbstatus testparm testprns \
+      make_smbcodepage make_printerdef rpcclient make_unicodemap
+do
+install -m755 -s source/bin/$i $RPM_BUILD_ROOT%{prefix}/bin
+done
+for i in addtosmbpass mksmbpasswd.sh smbtar 
+do
+install -m755 source/script/$i $RPM_BUILD_ROOT%{prefix}/bin
+done
+
+# Install secure binary files
+for i in smbd nmbd swat smbmount smbmnt smbumount
+do
+install -m755 -s source/bin/$i $RPM_BUILD_ROOT%{prefix}/sbin
+done
+
+# we need a symlink for mount to recognise the smb filesystem type
+ln -sf %{prefix}/sbin/smbmount $RPM_BUILD_ROOT/sbin/mount.smbfs
+
+# Install level 1 man pages
+for i in smbclient.1 smbrun.1 smbstatus.1 smbtar.1 testparm.1 testprns.1 make_smbcodepage.1 \
+      nmblookup.1 make_unicodemap.1
+do
+install -m644 docs/manpages/$i $RPM_BUILD_ROOT%{prefix}/man/man1
+done
+
+# Install codepage source files
+for i in 437 737 775 850 852 861 866 932 936 949 950 1251
+do
+install -m644 source/codepages/codepage_def.$i $RPM_BUILD_ROOT/etc/codepages/src
+done
+for i in 437 737 850 852 861 866 932 936 949 950 ISO8859-1 ISO8859-2 ISO8859-5 \
+      ISO8859-7 KOI8-R
+do
+install -m644 source/codepages/CP$i.TXT $RPM_BUILD_ROOT/etc/codepages/src
+done
+
+# Install SWAT helper files
+for i in swat/help/*.html docs/htmldocs/*.html
+do
+install -m644 $i $RPM_BUILD_ROOT%{prefix}/share/swat/help
+done
+for i in swat/images/*.gif
+do
+install -m644 $i $RPM_BUILD_ROOT%{prefix}/share/swat/images
+done
+for i in swat/include/*.html
+do
+install -m644 $i $RPM_BUILD_ROOT%{prefix}/share/swat/include
+done
+for i in docs/htmldocs/using_samba/*.html
+do
+install -m644 $i $RPM_BUILD_ROOT%{prefix}/share/swat/using_samba
+done
+for i in docs/htmldocs/using_samba/figs/*.gif
+do
+install -m644 $i $RPM_BUILD_ROOT%{prefix}/share/swat/using_samba/figs
+done
+for i in docs/htmldocs/using_samba/gifs/*.gif
+do
+install -m644 $i $RPM_BUILD_ROOT%{prefix}/share/swat/using_samba/gifs
+done
+
+# Install the miscellany
+install -m644 swat/README $RPM_BUILD_ROOT%{prefix}/share/swat
+install -m644 docs/manpages/smb.conf.5 $RPM_BUILD_ROOT%{prefix}/man/man5
+install -m644 docs/manpages/lmhosts.5 $RPM_BUILD_ROOT%{prefix}/man/man5
+install -m644 docs/manpages/smbpasswd.5 $RPM_BUILD_ROOT%{prefix}/man/man5
+install -m644 docs/manpages/samba.7 $RPM_BUILD_ROOT%{prefix}/man/man7
+install -m644 docs/manpages/smbd.8 $RPM_BUILD_ROOT%{prefix}/man/man8
+install -m644 docs/manpages/nmbd.8 $RPM_BUILD_ROOT%{prefix}/man/man8
+install -m644 docs/manpages/swat.8 $RPM_BUILD_ROOT%{prefix}/man/man8
+install -m644 docs/manpages/smbmnt.8 $RPM_BUILD_ROOT%{prefix}/man/man8
+install -m644 docs/manpages/smbmount.8 $RPM_BUILD_ROOT%{prefix}/man/man8
+install -m644 docs/manpages/smbpasswd.8 $RPM_BUILD_ROOT%{prefix}/man/man8
+install -m644 docs/manpages/smbspool.8 $RPM_BUILD_ROOT%{prefix}/man/man8
+install -m644 packaging/RedHat/smb.conf $RPM_BUILD_ROOT/etc/smb.conf
+install -m644 packaging/RedHat/smbusers $RPM_BUILD_ROOT/etc/smbusers
+install -m755 packaging/RedHat/smbprint $RPM_BUILD_ROOT%{prefix}/bin
+install -m755 packaging/RedHat/findsmb $RPM_BUILD_ROOT%{prefix}/bin
+install -m755 packaging/RedHat/smbadduser $RPM_BUILD_ROOT%{prefix}/bin
+install -m755 packaging/RedHat/smb.init $RPM_BUILD_ROOT/etc/rc.d/init.d/smb
+install -m755 packaging/RedHat/smb.init $RPM_BUILD_ROOT%{prefix}/sbin/samba
+install -m644 packaging/RedHat/samba.pamd $RPM_BUILD_ROOT/etc/pam.d/samba
+install -m644 packaging/RedHat/samba.log $RPM_BUILD_ROOT/etc/logrotate.d/samba
+echo 127.0.0.1 localhost > $RPM_BUILD_ROOT/etc/lmhosts
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%post
+/sbin/chkconfig --add smb
+
+# Build codepage load files
+for i in 437 737 850 852 861 866 932 936 949 950 1251
+do
+%{prefix}/bin/make_smbcodepage c $i /etc/codepages/src/codepage_def.$i /etc/codepages/codepage.$i
+done
+for i in 437 737 850 852 861 866 932 936 949 950 ISO8859-1 ISO8859-2 ISO8859-5 ISO8859-7 KOI8-R
+do
+%{prefix}/bin/make_unicodemap $i /etc/codepages/src/CP$i.TXT /etc/codepages/unicode_map.$i
+done
+
+# Add swat entry to /etc/services if not already there
+if !( grep ^[:space:]*swat /etc/services > /dev/null ) then
+	echo 'swat		901/tcp				# Add swat service used via inetd' >> /etc/services
+fi
+
+# Add swat entry to /etc/inetd.conf if needed
+if !( grep ^[:space:]*swat /etc/inetd.conf > /dev/null ) then
+	echo 'swat	stream	tcp	nowait.400	root	%{prefix}/sbin/swat swat' >> /etc/inetd.conf
+killall -1 inetd || :
+fi
+
+%preun
+if [ $1 = 0 ] ; then
+    /sbin/chkconfig --del smb
+
+    for n in /etc/codepages/*; do
+	if [ $n != /etc/codepages/src ]; then
+	    rm -rf $n
+	fi
+    done
+    # We want to remove the browse.dat and wins.dat files so they can not interfer with a new version of samba!
+    if [ -e /var/lock/samba/browse.dat ]; then
+	    rm -f /var/lock/samba/browse.dat
+    fi
+    if [ -e /var/lock/samba/wins.dat ]; then
+	    rm -f /var/lock/samba/wins.dat
+    fi
+fi
+
+%postun
+# Only delete remnants of samba if this is the final deletion.
+if [ $1 = 0 ] ; then
+    if [ -x /etc/pam.d/samba ]; then
+      rm -f /etc/pam.d/samba
+    fi
+    if [ -e /var/log/samba ]; then
+      rm -rf /var/log/samba
+    fi
+    if [ -e /var/lock/samba ]; then
+      rm -rf /var/lock/samba
+    fi
+
+    # Remove swat entries from /etc/inetd.conf and /etc/services
+    cd /etc
+    tmpfile=/etc/tmp.$$
+    sed -e '/^[:space:]*swat.*$/d' /etc/inetd.conf > $tmpfile
+    mv $tmpfile inetd.conf
+    sed -e '/^[:space:]*swat.*$/d' /etc/services > $tmpfile
+    mv $tmpfile services
+fi
+
+%triggerpostun -- samba < samba-2.0.0
+if [ $0 != 0 ]; then
+    /sbin/chkconfig --add smb
+fi
+
+
+%files
+%doc README COPYING Manifest Read-Manifest-Now
+%doc WHATSNEW.txt Roadmap
+%doc docs
+%doc swat/README
+%doc examples
+%attr(-,root,root) %{prefix}/sbin/smbd
+%attr(-,root,root) %{prefix}/sbin/nmbd
+%attr(-,root,root) %{prefix}/sbin/swat
+%attr(-,root,root) %{prefix}/sbin/smbmnt
+%attr(-,root,root) %{prefix}/sbin/smbmount
+%attr(-,root,root) %{prefix}/sbin/smbumount
+%attr(-,root,root) /sbin/mount.smbfs
+%attr(0750,root,root) %{prefix}/sbin/samba
+%attr(-,root,root) %{prefix}/bin/addtosmbpass
+%attr(-,root,root) %{prefix}/bin/mksmbpasswd.sh
+%attr(-,root,root) %{prefix}/bin/smbclient
+%attr(-,root,root) %{prefix}/bin/smbspool
+%attr(-,root,root) %{prefix}/bin/rpcclient
+%attr(-,root,root) %{prefix}/bin/testparm
+%attr(-,root,root) %{prefix}/bin/testprns
+%attr(-,root,root) %{prefix}/bin/findsmb
+%attr(-,root,root) %{prefix}/bin/smbstatus
+%attr(-,root,root) %{prefix}/bin/nmblookup
+%attr(-,root,root) %{prefix}/bin/make_smbcodepage
+%attr(-,root,root) %{prefix}/bin/make_unicodemap
+%attr(-,root,root) %{prefix}/bin/make_printerdef
+%attr(-,root,root) %{prefix}/bin/smbpasswd
+%attr(-,root,root) %{prefix}/bin/smbtar
+%attr(-,root,root) %{prefix}/bin/smbprint
+%attr(-,root,root) %{prefix}/bin/smbadduser
+%attr(-,root,root) %{prefix}/share/swat/help/welcome.html
+%attr(-,root,root) %{prefix}/share/swat/help/DOMAIN_MEMBER.html
+%attr(-,root,root) %{prefix}/share/swat/help/NT_Security.html
+%attr(-,root,root) %{prefix}/share/swat/help/lmhosts.5.html
+%attr(-,root,root) %{prefix}/share/swat/help/make_smbcodepage.1.html
+%attr(-,root,root) %{prefix}/share/swat/help/nmbd.8.html
+%attr(-,root,root) %{prefix}/share/swat/help/nmblookup.1.html
+%attr(-,root,root) %{prefix}/share/swat/help/samba.7.html
+%attr(-,root,root) %{prefix}/share/swat/help/smb.conf.5.html
+%attr(-,root,root) %{prefix}/share/swat/help/smbclient.1.html
+%attr(-,root,root) %{prefix}/share/swat/help/smbspool.8.html
+%attr(-,root,root) %{prefix}/share/swat/help/smbd.8.html
+%attr(-,root,root) %{prefix}/share/swat/help/smbpasswd.5.html
+%attr(-,root,root) %{prefix}/share/swat/help/smbpasswd.8.html
+%attr(-,root,root) %{prefix}/share/swat/help/smbrun.1.html
+%attr(-,root,root) %{prefix}/share/swat/help/smbstatus.1.html
+%attr(-,root,root) %{prefix}/share/swat/help/smbtar.1.html
+%attr(-,root,root) %{prefix}/share/swat/help/swat.8.html
+%attr(-,root,root) %{prefix}/share/swat/help/testparm.1.html
+%attr(-,root,root) %{prefix}/share/swat/help/testprns.1.html
+%attr(-,root,root) %{prefix}/share/swat/images/globals.gif
+%attr(-,root,root) %{prefix}/share/swat/images/home.gif
+%attr(-,root,root) %{prefix}/share/swat/images/passwd.gif
+%attr(-,root,root) %{prefix}/share/swat/images/printers.gif
+%attr(-,root,root) %{prefix}/share/swat/images/shares.gif
+%attr(-,root,root) %{prefix}/share/swat/images/samba.gif
+%attr(-,root,root) %{prefix}/share/swat/images/status.gif
+%attr(-,root,root) %{prefix}/share/swat/images/viewconfig.gif
+%attr(-,root,root) %{prefix}/share/swat/include/header.html
+%attr(-,root,root) %{prefix}/share/swat/include/footer.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/appa_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/appa_02.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/appa_03.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/appa_04.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/appa_05.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/appb_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/appb_02.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/appb_03.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/appc_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/appd_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/appe_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/appf_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch01_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch01_02.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch01_03.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch01_04.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch01_05.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch01_06.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch01_07.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch01_08.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch02_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch02_02.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch02_03.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch02_04.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch02_05.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch02_06.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch03_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch03_02.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch03_03.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch04_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch04_02.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch04_03.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch04_04.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch04_05.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch04_06.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch04_07.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch04_08.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch05_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch05_02.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch05_03.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch05_04.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch05_05.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch06_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch06_02.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch06_03.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch06_04.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch06_05.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch06_06.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch07_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch07_02.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch07_03.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch08_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch08_02.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch08_03.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch08_04.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch08_05.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch08_06.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch08_07.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch09_01.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch09_02.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/ch09_03.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/index.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/inx.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/licenseinfo.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/this_edition.html
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0101.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0102.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0103.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0104.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0105.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0106.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0107.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0108.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0109.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0110.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0111.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0112.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0113.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0114.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0201.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0202.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0203.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0204.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0301.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0302.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0303.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0304.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0305.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0306.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0307.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0308.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0309.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0310.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0311.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0312.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0313.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0314.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0315.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0316.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0317.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0318.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0319.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0320.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0321.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0322.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0323.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0324.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0325.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0326.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0327.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0328.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0401.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0402.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0403.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0404.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0405.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0406.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0407.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0501.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0502.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0503.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0504.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0505.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0506.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0507.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0508.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0601.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0602.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0603.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0604.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0605.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0606.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0701.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0702.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0703.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0704.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0705.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0706.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0707.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0708.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0709.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0801.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0802.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0803.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0804.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0805.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0901.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0902.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0903.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0904.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.0905.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.aa01.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.ab01.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/figs/sam.ab02.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/gifs/index.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/gifs/samba.s.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/gifs/txthome.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/gifs/txtnexta.gif
+%attr(-,root,root) %{prefix}/share/swat/using_samba/gifs/txtpreva.gif
+%attr(-,root,root) %config(noreplace) /etc/lmhosts
+%attr(-,root,root) %config(noreplace) /etc/smb.conf
+%attr(-,root,root) %config(noreplace) /etc/smbusers
+%attr(-,root,root) /etc/rc.d/init.d/smb
+%attr(-,root,root) /etc/logrotate.d/samba
+%attr(-,root,root) /etc/pam.d/samba
+%attr(-,root,root) /etc/codepages/src/codepage_def.437
+%attr(-,root,root) /etc/codepages/src/codepage_def.737
+%attr(-,root,root) /etc/codepages/src/codepage_def.775
+%attr(-,root,root) /etc/codepages/src/codepage_def.850
+%attr(-,root,root) /etc/codepages/src/codepage_def.852
+%attr(-,root,root) /etc/codepages/src/codepage_def.861
+%attr(-,root,root) /etc/codepages/src/codepage_def.866
+%attr(-,root,root) /etc/codepages/src/codepage_def.932
+%attr(-,root,root) /etc/codepages/src/codepage_def.936
+%attr(-,root,root) /etc/codepages/src/codepage_def.949
+%attr(-,root,root) /etc/codepages/src/codepage_def.950
+%attr(-,root,root) /etc/codepages/src/codepage_def.1251
+%attr(-,root,root) /etc/codepages/src/CP437.TXT
+%attr(-,root,root) /etc/codepages/src/CP737.TXT
+%attr(-,root,root) /etc/codepages/src/CP850.TXT
+%attr(-,root,root) /etc/codepages/src/CP852.TXT
+%attr(-,root,root) /etc/codepages/src/CP861.TXT
+%attr(-,root,root) /etc/codepages/src/CP866.TXT
+%attr(-,root,root) /etc/codepages/src/CP932.TXT
+%attr(-,root,root) /etc/codepages/src/CP936.TXT
+%attr(-,root,root) /etc/codepages/src/CP949.TXT
+%attr(-,root,root) /etc/codepages/src/CP950.TXT
+%attr(-,root,root) /etc/codepages/src/CPISO8859-1.TXT
+%attr(-,root,root) /etc/codepages/src/CPISO8859-2.TXT
+%attr(-,root,root) /etc/codepages/src/CPISO8859-5.TXT
+%attr(-,root,root) /etc/codepages/src/CPISO8859-7.TXT
+%attr(-,root,root) /etc/codepages/src/CPKOI8-R.TXT
+%attr(-,root,root) %{prefix}/man/man1/smbstatus.1
+%attr(-,root,root) %{prefix}/man/man1/smbclient.1
+%attr(-,root,root) %{prefix}/man/man1/make_smbcodepage.1
+%attr(-,root,root) %{prefix}/man/man1/make_unicodemap.1
+%attr(-,root,root) %{prefix}/man/man1/smbrun.1
+%attr(-,root,root) %{prefix}/man/man1/smbtar.1
+%attr(-,root,root) %{prefix}/man/man1/testparm.1
+%attr(-,root,root) %{prefix}/man/man1/testprns.1
+%attr(-,root,root) %{prefix}/man/man1/nmblookup.1
+%attr(-,root,root) %{prefix}/man/man5/smb.conf.5
+%attr(-,root,root) %{prefix}/man/man5/lmhosts.5
+%attr(-,root,root) %{prefix}/man/man5/smbpasswd.5
+%attr(-,root,root) %{prefix}/man/man7/samba.7
+%attr(-,root,root) %{prefix}/man/man8/smbd.8
+%attr(-,root,root) %{prefix}/man/man8/nmbd.8
+%attr(-,root,root) %{prefix}/man/man8/smbpasswd.8
+%attr(-,root,root) %{prefix}/man/man8/swat.8
+%attr(-,root,root) %{prefix}/man/man8/smbmnt.8
+%attr(-,root,root) %{prefix}/man/man8/smbmount.8
+%attr(-,root,root) %{prefix}/man/man8/smbspool.8
+%attr(-,root,nobody) %dir /home/samba
+%attr(-,root,root) %dir /etc/codepages
+%attr(-,root,root) %dir /etc/codepages/src
+%attr(-,root,root) %dir /var/lock/samba
+%attr(-,root,root) %dir /var/log/samba
+%attr(1777,root,root) %dir /var/spool/samba

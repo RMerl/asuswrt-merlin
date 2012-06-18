@@ -1,0 +1,40 @@
+From 33cb7f0b4ae63f56523a20bd13e897c0cb97d73d
+From: Filippo Arcidiacono
+Date: Tue, 27 Jul 2010 15:45:26 +0000
+Subject: ldso: Do not adjust dynamic section entries unnecessarily
+
+Signed-off-by: Filippo Arcidiacono <filippo.arcidiacono@st.com>
+Signed-off-by: Carmelo Amoroso <carmelo.amoroso@st.com>
+---
+diff --git a/ldso/include/dl-elf.h b/ldso/include/dl-elf.h
+index 9c2888f..cbb2100 100644
+--- a/ldso/include/dl-elf.h
++++ b/ldso/include/dl-elf.h
+@@ -157,15 +157,18 @@ unsigned int __dl_parse_dynamic_info(ElfW(Dyn) *dpnt, unsigned long dynamic_info
+ 		if (dynamic_info[tag]) \
+ 			dynamic_info[tag] = (unsigned long) DL_RELOC_ADDR(load_off, dynamic_info[tag]); \
+ 	} while (0)
+-	ADJUST_DYN_INFO(DT_HASH, load_off);
+-	ADJUST_DYN_INFO(DT_PLTGOT, load_off);
+-	ADJUST_DYN_INFO(DT_STRTAB, load_off);
+-	ADJUST_DYN_INFO(DT_SYMTAB, load_off);
+-	ADJUST_DYN_INFO(DT_RELOC_TABLE_ADDR, load_off);
+-	ADJUST_DYN_INFO(DT_JMPREL, load_off);
++	/* Don't adjust .dynamic unnecessarily.  */
++	if (load_off != 0) {
++		ADJUST_DYN_INFO(DT_HASH, load_off);
++		ADJUST_DYN_INFO(DT_PLTGOT, load_off);
++		ADJUST_DYN_INFO(DT_STRTAB, load_off);
++		ADJUST_DYN_INFO(DT_SYMTAB, load_off);
++		ADJUST_DYN_INFO(DT_RELOC_TABLE_ADDR, load_off);
++		ADJUST_DYN_INFO(DT_JMPREL, load_off);
+ #ifdef __LDSO_GNU_HASH_SUPPORT__
+-	ADJUST_DYN_INFO(DT_GNU_HASH_IDX, load_off);
++		ADJUST_DYN_INFO(DT_GNU_HASH_IDX, load_off);
+ #endif
++	}
+ #undef ADJUST_DYN_INFO
+ }
+ 
+--
+cgit v0.8.2.1

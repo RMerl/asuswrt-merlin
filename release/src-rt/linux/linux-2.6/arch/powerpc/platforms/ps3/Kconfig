@@ -1,0 +1,105 @@
+config PPC_PS3
+	bool "Sony PS3 (incomplete)"
+	depends on PPC_MULTIPLATFORM && PPC64
+	select PPC_CELL
+	select USB_ARCH_HAS_OHCI
+	select USB_OHCI_LITTLE_ENDIAN
+	select USB_OHCI_BIG_ENDIAN_MMIO
+	select USB_ARCH_HAS_EHCI
+	select USB_EHCI_BIG_ENDIAN_MMIO
+	help
+	  This option enables support for the Sony PS3 game console
+	  and other platforms using the PS3 hypervisor.
+	  Support for this platform is not yet complete, so
+	  enabling this will not result in a bootable kernel on a
+	  PS3 system.
+
+menu "PS3 Platform Options"
+	depends on PPC_PS3
+
+config PS3_ADVANCED
+	depends on PPC_PS3
+	bool "PS3 Advanced configuration options"
+	help
+	  This gives you access to some advanced options for the PS3. The
+	  defaults should be fine for most users, but these options may make
+	  it possible to better control the kernel configuration if you know
+	  what you are doing.
+
+	  Note that the answer to this question won't directly affect the
+	  kernel: saying N will just cause the configurator to skip all
+	  the questions about these options.
+
+	  Most users should say N to this question.
+
+config PS3_HTAB_SIZE
+	depends on PPC_PS3
+	int "PS3 Platform pagetable size" if PS3_ADVANCED
+	range 18 20
+	default 20
+	help
+	  This option is only for experts who may have the desire to fine
+	  tune the pagetable size on their system.  The value here is
+	  expressed as the log2 of the page table size.  Valid values are
+	  18, 19, and 20, corresponding to 256KB, 512KB and 1MB respectively.
+
+	  If unsure, choose the default (20) with the confidence that your
+	  system will have optimal runtime performance.
+
+config PS3_DYNAMIC_DMA
+	depends on PPC_PS3 && EXPERIMENTAL
+	bool "PS3 Platform dynamic DMA page table management"
+	default n
+	help
+	  This option will enable kernel support to take advantage of the
+	  per device dynamic DMA page table management provided by the Cell
+	  processor's IO Controller.  This support incurs some runtime
+	  overhead and also slightly increases kernel memory usage.  The
+	  current implementation should be considered experimental.
+
+	  This support is mainly for Linux kernel development.  If unsure,
+	  say N.
+
+config PS3_USE_LPAR_ADDR
+	depends on PPC_PS3 && EXPERIMENTAL
+	bool "PS3 use lpar address space"
+	default y
+	help
+	  This option is solely for experimentation by experts.  Disables
+	  translation of lpar addresses.  SPE support currently won't work
+	  without this set to y.
+
+	  If you have any doubt, choose the default y.
+
+config PS3_VUART
+	depends on PPC_PS3
+	bool "PS3 Virtual UART support" if PS3_ADVANCED
+	default y
+	help
+	  Include support for the PS3 Virtual UART.
+
+	  This support is required for several system services
+	  including the System Manager and AV Settings.  In
+	  general, all users will say Y.
+
+config PS3_PS3AV
+	tristate "PS3 AV settings driver" if PS3_ADVANCED
+	depends on PS3_VUART
+	default y
+	help
+	  Include support for the PS3 AV Settings driver.
+
+	  This support is required for graphics and sound. In
+	  general, all users will say Y or M.
+
+config PS3_SYS_MANAGER
+	bool "PS3 System Manager driver" if PS3_ADVANCED
+	depends on PS3_VUART
+	default y
+	help
+	  Include support for the PS3 System Manager.
+
+	  This support is required for system control.  In
+	  general, all users will say Y.
+
+endmenu

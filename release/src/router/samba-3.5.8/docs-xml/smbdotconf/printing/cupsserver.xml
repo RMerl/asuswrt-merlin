@@ -1,0 +1,26 @@
+<samba:parameter name="cups server"
+                 context="G"
+		 type="string"
+		 print="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>
+    This parameter is only applicable if <smbconfoption name="printing"/> is set to <constant>cups</constant>.
+    </para>
+
+   <para>
+   If set, this option overrides the ServerName option in the CUPS <filename>client.conf</filename>. This is 
+   necessary if you have virtual samba servers that connect to different CUPS daemons.
+   </para>
+
+   <para>Optionally, a port can be specified by separating the server name 
+	   and port number with a colon. If no port was specified, 
+	   the default port for IPP (631) will be used.
+   </para>
+	  
+</description>
+
+<value type="default">""</value>
+<value type="example">mycupsserver</value>
+<value type="example">mycupsserver:1631</value>
+</samba:parameter>

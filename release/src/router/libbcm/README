@@ -1,0 +1,27 @@
+#
+# Broadcom Non-GPL Shared Library functions
+#
+# $Copyright Broadcom Corporation$
+#
+# $Id: README,v 1.1 2004-09-02 02:38:55 mdeb Exp $
+#
+
+This directory contains source files which are used to 
+build the shared library 'libbcm.so'.
+
+This shared library contains functions that can be used by
+multiple applications on the Linux Router. The source
+files that comprise this library are not subject to GPL. If 
+you want to add a function that is shared by multiple
+applications and which does not need to be part of the GPL
+release, add the source file to this library. If the file 
+has to be included as part of the GPL release, add it to
+libshared.so.
+
+
+WARNING:
+
+Before adding files to this library, make absolutely sure 
+that the files don't fall under GPL. Source files added to
+this libraray should NOT be included in gpl-filelist.txt.
+

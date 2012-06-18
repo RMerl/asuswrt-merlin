@@ -1,0 +1,77 @@
+.\" LIC: GPL
+.TH PPPOE-SNIFF 8 "3 July 2000"
+.\""
+.UC 4
+.SH NAME
+pppoe-sniff \- examine network for non-standard PPPoE frames
+.SH SYNOPSIS
+.B pppoe-sniff \fR[\fIoptions\fR]
+
+.SH DESCRIPTION
+\fBpppoe-sniff\fR listens for likely-looking PPPoE PADR and session frames
+and deduces extra options required for \fBpppoe(8)\fR to work.
+
+Some DSL providers seem to use non-standard frame types for PPPoE frames,
+and/or require a certain value in the Service-Name field.  It is often
+easier to sniff those values from a machine which can successfully connect
+rather than try to pry them out of the DSL provider.
+
+To use \fBpppoe-sniff\fR, you need two computers, a DSL modem and
+an Ethernet hub (\fInot\fR an Ethernet switch.)
+
+If the DSL modem normally connects directly to your computer's
+Ethernet card, connect it to the "uplink" port on the Ethernet hub.
+Plug two computers into normal ports on the hub.  On one computer, run
+whatever software the DSL provider gave you on whatever operating
+system the DSL provider supports.  On the other computer, run Linux and
+log in as root.
+
+On the Linux machine, put the Ethernet interface into promiscuous mode
+and start \fBpppoe-sniff\fR.  If the ethernet interface is \fIeth0\fR,
+for example, type these commands:
+
+.nf
+	ifconfig eth0 promisc
+	pppoe-sniff -I eth0
+.fi
+
+On the other machine, start your DSL connection as usual.  After a short
+time, \fBpppoe-sniff\fR should print recommendations for the value
+of \fBPPPOE_EXTRA\fR.  Set this value in \fB/etc/ppp/pppoe.conf\fR.
+If \fBpppoe-sniff\fR indicates that something special is required in
+\fBPPPOE_EXTRA\fR, please e-mail this to \fBpppoe@roaringpenguin.com\fR
+along with the name of your ISP and the manufacturer and model number of
+your DSL modem.  This information will be collated and provided on the
+PPPoE web page for users who do not have two computers.
+
+After \fBpppoe-sniff\fR finishes (or you stop it if it seems hung),
+remember to turn off promiscuous mode:
+
+.nf
+	ifconfig eth0 -promisc
+.fi
+
+.SH OPTIONS
+.TP
+.B \-I \fIinterface\fR
+The \fB\-I\fR option specifies the Ethernet interface to use.  Under Linux,
+it is typically \fIeth0\fR or \fIeth1\fR.  The interface should be "up"
+and in promiscuous mode before you start \fBpppoe-sniff\fR.
+
+.TP
+.B \-V
+The \fB\-V\fR option causes \fBpppoe-sniff\fR to print its version number and
+exit.
+
+.SH BUGS
+\fBpppoe-sniff\fR only works on Linux.
+
+.SH AUTHORS
+\fBpppoe-sniff\fR was written by David F. Skoll <dfs@roaringpenguin.com>.
+
+The \fBpppoe\fR home page is \fIhttp://www.roaringpenguin.com/pppoe/\fR.
+
+.SH SEE ALSO
+pppoe-start(8), pppoe-stop(8), pppoe-connect(8), pppd(8), pppoe.conf(5),
+pppoe(8), pppoe-setup(8), pppoe-status(8), pppoe-server(8), pppoe-relay(8)
+

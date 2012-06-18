@@ -1,0 +1,166 @@
+# @(#) list changes to udpxy from build to build
+#
+# Copyright 2008-2011 Pavel V. Cherenkov (pcherenkov@gmail.com)
+#
+#  This file is part of udpxy.
+#
+#  udpxy is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  udpxy is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with udpxy.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+Build 14 (2-Jan-2008):
+    (*) shutdown command removed
+
+Build 15-18 (7-Jan-2008):
+    (*) interface names get translated into IPv4 addresses
+    (*) lock-enabled pidfile support added
+
+Build 19 (9-Jan-2008):
+    (*) 'lean' target added to makefile
+    (*) -n (nice increment) option added
+
+Build 20 (9-Jan-2008):
+    (*) default settings changed for various options
+
+Build 21-22 (16-Jan-2008):
+    (*) Web GUI refinements (new design, 'restart' button added to status page)
+    (*) mipsel-linux-uclibc-gcc support added to wl500-specific makefile
+    (*) generation of wl500-specific source archive
+
+Build 23 (18-Jan-2008):
+    (*) Usage examples added to status page and command-line output
+    (*) Copyright notice added to status page and usage
+    (*) make for wl500 will not strip; no default compiler given
+
+Build 24-30 (27-Feb-2008)
+    (*) support for RTP over MPEG-TS added
+
+Build 31 (28-Feb-2008)
+    (*) bug-fix: lean target compile error corrected
+    (*) release target for wl500 will not strip the executable
+
+Build 32 (29-Feb-2008)
+    (*) throughput statistics displayed on status page
+    (*) log messages are timestamp-prepended now
+
+Build 33 (23-Mar-2008)
+    (*) udpxrec application added to record traffic into file
+    (*) miliseconds added to log timestamps
+
+Build 34 (23-Mar-2008)
+    (*) Bug fix: core dumped if no pidfile specified
+
+Build 35 (24-Mar-2008)
+    (*) Bug fix: udpxy terminates with unlink error when run as a daemon
+
+Build 36 (25-Mar-2008)
+    (*) Bug fix: udpxrec: specifying a small buffer (-B) produces assert or SEGV
+    (*) Bug fix: udpxrec: start/end-recording can be in the past
+    (*) udpxy made accept buffer in bytes by default (was in Kb)
+    (*) udpxrec will run as daemon if started under root
+    (*) Bug fix: udpxy, udpxrec will not run in bkg w/o log spec
+    (*) udpxrec will require pidfile to run as daemon (root in bkg)
+
+Build 37 (27-Mar-2008)
+    (*) bug fixes - maintenance build
+
+Build 38 (11-Apr-2008)
+    (*) -H parameter added to set max time data can be held in buffer
+    (*) socket read timeout is configurable through $UDPXY_RCV_TMOUT (env)
+    (*) migrated to unified makefile for all supported compilers
+    (*) added dependency-generation support thru mkdep
+    (*) support added for suncc (Sun Studio 12), icc (Intel C), HP ANSI C compiler (hppa20w, hppa20, hppa11 modes)
+
+Build 39 (21-May-2008)
+    (*) resolved issue of WMP refusing to connect to udpxy
+    (*) added pid to log output
+
+Version 1.0 'Chipmunk'
+--------------------------
+
+Build 1 (4-June-2008)
+    (*) same as Build 39
+
+Build 2 (6-June-2008)
+    (*) Rolled back WMP-compatibility changes
+
+Build 6 (12-August-2008)
+    (*) Fixed: udpxrec would not write beyond 2Gb; -M option would not accept >2Gb of size
+
+Build 7 (20-September-2008)
+    (*) Fixed: multicast-resubscribe default period of zero seconds would cause udpxy to resubscribe
+        on every iteration; logic changed to make udpxy re-subscribe only on setting's value >0
+        (0 means 'do NOT' re-subscribe)
+
+Build 8 (3-December-2008)
+    (*) SIGPIPE is ignored now (was handled as a signal to quit)
+    (*) Full version info is displayed on exit
+    (*) PAUSE support (non-blocking receive socket) can be disabled
+    (*) DHOLD_TIMEOUT (default max time to buffer data before flush) set to 4 seconds
+
+Build 9 (17-February-2009)
+    (*) documentation (in Russian) added
+    (*) default buffer size changed to 4K, was 64K
+    (*) minimal send-socket buffer length set to 32K (was previously set to data buffer size)
+    (*) UDPXY_SENDBUF_LEN environment variable can be set to control send-socket buffer size
+
+Build 10 (24-February-2009)
+    (*) read-socket buffer left untouched if bigger than suggested buffer value based on -R
+        and -B parameters and the minimum buffer size - currently 32K - for send socket
+    (*) UDPXY_SENDBUF_LEN replaced by UDPXREC_SOCKBUF_LEN: that will be the minimum size
+        for both read- and send-socket buffers (ignored still if set to less than 32K)
+    (*) send-socket buffer size will be enlarged to the size of read-socket bufffer size
+        (if currently smaller)
+
+Build 11 (25-February-2009)
+    (*) UDPXY_DSOCKBUF_NOSYNC set to 1 will leave send-socket buffer size unaltered
+    (*) UDPXY_SSOCKBUF_NOSYNC set to 1 will leave read (mcast)-socket buffer size unaltered
+    (*) default buffer size (-B) changed to 2K, was 4K
+    (*) default value for -R (messages to buffer) set to 1
+    (*) minimum (advisory) socket buffer size set to 64K, was 32K
+    (*) Fixed: assert when processing RTP-TS with -R 1
+    (*) Fixed: if2addr() not working under 64-bit linux; -a and -m options would not accept ifc names
+    (*) Fixed: quit flag value cast incorrectly under 64-bit linux
+    (*) CFLAGS variable may used for additional compiler options (CFLAGS='-m32' will force 32-bit build, for instance)
+    (*) NOP statements in udpxy.c, udpxrec.c updated to compile w/o warnings under gcc 3.2.3
+    (*) util/mkipk.sh script added to create IPKG packages
+
+Build 12 (9-April-2009)
+    (*) ported to compile under FreeBSD 7.1 (32-bit)
+
+Build 13 (10-April-2009)
+    (*) signedness comparison warnings eliminated
+
+Build 14 (23-Jul-2009)
+    (*) ported to compile under FreeBSD 5.5 (32-bit)
+
+Build 15 (XX-Mar-2010)
+    (*) FIXED: not compiling with -O2/O3 flags under gcc (select additional options in USER_OPT env variable)
+    (*) FIXED: would not allow running more than one udpxy daemon
+
+Build 16 (21-Mar-2010)
+    (*) FIXED: hanging when specifying network interface by name
+
+Build 17 (27-Jun-2010)
+    (*) FIXED: server terminates on ECONNABORTED from accept()
+    (*) Dynamic memory allocation for HTTP status pages implemented - will not truncate pages
+
+Build 18 (9-Jan-2011)
+    (*) IP/port separator in HTTP request to udpxy can be any of those: ":%~+-^"
+
+Build 19 (9-Jan-2011)
+    (*) MAX limit of clients (-c option) upped to 5,000 (five thousand)
+
+
+# __EOF__
+

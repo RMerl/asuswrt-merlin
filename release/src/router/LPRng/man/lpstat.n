@@ -1,0 +1,293 @@
+.\" @(#)lpstat.1 1.29 95/10/09 SMI; from SVr4
+.\" Copyright 1989 AT&T
+.\" Copyright (c) 1995, Sun Microsystems, Inc.
+.\" All Rights Reserved
+.\" Portions Copyright (c) 1992, X/Open Company Limited
+.\" All Rights Reserved
+.TH lpstat 1 "7 Feb 1994"
+.SH NAME
+lpstat \- print information about the status of the LP print service
+.SH SYNOPSIS
+.B lpstat
+[
+.B \-A
+] [
+.B \-d
+] [
+.B \-r
+] [
+.B \-R
+] [
+.B \-s
+] [
+.B \-t
+] [
+.B \-a
+.RI [ list ]
+] 
+.ti +5n
+[
+.B \-c
+.RI [ list ]
+] 
+[
+.B \-f
+.RI [ list ]
+[
+.B \-l
+] ]
+[
+.B \-o
+.RI [ list ]
+]
+.ti +5n
+[
+.B \-p
+.RI [ list ]
+[
+.BI \-D
+] [
+.B \-l
+] ]
+[
+.B \-P
+]
+.ti +5n
+[
+.B \-S
+.RI [ list ]
+[
+.B \-l
+] ] 
+[
+.B \-u
+.RI [ login-ID-list ]
+] 
+.ti +5n
+[
+.B \-v
+.RI [ list ]
+]
+[
+.BI \-T debugoptions
+] 
+.RI [ list ]
+.SH DESCRIPTION
+.IX "lpstat command" "" "\fLlpstat\fP \(em print information about the status of the LP print service"
+.IX "LP print services" "print information about the status" "" "print information about the status \(em \fLlpstat\fP"
+.IX "printers" "print information about the status" "" "print information about the status \(em \fLlpstat\fP"
+The \f3lpstat\fP command 
+prints information about the current status of 
+the 
+.SM LP 
+print service.
+This is implemented as a front end to the LPRng
+.BR lpq (1)
+program,
+and does not have the full functionality of the native
+.B lpstat
+program.
+.PP
+If no options are given,
+then \f3lpstat\f1
+prints the status of all the user's print
+requests made by \f3lp\f1 on the default printer.
+(see
+.BR lp (1)
+and
+.BR lpr (1)).
+Any arguments that are not \f2options\f1
+are assumed to be \f2request-IDs\f1
+as returned by \f3lp\f1
+or printer names.
+The \f3lpstat\f1 command 
+prints the status of such requests.
+The \f2options\f1 may appear in any order
+and may be repeated
+and intermixed with other arguments.
+Some of the keyletters below
+may be followed by an optional
+.I list
+that can be in one of two forms:
+a list of items separated from one another by a comma,
+or a list of items separated
+from one another by spaces
+enclosed in quotes.
+For example:
+.PP
+.RS
+\f3 example% lpstat \-u "user1 user2 user3"\f1
+.RE
+.PP
+Specifying \f3all\f1 after any keyletter
+that takes \f2list\f1 as an argument causes
+all information relevant to the keyletter to be printed.
+For example, the command:
+.PP
+.RS
+.B example% lpstat \-o all
+.RE
+.PP
+prints the status of all output requests.
+.PP
+The omission of a \f2list\f1
+following such key letters causes all information
+relevant to the key letter to be printed.
+For example, the command:
+.PP
+.RS
+.B example% lpstat \-o
+.RE
+.PP
+prints the status of all output requests.
+.SH OPTIONS
+The following options are supported:
+.TP 15
+\f3\-A\f1
+Use authentication specified by the value of the AUTH environment variable.
+.TP 15
+\f3\-a\f1 [\f2list\f1]
+Reports whether print destinations are accepting requests.
+.I list
+is a list of printer names.
+.TP
+\f3\-c\f1 [\f2list\f1]
+Print name of all classes and their members.
+.I list
+is a list of class names.
+(Same effect as \f3\-o\fP.)
+.TP
+.B \-d
+Print the system default destination for
+output requests.
+.TP
+\f3\-f \f1[\f2list\f1] [\f3\-l\f1]
+Print list of printers supporting the specified forms option is
+ignored.
+.TP
+\f3\-o\f1 [\f2list\f1]
+Print the status of output requests:
+.I list
+is a list of intermixed
+printer names, class names, and
+\f2request-IDs\f1.
+The keyletter \f3\-o\fP may be omitted.
+.br
+.ne 3
+.TP
+\f3\-p\f1 [\f2list\f1]
+Print the status of printers.
+\f2list\f1 is a list of printer names.
+(Same effect as \f3\-o\fP.)
+.TP
+.B \-P
+Print the paper types.
+Ignored.
+.TP
+.B \-r
+Print the status of the 
+.SM LP 
+request scheduler.
+.TP
+.B \-R
+Print a number showing the position of each job in the print queue.
+Ignored.
+.TP
+.B \-s
+Print a status summary.
+Produces a short status listing.
+.TP
+\f3\-S \f1[\f2list\f1] [\f3\-l\f1]
+List or verify character sets of printers.
+(Ignored.)
+.TP
+.B \-t
+Print all status information.
+.TP
+\f3\-u\f1 [\f2login-ID-list\f1] 
+Print the status of output requests for users.
+(Same effect as \f3\-o\fP.)
+.TP 15
+\f3\-v\f1 [\f2list\f1]
+Print the path names of the printer output devices.
+(Ignored.)
+.B \-D
+Combined with the
+.B \-p
+flag prints description of printer.
+.TP 15
+\f3\-Toptions\f1
+Set debugging options. Use -T= to get lpstat to provide a list.
+.SH ENVIRONMENT
+.PP
+By default,
+the destination printer
+is taken from
+the command line
+.I dest
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
+.SH "EXIT STATUS"
+.PP
+The following exit values are returned:
+.TP 15
+.B "zero (0)"
+Successful completion.
+.TP
+.B "non-zero (!=0)"
+An error occurred.
+.SH FILES
+.PP
+The files used by LPRng are set by values in the
+printer configuration file.
+The following are a commonly used set of default values.
+.nf
+.ta \w'/var/spool/lpd/printcap.<hostname>           'u
+_LPD_CONF_PATH_	LPRng configuration file
+${HOME}/.printcap	user printer description file
+_PRINTCAP_PATH_	printer description file
+_LPD_PERMS_PATH_	permissions
+_LOCKFILE_	lock file for queue control
+/var/spool/lpd		spool directories
+/var/spool/lpd/QUEUE/control	queue control
+/var/spool/lpd/QUEUE/log	trace or debug log file
+/var/spool/lpd/QUEUE/acct	accounting file
+/var/spool/lpd/QUEUE/status	status file
+.fi
+.SH SEE ALSO
+lpd.conf(5),
+lpc(8),
+lpd(8),
+checkpc(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.perms(5),
+pr(1), lprng_certs(1), lprng_index_certs(1).
+.SH DIAGNOSTICS
+.nf
+Most of the diagnostics are self explanatory.
+If you are puzzled over the exact cause of failure,
+set the debugging level on (-T5) and run again.
+The debugging information will 
+help you to pinpoint the exact cause of failure.
+.fi
+.SH "HISTORY"
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+The LPRng mailing list is lprng@lprng.com;
+subscribe by sending mail to lprng-request@lprng.com with
+the word subscribe in the body.
+The software is available from ftp://ftp.lprng.com/pub/LPRng.
+.SH "AUTHOR"
+Patrick Powell <papowell@lprng.com>.

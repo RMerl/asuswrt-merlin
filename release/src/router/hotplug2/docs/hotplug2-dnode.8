@@ -1,0 +1,18 @@
+.\" .nh
+.\" .ad l
+.TH "hotplug2-dnode" "8" "August 2006" "hotplug2-dnode" "hotplug2-dnode"
+.SH "NAME"
+hotplug2\-dnode \- /proc/sys/kernel/hotplug to uevent bridge
+.SH "DESCRIPTION"
+.PP 
+The application hotplug2\-dnode is a bridge between the old /proc/sys/kernel/hotplug interface used mainly in 2.4 kernels and new uevent method, using socket. 
+.PP 
+Once executed, it reads the event passed through environment variables and arguments, turns it into uevent format, generates the possibly missing variables and passes onwards using netlink socket.
+.PP 
+.SH "AUTHOR"
+.PP 
+Written by iSteve
+<isteve@bofh.cz>
+.SH "SEE ALSO"
+.PP 
+\fBhotplug2\fR(8)

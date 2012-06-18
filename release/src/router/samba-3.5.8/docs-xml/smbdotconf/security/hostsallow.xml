@@ -1,0 +1,63 @@
+<samba:parameter name="hosts allow"
+                 context="S"
+				 type="list"
+                 basic="1" advanced="1" print="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<synonym>allow hosts</synonym>
+<description>
+    <para>A synonym for this parameter is <smbconfoption name="allow hosts"/>.</para>
+		
+    <para>This parameter is a comma, space, or tab delimited 
+    set of hosts which are permitted to access a service.</para>
+
+    <para>If specified in the [global] section then it will
+    apply to all services, regardless of whether the individual 
+    service has a different setting.</para>
+
+    <para>You can specify the hosts by name or IP number. For 
+    example, you could restrict access to only the hosts on a 
+    Class C subnet with something like <command>allow hosts = 150.203.5.</command>.
+	The full syntax of the list is described in the man 
+    page <filename>hosts_access(5)</filename>. Note that this man
+    page may not be present on your system, so a brief description will
+    be given here also.</para>
+
+    <para>Note that the localhost address 127.0.0.1 will always 
+    be allowed access unless specifically denied by a <smbconfoption name="hosts deny"/> option.</para>
+
+    <para>You can also specify hosts by network/netmask pairs and 
+    by netgroup names if your system supports netgroups. The 
+    <emphasis>EXCEPT</emphasis> keyword can also be used to limit a 
+    wildcard list. The following examples may provide some help:</para>
+
+<para>Example 1: allow all IPs in 150.203.*.*; except one</para>
+
+    <para><command moreinfo="none">hosts allow = 150.203. EXCEPT 150.203.6.66</command></para>
+
+    <para>Example 2: allow hosts that match the given network/netmask</para>
+
+    <para><command moreinfo="none">hosts allow = 150.203.15.0/255.255.255.0</command></para>
+
+    <para>Example 3: allow a couple of hosts</para>
+
+    <para><command moreinfo="none">hosts allow = lapland, arvidsjaur</command></para>
+
+    <para>Example 4: allow only hosts in NIS netgroup &quot;foonet&quot;, but 
+    deny access from one particular host</para>
+
+    <para><command moreinfo="none">hosts allow = @foonet</command></para>
+
+    <para><command moreinfo="none">hosts deny = pirate</command></para>
+
+    <note><para>Note that access still requires suitable user-level passwords.</para></note>
+
+    <para>See <citerefentry><refentrytitle>testparm</refentrytitle>
+    <manvolnum>1</manvolnum></citerefentry> for a way of testing your host access 
+    to see if it does what you expect.</para>
+
+		
+</description>
+
+<value type="example">150.203.5. myhost.mynet.edu.au</value>
+<value type="default"><comment>none (i.e., all hosts permitted access)</comment></value>
+</samba:parameter>

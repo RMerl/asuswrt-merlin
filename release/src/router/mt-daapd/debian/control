@@ -1,0 +1,13 @@
+Source: mt-daapd
+Section: sound
+Priority: optional
+Maintainer: Aubin Paul <debian@outlyer.org>
+Build-Depends: debhelper (>= 4.0.0), libid3tag0-dev, zlib1g-dev, libgdbm-dev
+Standards-Version: 3.6.0
+
+Package: mt-daapd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: iTunes-compatible DAAP server 
+ An iTunes server for Linux, Solaris, OSX, and other POSIX Unix machines. 
+

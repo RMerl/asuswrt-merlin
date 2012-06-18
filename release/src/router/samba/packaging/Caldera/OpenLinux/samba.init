@@ -1,0 +1,62 @@
+#!/bin/sh
+#
+# description: Starts and stops the Samba smbd and nmbd daemons
+#	       used to provide SMB network services.
+
+NAME_S=smbd
+DAEMON_S=/usr/sbin/$NAME_S
+NAME_N=nmbd
+DAEMON_N=/usr/sbin/$NAME_N
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+# See how we were called.
+case "$1" in
+ start)
+  [ -e $SVIlock ] && exit 1
+  [ ${NETWORKING} = "no" ] && exit 2
+  [ -x $DAEMON_S -a -x $DAEMON_N ] || exit 2
+
+  #[ "$CONFIGURED"  != "no" -a "$CONFIGURED"  != "false" ] || {
+  SVIemptyConfig /etc/samba.d/smb.conf && {
+    echo "$DESCRIPTIVE: not configured! Skipped..."
+    exit 2
+  }
+
+  echo -n "Starting $IDENT: "
+  ssd -S -n $NAME_S -x $DAEMON_S -- $OPTIONS_SMB
+  ssd -S -n $NAME_N -x $DAEMON_N -- $OPTIONS_NMB
+
+  echo "."
+  touch $SVIlock
+  ;;
+
+ stop)
+  [ -e $SVIlock ] || exit 0
+
+  echo -n "Stopping $IDENT: "
+  ssd -K -p /var/lock/samba.d/$NAME_N.pid -n $NAME_N #-x $DAEMON_N
+  ssd -K -p /var/lock/samba.d/$NAME_S.pid -n $NAME_S #-x $DAEMON_S
+
+  echo "."
+  rm -f $SVIlock
+  ;;
+
+ restart)
+  echo -n "Restarting $IDENT: "
+  $0 stop
+  $0 start
+  exit $?
+  ;;
+
+ *)
+  echo "Usage: $SVIscript {start|restart|stop}"
+  exit 1
+  ;;
+esac
+
+exit 0

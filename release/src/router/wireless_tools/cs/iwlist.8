@@ -1,0 +1,120 @@
+.\" Jean II - HPLB - 96
+.\" iwlist.8
+.\"
+.TH IWLIST 8 "23.èerven 2004" "wireless-tools" "Linux - Manuál programátora"
+.\"
+.\" NAME part
+.\"
+.SH JMÉNO
+iwlist \- Získá podrobnìj¹í bezdrátové informace o bezdrátovém rozhraní
+.\"
+.\" SYNOPSIS part
+.\"
+.SH SYNTAXE
+.BI "iwlist " rozhraní " scanning"
+.br
+.BI "iwlist " rozhraní " frequency"
+.br
+.BI "iwlist " rozhraní " rate"
+.br
+.BI "iwlist " rozhraní " key"
+.br
+.BI "iwlist " rozhraní " power"
+.br
+.BI "iwlist " rozhraní " txpower"
+.br
+.BI "iwlist " rozhraní " retry"
+.br
+.BI "iwlist " rozhraní " event"
+.br
+.BI "iwlist --help"
+.br
+.BI "iwlist --version"
+.\"
+.\" DESCRIPTION part
+.\"
+.SH POPIS
+.B Iwlist
+se pou¾ívá k zobrazení doplòujících informací o bezdrátovém sí»ovém
+rozhraní, které nejsou zobrazovány pøíkazem
+.IR iwconfig (8).
+Hlavní parametr urèuje typ informace, kterou
+.B iwlist
+zobrazí v detailní podobì, vèetnì informace, kterou poskytuje
+.IR iwconfig (8).
+.\"
+.\" PARAMETER part
+.\"
+.SH PARAMETRY
+.TP
+.BR scan [ning]
+Vypí¹e seznam pøístupových bodù a Ad-Hoc buòek v dosahu a 
+volitelnì i spoustu informací o nich (ESSID, kvalita,
+frekvence, re¾im...). Typ zobrazené informace závisí na mo¾nostech karty.
+.br
+Spu¹tìní skenování je privilegovaná operace (mù¾e ji provést pouze
+.RI root
+) a normální u¾ivatel mù¾e pouze èíst zbylé výsledky skenování. 
+Jako výchozí je zpùsob, kterým je skenování provedeno (jeho rozsah)
+ovlivnìn aktuálním nastavením ovladaèe. U tohoto pøíkazu se poèítá s dodateènými parametry
+pro kontrolu zpùsobu skenování, to ale zatím není implementováno.
+.TP
+.BR freq [uency]/ channel
+Vypí¹e seznam dostupných frekvencí pro zaøízení a poèet definovaných kanálù
+Prosím vìnujte pozornost tomu, ¾e ovladaè obvykle vrací
+celkový poèet kanálù a pouze frekvence dostupné v aktuálním locale,
+tak¾e mezi zobrazenými frekvencemi a èísly kanálù není vztah "jedna k jedné".
+.TP
+.BR rate / bit [rate]
+Vypí¹e pøenosové rychlosti podporované zaøízením.
+.TP
+.BR key / enc [ryption]
+Vypí¹e podporované velikosti ¹ifrovacích klíèù a zobrazí v¹echny ¹ifrovací
+klíèe dostupné v zaøízení.
+.TP
+.B power
+Vypí¹e rùzné atributy a re¾imy øízení spotøeby zaøízení.
+.TP
+.B txpower
+vypí¹e dostupné vysílací výkony zaøízení.
+.TP
+.B retry
+vypí¹e limity pro transmit retry a retry lifetime na zaøízení.
+.TP
+.BR ap / accesspoint / peers
+Vypí¹e pøístupové body v dosahu a volitelnì i kvalitu spoje
+Tato volba je 
+.B zastaralá
+a je nyní opu¹tìna ve prospìch skenování (viz vý¹e), vìt¹ina
+ovladaèù ji nepodporuje.
+.br
+Nìkteré ovladaèe mohou s tímto pøíkazem vracet zvlá¹tní seznam peerù
+nebo pøístupových bodù, jako napø. seznam peerù asociovaních s/registrovaných s
+kartou. Více informací obsahuje dokumentace ovladaèù.
+.TP
+.B event
+Vypí¹e bezdrátové události podporované zaøízením.
+.TP
+.B --version
+Zobrazí verzi wireless tools a doporuèenou a aktuální verzi Wireless Extensions
+s ohledem na bezdrátové rozhraní.
+.\"
+.\" TRANSLATION part
+.\"
+.SH PØEKLAD
+Pavel Heimlich \- tropikhajma@seznam.cz, bøezen 2005 (wireless_tools.28pre4).
+.\"
+.\" FILES part
+.\"
+.SH SOUBORY
+.I /proc/net/wireless
+.\"
+.\" SEE ALSO part
+.\"
+.SH DAL©Í INFORMACE
+.BR iwconfig (8),
+.BR iwspy (8).
+.BR iwevent (8),
+.BR iwpriv (8),
+.BR wireless (7).
+

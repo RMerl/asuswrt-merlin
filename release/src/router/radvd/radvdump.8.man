@@ -1,0 +1,86 @@
+.\"
+.\"
+.\"   Authors:
+.\"    Lars Fenneberg		<lf@elemental.net>	 
+.\"    Marko Myllynen		<myllynen@lut.fi>	
+.\"
+.\"   This software is Copyright 1996 by the above mentioned author(s), 
+.\"   All Rights Reserved.
+.\"
+.\"   The license which is distributed with this software in the file COPYRIGHT
+.\"   applies to this software. If your distribution is missing this file, you
+.\"   may request it from <pekkas@netcore.fi>.
+.\"
+.\"
+.\"
+.TH RADVDUMP 8 "31 Mar 2008" "radvd @VERSION@" ""
+.SH NAME
+radvdump \- dump router advertisements
+.SH SYNOPSIS
+.B radvdump
+.B "[ \-vhfe ]"
+.BI "[ \-d " debuglevel " ]"
+
+.SH DESCRIPTION
+.B radvdump
+prints out the contents of incoming router advertisements sent by
+.B radvd
+or some other software implementing (parts of)
+"Neighbor Discovery for IP Version 6 (IPv6)" (RFC 4861).
+
+.SH OPTIONS
+
+For every one character option there is also a long option, which
+is listed right next to the "short" option name:
+
+.TP
+.BR "\-v" , " \-\-version"
+Displays the version of
+.I radvdump
+and then aborts.
+.TP
+.BR "\-h" , " \-\-help"
+Displays a short usage description and then aborts.
+.TP
+.BR "\-f" , " \-\-file\-format"
+Output received router advertisements in the format of the
+.B radvd
+configuration file.
+Since radvd 0.9, this is the default and the switch is provided
+for backward compatibility only.
+.TP
+.BR "\-e" , " \-\-exclude-defaults"
+Exclude default valued options from configuration file format.
+This option is ignored if option
+.B "\-f"
+is not set.
+.TP
+.BR "\-d " debuglevel, " \-\-debug " debuglevel
+With this option you turn on debugging information. The debugging level is
+an integer in the range from 1 to 4, from quiet to very verbose. A
+debugging level of 0 completely turns off debugging.
+
+The default debugging level is 0.
+
+.SH FILES
+
+.nf
+@sbindir@/radvdump
+.fi
+.SH BUGS
+
+There certainly are some bugs. If you find them or have other
+suggestions please contact Pekka Savola <pekkas@netcore.fi>.
+
+.SH "SEE ALSO"
+
+.BR radvd (8),
+.BR radvd.conf (5)
+.SH AUTHORS
+
+.nf
+Lars Fenneberg	<lf@elemental.net>	- previous maintainer
+Nathan Lutchansky <lutchann@litech.org> - previous maintainer
+Pekka Savola	<pekkas@netcore.fi>	- current maintainer
+Marko Myllynen	<myllynen@lut.fi>	- Mobile IPv6 support
+.fi

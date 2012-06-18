@@ -1,0 +1,15 @@
+Tweedlebug
+_afpovertcp._tcp.
+548
+name=val1
+
+Tweedlebug2
+_afpovertcp._tcp. local.
+548
+name=val2
+name2=anotherattribute
+
+Tweedlebug3
+_afpovertcp._tcp.
+548
+name=val3

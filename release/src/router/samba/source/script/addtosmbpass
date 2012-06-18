@@ -1,0 +1,74 @@
+#!/usr/bin/awk -f
+# edit the line above to point to your real location of awk interpreter
+
+# awk program for adding new entries in smbpasswd files
+# arguments are account names to add; feed it an existent Samba password
+# file on stdin, results will be written on stdout
+#
+# Michal Jaegermann, michal@ellpspace.math.ualberta.ca, 1995-11-09
+
+BEGIN {
+  me = "addtosmbpass";
+  count = ARGC;
+  FS = ":";
+ 
+  if (count == 1) {
+    print "Usage:", me,
+          "name1 [name2 ....] < smbpasswd.in >  smbpasswd.out";
+    ARGV[1] = "/dev/null";
+    ARGC = 2;
+    exit;
+  }
+
+  for(i = 1; i < count; i++) {
+    names[ARGV[i]] = " ";
+    delete ARGV[i];
+  }
+# sane awk should work simply with 'ARGC = 1', but not every awk
+# implementation is sane - big sigh!!
+  ARGV[1] = "-";
+  ARGC = 2;
+#
+# If you have ypmatch but is not RPC registered (some Linux systems
+# for example) comment out the next line.
+# "which ypmatch" | getline ypmatch;
+  if (1 != match(ypmatch, /^\//)) {
+    ypmatch = "";
+  }
+  pwdf = "/etc/passwd";
+}
+#check for names already present in input
+{
+  print $0;
+  for(name in names) {
+    if($1 ~ name) {
+      delete names[name];
+    }
+  }
+}
+END {
+  fmt = "%s:%s:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:";
+  fmt = fmt   "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:[U          ]:LCT-00000000:%s:\n";
+  for(name in names) {
+    while ((getline < pwdf) > 0) {
+      if ($1 == name) {
+	printf(fmt, $1, $3, $5);
+	close(pwdf);
+	notfound = "";
+	break;
+      }
+      notfound = "n";
+    }
+    $0 = "";
+    if (notfound && ypmatch) {
+#     try to find in NIS databases
+      command = ypmatch " " name " passwd";
+      command | getline;
+      if (NF > 0) {
+	printf(fmt, $1, $3, $5);
+      }
+      close(command);
+    }
+  }
+}
+

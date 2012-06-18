@@ -1,0 +1,215 @@
+##
+## Coding conventions in the Samba 3.0 tree
+##
+
+===========
+Quick Start
+===========
+
+Coding style guidelines are about reducing the number of unnecessary
+reformatting patches and making things easier developers to work together.
+You don't have to like them or even agree with them, but once put in place
+we all have to abide by them (or vote to change them).  However, coding
+style should never outweigh coding itself and so the the guidelines
+described here are hopefully easier enough to follow as they are very
+common and supported by tools and editors.
+
+The basic style, also mentioned in the SAMBA_4_0/prog_guide.txt is the
+Linux kernel coding style (See Documentation/CodingStyle in the kernel
+source tree).  The closely matches what most Samba developers use already
+anyways.
+
+But to save you the trouble of reading the Linux kernel style guide, here
+are the highlights.
+
+
+* Maximum Line Width is 80 Characters
+  The reason is not for people with low-res screens but rather sticking
+  to 80 columns prevents you from easily nesting more than one level of
+  if statements or other code blocks.  Use source/script/count_80_col.pl
+  to check your changes.
+
+* Use 8 Space Tabs to Indent
+  No whitespace filler.
+
+* No Trailing Whitespace
+  Use source/script/strip_trail_ws.pl to clean you files before committing.
+
+* Follow the K&R guidelines.  We won't go throw them all here.  You have
+  a copy of "The C Programming Language" anyways right?  You can also use
+  the format_indent.sh script found in source/script/ if all else fails.
+
+
+
+============
+Editor Hints
+============
+
+Emacs
+-----
+Add the follow to your $HOME/.emacs file:
+
+  (add-hook 'c-mode-hook
+	(lambda ()
+		(c-set-style "linux")
+		(c-toggle-auto-state)))
+
+
+Vi
+--
+(Thanks to SATOH Fumiyasu <fumiyas@osstech.jp> for these hints):
+
+For the basic vi editor including with all variants of *nix, add the 
+following to $HOME/.exrc:
+
+  set tabstop=8
+  set shiftwidth=8
+
+For Vim, the following settings in $HOME/.vimrc will also deal with 
+displaying trailing whitespace:
+
+  if has("syntax") && (&t_Co > 2 || has("gui_running"))
+	syntax on
+	function! ActivateInvisibleCharIndicator()
+		syntax match TrailingSpace "[ \t]\+$" display containedin=ALL
+		highlight TrailingSpace ctermbg=Red
+	endf
+	autocmd BufNewFile,BufRead * call ActivateInvisibleCharIndicator()
+  endif
+
+
+=========================
+FAQ & Statement Reference
+=========================
+
+Comments
+--------
+
+Comments should always use the standard C syntax.  I.e. /* ... */.  C++ 
+style comments are not currently allowed.
+
+
+Indention & Whitespace & 80 columns
+-----------------------------------
+
+To avoid confusion, indentations are to be 8 character with tab (not 
+8 ' ' characters.  When wrapping parameters for function calls, 
+alignment parameter list with the first parameter on the previous line.
+Use tabs to get as close as possible and then fill in the final 7 
+characters or less with whitespace.  For example,
+
+	var1 = foo(arg1, arg2,
+		   arg3);
+
+The previous example is intended to illustrate alignment of function 
+parameters across lines and not as encourage for gratuitous line 
+splitting.  Never split a line before columns 70 - 79 unless you
+have a really good reason.  Be smart about formatting.
+
+
+If, switch, & Code blocks
+-------------------------
+
+Always follow an 'if' keyword with a space but don't include additional
+spaces following or preceding the parentheses in the conditional.
+This is good:
+
+	if (x == 1)
+
+This is bad:
+
+	if ( x == 1 )
+
+Yes we have a lot of code that uses the second form and we are trying 
+to clean it up without being overly intrusive.
+
+Note that this is a rule about parentheses following keywords and not
+functions.  Don't insert a space between the name and left parentheses when 
+invoking functions.
+
+Braces for code blocks used by for, if, switch, while, do..while, etc...
+should begin on the same line as the statement keyword and end on a line 
+of their own.  NOTE: Functions are different and the beginning left brace
+should begin on a line of its own.
+
+If the beginning statement has to be broken across lines due to length,
+the beginning brace should be on a line of its own.
+
+The exception to the ending rule is when the closing brace is followed by 
+another language keyword such as else or the closing while in a do..while 
+loop.
+
+Good examples:
+
+	if (x == 1) {
+		printf("good\n");
+	}
+
+	for (x=1;
+	     x<10;
+	     x++)
+	{
+		print("%d\n", x);
+	}
+
+	do {
+		printf("also good\n");
+	} while (1);
+
+Bad examples:
+
+	while (1)
+	{
+		print("I'm in a loop!\n"); }
+	
+
+Goto
+----
+
+While many people have been academically taught that goto's are fundamentally
+evil, then can greatly enhance readability and reduce memory leaks when used
+as the single exit point from a function.  But in no Samba world what so ever 
+is a goto outside of a function or block of code a good idea.
+
+Good Examples:
+
+int function foo(int y)
+{
+	int *z = NULL;
+	int ret = 0;
+
+	if ( y < 10 ) {
+		z = malloc(sizeof(int)*y);
+		if (!z) {
+			ret = 1;
+			goto done;
+		}
+	}
+
+	print("Allocated %d elements.\n", y);
+
+ done: 
+	if (z)
+		free(z);
+
+	return ret;
+}
+
+
+Checking Pointer Values
+-----------------------
+
+When invoking functions that return pointer values, either of the following 
+are acceptable.  Use you best judgement and choose the more readable option.
+Remember that many other people will review it.
+
+	if ((x = malloc(sizeof(short)*10)) == NULL ) {
+		fprintf(stderr, "Unable to alloc memory!\n");
+	}
+
+or
+
+	x = malloc(sizeof(short)*10);
+	if (!x) {
+		fprintf(stderr, "Unable to alloc memory!\n");
+	}

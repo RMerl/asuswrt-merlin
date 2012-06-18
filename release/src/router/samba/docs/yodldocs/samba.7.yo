@@ -1,0 +1,146 @@
+mailto(samba@samba.org)
+manpage(Samba htmlcommand((7)))(7)(23 Oct 1998)(Samba)()
+
+label(NAME)
+manpagename(Samba)(A Windows SMB/CIFS fileserver for UNIX)
+
+label(SYNOPSIS)
+manpagesynopsis()
+bf(Samba)
+
+
+label(DESCRIPTION)
+manpagedescription()
+
+The Samba software suite is a collection of programs that implements
+the Server Message Block(commonly abbreviated as SMB) protocol for
+UNIX systems. This protocol is sometimes also referred to as the
+Common Internet File System (CIFS), LanManager or NetBIOS protocol.
+
+label(COMPONENTS)
+manpagesection(COMPONENTS)
+
+The Samba suite is made up of several components. Each component is
+described in a separate manual page. It is strongly recommended that
+you read the documentation that comes with Samba and the manual pages
+of those components that you use. If the manual pages aren't clear
+enough then please send a patch or bug report
+to email(samba@samba.org).
+
+startdit() 
+
+dit(url(bf(smbd))(smbd.8.html)) nl() nl() The url(bf(smbd)
+(8))(smbd.8.html) daemon provides the file and print services to SMB
+clients, such as Windows 95/98, Windows NT, Windows for Workgroups or
+LanManager. The configuration file for this daemon is described in
+url(bf(smb.conf (5)))(smb.conf.5.html).
+
+dit(url(bf(nmbd))(nmbd.8.html)) nl() nl() The url(bf(nmbd)
+(8))(nmbd.8.html) daemon provides NetBIOS nameserving and browsing
+support. The configuration file for this daemon is described in
+url(bf(smb.conf (5)))(smb.conf.5.html).
+
+dit(url(bf(smbclient))(smbclient.1.html)) nl() nl() The url(bf(smbclient)
+(1))(smbclient.1.html) program implements a simple ftp-like
+client. This is useful for accessing SMB shares on other compatible
+servers (such as Windows NT), and can also be used to allow a UNIX box
+to print to a printer attached to any SMB server (such as a PC running
+Windows NT).
+
+dit(url(bf(testparm))(testparm.1.html)) nl() nl() The url(bf(testparm
+(1)))(testparm.1.html) utility allows you to test your url(bf(smb.conf
+(5)))(smb.conf.5.html) configuration file.
+
+dit(url(bf(testprns))(testprns.1.html)) nl() nl() the url(bf(testprns
+(1)))(testprns.1.html) utility allows you to test the printers defined
+in your printcap file.
+
+dit(url(bf(smbstatus))(smbstatus.1.html)) nl() nl() The url(bf(smbstatus)
+(1))(smbstatus.1.html) utility allows you list current connections to the 
+url(bf(smbd (8)))(smbd.8.html) server.
+
+dit(url(bf(nmblookup))(nmblookup.1.html)) nl() nl() the
+url(bf(nmblookup (1)))(nmblookup.1.html) utility allows NetBIOS name
+queries to be made from the UNIX machine.
+
+dit(url(bf(make_smbcodepage))(make_smbcodepage.1.html)) nl() nl() The
+url(bf(make_smbcodepage (1)))(make_smbcodepage.1.html) utility allows
+you to create SMB code page definition files for your url(bf(smbd
+(8)))(smbd.8.html) server.
+
+dit(url(bf(smbpasswd))(smbpasswd.8.html)) nl() nl() The url(bf(smbpasswd
+(8)))(smbpasswd.8.html) utility allows you to change SMB encrypted
+passwords on Samba and Windows NT(tm) servers.
+
+enddit()
+
+label(AVAILABILITY)
+manpagesection(AVAILABILITY)
+
+The Samba software suite is licensed under the GNU Public License
+(GPL). A copy of that license should have come with the package in the
+file COPYING. You are encouraged to distribute copies of the Samba
+suite, but please obey the terms of this license.
+
+The latest version of the Samba suite can be obtained via anonymous
+ftp from samba.org in the directory pub/samba/. It is
+also available on several mirror sites worldwide.
+
+You may also find useful information about Samba on the newsgroup
+comp.protocols.smb and the Samba mailing list. Details on how to join
+the mailing list are given in the README file that comes with Samba.
+
+If you have access to a WWW viewer (such as Netscape or Mosaic) then
+you will also find lots of useful information, including back issues
+of the Samba mailing list, at
+url(http://samba.org/samba/)(http://samba.org/samba/).
+
+label(VERSION)
+manpagesection(VERSION)
+
+This man page is correct for version 2.0 of the Samba suite. 
+
+label(CONTRIBUTIONS)
+manpagesection(CONTRIBUTIONS)
+
+If you wish to contribute to the Samba project, then I suggest you
+join the Samba mailing list at email(samba@samba.org). See the
+Web page at
+url(http://samba.org/listproc)(http://samba.org/listproc)
+for details on how to do this.
+
+If you have patches to submit or bugs to report then you may mail them
+directly to email(samba@samba.org). Note, however, that due to
+the enormous popularity of this package the Samba Team may take some
+time to respond to mail. We prefer patches in em(diff -u) format.
+
+label(CREDITS)
+manpagesection(CREDITS)
+
+Contributors to the project are now too numerous to mention here but
+all deserve the thanks of all Samba users. To see a full list, look at
+url(ftp://samba.org/pub/samba/alpha/change-log)(ftp://samba.org/pub/samba/alpha/change-log)
+for the pre-CVS changes and at
+url(ftp://samba.org/pub/samba/alpha/cvs.log)(ftp://samba.org/pub/samba/alpha/cvs.log)
+for the contributors to Samba post-CVS. CVS is the Open Source source
+code control system used by the Samba Team to develop Samba. The
+project would have been unmanageable without it.
+
+In addition, several commercial organizations now help fund the Samba
+Team with money and equipment. For details see the Samba Web pages at
+url(http://samba.org/samba/samba-thanks.html)(http://samba.org/samba/samba-thanks.html).
+
+label(AUTHOR)
+manpageauthor()
+
+The original Samba software and related utilities were created by
+Andrew Tridgell email(samba@samba.org). Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+
+The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+url(bf(ftp://ftp.icce.rug.nl/pub/unix/))(ftp://ftp.icce.rug.nl/pub/unix/))
+and updated for the Samba2.0 release by Jeremy Allison.
+email(samba@samba.org).

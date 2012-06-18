@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# firewall-standalone	This script sets up firewall rules for a standalone
+#                       machine
+#
+# Copyright (C) 2005 Roaring Penguin Software Inc.  This software may
+# be distributed under the terms of the GNU General Public License, version
+# 2 or any later version.
+# LIC: GPL
+
+# Interface to Internet
+EXTIF=ppp+
+
+iptables -P INPUT ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -P FORWARD DROP
+
+iptables -F FORWARD
+iptables -F INPUT
+iptables -F OUTPUT
+
+# Deny TCP and UDP packets to privileged ports
+iptables -A INPUT -p udp -i $EXTIF --dport 0:1023 -j LOG
+iptables -A INPUT -p tcp -i $EXTIF --dport 0:1023 -j LOG
+iptables -A INPUT -p udp -i $EXTIF --dport 0:1023 -j DROP
+iptables -A INPUT -p tcp -i $EXTIF --dport 0:1023 -j DROP
+
+# Deny TCP connection attempts
+iptables -A INPUT -i $EXTIF -p tcp --syn -j LOG
+iptables -A INPUT -i $EXTIF -p tcp --syn -j DROP
+
+# Deny ICMP echo-requests
+iptables -A INPUT -i $EXTIF -p icmp --icmp-type echo-request -j DROP
+

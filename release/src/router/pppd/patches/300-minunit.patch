@@ -1,0 +1,81 @@
+diff -BurpN ppp-2.4.5-pre/pppd/options.c ppp/pppd/options.c
+--- ppp-2.4.5-pre/pppd/options.c	2009-09-06 15:52:13.000000000 +0000
++++ ppp/pppd/options.c	2009-09-06 15:57:44.000000000 +0000
+@@ -114,6 +114,7 @@ char	linkname[MAXPATHLEN];	/* logical na
+ bool	tune_kernel;		/* may alter kernel settings */
+ int	connect_delay = 1000;	/* wait this many ms after connect script */
+ int	req_unit = -1;		/* requested interface unit */
++int	req_minunit = -1;	/* requested minimal interface unit */
+ bool	multilink = 0;		/* Enable multilink operation */
+ char	*bundle_name = NULL;	/* bundle name for multilink */
+ bool	dump_options;		/* print out option values */
+@@ -274,6 +275,9 @@ option_t general_options[] = {
+     { "unit", o_int, &req_unit,
+       "PPP interface unit number to use if possible",
+       OPT_PRIO | OPT_LLIMIT, 0, 0 },
++    { "minunit", o_int, &req_minunit,
++      "PPP interface minimal unit number",
++      OPT_PRIO | OPT_LLIMIT, 0, 0 },
+ 
+     { "dump", o_bool, &dump_options,
+       "Print out option values after parsing all options", 1 },
+diff -BurpN ppp-2.4.5-pre/pppd/pppd.8 ppp/pppd/pppd.8
+--- ppp-2.4.5-pre/pppd/pppd.8	2009-09-06 15:52:13.000000000 +0000
++++ ppp/pppd/pppd.8	2009-09-06 15:56:39.000000000 +0000
+@@ -1062,6 +1062,12 @@ under Linux and FreeBSD 2.2.8 and later.
+ Sets the ppp unit number (for a ppp0 or ppp1 etc interface name) for outbound
+ connections.
+ .TP
++.B minunit \fInum
++Such as unit, but always select bigger interface
++.TP
++.B minunit \fInum
++PPP interface minimal unit number. Such as unit, but always select bigger interface
++.TP
+ .B updetach
+ With this option, pppd will detach from its controlling terminal once
+ it has successfully established the ppp connection (to the point where
+diff -BurpN ppp-2.4.5-pre/pppd/pppd.h ppp/pppd/pppd.h
+--- ppp-2.4.5-pre/pppd/pppd.h	2009-09-06 15:52:13.000000000 +0000
++++ ppp/pppd/pppd.h	2009-09-06 15:59:03.000000000 +0000
+@@ -80,6 +80,7 @@
+ #define MAXARGS		1	/* max # args to a command */
+ #define MAXNAMELEN	256	/* max length of hostname or name for auth */
+ #define MAXSECRETLEN	256	/* max length of password or secret */
++#define MAXUNIT		255	/* max ppp interface */
+ 
+ /*
+  * Option descriptor structure.
+@@ -314,6 +315,7 @@ extern bool	tune_kernel;	/* May alter ke
+ extern int	connect_delay;	/* Time to delay after connect script */
+ extern int	max_data_rate;	/* max bytes/sec through charshunt */
+ extern int	req_unit;	/* interface unit number to use */
++extern int	req_minunit;	/* interface minimal unit number to use */
+ extern bool	multilink;	/* enable multilink operation */
+ extern bool	noendpoint;	/* don't send or accept endpt. discrim. */
+ extern char	*bundle_name;	/* bundle name for multilink */
+diff -BurpN ppp-2.4.5-pre/pppd/sys-linux.c ppp/pppd/sys-linux.c
+--- ppp-2.4.5-pre/pppd/sys-linux.c	2009-09-06 15:52:13.000000000 +0000
++++ ppp/pppd/sys-linux.c	2009-09-06 17:04:50.000000000 +0000
+@@ -634,13 +634,15 @@ static int make_ppp_unit()
+ 	    || fcntl(ppp_dev_fd, F_SETFL, flags | O_NONBLOCK) == -1)
+ 		warn("Couldn't set /dev/ppp to nonblock: %m");
+ 
+-	ifunit = req_unit;
+-	x = ioctl(ppp_dev_fd, PPPIOCNEWUNIT, &ifunit);
+-	if (x < 0 && req_unit >= 0 && errno == EEXIST) {
+-		warn("Couldn't allocate PPP unit %d as it is already in use", req_unit);
+-		ifunit = -1;
++	ifunit = (req_unit >= 0) ? req_unit : req_minunit;
++	do {
+ 		x = ioctl(ppp_dev_fd, PPPIOCNEWUNIT, &ifunit);
+-	}
++		if (x < 0 && errno == EEXIST) {
++			warn("Couldn't allocate PPP unit %d as it is already in use", ifunit);
++			ifunit = (req_unit >= 0) ? -1 : ++req_minunit;
++		} else break;
++	} while (ifunit < MAXUNIT);
++
+ 	if (x < 0)
+ 		error("Couldn't create new ppp unit: %m");
+ 	return x;

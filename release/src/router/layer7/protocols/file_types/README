@@ -1,0 +1,73 @@
+Patterns in this directory are not for network protocols, but rather for
+file types.  They are for cases in which you would like to
+promote/restrict transfer of one file type regardless of what protocol
+it is being transfered over.
+# Copyright (C) 2008 Matthew Strait, Ethan Sommer; See ../LICENSE
+
+Writing patterns for this directory is pretty easy.  Often
+/usr/share/magic has everything you need to know. If you'd like
+something that isn't here, please ask for it.
+
+Notes:
+
+0) Support for doing this is pretty sketchy.  Proceed at your own risk.
+
+1) These patterns cannot use the ^ and $ anchors, because although you
+may be matching the beginning of a file, it's not the beginning of a
+connection.
+
+2) A connection may very well contain more than one file transfer and/or
+things other than file transfers. These will match the first file sent
+(or nothing if the first stuff isn't a file) and continue to apply that
+classification to all subsequent files of that connection, regardless of
+their content.  For instance:
+
+- HTTP can send several files over the same connection.  l7-filter can
+match the first one, but subsequent ones just get the original match
+applied to them. 
+
+- SMB sends all sorts of chatter over the same TCP connection as files
+are sent over, so we can't match its file transfers at all.
+
+3) Since the file starts later than the application layer protocol
+information, you may need to increase the number of packets and bytes
+examined.  Use /proc/net/layer7_numpackets to increase the number of
+packets examined. i.e. "echo 12 > /proc/net/layer7_numpackets".
+To increase the number of bytes examined, you'll need to recompile
+your kernel.  See the documentation at http://l7-filter.sf.net
+
+4) If you want a filter for both a file type and the application layer
+protocol that this file type is transported over (i.e. HTML and HTTP),
+you've got a difficult situation.  Each connection can only be 
+classified as one thing at a time.  The obvious thing is to set up
+a tree like this:
+
+(root)
+ \_ HTTP
+ |   \_ HTML
+ |   \_ PDF
+ \_ FTP
+     \_ TAR
+     \_ PS
+     \_ PDF
+
+But if you do this, you'll find that the file types never match, because
+the connections have already been classifed by their protocol.
+
+So what's the solution?  Well, you can do this instead:
+
+(root)
+ \_ port 80
+ |   \_ HTML
+ |   \_ PDF
+ \_ port 21
+     \_ TAR
+     \_ PS
+     \_ PDF
+
+(Except, of course, that FTP data doesn't actually go over port 21, so 
+some extra magic is needed there.)
+
+Or perhaps you could use IMQ to create several unrelated regions of
+classification.  i.e. On ingress, classify and shape on protocol
+and on egress, classify and shape on file type.  I haven't tried this.

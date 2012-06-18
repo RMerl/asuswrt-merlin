@@ -1,0 +1,7 @@
+This matches on a given arbitrary range of IPv4 addresses
+.TP
+.BI "[!]" "--src-range " "ip-ip"
+Match source IP in the specified range.
+.TP
+.BI "[!]" "--dst-range " "ip-ip"
+Match destination IP in the specified range.

@@ -1,0 +1,389 @@
+.\"	$KAME: dhcp6s.conf.5,v 1.18 2005/01/12 06:06:12 suz Exp $
+.\"
+.\" Copyright (C) 2002 WIDE Project.
+.\" All rights reserved.
+.\" 
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the project nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd July 29, 2004
+.Dt DHCP6S.CONF 5
+.Os KAME
+.\"
+.Sh NAME
+.Nm dhcp6s.conf
+.Nd DHCPv6 server configuration file
+.\"
+.Sh SYNOPSIS
+.Pa /usr/local/etc/dhcp6s.conf
+.\"
+.Sh DESCRIPTION
+The
+.Nm
+file contains configuration information for KAME's DHCPv6 server,
+.Nm dhcp6s .
+The configuration file consists of a sequence of statements terminated
+by a semi-colon (`;').
+Statements are composed of tokens separated by white space,
+which can be any combination of blanks,
+tabs and newlines.
+In some cases a set of statements is combined with a pair of brackets,
+which is regarded as a single token.
+Lines beginning with
+.Ql #
+are comments.
+.Sh Interface specification
+There are some statements that may or have to specify interface.
+Interfaces are specified in the form of "name unit", such as
+.Ar fxp0
+and
+.Ar gif1.
+.\"
+.Sh Include statement
+An include statement specifies another configuration file to be included.
+The format of an include statement is as follows:
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic include Ar \(dqfilename\(dq ;
+.Xc
+Where
+.Ar \(dqfilename\(dq
+is the name (full path) of the file to be included.
+.El
+.\"
+.Sh Option statement
+An option statement specifies configuration parameters provided for
+every client.
+The format of the statement is as follows.
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic option Ar option-name Op Ar option-value
+;
+.Xc
+The following options can be specified in an option statement.
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic domain-name-servers Ar dns-address Op Ar dns-addresses... ;
+.Xc
+provides DNS server address(es).
+Each
+.Ar dns-address
+must be a numeric IPv6 address.
+Multiple server addresses can also be specified by a sequence of
+these statements.
+.It Xo
+.Ic domain-name Ar \(dqdns-name\(dq ;
+.Xc
+provides a domain name of a DNS search path.
+Multiple names in the path can be specified by a sequence of these
+statements.
+.It Xo
+.Ic ntp-servers Ar ntp-address Op Ar ntp-addresses... ;
+.Xc
+provides NTP server address(es).
+Each
+.Ar ntp-address
+must be a numeric IPv6 address.
+Multiple server addresses can also be specified by a sequence of these
+statements.
+.It Xo
+.Ic sip-server-address Ar sip-server-address Op Ar sip-server-addresses... ;
+.Xc
+provides SIP server address(es).
+Each
+.Ar sip-server-address
+must be a numeric IPv6 address.
+Multiple server addresses can also be specified by a sequence of
+these statements.
+.It Xo
+.Ic sip-server-domain-name Ar \(dqsip-server-domain-name\(dq ;
+.Xc
+provides a domain name of a SIP server.
+Multiple names in the path can be specified by a sequence of these
+statements.
+.It Xo
+.Ic nis-server-address Ar nis-server-address Op Ar nis-server-addresses... ;
+.Xc
+provides NIS server address(es).
+Each
+.Ar nis-server-address
+must be a numeric IPv6 address.
+Multiple server addresses can also be specified by a sequence of
+these statements.
+.It Xo
+.Ic nis-domain-name Ar \(dqnis-domain-name\(dq ;
+.Xc
+provides a NIS domain name.
+Multiple names in the path can be specified by a sequence of these
+statements.
+.It Xo
+.Ic nisp-server-address Ar nisp-server-address Op Ar nisp-server-addresses... ;
+.Xc
+provides NIS+ server address(es).
+Each
+.Ar nisp-server-address
+must be a numeric IPv6 address.
+Multiple server addresses can also be specified by a sequence of
+these statements.
+.It Xo
+.Ic nisp-domain-name Ar \(dqnisp-domain-name\(dq ;
+.Xc
+provides a NIS+ domain name.
+Multiple names in the path can be specified by a sequence of these
+statements.
+.It Xo
+.Ic bcmcs-server-address Ar bcmcs-server-address Op Ar bcmcs-server-addresses... ;
+.Xc
+provides BCMCS server address(es).
+Each
+.Ar bcmcs-server-address
+must be a numeric IPv6 address.
+Multiple server addresses can also be specified by a sequence of
+these statements.
+.It Xo
+.Ic bcmcs-server-domain-name Ar \(dqbcmcs-server-domain-name\(dq ;
+.Xc
+provides a domain name of a BCMCS server.
+Multiple names in the path can be specified by a sequence of these
+statements.
+.It Xo
+.Ic refreshtime Ar interval ;
+.Xc
+specifies the refresh time of stateless information that does not have
+particular lease duration in seconds.
+This option is only applicable to stateless configuration by
+information-request and reply exchanges.
+.El
+.El
+.\"
+.Sh Interface statement
+An interface statement specifies configuration parameters on the
+interface.
+The generic format of an interface statement is as follows:
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic interface Ar interface
+{
+.Ar substatements
+};
+.Xc
+The followings are possible
+.Ar substatements
+in an interface statement.
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic allow Ar allow-options
+;
+.Xc
+This statement specifies DHCPv6 options accepted by the server.
+Currently only
+.Ar rapid-commit
+can be specified in an
+.Ic allow
+statement, which specifies the server to
+accept a rapid-commit option in solicit messages.
+.It Ic preference Ar pref ;
+This statement sets the server's preference value on the
+interface to the value
+.Ar pref .
+The specified value will be contained in a preference option of
+advertise messages.
+The preference value must be a decimal integer and be between 0 and
+255 (inclusive.)
+.It Ic address-pool Ar pool Ar pltime Op Ar vltime ;
+This statement assigns an address pool
+.Ar pool
+to the interface. When
+.Nm
+receives a allocation request for an IA-NA, it assigns one IPv6 address from this pool.
+The specified pool name will be defined in a pool statement.
+Regarding the
+.Ar pltime
+and
+.Ar vltime
+, please see the explanation in the
+.Ar prefix
+substatement in host statement section.
+.El
+.El
+.\"
+.Sh Host statement
+A host statement specifies configuration parameters for a particular
+client.
+The generic format of a host statement is as follows:
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic host Ar name
+{
+.Ar substatements
+};
+.Xc
+.Ar name
+is an arbitrary string.
+It does not affect server's behavior but is provided for
+readability of log messages.
+Possible substatements are as follows.
+.Bl -tag -width Ds -compact
+.It Ic duid Ar ID ;
+This statement defines the client's DHCP unique identifier
+.Pq DUID .
+.Ar ID
+is a colon-separated hexadecimal sequence where each separated part
+must be composed of two hexadecimal values.
+This statement is used to identify a particular host by the server
+and must be included in a host statement.
+.It Ic prefix Ar ipv6-prefix pltime Op Ar vltime ;
+This statement specifies an IPv6 prefix to be delegated to the client.
+.Ar ipv6-prefix
+is a string representing a valid IPv6 prefix
+.Pq see the example below .
+.Ar pltime
+and
+.Ar vltime
+are preferred and valid lifetimes of the prefix, respectively.
+When the latter is omitted, it will be set to the same value of
+.Ar pltime.
+A positive decimal number or a special string
+.Ic infinity
+can be specified as a lifetime.
+A decimal number provides the lifetime in seconds,
+while
+.Ic infinity
+means the corresponding lifetime never expires.
+When both lifetimes are specified,
+.Ar pltime
+must not be larger than
+.Ar vltime .
+Multiple prefixes can be specified,
+each of which is given by a single
+.Ic prefix
+statement.
+In that case,
+all or some of the specified prefixes will be delegated to the client,
+based on required parameters by the client.
+.It Ic address Ar ipv6-address pltime Op Ar vltime ;
+This statement specifies an IPv6 address to be assigned to the client.
+Everything is same as 
+.Ar prefix
+option, except that you do not need specify prefix length.
+.It Ic delayedkey Ar keyname ;
+This statement specifies a secret key shared with the client for the DHCPv6
+delayed authentication protocol.
+.Ar keyname
+is a string that identifies a particular set of key parameters.
+A separate
+.Ic keyinfo
+statement for
+.Ar keyname
+must be provided in the configuration file.
+When this statement is specified and the client includes an
+authentication option for the delayed authentication protocol in a
+Solicit message,
+.Ic dhcp6s
+will perform the authentication protocol for succeeding message
+exchanges.
+.El
+.El
+.\"
+.Sh Pool statement
+A pool statement specifies an address pool for a particular interface.
+The generic format of a pool statement is as follows:
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic pool Ar name
+{
+.Ar substatements ;
+};
+.Xc
+.Ar name
+is an arbitrary string.
+It does not affect server's behavior but is provided for
+readability of log messages.
+Possible substatements are as follows.
+.Bl -tag -width Ds -compact
+.It Ic range Ar min-addr Ic to Ar max-addr
+This substatement defines the range of addresses allocated for the pool,
+i.e. from 
+.Ar min-addr
+to
+.Ar max-addr.
+.El
+.El
+.\"
+.Sh Keyinfo statement
+This statement defines a secret key shared with a client to
+authenticate DHCPv6 messages.
+The format and the description of this statement is provided in
+.Xr dhcp6c.conf 5 .
+One important difference in the server configuration is,
+however,
+the
+.Ar keyname
+is referred from a
+.Ic host
+statement as described above.
+.\"
+.Sh Examples
+The followings are a sample configuration to provide a DNS server
+address for every client as well as to delegate a permanent IPv6
+prefix 2001:db8:1111::/48 to a client whose DUID is 00:01:00:01:aa:bb.
+.Bd -literal -offset
+option domain-name-servers 2001:db8::35;
+
+host kame {
+	duid 00:01:00:01:aa:bb;
+	prefix 2001:db8:1111::/48 infinity;
+};
+.Ed
+.Pp
+If a shared secret should be configured in both the server and the
+client for DHCPv6 authentication,
+it would be specified in the configuration file as follows:
+.Bd -literal -offset
+keyinfo kame {
+        realm "kame.net";
+        keyid 1;
+        secret "5pvW2g48OHPvkYMJSw0vZA==";
+};
+.Ed
+.Pp
+And the
+.Ic host
+statement would be modified as follows:
+.Bd -literal -offset
+host kame {
+	duid 00:01:00:01:aa:bb;
+	prefix 2001:db8:1111::/48 infinity;
+        delayedkey kame;
+};
+.Ed
+.Sh SEE ALSO
+.Xr dhcp6c.conf 5
+.Xr dhcp6s 8
+.\"
+.Sh HISTORY
+The
+.Nm
+configuration file first appeared in the WIDE/KAME IPv6 protocol
+stack kit.

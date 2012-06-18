@@ -1,0 +1,55 @@
+<!ENTITY DocBook "<productname condition='noindex'>DocBook</productname>">
+<!ENTITY docbook "<productname condition='noindex'>DocBook</productname>">
+<!ENTITY DB2LaTeX "<productname condition='noindex'>DB2<?latex \?>LaTeX</productname>">
+<!ENTITY db2latex "<productname condition='noindex'>DB2<?latex \?>LaTeX</productname>">
+<!ENTITY LaTeX "<productname condition='noindex'><?latex \?>LaTeX</productname>">
+<!ENTITY latex "<productname condition='noindex'><?latex \?>LaTeX</productname>">
+<!ENTITY BibTeX "<productname><?latex \?>BibTeX</productname>">
+<!ENTITY bibtex "<productname><?latex \?>BibTeX</productname>">
+
+<!ENTITY ramon "<author><firstname>Ramon</firstname><surname>Casellas</surname></author>">
+<!ENTITY james "<author><firstname>James</firstname><surname>Devenish</surname></author>">
+
+<!ENTITY mapping "<xref linkend='latex.mapping'/>">
+<!ENTITY preamble "<xref linkend='preamble'/>">
+<!ENTITY no_var "<para>There are no configuration variables for this template.</para>">
+<!ENTITY essential_preamble "<para>This template requires &LaTeX; commands that are part of the <quote>essential preamble</quote>.</para>">
+<!ENTITY rev_2003_05 "<date>May-January 2004</date><revremark>Major review of documentation.</revremark>">
+<!ENTITY roleattr "<sgmltag class='attribute'>role</sgmltag>">
+
+<!ENTITY test_article "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_article' xml='article.xml' xsl='article.xsl'/></member>">
+<!ENTITY test_adm "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_adm' xml='test.xml'/></member>">
+<!ENTITY test_biblio "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_biblio' xml='test.xml'/></member>">
+<!ENTITY test_bind "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_bind' xml='Bv9ARM-book.xml'/></member>">
+<!ENTITY test_blocks "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_blocks' xml='test.xml'/></member>">
+<!ENTITY test_book "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_book' xml='test.xml'/></member>">
+<!ENTITY test_chemistry "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_chemistry' xml='test.xml'/></member>">
+<!ENTITY test_cited "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_cited' xml='test.xml'/></member>">
+<!ENTITY test_ddh "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_ddh' xml='article.xml'/></member>">
+<!ENTITY test_defguide "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_defguide' xml='defguide.xml'/></member>">
+<!ENTITY test_draft "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_draft' xml='test.xml'/></member>">
+<!ENTITY test_draft1 "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_draft' xml='test.xml' xsl='test.xsl'/></member>">
+<!ENTITY test_draft2 "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_draft' xml='test.xml' xsl='hyperref.xsl'/></member>">
+<!ENTITY test_draft3 "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_draft' xml='test.xml' xsl='varioref1.xsl'/></member>">
+<!ENTITY test_draft4 "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_draft' xml='test.xml' xsl='varioref2.xsl'/></member>">
+<!ENTITY test_ecos "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_ecos' xml='user-guide.xml'/></member>">
+<!ENTITY test_entities "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_entities' xml='test.xml'/></member>">
+<!ENTITY test_gloss "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_gloss' xml='test.xml'/></member>">
+<!ENTITY test_ieeebiblio "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_ieeebiblio' xml='test.xml'/></member>">
+<!ENTITY test_index "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_index' xml='test.xml'/></member>">
+<!ENTITY test_index_draft "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_index' xml='test.xml' xsl='draft.xsl'/></member>">
+<!ENTITY test_links "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_links' xml='test.xml'/></member>">
+<!ENTITY test_lot "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_lot' xml='test1.xml'/></member>">
+<!ENTITY test_lot1 "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_lot' xml='test1.xml'/></member>">
+<!ENTITY test_lot2 "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_lot' xml='test2.xml'/></member>">
+<!ENTITY test_lot3 "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_lot' xml='test3.xml'/></member>">
+<!ENTITY test_lists "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_lists' xml='test.xml'/></member>">
+<!ENTITY test_mapping "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_mapping' xml='test.xml'/></member>">
+<!ENTITY test_minimal "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_minimal' xml='minimal.xml'/></member>">
+<!ENTITY test_pinkjuice "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_pinkjuice' xml='vimxml.xml'/></member>">
+<!ENTITY test_program "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_program' xml='test.xml'/></member>">
+<!ENTITY test_procedure "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_procedure' xml='test.xml'/></member>">
+<!ENTITY test_subfig "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_subfig' xml='test.xml'/></member>">
+<!ENTITY test_tables "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_tables' xml='test.xml'/></member>">
+<!ENTITY test_theorem "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_theorem' xml='test.xml'/></member>">
+<!ENTITY test_varioref "<member><sample xmlns='http://nwalsh.com/xsl/documentation/1.0' directory='test_varioref' xml='test.xml'/></member>">

@@ -1,0 +1,14 @@
+<samba:parameter name="preexec close"
+		 context="S"
+		 type="boolean"
+		 advanced="1" developer="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This boolean option controls whether a non-zero return code from <smbconfoption name="preexec"/> 
+	should close the service being connected to.
+	</para>
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

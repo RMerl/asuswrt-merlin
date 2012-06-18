@@ -1,0 +1,4 @@
+NOTE:
+
+This patch currently does not work together with xl2tpd's "ipsec saref"
+option.

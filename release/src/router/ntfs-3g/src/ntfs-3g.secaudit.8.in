@@ -1,0 +1,171 @@
+.\" Copyright (c) 2007-2009 Jean-Pierre André.
+.\" This file may be copied under the terms of the GNU Public License.
+.\"
+.TH NTFS-3G.SECAUDIT 8 "February 2010" "ntfs-3g.secaudit 1.3.8"
+.SH NAME
+ntfs-3g.secaudit \- NTFS Security Data Auditing
+.SH SYNOPSIS
+.B ntfs-3g.secaudit
+\fB[\fIoptions\fP\fB]\fR
+.I args
+.PP
+Where \fIoptions\fP is a combination of :
+.RS
+-a full auditing of security data (Linux only)
+.RE
+.RS
+-b backup ACLs
+.RE
+.RS
+-e setting extra backed-up parameters (in conjunction with -s)
+.RE
+.RS
+-h displaying hexadecimal security descriptors saved in a file
+.RE
+.RS
+-r recursing in a directory
+.RE
+.RS
+-s setting backed-up ACLs
+.RE
+.RS
+-v verbose (very verbose if set twice)
+.RE
+.PP
+and args define the parameters and the set of files acted upon.
+.PP
+Typing secaudit with no args will display a summary of available options.
+.SH DESCRIPTION
+\fBntfs-3g.secaudit\fR
+displays the ownership and permissions of a set of files on an NTFS
+file system, and checks their consistency. It can be started in terminal
+mode only (no graphical user interface is available.)
+.PP
+When a \fIvolume\fR is required, it has to be unmounted, and the command
+has to be issued as \fBroot\fP. The \fIvolume\fR can be either a block
+device (i.e. a disk partition) or an image file.
+.PP
+When acting on a directory or volume, the command may produce a lot
+of information. It is therefore advisable to redirect the output to
+a file or pipe it to a text editor for examination.
+.SH OPTIONS
+Below are the valid combinations of options and arguments that
+\fBntfs-3g.secaudit\fR accepts. All the indicated arguments are
+mandatory and must be unique (if wildcards are used, they must
+resolve to a single name.)
+.TP
+\fB-h\fP \fIfile\fP
+Displays in an human readable form the hexadecimal security descriptors
+saved in \fIfile\fP. This can be used to turn a verbose output into a very
+verbose output.
+.TP
+\fB-a[rv]\fP \fIvolume\fP
+Audits the volume : all the global security data on \fIvolume\fP are scanned
+and errors are displayed. If option \fB-r\fP is present, all files and
+directories are also scanned and their relations to global security data
+are checked. This can produce a lot of data.
+
+This option is not effective on volumes formatted for old NTFS versions (pre
+NTFS 3.0). Such volumes have no global security data.
+
+When errors are signalled, it is advisable to repair the volume with an
+appropriate tool (such as \fBchkdsk\fP on Windows.)
+.TP
+\fB[-v]\fP \fIvolume\fP \fIfile\fP
+Displays the security parameters of \fIfile\fP : its interpreted Linux mode
+(rwx flags in octal) and Posix ACL[1], its security key if any, and its
+security descriptor if verbose output.
+.TP
+\fB-r[v]\fP \fIvolume\fP \fIdirectory\fP
+displays the security parameters of all files and subdirectories in
+\fIdirectory\fP : their interpreted Linux mode (rwx flags in octal) and Posix
+ACL[1], their security key if any, and their security descriptor if
+verbose output.
+.TP
+.B -b[v] \fIvolume\fP \fI[directory]\fP
+Recursively extracts to standard output the NTFS ACLs of files in \fIvolume\fP
+and \fIdirectory\fP.
+.TP
+\fB-s[ev]\fP \fIvolume\fP \fI[backup-file]\fP
+Sets the NTFS ACLS as indicated in \fIbackup-file\fP or standard input. The
+input data must have been created on Linux. With option \fB-e\fP, also sets
+extra parameters (currently Windows attrib).
+.TP
+\fIvolume\fP \fIperms\fP \fIfile\fP
+Sets the security parameters of file to perms. Perms is the Linux
+requested mode (rwx flags, expressed in octal form as in chmod) or
+a Posix ACL[1] (expressed like in setfacl -m). This sets a new ACL
+which is effective for Linux and Windows.
+.TP
+\fB-r[v]\fP \fIvolume\fP \fIperms\fP \fIdirectory\fP
+Sets the security parameters of all files and subdirectories in
+\fIdirectory\fP to \fIperms\fP. Perms is the Linux requested mode (rwx flags,
+expressed in octal form as in \fBchmod\fP), or a Posix ACL[1] (expressed like
+in \fBsetfacl -m\fP.) This sets new ACLs which are effective for Linux and
+Windows.
+.TP
+\fB[-v]\fP \fImounted-file\fP
+Displays the security parameters of \fImounted-file\fP : its interpreted
+Linux mode (rwx flags in octal) and Posix ACL[1], its security key if any,
+and its security descriptor if verbose output. This is a special case which
+acts on a mounted file (or directory) and does not require being root. The
+Posix ACL interpretation can only be displayed if the full path to
+\fImounted-file\fP from the root of the global file tree is provided.
+.SH NOTE
+[1] provided the POSIX ACL option was selected at compile time. A Posix ACL
+specification looks like "\fB[d:]{ugmo}:[id]:[perms],...\fP" where id is a
+numeric user or group id, and perms an octal digit or a set from the letters
+r, w and x.
+.RS
+Example : "\fBu::7,g::5,o:0,u:510:rwx,g:500:5,d:u:510:7\fP"
+.SH EXAMPLES
+Audit the global security data on /dev/sda1
+.RS
+.sp
+.B ntfs-3g.secaudit -ar /dev/sda1
+.sp
+.RE
+Display the ownership and permissions parameters for files in directory
+/audio/music on device /dev/sda5, excluding sub-directories :
+.RS
+.sp
+.B ntfs-3g.secaudit /dev/sda5 /audio/music
+.sp
+.RE
+Set all files in directory /audio/music on device /dev/sda5 as writeable
+by owner and read-only for everybody :
+.RS
+.sp
+.B ntfs-3g.secaudit -r /dev/sda5 644 /audio/music
+.sp
+.RE
+.SH EXIT CODES
+.B ntfs-3g.secaudit
+exits with a value of 0 when no error was detected, and with a value
+of 1 when an error was detected.
+.SH KNOWN ISSUES
+Please see 
+.RS
+.sp
+http://www.tuxera.com/community/ntfs-3g-faq/
+.sp
+.RE
+for common questions and known issues.
+If you would find a new one in the latest release of
+the software then please send an email describing it
+in detail. You can contact the 
+development team on the ntfs\-3g\-devel@lists.sf.net
+address.
+.SH AUTHORS
+.B ntfs-3g.secaudit
+has been developed by Jean-Pierre André.
+.SH THANKS
+Several people made heroic efforts, often over five or more
+years which resulted the ntfs-3g driver. Most importantly they are 
+Anton Altaparmakov, Richard Russon, Szabolcs Szakacsits, Yura Pakhuchiy,
+Yuval Fledel, and the author of the groundbreaking FUSE filesystem development 
+framework, Miklos Szeredi.
+.SH SEE ALSO
+.BR ntfsprogs (8),
+.BR attr (5),
+.BR getfattr (1)

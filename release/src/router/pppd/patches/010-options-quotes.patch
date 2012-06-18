@@ -1,0 +1,102 @@
+From 3089132cdf5b58dbdfc2daf08ec5c08eb47f8aca 
+From: James Carlson
+Date: Mon, 23 Aug 2010 10:03:07 -0400
+Subject: [PATCH] Fix quote handling in configuration files to be more like shell quoting.
+
+The specific case that confused a user was:
+	ROUTES="216.220.192.0/20 10.0.100.0/24"
+which was interpreted as two separate words, merely because the first quote
+mark was in the middle of a word.
+---
+ pppd/options.c |   44 ++++++++++++++++++++++----------------------
+ 1 files changed, 22 insertions(+), 22 deletions(-)
+
+diff --git a/pppd/options.c b/pppd/options.c
+index 434ab95..008b482 100644
+--- a/pppd/options.c
++++ b/pppd/options.c
+@@ -1146,6 +1146,7 @@ getword(f, word, newlinep, filename)
+     len = 0;
+     escape = 0;
+     comment = 0;
++    quoted = 0;
+ 
+     /*
+      * First skip white-space and comments.
+@@ -1204,15 +1205,6 @@ getword(f, word, newlinep, filename)
+     }
+ 
+     /*
+-     * Save the delimiter for quoted strings.
+-     */
+-    if (!escape && (c == '"' || c == '\'')) {
+-        quoted = c;
+-	c = getc(f);
+-    } else
+-        quoted = 0;
+-
+-    /*
+      * Process characters until the end of the word.
+      */
+     while (c != EOF) {
+@@ -1300,29 +1292,34 @@ getword(f, word, newlinep, filename)
+ 	    if (!got)
+ 		c = getc(f);
+ 	    continue;
+-
+ 	}
+ 
+ 	/*
+-	 * Not escaped: see if we've reached the end of the word.
++	 * Backslash starts a new escape sequence.
+ 	 */
+-	if (quoted) {
+-	    if (c == quoted)
+-		break;
+-	} else {
+-	    if (isspace(c) || c == '#') {
+-		ungetc (c, f);
+-		break;
+-	    }
++	if (c == '\\') {
++	    escape = 1;
++	    c = getc(f);
++	    continue;
+ 	}
+ 
+ 	/*
+-	 * Backslash starts an escape sequence.
++	 * Not escaped: check for the start or end of a quoted
++	 * section and see if we've reached the end of the word.
+ 	 */
+-	if (c == '\\') {
+-	    escape = 1;
++	if (quoted) {
++	    if (c == quoted) {
++		quoted = 0;
++		c = getc(f);
++		continue;
++	    }
++	} else if (c == '"' || c == '\'') {
++	    quoted = c;
+ 	    c = getc(f);
+ 	    continue;
++	} else if (isspace(c) || c == '#') {
++	    ungetc (c, f);
++	    break;
+ 	}
+ 
+ 	/*
+@@ -1351,6 +1348,9 @@ getword(f, word, newlinep, filename)
+ 	 */
+ 	if (len == 0)
+ 	    return 0;
++	if (quoted)
++	    option_error("warning: quoted word runs to end of file (%.20s...)",
++			 filename, word);
+     }
+ 
+     /*
+-- 
+1.7.1
+

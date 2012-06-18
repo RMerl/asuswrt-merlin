@@ -1,0 +1,77 @@
+#
+# samba PMDA help file in the ASCII format
+#
+# lines beginning with a # are ignored
+# lines beginning @ introduce a new entry of the form
+#  @ metric_name oneline-text
+#  help test goes
+#  here over multiple lines
+#  ...
+#
+# the metric_name is decoded against the default PMNS -- as a special case,
+# a name of the form NNN.MM (for numeric NNN and MM) is interpreted as an
+# instance domain identification, and the text describes the instance domain
+#
+# blank lines before the @ line are ignored
+#
+
+@ SAMBA.0 Count and Time Instance Domain
+Contains count and time information for system calls and smb transactions.
+Counts shows the number of times each transaction was called. Times 
+indicates the time spent in each transaction.
+
+@ SAMBA.1 Byte Instance Domain
+This domain contains instances for the number of bytes transferred
+using the read and write system call.
+
+@ samba.counts Count of calls to this function
+
+@ samba.times Time required to complete call
+
+@ samba.bytes Number of bytes processed by this call
+
+@ samba.smbd.smb_count Count of SMB packets processed
+
+@ samba.smbd.uid_changes Count of times effective uid changed
+
+@ samba.statcache.lookups Number of lookups in stat cache
+
+@ samba.statcache.misses Number of times stat cache lookup missed
+
+@ samba.statcache.hits Number of times stat cache lookup hit
+
+@ samba.writecache.num_caches Number of write caches available
+
+@ samba.writecache.allocated_caches Number of write caches allocated
+
+@ samba.writecache.read_hits Number of times read request found in write cache
+
+@ samba.writecache.total_writes Number of writes to write cache 
+
+@ samba.writecache.init_writes Number of initial writes to write cache
+
+@ samba.writecache.abutted_writes 
+
+@ samba.writecache.perfect_writes
+
+@ samba.writecache.direct_writes
+
+@ samba.writecache.non_oplock_writes
+
+@ samba.writecache.seek_flush
+
+@ samba.writecache.read_flush
+
+@ samba.writecache.write_flush
+
+@ samba.writecache.readraw_flush
+
+@ samba.writecache.oplock_rel_flush
+
+@ samba.writecache.close_flush
+
+@ samba.writecache.sync_flush
+
+@ samba.writecache.size_change_flush
+
+@ samba.bytes cumulative number of bytes read or written

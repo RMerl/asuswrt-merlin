@@ -1,0 +1,451 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Using Kerberos 5 for Authentication</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title="PGP Authentication Support" href=
+    "x9115.htm">
+    <link rel="NEXT" title="Using Kerberos 4 for Authentication"
+    href="x9386.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x9115.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x9386.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="KERBEROS">17.13. Using Kerberos 5
+      for Authentication</a></h1>
+
+      <p><b class="APPLICATION">LPRng</b> Kerberos 5 authentication
+      is based on the Kerberos5-1.2.5 release as of 3 June 2002.
+      The distribution was obtained from MIT from the <span class=
+      "emphasis"><i class="EMPHASIS"><a href=
+      "http://web.mit.edu/kerberos/www/" target=
+      "_top">http://web.mit.edu/kerberos/www/</a></i></span>
+      Website.</p>
+
+      <p>The following sections briefly describes how to set up and
+      test the Kerberos software and then how to configure <b
+      class="APPLICATION">LPRng</b> to use Kerberos.</p>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9246">17.13.1. <b class=
+        "APPLICATION">LPRng</b> Configuration</a></h2>
+
+        <p>The following <var class="LITERAL">configure</var>
+        options are used to enable Kerberos support:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9251"></a>
+<pre class="SCREEN">
+    --enable-kerberos         enable Kerberos V support
+    --enable-mit_kerberos4    enable MIT Kerberos 4 support
+    --disable-kerberos_checks disable Kerberos sanity checks
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The <var class="LITERAL">--enable-kerberos</var> option
+        will cause <var class="LITERAL">configure</var> to search
+        for the include files such as <tt class=
+        "FILENAME">krb5.h</tt> and the <var class=
+        "LITERAL">krb5</var> support libraries. libraries. If it
+        finds these, then Kerberos authentication will be included.
+        The <var class="LITERAL">--enable-mit_kerberos</var> enable
+        searching for the Kerberos 4 include files and support
+        libraries. If these are found then MIT Kerberos 4
+        compatibility will be enabled. The <var class=
+        "LITERAL">--disable-kerberos_checks</var> will disable
+        checking for libraries and simply enable the various
+        options.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9260">17.13.2. Kerberos
+        Installation Procedure</a></h2>
+
+        <ol type="1">
+          <li>
+            <p>Get the Kerberos 5 distribution.</p>
+          </li>
+
+          <li>
+            <p>Compile and install the distribution.</p>
+          </li>
+
+          <li>
+            <p>Create the <tt class="FILENAME">/etc/krb5.conf</tt>
+            and <tt class=
+            "FILENAME">/usr/local/var/krb5kdc/kdc.conf</tt>, files
+            using templates from the files in the Kerberos
+            distribution's <tt class=
+            "FILENAME">src/config-files</tt> directory. See the
+            Kerberos Installation Guide and the Kerberos System
+            Administrators Guide for details.</p>
+          </li>
+
+          <li>
+            <p>Start up the KDC and KADMIN servers - you might want
+            to put the following in your <tt class=
+            "FILENAME">rc.local</tt> or equivalent system startup
+            files:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN9276"></a>
+<pre class="SCREEN">
+    if [ -f /etc/krb5.conf -a -f /usr/local/var/krb5kdc/kdc.conf  ]; then
+        echo -n ' krb5kdc ';    /usr/local/sbin/krb5kdc;
+        echo -n ' kadmind ';    /usr/local/sbin/kadmind;
+    fi
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>Use kadmin (or kadmin.local) to create principals
+            for your users.</p>
+          </li>
+
+          <li>
+            <p>Use kadmin (or kadmin.local) to create principals
+            for the <b class="APPLICATION">lpd</b> servers. The
+            recommended method is to use <tt class=
+            "FILENAME">lpr/hostname@REALM</tt> as a template for
+            the principal name, i.e. - <var class=
+            "LITERAL">lpr/astart1.private@ASTART.COM</var> for an
+            example. You should use fully qualified domain names
+            for the principals. Do not assign the principal a
+            password.</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN9285"></a>
+<pre class="SCREEN">
+    Example:
+    
+    #&gt; kadmin   OR #&gt; kadmin.local 
+    kadmin: addprinc -randkey lpr/wayoff.private@ASTART.COM
+    quit
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>Extract the keytab for each server:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN9289"></a>
+<pre class="SCREEN">
+    Example:
+    #&gt; kadmin   OR #&gt; kadmin.local 
+    ktadd -k /etc/lpr.wayoff.private  lpr/wayoff.private@ASTART.COM
+    quit
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>The <var class=
+            "LITERAL">/etc/lpr.wayoff.private</var> file contains
+            the keytab information which is the equivalent of a
+            password for a server program. You should create these
+            files and then copy the appropriate <var class=
+            "LITERAL">keytab</var> file to <tt class=
+            "FILENAME">/etc/lpd.keytab</tt> file on each server.
+            See the warnings about of keytab files in the Kerberos
+            Installation and Kerberos Administration manuals. You
+            should copy the file using an encrypted connection, set
+            the permissions to read only by the owner (<var class=
+            "LITERAL">400</var>), and set the owner to <var class=
+            "LITERAL">daemon</var> or the user that <b class=
+            "APPLICATION">lpd</b> will run as.</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN9299"></a>
+<pre class="SCREEN">
+    #&gt; chmod 400 lpr.wayoff.com
+    #&gt; scp lpr.wayoff.com root@wayoff.com:/etc/lpd.keytab
+    #&gt; ssh -l root wayoff.com
+    # wayoff &gt; chmod 400 /etc/lpd.keytab  
+    # wayoff &gt; chown daemon /etc/lpd.keytab  
+    # wayoff &gt; ls -l /etc/lpd.keytab  
+    -rw-------  1 daemon  wheel  128 Jan 16 11:06 /etc/lpd.keytab
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>If you want to have MIT Kerberos4 printing
+            compatibility then you will need to set up Kerberos 4
+            <var class="LITERAL">servertabs</var> instead of
+            Kerberos 5 keytabs. Assuming that you have put the
+            Kerberos 5 keytab in <tt class=
+            "FILENAME">/etc/lpd.keytab</tt>, then you extract the
+            Kerberos 4 srvtab version of the Kerberos 5 keytab
+            using the following commands. You must put the key in
+            the <tt class="FILENAME">/etc/srvtab</tt> file in order
+            to be compatible with the Kerberos 4 support.</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN9306"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {321} #</samp> <kbd class=
+"USERINPUT">ktuil</kbd>
+    <kbd class="USERINPUT">rkt /etc/lpd.keytab</kbd>
+    <kbd class="USERINPUT">wst /etc/srvtab</kbd>
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+        </ol>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9312">17.13.3. <b class=
+        "APPLICATION">LPRng</b> Configuration</a></h2>
+
+        <p>The <b class="APPLICATION">LPRng</b> software needs to
+        be configured so that it can find the Kerberos libraries
+        and include files. By default, the include files are
+        installed in <tt class="FILENAME">/usr/local/include</tt>
+        and the libraries in <tt class=
+        "FILENAME">/usr/local/lib</tt>. Use the following steps to
+        configure <b class="APPLICATION">LPRng</b> so that it uses
+        these directories during configuration and
+        installation:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9320"></a>
+<pre class="SCREEN">
+    cd .../LPRng
+    rm -f config.cache
+    CPPFLAGS="-I/usr/local/include -I/usr/include/kerberosIV" \
+      LDFLAGS="-L/usr/local/lib -L/usr/lib/kerberosIV" \
+      ./configure
+    make clean all
+    su
+    make install
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9322">17.13.4. Printcap
+        Entries</a></h2>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">auth=kerberos5</var><span
+            class="emphasis"><i class="EMPHASIS">use Kerberos5
+            authentication</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">kerberos_id=</var><span class=
+            "emphasis"><i class="EMPHASIS">server prinicpal name
+            (for client use)</i></span></p>
+          </li>
+
+          <li>
+            <p><var class=
+            "LITERAL">kerberos_server_principal=</var><span class=
+            "emphasis"><i class="EMPHASIS">alias for
+            kerberos_id</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">kerberos_forward_id=</var><span
+            class="emphasis"><i class="EMPHASIS">destination server
+            used by server</i></span></p>
+          </li>
+
+          <li>
+            <p><var class=
+            "LITERAL">kerberos_forward_principal=</var><span class=
+            "emphasis"><i class="EMPHASIS">alias for
+            kerberos_forward_id</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">kerberos_keytab=</var><span
+            class="emphasis"><i class="EMPHASIS">location of the
+            lpd server keytab file</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">kerberos_service=</var><span
+            class="emphasis"><i class="EMPHASIS">service to be
+            used</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">kerberos_life=</var><span
+            class="emphasis"><i class="EMPHASIS">lpd server ticket
+            lifetime</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">kerberos_renew=</var><span
+            class="emphasis"><i class="EMPHASIS">lpd server ticket
+            renew</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>Example printcap entry:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9363"></a>
+<pre class="SCREEN">
+    pr:client
+        :lp=pr@wayoff
+        :auth=kerberos5
+        :kerberos_id=lpr/wayoff.private@ASTART.COM
+    pr:server
+        :lp=pr@faroff.private
+        :auth_forward=kerberos5
+        :kerberos_id=lpr/wayoff.private@ASTART.COM
+        :kerberos_forward_id=lpr/faroff.private@ASTART.COM
+        :kerberos_keytab=/etc/lpd.keytab
+    
+    OR If you want to use Kerberos 4 authentication to the server
+    pr:client
+        :lp=pr@wayoff
+        :auth=kerberos4
+        :kerberos_id=lpr/wayoff.private@ASTART.COM
+    # support both Kerberos 4 and 5 on server
+    pr:server
+        :lp=pr@faroff.private
+        :auth_forward=kerberos5
+        :kerberos_id=lpr/wayoff.private@ASTART.COM
+        :kerberos_forward_id=lpr/faroff.private@ASTART.COM
+        :kerberos_keytab=/etc/lpd.keytab
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The printcap configuration for Kerberos authentication
+        is very simple.</p>
+
+        <p>The <var class="LITERAL">kerberos_id</var> is the
+        principal name of the lpd server that clients will connect
+        to. For backwards compatibility, <var class=
+        "LITERAL">kerberos_server_principal</var> can also be used.
+        This values is used to obtain a ticket for the <b class=
+        "APPLICATION">lpd</b> server, and is the only entry
+        required for client to server authentication.</p>
+
+        <p>The other entries are used by the <b class=
+        "APPLICATION">lpd</b> server. <var class=
+        "LITERAL">kerberos_keytab</var> entry is the location of
+        the keytab file to be used by the server. This contains the
+        passphrase used by the server to authenticate itself and
+        get a ticket from the ticket server.</p>
+
+        <p>The <var class="LITERAL">kerberos_id</var> value is also
+        used by the server during the authentication process to
+        make sure that the correct principal name was used by the
+        request originator. This check has saved many hours of pain
+        in trying to determine why authentication is failing.</p>
+
+        <p>The <var class="LITERAL">kerberos_life</var> and <var
+        class="LITERAL">kerberos_renew</var> set the lifetime and
+        renewability of the lpd server Kerberos tickets. These
+        values should not be modified unless you are familiar with
+        the Kerberos system. There are extensive notes in the <b
+        class="APPLICATION">LPRng</b> source code concerning these
+        values. The <var class="LITERAL">kerberos_service</var>
+        value supplies the name of the service to be used when
+        generating a ticket. It is stronly recommended that the
+        <var class="LITERAL">kerberos_id</var> entry be used
+        instead.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9381">17.13.5. User
+        Environment Variables and Files</a></h2>
+
+        <p>In order to use kerberos authentication, the user will
+        need to obtain a ticket from the Kerberos ticket server.
+        This is done using <var class="LITERAL">kinit</var>.</p>
+
+        <p>No other actions are required by the user.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x9115.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x9386.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">PGP
+          Authentication Support</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Using Kerberos
+          4 for Authentication</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

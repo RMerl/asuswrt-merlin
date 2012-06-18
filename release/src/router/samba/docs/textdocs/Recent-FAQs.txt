@@ -1,0 +1,289 @@
+!==
+!== Recent-FAQs.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:	Samba-bugs@samba.org
+Date:		July 5, 1998
+Status:		Current
+
+=============================================================================
+Subject: Recent FAQ answers to common questions / problems
+=============================================================================
+Contents:	NetWkstaUserLogon
+		Not listening for calling name
+		System Error 1240
+		Trapdoor UID
+		User Access Control
+		Using NT to Browse Samba Shares
+		setup.exe and 16 bit programs
+		smbclient -N
+
+NetWkstaUserLogon
+=================
+FAQ answer about the new password server code:
+
+In 1.9.18 you can disable the NetWkstaUserLogon call at compile time
+in local.h and from 1.9.18p3 you can now disable it from an option in
+your smb.conf.
+
+The password server behaviour changed because we discovered that bugs
+in some NT servers allowed anyone to login with no password if they
+chose an account name that did not exist on the password server. The 
+NT password server was saying "yes, it's OK to login" even when the 
+account didn't exist at all! Adding the NetWkstaUserLogon call fixed 
+the problem, and follows the "recommended" method that MS have 
+recently documented for pass through authentication.
+
+The problem now is that some NT servers (in particular NT
+workstation?) don't support the NetWkstaUserLogon call. The call also
+doesn't work for accounts in trust relationships.
+
+The eventual solution for this will be to replace the password server
+code in Samba with NT domain code as that is developed. For now you 
+have the choice of compiling Samba either with or without the 
+NetWkstaUserLogon call in the password server code.
+
+In 1.9.18p3 the following was added (copied from the 1.9.18p3 release
+notes):
+
+In the [global] section of smb.conf :
+
+networkstation user login
+
+This code (submitted by Rob Nielsen) allows the code many people 
+were having problems with that queries an NT password server to 
+be turned off at runtime rather than compile time. Please see the 
+documentation in the smb.conf manual page for details. This is a 
+security option - it must only be turned off after checks have been
+made to ensure that your NT password server does not suffer from the
+bug this code was meant to protect against !
+
+In 1.9.18 you can enable/disable this call in local.h. In 1.9.17p5
+you could apply the following patch. Applying this patch will make
+the password server code behave like the code in earlier versions
+of Samba. If you do this then please ensure that you test to see
+that users are prevented from logging in if they give a bogus 
+username/password. You may have a NT server that is affected by the
+bug that this code is designed to avoid.
+
+
+--- password.c	1997/10/21 10:09:28	1.25.2.4
++++ password.c	1997/12/31 06:43:06
+@@ -1619,6 +1619,7 @@
+ 	}
+ 
+ 
++#if 0
+ 	if (!cli_NetWkstaUserLogon(&cli,user,local_machine)) {
+ 		DEBUG(1,("password server %s failed NetWkstaUserLogon\n", cli.desthost));
+ 		cli_tdis(&cli);
+@@ -1638,6 +1639,7 @@
+ 		cli_tdis(&cli);
+ 		return False;
+ 	}
++#endif
+ 
+ 	DEBUG(3,("password server %s accepted the password\n", cli.desthost));
+===============================================================================
+
+Not listening for calling name
+==============================
+
+> Session request failed (131,129) with myname=HOBBES destname=CALVIN
+> Not listening for calling name
+
+If you get this when talking to a Samba box then it means that your
+global "hosts allow" or "hosts deny" settings are causing the Samba 
+server to refuse the connection. 
+
+Look carefully at your "hosts allow" and "hosts deny" lines in the
+global section of smb.conf. 
+
+It can also be a problem with reverse DNS lookups not functioning 
+correctly, leading to the remote host identity not being able to
+be confirmed, but that is less likely.
+===============================================================================
+
+System Error 1240
+=================
+System error 1240 means that the client is refusing to talk
+to a non-encrypting server. Microsoft changed WinNT in service
+pack 3 to refuse to connect to servers that do not support
+SMB password encryption.
+
+There are two main solutions:
+
+1) enable SMB password encryption in Samba. See ENCRYPTION.txt in the 
+Samba docs
+
+2) disable this new behaviour in NT. See WinNT.txt in the 
+Samba docs
+===============================================================================
+
+Trapdoor UID
+============
+> Log message "you appear to have a trapdoor uid system" 
+
+This can have several causes. It might be because you are using a uid
+or gid of 65535 or -1. This is a VERY bad idea, and is a big security
+hole. Check carefully in your /etc/passwd file and make sure that no
+user has uid 65535 or -1. Especially check the "nobody" user, as many
+broken systems are shipped with nobody setup with a uid of 65535.
+
+It might also mean that your OS has a trapdoor uid/gid system :-)
+
+This means that once a process changes effective uid from root to
+another user it can't go back to root. Unfortunately Samba relies on
+being able to change effective uid from root to non-root and back
+again to implement its security policy. If your OS has a trapdoor uid
+system this won't work, and several things in Samba may break. Less
+things will break if you use user or server level security instead of
+the default share level security, but you may still strike
+problems.
+
+The problems don't give rise to any security holes, so don't panic,
+but it does mean some of Samba's capabilities will be unavailable.
+In particular you will not be able to connect to the Samba server as
+two different uids at once. This may happen if you try to print as a
+"guest" while accessing a share as a normal user. It may also affect
+your ability to list the available shares as this is normally done as
+the guest user.
+
+Complain to your OS vendor and ask them to fix their system.
+
+Note: the reason why 65535 is a VERY bad choice of uid and gid is that
+it casts to -1 as a uid, and the setreuid() system call ignores (with
+no error) uid changes to -1. This means any daemon attempting to run
+as uid 65535 will actually run as root. This is not good!
+===============================================================================
+
+User Access Control
+===================
+> In windows when i set up a share in "user mode" i get the message:
+>  "You cannot view the list of users at this time. Please try again later."
+> 
+> I know you have lists of users for access and aliasing purposes, but i
+> have read nothing to support the idea that these lists control the Domain
+> Users List...
+
+Samba does NOT at this time support user mode access control for Window 9x
+of for NT. This is a priority item and requires full implementation of the NT SMB 
+protocol calls. Samba-1.9.19 will go into alpha in about 2 months time and will
+have a more full implementation of the NT SMB protocols to support Domain Client
+interoperability. When we can see that this has been succesful we wil then implement
+the NT SMB Server components. This will probably be released as Samba-2.0
+
+Samba-1.9.18p5 is scheduled to go out within 14 days. This will close off the 1.9.18
+branch and then opens the way to progress 1.9.19.
+
+I hope this answers your concerns adequately.
+===============================================================================
+
+Using NT to Browse Samba Shares
+===============================
+> WIN-NT workstations (nt4.0, service pack 3) 
+> samba with
+>   security = user
+>   encrypt passwords = yes
+>   guest account = guest
+> 
+> start the explorer on a win-nt workstation and select network. I find
+> my unix server running samba, but I can not see the list of shares 
+> unless I am  a user, who is known in the smbpasswd of the unix machine.
+> The guest account "guest" exists on my unix machine. For testing I even
+> made him a regular user with a password.
+>
+> With my network monitor I can see, that the win-nt workstation uses the
+> current login, to connect to IPC$ on the samba server 
+> (for example "administrator"), not the guest account.
+
+This is exactly how Windows NT works. You MUST have a valid account on the Windows
+NT box you are trying to see the resource list on. If your currently logged in
+account details do NOT match an account on the NT machine you are trying to access
+then you will be presented with a logon box for that machine. When you enter the
+name of an account on that machine / domain, together with a valid password then
+the resource list is made available. If the account details are not correct then
+no resource list is shown.
+
+Samba follows the behaviour of Windows NT exactly.
+
+Warning:Warning:Warning:
+========================
+Samba can be compiled with the GUEST_SESSION_SETUP option at 0,1 or 2.
+The default is 0. If this is set to 1 or 2 then Windows NT machines that DO NOT
+have an account on the Samba server will see the resource list. The down side of this
+is that legitimate users may then be refused access to their legitimate resources.
+Setting this option creates serious security holes. DO NOT DO IT. Samba has the
+value of this option set at 0 - NOT WITHOUT REASON!!!!
+
+******> Warning:Warning:Warning: ****> Do not tamper with this setting!!!
+===============================================================================
+
+setup.exe and 16 bit programs
+=============================
+Running 16 bit programs from Windows NT on a Samba mapped drive
+---------------------------------------------------------------
+
+The Windows NT redirector has a bug when running against a 
+Samba or Windows 95 mapped drive and attempting to run a
+16 bit executable.
+
+The problem occurs when the pathname to a 16 bit executable
+contains a non 8.3 filename complient directory component,
+Windows NT will fail to load the program and complain it
+cannot find the path to the program.
+
+It can be verified that this is a bug in Windows NT and
+not Samba as the same problem can be reproduced exactly
+when attempting to run the same program with the same
+pathname from a Windows 95 server (ie. the problem still
+exists even with no Samba server involved).
+
+Microsoft have been made aware of this problem, it is
+unknown if they regard it as serious enough to provide
+a fix for this.
+
+One of the reasons this problem is reported frequently
+is that InstallShield setup.exe executables are frequently
+written as 16 bit programs, and so hit this problem.
+
+As a workaround, you may create (on a Samba server at
+least) a symbolic link with an 8.3 complient name to 
+the non 8.3 complient directory name, and then the 16
+bit program will run. Alternatively, use the 8.3
+complient mangled name to specify the path to run
+the binary.
+
+This will be fixed when Samba adds the NT-specific
+SMB calls (currently targeted for the next major
+Samba release), as once the NT SMB calls are used
+this problem no longer occurs (which is why the
+problem doesn't occur when running against a drive
+mapped to a Windows NT server).
+
+Regards,
+
+	Jeremy Allison.
+	Samba Team.
+===============================================================================
+
+smbclient -N
+============
+> When getting the list of shares available on a host using the command
+>   smbclient -N -L <server>
+> the program always prompts for the password if the server is a Samba server.
+> It also ignores the "-N" argument when querying some (but not all) of our
+> NT servers.
+
+No, it does not ignore -N, it is just that your server rejected the 
+null password in the connection, so smbclient prompts for a password
+to try again.
+
+To get the behaviour that you probably want use 
+	smbclient -L host -U%
+
+this will set both the username and password to null, which is
+an anonymous login for SMB. Using -N would only set the password
+to null, and this is not accepted as an anonymous login for most
+SMB servers.
+===============================================================================
+

@@ -1,0 +1,322 @@
+<HTML>
+<HEAD>
+<TITLE> Samba FAQ: Common client questions</TITLE>
+</HEAD>
+<BODY>
+<A HREF="sambafaq-2.html">Previous</A>
+<A HREF="sambafaq-4.html">Next</A>
+<A HREF="sambafaq.html#toc3">Table of Contents</A>
+<HR>
+<H2><A NAME="s3">3. Common client questions</A></H2>
+
+<P> 
+<A NAME="client_questions"></A> 
+</P>
+
+<H2><A NAME="ss3.1">3.1 Are there any Macintosh clients for Samba?</A></H2>
+
+<P> 
+<A NAME="mac_clients"></A> 
+
+Yes! Thursby now have a CIFS Client / Server called DAVE - see 
+<A HREF="http://www.thursby.com/">http://www.thursby.com/</A>.
+They test it against Windows 95, Windows NT and samba for compatibility issues.
+At the time of writing, DAVE was at version 1.0.1. The 1.0.0 to 1.0.1 update is available 
+as a free download from the Thursby web site (the speed of finder copies has
+been greatly enhanced, and there are bug-fixes included).</P>
+<P>Alternatives - There are two free implementations of AppleTalk for
+several kinds of UNIX machnes, and several more commercial ones.
+These products allow you to run file services and print services
+natively to Macintosh users, with no additional support required on
+the Macintosh.  The two free omplementations are Netatalk,
+<A HREF="http://www.umich.edu/~rsug/netatalk/">http://www.umich.edu/~rsug/netatalk/</A>, and CAP, 
+<A HREF="http://www.cs.mu.oz.au/appletalk/atalk.html">http://www.cs.mu.oz.au/appletalk/atalk.html</A>.  What Samba offers 
+MS Windows users, these packages offer to Macs.  For more info on
+these packages, Samba, and Linux (and other UNIX-based systems)
+see 
+<A HREF="http://www.eats.com/linux_mac_win.html">http://www.eats.com/linux_mac_win.html</A></P>
+
+
+<H2><A NAME="ss3.2">3.2 "Session request failed (131,130)" error</A></H2>
+
+<P> 
+<A NAME="sess_req_fail"></A> 
+
+The following answer is provided by John E. Miller:</P>
+<P>I'll assume that you're able to ping back and forth between the
+machines by IP address and name, and that you're using some security
+model where you're confident that you've got user IDs and passwords
+right.  The logging options (-d3 or greater) can help a lot with that.
+DNS and WINS configuration can also impact connectivity as well.</P>
+<P>Now, on to 'scope id's.  Somewhere in your Win95 TCP/IP network
+configuration (I'm too much of an NT bigot to know where it's located
+in the Win95 setup, but I'll have to learn someday since I teach for a
+Microsoft Solution Provider Authorized Tech Education Center - what an
+acronym...) <F>Note: It's under Control Panel | Network | TCP/IP | WINS
+Configuration</F> there's a little text entry field called something like
+'Scope ID'.</P>
+<P>This field essentially creates 'invisible' sub-workgroups on the same
+wire.  Boxes can only see other boxes whose Scope IDs are set to the
+exact same value - it's sometimes used by OEMs to configure their
+boxes to browse only other boxes from the same vendor and, in most
+environments, this field should be left blank.  If you, in fact, have
+something in this box that EXACT value (case-sensitive!) needs to be
+provided to smbclient and nmbd as the -i (lowercase) parameter. So, if
+your Scope ID is configured as the string 'SomeStr' in Win95 then
+you'd have to use smbclient -iSomeStr <F>otherparms</F> in connecting to
+it.</P>
+
+
+<H2><A NAME="ss3.3">3.3 How do I synchronise my PC's clock with my Samba server? </A></H2>
+
+<P>
+<A NAME="synchronise_clock"></A> 
+
+To syncronize your PC's clock with your Samba server:
+<UL>
+<LI> Copy timesync.pif to your windows directory</LI>
+<LI> timesync.pif can be found at:
+<A HREF="http://samba.org/samba/binaries/miscellaneous/timesync.pif">http://samba.org/samba/binaries/miscellaneous/timesync.pif</A></LI>
+<LI> Add timesync.pif to your 'Start Up' group/folder</LI>
+<LI> Open the properties dialog box for the program/icon</LI>
+<LI> Make sure the 'Run Minimized' option is set in program 'Properties'</LI>
+<LI> Change the command line section that reads <F>\\sambahost</F> to reflect the name of your server.</LI>
+<LI> Close the properties dialog box by choosing 'OK'</LI>
+</UL>
+
+Each time you start your computer (or login for Win95) your PC will
+synchronize its clock with your Samba server.</P>
+<P>Alternativley, if you clients support Domain Logons, you can setup Domain Logons with Samba
+- see: 
+<A HREF="ftp://samba.org/pub/samba/docs/BROWSING.txt">BROWSING.txt</A> *** for more information.</P>
+<P>Then add 
+<BLOCKQUOTE><CODE>
+<PRE>
+NET TIME \\%L /SET /YES
+</PRE>
+</CODE></BLOCKQUOTE>
+
+as one of the lines in the logon script.</P>
+
+<H2><A NAME="ss3.4">3.4 Problems with WinDD, NTrigue, WinCenterPro etc</A></H2>
+
+<P>
+<A NAME="multiple_session_clients"></A> 
+</P>
+<P>All of the above programs are applications that sit on an NT box and
+allow multiple users to access the NT GUI applications from remote
+workstations (often over X).</P>
+<P>What has this got to do with Samba? The problem comes when these users
+use filemanager to mount shares from a Samba server. The most common
+symptom is that the first user to connect get correct file permissions
+and has a nice day, but subsequent connections get logged in as the
+same user as the first person to login. They find that they cannot
+access files in their own home directory, but that they can access
+files in the first users home directory (maybe not such a nice day
+after all?)</P>
+<P>Why does this happen? The above products all share a common heritage
+(and code base I believe). They all open just a single TCP based SMB
+connection to the Samba server, and requests from all users are piped
+over this connection. This is unfortunate, but not fatal.</P>
+<P>It means that if you run your Samba server in share level security
+(the default) then things will definately break as described
+above. The share level SMB security model has no provision for
+multiple user IDs on the one SMB connection. See 
+<A HREF="ftp://samba.org/pub/samba/docs/security_level.txt">security_level.txt</A> in
+the docs for more info on share/user/server level security.</P>
+<P>If you run in user or server level security then you have a chance,
+but only if you have a recent version of Samba (at least 1.9.15p6). In
+older versions bugs in Samba meant you still would have had problems.</P>
+<P>If you have a trapdoor uid system in your OS then it will never work
+properly. Samba needs to be able to switch uids on the connection and
+it can't if your OS has a trapdoor uid system. You'll know this
+because Samba will note it in your logs.</P>
+<P>Also note that you should not use the magic "homes" share name with
+products like these, as otherwise all users will end up with the same
+home directory. Use <F>\\server\username</F> instead.</P>
+
+
+<H2><A NAME="ss3.5">3.5 Problem with printers under NT</A></H2>
+
+<P> 
+<A NAME="nt_printers"></A> 
+
+This info from Stefan Hergeth
+hergeth@f7axp1.informatik.fh-muenchen.de may be useful:</P>
+<P>A network-printer (with ethernetcard) is connected to the NT-Clients
+via our UNIX-Fileserver (SAMBA-Server), like the configuration told by
+Matthew Harrell harrell@leech.nrl.navy.mil (see WinNT.txt)
+<OL>
+<LI>If a user has choosen this printer as the default printer in his
+NT-Session and this printer is not connected to the network
+(e.g. switched off) than this user has a problem with the SAMBA-
+connection of his filesystems. It's very slow.
+</LI>
+<LI>If the printer is connected to the network everything works fine.
+</LI>
+<LI>When the smbd ist started with debug level 3, you can see that the
+NT spooling system try to connect to the printer many times. If the
+printer ist not connected to the network this request fails and the
+NT spooler is wasting a lot of time to connect to the printer service.
+This seems to be the reason for the slow network connection.
+</LI>
+<LI>Maybe it's possible to change this behaviour by setting different 
+printer properties in the Print-Manager-Menu of NT, but i didn't try it yet.</LI>
+</OL>
+</P>
+
+
+<H2><A NAME="ss3.6">3.6 Why are my file's timestamps off by an hour, or by a few hours?</A></H2>
+
+<P>
+<A NAME="dst_bugs"></A> 
+
+This is from Paul Eggert eggert@twinsun.com.</P>
+<P>Most likely it's a problem with your time zone settings.</P>
+<P>Internally, Samba maintains time in traditional Unix format,
+namely, the number of seconds since 1970-01-01 00:00:00 Universal Time
+(or ``GMT''), not counting leap seconds.</P>
+<P>On the server side, Samba uses the Unix TZ variable to convert
+internal timestamps to and from local time.  So on the server side, there are
+two things to get right.
+<OL>
+<LI>The Unix system clock must have the correct Universal time.
+Use the shell command "sh -c 'TZ=UTC0 date'" to check this.
+</LI>
+<LI>The TZ environment variable must be set on the server
+before Samba is invoked.  The details of this depend on the
+server OS, but typically you must edit a file whose name is
+/etc/TIMEZONE or /etc/default/init, or run the command `zic -l'.
+</LI>
+<LI>TZ must have the correct value.
+<OL>
+<LI>If possible, use geographical time zone settings
+(e.g. TZ='America/Los_Angeles' or perhaps
+TZ=':US/Pacific').  These are supported by most
+popular Unix OSes, are easier to get right, and are
+more accurate for historical timestamps.  If your
+operating system has out-of-date tables, you should be
+able to update them from the public domain time zone
+tables at 
+<A HREF="ftp://elsie.nci.nih.gov/pub/">ftp://elsie.nci.nih.gov/pub/</A>.
+</LI>
+<LI>If your system does not support geographical timezone
+settings, you must use a Posix-style TZ strings, e.g.
+TZ='PST8PDT,M4.1.0/2,M10.5.0/2' for US Pacific time.
+Posix TZ strings can take the following form (with optional
+items in brackets):
+<PRE>
+        StdOffset[Dst[Offset],Date/Time,Date/Time]
+</PRE>
+
+where:
+<UL>
+<LI>                        `Std' is the standard time designation (e.g. `PST').
+</LI>
+<LI>                        `Offset' is the number of hours behind UTC (e.g. `8').
+Prepend a `-' if you are ahead of UTC, and
+append `:30' if you are at a half-hour offset.
+Omit all the remaining items if you do not use
+daylight-saving time.
+</LI>
+<LI>                        `Dst' is the daylight-saving time designation
+(e.g. `PDT').
+
+The optional second `Offset' is the number of
+hours that daylight-saving time is behind UTC.
+The default is 1 hour ahead of standard time.
+</LI>
+<LI>                        `Date/Time,Date/Time' specify when daylight-saving
+time starts and ends.  The format for a date is
+`Mm.n.d', which specifies the dth day (0 is Sunday)
+of the nth week of the mth month, where week 5 means
+the last such day in the month.  The format for a
+time is <F>h</F>h<F>:mm[:ss</F>], using a 24-hour clock.</LI>
+</UL>
+
+Other Posix string formats are allowed but you don't want
+to know about them.</LI>
+</OL>
+</LI>
+</OL>
+
+On the client side, you must make sure that your client's clock and
+time zone is also set appropriately.  <F>[I don't know how to do this.</F>]
+Samba traditionally has had many problems dealing with time zones, due
+to the bizarre ways that Microsoft network protocols handle time
+zones.  A common symptom is for file timestamps to be off by an hour.
+To work around the problem, try disconnecting from your Samba server
+and then reconnecting to it; or upgrade your Samba server to
+1.9.16alpha10 or later.</P>
+
+
+<H2><A NAME="ss3.7">3.7 How do I set the printer driver name correctly? </A></H2>
+
+<P>
+<A NAME="printer_driver_name"></A> 
+
+Question:
+On NT, I opened "Printer Manager" and "Connect to Printer".
+Enter <F>"\\ptdi270\ps1"</F> in the box of printer. I got the
+following error message:
+<BLOCKQUOTE><CODE>
+<PRE>
+     You do not have sufficient access to your machine
+     to connect to the selected printer, since a driver
+     needs to be installed locally.
+</PRE>
+</CODE></BLOCKQUOTE>
+
+Answer:</P>
+<P>In the more recent versions of Samba you can now set the "printer
+driver" in smb.conf. This tells the client what driver to use. For
+example:
+<BLOCKQUOTE><CODE>
+<PRE>
+     printer driver = HP LaserJet 4L
+</PRE>
+</CODE></BLOCKQUOTE>
+
+with this, NT knows to use the right driver. You have to get this string
+exactly right.</P>
+<P>To find the exact string to use, you need to get to the dialog box in
+your client where you select which printer driver to install. The
+correct strings for all the different printers are shown in a listbox
+in that dialog box.</P>
+<P>You could also try setting the driver to NULL like this:
+<BLOCKQUOTE><CODE>
+<PRE>
+     printer driver = NULL
+</PRE>
+</CODE></BLOCKQUOTE>
+
+this is effectively what older versions of Samba did, so if that
+worked for you then give it a go. If this does work then let us know via 
+<A HREF="mailto:samba@samba.org">samba@samba.org</A>,
+and we'll make it the default. Currently the default is a 0 length
+string.</P>
+
+
+<H2><A NAME="ss3.8">3.8 I've applied NT 4.0 SP3, and now I can't access Samba shares, Why?</A></H2>
+
+<P>
+<A NAME="NT_SP3_FIX"></A> 
+
+As of SP3, Microsoft has decided that they will no longer default to 
+passing clear text passwords over the network.  To enable access to 
+Samba shares from NT 4.0 SP3, you must do <B>ONE</B> of two things:
+<OL>
+<LI> Set the Samba configuration option 'security = user' and implement all of the stuff detailed in 
+<A HREF="ftp://samba.org/pub/samba/docs/ENCRYPTION.txt">ENCRYPTION.txt</A>.</LI>
+<LI> Follow Microsoft's directions for setting your NT box to allow plain text passwords. see 
+<A HREF="http://www.microsoft.com/kb/articles/q166/7/30.htm">Knowledge Base Article Q166730</A></LI>
+</OL>
+</P>
+
+
+<HR>
+<A HREF="sambafaq-2.html">Previous</A>
+<A HREF="sambafaq-4.html">Next</A>
+<A HREF="sambafaq.html#toc3">Table of Contents</A>
+</BODY>
+</HTML>

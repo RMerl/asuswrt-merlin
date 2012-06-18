@@ -1,0 +1,28 @@
+#!/bin/sh
+CI=
+CO=-kv
+
+checkin() {
+	rcs -l $1;
+	ci ${CI} -mUpdate -t-Initial $1;
+	yes |co ${CO} $1;
+}
+
+find . -type f -newer VERSION -print | sed -e '/,v/d' -e '/\.[oa]/d' -e '/config\.*/d' >/tmp/a
+for i in `cat /tmp/a ` ; do
+	if file $i | grep 'executable' >/dev/null; then
+		echo executable $i;
+	else
+		echo GOOD $i;
+		case "$i" in
+			config.h.in ) checkin $i;;
+			config.* ) ;;
+			*Makefile* ) ;;
+			*Makefile.* ) ;;
+			*.html ) ;;
+			CIFAST ) ;;
+			configure ) ;;
+			* ) checkin $i ;;
+		esac;
+	fi;
+done;

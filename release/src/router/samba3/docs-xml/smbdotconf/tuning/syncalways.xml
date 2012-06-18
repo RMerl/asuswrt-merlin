@@ -1,0 +1,21 @@
+<samba:parameter name="sync always"
+	context="S"
+	type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This is a boolean parameter that controls 
+    whether writes will always be written to stable storage before 
+    the write call returns. If this is <constant>no</constant> then the server will be 
+    guided by the client's request in each write call (clients can 
+    set a bit indicating that a particular write should be synchronous). 
+    If this is <constant>yes</constant> then every write will be followed by a <command moreinfo="none">fsync()
+    </command> call to ensure the data is written to disk. Note that 
+    the <parameter moreinfo="none">strict sync</parameter> parameter must be set to
+    <constant>yes</constant> in order for this parameter to have 
+    any affect.</para>
+</description>
+
+<related>strict sync</related>
+
+<value type="default">no</value>
+</samba:parameter>

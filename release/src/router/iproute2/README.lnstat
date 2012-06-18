@@ -1,0 +1,81 @@
+lnstat - linux networking statistics
+(C) 2004 Harald Welte <laforge@gnumonks.org
+======================================================================
+
+This tool is a generalized and more feature-complete replacement for the old
+'rtstat' program.
+
+In addition to routing cache statistics, it supports any kind of statistics
+the linux kernel exports via a file in /proc/net/stat.  In a stock 2.6.9
+kernel, this is 
+	per-protocol neighbour cache statistics 
+		(ipv4, ipv6, atm, decnet)
+	routing cache statistics
+		(ipv4)
+	connection tracking statistics
+		(ipv4)
+
+Please note that lnstat will adopt to any additional statistics that might be
+added to the kernel at some later point
+
+I personally always like examples more than any reference documentation, so I
+list the following examples.  If somebody wants to do a manpage, feel free
+to send me a patch :)
+
+EXAMPLES:
+
+In order to get a list of supported statistics files, you can run
+
+	lnstat -d
+
+It will display something like
+ 
+/proc/net/stat/arp_cache:
+         1: entries
+         2: allocs
+         3: destroys
+[...]
+/proc/net/stat/rt_cache:
+         1: entries
+         2: in_hit
+         3: in_slow_tot
+
+You can now select the files/keys you are interested by something like
+
+	lnstat -k arp_cache:entries,rt_cache:in_hit,arp_cache:destroys
+
+arp_cach|rt_cache|arp_cach|
+ entries|  in_hit|destroys|
+       6|       6|       0|
+       6|       0|       0|
+       6|       2|       0|
+
+
+You can specify the interval (e.g. 10 seconds) by:
+	
+	lnstat -i 10
+
+You can specify to only use one particular statistics file:
+
+	lnstat -f ip_conntrack
+
+You can specify individual field widths 
+
+	lnstat -k arp_cache:entries,rt_cache:entries -w 20,8
+
+You can specify not to print a header at all
+	
+	lnstat -s 0
+
+You can specify to print a header only at start of the program
+
+	lnstat -s 1
+
+You can specify to print a header at start and every 20 lines:
+
+	lnstat -s 20
+
+You can specify the number of samples you want to take (e.g. 5):
+	
+	lnstat -c 5
+

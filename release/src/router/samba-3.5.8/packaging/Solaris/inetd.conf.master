@@ -1,0 +1,1 @@
+swat	stream	tcp	nowait.400	root	__BASEDIR__/samba/bin/swat swat

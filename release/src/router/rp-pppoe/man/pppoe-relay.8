@@ -1,0 +1,124 @@
+.\" LIC: GPL
+.TH PPPOE-RELAY 8 "26 January 2001"
+.\""
+.UC 4
+.SH NAME
+pppoe-relay \- user-space PPPoE relay agent.
+.SH SYNOPSIS
+.B pppoe-relay \fR[\fIoptions\fR]
+
+.SH DESCRIPTION
+\fBpppoe-relay\fR is a user-space relay agent for PPPoE
+(Point-to-Point Protocol over Ethernet) for Linux.  \fBpppoe-relay\fR
+works in concert with the \fBpppoe\fR client and \fBpppoe-server\fR
+server.  See the OPERATION section later in this manual for
+details on how \fBpppoe-relay\fR works.
+
+.SH OPTIONS
+.TP
+.B \-S \fIinterface\fR
+Adds the Ethernet interface \fIinterface\fR to the list of interfaces
+managed by \fBpppoe-relay\fR.  Only PPPoE servers may be connected to
+this interface.
+
+.TP
+.B \-C \fIinterface\fR
+Adds the Ethernet interface \fIinterface\fR to the list of interfaces
+managed by \fBpppoe-relay\fR.  Only PPPoE clients may be connected to
+this interface.
+
+.TP
+.B \-B \fIinterface\fR
+Adds the Ethernet interface \fIinterface\fR to the list of interfaces
+managed by \fBpppoe-relay\fR.  Both PPPoE clients and servers may be
+connected to this interface.
+
+.TP
+.B \-n \fInum\fR
+Allows at most \fInum\fR concurrent PPPoE sessions.  If not specified,
+the default is 5000.  \fInum\fR can range from 1 to 65534.
+
+.TP
+.B \-i \fItimeout\fR
+Specifies the session idle timeout.  If both peers in a session are idle
+for more than \fItimeout\fR seconds, the session is terminated.
+If \fItimeout\fR is specified as zero, sessions will never be terminated
+because of idleness.
+
+Note that the idle-session expiry routine is never run more frequently than
+every 30 seconds, so the timeout is approximate.  The default value for
+\fItimeout\fR is 600 seconds (10 minutes.)
+
+.TP
+.B \-F
+The \fB\-F\fR option causes \fBpppoe-relay\fR \fInot\fR to fork into the
+background; instead, it remains in the foreground.
+
+.TP
+.B \-h
+The \fB\-h\fR option prints a brief usage message and exits.
+
+.SH OPERATION
+
+\fBpppoe-relay\fR listens for incoming PPPoE PADI frames on all interfaces
+specified with \fB-B\fR or \fB-C\fR options.  When a PADI frame appears,
+\fBpppoe-relay\fR adds a Relay-Session-ID tag and broadcasts the PADI
+on all interfaces specified with \fB-B\fR or \fB-S\fR options (except the
+interface on which the frame arrived.)
+
+Any PADO frames received are relayed back to the client which sent the
+PADI (assuming they contain valid Relay-Session-ID tags.)  Likewise,
+PADR frames from clients are relayed back to the matching access
+concentrator.
+
+When a PADS frame is received, \fBpppoe-relay\fR enters the two peers'
+MAC addresses and session-ID's into a hash table.  (The session-ID seen
+by the access concentrator may be different from that seen by the client;
+\fBpppoe-relay\fR must renumber sessions to avoid the possibility of duplicate
+session-ID's.)  Whenever either peer sends a session frame, \fBpppoe-relay\fR
+looks up the session entry in the hash table and relays the frame to
+the correct peer.
+
+When a PADT frame is received, \fBpppoe-relay\fR relays it to the peer
+and deletes the session entry from its hash table.
+
+If a client and server crash (or frames are lost), PADT frames may never
+be sent, and \fBpppoe-relay\fR's hash table can fill up with stale sessions.
+Therefore, a session-cleaning routine runs periodically, and removes old
+sessions from the hash table.  A session is considered "old" if no traffic
+has been seen within \fItimeout\fR seconds.  When a session is deleted because
+of a timeout, a PADT frame is sent to each peer to make certain that they
+are aware the session has been killed.
+
+.SH EXAMPLE INVOCATIONS
+
+.nf
+pppoe-relay -C eth0 -S eth1
+.fi
+
+The example above relays frames between PPPoE clients on the eth0 network
+and PPPoE servers on the eth1 network.
+
+.nf
+pppoe-relay -B eth0 -B eth1
+.fi
+
+This example is a transparent relay -- frames are relayed between any mix
+of clients and servers on the eth0 and eth1 networks.
+
+.nf
+pppoe-relay -S eth0 -C eth1 -C eth2 -C eth3
+.fi
+
+This example relays frames between servers on the eth0 network and
+clients on the eth1, eth2 and eth3 networks.
+
+.SH AUTHORS
+\fBpppoe-relay\fR was written by David F. Skoll <dfs@roaringpenguin.com>.
+
+The \fBpppoe\fR home page is \fIhttp://www.roaringpenguin.com/pppoe/\fR.
+
+.SH SEE ALSO
+pppoe-start(8), pppoe-stop(8), pppoe-connect(8), pppd(8), pppoe.conf(5),
+pppoe(8), pppoe-setup(8), pppoe-status(8), pppoe-sniff(8), pppoe-server(8)
+

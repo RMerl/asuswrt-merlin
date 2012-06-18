@@ -1,0 +1,119 @@
+Readme for HSO driver v1.5 and older
+====================================
+
+Contents:
+---------
+1) Using the driver for a ppp connection
+2) Using the driver as a network interface
+3) Dynamic suspend/resume implementation
+
+
+1) Using the driver for a ppp connection
+========================================
+
+The biggest problem in setting up a PPP connection is knowing on which port to set up pppd.
+When the driver is loaded and the device inserted, there are 2 ways to know the correct port:
+
+Points 1 & 2 are obselete since v1.3 of the driver they are left in just for completeness.
+1. Check syslog for an entry which says 'Found Modem port <portname>'. Then use <portname> to set up your ppp session.
+2. Check /proc/hso/devices. In that directory there is an entry for each port. When you do a 'cat' on each entry it will 
+show you the type of port.
+	In case of a modem port it will say 'Modem' on the first line.  
+3. The hso_connect.sh script distributed with this package shows how to find the application port 
+used to send AT commands to start the network port in versions 1.3 of the driver & afterwords, 
+the snippet of the bash script that does this is...
+TTYS=`find /sys/class/tty -name "ttyHS*"`
+APP_PORT=""
+for i in $TTYS; do
+    if [ `grep Application $i/hsotype` ]
+    then
+	APP_PORT=$i
+	break
+    fi
+done
+DEVICE=/dev/`echo $APP_PORT | cut -d/ -f5`
+echo Using $DEVICE application port.
+
+
+
+2) Using the driver as a network interface
+==========================================
+
+You can use the hso_connect.sh script provided to set up a call on the network interface. 
+However they're far from failsafe and should only serve as a guide towards
+the connection setup. 
+I'll briefly details the steps required to manually activate such a network interface connection:
+
+The points presented below on how to start the network interface is pretty obselete use
+this as a rough guide & read the hso_connect.sh use the script as a more accurate guide... 
+1) Open an AT port, preferrably the Control port.  /dev/ttyHS0 serves as a pretty wild guess as a Control port. 
+If not sure, use the advice in previous section but replace 'Modem' with 'Control'.
+2) Make sure your PIN code and APN are set correctly ( AT+CPIN=xxxx for PIN code and AT+CGDCONT=1,,"<APN>" ).
+3) Make sure the card is registered on the network. Entering AT+COPS? should display the network you're currently registered on.
+4) Now you need to activate your connection. So issue AT_OWANCALL=1,1,1. This will return OK immediately. 
+However this doesn't mean your data call is already active. It means the call succeeded and the call is -being- set up. 
+When the call is ready, you'll get an unsolicited response in the form of '_OWANCALL: 1,X', where X can 0,1,2,3.
+0 = Disconnected, 1 = Connected, 2 = In setup,  3 = Call setup failed. If everything goes right, you should see '_OWANCALL: 1,1'. 
+Note on the unsolicited response: the unsolicited response is enabled by the last parameter of AT_OWANCALL. If you set that 
+parameter to 0 ( AT_OWANCALL=1,1,0 ), you will never see the unsolicited response, so you will need to query the call status 
+with AT_OWANCALL?
+
+5) If that went well and your data call is active, you can issue AT_OWANDATA?. This will return the IP settings you can use to 
+configure the hso0 interface.
+The settings which will be returned are : _OWANDATA: 1, <gateway>, <IP>, <DNS 1>, <DNS 2>, <NBNS1>, <NBNS2>, <speed>
+
+To disconnect the call simply issue AT_OWANCALL=1,0,1 on an AT port.
+
+NOTE: In most commands entered above, the first parameter is your context-id ( '1' here ) . In theory you can define multiple 
+context id's, but in practice they're of little use. Just make sure you use the same id across the AT commands or your context 
+might not be defined properly.
+
+
+3) Dynamic suspend/resume implementation
+========================================
+
+This driver has dynamic suspend/resume implemented using the autopm interface provided from kernel 2.6.22.  When CONFIG_USB_SUSPEND 
+was enabled in your kernel and the device supports remote wakeup, you can use this functionality. 
+By default it is disabled due to its experimental status, you can enable it by setting the module parameter 'enable_autopm' to 1. 
+You can do this when you insmod the module (eg insmod hso.ko enable_autopm=1) or you can change the default in modules.conf.
+The autosuspend is implemented in the USB core, and is not enabled by default since no devices support it in the time this is written. You can enable this by changing the appropriate values in the files within the /sys/bus/usb/devices/.../power/ directory 
+(where the "..." is the device id).
+The relevant files in that directory are:
+- wakeup: this should contain the word "enabled" if the device supports remote wakeup, if it doesn't the autosuspend will be disabled.
+- level: there are 3 modes: 
+	- "on": the device is always on, autosuspend is disabled
+	- "suspend": the device is suspended, but can be woken up by remote wakeup
+	- "auto": autosuspend is enabled
+	You can set this mode by echo-ing the word to that file,
+	eg to enable autosuspend do: 'echo "auto" > /sys/bus/usb/devices/.../power/level' (where "..." is the device id)
+- autosuspend: the number of seconds before autosuspend is triggered after the last time the device was busy. If set to -1, autosuspend is disabled. 
+	If you enable autosuspend, it is strongly recommended to not put a value lower than 5 in this file.
+	You can set this delay by echo-ing the word to that file,
+	eg to set autosuspend to kick in after 10 seconds do: 'echo "10" > /sys/bus/usb/devices/.../power/autosuspend' (where "..." is the device id)
+
+Before version 1.3 of the driver autosuspend used be done as follows...
+When trying to script it so that the autosuspend is enabled, you will need the usb device id, this however can change values, that is why an entry is created in the /proc filesystem where you can easily fetch that id. Assuming you only have 1 data card, there will be a ttyHS0 device, and the proc file will be: /proc/hso/devices/ttyHS0, and in that file a value "USB bus id:" will tell you which device.
+eg: if you want to add autosuspend after 5 seconds in your script, do something like this ( as root ) :
+	echo 5 > /sys/bus/usb/devices/`grep USB /proc/hso/devices/ttyHS0 | awk '{print $4}'`/power/autosuspend
+Since version 1.5
+The setpwr.sh script now roughly finds the place where to set switch on or off autosuspend by
+finding a idVendor code of 0af0 which is Option, i.e. it only works for an Option modem & only if only
+one Option modem is connected. 
+setpwr.sh auto swiches on autosuspend, setpwr.sh on switches off autosuspend.
+The autosuspend variable in the same directory as setpwr.sh uses sets the time in seconds before autosuspend
+becomes activated.
+
+ports.sh
+========
+This little script lists the application,control & diagnostic ports
+on the system
+ports.sh app 
+will list application ports
+ports.sh all 
+will list all the ports. 
+The script searches in /sys first for
+application ports then in /proc so as to work
+with pre 1.3 drivers. 
+ 
+
+ 

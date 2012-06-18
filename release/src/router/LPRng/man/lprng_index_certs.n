@@ -1,0 +1,48 @@
+.ds VE LPRng-3.9.0
+.TH LPRNG_INDEX_CERTS 1 \*(VE "LPRng"
+.ig
+lpbanner.1,v 3.33 1998/03/29 18:37:49 papowell Exp
+..
+.SH NAME
+lprng_index_certs \- lprng SSL certificate management
+.SH SYNOPSIS
+.B "lprng_index_certs [directory]"
+.SH DESCRIPTION
+.PP
+The
+.B lprng_index_certs
+program creates a set of index files in the LPRng
+signing certificate directory.
+See
+.BR lprng_certs (1)
+for details.
+.SH "EXIT STATUS"
+.PP
+The following exit values are returned:
+.TP 15
+.B "zero (0)"
+Successful completion.
+.TP
+.B "non-zero (!=0)"
+An error occurred.
+.SH "SEE ALSO"
+.LP
+lpd.conf(5),
+lpc(8),
+lpd(8),
+checkpc(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.conf(5),
+pr(1), lprng_certs(1), lprng_index_certs(1).
+.SH "HISTORY"
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+The LPRng mailing list is lprng@lprng.com;
+subscribe by sending mail to lprng-request@lprng.com with
+the word subscribe in the body.
+The software is available from ftp://ftp.lprng.com/pub/LPRng.
+.SH "AUTHOR"
+Patrick Powell <papowell@lprng.com>.

@@ -1,0 +1,115 @@
+ uClibc SVN branch uClibc-nptl - Revision 11527
+ 
+ Fix relocation error messages for MIPS so that they actually work instead
+  of segfaulting. Nobody tests things anymore.
+ 
+--- uClibc/ldso/ldso/mips/dl-debug.h	2005/09/21 03:57:02	11526
++++ uClibc-nptl/ldso/ldso/mips/dl-debug.h	2005/09/21 04:05:06	11527
+@@ -1,7 +1,7 @@
+ /* vi: set sw=4 ts=4: */
+ /* mips/mipsel ELF shared library loader suppport
+  *
+-   Copyright (C) 2002, Steven J. Hill (sjhill@realitydiluted.com)
++   Copyright (C) 2002, 2005 Steven J. Hill (sjhill@realitydiluted.com)
+  *
+  * All rights reserved.
+  *
+@@ -27,19 +27,59 @@
+  * SUCH DAMAGE.
+  */
+ 
+-static const char *_dl_reltypes_tab[] =
++static const char *_dl_reltypes_tab[R_MIPS_NUM];
++
++void _dl_populate_reltypes_tab(void)
+ {
+-	[0]		"R_MIPS_NONE",	"R_MIPS_16",	"R_MIPS_32",
+-	[3]		"R_MIPS_REL32",	"R_MIPS_26",	"R_MIPS_HI16",
+-	[6]		"R_MIPS_LO16",	"R_MIPS_GPREL16",	"R_MIPS_LITERAL",
+-	[9]		"R_MIPS_GOT16",	"R_MIPS_PC16",	"R_MIPS_CALL16",
+-	[12]	"R_MIPS_GPREL32",
+-	[16]	"R_MIPS_SHIFT5",	"R_MIPS_SHIFT6",	"R_MIPS_64",
+-	[19]	"R_MIPS_GOT_DISP",	"R_MIPS_GOT_PAGE",	"R_MIPS_GOT_OFST",
+-	[22]	"R_MIPS_GOT_HI16",	"R_MIPS_GOT_LO16",	"R_MIPS_SUB",
+-	[25]	"R_MIPS_INSERT_A",	"R_MIPS_INSERT_B",	"R_MIPS_DELETE",
+-	[28]	"R_MIPS_HIGHER",	"R_MIPS_HIGHEST",	"R_MIPS_CALL_HI16",
+-	[31]	"R_MIPS_CALL_LO16",	"R_MIPS_SCN_DISP",	"R_MIPS_REL16",
+-	[34]	"R_MIPS_ADD_IMMEDIATE",	"R_MIPS_PJUMP",	"R_MIPS_RELGOT",
+-	[37]	"R_MIPS_JALR",
+-};
++	_dl_reltypes_tab [0] = "R_MIPS_NONE";
++	_dl_reltypes_tab [1] = "R_MIPS_16";
++	_dl_reltypes_tab [2] = "R_MIPS_32";
++	_dl_reltypes_tab [3] = "R_MIPS_REL32";
++	_dl_reltypes_tab [4] = "R_MIPS_26";
++	_dl_reltypes_tab [5] = "R_MIPS_HI16";
++	_dl_reltypes_tab [6] = "R_MIPS_LO16";
++	_dl_reltypes_tab [7] = "R_MIPS_GPREL16";
++	_dl_reltypes_tab [8] = "R_MIPS_LITERAL";
++	_dl_reltypes_tab [9] = "R_MIPS_GOT16";
++	_dl_reltypes_tab[10] = "R_MIPS_PC16";
++	_dl_reltypes_tab[11] = "R_MIPS_CALL16";
++	_dl_reltypes_tab[12] = "R_MIPS_GPREL32";
++	_dl_reltypes_tab[13] = NULL;
++	_dl_reltypes_tab[14] = NULL;
++	_dl_reltypes_tab[15] = NULL;
++	_dl_reltypes_tab[16] = "R_MIPS_SHIFT5";
++	_dl_reltypes_tab[17] = "R_MIPS_SHIFT6";
++	_dl_reltypes_tab[18] = "R_MIPS_64";
++	_dl_reltypes_tab[19] = "R_MIPS_GOT_DISP";
++	_dl_reltypes_tab[20] = "R_MIPS_GOT_PAGE";
++	_dl_reltypes_tab[21] = "R_MIPS_GOT_OFST";
++	_dl_reltypes_tab[22] = "R_MIPS_GOT_HI16";
++	_dl_reltypes_tab[23] = "R_MIPS_GOT_LO16";
++	_dl_reltypes_tab[24] = "R_MIPS_SUB";
++	_dl_reltypes_tab[25] = "R_MIPS_INSERT_A";
++	_dl_reltypes_tab[26] = "R_MIPS_INSERT_B";
++	_dl_reltypes_tab[27] = "R_MIPS_DELETE";
++	_dl_reltypes_tab[28] = "R_MIPS_HIGHER";
++	_dl_reltypes_tab[29] = "R_MIPS_HIGHEST";
++	_dl_reltypes_tab[30] = "R_MIPS_CALL_HI16";
++	_dl_reltypes_tab[31] = "R_MIPS_CALL_LO16";
++	_dl_reltypes_tab[32] = "R_MIPS_SCN_DISP";
++	_dl_reltypes_tab[33] = "R_MIPS_REL16";
++	_dl_reltypes_tab[34] = "R_MIPS_ADD_IMMEDIATE";
++	_dl_reltypes_tab[35] = "R_MIPS_PJUMP";
++	_dl_reltypes_tab[36] = "R_MIPS_RELGOT";
++	_dl_reltypes_tab[37] = "R_MIPS_JALR";
++	_dl_reltypes_tab[38] = "R_MIPS_TLS_DTPMOD32";
++	_dl_reltypes_tab[39] = "R_MIPS_TLS_DTPREL32";
++	_dl_reltypes_tab[40] = "R_MIPS_TLS_DTPMOD64";
++	_dl_reltypes_tab[41] = "R_MIPS_TLS_DTPREL64";
++	_dl_reltypes_tab[42] = "R_MIPS_TLS_GD";
++	_dl_reltypes_tab[43] = "R_MIPS_TLS_LDM";
++	_dl_reltypes_tab[44] = "R_MIPS_TLS_DTPREL_HI16";
++	_dl_reltypes_tab[45] = "R_MIPS_TLS_DTPREL_LO16";
++	_dl_reltypes_tab[46] = "R_MIPS_TLS_GOTTPREL";
++	_dl_reltypes_tab[47] = "R_MIPS_TLS_TPREL32";
++	_dl_reltypes_tab[48] = "R_MIPS_TLS_TPREL64";
++	_dl_reltypes_tab[49] = "R_MIPS_TLS_TPREL_HI16";
++	_dl_reltypes_tab[50] = "R_MIPS_TLS_TPREL_LO16";
++}
+--- uClibc/ldso/ldso/dl-debug.c	2005/09/21 03:57:02	11526
++++ uClibc-nptl/ldso/ldso/dl-debug.c	2005/09/21 04:05:06	11527
+@@ -6,7 +6,7 @@
+  * Copyright (C) 2001-2004 Erik Andersen
+  * Copyright (C) 2002-2004, Axis Communications AB
+  * Copyright (C) 2003, 2004 Red Hat, Inc.
+- * Copyright (C) 2002, Steven J. Hill (sjhill@realitydiluted.com)
++ * Copyright (C) 2002, 2005 Steven J. Hill (sjhill@realitydiluted.com)
+  * Copyright (C) 2001-2002 David A. Schleef
+  * Copyright (C) 2004 Joakim Tjernlund
+  * Copyright (C) 2002, Stefan Allius <allius@atecom.com> and
+--- uClibc/ldso/ldso/ldso.c	2008-10-08 21:15:56.000000000 +0400
++++ uClibc/ldso/ldso/ldso.c	2008-10-08 21:19:52.000000000 +0400
+@@ -246,6 +246,10 @@
+         /* Perform additional init of global vars in dl-hash */
+         _dl_hash_init();
+ 
++#if defined (__mips__) && defined (__SUPPORT_LD_DEBUG__)
++       _dl_populate_reltypes_tab();
++#endif
++
+ 	/* Find the runtime load address of the main executable.  This may be
+ 	 * different from what the ELF header says for ET_DYN/PIE executables.
+ 	 */

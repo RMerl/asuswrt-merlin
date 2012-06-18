@@ -1,0 +1,148 @@
+
+
+ 
+
+
+
+<html><head><title>swat (8)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>swat (8)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    swat - Samba Web Administration Tool
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+    
+<p><strong>swat</strong> [<a href="swat.8.html#minuss">-s smb config file</a>] [<a href="swat.8.html#minusa">-a</a>]
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This program is part of the <strong>Samba</strong> suite.
+<p><strong>swat</strong> allows a Samba administrator to configure the complex
+<a href="smb.conf.5.html"><strong>smb.conf</strong></a> file via a Web browser. In
+addition, a swat configuration page has help links to all the
+configurable options in the <a href="smb.conf.5.html"><strong>smb.conf</strong></a> file
+allowing an administrator to easily look up the effects of any change.
+<p><strong>swat</strong> is run from <strong>inetd</strong>
+<p><a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+    
+<p><dl>
+<p><a name="minuss"></a>
+<p></p><dt><strong><strong>-s smb configuration file</strong></strong><dd> The default configuration file path is
+determined at compile time.
+<p>The file specified contains the configuration details required by the
+<a href="smbd.8.html"><strong>smbd</strong></a> server. This is the file that <strong>swat</strong> will
+modify. The information in this file includes server-specific
+information such as what printcap file to use, as well as descriptions
+of all the services that the server is to provide. See <a href="smb.conf.5.html">smb.conf
+(5)</a> for more information.
+<p><a name="minusa"></a>
+<p></p><dt><strong><strong>-a</strong></strong><dd> 
+<p>This option disables authentication and puts <strong>swat</strong> in demo mode. In
+that mode anyone will be able to modify the
+<a href="smb.conf.5.html"><strong>smb.conf</strong></a> file.
+<p>Do NOT enable this option on a production server.
+<p></dl>
+<p><a name="INSTALLATION"></a>
+<h2>INSTALLATION</h2>
+    
+<p>After you compile SWAT you need to run <code>"make install"</code> to install the
+swat binary and the various help files and images. A default install
+would put these in:
+<p><pre>
+
+/usr/local/samba/bin/swat
+/usr/local/samba/swat/images/*
+/usr/local/samba/swat/help/*
+
+</pre>
+
+<p><a name="INETD"></a>
+<h2>INETD INSTALLATION</h2>
+    
+<p>You need to edit your <code>/etc/inetd.conf</code> and <code>/etc/services</code> to
+enable <strong>SWAT</strong> to be launched via inetd. 
+<p>In <code>/etc/services</code> you need to add a line like this:
+<p><code>swat            901/tcp</code>
+<p>Note for NIS/YP users - you may need to rebuild the NIS service maps
+rather than alter your local <code>/etc/services</code> file.
+<p>the choice of port number isn't really important except that it should
+be less than 1024 and not currently used (using a number above 1024
+presents an obscure security hole depending on the implementation
+details of your <strong>inetd</strong> daemon).
+<p>In <code>/etc/inetd.conf</code> you should add a line like this:
+<p><code>swat    stream  tcp     nowait.400  root    /usr/local/samba/bin/swat swat</code>
+<p>One you have edited <code>/etc/services</code> and <code>/etc/inetd.conf</code> you need
+to send a HUP signal to inetd. To do this use <code>"kill -1 PID"</code> where
+PID is the process ID of the inetd daemon.
+<p><a name="LAUNCHING"></a>
+<h2>LAUNCHING</h2>
+    
+<p>To launch <strong>swat</strong> just run your favorite web browser and point it at
+<code>http://localhost:901/</code>.
+<p><strong>Note that you can attach to <strong>swat</strong> from any IP connected machine but
+connecting from a remote machine leaves your connection open to
+password sniffing as passwords will be sent in the clear over the
+wire.</strong>
+<p><h2>FILES</h2>
+    
+<p><strong>/etc/inetd.conf</strong>
+<p>This file must contain suitable startup information for the
+meta-daemon. 
+<p><strong>/etc/services</strong>
+<p>This file must contain a mapping of service name (e.g., swat) to
+service port (e.g., 901) and protocol type (e.g., tcp). 
+<p><strong>/usr/local/samba/lib/smb.conf</strong>
+<p>This is the default location of the <em>smb.conf</em> server configuration
+file that <strong>swat</strong> edits. Other common places that systems install
+this file are <em>/usr/samba/lib/smb.conf</em> and <em>/etc/smb.conf</em>.
+<p>This file describes all the services the server is to make available
+to clients. See <strong>smb.conf (5)</strong> for more information.
+<p><a name="WARNINGS"></a>
+<h2>WARNINGS</h2>
+    
+<p><strong>swat</strong> will rewrite your <a href="smb.conf.5.html"><strong>smb.conf</strong></a> file. It
+will rearrange the entries and delete all comments,
+<a href="smb.conf.5.html#include"><strong>"include="</strong></a> and
+<a href="smb.conf.5.html#copy"><strong>"copy="</strong></a> options. If you have a
+carefully crafted <a href="smb.conf.5.html"><strong>smb.conf</strong></a> then back it up
+or don't use <strong>swat</strong>!
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite.
+<p><a name="SEEALSO"></a>
+<h2>SEE ALSO</h2>
+    
+<p><strong>inetd (8)</strong>, <a href="nmbd.8.html"><strong>nmbd (8)</strong></a>,
+<a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a>.
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell (samba@samba.org). Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+</body>
+</html>

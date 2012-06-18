@@ -1,0 +1,39 @@
+<samba:parameter name="force printername"
+                 context="S"
+		 type="boolean"
+		 print="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>When printing from Windows NT (or later), 
+    each printer in <filename>smb.conf</filename> has two 
+    associated names which can be used by the client.  The first
+    is the sharename (or shortname) defined in smb.conf.  This
+    is the only printername available for use by Windows 9x clients.
+    The second name associated with a printer can be seen when 
+    browsing to the "Printers" (or "Printers and Faxes") folder 
+    on the Samba server.  This is referred to simply as the printername
+    (not to be confused with the <parameter>printer name</parameter> option).
+    </para>
+
+    <para>When assigning a new driver to a printer on a remote 
+    Windows compatible print server such as Samba, the Windows client
+    will rename the printer to match the driver name just uploaded.
+    This can result in confusion for users when multiple 
+    printers are bound to the same driver.  To prevent Samba from
+    allowing the printer's printername to differ from the sharename
+    defined in smb.conf, set <parameter>force printername = yes</parameter>.
+    </para>
+
+    <para>Be aware that enabling this parameter may affect migrating
+    printers from a Windows server to Samba since Windows has no way to 
+    force the sharename and printername to match.</para>
+
+    <para>It is recommended that this parameter's value not be changed
+    once the printer is in use by clients as this could cause a user
+    not be able to delete printer connections from their local Printers 
+    folder.</para>
+
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

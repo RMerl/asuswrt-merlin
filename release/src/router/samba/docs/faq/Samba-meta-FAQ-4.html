@@ -1,0 +1,215 @@
+<HTML>
+<HEAD>
+<TITLE> Samba meta FAQ: Designing A SMB and CIFS Network</TITLE>
+</HEAD>
+<BODY>
+<A HREF="Samba-meta-FAQ-3.html">Previous</A>
+<A HREF="Samba-meta-FAQ-5.html">Next</A>
+<A HREF="Samba-meta-FAQ.html#toc4">Table of Contents</A>
+<HR>
+<H2><A NAME="s4">4. Designing A SMB and CIFS Network</A></H2>
+
+
+<P>The big issues for installing any network of LAN or WAN file and print
+servers are </P>
+<P>
+<UL>
+<LI>How and where usernames, passwords and other security information
+is stored 
+</LI>
+<LI>What method can be used for locating the resources that users have
+permission to use 
+</LI>
+<LI>What protocols the clients can converse with
+</LI>
+</UL>
+ </P>
+<P>If you buy Netware, Windows NT or just about any other LAN fileserver
+product you are expected to lock yourself into the product's preferred
+answers to these questions. This tendancy is restrictive and often very
+expensive for a site where there is only one kind of client or server,
+and for sites with a mixture of operating systems it often makes it
+impossible to share resources between some sets of users.</P>
+<P>The Samba philosophy is to make things as easy as possible for
+administators, which means allowing as many combinations of clients,
+servers, operating systems and protocols as possible.</P>
+
+<H2><A NAME="ss4.1">4.1 Workgroups, Domains, Authentication and Browsing</A></H2>
+
+
+<P>From the point of view of networking implementation, Domains and
+Workgroups are <EM>exactly</EM> the same, except for the client logon
+sequence. Some kind of distributed authentication database is associated
+with a domain (there are quite a few choices) and this adds so much
+flexibility that many people think of a domain as a completely different
+entity to a workgroup. From Samba's point of view a client connecting to
+a service presents an authentication token, and it if it is valid they
+have access. Samba does not care what mechanism was used to generate
+that token in the first place.</P>
+<P>The SMB client logging on to a domain has an expectation that every other
+server in the domain should accept the same authentication information.
+However the network browsing functionality of domains and workgroups is
+identical and is explained in 
+<A HREF="../BROWSING.txt">../BROWSING.txt</A>.</P>
+<P>There are some implementation differences: Windows 95 can be a member of
+both a workgroup and a domain, but Windows NT cannot. Windows 95 also
+has the concept of an "alternative workgroup". Samba can only be a
+member of a single workgroup or domain, although this is due to change
+with a future version when nmbd will be split into two daemons, one for
+WINS and the other for browsing (
+<A HREF="../NetBIOS.txt">../NetBIOS.txt</A> explains
+what WINS is.)</P>
+
+<H3>Defining the Terms</H3>
+
+<P>
+<A NAME="BrowseAndDomainDefs"></A> 
+</P>
+<P>
+<DL>
+
+<DT><B>Workgroup</B><DD><P>means a collection of machines that maintain a common
+browsing database containing information about their shared resources.
+They do not necessarily have any security information in common (if they
+do, it gets called a Domain.) The browsing database is dynamic, modified
+as servers come and go on the network and as resources are added or
+deleted. The term "browsing" refers to a user accessing the database via
+whatever interface the client provides, eg the OS/2 Workplace Shell or
+Windows 95 Explorer. SMB servers agree between themselves as to which
+ones will maintain the browsing database. Workgroups can be anywhere on
+a connected TCP/IP network, including on different subnets or even on
+the Interet. This is a very tricky part of SMB to implement.</P>
+
+<DT><B>Master Browsers</B><DD><P>are machines which holds the master browsing
+database for a workgroup or domain. There are two kinds of Master Browser:</P>
+<P>
+<UL>
+<LI> Domain Master Browser, which holds the master browsing
+information for an entire domain, which may well cross multiple TCP/IP
+subnets.
+</LI>
+<LI> Local Master Browser, which holds the master browsing database
+for a particular subnet and communicates with the Domain Master Browser
+to get information on other subnets.
+</LI>
+</UL>
+</P>
+<P>Subnets are differentiated because browsing is based on broadcasts, and
+broadcasts do not pass through routers. Subnets are not routed: while it
+is possible to have more than one subnet on a single network segment
+this is regarded as very bad practice.</P>
+<P>Master Browsers (both Domain and Local) are elected dynamically
+according to an algorithm which is supposed to take into account the
+machine's ability to sustain the browsing load. Samba can be configured
+to always act as a master browser, ie it always wins elections under all
+circumstances, even against systems such as a Windows NT Primary Domain
+Controller which themselves expect to win. </P>
+<P>There are also Backup Browsers which are promoted to Master Browsers in
+the event of a Master Browser disappearing from the network.</P>
+<P>Alternative terms include confusing variations such as "Browse Master",
+and "Master Browser" which we are trying to eliminate from the Samba
+documentation. </P>
+
+<DT><B>Domain Controller</B><DD><P>is a term which comes from the Microsoft and IBM
+etc implementation of the LAN Manager protocols. It is tied to
+authentication. There are other ways of doing domain authentication, but
+the Windows NT method has a large market share. The general issues are
+discussed in 
+<A HREF="../DOMAIN.txt">../DOMAIN.txt</A> and a Windows NT-specific
+discussion is in 
+<A HREF="../DOMAIN_CONTROL.txt">../DOMAIN_CONTROL.txt</A>.</P>
+
+</DL>
+</P>
+
+<H3>Sharelevel (Workgroup) Security Services</H3>
+
+<P>
+<A NAME="ShareModeSecurity"></A> 
+</P>
+<P>With the Samba setting "security = SHARE", all shared resources
+information about what password is associated with them but only hints
+as to what usernames might be valid (the hint can be 'all users', in
+which case any username will work. This is usually a bad idea, but
+reflects both the initial implementations of SMB in the mid-80s and
+its reincarnation with Windows for Workgroups in 1992. The idea behind
+workgroup security was that small independant groups of people could
+share information on an ad-hoc basis without there being an
+authentication infrastructure present or requiring them to do more than
+fill in a dialogue box.</P>
+
+<H3>Authentication Domain Mode Services</H3>
+
+<P>
+<A NAME="DomainModeSecurity"></A> 
+</P>
+<P>With the Samba settings "security = USER" or "security = SERVER"
+accesses to all resources are checked for username/password pair matches
+in a more rigorous manner. To the client, this has the effect of
+emulating a Microsoft Domain. The client is not concerned whether or not
+Samba looks up a Windows NT SAM or does it in some other way.</P>
+
+
+<H2><A NAME="ss4.2">4.2 Authentication Schemes</A></H2>
+
+
+<P>In the simple case authentication information is stored on a single
+server and the user types a password on connecting for the first time.
+However client operating systems often require a password before they
+can be used at all, and in addition users usually want access to more
+than one server. Asking users to remember many different passwords in
+different contexts just does not work. Some kind of distributed
+authentication database is needed. It must cope with password changes
+and provide for assigning groups of users the same level of access
+permissions. This is why Samba installations often choose to implement a
+Domain model straight away.</P>
+<P>Authentication decisions are some of the biggest in designing a network.
+Are you going to use a scheme native to the client operating system,
+native to the server operating system, or newly installed on both? A
+list of options relevant to Samba (ie that make sense in the context of
+the SMB protocol) follows. Any experiences with other setups would be
+appreciated. <F>refer to server FAQ for "passwd chat" passwd program 
+password server etc etc...</F></P>
+
+<H3>NIS</H3>
+
+
+<P>For Windows 95, Windows for Workgroups and most other clients Samba can
+be a domain controller and share the password database via NIS
+transparently. Windows NT is different. 
+<A HREF="http://www.dcs.qmw.ac.uk/~williams">Free NIS NT client</A></P>
+
+<H3>Kerberos</H3>
+
+
+<P>Kerberos for US users only:
+<A HREF="http://www.cygnus.com/product/unifying-security.html">Kerberos overview</A>
+<A HREF="http://www.cygnus.com/product/kerbnet-download.html">Download Kerberos</A></P>
+
+<H3>FTP</H3>
+
+
+<P>Other NT w/s logon hack via NT</P>
+
+<H3>Default Server Method</H3>
+
+
+
+<H3>Client-side Database Only</H3>
+
+
+
+
+<H2><A NAME="ss4.3">4.3 Post-Authentication: Netlogon, Logon Scripts, Profiles</A></H2>
+
+
+<P>See 
+<A HREF="../DOMAIN.txt">../DOMAIN.txt</A></P>
+
+
+<HR>
+<A HREF="Samba-meta-FAQ-3.html">Previous</A>
+<A HREF="Samba-meta-FAQ-5.html">Next</A>
+<A HREF="Samba-meta-FAQ.html#toc4">Table of Contents</A>
+</BODY>
+</HTML>

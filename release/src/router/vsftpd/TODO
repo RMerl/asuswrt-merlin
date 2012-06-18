@@ -1,0 +1,66 @@
+CRITICAL
+========
+
+- Improve FAQ, docs (ongoing..)
+- Integrated test suite (I'm so lazy..)
+- Sweedish, Russian etc. characters showing as ? in the log - many complaints.
+- Check re-entrancy of usage of vsf_sysutil_exit_func.
+- Fix SSL session timeout more gracefully.
+- Use SSL_peek (surely pipelining won't work with current SSL code?)
+
+NOT SO CRITICAL
+===============
+
+- "add_group" support.
+- Implict SSL support (port 990?)
+- Do something with client certs.
+- Add CHLD handler to priv parent process to take care of session crashes?
+- Still reports FlashFXP broken when trying to do FXP.
+- Add negation, other support to regex handler.
+- Fix SIGHUP config file reload to correctly reset _removed_ settings to
+their default values.
+- Upload file size limits.
+- Allow groups to be listed in user lists.
+- Allow space in username.
+- Minor: background should happen after listen has completed so that failure
+can result in a non-zero exit code.
+- Better reporting of failed uploads due to out of device space or quota all
+used.
+- option to chroot to home dir and THEN apply init_dir
+- separate upload/download max rates
+- select() is assuming Linux behaviour (not threatening stability)
+- add example global bandwidth limiting.
+- switch to new signal model
+- have a chown_uploads for non-anon users too; also more control over
+permissions of uploaded file
+
+ON THE BACK BURNER
+==================
+
+- MLST, MLSD
+- LPRT, LPSV
+- Small race: signal might come in just before we start a blocking call
+- log logout (pam session support provides this for locals)
+- Limits on GIDs allowed to authenticate?
+- Dynamic login info e.g. you are user XXX of YYY.
+- Handle SIGINT.
+- Session byte transfer counts in STAT output.
+- Mac OS X setgroups() issue (report of success with 10.3.4, maybe OS X bug
+has been fixed?)
+- Fix for systems with no IPv6 (e.g. Solaris 7) (I'm only getting limited
+numbers of these reports)
+- Look into using GnuTLS in place of OpenSSL (more compatible license).
+- put anon FTP users in wtmp too?
+- Test vsftpd with pam_opie (issues with challenge/response vs. FTP protocol?)
+- SITE GROUP support.
+- SITE UTIME?
+- Allow listener to listen on multiple IPs; bonus points if the different
+IPs can have different configs.
+
+NOT PLANNED
+===========
+
+- telnet strings (no demand)
+- "Minimal" build support
+- transparent tar / compression support (no demand)
+

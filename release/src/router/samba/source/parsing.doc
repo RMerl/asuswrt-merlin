@@ -1,0 +1,363 @@
+Chris Hertel, Samba Team
+November 1997
+
+This is a quick overview of the lexical analysis, syntax, and semantics
+of the smb.conf file.
+
+Lexical Analysis:
+
+  Basically, the file is processed on a line by line basis.  There are
+  four types of lines that are recognized by the lexical analyzer
+  (params.c):
+
+  Blank lines           - Lines containing only whitespace.
+  Comment lines         - Lines beginning with either a semi-colon or a
+                          pound sign (';' or '#').
+  Section header lines  - Lines beginning with an open square bracket
+                          ('[').
+  Parameter lines       - Lines beginning with any other character.
+                          (The default line type.)
+
+  The first two are handled exclusively by the lexical analyzer, which
+  ignores them.  The latter two line types are scanned for
+
+  - Section names
+  - Parameter names
+  - Parameter values
+
+  These are the only tokens passed to the parameter loader
+  (loadparm.c).  Parameter names and values are divided from one
+  another by an equal sign: '='.
+
+
+  Handling of Whitespace:
+
+  Whitespace is defined as all characters recognized by the isspace()
+  function (see ctype(3C)) except for the newline character ('\n')
+  The newline is excluded because it identifies the end of the line.
+
+  - The lexical analyzer scans past white space at the beginning of a
+    line.
+
+  - Section and parameter names may contain internal white space.  All
+    whitespace within a name is compressed to a single space character. 
+
+  - Internal whitespace within a parameter value is kept verbatim with
+    the exception of carriage return characters ('\r'), all of which
+    are removed.
+
+  - Leading and trailing whitespace is removed from names and values.
+
+
+  Handling of Line Continuation:
+
+  Long section header and parameter lines may be extended across
+  multiple lines by use of the backslash character ('\\').  Line
+  continuation is ignored for blank and comment lines.
+
+  If the last (non-whitespace) character within a section header or on
+  a parameter line is a backslash, then the next line will be
+  (logically) concatonated with the current line by the lexical
+  analyzer.  For example:
+
+    param name = parameter value string \
+    with line continuation.
+
+  Would be read as
+
+    param name = parameter value string     with line continuation.
+
+  Note that there are five spaces following the word 'string',
+  representing the one space between 'string' and '\\' in the top
+  line, plus the four preceeding the word 'with' in the second line.
+  (Yes, I'm counting the indentation.)
+
+  Line continuation characters are ignored on blank lines and at the end
+  of comments.  They are *only* recognized within section and parameter
+  lines.
+
+
+  Line Continuation Quirks:
+  
+  Note the following example:
+
+    param name = parameter value string \
+    \
+    with line continuation.
+
+  The middle line is *not* parsed as a blank line because it is first
+  concatonated with the top line.  The result is
+
+    param name = parameter value string         with line continuation.
+
+  The same is true for comment lines.
+
+    param name = parameter value string \
+    ; comment \
+    with a comment.
+
+  This becomes:
+  
+    param name = parameter value string     ; comment     with a comment.
+
+  On a section header line, the closing bracket (']') is considered a
+  terminating character, and the rest of the line is ignored.  The lines
+  
+    [ section   name ] garbage \
+    param  name  = value
+
+  are read as
+
+    [section name]
+    param name = value
+
+
+
+Syntax:
+
+  The syntax of the smb.conf file is as follows:
+
+  <file>            :==  { <section> } EOF
+
+  <section>         :==  <section header> { <parameter line> }
+
+  <section header>  :==  '[' NAME ']'
+
+  <parameter line>  :==  NAME '=' VALUE NL
+
+
+  Basically, this means that
+  
+    - a file is made up of zero or more sections, and is terminated by
+      an EOF (we knew that).
+
+    - A section is made up of a section header followed by zero or more
+      parameter lines.
+
+    - A section header is identified by an opening bracket and
+      terminated by the closing bracket.  The enclosed NAME identifies
+      the section.
+
+    - A parameter line is divided into a NAME and a VALUE.  The *first*
+      equal sign on the line separates the NAME from the VALUE.  The
+      VALUE is terminated by a newline character (NL = '\n').
+
+
+About params.c:
+
+  The parsing of the config file is a bit unusual if you are used to
+  lex, yacc, bison, etc.  Both lexical analysis (scanning) and parsing
+  are performed by params.c.  Values are loaded via callbacks to
+  loadparm.c.
+
+--------------------------------------------------------------------------
+
+                                  Samba DEBUG
+                                       
+Chris Hertel, Samba Team
+July, 1998
+   
+   Here's the scoop on the update to the DEBUG() system.
+   
+   First, my goals are:
+     * Backward compatibility (ie., I don't want to break any Samba code
+       that already works).
+     * Debug output should be timestamped and easy to read (format-wise).
+     * Debug output should be parsable by software.
+     * There should be convenient tools for composing debug messages.
+       
+   NOTE: the Debug functionality has been moved from util.c to the new
+   debug.c module.
+   
+New Output Syntax
+
+   The syntax of a debugging log file is represented as:
+  <debugfile> :== { <debugmsg> }
+
+  <debugmsg>  :== <debughdr> '\n' <debugtext>
+
+  <debughdr>  :== '[' TIME ',' LEVEL ']' FILE ':' [FUNCTION] '(' LINE ')'
+
+  <debugtext> :== { <debugline> }
+
+  <debugline> :== TEXT '\n'
+
+   TEXT is a string of characters excluding the newline character.
+   LEVEL is the DEBUG level of the message (an integer in the range
+   0..10).
+   TIME is a timestamp.
+   FILE is the name of the file from which the debug message was
+   generated.
+   FUNCTION is the function from which the debug message was generated.
+   LINE is the line number of the debug statement that generated the
+   message.
+   
+   Basically, what that all means is:
+     * A debugging log file is made up of debug messages.
+     * Each debug message is made up of a header and text. The header is
+       separated from the text by a newline.
+     * The header begins with the timestamp and debug level of the
+       message enclosed in brackets. The filename, function, and line
+       number at which the message was generated follow. The filename is
+       terminated by a colon, and the function name is terminated by the
+       parenthesis which contain the line number. Depending upon the
+       compiler, the function name may be missing (it is generated by the
+       __FUNCTION__ macro, which is not universally implemented, dangit).
+     * The message text is made up of zero or more lines, each terminated
+       by a newline.
+       
+   Here's some example output:
+
+    [1998/08/03 12:55:25, 1] nmbd.c:(659)
+      Netbios nameserver version 1.9.19-prealpha started.
+      Copyright Andrew Tridgell 1994-1997
+    [1998/08/03 12:55:25, 3] loadparm.c:(763)
+      Initializing global parameters
+
+   Note that in the above example the function names are not listed on
+   the header line. That's because the example above was generated on an
+   SGI Indy, and the SGI compiler doesn't support the __FUNCTION__ macro.
+   
+The DEBUG() Macro
+
+   Use of the DEBUG() macro is unchanged. DEBUG() takes two parameters.
+   The first is the message level, the second is the body of a function
+   call to the Debug1() function.
+   
+   That's confusing.
+   
+   Here's an example which may help a bit. If you would write
+
+     printf( "This is a %s message.\n", "debug" );
+
+   to send the output to stdout, then you would write
+
+     DEBUG( 0, ( "This is a %s message.\n", "debug" ) );
+
+   to send the output to the debug file.  All of the normal printf()
+   formatting escapes work.
+   
+   Note that in the above example the DEBUG message level is set to 0.
+   Messages at level 0 always print.  Basically, if the message level is
+   less than or equal to the global value DEBUGLEVEL, then the DEBUG
+   statement is processed.
+   
+   The output of the above example would be something like:
+
+    [1998/07/30 16:00:51, 0] file.c:function(128)
+      This is a debug message.
+
+   Each call to DEBUG() creates a new header *unless* the output produced
+   by the previous call to DEBUG() did not end with a '\n'. Output to the
+   debug file is passed through a formatting buffer which is flushed
+   every time a newline is encountered. If the buffer is not empty when
+   DEBUG() is called, the new input is simply appended.
+
+   ...but that's really just a Kludge. It was put in place because
+   DEBUG() has been used to write partial lines. Here's a simple (dumb)
+   example of the kind of thing I'm talking about:
+
+    DEBUG( 0, ("The test returned " ) );
+    if( test() )
+      DEBUG(0, ("True") );
+    else
+      DEBUG(0, ("False") );
+    DEBUG(0, (".\n") );
+
+   Without the format buffer, the output (assuming test() returned true)
+   would look like this:
+
+    [1998/07/30 16:00:51, 0] file.c:function(256)
+      The test returned
+    [1998/07/30 16:00:51, 0] file.c:function(258)
+      True
+    [1998/07/30 16:00:51, 0] file.c:function(261)
+      .
+
+   Which isn't much use. The format buffer kludge fixes this problem.
+   
+The DEBUGADD() Macro
+
+   In addition to the kludgey solution to the broken line problem
+   described above, there is a clean solution. The DEBUGADD() macro never
+   generates a header. It will append new text to the current debug
+   message even if the format buffer is empty. The syntax of the
+   DEBUGADD() macro is the same as that of the DEBUG() macro.
+
+    DEBUG( 0, ("This is the first line.\n" ) );
+    DEBUGADD( 0, ("This is the second line.\nThis is the third line.\n" ) );
+
+   Produces
+    [1998/07/30 16:00:51, 0] file.c:function(512)
+      This is the first line.
+      This is the second line.
+      This is the third line.
+
+The DEBUGLVL() Macro
+
+   One of the problems with the DEBUG() macro was that DEBUG() lines
+   tended to get a bit long. Consider this example from
+   nmbd_sendannounce.c:
+
+  DEBUG(3,("send_local_master_announcement: type %x for name %s on subnet %s for workgroup %s\n",
+            type, global_myname, subrec->subnet_name, work->work_group));
+
+   One solution to this is to break it down using DEBUG() and DEBUGADD(),
+   as follows:
+
+  DEBUG( 3, ( "send_local_master_announcement: " ) );
+  DEBUGADD( 3, ( "type %x for name %s ", type, global_myname ) );
+  DEBUGADD( 3, ( "on subnet %s ", subrec->subnet_name ) );
+  DEBUGADD( 3, ( "for workgroup %s\n", work->work_group ) );
+
+   A similar, but arguably nicer approach is to use the DEBUGLVL() macro.
+   This macro returns True if the message level is less than or equal to
+   the global DEBUGLEVEL value, so:
+
+  if( DEBUGLVL( 3 ) )
+    {
+    dbgtext( "send_local_master_announcement: " );
+    dbgtext( "type %x for name %s ", type, global_myname );
+    dbgtext( "on subnet %s ", subrec->subnet_name );
+    dbgtext( "for workgroup %s\n", work->work_group );
+    }
+
+   (The dbgtext() function is explained below.)
+   
+   There are a few advantages to this scheme:
+     * The test is performed only once.
+     * You can allocate variables off of the stack that will only be used
+       within the DEBUGLVL() block.
+     * Processing that is only relevant to debug output can be contained
+       within the DEBUGLVL() block.
+       
+New Functions
+
+   dbgtext()
+          This function prints debug message text to the debug file (and
+          possibly to syslog) via the format buffer. The function uses a
+          variable argument list just like printf() or Debug1(). The
+          input is printed into a buffer using the vslprintf() function,
+          and then passed to format_debug_text().
+          
+          If you use DEBUGLVL() you will probably print the body of the
+          message using dbgtext(). 
+          
+   dbghdr()
+          This is the function that writes a debug message header.
+          Headers are not processed via the format buffer. Also note that
+          if the format buffer is not empty, a call to dbghdr() will not
+          produce any output. See the comments in dbghdr() for more info.
+          
+          It is not likely that this function will be called directly. It
+          is used by DEBUG() and DEBUGADD().
+          
+   format_debug_text()
+          This is a static function in debug.c. It stores the output text
+          for the body of the message in a buffer until it encounters a
+          newline. When the newline character is found, the buffer is
+          written to the debug file via the Debug1() function, and the
+          buffer is reset. This allows us to add the indentation at the
+          beginning of each line of the message body, and also ensures
+          that the output is written a line at a time (which cleans up
+          syslog output).

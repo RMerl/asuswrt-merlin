@@ -1,0 +1,251 @@
+<?xml version='1.0'?>
+<!--
+<!DOCTYPE slides SYSTEM "../../schema/dtd/slides.dtd">
+-->
+<slides>
+<slidesinfo>
+  <title>The Slides Document Type</title>
+  <author><firstname>Norman</firstname><surname>Walsh</surname></author>
+  <pubdate>Tuesday, 25 June 2002</pubdate>
+  <releaseinfo role="version">3.1.0</releaseinfo>
+  <copyright><year>2002</year>
+             <holder>Norman Walsh</holder></copyright>
+</slidesinfo>
+
+<foil><title>Introduction</title>
+<para>This is the introductory slide.</para>
+<para>If you use foil groups (previously called sections), you can
+have introductory slides before the first group.</para>
+<warning><title>Warning! :)</title>
+<para>This is a work in progress ("release early, release often")</para>
+</warning>
+</foil>
+
+<foilgroup><title>Purpose and History</title>
+
+<para>Groups can now have introductory text as well.</para>
+
+<foil><title>What Are Slides?</title>
+<itemizedlist>
+<listitem><para>An XML presentation tool
+</para></listitem>
+<listitem><para>Suitable for HTML or PDF presentations
+</para></listitem>
+<listitem><para>Supported by Open Source software
+</para></listitem>
+</itemizedlist>
+</foil>
+
+<foil><title>Where Do They Come From?</title>
+
+<itemizedlist>
+<listitem><para>Maintained by the <ulink url="http://docbook.sourceforge.net/">DocBook
+Open Repository</ulink> Project at
+<ulink url="http://sourceforge.net/">SourceForge</ulink>
+</para></listitem>
+<listitem><para>Customization layer of
+<ulink url="http://www.oasis-open.org/docbook/xml/simple/">Simplified DocBook</ulink>
+</para></listitem>
+</itemizedlist>
+</foil>
+
+<foil><title>Why?</title>
+
+<itemizedlist>
+<listitem><para>So Norm could give presentations
+</para></listitem>
+<listitem><para>So Norm could publish those presentations on the web
+</para></listitem>
+<listitem><para>So Norm could have <emphasis>accessible</emphasis> presentations
+that didn't rely on the grotesque HTML output of some otherwise bloated, proprietary
+tool
+</para></listitem>
+<listitem><para>So Norm could cut-and-paste from his DocBook articles and papers
+directly into his slides
+</para></listitem>
+<listitem><para>Oh, let's face it: because it was there. Like the proverbial mountain.
+</para></listitem>
+</itemizedlist>
+</foil>
+</foilgroup>
+
+<foilgroup><title>Authoring</title>
+
+<para>How to write a presentation.</para>
+
+<foil><title>Minimal Presentation</title>
+
+<para>The smallest possible presentation looks like this:</para>
+
+<screen><![CDATA[<?xml version='1.0'?>
+<!DOCTYPE slides PUBLIC "-//Norman Walsh//DTD Slides XML V3.0b1//EN"
+                 "http://docbook.sourceforge.net/release/slides/3.0b1/slides.dtd">
+<slides>
+<slidesinfo>
+<title>Presentation Title</title>
+</slidesinfo>
+<foil><title>Foil Title</title>
+<para>Foil content</para>
+</foil>
+</slides>]]></screen>
+
+<para>Every presentation must contain at least one slide.</para>
+</foil>
+
+<foil><title>Presentation Metadata</title>
+
+<para>Presentations usually have more metadata in the <literal>slidesinfo</literal>
+wrapper. Here's a typical example:</para>
+
+<screen><![CDATA[<slidesinfo>
+  <title>Supporting Localized Generated Text</title>
+  <titleabbrev>Generated Text</titleabbrev>
+  <author><firstname>Norman</firstname><surname>Walsh</surname></author>
+  <pubdate>Sunday, 08 Apr 2001</pubdate>
+  <confgroup>
+    <conftitle>XSLTUK-01</conftitle>
+    <confdates>08 Apr - 09 Apr 2001</confdates>
+    <conftitle role="address">Keble College, Oxford, UK</conftitle>
+    <confnum>1</confnum>
+  </confgroup>
+  <releaseinfo role="version">Version TEST</releaseinfo>
+  <copyright><year>2001</year>
+             <holder>Sun Microsystems, Inc.</holder></copyright>
+</slidesinfo>]]></screen>
+</foil>
+
+<foil><title>Presentation Content</title>
+
+<para>It's common for individual slides to consist of a single
+bulleted or numbered list. However, the full range of <quote>block
+level</quote> Simplified DocBook elements are avialable.</para>
+
+</foil>
+</foilgroup>
+
+<foilgroup><title>Styling</title>
+
+<para>How to transform a presentation.</para>
+
+<foil><title>HTML</title>
+
+<para>There are a lot of HTML options. When you publish your
+presentation on the web, it's probably best to use one of the simpler,
+more accessible styles. For your actual live presentation, you may
+want to choose something fancier.</para>
+
+</foil>
+
+<foil><title>Plain HTML</title>
+
+<itemizedlist>
+<listitem><para><ulink url="../default/"><filename>default.xsl</filename></ulink>
+and
+<ulink url="../plain/"><filename>plain.xsl</filename></ulink>
+produce fairly simple presentations
+</para></listitem>
+<listitem><para><ulink url="../tables/"><filename>tables.xsl</filename></ulink>
+uses a table to show the navigation context (somewhat like the tabular
+<ulink url="http://docbook.sourceforge.net/">Website</ulink> style)
+</para></listitem>
+<listitem><para><ulink url="../vslides/"><filename>vslides.xsl</filename></ulink>
+places navigation on the left side instead of the top and bottom
+</para></listitem>
+<listitem><para><ulink url="../w3c/"><filename>w3c.xsl</filename></ulink>
+produces slides that resemble the format used by the W3C for presentations
+</para></listitem>
+</itemizedlist>
+
+</foil>
+
+<foil><title>Fancy HTML</title>
+
+<itemizedlist>
+<listitem><para><ulink url="../frames1/frames.html"><filename>frames.xsl</filename></ulink>
+uses frames. There are several options that you can apply:
+</para>
+<itemizedlist>
+<listitem><para><ulink url="../frames2/frames.html">overlay</ulink> uses CSS absolute positioning
+to keep the navigation static on the pages (only works on recent browsers)
+</para></listitem>
+<listitem><para><ulink url="../frames3/frames.html">multiframe</ulink> uses additional frames
+to keep the navigation static on the pages
+</para></listitem>
+<listitem><para><ulink url="../frames4/frames.html">dynamic.toc</ulink> uses JavaScript to keep
+the table of contents and the current slide in sync (only works on recent browsers)
+</para></listitem>
+<listitem><para><ulink url="../frames5/frames.html">active.toc</ulink> uses JavaScript to make
+the table of context <quote>active</quote> so that you can open and close the foil
+groups (only works on recent browsers)
+</para></listitem>
+<listitem><para>These toc styles can be combined with
+<ulink url="../frames6/frames.html">overlay</ulink> or <ulink url="../frames7/frames.html">multiframe</ulink>
+</para></listitem>
+</itemizedlist>
+</listitem>
+</itemizedlist>
+</foil>
+
+<foil><title>PDF</title>
+
+<para>The <filename>fo-plain.xsl</filename> stylesheet produces XSL Formatting
+Objects that can subsequently be turned into PDF.</para>
+
+</foil>
+
+</foilgroup>
+
+<foilgroup><title>Presentation</title>
+
+<para>How to customize and present a set of slides.</para>
+
+<foil><title>Look And Feel</title>
+
+<para>For HTML display, most of the actual
+<quote>look-and-feel</quote> of the presentation is controlled by the CSS
+stylesheet(s) used.</para>
+
+</foil>
+
+<foil><title>Presentation Tips</title>
+
+<itemizedlist>
+<listitem><para>It's usually best if each slide is only one page (avoid scrolling).
+</para></listitem>
+<listitem><para>If you'll be giving your presentation with a projector, make sure you
+know what resolution you'll have available and test your presentation at that resolution.
+</para></listitem>
+<listitem><para>Make your fonts bigger so the folks in the back of the room can read
+your slides.
+</para></listitem>
+<listitem><para>Test the equipment before your presentation begins. Really.
+</para></listitem>
+<listitem><para>Speak more slowly. I always forget that one.
+</para></listitem>
+</itemizedlist>
+</foil>
+
+</foilgroup>
+
+<foilgroup><title>Conclusions</title>
+
+<foil><title>Conclusions</title>
+
+<para>It's customary to have a conclusions slide.</para>
+
+</foil>
+
+<foil><title>References</title>
+
+<para>References are a good idea too.</para>
+
+</foil>
+
+<foil><title>Q&amp;A</title>
+
+<para>Any questions?</para>
+
+</foil>
+</foilgroup>
+
+</slides>

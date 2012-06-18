@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>What is RFC 1179, the Line Printer Daemon
+    Protocol?</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="The Most Frequently Asked Questions "
+    href="faq.htm">
+    <link rel="PREVIOUS" title=
+    "I get messages about bad control file format" href=
+    "x10807.htm">
+    <link rel="NEXT" title=
+    "I want to replace lp, lpstat, etc, but my programs need them"
+    href="x10839.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x10807.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          20. The Most Frequently Asked Questions</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x10839.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="RFC1179">20.6. What is RFC 1179,
+      the Line Printer Daemon Protocol?</a></h1>
+
+      <p>RFC1179 defines a standard method by which print jobs can
+      be transferred using the TCP/IP protocol between hosts. The
+      standard was developed by simply detailing the way that a
+      version of the BSD <b class="APPLICATION">lpd</b> software
+      did its job.</p>
+
+      <p>From the RFC Introduction: <a name="AEN10820"></a></p>
+
+      <blockquote class="BLOCKQUOTE">
+        <p>RFC 1179 describes a print server protocol widely used
+        on the Internet for communicating between line printer
+        daemons (both clients and servers). RFC1179 is for
+        informational purposes only, and does not specify an
+        Internet standard.</p>
+      </blockquote>
+      <br>
+      <br>
+
+      <p>Having said this, the RFC then goes on to describe the
+      protocol used by a particular implementation of <b class=
+      "APPLICATION">lpd</b>. The problem was that the RFC did not
+      provide any way to put extensions to the operations into the
+      system, and failed to specify such interesting details as the
+      order in which print jobs and their components could be
+      transferred.</p>
+
+      <p>Comment by Patrick Powell <var class=
+      "LITERAL">&lt;papowell@lprng.com&gt;</var> : <a name=
+      "AEN10826"></a></p>
+
+      <blockquote class="BLOCKQUOTE">
+        <p>Since 1988, there have been a large number of print
+        spooling systems developed which claim RFC1179 conformance,
+        but which are mutually incompatible.</p>
+
+        <p>Rather than live with the limited capabilities of the
+        RFC1179 standard, <b class="APPLICATION">LPRng</b> has
+        extended them by adding capabilities to perform remote
+        control of print spoolers, encrypted and authenticated data
+        transfers, and other operations missing from the RFC1179
+        specification. However, great effort was made to be
+        backwards compatible with older and other <b class=
+        "APPLICATION">lpd</b> based systems.</p>
+
+        <p><b class="APPLICATION">LPRng</b> was developed in order
+        to be able to both accept and provide interactions with
+        these systems. It does so by allowing various options to be
+        used to <span class="emphasis"><i class=
+        "EMPHASIS">tune</i></span> how print jobs would be
+        exchanged. Currently, <b class="APPLICATION">LPRng</b> can
+        be configured to send and receive print jobs between a vast
+        number of the existing spooling systems. It is flexible
+        enough to act as a gateway between non-compatible systems,
+        and has provisions to transform jobs from one format to
+        another in a dynamic manner.</p>
+      </blockquote>
+      <br>
+      <br>
+
+      <p>For a detailed explanation about <b class=
+      "APPLICATION">LPRng</b> and RFC1179, see <a href=
+      "rfc1179ref.htm">RFC1179 and <b class=
+      "APPLICATION">LPRng</b></a>.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x10807.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x10839.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">I get messages
+          about bad control file format</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "faq.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">I want to
+          replace lp, lpstat, etc, but my programs need them</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,55 @@
+<samba:parameter name="printcap name"
+	context="G"
+	type="string"
+		 print="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<synonym>printcap</synonym>
+<description>
+    <para>
+	This parameter may be used to override the compiled-in default printcap name used by the server (usually
+	<filename moreinfo="none"> /etc/printcap</filename>). See the discussion of the <link
+	linkend="PRINTERSSECT">[printers]</link> section above for reasons why you might want to do this.
+	</para>
+
+    <para>
+	To use the CUPS printing interface set <command moreinfo="none">printcap name = cups </command>. This should
+	be supplemented by an addtional setting <smbconfoption name="printing">cups</smbconfoption> in the [global]
+	section.  <command moreinfo="none">printcap name = cups</command> will use the  &quot;dummy&quot; printcap
+	created by CUPS, as specified in your CUPS configuration file.
+    </para>
+
+    <para>
+	On System V systems that use <command moreinfo="none">lpstat</command> to 
+    list available printers you can use <command moreinfo="none">printcap name = lpstat
+    </command> to automatically obtain lists of available printers. This 
+    is the default for systems that define SYSV at configure time in 
+    Samba (this includes most System V based systems). If <parameter moreinfo="none">
+    printcap name</parameter> is set to <command moreinfo="none">lpstat</command> on 
+    these systems then Samba will launch <command moreinfo="none">lpstat -v</command> and 
+    attempt to parse the output to obtain a printer list.
+	</para>
+
+    <para>
+	A minimal printcap file would look something like this:
+<programlisting format="linespecific">
+print1|My Printer 1
+print2|My Printer 2
+print3|My Printer 3
+print4|My Printer 4
+print5|My Printer 5
+</programlisting>
+    where the '|' separates aliases of a printer. The fact that the second alias has a space in
+	it gives a hint to Samba that it's a comment.
+	</para>
+
+    <note><para>
+	Under AIX the default printcap name is <filename moreinfo="none">/etc/qconfig</filename>. Samba will
+	assume the file is in AIX <filename moreinfo="none">qconfig</filename> format if the string <filename
+	moreinfo="none">qconfig</filename> appears in the printcap filename.
+	</para></note>
+
+</description>
+	
+<value type="default">/etc/printcap</value>
+<value type="example">/etc/myprintcap</value>
+</samba:parameter>

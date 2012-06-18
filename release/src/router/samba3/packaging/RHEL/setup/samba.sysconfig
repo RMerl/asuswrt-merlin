@@ -1,0 +1,6 @@
+# Options to smbd
+SMBDOPTIONS="-D"
+# Options to nmbd
+NMBDOPTIONS="-D"
+# Options for winbindd
+WINBINDOPTIONS=""

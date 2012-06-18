@@ -1,0 +1,208 @@
+.TH UDHCPC 8 2001-09-26 GNU/Linux "GNU/Linux Administrator's Manual"
+.SH NAME
+udhcpc \- very small DHCP client
+.SH SYNOPSIS
+.B udhcpc
+.RI [ OPTION ]...
+.SH DESCRIPTION
+The udhcp client negotiates a lease with the DHCP server and
+executes a script when it is obtained or lost.
+.SH OPTIONS
+.TP
+.BI \-c\  CLIENTID ,\ \-\-clientid= CLIENTID
+Send the client identifier
+.IR CLIENTID .
+.TP
+.BR -f ,\  \-\-foreground
+Do not fork after obtaining a lease.
+.TP
+.BI \-H\  HOSTNAME ,\ \-\-hostname= HOSTNAME
+Send the client hostname
+.IR HOSTNAME .
+.TP
+.BI \-h\  HOSTNAME
+Alias for -H
+.IR HOSTNAME .
+.TP
+.BI \-i\  INTERFACE ,\ \-\-interface= INTERFACE
+Configure
+.IR INTERFACE .
+.TP
+.BR -n ,\  \-\-now
+Exit with failure if a lease cannot be obtained.
+.TP
+.BI \-p\  FILE ,\ \-\-pidfile= FILE
+Write the process ID of the daemon to
+.IR FILE .
+.TP
+.BR -q ,\  \-\-quit
+Exit after obtaining a lease.
+.TP
+.BI \-r\  ADDRESS ,\ \-\-request= ADDRESS
+Request IP address
+.IR ADDRESS .
+.TP
+.BI \-s\  FILE ,\ \-\-script= FILE
+Use script
+.IR FILE .
+.TP
+.BR -v ,\  \-\-version
+Display version.
+.SH USAGE
+When an event occurs,
+.B udhcpc
+executes a script.  There are four possible arguments to this
+script:
+.TP
+.B deconfig
+.B deconfig
+is used when
+.B udhcpc
+starts, and when a lease is lost.  The script should put the
+interface in an up, but deconfigured, state.
+.TP
+.B bound
+.B bound
+is used when
+.B udhcpc
+moves from an unbound to a bound state.  The script should
+configure the interface and set any other relevant parameters
+(e.g., default gateway, dns server, etc.).
+.TP
+.B renew
+.B renew
+is used when
+.B udhcpc
+when a lease is renewed.  The interface is already
+configured, so the IP address will not change.  Other parameters
+(e.g., default gateway, subnet mask, dns server) may.
+.TP
+.B nak
+.B nak
+is used when
+.B udhcpc
+receieves a NAK packet from the server. The
+enviromental variable
+.B $message
+will contain the reason for the
+NAK message if the server included one. Processing this message
+is optional, as the script will also be called with deconfig if
+need be.
+.PP
+Parameters are passed to the script via the following environment
+variables:
+.TP
+.B HOME
+The inherited HOME, or "/" if it is unset.
+.TP
+.B PATH
+The inherited PATH, or "/bin:/usr/bin:/sbin:/usr/sbin" if it is
+unset.
+.TP
+.B interface
+The interface.
+.TP
+.B ip
+The client IP address.
+.TP
+.B siaddr
+The BOOTP next server option.
+.TP
+.B sname
+The BOOTP server name option.
+.TP
+.B boot_file
+The BOOTP boot file option.
+.TP
+.B subnet
+The subnet mask.
+.TP
+.B timezone
+The timezone offset from UTC in seconds.
+.TP
+.B router
+The list of routers.
+.TP
+.B timesvr
+The list of time servers.
+.TP
+.B namesvr
+The list of IEN 116 name servers.
+.TP
+.B dns
+The list of DNS servers.
+.TP
+.B logsvr
+The list of MIT-LCS UDP log servers.
+.TP
+.B cookiesvr
+The list of RFC 865 cookie servers.
+.TP
+.B lprsvr
+The list of LPR servers.
+.TP
+.B hostname
+The host name.
+.TP
+.B bootsize
+The length in 512-octet blocks of the bootfile.
+.TP
+.B domain
+The domain name of the network.
+.TP
+.B swapsvr
+The client's swap server.
+.TP
+.B rootpath
+The path of the client's root dist.
+.TP
+.B ipttl
+The TTL.
+.TP
+.B mtu
+The MTU.
+.TP
+.B broadcast
+The broadcast address.
+.TP
+.B ntpsrv
+The list of NTP servers.
+.TP
+.B wins
+The list of WINS servers.
+.TP
+.B lease
+The lease time in seconds.
+.TP
+.B dhcptype
+The DHCP message type (safely ignored).
+.TP
+.B serverid
+The server IP address.
+.TP
+.B message
+Reason for a DHCPNAK.
+.TP
+.B tftp
+The TFTP server name.
+.TP
+.B bootfile
+The bootfile name.
+.SH FILES
+.TP
+.I /usr/share/udhcpc/default.script
+Script run when leases are obtained or lost.
+.SH NOTES
+.B udhcpc
+responds to the following signals:
+.TP
+.B SIGUSR1
+This signal causes
+.B udhcpc
+to renew the current lease or, if it does not have one, obtain a
+new lease.
+.TP
+.B SIGUSR2
+This signal caused
+.B udhcpc
+to release the current lease.

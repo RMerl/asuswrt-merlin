@@ -1,0 +1,77 @@
+#!/bin/sh
+###################################################################
+#
+# Script to dial the remote system, negotiate the connection, and send
+# it the id. Then wait for the modem to disconnect. Reset the modem
+# to answer mode and wait for the system to call back.
+#
+# The telephone number and modempass are used when establishing the
+# connection to the modem.
+#
+PHONE=555-1212
+MODEMPASS=modem_identifier
+#
+# Once the modem calls back, the account name and password are used for
+# a UNIX style login operation.
+#
+ACCOUNT=my_account_name
+PASSWORD=my_password
+
+###################################################################
+#
+# Step 1. Dial the modem and negotiate the initial dialog.
+#         note: the modem is configured to ignore loss of DCD at this point.
+#         it is important that this be performed because the loss of DCD
+#         will normally prevent system from working since 'modem' is used
+#         for pppd.
+#
+#         The script is terminated normally when the carrier is lost.
+#
+chat -v							\
+	TIMEOUT		3				\
+	ABORT		'\nBUSY\r'			\
+	ABORT		'\nNO ANSWER\r'			\
+	ABORT		'\nRINGING\r\n\r\nRINGING\r'	\
+	''		AT				\
+	'OK-+++\c-OK'	'AT&C0&D2S0=0H0			\
+	TIMEOUT		30				\
+	OK		ATDT$TELEPHONE			\
+	CONNECT		''				\
+	assword:	$MODEMPASS			\
+	"\nNO CARRIER\r"
+
+if [ "$?" = "0" ]; then
+
+###################################################################
+#
+# Step 2. Wait for the call back from the remote. This will wait for at most
+#         30 seconds for the call back should the first attempt fail or
+#         something happen with the callback logic at the remote.
+#
+#         note: when the callback occurs, the DCD setting is re-enabled.
+#
+# If some voice call should happen during this period, the system will
+# answer the telephone and then hang up on them. I realize that this is
+# rude, but there is little that this script can do.
+#
+  chat -v						\
+	TIMEOUT		30				\
+	ABORT		'\nVOICE\r'			\
+	'\nRING\r'	'AT&C1A'			\
+	CONNECT		''				\
+	TIMEOUT		10				\
+	ogin:--ogin:	$ACCOUNT			\
+	TIMEOUT		45				\
+	assword:	$PASSWORD
+
+  if [ "$?" = "0" ]; then
+    exit 0
+  fi
+fi
+
+###################################################################
+#
+# The script has failed. Terminate the connection mode.
+#
+chat -v TIMEOUT 3 "" AT 'OK-+++\c-OK' 'AT&C1&D2S0=0H0' OK
+exit 1

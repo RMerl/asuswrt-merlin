@@ -1,0 +1,89 @@
+# LIC: GPL
+
+pppoe: a PPP-over-Ethernet redirector for pppd
+Copyright (C) 2001-2005 Roaring Penguin Software Inc.
+
+Some inspiration from an earlier client by Luke Stras.
+
+The MSS clamping was inspired by mssclampfw by Marc Boucher <marc@mbsi.ca>
+with acknowledgements to Rebel.com (http://www.rebel.com).  However, the
+actual MSS clamping code is original and is licensed under the GPL, unlike
+the original mssclampfw.
+
+Introduction
+============
+
+pppoe is a user-space redirector which permits the use of PPPoE
+(Point-to-Point Over Ethernet) with Linux.  PPPoE is used by many
+DSL service providers.
+
+Installation
+============
+
+Requirements
+------------
+
+1) Linux 2.2.9 or later on Intel, Sparc or PowerPC.  It may work on
+   Alpha, too -- anyone care to let me know?
+
+	   OR
+
+   Linux 2.0.36 or later.
+
+	   OR
+
+   FreeBSD, NetBSD or OpenBSD with BPF support.  I have access only
+   to FreeBSD.  In general, I can't answer questions about the *BSD's
+   as well as I can about Linux.
+
+
+2) pppd 2.3.10 or later.  Versions 2.3.7 and later work unless you use
+   demand-dialling.  For demand dialling, you *must* use 2.3.10 or later.
+
+QUICKSTART
+----------
+
+If you're lucky, the "quickstart" method will work.  After unpacking
+the archive, become root and type:
+
+	./go
+
+This should configure, compile and install the software and set up your
+DSL connection.  You'll have to answer a few questions along the way.
+
+If you want the GUI wrapper, type:
+
+	./go-gui
+
+If ./go and ./go-gui didn't work, read the rest of this README.
+
+Compiling
+---------
+
+Compile and install pppd if you don't already have it.  Then:
+
+1) Unpack:
+
+	$ tar xzvf rp-pppoe-xxx.tar.gz
+
+2) Change to source directory:
+
+	$ cd src
+
+3) Configure:
+
+	$ ./configure
+
+4) Compile:
+
+	$ make
+
+4) Install (this step must be done as root)
+
+	# make install
+
+5) Now read doc/HOW-TO-CONNECT
+
+--
+David F. Skoll <dfs@roaringpenguin.com> | Roaring Penguin Software Inc.
+http://www.roaringpenguin.com

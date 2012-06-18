@@ -1,0 +1,7 @@
+This module matches a rate limit based on a fuzzy logic controller [FLC]
+.TP
+.BI "--lower-limit " "number"
+Specifies the lower limit (in packets per second).
+.TP
+.BI "--upper-limit " "number"
+Specifies the upper limit (in packets per second).

@@ -1,0 +1,260 @@
+This file describes the installation process for ppp-2.4 on systems
+running Solaris.  The Solaris and SVR4 ports share a lot of code but
+are not identical.  The STREAMS kernel modules and driver for Solaris
+are in the solaris directory (and use some code from the modules
+directory).
+
+NOTE: Although the kernel driver and modules have been designed to
+operate correctly on SMP systems, they have not been extensively
+tested on SMP machines.  Some users of SMP Solaris x86 systems have
+reported system problems apparently linked to the use of previous
+versions of this software.  I believe these problems have been fixed.
+
+
+Installation.
+*************
+
+1. Run the configure script and make the user-level programs and the
+   kernel modules.
+
+	./configure
+	make
+
+    The configure script will automatically find Sun's cc if it's in
+    the standard location (/opt/SUNWspro/bin/cc).  If you do not have
+    Sun's WorkShop compiler, configure will attempt to use 'gcc'.  If
+    this is found and you have a 64 bit kernel, it will check that gcc
+    accepts the "-m64" option, which is required to build kernel
+    modules.
+
+    You should not have to edit the Makefiles for most ordinary cases.
+
+2. Install the programs and kernel modules: as root, do
+
+	make install
+
+    This installs pppd, chat and pppstats in /usr/local/bin and the
+    kernel modules in /kernel/drv and /kernel/strmod, and creates the
+    /etc/ppp directory and populates it with default configuration
+    files.  You can change the installation directories by editing
+    solaris/Makedefs.  If you have a 64 bit kernel, the 64-bit drivers
+    are installed in /kernel/drv/sparcv9 and /kernel/strmod/sparcv9.
+
+    If your system normally has only one network interface at boot
+    time, the default Solaris system startup scripts will disable IP
+    forwarding in the IP kernel module.  This will prevent the remote
+    machine from using the local machine as a gateway to access other
+    hosts.  The solution is to create an /etc/ppp/ip-up script
+    containing something like this:
+
+	#!/bin/sh
+	/usr/sbin/ndd -set /dev/ip ip_forwarding 1
+
+    See the man page for ip(7p) for details.
+
+Integrated pppd
+***************
+
+  Solaris 8 07/01 (Update 5) and later have an integrated version of
+  pppd, known as "Solaris PPP 4.0," and is based on ppp-2.4.0.  This
+  version comes with the standard Solaris software distribution and is
+  supported by Sun.  It is fully tested in 64-bit and SMP modes, and
+  with bundled and unbundled synchronous drivers.  Solaris 8 10/01
+  (Update 6) and later includes integrated PPPoE client and server
+  support, with kernel-resident data handling.  See pppd(1M).
+
+  The feature is part of the regular full installation, and is
+  provided by these packages:
+
+	SUNWpppd	- 32-bit mode kernel drivers
+	SUNWpppdr	- root-resident /etc/ppp config samples
+	SUNWpppdu	- /usr/bin/pppd itself, plus chat
+	SUNWpppdx	- 64-bit mode kernel drivers
+	SUNWpppdt	- PPPoE support
+	SUNWpppg	- GPL'd optional 'pppdump' and plugins
+	SUNWpppgS	- Source for GPL'd optional features
+
+  Use the open source version of pppd if you wish to recompile to add
+  new features or to experiment with the code.  Production systems,
+  however, should run the Sun-supplied version, if at all possible.
+
+  You can run both versions on a single system if you wish.  The
+  Solaris PPP 4.0 interfaces are named "spppN," while this open source
+  version names its interfaces as "pppN".  The STREAMS modules are
+  similarly separated.  The Sun-supplied pppd lives in /usr/bin/pppd,
+  while the open source version installs (by default) in
+  /usr/local/bin/pppd.
+
+Dynamic STREAMS Re-Plumbing Support.
+************************************
+
+  Solaris 8 (and later) includes dynamic re-plumbing support.  With
+  this feature, modules below ip can be inserted, or removed, without
+  having the ip stream be unplumbed, and re-plumbed again.  All state
+  in ip for the interface will be preserved as modules are added or
+  removed.  Users can install (or upgrade) modules such as firewall,
+  bandwidth manager, cache manager, tunneling, etc., without shutting
+  the interface down.
+
+  To support this, ppp driver now uses /dev/udp instead of /dev/ip for
+  the ip stream. The interface stream (where ip module pushed on top
+  of ppp) is then I_PLINK'ed below the ip stream. /dev/udp is used
+  because STREAMS will not let a driver be PLINK'ed under itself, and
+  /dev/ip is typically the driver at the bottom of the tunneling
+  interfaces stream.  The mux ids of the ip streams are then added
+  using SIOCSxIFMUXID ioctl.
+
+  Users will be able to see the modules on the interface stream by,
+  for example:
+
+    pikapon# ifconfig ppp modlist
+    0 ip
+    1 ppp
+
+  Or arbitrarily if bandwidth manager and firewall modules are installed:
+
+    pikapon# ifconfig hme0 modlist
+    0 arp
+    1 ip
+    2 ipqos
+    3 firewall
+    4 hme
+
+Snoop Support.
+**************
+
+  This version includes support for /usr/sbin/snoop.  Tests have been
+  done on Solaris 7 through 9. Only IPv4 and IPv6 packets will be sent
+  up to stream(s) marked as promiscuous (i.e., those used by snoop).
+
+  Users will be able to see the packets on the ppp interface by, for
+  example:
+
+    snoop -d ppp0
+
+  See the man page for snoop(1M) for details.
+
+IPv6 Support.
+*************
+
+  This is for Solaris 8 and later.
+
+  This version has been tested under Solaris 8 and 9 running IPv6.
+  Interoperability testing has only been done between Solaris machines
+  in terms of the IPV6 NCP.  An additional command line option for the
+  pppd daemon has been added: ipv6cp-use-persistent.
+
+  By default, compilation for IPv6 support is not enabled.  Uncomment
+  the necessary lines in pppd/Makefile.sol2 to enable it.  Once done,
+  the quickest way to get IPv6 running is to add the following
+  somewhere in the command line option:
+
+	+ipv6 ipv6cp-use-persistent
+
+  The persistent id for the link-local address was added to conform to
+  RFC 2472; such that if there's an EUI-48 available, use that to make
+  up the EUI-64.  As of now, the Solaris implementation extracts the
+  EUI-48 id from the Ethernet's MAC address (the ethernet interface
+  needs to be up).  Future work might support other ways of obtaining
+  a unique yet persistent id, such as EEPROM serial numbers, etc.
+
+  There need not be any up/down scripts for ipv6,
+  e.g. /etc/ppp/ipv6-up or /etc/ppp/ipv6-down, to trigger IPv6
+  neighbor discovery for auto configuration and routing.  The in.ndpd
+  daemon will perform all of the necessary jobs in the
+  background. /etc/inet/ndpd.conf can be further customized to enable
+  the machine as an IPv6 router. See the man page for in.ndpd(1M) and
+  ndpd.conf(4) for details.
+
+  Below is a sample output of "ifconfig -a" with persistent link-local
+  address.  Note the UNNUMBERED flag is set because hme0 and ppp0 both
+  have identical link-local IPv6 addresses:
+
+lo0: flags=1000849<UP,LOOPBACK,RUNNING,MULTICAST,IPv4> mtu 8232 index 1
+        inet 127.0.0.1 netmask ff000000 
+hme0: flags=1000843<UP,BROADCAST,RUNNING,MULTICAST,IPv4> mtu 1500 index 2
+        inet 129.146.86.248 netmask ffffff00 broadcast 129.146.86.255
+        ether 8:0:20:8d:38:c1 
+lo0: flags=2000849<UP,LOOPBACK,RUNNING,MULTICAST,IPv6> mtu 8252 index 1
+        inet6 ::1/128 
+hme0: flags=2000841<UP,RUNNING,MULTICAST,IPv6> mtu 1500 index 2
+        ether 8:0:20:8d:38:c1 
+        inet6 fe80::a00:20ff:fe8d:38c1/10 
+hme0:1: flags=2080841<UP,RUNNING,MULTICAST,ADDRCONF,IPv6> mtu 1500 index 2
+        inet6 fec0::56:a00:20ff:fe8d:38c1/64 
+hme0:2: flags=2080841<UP,RUNNING,MULTICAST,ADDRCONF,IPv6> mtu 1500 index 2
+        inet6 2000::56:a00:20ff:fe8d:38c1/64 
+hme0:3: flags=2080841<UP,RUNNING,MULTICAST,ADDRCONF,IPv6> mtu 1500 index 2
+        inet6 2::56:a00:20ff:fe8d:38c1/64 
+ppp0: flags=10008d1<UP,POINTOPOINT,RUNNING,NOARP,MULTICAST,IPv4> mtu 1500 index 12
+        inet 172.16.1.1 --> 172.16.1.2 netmask ffffff00 
+ppp0: flags=2202851<UP,POINTOPOINT,RUNNING,MULTICAST,UNNUMBERED,NONUD,IPv6> mtu 1500 index 12
+        inet6 fe80::a00:20ff:fe8d:38c1/10 --> fe80::a00:20ff:fe7a:24fb
+
+  Note also that a plumbed ipv6 interface stream will exist throughout
+  the entire PPP session in the case where the peer rejects IPV6CP,
+  which further causes the interface state to stay down. Unplumbing
+  will happen when the daemon exits. This is done by design and is not
+  a bug.
+
+64-bit Support.
+***************
+
+  This version has been tested under Solaris 7 through 9 in both 32-
+  and 64-bit environments (Ultra class machines).  Installing the
+  package by executing "make install" will result in additional files
+  residing in /kernel/drv/sparcv9 and /kernel/strmod/sparcv9
+  subdirectories.
+
+  64-bit modules and driver have been compiled and tested using Sun's
+  cc and gcc.
+
+Synchronous Serial Support.
+***************************
+
+  This version has working but limited support for the on-board
+  synchronous HDLC interfaces.  It has been tested with the
+  /dev/se_hdlc, /dev/zsh, HSI/S, and HSI/P drivers.  Synchronous mode
+  was tested with a Cisco router.
+
+  The ppp daemon does not directly support controlling the serial
+  interface.  It relies on the /usr/sbin/syncinit command to
+  initialize HDLC mode and clocking.
+
+  There is a confirmed bug with NRZ/NRZI mode in the /dev/se_hdlc
+  driver, and Solaris patch 104596-11 is needed to correct it.
+  (However this patch seems to introduce other serial problems.  If
+  you don't apply the patch, the workaround is to change the nrzi mode
+  to yes or no, whichever works.)
+
+  How to start pppd with synchronous support:
+
+	#!/bin/sh
+
+	local=1.1.1.1   # your ip address here
+	baud=38400	# needed, but ignored by serial driver
+
+	# Change to the correct serial driver/port
+	#dev=/dev/zsh0
+	dev=/dev/se_hdlc0
+ 
+	# Change the driver, nrzi mode, speed and clocking to match
+	# your setup.
+	# This configuration is for external clocking from the DCE
+	connect="syncinit se_hdlc0 nrzi=no speed=64000 txc=rxc rxc=rxc"
+ 
+	/usr/sbin/pppd $dev sync $baud novj noauth $local: connect "$connect"
+
+  Sample Cisco router config excerpt:
+
+	!
+	! Cisco router setup as DCE with RS-232 DCE cable
+	! 
+	!         
+	interface Serial0
+	 ip address 1.1.1.2 255.255.255.0
+	 encapsulation ppp
+	 clockrate 64000
+	 no nrzi-encoding
+	 no shutdown
+	!         

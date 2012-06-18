@@ -1,0 +1,36 @@
+This is used to send back an error packet in response to the matched
+packet: otherwise it is equivalent to 
+.B DROP
+so it is a terminating TARGET, ending rule traversal.
+This target is only valid in the
+.BR INPUT ,
+.B FORWARD
+and
+.B OUTPUT
+chains, and user-defined chains which are only called from those
+chains.  The following option controls the nature of the error packet
+returned:
+.TP
+.BI "--reject-with " "type"
+The type given can be
+.nf
+.B " icmp6-no-route"
+.B " no-route"
+.B " icmp6-adm-prohibited"
+.B " adm-prohibited"
+.B " icmp6-addr-unreachable"
+.B " addr-unreach"
+.B " icmp6-port-unreachable"
+.B " port-unreach"
+.fi
+which return the appropriate ICMPv6 error message (\fBport-unreach\fP is
+the default). Finally, the option
+.B tcp-reset
+can be used on rules which only match the TCP protocol: this causes a
+TCP RST packet to be sent back.  This is mainly useful for blocking 
+.I ident
+(113/tcp) probes which frequently occur when sending mail to broken mail
+hosts (which won't accept your mail otherwise).
+.B tcp-reset
+can only be used with kernel versions 2.6.14 or latter.
+

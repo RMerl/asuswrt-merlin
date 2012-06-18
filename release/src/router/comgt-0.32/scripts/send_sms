@@ -1,0 +1,40 @@
+opengt
+set com 115200n81
+set senddelay 0.05
+waitquiet 1 0.1
+send "AT+CMGF=1^m"
+gosub wait_ok
+send "AT+CSMP=17,167^m"
+gosub wait_ok
+send "AT+CPMS=\"SM\",\"SM\",\"SM\"^m"
+gosub wait_ok
+send "AT+CMGL=\"ALL\"^m"
+let i=0
+open file "/tmp/send_sms"
+:get_next
+get 1 "^m" $s
+fprint $s
+let $a=$s
+if len($a)>=3 let $b=$right($a,2)
+if $b="OK" goto exit
+inc i
+if i<45 goto get_next
+:exit
+fprint "\n"
+close file
+exit 0
+
+:wait_ok
+let t=0
+:get_again
+get 1 " ^m" $s
+let $a=$s
+if len($a)>=3 let $b=$right($a,2)
+if $b="OK" goto got_ok
+else inc t
+if t<45 goto get_again
+else goto return
+:got_ok
+#print $s
+:return
+return

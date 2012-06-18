@@ -1,0 +1,17 @@
+This modules macthes IP sets which can be defined by ipset(8).
+.TP
+.BR "--set " "setname flag[,flag...]"
+where flags are
+.BR "src"
+and/or
+.BR "dst" 
+and there can be no more than six of them. Hence the command
+.nf
+ iptables -A FORWARD -m set --set test src,dst
+.fi
+will match packets, for which (depending on the type of the set) the source
+address or port number of the packet can be found in the specified set. If 
+there is a binding belonging to the mached set element or there is a default 
+binding for the given set, then the rule will match the packet only if 
+additionally (depending on the type of the set) the destination address or 
+port number of the packet can be found in the set according to the binding.

@@ -1,0 +1,3 @@
+"$THIS_SH" -c 'trap "echo cow" 0'
+"$THIS_SH" -c 'trap "echo moo" EXIT'
+"$THIS_SH" -c 'trap "echo no" 0; trap 0'

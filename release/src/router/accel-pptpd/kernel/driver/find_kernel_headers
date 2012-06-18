@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if test -n "${KDIR}"; then
+    if test -f ${KDIR}/include/linux/version.h; then
+	echo ${KDIR}
+	exit 0
+    else
+	exit 1
+    fi
+else
+    if test -f /usr/src/linux/include/linux/version.h; then
+	echo /usr/src/linux
+	exit 0
+    elif test -f /lib/modules/`uname -r`/build/include/linux/version.h; then
+	echo /lib/modules/`uname -r`/build
+	exit 0
+    else
+	exit 1
+    fi
+fi
+    

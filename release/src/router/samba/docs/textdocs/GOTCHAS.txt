@@ -1,0 +1,71 @@
+!==
+!== GOTCHAS.txt for Samba release 2.0.10 23 Jun 2001
+!==
+This file lists Gotchas to watch out for:
+=========================================================================
+Item Number:	1.0
+Description:	Problem Detecting Interfaces
+Symptom:	Workstations do NOT see Samba server in Browse List
+OS:		RedHat - Rembrandt Beta 2
+Platform:	Intel
+Date:		August 16, 1996
+Submitted By:	John H Terpstra 
+Details:
+	By default RedHat Rembrandt-II during installation adds an
+	entry to /etc/hosts as follows:-
+		127.0.0.1 loopback "hostname"."domainname"
+
+	This causes Samba to loop back onto the loopback interface.
+	The result is that Samba fails to communicate correctly with
+	the world and therefor may fail to correctly negotiate who
+	is the master browse list holder and who is the master browser.
+
+Corrective Action:	Delete the entry after the word loopback
+	in the line starting 127.0.0.1
+=========================================================================
+Item Number:	2.0
+Description:	Problems with MS Windows NT Server network logon service
+Symptom:	Loss of Domain Logon Services and failed Windows NT / 95
+		logon attempts.
+OS:		All Unix systems with Windows NT Domain Control environments.
+Platform:	All
+Date:		February 1, 1997
+Submitted By:	John H Terpstra 
+Details:
+	Samba is configured for Domain logon control in a network
+	where a Windows NT Domain Primary Controller is running.
+
+	Case 1:
+		The Windows NT Server is shut down, then restarted. Then
+		the Samba server is reconfigured so that it NO LONGER offers
+		Domain logon services. Windows NT and 95 workstations can no
+		longer log onto the domain. Ouch!!!
+
+	Case 2:
+		The Windows NT Server which is running the Network logon
+		Service is shut down and restarted while Samba is a domain
+		controller offering the Domain LogOn service. Windows NT
+		Workstation and Server can no longer log onto the network.
+
+	Cause:
+		Windows NT checks at start up to see if any domain logon
+		controllers are already running within the domain. It finds
+		Samba claiming to offer the service and therefore does NOT
+		start its Network Logon Service.
+
+		Windows NT needs the Windows NT network logon service to gain
+		from its Domain controller's SAM database the security
+		identifier for the user loging on.
+
+Work-around:	Stop the Samba nmbd and smbd processes, then on the Windows
+		NT Primary Domain Controller start the Network Logon Service.
+		Now restart the Samba nmbd and smbd services.
+
+		Better still: DO NOT CONFIGURE SAMBA AS THE NETWORK LOGON
+		SERVER, DO NOT SET SAMBA TO BE THE DOMAIN MASTER, DO NOT
+		SET SAMBA TO OS LEVEL GREATER THAN 0.
+
+		ie: Let Windows NT Server be the Domain Logon server, the
+		domain master browser and do NOT interfere with any aspect
+		of Microsoft Windows NT Domain Control.
+=========================================================================

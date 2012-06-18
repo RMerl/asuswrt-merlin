@@ -1,0 +1,45 @@
+.\" LIC: GPL
+.TH PPPOE-WRAPPER 1 "26 February 2001"
+.UC 4
+.SH NAME
+pppoe-wrapper \- SUID wrapper for starting and stopping PPPoE connections.
+.SH SYNOPSIS
+.B pppoe-wrapper start linkname
+.P
+.B pppoe-wrapper stop linkname
+.P
+.B pppoe-wrapper status linkname
+
+.SH DESCRIPTION
+\fBpppoe-wrapper\fR is a small SUID program which allows non-root users
+to start and stop PPPoE links.  It operates as follows:
+
+.TP
+.B o
+First, \fIlinkname\fR is sanity-checked.  Too-long names and names containing
+illegal characters are rejected.
+
+.TP
+.B o
+Second, \fBpppoe-wrapper\fR opens the file \fB/etc/ppp/rp-pppoe-gui/conf.\fR\fIlinkname\fR for reading.  If that file does not contain the line:
+.nf
+
+		NONROOT=OK
+
+.fi
+then \fBpppoe-wrapper\fR fails.
+
+.TP
+.B o
+Otherwise, \fBpppoe-wrapper\fR runs \fBpppoe-start\fR, \fBpppoe-stop\fR or
+\fBpppoe-status\fR with the above filename as its single argument.
+
+.SH AUTHOR
+\fBpppoe-wrapper\fR was written by David F. Skoll <dfs@roaringpenguin.com>.
+
+The \fBpppoe\fR home page is \fIhttp://www.roaringpenguin.com/pppoe/\fR.
+
+.SH SEE ALSO
+pppoe-start(8), pppoe-stop(8), pppoe-status(8), tkpppoe(1)
+
+

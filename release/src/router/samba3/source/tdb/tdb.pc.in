@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: tdb
+Description: A trivial database
+Version: 4.0
+#Libs: @LIBS@ -L${libdir} -ltdb
+Cflags: -I${includedir} @CFLAGS@

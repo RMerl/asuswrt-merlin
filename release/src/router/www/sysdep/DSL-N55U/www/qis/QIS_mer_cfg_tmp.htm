@@ -1,0 +1,485 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="stylesheet" type="text/css" href="../form_style.css">
+<link rel="stylesheet" type="text/css" href="qis_style.css">
+<script type="text/JavaScript" src="/state.js"></script>
+<script type="text/JavaScript" src="/general.js"></script>
+<script type="text/JavaScript" src="/form.js"></script>
+<style>
+span{
+	border:0px solid #FFFFFF;
+	color:#FFFFFF;
+	font-size:14px;
+	font-family:Arial, Helvetica, sans-serif;
+	/*width:27px;*/
+	text-align:right;
+	margin:0px auto;
+	ime-mode:disabled;
+}
+</style>
+<script>
+var vpi_val = "<% nvram_get("dsltmp_cfg_vpi"); %>";
+var vci_val = "<% nvram_get("dsltmp_cfg_vci"); %>";
+var encap_val = "<% nvram_get("dsltmp_cfg_encap"); %>";
+var ispname_str = "<% nvram_get("dsltmp_cfg_ispname"); %>";
+var country_str = "<% nvram_get("dsltmp_cfg_country"); %>";
+var w_Setting = "<% nvram_get("w_Setting"); %>";
+var iptv_num_pvc_str = "";
+
+var encap_str = " , LLC";
+if (encap_val == "1") encap_str = " , VC";
+
+var iptv_num_pvc_val = "<% nvram_get("dsltmp_cfg_iptv_num_pvc"); %>";
+if (iptv_num_pvc_val != "0" && iptv_num_pvc_val != "") iptv_num_pvc_str = iptv_num_pvc_val + " IPTV PVC(s).";
+
+function QKfinish_load_body(){
+	parent.document.title = "<#Web_Title#> - <#QKSet_all_title#>";
+	parent.set_step("t2");
+	
+	document.form.x_DHCPClient[0].checked = 0;
+	document.form.x_DHCPClient[1].checked = 1;
+	document.form.wan_dnsenable_x[0].checked = 0;
+	document.form.wan_dnsenable_x[1].checked = 1;
+	show_dhcpenable(1);
+	
+	if (country_str == "Denmark")
+	{
+		//denmark ISP need input MAC address
+		document.getElementById("mac_addr1").style.display = "";
+		document.getElementById("mac_addr2").style.display = "";
+	}	
+}
+
+function validate_ip(){
+		if(document.form.x_DHCPClient[0].checked){
+			if(document.form.dsl_gateway.value == document.form.dsl_ipaddr.value){
+				alert("<#IPConnection_warning_WANIPEQUALGatewayIP#>");
+				return false;
+			}
+		}
+
+	return true;
+}
+
+function validate_dns(){
+	//todo
+	return true;
+}
+
+function show_dhcpenable(flag){
+	if(flag == 1 || flag == true){
+		show_dnsenable(0);
+		IPinputCtrl(document.form.dsl_ipaddr, 0);
+		IPinputCtrl(document.form.dsl_netmask, 0);
+		IPinputCtrl(document.form.dsl_gateway, 0);
+		document.form.wan_dnsenable_x[0].checked = 0;
+		document.form.wan_dnsenable_x[1].checked = 1;
+		inputCtrl(document.form.wan_dnsenable_x[0], 1);
+		inputCtrl(document.form.wan_dnsenable_x[1], 1);
+	}
+	else{
+		show_dnsenable(1);
+		IPinputCtrl(document.form.dsl_ipaddr, 1);
+		IPinputCtrl(document.form.dsl_netmask, 1);
+		IPinputCtrl(document.form.dsl_gateway, 1);
+		document.form.wan_dnsenable_x[0].checked = 1;
+		document.form.wan_dnsenable_x[1].checked = 0;
+		inputCtrl(document.form.wan_dnsenable_x[0], 1);
+		inputCtrl(document.form.wan_dnsenable_x[1], 0);
+	}
+}
+
+function show_dnsenable(flag){
+	if(flag == 1 || flag == true){
+		IPinputCtrl(document.form.dsl_dns1_x, 1);
+		IPinputCtrl(document.form.dsl_dns2_x, 1);
+	}
+	else{
+		IPinputCtrl(document.form.dsl_dns1_x, 0);
+		IPinputCtrl(document.form.dsl_dns2_x, 0);
+	}
+}
+
+function get_result_of_all_IP(){
+	combineIP("dsl_ipaddr");
+	combineIP("dsl_netmask");
+	combineIP("dsl_gateway");
+	combineIP("dsl_dns1_x");
+	combineIP("dsl_dns2_x");
+}
+
+function remove_red_field(){
+	$("dsl_ipaddr_div").style.border = "2px inset #F4F4F4";
+	$("dsl_netmask_div").style.border = "2px inset #F4F4F4";
+	$("dsl_gateway_div").style.border = "2px inset #F4F4F4";
+	$("dsl_dns1_x_div").style.border = "2px inset #F4F4F4";
+	$("dsl_dns2_x_div").style.border = "2px inset #F4F4F4";
+}
+
+function submitForm(){
+	remove_red_field();
+	get_result_of_all_IP();
+	if(!validate_ip())
+		return;
+	if(!validate_dns())
+		return;
+
+	if(document.form.x_DHCPClient[0].checked) //Use static WAN and DNS IP; 1 Dynamic, 0 Static
+	{
+		document.getElementById("dsltmp_qis_DHCPClient").value = "0";
+		document.getElementById("dsltmp_qis_ipaddr").value = document.getElementById("dsl_ipaddr").value;
+		document.getElementById("dsltmp_qis_netmask").value = document.getElementById("dsl_netmask").value;
+		document.getElementById("dsltmp_qis_gateway").value = document.getElementById("dsl_gateway").value;
+		//alert("dsltmp_qis_DHCPClient: "+ document.getElementById("dsltmp_qis_DHCPClient").value);
+		//alert("dsltmp_qis_ipaddr: "+ document.getElementById("dsltmp_qis_ipaddr").value);
+		//alert("dsltmp_qis_netmask: "+ document.getElementById("dsltmp_qis_netmask").value);
+		//alert("dsltmp_qis_gateway: "+ document.getElementById("dsltmp_qis_gateway").value);
+
+		document.getElementById("dsltmp_qis_dnsenable").value = "0";
+		document.getElementById("dsltmp_qis_dns1").value = document.getElementById("dsl_dns1_x").value;
+		document.getElementById("dsltmp_qis_dns2").value = document.getElementById("dsl_dns2_x").value;
+		//alert("dsltmp_qis_dnsenable: "+ document.getElementById("dsltmp_qis_dnsenable").value);
+		//alert("dsltmp_qis_dns1: "+ document.getElementById("dsltmp_qis_dns1").value);
+		//alert("dsltmp_qis_dns2: "+ document.getElementById("dsltmp_qis_dns2").value);
+	}
+	else //Use dynamic WAN and DNS IP; 1 Dynamic, 0 Static
+	{
+		document.getElementById("dsltmp_qis_DHCPClient").value = "1";
+		//alert("dsltmp_qis_DHCPClient: "+ document.getElementById("dsltmp_qis_DHCPClient").value);
+
+		if(document.form.wan_dnsenable_x[0].checked) //Use static DNS
+		{
+			document.getElementById("dsltmp_qis_dnsenable").value = "0";
+			document.getElementById("dsltmp_qis_dns1").value = document.getElementById("dsl_dns1_x").value;
+			document.getElementById("dsltmp_qis_dns2").value = document.getElementById("dsl_dns2_x").value;
+			//alert("dsltmp_qis_dnsenable: "+ document.getElementById("dsltmp_qis_dnsenable").value);
+			//alert("dsltmp_qis_dns1: "+ document.getElementById("dsltmp_qis_dns1").value);
+			//alert("dsltmp_qis_dns2: "+ document.getElementById("dsltmp_qis_dns2").value);
+		}
+		else //Use dynamic DNS
+		{
+			document.getElementById("dsltmp_qis_dnsenable").value = "1";
+			//alert("dsltmp_qis_dnsenable: "+ document.getElementById("dsltmp_qis_dnsenable").value);
+		}
+	}
+	document.form.next_page.value = "/qis/QIS_wireless.htm";
+	document.form.submit();
+}
+
+function gotoHome() {
+	if (w_Setting == "0") {
+		alert("<#QIS_recommand_encryption#>");	
+		location.href = '/qis/QIS_wireless.htm';
+	}
+	else {
+		parent.location.href = '/index.asp';
+	}
+}
+
+</script>
+</head>
+
+<body onLoad="QKfinish_load_body();" >
+<form method="post" name="form" action="/start_apply.htm" target="">
+<input type="hidden" name="prev_page" value="/qis/QIS_manual_setting.htm">
+<input type="hidden" name="current_page" value="/qis/QIS_mer_cfg_tmp.htm">
+<input type="hidden" name="next_page" value="">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_wait" value="">
+<input type="hidden" name="dsltmp_qis_vpi" id="dsltmp_qis_vpi" value="<% nvram_get("dsltmp_cfg_vpi"); %>">
+<input type="hidden" name="dsltmp_qis_vci" id="dsltmp_qis_vci" value="<% nvram_get("dsltmp_cfg_vci"); %>">
+<input type="hidden" name="dsltmp_qis_proto" id="dsltmp_qis_proto" value="mer">
+<input type="hidden" name="dsltmp_qis_encap" id="dsltmp_qis_encap" value="<% nvram_get("dsltmp_cfg_encap"); %>">
+<input type="hidden" name="dsltmp_qis_pppoe_username" id="dsltmp_qis_pppoe_username" value="">
+<input type="hidden" name="dsltmp_qis_pppoe_passwd" id="dsltmp_qis_pppoe_passwd" value="">
+<input type="hidden" name="dsltmp_qis_pppoe_dial_on_demand" id="dsltmp_qis_pppoe_dial_on_demand" value="0">
+<input type="hidden" name="dsltmp_qis_pppoe_idletime" id="dsltmp_qis_pppoe_idletime" value="0">
+<input type="hidden" name="dsltmp_qis_pppoe_mtu" id="dsltmp_qis_pppoe_mtu" value="1492">
+<input type="hidden" name="dsltmp_qis_pppoe_mru" id="dsltmp_qis_pppoe_mru" value="1492">
+<input type="hidden" name="dsltmp_qis_pppoe_service" id="dsltmp_qis_pppoe_service" value="">
+<input type="hidden" name="dsltmp_qis_pppoe_options" id="dsltmp_qis_pppoe_options" value="">
+<input type="hidden" name="dsltmp_qis_DHCPClient" id="dsltmp_qis_DHCPClient" value="1">
+<input type="hidden" name="dsltmp_qis_ipaddr" id="dsltmp_qis_ipaddr" value="0.0.0.0">
+<input type="hidden" name="dsltmp_qis_netmask" id="dsltmp_qis_netmask" value="0.0.0.0">
+<input type="hidden" name="dsltmp_qis_gateway" id="dsltmp_qis_gateway" value="0.0.0.0">
+<input type="hidden" name="dsltmp_qis_dnsenable" id="dsltmp_qis_dnsenable" value="0">
+<input type="hidden" name="dsltmp_qis_dns1" id="dsltmp_qis_dns1" value="">
+<input type="hidden" name="dsltmp_qis_dns2" id="dsltmp_qis_dns2" value="">
+<input type="hidden" name="dsltmp_qis_svc_cat" id="dsltmp_qis_svc_cat" value="0">
+<input type="hidden" name="dsltmp_qis_pcr" id="dsltmp_qis_pcr" value="0">
+<input type="hidden" name="dsltmp_qis_scr" id="dsltmp_qis_scr" value="0">
+<input type="hidden" name="dsltmp_qis_mbs" id="dsltmp_qis_mbs" value="0">
+<input type="hidden" name="dsltmp_qis_dsl_pvc_set" value="1">
+<!-- dsltmp_qis_hwaddr is in the HTML code -->
+
+<div class="QISmain">
+	<div class="formfonttitle" style="padding:0 0 0 10;" id="FailReason"><#Manual_Setting_Title#></div>
+	<table width="730px">
+		<tr>
+			<td id="home_button" align="right">
+				<img onclick="gotoHome();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+			</td>
+		</tr>
+	</table>		
+	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img style="width: 700px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+	<br/>
+
+
+<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
+  <tr>
+		&nbsp;&nbsp;&nbsp;<#pvccfg_PVC_type#> MER. <b>VPI/VCI = <% nvram_get("dsltmp_cfg_vpi"); %>/<% nvram_get("dsltmp_cfg_vci"); %><script>document.write(encap_str)</script></b><br>
+		&nbsp;&nbsp;&nbsp;<b><script>document.write(iptv_num_pvc_str)</script></b>
+  </tr>
+</table>
+
+<div id="showip">
+<fieldset>
+<legend>
+	<#Layer3Forwarding_x_UseStaticIP_itemname#>
+	<span id="dhcp_info_radio">
+		<input type="radio" name="x_DHCPClient" class="input" value="0" onclick="show_dhcpenable(this.value);"><#checkbox_Yes#>
+		<input type="radio" name="x_DHCPClient" class="input" value="1" onclick="show_dhcpenable(this.value);"><#checkbox_No#>
+	</span>
+</legend>
+	<table id="tblsetting_2" class="QISform" width="400" border="0" align="center" cellpadding="3" cellspacing="0">
+		<tr>
+			<th width="180">
+				<#IPConnection_ExternalIPAddress_itemname#>
+			</th>
+			<td class="QISformtd">
+				<input type="hidden" id="dsl_ipaddr" name="dsl_ipaddr" value="" maxlength="15" onkeypress="return is_ipaddr(this);" onkeyup="change_ipaddr(this);"  title="WAN IP">
+				<div class="IPaddr" id="dsl_ipaddr_div">
+					<input maxlength="3"
+								 name="dsl_ipaddr1";
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />.
+					<input maxlength="3"
+								 id="dsl_ipaddr2"
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />.
+					<input maxlength="3"
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />.
+					<input maxlength="3"
+								 name="dsl_ipaddr4";
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />
+				</div>
+			</td>
+		</tr>
+
+		<tr>
+			<th width="180">
+				<#IPConnection_x_ExternalSubnetMask_itemname#>
+			</th>
+			<td class="QISformtd">
+				<input type="hidden" id="dsl_netmask" name="dsl_netmask" value="" maxlength="15"  title="WAN Subnet Mask">
+				<div class="IPaddr" id="dsl_netmask_div">
+					<input maxlength="3"
+								 name="dsl_netmask1"
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onblur="validateIP(this);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />.
+					<input maxlength="3"
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onblur="validateIP(this);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />.
+					<input maxlength="3"
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onblur="validateIP(this);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />.
+					<input maxlength="3" name="dsl_netmask4"
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onblur="validateIP(this);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />
+				</div>
+			</td>
+		</tr>
+
+		<tr>
+			<th>
+				<#IPConnection_x_ExternalGateway_itemname#>
+			</th>
+			<td class="QISformtd">
+				<input type="hidden" id="dsl_gateway" name="dsl_gateway" value="" maxlength="15" onkeypress="return is_ipaddr(this);" onkeyup="return change_ipaddr(this);" class="input">
+				<div class="IPaddr" id="dsl_gateway_div">
+					<input maxlength="3"
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onblur="validateIP(this);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />.
+					<input maxlength="3"
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onblur="validateIP(this);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />.
+					<input maxlength="3"
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onblur="validateIP(this);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />.
+					<input maxlength="3" name="dsl_gateway4"
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onblur="validateIP(this);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />
+				</div>
+			</td>
+		</tr>
+	</table>
+</fieldset>
+</div>
+
+<div id="dns_sec">
+  <fieldset>
+  <legend>
+	  <span id="dns_info_title"><#qis_dns#>:</span>
+	  <span id="dns_info_radio">
+  		<input type="radio" name="wan_dnsenable_x" value="1" onclick="show_dnsenable(this.value);" class="input"><#checkbox_Yes#>
+			<input type="radio" name="wan_dnsenable_x" value="0" onclick="show_dnsenable(this.value);" class="input"><#checkbox_No#>
+	  </span>
+  </legend>
+  <table id="tblsetting_4" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
+  <tr>
+	  <th width="180">
+	  	<#IPConnection_x_DNSServer1_itemname#>
+	  </th>
+	  <td class="QISformtd">
+			<input type="hidden" id="dsl_dns1_x" name="dsl_dns1_x" value="" onkeypress="return is_ipaddr(this);" onkeyup="return change_ipaddr(this);" maxlength="15">
+			<div class="IPaddr" id="dsl_dns1_x_div">
+				<input maxlength="3"
+							 name="dsl_dns1_x1"
+							 onkeypress="return checkIP(this,event);"
+                onkeyup="return checkWord(this,event);"
+                onblur="validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                ondragenter="return false"
+                autocomplete="off" />.
+				<input maxlength="3"
+							 onkeypress="return checkIP(this,event);"
+                onkeyup="return checkWord(this,event);"
+                onblur="validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                ondragenter="return false"
+                autocomplete="off" />.
+				<input maxlength="3"
+							 onkeypress="return checkIP(this,event);"
+                onkeyup="return checkWord(this,event);"
+                onblur="validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                ondragenter="return false"
+                autocomplete="off" />.
+				<input maxlength="3" name="dsl_dns1_x4"
+							 onkeypress="return checkIP(this,event);"
+                onkeyup="return checkWord(this,event);"
+                onblur="validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                ondragenter="return false"
+                autocomplete="off" />
+			</div>
+	  </td>
+	</tr>
+
+	<tr>
+	  <th width="180">
+	  	<#IPConnection_x_DNSServer2_itemname#>
+	  </th>
+	  <td class="QISformtd">
+			<input type="hidden" id="dsl_dns2_x" name="dsl_dns2_x" value="" maxlength="15" onkeypress="return is_ipaddr(this);" onkeyup="return change_ipaddr(this);">
+			<div class="IPaddr" id="dsl_dns2_x_div">
+				<input maxlength="3"
+							 onkeypress="return checkIP(this,event);"
+                onkeyup="return checkWord(this,event);"
+                onblur="validateIP(this);"
+                onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                ondragenter="return false"
+                autocomplete="off" />.
+				<input maxlength="3"
+							 onkeypress="return checkIP(this,event);"
+               onkeyup="return checkWord(this,event);"
+               onblur="validateIP(this);"
+               onpaste="return   !clipboardData.getData('text').match(/\D/)"
+               ondragenter="return false"
+               autocomplete="off" />.
+				<input maxlength="3"
+							 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                onblur="validateIP(this);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />.
+				<input maxlength="3" name="dsl_dns2_x4"
+								 onkeypress="return checkIP(this,event);"
+                 onkeyup="return checkWord(this,event);"
+                 onblur="validateIP(this);"
+                 onpaste="return   !clipboardData.getData('text').match(/\D/)"
+                 ondragenter="return false"
+                 autocomplete="off" />
+				</div>
+	  </td>
+	</tr>
+  </table>
+  </fieldset>
+  <table>
+  <tr>
+	  <tr>
+		<th width="120"><span id="mac_addr1" style="display:none"><#PPPConnection_x_MacAddressForISP_itemname#></span></th>
+		<td>
+		  <span id="mac_addr2" style="display:none">
+		  <input type='text' name='dsltmp_qis_hwaddr' value='' maxlength="17" size='17'>&nbsp;<#BOP_isp_mac_item#>&nbsp;example: 00:11:22:33:44:55
+		  </span>
+		</td>
+	  </tr>		
+  </tr>		
+  </table>  
+</div>
+
+	<div class="apply_gen" style="margin-top:30px">
+		<input type="button" id="prevButton" value="<#Manual_Setting_btn#>" onclick="gotoprev(document.form);" class="button_gen" >
+<!--
+		<input type="button" id="nextButton" value="Ethernet WAN" onclick="redirect_page('internet_type');" class="button_gen" >
+-->
+		<input type="button" id="nextButton" value="<#btn_next#>" onclick="submitForm();" class="button_gen">
+	</div>
+
+</div>
+</form>
+</body>
+</html>

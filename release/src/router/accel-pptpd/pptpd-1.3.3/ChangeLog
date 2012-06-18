@@ -1,0 +1,611 @@
+15.05.2006 xeb
+	* accel-pptp forked from pptpd-1.3.2
+
+Tue Sep  5 09:42:46 2006  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd-1.3.3.tar.gz: released.
+
+Tue Sep  5 09:25:25 2006  James Cameron  <quozl@us.netrek.org>
+
+	* defaults.h: remove MAX_CONNECTIONS reference.
+
+	* samples/pptpd.conf: add connections clause, remove reference to
+	MAX_CONNECTIONS.
+
+Tue Sep  5 09:10:55 2006  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.c (processIPStr): add new informational message to
+	indicate when the number of connections is constrained by the
+	configured IP address ranges.
+
+Tue Sep  5 08:52:20 2006  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.c: fix segfault on -C option, cause was option string
+	didn't include argument flag for number of connections.  Closes
+	Gentoo Bug #132898 <http://bugs.gentoo.org/show_bug.cgi?id=132898>
+	thanks to Alin Nastac (mrness at gentoo.org) and Peter Volkov.
+
+Thu Aug  3 12:02:02 2006  James Cameron  <quozl@us.netrek.org>
+
+	* plugins/Makefile (LIBDIR), Makefile.am (LIBDIR): support build
+	of x86_64 mixed architecture.  From: Anton Gorlov.
+
+Thu Aug  3 11:14:59 2006  James Cameron  <quozl@us.netrek.org>
+
+	* configure.in: rewrite use of AC_ARG_WITH and AC_ARG_ENABLE to
+	more properly support the negative case.  Reported by: Phil
+	Oester.
+
+Thu Aug  3 09:55:25 2006  James Cameron  <quozl@us.netrek.org>
+
+	* plugins/Makefile: include libutil.  From: Anton Gorlov.
+
+Thu Apr 20 16:18:26 2006  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.init: ensures the service is not enabled by default when
+	installed, and adds a "condrestart" target that will restart the
+	daemon if and only if it's already running.  Reported by: Paul
+	Howarth.
+
+Tue Apr 18 14:47:29 2006  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd-1.3.2.tar.gz: released.
+
+	* configure.in: fix --with flags to work --without, change
+	--with-bcrelay to --enable-bcrelay.
+
+Mon Mar 27 11:42:36 2006  James Cameron  <quozl@us.netrek.org>
+
+	* pptpgre.c (decaps_gre, dequeue_gre): only report to LOG_DEBUG if
+	the debug option is set.  Reported by: Thomas Stein
+	<thomas.stein@knowledgetools.de>
+
+Tue Feb 14 10:52:13 2006  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd-1.3.1.tar.gz: released.
+
+Thu Dec 29 17:39:15 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.c, pptpmanager.c, pptpmanager.h, defaults.h: make
+	connections limit a run-time option.
+
+Thu Dec 29 15:45:51 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.c (launch_bcrelay): insufficient space was allocated in
+	the argv array for the number of elements used.
+
+Thu Dec 29 12:11:23 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd: remove PPPD_IP_ALLOC in favour of a configuration option.
+	
+	* pptpd.8: add --delegate
+	
+	* pptpd.conf.5, samples/pptpd.conf: add delegate option
+	
+	* config.h.in, configure.in: remove --with-pppd-ip-alloc option
+	
+	* pptpmanager.c, defaults.h, pptpd.c: convert from conditional
+	compilation to run-time checking.
+	
+	* samples/options.pptpd: describe how to force local IP for tunnel
+	even in delegate mode.
+
+	* INSTALL: remove build.sh reference.
+	
+Thu Dec 29 11:04:13 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpgre.c (pptp_gre_init): prevent initial unwanted GRE ACK.
+	From: Jonathan Barker <jabarker@itstrategic.ca>
+
+Mon Nov 21 10:53:09 2005  James Cameron  <quozl@us.netrek.org>
+
+	* bcrelay.c (mainloop): ignore ENOBUFS rather than fail.
+	From: Rajkumar S <rajkumars@asianetindia.com>
+
+Mon Oct 31 09:21:11 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpctrl.c: change GETARG to GETARG_VALUE and add a GETARG_INT
+	and GETARG_STRING macro, to improve readability.
+
+Mon Aug 22 10:45:14 2005  James Cameron  <quozl@us.netrek.org>
+
+	* compat.c (sigpipe_assign): remove superfluous sigset variable
+	and calls; they served no purpose.  Reported by: Pavol Gono.
+
+Wed Aug  3 19:04:07 2005  James Cameron  <quozl@us.netrek.org>
+
+	* plugins/pptpd-logwtmp.c: fix compilation warning by including
+	string.h
+
+	* ctrlpacket.c (read_pptp_packet): initialise return control
+	message type, to fix compilation warnings.
+
+	* pqueue.c: compilation fixes, use of log() and warn() replaced
+	with syslog().
+
+Wed Aug  3 17:33:40 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd-1.3.0.tar.gz: released.
+
+Tue Aug  2 21:31:25 2005  James Cameron  <quozl@us.netrek.org>
+
+	* samples/options.pptpd: disable Van Jacobson compression.
+	Reported by Pawel Pokrywka.
+
+Tue Aug  2 21:27:11 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpgre.c: packet reordering implementation, contributed by Vijay
+	Bharadwaj.
+
+Tue Aug  2 19:32:47 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpdefs.h (MAX_ECHO_WAIT, IDLE_WAIT): comply with RFC2637,
+	reported by Tobias Brox, updates 20040811-0.
+
+Tue Aug  2 19:30:30 2005  James Cameron  <quozl@us.netrek.org>
+
+	* plugins/pptpd-logwtmp.c (ip_up): implement
+	pptpd-logwtmp-strip-domain option, closes 20050401-1.
+
+Tue Aug  2 19:01:42 2005  James Cameron  <quozl@us.netrek.org>
+
+	* Makefile.am (EXTRA_DIST): add html directory, missing from
+	distribution, closes 20050729-1.
+
+Fri Jul 29 22:56:08 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpdefs.h (PPP_WAIT): default ten seconds wait for PPP packets
+	to begin to be sent.
+
+	* pptpctrl.c (pptp_handle_ctrl_connection): wait for first packet
+	from pppd before continuing, an experimental fix for bug
+	20040521-1.
+
+Tue Jul 12 16:33:23 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpmanager.c (pptpmanager): process initial packet header
+	length field properly.  Reported by: Alex Beregszaszi
+
+Thu Mar  3 16:19:17 2005  James Cameron  <quozl@us.netrek.org>
+
+	* bcrelay.c (mainloop): ignore ENETDOWN and ENXIO from sendto(2).
+	Closes 20040428-0.
+
+Thu Feb 24 11:48:08 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.8: add section on debugging, contributed by Peter Mueller.
+
+Thu Feb 17 13:05:31 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd-1.2.3.tar.gz: released.
+
+Thu Feb 17 13:01:22 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.c (showusage, showversion): change from poptop to pptpd.
+
+Tue Jan 25 09:01:49 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpctrl.c: perform error checking on dup2 calls, as on Linux
+	they can fail under certain circumstances.
+
+Fri Jan 14 13:38:58 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.c, pptpctrl.c, bcrelay.c, configure.in, acconfig.h: add
+	configure option --enable-facility to set syslog facility to use
+	in logging.  e.g. LOG_LOCAL0
+
+Mon Jan 10 09:51:05 2005  James Cameron  <quozl@us.netrek.org>
+
+	* config.h.in, configure.in, pptpgre.c (encaps_gre): uses writev()
+	if available, to avoid a memcpy() of the GRE payload when sending
+	off the packet.  From: Marcus Sundberg.
+
+Thu Jan  6 10:07:39 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpmanager.c (pptp_manager): compilation fix for gcc < 3, a
+	regression introduced in pptpd-1.2.2.  Reported by: Peter Mueller.
+
+Wed Jan  5 22:12:38 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd-1.2.2.tar.gz: released.
+
+Wed Jan  5 21:16:15 2005  James Cameron  <quozl@us.netrek.org>
+
+	* compat.h, compat.c (sigpipe_*): build a generalised signal pipe
+	delivery ... thing, for use by pptpd and pptpctrl.
+
+	* pptpctrl.c (main): use signal pipe delivery instead of calling
+	syslog(3) in the SIGTERM handler, call the old handler bail() when
+	SIGTERM is delivered via the pipe.
+
+	* pptpd.c: kill bcrelay outside a signal handler in order to avoid
+	deadlock.
+
+	* pptpmanager.c (pptp_manager): use generalised signal pipe
+	delivery, return to caller on SIGTERM.
+
+Wed Jan  5 17:30:50 2005  James Cameron  <quozl@us.netrek.org>
+
+	* pptpmanager.c: fix bug 2004-01-05-0, hang due to syslog(3)
+	called by signal(2) handler.  Derived from contributions to PPTP
+	Client by Jean Wolter.
+
+	* pptpmanager.c: add pipe for queueing SIGCHLD events.
+	
+	* pptpmanager.c (sigchld_handler): add safe handler for SIGCHLD.
+	
+	* pptpmanager.c (sigchld_responder): move old handler into
+	non-signal context function called from main event loop.
+	
+	* pptpmanager.c (sigchld_setup): move SIGCHLD signal handling
+	setup into own function.
+
+	* pptpmanager.c (pptp_manager): call the new signal handling setup
+	function, FD_ZERO each time around (it wasn't being reset), watch
+	the signal handling pipe in the main event loop, handle EINTR
+	return from select by ignoring it and restarting the select().
+	Added code to handle signal pipe data.  Removed code for blocking
+	SIGCHLD on new connection, now that the signal handling is linear.
+
+Thu Dec 23 09:17:29 2004  James Cameron  <quozl@us.netrek.org>
+
+	* samples/options.pptpd: turn off logging to stderr by default, to
+	prevent loopback detected.  From: Andrew Hall
+	<ahall@sportingstatz.com>
+
+Thu Nov 11 14:20:18 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.spec: allows the RPM to be built on Red Hat Enterprise
+	Linux systems that use an older version of autotools.  From:
+	Charlie Brady <charlieb-poptop-server@e-smith.com>
+
+Thu Jun 24 09:35:58 2004  Peter Mueller  <pmueller@sidestep.com>
+
+	* pptpd.init: avoid spitting garbage if no processes exist.
+
+Wed Jun 23 19:42:33 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd-1.2.1.tar.gz: released.
+	
+	* plugins/patchlevel.h: update pppd version requirement, so that
+	pptpd works with Paul Howarth's pppd 2.4.3 CVS packages.
+
+Fri Jun  4 13:56:20 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.init: warn that restart may cause problems, provide
+	restart-kill.  From: Peter Mueller.
+
+Tue May 25 11:35:49 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd-1.2.0-b4.tar.gz: released.
+
+Mon May 24 20:27:53 2004  James Cameron  <quozl@us.netrek.org>
+
+	* debian/copyright: fix spelling to fix lintian warning.
+	* debian/changelog: remove emacs stuff to fix lintian warning.
+	* pptpd.8: refer to pptpd.conf(5) early on, and remove EXAMPLES
+	section, as it contributes nothing.
+	* pptpd.conf.5: add documentation for firewall rules.
+
+Fri May 21 20:43:55 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.spec: rework to build under rpm 4.0.4, depend on ppp >=
+	2.4.2, change description to match Debian package, add vendor,
+	propogate changes since 1.1.4-b3 involving obsolete scripts and
+	new plugin.
+
+	* Makefile.am, plugins/Makefile: add missing pptpd.init, add
+	debian packaging from downstream, propogate DESTDIR and prefix to
+	plugins install target.
+
+	* debian/changelog: change the version to -0 to avoid clobbering
+	the later Debian package.
+
+Mon May 17 16:28:49 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.c: bug fix, only check PPP options file readability if an
+	options file has been given in the configuration file or command
+	line.  Reported by: Andrew Alexandrov
+
+Mon May 17 12:31:34 2004  James Cameron  <quozl@us.netrek.org>
+
+	* Makefile.am (EXTRA_DIST): remove html, as the documentation is
+	out of date, explicitly name samples, tools and plugins files to
+	prevent CVS in tarball.
+
+Mon May 17 12:31:09 2004  James Cameron  <quozl@us.netrek.org>
+
+	* debian: merge upstream Debian patches.  From Rene Mayrhofer.
+
+Fri May 14 15:50:35 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.c (killbcrelay): bug fix, pptpd catches SIGTERM to kill
+	bcrelay, but doesn't kill itself.  "This patch solves partially
+	the problem.  When there is a connection established klling the
+	main pptpd process will not kill the control connection process."
+	From: Pawel Guraj.
+
+Thu Apr 29 20:18:19 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.8, pptpd.conf.5: adopt man page review suggestions.
+	From: Chris Wilson.
+
+Thu Apr 29 19:49:59 2004  James Cameron  <quozl@us.netrek.org>
+
+	* plugins/pptpd-logwtmp.c (ip_up): use the username that was
+	authenticated from the peer_authname variable rather than the
+	local host name hiding in the user variable.
+	Reported by: Pawel Guraj.
+
+Thu Apr 29 16:56:05 2004  James Cameron  <quozl@us.netrek.org>
+
+	* ctrlpacket.c (deal_out_call): print connection speed properly.
+	From: Jan Dubiec.
+
+Thu Apr 29 16:49:03 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.c: fix segfault if built --with-bcrelay but neither
+	bcrelay config option nor --bcrelay command line flag used.  From:
+	Jan Dubiec, Pawel Guraj.
+
+Wed Apr 28 21:24:25 2004  James Cameron  <quozl@us.netrek.org>
+
+	* README.logwtmp: write up new feature to track user connections
+	and disconnections using the standard wtmp(5) mechanism.
+	* defaults.h, pptpd.8, pptpctrl.8, pptpctrl.c, pptpd.c,
+	pptpmanager.c, samples/pptpd.conf: add --logwtmp option.
+	* plugins/Makefile: derive from PPP CVS plugins example.
+	* plugins/patchlevel.h, plugins/pppd.h: copy headers from PPP CVS.
+	* plugins/pptpd-logwtmp.c: add plugin to update wtmp.
+	* Makefile.am: add targets for plugins build and any future
+	subdirectories.
+	* tools/vpnwho.pl: mark as obsolete.
+
+Wed Apr 28 19:54:04 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpctrl.c (main): waitpid() rather than kill() the pppd, so
+	that ip-down scripts get executed.
+
+Tue Apr 27 09:11:32 2004  James Cameron  <quozl@us.netrek.org>
+
+	* NEWS: change attribution on request from author.
+
+	* Makefile.am (EXTRA_DIST): include README.portslave, re-order list.
+
+Sun Apr 25 20:31:52 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd-1.2.0-b3.tar.gz: released.
+	
+Sat Apr 24 20:51:54 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpgre.c (decaps_hdlc): add hint for EIO on read() of PTY,
+	suggesting a look at option syntax and pppd logs.  To address a
+	FAQ seen on mailing lists.
+
+	* pptpd.conf.5: add routing checklists for three different methods
+	of allocating subnets and configuring pptpd.
+
+	* pptpd.8, pptpd.conf.5: add noipparam option documentation.  Move
+	speed option to end of list.  Rework text for simplicity.  Cross
+	check against pptpd.c.
+
+	* pptpctrl.8: rework argument list, cross check against
+	pptpctrl.c, remove examples because running from inetd(8) is
+	unusual and not encouraged.
+
+	* pptpd.c, pptpd.8, pptpmanager.c, pptpctrl.c, defaults.h: add
+	--ppp option to specify PPP program to use in place of default
+	PPP_BINARY, and pass the new parameter to pptpctrl.  Also reworked
+	option handling and validation to simplify code.  Use access()
+	instead of fopen() to verify that files can be read or executed.
+
+	* pptpd.c: bug fix, --stimeout option was not working due to use
+	of strdup() and a blind cast instead of atoi().
+
+	* pptpd.c: bug fix, --noipparam option on command line was causing
+	premature exit during option processing.
+
+Fri Apr 23 21:01:31 2004  James Cameron  <quozl@us.netrek.org>
+
+	* tools/pptp-portslave: add contribution from Russell Coker, on
+	Debian Bug#126486.
+
+Fri Apr 23 20:34:28 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpctrl.c (main): fail if arguments insufficient, closes Debian
+	Bug#107933.
+
+	* .cvsignore: include config.h and stamp-h, to assist with CVS
+	updates.
+
+Fri Apr 23 20:13:43 2004  James Cameron  <quozl@us.netrek.org>
+
+	* AUTHORS: hide author e-mails, add contributors since last release.
+
+Fri Apr 23 20:00:02 2004  James Cameron  <quozl@us.netrek.org>
+
+	* stamp-h, config.h: remove from CVS.
+	
+	* import: remove huge superfluous screen snapshot that was slowing
+	CVS access.
+
+	* .cvsignore: update for new build environment, include everything
+	that might normally be in a user directory checked out from CVS.
+
+	* samples/options: not relevant, removed.
+
+	* tools/confmod.sh: mark as obsolete, relevant only for ppp-2.4.1
+	forks.
+
+	* reconf, version: adjust comments.
+
+	* pptpd.spec: include vpnwho.pl (old version at this stage until
+	Bruno finds me the latest version) in the RPM packaging.
+
+	* pptpd.conf.5, pptpd.8: expand acronymn DOS.
+
+	* pptpctrl.8: add note that speed is ineffective on Linux.
+
+	* makepackage: use complete version, including beta release, as
+	part of the packaging; don't hide the beta release version.
+
+	* configure.in: remove warning about /usr/local/bin/pptpd, since
+	/usr/local/bin is locally administered; we have no right to warn,
+	we may have been responsible even in this version for placing the
+	file there.
+
+	* Anon-CVS-Root: obsolete, removed.
+	
+	* build.sh: obsolete build.sh
+
+	* README.bcrelay: wrap to 80 columns.
+
+	* README: rework for new release.
+
+Fri Apr 23 17:05:23 2004  James Cameron  <quozl@us.netrek.org>
+
+	* makerpm: remove from CVS in favour of makepackage per Richard's
+	e-mail on 1st August 2003.
+
+	* Makefile.am (EXTRA_DIST): add README.bcrelay, older ChangeLogs,
+	tools, spec file, and makepackage script.
+
+Fri Apr 23 16:15:59 2004  James Cameron  <quozl@us.netrek.org>
+
+	* reconf: remove setting of pptpd.conf version.
+
+	* samples/pptpd.conf: remove package version from file, use CVS
+	revision header instead.
+
+	* samples/options.pptpd: clarify comments, default to work with
+	PPP 2.4.2.
+
+Thu Apr 22 16:38:01 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpctrl.c: remove report of connection speed for Linux pppd.
+
+Thu Apr 22 13:41:11 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd-1.2.0-b1.tar.gz: released to test team.
+	
+	* AUTHORS: adjust to reflect new maintainer.
+
+	* bcrelay.c: when compiling without --with-bcrelay, fail
+	immediately with an error message suggesting a rebuild.
+
+	* bcrelay.c: adopt VERSION from main package, cause my_daemon() to
+	be conditional on not HAVE_DAEMON.
+
+	* pptpd.c (killbcrelay): avoid code when BCRELAY is not defined.
+	Fixes compiler error when pptpd is configured using defaults.
+
+	* Makefile.am (dist-hook, EXTRA_DIST): remove CVS from final
+	source distribution.
+
+	* samples/pptpd.conf: remove some whitespace and wrap.
+
+	* Makefile.am: remove CVS from dist target.
+
+	* RELEASING: new file of release instructions, for 1.2.0 release
+	candidate.
+
+	* configure.in: change version.
+
+	* pptpd.spec: change version.
+
+	* ChangeLog: adopt GNU format.
+	
+Fri Feb 27 09:53:19 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpctrl.c (pptp_handle_ctrl_connection): on any CALL_CLR_RQST,
+	terminate the call.  From: "Bruno Lopes F. Cabral"
+	<bruno@openline.com.br> 2004-01-08
+	http://marc.theaimsgroup.com/?l=poptop-server&m=107359240120864&w=2
+
+Fri Feb 27 09:50:41 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpctrl.c (launch_pppd): make sure SIGCHLD is unblocked. The
+	procmask gets inherited from the manager and usually has the
+	SIGCHLD blocked. Actually pppd does not expect that somebody
+	tampered with its signal mask, thus we just unblock all signals
+	and leave them to be handled by pppd.  This fixes the "ip-up
+	zombie" bug.  From: Peter Stamfest <poptop@stamfest.at> 2003-09-06
+	http://marc.theaimsgroup.com/?l=poptop-server&m=106284825408104&w=2
+
+Thu Feb 26 15:17:37 2004  James Cameron  <quozl@us.netrek.org>
+
+	* pptpd.8, pptpd.conf.5 (speed): note that speed is ineffective on
+	Linux, despite being accepted by pppd.
+
+Wed Dec 10 09:28:01 2003  James Cameron  <quozl@us.netrek.org>
+
+	* pptpctrl.c (launch_pppd): report program binary path.
+
+Tue Dec  9 10:22:01 2003  James Cameron  <quozl@us.netrek.org>
+
+	* pptpctrl.c (launch_pppd): report cause of failed execvp().
+	* pptpctrl.c (startCall): better explain launch failure.
+
+poptop (1.1.4-b5) unstable; urgency=low
+
+  * Added code to pass ipparam to pppd - By Sergio M. Ammirata
+  * Added Debian packaging information (not included in .tar.gz)
+  * Added bcrelay_v1 - By Norbert van Bolhuis
+  
+ -- R. de Vroede <richard@oip.tudelft.nl>  Fri, 18 Jul 2003 11:34:05 +0200
+
+poptop (1.1.4-b4) unstable; urgency=low
+
+  * Bugfix: First GRE packet always discarded - By: fghdgh (gcc111)
+  * Bugfix: Console fds left open, ssh hangs - By: fghdgh (gcc111)
+  * Bugfix: Pidfile option doesn't work - By: Visarion Mandzgaladze
+  
+ -- R. de Vroede <richard@oip.tudelft.nl>  Fri, Jun 20 2003 11:34:05 +0200
+
+poptop (1.1.4-b3) unstable; urgency=low
+
+  * Bugfix: Two buffer overflows in pptpctrl.c - By: Hernan Otero
+  
+ -- R. de Vroede <richard@oip.tudelft.nl>  Tue, May 13 2003 11:34:05 +0200
+
+poptop (1.1.4-b2) unstable; urgency=low
+
+  * Bugfix: Potential buffer-overflow in ctrlpacket.c
+  * Callid enhancements.  From: Ilguiz Latypov, Debian Bug#171831
+  
+ -- R. de Vroede <richard@oip.tudelft.nl>  Wed, Apr  9 2003 11:34:05 +0200
+
+poptop (1.1.4-b1) unstable; urgency=low
+
+  * Added BCrelay (Broadcast relay)
+  
+ -- R. de Vroede <richard@oip.tudelft.nl>  Fri, Oct 11 2002 11:34:05 +0200
+
+Poptop ChangeLog
+---------------------------------------------------------------------------
+v1.1.3
+* Wed Apr  9 2003 Richard de Vroede <r.devroede@linvision.com>
+- fixed a potential buffer-overflow in ctrlpacket.c
+
+* Thu Aug 22 2002 Richard de Vroede <richard@linvision.com>
+- added stimeout option to pptpd.conf manpage
+- updated the Changelog file ;-)
+
+* Tue Aug 20 2002 Richard de Vroede <richard@linvision.com>
+- removed debug commandline option from pptpd.init
+
+* Thu Aug  1 2002 Richard de Vroede <richard@linvision.com>
+- added config(noreplace) so old configs don't get replaced
+- fixed postscriptlet
+- adapted spec to cvs tree
+
+* Wed Jun 26 2002 Richard de Vroede <richard@linvision.com>
+- specfile now supports --with[out] options
+
+---------------------------------------------------------------------------
+v0.9.13 -> v1.1.3
+* June 18 2002 Richard de Vroede <richard@linvision.com>
+- migrated to version higher than last poptop release
+- bugfixed
+
+---------------------------------------------------------------------------

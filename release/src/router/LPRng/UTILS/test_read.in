@@ -1,0 +1,29 @@
+#!@PERL@
+
+package test_read;
+use strict;
+use LPRng;
+use Sys::Hostname;
+
+# working values
+my($pc_path,$file,$Printer,$key,$value,$Pc_value);
+$| = 1;
+Set_Debug(5);
+Setup_LPRng( "P:");
+# get the printer name
+$Printer = Get_printer_name();
+if( not $Printer ){
+	die "missing printer name";
+}
+print "Printer '$Printer'\n";
+$Pc_value = Setup_pc_entry( $Printer );
+if( not defined $Pc_value ){
+	print "no printcap information for printer '$Printer'\n";
+	exit 1;
+}
+print "Printcap '$Printer'\n";
+foreach $key (sort keys %$Pc_value ){
+	print "  '$key'='$Pc_value->{$key}'\n";
+}
+print "DONE\n";
+exit 0;

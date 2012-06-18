@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# chkconfig: - 16 84
+# description: A RIP routing engine for use with Zebra
+#
+# processname: ripd
+# config: /etc/ripd.conf
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+
+[ -f /etc/ripd.conf ] || exit 0
+
+case "$1" in
+  start)
+	echo -n "Starting ripd: "
+        daemon /usr/sbin/ripd -d
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/ripd
+	echo
+	;;
+  stop)
+	echo -n "Shutting down ripd: "
+	killproc ripd
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/ripd
+	echo
+	;;
+  restart)
+        $0 stop
+        $0 start
+	RETVAL=$?
+        ;;
+  status)
+        status ripd
+	RETVAL=$?
+        ;;
+  *)
+	echo "Usage: ripd {start|stop|restart|status}"
+	exit 1
+esac
+
+exit $RETVAL

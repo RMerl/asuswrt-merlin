@@ -1,0 +1,2 @@
+/* Copyright (c): 2002-2005 (Germany): United Internet, 1&1, GMX, Schlund+Partner, Alturo */
+function QxPasswordField(vText){QxTextField.call(this,vText);this.setHtmlProperty("type","password");};QxPasswordField.extend(QxTextField,"QxPasswordField");

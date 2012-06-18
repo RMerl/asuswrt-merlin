@@ -1,0 +1,147 @@
+.ds VE LPRng-3.9.0
+.TH LPF 1 \*(VE "LPRng"
+.ig
+Thu Jul 20 07:19:29 PDT 1995 Patrick Powell
+..
+.SH NAME
+lpf \- general printer filter
+.SH SYNOPSIS
+.B lpf
+.BI \-P printer
+.BI \-w width
+.BI \-l length
+.BI \-x width
+.BI \-y length
+[
+.BI \-c
+]
+.BI \-K controlfilename
+.BI \-L bnrname
+[
+.BI \-i indent
+] [
+.BI \-Z options
+] [
+.BI \-C class
+] [
+.BI \-J job
+] [
+.BI \-R accntname
+] 
+.BI \-n login
+.BI \-h Host
+.BI \-F format
+[
+.BI \-T [crlf,debug]
+.BI \-D level
+] [
+affile
+]
+.SH DESCRIPTION
+.B Lpf
+is a general printer filter. Usually it is used as filter in the
+printcap file and is called by lpd.
+The -Tcrlf option will suppress translation of LF to CR/LF pairs.
+The -Tdebug option will increment the debug level.
+
+The following options passes lpd by default:
+.IP "\fB\-P\fIprinter\fR" 5
+The name of the printer.
+.IP "\fB\-w\fIwidth\fR" 5
+The page width in chars, as given in the :pw field in the printcap file
+.IP "\fB\-l\fIlength\fR" 5
+The page length in lines, as given in the :pl field in the printcap file
+.IP "\fB\-x\fIwidth\fR" 5
+The page width in pixels, as given in the :px field in the printcap file
+.IP "\fB\-y\fIlength\fR" 5
+The page length in pixels, as given in the :py field in the printcap file
+.IP "\fB\-K\fIcontrolfilename\fR" 5
+The name of the control file.
+.IP "\fB\-L\fIbnrname\fR" 5
+The banner name.
+This is set by the lpr -T option.
+.IP "\fB\-n\fIlogin\fR" 5
+The user login name.
+.IP "\fB\-h\fIHost\fR" 5
+The host where the job was submitted.
+.IP "\fB\-F\fIformat\fR" 5
+The job format from the lpr -F option or other option.
+.PP
+These options are optionally set by lpd:
+.IP "\fB\-Z\fIoptions\fR" 5
+Extra options. They are passed from the \fB\-Z\fR parameter given on
+the lpr command command line and can be interpreted by the filter.
+.PP
+These remaining options can be added
+to the filter entry in the printcap file:
+.IP "\fB\-c\fR" 5
+ignore control characters, set by lpr -b (binary) or -l (literal) options.
+.IP "\fB\-i\fIindent\fR" 5
+The indentation amount, set by lpr -i indent option.
+.IP "\fB\-C\fIclass\fR" 5
+The class name, set by lpr -C class option.
+.IP "\fB\-J\fIjob\fR" 5
+The job name, set by lpr -J job option.
+.IP "\fB\-R\fIaccntname\fR" 5
+The name of the accounting file, from printcap information.
+.IP "\fB\-D\fIlevel\fR" 5
+Sets debug level. The level must be an integer, a nonzero value
+switches debugging on.
+.IP "\fB\-T\fIcrlf\fR" 5
+Turn LF to CR/LF translation off.
+.IP "\fB\-T\fIdebug\fR" 5
+Increment the debug level.
+.SH "EXIT STATUS"
+.PP
+The following exit values are returned:
+.TP 15
+.B "zero (0)"
+Successful completion.
+.TP
+.B "non-zero (!=0)"
+An error occurred.
+.SH FILES
+.PP
+The files used by LPRng are set by values in the
+printer configuration file.
+The following are a commonly used set of default values.
+.nf
+.ta \w'/var/spool/lpd/printcap.<hostname>           'u
+_LPD_CONF_PATH_	LPRng configuration file
+${HOME}/.printcap	user printer description file
+_PRINTCAP_PATH_	printer description file
+_LPD_PERMS_PATH_	permissions
+_LOCKFILE_	lock file for queue control
+/var/spool/lpd		spool directories
+/var/spool/lpd/QUEUE/control	queue control
+/var/spool/lpd/QUEUE/log	trace or debug log file
+/var/spool/lpd/QUEUE/acct	accounting file
+/var/spool/lpd/QUEUE/status	status file
+.fi
+.SH "SEE ALSO"
+lpd.conf(5),
+lpc(8),
+lpd(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.perms(5),
+pr(1), lprng_certs(1), lprng_index_certs(1).
+.SH DIAGNOSTICS
+.nf
+Most of the diagnostics are self explanatory.
+If you are puzzled over the exact cause of failure,
+set the debugging level on (-D5) and run again.
+The debugging information will 
+help you to pinpoint the exact cause of failure.
+.fi
+.SH "HISTORY"
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+The LPRng mailing list is lprng@lprng.com;
+subscribe by sending mail to lprng-request@lprng.com with
+the word subscribe in the body.
+The software is available from ftp://ftp.lprng.com/pub/LPRng.
+.SH "AUTHOR"
+Patrick Powell <papowell@lprng.com>.

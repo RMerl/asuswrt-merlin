@@ -1,0 +1,58 @@
+opengt
+set com 115200n81
+set senddelay 0.05
+waitquiet 2 0.5
+send "ATZ^m"
+waitfor 10 "OK","ERR","ERROR"
+if % = -1 goto timeout
+if % = 0 goto operator
+if % = 1 goto error
+if % = 2 goto error
+  :operator
+    send "AT+CREG=2^m"
+    send "AT+CREG?^m"
+    waitfor 4 "+CREG?","Error"
+    if % = -1 goto timeout
+    if % = 0 goto getlist
+    print "Error response from device\n"
+    exit 1
+  :getlist
+    let c=0
+    print "Getting Reg Code:"
+  :waiting    
+    get 2 "^m" $s
+    if % = -1 goto stillwaiting
+    waitquiet 1 0.2
+    print $s
+    goto ops
+  :stillwaiting
+    if c > 60 goto timeout
+    let c=c+1
+    goto waiting
+  :ops
+    send "AT+COPS?^m"
+    waitfor 4 "+COPS?","Error"
+    if % = -1 goto timeout
+    if % = 0 goto getlist2
+    print "Error response from device\n"
+    exit 1
+  :getlist2
+    let c=0
+    print "\nGetting Op Code:"
+  :waiting2
+    get 2 "^m" $s2
+    if % = -1 goto stillwaiting2
+    waitquiet 1 0.2
+    print $s2
+    exit 0
+  :stillwaiting2
+    if c > 60 goto timeout
+    let c=c+1
+    goto waiting2
+  :timeout
+    print "Network Search Timeout\n"
+    exit 1
+  :error
+    print "CONNECT ERROR\n"
+    exit 1
+

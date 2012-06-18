@@ -1,0 +1,11 @@
+--- gcc-4.2.4/gcc/Makefile.in	2009-12-03 17:24:28.000000000 +0300
++++ gcc-4.2.4/gcc/Makefile.in	2009-12-03 17:25:33.000000000 +0300
+@@ -3492,7 +3492,7 @@
+ 
+ generated-manpages: man
+ 
+-man: $(MANFILES) lang.man @GENINSRC@ srcman lang.srcman
++man: gcc-vers.texi $(MANFILES) lang.man @GENINSRC@ srcman lang.srcman
+ 
+ srcman: $(MANFILES)
+ 	-cp -p $^ $(srcdir)/doc

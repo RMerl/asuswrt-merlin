@@ -1,0 +1,109 @@
+#!/bin/sh
+# this is an example of how to use /bin/sh and LPRng
+# to get the command line and printcap option values
+# and set shell variables from them
+#  Note that we use a couple of variables
+#PATH=/bin:/usr/bin
+Args=""
+vAr=""
+vAlue=""
+vAls=""
+iI=""
+Tf=""
+if -n $Debug ; then
+	set >/tmp/before
+fi
+Args="$@"
+if -n $Debug ; then
+	echo "$@" >>/tmp/before
+fi
+while expr "$1" : '-.*' >/dev/null ; do
+  vAr=`expr "$1" : '-\(.\).*'`;
+  vAlue=`expr "$1" : '-.\(.*\)'`;
+  case "$vAr" in
+    - ) break;;
+    c ) c=1;;
+    [a-zA-Z] )
+      if test "X$vAlue" = "X" ; then shift; vAlue=$1; fi;
+      eval $vAr='$vAlue';
+      #setvar $vAr "$vAlue"
+      ;;
+  esac;
+  shift;
+done
+
+# set shell variables to the printcap options
+#  flag   ->  flag=1
+#  flag@  ->  flag=0
+#  option=value ->  option='value'
+#
+setpcvals () {
+    while test "$#" -gt 0 ; do
+      iI=$1
+      if expr "$iI" : " *\:" >/dev/null ; then
+        vAr=`expr "$iI" : " *\:\([^#=][^#=]*\)[#=].*"`;
+        vAlue=`expr "$iI" : " *\:[^#=][^#=]*[#=]\(.*\)"`;
+        if test "X$vAr" = "X" ; then
+          vAr=`expr "$iI" : " *:\(.*\)@"`;
+          vAlue=0;
+        fi
+        if test "X$vAr" = "X" ; then
+          vAr=`expr "$iI" : " *:\(.*\)"`;
+          vAlue=1;
+        fi
+        if test "X$vAr" != "X" ; then
+          eval $vAr='$vAlue';
+          #setvar $vAr "$vAlue"
+        fi
+      else
+        vAr=`expr "$iI" : " *\([^|][^|]*\).*"`;
+        if test "X$vAr" != "X" ; then
+          eval Printer="$vAr"
+        fi
+      fi;
+	  shift
+    done
+}
+
+# set shell variables to the printcap options
+#  flag   ->  flag=1
+#  flag@  ->  flag=0
+#  option=value ->  option='value'
+#
+setcontrolvals () {
+    while test "$#" -gt 0 ; do
+      iI=$1
+      vAr=`expr "$iI" : " *\([A-Z]\).*"`;
+      vAlue=`expr "$iI" : " *[A-Z]\(.*\)"`;
+      if test "X$vAr" != "X" ; then
+        eval $vAr='$vAlue';
+        #setvar $vAr "$vAlue";
+      fi;
+	  shift
+    done
+}
+
+Tf=$IFS
+IFS="
+"
+setpcvals $PRINTCAP_ENTRY
+setcontrolvals $CONTROL
+IFS=$Tf
+
+# 
+# restore argument list
+set -- $Args
+Args=""
+vAr=""
+vAlue=""
+vAls=""
+iI=""
+Tf=""
+
+if test -n "$Debug" ; then
+	set >/tmp/after
+	echo "$@" >>/tmp/after
+	diff /tmp/before /tmp/after
+fi
+cat
+exit 0

@@ -1,0 +1,49 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<TITLE>talloc</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000" VLINK="#292555" LINK="#292555" ALINK="#cc0033">
+
+<h1>talloc</h1>
+
+talloc is a hierarchical pool based memory allocator with
+destructors. It is the core memory allocator used in Samba4, and has
+made a huge difference in many aspects of Samba4 development.<p>
+
+To get started with talloc, I would recommend you read the <a
+href="http://samba.org/ftp/unpacked/samba4/source/lib/talloc/talloc_guide.txt">talloc guide</a>.
+
+<h2>Discussion and bug reports</h2>
+
+talloc does not currently have its own mailing list or bug tracking
+system. For now, please use the <a
+href="https://lists.samba.org/mailman/listinfo/samba-technical">samba-technical</a>
+mailing list, and the <a href="http://bugzilla.samba.org/">Samba
+bugzilla</a> bug tracking system.
+
+<h2>Download</h2>
+
+You can download the latest release either via rsync or anonymous
+svn. To fetch via svn use the following command:
+
+<pre>
+  svn co svn://svnanon.samba.org/samba/branches/SAMBA_4_0/source/lib/talloc talloc
+  svn co svn://svnanon.samba.org/samba/branches/SAMBA_4_0/source/lib/replace libreplace
+</pre>
+
+To fetch via rsync use this command:
+
+<pre>
+  rsync -Pavz samba.org::ftp/unpacked/samba4/source/lib/talloc .
+  rsync -Pavz samba.org::ftp/unpacked/samba4/source/lib/libreplace .
+</pre>
+
+<hr>
+<tiny>
+<a href="http://samba.org/~tridge/">Andrew Tridgell</a><br>
+talloc AT tridgell.net
+</tiny>
+
+</BODY>
+</HTML>

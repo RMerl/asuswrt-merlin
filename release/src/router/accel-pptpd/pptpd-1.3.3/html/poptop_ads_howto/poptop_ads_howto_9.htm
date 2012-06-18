@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Poptop MSCHAP2 ADS Howto</title>
+</head>
+
+<body>
+<p><strong>13. Freeradius</strong></p>
+<p>Freeradius has a massive 57KB configuration file. Fortunately, we only have to change a few lines. </p>
+<hr>
+<a name="mschap2"></a><strong>13.1 Configure Freeradius for MSCHAPv2
+</strong>
+<p>Edit /etc/raddb/radiusd.conf to enable MSCAHP2. Open the file and locate the module section and then the mschap subsection.</p>
+<blockquote>
+  <pre>modules {<br>
+        ....[snip]....<br>
+        mschap {
+                authtype = MS-CHAP
+                use_mppe = yes
+                require_encryption = yes
+                require_strong = yes
+                ntlm_auth = &quot;/usr/bin/ntlm_auth --request-nt-key --username=%{Stripped-User-Name:-%{User-Name:-None}} --challenge=%{mschap:Challenge:-00} --nt-response=%{mschap:NT-Response:-00}&quot;<br>        }<br>
+        ....[snip]....<br>
+}</pre>
+</blockquote>
+<p>Save the file. The mschap option in the authorize and authenticate sections is enabled by default. If they are not, enable them accordingly. </p>
+<p>The radius server has a secret key for security. The default key for freeradius is testing123. It is a good idea to change it for obvious security reasons. The key is in /etc/raddb/clients.conf. </p>
+<blockquote>
+  <pre>client 127.0.0.1 {<br>        #<br>        #  The shared secret use to &quot;encrypt&quot; and &quot;sign&quot; packets between<br>        #  the NAS and FreeRADIUS.  You MUST change this secret from the<br>        #  default, otherwise it's not a secret any more!<br>        #<br>        #  The secret can be any string, up to 32 characters in length.<br>        #<br>        secret          = testing123 
+
+        ....[snip]....
+</pre>
+</blockquote>
+<p><strong>Note</strong>: if you change the secret key, you must modify the /etc/radiusclient/servers so that they match each other.
+</p>
+<hr>
+<p><strong><a name="access"></a>13.2 PPTP Access Control </strong></p>
+<p>The above configuration allows everyone with a valid userID in the AD to connect to the pptpd server. If you want to restrict access to a group of users, you can create a group, say VPN_Allowed, in the AD. Add users to the group and modify the ntml_auth line in /etc/raddb/radius.conf to include the parameter &quot;--require-membership-of=EXAMPLE+VPN_Allowed&quot;. </p>
+<p>In the example, I split the line into multiple lines for clarity. It should be one continuous line in the configuration file. </p>
+<blockquote>
+  <pre>ntlm_auth = &quot;/usr/bin/ntlm_auth --request-nt-key 
+                  --username=%{Stripped-User-Name:-%{User-Name:-None}} 
+                  --challenge=%{mschap:Challenge:-00} 
+                  --nt-response=%{mschap:NT-Response:-00} 
+                  --require-membership-of=EXAMPLE+VPN_Allowed&quot;</pre>
+</blockquote><p></p>
+<hr>
+<a href="poptop_ads_howto_10.htm">Next</a> &nbsp;&nbsp;<a href="poptop_ads_howto_8.htm">Previous</a>&nbsp;&nbsp;<a href="poptop_ads_howto_1.htm#toc">Content</a><p>&nbsp;  </p>
+</body>
+</html>

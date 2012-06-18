@@ -1,0 +1,88 @@
+                 Samba Projects Directory
+                 ========================
+
+
+>>>>> NOTE: THIS FILE IS NOW VERY OUT OF DATE <<<<<
+
+
+This is a list of who's working on what in Samba. It's not guaranteed
+to be uptodate or accurate but I hope it will help us getting
+coordinated.
+
+If you are working on something to do with Samba and you aren't here
+then please let me know! Also, if you are listed below and you have
+any corrections or updates then please let me know.
+
+Email contact:
+samba@samba.org
+
+========================================================================
+Documentation and FAQ
+
+Docs and FAQ files for the Samba suite of software.
+
+Contact samba@samba.org with the diffs. These are urgently 
+required. 
+
+The FAQ is being added to on an ad hoc basis, see the web pages for info.
+
+Mark Preston was working on a set of formatted docs for Samba. Is this
+still happening? Contact mpreston@sghms.ac.uk
+
+Status last updated 2nd October 1996
+========================================================================
+
+========================================================================
+Netbeui support
+
+This aimed to produce patches so that Samba can be used with clients
+that do not have TCP/IP. It will try to remain as portable as possible.
+Contact Brian.Onn@Canada.Sun.COM (Brian Onn) Unfortunately it died, and
+although a lot of people have expressed interest nobody has come forward
+to do it. The Novell port (see Samba web pages) includes NetBEUI 
+functionality in a proprietrary library which should still be helpful as 
+we have the interfaces. Alan Cox (a.cox@li.org) has the information 
+required to write the state machine if someone is going to do the work.
+
+Status last updated 2nd October 1996
+========================================================================
+
+========================================================================
+Smbfs
+
+A mountable smb filesystem for Linux using the userfs userspace filesystem
+
+Contact lendecke@namu01.gwdg.de (Volker Lendecke)
+
+This works really well, and is measurably more efficient than commercial
+client software. It is now part of the Linux kernel. Long filename support
+is in use.
+
+Status last updated June 1997
+========================================================================
+
+========================================================================
+Admin Tool
+
+Aims to produce a nice smb.conf editor and other useful tools for
+administering a Samba system.
+
+Contact: Steve Brown (steve@unicorn.dungeon.com)
+
+In the design phase.
+
+Status last updated 4th September 1994
+========================================================================
+
+
+========================================================================
+Lanman Client.
+
+Contact: john@amanda.xs4all.nl (John Stewart)
+
+Aims to produce a reliable LANMAN Client implementation for LINUX,
+and possibly other variations of UNIX. Project ably started by
+Tor Lillqvist; tml@hemuli.tte.vtt.fi
+
+Status last updated 17th January 1995
+========================================================================

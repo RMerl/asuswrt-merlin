@@ -1,0 +1,29 @@
+Index: gcc-4.2.3/libstdc++-v3/include/c_compatibility/wchar.h
+===================================================================
+--- gcc-4.2.3.orig/libstdc++-v3/include/c_compatibility/wchar.h	2005-08-17 04:28:44.000000000 +0200
++++ gcc-4.2.3/libstdc++-v3/include/c_compatibility/wchar.h	2008-05-21 13:45:44.021288244 +0200
+@@ -101,7 +101,9 @@
+ using std::wmemcpy;
+ using std::wmemmove;
+ using std::wmemset;
++#if _GLIBCXX_HAVE_WCSFTIME
+ using std::wcsftime;
++#endif
+ 
+ #if _GLIBCXX_USE_C99
+ using std::wcstold;
+Index: gcc-4.2.3/libstdc++-v3/include/c_std/std_cwchar.h
+===================================================================
+--- gcc-4.3.5.orig/libstdc++-v3/include/c_std/cwchar
++++ gcc-4.3.5/libstdc++-v3/include/c_std/cwchar
+@@ -182,7 +182,9 @@
+   using ::wcscoll;
+   using ::wcscpy;
+   using ::wcscspn;
++#if _GLIBCXX_HAVE_WCSFTIME
+   using ::wcsftime;
++#endif
+   using ::wcslen;
+   using ::wcsncat;
+   using ::wcsncmp;
+--

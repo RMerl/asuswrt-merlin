@@ -1,0 +1,11 @@
+GET /cgi-bin/findweather/getForecast?query=55418 HTTP/1.1
+Host: www.wunderground.com
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.7.10) Gecko/20050716 Firefox/1.0.6
+Accept: text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5
+Accept-Language: en-us,en;q=0.5
+Accept-Encoding: gzip,deflate
+Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7
+Keep-Alive: 300
+Connection: keep-alive
+Cookie: Dwunderground.comFRQSTR=18607055x51783:1:1440,18607055x8404:1:204,18607055,18607055,18607055; Units=metric; DT=1114369348:1321:l8; JS=ON; TID=3c12na2116nrae; TData=; AS5000=2005-08-31:TRMP-00014=1:TACO-00011=1:ADVR-00022=1:; L1756983431=0.1125460969390; ANXD=x
+

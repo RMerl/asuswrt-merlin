@@ -1,0 +1,8 @@
+h=x$(busybox hostid)
+# Is $h a sequence of hex numbers?
+x="${h//[0123456789abcdef]/x}"
+x="${x//xxx/x}"
+x="${x//xxx/x}"
+x="${x//xxx/x}"
+x="${x//xx/x}"
+test x"$x" = x"x"

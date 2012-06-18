@@ -1,0 +1,46 @@
+Import('env')
+
+tests = Split('prepare.sh \
+        run-tests.pl \
+        cleanup.sh')
+
+extra_dist = Split('fastcgi-10.conf \
+      fastcgi-auth.conf \
+      fastcgi-responder.conf \
+      fastcgi-13.conf \
+      bug-06.conf \
+      bug-12.conf \
+      core-var-include.t \
+      var-include.conf \
+      var-include-sub.conf \
+      condition.conf \
+      core-condition.t \
+      core-request.t \
+      core-response.t \
+      core-keepalive.t \
+      core.t \
+      mod-access.t \
+      mod-auth.t \
+      mod-cgi.t \
+      mod-compress.t \
+      mod-compress.conf \
+      mod-fastcgi.t \
+      mod-redirect.t \
+      mod-userdir.t \
+      mod-rewrite.t \
+      request.t \
+      mod-ssi.t \
+      LightyTest.pm \
+      mod-setenv.t')
+
+t  = env.Command('foo1', 'prepare.sh', '(cd ./tests/; ./prepare.sh; cd ..)')
+t += env.Command('foo2', 'run-tests.pl', '( cd ./tests/; SHELL=/bin/sh ./run-tests.pl; cd ..)')
+t += env.Command('foo3', 'cleanup.sh', '(cd ./tests/; ./cleanup.sh; cd ..)')
+
+if env['LIBFCGI']:
+	fcgis = []
+	fcgis += env.Program("fcgi-auth", "fcgi-auth.c", LIBS=env['LIBFCGI'])
+	fcgis += env.Program("fcgi-responder", "fcgi-responder.c", LIBS=env['LIBFCGI'])
+	env.Depends(t, fcgis)
+
+env.Alias('check', t )

@@ -1,0 +1,70 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          dropbear
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+### END INIT INFO
+#
+# Do not configure this file. Edit /etc/default/dropbear instead!
+#
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/sbin/dropbear
+NAME=dropbear
+DESC="Dropbear SSH server"
+
+DROPBEAR_PORT=22
+DROPBEAR_EXTRA_ARGS=
+NO_START=0
+
+set -e
+
+cancel() { echo "$1" >&2; exit 0; };
+test ! -r /etc/default/dropbear || . /etc/default/dropbear
+test -x "$DAEMON" || cancel "$DAEMON does not exist or is not executable."
+test ! -x /usr/sbin/update-service || ! update-service --check dropbear ||
+  cancel 'The dropbear service is controlled through runit, use the sv(8) program'
+
+test -z "$DROPBEAR_BANNER" || \
+  DROPBEAR_EXTRA_ARGS="$DROPBEAR_EXTRA_ARGS -b $DROPBEAR_BANNER"
+test -n "$DROPBEAR_RSAKEY" || \
+  DROPBEAR_RSAKEY="/etc/dropbear/dropbear_rsa_host_key"
+test -n "$DROPBEAR_DSSKEY" || \
+  DROPBEAR_DSSKEY="/etc/dropbear/dropbear_dss_host_key"
+test -n "$DROPBEAR_RECEIVE_WINDOW" || \
+  DROPBEAR_RECEIVE_WINDOW="65536"
+
+case "$1" in
+  start)
+	test "$NO_START" = "0" || cancel 'NO_START is not set to zero.'
+	echo -n "Starting $DESC: "
+	start-stop-daemon --start --quiet --pidfile /var/run/"$NAME".pid \
+	  --exec "$DAEMON" -- -d "$DROPBEAR_DSSKEY" -r "$DROPBEAR_RSAKEY" \
+	    -p "$DROPBEAR_PORT" -W "$DROPBEAR_RECEIVE_WINDOW" $DROPBEAR_EXTRA_ARGS
+	echo "$NAME."
+	;;
+  stop)
+	echo -n "Stopping $DESC: "
+	start-stop-daemon --stop --quiet --oknodo --pidfile /var/run/"$NAME".pid
+	echo "$NAME."
+	;;
+  restart|force-reload)
+	test "$NO_START" = "0" || cancel 'NO_START is not set to zero.'
+	echo -n "Restarting $DESC: "
+	start-stop-daemon --stop --quiet --oknodo --pidfile /var/run/"$NAME".pid
+	sleep 1
+	start-stop-daemon --start --quiet --pidfile /var/run/"$NAME".pid \
+	  --exec "$DAEMON" -- -d "$DROPBEAR_DSSKEY" -r "$DROPBEAR_RSAKEY" \
+	    -p "$DROPBEAR_PORT" -W "$DROPBEAR_RECEIVE_WINDOW" $DROPBEAR_EXTRA_ARGS
+	echo "$NAME."
+	;;
+  *)
+	N=/etc/init.d/$NAME
+	echo "Usage: $N {start|stop|restart|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

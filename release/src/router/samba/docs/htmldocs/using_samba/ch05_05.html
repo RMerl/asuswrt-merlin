@@ -1,0 +1,399 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 5] 5.5 Locks and Oplocks</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:33:03Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_04.html" TITLE="5.4 Name Mangling and Case">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 5.4 Name Mangling and Case" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch05_01.html" TITLE="5. Browsing and Advanced Disk Shares ">
+Chapter 5<br>
+Browsing and Advanced Disk Shares </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="chapter" HREF="ch06_01.html" TITLE="6. Users, Security, and Domains ">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 6. Users, Security, and Domains " BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch05-75933">
+5.5 Locks and Oplocks</a></h2><P CLASS="para">Concurrent writes to a single file are not desirable in any operating system. To prevent this, most operating systems use <I CLASS="firstterm">
+locks</i> to guarantee that only one process can write to a file at a time. Operating systems traditionally lock entire files, although newer ones allow a range of bytes within a file to be locked. If another process attempts to write to a file (or section of one) that is already locked, it will receive an error from the operating system and will wait until the lock is released.</p><P CLASS="para">
+Samba supports the standard DOS and NT filesystem (deny-mode) locking requests, which allow only one process to write to an entire file on a server at a give time, as well as byte-range locking. In addition, Samba supports a new locking mechanism known in the Windows NT world as <I CLASS="firstterm">
+opportunistic locking&nbsp;- </i><EM CLASS="emphasis">
+oplock</em> for short.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-964663">
+5.5.1 Opportunistic Locking</a></h3><P CLASS="para">
+Opportunistic locking allows a client to notify the Samba server that it will not only be the exclusive writer of a file, but will also cache its changes to that file on its own machine (and not on the Samba server) in order to speed up file access for that client. When Samba knows that a file has been opportunistically locked by a client, it marks its version as having an opportunistic lock and waits for the client to complete work on the file, at which point it expects the client to send the final changes back to the Samba server for synchronization.</p><P CLASS="para">
+If a second client requests access to that file before the first client has finished working on it, Samba can send an <I CLASS="firstterm">
+oplock break</i> request to the first client. This tells the client to stop caching its changes and return the current state of the file to the server so that the interrupting client can use it as it sees fit. An opportunistic lock, however, is not a replacement for a standard deny-mode lock. It is not unheard of for the interrupting process to be granted an oplock break only to discover that the original process also has a deny-mode lock on a file as well. <A CLASS="xref" HREF="ch05_05.html#ch05-74304">
+Figure 5.8</a> illustrates this opportunistic locking process.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch05-74304">
+Figure 5.8: Opportunistic locking</a></h4><IMG CLASS="graphic" SRC="figs/sam.0508.gif" ALT="Figure 5.8"><P CLASS="para">
+In terms of locks, we highly recommend using the defaults provided by Samba: standard DOS/Windows deny-mode locks for compatibility and oplocks for the extra performance that local caching allows. If your operating system can take advantage of oplocks, it should provide significant performance improvements. Unless you have a specific reason for changing any of these options, it's best to leave them as they are.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-969392">
+5.5.2 Unix and Locking</a></h3><P CLASS="para">Windows systems cooperate well to avoid overwriting each other's changes. But if a file stored on a Samba system is accessed by a Unix process, this process won't know a thing about Windows oplocks and could easily ride roughshod over a lock. Some Unix systems have been enhanced to understand the Windows oplocks maintained by Samba. Currently the support exists only in SGI Irix 6.5.2f and later; Linux and FreeBSD should soon follow.</p><P CLASS="para">
+If you have a system that understands oplocks, set <CODE CLASS="literal">
+kernel</code> <CODE CLASS="literal">
+oplocks</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code> in the Samba configuration file. That should eliminate conflicts between Unix processes and Windows users. </p><P CLASS="para">
+If your system does not support kernel oplocks, you could end up with corrupted data when somebody runs a Unix process that reads or writes a file that Windows users also access. However, Samba provides a rough protection mechanism in the absence of kernel oplocks: the <CODE CLASS="literal">
+veto</code> <CODE CLASS="literal">
+oplock</code> <CODE CLASS="literal">
+files</code> option. If you can anticipate which Samba files are used by both Windows users and Unix users, set their names in a <CODE CLASS="literal">
+veto</code> <CODE CLASS="literal">
+oplock</code> <CODE CLASS="literal">
+files</code> option. This will suppress the use of oplocks on matching filenames, which will supress client caching, and let the Windows and Unix programs use system locking or update times to detect competition for the same file. A sample option is: </p><PRE CLASS="programlisting">
+veto oplock files = /*.dbm/</pre><P CLASS="para">
+This option allows both Unix processes and Windows users to edit files ending in the suffix <EM CLASS="emphasis">
+.dbm</em>. Note that the syntax of this option is similar to <CODE CLASS="literal">
+veto</code> <CODE CLASS="literal">
+files</code>.</p><P CLASS="para">
+Samba's options for locks and oplocks are given in <A CLASS="xref" HREF="ch05_05.html#ch05-53407">
+Table 5.8</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch05-53407">
+Table 5.8: Locks and Oplocks Configuration Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+share modes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If set to <CODE CLASS="literal">
+yes</code>, turns on support for DOS-style whole-file locks.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+locking</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, turns on byte-range locks.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+strict locking</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, denies access to an entire file if a byte-range lock exists in it.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+oplocks</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, turn on local caching of files on the client for this share.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+kernel oplocks</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, indicates that the kernel supports oplocks.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+fake oplocks</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, tells client the lock was obtained, but doesn't actually lock it.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+blocking locks </code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Allows lock requestor to wait for the lock to be granted.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+veto oplock files</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (list of filenames)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Does not oplock specified files.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+lock directory</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the location where various Samba files, including locks, are stored.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+As specified in Samba makefile</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958552">
+5.5.2.1 share modes</a></h4><P CLASS="para">
+The most primitive locks available to Samba are deny-mode locks, known as <I CLASS="firstterm">
+share modes</i>, which are employed by programs such as text editors to avoid accidental overwriting of files. For reference, the deny-mode locks are listed in <A CLASS="xref" HREF="ch05_05.html#ch05-55885">
+Table 5.9</a>.   </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch05-55885">
+Table 5.9: SMB Deny-Mode Locks </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Lock</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Description</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+DENY_NONE</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Do not deny any other file requests.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+DENY_ALL</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Deny all open requests on the current file.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+DENY_READ</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Deny any read-only open requests on the current file.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+DENY_WRITE</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Deny any write-only open requests on the current file.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+DENY_DOS</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If opened for reading, others can read but cannot write to the file. If opened for writing, others cannot open the file at all.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+DENY_FCB</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Obsolete.</p></td></tr></tbody></table><P CLASS="para">
+The <CODE CLASS="literal">
+share</code> <CODE CLASS="literal">
+modes</code> parameter, which enforces the use of these locks, is enabled by default. To disable it, use the following command:</p><PRE CLASS="programlisting">
+[accounting]
+	share modes = no</pre><P CLASS="para">
+We highly recommend against disabling the default locking mechanism unless you have a justifiable reason for doing so. Most Windows and DOS applications rely on these locking mechanisms in order to work correctly, and will complain bitterly if this functionality is taken away.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958557">
+5.5.2.2 locking</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+locking</code> option can be used to tell Samba to engage or disengage server-side byte-range locks on behalf of the client. Samba implements byte-range locks on the server side with normal Unix advisory locks and will consequently prevent other properly-behaved Unix processes from overwriting a locked byte range.</p><P CLASS="para">
+This option can be specified per share as follows:</p><PRE CLASS="programlisting">
+[accounting]
+	locking = yes</pre><P CLASS="para">
+If the <CODE CLASS="literal">
+locking</code> option is set to <CODE CLASS="literal">
+yes</code>, the requestor will be delayed until the holder of either type of lock releases it (or crashes). If, however, the option is set to <CODE CLASS="literal">
+no</code>, no byte-range locks will be kept for the files, although requests to lock and unlock files will appear to succeed. The option is set to <CODE CLASS="literal">
+yes</code> by default; however, you can turn this option off if you have read-only media.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-959694">
+5.5.2.3 strict locking</a></h4><P CLASS="para">
+This option checks every file access for a byte-range lock on the range of bytes being accessed. This is typically not needed if a client adheres to all the locking mechanisms in place. This option is set to <CODE CLASS="literal">
+no</code> by default; however, you can reset it per share as follows:</p><PRE CLASS="programlisting">
+[accounting]
+	strict locking = yes</pre><P CLASS="para">
+If this option is set to <CODE CLASS="literal">
+yes</code>, mandatory locks are enforced on any file with byte-range locks.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958563">
+5.5.2.4 blocking locks</a></h4><P CLASS="para">
+Samba also supports <I CLASS="firstterm">
+blocking locks</i>, a minor variant of range locks. Here, if the range of bytes is not available, the client specifies an amount of time that it's willing to wait. The server then caches the lock request, periodically checking to see if the file is available. If it is, it notifies the client; however, if time expires, Samba will tell the client that the request has failed. This strategy prevents the client from continually polling to see if the lock is available.</p><P CLASS="para">
+You can disable this option per share as follows:</p><PRE CLASS="programlisting">
+[accounting]
+	blocking locks = no</pre><P CLASS="para">
+When set to <CODE CLASS="literal">
+yes</code>, blocking locks will be enforced on the file. If this option is set to <CODE CLASS="literal">
+no</code>, Samba behaves as if normal locking mechanisms are in place on the file. The default is <CODE CLASS="literal">
+yes</code>.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958571">
+5.5.2.5 oplocks</a></h4><P CLASS="para">
+This option enables or disables support for oplocks on the client. The option is enabled by default. However, you can disable it with the following command:</p><PRE CLASS="programlisting">
+[data]
+	oplocks = no</pre><P CLASS="para">
+If you are in an extremely unstable network environment or have many clients that cannot take advantage of opportunistic locking, it may be better to shut this Samba feature off. Oplocks should be disabled if you are accessing the same files from both Unix applications (such as <EM CLASS="emphasis">
+vi</em>) and SMB clients (unless you are lucky enough to have an operating system that supports kernel oplocks as discussed earlier).</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958575">
+5.5.2.6 fake oplocks</a></h4><P CLASS="para">
+Before opportunistic locking was available on Samba, the Samba daemons pretended to allow oplocks via the <CODE CLASS="literal">
+fake</code> <CODE CLASS="literal">
+oplocks</code> option. If this option was enabled, all clients were told that the file is available for opportunistic locking, and never warned of simultaneous access. This option is deprecated now that real oplocks are available on Samba.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958577">
+5.5.2.7 kernel oplocks</a></h4><P CLASS="para">
+If a Unix application separate from Samba tries to update a file that Samba has oplocked to a Windows client, it will likely succeed (depending on the operating system) and both Samba and the client will never be aware of it. However, if the local Unix operating system supports it, Samba can warn it of oplocked files, which can suspend the Unix process, notify the client via Samba to write its copy back, and only then allow the open to complete. Essentially, this means that the operating system kernel on the Samba system has the ability to handle oplocks as well as Samba.</p><P CLASS="para">
+You can enable this behavior with the <CODE CLASS="literal">
+kernel</code> <CODE CLASS="literal">
+oplocks</code> option, as follows:</p><PRE CLASS="programlisting">
+[global]
+	kernel oplocks = yes</pre><P CLASS="para">
+Samba can automatically detect kernel oplocks and use them if present. At the time of this writing, this feature is supported only by SGI Irix 6.5.2f and later. However, Linux and FreeBSD support are expected in the near future. A system without kernel oplocks will allow the Unix process to update the file, but the client programs will notice the change only at a later time, if at all. </p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958581">
+5.5.2.8 veto oplock files</a></h4><P CLASS="para">
+You can provide a list of filenames that are never granted opportunistic locks with the <CODE CLASS="literal">
+veto</code> <CODE CLASS="literal">
+oplock</code> <CODE CLASS="literal">
+files</code> option. This option can be set either globally or on a per-share basis. For example:</p><PRE CLASS="programlisting">
+veto oplock files = /*.bat/*.htm/</pre><P CLASS="para">
+The value of this option is a series of patterns. Each pattern entry must begin, end, or be separated from another with a slash (/) character, even if there is only one pattern listed. Asterisks can be used as a wildcard to represent zero or more characters. Questions marks can be used to represent exactly one character.</p><P CLASS="para">
+We recommend that you disable oplocks on any files that are meant to be updated by Unix or are intended to be shared by several processes simultaneously.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-960237">
+5.5.2.9 lock directory</a></h4><P CLASS="para">
+This option (sometimes called <CODE CLASS="literal">
+lock</code> <CODE CLASS="literal">
+dir</code>) specifies the location of a directory where Samba will store SMB deny-mode lock files. Samba stores other files in this directory as well, such as browse lists and its shared memory file. If WINS is enabled, the WINS database is written to this directory as well. The default for this option is specified in the Samba makefile; it is typically <I CLASS="filename">
+/usr/local/samba/var/locks</i>. You can override this location as follows:</p><PRE CLASS="programlisting">
+[global]
+	lock directory = /usr/local/samba/locks</pre><P CLASS="para">
+You typically would not need to override this option, unless you want to move the lock files to a more standardized location, such as <I CLASS="filename">
+/var/spool/locks</i>. </p></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_04.html" TITLE="5.4 Name Mangling and Case">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 5.4 Name Mangling and Case" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="chapter" HREF="ch06_01.html" TITLE="6. Users, Security, and Domains ">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 6. Users, Security, and Domains " BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+5.4 Name Mangling and Case</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+6. Users, Security, and Domains </td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

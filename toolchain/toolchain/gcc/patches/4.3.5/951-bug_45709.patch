@@ -1,0 +1,111 @@
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=45709
+
+--- gcc-4_3-branch/gcc/ChangeLog	2010/09/18 17:23:20	164399
++++ gcc-4_3-branch/gcc/ChangeLog	2010/09/18 18:53:53	164400
+@@ -1,3 +1,9 @@
++2010-09-18  Richard Guenther  <rguenther@suse.de>
++
++	PR tree-optimization/45709
++	* tree-inline.c (copy_phis_for_bb): Delay commit of edge
++	insertions until after all PHI nodes of the block are processed.
++
+ 2010-09-01  Eric Botcazou  <ebotcazou@adacore.com>
+ 
+ 	* gimplify.c (gimplify_init_constructor): Do not create a temporary for
+--- gcc-4_3-branch/gcc/testsuite/ChangeLog	2010/09/18 17:23:20	164399
++++ gcc-4_3-branch/gcc/testsuite/ChangeLog	2010/09/18 18:53:53	164400
+@@ -1,3 +1,9 @@
++2010-09-18  Richard Guenther  <rguenther@suse.de>
++
++	PR tree-optimization/45709
++	* g++.dg/torture/pr45709.C: New testcase.
++	* g++.dg/torture/pr45709-2.C: Likewise.
++
+ 2010-08-11  Richard Guenther  <rguenther@suse.de>
+ 
+ 	PR c/44555
+--- /dev/null
++++ gcc-4_3-branch/gcc/testsuite/g++.dg/torture/pr45709.C	2010/09/18 18:53:53	164400
+@@ -0,0 +1,20 @@
++// { dg-do compile }
++// { dg-options "-O" }
++
++struct Region {
++    int storage[4];
++    int count;
++};
++static inline Region subtract(int lhs)
++{
++  Region reg;
++  int* storage = reg.storage;
++  if (lhs > 0)
++    storage++;
++  reg.count = storage - reg.storage;
++  return reg;
++}
++void bar(int a)
++{
++  const Region copyBack(subtract(a));
++}
+--- /dev/null	
++++ gcc-4_3-branch/gcc/testsuite/g++.dg/torture/pr45709-2.C	2010/09/18 18:53:53	164400
+@@ -0,0 +1,21 @@
++// { dg-do compile }
++// { dg-options "-O" }
++
++struct Region {
++    int storage[4];
++    int count;
++};
++static inline Region subtract(int lhs)
++{
++  Region reg;
++  int* storage = reg.storage;
++  int* storage2 = reg.storage;
++  if (lhs > 0)
++    storage++, storage2--;
++  reg.count = storage - reg.storage + storage2 - reg.storage;
++  return reg;
++}
++void bar(int a)
++{
++  const Region copyBack(subtract(a));
++}
+--- gcc-4_3-branch/gcc/tree-inline.c	2010/09/18 17:23:20	164399
++++ gcc-4_3-branch/gcc/tree-inline.c	2010/09/18 18:53:53	164400
+@@ -1204,13 +1204,14 @@
+   basic_block new_bb = bb->aux;
+   edge_iterator ei;
+   tree phi;
++  edge new_edge;
++  bool inserted = false;
+ 
+   for (phi = phi_nodes (bb); phi; phi = PHI_CHAIN (phi))
+     {
+       tree res = PHI_RESULT (phi);
+       tree new_res = res;
+       tree new_phi;
+-      edge new_edge;
+ 
+       if (is_gimple_reg (res))
+ 	{
+@@ -1234,12 +1235,18 @@
+ 		  tree stmts = NULL_TREE;
+ 		  new_arg = force_gimple_operand (new_arg, &stmts,
+ 						  true, NULL);
+-		  bsi_insert_on_edge_immediate (new_edge, stmts);
++		  bsi_insert_on_edge (new_edge, stmts);
++		  inserted = true;
+ 		}
+ 	      add_phi_arg (new_phi, new_arg, new_edge);
+ 	    }
+ 	}
+     }
++
++  /* Commit the delayed edge insertions.  */
++  if (inserted)
++    FOR_EACH_EDGE (new_edge, ei, new_bb->preds)
++      bsi_commit_one_edge_insert (new_edge, NULL);
+ }
+ 
+ /* Wrapper for remap_decl so it can be used as a callback.  */

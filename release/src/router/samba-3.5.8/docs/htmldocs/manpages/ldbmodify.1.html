@@ -1,0 +1,14 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>ldbmodify</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="ldbmodify.1"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ldbmodify &#8212; Modify records in a LDB database</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">ldbmodify</code> [-H LDB-URL] [ldif-file]</p></div></div><div class="refsect1" lang="en"><a name="id2522926"></a><h2>DESCRIPTION</h2><p>
+		ldbmodify changes, adds and deletes records in a LDB database. 
+		The changes that should be made to the LDB database are read from 
+		the specified LDIF-file. If - is specified as the filename, input is read from stdin.
+	</p><p>For now, see ldapmodify(1) for details on the LDIF file format.</p></div><div class="refsect1" lang="en"><a name="id2522945"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">-H &lt;ldb-url&gt;</span></dt><dd><p>
+				LDB URL to connect to. See ldb(7) for details.
+			</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2483332"></a><h2>ENVIRONMENT</h2><div class="variablelist"><dl><dt><span class="term">LDB_URL</span></dt><dd><p>LDB URL to connect to (can be overrided by using the 
+					-H command-line option.)</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2483354"></a><h2>VERSION</h2><p>This man page is correct for version 4.0 of the Samba suite.</p></div><div class="refsect1" lang="en"><a name="id2483365"></a><h2>SEE ALSO</h2><p>ldb(7), ldbedit</p></div><div class="refsect1" lang="en"><a name="id2483375"></a><h2>AUTHOR</h2><p> ldb was written by 
+		 <a class="ulink" href="http://samba.org/~tridge/" target="_top">Andrew Tridgell</a>.
+	</p><p>
+If you wish to report a problem or make a suggestion then please see
+the <a class="ulink" href="http://ldb.samba.org/" target="_top">http://ldb.samba.org/</a> web site for
+current contact and maintainer information.
+	</p><p>This manpage was written by Jelmer Vernooij.</p></div></div></body></html>

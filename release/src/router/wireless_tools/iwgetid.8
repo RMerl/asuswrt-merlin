@@ -1,0 +1,115 @@
+.\" Guus Sliepen - 2001
+.\" Completed and fixed up by Jean Tourrilhes - 2002-2003
+.\" iwgetid.8
+.\"
+.TH IWGETID 8 "02 December 2003" "wireless-tools" "Linux Programmer's Manual"
+.\"
+.\" NAME part
+.\"
+.SH NAME
+iwgetid \- Report ESSID, NWID or AP/Cell Address of wireless network
+.\"
+.\" SYNOPSIS part
+.\"
+.SH SYNOPSIS
+.BI "iwgetid " [interface] " [--raw] [--scheme] [--ap] [--freq]"
+.br
+.BI "                   [--mode] [--protocol] [--channel]
+.br
+.\"
+.\" DESCRIPTION part
+.\"
+.SH DESCRIPTION
+.B iwgetid
+is used to find out the NWID, ESSID or AP/Cell Address of the wireless
+network that is currently used. The information reported is the same
+as the one shown by
+.BR iwconfig ", but " iwgetid
+is easier to integrate in various scripts.
+.br
+By default,
+.B iwgetid
+will print the
+.I ESSID
+of the device, and if the device doesn't have any ESSID it will print
+its
+.IR NWID .
+.br
+The default formatting output is pretty-print.
+.\"
+.\" OPTIONS part
+.\"
+.SH OPTIONS
+.TP
+.B --raw
+This option disables pretty-printing of the information. This option
+is orthogonal to the other options (except
+.BR --scheme ),
+so with the appropriate combination of options you can print the raw
+ESSID, AP Address or Mode.
+.br
+This format is ideal when storing the result of iwgetid as a
+variable in
+.I Shell
+or
+.I Perl
+scripts or to pass the result as an argument on the command line of
+.BR iwconfig .
+.TP
+.B --scheme
+This option is similar to the previous one, it disables
+pretty-printing of the information and removes all characters that are
+not alphanumerics (like space, punctuation and control characters).
+.br
+The resulting output is a valid Pcmcia scheme identifier (that may be
+used as an argument of the command
+.BR "cardctl scheme" ).
+This format is also ideal when using the result of iwgetid as a
+selector in
+.I Shell
+or
+.I Perl
+scripts, or as a file name.
+.TP
+.B --ap
+Display the MAC address of the Wireless
+.I Access Point
+or the
+.IR Cell .
+.TP
+.B --freq
+Display the current
+.I frequency
+or
+.I channel
+used by the interface.
+.TP
+.B --channel
+Display the current
+.I channel
+used by the interface. The channel is determined using the current
+frequency and the frequency list provided by the interface.
+.TP
+.B --mode
+Display the current
+.I mode
+of the interface.
+.TP
+.B --protocol
+Display the
+.I protocol name
+of the interface. This allows to identify all the cards that are
+compatible with each other and accept the same type of configuration.
+.br
+This can also be used to
+.I check Wireless Extension support
+on the interface, as this is the only attribute that all drivers
+supporting Wireless Extension are mandated to support.
+.\"
+.\" SEE ALSO part
+.\"
+.SH SEE ALSO
+.BR iwconfig (8),
+.BR ifconfig (8),
+.BR iwspy (8),
+.BR iwpriv (8).

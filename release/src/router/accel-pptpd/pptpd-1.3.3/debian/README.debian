@@ -1,0 +1,8 @@
+pptpd for DEBIAN
+----------------------
+
+Please note that, if you want to use pptpd to create host-to-site tunnels (e.g.
+typical road-warrior setups), then you will need to enable IP forwarding. This
+can be done by setting ip_forward=yes in /etc/network/options.
+
+Rene Mayrhofer <rene.mayrhofer@gibraltar.at>, Mon, 16 Aug 1999 11:27:43 +0200

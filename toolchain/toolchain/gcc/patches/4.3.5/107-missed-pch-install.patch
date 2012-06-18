@@ -1,0 +1,78 @@
+diff -uB a/libstdc++-v3/include/Makefile.am b/libstdc++-v3/include/Makefile.am
+--- a/libstdc++-v3/include/Makefile.am
++++ b/libstdc++-v3/include/Makefile.am
+@@ -831,8 +831,10 @@
+ PCHFLAGS=-Winvalid-pch -x c++-header $(CXXFLAGS)
+ if GLIBCXX_BUILD_PCH
+ pch_build = ${pch_output}
++pch_install = install-pch
+ else
+ pch_build =
++pch_install =
+ endif
+ 
+ # List of all timestamp files.  By keeping only one copy of this list, both
+@@ -1101,7 +1103,7 @@
+ # the rest are taken from the original source tree.
+ 
+ if GLIBCXX_HOSTED
+-install-data-local: install-headers
++install-data-local: install-headers ${pch_install}
+ else
+ install-data-local: install-freestanding-headers
+ endif
+@@ -1194,6 +1196,16 @@
+ 	 ${thread_host_headers}; do \
+ 	  $(INSTALL_DATA) $${file} $(DESTDIR)${host_installdir}; done
+ 
++install-pch:
++	$(mkinstalldirs) $(DESTDIR)${pch1_output_installdir}
++	for file in ${pch1_output_builddir}/*; do \
++	  $(INSTALL_DATA) $$file $(DESTDIR)${pch1_output_installdir}; done
++	$(mkinstalldirs) $(DESTDIR)${pch2_output_installdir}
++	for file in ${pch2_output_builddir}/*; do \
++	  $(INSTALL_DATA) $$file $(DESTDIR)${pch2_output_installdir}; done
++	$(INSTALL_DATA) ${pch1_output_anchor} $(DESTDIR)${host_installdir}
++	$(INSTALL_DATA) ${pch2_output_anchor} $(DESTDIR)${host_installdir}
++
+ # By adding these files here, automake will remove them for 'make clean'
+ CLEANFILES = ${pch_output} ${pch_output_anchors}
+ 
+diff -uB a/libstdc++-v3/include/Makefile.in b/libstdc++-v3/include/Makefile.in
+--- a/libstdc++-v3/include/Makefile.in
++++ b/libstdc++-v3/include/Makefile.in
+@@ -1062,6 +1062,8 @@
+ PCHFLAGS = -Winvalid-pch -x c++-header $(CXXFLAGS)
+ @GLIBCXX_BUILD_PCH_FALSE@pch_build = 
+ @GLIBCXX_BUILD_PCH_TRUE@pch_build = ${pch_output}
++@GLIBCXX_BUILD_PCH_FALSE@pch_install = 
++@GLIBCXX_BUILD_PCH_TRUE@pch_install = install-pch
+ 
+ # List of all timestamp files.  By keeping only one copy of this list, both
+ # CLEANFILES and all-local are kept up-to-date.
+@@ -1459,7 +1461,7 @@
+ # host_headers_extra are taken out of the build tree staging area;
+ # the rest are taken from the original source tree.
+ 
+-@GLIBCXX_HOSTED_TRUE@install-data-local: install-headers
++@GLIBCXX_HOSTED_TRUE@install-data-local: install-headers ${pch_install}
+ @GLIBCXX_HOSTED_FALSE@install-data-local: install-freestanding-headers
+ 
+ # This is a subset of the full install-headers rule.  We only need <cstddef>,
+@@ -1550,6 +1552,16 @@
+ 	 ${thread_host_headers}; do \
+ 	  $(INSTALL_DATA) $${file} $(DESTDIR)${host_installdir}; done
+ 
++install-pch:
++	$(mkinstalldirs) $(DESTDIR)${pch1_output_installdir}
++	for file in ${pch1_output_builddir}/*; do \
++	  $(INSTALL_DATA) $$file $(DESTDIR)${pch1_output_installdir}; done
++	$(mkinstalldirs) $(DESTDIR)${pch2_output_installdir}
++	for file in ${pch2_output_builddir}/*; do \
++	  $(INSTALL_DATA) $$file $(DESTDIR)${pch2_output_installdir}; done
++	$(INSTALL_DATA) ${pch1_output_anchor} $(DESTDIR)${host_installdir}
++	$(INSTALL_DATA) ${pch2_output_anchor} $(DESTDIR)${host_installdir}
++
+ # To remove directories.
+ clean-local:
+ 	rm -rf ${pch_output_dirs}

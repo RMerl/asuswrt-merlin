@@ -1,0 +1,8 @@
+Sun Jun 23 14:05:30 PDT 2002
+Done Jobs/Error Jobs
+  - sorting of jobs has error jobs and then done jobs
+    so 'remove_done' will retain error jobs. 
+  - sort these by completion time and remove all but the
+    last N.  You will then have to reorder list by other
+    criteria.
+   (Reported by: Akop Pogosian <akopps@CSUA.Berkeley.EDU>)

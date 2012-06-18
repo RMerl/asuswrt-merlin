@@ -1,0 +1,134 @@
+/*
+  krb5 PAC
+*/
+
+#include "idl_types.h"
+
+import "security.idl", "netlogon.idl", "samr.idl";
+
+[
+  uuid("12345778-1234-abcd-0000-00000000"),
+  version(0.0),
+  pointer_default(unique),
+  helpstring("Active Directory KRB5 PAC")
+]
+interface krb5pac
+{
+	typedef struct {
+		NTTIME logon_time;
+		[value(2*strlen_m(account_name))] uint16 size;
+		[charset(UTF16)] uint8 account_name[size];
+	} PAC_LOGON_NAME;
+
+	typedef [public,flag(NDR_PAHEX)] struct {
+		uint32 type;
+		[flag(NDR_REMAINING)] DATA_BLOB signature;
+	} PAC_SIGNATURE_DATA;
+
+	typedef struct {
+		netr_SamInfo3 info3;
+		dom_sid2 *res_group_dom_sid;
+		samr_RidWithAttributeArray res_groups;
+	} PAC_LOGON_INFO;
+
+	typedef struct {
+		[value(2*strlen_m(upn_name))] uint16 upn_size;
+		uint16 upn_offset;
+		[value(2*strlen_m(domain_name))] uint16 domain_size;
+		uint16 domain_offset;
+		uint16 unknown3; /* 0x01 */
+		uint16 unknown4;
+		uint32 unknown5;
+		[charset(UTF16)] uint8 upn_name[upn_size+2];
+		[charset(UTF16)] uint8 domain_name[domain_size+2];
+		uint32 unknown6; /* padding */
+	} PAC_UNKNOWN_12;
+
+	typedef [public] struct {
+		PAC_LOGON_INFO *info;
+	} PAC_LOGON_INFO_CTR;
+
+	typedef [public,v1_enum] enum {
+		PAC_TYPE_LOGON_INFO = 1,
+		PAC_TYPE_SRV_CHECKSUM = 6,
+		PAC_TYPE_KDC_CHECKSUM = 7,
+		PAC_TYPE_LOGON_NAME = 10,
+		PAC_TYPE_CONSTRAINED_DELEGATION = 11,
+		PAC_TYPE_UNKNOWN_12 = 12
+	} PAC_TYPE;
+
+	typedef struct {
+		[flag(NDR_REMAINING)] DATA_BLOB remaining;
+	} DATA_BLOB_REM;
+
+	typedef [public,nodiscriminant,gensize] union {
+		[case(PAC_TYPE_LOGON_INFO)][subcontext(0xFFFFFC01)] PAC_LOGON_INFO_CTR logon_info;
+		[case(PAC_TYPE_SRV_CHECKSUM)]	PAC_SIGNATURE_DATA srv_cksum;
+		[case(PAC_TYPE_KDC_CHECKSUM)]	PAC_SIGNATURE_DATA kdc_cksum;
+		[case(PAC_TYPE_LOGON_NAME)]	PAC_LOGON_NAME logon_name;
+		/* when new PAC info types are added they are supposed to be done
+		   in such a way that they are backwards compatible with existing
+		   servers. This makes it safe to just use a [default] for
+		   unknown types, which lets us ignore the data */
+		[default]	[subcontext(0)] DATA_BLOB_REM unknown;
+		/* [case(PAC_TYPE_UNKNOWN_12)]	PAC_UNKNOWN_12 unknown; */
+	} PAC_INFO;
+
+	typedef [public,nopush,nopull,noprint] struct {
+		PAC_TYPE type;
+		[value(_ndr_size_PAC_INFO(info, type, 0))] uint32 _ndr_size;
+		[relative,switch_is(type),subcontext(0),subcontext_size(_subcontext_size_PAC_INFO(r, ndr->flags)),flag(NDR_ALIGN8)] PAC_INFO *info;
+		[value(0)] uint32 _pad; /* Top half of a 64 bit pointer? */
+	} PAC_BUFFER;
+
+	typedef [public] struct {
+		uint32 num_buffers;
+		uint32 version;
+		PAC_BUFFER buffers[num_buffers];
+	} PAC_DATA;
+
+	typedef [public] struct {
+		PAC_TYPE type;
+		uint32 ndr_size;
+		[relative,subcontext(0),subcontext_size(NDR_ROUND(ndr_size,8)),flag(NDR_ALIGN8)] DATA_BLOB_REM *info;
+		[value(0)] uint32 _pad; /* Top half of a 64 bit pointer? */
+	} PAC_BUFFER_RAW;
+
+	typedef [public] struct {
+		uint32 num_buffers;
+		uint32 version;
+		PAC_BUFFER_RAW buffers[num_buffers];
+	} PAC_DATA_RAW;
+
+	const int NETLOGON_GENERIC_KRB5_PAC_VALIDATE = 3;
+
+	typedef [public] struct {
+		[value(NETLOGON_GENERIC_KRB5_PAC_VALIDATE)] uint32 MessageType;
+		uint32 ChecksumLength;
+		int32 SignatureType;
+		uint32 SignatureLength;
+		[flag(NDR_REMAINING)] DATA_BLOB ChecksumAndSignature;
+	} PAC_Validate;
+
+	void decode_pac(
+		[in] PAC_DATA pac
+		);
+
+	void decode_pac_raw(
+		[in] PAC_DATA_RAW pac
+		);
+
+	void decode_login_info(
+		[in] PAC_LOGON_INFO logon_info
+		);
+
+	void decode_pac_validate(
+		[in] PAC_Validate pac_validate
+		);
+
+	/* used for samba3 netsamlogon cache */
+	typedef [public] struct {
+		time_t timestamp;
+		netr_SamInfo3 info3;
+	} netsamlogoncache_entry;
+}

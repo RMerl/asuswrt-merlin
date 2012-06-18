@@ -1,0 +1,14 @@
+<% page_header("columns", "ESP Include Test", "esptest"); %>
+
+including /scripting/test.ejs<p/>
+<% include("/scripting/test.ejs"); %>
+calling a function from test.ejs ...<p/>
+<% showArray("request", request); %>
+
+including /scripting/test.esp<p/>
+<% include /scripting/test.esp %>
+calling a function from test.esp ...<p/>
+<% res = testfn('foo'); %>
+result is: @@res
+
+<% page_footer(); %>

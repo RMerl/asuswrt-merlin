@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<style>
+html{
+margin:0 0;
+padding:0px;
+}
+body{
+display: block;
+overflow: hidden;
+}
+fieldset {  
+width:320px;  
+font-family:Verdana, Arial, Helvetica, sans-serif;  
+font-size:14px;  
+}
+</style>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript">
+var this_url;
+var m = new lang();
+var g_storage = new myStorage();
+
+$("document").ready(function() {
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	$('label#username').text(m.getString('title_username'));
+	$('label#password').text(m.getString('title_password'));
+	$('button#ok').text(m.getString('btn_ok'));
+	$('button#cancel').text(m.getString('btn_cancel'));
+	
+	//$('input#username').attr("disabled", "");
+	//$('input#password').attr("disabled", "");
+	
+	this_url = getUrlVars()["v"];
+});
+
+function doOK(e) {
+	
+	var user = $('input#username').val();
+	var pass = $('input#password').val();
+	var auth = "Basic " + Base64.encode(user + ":" + pass);
+	
+	//$('input#username').attr("disabled", "disabled");
+	//$('input#password').attr("disabled", "disabled");
+	
+	parent.doLOGIN(this_url, auth);
+};
+
+function doCancel(e) {
+	parent.closeJqmWindow(0);
+};
+
+function getUrlVars(){
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++){
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+}
+
+function onKeyHandler(e){
+	if(e.keyCode==13)
+		doOK(e);
+}
+</script>
+</head>
+<body>
+
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;">	
+	<tr>
+  	<td>
+  	<form name="form_login">  
+			<fieldset>  
+				<table>  
+					<tr>  
+					<td><label id="username">Username :</label></td><td><input name="username" type="text" id="username" size="30"></td>  
+					</tr>  
+					<tr>  
+					<td><label id="password">Password :</label></td><td><input name="password" type="password" id="password" size="30" onkeydown="return onKeyHandler(event)"></td>  
+					</tr>
+				</table>  
+			</fieldset>  
+		</form>  
+
+    </td>    
+  </tr>
+  <tr style='height:20px'></tr>
+  <tr>
+  	<td>
+  	<div class="table_block_footer" style="text-align:right">
+    	<button id="ok" class='btnStyle' onClick="doOK();">OK</button>
+      <button id="cancel" class="btnStyle" onClick="doCancel();">Close</button>
+    </div>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

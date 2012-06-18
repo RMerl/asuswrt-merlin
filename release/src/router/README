@@ -1,0 +1,70 @@
+#
+# Broadcom Linux Router Configuration
+#
+# Copyright 2005, Broadcom Corporation
+# All Rights Reserved.
+# 
+# THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
+# KIND, EXPRESS OR IMPLIED, BY STATUTE, COMMUNICATION OR OTHERWISE. BROADCOM
+# SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+# FOR A SPECIFIC PURPOSE OR NONINFRINGEMENT CONCERNING THIS SOFTWARE.
+#
+# $Id: README,v 1.1.1.7 2005/03/07 07:31:12 kanki Exp $
+#
+
+* Introduction
+
+To compile the Broadcom Linux Router package, you must have both
+mipsel-linux and mipsel-uclibc toolchains in your PATH.
+
+/opt/brcm/hndtools-mipsel-linux/bin
+/opt/brcm/hndtools-mipsel-uclibc/bin
+
+
+** Configuration
+
+To configure the package, type "make menuconfig". The Linux kernel will
+be configured as well.
+
+** Compilation
+
+To compile after configuring, type "make". The Linux kernel will be
+built as well.
+
+To compile only a particular module (e.g. rc), type "make rc".
+
+** Installation
+
+To package for direct installation, type "make install" or "make
+package". Linux kernel modules will be installed as well.
+
+If uClibc was selected, "make install" will create a linux.trx file in
+"mipsel-uclibc/". If uClibc was not selected, a linux.trx file will be
+created in "mipsel/".
+
+** Cleaning
+
+It is recommended that "make clean" be run after a configuration change
+is made. By default, "make clean" will not clean the kernel. Uncomment
+the last line of the "clean" target in the Makefile to enable kernel
+cleaning.
+
+* Customization
+
+See config/Kconfig-language.txt for a description of the configuration
+language used for user applications. Although its configuration program
+appears similar, the Linux kernel uses a slightly different
+language. See ../linux/linux/Documentation/kbuild/config-language.txt.
+
+To add a new user application to the package, edit config/Config and
+name the module rule under the "Configuration" section of the
+Makefile. If the module can be built, cleaned, and installed with the
+generic rules located at the end of the Makefile, no further changes are
+necessary. Otherwise, add additional rules for the module under the
+"Overrides" section of the Makefile. "make <module>" should descend into
+the module directory and compile the sources. "make <module>-install"
+should install the appropriate binaries as if "$(INSTALLDIR)/<module>"
+were the root directory. "make <module>-clean" should clean generated
+files from the module directory.
+
+See the rules for "www" for a simple example.

@@ -1,0 +1,155 @@
+!==
+!== NetBIOS.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:    lkcl - samba@arvidsjaur.anu.edu.au
+                Copyright 1997  Luke Kenneth Casson Leighton 
+Date:           March 1997
+Status:         Current
+Updated:        12jun97
+
+Subject:	Definition of NetBIOS Protocol and Name Resolution Modes
+=============================================================================
+
+=======
+NETBIOS
+=======
+
+NetBIOS runs over the following tranports: TCP/IP; NetBEUI and IPX/SPX.
+Samba only uses NetBIOS over TCP/IP.  For details on the TCP/IP NetBIOS 
+Session Service NetBIOS Datagram Service, and NetBIOS Names, see
+rfc1001.txt and rfc1002.txt.
+
+NetBEUI is a raw NetBIOS frame protocol implementation that allows NetBIOS
+datagrams to be sent out over the 'wire' embedded within LLC frames.
+NetBEUI is not required when using NetBIOS over TCP/IP protocols and it
+is preferable NOT to install NetBEUI if it can be avoided.
+
+IPX/SPX is also not required when using NetBIOS over TCP/IP, and it is
+preferable NOT to install the IPX/SPX transport unless you are using Novell
+servers.  At the very least, it is recommended that you do not install
+'NetBIOS over IPX/SPX'.
+
+[When installing Windows 95, you will find that NetBEUI and IPX/SPX are
+installed as the default protocols.  This is because they are the simplest
+to manage: no Windows 95 user-configuration is required].
+
+
+NetBIOS applications (such as samba) offer their services (for example,
+SMB file and print sharing) on a NetBIOS name.  They must claim this name
+on the network before doing so.  The NetBIOS session service will then
+accept connections on the application's behalf (on the NetBIOS name
+claimed by the application).  A NetBIOS session between the application
+and the client can then commence.
+
+NetBIOS names consist of 15 characters plus a 'type' character.  This is
+similar, in concept, to an IP address and a TCP port number, respectively.
+A NetBIOS-aware application on a host will offer different services under
+different NetBIOS name types, just as a host will offer different TCP/IP
+services on different port numbers.
+
+NetBIOS names must be claimed on a network, and must be defended.  The use
+of NetBIOS names is most suitable on a single subnet; a Local Area Network
+or a Wide Area Network.
+
+NetBIOS names are either UNIQUE or GROUP.  Only one application can claim a
+UNIQUE NetBIOS name on a network.
+
+There are two kinds of NetBIOS Name resolution: Broadcast and Point-to-Point.
+
+
+=================
+BROADCAST NetBIOS
+=================
+
+Clients can claim names, and therefore offer services on successfully claimed
+names, on their broadcast-isolated subnet.  One way to get NetBIOS services
+(such as browsing: see ftp.microsoft.com/drg/developr/CIFS/browdiff.txt; and
+SMB file/print sharing: see cifs4.txt) working on a LAN or WAN is to make
+your routers forward all broadcast packets from TCP/IP ports 137, 138 and 139.
+
+This, however, is not recommended.  If you have a large LAN or WAN, you will
+find that some of your hosts spend 95 percent of their time dealing with
+broadcast traffic.  [If you have IPX/SPX on your LAN or WAN, you will find
+that this is already happening: a packet analyzer will show, roughly
+every twelve minutes, great swathes of broadcast traffic!].
+
+
+============
+NBNS NetBIOS
+============
+
+rfc1001.txt describes, amongst other things, the implementation and use
+of, a 'NetBIOS Name Service'.  NT/AS offers 'Windows Internet Name Service'
+which is fully rfc1001/2 compliant, but has had to take specific action
+with certain NetBIOS names in order to make it useful.  (for example, it
+deals with the registration of <1c> <1d> <1e> names all in different ways.
+I recommend the reading of the Microsoft WINS Server Help files for full
+details).
+
+Samba also offers WINS server capabilities.  Samba does not interact
+with NT/AS (WINS replication), so if you have a mixed NT server and
+Samba server environment, it is recommended that you use the NT server's
+WINS capabilities, instead of samba's WINS server capabilities.
+
+The use of a WINS server cuts down on broadcast network traffic for
+NetBIOS name resolution.  It has the effect of pulling all the broadcast
+isolated subnets together into a single NetBIOS scope, across your LAN
+or WAN, while avoiding the use of TCP/IP broadcast packets.
+
+When you have a WINS server on your LAN, WINS clients will be able to
+contact the WINS server to resolve NetBIOS names.  Note that only those
+WINS clients that have registered with the same WINS server will be
+visible.  The WINS server _can_ have static NetBIOS entries added to its
+database (usually for security reasons you might want to consider putting
+your domain controllers or other important servers as static entries,
+but you should not rely on this as your sole means of security), but for
+the most part, NetBIOS names are registered dynamically.
+
+[It is important to mention that samba's browsing capabilities (as a WINS
+client) must have access to a WINS server.  if you are using samba also
+as a WINS server, then it will have a direct short-cut into the WINS
+database.
+
+This provides some confusion for lots of people, and is worth mentioning
+here:  a Browse Server is NOT a WINS Server, even if these services are
+implemented in the same application.  A Browse Server _needs_ a WINS server
+because a Browse Server is a WINS client, which is _not_ the same thing].
+
+Clients can claim names, and therefore offer services on successfully claimed
+names, on their broadcast-isolated subnet.  One way to get NetBIOS services
+(such as browsing: see ftp.microsoft.com/drg/developr/CIFS/browdiff.txt; and
+SMB file/print sharing: see cifs6.txt) working on a LAN or WAN is to make
+your routers forward all broadcast packets from TCP/IP ports 137, 138 and 139.
+You will find, however, if you do this on a large LAN or a WAN, that your
+network is completely swamped by NetBIOS and browsing packets, which is why
+WINS was developed to minimise the necessity of broadcast traffic.
+
+WINS Clients therefore claim names from the WINS server.  If the WINS
+server allows them to register a name, the client's NetBIOS session service
+can then offer services on this name.  Other WINS clients will then
+contact the WINS server to resolve a NetBIOS name.
+
+
+=======================
+Samba WINS Capabilities
+=======================
+
+To configure samba as a WINS server, you must add "wins support = yes" to
+the [global] section of your smb.conf file.  This will enable WINS server
+capabilities in nmbd.
+
+To configure samba as a WINS client, you must add "wins server = x.x.x.x"
+to the [global] section of your smb.conf file, where x.x.x.x is the TCP/IP
+address of your WINS server.  The browsing capabilities in nmbd will then
+register (and resolve) WAN-wide NetBIOS names with this WINS server.
+
+Note that if samba has "wins support = yes", then the browsing capabilities
+will _not_ use the "wins server" option to resolve NetBIOS names: it will
+go directly to the internal WINS database for NetBIOS name resolution.  It
+is therefore invalid to have both "wins support = yes" and
+"wins server = x.x.x.x".  Note, in particular, that if you configure the
+"wins server" parameter to be the ip address of your samba server itself
+(as might one intuitively think), that you will run into difficulties.
+Do not use both parameters!
+
+

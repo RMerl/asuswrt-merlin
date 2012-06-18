@@ -1,0 +1,44 @@
+Installation Instructions for HP-UX Software Distributor package
+----------------------------------------------------------------
+
+1. Run swinstall
+
+  You may have copied (swcopy) the depot to the depot server. In such cases
+  select the depot on server.
+
+  In order to install from the depot file, as root enter the following
+  command:
+
+      swinstall -s `pwd`/samba.depot Samba
+
+2. Create configuration file
+
+  Create /opt/samba/lib/smb.cof. You can use one of the examples from
+  /opt/samba/newconfig/examples as template.
+
+3. Start/stop Samba
+
+  The installation provides the boot startup script at /sbin/init.d/samba. 
+  Samba will automatically start at run level 3 and stop during the 
+  transition to run level 2.
+
+  You can use this script to manually manipulate Samba. Enter:
+
+     # /sbin/init.d/samba start       to start Samba
+     # /sbin/init.d/samba stop        to stop Samba
+
+4. Customization
+
+  The autostart is controled by editing file /etc/rc.config.d/samba. This 
+  file has the following variables:
+
+	SAMBA_START=[0|1]      1   start Samba at boot (default)
+                               0   do not start samba at boot
+
+        SAMBA_DEBUG=[0-9]      debug level for smbd and nmbd. Default debug
+                               level is 1.
+
+  The configuration file is not overwritten at next install while the boot
+  script (/sbin/init.d/samba) is.
+
+Author: Leon Mlakar <leon@hermes.si>

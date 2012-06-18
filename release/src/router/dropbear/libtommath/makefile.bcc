@@ -1,0 +1,44 @@
+#
+# Borland C++Builder Makefile (makefile.bcc)
+#
+
+
+LIB = tlib
+CC = bcc32
+CFLAGS = -c -O2 -I.
+
+OBJECTS=bncore.obj bn_mp_init.obj bn_mp_clear.obj bn_mp_exch.obj bn_mp_grow.obj bn_mp_shrink.obj \
+bn_mp_clamp.obj bn_mp_zero.obj  bn_mp_set.obj bn_mp_set_int.obj bn_mp_init_size.obj bn_mp_copy.obj \
+bn_mp_init_copy.obj bn_mp_abs.obj bn_mp_neg.obj bn_mp_cmp_mag.obj bn_mp_cmp.obj bn_mp_cmp_d.obj \
+bn_mp_rshd.obj bn_mp_lshd.obj bn_mp_mod_2d.obj bn_mp_div_2d.obj bn_mp_mul_2d.obj bn_mp_div_2.obj \
+bn_mp_mul_2.obj bn_s_mp_add.obj bn_s_mp_sub.obj bn_fast_s_mp_mul_digs.obj bn_s_mp_mul_digs.obj \
+bn_fast_s_mp_mul_high_digs.obj bn_s_mp_mul_high_digs.obj bn_fast_s_mp_sqr.obj bn_s_mp_sqr.obj \
+bn_mp_add.obj bn_mp_sub.obj bn_mp_karatsuba_mul.obj bn_mp_mul.obj bn_mp_karatsuba_sqr.obj \
+bn_mp_sqr.obj bn_mp_div.obj bn_mp_mod.obj bn_mp_add_d.obj bn_mp_sub_d.obj bn_mp_mul_d.obj \
+bn_mp_div_d.obj bn_mp_mod_d.obj bn_mp_expt_d.obj bn_mp_addmod.obj bn_mp_submod.obj \
+bn_mp_mulmod.obj bn_mp_sqrmod.obj bn_mp_gcd.obj bn_mp_lcm.obj bn_fast_mp_invmod.obj bn_mp_invmod.obj \
+bn_mp_reduce.obj bn_mp_montgomery_setup.obj bn_fast_mp_montgomery_reduce.obj bn_mp_montgomery_reduce.obj \
+bn_mp_exptmod_fast.obj bn_mp_exptmod.obj bn_mp_2expt.obj bn_mp_n_root.obj bn_mp_jacobi.obj bn_reverse.obj \
+bn_mp_count_bits.obj bn_mp_read_unsigned_bin.obj bn_mp_read_signed_bin.obj bn_mp_to_unsigned_bin.obj \
+bn_mp_to_signed_bin.obj bn_mp_unsigned_bin_size.obj bn_mp_signed_bin_size.obj  \
+bn_mp_xor.obj bn_mp_and.obj bn_mp_or.obj bn_mp_rand.obj bn_mp_montgomery_calc_normalization.obj \
+bn_mp_prime_is_divisible.obj bn_prime_tab.obj bn_mp_prime_fermat.obj bn_mp_prime_miller_rabin.obj \
+bn_mp_prime_is_prime.obj bn_mp_prime_next_prime.obj bn_mp_dr_reduce.obj \
+bn_mp_dr_is_modulus.obj bn_mp_dr_setup.obj bn_mp_reduce_setup.obj \
+bn_mp_toom_mul.obj bn_mp_toom_sqr.obj bn_mp_div_3.obj bn_s_mp_exptmod.obj \
+bn_mp_reduce_2k.obj bn_mp_reduce_is_2k.obj bn_mp_reduce_2k_setup.obj \
+bn_mp_reduce_2k_l.obj bn_mp_reduce_is_2k_l.obj bn_mp_reduce_2k_setup_l.obj \
+bn_mp_radix_smap.obj bn_mp_read_radix.obj bn_mp_toradix.obj bn_mp_radix_size.obj \
+bn_mp_fread.obj bn_mp_fwrite.obj bn_mp_cnt_lsb.obj bn_error.obj \
+bn_mp_init_multi.obj bn_mp_clear_multi.obj bn_mp_exteuclid.obj bn_mp_toradix_n.obj \
+bn_mp_prime_random_ex.obj bn_mp_get_int.obj bn_mp_sqrt.obj bn_mp_is_square.obj \
+bn_mp_init_set.obj bn_mp_init_set_int.obj bn_mp_invmod_slow.obj bn_mp_prime_rabin_miller_trials.obj \
+bn_mp_to_signed_bin_n.obj bn_mp_to_unsigned_bin_n.obj
+
+TARGET = libtommath.lib
+
+$(TARGET): $(OBJECTS)
+
+.c.obj:
+	$(CC) $(CFLAGS) $<
+	$(LIB) $(TARGET) -+$@

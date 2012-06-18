@@ -1,0 +1,231 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Abnormal Termination</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Job Processing" href="jobsteps.htm">
+    <link rel="PREVIOUS" title="Normal Termination" href=
+    "normalterm.htm">
+    <link rel="NEXT" title="Forwarding Jobs" href="bk.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "normalterm.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          15. Job Processing</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "bk.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="ABNORMALTERM">15.10. Abnormal
+      Termination</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">mail_from=</var><span class=
+          "emphasis"><i class="EMPHASIS">Mail from user
+          name</i></span></p>
+        </li>
+
+        <li>
+          <p><var class=
+          "LITERAL">mail_operator_on_error=</var><span class=
+          "emphasis"><i class="EMPHASIS">Mail to operator on
+          error</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">send_try=</var><span class=
+          "emphasis"><i class="EMPHASIS">Maximum printing or
+          transfer attempts</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">save_on_error</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Do not delete on
+          error</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">done_jobs=N</var><span class=
+          "emphasis"><i class="EMPHASIS">Save status of last N
+          jobs</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">done_jobs_max_age=N</var><span
+          class="emphasis"><i class="EMPHASIS">Remove status when
+          older than N seconds</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">send_failure_action=</var><span
+          class="emphasis"><i class="EMPHASIS">Action on
+          Failure</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">sendmail=</var><span class=
+          "emphasis"><i class="EMPHASIS">sendmail path name and
+          options</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">stop_on_abort</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Stop processing
+          queue on filter abort</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>If the job processing terminates abnormally, the following
+      sequence of events occurs:</p>
+
+      <ol type="1">
+        <li>
+          <p>The job is marked as having an error during
+          processing.</p>
+        </li>
+
+        <li>
+          <p>The <b class="APPLICATION">lpd</b> server will attempt
+          to kill all filters and other associated processes by
+          sending a SIGINT and SIGCONT (<tt class="COMMAND">kill
+          -INT</tt> and <tt class="COMMAND">kill -CONT</tt>) to
+          them.</p>
+        </li>
+
+        <li>
+          <p>If there is a <var class=
+          "LITERAL">mail_operator_on_error</var> value, the
+          specified operator will be mailed an error indication.
+          The <var class="LITERAL">sendmail</var> option specifies
+          the pathname of the <span class="emphasis"><i class=
+          "EMPHASIS">sendmail</i></span> program and the options
+          needed to have it read mail addresses from its standard
+          input. For example, <var class=
+          "LITERAL">sendmail=/usr/sbin/sendmail -oi -t</var> is a
+          commonly used set of options.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">mail_from</var> value
+          specifies the user name used for mail origination. If not
+          specified, the default is to use the print spool queue or
+          printer name.</p>
+        </li>
+
+        <li>
+          <p>If there is a <var class=
+          "LITERAL">send_failure_action</var> specified, then it is
+          decoded and the corresponding action taken. If the value
+          is <var class="LITERAL">remove</var>, <var class=
+          "LITERAL">hold</var>, <var class="LITERAL">abort</var>,
+          or <var class="LITERAL">retry</var>, then the job is
+          removed, held, aborted, or retried. If the value is <tt
+          class="FILENAME">|/program</tt>, the program is executed
+          and the number of attempts are written to the filter
+          <acronym class="ACRONYM">STDIN</acronym>. The exit status
+          of the filter will be used to determine the consequent
+          actions. That is, JSUCC (0) will be success, and the
+          standard success action will be taken; JFAIL will cause
+          retry, JREMOVE will cause the job to be removed, JHOLD
+          will cause the job to be held, JABORT or other status
+          will abort processing.</p>
+        </li>
+
+        <li>
+          <p>If the status is ABORT and the <var class=
+          "LITERAL">stop_on_abort</var> flag is set, then further
+          processing of jobs is terminated. The job is not removed
+          from the queue.</p>
+        </li>
+
+        <li>
+          <p>If the error status indicates removal, the <var class=
+          "LITERAL">save_on_error</var> flag is clear, and the <var
+          class="LITERAL">done_jobs</var> and <var class=
+          "LITERAL">done_jobs_max_age</var> values are zero (0),
+          then the job is removed from the spool queue.</p>
+        </li>
+
+        <li>
+          <p>If the error status indicates that no further
+          operations should be performed on the queue, then the <b
+          class="APPLICATION">lpd</b> server will stop processing
+          jobs.</p>
+        </li>
+
+        <li>
+          <p>If the error code indicated that the job should be
+          retried, and the <var class="LITERAL">send_try</var>
+          value is 0 or the number of attempts is less than the
+          <var class="LITERAL">send_try</var> value, then the job
+          is retried. Between each attempt to transfer a job to a
+          remote site. This pause will double after each attempt,
+          reaching a maximum of <var class=
+          "LITERAL">max_connect_interval</var> seconds. If <var
+          class="LITERAL">max_connect_interval</var> is 0, there is
+          no limit on the interval value.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "normalterm.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "bk.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Normal
+          Termination</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "jobsteps.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Forwarding
+          Jobs</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

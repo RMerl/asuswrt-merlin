@@ -1,0 +1,271 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Installation Problems</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Installation" href="installation.htm">
+    <link rel="PREVIOUS" title="Compilation and Install" href=
+    "x962.htm">
+    <link rel="NEXT" title=
+    "Updating Print Spooler Software and Startup Scripts" href=
+    "update.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x962.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 2.
+          Installation</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "update.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN1000">2.9. Installation
+      Problems</a></h1>
+
+      <p>Read the notes for your OS in section <a href=
+      "systemspecific.htm">System-dependent notes</a> for specific
+      installation help (if any).</p>
+
+      <p>The following is a list of commonly encountered problems
+      and their solution. If these do not solve your problem, then
+      send mail to the <a href="maillist.htm">lprng@lprng.com</a>
+      mailing list. You will have to subscribe to the list in order
+      to post to the list.</p>
+
+      <ol type="1">
+        <li>
+          <p><b class="APPLICATION">Make</b> complains about a
+          malformed <tt class="FILENAME">make</tt> or <tt class=
+          "FILENAME">Makefile</tt> file, illegal syntax in the
+          file, or illegal entries in the file. You are most likely
+          not running GNU Make. You <span class="emphasis"><i
+          class="EMPHASIS">must</i></span> use GNU <b class=
+          "APPLICATION">make</b> or you should be a Unix Wizard
+          able to master the mysteries of converting GNU Makefiles
+          to your local system <b class="APPLICATION">make</b>. It
+          is easier to simply install GNU <b class=
+          "APPLICATION">make</b>.</p>
+        </li>
+
+        <li>
+          <p>The C Compiler complains about missing files or has a
+          large number of errors. Use <b class=
+          "APPLICATION">gcc</b> instead of your vendor's C
+          compiler.</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN1019"></a>
+<pre class="SCREEN">
+    configure --with-cc=gcc
+</pre>
+          </div>
+          <br>
+          <br>
+
+          <p>If there are messages about missing system files, then
+          you most likely have an incomplete set of system <tt
+          class="FILENAME">include</tt> files, or the <tt class=
+          "FILENAME">include</tt> do not properly reference other
+          required include files, or the include files are located
+          in an <span class="emphasis"><i class=
+          "EMPHASIS">unusual</i></span> location. If you are using
+          <b class="APPLICATION">gcc</b> then make sure that the <b
+          class="APPLICATION">gcc</b> was carried out correctly on
+          your system. The easiest way to assure this is to
+          recompile and reinstall the <b class=
+          "APPLICATION">gcc</b> compiler.</p>
+        </li>
+
+        <li>
+          <p>If you have checked your compiler installation and are
+          still missing libraries or files then the <tt class=
+          "FILENAME">include</tt> files may be in <tt class=
+          "FILENAME">/usr/local/include</tt> and libraries may be
+          in <tt class="FILENAME">/usr/local/include</tt> and these
+          directories may not searched or used by the compiler by
+          default. This can be fixed by using the <var class=
+          "LITERAL">--with-cppopts=</var> and <var class=
+          "LITERAL">--with-ldopts=</var> configure options.</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN1035"></a>
+<pre class="SCREEN">
+    configure \
+      --with-cppopts="-I/usr/local/include -I/usr/include/kerberosIV" \
+      --with-ldopts="-L/usr/local/lib -L/usr/lib/kerberosIV"
+</pre>
+          </div>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>The software compiles but will not run on the system.
+          Make sure that you have followed your system specific
+          rules for compiling and installing <var class=
+          "LITERAL">setuid ROOT</var> programs on your system. You
+          may need to statically link your executables.</p>
+        </li>
+
+        <li>
+          <p>The software was compiled on one system and copied to
+          another system, but will not run on the other system. Try
+          compiling the software on the target system. If it
+          compiles and runs, then you most likely have an issue
+          with libraries or Operating System Versions.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>After you have installed the LPRng software and rebooted
+      your system, do the following commands:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1043"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {16} #</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@astart
+     Queue: no printable jobs in queue
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If you do not get status displayed, or you get some other
+      error message, then the following are a series of tests can
+      use to check that <b class="APPLICATION">LPRng</b> is
+      installed correctly.</p>
+
+      <p>First we will run <b class="APPLICATION">lpd</b> in the
+      <span class="emphasis"><i class=
+      "EMPHASIS">foreground</i></span> and are used to make sure
+      that our system configuration is correct. You will need <var
+      class="LITERAL">root</var> permissions to do the following
+      steps. Stop the running currently running <b class=
+      "APPLICATION">lpd</b> process. Next, run <b class=
+      "APPLICATION">lpd</b> in foreground mode:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1055"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {17} #</samp> <kbd class=
+"USERINPUT">ps -aux | grep lpd</kbd> 
+    daemon   240  0.0  0.0  1292  0  ??  IWs  -     0:00.00 lpd: lpd Waiting
+    <samp class="PROMPT">h4: {18} #</samp> <kbd class=
+"USERINPUT">kill 240</kbd>
+    <samp class="PROMPT">h4: {19} #</samp> <kbd class=
+"USERINPUT">checkpc -f</kbd>
+    <samp class="PROMPT">h4: {20} #</samp> <kbd class=
+"USERINPUT">/usr/local/bin/lpd -F -D1</kbd>
+    Fatal error - Another print spooler is using TCP printer port
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If you get the above error message, then you have either
+      not terminated the running <b class="APPLICATION">lpd</b>
+      server, there is another process using TCP/IP port 515, or
+      you are not starting the <b class="APPLICATION">lpd</b>
+      server as ROOT. See the <a href="systemspecific.htm">System
+      Specific Notes</a> for details on how to resolve these
+      issues.</p>
+
+      <p>Correct the problem and then restart the server. You
+      should see the output indicated below:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1070"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {21} #</samp> <kbd class=
+"USERINPUT">/usr/local/bin/lpd -F -D1</kbd>
+    1999-04-05-14:35:14.023 astart27 [2667] Waiting  lpd: LOOP START
+    1999-04-05-14:35:14.024 astart27 [2667] Waiting  Get_max_servers: \
+       getrlimit returns 256
+    1999-04-05-14:35:14.024 astart27 [2667] Waiting  Get_max_servers: \
+       returning 128
+    1999-04-05-14:35:14.025 astart27 [2667] Waiting  lpd: \
+       max_servers 128, active 0
+    1999-04-05-14:35:14.025 astart27 [2667] Waiting  lpd: \
+       starting select timeout 'yes', 600 sec
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Now from another window do the following commands:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1075"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {22} #</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@astart
+     Queue: no printable jobs in queue
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>At this point your <b class="APPLICATION">LPRng</b>
+      software has been installed and tested. See the <a href=
+      "update.htm">Updating Print Spooler Software and Startup
+      Scripts</a> for details on how to automatically start <b
+      class="APPLICATION">lpd</b> at boot time.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x962.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "update.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Compilation and
+          Install</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "installation.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Updating Print
+          Spooler Software and Startup Scripts</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

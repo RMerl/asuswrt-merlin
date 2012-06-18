@@ -1,0 +1,98 @@
+#!/bin/sh
+date=`date`;
+AWK=@AWK@
+cat <<EOF
+# lpd.conf generated from $1 on $date
+#   The values in this file are the default values.
+#   If you modify the file,  set the value to something other than the default
+#   For example,
+#     # default force_localhost
+#   means the 'force_localhost' option default value is on or 1
+#   To set it to OFF or 0, change this to read:
+#     force_localhost@
+
+EOF
+
+${AWK} '
+/XXSTART/,/END/{
+	if ( $0 ~ /XXSTARTXX/ ) next;
+	if ( $0 ~ /END/ ) next;
+	if ( $0 ~ /^\{/ ) {
+		print "XXX" $0;
+	} else {
+		print "YYY" $0;
+	}
+}' | sed -e '/XXX/s/[{}"]//g' -e '/XXX/s/,$//' \
+	-e '/XXX/s/[ 	][ 	]*/ /g' \
+	-e '/YYY/s/ *\*\///' -e '/YYY/s/.*\/\* *//' \
+| ${AWK} '
+{ 
+	# print "LINE" $0;
+	if ( $0 ~ /XXX/ ) {
+		# print $0;
+		i = index($0," ");
+		l = substr($0,i);
+		FS = ",";
+		fields = split( l, a );
+		name = a[1];
+		i = 1
+		while( i == 1 ) {
+			i = index( name, " " );
+			if( i == 1 ){
+				name = substr(name,2);
+			}
+		}
+		type = a[3] + 0;
+		i = 1;
+		while( i == 1 ) {
+			i = index( type, " " );
+			if( i == 1 ){
+				type = substr(type,2);
+			}
+		}
+		value = a[7];
+		for( i = 8; i <= fields; ++i ){
+			value = value "," a[i];
+		}
+		i = 1;
+		while( i == 1 ) {
+			i = index( value, " " );
+			if( i == 1 ){
+				value = substr(value,2);
+			}
+		}
+		if( index( value, "=" ) == 1 ){
+			value = substr(value,2);
+		}
+		if( index( value, "#" ) == 1 ){
+			value = substr(value,2);
+		}
+#		F="";
+#		if( fields > 6 ){
+#			F =	"FIELDS="
+#		}
+#		print "name \"" name "\", type \"" type "\", value \"" F  value "\"";
+		if( type == 0 ){
+			value = value + 0;
+			# print "FLAG \"" value "\"" ;
+			if( value == 0 ){
+				name= name "@ (FLAG off)";
+			} else {
+				name= name "  (FLAG on)";
+			}
+		} else if( type == 1 ){
+			if( value == "" ){
+				value = 0;
+			}
+			name = name "=" value "  (INTEGER)";
+		} else {
+			v = "";
+			if( value == "0"){ value = ""; v = "EMPTY " ; }
+			name = name "=" value "  (" v "STRING)";
+		}
+		print "#   default " name ;
+	} else {
+		print "# Purpose: " $0;
+	}
+}
+'

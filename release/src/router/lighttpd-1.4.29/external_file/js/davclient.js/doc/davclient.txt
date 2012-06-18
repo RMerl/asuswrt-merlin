@@ -1,0 +1,407 @@
+=======================
+DavClient documentation
+=======================
+
+API documentation for the 'davlib' JavaScript WebDAV library.
+
+
+davlib
+======
+
+davlib.STATUS_CODES = #0={100: "Continue", 101: ... : "Insufficient Storage"}
+
+davlib.DEBUG = 0
+
+---------
+functions
+---------
+
+davlib.debug(text)
+------------------
+
+simple debug function
+
+set the DEBUG global to some true value, and messages will appear
+on the bottom of the document
+
+davlib.getXmlHttpRequest()
+--------------------------
+
+instantiate an XMLHTTPRequest 
+
+this can be improved by testing the user agent better and, in case 
+of IE, finding out which MSXML is installed and such, but it 
+seems to work just fine for now
+
+------------------
+davlib.DavClient()
+------------------
+
+Low level (subset of) WebDAV client implementation 
+        
+Basically what one would expect from a basic DAV client, it
+provides a method for every HTTP method used in basic DAV, it
+parses PROPFIND requests to handy JS structures and accepts 
+similar structures for PROPPATCH.
+
+Requests are handled asynchronously, so instead of waiting until
+the response is sent back from the server and returning the
+value directly, a handler is registered that is called when
+the response is available and the method that sent the request
+is ended. For that reason all request methods accept a 'handler'
+argument, which will be called (with 3 arguments: statuscode,
+statusstring and content (the latter only where appropriate))
+when the request is handled by the browser.
+The reason for this choice is that Mozilla sometimes freezes
+when using XMLHttpRequest for synchronous requests.
+
+The only 'public' methods on the class are the 'initialize'
+method, that needs to be called first thing after instantiating
+a DavClient object, and the methods that have a name similar to
+an HTTP method (GET, PUT, etc.). The latter all get at least a
+'path' argument, a 'handler' argument and a 'context' argument:
+
+    * 'path'
+    
+      an absolute path to the target resource
+      
+    * 'handler'
+    
+      a function or method that will be called once
+      the request has finished (see below)
+      
+    * 'context'
+    
+      the context used to call the handler, the
+      'this' variable inside methods, so usually the
+      object (instance) the handler is bound to (ignore 
+      when the handler is a function)
+
+All handlers are called with the same 3 arguments:
+
+    * 'status'
+    
+      the HTTP status code
+      
+    * 'statusstring'
+    
+      a string representation (see STATUS_CODES
+      array above) of the status code
+    
+    * 'content'
+    
+      can be a number of different things:
+      
+            * when there was an error in a method that targets
+              a single resource, this contains the error body
+            * when there was an error in a method that targets
+              a set of resources (multi-status) it contains
+              a Root object instance (see below) that contains
+              the error messages of all the objects
+            * if the method was GET and there was no error, it
+              will contain the contents of the resource
+            * if the method was PROPFIND and there was no error,
+              it will contain a Root object (see below) that
+              contains the properties of all the resources
+              targeted
+            * if there was no error and there is no content to
+              return, it will contain null
+    
+    * 'headers'
+    
+      a mapping (associative array) from lowercase header
+      name to value (string)
+
+Basic usage example::
+
+    function handler(status, statusstring, content, headers) {
+        if (content) {
+            if (status != '200' && status != '204') {
+                if (status == '207') {
+                    alert('not going to show multi-status ' +
+                            here...');
+                };
+                alert('Error: ' + statusstring);
+            } else {
+                alert('Content: ' + content);
+            };
+        };
+    };
+
+    var dc = new DavClient();
+    dc.initialize('localhost');
+
+    // create a directory
+    dc.MKCOL('/foo', handler);
+
+    // create a file and save some contents
+    dc.PUT('/foo/bar.txt', 'baz?', handler);
+
+    // load and alert it (alert happens in the handler)
+    dc.GET('/foo/bar.txt', handler);
+
+    // lock the file, we need to store the lock token from 
+    // the result
+    function lockhandler(status, statusstring, content, headers) {
+        if (status != '200') {
+            alert('Error unlocking: ' + statusstring);
+        } else {
+            window.CURRENT_LOCKTOKEN = headers.locktoken;
+        };
+    };
+    dc.LOCK('/foo/bar.txt', 'http://johnnydebris.net/', 
+                lockhandler);
+
+    // run the following bit only if the lock was set properly
+    if (window.CURRENT_LOCKTOKEN) {
+        // try to delete it: this will fail
+        dc.DELETE('/foo/bar.txt', handler);
+        
+        // now unlock it using the lock token stored above
+        dc.UNLOCK('/foo/bar.txt', window.CURRENT_LOCKTOKEN, handler);
+    };
+
+    // delete the dir
+    dc.DELETE('/foo', handler);
+
+For detailed information about the HTTP methods and how they
+can/should be used in a DAV context, see http://www.webdav.org.
+
+This library depends on version 0.3 of the 'dommer' package
+and version 0.2 of the 'minisax.js' package, both of which
+should be available from http://johnnydebris.net under the
+same license as this one (GPL).
+
+If you have questions, bug reports, or patches, please send an 
+email to johnny@johnnydebris.net.
+
+
+davlib.DavClient.initialize(host, port, protocol)
+-------------------------------------------------
+
+the 'constructor' (needs to be called explicitly!!) 
+        
+* 'host' - the host name or IP
+* 'port' - HTTP port of the host (optional, defaults to 80)
+* 'protocol' - protocol part of URLs (optional, defaults to http)
+
+davlib.DavClient.OPTIONS(path, handler, context)
+------------------------------------------------
+
+perform an OPTIONS request
+
+find out which HTTP methods are understood by the server
+
+davlib.DavClient.GET(path, handler, context)
+--------------------------------------------
+
+perform a GET request 
+        
+retrieve the contents of a resource
+
+davlib.DavClient.PUT(path, content, handler, context, locktoken)
+----------------------------------------------------------------
+
+perform a PUT request 
+        
+save the contents of a resource to the server
+
+* 'content' - the contents of the resource
+
+davlib.DavClient.DELETE(path, handler, context, locktoken)
+----------------------------------------------------------
+
+perform a DELETE request 
+        
+remove a resource (recursively)
+
+davlib.DavClient.MKCOL(path, handler, context, locktoken)
+---------------------------------------------------------
+
+perform a MKCOL request
+
+create a collection
+
+davlib.DavClient.COPY(path, topath, handler, context, overwrite, locktoken)
+---------------------------------------------------------------------------
+
+perform a COPY request
+
+create a copy of a resource
+
+* 'topath' - the path to copy the resource to
+* 'overwrite' - whether or not to fail when the resource 
+  already exists (optional)
+
+davlib.DavClient.MOVE(path, topath, handler, context, overwrite, locktoken)
+---------------------------------------------------------------------------
+
+perform a MOVE request
+
+move a resource from location
+
+* 'topath' - the path to move the resource to
+* 'overwrite' - whether or not to fail when the resource
+  already exists (optional)
+
+davlib.DavClient.PROPFIND(path, handler, context, depth)
+--------------------------------------------------------
+
+perform a PROPFIND request
+
+read the metadata of a resource (optionally including its children)
+
+* 'depth' - control recursion depth, default 0 (only returning the
+  properties for the resource itself)
+
+davlib.DavClient.PROPPATCH(path, handler, context, setprops, delprops, locktoken)
+---------------------------------------------------------------------------------
+
+perform a PROPPATCH request
+
+set the metadata of a (single) resource
+
+* 'setprops' - a mapping {<namespace>: {<key>: <value>}} of
+  variables to set
+* 'delprops' - a mapping {<namespace>: [<key>]} of variables
+  to delete
+
+davlib.DavClient.LOCK(path, owner, handler, context, scope, type, depth, timeout, locktoken)
+--------------------------------------------------------------------------------------------
+
+perform a LOCK request
+
+set a lock on a resource
+
+* 'owner' - a URL to identify the owner of the lock to be set
+* 'scope' - the scope of the lock, can be 'exclusive' or 'shared'
+* 'type' - the type of lock, can be 'write' (somewhat strange, eh?)
+* 'depth' - can be used to lock (part of) a branch (use 'infinity' as
+  value) or just a single target (default)
+* 'timeout' - set the timeout in seconds
+
+davlib.DavClient.UNLOCK(path, locktoken, handler, context)
+----------------------------------------------------------
+
+perform an UNLOCK request
+
+unlock a previously locked file
+
+* 'token' - the opaque lock token, as can be retrieved from 
+  content.locktoken using a LOCK request.
+
+--------------
+davlib.DavFS()
+--------------
+
+High level implementation of a WebDAV client
+
+
+davlib.DavFS.initialize(host, port, protocol)
+---------------------------------------------
+
+davlib.DavFS.read(path, handler, context)
+-----------------------------------------
+
+get the contents of a file 
+    
+when done, handler is called with 2 arguments, the status code
+and the content, optionally in context <context>
+
+davlib.DavFS.write(path, content, handler, context, locktoken)
+--------------------------------------------------------------
+
+write the new contents of an existing or new file
+
+when done handler will be called with one argument,
+the status code of the response, optionally in context
+<context>
+
+davlib.DavFS.remove(path, handler, context, locktoken)
+------------------------------------------------------
+
+remove a file or directory recursively from the fs
+
+when done handler will be called with one argument,
+the status code of the response, optionally in context
+<context>
+
+when the status code is 'Multi-Status', the handler will
+get a second argument passed in, which is a parsed tree of
+the multi-status response body
+
+davlib.DavFS.mkDir(path, handler, context, locktoken)
+-----------------------------------------------------
+
+create a dir (collection)
+    
+when done, handler is called with 2 arguments, the status code
+and the content, optionally in context <context>
+
+davlib.DavFS.copy(path, topath, handler, context, overwrite, locktoken)
+-----------------------------------------------------------------------
+
+copy an item (resource or collection) to another location
+    
+when done, handler is called with 1 argument, the status code,
+optionally in context <context>
+
+davlib.DavFS.move(path, topath, handler, context, locktoken)
+------------------------------------------------------------
+
+move an item (resource or collection) to another location
+    
+when done, handler is called with 1 argument, the status code,
+optionally in context <context>
+
+davlib.DavFS.listDir(path, handler, context, cached)
+----------------------------------------------------
+
+list the contents of a collection
+    
+when done, handler is called with 2 arguments, the status code
+and an array with filenames, optionally in context <context>
+
+davlib.DavFS.getProps(path, handler, context, cached)
+-----------------------------------------------------
+
+get the value of one or more properties
+
+davlib.DavFS.setProps(path, setprops, delprops, handler, context, locktoken)
+----------------------------------------------------------------------------
+
+davlib.DavFS.lock(path, owner, handler, context, scope, type, depth, timeout, locktoken)
+----------------------------------------------------------------------------------------
+
+Lock an item
+
+when done, handler is called with 2 arguments, the status code
+and an array with filenames, optionally in context <context>
+
+optional args:
+
+<owner> is a URL that identifies the owner, <type> can currently 
+only be 'write' (according to the DAV specs), <depth> should be 
+either 1 or 'Infinity' (default), timeout is in seconds and
+locktoken is the result of a previous lock (serves to refresh a 
+lock)
+
+davlib.DavFS.unlock(path, locktoken, handler, context)
+------------------------------------------------------
+
+Release a lock from an item
+
+when done, handler is called with 1 argument, the status code,
+optionally in context <context>
+
+<locktoken> is a lock token returned by a previous DavFS.lock()
+call
+
+----------------------------
+davlib.Resource(href, props)
+----------------------------
+
+a single resource in a multi-status tree
+
+davlib.Resource.items = []
+davlib.Resource.properties = #0={}

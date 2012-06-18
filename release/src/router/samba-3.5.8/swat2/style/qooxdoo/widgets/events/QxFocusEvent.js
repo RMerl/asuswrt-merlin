@@ -1,0 +1,2 @@
+/* Copyright (c): 2002-2005 (Germany): United Internet, 1&1, GMX, Schlund+Partner, Alturo */
+function QxFocusEvent(eType,autoDispose){QxEvent.call(this,eType,autoDispose);if(eType=="focusin"||eType=="focusout"){this._bubbles=true;this._propagationStopped=false;};};QxFocusEvent.extend(QxEvent,"QxFocusEvent");

@@ -1,0 +1,415 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 4] Disk Shares </title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:31:52Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch03_03.html" TITLE="3.3 An Introduction to SMB/CIFS">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 3.3 An Introduction to SMB/CIFS" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+Chapter 4</font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_02.html" TITLE="4.2 Special Sections">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.2 Special Sections" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div class="samplechapter">
+<H1 CLASS="chapter">
+<A CLASS="title" NAME="ch04-21486">
+4. Disk Shares </a></h1><DIV CLASS="htmltoc">
+<P>
+<B>
+Contents:</b><br>
+<A CLASS="sect1" HREF="#ch04-76968" TITLE="4.1 Learning the Samba Configuration File">
+Learning the Samba Configuration File</a><br>
+<A CLASS="sect1" HREF="ch04_02.html" TITLE="4.2 Special Sections">
+Special Sections</a><br>
+<A CLASS="sect1" HREF="ch04_03.html" TITLE="4.3 Configuration File Options">
+Configuration File Options</a><br>
+<A CLASS="sect1" HREF="ch04_04.html" TITLE="4.4 Server Configuration">
+Server Configuration</a><br>
+<A CLASS="sect1" HREF="ch04_05.html" TITLE="4.5 Disk Share Configuration">
+Disk Share Configuration</a><br>
+<A CLASS="sect1" HREF="ch04_06.html" TITLE="4.6 Networking Options with Samba">
+Networking Options with Samba</a><br>
+<A CLASS="sect1" HREF="ch04_07.html" TITLE="4.7 Virtual Servers">
+Virtual Servers</a><br>
+<A CLASS="sect1" HREF="ch04_08.html" TITLE="4.8 Logging Configuration Options">
+Logging Configuration Options</a></p><P>
+</p></div><P CLASS="para">In the previous three chapters, we showed you how to install Samba on a Unix server and set up Windows clients to use a simple disk share. This chapter will show you how Samba can assume more productive roles on your network.</p><P CLASS="para">
+Samba's daemons, <EM CLASS="emphasis">
+smbd</em> and <EM CLASS="emphasis">
+nmbd</em>, are controlled through a single ASCII file, <I CLASS="filename">
+smb.conf</i>, that can contain over 200 unique options. These options define how Samba reacts to the network around it, including everything from simple permissions to encrypted connections and NT domains. The next five chapters are designed to help you get familiar with this file and its options. Some of these options you will use and change frequently; others you may never use&nbsp;- it all depends on how much functionality you want Samba to offer its clients.</p><P CLASS="para">
+This chapter introduces the structure of the Samba configuration file and shows you how to use these options to create and modify disk shares. Subsequent chapters will discuss browsing, how to configure users, security, domains, and printers, and a host of other myriad topics that you can implement with Samba on your network.</p><DIV CLASS="sect1">
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="s1"></a>
+<A CLASS="title" NAME="ch04-76968">
+4.1 Learning the Samba Configuration File</a></h2><P CLASS="para">
+<I CLASS="filename">
+</i>Here is an <I CLASS="filename">
+</i>example of a Samba configuration file. If you have worked with a Windows .INI file, the structure of the <I CLASS="filename">
+smb.conf </i> file should look very familiar: </p><PRE CLASS="programlisting">
+[global] 
+	log level = 1 
+	max log size = 1000
+	socket options = TCP_NODELAY IPTOS_LOWDELAY 
+	guest ok = no
+[homes] 
+	browseable = no
+	map archive = yes
+[printers] 
+	path = /usr/tmp
+	guest ok = yes
+	printable = yes
+	min print space = 2000
+[test]
+	browseable = yes
+	read only = yes
+	guest ok = yes
+	path = /export/samba/test</pre><P CLASS="para">
+Although you may not understand the contents yet, this is a good configuration file to grab if you're in a hurry. (If you're not, we'll create a new one from scratch shortly.) In a nutshell, this configuration file sets up basic debug logging in a default log file not to exceed 1MB, optimizes TCP/IP socket connections between the Samba server and any SMB clients, and allows Samba to create a disk share for each user that has a standard Unix account on the server. In addition, each of the printers registered on the server will be publicly available, as will a single read-only share that maps to the <I CLASS="filename">
+/export/samba/test</i> directory. The last part of this file is similar to the disk share you used to test Samba in <a href="ch02_01.html"><b>Chapter 2, <CITE CLASS="chapter">Installing Samba on a Unix System</cite></b></a>.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-52415">
+4.1.1 Configuration File Structure</a></h3><P CLASS="para">
+<I CLASS="filename">
+</i>Let's take another look at this configuration file, this time from a higher level:</p><PRE CLASS="programlisting">
+[global] 
+	...
+[homes] 
+	...
+[printers] 
+	...
+[test] 
+	...</pre><P CLASS="para">
+The names inside the square brackets delineate unique sections of the <I CLASS="filename">
+smb.conf</i> file; each section names the <I CLASS="firstterm">
+share</i> (or service) that the section refers to. For example, the <CODE CLASS="literal">
+[test]</code> and <CODE CLASS="literal">
+[homes]</code> sections are each unique disk shares; they contain options that map to specific directories on the Samba server. The <CODE CLASS="literal">
+[printers]</code> share contains options that map to various printers on the server. All the sections defined in the <I CLASS="filename">
+smb.conf</i> file, with the exception of the <CODE CLASS="literal">
+[global]</code> section, will be available as a disk or printer share to clients connecting to the Samba server.</p><P CLASS="para">
+The remaining lines are individual configuration options unique to that share. These options will continue until a new bracketed section is encountered, or until the end of the file is reached. Each configuration option follows a simple format:</p><PRE CLASS="programlisting"><CODE CLASS="replaceable"><I>option</i></code> = <CODE CLASS="replaceable"><I>value</i></code></pre><P CLASS="para">
+Options in the <I CLASS="filename">
+smb.conf</i> file are set by assigning a value to them. We should warn you up front that some of the option names in Samba are poorly chosen. For example, <CODE CLASS="literal">
+read</code> <CODE CLASS="literal">
+only</code> is self-explanatory, and is typical of many recent Samba options. <CODE CLASS="literal">
+public</code> is an older option, and is vague; it now has a less-confusing synonym <CODE CLASS="literal">
+guest</code> <CODE CLASS="literal">
+ok</code> (may be accessed by guests). We describe some of the more common historical names in this chapter in sections that highlight each major task. In addition, <a href="appc_01.html"><b>Appendix C, <CITE CLASS="appendix">Samba Configuration Option Quick Reference</cite></b></a>, contains an alphabetical index of all the configuration options and their meanings.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-955562">
+4.1.1.1 Whitespaces, quotes, and commas</a></h4><P CLASS="para">
+An important item to remember about configuration options is that all whitespaces in the <CODE CLASS="replaceable">
+<I>
+value</i></code> are significant. For example, consider the following option:</p><PRE CLASS="programlisting">
+volume = The Big Bad Hard Drive Number 3543</pre><P CLASS="para">
+Samba strips away the spaces between the final <CODE CLASS="literal">
+e</code> in <CODE CLASS="literal">
+volume</code> and the first <CODE CLASS="literal">
+T</code> in <CODE CLASS="literal">
+The</code>. These whitespaces are insignificant. The rest of the whitespaces are significant and will be recognized and preserved by Samba when reading in the file. Space is not significant in option names (such as <CODE CLASS="literal">
+guest</code> <CODE CLASS="literal">
+ok</code>), but we recommend you follow convention and keep spaces between the words of options.</p><P CLASS="para">
+If you feel safer including quotation marks at the beginning and ending of a configuration option's value, you may do so. Samba will ignore these quotation marks when it encounters them. Never use quotation marks around an option itself; Samba will treat this as an error.</p><P CLASS="para">
+Finally, you can use whitespaces to separate a series of values in a list, or you can use commas. These two options are equivalent:</p><PRE CLASS="programlisting">
+netbios aliases = sales, accounting, payroll
+netbios aliases = sales accounting payroll</pre><P CLASS="para">
+In some values, however, you must use one form of separation&nbsp;- spaces in some cases, commas in others.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-960466">
+4.1.1.2 Capitalization</a></h4><P CLASS="para">Capitalization is not important in the Samba configuration file except in locations where it would confuse the underlying operating system. For example, let's assume that you included the following option in a share that pointed to <I CLASS="filename">
+/export/samba/simple </i>:</p><PRE CLASS="programlisting">
+PATH = /EXPORT/SAMBA/SIMPLE</pre><P CLASS="para">
+Samba would have no problem with the <CODE CLASS="literal">
+path</code> configuration option appearing entirely in capital letters. However, when it tries to connect to the given directory, it would be unsuccessful because the Unix filesystem in the underlying operating system <EM CLASS="emphasis">
+is</em> case sensitive. Consequently, the path listed would not be found and clients would be unable to connect to the share.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-960474">
+4.1.1.3 Line continuation</a></h4><P CLASS="para">
+You can continue a line in the Samba configuration file using the backslash, as follows:</p><PRE CLASS="programlisting">
+comment = The first share that has the primary copies \
+          of the new Teamworks software product.</pre><P CLASS="para">
+Because of the backslash, these two lines will be treated as one line by Samba. The second line begins at the first non-whitespace character that Samba encounters; in this case, the <CODE CLASS="literal">
+o</code> in <CODE CLASS="literal">
+of</code>.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-955588">
+4.1.1.4 Comments</a></h4><P CLASS="para">
+You can insert comments in the <I CLASS="filename">
+smb.conf</i> configuration file by preceding a line with either a hash mark (#) or a semicolon (;). Both characters are equivalent. For example, the first three lines in the following example would be considered comments:</p><PRE CLASS="programlisting">
+#  This is the printers section. We have given a minimum print 
+;  space of 2000 to prevent some errors that we've seen when
+;  the spooler runs out of space.
+
+[printers] 
+	public = yes
+	min print space = 2000</pre><P CLASS="para">
+Samba will ignore all comment lines in its configuration file; there are no limitations to what can be placed on a comment line after the initial hash mark or semicolon. Note that the line continuation character (<CODE CLASS="literal">\</code>) will <EM CLASS="emphasis">
+not</em> be honored on a commented line. Like the rest of the line, it is ignored.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-955563">
+4.1.1.5 Changes at runtime</a></h4><P CLASS="para">You can modify the <I CLASS="filename">
+smb.conf</i> configuration file and any of its options at any time while the Samba daemons are running. By default, Samba checks the configuration file every 60 seconds for changes. If it finds any, the changes are immediately put into effect. If you don't wish to wait that long, you can force a reload by either sending a SIGHUP signal to the <EM CLASS="emphasis">
+smbd</em> and <EM CLASS="emphasis">
+nmbd</em> processes, or simply restarting the daemons.</p><P CLASS="para">
+For example, if the <EM CLASS="emphasis">
+smbd</em> process was 893, you could force it to reread the configuration file with the following command:</p><PRE CLASS="programlisting">
+<B CLASS="emphasis.bold"><CODE CLASS="literal">#</code> kill -SIGHUP 893</b></pre><P CLASS="para">
+Not all changes will be immediately recognized by clients. For example, changes to a share that is currently in use will not be registered until the client disconnects and reconnects to that share. In addition, server-specific parameters such as the workgroup or NetBIOS name of the server will not register immediately either. This keeps active clients from being suddenly disconnected or encountering unexpected access problems while a session is open.<I CLASS="filename">
+</i> </p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-87365">
+4.1.2 Variables</a></h3><P CLASS="para">
+<I CLASS="filename">
+</i>Samba includes a complete set of variables for determining characteristics of the Samba server and the clients to which it connects. Each of these variables begins with a percent sign, followed by a single uppercase or lowercase letter, and can be used only on the right side of a configuration option (e.g., after the equal sign):</p><PRE CLASS="programlisting">
+[pub]
+    path = /home/ftp/pub/%a </pre><P CLASS="para">
+The <CODE CLASS="literal">
+%a</code> stands for the client machine's architecture (e.g., <CODE CLASS="literal">
+WinNT</code> for Windows NT, <CODE CLASS="literal">
+Win95</code> for Windows 95 or 98, or <CODE CLASS="literal">
+WfWg</code> for Windows for Workgroups). Because of this, Samba will assign a unique path for the <CODE CLASS="literal">
+[pub]</code> share to client machines running Windows NT, a different path for client machines running Windows 95, and another path for Windows for Workgroups. In other words, the paths that each client would see as its share differ according to the client's architecture, as follows:</p><PRE CLASS="programlisting">
+/home/ftp/pub/WinNT
+/home/ftp/pub/Win95
+/home/ftp/pub/WfWg</pre><P CLASS="para">
+Using variables in this manner comes in handy if you wish to have different users run custom configurations based on their own unique characteristics or conditions. Samba has 19 variables, as shown in <A CLASS="xref" HREF="ch04_01.html#ch04-10883">
+Table 4.1</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch04-10883">
+Table 4.1: Samba Variables </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Variable</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Definition</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<B CLASS="emphasis.bold">Client variables</b></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%a</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<I CLASS="filename">
+</i>Client's architecture (e.g., Samba, WfWg, WinNT, Win95, or UNKNOWN)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%I</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Client's IP address (e.g., 192.168.220.100)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">%m</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Client's NetBIOS name</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%M</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Client's DNS name</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<B CLASS="emphasis.bold">User variables</b></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%g</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Primary group of <CODE CLASS="literal">
+%u</code></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%G</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Primary group of <CODE CLASS="literal">
+%U</code></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%H</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Home directory of <CODE CLASS="literal">
+%u</code></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%u</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Current Unix username</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%U</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Requested client username (not always used by Samba)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<B CLASS="emphasis.bold">
+Share variables</b></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%p</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Automounter's path to the share's root directory, if different from <CODE CLASS="literal">
+%P</code></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%P</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Current share's root directory</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%S</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Current share's name</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<B CLASS="emphasis.bold">
+Server variables</b></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%d</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Current server process ID</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%h</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Samba server's DNS hostname</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%L</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Samba server's NetBIOS name</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%N</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Home directory server, from the automount map</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%v</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Samba version</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<B CLASS="emphasis.bold">
+Miscellaneous variables</b></p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%R</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+The SMB protocol level that was negotiated</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%T</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+The current date and time</p></td></tr></tbody></table><P CLASS="para">Here's another example of using variables: let's say that there are five clients on your network, but one client, <CODE CLASS="literal">
+fred</code>, requires a slightly different <CODE CLASS="literal">
+[homes]</code> configuration loaded when it connects to the Samba server. With Samba, it's simple to attack such a problem: </p><PRE CLASS="programlisting">
+[homes] 
+	...
+	include = /usr/local/samba/lib/smb.conf.%m
+	...</pre><P CLASS="para">
+The <CODE CLASS="literal">
+include</code> option here causes a separate configuration file for each particular NetBIOS machine (<CODE CLASS="literal">%m</code>) to be read in addition to the current file. If the hostname of the client machine is <CODE CLASS="literal">
+fred</code>, and if a <I CLASS="filename">
+smb.conf.fred</i> file exists in the <CODE CLASS="replaceable">
+<I>
+samba_dir</i></code><I CLASS="filename">
+/lib/</i> directory (or whatever directory you've specified for your configuration files), Samba will insert that configuration file into the default one. If any configuration options are restated in <I CLASS="filename">
+smb.conf.fred</i>, those values will override any options previously encountered in that share. Note that we say "previously." If any options are restated in the main configuration file after the <CODE CLASS="literal">
+include</code> option, Samba will honor those restated values for the share in which they are defined.</p><P CLASS="para">
+Here's the important part: if there is no such file, Samba will not generate an error. In fact, it won't do anything at all. This allows you to create only one extra configuration file for <CODE CLASS="literal">
+fred</code> when using this strategy, instead of one for each NetBIOS machine that is on the network.</p><P CLASS="para">
+Machine-specific configuration files can be used both to customize particular clients and to make debugging Samba easier. Consider the latter; if we have one client with a problem, we can use this approach to give it a private log file with a more verbose logging level. This allows us to see what Samba is doing without slowing down all the other clients or overflowing the disk with useless logs. Remember, with large networks you may not always have the option to restart the Samba server to perform debugging!</p><P CLASS="para">
+You can use each of the variables in <A CLASS="xref" HREF="ch04_01.html#ch04-10883">
+Table 4.1</a> to give custom values to a variety of Samba options. We will highlight several of these options as we move through the next few chapters.<I CLASS="filename">
+</i> </p></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch03_03.html" TITLE="3.3 An Introduction to SMB/CIFS">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 3.3 An Introduction to SMB/CIFS" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_02.html" TITLE="4.2 Special Sections">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.2 Special Sections" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+3.3 An Introduction to SMB/CIFS</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+4.2 Special Sections</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

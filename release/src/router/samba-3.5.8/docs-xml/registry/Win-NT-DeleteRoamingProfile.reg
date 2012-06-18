@@ -1,0 +1,11 @@
+REGEDIT4
+
+;Contributor:   John H Terpstra
+;Updated:	December 17, 2002
+;Status:	Current
+;
+;Subject:	Registry file update to delete roaming profiles on logout
+
+[HKEY_LOCAL_MACHINE\SYSTEM\Software\Microsoft\Windows NT\CurrentVersion\winlogon]
+"DeleteRoamingCache"=dword:00000001
+

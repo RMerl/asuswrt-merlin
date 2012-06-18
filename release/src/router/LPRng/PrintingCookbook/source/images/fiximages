@@ -1,0 +1,59 @@
+#!/bin/sh
+
+# hwmax = HTML or PNG
+hwmax=400
+# pwmax = EPS
+pwmax=350
+a="0.75"
+usage() {
+	echo "use: $0 [-p width] [-h width] [ -a aspect ratio ] [files]"
+	echo "  -h width   - set the PNG or HTML width (default $hwmax)"
+	echo "  -p width   - set the PostScript or EPS width (default $pwmax)"
+	echo "  -a aspect ratio   - set the height to width aspect ration (default $a)"
+	echo "  files - default *.png"
+}
+
+while [ "$1" != "" ] ; do
+	case "$1" in
+	-h ) hwmax="$2"; shift ;;
+	-p ) pwmax="$2"; shift ;;
+	-a ) a="$2"; shift ;;
+	-* ) usage;;
+	* ) break;;
+	esac
+	shift
+done
+
+if [ "$1" = "" ] ; then set -- *.png ; fi
+
+echo FILES "$@"
+echo "using hwmax $hwmax, pwmax $pwmax, aspect ratio $a"
+scale(){
+	# echo "scale $1 $2 $3"
+	f=`echo $1 | sed -e 's/\.png//'`
+	w=$2
+	h=$3
+	s=100
+	t=100
+    hmax=`perl -e "print int (  $a * $hwmax ); "`
+	if [ $w -gt $hwmax ] ; then s=`expr "$hwmax" "*" "100" "/" "$w"`; echo "$1 width scale $s"; fi
+	if [ $h -gt $hmax ] ; then t=`expr "$hmax" "*" "100" "/" "$h"`; echo "$1 height scale $t"; fi
+	if [ $s -gt $t ] ; then s=$t; fi
+	echo "HTML $1 scale by $s";
+	convert -frame 6x6 -mattecolor "#ccc" -geometry "$s%" $1 x_$f.png
+	s=100
+	t=100
+    hmax=`perl -e "print int (  $a * $pwmax ); "`
+	if [ $w -gt $pwmax ] ; then s=`expr "$pwmax" "*" "100" "/" "$w"`; echo "$1 width scale $s"; fi
+	if [ $h -gt $hmax ] ; then t=`expr "$hmax" "*" "100" "/" "$h"`; echo "$1 height scale $t"; fi
+	if [ $s -gt $t ] ; then s=$t; fi
+	echo "EPS $1 scale by $s";
+	convert -frame 6x6 -mattecolor "#ccc" -geometry "$s%" $1 x_$f.eps
+}
+
+for i in "$@" ; do
+	case $i in
+	x_*.png ) ;;
+	*.png ) echo $i; scale `identify -format "%f %w %h" $i` ;;
+	esac
+done

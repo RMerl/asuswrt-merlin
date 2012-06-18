@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# This script is called with the following parameters:
+# interface tty speed local-address remote-address ipparam
+#
+
+
+# Kill the router advertisement daemon on this interface.
+# The killing procedure is copied from RedHat 6.0 initscripts.
+
+DEVICE=$1
+
+PIDFILE=/var/run/radvd-$DEVICE.pid
+
+[ -f $PIDFILE ] || exit 0
+
+PID=`cat $PIDFILE`
+if [ "$PID" != "" ]; then
+    if ps h $PID >/dev/null 2>&1; then
+	kill -TERM $PID
+	usleep 10000
+	if ps h $PID >/dev/null 2>&1; then
+	    sleep 1
+	    if ps h $PID >/dev/null 2>&1; then
+		kill -KILL $PID
+	    fi
+	fi
+    fi
+fi
+
+rm -f $PIDFILE

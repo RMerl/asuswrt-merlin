@@ -1,0 +1,4 @@
+This matches if a specific /proc filename is '0' or '1'.
+.TP
+.BR "--condition " "[!] \fIfilename"
+Match on boolean value stored in /proc/net/ip6t_condition/filename file

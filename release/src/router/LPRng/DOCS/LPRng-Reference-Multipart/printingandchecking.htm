@@ -1,0 +1,226 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Printing a File and Checking Status</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title="Restoring Original Configuration"
+    href="restoring.htm">
+    <link rel="NEXT" title="Selecting the Print Queue" href=
+    "selectingprintqueue.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "restoring.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "selectingprintqueue.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="PRINTINGANDCHECKING">4.5. Printing
+      a File and Checking Status</a></h1>
+
+      <p>Try the following commands. The commands appear after the
+      prompt, and sample output that you might see is shown.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1896"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {104} %</samp> <kbd class=
+"USERINPUT">lpr -V /tmp/hi</kbd>
+    Version LPRng-3.6.14
+    sending job 'papowell@h4+238' to lp@localhost
+    connecting to 'localhost', attempt 1
+    connected to 'localhost'
+    requesting printer lp@localhost
+    sending control file 'cfA238h4.private' to lp@localhost
+    completed sending 'cfA238h4.private' to lp@localhost
+    sending data file 'dfA238h4.private' to lp@localhost
+    completed sending 'dfA238h4.private' to lp@localhost
+    done job 'papowell@h4+238' transfer to lp@localhost
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <tt class="COMMAND">lpr -V</tt> (Verbose) option
+      causes <b class="APPLICATION">lpr</b> to print status output.
+      As you can see from the above lines, it first tries to
+      connect to the <b class="APPLICATION">lpd</b> server on host
+      <var class="LITERAL">localhost</var>, then sends a print
+      request (which is accepted), then sends a <span class=
+      "emphasis"><i class="EMPHASIS">control</i></span> file
+      containing information about the job and a <span class=
+      "emphasis"><i class="EMPHASIS">data</i></span> file or files
+      which are copies of the files to be printed.</p>
+
+      <p>If you check the <tt class="FILENAME">/tmp/lp</tt> file
+      and you will find that a copy of <tt class=
+      "FILENAME">/tmp/hi</tt> has been written to it. By default,
+      the <b class="APPLICATION">lpd</b> print spooler acts as a
+      store and forward system, accepting files to be printed,
+      holding them in the print queue, and then forwarding them to
+      the destination system or output device.</p>
+
+      <p>You can use the <b class="APPLICATION">lpq</b> command to
+      view the status of the print job.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1913"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {105} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+     Status: job 'papowell@h4+238' removed at 09:39:03.256
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If you want to see more status information, use <tt class=
+      "COMMAND">lpq -l</tt>, <tt class="COMMAND">lpq -ll</tt>, or
+      even <tt class="COMMAND">lpq -L</tt>. The <var class=
+      "LITERAL">-L</var> provides al<var class="LITERAL">L</var>
+      the status.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1923"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {106} %</samp> <kbd class=
+"USERINPUT">lpq -l</kbd>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+     Status: lp@h4.private: job 'papowell@h4+238' printed at 09:39:03.112
+     Status: job 'papowell@h4+238' removed at 09:39:03.256
+    <samp class="PROMPT">h4: {107} %</samp> <kbd class=
+"USERINPUT">lpq -ll</kbd>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+     Status: finished 'papowell@h4+238', status 'JSUCC' at 09:39:03.108
+     Status: subserver pid 8240 exit status 'JSUCC' at 09:39:03.110
+     Status: lp@h4.private: job 'papowell@h4+238' printed at 09:39:03.112
+     Status: job 'papowell@h4+238' removed at 09:39:03.256
+    <samp class="PROMPT">h4: {108} %</samp> <kbd class=
+"USERINPUT">lpq -L</kbd>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+     Status: subserver pid 8240 starting at 09:39:03.105
+     Status: accounting at start at 09:39:03.105
+     Status: opening device '/tmp/lp' at 09:39:03.105
+     Status: printing job 'papowell@h4+238' at 09:39:03.106
+     Status: no banner at 09:39:03.107
+     Status: printing data file 'dfA238h4.private', size 3 at 09:39:03.107
+     Status: printing done 'papowell@h4+238' at 09:39:03.107
+     Status: accounting at end at 09:39:03.108
+     Status: finished 'papowell@h4+238', status 'JSUCC' at 09:39:03.108
+     Status: subserver pid 8240 exit status 'JSUCC' at 09:39:03.110
+     Status: lp@h4.private: job 'papowell@h4+238' printed at 09:39:03.112
+     Status: job 'papowell@h4+238' removed at 09:39:03.256
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>There are different status formats available as well. The
+      <tt class="COMMAND">lpq -s</tt> (summary) produces a single
+      line of status per spool queue, while the <tt class=
+      "COMMAND">lpq -v</tt> (verbose) produces output that is very
+      suitable for processing with programs such as <b class=
+      "APPLICATION">Perl</b> or <b class="APPLICATION">awk</b>:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1936"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {109} %</samp> <kbd class=
+"USERINPUT">lpq -s</kbd>
+    lp@h4  0 jobs
+    <samp class="PROMPT">h4: {110} %</samp> <kbd class=
+"USERINPUT">lpq -v</kbd>
+    Printer: lp@h4
+     Printing: no
+     Aborted: no
+     Spooling: no
+     Queue: no printable jobs in queue
+     SPOOLCONTROL=
+     Status: subserver pid 8240 starting at 09:39:03.105
+     Status: accounting at start at 09:39:03.105
+     Status: opening device '/tmp/lp' at 09:39:03.105
+     Status: printing job 'papowell@h4+238' at 09:39:03.106
+     Status: no banner at 09:39:03.107
+     Status: printing data file 'dfA238h4.private', size 3 at 09:39:03.107
+     Status: printing done 'papowell@h4+238' at 09:39:03.107
+     Status: accounting at end at 09:39:03.108
+     Status: finished 'papowell@h4+238', status 'JSUCC' at 09:39:03.108
+     Status: subserver pid 8240 exit status 'JSUCC' at 09:39:03.110
+     Status: lp@h4.private: job 'papowell@h4+238' printed at 09:39:03.112
+     Status: job 'papowell@h4+238' removed at 09:39:03.256
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If you check the <tt class="FILENAME">/tmp/lp</tt> file
+      and you will find that a copy of <tt class=
+      "FILENAME">/tmp/hi</tt> has been written to it. By default,
+      the <b class="APPLICATION">lpd</b> print spooler acts as a
+      store and forward system, accepting files to be printed,
+      holding them in the print queue, and then forwarding them to
+      the destination system or output device.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "restoring.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "selectingprintqueue.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Restoring
+          Original Configuration</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Selecting the
+          Print Queue</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

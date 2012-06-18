@@ -1,0 +1,101 @@
+diff --git a/pppd/ccp.c b/pppd/ccp.c
+index 5814f35..377c733 100644
+--- a/pppd/ccp.c
++++ b/pppd/ccp.c
+@@ -139,6 +139,9 @@ static option_t ccp_option_list[] = {
+     { "require-mppe-128", o_bool, &ccp_allowoptions[0].mppe,
+       "require MPPE 128-bit encryption", OPT_PRIO | OPT_A2OR | MPPE_OPT_128,
+       &ccp_wantoptions[0].mppe },
++    { "allow-mppe-128", o_bool, &ccp_allowoptions[0].allow_mppe,
++      "require MPPE 128-bit encryption", OPT_PRIO | OPT_A2OR | MPPE_OPT_128,
++      &ccp_wantoptions[0].allow_mppe },
+     { "+mppe-128", o_bool, &ccp_allowoptions[0].mppe,
+       "require MPPE 128-bit encryption",
+       OPT_ALIAS | OPT_PRIO | OPT_A2OR | MPPE_OPT_128,
+@@ -397,7 +400,7 @@ ccp_open(unit)
+      * deciding whether to open in silent mode.
+      */
+     ccp_resetci(f);
+-    if (!ANY_COMPRESS(ccp_gotoptions[unit]))
++    if (!ANY_COMPRESS(ccp_gotoptions[unit]) || ccp_gotoptions[unit].allow_mppe)
+ 	f->flags |= OPT_SILENT;
+ 
+     fsm_open(f);
+@@ -1077,6 +1080,8 @@ ccp_reqci(f, p, lenp, dont_nak)
+     int len, clen, type, nb;
+     ccp_options *ho = &ccp_hisoptions[f->unit];
+     ccp_options *ao = &ccp_allowoptions[f->unit];
++    ccp_options *go = &ccp_gotoptions[f->unit];
++    ccp_options *wo = &ccp_wantoptions[f->unit];
+ #ifdef MPPE
+     bool rej_for_ci_mppe = 1;	/* Are we rejecting based on a bad/missing */
+ 				/* CI_MPPE, or due to other options?       */
+@@ -1103,11 +1108,22 @@ ccp_reqci(f, p, lenp, dont_nak)
+ 	    switch (type) {
+ #ifdef MPPE
+ 	    case CI_MPPE:
+-		if (!ao->mppe || clen != CILEN_MPPE) {
++		if (!(ao->mppe||ao->allow_mppe) || clen != CILEN_MPPE) {
+ 		    newret = CONFREJ;
+ 		    break;
+ 		}
++		
+ 		MPPE_CI_TO_OPTS(&p[2], ho->mppe);
++		
++		if (ao->allow_mppe && !ao->mppe && (ho->mppe&MPPE_OPT_128)){
++		    ao->mppe=ao->allow_mppe;
++		    go->mppe=go->allow_mppe;
++		    wo->mppe=wo->allow_mppe;
++		    ccp_resetci(f);
++		    /*ccp_down(f);
++		    ccp_up(f);
++		    return CONFACK;*/
++		}
+ 
+ 		/* Nak if anything unsupported or unknown are set. */
+ 		if (ho->mppe & MPPE_OPT_UNSUPPORTED) {
+diff --git a/pppd/ccp.h b/pppd/ccp.h
+index 6f4a2fe..7211c74 100644
+--- a/pppd/ccp.h
++++ b/pppd/ccp.h
+@@ -38,6 +38,7 @@ typedef struct ccp_options {
+     bool deflate_correct;	/* use correct code for deflate? */
+     bool deflate_draft;		/* use draft RFC code for deflate? */
+     bool mppe;			/* do MPPE? */
++    bool allow_mppe;			/* do MPPE? */
+     u_short bsd_bits;		/* # bits/code for BSD Compress */
+     u_short deflate_size;	/* lg(window size) for Deflate */
+     short method;		/* code for chosen compression method */
+diff --git a/pppd/fsm.c b/pppd/fsm.c
+index c200cc3..782dd0e 100644
+--- a/pppd/fsm.c
++++ b/pppd/fsm.c
+@@ -435,11 +435,11 @@ fsm_rconfreq(f, id, inp, len)
+ 	f->state = REQSENT;
+ 	break;
+ 
+-    case STOPPED:
+-	/* Negotiation started by our peer */
+-	fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
+-	f->state = REQSENT;
+-	break;
++//    case STOPPED:
++//	/* Negotiation started by our peer */
++//	fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
++//	f->state = REQSENT;
++//	break;
+     }
+ 
+     /*
+@@ -454,6 +454,11 @@ fsm_rconfreq(f, id, inp, len)
+     else
+ 	code = CONFACK;
+ 
++    if (f->state==STOPPED){
++	fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
++	f->state = REQSENT;
++    }
++
+     /* send the Ack, Nak or Rej to the peer */
+     fsm_sdata(f, code, id, inp, len);
+ 

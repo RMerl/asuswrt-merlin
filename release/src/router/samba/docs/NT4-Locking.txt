@@ -1,0 +1,31 @@
+!==
+!== NT4-Locking.txt for Samba release 2.0.10 23 Jun 2001
+!==
+NOTE: The NT Registry changes contained within this file may be injurious to
+the health of your system. Please make ABSOLUTELY sure that you backup the
+original values for each parameter BEFORE you make any changes.
+
+===================================== CUT HERE ================================
+REGEDIT4
+
+;Contributor:   John H Terpstra <jht@samba.org>
+;Updated:	Feb 15, 1999
+;
+;Subject:	Registry Entries That Affect Locking and Caching
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters]
+"BufFilesDenyWrite"=dword:00000000
+"BufNamedPipes"=dword:00000000
+"UseOpportunisticLocking"=dword:00000000
+"DormantFileLimit"=dword:00000000
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters\Linkage]
+"UtilizeNtCaching"=dword:00000000
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Filesystem]
+"Win95TruncateExtensions"=dword:00000000
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LanManServer\Parameters]
+"EnableOpLockForceClose"=dword:00000001
+"EnableOpLocks"=dword:00000000
+

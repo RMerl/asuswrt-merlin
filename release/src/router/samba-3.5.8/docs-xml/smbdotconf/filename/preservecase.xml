@@ -1,0 +1,17 @@
+<samba:parameter name="preserve case"
+                 context="S"
+				 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This controls if new filenames are created with the case that the client passes, or if 
+	they are forced to be the <smbconfoption name="default case"/>.
+	</para>
+	
+	<para>
+	See the section on <link linkend="NAMEMANGLINGSECT">NAME MANGLING</link> for a fuller discussion.
+	</para>
+</description>
+
+<value type="default">yes</value>
+</samba:parameter>

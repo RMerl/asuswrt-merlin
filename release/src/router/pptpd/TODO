@@ -1,0 +1,110 @@
+This is the pptpd project TODO list.
+
+(Note: tasks that are probably easy are marked with a [JJ], which
+means Junior Jobs, following the KDE tradition suggested by Adriaan de
+Groot in May 2004.)
+
+20060714-1, 1.3.2, bcrelay is built even if --enable-bcrelay is not used.
+
+20050105-1, 1.2.1, denial of service, for ten seconds (or --stimeout)
+the pptpd will not process further connections while it waits for a
+client to send data.  The second select() will prevent any further
+accept() calls.  To be tested.
+
+20041108-0, 1.2.1, vpnstats does not parse RHEL3 log output
+successfully.  It also creates a cron.weekly entry that is not removed
+when the package is removed.  Yet to test if vpnstats.pl works okay.
+[JJ]
+
+20040811-0, 1.2.1, RFC2637 timers IDLE_WAIT and MAX_ECHO_WAIT, in
+pptpdefs.h, make these configurable, requested by Tobias Brox.  [JJ]
+
+20040623-0, 1.2.1, "Plugin /usr/lib/pptpd/pptpd-logwtmp.so is for pppd
+version 2.4.2, this is 2.4.3" happens if pppd 2.4.3 is installed, or
+vice versa if 2.4.2 is installed.  [JJ] Workaround on common
+distributions is to use makepackage instead of "make install".
+pptpd.init is also affected, as it has a hardcoded path to pptpd.
+Configure script should detect or accept version of pppd to build
+against.
+
+20040521-4, 1.2.0-b3, running on Fedora Core 1, kernel ? , when a
+connection arrives a warning is issued by the kernel "application bug:
+pptpctrl($PID) has SIGCHLD set to SIG_IGN but calls wait().  (see the
+NOTES section of 'man 2 wait').  Workaround activated."
+
+20040521-0, 1.2.0-b3, write bcrelay man page.  (Debian lintian for
+pptpd 1.1.4-0b4-1)  [JJ]
+
+feature: nuke prior login by user, by writing a new pppd plugin.
+
+feature: prevent login by user if prior login still in progress, using
+pppd plugin that captures old hook and re-uses it, during chap auth.
+
+20040428-7, CVS HEAD, minor, pptpctrl.c refers to hard coded path
+/usr/lib/pptpd/pptpd-logwtmp.so instead of path derived from prefix
+given to configure script.  also, the rpm build fails if not run in a
+fakeroot.
+
+review debian bug reports for pptpd package
+http://bugs.debian.org/pptpd
+
+20040426-0 bug: terminating immediately on CALL_CLR_RQST from client
+(1.2.0-b3) may violate the RFC, but was done to fix zombie pppd, Bruno
+will try older version to gather system state information to see why
+it happened, but there is indeed a design defect that doesn't reap
+(wait() on the PID of) the pppd it had previously forked.  it probably
+isn't right to simply kill() the pppd until it has had a chance to
+finish up, e.g. ip-down scripts.  context is pptpctrl.c.  on the other
+hand, if a stop control connection request arrives, are the active
+connections supposed to be closed; there are reports of pppd living
+on.
+
+minor bug: pptpctrl.c:302 (1.11) there is a test for absolute file
+descriptor numbers, which is probably not portable.
+
+bug: 1.2.0-b3 configfile.c opens, reads and closes /etc/pptpd.conf as
+many times as there are possible option values, and only returns the
+first match for a keyword, not the last.
+
+20030214, ignore EPERM on GRE write for a short time in case netfilter
+is being adjusted by ip-up scripts, Bug #181005.
+
+20030801, 1.1.3, XP seems to need mtu negotiation 4 lower than
+serverside.  MS PPTP-server handles this correctly.
+
+20030620, 1.1.3, PPTP daemon waiting for infinite time if the
+pptpd.conf file does not have a new line character at the EOF. So we
+need a config-check routine. It is allready there, but it seems to
+output to stdout.
+
+20030611, 1.1.3, pptpd incorrectly hides all pppd error output.  This
+is a defect and should be fixed. It apparently doesn't even wait for
+and report the pppd exit status.
+
+20030526, 1.1.3, Make choice between slirp, pppd and BSD userspace
+PPPD a runtime one instead of compile time.
+
+20030218, 1.1.3, ask IP-info from a real DHCP-server. It is possible
+to get a Radius-server to do this.
+
+20030128, 1.1.3, Make the logentries more verbose, so that they
+actually mean something to the admins.
+
+20021220, 1.1.3, Add a way to define pools for different usergroups.
+
+19990802, 1.1.3, We don't actually implement any kind of window
+protocol, congestion control, etc, etc.  Very simple algorithm which
+works well on LANs and good performance links but could be improved
+for slow distant dialups/bad routing and links.
+
+19990705, 1.1.3, PNS mode and all things which go with it aren't
+supported properly.  We're only an IP tunnelling PAC, and our clients
+act as a PNS, as per the draft.  We may implement PNS mode and related
+things like multiple calls from one client IP in the future
+(post-1.0).
+
+19990413, 1.1.3, SET LINK INFO (CTRL Message 15) is not fully
+implemented. This doesn't cause any problem with Win95/98/NT or Linux
+clients.  NT clients send a default set of ACCMs which we validate and
+ignore, the others don't send anything.  Probably fine for all IP
+tunneling clients (post-1.0).

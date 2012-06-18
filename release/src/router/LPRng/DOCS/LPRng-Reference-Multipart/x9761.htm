@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Accessing Printer Hardware Pagecounters</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Accounting " href="accountingref.htm">
+    <link rel="PREVIOUS" title="Authorization and Quotas" href=
+    "x9736.htm">
+    <link rel="NEXT" title="Reliable Accounting" href="x9772.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x9736.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          18. Accounting</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x9772.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN9761">18.5. Accessing Printer
+      Hardware Pagecounters</a></h1>
+
+      <p>The following is from Hewlett-Packard documentation, <a
+      href=
+      "http://www.hp.com/cposupport/printers/support_doc/bpl02119.html"
+       target=
+      "_top">http://www.hp.com/cposupport/printers/support_doc/bpl02119.html</a></p>
+
+      <p>All HP LaserJet 4/5/6 family printers have a page count
+      feature built into the firmware. However, this feature works
+      differently depending on which HP LaserJet printer is being
+      used. The following is a description of how the page count
+      feature works for each printer within the HP LaserJet 4/5/6
+      printer families.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN9766"></a>
+<pre class="SCREEN">
+    HP LaserJet 4/4M printers
+    HP LaserJet 4 Plus/4M Plus printers
+    HP LaserJet 4P/4MP printers
+    HP LaserJet 4Si/4Si MX printers
+    HP LaserJet 4ML printers
+    HP LaserJet 5P/5MP printers
+    HP LaserJet 6P/6MP printers
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>All of the above printers use the same method for keeping
+      track of the number of copies. There are really two different
+      page count values: Primary and Secondary values. Every time a
+      page is printed, whether it is an internal job (such as a
+      self-test) or a standard print job, the Secondary page count
+      increases by one. This value is stored in standard RAM. Once
+      the Secondary page count value reaches 10, the Primary page
+      count will increase by 10. The Primary page count value is
+      stored in a type of memory called NVRAM (Non-Volatile RAM).
+      This is important, since NVRAM is not cleared when the
+      printer is powered off. Standard RAM, on the other hand, is
+      cleared when the printer is turned off or reset. Thus, the
+      Primary page count only increases in increments of 10.</p>
+
+      <p>Example</p>
+
+      <p>You have a brand new HP LaserJet 6P printer and you print
+      a self-test page. When you look on the test page for the Page
+      Count value, you will see that it says 1. Next, you decide to
+      print a two page letter and, after that, another self-test.
+      The page count value now says 4. Internally, the printers
+      Secondary page count (stored in RAM) has the value of 4 while
+      the Primary page count (stored in NVRAM) still has the value
+      of 0. Now, you turn the printer off, then back on, and print
+      another self-test. The page count value again says 1 since
+      the previous value of 4, stored in RAM, was cleared when the
+      printer was powered off. Finally, print a ten page document
+      and then turn the printer off. Upon turning the printer back
+      on and printing out another self test, you see that the page
+      count value is 11. Internally, the Secondary page count value
+      is back at 1 while the Primary page count value (stored in
+      NVRAM) is 10. Added together, you end up with the resulting
+      value seen on the self-test page.</p>
+
+      <p>The HP LaserJet 4L/5L/6L printers differ from that of the
+      other printers in that they do not have any NVRAM available
+      for storing page count values. Thus, no way exists for the
+      printer to retain a page count value once the printer is
+      powered off. The HP LaserJet 4L/5L/6L printers have only a
+      single page count value that increases in increments of one
+      until the printer is powered off.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x9736.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x9772.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Authorization
+          and Quotas</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "accountingref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Reliable
+          Accounting</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

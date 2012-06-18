@@ -1,0 +1,916 @@
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+mainmenu "Linux/PowerPC Kernel Configuration"
+
+config PPC64
+	bool "64-bit kernel"
+	default n
+	help
+	  This option selects whether a 32-bit or a 64-bit kernel
+	  will be built.
+
+config PPC_PM_NEEDS_RTC_LIB
+	bool
+	select RTC_LIB
+	default y if PM
+
+config PPC32
+	bool
+	default y if !PPC64
+
+config 64BIT
+	bool
+	default y if PPC64
+
+config PPC_MERGE
+	def_bool y
+
+config MMU
+	bool
+	default y
+
+config GENERIC_HARDIRQS
+	bool
+	default y
+
+config IRQ_PER_CPU
+	bool
+	default y
+
+config RWSEM_GENERIC_SPINLOCK
+	bool
+
+config RWSEM_XCHGADD_ALGORITHM
+	bool
+	default y
+
+config ARCH_HAS_ILOG2_U32
+	bool
+	default y
+
+config ARCH_HAS_ILOG2_U64
+	bool
+	default y if 64BIT
+
+config GENERIC_HWEIGHT
+	bool
+	default y
+
+config GENERIC_CALIBRATE_DELAY
+	bool
+	default y
+
+config GENERIC_FIND_NEXT_BIT
+	bool
+	default y
+
+config PPC
+	bool
+	default y
+
+config EARLY_PRINTK
+	bool
+	default y
+
+config COMPAT
+	bool
+	default y if PPC64
+
+config SYSVIPC_COMPAT
+	bool
+	depends on COMPAT && SYSVIPC
+	default y
+
+# All PPC32s use generic nvram driver through ppc_md
+config GENERIC_NVRAM
+	bool
+	default y if PPC32
+
+config SCHED_NO_NO_OMIT_FRAME_POINTER
+	bool
+	default y
+
+config ARCH_MAY_HAVE_PC_FDC
+	bool
+	default !PPC_PSERIES || PCI
+
+config PPC_OF
+	def_bool y
+
+config PPC_UDBG_16550
+	bool
+	default n
+
+config GENERIC_TBSYNC
+	bool
+	default y if PPC32 && SMP
+	default n
+
+config AUDIT_ARCH
+	bool
+	default y
+
+config GENERIC_BUG
+	bool
+	default y
+	depends on BUG
+
+config SYS_SUPPORTS_APM_EMULATION
+	default y if PMAC_APM_EMU
+	bool
+
+config DEFAULT_UIMAGE
+	bool
+	help
+	  Used to allow a board to specify it wants a uImage built by default
+	default n
+
+config PPC64_SWSUSP
+	bool
+	depends on PPC64 && (BROKEN || (PPC_PMAC64 && EXPERIMENTAL))
+	default y
+
+menu "Processor support"
+choice
+	prompt "Processor Type"
+	depends on PPC32
+	default 6xx
+
+config CLASSIC32
+	bool "52xx/6xx/7xx/74xx"
+	select PPC_FPU
+	select 6xx
+	help
+	  There are four families of PowerPC chips supported.  The more common
+	  types (601, 603, 604, 740, 750, 7400), the Motorola embedded
+	  versions (821, 823, 850, 855, 860, 52xx, 82xx, 83xx), the AMCC
+	  embedded versions (403 and 405) and the high end 64 bit Power
+	  processors (POWER 3, POWER4, and IBM PPC970 also known as G5).
+
+	  This option is the catch-all for 6xx types, including some of the
+	  embedded versions.  Unless there is see an option for the specific
+	  chip family you are using, you want this option.
+	  
+	  You do not want this if you are building a kernel for a 64 bit
+	  IBM RS/6000 or an Apple G5, choose 6xx.
+	  
+	  If unsure, select this option
+	  
+	  Note that the kernel runs in 32-bit mode even on 64-bit chips.
+
+config PPC_82xx
+	bool "Freescale 82xx"
+	select 6xx
+	select PPC_FPU
+
+config PPC_83xx
+	bool "Freescale 83xx"
+	select 6xx
+	select FSL_SOC
+	select 83xx
+	select PPC_FPU
+	select WANT_DEVICE_TREE
+
+config PPC_85xx
+	bool "Freescale 85xx"
+	select E500
+	select FSL_SOC
+	select 85xx
+	select WANT_DEVICE_TREE
+
+config PPC_86xx
+	bool "Freescale 86xx"
+	select 6xx
+	select FSL_SOC
+	select FSL_PCIE
+	select PPC_FPU
+	select ALTIVEC
+	help
+	  The Freescale E600 SoCs have 74xx cores.
+
+config PPC_8xx
+	bool "Freescale 8xx"
+	select FSL_SOC
+	select 8xx
+
+config 40x
+	bool "AMCC 40x"
+	select PPC_DCR_NATIVE
+
+config 44x
+	bool "AMCC 44x"
+	select PPC_DCR_NATIVE
+	select WANT_DEVICE_TREE
+
+config E200
+	bool "Freescale e200"
+
+endchoice
+
+config POWER4_ONLY
+	bool "Optimize for POWER4"
+	depends on PPC64
+	default n
+	---help---
+	  Cause the compiler to optimize for POWER4/POWER5/PPC970 processors.
+	  The resulting binary will not work on POWER3 or RS64 processors
+	  when compiled with binutils 2.15 or later.
+
+config POWER3
+	bool
+	depends on PPC64
+	default y if !POWER4_ONLY
+
+config POWER4
+	depends on PPC64
+	def_bool y
+
+config 6xx
+	bool
+
+# this is temp to handle compat with arch=ppc
+config 8xx
+	bool
+
+# this is temp to handle compat with arch=ppc
+config 83xx
+	bool
+
+# this is temp to handle compat with arch=ppc
+config 85xx
+	bool
+
+config E500
+	bool
+
+config PPC_FPU
+	bool
+	default y if PPC64
+
+config PPC_DCR_NATIVE
+	bool
+	default n
+
+config PPC_DCR_MMIO
+	bool
+	default n
+
+config PPC_DCR
+	bool
+	depends on PPC_DCR_NATIVE || PPC_DCR_MMIO
+	default y
+
+config PPC_OF_PLATFORM_PCI
+	bool
+	depends on PPC64 # not supported on 32 bits yet
+	default n
+
+config 4xx
+	bool
+	depends on 40x || 44x
+	default y
+
+config BOOKE
+	bool
+	depends on E200 || E500 || 44x
+	default y
+
+config FSL_BOOKE
+	bool
+	depends on E200 || E500
+	default y
+
+config PTE_64BIT
+	bool
+	depends on 44x || E500
+	default y if 44x
+	default y if E500 && PHYS_64BIT
+
+config PHYS_64BIT
+	bool 'Large physical address support' if E500
+	depends on 44x || E500
+	select RESOURCES_64BIT
+	default y if 44x
+	---help---
+	  This option enables kernel support for larger than 32-bit physical
+	  addresses.  This features is not be available on all e500 cores.
+
+	  If in doubt, say N here.
+
+config ALTIVEC
+	bool "AltiVec Support"
+	depends on CLASSIC32 || POWER4
+	---help---
+	  This option enables kernel support for the Altivec extensions to the
+	  PowerPC processor. The kernel currently supports saving and restoring
+	  altivec registers, and turning on the 'altivec enable' bit so user
+	  processes can execute altivec instructions.
+
+	  This option is only usefully if you have a processor that supports
+	  altivec (G4, otherwise known as 74xx series), but does not have
+	  any affect on a non-altivec cpu (it does, however add code to the
+	  kernel).
+
+	  If in doubt, say Y here.
+
+config SPE
+	bool "SPE Support"
+	depends on E200 || E500
+	default y
+	---help---
+	  This option enables kernel support for the Signal Processing
+	  Extensions (SPE) to the PowerPC processor. The kernel currently
+	  supports saving and restoring SPE registers, and turning on the
+	  'spe enable' bit so user processes can execute SPE instructions.
+
+	  This option is only useful if you have a processor that supports
+	  SPE (e500, otherwise known as 85xx series), but does not have any
+	  effect on a non-spe cpu (it does, however add code to the kernel).
+
+	  If in doubt, say Y here.
+
+config PPC_STD_MMU
+	bool
+	depends on 6xx || POWER3 || POWER4 || PPC64
+	default y
+
+config PPC_STD_MMU_32
+	def_bool y
+	depends on PPC_STD_MMU && PPC32
+
+config PPC_MM_SLICES
+	bool
+	default y if HUGETLB_PAGE
+	default n
+
+config VIRT_CPU_ACCOUNTING
+	bool "Deterministic task and CPU time accounting"
+	depends on PPC64
+	default y
+	help
+	  Select this option to enable more accurate task and CPU time
+	  accounting.  This is done by reading a CPU counter on each
+	  kernel entry and exit and on transitions within the kernel
+	  between system, softirq and hardirq state, so there is a
+	  small performance impact.  This also enables accounting of
+	  stolen time on logically-partitioned systems running on
+	  IBM POWER5-based machines.
+
+	  If in doubt, say Y here.
+
+config SMP
+	depends on PPC_STD_MMU
+	bool "Symmetric multi-processing support"
+	---help---
+	  This enables support for systems with more than one CPU. If you have
+	  a system with only one CPU, say N. If you have a system with more
+	  than one CPU, say Y.  Note that the kernel does not currently
+	  support SMP machines with 603/603e/603ev or PPC750 ("G3") processors
+	  since they have inadequate hardware support for multiprocessor
+	  operation.
+
+	  If you say N here, the kernel will run on single and multiprocessor
+	  machines, but will use only one CPU of a multiprocessor machine. If
+	  you say Y here, the kernel will run on single-processor machines.
+	  On a single-processor machine, the kernel will run faster if you say
+	  N here.
+
+	  If you don't know what to do here, say N.
+
+config NR_CPUS
+	int "Maximum number of CPUs (2-128)"
+	range 2 128
+	depends on SMP
+	default "32" if PPC64
+	default "4"
+
+config NOT_COHERENT_CACHE
+	bool
+	depends on 4xx || 8xx || E200
+	default y
+
+config CONFIG_CHECK_CACHE_COHERENCY
+	bool
+endmenu
+
+source "init/Kconfig"
+
+source "arch/powerpc/platforms/Kconfig"
+
+menu "Kernel options"
+
+config HIGHMEM
+	bool "High memory support"
+	depends on PPC32
+
+source kernel/Kconfig.hz
+source kernel/Kconfig.preempt
+source "fs/Kconfig.binfmt"
+
+# We optimistically allocate largepages from the VM, so make the limit
+# large enough (16MB). This badly named config option is actually
+# max order + 1
+config FORCE_MAX_ZONEORDER
+	int
+	depends on PPC64
+	default "9" if PPC_64K_PAGES
+	default "13"
+
+config MATH_EMULATION
+	bool "Math emulation"
+	depends on 4xx || 8xx || E200 || PPC_MPC832x || E500
+	---help---
+	  Some PowerPC chips designed for embedded applications do not have
+	  a floating-point unit and therefore do not implement the
+	  floating-point instructions in the PowerPC instruction set.  If you
+	  say Y here, the kernel will include code to emulate a floating-point
+	  unit, which will allow programs that use floating-point
+	  instructions to run.
+
+config IOMMU_VMERGE
+	bool "Enable IOMMU virtual merging (EXPERIMENTAL)"
+	depends on EXPERIMENTAL && PPC64
+	default n
+	help
+	  Cause IO segments sent to a device for DMA to be merged virtually
+	  by the IOMMU when they happen to have been allocated contiguously.
+	  This doesn't add pressure to the IOMMU allocator. However, some
+	  drivers don't support getting large merged segments coming back
+	  from *_map_sg(). Say Y if you know the drivers you are using are
+	  properly handling this case.
+
+config HOTPLUG_CPU
+	bool "Support for enabling/disabling CPUs"
+	depends on SMP && HOTPLUG && EXPERIMENTAL && (PPC_PSERIES || PPC_PMAC)
+	---help---
+	  Say Y here to be able to disable and re-enable individual
+	  CPUs at runtime on SMP machines.
+
+	  Say N if you are unsure.
+
+config ARCH_ENABLE_MEMORY_HOTPLUG
+	def_bool y
+
+config KEXEC
+	bool "kexec system call (EXPERIMENTAL)"
+	depends on (PPC_PRPMC2800 || PPC_MULTIPLATFORM) && EXPERIMENTAL
+	help
+	  kexec is a system call that implements the ability to shutdown your
+	  current kernel, and to start another kernel.  It is like a reboot
+	  but it is independent of the system firmware.   And like a reboot
+	  you can start any kernel with it, not just Linux.
+
+	  The name comes from the similarity to the exec system call.
+
+	  It is an ongoing process to be certain the hardware in a machine
+	  is properly shutdown, so do not be surprised if this code does not
+	  initially work for you.  It may help to enable device hotplugging
+	  support.  As of this writing the exact hardware interface is
+	  strongly in flux, so no good recommendation can be made.
+
+config CRASH_DUMP
+	bool "Build a kdump crash kernel (EXPERIMENTAL)"
+	depends on PPC_MULTIPLATFORM && PPC64 && EXPERIMENTAL
+	help
+	  Build a kernel suitable for use as a kdump capture kernel.
+	  The kernel will be linked at a different address than normal, and
+	  so can only be used for Kdump.
+
+	  Don't change this unless you know what you are doing.
+
+config PPCBUG_NVRAM
+	bool "Enable reading PPCBUG NVRAM during boot" if PPLUS || LOPEC
+	default y if PPC_PREP
+
+config IRQ_ALL_CPUS
+	bool "Distribute interrupts on all CPUs by default"
+	depends on SMP && !MV64360
+	help
+	  This option gives the kernel permission to distribute IRQs across
+	  multiple CPUs.  Saying N here will route all IRQs to the first
+	  CPU.  Generally saying Y is safe, although some problems have been
+	  reported with SMP Power Macintoshes with this option enabled.
+
+config NUMA
+	bool "NUMA support"
+	depends on PPC64
+	default y if SMP && PPC_PSERIES
+
+config NODES_SHIFT
+	int
+	default "4"
+	depends on NEED_MULTIPLE_NODES
+
+config ARCH_SELECT_MEMORY_MODEL
+	def_bool y
+	depends on PPC64
+
+config ARCH_FLATMEM_ENABLE
+	def_bool y
+	depends on (PPC64 && !NUMA) || PPC32
+
+config ARCH_SPARSEMEM_ENABLE
+	def_bool y
+	depends on PPC64
+
+config ARCH_SPARSEMEM_DEFAULT
+	def_bool y
+	depends on (SMP && PPC_PSERIES) || PPC_PS3
+
+config ARCH_POPULATES_NODE_MAP
+	def_bool y
+
+source "mm/Kconfig"
+
+config ARCH_MEMORY_PROBE
+	def_bool y
+	depends on MEMORY_HOTPLUG
+
+# Some NUMA nodes have memory ranges that span
+# other nodes.  Even though a pfn is valid and
+# between a node's start and end pfns, it may not
+# reside on that node.  See memmap_init_zone()
+# for details.
+config NODES_SPAN_OTHER_NODES
+	def_bool y
+	depends on NEED_MULTIPLE_NODES
+
+config PPC_HAS_HASH_64K
+	bool
+	depends on PPC64
+	default n
+
+config PPC_64K_PAGES
+	bool "64k page size"
+	depends on PPC64
+	select PPC_HAS_HASH_64K
+	help
+	  This option changes the kernel logical page size to 64k. On machines
+	  without processor support for 64k pages, the kernel will simulate
+	  them by loading each individual 4k page on demand transparently,
+	  while on hardware with such support, it will be used to map
+	  normal application pages.
+
+config SCHED_SMT
+	bool "SMT (Hyperthreading) scheduler support"
+	depends on PPC64 && SMP
+	help
+	  SMT scheduler support improves the CPU scheduler's decision making
+	  when dealing with POWER5 cpus at a cost of slightly increased
+	  overhead in some places. If unsure say N here.
+
+config PROC_DEVICETREE
+	bool "Support for device tree in /proc"
+	depends on PROC_FS
+	help
+	  This option adds a device-tree directory under /proc which contains
+	  an image of the device tree that the kernel copies from Open
+	  Firmware or other boot firmware. If unsure, say Y here.
+
+config CMDLINE_BOOL
+	bool "Default bootloader kernel arguments"
+
+config CMDLINE
+	string "Initial kernel command string"
+	depends on CMDLINE_BOOL
+	default "console=ttyS0,9600 console=tty0 root=/dev/sda2"
+	help
+	  On some platforms, there is currently no way for the boot loader to
+	  pass arguments to the kernel. For these platforms, you can supply
+	  some command-line options at build time by entering them here.  In
+	  most cases you will need to specify the root device here.
+
+if !44x || BROKEN
+source kernel/power/Kconfig
+endif
+
+config SECCOMP
+	bool "Enable seccomp to safely compute untrusted bytecode"
+	depends on PROC_FS
+	default y
+	help
+	  This kernel feature is useful for number crunching applications
+	  that may need to compute untrusted bytecode during their
+	  execution. By using pipes or other transports made available to
+	  the process as file descriptors supporting the read/write
+	  syscalls, it's possible to isolate those applications in
+	  their own address space using seccomp. Once seccomp is
+	  enabled via /proc/<pid>/seccomp, it cannot be disabled
+	  and the task is only allowed to execute a few safe syscalls
+	  defined by each seccomp mode.
+
+	  If unsure, say Y. Only embedded should say N here.
+
+config WANT_DEVICE_TREE
+	bool
+	default n
+
+config DEVICE_TREE
+	string "Static device tree source file"
+	depends on WANT_DEVICE_TREE
+	help
+	  This specifies the device tree source (.dts) file to be
+	  compiled and included when building the bootwrapper.  If a
+	  relative filename is given, then it will be relative to
+	  arch/powerpc/boot/dts.  If you are not using the bootwrapper,
+	  or do not need to build a dts into the bootwrapper, this
+	  field is ignored.
+
+	  For example, this is required when building a cuImage target
+	  for an older U-Boot, which cannot pass a device tree itself.
+	  Such a kernel will not work with a newer U-Boot that tries to
+	  pass a device tree (unless you tell it not to).  If your U-Boot
+	  does not mention a device tree in "help bootm", then use the
+	  cuImage target and specify a device tree here.  Otherwise, use
+	  the uImage target and leave this field blank.
+
+endmenu
+
+config ISA_DMA_API
+	bool
+	default y
+
+menu "Bus options"
+
+config ISA
+	bool "Support for ISA-bus hardware"
+	depends on PPC_PREP || PPC_CHRP
+	select PPC_I8259
+	help
+	  Find out whether you have ISA slots on your motherboard.  ISA is the
+	  name of a bus system, i.e. the way the CPU talks to the other stuff
+	  inside your box.  If you have an Apple machine, say N here; if you
+	  have an IBM RS/6000 or pSeries machine or a PReP machine, say Y.  If
+	  you have an embedded board, consult your board documentation.
+
+config ZONE_DMA
+	bool
+	default y
+
+config GENERIC_ISA_DMA
+	bool
+	depends on PPC64 || POWER4 || 6xx && !CPM2
+	default y
+
+config PPC_INDIRECT_PCI
+	bool
+	depends on PCI
+	default y if 40x || 44x
+	default n
+
+config PPC_INDIRECT_PCI_BE
+	bool
+	depends PPC_INDIRECT_PCI
+	default n
+
+config EISA
+	bool
+
+config SBUS
+	bool
+
+config FSL_SOC
+	bool
+
+config FSL_PCIE
+	bool
+	depends on PPC_86xx
+
+# Yes MCA RS/6000s exist but Linux-PPC does not currently support any
+config MCA
+	bool
+
+config PCI
+	bool "PCI support" if 40x || CPM2 || PPC_83xx || PPC_85xx || PPC_86xx \
+		|| PPC_MPC52xx || (EMBEDDED && (PPC_PSERIES || PPC_ISERIES)) \
+		|| MPC7448HPC2 || PPC_PS3 || PPC_HOLLY
+	default y if !40x && !CPM2 && !8xx && !APUS && !PPC_83xx \
+		&& !PPC_85xx && !PPC_86xx
+	default PCI_PERMEDIA if !4xx && !CPM2 && !8xx && APUS
+	default PCI_QSPAN if !4xx && !CPM2 && 8xx
+	select ARCH_SUPPORTS_MSI
+	help
+	  Find out whether your system includes a PCI bus. PCI is the name of
+	  a bus system, i.e. the way the CPU talks to the other stuff inside
+	  your box.  If you say Y here, the kernel will include drivers and
+	  infrastructure code to support PCI bus devices.
+
+config PCI_DOMAINS
+	bool
+	default PCI
+
+config PCI_QSPAN
+	bool "QSpan PCI"
+	depends on !4xx && !CPM2 && 8xx
+	select PPC_I8259
+	help
+	  Say Y here if you have a system based on a Motorola 8xx-series
+	  embedded processor with a QSPAN PCI interface, otherwise say N.
+
+config PCI_8260
+	bool
+	depends on PCI && 8260
+	select PPC_INDIRECT_PCI
+	default y
+
+config 8260_PCI9
+	bool "Enable workaround for MPC826x erratum PCI 9"
+	depends on PCI_8260 && !ADS8272
+	default y
+
+choice
+	prompt "IDMA channel for PCI 9 workaround"
+	depends on 8260_PCI9
+
+config 8260_PCI9_IDMA1
+	bool "IDMA1"
+
+config 8260_PCI9_IDMA2
+	bool "IDMA2"
+
+config 8260_PCI9_IDMA3
+	bool "IDMA3"
+
+config 8260_PCI9_IDMA4
+	bool "IDMA4"
+
+endchoice
+
+source "drivers/pci/pcie/Kconfig"
+
+source "drivers/pci/Kconfig"
+
+source "drivers/pcmcia/Kconfig"
+
+source "drivers/pci/hotplug/Kconfig"
+
+endmenu
+
+menu "Advanced setup"
+	depends on PPC32
+
+config ADVANCED_OPTIONS
+	bool "Prompt for advanced kernel configuration options"
+	help
+	  This option will enable prompting for a variety of advanced kernel
+	  configuration options.  These options can cause the kernel to not
+	  work if they are set incorrectly, but can be used to optimize certain
+	  aspects of kernel memory management.
+
+	  Unless you know what you are doing, say N here.
+
+comment "Default settings for advanced configuration options are used"
+	depends on !ADVANCED_OPTIONS
+
+config HIGHMEM_START_BOOL
+	bool "Set high memory pool address"
+	depends on ADVANCED_OPTIONS && HIGHMEM
+	help
+	  This option allows you to set the base address of the kernel virtual
+	  area used to map high memory pages.  This can be useful in
+	  optimizing the layout of kernel virtual memory.
+
+	  Say N here unless you know what you are doing.
+
+config HIGHMEM_START
+	hex "Virtual start address of high memory pool" if HIGHMEM_START_BOOL
+	default "0xfe000000"
+
+config LOWMEM_SIZE_BOOL
+	bool "Set maximum low memory"
+	depends on ADVANCED_OPTIONS
+	help
+	  This option allows you to set the maximum amount of memory which
+	  will be used as "low memory", that is, memory which the kernel can
+	  access directly, without having to set up a kernel virtual mapping.
+	  This can be useful in optimizing the layout of kernel virtual
+	  memory.
+
+	  Say N here unless you know what you are doing.
+
+config LOWMEM_SIZE
+	hex "Maximum low memory size (in bytes)" if LOWMEM_SIZE_BOOL
+	default "0x30000000"
+
+config KERNEL_START_BOOL
+	bool "Set custom kernel base address"
+	depends on ADVANCED_OPTIONS
+	help
+	  This option allows you to set the kernel virtual address at which
+	  the kernel will map low memory (the kernel image will be linked at
+	  this address).  This can be useful in optimizing the virtual memory
+	  layout of the system.
+
+	  Say N here unless you know what you are doing.
+
+config KERNEL_START
+	hex "Virtual address of kernel base" if KERNEL_START_BOOL
+	default "0xc0000000"
+
+config TASK_SIZE_BOOL
+	bool "Set custom user task size"
+	depends on ADVANCED_OPTIONS
+	help
+	  This option allows you to set the amount of virtual address space
+	  allocated to user tasks.  This can be useful in optimizing the
+	  virtual memory layout of the system.
+
+	  Say N here unless you know what you are doing.
+
+config TASK_SIZE
+	hex "Size of user task space" if TASK_SIZE_BOOL
+	default "0x80000000"
+
+config CONSISTENT_START_BOOL
+	bool "Set custom consistent memory pool address"
+	depends on ADVANCED_OPTIONS && NOT_COHERENT_CACHE
+	help
+	  This option allows you to set the base virtual address
+	  of the consistent memory pool.  This pool of virtual
+	  memory is used to make consistent memory allocations.
+
+config CONSISTENT_START
+	hex "Base virtual address of consistent memory pool" if CONSISTENT_START_BOOL
+	default "0xff100000" if NOT_COHERENT_CACHE
+
+config CONSISTENT_SIZE_BOOL
+	bool "Set custom consistent memory pool size"
+	depends on ADVANCED_OPTIONS && NOT_COHERENT_CACHE
+	help
+	  This option allows you to set the size of the
+	  consistent memory pool.  This pool of virtual memory
+	  is used to make consistent memory allocations.
+
+config CONSISTENT_SIZE
+	hex "Size of consistent memory pool" if CONSISTENT_SIZE_BOOL
+	default "0x00200000" if NOT_COHERENT_CACHE
+
+config BOOT_LOAD_BOOL
+	bool "Set the boot link/load address"
+	depends on ADVANCED_OPTIONS && !PPC_MULTIPLATFORM
+	help
+	  This option allows you to set the initial load address of the zImage
+	  or zImage.initrd file.  This can be useful if you are on a board
+	  which has a small amount of memory.
+
+	  Say N here unless you know what you are doing.
+
+config BOOT_LOAD
+	hex "Link/load address for booting" if BOOT_LOAD_BOOL
+	default "0x00400000" if 40x || 8xx || 8260
+	default "0x01000000" if 44x
+	default "0x00800000"
+
+config PIN_TLB
+	bool "Pinned Kernel TLBs (860 ONLY)"
+	depends on ADVANCED_OPTIONS && 8xx
+endmenu
+
+if PPC64
+config KERNEL_START
+	hex
+	default "0xc000000000000000"
+endif
+
+source "net/Kconfig"
+
+source "drivers/Kconfig"
+
+source "fs/Kconfig"
+
+# XXX source "arch/ppc/8xx_io/Kconfig"
+
+# XXX source "arch/ppc/8260_io/Kconfig"
+
+source "arch/powerpc/sysdev/qe_lib/Kconfig"
+
+source "lib/Kconfig"
+
+menu "Instrumentation Support"
+	depends on EXPERIMENTAL
+
+source "arch/powerpc/oprofile/Kconfig"
+
+config KPROBES
+	bool "Kprobes (EXPERIMENTAL)"
+	depends on !BOOKE && !4xx && KALLSYMS && EXPERIMENTAL && MODULES
+	help
+	  Kprobes allows you to trap at almost any kernel address and
+	  execute a callback function.  register_kprobe() establishes
+	  a probepoint and specifies the callback.  Kprobes is useful
+	  for kernel debugging, non-intrusive instrumentation and testing.
+	  If in doubt, say "N".
+endmenu
+
+source "arch/powerpc/Kconfig.debug"
+
+source "security/Kconfig"
+
+config KEYS_COMPAT
+	bool
+	depends on COMPAT && KEYS
+	default y
+
+source "crypto/Kconfig"

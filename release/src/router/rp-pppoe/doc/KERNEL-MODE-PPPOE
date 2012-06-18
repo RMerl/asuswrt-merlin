@@ -1,0 +1,98 @@
+# LIC: GPL
+
+RP-PPPoE now supports kernel-mode PPPoE on Linux kernels 2.4 or newer.
+However, the default "./go" build procedure does not make kernel-mode
+support.
+
+Here's what you need to do:
+
+0) Make sure you are running kernel 2.4 or newer on the machine you
+will build rp-pppoe on.  You must have the following kernel
+configuration settings:
+
+	CONFIG_PPP=m          or CONFIG_PPP=y
+	CONFIG_PPP_ASYNC=m    or CONFIG_PPP_ASYNC=y
+	CONFIG_PPP_SYNC_TTY=m or CONFIG_PPP_SYNC_TTY=y
+	CONFIG_PPP_DEFLATE=m  or CONFIG_PPP_DEFLATE=y
+	CONFIG_PPP_BSDCOMP=m  or CONFIG_PPP_BSDCOMP=y
+	CONFIG_PPPOE=m        or CONFIG_PPPOE=y
+	CONFIG_N_HDLC=m       or CONFIG_N_HDLC=y
+	CONFIG_UNIX98_PTYS=y
+
+You also need a /dev/ppp file:
+
+	mknod --mode=664 /dev/ppp c 108 0
+
+You might want to add these lines to /etc/modules.conf:
+
+	alias char-major-108 ppp_generic
+	alias tty-ldisc-3 ppp_async
+	alias tty-ldisc-13 n_hdlc
+	alias tty-ldisc-14 ppp_synctty
+	alias net-pf-24 pppoe
+
+1) If you are running pppd older than 2.4.0, check out the latest
+version of the PPP software from the CVS repository at cvs.samba.org.
+Here's how to do this:
+
+	cvs -d :pserver:cvs@pserver.samba.org:/cvsroot login
+	# When prompted for a password, type "cvs"
+
+	# Change to the directory in which you want to store the PPP source
+	# code.
+	cd /path/to/checked/out/sources
+
+	# Check out the source
+	cvs -z5 -d :pserver:cvs@pserver.samba.org:/cvsroot co ppp
+
+If you are running pppd 2.4.0 or newer, and have the pppd development
+headers installed, you can skip steps 1 and 2.
+
+2) The source gets checked out into a subdirectory called ppp.  If
+the source ends up in /path/to/checked/out/sources/ppp, then call
+that path $PPPDIR.
+
+Build and install the checked-out ppp code according to its instructions.
+
+3) Unpack rp-pppoe.
+
+4) In the rp-pppoe directory, change to src/ and type:
+
+	./configure --enable-plugin=$PPPDIR
+
+where $PPPDIR, of course, refers to the checked-out "ppp" directory
+from cvs.samba.org.
+
+If you didn't check out the PPP software from cvs.samba.org, use:
+
+	./configure --enable-plugin
+
+This will work if the header pppd/pppd.h is located in /usr/include
+or /usr/local/include.
+
+4) Type make; make install
+
+5) Edit /etc/ppp/pppoe.conf to include this line:
+
+	LINUX_PLUGIN=/etc/ppp/plugins/rp-pppoe.so
+
+After that, pppoe-start should use kernel-mode PPPoE.
+
+The rp-pppoe.so plugin adds the following command-line options to pppd:
+
+ethXXX                          -- Use interface ethXXX as Ethernet interface
+brXXX                           -- Use interface brXXX as Ethernet interface
+nic-XXXX                        -- Use interface XXXX as the Ethernet interface
+
+rp_pppoe_service SERVICE_NAME   -- Specify desired service name
+rp_pppoe_ac NAME                -- Specify desired access concentrator name
+rp_pppoe_verbose 0|1            -- Print names of access concentrators
+
+rp_pppoe_sess nnnn:aa:bb:cc:dd:ee:ff -- Attach to existing session 'nnnn'
+                                on AC with Ethernet address aa:bb:cc:dd:ee:ff
+                                This skips the discovery phase.
+
+
+--
+David F. Skoll <dfs@roaringpenguin.com>
+

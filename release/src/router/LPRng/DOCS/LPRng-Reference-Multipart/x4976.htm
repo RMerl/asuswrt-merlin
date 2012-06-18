@@ -1,0 +1,385 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Network Print Server Configuration Information</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printer Communication and Protocols "
+    href="printercomm.htm">
+    <link rel="PREVIOUS" title="Network Print Server Boxes " href=
+    "secnetwork.htm">
+    <link rel="NEXT" title="HP JetDirect Interface" href=
+    "x5157.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "secnetwork.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          11. Printer Communication and Protocols</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x5157.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN4976">11.6. Network Print
+      Server Configuration Information</a></h1>
+
+      <p>The following is a list of print server manufacturers,
+      models, and with hints on how to access these boxes with
+      various protocols.</p>
+
+      <div class="TABLE">
+        <a name="NEWPS"></a>
+
+        <p><b>Table 11-1. Network Print Server Configuration
+        Information</b></p>
+
+        <table border="1" frame="border" rules="all" class=
+        "CALSTABLE">
+          <col>
+          <col>
+          <col>
+          <col>
+
+          <thead>
+            <tr>
+              <th>Manufacturer</th>
+
+              <th>Model</th>
+
+              <th>RFC1179 Port Name (rp=XXX)</th>
+
+              <th>Send to TCP port</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td><a href="http://www.cannon.com/" target=
+              "_top">Cannon Printer</a></td>
+
+              <td>Cannon 460 PS, no hard drive</td>
+
+              <td>xjdirect</td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+
+            <tr>
+              <td>&nbsp;</td>
+
+              <td>Cannon 460 PS hard drive</td>
+
+              <td><var class="LITERAL">xjprint</var> - print
+              immediately,<var class="LITERAL">xjhold</var> - print
+              later</td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.digprod.com/" target=
+              "_top">Digital Products Inc.</a></td>
+
+              <td>NETPrint Print Server</td>
+
+              <td><var class="LITERAL">PORT</var><var class=
+              "LITERAL">n</var>, where <var class="LITERAL">n</var>
+              is port on server</td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.efi.com/" target=
+              "_top">Electronics For Imaging Inc.</a></td>
+
+              <td>Fiery RIP i series</td>
+
+              <td><var class="LITERAL">normalq</var> or <var class=
+              "LITERAL">urgentq</var></td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+
+            <tr>
+              <td>&nbsp;</td>
+
+              <td>Fiery RIP XJ series</td>
+
+              <td><var class="LITERAL">xjprint</var></td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+
+            <tr>
+              <td>&nbsp;</td>
+
+              <td>Fiery RIP XJ+ and SI series</td>
+
+              <td><var class="LITERAL">print_</var><var class=
+              "LITERAL">Model</var>, e.g. <var class=
+              "LITERAL">print_DocuColor</var></td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+
+            <tr>
+              <td>&nbsp;</td>
+
+              <td>Fiery models ZX2100, ZX3300, X2, X2e</td>
+
+              <td><var class="LITERAL">print</var></td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.emulex.com/" target=
+              "_top">Emulex Corp.</a></td>
+
+              <td>NETJet/NETQue print server</td>
+
+              <td><acronym class="ACRONYM">PASSTHRU</acronym></td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.extendsys.com/" target=
+              "_top">Extended Systems Inc.</a></td>
+
+              <td>ExtendNet Print Server</td>
+
+              <td><var class="LITERAL">Printer<var class=
+              "REPLACEABLE">n</var></var>, where <var class=
+              "LITERAL">n</var> is port on server</td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.hp.com/" target=
+              "_top">Hewlett-Packard</a></td>
+
+              <td>JetDirect interface card</td>
+
+              <td><var class="LITERAL">raw</var></td>
+
+              <td>9100</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.hp.com/" target=
+              "_top">Hewlett-Packard</a></td>
+
+              <td>JetDirect Multiport Server</td>
+
+              <td><var class="LITERAL">port 1 - raw1, port 2 -
+              raw2, etc.</var></td>
+
+              <td>port 1 - 9100, port 2 - 9101, etc.</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.i-data.com/" target=
+              "_top">I-Data</a></td>
+
+              <td>Easycom 10 Printserver</td>
+
+              <td><var class="LITERAL">par1</var> (parallel port
+              1)</td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+
+            <tr>
+              <td>&nbsp;</td>
+
+              <td>Easycom 100 Printserver</td>
+
+              <td><var class="LITERAL">LPDPRT1</var></td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.printers.ibm.com/" target=
+              "_top">IBM</a></td>
+
+              <td>Network Printer 12, 17, 24, and 24PS</td>
+
+              <td><acronym class="ACRONYM">PASS</acronym></td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.lantronix.com/" target=
+              "_top">Lantronix</a></td>
+
+              <td>EPS1, EPS2</td>
+
+              <td><var class="LITERAL">EPS_<var class=
+              "LITERAL">X_S1 (serial) port 1, EPS_X</var>_P1
+              (parallel) port 2</var>, etc.</td>
+
+              <td>3001 (port 1), 3002 (port 2), etc.</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.qms.com/" target=
+              "_top">QMS</a></td>
+
+              <td>Various Models</td>
+
+              <td><acronym class="ACRONYM">RAW</acronym></td>
+
+              <td>35 (AppSocket)</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.tek.com" target=
+              "_top">Tektronix</a></td>
+
+              <td>Tektronix printer network cards</td>
+
+              <td><acronym class="ACRONYM">PS</acronym>
+              (PostScript), <acronym class="ACRONYM">PCL</acronym>
+              (PCL), or <acronym class=
+              "ACRONYM">AUTO</acronym>(Auto-selection between PS,
+              PCL, or HPGL). Not reliable.</td>
+
+              <td>9100 (AppSocket on some models)</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.rosel.com" target="_top">Rose
+              Electronics</a></td>
+
+              <td>Microserve Print Servers</td>
+
+              <td>lp</td>
+
+              <td>9100</td>
+            </tr>
+
+            <tr>
+              <td><a href="http://www.xerox.com/" target=
+              "_top">Xerox</a></td>
+
+              <td>Models 4505, 4510, 4517, 4520</td>
+
+              <td><acronym class="ACRONYM">PASSTHRU</acronym></td>
+
+              <td>2501 (AppSocket on some models)</td>
+            </tr>
+
+            <tr>
+              <td>&nbsp;</td>
+
+              <td>Model 4512</td>
+
+              <td><var class="LITERAL">PORT1</var></td>
+
+              <td>10001 (programmable)</td>
+            </tr>
+
+            <tr>
+              <td>&nbsp;</td>
+
+              <td>Model N17</td>
+
+              <td><acronym class="ACRONYM">RAW</acronym></td>
+
+              <td>9100</td>
+            </tr>
+
+            <tr>
+              <td>&nbsp;</td>
+
+              <td>Models N24 and N32</td>
+
+              <td><acronym class="ACRONYM">RAW</acronym></td>
+
+              <td>2000</td>
+            </tr>
+
+            <tr>
+              <td>&nbsp;</td>
+
+              <td>Models 4900, 4915, 4925, C55</td>
+
+              <td><acronym class="ACRONYM">PS</acronym></td>
+
+              <td>2000</td>
+            </tr>
+
+            <tr>
+              <td>&nbsp;</td>
+
+              <td>Document Centre DC220/230</td>
+
+              <td><var class="LITERAL">lp</var></td>
+
+              <td>- Unknown if supported -</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>All company, brand, and product names are properties of
+      their respective owners.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "secnetwork.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x5157.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Network Print
+          Server Boxes</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printercomm.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">HP JetDirect
+          Interface</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,156 @@
+/* -*- Mode: C; tab-width: 4 -*-
+ *
+ * Copyright (c) 2007 Apple Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+
+    Change History (most recent first):
+
+$Log: helpermsg.defs,v $
+Revision 1.17  2009/04/20 20:40:14  cheshire
+<rdar://problem/6786150> uDNS: Running location cycling caused configd and mDNSResponder to deadlock
+Changed mDNSPreferencesSetName (and similar) routines from MIG "routine" to MIG "simpleroutine"
+so we don't deadlock waiting for a result that we're just going to ignore anyway
+
+Revision 1.16  2009/03/20 22:12:28  mcguire
+<rdar://problem/6703952> Support CFUserNotificationDisplayNotice in mDNSResponderHelper
+Make the call to the helper a simpleroutine: don't wait for an unused return value
+
+Revision 1.15  2009/03/20 20:52:22  cheshire
+<rdar://problem/6703952> Support CFUserNotificationDisplayNotice in mDNSResponderHelper
+
+Revision 1.14  2009/03/14 01:42:56  mcguire
+<rdar://problem/5457116> BTMM: Fix issues with multiple .Mac accounts on the same machine
+
+Revision 1.13  2009/01/22 02:14:26  cheshire
+<rdar://problem/6515626> Sleep Proxy: Set correct target MAC address, instead of all zeroes
+
+Revision 1.12  2009/01/14 01:38:43  mcguire
+<rdar://problem/6492710> Write out DynamicStore per-interface SleepProxyServer info
+
+Revision 1.11  2008/11/04 23:54:09  cheshire
+Added routine mDNSSetARP(), used to replace an SPS client's entry in our ARP cache with
+a dummy one, so that IP traffic to the SPS client initiated by the SPS machine can be
+captured by our BPF filters, and used as a trigger to wake the sleeping machine.
+
+Revision 1.10  2008/10/24 01:42:36  cheshire
+Added mDNSPowerRequest helper routine to request a scheduled wakeup some time in the future
+
+Revision 1.9  2008/10/20 22:01:28  cheshire
+Made new Mach simpleroutine "mDNSRequestBPF"
+
+Revision 1.8  2008/09/26 21:18:13  cheshire
+Tidy up code layout
+
+Revision 1.7  2008/08/13 23:04:06  mcguire
+<rdar://problem/5858535> handle SIGTERM in mDNSResponderHelper
+Preparation: rename message function, as it will no longer be called only on idle exit
+
+Revision 1.6  2007/09/07 22:44:03  mcguire
+<rdar://problem/5448420> Move CFUserNotification code to mDNSResponderHelper
+
+Revision 1.5  2007/09/04 22:32:58  mcguire
+<rdar://problem/5453633> BTMM: BTMM overwrites /etc/racoon/remote/anonymous.conf
+
+Revision 1.4  2007/08/23 21:53:13  cheshire
+Added $Log header
+
+Revision 1.3  2007/08/18 01:02:03  mcguire
+<rdar://problem/5415593> No Bonjour services are getting registered at boot
+
+Revision 1.2  2007/08/15 23:20:28  mcguire
+<rdar://problem/5408105> BTMM: racoon files can get corrupted if autotunnel is listening on port > 32767
+
+Revision 1.1  2007/08/08 22:34:58  mcguire
+<rdar://problem/5197869> Security: Run mDNSResponder as user id mdnsresponder instead of root
+ */
+
+#include <mach/std_types.defs>
+#include <mach/mach_types.defs>
+
+import "helpermsg-types.h";
+
+type v4addr_t  = array [ 4] of uint8_t;
+type ethaddr_t = array [ 6] of uint8_t;
+type v6addr_t  = array [16] of uint8_t;
+type string_t = c_string[*:1024];
+
+subsystem helper 1833193043;
+serverprefix do_;
+userprefix proxy_;
+
+simpleroutine mDNSExit(			port			: mach_port_t;
+		ServerAuditToken		token			: audit_token_t);
+
+simpleroutine mDNSRequestBPF(	port			: mach_port_t;
+		ServerAuditToken		token			: audit_token_t);
+
+routine mDNSPowerRequest(		port			: mach_port_t;
+								key				: int;
+								interval		: int;
+		out						err				: int;
+		ServerAuditToken		token			: audit_token_t);
+
+routine mDNSSetARP(				port			: mach_port_t;
+								ifindex			: int;
+								ip				: v4addr_t;
+								eth				: ethaddr_t;
+		out						err				: int;
+		ServerAuditToken		token			: audit_token_t);
+
+simpleroutine mDNSNotify(		port			: mach_port_t;
+								title			: string_t;
+								msg				: string_t;
+		ServerAuditToken		token			: audit_token_t);
+
+simpleroutine mDNSDynamicStoreSetConfig(
+								port			: mach_port_t;
+								key				: int;
+								subkey			: string_t;
+								value			: pointer_t;
+		ServerAuditToken		token			: audit_token_t);
+
+simpleroutine mDNSPreferencesSetName( port			: mach_port_t;
+								key				: int;
+								old				: string_t;
+								new				: string_t;
+		ServerAuditToken		token			: audit_token_t);
+
+routine mDNSKeychainGetSecrets( port			: mach_port_t;
+		out						numsecrets		: unsigned;
+		out						secrets			: pointer_t;
+		out						err				: int;
+		ServerAuditToken		token			: audit_token_t);
+
+simpleroutine mDNSAutoTunnelInterfaceUpDown(
+								port			: mach_port_t;
+								updown			: int;
+								address			: v6addr_t;
+		ServerAuditToken		token			: audit_token_t);
+
+simpleroutine mDNSConfigureServer(	port			: mach_port_t;
+								updown			: int;
+								fqdn			: string_t;
+		ServerAuditToken		token			: audit_token_t);
+
+routine mDNSAutoTunnelSetKeys(	port			: mach_port_t;
+								replacedelete	: int;
+								local_inner		: v6addr_t;
+								local_outer		: v4addr_t;
+								local_port		: uint16_t;
+								remote_inner	: v6addr_t;
+								remote_outer	: v4addr_t;
+								remote_port		: uint16_t;
+								fqdn			: string_t;
+		out						err				: int;
+		ServerAuditToken		token			: audit_token_t);

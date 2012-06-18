@@ -1,0 +1,131 @@
+Starting with version 2.3.10, pppd includes support for `plugins' -
+pieces of code which can be loaded into pppd at runtime and which can
+affect its behaviour in various ways.  The idea of plugins is to
+provide a way for people to customize the behaviour of pppd without
+having to either apply local patches to each version or get their
+patches accepted into the standard distribution.  My aim is that
+plugins will be able to be used with successive versions of pppd
+without needing to recompile the plugins.
+
+A plugin is a standard shared library object, typically with a name
+ending in .so.  They are loaded using the standard dlopen() library
+call, so plugins are only supported on systems which support shared
+libraries and the dlopen call.  At present pppd is compiled with
+plugin support only under Linux and Solaris.
+
+Plugins are loaded into pppd using the `plugin' option, which takes
+one argument, the name of a shared object file.  The plugin option is
+a privileged option.  I suggest that you give the full path name of
+the shared object file; if you don't, it may be possible for
+unscrupulous users to substitute another shared object file for the
+one you mean to load, e.g. by setting the LD_LIBRARY_PATH variable.
+
+Plugins are usually written in C and compiled and linked to a shared
+object file in the appropriate manner for your platform.  Using gcc
+under Linux, a plugin called `xyz' could be compiled and linked with
+the following commands:
+
+	gcc -c -O xyz.c
+	gcc -shared -o xyz.so xyz.o
+
+There are some example plugins in the pppd/plugins directory in the
+ppp distribution.  Currently there is one example, minconn.c, which
+implements a `minconnect' option, which specifies a minimum connect
+time before the idle timeout applies.
+
+Plugins can access global variables within pppd, so it is useful for
+them to #include "pppd.h" from the pppd source directory.
+
+Every plugin must contain a global procedure called `plugin_init'.
+This procedure will get called (with no arguments) immediately after
+the plugin is loaded.
+
+Plugins can affect the behaviour of pppd in at least three ways:
+
+1. They can add extra options which pppd will then recognize.  This is
+   done by calling the add_options() procedure with a pointer to an
+   array of option_t structures.  The last entry in the array must
+   have its name field set to NULL.
+
+2. Pppd contains `hook' variables which are procedure pointers.  If a
+   given hook is not NULL, pppd will call the procedure it points to
+   at the appropriate point in its processing.  The plugin can set any
+   of these hooks to point to its own procedures.  See below for a
+   description of the hooks which are currently implemented.
+
+3. Plugin code can call any global procedures and access any global
+   variables in pppd.
+
+Here is a list of the currently implemented hooks in pppd.
+
+
+int (*idle_time_hook)(struct ppp_idle *idlep);
+
+The idle_time_hook is called when the link first comes up (i.e. when
+the first network protocol comes up) and at intervals thereafter.  On
+the first call, the idlep parameter is NULL, and the return value is
+the number of seconds before pppd should check the link activity, or 0
+if there is to be no idle timeout.
+
+On subsequent calls, idlep points to a structure giving the number of
+seconds since the last packets were sent and received.  If the return
+value is > 0, pppd will wait that many seconds before checking again.
+If it is <= 0, that indicates that the link should be terminated due
+to lack of activity.
+
+
+int (*holdoff_hook)(void);
+
+The holdoff_hook is called when an attempt to bring up the link fails,
+or the link is terminated, and the persist or demand option was used.
+It returns the number of seconds that pppd should wait before trying
+to reestablish the link (0 means immediately).
+
+
+int (*pap_check_hook)(void);
+int (*pap_passwd_hook)(char *user, char *passwd);
+int (*pap_auth_hook)(char *user, int userlen,
+		     char *passwd, int passlen,
+		     char **msgp, int *msglenp,
+		     struct wordlist **paddrs,
+		     struct wordlist **popts);
+
+These hooks are designed to allow a plugin to replace the normal PAP
+password processing in pppd with something different (e.g. contacting
+an external server).
+
+The pap_check_hook is called to check whether there is any possibility
+that the peer could authenticate itself to us.  If it returns 1, pppd
+will ask the peer to authenticate itself.  If it returns 0, pppd will
+not ask the peer to authenticate itself (but if authentication is
+required, pppd may exit, or terminate the link before network protocol
+negotiation).  If it returns -1, pppd will look in the pap-secrets
+file as it would normally.
+
+The pap_passwd_hook is called to determine what username and password
+pppd should use in authenticating itself to the peer with PAP.  The
+user string will already be initialized, by the `user' option, the
+`name' option, or from the hostname, but can be changed if necessary.
+MAXNAMELEN bytes of space are available at *user, and MAXSECRETLEN
+bytes of space at *passwd.  If this hook returns 0, pppd will use the
+values at *user and *passwd; if it returns -1, pppd will look in the
+pap-secrets file, or use the value from the +ua or password option, as
+it would normally.
+
+The pap_auth_hook is called to determine whether the username and
+password supplied by the peer are valid.  user and passwd point to
+null-terminated strings containing the username and password supplied
+by the peer, with non-printable characters converted to a printable
+form.  The pap_auth_hook function should set msg to a string to be
+returned to the peer and return 1 if the username/password was valid
+and 0 if not.  If the hook returns -1, pppd will look in the
+pap-secrets file as usual.
+
+If the username/password was valid, the hook can set *paddrs to point
+to a wordlist containing the IP address(es) which the peer is
+permitted to use, formatted as in the pap-secrets file.  It can also
+set *popts to a wordlist containing any extra options for this user
+which pppd should apply at this point.
+
+
+## $Id: PLUGINS,v 1.1.1.4 2003/10/14 08:09:52 sparq Exp $ ##

@@ -1,0 +1,6 @@
+#!/bin/bash
+export PORTSLAVELOGNAME="AutoPPP"
+export PORTSLAVE_SESSION=`date +%s``printf "%X" $RANDOM`
+export PORTSLAVE_START_TIME=`date +%s`
+export PORTSLAVE_DO_ACCT="1"
+exec /usr/sbin/pppd $* plugin /usr/lib/libpsr.so

@@ -1,0 +1,234 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Sample Printcap Entry</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="NEXT" title="Setting Up the Tutorial Configuration"
+    href="tutorialconfig.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "tutorial.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "tutorialconfig.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="SAMPLEPRINTCAP">4.2. Sample
+      Printcap Entry</a></h1>
+
+      <p>As described in the <a href="tutorial.htm#OVERVIEW">Print
+      Spooling Overview</a>, the information in the <tt class=
+      "FILENAME">printcap</tt> database is used control printing
+      operations. While there is no RFC specifying its format or
+      content, there is a strong <span class="emphasis"><i class=
+      "EMPHASIS">de facto</i></span> standard for its format. For a
+      complete description of the <tt class=
+      "FILENAME">printcap</tt> database see <a href=
+      "printcapref.htm">Printcap Database</a>. For a list of all of
+      the <tt class="FILENAME">printcap</tt> and configuration
+      options see <a href="optionindex.htm">Index To All The
+      Configuration and Printcap Options</a>.</p>
+
+      <p>Here is a sample printcap suitable for use by the <b
+      class="APPLICATION">LPRng</b> clients:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1703"></a>
+<pre class="SCREEN">
+    LPRng use :lp for destination (device and spool queue)
+       lp:lp=lp@h4.private
+       lpreal:lp=/dev/lp0
+    
+    Vintage BSD uses :rp:rm for spooler queue and :lp for device
+      lp:rp=lp:rm=h4.private
+      lpdev:lp=/dev/lp0
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <var class="LITERAL">:lp=lp@h4.private</var> printcap
+      entry tells the <span class="emphasis"><i class=
+      "EMPHASIS">client</i></span> programs that jobs for the <b
+      class="APPLICATION">lp</b> printer or print queue are sent to
+      the <b class="APPLICATION">lp</b> print queue queue on host
+      <tt class="FILENAME">h4.private</tt>. This can also be
+      specified using the The <span class="emphasis"><i class=
+      "EMPHASIS">legacy</i></span> BSD <var class=
+      "LITERAL">:rp</var> and <var class="LITERAL">:rm</var>. The
+      <var class="LITERAL">:rp=</var><span class="emphasis"><i
+      class="EMPHASIS">queue</i></span> option specifies the <span
+      class="emphasis"><i class="EMPHASIS">print queue</i></span>
+      <var class="LITERAL">:rm=</var><span class="emphasis"><i
+      class="EMPHASIS">host</i></span> option specifies the host.
+      When both <var class="LITERAL">lp</var> and <var class=
+      "LITERAL">:rp:rm</var> are present the <var class=
+      "LITERAL">:lp</var> option has precedence.</p>
+
+      <p>On the printserver the following is a sample printcap
+      entry suitable for the <b class="APPLICATION">lpd</b>
+      server:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1724"></a>
+<pre class="SCREEN">
+    lp:
+      :lp=/dev/lp0
+      :sd=/var/spool/lpd/%P
+      :filter=/usr/local/libexec/filters/ifhp
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <var class="LITERAL">:sd=</var><span class=
+      "emphasis"><i class="EMPHASIS">directory</i></span> option
+      (spool queue directory) specifies the directory where print
+      jobs will be placed. The <var class="LITERAL">%P</var> will
+      be replaced with the name of the spool queue. The <var class=
+      "LITERAL">:lp</var> literal is now the path to the output
+      device the <b class="APPLICATION">lpd</b> server will use to
+      print the job. The <var class="LITERAL">:filter</var> literal
+      specifies the filter program to use to process the job before
+      sending to the output device.</p>
+
+      <p>Here is another example of a printcap entry using the <var
+      class="LITERAL">%P</var> notation:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1735"></a>
+<pre class="SCREEN">
+    lp:lp=%P@h4.private
+</pre>
+      </div>
+      This entry will cause all jobs sent to the <var class=
+      "LITERAL">lp</var> spool queue to be sent to the <var class=
+      "LITERAL">lp</var> queue on <var class=
+      "LITERAL">server</var>. <var class="LITERAL">%X</var> strings
+      in the printcap entries are expanded as shown: 
+
+      <div class="INFORMALTABLE">
+        <a name="AEN1741"></a>
+
+        <table border="1" frame="border" rules="all" class=
+        "CALSTABLE">
+          <col>
+          <col>
+
+          <thead>
+            <tr>
+              <th>Key</th>
+
+              <th>Replaced By</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td><var class="LITERAL">%P</var></td>
+
+              <td>printcap entry primary name (printer)</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">%Q</var></td>
+
+              <td>queue requested</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">%h</var></td>
+
+              <td>short host name (host)</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">%H</var></td>
+
+              <td>fully qualified host name
+              (host.dns.whatever)</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">%R</var></td>
+
+              <td>remote printer (rp value)</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">%M</var></td>
+
+              <td>remote host (rm value)</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">%D</var></td>
+
+              <td>date in YYYY-MM-DD format</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "tutorial.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "tutorialconfig.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Print Spooling
+          Tutorial</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Setting Up the
+          Tutorial Configuration</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

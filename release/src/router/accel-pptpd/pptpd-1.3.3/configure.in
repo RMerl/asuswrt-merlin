@@ -1,0 +1,250 @@
+AC_INIT(configure.in)
+
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(pptpd,0.8.5)
+
+AC_DEFINE(BCRELAY,[],"Enable Broadcast Relay")
+AC_DEFINE(PPPD_VERSION,[],"PPPD version")
+AC_DEFINE(PPTP_FACILITY,[],"syslog facility to use")
+#AC_DEFINE(socklen_t,[],"")
+# check common command line options early
+
+AC_DEFINE(PPP_BINARY, "/usr/sbin/pppd","pppd binary")
+AC_DEFINE(KERNELVERSION,[],"kernel version")
+
+
+AC_MSG_CHECKING(command line for syslog facility name)
+AC_ARG_ENABLE(facility,
+    [  --enable-facility=name    Use another syslog facility, default LOG_DAEMON ],
+    [
+	AC_MSG_RESULT($enableval)
+	AC_DEFINE_UNQUOTED(PPTP_FACILITY, $enableval)
+	],
+    [
+	AC_MSG_RESULT(default LOG_DAEMON)
+	AC_DEFINE_UNQUOTED(PPTP_FACILITY, LOG_DAEMON)
+    ])
+
+AC_MSG_CHECKING(command line for bcrelay build)
+AC_ARG_ENABLE(bcrelay,
+	[  --enable-bcrelay          Enable broadcast relay function ],
+	[ 
+	    case "$enableval" in
+		yes)
+		    AC_MSG_RESULT(yes)
+		    AC_DEFINE(BCRELAY)
+		    BCRELAY=$enableval
+		    break;
+		    ;;
+		no)
+		    AC_MSG_RESULT(explicit no)
+		    ;;
+		*)
+		    # only yes or no are expected for this option
+		    AC_MSG_RESULT(unrecognised... terminating)
+		    exit 1
+		    ;;
+	    esac
+	], [AC_MSG_RESULT(default no)])
+
+AC_PROG_CC
+AC_PROG_RANLIB
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+
+AC_C_CONST
+AC_C_INLINE
+
+AC_EXEEXT
+AC_OBJEXT
+AC_SYS_INTERPRETER
+
+AC_CHECK_FUNCS(setsid daemon setproctitle getservbyname strlcpy fork memmove strerror writev)
+
+AC_CHECK_HEADERS(string.h)
+AC_CHECK_HEADERS(syslog.h)
+AC_CHECK_HEADERS(libintl.h)
+AC_CHECK_HEADERS(libutil.h)
+AC_CHECK_HEADERS(sys/uio.h)
+
+AC_CHECK_TYPE(size_t, unsigned int)
+AC_CHECK_TYPE(ssize_t, int)
+AC_CHECK_TYPE(u_int8_t, unsigned char)
+AC_CHECK_TYPE(u_int16_t, unsigned short)
+AC_CHECK_TYPE(u_int32_t, unsigned int)
+
+dnl Check for type in sys/socket.h - from Squid source (GPL)
+AC_CACHE_CHECK(for socklen_t, ac_cv_type_socklen_t, [
+  AC_EGREP_CPP([socklen_t[^a-zA-Z_0-9]], [#include <sys/types.h>
+#include <sys/socket.h>
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <stddef.h>
+#endif],
+    ac_cv_type_socklen_t=yes,
+    ac_cv_type_socklen_t=no)
+])
+if test $ac_cv_type_socklen_t = no; then
+  AC_DEFINE(socklen_t, int,"")
+fi
+
+dnl Check for libwrap (black magic check)
+AC_ARG_WITH(libwrap,
+	[  --with-libwrap          Use libwrap (tcp wrappers) ],
+[
+ if test "$with_libwrap" = "yes"; then
+ XYZZY_LIBS="$LIBS"
+ AC_MSG_CHECKING(for libwrap alone)
+ LIBS="$XYZZY_LIBS -lwrap"
+ AC_TRY_LINK([ int allow_severity, deny_severity; ],
+	     [ hosts_access(); ],
+	     [ AC_MSG_RESULT(yes)
+	       AC_DEFINE(HAVE_LIBWRAP,[],"use libwrap")
+	       LIBWRAP="yes"
+	       XTRALIBS_MGR="-lwrap" ],
+	     [ AC_MSG_RESULT(no)
+   LIBS="$XYZZY_LIBS -lwrap -lnsl"
+   AC_MSG_CHECKING(for libwrap with libnsl)
+   AC_TRY_LINK([ int allow_severity, deny_severity; ],
+	       [ hosts_access(); ],
+	       [ AC_MSG_RESULT(yes)
+	         AC_DEFINE(HAVE_LIBWRAP)
+		 LIBWRAP="yes"
+	         XTRALIBS_MGR="-lwrap -lnsl" ],
+	       [ AC_MSG_RESULT(no) ])
+ ])
+ LIBS="$XYZZY_LIBS"
+ fi
+])
+
+dnl More ugliness; -lnsl, -lutil and -lsocket
+XYZZY_LIBS="$LIBS"
+AC_CHECK_LIB(c, accept)
+AC_CHECK_LIB(c, gethostbyname)
+AC_CHECK_LIB(c, gettext)
+AC_CHECK_LIB(socket, accept)
+AC_CHECK_LIB(nsl, gethostbyname)
+AC_CHECK_LIB(intl, gettext)
+LIBS="$XYZZY_LIBS"
+if test "$ac_cv_lib_c_accept" = no; then
+  if test "$ac_cv_lib_socket_accept" = yes; then
+	LIBS="$LIBS -lsocket"
+  else
+	echo "Couldn't find a usable accept!" 1>&2
+	exit 1
+  fi
+fi
+if test "$ac_cv_lib_c_gethostbyname" = no; then
+  if test "$ac_cv_lib_nsl_gethostbyname" = yes; then
+	LIBS="$LIBS -lnsl"
+	if test "$XTRALIBS_MGR" = "-lwrap -lnsl"; then
+	  XTRALIBS_MGR="-lwrap"
+	fi
+  else
+	echo "Couldn't find a usable gethostbyname!" 1>&2
+	exit 1
+  fi
+fi
+if test "$ac_cv_header_libintl_h" = yes; then
+  if test "$ac_cv_lib_c_gettext" = no; then
+    if test "$ac_cv_lib_intl_gettext" = yes; then
+      XTRALIBS_MGR = "$XTRALIBS_MGR -lintl"
+    else
+      echo "Have libintl.h but no usable gettext!" 1>&2
+      exit 1
+    fi
+  fi
+fi
+
+AC_SUBST(XTRALIBS_CTRL)
+AC_SUBST(XTRALIBS_MGR)
+
+if test "$BCRELAY" = "yes"; then
+  if test "$BCRELAY" = "yes"; then
+    XTRA_PROG="bcrelay"
+    true
+  else
+    echo "No BCrelay selected." 1>&2
+  fi
+fi
+
+AC_SUBST(XTRA_PROG)
+
+AC_MSG_CHECKING([for linux kernel herders])
+if test -n "${KDIR}"; then
+	if test -f ${KDIR}/include/linux/version.h; then
+		header=${KDIR}/include
+	else
+		AC_MSG_RESULT(not found)
+		AC_MSG_ERROR(Could not find linux kernel headers)
+	fi
+else
+	kernel=`uname -r`
+	if test -f /usr/src/linux/include/linux/version.h; then 
+		header=/usr/src/linux/include
+	elif test -f /lib/modules/${kernel}/build/include/linux/version.h; then
+		header=/lib/modules/${kernel}/build/include
+	else
+		AC_MSG_RESULT(not found)
+		AC_MSG_ERROR(Could not find linux kernel headers)
+	fi
+fi
+
+VERSION=$(cat ${header/include}Makefile | grep '^VERSION = ' | awk '{print $3}')
+PATCHLEVEL=$(cat ${header/include}Makefile | grep '^PATCHLEVEL = ' | awk '{print $3}')
+SUBLEVEL=$(cat ${header/include}Makefile | grep '^SUBLEVEL = ' | awk '{print $3}')
+EXTRAVERSION=$(cat ${header/include}Makefile | grep '^EXTRAVERSION = ' | awk '{print $3}')
+KERNELVERSION=$VERSION.$PATCHLEVEL.$SUBLEVEL$EXTRAVERSION
+AC_DEFINE_UNQUOTED(KERNELVERSION,"$KERNELVERSION")
+
+AC_MSG_RESULT(found ($KERNELVERSION at ${header/include}))
+CFLAGS="${CFLAGS} -I. -I${header}"
+AC_SUBST(kernel_headers,${header})
+
+AC_MSG_CHECKING(for pppd)
+pppd=`which pppd 2>&1`
+if test $? -eq 1; then
+	pppd=""
+	for path in /usr/sbin /usr/local/sbin /usr/bin /usr/local/bin /sbin; do
+		if test -x ${path}/pppd; then
+			pppd=${path}/pppd
+			break;
+		fi
+	done
+fi
+
+if test -z "${pppd}"; then
+    AC_MSG_RESULT(not found)
+    AC_MSG_ERROR(Could not find pppd)
+fi    
+pppd_ver=`${pppd} --version 2>&1 | grep version | sed 's/pppd version //'`
+AC_MSG_RESULT($pppd ($pppd_ver))
+AC_DEFINE_UNQUOTED(PPPD_VERSION,"${pppd_ver}")
+
+
+echo '==============================================================================='
+
+echo 'Configuration chosen:'
+
+echo    '   PPPD:               '${pppd_ver}
+
+echo -n '   LIBWRAP security:   '
+if test "$LIBWRAP" = "yes"; then
+  echo 'Yes.'
+else
+  echo 'No.'
+fi
+
+echo -n '   Broadcast Relay:    '
+if test "$BCRELAY" = "yes"; then
+  echo 'Yes.'
+else
+  echo 'No.'
+fi
+
+echo    '   linux kernel:       '$KERNELVERSION at ${header/include}
+
+AC_CACHE_SAVE
+AC_OUTPUT(Makefile)
+ 

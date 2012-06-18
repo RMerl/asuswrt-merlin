@@ -1,0 +1,4 @@
+This module randomly matches a certain percentage of all packets.
+.TP
+.BI "--average " "percent"
+Matches the given percentage.  If omitted, a probability of 50% is set. 

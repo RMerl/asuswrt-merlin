@@ -1,0 +1,25 @@
+# The followings are a sample configuration to provide a DNS server address
+# for every client as well as to delegate a permanent IPv6 prefix
+# 2001:db8:1111::/48 to a client whose DUID is 00:01:00:01:aa:bb.
+
+option domain-name-servers 2001:db8::35;
+
+host kame {
+	duid 00:01:00:01:aa:bb;
+	prefix 2001:db8:1111::/48 infinity;
+};
+
+# The followings are a sample configuration to provide an IPv6 address
+# from an address pool 2001:db8:1:2::1000-2000 for 3600[s].
+# Note. You have to send an RA to fxp0; otherwise a client cannot be sure 
+# about the prefix-length and the default router.  If you want to prevent
+# stateless address configuration via RA, please set the autonomous-flag to
+# OFF in your RA configuration.
+
+interface fxp0 {
+	address-pool pool1 3600;
+};
+
+pool pool1 {
+	range 2001:db8:1:2::1000 to 2001:db8:1:2::2000 ;
+};

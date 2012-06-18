@@ -1,0 +1,163 @@
+.\" $Id: l2tp.conf.5 3323 2011-09-21 18:45:48Z lly.dev $ 
+.\" LIC: GPL
+.TH L2TP.CONF 5 "11 March 2002"
+.\""
+.UC 4
+.SH NAME
+l2tp.conf \- L2TP configuration file
+.SH DESCRIPTION
+The \fBl2tp.conf\fP file contains the configuration for
+the L2TP daemon \fBl2tpd\fP(8).
+Each line in the file takes one of the following forms:
+.\"
+.IP "# \fIcomment\fR"
+A line beginning with a pound sign is ignored.
+.\"
+.IP "\fBglobal\fP"
+The keyword \fBglobal\fR marks the start of the global configuration section.
+.\"
+.IP "\fBsection\fP \fIsec_name\fR"
+The keyword \fBsection\fR marks the start of configuration options for a
+particular section.  The section \fIpeer\fR is built-in and allows you
+to specify options relating to a particular L2TP peer.  Other sections
+may be present, depending on which handlers have been dynamically-loaded.
+,\"
+.IP "\fIoption\fR \fIvalue\fR"
+All other lines contain two space-separated words:  An option name
+and a corresponding value.  If the \fIvalue\fR contains spaces,
+it should be surrounded by double-quotes.  Double-quotes within the
+value may be escaped with a backslash, as in C.
+.\"
+.SS "The GLOBAL Section"
+The global section, introduced by the \fBglobal\fR keyword, defines
+options applicable to the entire daemon.  The available options are:
+.\"
+.IP "\fBlisten-port\fP"
+The UDP port on which the daemon listens.  By default, the standard UDP
+port 1701 is used.
+.\"
+.IP "\fBlisten-addr\fP"
+The IP address of the interface on which the daemon listens.  By default,
+it listens on INADDR_ANY, meaning it listens on all interfaces.
+.\"
+.IP "\fBload-handler\fP \fIhandler_name\fR"
+Causes the daemon to dynamically-load a module which extends its functionality.
+The available modules are \fIsync-pppd.so\fR, an interface to the Linux
+pppd daemon, and \fIcmd.so\fR, a simple command-processor for controlling
+the daemon.  These handlers will be described in later sections.
+.\"
+.SS "The PEER Section"
+The peer section, introduced by the \fBsection peer\fR line, has
+the following options.  Note that each set of peer options \fImust\fR
+be preceded by its own \fBsection peer\fR line.
+.\"
+.IP "\fBpeer\fP \fIaddr\fR"
+Specifies the IP address of the peer.  It may be an actual IP address
+in dotted-quad notation, or a host name.
+.\"
+.IP "\fBmask\fP \fInumber_of_bits\fR"
+Specifies the number of bits to use as the netmask.  The address specified
+in the \fBpeer\fR command is then treated as the subnet IP.
+.\"
+.IP "\fBhostname\fP \fIname\fR"
+Specifies the local \fIname\fP to be sent to the peer.  If this option is
+not specified, the local host name is sent.
+.\"
+.IP "\fBpeername\fP \fIname\fP"
+Only accept the connection if the peer announces this \fIname\fP as
+its local name.  Not specifying this option puts no restrictions on the
+peer name.
+.\"
+.IP "\fBsecret\fP \fIshared_secret\fR"
+Specifies the shared secret to use for tunnel authentication with the peer.
+If you omit this option, tunnel authentication is not performed.
+.\"
+.IP "\fBport\fP \fIport\fR"
+Specifies the UDP port for contacting the peer.  If the peer contacts
+us first, we use whichever port the peer used.
+.\"
+.IP "\fBlac-handler\fP \fImodule_name\fR"
+Specifies the name of the module which implements LAC functionality.
+In most cases, this should be \fBsync-pppd\fR.  If you omit this option,
+then the daemon will not act as a LAC for the peer.
+.\"
+.IP "\fBlac-opts\fP \fIoptions\fP"
+Specifies additional pppd options for the LAC handler.
+.\"
+.IP "\fBlns-handler\fP \fImodule_name\fR"
+Specifies the name of the module which implements LNS functionality.
+In most cases, this should be \fBsync-pppd\fR.  If you omit this option,
+then the daemon will not act as a LNS for the peer.
+.\"
+.IP "\fBlns-opts\fP \fIoptions\fP"
+Specifies additional pppd options for the LNS handler.
+.\"
+.IP "\fBhide-avps\fP \fIbool\fR"
+If \fIbool\fR is 0, we will not hide any AVP's.  If it is 1, we will
+hide all the AVP's for which hiding is permitted.  If there is no
+shared secret, no AVP's are hidden.
+.\"
+.IP "\fBretain-tunnel\fP \fIbool\fR"
+If \fIbool\fR is 0, then the tunnel will be torn down when the last
+session terminates.  If it is 1, the tunnel will be maintained even
+if there are no sessions.
+.\"
+.IP "\fBstrict-ip-check\fP \fIbool\fR"
+By default, the l2tp code will discard datagrams for a given tunnel
+if the source address does not match the specified peer's IP address.
+If you set strict-ip-check to 0, then the l2tp code will accept
+datagrams for a tunnel regardless of the source IP address.
+.\"
+.IP "\fBpersist\fP"
+Persistent sessions will be reestablished if they terminate due to
+connection or tunnel errors.
+.\"
+.IP "\fBmaxfail\fP \fInumber\fP"
+If a session could not be reestablished after \fInumber\fP times, it will
+stay down until started manually.
+.\"
+.IP "\fBholdoff\fP \fIdelay\fP"
+Wait \fIdelay\fP seconds before trying to reestablish a session.
+.\"
+.SS "The SYNC-PPPD Section"
+NOTE: The sync-pppd handler only works on Linux.  You must have pppd version
+2.4.1 or later, and your kernel must have these modules loaded (or compiled
+in): ppp_synctty, ppp_generic, slhc and n_hdlc.
+.PP
+This section is available only if you have used \fBload-handler sync-pppd.so\fR
+in the global section.  Options available are:
+.\"
+.IP "\fBlns-pppd-opts\fP \fIoptions\fR"
+Options to supply to pppd when we are acting as an LNS.
+.\"
+.IP "\fBlac-pppd-opts\fP \fIoptions\fR"
+Options to supply to pppd when we are acting as an LAC.
+.\"
+.IP "\fBset-ppp-if-name\fP \fIbool\dR"
+If this is set to 1, then each PPP interface is named with the process-ID
+of the pppd process.  For example, if pppd has process-ID 3211, then the
+corresponding interface is called ppp3211.  If you set this to 0 (the default),
+then the kernel picks the interface name starting at ppp0.
+.\"
+.IP "\fBpppd-path \fIpath\fR\fP
+Sets the path to the pppd program.  If this option is not supplied, the
+default path of \fI/usr/sbin/pppd\fR is used.
+.PP
+Note that the \fBsync-pppd\fR module does not directly support maintaining
+a pool of IP addresses for IP address assignment.  We recommend that you
+assign IP addresses using a RADIUS server and the latest PPP implementation
+from CVS.
+.PP
+Even if you do not supply any options to sync-pppd, you \fImust\fR have
+a \fBsection sync-pppd\fR line to activate the handler.
+.SH "The CMD Section"
+This section is available only if you have used \fBload-handler cmd.so\fR
+in the global section.  The only option available is:
+.IP "\fBsocket-path\fP \fIpathname\fR"
+Specifies the path name of the UNIX-domain socket for controlling the
+daemon.  Defaults to \fI/var/run/l2tpctrl\fR.
+.PP
+Even if you do not supply any options to cmd, you \fImust\fR have
+a \fBsection cmd\fR line to activate the handler.
+.SH AUTHORS
+\fBl2tpd\fR was written by David F. Skoll <dfs@roaringpenguin.com>.

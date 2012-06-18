@@ -1,0 +1,15 @@
+<samba:parameter name="delete group script"
+                 context="G"
+				 type="string"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This is the full pathname to a script that will 
+	be run <emphasis>AS ROOT</emphasis> <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> when a group is requested to be deleted. 
+	It will expand any <parameter moreinfo="none">%g</parameter> to the group name passed.  
+	This script is only useful for installations using the Windows NT domain administration tools.
+	</para>
+</description>
+<value type="default"></value>
+</samba:parameter>

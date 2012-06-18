@@ -1,0 +1,50 @@
+.TH dropbearkey 8
+.SH NAME
+dropbearkey \- create private keys for the use with dropbear(8)
+.SH SYNOPSIS
+.B dropbearkey
+\-t
+.I type
+\-f
+.I file
+[\-s
+.IR bits ]
+.SH DESCRIPTION
+.B dropbearkey
+generates a
+.I RSA
+or
+.I DSS
+format SSH private key, and saves it to a file for the use with the
+.BR dropbear (8)
+SSH 2 server.
+Note that 
+some SSH implementations
+use the term "DSA" rather than "DSS", they mean the same thing.
+.SH OPTIONS
+.TP
+.B \-t \fItype
+Type of key to generate.
+Must be one of
+.I rsa
+or
+.IR dss .
+.TP
+.B \-f \fIfile
+Write the secret key to the file
+.IR file .
+.TP
+.B \-s \fIbits
+Set the key size to
+.I bits
+bits, should be multiple of 8 (optional).
+.SH EXAMPLE
+ # dropbearkey -t rsa -f /etc/dropbear/dropbear_rsa_host_key
+.SH AUTHOR
+Matt Johnston (matt@ucc.asn.au).
+.br
+Gerrit Pape (pape@smarden.org) wrote this manual page.
+.SH SEE ALSO
+dropbear(8), dbclient(1)
+.P
+http://matt.ucc.asn.au/dropbear/dropbear.html

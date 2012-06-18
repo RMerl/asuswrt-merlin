@@ -1,0 +1,40 @@
+#!/bin/sh
+
+PPP_ON_BOOT=/etc/ppp/ppp_on_boot
+
+case "$1" in
+  -*) echo "
+Usage: pon [provider] [arguments]
+
+If pon is invoked without arguments, $PPP_ON_BOOT file will be
+run, presuming it exists and is executable. Otherwise, a PPP connection
+will be started using settings from /etc/ppp/peers/provider.
+If you specify one argument, a PPP connection will be started using
+settings from the appropriate file in the /etc/ppp/peers/ directory, and
+any additional arguments supplied will be passed as extra arguments to
+pppd.
+"
+      exit 0
+      ;;
+esac
+
+if [ -z "$1" -a -x "$PPP_ON_BOOT" ]; then
+  exec "$PPP_ON_BOOT"
+fi
+
+if [ -z "$1" -a ! -f /etc/ppp/peers/provider ]; then
+  echo "
+Please configure /etc/ppp/peers/provider or use a command line argument to
+use another file in /etc/ppp/peers/ directory.
+"
+  exit 1
+fi
+
+if [ "$1" -a ! -f "/etc/ppp/peers/$1" ]; then
+  echo "
+The file /etc/ppp/peers/$1 does not exist.
+"
+  exit 1
+fi
+
+exec /usr/sbin/pppd call ${@:-provider}

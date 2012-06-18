@@ -1,0 +1,36 @@
+<% page_header("columns", "ESP ldb test", "esptest"); %>
+
+<h1>Samba4 ldb test</h1>
+
+<h3>An attribute constrained search</h3>
+
+<%
+var lp = loadparm_init();
+var dbfile = lp.get("sam database");
+var attrs = new Array("name", "dnsDomain", "objectSid", "dn");
+var ldb = ldb_init();
+ldb.session_info = session.authinfo.session_info;
+
+var ok = ldb.connect(dbfile);
+assert(ok);
+
+res = ldb.search("(objectClass=domain)", NULL, ldb.SCOPE_DEFAULT, attrs);
+multi_table(res, "dn");
+%>
+
+<h3>An unconstrained search</h3>
+
+<%
+res = ldb.search("(objectClass=user)");
+multi_table(res, "dn");
+%>
+
+<h3>A search with bad arguments</h3>
+
+<%
+res = ldb.search("=blah", "foo");
+%>
+
+all done
+
+<% page_footer() %>

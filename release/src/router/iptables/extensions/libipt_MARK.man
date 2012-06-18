@@ -1,0 +1,13 @@
+This is used to set the netfilter mark value associated with the
+packet.  It is only valid in the
+.B mangle
+table.  It can for example be used in conjunction with iproute2.
+.TP
+.BI "--set-mark " "value"
+Set nfmark value
+.TP
+.BI "--and-mark " "value"
+Binary AND the nfmark with value
+.TP
+.BI "--or-mark " "value"
+Binary OR  the nfmark with value

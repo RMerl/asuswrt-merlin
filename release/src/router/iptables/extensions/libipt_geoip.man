@@ -1,0 +1,15 @@
+Match a packet by its source or destination country.
+.TP
+[\fB!\fR] \fB--src-cc\fR, \fB--source-country \fIcountry\fR[\fB,\fIcountry\fB,\fIcountry\fB,\fI...\fR]
+Match packet coming from (one of) the specified country(ies)
+.TP
+[\fB!\fR] \fB--dst-cc\fR, \fB--destination-country \fIcountry\fR[\fB,\fIcountry\fB,\fIcountry\fB,\fI...\fR]
+Match packet going to (one of) the specified country(ies)
+.TP
+NOTE:
+The country is inputed by its ISO3166 code.
+.P
+The only extra files you need is a binary db (geoipdb.bin) & its index file (geoipdb.idx).
+Both files are generated from a countries & subnets database with the csv2bin tool,
+available at www.cookinglinux.org/geoip/. Both files MUST also be moved in /var/geoip/
+as the shared library is statically looking for that pathname (ex.: /var/geoip/geoipdb.bin).

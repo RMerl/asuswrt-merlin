@@ -1,0 +1,38 @@
+http://sourceware.org/bugzilla/show_bug.cgi?id=10858
+
+===================================================================
+RCS file: /cvs/src/src/bfd/ChangeLog,v
+retrieving revision 1.4940
+retrieving revision 1.4941
+diff -u -r1.4940 -r1.4941
+--- src/bfd/ChangeLog	2010/02/23 11:38:34	1.4940
++++ src/bfd/ChangeLog	2010/02/24 14:21:50	1.4941
+@@ -1,3 +1,10 @@
++2010-02-24  Alan Modra  <amodra@gmail.com>
++
++	PR binutils/10858
++	* elfxx-mips.c (mips_elf_create_dynamic_relocation): Ise
++	SYMBOL_REFERENCES_LOCAL to exclude entries from the dynamic symbol
++	table.
++
+ 2009-02-02  Tristan Gingold  <gingold@adacore.com>
+ 
+ 	* configure.in: Bump version to 2.19.1
+===================================================================
+RCS file: /cvs/src/src/bfd/elfxx-mips.c,v
+retrieving revision 1.266
+retrieving revision 1.267
+diff -u -r1.266 -r1.267
+--- src/bfd/elfxx-mips.c	2010/02/04 09:16:41	1.266
++++ src/bfd/elfxx-mips.c	2010/02/24 14:21:51	1.267
+@@ -5755,9 +5755,7 @@
+ 
+   /* We must now calculate the dynamic symbol table index to use
+      in the relocation.  */
+-  if (h != NULL
+-      && (!h->root.def_regular
+-	  || (info->shared && !info->symbolic && !h->root.forced_local)))
++  if (h != NULL && ! SYMBOL_REFERENCES_LOCAL (info, &h->root))
+     {
+       indx = h->root.dynindx;
+       if (SGI_COMPAT (output_bfd))

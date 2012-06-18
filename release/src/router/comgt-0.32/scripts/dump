@@ -1,0 +1,22 @@
+####################################################
+#
+# dump - comgt script to dump modem settings
+#
+# Copyright (C) 2006  Paul Hardwick <paul@peck.org>
+#
+###################################################
+print "\nDumping Modem Settings\n\n"
+print "#################\n"
+opengt
+set com 115200n81
+set senddelay 0.05
+waitquiet 1 0.2
+send "AT&VE1^m"
+
+get 1 "^m" $a
+:loop
+    print $a
+    get 1 "^m" $a
+    let a=len($a)
+    if a > 0 goto loop
+print "#################\n"

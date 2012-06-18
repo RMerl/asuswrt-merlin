@@ -1,0 +1,75 @@
+<% page_header("columns", "ESP loadparm test", "esptest" ); 
+   include("/scripting/forms.js");
+%>
+
+<h1>Samba4 loadparm test</h1>
+
+<%
+lp = loadparm_init();
+
+var f = FormObj("LoadparmTest", 2, 1);
+f.element[0].label = "Share";
+f.element[1].label = "Parameter";
+f.submit[0] = "OK";
+
+f.display();
+
+function stringVar(v) {
+	var type = typeof(v);
+	var ret = "";
+	if (type == "object") {
+		for (val in v) {
+			ret = ret + " " + v[val];
+		}
+	} else {
+		ret = ret + v;
+	}
+	return ret;
+}
+
+function showValue(name, v) {
+	write("parameter:" + name + "<br>\n");
+	write("Type  is: " + typeof(v) + "<br>\n");
+	write("Value is: " + stringVar(v) + "<p>\n");
+}
+
+
+if (request['REQUEST_METHOD'] == "POST") {
+	/* if they cancelled then take them back to the list of tests */
+	if (form['submit'] == "Cancel") {
+		redirect("/");
+	}
+	
+	var v;
+
+	share = form['Share'];
+	name  = form['Parameter'];
+	if (share && name) {
+		v = lp.get(share, name);
+	} else if (name) {
+		v = lp.get(name);
+	}
+
+	showValue(name, v);
+}
+%>
+
+Here are some commonly used parameters:<p>
+
+<%
+showValue("defined services", lp.services());
+
+function showParameter(name) {
+	showValue(name, lp.get(name));
+}
+
+showParameter("server services");
+showParameter("netbios name");
+showParameter("security");
+showParameter("workgroup");
+showParameter("log level");
+showParameter("server signing");
+showParameter("interfaces");
+%>
+
+<% page_footer(); %>

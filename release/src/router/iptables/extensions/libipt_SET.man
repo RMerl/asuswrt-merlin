@@ -1,0 +1,16 @@
+This modules adds and/or deletes entries from IP sets which can be defined 
+by ipset(8).
+.TP
+.BR "--add-set " "setname flag[,flag...]"
+add the address(es)/port(s) of the packet to the sets
+.TP
+.BR "--del-set " "setname flag[,flag...]"
+delete the address(es)/port(s) of the packet from the sets,
+where flags are
+.BR "src"
+and/or
+.BR "dst"
+and there can be no more than six of them.
+.TP
+The bindings to follow must previously be defined in order to use 
+multilevel adding/deleting by the SET target.

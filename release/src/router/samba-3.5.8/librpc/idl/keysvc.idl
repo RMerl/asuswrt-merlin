@@ -1,0 +1,16 @@
+/*
+  cryptographic key services interface
+*/
+
+
+/* Also seen as: 0d72a7d4-6148-11d1-b4aa-00c04fb66ea0 */
+[
+  uuid("8d0ffe72-d252-11d0-bf8f-00c04fd9126b"),
+  pointer_default(unique),
+  version(1.0),
+  helpstring("Cryptographic Key Services")
+]
+interface keysvc
+{
+	WERROR keysvc_Unknown0();
+}

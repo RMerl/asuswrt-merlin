@@ -1,0 +1,188 @@
+Samba4 developer howto
+======================
+
+tridge@samba.org, December 2004
+
+A more up to date version of this howto can be found in the wiki 
+at http://wiki.samba.org/index.php/Samba4/HOWTO.
+
+This is a very basic document on how to setup a simple Samba4
+server. This is aimed at developers who are already familiar with
+Samba3 and wish to participate in Samba4 development. This is not
+aimed at production use of Samba4.
+
+.. contents::
+
+Step 1: download Samba4
+-----------------------
+
+If you have downloaded the Samba4 code via a tarball released from the
+samba.org website, Step 1 has already been completed for you.  For testing
+with the version released in the tarball, you may continue on to Step 2.  Note
+that the references below to the top-level directory named "samba4" will
+instead be based on the name of the tarball downloaded (e.g.
+"samba-4.0.0alpha3" for the tarball samba-4.0.0alpha3.tar.gz).
+
+There are 2 methods of doing this:
+
+  method 1:  "rsync -avz samba.org::ftp/unpacked/samba_4_0_test/ samba4"
+
+  method 2:  "git clone git://git.samba.org/samba.git samba4; cd samba4 && git checkout -b v4-0-test origin/v4-0-test; cd .."
+
+both methods will create a directory called "samba4" in the current
+directory. If you don't have rsync or git then install one of them. 
+
+Since only released versions of Samba contain a pregenerated configure script, 
+you will have to generate it by hand::
+
+ $ cd samba4/source
+ $ ./autogen.sh
+
+Note that the above rsync command will give you a checked out git
+repository. So if you also have git you can update it to the latest
+version at some future date using::
+
+  $ cd samba4
+  $ git pull origin v4-0-test
+
+Step 2: compile Samba4
+----------------------
+
+Recommended optional development libraries:
+- acl and xattr development libraries
+- gnutls
+- readline
+
+Run this::
+
+  $ cd samba4/source
+  $ ./configure
+  $ make
+
+Step 3: install Samba4
+----------------------
+
+Run this as a user who have permission to write to the install
+directory (defaults to /usr/local/samba). Use --prefix option to
+configure above to change this.
+
+::
+ 
+  # make install
+
+
+Step 4: provision Samba4
+------------------------
+
+The "provision" step sets up a basic user database. 
+Must be run as a user with permission to write to the install directory.
+
+::
+
+  # cd source
+  # ./setup/provision --realm=YOUR.REALM --domain=YOURDOM \
+  #  --adminpass=SOMEPASSWORD --server-role='domain controller'
+
+'YOURDOM' is the NT4 style domain name. 'YOUR.REALM' is your kerberos
+realm, which is typically your DNS domain name.
+
+Step 5: Create a simple smb.conf
+--------------------------------
+
+The provisioning will create a very simple smb.conf with no shares by
+default. You will need to update it to add at least one share. For
+example::
+
+  [test]
+	path = /data/test
+	read only = no
+
+
+Step 6: starting Samba4
+-----------------------
+
+The simplest is to just run "smbd", but as a developer you may find
+the following more useful::
+
+   # smbd -i -M single
+
+that means "start smbd without messages in stdout, and running a
+single process. That mode of operation makes debugging smbd with gdb
+particularly easy.
+
+Note that now it is no longer necessary to have an instance of nmbd
+from Samba 3 running.  If you are running any smbd or nmbd processes
+they need to be stopped before starting smbd from Samba 4.
+
+Make sure you put the bin and sbin directories from your new install
+in your $PATH. Make sure you run the right version!
+
+
+Step 7: testing Samba4
+----------------------
+
+try this command::
+
+  $ smbclient //localhost/test -Uadministrator%SOMEPASSWORD
+
+
+NOTE about filesystem support
+-----------------------------
+
+To use the advanced features of Samba4 you need a filesystem that
+supports both the "user" and "system" xattr namespaces.
+
+If you run Linux with a 2.6 kernel and ext3 this means you need to
+include the option "user_xattr" in your /etc/fstab. For example::
+
+   /dev/hda3		/home			ext3    user_xattr     1 1
+
+You also need to compile your kernel with the XATTR and SECURITY
+options for your filesystem. For ext3 that means you need::
+
+   CONFIG_EXT3_FS_XATTR=y
+   CONFIG_EXT3_FS_SECURITY=y
+
+If you are running a Linux 2.6 kernel with CONFIG_IKCONFIG_PROC
+defined you can check this with the following command::
+
+   $ zgrep CONFIG_EXT3_FS /proc/config.gz
+
+If you don't have a filesystem with xattr support, then you can
+simulate it by using the option::
+
+   posix:eadb = /usr/local/samba/eadb.tdb
+
+that will place all extra file attributes (NT ACLs, DOS EAs, streams
+etc), in that tdb. It is not efficient, and doesn't scale well, but at
+least it gives you a choice when you don't have a modern filesystem.
+
+Testing your filesystem
+-----------------------
+
+To test your filesystem support, install the 'attr' package and run
+the following 4 commands as root::
+
+  # touch test.txt
+  # setfattr -n user.test -v test test.txt
+  # setfattr -n security.test -v test2 test.txt
+  # getfattr -d test.txt
+  # getfattr -n security.test -d test.txt
+
+You should see output like this::
+
+  # file: test.txt
+  user.test="test"
+  
+  # file: test.txt
+  security.test="test2"
+
+If you get any "Operation not supported" errors then it means your
+kernel is not configured correctly, or your filesystem is not mounted
+with the right options.
+
+If you get any "Operation not permitted" errors then it probably means
+you didn't try the test as root.
+
+..
+	vim: ft=rest

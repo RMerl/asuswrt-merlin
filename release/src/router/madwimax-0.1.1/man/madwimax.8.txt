@@ -1,0 +1,100 @@
+MADWIMAX(8)
+===========
+Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+
+NAME
+----
+madwimax - driver for mobile WiMAX equipment based on Samsung CMC-730
+
+
+SYNOPSIS
+--------
+*madwimax* ['OPTIONS']
+
+
+DESCRIPTION
+-----------
+*madwimax* is an experimental reverse-engineered linux driver for
+mobile WiMAX (802.16e) devices based on Samsung CMC-730 chip. These
+devices are currently supported:
+
+* Samsung SWC-U200
+* Samsung SWC-E100
+* Samsung SWM-S10R (it is built in Samsung NC-10 netbook)
+
+The driver is completely user-space. It requires libusb-1.0 and
+TUN/TAP driver to work.
+
+
+OPTIONS
+-------
+*-d, --daemonize*::
+    Daemonize after startup.
+
+*--device*='VID:PID'::
+    Specify the USB device by 'VID:PID' combination.
+
+*-e* 'FILE', *--event-script*='FILE'::
+    Specify path to the event script.
+
+*--exact-device*='BUS/DEVICE'::
+    Specify the exact USB 'BUS/DEVICE' (use with care!).
+
+*-f, --detach-dvd*::
+    Detach pseudo-DVD kernel driver on startup.
+
+*-h, --help*::
+    Display help.
+
+*-l* 'FILE', *--log-file*='FILE'::
+    Write log to the specified 'FILE' instead of the other methods.
+
+*-o, --diode-off*::
+    Turn off the diode (diode is turned on by default).
+
+*-q, --quiet*::
+    Switch off logging.
+
+*-V, --version*::
+    Print the program version number.
+
+*-v, --verbose*::
+    Increase the log level.
+    
+*--ssid*='SSID'::
+    Specify service set identifier, or SSID, which is a friendly name
+    that identifies a particular 802.16e wireless network.
+
+
+EXIT STATUS
+-----------
+*0*::
+    Success
+
+*1*::
+    Failure (syntax or usage error; hardware error; underlying
+    software error; unexpected error).
+
+
+BUGS
+----
+See the madwimax issue tracker:
+<http://code.google.com/p/madwimax/issues/list>
+
+
+AUTHOR
+------
+Written by Alexander Gordeev, <mailto:lasaine@lvk.cs.msu.su>
+
+
+RESOURCES
+---------
+Main web site: <http://code.google.com/p/madwimax/>
+
+
+COPYING
+-------
+Copyright \(C) 2008-2009 Alexander Gordeev. Free use of this software
+is granted under the terms of the GNU General Public License (GPL).
+

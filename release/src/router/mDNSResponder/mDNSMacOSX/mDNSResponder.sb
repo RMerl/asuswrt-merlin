@@ -1,0 +1,242 @@
+; -*- Mode: Scheme; tab-width: 4 -*-
+;
+; Copyright (c) 2007 Apple Inc. All rights reserved.
+;
+; Redistribution and use in source and binary forms, with or without 
+; modification, are permitted provided that the following conditions are met:
+;
+; 1.  Redistributions of source code must retain the above copyright notice, 
+;     this list of conditions and the following disclaimer. 
+; 2.  Redistributions in binary form must reproduce the above copyright notice, 
+;     this list of conditions and the following disclaimer in the documentation 
+;     and/or other materials provided with the distribution. 
+; 3.  Neither the name of Apple Computer, Inc. ("Apple") nor the names of its 
+;     contributors may be used to endorse or promote products derived from this 
+;     software without specific prior written permission. 
+;
+; THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND ANY 
+; EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+; WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+; DISCLAIMED. IN NO EVENT SHALL APPLE OR ITS CONTRIBUTORS BE LIABLE FOR ANY 
+; DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+; (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
+; ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;
+; $Log: mDNSResponder.sb,v $
+; Revision 1.38  2009/04/16 16:03:08  mcguire
+; <rdar://problem/6792024> abort() causes high CPU usage instead of crash & restart
+;
+; Revision 1.37  2009/04/02 22:21:17  mcguire
+; <rdar://problem/6577409> Adopt IOPM APIs
+;
+; Revision 1.36  2009/03/02 01:32:20  mcguire
+; <rdar://problem/6623264> Seatbelt: Add rule to allow raw sockets
+;
+; Revision 1.35  2009/02/07 02:51:10  cheshire
+; <rdar://problem/6084043> Sleep Proxy: Need to adopt IOPMConnection
+; Allow mDNSResponder to access IOPMConnection API
+;
+; Revision 1.34  2008/11/11 00:55:08  mcguire
+; <rdar://problem/6357957> sandbox: need to allow Mach port com.apple.system.DirectoryService.membership_v1
+;
+; Revision 1.33  2008/10/24 02:03:30  cheshire
+; So we can watch for Internet Sharing changes, allow read access to
+; /Library/Preferences/SystemConfiguration/com.apple.nat.plist
+;
+; Revision 1.32  2008/10/07 23:06:58  mcguire
+; <rdar://problem/6276444> Seatbelt: Policy denied Mach service lookup: com.apple.system.logger
+;
+; Revision 1.31  2008/09/24 23:57:27  mcguire
+; <rdar://problem/6227808> need read access to /private/var/db/crls/crlcache.db
+;
+; Revision 1.30  2008/09/11 22:01:51  mcguire
+; re-add accidentally removed log comment
+;
+; Revision 1.29  2008/09/11 20:46:08  mcguire
+; <rdar://problem/6208848> can't write to -Caches-
+;
+; Revision 1.28  2008/09/11 20:04:14  mcguire
+; <rdar://problem/6211355> Instances of \. in regex exprs don't do what is intended
+;
+; Revision 1.27  2008/07/24 21:18:14  cheshire
+; <rdar://problem/3988320> Should use randomized source ports and transaction IDs to avoid DNS cache poisoning
+; Need to allow access to /dev/urandom
+;
+; Revision 1.26  2008/06/03 01:21:12  mcguire
+; <rdar://problem/5902470> add /var/db/mds to sb profile
+;
+; Revision 1.25  2008/03/17 18:04:41  mcguire
+; <rdar://problem/5800476> SC now reads preference file
+;
+; Revision 1.24  2007/09/20 22:33:17  cheshire
+; Tidied up inconsistent and error-prone naming -- used to be mDNSResponderHelper in
+; some places and mDNSResponder.helper in others; now mDNSResponderHelper everywhere
+;
+; Revision 1.23  2007/09/04 22:26:18  mcguire
+; <rdar://problem/5442826> Seatbelt: mDNSResponder needs to be allowed to access "/Library/Security/Trust Settings/" etc.
+;
+; Revision 1.22  2007/08/24 22:01:56  mcguire
+; <rdar://problem/5141606> BTMM: Task: Change mDNSResponder Seatbelt settings to "deny default" instead of "signal FPE" just prior to GM candidate
+;
+; Revision 1.21  2007/08/18 01:02:03  mcguire
+; <rdar://problem/5415593> No Bonjour services are getting registered at boot
+;
+; Revision 1.20  2007/08/08 22:34:59  mcguire
+; <rdar://problem/5197869> Security: Run mDNSResponder as user id mdnsresponder instead of root
+;
+; Revision 1.19  2007/07/02 23:37:50  cheshire
+; <rdar://problem/5267615> Need to list of allowed mach-lookup operations explicitly in mDNSResponder.sb
+;
+; Revision 1.18  2007/06/28 20:43:35  cheshire
+; <rdar://problem/5298202> Seatbelt: mDNSResponder needs to be able to access /dev/autofs_nowait
+;
+; Revision 1.17  2007/06/28 20:34:45  cheshire
+; Updated comments to reflect new seatbelt language syntax
+;
+; Revision 1.16  2007/05/29 23:32:46  cheshire
+; Rearrange file so SPI warning isn't deleted when CVS history is trimmed from installed copy
+;
+; Revision 1.15  2007/05/25 22:45:17  jvidrine
+; <rdar://problem/5227658> Update mDNSResponder.sb to Seatbelt Profile Language version 1
+;
+; Revision 1.14  2007/05/23 17:40:08  cheshire
+; <rdar://problem/5221397> Seatbelt killed mDNSResponder trying to read X509Anchors and X509Certificates
+;
+; Revision 1.13  2007/05/23 01:47:59  cheshire
+; Need to list fs_read_data permission explicitly --
+; unlike fs_read/fs_write, fs_read_data does NOT automatically inherit from fs_write_data
+;
+; Revision 1.12  2007/05/21 23:52:27  cheshire
+; <rdar://problem/5216638> Seatbelt killed mDNSResponder generating Module Directory Services cache
+;
+; Revision 1.11  2007/05/20 16:29:06  cheshire
+; <rdar://problem/5213725> Seatbelt killed mDNSResponder trying to access /usr/share/icu/icudt36l.dat
+;
+; Revision 1.10  2007/05/15 00:21:39  cheshire
+; <rdar://problem/5202374> Seatbelt killed mDNSResponder reading /private/var/root/Library/Preferences/com.apple.security.plist
+;
+; Revision 1.9  2007/05/14 22:08:26  cheshire
+; <rdar://problem/5200986> Seatbelt: Need to escape literal dots in filename patterns
+;
+; Revision 1.8  2007/05/14 19:39:31  cheshire
+; <rdar://problem/5198345> Seatbelt killed mDNSResponder in CFTimeZoneCopyDefault
+; <rdar://problem/5199456> Seatbelt killed mDNSResponder in SecKeychainOpen
+;
+; Revision 1.7  2007/05/12 01:57:56  cheshire
+; <rdar://problem/5197938> Seatbelt: mDNSResponder needs to be able to access preferences.plist-lock
+;
+; Revision 1.6  2007/05/10 21:12:14  cheshire
+; <rdar://problem/5149833> Start using "debug deny" mode in Seatbelt
+;
+; Revision 1.5  2007/05/10 19:41:25  cheshire
+; <rdar://problem/5182549> Have to use "deny mach_lookup_default" because "signal" doesn't work
+;
+; Revision 1.4  2007/04/27 20:46:31  cheshire
+; Additional requirements: allow mDNSResponder to read /dev/random and /System/Library/Keychains/System.*
+;
+; Revision 1.3  2007/04/20 19:42:14  cheshire
+; Condense rules a bit to bring file under Seatbelt's 4K limit
+;
+; Revision 1.2  2007/04/19 01:47:49  cheshire
+; Refinements to sandbox profile, e.g. allow writing to /dev/console early in the boot process
+;
+; Revision 1.1  2007/04/18 00:50:47  cheshire
+; <rdar://problem/5141540> Sandbox mDNSResponder
+;
+;############################################################################
+
+; WARNING! SEATBELT CURRENTLY CAN'T HANDLE PROFILES LARGER THAN 16K
+; MAKE SURE THE SIZE OF THIS FILE FROM "version" TO THE END DOESN'T EXCEED 16K
+
+(version 1)
+
+; WARNING: The sandbox rule capabilities and syntax used in this file are currently an
+; Apple SPI (System Private Interface) and are subject to change at any time without notice.
+; Apple may in future announce an official public supported sandbox API, but until then Developers
+; are cautioned not to build products that use or depend on the sandbox facilities illustrated here.
+
+; Use "debug all" to log all operations examined by seatbelt, whether allowed or not.
+; Use "debug deny" to log only operations that are denied by seatbelt
+; to discover what specific attempted operation is causing an exception.
+
+;(debug all)
+(debug deny)
+
+; To help debugging, "with send-signal SIGFPE" will trigger a fake floating-point exception,
+; which will crash the process and show the call stack leading to the offending operation.
+; For the shipping version "deny" is probably better because it vetoes the operation
+; without killing the process.
+
+(deny default)
+;(deny default (with send-signal SIGFPE))
+
+; Special exception: "send-signal" command does not apply to the mach-* operations,
+; so for those we have to use a plain unadorned "deny" instead
+; (which means we may not get any notification of unintentional mach-* denials)
+(deny mach-lookup)
+(deny mach-priv-host-port)
+
+; Mach communications
+; These are needed for things like getpwnam, hostname changes, & keychain
+(allow mach-lookup (global-name
+					"com.apple.bsd.dirhelper"
+					"com.apple.distributed_notifications.2"
+					"com.apple.ocspd"
+					"com.apple.PowerManagement.control"
+					"com.apple.mDNSResponderHelper"
+					"com.apple.SecurityServer"
+					"com.apple.SystemConfiguration.configd"
+					"com.apple.system.DirectoryService.libinfo_v1"
+					"com.apple.system.DirectoryService.membership_v1"
+					"com.apple.system.notification_center"
+					"com.apple.system.logger"))
+
+; Rules to allow the operations mDNSResponder needs start here
+
+(allow signal (target self))
+(allow network*)			; Allow networking, including Unix Domain Sockets
+(if (defined? 'system-socket)
+    (allow system-socket))  ; To create raw sockets
+(allow sysctl-read)			; To get hardware model information
+(allow file-read-metadata)	; Needed for dyld to work
+(allow ipc-posix-shm)		; Needed for POSIX shared memory
+
+(allow file-read-data                 (regex #"^/dev/random$"))
+(allow file-read-data file-write-data (regex #"^/dev/console$"))		; Needed for syslog early in the boot process
+(allow file-read-data                 (regex #"^/dev/autofs_nowait$"))	; Used by CF to circumvent automount triggers
+
+; Allow us to read and write our socket
+(allow file-read*     file-write*     (regex #"^/private/var/run/mDNSResponder$"))
+
+; Allow us to read system version, settings, and other miscellaneous necessary file system accesses
+(allow file-read-data                 (regex #"^/dev/urandom$"))
+(allow file-read-data                 (regex #"^/usr/sbin(/mDNSResponder)?$"))		; Needed for CFCopyVersionDictionary()
+(allow file-read-data                 (regex #"^/usr/share/icu/.*$"))
+(allow file-read-data                 (regex #"^/usr/share/zoneinfo/.*$"))
+(allow file-read-data                 (regex #"^/Library/Preferences/SystemConfiguration/preferences\.plist$"))
+(allow file-read-data                 (regex #"^/Library/Preferences/SystemConfiguration/com\.apple\.nat\.plist$"))
+(allow file-read-data                 (regex #"^/Library/Preferences/(ByHost/)?\.GlobalPreferences.*\.plist$"))
+(allow file-read-data                 (regex #"^/Library/Preferences/com\.apple\.security.*\.plist$"))
+(allow file-read-data                 (regex #"^/Library/Preferences/com\.apple\.crypto\.plist$"))
+(allow file-read-data                 (regex #"^/Library/Security/Trust Settings/Admin\.plist$"))
+(allow file-read-data                 (regex #"^/System/Library/CoreServices/SystemVersion.*$"))
+(allow file-read-data                 (regex #"^/System/Library/Preferences/com\.apple\.security.*\.plist$"))
+(allow file-read-data                 (regex #"^/System/Library/Preferences/com\.apple\.crypto\.plist$"))
+(allow file-read-data                 (regex #"^/System/Library/SystemConfiguration/PowerManagement\.bundle(/|$)"))
+(allow file-read-data                 (regex #"^/Library/Preferences/SystemConfiguration/com\.apple\.PowerManagement\.plist$"))
+
+; Allow access to System Keychain
+(allow file-read-data                 (regex #"^/System/Library/Security$"))
+(allow file-read-data                 (regex #"^/System/Library/Keychains/.*$"))
+(allow file-read-data                 (regex #"^/Library/Keychains/System\.keychain$"))
+; Our Module Directory Services cache
+(allow file-read-data                 (regex #"^/private/var/tmp/mds/"))
+(allow file-read* file-write*         (regex #"^/private/var/tmp/mds/[0-9]+(/|$)"))
+(allow file-read-data                 (regex #"^/private/var/db/mds/"))
+(allow file-read* file-write*         (regex #"^/private/var/db/mds/[0-9]+(/|$)"))
+(allow file-read* file-write*         (regex #"^/private/var/folders/[^/]+/[^/]+/-Caches-/mds(/|$)"))
+; CRL Cache for SSL/TLS connections
+(allow file-read-data                 (regex #"^/private/var/db/crls/crlcache\.db$"))

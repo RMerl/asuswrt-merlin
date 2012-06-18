@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Serial Printer</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Parallel Printer" href="x5848.htm">
+    <link rel="NEXT" title="Bounce Queue " href="lpdbounce.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x5848.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "lpdbounce.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="SERIAL">12.10. Serial
+      Printer</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">br=</var><span class=
+          "emphasis"><i class="EMPHASIS">serial port bit
+          rate</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">rw</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">device opened
+          RW</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">stty=</var><span class=
+          "emphasis"><i class="EMPHASIS">stty options for serial
+          port configuration</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The following is a typical printcap for a serial
+      printer:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5898"></a>
+<pre class="SCREEN">
+    # Local Serial ASCII printer
+    lp2
+      :lp=/dev/ttya
+      :rw
+      :cm=Serial printer
+      :sd=/var/spool/lpd/lp2
+      :stty=9600 -echo -crmod -raw -oddp -evenp pass8 cbreak ixon
+      :filter=/usr/local/sbin/lpf
+      :mx=0
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Let's examine the new options:</p>
+
+      <ol type="1">
+        <li>
+          <p>A serial port is usually <span class="emphasis"><i
+          class="EMPHASIS">bidirectional</i></span>, and printers
+          will report errors back to the host computer. The <var
+          class="LITERAL">rw</var> flag will cause the printer port
+          to be opened <var class="LITERAL">read-write</var>, and
+          the <b class="APPLICATION">lpd</b> server will report
+          status information.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">stty</var> option specifies
+          the <tt class="COMMAND">stty(1)</tt> flags and line speed
+          needed to configure the serial line (See <a href=
+          "secserial.htm">Serial Printers</a> for details).</p>
+        </li>
+
+        <li>
+          <p>The legacy <var class="LITERAL">br</var> (bit rate)
+          option can be used to specify the line speed as well.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x5848.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "lpdbounce.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Parallel
+          Printer</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Bounce
+          Queue</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

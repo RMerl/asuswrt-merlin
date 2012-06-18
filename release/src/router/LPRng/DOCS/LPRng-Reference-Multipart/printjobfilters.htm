@@ -1,0 +1,1650 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Print Job Filters</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title="Job Removal" href="jobremoval.htm">
+    <link rel="NEXT" title=
+    "Job File Format Conversion with Filters" href=
+    "jobfileformatconversion.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "jobremoval.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "jobfileformatconversion.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="PRINTJOBFILTERS">4.9. Print Job
+      Filters</a></h1>
+
+      <p>A printer usually understands one or more <span class=
+      "emphasis"><i class="EMPHASIS">Print Job
+      Languages</i></span>. Files sent to this printer must be in
+      one of these languages and have the appropriate <span class=
+      "emphasis"><i class="EMPHASIS">job format</i></span>. The
+      most common Print Job Languages are <a href=
+      "x291.htm#POSTSCRIPT">PostScript</a> and <a href=
+      "x291.htm#PCL">PCL</a>. Text files are PCL with no special
+      PCL control sequences.</p>
+
+      <p>In order for a printer to reliably print a job it needs to
+      be reset to a known configuration and then at the end of job
+      having it flush all of the output to the printing device.
+      This is done by sending it <span class="emphasis"><i class=
+      "EMPHASIS">start of job</i></span> and <span class=
+      "emphasis"><i class="EMPHASIS">end of job</i></span>
+      commands. These commands differ from printer to printer and
+      depend on the print job language as well. Some <span class=
+      "emphasis"><i class="EMPHASIS">vintage</i></span> line
+      printers also have a set of proprietary <span class=
+      "emphasis"><i class="EMPHASIS">escape sequences</i></span>
+      that are used to set up margins, form size, and other
+      printing characteristics. Usually a <span class="emphasis"><i
+      class="EMPHASIS">setup string</i></span> with these escape
+      sequences must be sent to the printer before a file can be
+      printed.</p>
+
+      <p>When sending a job to the printer the print spooler will
+      first process the job using a <span class="emphasis"><i
+      class="EMPHASIS">print job filter</i></span> or <span class=
+      "emphasis"><i class="EMPHASIS">filter</i></span> program.
+      This program reads the job file and then produces output in
+      the format required for the printer.</p>
+
+      <p>When a print job is created the files in the print job are
+      assigned a <span class="emphasis"><i class=
+      "EMPHASIS">format</i></span>. This format was meant as a
+      guide to the print spooler and was to be used to select the
+      filter program for the files in the job. The format was a
+      lower case letter; the <var class="LITERAL">f</var> is the
+      de<var class="LITERAL">f</var>ault format and indicates
+      normal processing and the <var class="LITERAL">l</var> format
+      indicates a literal or binary file. Job files that are
+      flagged as having literal or binary format are usually passed
+      directly to the printer or have at the most a minimal amount
+      of processing. See <a href="printjobformats.htm">Print Job
+      Formats</a> for more information about formats and their use
+      with filters.</p>
+
+      <p>There are two ways to specify filters: the default <var
+      class="LITERAL">:filter=...</var> option and the more
+      specific <var class="LITERAL">Xf=...</var> option. The <var
+      class="LITERAL">X</var> is a lower case letter corresponding
+      to a format. Here is a sample printcap entry with a filter
+      specification:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2200"></a>
+<pre class="SCREEN">
+    lp:sd=/var/spool/lpd/%P
+      :filter=/usr/local/lib/filters/ifhp
+      :rf=/usr/local/lib/filters/rfilter
+</pre>
+      </div>
+      All jobs with formats other than <var class="LITERAL">r</var>
+      will be processed using the <var class="LITERAL">ifhp</var>
+      program while the jobs with the <var class="LITERAL">r</var>
+      format will be processed using the <var class=
+      "LITERAL">rfilter</var> program.<br>
+      <br>
+
+      <p>We will set up a very simple filter and use it to
+      demonstrate how filtering is done by the <b class=
+      "APPLICATION">lpd</b> print spooler. First, set up the <tt
+      class="FILENAME">/tmp/testf</tt> file as shown below.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2209"></a>
+<pre class="SCREEN">
+    #!/bin/sh
+    # /tmp/testf - test filter for LPRng
+    PATH=/bin:/usr/bin; export PATH
+    echo TESTF $0 "$@" &gt;&amp;2
+    echo TESTF $0 "$@"
+    echo ENV
+    set
+    echo LEADER
+    /bin/cat
+    echo TRAILER
+    exit 0
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Let us carefully examine the script line by line. The
+      first couple of lines are <span class="emphasis"><i class=
+      "EMPHASIS">boilerplate</i></span>. You should <span class=
+      "emphasis"><i class="EMPHASIS">always</i></span> set the <var
+      class="ENVAR">PATH</var> value in a filter script or use full
+      pathnames for executable programs. This is a good practice as
+      it ensures that only the specified directories will be
+      searched for commands.</p>
+
+      <p>The next lines echo the command line arguments to file
+      descriptor 2 (<acronym class="ACRONYM">STDERR</acronym>) and
+      to <acronym class="ACRONYM">STDOUT</acronym>. We will soon
+      see how this information is displayed by the <b class=
+      "APPLICATION">LPRng</b> software. We then use the <tt class=
+      "COMMAND">set</tt> command to list the shell variables to
+      <acronym class="ACRONYM">STDOUT</acronym>, print <acronym
+      class="ACRONYM">LEADER</acronym> to <acronym class=
+      "ACRONYM">STDOUT</acronym>, copy <acronym class=
+      "ACRONYM">STDIN</acronym> to <acronym class=
+      "ACRONYM">STDOUT</acronym>, and print <acronym class=
+      "ACRONYM">TRAILER</acronym> to <acronym class=
+      "ACRONYM">STDOUT</acronym>. We exit with a zero result
+      code.</p>
+
+      <p>We can test our script, with the results shown below:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2228"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {163} %</samp> <kbd class=
+"USERINPUT">chmod 755 /tmp/testf</kbd>
+    <samp class="PROMPT">h4: {164} %</samp> <kbd class=
+"USERINPUT">echo hi |/tmp/testf -a1</kbd>
+    TESTF /tmp/testf -a1
+    TESTF /tmp/testf -a1
+    ENV
+    USER=papowell
+    HOSTNAME=h4
+    ...
+    PATH=/bin:/usr/bin
+    LEADER
+    hi
+    TRAILER
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Let's now use this filter. Edit the <var class=
+      "LITERAL">lp</var> printcap entry so it has contents
+      indicated below, use <tt class="COMMAND">checkpc -f</tt> to
+      check the printcap, and then use <tt class="COMMAND">lpc
+      reread</tt> to restart the <b class="APPLICATION">lpd</b>
+      server.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2239"></a>
+<pre class="SCREEN">
+    lp:sd=/var/spool/lpd/%P
+      :force_localhost
+      :lp=/tmp/lp
+      :filter=/tmp/testf
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Execute the following commands to print the <tt class=
+      "FILENAME">/tmp/hi</tt> file and observe the results:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2243"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {165} %</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/lp</kbd>
+    <samp class="PROMPT">h4: {166} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {167} %</samp> <kbd class=
+"USERINPUT">lpq -llll</kbd>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+     Status: lp@h4.private: job 'papowell@h4+26593' printed at 21:37:21.312
+     Status: job 'papowell@h4+26593' removed at 21:37:21.323
+     Status: subserver pid 26683 starting at 21:39:21.908
+     Status: accounting at start at 21:39:21.908
+     Status: opening device '/tmp/lp' at 21:39:21.909
+     Status: printing job 'papowell@h4+26681' at 21:39:21.909
+     Status: no banner at 21:39:21.909
+     Status: printing data file 'dfA026681h4.private', size 3, \
+        IF filter 'testf' at 21:39:21.909
+     Status: IF filter msg - 'TESTF /tmp/testf -Apapowell@h4+26681 \
+         -CA -D2000-04 -11-21:39:21.877 -Ff -Hh4.private -J/tmp/hi \
+          -Lpapowell -Plp -Qlp -aacct -b3 -d/var/tmp/LPD/lp \
+          -edfA026681h4.private -f/tmp/hi -hh4.private -j026681 \
+          -kcfA026681h4.private -l66 -npapowell -sstatus \
+          -t2000-04-11-21:39:21.000 -w80 -x0 -y0 acct' \
+           at 21:39:21.914
+     Status: IF filter finished at 21:39:22.070
+     Status: printing done 'papowell@h4+26681' at 21:39:22.070
+     Status: accounting at end at 21:39:22.070
+     Status: finished 'papowell@h4+26681', status 'JSUCC' at 21:39:22.070
+     Status: subserver pid 26683 exit status 'JSUCC' at 21:39:22.072
+     Status: lp@h4.private: job 'papowell@h4+26681' printed at 21:39:22.072
+     Status: job 'papowell@h4+26681' removed at 21:39:22.085
+    <samp class="PROMPT">h4: {168} %</samp> <kbd class=
+"USERINPUT">more /tmp/lp</kbd>
+    TESTF /tmp/testf -Apapowell@h4+26681 -CA -D2000-04-11-21:39:21.877 \
+     -Ff -Hh4.private -J/tmp/hi -Lpapowell -Plp -Qlp -aacct -b3 \
+     -d/var/tmp/LPD/lp -edfA026681h4.private -f/tmp/hi -hh4.private \
+     -j026681 -kcfA026681h4.private -l66 -npapowell -sstatus \
+     -t2000-04-11-21:39:21.000 -w80 -x0 -y0 acct
+    ENV
+    USER=papowell
+    LD_LIBRARY_PATH=/lib:/usr/lib:/usr/5lib:/usr/ucblib
+    HOME=/home/papowell
+    PRINTCAP_ENTRY=lp
+     :force_localhost
+     :filter=/tmp/testf
+     :lp=/var/tmp/lp
+     :sd=/var/tmp/LPD/lp
+    
+    PS1=$
+    OPTIND=1
+    PS2=&gt;
+    SPOOL_DIR=/var/tmp/LPD/lp
+    LOGNAME=papowell
+    
+    CONTROL=Hh4.private
+     Ppapowell
+     J/tmp/hi
+     CA
+     Lpapowell
+     Apapowell@h4+15850
+     D2000-04-26-18:13:55.505
+     Qlp
+     N/tmp/hi
+     fdfA015850h4.private
+     UdfA015850h4.private
+    
+    PATH=/bin:/usr/bin
+    SHELL=/bin/sh
+    LOGDIR=/home/papowell
+    IFS=
+    PRINTER=lp
+    LEADER
+    test Test
+    TRAILER
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <tt class="COMMAND">cp</tt> command clears out the <tt
+      class="FILENAME">/tmp/lp</tt> file we are using as a dummy
+      output device. The <tt class="COMMAND">lpr</tt> command
+      prints the <tt class="FILENAME">/tmp/hi</tt> file and the <tt
+      class="COMMAND">lpq -llll</tt> command shows the status
+      information. The status information now contains the line
+      that the <tt class="COMMAND">testf</tt> script wrote to
+      <acronym class="ACRONYM">STDERR</acronym>. The <b class=
+      "APPLICATION">lpd</b> server captures filter <acronym class=
+      "ACRONYM">STDERR</acronym> messages and puts it them in the
+      spool queue status file.</p>
+
+      <p>As we see from the lpq status, <b class=
+      "APPLICATION">lpd</b> passes a large number of command line
+      options to our filter. These options and their meanings are
+      discussed in detail in <a href="filteroptions.htm">Filter
+      Command Line Options and Environment Variables</a>. We will
+      discuss these in more detail in the next section.</p>
+
+      <p>If we look at the <tt class="FILENAME">/tmp/lp</tt> file,
+      we see the command line options and values of the shell
+      variables. For a full discussion of the environment variables
+      passed to a filter see <a href="filteroptions.htm">Filter
+      Command Line Options and Environment Variables</a>. The more
+      interesting environment variables include the <var class=
+      "ENVAR">PRINTCAP_ENTRY</var> variable, which is a copy of the
+      printcap entry for this printer, and the <var class=
+      "ENVAR">CONTROL</var> variable, which is a copy of the
+      control file for the the print job.</p>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="CONTROLFILES">4.9.1. Control
+        Files and Filter Options</a></h2>
+
+        <p>When you submit a print job the <b class=
+        "APPLICATION">lpd</b> print spooler stores it in the spool
+        queue as two or more files: a <span class="emphasis"><i
+        class="EMPHASIS">control</i></span> file that contains
+        information about the job and the <span class="emphasis"><i
+        class="EMPHASIS">data</i></span> files that contain the
+        information to be printed. Here is sample control file:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2277"></a>
+<pre class="SCREEN">
+    Hh4.private
+    Ppapowell
+    J/tmp/hi
+    CA
+    Lpapowell
+    Apapowell@h4+15850
+    D2000-04-26-18:13:55.505
+    Qlp
+    N/tmp/hi
+    fdfA015850h4.private
+    UdfA015850h4.private
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Lines starting with upper case letters contain job
+        information such as the user who submitted the job. Lines
+        starting with lower case letters indicate the data file to
+        be printed and the corresponding format. For full details
+        about the exact format of the control file see <a href=
+        "jobfiles.htm">Job Files</a>.</p>
+
+        <p><a href="printjobfilters.htm#FILTEROPTIONSTABLE">Table
+        4-1</a> shows the correspondence between lines in the
+        control file and <b class="APPLICATION">lpr</b> command
+        line options. The <var class="LITERAL">N</var> values are
+        the names of the files that are printed. The <var class=
+        "LITERAL">U</var> indicates a data file is in a job and is
+        present to meet RCF1179 and <span class="emphasis"><i
+        class="EMPHASIS">vintage</i></span> print spooler
+        requirements.</p>
+
+        <div class="TABLE">
+          <a name="FILTEROPTIONSTABLE"></a>
+
+          <p><b>Table 4-1. Filter Options</b></p>
+
+          <table border="1" frame="border" rules="all" class=
+          "CALSTABLE">
+            <col>
+            <col>
+            <col>
+
+            <thead>
+              <tr>
+                <th>Control File</th>
+
+                <th>Filter Option</th>
+
+                <th>Purpose or Value</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>&nbsp;</td>
+
+                <td><var class="LITERAL">-P</var><span class=
+                "emphasis"><i class=
+                "EMPHASIS">Printer</i></span></td>
+
+                <td>Print queue name - printcap information</td>
+              </tr>
+
+              <tr>
+                <td><span class="emphasis"><i class=
+                "EMPHASIS">H</i></span></td>
+
+                <td><var class="LITERAL">-H</var><span class=
+                "emphasis"><i class="EMPHASIS">Host</i></span></td>
+
+                <td>Host Name</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">P</var></td>
+
+                <td><var class="LITERAL">-n</var><span class=
+                "emphasis"><i class="EMPHASIS">User</i></span></td>
+
+                <td>User Login Name of job originator</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">J</var></td>
+
+                <td><var class="LITERAL">-J</var><span class=
+                "emphasis"><i class="EMPHASIS">Job
+                name</i></span></td>
+
+                <td>lpr -J option or file name</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">C</var></td>
+
+                <td><var class="LITERAL">-C</var><span class=
+                "emphasis"><i class=
+                "EMPHASIS">Class</i></span></td>
+
+                <td>Print class (lpr -C option)</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">L</var></td>
+
+                <td><var class="LITERAL">-L</var><span class=
+                "emphasis"><i class=
+                "EMPHASIS">Banner</i></span></td>
+
+                <td>Banner page request</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">A</var></td>
+
+                <td><var class="LITERAL">-A</var><span class=
+                "emphasis"><i class=
+                "EMPHASIS">Jobid</i></span></td>
+
+                <td>Job Id</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">D</var></td>
+
+                <td><var class="LITERAL">-D</var><span class=
+                "emphasis"><i class="EMPHASIS">Date</i></span></td>
+
+                <td>Date or time information</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">Q</var></td>
+
+                <td><var class="LITERAL">-Q</var><span class=
+                "emphasis"><i class=
+                "EMPHASIS">Queue</i></span></td>
+
+                <td>Original Print queue job was sent to</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">N</var></td>
+
+                <td><var class="LITERAL">-N</var><span class=
+                "emphasis"><i class=
+                "EMPHASIS">Filename</i></span></td>
+
+                <td>Filename</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">f,l,p,...</var></td>
+
+                <td><var class="LITERAL">-F</var><span class=
+                "emphasis"><i class="EMPHASIS">f</i></span></td>
+
+                <td>Datafile format</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">U</var></td>
+
+                <td>&nbsp;</td>
+
+                <td>Datafile (historical)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>When a print filter processes these jobs the values in
+        the control file are passed on the command line as options
+        starting with upper case letters:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2378"></a>
+<pre class="SCREEN">
+    /tmp/testf -Apapowell@h4+26681 -CA \
+       -D2000-04-11-21:39:21.877 -Ff -Hh4.private ....
+</pre>
+        </div>
+        Sometimes we want to pass only a small subset of these
+        command line options to a filter or provide them in a
+        specific order in order to be compatible with <span class=
+        "emphasis"><i class="EMPHASIS">legacy</i></span> print
+        filters. <b class="APPLICATION">LPRng</b> provides several
+        different ways to do this and we will explore how to
+        control command line options.<br>
+        <br>
+
+        <p>If the filter entry starts with <var class=
+        "LITERAL">-$</var>, this suppresses the automatic addition
+        of command line options; we can then add our own options to
+        the command line. Modify the printcap entry to have the
+        following form:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2384"></a>
+<pre class="SCREEN">
+    lp:sd=/var/spool/lpd/%P
+      :force_localhost
+      :lp=/tmp/lp
+      :filter= -$ /tmp/testf '$P' $0P -X$-P ${lp} G\072 or \:
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Lets print our <tt class="FILENAME">/tmp/hi</tt> test
+        file and then look at the <b class="APPLICATION">lpq</b>
+        status:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2389"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {169} %</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/lp</kbd>
+    <samp class="PROMPT">h4: {170} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {171} %</samp> <kbd class=
+"USERINPUT">lpq -llll</kbd>
+    Printer: lp@h4
+     ....
+     Status: IF filter msg - 'TESTF /tmp/testf -Plp -P lp -Xlp \
+        -Ylp /tmp/lp G: or :' at 01:20:21.560
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The <var class="LITERAL">-$</var> suppresses the adding
+        the default literals to the filter command line. You can
+        pass specific options using <var class="LITERAL">$X</var>;
+        if the option has a non-null value then it will be expanded
+        in the following format:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2400"></a>
+<pre class="SCREEN">
+    Option    Value Expansion
+    $X        -X&lt;value&gt;
+    $'X       -X'&lt;value&gt;'
+    $0X       -X '&lt;value&gt;'
+    $-X       &lt;value&gt;
+    $'-X      '&lt;value&gt;'
+    ${X}      control file X option value
+    $'{X}     control file X option value (in quotes)
+    ${name}   printcap option value if value nonzero length
+    $'{name}  printcap option value if value nonzero length in quotes
+    \nnn      single printable character
+    $*        all options in control file expanded using $X
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Command line options can be grouped and passed as a
+        single argument by enclosing them in single or double
+        quotes. You should be aware that <b class=
+        "APPLICATION">LPRng</b> has an <span class="emphasis"><i
+        class="EMPHASIS">extremely</i></span> primitive way of
+        handling quotes. When the <tt class="COMMAND">/bin/sh
+        -c</tt> parameter is not used, the the command line is
+        broken on spaces and each unit is passed as an individual
+        argument. If the first character after a space is a quote
+        (single or double), the next quote is found, and then
+        entire element is then used as a single parameter.
+        Substitution of <var class="LITERAL">$X</var> parameters is
+        then done. As a special case, when you have a <var class=
+        "LITERAL">$0X</var>, this causes a split and all of the
+        string previous and including the <var class=
+        "LITERAL">-X</var> flag is passed as a single option and
+        all of the option value and following are passed as another
+        option. If the result of the expansion is a zero length
+        parameter then it is removed from the parameter list. When
+        the <tt class="COMMAND">/bin/sh -c</tt> is used the command
+        line is not broken, and all non-empty option values are
+        enclosed in single quotes.</p>
+
+        <p>The <var class="LITERAL">${name}</var> option is used to
+        pass a printcap option value. For example, you can pass the
+        value of the printcap option <var class=
+        "LITERAL">form</var> as shown below. You can experiment
+        with this by using the <tt class="FILENAME">/tmp/testf</tt>
+        filter and printcap shown below.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2414"></a>
+<pre class="SCREEN">
+    printcap:
+    lp:sd=/var/spool/lpd/%P
+      :force_localhost
+      :lp=/tmp/lp
+      :filter=/tmp/testf -F ${form}
+      :form=payroll
+    
+    <samp class="PROMPT">h4: {172} %</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/lp</kbd>
+    <samp class="PROMPT">h4: {173} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {174} %</samp> <kbd class=
+"USERINPUT">lpq -llll</kbd>
+    Printer: lp@h4
+     ...
+     Status: IF filter msg - 'TESTF /tmp/testf -F payroll' at 09:55:31.276
+     ...
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>If we have a <span class="emphasis"><i class=
+        "EMPHASIS">legacy</i></span> print filter that was
+        originally written for the <acronym class=
+        "ACRONYM">BSD</acronym> print spooler, then we may find
+        that it requires a small number of command line options in
+        a very specific order. We can use the <var class=
+        "LITERAL">:bkf</var> (BSD Kompatible Filter or BacKwards
+        compatible Filter) flag to pass suitable options. Modify
+        the printcap entry to have the following form:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2426"></a>
+<pre class="SCREEN">
+    lp:sd=/var/spool/lpd/%P
+      :force_localhost
+      :lp=/tmp/lp
+      :filter=/tmp/testf
+      :bk
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Lets print our <tt class="FILENAME">/tmp/hi</tt> test
+        file and then look at the <b class="APPLICATION">lpq</b>
+        status:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2431"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {175} %</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/lp</kbd>
+    <samp class="PROMPT">h4: {176} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {177} %</samp> <kbd class=
+"USERINPUT">lpq -llll</kbd>
+    Printer: lp@h4
+     ....
+     Status: IF filter msg - 'TESTF /tmp/testf -Plp -w80 -l66 \
+        -x0 -y0 -Ff -Lpapowell -J/tmp/hi -CA -n papowell \
+        -h h4.private acct' at 08:07:46.583
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Finally, there are times when we would like the print
+        filter to be a simple shell command or to chain several
+        programs together in a simple pipeline. While this is
+        possible using a print filter, you can also do this in the
+        filter specification. If your filter specification starts
+        with a parenthesis (<var class="LITERAL">(</var>) or
+        contains the IO redirection for pipeto (<var class=
+        "LITERAL">|</var>), input redirection (<var class=
+        "LITERAL">&lt;</var>), or output redirection (<var class=
+        "LITERAL">&gt;</var>) then the <b class=
+        "APPLICATION">lpd</b> server will use the <var class=
+        "LITERAL">:shell</var> configuration option value (default
+        <tt class="FILENAME">/bin/sh</tt>) and execute it
+        using:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2447"></a>
+<pre class="SCREEN">
+    ${shell} -c "( ${if} )"
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>If this is done, then no command line options are added
+        to the command. However, expansion of <var class=
+        "LITERAL">$X</var> parameters are still done. Modify the
+        printcap entry to have the following form:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2451"></a>
+<pre class="SCREEN">
+    lp:sd=/var/spool/lpd/%P
+      :force_localhost
+      :lp=/tmp/lp
+      :filter=(echo "PREAMBLE"; /tmp/testf; echo "APPENDIX")
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Lets print our <tt class="FILENAME">/tmp/hi</tt> test
+        file and then look at the <b class="APPLICATION">lpq</b>
+        status:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2456"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {178} %</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/lp</kbd>
+    <samp class="PROMPT">h4: {179} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {180} %</samp> <kbd class=
+"USERINPUT">lpq -llll</kbd>
+    Printer: lp@h4
+     ....
+     Status: printing data file 'dfA018881h4.private', size 3, \
+       IF filter 'echo' at 09:22:11.476
+     Status: IF filter msg - 'TESTF /tmp/testf' at 09:22:11.510
+     Status: IF filter finished at 09:22:11.514
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>If we examine the <tt class="FILENAME">/tmp/lp</tt> file
+        we find:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2466"></a>
+<pre class="SCREEN">
+    PREAMBLE
+    TESTF /tmp/testf
+    ENV
+    USER=papowell
+    LD_LIBRARY_PATH=/lib:/usr/lib:/usr/5lib:/usr/ucblib
+    ...
+    PRINTER=lp
+    LEADER
+    hi
+    TRAILER
+    APPENDIX
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>As we expected, no options were passed on the command
+        line. If the printcap is modified to have the following
+        contents, then you will see:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2469"></a>
+<pre class="SCREEN">
+    lp:sd=/var/spool/lpd/%P
+      :force_localhost
+      :lp=/tmp/lp
+      :filter=(echo "PREAMBLE"; /tmp/testf $*; echo "APPENDIX")
+    
+    <samp class="PROMPT">h4: {181} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {182} %</samp> <kbd class=
+"USERINPUT">lpq -llll</kbd>
+    Printer: lp@h4
+     ....
+     Status: IF filter msg - 'TESTF /tmp/testf -Apapowell@h4+18941 \
+       -CA -D2000-04-29-09:27:30.700 -Ff -Hh4.private -J/tmp/hi \
+       -Lpapowell -Plp -Qlp -aacct -b3 -d/var/tmp/LPD/lp \
+       -edfA018941h4.private -f/tmp/hi -hh4.private -j018941 \
+       -kcfA018941h4.private -l66 -npapowell -sstatus \
+       -t2000-04-29-09:27:30.864 -w80 -x0 -y0 acct' at 09:27:30.879
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Using the shell invocation is especially useful when you
+        may have a parameter that has an empty string value, and
+        need to pass this as a command line parameter. Modify the
+        <tt class="FILENAME">/tmp/testf</tt> filter, the printcap,
+        and execute the following commands:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2477"></a>
+<pre class="SCREEN">
+    printcap:
+      lp:sd=/var/spool/lpd/%P
+        :force_localhost
+        :lp=/tmp/lp
+        :filter=( /tmp/testf -F '${form}' )
+        :form=
+    
+    #!/bin/sh
+    # /tmp/testf - test filter for LPRng
+    PATH=/bin:/usr/bin; export PATH
+    echo TESTF $0 "$@" &gt;&amp;2
+    echo TESTF $0 "$@"
+    while test $# -gt 0 ; do
+      echo "PARM '$1'";
+      shift;
+    done
+    echo LEADER
+    /bin/cat
+    echo TRAILER
+    exit 0
+    
+    <samp class="PROMPT">h4: {183} %</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/lp</kbd>
+    <samp class="PROMPT">h4: {184} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {185} %</samp> <kbd class=
+"USERINPUT">lpq -llll</kbd>
+    Printer: lp@h4
+     ...
+     Status: IF filter msg - 'TESTF /tmp/testf -F' at 09:59:27.365
+    
+    <samp class="PROMPT">h4: {186} %</samp> <kbd class=
+"USERINPUT">more /tmp/lp</kbd>
+    TESTF /tmp/testf -F
+    PARM '-F'
+    PARM ''
+    LEADER
+    hi
+    TRAILER
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>As you can see, there are <span class="emphasis"><i
+        class="EMPHASIS">empty</i></span> parameters passed to the
+        filter. This is due to the combination of the <var class=
+        "LITERAL">$'{form}</var> and using the <var class=
+        "LITERAL">:filter=(...)</var> form.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="FILTERENVIRONMENTVARS">4.9.2.
+        Filter Environment Variables</a></h2>
+
+        <p>In this section we will look further at the environment
+        variables passed to the filter. We printed the shell
+        variable values for the filter at the start of the
+        file:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2494"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {187} %</samp> <kbd class=
+"USERINPUT">cat /tmp/lp</kbd>
+    /tmp/testf -Plp -P lp -Xlp -Ylp /tmp/lp G:' at 01:20:21.560
+    ENV
+    CONTROL=Hh4.private
+     Ppapowell
+     J/tmp/hi
+     CA
+     Lpapowell
+     Apapowell@h4+105
+     D2000-04-12-15:27:26.662
+     Qlp
+     N/tmp/hi
+     fdfA105h4.private
+     UdfA105h4.private
+    HOME=/home/daemon
+    LD_LIBRARY_PATH=/lib:/usr/lib:/usr/5lib:/usr/ucblib
+    LOGDIR=/home/daemon
+    LOGNAME=daemon
+    OPTIND=1
+    PATH=/bin:/usr/bin:/usr/local/bin
+    PRINTCAP_ENTRY=lp
+     :force_localhost
+     :filter=/tmp/testf
+     :lp=/tmp/lp
+     :sd=/tmp/LPD/lp
+    PRINTER=lp
+    PS1=$
+    PS2=&gt;
+    SHELL=/bin/sh
+    SPOOL_DIR=/tmp/LPD/lp
+    USER=daemon
+    
+    LEADER
+    hi
+    TRAILER
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The <var class="ENVAR">HOME</var>, <var class=
+        "ENVAR">USER</var>, <var class="ENVAR">SHELL</var>, <var
+        class="ENVAR">PS1</var>, and <var class="ENVAR">PS2</var>
+        variables are usually set by the shell, and are reflect the
+        information for the <acronym class="ACRONYM">UID</acronym>
+        of the user running the shell.</p>
+
+        <p>The <var class="ENVAR">PATH</var> and <var class=
+        "LITERAL">LP_LIBRARY_PATH</var> are set by the <b class=
+        "APPLICATION">lpd</b> server to values specified in the
+        printcap or configuration information. It is recommended
+        that users set these to site specific values if the
+        defaults are not suitable for their sites.</p>
+
+        <p>The <b class="APPLICATION">lpd</b> server sets the <var
+        class="LITERAL">PRINTER</var>, <var class=
+        "LITERAL">PRINTCAP_ENTRY</var>, and <var class=
+        "LITERAL">CONTROL</var> environment variables to the
+        printer name, printcap entry, and control file for the
+        print job. This information is very useful to filters that
+        must make decisions based on values passed to the print
+        server in the control file and which use parameters in the
+        printcap entry to control their actions.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name=
+        "USINGCOMMANDLINEANDPRINTCAP">4.9.3. Using Command Line and
+        Printcap Options In Filters</a></h2>
+
+        <p>One of the problems commonly encountered problem in
+        writing a filter is getting the command line values. The
+        UNIX POSIX Standard provides a C Language <code class=
+        "FUNCTION">getopt</code> function that can be used for
+        command line options, and some, but not all shell
+        implementations have a corresponding shell <code class=
+        "FUNCTION">getopt</code> function. Also, many times it
+        would be useful to get the values of the printcap options.
+        These could be used to specify options or operations that
+        are not easily done by passing command lines.</p>
+
+        <ul>
+          <li>
+            <p>Observe that all the command line options are single
+            letters. If we set the shell variables to the
+            corresponding option value, then we could access them
+            by using <var class="LITERAL">$x</var>, where <var
+            class="LITERAL">x</var> is the option letter. There is
+            an exception to this rule, which is the <var class=
+            "LITERAL">-c</var> command line literal, which for
+            various historical and compatibility reasons does not
+            take a value. But if it is present, we might as well
+            assign it the value <var class="LITERAL">1</var>.</p>
+          </li>
+
+          <li>
+            <p>Observe that by convention all printcap options have
+            lowercase names of two or more letters, and that all
+            environment variables have all upper case letters. If
+            we set shell variables with the corresponding printcap
+            entry values, then we can access them using <var class=
+            "LITERAL">$literal</var>. If we need to create a local
+            shell variable for use, we can use <var class=
+            "LITERAL">mIxEd</var> case and not have a conflict.</p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>The <var class="LITERAL">decode_args_with_sh</var>
+        script which is in the <acronym class=
+        "ACRONYM">UTILS</acronym> directory of the <b class=
+        "APPLICATION">LPRng</b> distribution follows these
+        conventions and sets the appropriate shell variables. We
+        have also include a bit of code that will extract the
+        control file control line values and put them into
+        variables as well.</p>
+
+        <p>Save the current <tt class="FILENAME">/tmp/testf</tt>
+        filter file in <tt class="FILENAME">/tmp/testf.old</tt> and
+        replace it with the following:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2537"></a>
+<pre class="SCREEN">
+    #!/bin/sh
+    # this is an example of how to use /bin/sh and LPRng
+    # to get the command line and printcap option values
+    # and set shell variables from them
+    #  Note that we use a couple of variables
+    #PATH=/bin:/usr/bin
+    Args=""
+    vAr=""
+    vAlue=""
+    vAls=""
+    iI=""
+    Tf=""
+    Debug=1
+    if -n $Debug ; then
+        set &gt;/tmp/before
+    fi
+    Args="$@"
+    if -n $Debug ; then
+        echo "$@" &gt;&gt;/tmp/before
+    fi
+    while expr "$1" : '-.*' &gt;/dev/null ; do
+      vAr=`expr "$1" : '-\(.\).*'`;
+      vAlue=`expr "$1" : '-.\(.*\)`;
+      case "$vAr" in
+        - ) break;;
+        c ) c=1;;
+        [a-zA-Z] )
+          if test "X$vAlue" = "X" ; then shift; vAlue=$1; fi;
+          eval $vAr='$vAlue';
+          #setvar $vAr "$vAlue"
+          ;;
+      esac;
+      shift;
+    done
+    
+    # set shell variables to the printcap options
+    #  flag   -&gt;  flag=1
+    #  flag@  -&gt;  flag=0
+    #  option=value -&gt;  option='value'
+    #
+    setpcvals () {
+        while test "$#" -gt 0 ; do
+          iI=$1
+          if expr "$iI" : " *\:" &gt;/dev/null ; then
+            vAr=`expr "$iI" : " *\:\([^=][^=]*\)=.*"`;
+            vAlue=`expr "$iI" : " *\:[^=][^=]*=\(.*\)"`;
+            if test "X$vAr" = "X" ; then
+              vAr=`expr "$iI" : " *:\(.*\)@"`;
+              vAlue=0;
+            fi
+            if test "X$vAr" = "X" ; then
+              vAr=`expr "$iI" : " *:\(.*\)"`;
+              vAlue=1;
+            fi
+            if test "X$vAr" != "X" ; then
+              eval $vAr='$vAlue';
+              #setvar $vAr "$vAlue"
+            fi
+          else
+            vAr=`expr "$iI" : " *\([^|][^|]*\).*"`;
+            if test "X$vAr" != "X" ; then
+              eval Printer="$vAr"
+            fi
+          fi;
+          shift
+        done
+    }
+    
+    # set shell variables to the printcap options
+    #  flag   -&gt;  flag=1
+    #  flag@  -&gt;  flag=0
+    #  option=value -&gt;  option='value'
+    #
+    setcontrolvals () {
+        while test "$#" -gt 0 ; do
+          iI=$1
+          vAr=`expr "$iI" : " *\([A-Z]\).*"`;
+          vAlue=`expr "$iI" : " *[A-Z]\(.*\)"`;
+          if test "X$vAr" != "X" ; then
+            eval $vAr='$vAlue';
+            #setvar $vAr "$vAlue";
+          fi;
+          shift
+        done
+    }
+    
+    Tf=$IFS
+    IFS="
+    "
+    setpcvals $PRINTCAP_ENTRY
+    setcontrolvals $CONTROL
+    IFS=$Tf
+    
+    #
+    # restore argument list
+    set -- $Args
+    Args=""
+    vAr=""
+    vAlue=""
+    vAls=""
+    iI=""
+    Tf=""
+    
+    if test -n "$Debug" ; then
+        set &gt;/tmp/after
+        echo "$@" &gt;&gt;/tmp/after
+        diff /tmp/before /tmp/after
+    fi
+    /bin/cat
+    exit 0
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Lets print our <tt class="FILENAME">/tmp/hi</tt> test
+        file and then look at the results in <tt class=
+        "FILENAME">/tmp/lp</tt>:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2542"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {188} %</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/lp</kbd>
+    <samp class="PROMPT">h4: {189} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {190} %</samp> <kbd class=
+"USERINPUT">more /tmp/lp</kbd>
+    0a1
+    &gt; e=dfA021771h4.private
+    2a4,6
+    &gt; l=66
+    &gt; s=status
+    &gt; L=papowell
+    10a15,17
+    &gt; j=021771
+    &gt; C=A
+    &gt; J=/tmp/hi
+    12a20
+    &gt; a=acct
+    ...
+    33a58
+    &gt; Printer=lp
+    ...
+    hi
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>As we see from the output, shell variables have the
+        values of our command line and printcap options. It is left
+        as an exercise for the reader to add the necessary <var
+        class="LITERAL">export</var> statements to cause these
+        values to be exported to subshells. It is <span class=
+        "emphasis"><i class="EMPHASIS">not</i></span> recommended
+        that a wholesale export of the shell variables be done, but
+        only selected ones.</p>
+
+        <p>The paranoid and security minded reader will see some
+        possible security problem with this script. The <var class=
+        "LITERAL">eval $vAr='$vAlue'</var> command sets the value
+        of the shell variable <var class="LITERAL">$vAr</var> to
+        the value <var class="LITERAL">$vAlue</var>. The <var
+        class="LITERAL">$vAr</var> variable is always taken from
+        either a single letter or is the name of an option in the
+        printcap file. Clearly the printcap file must not be
+        modifiable by users, and should have the same security
+        considerations as any other system configuration file. The
+        values of the <var class="LITERAL">$vAlue</var> are taken
+        directly from the control file, whose contents are under
+        the control of the originator of the print job request.</p>
+
+        <p>For this reason <b class="APPLICATION">LPRng</b> takes
+        the rather brutal step of <span class="emphasis"><i class=
+        "EMPHASIS">sanitizing</i></span> the control file. Only
+        alphanumerics or a character in the list <var class=
+        "LITERAL">@/:()=,+-%_</var> are used in the control file;
+        all others replaced by the underscore (<var class=
+        "LITERAL">_</var>) character. In addition, all filters are
+        run as the <b class="APPLICATION">lpd</b> user specified in
+        the <tt class="FILENAME">lpd.conf</tt> configuration
+        file.</p>
+
+        <p>The following is an example of how to extract the same
+        information in Perl:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2567"></a>
+<pre class="SCREEN">
+    #!/usr/bin/perl
+    eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
+        if $running_under_some_shell;
+                # this emulates #! processing on NIH machines.
+                # (remove #! line above if indigestible)
+    
+    use Getopt::Std;
+    my(%args,%options);
+    # get the arguments
+    getopt(
+        "a:b:cd:e:f:g:h:i:j:l:m:n:o:p:q:r:s:t:u:v:w:x:y:z:" .
+        "A:B:C:D:E:F:G:H:I:J:L:M:N:O:P:Q:R:S:T:U:V:W:X:Y:Z:",
+        \%args );
+    
+    # set :key=value  -&gt; $option{$key}=$value
+    # set :key@       -&gt; $option{$key}="0"
+    # set :key        -&gt; $option{$key}="1"
+     map {
+        if( m/^\s*:([^=]+)=(.*)/ ){
+         $options{$1}=$2;
+        } elsif( m/^\s*:([^=]+)\@$/ ){
+         $options{$1}="0";
+        } elsif( m/^\s*:([^=]+)/ ){
+         $options{$1}="1";
+        } elsif( m/^\s*([^|]+)/ ){
+         $options{"Printer"}=$1;
+        }
+     } split( "\n", $ENV{'PRINTCAP_ENTRY'});
+    
+    # get the control file entries
+     map {
+        if( m/^\s*([A-Z])(.*)/ ){
+         $options{$1}=$2;
+        } elsif( m/^\s*([a-z])/ ){
+         $options{'Format'}=$1;
+        }
+     } split( "\n", $ENV{'CONTROL'});
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The Perl <var class="LITERAL">Getopt::Std</var> routine
+        parses the command line options and puts their values in
+        the <var class="LITERAL">%args</var> hash variable where
+        they can be accessed using <var class=
+        "LITERAL">$args{'x'}</var>. Similarly, the <var class=
+        "LITERAL">map</var> and <var class="LITERAL">split</var>
+        functions process the PRINTCAP_ENTRY and CONTROL
+        environment variable and set <var class=
+        "LITERAL">%options</var> with the printcap entry options
+        and the values from the control file. The <code class=
+        "FUNCTION">map</code> function could be replaced by a <code
+        class="FUNCTION">foreach</code> loop, but this is Perl:
+        <span class="emphasis"><i class="EMPHASIS">There is more
+        than one way to do it</i></span> and no tutorial would be
+        complete without at least one mind stretching example that
+        has the reader reaching for the reference manual.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="FILTEREXITCODES">4.9.4. Filter
+        Exit Codes</a></h2>
+
+        <p>The <b class="APPLICATION">lpd</b> server uses the exit
+        code of the filter to determine if the filter was
+        successful or unsuccessful. The <a href=
+        "exitcodes.htm">Filter Exit Codes</a> section discusses
+        these values in detail, but here are the most
+        important:</p>
+
+        <div class="VARIABLELIST">
+          <dl>
+            <dt>0 - JSUCC</dt>
+
+            <dd>
+              <p>A JSUCC exit code indicates that the filter was
+              successful in doing its work.</p>
+            </dd>
+
+            <dt>1 - JFAIL</dt>
+
+            <dd>
+              <p>A JFAIL exit code indicates that the filter was
+              unsuccessful in doing its work, possibly due to a
+              transient condition such as out of paper, printer
+              jam, etc., but an additional attempt might be
+              successful. Usually the <b class=
+              "APPLICATION">lpd</b> server will try at most <a
+              href="abnormalterm.htm">send_try</a> attempts before
+              giving up.</p>
+            </dd>
+
+            <dt>2 - JABORT</dt>
+
+            <dd>
+              <p>A JABORT exit code indicates that the filter was
+              unsuccessful in doing its work and has detected a
+              condition that would make it impossible to print the
+              job. In addition, the printer may require
+              administrative attention, and the print queue
+              operation may need to be suspended until the problem
+              is rectified.</p>
+            </dd>
+
+            <dt>3 - JREMOVE</dt>
+
+            <dd>
+              <p>The JREMOVE exit code will cause the job to be
+              removed from the print queue.</p>
+            </dd>
+
+            <dt>6 - JHOLD</dt>
+
+            <dd>
+              <p>The JHOLD exit code will cause the job to be
+              temporarily prevented from printing until release by
+              the <tt class="COMMAND">lpc release</tt> command.</p>
+            </dd>
+
+            <dt>Other Values</dt>
+
+            <dd>
+              <p>Usually any other value, including exit due to a
+              signal, is treated as a JABORT exit, and the same
+              action is taken.</p>
+            </dd>
+          </dl>
+        </div>
+        <br>
+        <br>
+
+        <p>It should be obvious that the filter exit code is very
+        important, and that care needs to be taken to return the
+        correct value.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name=
+        "JOBFORMATSANDFILTERSELECTION">4.9.5. Job Formats and
+        Filter Selection</a></h2>
+
+        <p>In the previous sections we discussed how a print filter
+        was executed and how it could be used. Now we will look at
+        how the <b class="APPLICATION">lpd</b> spooler chooses a
+        print filter program. Let us re-examine our example print
+        job control file:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2617"></a>
+<pre class="SCREEN">
+    Hh4.private
+    Ppapowell
+    J/tmp/hi
+    CA
+    Lpapowell
+    Apapowell@h4+105
+    D2000-04-12-15:27:26.662
+    Qlp
+    N/tmp/hi
+    fdfA105h4.private
+    UdfA105h4.private
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Each data file for a print job has a name with the
+        format <var class="LITERAL">df</var><span class=
+        "emphasis"><i class="EMPHASIS">X</i></span>nnn<tt class=
+        "FILENAME">h4.private</tt>. The <var class=
+        "LITERAL">df</var> is used to indicate that the file is a
+        <span class="emphasis"><i class="EMPHASIS">data
+        file</i></span>, and the remainder is a unique name for the
+        file in the job. The <var class="LITERAL">X</var> part of
+        the name must be an upper or lower case letter, setting a
+        limit of 52 different files in a single print job.</p>
+
+        <p>The <tt class="FILENAME">fdfA105h4.private</tt> line in
+        the control file specifies that we are to print the job
+        using the filter for the <var class="LITERAL">f</var>
+        format; the file printing information consists of the
+        format assigned to the file and the name of the file. In
+        the legacy BSD print spoolers, this format was used to
+        select the print filter to be used. <b class=
+        "APPLICATION">LPRng</b> has expanded this by providing a
+        <span class="emphasis"><i class=
+        "EMPHASIS">default</i></span> filter specification.</p>
+
+        <div class="TABLE">
+          <a name="JOBFORMAT"></a>
+
+          <p><b>Table 4-2. Job Formats and Filter Selection</b></p>
+
+          <table border="1" frame="border" rules="all" class=
+          "CALSTABLE">
+            <col>
+            <col>
+            <col>
+
+            <thead>
+              <tr>
+                <th><b class="APPLICATION">lpr</b> command line
+                option</th>
+
+                <th>Control File Line</th>
+
+                <th>Printcap Option For Filter</th>
+
+                <th>Filter Command Line</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>(default)</td>
+
+                <td>fdfAnnn</td>
+
+                <td>:if=/path</td>
+
+                <td>/path -Ff ...</td>
+              </tr>
+
+              <tr>
+                <td>-b or -l</td>
+
+                <td>ldfAnnn</td>
+
+                <td>:if=/path</td>
+
+                <td>/path ... -Ff -c</td>
+              </tr>
+
+              <tr>
+                <td>-p</td>
+
+                <td>pdfAnnn</td>
+
+                <td>:if=/path</td>
+
+                <td>pr | format f filter</td>
+              </tr>
+
+              <tr>
+                <td>-c, -d, -n, -r, -t, -v, -FX</td>
+
+                <td>XdfAnnn</td>
+
+                <td>:Xf=/path ...</td>
+
+                <td>/path -FX</td>
+              </tr>
+
+              <tr>
+                <td>any format</td>
+
+                <td>XdfAnnn</td>
+
+                <td>:filter=/path ...</td>
+
+                <td>/path -FX</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p><a href="printjobfilters.htm#JOBFORMAT">Table 4-2</a>
+        shows the rather baroque relationship between the format
+        options specified by the <b class="APPLICATION">lpr</b>
+        command and the way that <b class="APPLICATION">lpd</b>
+        uses them. The reason for this complexity lies in the
+        various implementations and variations that occurred during
+        the development and deployment of the original BSD print
+        spooling software.</p>
+
+        <p>Here is the complete, arcane, and baroque set of rules
+        that are used to select and print filters. The de<var
+        class="LITERAL">f</var>ault format used by <b class=
+        "APPLICATION">lpr</b> is <var class="LITERAL">f</var>;
+        unless some other format is specified this is used. The <tt
+        class="COMMAND">lpr -b</tt> and <tt class="COMMAND">lpr
+        -l</tt> (<var class="LITERAL">b</var>inary and <var class=
+        "LITERAL">l</var>iteral literals) are a request to <b
+        class="APPLICATION">lpd</b> to do as little processing as
+        possible of this file before printing it. <b class=
+        "APPLICATION">Lpd</b> use the <var class=
+        "LITERAL">:if</var> filter for formats <var class=
+        "LITERAL">f</var> and <var class="LITERAL">l</var>; the
+        <var class="LITERAL">l</var> literal causes the the <var
+        class="LITERAL">-c</var> filter command line flag to be
+        used as well. The <tt class="COMMAND">lpr</tt> <var class=
+        "LITERAL">-c</var>, <var class="LITERAL">-d</var>, <var
+        class="LITERAL">-n</var>, <var class="LITERAL">-r</var>,
+        <var class="LITERAL">-t</var>, and <var class=
+        "LITERAL">-v</var> options cause the corresponding format
+        to be used, and for <b class="APPLICATION">lpd</b> to use
+        the filter specified by the printcap option <var class=
+        "LITERAL">:Xf</var>, where <var class="LITERAL">X</var> is
+        the specified format.</p>
+
+        <p>The <tt class="COMMAND">lpr -p</tt> (<var class=
+        "LITERAL">p</var>retty-print literal) selects <var class=
+        "LITERAL">p</var> format, and <b class=
+        "APPLICATION">lpd</b> is supposed to use the program
+        specified by the <var class="LITERAL">:pr</var> printcap
+        option to format the file and then process the output of
+        this program according to format <var class=
+        "LITERAL">f</var>. Unpredictable results may occur using
+        this facility.</p>
+
+        <p>the <tt class="COMMAND">lpr -FX</tt> allows you to
+        explicitly specify format <var class="LITERAL">X</var>
+        where <var class="LITERAL">X</var> is a lower case letter,
+        and <b class="APPLICATION">lpd</b> will use the filter
+        specified by printcap option <var class=
+        "LITERAL">:Xf</var>, where <var class="LITERAL">X</var> is
+        the specified format. If there is no <var class=
+        "LITERAL">:Xf</var> printcap literal value then the
+        printcap <var class="LITERAL">:filter</var> literal value
+        will be used as the filter, and if this is undefined then
+        the file will be passed without processing through to the
+        printing device.</p>
+
+        <p>If a filter is not specified for the format then the
+        default filter specified by <var class=
+        "LITERAL">:filter=/path</var> filter is used, and if there
+        is no default, then the output is sent directly to the
+        output device.</p>
+
+        <p>If the <var class="LITERAL">:fx=</var><span class=
+        "emphasis"><i class="EMPHASIS">formats</i></span> is
+        present in a printcap entry, it specifies the formats that
+        are allowed. For example, <var class=
+        "LITERAL">:fx=lfv</var> would allow only formats <var
+        class="LITERAL">l</var>, <var class="LITERAL">f</var>, and
+        <var class="LITERAL">v</var> to be used on a particular
+        spool queue.</p>
+
+        <p>Some <var class="LITERAL">Xf</var> options have
+        pre-assigned meanings and cannot be used for filter
+        selection.</p>
+
+        <div class="INFORMALTABLE">
+          <a name="AEN2723"></a>
+
+          <table border="1" class="CALSTABLE">
+            <col>
+            <col>
+
+            <thead>
+              <tr>
+                <th>Printcap Option</th>
+
+                <th>Purpose</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>Printcap Option</td>
+
+                <td>Purpose</td>
+              </tr>
+
+              <tr>
+                <td>:af=/path</td>
+
+                <td>Accounting File</td>
+              </tr>
+
+              <tr>
+                <td>:ff=formfeed</td>
+
+                <td>Form Feed String</td>
+              </tr>
+
+              <tr>
+                <td>:if=/path</td>
+
+                <td>filter (l,b,p,f formats)</td>
+              </tr>
+
+              <tr>
+                <td>:filter=/path</td>
+
+                <td>Default filter</td>
+              </tr>
+
+              <tr>
+                <td>:lf=/path</td>
+
+                <td>Log file</td>
+              </tr>
+
+              <tr>
+                <td>:of=/path</td>
+
+                <td>OF filter</td>
+              </tr>
+
+              <tr>
+                <td>:sf</td>
+
+                <td>suppress form feed between job files</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>The <var class="LITERAL">:of</var> filter is a special
+        case and is used for banner printing and accounting
+        purposes. See <a href="ofdetails.htm">OF Filter</a> for
+        details.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "jobremoval.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "jobfileformatconversion.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Job
+          Removal</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Job File
+          Format Conversion with Filters</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

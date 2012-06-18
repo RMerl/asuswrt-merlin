@@ -1,0 +1,50 @@
+#
+# @(#) Test reverse lookup of group ids from getent match getgrgid() output
+#
+
+load_lib util-defs.exp
+load_lib compile.exp
+
+# Compile getgruid.c
+
+simple_compile "getgrgid"
+
+# Get list of gids using getent
+
+set output [util_start "getent" "group" ""]
+set got_entries 0
+
+verbose $output
+
+foreach {line} [split $output "\n"] {
+
+    # Process user
+
+    set grp_entry [split $line ":"]
+    set group [lindex $grp_entry 0]
+
+    if {[regexp {^[^/]+/} $group]} {
+
+        set got_entries 1
+
+        # Only lookup winbindd users
+
+        set gid [lindex $grp_entry 2]
+
+        # Test lookup of gid succeeds
+
+        set output [util_start "$srcdir/$subdir/getgrgid" "$gid" ""]
+	verbose $output
+
+        if {[regexp "PASS:" $output]} {
+            pass "getgrgid $gid ($group)"
+        } else {
+            fail "getgrgid $gid ($group)"
+        }            
+    }
+
+}
+
+if {!$got_entries} {
+    perror "No domain groups returned from getent"
+}

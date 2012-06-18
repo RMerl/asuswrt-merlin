@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<TITLE>ldb</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000" VLINK="#292555" LINK="#292555" ALINK="#cc0033">
+
+<h1>ldb</h1>
+
+ldb is a LDAP-like embedded database. It is not at all LDAP standards
+compliant, so if you want a standards compliant database then please
+see the excellent <a href="http://www.openldap.org/">OpenLDAP</a>
+project.<p>
+
+What ldb does is provide a fast database with an LDAP-like API
+designed to be used within an application. In some ways it can be seen
+as a intermediate solution between key-value pair databases and a real
+LDAP database.<p>
+
+ldb is the database engine used in Samba4.
+
+<h2>Features</h2>
+
+The main features that separate ldb from other solutions are:
+
+<ul>
+<li>Safe multi-reader, multi-writer, using byte range locking
+<li>LDAP-like API
+<li>fast operation
+<li>choice of local tdb or remote LDAP backends
+<li>integration with <a href="http://talloc.samba.org">talloc</a>
+<li>schema-less operation, for trivial setup
+<li>modules for extensions (such as schema support)
+<li>easy setup of indexes and attribute properties
+<li>ldbedit tool for database editing (reminiscent of 'vipw')
+<li>ldif for import/export
+</ul>
+
+<h2>Documentation</h2>
+
+Currently ldb is completely lacking in programmer or user
+documentation. This is your opportunity to make a contribution! Start
+with the public functions declared in <a
+href="http://samba.org/ftp/unpacked/ldb/include/ldb.h">ldb.h</a>
+and the example code in the <a
+href="http://samba.org/ftp/unpacked/ldb/tools/">tools
+directory</a>. Documentation in the same docbook format used by Samba
+would be preferred.
+
+<h2>Discussion and bug reports</h2>
+
+ldb does not currently have its own mailing list or bug tracking
+system. For now, please use the <a
+href="https://lists.samba.org/mailman/listinfo/samba-technical">samba-technical</a>
+mailing list or the <a href="https://lists.samba.org/mailman/listinfo/ldb">ldb</a>
+mailing list, and the <a href="http://bugzilla.samba.org/">Samba bugzilla</a> bug tracking system.
+
+<h2>Download</h2>
+
+You can download the latest release either via rsync or thtough git.<br>
+<br>
+To fetch via git see the following guide:<br>
+<a href="http://wiki.samba.org/index.php/Using_Git_for_Samba_Development">Using Git for Samba Development</a><br>
+Once you have cloned the tree switch to the v4-0-test branch and cd into the source/lib/ldb directory.<br>
+<br>
+To fetch via rsync use these commands:
+
+<pre>
+  rsync -Pavz samba.org::ftp/unpacked/ldb .
+  rsync -Pavz samba.org::ftp/unpacked/tdb .
+  rsync -Pavz samba.org::ftp/unpacked/talloc .
+  rsync -Pavz samba.org::ftp/unpacked/libreplace .
+</pre>
+
+and build in ldb. It will find the other libraries in the directory
+above automatically.
+
+<hr>
+<tiny>
+<a href="http://samba.org/~tridge/">Andrew Tridgell</a><br>
+ldb AT tridgell.net
+</tiny>
+
+</BODY>
+</HTML>

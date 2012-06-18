@@ -1,0 +1,590 @@
+
+
+ 
+
+
+
+<html><head><title>smbclient (1)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>smbclient (1)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    smbclient - ftp-like client to access SMB/CIFS resources on servers
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+    
+<p><strong>smbclient</strong> <a href="smbclient.1.html#servicename">servicename</a> [<a href="smbclient.1.html#password">password</a>] [<a href="smbclient.1.html#minuss">-s smb.conf</a>] [<a href="smbclient.1.html#minusO">-O socket options</a>][<a href="smbclient.1.html#minusR">-R name resolve order</a>] [<a href="smbclient.1.html#minusM">-M NetBIOS name</a>] [<a href="smbclient.1.html#minusi">-i scope</a>] [<a href="smbclient.1.html#minusN">-N</a>] [<a href="smbclient.1.html#minusn">-n NetBIOS name</a>] [<a href="smbclient.1.html#minusd">-d debuglevel</a>] [<a href="smbclient.1.html#minusP">-P</a>] [<a href="smbclient.1.html#minusp">-p port</a>] [<a href="smbclient.1.html#minusl">-l log basename</a>] [<a href="smbclient.1.html#minush">-h</a>] [<a href="smbclient.1.html#minusI">-I dest IP</a>] [<a href="smbclient.1.html#minusE">-E</a>] [<a href="smbclient.1.html#minusU">-U username</a>] [<a href="smbclient.1.html#minusL">-L NetBIOS name</a>] [<a href="smbclient.1.html#minust">-t terminal code</a>] [<a href="smbclient.1.html#minusm">-m max protocol</a>] [<a href="smbclient.1.html#minusb">-b buffersize</a>] [<a href="smbclient.1.html#minusW">-W workgroup</a>] [<a href="smbclient.1.html#minusT">-T&lt;c|x&gt;IXFqgbNan</a>] [<a href="smbclient.1.html#minusD">-D directory</a>] [<a href="smbclient.1.html#minusc">-c command string</a>]
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This program is part of the <strong>Samba</strong> suite.
+<p><strong>smbclient</strong> is a client that can 'talk' to an SMB/CIFS server. It
+offers an interface similar to that of the ftp program (see <strong>ftp
+(1)</strong>).  Operations include things like getting files from the server
+to the local machine, putting files from the local machine to the
+server, retrieving directory information from the server and so on.
+<p><a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+    
+<p><dl>
+<p><a name="servicename"></a>
+<p></p><dt><strong><strong>servicename</strong></strong><dd> servicename is the name of the service you want
+to use on the server. A service name takes the form
+<code>//server/service</code> where <em>server</em> is the NetBIOS name of the SMB/CIFS
+server offering the desired service and <em>service</em> is the name
+of the service offered. Thus to connect to the service <em>printer</em> on
+the SMB/CIFS server <em>smbserver</em>, you would use the servicename
+<p><code>//smbserver/printer</code>
+<p>Note that the server name required is NOT necessarily the IP (DNS)
+host name of the server ! The name required is a NetBIOS server name,
+which may or may not be the same as the IP hostname of the machine
+running the server.
+<p>The server name is looked up according to either the
+<a href="smbclient.1.html#minusR"><strong>-R</strong></a> parameter to <strong>smbclient</strong> or using the
+<a href="smb.conf.5.html#nameresolveorder"><strong>name resolve order</strong></a>
+parameter in the smb.conf file, allowing an administrator to change
+the order and methods by which server names are looked up.
+<p><a name="password"></a>
+<p></p><dt><strong><strong>password</strong></strong><dd> password is the password required to access the
+specified service on the specified server. If this parameter is
+supplied, the <a href="smbclient.1.html#minusN"><strong>-N</strong></a> option (suppress password prompt) is assumed.
+<p>There is no default password. If no password is supplied on the
+command line (either by using this parameter or adding a password to
+the <a href="smbclient.1.html#minusU"><strong>-U</strong></a> option (see below)) and the <a href="smbclient.1.html#minusN"><strong>-N</strong></a> option is not specified,
+the client will prompt for a password, even if the desired service
+does not require one. (If no password is required, simply press ENTER
+to provide a null password.)
+<p>Note: Some servers (including OS/2 and Windows for Workgroups) insist
+on an uppercase password. Lowercase or mixed case passwords may be
+rejected by these servers.
+<p>Be cautious about including passwords in scripts.
+<p><a name="minuss"></a>
+<p></p><dt><strong><strong>-s smb.conf</strong></strong><dd> This parameter specifies the pathname to the
+Samba configuration file, smb.conf. This file controls all aspects of
+the Samba setup on the machine and smbclient also needs to read this
+file.
+<p><a name="minusO"></a>
+<p></p><dt><strong><strong>-O socket options</strong></strong><dd> TCP socket options to set on the client
+socket. See the <a href="smb.conf.5.html#socketoptions">socket options</a>
+parameter in the <a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a> manpage for
+the list of valid options.
+<p><a name="minusR"></a>
+<p></p><dt><strong><strong>-R name resolve order</strong></strong><dd> This option allows the user of
+smbclient to determine what name resolution services to use when
+looking up the NetBIOS name of the host being connected to.
+<p>The options are :"lmhosts", "host", "wins" and "bcast". They cause
+names to be resolved as follows :
+<p><dl>
+<p><li > <strong>lmhosts</strong> : Lookup an IP address in the Samba lmhosts file.
+The lmhosts file is stored in the same directory as the
+<a href="smb.conf.5.html"><strong>smb.conf</strong></a> file.
+<p><li > <strong>host</strong> : Do a standard host name to IP address resolution,
+using the system /etc/hosts, NIS, or DNS lookups. This method of name
+resolution is operating system depended for instance on IRIX or
+Solaris this may be controlled by the <em>/etc/nsswitch.conf</em> file).  
+<p><li > <strong>wins</strong> : Query a name with the IP address listed in the <a href="smb.conf.5.html#winsserver"><strong>wins
+server</strong></a> parameter in the smb.conf file. If 
+no WINS server has been specified this method will be ignored.
+<p><li > <strong>bcast</strong> : Do a broadcast on each of the known local interfaces
+listed in the <a href="smb.conf.5.html#interfaces"><strong>interfaces</strong></a> parameter
+in the smb.conf file. This is the least reliable of the name resolution
+methods as it depends on the target host being on a locally connected
+subnet. 
+<p></dl>
+<p>If this parameter is not set then the name resolve order defined
+in the <a href="smb.conf.5.html"><strong>smb.conf</strong></a> file parameter 
+<a href="smb.conf.5.html#nameresolveorder">(<strong>name resolve order</strong>)</a>
+will be used.
+<p>The default order is lmhosts, host, wins, bcast and without this
+parameter or any entry in the <a href="smb.conf.5.html#nameresolveorder"><strong>"name resolve
+order"</strong></a> parameter of the
+<a href="smb.conf.5.html"><strong>smb.conf</strong></a> file the name resolution methods
+will be attempted in this order.
+<p><a name="minusM"></a>
+<p></p><dt><strong><strong>-M NetBIOS name</strong></strong><dd> This options allows you to send messages,
+using the "WinPopup" protocol, to another computer. Once a connection
+is established you then type your message, pressing ^D (control-D) to
+end.
+<p>If the receiving computer is running WinPopup the user will receive
+the message and probably a beep. If they are not running WinPopup the
+message will be lost, and no error message will occur.
+<p>The message is also automatically truncated if the message is over
+1600 bytes, as this is the limit of the protocol.
+<p>One useful trick is to cat the message through <strong>smbclient</strong>.
+For example:
+<p><code>cat mymessage.txt | smbclient -M FRED</code>
+<p>will send the message in the file <em>mymessage.txt</em> to the machine FRED.
+<p>You may also find the <a href="smbclient.1.html#minusU"><strong>-U</strong></a> and <a href="smbclient.1.html#minusI"><strong>-I</strong></a> options useful, as they allow
+you to control the FROM and TO parts of the message.
+<p>See the <a href="smb.conf.5.html#messagecommand"><strong>message command</strong></a>
+parameter in the <strong>smb.conf (5)</strong> for a description of how to handle
+incoming WinPopup messages in Samba.
+<p>Note: Copy WinPopup into the startup group on your WfWg PCs if you
+want them to always be able to receive messages.
+<p><a name="minusi"></a>
+<p></p><dt><strong><strong>-i scope</strong></strong><dd> This specifies a NetBIOS scope that smbclient will use
+to communicate with when generating NetBIOS names. For details on the
+use of NetBIOS scopes, see rfc1001.txt and rfc1002.txt. NetBIOS scopes
+are <em>very</em> rarely used, only set this parameter if you are the
+system administrator in charge of all the NetBIOS systems you
+communicate with.
+<p><a name="minusN"></a>
+<p></p><dt><strong><strong>-N</strong></strong><dd> If specified, this parameter suppresses the normal
+password prompt from the client to the user. This is useful when
+accessing a service that does not require a password.
+<p>Unless a password is specified on the command line or this parameter
+is specified, the client will request a password.
+<p><a name="minusn"></a>
+<p></p><dt><strong><strong>-n NetBIOS name</strong></strong><dd> By default, the client will use the local
+machine's hostname (in uppercase) as its NetBIOS name. This parameter
+allows you to override the host name and use whatever NetBIOS name you
+wish.
+<p><a name="minusd"></a>
+<p></p><dt><strong><strong>-d debuglevel</strong></strong><dd> debuglevel is an integer from 0 to 10, or the
+letter 'A'.
+<p>The default value if this parameter is not specified is zero.
+<p>The higher this value, the more detail will be logged to the log files
+about the activities of the client. At level 0, only critical errors
+and serious warnings will be logged. Level 1 is a reasonable level for
+day to day running - it generates a small amount of information about
+operations carried out.
+<p>Levels above 1 will generate considerable amounts of log data, and
+should only be used when investigating a problem. Levels above 3 are
+designed for use only by developers and generate HUGE amounts of log
+data, most of which is extremely cryptic. If debuglevel is set to the
+letter 'A', then <em>all</em> debug messages will be printed. This setting
+is for developers only (and people who <em>really</em> want to know how the
+code works internally).
+<p>Note that specifying this parameter here will override the <a href="smb.conf.5.html#loglevel"><strong>log
+level</strong></a> parameter in the <a href="smb.conf.5.html"><strong>smb.conf
+(5)</strong></a> file.
+<p><a name="minusP"></a>
+<p></p><dt><strong><strong>-P</strong></strong><dd> This option is no longer used. The code in Samba2.0
+now lets the server decide the device type, so no printer specific
+flag is needed.
+<p><a name="minusp"></a>
+<p></p><dt><strong><strong>-p port</strong></strong><dd> This number is the TCP port number that will be used
+when making connections to the server. The standard (well-known) TCP
+port number for an SMB/CIFS server is 139, which is the default.
+<p><a name="minusl"></a>
+<p></p><dt><strong><strong>-l logfilename</strong></strong><dd> If specified, logfilename specifies a base
+filename into which operational data from the running client will be
+logged.
+<p>The default base name is specified at compile time.
+<p>The base name is used to generate actual log file names. For example,
+if the name specified was "log", the debug file would be
+<code>log.client</code>.
+<p>The log file generated is never removed by the client.
+<p><a name="minush"></a>
+<p></p><dt><strong><strong>-h</strong></strong><dd> Print the usage message for the client.
+<p><a name="minusI"></a>
+<p></p><dt><strong><strong>-I IP address</strong></strong><dd> IP address is the address of the server to
+connect to. It should be specified in standard "a.b.c.d" notation.
+<p>Normally the client would attempt to locate a named SMB/CIFS server by
+looking it up via the NetBIOS name resolution mechanism described
+above in the <a href="smbclient.1.html#minusR"><strong>name resolve order</strong></a> parameter
+above. Using this parameter will force the client to assume that the
+server is on the machine with the specified IP address and the NetBIOS
+name component of the resource being connected to will be ignored.
+<p>There is no default for this parameter. If not supplied, it will be
+determined automatically by the client as described above.
+<p><a name="minusE"></a>
+<p></p><dt><strong><strong>-E</strong></strong><dd> This parameter causes the client to write messages to the
+standard error stream (stderr) rather than to the standard output
+stream.
+<p>By default, the client writes messages to standard output - typically
+the user's tty.
+<p><a name="minusU"></a>
+<p></p><dt><strong><strong>-U username</strong></strong><dd> This specifies the user name that will be used by
+the client to make a connection, assuming your server is not a downlevel
+server that is running a protocol level that uses passwords on shares,
+not on usernames.
+<p>Some servers are fussy about the case of this name, and some insist
+that it must be a valid NetBIOS name.
+<p>If no username is supplied, it will default to an uppercase version of
+the environment variable <code>USER</code> or <code>LOGNAME</code> in that order.  If no
+username is supplied and neither environment variable exists the
+username "GUEST" will be used.
+<p>If the <code>USER</code> environment variable contains a '%' character,
+everything after that will be treated as a password. This allows you
+to set the environment variable to be <code>USER=username%password</code> so
+that a password is not passed on the command line (where it may be
+seen by the ps command).
+<p>If the service you are connecting to requires a password, it can be
+supplied using the <a href="smbclient.1.html#minusU"><strong>-U</strong></a> option, by appending a percent symbol ("%")
+then the password to username.  For example, to attach to a service as
+user <code>"fred"</code> with password <code>"secret"</code>, you would specify. <br>
+<p><code>-U fred%secret</code> <br>
+<p>on the command line. Note that there are no spaces around the percent
+symbol.
+<p>If you specify the password as part of username then the <a href="smbclient.1.html#minusN"><strong>-N</strong></a> option
+(suppress password prompt) is assumed.
+<p>If you specify the password as a parameter <em>AND</em> as part of username
+then the password as part of username will take precedence. Putting
+nothing before or nothing after the percent symbol will cause an empty
+username or an empty password to be used, respectively.
+<p>The password may also be specified by setting up an environment
+variable called <code>PASSWD</code> that contains the users password. Note
+that this may be very insecure on some systems but on others allows
+users to script smbclient commands without having a password appear in
+the command line of a process listing.
+<p>Note: Some servers (including OS/2 and Windows for Workgroups) insist
+on an uppercase password. Lowercase or mixed case passwords may be
+rejected by these servers.
+<p>Be cautious about including passwords in scripts or in the
+<code>PASSWD</code> environment variable. Also, on many systems the command
+line of a running process may be seen via the <code>ps</code> command to be
+safe always allow smbclient to prompt for a password and type it in
+directly.
+<p><a name="minusL"></a>
+<p></p><dt><strong><strong>-L</strong></strong><dd> This option allows you to look at what services are
+available on a server. You use it as <code>"smbclient -L host"</code> and a
+list should appear.  The <a href="smbclient.1.html#minusI"><strong>-I</strong></a> option may be useful if your NetBIOS
+names don't match your tcp/ip dns host names or if you are trying to
+reach a host on another network.
+<p><a name="minust"></a>
+<p></p><dt><strong><strong>-t terminal code</strong></strong><dd> This option tells smbclient how to interpret
+filenames coming from the remote server. Usually Asian language
+multibyte UNIX implementations use different character sets than
+SMB/CIFS servers (<em>EUC</em> instead of <em>SJIS</em> for example). Setting
+this parameter will let smbclient convert between the UNIX filenames
+and the SMB filenames correctly. This option has not been seriously
+tested and may have some problems.
+<p>The terminal codes include <code>sjis</code>, <code>euc</code>, <code>jis7</code>, <code>jis8</code>,
+<code>junet</code>, <code>hex</code>, <code>cap</code>. This is not a complete list, check the
+Samba source code for the complete list.
+<p><a name="minusm"></a>
+<p></p><dt><strong><strong>-m max protocol level</strong></strong><dd> With the new code in Samba2.0,
+<strong>smbclient</strong> always attempts to connect at the maximum
+protocols level the server supports. This parameter is
+preserved for backwards compatibility, but any string
+following the <strong>-m</strong> will be ignored.
+<p><a name="minusb"></a>
+<p></p><dt><strong><strong>-b buffersize</strong></strong><dd> This option changes the transmit/send buffer
+size when getting or putting a file from/to the server. The default
+is 65520 bytes. Setting this value smaller (to 1200 bytes) has been
+observed to speed up file transfers to and from a Win9x server.
+<p><a name="minusW"></a>
+<p></p><dt><strong><strong>-W WORKGROUP</strong></strong><dd> Override the default workgroup specified in the
+<a href="smb.conf.5.html#workgroup"><strong>workgroup</strong></a> parameter of the
+<a href="smb.conf.5.html"><strong>smb.conf</strong></a> file for this connection. This may
+be needed to connect to some servers.
+<p><a name="minusT"></a> <p></p><dt><strong><strong>-T tar options</strong></strong><dd> smbclient may be used to create
+<strong>tar (1)</strong> compatible backups of all the files on an SMB/CIFS
+share. The secondary tar flags that can be given to this option are :
+<p><dl>
+<p><p></p><dt><strong><strong>c</strong></strong><dd> Create a tar file on UNIX. Must be followed by the
+	name of a tar file, tape device or <code>"-"</code> for standard output. If
+	using standard output you must turn the log level to its lowest value
+    <code>-d0</code> to avoid corrupting your tar file. This flag is
+	mutually exclusive with the <strong>x</strong> flag.
+<p><p></p><dt><strong><strong>x</strong></strong><dd> Extract (restore) a local tar file back to a
+	share. Unless the <a href="smbclient.1.html#minusD"><strong>-D</strong></a> option is given, the tar files will be
+	restored from the top level of the share. Must be followed by the name
+	of the tar file, device or <code>"-"</code> for standard input. Mutually exclusive
+	with the <strong>c</strong> flag. Restored files have their creation times (mtime)
+	set to the date saved in the tar file. Directories currently do not
+	get their creation dates restored properly.
+<p><p></p><dt><strong><strong>I</strong></strong><dd> Include files and directories. Is the default
+	behavior when filenames are specified above. Causes tar files to
+	be included in an extract or create (and therefore everything else to
+	be excluded). See example below.  Filename globbing works 
+	in one of two ways.  See <strong>r</strong> below.
+<p><p></p><dt><strong><strong>X</strong></strong><dd> Exclude files and directories. Causes tar files to
+	be excluded from an extract or create. See example below.  Filename
+	globbing works in one of two ways now. See <strong>r</strong> below.
+<p><p></p><dt><strong><strong>b</strong></strong><dd> Blocksize. Must be followed by a valid (greater than
+	zero) blocksize.  Causes tar file to be written out in
+	blocksize*TBLOCK (usually 512 byte) blocks.
+<p><p></p><dt><strong><strong>g</strong></strong><dd> Incremental. Only back up files that have the
+	archive bit set. Useful only with the <strong>c</strong> flag.
+<p><p></p><dt><strong><strong>q</strong></strong><dd> Quiet. Keeps tar from printing diagnostics as it
+	works.  This is the same as tarmode quiet.
+<p><p></p><dt><strong><strong>r</strong></strong><dd> Regular expression include or exclude.  Uses regular 
+	regular expression matching for excluding or excluding files if 
+	compiled with HAVE_REGEX_H. However this mode can be very slow. If 
+	not compiled with HAVE_REGEX_H, does a limited wildcard match on * and 
+	?.
+<p><p></p><dt><strong><strong>N</strong></strong><dd> Newer than. Must be followed by the name of a file
+	whose date is compared against files found on the share during a
+	create. Only files newer than the file specified are backed up to the
+	tar file. Useful only with the <strong>c</strong> flag.
+<p><p></p><dt><strong><strong>a</strong></strong><dd> Set archive bit. Causes the archive bit to be reset
+	when a file is backed up. Useful with the <strong>g</strong> and <strong>c</strong> flags.
+<p></dl>
+<p><em>Tar Long File Names</em>
+<p>smbclient's tar option now supports long file names both on backup and
+restore. However, the full path name of the file must be less than
+1024 bytes.  Also, when a tar archive is created, smbclient's tar
+option places all files in the archive with relative names, not
+absolute names.
+<p><em>Tar Filenames</em>
+<p>All file names can be given as DOS path names (with <code>\</code> as the
+component separator) or as UNIX path names (with <code>/</code> as the
+component separator).
+<p><em>Examples</em>
+<p><dl>
+<p><li > Restore from tar file backup.tar into myshare on mypc (no password on share).
+<p><code>smbclient //mypc/myshare "" -N -Tx backup.tar</code>
+<p><li > Restore everything except users/docs
+<p><code>smbclient //mypc/myshare "" -N -TXx backup.tar users/docs</code>
+<p><li > Create a tar file of the files beneath users/docs.
+<p><code>smbclient //mypc/myshare "" -N -Tc backup.tar users/docs</code>
+<p><li > Create the same tar file as above, but now use a DOS path name.
+<p><code>smbclient //mypc/myshare "" -N -tc backup.tar users\edocs</code>
+<p><li > Create a tar file of all the files and directories in the share.
+<p><code>smbclient //mypc/myshare "" -N -Tc backup.tar *</code>
+<p></dl>
+<p><a name="minusD"></a>
+<p></p><dt><strong><strong>-D initial directory</strong></strong><dd> Change to initial directory before
+starting. Probably only of any use with the tar <a href="smbclient.1.html#minusT"><strong>-T</strong></a> option.
+<p><a name="minusc"></a>
+<p></p><dt><strong><strong>-c command string</strong></strong><dd> command string is a semicolon separated
+list of commands to be executed instead of prompting from stdin.
+<a href="smbclient.1.html#minusN"><strong>-N</strong></a> is implied by <strong>-c</strong>.
+<p>This is particularly useful in scripts and for printing stdin to the
+server, e.g. <code>-c 'print -'</code>.
+<p></dl>
+<p><a name="OPERATIONS"></a>
+<h2>OPERATIONS</h2>
+    
+<p>Once the client is running, the user is presented with a prompt :
+<p><code>smb:\&gt;</code>
+<p>The backslash ("\") indicates the current working directory on the
+server, and will change if the current working directory is changed.
+<p>The prompt indicates that the client is ready and waiting to carry out
+a user command. Each command is a single word, optionally followed by
+parameters specific to that command. Command and parameters are
+space-delimited unless these notes specifically state otherwise. All
+commands are case-insensitive.  Parameters to commands may or may not
+be case sensitive, depending on the command.
+<p>You can specify file names which have spaces in them by quoting the
+name with double quotes, for example "a long file name".
+<p>Parameters shown in square brackets (e.g., "[parameter]") are
+optional. If not given, the command will use suitable
+defaults. Parameters shown in angle brackets (e.g., "&lt;parameter&gt;") are
+required.
+<p>Note that all commands operating on the server are actually performed
+by issuing a request to the server. Thus the behavior may vary from
+server to server, depending on how the server was implemented.
+<p>The commands available are given here in alphabetical order.
+<p><dl>
+<p><a name="questionmark"></a> <p></p><dt><strong><strong>? [command]</strong></strong><dd> If "command" is specified,
+the <strong>?</strong> command will display a brief informative message about the
+specified command.  If no command is specified, a list of available
+commands will be displayed.
+<p><a name="exclaimationmark"></a> <p></p><dt><strong><strong>! [shell command]</strong></strong><dd> If "shell command"
+is specified, the <strong>!</strong>  command will execute a shell locally and run
+the specified shell command. If no command is specified, a local shell
+will be run.
+<p><a name="cd"></a> <p></p><dt><strong><strong>cd [directory name]</strong></strong><dd> If "directory name" is
+specified, the current working directory on the server will be changed
+to the directory specified. This operation will fail if for any reason
+the specified directory is inaccessible.
+<p>If no directory name is specified, the current working directory on
+the server will be reported.
+<p><a name="del"></a> <p></p><dt><strong><strong>del &lt;mask&gt;</strong></strong><dd> The client will request that the server
+attempt to delete all files matching "mask" from the current working
+directory on the server.
+<p><a name="dir"></a> <p></p><dt><strong><strong>dir &lt;mask&gt;</strong></strong><dd> A list of the files matching "mask" in
+the current working directory on the server will be retrieved from the
+server and displayed.
+<p><a name="exit"></a> <p></p><dt><strong><strong>exit</strong></strong><dd> Terminate the connection with the server and
+exit from the program.
+<p><a name="get"></a> <p></p><dt><strong><strong>get &lt;remote file name&gt; [local file name]</strong></strong><dd> Copy the
+file called "remote file name" from the server to the machine running
+the client. If specified, name the local copy "local file name".  Note
+that all transfers in smbclient are binary. See also the
+<a href="smbclient.1.html#lowercase"><strong>lowercase</strong></a> command.
+<p><a name="help"></a> <p></p><dt><strong><strong>help [command]</strong></strong><dd> See the <a href="smbclient.1.html#questionmark"><strong>?</strong></a>
+command above.
+<p><a name="lcd"></a> <p></p><dt><strong><strong>lcd [directory name]</strong></strong><dd> If "directory name" is
+specified, the current working directory on the local machine will
+be changed to the directory specified. This operation will fail if for
+any reason the specified directory is inaccessible.
+<p>If no directory name is specified, the name of the current working
+directory on the local machine will be reported.
+<p><a name="lowercase"></a> <p></p><dt><strong><strong>lowercase</strong></strong><dd> Toggle lowercasing of filenames
+for the <a href="smbclient.1.html#get"><strong>get</strong></a> and <a href="smbclient.1.html#mget"><strong>mget</strong></a> commands.
+<p>When lowercasing is toggled ON, local filenames are converted to
+lowercase when using the <a href="smbclient.1.html#get"><strong>get</strong></a> and <a href="smbclient.1.html#mget"><strong>mget</strong></a>
+commands. This is often useful when copying (say) MSDOS files from a
+server, because lowercase filenames are the norm on UNIX systems.
+<p><a name="ls"></a> <p></p><dt><strong><strong>ls &lt;mask&gt;</strong></strong><dd> See the <a href="smbclient.1.html#dir"><strong>dir</strong></a> command above.
+<p><a name="mask"></a> <p></p><dt><strong><strong>mask &lt;mask&gt;</strong></strong><dd> This command allows the user to set
+up a mask which will be used during recursive operation of the
+<a href="smbclient.1.html#mget"><strong>mget</strong></a> and <a href="smbclient.1.html#mput"><strong>mput</strong></a> commands.
+<p>The masks specified to the <a href="smbclient.1.html#mget"><strong>mget</strong></a> and
+<a href="smbclient.1.html#mput"><strong>mput</strong></a> commands act as filters for directories rather
+than files when recursion is toggled ON.
+<p>The mask specified with the .B mask command is necessary to filter
+files within those directories. For example, if the mask specified in
+an <a href="smbclient.1.html#mget"><strong>mget</strong></a> command is "source*" and the mask specified
+with the mask command is "*.c" and recursion is toggled ON, the
+<a href="smbclient.1.html#mget"><strong>mget</strong></a> command will retrieve all files matching "*.c" in
+all directories below and including all directories matching "source*"
+in the current working directory.
+<p>Note that the value for mask defaults to blank (equivalent to "*") and
+remains so until the mask command is used to change it. It retains the
+most recently specified value indefinitely. To avoid unexpected
+results it would be wise to change the value of .I mask back to "*"
+after using the <a href="smbclient.1.html#mget"><strong>mget</strong></a> or <a href="smbclient.1.html#mput"><strong>mput</strong></a> commands.
+<p><a name="md"></a> <p></p><dt><strong><strong>md &lt;directory name&gt;</strong></strong><dd> See the <a href="smbclient.1.html#mkdir"><strong>mkdir</strong></a>
+command.
+<p><a name="mget"></a> <p></p><dt><strong><strong>mget &lt;mask&gt;</strong></strong><dd> Copy all files matching mask from the
+server to the machine running the client.
+<p>Note that mask is interpreted differently during recursive operation
+and non-recursive operation - refer to the <a href="smbclient.1.html#recurse"><strong>recurse</strong></a>
+and <a href="smbclient.1.html#mask"><strong>mask</strong></a> commands for more information. Note that all
+transfers in .B smbclient are binary. See also the
+<a href="smbclient.1.html#lowercase"><strong>lowercase</strong></a> command.
+<p><a name="mkdir"></a> <p></p><dt><strong><strong>mkdir &lt;directory name&gt;</strong></strong><dd> Create a new directory on
+the server (user access privileges permitting) with the specified
+name.
+<p><a name="mput"></a> <p></p><dt><strong><strong>mput &lt;mask&gt;</strong></strong><dd> Copy all files matching mask in
+the current working directory on the local machine to the current
+working directory on the server.
+<p>Note that mask is interpreted differently during recursive operation
+and non-recursive operation - refer to the <a href="smbclient.1.html#recurse"><strong>recurse</strong></a>
+and <a href="smbclient.1.html#mask"><strong>mask</strong></a> commands for more information. Note that all
+transfers in .B smbclient are binary.
+<p><a name="print"></a> <p></p><dt><strong><strong>print &lt;file name&gt;</strong></strong><dd> Print the specified file
+from the local machine through a printable service on the server.
+<p>See also the <a href="smbclient.1.html#printmode"><strong>printmode</strong></a> command.
+<p><a name="printmode"></a> <p></p><dt><strong><strong>printmode &lt;graphics or text&gt;</strong></strong><dd> Set the print
+mode to suit either binary data (such as graphical information) or
+text. Subsequent print commands will use the currently set print
+mode.
+<p><a name="prompt"></a> <p></p><dt><strong><strong>prompt</strong></strong><dd> Toggle prompting for filenames during
+operation of the <a href="smbclient.1.html#mget"><strong>mget</strong></a> and <a href="smbclient.1.html#mput"><strong>mput</strong></a>
+commands.
+<p>When toggled ON, the user will be prompted to confirm the transfer of
+each file during these commands. When toggled OFF, all specified files
+will be transferred without prompting.
+<p><a name="put"></a> <p></p><dt><strong><strong>put &lt;local file name&gt; [remote file name]</strong></strong><dd> Copy the
+file called "local file name" from the machine running the client to
+the server. If specified, name the remote copy "remote file name".
+Note that all transfers in smbclient are binary. See also the
+<a href="smbclient.1.html#lowercase"><strong>lowercase</strong></a> command.
+<p><a name="queue"></a> <p></p><dt><strong><strong>queue</strong></strong><dd> Displays the print queue, showing the job
+id, name, size and current status.
+<p><a name="quit"></a> <p></p><dt><strong><strong>quit</strong></strong><dd> See the <a href="smbclient.1.html#exit"><strong>exit</strong></a> command.
+<p><a name="rd"></a> <p></p><dt><strong><strong>rd &lt;directory name&gt;</strong></strong><dd> See the <a href="smbclient.1.html#rmdir"><strong>rmdir</strong></a>
+command.
+<p><a name="recurse"></a> <p></p><dt><strong><strong>recurse</strong></strong><dd> Toggle directory recursion for the
+commands <a href="smbclient.1.html#mget"><strong>mget</strong></a> and <a href="smbclient.1.html#mput"><strong>mput</strong></a>.
+<p>When toggled ON, these commands will process all directories in the
+source directory (i.e., the directory they are copying .IR from ) and
+will recurse into any that match the mask specified to the
+command. Only files that match the mask specified using the
+<a href="smbclient.1.html#mask"><strong>mask</strong></a> command will be retrieved. See also the
+<a href="smbclient.1.html#mask"><strong>mask</strong></a> command.
+<p>When recursion is toggled OFF, only files from the current working
+directory on the source machine that match the mask specified to the
+<a href="smbclient.1.html#mget"><strong>mget</strong></a> or <a href="smbclient.1.html#mput"><strong>mput</strong></a> commands will be copied,
+and any mask specified using the <a href="smbclient.1.html#mask"><strong>mask</strong></a> command will be
+ignored.
+<p><a name="rm"></a> <p></p><dt><strong><strong>rm &lt;mask&gt;</strong></strong><dd> Remove all files matching mask from
+the current working directory on the server.
+<p><a name="rmdir"></a> <p></p><dt><strong><strong>rmdir &lt;directory name&gt;</strong></strong><dd> Remove the specified
+directory (user access privileges permitting) from the server.
+<p><a name="tar"></a> <p></p><dt><strong><strong>tar &lt;c|x&gt;[IXbgNa]</strong></strong><dd> Performs a tar operation - see
+the <a href="smbclient.1.html#minusT"><strong>-T</strong></a> command line option above. Behavior may be
+affected by the <a href="smbclient.1.html#tarmode"><strong>tarmode</strong></a> command (see below). Using
+g (incremental) and N (newer) will affect tarmode settings. Note that
+using the "-" option with tar x may not work - use the command line
+option instead.
+<p><a name="blocksize"></a> <p></p><dt><strong><strong>blocksize &lt;blocksize&gt;</strong></strong><dd> Blocksize. Must be
+followed by a valid (greater than zero) blocksize. Causes tar file to
+be written out in blocksize*TBLOCK (usually 512 byte) blocks.
+<p><a name="tarmode"></a> <p></p><dt><strong><strong>tarmode &lt;full|inc|reset|noreset&gt;</strong></strong><dd> Changes tar's
+behavior with regard to archive bits. In full mode, tar will back up
+everything regardless of the archive bit setting (this is the default
+mode). In incremental mode, tar will only back up files with the
+archive bit set. In reset mode, tar will reset the archive bit on all
+files it backs up (implies read/write share).
+<p><a name="setmode"></a> <p></p><dt><strong><strong>setmode &lt;filename&gt; &lt;perm=[+|\-]rsha&gt;</strong></strong><dd> A version
+of the DOS attrib command to set file permissions. For example:
+<p><code>setmode myfile +r</code>
+<p>would make myfile read only.
+<p></dl>
+<p><a name="NOTES"></a>
+<h2>NOTES</h2>
+    
+<p>Some servers are fussy about the case of supplied usernames,
+passwords, share names (AKA service names) and machine names. If you
+fail to connect try giving all parameters in uppercase.
+<p>It is often necessary to use the <a href="smbclient.1.html#minusn"><strong>-n</strong></a> option when connecting to some
+types of servers. For example OS/2 LanManager insists on a valid
+NetBIOS name being used, so you need to supply a valid name that would
+be known to the server.
+<p>smbclient supports long file names where the server supports the
+LANMAN2 protocol or above.
+<p><a name="ENVIRONMENTVARIABLES"></a>
+<h2>ENVIRONMENT VARIABLES</h2>
+    
+<p>The variable <strong>USER</strong> may contain the username of the person using the
+client.  This information is used only if the protocol level is high
+enough to support session-level passwords.
+<p>The variable <strong>PASSWD</strong> may contain the password of the person using
+the client.  This information is used only if the protocol level is
+high enough to support session-level passwords.
+<p><a name="INSTALLATION"></a>
+<h2>INSTALLATION</h2>
+    
+<p>The location of the client program is a matter for individual system
+administrators. The following are thus suggestions only.
+<p>It is recommended that the smbclient software be installed in the
+/usr/local/samba/bin or /usr/samba/bin directory, this directory
+readable by all, writeable only by root. The client program itself
+should be executable by all. The client should <em>NOT</em> be setuid or
+setgid!
+<p>The client log files should be put in a directory readable and
+writeable only by the user.
+<p>To test the client, you will need to know the name of a running
+SMB/CIFS server. It is possible to run <a href="smbd.8.html"><strong>smbd (8)</strong></a>
+an ordinary user - running that server as a daemon on a
+user-accessible port (typically any port number over 1024) would
+provide a suitable test server.
+<p><a name="DIAGNOSTICS"></a>
+<h2>DIAGNOSTICS</h2>
+    
+<p>Most diagnostics issued by the client are logged in a specified log
+file. The log file name is specified at compile time, but may be
+overridden on the command line.
+<p>The number and nature of diagnostics available depends on the debug
+level used by the client. If you have problems, set the debug level to
+3 and peruse the log files.
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite.
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+</body>
+</html>

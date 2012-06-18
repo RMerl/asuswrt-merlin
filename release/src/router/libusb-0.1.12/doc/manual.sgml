@@ -1,0 +1,75 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY intro SYSTEM "intro.sgml">
+<!ENTITY api SYSTEM "api.sgml">
+<!ENTITY functions SYSTEM "functions.sgml">
+<!ENTITY examples SYSTEM "examples.sgml">
+
+<!-- I'm lazy -->
+<!ENTITY usb "<acronym>USB</acronym>">
+]>
+
+<book id="manual">
+  <title>libusb Developers Guide</title>
+  <bookinfo>
+    <author>
+      <firstname>Johannes</firstname>
+      <surname>Erdfelt</surname>
+    </author>
+    <affiliation>
+      <address><email>johannes@erdfelt.com</email></address>
+    </affiliation>
+
+    <revhistory>
+      <revision>
+        <revnumber>0.3</revnumber>
+        <date>June 28, 2002</date>
+        <authorinitials>jerdfelt</authorinitials>
+        <revremark>More cleanups. Add the rest of the API and clean up some places. Add some examples. Hopefully, this should document the entire 0.1 API now.</revremark>
+      </revision>
+
+      <revision>
+        <revnumber>0.2</revnumber>
+        <date>June 11, 2002</date>
+        <authorinitials>jerdfelt</authorinitials>
+        <revremark>Cleanup, update for all of the changes that have happened in the last couple of months.</revremark>
+      </revision>
+
+      <revision>
+        <revnumber>0.1</revnumber>
+        <date>August 26, 2001</date>
+        <authorinitials>jerdfelt</authorinitials>
+        <revremark>First stab.</revremark>
+      </revision>
+    </revhistory>
+
+    <keywordset>
+      <keyword>libusb</keyword>
+    </keywordset>
+  </bookinfo>
+
+  <preface id="preface">
+    <title>Preface</title>
+
+    <abstract>
+      <simpara>This document's purpose is to explain the API for libusb and how to use it to make a &usb; aware application</simpara>
+      <simpara>Any suggestions, corrections and comments regarding this document can be sent to the author: <ulink url="mailto:johannes@erdfelt.com">Johannes Erdfelt</ulink> or the <ulink url="mailto:libusb-devel@lists.sourceforge.net">libusb developers mailing list</ulink>.</simpara>
+    </abstract>
+  </preface>
+
+  <part id="intro">
+&intro;
+  </part>
+
+  <part id="api">
+&api;
+  </part>
+
+  <part id="functions">
+&functions;
+  </part>
+
+  <part id="examples">
+&examples;
+  </part>
+</book>

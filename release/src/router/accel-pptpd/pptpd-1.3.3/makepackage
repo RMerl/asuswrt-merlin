@@ -1,0 +1,36 @@
+#!/bin/bash
+# given source tree build .tar.gz and package for distribution on this host
+
+os=$(uname)
+if [ -f /etc/redhat-release ]; then
+   DISTRO="RedHat"
+   DVER=$(cat /etc/redhat-release | cut -d " " -f5-)
+elif [ -f /etc/SuSE-release ]; then
+   DISTRO="SuSE"
+   DVER=$(cat /etc/SuSE-release | head -n1 | cut -d " " -f3)
+elif [ -f /etc/debian_version ]; then
+   DISTRO="Debian"
+   DVER=$(cat /etc/debian_version)
+else
+   DISTRO=$os
+fi
+
+version=$(./version)
+
+if [ "$DISTRO" == "RedHat" ]; then
+ mkdir -p /tmp/pptpd-$version
+ cp -ar * /tmp/pptpd-$version/
+ cd /tmp
+ tar -czf /usr/src/redhat/SOURCES/pptpd-$version.tar.gz pptpd-$version
+ cd -
+ rpmbuild -ba pptpd.spec
+elif [ "$DISTRO" == "Debian" ]; then
+ DPKG_BP=`which dpkg-buildpackage 2>/dev/null`
+ if [ -z "$DPKG_BP" ]; then
+  echo "dpkg-buildpackage not installed. Do: apt-get install dpkg-dev"
+  exit 1
+ fi
+ $DPKG_BP -rfakeroot
+else
+ echo "No packagebuilder implemented yet."
+fi

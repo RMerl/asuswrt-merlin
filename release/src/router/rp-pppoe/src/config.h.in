@@ -1,0 +1,143 @@
+/* config.h.in.  Generated automatically from configure.in by autoheader.  */
+/* LIC: GPL */
+
+/* Define to empty if the keyword does not work.  */
+#undef const
+
+/* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef pid_t
+
+/* Define as the return type of signal handlers (int or void).  */
+#undef RETSIGTYPE
+
+/* Define if the setvbuf function takes the buffering type as its second
+   argument and the buffer pointer as the third, as on System V
+   before release 3.  */
+#undef SETVBUF_REVERSED
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define if you can safely include both <sys/time.h> and <time.h>.  */
+#undef TIME_WITH_SYS_TIME
+
+/* Define if your <sys/time.h> declares struct tm.  */
+#undef TM_IN_SYS_TIME
+
+#undef HAVE_STRUCT_SOCKADDR_LL
+
+/* The number of bytes in a unsigned int.  */
+#undef SIZEOF_UNSIGNED_INT
+
+/* The number of bytes in a unsigned long.  */
+#undef SIZEOF_UNSIGNED_LONG
+
+/* The number of bytes in a unsigned short.  */
+#undef SIZEOF_UNSIGNED_SHORT
+
+/* Define if you have the select function.  */
+#undef HAVE_SELECT
+
+/* Define if you have the socket function.  */
+#undef HAVE_SOCKET
+
+/* Define if you have the strerror function.  */
+#undef HAVE_STRERROR
+
+/* Define if you have the strtol function.  */
+#undef HAVE_STRTOL
+
+/* Define if you have the <asm/types.h> header file.  */
+#undef HAVE_ASM_TYPES_H
+
+/* Define if you have the <fcntl.h> header file.  */
+#undef HAVE_FCNTL_H
+
+/* Define if you have the <getopt.h> header file.  */
+#undef HAVE_GETOPT_H
+
+/* Define if you have the <linux/if_ether.h> header file.  */
+#undef HAVE_LINUX_IF_ETHER_H
+
+/* Define if you have kernel-mode PPPoE in Linux file.  */
+#undef HAVE_LINUX_KERNEL_PPPOE
+
+/* Define if you have the <linux/if_packet.h> header file.  */
+#undef HAVE_LINUX_IF_PACKET_H
+
+/* Define if you have the <linux/if_pppox.h> header file.  */
+#undef HAVE_LINUX_IF_PPPOX_H
+
+/* Define if you have the <net/bpf.h> header file.  */
+#undef HAVE_NET_BPF_H
+
+/* Define if you have the <net/if_arp.h> header file.  */
+#undef HAVE_NET_IF_ARP_H
+
+/* Define if you have the <net/ethernet.h> header file.  */
+#undef HAVE_NET_ETHERNET_H
+
+/* Define if you have the <net/if.h> header file.  */
+#undef HAVE_NET_IF_H
+
+/* Define if you have the <linux/if.h> header file.  */
+#undef HAVE_LINUX_IF_H
+
+/* Define if you have the <net/if_dl.h> header file.  */
+#undef HAVE_NET_IF_DL_H
+
+/* Define if you have the <net/if_ether.h> header file.  */
+#undef HAVE_NET_IF_ETHER_H
+
+/* Define if you have the <net/if_types.h> header file.  */
+#undef HAVE_NET_IF_TYPES_H
+
+/* Define if you have the <netinet/if_ether.h> header file.  */
+#undef HAVE_NETINET_IF_ETHER_H
+
+/* Define if you have the <netpacket/packet.h> header file.  */
+#undef HAVE_NETPACKET_PACKET_H
+
+/* Define if you have the <sys/cdefs.h> header file.  */
+#undef HAVE_SYS_CDEFS_H
+
+/* Define if you have the <sys/dlpi.h> header file.  */
+#undef HAVE_SYS_DLPI_H
+
+/* Define if you have the <sys/ioctl.h> header file.  */
+#undef HAVE_SYS_IOCTL_H
+
+/* Define if you have the <sys/param.h> header file.  */
+#undef HAVE_SYS_PARAM_H
+
+/* Define if you have the <sys/socket.h> header file.  */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define if you have the <sys/time.h> header file.  */
+#undef HAVE_SYS_TIME_H
+
+/* Define if you have the <sys/uio.h> header file.  */
+#undef HAVE_SYS_UIO_H
+
+/* Define if you have the <syslog.h> header file.  */
+#undef HAVE_SYSLOG_H
+
+/* Define if you have the <unistd.h> header file.  */
+#undef HAVE_UNISTD_H
+
+/* Define if you have the N_HDLC line discipline in linux/termios.h */
+#undef HAVE_N_HDLC
+
+/* Define if bitfields are packed in reverse order */
+#undef PACK_BITFIELDS_REVERSED
+
+/* Define to include debugging code */
+#undef DEBUGGING_ENABLED
+
+/* Solaris moans if we don't do this... */
+#ifdef __sun
+#define __EXTENSIONS__ 1
+#endif

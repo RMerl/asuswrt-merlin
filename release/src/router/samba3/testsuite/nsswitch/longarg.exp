@@ -1,0 +1,29 @@
+#
+# @(#) Test handling of long arguments passed to various nss functions
+#
+
+load_lib compile.exp
+load_lib util-defs.exp
+
+# Run tests from C source files
+
+set longarg_tests [list \
+	{ "long arg to getpwnam()" "longarg_getpwnam" } \
+	{ "long arg to getgrnam()" "longarg_getgrnam" } \
+	]
+
+foreach { test } $longarg_tests {
+    set test_desc [lindex $test 0]
+    set test_file [lindex $test 1]
+
+    simple_make "longarg" $test_file
+    set output [util_start "$srcdir/$subdir/$test_file" ]
+
+    if { [regexp "PASS" $output] } {
+        pass $test_desc
+        file delete "$srcdir/$subdir/$test_file" "$srcdir/$subdir/$test_file.o"
+    } else {
+        fail $test_desc
+        puts $output
+    }
+}

@@ -1,0 +1,16 @@
+#
+# defines common to several Makefiles
+#
+
+INSTALL= /usr/sbin/install
+
+BINDIR = /usr/local/bin
+MANDIR = /usr/local/man
+ETCDIR = /etc/ppp
+
+COPTS = -O -Xa
+
+# For compiling with gcc, comment out the COPTS definition above and
+# uncomment the next 2 definitions.
+#CC = gcc
+#COPTS = -O2

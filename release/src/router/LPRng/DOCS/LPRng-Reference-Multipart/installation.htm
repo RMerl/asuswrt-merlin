@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Installation</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="References and Standards" href=
+    "x291.htm">
+    <link rel="NEXT" title=
+    "PATH Environment Variable and Utilities" href="x433.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x291.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x433.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="INSTALLATION"></a>Chapter 2. Installation</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>2.1. <a href="installation.htm#AEN350">Getting Source
+          Code and Support Programs</a></dt>
+
+          <dt>2.2. <a href="x433.htm"><var class="ENVAR">PATH</var>
+          Environment Variable and Utilities</a></dt>
+
+          <dt>2.3. <a href="nfsmount.htm">Network Mounted File
+          System and Spool Directories</a></dt>
+
+          <dt>2.4. <a href="usergroup.htm">Daemon User and Daemon
+          Group</a></dt>
+
+          <dt>2.5. <a href="x485.htm">Configuration</a></dt>
+
+          <dt>2.6. <a href="requireconfig.htm">System and User
+          Printcap, lpd.conf, and lpd.perms files</a></dt>
+
+          <dt>2.7. <a href="x926.htm">Checking System Installation
+          with <b class="APPLICATION">checkpc</b></a></dt>
+
+          <dt>2.8. <a href="x962.htm">Compilation and
+          Install</a></dt>
+
+          <dt>2.9. <a href="x1000.htm">Installation
+          Problems</a></dt>
+
+          <dt>2.10. <a href="update.htm">Updating Print Spooler
+          Software and Startup Scripts</a></dt>
+
+          <dt>2.11. <a href="lpsimulation.htm">Emulation for UNIX
+          SystemV <b class="APPLICATION">lp</b> and <b class=
+          "APPLICATION">lpstat</b></a></dt>
+
+          <dt>2.12. <a href="smb.htm">SAMBA and <b class=
+          "APPLICATION">LPRng</b></a></dt>
+
+          <dt>2.13. <a href="setuid.htm">Security Concerns</a></dt>
+        </dl>
+      </div>
+
+      <p>The basic components of the <b class=
+      "APPLICATION">LPRng</b> system are the executables and the
+      database files. This section deals with generating and
+      installing the executable files.</p>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="AEN350">2.1. Getting Source Code
+        and Support Programs</a></h1>
+
+        <ol type="1">
+          <li>
+            <p>Obtain the latest or stable version of the <b class=
+            "APPLICATION">LPRng</b> source code from a <a href=
+            "secftp.htm"><b class="APPLICATION">LPRng</b> FTP
+            Site</a>.</p>
+          </li>
+
+          <li>
+            <p>Obtain the latest or stable version of the <b class=
+            "APPLICATION">ifhp</b> filter source code from a <a
+            href="secftp.htm"><b class="APPLICATION">LPRng</b> FTP
+            Site</a>. This filter is used to support PostScript,
+            PCL, and text printers.</p>
+          </li>
+
+          <li>
+            <p>Obtain the following GNU programs from one of the
+            many <a href="http://www.gnu.org" target="_top">GNU
+            Software Mirror Sites</a> and install them. See the
+            directions in the GNU Zip distribution for details.</p>
+
+            <div class="VARIABLELIST">
+              <dl>
+                <dt>GNU <b class="APPLICATION">gzip</b> Compression
+                Utility</dt>
+
+                <dd>
+                  <p>Used to generate the compressed <b class=
+                  "APPLICATION">LPRng</b> distribution.</p>
+                </dd>
+
+                <dt>GNU <b class="APPLICATION">tar</b> Archive
+                Utility</dt>
+
+                <dd>
+                  <p><a href="http://www.gnu.org" target=
+                  "_top">GNU</a> <b class="APPLICATION">tar</b>
+                  supports <b class="APPLICATION">gzip</b>
+                  compression and decompression and is used to
+                  generate the <b class="APPLICATION">LPRng</b>
+                  distribution.</p>
+                </dd>
+
+                <dt>GNU <b class="APPLICATION">make</b></dt>
+
+                <dd>
+                  <p><b class="APPLICATION">LPRng</b> requires <a
+                  href="http://www.gnu.org" target="_top">GNU</a>
+                  <b class="APPLICATION">make</b> for configuration
+                  and installation.</p>
+                </dd>
+
+                <dt>GNU <b class="APPLICATION">gcc</b> Compiler or
+                ANSI C Compiler</dt>
+
+                <dd>
+                  <p><b class="APPLICATION">LPRng</b> requires and
+                  ANSI C compiler. If you do not have an ANSI C
+                  compiler then please use the <a href=
+                  "http://www.gnu.org" target="_top">GNU</a> <b
+                  class="APPLICATION">gcc</b> compiler.</p>
+                </dd>
+              </dl>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>Solaris Sparc and X86 Binaries for GCC and Make can
+            be obtained from <a href="http://sunfreeware.com/"
+            target="_top">http://sunfreeware.com/</a>.</p>
+          </li>
+
+          <li>
+            <p>While the following are not essential to <b class=
+            "APPLICATION">LPRng</b> they are used by the <b class=
+            "APPLICATION">ifhp</b> filter.</p>
+
+            <div class="VARIABLELIST">
+              <dl>
+                <dt><b class="APPLICATION">file</b> - File
+                Identification Utility</dt>
+
+                <dd>
+                  <a name="FILEPROG"></a>
+
+                  <p>The Open Source <b class=
+                  "APPLICATION">file</b> utility by Ian F. Darwin
+                  can be obtained from <a href=
+                  "ftp://ftp.astron.com/pub/file/" target=
+                  "_top">ftp://ftp.astron.com/pub/file/</a>. or <a
+                  href=
+                  "ftp://ftp.lprng.com/pub/LPRng/UNIXTOOLS/file/"
+                  target=
+                  "_top">ftp://ftp.lprng.com/pub/LPRng/UNIXTOOLS/file/</a>.
+                  This is a greatly improved version of the
+                  original UNIX file utility and may be used by the
+                  <b class="APPLICATION">ifhp</b> filter to do file
+                  recognition.</p>
+                </dd>
+
+                <dt><b class="APPLICATION">gs</b> -
+                GhostScript</dt>
+
+                <dd>
+                  <a name="GHOSTSCRIPT"></a>
+
+                  <p>GhostScript can be obtained from <a href=
+                  "http://www.cs.wisc.edu/~ghost/" target=
+                  "_top">http://www.cs.wisc.edu/~ghost/</a> or <a
+                  href="http://www.ghostscript.com" target=
+                  "_top">http://www.ghostscript.com</a>.
+                  GhostScript is a PostScript interpreter that
+                  allows you to translate PostScript to various
+                  printer compatible formats such as PCL, as well
+                  as displaying the code on a terminal. You might
+                  also want to get the PDF extensions that allows
+                  GhostScript to read and print PDF files.</p>
+                </dd>
+
+                <dt><b class="APPLICATION">gv</b> - GhostView</dt>
+
+                <dd>
+                  <a name="GV"></a>
+
+                  <p>Of course you will want to get the <b class=
+                  "APPLICATION">gv</b> program that uses
+                  GhostScript to display PostScript on an X
+                  terminal. It can be obtained from <a href=
+                  "http://wwwthep.physik.uni-mainz.de/~plass/gv/"
+                  target=
+                  "_top">http://wwwthep.physik.uni-mainz.de/~plass/gv/</a></p>
+                </dd>
+              </dl>
+            </div>
+            <br>
+            <br>
+          </li>
+        </ol>
+        <br>
+        <br>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x291.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x433.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">References and
+          Standards</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top"><var class=
+          "ENVAR">PATH</var> Environment Variable and
+          Utilities</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

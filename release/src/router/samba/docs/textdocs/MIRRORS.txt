@@ -1,0 +1,6 @@
+!==
+!== MIRRORS.txt for Samba release 2.0.10 23 Jun 2001
+!==
+
+For a list of web and ftp mirrors please see 
+http://samba.org/samba/

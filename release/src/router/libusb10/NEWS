@@ -1,0 +1,56 @@
+This file lists notable changes in each release. For the full history of all
+changes, see ChangeLog.
+
+2010-05-07: v1.0.8
+* Bug fixes
+
+2010-04-19: v1.0.7
+* Bug fixes and documentation tweaks
+* Add more interface class definitions
+
+2009-11-22: v1.0.6
+* Bug fixes
+* Increase libusb_handle_events() timeout to 60s for powersaving
+
+2009-11-15: v1.0.5
+ * Use timerfd when available for timer management
+ * Small fixes/updates
+
+2009-11-06: v1.0.4 release
+ * Bug fixes including transfer locking to fix some potential threading races
+ * More flexibility with clock types on Linux
+ * Use new bulk continuation tracking in Linux 2.6.32 for improved handling
+   of short/failed transfers
+
+2009-08-27: v1.0.3 release
+ * Bug fixes
+ * Add libusb_get_max_iso_packet_size()
+
+2009-06-13: v1.0.2 release
+ * Bug fixes
+
+2009-05-12: v1.0.1 release
+ * Bug fixes
+ * Darwin backend
+
+2008-12-13: v1.0.0 release
+ * Bug fixes
+
+2008-11-21: v0.9.4 release
+ * Bug fixes
+ * Add libusb_attach_kernel_driver()
+
+2008-08-23: v0.9.3 release
+ * Bug fixes
+
+2008-07-19: v0.9.2 release
+ * Bug fixes
+
+2008-06-28: v0.9.1 release
+ * Bug fixes
+ * Introduce contexts to the API
+ * Compatibility with new Linux kernel features
+
+2008-05-25: v0.9.0 release
+ * First libusb-1.0 beta release
+

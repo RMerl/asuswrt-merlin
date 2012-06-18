@@ -1,0 +1,2153 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.6	//
+AFTER	parser.c	/^     AFTER = 286,$/;"	e	enum:yytokentype	file:
+AFTER	parser.c	131;"	d	file:
+AFTER	parser.h	/^     AFTER = 286,$/;"	e	enum:yytokentype
+AFTER	parser.h	104;"	d
+AGO	parser.c	/^     AGO = 287,$/;"	e	enum:yytokentype	file:
+AGO	parser.c	132;"	d	file:
+AGO	parser.h	/^     AGO = 287,$/;"	e	enum:yytokentype
+AGO	parser.h	105;"	d
+ALBUM	parser.c	/^     ALBUM = 261,$/;"	e	enum:yytokentype	file:
+ALBUM	parser.c	106;"	d	file:
+ALBUM	parser.h	/^     ALBUM = 261,$/;"	e	enum:yytokentype
+ALBUM	parser.h	79;"	d
+AND	parser.c	/^     AND = 258,$/;"	e	enum:yytokentype	file:
+AND	parser.c	103;"	d	file:
+AND	parser.h	/^     AND = 258,$/;"	e	enum:yytokentype
+AND	parser.h	76;"	d
+ARGLIST	webserver.h	/^} ARGLIST;$/;"	t	typeref:struct:tag_arglist
+ARTIST	parser.c	/^     ARTIST = 260,$/;"	e	enum:yytokentype	file:
+ARTIST	parser.c	105;"	d	file:
+ARTIST	parser.h	/^     ARTIST = 260,$/;"	e	enum:yytokentype
+ARTIST	parser.h	78;"	d
+AbsoluteMaxDNSMessageData	mDNSClientAPI.h	1369;"	d
+AccelerateThisQuery	mDNS.c	/^mDNSlocal mDNSBool AccelerateThisQuery(mDNS *const m, DNSQuestion *q)$/;"	f
+Acknowledged	mDNSClientAPI.h	/^	mDNSu8          Acknowledged;		\/\/ Set if we've given the success callback to the client$/;"	m	struct:AuthRecord_struct
+ActiveQuestion	mDNS.c	1513;"	d	file:
+AddRecordToResponseList	mDNS.c	/^mDNSlocal void AddRecordToResponseList(AuthRecord ***nrpp, AuthRecord *rr, AuthRecord *add)$/;"	f
+Additional1	mDNSClientAPI.h	/^	AuthRecord     *Additional1;		\/\/ Recommended additional record to include in response$/;"	m	struct:AuthRecord_struct
+Additional2	mDNSClientAPI.h	/^	AuthRecord     *Additional2;		\/\/ Another additional$/;"	m	struct:AuthRecord_struct
+Advertise	mDNSClientAPI.h	/^	mDNSBool        Advertise;			\/\/ Set Advertise to false if you are only searching on this interface$/;"	m	struct:NetworkInterfaceInfo_struct
+AdvertiseLocalAddresses	mDNSClientAPI.h	/^	mDNSBool AdvertiseLocalAddresses;$/;"	m	struct:mDNS_struct
+AllDNSAdminGroup	mDNS.c	/^mDNSexport const mDNSv4Addr AllDNSAdminGroup   = { { 239, 255, 255, 251 } };$/;"	v
+AllDNSLinkGroup	mDNS.c	/^mDNSexport const mDNSv4Addr AllDNSLinkGroup    = { { 224,   0,   0, 251 } };$/;"	v
+AllDNSLinkGroup_v4	mDNS.c	/^mDNSexport const mDNSAddr   AllDNSLinkGroup_v4 = { mDNSAddrType_IPv4, { { { 224,   0,   0, 251 } } } };$/;"	v
+AllDNSLinkGroup_v6	mDNS.c	/^mDNSexport const mDNSAddr   AllDNSLinkGroup_v6 = { mDNSAddrType_IPv6, { { { 0xFF,0x02,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0xFB } } } };$/;"	v
+AllDNSLinkGroupv6	mDNS.c	/^mDNSexport const mDNSv6Addr AllDNSLinkGroupv6  = { { 0xFF,0x02,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0xFB } };$/;"	v
+AnnounceCount	mDNSClientAPI.h	/^	mDNSu8          AnnounceCount;		\/\/ Number of announcements remaining (kDNSRecordTypeShared)$/;"	m	struct:AuthRecord_struct
+AnnounceUntil	mDNSClientAPI.h	/^	mDNSs32         AnnounceUntil;		\/\/ In platform time units: Creation time + TTL$/;"	m	struct:AuthRecord_struct
+AnswerForNewLocalOnlyRecords	mDNS.c	/^mDNSlocal void AnswerForNewLocalOnlyRecords(mDNS *const m)$/;"	f
+AnswerLocalOnlyQuestionWithResourceRecord	mDNS.c	/^mDNSlocal void AnswerLocalOnlyQuestionWithResourceRecord(mDNS *const m, DNSQuestion *q, AuthRecord *rr, mDNSBool AddRecord)$/;"	f
+AnswerLocalOnlyQuestions	mDNS.c	/^mDNSlocal void AnswerLocalOnlyQuestions(mDNS *const m, AuthRecord *rr, mDNSBool AddRecord)$/;"	f
+AnswerNewLocalOnlyQuestion	mDNS.c	/^mDNSlocal void AnswerNewLocalOnlyQuestion(mDNS *const m)$/;"	f
+AnswerNewQuestion	mDNS.c	/^mDNSlocal void AnswerNewQuestion(mDNS *const m)$/;"	f
+AnswerQuestionWithResourceRecord	mDNS.c	/^mDNSlocal void AnswerQuestionWithResourceRecord(mDNS *const m, DNSQuestion *q, CacheRecord *rr, mDNSBool AddRecord)$/;"	f
+Answers	mDNSClientAPI.h	/^	mDNSu32                       Answers;$/;"	m	struct:ServiceInfoQuery_struct
+AppendDNSNameString	mDNS.c	/^mDNSexport mDNSu8 *AppendDNSNameString(domainname *const name, const char *cstr)$/;"	f
+AppendDomainLabel	mDNS.c	/^mDNSexport mDNSu8 *AppendDomainLabel(domainname *const name, const domainlabel *const label)$/;"	f
+AppendDomainName	mDNS.c	/^mDNSexport mDNSu8 *AppendDomainName(domainname *const name, const domainname *const append)$/;"	f
+AppendLabelSuffix	mDNS.c	/^mDNSlocal void AppendLabelSuffix(domainlabel *name, mDNSu32 val, mDNSBool RichText)$/;"	f
+AppendLiteralLabelString	mDNS.c	/^mDNSexport mDNSu8 *AppendLiteralLabelString(domainname *const name, const char *cstr)$/;"	f
+AssignDomainName	mDNS.c	1126;"	d	file:
+AssignDomainName	mDNSClientAPI.h	1275;"	d
+AuthRecord	mDNSClientAPI.h	/^typedef struct AuthRecord_struct AuthRecord;$/;"	t	typeref:struct:AuthRecord_struct
+AuthRecord_struct	mDNSClientAPI.h	/^struct AuthRecord_struct$/;"	s
+BEFORE	parser.c	/^     BEFORE = 285,$/;"	e	enum:yytokentype	file:
+BEFORE	parser.c	130;"	d	file:
+BEFORE	parser.h	/^     BEFORE = 285,$/;"	e	enum:yytokentype
+BEFORE	parser.h	103;"	d
+BEGIN	lexer.c	123;"	d	file:
+BITRATE	parser.c	/^     BITRATE = 283,$/;"	e	enum:yytokentype	file:
+BITRATE	parser.c	128;"	d	file:
+BITRATE	parser.h	/^     BITRATE = 283,$/;"	e	enum:yytokentype
+BITRATE	parser.h	101;"	d
+BLACK	redblack.c	/^enum nodecolour { BLACK, RED };$/;"	e	enum:nodecolour	file:
+BLKSIZE	dynamic-art.c	39;"	d	file:
+BLKSIZE	restart.c	44;"	d	file:
+BPM	parser.c	/^     BPM = 282,$/;"	e	enum:yytokentype	file:
+BPM	parser.c	127;"	d	file:
+BPM	parser.h	/^     BPM = 282,$/;"	e	enum:yytokentype
+BPM	parser.h	100;"	d
+BuildQuestion	mDNS.c	/^mDNSlocal mDNSBool BuildQuestion(mDNS *const m, DNSMessage *query, mDNSu8 **queryptr, DNSQuestion *q,$/;"	f
+CACHE_HASH_SLOTS	mDNSClientAPI.h	1023;"	d
+CHUNK	ogg.c	30;"	d	file:
+COMMENT	parser.c	/^     COMMENT = 269,$/;"	e	enum:yytokentype	file:
+COMMENT	parser.c	114;"	d	file:
+COMMENT	parser.h	/^     COMMENT = 269,$/;"	e	enum:yytokentype
+COMMENT	parser.h	87;"	d
+COMPOSER	parser.c	/^     COMPOSER = 264,$/;"	e	enum:yytokentype	file:
+COMPOSER	parser.c	109;"	d	file:
+COMPOSER	parser.h	/^     COMPOSER = 264,$/;"	e	enum:yytokentype
+COMPOSER	parser.h	82;"	d
+CONDUCTOR	parser.c	/^     CONDUCTOR = 266,$/;"	e	enum:yytokentype	file:
+CONDUCTOR	parser.c	111;"	d	file:
+CONDUCTOR	parser.h	/^     CONDUCTOR = 266,$/;"	e	enum:yytokentype
+CONDUCTOR	parser.h	84;"	d
+CONFIG	daapd.h	/^} CONFIG;$/;"	t	typeref:struct:tag_config
+CONFIGELEMENT	configfile.c	/^} CONFIGELEMENT;$/;"	t	typeref:struct:tag_configelement	file:
+CONFIG_TYPE_INT	configfile.c	84;"	d	file:
+CONFIG_TYPE_SPECIAL	configfile.c	86;"	d	file:
+CONFIG_TYPE_STRING	configfile.c	85;"	d	file:
+CONSTRAINT_MUXING_VIOLATED	ogg.c	97;"	d	file:
+CONSTRAINT_PAGE_AFTER_EOS	ogg.c	96;"	d	file:
+CRActiveQuestion	mDNSClientAPI.h	/^	DNSQuestion    *CRActiveQuestion;	\/\/ Points to an active question referencing this answer$/;"	m	struct:CacheRecord_struct
+CacheCheckGracePeriod	mDNS.c	3580;"	d	file:
+CacheRecord	mDNSClientAPI.h	/^typedef struct CacheRecord_struct CacheRecord;$/;"	t	typeref:struct:CacheRecord_struct
+CacheRecordAdd	mDNS.c	/^mDNSlocal void CacheRecordAdd(mDNS *const m, CacheRecord *rr)$/;"	f
+CacheRecordRmv	mDNS.c	/^mDNSlocal void CacheRecordRmv(mDNS *const m, CacheRecord *rr)$/;"	f
+CacheRecord_struct	mDNSClientAPI.h	/^struct CacheRecord_struct$/;"	s
+CheckCacheExpiration	mDNS.c	/^mDNSlocal void CheckCacheExpiration(mDNS *const m, mDNSu32 slot)$/;"	f
+ClearInterfaceList	mDNSPosix.c	/^static void ClearInterfaceList(mDNS *const m)$/;"	f	file:
+CompareRData	mDNS.c	/^mDNSlocal int CompareRData(AuthRecord *our, CacheRecord *pkt)$/;"	f
+CompleteDeregistration	mDNS.c	/^mDNSlocal void CompleteDeregistration(mDNS *const m, AuthRecord *rr)$/;"	f
+CompleteProbing	mDNS.c	/^mDNSlocal void CompleteProbing(mDNS *const m, AuthRecord *const rr)$/;"	f
+CompressedDomainNameLength	mDNS.c	/^mDNSlocal mDNSu16 CompressedDomainNameLength(const domainname *const name, const domainname *parent)$/;"	f
+Conflict	mDNSClientAPI.h	/^	mDNSBool             Conflict;	\/\/ Set if this record set was forcibly deregistered because of a conflict$/;"	m	struct:ServiceRecordSet_struct
+ConstructServiceName	mDNS.c	/^mDNSexport mDNSu8 *ConstructServiceName(domainname *const fqdn,$/;"	f
+ConvertDomainLabelToCString	mDNSClientAPI.h	1312;"	d
+ConvertDomainLabelToCString_unescaped	mDNSClientAPI.h	1311;"	d
+ConvertDomainLabelToCString_withescape	mDNS.c	/^mDNSexport char *ConvertDomainLabelToCString_withescape(const domainlabel *const label, char *ptr, char esc)$/;"	f
+ConvertDomainNameToCString	mDNSClientAPI.h	1315;"	d
+ConvertDomainNameToCString_unescaped	mDNSClientAPI.h	1314;"	d
+ConvertDomainNameToCString_withescape	mDNS.c	/^mDNSexport char *ConvertDomainNameToCString_withescape(const domainname *const name, char *ptr, char esc)$/;"	f
+ConvertUTF8PstringToRFC1034HostLabel	mDNS.c	/^mDNSexport void ConvertUTF8PstringToRFC1034HostLabel(const mDNSu8 UTF8Name[], domainlabel *const hostlabel)$/;"	f
+CurrentAnswers	mDNSClientAPI.h	/^	mDNSu32               CurrentAnswers;	\/\/ Number of records currently in the cache that answer this question$/;"	m	struct:DNSQuestion_struct
+CurrentQuestion	mDNSClientAPI.h	/^	DNSQuestion *CurrentQuestion;		\/\/ Next question about to be examined in AnswerLocalQuestions()$/;"	m	struct:mDNS_struct
+CurrentRecord	mDNSClientAPI.h	/^	AuthRecord *CurrentRecord;			\/\/ Next AuthRecord about to be examined$/;"	m	struct:mDNS_struct
+DAAP_BLOCK	daap-proto.h	/^} DAAP_BLOCK;$/;"	t	typeref:struct:daap_block_tag
+DAAP_ITEMS	daap.c	/^} DAAP_ITEMS;$/;"	t	typeref:struct:tag_daap_items	file:
+DATE	parser.c	/^     DATE = 280,$/;"	e	enum:yytokentype	file:
+DATE	parser.c	125;"	d	file:
+DATE	parser.h	/^     DATE = 280,$/;"	e	enum:yytokentype
+DATE	parser.h	98;"	d
+DATEADDED	parser.c	/^     DATEADDED = 284,$/;"	e	enum:yytokentype	file:
+DATEADDED	parser.c	129;"	d	file:
+DATEADDED	parser.h	/^     DATEADDED = 284,$/;"	e	enum:yytokentype
+DATEADDED	parser.h	102;"	d
+DB_PLAYLIST	db-gdbm.c	/^} DB_PLAYLIST;$/;"	t	typeref:struct:tag_playlist	file:
+DB_PLAYLIST	db-memory.c	/^} DB_PLAYLIST;$/;"	t	typeref:struct:tag_playlist	file:
+DB_PLAYLISTENTRY	db-gdbm.c	/^} DB_PLAYLISTENTRY;$/;"	t	typeref:struct:tag_playlistentry	file:
+DB_PLAYLISTENTRY	db-memory.c	/^} DB_PLAYLISTENTRY;$/;"	t	typeref:struct:tag_playlistentry	file:
+DB_VERSION	db-gdbm.c	49;"	d	file:
+DEFAULT_CONFIGFILE	main.c	92;"	d	file:
+DEFAULT_CONFIGFILE	main.c	94;"	d	file:
+DNSQuestion	mDNSClientAPI.h	/^typedef struct DNSQuestion_struct DNSQuestion;$/;"	t	typeref:struct:DNSQuestion_struct
+DNSQuestion_struct	mDNSClientAPI.h	/^struct DNSQuestion_struct$/;"	s
+DNSTypeName	mDNS.c	/^mDNSexport char *DNSTypeName(mDNSu16 rrtype)$/;"	f
+DNS_ClassValues	mDNSClientAPI.h	/^	} DNS_ClassValues;$/;"	t	typeref:enum:__anon2
+DNS_Flags	mDNS.c	/^	} DNS_Flags;$/;"	t	typeref:enum:__anon30	file:
+DNS_TypeValues	mDNSClientAPI.h	/^	} DNS_TypeValues;$/;"	t	typeref:enum:__anon3
+DPRINTF	err.h	69;"	d
+DPRINTF	err.h	72;"	d
+D_MILLION	restart.c	46;"	d	file:
+DeconstructServiceName	mDNS.c	/^mDNSexport mDNSBool DeconstructServiceName(const domainname *const fqdn,$/;"	f
+DefaultAPIntervalForRecordType	mDNS.c	2067;"	d	file:
+DefaultAnnounceIntervalForTypeShared	mDNS.c	2064;"	d	file:
+DefaultAnnounceIntervalForTypeUnique	mDNS.c	2065;"	d	file:
+DefaultProbeCountForRecordType	mDNS.c	2047;"	d	file:
+DefaultProbeCountForTypeUnique	mDNS.c	2046;"	d	file:
+DefaultProbeIntervalForTypeUnique	mDNS.c	2063;"	d	file:
+DependentOn	mDNSClientAPI.h	/^	AuthRecord     *DependentOn;		\/\/ This record depends on another for its uniqueness checking$/;"	m	struct:AuthRecord_struct
+DeregisterOurServices	rend-posix.c	/^static void DeregisterOurServices(void)$/;"	f	file:
+DiscardDeregistrations	mDNS.c	/^mDNSlocal void DiscardDeregistrations(mDNS *const m)$/;"	f
+DiscardLocalOnlyRecords	mDNS.c	/^mDNSlocal void DiscardLocalOnlyRecords(mDNS *const m)$/;"	f
+DiscardLocalOnlyRecords	mDNSClientAPI.h	/^	mDNSBool    DiscardLocalOnlyRecords;\/\/ Set when we have "remove" events we need to deliver to local-only questions$/;"	m	struct:mDNS_struct
+DomainNameHashValue	mDNS.c	/^mDNSlocal mDNSu32 DomainNameHashValue(const domainname *const name)$/;"	f
+DomainNameLength	mDNS.c	/^mDNSexport mDNSu16 DomainNameLength(const domainname *const name)$/;"	f
+DupSuppress	mDNSClientAPI.h	/^	DupSuppressInfo       DupSuppress[DupSuppressInfoSize];$/;"	m	struct:DNSQuestion_struct
+DupSuppressInfo	mDNSClientAPI.h	/^	} DupSuppressInfo;$/;"	t	typeref:struct:__anon17
+DupSuppressInfoSize	mDNSClientAPI.h	939;"	d
+DuplicateOf	mDNSClientAPI.h	/^	DNSQuestion          *DuplicateOf;$/;"	m	struct:DNSQuestion_struct
+DuplicateRecords	mDNSClientAPI.h	/^	AuthRecord *DuplicateRecords;		\/\/ Records currently 'on hold' because they are duplicates of existing records$/;"	m	struct:mDNS_struct
+ECHO	lexer.c	674;"	d	file:
+ENUMHANDLE	db-memory.h	/^typedef void* ENUMHANDLE;$/;"	t
+EOB_ACT_CONTINUE_SCAN	lexer.c	158;"	d	file:
+EOB_ACT_END_OF_FILE	lexer.c	159;"	d	file:
+EOB_ACT_LAST_MATCH	lexer.c	160;"	d	file:
+EQUALS	parser.c	/^     EQUALS = 270,$/;"	e	enum:yytokentype	file:
+EQUALS	parser.c	115;"	d	file:
+EQUALS	parser.h	/^     EQUALS = 270,$/;"	e	enum:yytokentype
+EQUALS	parser.h	88;"	d
+ERR_LEAK	err.c	/^} ERR_LEAK;$/;"	t	typeref:struct:tag_err_leak	file:
+ETIME	restart.h	41;"	d
+EXEC	Makefile	/^EXEC = mt-daap$/;"	m
+E_DBG	err.h	38;"	d
+E_FATAL	err.h	42;"	d
+E_INF	err.h	39;"	d
+E_LOG	err.h	41;"	d
+E_SPAM	err.h	37;"	d
+E_WARN	err.h	40;"	d
+ExpectUnicastResponse	mDNSClientAPI.h	/^	mDNSs32  ExpectUnicastResponse;		\/\/ Set when we send a query with the kDNSQClass_UnicastResponse bit set$/;"	m	struct:mDNS_struct
+ExpireDupSuppressInfo	mDNS.c	/^mDNSlocal void ExpireDupSuppressInfo(DupSuppressInfo ds[DupSuppressInfoSize], mDNSs32 time)$/;"	f
+ExpireDupSuppressInfoOnInterface	mDNS.c	/^mDNSlocal void ExpireDupSuppressInfoOnInterface(DupSuppressInfo ds[DupSuppressInfoSize], mDNSs32 time, mDNSInterfaceID InterfaceID)$/;"	f
+ExtraResourceRecord	mDNSClientAPI.h	/^typedef struct ExtraResourceRecord_struct ExtraResourceRecord;$/;"	t	typeref:struct:ExtraResourceRecord_struct
+ExtraResourceRecord_struct	mDNSClientAPI.h	/^struct ExtraResourceRecord_struct$/;"	s
+Extras	mDNSClientAPI.h	/^	ExtraResourceRecord *Extras;	\/\/ Optional list of extra AuthRecords attached to this service registration$/;"	m	struct:ServiceRecordSet_struct
+FLEXINT_H	lexer.c	29;"	d	file:
+FLEX_BETA	lexer.c	13;"	d	file:
+FLEX_SCANNER	lexer.c	8;"	d	file:
+FindCompressionPointer	mDNS.c	/^mDNSlocal const mDNSu8 *FindCompressionPointer(const mDNSu8 *const base, const mDNSu8 *const end, const mDNSu8 *const domname)$/;"	f
+FindDuplicateQuestion	mDNS.c	/^mDNSlocal DNSQuestion *FindDuplicateQuestion(const mDNS *const m, const DNSQuestion *const question)$/;"	f
+FindFirstAdvertisedInterface	mDNS.c	/^mDNSlocal NetworkInterfaceInfo *FindFirstAdvertisedInterface(mDNS *const m)$/;"	f
+FindIdenticalRecordInCache	mDNS.c	/^mDNSlocal CacheRecord *FindIdenticalRecordInCache(const mDNS *const m, ResourceRecord *pktrr)$/;"	f
+FindRRSet	mDNS.c	/^mDNSlocal const AuthRecord *FindRRSet(const mDNS *const m, const CacheRecord *const pktrr)$/;"	f
+FoundServiceInfo	mDNS.c	/^mDNSlocal void FoundServiceInfo(mDNS *const m, DNSQuestion *question, const ResourceRecord *const answer, mDNSBool AddRecord)$/;"	f
+FoundServiceInfoSRV	mDNS.c	/^mDNSlocal void FoundServiceInfoSRV(mDNS *const m, DNSQuestion *question, const ResourceRecord *const answer, mDNSBool AddRecord)$/;"	f
+FoundServiceInfoTXT	mDNS.c	/^mDNSlocal void FoundServiceInfoTXT(mDNS *const m, DNSQuestion *question, const ResourceRecord *const answer, mDNSBool AddRecord)$/;"	f
+FreePosixNetworkInterface	mDNSPosix.c	/^static void FreePosixNetworkInterface(PosixNetworkInterface *intf)$/;"	f	file:
+GDBM_NOLOCK	db-gdbm.c	59;"	d	file:
+GDBM_SYNC	db-gdbm.c	55;"	d	file:
+GENRE	parser.c	/^     GENRE = 262,$/;"	e	enum:yytokentype	file:
+GENRE	parser.c	107;"	d	file:
+GENRE	parser.h	/^     GENRE = 262,$/;"	e	enum:yytokentype
+GENRE	parser.h	80;"	d
+GET_SA_LEN	mDNSUNP.h	81;"	d
+GET_SA_LEN	mDNSUNP.h	84;"	d
+GET_SA_LEN	mDNSUNP.h	87;"	d
+GREATER	parser.c	/^     GREATER = 273,$/;"	e	enum:yytokentype	file:
+GREATER	parser.c	118;"	d	file:
+GREATER	parser.h	/^     GREATER = 273,$/;"	e	enum:yytokentype
+GREATER	parser.h	91;"	d
+GREATEREQUAL	parser.c	/^     GREATEREQUAL = 274,$/;"	e	enum:yytokentype	file:
+GREATEREQUAL	parser.c	119;"	d	file:
+GREATEREQUAL	parser.h	/^     GREATEREQUAL = 274,$/;"	e	enum:yytokentype
+GREATEREQUAL	parser.h	92;"	d
+GROUPING	parser.c	/^     GROUPING = 267,$/;"	e	enum:yytokentype	file:
+GROUPING	parser.c	112;"	d	file:
+GROUPING	parser.h	/^     GROUPING = 267,$/;"	e	enum:yytokentype
+GROUPING	parser.h	85;"	d
+GZIP_CHUNK	daap-proto.h	29;"	d
+GZIP_COMPRESSION_LEVEL	daap-proto.h	30;"	d
+GZIP_STREAM	daap-proto.h	/^} GZIP_STREAM;$/;"	t	typeref:struct:gzip_stream_tag
+GenerateUnicastResponse	mDNS.c	/^mDNSlocal mDNSu8 *GenerateUnicastResponse(const DNSMessage *const query, const mDNSu8 *const end,$/;"	f
+GetFirstActiveInterface	mDNS.c	/^mDNSlocal const NetworkInterfaceInfo *GetFirstActiveInterface(const NetworkInterfaceInfo *intf)$/;"	f
+GetFreeCacheRR	mDNS.c	/^mDNSlocal CacheRecord *GetFreeCacheRR(mDNS *const m, mDNSu16 RDLength)$/;"	f
+GetLargeResourceRecord	mDNS.c	3070;"	d	file:
+GetNextActiveInterfaceID	mDNS.c	/^mDNSlocal mDNSInterfaceID GetNextActiveInterfaceID(const NetworkInterfaceInfo *intf)$/;"	f
+GetNextScheduledEvent	mDNS.c	/^mDNSlocal mDNSs32 GetNextScheduledEvent(const mDNS *const m)$/;"	f
+GetRDLength	mDNS.c	/^mDNSlocal mDNSu16 GetRDLength(const ResourceRecord *const rr, mDNSBool estimate)$/;"	f
+GetRRDisplayString	mDNSClientAPI.h	1342;"	d
+GetRRDisplayString_rdb	mDNS.c	/^mDNSexport char *GetRRDisplayString_rdb(mDNS *const m, const ResourceRecord *rr, RDataBody *rd)$/;"	f
+GetRRDomainNameTarget	mDNS.c	2240;"	d	file:
+GetResourceRecord	mDNS.c	/^mDNSlocal const mDNSu8 *GetResourceRecord(mDNS *const m, const DNSMessage *msg, const mDNSu8 *ptr, const mDNSu8 *end,$/;"	f
+GetUserSpecifiedFriendlyComputerName	mDNSPosix.c	/^mDNSlocal void GetUserSpecifiedFriendlyComputerName(domainlabel *const namelabel)$/;"	f
+GetUserSpecifiedRFC1034ComputerName	mDNSPosix.c	/^mDNSlocal void GetUserSpecifiedRFC1034ComputerName(domainlabel *const namelabel)$/;"	f
+GotADD	mDNSClientAPI.h	/^	mDNSu8                        GotADD;$/;"	m	struct:ServiceInfoQuery_struct
+GotSRV	mDNSClientAPI.h	/^	mDNSu8                        GotSRV;$/;"	m	struct:ServiceInfoQuery_struct
+GotTXT	mDNSClientAPI.h	/^	mDNSu8                        GotTXT;$/;"	m	struct:ServiceInfoQuery_struct
+HIHardware	mDNSClientAPI.h	/^	UTF8str255 HIHardware;$/;"	m	struct:mDNS_struct
+HISoftware	mDNSClientAPI.h	/^	UTF8str255 HISoftware;$/;"	m	struct:mDNS_struct
+HandleSigInt	rend-posix.c	/^static void HandleSigInt(int sigraised)$/;"	f	file:
+HandleSigQuit	rend-posix.c	/^static void HandleSigQuit(int sigraised)$/;"	f	file:
+HashSlot	mDNS.c	2125;"	d	file:
+HaveSentEntireRRSet	mDNS.c	/^mDNSlocal mDNSBool HaveSentEntireRRSet(const mDNS *const m, const AuthRecord *const rr, mDNSInterfaceID InterfaceID)$/;"	f
+Host	mDNSClientAPI.h	/^	domainname           Host;		\/\/ Set if this service record does not use the standard target host name$/;"	m	struct:ServiceRecordSet_struct
+HostInterfaces	mDNSClientAPI.h	/^	NetworkInterfaceInfo *HostInterfaces;$/;"	m	struct:mDNS_struct
+HostNameCallback	mDNS.c	/^mDNSlocal void HostNameCallback(mDNS *const m, AuthRecord *const rr, mStatus result)$/;"	f
+HostTarget	mDNSClientAPI.h	/^	mDNSu8          HostTarget;			\/\/ Set if the target of this record (PTR, CNAME, SRV, etc.) is our host name$/;"	m	struct:AuthRecord_struct
+ID	parser.c	/^     ID = 278,$/;"	e	enum:yytokentype	file:
+ID	parser.c	123;"	d	file:
+ID	parser.h	/^     ID = 278,$/;"	e	enum:yytokentype
+ID	parser.h	96;"	d
+IFI_ALIAS	mDNSUNP.h	117;"	d
+IFI_HADDR	mDNSUNP.h	91;"	d
+IFI_NAME	mDNSUNP.h	90;"	d
+INADDR_NONE	uici.c	52;"	d	file:
+INCLUDES	parser.c	/^     INCLUDES = 276,$/;"	e	enum:yytokentype	file:
+INCLUDES	parser.c	121;"	d	file:
+INCLUDES	parser.h	/^     INCLUDES = 276,$/;"	e	enum:yytokentype
+INCLUDES	parser.h	94;"	d
+INCLUDE_GENERIC_META_IDS	daap.c	314;"	d	file:
+INITIAL	lexer.c	616;"	d	file:
+INT16_MAX	lexer.c	72;"	d	file:
+INT16_MIN	lexer.c	63;"	d	file:
+INT32_MAX	lexer.c	75;"	d	file:
+INT32_MIN	lexer.c	66;"	d	file:
+INT8_MAX	lexer.c	69;"	d	file:
+INT8_MIN	lexer.c	60;"	d	file:
+INTERVAL	parser.c	/^     INTERVAL = 288$/;"	e	enum:yytokentype	file:
+INTERVAL	parser.c	133;"	d	file:
+INTERVAL	parser.h	/^     INTERVAL = 288$/;"	e	enum:yytokentype
+INTERVAL	parser.h	106;"	d
+IPv4Available	mDNSClientAPI.h	/^	mDNSBool        IPv4Available;		\/\/ If InterfaceActive, set if v4 available on this InterfaceID$/;"	m	struct:NetworkInterfaceInfo_struct
+IPv6Available	mDNSClientAPI.h	/^	mDNSBool        IPv6Available;		\/\/ If InterfaceActive, set if v6 available on this InterfaceID$/;"	m	struct:NetworkInterfaceInfo_struct
+IS	parser.c	/^     IS = 275,$/;"	e	enum:yytokentype	file:
+IS	parser.c	120;"	d	file:
+IS	parser.h	/^     IS = 275,$/;"	e	enum:yytokentype
+IS	parser.h	93;"	d
+IS_A_PRINTF_STYLE_FUNCTION	mDNSDebug.h	73;"	d
+IS_A_PRINTF_STYLE_FUNCTION	mDNSDebug.h	75;"	d
+IdenticalResourceRecord	mDNS.c	/^mDNSlocal mDNSBool IdenticalResourceRecord(const ResourceRecord *const r1, const ResourceRecord *const r2)$/;"	f
+ImmedAdditional	mDNSClientAPI.h	/^	mDNSInterfaceID ImmedAdditional;	\/\/ Hint that we might want to also send this record, just to be helpful$/;"	m	struct:AuthRecord_struct
+ImmedAnswer	mDNSClientAPI.h	/^	mDNSInterfaceID ImmedAnswer;		\/\/ Someone on this interface issued a query we need to answer (all-ones for all interfaces)$/;"	m	struct:AuthRecord_struct
+IncludeInProbe	mDNSClientAPI.h	/^	mDNSu8          IncludeInProbe;		\/\/ Set if this RR is being put into a probe right now$/;"	m	struct:AuthRecord_struct
+IncrementLabelSuffix	mDNS.c	/^mDNSexport void IncrementLabelSuffix(domainlabel *name, mDNSBool RichText)$/;"	f
+InitialAnnounceCount	mDNS.c	2056;"	d	file:
+InitialQuestionInterval	mDNS.c	1512;"	d	file:
+InitializeDNSMessage	mDNS.c	/^mDNSlocal void InitializeDNSMessage(DNSMessageHeader *h, mDNSOpaque16 id, mDNSOpaque16 flags)$/;"	f
+InitializeLastAPTime	mDNS.c	/^mDNSlocal void InitializeLastAPTime(mDNS *const m, AuthRecord *const rr)$/;"	f
+InlineCacheRDSize	mDNSClientAPI.h	736;"	d
+InterfaceActive	mDNSClientAPI.h	/^	mDNSBool        InterfaceActive;	\/\/ InterfaceActive is set if interface is sending & receiving packets$/;"	m	struct:NetworkInterfaceInfo_struct
+InterfaceID	mDNSClientAPI.h	/^	mDNSInterfaceID       InterfaceID;		\/\/ Non-zero if you want to issue link-local queries only on a single specific IP interface$/;"	m	struct:DNSQuestion_struct
+InterfaceID	mDNSClientAPI.h	/^	mDNSInterfaceID       InterfaceID;$/;"	m	struct:__anon17
+InterfaceID	mDNSClientAPI.h	/^	mDNSInterfaceID InterfaceID;		\/\/ ID of the interface the response was received on$/;"	m	struct:__anon18
+InterfaceID	mDNSClientAPI.h	/^	mDNSInterfaceID InterfaceID;		\/\/ Set if this RR is specific to one interface$/;"	m	struct:ResourceRecord_struct
+InterfaceID	mDNSClientAPI.h	/^	mDNSInterfaceID InterfaceID;$/;"	m	struct:NetworkInterfaceInfo_struct
+KnownBugs	mDNSClientAPI.h	/^	mDNSu32  KnownBugs;$/;"	m	struct:mDNS_struct
+LESS	parser.c	/^     LESS = 271,$/;"	e	enum:yytokentype	file:
+LESS	parser.c	116;"	d	file:
+LESS	parser.h	/^     LESS = 271,$/;"	e	enum:yytokentype
+LESS	parser.h	89;"	d
+LESSEQUAL	parser.c	/^     LESSEQUAL = 272,$/;"	e	enum:yytokentype	file:
+LESSEQUAL	parser.c	117;"	d	file:
+LESSEQUAL	parser.h	/^     LESSEQUAL = 272,$/;"	e	enum:yytokentype
+LESSEQUAL	parser.h	90;"	d
+LOGDEST_LOGFILE	err.h	34;"	d
+LOGDEST_STDERR	err.h	32;"	d
+LOGDEST_SYSLOG	err.h	33;"	d
+L_ART	err.h	53;"	d
+L_BROW	err.h	51;"	d
+L_CONF	err.h	45;"	d
+L_DAAP	err.h	54;"	d
+L_DB	err.h	47;"	d
+L_IND	err.h	50;"	d
+L_MAIN	err.h	55;"	d
+L_MISC	err.h	58;"	d
+L_PL	err.h	52;"	d
+L_QRY	err.h	49;"	d
+L_REND	err.h	56;"	d
+L_SCAN	err.h	48;"	d
+L_WS	err.h	46;"	d
+LabelContainsSuffix	mDNS.c	/^mDNSlocal mDNSBool LabelContainsSuffix(const domainlabel *const name, const mDNSBool RichText)$/;"	f
+LargeAnswers	mDNSClientAPI.h	/^	mDNSu32               LargeAnswers;		\/\/ Number of answers with rdata > 1024 bytes$/;"	m	struct:DNSQuestion_struct
+LargeCacheRecord	mDNSClientAPI.h	/^	} LargeCacheRecord;$/;"	t	typeref:struct:__anon16
+LastAPTime	mDNSClientAPI.h	/^	mDNSs32         LastAPTime;			\/\/ In platform time units: Last time we sent announcement\/probe$/;"	m	struct:AuthRecord_struct
+LastMCInterface	mDNSClientAPI.h	/^	mDNSInterfaceID LastMCInterface;	\/\/ Interface this record was multicast on at the time LastMCTime was recorded$/;"	m	struct:AuthRecord_struct
+LastMCTime	mDNSClientAPI.h	/^	mDNSs32         LastMCTime;			\/\/ Last time we multicast this record (used to guard against packet-storm attacks)$/;"	m	struct:AuthRecord_struct
+LastQTime	mDNSClientAPI.h	/^	mDNSs32               LastQTime;		\/\/ Last scheduled transmission of this Q on *all* applicable interfaces$/;"	m	struct:DNSQuestion_struct
+LastQTxTime	mDNSClientAPI.h	/^	mDNSs32               LastQTxTime;		\/\/ Last time this Q was sent on one (but not necessarily all) interfaces$/;"	m	struct:DNSQuestion_struct
+LastUnansweredTime	mDNSClientAPI.h	/^	mDNSs32         LastUnansweredTime;	\/\/ In platform time units; last time we incremented UnansweredQueries$/;"	m	struct:CacheRecord_struct
+LastUsed	mDNSClientAPI.h	/^	mDNSs32         LastUsed;			\/\/ In platform time units$/;"	m	struct:CacheRecord_struct
+LocalOnlyQuestions	mDNSClientAPI.h	/^	DNSQuestion *LocalOnlyQuestions;	\/\/ Questions with InterfaceID set to ~0 ("local only")$/;"	m	struct:mDNS_struct
+LocalOnlyRecords	mDNSClientAPI.h	/^	AuthRecord *LocalOnlyRecords;		\/\/ Local records registered with InterfaceID set to ~0 ("local only")$/;"	m	struct:mDNS_struct
+LocateAnswers	mDNS.c	/^mDNSlocal const mDNSu8 *LocateAnswers(const DNSMessage *const msg, const mDNSu8 *const end)$/;"	f
+LocateAuthorities	mDNS.c	/^mDNSlocal const mDNSu8 *LocateAuthorities(const DNSMessage *const msg, const mDNSu8 *const end)$/;"	f
+LogMsg	mDNSPosix.c	/^mDNSexport void LogMsg(const char *format, ...)$/;"	f
+MAIN_SLEEP_INTERVAL	main.c	109;"	d	file:
+MAXBACKLOG	uici.c	48;"	d	file:
+MAX_DOMAIN_LABEL	mDNSClientAPI.h	612;"	d
+MAX_DOMAIN_NAME	mDNSClientAPI.h	616;"	d
+MAX_ESCAPED_DOMAIN_LABEL	mDNSClientAPI.h	633;"	d
+MAX_ESCAPED_DOMAIN_NAME	mDNSClientAPI.h	634;"	d
+MAX_HOSTNAME	webserver.c	51;"	d	file:
+MAX_LINE	configfile.c	151;"	d	file:
+MAX_LINEBUFFER	webserver.c	52;"	d	file:
+MAX_NAME_LEN	rend-unix.h	25;"	d
+MAYBEFREE	db-gdbm.c	51;"	d	file:
+MAYBEFREE	db-memory.c	58;"	d	file:
+MAYBEFREE	mp3-scanner.c	94;"	d	file:
+MDNS_CHECK_PRINTF_STYLE_FUNCTIONS	mDNSDebug.h	71;"	d
+MEMNOTIFY	err.h	83;"	d
+MEMNOTIFY	err.h	94;"	d
+MILLION	restart.c	45;"	d	file:
+MP3FILE	mp3-scanner.h	/^} MP3FILE;$/;"	t	typeref:struct:tag_mp3file
+MP3HELPER	db-gdbm.c	/^} MP3HELPER;$/;"	t	typeref:struct:__anon21	file:
+MP3PACKED	db-gdbm.c	/^} MP3PACKED;$/;"	t	typeref:struct:tag_mp3packed	file:
+MP3RECORD	db-gdbm.c	/^typedef struct tag_mp3record MP3RECORD;$/;"	t	typeref:struct:tag_mp3record	file:
+MP3RECORD	db-memory.c	/^} MP3RECORD;$/;"	t	typeref:struct:tag_mp3record	file:
+MPExpectingKA	mDNSClientAPI.h	/^	mDNSBool        MPExpectingKA;		\/\/ Multi-packet query handling: Set when we increment MPUnansweredQ; allows one KA$/;"	m	struct:CacheRecord_struct
+MPLastUnansweredQT	mDNSClientAPI.h	/^	mDNSs32         MPLastUnansweredQT;	\/\/ Multi-packet query handling: Last time we incremented MPUnansweredQ$/;"	m	struct:CacheRecord_struct
+MPUnansweredKA	mDNSClientAPI.h	/^	mDNSu32         MPUnansweredKA;		\/\/ Multi-packet query handling: Number of times we've seen this record in a KA list$/;"	m	struct:CacheRecord_struct
+MPUnansweredQ	mDNSClientAPI.h	/^	mDNSu32         MPUnansweredQ;		\/\/ Multi-packet query handling: Number of times we've seen a query for this record$/;"	m	struct:CacheRecord_struct
+MainCallback	mDNSClientAPI.h	/^	mDNSCallback *MainCallback;$/;"	m	struct:mDNS_struct
+MainContext	mDNSClientAPI.h	/^	void         *MainContext;$/;"	m	struct:mDNS_struct
+MakeDomainLabelFromLiteralString	mDNS.c	/^mDNSexport mDNSBool MakeDomainLabelFromLiteralString(domainlabel *const label, const char *cstr)$/;"	f
+MakeDomainNameFromDNSNameString	mDNS.c	/^mDNSexport mDNSu8 *MakeDomainNameFromDNSNameString(domainname *const name, const char *cstr)$/;"	f
+MatchDependentOn	mDNS.c	/^mDNSlocal mDNSBool MatchDependentOn(const mDNS *const m, const CacheRecord *const pktrr, const AuthRecord *const master)$/;"	f
+MaxQuestionInterval	mDNS.c	3632;"	d	file:
+MaxRDLength	mDNSClientAPI.h	/^	mDNSu16    MaxRDLength;	\/\/ Amount of storage allocated for rdata (usually sizeof(RDataBody))$/;"	m	struct:__anon14
+MaxRDLength	mDNSClientAPI.h	/^	struct { mDNSu16 MaxRDLength; mDNSu8 data[InlineCacheRDSize]; } rdatastorage;	\/\/ Storage for small records is right here$/;"	m	struct:CacheRecord_struct::__anon15
+MaxUnansweredQueries	mDNS.c	2076;"	d	file:
+MaximumRDSize	mDNSClientAPI.h	724;"	d
+MetaDataMap	daap.c	/^} MetaDataMap;$/;"	t	typeref:struct:__anon33	file:
+MetaFieldName_t	daap.c	/^} MetaFieldName_t;$/;"	t	typeref:enum:__anon32	file:
+MetaField_t	daap.c	/^typedef unsigned long long	MetaField_t;$/;"	t	file:
+MsgBuffer	mDNSClientAPI.h	/^	char MsgBuffer[80];					\/\/ Temp storage used while building error log messages$/;"	m	struct:mDNS_struct
+MulticastDNSPort	mDNS.c	/^mDNSexport const mDNSIPPort MulticastDNSPort   = { { MulticastDNSPortAsNumber >> 8, MulticastDNSPortAsNumber & 0xFF } };$/;"	v
+MulticastDNSPortAsNumber	mDNS.c	1096;"	d	file:
+MustSendRecord	mDNS.c	4744;"	d	file:
+NOT	parser.c	/^     NOT = 277,$/;"	e	enum:yytokentype	file:
+NOT	parser.c	122;"	d	file:
+NOT	parser.h	/^     NOT = 277,$/;"	e	enum:yytokentype
+NOT	parser.h	95;"	d
+NR_AdditionalTo	mDNSClientAPI.h	/^	AuthRecord     *NR_AdditionalTo;	\/\/ Set if this record was selected by virtue of being additional to another$/;"	m	struct:AuthRecord_struct
+NR_AnswerTo	mDNSClientAPI.h	/^	const mDNSu8   *NR_AnswerTo;		\/\/ Set if this record was selected by virtue of being a direct answer to a question$/;"	m	struct:AuthRecord_struct
+NUM	parser.c	/^     NUM = 279,$/;"	e	enum:yytokentype	file:
+NUM	parser.c	124;"	d	file:
+NUM	parser.h	/^     NUM = 279,$/;"	e	enum:yytokentype
+NUM	parser.h	97;"	d
+NetworkInterfaceInfo	mDNSClientAPI.h	/^typedef struct NetworkInterfaceInfo_struct NetworkInterfaceInfo;$/;"	t	typeref:struct:NetworkInterfaceInfo_struct
+NetworkInterfaceInfo_struct	mDNSClientAPI.h	/^struct NetworkInterfaceInfo_struct$/;"	s
+NewLocalOnlyQuestions	mDNSClientAPI.h	/^	DNSQuestion *NewLocalOnlyQuestions;	\/\/ Fresh local-only questions not yet answered$/;"	m	struct:mDNS_struct
+NewLocalOnlyRecords	mDNSClientAPI.h	/^	AuthRecord *NewLocalOnlyRecords;	\/\/ Fresh local-only records not yet delivered to local-only questions$/;"	m	struct:mDNS_struct
+NewQuestions	mDNSClientAPI.h	/^	DNSQuestion *NewQuestions;			\/\/ Fresh questions not yet answered from cache$/;"	m	struct:mDNS_struct
+NewRData	mDNSClientAPI.h	/^	RData          *NewRData;			\/\/ Set if we are updating this record with new rdata$/;"	m	struct:AuthRecord_struct
+NextCacheCheck	mDNSClientAPI.h	/^	mDNSs32  NextCacheCheck;			\/\/ Next time to refresh cache record before it expires$/;"	m	struct:mDNS_struct
+NextInCFList	mDNSClientAPI.h	/^	CacheRecord    *NextInCFList;		\/\/ Set if this is in the list of records we just received with the cache flush bit set$/;"	m	struct:CacheRecord_struct
+NextInDQList	mDNSClientAPI.h	/^	DNSQuestion          *NextInDQList;$/;"	m	struct:DNSQuestion_struct
+NextInKAList	mDNSClientAPI.h	/^	CacheRecord    *NextInKAList;		\/\/ Link to the next element in the chain of known answers to send$/;"	m	struct:CacheRecord_struct
+NextRequiredQuery	mDNSClientAPI.h	/^	mDNSs32         NextRequiredQuery;	\/\/ In platform time units$/;"	m	struct:CacheRecord_struct
+NextResponse	mDNSClientAPI.h	/^	AuthRecord     *NextResponse;		\/\/ Link to the next element in the chain of responses to generate$/;"	m	struct:AuthRecord_struct
+NextScheduledEvent	mDNSClientAPI.h	/^	mDNSs32  NextScheduledEvent;		\/\/ Derived from values below$/;"	m	struct:mDNS_struct
+NextScheduledProbe	mDNSClientAPI.h	/^	mDNSs32  NextScheduledProbe;		\/\/ Next time to probe for new authoritative record$/;"	m	struct:mDNS_struct
+NextScheduledQuery	mDNSClientAPI.h	/^	mDNSs32  NextScheduledQuery;		\/\/ Next time to send query in its exponential backoff sequence$/;"	m	struct:mDNS_struct
+NextScheduledResponse	mDNSClientAPI.h	/^	mDNSs32  NextScheduledResponse;		\/\/ Next time to send authoritative record(s) in responses$/;"	m	struct:mDNS_struct
+NextUpdateCredit	mDNSClientAPI.h	/^	mDNSs32         NextUpdateCredit;	\/\/ Time next token is added to bucket$/;"	m	struct:AuthRecord_struct
+NormalMaxDNSMessageData	mDNSClientAPI.h	1370;"	d
+NumFailedProbes	mDNSClientAPI.h	/^	mDNSs32 NumFailedProbes;$/;"	m	struct:mDNS_struct
+NumSubTypes	mDNSClientAPI.h	/^	mDNSu32              NumSubTypes;$/;"	m	struct:ServiceRecordSet_struct
+OBJS	Makefile	/^OBJS = configfile.o db-memory.o main.o mp3-scanner.o query.o \\$/;"	m
+OFFSET_OF	daap.c	139;"	d	file:
+OR	parser.c	/^     OR = 259,$/;"	e	enum:yytokentype	file:
+OR	parser.c	104;"	d	file:
+OR	parser.h	/^     OR = 259,$/;"	e	enum:yytokentype
+OR	parser.h	77;"	d
+ORCHESTRA	parser.c	/^     ORCHESTRA = 265,$/;"	e	enum:yytokentype	file:
+ORCHESTRA	parser.c	110;"	d	file:
+ORCHESTRA	parser.h	/^     ORCHESTRA = 265,$/;"	e	enum:yytokentype
+ORCHESTRA	parser.h	83;"	d
+PATH	parser.c	/^     PATH = 263,$/;"	e	enum:yytokentype	file:
+PATH	parser.c	108;"	d	file:
+PATH	parser.h	/^     PATH = 263,$/;"	e	enum:yytokentype
+PATH	parser.h	81;"	d
+PIDFILE	main.c	100;"	d	file:
+PL_NODE	playlist.h	/^} PL_NODE;$/;"	t	typeref:struct:tag_pl_node
+PacketRRConflict	mDNS.c	/^mDNSlocal mDNSBool PacketRRConflict(const mDNS *const m, const AuthRecord *const our, const CacheRecord *const pktrr)$/;"	f
+PacketRRMatchesSignature	mDNS.c	/^mDNSlocal mDNSBool PacketRRMatchesSignature(const CacheRecord *const pktrr, const AuthRecord *const authrr)$/;"	f
+PlatformStorage	rend-posix.c	/^static mDNS_PlatformSupport PlatformStorage;  \/\/ Stores this platform's globals$/;"	v	file:
+PosixErrorToStatus	mDNSPosix.c	212;"	d	file:
+PosixNetworkInterface	mDNSPosix.c	/^struct PosixNetworkInterface$/;"	s	file:
+PosixNetworkInterface	mDNSPosix.c	/^typedef struct PosixNetworkInterface PosixNetworkInterface;$/;"	t	typeref:struct:PosixNetworkInterface	file:
+PosixService	rend-posix.c	/^struct PosixService {$/;"	s	file:
+PosixService	rend-posix.c	/^typedef struct PosixService PosixService;$/;"	t	typeref:struct:PosixService	file:
+ProbeCount	mDNSClientAPI.h	/^	mDNSu8          ProbeCount;			\/\/ Number of probes remaining before this record is valid (kDNSRecordTypeUnique)$/;"	m	struct:AuthRecord_struct
+ProbeFailTime	mDNSClientAPI.h	/^	mDNSs32 ProbeFailTime;$/;"	m	struct:mDNS_struct
+ProcessQuery	mDNS.c	/^mDNSlocal mDNSu8 *ProcessQuery(mDNS *const m, const DNSMessage *const query, const mDNSu8 *const end,$/;"	f
+PurgeCacheResourceRecord	mDNS.c	/^mDNSlocal void PurgeCacheResourceRecord(mDNS *const m, CacheRecord *rr)$/;"	f
+PutResourceRecord	mDNS.c	2932;"	d	file:
+PutResourceRecordCappedTTL	mDNS.c	/^mDNSlocal mDNSu8 *PutResourceRecordCappedTTL(DNSMessage *const msg, mDNSu8 *ptr, mDNSu16 *count, ResourceRecord *rr, mDNSu32 maxttl)$/;"	f
+PutResourceRecordTTL	mDNS.c	/^mDNSlocal mDNSu8 *PutResourceRecordTTL(DNSMessage *const msg, mDNSu8 *ptr, mDNSu16 *count, ResourceRecord *rr, mDNSu32 ttl)$/;"	f
+QueryFlags	mDNS.c	/^static const mDNSOpaque16 QueryFlags    = { { kDNSFlag0_QR_Query    | kDNSFlag0_OP_StdQuery,                0 } };$/;"	v	file:
+QuestionCallback	mDNSClientAPI.h	/^	mDNSQuestionCallback *QuestionCallback;$/;"	m	struct:DNSQuestion_struct
+QuestionContext	mDNSClientAPI.h	/^	void                 *QuestionContext;$/;"	m	struct:DNSQuestion_struct
+Questions	mDNSClientAPI.h	/^	DNSQuestion *Questions;				\/\/ List of all registered questions, active and inactive$/;"	m	struct:mDNS_struct
+RBLIST	redblack.h	79;"	d
+RBNULL	redblack.c	67;"	d	file:
+RB_CMP	redblack.h	43;"	d
+RB_ENTRY	redblack.c	/^RB_STATIC const RB_ENTRY(data_t) * $/;"	f
+RB_ENTRY	redblack.c	/^RB_STATIC const RB_ENTRY(data_t) *$/;"	f
+RB_ENTRY	redblack.c	/^RB_STATIC struct RB_ENTRY(tree) *$/;"	f
+RB_ENTRY	redblack.c	/^static const RB_ENTRY(data_t) * $/;"	f	file:
+RB_ENTRY	redblack.c	/^static struct RB_ENTRY(node) *$/;"	f	file:
+RB_ENTRY	redblack.c	/^static struct RB_ENTRY(node) *RB_ENTRY(_alloc)() {return (struct RB_ENTRY(node) *) malloc(sizeof(struct RB_ENTRY(node)));}$/;"	f	file:
+RB_ENTRY	redblack.c	/^struct RB_ENTRY(node)$/;"	f
+RB_ENTRY	redblack.c	918;"	d	file:
+RB_ENTRY	redblack.h	/^struct RB_ENTRY(lists) { $/;"	f
+RB_ENTRY	redblack.h	/^struct RB_ENTRY(tree) {$/;"	f
+RB_ENTRY	redblack.h	45;"	d
+RB_FREE	db-gdbm.c	41;"	d	file:
+RB_GET	redblack.c	50;"	d	file:
+RB_INLINE	redblack.h	44;"	d
+RB_LUEQUAL	redblack.h	54;"	d
+RB_LUFIRST	redblack.h	61;"	d
+RB_LUGREAT	redblack.h	58;"	d
+RB_LUGTEQ	redblack.h	55;"	d
+RB_LULAST	redblack.h	62;"	d
+RB_LULESS	redblack.h	57;"	d
+RB_LULTEQ	redblack.h	56;"	d
+RB_LUNEXT	redblack.h	59;"	d
+RB_LUPREV	redblack.h	60;"	d
+RB_NONE	redblack.h	53;"	d
+RB_SET	redblack.c	51;"	d	file:
+RB_STATIC	redblack.h	49;"	d
+RD_SIDE	rend-unix.c	42;"	d	file:
+RD_SIDE	rend-unix.h	39;"	d
+RData	mDNSClientAPI.h	/^	} RData;$/;"	t	typeref:struct:__anon14
+RDataBody	mDNSClientAPI.h	/^	} RDataBody;$/;"	t	typeref:union:__anon13
+RDataHashValue	mDNS.c	/^mDNSlocal mDNSu32 RDataHashValue(mDNSu16 const rdlength, const RDataBody *const rdb)$/;"	f
+RED	redblack.c	/^enum nodecolour { BLACK, RED };$/;"	e	enum:nodecolour	file:
+REJECT	lexer.c	573;"	d	file:
+REND_AVAHI_GROUP_ENTRY	rend-avahi.c	/^} REND_AVAHI_GROUP_ENTRY;$/;"	t	typeref:struct:tag_rend_avahi_group_entry	file:
+REND_MESSAGE	rend-unix.h	/^} REND_MESSAGE;$/;"	t	typeref:struct:tag_rend_message
+REND_MSG_TYPE_REGISTER	rend-unix.h	34;"	d
+REND_MSG_TYPE_STATUS	rend-unix.h	37;"	d
+REND_MSG_TYPE_STOP	rend-unix.h	36;"	d
+REND_MSG_TYPE_UNREGISTER	rend-unix.h	35;"	d
+RRExpireTime	mDNS.c	2074;"	d	file:
+RRIsAddressType	mDNS.c	2032;"	d	file:
+RRSet	mDNSClientAPI.h	/^	AuthRecord     *RRSet;				\/\/ This unique record is part of an RRSet$/;"	m	struct:AuthRecord_struct
+RRTypeIsAddressType	mDNS.c	2033;"	d	file:
+RRUniqueOrKnownUnique	mDNS.c	2044;"	d	file:
+RR_A	mDNSClientAPI.h	/^	AuthRecord RR_A;					\/\/ 'A' or 'AAAA' (address) record for our ".local" name$/;"	m	struct:NetworkInterfaceInfo_struct
+RR_ADV	mDNSClientAPI.h	/^	AuthRecord           RR_ADV;	\/\/ e.g. _services._dns-sd._udp.local. PTR _printer._tcp.local.$/;"	m	struct:ServiceRecordSet_struct
+RR_HINFO	mDNSClientAPI.h	/^	AuthRecord RR_HINFO;$/;"	m	struct:NetworkInterfaceInfo_struct
+RR_PTR	mDNSClientAPI.h	/^	AuthRecord           RR_PTR;	\/\/ e.g. _printer._tcp.local.        PTR Name._printer._tcp.local.$/;"	m	struct:ServiceRecordSet_struct
+RR_PTR	mDNSClientAPI.h	/^	AuthRecord RR_PTR;					\/\/ PTR (reverse lookup) record$/;"	m	struct:NetworkInterfaceInfo_struct
+RR_SRV	mDNSClientAPI.h	/^	AuthRecord           RR_SRV;	\/\/ e.g. Name._printer._tcp.local.   SRV 0 0 port target$/;"	m	struct:ServiceRecordSet_struct
+RR_TXT	mDNSClientAPI.h	/^	AuthRecord           RR_TXT;	\/\/ e.g. Name._printer._tcp.local.   TXT PrintQueueName$/;"	m	struct:ServiceRecordSet_struct
+RT_GET	webserver.h	29;"	d
+RT_POST	webserver.h	30;"	d
+RandomQueryDelay	mDNSClientAPI.h	/^	mDNSs32  RandomQueryDelay;			\/\/ For de-synchronization of query packets on the wire$/;"	m	struct:mDNS_struct
+ReannounceCount	mDNS.c	2057;"	d	file:
+RecentAnswers	mDNSClientAPI.h	/^	mDNSu32               RecentAnswers;	\/\/ Number of answers since the last time we sent this query$/;"	m	struct:DNSQuestion_struct
+ReconfirmAntecedents	mDNS.c	/^mDNSlocal void ReconfirmAntecedents(mDNS *const m, DNSQuestion *q)$/;"	f
+RecordCallback	mDNSClientAPI.h	/^	mDNSRecordCallback *RecordCallback;	\/\/ Callback function to call for state changes$/;"	m	struct:AuthRecord_struct
+RecordContext	mDNSClientAPI.h	/^	void           *RecordContext;		\/\/ Context parameter for the callback function$/;"	m	struct:AuthRecord_struct
+RecordDupSuppressInfo	mDNS.c	/^mDNSlocal int RecordDupSuppressInfo(DupSuppressInfo ds[DupSuppressInfoSize], mDNSs32 Time, mDNSInterfaceID InterfaceID, mDNSs32 Type)$/;"	f
+RecordIsLocalDuplicate	mDNS.c	2395;"	d	file:
+RecordLDT	mDNS.c	2394;"	d	file:
+RecordProbeFailure	mDNS.c	/^mDNSlocal void RecordProbeFailure(mDNS *const m, const AuthRecord *const rr)$/;"	f
+RecordType	mDNSClientAPI.h	/^	mDNSu8          RecordType;			\/\/ See enum above$/;"	m	struct:ResourceRecord_struct
+RegisterOneService	rend-posix.c	/^static mStatus RegisterOneService(const char *  richTextHostName, $/;"	f	file:
+RegistrationCallback	rend-posix.c	/^static void RegistrationCallback(mDNS *const m, ServiceRecordSet *const thisRegistration, mStatus status)$/;"	f	file:
+ReleaseCacheRR	mDNS.c	/^mDNSlocal void ReleaseCacheRR(mDNS *const m, CacheRecord *r)$/;"	f
+RemoveLabelSuffix	mDNS.c	/^mDNSlocal mDNSu32 RemoveLabelSuffix(domainlabel *name, mDNSBool RichText)$/;"	f
+ResolveSimultaneousProbe	mDNS.c	/^mDNSlocal void ResolveSimultaneousProbe(mDNS *const m, const DNSMessage *const query, const mDNSu8 *const end,$/;"	f
+ResourceRecord	mDNSClientAPI.h	/^typedef struct ResourceRecord_struct ResourceRecord;$/;"	t	typeref:struct:ResourceRecord_struct
+ResourceRecordAnswersQuestion	mDNS.c	/^mDNSlocal mDNSBool ResourceRecordAnswersQuestion(const ResourceRecord *const rr, const DNSQuestion *const q)$/;"	f
+ResourceRecordIsValidAnswer	mDNS.c	2035;"	d	file:
+ResourceRecordIsValidInterfaceAnswer	mDNS.c	2040;"	d	file:
+ResourceRecord_struct	mDNSClientAPI.h	/^struct ResourceRecord_struct$/;"	s
+ResourceRecords	mDNSClientAPI.h	/^	AuthRecord *ResourceRecords;$/;"	m	struct:mDNS_struct
+ResponseFlags	mDNS.c	/^static const mDNSOpaque16 ResponseFlags = { { kDNSFlag0_QR_Response | kDNSFlag0_OP_StdQuery | kDNSFlag0_AA, 0 } };$/;"	v	file:
+SCAN_FRAMEINFO	mp3-scanner.c	/^} SCAN_FRAMEINFO;$/;"	t	typeref:struct:tag_scan_frameinfo	file:
+SCAN_ID3HEADER	mp3-scanner.c	/^} __attribute((packed)) SCAN_ID3HEADER;$/;"	t	typeref:struct:tag_scan_id3header	file:
+SCAN_STATUS	configfile.c	/^} SCAN_STATUS;$/;"	t	typeref:struct:tag_scan_status	file:
+SIGCLD	main.c	105;"	d	file:
+SMART_PLAYLIST	playlist.h	/^} SMART_PLAYLIST;$/;"	t	typeref:struct:tag_smart_playlist
+STATS	daapd.h	/^} STATS;$/;"	t	typeref:struct:tag_stats
+STRLEN	db-gdbm.c	50;"	d	file:
+SameDomainLabel	mDNS.c	/^mDNSexport mDNSBool SameDomainLabel(const mDNSu8 *a, const mDNSu8 *b)$/;"	f
+SameDomainName	mDNS.c	/^mDNSexport mDNSBool SameDomainName(const domainname *const d1, const domainname *const d2)$/;"	f
+SameRData	mDNS.c	/^mDNSlocal mDNSBool SameRData(const ResourceRecord *const r1, const ResourceRecord *const r2)$/;"	f
+SameResourceRecordSignature	mDNS.c	/^mDNSlocal mDNSBool SameResourceRecordSignature(const ResourceRecord *const r1, const ResourceRecord *const r2)$/;"	f
+SearchForInterfaceByName	mDNSPosix.c	/^static PosixNetworkInterface *SearchForInterfaceByName(mDNS *const m, const char *intfName)$/;"	f	file:
+SendDeregistrations	mDNSClientAPI.h	/^	mDNSBool SendDeregistrations;		\/\/ Set if we need to send deregistrations (immediately)$/;"	m	struct:mDNS_struct
+SendImmediateAnswers	mDNSClientAPI.h	/^	mDNSBool SendImmediateAnswers;		\/\/ Set if we need to send answers (immediately -- or as soon as SuppressSending clears)$/;"	m	struct:mDNS_struct
+SendOnAll	mDNSClientAPI.h	/^	mDNSBool              SendOnAll;		\/\/ Set if we're sending this question on all active interfaces$/;"	m	struct:DNSQuestion_struct
+SendQNow	mDNSClientAPI.h	/^	mDNSInterfaceID       SendQNow;			\/\/ The interface this query is being sent on right now$/;"	m	struct:DNSQuestion_struct
+SendQueries	mDNS.c	/^mDNSlocal void SendQueries(mDNS *const m)$/;"	f
+SendRNow	mDNSClientAPI.h	/^	mDNSInterfaceID SendRNow;			\/\/ The interface this query is being sent on right now$/;"	m	struct:AuthRecord_struct
+SendResponses	mDNS.c	/^mDNSlocal void SendResponses(mDNS *const m)$/;"	f
+ServiceCallback	mDNS.c	/^mDNSlocal void ServiceCallback(mDNS *const m, AuthRecord *const rr, mStatus result)$/;"	f
+ServiceCallback	mDNSClientAPI.h	/^	mDNSServiceCallback *ServiceCallback;$/;"	m	struct:ServiceRecordSet_struct
+ServiceContext	mDNSClientAPI.h	/^	void                *ServiceContext;$/;"	m	struct:ServiceRecordSet_struct
+ServiceInfo	mDNSClientAPI.h	/^	} ServiceInfo;$/;"	t	typeref:struct:__anon18
+ServiceInfoQuery	mDNSClientAPI.h	/^typedef struct ServiceInfoQuery_struct ServiceInfoQuery;$/;"	t	typeref:struct:ServiceInfoQuery_struct
+ServiceInfoQueryCallback	mDNSClientAPI.h	/^	mDNSServiceInfoQueryCallback *ServiceInfoQueryCallback;$/;"	m	struct:ServiceInfoQuery_struct
+ServiceInfoQueryContext	mDNSClientAPI.h	/^	void                         *ServiceInfoQueryContext;$/;"	m	struct:ServiceInfoQuery_struct
+ServiceInfoQuery_struct	mDNSClientAPI.h	/^struct ServiceInfoQuery_struct$/;"	s
+ServiceRecordSet	mDNSClientAPI.h	/^typedef struct ServiceRecordSet_struct ServiceRecordSet;$/;"	t	typeref:struct:ServiceRecordSet_struct
+ServiceRecordSet_struct	mDNSClientAPI.h	/^struct ServiceRecordSet_struct$/;"	s
+SetNewRData	mDNS.c	/^mDNSlocal void SetNewRData(ResourceRecord *const rr, RData *NewRData, mDNSu16 rdlength)$/;"	f
+SetNextAnnounceProbeTime	mDNS.c	/^mDNSlocal void SetNextAnnounceProbeTime(mDNS *const m, const AuthRecord *const rr)$/;"	f
+SetNextCacheCheckTime	mDNS.c	/^mDNSlocal void SetNextCacheCheckTime(mDNS *const m, CacheRecord *const rr)$/;"	f
+SetNextQueryTime	mDNS.c	/^mDNSlocal void SetNextQueryTime(mDNS *const m, const DNSQuestion *const q)$/;"	f
+SetTargetToHostName	mDNS.c	/^mDNSlocal void SetTargetToHostName(mDNS *const m, AuthRecord *const rr)$/;"	f
+SetupInterfaceList	mDNSPosix.c	/^static int SetupInterfaceList(mDNS *const m)$/;"	f	file:
+SetupOneInterface	mDNSPosix.c	/^static int SetupOneInterface(mDNS *const m, struct sockaddr *intfAddr, const char *intfName)$/;"	f	file:
+SetupSocket	mDNSPosix.c	/^static int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interfaceIndex, int *sktPtr)$/;"	f	file:
+ShouldSuppressKnownAnswer	mDNS.c	/^mDNSlocal mDNSBool ShouldSuppressKnownAnswer(const CacheRecord *const ka, const AuthRecord *const rr)$/;"	f
+SleepState	mDNSClientAPI.h	/^	mDNSBool SleepState;				\/\/ Set if we're sleeping (send no more packets)$/;"	m	struct:mDNS_struct
+SmallRecordLimit	mDNS.c	1111;"	d	file:
+SockAddrTomDNSAddr	mDNSPosix.c	/^static void SockAddrTomDNSAddr(const struct sockaddr *const sa, mDNSAddr *ipAddr, mDNSIPPort *ipPort)$/;"	f	file:
+SocketDataReady	mDNSPosix.c	/^static void SocketDataReady(mDNS *const m, PosixNetworkInterface *intf, int skt)$/;"	f	file:
+StandardAuthRDSize	mDNSClientAPI.h	723;"	d
+SubTypes	mDNSClientAPI.h	/^	AuthRecord          *SubTypes;$/;"	m	struct:ServiceRecordSet_struct
+SuppressOnThisInterface	mDNS.c	/^mDNSlocal mDNSBool SuppressOnThisInterface(const DupSuppressInfo ds[DupSuppressInfoSize], const NetworkInterfaceInfo * const intf)$/;"	f
+SuppressProbes	mDNSClientAPI.h	/^	mDNSs32 SuppressProbes;$/;"	m	struct:mDNS_struct
+SuppressSending	mDNSClientAPI.h	/^	mDNSs32  SuppressSending;			\/\/ Don't send *any* packets during this time$/;"	m	struct:mDNS_struct
+TEST_LOCALONLY_FOR_EVERYTHING	mDNS.c	1009;"	d	file:
+TXTinfo	mDNSClientAPI.h	/^	mDNSu8          TXTinfo[2048];		\/\/ Additional demultiplexing information (e.g. LPR queue name)$/;"	m	struct:__anon18
+TXTlen	mDNSClientAPI.h	/^	mDNSu16         TXTlen;$/;"	m	struct:__anon18
+TYPE	parser.c	/^     TYPE = 268,$/;"	e	enum:yytokentype	file:
+TYPE	parser.c	113;"	d	file:
+TYPE	parser.h	/^     TYPE = 268,$/;"	e	enum:yytokentype
+TYPE	parser.h	86;"	d
+T_DATE	playlist.h	29;"	d
+T_INT	playlist.h	27;"	d
+T_STR	playlist.h	28;"	d
+ThisAPInterval	mDNSClientAPI.h	/^	mDNSs32         ThisAPInterval;		\/\/ In platform time units: Current interval for announce\/probe$/;"	m	struct:AuthRecord_struct
+ThisQInterval	mDNSClientAPI.h	/^	mDNSs32               ThisQInterval;	\/\/ LastQTime + ThisQInterval is the next scheduled transmission of this Q$/;"	m	struct:DNSQuestion_struct
+TicksTTL	mDNS.c	2073;"	d	file:
+Time	mDNSClientAPI.h	/^	mDNSs32               Time;$/;"	m	struct:__anon17
+TimeRcvd	mDNSClientAPI.h	/^	mDNSs32         TimeRcvd;			\/\/ In platform time units$/;"	m	struct:CacheRecord_struct
+TimeToAnnounceThisRecord	mDNS.c	2071;"	d	file:
+TimeToSendThisQuestion	mDNS.c	1514;"	d	file:
+TimeToSendThisRecord	mDNS.c	2072;"	d	file:
+TxAndRx	mDNSClientAPI.h	/^	mDNSBool        TxAndRx;			\/\/ Set to false if not sending and receiving packets on this interface$/;"	m	struct:NetworkInterfaceInfo_struct
+Type	mDNSClientAPI.h	/^	mDNSs32               Type;				\/\/ v4 or v6?$/;"	m	struct:__anon17
+UINT16_MAX	lexer.c	81;"	d	file:
+UINT32_MAX	lexer.c	84;"	d	file:
+UINT8_MAX	lexer.c	78;"	d	file:
+UPORT	uici.h	39;"	d
+UTF8str255	mDNSClientAPI.h	/^typedef struct { mDNSu8 c[256]; } UTF8str255;		\/\/ Null-terminated C string$/;"	t	typeref:struct:__anon11
+UnansweredQueries	mDNSClientAPI.h	/^	mDNSu32         UnansweredQueries;	\/\/ Number of times we've issued a query for this record without getting an answer$/;"	m	struct:CacheRecord_struct
+UnicastDNSPort	mDNS.c	/^mDNSexport const mDNSIPPort UnicastDNSPort     = { { UnicastDNSPortAsNumber   >> 8, UnicastDNSPortAsNumber   & 0xFF } };$/;"	v
+UnicastDNSPortAsNumber	mDNS.c	1095;"	d	file:
+UniqueAnswers	mDNSClientAPI.h	/^	mDNSu32               UniqueAnswers;	\/\/ Number of answers received with kDNSClass_UniqueRRSet bit set$/;"	m	struct:DNSQuestion_struct
+UpdateBlocked	mDNSClientAPI.h	/^	mDNSs32         UpdateBlocked;		\/\/ Set if update delaying is in effect$/;"	m	struct:AuthRecord_struct
+UpdateCallback	mDNSClientAPI.h	/^	mDNSRecordUpdateCallback *UpdateCallback;$/;"	m	struct:AuthRecord_struct
+UpdateCredits	mDNSClientAPI.h	/^	mDNSu32         UpdateCredits;		\/\/ Token-bucket rate limiting of excessive updates$/;"	m	struct:AuthRecord_struct
+UpdateInterfaceProtocols	mDNS.c	/^mDNSlocal void UpdateInterfaceProtocols(mDNS *const m, NetworkInterfaceInfo *active)$/;"	f
+UpdateQuestionDuplicates	mDNS.c	/^mDNSlocal void UpdateQuestionDuplicates(mDNS *const m, const DNSQuestion *const question)$/;"	f
+UseCount	mDNSClientAPI.h	/^	mDNSu32         UseCount;			\/\/ Number of times this RR has been used to answer a question$/;"	m	struct:CacheRecord_struct
+VISIT	redblack.h	/^VISIT;$/;"	t	typeref:enum:__anon1
+ValidateDomainName	mDNS.c	2350;"	d	file:
+ValidateRData	mDNS.c	/^mDNSlocal mDNSBool ValidateRData(const mDNSu16 rrtype, const mDNSu16 rdlength, const RData *const rd)$/;"	f
+WANT_SORT	db-gdbm.c	26;"	d	file:
+WINAMP_GENRE_UNKNOWN	mp3-scanner.c	269;"	d	file:
+WR_SIDE	rend-unix.c	43;"	d	file:
+WR_SIDE	rend-unix.h	40;"	d
+WSCONFIG	webserver.h	/^} WSCONFIG;$/;"	t	typeref:struct:tag_wsconfig
+WSHANDLE	webserver.h	/^typedef void* WSHANDLE;$/;"	t
+WS_AUTH_HANDLER	webserver.h	70;"	d
+WS_CONNINFO	webserver.h	/^} WS_CONNINFO;$/;"	t	typeref:struct:tag_ws_conninfo
+WS_CONNLIST	webserver.c	/^} WS_CONNLIST;$/;"	t	typeref:struct:tag_ws_connlist	file:
+WS_HANDLER	webserver.c	/^} WS_HANDLER;$/;"	t	typeref:struct:tag_ws_handler	file:
+WS_PRIVATE	webserver.c	/^} WS_PRIVATE;$/;"	t	typeref:struct:tag_ws_private	file:
+WS_REQ_HANDLER	webserver.h	69;"	d
+YEAR	parser.c	/^     YEAR = 281,$/;"	e	enum:yytokentype	file:
+YEAR	parser.c	126;"	d	file:
+YEAR	parser.h	/^     YEAR = 281,$/;"	e	enum:yytokentype
+YEAR	parser.h	99;"	d
+YYABORT	parser.c	669;"	d	file:
+YYACCEPT	parser.c	668;"	d	file:
+YYBACKUP	parser.c	681;"	d	file:
+YYBISON	parser.c	47;"	d	file:
+YYBISON_VERSION	parser.c	50;"	d	file:
+YYCOPY	parser.c	408;"	d	file:
+YYCOPY	parser.c	411;"	d	file:
+YYDEBUG	parser.c	190;"	d	file:
+YYDPRINTF	parser.c	761;"	d	file:
+YYDPRINTF	parser.c	907;"	d	file:
+YYEMPTY	parser.c	665;"	d	file:
+YYEOF	parser.c	666;"	d	file:
+YYERRCODE	parser.c	700;"	d	file:
+YYERROR	parser.c	670;"	d	file:
+YYERROR_VERBOSE	parser.c	170;"	d	file:
+YYERROR_VERBOSE	parser.c	195;"	d	file:
+YYERROR_VERBOSE	parser.c	196;"	d	file:
+YYERROR_VERBOSE	parser.c	198;"	d	file:
+YYFAIL	parser.c	677;"	d	file:
+YYFINAL	parser.c	441;"	d	file:
+YYFPRINTF	parser.c	758;"	d	file:
+YYFREE	parser.c	374;"	d	file:
+YYID	parser.c	/^YYID (int i)$/;"	f	file:
+YYID	parser.c	298;"	d	file:
+YYINITDEPTH	parser.c	916;"	d	file:
+YYLAST	parser.c	443;"	d	file:
+YYLEX	parser.c	748;"	d	file:
+YYLEX	parser.c	750;"	d	file:
+YYLLOC_DEFAULT	parser.c	709;"	d	file:
+YYLSP_NEEDED	parser.c	59;"	d	file:
+YYMALLOC	parser.c	367;"	d	file:
+YYMAXDEPTH	parser.c	927;"	d	file:
+YYMAXUTOK	parser.c	456;"	d	file:
+YYNNTS	parser.c	448;"	d	file:
+YYNRULES	parser.c	450;"	d	file:
+YYNSTATES	parser.c	452;"	d	file:
+YYNTOKENS	parser.c	446;"	d	file:
+YYPACT_NINF	parser.c	606;"	d	file:
+YYPOPSTACK	parser.c	1265;"	d	file:
+YYPURE	parser.c	56;"	d	file:
+YYRECOVERING	parser.c	679;"	d	file:
+YYRHSLOC	parser.c	707;"	d	file:
+YYSIZE_MAXIMUM	parser.c	275;"	d	file:
+YYSIZE_T	parser.c	263;"	d	file:
+YYSIZE_T	parser.c	265;"	d	file:
+YYSIZE_T	parser.c	269;"	d	file:
+YYSIZE_T	parser.c	271;"	d	file:
+YYSKELETON_NAME	parser.c	53;"	d	file:
+YYSTACK_ALLOC	parser.c	321;"	d	file:
+YYSTACK_ALLOC	parser.c	325;"	d	file:
+YYSTACK_ALLOC	parser.c	330;"	d	file:
+YYSTACK_ALLOC	parser.c	353;"	d	file:
+YYSTACK_ALLOC_MAXIMUM	parser.c	350;"	d	file:
+YYSTACK_ALLOC_MAXIMUM	parser.c	356;"	d	file:
+YYSTACK_BYTES	parser.c	400;"	d	file:
+YYSTACK_FREE	parser.c	344;"	d	file:
+YYSTACK_FREE	parser.c	354;"	d	file:
+YYSTACK_GAP_MAXIMUM	parser.c	396;"	d	file:
+YYSTACK_RELOCATE	parser.c	427;"	d	file:
+YYSTATE	lexer.c	130;"	d	file:
+YYSTYPE	parser.c	/^	YYSTYPE;$/;"	t	typeref:union:YYSTYPE	file:
+YYSTYPE	parser.c	/^typedef union YYSTYPE$/;"	u	file:
+YYSTYPE	parser.h	/^	YYSTYPE;$/;"	t	typeref:union:YYSTYPE
+YYSTYPE	parser.h	/^typedef union YYSTYPE$/;"	u
+YYSTYPE_IS_DECLARED	parser.c	218;"	d	file:
+YYSTYPE_IS_DECLARED	parser.h	123;"	d
+YYSTYPE_IS_TRIVIAL	parser.c	219;"	d	file:
+YYSTYPE_IS_TRIVIAL	parser.h	124;"	d
+YYTABLES_NAME	lexer.c	2086;"	d	file:
+YYTABLE_NINF	parser.c	629;"	d	file:
+YYTERROR	parser.c	699;"	d	file:
+YYTOKENTYPE	parser.c	65;"	d	file:
+YYTOKENTYPE	parser.h	38;"	d
+YYTOKEN_TABLE	parser.c	203;"	d	file:
+YYTRANSLATE	parser.c	458;"	d	file:
+YYUNDEFTOK	parser.c	455;"	d	file:
+YYUSE	parser.c	291;"	d	file:
+YYUSE	parser.c	293;"	d	file:
+YY_	parser.c	281;"	d	file:
+YY_	parser.c	285;"	d	file:
+YY_AT_BOL	lexer.c	347;"	d	file:
+YY_BREAK	lexer.c	753;"	d	file:
+YY_BUFFER_EOF_PENDING	lexer.c	263;"	d	file:
+YY_BUFFER_NEW	lexer.c	251;"	d	file:
+YY_BUFFER_NORMAL	lexer.c	252;"	d	file:
+YY_BUFFER_STATE	lexer.c	/^typedef struct yy_buffer_state *YY_BUFFER_STATE;$/;"	t	typeref:struct:yy_buffer_state	file:
+YY_BUF_SIZE	lexer.c	142;"	d	file:
+YY_CHAR	lexer.c	/^typedef unsigned char YY_CHAR;$/;"	t	file:
+YY_CURRENT_BUFFER	lexer.c	279;"	d	file:
+YY_CURRENT_BUFFER_LVALUE	lexer.c	286;"	d	file:
+YY_DECL	lexer.c	741;"	d	file:
+YY_DECL_IS_OURS	lexer.c	737;"	d	file:
+YY_DO_BEFORE_ACTION	lexer.c	372;"	d	file:
+YY_END_OF_BUFFER	lexer.c	380;"	d	file:
+YY_END_OF_BUFFER_CHAR	lexer.c	138;"	d	file:
+YY_EXIT_FAILURE	lexer.c	1881;"	d	file:
+YY_EXTRA_TYPE	lexer.c	627;"	d	file:
+YY_FATAL_ERROR	lexer.c	728;"	d	file:
+YY_FLEX_MAJOR_VERSION	lexer.c	9;"	d	file:
+YY_FLEX_MINOR_VERSION	lexer.c	10;"	d	file:
+YY_FLEX_SUBMINOR_VERSION	lexer.c	11;"	d	file:
+YY_FLUSH_BUFFER	lexer.c	315;"	d	file:
+YY_INPUT	lexer.c	681;"	d	file:
+YY_INT_ALIGNED	lexer.c	4;"	d	file:
+YY_LESS_LINENO	lexer.c	169;"	d	file:
+YY_LOCATION_PRINT	parser.c	735;"	d	file:
+YY_LOCATION_PRINT	parser.c	740;"	d	file:
+YY_MORE_ADJ	lexer.c	575;"	d	file:
+YY_NEW_FILE	lexer.c	136;"	d	file:
+YY_NULL	lexer.c	110;"	d	file:
+YY_NUM_RULES	lexer.c	379;"	d	file:
+YY_READ_BUF_SIZE	lexer.c	666;"	d	file:
+YY_REDUCE_PRINT	parser.c	897;"	d	file:
+YY_REDUCE_PRINT	parser.c	910;"	d	file:
+YY_RESTORE_YY_MORE_OFFSET	lexer.c	576;"	d	file:
+YY_RULE_SETUP	lexer.c	756;"	d	file:
+YY_SC_TO_UI	lexer.c	117;"	d	file:
+YY_STACK_PRINT	parser.c	859;"	d	file:
+YY_STACK_PRINT	parser.c	909;"	d	file:
+YY_START	lexer.c	129;"	d	file:
+YY_START_STACK_INCR	lexer.c	723;"	d	file:
+YY_STATE_BUF_SIZE	lexer.c	147;"	d	file:
+YY_STATE_EOF	lexer.c	133;"	d	file:
+YY_STRUCT_YY_BUFFER_STATE	lexer.c	204;"	d	file:
+YY_SYMBOL_PRINT	parser.c	767;"	d	file:
+YY_SYMBOL_PRINT	parser.c	908;"	d	file:
+YY_TYPEDEF_YY_BUFFER_STATE	lexer.c	150;"	d	file:
+YY_TYPEDEF_YY_SIZE_T	lexer.c	199;"	d	file:
+YY_USER_ACTION	lexer.c	748;"	d	file:
+YY_USE_CONST	lexer.c	92;"	d	file:
+YY_USE_CONST	lexer.c	98;"	d	file:
+_CONFIGFILE_H_	configfile.h	23;"	d
+_DAAPD_H_	daapd.h	32;"	d
+_DAAP_H_	daap.h	22;"	d
+_DAAP_PROTO_H_	daap-proto.h	23;"	d
+_DB_MEMORY_H_	db-memory.h	23;"	d
+_DYNAMIC_ART_H_	dynamic-art.h	23;"	d
+_MP3_SCANNER_H_	mp3-scanner.h	23;"	d
+_PL_H_	playlist.h	23;"	d
+_POSIX_PTHREAD_SEMANTICS	configfile.c	33;"	d	file:
+_POSIX_PTHREAD_SEMANTICS	mp3-scanner.c	33;"	d	file:
+_REDBLACK_H	redblack.h	135;"	d
+_REND_H_	rend.h	23;"	d
+_REND_UNIX_H_	rend-unix.h	23;"	d
+_STDLIB_H	parser.c	335;"	d	file:
+_STDLIB_H	parser.c	363;"	d	file:
+_STRCASESTR_H_	strcasestr.h	2;"	d
+_WEBSERVER_H_	webserver.h	23;"	d
+_XOPEN_SOURCE	db-gdbm.c	27;"	d	file:
+_XOPEN_SOURCE	db-memory.c	26;"	d	file:
+__ERR_H__	err.h	29;"	d
+__IN_ERR__	err.c	49;"	d	file:
+__IN_ERR__	rend-posix.c	189;"	d	file:
+__STDC_LIMIT_MACROS	lexer.c	39;"	d	file:
+__mDNSClientAPI_h	mDNSClientAPI.h	434;"	d
+__mDNSDebug_h	mDNSDebug.h	56;"	d
+__mDNSPlatformPosix_h	mDNSPosix.h	61;"	d
+__mDNSUNP_h	mDNSUNP.h	61;"	d
+__query__	query.h	2;"	d
+_browse_item	daap.c	/^struct _browse_item$/;"	s	file:
+_delete	redblack.c	/^RB_ENTRY(_delete)(struct RB_ENTRY(node) **rootp, struct RB_ENTRY(node) *z)$/;"	f	file:
+_delete_fix	redblack.c	/^RB_ENTRY(_delete_fix)(struct RB_ENTRY(node) **rootp, struct RB_ENTRY(node) *x)$/;"	f	file:
+_destroy	redblack.c	/^RB_ENTRY(_destroy)(struct RB_ENTRY(node) *x)$/;"	f	file:
+_extradata	mDNSClientAPI.h	/^	mDNSu8 _extradata[MaximumRDSize-InlineCacheRDSize];		\/\/ Glue on the necessary number of extra bytes$/;"	m	struct:__anon16
+_free	redblack.c	/^RB_ENTRY(_free)(struct RB_ENTRY(node) *x)$/;"	f	file:
+_free	redblack.c	/^static void RB_ENTRY(_free)(struct RB_ENTRY(node) *x) {free(x);}$/;"	f	file:
+_left_rotate	redblack.c	/^RB_ENTRY(_left_rotate)(struct RB_ENTRY(node) **rootp, struct RB_ENTRY(node) *x)$/;"	f	file:
+_openlist	redblack.c	/^RB_ENTRY(_openlist)(const struct RB_ENTRY(node) *rootp)$/;"	f	file:
+_rend_avahi_add_group_entry	rend-avahi.c	/^static int _rend_avahi_add_group_entry(char *name, char *type, int port) {$/;"	f	file:
+_rend_avahi_create_services	rend-avahi.c	/^int _rend_avahi_create_services(void) {$/;"	f
+_rend_avahi_lock	rend-avahi.c	/^void _rend_avahi_lock(void) {$/;"	f
+_rend_avahi_signal	rend-avahi.c	/^void _rend_avahi_signal(void) {$/;"	f
+_rend_avahi_unlock	rend-avahi.c	/^void _rend_avahi_unlock(void) {$/;"	f
+_rend_avahi_wait_on	rend-avahi.c	/^void _rend_avahi_wait_on(void *what) {$/;"	f
+_right_rotate	redblack.c	/^RB_ENTRY(_right_rotate)(struct RB_ENTRY(node) **rootp, struct RB_ENTRY(node) *y)$/;"	f	file:
+_stream_processor	ogg.c	/^typedef struct _stream_processor {$/;"	s	file:
+_walk	redblack.c	/^RB_ENTRY(_walk)(const struct RB_ENTRY(node) *x, void (*action)(const RB_ENTRY(data_t) *, const VISIT, const int, void *), void *arg, int level)$/;"	f	file:
+aac_drilltoatom	mp3-scanner.c	/^off_t aac_drilltoatom(FILE *aac_fp, char *atom_path, unsigned int *atom_length)$/;"	f
+add2currenttime	restart.c	/^struct timeval add2currenttime(double seconds) {$/;"	f
+add_browse_item	daap.c	/^static void add_browse_item(browse_item** root, char* name)$/;"	f	file:
+addheaders	webserver.c	/^    int addheaders;$/;"	m	struct:tag_ws_handler	file:
+adminpassword	daapd.h	/^    char *adminpassword;  \/**< Password to web management pages *\/$/;"	m	struct:tag_config
+album	mp3-scanner.h	/^    char *album;     \/* TALB *\/$/;"	m	struct:tag_mp3file
+album_len	db-gdbm.c	/^    int album_len;$/;"	m	struct:tag_mp3packed	file:
+aliasIntf	mDNSPosix.c	/^	PosixNetworkInterface * aliasIntf;$/;"	m	struct:PosixNetworkInterface	file:
+alloca	parser.c	328;"	d	file:
+allocated	ogg.c	/^    int allocated;$/;"	m	struct:__anon24	file:
+altForm	mDNS.c	/^	char          altForm;$/;"	m	struct:mDNSprintf_format	file:
+always_scan	daapd.h	/^    int always_scan;      \/**< 0 to minimize disk usage (embedded devices) *\/$/;"	m	struct:tag_config
+arg1	playlist.h	/^    } arg1;$/;"	m	struct:tag_pl_node	typeref:union:tag_pl_node::__anon22
+arg2	playlist.h	/^    } arg2;$/;"	m	struct:tag_pl_node	typeref:union:tag_pl_node::__anon23
+arith_query	query.c	/^static int arith_query(query_node_t* query, void* target)$/;"	f	file:
+artfilename	daapd.h	/^    char *artfilename;    \/**< What filename to merge coverart with *\/$/;"	m	struct:tag_config
+artist	mp3-scanner.h	/^    char *artist;    \/* TPE1 *\/$/;"	m	struct:tag_mp3file
+artist_len	db-gdbm.c	/^    int artist_len;$/;"	m	struct:tag_mp3packed	file:
+assert	redblack.c	32;"	d	file:
+assert0	mDNSClientAPI.h	/^	char assert0[(sizeof(rdataSRV)         == 262                          ) ? 1 : -1];$/;"	m	struct:mDNS_CompileTimeAssertionChecks
+assert1	mDNSClientAPI.h	/^	char assert1[(sizeof(DNSMessageHeader) ==  12                          ) ? 1 : -1];$/;"	m	struct:mDNS_CompileTimeAssertionChecks
+assert2	mDNSClientAPI.h	/^	char assert2[(sizeof(DNSMessage)       ==  12+AbsoluteMaxDNSMessageData) ? 1 : -1];$/;"	m	struct:mDNS_CompileTimeAssertionChecks
+assert3	mDNSClientAPI.h	/^	char assert3[(sizeof(mDNSs8)           ==   1                          ) ? 1 : -1];$/;"	m	struct:mDNS_CompileTimeAssertionChecks
+assert4	mDNSClientAPI.h	/^	char assert4[(sizeof(mDNSu8)           ==   1                          ) ? 1 : -1];$/;"	m	struct:mDNS_CompileTimeAssertionChecks
+assert5	mDNSClientAPI.h	/^	char assert5[(sizeof(mDNSs16)          ==   2                          ) ? 1 : -1];$/;"	m	struct:mDNS_CompileTimeAssertionChecks
+assert6	mDNSClientAPI.h	/^	char assert6[(sizeof(mDNSu16)          ==   2                          ) ? 1 : -1];$/;"	m	struct:mDNS_CompileTimeAssertionChecks
+assert7	mDNSClientAPI.h	/^	char assert7[(sizeof(mDNSs32)          ==   4                          ) ? 1 : -1];$/;"	m	struct:mDNS_CompileTimeAssertionChecks
+assert8	mDNSClientAPI.h	/^	char assert8[(sizeof(mDNSu32)          ==   4                          ) ? 1 : -1];$/;"	m	struct:mDNS_CompileTimeAssertionChecks
+assert9	mDNSClientAPI.h	/^	char assert9[(sizeof(mDNSOpaque16)     ==   2                          ) ? 1 : -1];$/;"	m	struct:mDNS_CompileTimeAssertionChecks
+assertA	mDNSClientAPI.h	/^	char assertA[(sizeof(mDNSOpaque32)     ==   4                          ) ? 1 : -1];$/;"	m	struct:mDNS_CompileTimeAssertionChecks
+assertB	mDNSClientAPI.h	/^	char assertB[(sizeof(mDNSOpaque128)    ==  16                          ) ? 1 : -1];$/;"	m	struct:mDNS_CompileTimeAssertionChecks
+atoll	main.c	113;"	d	file:
+auth_handler	webserver.c	/^    int(*auth_handler)(char *, char *);$/;"	m	struct:tag_ws_handler	file:
+bit	daap.c	/^    MetaFieldName_t	bit;$/;"	m	struct:__anon33	file:
+bitrate	db-gdbm.c	/^    int bitrate;$/;"	m	struct:tag_mp3packed	file:
+bitrate	mp3-scanner.c	/^    int bitrate;             \/**< Bitrate in kbps (128, 64, etc) *\/$/;"	m	struct:tag_scan_frameinfo	file:
+bitrate	mp3-scanner.h	/^    int bitrate;$/;"	m	struct:tag_mp3file
+bpm	db-gdbm.c	/^    int bpm;$/;"	m	struct:tag_mp3packed	file:
+bpm	mp3-scanner.h	/^    int bpm;         \/* TBPM *\/$/;"	m	struct:tag_mp3file
+browse_fields	daap.c	/^static query_field_t browse_fields[] = {$/;"	v	file:
+browse_item	daap.c	/^typedef struct _browse_item browse_item;$/;"	t	typeref:struct:_browse_item	file:
+bytes	ogg.c	/^    ogg_int64_t bytes;$/;"	m	struct:__anon25	file:
+bytes_in	daap-proto.h	/^  int bytes_in;$/;"	m	struct:gzip_stream_tag
+bytes_out	daap-proto.h	/^  int bytes_out;$/;"	m	struct:gzip_stream_tag
+bytes_served	daapd.h	/^    unsigned int bytes_served;  \/**< How many bytes of data served (unused) *\/$/;"	m	struct:tag_stats
+c	mDNSClientAPI.h	/^typedef struct { mDNSu8 c[ 64]; } domainlabel;		\/\/ One label: length byte and up to 63 characters$/;"	m	struct:__anon9
+c	mDNSClientAPI.h	/^typedef struct { mDNSu8 c[256]; } UTF8str255;		\/\/ Null-terminated C string$/;"	m	struct:__anon11
+c	mDNSClientAPI.h	/^typedef struct { mDNSu8 c[256]; } domainname;		\/\/ Up to 255 bytes of length-prefixed domainlabels$/;"	m	struct:__anon10
+changed	configfile.c	/^    int changed;           \/**< Has this been changed since the last load? *\/$/;"	m	struct:tag_configelement	file:
+children	daap-proto.h	/^    struct daap_block_tag *children;$/;"	m	struct:daap_block_tag	typeref:struct:daap_block_tag::daap_block_tag
+client_callback	rend-avahi.c	/^static void client_callback(AvahiClient *c, AvahiClientState state, AVAHI_GCC_UNUSED void * userdata) {$/;"	f	file:
+close	webserver.h	/^    int close;$/;"	m	struct:tag_ws_conninfo
+closelist	redblack.c	/^RB_ENTRY(closelist)(RBLIST *rblistp)$/;"	f
+cmd	rend-unix.h	/^    int cmd;$/;"	m	struct:tag_rend_message
+comment	mp3-scanner.h	/^    char *comment;   \/* COMM *\/$/;"	m	struct:tag_mp3file
+comment_len	db-gdbm.c	/^    int comment_len;$/;"	m	struct:tag_mp3packed	file:
+compare	db-gdbm.c	/^int compare(MP3RECORD* a, MP3RECORD* b)$/;"	f
+compilation	db-gdbm.c	/^    char compilation;$/;"	m	struct:tag_mp3packed	file:
+compilation	mp3-scanner.h	/^    char compilation;$/;"	m	struct:tag_mp3file
+composer	mp3-scanner.h	/^    char *composer;  \/* TCOM *\/$/;"	m	struct:tag_mp3file
+composer_len	db-gdbm.c	/^    int composer_len;$/;"	m	struct:tag_mp3packed	file:
+compress	daapd.h	/^    int compress;         \/**< Should we compress? *\/$/;"	m	struct:tag_config
+conductor	mp3-scanner.h	/^    char *conductor; \/* TPE3 *\/$/;"	m	struct:tag_mp3file
+conductor_len	db-gdbm.c	/^    int conductor_len;$/;"	m	struct:tag_mp3packed	file:
+config	main.c	/^CONFIG config; \/**< Main configuration structure, as read from configfile *\/$/;"	v
+config_auth	configfile.c	/^int config_auth(char *user, char *password) {$/;"	f
+config_close	configfile.c	/^void config_close(void) {$/;"	f
+config_element	configfile.c	/^    int config_element;    \/**< config file directive or web interface directive *\/$/;"	m	struct:tag_configelement	file:
+config_elements	configfile.c	/^CONFIGELEMENT config_elements[] = {$/;"	v
+config_emit_flags	configfile.c	/^void config_emit_flags(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_emit_include	configfile.c	/^void config_emit_include(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_emit_int	configfile.c	/^void config_emit_int(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_emit_ispage	configfile.c	/^void config_emit_ispage(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_emit_literal	configfile.c	/^void config_emit_literal(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_emit_readonly	configfile.c	/^void config_emit_readonly(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_emit_service_status	configfile.c	/^void config_emit_service_status(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_emit_session_count	configfile.c	/^void config_emit_session_count(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_emit_string	configfile.c	/^void config_emit_string(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_emit_system	configfile.c	/^void config_emit_system(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_emit_threadstatus	configfile.c	/^void config_emit_threadstatus(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_emit_user	configfile.c	/^void config_emit_user(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_emit_version	configfile.c	/^void config_emit_version(WS_CONNINFO *pwsc, void *value, char *arg) {$/;"	f
+config_existdir	configfile.c	/^int config_existdir(char *path) {$/;"	f
+config_file_is_readonly	configfile.c	/^int config_file_is_readonly(void) {$/;"	f
+config_get_next_session	configfile.c	/^int config_get_next_session(void) {$/;"	f
+config_get_session_count	configfile.c	/^int config_get_session_count(void) {$/;"	f
+config_handler	configfile.c	/^void config_handler(WS_CONNINFO *pwsc) {$/;"	f
+config_makedir	configfile.c	/^int config_makedir(char *path) {$/;"	f
+config_mutex_lock	configfile.c	/^int config_mutex_lock(void) {$/;"	f
+config_mutex_unlock	configfile.c	/^int config_mutex_unlock(void) {$/;"	f
+config_read	configfile.c	/^int config_read(char *file) {$/;"	f
+config_session	configfile.c	/^int config_session=0;                                   \/**< session counter *\/$/;"	v
+config_set_status	configfile.c	/^void config_set_status(WS_CONNINFO *pwsc, int session, char *fmt, ...) {$/;"	f
+config_subst_stream	configfile.c	/^void config_subst_stream(WS_CONNINFO *pwsc, int fd_src) {$/;"	f
+config_write	configfile.c	/^int config_write(WS_CONNINFO *pwsc) {$/;"	f
+configfile	daapd.h	/^    char *configfile;     \/**< path to config file *\/$/;"	m	struct:tag_config
+connlist	webserver.c	/^    WS_CONNLIST connlist;$/;"	m	struct:tag_ws_private	file:
+constant	query.h	/^	int			constant;$/;"	m	union:query_node_::__anon27
+constraint_violated	ogg.c	/^    int constraint_violated;$/;"	m	struct:_stream_processor	file:
+copyblock	dynamic-art.c	/^int copyblock(int fromfd, int tofd, size_t size) {$/;"	f
+copyfile	restart.c	/^int copyfile(int fromfd, int tofd) {$/;"	f
+coreIntf	mDNSPosix.c	/^	NetworkInterfaceInfo    coreIntf;$/;"	m	struct:PosixNetworkInterface	file:
+coreServ	rend-posix.c	/^    ServiceRecordSet coreServ;$/;"	m	struct:PosixService	file:
+count_browse_items	daap.c	/^static int count_browse_items(browse_item* root)$/;"	f	file:
+crc_protected	mp3-scanner.c	/^    int crc_protected;       \/**< Is the frame crc protected? *\/$/;"	m	struct:tag_scan_frameinfo	file:
+create_stream_set	ogg.c	/^static stream_set *create_stream_set(void) {$/;"	f	file:
+cval	parser.c	/^    char *cval;$/;"	m	union:YYSTYPE	file:
+cval	parser.h	/^    char *cval;$/;"	m	union:YYSTYPE
+cval	playlist.h	/^	char *cval;$/;"	m	union:tag_pl_node::__anon23
+da_aac_attach_image	dynamic-art.c	/^off_t da_aac_attach_image(int img_fd, int out_fd, int aac_fd, int offset)$/;"	f
+da_aac_insert_covr_atom	dynamic-art.c	/^off_t da_aac_insert_covr_atom(off_t extra_size, int out_fd, FILE *aac_fp,$/;"	f
+da_aac_rewrite_stco_atom	dynamic-art.c	/^off_t da_aac_rewrite_stco_atom(off_t extra_size, int out_fd, FILE *aac_fp,$/;"	f
+da_attach_image	dynamic-art.c	/^int da_attach_image(int img_fd, int out_fd, int mp3_fd, int offset)$/;"	f
+da_get_current_tag_info	dynamic-art.c	/^int *da_get_current_tag_info(int file_fd) {$/;"	f
+da_get_image_fd	dynamic-art.c	/^int da_get_image_fd(char *filename) {$/;"	f
+daap_add_char	daap-proto.c	/^DAAP_BLOCK *daap_add_char(DAAP_BLOCK *parent, char *tag, char value) {$/;"	f
+daap_add_data	daap-proto.c	/^DAAP_BLOCK *daap_add_data(DAAP_BLOCK *parent, char *tag, $/;"	f
+daap_add_empty	daap-proto.c	/^DAAP_BLOCK *daap_add_empty(DAAP_BLOCK *parent, char *tag) {$/;"	f
+daap_add_formatted	daap-proto.c	/^DAAP_BLOCK *daap_add_formatted(DAAP_BLOCK *parent, char *tag, $/;"	f
+daap_add_int	daap-proto.c	/^DAAP_BLOCK *daap_add_int(DAAP_BLOCK *parent, char *tag, int value) {$/;"	f
+daap_add_long	daap-proto.c	/^DAAP_BLOCK *daap_add_long(DAAP_BLOCK *parent, char *tag, int v1, int v2) {$/;"	f
+daap_add_mdcl	daap.c	/^int daap_add_mdcl(DAAP_BLOCK *root, char *tag, char *name, short int number) {$/;"	f
+daap_add_short	daap-proto.c	/^DAAP_BLOCK *daap_add_short(DAAP_BLOCK *parent, char *tag, short int value) {$/;"	f
+daap_add_song_entry	daap.c	/^DAAP_BLOCK* daap_add_song_entry(DAAP_BLOCK* mlcl, MP3FILE* song, MetaField_t meta)$/;"	f
+daap_add_string	daap-proto.c	/^DAAP_BLOCK *daap_add_string(DAAP_BLOCK *parent, char *tag, char *value) {$/;"	f
+daap_auth	main.c	/^int daap_auth(char *username, char *password) {$/;"	f
+daap_block_tag	daap-proto.h	/^typedef struct daap_block_tag {$/;"	s
+daap_find	daap-proto.c	/^DAAP_BLOCK *daap_find(DAAP_BLOCK *parent, char* tag)$/;"	f
+daap_free	daap-proto.c	/^void daap_free(DAAP_BLOCK *root) {$/;"	f
+daap_get_new	daap-proto.c	/^DAAP_BLOCK *daap_get_new(void) {$/;"	f
+daap_handle_index	daap.c	/^void daap_handle_index(DAAP_BLOCK* block, const char* index)$/;"	f
+daap_handler	main.c	/^void daap_handler(WS_CONNINFO *pwsc) {$/;"	f
+daap_remove	daap-proto.c	/^void daap_remove(DAAP_BLOCK* node)$/;"	f
+daap_response_browse	daap.c	/^DAAP_BLOCK* daap_response_browse(const char* name, const char* filter)$/;"	f
+daap_response_content_codes	daap.c	/^DAAP_BLOCK *daap_response_content_codes(void) {$/;"	f
+daap_response_dbinfo	daap.c	/^DAAP_BLOCK *daap_response_dbinfo(char *name) {$/;"	f
+daap_response_login	daap.c	/^DAAP_BLOCK *daap_response_login(char *hostname) {$/;"	f
+daap_response_playlist_items	daap.c	/^DAAP_BLOCK *daap_response_playlist_items(unsigned int playlist, char* metaStr, char* query) {$/;"	f
+daap_response_playlists	daap.c	/^DAAP_BLOCK *daap_response_playlists(char *name) {$/;"	f
+daap_response_server_info	daap.c	/^DAAP_BLOCK *daap_response_server_info(char *name, char *client_version) {$/;"	f
+daap_response_songlist	daap.c	/^DAAP_BLOCK *daap_response_songlist(char* metaStr, char* query) {$/;"	f
+daap_response_update	daap.c	/^DAAP_BLOCK *daap_response_update(int fd, int clientver) {$/;"	f
+daap_serialize	daap-proto.c	/^int daap_serialize(DAAP_BLOCK *root, int fd, GZIP_STREAM *gz) {$/;"	f
+daap_set_int	daap-proto.c	/^int daap_set_int(DAAP_BLOCK* parent, char* tag, int value)$/;"	f
+daemon_start	main.c	/^int daemon_start(void) {$/;"	f
+data	db-gdbm.c	/^    char data[1];$/;"	m	struct:tag_mp3packed	file:
+data	mDNSClientAPI.h	/^	mDNSu8      data[StandardAuthRDSize];$/;"	m	union:__anon13
+data	mDNSClientAPI.h	/^	struct { mDNSu16 MaxRDLength; mDNSu8 data[InlineCacheRDSize]; } rdatastorage;	\/\/ Storage for small records is right here$/;"	m	struct:CacheRecord_struct::__anon15
+data	ogg.c	/^    void *data;$/;"	m	struct:_stream_processor	file:
+data_kind	mp3-scanner.h	/^    int data_kind;              \/* dmap.datakind (asdk) *\/$/;"	m	struct:tag_mp3file
+datebool	parser.y	/^datebool: BEFORE { $$ = $1; }$/;"	l
+datetag	parser.y	/^datetag: DATEADDED { $$ = $1; }$/;"	l
+dateval	parser.y	/^dateval: DATE { $$ = $1; }$/;"	l
+db_add	db-gdbm.c	/^int db_add(MP3FILE *pmp3) {$/;"	f
+db_add	db-memory.c	/^int db_add(MP3FILE *mp3file) {$/;"	f
+db_add_playlist	db-gdbm.c	/^int db_add_playlist(unsigned long int playlistid, char *name, int file_time, int is_smart) {$/;"	f
+db_add_playlist	db-memory.c	/^int db_add_playlist(unsigned int playlistid, char *name, int is_smart) {$/;"	f
+db_add_playlist_song	db-gdbm.c	/^int db_add_playlist_song(unsigned long int playlistid, unsigned long int itemid) {$/;"	f
+db_add_playlist_song	db-memory.c	/^int db_add_playlist_song(unsigned int playlistid, unsigned int itemid) {$/;"	f
+db_compare_rb_nodes	db-gdbm.c	/^int db_compare_rb_nodes(const void *pa, const void *pb, const void *cfg) {$/;"	f
+db_deinit	db-gdbm.c	/^int db_deinit(void) {$/;"	f
+db_deinit	db-memory.c	/^int db_deinit(void) {$/;"	f
+db_delete	db-gdbm.c	/^int db_delete(unsigned long int id) {$/;"	f
+db_delete_playlist	db-gdbm.c	/^int db_delete_playlist(unsigned long int playlistid) {$/;"	f
+db_dispose	db-gdbm.c	/^void db_dispose(MP3FILE *pmp3) {$/;"	f
+db_end_initial_update	db-gdbm.c	/^int db_end_initial_update(void) {$/;"	f
+db_end_initial_update	db-memory.c	/^int db_end_initial_update(void) {$/;"	f
+db_enum	db-gdbm.c	/^MP3FILE *db_enum(ENUMHANDLE *current) {$/;"	f
+db_enum	db-memory.c	/^MP3FILE *db_enum(MP3RECORD **current) {$/;"	f
+db_enum_begin	db-gdbm.c	/^ENUMHANDLE db_enum_begin(void) {$/;"	f
+db_enum_begin	db-memory.c	/^MP3RECORD *db_enum_begin(void) {$/;"	f
+db_enum_end	db-gdbm.c	/^int db_enum_end(ENUMHANDLE handle) {$/;"	f
+db_enum_end	db-memory.c	/^int db_enum_end(void) {$/;"	f
+db_exists	db-gdbm.c	/^int db_exists(unsigned long int id) {$/;"	f
+db_exists	db-memory.c	/^int db_exists(int id) {$/;"	f
+db_find	db-gdbm.c	/^MP3FILE *db_find(unsigned long int id) {  \/* FIXME: Not reentrant *\/$/;"	f
+db_find	db-memory.c	/^MP3FILE *db_find(int id) {$/;"	f
+db_freerecord	db-memory.c	/^void db_freerecord(MP3RECORD *mp3record) {$/;"	f
+db_gdbm_mutex	db-gdbm.c	/^static pthread_mutex_t db_gdbm_mutex = PTHREAD_MUTEX_INITIALIZER; \/**< gdbm not reentrant *\/$/;"	v	file:
+db_gdbmlock	db-gdbm.c	/^void db_gdbmlock(void) {$/;"	f
+db_gdbmunlock	db-gdbm.c	/^int db_gdbmunlock(void) {$/;"	f
+db_get_playlist_count	db-gdbm.c	/^int db_get_playlist_count(void) {$/;"	f
+db_get_playlist_count	db-memory.c	/^int db_get_playlist_count(void) {$/;"	f
+db_get_playlist_entry_count	db-gdbm.c	/^int db_get_playlist_entry_count(unsigned long int playlistid) {$/;"	f
+db_get_playlist_entry_count	db-memory.c	/^int db_get_playlist_entry_count(int playlistid) {$/;"	f
+db_get_playlist_is_smart	db-gdbm.c	/^int db_get_playlist_is_smart(unsigned long int playlistid) {$/;"	f
+db_get_playlist_is_smart	db-memory.c	/^int db_get_playlist_is_smart(int playlistid) {$/;"	f
+db_get_playlist_name	db-gdbm.c	/^char *db_get_playlist_name(unsigned long int playlistid) {$/;"	f
+db_get_playlist_name	db-memory.c	/^char *db_get_playlist_name(int playlistid) {$/;"	f
+db_get_song_count	db-gdbm.c	/^int db_get_song_count(void) {$/;"	f
+db_get_song_count	db-memory.c	/^int db_get_song_count(void) {$/;"	f
+db_init	db-gdbm.c	/^int db_init(void) {$/;"	f
+db_init	db-memory.c	/^int db_init(void) {$/;"	f
+db_init_once	db-gdbm.c	/^void db_init_once(void) {$/;"	f
+db_init_once	db-memory.c	/^void db_init_once(void) {$/;"	f
+db_initlock	db-gdbm.c	/^static pthread_once_t db_initlock=PTHREAD_ONCE_INIT; \/**< to initialize the rwlock *\/$/;"	v	file:
+db_initlock	db-memory.c	/^pthread_once_t db_initlock=PTHREAD_ONCE_INIT;$/;"	v
+db_is_empty	db-gdbm.c	/^int db_is_empty(void) {$/;"	f
+db_is_empty	db-memory.c	/^int db_is_empty(void) {$/;"	f
+db_last_modified	db-gdbm.c	/^int db_last_modified(unsigned long int id) {$/;"	f
+db_last_modified	db-memory.c	/^int db_last_modified(int id) {$/;"	f
+db_last_scan	db-gdbm.c	/^static int db_last_scan; \/**< Dunno... *\/$/;"	v	file:
+db_open	db-gdbm.c	/^int db_open(char *parameters, int reload) {$/;"	f
+db_open	db-memory.c	/^int db_open(char *parameters) {$/;"	f
+db_packrecord	db-gdbm.c	/^datum *db_packrecord(MP3FILE *pmp3) {$/;"	f
+db_playlist_count	db-gdbm.c	/^static int db_playlist_count=0; \/**< Number of active playlists *\/$/;"	v	file:
+db_playlist_count	db-memory.c	/^int db_playlist_count=0;$/;"	v
+db_playlist_enum	db-gdbm.c	/^int db_playlist_enum(ENUMHANDLE* handle) {$/;"	f
+db_playlist_enum	db-memory.c	/^int db_playlist_enum(DB_PLAYLIST **current) {$/;"	f
+db_playlist_enum_begin	db-gdbm.c	/^ENUMHANDLE db_playlist_enum_begin(void) {$/;"	f
+db_playlist_enum_begin	db-memory.c	/^DB_PLAYLIST *db_playlist_enum_begin(void) {$/;"	f
+db_playlist_enum_end	db-gdbm.c	/^int db_playlist_enum_end(ENUMHANDLE handle) {$/;"	f
+db_playlist_enum_end	db-memory.c	/^int db_playlist_enum_end(void) {$/;"	f
+db_playlist_find	db-gdbm.c	/^DB_PLAYLIST *db_playlist_find(unsigned long int playlistid) {$/;"	f
+db_playlist_items_enum	db-gdbm.c	/^int db_playlist_items_enum(ENUMHANDLE* handle) {$/;"	f
+db_playlist_items_enum	db-memory.c	/^int db_playlist_items_enum(DB_PLAYLISTENTRY **current) {$/;"	f
+db_playlist_items_enum_begin	db-gdbm.c	/^ENUMHANDLE db_playlist_items_enum_begin(unsigned long int playlistid) {$/;"	f
+db_playlist_items_enum_begin	db-memory.c	/^DB_PLAYLISTENTRY *db_playlist_items_enum_begin(int playlistid) {$/;"	f
+db_playlist_items_enum_end	db-gdbm.c	/^int db_playlist_items_enum_end(ENUMHANDLE handle) {$/;"	f
+db_playlist_items_enum_end	db-memory.c	/^int db_playlist_items_enum_end(void) {$/;"	f
+db_playlist_last_modified	db-gdbm.c	/^int db_playlist_last_modified(unsigned long int playlistid) {$/;"	f
+db_playlists	db-gdbm.c	/^static DB_PLAYLIST db_playlists; \/**< The current playlists *\/$/;"	v	file:
+db_playlists	db-memory.c	/^DB_PLAYLIST db_playlists;$/;"	v
+db_readlock	db-gdbm.c	/^void db_readlock(void) {$/;"	f
+db_removed	db-gdbm.c	/^static struct rbtree *db_removed; \/**< rbtree to do quick searchs to do background scans *\/$/;"	v	typeref:struct:rbtree	file:
+db_root	db-memory.c	/^MP3RECORD db_root;$/;"	v
+db_rwlock	db-gdbm.c	/^static pthread_rwlock_t db_rwlock; \/**< pthread r\/w sync for the database *\/$/;"	v	file:
+db_rwlock	db-memory.c	/^pthread_rwlock_t db_rwlock; \/* OSX doesn't have PTHREAD_RWLOCK_INITIALIZER *\/$/;"	v
+db_scanning	db-gdbm.c	/^int db_scanning(void) {$/;"	f
+db_scanning	db-memory.c	/^int db_scanning(void) {$/;"	f
+db_song_count	db-gdbm.c	/^static int db_song_count; \/**< Number of songs in the db *\/$/;"	v	file:
+db_song_count	db-memory.c	/^int db_song_count;$/;"	v
+db_songs	db-gdbm.c	/^static GDBM_FILE db_songs; \/**< Database that holds the mp3 info *\/$/;"	v	file:
+db_start_initial_update	db-gdbm.c	/^int db_start_initial_update(void) {$/;"	f
+db_start_initial_update	db-memory.c	/^int db_start_initial_update(void) {$/;"	f
+db_timestamp	db-gdbm.c	/^    int db_timestamp;$/;"	m	struct:tag_mp3packed	file:
+db_timestamp	mp3-scanner.h	/^    int db_timestamp;$/;"	m	struct:tag_mp3file
+db_unlock	db-gdbm.c	/^int db_unlock(void) {$/;"	f
+db_unpackrecord	db-gdbm.c	/^int db_unpackrecord(datum *pdatum, MP3FILE *pmp3) {$/;"	f
+db_update_mode	db-gdbm.c	/^static int db_update_mode=0; \/**< Are we in the middle of a bulk update? *\/$/;"	v	file:
+db_update_mode	db-memory.c	/^int db_update_mode=0;$/;"	v
+db_version	db-gdbm.c	/^int db_version(void) {$/;"	f
+db_version	db-memory.c	/^int db_version(void) {$/;"	f
+db_version_no	db-gdbm.c	/^static int db_version_no;  \/**< db version, incremented every time add or delete *\/$/;"	v	file:
+db_version_no	db-memory.c	/^int db_version_no;$/;"	v
+db_writelock	db-gdbm.c	/^void db_writelock(void) {$/;"	f
+dbdir	daapd.h	/^    char *dbdir;          \/**< Where to put the db file *\/$/;"	m	struct:tag_config
+debugf	mDNSDebug.h	83;"	d
+debugf	mDNSDebug.h	87;"	d
+debugf	mDNSDebug.h	89;"	d
+debugf	mDNSDebug.h	91;"	d
+debugf_	mDNSPosix.c	/^mDNSexport void debugf_(const char *format, ...)$/;"	f
+desc	ogg.c	/^    char *desc;$/;"	m	struct:vorbis_release	file:
+description	daap.c	/^    char *description;$/;"	m	struct:tag_daap_items	file:
+description	mp3-scanner.h	/^    char* description;		\/* long file type *\/$/;"	m	struct:tag_mp3file
+destroy	redblack.c	/^RB_ENTRY(destroy)(struct RB_ENTRY(tree) *rbinfo)$/;"	f
+disc	db-gdbm.c	/^    int disc;$/;"	m	struct:tag_mp3packed	file:
+disc	mp3-scanner.h	/^    int disc;        \/* TPOS *\/$/;"	m	struct:tag_mp3file
+dispatch_threads	webserver.c	/^    int dispatch_threads;$/;"	m	struct:tag_ws_private	file:
+domainlabel	mDNSClientAPI.h	/^typedef struct { mDNSu8 c[ 64]; } domainlabel;		\/\/ One label: length byte and up to 63 characters$/;"	t	typeref:struct:__anon9
+domainname	mDNSClientAPI.h	/^typedef struct { mDNSu8 c[256]; } domainname;		\/\/ Up to 255 bytes of length-prefixed domainlabels$/;"	t	typeref:struct:__anon10
+doneheaders	ogg.c	/^    int doneheaders;$/;"	m	struct:__anon25	file:
+drop_privs	main.c	/^int drop_privs(char *user) {$/;"	f
+dummy	mDNSClientAPI.h	/^typedef struct mDNSInterfaceID_dummystruct { void *dummy; } *mDNSInterfaceID;$/;"	m	struct:mDNSInterfaceID_dummystruct
+dummy	mDNSPosix.h	/^	long dummy[1];	\/\/ Some compilers don't like empty structures$/;"	m	struct:mDNS_PlatformSupport_struct
+emit	configfile.c	/^    void (*emit)(WS_CONNINFO *, void *, char *);  \/* how to display it on a web page *\/$/;"	m	struct:tag_configelement	file:
+encodeMetaRequest	daap.c	/^MetaField_t encodeMetaRequest(char* meta, MetaDataMap* map)$/;"	f
+end	ogg.c	/^    int end;$/;"	m	struct:_stream_processor	file:
+endorder	redblack.h	/^  endorder,$/;"	e	enum:__anon1
+entry_group_callback	rend-avahi.c	/^static void entry_group_callback(AvahiEntryGroup *g, AvahiEntryGroupState state, AVAHI_GCC_UNUSED void *userdata) {$/;"	f	file:
+err_categorylist	err.c	/^static char *err_categorylist[] = {$/;"	v	file:
+err_debuglevel	err.c	/^int err_debuglevel=0; \/**< current debuglevel, set from command line with -d *\/$/;"	v
+err_debugmask	err.c	/^static unsigned int err_debugmask=0xFFFFFFFF; \/**< modules to debug, see \\ref log_categories *\/$/;"	v	file:
+err_file	err.c	/^static FILE *err_file=NULL; \/**< if logging to file, the handle of that file *\/$/;"	v	file:
+err_free	err.c	/^void err_free(char *file, int line, void *ptr) {$/;"	f
+err_leak	err.c	/^ERR_LEAK err_leak = { NULL, NULL, 0, 0, NULL };$/;"	v
+err_leakcheck	err.c	/^void err_leakcheck(void) {$/;"	f
+err_lock_mutex	err.c	/^int err_lock_mutex(void) {$/;"	f
+err_log	err.c	/^void err_log(int level, unsigned int cat, char *fmt, ...)$/;"	f
+err_logdestination	err.c	/^static int err_logdestination=LOGDEST_STDERR; \/**< current log destination *\/$/;"	v	file:
+err_malloc	err.c	/^void *err_malloc(char *file, int line, size_t size) {$/;"	f
+err_mutex	err.c	/^static pthread_mutex_t err_mutex=PTHREAD_MUTEX_INITIALIZER; \/**< for serializing log messages *\/$/;"	v	file:
+err_notify	err.c	/^void err_notify(char *file, int line, void *ptr) {$/;"	f
+err_setdebugmask	err.c	/^extern int err_setdebugmask(char *list) {$/;"	f
+err_setdest	err.c	/^void err_setdest(char *app, int destination) {$/;"	f
+err_strdup	err.c	/^char *err_strdup(char *file, int line, const char *str) {$/;"	f
+err_unlock_mutex	err.c	/^int err_unlock_mutex(void) {$/;"	f
+error	webserver.h	/^    int error;$/;"	m	struct:tag_ws_conninfo
+exit_cond	webserver.c	/^    pthread_cond_t exit_cond;$/;"	m	struct:tag_ws_private	file:
+exit_mutex	webserver.c	/^    pthread_mutex_t exit_mutex;$/;"	m	struct:tag_ws_private	file:
+expression	parser.y	/^expression: expression AND expression { $$=pl_newexpr($1,$2,$3); }$/;"	l
+extensions	daapd.h	/^    char *extensions;     \/**< What music file extentions to process *\/$/;"	m	struct:tag_config
+fcopyblock	dynamic-art.c	/^int fcopyblock(FILE *fromfp, int tofd, size_t size) {$/;"	f
+fd	webserver.h	/^    int fd;$/;"	m	struct:tag_ws_conninfo
+field	query.h	/^	const query_field_t*	field;$/;"	m	union:query_node_::__anon27
+fieldWidth	mDNS.c	/^	unsigned int  fieldWidth;$/;"	m	struct:mDNSprintf_format	file:
+file	err.c	/^    char *file;$/;"	m	struct:tag_err_leak	file:
+file_size	db-gdbm.c	/^    int file_size;$/;"	m	struct:tag_mp3packed	file:
+file_size	mp3-scanner.h	/^    int file_size;$/;"	m	struct:tag_mp3file
+file_time	db-gdbm.c	/^    int file_time;$/;"	m	struct:tag_playlist	file:
+files	mp3-scanner.c	/^    int		(*files)(char* file, MP3FILE* pmp3);$/;"	m	struct:__anon29	file:
+find_field	query.c	/^static const query_field_t* find_field(const char* name, const query_field_t* fields)$/;"	f	file:
+find_stream_processor	ogg.c	/^static stream_processor *find_stream_processor(stream_set *set, ogg_page *page)$/;"	f	file:
+firstTypeSpecificMetaId	daap.c	/^    firstTypeSpecificMetaId,$/;"	e	enum:__anon32	file:
+firstgranulepos	ogg.c	/^    ogg_int64_t firstgranulepos;$/;"	m	struct:__anon25	file:
+flags	mp3-scanner.c	/^    unsigned char flags;$/;"	m	struct:tag_scan_id3header	file:
+flex_int16_t	lexer.c	/^typedef int16_t flex_int16_t;$/;"	t	file:
+flex_int16_t	lexer.c	/^typedef short int flex_int16_t;$/;"	t	file:
+flex_int32_t	lexer.c	/^typedef int flex_int32_t;$/;"	t	file:
+flex_int32_t	lexer.c	/^typedef int32_t flex_int32_t;$/;"	t	file:
+flex_int8_t	lexer.c	/^typedef int8_t flex_int8_t;$/;"	t	file:
+flex_int8_t	lexer.c	/^typedef signed char flex_int8_t;$/;"	t	file:
+flex_uint16_t	lexer.c	/^typedef uint16_t flex_uint16_t;$/;"	t	file:
+flex_uint16_t	lexer.c	/^typedef unsigned short int flex_uint16_t;$/;"	t	file:
+flex_uint32_t	lexer.c	/^typedef uint32_t flex_uint32_t;$/;"	t	file:
+flex_uint32_t	lexer.c	/^typedef unsigned int flex_uint32_t;$/;"	t	file:
+flex_uint8_t	lexer.c	/^typedef uint8_t flex_uint8_t;$/;"	t	file:
+flex_uint8_t	lexer.c	/^typedef unsigned char flex_uint8_t; $/;"	t	file:
+fname	mp3-scanner.h	/^    char *fname;$/;"	m	struct:tag_mp3file
+fname_len	db-gdbm.c	/^    int fname_len;$/;"	m	struct:tag_mp3packed	file:
+forceSign	mDNS.c	/^	unsigned      forceSign : 1;$/;"	m	struct:mDNSprintf_format	file:
+found	db-gdbm.c	/^    int found;$/;"	m	struct:tag_playlist	file:
+frame_length	mp3-scanner.c	/^    int frame_length;        \/**< Frame length in bytes - calculated *\/$/;"	m	struct:tag_scan_frameinfo	file:
+frame_offset	mp3-scanner.c	/^    int frame_offset;        \/**< Where this frame was found *\/$/;"	m	struct:tag_scan_frameinfo	file:
+free	daap-proto.h	/^    int free;$/;"	m	struct:daap_block_tag
+free	err.h	80;"	d
+free_browse_items	daap.c	/^static void free_browse_items(browse_item* root)$/;"	f	file:
+free_ifi_info	mDNSUNP.c	/^free_ifi_info(struct ifi_info *ifihead)$/;"	f
+free_stream_set	ogg.c	/^static void free_stream_set(stream_set *set)$/;"	f	file:
+gMDNSPlatformPosixVerboseLevel	mDNSPosix.c	/^int gMDNSPlatformPosixVerboseLevel = 0;$/;"	v
+gServiceID	rend-posix.c	/^static int gServiceID = 0;$/;"	v	file:
+gServiceList	rend-posix.c	/^static PosixService *gServiceList = NULL;$/;"	v	file:
+gSongMetaDataMap	daap.c	/^static MetaDataMap	gSongMetaDataMap[] = {$/;"	v	file:
+gStopNow	rend-posix.c	/^static volatile mDNSBool gStopNow;$/;"	v	file:
+gb_served	daapd.h	/^    unsigned int gb_served;     \/**< How many gigs of data have been served (unused) *\/$/;"	m	struct:tag_stats
+gdbm_mp3	db-gdbm.c	/^static MP3FILE gdbm_mp3; \/**< used during enumerations *\/$/;"	v	file:
+gdbm_mp3_mustfree	db-gdbm.c	/^static int gdbm_mp3_mustfree=0;  \/**< is the data in #gdbm_mp3 valid? Should it be freed? *\/$/;"	v	file:
+genre	mp3-scanner.h	/^    char *genre;     \/* TCON *\/$/;"	m	struct:tag_mp3file
+genre_len	db-gdbm.c	/^    int genre_len;$/;"	m	struct:tag_mp3packed	file:
+getDomainName	mDNS.c	/^mDNSlocal const mDNSu8 *getDomainName(const DNSMessage *const msg, const mDNSu8 *ptr, const mDNSu8 *const end,$/;"	f
+getQuestion	mDNS.c	/^mDNSlocal const mDNSu8 *getQuestion(const DNSMessage *msg, const mDNSu8 *ptr, const mDNSu8 *end, const mDNSInterfaceID InterfaceID,$/;"	f
+get_field_name	query.c	/^static int		get_field_name(const char** pcursor,$/;"	f	file:
+get_ifi_info	mDNSUNP.c	/^struct ifi_info *get_ifi_info(int family, int doaliases)$/;"	f
+get_next_page	ogg.c	/^static int get_next_page(FILE *f, ogg_sync_state *sync, ogg_page *page, $/;"	f	file:
+gettimeout	restart.c	/^static int gettimeout(struct timeval end,$/;"	f	file:
+got_id3	mp3-scanner.h	/^    int got_id3;$/;"	m	struct:tag_mp3file
+group_match	query.c	/^static query_node_t*	group_match(const char* query,$/;"	f	file:
+grouping	mp3-scanner.h	/^    char *grouping;  \/* TIT1 *\/$/;"	m	struct:tag_mp3file
+grouping_len	db-gdbm.c	/^    int grouping_len;$/;"	m	struct:tag_mp3packed	file:
+gzip_alloc	daap-proto.c	/^GZIP_STREAM *gzip_alloc(void) {$/;"	f
+gzip_close	daap-proto.c	/^int gzip_close(GZIP_STREAM *gz, int fd) {$/;"	f
+gzip_compress	daap-proto.c	/^int gzip_compress(GZIP_STREAM *gz) {$/;"	f
+gzip_stream_tag	daap-proto.h	/^typedef struct gzip_stream_tag {$/;"	s
+gzip_write	daap-proto.c	/^ssize_t gzip_write(GZIP_STREAM *gz, void *buf, size_t size) {$/;"	f
+hSize	mDNS.c	/^	unsigned      hSize : 1;$/;"	m	struct:mDNSprintf_format	file:
+handlers	webserver.c	/^    WS_HANDLER handlers;$/;"	m	struct:tag_ws_private	file:
+havePrecision	mDNS.c	/^	unsigned      havePrecision : 1;$/;"	m	struct:mDNSprintf_format	file:
+host	configfile.c	/^    char *host;$/;"	m	struct:tag_scan_status	file:
+hostlabel	mDNSClientAPI.h	/^	domainlabel hostlabel;				\/\/ Conforms to RFC 1034 "letter-digit-hyphen" ARPANET host name rules$/;"	m	struct:mDNS_struct
+hostname	mDNSClientAPI.h	/^	domainname  hostname;				\/\/ Host Name, e.g. "Foo.local."$/;"	m	struct:mDNS_struct
+hostname	webserver.h	/^    char *hostname;$/;"	m	struct:tag_ws_conninfo
+i32	query.h	/^	int			i32;$/;"	m	union:query_node_::__anon28
+i64	query.h	/^	long long		i64;$/;"	m	union:query_node_::__anon28
+id	db-gdbm.c	/^    unsigned long int	id;$/;"	m	struct:tag_playlist	file:
+id	db-gdbm.c	/^    unsigned long int	id;$/;"	m	struct:tag_playlistentry	file:
+id	db-gdbm.c	/^    unsigned long int id;$/;"	m	struct:tag_mp3packed	file:
+id	db-memory.c	/^    unsigned int id;$/;"	m	struct:tag_playlist	file:
+id	db-memory.c	/^    unsigned int id;$/;"	m	struct:tag_playlistentry	file:
+id	mp3-scanner.c	/^    unsigned char id[3];$/;"	m	struct:tag_scan_id3header	file:
+id	mp3-scanner.h	/^	unsigned long int	id;$/;"	m	struct:tag_mp3file
+id	playlist.h	/^    unsigned int id;$/;"	m	struct:tag_smart_playlist
+id	webserver.h	/^    char *id;$/;"	m	struct:tag_wsconfig
+id3v2_image_size	dynamic-art.c	68;"	d	file:
+id3v2_tag_size	dynamic-art.c	73;"	d	file:
+id3v3_image_size	dynamic-art.c	54;"	d	file:
+id3v3_tag_size	dynamic-art.c	72;"	d	file:
+iface	daapd.h	/^    char *iface;          \/**< interface to advertise on *\/$/;"	m	struct:tag_config
+ifi_addr	mDNSUNP.h	/^  struct sockaddr  *ifi_addr;   \/* primary address *\/$/;"	m	struct:ifi_info	typeref:struct:ifi_info::sockaddr
+ifi_brdaddr	mDNSUNP.h	/^  struct sockaddr  *ifi_brdaddr;\/* broadcast address *\/$/;"	m	struct:ifi_info	typeref:struct:ifi_info::sockaddr
+ifi_dstaddr	mDNSUNP.h	/^  struct sockaddr  *ifi_dstaddr;\/* destination address *\/$/;"	m	struct:ifi_info	typeref:struct:ifi_info::sockaddr
+ifi_flags	mDNSUNP.h	/^  short   ifi_flags;            \/* IFF_xxx constants from <net\/if.h> *\/$/;"	m	struct:ifi_info
+ifi_haddr	mDNSUNP.h	/^  u_char  ifi_haddr[IFI_HADDR]; \/* hardware address *\/$/;"	m	struct:ifi_info
+ifi_hlen	mDNSUNP.h	/^  u_short ifi_hlen;             \/* #bytes in hardware address: 0, 6, 8 *\/$/;"	m	struct:ifi_info
+ifi_index	mDNSUNP.h	/^  int     ifi_index;            \/* interface index *\/$/;"	m	struct:ifi_info
+ifi_info	mDNSUNP.h	/^struct ifi_info {$/;"	s
+ifi_myflags	mDNSUNP.h	/^  short   ifi_myflags;          \/* our own IFI_xxx flags *\/$/;"	m	struct:ifi_info
+ifi_name	mDNSUNP.h	/^  char    ifi_name[IFI_NAME];   \/* interface name, null terminated *\/$/;"	m	struct:ifi_info
+ifi_next	mDNSUNP.h	/^  struct ifi_info  *ifi_next;   \/* next of these structures *\/$/;"	m	struct:ifi_info	typeref:struct:ifi_info::ifi_info
+in	daap-proto.h	/^  char *in;$/;"	m	struct:gzip_stream_tag
+in_headers	ogg.c	/^    int in_headers;$/;"	m	struct:__anon24	file:
+in_size	daap-proto.h	/^  int in_size;$/;"	m	struct:gzip_stream_tag
+index	mDNSPosix.c	/^	int                     index;$/;"	m	struct:PosixNetworkInterface	file:
+info	mDNSClientAPI.h	/^	ServiceInfo                  *info;$/;"	m	struct:ServiceInfoQuery_struct
+intbool	parser.y	/^intbool: EQUALS { $$ = $1; }$/;"	l
+interval	parser.y	/^interval: INTERVAL { $$ = $1; }$/;"	l
+intfName	mDNSPosix.c	/^	const char *            intfName;$/;"	m	struct:PosixNetworkInterface	file:
+inttag	parser.y	/^inttag: YEAR$/;"	l
+ip	mDNSClientAPI.h	/^	mDNSAddr        ip;					\/\/ Remote (destination) IP address where this service can be accessed$/;"	m	struct:__anon18
+ip	mDNSClientAPI.h	/^	mDNSAddr        ip;$/;"	m	struct:NetworkInterfaceInfo_struct
+ip	mDNSClientAPI.h	/^	mDNSv4Addr  ip;			\/\/ For 'A' record$/;"	m	union:__anon13
+ip	mDNSClientAPI.h	/^	union { mDNSv6Addr v6; mDNSv4Addr v4; } ip;$/;"	m	struct:__anon5	typeref:union:__anon5::__anon6
+ipi_addr	mDNSUNP.h	/^    struct sockaddr_storage ipi_addr;$/;"	m	struct:my_in_pktinfo	typeref:struct:my_in_pktinfo::sockaddr_storage
+ipi_ifindex	mDNSUNP.h	/^    int                     ipi_ifindex;            \/* received interface index *\/$/;"	m	struct:my_in_pktinfo
+ipi_ifname	mDNSUNP.h	/^    char                    ipi_ifname[IFI_NAME];   \/* received interface name  *\/$/;"	m	struct:my_in_pktinfo
+ipv6	mDNSClientAPI.h	/^	mDNSv6Addr  ipv6;		\/\/ For 'AAAA' record$/;"	m	union:__anon13
+is_smart	db-gdbm.c	/^    int is_smart;$/;"	m	struct:tag_playlist	file:
+is_smart	db-memory.c	/^    int is_smart;$/;"	m	struct:tag_playlist	file:
+is_valid	mp3-scanner.c	/^    int is_valid;$/;"	m	struct:tag_scan_frameinfo	file:
+isillegal	ogg.c	/^    int isillegal;$/;"	m	struct:_stream_processor	file:
+isnew	ogg.c	/^    int isnew;$/;"	m	struct:_stream_processor	file:
+item_kind	mp3-scanner.h	/^    int item_kind;		\/* song or movie *\/$/;"	m	struct:tag_mp3file
+ival	parser.c	/^    unsigned int ival;$/;"	m	union:YYSTYPE	file:
+ival	parser.h	/^    unsigned int ival;$/;"	m	union:YYSTYPE
+ival	playlist.h	/^	int ival;$/;"	m	union:tag_pl_node::__anon22
+ival	playlist.h	/^	int ival;$/;"	m	union:tag_pl_node::__anon23
+kDNSClass_CH	mDNSClientAPI.h	/^	kDNSClass_CH               = 3,		\/\/ CHAOS$/;"	e	enum:__anon2
+kDNSClass_CS	mDNSClientAPI.h	/^	kDNSClass_CS               = 2,		\/\/ CSNET$/;"	e	enum:__anon2
+kDNSClass_HS	mDNSClientAPI.h	/^	kDNSClass_HS               = 4,		\/\/ Hesiod$/;"	e	enum:__anon2
+kDNSClass_IN	mDNSClientAPI.h	/^	kDNSClass_IN               = 1,		\/\/ Internet$/;"	e	enum:__anon2
+kDNSClass_Mask	mDNSClientAPI.h	/^	kDNSClass_Mask             = 0x7FFF,\/\/ Multicast DNS uses the bottom 15 bits to identify the record class...$/;"	e	enum:__anon2
+kDNSClass_NONE	mDNSClientAPI.h	/^	kDNSClass_NONE             = 254,	\/\/ Used in DNS UPDATE [RFC 2136]$/;"	e	enum:__anon2
+kDNSClass_UniqueRRSet	mDNSClientAPI.h	/^	kDNSClass_UniqueRRSet      = 0x8000,\/\/ ... and the top bit indicates that all other cached records are now invalid$/;"	e	enum:__anon2
+kDNSFlag0_AA	mDNS.c	/^	kDNSFlag0_AA          = 0x04,		\/\/ Authoritative Answer?$/;"	e	enum:__anon30	file:
+kDNSFlag0_OP_Iquery	mDNS.c	/^	kDNSFlag0_OP_Iquery   = 0x08,$/;"	e	enum:__anon30	file:
+kDNSFlag0_OP_Mask	mDNS.c	/^	kDNSFlag0_OP_Mask     = 0x78,		\/\/ Operation type$/;"	e	enum:__anon30	file:
+kDNSFlag0_OP_Notify	mDNS.c	/^	kDNSFlag0_OP_Notify   = 0x20,$/;"	e	enum:__anon30	file:
+kDNSFlag0_OP_Status	mDNS.c	/^	kDNSFlag0_OP_Status   = 0x10,$/;"	e	enum:__anon30	file:
+kDNSFlag0_OP_StdQuery	mDNS.c	/^	kDNSFlag0_OP_StdQuery = 0x00,$/;"	e	enum:__anon30	file:
+kDNSFlag0_OP_Unused3	mDNS.c	/^	kDNSFlag0_OP_Unused3  = 0x18,$/;"	e	enum:__anon30	file:
+kDNSFlag0_OP_Update	mDNS.c	/^	kDNSFlag0_OP_Update   = 0x28,$/;"	e	enum:__anon30	file:
+kDNSFlag0_QROP_Mask	mDNS.c	/^	kDNSFlag0_QROP_Mask   = kDNSFlag0_QR_Mask | kDNSFlag0_OP_Mask,$/;"	e	enum:__anon30	file:
+kDNSFlag0_QR_Mask	mDNS.c	/^	kDNSFlag0_QR_Mask     = 0x80,		\/\/ Query or response?$/;"	e	enum:__anon30	file:
+kDNSFlag0_QR_Query	mDNS.c	/^	kDNSFlag0_QR_Query    = 0x00,$/;"	e	enum:__anon30	file:
+kDNSFlag0_QR_Response	mDNS.c	/^	kDNSFlag0_QR_Response = 0x80,$/;"	e	enum:__anon30	file:
+kDNSFlag0_RD	mDNS.c	/^	kDNSFlag0_RD          = 0x01,		\/\/ Recursion Desired?$/;"	e	enum:__anon30	file:
+kDNSFlag0_TC	mDNS.c	/^	kDNSFlag0_TC          = 0x02,		\/\/ Truncated?$/;"	e	enum:__anon30	file:
+kDNSFlag1_AD	mDNS.c	/^	kDNSFlag1_AD          = 0x20,		\/\/ Authentic Data [RFC 2535]$/;"	e	enum:__anon30	file:
+kDNSFlag1_CD	mDNS.c	/^	kDNSFlag1_CD          = 0x10,		\/\/ Checking Disabled [RFC 2535]$/;"	e	enum:__anon30	file:
+kDNSFlag1_RA	mDNS.c	/^	kDNSFlag1_RA          = 0x80,		\/\/ Recursion Available?$/;"	e	enum:__anon30	file:
+kDNSFlag1_RC	mDNS.c	/^	kDNSFlag1_RC          = 0x0F,		\/\/ Response code$/;"	e	enum:__anon30	file:
+kDNSFlag1_RC_FmtErr	mDNS.c	/^	kDNSFlag1_RC_FmtErr   = 0x01,$/;"	e	enum:__anon30	file:
+kDNSFlag1_RC_NXDomain	mDNS.c	/^	kDNSFlag1_RC_NXDomain = 0x03,$/;"	e	enum:__anon30	file:
+kDNSFlag1_RC_NXRRSet	mDNS.c	/^	kDNSFlag1_RC_NXRRSet  = 0x08,$/;"	e	enum:__anon30	file:
+kDNSFlag1_RC_NoErr	mDNS.c	/^	kDNSFlag1_RC_NoErr    = 0x00,$/;"	e	enum:__anon30	file:
+kDNSFlag1_RC_NotAuth	mDNS.c	/^	kDNSFlag1_RC_NotAuth  = 0x09,$/;"	e	enum:__anon30	file:
+kDNSFlag1_RC_NotImpl	mDNS.c	/^	kDNSFlag1_RC_NotImpl  = 0x04,$/;"	e	enum:__anon30	file:
+kDNSFlag1_RC_NotZone	mDNS.c	/^	kDNSFlag1_RC_NotZone  = 0x0A$/;"	e	enum:__anon30	file:
+kDNSFlag1_RC_Refused	mDNS.c	/^	kDNSFlag1_RC_Refused  = 0x05,$/;"	e	enum:__anon30	file:
+kDNSFlag1_RC_SrvErr	mDNS.c	/^	kDNSFlag1_RC_SrvErr   = 0x02,$/;"	e	enum:__anon30	file:
+kDNSFlag1_RC_YXDomain	mDNS.c	/^	kDNSFlag1_RC_YXDomain = 0x06,$/;"	e	enum:__anon30	file:
+kDNSFlag1_RC_YXRRSet	mDNS.c	/^	kDNSFlag1_RC_YXRRSet  = 0x07,$/;"	e	enum:__anon30	file:
+kDNSFlag1_Zero	mDNS.c	/^	kDNSFlag1_Zero        = 0x40,		\/\/ Reserved; must be zero$/;"	e	enum:__anon30	file:
+kDNSQClass_ANY	mDNSClientAPI.h	/^	kDNSQClass_ANY             = 255,	\/\/ Not a DNS class, but a DNS query class, meaning "all classes"$/;"	e	enum:__anon2
+kDNSQClass_UnicastResponse	mDNSClientAPI.h	/^	kDNSQClass_UnicastResponse = 0x8000	\/\/ Top bit set in a question means "unicast response acceptable"$/;"	e	enum:__anon2
+kDNSQType_ANY	mDNSClientAPI.h	/^	kDNSQType_ANY = 255		\/\/ Not a DNS type, but a DNS query type, meaning "all types"$/;"	e	enum:__anon3
+kDNSRecordTypeActiveMask	mDNSClientAPI.h	/^	kDNSRecordTypeActiveMask       = (kDNSRecordTypeAdvisory | kDNSRecordTypeShared | kDNSRecordTypeVerified | kDNSRecordTypeKnownUnique),$/;"	e	enum:__anon12
+kDNSRecordTypeAdvisory	mDNSClientAPI.h	/^	kDNSRecordTypeAdvisory         = 0x04,	\/\/ Like Shared, but no goodbye packet$/;"	e	enum:__anon12
+kDNSRecordTypeDeregistering	mDNSClientAPI.h	/^	kDNSRecordTypeDeregistering    = 0x01,	\/\/ Shared record about to announce its departure and leave the list$/;"	e	enum:__anon12
+kDNSRecordTypeKnownUnique	mDNSClientAPI.h	/^	kDNSRecordTypeKnownUnique      = 0x20,	\/\/ Known Unique means mDNS can assume name is unique without checking$/;"	e	enum:__anon12
+kDNSRecordTypePacketAdd	mDNSClientAPI.h	/^	kDNSRecordTypePacketAdd        = 0x80,	\/\/ Received in the Additional Section of a DNS Response$/;"	e	enum:__anon12
+kDNSRecordTypePacketAddUnique	mDNSClientAPI.h	/^	kDNSRecordTypePacketAddUnique  = 0xA0,	\/\/ Received in the Additional Section of a DNS Response with kDNSClass_UniqueRRSet set$/;"	e	enum:__anon12
+kDNSRecordTypePacketAns	mDNSClientAPI.h	/^	kDNSRecordTypePacketAns        = 0xC0,	\/\/ Received in the Answer Section of a DNS Response$/;"	e	enum:__anon12
+kDNSRecordTypePacketAnsMask	mDNSClientAPI.h	/^	kDNSRecordTypePacketAnsMask    = 0x40,	\/\/ True for PacketAns       and PacketAnsUnique$/;"	e	enum:__anon12
+kDNSRecordTypePacketAnsUnique	mDNSClientAPI.h	/^	kDNSRecordTypePacketAnsUnique  = 0xE0,	\/\/ Received in the Answer Section of a DNS Response with kDNSClass_UniqueRRSet set$/;"	e	enum:__anon12
+kDNSRecordTypePacketUniqueMask	mDNSClientAPI.h	/^	kDNSRecordTypePacketUniqueMask = 0x20	\/\/ True for PacketAddUnique and PacketAnsUnique$/;"	e	enum:__anon12
+kDNSRecordTypeShared	mDNSClientAPI.h	/^	kDNSRecordTypeShared           = 0x08,	\/\/ Shared means record name does not have to be unique -- use random delay on responses$/;"	e	enum:__anon12
+kDNSRecordTypeUnique	mDNSClientAPI.h	/^	kDNSRecordTypeUnique           = 0x02,	\/\/ Will become a kDNSRecordTypeVerified when probing is complete$/;"	e	enum:__anon12
+kDNSRecordTypeUniqueMask	mDNSClientAPI.h	/^	kDNSRecordTypeUniqueMask       = (kDNSRecordTypeUnique | kDNSRecordTypeVerified | kDNSRecordTypeKnownUnique),$/;"	e	enum:__anon12
+kDNSRecordTypeUnregistered	mDNSClientAPI.h	/^	kDNSRecordTypeUnregistered     = 0x00,	\/\/ Not currently in any list$/;"	e	enum:__anon12
+kDNSRecordTypeVerified	mDNSClientAPI.h	/^	kDNSRecordTypeVerified         = 0x10,	\/\/ Unique means mDNS should check that name is unique (and then send immediate responses)$/;"	e	enum:__anon12
+kDNSType_A	mDNSClientAPI.h	/^	kDNSType_A = 1,			\/\/  1 Address$/;"	e	enum:__anon3
+kDNSType_AAAA	mDNSClientAPI.h	/^	kDNSType_AAAA = 28,		\/\/ 28 IPv6 address$/;"	e	enum:__anon3
+kDNSType_CNAME	mDNSClientAPI.h	/^	kDNSType_CNAME,			\/\/  5 Canonical Name$/;"	e	enum:__anon3
+kDNSType_HINFO	mDNSClientAPI.h	/^	kDNSType_HINFO,			\/\/ 13 Host information$/;"	e	enum:__anon3
+kDNSType_MB	mDNSClientAPI.h	/^	kDNSType_MB,			\/\/  7 Mailbox$/;"	e	enum:__anon3
+kDNSType_MD	mDNSClientAPI.h	/^	kDNSType_MD,			\/\/  3 Mail Destination$/;"	e	enum:__anon3
+kDNSType_MF	mDNSClientAPI.h	/^	kDNSType_MF,			\/\/  4 Mail Forwarder$/;"	e	enum:__anon3
+kDNSType_MG	mDNSClientAPI.h	/^	kDNSType_MG,			\/\/  8 Mail Group$/;"	e	enum:__anon3
+kDNSType_MINFO	mDNSClientAPI.h	/^	kDNSType_MINFO,			\/\/ 14 Mailbox information$/;"	e	enum:__anon3
+kDNSType_MR	mDNSClientAPI.h	/^	kDNSType_MR,			\/\/  9 Mail Rename$/;"	e	enum:__anon3
+kDNSType_MX	mDNSClientAPI.h	/^	kDNSType_MX,			\/\/ 15 Mail Exchanger$/;"	e	enum:__anon3
+kDNSType_NS	mDNSClientAPI.h	/^	kDNSType_NS,			\/\/  2 Name Server$/;"	e	enum:__anon3
+kDNSType_NULL	mDNSClientAPI.h	/^	kDNSType_NULL,			\/\/ 10 NULL RR$/;"	e	enum:__anon3
+kDNSType_PTR	mDNSClientAPI.h	/^	kDNSType_PTR,			\/\/ 12 Domain name pointer$/;"	e	enum:__anon3
+kDNSType_SOA	mDNSClientAPI.h	/^	kDNSType_SOA,			\/\/  6 Start of Authority$/;"	e	enum:__anon3
+kDNSType_SRV	mDNSClientAPI.h	/^	kDNSType_SRV = 33,		\/\/ 33 Service record$/;"	e	enum:__anon3
+kDNSType_TXT	mDNSClientAPI.h	/^	kDNSType_TXT,			\/\/ 16 Arbitrary text string$/;"	e	enum:__anon3
+kDNSType_WKS	mDNSClientAPI.h	/^	kDNSType_WKS,			\/\/ 11 Well-known-service$/;"	e	enum:__anon3
+kDefaultPortNumber	rend-posix.c	/^    kDefaultPortNumber = 80$/;"	e	enum:__anon34	file:
+kDefaultReconfirmTimeForCableDisconnect	mDNS.c	3609;"	d	file:
+kDefaultReconfirmTimeForNoAnswer	mDNS.c	3608;"	d	file:
+kDefaultServiceType	rend-posix.c	/^static const char kDefaultServiceType[] = "_http._tcp.";$/;"	v	file:
+kDefaultTTLforShared	mDNS.c	1114;"	d	file:
+kDefaultTTLforUnique	mDNS.c	1113;"	d	file:
+kMaxUpdateCredits	mDNS.c	1116;"	d	file:
+kMinimumReconfirmTime	mDNS.c	3610;"	d	file:
+key	webserver.h	/^    char *key;$/;"	m	struct:tag_arglist
+lSize	mDNS.c	/^	unsigned      lSize : 1;$/;"	m	struct:mDNSprintf_format	file:
+l_converttime	lexer.c	/^time_t l_converttime(int day, int month, int year) {$/;"	f
+l_convertyyyymmdd	lexer.c	/^time_t l_convertyyyymmdd(char *date) {$/;"	f
+last_child	daap-proto.h	/^    struct daap_block_tag *last_child;$/;"	m	struct:daap_block_tag	typeref:struct:daap_block_tag::daap_block_tag
+last_node	db-gdbm.c	/^    struct tag_playlistentry *last_node;  \/**< Make a tail add o(1) *\/$/;"	m	struct:tag_playlist	typeref:struct:tag_playlist::tag_playlistentry	file:
+lastgranulepos	ogg.c	/^    ogg_int64_t lastgranulepos;$/;"	m	struct:__anon25	file:
+layer	mp3-scanner.c	/^    int layer;               \/**< 1, 2, or 3, representing Layer I, II, and III *\/$/;"	m	struct:tag_scan_frameinfo	file:
+leaf	redblack.h	/^  leaf$/;"	e	enum:__anon1
+left	query.h	/^    }				left;$/;"	m	struct:query_node_	typeref:union:query_node_::__anon27
+leftJustify	mDNS.c	/^	unsigned      leftJustify : 1;$/;"	m	struct:mDNSprintf_format	file:
+line	err.c	/^    int line;$/;"	m	struct:tag_err_leak	file:
+lock_Questions	mDNSClientAPI.h	/^	mDNSu8  lock_Questions;$/;"	m	struct:mDNS_struct
+lock_Records	mDNSClientAPI.h	/^	mDNSu8  lock_Records;$/;"	m	struct:mDNS_struct
+lock_rrcache	mDNSClientAPI.h	/^	mDNSu8  lock_rrcache;				\/\/ For debugging: Set at times when these lists may not be modified$/;"	m	struct:mDNS_struct
+logfile	daapd.h	/^    char *logfile;        \/**< What file to use as a logfile *\/$/;"	m	struct:tag_config
+lostseq	ogg.c	/^    int lostseq;$/;"	m	struct:_stream_processor	file:
+mDNS	mDNSClientAPI.h	/^typedef struct mDNS_struct mDNS;$/;"	t	typeref:struct:mDNS_struct
+mDNSAddr	mDNSClientAPI.h	/^	} mDNSAddr;$/;"	t	typeref:struct:__anon5
+mDNSAddrIsDNSMulticast	mDNS.c	/^mDNSlocal mDNSBool mDNSAddrIsDNSMulticast(const mDNSAddr *ip)$/;"	f
+mDNSAddrType_IPv4	mDNSClientAPI.h	/^	mDNSAddrType_IPv4    = 4,$/;"	e	enum:__anon4
+mDNSAddrType_IPv6	mDNSClientAPI.h	/^	mDNSAddrType_IPv6    = 6,$/;"	e	enum:__anon4
+mDNSAddrType_None	mDNSClientAPI.h	/^	mDNSAddrType_None    = 0,$/;"	e	enum:__anon4
+mDNSAddrType_Unknown	mDNSClientAPI.h	/^	mDNSAddrType_Unknown = ~0	\/\/ Special marker value used in known answer list recording$/;"	e	enum:__anon4
+mDNSAddressIsOnes	mDNS.c	1466;"	d	file:
+mDNSAddressIsValid	mDNS.c	1470;"	d	file:
+mDNSAddressIsZero	mDNS.c	1462;"	d	file:
+mDNSBool	mDNSClientAPI.h	/^typedef          int   mDNSBool;$/;"	t
+mDNSCallback	mDNSClientAPI.h	/^typedef void mDNSCallback(mDNS *const m, mStatus result);$/;"	t
+mDNSCoreInitComplete	mDNS.c	/^mDNSexport void mDNSCoreInitComplete(mDNS *const m, mStatus result)$/;"	f
+mDNSCoreMachineSleep	mDNS.c	/^mDNSexport void mDNSCoreMachineSleep(mDNS *const m, mDNSBool sleepstate)$/;"	f
+mDNSCoreReceive	mDNS.c	/^mDNSexport void mDNSCoreReceive(mDNS *const m, DNSMessage *const msg, const mDNSu8 *const end,$/;"	f
+mDNSCoreReceiveQuery	mDNS.c	/^mDNSlocal void mDNSCoreReceiveQuery(mDNS *const m, const DNSMessage *const msg, const mDNSu8 *const end,$/;"	f
+mDNSCoreReceiveResponse	mDNS.c	/^mDNSlocal void mDNSCoreReceiveResponse(mDNS *const m,$/;"	f
+mDNSIPPort	mDNSClientAPI.h	/^typedef mDNSOpaque16  mDNSIPPort;		\/\/ An IP port is a two-byte opaque identifier (not an integer)$/;"	t
+mDNSIPv4AddressIsOnes	mDNS.c	1459;"	d	file:
+mDNSIPv4AddressIsZero	mDNS.c	1456;"	d	file:
+mDNSIPv6AddressIsOnes	mDNS.c	1460;"	d	file:
+mDNSIPv6AddressIsZero	mDNS.c	1457;"	d	file:
+mDNSIPv6Support	mDNSPosix.h	66;"	d
+mDNSInterfaceID	mDNSClientAPI.h	/^typedef struct mDNSInterfaceID_dummystruct { void *dummy; } *mDNSInterfaceID;$/;"	t	typeref:struct:mDNSInterfaceID_dummystruct
+mDNSInterfaceID_dummystruct	mDNSClientAPI.h	/^typedef struct mDNSInterfaceID_dummystruct { void *dummy; } *mDNSInterfaceID;$/;"	s
+mDNSInterfaceMark	mDNS.c	/^mDNSlocal  const mDNSInterfaceID mDNSInterfaceMark = { (mDNSInterfaceID)~0 };$/;"	v
+mDNSInterface_Any	mDNS.c	/^mDNSexport const mDNSInterfaceID mDNSInterface_Any = { 0 };$/;"	v
+mDNSIsLowerCase	mDNS.c	1531;"	d	file:
+mDNSIsUpperCase	mDNS.c	1530;"	d	file:
+mDNSNULL	mDNSClientAPI.h	572;"	d
+mDNSPlatformClose	mDNSPosix.c	/^mDNSexport void mDNSPlatformClose(mDNS *const m)$/;"	f
+mDNSPlatformInit	mDNSPosix.c	/^mDNSexport mStatus mDNSPlatformInit(mDNS *const m)$/;"	f
+mDNSPlatformLock	mDNSPosix.c	/^mDNSexport void    mDNSPlatformLock   (const mDNS *const m)$/;"	f
+mDNSPlatformMemAllocate	mDNSPosix.c	/^mDNSexport void *  mDNSPlatformMemAllocate(mDNSu32 len) { return(malloc(len)); }$/;"	f
+mDNSPlatformMemCopy	mDNSPosix.c	/^mDNSexport void    mDNSPlatformMemCopy(const void *src,       void *dst, mDNSu32 len)$/;"	f
+mDNSPlatformMemFree	mDNSPosix.c	/^mDNSexport void    mDNSPlatformMemFree    (void *mem)   { free(mem); }$/;"	f
+mDNSPlatformMemSame	mDNSPosix.c	/^mDNSexport mDNSBool mDNSPlatformMemSame(const void *src, const void *dst, mDNSu32 len)$/;"	f
+mDNSPlatformMemZero	mDNSPosix.c	/^mDNSexport void    mDNSPlatformMemZero(                       void *dst, mDNSu32 len)$/;"	f
+mDNSPlatformOneSecond	mDNSPosix.c	/^mDNSexport mDNSs32  mDNSPlatformOneSecond = 1024;$/;"	v
+mDNSPlatformPosixRefreshInterfaceList	mDNSPosix.c	/^extern mStatus mDNSPlatformPosixRefreshInterfaceList(mDNS *const m)$/;"	f
+mDNSPlatformSendUDP	mDNSPosix.c	/^mDNSexport mStatus mDNSPlatformSendUDP(const mDNS *const m, const DNSMessage *const msg, const mDNSu8 *const end,$/;"	f
+mDNSPlatformStatus	mDNSClientAPI.h	/^	mStatus mDNSPlatformStatus;$/;"	m	struct:mDNS_struct
+mDNSPlatformStrCopy	mDNSPosix.c	/^mDNSexport void    mDNSPlatformStrCopy(const void *src,       void *dst)$/;"	f
+mDNSPlatformStrLen	mDNSPosix.c	/^mDNSexport mDNSu32  mDNSPlatformStrLen (const void *src)$/;"	f
+mDNSPlatformTimeInit	mDNSPosix.c	/^mDNSexport mStatus mDNSPlatformTimeInit(mDNSs32 *timenow)$/;"	f
+mDNSPlatformTimeNow	mDNSPosix.c	/^mDNSexport mDNSs32  mDNSPlatformTimeNow()$/;"	f
+mDNSPlatformUnlock	mDNSPosix.c	/^mDNSexport void    mDNSPlatformUnlock (const mDNS *const m)$/;"	f
+mDNSPosixGetFDSet	mDNSPosix.c	/^mDNSexport void mDNSPosixGetFDSet(mDNS *const m, int *nfds, fd_set *readfds, struct timeval *timeout)$/;"	f
+mDNSPosixProcessFDSet	mDNSPosix.c	/^mDNSexport void mDNSPosixProcessFDSet(mDNS *const m, fd_set *readfds)$/;"	f
+mDNSQuestionCallback	mDNSClientAPI.h	/^typedef void mDNSQuestionCallback(mDNS *const m, DNSQuestion *question, const ResourceRecord *const answer, mDNSBool AddRecord);$/;"	t
+mDNSRandom	mDNS.c	/^mDNSlocal mDNSu32 mDNSRandom(mDNSu32 max)$/;"	f
+mDNSRecordCallback	mDNSClientAPI.h	/^typedef void mDNSRecordCallback(mDNS *const m, AuthRecord *const rr, mStatus result);$/;"	t
+mDNSRecordUpdateCallback	mDNSClientAPI.h	/^typedef void mDNSRecordUpdateCallback(mDNS *const m, AuthRecord *const rr, RData *OldRData);$/;"	t
+mDNSSameAddress	mDNS.c	/^mDNSexport mDNSBool mDNSSameAddress(const mDNSAddr *ip1, const mDNSAddr *ip2)$/;"	f
+mDNSSameIPv4Address	mDNS.c	1453;"	d	file:
+mDNSSameIPv6Address	mDNS.c	1454;"	d	file:
+mDNSSendDNSMessage	mDNS.c	/^mDNSlocal mStatus mDNSSendDNSMessage(const mDNS *const m, DNSMessage *const msg, const mDNSu8 *const end,$/;"	f
+mDNSServiceCallback	mDNSClientAPI.h	/^typedef void mDNSServiceCallback(mDNS *const m, ServiceRecordSet *const sr, mStatus result);$/;"	t
+mDNSServiceInfoQueryCallback	mDNSClientAPI.h	/^typedef void mDNSServiceInfoQueryCallback(mDNS *const m, ServiceInfoQuery *query);$/;"	t
+mDNSStorage	rend-posix.c	/^static mDNS mDNSStorage;       \/\/ mDNS core uses this to store its globals$/;"	v	file:
+mDNS_AddRecordToService	mDNS.c	/^mDNSexport mStatus mDNS_AddRecordToService(mDNS *const m, ServiceRecordSet *sr,$/;"	f
+mDNS_AdvertiseDomains	mDNS.c	/^mDNSexport mStatus mDNS_AdvertiseDomains(mDNS *const m, AuthRecord *rr,$/;"	f
+mDNS_AdvertiseInterface	mDNS.c	/^mDNSlocal void mDNS_AdvertiseInterface(mDNS *const m, NetworkInterfaceInfo *set)$/;"	f
+mDNS_Close	mDNS.c	/^mDNSexport void mDNS_Close(mDNS *const m)$/;"	f
+mDNS_CompileTimeAssertionChecks	mDNSClientAPI.h	/^struct mDNS_CompileTimeAssertionChecks$/;"	s
+mDNS_DeadvertiseInterface	mDNS.c	/^mDNSlocal void mDNS_DeadvertiseInterface(mDNS *const m, NetworkInterfaceInfo *set)$/;"	f
+mDNS_Dereg_conflict	mDNS.c	/^typedef enum { mDNS_Dereg_normal, mDNS_Dereg_conflict, mDNS_Dereg_repeat } mDNS_Dereg_type;$/;"	e	enum:__anon31	file:
+mDNS_Dereg_normal	mDNS.c	/^typedef enum { mDNS_Dereg_normal, mDNS_Dereg_conflict, mDNS_Dereg_repeat } mDNS_Dereg_type;$/;"	e	enum:__anon31	file:
+mDNS_Dereg_repeat	mDNS.c	/^typedef enum { mDNS_Dereg_normal, mDNS_Dereg_conflict, mDNS_Dereg_repeat } mDNS_Dereg_type;$/;"	e	enum:__anon31	file:
+mDNS_Dereg_type	mDNS.c	/^typedef enum { mDNS_Dereg_normal, mDNS_Dereg_conflict, mDNS_Dereg_repeat } mDNS_Dereg_type;$/;"	t	typeref:enum:__anon31	file:
+mDNS_Deregister	mDNS.c	/^mDNSexport mStatus mDNS_Deregister(mDNS *const m, AuthRecord *const rr)$/;"	f
+mDNS_DeregisterInterface	mDNS.c	/^mDNSexport void mDNS_DeregisterInterface(mDNS *const m, NetworkInterfaceInfo *set)$/;"	f
+mDNS_DeregisterNoSuchService	mDNSClientAPI.h	1235;"	d
+mDNS_DeregisterService	mDNS.c	/^mDNSexport mStatus mDNS_DeregisterService(mDNS *const m, ServiceRecordSet *sr)$/;"	f
+mDNS_Deregister_internal	mDNS.c	/^mDNSlocal mStatus mDNS_Deregister_internal(mDNS *const m, AuthRecord *const rr, mDNS_Dereg_type drt)$/;"	f
+mDNS_DomainType	mDNSClientAPI.h	/^	} mDNS_DomainType;$/;"	t	typeref:enum:__anon20
+mDNS_DomainTypeBrowse	mDNSClientAPI.h	/^	mDNS_DomainTypeBrowse              = 0,$/;"	e	enum:__anon20
+mDNS_DomainTypeBrowseDefault	mDNSClientAPI.h	/^	mDNS_DomainTypeBrowseDefault       = 1,$/;"	e	enum:__anon20
+mDNS_DomainTypeNames	mDNS.c	/^static const char *const mDNS_DomainTypeNames[] =$/;"	v	file:
+mDNS_DomainTypeRegistration	mDNSClientAPI.h	/^	mDNS_DomainTypeRegistration        = 2,$/;"	e	enum:__anon20
+mDNS_DomainTypeRegistrationDefault	mDNSClientAPI.h	/^	mDNS_DomainTypeRegistrationDefault = 3$/;"	e	enum:__anon20
+mDNS_Execute	mDNS.c	/^mDNSexport mDNSs32 mDNS_Execute(mDNS *const m)$/;"	f
+mDNS_GenerateFQDN	mDNS.c	/^mDNSexport void mDNS_GenerateFQDN(mDNS *const m)$/;"	f
+mDNS_GetDomains	mDNS.c	/^mDNSexport mStatus mDNS_GetDomains(mDNS *const m, DNSQuestion *const question, mDNS_DomainType DomainType,$/;"	f
+mDNS_GrowCache	mDNS.c	/^mDNSexport void mDNS_GrowCache(mDNS *const m, CacheRecord *storage, mDNSu32 numrecords)$/;"	f
+mDNS_Init	mDNS.c	/^mDNSexport mStatus mDNS_Init(mDNS *const m, mDNS_PlatformSupport *const p,$/;"	f
+mDNS_Init_AdvertiseLocalAddresses	mDNSClientAPI.h	1168;"	d
+mDNS_Init_DontAdvertiseLocalAddresses	mDNSClientAPI.h	1169;"	d
+mDNS_Init_NoCache	mDNSClientAPI.h	1165;"	d
+mDNS_Init_NoInitCallback	mDNSClientAPI.h	1170;"	d
+mDNS_Init_NoInitCallbackContext	mDNSClientAPI.h	1171;"	d
+mDNS_Init_ZeroCacheSize	mDNSClientAPI.h	1166;"	d
+mDNS_KnownBug_PhantomInterfaces	mDNSClientAPI.h	/^	mDNS_KnownBug_PhantomInterfaces = 1$/;"	e	enum:__anon19
+mDNS_Lock	mDNS.c	/^mDNSlocal void mDNS_Lock(mDNS *const m)$/;"	f
+mDNS_PlatformSupport	mDNSClientAPI.h	/^typedef struct mDNS_PlatformSupport_struct mDNS_PlatformSupport;$/;"	t	typeref:struct:mDNS_PlatformSupport_struct
+mDNS_PlatformSupport_struct	mDNSPosix.h	/^struct mDNS_PlatformSupport_struct$/;"	s
+mDNS_Reconfirm	mDNS.c	/^mDNSexport mStatus mDNS_Reconfirm(mDNS *const m, CacheRecord *const rr)$/;"	f
+mDNS_ReconfirmByValue	mDNS.c	/^mDNSexport mStatus mDNS_ReconfirmByValue(mDNS *const m, ResourceRecord *const rr)$/;"	f
+mDNS_Reconfirm_internal	mDNS.c	/^mDNSlocal mStatus mDNS_Reconfirm_internal(mDNS *const m, CacheRecord *const rr, mDNSu32 interval)$/;"	f
+mDNS_Register	mDNS.c	/^mDNSexport mStatus mDNS_Register(mDNS *const m, AuthRecord *const rr)$/;"	f
+mDNS_RegisterInterface	mDNS.c	/^mDNSexport mStatus mDNS_RegisterInterface(mDNS *const m, NetworkInterfaceInfo *set)$/;"	f
+mDNS_RegisterNoSuchService	mDNS.c	/^mDNSexport mStatus mDNS_RegisterNoSuchService(mDNS *const m, AuthRecord *const rr,$/;"	f
+mDNS_RegisterService	mDNS.c	/^mDNSexport mStatus mDNS_RegisterService(mDNS *const m, ServiceRecordSet *sr,$/;"	f
+mDNS_Register_internal	mDNS.c	/^mDNSlocal mStatus mDNS_Register_internal(mDNS *const m, AuthRecord *const rr)$/;"	f
+mDNS_RemoveRecordFromService	mDNS.c	/^mDNSexport mStatus mDNS_RemoveRecordFromService(mDNS *const m, ServiceRecordSet *sr, ExtraResourceRecord *extra)$/;"	f
+mDNS_RenameAndReregisterService	mDNS.c	/^mDNSexport mStatus mDNS_RenameAndReregisterService(mDNS *const m, ServiceRecordSet *const sr, const domainlabel *newname)$/;"	f
+mDNS_SetupResourceRecord	mDNS.c	/^mDNSexport void mDNS_SetupResourceRecord(AuthRecord *rr, RData *RDataStorage, mDNSInterfaceID InterfaceID,$/;"	f
+mDNS_StartBrowse	mDNS.c	/^mDNSexport mStatus mDNS_StartBrowse(mDNS *const m, DNSQuestion *const question,$/;"	f
+mDNS_StartQuery	mDNS.c	/^mDNSexport mStatus mDNS_StartQuery(mDNS *const m, DNSQuestion *const question)$/;"	f
+mDNS_StartQuery_internal	mDNS.c	/^mDNSlocal mStatus mDNS_StartQuery_internal(mDNS *const m, DNSQuestion *const question)$/;"	f
+mDNS_StartResolveService	mDNS.c	/^mDNSexport mStatus mDNS_StartResolveService(mDNS *const m,$/;"	f
+mDNS_StopAdvertiseDomains	mDNSClientAPI.h	1259;"	d
+mDNS_StopBrowse	mDNSClientAPI.h	1240;"	d
+mDNS_StopGetDomains	mDNSClientAPI.h	1257;"	d
+mDNS_StopQuery	mDNS.c	/^mDNSexport mStatus mDNS_StopQuery(mDNS *const m, DNSQuestion *const question)$/;"	f
+mDNS_StopQuery_internal	mDNS.c	/^mDNSlocal mStatus mDNS_StopQuery_internal(mDNS *const m, DNSQuestion *const question)$/;"	f
+mDNS_StopResolveService	mDNS.c	/^mDNSexport void    mDNS_StopResolveService (mDNS *const m, ServiceInfoQuery *query)$/;"	f
+mDNS_Unlock	mDNS.c	/^mDNSlocal void mDNS_Unlock(mDNS *const m)$/;"	f
+mDNS_Update	mDNS.c	/^mDNSexport mStatus mDNS_Update(mDNS *const m, AuthRecord *const rr, mDNSu32 newttl,$/;"	f
+mDNS_VACB_Lim	mDNS.c	1169;"	d	file:
+mDNS_VACB_Remain	mDNS.c	1170;"	d	file:
+mDNS_VACB_Size	mDNS.c	1167;"	d	file:
+mDNS_busy	mDNSClientAPI.h	/^	mDNSu32 mDNS_busy;					\/\/ Incremented between mDNS_Lock\/mDNS_Unlock section$/;"	m	struct:mDNS_struct
+mDNS_reentrancy	mDNSClientAPI.h	/^	mDNSu32 mDNS_reentrancy;			\/\/ Incremented when calling a client callback$/;"	m	struct:mDNS_struct
+mDNS_shutdown	mDNSClientAPI.h	/^	mDNSu8  mDNS_shutdown;				\/\/ Set when we're shutting down, allows us to skip some unnecessary steps$/;"	m	struct:mDNS_struct
+mDNS_snprintf	mDNS.c	/^mDNSexport mDNSu32 mDNS_snprintf(char *sbuffer, mDNSu32 buflen, const char *fmt, ...)$/;"	f
+mDNS_struct	mDNSClientAPI.h	/^struct mDNS_struct$/;"	s
+mDNS_vsnprintf	mDNS.c	/^mDNSexport mDNSu32 mDNS_vsnprintf(char *sbuffer, mDNSu32 buflen, const char *fmt, va_list arg)$/;"	f
+mDNSexport	mDNSClientAPI.h	455;"	d
+mDNSfalse	mDNSClientAPI.h	/^enum { mDNSfalse = 0, mDNStrue = 1 };$/;"	e	enum:__anon7
+mDNSlocal	mDNSClientAPI.h	448;"	d
+mDNSprintf_format	mDNS.c	/^static const struct mDNSprintf_format$/;"	s	file:
+mDNSprintf_format_default	mDNS.c	/^	} mDNSprintf_format_default;$/;"	v	typeref:struct:mDNSprintf_format	file:
+mDNSs16	mDNSClientAPI.h	/^typedef   signed short mDNSs16;$/;"	t
+mDNSs32	mDNSClientAPI.h	/^typedef int32_t    mDNSs32;$/;"	t
+mDNSs8	mDNSClientAPI.h	/^typedef   signed char  mDNSs8;$/;"	t
+mDNStrue	mDNSClientAPI.h	/^enum { mDNSfalse = 0, mDNStrue = 1 };$/;"	e	enum:__anon7
+mDNSu16	mDNSClientAPI.h	/^typedef unsigned short mDNSu16;$/;"	t
+mDNSu32	mDNSClientAPI.h	/^typedef u_int32_t  mDNSu32;$/;"	t
+mDNSu8	mDNSClientAPI.h	/^typedef unsigned char  mDNSu8;$/;"	t
+mDNSv4Addr	mDNSClientAPI.h	/^typedef mDNSOpaque32  mDNSv4Addr;		\/\/ An IP address is a four-byte opaque identifier (not an integer)$/;"	t
+mDNSv6Addr	mDNSClientAPI.h	/^typedef mDNSOpaque128 mDNSv6Addr;		\/\/ An IPv6 address is a 16-byte opaque identifier (not an integer)$/;"	t
+mStatus	mDNSClientAPI.h	/^typedef mDNSs32 mStatus;$/;"	t
+mStatus_AlreadyRegistered	mDNSClientAPI.h	/^	mStatus_AlreadyRegistered = -65547,$/;"	e	enum:__anon8
+mStatus_BadFlagsErr	mDNSClientAPI.h	/^	mStatus_BadFlagsErr       = -65543,$/;"	e	enum:__anon8
+mStatus_BadInterfaceErr	mDNSClientAPI.h	/^	mStatus_BadInterfaceErr   = -65552,$/;"	e	enum:__anon8
+mStatus_BadParamErr	mDNSClientAPI.h	/^	mStatus_BadParamErr       = -65540,$/;"	e	enum:__anon8
+mStatus_BadReferenceErr	mDNSClientAPI.h	/^	mStatus_BadReferenceErr   = -65541,$/;"	e	enum:__anon8
+mStatus_BadStateErr	mDNSClientAPI.h	/^	mStatus_BadStateErr       = -65542,$/;"	e	enum:__anon8
+mStatus_ConfigChanged	mDNSClientAPI.h	/^	mStatus_ConfigChanged     = -65791,$/;"	e	enum:__anon8
+mStatus_GrowCache	mDNSClientAPI.h	/^	mStatus_GrowCache         = -65790,$/;"	e	enum:__anon8
+mStatus_Incompatible	mDNSClientAPI.h	/^	mStatus_Incompatible      = -65551,$/;"	e	enum:__anon8
+mStatus_Invalid	mDNSClientAPI.h	/^	mStatus_Invalid           = -65549,$/;"	e	enum:__anon8
+mStatus_MemFree	mDNSClientAPI.h	/^	mStatus_MemFree           = -65792		\/\/ 0xFFFE FF00$/;"	e	enum:__anon8
+mStatus_NameConflict	mDNSClientAPI.h	/^	mStatus_NameConflict      = -65548,$/;"	e	enum:__anon8
+mStatus_NoCache	mDNSClientAPI.h	/^	mStatus_NoCache           = -65546,$/;"	e	enum:__anon8
+mStatus_NoError	mDNSClientAPI.h	/^	mStatus_NoError           = 0,$/;"	e	enum:__anon8
+mStatus_NoMemoryErr	mDNSClientAPI.h	/^	mStatus_NoMemoryErr       = -65539,$/;"	e	enum:__anon8
+mStatus_NoSuchNameErr	mDNSClientAPI.h	/^	mStatus_NoSuchNameErr     = -65538,$/;"	e	enum:__anon8
+mStatus_NotInitializedErr	mDNSClientAPI.h	/^	mStatus_NotInitializedErr = -65545,$/;"	e	enum:__anon8
+mStatus_UnknownErr	mDNSClientAPI.h	/^	mStatus_UnknownErr        = -65537,		\/\/ 0xFFFE FFFF$/;"	e	enum:__anon8
+mStatus_UnsupportedErr	mDNSClientAPI.h	/^	mStatus_UnsupportedErr    = -65544,$/;"	e	enum:__anon8
+mStatus_Waiting	mDNSClientAPI.h	/^	mStatus_Waiting           = 1,$/;"	e	enum:__anon8
+mac_to_unix_time	mp3-scanner.c	/^time_t mac_to_unix_time(int t) {$/;"	f
+main	main.c	/^int main(int argc, char *argv[]) {$/;"	f
+make_composite_tags	mp3-scanner.c	/^void make_composite_tags(MP3FILE *song)$/;"	f
+malloc	err.h	78;"	d
+match_number	query.c	/^static query_node_t*	match_number(const query_field_t* field, $/;"	f	file:
+match_specifier	query.c	/^static query_node_t*	match_specifier(const char* query,$/;"	f	file:
+match_string	query.c	/^static query_node_t*	match_string(const query_field_t* field, $/;"	f	file:
+mdnsIsDigit	mDNS.c	1529;"	d	file:
+mdnsIsLetter	mDNS.c	1532;"	d	file:
+mdnsValidHostChar	mDNS.c	1799;"	d	file:
+mdns_client	rend-avahi.c	/^static AvahiClient *mdns_client = NULL;$/;"	v	file:
+mdns_group	rend-avahi.c	/^static AvahiEntryGroup *mdns_group = NULL;$/;"	v	file:
+metaContainerItemId	daap.c	/^    metaContainerItemId,$/;"	e	enum:__anon32	file:
+metaItemId	daap.c	/^    metaItemId,$/;"	e	enum:__anon32	file:
+metaItemKind	daap.c	/^    metaItemKind,$/;"	e	enum:__anon32	file:
+metaItemName	daap.c	/^    metaItemName,$/;"	e	enum:__anon32	file:
+metaParentContainerId	daap.c	/^    metaParentContainerId,$/;"	e	enum:__anon32	file:
+metaPersistentId	daap.c	/^    metaPersistentId,$/;"	e	enum:__anon32	file:
+metaSongAlbum	daap.c	/^    metaSongAlbum = firstTypeSpecificMetaId,$/;"	e	enum:__anon32	file:
+metaSongArtist	daap.c	/^    metaSongArtist,$/;"	e	enum:__anon32	file:
+metaSongBPM	daap.c	/^    metaSongBPM,		\/* beats per minute *\/$/;"	e	enum:__anon32	file:
+metaSongBitRate	daap.c	/^    metaSongBitRate,$/;"	e	enum:__anon32	file:
+metaSongComment	daap.c	/^    metaSongComment,$/;"	e	enum:__anon32	file:
+metaSongCompilation	daap.c	/^    metaSongCompilation,$/;"	e	enum:__anon32	file:
+metaSongComposer	daap.c	/^    metaSongComposer,$/;"	e	enum:__anon32	file:
+metaSongDataKind	daap.c	/^    metaSongDataKind,$/;"	e	enum:__anon32	file:
+metaSongDataURL	daap.c	/^    metaSongDataURL,$/;"	e	enum:__anon32	file:
+metaSongDateAdded	daap.c	/^    metaSongDateAdded,$/;"	e	enum:__anon32	file:
+metaSongDateModified	daap.c	/^    metaSongDateModified,$/;"	e	enum:__anon32	file:
+metaSongDescription	daap.c	/^    metaSongDescription,$/;"	e	enum:__anon32	file:
+metaSongDisabled	daap.c	/^    metaSongDisabled,$/;"	e	enum:__anon32	file:
+metaSongDiscCount	daap.c	/^    metaSongDiscCount,$/;"	e	enum:__anon32	file:
+metaSongDiscNumber	daap.c	/^    metaSongDiscNumber,$/;"	e	enum:__anon32	file:
+metaSongEqPreset	daap.c	/^    metaSongEqPreset,$/;"	e	enum:__anon32	file:
+metaSongFormat	daap.c	/^    metaSongFormat,$/;"	e	enum:__anon32	file:
+metaSongGenre	daap.c	/^    metaSongGenre,$/;"	e	enum:__anon32	file:
+metaSongGrouping	daap.c	/^    metaSongGrouping,$/;"	e	enum:__anon32	file:
+metaSongRelativeVolume	daap.c	/^    metaSongRelativeVolume,$/;"	e	enum:__anon32	file:
+metaSongSampleRate	daap.c	/^    metaSongSampleRate,$/;"	e	enum:__anon32	file:
+metaSongSize	daap.c	/^    metaSongSize,$/;"	e	enum:__anon32	file:
+metaSongStartTime	daap.c	/^    metaSongStartTime,$/;"	e	enum:__anon32	file:
+metaSongStopTime	daap.c	/^    metaSongStopTime,$/;"	e	enum:__anon32	file:
+metaSongTime	daap.c	/^    metaSongTime,$/;"	e	enum:__anon32	file:
+metaSongTrackCount	daap.c	/^    metaSongTrackCount,$/;"	e	enum:__anon32	file:
+metaSongTrackNumber	daap.c	/^    metaSongTrackNumber,$/;"	e	enum:__anon32	file:
+metaSongUserRating	daap.c	/^    metaSongUserRating,$/;"	e	enum:__anon32	file:
+metaSongYear	daap.c	/^    metaSongYear$/;"	e	enum:__anon32	file:
+misc_vorbis_info	ogg.c	/^} misc_vorbis_info;$/;"	t	typeref:struct:__anon25	file:
+mp3dir	daapd.h	/^    char *mp3dir;         \/**< root directory of the mp3 files *\/$/;"	m	struct:tag_config
+mp3file	db-gdbm.c	/^    MP3FILE mp3file;$/;"	m	struct:tag_mp3record	file:
+mp3file	db-memory.c	/^    MP3FILE mp3file;$/;"	m	struct:tag_mp3record	file:
+multicastSocket	mDNSPosix.c	/^	int                     multicastSocket;$/;"	m	struct:PosixNetworkInterface	file:
+multicastSocketv6	mDNSPosix.c	/^	int                     multicastSocketv6;$/;"	m	struct:PosixNetworkInterface	file:
+mx	mDNSClientAPI.h	/^	rdataMX     mx;			\/\/ For MX record$/;"	m	union:__anon13
+my_in_pktinfo	mDNSUNP.h	/^struct my_in_pktinfo {$/;"	s
+name	configfile.c	/^    char *name;            \/**< config file directive name *\/$/;"	m	struct:tag_configelement	file:
+name	daap.c	/^    char*		name;$/;"	m	struct:_browse_item	file:
+name	db-gdbm.c	/^    char *name;$/;"	m	struct:tag_playlist	file:
+name	db-memory.c	/^    char *name;$/;"	m	struct:tag_playlist	file:
+name	mDNSClientAPI.h	/^	domainname      name;				$/;"	m	struct:ResourceRecord_struct
+name	mDNSClientAPI.h	/^	domainname      name;$/;"	m	struct:__anon18
+name	mDNSClientAPI.h	/^	domainname  name;		\/\/ For PTR and CNAME records$/;"	m	union:__anon13
+name	playlist.h	/^    char *name;$/;"	m	struct:tag_smart_playlist
+name	query.h	/^    const char*		name;$/;"	m	struct:query_field_
+name	rend-avahi.c	/^    char *name;$/;"	m	struct:tag_rend_avahi_group_entry	file:
+name	rend-unix.h	/^    char name[MAX_NAME_LEN];$/;"	m	struct:tag_rend_message
+namehash	mDNSClientAPI.h	/^	mDNSu32         namehash;			\/\/ Name-based (i.e. case insensitive) hash of name$/;"	m	struct:ResourceRecord_struct
+newrdlength	mDNSClientAPI.h	/^	mDNSu16         newrdlength;		\/\/ ... and the length of the new RData$/;"	m	struct:AuthRecord_struct
+next	configfile.c	/^    struct tag_scan_status *next;$/;"	m	struct:tag_scan_status	typeref:struct:tag_scan_status::tag_scan_status	file:
+next	daap-proto.h	/^    struct daap_block_tag *next;$/;"	m	struct:daap_block_tag	typeref:struct:daap_block_tag::daap_block_tag
+next	daap.c	/^    browse_item*	next;$/;"	m	struct:_browse_item	file:
+next	db-gdbm.c	/^    MP3RECORD*	next;$/;"	m	struct:__anon21	file:
+next	db-gdbm.c	/^    MP3RECORD* next;$/;"	m	struct:tag_mp3record	file:
+next	db-gdbm.c	/^    struct tag_playlist *next;$/;"	m	struct:tag_playlist	typeref:struct:tag_playlist::tag_playlist	file:
+next	db-gdbm.c	/^    struct tag_playlistentry *next;$/;"	m	struct:tag_playlistentry	typeref:struct:tag_playlistentry::tag_playlistentry	file:
+next	db-memory.c	/^    struct tag_mp3record *next;$/;"	m	struct:tag_mp3record	typeref:struct:tag_mp3record::tag_mp3record	file:
+next	db-memory.c	/^    struct tag_playlist *next;$/;"	m	struct:tag_playlist	typeref:struct:tag_playlist::tag_playlist	file:
+next	db-memory.c	/^    struct tag_playlistentry *next;$/;"	m	struct:tag_playlistentry	typeref:struct:tag_playlistentry::tag_playlistentry	file:
+next	err.c	/^    struct tag_err_leak *next;$/;"	m	struct:tag_err_leak	typeref:struct:tag_err_leak::tag_err_leak	file:
+next	mDNSClientAPI.h	/^	AuthRecord     *next;				\/\/ Next in list; first element of structure for efficiency reasons$/;"	m	struct:AuthRecord_struct
+next	mDNSClientAPI.h	/^	CacheRecord    *next;				\/\/ Next in list; first element of structure for efficiency reasons$/;"	m	struct:CacheRecord_struct
+next	mDNSClientAPI.h	/^	DNSQuestion          *next;$/;"	m	struct:DNSQuestion_struct
+next	mDNSClientAPI.h	/^	ExtraResourceRecord *next;$/;"	m	struct:ExtraResourceRecord_struct
+next	mDNSClientAPI.h	/^	NetworkInterfaceInfo *next;$/;"	m	struct:NetworkInterfaceInfo_struct
+next	playlist.h	/^    struct tag_smart_playlist *next;$/;"	m	struct:tag_smart_playlist	typeref:struct:tag_smart_playlist::tag_smart_playlist
+next	rend-avahi.c	/^    struct tag_rend_avahi_group_entry *next;$/;"	m	struct:tag_rend_avahi_group_entry	typeref:struct:tag_rend_avahi_group_entry::tag_rend_avahi_group_entry	file:
+next	rend-posix.c	/^    PosixService *next;$/;"	m	struct:PosixService	file:
+next	webserver.c	/^    struct tag_ws_connlist *next;$/;"	m	struct:tag_ws_connlist	typeref:struct:tag_ws_connlist::tag_ws_connlist	file:
+next	webserver.c	/^    struct tag_ws_handler *next;$/;"	m	struct:tag_ws_handler	typeref:struct:tag_ws_handler::tag_ws_handler	file:
+next	webserver.h	/^    struct tag_arglist *next;$/;"	m	struct:tag_arglist	typeref:struct:tag_arglist::tag_arglist
+nicelabel	mDNSClientAPI.h	/^	domainlabel nicelabel;				\/\/ Rich text label encoded using canonically precomposed UTF-8$/;"	m	struct:mDNS_struct
+node	query.h	/^	query_node_t*		node;$/;"	m	union:query_node_::__anon27
+node	query.h	/^	query_node_t*		node;$/;"	m	union:query_node_::__anon28
+nodecolour	redblack.c	/^enum nodecolour { BLACK, RED };$/;"	g	file:
+nodes	db-gdbm.c	/^    struct tag_playlistentry *nodes;$/;"	m	struct:tag_playlist	typeref:struct:tag_playlist::tag_playlistentry	file:
+nodes	db-memory.c	/^    struct tag_playlistentry *nodes;$/;"	m	struct:tag_playlist	typeref:struct:tag_playlist::tag_playlistentry	file:
+null_start	ogg.c	/^static void null_start(stream_processor *stream)$/;"	f	file:
+nullstrcmp	db-gdbm.c	/^static int nullstrcmp(const char* a, const char* b)$/;"	f	file:
+num	ogg.c	/^    int num;$/;"	m	struct:_stream_processor	file:
+num_pkts_accepted	mDNSPosix.c	/^static int num_pkts_accepted = 0;$/;"	v	file:
+num_pkts_rejected	mDNSPosix.c	/^static int num_pkts_rejected = 0;$/;"	v	file:
+num_registered_interfaces	mDNSPosix.c	/^static int num_registered_interfaces = 0;$/;"	v	file:
+number_of_frames	mp3-scanner.c	/^    int number_of_frames;    \/**< Number of frames in the song *\/$/;"	m	struct:tag_scan_frameinfo	file:
+offset	query.h	/^    int			offset;$/;"	m	struct:query_field_
+onesIPv4Addr	mDNS.c	/^mDNSexport const mDNSv4Addr      onesIPv4Addr      = { { 255, 255, 255, 255 } };$/;"	v
+onesIPv6Addr	mDNS.c	/^mDNSexport const mDNSv6Addr      onesIPv6Addr      = { { 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 } };$/;"	v
+op	playlist.h	/^    int op;$/;"	m	struct:tag_pl_node
+openlist	redblack.c	/^RB_ENTRY(openlist)(const struct RB_ENTRY(tree) *rbinfo)$/;"	f
+orchestra	mp3-scanner.h	/^    char *orchestra; \/* TPE2 *\/$/;"	m	struct:tag_mp3file
+orchestra_len	db-gdbm.c	/^    int orchestra_len;$/;"	m	struct:tag_mp3packed	file:
+os	ogg.c	/^    ogg_stream_state os;$/;"	m	struct:_stream_processor	file:
+other_start	ogg.c	/^static void other_start(stream_processor *stream, char *type)$/;"	f	file:
+out	daap-proto.h	/^  char *out;$/;"	m	struct:gzip_stream_tag
+p	mDNSClientAPI.h	/^	mDNS_PlatformSupport *p;			\/\/ Pointer to platform-specific data of indeterminite size$/;"	m	struct:mDNS_struct
+packedstruct	mDNSClientAPI.h	467;"	d
+packedstruct	mDNSClientAPI.h	470;"	d
+packedunion	mDNSClientAPI.h	468;"	d
+packedunion	mDNSClientAPI.h	471;"	d
+padding	mp3-scanner.c	/^    int padding;             \/**< Whether or not there is a padding sample *\/$/;"	m	struct:tag_scan_frameinfo	file:
+parent	daap-proto.h	/^    struct daap_block_tag *parent;$/;"	m	struct:daap_block_tag	typeref:struct:daap_block_tag::daap_block_tag
+path	mp3-scanner.h	/^    char *path;$/;"	m	struct:tag_mp3file
+path_len	db-gdbm.c	/^    int path_len;$/;"	m	struct:tag_mp3packed	file:
+pid	daapd.h	/^    int pid;              \/**< pid that will accept INT to terminate *\/$/;"	m	struct:tag_config
+pl_addplaylist	parser.c	/^int pl_addplaylist(char *name, PL_NODE *root) {$/;"	f
+pl_dump	playlist.c	/^void pl_dump(void) {$/;"	f
+pl_dump_node	playlist.c	/^void pl_dump_node(PL_NODE *pnode, int indent) {$/;"	f
+pl_error	playlist.c	/^int pl_error=0;$/;"	v
+pl_eval	playlist.c	/^void pl_eval(MP3FILE *pmp3) {$/;"	f
+pl_eval_node	playlist.c	/^int pl_eval_node(MP3FILE *pmp3, PL_NODE *pnode) {$/;"	f
+pl_load	playlist.c	/^int pl_load(char *file) {$/;"	f
+pl_newcharpredicate	parser.c	/^PL_NODE *pl_newcharpredicate(int tag, int op, char *value) {$/;"	f
+pl_newdatepredicate	parser.c	/^PL_NODE *pl_newdatepredicate(int tag, int op, int value) {$/;"	f
+pl_newexpr	parser.c	/^PL_NODE *pl_newexpr(PL_NODE *arg1, int op, PL_NODE *arg2) {$/;"	f
+pl_newintpredicate	parser.c	/^PL_NODE *pl_newintpredicate(int tag, int op, int value) {$/;"	f
+pl_number	parser.c	/^int pl_number=2;$/;"	v
+pl_register	playlist.c	/^void pl_register(void) {$/;"	f
+pl_smart	playlist.c	/^SMART_PLAYLIST pl_smart = { NULL, 0, NULL, NULL };$/;"	v
+playlist	daapd.h	/^    char *playlist;       \/**< Path to the playlist file *\/$/;"	m	struct:tag_config
+playlist	parser.y	/^playlist: ID '{' expression '}' { $$ = pl_addplaylist($1, $3); }$/;"	l
+playlistlist	parser.y	/^playlistlist: playlist {}$/;"	l
+plval	parser.c	/^    PL_NODE *plval;    $/;"	m	union:YYSTYPE	file:
+plval	parser.h	/^    PL_NODE *plval;    $/;"	m	union:YYSTYPE
+plval	playlist.h	/^	struct tag_pl_node *plval;$/;"	m	union:tag_pl_node::__anon22	typeref:struct:tag_pl_node::__anon22::tag_pl_node
+plval	playlist.h	/^	struct tag_pl_node *plval;$/;"	m	union:tag_pl_node::__anon23	typeref:struct:tag_pl_node::__anon23::tag_pl_node
+port	daapd.h	/^    int port;             \/**< port to listen on *\/$/;"	m	struct:tag_config
+port	mDNSClientAPI.h	/^	mDNSIPPort      port;				\/\/ Port where this service can be accessed$/;"	m	struct:__anon18
+port	rend-avahi.c	/^    int port;$/;"	m	struct:tag_rend_avahi_group_entry	file:
+port	rend-unix.h	/^    int port;$/;"	m	struct:tag_rend_message
+port	webserver.h	/^    unsigned short port;$/;"	m	struct:tag_wsconfig
+postorder	redblack.h	/^  postorder,$/;"	e	enum:__anon1
+precision	mDNS.c	/^	unsigned int  precision;$/;"	m	struct:mDNSprintf_format	file:
+predicate	parser.y	/^predicate: strtag strbool ID { $$=pl_newcharpredicate($1, $2, $3); }$/;"	l
+preorder	redblack.h	/^  preorder,$/;"	e	enum:__anon1
+process_end	ogg.c	/^    void (*process_end)(struct _stream_processor *, MP3FILE *);$/;"	m	struct:_stream_processor	file:
+process_m3u	daapd.h	/^    int process_m3u;      \/**< Should we process m3u files? *\/$/;"	m	struct:tag_config
+process_null	ogg.c	/^static void process_null(stream_processor *stream, ogg_page *page, MP3FILE *pmp)$/;"	f	file:
+process_other	ogg.c	/^static void process_other(stream_processor *stream, ogg_page *page, MP3FILE *pmp)$/;"	f	file:
+process_page	ogg.c	/^    void (*process_page)(struct _stream_processor *, ogg_page *, MP3FILE *);$/;"	m	struct:_stream_processor	file:
+ptr	err.c	/^    void *ptr;$/;"	m	struct:tag_err_leak	file:
+putDomainNameAsLabels	mDNS.c	/^mDNSlocal mDNSu8 *putDomainNameAsLabels(const DNSMessage *const msg,$/;"	f
+putQuestion	mDNS.c	/^mDNSlocal mDNSu8 *putQuestion(DNSMessage *const msg, mDNSu8 *ptr, const mDNSu8 *const limit,$/;"	f
+putRData	mDNS.c	/^mDNSlocal mDNSu8 *putRData(const DNSMessage *const msg, mDNSu8 *ptr, const mDNSu8 *const limit, ResourceRecord *rr)$/;"	f
+pwsc	webserver.c	/^    WS_CONNINFO *pwsc;$/;"	m	struct:tag_ws_connlist	file:
+pwsp	webserver.h	/^    WSHANDLE pwsp;$/;"	m	struct:tag_ws_conninfo
+qAv4	mDNSClientAPI.h	/^	DNSQuestion                   qAv4;$/;"	m	struct:ServiceInfoQuery_struct
+qAv6	mDNSClientAPI.h	/^	DNSQuestion                   qAv6;$/;"	m	struct:ServiceInfoQuery_struct
+qSRV	mDNSClientAPI.h	/^	DNSQuestion                   qSRV;$/;"	m	struct:ServiceInfoQuery_struct
+qTXT	mDNSClientAPI.h	/^	DNSQuestion                   qTXT;$/;"	m	struct:ServiceInfoQuery_struct
+qclass	mDNSClientAPI.h	/^	mDNSu16               qclass;$/;"	m	struct:DNSQuestion_struct
+qft_i32	query.h	/^    qft_i32,$/;"	e	enum:__anon26
+qft_i64	query.h	/^    qft_i64,$/;"	e	enum:__anon26
+qft_string	query.h	/^    qft_string$/;"	e	enum:__anon26
+qname	mDNSClientAPI.h	/^	domainname            qname;$/;"	m	struct:DNSQuestion_struct
+qnamehash	mDNSClientAPI.h	/^	mDNSu32               qnamehash;$/;"	m	struct:DNSQuestion_struct
+qot_and	query.h	/^    qot_and,$/;"	e	enum:__anon26
+qot_begins	query.h	/^    qot_begins,$/;"	e	enum:__anon26
+qot_const	query.h	/^    qot_const,$/;"	e	enum:__anon26
+qot_contains	query.h	/^    qot_contains,$/;"	e	enum:__anon26
+qot_empty	query.h	/^    qot_empty,$/;"	e	enum:__anon26
+qot_ends	query.h	/^    qot_ends,$/;"	e	enum:__anon26
+qot_eq	query.h	/^    qot_eq,$/;"	e	enum:__anon26
+qot_ge	query.h	/^    qot_ge,$/;"	e	enum:__anon26
+qot_gt	query.h	/^    qot_gt,$/;"	e	enum:__anon26
+qot_is	query.h	/^    qot_is,$/;"	e	enum:__anon26
+qot_le	query.h	/^    qot_le,$/;"	e	enum:__anon26
+qot_lt	query.h	/^    qot_lt,$/;"	e	enum:__anon26
+qot_ne	query.h	/^    qot_ne,$/;"	e	enum:__anon26
+qot_not	query.h	/^    qot_not,$/;"	e	enum:__anon26
+qot_or	query.h	/^    qot_or,$/;"	e	enum:__anon26
+qtype	mDNSClientAPI.h	/^	mDNSu16               qtype;$/;"	m	struct:DNSQuestion_struct
+query_build	query.c	/^query_node_t* query_build(const char* query, const query_field_t* fields)$/;"	f
+query_dump	query.c	/^void query_dump(FILE* fp, query_node_t* query, int depth)$/;"	f
+query_field_	query.h	/^struct query_field_$/;"	s
+query_field_t	query.h	/^typedef struct query_field_ query_field_t;$/;"	t	typeref:struct:query_field_
+query_free	query.c	/^void query_free(query_node_t* query)$/;"	f
+query_node_	query.h	/^struct query_node_$/;"	s
+query_node_t	query.h	/^typedef struct query_node_ query_node_t;$/;"	t	typeref:struct:query_node_
+query_test	query.c	/^int query_test(query_node_t* query, void* target)$/;"	f
+query_type_t	query.h	/^} query_type_t;$/;"	t	typeref:enum:__anon26
+query_unescape	query.c	/^char* query_unescape(const char* src)$/;"	f
+r	mDNSClientAPI.h	/^	AuthRecord r;$/;"	m	struct:ExtraResourceRecord_struct
+r	mDNSClientAPI.h	/^	CacheRecord r;$/;"	m	struct:__anon16
+r_close	restart.c	/^int r_close(int fildes) {$/;"	f
+r_dup2	restart.c	/^int r_dup2(int fildes, int fildes2) {$/;"	f
+r_open2	restart.c	/^int r_open2(const char *path, int oflag) {$/;"	f
+r_open3	restart.c	/^int r_open3(const char *path, int oflag, mode_t mode) {$/;"	f
+r_read	restart.c	/^ssize_t r_read(int fd, void *buf, size_t size) {$/;"	f
+r_wait	restart.c	/^pid_t r_wait(int *stat_loc) {$/;"	f
+r_waitpid	restart.c	/^pid_t r_waitpid(pid_t pid, int *stat_loc, int options) {$/;"	f
+r_write	restart.c	/^ssize_t r_write(int fd, void *buf, size_t size) {$/;"	f
+rb_closelist	redblack.c	/^rb_closelist(RBLIST *rblistp)$/;"	f	file:
+rbdata_t	redblack.h	42;"	d
+rbmax	redblack.h	133;"	d
+rbmin	redblack.h	132;"	d
+rcsid	redblack.c	/^static char rcsid[]="$Id: tags,v 1.1 2009-06-30 02:31:09 steven Exp $";$/;"	v	file:
+rdata	mDNSClientAPI.h	/^	RData           *rdata;				\/\/ Pointer to storage for this rdata$/;"	m	struct:ResourceRecord_struct
+rdatahash	mDNSClientAPI.h	/^	mDNSu32         rdatahash;			\/\/ 32-bit hash of the raw rdata$/;"	m	struct:ResourceRecord_struct
+rdatastorage	mDNSClientAPI.h	/^	RData           rdatastorage;		\/\/ Normally the storage is right here, except for oversized records$/;"	m	struct:AuthRecord_struct
+rdatastorage	mDNSClientAPI.h	/^	struct { mDNSu16 MaxRDLength; mDNSu8 data[InlineCacheRDSize]; } rdatastorage;	\/\/ Storage for small records is right here$/;"	m	struct:CacheRecord_struct	typeref:struct:CacheRecord_struct::__anon15
+rdestimate	mDNSClientAPI.h	/^	mDNSu16         rdestimate;			\/\/ Upper bound on size of rdata after name compression$/;"	m	struct:ResourceRecord_struct
+rdlength	mDNSClientAPI.h	/^	mDNSu16         rdlength;			\/\/ Size of the raw rdata, in bytes$/;"	m	struct:ResourceRecord_struct
+rdnamehash	mDNSClientAPI.h	/^	mDNSu32         rdnamehash;			\/\/ Set if this rdata contains a domain name (e.g. PTR, SRV, CNAME etc.)$/;"	m	struct:ResourceRecord_struct
+readblock	restart.c	/^ssize_t readblock(int fd, void *buf, size_t size) {$/;"	f
+readline	restart.c	/^int readline(int fd, char *buf, int nbytes) {$/;"	f
+readlinetimed	restart.c	/^int readlinetimed(int fd, char *buf, int nbytes, double seconds) {$/;"	f
+readpassword	daapd.h	/^    char *readpassword;   \/**< iTunes password *\/$/;"	m	struct:tag_config
+readtimed	restart.c	/^ssize_t readtimed(int fd, void *buf, size_t nbyte, double seconds) {$/;"	f
+readwrite	restart.c	/^int readwrite(int fromfd, int tofd) {$/;"	f
+readwriteblock	restart.c	/^int readwriteblock(int fromfd, int tofd, char *buf, int size) {$/;"	f
+recvfrom_flags	mDNSUNP.c	/^recvfrom_flags(int fd, void *ptr, size_t nbytes, int *flagsp,$/;"	f
+regex	webserver.c	/^    regex_t regex;$/;"	m	struct:tag_ws_handler	file:
+releases	ogg.c	/^} releases[] = {$/;"	v	typeref:struct:vorbis_release
+reload	daapd.h	/^    int reload;           \/**< Time to reload and\/or rescan the database? *\/$/;"	m	struct:tag_config
+rend_add_text	rend-osx.c	/^void rend_add_text(char *buffer, char *string) {$/;"	f
+rend_addtorunloop	rend-osx.c	/^static int rend_addtorunloop(dns_service_discovery_ref client) {$/;"	f	file:
+rend_avahi_cond	rend-avahi.c	/^static pthread_cond_t rend_avahi_cond;$/;"	v	file:
+rend_avahi_entries	rend-avahi.c	/^static REND_AVAHI_GROUP_ENTRY rend_avahi_entries = { NULL, NULL, 0, NULL };$/;"	v	file:
+rend_avahi_mutex	rend-avahi.c	/^static pthread_mutex_t rend_avahi_mutex;$/;"	v	file:
+rend_callback	rend-howl.c	/^void rend_callback(void) {$/;"	f
+rend_callback	rend-osx.c	/^void rend_callback(void *info) {$/;"	f
+rend_callback	rend-posix.c	/^void rend_callback(void) {$/;"	f
+rend_handle	rend-howl.c	/^sw_discovery rend_handle;$/;"	v
+rend_handler	rend-osx.c	/^static void rend_handler(CFMachPortRef port, void *msg, CFIndex size, void *info) {$/;"	f	file:
+rend_howl_reply	rend-howl.c	/^static sw_result rend_howl_reply(sw_discovery discovery,$/;"	f	file:
+rend_init	rend-avahi.c	/^int rend_init(char *user) {$/;"	f
+rend_init	rend-unix.c	/^int rend_init(char *user) {$/;"	f
+rend_pid	rend-unix.c	/^int rend_pid;$/;"	v
+rend_pipe_from	rend-unix.c	/^int rend_pipe_from[2];$/;"	v
+rend_pipe_monitor	rend-howl.c	/^void *rend_pipe_monitor(void* arg) {$/;"	f
+rend_pipe_monitor	rend-osx.c	/^void *rend_pipe_monitor(void* arg) {$/;"	f
+rend_pipe_to	rend-unix.c	/^int rend_pipe_to[2];$/;"	v
+rend_poll	rend-avahi.c	/^static void *rend_poll(void *arg) {$/;"	f	file:
+rend_private_init	rend-howl.c	/^int rend_private_init(char *user) {$/;"	f
+rend_private_init	rend-osx.c	/^int rend_private_init(char *user) {$/;"	f
+rend_private_init	rend-posix.c	/^int rend_private_init(char *user) {$/;"	f
+rend_read_message	rend-unix.c	/^int rend_read_message(REND_MESSAGE *pmsg) {$/;"	f
+rend_register	rend-avahi.c	/^int rend_register(char *name, char *type, int port) {$/;"	f
+rend_register	rend-unix.c	/^int rend_register(char *name, char *type, int port) {$/;"	f
+rend_reply	rend-osx.c	/^static void rend_reply(DNSServiceRegistrationReplyErrorType errorCode, void *context) {$/;"	f	file:
+rend_rls	rend-osx.c	/^CFRunLoopSourceRef rend_rls;$/;"	v
+rend_runloop	rend-osx.c	/^CFRunLoopRef rend_runloop;$/;"	v
+rend_running	rend-avahi.c	/^int rend_running(void) {$/;"	f
+rend_running	rend-unix.c	/^int rend_running(void) {$/;"	f
+rend_send_message	rend-unix.c	/^int rend_send_message(REND_MESSAGE *pmsg) {$/;"	f
+rend_send_response	rend-unix.c	/^int rend_send_response(int value) {$/;"	f
+rend_sigint	rend-osx.c	/^static void rend_sigint(int sigraised) {$/;"	f	file:
+rend_stop	rend-avahi.c	/^int rend_stop() {$/;"	f
+rend_stop	rend-unix.c	/^int rend_stop(void) {$/;"	f
+rend_stoprunloop	rend-osx.c	/^static void rend_stoprunloop(void) {$/;"	f	file:
+rend_tid	rend-avahi.c	/^static pthread_t rend_tid;$/;"	v	file:
+rend_tid	rend-howl.c	/^pthread_t rend_tid;$/;"	v
+rend_tid	rend-osx.c	/^pthread_t rend_tid;$/;"	v
+rend_unregister	rend-avahi.c	/^int rend_unregister(char *name, char *type, int port) {$/;"	f
+rend_unregister	rend-unix.c	/^int rend_unregister(char *name, char *type, int port) {$/;"	f
+reported_size	daap-proto.h	/^    int reported_size;$/;"	m	struct:daap_block_tag
+req_handler	webserver.c	/^    void (*req_handler)(WS_CONNINFO*);$/;"	m	struct:tag_ws_handler	file:
+request_headers	webserver.h	/^    ARGLIST request_headers;$/;"	m	struct:tag_ws_conninfo
+request_type	webserver.h	/^    int request_type;$/;"	m	struct:tag_ws_conninfo
+request_vars	webserver.h	/^    ARGLIST request_vars;$/;"	m	struct:tag_ws_conninfo
+required	configfile.c	/^    int required;          \/**< If config file, is it required? *\/$/;"	m	struct:tag_configelement	file:
+rescan_interval	daapd.h	/^    int rescan_interval;  \/**< How often to do a background rescan of the file system *\/$/;"	m	struct:tag_config
+response_headers	webserver.h	/^    ARGLIST response_headers;$/;"	m	struct:tag_ws_conninfo
+resrec	mDNSClientAPI.h	/^	ResourceRecord  resrec;$/;"	m	struct:AuthRecord_struct
+resrec	mDNSClientAPI.h	/^	ResourceRecord  resrec;$/;"	m	struct:CacheRecord_struct
+right	query.h	/^    }				right;$/;"	m	struct:query_node_	typeref:union:query_node_::__anon28
+root	db-gdbm.c	/^    MP3RECORD*	root;$/;"	m	struct:__anon21	file:
+root	playlist.h	/^    PL_NODE *root;$/;"	m	struct:tag_smart_playlist
+rrcache_active	mDNSClientAPI.h	/^	mDNSu32 rrcache_active;				\/\/ Number of cache entries currently occupied by records that answer active questions$/;"	m	struct:mDNS_struct
+rrcache_free	mDNSClientAPI.h	/^	CacheRecord *rrcache_free;$/;"	m	struct:mDNS_struct
+rrcache_hash	mDNSClientAPI.h	/^	CacheRecord *rrcache_hash[CACHE_HASH_SLOTS];$/;"	m	struct:mDNS_struct
+rrcache_report	mDNSClientAPI.h	/^	mDNSu32 rrcache_report;$/;"	m	struct:mDNS_struct
+rrcache_size	mDNSClientAPI.h	/^	mDNSu32 rrcache_size;				\/\/ Total number of available cache entries$/;"	m	struct:mDNS_struct
+rrcache_tail	mDNSClientAPI.h	/^	CacheRecord **rrcache_tail[CACHE_HASH_SLOTS];$/;"	m	struct:mDNS_struct
+rrcache_totalused	mDNSClientAPI.h	/^	mDNSu32	rrcache_totalused;			\/\/ Number of cache entries currently occupied$/;"	m	struct:mDNS_struct
+rrcache_used	mDNSClientAPI.h	/^	mDNSu32 rrcache_used[CACHE_HASH_SLOTS];$/;"	m	struct:mDNS_struct
+rrclass	mDNSClientAPI.h	/^	mDNSu16         rrclass;$/;"	m	struct:ResourceRecord_struct
+rroriginalttl	mDNSClientAPI.h	/^	mDNSu32         rroriginalttl;		\/\/ In seconds$/;"	m	struct:ResourceRecord_struct
+rrtype	mDNSClientAPI.h	/^	mDNSu16         rrtype;$/;"	m	struct:ResourceRecord_struct
+runas	daapd.h	/^    char *runas;          \/**< Who to drop privs to (if run as root) *\/$/;"	m	struct:tag_config
+running	webserver.c	/^    int running;$/;"	m	struct:tag_ws_private	file:
+samplerate	db-gdbm.c	/^    int samplerate;$/;"	m	struct:tag_mp3packed	file:
+samplerate	mp3-scanner.c	/^    int samplerate;          \/**< Samplerate (e.g. 44100) *\/$/;"	m	struct:tag_scan_frameinfo	file:
+samplerate	mp3-scanner.h	/^    int samplerate;$/;"	m	struct:tag_mp3file
+samples_per_frame	mp3-scanner.c	/^    int samples_per_frame;   \/**< Samples per frame - calculated field *\/$/;"	m	struct:tag_scan_frameinfo	file:
+scan_aac_findatom	mp3-scanner.c	/^long scan_aac_findatom(FILE *fin, long max_offset, char *which_atom, int *atom_size) {$/;"	f
+scan_br_table	mp3-scanner.c	/^int scan_br_table[5][16] = {$/;"	v
+scan_decode_mp3_frame	mp3-scanner.c	/^int scan_decode_mp3_frame(unsigned char *frame, SCAN_FRAMEINFO *pfi) {$/;"	f
+scan_freetags	mp3-scanner.c	/^int scan_freetags(MP3FILE *pmp3) {$/;"	f
+scan_get_aacfileinfo	mp3-scanner.c	/^int scan_get_aacfileinfo(char *file, MP3FILE *pmp3) {$/;"	f
+scan_get_aactags	mp3-scanner.c	/^int scan_get_aactags(char *file, MP3FILE *pmp3) {$/;"	f
+scan_get_average_bitrate	mp3-scanner.c	/^void scan_get_average_bitrate(FILE *infile, SCAN_FRAMEINFO *pfi) {$/;"	f
+scan_get_fileinfo	mp3-scanner.c	/^int scan_get_fileinfo(char *file, MP3FILE *pmp3) {$/;"	f
+scan_get_frame_count	mp3-scanner.c	/^void scan_get_frame_count(FILE *infile, SCAN_FRAMEINFO *pfi) {$/;"	f
+scan_get_mp3fileinfo	mp3-scanner.c	/^int scan_get_mp3fileinfo(char *file, MP3FILE *pmp3) {$/;"	f
+scan_get_mp3tags	mp3-scanner.c	/^int scan_get_mp3tags(char *file, MP3FILE *pmp3) {$/;"	f
+scan_get_nulfileinfo	mp3-scanner.c	/^static int scan_get_nulfileinfo(char *file, MP3FILE *pmp3) { return 0; };$/;"	f	file:
+scan_get_nultags	mp3-scanner.c	/^static int scan_get_nultags(char *file, MP3FILE *pmp3) { return 0; };$/;"	f	file:
+scan_get_oggfileinfo	ogg.c	/^int scan_get_oggfileinfo(char *filename, MP3FILE *pmp3) {$/;"	f
+scan_get_urlfileinfo	mp3-scanner.c	/^int scan_get_urlfileinfo(char *file, MP3FILE *pmp3) {$/;"	f
+scan_gettags	mp3-scanner.c	/^int scan_gettags(char *file, MP3FILE *pmp3) {$/;"	f
+scan_init	mp3-scanner.c	/^int scan_init(char *path) {$/;"	f
+scan_mode_foreground	mp3-scanner.c	/^int scan_mode_foreground=1;$/;"	v
+scan_music_file	mp3-scanner.c	/^void scan_music_file(char *path, struct dirent *pde, struct stat *psb) {$/;"	f
+scan_mutex	configfile.c	/^pthread_mutex_t scan_mutex = PTHREAD_MUTEX_INITIALIZER; \/**< status list mutex *\/$/;"	v
+scan_path	mp3-scanner.c	/^int scan_path(char *path) {$/;"	f
+scan_sample_table	mp3-scanner.c	/^int scan_sample_table[3][4] = {$/;"	v
+scan_static_playlist	mp3-scanner.c	/^void scan_static_playlist(char *path, struct dirent *pde, struct stat *psb) {$/;"	f
+scan_status	configfile.c	/^SCAN_STATUS scan_status = { 0,0,NULL,NULL };            \/**< root of status list *\/$/;"	v
+scan_type	daapd.h	/^    int scan_type;        \/**< How hard to search mp3 files. see scan_get_mp3fileinfo() *\/$/;"	m	struct:tag_config
+scan_winamp_genre	mp3-scanner.c	/^char *scan_winamp_genre[] = {$/;"	v
+seqno	ogg.c	/^    long seqno;$/;"	m	struct:_stream_processor	file:
+serial	ogg.c	/^    ogg_uint32_t serial; \/* must be 32 bit unsigned *\/$/;"	m	struct:_stream_processor	file:
+server_fd	webserver.c	/^    int server_fd;$/;"	m	struct:tag_ws_private	file:
+server_tid	webserver.c	/^    pthread_t server_tid;$/;"	m	struct:tag_ws_private	file:
+servername	daapd.h	/^    char *servername;     \/**< Name advertised via rendezvous *\/$/;"	m	struct:tag_config
+serviceID	rend-posix.c	/^    int serviceID;$/;"	m	struct:PosixService	file:
+session	configfile.c	/^    int session;$/;"	m	struct:tag_scan_status	file:
+short	parser.c	231;"	d	file:
+shownillegal	ogg.c	/^    int shownillegal;$/;"	m	struct:_stream_processor	file:
+sign	mDNS.c	/^	char          sign;		\/\/ +, - or space$/;"	m	struct:mDNSprintf_format	file:
+signal_handler	main.c	/^void *signal_handler(void *arg) {$/;"	f
+simple_poll	rend-avahi.c	/^static AvahiSimplePoll *simple_poll = NULL;$/;"	v	file:
+single_match	query.c	/^static query_node_t*	single_match(const char* query,$/;"	f	file:
+size	daap-proto.h	/^    int size;$/;"	m	struct:daap_block_tag
+size	err.c	/^    int size;$/;"	m	struct:tag_err_leak	file:
+size	mp3-scanner.c	/^    unsigned char size[4];$/;"	m	struct:tag_scan_id3header	file:
+sizeofRDataHeader	mDNSClientAPI.h	754;"	d
+skipDomainName	mDNS.c	/^mDNSlocal const mDNSu8 *skipDomainName(const DNSMessage *const msg, const mDNSu8 *ptr, const mDNSu8 *const end)$/;"	f
+skipQuestion	mDNS.c	/^mDNSlocal const mDNSu8 *skipQuestion(const DNSMessage *msg, const mDNSu8 *ptr, const mDNSu8 *end)$/;"	f
+skipResourceRecord	mDNS.c	/^mDNSlocal const mDNSu8 *skipResourceRecord(const DNSMessage *msg, const mDNSu8 *ptr, const mDNSu8 *end)$/;"	f
+sockaddr_storage	mDNSUNP.h	77;"	d
+socklen_t	mDNSUNP.h	/^    typedef unsigned int socklen_t;$/;"	t
+song_fields	daap.c	/^static query_field_t	song_fields[] = {$/;"	v	file:
+song_length	db-gdbm.c	/^    int song_length;$/;"	m	struct:tag_mp3packed	file:
+song_length	mp3-scanner.h	/^    int song_length;$/;"	m	struct:tag_mp3file
+songs	db-gdbm.c	/^    int songs;$/;"	m	struct:tag_playlist	file:
+songs	db-memory.c	/^    int songs;$/;"	m	struct:tag_playlist	file:
+songs_served	daapd.h	/^    int songs_served;           \/**< How many songs have been served *\/$/;"	m	struct:tag_stats
+srv	mDNSClientAPI.h	/^	rdataSRV    srv;		\/\/ For SRV record$/;"	m	union:__anon13
+start	ogg.c	/^    int start;$/;"	m	struct:_stream_processor	file:
+start_signal_handler	main.c	/^int start_signal_handler(pthread_t *handler_tid) {$/;"	f
+start_time	daapd.h	/^    time_t start_time;          \/**< When the server was started *\/$/;"	m	struct:tag_stats
+stats	daapd.h	/^    STATS stats;          \/**< Stats structure (see above) *\/$/;"	m	struct:tag_config
+status	webserver.c	/^    char *status;$/;"	m	struct:tag_ws_connlist	file:
+stereo	mp3-scanner.c	/^    int stereo;              \/**< Any kind of stereo.. joint, dual mono, etc *\/$/;"	m	struct:tag_scan_frameinfo	file:
+stop	daapd.h	/^    int stop;             \/**< Time to exit? *\/$/;"	m	struct:tag_config
+stop	webserver.c	/^    int stop;$/;"	m	struct:tag_ws_private	file:
+str	query.h	/^	char*			str;$/;"	m	union:query_node_::__anon28
+strbool	parser.y	/^strbool: IS { $$=$1; }$/;"	l
+strcasestr	strcasestr.c	/^char * strcasestr(char* haystack, char* needle) {$/;"	f
+strdup	err.h	79;"	d
+stream_processor	ogg.c	/^} stream_processor;$/;"	t	typeref:struct:_stream_processor	file:
+stream_set	ogg.c	/^} stream_set;$/;"	t	typeref:struct:__anon24	file:
+streams	ogg.c	/^    stream_processor *streams;$/;"	m	struct:__anon24	file:
+streams_open	ogg.c	/^static int streams_open(stream_set *set)$/;"	f	file:
+string_query	query.c	/^static int string_query(query_node_t* query, void* target)$/;"	f	file:
+strsep	strsep.c	/^char *strsep(char **stringp, const char *delim) {$/;"	f
+strtag	parser.y	/^strtag: ARTIST$/;"	l
+struct_size	db-gdbm.c	/^    int struct_size; \/\/ so we can upgrade in place next time... doh!$/;"	m	struct:tag_mp3packed	file:
+suffix	mp3-scanner.c	/^    char*	suffix;$/;"	m	struct:__anon29	file:
+svalue	daap-proto.h	/^    char svalue[4]; \/* for statics up to 4 bytes *\/$/;"	m	struct:daap_block_tag
+tag	daap-proto.h	/^    char tag[4];$/;"	m	struct:daap_block_tag
+tag	daap.c	/^    char *tag;$/;"	m	struct:tag_daap_items	file:
+tag	daap.c	/^    const char*		tag;$/;"	m	struct:__anon33	file:
+tag_arglist	webserver.h	/^typedef struct tag_arglist {$/;"	s
+tag_config	daapd.h	/^typedef struct tag_config {$/;"	s
+tag_configelement	configfile.c	/^typedef struct tag_configelement {$/;"	s	file:
+tag_daap_items	daap.c	/^typedef struct tag_daap_items {$/;"	s	file:
+tag_err_leak	err.c	/^typedef struct tag_err_leak {$/;"	s	file:
+tag_mp3file	mp3-scanner.h	/^typedef struct tag_mp3file {$/;"	s
+tag_mp3packed	db-gdbm.c	/^typedef struct tag_mp3packed {$/;"	s	file:
+tag_mp3record	db-gdbm.c	/^struct tag_mp3record {$/;"	s	file:
+tag_mp3record	db-memory.c	/^typedef struct tag_mp3record {$/;"	s	file:
+tag_pl_node	playlist.h	/^typedef struct tag_pl_node {$/;"	s
+tag_playlist	db-gdbm.c	/^typedef struct tag_playlist {$/;"	s	file:
+tag_playlist	db-memory.c	/^typedef struct tag_playlist {$/;"	s	file:
+tag_playlistentry	db-gdbm.c	/^typedef struct tag_playlistentry {$/;"	s	file:
+tag_playlistentry	db-memory.c	/^typedef struct tag_playlistentry {$/;"	s	file:
+tag_rend_avahi_group_entry	rend-avahi.c	/^typedef struct tag_rend_avahi_group_entry {$/;"	s	file:
+tag_rend_message	rend-unix.h	/^typedef struct tag_rend_message {$/;"	s
+tag_scan_frameinfo	mp3-scanner.c	/^typedef struct tag_scan_frameinfo {$/;"	s	file:
+tag_scan_id3header	mp3-scanner.c	/^typedef struct tag_scan_id3header {$/;"	s	file:
+tag_scan_status	configfile.c	/^typedef struct tag_scan_status {$/;"	s	file:
+tag_smart_playlist	playlist.h	/^typedef struct tag_smart_playlist {$/;"	s
+tag_stats	daapd.h	/^typedef struct tag_stats {$/;"	s
+tag_ws_conninfo	webserver.h	/^typedef struct tag_ws_conninfo {$/;"	s
+tag_ws_connlist	webserver.c	/^typedef struct tag_ws_connlist {$/;"	s	file:
+tag_ws_handler	webserver.c	/^typedef struct tag_ws_handler {$/;"	s	file:
+tag_ws_private	webserver.c	/^typedef struct tag_ws_private {$/;"	s	file:
+tag_wsconfig	webserver.h	/^typedef struct tag_wsconfig {$/;"	s
+taghandler	mp3-scanner.c	/^} taghandler;$/;"	t	typeref:struct:__anon29	file:
+taghandlers	mp3-scanner.c	/^static taghandler taghandlers[] = {$/;"	v	file:
+taglist	daap.c	/^DAAP_ITEMS taglist[] = {$/;"	v
+tags	mp3-scanner.c	/^    int		(*tags)(char* file, MP3FILE* pmp3);$/;"	m	struct:__anon29	file:
+thread	configfile.c	/^    int thread;$/;"	m	struct:tag_scan_status	file:
+threadno	webserver.c	/^    int threadno;$/;"	m	struct:tag_ws_private	file:
+threadno	webserver.h	/^    int threadno;$/;"	m	struct:tag_ws_conninfo
+time_added	db-gdbm.c	/^    int time_added;$/;"	m	struct:tag_mp3packed	file:
+time_added	mp3-scanner.h	/^    int time_added;$/;"	m	struct:tag_mp3file
+time_modified	db-gdbm.c	/^    int time_modified;$/;"	m	struct:tag_mp3packed	file:
+time_modified	mp3-scanner.h	/^    int time_modified;$/;"	m	struct:tag_mp3file
+time_played	db-gdbm.c	/^    int time_played;$/;"	m	struct:tag_mp3packed	file:
+time_played	mp3-scanner.h	/^    int time_played;$/;"	m	struct:tag_mp3file
+timenow	mDNSClientAPI.h	/^	mDNSs32  timenow;					\/\/ The time that this particular activation of the mDNS code started$/;"	m	struct:mDNS_struct
+timenow_adjust	mDNSClientAPI.h	/^	mDNSs32  timenow_adjust;			\/\/ Correction applied if we ever discover time went backwards$/;"	m	struct:mDNS_struct
+timenow_last	mDNSClientAPI.h	/^	mDNSs32  timenow_last;				\/\/ The time the last time we ran$/;"	m	struct:mDNS_struct
+title	mp3-scanner.h	/^    char *title;     \/* TIT2 *\/$/;"	m	struct:tag_mp3file
+title_len	db-gdbm.c	/^    int title_len;$/;"	m	struct:tag_mp3packed	file:
+total_discs	db-gdbm.c	/^    int total_discs;$/;"	m	struct:tag_mp3packed	file:
+total_discs	mp3-scanner.h	/^    int total_discs;$/;"	m	struct:tag_mp3file
+total_tracks	db-gdbm.c	/^    int total_tracks;$/;"	m	struct:tag_mp3packed	file:
+total_tracks	mp3-scanner.h	/^    int total_tracks;$/;"	m	struct:tag_mp3file
+track	db-gdbm.c	/^    int track;$/;"	m	struct:tag_mp3packed	file:
+track	mp3-scanner.h	/^    int track;       \/* TRCK *\/$/;"	m	struct:tag_mp3file
+txt	mDNSClientAPI.h	/^	UTF8str255  txt;		\/\/ For TXT record$/;"	m	union:__anon13
+type	configfile.c	/^    int type;              \/**< Int, string, or special? *\/$/;"	m	struct:tag_configelement	file:
+type	daap.c	/^    int type;$/;"	m	struct:tag_daap_items	file:
+type	mDNSClientAPI.h	/^	mDNSs32 type;$/;"	m	struct:__anon5
+type	mp3-scanner.h	/^    char *type;$/;"	m	struct:tag_mp3file
+type	ogg.c	/^    char *type;$/;"	m	struct:_stream_processor	file:
+type	playlist.h	/^    int type;$/;"	m	struct:tag_pl_node
+type	query.h	/^    query_type_t		type;$/;"	m	struct:query_node_
+type	query.h	/^    query_type_t	type;$/;"	m	struct:query_field_
+type	rend-avahi.c	/^    char *type;$/;"	m	struct:tag_rend_avahi_group_entry	file:
+type	rend-unix.h	/^    char type[MAX_NAME_LEN];$/;"	m	struct:tag_rend_message
+type_len	db-gdbm.c	/^    int type_len;$/;"	m	struct:tag_mp3packed	file:
+u	mDNSClientAPI.h	/^	RDataBody  u;$/;"	m	struct:__anon14
+u_accept	uici.c	/^int u_accept(int fd, char *hostn, int hostnsize) {$/;"	f
+u_connect	uici.c	/^int u_connect(u_port_t port, char *hostn) {$/;"	f
+u_ignore_sigpipe	uici.c	/^static int u_ignore_sigpipe() {$/;"	f	file:
+u_open	uici.c	/^int u_open(u_port_t port) {$/;"	f
+u_port_t	uici.h	/^typedef unsigned short u_port_t;$/;"	t
+unput	lexer.c	191;"	d	file:
+uri	webserver.h	/^    char *uri;$/;"	m	struct:tag_ws_conninfo
+url	mp3-scanner.h	/^    char *url;       \/* daap.songdataurl (asul) *\/$/;"	m	struct:tag_mp3file
+url_len	db-gdbm.c	/^    int url_len; $/;"	m	struct:tag_mp3packed	file:
+usage	main.c	/^void usage(char *program) {$/;"	f
+use_mdns	daapd.h	/^    int use_mdns;         \/**< Should we do rendezvous advertisements? *\/$/;"	m	struct:tag_config
+used	ogg.c	/^    int used;$/;"	m	struct:__anon24	file:
+v4	mDNSClientAPI.h	/^	union { mDNSv6Addr v6; mDNSv4Addr v4; } ip;$/;"	m	union:__anon5::__anon6
+v4Requester	mDNSClientAPI.h	/^	mDNSv4Addr      v4Requester;		\/\/ Recent v4 query for this record, or all-ones if more than one recent query$/;"	m	struct:AuthRecord_struct
+v6	mDNSClientAPI.h	/^	union { mDNSv6Addr v6; mDNSv4Addr v4; } ip;$/;"	m	union:__anon5::__anon6
+v6Requester	mDNSClientAPI.h	/^	mDNSv6Addr      v6Requester;		\/\/ Recent v6 query for this record, or all-ones if more than one recent query$/;"	m	struct:AuthRecord_struct
+value	daap-proto.h	/^    char *value;$/;"	m	struct:daap_block_tag
+value	webserver.h	/^    char *value;$/;"	m	struct:tag_arglist
+var	configfile.c	/^    void *var;             \/**< if config file, where is the corresponding var? *\/$/;"	m	struct:tag_configelement	file:
+vc	ogg.c	/^    vorbis_comment vc;$/;"	m	struct:__anon25	file:
+vendor_string	ogg.c	/^    char *vendor_string;$/;"	m	struct:vorbis_release	file:
+verbosedebugf	mDNSDebug.h	100;"	d
+verbosedebugf	mDNSDebug.h	102;"	d
+verbosedebugf	mDNSDebug.h	104;"	d
+verbosedebugf	mDNSDebug.h	96;"	d
+verbosedebugf_	mDNSPosix.c	/^mDNSexport void verbosedebugf_(const char *format, ...)$/;"	f
+version	db-gdbm.c	/^    int version;$/;"	m	struct:tag_mp3packed	file:
+version	mp3-scanner.c	/^    double version;          \/**< MPEG version (e.g. 2.0, 2.5, 1.0) *\/$/;"	m	struct:tag_scan_frameinfo	file:
+version	mp3-scanner.c	/^    unsigned char version[2];$/;"	m	struct:tag_scan_id3header	file:
+vi	ogg.c	/^    vorbis_info vi;$/;"	m	struct:__anon25	file:
+vorbis_end	ogg.c	/^static void vorbis_end(stream_processor *stream, MP3FILE *pmp3) $/;"	f	file:
+vorbis_process	ogg.c	/^static void vorbis_process(stream_processor *stream, ogg_page *page,$/;"	f	file:
+vorbis_release	ogg.c	/^struct vorbis_release {$/;"	s	file:
+vorbis_start	ogg.c	/^static void vorbis_start(stream_processor *stream)$/;"	f	file:
+waitfdtimed	restart.c	/^int waitfdtimed(int fd, struct timeval end) {$/;"	f
+walk	redblack.c	/^RB_ENTRY(walk)(const struct RB_ENTRY(tree) *rbinfo, void (*action)(const RB_ENTRY(data_t) *, const VISIT, const int, void *), void *arg)$/;"	f
+wantsMeta	daap.c	/^int wantsMeta(MetaField_t meta, MetaFieldName_t fieldNo)$/;"	f
+web_root	daapd.h	/^    char *web_root;       \/**< path to the directory containing the admin-root files *\/$/;"	m	struct:tag_config
+web_root	webserver.h	/^    char *web_root;$/;"	m	struct:tag_wsconfig
+what	configfile.c	/^    char *what;$/;"	m	struct:tag_scan_status	file:
+ws_add_dispatch_thread	webserver.c	/^void ws_add_dispatch_thread(WS_PRIVATE *pwsp, WS_CONNINFO *pwsc) {$/;"	f
+ws_addarg	webserver.c	/^int ws_addarg(ARGLIST *root, char *key, char *fmt, ...) {$/;"	f
+ws_addresponseheader	webserver.c	/^int ws_addresponseheader(WS_CONNINFO *pwsc, char *header, char *fmt, ...) {$/;"	f
+ws_close	webserver.c	/^void ws_close(WS_CONNINFO *pwsc) {$/;"	f
+ws_decodepassword	webserver.c	/^int ws_decodepassword(char *header, char **username, char **password) {$/;"	f
+ws_defaulthandler	webserver.c	/^void ws_defaulthandler(WS_PRIVATE *pwsp, WS_CONNINFO *pwsc) {$/;"	f
+ws_dispatcher	webserver.c	/^void *ws_dispatcher(void *arg) {$/;"	f
+ws_dow	webserver.c	/^char *ws_dow[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };$/;"	v
+ws_emitheaders	webserver.c	/^void ws_emitheaders(WS_CONNINFO *pwsc) {$/;"	f
+ws_encoding_hack	webserver.c	/^int ws_encoding_hack(WS_CONNINFO *pwsc) {$/;"	f
+ws_findhandler	webserver.c	/^int ws_findhandler(WS_PRIVATE *pwsp, WS_CONNINFO *pwsc,$/;"	f
+ws_freearglist	webserver.c	/^void ws_freearglist(ARGLIST *root) {$/;"	f
+ws_getarg	webserver.c	/^char *ws_getarg(ARGLIST *root, char *key) {$/;"	f
+ws_getgetvars	webserver.c	/^int ws_getgetvars(WS_CONNINFO *pwsc, char *string) {$/;"	f
+ws_getheaders	webserver.c	/^int ws_getheaders(WS_CONNINFO *pwsc) {$/;"	f
+ws_getpostvars	webserver.c	/^int ws_getpostvars(WS_CONNINFO *pwsc) {$/;"	f
+ws_getrequestheader	webserver.c	/^char *ws_getrequestheader(WS_CONNINFO *pwsc, char *header) {$/;"	f
+ws_getvar	webserver.c	/^char *ws_getvar(WS_CONNINFO *pwsc, char *var) {$/;"	f
+ws_lock_unsafe	webserver.c	/^int ws_lock_unsafe(void) {$/;"	f
+ws_mainthread	webserver.c	/^void *ws_mainthread(void *arg) {$/;"	f
+ws_moy	webserver.c	/^char *ws_moy[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",$/;"	v
+ws_registerhandler	webserver.c	/^int ws_registerhandler(WSHANDLE ws, char *regex,$/;"	f
+ws_remove_dispatch_thread	webserver.c	/^void ws_remove_dispatch_thread(WS_PRIVATE *pwsp, WS_CONNINFO *pwsc) {$/;"	f
+ws_returnerror	webserver.c	/^int ws_returnerror(WS_CONNINFO *pwsc,int error, char *description) {$/;"	f
+ws_start	webserver.c	/^WSHANDLE ws_start(WSCONFIG *config) {$/;"	f
+ws_stop	webserver.c	/^extern int ws_stop(WSHANDLE ws) {$/;"	f
+ws_testarg	webserver.c	/^int ws_testarg(ARGLIST *root, char *key, char *value) {$/;"	f
+ws_testrequestheader	webserver.c	/^int ws_testrequestheader(WS_CONNINFO *pwsc, char *header, char *value) {$/;"	f
+ws_unlock_unsafe	webserver.c	/^int ws_unlock_unsafe(void) {$/;"	f
+ws_unsafe	webserver.c	/^pthread_mutex_t ws_unsafe=PTHREAD_MUTEX_INITIALIZER;$/;"	v
+ws_urldecode	webserver.c	/^char *ws_urldecode(char *string, int space_as_plus) {$/;"	f
+ws_writefd	webserver.c	/^int ws_writefd(WS_CONNINFO *pwsc, char *fmt, ...) {$/;"	f
+wsconfig	webserver.c	/^    WSCONFIG wsconfig;$/;"	m	struct:tag_ws_private	file:
+xing_offset	mp3-scanner.c	/^    int xing_offset;         \/**< Where the xing header should be relative to end of hdr *\/$/;"	m	struct:tag_scan_frameinfo	file:
+year	db-gdbm.c	/^    int year;$/;"	m	struct:tag_mp3packed	file:
+year	mp3-scanner.h	/^    int year;        \/* TDRC *\/$/;"	m	struct:tag_mp3file
+yy_accept	lexer.c	/^static yyconst flex_int16_t yy_accept[179] =$/;"	v	file:
+yy_at_bol	lexer.c	/^	int yy_at_bol;$/;"	m	struct:yy_buffer_state	file:
+yy_base	lexer.c	/^static yyconst flex_int16_t yy_base[181] =$/;"	v	file:
+yy_bs_column	lexer.c	/^    int yy_bs_column; \/**< The column count. *\/$/;"	m	struct:yy_buffer_state	file:
+yy_bs_lineno	lexer.c	/^    int yy_bs_lineno; \/**< The line count. *\/$/;"	m	struct:yy_buffer_state	file:
+yy_buf_pos	lexer.c	/^	char *yy_buf_pos;		\/* current position in input buffer *\/$/;"	m	struct:yy_buffer_state	file:
+yy_buf_size	lexer.c	/^	yy_size_t yy_buf_size;$/;"	m	struct:yy_buffer_state	file:
+yy_buffer_stack	lexer.c	/^static YY_BUFFER_STATE * yy_buffer_stack = 0; \/**< Stack as an array. *\/$/;"	v	file:
+yy_buffer_stack_max	lexer.c	/^static size_t yy_buffer_stack_max = 0; \/**< capacity of stack. *\/$/;"	v	file:
+yy_buffer_stack_top	lexer.c	/^static size_t yy_buffer_stack_top = 0; \/**< index of top of stack. *\/$/;"	v	file:
+yy_buffer_state	lexer.c	/^struct yy_buffer_state$/;"	s	file:
+yy_buffer_status	lexer.c	/^	int yy_buffer_status;$/;"	m	struct:yy_buffer_state	file:
+yy_c_buf_p	lexer.c	/^static char *yy_c_buf_p = (char *) 0;$/;"	v	file:
+yy_ch_buf	lexer.c	/^	char *yy_ch_buf;		\/* input buffer *\/$/;"	m	struct:yy_buffer_state	file:
+yy_chk	lexer.c	/^static yyconst flex_int16_t yy_chk[234] =$/;"	v	file:
+yy_create_buffer	lexer.c	/^    YY_BUFFER_STATE yy_create_buffer  (FILE * file, int  size )$/;"	f
+yy_def	lexer.c	/^static yyconst flex_int16_t yy_def[181] =$/;"	v	file:
+yy_delete_buffer	lexer.c	/^    void yy_delete_buffer (YY_BUFFER_STATE  b )$/;"	f
+yy_did_buffer_switch_on_eof	lexer.c	/^static int yy_did_buffer_switch_on_eof;$/;"	v	file:
+yy_ec	lexer.c	/^static yyconst flex_int32_t yy_ec[256] =$/;"	v	file:
+yy_fatal_error	lexer.c	/^static void yy_fatal_error (yyconst char* msg )$/;"	f	file:
+yy_fill_buffer	lexer.c	/^	int yy_fill_buffer;$/;"	m	struct:yy_buffer_state	file:
+yy_flex_debug	lexer.c	/^int yy_flex_debug = 0;$/;"	v
+yy_flex_strlen	lexer.c	/^static int yy_flex_strlen (yyconst char * s )$/;"	f	file:
+yy_flex_strncpy	lexer.c	/^static void yy_flex_strncpy (char* s1, yyconst char * s2, int n )$/;"	f	file:
+yy_flush_buffer	lexer.c	/^    void yy_flush_buffer (YY_BUFFER_STATE  b )$/;"	f
+yy_get_next_buffer	lexer.c	/^static int yy_get_next_buffer (void)$/;"	f	file:
+yy_get_previous_state	lexer.c	/^    static yy_state_type yy_get_previous_state (void)$/;"	f	file:
+yy_hold_char	lexer.c	/^static char yy_hold_char;$/;"	v	file:
+yy_init	lexer.c	/^static int yy_init = 0;		\/* whether we need to initialize *\/$/;"	v	file:
+yy_init_buffer	lexer.c	/^    static void yy_init_buffer  (YY_BUFFER_STATE  b, FILE * file )$/;"	f	file:
+yy_init_globals	lexer.c	/^static int yy_init_globals (void)$/;"	f	file:
+yy_input_file	lexer.c	/^	FILE *yy_input_file;$/;"	m	struct:yy_buffer_state	file:
+yy_is_interactive	lexer.c	/^	int yy_is_interactive;$/;"	m	struct:yy_buffer_state	file:
+yy_is_our_buffer	lexer.c	/^	int yy_is_our_buffer;$/;"	m	struct:yy_buffer_state	file:
+yy_last_accepting_cpos	lexer.c	/^static char *yy_last_accepting_cpos;$/;"	v	file:
+yy_last_accepting_state	lexer.c	/^static yy_state_type yy_last_accepting_state;$/;"	v	file:
+yy_load_buffer_state	lexer.c	/^static void yy_load_buffer_state  (void)$/;"	f	file:
+yy_meta	lexer.c	/^static yyconst flex_int32_t yy_meta[36] =$/;"	v	file:
+yy_n_chars	lexer.c	/^	int yy_n_chars;$/;"	m	struct:yy_buffer_state	file:
+yy_n_chars	lexer.c	/^static int yy_n_chars;		\/* number of characters read into yy_ch_buf *\/$/;"	v	file:
+yy_new_buffer	lexer.c	325;"	d	file:
+yy_nxt	lexer.c	/^	flex_int32_t yy_nxt;$/;"	m	struct:yy_trans_info	file:
+yy_nxt	lexer.c	/^static yyconst flex_int16_t yy_nxt[234] =$/;"	v	file:
+yy_reduce_print	parser.c	/^yy_reduce_print (YYSTYPE *yyvsp, int yyrule)$/;"	f	file:
+yy_rule_can_match_eol	lexer.c	/^static yyconst flex_int32_t yy_rule_can_match_eol[47] =$/;"	v	file:
+yy_scan_buffer	lexer.c	/^YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size )$/;"	f
+yy_scan_bytes	lexer.c	/^YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, int  _yybytes_len )$/;"	f
+yy_scan_string	lexer.c	/^YY_BUFFER_STATE yy_scan_string (yyconst char * yystr )$/;"	f
+yy_set_bol	lexer.c	337;"	d	file:
+yy_set_interactive	lexer.c	327;"	d	file:
+yy_size_t	lexer.c	/^typedef unsigned int yy_size_t;$/;"	t	file:
+yy_stack_print	parser.c	/^yy_stack_print (yytype_int16 *bottom, yytype_int16 *top)$/;"	f	file:
+yy_start	lexer.c	/^static int yy_start = 0;	\/* start state number *\/$/;"	v	file:
+yy_state_type	lexer.c	/^typedef int yy_state_type;$/;"	t	file:
+yy_switch_to_buffer	lexer.c	/^    void yy_switch_to_buffer  (YY_BUFFER_STATE  new_buffer )$/;"	f
+yy_symbol_print	parser.c	/^yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)$/;"	f	file:
+yy_symbol_value_print	parser.c	/^yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)$/;"	f	file:
+yy_trans_info	lexer.c	/^struct yy_trans_info$/;"	s	file:
+yy_try_NUL_trans	lexer.c	/^    static yy_state_type yy_try_NUL_trans  (yy_state_type yy_current_state )$/;"	f	file:
+yy_verify	lexer.c	/^	flex_int32_t yy_verify;$/;"	m	struct:yy_trans_info	file:
+yyalloc	lexer.c	/^void *yyalloc (yy_size_t  size )$/;"	f
+yyalloc	parser.c	/^union yyalloc$/;"	u	file:
+yychar	parser.c	/^int yychar;$/;"	v
+yycheck	parser.c	/^static const yytype_int8 yycheck[] =$/;"	v	file:
+yyclearin	parser.c	664;"	d	file:
+yyconst	lexer.c	104;"	d	file:
+yyconst	lexer.c	106;"	d	file:
+yydebug	parser.c	/^int yydebug;$/;"	v
+yydefact	parser.c	/^static const yytype_uint8 yydefact[] =$/;"	v	file:
+yydefgoto	parser.c	/^static const yytype_int8 yydefgoto[] =$/;"	v	file:
+yydestruct	parser.c	/^yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)$/;"	f	file:
+yyensure_buffer_stack	lexer.c	/^static void yyensure_buffer_stack (void)$/;"	f	file:
+yyerrok	parser.c	663;"	d	file:
+yyerror	lexer.c	/^void yyerror(char *msg) {$/;"	f
+yyfree	lexer.c	/^void yyfree (void * ptr )$/;"	f
+yyget_debug	lexer.c	/^int yyget_debug  (void)$/;"	f
+yyget_in	lexer.c	/^FILE *yyget_in  (void)$/;"	f
+yyget_leng	lexer.c	/^int yyget_leng  (void)$/;"	f
+yyget_lineno	lexer.c	/^int yyget_lineno  (void)$/;"	f
+yyget_out	lexer.c	/^FILE *yyget_out  (void)$/;"	f
+yyget_text	lexer.c	/^char *yyget_text  (void)$/;"	f
+yyin	lexer.c	/^FILE *yyin = (FILE *) 0, *yyout = (FILE *) 0;$/;"	v
+yyinput	lexer.c	/^    static int yyinput (void)$/;"	f	file:
+yyleng	lexer.c	/^int yyleng;$/;"	v
+yyless	lexer.c	178;"	d	file:
+yyless	lexer.c	1892;"	d	file:
+yyless	lexer.c	1893;"	d	file:
+yylex_destroy	lexer.c	/^int yylex_destroy  (void)$/;"	f
+yylineno	lexer.c	/^int yylineno = 1;$/;"	v
+yylval	parser.c	/^YYSTYPE yylval;$/;"	v
+yymore	lexer.c	574;"	d	file:
+yynerrs	parser.c	/^int yynerrs;$/;"	v
+yyout	lexer.c	/^FILE *yyin = (FILE *) 0, *yyout = (FILE *) 0;$/;"	v
+yypact	parser.c	/^static const yytype_int8 yypact[] =$/;"	v	file:
+yyparse	parser.c	/^yyparse (void *YYPARSE_PARAM)$/;"	f
+yypgoto	parser.c	/^static const yytype_int8 yypgoto[] =$/;"	v	file:
+yypop_buffer_state	lexer.c	/^void yypop_buffer_state (void)$/;"	f
+yyprhs	parser.c	/^static const yytype_uint8 yyprhs[] =$/;"	v	file:
+yypush_buffer_state	lexer.c	/^void yypush_buffer_state (YY_BUFFER_STATE new_buffer )$/;"	f
+yyr1	parser.c	/^static const yytype_uint8 yyr1[] =$/;"	v	file:
+yyr2	parser.c	/^static const yytype_uint8 yyr2[] =$/;"	v	file:
+yyrealloc	lexer.c	/^void *yyrealloc  (void * ptr, yy_size_t  size )$/;"	f
+yyrestart	lexer.c	/^    void yyrestart  (FILE * input_file )$/;"	f
+yyrhs	parser.c	/^static const yytype_int8 yyrhs[] =$/;"	v	file:
+yyrline	parser.c	/^static const yytype_uint8 yyrline[] =$/;"	v	file:
+yyset_debug	lexer.c	/^void yyset_debug (int  bdebug )$/;"	f
+yyset_in	lexer.c	/^void yyset_in (FILE *  in_str )$/;"	f
+yyset_lineno	lexer.c	/^void yyset_lineno (int  line_number )$/;"	f
+yyset_out	lexer.c	/^void yyset_out (FILE *  out_str )$/;"	f
+yyss	parser.c	/^  yytype_int16 yyss;$/;"	m	union:yyalloc	file:
+yystos	parser.c	/^static const yytype_uint8 yystos[] =$/;"	v	file:
+yystpcpy	parser.c	/^yystpcpy (char *yydest, const char *yysrc)$/;"	f	file:
+yystpcpy	parser.c	959;"	d	file:
+yystrlen	parser.c	/^yystrlen (const char *yystr)$/;"	f	file:
+yystrlen	parser.c	936;"	d	file:
+yystype	parser.c	217;"	d	file:
+yystype	parser.h	122;"	d
+yysyntax_error	parser.c	/^yysyntax_error (char *yyresult, int yystate, int yychar)$/;"	f	file:
+yytable	parser.c	/^static const yytype_uint8 yytable[] =$/;"	v	file:
+yyterminate	lexer.c	718;"	d	file:
+yytext	lexer.c	/^char *yytext;$/;"	v
+yytext_ptr	lexer.c	362;"	d	file:
+yytname	parser.c	/^static const char *const yytname[] =$/;"	v	file:
+yytnamerr	parser.c	/^yytnamerr (char *yyres, const char *yystr)$/;"	f	file:
+yytokentype	parser.c	/^   enum yytokentype {$/;"	g	file:
+yytokentype	parser.h	/^   enum yytokentype {$/;"	g
+yytoknum	parser.c	/^static const yytype_uint16 yytoknum[] =$/;"	v	file:
+yytranslate	parser.c	/^static const yytype_uint8 yytranslate[] =$/;"	v	file:
+yytype_int16	parser.c	/^typedef YYTYPE_INT16 yytype_int16;$/;"	t	file:
+yytype_int16	parser.c	/^typedef short int yytype_int16;$/;"	t	file:
+yytype_int8	parser.c	/^typedef YYTYPE_INT8 yytype_int8;$/;"	t	file:
+yytype_int8	parser.c	/^typedef short int yytype_int8;$/;"	t	file:
+yytype_int8	parser.c	/^typedef signed char yytype_int8;$/;"	t	file:
+yytype_uint16	parser.c	/^typedef YYTYPE_UINT16 yytype_uint16;$/;"	t	file:
+yytype_uint16	parser.c	/^typedef unsigned short int yytype_uint16;$/;"	t	file:
+yytype_uint8	parser.c	/^typedef YYTYPE_UINT8 yytype_uint8;$/;"	t	file:
+yytype_uint8	parser.c	/^typedef unsigned char yytype_uint8;$/;"	t	file:
+yyunput	lexer.c	/^    static void yyunput (int c, register char * yy_bp )$/;"	f	file:
+yyvs	parser.c	/^  YYSTYPE yyvs;$/;"	m	union:yyalloc	file:
+yywrap	lexer.c	/^int yywrap(void) {$/;"	f
+zeroAddr	mDNS.c	/^mDNSlocal  const mDNSAddr        zeroAddr          = { mDNSAddrType_None, {{{ 0 }}} };$/;"	v
+zeroDomainNamePtr	mDNS.c	1108;"	d	file:
+zeroID	mDNS.c	/^static const mDNSOpaque16 zeroID = { { 0, 0 } };$/;"	v	file:
+zeroIPAddr	mDNS.c	/^mDNSexport const mDNSv4Addr      zeroIPAddr        = { { 0 } };$/;"	v
+zeroIPPort	mDNS.c	/^mDNSexport const mDNSIPPort      zeroIPPort        = { { 0 } };$/;"	v
+zeroPad	mDNS.c	/^	unsigned      zeroPad : 1;$/;"	m	struct:mDNSprintf_format	file:
+zeroRR	mDNS.c	/^mDNSexport const ResourceRecord  zeroRR;$/;"	v
+zerov6Addr	mDNS.c	/^mDNSexport const mDNSv6Addr      zerov6Addr        = { { 0 } };$/;"	v

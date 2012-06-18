@@ -1,0 +1,145 @@
+#!/usr/bin/perl
+# Simple pkg-config implementation in perl
+# jelmer@samba.org, November 2006
+
+use strict;
+use Getopt::Long;
+
+my @dirs = split(/:/, $ENV{PKG_CONFIG_PATH});
+
+my $opt_help = 0;
+my $opt_libs = 0;
+my $opt_cflags = 0;
+my $opt_static = 0;
+
+my $result = GetOptions (
+	    'help|h|?' => \$opt_help, 
+		'static' => \$opt_static,
+		'libs' => \$opt_libs,
+		'cflags' => \$opt_cflags
+	    );
+
+if (not $result) {
+	exit(1);
+}
+
+if ($opt_help) {
+	print "pkg-config replacement in perl\n";
+	print "Copyright (C) 2006 Jelmer Vernooij <jelmer\@samba.org>\n";
+	print "\n";
+	print "Usage: pkg-config [OPTIONS] PACKAGE...\n";
+	print " --help			Print this help message\n";
+	print " --static		Print flags for static libraries\n";
+	print " --libs			Print linker flags\n";
+	print " --cflags		Print C compiler flags\n";
+	print "\n";
+	exit(0);
+}
+
+sub find_path($)
+{
+	my $name = shift;
+	foreach my $dir (@dirs) {
+		if (-f "$dir/$name-uninstalled.pc") {
+			return "$dir/$name-uninstalled.pc";
+		}
+	} 
+	foreach my $dir (@dirs) {
+		if (-f "$dir/$name.pc" ) {
+			return "$dir/$name.pc";
+		}
+	}
+	die("No such package `$name'");
+}
+
+sub ReplaceVars($$)
+{
+	my ($expr, $vars) = @_;
+
+	$_ = $expr;
+
+	while (/(.*)\${([^}]+)}(.*)/) {
+		$_ = "$1$vars->{$2}$3";
+	}
+
+	return $_;
+}
+
+sub Parse($)
+{
+	my $name = shift;
+	my $path = find_path($name);
+	my %variables = ();
+	my %fields = ();
+	my $lineno = 0;
+	open(IN, "<$path") or die("Unable to open $path: $!");
+	foreach (<IN>) {
+		$lineno+=1;
+		next if (/^#.*/);
+		if (/^([A-Za-z.]+): (.*)$/) {
+			$fields{$1} = ReplaceVars($2, \%variables);
+		} elsif (/^([A-Za-z_]+)=(.*)$/) {
+			$variables{$1} = ReplaceVars($2, \%variables);
+		} elsif (/^[ \t]*$/) {
+		} else {
+			warn("$path:$lineno: parse error");
+		}
+	}
+	close(IN);
+	return \%fields;
+}
+
+sub Cflags($)
+{
+	my $name = shift;
+	my $fields = Parse($name);
+	my @cflags = split(/ /, $fields->{Cflags});
+	foreach (split(/[, ]/, $fields->{Requires})) {
+		push (@cflags, Cflags($_));
+	}
+	return @cflags;
+}
+
+sub Libs($)
+{
+	my $name = shift;
+	my $fields = Parse($name);
+	my @libs = split(/ /, $fields->{Libs});
+	foreach (split(/[, ]/, $fields->{Requires})) {
+		push (@libs, Libs($_));
+	}
+	if ($opt_static) {
+		foreach (split(/[ ,]/, $fields->{"Requires.private"})) {
+			push (@libs, Libs($_));
+		}
+	}
+	return @libs;
+}
+
+my @out = ();
+
+foreach my $pkg (@ARGV) 
+{
+	push (@out, Libs($pkg)) if ($opt_libs);
+	push (@out, Cflags($pkg)) if ($opt_cflags);
+}
+
+sub nub
+{
+	my @list = @_;
+	my @ret = ();
+	my %seen = ();
+	foreach (@list) {
+		next if (defined($seen{$_}));
+		push (@ret, $_);
+		$seen{$_} = 1;
+	}
+	return @ret;
+}
+
+if ($#out >= 0) {
+	@out = nub(@out);
+	print join(' ', @out) . "\n";
+}
+
+exit 0;

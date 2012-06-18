@@ -1,0 +1,100 @@
+NOTE! The samba.c source in this directory has been removed pending
+approval from SGI to use it under the GPLv3 license.
+
+Please see Samba 3.0.xx for a copy of this code under the GPLv2
+license if required.
+
+samba PMDA
+===========
+
+This PMDA is a sample that illustrates how a simple samba monitor
+PMDA might be constructed, using a shared memory segment to transfer
+information about transaction activity from the smb daemon.
+
+Note:
+	This PMDA may be remade from source and hence requires 
+	a C compiler and Perl to be installed.
+
+	Uses of make(1) may fail (without removing or clobbering files)
+	if the C compiler cannot be found.  This is most likely to
+	happen when running the PMDA ./Install script.
+
+	The only remedial action is to install the C compiler, or
+	hand-craft changes to the Makefile.
+
+Metrics
+=======
+
+The file ./help contains descriptions for all of the metrics exported
+by this PMDA.
+
+Once the PMDA has been installed, the following command will list all
+the available metrics and their explanatory "help" text:
+
+	$ pminfo -fT samba
+
+Installation
+============
+
+ +  # mkdir /var/pcp/pmdas/samba
+ +  # cp * /var/pcp/pmdas/samba
+ +  # cp ../source/include/profile.h /var/pcp/pmdas/samba
+ +  # cd /var/pcp/pmdas/samba
+
+ +  Check that there is no clash in the Performance Metrics Domain
+    defined in ./domain.h and the other PMDAs currently in use
+    (/etc/pmcd.conf).  If there is, edit ./domain.h to choose another
+    domain number.
+
+ +  If you are not installing on an IRIX system, edit samba.c and
+    comment out the 
+
+	#define IRIX 1
+
+ +  Then simply use
+
+	# ./Install
+
+ +  Alternatively, to install just the Performance Metrics Name Space
+    for the samba metrics on the local system, but not the samba PMDA
+    (presumably because the local system is running PCP 1.x and you
+    wish to connect to a remote system where PCP 2.0 and the samba PMDA
+    is running), make sure the Performance Metrics Domain defined in
+    ./domain.h matches the domain chosen for the samba PMDA on the
+    remote system (check the second field in the corresponding line of
+    the pmcd.conf file on the remote system - located in /etc on IRIX
+    and /var/pcp/config/pmcd on Linux), then
+
+	# ./Install -N
+
+De-installation
+===============
+
+ +  Simply use
+
+        # cd /var/pcp/pmdas/samba
+	# ./Remove
+
+ +  If you also want to remove the sources use
+
+	# cd /
+	# rm -rf /var/pcp/pmdas/samba
+
+Making something happen
+=======================
+
+The application "smbd" updates the shared memory segment to add
+profile information about smbd. By default updating is disabled.
+To start updating of the shared memory segment you need to run the
+smbcontrol command to turn on profiling for one or more smbd processes
+(see the man page for smbcontrol).
+
+
+
+Troubleshooting
+===============
+
+ +  After installing or restarting the agent, the PMCD log file
+    (pmcd.log) and the PMDA log file (samba.log) should be checked 
+    for any warnings or errors. These logs are located in 
+    /var/log/pcp/pmcd on Linux and /var/adm/pcplog on IRIX.

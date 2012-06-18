@@ -1,0 +1,37 @@
+This module allows you to limit the packet per second (pps) rate on a per
+destination IP or per destination port base.  As opposed to the `limit' match,
+every destination ip / destination port has it's own limit.
+.TP
+THIS MODULE IS DEPRECATED AND HAS BEEN REPLACED BY ``hashlimit''
+.TP
+.BI "--dstlimit " "avg"
+Maximum average match rate (packets per second unless followed by /sec /minute /hour /day postfixes).
+.TP
+.BI "--dstlimit-mode " "mode"
+The limiting hashmode.  Is the specified limit per
+.B dstip, dstip-dstport
+tuple, 
+.B srcip-dstip
+tuple, or per
+.B srcipdstip-dstport
+tuple.
+.TP
+.BI "--dstlimit-name " "name"
+Name for /proc/net/ipt_dstlimit/* file entry
+.TP
+.BI "[" "--dstlimit-burst " "burst" "]"
+Number of packets to match in a burst.  Default: 5
+.TP
+.BI "[" "--dstlimit-htable-size " "size" "]"
+Number of buckets in the hashtable
+.TP
+.BI "[" "--dstlimit-htable-max " "max" "]"
+Maximum number of entries in the hashtable
+.TP
+.BI "[" "--dstlimit-htable-gcinterval " "interval" "]"
+Interval between garbage collection runs of the hashtable (in miliseconds).
+Default is 1000 (1 second).
+.TP
+.BI "[" "--dstlimit-htable-expire " "time"
+After which time are idle entries expired from hashtable (in miliseconds)?
+Default is 10000 (10 seconds).

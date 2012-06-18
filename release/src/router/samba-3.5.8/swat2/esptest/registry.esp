@@ -1,0 +1,50 @@
+<%
+  page_header("columns", "ESP registry edit", "esptest"); 
+%>
+
+<script type="text/javascript" src="/scripting/client/encoder.js"></script>
+<script type="text/javascript" src="/scripting/client/call.js"></script>
+<script type="text/javascript" src="/scripting/client/regedit.js"></script>
+
+<h1>Registry Editor</h1>
+
+<script type="text/javascript">
+
+/*** init the page for qooxdoo ***/
+window.application.main = function()
+{
+    var doc = this.getClientWindow().getDocument();
+    var inlineWidget = new QxInline;
+    var qwidget = new QxWidget;
+    qwidget.setHeight(800);
+    qwidget.setWidth("100%");
+    qwidget.setBorder(QxBorder.presets.groove);
+
+    var btn1 = new QxButton("Registry Editor");
+    btn1.set({ top: 20, left : 30 });
+    btn1.addEventListener("click", function() {
+            var regWindow = new QxWindow("Registry Editor");
+	    with(regWindow) {
+                setTop(50);
+		setLeft(50);
+                setMinWidth(600);
+		setMinHeight(600);
+		setResizeMethod("frame");
+	    }
+
+	    var regedit = regedit_widget("ncalrpc:");
+	    regWindow.add(regedit);
+	    qwidget.add(regWindow);
+	    regWindow.setVisible(true);
+
+    });
+    qwidget.add(btn1);
+    inlineWidget.add(qwidget);
+    doc.add(inlineWidget, "canvas");
+}
+
+</script>
+
+<div id="canvas" style="overflow:hidden;position:static;margin-top:38px;margin-left:10px;margin-right:700px;width:700px"></div>
+
+<% page_footer(); %>

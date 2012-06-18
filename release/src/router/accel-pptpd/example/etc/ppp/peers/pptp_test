@@ -1,0 +1,13 @@
+plugin "pptp.so"
+pptp_server 192.168.10.10
+#pptp_phone 12345
+name test
+remotename pptp
+file /etc/ppp/options.pptp
+ipparam test
+#debug
+#dump
+mtu 1436
+mru 1436
+lcp-echo-interval 20
+lcp-echo-failure  3

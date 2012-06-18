@@ -1,0 +1,79 @@
+
+<!--
+     File isomscr.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1991
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+<!ENTITY ascr             "&#x1D4B6;" ><!--/scr a, script letter a -->
+<!ENTITY Ascr             "&#x1D49C;" ><!--/scr A, script letter A -->
+<!ENTITY bscr             "&#x1D4B7;" ><!--/scr b, script letter b -->
+<!ENTITY Bscr             "&#x1D49D;" ><!--/scr B, script letter B -->
+<!ENTITY cscr             "&#x1D4B8;" ><!--/scr c, script letter c -->
+<!ENTITY Cscr             "&#x1D49E;" ><!--/scr C, script letter C -->
+<!ENTITY dscr             "&#x1D4B9;" ><!--/scr d, script letter d -->
+<!ENTITY Dscr             "&#x1D49F;" ><!--/scr D, script letter D -->
+<!ENTITY escr             "&#x1D4BA;" ><!--/scr e, script letter e -->
+<!ENTITY Escr             "&#x1D4A0;" ><!--/scr E, script letter E -->
+<!ENTITY fscr             "&#x1D4BB;" ><!--/scr f, script letter f -->
+<!ENTITY Fscr             "&#x1D4A1;" ><!--/scr F, script letter F -->
+<!ENTITY gscr             "&#x1D4BC;" ><!--/scr g, script letter g -->
+<!ENTITY Gscr             "&#x1D4A2;" ><!--/scr G, script letter G -->
+<!ENTITY hscr             "&#x1D4BD;" ><!--/scr h, script letter h -->
+<!ENTITY Hscr             "&#x1D4A3;" ><!--/scr H, script letter H -->
+<!ENTITY iscr             "&#x1D4BE;" ><!--/scr i, script letter i -->
+<!ENTITY Iscr             "&#x1D4A4;" ><!--/scr I, script letter I -->
+<!ENTITY jscr             "&#x1D4BF;" ><!--/scr j, script letter j -->
+<!ENTITY Jscr             "&#x1D4A5;" ><!--/scr J, script letter J -->
+<!ENTITY kscr             "&#x1D4C0;" ><!--/scr k, script letter k -->
+<!ENTITY Kscr             "&#x1D4A6;" ><!--/scr K, script letter K -->
+<!ENTITY lscr             "&#x1D4C1;" ><!--/scr l, script letter l -->
+<!ENTITY Lscr             "&#x1D4A7;" ><!--/scr L, script letter L -->
+<!ENTITY mscr             "&#x1D4C2;" ><!--/scr m, script letter m -->
+<!ENTITY Mscr             "&#x1D4A8;" ><!--/scr M, script letter M -->
+<!ENTITY nscr             "&#x1D4C3;" ><!--/scr n, script letter n -->
+<!ENTITY Nscr             "&#x1D4A9;" ><!--/scr N, script letter N -->
+<!ENTITY oscr             "&#x1D4C4;" ><!--/scr o, script letter o -->
+<!ENTITY Oscr             "&#x1D4AA;" ><!--/scr O, script letter O -->
+<!ENTITY pscr             "&#x1D4C5;" ><!--/scr p, script letter p -->
+<!ENTITY Pscr             "&#x1D4AB;" ><!--/scr P, script letter P -->
+<!ENTITY qscr             "&#x1D4C6;" ><!--/scr q, script letter q -->
+<!ENTITY Qscr             "&#x1D4AC;" ><!--/scr Q, script letter Q -->
+<!ENTITY rscr             "&#x1D4C7;" ><!--/scr r, script letter r -->
+<!ENTITY Rscr             "&#x1D4AD;" ><!--/scr R, script letter R -->
+<!ENTITY sscr             "&#x1D4C8;" ><!--/scr s, script letter s -->
+<!ENTITY Sscr             "&#x1D4AE;" ><!--/scr S, script letter S -->
+<!ENTITY tscr             "&#x1D4C9;" ><!--/scr t, script letter t -->
+<!ENTITY Tscr             "&#x1D4AF;" ><!--/scr T, script letter T -->
+<!ENTITY uscr             "&#x1D4CA;" ><!--/scr u, script letter u -->
+<!ENTITY Uscr             "&#x1D4B0;" ><!--/scr U, script letter U -->
+<!ENTITY vscr             "&#x1D4CB;" ><!--/scr v, script letter v -->
+<!ENTITY Vscr             "&#x1D4B1;" ><!--/scr V, script letter V -->
+<!ENTITY wscr             "&#x1D4CC;" ><!--/scr w, script letter w -->
+<!ENTITY Wscr             "&#x1D4B2;" ><!--/scr W, script letter W -->
+<!ENTITY xscr             "&#x1D4CD;" ><!--/scr x, script letter x -->
+<!ENTITY Xscr             "&#x1D4B3;" ><!--/scr X, script letter X -->
+<!ENTITY yscr             "&#x1D4CE;" ><!--/scr y, script letter y -->
+<!ENTITY Yscr             "&#x1D4B4;" ><!--/scr Y, script letter Y -->
+<!ENTITY zscr             "&#x1D4CF;" ><!--/scr z, script letter z -->
+<!ENTITY Zscr             "&#x1D4B5;" ><!--/scr Z, script letter Z -->

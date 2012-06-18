@@ -1,0 +1,37 @@
+This module matches packets based on their 
+.B address type.
+Address types are used within the kernel networking stack and categorize
+addresses into various groups.  The exact definition of that group depends on the specific layer three protocol.
+.TP
+The following address types are possible:
+.TP
+.BI "UNSPEC"
+an unspecified address (i.e. 0.0.0.0)
+.BI "UNICAST"
+an unicast address
+.BI "LOCAL"
+a local address
+.BI "BROADCAST"
+a broadcast address
+.BI "ANYCAST"
+an anycast packet
+.BI "MULTICAST"
+a multicast address
+.BI "BLACKHOLE"
+a blackhole address
+.BI "UNREACHABLE"
+an unreachable address
+.BI "PROHIBIT"
+a prohibited address
+.BI "THROW"
+FIXME
+.BI "NAT"
+FIXME
+.BI "XRESOLVE"
+FIXME
+.TP
+.BI "--src-type " "type"
+Matches if the source address is of given type
+.TP
+.BI "--dst-type " "type"
+Matches if the destination address is of given type

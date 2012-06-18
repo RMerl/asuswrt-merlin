@@ -1,0 +1,59 @@
+udhcp server (udhcpd)
+--------------------
+
+The only command line argument to udhcpd is an optional specifed
+config file. If no config file is specified, udhcpd uses the default
+config file, /etc/udhcpd.conf. Ex:
+
+udhcpd /etc/udhcpd.eth1.conf
+
+The udhcp server employs a number of simple config files:
+
+udhcpd.leases
+------------
+
+The udhcpd.leases behavior is designed for an embedded system. The
+file is written either every auto_time seconds, or when a SIGUSR1
+is received (the auto_time timer restarts if a SIGUSR1 is received). 
+If you send a SIGTERM to udhcpd directly after a SIGUSR1, udhcpd will
+finish writing the leases file and wait for the aftermentioned script
+to be executed and finish before quiting, so you do not need to sleep
+between sending signals. When the file is written, a script can be
+optionally called to commit the file to flash. Lease times are stored
+in the file by time remaining in lease (for systems without clock
+that works when there is no power), or by the absolute time that it
+expires in seconds from epoch. In the remaining format, expired leases
+are stored as zero. The file is of the format:
+
+16 byte MAC
+4 byte ip address
+u32 expire time
+16 byte MAC
+4 byte ip address
+u32 expire time
+.
+etc.
+
+example: hexdump udhcpd.leases
+
+0000000 1000 c95a 27d9 0000 0000 0000 0000 0000
+0000010 a8c0 150a 0d00 2d29 5000 23fc 8566 0000
+0000020 0000 0000 0000 0000 a8c0 140a 0d00 4e29
+0000030
+
+
+udhcpd.conf
+----------
+
+The format is fairly simple, there is a sample file with all the
+available options and comments describing them in samples/udhcpd.conf
+
+compile time options
+-------------------
+	
+dhcpd.h contains the other two compile time options:
+	
+	LEASE_TIME: The default lease time if not specified in the config
+	file.
+	
+	DHCPD_CONFIG_FILE: The defualt config file to use.

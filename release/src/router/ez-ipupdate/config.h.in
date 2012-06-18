@@ -1,0 +1,170 @@
+/* config.h.in.  Generated automatically from configure.in by autoheader.  */
+
+/* Define as the return type of signal handlers (int or void).  */
+#undef RETSIGTYPE
+
+#undef PACKAGE
+#undef VERSION
+#undef DEBUG
+#undef HAVE_GETPASS
+#undef HAVE_SYS_ERRLIST
+#undef OS
+#undef USE_MD5
+#undef DEF_SERVICE
+
+/* Define if you have the fork function.  */
+#undef HAVE_FORK
+
+/* Define if you have the getegid function.  */
+#undef HAVE_GETEGID
+
+/* Define if you have the geteuid function.  */
+#undef HAVE_GETEUID
+
+/* Define if you have the getgid function.  */
+#undef HAVE_GETGID
+
+/* Define if you have the gethostbyaddr function.  */
+#undef HAVE_GETHOSTBYADDR
+
+/* Define if you have the getopt function.  */
+#undef HAVE_GETOPT
+
+/* Define if you have the getopt_long function.  */
+#undef HAVE_GETOPT_LONG
+
+/* Define if you have the getpid function.  */
+#undef HAVE_GETPID
+
+/* Define if you have the getservbyname function.  */
+#undef HAVE_GETSERVBYNAME
+
+/* Define if you have the getuid function.  */
+#undef HAVE_GETUID
+
+/* Define if you have the herror function.  */
+#undef HAVE_HERROR
+
+/* Define if you have the inet_addr function.  */
+#undef HAVE_INET_ADDR
+
+/* Define if you have the inet_aton function.  */
+#undef HAVE_INET_ATON
+
+/* Define if you have the inet_ntoa function.  */
+#undef HAVE_INET_NTOA
+
+/* Define if you have the setegid function.  */
+#undef HAVE_SETEGID
+
+/* Define if you have the seteuid function.  */
+#undef HAVE_SETEUID
+
+/* Define if you have the setgid function.  */
+#undef HAVE_SETGID
+
+/* Define if you have the setuid function.  */
+#undef HAVE_SETUID
+
+/* Define if you have the snprintf function.  */
+#undef HAVE_SNPRINTF
+
+/* Define if you have the socket function.  */
+#undef HAVE_SOCKET
+
+/* Define if you have the stat function.  */
+#undef HAVE_STAT
+
+/* Define if you have the strdup function.  */
+#undef HAVE_STRDUP
+
+/* Define if you have the strerror function.  */
+#undef HAVE_STRERROR
+
+/* Define if you have the strftime function.  */
+#undef HAVE_STRFTIME
+
+/* Define if you have the vfork function.  */
+#undef HAVE_VFORK
+
+/* Define if you have the vfprintf function.  */
+#undef HAVE_VFPRINTF
+
+/* Define if you have the vsnprintf function.  */
+#undef HAVE_VSNPRINTF
+
+/* Define if you have the vsprintf function.  */
+#undef HAVE_VSPRINTF
+
+/* Define if you have the wait function.  */
+#undef HAVE_WAIT
+
+/* Define if you have the waitpid function.  */
+#undef HAVE_WAITPID
+
+/* Define if you have the <arpa/inet.h> header file.  */
+#undef HAVE_ARPA_INET_H
+
+/* Define if you have the <errno.h> header file.  */
+#undef HAVE_ERRNO_H
+
+/* Define if you have the <fcntl.h> header file.  */
+#undef HAVE_FCNTL_H
+
+/* Define if you have the <getopt.h> header file.  */
+#undef HAVE_GETOPT_H
+
+/* Define if you have the <grp.h> header file.  */
+#undef HAVE_GRP_H
+
+/* Define if you have the <netdb.h> header file.  */
+#undef HAVE_NETDB_H
+
+/* Define if you have the <netinet/in.h> header file.  */
+#undef HAVE_NETINET_IN_H
+
+/* Define if you have the <pwd.h> header file.  */
+#undef HAVE_PWD_H
+
+/* Define if you have the <signal.h> header file.  */
+#undef HAVE_SIGNAL_H
+
+/* Define if you have the <stdarg.h> header file.  */
+#undef HAVE_STDARG_H
+
+/* Define if you have the <sys/socket.h> header file.  */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define if you have the <sys/sockio.h> header file.  */
+#undef HAVE_SYS_SOCKIO_H
+
+/* Define if you have the <sys/stat.h> header file.  */
+#undef HAVE_SYS_STAT_H
+
+/* Define if you have the <sys/time.h> header file.  */
+#undef HAVE_SYS_TIME_H
+
+/* Define if you have the <sys/types.h> header file.  */
+#undef HAVE_SYS_TYPES_H
+
+/* Define if you have the <sys/wait.h> header file.  */
+#undef HAVE_SYS_WAIT_H
+
+/* Define if you have the <syslog.h> header file.  */
+#undef HAVE_SYSLOG_H
+
+/* Define if you have the <unistd.h> header file.  */
+#undef HAVE_UNISTD_H
+
+/* Define if you have the nsl library (-lnsl).  */
+#undef HAVE_LIBNSL
+
+/* Define if you have the socket library (-lsocket).  */
+#undef HAVE_LIBSOCKET
+
+/* Name of package */
+#undef PACKAGE
+
+/* Version number of package */
+#undef VERSION
+

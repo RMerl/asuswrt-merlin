@@ -1,0 +1,49 @@
+This module, when combined with connection tracking, allows access to
+more connection tracking information than the "state" match.
+(this module is present only if iptables was compiled under a kernel
+supporting this feature)
+.TP
+.BI "--ctstate " "state"
+Where state is a comma separated list of the connection states to
+match.  Possible states are
+.B INVALID
+meaning that the packet is associated with no known connection,
+.B ESTABLISHED
+meaning that the packet is associated with a connection which has seen
+packets in both directions,
+.B NEW
+meaning that the packet has started a new connection, or otherwise
+associated with a connection which has not seen packets in both
+directions, and
+.B RELATED
+meaning that the packet is starting a new connection, but is
+associated with an existing connection, such as an FTP data transfer,
+or an ICMP error.
+.B SNAT
+A virtual state, matching if the original source address differs from
+the reply destination.
+.B DNAT
+A virtual state, matching if the original destination differs from the
+reply source.
+.TP
+.BI "--ctproto " "proto"
+Protocol to match (by number or name)
+.TP
+.BI "--ctorigsrc " "[!] \fIaddress\fP[/\fImask\fP]"
+Match against original source address
+.TP
+.BI "--ctorigdst " "[!] \fIaddress\fP[/\fImask\fP]"
+Match against original destination address
+.TP
+.BI "--ctreplsrc " "[!] \fIaddress\fP[/\fImask\fP]"
+Match against reply source address
+.TP
+.BI "--ctrepldst " "[!] \fIaddress\fB[/\fImask\fP]"
+Match against reply destination address
+.TP
+.BI "--ctstatus " "[\fINONE|EXPECTED|SEEN_REPLY|ASSURED\fP][,...]"
+Match against internal conntrack states
+.TP
+.BI "--ctexpire " "\fItime\fP[\fI:time\fP]"
+Match remaining lifetime in seconds against given value
+or range of values (inclusive)

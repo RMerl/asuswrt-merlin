@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>lpc - Administration Program</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="lprm Job Selection" href=
+    "x4719.htm">
+    <link rel="NEXT" title=
+    "Queue Management - enable, disable, up, down" href=
+    "x4771.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x4719.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x4771.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="LPC"></a>Chapter 9. <b class=
+      "APPLICATION">lpc</b> - Administration Program</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>9.1. <a href="lpc.htm#AEN4753">Informational Commands
+          - status, flush, active, reread</a></dt>
+
+          <dt>9.2. <a href="x4771.htm">Queue Management - enable,
+          disable, up, down</a></dt>
+
+          <dt>9.3. <a href="x4783.htm">Printing Management - start,
+          stop, up, down</a></dt>
+
+          <dt>9.4. <a href="x4792.htm">Problem Management - abort,
+          redo, kill</a></dt>
+
+          <dt>9.5. <a href="x4798.htm">Job Scheduling - topq,
+          holdall, noholdall, hold, release</a></dt>
+
+          <dt>9.6. <a href="lpcredirect.htm">Queue Management -
+          class, redirect, move</a></dt>
+        </dl>
+      </div>
+
+      <p>The <b class="APPLICATION">lpc</b> command is the main way
+      that the <b class="APPLICATION">lpd</b> server is controlled.
+      Here is the help information displayed by the command:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN4734"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {308} %</samp> <kbd class=
+"USERINPUT">lpc -=</kbd>
+    lpc: Illegal option '='
+    usage: lpc [-Ddebuglevel][-Pprinter][-Shost][-Uusername][-V] [command]
+     with no command, reads from stdin
+      -Ddebuglevel - debug level
+      -Pprinter    - printer or printer@host
+      -Shost       - connect to lpd server on host
+      -Uuser       - identify command as coming from user
+      -V           - increase information verbosity
+     commands:
+     active  (printer[@host])        - check for active server
+     abort   (printer[@host] | all)  - stop server
+     class   printer[@host] (class | off) - show/set class printing
+     disable (printer[@host] | all)  - disable queueing
+     debug   (printer[@host] | all) debugparms - set debug level for printer
+     down    (printer[@host] | all)  - disable printing and queueing
+     enable  (printer[@host] | all)  - enable queueing
+     hold    (printer[@host] | all) (name[@host] | job | all)* - hold job
+     holdall (printer[@host] | all)  - hold all jobs on
+     kill    (printer[@host] | all)  - stop and restart server
+     lpd     (printer[@host]) - get LPD PID
+     lpq     (printer[@host] | all) (name[@host] | job | all)*   - run <b
+ class="APPLICATION">lpq</b>
+     lprm    (printer[@host] | all) (name[@host]|host|job| all)* - run <b
+ class="APPLICATION">lprm</b>
+     msg printer message text- set status message
+     move printer (user|jobid)* target - move jobs to new queue
+     noholdall (printer[@host] | all)- hold all jobs off
+     printcap(printer[@host] | all)  - report printcap values
+     quit                            - exit LPC
+     redirect(printer[@host] | all) (printer@host | off )*     - redirect jobs
+     redo    (printer[@host] | all) (name[@host] | job | all)* - redo jobs
+     release (printer[@host] | all) (name[@host] | job | all)* - release jobs
+     reread  (printer[@host])        - LPD reread database information
+     start   (printer[@host] | all)  - start printing
+     status  (printer[@host] | all)  - status of printers
+     stop    (printer[@host] | all)  - stop  printing
+     topq    (printer[@host] | all) (name[@host] | job | all)*  - reorder job
+     up      (printer[@host] | all) - enable printing and queueing
+       diagnostic:
+          defaultq               - show default queue for LPD server
+          defaults               - show default configuration values
+          client  (printer | all) - client config and printcap information
+          server (printer | all) - server config and printcap
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Most of the <b class="APPLICATION">lpc</b> command line
+      options are common to all <a href="lprngclients.htm"><b
+      class="APPLICATION">LPRng</b> Clients</a>, with the exception
+      of the <var class="LITERAL">-S server</var> literal. This
+      option allows the <b class="APPLICATION">lpd</b> host to be
+      explicitly specified.</p>
+
+      <p>The <b class="APPLICATION">lpc</b> commands can be
+      classified as <span class="emphasis"><i class=
+      "EMPHASIS">informational</i></span>, <span class=
+      "emphasis"><i class="EMPHASIS">queue management</i></span>,
+      <span class="emphasis"><i class="EMPHASIS">problem
+      management</i></span>, <span class="emphasis"><i class=
+      "EMPHASIS">job scheduling</i></span>, and <span class=
+      "emphasis"><i class="EMPHASIS">diagnostic</i></span>.</p>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="AEN4753">9.1. Informational
+        Commands - status, flush, active, reread</a></h1>
+
+        <p>The <tt class="COMMAND">lpc status</tt> command displays
+        the current status of various activities of interest to the
+        system administrator. This information includes the process
+        ID of the server and other processes.</p>
+
+        <p>During normal operation, when requested for job status
+        information the <b class="APPLICATION">lpd</b> server will
+        create this information and then save it in a status cache.
+        When successive requests for the same information arrive,
+        the cache is checked to see if the information is already
+        in the cache and there have been no status changes. If this
+        is the case, the cached status information is used. The <tt
+        class="COMMAND">lpc flush</tt> command will flush (delete)
+        this cache information and cause the <b class=
+        "APPLICATION">lpd</b> server to regenerate it from the
+        original job files.</p>
+
+        <p>The <tt class="COMMAND">lpc active</tt> command connects
+        to the print server and gets the Process ID of the <b
+        class="APPLICATION">lpd</b> process. This is useful to
+        determine if the <b class="APPLICATION">lpd</b> server is
+        running on the print server.</p>
+
+        <p>The <tt class="COMMAND">reread</tt> command connects to
+        the <b class="APPLICATION">lpd</b> print server and
+        requests that the server reread the <tt class=
+        "FILENAME">printcap</tt>, <tt class=
+        "FILENAME">lpd.conf</tt>, and <tt class=
+        "FILENAME">lpd.perms</tt> database files.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x4719.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x4771.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top"><b class=
+          "APPLICATION">lprm</b> Job Selection</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Queue
+          Management - enable, disable, up, down</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

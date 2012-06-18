@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Emulation for UNIX SystemV lp and lpstat</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Installation" href="installation.htm">
+    <link rel="PREVIOUS" title=
+    "Updating Print Spooler Software and Startup Scripts" href=
+    "update.htm">
+    <link rel="NEXT" title="SAMBA and LPRng" href="smb.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "update.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 2.
+          Installation</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "smb.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="LPSIMULATION">2.11. Emulation for
+      UNIX SystemV <b class="APPLICATION">lp</b> and <b class=
+      "APPLICATION">lpstat</b></a></h1>
+
+      <p>Many utilities in the UNIX System V environment require
+      the <b class="APPLICATION">lp</b>, <b class=
+      "APPLICATION">lpstat</b>, and <b class=
+      "APPLICATION">cancel</b> programs. It is almost impossible to
+      modify these utilities, as many are <span class="emphasis"><i
+      class="EMPHASIS">vintage</i></span> software which is
+      unsupported or which would be too costly to update. In order
+      to support these applications <b class=
+      "APPLICATION">LPRng</b> emulates the <b class=
+      "APPLICATION">lp</b>, <b class="APPLICATION">lpstat</b>, and
+      <b class="APPLICATION">clean</b> programs. See the <b class=
+      "APPLICATION">LPRng</b> man pages for <b class=
+      "APPLICATION">lp</b>, <b class="APPLICATION">lpstat</b>, and
+      <b class="APPLICATION">cancel</b> in the <b class=
+      "APPLICATION">LPRng</b> distribution for details and
+      compatibility.</p>
+
+      <p>The <b class="APPLICATION">LPRng</b> <b class=
+      "APPLICATION">lpstat</b> emulator accepts the <b class=
+      "APPLICATION">lpstat</b> command line options returns status
+      in a format that is close to the one that common <b class=
+      "APPLICATION">lpstat</b> implementations return.
+      Unfortunately, due to the wide variety of different
+      modifications and vendor versions of <b class=
+      "APPLICATION">lpstat</b> there are slight differences between
+      the this status and the status returned by the original <b
+      class="APPLICATION">lpstat</b>. If this is the case, then
+      there is little to do but to modify the source code for <b
+      class="APPLICATION">lpstat</b> and compile a version that
+      implements the required format.</p>
+
+      <p>If the <b class="APPLICATION">lpr</b> program is invoked
+      with the name <b class="APPLICATION">lp</b>, it will simulate
+      the <b class="APPLICATION">lp</b> options. This can be done
+      by making a symbolic link to the <b class=
+      "APPLICATION">lpr</b> program or by making a copy of the <b
+      class="APPLICATION">lpr</b> program with the name <b class=
+      "APPLICATION">lp</b>.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1338"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {59} #</samp> <kbd class=
+"USERINPUT">cd /usr/bin</kbd>
+    <samp class="PROMPT">h4: {60} #</samp> <kbd class=
+"USERINPUT">ln -s lpr lp</kbd>
+    <samp class="PROMPT">h4: {61} #</samp> <kbd class=
+"USERINPUT">lp /tmp/hi</kbd>
+    request id is root@h4+489
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Finally, if the <b class="APPLICATION">lprm</b> program is
+      invoked with the name <b class="APPLICATION">cancel</b> it
+      will simulate the <b class="APPLICATION">cancel</b> command.
+      This can be done by making a symbolic link to the <b class=
+      "APPLICATION">lprm</b> program or by making a copy of the <b
+      class="APPLICATION">lprm</b> program with the name <b class=
+      "APPLICATION">cancel</b>.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1353"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {62} #</samp> <kbd class=
+"USERINPUT">cd /usr/bin</kbd>
+    <samp class="PROMPT">h4: {63} #</samp> <kbd class=
+"USERINPUT">ln -s lprm cancel</kbd>
+    <samp class="PROMPT">h4: {64} #</samp> <kbd class=
+"USERINPUT">cancel 489</kbd>
+    cancel 513
+    Printer lp@h9:
+      checking perms 'root@h9+513'
+      dequeued 'root@h9+513'
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Many <span class="emphasis"><i class=
+      "EMPHASIS">vintage</i></span> or <span class="emphasis"><i
+      class="EMPHASIS">legacy</i></span> applications have fully
+      qualified paths to the <b class="APPLICATION">lp</b> and <b
+      class="APPLICATION">lpstat</b> executables, and it may be
+      necessary to make additional symbolic links or copies of the
+      <b class="APPLICATION">LPRng</b> executables to satisfy their
+      pathname requirements.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1367"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {65} #</samp> <kbd class=
+"USERINPUT">ln -s /usr/bin/lpr /usr/ucb/lpr</kbd>
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "update.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "smb.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Updating Print
+          Spooler Software and Startup Scripts</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "installation.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">SAMBA and <b
+          class="APPLICATION">LPRng</b></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

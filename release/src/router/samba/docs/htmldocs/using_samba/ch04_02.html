@@ -1,0 +1,211 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 4] 4.2 Special Sections</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:32:00Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_01.html" TITLE="4.1 Learning the Samba Configuration File">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.1 Learning the Samba Configuration File" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch04_01.html" TITLE="4. Disk Shares ">
+Chapter 4<br>
+Disk Shares </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_03.html" TITLE="4.3 Configuration File Options">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.3 Configuration File Options" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch04-81402">
+4.2 Special Sections</a></h2><P CLASS="para">
+<I CLASS="filename">
+</i>Now that we've gotten our feet wet with variables, there are a few special sections of the Samba configuration file that we should talk about. Again, don't worry if you do not understand each and every configuration options listed below; we'll go over each of them over the course of the upcoming chapters.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-pgfId-943263">
+4.2.1 The [ globals] Section</a></h3><P CLASS="para">
+The <CODE CLASS="literal">
+[globals]</code> section appears in virtually every Samba configuration file, even though it is not mandatory to define one. Any option set in this section of the file will apply to all the other shares, as if the contents of the section were copied into the share itself. There is one catch: other sections can list the same option in their section with a new value; this has the effect of overriding the value specified in the <CODE CLASS="literal">
+[globals]</code> section. </p><P CLASS="para">
+To illustrate this, let's again look at the opening example of the chapter:</p><PRE CLASS="programlisting">
+[global] 
+	log level = 1 
+	max log size = 1000
+	socket options = TCP_NODELAY IPTOS_LOWDELAY 
+	guest ok = no
+[homes] 
+	browseable = no
+	map archive = yes
+[printers] 
+	path = /usr/tmp
+	guest ok = yes
+	printable = yes
+	min print space = 2000
+[test] 
+	browseable = yes
+	read only = yes
+	guest ok = yes
+	path = /export/samba/test</pre><P CLASS="para">
+In the previous example, if we were going to connect a client to the <CODE CLASS="literal">
+[test]</code> share, Samba would first read in the <CODE CLASS="literal">
+[globals]</code> section. At that point, it would set the option <CODE CLASS="literal">
+guest</code> <CODE CLASS="literal">
+ok</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+no</code> as the global default for each share it encounters throughout the configuration file. This includes the <CODE CLASS="literal">
+[homes]</code> and <CODE CLASS="literal">
+[printers]</code> shares. When it reads in the <CODE CLASS="literal">
+[test]</code> share, however, it would then find the configuration option <CODE CLASS="literal">
+guest</code> <CODE CLASS="literal">
+ok</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code>, and override the default from the <CODE CLASS="literal">
+[globals]</code> section with the value <CODE CLASS="literal">
+yes</code> in the context of the <CODE CLASS="literal">
+[pub]</code> share.</p><P CLASS="para">
+Any option that appears outside of a section (before the first marked section) is also assumed to be a global option.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-pgfId-942795">
+4.2.2 The [homes] Section</a></h3><P CLASS="para">
+If a client attempts to connect to a share that doesn't appear in the <I CLASS="filename">
+smb.conf</i> file, Samba will search for a <CODE CLASS="literal">
+[homes]</code> share in the configuration file. If one exists, the unidentified share name is assumed to be a Unix username, which is queried in the password database of the Samba server. If that username appears, Samba assumes the client is a Unix user trying to connect to his or her home directory on the server.</p><P CLASS="para">
+For example, assume a client machine is connecting to the Samba server <CODE CLASS="literal">
+hydra</code> for the first time, and tries to connect to a share named [<CODE CLASS="literal">alice]</code>. There is no <CODE CLASS="literal">
+[alice]</code> share defined in the <I CLASS="filename">
+smb.conf</i> file, but there is a <CODE CLASS="literal">
+[homes]</code>, so Samba searches the password database file and finds an <CODE CLASS="literal">alice</code> user account is present on the system. Samba then checks the password provided by the client against user <CODE CLASS="literal">alice</code>'s Unix password&nbsp;- either with the password database file if it's using non-encrypted passwords, or Samba's <I CLASS="filename">
+smbpasswd</i> file if encrypted passwords are in use. If the passwords match, then Samba knows it has guessed right: the user <CODE CLASS="literal">alice</code> is trying to connect to her home directory. Samba will then create a share called <CODE CLASS="literal">[alice]</code> for her.</p><P CLASS="para">
+The process of using the <CODE CLASS="literal">
+[homes]</code> section to create users (and dealing with their passwords) is discussed in more detail in the <a href="ch06_01.html"><b>Chapter 6, <CITE CLASS="chapter">Users, Security, and Domains</cite></b></a>.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-pgfId-942816">
+4.2.3 The [printers] Section</a></h3><P CLASS="para">
+The third special section is called <CODE CLASS="literal">
+[printers]</code> and is similar to <CODE CLASS="literal">
+[homes]</code>. If a client attempts to connect to a share that isn't in the <I CLASS="filename">
+smb.conf</i>  file, and its name can't be found in the password file, Samba will check to see if it is a printer share. Samba does this by reading the printer capabilities file (usually <I CLASS="filename">
+/etc/printcap</i>) to see if the share name appears there.[<A CLASS="footnote" HREF="#ch04-pgfId-960558">1</a>] If it does, Samba creates a share named after the printer.</p><BLOCKQUOTE CLASS="footnote">
+<DIV CLASS="footnote">
+<P CLASS="para">
+<A CLASS="footnote" NAME="ch04-pgfId-960558">[1]</a> Depending on your system, this file may not be <EM CLASS="emphasis">
+/etc/printcap</em>. You can use the <EM CLASS="emphasis">
+testparm</em> command that comes with Samba to determine the value of the <CODE CLASS="literal">
+printcap</code> <CODE CLASS="literal">
+name</code> configuration option; this was the default value chosen when Samba was compiled.</p></div></blockquote><P CLASS="para">
+Like <CODE CLASS="literal">
+[homes]</code>, this means you don't have to maintain a share for each of your system printers in the <I CLASS="filename">
+smb.conf</i>  file. Instead, Samba honors the Unix printer registry if you request it to, and provides the registered printers to the client machines. There is, however, an obvious limitation: if you have an account named <CODE CLASS="literal">
+fred</code> and a printer named <CODE CLASS="literal">
+fred</code>, Samba will always find the user account first, even if the client really needed to connect to the printer.</p><P CLASS="para">
+The process of setting up the <CODE CLASS="literal">
+[printers]</code> share is discussed in more detail in <a href="ch07_01.html"><b>Chapter 7, <CITE CLASS="chapter">Printing and Name Resolution</cite></b></a>.<I CLASS="filename">
+</i> </p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-pgfId-968226">
+4.2.4 Configuration Options</a></h3><P CLASS="para">
+<I CLASS="filename">
+</i>Options in the Samba configuration files fall into one of two categories: <I CLASS="firstterm">
+global</i> or <I CLASS="firstterm">
+share</i>. Each category dictates where an option can appear in the configuration file.</p><DL CLASS="variablelist">
+<DT CLASS="term">
+Global</dt><DD CLASS="listitem">
+<P CLASS="para">Global options <EM CLASS="emphasis">
+must</em> appear in the <CODE CLASS="literal">
+[global]</code> section and nowhere else. These are options that typically apply to the behavior of the Samba server itself, and not to any of its shares.</p></dd><DT CLASS="term">
+Share</dt><DD CLASS="listitem">
+<P CLASS="para">Share options can appear in specific shares, or they can appear in the <CODE CLASS="literal">
+[global]</code> section. If they appear in the <CODE CLASS="literal">
+[global]</code> section, they will define a default behavior for all shares, unless a share overrides the option with a value of its own.</p></dd></dl><P CLASS="para">
+In addition, the values that a configuration option can take can be divided into four categories. They are as follows:</p><DL CLASS="variablelist">
+<DT CLASS="term">
+Boolean</dt><DD CLASS="listitem">
+<P CLASS="para">These are simply yes or no values, but can be represented by any of the following: <CODE CLASS="literal">
+yes</code>, <CODE CLASS="literal">
+no</code>, <CODE CLASS="literal">
+true</code>, <CODE CLASS="literal">
+false</code>, <CODE CLASS="literal">
+0</code>, <CODE CLASS="literal">
+1</code>. The values are case insensitive: <CODE CLASS="literal">
+YES</code> is the same as <CODE CLASS="literal">
+yes</code>.</p></dd><DT CLASS="term">
+Numerical</dt><DD CLASS="listitem">
+<P CLASS="para">An integer, hexidecimal, or octal number. The standard <CODE CLASS="literal">
+0x</code><EM CLASS="emphasis">
+nn</em> syntax is used for hexadecimal and <CODE CLASS="literal">
+0</code><EM CLASS="emphasis">
+nnn</em> for octal.</p></dd><DT CLASS="term">
+String</dt><DD CLASS="listitem">
+<P CLASS="para">
+A string of case-sensitive characters, such as a filename or a username.</p></dd><DT CLASS="term">
+Enumerated list</dt><DD CLASS="listitem">
+<P CLASS="para">
+A finite list of known values. In effect, a boolean is an enumerated list with only two values.<I CLASS="filename">
+</i> </p></dd></dl></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_01.html" TITLE="4.1 Learning the Samba Configuration File">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.1 Learning the Samba Configuration File" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_03.html" TITLE="4.3 Configuration File Options">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.3 Configuration File Options" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+4.1 Learning the Samba Configuration File</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+4.3 Configuration File Options</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

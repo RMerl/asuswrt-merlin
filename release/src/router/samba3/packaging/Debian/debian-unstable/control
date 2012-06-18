@@ -1,0 +1,203 @@
+Source: samba
+Section: net
+Priority: optional
+Maintainer: Eloy A. Paris <peloy@debian.org>
+Uploaders: Steve Langasek <vorlon@debian.org>, Christian Perrier <bubulle@debian.org>
+Build-Depends: debhelper (>= 4.1.13), libpam0g-dev, libreadline5-dev, libcupsys2-dev (>=1.1.20final+cvs20040330-4), autoconf, libacl1-dev (>= 2.2.11-1) [i386 ia64 alpha amd64 arm hppa m32r m68k mips mipsel powerpc ppc64 s390 s390x sh3 sh3eb sh4 sh4eb sparc], libkrb5-dev, libldap2-dev, po-debconf, python2.3-dev, binutils (>= 2.14.90.0.7), type-handling (>= 0.2.1), libpopt-dev, dpkg-dev (>= 1.13.9)
+Standards-Version: 3.6.2
+
+Package: samba
+Architecture: any
+Depends: samba-common (= ${Source-Version}), netbase, logrotate, ${shlibs:Depends}, ${misc:Depends}, libpam-runtime (>= 0.76-13.1), libpam-modules, lsb-base (>= 3.0-6)
+Replaces: samba-common (<= 2.0.5a-2)
+Suggests: samba-doc
+Description: a LanManager-like file and printer server for Unix
+ The Samba software suite is a collection of programs that
+ implements the SMB protocol for unix systems, allowing you to serve
+ files and printers to Windows, NT, OS/2 and DOS clients. This protocol
+ is sometimes also referred to as the LanManager or NetBIOS protocol.
+ .
+ This package contains all the components necessary to turn your
+ Debian GNU/Linux box into a powerful file and printer server.
+ .
+ Currently, the Samba Debian packages consist of the following:
+ .
+  samba - LanManager-like file and printer server for Unix.
+  samba-common - Samba common files used by both the server and the client.
+  smbclient - LanManager-like simple client for Unix.
+  swat - Samba Web Administration Tool
+  samba-doc - Samba documentation.
+  smbfs - Mount and umount commands for the smbfs (kernels 2.2.x and above).
+  libpam-smbpass - pluggable authentication module for SMB password database
+  libsmbclient - Shared library that allows applications to talk to SMB servers
+  libsmbclient-dev - libsmbclient shared libraries
+  winbind: Service to resolve user and group information from Windows NT servers
+  python2.3-samba: Python bindings that allow access to various aspects of Samba
+ .
+ It is possible to install a subset of these packages depending on
+ your particular needs. For example, to access other SMB servers you
+ should only need the smbclient and samba-common packages.
+ .
+ http://www.samba.org/
+
+Package: samba-common
+Architecture: any
+Depends: libpam-modules, ${shlibs:Depends}, ${misc:Depends}
+Replaces: samba (<< 3.0.20b-1)
+Description: Samba common files used by both the server and the client
+ The Samba software suite is a collection of programs that
+ implements the SMB protocol for unix systems, allowing you to serve
+ files and printers to Windows, NT, OS/2 and DOS clients. This protocol
+ is sometimes also referred to as the LanManager or NetBIOS protocol.
+ .
+ This package contains the common files that are used by both the server
+ (provided in the samba package) and the client (provided in the smbclient
+ package).
+
+Package: smbclient
+Architecture: any
+Depends: samba-common (= ${Source-Version}), ${shlibs:Depends}
+Replaces: samba (<< 2.999+3.0.alpha21-4)
+Provides: samba-client
+Suggests: smbfs
+Description: a LanManager-like simple client for Unix
+ The Samba software suite is a collection of programs that
+ implements the SMB protocol for unix systems, allowing you to serve
+ files and printers to Windows, NT, OS/2 and DOS clients. This protocol
+ is sometimes also referred to as the LanManager or NetBIOS protocol.
+ .
+ This package contains some client components of the Samba suite. In
+ particular it includes the command line utilities smbclient, smbtar,
+ and smbspool. If you want to mount shares exported from Microsoft
+ Windows machines or a Samba server you must install the smbfs package.
+
+Package: swat
+Architecture: any
+Depends: samba (= ${Source-Version}), ${shlibs:Depends}, ${misc:Depends}
+Recommends: samba-doc
+Description: Samba Web Administration Tool
+ The Samba software suite is a collection of programs that
+ implements the SMB protocol for unix systems, allowing you to serve
+ files and printers to Windows, NT, OS/2 and DOS clients. This protocol
+ is sometimes also referred to as the LanManager or NetBIOS protocol.
+ .
+ This package contains the components of the Samba suite that are needed
+ for Web administration of the Samba server.
+ .
+ Note: if you want to use the on-line documentation that is accesible
+ through the Swat front-end you must install the samba-doc package.
+
+Package: samba-doc
+Section: doc
+Architecture: all
+Description: Samba documentation
+ The Samba software suite is a collection of programs that
+ implements the SMB protocol for unix systems, allowing you to serve
+ files and printers to Windows, NT, OS/2 and DOS clients. This protocol
+ is sometimes also referred to as the LanManager or NetBIOS protocol.
+ .
+ This package contains all the documentation that comes in the original
+ tarball.
+
+Package: smbfs
+Section: otherosfs
+Priority: optional
+Architecture: any
+Depends: netbase (>= 2.02), samba-common (= ${Source-Version}), ${shlibs:Depends}
+Suggests: smbclient
+Replaces: smbfsx
+Conflicts: smbfsx, suidmanager (<< 0.50)
+Description: mount and umount commands for the smbfs (for kernels >= than 2.2.x)
+ Smbfs is a filesystem which understands the SMB protocol.
+ This is the protocol Windows for Workgroups, Windows NT or
+ LAN Manager use to talk to each other. It was inspired by
+ samba, the program by Andrew Tridgell that turns any unix
+ site into a file server for DOS or Windows clients.
+ .
+ If you want to use command-line utilities like smbclient, smbtar
+ and/or smbspool you just need to install the smbclient package.
+ .
+ Starting with the Debian Samba packages version 2.2.0-1, the old smbfs
+ utilities for 2.0.x have been removed. There are no wrapper scripts
+ that call a specific smbmount/smbumount depending on the kernel
+ version.  If you are using a 2.0.x kernel please upgrade or use the
+ latest Samba 2.0.7 Debian package.
+
+Package: libpam-smbpass
+Section: admin
+Priority: extra
+Architecture: any
+Depends: ${shlibs:Depends}
+Suggests: samba
+Description: pluggable authentication module for SMB password database
+ This is a stackable PAM module that allows a system administrator to easily
+ migrate to using encrypted passwords for Samba and to keep smb passwords in
+ sync with unix passwords.  Unlike other solutions, it does this without
+ requiring users to change their existing passwords or login to Samba using
+ cleartext passwords.
+
+Package: libsmbclient
+Section: libs
+Priority: optional
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: shared library that allows applications to talk to SMB servers
+ libsmbclient allows to write applications that use the SMB protocol.
+ This gives applications the ability to talk to Microsoft Windows servers
+ and Unix servers running Samba.
+ .
+ This package contains the libsmbclient shared library.
+
+Package: libsmbclient-dev
+Section: libdevel
+Priority: extra
+Architecture: any
+Depends: libsmbclient (= ${Source-Version})
+Description: libsmbclient static libraries and headers
+ libsmbclient allows to write applications that use the SMB protocol.
+ This gives applications the ability to talk to Microsoft Windows servers
+ and Unix servers running Samba.
+ .
+ This package contains the libsmbclient static libraries and headers
+ needed to build applications that use SMB services.
+
+Package: winbind
+Section: net
+Priority: optional
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Replaces: samba (<= 2.2.3-2)
+Description: service to resolve user and group information from Windows NT servers
+ This package provides the winbindd daemon, which provides a
+ service for the Name Service Switch capability that is present
+ in most modern C libraries (like the GNU C Library - glibc.)
+ .
+ The service provided by winbindd is called `winbind' and
+ can be used to resolve user and group information from a
+ Windows NT server. The service can also provide authentication
+ services via an associated PAM module.
+
+Package: python2.3-samba
+Section: python
+Priority: optional
+Architecture: any
+Depends: ${shlibs:Depends}, python2.3
+Description: Python bindings that allow access to various aspects of Samba
+ The Samba Python bindings allow you to access various aspects of Samba.
+ At the moment their status is "experimental" but they have been reported
+ to work well.
+ .
+ See /usr/share/doc/python2.3-samba/examples for a couple of examples.
+
+Package: samba-dbg
+Section: devel
+Architecture: any
+Depends: samba (= ${Source-Version})
+Description: Samba debugging symbols
+ The Samba software suite is a collection of programs that
+ implements the SMB protocol for unix systems, allowing you to serve
+ files and printers to Windows, NT, OS/2 and DOS clients. This protocol
+ is sometimes also referred to as the LanManager or NetBIOS protocol.
+ .
+ This package contains debugging symbols for the programs included in
+ the samba and smbclient packages.

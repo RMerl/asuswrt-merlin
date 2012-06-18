@@ -1,0 +1,412 @@
+/* config.h.in.  Generated from configure.in by autoheader.  */
+
+/* Using AIX */
+#undef AIX
+
+/* Broken getaddrinfo */
+#undef BROKEN_GETADDRINFO
+
+/* lastlog file location */
+#undef CONF_LASTLOG_FILE
+
+/* utmpx file location */
+#undef CONF_UTMPX_FILE
+
+/* utmp file location */
+#undef CONF_UTMP_FILE
+
+/* wtmpx file location */
+#undef CONF_WTMPX_FILE
+
+/* wtmp file location */
+#undef CONF_WTMP_FILE
+
+/* Disable use of lastlog() */
+#undef DISABLE_LASTLOG
+
+/* Use PAM */
+#undef DISABLE_PAM
+
+/* Disable use of pututline() */
+#undef DISABLE_PUTUTLINE
+
+/* Disable use of pututxline() */
+#undef DISABLE_PUTUTXLINE
+
+/* Using syslog */
+#undef DISABLE_SYSLOG
+
+/* Disable use of utmp */
+#undef DISABLE_UTMP
+
+/* Disable use of utmpx */
+#undef DISABLE_UTMPX
+
+/* Disable use of wtmp */
+#undef DISABLE_WTMP
+
+/* Disable use of wtmpx */
+#undef DISABLE_WTMPX
+
+/* Use zlib */
+#undef DISABLE_ZLIB
+
+/* Define to 1 if you have the `basename' function. */
+#undef HAVE_BASENAME
+
+/* Define to 1 if you have the `clearenv' function. */
+#undef HAVE_CLEARENV
+
+/* Define if gai_strerror() returns const char * */
+#undef HAVE_CONST_GAI_STRERROR_PROTO
+
+/* Define to 1 if you have the <crypt.h> header file. */
+#undef HAVE_CRYPT_H
+
+/* Define to 1 if you have the `daemon' function. */
+#undef HAVE_DAEMON
+
+/* Use /dev/ptc & /dev/pts */
+#undef HAVE_DEV_PTS_AND_PTC
+
+/* Define to 1 if you have the `dup2' function. */
+#undef HAVE_DUP2
+
+/* Define to 1 if you have the `endutent' function. */
+#undef HAVE_ENDUTENT
+
+/* Define to 1 if you have the `endutxent' function. */
+#undef HAVE_ENDUTXENT
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the `freeaddrinfo' function. */
+#undef HAVE_FREEADDRINFO
+
+/* Define to 1 if you have the `gai_strerror' function. */
+#undef HAVE_GAI_STRERROR
+
+/* Define to 1 if you have the `getaddrinfo' function. */
+#undef HAVE_GETADDRINFO
+
+/* Define to 1 if you have the `getnameinfo' function. */
+#undef HAVE_GETNAMEINFO
+
+/* Define to 1 if you have the `getspnam' function. */
+#undef HAVE_GETSPNAM
+
+/* Define to 1 if you have the `getusershell' function. */
+#undef HAVE_GETUSERSHELL
+
+/* Define to 1 if you have the `getutent' function. */
+#undef HAVE_GETUTENT
+
+/* Define to 1 if you have the `getutid' function. */
+#undef HAVE_GETUTID
+
+/* Define to 1 if you have the `getutline' function. */
+#undef HAVE_GETUTLINE
+
+/* Define to 1 if you have the `getutxent' function. */
+#undef HAVE_GETUTXENT
+
+/* Define to 1 if you have the `getutxid' function. */
+#undef HAVE_GETUTXID
+
+/* Define to 1 if you have the `getutxline' function. */
+#undef HAVE_GETUTXLINE
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <ioctl.h> header file. */
+#undef HAVE_IOCTL_H
+
+/* Define to 1 if you have the <lastlog.h> header file. */
+#undef HAVE_LASTLOG_H
+
+/* Define to 1 if you have the <libgen.h> header file. */
+#undef HAVE_LIBGEN_H
+
+/* Define to 1 if you have the `pam' library (-lpam). */
+#undef HAVE_LIBPAM
+
+/* Define to 1 if you have the <libutil.h> header file. */
+#undef HAVE_LIBUTIL_H
+
+/* Define to 1 if you have the `z' library (-lz). */
+#undef HAVE_LIBZ
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Have login() function */
+#undef HAVE_LOGIN
+
+/* Define to 1 if you have the `logout' function. */
+#undef HAVE_LOGOUT
+
+/* Define to 1 if you have the `logwtmp' function. */
+#undef HAVE_LOGWTMP
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `memset' function. */
+#undef HAVE_MEMSET
+
+/* Define to 1 if you have the <netdb.h> header file. */
+#undef HAVE_NETDB_H
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <netinet/in_systm.h> header file. */
+#undef HAVE_NETINET_IN_SYSTM_H
+
+/* Define to 1 if you have the <netinet/tcp.h> header file. */
+#undef HAVE_NETINET_TCP_H
+
+/* Have openpty() function */
+#undef HAVE_OPENPTY
+
+/* Define to 1 if you have the <pam/pam_appl.h> header file. */
+#undef HAVE_PAM_PAM_APPL_H
+
+/* Define to 1 if you have the <paths.h> header file. */
+#undef HAVE_PATHS_H
+
+/* Define to 1 if you have the <pty.h> header file. */
+#undef HAVE_PTY_H
+
+/* Define to 1 if you have the `putenv' function. */
+#undef HAVE_PUTENV
+
+/* Define to 1 if you have the `pututline' function. */
+#undef HAVE_PUTUTLINE
+
+/* Define to 1 if you have the `pututxline' function. */
+#undef HAVE_PUTUTXLINE
+
+/* Define to 1 if you have the <security/pam_appl.h> header file. */
+#undef HAVE_SECURITY_PAM_APPL_H
+
+/* Define to 1 if you have the `select' function. */
+#undef HAVE_SELECT
+
+/* Define to 1 if you have the `setutent' function. */
+#undef HAVE_SETUTENT
+
+/* Define to 1 if you have the `setutxent' function. */
+#undef HAVE_SETUTXENT
+
+/* Define to 1 if you have the <shadow.h> header file. */
+#undef HAVE_SHADOW_H
+
+/* Define to 1 if you have the `socket' function. */
+#undef HAVE_SOCKET
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strdup' function. */
+#undef HAVE_STRDUP
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
+/* Define to 1 if you have the <stropts.h> header file. */
+#undef HAVE_STROPTS_H
+
+/* Have struct addrinfo */
+#undef HAVE_STRUCT_ADDRINFO
+
+/* Have struct in6_addr */
+#undef HAVE_STRUCT_IN6_ADDR
+
+/* Have struct sockaddr_in6 */
+#undef HAVE_STRUCT_SOCKADDR_IN6
+
+/* Define to 1 if the system has the type `struct sockaddr_storage'. */
+#undef HAVE_STRUCT_SOCKADDR_STORAGE
+
+/* Define to 1 if `ss_family' is member of `struct sockaddr_storage'. */
+#undef HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
+
+/* Define to 1 if `ut_addr' is member of `struct utmpx'. */
+#undef HAVE_STRUCT_UTMPX_UT_ADDR
+
+/* Define to 1 if `ut_addr_v6' is member of `struct utmpx'. */
+#undef HAVE_STRUCT_UTMPX_UT_ADDR_V6
+
+/* Define to 1 if `ut_host' is member of `struct utmpx'. */
+#undef HAVE_STRUCT_UTMPX_UT_HOST
+
+/* Define to 1 if `ut_id' is member of `struct utmpx'. */
+#undef HAVE_STRUCT_UTMPX_UT_ID
+
+/* Define to 1 if `ut_syslen' is member of `struct utmpx'. */
+#undef HAVE_STRUCT_UTMPX_UT_SYSLEN
+
+/* Define to 1 if `ut_time' is member of `struct utmpx'. */
+#undef HAVE_STRUCT_UTMPX_UT_TIME
+
+/* Define to 1 if `ut_tv' is member of `struct utmpx'. */
+#undef HAVE_STRUCT_UTMPX_UT_TV
+
+/* Define to 1 if `ut_type' is member of `struct utmpx'. */
+#undef HAVE_STRUCT_UTMPX_UT_TYPE
+
+/* Define to 1 if `ut_addr' is member of `struct utmp'. */
+#undef HAVE_STRUCT_UTMP_UT_ADDR
+
+/* Define to 1 if `ut_addr_v6' is member of `struct utmp'. */
+#undef HAVE_STRUCT_UTMP_UT_ADDR_V6
+
+/* Define to 1 if `ut_exit' is member of `struct utmp'. */
+#undef HAVE_STRUCT_UTMP_UT_EXIT
+
+/* Define to 1 if `ut_host' is member of `struct utmp'. */
+#undef HAVE_STRUCT_UTMP_UT_HOST
+
+/* Define to 1 if `ut_id' is member of `struct utmp'. */
+#undef HAVE_STRUCT_UTMP_UT_ID
+
+/* Define to 1 if `ut_pid' is member of `struct utmp'. */
+#undef HAVE_STRUCT_UTMP_UT_PID
+
+/* Define to 1 if `ut_time' is member of `struct utmp'. */
+#undef HAVE_STRUCT_UTMP_UT_TIME
+
+/* Define to 1 if `ut_tv' is member of `struct utmp'. */
+#undef HAVE_STRUCT_UTMP_UT_TV
+
+/* Define to 1 if `ut_type' is member of `struct utmp'. */
+#undef HAVE_STRUCT_UTMP_UT_TYPE
+
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to 1 if you have the <termios.h> header file. */
+#undef HAVE_TERMIOS_H
+
+/* Define to 1 if the system has the type `uint16_t'. */
+#undef HAVE_UINT16_T
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `updwtmp' function. */
+#undef HAVE_UPDWTMP
+
+/* Define to 1 if you have the <util.h> header file. */
+#undef HAVE_UTIL_H
+
+/* Define to 1 if you have the `utmpname' function. */
+#undef HAVE_UTMPNAME
+
+/* Define to 1 if you have the `utmpxname' function. */
+#undef HAVE_UTMPXNAME
+
+/* Define to 1 if you have the <utmpx.h> header file. */
+#undef HAVE_UTMPX_H
+
+/* Define to 1 if you have the <utmp.h> header file. */
+#undef HAVE_UTMP_H
+
+/* Define to 1 if the system has the type `u_int16_t'. */
+#undef HAVE_U_INT16_T
+
+/* Define to 1 if you have the `_getpty' function. */
+#undef HAVE__GETPTY
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define as the return type of signal handlers (`int' or `void'). */
+#undef RETSIGTYPE
+
+/* Define to the type of arg 1 for `select'. */
+#undef SELECT_TYPE_ARG1
+
+/* Define to the type of args 2, 3 and 4 for `select'. */
+#undef SELECT_TYPE_ARG234
+
+/* Define to the type of arg 5 for `select'. */
+#undef SELECT_TYPE_ARG5
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Use /dev/ptmx */
+#undef USE_DEV_PTMX
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef gid_t
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef mode_t
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef pid_t
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t
+
+/* type to use in place of socklen_t if not defined */
+#undef socklen_t
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef uid_t

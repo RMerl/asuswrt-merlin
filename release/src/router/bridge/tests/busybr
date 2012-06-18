@@ -1,0 +1,23 @@
+#! /bin/sh
+BR=${1:-"br549"}
+ETH0=${1:-"eth0"}
+ETH1=${1:-"eth1"}
+
+# fetch ip of working br0
+IP=`/sbin/ifconfig $BR | sed -n -e 's/^.*inet addr:\([0-9][0-9\.]*\).*$/\1/p'`
+echo "Using IP address $IP"
+
+while true;
+do
+	ifconfig $BR down
+	brctl delbr $BR
+	ifconfig $ETH0 $IP
+
+	ifconfig $ETH0 0.0.0.0
+	brctl addbr $BR
+	brctl addif $BR $ETH0
+	brctl addif $BR $ETH1
+	ifconfig $BR $IP
+	
+	sleep 10
+done

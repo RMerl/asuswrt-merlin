@@ -1,0 +1,38 @@
+This is an RPC backend that implements all operations in terms of
+remote RPC operations.  This may be useful in certain debugging
+situations, where the traffic is encrypted, or you wish to validate
+that IDL is correct before implementing full test clients, or with
+windows clients.
+
+There are two modes of operation: Password specified and delegated
+credentials.
+
+Password specified:
+-------------------
+
+This uses a static username/password in the config file, example:
+
+[global]
+	dcerpc endpoint servers = remote
+	dcerpc_remote:binding = ncacn_np:win2003
+	dcerpc_remote:username = administrator
+	dcerpc_remote:password = PASSWORD
+	dcerpc_remote:interfaces = samr, lsarpc, netlogon
+
+Delegated credentials:
+----------------------
+
+If your incoming user is authenticated with Kerberos, and the machine
+account for this Samba4 proxy server is 'trusted for delegation', then
+the Samba4 proxy can forward the client's credentials to the target.
+
+You must be joined to the domain (net join <domain> member).
+
+To set 'trusted for delegation' with MMC, see the checkbox in the
+Computer account property page under Users and Computers.
+
+[global]
+	dcerpc endpoint servers = remote
+	dcerpc_remote:binding = ncacn_np:win2003
+	dcerpc_remote:interfaces = samr, lsarpc, netlogon
+

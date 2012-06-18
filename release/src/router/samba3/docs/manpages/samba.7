@@ -1,0 +1,413 @@
+.\"     Title: samba
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: Miscellanea
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "SAMBA" "7" "09/30/2009" "Samba 3\&.0" "Miscellanea"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+samba \- A Windows SMB/CIFS fileserver for UNIX
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCsamba\F[]
+.fam
+.SH "DESCRIPTION"
+.PP
+The Samba software suite is a collection of programs that implements the Server Message Block (commonly abbreviated as SMB) protocol for UNIX systems\&. This protocol is sometimes also referred to as the Common Internet File System (CIFS)\&. For a more thorough description, see
+http://www\&.ubiqx\&.org/cifs/\&. Samba also implements the NetBIOS protocol in nmbd\&.
+.PP
+\fBsmbd\fR(8)
+.RS 4
+The
+\FCsmbd\F[]
+daemon provides the file and print services to SMB clients, such as Windows 95/98, Windows NT, Windows for Workgroups or LanManager\&. The configuration file for this daemon is described in
+\fBsmb.conf\fR(5)
+.RE
+.PP
+\fBnmbd\fR(8)
+.RS 4
+The
+\FCnmbd\F[]
+daemon provides NetBIOS nameservice and browsing support\&. The configuration file for this daemon is described in
+\fBsmb.conf\fR(5)
+.RE
+.PP
+\fBsmbclient\fR(1)
+.RS 4
+The
+\FCsmbclient\F[]
+program implements a simple ftp\-like client\&. This is useful for accessing SMB shares on other compatible servers (such as Windows NT), and can also be used to allow a UNIX box to print to a printer attached to any SMB server (such as a PC running Windows NT)\&.
+.RE
+.PP
+\fBtestparm\fR(1)
+.RS 4
+The
+\FCtestparm\F[]
+utility is a simple syntax checker for Samba\'s
+\fBsmb.conf\fR(5)
+configuration file\&.
+.RE
+.PP
+\fBtestprns\fR(1)
+.RS 4
+The
+\FCtestprns\F[]
+utility supports testing printer names defined in your
+\FCprintcap\F[]
+file used by Samba\&.
+.RE
+.PP
+\fBsmbstatus\fR(1)
+.RS 4
+The
+\FCsmbstatus\F[]
+tool provides access to information about the current connections to
+\FCsmbd\F[]\&.
+.RE
+.PP
+\fBnmblookup\fR(1)
+.RS 4
+The
+\FCnmblookup\F[]
+tools allows NetBIOS name queries to be made from a UNIX host\&.
+.RE
+.PP
+\fBsmbpasswd\fR(8)
+.RS 4
+The
+\FCsmbpasswd\F[]
+command is a tool for changing LanMan and Windows NT password hashes on Samba and Windows NT servers\&.
+.RE
+.PP
+\fBsmbcacls\fR(1)
+.RS 4
+The
+\FCsmbcacls\F[]
+command is a tool to set ACL\'s on remote CIFS servers\&.
+.RE
+.PP
+\fBsmbsh\fR(1)
+.RS 4
+The
+\FCsmbsh\F[]
+command is a program that allows you to run a unix shell with with an overloaded VFS\&.
+.RE
+.PP
+\fBsmbtree\fR(1)
+.RS 4
+The
+\FCsmbtree\F[]
+command is a text\-based network neighborhood tool\&.
+.RE
+.PP
+\fBsmbtar\fR(1)
+.RS 4
+The
+\FCsmbtar\F[]
+can make backups of data on CIFS/SMB servers\&.
+.RE
+.PP
+\fBsmbspool\fR(8)
+.RS 4
+\FCsmbspool\F[]
+is a helper utility for printing on printers connected to CIFS servers\&.
+.RE
+.PP
+\fBsmbcontrol\fR(1)
+.RS 4
+\FCsmbcontrol\F[]
+is a utility that can change the behaviour of running samba daemons\&.
+.RE
+.PP
+\fBrpcclient\fR(1)
+.RS 4
+\FCrpcclient\F[]
+is a utility that can be used to execute RPC commands on remote CIFS servers\&.
+.RE
+.PP
+\fBpdbedit\fR(8)
+.RS 4
+The
+\FCpdbedit\F[]
+command can be used to maintain the local user database on a samba server\&.
+.RE
+.PP
+\fBfindsmb\fR(1)
+.RS 4
+The
+\FCfindsmb\F[]
+command can be used to find SMB servers on the local network\&.
+.RE
+.PP
+\fBnet\fR(8)
+.RS 4
+The
+\FCnet\F[]
+command is supposed to work similar to the DOS/Windows NET\&.EXE command\&.
+.RE
+.PP
+\fBswat\fR(8)
+.RS 4
+\FCswat\F[]
+is a web\-based interface to configuring
+\FCsmb\&.conf\F[]\&.
+.RE
+.PP
+\fBwinbindd\fR(8)
+.RS 4
+\FCwinbindd\F[]
+is a daemon that is used for integrating authentication and the user database into unix\&.
+.RE
+.PP
+\fBwbinfo\fR(1)
+.RS 4
+\FCwbinfo\F[]
+is a utility that retrieves and stores information related to winbind\&.
+.RE
+.PP
+\fBprofiles\fR(1)
+.RS 4
+\FCprofiles\F[]
+is a command\-line utility that can be used to replace all occurences of a certain SID with another SID\&.
+.RE
+.PP
+\fBlog2pcap\fR(1)
+.RS 4
+\FClog2pcap\F[]
+is a utility for generating pcap trace files from Samba log files\&.
+.RE
+.PP
+\fBvfstest\fR(1)
+.RS 4
+\FCvfstest\F[]
+is a utility that can be used to test vfs modules\&.
+.RE
+.PP
+\fBntlm_auth\fR(1)
+.RS 4
+\FCntlm_auth\F[]
+is a helper\-utility for external programs wanting to do NTLM\-authentication\&.
+.RE
+.PP
+\fBsmbmount\fR(8), \fBsmbumount\fR(8), \fBsmbmnt\fR(8)
+.RS 4
+\FCsmbmount\F[],\FCsmbumount\F[]
+and
+\FCsmbmnt\F[]
+are commands that can be used to mount CIFS/SMB shares on Linux\&.
+.RE
+.PP
+\fBsmbcquotas\fR(1)
+.RS 4
+\FCsmbcquotas\F[]
+is a tool that can set remote QUOTA\'s on server with NTFS 5\&.
+.RE
+.SH "COMPONENTS"
+.PP
+The Samba suite is made up of several components\&. Each component is described in a separate manual page\&. It is strongly recommended that you read the documentation that comes with Samba and the manual pages of those components that you use\&. If the manual pages and documents aren\'t clear enough then please visit
+http://devel\&.samba\&.org
+for information on how to file a bug report or submit a patch\&.
+.PP
+If you require help, visit the Samba webpage at
+http://www\&.samba\&.org/
+and explore the many option available to you\&.
+.SH "AVAILABILITY"
+.PP
+The Samba software suite is licensed under the GNU Public License(GPL)\&. A copy of that license should have come with the package in the file COPYING\&. You are encouraged to distribute copies of the Samba suite, but please obey the terms of this license\&.
+.PP
+The latest version of the Samba suite can be obtained via anonymous ftp from samba\&.org in the directory pub/samba/\&. It is also available on several mirror sites worldwide\&.
+.PP
+You may also find useful information about Samba on the newsgroup
+comp\&.protocol\&.smb
+and the Samba mailing list\&. Details on how to join the mailing list are given in the README file that comes with Samba\&.
+.PP
+If you have access to a WWW viewer (such as Mozilla or Konqueror) then you will also find lots of useful information, including back issues of the Samba mailing list, at
+http://lists\&.samba\&.org\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0 of the Samba suite\&.
+.SH "CONTRIBUTIONS"
+.PP
+If you wish to contribute to the Samba project, then I suggest you join the Samba mailing list at
+http://lists\&.samba\&.org\&.
+.PP
+If you have patches to submit, visit
+http://devel\&.samba\&.org/
+for information on how to do it properly\&. We prefer patches in
+\FCdiff \-u\F[]
+format\&.
+.SH "CONTRIBUTORS"
+.PP
+Contributors to the project are now too numerous to mention here but all deserve the thanks of all Samba users\&. To see a full list, look at the
+\FCchange\-log\F[]
+in the source package for the pre\-CVS changes and at
+http://cvs\&.samba\&.org/
+for the contributors to Samba post\-CVS\&. CVS is the Open Source source code control system used by the Samba Team to develop Samba\&. The project would have been unmanageable without it\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original Samba man pages were written by Karl Auer\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\&.icce\&.rug\&.nl/pub/unix/) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

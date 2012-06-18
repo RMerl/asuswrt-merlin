@@ -1,0 +1,44 @@
+# bcm94320pagh board
+# $Copyright (C) 2003 Broadcom Corporation$
+# $Id: bcm94320pagh.txt,v 1.4 2005-03-24 17:28:52 mtanner Exp $
+boardtype=0x0468
+boardnum=${serno}
+# Board revision 1.5
+boardrev=0x15
+boardflags=0x0648
+sromrev=2
+
+# Dualband id
+wl0id=0x4319
+
+# 4320 802.11g parameters
+il0macaddr=00:90:4c:93:${maclo}
+aa0=3
+ag0=2
+pa0maxpwr=76
+pa0itssit=62
+pa0b0=0x1616
+pa0b1=0xfa8d
+pa0b2=0xfe9b
+
+# 4320 802.11a parameters
+et1macaddr=00:90:4c:94:${maclo}
+aa1=2
+ag1=2
+pa1itssit=120
+pa1lomaxpwr=58
+pa1lob0=0x18c4
+pa1lob1=0xfcd7
+pa1lob2=0xff67
+pa1maxpwr=58
+pa1b0=0x173b
+pa1b1=0xfd04
+pa1b2=0xff37
+pa1himaxpwr=58
+pa1hib0=0x1e78
+pa1hib1=0xfc2e
+pa1hib2=0xffca
+
+# Commons wireless parameters
+cctl=0
+ccode=0

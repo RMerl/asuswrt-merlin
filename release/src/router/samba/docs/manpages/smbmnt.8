@@ -1,0 +1,37 @@
+.TH SMBMNT 8 "23 Jun 2001" "smbmnt 2.0.10"
+.PP 
+.SH "NAME" 
+smbmnt \- helper utility for mounting SMB filesystems
+.PP 
+.SH "SYNOPSIS" 
+\fBsmbmnt\fP mount-point [ -s share ] [ -r ] [ -u uid ] [ -g gid ] [ -f mask ] [ -d mask ] 
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+smbmnt is a helper application used by the smbmount program to do the
+actual mounting of SMB shares\&. smbmnt is meant to be installed setuid
+root so that normal users can mount their smb shares\&. It checks
+whether the user has write permissions on the mount point and then
+mounts the directory\&.
+.PP 
+The smbmnt program is normally invoked by smbmount\&. It should not be
+invoked directly by users\&.
+.PP 
+.IP "\fB-r\fP" 
+mount the filesystem read-only
+.PP 
+.IP "\fB-u uid\fP" 
+specify the uid that the files will be owned by
+.PP 
+.IP "\fB-g gid\fP" 
+specify the gid that the files will be owned by
+.PP 
+.IP "\fB-f mask\fP" 
+specify the octal file mask applied 
+.PP 
+.IP "\fB-d mask\fP" 
+specify the octal directory mask applied 
+.PP 
+.SH "AUTHOR" 
+The maintainer of smbfs, smbmnt and smbmount is Andrew Tridgell
+tridge@samba\&.org

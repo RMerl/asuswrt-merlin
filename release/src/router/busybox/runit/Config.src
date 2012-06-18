@@ -1,0 +1,89 @@
+#
+# For a description of the syntax of this configuration file,
+# see scripts/kbuild/config-language.txt.
+#
+
+menu "Runit Utilities"
+
+INSERT
+
+config RUNSV
+	bool "runsv"
+	default y
+	help
+	  runsv starts and monitors a service and optionally an appendant log
+	  service.
+
+config RUNSVDIR
+	bool "runsvdir"
+	default y
+	help
+	  runsvdir starts a runsv process for each subdirectory, or symlink to
+	  a directory, in the services directory dir, up to a limit of 1000
+	  subdirectories, and restarts a runsv process if it terminates.
+
+config FEATURE_RUNSVDIR_LOG
+	bool "Enable scrolling argument log"
+	depends on RUNSVDIR
+	default n
+	help
+	  Enable feature where second parameter of runsvdir holds last error
+	  message (viewable via top/ps). Otherwise (feature is off
+	  or no parameter), error messages go to stderr only.
+
+config SV
+	bool "sv"
+	default y
+	help
+	  sv reports the current status and controls the state of services
+	  monitored by the runsv supervisor.
+
+config SV_DEFAULT_SERVICE_DIR
+	string "Default directory for services"
+	default "/var/service"
+	depends on SV
+	help
+	  Default directory for services.
+	  Defaults to "/var/service"
+
+config SVLOGD
+	bool "svlogd"
+	default y
+	help
+	  svlogd continuously reads log data from its standard input, optionally
+	  filters log messages, and writes the data to one or more automatically
+	  rotated logs.
+
+config CHPST
+	bool "chpst"
+	default y
+	help
+	  chpst changes the process state according to the given options, and
+	  execs specified program.
+
+config SETUIDGID
+	bool "setuidgid"
+	default y
+	help
+	  Sets soft resource limits as specified by options
+
+config ENVUIDGID
+	bool "envuidgid"
+	default y
+	help
+	  Sets $UID to account's uid and $GID to account's gid
+
+config ENVDIR
+	bool "envdir"
+	default y
+	help
+	  Sets various environment variables as specified by files
+	  in the given directory
+
+config SOFTLIMIT
+	bool "softlimit"
+	default y
+	help
+	  Sets soft resource limits as specified by options
+
+endmenu

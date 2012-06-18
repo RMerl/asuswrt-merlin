@@ -1,0 +1,137 @@
+INTERNET-DRAFT 							Michael P. Armijo
+Status: Informational						Microsoft Corporation
+January 1999 
+Expires July 1999 	 					 
+
+
+                             Active Directory Syntaxes
+                    	draft-armijo-ldap-syntax-00.txt
+
+
+1. Status of this Memo
+
+
+This memo provides information for the Internet community. It does not specify 
+an Internet standard of any kind. Distribution of this memo is unlimited.
+
+This document is an Internet-Draft. Internet-Drafts are working documents of the 
+Internet Engineering Task Force (IETF), its areas, and its working groups. Note 
+that other groups may also distribute working documents as Internet-Drafts. 
+
+Internet-Drafts are draft documents valid for a maximum of six months and may be 
+updated, replaced, or obsoleted by other documents at any time. It is 
+inappropriate to use Internet- Drafts as reference material or to cite them 
+other than as "work in progress." 
+
+To view the entire list of current Internet-Drafts, please check the "1id-
+abstracts.txt" listing contained in the Internet-Drafts Shadow Directories on 
+ftp.is.co.za (Africa), ftp.nordu.net (Northern Europe), ftp.nis.garr.it 
+(Southern Europe), munnari.oz.au (Pacific Rim), ftp.ietf.org (US East Coast), or 
+ftp.isi.edu (US West Coast).
+
+2. Abstract
+
+The purpose of this document is to inform the Internet community of LDAP 
+syntaxes available in the Windows NT Active Directory.  These syntaxes provide
+additional functionality to the Active Directory.
+
+
+3. RFC Key Words
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", 
+"SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be 
+interpreted as described in RFC 2119.
+
+
+4. LDAP Syntaxes
+
+CaseIgnoreString: 1.2.840.113556.1.4.905
+	Encoded as a Printable String (OID 1.3.6.1.4.1.1466.115.121.1.44)
+
+
+OR-Name: 1.2.840.113556.1.4.1221
+	Encoded as:
+ 	ORName = DN | "X400:" ORaddress "#X500:" DN | "X400:"ORaddress 
+	DN = normally encoded rfc 1779 name
+	ORaddress = some string encoding for OR addresses.  
+	
+Note that an unescaped # character must not be legal in this encoding.  
+This is necessary to be able to identify where the #X500 starts if the 
+middle choice of the encoding is chosen.
+
+	
+DNWithOctetString: 1.2.840.113556.1.4.903
+	Encoded as a :
+	DNWithOctetString  = OctetTag ':' Count ':' OctetString ':' DN
+	OctetTag = 'B' | 'b'
+	Count = positive decimal number, counting number of encoded characters 
+		in OctetString
+	OctetString = [EncodedByte]*  // Note: the number of characters in the
+		string encoding of the OctetString is Count.
+	EncodedByte = [0-9 | a-f | A-F] [0-9 | a-f | A-F]
+	DN = <normal string encoding of a DN> 
+
+	As an example, the string encoding of the combination of 0x74 0x65 0x73 
+	0x74 and DC=Microsoft,DC=Com is
+
+	B:8:74657374:DC=Microsoft,DC=Com
+
+	
+DNWithString: 1.2.840.113556.1.4.904
+	Encoded as a :
+	DNWithString  = StringTag ':' Count ':' String ':' DN
+	OctetTag = 'S' | 's'
+	Count = positive decimal number, counting number of bytes in String
+	String = <normally encoded (i.e. UTF8 for V3) string>  // Note: the number 
+	of bytes in the string encoding of the String is Count. 
+ 
+	DN = <normal string encoding of a DN> 
+
+	As an example, the string encoding of the combination of "test" and 
+	DC=Microsoft,DC=Com is
+
+	B:4:test:DC=Microsoft,DC=Com
+
+	As an example, the string encoding of the combination of XYZ (where X, Y, 
+	and Z all have two byte UTF-8 encodings) and DC=Microsoft,DC=Com is
+
+	B:6:XYZ:DC=Microsoft,DC=Com
+
+Note: Characters with multibyte UTF-8 encodings contribute more than one to the count
+
+
+Large-Integer: 1.2.840.113556.1.4.906
+	Encoded as an Integer (OID 1.3.6.1.4.1.1466.115.121.1.27), but guaranteed 
+	to support 64 bit numbers.
+
+
+Object-Security-Descriptor: 1.2.840.113556.1.4.907
+	Encoded as an Octet-String (OID 1.3.6.1.4.1.1466.115.121.1.40)
+
+
+5. References
+
+[RFC 2251]
+    M. Wahl, T. Howes, S. Kille, "Lightweight Directory Access Protocol
+    (v3)", RFC 2251, December 1997.  1997.
+
+[RFC 2119] 
+    Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels," 
+    RFC 2119, Harvard University, March 1997.
+
+
+6. Authors Address
+
+ Michael P. Armijo
+ One Microsoft Way
+ Redmond, WA 
+ 98052
+ USA
+
+ (425)882-8080
+ micharm@microsoft.com
+
+
+
+
+

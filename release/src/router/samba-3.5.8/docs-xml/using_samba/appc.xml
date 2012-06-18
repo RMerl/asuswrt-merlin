@@ -1,0 +1,3337 @@
+<appendix label="C" id="SAMBA-AP-C">
+<title>Samba Configuration Option Quick Reference</title>
+
+
+
+
+<para>The following pages list each of the Samba configuration
+options. If an option is applicable only to the global section,
+"[global]" will appear before its name. Any lists mentioned are space
+separated, except where noted. A glossary of terms follows the
+options.</para>
+
+
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="C.1" id="appc-SECT-1">
+<title>Configuration Options</title>
+
+
+<refentry id="appc-refentry-1">
+<refmeta>
+<refmiscinfo class="allowable values">user list</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>admin users = user list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>List of users who will be granted root permissions on the share by Samba.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-2">
+<refmeta>
+<refmiscinfo class="allowable values">any</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>allow hosts = host list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym for <literal>hosts allow</literal>. List of machines that may connect to a share.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-3">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>alternate permissions = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Obsolete. Has no effect in Samba 2. Files will be shown as read-only if the owner can't write them. In Samba 1.9 and earlier, setting this option would set the DOS filesystem read-only attribute on any file the user couldn't read. This in turn required the <literal>delete readonly</literal> option.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-4">
+<refmeta>
+<refmiscinfo class="allowable values">NT, Win95, WfW</refmiscinfo>
+<refmiscinfo class="default">NT</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] announce as = system type</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Have Samba announce itself as something other than an NT server. Discouraged because it interferes with serving browse lists.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-5">
+<refmeta>
+<refmiscinfo class="allowable values">any</refmiscinfo>
+<refmiscinfo class="default">4.2</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] announce version = number.number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Instructs Samba to announce itself as an older version SMB server. Discouraged.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-6">
+<refmeta>
+<refmiscinfo class="allowable values">any shares</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] auto services = share list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>List of shares that will always appear in browse lists. A synonym is <literal>preload</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-7">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>available = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to NO, denies access to a share. Doesn't affect browsing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-8">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] bind interfaces only = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, shares and browsing will be provided only on interfaces in an interfaces list (see <literal>interfaces</literal>). New in Samba 1.9.18. If you set this option to YES, be sure to add 127.0.0.1 to the interfaces list to allow <emphasis>smbpasswd</emphasis> to connect to the local machine to change passwords. This is a convienence option; it does not improve security.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-9">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>browsable = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Allows a share to be announced in browse lists.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-10">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>blocking locks = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, honors byte range lock requests with time limits for queuing the request and retrying it until the time period expires. New in Samba 2.0.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-11">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] browse list = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Turns on/off <literal>browse</literal> <literal>list</literal> from this server. Avoid changing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-12">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] case sensitive = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, uses exactly the case the client supplied when trying to resolve a filename. If NO, matches either upper- or lowercase name. Avoid changing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-13">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] case sig names = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym for <literal>case sensitive</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-14">
+<refmeta>
+<refmiscinfo class="allowable values">positive number</refmiscinfo>
+<refmiscinfo class="default">60</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] change notify timeout = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the number of seconds between checks when a client asks for notification of changes in a directory. Introduced in Samba 2.0 to limit the performance cost of the checks. Avoid lowering.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-15">
+<refmeta>
+<refmiscinfo class="allowable values">ISO8859-1, ISO8859-2, ISO8859-5, KOI8-R</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>character set = name</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set, translates from DOS code pages to the Western European (ISO8859-1), Eastern European (ISO8859-2), Russian Cyrillic (ISO8859-5), or Alternate Russian (KOI8-R) character set. The <literal>client code page</literal> must be set to 850.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-16">
+<refmeta>
+<refmiscinfo class="allowable values">See <link linkend="ch08-20815">Table 8.4</link></refmiscinfo>
+<refmiscinfo class="default">437 (US MS-DOS)</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>client code page = name</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the DOS code page explicitly, overriding any previous <literal>valid chars</literal> settings. Examples of values are 850 for European, 437 is the US standard, and 932 for Japanese Shift-JIS. Introduced in Samba 1.9.19.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-17">
+<refmeta>
+<refmiscinfo class="allowable values">euc, cap, hex, hexN, sjis, j8bb, j8bj, jis8, j8bh, j8@b, j8@j, j8@h, j7bb, j7bj, jis7, j7bh, j7@b, j7@j, j7@h, jubb, jubj, junet, jubh, ju@b, ju@j, ju@h</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>coding system = code</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the coding system used, notably for Kanji. This is employed for filenames and should  correspond to the code page in use. The <literal>client code page</literal> option must be set to 932 (Japanese Shift-JIS). Introduced in Samba 2.0.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-18">
+<refmeta>
+<refmiscinfo class="allowable values">a text string or NULL</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>comment = text</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the comment that appears beside a share in a NET VIEW or the details list of a Microsoft directory window. See also the <literal>server string</literal> configuration option.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-19">
+<refmeta>
+<refmiscinfo class="allowable values">Unix pathname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] config file = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Selects an additional Samba configuration file to read instead of the current one. Used to relocate the configuration file, or used with %-variables to select custom configuration files for some users or machines.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-20">
+<refmeta>
+<refmiscinfo class="allowable values">existing section's name</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>copy = section name</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Copies the configuration of a previously seen share into the share where it appears. Used with %-variables to select custom configurations for machines, architectures and users. The copied section must be earlier in the configuration file. Copied options are of lesser priority than those explicitly listed in the section.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-21">
+<refmeta>
+<refmiscinfo class="allowable values">octal permission bits, 0-0777</refmiscinfo>
+<refmiscinfo class="default">0744</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>create mask = octal value</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Also called <literal>create mode</literal>. Sets the maximum allowable permissions for new files (e.g., 0755). See also <literal>directory mask</literal>. To require certain permissions to be set, see <literal>force create mask/force directory mask</literal>. This option stopped affecting directories in Samba 1.9.17, and the default value changed in Samba 2.0.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-22">
+<refmeta>
+<refmiscinfo class="allowable values">octal permission bits, 0-0777</refmiscinfo>
+<refmiscinfo class="default">0744</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>create mode = octal permission bits</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym for <literal>create mask</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-23">
+<refmeta>
+<refmiscinfo class="allowable values">minutes</refmiscinfo>
+<refmiscinfo class="default">0 </refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] deadtime = minutes</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>The time in minutes before an unused connection will be terminated. Zero means forever. Used to keep clients from tying up server resources forever. If used, clients will have to auto-reconnect after minutes of inactivity. See also <literal>keepalive</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-24">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] debug level = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the logging level used. Values of 3 or more slow Samba noticeably. A synonym is <literal>log level</literal>. Recommended value: 1.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-25">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] debug timestamp = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Timestamps all log messages. Can be turned off when it's not useful (e.g., in debugging). New in Samba 2.0.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-26">
+<refmeta>
+<refmiscinfo class="allowable values">share name</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] default = name</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Also called <literal>default service</literal>. The name of a service (share) to provide if someone requests a service they don't have permission to use or which doesn't exist. As of Samba 1.9.14, the path will be set from the name the client specified, with any "_" characters changed to "/" characters, allowing access to any directory on the Samba server. Use is strongly discouraged.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-27">
+<refmeta>
+<refmiscinfo class="allowable values">LOWER, UPPER</refmiscinfo>
+<refmiscinfo class="default">LOWER</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>default case = case</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the case in which to store new filenames. LOWER indicates mixed case, UPPER indicates uppercase letters.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-28">
+<refmeta>
+<refmiscinfo class="allowable values">share name</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] default service = share name</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym for <literal>default</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-29">
+<refmeta>
+<refmiscinfo class="allowable values">NO, YES</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>delete readonly = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Allow delete requests to remove read-only files. This is not allowed in DOS/Windows, but is normal in Unix, which has separate directory permissions. Used with programs like RCS, or with the older <literal>alternate permissions</literal> option.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-30">
+<refmeta>
+<refmiscinfo class="allowable values">NO, YES</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>delete veto files = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Allow delete requests for a directory containing files or subdirectories the user can't see due to the <literal>veto files</literal> option. If set to NO, the directory will not be deleted and will still contain invisible files.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-31">
+<refmeta>
+<refmiscinfo class="allowable values">host list</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>deny hosts = host list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>A synonym is <literal>hosts deny</literal>. Specifies a list of machines from which to refuse connections or shares.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-32">
+<refmeta>
+<refmiscinfo class="allowable values">shell command</refmiscinfo>
+<refmiscinfo class="default">varies</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] dfree command = command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>A command to run on the server to return disk free space. Not needed unless the OS command does not work properly.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-33">
+<refmeta>
+<refmiscinfo class="allowable values">pathname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>directory = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym for <literal>path</literal>. A directory provided by a file share, or used by a printer share. Set automatically in the <literal>[homes]</literal> share to user's home directory, otherwise defaults to<filename> /tmp</filename>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-34">
+<refmeta>
+<refmiscinfo class="allowable values">octal value from 0 to 0777</refmiscinfo>
+<refmiscinfo class="default">0755</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>directory mask = octal permission bits</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Also called <literal>directory mode</literal>. Sets the maximum allowable permissions for newly created directories. To require certain permissions be set, see the <literal>force create mask</literal> and <literal>force directory mask</literal> options.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-35">
+<refmeta>
+<refmiscinfo class="allowable values">octal value from 0 to 0777</refmiscinfo>
+<refmiscinfo class="default">0755</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>directory mode = octal permission bits</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym for <literal>directory mask</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-36">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] dns proxy = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, and if <literal>wins server = YES</literal>, look up hostnames in DNS if they are not found using WINS.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-37">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] domain logons = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Allow Windows 95/98 or NT clients to log on to an NT-like domain.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-38">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] domain master = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Become a domain master browser list collector if possible for the entire workgroup/domain.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-39">
+<refmeta>
+<refmiscinfo class="allowable values">comma-separated list of paths</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>dont descend = comma-list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Does not allow a change directory or search in the directories specified. This is a browsing convenience option; it doesn't provide any extra security.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-40">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>dos filetimes = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Allow non-owners to change file times if they can write to the file. See also <literal>dos filetime resolution</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-41">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>dos filetime resolution = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Set file times on Unix to match DOS standards (round to next even second). Recommended if using Visual C++ or a PC <emphasis>make</emphasis> program to avoid remaking the programs unnecesarily. Use with the <literal>dos filetimes</literal> option.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-42">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] encrypt passwords = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Uses Windows NT-style password encryption. Requires an <filename>smbpasswd</filename> on the Samba server.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-43">
+<refmeta>
+<refmiscinfo class="allowable values">shell command</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>exec = command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym of <literal>preexec</literal>, a command to run as the user just before connecting to the share.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-44">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fake directory create times = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Bug fix for users of Microsoft <emphasis>nmake</emphasis>. If set, Samba will set directory create times such that <emphasis>nmake</emphasis> won't remake all files every time.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-45">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fake oplocks = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Return YES whenever a client asks if it can lock a file and cache it locally, but does not enforce lock on the server. Use only for read-only disks, as Samba now supports real <literal>oplocks</literal> and has per-file overrides. See also <literal>oplocks</literal> and <literal>veto oplock files</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-46">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>follow symlinks = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, Samba will follow symlinks in a file share or shares. See the <literal>wide links</literal> option if you want to restrict symlinks to just the current share.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-47">
+<refmeta>
+<refmiscinfo class="allowable values">octal value from 0 to 0777</refmiscinfo>
+<refmiscinfo class="default">0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>force create mask = octal permission bits</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Provides bits that will be <literal>OR</literal>ed into the permissions of newly created files. Used with the <literal>create mode</literal> configuration option.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-48">
+<refmeta>
+<refmiscinfo class="allowable values">octal value from 0 to 0777</refmiscinfo>
+<refmiscinfo class="default">0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>force create mode = octal permission bits</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym for <literal>force create mask</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-49">
+<refmeta>
+<refmiscinfo class="allowable values">octal value from 0 to 0777</refmiscinfo>
+<refmiscinfo class="default">0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>force directory mask = octal permission bits</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Provides bits that will be <literal>OR</literal>ed into the permissions of newly created directories, forcing those bits to be set. Used with <literal>directory mode</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-50">
+<refmeta>
+<refmiscinfo class="allowable values">octal value from 0 to 0777</refmiscinfo>
+<refmiscinfo class="default">0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>force directory mode = octal permission bits</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym for <literal>force</literal> <literal>directory</literal> <literal>mask</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-51">
+<refmeta>
+<refmiscinfo class="allowable values">group</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>force group = unix group</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the effective group name assigned to all users accessing a share. Used to override user's normal groups.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-52">
+<refmeta>
+<refmiscinfo class="allowable values">username</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>force user = name</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the effective username assigned to all users accessing a share. Discouraged.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-53">
+<refmeta>
+<refmiscinfo class="allowable values">NTFS, FAT, Samba</refmiscinfo>
+<refmiscinfo class="default">NTFS</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fstype = string</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the filesystem type reported to the client.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-54">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] getwd cache = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Cache current directory for performance. Recommended with the <literal>wide links</literal> option.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-55">
+<refmeta>
+<refmiscinfo class="allowable values">unix group</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>group = group</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>An obsolete form of <literal>force group</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-56">
+<refmeta>
+<refmiscinfo class="allowable values">username</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>guest account = user</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the name of the unprivileged Unix account to use for tasks like printing and for accessing shares marked with <literal>guest ok</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-57">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>guest ok = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, passwords are not needed for this share. Synonym of <literal>public</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-58">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>guest only = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Forces user of a share to do so as the guest account. Requires <literal>guest</literal> <literal>ok</literal> or <literal>public</literal> to be <literal>yes</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-59">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>hide dot files = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Treats files beginning with a dot in a share as if they had the DOS/Windows hidden attribute set.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-60">
+<refmeta>
+<refmiscinfo class="allowable values">list of patterns, separated by <literal>/</literal> characters</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>hide files = slash-separated list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>List of file or directory names to set the DOS hidden attribute on. Names may contain <literal>?</literal> or <literal>*</literal> pattern-characters and <literal>%</literal>-variables. See also <literal>hide</literal> <literal>dot</literal> <literal>files</literal> and <literal>veto</literal> <literal>files</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-61">
+<refmeta>
+<refmiscinfo class="allowable values">NIS map name</refmiscinfo>
+<refmiscinfo class="default">auto.home</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] homedir map = NIS map name</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Used with <literal>nis homedir</literal> to locate user's Unix home directory from Sun NIS (not NIS+).</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-62">
+<refmeta>
+<refmiscinfo class="allowable values">list of hostnames</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>hosts allow = host list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym of <literal>allow hosts</literal>, a list of machines that can access a share or shares. If NULL (the default) any machine can access the share unless there is a <literal>hosts deny</literal> option.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-63">
+<refmeta>
+<refmiscinfo class="allowable values">list of hostnames</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>hosts deny = host list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym of <literal>deny hosts</literal>, a list of machines that cannot connect to a share or shares.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-64">
+<refmeta>
+<refmiscinfo class="allowable values">pathname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] hosts equiv = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Path to a file of trusted machines from which password-less logins are allowed. Strongly discouraged, because Windows/NT users can always override the user name, the only security in this scheme.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-65">
+<refmeta>
+<refmiscinfo class="allowable values">pathname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>include = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Include the named file in <filename>smb.conf</filename> at the line where it appears. This option does not understand the variables <literal>%u</literal> (user), <literal>%P</literal> (current share's root directory), or <literal>%S</literal> (current share name), because they are not set at the time the file is read.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-66">
+<refmeta>
+<refmiscinfo class="allowable values">IP addresses separated by spaces</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] interfaces = interface list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the interfaces to which Samba will respond. The default is the machine's primary interface only. Recommended on multihomed machines or to override erroneous addresses and netmasks.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-67">
+<refmeta>
+<refmiscinfo class="allowable values">list of users</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>invalid users = user list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>List of users that will not be permitted access to a share or shares.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-68">
+<refmeta>
+<refmiscinfo class="allowable values">number of seconds</refmiscinfo>
+<refmiscinfo class="default">0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] keepalive = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Number of seconds between checks for a crashed client. The default of 0 causes no checks to be performed. Recommended if you want checks more often than every four hours. 3600 (10 minutes) is reasonable. See also <literal>socket options</literal> for another approach.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-69">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">automatic</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] kernel oplocks = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Break oplock when a Unix process accesses an <emphasis>oplocked</emphasis> file, preventing corruption. Set to YES on operating systems supporting this, otherwise set to NO. New in Samba 2.0; supported on SGI, and hopefully soon on Linux and BSD. Avoid changing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-70">
+<refmeta>
+<refmiscinfo class="allowable values">various</refmiscinfo>
+<refmiscinfo class="default">varies</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] ldap filter = various</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Options beginning with <literal>ldap</literal> are part of an experimental (circa Samba 2.0) use of the Lightweight Directory Access Protocol (LDAP) general directory/distributed database for user, name, and host information. This option is reserved for future use.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-71">
+<refmeta>
+<refmiscinfo class="allowable values">various</refmiscinfo>
+<refmiscinfo class="default">various</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] ldap port = various</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Options beginning with <literal>ldap</literal> are part of an experimental (circa Samba 2.0) use of the Lightweight Directory Access Protocol (LDAP) general directory/distributed database for user, name, and host information. This option is reserved for future use.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-72">
+<refmeta>
+<refmiscinfo class="allowable values">various</refmiscinfo>
+<refmiscinfo class="default">various</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] ldap root = various</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Options beginning with <literal>ldap</literal> are part of an experimental (circa Samba 2.0) use of the Lightweight Directory Access Protocol (LDAP) general directory/distributed database for user, name, and host information. This option is reserved for future use.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-73">
+<refmeta>
+<refmiscinfo class="allowable values">various</refmiscinfo>
+<refmiscinfo class="default">various</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] ldap server = various</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Options beginning with <literal>ldap</literal> are part of an experimental (circa Samba 2.0) use of the Lightweight Directory Access Protocol (LDAP) general directory/distributed database for user, name, and host information. This option is reserved for future use.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-74">
+<refmeta>
+<refmiscinfo class="allowable values">various</refmiscinfo>
+<refmiscinfo class="default">various</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] ldap suffix = various</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Options beginning with <literal>ldap</literal> are part of an experimental (circa Samba 2.0) use of the Lightweight Directory Access Protocol (LDAP) general directory/distributed database for user, name, and host information. This option is reserved for future use.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-75">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] load printers = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Load all printer names from the system printer capabilities into browse list. Uses configuration options from the <literal>[printers]</literal> section.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-76">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] local master = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Stands for election as the local master browser. See also <literal>domain master</literal> and <literal>os level</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-77">
+<refmeta>
+<refmiscinfo class="allowable values">AUTO, YES, NO</refmiscinfo>
+<refmiscinfo class="default">AUTO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] lm announce = value</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Produce OS/2 SMB broadcasts at an interval specified by the <literal>lm interval</literal> option. YES/NO turns them on/off unconditionally. AUTO causes the Samba server to wait for a LAN Manager announcement from another client before sending one out. Required for OS/2 client browsing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-78">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">60</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] lm interval = seconds</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the time period, in seconds, between OS/2 SMB broadcast announcements.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-79">
+<refmeta>
+<refmiscinfo class="allowable values">pathname</refmiscinfo>
+<refmiscinfo class="default"><emphasis>/usr/local/samba/var/locks</emphasis></refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] lock directory = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Set a directory to keep lock files in. The directory must be writable by Samba, readable by everyone.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-80">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>locking = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Perform file locking. If set to NO, Samba will accept lock requests but will not actually lock resources. Recommended only for read-only file systems.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-81">
+<refmeta>
+<refmiscinfo class="allowable values">pathname</refmiscinfo>
+<refmiscinfo class="default">varies</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] log file = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Set name and location of the log file. Allows all %-variables.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-82">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] log level = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>A synonym of <literal>debug level</literal>. Sets the logging level used. Values of 3 or more slow the system noticeably.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-83">
+<refmeta>
+<refmiscinfo class="allowable values">DOS drive name</refmiscinfo>
+<refmiscinfo class="default">None</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] logon drive = drive</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the drive on Windows NT (only) of the <literal>logon path</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-84">
+<refmeta>
+<refmiscinfo class="allowable values">Unix pathname</refmiscinfo>
+<refmiscinfo class="default"><emphasis>\\</emphasis><replaceable>%N </replaceable><emphasis>\</emphasis><replaceable>%U</replaceable></refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] logon home = path</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the home directory of a Windows 95/98 or NT Workstation user. Allows <literal>NET</literal> <literal>USE</literal> <literal>H:/HOME</literal> from the command prompt.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-85">
+<refmeta>
+<refmiscinfo class="allowable values">Windows pathname</refmiscinfo>
+<refmiscinfo class="default"><emphasis>\\</emphasis><replaceable>%N </replaceable><emphasis>\</emphasis><replaceable>%U </replaceable><emphasis>\profile</emphasis></refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] logon path = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets path to Windows profile directory. This contains <emphasis>USER.MAN</emphasis> and/or <emphasis>USER.DAT</emphasis> profile files and the Windows 95 Desktop, Start Menu, Network Neighborhood, and programs folders.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-86">
+<refmeta>
+<refmiscinfo class="allowable values">pathname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] logon script = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets pathname relative to <literal>[netlogin]</literal> share of a DOS/NT script to run on the client at login time. Allows all %-variables.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-87">
+<refmeta>
+<refmiscinfo class="allowable values">fully-qualfied Unix shell command</refmiscinfo>
+<refmiscinfo class="default">varies</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>lppause command = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the command to pause a print job. Honors the <literal>%p</literal> (printer name) and <literal>%j</literal> (job number) variables.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-88">
+<refmeta>
+<refmiscinfo class="allowable values">fully-qualified Unix shell command</refmiscinfo>
+<refmiscinfo class="default">varies</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>lpresume command = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the command to resume a paused print job. Honors the <literal>%p</literal> (printer name) and <literal>%j</literal> ( job number) variables.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-89">
+<refmeta>
+<refmiscinfo class="allowable values">number of seconds</refmiscinfo>
+<refmiscinfo class="default">10</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] lpq cache time = seconds</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets how long to keep print queue (<literal>lpq  </literal>) status is cached, in seconds.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-90">
+<refmeta>
+<refmiscinfo class="allowable values">fully-qualfied Unix shell command</refmiscinfo>
+<refmiscinfo class="default">varies</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>lpq command = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the command used to get printer status. Usually initialized to a default value by the <literal>printing</literal> option. Honors the <literal>%p</literal> (printer name) variable.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-91">
+<refmeta>
+<refmiscinfo class="allowable values">fully-qualified Unix shell command</refmiscinfo>
+<refmiscinfo class="default">varies</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>lprm command = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the command to delete a print job. Usually initialized to a default value by the <literal>printing</literal> option. Honors the <literal>%p</literal> (printer name) and <literal>%j</literal> (job number) variables.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-92">
+<refmeta>
+<refmiscinfo class="allowable values">number of seconds</refmiscinfo>
+<refmiscinfo class="default">604,800</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>machine password timeout = seconds</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the period between (NT domain) machine password changes. Default is 1 week, or 604,800 seconds.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-93">
+<refmeta>
+<refmiscinfo class="allowable values">Unix pathname</refmiscinfo>
+<refmiscinfo class="default"><emphasis>script.out</emphasis></refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>magic output = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the output file for the discouraged <literal>magic scripts</literal> option. Default is the script name, followed by the extension <emphasis>.out</emphasis>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-94">
+<refmeta>
+<refmiscinfo class="allowable values">Unix pathname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>magic script = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets a filename for execution via a shell whenever the file is closed from the client, to allow clients to run commands on the server.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-95">
+<refmeta>
+<refmiscinfo class="allowable values"><emphasis>allowable values:</emphasis> YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>mangle case = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Mangle a name if it is in mixed case.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-96">
+<refmeta>
+<refmiscinfo class="allowable values">list of to-from pairs</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>mangled map = map list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Set up a table of names to remap (e.g., <emphasis>.html</emphasis> to <emphasis>.htm</emphasis>).</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-97">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>mangled names = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets Samba to abbreviate names that are too long or have unsupported characters to the DOS 8.3 style.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-98">
+<refmeta>
+<refmiscinfo class="allowable values">character</refmiscinfo>
+<refmiscinfo class="default">~</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>mangling char = character</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the unique mangling character used in all mangled names.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-99">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">50</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] mangled stack = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the size of a cache of recently-mangled filenames.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-100">
+<refmeta>
+<refmiscinfo class="allowable values">Unix pathname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>map aliasname = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Points to a file of Unix group/NT group pairs, one per line. This is used to map NT aliases to Unix group names. See also the configuration options <literal>username</literal> <literal>map</literal> and <literal>map</literal> <literal>groupname</literal>. Introduced in Samba 2.0.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-101">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>map archive = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, Samba sets the executable-by-user (0100) bit on Unix files if the DOS archive attribute is set. Recommended: if used, the <literal>create mask</literal> must contain the 0100 bit.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-102">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>map hidden = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, sets executable-by-other (0001) bit on Unix files if the DOS hidden attribute is set. If used, the <literal>create mask</literal> option must contain the  0001 bit.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-103">
+<refmeta>
+<refmiscinfo class="allowable values">pathname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>map groupname = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Points to a file of Unix group/NT group, one per line. This is used to map NT group names to Unix group names. See also the configuration options <literal>username</literal> <literal>map</literal> and <literal>map</literal> <literal>aliasname</literal>. Introduced in Samba 2.0.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-104">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>map system = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, Samba sets the executable-by-group (0010) bit on Unix files if the DOS system attribute is set. If used, the <literal>create mask</literal> must contain the  0010 bit.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-105">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">0 (infinity)</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>max connections = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Set maximum number of connections allowed to a share from each individual client machine.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-106">
+<refmeta>
+<refmiscinfo class="allowable values">size in MB</refmiscinfo>
+<refmiscinfo class="default">0 (unchanged)</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] max disk size = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets maximum disk size/free-space size (in megabytes) to return to client. Some clients or applications can't understand large maximum disk sizes.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-107">
+<refmeta>
+<refmiscinfo class="allowable values">size in KB</refmiscinfo>
+<refmiscinfo class="default">5000</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] max log size = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the size (in kilobytes) at which Samba will start a new log file. The current log file will be renamed with an <emphasis>.old</emphasis> extension, replacing any previous file with that name.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-108">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">50</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] max mux = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the number of simultaneous operations that Samba clients may make. Avoid changing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-109">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">N/A</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] max packet = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym for <literal>packet size</literal>. Obsolete as of Samba 1.7. Use <literal>max xmit</literal> instead.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-110">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">10,000</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] max open files = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Limits the number of files a Samba process will try to keep open at one time. Samba allows you to set this to less than the Unix maximum. This option is a workaround for a separate problem. Avoid changing. This option was introduced in Samba 2.0.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-111">
+<refmeta>
+<refmiscinfo class="allowable values">time in seconds</refmiscinfo>
+<refmiscinfo class="default">14400 (4 hrs)</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] max ttl = seconds</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the time to keep NetBIOS names in <emphasis>nmbd</emphasis> cache while trying to perform a lookup on it. Avoid changing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-112">
+<refmeta>
+<refmiscinfo class="allowable values">time in seconds</refmiscinfo>
+<refmiscinfo class="default">259200 (3 days)</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] max wins ttl = seconds</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Limits time-to-live of a NetBIOS name in <emphasis>nmbd</emphasis> WINS cache, in seconds. Avoid changing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-113">
+<refmeta>
+<refmiscinfo class="allowable values">size in bytes</refmiscinfo>
+<refmiscinfo class="default">65535</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] max xmit = bytes</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets maximum packet size that will be negotiated by Samba. Tuning parameter for slow links and older client bugs. Values less than 2048 are discouraged.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-114">
+<refmeta>
+<refmiscinfo class="allowable values">shell command</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] message command = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the command on the server to run when a WinPopup message arrives from a client. The command must end in "<literal>&amp;</literal>" to allow immediate return. Honors all %-variables except <literal>%u</literal> (user), and supports the extra variables <literal>%s</literal> (filename the message is in), <literal>%t</literal> (destination machine), and <literal>%f</literal> (from).</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-115">
+<refmeta>
+<refmiscinfo class="allowable values">space in KB</refmiscinfo>
+<refmiscinfo class="default">0 (unlimited)</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>min print space = kilobytes</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets minimum spool space required before accepting a print request.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-116">
+<refmeta>
+<refmiscinfo class="allowable values">time in seconds</refmiscinfo>
+<refmiscinfo class="default">21600 (6 hrs)</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] min wins ttl = seconds</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets minimum time-to-live of a NetBIOS name in <emphasis>nmbd</emphasis> WINS cache, in seconds. Avoid changing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-117">
+<refmeta>
+<refmiscinfo class="allowable values">list of lmhosts, wins, hosts and bcast</refmiscinfo>
+<refmiscinfo class="default">lmhosts wins hosts bcast</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>name resolve order = list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets order of lookup when trying to get IP address from names. The <literal>hosts</literal> parameter carrries out a regular name look up using the server's normal sources: <emphasis>/etc/hosts</emphasis>, DNS, NIS, or a combination of them. Introduced in Samba 1.9.18p4.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-118">
+<refmeta>
+<refmiscinfo class="allowable values">list of netbios names</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] netbios aliases = list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Adds additional NetBIOS names by which a Samba server will advertise itself.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-119">
+<refmeta>
+<refmiscinfo class="allowable values">host name</refmiscinfo>
+<refmiscinfo class="default">varies</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>netbios name = hostname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the NetBIOS name by which a Samba server is known, or primary name if NetBIOS aliases exist.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-120">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] networkstation user login = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to NO, clients will not do a full login when <literal>security = server</literal>. Avoid changing. Turning it off is a temporary workaround (introduced in Samba 1.9.18p3) for NT trusted domains bug. Automatic correction was introduced in Samba 1.9.18p10; the parameter may eventually be removed.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-121">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] nis homedir = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, the <literal>homedir map</literal> will be used to look up the user's home-directory server name and return it to the client. The client will contact that machine to connect to the share. This avoids mounting from a machine that doesn't actually have the disk. The machine with the home directories must be an SMB server.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-122">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] nt pipe support = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Allows turning off NT-specific pipe calls. This is a developer/benchmarking option and may be removed in the future. Avoid changing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-123">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] nt smb support = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, allow NT-specific SMBs to be used. This is a developer/benchmarking option and may be removed in the future. Avoid changing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-124">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] null passwords = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, allows access to accounts that have null passwords. Strongly discouraged.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-125">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>ole locking compatibility = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, locking ranges will be mapped to avoid Unix locks crashing when Windows uses locks above 32KB. You should avoid changing this option. Introduced in Samba 1.9.18p10.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-126">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>only guest = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>A synonym for <literal>guest only</literal>. Forces user of a share to login as the guest account.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-127">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>only user = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Requires that users of the share be on a <literal>username =</literal> list.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-128">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>oplocks = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, support local caching of <emphasis>opportunistic</emphasis> locked files on client. This option is recommended because it improves performance by about 30%. See also <literal>fake</literal> <literal>oplocks</literal> and <literal>veto</literal> <literal>oplock</literal> <literal>files</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-129">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] os level = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the candidacy of the server when electing a browse master. Used with the <literal>domain</literal> <literal>master</literal> or <literal>local</literal> <literal>master</literal> options. You can set a higher value than a competing operating system if you want Samba to win. Windows for Workgroups and Windows 95 use 1, Windows NT client uses 17, and Windows NT Server uses 33.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-130">
+<refmeta>
+<refmiscinfo class="allowable values">number in bytes</refmiscinfo>
+<refmiscinfo class="default">65535</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] packet size = bytes</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Obsolete. Discouraged synonym of <literal>max packet</literal>. See <literal>max xmit</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-131">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] passwd chat debug = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Logs an entire password chat, including passwords passed, with a log level of 100. For debugging only. Introduced in Samba 1.9.18p5.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-132">
+<refmeta>
+<refmiscinfo class="allowable values">Unix server commands</refmiscinfo>
+<refmiscinfo class="default">compiled-in value</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] passwd chat = command sequence</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the command used to change passwords on the server. Supports the variables <literal>%o</literal> (old password) and <literal>%n</literal> (new password) and allows <literal>\r</literal> <literal>\n</literal> <literal>\t</literal> and <literal>\s</literal> (space) escapes in the sequence.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-133">
+<refmeta>
+<refmiscinfo class="allowable values">Unix server program</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] passwd program = program</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the command used to change user's password. Will be run as <literal>root</literal>. Supports <literal>%u</literal> (user).</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-134">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] password level = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Specifies the number of uppercase letter permutations used to match passwords. Workaround for clients that change passwords to a single case before sending them to the Samba server. Causes repeated login attempts with passwords in different cases, which can trigger account lockouts.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-135">
+<refmeta>
+<refmiscinfo class="allowable values">list of NetBIOS names</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] password server = netbios names</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>A list of SMB servers that will validate passwords for you. Used with an NT password server (PDC or BDC) and the <literal>security</literal> <literal>=</literal> <literal>server</literal> or <literal>security</literal> <literal>=</literal> <literal>domain</literal> configuration options. Caution: an NT password server must allow logins from the Samba server.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-136">
+<refmeta>
+<refmiscinfo class="allowable values">fully-qualfied Unix shell command</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>panic action = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the command to run when Samba panics. For Samba developers and testers, <literal>/usr/bin/X11/xterm -display :0 -e gdb /samba/bin/smbd %d</literal> is a possible value.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-137">
+<refmeta>
+<refmiscinfo class="allowable values">pathname</refmiscinfo>
+<refmiscinfo class="default">varies</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>path = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the path to the directory provided by a file share or used by a printer share. Set automatically in <literal>[homes]</literal> share to user's home directory, otherwise defaults to<filename> /tmp</filename>. Honors the <literal>%u</literal> (user) and <literal>%m</literal> (machine) variables.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-138">
+<refmeta>
+<refmiscinfo class="allowable values">fully-qualified Unix shell command</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>postexec = /absolute_  path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets a command to run as the user after disconnecting from the share. See also the options <literal>preexec</literal>, <literal>root preexec</literal>, and <literal>root postexec</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-139">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>postscript = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Flags a printer as PostScript to avoid a Windows bug by inserting <literal>%!</literal> as the first line. Works only if printer actually is PostScript compatible.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-140">
+<refmeta>
+<refmiscinfo class="allowable values">fully-qualified Unix shell command</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>preexec = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets a command to run as the user before connecting to the share. See also the options <literal>postexec</literal>, <literal>root preexec</literal>, and <literal>root postexec</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-141">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] preferred master = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, Samba is preferred to become the master browser. Causes Samba to call a browsing election when it comes online.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-142">
+<refmeta>
+<refmiscinfo class="allowable values">list of services</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>preload = share list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym of <literal>auto</literal> <literal>services</literal>. Specifies a list of shares that will always appear in browse lists.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-143">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>preserve case = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, this option leaves filenames in the case sent by client. If no, it forces filenames to the case specified by the <literal>default</literal> <literal>case</literal> option. See also <literal>short preserve case</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-144">
+<refmeta>
+<refmiscinfo class="allowable values">fully-qualified Unix shell command</refmiscinfo>
+<refmiscinfo class="default">varies</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>print command = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the command used to send a spooled file to the printer. Usually initialized to a default value by the <literal>printing</literal> option. This option honors the <literal>%p</literal> (printer name), <literal>%s</literal> (spool file) and <literal>%f</literal> (spool file as a relative path) variables. Note that the command in the value of the option must include file deletion of the spool file.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-145">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>print ok = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym of <literal>printable</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-146">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>printable = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets a share to be a print share. Required for all printers.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-147">
+<refmeta>
+<refmiscinfo class="allowable values">pathname</refmiscinfo>
+<refmiscinfo class="default"><emphasis>/etc/printcap</emphasis></refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] printcap name = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the path to the printer capabilities file used by the <literal>[printers]</literal> share. The default value changes to <filename>/etc/qconfig</filename> under AIX and <filename>lpstat</filename> on System V.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-148">
+<refmeta>
+<refmiscinfo class="allowable values">printer name</refmiscinfo>
+<refmiscinfo class="default"><literal>lp</literal></refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>printer = name</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the name of the Unix printer.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-149">
+<refmeta>
+<refmiscinfo class="allowable values">exact printer driver string used by Windows</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>printer driver = printer driver name</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the string to pass to Windows when asked what driver to use to prepare files for a printer share. Note that the value is case sensitive.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-150">
+<refmeta>
+<refmiscinfo class="allowable values">Unix pathname</refmiscinfo>
+<refmiscinfo class="default"><emphasis>samba-lib/printers.def</emphasis></refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] printer driver file = path</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the location of a <emphasis>msprint.def</emphasis> file, usable by Windows 95/98.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-151">
+<refmeta>
+<refmiscinfo class="allowable values">Windows network path</refmiscinfo>
+<refmiscinfo class="default"><emphasis>\\</emphasis><replaceable>server</replaceable><emphasis>\PRINTER$</emphasis></refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>printer driver location = path</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the location of the driver for a particular printer. The value is a pathname for a share that stores the printer driver files.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-152">
+<refmeta>
+<refmiscinfo class="allowable values">name</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>printer name = name</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym of <literal>printer</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-153">
+<refmeta>
+<refmiscinfo class="allowable values">bsd, sysv, hpux, aix, qnx, plp, lprng</refmiscinfo>
+<refmiscinfo class="default">bsd</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>printing = style</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets printing style to one of the above, instead of the compiled-in value. This sets initial values of at least the <literal>print</literal> <literal>command </literal>, <literal>print</literal> <literal>command </literal>, <literal>lpq</literal> <literal>command </literal>, and <literal>lprm</literal> <literal>command</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-154">
+<refmeta>
+<refmiscinfo class="allowable values">NT1, LANMAN2, LANMAN1, COREPLUS, CORE</refmiscinfo>
+<refmiscinfo class="default">NT1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] protocol = protocol</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets SMB protocol version to one of the allowable
+values. Resetting is highly discouraged. Only for backwards
+compatibility with older-client bugs.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-155">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>public = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, passwords are not needed for this share. A synonym is <literal>guest ok</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-156">
+<refmeta>
+<refmiscinfo class="allowable values">valid Unix command</refmiscinfo>
+<refmiscinfo class="default">varies</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>queuepause command = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the command used to pause a print queue. Usually initialized to a default value by the <literal>printing</literal> option. Introduced in Samba 1.9.18p10.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-157">
+<refmeta>
+<refmiscinfo class="allowable values">valid Unix command</refmiscinfo>
+<refmiscinfo class="default">varies</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>queueresume command = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the command used to resume a print queue. Usually initialized to a default value by the <literal>printing</literal> option. Introduced in Samba 1.9.18p10.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-158">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>read bmpx = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Obsolete. Do not change.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-159">
+<refmeta>
+<refmiscinfo class="allowable values">comma-separated list of users</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>read list = comma-separated list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Specifies a list of users given read-only access to a writeable share.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-160">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>read only = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets a share to read-only. Antonym of <literal>writable</literal> and <literal>write ok</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-161">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] read prediction = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Reads ahead data for read-only files. Obsolete; removed in Samba 2.0.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-162">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] read raw = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Allows fast streaming reads over TCP using 64K buffers. Recommended.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-163">
+<refmeta>
+<refmiscinfo class="allowable values">size in bytes</refmiscinfo>
+<refmiscinfo class="default">2048</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] read size = bytes</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets a buffering option for servers with mismatched disk and network speeds. Requires experimentation. Avoid changing. Should not exceed 65536.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-164">
+<refmeta>
+<refmiscinfo class="allowable values">list of remote addresses</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] remote announce = remote list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Adds workgroups to the list on which the Samba server will announce itself. Specified as IP address/workgroup (for instance, 192.168.220.215/SIMPLE) with multiple groups separated by spaces. Allows directed broadcasts. The server will appear on those workgroup's browse lists. Does not require WINS.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-165">
+<refmeta>
+<refmiscinfo class="allowable values">IP-address list</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] remote browse sync = address list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Enables Samba-only browse list synchronization with other Samba local master browsers. Addresses can be specific addresses or directed broadcasts (i.e., ###.###.###.255). The latter will cause Samba to hunt down the local master.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-166">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>revalidate = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, requires users to re-enter passwords even after a successful initial logon to a share with a password.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-167">
+<refmeta>
+<refmiscinfo class="allowable values">Unix pathname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] root = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym for <literal>root directory</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-168">
+<refmeta>
+<refmiscinfo class="allowable values">Unix pathname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] root dir = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym for <literal>root directory</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-169">
+<refmeta>
+<refmiscinfo class="allowable values">Unix pathname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] root directory = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Specifies a directory to <literal>chroot()</literal> to before starting daemons. Prevents any access below that directory tree. See also the <literal>wide links</literal> configuration option.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-170">
+<refmeta>
+<refmiscinfo class="allowable values">fully-qualified Unix shell command</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>root postexec = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets a command to run as root after disconnecting from the share. See also <literal>preexec</literal>, <literal>postexec</literal>, and <literal>root</literal> <literal>preexec</literal> configuration options. Runs after the user's <literal>postexec</literal> command. Use with caution.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-171">
+<refmeta>
+<refmiscinfo class="allowable values">fully-qualified Unix shell command</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>root preexec = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets a command to run as root before connecting to the share. See also <literal>preexec</literal>, <literal>postexec</literal>, and <literal>root</literal> <literal>postexec</literal> configuration options. Runs before the user's <literal>preexec</literal> command. Use with caution.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-172">
+<refmeta>
+<refmiscinfo class="allowable values">share, user, server, domain</refmiscinfo>
+<refmiscinfo class="default">share in Samba 1.0, user in 2.0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] security = value</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets password-security policy. If <literal>security</literal> <literal>=</literal> <literal>share</literal>, services have a shared password, available to everyone. If <literal>security</literal> <literal>=</literal> <literal>user</literal>, users have (Unix) accounts and passwords. If <literal>security</literal> <literal>=</literal> <literal>server</literal>, users have accounts and passwords and a separate machine authenticates them for Samba. If <literal>security</literal> <literal>=</literal> <literal>domain</literal>, full NT-domain authentication is done. See also the <literal>password server</literal> and <literal>encrypted passwords</literal> configuration options.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-173">
+<refmeta>
+<refmiscinfo class="allowable values">string</refmiscinfo>
+<refmiscinfo class="default">Samba <literal>%v</literal> in 2.0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] server string = text</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the name that appears beside a server in browse lists. Honors the <literal>%v</literal> (Samba version number) and <literal>%h</literal> (hostname) variables.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-174">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>set directory = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Allows DEC Pathworks client to use the <emphasis>set dir</emphasis> command.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-175">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">113</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] shared file entries = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Obsolete; do not use.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-176">
+<refmeta>
+<refmiscinfo class="allowable values">size in bytes</refmiscinfo>
+<refmiscinfo class="default">102400</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>shared mem size = bytes</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If compiled with FAST_SHARE_MODES (mmap), sets the shared memory size in bytes. Avoid changing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-177">
+<refmeta>
+<refmiscinfo class="allowable values">Unix pathname</refmiscinfo>
+<refmiscinfo class="default"><filename>/usr/local/samba/private/smbpasswd</filename></refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] smb passwd file = path</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Overrides compiled-in path to password file if <literal>encrypted passwords</literal> <literal>=</literal> <literal>yes</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-178">
+<refmeta>
+<refmiscinfo class="allowable values">smbrun command</refmiscinfo>
+<refmiscinfo class="default">compiled-in value</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] smbrun = /absolute_ path/command</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Overrides compiled-in path to <filename>smbrun</filename> binary. Avoid changing.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-179">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>share modes = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, this option supports Windows-style whole-file (deny mode) locks.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-180">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>short preserve case = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, leaves mangled 8.3-style filenames in the case sent by client. If no, it forces the case to that specified by the <literal>default case</literal> option. See also <literal>preserve case</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-181">
+<refmeta>
+<refmiscinfo class="allowable values">IP address</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] socket address = IP address</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets address on which to listen for connections. Default is to listen to all addresses. Used to support multiple virtual interfaces on one server. Highly discouraged.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-182">
+<refmeta>
+<refmiscinfo class="allowable values">list</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] socket options = socket option list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets OS-specific socket options. <literal>SO_KEEPALIVE</literal> has TCP check clients every 4 hours to see if they are still accessible. <literal>TCP_NODELAY</literal> sends even tiny packets to keep delay low. Recommended wherever the operating system supports them. See <link linkend="SAMBA-AP-B">Appendix B</link>, for more information.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-183">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] status = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, logs connections to a file (or shared memory) accessible to <filename>smbstatus</filename>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-184">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>strict sync = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, Samba will synchronize to disk whenever the client sets the sync bit in a packet. If set to NO, Samba flushes data to disk whenever buffers fill. Defaults to NO because Windows 98 Explorer sets the bit (incorrectly) in all packets. Introduced in Samba 1.9.18p10.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-185">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>strict locking = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, Samba checks locks on every access, not just on demand and at open time. Not recommended.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-186">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] strip dot = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Removes trailing dots from filenames. Use <literal>mangled map</literal> instead.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-187">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">1</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] syslog = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets number of Samba log messages to send to <filename>syslog</filename>. Higher is more verbose. The <filename>syslog.conf</filename> file must have suitable logging enabled.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-188">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] syslog only = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, log only to <emphasis>syslog,</emphasis> not standard Samba log files.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-189">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>sync always = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, Samba calls <emphasis>fsync</emphasis>(3) after every write. Avoid except for debugging crashing servers.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-190">
+<refmeta>
+<refmiscinfo class="allowable values">minutes</refmiscinfo>
+<refmiscinfo class="default">0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] time offset = minutes</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets number of minutes to add to system time zone calculation. Provided to fix a client daylight-savings bug; not recommended.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-191">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] time server = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If YES, <emphasis>nmbd</emphasis> will provide time service to its clients.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-192">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>unix password sync = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set, will attempt to change the user's Unix password whenever the user changes his or her SMB password. Used to ease synchronization of Unix and Microsoft password databases. Added in Samba 1.9.18p4. See also <literal>passwd chat</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-193">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>unix realname = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set, will provide the GCOS field of <filename>/etc/passwd</filename> to the client as the user's full name.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-194">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>update encrypted = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Updates the Microsoft-format password file when a user logs in with unencrypted passwords. Provided to ease conversion to encryped passwords for Windows 95/98 and NT. Added in Samba 1.9.18p5.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-195">
+<refmeta>
+<refmiscinfo class="allowable values">comma-separated list of user names</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>user = comma-separated list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym for <literal>username</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-196">
+<refmeta>
+<refmiscinfo class="allowable values">comma-separated list of user names</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>username = comma-separated list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets a list of users to try to log in as for a share or shares with share-level security. Synonyms are <literal>user</literal> and <literal>users</literal>. Discouraged. Use <literal>NET USE \\</literal><replaceable>server</replaceable><literal>\</literal><replaceable>share </replaceable><literal>%</literal><replaceable>user</replaceable> from the client instead.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-197">
+<refmeta>
+<refmiscinfo class="allowable values">number</refmiscinfo>
+<refmiscinfo class="default">0</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>username level = number</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Number of uppercase letter permutations allowed to match Unix usernames. Workaround for Windows feature (single-case usernames). Use is discouraged.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-198">
+<refmeta>
+<refmiscinfo class="allowable values">pathname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] username map = pathname</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Names a file of Unix-to-Windows name pairs; used to map different spellings of account names and those Windows usernames longer than eight characters.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-199">
+<refmeta>
+<refmiscinfo class="allowable values">list of numeric values</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>valid chars = list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Semi-obsolete. Adds national characters to a character set map. Overridden by <literal>client code page</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-200">
+<refmeta>
+<refmiscinfo class="allowable values">list of users</refmiscinfo>
+<refmiscinfo class="default">NULL (everyone)</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>valid users = user list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>List of users that can log in to a share.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-201">
+<refmeta>
+<refmiscinfo class="allowable values">slash-separated list of filenames</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>veto files = slash-list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>List of files not to allow the client to see when listing a directory's contents. See also <literal>delete veto files</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-202">
+<refmeta>
+<refmiscinfo class="allowable values">slash-separated list of filenames</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>veto oplock files = slash-list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>List of files not to oplock (and cache on clients). See also <literal>oplocks</literal> and <literal>fake oplocks</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-203">
+<refmeta>
+<refmiscinfo class="allowable values">string</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>volume = share name</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the volume label of a disk share, notably a CD-ROM.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-204">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>wide links = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, Samba will follow symlinks out of the current disk share(s). See also the <literal>root dir</literal> and <literal>follow symlinks</literal> options.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-205">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] wins proxy = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, <emphasis>nmbd</emphasis> will proxy resolution requests to WINS servers on behalf of old clients, which use broadcasts. WINS server is typically on another subnet.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-206">
+<refmeta>
+<refmiscinfo class="allowable values">hostname</refmiscinfo>
+<refmiscinfo class="default">NULL</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] wins server = host</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the DNS name or IP address of the WINS server.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-207">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">NO</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] wins support = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>If set to YES, Samba activates WINS service. The <literal>wins server</literal> option must not be set if <literal>wins support = yes</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-208">
+<refmeta>
+<refmiscinfo class="allowable values">workgroup name</refmiscinfo>
+<refmiscinfo class="default">compiled-in</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] workgroup = name</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Sets the workgroup to which things will be served. Overrides compiled-in value. Choosing a name other than <literal>WORKGROUP</literal> is strongly recommended.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-209">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>writable = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Antonym for <literal>read only</literal>; synonym of <literal>write ok</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-210">
+<refmeta>
+<refmiscinfo class="allowable values">comma-separated list of users</refmiscinfo>
+<refmiscinfo class="default">NULL (everyone)</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>write list = comma-separated list</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>List of users that are given read-write access to a read-only share. See also <literal>read list</literal>.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-211">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>write ok = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Synonym of the <literal>writable</literal> configuration option.</para>
+
+</refsynopsisdiv>
+</refentry>
+
+<refentry id="appc-refentry-212">
+<refmeta>
+<refmiscinfo class="allowable values">YES, NO</refmiscinfo>
+<refmiscinfo class="default">YES</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>[global] write raw = boolean</refname>
+</refnamediv>
+<refsynopsisdiv>
+<para>Allows fast streaming writes over TCP, using 64KB buffers. Recommended.</para>
+
+</refsynopsisdiv>
+</refentry>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="C.2" id="appc-SECT-2">
+<title>Glossary of Configuration Values</title>
+
+
+<variablelist>
+<varlistentry><term>
+<indexterm id="appc-idx-990655-0"><primary>glossary</primary></indexterm>Address list</term>
+<listitem><para>A space-separated list of IP addresses in ###.###.###.### format.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>Comma-separated list</term>
+<listitem><para>A list of items separated by commas.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>Command</term>
+<listitem><para>A Unix command, with full path and parameters.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>Host list</term>
+<listitem><para>A space-separated list of hosts. Allows IP addresses, address masks, domain names, ALL, and EXCEPT</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>Interface list</term>
+<listitem><para>A space-separated list of interfaces, in either address/netmask or address/n-bits format. For example, 192.168.2.10/24 or 192.168.2.10/255.255.255.0</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>Map list</term>
+<listitem><para>A space-separated list of file-remapping strings such as <literal>(*.html</literal> <literal>*.htm)</literal>.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>Remote list</term>
+<listitem><para>A space-separated list of subnet-broadcast-address/workgroup pairs. For example, 192.168.2.255/SERVERS 192.168.4.255/STAFF.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>Service (share) list</term>
+<listitem><para>A space-separated list of share names, without the enclosing square brackets.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>Slash-list</term>
+<listitem><para>A list of filenames, separated by "/" characters to allow embedded spaces. For example, <literal>/.*/fred</literal> <literal>flintstone/*.frk/</literal>.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>Text</term>
+<listitem><para>One line of text.</para></listitem>
+</varlistentry>
+
+
+<varlistentry><term>User list</term>
+<listitem><para>A space-separated list of usernames. In Samba 1.9, <literal>@group-name</literal> will include everyone in Unix group <literal>group-name</literal>. In Samba 2.0, <literal>@group-name</literal> includes whomever is in the NIS netgroup <literal>group_name</literal> if one exists, otherwise whomever is in the Unix group <literal>group_name</literal>. In addition, +<literal>group_name</literal> is a Unix group, &amp;<literal>group_name</literal> is an NIS netgroup, and &amp;+ and +&amp; cause an ordered search of both Unix and NIS groups.</para></listitem>
+</varlistentry>
+</variablelist>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="C.3" id="appc-SECT-3">
+<title>Configuration File Variables</title>
+
+
+<para><link linkend="appc-88529">Table 3.1</link> lists of Samba configuration file variables.</para>
+
+
+<table label="C.1" id="appc-88529">
+<title>Variables in Alphabetic Order </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Name</para></entry>
+
+<entry colname="col2"><para>Meaning</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>%a</literal></para></entry>
+
+<entry colname="col2"><para>Client's architecture (one of Samba, WfWg, WinNT, Win95, or UNKNOWN)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%d</literal></para></entry>
+
+<entry colname="col2"><para>Current server process's processID</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%f</literal></para></entry>
+
+<entry colname="col2"><para>Print-spool file as a relative path (printing only)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%f</literal></para></entry>
+
+<entry colname="col2"><para>User from which a message was sent (messages only)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%G</literal></para></entry>
+
+<entry colname="col2"><para>Primary group name of <literal>%U</literal> (requested username)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%g</literal></para></entry>
+
+<entry colname="col2"><para>Primary group name of <literal>%u</literal> (actual username)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%H</literal></para></entry>
+
+<entry colname="col2"><para>Home directory of <literal>%u</literal> (actual username)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%h</literal></para></entry>
+
+<entry colname="col2"><para>Samba server's (Internet) hostname</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%I</literal></para></entry>
+
+<entry colname="col2"><para>Client's IP address</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%j</literal></para></entry>
+
+<entry colname="col2"><para>Print job number (printing only)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%L</literal></para></entry>
+
+<entry colname="col2"><para>Samba server's NetBIOS name (virtual servers have multiple names)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%M</literal></para></entry>
+
+<entry colname="col2"><para>Client's (Internet) hostname</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%m</literal></para></entry>
+
+<entry colname="col2"><para>Client's NetBIOS name</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%n</literal></para></entry>
+
+<entry colname="col2"><para>New password (password change only)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%N</literal></para></entry>
+
+<entry colname="col2"><para>Name of the NIS home directory server (without NIS, same as <literal>%L</literal>)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%o</literal></para></entry>
+
+<entry colname="col2"><para>Old password (password change only)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%P</literal></para></entry>
+
+<entry colname="col2"><para>Current share's root directory (actual)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%p</literal></para></entry>
+
+<entry colname="col2"><para>Current share's root directory (in an NIS homedir map)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%p</literal></para></entry>
+
+<entry colname="col2"><para>Print filename (printing only)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%R</literal></para></entry>
+
+<entry colname="col2"><para>Protocol level in use (one of CORE, COREPLUS, LANMAN1, LANMAN2, or NT1)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%S</literal></para></entry>
+
+<entry colname="col2"><para>Current share's name</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%s</literal></para></entry>
+
+<entry colname="col2"><para>Filename the message is in (messages only)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%s</literal></para></entry>
+
+<entry colname="col2"><para>Print-spool file name (printing only)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%T</literal></para></entry>
+
+<entry colname="col2"><para>Current date and time</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%t</literal></para></entry>
+
+<entry colname="col2"><para>Destination machine (messages only)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%u</literal></para></entry>
+
+<entry colname="col2"><para>Current share's username</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%U</literal></para></entry>
+
+<entry colname="col2"><para>Requested username for current share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%v</literal></para></entry>
+
+<entry colname="col2"><para>Samba version</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+</sect1>
+
+
+
+
+
+
+
+
+</appendix>

@@ -1,0 +1,61 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>pam_winbind</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="pam_winbind.7"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>pam_winbind &#8212; PAM module for Winbind</p></div><div class="refsect1" lang="en"><a name="id2522915"></a><h2>DESCRIPTION</h2><p>This tool is part of the <a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>
+	pam_winbind is a PAM module that can authenticate users against the local domain by talking to the Winbind daemon.
+	</p></div><div class="refsect1" lang="en"><a name="id2522939"></a><h2>OPTIONS</h2><p>
+	
+		pam_winbind supports several options which can either be set in
+		the PAM configuration files or in the pam_winbind configuration
+		file situated at
+		<code class="filename">/etc/security/pam_winbind.conf</code>. Options
+		from the PAM configuration file take precedence to those from
+		the configuration file.
+
+		</p><div class="variablelist"><dl><dt><span class="term">debug</span></dt><dd><p>Gives debugging output to syslog.</p></dd><dt><span class="term">debug_state</span></dt><dd><p>Gives detailed PAM state debugging output to syslog.</p></dd><dt><span class="term">require_membership_of=[SID or NAME]</span></dt><dd><p>
+		If this option is set, pam_winbind will only succeed if the user is a member of the given SID or NAME. A SID
+		can be either a group-SID, an alias-SID or even an user-SID. It is also possible to give a NAME instead of the
+		SID. That name must have the form: <em class="parameter"><code>MYDOMAIN\\mygroup</code></em> or
+		<em class="parameter"><code>MYDOMAIN\\myuser</code></em>.  pam_winbind will, in that case, lookup the SID internally. Note that
+		NAME may not contain any spaces. It is thus recommended to only use SIDs. You can verify the list of SIDs a
+		user is a member of with <code class="literal">wbinfo --user-sids=SID</code>.
+		</p></dd><dt><span class="term">try_first_pass</span></dt><dd><p></p></dd><dt><span class="term">use_first_pass</span></dt><dd><p>
+		By default, pam_winbind tries to get the authentication token from a previous module. If no token is available
+		it asks the user for the old password. With this option, pam_winbind aborts with an error if no authentication
+		token from a previous module is available.
+		</p></dd><dt><span class="term">use_authtok</span></dt><dd><p>
+		Set the new password to the one provided by the previously stacked password module. If this option is not set 
+		pam_winbind will ask the user for the new password.
+		</p></dd><dt><span class="term">krb5_auth</span></dt><dd><p>
+
+		pam_winbind can authenticate using Kerberos when winbindd is
+		talking to an Active Directory domain controller. Kerberos
+		authentication must be enabled with this parameter. When
+		Kerberos authentication can not succeed (e.g. due to clock
+		skew), winbindd will fallback to samlogon authentication over
+		MSRPC. When this parameter is used in conjunction with
+		<em class="parameter"><code>winbind refresh tickets</code></em>, winbind will
+		keep your Ticket Granting Ticket (TGT) uptodate by refreshing
+		it whenever necessary.
+
+		</p></dd><dt><span class="term">krb5_ccache_type=[type]</span></dt><dd><p>
+		
+		When pam_winbind is configured to try kerberos authentication
+		by enabling the <em class="parameter"><code>krb5_auth</code></em> option, it can
+		store the retrieved Ticket Granting Ticket (TGT) in a
+		credential cache. The type of credential cache can be set with
+		this option. Currently the only supported value is:
+		<em class="parameter"><code>FILE</code></em>. In that case a credential cache in
+		the form of /tmp/krb5cc_UID will be created, where UID is
+		replaced with the numeric user id.  Leave empty to just do
+		kerberos authentication without having a ticket cache after the
+		logon has succeeded.
+
+		</p></dd><dt><span class="term">cached_login</span></dt><dd><p>
+		Winbind allows to logon using cached credentials when <em class="parameter"><code>winbind offline logon</code></em> is enabled. To use this feature from the PAM module this option must be set.
+		</p></dd><dt><span class="term">silent</span></dt><dd><p>
+		Do not emit any messages.
+		</p></dd></dl></div><p>
+
+
+	</p></div><div class="refsect1" lang="en"><a name="id2483635"></a><h2>SEE ALSO</h2><p><a class="citerefentry" href="wbinfo.1.html"><span class="citerefentry"><span class="refentrytitle">wbinfo</span>(1)</span></a>, <a class="citerefentry" href="winbindd.8.html"><span class="citerefentry"><span class="refentrytitle">winbindd</span>(8)</span></a>, <a class="citerefentry" href="smb.conf.5.html"><span class="citerefentry"><span class="refentrytitle">smb.conf</span>(5)</span></a></p></div><div class="refsect1" lang="en"><a name="id2483671"></a><h2>VERSION</h2><p>This man page is correct for version 3.0 of Samba.</p></div><div class="refsect1" lang="en"><a name="id2483681"></a><h2>AUTHOR</h2><p>
+	The original Samba software and related utilities were created by Andrew Tridgell. Samba is now developed by
+	the Samba Team as an Open Source project similar to the way the Linux kernel is developed.
+	</p><p>This manpage was written by Jelmer Vernooij and Guenther Deschner.</p></div></div></body></html>

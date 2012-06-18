@@ -1,0 +1,23 @@
+From: Thomas Rauscher
+Date: Thu, 23 Sep 2010 07:02:05 UTC
+Subject: [PATCH] vswprintf lacks mutex init
+
+it seems that vswprintf lacks the initialization of the STDIO mutex.
+At least on ARM/NPTL, calling this function blocks sometimes.
+
+The following patch solved the problem for me (code copied from vsnprintf.c).
+
+diff -uBp uClibc.orig/libc/stdio/vswprintf.c uClibc/libc/stdio/vswprintf.c
+--- uClibc.orig/libc/stdio/vswprintf.c	2008-04-11 00:39:07.000000000 +0400
++++ uClibc/libc/stdio/vswprintf.c	2010-09-25 09:16:09.000000000 +0400
+@@ -40,6 +40,10 @@ int vswprintf(wchar_t *__restrict buf, s
+ 	__INIT_MBSTATE(&(f.__state));
+ #endif /* __STDIO_MBSTATE */
+ 
++#if (defined(__STDIO_BUFFERS) || defined(__USE_OLD_VFPRINTF__)) && defined(__UCLIBC_HAS_THREADS__)
++	f.__user_locking = 1;		/* Set user locking. */
++	__stdio_init_mutex(&f.__lock);
++#endif
+ 	f.__nextopen = NULL;
+ 
+ 	if (size > ((SIZE_MAX - (size_t) buf)/sizeof(wchar_t))) {

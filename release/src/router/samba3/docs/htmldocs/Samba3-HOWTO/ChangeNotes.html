@@ -1,0 +1,144 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 9. Important and Critical Change Notes for the Samba 3.x Series</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"><link rel="home" href="index.html" title="The Official Samba 3.0.x HOWTO and Reference Guide"><link rel="up" href="optional.html" title="Part III. Advanced Configuration"><link rel="prev" href="optional.html" title="Part III. Advanced Configuration"><link rel="next" href="NetworkBrowsing.html" title="Chapter 10. Network Browsing"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 9. Important and Critical Change Notes for the Samba 3.x Series</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="optional.html">Prev</a> </td><th width="60%" align="center">Part III. Advanced Configuration</th><td width="20%" align="right"> <a accesskey="n" href="NetworkBrowsing.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="ChangeNotes"></a>Chapter 9. Important and Critical Change Notes for the Samba 3.x Series</h2></div><div><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="othername">H.</span> <span class="orgname">Samba Team</span> <span class="surname">Terpstra</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jht@samba.org">jht@samba.org</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">Gerald</span> <span class="othername">(Jerry)</span> <span class="orgname">Samba Team</span> <span class="surname">Carter</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jerry@samba.org">jerry@samba.org</a>&gt;</code></p></div></div></div></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="ChangeNotes.html#id2578589">Important Samba-3.2.x Change Notes</a></span></dt><dt><span class="sect1"><a href="ChangeNotes.html#id2578600">Important Samba-3.0.x Change Notes</a></span></dt><dd><dl><dt><span class="sect2"><a href="ChangeNotes.html#id2578659">User and Group Changes</a></span></dt><dt><span class="sect2"><a href="ChangeNotes.html#id2578971">Essential Group Mappings</a></span></dt><dt><span class="sect2"><a href="ChangeNotes.html#id2579093">Passdb Changes</a></span></dt><dt><span class="sect2"><a href="ChangeNotes.html#id2579153">Group Mapping Changes in Samba-3.0.23</a></span></dt><dt><span class="sect2"><a href="ChangeNotes.html#id2579273">LDAP Changes in Samba-3.0.23</a></span></dt></dl></dd></dl></div><p>
+Please read this chapter carefully before update or upgrading Samba.  You should expect to find only critical
+or very important information here. Comprehensive change notes and guidance information can be found in the
+section <a class="link" href="upgrading-to-3.0.html" title="Chapter 35. Updating and Upgrading Samba">Updating and Upgrading Samba</a>.
+</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2578589"></a>Important Samba-3.2.x Change Notes</h2></div></div></div><p>
+!!!!!!!!!!!!Add all critical update notes here!!!!!!!!!!!!!
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2578600"></a>Important Samba-3.0.x Change Notes</h2></div></div></div><p>
+These following notes pertain in particular to Samba 3.0.23 through Samba 3.0.25c (or more recent 3.0.25
+update).  Samba is a fluid and ever changing project. Changes throughout the 3.0.x series release are
+documented in this documention - See <a class="link" href="upgrading-to-3.0.html#oldupdatenotes" title="Upgrading from Samba-2.x to Samba-3.0.25">Upgrading from Samba-2.x to Samba-3.0.25</a>.
+</p><p>
+Sometimes it is difficult to figure out which part, or parts, of the HOWTO documentation should be updated to
+reflect the impact of new or modified features. At other times it becomes clear that the documentation is in
+need of being restructured.
+</p><p>
+In recent times a group of Samba users has joined the thrust to create a new <a class="ulink" href="http://wiki.samba.org/" target="_top">Samba Wiki</a> that is slated to become the all-singing and all-dancing
+new face of Samba documentation. Hopefully, the Wiki will benefit from greater community input and
+thus may be kept more up to date. Until that golden dream materializes and matures it is necessary to
+continue to maintain the HOWTO. This chapter will document major departures from earlier behavior until
+such time as the body of this HOWTO is restructured or modified.
+</p><p>
+This chapter is new to the release of the HOWTO for Samba 3.0.23. It includes much of the notes provided
+in the <code class="filename">WHATSNEW.txt</code> file that is included with the Samba source code release tarball.
+</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2578659"></a>User and Group Changes</h3></div></div></div><p>
+The change documented here affects unmapped user and group accounts only.
+</p><p>
+<a class="indexterm" name="id2578672"></a>
+<a class="indexterm" name="id2578679"></a>
+<a class="indexterm" name="id2578686"></a>
+<a class="indexterm" name="id2578695"></a>
+<a class="indexterm" name="id2578704"></a>
+The user and group internal management routines have been rewritten to prevent overlaps of
+assigned Relative Identifiers (RIDs).  In the past the has been a potential problem when
+either manually mapping Unix groups with the <code class="literal">net groupmap</code> command or
+when migrating a Windows domain to a Samba domain by executing:
+<code class="literal">net rpc vampire</code>.
+</p><p>
+<a class="indexterm" name="id2578735"></a>
+<a class="indexterm" name="id2578742"></a>
+<a class="indexterm" name="id2578748"></a>
+<a class="indexterm" name="id2578755"></a>
+Unmapped users are now assigned a SID in the <code class="literal">S-1-22-1</code> domain and unmapped
+groups are assigned a SID in the <code class="literal">S-1-22-2</code> domain.  Previously they were
+assigned a RID within the SAM on the Samba server.  For a domain controller this would have been under the
+authority of the domain SID where as on a member server or standalone server, this would have
+been under the authority of the local SAM (see the man page for <code class="literal">net getlocalsid</code>).
+</p><p>
+<a class="indexterm" name="id2578792"></a>
+<a class="indexterm" name="id2578798"></a>
+<a class="indexterm" name="id2578805"></a>
+<a class="indexterm" name="id2578812"></a>
+<a class="indexterm" name="id2578819"></a>
+The result is that any unmapped users or groups on an upgraded Samba domain controller may
+be assigned a new SID.  Because the SID rather than a name is stored in Windows security
+descriptors, this can cause a user to no longer have access to a resource for example if a
+file was copied from a Samba file server to a local Windows client NTFS partition.  Any files
+stored on the Samba server itself will continue to be accessible because UNIX stores the UNIX
+GID and not the SID for authorization checks.
+</p><p>
+An example helps to illustrate the change:
+</p><p>
+<a class="indexterm" name="id2578841"></a>
+<a class="indexterm" name="id2578848"></a>
+<a class="indexterm" name="id2578855"></a>
+<a class="indexterm" name="id2578861"></a>
+Assume that a group named <span class="emphasis"><em>developers</em></span> exists with a UNIX GID of 782. In this
+case this user does not exist in Samba's group mapping table. It would be perfectly normal for
+this group to be appear in an ACL editor.  Prior to Samba-3.0.23, the group SID might appear as
+<code class="literal">S-1-5-21-647511796-4126122067-3123570092-2565</code>.
+</p><p>
+<a class="indexterm" name="id2578885"></a>
+<a class="indexterm" name="id2578892"></a>
+<a class="indexterm" name="id2578899"></a>
+<a class="indexterm" name="id2578905"></a>
+With the release of Samba-3.0.23, the group SID would be reported as <code class="literal">S-1-22-2-782</code>.  Any
+security descriptors associated with files stored on a Windows NTFS disk partition will not allow access based
+on the group permissions if the user was not a member of the
+<code class="literal">S-1-5-21-647511796-4126122067-3123570092-2565</code>  group.  Because this group SID is
+<code class="literal">S-1-22-2-782</code> and not reported in a user's token, Windows would fail the authorization check
+even though both SIDs in some respect refer to the same UNIX group.
+</p><p>
+<a class="indexterm" name="id2578942"></a>
+<a class="indexterm" name="id2578948"></a>
+The workaround for versions of Samba prior to 3.0.23, is to create a manual domain group mapping
+entry for the group <span class="emphasis"><em>developers</em></span> to point at the
+<code class="literal">S-1-5-21-647511796-4126122067-3123570092-2565</code> SID. With the release of Samba-3.0.23 this
+workaround is no longer needed.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2578971"></a>Essential Group Mappings</h3></div></div></div><p>
+Samba 3.0.x series  releases before 3.0.23 automatically created group mappings for the essential Windows
+domain groups <code class="literal">Domain Admins, Domain Users, Domain Guests</code>. Commencing with Samba 3.0.23
+these mappings need to be created by the Samba administrator. Failure to do this may result in a failure to
+correctly authenticate and recoognize valid domain users. When this happens users will not be able to log onto
+the Windows client.
+</p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+Group mappings are essentail only if the Samba servers is running as a PDC/BDC. Stand-alone servers do not
+require these group mappings.
+</p></div><p>
+The following mappings are required:
+</p><div class="table"><a name="TOSH-domgroups"></a><p class="title"><b>Table 9.1. Essential Domain Group Mappings</b></p><div class="table-contents"><table summary="Essential Domain Group Mappings" border="1"><colgroup><col><col><col></colgroup><thead><tr><th align="center">Domain Group</th><th align="center">RID</th><th align="center">Example UNIX Group</th></tr></thead><tbody><tr><td align="center">Domain Admins</td><td align="center">512</td><td align="center">root</td></tr><tr><td align="center">Domain Users</td><td align="center">513</td><td align="center">users</td></tr><tr><td align="center">Domain Guests</td><td align="center">514</td><td align="center">nobody</td></tr></tbody></table></div></div><br class="table-break"><p>
+When the POSIX (UNIX) groups are stored in LDAP, it may be desirable to call these <code class="literal">domadmins, domusers,
+domguests</code> respectively.
+</p><p>
+For further information regarding group mappings see <a class="link" href="groupmapping.html" title="Chapter 12. Group Mapping: MS Windows and UNIX">Group Mapping: MS Windows
+and UNIX</a>.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2579093"></a>Passdb Changes</h3></div></div></div><p>
+<a class="indexterm" name="id2579100"></a>
+<a class="indexterm" name="id2579107"></a>
+<a class="indexterm" name="id2579113"></a>
+<a class="indexterm" name="id2579120"></a>
+The <a class="link" href="smb.conf.5.html#PASSDBBACKEND" target="_top">passdb backend</a> parameter no long accepts multiple passdb backends in a
+chained configuration.  Also be aware that the SQL and XML based passdb modules have been
+removed in the Samba-3.0.23 release.  More information regarding external support for a SQL
+passdb module can be found on the  <a class="ulink" href="http://pdbsql.sourceforge.net/" target="_top">pdbsql</a> web site.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2579153"></a>Group Mapping Changes in Samba-3.0.23</h3></div></div></div><p>
+<a class="indexterm" name="id2579160"></a>
+<a class="indexterm" name="id2579167"></a>
+<a class="indexterm" name="id2579174"></a>
+<a class="indexterm" name="id2579181"></a>
+<a class="indexterm" name="id2579188"></a>
+<a class="indexterm" name="id2579195"></a>
+<a class="indexterm" name="id2579202"></a>
+<a class="indexterm" name="id2579208"></a>
+<a class="indexterm" name="id2579215"></a>
+<a class="indexterm" name="id2579221"></a>
+<a class="indexterm" name="id2579228"></a>
+The default mapping entries for groups such as <code class="literal">Domain Admins</code> are no longer
+created when using an <code class="literal">smbpasswd</code> file or a <code class="literal">tdbsam</code> passdb
+backend.  This means that it is necessary to explicitly execute the <code class="literal">net groupmap add</code>
+to create group mappings, rather than use the <code class="literal">net groupmap modify</code> method to create the
+Windows group SID to UNIX GID mappings.  This change has no effect on winbindd's IDMAP functionality
+for domain groups.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2579273"></a>LDAP Changes in Samba-3.0.23</h3></div></div></div><p>
+<a class="indexterm" name="id2579281"></a>
+<a class="indexterm" name="id2579288"></a>
+<a class="indexterm" name="id2579295"></a>
+<a class="indexterm" name="id2579302"></a>
+<a class="indexterm" name="id2579309"></a>
+There has been a minor update the Samba LDAP schema file. A substring matching rule has been
+added to the <code class="literal">sambaSID</code> attribute definition.  For OpenLDAP servers, this
+will require the addition of <code class="literal">index sambaSID sub</code> to the
+<code class="filename">slapd.conf</code> configuration file.  It will be necessary to execute the
+<code class="literal">slapindex</code> command after making this change. There has been no change to the
+actual data storage schema.
+</p></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="optional.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="optional.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="NetworkBrowsing.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Part III. Advanced Configuration </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 10. Network Browsing</td></tr></table></div></body></html>

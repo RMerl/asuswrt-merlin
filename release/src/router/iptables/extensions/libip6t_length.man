@@ -1,0 +1,4 @@
+This module matches the length of the IPv6 payload in octets, or range of it.
+IPv6 header itself isn't counted.
+.TP
+.BR "--length " "[!] \fIlength\fP[:\fIlength\fP]"

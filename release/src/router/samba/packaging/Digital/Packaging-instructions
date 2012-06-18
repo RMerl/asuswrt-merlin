@@ -1,0 +1,14 @@
+The package building files should be located in a directory
+called: samba-2.0.0
+
+Step	Directions
+====	============================================
+1.	Copy the samba distribution tarball into the packaging directory
+2.	Make sure you have a installed on your system the GNU gzip/gunzip files
+3.	Edit "package-prep" script as required
+4.	Run "package-prep"
+
+If all goes well, you should now have a usable distribution package.
+
+Note:	Update the Instructions file as required.
+

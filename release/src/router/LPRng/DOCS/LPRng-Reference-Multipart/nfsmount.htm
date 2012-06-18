@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Network Mounted File System and Spool
+    Directories</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Installation" href="installation.htm">
+    <link rel="PREVIOUS" title=
+    "PATH Environment Variable and Utilities" href="x433.htm">
+    <link rel="NEXT" title="Daemon User and Daemon Group " href=
+    "usergroup.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x433.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 2.
+          Installation</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "usergroup.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="NFSMOUNT">2.3. Network Mounted
+      File System and Spool Directories</a></h1>
+
+      <div class="WARNING">
+        <blockquote class="WARNING">
+          <p><b>Warning</b>It is strongly recommended that the
+          print spool directories and essential printer
+          configuration file files should <span class="emphasis"><i
+          class="EMPHASIS">NOT</i></span> be in an NFS mounted file
+          system or on a file system which is NFS exported.</p>
+        </blockquote>
+      </div>
+
+      <p>The <b class="APPLICATION">LPRng</b> <b class=
+      "APPLICATION">lpd</b> print server makes heavy use of file
+      locking to coordinate and synchronize process activities.
+      Given the historical and ongoing problems of file locking on
+      and NFS mounted file system, not to mention the high overhead
+      for doing file locking in a distributed environment, it is
+      strongly recommended that spool directories <span class=
+      "emphasis"><i class="EMPHASIS">NOT</i></span> be on an NFS
+      mounted partition or on a partition that is NFS exported.</p>
+
+      <p>This warning extends to other network file systems as
+      well.</p>
+
+      <p>In addition, the configuration file such as <tt class=
+      "FILENAME">/etc/printcap</tt> must be available or printing
+      will not function. Care should be taken to ensure that these
+      files are stable and available at all times.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x433.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "usergroup.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top"><var class=
+          "ENVAR">PATH</var> Environment Variable and
+          Utilities</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "installation.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Daemon User
+          and Daemon Group</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

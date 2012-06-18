@@ -1,0 +1,213 @@
+mailto(samba@samba.org) 
+
+manpage(smbpasswd htmlcommand((5)))(5)(23 Oct 1998)(Samba)(SAMBA)
+
+label(NAME)
+manpagename(smbpasswd)(The Samba encrypted password file)
+
+label(SYNOPSIS)
+manpagesynopsis() 
+
+smbpasswd is the bf(Samba) encrypted password file.
+
+label(DESCRIPTION)
+manpagedescription()
+
+This file is part of the bf(Samba) suite.
+
+smbpasswd is the bf(Samba) encrypted password file. It contains
+the username, Unix user id and the SMB hashed passwords of the
+user, as well as account flag information and the time the password
+was last changed. This file format has been evolving with Samba
+and has had several different formats in the past.
+
+label(FILEFORMAT)
+manpagesection(FILE FORMAT)
+
+The format of the smbpasswd file used by Samba 2.0 is very similar to
+the familiar Unix bf(passwd (5)) file. It is an ASCII file containing
+one line for each user. Each field within each line is separated from
+the next by a colon. Any entry beginning with # is ignored. The
+smbpasswd file contains the following information for each user:
+
+startit()
+
+label(name)
+dit(bf(name)) nl() nl()
+
+	This is the user name. It must be a name that already exists
+	in the standard UNIX passwd file.
+
+label(uid)
+dit(bf(uid)) nl() nl()
+
+	This is the UNIX uid. It must match the uid field for the same
+	user entry in the standard UNIX passwd file. If this does not
+	match then Samba will refuse to recognize this bf(smbpasswd) file entry
+	as being valid for a user.
+
+label(LanmanPasswordHash)
+dit(bf(Lanman Password Hash)) nl() nl()
+
+	This is the em(LANMAN) hash of the users password, encoded as 32 hex
+	digits. The em(LANMAN) hash is created by DES encrypting a well known
+	string with the users password as the DES key. This is the same
+	password used by Windows 95/98 machines. Note that this password hash
+	is regarded as weak as it is vulnerable to dictionary attacks and if
+	two users choose the same password this entry will be identical (i.e.
+	the password is not em("salted") as the UNIX password is). If the
+	user has a null password this field will contain the characters
+	tt("NO PASSWORD") as the start of the hex string. If the hex string
+	is equal to 32 tt('X') characters then the users account is marked as
+	em(disabled) and the user will not be able to log onto the Samba
+	server.
+
+	em(WARNING !!). Note that, due to the challenge-response nature of the
+	SMB/CIFS authentication protocol, anyone with a knowledge of this
+	password hash will be able to impersonate the user on the network.
+	For this reason these hashes are known as em("plain text equivalent")
+	and must em(NOT) be made available to anyone but the root user. To
+	protect these passwords the bf(smbpasswd) file is placed in a
+	directory with read and traverse access only to the root user and the
+	bf(smbpasswd) file itself must be set to be read/write only by root,
+	with no other access.
+
+label(NTPasswordHash)
+dit(bf(NT Password Hash)) nl() nl()
+
+	This is the em(Windows NT) hash of the users password, encoded as 32
+	hex digits. The em(Windows NT) hash is created by taking the users
+	password as represented in 16-bit, little-endian UNICODE and then
+	applying the em(MD4) (internet rfc1321) hashing algorithm to it.
+
+	This password hash is considered more secure than the link(bf(Lanman
+	Password Hash))(LanmanPasswordHash) as it preserves the case of the
+	password and uses a much higher quality hashing algorithm. However, it
+	is still the case that if two users choose the same password this
+	entry will be identical (i.e. the password is not em("salted") as the
+	UNIX password is).
+
+	em(WARNING !!). Note that, due to the challenge-response nature of the
+	SMB/CIFS authentication protocol, anyone with a knowledge of this
+	password hash will be able to impersonate the user on the network.
+	For this reason these hashes are known as em("plain text equivalent")
+	and must em(NOT) be made available to anyone but the root user. To
+	protect these passwords the bf(smbpasswd) file is placed in a
+	directory with read and traverse access only to the root user and the
+	bf(smbpasswd) file itself must be set to be read/write only by root,
+	with no other access.
+
+label(AccountFlags)
+dit(bf(Account Flags)) nl() nl()
+
+	This section contains flags that describe the attributes of the users
+	account. In the bf(Samba2.0) release this field is bracketed by tt('[')
+	and tt(']') characters and is always 13 characters in length (including
+	the tt('[') and tt(']') characters). The contents of this field may be
+	any of the characters.
+
+		startit()
+
+		label(capU)
+		it() bf('U') This means this is a em("User") account, i.e. an ordinary
+		user. Only bf(User) and link(bf(Workstation Trust))(capW) accounts are
+		currently supported in the bf(smbpasswd) file.
+
+		label(capN)
+		it() bf('N') This means the account has em(no) password (the passwords
+		in the fields link(bf(Lanman Password Hash))(LanmanPasswordHash) and
+	        link(bf(NT Password Hash))(NTPasswordHash) are ignored). Note that this
+		will only allow users to log on with no password if the 
+		url(bf(null passwords))(smb.conf.5.html#nullpasswords) parameter is set
+		in the url(bf(smb.conf (5)))(smb.conf.5.html) config file.
+
+		label(capD)
+		it() bf('D') This means the account is disabled and no SMB/CIFS logins 
+		will be	allowed for this user.
+
+		label(capW)
+		it() bf('W') This means this account is a em("Workstation Trust") account.
+		This kind of account is used in the Samba PDC code stream to allow Windows
+		NT Workstations and Servers to join a Domain hosted by a Samba PDC.
+
+		endit()
+
+	Other flags may be added as the code is extended in future. The rest of
+	this field space is filled in with spaces.
+
+label(LastChangeTime)
+dit(bf(Last Change Time)) nl() nl()
+
+	This field consists of the time the account was last modified. It consists of
+	the characters tt(LCT-) (standing for em("Last Change Time")) followed by a numeric
+	encoding of the UNIX time in seconds since the epoch (1970) that the last change
+	was made.
+
+dit(bf(Following fields)) nl() nl()
+
+	All other colon separated fields are ignored at this time.
+
+enddit()
+
+label(NOTES)
+manpagesection(NOTES)
+
+In previous versions of Samba (notably the 1.9.18 series) this file
+did not contain the link(bf(Account Flags))(AccountFlags) or 
+link(bf(Last Change Time))(LastChangeTime) fields. The Samba 2.0
+code will read and write these older password files but will not be able to
+modify the old entries to add the new fields. New entries added with
+url(bf(smbpasswd (8)))(smbpasswd.8.html) will contain the new fields
+in the added accounts however. Thus an older bf(smbpasswd) file used
+with Samba 2.0 may end up with some accounts containing the new fields
+and some not.
+
+In order to convert from an old-style bf(smbpasswd) file to a new
+style, run the script bf(convert_smbpasswd), installed in the
+Samba tt(bin/) directory (the same place that the url(bf(smbd))(smbd.8.html)
+and url(bf(nmbd))(nmbd.8.html) binaries are installed) as follows:
+
+verb(
+
+    cat old_smbpasswd_file | convert_smbpasswd > new_smbpasswd_file
+
+)
+
+The bf(convert_smbpasswd) script reads from stdin and writes to stdout
+so as not to overwrite any files by accident.
+
+Once this script has been run, check the contents of the new smbpasswd
+file to ensure that it has not been damaged by the conversion script
+(which uses bf(awk)), and then replace the tt(<old smbpasswd file>)
+with the tt(<new smbpasswd file>).
+
+label(VERSION)
+manpagesection(VERSION)
+
+This man page is correct for version 2.0 of the Samba suite.
+
+label(SEEALSO)
+manpageseealso()
+
+url(bf(smbpasswd (8)))(smbpasswd.8.html), url(bf(samba
+(7)))(samba.7.html), and the Internet RFC1321 for details on the MD4
+algorithm.
+
+label(AUTHOR)
+manpageauthor()
+
+The original Samba software and related utilities were created by
+Andrew Tridgell email(samba@samba.org). Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+
+The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+url(bf(ftp://ftp.icce.rug.nl/pub/unix/))(ftp://ftp.icce.rug.nl/pub/unix/)) 
+and updated for the Samba2.0 release by Jeremy
+Allison, email(samba@samba.org).
+
+See url(bf(samba (7)))(samba.7.html) to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.

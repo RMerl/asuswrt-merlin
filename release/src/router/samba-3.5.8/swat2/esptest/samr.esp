@@ -1,0 +1,36 @@
+<% page_header("columns", "ESP samr test", "esptest"); 
+
+  libinclude("base.js");
+  libinclude("samr.js");
+%>
+
+<h1>Samba4 samr rpc test</h1>
+
+<%
+var conn  = samr_init();
+var binding = "ncalrpc:";
+status = conn.connect(binding);
+check_status_ok(status);
+
+handle = samrConnect(conn);
+
+domains = samrEnumDomains(conn, handle);
+
+for (i=0;i<domains.length;i++) {
+    write("<h2>Domain " + domains[i].name + "</h2>\n");
+    sid = samrLookupDomain(conn, handle, domains[i].name);
+    dom_handle = samrOpenDomain(conn, handle, sid);
+    users = samrEnumDomainUsers(conn, dom_handle);
+    samrFillUserInfo(conn, dom_handle, users, 3);
+    if (users.length == 0) {
+	    write("no users in domain<br>\n");
+    } else {
+	    multi_table(users, "name");
+    }
+    samrClose(conn, dom_handle);
+}
+
+%>
+
+
+<% page_footer(); %>

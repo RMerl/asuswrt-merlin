@@ -1,0 +1,85 @@
+mailto(samba@samba.org) 
+
+manpage(smbstatus htmlcommand((1)))(1)(23 Oct 1998)(Samba)(SAMBA)
+
+label(NAME)
+manpagename(smbstatus)(report on current Samba connections)
+
+label(SYNOPSIS)
+manpagesynopsis() 
+
+bf(smbstatus) [link(-P)(minusP)] [link(-b)(minusb)] [link(-d)(minusd)] [link(-L)(minusL)] [link(-p)(minusp)] [link(-S)(minusS)] [link(-s configuration file)(minuss)] [link(-u username)(minusu)]
+
+label(DESCRIPTION)
+manpagedescription()
+
+This program is part of the bf(Samba) suite.
+
+bf(smbstatus) is a very simple program to list the current Samba
+connections.
+
+label(OPTIONS)
+manpageoptions()
+
+startdit()
+
+label(minusP)
+dit(bf(-P)) If samba has been compiled with the profiling option,
+print only the contents of the profiling shared memory area.
+
+label(minusb)
+dit(bf(-b)) gives brief output.
+
+label(minusd)
+dit(bf(-d)) gives verbose output.
+
+label(minusL)
+dit(bf(-L)) causes smbstatus to only list locks.
+
+label(minusp)
+dit(bf(-p)) print a list of url(bf(smbd))(smbd.8.html)
+processes and exit. Useful for scripting.
+
+label(minusS)
+dit(bf(-S)) causes smbstatus to only list shares.
+
+label(minuss)
+dit(bf(-s configuration file)) The default configuration file name is
+determined at compile time. The file specified contains the
+configuration details required by the server. See url(bf(smb.conf
+(5)))(smb.conf.5.html) for more information.
+
+label(minusu)
+dit(bf(-u username)) selects information relevant to em(username)
+only.
+
+enddit()
+
+label(VERSION)
+manpagesection(VERSION)
+
+This man page is correct for version 2.0 of the Samba suite.
+
+label(SEEALSO)
+manpageseealso()
+
+url(bf(smb.conf (5)))(smb.conf.5.html), url(bf(smbd (8)))(smbd.8.html)
+
+label(AUTHOR)
+manpageauthor()
+
+The original Samba software and related utilities were created by
+Andrew Tridgell email(samba@samba.org). Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+
+The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+url(bf(ftp://ftp.icce.rug.nl/pub/unix/))(ftp://ftp.icce.rug.nl/pub/unix/))
+and updated for the Samba2.0 release by Jeremy Allison.
+email(samba@samba.org).
+
+See url(bf(samba (7)))(samba.7.html) to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.

@@ -1,0 +1,29 @@
+<samba:parameter name="write list"
+                 context="S"
+				 type="list"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>
+    This is a list of users that are given read-write access to a service. If the 
+    connecting user is in this list then they will be given write access, no matter 
+    what the <smbconfoption name="read only"/> option is set to. The list can 
+    include group names using the @group syntax.
+    </para>
+
+    <para>
+    Note that if a user is in both the read list and the write list then they will be 
+    given write access.
+    </para>
+
+    <para>
+    By design, this parameter will not work with the 
+    <smbconfoption name="security">share</smbconfoption> in Samba 3.0.
+    </para>
+
+</description>
+
+<related>read list</related>
+
+<value type="default"></value>
+<value type="example">admin, root, @staff</value>
+</samba:parameter>

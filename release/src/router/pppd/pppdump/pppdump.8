@@ -1,0 +1,62 @@
+.\"	@(#) $Id: pppdump.8,v 1.2 2004/11/13 12:22:49 paulus Exp $
+.TH PPPDUMP 8 "1 April 1999"
+.SH NAME
+pppdump \- convert PPP record file to readable format
+.SH SYNOPSIS
+.B pppdump
+[
+.B \-h
+|
+.B \-p
+[
+.B \-d
+]] [
+.B \-r
+] [
+.B \-m \fImru
+] [
+.I file \fR...
+]
+.ti 12
+.SH DESCRIPTION
+The
+.B pppdump
+utility converts the files written using the \fIrecord\fR option of
+.B pppd
+into a human-readable format.  If one or more filenames are specified,
+.B pppdump
+will read each in turn; otherwise it will read its standard input.  In
+each case the result is written to standard output.
+.PP
+The options are as follows:
+.TP
+.B \-h
+Prints the bytes sent and received in hexadecimal.  If neither this
+option nor the \fB\-p\fR option is specified, the bytes are printed as
+the characters themselves, with non-printing and non-ASCII characters
+printed as escape sequences.
+.TP
+.B \-p
+Collects the bytes sent and received into PPP packets, interpreting
+the async HDLC framing and escape characters and checking the FCS
+(frame check sequence) of each packet.  The packets are printed as hex
+values and as characters (non-printable characters are printed as
+`.').
+.TP
+.B \-d
+With the \fB\-p\fR option, this option causes
+.B pppdump
+to decompress packets which have been compressed with the BSD-Compress
+or Deflate methods.
+.TP
+.B \-r
+Reverses the direction indicators, so that `sent' is printed for
+bytes or packets received, and `rcvd' is printed for bytes or packets
+sent.
+.TP
+.B \-m \fImru
+Use \fImru\fR as the MRU (maximum receive unit) for both directions of
+the link when checking for over-length PPP packets (with the \fB\-p\fR
+option).
+.SH SEE ALSO
+pppd(8)

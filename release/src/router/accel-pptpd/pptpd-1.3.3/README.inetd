@@ -1,0 +1,45 @@
+It is possible to run from inetd but you must consider
+the following:
+
+  You use pptpctrl not pptpd.
+
+  You must put pptpctrl in /etc/services as port 1723.
+
+  You must configure pppd to allocate IP addresses (eg,
+  use /etc/options.ttyXX, the pppd erpcd hack and an erpcd,
+  or some other modification to pppd).
+
+  libwrap is not used in this mode - you should use tcp
+  wrappers in inetd like with any other network service.
+
+  The configuration file is ignored in this mode.
+
+  An example command line is:
+
+     pptpctrl 0 0 0 0 0
+
+  This would be put in inetd.conf as (assuming Linux tcp
+  wrappers):
+
+    pptpctrl stream tcp nowait root /usr/sbin/tcpd /usr/local/sbin/pptpctrl 0 0 0 0 0 --buffer--
+
+  Note the --buffer-- is just to make the process name
+  longer so it can modify its name to something meaningful.
+
+  First option: debugging (0 for off, 1 for on)
+  Second option: PPP options file (0 for off, 1 followed
+                 by a file name for on)
+  Third option: TTY speed (0 for default, 1 followed
+                by a speed to set a speed)
+  Fourth option: Local IP address (0 for pppd-determined,
+                 1 followed by an address to set)
+  Fifth option: Remote IP address (0 for pppd-determined,
+                1 followed by an address to set)
+
+  Another example, debugging on, alternate config file,
+  setting tty speed and specifying the local IP address:
+
+     pptpctrl 1 1 /etc/ppp/options.PPTP 1 115200 1 192.168.0.1 0
+
+David Luyer, luyer@ucs.uwa.edu.au
+Tue Jun 15 16:06:05 WST 1999

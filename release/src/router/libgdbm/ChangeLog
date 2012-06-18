@@ -1,0 +1,574 @@
+
+Tue Oct 15 15:00:11 PDT 2002	Jason Downs (downsj@downsj.com)
+
+	* samp1.cc: Remove.
+
+	* gdbm.3, gdbm.texinfo: 1.8.3.
+
+	* version.c: Version 1.8.3., modernize string (release date is in
+	  American format).
+
+	* gdbmreorg.c: Remove small memory leak.
+
+	* Makefile.in: Use more subs from configure, remove mention of SunOS.
+	  Add support for spec'ing an install time prefix via INSTALL_ROOT.
+
+	* INSTALL: Remove extra text from top.
+
+	* config.guess, config.sub: Update to latest versions.
+
+	* autoconf.h.in: Regenerate.
+
+	* configure.in: Modernize.
+
+	* systems.h: HAVE_ST_BLKSIZE -> HAVE_STRUCT_STAT_ST_BLKSIZE.
+
+Fri Sep 27 16:12:44 PDT 2002	Jason Downs (downsj@downsj.com)
+
+	* Makefile.in: Remove `info' target from all, since we don't even
+	  bother installing the one we built anyway.
+
+	* Fix a few checks against dbf.read_write.
+
+Wed Sep 25 15:19:00 PDT 2002	Jason Downs (downsj@downsj.com)
+
+	* Makefile.in: Remove the dbm and ndbm routines from the main
+	  library, moving them to gdbm_compat.  install-compat now
+	  installs the compat headers and the library.  Increment the
+	  MAJOR number of the shared library due to the removal of
+	  the compat functions.
+
+	* gdbm.3, gdbm.texinfo, version.c: 1.8.1; note gdbm_compat.
+
+	* proto.h: Change _gdbm_fatal() to void.
+
+	* update.c(_gdbm_fatal): Change function declaration to void.
+
+	* update.c(_gdbm_fatal): Change default exit status to 1.
+
+	* gdbmopen.c(gdbm_open): Remove setting of flags since we always check
+	  it against the mask.
+
+	* testdbm.c, testndbm.c: Added stdlib.h inclusions.
+
+	* falloc.c(push_avail_block): Fixed extremely rare case where the
+	  header avail table could fill up, causing us to over flow the
+	  table, corrupting memory, and eventually crashing.  Also forced
+	  merging of blocks within the scope of this routine (possibly
+	  should force them whenever the header avail table is being used).
+
+	* gdbmerrno.c: Fix error count, there are more than 18.
+
+	* gdbmerrno.h: Fix typo; GDBM_OPT_ILLEGAL is 20.
+
+	* gdbmopen.c: Fix typo; s/GDBM_OPENMASK/GDBM_WRITER/.
+
+Tue May 18 19:25:25 PDT 1999	Jason Downs	(downsj@downsj.com)
+
+	* gdbm.3, gdbm.texinfo: Update for 1.8.
+
+	* Makefile.in, configure.in: Switch to using libtool, but without
+	  automake.
+
+	* aclocal.m4, config.guess, config.sub, ltconfig, ltmain.sh: New
+	  files (libtool 1.2).
+
+Wed May 12 01:26:15 PDT 1999	Jason Downs	(downsj@downsj.com)
+
+	* gdbmopen.c, gdbmclose.c, gdbmreorg.c: check file_locking before
+	  calling locking macros; add support for setting GDBM_NOLOCK in
+	  gdbm_open().
+
+	* gdbmdefs.h: add file_locking flag to gdbm_file_info.
+
+	* gdbmconst.h, gdbm.proto: add GDBM_NOLOCK flag.
+
+	* gdbmfdesc.c: new file, adds external gdbm_fdesc() routine.
+
+	* gdbm.proto, gdbm.proto2: clean up, use __P, and compress.
+
+	* gdbmerrno.h: kill the enum, add defines for errors.
+
+	* gdbmsetopt.c, testgdbm.c: support GDBM_SYNC/GDBM_SYNCMODE.
+
+	* gdbmopen.c: gdbm_open() now DEFAULTS to ``fast mode''; use
+	  GDBM_SYNC to turn it off.  GDBM_FAST is obsolete and ignored.
+
+	* gdbmconst.h: add GDBM_SYNC and GDBM_SYNCMODE.
+
+	* proto.h, various source files: switch _ARGS to __P.
+
+	* systems.h, various source files: kill word_t, just use int
+	  everywhere.
+
+	* configure.in, autoconf.h.in: remove alloca() goo and modernize.
+
+	* many source files: replace all instances of alloca() with real
+	  malloc()s and free()s.
+
+	* update.c: don't deref NULL in _gdbm_fatal(), and don't use stdio.
+
+[  The following are entries revived from a dead experimental branch. ]
+
+Tue Nov  1 00:35:11 1994  Jason Downs  (downsj@downsj.com)
+
+	* gdbmopen.c (gdbm_open): actually initialize central_free and
+	  coalesce_blocks.
+
+	* gdbmdefs.h: added coalesce_blocks. these should've been bitmapped.
+	  oh well.
+
+	* falloc.c (various routines): made block merging an option.
+
+	* gdbmsetopt.c (gdbm_setopt): added GDBM_COALESCEBLKS option.
+
+	* gdbmconst.h: added GDBM_COALESCEBLKS option.
+
+Fri Jun  3 09:45:19 1994  Jason Downs  (downsj@downsj.com)
+        
+	* falloc.c (_gdbm_free): if central_free is set, all blocks are
+	  put into the header.
+        
+	* gdbmsetopt.c (gdbm_setopt): add GDBM_CENTFREE case.
+        
+	* gdbmdefs.h, gdbmconst.h, gdbm.proto: add central free option.
+
+Fri Jun  3 05:57:36 1994  Jason Downs  (downsj@downsj.com)
+
+	* falloc.c (pop_avail_block): merge block with header, instead
+	  of replace, since header may not be empty any longer.
+
+	* falloc.c (_gdbm_alloc): pop a block off the stack when the
+	  current header is half empty, instead of zero.
+
+Fri Jun  3 05:11:33 1994  Jason Downs  (downsj@downsj.com)
+
+	* gdbmstore.c (gdbm_store): don't alloc new disk if we're replacing
+	  and the records are the same size. suggested by phil a long time
+	  ago.
+
+Fri Jun  3 03:47:46 1994  Jason Downs  (downsj@downsj.com)
+        
+	* falloc.c (_gdbm_put_av_elem): allow adjacent blocks to be
+	  merged. inspired by the enhancement by Tim Howes.
+
+Thu Jun  2 22:15:19 1994  Jason Downs  (downsj@downsj.com)
+
+	* Makefile.in: add installation mode, owner, and group.
+
+Thu Jun  2 04:24:58 1994  Jason Downs  (downsj@downsj.com)
+
+	* Makefile.in: run mkinstalldirs before installing files.
+
+	* mkinstalldirs: new file.
+
+[ End of revived entries. ]
+
+Thu May 19 15:50:04 1994  Jason Downs  (downsj@downsj.com)
+	
+	* NEWS, README: update to 1.7.3.
+	
+	* gdbm.texinfo: update to 1.7.3, slight fixes.
+
+	* gdbm.3: update to 1.7.3, slight reformat.
+
+Thu May 19 14:45:51 1994  Jason Downs  (downsj@downsj.com)
+
+	* gdbmconst.h: removed the header magic numbers from this
+	  branch.
+
+	* version.c: added an include of autoconf.h, updated version
+
+	* gdbm.proto: added a define for GDBM_FASTMODE.
+
+Sun May 15 02:39:48 1994  Jason Downs  (downsj@downsj.com)
+
+	* gdbm.3, gdbm.texinfo: updates for 1.7.2
+	
+	* README, NEWS, version.c: update for 1.7.2
+	
+	* Makefile.in: removed files, changed (drastically) how the
+	  package compiles and installs.
+
+	* bytewise.c, bytewise.h: removed from this branch.
+
+Wed Mar 23 00:44:43 1994  Jason Downs  (downsj@downsj.com)
+
+	* extern.h: removed bogus (old) function declarations.
+
+Mon Mar 14 01:37:09 1994  Jason Downs  (downsj@downsj.com)
+
+	* Makefile.in: added new files.
+
+	* bytewise.c, bytewise.h: new portable byte order conversion
+	  package; supports 64bit longs/16bit ints.
+
+Sun Mar 13 22:56:10 1994  Jason Downs  (downsj@downsj.com)
+
+	* gdbmsetopt.c, gdbmconst.h: added GDBM_FASTMODE option.
+
+	* falloc.c: taught _gdbm_alloc() about the header avail table.
+	  hopefully, this will fix the bloating problem. i dunno, though,
+	  as i've never had that problem, myself.
+
+Sun Dec 26 05:17:04 1993  Jason Downs  (downsj@downsj.com)
+
+	* version.c: made gdbm_version const.
+
+	* gdbmerrno.c: made gdbm_strerror() and it's array const.
+
+	* various files: general clean up, reformating of code.
+
+	* systems.h: put <memory.h> inside of a conditional.
+
+	* configure.in, autoconf.h.in: added check for <memory.h>.
+
+	* systems.h: added a default define of SEEK_SET.
+
+	* bucket.c, gdbmopen.c, gdbmseq.c, gdbmdelete.c, gdbmdefs.h:
+	  cleaned up some uses of word_t.
+
+Tue Nov 16 03:11:56 1993  Jason Downs  (downsj@downsj.com)
+
+	* gdbm.3, gdbm.texinfo: updated versions to 1.3 for release
+
+	* version.c, README, NEWS: updated versions to 1.7.1 for release
+
+Sun Nov 14 17:21:03 1993  Jason Downs  (downsj@downsj.com)
+
+	* Makefile.in: added $(srcdir) to a few file references.
+
+Sat Nov 13 13:56:37 1993  Jason Downs  (downsj@downsj.com)
+
+	* gdbm.3, gdbm.texinfo: added new gdbm_firstkey()/gdbm_nextkey()
+	  documentation.
+
+	* gdbmopen.c: added SGI alloca patch.
+
+	* Makefile.in: changed installation prefix semantics.
+
+Sat Nov 13 01:52:31 1993  Jason Downs  (downsj@downsj.com)
+
+	* various source: redid the AIX alloca declaration. any new files
+	  that call alloca will have to start with the same header.
+
+	* all source, configure.in, Makefile.in: switched over to using
+	  autoconf.h, rather than packing all of the autoconf defs into
+	  the DEFS line.
+
+	* autoconf.h.in: new file.
+
+	* Makefile.in: changed rule for tndbm.o, hopefully making it more
+	  portable.
+
+	* alloca.c: added inclusion of stdlib.h
+
+Fri Nov 12 13:11:03 1993  Jason Downs  (downsj@downsj.com)
+
+	* Makefile.in, configure.in: fixed getop related bugs.
+
+	* systems.h: moved sys/types.h include to top.
+
+Wed Nov  3 17:18:59 1993  Jason Downs  (downsj@downsj.com)
+
+	* version.c: changed version to 1.7, for release.
+
+	* gdbmdefs.h: Moved all system includes to systems.h.
+
+Sun Oct 31 02:50:12 1993  Jason Downs  (downsj@downsj.com)
+
+	* version.c: changed version number to 1.7alpha.
+
+	* gdbm.texinfo: updated to reflect new routines and changes.
+	
+	* getopt.c, getopt.h: Added the GNU getopt.c to the dist, for
+	  compilation of testgdbm and conv2gdbm on machines without getopt().
+	
+	* various source files: changed all appropiate occurances of 'long'
+	  to type 'off_t'. Added off_t check to configure.in.
+
+	* gdbm.3: updated to reflect new routines and changes.
+
+Sat Oct 30 05:20:45 1993  Jason Downs  (downsj@downsj.com)
+
+        * testgdbm.c: Added support for bucket cache and block sizes,
+	  adding -c, -b and -g flags. Must use -g to specify the file
+          name, now.
+
+	* bucket.c, gdbmopen.c, gdbmclose.c, gdbmreorg.c, update.c,
+	  gdbmconst.h, gdbmdefs.h: Implemented dynamic, delayed
+	  initialization, bucket cache. New routine: _gdbm_init_cache().
+
+	* proto.h, gdbmerrno.c, gdbmerrno.h: Added gdbm_setopt() errors
+	  and prototypes.
+
+	* gdbmsetopt.c: New file, implements the gdbm_setopt() routine.
+
+	* testgdbm.c, testndbm.c, testdbm.c, conv2gdbm.c: cleaned up
+	  compiler warnings.
+
+	* update.c: repaired declarations and added prototypes for
+	  static routines, repaired declaration of _gdbm_fatal().
+
+	* falloc.c: repaired declarations and added prototypes for
+	  static routines.
+
+	* gdbmstore.c: commented out unsed variables in gdbm_store().
+
+	* proto.h: added prototypes for _gdbm_read_entry(),
+	  _gdbm_find_key(), and gdbm_sync().
+
+	* bucket.c, proto.h: changed _gdbm_get_bucket() and
+	  _gdbm_write_bucket() over to type void.
+
+Sat Oct 30 00:56:24 1993  Jason Downs  (downsj@downsj.com)
+
+	* gdbmerrno.c, gdbmexists.c, close.c, dbmrdonly.c: New files,
+	  adding the routines gdbm_strerror(), gdbm_exists(), and for
+	  better compatibility with the old dbm/ndbm libraries, the
+	  dbmclose() and dbm_rdonly() routines.
+
+	* various headers: Added prototypes for the new routines, and
+	  rearranged how gdbm.h is generated.
+
+Fri Oct 29 07:02:41 1993  Jason Downs  (downsj@downsj.com)
+
+	* README: split into README, INSTALL, and NEWS.  INSTALL
+	  includes more tips on compiling.  NEWS contains the 'short form'
+	  ChangeLog.
+	
+	* Makefile.in, configure.in: Redid parts of the autoconf
+	  stuff, and repaired many bugs.
+
+	* systems.h: Repaired the alloca declarations, among other
+	  things.
+
+	* various source files: changed all relevant usage of type
+	  'long' to type 'word_t', which will always be 32bits wide.
+	  'word_t' is defined in systems.h.
+
+Fri Jul 30 13:27:24 1993  Phil Nelson  (phil@cs.wwu.edu)
+
+	* findkey.c: Added a check of elem_loc == -1 in determining if
+	  the data cache held the item being looked for.
+
+Tue Jul 20 13:08:47 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* gdbm.texinfo: Fixed some errors.
+
+	* Makefile.in: Fixed some errors.
+
+ 	* version.c: Set version to 1.6 for release.
+
+Mon Jul 19 15:02:40 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* COPYING: Replaced Version 1 with Version 2.  Also updated
+	  all file notices to refer to version 2.
+
+	* gdbm.texinfo: Updated the documentation.
+
+	* README: Updated to current version.
+
+	* Makefile: updated clean and install.
+
+Wed Jul 14 13:37:44 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Makfile.in: Added samp1.cc to the list of distributed files.
+
+Sat Jun  5 21:35:59 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* gdbm.proto, Makefile.in: Added #ifndef _GDBM_H_ protection
+	  for the final gdbm.h file.  Also added prototypes and C++
+	  support.
+
+	* gdbmseq.c: Added gdbm_errno initialization to gdbm_nextkey.
+
+	* gdbmerrno.h and others: Moved the extern definition of
+	  gdbm_erron to gdbmerrno.h from the other files.
+
+Mon May 17 12:32:02 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* gdbm.proto: Added GDBM_FAST to the read_write flags.
+
+Sun May 16 12:50:01 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* configure.in, Makefile.in: Added autoconf configuration
+	  to gdbm.
+
+Tue Mar 30 00:08:48 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* global.c: Set gdbm_errno to GDBM_NO_ERROR to force
+	  it into the data segment.
+
+Sun Mar 28 22:51:40 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* gdbmfetch.c: Set return_val.dsize to 0 as a default return
+	  value.  (I was told that was more compatible with dbm/ndbm.)
+
+	* gdbmopen.c: Changed a "sizeof(int)" to "sizeof(long)".
+
+	* testgdbm.c: Changed "char opt" to "int opt" to make sure
+	  opt can be -1.
+
+	* hash.c: Added "unsigned" to declaration of value for
+	  better overflow operation.
+
+	* gdbmreorg.c: Added a free for data.dptr in the main loop.
+	  Also changed the malloc for new_name to an alloca.
+	  Removed all frees on new_name.
+
+Sat Mar 27 23:25:14 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* gdbmconst.h, gdbmdefs.h, gdbmopen.c, gdbmreorg.c,
+	  testgdbm.c, update.c, gdbm.h: Added code to allow for a
+	  GDBM_FAST mode in which fsync is not called during
+	  database update mode. Added a new flag "-f" to 
+	  testgdbm to make use of the new fast mode.
+
+	* gdbmsync.c: Added this function to allow a programmer
+	  to use the GDBM_FAST mode but still be able to sync
+	  a database.
+
+	* gdbmopen.c, gdbmdelete.c, gdbmfetch.c, gdbmseq.c, gdbmstore.c,
+	  gdbmreorg.c: Added initialization of gdbm_errno to GDBM_NO_ERROR.
+
+Mon Mar 22 23:03:36 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* gdbmclose.c: (gdbmclose) Added a fsync before close to make
+	  sure the file is written to disk before continuing.
+
+Sun Mar 21 21:33:31 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* proto.h: Added this as a new file.  It adds ANSI prototypes
+	  for ANSI compilers.
+
+	* gdbmdefs.h: Added an include of proto.h.
+
+	* Makefile: Added proper references to proto.h
+
+	* gdbmopen.c: Changed (int *) casts to (long *) and added
+	  an initialization to dbf->header.
+
+	* gdbmreorg.c: Added an "end update" on the new database and
+	  correctly set up the bucket cache.
+
+	* update.c: (_gdbm_end_update) Added type void to header.
+
+Wed Mar 17 19:14:27 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Changed copyright on all files to include 1993.  Also deleted
+	  all references to my phone number.
+
+Thu Feb 28 17:05:09 1991  Phil Nelson  (phil at strawberry.cs.wwu.edu)
+
+	* Added 1991 to copyright lines on all files.
+
+	* gdbmfetch.c: Fixed a bug introduced by previous changes.
+
+	* version.c:  Updated version to 1.5.
+
+Fri Feb  8 12:27:13 1991  Phil Nelson  (phil at strawberry.cs.wwu.edu)
+
+	* Change author's e-mail address in all comments.
+
+	* gdbmopen.c, systems.h: Changed opening sequence so that a
+	  database will not be truncated in NEWDB mode until the
+	  write has locked the file.
+
+	* testgdbm.c: Fixed a bug that caused a segmentation fault on
+	  one computer.  Also added the flags "-r" for opening the
+	  database as a READER and "-n" for opening the database as
+	  a NEWDB writer.  The default mode remains the WRCREAT mode.
+
+	* Various source files, changed the data types of various
+	  variables from int to long.  This should not make any difference
+	  to systems where sizeof(int) = sizeof(long).  It should make
+	  it easier to move to other systems.
+
+	* gdbmstore.c: Added a check for NULL key or content dptr.  Due to
+	  NULLs being used as error indications, data cannot be NULL also.
+
+	* gdbmfetch.c, gdbmseq.c, fetch.c: Added checks for zero sized
+	  key and content so malloc will not try to allocate zero bytes.
+
+        * gdbmconst.h: Added this file so that all constants are in one
+	  central place.  A few constants can be changed without changing
+	  the header sizes.
+
+Tue Aug 14 13:08:43 1990  Phil Nelson  (phil at unicorn.wwu.edu)
+
+	* Version 1.4 released.  (version.c: Updated to correct version.)
+
+	* Makefile: Added $(LIBS) to link for conv2gdbm.
+
+	* README: Updated to version 1.4 and added a 1.0-1.4 change
+	  statement.
+
+Wed Aug  8 16:57:29 1990  Phil Nelson  (phil at unicorn.wwu.edu)
+
+	* gdbmopen.c: Restructured some code to initialize dbf
+	  more completely.
+
+	* dbm.h: Added a null define to satisfy some versions that
+	  require a dbmclose() call.
+
+	* findkey.c: (_gdbm_findkey) Added a check for the NULL
+	  pointer in ...ca_data.dptr.
+
+	* gdbmdelete.c: Added code to more completely remove the
+	  cache entry for a deleted item.
+
+	* gdbmreorg.c: Added code to finish the transfer of information
+	  from the new_dbf to the orginal dbf.
+
+Fri May 30 08:29:16 1990  Phil Nelson  (phil at unicorn.wwu.edu)
+
+	* gdbmstore.c: Changed a strncpy to bcopy.
+
+Tue May 15 09:55:21 1990  Phil Nelson  (phil at unicorn.wwu.edu)
+
+	* Version 1.3 released.
+
+	* systems.h: Changed the defines for alloca to use the
+	  name builtin_alloca to depend on BUILTIN_ALLOCA instead
+	  of __GNUC__.  Added a definition of BUILTIN_ALLOCA for
+	  GNUC and for sun sparc.
+
+Fri May 11 12:15:56 1990  Phil Nelson  (phil at unicorn.wwu.edu)
+
+	* systems.h: Removed the include for <sys/types> and now
+	  systems.h requires <sys/types> included before it.
+
+	* Makefile: Corrected the makefile to include a file that
+	  was missing before.  Also, switched order of conv2gdbm
+	  and alldbm in the all option.
+
+	* findkey.c (_gdbm_read_entry): Reordered some statements
+	  to make the code more readable.
+
+	* update.c (_gdbm_fatal): Changed fatal message from "dbm fatal:"
+	  to "gdbm fatal:".
+
+Mon Apr 30 10:18:24 1990  Phil Nelson  (phil at unicorn.wwu.edu)
+
+	* Version 1.2 released.
+
+Fri Apr 27 09:49:59 1990  Phil Nelson  (phil at unicorn.wwu.edu)
+
+	* Makefile: Added the dist option.  Similar to the 
+	  addition from hack@ai.mit.edu, but correct.
+
+	* falloc.c (push_avail_block):  Change the avail count
+	  to reflect the correct number of entries.
+
+	* dbminit.c (dbminit): Changed the stat call to stat the
+	  ".dir" file as is done in dbmopen.c (dbm_open).
+
+Tue Apr 10 12:18:40 1990  Phil Nelson  (phil at unicorn.wwu.edu)
+
+	* Version 1.1. released.
+
+	* gdbmopen.c (gdbm_open): Clear out bucket cache.
+
+
+

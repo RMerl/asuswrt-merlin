@@ -1,0 +1,9 @@
+NOTIFY * HTTP/1.1 
+HOST: 239.255.255.250:1900
+CACHE-CONTROL: max-age=1800
+Location: http://10.1.1.1:5431/dyndev/uuid:000f6639-dbac-000f-6639-dbac0032011c
+NT: upnp:rootdevice
+NTS: ssdp:alive
+SERVER:LINUX/2.4 UPnP/1.0 BRCM400/1.0
+USN: uuid:000f6639-dbac-000f-6639-dbac0032011c::upnp:rootdevice
+

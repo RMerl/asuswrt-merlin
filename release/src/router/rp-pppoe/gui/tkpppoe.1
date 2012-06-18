@@ -1,0 +1,37 @@
+.\" $Id$ 
+.\" LIC: GPL
+.TH TKPPPOE 1 "26 February 2001"
+.UC 4
+.SH NAME
+tkpppoe \- Graphical interface for controlling rp-pppoe
+.SH SYNOPSIS
+.B tkpppoe
+
+.SH DESCRIPTION
+\fBtkpppoe\fR is a graphical program for controlling PPPoE links.
+It works with the RP-PPPoE package and has its own HTML manual.
+
+.SH FILES
+
+.TP
+.B /etc/ppp/rp-pppoe-gui/connection-info
+Contains connection information.  This file is not human-editable.
+
+.TP
+.B /etc/ppp/rp-pppoe-gui/passwd
+Contains passwords for each connection.  This file is not human-editable.
+
+.TP
+.B /etc/ppp/rp-pppoe-gui/conf.*
+These configuration files are used by \fBpppoe-start\fR.  They are
+generated anew by \fBtkpppoe\fR each time a change is made to a
+connection's properties.
+
+.SH AUTHOR
+\fBtkpppoe\fR was written by David F. Skoll <dfs@roaringpenguin.com>.
+
+The \fBpppoe\fR home page is \fIhttp://www.roaringpenguin.com/pppoe/\fR.
+
+.SH SEE ALSO
+pppoe-start(8), pppoe-stop(8), pppoe-wrapper(8).
+

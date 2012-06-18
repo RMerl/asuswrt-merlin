@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="smbtree.1">
+
+<refmeta>
+	<refentrytitle>smbtree</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">User Commands</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>smbtree</refname>
+	<refpurpose>A text based smb network browser
+	</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>smbtree</command>
+		<arg choice="opt">-b</arg>
+		<arg choice="opt">-D</arg>
+		<arg choice="opt">-S</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para><command>smbtree</command> is a smb browser program 
+	in text mode. It is similar to the "Network Neighborhood" found 
+	on Windows computers. It prints a tree with all 
+	the known domains, the servers in those domains and 
+	the shares on the servers.
+	</para>
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>-b</term>
+		<listitem><para>Query network nodes by sending requests 
+		as broadcasts instead of querying the local master browser.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-D</term>
+		<listitem><para>Only print a list of all 
+		the domains known on broadcast or by the 
+		master browser</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-S</term>
+		<listitem><para>Only print a list of 
+		all the domains and servers responding on broadcast or 
+		known by the master browser. 
+		</para></listitem>
+		</varlistentry>
+
+		&stdarg.server.debug;
+		&popt.common.samba;
+		&popt.common.credentials;
+		&stdarg.help;
+		
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.0 of the Samba 
+	suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para>The smbtree man page was written by Jelmer Vernooij. </para>
+</refsect1>
+
+</refentry>

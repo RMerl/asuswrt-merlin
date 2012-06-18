@@ -1,0 +1,220 @@
+config DVB_USB
+	tristate "Support for various USB DVB devices"
+	depends on DVB_CORE && USB && I2C
+	select FW_LOADER
+	select DVB_PLL
+	help
+	  By enabling this you will be able to choose the various supported
+	  USB1.1 and USB2.0 DVB devices.
+
+	  Almost every USB device needs a firmware, please look into
+	  <file:Documentation/dvb/README.dvb-usb>.
+
+	  For a complete list of supported USB devices see the LinuxTV DVB Wiki:
+	  <http://www.linuxtv.org/wiki/index.php/DVB_USB>
+
+	  Say Y if you own a USB DVB device.
+
+config DVB_USB_DEBUG
+	bool "Enable extended debug support for all DVB-USB devices"
+	depends on DVB_USB
+	help
+	  Say Y if you want to enable debugging. See modinfo dvb-usb (and the
+	  appropriate drivers) for debug levels.
+
+config DVB_USB_A800
+	tristate "AVerMedia AverTV DVB-T USB 2.0 (A800)"
+	depends on DVB_USB
+	select DVB_DIB3000MC
+	select DVB_TUNER_MT2060 if !DVB_FE_CUSTOMISE
+	help
+	  Say Y here to support the AVerMedia AverTV DVB-T USB 2.0 (A800) receiver.
+
+config DVB_USB_DIBUSB_MB
+	tristate "DiBcom USB DVB-T devices (based on the DiB3000M-B) (see help for device list)"
+	depends on DVB_USB
+	select DVB_PLL
+	select DVB_DIB3000MB
+	select DVB_TUNER_MT2060 if !DVB_FE_CUSTOMISE
+	help
+	  Support for USB 1.1 and 2.0 DVB-T receivers based on reference designs made by
+	  DiBcom (<http://www.dibcom.fr>) equipped with a DiB3000M-B demodulator.
+
+	  For an up-to-date list of devices supported by this driver, have a look
+	  on the Linux-DVB Wiki at www.linuxtv.org.
+
+	  Say Y if you own such a device and want to use it. You should build it as
+	  a module.
+
+config DVB_USB_DIBUSB_MB_FAULTY
+	bool "Support faulty USB IDs"
+	depends on DVB_USB_DIBUSB_MB
+	help
+	  Support for faulty USB IDs due to an invalid EEPROM on some Artec devices.
+
+config DVB_USB_DIBUSB_MC
+	tristate "DiBcom USB DVB-T devices (based on the DiB3000M-C/P) (see help for device list)"
+	depends on DVB_USB
+	select DVB_DIB3000MC
+	select DVB_TUNER_MT2060 if !DVB_FE_CUSTOMISE
+	help
+	  Support for USB2.0 DVB-T receivers based on reference designs made by
+	  DiBcom (<http://www.dibcom.fr>) equipped with a DiB3000M-C/P demodulator.
+
+	  For an up-to-date list of devices supported by this driver, have a look
+	  on the Linux-DVB Wiki at www.linuxtv.org.
+
+	  Say Y if you own such a device and want to use it. You should build it as
+	  a module.
+
+config DVB_USB_DIB0700
+	tristate "DiBcom DiB0700 USB DVB devices (see help for supported devices)"
+	depends on DVB_USB
+	select DVB_DIB7000P
+	select DVB_DIB7000M
+	select DVB_DIB3000MC
+	select DVB_TUNER_MT2060 if !DVB_FE_CUSTOMISE
+	help
+	  Support for USB2.0/1.1 DVB receivers based on the DiB0700 USB bridge. The
+	  USB bridge is also present in devices having the DiB7700 DVB-T-USB
+	  silicon. This chip can be found in devices offered by Hauppauge,
+	  Avermedia and other big and small companies.
+
+	  For an up-to-date list of devices supported by this driver, have a look
+	  on the Linux-DVB Wiki at www.linuxtv.org.
+
+	  Say Y if you own such a device and want to use it. You should build it as
+	  a module.
+
+config DVB_USB_UMT_010
+	tristate "HanfTek UMT-010 DVB-T USB2.0 support"
+	depends on DVB_USB
+	select DVB_PLL
+	select DVB_DIB3000MC
+	select DVB_TUNER_MT2060 if !DVB_FE_CUSTOMISE
+	help
+	  Say Y here to support the HanfTek UMT-010 USB2.0 stick-sized DVB-T receiver.
+
+config DVB_USB_CXUSB
+	tristate "Conexant USB2.0 hybrid reference design support"
+	depends on DVB_USB
+	select DVB_PLL
+	select DVB_CX22702 if !DVB_FE_CUSTOMISE
+	select DVB_LGDT330X if !DVB_FE_CUSTOMISE
+	select DVB_MT352 if !DVB_FE_CUSTOMISE
+	select DVB_ZL10353 if !DVB_FE_CUSTOMISE
+	help
+	  Say Y here to support the Conexant USB2.0 hybrid reference design.
+	  Currently, only DVB and ATSC modes are supported, analog mode
+	  shall be added in the future. Devices that require this module:
+
+	  Medion MD95700 hybrid USB2.0 device.
+	  DViCO FusionHDTV (Bluebird) USB2.0 devices
+
+config DVB_USB_M920X
+	tristate "Uli m920x DVB-T USB2.0 support"
+	depends on DVB_USB
+	select DVB_MT352 if !DVB_FE_CUSTOMISE
+	select DVB_TUNER_QT1010 if !DVB_FE_CUSTOMISE
+	help
+	  Say Y here to support the MSI Mega Sky 580 USB2.0 DVB-T receiver.
+	  Currently, only devices with a product id of
+	  "DTV USB MINI" (in cold state) are supported.
+	  Firmware required.
+
+config DVB_USB_GL861
+	tristate "Genesys Logic GL861 USB2.0 support"
+	depends on DVB_USB
+	select DVB_ZL10353 if !DVB_FE_CUSTOMISE
+	select DVB_TUNER_QT1010 if !DVB_FE_CUSTOMISE
+	help
+	  Say Y here to support the MSI Megasky 580 (55801) DVB-T USB2.0
+	  receiver with USB ID 0db0:5581.
+
+config DVB_USB_AU6610
+	tristate "Alcor Micro AU6610 USB2.0 support"
+	depends on DVB_USB
+	select DVB_ZL10353 if !DVB_FE_CUSTOMISE
+	select DVB_TUNER_QT1010 if !DVB_FE_CUSTOMISE
+	help
+	  Say Y here to support the Sigmatek DVB-110 DVB-T USB2.0 receiver.
+
+config DVB_USB_DIGITV
+	tristate "Nebula Electronics uDigiTV DVB-T USB2.0 support"
+	depends on DVB_USB
+	select DVB_PLL
+	select DVB_NXT6000 if !DVB_FE_CUSTOMISE
+	select DVB_MT352 if !DVB_FE_CUSTOMISE
+	help
+	  Say Y here to support the Nebula Electronics uDigitV USB2.0 DVB-T receiver.
+
+config DVB_USB_VP7045
+	tristate "TwinhanDTV Alpha/MagicBoxII, DNTV tinyUSB2, Beetle USB2.0 support"
+	depends on DVB_USB
+	help
+	  Say Y here to support the
+
+	    TwinhanDTV Alpha (stick) (VP-7045),
+		TwinhanDTV MagicBox II (VP-7046),
+		DigitalNow TinyUSB 2 DVB-t,
+		DigitalRise USB 2.0 Ter (Beetle) and
+		TYPHOON DVB-T USB DRIVE
+
+	  DVB-T USB2.0 receivers.
+
+config DVB_USB_VP702X
+	tristate "TwinhanDTV StarBox and clones DVB-S USB2.0 support"
+	depends on DVB_USB
+	help
+	  Say Y here to support the
+
+	    TwinhanDTV StarBox,
+		DigitalRise USB Starbox and
+		TYPHOON DVB-S USB 2.0 BOX
+
+	  DVB-S USB2.0 receivers.
+
+config DVB_USB_GP8PSK
+	tristate "GENPIX 8PSK->USB module support"
+	depends on DVB_USB
+	help
+	  Say Y here to support the
+	    GENPIX 8psk module
+
+	  DVB-S USB2.0 receivers.
+
+config DVB_USB_NOVA_T_USB2
+	tristate "Hauppauge WinTV-NOVA-T usb2 DVB-T USB2.0 support"
+	depends on DVB_USB
+	select DVB_DIB3000MC
+	select DVB_TUNER_MT2060 if !DVB_FE_CUSTOMISE
+	help
+	  Say Y here to support the Hauppauge WinTV-NOVA-T usb2 DVB-T USB2.0 receiver.
+
+config DVB_USB_TTUSB2
+	tristate "Pinnacle 400e DVB-S USB2.0 support"
+	depends on DVB_USB
+	select DVB_TDA10086 if !DVB_FE_CUSTOMISE
+	select DVB_LNBP21 if !DVB_FE_CUSTOMISE
+	select DVB_TDA826X if !DVB_FE_CUSTOMISE
+	help
+	  Say Y here to support the Pinnacle 400e DVB-S USB2.0 receiver. The
+	  firmware protocol used by this module is similar to the one used by the
+	  old ttusb-driver - that's why the module is called dvb-usb-ttusb2.ko.
+
+config DVB_USB_DTT200U
+	tristate "WideView WT-200U and WT-220U (pen) DVB-T USB2.0 support (Yakumo/Hama/Typhoon/Yuan)"
+	depends on DVB_USB
+	help
+	  Say Y here to support the WideView/Yakumo/Hama/Typhoon/Yuan DVB-T USB2.0 receiver.
+
+	  The receivers are also known as DTT200U (Yakumo) and UB300 (Yuan).
+
+	  The WT-220U and its clones are pen-sized.
+
+config DVB_USB_OPERA1
+	tristate "Opera1 DVB-S USB2.0 receiver"
+	depends on DVB_USB
+	select DVB_STV0299 if !DVB_FE_CUSTOMISE
+	help
+	  Say Y here to support the Opera DVB-S USB2.0 receiver.

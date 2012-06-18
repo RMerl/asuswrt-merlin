@@ -1,0 +1,22 @@
+# /etc/radiusclient/realms
+#
+# Handle realm @netservers.co.uk on an internal RADIUS server
+# (note the server must be told to strip the realm)
+
+#authserver netservers.co.uk 192.168.1.1:1812
+#acctserver netservers.co.uk 192.168.1.1:1813
+
+# users in realm @example.com are handled by separate servers
+
+#authserver example.com 10.0.0.1:1812
+#acctserver example.com 10.0.0.2:1813
+
+# the DEFAULT realm matches users that do not supply a realm
+
+#authserver DEFAULT 192.168.1.1:1812
+#acctserver DEFAULT 192.168.1.1:1813
+
+# Any realms that do not match in the realms file automatically fall 
+# through to the standard radius plugin which uses the servers in the 
+# radiusclient.conf file.  Note that this is different than the
+# DEFAULT realm match, above.

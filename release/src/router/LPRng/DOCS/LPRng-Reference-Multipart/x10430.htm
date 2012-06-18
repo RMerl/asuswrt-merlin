@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>lpq Requests</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="RFC 1179 - Line Printer Daemon Protocol "
+    href="rfc1179ref.htm">
+    <link rel="PREVIOUS" title="Control File Contents" href=
+    "x10227.htm">
+    <link rel="NEXT" title="lprm Requests" href="x10453.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x10227.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          19. RFC 1179 - Line Printer Daemon Protocol</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x10453.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN10430">19.6. <b class=
+      "APPLICATION">lpq</b> Requests</a></h1>
+
+      <p>The RFC1179 protocol specifies that <b class=
+      "APPLICATION">lpq</b> print status requests can be sent to
+      the <b class="APPLICATION">lpd</b> server. The lpq requests
+      have the format:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10436"></a>
+<pre class="SCREEN">
+    \003printer [id]* \n    short
+    \004printer [id]* \n    long
+    \011printer [id]* \n    <b class=
+"APPLICATION">LPRng</b> extension- verbose
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <b class="APPLICATION">lpd</b> print server will then
+      return queue status and close the data connection.</p>
+
+      <p>RFC1179 does not state in any manner what the format of
+      the queue status should be. Thus, implementors have been free
+      to augment or change the status as they like. Even the BSD <b
+      class="APPLICATION">lpq</b> status format has been changed
+      from different versions.</p>
+
+      <p>See <a href="lpq.htm"><b class="APPLICATION">lpq</b> -
+      Status Monitoring Program</a> for information on the formats
+      returned.</p>
+
+      <p>The <var class="LITERAL">id</var> values are used to
+      select the jobs to be displayed. <b class=
+      "APPLICATION">LPRng</b> displays any job whose ID, hostname,
+      or user name information from the control file <var class=
+      "LITERAL">A</var>, <var class="LITERAL">H</var>, or <var
+      class="LITERAL">P</var> fields match any of the id
+      values.</p>
+
+      <p>Note that since there is no identification of the
+      information requestor, then restriction of information is
+      almost impossible.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x10227.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x10453.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Control File
+          Contents</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "rfc1179ref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top"><b class=
+          "APPLICATION">lprm</b> Requests</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

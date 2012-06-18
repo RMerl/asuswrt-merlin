@@ -1,0 +1,41 @@
+#
+# Multifunction miscellaneous devices
+#
+
+menu "Multifunction device drivers"
+	depends on HAS_IOMEM
+
+config MFD_SM501
+	tristate "Support for Silicon Motion SM501"
+	 ---help---
+	  This is the core driver for the Silicon Motion SM501 multimedia
+	  companion chip. This device is a multifunction device which may
+	  provide numerous interfaces including USB host controller USB gadget,
+	  Asyncronous Serial ports, Audio functions and a dual display video
+	  interface. The device may be connected by PCI or local bus with
+	  varying functions enabled.
+
+endmenu
+
+menu "Multimedia Capabilities Port drivers"
+	depends on ARCH_SA1100
+
+config MCP
+	tristate
+
+# Interface drivers
+config MCP_SA11X0
+	tristate "Support SA11x0 MCP interface"
+	depends on ARCH_SA1100
+	select MCP
+
+# Chip drivers
+config MCP_UCB1200
+	tristate "Support for UCB1200 / UCB1300"
+	depends on MCP
+
+config MCP_UCB1200_TS
+	tristate "Touchscreen interface support"
+	depends on MCP_UCB1200 && INPUT
+
+endmenu

@@ -1,0 +1,146 @@
+.TH dbclient 1
+.SH NAME
+dbclient \- lightweight SSH2 client
+.SH SYNOPSIS
+.B dbclient
+[\-Tt] [\-p
+.I port\fR] [\-i
+.I id\fR] [\-L
+.I l\fR:\fIh\fR:\fIr\fR] [\-R
+.I l\fR:\fIh\fR:\fIr\fR] [\-l
+.IR user ]
+.I host
+.RI [ command ]
+
+.B dbclient
+[
+.I args ]
+.I [user1]@host1[/port1],[user2]@host2[/port2],...
+
+.SH DESCRIPTION
+.B dbclient
+is a SSH 2 client designed to be small enough to be used in small memory
+environments, while still being functional and secure enough for general use.
+.SH OPTIONS
+.TP
+.B \-p \fIport
+Remote port.
+Connect to port
+.I port
+on the remote host.
+Default is 22.
+.TP
+.B \-i \fIidfile
+Identity file.
+Read the identity from file
+.I idfile
+(multiple allowed).
+.TP
+.B \-L \fIlistenport\fR:\fIhost\fR:\fIport\fR
+Local port forwarding.
+Forward the port
+.I listenport
+on the local host through the SSH connection to port
+.I port
+on the host
+.IR host .
+.TP
+.B \-R \fIlistenport\fR:\fIhost\fR:\fIport\fR
+Remote port forwarding.
+Forward the port
+.I listenport
+on the remote host through the SSH connection to port
+.I port
+on the host
+.IR host .
+.TP
+.B \-l \fIuser
+Username.
+Login as
+.I user
+on the remote host.
+.TP
+.B \-t
+Allocate a pty.
+.TP
+.B \-T
+Don't allocate a pty.
+.TP
+.B \-N
+Don't request a remote shell or run any commands. Any command arguments are ignored.
+.TP
+.B \-f
+Fork into the background after authentication. A command argument (or -N) is required.
+This is useful when using password authentication.
+.TP
+.B \-g
+Allow non-local hosts to connect to forwarded ports. Applies to -L and -R
+forwarded ports, though remote connections to -R forwarded ports may be limited
+by the ssh server.
+.TP
+.B \-y
+Always accept hostkeys if they are unknown. If a hostkey mismatch occurs the
+connection will abort as normal.
+.TP
+.B \-W \fIwindowsize
+Specify the per-channel receive window buffer size. Increasing this 
+may improve network performance at the expense of memory use. Use -h to see the
+default buffer size.
+.TP
+.B \-K \fItimeout_seconds
+Ensure that traffic is transmitted at a certain interval in seconds. This is
+useful for working around firewalls or routers that drop connections after
+a certain period of inactivity. The trade-off is that a session may be
+closed if there is a temporary lapse of network connectivity. A setting
+if 0 disables keepalives.
+.TP
+.B \-I \fIidle_timeout
+Disconnect the session if no traffic is transmitted or received for \fIidle_timeout\fR seconds.
+.TP
+.B \-J \fIproxy_command
+Use the standard input/output of the program \fIproxy_command\fR rather than using
+a normal TCP connection. A hostname should be still be provided, as this is used for
+comparing saved hostkeys.
+.TP
+.B \-B \fIendhost:endport
+"Netcat-alike" mode, where Dropbear will connect to the given host, then create a
+forwarded connection to \fIendhost\fR. This will then be presented as dbclient's
+standard input/output.
+
+Dropbear will also allow multiple "hops" to be specified, separated by commas. In
+this case a connection will be made to the first host, then a TCP forwarded 
+connection will be made through that to the second host, and so on. Hosts other than
+the final destination will not see anything other than the encrypted SSH stream. 
+A port for a host can be specified with a slash (eg matt@martello/44 ).
+This syntax can also be used with scp or rsync (specifying dbclient as the 
+ssh/rsh command). A file can be "bounced" through multiple SSH hops, eg
+
+scp -S dbclient matt@martello,root@wrt,canyons:/tmp/dump .
+
+Note that hostnames are resolved by the prior hop (so "canyons" would be resolved by the host "wrt")
+in the example above, the same way as other -L TCP forwarded hosts are. Host keys are 
+checked locally based on the given hostname.
+
+.SH ENVIRONMENT
+.TP
+.B DROPBEAR_PASSWORD
+A password to use for remote authentication can be specified in the environment
+variable DROPBEAR_PASSWORD. Care should be taken that the password is not
+exposed to other users on a multi-user system, or stored in accessible files.
+.TP
+.B SSH_ASKPASS
+dbclient can use an external program to request a password from a user.
+SSH_ASKPASS should be set to the path of a program that will return a password
+on standard output. This program will only be used if either DISPLAY is set and
+standard input is not a TTY, or the environment variable SSH_ASKPASS_ALWAYS is
+set.
+.SH AUTHOR
+Matt Johnston (matt@ucc.asn.au).
+.br
+Mihnea Stoenescu wrote initial Dropbear client support
+.br
+Gerrit Pape (pape@smarden.org) wrote this manual page.
+.SH SEE ALSO
+dropbear(8), dropbearkey(8)
+.P
+http://matt.ucc.asn.au/dropbear/dropbear.html

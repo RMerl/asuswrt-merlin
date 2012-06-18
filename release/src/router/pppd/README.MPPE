@@ -1,0 +1,78 @@
+PPP Support for MPPE (Microsoft Point to Point Encryption)
+==========================================================
+
+Frank Cusack		frank@google.com
+Mar 19, 2002
+
+Updated by Paul Mackerras, Sep 2008
+
+
+DISCUSSION
+
+MPPE is Microsoft's encryption scheme for PPP links.  It is pretty much
+solely intended for use with PPP over Internet links -- if you have a true
+point to point link you have little need for encryption.  It is generally
+used with PPTP.
+
+MPPE is negotiated within CCP (Compression Control Protocol) as option
+18.  In order for MPPE to work, both peers must agree to do it.  This
+complicates things enough that I chose to implement it as strictly a binary
+option, off by default.  If you turn it on, all other compression options
+are disabled and MPPE *must* be negotiated successfully in both directions
+(CCP is unidirectional) or the link will be disconnected.  I think this is
+reasonable since, if you want encryption, you want encryption.  That is,
+I am not convinced that optional encryption is useful.
+
+While PPP regards MPPE as a "compressor", it actually expands every frame
+by 4 bytes, the MPPE overhead (encapsulation).
+
+Because of the data expansion, you'll see that ppp interfaces get their
+mtu reduced by 4 bytes whenever MPPE is negotiated.  This is because
+when MPPE is active, it is *required* that *every* packet be encrypted.
+PPPD sets the mtu = MIN(peer mru, configured mtu).  To ensure that
+MPPE frames are not larger than the peer's mru, we reduce the mtu by 4
+bytes so that the network layer never sends ppp a packet that's too large.
+
+There is an option to compress the data before encrypting (MPPC), however
+the algorithm is patented and requires execution of a license with Hifn.
+MPPC as an RFC is a complete farce.  I have no further details on MPPC.
+
+Some recommendations:
+
+- Use stateless mode.  Stateful mode is disabled by default.  Unfortunately,
+  stateless mode is very expensive as the peers must rekey for every packet.
+- Use 128-bit encryption.
+- Use MS-CHAPv2 only.
+
+Reference documents:
+
+    <http://www.ietf.org/rfc/rfc3078.txt> MPPE
+    <http://www.ietf.org/rfc/rfc3079.txt> MPPE Key Derivation
+    <http://www.ietf.org/rfc/rfc2118.txt> MPPC
+    <http://www.ietf.org/rfc/rfc2637.txt> PPTP
+    <http://www.ietf.org/rfc/rfc2548.txt> MS RADIUS Attributes
+
+You might be interested in PoPToP, a Linux PPTP server.  You can find it at
+<http://www.poptop.org/>
+
+RADIUS support for MPPE is from Ralf Hofmann, <ralf.hofmann@elvido.net>.
+
+
+BUILDING THE PPPD
+
+The userland component of PPPD has no additional requirements above
+those for MS-CHAP and MS-CHAPv2.
+
+MPPE support is now included in the mainline Linux kernel releases.
+
+
+CONFIGURATION
+
+See pppd(8) for the MPPE options.  Under Linux, if your modutils is earlier
+than 2.4.15, you will need to add
+
+    alias ppp-compress-18 ppp_mppe
+
+to /etc/modules.conf.
+
+

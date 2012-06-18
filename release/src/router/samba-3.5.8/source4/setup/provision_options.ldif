@@ -1,0 +1,3 @@
+dn: @OPTIONS
+checkBaseOnSearch: TRUE
+

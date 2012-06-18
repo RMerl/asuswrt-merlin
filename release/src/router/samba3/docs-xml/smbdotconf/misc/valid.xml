@@ -1,0 +1,18 @@
+<samba:parameter name="-valid"
+		 context="S"
+		 type="boolean"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para> This parameter indicates whether a share is 
+	valid and thus can be used. When this parameter is set to false, 
+	the share will be in no way visible nor accessible.
+	</para>
+
+	<para>
+	This option should not be 
+	used by regular users but might be of help to developers. 
+	Samba uses this option internally to mark shares as deleted.
+	</para>
+</description>
+<value type="default">yes</value>
+</samba:parameter>

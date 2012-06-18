@@ -1,0 +1,10 @@
+dn: ${SAMBADN}
+objectClass: top
+objectClass: container
+cn: Samba
+
+dn: CN=samba-admin,${SAMBADN}
+objectClass: top
+objectClass: person
+cn: samba-admin
+userPassword: {CLEAR}${LDAPADMINPASS}

@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Bounce Queue&#13;</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Serial Printer" href="serial.htm">
+    <link rel="NEXT" title="Job Format Translation " href=
+    "translateformat.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "serial.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "translateformat.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="LPDBOUNCE">12.11. Bounce
+      Queue</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">lpd_bounce</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">produces a single
+          file for forwarding</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">bq_format=</var><span class=
+          "emphasis"><i class="EMPHASIS">format of filtered
+          files</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>When the destination of a spool queue is another spool
+      queue the job is simply forwarded without any modifications.
+      However, sometimes it is essential that the job be modified
+      before forwarding, as when the remote spool queue is actually
+      a printer, and jobs need to be converted to the format
+      acceptable by the remote printer or banner pages added.</p>
+
+      <p>The <var class="LITERAL">lpd_bounce</var> flag marks a
+      spool queue as a bounce queue. <var class="LITERAL">Lpd</var>
+      will perform all of the usually job processing steps, such as
+      banner generation, filtering files, etc, but saves the output
+      to a file. This file is then sent to the destination print
+      queue for further processing.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5933"></a>
+<pre class="SCREEN">
+    # Simple example of a bounce queue
+    bounce:lp=bounce@bouncehost
+    bounce:server
+        :lp=lp@remote
+        :lpd_bounce
+        :sd=/var/spool/lpd/%P
+        :filter=/usr/local/bin/lpf
+        # uncomment ab if you want banner
+        #:ab
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Some comments:</p>
+
+      <ol type="1">
+        <li>
+          <p>The <var class="LITERAL">lpd_bounce</var> option marks
+          the job as a bounce queue, and the <b class=
+          "APPLICATION">lpd</b> server will process the job through
+          the appropriate filter programs.</p>
+        </li>
+
+        <li>
+          <p>The printcap has filter specifications for different
+          job formats. These are the programs that will be used by
+          <b class="APPLICATION">LPRng</b> to process the job.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">bq_format</var> specifies the
+          job format for the output file sent to the remote spool
+          queue. If not specified, it defaults to <var class=
+          "LITERAL">l</var> (literal or binary).</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">ab</var> (always print a
+          banner) flag will force a banner to be added to the job.
+          The banner generation is done as discussed in <a href=
+          "bannerprinting.htm">Banner Printing</a>.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "serial.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "translateformat.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Serial
+          Printer</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Job Format
+          Translation</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

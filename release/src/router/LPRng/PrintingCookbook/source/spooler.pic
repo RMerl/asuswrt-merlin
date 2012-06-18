@@ -1,0 +1,22 @@
+.PS
+ Program: box "Program" "or" "File";
+ Lpr: box "lpr" with .w at Program.e+(0.5,0);
+ Lpd: box "lpd" with .w at Lpr.e+(0.5,0);
+ F1: box "Filter" with .w at Lpd.e+(0.5,0);
+ P1: box "Printer" with .w at F1.e+(0.5,0);
+ Lpd2: box "lpd" with .n at Lpd.s+(1,-.5);
+ F2: box "Filter" with .w at Lpd2.e+(0.5,0);
+ P2: box "Printer" with .w at F2.e+(0.5,0);
+ P3: box "Printer" with .n at (P2.s.x,P2.s.y-.5);
+ Lp: box "lpq" "lprm" "lpc" with .w at Program+(0.25,-1.0)
+	arrow from Program.e to Lpr.w;
+	arrow from Lpr.e to Lpd.w;
+	arrow from Lpd.e to F1.w;
+	arrow from F1.e to P1.w;
+	arrow from Lpd2.e to F2.w;
+	arrow from F2.e to P2.w;
+	arrow dashed from Lpd.se to Lpd2.nw;
+	arrow dashed from Lpd.s to (Lpd.s.x,P3.w.y) to P3.w;
+	arrow dotted from Lp.ne to Lpd.sw;
+	arrow dotted from Lp.e to Lpd2.w;
+.PE

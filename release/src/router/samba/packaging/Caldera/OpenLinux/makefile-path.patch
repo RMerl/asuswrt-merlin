@@ -1,0 +1,12 @@
+--- samba-2.0.1/source/Makefile.in.orig	Tue Dec  1 22:32:20 1998
++++ samba-2.0.1/source/Makefile.in	Wed Dec  2 17:11:33 1998
+@@ -25,9 +25,9 @@
+ BINDIR = @bindir@
+ # we don't use sbindir because we want full compatibility with
+ # the previous releases of Samba
+-SBINDIR = @bindir@
++SBINDIR = @sbindir@
+ LIBDIR = @libdir@
+-VARDIR = @localstatedir@
++VARDIR = /var/log/samba
+ MANDIR = @mandir@

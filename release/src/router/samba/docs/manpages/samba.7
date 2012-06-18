@@ -1,0 +1,161 @@
+.TH SAMBA 7 "23 Jun 2001" "samba 2.0.10"
+.PP 
+.SH "NAME" 
+Samba \- A Windows SMB/CIFS fileserver for UNIX
+.PP 
+.SH "SYNOPSIS" 
+\fBSamba\fP
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+The Samba software suite is a collection of programs that implements
+the Server Message Block(commonly abbreviated as SMB) protocol for
+UNIX systems\&. This protocol is sometimes also referred to as the
+Common Internet File System (CIFS), LanManager or NetBIOS protocol\&.
+.PP 
+.SH "COMPONENTS" 
+.PP 
+The Samba suite is made up of several components\&. Each component is
+described in a separate manual page\&. It is strongly recommended that
+you read the documentation that comes with Samba and the manual pages
+of those components that you use\&. If the manual pages aren\'t clear
+enough then please send a patch or bug report
+to samba@samba\&.org\&.
+.PP 
+.IP 
+.IP "\fBsmbd\fP" 
+.br 
+.br 
+The \fBsmbd\fP
+(8) daemon provides the file and print services to SMB
+clients, such as Windows 95/98, Windows NT, Windows for Workgroups or
+LanManager\&. The configuration file for this daemon is described in
+\fBsmb\&.conf (5)\fP\&.
+.IP 
+.IP "\fBnmbd\fP" 
+.br 
+.br 
+The \fBnmbd\fP
+(8) daemon provides NetBIOS nameserving and browsing
+support\&. The configuration file for this daemon is described in
+\fBsmb\&.conf (5)\fP\&.
+.IP 
+.IP "\fBsmbclient\fP" 
+.br 
+.br 
+The \fBsmbclient\fP
+(1) program implements a simple ftp-like
+client\&. This is useful for accessing SMB shares on other compatible
+servers (such as Windows NT), and can also be used to allow a UNIX box
+to print to a printer attached to any SMB server (such as a PC running
+Windows NT)\&.
+.IP 
+.IP "\fBtestparm\fP" 
+.br 
+.br 
+The \fBtestparm
+(1)\fP utility allows you to test your \fBsmb\&.conf
+(5)\fP configuration file\&.
+.IP 
+.IP "\fBtestprns\fP" 
+.br 
+.br 
+the \fBtestprns
+(1)\fP utility allows you to test the printers defined
+in your printcap file\&.
+.IP 
+.IP "\fBsmbstatus\fP" 
+.br 
+.br 
+The \fBsmbstatus\fP
+(1) utility allows you list current connections to the 
+\fBsmbd (8)\fP server\&.
+.IP 
+.IP "\fBnmblookup\fP" 
+.br 
+.br 
+the
+\fBnmblookup (1)\fP utility allows NetBIOS name
+queries to be made from the UNIX machine\&.
+.IP 
+.IP "\fBmake_smbcodepage\fP" 
+.br 
+.br 
+The
+\fBmake_smbcodepage (1)\fP utility allows
+you to create SMB code page definition files for your \fBsmbd
+(8)\fP server\&.
+.IP 
+.IP "\fBsmbpasswd\fP" 
+.br 
+.br 
+The \fBsmbpasswd
+(8)\fP utility allows you to change SMB encrypted
+passwords on Samba and Windows NT(tm) servers\&.
+.IP 
+.PP 
+.SH "AVAILABILITY" 
+.PP 
+The Samba software suite is licensed under the GNU Public License
+(GPL)\&. A copy of that license should have come with the package in the
+file COPYING\&. You are encouraged to distribute copies of the Samba
+suite, but please obey the terms of this license\&.
+.PP 
+The latest version of the Samba suite can be obtained via anonymous
+ftp from samba\&.org in the directory pub/samba/\&. It is
+also available on several mirror sites worldwide\&.
+.PP 
+You may also find useful information about Samba on the newsgroup
+comp\&.protocols\&.smb and the Samba mailing list\&. Details on how to join
+the mailing list are given in the README file that comes with Samba\&.
+.PP 
+If you have access to a WWW viewer (such as Netscape or Mosaic) then
+you will also find lots of useful information, including back issues
+of the Samba mailing list, at
+http://samba\&.org/samba/\&.
+.PP 
+.SH "VERSION" 
+.PP 
+This man page is correct for version 2\&.0 of the Samba suite\&. 
+.PP 
+.SH "CONTRIBUTIONS" 
+.PP 
+If you wish to contribute to the Samba project, then I suggest you
+join the Samba mailing list at samba@samba\&.org\&. See the
+Web page at
+http://samba\&.org/listproc
+for details on how to do this\&.
+.PP 
+If you have patches to submit or bugs to report then you may mail them
+directly to samba@samba\&.org\&. Note, however, that due to
+the enormous popularity of this package the Samba Team may take some
+time to respond to mail\&. We prefer patches in \fIdiff -u\fP format\&.
+.PP 
+.SH "CREDITS" 
+.PP 
+Contributors to the project are now too numerous to mention here but
+all deserve the thanks of all Samba users\&. To see a full list, look at
+ftp://samba\&.org/pub/samba/alpha/change-log
+for the pre-CVS changes and at
+ftp://samba\&.org/pub/samba/alpha/cvs\&.log
+for the contributors to Samba post-CVS\&. CVS is the Open Source source
+code control system used by the Samba Team to develop Samba\&. The
+project would have been unmanageable without it\&.
+.PP 
+In addition, several commercial organizations now help fund the Samba
+Team with money and equipment\&. For details see the Samba Web pages at
+http://samba\&.org/samba/samba-thanks\&.html\&.
+.PP 
+.SH "AUTHOR" 
+.PP 
+The original Samba software and related utilities were created by
+Andrew Tridgell samba@samba\&.org\&. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed\&.
+.PP 
+The original Samba man pages were written by Karl Auer\&. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+\fBftp://ftp\&.icce\&.rug\&.nl/pub/unix/\fP)
+and updated for the Samba2\&.0 release by Jeremy Allison\&.
+samba@samba\&.org\&.

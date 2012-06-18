@@ -1,0 +1,48 @@
+From 03431107373e708c346432f5912226758681f37a Mon Sep 17 00:00:00 2001
+From: Mike Frysinger
+Date: Sat, 05 Jan 2008 17:29:47 +0000
+Subject: Merge r19161 by vda from trunk:
+
+des.c: move 0.5k of static data on stack, they are used only temporarily
+by des_init.
+---
+diff --git a/libcrypt/des.c b/libcrypt/des.c
+index db2e22c..f715541 100644
+--- a/libcrypt/des.c
++++ b/libcrypt/des.c
+@@ -70,7 +70,6 @@
+  * struct crypt_data to make this really reentrant... */
+ static u_char	inv_key_perm[64];
+ static u_char	inv_comp_perm[56];
+-static u_char	u_sbox[8][64];
+ static u_char	un_pbox[32];
+ static u_int32_t en_keysl[16], en_keysr[16];
+ static u_int32_t de_keysl[16], de_keysr[16];
+@@ -194,7 +193,6 @@ static const u_int32_t bits32[32] =
+ };
+ 
+ static const u_char	bits8[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
+-static const u_int32_t *bits28, *bits24;
+ 
+ 
+ static int 
+@@ -218,12 +216,15 @@ ascii_to_bin(char ch)
+ static void
+ des_init(void)
+ {
++	static int des_initialised = 0;
++
+ 	int	i, j, b, k, inbit, obit;
+ 	u_int32_t	*p, *il, *ir, *fl, *fr;
+-	static int des_initialised = 0;
++	const u_int32_t *bits28, *bits24;
++	u_char	u_sbox[8][64];
+ 
+ 	if (des_initialised==1)
+-	    return;
++		return;
+ 
+ 	old_rawkey0 = old_rawkey1 = 0L;
+ 	saltbits = 0L;
+--
+cgit v0.8.2.1

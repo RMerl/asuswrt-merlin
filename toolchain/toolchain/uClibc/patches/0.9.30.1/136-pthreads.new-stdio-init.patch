@@ -1,0 +1,35 @@
+From 1555437358f20102bc4c2d17a3f6ad361acde5ed
+From: Timo Teräs
+Date: Tue, 13 Apr 2010 06:38:59 +0000
+Subject: linuxthreads.new: initialize stdio locking
+
+uClibc requires the threading library to enable locking for
+stdio, or the locking is not done at all.
+
+Signed-off-by: Timo Teräs <timo.teras@iki.fi>
+Signed-off-by: Austin Foxley <austinf@cetoncorp.com>
+---
+diff --git a/libpthread/linuxthreads/pthread.c b/libpthread/linuxthreads/pthread.c
+index f077515..69b6e18 100644
+--- a/libpthread/linuxthreads/pthread.c
++++ b/libpthread/linuxthreads/pthread.c
+@@ -616,6 +616,17 @@ static void pthread_initialize(void)
+ #ifdef USE_TLS
+   GL(dl_init_static_tls) = &__pthread_init_static_tls;
+ #endif
++
++  /* uClibc-specific stdio initialization for threads. */
++  {
++    FILE *fp;
++    _stdio_user_locking = 0;       /* 2 if threading not initialized */
++    for (fp = _stdio_openlist; fp != NULL; fp = fp->__nextopen) {
++      if (fp->__user_locking != 1) {
++        fp->__user_locking = 0;
++      }
++    }
++  }
+ }
+ 
+ void __pthread_initialize(void)
+--
+cgit v0.8.2.1

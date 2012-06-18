@@ -1,0 +1,51 @@
+!==
+!== NTDOMAIN.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:	Luke Kenneth Casson Leighton (samba@samba.org)
+		Copyright (C) 1997 Luke Kenneth Casson Leighton
+Created:	October 20, 1997
+Updated:	February 25, 1999 (Jerry Carter)
+
+Subject:	NT Domain Logons
+===========================================================================
+
+As of 1.9.18alpha1, Samba supports logins for NT 3.51 and 4.0 Workstations,
+without the need, use or intervention of NT Server.  This document describes
+how to set this up.  Over the continued development of the 1.9.18alpha
+series, this process (and therefore this document) should become simpler.
+
+One useful thing to do is to get this version of Samba up and running
+with Win95 profiles, as you would for the current stable version of
+Samba (currently at 1.9.17p4), and is fully documented.  You will need
+to set up encrypted passwords.  Even if you don't have any Win95 machines,
+using your Samba Server to store the profile for one of your NT Workstation
+users is a good test that you have 1.9.18alpha1 correctly configured *prior*
+to attempting NT Domain Logons.
+
+The support is still experimental, so should be used at your own risk.
+
+NT is not as robust as you might have been led to believe: during the
+development of the Domain Logon Support, one person reported having to
+reinstall NT from scratch: their workstation had become totally unuseable.
+
+[further reports on ntsec@iss.net by independent administrators showing
+ similar symptoms lead us to believe that the SAM database file may be
+ corruptible.  this _is_ recoverable (or, at least the machine is accessible),
+ by deleting the SAM file, under which circumstances all user account details
+ are lost, but at least the Administrator can log in with a blank password.
+ this is *not* possible except if the NT system is installed in a FAT
+ partition.]
+
+This *has* been reported to the NTBUGTRAQ@LISTSERV.NTBUGTRAQ.COM digest.
+
+==========================================================================
+Please note that Samba 2.0 does not **officially** support domain logons
+for Windows NT clients.  Of course, domain logon support for Windows 9x
+clients is complete and official.  These are two different issues.
+
+Samba's capability to act as a Primary Domain Controller for Windows NT
+domains is not advertised as it is not completed yet.  For more information 
+regarding how to obtain the latest development (HEAD branch) source code
+and what features are available, please refer to the NT Domain FAQ on-line
+at the Samba web site under the documentation page.
+

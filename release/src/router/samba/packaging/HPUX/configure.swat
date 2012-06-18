@@ -1,0 +1,61 @@
+# Configure script for Samba.swat
+
+UPDATE=0
+
+KillProcess()
+{
+  proc=$1
+  sig=$2
+
+  # Determine PID of process(es) to stop and kill it.  This routine
+  # is designed to work with bourne shell, ksh and posix shell.
+
+  Command=`basename $proc | cut -c1-8`     # Solaris ps limited to 8 chars.
+
+  pid=`ps -e | awk "\\$NF~/$Command/ {print \\$1}"`
+
+  if [ "X$pid" != "X" ]; then
+    kill -$sig $pid
+  fi
+}
+
+UpdateServices()
+{
+  if grep -q '^swat' /etc/services
+  then
+    return
+  fi
+
+  echo "swat      901/tcp" >>/etc/services
+  cat <<__EOF__
+NOTE:    The following entry had been added to /etc/services:
+             swat        901/tcp
+         Should you want to move SWAT to another port, modify the entry
+         accordingly and restart inetd daemon with -HUP signal.
+__EOF__
+  UPDATE=1
+}
+
+UpdateInetd()
+{
+  if grep -q '^swat' /etc/inetd.conf
+  then
+    return
+  fi
+
+  echo "swat    stream tcp   nowait.400 root /opt/samba/bin/swat swat" >>/etc/inetd.conf
+
+
+  UPDATE=1
+}
+
+UpdateServices
+UpdateInetd
+
+if [ "$UPDATE" -eq 1 ]
+then
+  KillProcess inetd HUP
+fi
+
+exit 0
+

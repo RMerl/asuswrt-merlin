@@ -1,0 +1,252 @@
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-2001 Patrick Powell, San Diego, CA
+#     papowell@lprng.com
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: TESTSUPPORT/lpd.perms.proto
+# PURPOSE: prototype printer permissions file
+# $Id: lpd.perms.in,v 1.1.1.1 2008/10/15 03:28:09 james26_jang Exp $
+########################################################################## 
+# Printer permissions data base
+## #
+##                  LPRng - An Enhanced Printer Spooler
+##                     lpd.perms file
+##                   Patrick Powell <papowell@lprng.com>
+##
+## VERSION=3.8.22
+##
+## Access control to the LPRng facilities is controlled by entries
+## in a set of lpd.perms files.  The common location for these files
+## are: /etc/lpd.perms,  /usr/etc/lpd.perms, and  /var/spool/lpd/lpd.perms.
+## The locations of these files are set by the perms_path entry
+## in the lpd.conf file or by compile time defaults in the
+## src/common/defaults.c file.
+## 
+## Each time the lpd server is given a user request or carries out an
+## operation,  it searches to the perms files to determine if the action
+## is ACCEPT or REJECT.  The first ACCEPT or REJECT found terminates the search.
+## If none is found,  then the last DEFAULT action is used.
+## 
+## Permissions are checked by the use of 'keys' and matches.  For each of
+## the following LPR activities,  the following keys have a value. 
+## 
+## Key          Match Connect Job   Job    LPQ  LPRM  LPC
+##                            Spool Print
+## SERVICE      S     'X'     'R'   'P'    'Q'  'M'   'C'
+## USER         S     -       JUSR  JUSR   JUSR JUSR  JUSR
+## HOST         S     RH      JH    JH     JH   JH    JH
+## GROUP        S     -       JUSR  JUSR   JUSR JUSR  JUSR
+## IP           IP    RIP     JIP   JIP    RIP  JIP   JIP
+## PORT         N     PORT    PORT  PORT   PORT PORT  PORT
+## UNIXSOCKET   V     SK      SK    SK     SK   SK    SK
+## REMOTEUSER   S     -       JUSR  JUSR   JUSR CUSR  CUSR
+## REMOTEHOST   S     RH      RH    JH     RH   RH    RH
+## REMOTEGROUP  S     -       JUSR  JUSR   JUSR CUSR  CUSR
+## CONTROLLINE  S     -       CL    CL     CL   CL    CL
+## PRINTER      S     -       PR    PR     PR   PR    PR
+## FORWARD      V     -       SA    -      -    SA    SA
+## SAMEHOST     V     -       SA    -      SA   SA    SA
+## SAMEUSER     V     -       -     -      SU   SU    SU
+## SERVER       V     -       SV    -      SV   SV    SV
+## LPC          S     -       -     -      -    -     LPC
+## AUTH         V     -       AU    AU     AU   AU    AU
+## AUTHTYPE     S     -       AU    AU     AU   AU    AU
+## AUTHUSER     S     -       AU    AU     AU   AU    AU
+## AUTHFROM     S     -       AU    AU     AU   AU    AU
+## AUTHSAMEUSER S     -       AU    AU     AU   AU    AU
+##   REMOTEIP is an alias for REMOTEHOST
+##   REMOTEPORT is an alias for PORT
+##   IP is an alias for HOST
+
+## 
+## KEY:
+##   JH = HOST          IP address/DNS name of host in control file
+##   RH = REMOTEHOST    connecting host IP address/DNS Name
+##   JUSR = USER        user in control file
+##   CUSR = REMOTEUSER  user making control operation request
+##   JIP= IP            IP address/DNS name of host in control file
+##   RIP= REMOTEIP      IP address/DNS name of requesting host
+##   PORT=              connecting host origination port
+##   SK=                true (match) if connection from a unix socket
+##   CONTROLLINE=       pattern match of control line in control file
+##
+##   SA= IP of source of request == IP of host in control file
+##   SU= user name making request == user in control file
+##   SV= IP of source of request = IP of server host or server Localhost
+##   LPC= lpc command globmatched against values
+##   AU= Authorization check on transfer
+##       AUTH will be true (match) if authenticated request
+##       AUTHTYPE will match authentication type of request to pattern
+##       AUTHUSER will match client authentication id to pattern
+##       AUTHFROM will match request originator authentication id to pattern
+##       AUTHSAMEUSER will match requestor authentication id
+##              to authentication id in job
+## 
+## Match: S = globmatch, IP = IPaddress[/netmask],
+##   N = low[-high] number range, V= matching or compatible values
+## SERVICE: 'X' - Connection request; 'R' - lpr request from remote host;
+##    'P' - print job in queue; 'Q' - lpq request, 'M' - lprm request;
+##    'C' - lpc spool control request;
+## NOTE: when printing (P action), the remote and job check values
+##   (i.e. - RUSR, JUSR) are identical.
+## NOTE: the HOST, USER, SAMEUSER and SAMEHOST checks always succeed
+##   when checking permissions for a spool queue;  they are active only when
+##   checking permissions of a spooled job.  
+## 
+## The UNIXSOCKET will match (true) when connection was made over a UNIX
+##   socket.
+## 
+## The SAMEHOST match checks to see that one (or more) of the
+##  IP addresses of the host originating a request is/are the
+##  matches one or more of the IP addresses of the host whose
+##  hostname appears in the control file.
+## The SAMEHOST match checks to see that one (or more) of the
+##  IP addresses of the host originating a request is/are the
+##  matches one or more of the IP addresses of the server.
+## FORWARD  is the same as NOT SAMEHOST, i.e. - request is
+##  forwarded.
+## 
+## The  special key letter=patterns searches the control file
+## line starting with the (upper case) letter, and is usually
+## used  with  printing  and  spooling  checks.  For example,
+## C=A*,B* would check that the class information (i.e.- line
+## in  the control file starting with C) had a value starting
+## with A or B.
+## 
+## A permission line consists of list of tests and an a result value
+## If all of the tests succeed,  then a match has been found and the
+## permission testing completes with the result value.  You use the
+## DEFAULT reserved word to set the default ACCEPT/DENY result.
+## The NOT keyword will reverse the sense of a test.
+## 
+## Each test can have one or more optional values separated by
+## commas. For example USER=john,paul,mark has 3 test values.
+## 
+## The Match type specifies how the matching is done.
+## S = glob type string match OR </path
+##     Format:  string with wildcards (*) and ranges
+##              * matches 0 or more chars
+##              [a-d] matches a or b or c or d
+##     Character comparison is case insensitive.
+##     For example - USER=th*s matches uTHS, This, This, Theses
+##                   USER=[d-f]x matches dx, ex, fx
+##     If the match is </path then the specified file is
+##     opened and read, and the file contents are treated like
+##     S type entries separated by whitespace
+##     
+## 
+## IP = IP address and submask.  IP address must be in dotted form.
+##       OR </path
+##      Format: x.x.x.x[/y.y.y.y]  x.x.x.x is IP address
+##              y.y.y.y is optional submask, default is 255.255.255.255
+##      Match is done by converting to 32 bit x, y, and IP value and using:
+##         success = ((x ^ IP ) & y) == 0   (C language notation)
+##     i.e.- only bits where mask is non-zero are used in comparison.
+##     For example - REMOTEIP=130.191.0.0/255.255.0.0 matches all address 130.191.X.X
+##     If the match is </path then the specified file is
+##     opened and read, and the file contents are treated like
+##     S type entries separated by whitespace
+##          
+## N = numerical range  -  low-high integer range.
+##      Format: low[-high]
+##      Example: PORT=0-1023 matches a port in range 0 - 1023 (privileged)
+## 
+## The SAMEUSER and SAMEHOST are options that form values from information
+## in control files or connections.  The GROUP entry searches the user group 
+## database for group names matching the pattern,  and then searches these
+## for the user name.  If the name is found,  the search is successful.
+## The SERVER entry is successful if the request originated from the current
+## lpd server host.
+## 
+## Note carefully that the USER, HOST, and IP values are based on values found
+## in the control file currently being checked for permissions.  The
+## REMOTEUSER, REMOTEHOST, and REMOTEIP are based on values supplied as part
+## of a connection to the LPD server,  or on the actual TCP/IP connection.
+##
+## The LPC entry matches an LPC command.  For example LPC=topq would match 
+## when an lpc topq command is being executed.  You must still have the
+## SERVICE=C entry to trigger this action.
+##
+## Note: the SERVICE=R and SERVICE=P both check the LPR actions
+## of sending a job.  However, SERVICE=R does it when the job is being
+## sent to the LPD server.  Some LPD (and LPR) implementations cannot
+## handle a job being rejected due to lack of permissions,  and sit in
+## an endless loop trying to resend the job.  This is the reason for
+## the SERVICE=P check.  You can accept the job for printing,  and then
+## have the SERVICE=P check remove the job.
+##
+## NOTE: if you do not have an explicit ACCEPT SERVICE=P or
+## DEFAULT ACCEPT action then your print jobs will be accepted
+## and then quietly discarded.
+## 
+## Example Permissions
+## 
+## # All operations allowed except those specifically forbidden
+## DEFAULT ACCEPT
+## 
+## # Accept connections from hosts on subnet 130.191.0.0 or
+## # from the server.
+##   ACCEPT SERVICE=X REMOTEIP=130.191.0.0/255.255.0.0,\
+##              128.0.0.0/8
+## # from a named set of sites
+##   ACCEPT SERVICE=X REMOTEHOST=engpc*
+## # listed in the /etc/accepthost file
+##   ACCEPT SERVICE=X REMOTEHOST=</etc/accepthost
+##     - /etc/rejecthost contains list of entries separated
+##       by whitespace.  For example:
+##            10.0.0.0/8 128.0.0.0/8
+##            192.168.10.1  192.168.10.2
+##   # don't take them from this particular host
+##   REJECT SERVICE=X REMOTEHOST=badhost.eng.com
+## # Reject all others
+##   REJECT SERVICE=X
+## 
+## #Do not allow anybody but root or papowell on
+## #astart1.astart.com or listed in the /etc/ok file
+## #to use lpc commands:
+##   ACCEPT SERVICE=C SERVER REMOTEUSER=root
+##   ACCEPT SERVICE=C REMOTEHOST=astart1.astart.com \
+##        REMOTEUSER=papowell,</etc/ok
+##     /etc/ok has list of users:
+##         root papowell nobody
+##         user1 user2
+## 
+## #Allow root on talker.astart.com to control printer hpjet
+##   ACCEPT SERVICE=C HOST=talker.astart.com PRINTER=hpjet REMOTEUSER=root
+## #Reject all others
+##   REJECT SERVICE=C
+## 
+## #Do not allow forwarded jobs or requests
+##   REJECT SERVICE=R,C,M FORWARD
+## 
+
+##  If you want to have connections only from programs on
+##  the local host,  then uncomment the next line:
+#REJECT NOT SERVER 
+
+## You can make sure that connections come from a privileged port.
+## Default is to allow them from any port so that non-setuid programs
+#  can do printing.
+#  Totally RFC1179
+#REJECT SERVICE=X NOT PORT=1-1023
+@PRIV_PORTS@REJECT SERVICE=X NOT PORT=1-1023
+#  Privileged
+#REJECT SERVICE=X NOT PORT=721-731
+#
+# allow root on server to control jobs
+ACCEPT SERVICE=C SERVER REMOTEUSER=root
+# allow anybody to get server, status, and printcap
+ACCEPT SERVICE=C LPC=lpd,status,printcap
+# reject all others
+REJECT SERVICE=C
+#
+# allow same user on originating host to remove a job
+ACCEPT SERVICE=M SAMEHOST SAMEUSER
+# allow root on server to remove a job
+ACCEPT SERVICE=M SERVER REMOTEUSER=root
+REJECT SERVICE=M
+# all other operations allowed
+DEFAULT ACCEPT

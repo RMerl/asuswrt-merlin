@@ -1,0 +1,212 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Job Hold File</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Spool Queues and Files" href=
+    "spoolqueue.htm">
+    <link rel="PREVIOUS" title="Job Files" href="jobfiles.htm">
+    <link rel="NEXT" title="Job State " href="ah.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "jobfiles.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          13. Spool Queues and Files</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "ah.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN6660">13.6. Job Hold
+      File</a></h1>
+
+      <p>Associated with each control file is a hold file that has
+      additional information controlling the printing operations.
+      The entries in this file have the form:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6663"></a>
+<pre class="SCREEN">
+    key [value]
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The following is an example of a hold file:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6666"></a>
+<pre class="SCREEN">
+    server 0
+    subserver 0
+    attempt 3
+    error cannot open printer
+    hold 0
+    priority 0
+    remove 0
+    routed 0
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <var class="LITERAL">server</var> and <var class=
+      "LITERAL">subserver</var> entry records the process ID of the
+      server process and the subserver process that is printing the
+      job. The <var class="LITERAL">attempt</var> field records the
+      total number of attempts to print the job. The <var class=
+      "LITERAL">error</var> field records any error that would
+      prevent the job from being printed. This information is
+      reported by the <b class="APPLICATION">lpq</b> program.</p>
+
+      <p>The <var class="LITERAL">hold</var> field is non-zero when
+      the <tt class="COMMAND">lpc hold</tt> command is used to
+      explicitly prevent the job from being printed; <tt class=
+      "COMMAND">lpc release</tt> will clear the field and allow the
+      job to be printed.</p>
+
+      <p>The <var class="LITERAL">priority</var> field is modified
+      by the <tt class="COMMAND">lpc topq</tt> command and is used
+      to provide an overriding priority to printing the file.</p>
+
+      <p>The <var class="LITERAL">remove</var> field is non-zero
+      when the file has been printed and should be removed.</p>
+
+      <p>The <var class="LITERAL">routed</var> field is used to
+      indicate that there is routing information present in the
+      hold file, and that special handling is needed. The routing
+      information is provided by a <a href=
+      "destinations.htm">routing filter</a>. The information is
+      recorded by information in the hold file. The following is an
+      example of routing information. Normally this information is
+      stored in a URL escaped format, with one line per
+      destination, but for clarity this has been broken out into
+      plain text form:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6687"></a>
+<pre class="SCREEN">
+    active 0
+    attempt 0
+    done 0
+    hold 0
+    priority 0
+    remove 0
+    routed 880892602
+    route 1
+      dest t1
+      ident papowell@h4+705.1
+      error
+      copies 1
+      copy_done 0
+      status 0
+      active 0
+      attempt 0
+      done 0
+      hold 0
+      sequence 0
+      priority B
+      CB
+      end
+    route 2
+      dest t1
+      ident papowell@h4+705.2
+      error
+      copies 0
+      copy_done 0
+      status 0
+      active 0
+      attempt 0
+      done 0
+      hold 0
+      sequence 1
+      end
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Routing information lines start with <var class=
+      "LITERAL">route</var> followed by individual routing entry
+      information. The <var class="LITERAL">route</var> <var class=
+      "LITERAL">dest</var>, <var class="LITERAL">copies</var>, <var
+      class="LITERAL">priority</var>, and <var class=
+      "LITERAL">Xnnnn</var> entries are derived from the output of
+      the router program; other fields are used during the printing
+      process. The <var class="LITERAL">copy_done</var> records the
+      numbers of copies done, while the <var class=
+      "LITERAL">done</var> records that the entry has been
+      completed. The <var class="LITERAL">status</var> is the
+      process ID of the server process doing the printing.</p>
+
+      <p>The output from route filter that generated the above file
+      was:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6700"></a>
+<pre class="SCREEN">
+    dest t1
+    copies 1
+    priority B
+    CB
+    end
+    dest t1
+    end
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "jobfiles.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "ah.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Job Files</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "spoolqueue.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Job State</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

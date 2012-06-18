@@ -1,0 +1,21 @@
+
+DESTDIR=
+KERNEL_HEADERS=-I@KERNEL_HEADERS@
+
+INSTALL=install -s
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+sbindir=@sbindir@
+mandir=@mandir@
+
+SUBDIRS=libbridge brctl
+
+all:
+
+clean:
+
+install:
+	mkdir -p $(DESTDIR)$(mandir)/man8
+	install -m 644 brctl.8 $(DESTDIR)$(mandir)/man8

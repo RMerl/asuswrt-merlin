@@ -1,0 +1,27 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript">
+var m = new lang();
+var g_storage = new myStorage();
+$("document").ready(function() {
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	$("#msg").text(m.getString('msg_logout_success'));
+	
+});
+</script>
+</head>
+<body>
+<table border="0" align="center" cellpadding="10" cellspacing="0">
+  <tbody><tr>
+		<td id="msg">
+		</td>
+  </tr>
+</tbody></table>
+</body>

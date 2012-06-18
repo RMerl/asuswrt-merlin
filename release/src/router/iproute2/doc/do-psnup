@@ -1,0 +1,16 @@
+#! /bin/bash
+# $1 = Temporary file . "string"
+# $2 = File to process . "string"
+# $3 = Page size . ie: a4 , letter ... "string"
+# $4 = Number of pages to fit on a single sheet . "numeric"
+
+if type psnup >&/dev/null; then
+	echo "psnup -$4 -p$3 $1 $2"
+	psnup -$4 -p$3 $1 $2
+elif type psmulti >&/dev/null; then
+	echo "psmulti $1 > $2"
+	psmulti $1 > $2
+else
+	echo "cp $1 $2"
+	cp $1 $2
+fi

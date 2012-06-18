@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>RFC1179 Protocol Extensions</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title="User Identification" href=
+    "x8974.htm">
+    <link rel="NEXT" title="Authentication Operations" href=
+    "auth.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x8974.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "auth.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN8980">17.9. RFC1179 Protocol
+      Extensions</a></h1>
+
+      <p>The RFC1179 protocol specifies that a <b class=
+      "APPLICATION">lpd</b> server command sent on a connection has
+      the form:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN8984"></a>
+<pre class="SCREEN">
+    \nnn[additional fields]\n
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p><var class="LITERAL">\nnn</var> is a one octet (byte)
+      value with the following meaning:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN8989"></a>
+<pre class="SCREEN">
+    REQ_START   1    start printer
+    REQ_RECV    2    transfer a printer job
+    REQ_DSHORT  3    print short form of queue status
+    REQ_DLONG   4    print long form of queue status
+    REQ_REMOVE  5    remove jobs
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <b class="APPLICATION">LPRng</b> system extends the
+      protocol with the following additional types:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN8993"></a>
+<pre class="SCREEN">
+    REQ_CONTROL 6    do control operation
+    REQ_BLOCK   7    transfer a block format print job
+    REQ_SECURE  8    do operation with authentication
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The REQ_CONTROL allows a remote user to send LPC commands
+      to the server. The REQ_BLOCK provides an alternate method to
+      transfer a job. Rather than transferring the control and data
+      files individually, this format transfers one file. The
+      REQ_AUTH provides a mechanism for providing an authentication
+      mechanism and is described in this document.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x8974.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "auth.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">User
+          Identification</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Authentication
+          Operations</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

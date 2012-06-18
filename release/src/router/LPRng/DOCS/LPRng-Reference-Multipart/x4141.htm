@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Wildcard Printcap Entry</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title=
+    "LPRng Clients - lpr, lprm, lpq, lpc, lpstat " href=
+    "lprngclients.htm">
+    <link rel="PREVIOUS" title=
+    "PRINTER, LPDEST, NPRINTER, and NGPRINTER Environment Variables"
+     href="x4125.htm">
+    <link rel="NEXT" title="First Printcap Entry" href="x4148.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x4125.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 5.
+          <b class="APPLICATION">LPRng</b> Clients - lpr, lprm,
+          lpq, lpc, lpstat</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x4148.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN4141">5.5. Wildcard Printcap
+      Entry</a></h1>
+
+      <p>If you specify a printcap name or alias as <var class=
+      "LITERAL">*</var> (wildcard), then if the <b class=
+      "APPLICATION">LPRng</b> system cannot find a printcap with
+      the exact name then the first matching wildcard will be used.
+      For example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN4146"></a>
+<pre class="SCREEN">
+    pr|*:rm=server
+      lpr -Ppr2 will match, and result in a printcap entry
+        pr|pr2:rm=server
+    
+    *|pr:rm=server
+      lpr -Ppr2 will match, and result in a printcap entry
+        pr2|pr:rm=server
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x4125.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x4148.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">PRINTER,
+          LPDEST, NPRINTER, and NGPRINTER Environment
+          Variables</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "lprngclients.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">First Printcap
+          Entry</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

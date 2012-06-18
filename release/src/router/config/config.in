@@ -1,0 +1,285 @@
+
+mainmenu "Router Configuration"
+
+config RTCONFIG_OPTIMIZE_SHARED_LIBS
+	bool "Optimize shared libraries (remove unused symbols)"
+	default y
+
+config RTCONFIG_L2TP
+	bool "L2TP"
+	default y
+
+config RTCONFIG_PPTP
+	bool "PPTP"
+	default y
+
+config RTCONFIG_EAPOL
+	bool "EAPOL"
+	default y
+
+config RTCONFIG_PPTPD
+	bool "PPTPD"
+	default n
+
+config RTCONFIG_ACCEL_PPTPD
+        bool "ACCEL_PPTPD"
+        default n
+
+config RTCONFIG_HTTPS
+	bool "HTTPS"
+	default y
+
+config RTCONFIG_SSH
+	bool "SSH"
+	default y
+
+config RTCONFIG_CIFS
+	bool "CIFS Client"
+	default y
+
+config RTCONFIG_JFFS2
+	bool "JFFS Support"
+	default y
+
+config RTCONFIG_JFFSV1
+	bool "  Use JFFSv1 (if not selected, JFFS2 is used)"
+	depends on RTCONFIG_JFFS2
+	default y
+
+config RTCONFIG_ZEBRA
+	bool "Zebra"
+	default y
+
+config RTCONFIG_DDNS
+	bool "Dynamic DNS"
+	default y
+
+config RTCONFIG_L7
+	bool "Layer 7 Netfilter"
+	default y
+
+config RTCONFIG_L7PAT
+	bool "  Standard Layer 7 Patterns"
+	depends on TCONFIG_L7
+	default y
+
+config RTCONFIG_LZO
+	bool "LZO Compression"
+	default n
+
+config RTCONFIG_OPENVPN
+	bool "OpenVPN"
+	depends on TCONFIG_LZO
+	default n
+
+# !!TB
+config RTCONFIG_IPV6
+	bool "IPv6 Support"
+	default n
+
+config RTCONFIG_EBTABLES
+	bool "Ebtables"
+	default n
+
+config RTCONFIG_EMF
+	bool "Broadcom EMF (Efficient Multicast Forwarding & IGMP Snooping)"
+	default n
+
+config RTCONFIG_FANCTRL
+	bool "Fan Control Function"
+	default n
+
+config RTCONFIG_BCMWL6
+	bool "BCM WL 6"
+	default n
+
+config RTCONFIG_WIRELESSWAN
+	bool "Wireless WAN Function"
+	default n
+
+config RTCONFIG_WIRELESSREPEATER
+	bool "Repeater Mode"
+	default n
+
+config RTCONFIG_PSTA
+	bool "Proxy STA"
+	default n
+
+config RTCONFIG_OLD_PARENTALCTRL
+	bool "Parental Control Function Old UI"
+	default n
+
+config RTCONFIG_PARENTALCTRL
+	bool "Parental Control Function"
+	default n
+
+config RTCONFIG_DSL
+	bool "DSL Support"
+	default n
+
+config RTCONFIG_DUALWAN
+	bool "Dual WAN Support"
+	default n
+
+config RTCONFIG_USB
+	bool "USB Support"
+	default y
+
+config RTCONFIG_MEDIA_SERVER
+	bool "Media Server (MiniDLNA)"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_CLOUDSYNC
+	bool "Cloudsync (Cloud Client)"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_FTP
+	bool "  FTP Server"
+	depends on RTCONFIG_USB
+	default y
+
+config RTCONFIG_FTP_SSL
+	bool "    FTP SSL Support"
+	depends on RTCONFIG_USB && RTCONFIG_FTP
+	default n
+
+config RTCONFIG_WEBDAV
+	bool "	  WebDav Support"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_SAMBASRV
+	bool "  Samba File Sharing"
+	depends on RTCONFIG_USB
+	default y
+
+config RTCONFIG_SAMBA3
+       bool "    Compile with Samba 3"
+       depends on RTCONFIG_SAMBASRV
+       default n
+
+config RTCONFIG_USB_EXTRAS
+	bool "  Additional modules and utilities"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_NTFS
+	bool "  NTFS Support"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_NTFS3G
+	bool "  NTFS-3G Support"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_USB_PRINTER
+	bool "  USB Printer Support"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_USB_MODEM
+	bool "  USB Modem Support"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_USB_MODEM_PIN
+	bool "  USB Modem pin code Support"
+	depends on RTCONFIG_USB_MODEM
+	default n
+
+config RTCONFIG_USB_BECEEM
+	bool "  BECEEM USB dongle Support"
+	depends on RTCONFIG_USB_MODEM
+	default n
+
+config RTCONFIG_BRCM_USBAP
+	bool "  USB AP Support"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_APP_PREINSTALLED
+	bool " Preinstalled APP Packages Support"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_APP_NETINSTALLED
+	bool " Install APP Packages through Network Support"
+	depends on RTCONFIG_USB
+	default n
+
+config RTCONFIG_DNSMASQ
+        bool "Dnsmasq"
+        default y
+
+config RTCONFIG_RALINK
+	bool "Ralink Chip Support"
+	default n
+
+config RTCONFIG_RALINK_RT3883
+	bool "Ralink Chip - RT3883 Support"
+	depends on RTCONFIG_RALINK
+	default n
+
+config RTCONFIG_RALINK_RT3052
+	bool "Ralink Chip - RT3052 Support"
+	depends on RTCONFIG_RALINK
+	default n
+
+config CONFIG_LIBBCM
+	bool "Broadcom shared library functions"
+	default n
+
+config CONFIG_LIBUPNP
+	bool "BCM UPnP library"
+	default n
+
+config RTCONFIG_WPS
+	bool "WPS Support"
+	default y
+
+config RTCONFIG_DNSMASQ
+        bool "Dnsmasq"
+        default n
+
+config RTCONFIG_SHP
+        bool "Special Handler Process"
+        default n
+
+config RTCONFIG_SFP
+	bool "Small Footprint"
+	default n
+
+config RTCONFIG_4M_SFP
+	bool "Small Footprint: 4MB"
+	default n
+
+config RTCONFIG_GROCTRL
+	bool "GRO Control"
+	default n
+
+config RTCONFIG_LANWAN_LED
+	bool "SW Control LAN/WAN LED"
+	default n
+
+config RTCONFIG_SWMODE_SWITCH
+	bool "HW Switch for SWMODE"
+	default n
+
+config RTCONFIG_WIRELESS_SWITCH
+	bool "HW Switch for WiFi"
+	default n
+
+config RTCONFIG_AUTODICT
+	bool "AUTO DICTIONARY TOOLS"
+	default n
+
+config RTCONFIG_ISP_METER
+        bool "ISP_METER"
+        default n
+
+config RTCONFIG_NVRAM_64K
+	bool "NVRAM_64K"
+	default n

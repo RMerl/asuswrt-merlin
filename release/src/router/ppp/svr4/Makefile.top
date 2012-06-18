@@ -1,0 +1,50 @@
+#
+# ppp top level makefile for SVR4 and Solaris 2
+#
+# $Id: Makefile.top,v 1.1.1.4 2003/10/14 08:09:54 sparq Exp $
+#
+
+include svr4/Makedefs
+
+all:
+	cd chat; $(MAKE) all
+	cd pppd; $(MAKE) all
+	cd pppstats; $(MAKE) all
+	cd pppdump; $(MAKE) all
+	cd svr4; $(MAKE) all
+
+install: $(BINDIR) $(MANDIR)/man8 install-progs install-etcppp
+
+install-progs:
+	cd chat; $(MAKE) install
+	cd pppd; $(MAKE) install
+	cd pppstats; $(MAKE) install
+	cd pppdump; $(MAKE) install
+	cd svr4; $(MAKE) install
+
+install-etcppp: $(ETCDIR) $(ETCDIR)/options $(ETCDIR)/pap-secrets \
+	$(ETCDIR)/chap-secrets
+
+$(ETCDIR)/options:
+	cp etc.ppp/options $@
+	chmod go-w $@
+$(ETCDIR)/pap-secrets:
+	$(INSTALL) -f $(ETCDIR) -m 600 etc.ppp/pap-secrets
+$(ETCDIR)/chap-secrets:
+	$(INSTALL) -f $(ETCDIR) -m 600 etc.ppp/chap-secrets
+
+$(BINDIR):
+	mkdir -m 755 -p $@
+$(MANDIR)/man8:
+	mkdir -m 755 -p $@
+$(ETCDIR):
+	mkdir -m 755 -p $@
+
+clean:
+	rm -f *~
+	cd chat; $(MAKE) clean
+	cd pppd; $(MAKE) clean
+	cd pppstats; $(MAKE) clean
+	cd pppdump; $(MAKE) clean
+	cd svr4; $(MAKE) clean
+

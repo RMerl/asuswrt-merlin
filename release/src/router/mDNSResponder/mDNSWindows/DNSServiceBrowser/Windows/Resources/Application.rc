@@ -1,0 +1,323 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "Resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "Resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""Resources\\Application.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAIN_ICON           ICON                    "Application.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_CHOOSER_DIALOG DIALOGEX 0, 0, 512, 316
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CENTER | WS_MINIMIZEBOX | WS_POPUP | 
+    WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "DNSServiceBrowser"
+MENU IDR_CHOOSER_DIALOG_MENU
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    CONTROL         "",IDC_SERVICE_LIST,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | 
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,8,268,256
+    CONTROL         "",IDC_CHOOSER_LIST,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | 
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,282,8,224,170
+    CONTROL         "",IDC_DOMAIN_LIST,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | 
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,272,268,38
+    GROUPBOX        "Information",IDC_STATIC,282,182,224,128
+    RTEXT           "Name:",IDC_STATIC,288,195,38,8
+    EDITTEXT        IDC_INFO_NAME_TEXT,330,195,168,10,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
+    RTEXT           "IP address:",IDC_STATIC,288,208,38,8
+    EDITTEXT        IDC_INFO_IP_TEXT,330,208,168,10,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
+    RTEXT           "Interface:",IDC_STATIC,288,221,38,8
+    EDITTEXT        IDC_INFO_INTERFACE_TEXT,330,221,168,10,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
+    RTEXT           "Host Name:",IDC_STATIC,287,234,38,8
+    EDITTEXT        IDC_INFO_HOST_NAME_TEXT,330,234,168,10,ES_AUTOHSCROLL | 
+                    ES_READONLY | NOT WS_BORDER,WS_EX_STATICEDGE
+    RTEXT           "Text:",IDC_STATIC,288,247,38,8
+    EDITTEXT        IDC_INFO_TEXT_TEXT,330,247,168,57,ES_MULTILINE | 
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | NOT 
+                    WS_BORDER,WS_EX_STATICEDGE
+END
+
+IDD_ABOUT_DIALOG DIALOGEX 0, 0, 244, 73
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
+CAPTION "About DNSServiceBrowser"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    ICON            IDR_MAIN_ICON,IDC_ABOUT_APP_ICON,12,12,20,20
+    LTEXT           "DNSServiceBrowser",IDC_ABOUT_APP_NAME_TEXT,44,11,192,
+                    12
+    LTEXT           "Version 1.2d1",IDC_ABOUT_APP_VERSION_TEXT,44,25,192,8
+    LTEXT           "Copyright (C) 2002-2004 Apple Computer, Inc.",
+                    IDC_ABOUT_COPYRIGHT_TEXT,4,60,156,8
+    DEFPUSHBUTTON   "OK",IDOK,192,52,44,14
+END
+
+IDD_LOGIN DIALOGEX 0, 0, 180, 89
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Login"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT           "Enter a username and password. Leave blank to use the default username and/or password.",
+                    IDC_STATIC,8,8,156,16,NOT WS_GROUP
+    RTEXT           "Username:",IDC_STATIC,10,34,36,8,NOT WS_GROUP
+    EDITTEXT        IDC_LOGIN_USERNAME_TEXT,50,32,118,12,ES_AUTOHSCROLL
+    RTEXT           "Password:",IDC_STATIC,10,50,36,8,NOT WS_GROUP
+    EDITTEXT        IDC_LOGIN_PASSWORD_TEXT,50,48,118,12,ES_PASSWORD | 
+                    ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,129,70,44,14
+    PUSHBUTTON      "Cancel",IDCANCEL,77,70,44,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Apple Computer, Inc."
+            VALUE "FileDescription", "DNSServiceBrowser for Windows"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "DNSServiceBrowser for Windows"
+            VALUE "LegalCopyright", "Copyright (C) 2002-2004 Apple Computer, Inc."
+            VALUE "OriginalFilename", "DNSServiceBrowser.exe"
+            VALUE "ProductName", "DNSServiceBrowser for Windows"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_CHOOSER_DIALOG_MENU MENU 
+BEGIN
+    POPUP "File"
+    BEGIN
+        MENUITEM "Close &Window\tCtrl+W",       ID_FILE_CLOSE
+        MENUITEM SEPARATOR
+        MENUITEM "Exit",                        ID_FILE_EXIT
+    END
+    POPUP "Help"
+    BEGIN
+        MENUITEM "About DNSServiceBrowser...", ID_HELP_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_CHOOSER_DIALOG_MENU_ACCELERATORS ACCELERATORS 
+BEGIN
+    "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL, NOINVERT
+    "W",            ID_FILE_CLOSE,          VIRTKEY, CONTROL, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_MANIFEST
+//
+
+1 RT_MANIFEST 
+BEGIN
+    0x3f3c, 0x6d78, 0x206c, 0x6576, 0x7372, 0x6f69, 0x3d6e, 0x3122, 0x302e, 
+    0x2022, 0x6e65, 0x6f63, 0x6964, 0x676e, 0x223d, 0x5455, 0x2d46, 0x2238, 
+    0x7320, 0x6174, 0x646e, 0x6c61, 0x6e6f, 0x3d65, 0x7922, 0x7365, 0x3f22, 
+    0x203e, 0x0a0d, 0x613c, 0x7373, 0x6d65, 0x6c62, 0x2079, 0x0a0d, 0x2020, 
+    0x7820, 0x6c6d, 0x736e, 0x223d, 0x7275, 0x3a6e, 0x6373, 0x6568, 0x616d, 
+    0x2d73, 0x696d, 0x7263, 0x736f, 0x666f, 0x2d74, 0x6f63, 0x3a6d, 0x7361, 
+    0x2e6d, 0x3176, 0x2022, 0x0a0d, 0x2020, 0x6d20, 0x6e61, 0x6669, 0x7365, 
+    0x5674, 0x7265, 0x6973, 0x6e6f, 0x223d, 0x2e31, 0x2230, 0x0d3e, 0x3c0a, 
+    0x7361, 0x6573, 0x626d, 0x796c, 0x6449, 0x6e65, 0x6974, 0x7974, 0x0d20, 
+    0x200a, 0x2020, 0x7020, 0x6f72, 0x6563, 0x7373, 0x726f, 0x7241, 0x6863, 
+    0x7469, 0x6365, 0x7574, 0x6572, 0x223d, 0x3878, 0x2236, 0x0d20, 0x200a, 
+    0x2020, 0x7620, 0x7265, 0x6973, 0x6e6f, 0x223d, 0x2e35, 0x2e31, 0x2e30, 
+    0x2230, 0x0a0d, 0x2020, 0x2020, 0x7974, 0x6570, 0x223d, 0x6977, 0x336e, 
+    0x2232, 0x0a0d, 0x2020, 0x2020, 0x616e, 0x656d, 0x223d, 0x7041, 0x2e70, 
+    0x7865, 0x2265, 0x3e2f, 0x0a0d, 0x2020, 0x2020, 0x643c, 0x7365, 0x7263, 
+    0x7069, 0x6974, 0x6e6f, 0x413e, 0x7269, 0x6f50, 0x7472, 0x4120, 0x6d64, 
+    0x6e69, 0x5520, 0x6974, 0x696c, 0x7974, 0x2f3c, 0x6564, 0x6373, 0x6972, 
+    0x7470, 0x6f69, 0x3e6e, 0x0a0d, 0x2020, 0x2020, 0x643c, 0x7065, 0x6e65, 
+    0x6564, 0x636e, 0x3e79, 0x0a0d, 0x2020, 0x2020, 0x643c, 0x7065, 0x6e65, 
+    0x6564, 0x746e, 0x7341, 0x6573, 0x626d, 0x796c, 0x0d3e, 0x200a, 0x2020, 
+    0x3c20, 0x7361, 0x6573, 0x626d, 0x796c, 0x6449, 0x6e65, 0x6974, 0x7974, 
+    0x0a0d, 0x2020, 0x2020, 0x2020, 0x2020, 0x7420, 0x7079, 0x3d65, 0x7722, 
+    0x6e69, 0x3233, 0x0d22, 0x200a, 0x2020, 0x2020, 0x2020, 0x2020, 0x616e, 
+    0x656d, 0x223d, 0x694d, 0x7263, 0x736f, 0x666f, 0x2e74, 0x6957, 0x646e, 
+    0x776f, 0x2e73, 0x6f43, 0x6d6d, 0x6e6f, 0x432d, 0x6e6f, 0x7274, 0x6c6f, 
+    0x2273, 0x0a0d, 0x2020, 0x2020, 0x2020, 0x2020, 0x7620, 0x7265, 0x6973, 
+    0x6e6f, 0x223d, 0x2e36, 0x2e30, 0x2e30, 0x2230, 0x0a0d, 0x2020, 0x2020, 
+    0x2020, 0x2020, 0x7020, 0x6275, 0x696c, 0x4b63, 0x7965, 0x6f54, 0x656b, 
+    0x3d6e, 0x3622, 0x3935, 0x6235, 0x3436, 0x3431, 0x6334, 0x6663, 0x6431, 
+    0x2266, 0x0a0d, 0x2020, 0x2020, 0x2020, 0x2020, 0x6c20, 0x6e61, 0x7567, 
+    0x6761, 0x3d65, 0x2a22, 0x0d22, 0x200a, 0x2020, 0x2020, 0x2020, 0x2020, 
+    0x7270, 0x636f, 0x7365, 0x6f73, 0x4172, 0x6372, 0x6968, 0x6574, 0x7463, 
+    0x7275, 0x3d65, 0x7822, 0x3638, 0x2f22, 0x0d3e, 0x200a, 0x2020, 0x3c20, 
+    0x642f, 0x7065, 0x6e65, 0x6564, 0x746e, 0x7341, 0x6573, 0x626d, 0x796c, 
+    0x0d3e, 0x200a, 0x2020, 0x3c20, 0x642f, 0x7065, 0x6e65, 0x6564, 0x636e, 
+    0x3e79, 0x0a0d, 0x2f3c, 0x7361, 0x6573, 0x626d, 0x796c, 0x0d3e, "\012" 
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_CHOOSER_DIALOG, DIALOG
+    BEGIN
+        RIGHTMARGIN, 468
+    END
+
+    IDD_LOGIN, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 62
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDS_ABOUTBOX            "&About DNSServiceBrowser"
+    IDS_CHOOSER_DOMAIN_COLUMN_NAME "Domains"
+    IDP_SOCKETS_INIT_FAILED "Windows sockets initialization failed."
+    IDS_CHOOSER_SERVICE_COLUMN_TYPE "Services"
+    IDS_CHOOSER_CHOOSER_NAME_COLUMN_NAME "Name"
+    IDS_CHOOSER_CHOOSER_IP_COLUMN_NAME "IP Address"
+    IDS_CHOOSER_SERVICE_COLUMN_DESC "Description"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "Resources\Application.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

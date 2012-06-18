@@ -1,0 +1,96 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link type="text/css" rel="stylesheet" href="/qis/qis_style.css">
+<link type="text/css" rel="stylesheet" href="/form_style.css">
+<style>
+.test_css{
+	padding-left:10px;
+	font-size:13px;
+	font-weight:bolder;
+	color: #FFFFFF;
+}
+</style>
+<script type="text/JavaScript" src="/jquery.js"></script>
+<script type="text/javascript">
+var now_flag = '<% get_parameter("flag"); %>';
+
+function initial(){
+	parent.doResetModem();
+	parent.set_step("t1");
+	document.getElementById("go_detect").focus();
+}
+
+function gotoPage(dst_url, flag, isParent){
+	if(isParent && isParent == 1)
+		document.redirectForm.target = "_parent";
+	else
+		document.redirectForm.target = "";
+	document.redirectForm.action = dst_url;
+	document.redirectForm.flag.value = flag;
+	document.redirectForm.submit();
+}
+
+function submitenter(myfield,e)
+{	
+	var keycode;
+	if (window.event) keycode = window.event.keyCode;
+	else if (e) keycode = e.which;
+	else return true;
+
+	if (keycode == 13){
+		gotoPage('/qis/QIS_verify_detect.htm', 'resetModem', 0);
+   	return false;
+  }
+	else
+   	return true;
+}
+</script>
+</head>
+
+<body onLoad="initial();" onKeyPress="submitenter(this,event)">
+<div class="QISmain">
+	<div id='waitarea'>
+		<div class="formfonttitle" style="padding:6 0 0 10;">
+				<div>
+					<table width="730px">
+						<tr>
+							<td align="left">
+								<span class="description_down"><#QIS_modem2_desc1#></span>
+							</td>
+							<td align="right">
+								<img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+							</td>
+						</tr>
+					</table>
+				</div>
+				<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		</div>
+		<p class="QISGeneralFont"><#QIS_modem2_desc2#></p>
+		<p class="QISGeneralFont"><#QIS_modem2_desc3#></p>
+
+		<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
+			<tr>
+				<td align="center" colspan="2">
+					<br/><br/><img src="/images/modem_plug.png"></span>
+				</td>
+			</tr>
+		</table>
+		<br/>	
+		<div class="apply_gen">
+			<div id="fresharea">
+				<input type="button" id="go_detect" class="button_gen_long" onclick="gotoPage('/qis/QIS_verify_detect.htm', 'resetModem', 0);" value="<#QKSet_detect_freshbtn#>">
+			</div>
+		</div>
+
+	</div>
+</div>
+
+
+<form method="post" name="redirectForm" action="" target="">
+<input type="hidden" name="flag" value="">
+</form>
+</body>

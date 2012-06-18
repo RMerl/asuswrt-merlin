@@ -1,0 +1,93 @@
+############################################################################
+#  operator - a comgt script for viewing and selecting networks
+#
+#           An example of how you might do operator selection when travelling
+#           in a foreign country.
+#           Big ToDo - improve the interface!!!
+#
+#  Copyright (C) 2003  Paul Hardwick <paul@peck.org>
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+###########################################################################
+
+############################################################################
+# $Id: operator,v 1.1 2008-12-04 12:29:16 michael Exp $
+# $Log: operator,v $
+# Revision 1.1  2008-12-04 12:29:16  michael
+# comgt, 2G/3G utility
+#
+# Revision 1.1  2006/10/20 14:19:54  pharscape
+# Added scripts directory - expected operational location will /etc/comgt/
+#
+# Revision 1.1.1.1  2006/08/16 21:21:31  pharscape
+# intial CVS import
+#
+############################################################################
+opengt
+set com 115200n81
+set senddelay 0.05
+waitquiet 2 0.5
+  :operator
+    send "AT+COPS=?^m"
+    waitfor 20 "+COPS=?","Error"
+    if % = -1 goto timeout
+    if % = 0 goto getlist
+    print "Error response from device\n"
+    exit 1
+  :getlist
+    let c=0
+    print "Getting Operator list: "
+  :waiting    
+    print "."
+    get 2 "^m" $s
+    if % = -1 goto stillwaiting
+    waitquiet 1 0.2
+    print "\n"
+    print $s,"\n\n==============================================================\n"
+    print "Format: (Access,Long Name, Short Name, Network ID [,Technology])\n"
+    print "Access: 2 - Registered, 1 - Available, 3 - Forbidden\n"
+    print "Technology: 0 - GSM/GPRS, 2 - UMTS (Not available on all cards)\n"
+    print "\nEnter the Network ID to attempt manual registration\n [blank = automatic selection]:"
+    input $a
+    let a=len($a)
+    dec a
+    let $a=$left($a,a)
+    if $a = "" goto automatic
+    let $b="AT+COPS=1,2,\""+$a
+    let $b=$b+"\"^m"
+    send $b
+    goto waitresult
+  :automatic
+    let $b="AT+COPS=0^m"
+    send $b   
+  :waitresult
+    waitfor 60 "OK","ERR"
+    if % = -1 goto timeout
+    if % = 2 goto failedreg
+    print "Registration request accepted\n"
+    print "Command was: ",$b,"\n"    
+    exit 0
+  :failedreg
+    print "Registration request refused\n"
+    print "Command was: ",$b,"\n"
+    exit 1
+  :stillwaiting
+    if c > 60 goto timeout
+    let c=c+1
+    goto waiting
+  :timeout
+    print "Network Search Timeout\n"
+    exit 1

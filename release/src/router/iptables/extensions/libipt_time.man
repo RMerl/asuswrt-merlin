@@ -1,0 +1,16 @@
+This matches if the packet arrival time/date is within a given range. All options are facultative.
+.TP
+.BI " --timestart " "value"
+Match only if it is after `value' (Inclusive, format: HH:MM ; default 00:00).
+.TP
+.BI "--timestop  " "value"
+Match only if it is before `value' (Inclusive, format: HH:MM ; default 23:59).
+.TP
+.BI "--days " "listofdays"
+Match only if today is one of the given days. (format: Mon,Tue,Wed,Thu,Fri,Sat,Sun ; default everyday)
+.TP
+.BI "--datestart " "date"
+Match only if it is after `date' (Inclusive, format: YYYY[:MM[:DD[:hh[:mm[:ss]]]]] ; h,m,s start from 0 ; default to 1970)
+.TP
+.BI "--datestop " "date"
+Match only if it is before `date' (Inclusive, format: YYYY[:MM[:DD[:hh[:mm[:ss]]]]] ; h,m,s start from 0 ; default to 2037)

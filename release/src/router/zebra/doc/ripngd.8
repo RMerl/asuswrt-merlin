@@ -1,0 +1,143 @@
+.TH RIPNGD 8 "July 2000" "Zebra Beast - RIPNGD" "Version 0.88"
+
+.SH NAME
+ripngd \- a RIP routing engine for use with Zebra and IPv6
+
+.SH SYNOPSIS
+.B ripngd
+[
+.B \-dhlrv
+]
+[
+.B \-f config-file
+]
+[
+.B \-i pid-file
+]
+[
+.B \-P port-number
+]
+
+.SH DESCRIPTION
+.B ripngd 
+is a routing component that works with the 
+.B zebra
+routing engine.
+
+
+
+.SH OPTIONS
+
+.TP
+\fB\-d\fR, \fB\-\-daemon\fR
+Runs in daemon mode, forking and exiting from tty.
+
+.TP
+\fB\-f\fR, \fB\-\-config-file \fR\fIconfig-file\fR 
+Specifies the config file to use for startup. If not specified this
+option will likely default to \fB\fI/usr/local/etc/ripngd.conf\fR.
+ 
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+A brief message.
+
+.TP
+\fB\-i\fR, \fB\-\-pid_file \fR\fIpid-file\fR
+When ripngd starts its process idenifier is written to
+\fB\fIpid-file\fR.  The init system uses the recorded PID to stop or
+restart ripngd.  The likely default is \fB\fI/var/run/ripngd.pid\fR.
+
+.TP
+\fB\-l\fR, \fB\-\-log_mode\fR 
+Turn verbose logging on.
+
+.TP
+\fB\-P\fR, \fB\-\-vty_port \fR\fIport-number\fR 
+Specify the port that the ripngd VTY will listen on. This defaults to
+2603, as specified in \fB\fI/etc/services\fR.
+
+.TP
+\fB\-r\fR, \fB\-\-retain\fR 
+When the program terminates, retain routes added by \fBripd\fR.
+
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Print the version and exit.
+
+
+.SH COMMANDS
+
+\fB router ripng \fR
+\fB router zebra \fR -- (Move routes into kernel table)
+
+\fB network [NETWORK] \fR
+\fB no network [NETWORK] \fR
+
+\fB network [IFNAME] \fR
+\fB no network [IFNAME] \fR
+
+\fB route [NETWORK] \fR
+\fB no route [NETWORK] \fR
+
+\fB flush_timer [FLUSH] \fR
+
+\fB distribute-list [ACCESS-LIST] [in|out] [IFNAME] \fR
+
+\fB show ip ripng \fR
+\fB show debugging ripng \fR
+
+\fB debug ripng \fR
+\fB debug ripng events \fR
+\fB debug ripng packet \fR
+\fB debug ripng zebra \fR
+
+
+
+.SH FILES
+
+.TP
+.BI /usr/local/sbin/ripngd
+The default location of the 
+.B ripngd
+binary.
+
+.TP
+.BI /usr/local/etc/ripngd.conf
+The default location of the 
+.B ripngd
+config file.
+
+.TP
+.BI $(PWD)/ripngd.log 
+If the 
+.B ripngd
+process is config'd to output logs to a file, then you will find this
+file in the directory where you started \fBripngd\fR.
+
+
+.SH WARNING
+This man page is intended as a quick reference for command line
+options, and for config file commands. The definitive document is the
+Info file \fBzebra\fR.
+
+
+.SH DIAGNOSTICS
+The ripngd process may log to standard output, to a VTY, to a log
+file, or through syslog to the system logs. \fBripngd\fR supports many
+debugging options, see the Info file, or the source for details.
+
+
+.SH "SEE ALSO"
+References to other related man pages:
+
+ripd(8), ospfd(8), ospf6d(8), bgpd(8), zebra(8), vtysh(1)
+
+.SH BUGS
+.B ripngd
+eats bugs for breakfast. If you have food for the maintainers try 
+.BI <bug-zebra@gnu.org>
+
+
+.SH AUTHOR[S]
+See <\fBwww.zebra.org\fR>, or the Info file for an accurate list of authors.
+

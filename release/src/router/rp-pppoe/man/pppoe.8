@@ -1,0 +1,236 @@
+.\" LIC: GPL
+.TH PPPOE 8 "3 July 2000"
+.UC 4
+.SH NAME
+pppoe \- user-space PPPoE client.
+.SH SYNOPSIS
+.B pppd pty 'pppoe \fR[\fIpppoe_options\fR]\fB' \fR[\fIpppd_options\fR]
+.P
+.B pppoe -A \fR[\fIpppoe_options\fR]
+.SH DESCRIPTION
+\fBpppoe\fR is a user-space client for PPPoE (Point-to-Point Protocol
+over Ethernet) for Linux and other UNIX systems.  \fBpppoe\fR works in
+concert with the \fBpppd\fR PPP daemon to provide a PPP connection
+over Ethernet, as is used by many DSL service providers.
+
+.SH OPTIONS
+.TP
+.B \-I \fIinterface\fR
+The \fB\-I\fR option specifies the Ethernet interface to use.  Under Linux,
+it is typically \fIeth0\fR or \fIeth1\fR.  The interface should be "up"
+before you start \fBpppoe\fR, but should \fInot\fR be configured to have
+an IP address.
+
+.TP
+.B \-T \fItimeout\fR
+The \fB\-T\fR option causes \fBpppoe\fR to exit if no session traffic
+is detected for \fItimeout\fR seconds.  I recommend that you use this
+option as an extra safety measure, but if you do, you should make sure
+that PPP generates enough traffic so the timeout will normally not be
+triggered.  The best way to do this is to use the
+\fIlcp-echo-interval\fR option to \fBpppd\fR.  You should set the
+PPPoE timeout to be about four times the LCP echo interval.
+
+.TP
+.B \-D \fIfile_name\fR
+The \fB\-D\fR option causes every packet to be dumped to the specified
+\fIfile_name\fR.  This is intended for debugging only; it produces huge
+amounts of output and greatly reduces performance.
+
+.TP
+.B \-V
+The \fB\-V\fR option causes \fBpppoe\fR to print its version number and
+exit.
+
+.TP
+.B \-A
+The \fB\-A\fR option causes \fBpppoe\fR to send a PADI packet and then print
+the names of access concentrators in each PADO packet it receives.  Do not
+use this option in conjunction with \fBpppd\fR; the \fB\-A\fR option is
+meant to be used interactively to give interesting information about the
+access concentrator.
+
+.TP
+.B \-S \fIservice_name\fR
+Specifies the desired service name.  \fBpppoe\fR will only initiate sessions
+with access concentrators which can provide the specified service.  In
+most cases, you should \fInot\fR specify this option.  Use it only if you
+know that there are multiple access concentrators or know that you need a
+specific service name.
+
+.TP
+.B \-C \fIac_name\fR
+Specifies the desired access concentrator name.  \fBpppoe\fR will only
+initiate sessions with the specified access concentrator.  In
+most cases, you should \fInot\fR specify this option.  Use it only if you
+know that there are multiple access concentrators.  If both the
+\fB\-S\fR and \fB\-C\fR options are specified, they must \fIboth\fR match
+for \fBpppoe\fR to initiate a session.
+
+.TP
+.B \-U
+Causes \fBpppoe\fR to use the Host-Uniq tag in its discovery packets.  This
+lets you run multiple \fBpppoe\fR daemons without having their discovery
+packets interfere with one another.  You must supply this option to
+\fIall\fR \fBpppoe\fR daemons if you intend to run multiple daemons
+simultaneously.
+
+.TP
+.B \-s
+Causes \fBpppoe\fR to use \fIsynchronous\fR PPP encapsulation.  If you
+use this option, then you \fImust\fR use the \fBsync\fR option with
+\fBpppd\fR.  You are encouraged to use this option if it works, because
+it greatly reduces the CPU overhead of \fBpppoe\fR.  However, it
+MAY be unreliable on slow machines -- there is a race condition between
+pppd writing data and pppoe reading it.  For this reason, the default
+setting is asynchronous.  If you encounter bugs or crashes with Synchronous
+PPP, turn it off -- don't e-mail me for support!
+
+.TP
+.B \-m \fIMSS\fR
+Causes \fBpppoe\fR to \fIclamp\fR the TCP maximum segment size at the specified
+value.  Because of PPPoE overhead, the maximum segment size for PPPoE is
+smaller than for normal Ethernet encapsulation.  This could cause problems
+for machines on a LAN behind a gateway using PPPoE.  If you have a LAN
+behind a gateway, and the gateway connects to the Internet using PPPoE,
+you are strongly recommended to use a \fB\-m 1412\fR option.  This avoids
+having to set the MTU on all the hosts on the LAN.
+
+.TP
+.B \-p \fIfile\fR
+Causes \fBpppoe\fR to write its process-ID to the specified file.  This
+can be used to locate and kill \fBpppoe\fR processes.
+
+.TP
+.B \-e \fIsess:mac\fR
+Causes \fBpppoe\fR to skip the discovery phase and move directly to the
+session phase.  The session is given by \fIsess\fR and the MAC address of
+the peer by \fImac\fR.  This mode is \fInot\fR meant for normal use; it
+is designed only for \fBpppoe-server\fR(8).
+
+.TP
+.B \-n
+Causes \fBpppoe\fR not to open a discovery socket.  This mode is
+\fInot\fR meant for normal use; it is designed only for
+\fBpppoe-server\fR(8).
+
+.TP
+.B \-k
+Causes \fBpppoe\fR to terminate an existing session by sending a PADT frame,
+and then exit.  You must use the \fB\-e\fR option in conjunction with this
+option to specify the session to kill.  This may be useful for killing
+sessions when a buggy peer does not realize the session has ended.
+
+.TP
+.B \-d
+Causes \fBpppoe\fR to perform discovery and then exit, after printing
+session information to standard output.  The session information is printed
+in exactly the format expected by the \fB\-e\fR option.  This option lets
+you initiate a PPPoE discovery, perform some other work, and then start
+the actual PPP session.  \fIBe careful\fR; if you use this option in a loop,
+you can create many sessions, which may annoy your peer.
+
+.TP
+.B \-f disc:sess
+The \fB\-f\fR option sets the Ethernet frame types for PPPoE discovery
+and session frames.  The types are specified as hexadecimal numbers
+separated by a colon.  Standard PPPoE uses frame types 8863:8864.
+\fIYou should not use this option\fR unless you are absolutely sure
+the peer you are dealing with uses non-standard frame types.  If your
+ISP uses non-standard frame types, complain!
+
+.TP
+.B \-h
+The \fB\-h\fR option causes \fBpppoe\fR to print usage information and
+exit.
+
+.SH PPPOE BACKGROUND
+
+PPPoE (Point-to-Point Protocol over Ethernet) is described in RFC 2516
+and is a protocol which allows the session abstraction to be maintained
+over bridged Ethernet networks.
+
+PPPoE works by encapsulating PPP frames in Ethernet frames.  The protocol
+has two distinct stages:  The \fIdiscovery\fR and the \fIsession\fR stage.
+
+In the discovery stage, the host broadcasts a special PADI (PPPoE
+Active Discovery Initiation) frame to discover any \fIaccess
+concentrators\fR.  The access concentrators (typically, only one
+access concentrator) reply with PADO (PPPoE Active Discovery Offer)
+packets, announcing their presence and the services they offer.  The
+host picks one of the access concentrators and transmits a PADR (PPPoE
+Active Discovery Request) packet, asking for a session.  The access
+concentrator replies with a PADS (PPPoE Active Discovery
+Session-Confirmation) packet.  The protocol then moves to the session stage.
+
+In the session stage, the host and access concentrator exchange PPP frames
+embedded in Ethernet frames.  The normal Ethernet MTU is 1500 bytes, but
+the PPPoE overhead plus two bytes of overhead for the encapsulated PPP
+frame mean that the MTU of the PPP interface is at most 1492 bytes.
+This causes \fIall kinds of problems\fR if you are using a Linux machine
+as a firewall and interfaces behind the firewall have an MTU greater than
+1492.  In fact, to be safe, I recommend setting the MTU of machines
+behind the firewall to 1412, to allow for worst-case TCP and IP options
+in their respective headers.
+
+Normally, PPP uses the Link Control Protocol (LCP) to shut down a PPP
+link.  However, the PPPoE specification allows the link to be shut down
+with a special PADT (PPPoE Active Discovery Terminate) packet.  This client
+recognizes this packet and will correctly terminate if a terminate request
+is received for the PPP session.
+
+.SH DESIGN GOALS
+
+My design goals for this PPPoE client were as follows, in descending order
+of importance:
+
+.TP
+.B o
+It must work.
+
+.TP
+.B o
+It must be a user-space program and not a kernel patch.
+
+.TP
+.B o
+The code must be easy to read and maintain.
+
+.TP
+.B o
+It must be fully compliant with RFC 2516, the proposed PPPoE standard.
+
+.TP
+.B o
+It must never hang up forever -- if the connection is broken, it must
+detect this and exit, allowing a wrapper script to restart the connection.
+
+.TP
+.B o
+It must be fairly efficient.
+
+.P
+I believe I have achieved all of these goals, but (of course) am open
+to suggestions, patches and ideas.  See my home page,
+http://www.roaringpenguin.com, for contact information.
+
+.SH NOTES
+
+For best results, you must give \fBpppd\fR an mtu option of
+1492.  I have observed problems with excessively-large frames
+unless I set this option.  Also, if \fBpppoe\fR is running on a firewall
+machine, all machines behind the firewall should have MTU's of 1412.
+
+If you have problems, check your system logs.  \fBpppoe\fR logs interesting
+things to syslog.  You may have to turn on logging of \fIdebug\fR-level
+messages for complete diagnosis.
+
+.SH AUTHORS
+\fBpppoe\fR was written by David F. Skoll <dfs@roaringpenguin.com>,
+with much inspiration from an earlier version by Luke Stras.
+
+The \fBpppoe\fR home page is \fIhttp://www.roaringpenguin.com/pppoe/\fR.
+
+.SH SEE ALSO
+pppoe-start(8), pppoe-stop(8), pppoe-connect(8), pppd(8), pppoe.conf(5), pppoe-setup(8), pppoe-status(8), pppoe-sniff(8), pppoe-server(8), pppoe-relay(8)
+

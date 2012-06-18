@@ -1,0 +1,19 @@
+<samba:parameter name="debug pid"
+                 context="G"
+				 type="boolean"
+                 developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>
+    When using only one log file for more then one forked <citerefentry><refentrytitle>smbd</refentrytitle>
+    <manvolnum>8</manvolnum></citerefentry>-process there may be hard to follow which process outputs which 
+    message. This boolean parameter is adds the process-id to the timestamp message headers in the
+    logfile when turned on.
+    </para>
+
+    <para>
+    Note that the parameter <smbconfoption name="debug timestamp"/> must be on for this to have an effect.
+    </para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

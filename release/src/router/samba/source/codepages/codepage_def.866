@@ -1,0 +1,168 @@
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+# Codepage definition file for Code Page 866 - MS-DOS Cyrillic
+# defines lower->upper mapping.
+# Written by ODiP ( odip@biogate.com )
+
+# The columns are :
+# lower  upper  map to lower  map to upper
+#
+  97   65 True  True
+  98   66 True  True
+  99   67 True  True
+  100   68 True  True
+  101   69 True  True
+  102   70 True  True
+  103   71 True  True
+  104   72 True  True
+  105   73 True  True
+  106   74 True  True
+  107   75 True  True
+  108   76 True  True
+  109   77 True  True
+  110   78 True  True
+  111   79 True  True
+  112   80 True  True
+  113   81 True  True
+  114   82 True  True
+  115   83 True  True
+  116   84 True  True
+  117   85 True  True
+  118   86 True  True
+  119   87 True  True
+  120   88 True  True
+  121   89 True  True
+  122   90 True  True
+  160   128 True  True
+  161   129 True  True
+  162   130 True  True
+  163   131 True  True
+  164   132 True  True
+  165   133 True  True
+  166   134 True  True
+  167   135 True  True
+  168   136 True  True
+  169   137 True  True
+  170   138 True  True
+  171   139 True  True
+  172   140 True  True
+  173   141 True  True
+  174   142 True  True
+  175   143 True  True
+  224   144 True  True
+  225   145 True  True
+  226   146 True  True
+  227   147 True  True
+  228   148 True  True
+  229   149 True  True
+  230   150 True  True
+  231   151 True  True
+  232   152 True  True
+  233   153 True  True
+  234   154 True  True
+  235   155 True  True
+  236   156 True  True
+  237   157 True  True
+  238   158 True  True
+  239   159 True  True
+  241   240 True  True
+  243   242 True  True
+  245   244 True  True
+  247   246 True  True
+  33   0 False  False
+  35   0 False  False
+  36   0 False  False
+  37   0 False  False
+  38   0 False  False
+  39   0 False  False
+  40   0 False  False
+  41   0 False  False
+  45   0 False  False
+  48   0 False  False
+  49   0 False  False
+  50   0 False  False
+  51   0 False  False
+  52   0 False  False
+  53   0 False  False
+  54   0 False  False
+  55   0 False  False
+  56   0 False  False
+  57   0 False  False
+  64   0 False  False
+  94   0 False  False
+  95   0 False  False
+  96   0 False  False
+  123   0 False  False
+  125   0 False  False
+  126   0 False  False
+  127   0 False  False
+  176   0 False  False
+  177   0 False  False
+  178   0 False  False
+  179   0 False  False
+  180   0 False  False
+  181   0 False  False
+  182   0 False  False
+  183   0 False  False
+  184   0 False  False
+  185   0 False  False
+  186   0 False  False
+  187   0 False  False
+  188   0 False  False
+  189   0 False  False
+  190   0 False  False
+  191   0 False  False
+  192   0 False  False
+  193   0 False  False
+  194   0 False  False
+  195   0 False  False
+  196   0 False  False
+  197   0 False  False
+  198   0 False  False
+  199   0 False  False
+  200   0 False  False
+  201   0 False  False
+  202   0 False  False
+  203   0 False  False
+  204   0 False  False
+  205   0 False  False
+  206   0 False  False
+  207   0 False  False
+  208   0 False  False
+  209   0 False  False
+  210   0 False  False
+  211   0 False  False
+  212   0 False  False
+  213   0 False  False
+  214   0 False  False
+  215   0 False  False
+  216   0 False  False
+  217   0 False  False
+  218   0 False  False
+  219   0 False  False
+  220   0 False  False
+  221   0 False  False
+  222   0 False  False
+  223   0 False  False
+  248   0 False  False
+  249   0 False  False
+  250   0 False  False
+  251   0 False  False
+  252   0 False  False
+  253   0 False  False
+  254   0 False  False
+  255   0 False  False

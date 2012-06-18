@@ -1,0 +1,12 @@
+
+1. defunct process  issue.
+	=>child thread didn't correctly collected by parent thread.
+
+	[root@shiang wsc_upnp]# ps -aux | grep wscd
+	Warning: bad syntax, perhaps a bogus '-'? See /usr/share/doc/procps-3.2.5/FAQ
+	root     17172  0.0  0.0      0     0 pts/2    Zl+  16:53   0:00 [wscd] <defunct>
+	root     19452  0.0  0.2   3756   700 pts/1    S+   20:28   0:00 grep wscd
+
+	
+2.
+

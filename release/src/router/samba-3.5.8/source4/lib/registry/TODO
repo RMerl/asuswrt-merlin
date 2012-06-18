@@ -1,0 +1,5 @@
+- ..\..\, \bla\blie support in regshell
+- finish rpc_server
+
+regshell:
+ - support for security descriptors

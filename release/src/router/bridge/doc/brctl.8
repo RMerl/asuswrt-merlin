@@ -1,0 +1,172 @@
+.\"
+.\"	This program is free software; you can redistribute it and/or modify
+.\"	it under the terms of the GNU General Public License as published by
+.\"	the Free Software Foundation; either version 2 of the License, or
+.\"	(at your option) any later version.
+.\"
+.\"	This program is distributed in the hope that it will be useful,
+.\"	but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"	GNU General Public License for more details.
+.\"
+.\"	You should have received a copy of the GNU General Public License
+.\"	along with this program; if not, write to the Free Software
+.\"	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+.\"
+.\"
+.TH BRCTL 8 "November 7, 2001" "" ""
+.SH NAME
+brctl \- ethernet bridge administration
+.SH SYNOPSIS
+.BR "brctl [command]"
+.SH DESCRIPTION
+.B brctl
+is used to set up, maintain, and inspect the ethernet bridge
+configuration in the linux kernel.
+
+An ethernet bridge is a device commonly used to connect different
+networks of ethernets together, so that these ethernets will appear as
+one ethernet to the participants.
+
+Each of the ethernets being connected corresponds to one physical
+interface in the bridge. These individual ethernets are bundled into
+one bigger ('logical') ethernet, this bigger ethernet corresponds to
+the bridge network interface.
+
+
+.SH INSTANCES
+The command
+.B brctl addbr <name>
+creates a new instance of the ethernet bridge. The network interface
+corresponding to the bridge will be called <name>.
+
+The command
+.B brctl delbr <name>
+deletes the instance <name> of the ethernet bridge. The network
+interface corresponding to the bridge must be down before it can be
+deleted!
+
+The command
+.B brctl show
+shows all current instances of the ethernet bridge.
+
+
+.SH PORTS
+Each bridge has a number of ports attached to it. Network traffic
+coming in on any of these ports will be forwarded to the other ports
+transparently, so that the bridge is invisible to the rest of the
+network (i.e. it will not show up in
+.IR traceroute(8)
+).
+
+The command
+.B brctl addif <brname> <ifname>
+will make the interface <ifname> a port of the bridge <brname>. This
+means that all frames received on <ifname> will be processed as if
+destined for the bridge. Also, when sending frames on <brname>,
+<ifname> will be considered as a potential output interface.
+
+The command
+.B brctl delif <brname> <ifname>
+will detach the interface <ifname> from the bridge <brname>.
+
+The command
+.B brctl show <brname>
+will show some information on the bridge and it's attached ports.
+
+
+.SH AGEING
+The bridge keeps track of ethernet addresses seen on each port. When
+it needs to forward a frame, and it happens to know on which port the
+destination ethernet address (specified in the frame) is located, it
+can 'cheat' by forwarding the frame to that port only, thus saving a
+lot of redundant copies and transmits.
+
+However, the ethernet address location data is not static
+data. Machines can move to other ports, network cards can be replaced
+(which changes the machine's ethernet address), etc.
+
+.B brctl showmacs <brname>
+shows a list of learned MAC addresses for this bridge.
+
+.B brctl setageingtime <brname> <time>
+sets the ethernet (MAC) address ageing time, in seconds. After <time>
+seconds of not having seen a frame coming from a certain address, the
+bridge will time out (delete) that address from the Forwarding
+DataBase (fdb).
+
+.B brctl setgcint <brname> <time>
+sets the garbage collection interval for the bridge <brname> to <time>
+seconds. This means that the bridge will check the forwarding database
+for timed out entries every <time> seconds.
+
+
+.SH SPANNING TREE PROTOCOL
+Multiple ethernet bridges can work together to create even larger
+networks of ethernets using the IEEE 802.1d spanning tree
+protocol. This protocol is used for finding the shortest path between
+two ethernets, and for eliminating loops from the topology. As this
+protocol is a standard, linux bridges will interwork properly with
+other third party bridge products. Bridges communicate with eachother
+by sending and receiving BPDUs (Bridge Protocol Data Units). These
+BPDUs can be recognised by an ethernet destination address of
+01:80:c2:00:00:00.
+
+The spanning tree protocol can also be turned off (for those
+situations where it just doesn't make sense, for example when this
+linux box is the only bridge on the LAN, or when you know that there
+are no loops in the topology.)
+
+.IR brctl(8)
+can be used for configuring certain spanning tree protocol
+parameters. For an explanation of these parameters, see the IEEE
+802.1d specification (or send me an email). The default values should
+be just fine. If you don't know what these parameters mean, you
+probably won't feel the desire to tweak them.
+
+.B brctl stp <bridge> <state>
+controls this bridge instance's participation in the spanning tree
+protocol. If <state> is "on" or "yes" the STP will be turned on,
+otherwise it will be turned off.  When turned off, the bridge will not
+send or receive BPDUs, and will thus not participate in the spanning
+tree protocol. If your bridge isn't the only bridge on the LAN, or if
+there are loops in the LAN's topology, DO NOT turn this option off. If
+you turn this option off, please know what you are doing.
+
+
+.B brctl setbridgeprio <bridge> <priority>
+sets the bridge's priority to <priority>. The priority value is an
+unsigned 16-bit quantity (a number between 0 and 65535), and has no
+dimension. Lower priority values are 'better'. The bridge with the
+lowest priority will be elected 'root bridge'.
+
+.B brctl setfd <bridge> <time>
+sets the bridge's 'bridge forward delay' to <time> seconds.
+
+.B brctl sethello <bridge> <time>
+sets the bridge's 'bridge hello time' to <time> seconds.
+
+.B brctl setmaxage <bridge> <time>
+sets the bridge's 'maximum message age' to <time> seconds.
+
+.B brctl setpathcost <bridge> <port> <cost>
+sets the port cost of the port <port> to <cost>. This is a
+dimensionless metric.
+
+.B brctl setportprio <bridge> <port> <priority>
+sets the port <port>'s priority to <priority>. The priority value is
+an unsigned 8-bit quantity (a number between 0 and 255), and has no
+dimension. This metric is used in the designated port and root port
+selection algorithms.
+
+
+.SH NOTES
+.BR brctl(8)
+replaces the older brcfg tool.
+
+.SH SEE ALSO
+.BR ipchains(8),
+.BR iptables(8)
+
+.SH AUTHOR
+Lennert Buytenhek <buytenh@gnu.org>

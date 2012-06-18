@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# chkconfig: - 16 84
+# description: An OSPF routing engine for use with Zebra and IPv6
+#
+# processname: ospf6d
+# config: /etc/ospf6d.conf
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+
+[ -f /etc/ospf6d.conf ] || exit 0
+
+case "$1" in
+  start)
+	echo -n "Starting ospf6d: "
+        daemon /usr/sbin/ospf6d -d
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/ospf6d
+	echo
+	;;
+  stop)
+	echo -n "Shutting down ospf6d: "
+	killproc ospf6d
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/ospf6d
+	echo
+	;;
+  restart)
+        $0 stop
+        $0 start
+	RETVAL=$?
+        ;;
+  status)
+        status ospf6d
+	RETVAL=$?
+        ;;
+  *)
+	echo "Usage: ospf6d {start|stop|restart|status}"
+	exit 1
+esac
+
+exit $RETVAL

@@ -1,0 +1,7 @@
+The files ans.c, atm.h, atmres.h, atmsap.h, misc.c, text2atm.c  and
+text2qos.c are taken from the linux-atm libraries.  These are 
+Copyright 1995-2000 EPFL-LRC/ICA, and are licensed under the GNU Lesser
+General Public License.
+
+The file pppoatm.c contains its own copyright notice, and is licensed
+under the GPL.

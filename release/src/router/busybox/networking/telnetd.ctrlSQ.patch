@@ -1,0 +1,175 @@
+From: "Doug Graham" <dgraham@nortel.com>
+Date: 2009-01-22 07:20
+
+Hello,
+
+Busybox's telnetd does not disable local (client-side) flow control
+properly.  It does not put the pty into packet mode and then notify the
+client whenever flow control is disabled by an application running under
+its control.  The result is that ^S/^Q are not passed through to the
+application, which is painful when the application is an emacs variant.
+
+I suppose that support for this might be considered bloat, but the
+included patch only adds about 200 bytes of text to x86 busybox and 300
+bytes to mipsel busybox.  Please consider applying.
+
+=============================
+
+NB: the patch doesn't work as-is because we now have iac_safe_write()
+which quotes IACs on output.
+
+=============================
+Docs:
+
+The following ioctl(2) calls apply only to pseudo terminals:
+
+TIOCSTOP Stops output to a terminal (e.g. like typing ^S). Takes no parameter.
+
+TIOCSTART Restarts output (stopped by TIOCSTOP or by typing ^S). Takes no parameter.
+
+TIOCPKT         Enable/disable packet mode. When applied to the master side of a pseudo terminal, each
+subsequent read(2) from the terminal will return data written on the slave part of the pseudo terminal preceded by a
+zero byte (symbolically defined as TIOCPKT_DATA), or a single byte reflecting control status information.
+In the latter case, the byte is an inclusive-or of zero or more of the bits:
+
+TIOCPKT_FLUSHREAD     whenever the read queue for the terminal is flushed.
+TIOCPKT_FLUSHWRITE    whenever the write queue for the terminal is flushed.
+TIOCPKT_STOP    whenever output to the terminal is stopped a la ^S.
+TIOCPKT_START   whenever output to the terminal is restarted.
+TIOCPKT_DOSTOP  whenever t_stopc is ^S and t_startc is ^Q.
+TIOCPKT_NOSTOP  whenever the start and stop characters are not ^S/^Q.
+
+While this mode is in use, the presence of control status information to be read from the master side may be detected
+by a select(2) for exceptional conditions.
+
+This mode is used by rlogin(1) and rlogind(8) to implement a remote-echoed, locally ^S/^Q flow-controlled remote login
+with proper back-flushing of output; it can be used by other similar programs.
+
+TIOCUCNTL       Enable/disable a mode that allows a small number of simple user ioctl(2) commands to be passed through
+the pseudo-terminal, using a protocol similar to that of TIOCPKT. The TIOCUCNTL and TIOCPKT modes are mutually
+exclusive. This mode is enabled from the master side of a pseudo terminal. Each subsequent read(2) from the master side
+will return data written on the slave part of the pseudo terminal preceded by a zero byte, or a single byte reflecting a
+user control operation on the slave side. A user control command consists of a special ioctl(2) operation with no data;
+the command is given as UIOCCMD (n), where n is a number in the range 1-255. The operation value n will be received as
+a single byte on the next read(2) from the master side. The ioctl(2) UIOCCMD (0) is a no-op that may be used to probe
+for the existence of this facility. As with TIOCPKT mode, command operations may be detected with a select(2) for
+exceptional conditions.
+
+--- busybox-1.13.2/networking/telnetd.c	2009/01/21 20:02:39	1.1
++++ busybox-1.13.2/networking/telnetd.c	2009/01/22 00:35:28
+@@ -38,6 +38,9 @@
+ 	int sockfd_read, sockfd_write, ptyfd;
+ 	int shell_pid;
+ 
++#ifdef TIOCPKT
++	int flowstate;
++#endif
+ 	/* two circular buffers */
+ 	/*char *buf1, *buf2;*/
+ /*#define TS_BUF1 ts->buf1*/
+@@ -170,6 +173,9 @@
+ 	int fd, pid;
+ 	char tty_name[GETPTY_BUFSIZE];
+ 	struct tsession *ts = xzalloc(sizeof(struct tsession) + BUFSIZE * 2);
++#ifdef TIOCPKT
++	int on = 1;
++#endif
+ 
+ 	/*ts->buf1 = (char *)(ts + 1);*/
+ 	/*ts->buf2 = ts->buf1 + BUFSIZE;*/
+@@ -180,6 +186,10 @@
+ 		maxfd = fd;
+ 	ts->ptyfd = fd;
+ 	ndelay_on(fd);
++#ifdef TIOCPKT
++	ioctl(fd, TIOCPKT, &on);
++	ts->flowstate = TIOCPKT_DOSTOP;
++#endif
+ #if ENABLE_FEATURE_TELNETD_STANDALONE
+ 	ts->sockfd_read = sock;
+ 	/* SO_KEEPALIVE by popular demand */
+@@ -385,6 +395,16 @@
+ 		portnbr = 23,
+ 	};
+ #endif
++#ifdef TIOCPKT
++	int control;
++	static const char lflow_on[] =
++	    {IAC, SB, TELOPT_LFLOW, LFLOW_ON, IAC, SE};
++	static const char lflow_off[] =
++	    {IAC, SB, TELOPT_LFLOW, LFLOW_OFF, IAC, SE};
++# define RESERVED sizeof(lflow_on)
++#else
++# define RESERVED 0
++#endif
+ 	/* Even if !STANDALONE, we accept (and ignore) -i, thus people
+ 	 * don't need to guess whether it's ok to pass -i to us */
+ 	opt = getopt32(argv, "f:l:Ki" IF_FEATURE_TELNETD_STANDALONE("p:b:F"),
+@@ -475,7 +495,7 @@
+ 				FD_SET(ts->sockfd_read, &rdfdset);
+ 			if (ts->size2 > 0)       /* can write to socket */
+ 				FD_SET(ts->sockfd_write, &wrfdset);
+-			if (ts->size2 < BUFSIZE) /* can read from pty */
++			if (ts->size2 < (BUFSIZE - RESERVED)) /* can read from pty */
+ 				FD_SET(ts->ptyfd, &rdfdset);
+ 		}
+ 		ts = next;
+@@ -593,6 +613,52 @@
+ 					goto skip4;
+ 				goto kill_session;
+ 			}
++#ifdef TIOCPKT
++			control = TS_BUF2[ts->rdidx2];
++			if (--count > 0 && control == TIOCPKT_DATA) {
++				/*
++				 * If we are in packet mode, and we have
++				 * just read a chunk of actual data from
++				 * the pty, then there is the TIOCPKT_DATA
++				 * byte (zero) that we have got to remove
++				 * somehow.  If there were no chars in
++				 * TS_BUF2 before we did this read, then
++				 * we can optimize by just advancing wridx2.
++				 * Otherwise we have to copy the new data down
++				 * to close the gap (Could use readv() instead).
++				 */
++				if (ts->size2 == 0)
++					ts->wridx2++;
++				else {
++					memmove(TS_BUF2 + ts->rdidx2,
++						TS_BUF2 + ts->rdidx2 + 1, count);
++				}
++			}
++
++			/*
++			 * If the flow control state changed, notify
++			 * the client.  If "control" is not TIOCPKT_DATA,
++			 * then there are no data bytes to worry about.
++			 */
++			if ((control & (TIOCPKT_DOSTOP|TIOCPKT_NOSTOP)) != 0
++			 && ts->flowstate != (control & TIOCPKT_DOSTOP)) {
++				const char *p = ts->flowstate ? lflow_off : lflow_on;
++
++				/*
++				 * We know we have enough free slots available
++				 * (see RESERVED) but they are not necessarily
++				 * contiguous; we may have to wrap.
++				 */
++				for (count = sizeof(lflow_on); count > 0; count--) {
++					TS_BUF2[ts->rdidx2++] = *p++;
++					if (ts->rdidx2 >= BUFSIZE)
++						ts->rdidx2 = 0;
++					ts->size2++;
++				}
++
++				ts->flowstate = control & TIOCPKT_DOSTOP;
++			}
++#endif /* TIOCPKT */
+ 			ts->size2 += count;
+ 			ts->rdidx2 += count;
+ 			if (ts->rdidx2 >= BUFSIZE) /* actually == BUFSIZE */
+
+--Doug
+_______________________________________________
+busybox mailing list
+busybox@busybox.net
+http://lists.busybox.net/mailman/listinfo/busybox

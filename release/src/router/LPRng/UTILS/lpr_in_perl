@@ -1,0 +1,117 @@
+#!/usr/bin/perl
+eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
+    if $running_under_some_shell;
+            # this emulates #! processing on NIH machines.
+            # (remove #! line above if indigestible)
+
+
+use strict;
+use English;
+use Socket;
+use LPRng;
+use Getopt::Std;
+use Sys::Hostname;
+
+my($Printer, $Pc_value, $Debug );
+my($pr, $remote, $port, @files, $file, $f, $hostname, $username);
+my($cf, $df, $idn, $cfn, @dfn, $fn, $filecount, $i, $v, $SOCK, $sendcf,%Args);
+my($options) = "Z:O:";
+
+$| = 1;
+
+$Debug = 0;
+Set_Debug($Debug);
+getopts( $options . "P:", \%Args );
+Setup_LPRng( %Args );
+
+# get the printer name
+$Printer = Get_printer_name( %Args );
+if( not $Printer ){
+	die "missing printer name";
+}
+
+print "Printer '$Printer'\n" if $Debug;
+
+$Pc_value = Setup_pc_entry( $Printer );
+
+($pr, $remote, $port ) = Get_remote_pr_host( $Printer, $Pc_value );
+print "pr '$pr', remote '$remote', port '$port'\n" if $Debug;
+
+if( !(@files = @ARGV) ){
+	$f = "/tmp/lpr$$";
+	@files = $f;
+	open TEMP, ">$f"  or die "cannot open $f - $!\n";
+	while( defined( $i = <> ) ){
+		print TEMP $i or die "cannot write $f - $!\n";
+	}
+	close TEMP or die "cannot close $f - $!\n";
+}
+
+print "files " . join(",",@files) . "\n" if $Debug;
+
+
+$hostname = hostname();
+$username = getpwuid($UID);
+
+$cf = "H$hostname\n"
+ . "P$pr\n"
+ . "L$username\n" ;
+
+foreach $i ( split //, $options ){
+	print "option $i\n" if $Debug;
+	$v = $Args{$i};
+	if( $i ne ":" and $v ){
+		print "option $i='$v'\n" if $Debug;
+		$cf .= "$i$v\n";
+	}
+}
+
+$idn = $$ % 100;
+$cfn = sprintf( "cfA%03d%s", $idn, $hostname );
+print "cfn='$cfn'\n" if $Debug;
+$fn = "A";
+$filecount = 0;
+for( $i = 0; $i < @files; ++$i ){
+	$file = $files[$i];
+	if( ! -f $file || ! -r _ || ! -s _ ){
+		print "not a readable, nonzero length file - $file\n";
+	} else {
+		$df = sprintf( "df%s%03d%s", $fn, $idn, $hostname );
+		$dfn[$i] = $df;
+		$cf .= "N$file\n" . "f$df\n" . "U$df\n";
+		++$filecount;
+		++$fn;
+		if( $filecount == 26 ){ $fn = "a"; }
+	}
+}
+
+if( $filecount > 52 ){
+	print STDERR "too many files\n";
+	exit 2;
+}
+
+if( $filecount == 0 ){
+	print "nothing to print\n";
+	exit( 1 );
+}
+
+if( $Debug ){
+	print "cf contents = '$cf'\n";
+	print "cf len " . length( $cf ) . "\n";
+}
+
+$SOCK = getconnection( $remote, $port );
+sendit( $SOCK, sprintf( "\002%s\n", $pr ));;
+
+$sendcf = "\002" . length( $cf ) . " $cfn\n"; 
+sendbuffer( $SOCK, $sendcf, $cf );
+
+print "sending files '@files'\n" if $Debug;
+for( $i = 0; $i < @files; ++$i ){
+	if( $dfn[$i] ){
+		sendfile( $SOCK, $dfn[$i], $files[$i] );
+	}
+}
+
+close ($SOCK) or die "close: $!"; 
+exit 0;

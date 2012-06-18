@@ -1,0 +1,596 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Enable deferred authentication */
+#undef CONFIGURE_DEF_AUTH
+
+/* Enable internal packet filter */
+#undef CONFIGURE_PF
+
+/* enable iproute2 support */
+#undef CONFIG_FEATURE_IPROUTE
+
+/* Use memory debugging function in OpenSSL */
+#undef CRYPTO_MDEBUG
+
+/* Use dmalloc memory debugging library */
+#undef DMALLOC
+
+/* Dimension to use for empty array declaration */
+#undef EMPTY_ARRAY_SIZE
+
+/* Enable client capability only */
+#undef ENABLE_CLIENT_ONLY
+
+/* Enable client/server capability */
+#undef ENABLE_CLIENT_SERVER
+
+/* Enable debugging support */
+#undef ENABLE_DEBUG
+
+/* Enable internal fragmentation support */
+#undef ENABLE_FRAGMENT
+
+/* Enable HTTP proxy support */
+#undef ENABLE_HTTP_PROXY
+
+/* Enable management server capability */
+#undef ENABLE_MANAGEMENT
+
+/* Enable multi-homed UDP server capability */
+#undef ENABLE_MULTIHOME
+
+/* Allow --askpass and --auth-user-pass passwords to be read from a file */
+#undef ENABLE_PASSWORD_SAVE
+
+/* Enable TCP Server port sharing */
+#undef ENABLE_PORT_SHARE
+
+/* Enable smaller executable size */
+#undef ENABLE_SMALL
+
+/* Enable Socks proxy support */
+#undef ENABLE_SOCKS
+
+/* Define to 1 if you have the `accept' function. */
+#undef HAVE_ACCEPT
+
+/* Define to 1 if you have the <arpa/inet.h> header file. */
+#undef HAVE_ARPA_INET_H
+
+/* Define to 1 if you have the `bind' function. */
+#undef HAVE_BIND
+
+/* Define to 1 if you have the `chdir' function. */
+#undef HAVE_CHDIR
+
+/* Define to 1 if you have the `chroot' function. */
+#undef HAVE_CHROOT
+
+/* Define to 1 if you have the `chsize' function. */
+#undef HAVE_CHSIZE
+
+/* struct cmsghdr needed for extended socket error support */
+#undef HAVE_CMSGHDR
+
+/* Define to 1 if you have the `connect' function. */
+#undef HAVE_CONNECT
+
+/* Define to 1 if your compiler supports GNU GCC-style variadic macros */
+#undef HAVE_CPP_VARARG_MACRO_GCC
+
+/* Define to 1 if your compiler supports ISO C99 variadic macros */
+#undef HAVE_CPP_VARARG_MACRO_ISO
+
+/* Define to 1 if you have the `ctime' function. */
+#undef HAVE_CTIME
+
+/* Define to 1 if you have the <ctype.h> header file. */
+#undef HAVE_CTYPE_H
+
+/* Define to 1 if you have the `daemon' function. */
+#undef HAVE_DAEMON
+
+/* Define to 1 if you have the `dup' function. */
+#undef HAVE_DUP
+
+/* Define to 1 if you have the `dup2' function. */
+#undef HAVE_DUP2
+
+/* Define to 1 if you have the `ENGINE_cleanup' function. */
+#undef HAVE_ENGINE_CLEANUP
+
+/* Define to 1 if you have the `ENGINE_load_builtin_engines' function. */
+#undef HAVE_ENGINE_LOAD_BUILTIN_ENGINES
+
+/* Define to 1 if you have the `ENGINE_register_all_complete' function. */
+#undef HAVE_ENGINE_REGISTER_ALL_COMPLETE
+
+/* epoll_create function is defined */
+#undef HAVE_EPOLL_CREATE
+
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the <err.h> header file. */
+#undef HAVE_ERR_H
+
+/* Define to 1 if you have the `EVP_CIPHER_CTX_set_key_length' function. */
+#undef HAVE_EVP_CIPHER_CTX_SET_KEY_LENGTH
+
+/* Define to 1 if you have the `execve' function. */
+#undef HAVE_EXECVE
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the `flock' function. */
+#undef HAVE_FLOCK
+
+/* Define to 1 if you have the `fork' function. */
+#undef HAVE_FORK
+
+/* Define to 1 if you have the `ftruncate' function. */
+#undef HAVE_FTRUNCATE
+
+/* Define to 1 if you have the `getgrnam' function. */
+#undef HAVE_GETGRNAM
+
+/* Define to 1 if you have the `gethostbyname' function. */
+#undef HAVE_GETHOSTBYNAME
+
+/* Define to 1 if you have the `getpass' function. */
+#undef HAVE_GETPASS
+
+/* Define to 1 if you have the `getpeereid' function. */
+#undef HAVE_GETPEEREID
+
+/* Define to 1 if you have the `getpeername' function. */
+#undef HAVE_GETPEERNAME
+
+/* Define to 1 if you have the `getpid' function. */
+#undef HAVE_GETPID
+
+/* Define to 1 if you have the `getpwnam' function. */
+#undef HAVE_GETPWNAM
+
+/* Define to 1 if you have the `getsockname' function. */
+#undef HAVE_GETSOCKNAME
+
+/* Define to 1 if you have the `getsockopt' function. */
+#undef HAVE_GETSOCKOPT
+
+/* Define to 1 if you have the `gettimeofday' function. */
+#undef HAVE_GETTIMEOFDAY
+
+/* Define to 1 if you have the <grp.h> header file. */
+#undef HAVE_GRP_H
+
+/* Define to 1 if you have the `inet_ntoa' function. */
+#undef HAVE_INET_NTOA
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* struct in_pktinfo needed for IP_PKTINFO support */
+#undef HAVE_IN_PKTINFO
+
+/* struct iovec needed for IPv6 support */
+#undef HAVE_IOVEC
+
+/* struct iphdr needed for IPv6 support */
+#undef HAVE_IPHDR
+
+/* Define to 1 if you have the <linux/errqueue.h> header file. */
+#undef HAVE_LINUX_ERRQUEUE_H
+
+/* Define to 1 if you have the <linux/if_tun.h> header file. */
+#undef HAVE_LINUX_IF_TUN_H
+
+/* Define to 1 if you have the <linux/sockios.h> header file. */
+#undef HAVE_LINUX_SOCKIOS_H
+
+/* Define to 1 if you have the <linux/types.h> header file. */
+#undef HAVE_LINUX_TYPES_H
+
+/* Define to 1 if you have the `listen' function. */
+#undef HAVE_LISTEN
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `memset' function. */
+#undef HAVE_MEMSET
+
+/* Define to 1 if you have the `mlockall' function. */
+#undef HAVE_MLOCKALL
+
+/* struct msghdr needed for extended socket error support */
+#undef HAVE_MSGHDR
+
+/* Define to 1 if you have the <netdb.h> header file. */
+#undef HAVE_NETDB_H
+
+/* Define to 1 if you have the <netinet/if_ether.h> header file. */
+#undef HAVE_NETINET_IF_ETHER_H
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <netinet/in_systm.h> header file. */
+#undef HAVE_NETINET_IN_SYSTM_H
+
+/* Define to 1 if you have the <netinet/ip.h> header file. */
+#undef HAVE_NETINET_IP_H
+
+/* Define to 1 if you have the <netinet/tcp.h> header file. */
+#undef HAVE_NETINET_TCP_H
+
+/* Define to 1 if you have the <net/if.h> header file. */
+#undef HAVE_NET_IF_H
+
+/* Define to 1 if you have the <net/if_tun.h> header file. */
+#undef HAVE_NET_IF_TUN_H
+
+/* Define to 1 if you have the <net/tun/if_tun.h> header file. */
+#undef HAVE_NET_TUN_IF_TUN_H
+
+/* Define to 1 if you have the `nice' function. */
+#undef HAVE_NICE
+
+/* Define to 1 if you have the `openlog' function. */
+#undef HAVE_OPENLOG
+
+/* Define to 1 if you have the <openssl/engine.h> header file. */
+#undef HAVE_OPENSSL_ENGINE_H
+
+/* Define to 1 if you have the `poll' function. */
+#undef HAVE_POLL
+
+/* Define if you have POSIX threads libraries and header files. */
+#undef HAVE_PTHREAD
+
+/* Define to 1 if you have the `putenv' function. */
+#undef HAVE_PUTENV
+
+/* Define to 1 if you have the <pwd.h> header file. */
+#undef HAVE_PWD_H
+
+/* Define to 1 if you have the `readv' function. */
+#undef HAVE_READV
+
+/* Define to 1 if you have the `recv' function. */
+#undef HAVE_RECV
+
+/* Define to 1 if you have the `recvfrom' function. */
+#undef HAVE_RECVFROM
+
+/* Define to 1 if you have the `recvmsg' function. */
+#undef HAVE_RECVMSG
+
+/* Define to 1 if you have the <resolv.h> header file. */
+#undef HAVE_RESOLV_H
+
+/* Indicates if res_init is available */
+#undef HAVE_RES_INIT
+
+/* Define to 1 if you have the `select' function. */
+#undef HAVE_SELECT
+
+/* Define to 1 if you have the `send' function. */
+#undef HAVE_SEND
+
+/* Define to 1 if you have the `sendmsg' function. */
+#undef HAVE_SENDMSG
+
+/* Define to 1 if you have the `sendto' function. */
+#undef HAVE_SENDTO
+
+/* SELinux support */
+#undef HAVE_SETCON
+
+/* Define to 1 if you have the `setgid' function. */
+#undef HAVE_SETGID
+
+/* Define to 1 if you have the `setgroups' function. */
+#undef HAVE_SETGROUPS
+
+/* Define to 1 if you have the `setsid' function. */
+#undef HAVE_SETSID
+
+/* Define to 1 if you have the `setsockopt' function. */
+#undef HAVE_SETSOCKOPT
+
+/* Define to 1 if you have the `setuid' function. */
+#undef HAVE_SETUID
+
+/* Define to 1 if you have the <signal.h> header file. */
+#undef HAVE_SIGNAL_H
+
+/* Define to 1 if you have the `socket' function. */
+#undef HAVE_SOCKET
+
+/* struct sock_extended_err needed for extended socket error support */
+#undef HAVE_SOCK_EXTENDED_ERR
+
+/* Define to 1 if you have the `stat' function. */
+#undef HAVE_STAT
+
+/* Define to 1 if you have the <stdarg.h> header file. */
+#undef HAVE_STDARG_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strdup' function. */
+#undef HAVE_STRDUP
+
+/* Define to 1 if you have the `strerror' function. */
+#undef HAVE_STRERROR
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the <stropts.h> header file. */
+#undef HAVE_STROPTS_H
+
+/* Define to 1 if you have the `syslog' function. */
+#undef HAVE_SYSLOG
+
+/* Define to 1 if you have the <syslog.h> header file. */
+#undef HAVE_SYSLOG_H
+
+/* Define to 1 if you have the `system' function. */
+#undef HAVE_SYSTEM
+
+/* Define to 1 if you have the <sys/epoll.h> header file. */
+#undef HAVE_SYS_EPOLL_H
+
+/* Define to 1 if you have the <sys/file.h> header file. */
+#undef HAVE_SYS_FILE_H
+
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#undef HAVE_SYS_MMAN_H
+
+/* Define to 1 if you have the <sys/poll.h> header file. */
+#undef HAVE_SYS_POLL_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/sockio.h> header file. */
+#undef HAVE_SYS_SOCKIO_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/uio.h> header file. */
+#undef HAVE_SYS_UIO_H
+
+/* Define to 1 if you have the <sys/un.h> header file. */
+#undef HAVE_SYS_UN_H
+
+/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to 1 if you have the `time' function. */
+#undef HAVE_TIME
+
+/* struct tun_pi needed for IPv6 support */
+#undef HAVE_TUN_PI
+
+/* Define to 1 if you have the `umask' function. */
+#undef HAVE_UMASK
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `unlink' function. */
+#undef HAVE_UNLINK
+
+/* Define to 1 if you have the `vfork' function. */
+#undef HAVE_VFORK
+
+/* Define to 1 if you have the <vfork.h> header file. */
+#undef HAVE_VFORK_H
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
+/* Define to 1 if `fork' works. */
+#undef HAVE_WORKING_FORK
+
+/* Define to 1 if `vfork' works. */
+#undef HAVE_WORKING_VFORK
+
+/* Define to 1 if you have the `writev' function. */
+#undef HAVE_WRITEV
+
+/* Path to ifconfig tool */
+#undef IFCONFIG_PATH
+
+/* Path to iproute tool */
+#undef IPROUTE_PATH
+
+/* Use lzo/ directory prefix for LZO header files (for LZO 2.0) */
+#undef LZO_HEADER_DIR
+
+/* LZO version number */
+#undef LZO_VERSION_NUM
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to the necessary symbol if this constant uses a non-standard name on
+   your system. */
+#undef PTHREAD_CREATE_JOINABLE
+
+/* Define as the return type of signal handlers (`int' or `void'). */
+#undef RETSIGTYPE
+
+/* Path to route tool */
+#undef ROUTE_PATH
+
+/* The size of `unsigned int', as computed by sizeof. */
+#undef SIZEOF_UNSIGNED_INT
+
+/* The size of `unsigned long', as computed by sizeof. */
+#undef SIZEOF_UNSIGNED_LONG
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Enable strict options check between peers */
+#undef STRICT_OPTIONS_CHECK
+
+/* The TAP-Win32 id defined in tap-win32/SOURCES */
+#undef TAP_ID
+
+/* The TAP-Win32 version number is defined in tap-win32/SOURCES */
+#undef TAP_WIN32_MIN_MAJOR
+
+/* The TAP-Win32 version number is defined in tap-win32/SOURCES */
+#undef TAP_WIN32_MIN_MINOR
+
+/* A string representing our target */
+#undef TARGET_ALIAS
+
+/* Are we running on Mac OS X? */
+#undef TARGET_DARWIN
+
+/* Are we running on DragonFlyBSD? */
+#undef TARGET_DRAGONFLY
+
+/* Are we running on FreeBSD? */
+#undef TARGET_FREEBSD
+
+/* Are we running on Linux? */
+#undef TARGET_LINUX
+
+/* Are we running NetBSD? */
+#undef TARGET_NETBSD
+
+/* Are we running on OpenBSD? */
+#undef TARGET_OPENBSD
+
+/* Are we running on Solaris? */
+#undef TARGET_SOLARIS
+
+/* Are we running WIN32? */
+#undef TARGET_WIN32
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Win32 builtin */
+#undef UF
+
+/* Use OpenSSL crypto library */
+#undef USE_CRYPTO
+
+/* Use libdl for dynamic library loading */
+#undef USE_LIBDL
+
+/* Use LoadLibrary to load DLLs on Windows */
+#undef USE_LOAD_LIBRARY
+
+/* Use LZO compression library */
+#undef USE_LZO
+
+/* Enable PKCS11 capability */
+#undef USE_PKCS11
+
+/* Use pthread-based multithreading */
+#undef USE_PTHREAD
+
+/* Use OpenSSL SSL library */
+#undef USE_SSL
+
+/* Use valgrind memory debugging library */
+#undef USE_VALGRIND
+
+/* Version number of package */
+#undef VERSION
+
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef gid_t
+
+/* Some systems don't define in_addr_t */
+#undef in_addr_t
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
+
+/* Define to `long int' if <sys/types.h> does not define. */
+#undef off_t
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef pid_t
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t
+
+/* type to use in place of socklen_t if not defined */
+#undef socklen_t
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef uid_t
+
+/* 16-bit unsigned type */
+#undef uint16_t
+
+/* 32-bit unsigned type */
+#undef uint32_t
+
+/* 8-bit unsigned type */
+#undef uint8_t
+
+/* Define as `fork' if `vfork' does not work. */
+#undef vfork
+
+/* Define to empty if the keyword `volatile' does not work. Warning: valid
+   code using `volatile' can become incorrect without. Disable with care. */
+#undef volatile

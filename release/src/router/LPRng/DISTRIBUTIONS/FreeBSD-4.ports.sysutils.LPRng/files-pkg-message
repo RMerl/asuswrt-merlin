@@ -1,0 +1,25 @@
+
+To activate the LPRng printing system do the following:
+
+- set `lpd_enable=NO' in /etc/rc.conf.
+  The LPRng startup script is in /usr/local/etc/rc.d/lprng.sh
+
+- run checkpc -f to make sure that necessary files have been created
+
+- reboot or kill the old lpd (`killall lpd') and
+  start the new one (/usr/local/etc/rc.d/lprng.sh start)
+
+LPRng uses the printcap, lpd.conf, and lpd.perms configuration files
+
+For further information, see the LPRng Documentation:
+  DOCSDIR
+
+The LPRng Web Site is http://www.lprng.com
+
+Commercial support is available from Astart Technologies:
+
+Patrick Powell                 Astart Technologies
+papowell@astart.com            6741 Convoy Court
+Network and System             San Diego, CA 92111
+  Consulting                   858-874-6543 FAX 858-751-2435
+LPRng - Print Spooler (http://www.lprng.com)

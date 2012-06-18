@@ -1,0 +1,145 @@
+# $Id: mt-daapd.playlist,v 1.1 2009-06-30 02:31:08 steven Exp $
+#
+# This is the playlist file, for specifying iTunes-style
+# "Smart Playlists".
+# 
+# The syntax is as follows:
+#
+# "Playlist Name" { expression }
+#
+# An expression consists of:
+#
+# ID3-tag-name operator operand
+#
+# Where valid ID3-tag-names are:
+#   Artist (string)
+#   Album (string)
+#   Genre (string) 
+#   Path (string) -- full path to song, including filename
+#   Composer (string)
+#   Orchestra (string)
+#   Conductor (string)
+#   Grouping (string) -- I don't even know what this is...
+#   Comment (string)
+#   Type (string) -- "mp3 audio file", "m4a audio file", etc.
+#   Year (int)
+#   BPM (int)
+#   Bitrate (int)
+#   Date (date)
+#
+# Valid operators include:
+#   is, includes (string)
+#   >, <, <=, >=, = (int)
+#   after, before (date)
+#
+# the "is" operator must exactly match the tag,
+# while the "includes" operator matches a substring.
+# Both matches are case-insensitive
+#
+# Valid operands include:
+#   "string value" (string)
+#   integer (int)
+#
+# Multiple expressions can be anded or ored together,
+# using the keywords OR and AND (or || and &&).
+# The unary not operator is also supported using the
+# keyword NOT (or !)
+#
+# Examples:
+#
+# "techno" {
+#    genre includes "techno" ||
+#    artist includes "zombie"
+# }
+#
+# This would match songs by "Rob Zombie" or "White Zombie",
+# as well as those with a genre of "Techno-Industrial" or
+# "Trance/Techno", for example.
+#
+# "AAC Files" {
+#   path includes ".m4a" ||
+#   path includes ".m4p"
+# }
+#
+# This would match all m4a and m4p files -- i.e. iTunes-ripped aac files
+# or songs downloaded from iTMS.
+#
+# "Orchestral Music" {
+#   Orchestra !IS "" ||
+#   Conductor !IS ""
+# }
+#
+# This would match anything with *anything* entered as a
+# orchestra or conductor... this would probably include any
+# orchestral music.  Kind of ugly, but works!
+#
+#
+# DATES
+#
+# Dates are kind of funky.  The "date" of a file is when it
+# was created on the file system, or the date that it was first
+# entered into the database, whichever is earlier.  The date of 
+# a file can be matched with the terms "before" or "after".
+#
+# One example of a valid date is a date in yyyy-mm-dd format:
+#
+# "Files added after January 1, 2004" {
+#   date after 2004-01-01
+# }
+#
+# There are also some special date keywords:
+#  "today", "yesterday", "last week", "last month", "last year"
+# 
+# A valid date can also be made by appling an interval to a 
+# date.  As an example, a valid date might be:
+#
+# 3 weeks before today
+# or
+# 3 weeks ago   
+#
+# You can combine these, of course.
+#
+# "3 weeks before today" is the same as "2 weeks before last week" 
+# or "1 week after last month" or "21 days before today" or
+# "20 days before yesterday" or "7 days after last month".  You get
+# the idea.
+# 
+# Note that the playlists are only generated at the time that mt-daapd
+# starts... so while the dates will be accurate at start time, they
+# may become inaccurate with time.  Yes, I know... it's on my list.  :)
+#
+# So, examples:
+#
+# "Recently Added MP3s" {
+#   date after last month AND file includes ".mp3"
+# } 
+#
+# This matches only mp3 files added in the last 30 days.
+#
+# 
+# SUMMARY
+#
+# I expect that this language will grow over time.  If you want
+# to hack on it, see src/lexer.l, src/parser.y, and src/playlist.c
+#
+# If there is something missing you particularly want, let me
+# (rpedde@users.sourceforge.net) know!
+#
+
+"60's Music" {
+    Year >= 1960 && Year < 1970
+}
+
+"Recently Added" {
+    Date after 2 weeks ago
+}
+
+"Non-DRMed Music" {
+    path not includes ".m4p"
+}
+
+"AAC Files" {
+    path includes ".m4p" ||
+    path includes ".m4a" ||
+    path includes ".aac"
+}

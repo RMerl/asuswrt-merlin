@@ -1,0 +1,136 @@
+From 77d8478a61b6f34c99565d120f03ad789a68e075 Mon Sep 17 00:00:00 2001
+From: Carmelo Amoroso
+Date: Mon, 21 Jan 2008 09:42:25 +0000
+
+ This patch solves a problem in dladdr caused by the wrong value
+ of elf_resolve's loadaddr field for the main application.
+
+ Signed-off-by: Filippo Arcidiacono <filippo.arcidiacono@st.com>
+ Signed-off-by: Carmelo Amoroso <carmelo.amoroso@st.com>
+ 
+ SVN rev 20871		Fri Jan 18 05:14:19 2008 PST 
+ 
+--- uClibc/ldso/include/dl-defs.h	2008/01/18 02:22:25	20870
++++ uClibc/ldso/include/dl-defs.h	2008/01/18 13:14:19	20871
+@@ -168,8 +168,8 @@
+  */
+ #ifndef DL_ADDR_IN_LOADADDR
+ # define DL_ADDR_IN_LOADADDR(ADDR, TPNT, TFROM) \
+-	((void*)(TPNT)->loadaddr < (void*)(ADDR) \
+-	 && (!(TFROM) || (TFROM)->loadaddr < (TPNT)->loadaddr))
++	((void*)(TPNT)->mapaddr < (void*)(ADDR) \
++	 && (!(TFROM) || (TFROM)->mapaddr < (TPNT)->mapaddr))
+ #endif
+ 
+ /* This is called from dladdr() to give targets that use function descriptors
+--- uClibc/ldso/include/dl-hash.h	2008/01/18 02:22:25	20870
++++ uClibc/ldso/include/dl-hash.h	2008/01/18 13:14:19	20871
+@@ -34,6 +34,7 @@
+   struct elf_resolve * next;
+   struct elf_resolve * prev;
+   /* Nothing after this address is used by gdb. */
++  DL_LOADADDR_TYPE mapaddr;    /* Address at which ELF segments (either main app and DSO) are mapped into */
+   enum {elf_lib, elf_executable,program_interpreter, loaded_file} libtype;
+   struct dyn_elf * symbol_scope;
+   unsigned short usage_count;
+--- uClibc/ldso/ldso/dl-hash.c	2008/01/18 02:22:25	20870
++++ uClibc/ldso/ldso/dl-hash.c	2008/01/18 13:14:19	20871
+@@ -152,7 +152,7 @@
+ 		hash_addr += tpnt->nbucket;
+ 		tpnt->chains = hash_addr;
+ 	}
+-	tpnt->loadaddr = loadaddr;
++	tpnt->loadaddr = tpnt->mapaddr = loadaddr;
+ 	for (i = 0; i < DYNAMIC_SIZE; i++)
+ 		tpnt->dynamic_info[i] = dynamic_info[i];
+ 	return tpnt;
+--- uClibc/ldso/ldso/ldso.c	2008/01/18 02:22:25	20870
++++ uClibc/ldso/ldso/ldso.c	2008/01/18 13:14:19	20871
+@@ -135,6 +135,7 @@
+ 			  char **argv
+ 			  DL_GET_READY_TO_RUN_EXTRA_PARMS)
+ {
++	DL_LOADADDR_TYPE app_loadaddr = NULL;
+ 	ElfW(Phdr) *ppnt;
+ 	ElfW(Dyn) *dpnt;
+ 	char *lpntstr;
+@@ -276,6 +277,9 @@
+ 			relro_addr = ppnt->p_vaddr;
+ 			relro_size = ppnt->p_memsz;
+ 		}
++		if (!app_loadaddr && (ppnt->p_type == PT_LOAD)) {
++			app_loadaddr = ppnt->p_vaddr;
++		}
+ 		if (ppnt->p_type == PT_DYNAMIC) {
+ 			dpnt = (ElfW(Dyn) *) DL_RELOC_ADDR(app_tpnt->loadaddr, ppnt->p_vaddr);
+ 			_dl_parse_dynamic_info(dpnt, app_tpnt->dynamic_info, debug_addr, app_tpnt->loadaddr);
+@@ -322,6 +326,7 @@
+ 			_dl_symbol_tables = rpnt = (struct dyn_elf *) _dl_malloc(sizeof(struct dyn_elf));
+ 			_dl_memset(rpnt, 0, sizeof(struct dyn_elf));
+ 			rpnt->dyn = _dl_loaded_modules;
++			app_tpnt->mapaddr = app_loadaddr;
+ 			app_tpnt->rtld_flags = unlazy | RTLD_GLOBAL;
+ 			app_tpnt->usage_count++;
+ 			app_tpnt->symbol_scope = _dl_symbol_tables;
+--- uClibc/ldso/libdl/libdl.c	2008/01/18 02:22:25	20870
++++ uClibc/ldso/libdl/libdl.c	2008/01/18 13:14:19	20871
+@@ -739,13 +739,40 @@
+ 		char *strtab;
+ 		ElfW(Sym) *symtab;
+ 		unsigned int hn, si, sn, sf;
+-		ElfW(Addr) sa;
++		ElfW(Addr) sa = 0;
++
++		/* Set the info for the object the address lies in */
++		__info->dli_fname = pelf->libname;
++		__info->dli_fbase = (void *) DL_LOADADDR_BASE(pelf->mapaddr);
+ 
+-		sa = 0;
+ 		symtab = (ElfW(Sym) *) (pelf->dynamic_info[DT_SYMTAB]);
+ 		strtab = (char *) (pelf->dynamic_info[DT_STRTAB]);
+ 
+ 		sf = sn = 0;
++
++#ifdef __LDSO_GNU_HASH_SUPPORT__
++		if (pelf->l_gnu_bitmask) {
++			for (hn = 0; hn < pelf->nbucket; hn++) {
++				si = pelf->l_gnu_buckets[hn];
++				if (!si)
++					continue;
++
++				const Elf32_Word *hasharr = &pelf->l_gnu_chain_zero[si];
++				do {
++					ElfW(Addr) symbol_addr;
++
++					symbol_addr = (ElfW(Addr)) pelf->loadaddr + symtab[si].st_value;
++					if (symbol_addr <= (ElfW(Addr))__address && (!sf || sa < symbol_addr)) {
++						sa = symbol_addr;
++						sn = si;
++						sf = 1;
++					}
++					_dl_if_debug_print("Symbol \"%s\" at %p\n", strtab + symtab[si].st_name, symbol_addr);
++					++si;
++				} while ((*hasharr++ & 1u) == 0);
++			}
++		} else
++#endif
+ 		for (hn = 0; hn < pelf->nbucket; hn++) {
+ 			for (si = pelf->elf_buckets[hn]; si; si = pelf->chains[si]) {
+ 				ElfW(Addr) symbol_addr;
+@@ -763,10 +790,14 @@
+ 		}
+ 
+ 		if (sf) {
+-			__info->dli_fname = pelf->libname;
+-			__info->dli_fbase = (void *) DL_LOADADDR_BASE(pelf->loadaddr);
++			/* A nearest symbol has been found; fill the entries */
+ 			__info->dli_sname = strtab + symtab[sn].st_name;
+ 			__info->dli_saddr = (void *)sa;
++		} else {
++			/* No symbol found, fill entries with NULL value,
++			only the containing object will be returned. */
++			__info->dli_sname = NULL;
++			__info->dli_saddr = NULL;
+ 		}
+ 		return 1;
+ 	}

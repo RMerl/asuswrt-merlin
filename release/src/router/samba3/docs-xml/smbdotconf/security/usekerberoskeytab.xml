@@ -1,0 +1,23 @@
+<samba:parameter name="use kerberos keytab"
+                 context="G"
+		 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	Specifies whether Samba should attempt to maintain service principals in the systems
+	keytab file for <constant>host/FQDN</constant> and <constant>cifs/FQDN</constant>.
+	</para>
+
+	<para>
+	When you are using the heimdal Kerberos libraries, you must also specify the following in
+	<filename>/etc/krb5.conf</filename>:
+<programlisting>
+[libdefaults]
+default_keytab_name = FILE:/etc/krb5.keytab
+</programlisting>
+	</para>
+
+</description>
+
+<value type="default">False</value>
+</samba:parameter>

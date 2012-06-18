@@ -1,0 +1,73 @@
+AC_INIT(configure.in)
+
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(pptp,0.8.5)
+
+AC_LANG_C
+AC_PROG_CC
+AM_PROG_LIBTOOL
+
+AC_DEFINE(PPPD_VERSION,[],"PPPD version")
+AC_DEFINE(KERNELVERSION,[],"kernel version")
+
+CFLAGS="${CFLAGS:=}"
+
+dnl check linux headers
+AC_MSG_CHECKING([for linux kernel herders])
+if test -n "${KDIR}"; then
+    if test -f ${KDIR}/include/linux/version.h; then 
+	header=${KDIR}/include
+    else
+	AC_MSG_RESULT(not found)
+	AC_MSG_ERROR(Could not find linux kernel headers)
+    fi
+else
+    kernel=`uname -r`
+    if test -f /usr/src/linux/include/linux/version.h; then
+	header=/usr/src/linux/include
+    elif test -f /lib/modules/${kernel}/build/include/linux/version.h; then 
+	header=/lib/modules/${kernel}/build/include
+    else
+	AC_MSG_RESULT(not found)
+	AC_MSG_ERROR(Could not find linux kernel headers)
+    fi
+fi
+VERSION=$(cat ${header/include}Makefile | grep '^VERSION = ' | awk '{print $3}')
+PATCHLEVEL=$(cat ${header/include}Makefile | grep '^PATCHLEVEL = ' | awk '{print $3}')
+SUBLEVEL=$(cat ${header/include}Makefile | grep '^SUBLEVEL = ' | awk '{print $3}')
+EXTRAVERSION=$(cat ${header/include}Makefile | grep '^EXTRAVERSION = ' | awk '{print $3}')
+KERNELVERSION=$VERSION.$PATCHLEVEL.$SUBLEVEL$EXTRAVERSION
+AC_MSG_RESULT(found ($KERNELVERSION at ${header/include}))
+AC_DEFINE_UNQUOTED(KERNELVERSION,"$KERNELVERSION")
+
+
+CFLAGS="${CFLAGS} -I. -I${header}"
+
+AC_MSG_CHECKING([for pppd])
+pppd=`which pppd 2>&1`
+if test $? -eq 1; then
+    pppd=""
+    for path in /usr/sbin /usr/local/sbin /usr/bin /usr/local/bin /sbin; do
+	if test -x ${path}/pppd; then
+	    pppd=${path}/pppd
+	    break;
+        fi
+    done
+fi
+
+if test -z "${pppd}"; then
+    AC_MSG_RESULT(not found)
+    AC_MSG_ERROR(Could not find pppd)
+fi    
+pppd_ver=`${pppd} --version 2>&1 | grep version | sed 's/pppd version //'`
+AC_MSG_RESULT($pppd ($pppd_ver))
+AC_DEFINE_UNQUOTED(PPPD_VERSION,"${pppd_ver}")
+
+echo '==============================================================================='
+
+echo 'Configuration chosen:'
+echo    '   PPPD:              '${pppd_ver}
+echo    '   linux kernel :     '$KERNELVERSION at ${header/include}
+
+AC_OUTPUT(Makefile src/Makefile)
+ 

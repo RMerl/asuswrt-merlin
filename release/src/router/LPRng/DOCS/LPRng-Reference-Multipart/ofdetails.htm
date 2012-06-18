@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>OF Filter</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Filters " href="filters.htm">
+    <link rel="PREVIOUS" title="Print Job Formats " href=
+    "printjobformats.htm">
+    <link rel="NEXT" title="lpr -p format " href="pr.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "printjobformats.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          16. Filters</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "pr.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="OFDETAILS">16.4. OF
+      Filter</a></h1>
+
+      <p>The <var class="LITERAL">:of</var> filter is used to
+      process banners and job separators. The <var class=
+      "LITERAL">:of</var> filter is responsible for performing
+      appropriate processing of this information and sending to the
+      printer for action.</p>
+
+      <p>While the various file filters are invoked on a once per
+      print file basis, the <var class="LITERAL">:of</var> filter
+      is invoked on a once per print job basis.</p>
+
+      <p>This filter is the first one to be started, and should
+      perform whatever specialized device initialization is needed.
+      It should also do whatever accounting procedure is desired
+      for start of job accounting.</p>
+
+      <p>The <var class="LITERAL">:of</var> filter will be given
+      any banner printing or job separation information for a job.
+      As part of its operation, it can detect a specific string,
+      corresponding to a banner print request, and generate a
+      banner. (See the <a href="jobsteps.htm">Job Processing Steps
+      and Printcap Options</a> for details.)</p>
+
+      <p>During operation, the <b class="APPLICATION">lpd</b>
+      server will send the special <span class="emphasis"><i class=
+      "EMPHASIS">stop</i></span> sequence of <var class=
+      "LITERAL">\031\001</var> to the <var class=
+      "LITERAL">:of</var> filter. The filter must then suspend
+      itself using a <tt class="COMMAND">kill -STOP</tt> operation.
+      The <b class="APPLICATION">lpd</b> server will detect that
+      the <var class="LITERAL">:of</var> filter has suspended
+      itself and then will perform other printing operations.</p>
+
+      <p>After the other printing operations have been completed,
+      the <var class="LITERAL">:of</var> will then be sent a <tt
+      class="COMMAND">kill -CONT</tt> signal.</p>
+
+      <p>This sequence will continue until all information has been
+      printed, and then the <var class="LITERAL">:of</var> filter's
+      <acronym class="ACRONYM">STDIN</acronym> will be closed. The
+      filter will then perform whatever cleanup operations are
+      needed, update accounting or other information, and exit.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "printjobformats.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "pr.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Print Job
+          Formats</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "filters.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top"><b class=
+          "APPLICATION">lpr</b> -p format</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

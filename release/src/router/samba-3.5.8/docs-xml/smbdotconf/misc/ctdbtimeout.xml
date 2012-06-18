@@ -1,0 +1,37 @@
+<samba:parameter name="ctdb timeout"
+                 context="G"
+				 type="integer"
+                 advanced="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter specifies a timeout in seconds for the
+	  connection between Samba and ctdb. It is only valid if you
+	  have compiled Samba with clustering and if you have
+	  set <parameter>clustering=yes</parameter>.
+	</para>
+	<para>When something in the cluster blocks, it can happen that
+	  we wait indefinitely long for ctdb, just adding to the
+	  blocking condition. In a well-running cluster this should
+	  never happen, but there are too many components in a cluster
+	  that might have hickups. Choosing the right balance for this
+	  value is very tricky, because on a busy cluster long service
+	  times to transfer something across the cluster might be
+	  valid. Setting it too short will degrade the service your
+	  cluster presents, setting it too long might make the cluster
+	  itself not recover from something severely broken for too
+	  long.
+	</para>
+	<para>
+	  Be aware that if you set this parameter, this needs to be in
+	  the file smb.conf, it is not really helpful to put this into
+	  a registry configuration (typical on a cluster), because to
+	  access the registry contact to ctdb is requred.
+	</para>
+	<para>Setting <parameter>ctdb timeout</parameter> to n makes
+	  any process waiting longer than n seconds for a reply by the
+	  cluster panic. Setting it to 0 (the default) makes Samba
+	  block forever, which is the highly recommended default.
+	</para>
+</description>
+<value type="default">0</value>
+</samba:parameter>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>uk.org.thekelleys.dnsmasq</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/local/sbin/dnsmasq</string>
+		<string>--keep-in-foreground</string>
+		<string>--log-queries</string>
+		<string>--log-facility=/var/log/dnsmasq.log</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+</dict>
+</plist>

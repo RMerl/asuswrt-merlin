@@ -1,0 +1,39 @@
+#!/bin/sh
+
+filter() {
+	# sed removes " address: " prefixes which mess up diff
+	sed $'s/^\\(\t*\\)[ ]*[0-9a-f][0-9a-f]*:[ \t]*/\\1/' \
+	| sed 's/__GI_//g'
+}
+
+test -d "$1" || exit 1
+test -d "$2" || exit 1
+
+{
+	(
+		cd "$1" || exit 1
+		find -name '*.o' -o -name '*.os' # -o -name '*.so'
+	)
+	(
+		cd "$2" || exit 1
+		find -name '*.o' -o -name '*.os' # -o -name '*.so'
+	)
+} | sed 's:^\./::' | sort | uniq | \
+tee LST | \
+(
+IFS=''
+while read -r oname; do
+	if ! test -f "$1/$oname"; then
+		echo "Only $2/$oname"
+		continue
+	fi
+	if ! test -f "$2/$oname"; then
+		echo "Only $1/$oname"
+		continue
+	fi
+	diff -q -- "$1/$oname" "$2/$oname" >/dev/null && continue
+	(cd "$1"; objdump -dr "$oname" | filter >"$oname.disasm")
+	(cd "$2"; objdump -dr "$oname" | filter >"$oname.disasm")
+	diff -u "$1/$oname.disasm" "$2/$oname.disasm"
+done
+)

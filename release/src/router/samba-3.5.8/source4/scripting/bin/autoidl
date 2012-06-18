@@ -1,0 +1,161 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Unix SMB/CIFS implementation.
+# Copyright © Jelmer Vernooij <jelmer@samba.org> 2008
+#   
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#   
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#   
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import sys
+
+MAX_OPNUM = 1000
+MAX_BASE_SIZE = 0x1000
+MAX_IFACE_VERSION = 1000
+
+DCERPC_FAULT_OP_RNG_ERROR = 0x1c010002
+DCERPC_FAULT_NDR = 0x6f7
+NT_STATUS_NET_WRITE_FAULT = -1073741614
+
+
+sys.path.insert(0, "bin/python")
+
+from samba.dcerpc import ClientConnection
+
+def find_num_funcs(conn):
+    for i in xrange(MAX_OPNUM):
+        try:
+            conn.request(i, "")
+        except RuntimeError, (num, msg):
+            if num == DCERPC_FAULT_OP_RNG_ERROR:
+                return i
+    raise Exception("More than %d functions" % MAX_OPNUM)
+
+class Function:
+    def __init__(self, conn, opnum):
+        self.conn = conn
+        self.opnum = opnum
+
+    def request(self, data):
+        assert isinstance(data, str)
+        self.conn.request(self.opnum, data)
+
+    def valid_ndr(self, data):
+        try:
+            self.request(data)
+        except RuntimeError, (num, msg):
+            if num == DCERPC_FAULT_NDR:
+                return False
+        return True
+
+    def find_base_request(self, start=""):
+        """Find the smallest possible request that we can do that is 
+        valid. 
+        
+        This generally means sending all zeroes so we get NULL pointers where 
+        possible."""
+        # TODO: Don't try with just 0's as there may be switch_is() variables
+        # for which 0 is not a valid value or variables with range() set
+        # See how much input bytes we need
+        for i in range(MAX_BASE_SIZE):
+            data = start + chr(0) * i
+            if self.valid_ndr(data):
+                return data
+        return None
+
+    def check_decision_byte(self, base_request, i):
+        """Check whether the specified byte is a possible "decision" byte, 
+        e.g. a byte that is part of a pointer, array size variable or 
+        discriminant.
+        
+        Note that this function only checks if a byte is definitely a decision 
+        byte. It may return False in some cases while the byte is actually 
+        a decision byte."""
+        data = list(base_request)
+        data[i] = chr(1)
+        return not self.valid_ndr("".join(data))
+
+    def find_deferrant_data(self, base_request, idx):
+        data = list(base_request)
+        data[idx*4] = chr(1)
+        # Just check that this is a pointer to something non-empty:
+        assert not self.valid_ndr("".join(data))
+
+        newdata = self.find_base_request("".join(data))
+
+        if newdata is None:
+            return None
+        
+        assert newdata.startswith(data)
+
+        return newdata[len(data):]
+
+    def find_idl(self):
+        base_request = self.find_base_request()
+
+        if base_request is None:
+            raise Exception("Unable to determine base size for opnum %d" % self.opnum)
+
+        print "\tBase request is %r" % base_request
+
+        decision_byte_map = map(lambda x: self.check_decision_byte(base_request, x), range(len(base_request)))
+
+        print decision_byte_map
+        
+        # find pointers
+        possible_pointers = map(all, 
+            [decision_byte_map[i*4:(i+1)*4] for i in range(int(len(base_request)/4))])
+        print possible_pointers
+
+        pointer_deferrant_bases = map(
+            lambda x: self.find_deferrant_data(base_request, x) if possible_pointers[x] else None, range(len(possible_pointers)))
+
+        print pointer_deferrant_bases
+
+
+if len(sys.argv) < 3:
+    print "Usage: autoidl <binding> <UUID> [<version>]"
+    sys.exit(1)
+
+(binding, uuid) = sys.argv[1:3]
+if len(sys.argv) == 4:
+    version = sys.argv[3]
+else:
+    version = None
+
+if version is None:
+    for i in range(MAX_IFACE_VERSION):
+        try:
+            conn = ClientConnection(binding, (uuid, i))
+        except RuntimeError, (num, msg):
+            if num == NT_STATUS_NET_WRITE_FAULT:
+                continue
+            raise
+        else:
+            break
+else:
+    conn = ClientConnection(binding, (uuid, version))
+
+print "Figuring out number of connections...",
+num_funcs = find_num_funcs(conn)
+print "%d" % num_funcs
+
+# Figure out the syntax for each one
+for i in range(num_funcs):
+    print "Function %d" % i
+    data = Function(conn, i)
+    try:
+        data.find_idl()
+    except Exception, e:
+        print "Error: %r" % e

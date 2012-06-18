@@ -1,0 +1,40 @@
+       Internationalization and gettext 
+              Patrick Powell
+        Fri Sep  5 13:01:06 PDT 2003
+
+Internationalization is done using the gettext
+packages.   There are three possibilities to use this
+functionality:
+
+a)  no internationalization (default)
+      ./configure
+b)  nationalization if system supports it and gettext installed
+    on your system:
+      ./configure --enable-nls
+
+You may discover that system support for NLS has been put into
+/usr/local/{include,lib}.  Sometimes the C compiler does not
+search these directories by default and you will need to use:
+
+ configure 'CPPFLAGS=-I/usr/local/include' \
+   'LDFLAGS=-L/usr/local/lib' --enable-nls
+
+
+
+How to Install the gettext software:
+
+1. Get the gettext distribution and install it on your local system
+
+   ftp://prep.ai.mit.edu/pub/gnu/gettext-<version>
+
+   Unpack it by using:
+
+    tar zxvf gettext-<version>.tgz
+    cd gettext-<version>
+
+   Read the documentation.  It is pretty straight forward with
+   respect to installation.
+
+2. Create and/or update the configuration information using the
+   CREATE_CONFIGURE script in the source directory:
+   sh CREATE_CONFIGURE

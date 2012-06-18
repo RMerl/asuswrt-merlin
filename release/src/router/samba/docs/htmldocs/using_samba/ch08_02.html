@@ -1,0 +1,156 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 8] 8.2 Magic Scripts</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:35:51Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_01.html" TITLE="8.1 Supporting Programmers">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 8.1 Supporting Programmers" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch08_01.html" TITLE="8. Additional Samba Information ">
+Chapter 8<br>
+Additional Samba Information </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_03.html" TITLE="8.3 Internationalization">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 8.3 Internationalization" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch08-79987">
+8.2 Magic Scripts</a></h2><P CLASS="para">The following options deal with <I CLASS="firstterm">
+magic scripts</i> on the Samba server. Magic scripts are a method of running programs on Unix and redirecting the output back to the SMB client. These are essentially an experimental hack. However, some users and their programs still rely on these two options for their programs to function correctly. Magic scripts are not widely trusted and their use is highly discouraged by the Samba team. See <A CLASS="xref" HREF="ch08_02.html#ch08-33693">
+Table 8.2</a> for more information. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch08-33693">
+Table 8.2: Networking Configuration Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+magic script</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">string (fully-qualified filename)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the name of a file to be executed by Samba, as the logged-on user, when closed.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+magic output</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified filename)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets a file to log output from the magic file.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<EM CLASS="emphasis">
+scriptname.out</em></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr></tbody></table><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-958578">
+8.2.1 magic script</a></h3><P CLASS="para">
+If the <CODE CLASS="literal">
+magic</code> <CODE CLASS="literal">
+script</code> option is set to a filename and the client creates a file by that name in that share, Samba will run the file as soon as the user has opened and closed it. For example, let's assume that the following option was created in the share <CODE CLASS="literal">
+[accounting]</code>:</p><PRE CLASS="programlisting">
+[accounting]
+	magic script = tally.sh</pre><P CLASS="para">
+Samba continually monitors the files in that share. If one by the name of <EM CLASS="emphasis">
+tally.sh</em> is closed (after being opened) by a user, Samba will execute the contents of that file locally. The file will be passed to the shell to execute; it must therefore be a legal Unix shell script. This means that it must have newline characters as line endings instead of Windows CR/LFs. In addition, it helps if you use the <CODE CLASS="literal">
+#!</code> directive at the beginning of the file to indicate under which shell the script should run.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-958584">
+8.2.2 magic output</a></h3><P CLASS="para">
+This option specifies an output file that the script specified by the <CODE CLASS="literal">
+magic</code> <CODE CLASS="literal">
+script</code> option will send output to. You must specify a filename in a writable directory:</p><PRE CLASS="programlisting">
+[accounting]
+	magic script = tally.sh
+	magic output = /var/log/magicoutput</pre><P CLASS="para">
+If this option is omitted, the default output file is the name of the script (as stated in the <CODE CLASS="literal">
+magic</code> <CODE CLASS="literal">
+script</code> option) with the extension <EM CLASS="emphasis">
+.out</em> appended onto it. </p></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_01.html" TITLE="8.1 Supporting Programmers">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 8.1 Supporting Programmers" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_03.html" TITLE="8.3 Internationalization">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 8.3 Internationalization" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+8.1 Supporting Programmers</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+8.3 Internationalization</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

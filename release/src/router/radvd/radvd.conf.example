@@ -1,0 +1,124 @@
+#
+# NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE 
+# NOTE                                                             NOTE
+# NOTE  This is an EXAMPLE, which serves only to demonstrate the   NOTE
+# NOTE  syntax of radvd.conf, and is not meant to be used for a    NOTE
+# NOTE  real radvd configuration.                                  NOTE
+# NOTE                                                             NOTE
+# NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE 
+#
+
+interface eth0
+{
+	AdvSendAdvert on;
+
+# This may be needed on some interfaces which are not active when
+# radvd starts, but become available later on; see man page for details.
+
+	# IgnoreIfMissing on;
+
+#
+# These settings cause advertisements to be sent every 3-10 seconds.  This
+# range is good for 6to4 with a dynamic IPv4 address, but can be greatly
+# increased when not using 6to4 prefixes.
+#
+
+	MinRtrAdvInterval 3;
+	MaxRtrAdvInterval 10;
+
+#
+# You can use AdvDefaultPreference setting to advertise the preference of
+# the router for the purposes of default router determination.
+# NOTE: This feature is still being specified and is not widely supported!
+#
+	AdvDefaultPreference low;
+
+#
+# Disable Mobile IPv6 support
+#
+	AdvHomeAgentFlag off;
+
+#
+# example of a standard prefix
+#
+	prefix 2001:db8:1:0::/64
+	{
+		AdvOnLink on;
+		AdvAutonomous on;
+		AdvRouterAddr off;
+	};
+
+#
+# example of a 6to4 prefix
+#
+# Note that the first 48 bits are specified here as zeros.  These will be
+# replaced with the appropriate 6to4 address when radvd starts or is
+# reconfigured. Be sure that the SLA ID (1234 in this case) is specified
+# here!
+#
+	prefix 0:0:0:1234::/64
+	{
+		AdvOnLink on;
+		AdvAutonomous on;
+		AdvRouterAddr off;
+
+#
+# This setting causes radvd to replace the first 48 bits of the prefix
+# with the 6to4 address generated from the specified interface.  For example,
+# if the address of ppp0 is 192.0.2.25 when radvd configures itself, this
+# prefix will be advertised as 2002:C000:0219:1234::/64.
+#
+# If ppp0 is not available at configuration time, this prefix will not be
+# advertised, but other prefixes listed in the configuration will be
+# advertised as usual.
+#
+# When using the Base6to4Interface option, make sure radvd receives a
+# SIGHUP every time the ppp0 interface goes up, down, or is assigned a
+# new IPv4 address.  The SIGHUP will cause radvd to recognize that the
+# ppp0 interface has changed and will adjust the advertisements
+# accordingly.
+#
+
+		Base6to4Interface ppp0;
+
+#
+# If the IP address of ppp0 is assigned dynamically, be sure to set the
+# lifetimes for this prefix to be small.  Otherwise, hosts on your network
+# may continue to use a prefix that no longer corresponds to the address
+# on ppp0!
+#
+		AdvPreferredLifetime 120;
+		AdvValidLifetime 300;
+	};
+#
+# example of a more specific route
+# NOTE: This feature is not very widely supported! You may also need to
+# enable it manually (e.g. on Linux, change the value of
+# sysctl accept_ra_rt_info_max_plen to 48 or 64)
+#
+	route 2001:db0:fff::/48
+	{
+		AdvRoutePreference high;
+		AdvRouteLifetime 3600;
+	};
+
+#
+# RDNSS
+# NOTE: This feature is not very widely implemented.
+#
+        RDNSS 2001:db8::1 2001:db8::2
+        {
+                AdvRDNSSLifetime 30;
+        };
+
+#
+# DNS Search Lists
+#
+        DNSSL branch.example.com example.com
+        {
+                AdvDNSSLLifetime 30;
+        };
+
+
+};
+

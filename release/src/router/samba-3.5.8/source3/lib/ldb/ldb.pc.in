@@ -1,0 +1,15 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+modulesdir=@modulesdir@
+
+Name: ldb
+Description: An LDAP-like embedded database
+Version: 4.0
+Requires.private: tdb
+Requires: talloc
+Libs: -L${libdir} -lldb
+Cflags: -I${includedir} @CFLAGS@
+Modulesdir: ${modulesdir}
+URL: http://ldb.samba.org/

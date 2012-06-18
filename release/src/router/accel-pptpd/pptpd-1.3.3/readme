@@ -1,0 +1,30 @@
+Poptop README
+-------------
+
+You *must* do a 'make install' or Poptop will *NOT* find the binaries!
+See INSTALL for generic compile/install instructions, and run
+"./configure --help" for a list of valid options, or just type:
+
+./configure
+make
+make install
+
+(make install copies the binaries to /usr/local/sbin, so you better be root)
+
+To run Poptop simply type: 'pptpd' (or /usr/local/sbin/pptpd if you don't
+have /usr/local/sbin in your path).
+
+You may specify a number of options on the command line to change
+how Poptop launches PPP.
+
+Type: 'pptpd -h' for options you may specify on the command line.
+
+A sample config file is in samples/
+
+For more help look in html/
+or visit the Poptop web site at: http://accel-pptp.sourceforge.net/
+
+
+Good Luck!
+
+accel-pptp Development Team

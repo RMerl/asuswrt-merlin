@@ -1,0 +1,153 @@
+.TH SWAT 8 "23 Jun 2001" "swat 2.0.10"
+.PP 
+.SH "NAME" 
+swat \- Samba Web Administration Tool
+.PP 
+.SH "SYNOPSIS" 
+.PP 
+\fBswat\fP [-s smb config file] [-a]
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+This program is part of the \fBSamba\fP suite\&.
+.PP 
+\fBswat\fP allows a Samba administrator to configure the complex
+\fBsmb\&.conf\fP file via a Web browser\&. In
+addition, a swat configuration page has help links to all the
+configurable options in the \fBsmb\&.conf\fP file
+allowing an administrator to easily look up the effects of any change\&.
+.PP 
+\fBswat\fP is run from \fBinetd\fP
+.PP 
+.SH "OPTIONS" 
+.PP 
+.IP 
+.IP "\fB-s smb configuration file\fP" 
+The default configuration file path is
+determined at compile time\&.
+.IP 
+The file specified contains the configuration details required by the
+\fBsmbd\fP server\&. This is the file that \fBswat\fP will
+modify\&. The information in this file includes server-specific
+information such as what printcap file to use, as well as descriptions
+of all the services that the server is to provide\&. See smb\&.conf
+(5) for more information\&.
+.IP 
+.IP "\fB-a\fP" 
+.IP 
+This option disables authentication and puts \fBswat\fP in demo mode\&. In
+that mode anyone will be able to modify the
+\fBsmb\&.conf\fP file\&.
+.IP 
+Do NOT enable this option on a production server\&.
+.IP 
+.PP 
+.SH "INSTALLATION" 
+.PP 
+After you compile SWAT you need to run \f(CW"make install"\fP to install the
+swat binary and the various help files and images\&. A default install
+would put these in:
+.PP 
+
+.DS 
+ 
+
+/usr/local/samba/bin/swat
+/usr/local/samba/swat/images/*
+/usr/local/samba/swat/help/*
+
+.DE 
+ 
+
+.PP 
+.SH "INETD INSTALLATION" 
+.PP 
+You need to edit your \f(CW/etc/inetd\&.conf\fP and \f(CW/etc/services\fP to
+enable \fBSWAT\fP to be launched via inetd\&. 
+.PP 
+In \f(CW/etc/services\fP you need to add a line like this:
+.PP 
+\f(CWswat            901/tcp\fP
+.PP 
+Note for NIS/YP users - you may need to rebuild the NIS service maps
+rather than alter your local \f(CW/etc/services\fP file\&.
+.PP 
+the choice of port number isn\'t really important except that it should
+be less than 1024 and not currently used (using a number above 1024
+presents an obscure security hole depending on the implementation
+details of your \fBinetd\fP daemon)\&.
+.PP 
+In \f(CW/etc/inetd\&.conf\fP you should add a line like this:
+.PP 
+\f(CWswat    stream  tcp     nowait\&.400  root    /usr/local/samba/bin/swat swat\fP
+.PP 
+One you have edited \f(CW/etc/services\fP and \f(CW/etc/inetd\&.conf\fP you need
+to send a HUP signal to inetd\&. To do this use \f(CW"kill -1 PID"\fP where
+PID is the process ID of the inetd daemon\&.
+.PP 
+.SH "LAUNCHING" 
+.PP 
+To launch \fBswat\fP just run your favorite web browser and point it at
+\f(CWhttp://localhost:901/\fP\&.
+.PP 
+\fBNote that you can attach to \fBswat\fP from any IP connected machine but
+connecting from a remote machine leaves your connection open to
+password sniffing as passwords will be sent in the clear over the
+wire\&.\fP
+.PP 
+.SH "FILES" 
+.PP 
+\fB/etc/inetd\&.conf\fP
+.PP 
+This file must contain suitable startup information for the
+meta-daemon\&. 
+.PP 
+\fB/etc/services\fP
+.PP 
+This file must contain a mapping of service name (e\&.g\&., swat) to
+service port (e\&.g\&., 901) and protocol type (e\&.g\&., tcp)\&. 
+.PP 
+\fB/usr/local/samba/lib/smb\&.conf\fP
+.PP 
+This is the default location of the \fIsmb\&.conf\fP server configuration
+file that \fBswat\fP edits\&. Other common places that systems install
+this file are \fI/usr/samba/lib/smb\&.conf\fP and \fI/etc/smb\&.conf\fP\&.
+.PP 
+This file describes all the services the server is to make available
+to clients\&. See \fBsmb\&.conf (5)\fP for more information\&.
+.PP 
+.SH "WARNINGS" 
+.PP 
+\fBswat\fP will rewrite your \fBsmb\&.conf\fP file\&. It
+will rearrange the entries and delete all comments,
+\fB"include="\fP and
+\fB"copy="\fP options\&. If you have a
+carefully crafted \fBsmb\&.conf\fP then back it up
+or don\'t use \fBswat\fP!
+.PP 
+.SH "VERSION" 
+.PP 
+This man page is correct for version 2\&.0 of the Samba suite\&.
+.PP 
+.SH "SEE ALSO" 
+.PP 
+\fBinetd (8)\fP, \fBnmbd (8)\fP,
+\fBsmb\&.conf (5)\fP\&.
+.PP 
+.SH "AUTHOR" 
+.PP 
+The original Samba software and related utilities were created by
+Andrew Tridgell (samba@samba\&.org)\&. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed\&.
+.PP 
+The original Samba man pages were written by Karl Auer\&. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+\fBftp://ftp\&.icce\&.rug\&.nl/pub/unix/\fP)
+and updated for the Samba2\&.0 release by Jeremy Allison\&.
+samba@samba\&.org\&.
+.PP 
+See \fBsamba (7)\fP to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc\&.

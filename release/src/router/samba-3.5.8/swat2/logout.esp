@@ -1,0 +1,8 @@
+<% 
+page_header("plain", "Logging out", ""); 
+
+session.AUTHENTICATED = false;
+redirect("/login.esp");
+
+page_footer(); 
+%>

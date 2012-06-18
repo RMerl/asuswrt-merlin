@@ -1,0 +1,27 @@
+.\" LIC: GPL
+.TH PPPOE-START 8 "21 February 2000"
+.UC 4
+.SH NAME
+pppoe-start \- Shell script to bring up a PPPoE link
+.SH SYNOPSIS
+.B pppoe-start \fR[\fIconfig_file\fR]
+.P
+.B pppoe-start \fR\fIinterface user\fR [\fIconfig_file\fR]
+
+.SH DESCRIPTION
+\fBpppoe-start\fR is a shell script which starts the Roaring Penguin
+user-space PPPoE client.  If you omit \fIconfig_file\fR, the default
+file \fB/etc/ppp/pppoe.conf\fR is used.  If you supply
+\fIinterface\fR and \fIuser\fR, then they override the Ethernet interface
+and user-name settings in the configuration file.
+
+.SH AUTHOR
+\fBpppoe-start\fR was written by David F. Skoll <dfs@roaringpenguin.com>.
+
+The \fBpppoe\fR home page is \fIhttp://www.roaringpenguin.com/pppoe/\fR.
+
+.SH SEE ALSO
+pppoe(8), pppoe-stop(8), pppoe-connect(8), pppd(8), pppoe.conf(5),
+pppoe-setup(8), pppoe-status(8), pppoe-sniff(8), pppoe-relay(8),
+pppoe-server(8)
+

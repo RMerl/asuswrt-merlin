@@ -1,0 +1,187 @@
+#!gmake
+#
+CC = @CC@
+GCOV = @GCOV@
+XSLTPROC = @XSLTPROC@
+DOXYGEN = @DOXYGEN@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+datarootdir = @datarootdir@
+includedir = @includedir@
+libdir = @libdir@
+bindir = @bindir@
+mandir = @mandir@
+VPATH = @srcdir@:@libreplacedir@
+srcdir = @srcdir@
+builddir = @builddir@
+sharedbuilddir = @sharedbuilddir@
+INSTALLCMD = @INSTALL@
+SLAPD = @SLAPD@
+EXTRA_OBJ=@EXTRA_OBJ@
+TESTS=test-tdb.sh @TESTS@
+PACKAGE_VERSION = @PACKAGE_VERSION@
+PYTHON = @PYTHON@
+PYTHON_CONFIG = @PYTHON_CONFIG@
+ldbdir = $(srcdir)
+LIB_PATH_VAR = @LIB_PATH_VAR@
+
+LDB_MODULESDIR = @LDB_MODULESDIR@
+
+TALLOC_LIBS = @TALLOC_LIBS@
+TALLOC_CFLAGS = @TALLOC_CFLAGS@
+TALLOC_OBJ = @TALLOC_OBJ@
+
+TDB_LIBS = @TDB_LIBS@
+TDB_CFLAGS = @TDB_CFLAGS@
+TDB_OBJ = @TDB_OBJ@
+
+TEVENT_LIBS = @TEVENT_LIBS@
+TEVENT_CFLAGS = @TEVENT_CFLAGS@
+TEVENT_OBJ = @TEVENT_OBJ@
+
+POPT_LIBS = @POPT_LIBS@
+POPT_CFLAGS = @POPT_CFLAGS@
+POPT_OBJ = @POPT_OBJ@
+
+LDAP_LIBS = @LDAP_LIBS@
+
+LIBDL = @LIBDL@
+
+SHLIBEXT = @SHLIBEXT@
+
+LD_EXPORT_DYNAMIC = @LD_EXPORT_DYNAMIC@
+SHLD = @SHLD@
+SHLD_FLAGS = @SHLD_FLAGS@
+
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+
+PICFLAG = @PICFLAG@
+CFLAGS=-g -I$(srcdir)/include -Iinclude -I$(srcdir) -I$(srcdir)/.. \
+       $(POPT_CFLAGS) $(TALLOC_CFLAGS) $(TDB_CFLAGS) $(TEVENT_CFLAGS) \
+	-DLIBDIR=\"$(libdir)\" -DSHLIBEXT=\"$(SHLIBEXT)\" -DUSE_MMAP=1 \
+	-DLDB_MODULESDIR=\"$(LDB_MODULESDIR)\" \
+	@CFLAGS@
+
+MDLD = @MDLD@
+MDLD_FLAGS = @MDLD_FLAGS@
+
+OBJS = $(MODULES_OBJ) $(COMMON_OBJ) $(LDB_TDB_OBJ) $(TDB_OBJ) $(TEVENT_OBJ) $(TALLOC_OBJ) $(POPT_OBJ) $(LDB_MAP_OBJ) @LIBREPLACEOBJ@ $(EXTRA_OBJ) 
+
+headers = $(srcdir)/include/ldb.h $(srcdir)/include/ldb_errors.h $(srcdir)/include/ldb_handlers.h $(srcdir)/include/ldb_module.h
+
+BINS = bin/ldbadd bin/ldbsearch bin/ldbdel bin/ldbmodify bin/ldbedit bin/ldbrename bin/ldbtest
+
+EXAMPLES = examples/ldbreader examples/ldifreader
+
+DIRS = lib bin common ldb_tdb ldb_ldap ldb_sqlite3 modules tools examples
+
+default: all
+
+include $(ldbdir)/rules.mk
+
+nss: nssdir all $(NSS_LIB)
+
+nssdir:
+	@mkdir -p $(NSSDIR)
+
+SONAME = libldb.$(SHLIBEXT).0
+SOLIB = libldb.$(SHLIBEXT).$(PACKAGE_VERSION)
+LIBSOLIB = lib/$(SOLIB)
+STATICLIB = lib/libldb.a
+
+lib/$(SONAME): $(LIBSOLIB)
+	ln -fs libldb.$(SHLIBEXT).$(PACKAGE_VERSION) $@
+
+lib/libldb.$(SHLIBEXT): $(LIBSOLIB) lib/$(SONAME)
+	ln -fs libldb.$(SHLIBEXT).$(PACKAGE_VERSION) $@
+
+lib/libnss_ldb.$(SHLIBEXT).2: $(NSS_OBJ) $(LIBSOLIB)
+	$(SHLD) $(SHLD_FLAGS) -o $@ $(NSS_OBJ) $(LDFLAGS) $(LIBSOLIB) @SONAMEFLAG@libnss_ldb.$(SHLIBEXT).2
+
+$(LIBSOLIB): $(OBJS)
+	$(SHLD) $(SHLD_FLAGS) -o $@ $(OBJS) $(LDFLAGS) $(LIBS) $(TALLOC_LIBS) $(TDB_LIBS) $(TEVENT_LIBS) $(LIBDL) $(LDAP_LIBS) @SONAMEFLAG@$(SONAME)
+	ln -sf libldb.$(SHLIBEXT).$(PACKAGE_VERSION) lib/libldb.$(SHLIBEXT)
+
+all: showflags dirs $(OBJS) $(STATICLIB) $(LIBSOLIB) $(BINS) $(EXAMPLES) manpages \
+	@PYTHON_BUILD_TARGET@
+
+shared-build: all
+	${INSTALLCMD} -d $(sharedbuilddir)/lib
+	${INSTALLCMD} -m 644 $(STATICLIB) $(sharedbuilddir)/lib
+	${INSTALLCMD} -m 755 $(LIBSOLIB) $(sharedbuilddir)/lib
+	ln -sf $(SOLIB) $(sharedbuilddir)/lib/$(SONAME)
+	ln -sf $(SOLIB) $(sharedbuilddir)/lib/libldb.so
+	${INSTALLCMD} -d $(sharedbuilddir)/include
+	${INSTALLCMD} -m 644 $(srcdir)/include/ldb.h $(sharedbuilddir)/include
+	${INSTALLCMD} -m 644 $(srcdir)/include/ldb_errors.h $(sharedbuilddir)/include
+	${INSTALLCMD} -m 644 $(srcdir)/include/ldb_handlers.h $(sharedbuilddir)/include
+
+dirs:
+	@mkdir -p $(DIRS)
+
+manpages::
+	@$(srcdir)/docs/builddocs.sh "$(XSLTPROC)" "$(srcdir)"
+
+doxygen::
+	test -z "$(DOXYGEN)" || (cd $(srcdir) && "$(DOXYGEN)")
+
+clean::
+	rm -f *.o */*.o *.gcov */*.gc?? tdbtest.ldb*
+	rm -f $(BINS) $(TDB_OBJ) $(TALLOC_OBJ) $(STATICLIB) $(NSS_LIB) $(LIBSOLIB)
+	rm -f $(POPT_OBJ)
+	rm -f man/*.1 man/*.3 man/*.html
+	rm -f $(EXAMPLES)
+	rm -rf apidocs/
+	rm -rf tests/schema/
+
+distclean:: clean
+	rm -rf bin lib
+	rm -f config.log config.status config.cache include/config.h
+	rm -f ldb.pc
+	rm -f Makefile
+
+realdistclean:: distclean
+	rm -f configure include/config.h.in
+
+check:: test @PYTHON_CHECK_TARGET@
+
+check-soloading: sample.$(SHLIBEXT)
+	$(LIB_PATH_VAR)=lib LDB_MODULES_PATH=$(builddir) $(srcdir)/tests/test-soloading.sh
+
+test:: all check-soloading
+	for t in $(TESTS); do echo STARTING $${t}; $(LIB_PATH_VAR)=lib $(srcdir)/tests/$${t} || exit 1; done
+
+valgrindtest:: all
+	for t in $(TESTS); do echo STARTING $${t}; VALGRIND="valgrind -q --db-attach=yes --num-callers=30" $(srcdir)/tests/$${t} || exit 1; done
+
+installcheck:: install test
+
+install:: all installdirs installheaders installlibs installbin installdocs \
+		@PYTHON_INSTALL_TARGET@
+
+installdirs::
+	mkdir -p $(DESTDIR)$(includedir) $(DESTDIR)$(libdir) $(DESTDIR)$(bindir) $(DESTDIR)$(libdir)/pkgconfig 
+
+installheaders:: installdirs
+	cp $(headers) $(DESTDIR)$(includedir)
+
+installlibs:: installdirs
+	cp $(STATICLIB) $(LIBSOLIB) $(DESTDIR)$(libdir)
+	cp ldb.pc $(DESTDIR)$(libdir)/pkgconfig
+
+installbin:: installdirs
+	cp $(BINS) $(DESTDIR)$(bindir)
+
+installdocs:: installdirs
+	$(srcdir)/docs/installdocs.sh $(DESTDIR)$(mandir)
+
+gcov::
+	$(GCOV) -po ldb_sqlite3 $(srcdir)/ldb_sqlite3/*.c 2| tee ldb_sqlite3.report.gcov
+	$(GCOV) -po ldb_ldap $(srcdir)/ldb_ldap/*.c 2| tee ldb_ldap.report.gcov
+	$(GCOV) -po ldb_tdb $(srcdir)/ldb_tdb/*.c 2| tee ldb_tdb.report.gcov
+	$(GCOV) -po common $(srcdir)/common/*.c 2| tee common.report.gcov
+	$(GCOV) -po modules $(srcdir)/modules/*.c 2| tee modules.report.gcov
+	$(GCOV) -po tools $(srcdir)/tools/*.c 2| tee tools.report.gcov
+
+include $(ldbdir)/ldb.mk

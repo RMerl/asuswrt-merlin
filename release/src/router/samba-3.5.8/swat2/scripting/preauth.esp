@@ -1,0 +1,48 @@
+<%
+include("/scripting/common.js");
+
+/* this script is called on every web request. If it produces any
+   output at all then that output is returned and the requested page
+   is not given or processed.
+*/ 
+
+/*
+  check if a uri is one of the 'always allowed' pages, even when not logged in
+  This allows the login page to use the same style sheets and images
+*/
+function always_allowed(uri) {
+	var str = string_init();
+
+        /* allow jsonrpc-based applications to do their own authentication */
+        var s = str.split('/', uri);
+        if (s[0] == "" && s[1] == 'index.html') {
+                return true;
+        }
+
+	var s = str.split('.', uri);
+	if (s.length < 2) {
+		return false;
+	}
+
+	var ext = s[s.length-1];
+	var allowed = new Array("ico", "gif", "png","css", "js");
+	for (i in allowed) {
+		if (allowed[i] == ext) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
+if (server['SERVER_PROTOCOL'] == "http" &&
+    server['TLS_SUPPORT'] == "True") {
+	write("redirect to https");
+        redirect("https://" + headers['HOST'] + request['REQUEST_URI']);
+} else if (always_allowed(request['REQUEST_URI']) != true && 
+	   session['AUTHENTICATED'] == undefined) {
+	/* present the login page */
+	include("/login.esp");
+}
+
+%>

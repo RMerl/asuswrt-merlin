@@ -1,0 +1,12 @@
+#
+# USB modem driver of Beceem configuration
+#
+comment "USB modem driver of Beceem"
+	depends on USB
+
+config USB_BECEEM
+	tristate "Beceem's WiMAX Modem support"
+	depends on USB
+	---help---
+	  This driver supports USB WiMAX modems of Beceem.
+

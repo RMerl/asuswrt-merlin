@@ -1,0 +1,50 @@
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1995 Patrick Powell, San Diego State University
+#     papowell@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: TESTSUPPORT/lpd.conf.proto
+# PURPOSE: lpd.conf file for testing
+# lpd.conf.proto,v 3.3 1997/12/20 21:16:26 papowell Exp
+########################################################################## 
+# Test version of the plp.conf(5) file, using non-standard locations
+# and ports so as to avoid interfering with a running lpd(8).
+# you may (or may not) need this; if you get a warning, you do.
+# Change as appropriate.
+#
+#
+
+
+
+# replace the 'printcap_path' with the filter specification
+# try using the filter printcap access
+
+config_include_path=/etc:_TMP_LPD
+default_auth=kerberos
+default_banner_printer=_TMP_LPD/lpbanner
+default_printer=t1@_HOST_
+domain_name=_DOMAIN_
+group=0
+lockfile=_TMP_LPD/lpd.lock.%H
+logfile=_TMP_LPD/lpd.log.%H
+lpd_port=4000
+lpd_printcap_path=_TMP_LPD/lpd_printcap.%H
+printcap_include_path=_TMP_LPD
+
+#printcap_path=|_TMP_LPD/dbserver _TMP_LPD/printcap.db.%H
+printcap_path=_TMP_LPD/printcap.%H
+
+#perms_path=|_TMP_LPD/dbserver _TMP_LPD/lpd.perms.db.%H
+perms_path=_TMP_LPD/lpd.perms.%H
+unix_socket_path=_TMP_LPD/lprng.%H
+
+use-info-cache
+use_identifier
+
+user=_USER_
+
+#=test include facility
+include=_TMP_LPD/common.conf

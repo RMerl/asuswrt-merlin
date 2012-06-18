@@ -1,0 +1,11 @@
+/var/log/samba/log.nmb {
+    postrotate
+	/usr/bin/killall -HUP nmbd
+    endscript
+}
+
+/var/log/samba/log.smb {
+    postrotate
+	/usr/bin/killall -HUP smbd
+    endscript
+}

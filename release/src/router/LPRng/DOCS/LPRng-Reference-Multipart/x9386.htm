@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Using Kerberos 4 for Authentication</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title=
+    "Using Kerberos 5 for Authentication" href="kerberos.htm">
+    <link rel="NEXT" title="Using SSL for Authentication" href=
+    "x9412.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "kerberos.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x9412.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN9386">17.14. Using Kerberos 4
+      for Authentication</a></h1>
+
+      <p><b class="APPLICATION">LPRng</b> has built-in support for
+      the Project Athena extensions to the RFC1179 protocol. These
+      provide an extremely simple authentication protocol using an
+      initial credential exchange. After the initial exchange the
+      usual RFC1179 protocol is used.</p>
+
+      <p>During configuration, if the <tt class=
+      "FILENAME">krb.h</tt> (Kerberos 4) include file is found,
+      then this is enabled by default.</p>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9392">17.14.1. Printcap
+        Entries</a></h2>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">auth=kerberos4</var><span
+            class="emphasis"><i class="EMPHASIS">use Kerberos4
+            authentication</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">kerberos_id=</var><span class=
+            "emphasis"><i class="EMPHASIS">destination server key
+            used by clients</i></span></p>
+          </li>
+
+          <li>
+            <p><var class=
+            "LITERAL">kerberos_server_principal=</var><span class=
+            "emphasis"><i class="EMPHASIS">alias for
+            kerberos_id</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>Example printcap entry:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9409"></a>
+<pre class="SCREEN">
+    pr:
+        :lp=pr@wayoff
+        :auth=kerberos4
+        :kerberos_id=lpr/wayoff.private@ASTART.COM
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The configuration information for Kerberos4 and
+        Kerberos5 is identical and differ only in the
+        authentication type. Note that only client to server
+        authentication is supported.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "kerberos.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x9412.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Using Kerberos
+          5 for Authentication</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Using SSL for
+          Authentication</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

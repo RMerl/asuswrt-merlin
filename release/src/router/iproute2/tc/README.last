@@ -1,0 +1,47 @@
+Kernel code and interface.
+--------------------------
+
+* Compile time switches
+
+There is only one, but very important, compile time switch.
+It is not settable by "make config", but should be selected
+manually and after a bit of thinking in <include/net/pkt_sched.h>
+
+PSCHED_CLOCK_SOURCE can take three values:
+
+	PSCHED_GETTIMEOFDAY
+	PSCHED_JIFFIES
+	PSCHED_CPU
+
+
+ PSCHED_GETTIMEOFDAY
+
+Default setting is the most conservative PSCHED_GETTIMEOFDAY.
+It is very slow both because of weird slowness of do_gettimeofday()
+and because it forces code to use unnatural "timeval" format,
+where microseconds and seconds fields are separate.
+Besides that, it will misbehave, when delays exceed 2 seconds
+(f.e. very slow links or classes bounded to small slice of bandwidth)
+To resume: as only you will get it working, select correct clock
+source and forget about PSCHED_GETTIMEOFDAY forever.
+
+
+ PSCHED_JIFFIES
+
+Clock is derived from jiffies. On architectures with HZ=100
+granularity of this clock is not enough to make reasonable
+bindings to real time. However, taking into account Linux
+architecture problems, which force us to use artificial
+integrated clock in any case, this switch is not so bad
+for schduling even on high speed networks, though policing
+is not reliable.
+
+
+ PSCHED_CPU
+
+It is available only for alpha and pentiums with correct
+CPU timestamp. It is the fastest way, use it when it is available,
+but remember: not all pentiums have this facility, and
+a lot of them have clock, broken by APM etc. etc.
+
+

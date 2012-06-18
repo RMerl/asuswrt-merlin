@@ -1,0 +1,11 @@
+Preparation Date: October 25, 1998
+Preparer:	  John H Terpstra <jht@samba.org>
+
+Instructions:	Preparing Samba Packages for TurboLinux
+===============================================================
+
+We provide support only for current versions of TurboLinux.
+
+To produce the RPMS simply type:
+	sh makerpms.sh
+

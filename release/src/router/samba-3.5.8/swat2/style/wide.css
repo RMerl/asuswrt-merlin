@@ -1,0 +1,113 @@
+/*
+	wide.css
+	Copyright (C) 2004-2005 Deryck Hodge <deryck@samba.org>
+
+	An alternate two-column "wide" style for those pages
+	with lots and lots of text (download, devel, etc.)
+
+	You may freely use and modify the styles here, but if you 
+	intend to recreate the samba.org look exactly, please ask
+	permission first.
+*/
+
+
+/* Primary content section 
+***********************************************************/
+#content {
+	position:absolute;
+	top:100px;
+	clear:left;
+	margin:0 1% 0 175px;
+	padding-top:30px;
+	padding-left:35px;
+	padding-bottom:50px;
+	padding-right:15px;
+	background-color:#FFF;
+	border-left:1px solid #FFFF64;
+	border-right:1px solid #FFFF64;
+}
+* html #content {
+	width:70%;
+}
+#content h4 {
+	font-weight:bold;
+	margin:50px 10px 15px 0;
+}
+pre {
+    margin:15px 0 30px 5px;
+}    
+
+
+/* Team section
+***********************************************************/
+.teampic {
+	text-align:center;
+}
+.teampic img {
+	width:431px;
+	height:300px;
+}
+
+
+/* Release history/Release notes
+***********************************************************/
+.notes {
+	position:absolute;
+	top:265px;
+	left:0;
+}
+.notes h6 {
+    text-align:left;
+    margin:10px 5px;
+}
+.notes ul {
+	list-style-type:none;
+	text-align:left;
+	padding-left:12px;
+	margin:0 0 0 10px;
+	font-size:10px;
+}
+.intro {
+	margin-top:30px;
+}
+.headline {
+	margin-left:20px;
+	font-style:italic;
+}
+.latest ul {
+	list-style-type:none;
+	margin-left:40px;
+}
+
+
+/* Support providers pages
+***********************************************************/
+#countries {
+	float:left;
+	margin:240px 0 0 5px;
+	padding:0;
+	background-color:#E5E9F5;
+}
+#countries ul {
+	list-style-type:none;
+}
+#countries a {
+	font-size:small;
+}
+#countries h4 {
+	margin-top:10px;
+	margin-left:1px;
+	font-size:small;
+}
+.disclaimer {
+	margin:30px;
+	font-style:italic;
+}
+.info {
+	margin:75px 15px 15px 15px;
+	padding:10px;
+	font-size:small;
+	border-top:1px dotted #3878CD;
+	border-bottom:1px dotted #3878CD;
+}
+

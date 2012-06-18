@@ -1,0 +1,27 @@
+HKCR
+{
+	Bonjour.DNSSDService.1 = s 'DNSSDService Class'
+	{
+		CLSID = s '{24CD4DE9-FF84-4701-9DC1-9B69E0D1090A}'
+	}
+	Bonjour.DNSSDService = s 'DNSSDService Class'
+	{
+		CLSID = s '{24CD4DE9-FF84-4701-9DC1-9B69E0D1090A}'
+		CurVer = s 'Bonjour.DNSSDService.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {24CD4DE9-FF84-4701-9DC1-9B69E0D1090A} = s 'DNSSDService Class'
+		{
+			ProgID = s 'Bonjour.DNSSDService.1'
+			VersionIndependentProgID = s 'Bonjour.DNSSDService'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			val AppID = s '%APPID%'
+			'TypeLib' = s '{18FBED6D-F2B7-4EC8-A4A4-46282E635308}'
+		}
+	}
+}

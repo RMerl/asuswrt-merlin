@@ -1,0 +1,1344 @@
+<html>
+<head>
+<title>Using Samba</title>
+<META NAME="metadata" CONTENT="dublincore.0.1">
+<META NAME="subject" CONTENT="Using Samba">
+<META NAME="title" CONTENT="O'Reilly Catalog Index: Using Samba">
+<META NAME="otheragent" CONTENT="cron job">
+<META NAME="source" CONTENT="internal database">
+<META NAME="publisher" CONTENT="O'Reilly &amp; Associates, Inc.">
+<META NAME="objecttype" CONTENT="catalog index">
+<META NAME="form" CONTENT="html">
+</head>
+<BODY BGCOLOR="#FFFFFF" >
+<table border=0 cellspacing=0 cellpadding=0 width=90%>
+<tr>
+<td>
+<h2>Using Samba</h2>
+<h3>Index</h3>
+
+<PRE>
+</pre>
+<A HREF="#A">[&nbsp;A&nbsp;]</A>, 
+<A HREF="#B">[&nbsp;B&nbsp;]</A>, 
+<A HREF="#C">[&nbsp;C&nbsp;]</A>, 
+<A HREF="#D">[&nbsp;D&nbsp;]</A>, 
+<A HREF="#E">[&nbsp;E&nbsp;]</A>, 
+<A HREF="#F">[&nbsp;F&nbsp;]</A>, 
+<A HREF="#G">[&nbsp;G&nbsp;]</A>, 
+<A HREF="#H">[&nbsp;H&nbsp;]</A>, 
+<A HREF="#I">[&nbsp;I&nbsp;]</A>, 
+<A HREF="#J">[&nbsp;J&nbsp;]</A>, 
+<A HREF="#K">[&nbsp;K&nbsp;]</A>, 
+<A HREF="#L">[&nbsp;L&nbsp;]</A>, 
+<A HREF="#M">[&nbsp;M&nbsp;]</A>, 
+<A HREF="#N">[&nbsp;N&nbsp;]</A>, 
+<A HREF="#O">[&nbsp;O&nbsp;]</A>, 
+<A HREF="#P">[&nbsp;P&nbsp;]</A>, 
+<A HREF="#Q">[&nbsp;Q&nbsp;]</A>, 
+<A HREF="#R">[&nbsp;R&nbsp;]</A>, 
+<A HREF="#S">[&nbsp;S&nbsp;]</A>, 
+<A HREF="#T">[&nbsp;T&nbsp;]</A>, 
+<A HREF="#U">[&nbsp;U&nbsp;]</A>, 
+<A HREF="#V">[&nbsp;V&nbsp;]</A>, 
+<A HREF="#W">[&nbsp;W&nbsp;]</A>, 
+<A HREF="#Y">[&nbsp;Y&nbsp;]</A>, 
+
+
+<BR>&lt;&gt; (angled brackets), 14
+<BR>* (asterisk), 169
+<BR>\ (backslash) in smb.conf file, 85
+<BR>\\ (backslashes, two) in directories, 5
+<BR>: (colon), 6
+<BR>\ (continuation character), 85
+<BR>. (dot), 128, 134
+<BR># (hash mark), 85
+<BR>% (percent sign), 86
+<BR>. (period), 128
+<BR>? (question mark), 135
+<BR>; (semicolon), 85
+<BR>/ (slash character), 129, 134-135
+<BR>/ (slash) in shares, 116
+<BR>_ (underscore) 116
+<BR>* wildcard, 177
+
+<P><A NAME="A"><B>A</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>access-control options (shares), 160-162
+<BR>accessing Samba server, 61
+<BR>accounts, 51-53
+<BR>active connections, option for, 244
+<BR>addresses, networking option for, 106
+<BR>addtosmbpass executable, 176
+<BR>admin users option, 161
+<BR>AFS files, support for, 35
+<BR>aliases
+<BR> &nbsp; &nbsp; &nbsp;   multiple, 29
+<BR> &nbsp; &nbsp; &nbsp;   for NetBIOS names, 107
+<BR>alid users option, 161
+<BR>announce as option, 123
+<BR>announce version option, 123
+<BR>API (application programming interface), 9
+<BR>archive files, 137
+<BR>authentication, 19, 164-171
+<BR> &nbsp; &nbsp; &nbsp;   mechanisms for, 35
+<BR> &nbsp; &nbsp; &nbsp;   NT domain, 170
+<BR> &nbsp; &nbsp; &nbsp;   share-level option for, 192
+<BR>auto services option, 124
+<BR>automounter, support for, 35
+<BR>awk script, 176
+<P><A NAME="B"><B>B</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>backup browsers
+<BR> &nbsp; &nbsp; &nbsp;   local master browser, 22
+<BR> &nbsp; &nbsp; &nbsp;   per local master browser, 23
+<BR> &nbsp; &nbsp; &nbsp;   maximum number per workgroup, 22
+<BR>backup domain controllers (BDCs), 20
+<BR>backups, with smbtar program, 245-248
+<BR>backwards compatibility
+<BR> &nbsp; &nbsp; &nbsp;   elections and, 23
+<BR> &nbsp; &nbsp; &nbsp;   for filenames, 143
+<BR> &nbsp; &nbsp; &nbsp;   Windows domains and, 20
+<BR>base directory, 40
+<BR>.BAT scripts, 192
+<BR>BDCs (backup domain controllers), 20
+<BR>binary vs. source files, 32
+<BR>bind interfaces only option, 106
+<BR>bindings, 71
+<BR>Bindings tab, 60
+<BR>blocking locks option, 152
+<BR>b-node, 13
+<BR>boolean type, 90
+<BR>bottlenecks, 320-328
+<BR> &nbsp; &nbsp; &nbsp;   reducing, 321-326
+<BR> &nbsp; &nbsp; &nbsp;   types of, 320
+<BR>broadcast addresses, troubleshooting, 289
+<BR>broadcast registration, 13
+<BR>broadcast resolution, 13, 59
+<BR>broadcasting
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting with tcpdump utility, 255
+<BR> &nbsp; &nbsp; &nbsp;   (see also browsing; name resolution)
+<BR>browse lists, 21, 116
+<BR> &nbsp; &nbsp; &nbsp;   options for, 124, 127
+<BR> &nbsp; &nbsp; &nbsp;   propagation, 24
+<BR> &nbsp; &nbsp; &nbsp;   restricting shares from, 115
+<BR>browsing, 21-23, 114-127
+<BR> &nbsp; &nbsp; &nbsp;   client-side, testing with net view, 280
+<BR> &nbsp; &nbsp; &nbsp;   configuration options for, 122-127
+<BR> &nbsp; &nbsp; &nbsp;   elections, 23, 116-119
+<BR> &nbsp; &nbsp; &nbsp;   machines, list of, 21
+<BR> &nbsp; &nbsp; &nbsp;   options for, list of, 122
+<BR> &nbsp; &nbsp; &nbsp;   preventing, 115
+<BR> &nbsp; &nbsp; &nbsp;   resources of a specific machine, 21-23
+<BR> &nbsp; &nbsp; &nbsp;   server from client, 281
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting, 275-282
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      with smbclient, 276-278
+<BR>bug avoidance options, 240-245
+<BR> &nbsp; &nbsp; &nbsp;   list of, 240-241
+<P><A NAME="C"><B>C</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>cache size, new option for (Samba version 2.0), 239
+<BR>cache time (printers), option for, 220
+<BR>capitalization, 84
+<BR>Carnegie Mellon University, 35
+<BR>carriage-returns for scripts, 193
+<BR>case sensitivity
+<BR> &nbsp; &nbsp; &nbsp;   hostnames and, 5
+<BR> &nbsp; &nbsp; &nbsp;   options for, 146
+<BR> &nbsp; &nbsp; &nbsp;   usernames and, 163
+<BR>CD-ROM with this book
+<BR> &nbsp; &nbsp; &nbsp;   Samba distribution, 28, 32
+<BR> &nbsp; &nbsp; &nbsp;   testing tools, 28
+<BR>certificate authority, 300-303
+<BR>change notification, new option for (Samba version 2.0), 239
+<BR>change notify timeout option, 239
+<BR>Change Windows Password dialog box, 52
+<BR>changes at runtime, 85
+<BR>chat characters for passwords, 178
+<BR>CIFS (Common Internet File System), 3
+<BR> &nbsp; &nbsp; &nbsp;   (see also SMB/CIFS protocol)
+<BR>client code page option, 234
+<BR>client users (see users)
+<BR>client variables, 86
+<BR>clients, testing with nmblookup program, 279
+<BR>.CMD scripts, 192
+<BR>code pages, 234
+<BR> &nbsp; &nbsp; &nbsp;   multiple, 30
+<BR>coding system option, 235
+<BR>command string, SMB, 75
+<BR>commands for Samba, 366-377
+<BR>commas in values, 84
+<BR>comment option, 99
+<BR>comments in smb.conf (Samba configuration) file, 85
+<BR>compatibility, Samba with Windows NT, 30
+<BR>compilers, 33
+<BR>compiling Samba, 38-41
+<BR> &nbsp; &nbsp; &nbsp;   in version 2.0, 29
+<BR>config file option, 91
+<BR>configuration files
+<BR> &nbsp; &nbsp; &nbsp;   for individual clients, 253
+<BR> &nbsp; &nbsp; &nbsp;   machine-specific, 87
+<BR> &nbsp; &nbsp; &nbsp;   sample of, 379-383
+<BR> &nbsp; &nbsp; &nbsp;   smb.conf (Samba configuration) file (see smb.conf file)
+<BR>configuration options
+<BR> &nbsp; &nbsp; &nbsp;   browsing, 122-127
+<BR> &nbsp; &nbsp; &nbsp;   disk share, 97-100
+<BR> &nbsp; &nbsp; &nbsp;   format of, 83
+<BR> &nbsp; &nbsp; &nbsp;   list of, 329-356
+<BR> &nbsp; &nbsp; &nbsp;   server, 94-96
+<BR>configuring disk shares, 96-100
+<BR>configuring DNS (Windows NT), 68
+<BR>configuring Samba, 34-38
+<BR> &nbsp; &nbsp; &nbsp;   configuration file
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      creating, 41-45
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      testing, 45
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      (see also smb.conf (Samba configuration) file)
+<BR> &nbsp; &nbsp; &nbsp;   configure script
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      GNU, 34
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      sample execution, 38
+<BR> &nbsp; &nbsp; &nbsp;   options, 34-37
+<BR> &nbsp; &nbsp; &nbsp;   performance tuning, 312-328
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      benchmark for, 312, 314
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      other options for, 319-328
+<BR> &nbsp; &nbsp; &nbsp;   server, 93-96
+<BR> &nbsp; &nbsp; &nbsp;   with SSL, 295-311
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      requirements for, 296
+<BR>configuring TCP/IP networking protocol, 55, 66-71
+<BR>configuring Windows clients, 50-81
+<BR> &nbsp; &nbsp; &nbsp;   Windows 95/98 computers, 50-63
+<BR> &nbsp; &nbsp; &nbsp;   Windows NT 4.0 computers, 63-73
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      basic configuration, 63-67
+<BR>configuring WINS address, 70
+<BR>connected systems, status of, 9
+<BR>connections
+<BR> &nbsp; &nbsp; &nbsp;   active, option for, 244
+<BR> &nbsp; &nbsp; &nbsp;   current, list of, 370
+<BR> &nbsp; &nbsp; &nbsp;   resources, connecting to, 81
+<BR> &nbsp; &nbsp; &nbsp;   scripts for, 198
+<BR> &nbsp; &nbsp; &nbsp;   SMB, 77
+<BR> &nbsp; &nbsp; &nbsp;   testing, 259-263
+<BR> &nbsp; &nbsp; &nbsp;   virtual, 78
+<BR>copy option, 92
+<BR>creation masks, 138
+<BR> &nbsp; &nbsp; &nbsp;   option for, 140
+<BR>cryptography, private key, 35
+<BR>CVS (Concurrent Versions Systems), 378
+<BR>Cyclic Software, 378
+<P><A NAME="D"><B>D</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>daemons, 82, 359-362
+<BR> &nbsp; &nbsp; &nbsp;   killing, 48
+<BR> &nbsp; &nbsp; &nbsp;   messages generated by, reading, 8
+<BR> &nbsp; &nbsp; &nbsp;   stand-alone, 47
+<BR> &nbsp; &nbsp; &nbsp;   starting, 46-48
+<BR> &nbsp; &nbsp; &nbsp;   status report, 8
+<BR> &nbsp; &nbsp; &nbsp;   testing, 49
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      with testparm, 266
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting, 264-268
+<BR> &nbsp; &nbsp; &nbsp;   Unix, 2
+<BR> &nbsp; &nbsp; &nbsp;   viewing, 8
+<BR> &nbsp; &nbsp; &nbsp;   (see also smbd daemon; nmbd daemon)
+<BR>data transfer protocol, 6
+<BR>datagram service, 10, 16-18
+<BR>deadtime option, 241
+<BR>debug files, 49
+<BR>debug level option, 251, 314
+<BR>debug timestamp option, 112
+<BR>default case option, 146
+<BR>default services, 115
+<BR> &nbsp; &nbsp; &nbsp;   option for, 124
+<BR>defending hostnames, 12
+<BR>delays, troubleshooting, 287
+<BR>delete, 142
+<BR>delete readonly option, 139, 142
+<BR>delete veto files option, 135
+<BR>dfree command option, 241
+<BR>DFS, support for, 35
+<BR>DHCP (Dynamic Host Configuration Protocol), 57, 67
+<BR>dialup connection, 53
+<BR>Digital Pathworks clients, option for, 244
+<BR>directories
+<BR> &nbsp; &nbsp; &nbsp;   barring users from viewing contents, 130, 133
+<BR> &nbsp; &nbsp; &nbsp;   installation, 40
+<BR> &nbsp; &nbsp; &nbsp;   permissions, options for, 140
+<BR> &nbsp; &nbsp; &nbsp;   for Samba startup file, 363
+<BR> &nbsp; &nbsp; &nbsp;   target, 40
+<BR> &nbsp; &nbsp; &nbsp;   working, option for, 134
+<BR>directory mask option, 138, 141
+<BR>disabling/enabling features, 34
+<BR>discussion archives for Samba, 293
+<BR>disk quotas, support for, 37
+<BR>disk shares, 4-7, 49, 82-113
+<BR> &nbsp; &nbsp; &nbsp;   advanced, 114-154
+<BR> &nbsp; &nbsp; &nbsp;   configuring, 96-100
+<BR> &nbsp; &nbsp; &nbsp;   creating, 96
+<BR> &nbsp; &nbsp; &nbsp;   maximum size of, option for, 242
+<BR> &nbsp; &nbsp; &nbsp;   path option, 98
+<BR>disk sync, options for, 245
+<BR>DMB (domain master browser), 119-122
+<BR> &nbsp; &nbsp; &nbsp;   option for, 126
+<BR> &nbsp; &nbsp; &nbsp;   resource type, 24
+<BR>DNS Configuration tab, 57
+<BR>DNS (Domain Name System), 57
+<BR> &nbsp; &nbsp; &nbsp;   configuring, 68
+<BR> &nbsp; &nbsp; &nbsp;   as fallback for WINS address, 71
+<BR> &nbsp; &nbsp; &nbsp;   names
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      NetBIOS names and, 14
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      resource types and, 15
+<BR> &nbsp; &nbsp; &nbsp;   option for, 228
+<BR> &nbsp; &nbsp; &nbsp;   resources for further information, 293
+<BR> &nbsp; &nbsp; &nbsp;   tab, 68
+<BR>dns proxy option, 228
+<BR>docs directory, 34
+<BR> &nbsp; &nbsp; &nbsp;   test utilities, 254
+<BR>documentation for Samba, 291
+<BR> &nbsp; &nbsp; &nbsp;   importance of reading, 34
+<BR>domain controllers, 20, 169
+<BR> &nbsp; &nbsp; &nbsp;   for Windows 95/98, 18-20
+<BR>domain group map option, 191
+<BR>domain logons, 28, 184
+<BR> &nbsp; &nbsp; &nbsp;   configuring Windows 95/98 for, 188
+<BR> &nbsp; &nbsp; &nbsp;   configuring Windows NT 4.0 for, 189
+<BR> &nbsp; &nbsp; &nbsp;   scripts for, 192-200
+<BR>domain logons option, 190
+<BR>domain master browser (see DMB)
+<BR>domain master option, 126
+<BR>Domain Name System (see DNS)
+<BR>domain user map option, 191
+<BR>domain-level security, 164, 169-171
+<BR>domains, 18-20
+<BR> &nbsp; &nbsp; &nbsp;   adding Samba server to Windows NT domain, 171
+<BR> &nbsp; &nbsp; &nbsp;   behavior vs. Windows workgroups, 20
+<BR> &nbsp; &nbsp; &nbsp;   controllers (see domain controllers)
+<BR> &nbsp; &nbsp; &nbsp;   logons (see domain logons)
+<BR> &nbsp; &nbsp; &nbsp;   new option for password timeout (Samba version 2.0), 239
+<BR> &nbsp; &nbsp; &nbsp;   roles in assumed by Samba, 26
+<BR> &nbsp; &nbsp; &nbsp;   Windows, 18, 28, 184-192
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      authentication, 170
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      caution when selecting, 190
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      support for, 28
+<BR>dont descend option, 133
+<BR>DOS file permissions and attributes, 135-143
+<BR>DOS-formatted carriage returns, 193
+<BR>downloads
+<BR> &nbsp; &nbsp; &nbsp;   Samba, 32
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      obtained using CVS, 378
+<BR> &nbsp; &nbsp; &nbsp;   tcpdump utility, 78, 257
+<BR>drive letters, mapping, 5
+<BR>dynamically linked libraries, 33
+<P><A NAME="E"><B>E</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>elections, 23
+<BR> &nbsp; &nbsp; &nbsp;   operating system values in, 117
+<BR> &nbsp; &nbsp; &nbsp;   order of decisions in, 118
+<BR> &nbsp; &nbsp; &nbsp;   role settings in, 117
+<BR> &nbsp; &nbsp; &nbsp;   WINS servers and, 26
+<BR>enabling/disabling features, 34
+<BR>encrypt passwords option, 181
+<BR>encrypted passwords, 172
+<BR> &nbsp; &nbsp; &nbsp;   Microsoft format, 183
+<BR> &nbsp; &nbsp; &nbsp;   option for, 181
+<BR> &nbsp; &nbsp; &nbsp;   vs. plaintext passwords, 173
+<BR>Entire Network icon, 4
+<BR>enumerated lists, 91
+<BR>errors
+<BR> &nbsp; &nbsp; &nbsp;   searching for, 38
+<BR> &nbsp; &nbsp; &nbsp;   syntax, 45
+<BR>/etc/hosts file, 57, 60
+<BR>/etc/inetd.conf configuration files, 48
+<BR> &nbsp; &nbsp; &nbsp;   adding SWAT tool to, 41
+<BR>/etc/resolv.conf file, 57
+<BR>/etc/services configuration file, adding SWAT tool to, 41, 48
+<BR>Ethernet adaptor cards, 53, 70
+<BR> &nbsp; &nbsp; &nbsp;   linking to TCP/IP networking protocol, 55
+<BR>execute permissions, 47
+<BR>/export/samba/test directory, 42
+<P><A NAME="F"><B>F</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>fake directory create times option, 232
+<BR>fake oplocks option, 153
+<BR>FAQ, Samba, 291
+<BR>fast locking, 36
+<BR>fatal error, option for, 244
+<BR>fault tree, 257-291
+<BR> &nbsp; &nbsp; &nbsp;   how to use, 257
+<BR>"File and Printer Sharing for Microsoft Networks", 53, 60, 246
+<BR>file creation masks, 138
+<BR>filenames
+<BR> &nbsp; &nbsp; &nbsp;   8.3 format, 143
+<BR> &nbsp; &nbsp; &nbsp;   limitations on, 143
+<BR> &nbsp; &nbsp; &nbsp;   representing/resolving, 145
+<BR> &nbsp; &nbsp; &nbsp;   Unix, option for, 245
+<BR>files
+<BR> &nbsp; &nbsp; &nbsp;   archive, 137
+<BR> &nbsp; &nbsp; &nbsp;   attributes, 135-143
+<BR> &nbsp; &nbsp; &nbsp;   deleting, option for, 129
+<BR> &nbsp; &nbsp; &nbsp;   hidden, 128, 136
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      options for, 134
+<BR> &nbsp; &nbsp; &nbsp;   open, option for maximum number of, 243
+<BR> &nbsp; &nbsp; &nbsp;   permissions, 135-143
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      options for, 140
+<BR> &nbsp; &nbsp; &nbsp;   read-only, 136
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      deleting, 139, 142
+<BR> &nbsp; &nbsp; &nbsp;   system, 136
+<BR> &nbsp; &nbsp; &nbsp;   in use, status of, 9
+<BR> &nbsp; &nbsp; &nbsp;   veto, 129-131
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      option for deleting, 135
+<BR>filesystems
+<BR> &nbsp; &nbsp; &nbsp;   differences between, 127-131
+<BR> &nbsp; &nbsp; &nbsp;   links and, 130
+<BR> &nbsp; &nbsp; &nbsp;   options for, 132-135
+<BR> &nbsp; &nbsp; &nbsp;   reporting on by Samba, option for, 242
+<BR> &nbsp; &nbsp; &nbsp;   (see also files)
+<BR>fixed user configuration, 196
+<BR>flat namespaces, 14, 25
+<BR>follow symlinks option, 133
+<BR>force create mode option, 141
+<BR>force directory mode option, 141
+<BR>force group option, 139, 141
+<BR>force user option, 139, 141
+<BR>foreign-language characters, 234-236
+<BR>free space on disk, option for, 241
+<BR>fstype option, 242
+<BR>FTP (File Transfer Protocol), 6
+<BR> &nbsp; &nbsp; &nbsp;   sites for Samba downloads, 32
+<P><A NAME="G"><B>G</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>gateway field, 68
+<BR>getwd cache option, 134, 320
+<BR>global options, 90
+<BR>[globals] section, 88
+<BR>GNU autoconf, 29
+<BR>GNU configure script, 34
+<BR>GNU General Public License (GPL), 3, 378
+<BR>groups, 155-158
+<BR> &nbsp; &nbsp; &nbsp;   administrative privileges for, 159
+<BR> &nbsp; &nbsp; &nbsp;   names and types of, 15
+<BR>guest, 162
+<BR>guest access, 159-162
+<BR>guest account option, 162
+<BR>guest ok option, 98
+<BR>guest only option, 162
+<P><A NAME="H"><B>H</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>hangup (HUP) signal, 48
+<BR>header, SMB, 74
+<BR>Hexidecimal byte value
+<BR> &nbsp; &nbsp; &nbsp;   for NetBIOS group resource types, 16
+<BR> &nbsp; &nbsp; &nbsp;   for NetBIOS unique resource types, 15
+<BR>hidden files, 128, 136
+<BR> &nbsp; &nbsp; &nbsp;   options for, 134, 142, 319
+<BR>h-node, 13
+<BR>home directory, user's, 36, 155
+<BR> &nbsp; &nbsp; &nbsp;   logon script option for location of, 198
+<BR>homedir map option, 200
+<BR>[homes] share, 89, 157
+<BR>hort preserve case option, 147
+<BR>hostnames
+<BR> &nbsp; &nbsp; &nbsp;   case sensitivity and, 5
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      long/short, 286
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      lookup, 284
+<BR>hosts
+<BR> &nbsp; &nbsp; &nbsp;   files (Windows 95/98), 59
+<BR> &nbsp; &nbsp; &nbsp;   files (Windows NT computers), 71
+<BR> &nbsp; &nbsp; &nbsp;   networking option for connections, 101, 103, 105
+<BR> &nbsp; &nbsp; &nbsp;   subnets and, caution with, 102
+<BR>hosts allow option, 103
+<BR>hosts deny option, 105
+<BR>hosts equiv option, 184
+<BR>how-tos, fault tree, 257-291
+<BR>http, 6
+<BR>HUP (hangup) signal, 48
+<P><A NAME="I"><B>I</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>Identification Changes dialog box (Windows NT), 63
+<BR>Identification tab, 60
+<BR>implementations, Microsoft, 18-27
+<BR>include option, 92
+<BR>inetd daemon, starting other daemons from, 48
+<BR>installing Samba, 31-49
+<BR> &nbsp; &nbsp; &nbsp;   common problems, 34
+<BR> &nbsp; &nbsp; &nbsp;   installation directories, 40
+<BR> &nbsp; &nbsp; &nbsp;   steps in, 31
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      final, 41
+<BR> &nbsp; &nbsp; &nbsp;   time required, 31
+<BR>installing TCP/IP protocol, 65
+<BR>installing Workstation service, 65
+<BR>interfaces, networking options for, 102
+<BR>interfaces option, 105
+<BR>internationalization, 234-236
+<BR>invalid users option, 161
+<BR>IP address, 288-290
+<BR> &nbsp; &nbsp; &nbsp;   setting for Windows NT computers, 67
+<BR>IP Address tab
+<BR> &nbsp; &nbsp; &nbsp;   Windows 95/98, 57
+<BR> &nbsp; &nbsp; &nbsp;   Windows NT, 67
+<BR>IP packet size, tuning, 316
+<P><A NAME="J"><B>J</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>Jacobson, Van, 255
+<P><A NAME="K"><B>K</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>keep-alive packets, option for, 242
+<BR>Kerberos, support for, 35
+<BR>kernel oplocks option, 153
+<P><A NAME="L"><B>L</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>languages, non-European, 30
+<BR>LDAP (Lightweight Directory Access Protocol)
+<BR> &nbsp; &nbsp; &nbsp;   replacement for password synchronization, 179
+<BR> &nbsp; &nbsp; &nbsp;   support for, 36
+<BR>ldd tool, 33
+<BR>legal agreements covering multi-user functionality, 6
+<BR>Leres, Craig, 255
+<BR>Lightweight Directory Access Protocol (see LDAP)
+<BR>line continuation, 85
+<BR>links, 130
+<BR> &nbsp; &nbsp; &nbsp;   option for, 133
+<BR>Linux
+<BR> &nbsp; &nbsp; &nbsp;   installing Samba on Linux system, 31
+<BR> &nbsp; &nbsp; &nbsp;   submount and, 36
+<BR>lm announce option, 125
+<BR>lm interval option, 125
+<BR>LMHOSTS file, 224
+<BR>load printers option, 222
+<BR>local group map option, 192
+<BR>local master browser, 21, 116-122
+<BR> &nbsp; &nbsp; &nbsp;   checking machines for, 118
+<BR> &nbsp; &nbsp; &nbsp;   option for, 125
+<BR>local master option, 125
+<BR>local profiles, 194
+<BR>localhost
+<BR> &nbsp; &nbsp; &nbsp;   address, 69
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting, 288
+<BR>localization, 234-236
+<BR>lock directory option, 154
+<BR>locking option, 152
+<BR>locks/locking files, 9, 149-154
+<BR> &nbsp; &nbsp; &nbsp;   messaging option for, 237
+<BR> &nbsp; &nbsp; &nbsp;   opportunistic locking, 29
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      tuning of, 316
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      (see also oplocks)
+<BR> &nbsp; &nbsp; &nbsp;   options for, 151-154
+<BR> &nbsp; &nbsp; &nbsp;   Unix and, 150
+<BR>log files/logging
+<BR> &nbsp; &nbsp; &nbsp;   activating/deactivating, 253
+<BR> &nbsp; &nbsp; &nbsp;   checking, 108-113
+<BR> &nbsp; &nbsp; &nbsp;   configuration options, 108-113
+<BR> &nbsp; &nbsp; &nbsp;   in for the first time (Samba), 52
+<BR> &nbsp; &nbsp; &nbsp;   levels of
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      setting, 251-253
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      tuning, 314
+<BR> &nbsp; &nbsp; &nbsp;   options for, 199
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting, 282
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting from, 251-254
+<BR>log level option, 112, 251, 314
+<BR>login dialog box, domain logons
+<BR> &nbsp; &nbsp; &nbsp;   Windows 95/98, 188
+<BR> &nbsp; &nbsp; &nbsp;   Windows NT, 190
+<BR>login parameters, setting, 79
+<BR>logon drive option, 197
+<BR>logon home option, 198
+<BR>logon path option, 197
+<BR>logon script option, 197
+<BR>logon scripts, 192-200
+<BR> &nbsp; &nbsp; &nbsp;   options for, 196-198
+<BR>logons (see domain logons)
+<BR>lppause command option, 221
+<BR>lpq cache time option, 220, 319
+<BR>lpq command option, 221
+<BR>lpresume command option, 221
+<BR>lprm command option, 221
+<P><A NAME="M"><B>M</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>machine name, types, 15
+<BR>machine password timeout option, 239
+<BR>magic output option, 233
+<BR>magic script option, 233
+<BR>magic scripts, 233
+<BR>mailing lists
+<BR> &nbsp; &nbsp; &nbsp;   posting to, 39
+<BR> &nbsp; &nbsp; &nbsp;   for Samba, 292
+<BR>main tree, 40
+<BR>makefiles, 33-34
+<BR>mandatory profiles, 196
+<BR>mangle case option, 148
+<BR>mangled map option, 148
+<BR>mangled names option, 147
+<BR>mangled stack option, 148
+<BR>mangling char option, 148
+<BR>map archive option, 142
+<BR>map hidden option, 142
+<BR>Map Network Drive option, 5, 62
+<BR>map system option, 142
+<BR>mapping
+<BR> &nbsp; &nbsp; &nbsp;   files, options for location of, 191
+<BR> &nbsp; &nbsp; &nbsp;   network drives, 5
+<BR>masks
+<BR> &nbsp; &nbsp; &nbsp;   creation, 138
+<BR> &nbsp; &nbsp; &nbsp;   netmasks, 57
+<BR> &nbsp; &nbsp; &nbsp;   subnet, 57, 67
+<BR> &nbsp; &nbsp; &nbsp;   umasks, 138
+<BR>master browsers (see local master browser; DMB; preferred master browser)
+<BR>max connections option, 161
+<BR>max disk size option, 242
+<BR>max log size option, 112
+<BR>max mux option, 243
+<BR>max open files option, 243
+<BR>max ttl option, 229
+<BR>max wins ttl option, 229
+<BR>max xmit option, 243, 317
+<BR>Maximum Transport Unit (MTU), 316
+<BR>McCanne, Steven, 255
+<BR>measurement forms, 326
+<BR>memory, status of, 9
+<BR>message command option, 238
+<BR>messages
+<BR> &nbsp; &nbsp; &nbsp;   from daemons, reading, 8
+<BR> &nbsp; &nbsp; &nbsp;   WinPopup, 237
+<BR>Microsoft, 3
+<BR> &nbsp; &nbsp; &nbsp;   encryption, 30
+<BR> &nbsp; &nbsp; &nbsp;   implementations, 18-27
+<BR>Microsoft Networking Client, 65
+<BR>min print space option, 223
+<BR>min wins ttl option, 229
+<BR>mirror sites for Samba distribution, 28
+<BR>MIT, 35
+<BR>mmap code, 36
+<BR>m-node, 13
+<BR>modem, linking to TCP/IP networking protocol, 55
+<BR>MTU (Maximum Transport Unit), 316
+<BR>multiple code pages, 30
+<BR>multiple subnets, 120
+<BR>multi-user functionality, legal agreements and, 6
+<BR>My Computer (Windows 95/98), 51
+<P><A NAME="N"><B>N</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>name mangling, 143-149
+<BR> &nbsp; &nbsp; &nbsp;   options for, 145-149
+<BR> &nbsp; &nbsp; &nbsp;   steps in, 143
+<BR>name registration, 10
+<BR>name resolution, 11, 60, 224-229
+<BR> &nbsp; &nbsp; &nbsp;   options for, 227-229
+<BR>name resolve order option, 229
+<BR>name services, 10
+<BR> &nbsp; &nbsp; &nbsp;   identifying what is in use, 283
+<BR> &nbsp; &nbsp; &nbsp;   nmblookup program, 372
+<BR> &nbsp; &nbsp; &nbsp;   testing, 258
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting, 282-288
+<BR>naming
+<BR> &nbsp; &nbsp; &nbsp;   machine name, types, 15
+<BR> &nbsp; &nbsp; &nbsp;   machines on NetBIOS network, 10-13
+<BR> &nbsp; &nbsp; &nbsp;   NT computers, 63
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      caution with, 64
+<BR> &nbsp; &nbsp; &nbsp;   TCP/IP networking protocol, setting machine name for, 60
+<BR>NBNS (see NetBIOS, name server)
+<BR>NBT standard, 10
+<BR>NBTSTAT utility, 15
+<BR>Netatalk (Macintosh), support for interoperating with, 37
+<BR>NetBEUI (NetBIOS Extended User Interface), 10, 53
+<BR> &nbsp; &nbsp; &nbsp;   Windows NT computers and, 65
+<BR>netbios aliases option, 107
+<BR>NetBIOS name, 14-16
+<BR> &nbsp; &nbsp; &nbsp;   option for aliases, 107
+<BR> &nbsp; &nbsp; &nbsp;   setting
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      Windows 95/98, 61
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      Windows NT, 63
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting, 290
+<BR>netbios name option, 95
+<BR>NetBIOS (Network Basic Input/Output System), 9
+<BR> &nbsp; &nbsp; &nbsp;   compared with TCP/IP, 10
+<BR> &nbsp; &nbsp; &nbsp;   Extended User Interface (see NetBEUI)
+<BR> &nbsp; &nbsp; &nbsp;   multiple servers (see virtual servers)
+<BR> &nbsp; &nbsp; &nbsp;   name (see NetBIOS name)
+<BR> &nbsp; &nbsp; &nbsp;   name server (NBNS), 11, 25, 58
+<BR> &nbsp; &nbsp; &nbsp;   network, naming machines on, 10-13
+<BR> &nbsp; &nbsp; &nbsp;   over TCP/IP, 10
+<BR> &nbsp; &nbsp; &nbsp;   Unique Resource Types, 15
+<BR>netmasks, 57, 67
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting, 288
+<BR>network addresses
+<BR> &nbsp; &nbsp; &nbsp;   finding, 290
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting, 288-290
+<BR>Network Basic Input/Output System (see NetBIOS)
+<BR>network configuration commands, 192
+<BR>Network dialog box (Windows NT), 63
+<BR>network drives, mapping, 5
+<BR>Network File System
+<BR> &nbsp; &nbsp; &nbsp;   resources for further information, 293
+<BR>Network File System (NFS), 30
+<BR>Network icon
+<BR> &nbsp; &nbsp; &nbsp;   Windows 95/98, 53
+<BR> &nbsp; &nbsp; &nbsp;   Windows NT, 63
+<BR>network masks (see netmasks)
+<BR>Network Neighborhood icon, 61, 93
+<BR> &nbsp; &nbsp; &nbsp;   viewing Samba server, 72
+<BR>Network Neighborhood window, 21-22
+<BR> &nbsp; &nbsp; &nbsp;   mapping network drives via, 5
+<BR>networking
+<BR> &nbsp; &nbsp; &nbsp;   hardware for, testing, 259
+<BR> &nbsp; &nbsp; &nbsp;   network address ranges, 289
+<BR> &nbsp; &nbsp; &nbsp;   nmblookup program, testing with, 279
+<BR> &nbsp; &nbsp; &nbsp;   options, 101-106
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      list of, 103
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      magic script, 233
+<BR> &nbsp; &nbsp; &nbsp;   printing on a network, steps in, 201
+<BR> &nbsp; &nbsp; &nbsp;   setting up, 53-60
+<BR>newsgroups for Samba, 291
+<BR>NFS (Network File System), 30
+<BR> &nbsp; &nbsp; &nbsp;   resources for further information, 293
+<BR>nis homedir option, 200
+<BR>NIS/NIS+ protocol, 36, 169
+<BR> &nbsp; &nbsp; &nbsp;   how Samba works with, 199
+<BR> &nbsp; &nbsp; &nbsp;   resources for further information, 293
+<BR>nmbd daemon, 2, 29, 82, 85, 361-362
+<BR> &nbsp; &nbsp; &nbsp;   browsing options for, 125
+<BR> &nbsp; &nbsp; &nbsp;   killing, 48
+<BR> &nbsp; &nbsp; &nbsp;   starting, 46
+<BR>nmblookup program, 372
+<BR> &nbsp; &nbsp; &nbsp;   networks, testing with, 279
+<BR>node types, 13
+<BR>non-encrypted passwords, 172
+<BR>non-European languages, 30
+<BR>Novell Networking, 53
+<BR>nt pipe support option, 243
+<BR>nt smb support option, 243
+<BR>null passwords, 183
+<BR>null TID, 74
+<BR>numerical type, 90
+<P><A NAME="O"><B>O</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>.old files, 39
+<BR>ole locking compatibility option, 244
+<BR>Open Source Software (OSS), 3
+<BR>operating systems
+<BR> &nbsp; &nbsp; &nbsp;   encrypted/non-encrypted passwords, 172
+<BR> &nbsp; &nbsp; &nbsp;   miscellaneous options for, 240
+<BR> &nbsp; &nbsp; &nbsp;   values in elections, 117
+<BR>oplock files option, 316
+<BR>oplocks, 149-154
+<BR> &nbsp; &nbsp; &nbsp;   break requests, 149
+<BR> &nbsp; &nbsp; &nbsp;   messaging option for, 237
+<BR> &nbsp; &nbsp; &nbsp;   options for, 151-154
+<BR>oplocks option, 153
+<BR>opportunistic locking, 29
+<BR> &nbsp; &nbsp; &nbsp;   tuning, 316
+<BR> &nbsp; &nbsp; &nbsp;   (see also oplocks)
+<BR>option names, 84
+<BR>os filetime resolution option, 232
+<BR>os level option, 126
+<BR>OS/2, support for share-level security, 165
+<BR>OSF/1 (Digital Unix), 35
+<P><A NAME="P"><B>P</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>packets
+<BR> &nbsp; &nbsp; &nbsp;   headers for, tcpdump utility and, 376
+<BR> &nbsp; &nbsp; &nbsp;   maximum size of, option for, 243
+<BR>PAM (pluggable authentication modules), 179
+<BR> &nbsp; &nbsp; &nbsp;   support for, 36
+<BR>panic action option, 244
+<BR>passwd chat debug option, 182
+<BR>passwd chat option, 182
+<BR>passwd program option, 182
+<BR>password file, security and, 53
+<BR>password level option, 182
+<BR>Password settings (Windows 95/98), 51
+<BR>passwords, 171-184
+<BR> &nbsp; &nbsp; &nbsp;   chat characters for, 178
+<BR> &nbsp; &nbsp; &nbsp;   encrypted
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      changing, 176
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      disabling on Windows computers, 173
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      vs. non-encrypted, 172, 173
+<BR> &nbsp; &nbsp; &nbsp;   null, 183
+<BR> &nbsp; &nbsp; &nbsp;   options for, 180-184
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      share-level, 192
+<BR> &nbsp; &nbsp; &nbsp;   passwd program, 182
+<BR> &nbsp; &nbsp; &nbsp;   smbpasswd program, 374
+<BR> &nbsp; &nbsp; &nbsp;   stored by Samba, 172
+<BR> &nbsp; &nbsp; &nbsp;   synchronizing, 176-179
+<BR> &nbsp; &nbsp; &nbsp;   user-level security and, 168
+<BR> &nbsp; &nbsp; &nbsp;   Windows 95/98, 51-53
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      changing, 52
+<BR>pathnames
+<BR> &nbsp; &nbsp; &nbsp;   option for, 98
+<BR> &nbsp; &nbsp; &nbsp;   printer configuration and, 207
+<BR>paths, architecture-specific, 86
+<BR>pdate encrypted option, 183
+<BR>PDC (primary domain controller), 20
+<BR> &nbsp; &nbsp; &nbsp;   domain master browser and, 119
+<BR> &nbsp; &nbsp; &nbsp;   domain option for, 190
+<BR> &nbsp; &nbsp; &nbsp;   domain-level security and, 164
+<BR>PDC (continued)
+<BR> &nbsp; &nbsp; &nbsp;   Samba 2.1 and, 186
+<BR> &nbsp; &nbsp; &nbsp;   Samba, setting up as, 184
+<BR> &nbsp; &nbsp; &nbsp;   sever-level security and, 168
+<BR> &nbsp; &nbsp; &nbsp;   trust accounts and, 186
+<BR>performance, 29
+<BR>performance tuning, 312-328
+<BR> &nbsp; &nbsp; &nbsp;   benchmark for, 312, 314
+<BR> &nbsp; &nbsp; &nbsp;   other options for, 319-328
+<BR> &nbsp; &nbsp; &nbsp;   recommended enhancements, 320
+<BR>permissions, 207
+<BR> &nbsp; &nbsp; &nbsp;   options for, 140-143
+<BR> &nbsp; &nbsp; &nbsp;   for printing, 207
+<BR>plaintext passwords, 173
+<BR>pluggable authentication modules (PAM), 36, 179
+<BR>p-node, 13
+<BR>point-to-point communication, 13
+<BR>point-to-point registration/resolution, 13
+<BR>port not telnet option, 257
+<BR>postexec option, 199
+<BR>postscript option, 221
+<BR>preexec option, 199
+<BR>preferred master browser, 119
+<BR>preferred master option, 126
+<BR>preserve case option, 147
+<BR>preventing browsing, 115
+<BR>primary domain controller (see PDC)
+<BR>primary WINS server, 26
+<BR>print command option, 221
+<BR>print queue, options for, 223
+<BR>print shares, 7-9, 89-90, 204-205
+<BR> &nbsp; &nbsp; &nbsp;   created by Samba, 205
+<BR> &nbsp; &nbsp; &nbsp;   options for, 222
+<BR> &nbsp; &nbsp; &nbsp;   path option, 98
+<BR> &nbsp; &nbsp; &nbsp;   setting up on Windows client, 7
+<BR>printable option, 219
+<BR>printcap name option, 223
+<BR>printer capabilities file, 89
+<BR>printer driver file option, 219
+<BR>printer driver location option, 220
+<BR>printer driver option, 219
+<BR>printer option, 219
+<BR>PRINTER$ share, creating, 212
+<BR>printers
+<BR> &nbsp; &nbsp; &nbsp;   BSD, 215
+<BR> &nbsp; &nbsp; &nbsp;   names
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      caution with, 205
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      checking, 375
+<BR> &nbsp; &nbsp; &nbsp;   option for, 219-221
+<BR> &nbsp; &nbsp; &nbsp;   sharing (see print shares)
+<BR> &nbsp; &nbsp; &nbsp;   System V, 216
+<BR>printing, 201-224
+<BR> &nbsp; &nbsp; &nbsp;   commands, 202
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      default commands for, 221
+<BR> &nbsp; &nbsp; &nbsp;   configuration, minimal, 203-205
+<BR> &nbsp; &nbsp; &nbsp;   configuration options, 203-207
+<BR> &nbsp; &nbsp; &nbsp;   drivers for, setting up, 210-213
+<BR> &nbsp; &nbsp; &nbsp;   on a network, steps in, 201
+<BR> &nbsp; &nbsp; &nbsp;   options for, 217-224
+<BR> &nbsp; &nbsp; &nbsp;   pathnames used in commands for, 207
+<BR> &nbsp; &nbsp; &nbsp;   permissions for, 207
+<BR> &nbsp; &nbsp; &nbsp;   print jobs, 204
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      spooling with smbprint tool, 213
+<BR> &nbsp; &nbsp; &nbsp;   printer definition file, 211
+<BR> &nbsp; &nbsp; &nbsp;   resources for information on debugging, 208
+<BR> &nbsp; &nbsp; &nbsp;   through Samba, 201-213
+<BR> &nbsp; &nbsp; &nbsp;   test for, 206
+<BR> &nbsp; &nbsp; &nbsp;   types, 218
+<BR> &nbsp; &nbsp; &nbsp;   variables for, 203
+<BR> &nbsp; &nbsp; &nbsp;   Windows client printers
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      printing to, 213-224
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      setting up and testing, 208
+<BR>printing configuration option, 218
+<BR>private directory (Samba distribution), 172
+<BR>private key cryptography, 35
+<BR>privileges, option for, 199
+<BR>processes (see daemons)
+<BR>profiles, 194
+<BR> &nbsp; &nbsp; &nbsp;   creating, 53
+<BR> &nbsp; &nbsp; &nbsp;   local, 194
+<BR> &nbsp; &nbsp; &nbsp;   mandatory, 196
+<BR> &nbsp; &nbsp; &nbsp;   roaming, 194-196
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      option for location of, 197
+<BR>programmers, support for, 230-233
+<BR>propagation, browse list, 24
+<BR>Properties button (Windows 95/98), 55
+<BR>protocols
+<BR> &nbsp; &nbsp; &nbsp;   routed through a hardware device, 53
+<BR> &nbsp; &nbsp; &nbsp;   variant, negotiating, 78
+<BR>Protocols tab, 65-66
+<P><A NAME="Q"><B>Q</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>queuepause command option, 223
+<BR>queueresume command option, 223
+<BR>quotation marks in values, 84
+<P><A NAME="R"><B>R</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>rc.local file, 47
+<BR>read list option, 161
+<BR>read only option, 100
+<BR>read prediction, testing, 318
+<BR>read raw, tuning, 315
+<BR>read size, tuning, 318
+<BR>reading documentation, importance of, 34
+<BR>read-only files, 136
+<BR> &nbsp; &nbsp; &nbsp;   deleting, 139, 142
+<BR>read-only partitions, 40
+<BR>read-only/read-write access, 159
+<BR>remote announce option, 127
+<BR>remote browse sync option, 127
+<BR>remote procedure call (RPC), 376
+<BR>representing/resolving filenames, 145
+<BR>resource names, 14
+<BR>resource types, 14
+<BR> &nbsp; &nbsp; &nbsp;   for primary domain controller vs. domain master browser, 24
+<BR>resources, connecting to, 81
+<BR>resources for further information, 291-293
+<BR> &nbsp; &nbsp; &nbsp;   group attributes, 16
+<BR> &nbsp; &nbsp; &nbsp;   NFS (Network File System), 293
+<BR> &nbsp; &nbsp; &nbsp;   printers, debugging, 208
+<BR> &nbsp; &nbsp; &nbsp;   Samba, 32
+<BR> &nbsp; &nbsp; &nbsp;   Solaris servers, 321
+<BR> &nbsp; &nbsp; &nbsp;   Windows network configuration commands, 192
+<BR>revalidation of users, 192
+<BR>roaming profiles, 194-196
+<BR> &nbsp; &nbsp; &nbsp;   option for location of, 197
+<BR>role settings in elections, 117
+<BR>root postexec option, 199
+<BR>root preexec option, 198
+<BR>root user, 37, 199
+<BR> &nbsp; &nbsp; &nbsp;   access, 159
+<BR>routers, TCP/IP configuring and, 68
+<BR>RPC (remote procedure call), 376
+<BR>rpcclient program, 376
+<P><A NAME="S"><B>S</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>SAM (security account manager), 19, 169
+<BR>Samba, 1-9
+<BR> &nbsp; &nbsp; &nbsp;   compatibility with Windows NT, 30
+<BR> &nbsp; &nbsp; &nbsp;   compiling (see compiling Samba)
+<BR> &nbsp; &nbsp; &nbsp;   configuring (see configuring Samba)
+<BR> &nbsp; &nbsp; &nbsp;   daemons (see daemons)
+<BR> &nbsp; &nbsp; &nbsp;   distribution, xi, 28, 32
+<BR> &nbsp; &nbsp; &nbsp;   documentation, importance of reading, 34
+<BR> &nbsp; &nbsp; &nbsp;   downloading, 32-34
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      with CVS, 378
+<BR> &nbsp; &nbsp; &nbsp;   features/uses, x
+<BR> &nbsp; &nbsp; &nbsp;   installing (see installing Samba)
+<BR> &nbsp; &nbsp; &nbsp;   logging in for the first time, 52
+<BR> &nbsp; &nbsp; &nbsp;   Microsoft encryption and, 30
+<BR> &nbsp; &nbsp; &nbsp;   new features file, 34
+<BR> &nbsp; &nbsp; &nbsp;   origin of name, 2
+<BR> &nbsp; &nbsp; &nbsp;   performance tuning, 312-328
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      benchmark for, 312, 314
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      other options for, 319-328
+<BR> &nbsp; &nbsp; &nbsp;   reasons for using, 3
+<BR> &nbsp; &nbsp; &nbsp;   resources for further information, 291-293
+<BR> &nbsp; &nbsp; &nbsp;   roles in Windows domains/workgroups, 26
+<BR> &nbsp; &nbsp; &nbsp;   startup file, 363
+<BR> &nbsp; &nbsp; &nbsp;   test utilities, 254-257
+<BR> &nbsp; &nbsp; &nbsp;   version 2.0, 20, 28
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      character sets, 235
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      code pages for, 234
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      coding system parameters, 235
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      new options, 238
+<BR> &nbsp; &nbsp; &nbsp;   version 2.0.5, xi, 28
+<BR> &nbsp; &nbsp; &nbsp;   version 2.1, 20
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      PDC functionality and, 186
+<BR> &nbsp; &nbsp; &nbsp;   web site, 32, 291
+<BR> &nbsp; &nbsp; &nbsp;   WINS server and, 225
+<BR>Samba server
+<BR> &nbsp; &nbsp; &nbsp;   accessing, 61
+<BR> &nbsp; &nbsp; &nbsp;   connecting to, 71
+<BR> &nbsp; &nbsp; &nbsp;   resources offered, 72
+<BR> &nbsp; &nbsp; &nbsp;   sizing, 320-328
+<BR> &nbsp; &nbsp; &nbsp;   viewing via Network Neighborhood icon, 72
+<BR>Samba Web Administration Tool (see SWAT tool)
+<BR>scripts
+<BR> &nbsp; &nbsp; &nbsp;   connection, 198
+<BR> &nbsp; &nbsp; &nbsp;   logon, 192-200
+<BR> &nbsp; &nbsp; &nbsp;   magic, 233
+<BR> &nbsp; &nbsp; &nbsp;   for Samba startup file, 363
+<BR>secondary WINS server, 26
+<BR>sections of smb.conf (Samba configuration) file, 83
+<BR>Secure Sockets Layer protocol (see SSL)
+<BR>security, 35, 164-171
+<BR> &nbsp; &nbsp; &nbsp;   domain-level, 169-171
+<BR> &nbsp; &nbsp; &nbsp;   levels of, 164
+<BR>security (continued)
+<BR> &nbsp; &nbsp; &nbsp;   options for, 164
+<BR> &nbsp; &nbsp; &nbsp;   restricting access to shares, 158-163
+<BR> &nbsp; &nbsp; &nbsp;   server-level, 168
+<BR> &nbsp; &nbsp; &nbsp;   share-level, 164-167
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      options for, 167
+<BR> &nbsp; &nbsp; &nbsp;   user-level, 167
+<BR>security account manager (SAM), 19, 169
+<BR>Select Network Protocol dialog box, 65
+<BR>server configuration options, 94-96
+<BR>Server Message Block (see SMB)
+<BR>server string parameter, 95
+<BR>server-level security, 168
+<BR>servers
+<BR> &nbsp; &nbsp; &nbsp;   active, list of, 116
+<BR> &nbsp; &nbsp; &nbsp;   testing with nmblookup program, 278
+<BR> &nbsp; &nbsp; &nbsp;   virtual, 106-108
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      options for, 107
+<BR>service bindings, 71
+<BR>services, 83
+<BR> &nbsp; &nbsp; &nbsp;   list of enabled on machine, 45
+<BR> &nbsp; &nbsp; &nbsp;   performed by Samba, 2
+<BR> &nbsp; &nbsp; &nbsp;   testing low-level, 257-263
+<BR> &nbsp; &nbsp; &nbsp;   Workstation, 65
+<BR> &nbsp; &nbsp; &nbsp;   (see also shares)
+<BR>Services tab, 65
+<BR>session layer, connection at, 78
+<BR>session parameters, setting, 79
+<BR>session service, 10, 16-18
+<BR>set directory option, 244
+<BR>share modes, 151
+<BR>share options, 90
+<BR>shared directory/resources (see shares)
+<BR>shared resources (see shares)
+<BR>share-level security, 164-167
+<BR> &nbsp; &nbsp; &nbsp;   options for, 167
+<BR> &nbsp; &nbsp; &nbsp;   printing and guest accounts, 204
+<BR> &nbsp; &nbsp; &nbsp;   steps in taken by Samba, 165
+<BR>shares, 30, 83
+<BR> &nbsp; &nbsp; &nbsp;   access to
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      controlling, 158-163
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      creating for groups, 157
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      by foreign hosts, option for, 184
+<BR> &nbsp; &nbsp; &nbsp;   contents, restricting view of, 115
+<BR> &nbsp; &nbsp; &nbsp;   default, 115
+<BR> &nbsp; &nbsp; &nbsp;   file, path option for, 98
+<BR> &nbsp; &nbsp; &nbsp;   [globals] section, 88
+<BR> &nbsp; &nbsp; &nbsp;   option for identifying users allowed access to, 168
+<BR> &nbsp; &nbsp; &nbsp;   viewing (see browsing)
+<BR>sharing
+<BR> &nbsp; &nbsp; &nbsp;   disks (see disk shares)
+<BR> &nbsp; &nbsp; &nbsp;   printers (see print shares)
+<BR>Sharpe, Richard, 74
+<BR>SIGHUP signal, 85
+<BR>sizing Samba servers, 320-328
+<BR>smb passwd file option, 183
+<BR>SMB (Server Message Block), 2, 74-81
+<BR> &nbsp; &nbsp; &nbsp;   command string, 75
+<BR> &nbsp; &nbsp; &nbsp;   commercial products for, 77
+<BR> &nbsp; &nbsp; &nbsp;   deny-mode locks, 151
+<BR> &nbsp; &nbsp; &nbsp;   format of, 74
+<BR> &nbsp; &nbsp; &nbsp;   header, 75
+<BR> &nbsp; &nbsp; &nbsp;   magic scripts, 233
+<BR> &nbsp; &nbsp; &nbsp;   making a simple connection, 77
+<BR> &nbsp; &nbsp; &nbsp;   maximum number of operations, option for, 243
+<BR> &nbsp; &nbsp; &nbsp;   networks, 4
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      usernames and, 162
+<BR> &nbsp; &nbsp; &nbsp;   option for NT-specific options, 243
+<BR> &nbsp; &nbsp; &nbsp;   password server, 168
+<BR> &nbsp; &nbsp; &nbsp;   resources for further information, 74
+<BR> &nbsp; &nbsp; &nbsp;   seamless operation across networks, 30
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting connections, 268-275
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      testing locally, 268
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      testing with NET USE, 271-274
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      testing with smbclient, 270
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      testing with Windows Explorer, 274-275
+<BR> &nbsp; &nbsp; &nbsp;   wrapper support, 34
+<BR>SMB/CIFS protocol, 3
+<BR> &nbsp; &nbsp; &nbsp;   filesystems, 34
+<BR> &nbsp; &nbsp; &nbsp;   network and, 9-18
+<BR>smbclient program, 49, 364-370
+<BR>smb.conf (Samba configuration) file, 8, 41, 63, 82-93
+<BR> &nbsp; &nbsp; &nbsp;   configuring printers, 203
+<BR> &nbsp; &nbsp; &nbsp;   creating, 93
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      for each client, 253
+<BR> &nbsp; &nbsp; &nbsp;   example of, 82
+<BR> &nbsp; &nbsp; &nbsp;   modifying for printer drivers, 212
+<BR> &nbsp; &nbsp; &nbsp;   options for, 90-93
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      format of, 83
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      supporting programmers, 230-232
+<BR> &nbsp; &nbsp; &nbsp;   special sections of, 88-91
+<BR> &nbsp; &nbsp; &nbsp;   structure of, 83-86
+<BR> &nbsp; &nbsp; &nbsp;   testparm program for, 375
+<BR> &nbsp; &nbsp; &nbsp;   variables for, 86-88
+<BR>smbd daemon, 2, 82, 359-360
+<BR> &nbsp; &nbsp; &nbsp;   file, 47
+<BR> &nbsp; &nbsp; &nbsp;   killing, 48
+<BR> &nbsp; &nbsp; &nbsp;   starting, 46
+<BR>smbd server, checking with telnet, 266
+<BR>smbmount, support for, 36
+<BR>smbpasswd file, 172, 174-176
+<BR> &nbsp; &nbsp; &nbsp;   adding entries to, 175
+<BR> &nbsp; &nbsp; &nbsp;   caution with, 173-174
+<BR> &nbsp; &nbsp; &nbsp;   option for location of, 183
+<BR>smbpasswd program, 171, 374
+<BR> &nbsp; &nbsp; &nbsp;   changing passwords with, 176
+<BR>smbprint tool, spooling print jobs, 213
+<BR>smbrun option, 244
+<BR>smbsh program, 364
+<BR>smbstatus program, 8, 370
+<BR>smbtar program, 245-248
+<BR> &nbsp; &nbsp; &nbsp;   tar operations and, 371
+<BR>smbwrapper client, 30
+<BR>smbwrapper package, 35
+<BR>socket address option, 106
+<BR>socket options configuration options, 314
+<BR>software distribution (see Samba, distribution)
+<BR>source vs. binary files, 32
+<BR>spaces in values, 84
+<BR>special sections, smb.conf (Samba configuration) file, 88-91
+<BR>spelling, caution with, 61
+<BR>spool space, options for, 223
+<BR>square brackets, 83
+<BR>ssl CA certDir option, 308
+<BR>ssl CA certFile option, 308
+<BR>ssl ciphers option, 310
+<BR>ssl client cert option, 309
+<BR>ssl client key option, 309
+<BR>ssl compatibility option, 311
+<BR>ssl hosts option, 307
+<BR>ssl hosts resign option, 307
+<BR>ssl option, 307
+<BR>ssl require clientcert option, 309
+<BR>ssl require servercert option, 310
+<BR>SSL (Secure Sockets Layer) protocol, 30
+<BR> &nbsp; &nbsp; &nbsp;   configuration options for, 306-311
+<BR> &nbsp; &nbsp; &nbsp;   configuring Samba to use, 300
+<BR> &nbsp; &nbsp; &nbsp;   configuring Samba with, 295-311
+<BR> &nbsp; &nbsp; &nbsp;   SS Proxy, 296
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      setting up, 304
+<BR> &nbsp; &nbsp; &nbsp;   SSLeay, 296-304
+<BR> &nbsp; &nbsp; &nbsp;   support for, 34, 36
+<BR>ssl server cert option, 308
+<BR>ssl server key option, 308
+<BR>ssl version option, 310
+<BR>stand-alone daemons, 47
+<BR>stat cache option, 239
+<BR>stat cache size option, 239
+<BR>status option, 244
+<BR>status report on Samba, 8
+<BR>strict locking option, 152, 319
+<BR>strict sync option, 245, 319
+<BR>string types, 90
+<BR>strip dot option, 245
+<BR>subnets, 12
+<BR> &nbsp; &nbsp; &nbsp;   hosts and, caution with, 102
+<BR> &nbsp; &nbsp; &nbsp;   mask, 57, 67
+<BR> &nbsp; &nbsp; &nbsp;   multiple spanned by Windows workgroups, 24
+<BR> &nbsp; &nbsp; &nbsp;   Windows NT workstations and, 24
+<BR>superuser (see root user)
+<BR>SWAT tool, 29
+<BR> &nbsp; &nbsp; &nbsp;   adding to configuration files, 41
+<BR> &nbsp; &nbsp; &nbsp;   creating configuration file with, 42
+<BR>sync always option, 245, 319
+<BR>synchronizing
+<BR> &nbsp; &nbsp; &nbsp;   passwords, 176-179
+<BR> &nbsp; &nbsp; &nbsp;   time, options for, 231
+<BR>syntax errors, 45
+<BR>syslog only option, 113
+<BR>syslog option, 113
+<BR>SYSLOG utility, 110
+<BR> &nbsp; &nbsp; &nbsp;   support for, 36
+<BR>system administrator, WINS server and, 26
+<BR>system files, 136
+<BR>System V Unix, 47
+<BR> &nbsp; &nbsp; &nbsp;   printer configuration for, 203
+<P><A NAME="T"><B>T</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>tar operations, 371
+<BR>tcpdump utility, 78, 255-257, 376
+<BR> &nbsp; &nbsp; &nbsp;   passwords, reading, 172
+<BR>TCP/IP networking protocol, 9
+<BR> &nbsp; &nbsp; &nbsp;   adding/configuring, 54
+<BR> &nbsp; &nbsp; &nbsp;   checking setup, 53
+<BR> &nbsp; &nbsp; &nbsp;   compared with NetBIOS, 10
+<BR> &nbsp; &nbsp; &nbsp;   configuring, 66-71
+<BR> &nbsp; &nbsp; &nbsp;   installing, 65
+<BR> &nbsp; &nbsp; &nbsp;   NetBIOS over, 10
+<BR> &nbsp; &nbsp; &nbsp;   receive window, tuning, 317
+<BR> &nbsp; &nbsp; &nbsp;   resources for further information, 293
+<BR> &nbsp; &nbsp; &nbsp;   TCP, troubleshooting, 263
+<BR>TCP/IP Properties panel (Windows 95/98), 55
+<BR>test parser, 45
+<BR>test share, 42
+<BR>testing
+<BR> &nbsp; &nbsp; &nbsp;   configuration file, 45
+<BR> &nbsp; &nbsp; &nbsp;   daemons, 49
+<BR> &nbsp; &nbsp; &nbsp;   Samba, 41-46
+<BR> &nbsp; &nbsp; &nbsp;   smbclient program, 364-370
+<BR> &nbsp; &nbsp; &nbsp;   test utilities for Samba, 254-257
+<BR> &nbsp; &nbsp; &nbsp;   tools for (CD-ROM with this book), 28
+<BR>testparm program, 375
+<BR>testparm test parser, 45
+<BR>testprns program, 375
+<BR>TID (tree identifier), 74, 78, 80
+<BR>time server option, 231
+<BR>time synchronization, options for, 231
+<BR>time to live (TTL), options for, 229
+<BR>timestamp logs option, 112
+<BR>trace utility, 254
+<BR>trailing dot, option for, 245
+<BR>tree identifier (TID), 74, 78, 80
+<BR>Tridgell, Andrew, 2, 255
+<BR>troubleshooting, 250-291
+<BR> &nbsp; &nbsp; &nbsp;   information to have on hand, 257
+<BR> &nbsp; &nbsp; &nbsp;   network addresses, 288-290
+<BR> &nbsp; &nbsp; &nbsp;   where to start, 250
+<BR>trust accounts, creating, 186
+<BR>TTL (time to live), options for, 229
+<BR>tuning (see performance tuning)
+<P><A NAME="U"><B>U</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>umasks, 138
+<BR>uniform resource locators (URLs), 6
+<BR>Universal Naming Convention (UNC), 5
+<BR>Unix
+<BR> &nbsp; &nbsp; &nbsp;   carriage returns, 193
+<BR> &nbsp; &nbsp; &nbsp;   daemons, 2
+<BR> &nbsp; &nbsp; &nbsp;   file permissions and attributes, 135-143
+<BR> &nbsp; &nbsp; &nbsp;   filenames, option for, 245
+<BR> &nbsp; &nbsp; &nbsp;   locks and, 150
+<BR> &nbsp; &nbsp; &nbsp;   networks, usernames and, 162
+<BR> &nbsp; &nbsp; &nbsp;   options
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      for messaging, 237
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      miscellaneous, 240
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      for print commands, 221
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      for system logger, 113
+<BR> &nbsp; &nbsp; &nbsp;   password files, 169
+<BR> &nbsp; &nbsp; &nbsp;   permissions, share write access and, 159
+<BR> &nbsp; &nbsp; &nbsp;   servers, backing up computers from, 246
+<BR> &nbsp; &nbsp; &nbsp;   System V, 47
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      printer configuration for, 203
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      printing and, 29
+<BR> &nbsp; &nbsp; &nbsp;   troubleshooting utilities, 254
+<BR> &nbsp; &nbsp; &nbsp;   user classifications, 135
+<BR>unix password sync option, 180
+<BR>unix realname option, 133
+<BR>URLs (uniform resource locators), 6
+<BR> &nbsp; &nbsp; &nbsp;   distribution, 28
+<BR> &nbsp; &nbsp; &nbsp;   Kerberos, 35
+<BR> &nbsp; &nbsp; &nbsp;   Samba, 28, 32
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      distribution, xi
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      web site, 291
+<BR> &nbsp; &nbsp; &nbsp;   SMB (Server Message Block), 74
+<BR>use rhosts option, 184
+<BR>user profiles (Windows 95/98), 50
+<BR>user variables, 86
+<BR>user-level security, 164, 167
+<BR>username level option, 163
+<BR>username map option, 162
+<BR>username option, 167
+<BR>usernames
+<BR> &nbsp; &nbsp; &nbsp;   case sensitivity and, 163
+<BR> &nbsp; &nbsp; &nbsp;   options for, 162-163
+<BR> &nbsp; &nbsp; &nbsp;   SMB vs. Unix networks, 162
+<BR> &nbsp; &nbsp; &nbsp;   Windows 95/98, 51-53
+<BR>users, 155-158
+<BR> &nbsp; &nbsp; &nbsp;   allowing superuser (root) access to, 159
+<BR> &nbsp; &nbsp; &nbsp;   creating, 89
+<BR> &nbsp; &nbsp; &nbsp;   domain, semi-automatic deletion, 171
+<BR> &nbsp; &nbsp; &nbsp;   home directory, 36
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      logon script option for location of, 198
+<BR> &nbsp; &nbsp; &nbsp;   invalid, specifying, 158
+<BR> &nbsp; &nbsp; &nbsp;   read-only/read-write access, 159
+<BR> &nbsp; &nbsp; &nbsp;   setting up, 155
+<BR> &nbsp; &nbsp; &nbsp;   share-level option for authentication of, 192
+<BR> &nbsp; &nbsp; &nbsp;   shares for, setting up, 157
+<BR>/usr/local/samba file, 40
+<BR>/usr/local/samba/var/log.smb file, 49
+<P><A NAME="V"><B>V</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>valid chars option, 236
+<BR>variables, 86-88
+<BR>veto files, 129-131
+<BR> &nbsp; &nbsp; &nbsp;   option for deleting, 135
+<BR>veto files option, 134
+<BR>veto oplock files option, 154
+<BR>viewing daemons, 8
+<BR>virtual connection, 78
+<BR>virtual hosts, 29
+<BR>virtual servers, 106-108
+<BR> &nbsp; &nbsp; &nbsp;   options for, 107
+<BR>volume option, 100
+<P><A NAME="W"><B>W</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+<BR>Whistle, 3
+<BR>whitespaces in values, 84
+<BR>wide links option, 134, 319
+<BR>Windows 95/98
+<BR> &nbsp; &nbsp; &nbsp;   domain controllers for, 18-20
+<BR> &nbsp; &nbsp; &nbsp;   domain logons, configuring, 185
+<BR> &nbsp; &nbsp; &nbsp;   domains, 184-192
+<BR> &nbsp; &nbsp; &nbsp;   miscellaneous options for, 240
+<BR> &nbsp; &nbsp; &nbsp;   multiple users, support for, 50
+<BR> &nbsp; &nbsp; &nbsp;   passwords, encrypted, 172
+<BR> &nbsp; &nbsp; &nbsp;   printer drivers, installing, 210
+<BR> &nbsp; &nbsp; &nbsp;   share-level security, support for, 165
+<BR> &nbsp; &nbsp; &nbsp;   WinPopup tool, 237
+<BR>Windows clients
+<BR> &nbsp; &nbsp; &nbsp;   configuring, 50-81
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      Windows NT 4.0 computers, 63-73
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      Windows95/98 computers, 50-63
+<BR> &nbsp; &nbsp; &nbsp;   individual configuration files for, 253
+<BR> &nbsp; &nbsp; &nbsp;   printers for, setting up and testing, 208
+<BR> &nbsp; &nbsp; &nbsp;   role settings in elections, 117
+<BR>Windows Explorer, Map Network Drive option, 5
+<BR>Windows Internet Name Service (see WINS)
+<BR>Windows NT
+<BR> &nbsp; &nbsp; &nbsp;   client/server and, 77
+<BR> &nbsp; &nbsp; &nbsp;   configuring domain logons, 186
+<BR> &nbsp; &nbsp; &nbsp;   domains, 18, 28, 184-192
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      caution when selecting, 190
+<BR> &nbsp; &nbsp; &nbsp;   IP address, setting, 67
+<BR> &nbsp; &nbsp; &nbsp;   naming, caution with, 63
+<BR> &nbsp; &nbsp; &nbsp;   passwords
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      encrypted, 172
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      new option for timeout (Samba version 2.0), 239
+<BR> &nbsp; &nbsp; &nbsp;   pipes, option for, 243
+<BR> &nbsp; &nbsp; &nbsp;   server, domain master browser and, 119
+<BR> &nbsp; &nbsp; &nbsp;   SMB, option for, 243
+<BR> &nbsp; &nbsp; &nbsp;   user authentication and, 186
+<BR> &nbsp; &nbsp; &nbsp;   WINS address and, 70
+<BR>Windows NT Server 4.0, 65
+<BR>Windows NT Server Manager for Domains tool, 171
+<BR>Windows NT Workstation 4.0, 65
+<BR>Windows UNC format, 62
+<BR>Windows workgroups (see workgroups, Windows)
+<BR>WINDOWSHOSTS directory, 71
+<BR>WinPopup tool, 237
+<BR>WINS Address tab (Windows NT panel), 70
+<BR>WINS Configuration tab, 58
+<BR>wins proxy option, 228
+<BR>wins server option, 228
+<BR>wins support option, 228
+<BR>WINS (Windows Internet Name Service), 2, 25, 58
+<BR> &nbsp; &nbsp; &nbsp;   address, configuring, 70
+<BR> &nbsp; &nbsp; &nbsp;   name resolution and, 224
+<BR> &nbsp; &nbsp; &nbsp;   options for, 228
+<BR> &nbsp; &nbsp; &nbsp;   server, 44
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      configuring Windows domain logons and, 185
+<BR> &nbsp; &nbsp; &nbsp;   servers, 25, 59
+<BR> &nbsp; &nbsp; &nbsp;   Windows operating systems and, 26
+<BR> &nbsp; &nbsp; &nbsp;   WINS server
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      primary/secondary, 26
+<BR>WINS (Windows Internet Name Service) server
+<BR> &nbsp; &nbsp; &nbsp;   setting up Samba as, 226
+<BR> &nbsp; &nbsp; &nbsp;   setting up Sambato use, 225
+<BR>Wong, Brian, 321
+<BR>workgroup parameter, 96
+<BR>workgroups, 4
+<BR> &nbsp; &nbsp; &nbsp;   roles in assumed by Samba, 26
+<BR> &nbsp; &nbsp; &nbsp;   setting, 60
+<BR> &nbsp; &nbsp; &nbsp;   Windows
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      behaviors vs. Windows domain, 20
+<BR> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;      spanning multiple subnets, 24
+<BR>working directory, option for, 134
+<BR>Workstation service, installing, 65
+<BR>wrapper support for SMB (Server Message Block), 34
+<BR>write ahead, tuning, 318
+<BR>write list option, 161
+<BR>write privileges, 40
+<BR>write raw, tuning, 315
+<BR>write size, tuning, 317
+<BR>writeable/write ok option, 100
+<P><A NAME="Y"><B>Y</B><A HREF="inx.html">[&nbsp;Top&nbsp;]</A>
+
+<pre>
+</PRE>
+
+<P>
+<HR NOSHADE SIZE="-1">
+<P>
+Using Samba <a href="index.html">Table of Contents</a>
+<P>
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</td>
+</tr>
+</table>
+</body>
+</html>

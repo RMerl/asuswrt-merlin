@@ -1,0 +1,87 @@
+#! /bin/sh
+
+# Author: iSteve <isteve@bofh.cz>
+#
+# Note that this script is untested!
+
+# PATH should only include /usr/* if it runs after the mountnfs.sh script
+PATH=/sbin:/bin
+DESC="Hotplug2"
+NAME=hotplug2
+DAEMON=/sbin/$NAME
+DAEMON_ARGS="--coldplug --persistent"
+PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME
+
+# Load the VERBOSE setting and other rcS variables
+[ -f /etc/default/rcS ] && . /etc/default/rcS
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+. /lib/lsb/init-functions
+
+#
+# Function that starts the daemon/service
+#
+do_start()
+{
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
+		|| return 1
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
+		$DAEMON_ARGS \
+		|| return 2
+}
+
+#
+# Function that stops the daemon/service
+#
+do_stop()
+{
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
+	RETVAL="$?"
+	[ "$RETVAL" = 2 ] && return 2
+
+	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
+	[ "$?" = 2 ] && return 2
+	# Many daemons don't delete their pidfiles when they exit.
+	rm -f $PIDFILE
+	return "$RETVAL"
+}
+
+case "$1" in
+  start)
+  	[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
+	
+	case "$(uname -r)" in 
+	    2.[0123].*)
+		    log_end_msg 0
+		    exit 1;
+		    ;;
+	    2.[45].*)
+		    echo "/sbin/hotplug2-dnode" > /proc/sys/kernel/hotplug
+		    DAEMON_ARGS=${DAEMON_ARGS}" --set-coldplug-cmd /sbin/hotplug2-coldplug-2.4"
+		    ;;
+	    *)
+		    # 2.6 needs no extra flags
+		    ;;
+	esac
+	
+	do_start
+	case "$?" in
+		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+	esac
+	;;
+  stop)
+	[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+	do_stop
+	case "$?" in
+		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+	esac
+	;;
+  *)
+	echo "Usage: $SCRIPTNAME {start|stop}" >&2
+	exit 3
+	;;
+esac

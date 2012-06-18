@@ -1,0 +1,308 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Printing Banners</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Job Processing" href="jobsteps.htm">
+    <link rel="PREVIOUS" title="Opening the Output Device " href=
+    "opendevice.htm">
+    <link rel="NEXT" title="Printing Job Files " href=
+    "printingjob.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "opendevice.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          15. Job Processing</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "printingjob.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="BANNERPRINTING">15.6. Printing
+      Banners</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">ab</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Always print banner
+          (default FALSE)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">be=</var><span class=
+          "emphasis"><i class="EMPHASIS">End banner generator
+          program</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">bl=</var><span class=
+          "emphasis"><i class="EMPHASIS">Short banner line
+          format</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">bp=</var><span class=
+          "emphasis"><i class="EMPHASIS">Banner generator
+          program</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">bs=</var><span class=
+          "emphasis"><i class="EMPHASIS">Start banner
+          generator</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">generate_banner</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Generate banner for
+          forwarded jobs</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">hl</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Banner (header)
+          Last</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">of=</var><span class=
+          "emphasis"><i class="EMPHASIS">Banner and File Separator
+          Filter</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">sb</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Short banner (default
+          FALSE)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">sh</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Suppress header (banners)
+          (default FALSE)</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>Banner printing is one of the more complicated
+      configuration options of <b class="APPLICATION">LPRng</b>.
+      This is due mainly to historical evolution of the software,
+      as well as a lack of a well defined standard for filter
+      responsibilities. In the original BSD print spoolers, the
+      philosophy was that banner printing should be delegated to
+      the filters, as they were the most aware of the capabilities
+      of the printers. This required an <span class="emphasis"><i
+      class="EMPHASIS">out of band</i></span> method to convey
+      banner printing information to the filter, and resulted in a
+      complicated interface. The original interface was:</p>
+
+      <ol type="1">
+        <li>
+          <p>The filter doing banner printing was invoked as a
+          special <var class="LITERAL">:of</var> filter, or passed
+          a special flag.</p>
+        </li>
+
+        <li>
+          <p>The print spooling software would send a special <span
+          class="emphasis"><i class="EMPHASIS">single
+          line</i></span> of information telling it what the banner
+          information should be. Note that this line was never
+          documented except for the source code, and was
+          inconsistent from version to version. Also, there was no
+          indication of what to do with additional lines, if
+          any.</p>
+        </li>
+
+        <li>
+          <p>The filter would generate the banner, discard the
+          line, and then pass other lines to the output device.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>Adding to the confusion, the original print spoolers had a
+      <var class="LITERAL">:sh</var> (suppress header or banner)
+      flag, which was supposed to suppress banner printing. It did
+      this by having the print spooler not generate the magic
+      banner information line.</p>
+
+      <p>A more sophisticated banner printing system would allow
+      the print spooler software to generate the banner, and would
+      then have the <var class="LITERAL">:of</var> filter act as a
+      pass through. Thus, we need configure the <var class=
+      "LITERAL">:of</var> filter NOT to use the first line as
+      banner printing information, and to pass through all
+      information to the device.</p>
+
+      <p>Complicating this whole mess is the <var class=
+      "LITERAL">ld</var> (leader option) and <var class=
+      "LITERAL">tr</var> (trailer option) which is a string sent to
+      the output device (<var class="LITERAL">:of</var> filter)
+      when the device (filter) is initialized or terminated. This
+      can sometimes be interpreted as the banner line, leading to
+      unexpected results.</p>
+
+      <p>Sequence of Operations:</p>
+
+      <ol type="1">
+        <li>
+          <p>If the <var class="LITERAL">sh</var> (suppress header)
+          flag is true, no banner is printed, and the actions in
+          this section are skipped. No <span class="emphasis"><i
+          class="EMPHASIS">banner information line</i></span> is
+          generated for the <var class="LITERAL">:of</var> filter,
+          and no banner printing program is invoked. If there is an
+          <var class="LITERAL">:of</var> filter and it is expecting
+          such a line and you have <var class="LITERAL">ld</var> or
+          <var class="LITERAL">tr</var> information then you may
+          get unexpected results (actually, catastrophic failure is
+          a better term, but I digress).</p>
+        </li>
+
+        <li>
+          <p>If the <var class="LITERAL">hl</var> (header last)
+          flag is true the banner is printed at the end of the job
+          and the actions in this section are done at the end of
+          the job.</p>
+        </li>
+
+        <li>
+          <p>If the user does not want banner pages she can use the
+          <tt class="COMMAND">lpr -h</tt> option. This will cause
+          the <b class="APPLICATION">lpr</b> program to delete the
+          <var class="LITERAL">L</var> (banner name) line in the
+          control file. If there is no <var class="LITERAL">L</var>
+          line in the control file and <var class=
+          "LITERAL">ab</var> (always print a banner) is false (the
+          default), then no banner is printed and the other actions
+          in this section are skipped. If <var class=
+          "LITERAL">ab</var> is true and the <var class=
+          "LITERAL">L</var> line is missing then the <var class=
+          "LITERAL">N</var> (user login name) is used; if it is
+          missing as well, then ANONYMOUS is used for the user
+          name.</p>
+        </li>
+
+        <li>
+          <p>If a banner printing program is specified by <var
+          class="LITERAL">bp</var>, <var class="LITERAL">bs</var>,
+          or <var class="LITERAL">be</var> options, then <b class=
+          "APPLICATION">LPRng</b> will invoke the program to
+          generate a banner and then send the generated banner to
+          the printer via the <var class="LITERAL">:of</var>
+          filter. The banner printing program will be invoked using
+          the standard filter command line flags (see <a href=
+          "filteroptions.htm">Filter Command Line Options and
+          Environment Variables</a> for details), with is <acronym
+          class="ACRONYM">STDIN</acronym> attached to /dev/null and
+          <acronym class="ACRONYM">STDOUT</acronym> attached to a
+          file to hold the output banner.</p>
+        </li>
+
+        <li>
+          <p>If no banner printing program is specified and the
+          <var class="LITERAL">sb</var> (short banner) option is
+          TRUE (default is true), then the <var class=
+          "LITERAL">bl=...</var> (banner line) option value is
+          expanded and sent to the <var class="LITERAL">of_fd</var>
+          (<var class="LITERAL">:of</var> filter or device. The
+          default <var class="LITERAL">bl</var> value is: <var
+          class="LITERAL">bl=$-'C:$-'n Job: $-'J Date: $-'t</var>.
+          Using our example, this will get translated to:</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN7331"></a>
+<pre class="SCREEN">
+    papowell:A Job: file1 file2 Date: Thu Nov 27 23:02:04 PST 1997
+</pre>
+          </div>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>If no banner printing program is specified and we have
+          <var class="LITERAL">sb@</var> (no short banner) then we
+          skip banner generation, i.e. - we do <span class=
+          "emphasis"><i class="EMPHASIS">not</i></span> send a
+          banner generation line to the output (<var class=
+          "LITERAL">:of</var> filter).</p>
+        </li>
+
+        <li>
+          <p>If the queue is a normal forwarding queue, then the
+          <var class="LITERAL">generate_banner</var> option will
+          invoke the <var class="LITERAL">bp</var>, <var class=
+          "LITERAL">bs</var> or <var class="LITERAL">be</var>
+          program as appropriate to create a banner page file which
+          is then made the first (default) or last (<var class=
+          "LITERAL">hl</var> flag or <var class=
+          "LITERAL">be=...</var> present) file in a job. This
+          option has no effect in other types of queues. See the
+          <span class="emphasis"><i class="EMPHASIS"><a href=
+          "translateformat.htm">translate_format</a></i></span>
+          option as well.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "opendevice.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "printingjob.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Opening the
+          Output Device</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "jobsteps.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Printing Job
+          Files</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

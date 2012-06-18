@@ -1,0 +1,187 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="shortcut icon" href="images/favicon.png">
+<link rel="icon" href="images/favicon.png">
+<link href="../form_style.css"  rel="stylesheet" type="text/css">
+<link href="qis_style.css"  rel="stylesheet" type="text/css">
+<link href="../usp_style.css"  rel="stylesheet" type="text/css">
+<style type="text/css"> 
+.QISTutorFont{
+	font-family:Georgia, Arial, sans-serif;
+	width:280px;
+	line-height: 20px;
+}
+</style>
+<script type="text/javascript" language="JavaScript" src="../state.js"></script>
+<script type="text/javascript" language="JavaScript" src="../help.js"></script>
+<script type="text/javascript">
+
+function QKinternettype_load_body(){
+	parent.document.title = "<#Web_Title#> - Welcome!";
+	parent.set_step("t0");
+	document.form.http_passwd.focus();
+	
+	if (dsl_support != -1) {
+		document.getElementById("prev_btn").style.display = "none";
+		var detect_status = '<% nvram_get("dsltmp_autodet_state"); %>';	
+		if ( (detect_status == "Detecting") || (detect_status == "wait_for_init") ||
+			(detect_status == "initializing") ||(detect_status == "up") || (detect_status == "down")) {
+			document.form.next_page.value = "/qis/QIS_detect.htm";
+		}
+		else if ( (detect_status == "pppoe") || (detect_status == "pppoa") ) { //1:PPPoE, 2:PPPoA
+			document.form.next_page.value = "/qis/QIS_ppp_cfg.htm";
+		}
+		else if ( detect_status == "dhcp") { //2:MER
+			document.form.next_page.value = "/qis/QIS_mer_cfg.htm";		
+		}
+		else if ( detect_status == "Fail") {
+			document.form.next_page.value = "/qis/QIS_manual_setting.htm";				
+		}
+		else {
+			document.form.next_page.value = "/qis/QIS_manual_setting.htm";				
+		}
+	}
+
+	if(WebDav_support != -1){
+		document.getElementById('http_username_span').style.display = "none";
+		document.form.http_username.disabled = false;
+	}else{
+		document.getElementById('http_username_span').style.display = "";
+		document.form.http_username.disabled = true;
+		document.getElementById('http_username').style.display = "none";
+	}
+}
+
+function submitForm(){
+	if(document.form.http_passwd.value == "" || document.form.v_password2.value == ""){
+		alert("<#File_Pop_content_alert_desc6#>");
+		document.form.http_passwd.focus();
+		document.form.http_passwd.select();		
+		return false;
+	}
+	
+	if(document.form.http_passwd.value != document.form.v_password2.value){
+		alert("<#File_Pop_content_alert_desc7#>");
+		document.form.http_passwd.focus();
+		document.form.http_passwd.select();		
+		return false;	
+	}	
+
+	if(!validate_string(document.form.http_passwd)){
+		document.form.http_passwd.focus();
+		document.form.http_passwd.select();		
+		return false;
+	}
+	
+	if(document.form.http_passwd.value.length > 16){
+		alert("<#LANHostConfig_x_Password_itemdesc#>");		
+		document.form.http_passwd.focus();
+		document.form.http_passwd.select();		
+		return false;		
+	}	
+	
+	if(dsl_support != -1) {
+		// if it is dsl, just write to a temp variable
+		document.form.dsltmp_qis_admin_passwd.value = document.form.http_passwd.value;	
+		document.form.action_script.value = "";
+		document.form.dsltmp_qis_admin_passwd.disabled = false;
+		document.form.dsltmp_qis_admin_passwd_set.disabled = false;
+		document.form.http_passwd.disabled = true;
+		document.form.v_password2.disabled = true;
+		document.form.submit();
+		return;
+	}
+
+	parent.document.QKform.http_username.value = document.form.http_username.value;
+	parent.document.QKform.http_passwd.value = document.form.http_passwd.value;
+	document.form.flag.value = "";
+	
+	if(parent.flag_manual == 1)
+		document.form.action = "/qis/QIS_manual.htm";
+	else if(parent.document.QKform.sw_mode.value == "1")
+		document.form.action = "/qis/QIS_detect.htm";
+	else
+		document.form.action = "/qis/QIS_lanip.htm";
+
+	document.form.submit();
+}
+
+function gotoPrev(){
+	if (dsl_support != -1) {
+		location.href = "/qis/QIS_detect.htm";	
+	}
+	else {
+		location.href = "QIS_welcome.htm";
+	}
+}
+</script>
+</head>  
+<body onLoad="QKinternettype_load_body();" onunload="">
+<form method="post" name="form" action="/start_apply.htm" target="" onsubmit="return submitForm();">
+<input type="hidden" name="current_page" value="/qis/QIS_admin_pass.htm">
+<input type="hidden" name="next_page" value="/QIS_wizard.htm">   
+<input type="hidden" name="prev_page" value="/QIS_wizard.htm">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_script" value="restart_time">
+<input type="hidden" name="action_wait" value="0">
+<input type="hidden" name="dsltmp_qis_admin_passwd" value="" disabled>
+<input type="hidden" name="dsltmp_qis_admin_passwd_set" value="1" disabled>
+<input type="hidden" name="flag" value="detect">
+<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+<input type="hidden" name="sw_mode" value="1">
+<div class="QISmain">
+		<div>
+			<table width="730px">
+				<tr>
+					<td align="left">
+						<span class="description_down"><#QIS_pass_title#></span>
+					</td>
+					<td align="right">&nbsp;
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+<br/>
+
+<div style="margin-left:30px;">
+	<span class="QISGeneralFont" style="margin-left:0px;"><#QIS_pass_desc1#></span><br><br>
+	<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
+		<tr>
+		  <th width="200"><#Router_Login_Name#></th>
+		  <td class="QISformtd">
+				  	<div id="http_username_span" name="http_username_span" style="color:#FFFFFF;margin-left:8px;"><% nvram_get("http_username"); %></div>
+						<input type="text" id="http_username" name="http_username" style="height:25px;" class="input_15_table" maxlength="17" value='<% nvram_get("http_username"); %>'>
+		  </td>
+		</tr>	
+		<tr>
+		  <th width="200"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
+		  <td class="QISformtd">
+				<input type="password" value="" name="http_passwd" style="height:25px;" class="input_15_table" maxlength="17" />
+		  </td>
+		</tr>	
+		<tr>
+		  <th width="200"><span class="hintstyle"><#PASS_retype#></span></th>
+		  <td class="QISformtd">
+				<input type="password" value="" name="v_password2" style="height:25px;" class="input_15_table" maxlength="17" />
+		  </td>
+		</tr>	
+	</table>
+	<br>
+	<div class="QISTutorFont" style="height:200px"><#QIS_pass_desc3#></div>
+	<div style="margin-left:300px;margin-top:-200px;"><img width="300px" src="/images/qis/router_login.jpg"></span></div>
+</div>
+	<br>
+<div class="apply_gen">
+<span id="prev_btn">
+	<input type="button" value="<#CTL_prev#>" onclick="gotoPrev();" class="button_gen">
+</span>
+	<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen">
+</div>
+
+</form>
+</body> 

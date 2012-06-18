@@ -1,0 +1,162 @@
+	Wireless Tools
+	--------------
+
+	Ce paquetage contient les Wireless Tools (Outils Wireless), utilisé pour
+manipuler les Wireless Extensions. Les Wireless Extensions sont une interface
+vous permettant de manier les paramètres spécifiques aux Wireless LAN (réseaux
+sans fil) et d'obtenir les statistiques spécifiques.
+
+page web :
+--------
+	Vous trouverez beaucoup d'informations utiles sur :
+		http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/Tools.html
+		http://web.hpl.hp.com/personal/Jean_Tourrilhes/Linux/
+
+version pré compilée
+--------------------
+	La plupart des distributions Linux fournit un paquetage pré compilé
+contenant ces outils. Et beaucoup d'entre elles les pré installent par défaut.
+Par ailleurs, l'installation de ce paquetage est (maintenant) facile et vous
+permet d'obtenir une version plus à jour.
+
+INSTALL
+-------
+	Ce fichier contient les instructions et les requis pour l'installation.
+	*Doit* être lu.
+
+DISTRIBUTION.txt
+----------------
+	Ce fichier documente la manière de configurer les cartes wireless au
+démarrage avec différentes distributions Linux (en utilisant les Wireless
+Extensions). Veuillez le lire attentivement avant de poser des questions.
+	Dans ce fichier, j'essaye de rassembler toutes les spécificités de
+l'intégration des Wireless Extensions dans les ditributions Linux les plus
+courantes. J'ai besoin de votre aide pour compléter ce fichier.
+
+HOTPLUG.txt
+-----------
+	Ce fichier documente la manière de gérer et configurer les cartes
+wireless éjectables utilisant Hotplug. Il est plus avancé que les simples
+procédures de DISTRIBUTIONS.txt. Pour l'instant, il est principalement orienté
+Debian, mais j'espère que vous contribuerez pour d'autres distributions.
+
+PCMCIA.txt
+----------
+	Ce fichier décrit comment utiliser le script init PCMCIA pour configurer
+les Wireless Extensions et comment utiliser les schemes PCMCIA (NDT : procédures
+automatiques).
+
+pages man (iwconfig.8, iwlist.8, iwpriv.8, iwspy.8)
+---------
+	TRÈS IMPORTANT : J'essaye de garder les pages man à jour, ainsi vous
+devriez les lire avant de poser des questions.
+	TRÈS IMPORTANT : Ces pages man décrivent les fonctionnalités des outils,
+pas un périphérique n'en implémente toute l'étendue (et les pilotes en
+implémentent souvent encore moins).
+
+	Pour autant que je sache, les pages man constituent la plus complète, la
+plus à jour et la plus précise des documentations des Wireless Tools. Une mise
+à jour de la page web concernant les Wireless Extensions a été faite il y a fort
+longtemps. Envoyez-moi vos retours.
+
+	Les pages man peuvent aussi bien être copiées dans un endroit où la
+commande « man » les trouvera, comme /usr/local/man/man8, ou peut être lue
+localement avec la commande :
+		nroff -man xxx.8 | less
+(NDT : ou plus simplement avec « man ./xxx.8 »)
+
+pages man localisées (fr/*)
+--------------------
+	Les pages de man localisées ne sont pas écrites par moi (NDT\ : ainsi
+que ce document), par conséquent les seules disponibles sont celles qui me sont
+envoyées par de courageux volontaires et il faut s'attendre à ce que ces pages
+man soient en décalage par rapport à la version anglaise (c.-à-d. qu'elles
+n'aient pas toutes les mises à jour). La traduction des pages man n'est pas une
+tâche très gratifiante, sans compter mon anglais bancal et un certain nombre
+de termes techniques difficilement traduisibles vers d'autres langues, donc
+référez-vous à la version anglaise en cas de doute.
+
+iwconfig.c
+----------
+	L'outil wireless principal. Utilisé pour la configuration du matériel et
+pour voir les paramètres wireless les plus communs.
+
+iwlist.c
+--------
+	Affiche une grosse quantité d'information qui ne l'est pas par iwconfig.
+	Par exemple, tous les débits, toutes les fréquences, toutes les clefs...
+
+iwspy.c
+-------
+	Test de support Mobile IP et autorise la récupération de statistiques
+par adresse MAC (au lieu des stats globales). Aussi, pour certains
+pilotes/périphériques, c'est la seule manière d'obtenir des stats en mode
+Ad-Hoc.
+
+iwpriv.c
+--------
+	Manipule les ioctls privées des pilotes (« driver private ioctls ») :
+tous les paramètres qui sont spécifiques à un pilote ou à un périphérique et
+qui, par conséquent, ne font pas partie de iwconfig.
+
+iwgetid.c
+---------
+	Affiche l'ESSID ou le NWID du périphérique spécifié.
+	Peut aussi l'afficher dans un format pouvant être utilisé comme un
+« PCMCIA Scheme ».
+
+iwevent.c
+---------
+	Affiche les « Wireless Events » (Événements Wireless). Cela est
+nouveau, il n'y a donc pas encore beaucoup de pilotes qui le supportent...
+
+ifrename.c :
+----------
+	Renomme les interfaces réseau basées sur différents attributs.
+
+iwlib.c
+-------
+	Les librairies « helper » Wireless Tools. Peuvent être utiles si vous
+voulez créer votre propre application en utilisant les Wireless Extensions.
+
+Changelog, contributions :
+------------------------
+	Voir CHANGELOG.h
+
+wireless.h
+----------
+	Définition des Wireless Extensions. Gardez à l'esprit que la définition
+utilisée par les pilotes et les outils (Wireless Tools) doivent correspondre,
+sinon de drôles de choses peuvent arriver. Les outils essayent de le vérifier.
+	Depuis les Wireless Extensions v12, vous ne pouvez plus mettre ce
+fichier dans les entêtes de votre noyau pour mettre à jour les Wireless
+Extensions, vous avez besoin d'utiliser les patches complets disponibles sur ma
+page web. Donc, son utilité est plus pour le cas où vous prévoyez de faire de
+la compilation transverse (if you plan to do some « cross compile ») ou quelque
+chose de similaire.
+Juste pour votre plaisir, il y en a différentes versions. Si vos noyau/pilotes
+sont anciens, vous voudrez peut-être essayer les anciennes versions...
+
+sample_xxx.c :
+------------
+	Différents échantillons de code montrant comment implémenter quelques
+unes des caractéristiques les plus intéressantes des Wireless Extensions dans
+votre pilote.
+	Notez qu'il n'y a pas d'assurance que ce code compile, laissez-le tel
+quel, mais cela devrait vous orienter dans la bonne direction.
+	Aussi, jetez un ½il aux pilotes existant dans le noyau Linux.
+
+Autres outils :
+-------------
+	Ma page web liste bien d'autres outils utilisant les Wireless
+Extensions que vous pourriez trouver utiles...
+	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/Tools.html#links
+
+Autres questions :
+----------------
+	Vous avez le source, et il est documenté. Dans 99% des cas, vous y
+trouverez votre réponse.
+
+	Bonne chance...
+
+	Jean <jt@hpl.hp.com>

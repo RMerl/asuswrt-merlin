@@ -1,0 +1,184 @@
+.\" LIC: GPL
+.TH PPPOE-SERVER 8 "21 June 2008"
+.\""
+.UC 4
+.SH NAME
+pppoe-server \- user-space PPPoE server
+.SH SYNOPSIS
+.B pppoe-server \fR[\fIoptions\fR]
+
+.SH DESCRIPTION
+\fBpppoe-server\fR is a user-space server for PPPoE (Point-to-Point Protocol
+over Ethernet) for Linux and other UNIX systems.  \fBpppoe-server\fR works in
+concert with the \fBpppoe\fR client to respond to PPPoE discovery packets
+and set up PPPoE sessions.
+
+.SH OPTIONS
+.TP
+.B \-F
+The \fB\-F\fR option causes \fBpppoe-server\fR not to fork and become a
+daemon.  The default is to fork and become a daemon.
+
+.TP
+.B \-I \fIinterface\fR
+The \fB\-I\fR option specifies the Ethernet interface to use.  Under Linux,
+it is typically \fIeth0\fR or \fIeth1\fR.  The interface should be "up"
+before you start \fBpppoe-server\fR, but should \fInot\fR be configured to have
+an IP address.  You can supply multiple \fB\-I\fR options if you want the
+server to respond on more than one interface.
+
+.TP
+.B \-T \fItimeout\fR
+This option is passed directly to \fBpppoe\fR; see \fBpppoe\fR(8) for
+details.  If you are using kernel-mode PPPoE, this option has \fIno effect\fR.
+
+.TP
+.B \-C \fIac_name\fR
+Specifies which name to report as the access concentrator name.  If not
+supplied, the host name is used.
+
+.TP
+.B \-S \fIname\fR
+Offer a service named \fIname\fR.  Multiple \fB\-S\fR options may
+be specified; each one causes the named service to be advertised
+in a Service-Name tag in the PADO frame.  The first \fB\-S\fR option
+specifies the default service, and is used if the PPPoE client
+requests a Service-Name of length zero.
+
+.TP
+.B \-m \fIMSS\fR
+This option is passed directly to \fBpppoe\fR; see \fBpppoe\fR(8) for
+details.  If you are using kernel-mode PPPoE, this option has \fIno effect\fR.
+
+.TP
+.B \-x \fIn\fR
+Limit the number of sessions per peer MAC address to \fIn\fR.  If a given
+MAC address attempts to create more than \fIn\fR sessions, then its
+PADI and PADR packets are ignored.  If you set \fIn\fR to 0 (the default),
+then no limit is imposed on the number of sessions per peer MAC address.
+
+.TP
+.B \-s
+This option is passed directly to \fBpppoe\fR; see \fBpppoe\fR(8) for
+details.  In addition, it causes \fBpppd\fR to be invoked with the
+\fIsync\fR option.
+
+.TP
+.B \-L \fIip\fR
+Sets the local IP address.  This is passed to spawned \fBpppd\fR processes.
+If not specified, the default is 10.0.0.1.
+
+.TP
+.B \-R \fIip\fR
+Sets the starting remote IP address.  As sessions are established,
+IP addresses are assigned starting from \fIip\fR.   \fBpppoe-server\fR
+automatically keeps track of the pool of addresses and passes a
+valid remote IP address to \fBpppd\fR.  If not specified, a starting address
+of 10.67.15.1 is used.
+
+.TP
+.B \-N \fInum\fR
+Allows at most \fInum\fR concurrent PPPoE sessions.  If not specified,
+the default is 64.
+
+.TP
+.B \-O \fIfname\fR
+This option causes \fBpppoe-server\fR to tell \fBpppd\fR to use the option
+file \fIfname\fR instead of the default \fI/etc/ppp/pppoe-server-options\fR.
+
+.TP
+.B \-p \fIfname\fR
+Reads the specified file \fIfname\fR which is a text file consisting of
+one IP address per line.  These IP addresses will be assigned to clients.
+The number of sessions allowed will equal the number of addresses found
+in the file.  The \fB\-p\fR option overrides both \fB\-R\fR and \fB\-N\fR.
+
+In addition to containing IP addresses, the pool file can contain lines
+of the form:
+
+.nf
+	a.b.c.d-e
+.fi
+
+which includes all IP addresses from a.b.c.d to a.b.c.e.  For example,
+the line:
+
+.nf
+	1.2.3.4-7
+.fi
+
+is equivalent to:
+
+.nf
+	1.2.3.4
+	1.2.3.5
+	1.2.3.6
+	1.2.3.7
+.fi
+
+.TP
+.B \-r
+Tells the PPPoE server to randomly permute session numbers.  Instead of
+handing out sessions in order, the session numbers are assigned in an
+unpredictable order.
+
+.TP
+.B \-u
+Tells the server to invoke \fBpppd\fR with the \fIunit\fR option.  Note
+that this option only works for \fBpppd\fR version 2.4.0 or newer.
+
+.TP
+.B \-o \fIoffset\fR
+Instead of numbering PPPoE sessions starting at 1, they will be numbered
+starting at \fIoffset\fR+1.  This allows you to run multiple servers on
+a given machine; just make sure that their session numbers do not
+overlap.
+
+.TP
+.B \-f disc:sess
+The \fB\-f\fR option sets the Ethernet frame types for PPPoE discovery
+and session frames.  The types are specified as hexadecimal numbers
+separated by a colon.  Standard PPPoE uses frame types 8863:8864.
+\fIYou should not use this option\fR unless you are absolutely sure
+the peer you are dealing with uses non-standard frame types.
+
+.TP
+.B \-k
+The \fB\-k\fR option tells the server to use kernel-mode PPPoE on Linux.
+This option is available only on Linux kernels 2.4.0 and later, and
+only if the server was built with kernel-mode support.
+
+.TP
+.B \-h
+The \fB\-h\fR option prints a brief usage message and exits.
+
+.SH OPERATION
+
+\fBpppoe-server\fR listens for incoming PPPoE discovery packets.  When
+a session is established, it spawns a \fBpppd\fR process.  The following
+options are passed to \fBpppd\fR:
+
+.nf
+nodetach noaccomp nobsdcom nodeflate nopcomp novj novjccomp
+default-asyncmap
+.fi
+
+In addition, the local and remote IP address are set based on the
+\fB\-L\fR and \fB\-R\fR options.  The \fBpty\fR option is supplied along
+with a \fBpppoe\fR command to initiate the PPPoE session.  Finally,
+additional \fBpppd\fR options can be placed in the file
+\fB/etc/ppp/pppoe-server-options\fR (which must exist, even if it is just
+empty!)
+
+Note that \fBpppoe-server\fR is meant mainly for testing PPPoE clients.
+It is \fInot\fR a high-performance server meant for production use.
+
+.SH AUTHORS
+\fBpppoe-server\fR was written by David F. Skoll <dfs@roaringpenguin.com>.
+
+The \fBpppoe\fR home page is \fIhttp://www.roaringpenguin.com/pppoe/\fR.
+
+.SH SEE ALSO
+pppoe-start(8), pppoe-stop(8), pppoe-connect(8), pppd(8), pppoe.conf(5),
+pppoe(8), pppoe-setup(8), pppoe-status(8), pppoe-sniff(8), pppoe-relay(8)
+

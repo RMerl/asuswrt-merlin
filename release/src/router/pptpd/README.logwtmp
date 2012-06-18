@@ -1,0 +1,36 @@
+$Id: README.logwtmp,v 1.1 2004/04/28 11:36:07 quozl Exp $
+pptpd 1.2.0 logwtmp feature, by James Cameron, 28th April 2004.
+
+The --logwtmp feature uses the standard wtmp feature to track users
+who have connections to the server.  It works as follows.
+
+When a connection occurs, pptpd launches pppd with two additional
+options.  The first option directs pppd to load the pptpd-logwtmp.so
+plugin.  The second option is the IP address of the client.
+
+	"plugin /usr/lib/pptpd/pptpd-logwtmp.so"
+	"pptpd-original-ip 10.0.0.1"
+
+The plugin defines the pptpd-original-ip option so that pppd will
+accept it.
+
+If the plugin fails to load, pppd will fail in the usual manner.  Such
+a failure will usually be related to a missing file in /usr/lib/pptpd.
+
+The plugin asks pppd to notify it when IP comes up or goes down.
+
+When IP comes up, the plugin's ip_up() function executes, calling
+logwtmp() to mark the user as logged in.  Once this has happened,
+commands like "who" will show the user.  The tty will be set to the
+PPP interface name.
+
+When IP goes down, the plugin's ip_down() function executes, removing
+the entry from wtmp.  Note that a "kill -9" on the pppd will result in
+a user appearing to remain logged in.  Don't use "kill -9", use an
+ordinary kill.
+
+If pppd debug mode is enabled, the plugin announces it's version when
+loaded, and reports the parameters it is handing over to the logwtmp
+call.  See the plugins/pptpd-logwtmp.c source.
+
+--

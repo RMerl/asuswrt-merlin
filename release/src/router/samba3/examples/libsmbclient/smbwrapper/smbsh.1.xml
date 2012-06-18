@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="smbsh.1">
+
+<refmeta>
+	<refentrytitle>smbsh</refentrytitle>
+	<manvolnum>1</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">User Commands</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>smbsh</refname>
+	<refpurpose>Allows access to remote SMB shares
+	using UNIX commands</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>smbsh</command>
+		<arg choice="opt">-W workgroup</arg>
+		<arg choice="opt">-U username</arg>
+		<arg choice="opt">-P prefix</arg>
+		<arg choice="opt">-R &lt;name resolve order&gt;</arg>
+		<arg choice="opt">-d &lt;debug level&gt;</arg>
+		<arg choice="opt">-l logdir</arg>
+		<arg choice="opt">-L libdir</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para><command>smbsh</command> allows you to access an NT filesystem 
+	using UNIX commands such as <command>ls</command>, <command>
+	egrep</command>, and <command>rcp</command>. You must use a 
+	shell that is dynamically linked in order for <command>smbsh</command> 
+	to work correctly.</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+	    <varlistentry>
+		<term>-W WORKGROUP</term>
+		<listitem><para>Override the default workgroup specified in the 
+		workgroup parameter of the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry> file 
+		for this session. This may be needed to connect to some 
+		servers. </para></listitem>
+	    </varlistentry>
+		
+	    <varlistentry>
+		<term>-U username[%pass]</term>
+		<listitem><para>Sets the SMB username or username and password.
+		If this option is not specified, the user will be prompted for 
+		both the username and the password.  If %pass is not specified, 
+		the user will be prompted for the password.
+		</para></listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+		<term>-P prefix</term>
+		<listitem><para>This option allows
+		the user to set the directory prefix for SMB access. The 
+		default value if this option is not specified is 
+		<emphasis>smb</emphasis>.
+		</para></listitem>
+	    </varlistentry>
+
+		&stdarg.configfile;
+		&stdarg.server.debug;
+		&stdarg.resolve.order;
+
+	    <varlistentry>
+		<term>-L libdir</term>
+		<listitem><para>This parameter specifies the location of the 
+		shared libraries used by <command>smbsh</command>. The default
+		value is specified at compile time.
+		</para></listitem>
+	    </varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>To use the <command>smbsh</command> command, execute <command>
+	smbsh</command> from the prompt and enter the username and password 
+	that authenticates you to the machine running the Windows NT 
+	operating system.
+<programlisting>
+<prompt>system% </prompt><userinput>smbsh</userinput>
+<prompt>Username: </prompt><userinput>user</userinput>
+<prompt>Password: </prompt><userinput>XXXXXXX</userinput>
+</programlisting></para>
+
+
+	<para>Any dynamically linked command you execute from 
+	this shell will access the <filename>/smb</filename> directory 
+	using the smb protocol. For example, the command <command>ls /smb
+	</command> will show a list of workgroups. The command 
+	<command>ls /smb/MYGROUP </command> will show all the machines in 
+	the  workgroup MYGROUP. The command 
+	<command>ls /smb/MYGROUP/&lt;machine-name&gt;</command> will show the share 
+	names for that machine. You could then, for example, use the <command>
+	cd</command> command to change directories, <command>vi</command> to 
+	edit files, and <command>rcp</command>  to copy files.</para>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.0 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>BUGS</title>
+	
+	<para><command>smbsh</command> works by intercepting the standard 
+	libc calls with the dynamically loaded versions in <filename>
+	smbwrapper.o</filename>. Not all calls have been "wrapped", so 
+	some programs may not function correctly under <command>smbsh
+	</command>.</para>
+
+	<para>Programs which are not dynamically linked cannot make 
+	use of <command>smbsh</command>'s functionality. Most versions 
+	of UNIX have a <command>file</command> command that will 
+	describe how a program was linked.</para>
+</refsect1>
+
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para><citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+	<para>The original Samba man pages were written by Karl Auer. 
+	The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at <ulink url="ftp://ftp.icce.rug.nl/pub/unix/">
+	ftp://ftp.icce.rug.nl/pub/unix/</ulink>) and updated for the Samba 2.0 
+	release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook XML 4.2
+	for Samba 3.0 was done by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

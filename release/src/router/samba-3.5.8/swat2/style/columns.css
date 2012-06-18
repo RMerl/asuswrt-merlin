@@ -1,0 +1,73 @@
+/*
+	columns.css
+	Copyright (C) 2004-2005 Deryck Hodge <deryck@samba.org>
+
+	Creates a puesdo-three-column view.
+
+	You may freely use and modify the styles here, but if you 
+	intend to recreate the samba.org look exactly, please ask
+	permission first.
+*/
+
+
+/* Middle content column
+***********************************************************/
+#content {
+	position:absolute;
+	top:100px;
+	margin:0 20% 0 175px;
+	padding-top:30px;
+	padding-left:35px;
+	padding-bottom:50px;
+	padding-right:15px;
+	background-color:#FFF;
+	border-left:1px solid #FFFF64;
+	border-right:1px solid #FFFF64;
+}
+* html #content {
+	width:51%;
+	margin-right:0;
+}
+#content ul {
+	list-style-type:none;
+}
+
+
+/* Misc
+************************************************************/
+.headline {
+        margin-left:20px;
+        font-style:italic;
+}
+.plugs {
+	font-style:italic;
+	text-align:center;
+	border-top:2px groove #3878CD;
+	border-bottom:2px groove #3878CD;
+	padding:10px;
+	margin-top:100px;
+}
+.plugs p {
+	padding:30px;
+}
+.plugs img {
+	float:left;
+}
+.request {
+	margin-top:50px;
+	font-style:italic;
+	font-size:small;
+}
+#noswp img {
+    border:1px solid #3868CD;
+    width:370px;
+    height:90px;
+}
+#noswp a:hover {
+    background-color:transparent;
+}
+#noswp {
+    width:auto;
+    text-align:center;
+    margin:10px 0 25px 0;
+}

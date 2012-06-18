@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_readonly.8">
+
+<refmeta>
+	<refentrytitle>vfs_readonly</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_readonly</refname>
+	<refpurpose>make a Samba share read only for a specified time period</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = readonly</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>vfs_readonly</command> VFS module marks a share
+	as read only for all clients connecting within the configured
+	time period. Clients connecting during this time will be denied
+	write access to all files in the share, irrespective of ther
+	actual access privileges.</para>
+
+	<para>This module is stackable.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+
+		<varlistentry>
+		<term>readonly:period = BEGIN, END</term>
+		<listitem>
+		<para>Only mark the share as read only if the client
+		connection was made between the times marked by the
+		BEGIN and END date specifiers.
+		The syntax of these date specifiers is the
+		same as that accepted by the -d option of GNU
+		<citerefentry><refentrytitle>date</refentrytitle>
+			<manvolnum>1</manvolnum></citerefentry>.
+		</para>
+
+		</listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>Mark all shares read only:</para>
+<programlisting>
+        <smbconfsection name="[global]"/>
+	<smbconfoption name="vfs objects">readonly</smbconfoption>
+</programlisting>
+
+	<para>Mark the [backup] share as read only during business hours:</para>
+<programlisting>
+        <smbconfsection name="[backup]"/>
+	<smbconfoption name="path">/readonly</smbconfoption>
+	<smbconfoption name="vfs objects">readonly</smbconfoption>
+	<smbconfoption name="readonly:period">readonly:period = "today 9:00","today 17:00"</smbconfoption>
+</programlisting>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.0.25 of the Samba suite.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+</refsect1>
+
+</refentry>

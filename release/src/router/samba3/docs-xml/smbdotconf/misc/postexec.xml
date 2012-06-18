@@ -1,0 +1,21 @@
+<samba:parameter name="postexec"
+	         context="S"
+			 type="string"
+		 advanced="1" developer="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This option specifies a command to be run 
+	whenever the service is disconnected. It takes the usual 
+	substitutions. The command may be run as the root on some 
+	systems.</para>
+
+	<para>An interesting example may be to unmount server 
+	resources:</para>
+
+<para><command moreinfo="none">postexec = /etc/umount /cdrom</command></para>
+</description>
+<related>preexec</related> 
+
+<value type="default"></value>
+<value type="example">echo \&quot;%u disconnected from %S from %m (%I)\&quot; &gt;&gt; /tmp/log</value>
+</samba:parameter>

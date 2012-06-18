@@ -1,0 +1,446 @@
+#!/bin/bash
+#
+# dhclient-script for Linux.
+#
+#		This program is free software; you can redistribute it and/or
+#		modify it under the terms of the GNU General Public License
+#		as published by the Free Software Foundation; either version
+#		2 of the License, or (at your option) any later version.
+#
+# Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
+#
+# Probably, I did not understand, what this funny feature as "alias"
+# means exactly. For now I suppose, that it is a static address, which
+# we should install and preserve.
+#
+
+exec >> /tmp/DHS.log 2>&1
+
+echo dhc-script $* reason=$reason
+set | grep "^\(old_\|new_\|check_\)"
+
+LOG () {
+    echo LOG $* ;
+}
+
+# convert 8bit mask to length
+# arg: $1 = mask
+#
+Mask8ToLen() {
+	local l=0;
+
+	while [ $l -le 7 ]; do
+		if [ $[ ( 1 << $l ) + $1 ] -eq 256 ]; then
+			return	$[ 8 - $l ]
+		fi
+		l=$[ $l + 1 ]
+	done
+	return 0;
+}
+
+# convert inet dotted quad mask to length
+# arg: $1 = dotquad mask
+#
+MaskToLen() {
+ local masklen=0
+ local mask8=$1
+
+ case $1 in
+ 0.0.0.0)
+	return 0;
+	;;
+ 255.*.0.0)
+	masklen=8
+	mask8=${mask8#255.}
+	mask8=${mask8%.0.0}
+	;;
+ 255.255.*.0)
+	masklen=16
+	mask8=${mask8#255.255.}
+	mask8=${mask8%.0}
+	;;
+ 255.255.255.*)
+	masklen=24
+	mask8=${mask8#255.255.255.}
+	;;
+ *)
+	return 255
+	;;
+ esac
+ Mask8ToLen $mask8
+ return $[ $? + $masklen ]
+}
+
+# calculate ABC "natural" mask
+# arg: $1 = dotquad address
+#
+ABCMask () {
+ local class;
+
+ class=${1%%.*}
+
+ if [ "$1" = "255.255.255.255" ]; then
+    echo $1
+ elif [ "$1" = "0.0.0.0" ]; then
+    echo $1
+ elif [ $class -ge 224 ]; then
+    echo 240.0.0.0
+ elif [ $class -ge 192 ]; then
+    echo 255.255.255.0
+ elif [ $class -ge 128 ]; then
+    echo 255.255.0.0
+ else
+    echo 255.0.0.0
+ fi
+}
+
+# calculate ABC "natural" mask length
+# arg: $1 = dotquad address
+#
+ABCMaskLen () {
+ local class;
+
+ class=${1%%.*}
+
+ if [ "$1" = "255.255.255.255" ]; then
+    return 32
+ elif [ "$1" = "0.0.0.0" ]; then
+    return 0
+ elif [ $class -ge 224 ]; then
+    return 4;
+ elif [ $class -ge 192 ]; then
+    return 24;
+ elif [ $class -ge 128 ]; then
+    return 16;
+ else
+    return 8;
+ fi
+}
+
+# Delete IP address
+# args: $1 = interface
+#       $2 = address
+#       $3 = mask
+#       $4 = broadcast
+#       $5 = label
+#
+DelINETAddr () {
+  local masklen=32
+  local addrid=$1
+
+  LOG DelINETAddr $*
+
+  if [ "$5" ]; then
+    addrid=$addrid:$5
+  fi
+  LOG ifconfig $addrid down
+  ifconfig $addrid down
+}
+
+# Add IP address
+# args: $1 = interface
+#       $2 = address
+#       $3 = mask
+#       $4 = broadcast
+#       $5 = label
+#
+AddINETAddr () {
+  local mask_arg
+  local brd_arg
+  local addrid=$1
+
+  LOG AddINETAddr $*
+
+  if [ "$5" ]; then
+    addrid=$addrid:$5
+  fi
+  if [ "$3" ]; then
+    mask_arg="netmask $3"
+  fi
+  if [ "$4" ]; then
+    brd_arg="broadcast $4"
+  fi
+
+  LOG ifconfig $addrid $2 $mask_arg $brd_arg up
+  ifconfig $addrid $2 $mask_arg $brd_arg up
+}
+
+# Add default routes
+# args: $1 = routers list
+#
+AddDefaultRoutes() {
+    local router
+
+    if [ "$1" ]; then
+      LOG AddDefaultRoutes $*
+      for router in $1; do
+        LOG route add default gw $router
+        route add default gw $router
+      done ;
+    fi
+}
+
+# Delete default routes
+# args: $1 = routers list
+#
+DelDefaultRoutes() {
+    local router
+
+    if [ "$1" ]; then
+      LOG DelDefaultRoutes $*
+
+      for router in $1; do
+        LOG route del default gw $router
+        route del default gw $router
+      done
+    fi
+}
+
+# ping a host
+# args: $1 = dotquad address of the host
+#
+PingNode() {
+    LOG PingNode $*
+    if ping -q -c 1 -w 2 $1 ; then
+	return 0;
+    fi
+    return 1;
+}
+
+# Check (and add route, if alive) default routers
+# args: $1 = routers list
+# returns: 0 if at least one router is alive.
+#
+CheckRouterList() {
+    local router
+    local succeed=1
+
+    LOG CheckRouterList $*
+
+    for router in $1; do
+      if PingNode $router ; then
+	succeed=0
+        route add default gw $router
+      fi
+    done
+    return $succeed
+}
+
+# Delete/create static routes.
+# args: $1 = operation (del/add)
+#       $2 = routes list in format "dst1 nexthop1 dst2 ..."
+#
+# BEWARE: this feature of DHCP is obsolete, because does not
+#         support subnetting.
+#
+X-StaticRouteList() {
+    local op=$1
+    local lst="$2"
+    local masklen
+
+    LOG X-StaticRouteList $*
+
+    if [ "$lst" ]; then
+      set $lst
+      while [ $# -gt 1 ]; do
+	route $op -net $1 netmask `ABCMask "$1"` gw $2
+	shift; shift;
+      done
+   fi
+}
+
+# Create static routes.
+# arg: $1 = routes list in format "dst1 nexthop1 dst2 ..."
+#
+AddStaticRouteList() {
+    LOG AddStaticRouteList $*
+    X-StaticRouteList add "$1"
+}
+
+# Delete static routes.
+# arg: $1 = routes list in format "dst1 nexthop1 dst2 ..."
+#
+DelStaticRouteList() {
+    LOG DelStaticRouteList $*
+    X-StaticRouteList del "$1"
+}
+
+# Broadcast unsolicited ARP to update neighbours' caches.
+# args: $1 = interface
+#       $2 = address
+#
+UnsolicitedARP() {
+    if [ -f /sbin/arping ]; then
+	/sbin/arping -A -c 1 -I "$1" "$2" &
+	(sleep 2 ; /sbin/arping -U -c 1 -I "$1" "$2" ) &
+    fi
+}
+
+# Duplicate address detection.
+# args: $1 = interface
+#       $2 = test address
+# returns: 0, if DAD succeeded.
+DAD() {
+  if [ -f /sbin/arping ]; then
+	/sbin/arping -c 2 -w 3 -D -I "$1" "$2"
+	return $?
+  fi
+  return 0
+}
+
+
+# Setup resolver.
+# args: NO
+#       domain and nameserver list are passed in global variables.
+#
+# NOTE: we try to be careful and not to break user supplied resolv.conf.
+#       The script mangles it, only if it has dhcp magic signature.
+#
+UpdateDNS() {
+    local nameserver
+    local idstring="#### Generated by DHCPCD"
+
+    LOG UpdateDNS $*
+
+    if [ "$new_domain_name" = "" -a "$new_domain_name_servers" = "" ]; then
+	return 0;
+    fi
+
+    echo $idstring > /etc/resolv.conf.dhcp
+    if [ "$new_domain_name" ]; then
+	echo search $new_domain_name >> /etc/resolv.conf.dhcp
+    fi
+    echo options ndots:1 >> /etc/resolv.conf.dhcp
+
+    if [ "$new_domain_name_servers" ]; then
+	for nameserver in $new_domain_name_servers; do
+	    echo nameserver $nameserver >> /etc/resolv.conf.dhcp
+	done
+    else
+	echo nameserver 127.0.0.1 >> /etc/resolv.conf.dhcp
+    fi
+
+    if [ -f /etc/resolv.conf ]; then
+	if [ "`head -1 /etc/resolv.conf`" != "$idstring" ]; then
+	    return 0
+	fi
+	if [ "$old_domain_name" = "$new_domain_name" -a
+	     "$new_domain_name_servers" = "$old_domain_name_servers" ]; then
+	     return 0
+	fi
+    fi
+    mv /etc/resolv.conf.dhcp /etc/resolv.conf
+}
+
+case $reason in
+NBI)
+  exit 1
+  ;;
+
+MEDIUM)
+  exit 0
+  ;;
+
+PREINIT)
+  ifconfig $interface:dhcp down
+  ifconfig $interface:dhcp1 down
+  if [ -d /proc/sys/net/ipv4/conf/$interface ]; then
+    ifconfig $interface:dhcp 10.10.10.10 netmask 255.255.255.255
+    ifconfig $interface:dhcp down
+    if [ -d /proc/sys/net/ipv4/conf/$interface ]; then
+	LOG The interface $interface already configured.
+    fi
+  fi
+  ifconfig $interface:dhcp up
+  exit 0
+  ;;
+
+ARPSEND)
+  exit 0
+  ;;
+
+ARPCHECK)
+  if DAD "$interface" "$check_ip_address" ; then
+    exit 0
+  fi
+  exit 1
+  ;;
+
+BOUND|RENEW|REBIND|REBOOT)
+  if [ "$old_ip_address" -a "$alias_ip_address" -a \
+	"$alias_ip_address" != "$old_ip_address" ]; then
+    DelINETAddr "$interface" "$alias_ip_address" "$alias_subnet_mask" "$alias_broadcast_address" dhcp1
+  fi
+  if [ "$old_ip_address" -a "$old_ip_address" != "$new_ip_address" ]; then
+    DelINETAddr "$interface" "$old_ip_address" "$old_subnet_mask" "$old_broadcast_address" dhcp
+    DelDefaultRoutes "$old_routers"
+    DelStaticRouteList "$old_static_routes"
+  fi
+  if [ "$old_ip_address" = "" -o "$old_ip_address" != "$new_ip_address" -o \
+       "$reason" = "BOUND" -o "$reason" = "REBOOT" ]; then
+    AddINETAddr "$interface" "$new_ip_address" "$new_subnet_mask" "$new_broadcast_address" dhcp
+    AddStaticRouteList "$new_static_routes"
+    AddDefaultRoutes "$new_routers"
+    UnsolicitedARP "$interface" "$new_ip_address"
+  fi
+  if [ "$new_ip_address" != "$alias_ip_address" -a "$alias_ip_address" ]; then
+    AddINETAddr "$interface" "$alias_ip_address" "$alias_subnet_mask" "$alias_broadcast_address" dhcp1
+  fi
+  UpdateDNS
+  exit 0
+  ;;
+
+EXPIRE|FAIL)
+  if [ "$alias_ip_address" ]; then
+    DelINETAddr "$interface" "$alias_ip_address" "$alias_subnet_mask" "$alias_broadcast_address" dhcp1
+  fi
+  if [ "$old_ip_address" ]; then
+    DelINETAddr "$interface" "$old_ip_address" "$old_subnet_mask" "$old_broadcast_address" dhcp
+    DelDefaultRoutes "$old_routers"
+    DelStaticRouteList "$old_static_routes"
+  fi
+  if [ "$alias_ip_address" ]; then
+    AddINETAddr "$interface" "$alias_ip_address" "$alias_subnet_mask" "$alias_broadcast_address" dhcp1
+  fi
+  exit 0
+  ;;
+
+TIMEOUT)
+  if [ "$alias_ip_address" ]; then
+    DelINETAddr "$interface" "$alias_ip_address" "$alias_subnet_mask" "$alias_broadcast_address" dhcp1
+  fi
+# Seems, <null address> means, that no more old leases found.
+# Or does it mean bug in dhcpcd? 8) Fail for now.
+  if [ "$new_ip_address" = "<null address>" ]; then
+    if [ "$old_ip_address" ]; then
+	DelINETAddr "$interface" "$old_ip_address" "$old_subnet_mask" "$old_broadcast_address" dhcp
+    fi
+    if [ "$alias_ip_address" ]; then
+        AddINETAddr "$interface" "$alias_ip_address" "$alias_subnet_mask" "$alias_broadcast_address" dhcp1
+    fi
+    exit 1
+  fi
+  if DAD "$interface" "$new_ip_address" ; then
+    AddINETAddr "$interface" "$new_ip_address" "$new_subnet_mask" "$new_broadcast_address" dhcp
+    UnsolicitedARP "$interface" "$new_ip_address"
+    if [ "$alias_ip_address" -a "$alias_ip_address" != "$new_ip_address" ]; then
+      AddINETAddr "$interface" "$alias_ip_address" "$alias_subnet_mask" "$alias_broadcast_address" dhcp1
+      UnsolicitedARP "$interface" "$alias_ip_address"
+    fi
+    if CheckRouterList "$new_routers" ; then
+	AddStaticRouteList "$new_static_routes"
+	UpdateDNS
+	exit 0
+    fi
+  fi
+  DelINETAddr "$interface" "$new_ip_address" "$new_subnet_mask" "$new_broadcast_address" dhcp
+  DelDefaultRoutes "$old_routers"
+  DelStaticRouteList "$old_static_routes"
+  if [ "$alias_ip_address" ]; then
+    AddINETAddr "$interface" "$alias_ip_address" "$alias_subnet_mask" "$alias_broadcast_address" dhcp1
+  fi
+  exit 1
+  ;;
+esac
+
+exit 0

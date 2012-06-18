@@ -1,0 +1,420 @@
+\documentclass[17pt,headrule,footrule,landscape]{foils}
+\usepackage[latin1]{inputenc}
+\usepackage{pstricks,pst-node,pst-text,pst-3d}
+\usepackage{subfigure}
+\usepackage{fancybox}
+\usepackage{a4wide}
+\usepackage{times}
+\usepackage{fancyvrb}
+\usepackage{amsmath,amsthm, amsfonts, amssymb, amsxtra,amsopn}
+\usepackage{anysize}
+\usepackage[pdftex,bookmarksnumbered,colorlinks,backref, bookmarks, breaklinks, linktocpage,hyperfigures,hyperindex,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage[english]{babel}
+\usepackage[pdftex]{graphicx}
+\pdfcompresslevel=9
+%------------------------------------------------------- Values and counters
+\marginsize{1.5cm}{1.5cm}{0.5cm}{0.5cm}
+\renewcommand\floatpagefraction{.9}
+\renewcommand\topfraction{.9}
+\renewcommand\bottomfraction{.9}
+\renewcommand\textfraction{.1}
+
+\usepackage[usenames,pdftex]{color}
+%------------------------------------------------------- BfBlue Command
+\newcommand{\bfblue}[1]{ \textcolor{blue}{\bf #1} }
+
+%------------------------------------------------------- BfGreen Command
+\newcommand{\bfgreen}[1]{ \textcolor{blue}{\bf #1} }
+
+%------------------------------------------------------- BfRed Command
+\newcommand{\bfred}[1]{ \textcolor{red}{\bf #1} }
+
+%------------------------------------------------------- BfBlue Command
+\newcommand{\emblue}[1]{ \textcolor{blue}{\emph{#1}} }
+
+%------------------------------------------------------- BfGreen Command
+\newcommand{\emgreen}[1]{ \textcolor{blue}{\emph{#1}} }
+
+%------------------------------------------------------- BfRed Command
+\newcommand{\emred}[1]{ \textcolor{red}{\emph{#1}} }
+
+%------------------------------------------------------- Part Command
+\newcommand{\part}[1]{
+\foilhead{}
+\vspace{2cm}
+\begin{center}
+\Huge{\textcolor{blue}{#1}}
+\end{center}}
+ \newcommand{\dbz}{} 
+%------------------------------------------------------- Slide Command
+\newcommand{\slide}[1]{
+\foilhead[-0.5in]{\large{\textcolor{blue}{#1}}}
+}
+\newcommand{\id}[1]{
+\label{#1}
+\hypertarget{#1}{}
+}
+% --------------------------------------------
+\newenvironment{admminipage}{
+\begin{Sbox}
+\begin{minipage}
+}{
+\end{minipage}
+\end{Sbox}
+\fbox{\TheSbox}
+}
+\newlength{\admlength}
+\newenvironment{admonition}[2] {
+\hspace{0mm}\newline\hspace*\fill\newline
+\noindent
+\setlength{\fboxsep}{5pt}
+\setlength{\admlength}{\linewidth}
+\addtolength{\admlength}{-10\fboxsep}
+\addtolength{\admlength}{-10\fboxrule}
+\admminipage{\admlength}
+\bfblue{\sc\large{#2}}\newline
+\\[1mm]
+%\sffamily
+\includegraphics[width=1cm]{#1}
+\addtolength{\admlength}{-1cm}
+\addtolength{\admlength}{-20pt}
+\begin{minipage}[lt]{\admlength}
+\parskip=0.5\baselineskip \advance\parskip by 0pt plus 2pt
+}{
+\vspace{5mm}
+\end{minipage}
+\endadmminipage
+\vspace{.5em}
+\par
+}
+%--------------------------------------------------SLIDES INFORMATION
+\title{{\black The Slides Document Type}}
+\author{{\black }}
+ \begin{document}
+\maketitle
+%--------------------------------------------------SLIDES INFORMATION
+\title{{\black The Slides Document Type}}
+\author{{\black }}
+ 
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{Introduction}
+\label{id2739608}
+
+This is the introductory slide.
+
+If you use foil groups (previously called sections), you can have introductory slides before the first group.
+
+\begin{admonition}{figures/warning}{Warning! :)}% NOTICE: see the db2latex FAQ w.r.t db2latex variable $latex.admonition.path
+
+This is a work in progress ("release early, release often")
+\end{admonition}
+
+\end{slide}
+                                                                        
+
+%---------------------------------------------------------------------- PART 
+\part{Purpose and History            }
+%---------------------------------------------------------------------- PART 
+\label{id2739637}
+
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{What Are Slides?}
+\label{id2739648}
+
+\begin{itemize}
+%--- Item
+\item 
+An XML presentation tool
+
+
+%--- Item
+\item 
+Suitable for HTML or PDF presentations
+
+
+%--- Item
+\item 
+Supported by Open Source software
+
+\end{itemize}
+\end{slide}
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{Where Do They Come From?}
+\label{id2739677}
+
+\begin{itemize}
+%--- Item
+\item 
+Maintained by the \href{http://docbook.sourceforge.net/}{DocBook Open Repository} Project at
+\href{http://sourceforge.net/}{SourceForge}
+
+
+%--- Item
+\item 
+Customization layer of \href{http://www.oasis-open.org/docbook/xml/simple/}{Simplified DocBook}
+
+\end{itemize}
+\end{slide}
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{Why?}
+\label{id2739724}
+
+\begin{itemize}
+%--- Item
+\item 
+So Norm could give presentations
+
+
+%--- Item
+\item 
+So Norm could publish those presentations on the web
+
+
+%--- Item
+\item 
+So Norm could have {\em accessible} presentations that didn't rely on the grotesque HTML output of some otherwise bloated, proprietary tool
+
+
+%--- Item
+\item 
+So Norm could cut-and-paste from his DocBook articles and papers directly into his slides
+
+
+%--- Item
+\item 
+Oh, let's face it: because it was there. Like the proverbial mountain.
+
+\end{itemize}
+\end{slide}
+                                                                        
+
+%---------------------------------------------------------------------- PART 
+\part{Authoring            }
+%---------------------------------------------------------------------- PART 
+\label{id2739773}
+
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{Minimal Presentation}
+\label{id2739783}
+
+The smallest possible presentation looks like this:
+
+\begin{Verbatim}[]
+<?xml version='1.0'?>
+<!DOCTYPE slides PUBLIC "-//Norman Walsh//DTD Slides XML V3.0b1//EN"
+                 "http://docbook.sourceforge.net/release/slides/3.0b1/slides.dtd">
+<slides>
+<slidesinfo>
+<title>Presentation Title</title>
+</slidesinfo>
+<foil><title>Foil Title</title>
+<para>Foil content</para>
+</foil>
+</slides>
+\end{Verbatim}
+
+Every presentation must contain at least one slide.
+\end{slide}
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{Presentation Metadata}
+\label{id2739810}
+
+Presentations usually have more metadata in the {\texttt{{slidesinfo}}} wrapper. Here's a typical example:
+
+\begin{Verbatim}[]
+<slidesinfo>
+  <title>Supporting Localized Generated Text</title>
+  <titleabbrev>Generated Text</titleabbrev>
+  <author><firstname>Norman</firstname><surname>Walsh</surname></author>
+  <pubdate>Sunday, 08 Apr 2001</pubdate>
+  <confgroup>
+    <conftitle>XSLTUK-01</conftitle>
+    <confdates>08 Apr - 09 Apr 2001</confdates>
+    <conftitle role="address">Keble College, Oxford, UK</conftitle>
+    <confnum>1</confnum>
+  </confgroup>
+  <releaseinfo role="version">Version TEST</releaseinfo>
+  <copyright><year>2001</year>
+             <holder>Sun Microsystems, Inc.</holder></copyright>
+</slidesinfo>
+\end{Verbatim}
+\end{slide}
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{Presentation Content}
+\label{id2739830}
+
+It's common for individual slides to consist of a single bulleted or numbered list. However, the full range of «block level» Simplified DocBook elements are avialable.
+\end{slide}
+                                                                        
+
+%---------------------------------------------------------------------- PART 
+\part{Styling            }
+%---------------------------------------------------------------------- PART 
+\label{id2739862}
+
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{HTML}
+\label{id2739872}
+
+There are a lot of HTML options. When you publish your presentation on the web, it's probably best to use one of the simpler, more accessible styles. For your actual live presentation, you may want to choose something fancier.
+\end{slide}
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{Plain HTML}
+\label{id2739888}
+
+\begin{itemize}
+%--- Item
+\item 
+\href{../default/}{{\texttt{{default.\dbz{}xsl}}}}
+and
+\href{../plain/}{{\texttt{{plain.\dbz{}xsl}}}} produce fairly simple presentations
+
+
+%--- Item
+\item 
+\href{../tables/}{{\texttt{{tables.\dbz{}xsl}}}}
+uses a table to show the navigation context (somewhat like the tabular
+\href{http://docbook.sourceforge.net/}{Website} style)
+
+
+%--- Item
+\item 
+\href{../vslides/}{{\texttt{{vslides.\dbz{}xsl}}}} places navigation on the left side instead of the top and bottom
+
+
+%--- Item
+\item 
+\href{../w3c/}{{\texttt{{w3c.\dbz{}xsl}}}} produces slides that resemble the format used by the W3C for presentations
+
+\end{itemize}
+\end{slide}
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{Fancy HTML}
+\label{id2739970}
+
+\begin{itemize}
+%--- Item
+\item 
+\href{../frames1/frames.html}{{\texttt{{frames.\dbz{}xsl}}}} uses frames. There are several options that you can apply:
+
+\begin{itemize}
+%--- Item
+\item 
+\href{../frames2/frames.html}{overlay} uses CSS absolute positioning to keep the navigation static on the pages (only works on recent browsers)
+
+
+%--- Item
+\item 
+\href{../frames3/frames.html}{multiframe} uses additional frames to keep the navigation static on the pages
+
+
+%--- Item
+\item 
+\href{../frames4/frames.html}{dynamic.toc} uses JavaScript to keep the table of contents and the current slide in sync (only works on recent browsers)
+
+
+%--- Item
+\item 
+\href{../frames5/frames.html}{active.toc} uses JavaScript to make
+the table of context «active» so that you can open and close the foil groups (only works on recent browsers)
+
+
+%--- Item
+\item 
+These toc styles can be combined with \href{../frames6/frames.html}{overlay} or \href{../frames7/frames.html}{multiframe}
+
+\end{itemize}
+
+\end{itemize}
+\end{slide}
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{PDF}
+\label{id2740078}
+
+The {\texttt{{fo-\dbz{}plain.\dbz{}xsl}}} stylesheet produces XSL Formatting Objects that can subsequently be turned into PDF.
+\end{slide}
+                                                                        
+
+%---------------------------------------------------------------------- PART 
+\part{Presentation            }
+%---------------------------------------------------------------------- PART 
+\label{id2740095}
+
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{Look And Feel}
+\label{id2740106}
+
+For HTML display, most of the actual «look-and-feel» of the presentation is controlled by the CSS stylesheet(s) used.
+\end{slide}
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{Presentation Tips}
+\label{id2740122}
+
+\begin{itemize}
+%--- Item
+\item 
+It's usually best if each slide is only one page (avoid scrolling).
+
+
+%--- Item
+\item 
+If you'll be giving your presentation with a projector, make sure you know what resolution you'll have available and test your presentation at that resolution.
+
+
+%--- Item
+\item 
+Make your fonts bigger so the folks in the back of the room can read your slides.
+
+
+%--- Item
+\item 
+Test the equipment before your presentation begins. Really.
+
+
+%--- Item
+\item 
+Speak more slowly. I always forget that one.
+
+\end{itemize}
+\end{slide}
+                                                                        
+
+%---------------------------------------------------------------------- PART 
+\part{Conclusions            }
+%---------------------------------------------------------------------- PART 
+\label{id2740169}
+
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{Conclusions}
+\label{id2740175}
+
+It's customary to have a conclusions slide.
+\end{slide}
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{References}
+\label{id2740187}
+
+References are a good idea too.
+\end{slide}
+
+%---------------------------------------------------------------------- SLIDE 
+\begin{slide}{Q\&A}
+\label{id2740198}
+
+Any questions?
+\end{slide}
+\end{document}

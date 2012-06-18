@@ -1,0 +1,94 @@
+###############################################################################
+# $Id: pptpd-options,v 1.1 2004/05/17 02:16:35 quozl Exp $
+#
+# Sample Poptop PPP options file /etc/ppp/pptpd-options
+# Options used by PPP when a connection arrives from a client.
+# This file is pointed to by /etc/pptpd.conf option keyword.
+# Changes are effective on the next connection.  See "man pppd".
+#
+# You are expected to change this file to suit your system.  As
+# packaged, it requires PPP 2.4.2 and the kernel MPPE module.
+###############################################################################
+
+
+# Authentication
+
+# Name of the local system for authentication purposes 
+# (must match the second field in /etc/ppp/chap-secrets entries)
+name pptpd
+
+# Optional: domain name to use for authentication
+# domain mydomain.net
+
+# Strip the domain prefix from the username before authentication.
+# (applies if you use pppd with chapms-strip-domain patch)
+#chapms-strip-domain
+
+
+# Encryption
+# Debian: on systems with a kernel built with the package
+# kernel-patch-mppe >= 2.4.2 and using ppp >= 2.4.2, ...
+# {{{
+refuse-pap
+refuse-chap
+refuse-mschap
+# Require the peer to authenticate itself using MS-CHAPv2 [Microsoft
+# Challenge Handshake Authentication Protocol, Version 2] authentication.
+require-mschap-v2
+# Require MPPE 128-bit encryption
+# (note that MPPE requires the use of MSCHAP-V2 during authentication)
+require-mppe-128
+# }}}
+
+
+
+
+# Network and Routing
+
+# If pppd is acting as a server for Microsoft Windows clients, this
+# option allows pppd to supply one or two DNS (Domain Name Server)
+# addresses to the clients.  The first instance of this option
+# specifies the primary DNS address; the second instance (if given)
+# specifies the secondary DNS address.
+#ms-dns 10.0.0.1
+#ms-dns 10.0.0.2
+
+# If pppd is acting as a server for Microsoft Windows or "Samba"
+# clients, this option allows pppd to supply one or two WINS (Windows
+# Internet Name Services) server addresses to the clients.  The first
+# instance of this option specifies the primary WINS address; the
+# second instance (if given) specifies the secondary WINS address.
+#ms-wins 10.0.0.3
+#ms-wins 10.0.0.4
+
+# Add an entry to this system's ARP [Address Resolution Protocol]
+# table with the IP address of the peer and the Ethernet address of this
+# system.  This will have the effect of making the peer appear to other
+# systems to be on the local ethernet.
+# (you do not need this if your PPTP server is responsible for routing
+# packets to the clients -- James Cameron)
+proxyarp
+
+# Debian: do not replace the default route
+nodefaultroute
+
+
+# Logging
+
+# Enable connection debugging facilities.
+# (see your syslog configuration for where pppd sends to)
+#debug
+
+# Print out all the option values which have been set.
+# (often requested by mailing list to verify options)
+#dump
+
+
+# Miscellaneous
+
+# Create a UUCP-style lock file for the pseudo-tty to ensure exclusive
+# access.
+lock
+
+# Disable BSD-Compress compression
+nobsdcomp 

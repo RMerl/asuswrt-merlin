@@ -1,0 +1,495 @@
+% texmf.cnf -- runtime path configuration file for kpathsea.
+% (If you change or delete `original' on the previous line, the
+% distribution won't install its version over yours.)
+% Public domain.
+% 
+% What follows is a super-summary of what this .cnf file can
+% contain. Please read the Kpathsea manual for more information.
+% 
+% texmf.cnf is generated from texmf.in, by replacing @var@ with the
+% value of the Make variable `var', via a sed file texmf.sed, generated
+% (once) by kpathsea/Makefile (itself generated from kpathsea/Makefile.in
+% by configure).
+% 
+% Any identifier (sticking to A-Za-z_ for names is safest) can be assigned.
+% The `=' (and surrounding spaces) is optional.
+% No % or @ in texmf.in, for the sake of autogeneration.
+% (However, %'s and @'s can be edited into texmf.cnf or put in envvar values.)
+% $foo (or ${foo}) in a value expands to the envvar or cnf value of foo.
+% 
+% Earlier entries (in the same or another file) override later ones, and
+% an environment variable foo overrides any texmf.cnf definition of foo.
+% 
+% All definitions are read before anything is expanded, so you can use
+% variables before they are defined. 
+% 
+% If a variable assignment is qualified with `.PROGRAM', it is ignored
+% unless the current executable (last filename component of argv[0]) is
+% named PROGRAM.  This foo.PROGRAM construct is not recognized on the
+% right-hand side. For environment variables, use FOO_PROGRAM.
+% 
+% Which file formats use which paths for searches is described in the
+% various programs' and the kpathsea documentation.
+% 
+% // means to search subdirectories (recursively).
+% A leading !! means to look only in the ls-R db, never on the disk.
+% A leading/trailing/doubled ; in the paths will be expanded into the
+%   compile-time default. Probably not what you want.
+% 
+% You can use brace notation, for example: /usr/local/{mytex:othertex}
+% expands to /usr/local/mytex:/usr/local/othertex.  Instead of the path
+% separator you can use a comma: /usr/local/{mytex,othertex} also expands
+% to /usr/local/mytex:/usr/local/othertex.  However, the use of the comma
+% instead of the path separator is deprecated.
+%
+% The text above assumes thet path separator is a colon (:).  Non-UNIX
+% systems use different path separators, like the semicolon (;).
+
+%  Part 1: Search paths and directories.
+
+% You can set an environment variable to override TEXMF if you're testing
+% a new TeX tree, without changing anything else.
+% 
+% You may wish to use one of the $SELFAUTO... variables here so TeX will
+% find where to look dynamically.  See the manual and the definition
+% below of TEXMFCNF.
+
+% The main tree, which must be mentioned in $TEXMF, below:
+TEXMFMAIN = /usr/local/share/texmf
+
+% A place for local additions to a "standard" texmf tree.  For example:
+%   TEXMFLOCAL = /usr/local/share/texmf.local
+
+% If defined, teTeX's texconfig stores modifications here (instead of the
+% TEXMFMAIN tree).
+%   VARTEXMF = /usr/local/share/texmf-var
+
+% User texmf trees can be catered for like this...
+%   HOMETEXMF = $HOME/texmf
+
+% Now, list all the texmf trees. If you have multiple trees you can
+% use shell brace notation, like this:
+%   TEXMF = {$HOMETEXMF,!!$TEXMFLOCAL,!!$TEXMFMAIN}
+% The braces are necessary.  If you set VARTEXMF, you also have to
+%   - list $VARTEXMF in the TEXMF definition;
+%   - make sure that $VARTEXMF precedes $TEXMFMAIN in the TEXMF definition.
+TEXMF = !!$TEXMFMAIN
+
+% The system trees.  These are the trees that are shared by all the users.
+SYSTEXMF = $TEXMF
+
+% Where generated fonts may be written.  This tree is used when the sources
+% were found in a system tree and either that tree wasn't writable, or the
+% varfonts feature was enabled in MT_FEATURES in mktex.cnf.
+VARTEXFONTS = /var/tmp/texfonts
+
+% Where to look for ls-R files.  There need not be an ls-R in the
+% directories in this path, but if there is one, Kpathsea will use it.
+%
+% Remove $VARTEXFONTS from TEXMFDBS if the VARTEXFONTS directory is below
+% one of the TEXMF directories (avoids overlapping ls-R files).
+TEXMFDBS = $TEXMF;$VARTEXFONTS
+
+% It may be convenient to define TEXMF like this:
+%   TEXMF = {$HOMETEXMF,!!$TEXMFLOCAL,!!$TEXMFMAIN,$HOME}
+% which allows users to set up entire texmf trees, and tells TeX to
+% look in places like ~/tex and ~/bibtex.  If you do this, define TEXMFDBS
+% like this:
+%   TEXMFDBS = $HOMETEXMF;$TEXMFLOCAL;$TEXMFMAIN;$VARTEXFONTS
+% or mktexlsr will generate an ls-R file for $HOME when called, which is
+% rarely desirable.  If you do this you'll want to define SYSTEXMF like
+% this:
+%   SYSTEXMF = $TEXMFLOCAL;$TEXMFMAIN
+% so that fonts from a user's tree won't escape into the global trees.
+%
+% On some systems, there will be a system tree which contains all the font
+% files that may be created as well as the formats.  For example
+%   VARTEXMF = /var/lib/texmf
+% is used on many Linux systems.  In this case, set VARTEXFONTS like this
+%   VARTEXFONTS = $VARTEXMF/fonts
+% and do not mention it in TEXMFDBS (but _do_ mention VARTEXMF).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Usually you will not need to edit any of the other variables in part 1. %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% WEB2C is for Web2C specific files.  The current directory may not be
+% a good place to look for them.
+WEB2C = $TEXMF/web2c
+
+% TEXINPUTS is for TeX input files -- i.e., anything to be found by \input
+% or \openin, including .sty, .eps, etc. 
+
+% Plain TeX.  Have the command tex check all directories as a last
+% resort, we may have plain-compatible stuff anywhere.
+TEXINPUTS.tex = .;$TEXMF/tex/{plain,generic,}//
+
+% Other plain-based formats.
+TEXINPUTS.amstex = .;$TEXMF/tex/{amstex,plain,generic,}//
+TEXINPUTS.csplain = .;$TEXMF/tex/{csplain,plain,generic,}//
+TEXINPUTS.eplain  = .;$TEXMF/tex/{eplain,plain,generic,}//
+TEXINPUTS.ftex = .;$TEXMF/tex/{formate,plain,generic,}//
+TEXINPUTS.jadetex = .;$TEXMF/tex/{jadetex,plain,generic,}//
+TEXINPUTS.mex = .;$TEXMF/tex/{mex,plain,generic,}//
+TEXINPUTS.texinfo = .;$TEXMF/tex/{texinfo,plain,generic,}//
+
+% LaTeX 2e specific macros are stored in latex/, macros that can only be
+% used with 2.09 in latex209/.  In addition, we look in the directory
+% latex209, useful for macros that were written for 2.09 and do not
+% mention 2e at all, but can be used with 2e.
+TEXINPUTS.cslatex = .;$TEXMF/tex/{cslatex,csplain,latex,generic,}//
+TEXINPUTS.platex  = .;$TEXMF/tex/{platex,latex,generic,}//
+TEXINPUTS.latex = .;$TEXMF/tex/{latex,generic,}//
+TEXINPUTS.latex209 = .;$TEXMF/tex/{latex209,generic,latex,}//
+
+% Fontinst needs to read afm files.
+TEXINPUTS.fontinst = .;$TEXMF/tex//;$TEXMF/fonts/afm//
+
+% MLTeX.
+TEXINPUTS.frlatex = .;$TEXMF/{mltex,tex}/{french,latex,generic,}//
+TEXINPUTS.frtex   = .;$TEXMF/{mltex,tex}/{french,plain,generic,}//
+TEXINPUTS.mllatex = .;$TEXMF/{mltex,tex}/{latex,generic,}//
+TEXINPUTS.mltex = .;$TEXMF/{mltex,tex}/{plain,generic,}//
+
+% e-TeX.  This form of the input paths is borrowed from teTeX.  A certain
+% variant of TDS is assumed here, unaffected by the build variables.
+TEXINPUTS.elatex   = .;$TEXMF/{etex,tex}/{latex,generic,}//
+TEXINPUTS.etex     = .;$TEXMF/{etex,tex}/{plain,generic,}//
+
+% pdfTeX.  This form of the input paths is borrowed from teTeX.  A certain
+% variant of TDS is assumed here, unaffected by the build variables.
+TEXINPUTS.pdfcslatex = .;$TEXMF/{pdftex,tex}/{cslatex,csplain,latex,generic,}//
+TEXINPUTS.pdfcsplain = .;$TEXMF/{pdftex,tex}/{csplain,plain,generic,}//
+TEXINPUTS.pdfjadetex = .;$TEXMF/{pdftex,tex}/{jadetex,plain,generic,}//
+TEXINPUTS.pdflatex = .;$TEXMF/{pdftex,tex}/{latex,generic,}//
+TEXINPUTS.pdfmex   = .;$TEXMF/{pdftex,tex}/{mex,plain,generic,}//
+TEXINPUTS.pdftex   = .;$TEXMF/{pdftex,tex}/{plain,generic,}//
+TEXINPUTS.pdftexinfo = .;$TEXMF/{pdftex,tex}/{texinfo,plain,generic,}//
+
+% pdfeTeX.
+TEXINPUTS.pdfelatex = .;$TEXMF/{pdfetex,pdftex,etex,tex}/{latex,generic,}//
+TEXINPUTS.pdfetex   = .;$TEXMF/{pdfetex,pdftex,etex,tex}/{plain,generic,}//
+
+% Omega.
+TEXINPUTS.lambda = .;$TEXMF/{omega,tex}/{lambda,latex,generic,}//
+TEXINPUTS.omega = .;$TEXMF/{omega,tex}/{plain,generic,}//
+
+% Context macros by Hans Hagen:
+TEXINPUTS.context = .;$TEXMF/{pdftex,etex,tex}/{context,plain,generic,}//
+
+% odd formats  needing their own paths
+TEXINPUTS.lamstex  = .;$TEXMF/tex/{lamstex,plain,generic,}//
+TEXINPUTS.lollipop = .;$TEXMF/tex/{lollipop,plain,generic,}//
+
+% Earlier entries override later ones, so put this last.
+TEXINPUTS = .;$TEXMF/tex/{generic,}//
+
+% Metafont, MetaPost inputs.
+MFINPUTS = .;$TEXMF/metafont//;{$TEXMF/fonts,$VARTEXFONTS}/source//
+MPINPUTS = .;$TEXMF/metapost//
+
+% Dump files (fmt/base/mem) for vir{tex,mf,mp} to read (see web2c/INSTALL),
+% and string pools (.pool) for ini{tex,mf,mp}.  It is silly that we have six
+% paths and directories here (they all resolve to a single place by default),
+% but historically ...
+TEXFORMATS = .;$TEXMF/web2c
+MFBASES = .;$TEXMF/web2c
+MPMEMS = .;$TEXMF/web2c
+TEXPOOL = .;$TEXMF/web2c
+MFPOOL = .;$TEXMF/web2c
+MPPOOL = .;$TEXMF/web2c
+
+% Device-independent font metric files.
+VFFONTS = .;$TEXMF/fonts/vf//
+TFMFONTS = .;{$TEXMF/fonts,$VARTEXFONTS}/tfm//
+
+% The $MAKETEX_MODE below means the drivers will not use a cx font when
+% the mode is ricoh.  If no mode is explicitly specified, kpse_prog_init
+% sets MAKETEX_MODE to /, so all subdirectories are searched.  See the manual.
+% The modeless part guarantees that bitmaps for PostScript fonts are found.
+PKFONTS = .;{$TEXMF/fonts,$VARTEXFONTS}/pk/{$MAKETEX_MODE,modeless}//
+
+% Similarly for the GF format, which only remains in existence because
+% Metafont outputs it (and MF isn't going to change).
+GFFONTS = .;$TEXMF/fonts/gf/$MAKETEX_MODE//
+
+% A backup for PKFONTS and GFFONTS. Not used for anything.
+GLYPHFONTS = .;$TEXMF/fonts
+
+% A place to puth everything that doesn't fit the other font categories.
+MISCFONTS = .;$TEXMF/fonts/misc//
+
+% For texfonts.map and included map files used by mktexpk.
+% See ftp://ftp.tug.org/tex/fontname.tar.gz.
+TEXFONTMAPS = .;$TEXMF/fontname
+
+% BibTeX bibliographies and style files.
+BIBINPUTS = .;$TEXMF/bibtex/{bib,}//
+BSTINPUTS = .;$TEXMF/bibtex/{bst,}//
+
+% MFT style files.
+MFTINPUTS = .;$TEXMF/mft//
+
+% PostScript headers, prologues (.pro), encodings (.enc) and fonts.
+TEXPSHEADERS = .;$TEXMF/{dvips,pdftex,tex,fonts/type1}//
+
+% PostScript Type 1 outline fonts.
+T1FONTS = .;$TEXMF/fonts/type1//
+
+% PostScript AFM metric files.
+AFMFONTS = .;$TEXMF/fonts/afm//
+
+% TrueType outline fonts.
+TTFONTS = .;$TEXMF/fonts/truetype//
+
+% Type 42 outline fonts.
+T42FONTS = .;$TEXMF/fonts/type42//
+
+% Dvips' config.* files (this name should not start with `TEX'!).
+TEXCONFIG = .;$TEXMF/dvips//
+
+% Makeindex style (.ist) files.
+INDEXSTYLE = .;$TEXMF/makeindex//
+
+% Used by DMP (ditroff-to-mpx), called by makempx -troff.
+TRFONTS = /usr/lib/font/devpost
+MPSUPPORT = .;$TEXMF/metapost/support
+
+% For xdvi to find mime.types and .mailcap, if they do not exist in
+% $HOME.  These are single directories, not paths.
+% (But the default mime.types, at least, may well suffice.)
+MIMELIBDIR = /usr/local/etc
+MAILCAPLIBDIR = /usr/local/etc
+
+% TeX documentation and source files, for use with kpsewhich.
+TEXDOCS = .;$TEXMF/doc//
+TEXSOURCES = .;$TEXMF/source//
+
+% Omega-related fonts and other files.  The odd construction for OFMFONTS
+% makes it behave in the face of a definition of TFMFONTS.  Unfortunately
+% no default substitution would take place for TFMFONTS, so an explicit
+% path is retained.
+OFMFONTS = .;{$TEXMF/fonts,$VARTEXFONTS}/{ofm,tfm}//;$TFMFONTS
+OPLFONTS = .;{$TEXMF/fonts,$VARTEXFONTS}/opl//
+OVFFONTS = .;{$TEXMF/fonts,$VARTEXFONTS}/ovf//
+OVPFONTS = .;{$TEXMF/fonts,$VARTEXFONTS}/ovp//
+OTPINPUTS = .;$TEXMF/omega/otp//
+OCPINPUTS = .;$TEXMF/omega/ocp//
+
+% Some additional input variables for several programs.  If you add
+% a program that uses the 'other text files' or 'other binary files'
+% search formats, you'll want to add their variables here as well.
+T4HTINPUTS   = .;$TEXMF/tex4ht//
+
+%% The mktex* scripts rely on KPSE_DOT. Do not set it in the environment.
+KPSE_DOT = .
+
+% This definition isn't used from this .cnf file itself (that would be
+% paradoxical), but the compile-time default in paths.h is built from it.
+% The SELFAUTO* variables are set automatically from the location of
+% argv[0], in kpse_set_progname.  
+% 
+% The TETEXDIR stuff isn't likely to relevant unless you're using teTeX,
+% but it doesn't hurt.
+%
+% For security reasons, it is better not to have . part of the path.
+% 
+TEXMFCNF = {$SELFAUTOLOC,$SELFAUTODIR,$SELFAUTOPARENT}{,{/share,}/texmf{.local,}/web2c};$TETEXDIR;/usr/local/share/texmf/web2c;/usr/local/share/texmf/web2c
+
+
+
+%  Part 2: Non-path options.
+ 
+% Write .log/.dvi/etc. files here, if the current directory is unwritable.
+% TEXMFOUTPUT = /tmp
+
+% If a dynamic file creation fails, log the command to this file, in
+% either the current directory or TEXMFOUTPUT.  Set to the
+% empty string or  0  to avoid logging.
+MISSFONT_LOG = missfont.log
+
+% Set to a colon-separated list of words specifying warnings to suppress.
+% To suppress everything, use TEX_HUSH = all; this is equivalent to
+% TEX_HUSH = checksum:lostchar:readable:special
+TEX_HUSH = none
+
+% Enable system commands via \write18{...}?
+shell_escape = f
+
+% Allow TeX \openin, \openout, or \input on filenames starting with `.'
+% (e.g., .rhosts) or outside the current tree (e.g., /etc/passwd)?
+% a (any)        : any file can be opened.
+% r (restricted) : disallow opening "dotfiles".
+% p (paranoid)   : as 'r' and disallow going to parent directories, and
+%                  restrict absolute paths to be under $TEXMFOUTPUT.
+openout_any = p
+openin_any = a
+
+% Allow TeX, MF, and MP to parse the first line of an input file for
+% the %&format construct.
+parse_first_line = t
+
+% Enable the mktex... scripts by default?  These must be set to 0 or 1.
+% Particular programs can and do override these settings, for example
+% dvips's -M option.  Your first chance to specify whether the scripts
+% are invoked by default is at configure time.
+% 
+% These values are ignored if the script names are changed; e.g., if you
+% set DVIPSMAKEPK to `foo', what counts is the value of the environment
+% variable/config value `FOO', not the `MKTEXPK' value.
+% 
+% MKTEXTEX = 0
+% MKTEXPK = 0
+% MKTEXMF = 0
+% MKTEXTFM = 0
+% MKOCP = 0
+% MKOFM = 0
+
+% What MetaPost runs to make MPX files.  This is passed an option -troff
+% if MP is in troff mode.  Set to `0' to disable this feature.
+MPXCOMMAND = makempx
+
+
+%  Part 3: Array and other sizes for TeX (and Metafont and MetaPost).
+% 
+% If you want to change some of these sizes only for a certain TeX
+% variant, the usual dot notation works, e.g.,
+% main_memory.hugetex = 20000000
+% 
+% If a change here appears to be ignored, try redumping the format file.
+
+% Memory. Must be less than 8,000,000 total.
+% 
+% main_memory is relevant only to initex, extra_mem_* only to non-ini.
+% Thus, have to redump the .fmt file after changing main_memory; to add
+% to existing fmt files, increase extra_mem_*.  (To get an idea of how
+% much, try \tracingstats=2 in your TeX source file;
+% web2c/tests/memtest.tex might also be interesting.)
+% 
+% To increase space for boxes (as might be needed by, e.g., PiCTeX),
+% increase extra_mem_bot.
+% 
+% For some xy-pic samples, you may need as much as 700000 words of memory.
+% For the vast majority of documents, 60000 or less will do.
+% 
+main_memory.context = 1100000
+main_memory = 263000 % words of inimemory available; also applies to inimf&mp
+extra_mem_top = 100000    % extra high memory for chars, tokens, etc.
+extra_mem_bot = 100000    % extra low memory for boxes, glue, breakpoints, etc.
+
+% Words of font info for TeX (total size of all TFM files, approximately). 
+font_mem_size = 400000
+
+% Total number of fonts. Must be >= 50 and <= 2000 (without tex.ch changes).
+font_max = 1000
+
+% Extra space for the hash table of control sequences (which allows 10K
+% names as distributed).
+hash_extra.context = 25000
+% hash_extra = 0
+hash_extra = 60000
+
+% Max number of characters in all strings, including all error messages,
+% help texts, font names, control sequences.  These values apply to TeX and MP.
+pool_size.context = 750000
+% pool_size = 125000		
+pool_size   = 1000000
+% Minimum pool space after TeX/MP's own strings; must be at least
+% 25000 less than pool_size, but doesn't need to be nearly that large.
+string_vacancies.context = 45000
+string_vacancies = 25000
+% Maximum number of strings.
+max_strings.context = 55000
+% max_strings = 15000
+max_strings = 70000
+% min pool space left after loading .fmt
+pool_free.context = 47500
+pool_free = 5000
+
+% Hyphenation trie. As distributed, the maximum is 65535; this should
+% work unless `unsigned short' is not supported or is smaller than 16
+% bits.  This value should suffice for UK English, US English, French,
+% and German (for example).  To increase, you must change
+% `ssup_trie_opcode' and `ssup_trie_size' in tex.ch (and rebuild TeX);
+% the trie will then consume four bytes per entry, instead of two.
+% 
+% US English, German, and Portuguese: 30000.
+% German: 14000.
+% US English: 10000.
+% 
+trie_size = 64000
+
+% Buffer size.  TeX uses the buffer to contain input lines, but macro
+% expansion works by writing material into the buffer and reparsing the
+% line.  As a consequence, certain constructs require the buffer to be
+% very large.  As distributed, the size is 50000; most documents can be
+% handled within a tenth of this size.
+buf_size = 50000
+
+hyph_size = 1000        % number of hyphenation exceptions, >610 and <32767.
+nest_size.context = 500
+nest_size = 100		% simultaneous semantic levels (e.g., groups)
+max_in_open = 15	% simultaneous input files and error insertions
+param_size.context = 1500
+param_size = 500	% simultaneous macro parameters
+save_size.context = 5000
+% save_size = 4000	% for saving values outside current group
+save_size = 10000	% for saving values outside current group
+stack_size.context = 1500
+stack_size = 300	% simultaneous input sources
+
+% These are Omega-specific.
+ocp_buf_size = 20000	% character buffers for ocp filters.
+ocp_stack_size = 10000	% stacks for ocp computations.
+ocp_list_size = 1000	% control for multiple ocps.
+
+% These work best if they are the same as the I/O buffer size, but it
+% doesn't matter much.  Must be a multiple of 8.
+dvi_buf_size = 16384 % TeX
+gf_buf_size = 16384  % MF
+
+% It's probably inadvisable to change these. At any rate, we must have:
+% 45 < error_line      < 255;
+% 30 < half_error_line < error_line - 15;
+% 60 <= max_print_line;
+% These apply to Metafont and MetaPost as well.
+error_line = 79
+half_error_line = 50
+max_print_line = 79
+
+main_memory.hugelatex = 1100000
+param_size.hugelatex = 1500
+stack_size.hugelatex = 1500
+hash_extra.hugelatex = 55000
+string_vacancies.hugelatex = 45000
+pool_free.hugelatex = 47500
+nest_size.hugelatex = 500
+save_size.hugelatex = 5000
+pool_size.hugelatex = 500000
+max_strings.hugelatex = 55000
+font_mem_size.hugelatex = 400000
+
+main_memory.jadetex = 1500000
+param_size.jadetex = 1500
+stack_size.jadetex = 1500
+hash_extra.jadetex = 55000
+string_vacancies.jadetex = 45000
+pool_free.jadetex = 47500
+nest_size.jadetex = 500
+save_size.jadetex = 5000
+pool_size.jadetex = 500000
+max_strings.jadetex = 55000
+extra_mem_top.jadetex = 100000    % extra high memory for chars, tokens, etc.
+extra_mem_bot.jadetex = 100000    % extra low memory for boxes, glue, breakpoints, etc.
+
+main_memory.pdfjadetex = 2500000
+param_size.pdfjadetex = 1500
+stack_size.pdfjadetex = 1500
+hash_extra.pdfjadetex = 100000
+string_vacancies.pdfjadetex = 45000
+pool_free.pdfjadetex = 47500
+nest_size.pdfjadetex = 500
+save_size.pdfjadetex = 5000
+pool_size.pdfjadetex = 500000
+max_strings.pdfjadetex = 55000

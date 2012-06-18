@@ -1,0 +1,23 @@
+#!/bin/sh
+# Usage: event.sh <event> <if-name>
+
+case "$1" in
+if-create)
+	ifconfig "$2" up
+	;;
+if-up)
+	ifconfig "$2" up
+	udhcpc -i "$2" -p /var/run/udhcpc0.pid -s /tmp/udhcpc&
+	;;
+if-down)
+	kill -TERM $(cat /var/run/udhcpc0.pid)
+	ifconfig "$2" down
+	;;
+if-release)
+	ifconfig "$2" down
+	;;
+*)
+	echo "Usage: $0 { if-create | if-up | if-down | if-release }" >&2
+	exit 3
+	;;
+esac

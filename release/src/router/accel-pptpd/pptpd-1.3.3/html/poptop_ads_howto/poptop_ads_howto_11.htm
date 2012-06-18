@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Poptop MSCHAP2 ADS Howto</title>
+</head>
+
+<body>
+<p><strong>15. pptp Client Installation</strong></p>
+<p>I will only describe the Windows XP pptp client installation. For other operating system, please see the documents in <a href="http://poptop.sourceforge.net/dox/">here</a>. </p>
+<ul>
+  <li>Start -> Settings -> Control Panels -> Network Connections.</li>
+  <li>Click on &quot;Create a new connection&quot; on the left pane. </li>
+  <li>A Winzard starts. Click on Next.</li>
+  <li>Choose &quot;Connect to the network at my workplace&quot;. Next.</li>
+  <li> Choose &quot;Virtual Private Network Connection&quot;. Next.</li>
+  <li>Key in the company name. Next.</li>
+  <li>Choose &quot;Do not dial the initial connection&quot;. Next</li>
+  <li>Type in the external IP address of Hostname of the pptpd gateway. Next.</li>
+  <li>Choose &quot;Anyone's use&quot;. Next</li>
+  <li>Check the &quot;Add a shortcut to this connection to my desktop&quot;. Finish.</li>
+  <li>A  new icon appears on the Network Connections under the header Virtual Private Network. Right click on it and choose Properties.</li>
+  <li>Click on the Security tab. Check &quot;Advanced (custom settings)&quot; and then click  the Settings button.</li>
+  <li> Choose &quot;Maximum strength encryption (disconnect if server declines)&quot; on Data Encryption.</li>
+  <li>In the same tab, choose &quot;Allow these protocols&quot; and undo all except &quot;Microsoft CHAP Version 2 (MS-CHAP v2)&quot;. Click  OK and click OK again to close the window.</li>
+</ul>
+<p>That's all for a standard configuration. All traffic from the PC will pipe through the pptp tunnel except those for the local attached network segment. This is the recommended way of implementing VPN for security reasons.</p>
+<hr>
+<strong><a name="splittunnel"></a>15.1 Split Tunneling</strong>
+<p>Split Tunneling allows you to configure the network so that only selected traffic is directed to the VPN tunnel. For instance,   you want browsing  traffic to go to the Internet directly but corporate traffic goes via the VPN, then you will need split tunneling. It is also important if your ISP requires a heatbeat from your machine to keep the connection alive. </p>
+<p>While split tunneling provides convenience, it causes  security problems because <span name="intelliTxt" id="intelliTxt">it essentially renders the VPN vulnerable to attack as it is accessible through the public, non-secure network. Check your company security policy before inplementing split tunneling. </span></p>
+<p>To set up split tunneling:</p>
+<ul>
+  <li>Right click on the icon which you created in section 15 and choose Properties.</li>
+  <li>Choose the Networking tab. Highligth the Internet Protocol (TCP/IP) and click on the Properties button.</li>
+  <li>Click on the Advanced Button and then deselect &quot;Use default gateway on remote network&quot;. Click OK. Click OK and then click OK.</li>
+</ul>
+<p>If you have a simple private network which has only one single segment, you have finished the configuration. Take a break and enjoy you day.</p>
+<p>If you have multiple subnets in the private network, there are still works to do. By not using the PPP as the default gateway, we introduce another problem. The PPP client will set up routing only to the subnet that is directly attached to the pptp gateway. Traffic will not route to the other subnets. In our test environment, you can only access 10.0.0.0 but not 172.16.0.0. To resolve this problem, I created a VBScript to add the extra routes. </p>
+<p>The VBScript is listed here: </p>
+<blockquote>
+  <pre>Option Explicit<br>Dim IP_Address<br>Dim TmpFile : TmpFile = &quot;c:\ip.txt&quot;<br>Dim route1
+
+<strong>route1 = &quot;route add 172.16.0.0 mask 255.255.255.0 &quot;</strong>
+
+SaveIP<br>IP_Address = GetIP()<br>route1 = route1 &amp; IP_Address<br>AddRoute
+
+Sub SaveIP<br>  Dim ws : Set ws = CreateObject(&quot;WScript.Shell&quot;)<br>  ws.run &quot;%comspec% /c ipconfig &gt; &quot; &amp; TmpFile, 0, True<br>  Set ws = Nothing<br>End Sub
+
+Function GetIP()<br>  Dim fso : Set fso = CreateObject(&quot;Scripting.FileSystemObject&quot;)<br>  Dim re : Set re = New RegExp<br>  re.Global = TRUE
+
+  Dim file, fileline, matches<br>  Dim pppsection : pppsection = FALSE
+
+  If fso.FileExists(TmpFile) Then<br>    Set file = fso.OpenTextFile(TmpFile)<br>
+    Do While Not file.AtEndOfStream<br>      fileline = file.ReadLine
+
+      If Not pppsection Then
+        If left(fileline,3) = "PPP" Then
+          pppsection = TRUE
+        End If
+      Else
+        re.Pattern = "IP Address[\. ]+: "
+        If re.Test(fileline) Then
+          matches = split(fileline,":")
+          GetIP = right(matches(1),len(matches(1))-1)
+        End If
+      End If
+
+    Loop<br>    file.Close<br>  End If
+
+  Set re = Nothing<br>  Set fso = Nothing<br>End Function
+
+Sub AddRoute<br>  Dim ws : Set ws = CreateObject(&quot;WScript.Shell&quot;)<br>  ws.run &quot;%comspec% /c &quot; &amp; route1, 0, True<br>  Set ws = Nothing<br>End Sub
+</pre>
+</blockquote>
+<p>Create the VBScript file somewhere in your PC and create a shortcut on the desktop. When the PPP connects, double click on the shortcut will add the route accordingly.</p>
+<p><strong>Note</strong>: you will need to modify the line in bold for your environment. </p>
+<hr>
+<a href="poptop_ads_howto_12.htm">Next</a> &nbsp;&nbsp;<a href="poptop_ads_howto_10.htm">Previous</a>&nbsp;&nbsp;<a href="poptop_ads_howto_1.htm#toc">Content</a><p>&nbsp;</p>
+<p>&nbsp;</p>
+</body>
+</html>

@@ -1,0 +1,12 @@
+Duplicated name : PVC_help
+
+This string is duplicated. Please ensure there is single one string in DICT.
+
+No found : ALERT_OF_ERROR_Input26=XXXXXXXXXXXXXX!
+
+This string could not find from EN.dict. This string is not referenced. It should be removed.
+
+No string : BM_NoChange=
+
+This string is empty. This string should be removed.
+

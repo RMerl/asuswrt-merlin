@@ -1,0 +1,7 @@
+TIMEOUT	10
+""	ATZ
+OK	"AT_OWANCALL=1,0,0^m"
+TIMEOUT	1
+ERROR	""
+OK	""
+

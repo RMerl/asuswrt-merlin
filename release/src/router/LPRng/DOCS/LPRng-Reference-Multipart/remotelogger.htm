@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Remote Logger Operation</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title=
+    "I want to replace lp, lpstat, etc, but my programs need them"
+    href="x10839.htm">
+    <link rel="NEXT" title="Logger Messages" href="x10892.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x10839.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x10892.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="REMOTELOGGER"></a>Chapter 21. Remote Logger
+      Operation</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>21.1. <a href="remotelogger.htm#LOGGER">Logger
+          Network Communication</a></dt>
+
+          <dt>21.2. <a href="x10892.htm">Logger Messages</a></dt>
+
+          <dt>21.3. <a href="x10897.htm">Message Format</a></dt>
+
+          <dt>21.4. <a href="x10925.htm">Dump Messages</a></dt>
+
+          <dt>21.5. <a href="x10928.htm">LPD Messages</a></dt>
+
+          <dt>21.6. <a href="x10933.htm">Job Status Messages -
+          UPDATE</a></dt>
+
+          <dt>21.7. <a href="x10945.htm">Printer Status Messages -
+          PRSTATUS</a></dt>
+        </dl>
+      </div>
+
+      <p>Several sites have wanted a way to provide central logging
+      of job status and/or information. In order to do this, the
+      following functionality is implemented in <b class=
+      "APPLICATION">LPRng</b>.</p>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="LOGGER">21.1. Logger Network
+        Communication</a></h1>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">logger_destination=</var><span
+            class="emphasis"><i class="EMPHASIS">logger information
+            destination</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">logger_pathname=</var><span
+            class="emphasis"><i class="EMPHASIS">pathname of temp
+            file for log information</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">logger_max_size=</var><span
+            class="emphasis"><i class="EMPHASIS">max size in K of
+            temp file for log information</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">logger_timeout=</var><span
+            class="emphasis"><i class="EMPHASIS">time between
+            connection attempts</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>The printcap/configuration variable <var class=
+        "LITERAL">logger_destination</var> specifies a destination
+        in the standard <var class="LITERAL">host%port</var>
+        notation used by <b class="APPLICATION">LPRng</b>. Host is
+        the destination host, and can be a name or IP address. Port
+        is the port on the destination host. A TCP/IP connection is
+        made to the indicated port.</p>
+
+        <p>Log information is save in a temporary file specified by
+        <var class="LITERAL">logger_path</var>, and up to <var
+        class="LITERAL">logger_max_size</var> K bytes of data will
+        be saved.</p>
+
+        <p>If a connection cannot be made to the <var class=
+        "LITERAL">logger_destination</var>, then every <var class=
+        "LITERAL">logger_timeout</var> seconds a new connection
+        attempt will be made. If <var class=
+        "LITERAL">logger_timeout</var> is 0, then a connection
+        attempt will be made every time new data arrives to be
+        logged.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x10839.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x10892.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">I want to
+          replace lp, lpstat, etc, but my programs need them</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Logger
+          Messages</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

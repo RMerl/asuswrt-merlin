@@ -1,0 +1,14 @@
+<samba:parameter name="delete readonly"
+		 context="S"
+		 type="boolean"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter allows readonly files to be deleted.  
+	This is not normal DOS semantics, but is allowed by UNIX.</para>
+		
+	<para>This option may be useful for running applications such 
+	as rcs, where UNIX file ownership prevents changing file 
+	permissions, and DOS semantics prevent deletion of a read only file.</para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

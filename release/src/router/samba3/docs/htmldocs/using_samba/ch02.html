@@ -1,0 +1,1849 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Chapter 2. Installing Samba on a Unix System</h1>
+
+<p><a name="INDEX-1"/>Now
+that you know what Samba can do for you and your users,
+it's time to get your own network set up.
+Let's start with the installation of Samba. When
+dancing the samba, one learns by taking small steps.
+It's just the same when installing Samba; we need to
+teach it step by step. This chapter will help you start off on the
+right foot.</p>
+
+<p>For illustrative purposes, we will be installing the 2.2.6 version of
+the Samba server on a Linux system running Version 2.4 of the kernel.
+However, the installation steps are essentially the same for all the
+platforms Samba supports.</p>
+
+
+<div class="sect1"><a name="samba2-CHP-2-SECT-1"/>
+
+<h2 class="head1">Bundled Versions</h2>
+
+<p><a name="INDEX-2"/><a name="INDEX-3"/>Samba is in such
+popular use that many Unix distributions come with it already
+installed. If you choose to use a bundled version of Samba, you can
+breeze through most of this chapter, but you'll be
+stuck with the Samba version and compile-time options your vendor
+selected for you. That version of Samba can't be any
+newer than the operating system release, so you're
+likely to be pretty far behind the latest developments. On the other
+hand, you can be fairly sure that a bundled version has been
+installed properly, and perhaps it will take only a few simple
+modifications to your <em class="emphasis">smb.conf</em> file for you to
+be off and running. Samba is mature enough that you probably
+don't need the latest release to meet your basic
+needs, so you might be perfectly happy running a bundled version.</p>
+
+<p>If you choose this option, be aware that your Samba files, including
+the very important
+<em class="emphasis">smb.conf</em>,<a name="INDEX-4"/> might be in different places
+than they would be if you were to install from a binary or source
+distribution. For example, with the Red Hat, Debian, and Mandrake
+Linux distributions, <em class="emphasis">smb.conf</em> and some other
+Samba-related files are in the <em class="emphasis">/etc/samba</em>
+directory.</p>
+
+<p>If Samba is already installed on your system, you can check to see
+what version you have by using the command:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>smbd -V</b></tt>
+Version 2.2.6</pre></blockquote>
+
+<p>(If this doesn't work, it might be because
+<em class="emphasis">smbd</em> is not in your shell's
+search path. If you have the <em class="emphasis">locate</em> or
+<em class="emphasis">whereis</em> command in your Unix variant, you can
+use it to locate the <em class="emphasis">smbd</em> executable.)</p>
+
+<p>You might also be able to use a system-specific tool to query a
+software-package maintenance utility. On Red Hat Linux, you can use
+the <em class="emphasis">rpm</em><a name="INDEX-5"/> command to query the installed packages
+for Samba:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>rpm -qa | grep samba</b></tt>
+samba-client-2.0.8-1.7.1
+samba-2.0.8-1.7.1
+samba-common-2.0.8-1.7.1</pre></blockquote>
+
+<p>This shows we have Samba 2.0.8, divided into three Red Hat Package
+Manager (RPM) packages, bundled with Red Hat 7.1. If your version of
+Samba is old, you might at the very least want to check with your
+vendor for an update.</p>
+
+<p>Otherwise, if you're sure you are going to install
+from a binary or source distribution, you can remove the RPM packages
+as follows:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>rpm -e samba</b></tt>
+# <tt class="userinput"><b>rpm -e samba-client</b></tt>
+# <tt class="userinput"><b>rpm -e samba-common</b></tt></pre></blockquote>
+
+<p>If you are not using Red Hat Linux, consult your
+system's documentation to find the method that works
+for you.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-2-SECT-1.1"/>
+
+<h3 class="head2">Binary or Source?</h3>
+
+<p><a name="INDEX-6"/>Precompiled
+&quot;binary&quot; packages are also
+available for a large number of Unix platforms. These packages
+contain binaries for each Samba executable, as well as the standard
+Samba documentation. Note that while installing a binary distribution
+can save you a fair amount of time and trouble, you should keep a
+couple of issues in mind when deciding whether to use the binary or
+compile the source yourself:</p>
+
+<ul><li>
+<p>The binary packages can lag behind the latest version of the software
+by one or two (maybe more) minor releases, especially after a series
+of small changes and for less popular platforms. Compare the release
+notes for the source and binary packages to make sure there
+aren't any new features that you need on your
+platform.</p>
+</li><li>
+<p>If you use a precompiled binary that is dynamically linked, you will
+need to ensure that you have the correct libraries required by the
+executables. If your system does not already have the required
+version of a library, you might have to install a new version. The
+<em class="filename">README</em> file or <em class="filename">makefile</em>
+that accompanies the binary distribution should list any special
+requirements.</p>
+
+<p>Many systems with shared libraries come with a nifty tool called
+<em class="emphasis">ldd</em>. This tool will tell you which libraries a
+specific binary requires and which libraries on the system satisfy
+that requirement. For example, checking the <em class="emphasis">smbd</em>
+program on our test machine gave us:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>ldd smbd</b></tt>
+        libdl.so.2 =&gt; /lib/libdl.so.2 (0x40026000)
+        libnsl.so.1 =&gt; /lib/libnsl.so.1 (0x4002a000)
+        libpam.so.0 =&gt; /lib/libpam.so.0 (0x40041000)
+        libc.so.6 =&gt; /lib/libc.so.6 (0x40049000)
+        /lib/ld-linux.so.2 =&gt; /lib/ld-linux.so.2 (0x40000000)</pre></blockquote>
+
+<p>If there are any incompatibilities between Samba and specific
+libraries on your machine, the distribution-specific documentation
+should highlight them.</p>
+</li><li>
+<p>If your precompiled binary is statically linked, it is still possible
+to have problems. There have been cases in which the statically
+linked C library calls in Samba programs have been out of sync with
+the operating-system kernel, even though this is
+&quot;not supposed to happen.&quot;</p>
+</li><li>
+<p>Keep in mind that each binary distribution carries preset values
+about the target platform, such as default directories and
+configuration option values. Again, check the documentation and the
+makefile included in the source directory to see which directives and
+variables were used when the binary was compiled. In some cases,
+these will not be appropriate for your situation.</p>
+
+<p>A few configuration items can be reset with command-line options at
+runtime rather than at compile time. For example, if your binary
+tries to place any log, lock, or status files in the
+&quot;wrong&quot; place (for example, in
+<em class="filename">/usr/local</em> ), you can override this without
+recompiling.</p>
+</li></ul>
+<p>One point worth mentioning is that the Samba source requires an
+<a name="INDEX-7"/><a name="INDEX-8"/><a name="INDEX-9"/>ANSI C
+compiler. If you are on a legacy platform with a non-ANSI compiler,
+such as the <em class="emphasis">cc</em> compiler on SunOS Version 4,
+you'll have to install an ANSI-compliant compiler
+such as <em class="emphasis">gcc</em> <a name="INDEX-10"/>before you do anything else.<a name="FNPTR-1"/><a href="#FOOTNOTE-1">[1]</a>
+If installing a compiler isn't something you want to
+wrestle with, you can start off with a binary package. However, for
+the most flexibility and compatibility on your system, we always
+recommend compiling from the latest stable or production source.</p>
+
+<p>A typical installation will take about an hour to complete, including
+downloading the source files and compiling them, setting up the
+configuration files, and testing the server.</p>
+
+<p>Here is an overview of the steps:</p>
+
+<ol><li>
+<p><a name="INDEX-11"/>Download the source or binary files.</p>
+</li><li>
+<p>Read the installation documentation.</p>
+</li><li>
+<p>Configure a makefile.</p>
+</li><li>
+<p>Compile the server and utility programs.</p>
+</li><li>
+<p>Install the server files.</p>
+</li><li>
+<p>Create a Samba configuration file.</p>
+</li><li>
+<p>Test the configuration file.</p>
+</li><li>
+<p>Start the Samba daemons.</p>
+</li><li>
+<p>Test the Samba daemons. <a name="INDEX-12"/></p>
+</li></ol>
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-2-SECT-2"/>
+
+<h2 class="head1">Downloading the Samba Distribution</h2>
+
+<p><a name="INDEX-13"/>If
+you would like to download the latest version of the Samba software,
+the primary web site is <a href="http://www.samba.org">http://www.samba.org</a>. Once connected to this
+page, you'll see links to several Samba mirror sites
+across the world, both for the standard Samba web pages and for sites
+devoted exclusively to downloading Samba. For the best performance,
+choose a site that is closest to your own geographic location.</p>
+
+<p>The standard Samba web sites have Samba
+<a name="INDEX-14"/>documentation and
+<a name="INDEX-15"/>tutorials,
+<a name="INDEX-16"/>mailing-list
+archives, and the latest Samba <a name="INDEX-17"/>news, as well as source and binary
+distributions of Samba. The download sites (sometimes called
+<em class="emphasis">F T P sites</em>) have only the source and binary
+distributions. Unless you specifically want an older version of the
+Samba server or are going to install a binary distribution, download
+the latest source distribution from the closest mirror site. This
+distribution is always named:</p>
+
+<blockquote><pre class="code">samba-latest.tar.gz</pre></blockquote>
+
+<p>which for the 2.2.6 release is an approximately 5MB file.</p>
+
+<p>The source distribution has been archived with
+<em class="emphasis">tar</em> and then compressed with the GNU
+<em class="emphasis">gzip</em> program. To unpack it, move the file to the
+directory in which you want the Samba source directory to be located,
+then <em class="emphasis">cd</em> to that directory and run the command:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>tar xvfz samba-latest.tar.gz</b></tt></pre></blockquote>
+
+<p>Or, if you do not have the GNU <em class="emphasis">tar</em> program
+(which also handles the unzipping):</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>gunzip samba-latest.tar.gz</b></tt>
+$ <tt class="userinput"><b>tar xvf samba-latest.tar</b></tt></pre></blockquote>
+
+<p>In that latter case, you might need to install the GNU
+<em class="emphasis">gunzip</em> program first. While the
+<em class="emphasis">tar</em> command runs, it will print out a list of
+the files it installs.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-2-SECT-2.1"/>
+
+<h3 class="head2">Read the Documentation</h3>
+
+<p><a name="INDEX-18"/>This
+part might seem obvious, but at one time or other you probably
+uncompressed a package, blindly typed:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>configure; make; make install</b></tt></pre></blockquote>
+
+<p>and walked away to get another cup of coffee. Do yourself a favor and
+be a little more careful this time.</p>
+
+<p>In the top-level directory that you just installed, there is a file
+named <em class="filename">WHATSNEW.txt</em>, which contains the latest
+news about the release. If you are upgrading, you can find important
+information about bug fixes or configuration parameters that have
+been added or are no longer supported.</p>
+
+<p>With both source and binary packages you'll find a
+large number of documents in the <em class="filename">docs</em> directory,
+in a variety of formats. One file is especially important:</p>
+
+<blockquote><pre class="code">docs/htmldocs/UNIX_INSTALL.html</pre></blockquote>
+
+<p>This is the Samba Team's official instructions on
+installing Samba on a Unix system, which you might like to use as
+another perspective besides what we are telling you here.</p>
+
+<p>In general, we expect you'll find to be most useful
+the files in the following directories:</p>
+
+<dl>
+<dt><b>docs/faq</b></dt>
+<dd>
+<p>This is the Samba Frequently Asked Questions (FAQ) files.</p>
+</dd>
+
+
+
+<dt><b>docs/htmldocs</b></dt>
+<dd>
+<p>This is the miscellaneous documentation in HTML format.</p>
+</dd>
+
+
+
+<dt><b>docs/textdocs</b></dt>
+<dd>
+<p>Here is more documentation, in simple text format.</p>
+</dd>
+
+
+
+<dt><b>docs/manpages</b></dt>
+<dd>
+<p>You don't need to worry about these yet; during the
+installation, the files will be installed so that you can use the
+<em class="emphasis">man</em> command to read them. But you can take a
+look in the directory to see which manpages are available.</p>
+</dd>
+
+</dl>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-2-SECT-3"/>
+
+<h2 class="head1">Configuring Samba</h2>
+
+<p><a name="INDEX-19"/><a name="INDEX-20"/>Samba automatically configures itself
+prior to compilation. This reduces the likelihood of a
+machine-specific problem, but you might end up wishing for an option
+after Samba has been installed.</p>
+
+<p>The source distribution of Samba 2.2 and above
+doesn't initially have a
+<a name="INDEX-21"/>makefile. Instead, one is
+generated through a <a name="INDEX-22"/><a name="INDEX-23"/>GNU <em class="filename">configure</em>
+script, which is located in the <em class="filename">samba-2.2.x
+/source/</em> directory. The <em class="firstterm">configure</em>
+script takes care of the machine-specific issues of building Samba.</p>
+
+<a name="samba2-CHP-2-NOTE-88"/><blockquote class="note"><h4 class="objtitle">NOTE</h4>
+
+
+
+<p>Before running the <em class="filename">configure</em> script, it is
+important that you become the root user on the system. Otherwise, you
+might get a warning such as:</p>
+
+
+<blockquote><pre class="code">configure: warning: running as non-root will disable some tests</pre></blockquote>
+
+
+<p>You don't want any test to be disabled when the
+Samba makefile is being created; it would leave the potential for
+errors down the road when compiling or running Samba on your system.</p>
+</blockquote>
+
+<p>When the <em class="filename">configure </em>script is run, it prints out
+messages telling what it is doing, and error messages might be mixed
+in. To make sure you see those very important error messages, we
+suggest you run <em class="filename">configure </em>with its standard
+output passed through some filter to capture the output and keep it
+from scrolling out of sight. One method is using the
+<em class="filename">more</em> command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>./configure | more</b></tt></pre></blockquote>
+
+<p>We will show you another in a moment.</p>
+
+<p>Although you can run <em class="filename">configure </em>as previously
+with no options, you might want to add support for extra features by
+passing options on the command line. For example:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>./configure --with-winbind</b></tt></pre></blockquote>
+
+<p>will configure the Samba makefile with support for winbind
+authentication. If you would like a complete list of options, type
+the following:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>./configure --help</b></tt></pre></blockquote>
+
+<p>Each option enables or disables various features. You typically
+enable a feature by specifying the
+<tt class="literal">--</tt><a name="INDEX-24"/><a name="INDEX-25"/><a name="INDEX-26"/><a name="INDEX-27"/><tt class="literal">with-</tt><em class="replaceable">feature</em>
+option, which will cause the feature to be compiled and installed.
+Likewise, if you specify a
+<tt class="literal">--without-</tt><em class="replaceable">feature</em>
+option, the feature will be disabled. A full list of configuration
+options is provided in <a href="appe.html">Appendix E</a>, but for now we
+want to point out three of them, which are features we cover later in
+this book:</p>
+
+<dl>
+<dt><b><tt class="literal">--with-msdfs</tt><a name="INDEX-28"/><a name="INDEX-29"/></b></dt>
+<dd>
+<p>Include support for Microsoft Distributed filesystem (Dfs), which
+allows dispersed network resources to be clumped together into one
+easy-to-navigate directory tree. See <a href="ch08.html">Chapter 8</a>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-smbwrapper</tt><a name="INDEX-30"/><a name="INDEX-31"/></b></dt>
+<dd>
+<p>Include SMB wrapper support, which allows programs running on the
+Unix host to access SMB shared folders as if they were Unix
+filesystems. We recommend using this option. See <a href="ch05.html">Chapter 5</a>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-smbmount</tt><a name="INDEX-32"/><a name="INDEX-33"/></b></dt>
+<dd>
+<p>Include <em class="emphasis">smbmount</em> support, which allows SMB
+shared folders to be mounted in the Unix filesystem. At the time of
+this writing, support for this feature exists only for Linux. This is
+also covered in <a href="ch05.html">Chapter 5</a>.</p>
+</dd>
+
+</dl>
+
+<p>Each option is disabled by default, and none of the features is
+essential to Samba. However, you may want to include them in your
+configuration (as we will in our example) at least to be able to try
+out the options in later chapters.</p>
+
+<p>In addition, <a href="ch02.html#samba2-CHP-2-TABLE-1">Table 2-1</a> shows some other parameters
+that you can give the <em class="filename">configure</em> script if you
+wish to store parts of the Samba distribution in different places,
+perhaps to make use of multiple disks or partitions. Note that the
+defaults sometimes refer to a prefix specified earlier in the table.</p>
+
+<a name="samba2-CHP-2-TABLE-1"/><h4 class="head4">Table 2-1. Additional configure options</h4><table border="1">
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Meaning</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">--prefix</tt><a name="INDEX-34"/><a name="INDEX-35"/>=<em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Install architecture-independent files at the base directory
+specified.</p>
+</td>
+<td>
+<p><em class="filename">/usr/local/samba</em></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--eprefix</tt><a name="INDEX-36"/><a name="INDEX-37"/>=<em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Install architecture-dependent files at the base directory specified.</p>
+</td>
+<td>
+<p><em class="filename">/usr/local/samba</em></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--bindir</tt><a name="INDEX-38"/><a name="INDEX-39"/>=<em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Install user executables in the directory specified.</p>
+</td>
+<td>
+<p><em class="replaceable">eprefix</em><em class="filename">/bin</em></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--sbindir</tt><a name="INDEX-40"/><a name="INDEX-41"/>=<em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Install administrator executables in the directory specified.</p>
+</td>
+<td>
+<p><em class="replaceable">eprefix</em><em class="filename">/bin</em></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--libexecdir</tt><a name="INDEX-42"/><a name="INDEX-43"/>=<em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Install program executables in the directory specified.</p>
+</td>
+<td>
+<p><em class="replaceable">eprefix</em><em class="filename">/libexec</em></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--datadir</tt><a name="INDEX-44"/><a name="INDEX-45"/>=<em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Install read-only architecture-independent data in the directory
+specified.</p>
+</td>
+<td>
+<p><em class="replaceable">prefix</em><em class="filename">/share</em></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--libdir</tt><a name="INDEX-46"/><a name="INDEX-47"/>=<em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Install program libraries in the directory specified.</p>
+</td>
+<td>
+<p><em class="replaceable">eprefix</em><em class="filename">/lib</em></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--includedir</tt><a name="INDEX-48"/><a name="INDEX-49"/>=<em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Install package-include files in the directory specified.</p>
+</td>
+<td>
+<p><em class="replaceable">prefix</em><em class="filename">/include</em></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--infodir</tt><a name="INDEX-50"/><a name="INDEX-51"/>=<em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Install additional information files in the directory specified.</p>
+</td>
+<td>
+<p><em class="replaceable">prefix</em><em class="filename">/info</em></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--mandir</tt><a name="INDEX-52"/><a name="INDEX-53"/>=<em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Install manual pages in the directory specified.</p>
+</td>
+<td>
+<p><em class="replaceable">prefix</em><em class="filename">/man</em></p>
+</td>
+</tr>
+
+</table>
+
+<p>Here is a sample execution of the
+<em class="filename">configure</em><a name="INDEX-54"/>
+script, which creates a Samba 2.2.6 makefile for the Linux platform.
+Note that you must run the configure script in the
+<em class="emphasis">source</em> directory and that we are showing you yet
+another way to capture the output of the script:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>cd samba-2.2.6/source/</b></tt>
+$ <tt class="userinput"><b>su</b></tt>
+Password:
+# <tt class="userinput"><b>./configure --with-smbwrapper --with-smbmount \</b></tt>
+<tt class="userinput"><b>--with-msdfs --with-syslog --with-utmp 2&gt;&amp;1 | tee config.my.log</b></tt>
+loading cache ./config.cache
+checking for gcc... (cached) gcc
+checking whether the C compiler (gcc -O ) works... yes
+checking whether the C compiler (gcc -O ) is a cross-compiler... no
+checking whether we are using GNU C... (cached) yes
+checking whether gcc accepts -g... (cached) yes
+checking for a BSD-compatible install... (cached) /usr/bin/install -c
+
+<i class="lineannotation">...(content omitted)...</i>
+
+checking configure summary
+configure OK
+creating ./config.status
+creating include/stamp-h
+creating Makefile
+creating include/config.h</pre></blockquote>
+
+<p>In general, any message from <em class="filename">configure</em> that
+doesn't begin with the words
+<tt class="literal">checking</tt><a name="INDEX-55"/> or
+<tt class="literal">creating</tt><a name="INDEX-56"/> is an
+<a name="INDEX-57"/>error; it often helps to redirect the
+output of the configure script to a file so that you can quickly
+search for errors, as we did with the <em class="filename">tee</em>
+command earlier. If there was an error during configuration, more
+detailed information about it can be found in the
+<em class="filename">config.log</em><a name="INDEX-58"/> file, which is written to the local
+directory by the <em class="filename">configure</em> script, as well as in
+the <em class="filename">config.my.log</em> file, which we created by
+piping through the <em class="filename">tee</em> command. These files are
+very similar in both name and content, but be careful to check both
+of them for error messages before continuing!</p>
+
+<p>If the configuration works, you'll see a
+<tt class="literal">checking</tt> <tt class="literal">configure</tt>
+<tt class="literal">summary</tt> message followed by a
+<tt class="literal">configure</tt> <tt class="literal">OK</tt> message and four
+or five file-creation messages. So far, so good. <a name="INDEX-59"/></p>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-2-SECT-4"/>
+
+<h2 class="head1">Compiling and Installing Samba</h2>
+
+<p><a name="INDEX-60"/><a name="INDEX-61"/><a name="INDEX-62"/><a name="INDEX-63"/>At this point you should be ready to build
+the Samba executables. Compiling is also easy: in the
+<em class="filename">source</em> directory, type <tt class="literal">make</tt>
+on the command line. The
+<em class="filename">make</em><a name="INDEX-64"/> utility will produce a stream of
+explanatory and success messages, beginning with:</p>
+
+<blockquote><pre class="code">Using FLAGS = -O -Iinclude ...</pre></blockquote>
+
+<p>This build includes compiles for both <em class="emphasis">smbd</em> and
+<em class="emphasis">nmbd</em> and ends in a linking command for
+<em class="filename">bin/nmblookup</em>. For example, here is a sample
+make of Samba Version 2.2.6 on a Linux server:</p>
+
+<blockquote><pre class="code"># make 2&gt;&amp;1 | tee make.log
+Using FLAGS =  -O  -Iinclude -I./include -I./ubiqx -I./smbwrapper -D_LARGEFILE64
+_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE  -DLOGFILEBASE=&quot;/usr/local/samba/va
+r&quot; -DCONFIGFILE=&quot;/usr/local/samba/lib/smb.conf&quot; -DLMHOSTSFILE=&quot;/usr/local/samba/
+lib/lmhosts&quot;   -DSWATDIR=&quot;/usr/local/samba/swat&quot; -DSBINDIR=&quot;/usr/local/samba/bin
+&quot; -DLOCKDIR=&quot;/usr/local/samba/var/locks&quot; -DCODEPAGEDIR=&quot;/usr/local/samba/lib/cod
+epages&quot; -DDRIVERFILE=&quot;/usr/local/samba/lib/printers.def&quot; -DBINDIR=&quot;/usr/local/sa
+mba/bin&quot;  -DHAVE_INCLUDES_H -DPASSWD_PROGRAM=&quot;/bin/passwd&quot; -DSMB_PASSWD_FILE=&quot;/u
+sr/local/samba/private/smbpasswd&quot; -DTDB_PASSWD_FILE=&quot;/usr/local/samba/private/sm
+bpasswd.tdb&quot;
+Using FLAGS32 =  -O  -Iinclude -I./include -I./ubiqx -I./smbwrapper -D_LARGEFILE
+64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE  -DLOGFILEBASE=&quot;/usr/local/samba/
+var&quot; -DCONFIGFILE=&quot;/usr/local/samba/lib/smb.conf&quot; -DLMHOSTSFILE=&quot;/usr/local/samb
+a/lib/lmhosts&quot;   -DSWATDIR=&quot;/usr/local/samba/swat&quot; -DSBINDIR=&quot;/usr/local/samba/b
+in&quot; -DLOCKDIR=&quot;/usr/local/samba/var/locks&quot; -DCODEPAGEDIR=&quot;/usr/local/samba/lib/c
+odepages&quot; -DDRIVERFILE=&quot;/usr/local/samba/lib/printers.def&quot; -DBINDIR=&quot;/usr/local/
+samba/bin&quot;  -DHAVE_INCLUDES_H -DPASSWD_PROGRAM=&quot;/bin/passwd&quot; -DSMB_PASSWD_FILE=&quot;
+/usr/local/samba/private/smbpasswd&quot; -DTDB_PASSWD_FILE=&quot;/usr/local/samba/private/
+smbpasswd.tdb&quot;
+Using LIBS = -ldl -lnsl -lpam
+Compiling smbd/server.c
+Compiling smbd/files.c
+Compiling smbd/chgpasswd.c
+Compiling smbd/connection.c
+Compiling smbd/utmp.c
+Compiling smbd/session.c
+Compiling smbd/dfree.c
+Compiling smbd/dir.c
+
+<i class="lineannotation">...(content omitted)...</i>
+
+Compiling rpc_server/srv_srvsvc.c
+Compiling rpc_server/srv_srvsvc_nt.c
+Compiling rpc_server/srv_util.c
+Compiling rpc_server/srv_wkssvc.c
+Compiling rpc_server/srv_wkssvc_nt.c
+Compiling rpc_server/srv_pipe.c
+Compiling rpc_server/srv_dfs.c
+Compiling rpc_server/srv_dfs_nt.c
+Compiling rpc_server/srv_spoolss.c
+Compiling rpc_server/srv_spoolss_nt.c
+Compiling lib/util_getent.c
+Compiling rpc_parse/parse_lsa.c
+Compiling rpc_parse/parse_net.c
+Compiling rpc_parse/parsen/smbmount
+Compiling client/smbmnt.c
+Linking bin/smbmnt
+Compiling client/smbumount.c
+Linking bin/smbumount
+Compiling utils/nmblookup.c
+Linking bin/nmblookup</pre></blockquote>
+
+<p>If you encounter a problem when compiling, first check the Samba
+documentation to see if it is easily fixable. Another possibility is
+to search or post to the Samba mailing lists, which are given at the
+end of <a href="ch12.html">Chapter 12</a> and on the Samba home page. Most
+compilation issues are system-specific and almost always easy to
+overcome.</p>
+
+<p>Now that the files have been compiled, you can install them into the
+directories you identified with the command:</p>
+
+<blockquote><pre class="code">#<tt class="userinput"><b> make install</b></tt></pre></blockquote>
+
+<p>If you happen to be <a name="INDEX-65"/>upgrading, your old Samba files will be
+saved with the extension
+<em class="emphasis">.old</em>,<a name="INDEX-66"/> and you can go back to that previous
+version with the command
+<tt class="literal">make</tt><a name="INDEX-67"/> <tt class="literal">revert</tt>. After doing a
+<tt class="literal">make</tt><a name="INDEX-68"/> <tt class="literal">install</tt>, you should
+copy the <em class="emphasis">.old</em> files (if they exist) to a new
+location or name. Otherwise, the next time you install Samba, the
+original <em class="emphasis">.old</em> will be overwritten without
+warning and you could lose your earlier version. If you configured
+Samba to use the default locations for files, the new files will be
+installed in the directories listed in <a href="ch02.html#samba2-CHP-2-TABLE-2">Table 2-2</a>.
+Remember that you need to perform the installation from an account
+that has write privileges on these target directories; this is
+typically the root account.</p>
+
+<a name="samba2-CHP-2-TABLE-2"/><h4 class="head4">Table 2-2. Samba installation directories</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Directory</p>
+</th>
+<th>
+<p>Description</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><em class="emphasis">/usr/local/samba</em></p>
+</td>
+<td>
+<p>Main tree</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><em class="emphasis">/usr/local/samba/bin</em></p>
+</td>
+<td>
+<p>Binaries</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><em class="emphasis">/usr/local/samba/lib</em></p>
+</td>
+<td>
+<p><em class="emphasis">smb.conf</em>, <em class="emphasis">lmhosts</em>,
+configuration files, etc.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><em class="emphasis">/usr/local/samba/man</em></p>
+</td>
+<td>
+<p>Samba documentation</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><em class="emphasis">/usr/local/samba/private</em></p>
+</td>
+<td>
+<p>Samba-encrypted password file</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><em class="emphasis">/usr/local/samba/swat</em></p>
+</td>
+<td>
+<p>SWAT files</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><em class="emphasis">/usr/local/samba/var</em></p>
+</td>
+<td>
+<p>Samba log files, lock files, browse list info, shared memory files,
+process ID files</p>
+</td>
+</tr>
+
+</table>
+
+<p>Throughout the remainder of the book, we occasionally refer to the
+location of the main tree as <em class="filename">/usr/local/samba</em>.
+In most configurations, this is the base directory of the installed
+Samba package; however, it can vary from system to system<em class="filename">
+</em>.</p>
+
+<a name="samba2-CHP-2-NOTE-90"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>Watch out if you've made <em class="filename">/usr</em> a
+read-only partition. You will want to put the logs, locks, and
+password files somewhere else.</p>
+</blockquote>
+
+<p>Here is the installation that we performed on our machine. You can
+see that we used <em class="filename">/usr/local/samba</em> as the base
+directory for the distribution:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>make install 2&gt;&amp;1 | tee make-install.log</b></tt>
+Using FLAGS =  -O  -Iinclude -I./include -I./ubiqx -I./smbwrapper -D_LARGEFILE64
+_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE  -DLOGFILEBASE=&quot;/usr/local/samba/va
+r&quot; -DCONFIGFILE=&quot;/usr/local/samba/lib/smb.conf&quot;
+
+<i class="lineannotation">...(content omitted)...</i>
+
+The binaries are installed. You can restore the old binaries (if there
+were any) using the command &quot;make revert&quot;. You can uninstall the binaries
+using the command &quot;make uninstallbin&quot; or &quot;make uninstall&quot; to uninstall
+binaries, manpages and shell scripts.
+
+<i class="lineannotation">...(content omitted)...</i>
+
+======================================================================
+The SWAT files have been installed. Remember to read the swat/README
+for information on enabling and using SWAT.
+======================================================================</pre></blockquote>
+
+<p>If the last message is about SWAT, you've
+successfully installed all the files. Congratulations! You now have
+Samba on your system!</p>
+
+
+<div class="sect2"><a name="samba2-CHP-2-SECT-4.1"/>
+
+<h3 class="head2">Upgrading Your Installation</h3>
+
+<p><a name="INDEX-70"/><a name="INDEX-71"/>Eventually a new version of
+Samba will be released, and you will want to upgrade. This is simple;
+just repeat the same steps you used to install your current version.
+Download the source distribution from the Samba web site and install
+it, then run the <tt class="literal">./configure</tt>,
+<tt class="literal">make</tt>, and <tt class="literal">make</tt>
+<tt class="literal">install</tt> commands as before. If
+you've forgotten which options you used with the
+<a name="INDEX-72"/><a name="INDEX-73"/><a name="INDEX-74"/><a name="INDEX-75"/><em class="emphasis">configure</em>
+script, take a look at the
+<em class="filename">source/config.status</em><a name="INDEX-76"/><a name="INDEX-77"/> file in your previous
+version's source distribution. The first few lines
+of this file show the options used the last time
+<em class="emphasis">configure</em> was run.</p>
+
+<p>When you run the <tt class="literal">make
+install</tt><a name="INDEX-78"/> command to install your new
+version, the files of the previous version are replaced with the new
+ones, and then all you have to do is restart the Samba daemons to get
+your new version running. See <a href="ch02.html#samba2-CHP-2-SECT-8">Section 2.8</a> later in this chapter for directions on how to do this.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-2-SECT-4.2"/>
+
+<h3 class="head2">Reconfiguring Samba</h3>
+
+<p><a name="INDEX-79"/>If you
+have already compiled Samba and wish to recompile the same source
+code with different <em class="emphasis">configure</em> options, you
+should run the following three commands in the
+<em class="emphasis">source</em> directory before rerunning the
+<em class="emphasis">configure</em> script:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>autoconf</b></tt>
+# <tt class="userinput"><b>make clean</b></tt>
+# <tt class="userinput"><b>rm config.cache</b></tt></pre></blockquote>
+
+<p>This ensures that you are starting with a clean slate and that your
+previous <em class="emphasis">configure</em> command does not leave any
+data around that can affect your new build. From here, you can rerun
+<tt class="literal">./configure</tt> and then <tt class="literal">make</tt> and
+<tt class="literal">make install</tt>.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-2-SECT-4.3"/>
+
+<h3 class="head2">Setting Search Paths</h3>
+
+<p><a name="INDEX-80"/>You
+will probably want to run commands included in the Samba distribution
+without having to specify their full directory paths. For that to
+work, the directory in which the Samba executables are located,
+<em class="filename">/usr/local/samba/bin</em> by default, must be added
+to your shell's <a name="INDEX-81"/>PATH environment variable. This
+environment variable is usually set in one or more of the
+shell's startup files, which in the case of
+<em class="emphasis">bash</em> are <em class="filename">/etc/profile</em>
+(systemwide) and the <em class="filename">.bash_profile</em> and
+<em class="filename">.bashrc</em> files in each user's
+home directory.</p>
+
+<p>To be able to read the <a name="INDEX-82"/><a name="INDEX-83"/><a name="INDEX-84"/>Samba manual pages using the
+<em class="emphasis">man</em> command, the directory where
+Samba's manual pages reside,
+<em class="filename">/usr/local/samba/man</em> by default, must be in your
+<a name="INDEX-85"/>MANPATH environment variable. On Red
+Hat Linux, this can be accomplished by adding the following two lines
+to <em class="filename">/etc/man.config</em>:</p>
+
+<a name="INDEX-86"/><a name="INDEX-87"/><blockquote><pre class="code">
+MANPATH            /usr/local/samba/man
+MANPATH_MAP        /usr/local/samba/bin     /usr/local/samba/man</pre></blockquote>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-2-SECT-5"/>
+
+<h2 class="head1">Enabling SWAT</h2>
+
+<p>The <a name="INDEX-88"/><a name="INDEX-89"/>Samba
+Web Administration Tool (SWAT) runs as a daemon under
+<em class="emphasis">inetd</em> or <em class="filename">xinetd </em>and
+provides a forms-based editor in your web browser for creating and
+modifying <a name="INDEX-90"/>Samba's
+configuration file. For SWAT to work, entries must be added for it in
+the <em class="filename">/etc/services</em> and
+<em class="filename">/etc/inetd.conf</em> (or
+<em class="filename">/etc/xinetd.d/swat) </em>configuration files. To add
+the entries, follow these two steps:</p>
+
+<ol><li>
+<p>Check your <em class="filename">/etc/services</em> file, and if it does
+not contain the following line, add it to the end of the file:</p>
+
+<blockquote><pre class="code">swat   901/tcp</pre></blockquote>
+</li>
+<li>
+<p>Now for <em class="filename">inetd </em><a name="INDEX-91"/>or <em class="filename">xinetd.
+</em><a name="INDEX-92"/>These are &quot;Internet
+super daemons&quot; that handle starting daemons on
+demand, instead of letting them sit around in memory consuming system
+resources. Most systems use <em class="filename">inetd, </em>but
+<em class="filename">xinetd </em>is also used in some versions of Unix,
+notably the Red Hat Linux (Versions 7 and newer) that we use in our
+examples. You can use the <em class="emphasis">ps</em> command to see
+which of the two your system is running.</p>
+</li></ol>
+<p>For <em class="filename">inetd, </em>add a line to the
+<em class="emphasis">/etc/</em><em class="filename">inetd.conf </em>file.
+(Check your <em class="filename">inetd.conf</em> manual page to see the
+exact format of the<em class="filename"> inetd.conf</em> file if it
+differs from the following example.) Don't forget to
+change the path to the SWAT binary if you installed it in a different
+location from the default <em class="filename">/usr/local/samba</em>:</p>
+
+<blockquote><pre class="code">swat   stream  tcp  nowait  root  /usr/local/samba/bin/swat  swat</pre></blockquote>
+
+<p>Then force <em class="filename">inetd</em> to reread its configuration
+file by sending it a SIGHUP (hangup) signal:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>/bin/kill -HUP -a inetd</b></tt></pre></blockquote>
+
+<p>Notice that we are using a version of the <em class="emphasis">kill</em>
+command that supports the <em class="emphasis">-a</em> option, so as to
+allow us to specify the process by name. On FreeBSD and Linux, you
+can use the <em class="emphasis">killall</em> command<a name="FNPTR-2"/><a href="#FOOTNOTE-2">[2]</a> as follows:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>killall -HUP inetd</b></tt></pre></blockquote>
+
+<p>If you are not running Linux or FreeBSD and your version of
+<em class="emphasis">kill</em> doesn't have the
+<em class="emphasis">-a</em> option, you will need to use the
+<em class="emphasis">ps</em> command to find the process ID and then
+supply that to <em class="emphasis">kill</em>:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>ps ax | grep inetd</b></tt>
+  780 ?        S      0:00 inetd
+ 1981 pts/4    S      0:00 grep inetd                                         
+# <tt class="userinput"><b>kill -HUP 780</b></tt></pre></blockquote>
+
+<p>If your system is using <em class="filename">xinet, </em>add a file named
+<em class="emphasis">swat</em> in your <em class="filename">/etc/xinetd.d
+</em>directory, containing the following:</p>
+
+<blockquote><pre class="code"># description: swat is the Samba Web Administration Tool, which
+#       allows an administrator to configure Samba using a web
+#       browser interface, with the URL http://localhost:901
+service swat.
+{
+        socket_type             = stream
+        wait                    = no
+        protocol                = tcp
+        only_from               = localhost
+        user                    = root
+        log_on_failure          += USERID
+        server                  = /usr/local/samba/bin/swat
+        port                    = 901
+        disable                 = no
+}</pre></blockquote>
+
+<p>Then <em class="emphasis">xinetd</em> needs to be sent a signal<a name="FNPTR-3"/><a href="#FOOTNOTE-3">[3]</a> to make it reread its configuration files:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>/bin/kill -HUP -a xinetd</b></tt></pre></blockquote>
+
+<p>And that's pretty much it for the installation.
+Before you can start up Samba, however, you need to create a
+configuration file for it.</p>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-2-SECT-6"/>
+
+<h2 class="head1">A Basic Samba Configuration File</h2>
+
+<p><a name="INDEX-93"/>The
+key to configuring Samba is its configuration file,
+<em class="filename">smb.conf</em>. This configuration file can be very
+simple or extremely complex, and the rest of this book is devoted to
+helping you get deeply personal with this file. For now, however,
+we'll show you how to set up a single file service,
+which will allow you to fire up the Samba daemons and see that
+everything is running as it should be. In later chapters, you will
+see how to configure Samba for more complicated and interesting
+tasks.</p>
+
+<p>The installation process does not automatically create an
+<em class="filename">smb.conf</em> configuration file, although several
+example files are included in the Samba distribution. To test the
+server software, though, we'll use the following
+file, which you can create in a text editor. It should be named
+<em class="filename">smb.conf</em> and placed in the
+<em class="emphasis">/usr/local/samba/lib</em> directory:<a name="FNPTR-4"/><a href="#FOOTNOTE-4">[4]</a></p>
+
+<blockquote><pre class="code">[global]
+    workgroup = METRAN 
+[test] 
+    comment = For testing only, please
+    path = /usr/local/samba/tmp
+    read only = no
+    guest ok = yes</pre></blockquote>
+
+<p>This brief configuration file tells the Samba server to offer the
+<em class="filename">/usr/local/samba/tmp</em> directory on the server as
+an SMB share called <em class="emphasis">test</em>. The server also
+becomes part of the METRAN workgroup, of which each client must also
+be a part. If you have already chosen a name for your own workgroup,
+use the name of your workgroup instead of METRAN in the previous
+example. In case you are connecting your Samba system into an
+existing network and need to know the workgroup name, you can ask
+another system administrator or go to a Windows system in the
+workgroup and follow these instructions:</p>
+
+<ul><li>
+<p>Windows 95/98/Me/NT: open the Control Panel, then double-click the
+Network icon. Click the Identification tab, and look for the
+&quot;Workgroup:&quot; label.</p>
+</li><li>
+<p>Windows 2000: open the Control Panel and double-click the System
+icon. Click the Network Identification tab. The workgroup name will
+appear below the computer name.</p>
+</li><li>
+<p>Windows XP: open the Control Panel in Classic View mode and
+double-click the System icon. Then click the Computer Name tab.</p>
+</li></ul>
+<p>We'll use the <tt class="literal">[test]</tt> share in the
+next chapter to set up the Windows clients. For now, you can complete
+the setup by performing the following commands as root on your Unix
+server:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>mkdir /usr/local/samba/tmp</b></tt>
+# <tt class="userinput"><b>chmod 777 /usr/local/samba/tmp</b></tt></pre></blockquote>
+
+<p>You might also want to put a file or two in the
+<em class="filename">/usr/local/samba/tmp</em> directory so that after
+your Windows systems are initially configured, you will have
+something to use to check that everything works.</p>
+
+<p>We should point out that in terms of system security, this is the
+worst setup possible. For the moment, however, we only wish to test
+Samba, so we'll leave security out of the picture.
+In addition, we will encounter some encrypted password issues with
+Windows clients later on, so this setup will afford us the least
+amount of headaches.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-2-SECT-6.1"/>
+
+<h3 class="head2">Encrypted Passwords</h3>
+
+<p><a name="INDEX-94"/><a name="INDEX-95"/><a name="INDEX-96"/>If your Windows clients are using Windows
+98 or Windows NT 4 Service Pack 3 or above (including Windows 2000
+and Windows XP) and you are using a version of Samba earlier than
+3.0, you must add the following entry to the
+<tt class="literal">[global]</tt> section of the Samba configuration file:</p>
+
+<blockquote><pre class="code">[global]
+    encrypt passwords = yes</pre></blockquote>
+
+<p>In addition, you must use the
+<em class="filename">smbpasswd</em><a name="INDEX-97"/> program (typically located in the
+directory <em class="filename">/usr/local/samba/bin/ </em>) to enter the
+username/password combinations of the Samba users into
+Samba's encrypted password database. For example, if
+you wanted to allow Unix user <tt class="literal">steve</tt> to access
+shares from a client system, you would use this command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbpasswd -a steve</b></tt>
+New SMB password:
+Retype new SMB password:
+Added user steve.</pre></blockquote>
+
+<p>When the first user is added, the program will output a message
+saying that the encrypted password database does not exist.
+Don't worry: it will then create the database for
+you. Make sure that the username/password combinations you add to the
+encrypted database match the usernames and passwords you intend to
+use on the Windows client side. You must run
+<em class="emphasis">smbpasswd</em> for each client user.</p>
+
+<p>In Samba 3.0, passwords are encrypted by default, so the
+<tt class="literal">encrypt</tt> <tt class="literal">passwords</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt> parameter in the
+configuration file is optional. However, you will still need to run
+the <em class="emphasis">smbpasswd</em> command to add users to the
+encrypted password file.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-2-SECT-6.2"/>
+
+<h3 class="head2">Using SWAT</h3>
+
+<p><a name="INDEX-98"/>Creating
+a configuration file with SWAT is even easier than writing a
+configuration file by hand. To invoke SWAT, use your web browser to
+connect to <em class="emphasis">http://localhost:901</em>, and log on as
+root with the root password, as shown in <a href="ch02.html#samba2-CHP-2-FIG-1">Figure 2-1</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-2-FIG-1"/><a name="INDEX-99"/><img src="figs/sam2_0201.gif"/></div><h4 class="head4">Figure 2-1. SWAT login</h4>
+
+<p>After logging in, click the GLOBALS button at the top of the screen.
+You should see the Global Variables page shown in <a href="ch02.html#samba2-CHP-2-FIG-2">Figure 2-2</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-2-FIG-2"/><img src="figs/sam2_0202.gif"/></div><h4 class="head4">Figure 2-2. SWAT Global Variables page</h4>
+
+<p>In this example, notice that SWAT retrieved the workgroup name from
+the <em class="emphasis">smb.conf</em> file that you created. (If it
+didn't, go back and perform that step correctly.)
+Make sure that the <tt class="literal">security</tt> field is set to
+<tt class="literal">USER</tt>.</p>
+
+<p>If you are running Samba 2.2 and your Windows clients are at least
+Windows 98 or Windows NT 4 SP 3 or later versions, find
+<tt class="literal">encrypt</tt> <tt class="literal">passwords</tt> in the
+Security Options section and select <tt class="literal">yes</tt>.</p>
+
+<p>The only other option you need to change from the menu is one
+determining which system on the LAN resolves NetBIOS addresses; this
+system is called the <em class="emphasis">WINS server</em>. At the very
+bottom of the page, set the <tt class="literal">wins</tt>
+<tt class="literal">support</tt> field to <tt class="literal">Yes</tt>, unless
+you already have a WINS server on your network. If you do, put the
+WINS server's IP address in the
+<tt class="literal">wins</tt> <tt class="literal">server</tt> field instead. Then
+return to the top of the screen, and press the Commit Changes button
+to write the changes out to the <em class="emphasis">smb.conf</em> file.</p>
+
+<p>Next, click the SHARES icon. You should see a page similar to <a href="ch02.html#samba2-CHP-2-FIG-3">Figure 2-3</a>. Select <tt class="literal">test</tt> (to the right
+of the Choose Share button), and click the Choose Share button. You
+will see the Share Parameters screen, as shown in <a href="ch02.html#samba2-CHP-2-FIG-3">Figure 2-3</a>, with the <tt class="literal">comment</tt> and
+<tt class="literal">path</tt> fields filled in from your
+<em class="emphasis">smb.conf</em> file.</p>
+
+<div class="figure"><a name="samba2-CHP-2-FIG-3"/><img src="figs/sam2_0203.gif"/></div><h4 class="head4">Figure 2-3. SWAT Share Parameters screen</h4>
+
+<p>If you specified that you want to use encrypted passwords on the
+GLOBALS page, click the PASSWORD button. Near the top of the screen,
+you will see the Server Password Management section. Enter your Unix
+username and password in the spaces, and click the Add New User
+button. This functions the same as the <em class="emphasis">smbpasswd</em>
+utility and creates an entry in the
+<em class="emphasis">/usr/local/samba/private/smbpasswd</em> file to allow
+you to authenticate from a Windows client.</p>
+
+<p>Now click the VIEW button at the top, and SWAT shows you the
+following <em class="filename">smb.conf</em> file:</p>
+
+<blockquote><pre class="code"># Samba config file created using SWAT
+# from localhost (127.0.0.1)
+# Date: 2002/09/05 04:56:43
+
+# Global parameters
+        workgroup = METRAN
+        encrypt passwords = Yes
+        wins support = Yes
+
+[test]
+        comment = For testing only!
+        path = /usr/local/samba/tmp
+        read only = No</pre></blockquote>
+
+<p>Once this configuration file is completed, you can skip the next step
+because the output of SWAT is guaranteed to be syntactically correct.
+<a name="INDEX-100"/></p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-2-SECT-6.3"/>
+
+<h3 class="head2">Disabling Oplocks</h3>
+
+<p>The <em class="filename">smb.conf</em><a name="INDEX-101"/><a name="INDEX-102"/>
+file you have just created is certainly good enough for the purpose
+of initial setup and testing, and you can use it as a starting point
+from which to develop the configuration of your production Samba
+server. But before you get too far with that, we want to bring one
+thing to your attention.</p>
+
+<p>If you are the type of administrator who is highly concerned about
+data integrity, you might want to make the following modification to
+your <em class="filename">smb.conf</em> file before continuing:</p>
+
+<blockquote><pre class="code">[global]
+    oplocks = no</pre></blockquote>
+
+<p>That is, use a text editor to add the line <tt class="literal">oplocks</tt>
+<tt class="literal">=</tt> <tt class="literal">no</tt> to the
+<tt class="literal">[global]</tt> section of your
+<em class="filename">smb.conf</em> file. With this example, as with other
+examples we will present throughout this book, you do not need to
+enter the <tt class="literal">[global]</tt> line again in your
+configuration file. We include it only to indicate in which section
+the parameter belongs.</p>
+
+<p>The <tt class="literal">oplocks</tt> <tt class="literal">=</tt>
+<tt class="literal">no</tt> parameter disables opportunistic locking by
+clients. This will result in significantly poorer performance, but
+will help ensure that flaky Windows clients and/or unreliable network
+hardware will not lead to corrupted files on the Samba server.</p>
+
+<p>We will cover opportunistic locking (oplocks) in more detail in the
+section &quot;Locks and Oplocks&quot; in
+<a href="ch08.html">Chapter 8</a>, and recommend that you understand the
+ideas presented there before implementing a production Samba server
+that serves database files or other valuable data.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-2-SECT-6.4"/>
+
+<h3 class="head2">Testing the Configuration File</h3>
+
+<p><a name="INDEX-103"/>If you
+didn't use SWAT to create your configuration file,
+you should probably test it to ensure that it is syntactically
+correct. It might seem silly to run a test program against an
+eight-line configuration file, but it's good
+practice for the real ones that we'll be writing
+later on.</p>
+
+<p>The test parser,
+<em class="filename">testparm</em><a name="INDEX-104"/>, examines an
+<em class="filename">smb.conf</em> file for syntax errors and reports any
+it finds along with a list of the services enabled on your machine.
+An example follows; you'll notice that in our haste
+to get the server running we mistyped <tt class="literal">workgroup</tt> as
+<tt class="literal">workgrp</tt> (the output is often lengthy, so we
+recommend capturing it with the <em class="emphasis">tee</em> command):</p>
+
+<blockquote><pre class="code">Load smb config files from smb.conf
+Unknown parameter encountered: &quot;workgrp&quot;
+Ignoring unknown parameter &quot;workgrp&quot;
+Processing section &quot;[test]&quot;
+Loaded services file OK.
+Press Enter to see a dump of your service definitions
+# Global parameters
+[global]
+    workgroup = WORKGROUP
+    netbios name = 
+    netbios aliases = 
+    server string = Samba 2.2.6
+    interfaces = 
+    bind interfaces only = No
+
+<i class="lineannotation">...(content omitted)...</i>
+
+[test]
+    comment = For testing only!
+    path = /usr/local/samba/tmp
+    read only = No</pre></blockquote>
+
+<p>The interesting parts are at the top and bottom. The top of the
+output will flag any syntax errors that you might have made, and the
+bottom lists the services that the server thinks it should offer. A
+word of advice: make sure you and the server have the same
+expectations. <a name="INDEX-105"/></p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-2-SECT-7"/>
+
+<h2 class="head1">Firewall Configuration</h2>
+
+<p><a name="INDEX-106"/>As
+with any services that run on TCP/IP, the SMB networking services
+offered by Samba can be accessed from across the Internet unless your
+organization's firewall is properly configured. The
+following ports are used by Samba for SMB networking and SWAT:</p>
+
+<dl>
+<dt><b>Port 137</b></dt>
+<dd>
+<p>Used for NetBIOS network browsing</p>
+</dd>
+
+
+
+<dt><b>Port 138</b></dt>
+<dd>
+<p>Used for NetBIOS name service</p>
+</dd>
+
+
+
+<dt><b>Port 139</b></dt>
+<dd>
+<p>Used for file and printer sharing and other operations</p>
+</dd>
+
+
+
+<dt><b>Port 445</b></dt>
+<dd>
+<p>Used by Windows 2000/XP when NetBIOS over TCP/IP is disabled</p>
+</dd>
+
+
+
+<dt><b>Port 901</b></dt>
+<dd>
+<p>Used by SWAT</p>
+</dd>
+
+</dl>
+
+<p>At the minimum, your organization's Internet
+firewall should shut down all the ports in the list to traffic in
+both directions. Do not assume that preventing incoming connections
+is sufficient; there are cracks that trick Windows clients into
+sending data out of the local area network and into the Internet by
+SMB protocol, even from a local network that uses private IP
+addresses not forwarded by routers. If you want SMB traffic to travel
+across the Internet to remote sites, the best way is to use a virtual
+private network (VPN). See the O'Reilly book,
+<em class="citetitle">Virtual Private Networks</em>, for more information
+on this subject.</p>
+
+<p>In addition, you might wish to configure a firewall on the Samba host
+system to keep SMB packets from traveling further than necessary
+within your organization's network. For example,
+port 901 can be shut down for remote accesses so that SWAT can be run
+only on the Samba host system. If you are using Samba to serve only a
+fraction of the client systems within your organization, consider
+allowing SMB packets (i.e., packets on ports 137-139 and 445) to go
+to or come from only those clients.</p>
+
+<p>For more information on configuring firewalls, see the
+O'Reilly book <em class="citetitle">Building Internet
+Firewalls</em>.</p>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-2-SECT-8"/>
+
+<h2 class="head1">Starting the Samba Daemons</h2>
+
+<p>Two Samba processes,
+<em class="emphasis">smbd</em><a name="INDEX-107"/> and
+<em class="emphasis">nmbd</em><a name="INDEX-108"/>, need to be running for Samba to work
+correctly. There are three ways to start them:</p>
+
+<ul><li>
+<p>Manually</p>
+</li><li>
+<p>Automatically, during system boot</p>
+</li><li>
+<p>From <em class="emphasis">inetd or xinetd</em></p>
+</li></ul>
+
+<div class="sect2"><a name="samba2-CHP-2-SECT-8.1"/>
+
+<h3 class="head2">Starting the Daemons Manually</h3>
+
+<p><a name="INDEX-109"/><a name="INDEX-110"/>If you're in a
+hurry, you can start the Samba daemons by hand. As root, simply enter
+the following commands:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>/usr/local/samba/bin/smbd -D</b></tt>
+# <tt class="userinput"><b>/usr/local/samba/bin/nmbd -D</b></tt></pre></blockquote>
+
+<p>Samba will now be running on your system and is ready to accept
+connections. However, keep in mind that if either of the daemons exit
+for any reason (including system reboots), they will need to be
+restarted manually.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-2-SECT-8.2"/>
+
+<h3 class="head2">Automatic Startup</h3>
+
+<p><a name="INDEX-111"/><a name="INDEX-112"/>To have the Samba daemons
+started automatically when the system boots, you need to add the
+commands listed in the previous section to your standard Unix startup
+scripts. The exact method varies depending on the flavor of Unix
+you're using.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-2-SECT-8.2.1"/>
+
+<h3 class="head3">BSD Unix</h3>
+
+<p><a name="INDEX-113"/><a name="INDEX-114"/><a name="INDEX-115"/>With a BSD-style Unix, you need to append
+the following code to the <em class="filename">rc.local </em>file, which
+is typically found in the <em class="filename">/etc</em> or
+<em class="filename">/etc/rc.d</em> directories:</p>
+
+<blockquote><pre class="code">if [ -x /usr/local/samba/bin/smbd]; then
+    echo &quot;Starting smbd...&quot;
+    /usr/local/samba/bin/smbd -D
+    echo &quot;Starting nmbd...&quot;
+    /usr/local/samba/bin/nmbd -D
+fi</pre></blockquote>
+
+<p>This code is very simple: it checks to see if the
+<em class="filename">smbd</em> file exists and has execute permissions,
+and if it does, it starts up both of the Samba daemons on system
+boot.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-2-SECT-8.2.2"/>
+
+<h3 class="head3">System V Unix</h3>
+
+<p><a name="INDEX-116"/><a name="INDEX-117"/><a name="INDEX-118"/>With System V, things can get a little
+more complex. Depending on your Unix version, you might be able to
+get away with making a simple change to an
+<em class="filename">rc.local</em> file as with BSD Unix, but System V
+typically uses directories containing links to scripts that control
+daemons on the system. Hence, you need to instruct the system how to
+start and stop the Samba daemons. The first step to implement this is
+to modify the contents of the <em class="filename">/etc/rc.d/init.d</em>
+directory by adding something similar to the following shell script,
+which for this example we will name <em class="filename">smb </em>:</p>
+
+<blockquote><pre class="code">#!/bin/sh
+
+# Check that the Samba configuration file exists
+[ -f /usr/local/samba/lib/smb.conf ] || exit 0
+
+start(  )
+{
+        echo -n &quot;Starting SMB services: &quot;
+        /usr/local/samba/bin/smbd -D
+        ERROR=$?
+        echo
+
+        echo -n &quot;Starting NMB services: &quot;
+        /usr/local/samba/bin/nmbd -D
+        ERROR2=$?
+        if [ $ERROR2 -ne 0 ]
+        then
+                ERROR=1
+        fi
+        echo
+
+        return $ERROR
+}
+
+stop(  )
+{
+        echo -n &quot;Shutting down SMB services: &quot;
+        /bin/kill -TERM -a smbd
+        ERROR=$?
+        echo
+
+        echo -n &quot;Shutting down NMB services: &quot;
+        /bin/kill -TERM -a nmbd
+        ERROR2=$?
+        if [ $ERROR2 -ne 0 ]
+        then
+                ERROR=1
+        fi
+        echo
+
+        return $ERROR
+}
+
+case &quot;$1&quot; in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  *)
+        echo &quot;Usage: $0 {start|stop}&quot;
+        exit 1
+esac
+
+exit $?</pre></blockquote>
+
+<p>With this script, you can start and stop <em class="emphasis">smbd</em>
+and <em class="emphasis">nmbd</em> like this:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>/etc/rc.d/init.d/smb start</b></tt>
+Starting SMB services:
+Starting NMB services:
+# <tt class="userinput"><b>ps ax | grep mbd</b></tt>
+ 1268 ?        S      0:00 /usr/local/samba/bin/smbd -D
+ 1270 ?        S      0:00 /usr/local/samba/bin/nmbd -D
+ 1465 pts/2    S      0:00 grep mbd
+# <tt class="userinput"><b>/etc/rc.d/init.d/smb stop</b></tt>
+Shutting down SMB services:
+Shutting down NMB services:</pre></blockquote>
+
+<p>If you are having trouble writing a startup script for your system,
+check to see if there is a packaged release of Samba (available from
+your Unix vendor or the Samba FTP site). If so, you might be able to
+extract a startup script from it to use as a starting point.
+Typically, this script doesn't change much (if at
+all) from release to release, so using a script from an older Samba
+version should not be a problem. Another possibility is to check the
+<em class="filename">packaging</em> directory in the Samba source
+distribution. In that directory, there are subdirectories for many
+Unix versions in which you can find a startup script for those
+versions. Even if your version isn't included, you
+can probably find a startup script for a similar version to use as a
+starting point.</p>
+
+<p>Finally, we need to add symbolic links to the
+<em class="filename">smb</em> script in the
+<em class="emphasis">/etc/rc.d/rcX.d</em> directories:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>ln -s /etc/rc.d/init.d/smb /etc/rc.d/rc3.d/S35smb</b></tt>
+# <tt class="userinput"><b>ln -s /etc/rc.d/init.d/smb /etc/rc.d/rc5.d/S35smb</b></tt>
+
+# <tt class="userinput"><b>ln -s /etc/rc.d/init.d/smb /etc/rc.d/rc0.d/K35smb</b></tt>
+# <tt class="userinput"><b>ln -s /etc/rc.d/init.d/smb /etc/rc.d/rc1.d/K35smb</b></tt>
+# <tt class="userinput"><b>ln -s /etc/rc.d/init.d/smb /etc/rc.d/rc2.d/K35smb</b></tt>
+# <tt class="userinput"><b>ln -s /etc/rc.d/init.d/smb /etc/rc.d/rc4.d/K35smb</b></tt>
+# <tt class="userinput"><b>ln -s /etc/rc.d/init.d/smb /etc/rc.d/rc6.d/K35smb</b></tt></pre></blockquote>
+
+<p>The first two commands, with link names starting with an
+&quot;S&quot;, cause Samba to be started when
+entering runlevels 3 or 5, which are the runlevels in which network
+file sharing (NFS) is normally enabled. The second group of commands,
+with link names starting with a
+&quot;K&quot;, cause Samba to be shut down
+when entering any of the other runlevels (0, 1, 2, 4, or 6).</p>
+
+<p>The links starting with &quot;S&quot; are
+used to start the daemons, and the links starting with
+&quot;K&quot; are used for killing them. When
+the runlevel is changed, the links starting with
+&quot;K&quot; in the corresponding directory
+(e.g., the <em class="filename">rc3.d</em> directory for runlevel 3) are
+executed, followed by the links starting with
+&quot;S&quot;. If we wanted, we could have
+Samba restarted when switching between runlevels 3 and 5 by adding a
+<em class="filename">K35smb</em> link to each <em class="filename">rc3.d</em>
+and <em class="filename">rc5.d </em>directory.</p>
+
+<p>The number after the K or S in the link names is used to set the
+order in which all the daemons with links in the directory are
+started or killed off. Get a long listing of the
+<em class="emphasis">rc3.d</em> or <em class="emphasis">rc5.d</em> directories
+to see how this is set up on your system. We use 35 to match the
+behavior of Red Hat's Samba RPM package. The
+important thing is to make sure when starting Samba that all services
+it requires are started before it. When shutting down, it is a good
+idea to shut down Samba before services it requires to avoid excess
+error messages in the log files, but the order is not as crucial.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-2-SECT-8.2.3"/>
+
+<h3 class="head3">Darwin and Mac OS X</h3>
+
+<p><a name="INDEX-119"/><a name="INDEX-120"/><a name="INDEX-121"/><a name="INDEX-122"/>An installation of Samba is bundled with the
+Darwin distribution, which is included in Mac OS X.<a name="FNPTR-5"/><a href="#FOOTNOTE-5">[5]</a> </p>
+
+<p>The Samba daemons are started during system
+boot by the script
+<em class="filename">/System/Library/StartupItems/Samba/Samba</em>. To
+trigger the execution of this script, edit the file
+<em class="filename">/etc/hostconfig</em> and change the SMBSERVER
+parameter to look like this:</p>
+
+<blockquote><pre class="code">SMBSERVER=-YES-</pre></blockquote>
+
+<p>On Mac OS X, the graphical user interface (GUI) provides an
+alternative to using the command line. Launch the System Preferences
+application, and select Sharing (see <a href="ch02.html#samba2-CHP-2-FIG-4">Figure 2-4</a>).
+Under the Services tab, turn on Windows File Sharing. This will make
+the aforementioned change to <em class="filename">/etc/hostconfig</em> and
+immediately execute the startup item.</p>
+
+<div class="figure"><a name="samba2-CHP-2-FIG-4"/><img src="figs/sam2_0204.gif"/></div><h4 class="head4">Figure 2-4. Mac OS X sharing preferences</h4>
+
+<p>If you decide to install Samba yourself on Mac OS X,
+it's best not to stomp on the installation provided
+with the OS. Use the procedures detailed earlier in this chapter to
+install the software into <em class="filename">/usr/local/samba</em> or
+some other area unaffected by OS upgrades. (Remember to set up users
+with <em class="emphasis">smbpasswd</em> if you're using
+encrypted passwords, as described earlier in this chapter. This step
+is handled automatically with entries in
+<em class="filename">/var/db/samba/hash</em> if you're
+using the built-in server on Mac OS X.) Once you've
+got that working, you can edit the Samba startup item script to refer
+to your installation, like this:</p>
+
+<blockquote><pre class="code">    #!/bin/sh
+    # Start Samba
+
+    . /etc/rc.common
+
+    if [ &quot;${SMBSERVER:=-NO-}&quot; = &quot;-YES-&quot; ]; then
+        ConsoleMessage &quot;Starting SMB server&quot;
+
+        if [ -f /usr/local/samba/lib/smb.conf ]; then
+            /usr/local/samba/bin/smbd -D
+            /usr/local/samba/bin/nmbd -D
+        fi
+    fi</pre></blockquote>
+
+<p>However, beware of OS updates, which can wipe out your changes. One
+solution is to make the script immutable, like this:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>chflags uchg /System/Library/StartupItems/Samba/Samba</b></tt></pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-2-SECT-8.2.4"/>
+
+<h3 class="head3">Testing automatic startup</h3>
+
+<p><a name="INDEX-123"/><a name="INDEX-124"/>If you can afford a few minutes of
+downtime, reboot your system and again use the
+<em class="emphasis">ps</em> command to check that the
+<em class="emphasis">smbd</em> and <em class="emphasis">nmbd</em> daemons are
+running. And if you are managing a 24/7 server, we highly recommend
+that you find some downtime in which to reboot and perform this
+check. Otherwise, your next unscheduled downtime might surprise you
+with a mysterious absence of SMB networking services when the system
+comes up again! <a name="INDEX-125"/><a name="INDEX-126"/></p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-2-SECT-8.3"/>
+
+<h3 class="head2">Starting from inetd</h3>
+
+<p><a name="INDEX-127"/><a name="INDEX-128"/><a name="INDEX-129"/>The <em class="emphasis">inetd</em>
+<em class="emphasis"><a name="FNPTR-6"/><a href="#FOOTNOTE-6">[6]</a></em> daemon is a Unix
+system's Internet &quot;super
+daemon.&quot; It listens on ports defined in
+<em class="filename">/etc/services</em> and executes the appropriate
+program for each port, which is defined in
+<em class="filename">/etc/inetd.conf</em>. The advantage of this scheme is
+that you can have a large number of daemons ready to answer queries,
+but they don't all have to be running all the time.
+Instead, <em class="emphasis">inetd</em> listens for connection requests
+and starts the appropriate daemon when it is needed. The penalty is a
+small overhead cost of creating a new daemon process, as well as the
+fact that you need to edit two files rather than one to set things
+up. The <em class="emphasis">inetd</em> daemon is handy if you have only
+one or two Samba users or your machine is running too many daemons
+already. It's also easier to perform an upgrade
+without disturbing an existing connection.</p>
+
+<p>If you wish to start from <em class="filename">inetd</em>, first open
+<em class="filename">/etc/services</em> in your text editor. If you
+don't already have them defined, add the following
+two lines:</p>
+
+<blockquote><pre class="code">netbios-ssn     139/tcp
+netbios-ns      137/udp</pre></blockquote>
+
+<p>Next, edit <em class="filename">/etc/inetd.conf</em>. Look for the
+following two lines and add them if they don't
+exist. If you already have <tt class="literal">smbd</tt> and
+<tt class="literal">nmbd</tt> lines in the file, edit them to point at the
+new <em class="emphasis">smbd</em> and <em class="emphasis">nmbd</em>
+you've installed. Your brand of Unix might use a
+slightly different syntax in this file; use the existing entries and
+the <em class="filename">inetd.conf </em> manual
+page as a guide:</p>
+
+<blockquote><pre class="code">netbios-ssn stream tcp nowait root /usr/local/samba/bin/smbd smbd 
+netbios-ns  dgram  udp wait   root /usr/local/samba/bin/nmbd nmbd</pre></blockquote>
+
+<p>Finally, kill any <em class="emphasis">smbd</em> or
+<em class="emphasis">nmbd</em> processes and send the
+<em class="emphasis">inetd</em> process a hangup (HUP) signal to tell it
+to reread its configuration file:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>/bin/kill -TERM -a smbd</b></tt>
+# <tt class="userinput"><b>/bin/kill -TERM -a nmbd</b></tt>
+# <tt class="userinput"><b>/bin/kill -HUP -a inetd</b></tt></pre></blockquote>
+
+<p>After that, Samba should be up and running.</p>
+
+<p>As we've pointed out before, Red Hat and perhaps
+other Unix vendors supply <em class="emphasis">xinetd</em> rather than
+<em class="emphasis">inetd</em>. If you need to use
+<em class="emphasis">xinetd</em>, you will need to supply a configuration
+file in the <em class="emphasis">/etc/xinetd.d</em> directory.
+<a name="INDEX-130"/></p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-2-SECT-9"/>
+
+<h2 class="head1">Testing the Samba Daemons</h2>
+
+<p><a name="INDEX-131"/><a name="INDEX-132"/>We're
+nearly done with the Samba server setup. All that's
+left to do is to make sure everything is working as we think it
+should. A convenient way to do this is to use the
+<em class="filename">smbclient</em><a name="INDEX-133"/> program to examine what the server is
+offering to the network. If everything is set up properly, you should
+be able to do the following:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>/usr/local/samba/bin/smbclient -U% -L localhost</b></tt>
+added interface ip=172.16.1.1 bcast=172.16.1.255 nmask=255.255.255.0
+Domain=[METRAN] OS=[Unix] Server=[Samba 2.2.6]
+
+        Sharename      Type      Comment
+        ---------      ----      -------
+        test           Disk      For testing only, please
+        IPC$           IPC       IPC Service (Samba 2.2.6)
+        ADMIN$         Disk      IPC Service (Samba 2.2.6)
+        
+        Server               Comment
+        ---------            -------
+        TOLTEC               Samba 2.2.6 on toltec
+
+        Workgroup            Master
+        ---------            -------
+        METRAN               TOLTEC</pre></blockquote>
+
+<p>If there is a problem, don't panic! Try to start the
+daemons manually, and check the system output or the debug files at
+<em class="filename">/usr/local/samba/var/log.smb</em><a name="INDEX-134"/><a name="INDEX-135"/><a name="INDEX-136"/> to see if you can determine what happened.
+If you think it might be a more serious problem, skip to <a href="ch12.html">Chapter 12</a> for help on troubleshooting the Samba daemons.</p>
+
+<p>If it worked, congratulations! You now have successfully set up the
+Samba server with a disk share. It's a simple one,
+but we can use it to set up and test the Windows 95/98/Me and
+NT/2000/XP clients in the next chapter. Then we will start making it
+more interesting by adding services such as home directories,
+printers, and security, and by seeing how to integrate the server
+into a larger Windows domain. <a name="INDEX-137"/></p>
+
+
+</div>
+
+<hr/><h4 class="head4">Footnotes</h4><blockquote><a name="FOOTNOTE-1"/>
+<p><a href="#FNPTR-1">[1]</a> <em class="emphasis">gcc</em> binaries are available for almost
+every modern machine. See <a href="http://www.gnu.org/">http://www.gnu.org/</a> for a list of sites with
+<em class="emphasis">gcc</em> and other GNU software.</p> <a name="FOOTNOTE-2"/> <p><a href="#FNPTR-2">[2]</a> Do
+not confuse this with the Solaris <em class="emphasis">killall</em>
+command, which performs part of the system shutdown sequence!</p>
+<a name="FOOTNOTE-3"/>
+<p><a href="#FNPTR-3">[3]</a> Depending on the version of <em class="emphasis">xinetd</em> you
+have and how it was compiled, you might need to send a USR1 or some
+other signal rather than the HUP signal. Check the manual page for
+<em class="emphasis">xinetd (8)</em> on your system for details.</p>
+<a name="FOOTNOTE-4"/>
+<p><a href="#FNPTR-4">[4]</a> If you did not compile Samba, but instead downloaded a binary,
+check with the documentation for the package to find out where it
+expects the <em class="filename">smb.conf</em> file to be. Or, try running
+the <em class="emphasis">testparm</em> program and look for the location
+of <em class="filename">smb.conf</em> in the first line of output. If
+Samba came preinstalled with your Unix system, an
+<em class="filename">smb.conf</em> file is probably already somewhere on
+your system.</p> <a name="FOOTNOTE-5"/>
+<p><a href="#FNPTR-5">[5]</a> In this book, we cover Darwin Version 6.0 and OS X Version
+10.2.</p> <a name="FOOTNOTE-6"/> <p><a href="#FNPTR-6">[6]</a> With early releases of Samba 2.2, there were reports
+of intermittent errors when starting from <em class="emphasis">inetd</em>.
+We provide this information so that it will be available for later
+releases when the problem will hopefully have been identified and
+corrected.</p> </blockquote>
+
+
+<hr/><h4 class="head4"><a href="toc.html">TOC</a></h4>
+</body></html>

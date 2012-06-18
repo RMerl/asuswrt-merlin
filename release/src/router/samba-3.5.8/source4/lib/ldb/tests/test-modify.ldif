@@ -1,0 +1,23 @@
+dn: cn=Ursula Hampster,ou=Alumni Association,ou=People,o=University of Michiga
+ n,c=TEST
+changetype: modify
+add: drink
+drink: mango lassi
+-
+add: drink
+drink: lemonade
+-
+delete: pager
+-
+replace: telephonenumber
+telephonenumber: +61 2 6260 6012
+telephonenumber: +61 412 666 929
+-
+delete: telephonenumber
+telephonenumber: +61 2 6260 6012
+-
+delete: telephonenumber
+telephonenumber: +61 412 666 929
+-
+add: telephonenumber
+telephonenumber: +61 412 666 929

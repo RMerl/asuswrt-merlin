@@ -1,0 +1,7 @@
+Encrypt TCP and UDP traffic using a simple XOR encryption
+.TP
+.BI "--key " "string"
+Set key to "string"
+.TP
+.BI "--block-size"
+Set block size

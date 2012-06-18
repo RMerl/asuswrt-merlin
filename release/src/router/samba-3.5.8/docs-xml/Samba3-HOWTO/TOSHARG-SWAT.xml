@@ -1,0 +1,640 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="SWAT">
+<chapterinfo>
+	&author.jht;
+	<pubdate>April 21, 2003</pubdate>
+</chapterinfo>
+
+<title>SWAT: The Samba Web Administration Tool</title>
+
+<para>
+<indexterm><primary>configuration tool</primary></indexterm>
+<indexterm><primary>SWAT</primary></indexterm>
+<indexterm><primary>Web-based configuration</primary></indexterm>
+There are many and varied opinions regarding the usefulness of SWAT.  No matter how hard one tries to produce
+the perfect configuration tool, it remains an object of personal taste. SWAT is a tool that allows Web-based
+configuration of Samba. It has a wizard that may help to get Samba configured quickly, it has
+context-sensitive help on each &smb.conf; parameter, it provides for monitoring of current state of connection
+information, and it allows networkwide MS Windows network password management.
+</para>
+
+<sect1>
+<title>Features and Benefits</title>
+
+<para>
+<indexterm><primary>internetworking super daemon</primary></indexterm>
+SWAT is a facility that is part of the Samba suite. The main executable is called
+<command>swat</command> and is invoked by the internetworking super daemon.
+See <link linkend="xinetd">appropriate section</link> for details.
+</para>
+
+<para>
+<indexterm><primary>man</primary></indexterm>
+SWAT uses integral Samba components to locate parameters supported by the particular
+version of Samba. Unlike tools and utilities that are external to Samba, SWAT is always
+up to date as known Samba parameters change. SWAT provides context-sensitive help for each
+configuration parameter, directly from <command>man</command> page entries.
+</para>
+
+<para>
+<indexterm><primary>documentation</primary></indexterm>
+<indexterm><primary>configuration files</primary></indexterm>
+<indexterm><primary>internal ordering</primary></indexterm>
+Some network administrators believe that it is a good idea to write systems
+documentation inside configuration files, and for them SWAT will always be a nasty tool. SWAT
+does not store the configuration file in any intermediate form; rather, it stores only the
+parameter settings, so when SWAT writes the &smb.conf; file to disk, it writes only
+those parameters that are at other than the default settings. The result is that all comments,
+as well as parameters that are no longer supported, will be lost from the &smb.conf; file.
+Additionally, the parameters will be written back in internal ordering.
+</para>
+
+<note><para>
+<indexterm><primary>stripped of comments</primary></indexterm>
+Before using SWAT, please be warned &smbmdash; SWAT will completely replace your &smb.conf; with
+a fully optimized file that has been stripped of all comments you might have placed there
+and only nondefault settings will be written to the file.
+</para></note>
+
+</sect1>
+
+<sect1>
+<title>Guidelines and Technical Tips</title>
+
+<para>
+<indexterm><primary>internationalization support</primary></indexterm>
+This section aims to unlock the dark secrets behind how SWAT may be made to work,
+how it can be made more secure, and how to solve internationalization support problems.
+</para>
+
+<sect2>
+<title>Validate SWAT Installation</title>
+
+<para>
+<indexterm><primary>SWAT binary support</primary></indexterm>
+The very first step that should be taken before attempting to configure a host
+system for SWAT operation is to check that it is installed. This may seem a trivial
+point to some, but several Linux distributions do not install SWAT by default,
+even though they do ship an installable binary support package containing SWAT
+on the distribution media.
+</para>
+
+<para>
+<indexterm><primary>swat</primary></indexterm>
+When you have confirmed that SWAT is installed, it is necessary to validate
+that the installation includes the binary <command>swat</command> file as well
+as all the supporting text and Web files. A number of operating system distributions
+in the past have failed to include the necessary support files, even though the
+<command>swat</command> binary executable file was installed. 
+</para>
+
+<para>
+<indexterm><primary>inetd</primary></indexterm>
+<indexterm><primary>xinetd</primary></indexterm>
+Finally, when you are sure that SWAT has been fully installed, please check that SWAT
+is enabled in the control file for the internetworking super-daemon (inetd or xinetd)
+that is used on your operating system platform. 
+</para>
+
+<sect3>
+<title>Locating the <command>SWAT</command> File</title>
+
+<para>
+<indexterm><primary>/usr/local/samba/bin</primary></indexterm>
+<indexterm><primary>/usr/sbin</primary></indexterm>
+<indexterm><primary>/opt/samba/bin</primary></indexterm>
+To validate that SWAT is installed, first locate the <command>swat</command> binary
+file on the system. It may be found under the following directories:</para>
+<para><simplelist>
+	<member><filename>/usr/local/samba/bin</filename> &smbmdash; the default Samba location</member>
+	<member><filename>/usr/sbin</filename> &smbmdash; the default location on most Linux systems</member>
+	<member><filename>/opt/samba/bin</filename></member>
+</simplelist>
+</para>
+
+<para>
+The actual location is much dependent on the choice of the operating system vendor or as determined
+by the administrator who compiled and installed Samba.
+</para>
+
+<para>
+There are a number of methods that may be used to locate the <command>swat</command> binary file.
+The following methods may be helpful.
+</para>
+
+<para>
+<indexterm><primary>swat</primary></indexterm>
+<indexterm><primary>operating system search path</primary></indexterm>
+<indexterm><primary>swat command-line options</primary></indexterm>
+If <command>swat</command> is in your current operating system search path, it will be easy to 
+find it. You can ask what are the command-line options for <command>swat</command> as shown here:
+<screen>
+frodo:~ # swat -?
+Usage: swat [OPTION...]
+  -a, --disable-authentication         Disable authentication (demo mode)
+
+Help options:
+  -?, --help                           Show this help message
+  --usage                              Display brief usage message
+
+Common samba options:
+  -d, --debuglevel=DEBUGLEVEL          Set debug level
+  -s, --configfile=CONFIGFILE          Use alternative configuration file
+  -l, --log-basename=LOGFILEBASE       Basename for log/debug files
+  -V, --version                        Print version
+</screen>
+</para>
+
+</sect3>
+
+<sect3>
+<title>Locating the SWAT Support Files</title>
+
+<para>
+Now that you have found that <command>swat</command> is in the search path, it is easy
+to identify where the file is located. Here is another simple way this may be done:
+<screen>
+frodo:~ # whereis swat
+swat: /usr/sbin/swat /usr/share/man/man8/swat.8.gz
+</screen>
+</para>
+
+<para>
+If the above measures fail to locate the <command>swat</command> binary, another approach
+is needed. The following may be used:
+<screen>
+frodo:/ # find / -name swat -print
+/etc/xinetd.d/swat
+/usr/sbin/swat
+/usr/share/samba/swat
+frodo:/ #
+</screen>
+</para>
+
+<para>
+This list shows that there is a control file for <command>xinetd</command>, the internetwork
+super-daemon that is installed on this server. The location of the SWAT binary file is
+<filename>/usr/sbin/swat</filename>, and the support files for it are located under the
+directory <filename>/usr/share/samba/swat</filename>.
+</para>
+
+<para>
+We must now check where <command>swat</command> expects to find its support files. This can
+be done as follows:
+<screen>
+frodo:/ # strings /usr/sbin/swat | grep "/swat"
+/swat/
+...
+/usr/share/samba/swat
+frodo:/ #
+</screen>
+</para>
+
+<para>
+The <filename>/usr/share/samba/swat/</filename> entry shown in this listing is the location of the
+support files. You should verify that the support files exist under this directory. A sample
+list is as shown:
+<screen>
+jht@frodo:/> find /usr/share/samba/swat -print
+/usr/share/samba/swat
+/usr/share/samba/swat/help
+/usr/share/samba/swat/lang
+/usr/share/samba/swat/lang/ja
+/usr/share/samba/swat/lang/ja/help
+/usr/share/samba/swat/lang/ja/help/welcome.html
+/usr/share/samba/swat/lang/ja/images
+/usr/share/samba/swat/lang/ja/images/home.gif
+...
+/usr/share/samba/swat/lang/ja/include
+/usr/share/samba/swat/lang/ja/include/header.nocss.html
+...
+/usr/share/samba/swat/lang/tr
+/usr/share/samba/swat/lang/tr/help
+/usr/share/samba/swat/lang/tr/help/welcome.html
+/usr/share/samba/swat/lang/tr/images
+/usr/share/samba/swat/lang/tr/images/home.gif
+...
+/usr/share/samba/swat/lang/tr/include
+/usr/share/samba/swat/lang/tr/include/header.html
+/usr/share/samba/swat/using_samba
+...
+/usr/share/samba/swat/images
+/usr/share/samba/swat/images/home.gif
+...
+/usr/share/samba/swat/include
+/usr/share/samba/swat/include/footer.html
+/usr/share/samba/swat/include/header.html
+jht@frodo:/>
+</screen>
+</para>
+
+<para>
+If the files needed are not available, it is necessary to obtain and install them
+before SWAT can be used.
+</para>
+
+</sect3>
+</sect2>
+
+<sect2 id="xinetd">
+<title>Enabling SWAT for Use</title>
+
+<para>
+SWAT should be installed to run via the network super-daemon. Depending on which system
+your UNIX/Linux system has, you will have either an <command>inetd</command>- or
+<command>xinetd</command>-based system.
+</para>
+
+<para>
+The nature and location of the network super-daemon varies with the operating system
+implementation. The control file (or files) can be located in the file 
+<filename>/etc/inetd.conf</filename> or in the directory <filename>/etc/[x]inet[d].d</filename>
+or in a similar location.
+</para>
+
+<para>
+The control entry for the older style file might be:
+<indexterm><primary>swat</primary><secondary>enable</secondary></indexterm>
+</para>
+
+
+<para><programlisting>
+	# swat is the Samba Web Administration Tool
+	swat stream tcp nowait.400 root /usr/sbin/swat swat
+</programlisting></para>
+
+<para>
+A control file for the newer style xinetd could be:
+</para>
+
+<para>
+<programlisting>
+# default: off
+# description: SWAT is the Samba Web Admin Tool. Use swat \
+#              to configure your Samba server. To use SWAT, \
+#              connect to port 901 with your favorite web browser.
+service swat
+{
+	port    = 901
+	socket_type     = stream
+	wait    = no
+	only_from = localhost
+	user    = root
+	server  = /usr/sbin/swat
+	log_on_failure  += USERID
+	disable = no
+}
+</programlisting>
+In the above, the default setting for <parameter>disable</parameter> is <constant>yes</constant>.
+This means that SWAT is disabled. To enable use of SWAT, set this parameter to <constant>no</constant>
+as shown.
+</para>
+
+<para>
+<indexterm><primary>swat</primary></indexterm>
+<indexterm><primary>/usr/sbin</primary></indexterm>
+<indexterm><primary>/usr/share/samba/swat</primary></indexterm>
+<indexterm><primary>/usr/local/samba/swat</primary></indexterm>
+Both of the previous examples assume that the <command>swat</command> binary has been
+located in the <filename>/usr/sbin</filename> directory. In addition to the above,
+SWAT will use a directory access point from which it will load its Help files
+as well as other control information. The default location for this on most Linux
+systems is in the directory <filename>/usr/share/samba/swat</filename>. The default
+location using Samba defaults will be <filename>/usr/local/samba/swat</filename>.
+</para>
+
+<para>
+<indexterm><primary>SWAT permission allowed</primary></indexterm>
+<indexterm><primary>password change facility</primary></indexterm>
+Access to SWAT will prompt for a logon. If you log onto SWAT as any non-root user,
+the only permission allowed is to view certain aspects of configuration as well as
+access to the password change facility. The buttons that will be exposed to the non-root
+user are <guibutton>HOME</guibutton>, <guibutton>STATUS</guibutton>, <guibutton>VIEW</guibutton>, and 
+<guibutton>PASSWORD</guibutton>. The only page that allows
+change capability in this case is <guibutton>PASSWORD</guibutton>.
+</para>
+
+<para>
+As long as you log onto SWAT as the user <emphasis>root</emphasis>, you should obtain
+full change and commit ability. The buttons that will be exposed include
+<guibutton>HOME</guibutton>, <guibutton>GLOBALS</guibutton>, <guibutton>SHARES</guibutton>, <guibutton>PRINTERS</guibutton>, 
+<guibutton>WIZARD</guibutton>, <guibutton>STATUS</guibutton>, <guibutton>VIEW</guibutton>, and <guibutton>PASSWORD</guibutton>.
+</para>
+
+</sect2>
+
+<sect2>
+<title>Securing SWAT through SSL</title>
+
+
+<para>
+<indexterm><primary>SSL</primary></indexterm>
+<indexterm><primary>swat</primary><secondary>security</secondary></indexterm>
+Many people have asked about how to set up SWAT with SSL to allow for secure remote
+administration of Samba. Here is a method that works, courtesy of Markus Krieger.
+</para>
+
+<para>
+Modifications to the SWAT setup are as follows: 
+</para>
+
+<procedure>
+	<step><para>
+<indexterm><primary>OpenSSL</primary></indexterm>
+	Install OpenSSL.
+	</para></step>
+
+	<step><para>
+<indexterm><primary>certificate</primary></indexterm>
+<indexterm><primary>private key</primary></indexterm>
+	Generate certificate and private key.
+<indexterm><primary>/usr/bin/openssl</primary></indexterm>
+<screen>
+&rootprompt;<userinput>/usr/bin/openssl req -new -x509 -days 365 -nodes -config \
+	/usr/share/doc/packages/stunnel/stunnel.cnf \
+	-out /etc/stunnel/stunnel.pem -keyout /etc/stunnel/stunnel.pem</userinput>
+</screen></para></step>
+
+	<step><para>
+	Remove SWAT entry from [x]inetd.
+	</para></step>
+
+	<step><para>
+<indexterm><primary>stunnel</primary></indexterm>
+	Start <command>stunnel</command>.
+
+<screen>
+&rootprompt;<userinput>stunnel -p /etc/stunnel/stunnel.pem -d 901 \
+	 -l /usr/local/samba/bin/swat swat </userinput>
+</screen></para></step>
+</procedure>
+
+<para>
+Afterward, simply connect to SWAT by using the URL <ulink noescape="1"
+url="https://myhost:901">https://myhost:901</ulink>, accept the certificate, and the SSL connection is up.
+</para>
+
+</sect2>
+
+<sect2>
+<title>Enabling SWAT Internationalization Support</title>
+
+<para>
+SWAT can be configured to display its messages to match the settings of
+the language configurations of your Web browser. It will be passed to SWAT 
+in the Accept-Language header of the HTTP request.
+</para>
+
+<para>
+To enable this feature:
+</para>
+
+<itemizedlist>
+	<listitem><para>
+	Install  the proper <command>msg</command> files from the Samba
+	<filename>source/po</filename> directory into $LIBDIR.
+	</para></listitem>
+
+	<listitem><para>
+	Set your browsers language setting.
+	</para></listitem>
+</itemizedlist>
+
+<para>
+<indexterm><primary>msg file</primary></indexterm>
+<indexterm><primary>Japanese</primary></indexterm>
+<indexterm><primary>French</primary></indexterm>
+<indexterm><primary>English</primary></indexterm>
+The name of the <command>msg</command> file is the same as the language ID sent by the browser. For
+example, <emphasis>en</emphasis> means English, <emphasis>ja</emphasis> means Japanese, <emphasis>fr</emphasis> means French.
+</para>
+
+<para>
+<indexterm><primary>locale</primary></indexterm>
+If you do not like some of messages, or there are no <command>msg</command> files for
+your locale, you can create them simply by copying the <command>en.msg</command> files
+to the directory for <quote>your language ID.msg</quote> and filling in proper strings
+to each <quote>msgstr</quote>. For example, in <filename>it.msg</filename>, the
+<command>msg</command> file for the Italian locale, just set:
+<screen>
+msgid "Set Default"
+msgstr "Imposta Default"
+</screen>
+<indexterm><primary>msg</primary></indexterm>
+and so on. If you find a mistake or create a new <command>msg</command> file, please email it
+to us so we will consider it in the next release of Samba. The <command>msg</command> file should be encoded in UTF-8.
+</para>
+
+<para>
+<indexterm><primary>UTF-8 encoding</primary></indexterm>
+Note that if you enable this feature and the <smbconfoption name="display charset"/> is not
+matched to your browser's setting, the SWAT display may be corrupted.  In a future version of
+Samba, SWAT will always display messages with UTF-8 encoding. You will then not need to set
+this &smb.conf; file parameter.
+</para>
+
+</sect2>
+
+</sect1>
+
+<sect1>
+<title>Overview and Quick Tour</title>
+
+<para>
+SWAT is a tool that may be used to configure Samba or just to obtain useful links
+to important reference materials such as the contents of this book as well as other
+documents that have been found useful for solving Windows networking problems.
+</para>
+
+<sect2>
+<title>The SWAT Home Page</title>
+
+<para>
+The SWAT title page provides access to the latest Samba documentation. The manual page for
+each Samba component is accessible from this page, as are the Samba3-HOWTO (this 
+document) as well as the O'Reilly book <quote>Using Samba.</quote>
+</para>
+
+<para>
+Administrators who wish to validate their Samba configuration may obtain useful information
+from the man pages for the diagnostic utilities. These are available from the SWAT home page
+also. One diagnostic tool that is not mentioned on this page but that is particularly
+useful is <ulink url="http://www.ethereal.com/"><command>ethereal</command></ulink>.
+</para>
+
+<warning><para>
+SWAT can be configured to run in <emphasis>demo</emphasis> mode. This is not recommended
+because it runs SWAT without authentication and with full administrative ability. It allows
+changes to &smb.conf; as well as general operation with root privileges. The option that
+creates this ability is the <option>-a</option> flag to SWAT. <emphasis>Do not use this in a
+production environment.</emphasis>
+</para></warning>
+
+</sect2>
+
+<sect2>
+<title>Global Settings</title>
+
+<para>
+The <guibutton>GLOBALS</guibutton> button exposes a page that allows configuration of the global parameters
+in &smb.conf;. There are two levels of exposure of the parameters:
+</para>
+
+<itemizedlist>
+	<listitem><para>
+	<guibutton>Basic</guibutton> &smbmdash; exposes common configuration options.
+	</para></listitem>
+
+	<listitem><para>
+	<guibutton>Advanced</guibutton> &smbmdash; exposes configuration options needed in more 
+	complex environments.
+	</para></listitem>
+</itemizedlist>
+
+<para>
+To switch to other than <guibutton>Basic</guibutton> editing ability, click on <guibutton>Advanced</guibutton>.
+You may also do this by clicking on the radio button, then click on the <guibutton>Commit Changes</guibutton> button.
+</para>
+
+<para>
+After making any changes to configuration parameters, make sure that
+you click on the 
+<guibutton>Commit Changes</guibutton> button before moving to another area; otherwise,
+your changes will be lost.
+</para>
+
+<note><para>
+SWAT has context-sensitive help. To find out what each parameter is
+for, simply click on the
+<guibutton>Help</guibutton> link to the left of the configuration parameter.
+</para></note>
+
+</sect2>
+
+<sect2>
+<title>Share Settings</title>
+
+<para>
+To affect a currently configured share, simply click on the pull-down button between the
+<guibutton>Choose Share</guibutton> and the <guibutton>Delete Share</guibutton> buttons and
+select the share you wish to operate on. To edit the settings,
+click on the
+<guibutton>Choose Share</guibutton> button. To delete the share, simply press the
+<guibutton>Delete Share</guibutton> button.
+</para>
+
+<para>
+To create a new share, next to the button labeled <guibutton>Create Share</guibutton>, enter
+into the text field the name of the share to be created, then click on the 
+<guibutton>Create Share</guibutton> button.
+</para>
+
+</sect2>
+
+<sect2>
+<title>Printers Settings</title>
+
+<para>
+To affect a currently configured printer, simply click on the pull-down button between the
+<guibutton>Choose Printer</guibutton> and the <guibutton>Delete Printer</guibutton> buttons and
+select the printer you wish to operate on. To edit the settings,
+click on the
+<guibutton>Choose Printer</guibutton> button. To delete the share, simply press the
+<guibutton>Delete Printer</guibutton> button.
+</para>
+
+<para>
+To create a new printer, next to the button labeled <guibutton>Create Printer</guibutton>, enter
+into the text field the name of the share to be created, then click on the 
+<guibutton>Create Printer</guibutton> button.
+</para>
+
+</sect2>
+
+<sect2>
+<title>The SWAT Wizard</title>
+
+<para>
+The purpose of the SWAT Wizard is to help the Microsoft-knowledgeable network administrator
+to configure Samba with a minimum of effort.
+</para>
+
+<para>
+The Wizard page provides a tool for rewriting the &smb.conf; file in fully optimized format.
+This will also happen if you press the <guibutton>Commit</guibutton> button. The two differ
+because the <guibutton>Rewrite</guibutton> button ignores any changes that may have been made,
+while the <guibutton>Commit</guibutton> button causes all changes to be affected.
+</para>
+
+<para>
+The <guibutton>Edit</guibutton> button permits the editing (setting) of the minimal set of
+options that may be necessary to create a working Samba server.
+</para>
+
+<para>
+Finally, there are a limited set of options that determine what type of server Samba
+will be configured for, whether it will be a WINS server, participate as a WINS client, or
+operate with no WINS support. By clicking one button, you can elect to expose (or not) user
+home directories.
+</para>
+
+</sect2>
+
+<sect2>
+<title>The Status Page</title>
+
+<para>
+The status page serves a limited purpose. First, it allows control of the Samba daemons.
+The key daemons that create the Samba server environment are &smbd;, &nmbd;, and &winbindd;.
+</para>
+
+<para>
+The daemons may be controlled individually or as a total group. Additionally, you may set
+an automatic screen refresh timing. As MS Windows clients interact with Samba, new smbd processes
+are continually spawned. The auto-refresh facility allows you to track the changing
+conditions with minimal effort.
+</para>
+
+<para>
+Finally, the status page may be used to terminate specific smbd client connections in order to
+free files that may be locked.
+</para>
+
+</sect2>
+
+<sect2>
+<title>The View Page</title>
+
+<para>
+The view page allows you to view the optimized &smb.conf; file and, if you are
+particularly masochistic, permits you also to see all possible global configuration
+parameters and their settings.
+</para>
+
+</sect2>
+
+<sect2>
+<title>The Password Change Page</title>
+
+<para>
+The password change page is a popular tool that allows the creation, deletion, deactivation,
+and reactivation of MS Windows networking users on the local machine. You can also use
+this tool to change a local password for a user account.
+</para>
+
+<para>
+When logged in as a non-root account, the user must provide the old password as well as
+the new password (twice). When logged in as <emphasis>root</emphasis>, only the new password is
+required.
+</para>
+
+<para>
+One popular use for this tool is to change user passwords across a range of remote MS Windows
+servers.
+</para>
+
+</sect2>
+</sect1>
+
+</chapter>

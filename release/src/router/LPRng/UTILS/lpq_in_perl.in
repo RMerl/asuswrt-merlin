@@ -1,0 +1,78 @@
+#!@PERL@
+eval 'exec @PERL@ -S $0 ${1+"$@"}'
+    if $running_under_some_shell;
+            # this emulates #! processing on NIH machines.
+            # (remove #! line above if indigestible)
+
+
+use strict;
+use English;
+use Socket;
+use LPRng;
+use Getopt::Std;
+
+my(
+	$Printer, $Pc_value, $Debug, %Args, $pr, $remote, $port, $option,
+	$options, $SOCK, $line, $prefix, $firstpart, $count, $max,
+);
+
+$| = 1;
+
+$Debug = 0;
+Set_Debug($Debug);
+
+getopts( "P:svl", \%Args);
+Setup_LPRng( %Args );
+
+
+# get the printer name
+$Printer = Get_printer_name( %Args );
+if( not $Printer ){
+	die "missing printer name";
+}
+
+print "Printer '$Printer'\n" if $Debug;
+
+$Pc_value = Setup_pc_entry( $Printer );
+
+($pr, $remote, $port ) = Get_remote_pr_host( $Printer, $Pc_value );
+print "pr '$pr', remote '$remote', port '$port'\n" if $Debug;
+
+$option = 4;
+$option = 3 if( $Args{'s'} );
+$option = 8 if( $Args{'v'} );
+
+$max = 0;
+$max += $Args{'l'} if $Args{'l'};
+if( $max > 4 ){
+	$max = 0;
+} else {
+	$max = (1 << $max );
+}
+
+print "max $max\n" if $Debug;
+
+$SOCK = getconnection( $remote, $port );
+
+$options =  join (" ", @ARGV);
+printf $SOCK "%c%s%s\n", $option, $pr, $options ? (" " . $options) : "";
+$prefix = "";
+
+while ( defined( $line = <$SOCK> ) ) { 
+	if( $max ){
+		($firstpart) = split( ":", $line );
+		print "firstpart '$firstpart', count $count\n" if $Debug;
+		$firstpart ||= "";
+		if( $prefix eq $firstpart ){
+			if( ++$count >= $max ){
+				next;
+			}
+		} else {
+			$count = 0;
+			$prefix = $firstpart;
+		}
+	}
+	print $line; 
+} 
+close ($SOCK) or die "close: $!"; 
+exit 0;

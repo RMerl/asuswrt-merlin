@@ -1,0 +1,142 @@
+libexif-0.6.19 (2009-11-12):
+  * New translations: be, en_GB, it, ja, pt, sq, zh_CN
+  * Updated translations: da, sv, vi
+  * Now using a binary search to make searching through the tag table faster
+  * Fixed a heap buffer overflow during tag format conversion
+
+
+libexif-0.6.18 (2009-10-09):
+  * New translations: da, pt_BR, sr
+  * Updated translations: cs, de, en_CA, nl, pl, sk, sv, vi
+  * Added some example programs
+  * libexif is now thread safe when the underlying C library is thread safe
+    and when each object allocated by libexif isn't used by more than one
+    thread simultaneously
+  * Expanded the Doxygen API documentation
+  * Access to the raw EXIF data through the ExifEntry structure members is
+    now officially documented
+  * Fixed some Olympus/Sanyo MakerNote interpretations
+  * Added support for Epson MakerNotes
+  * Fixed bug #1946138 to stop ignoring CFLAGS in the sqrt configure test
+  * Added remaining GPS tags from the EXIF 2.2 spec to the tag table
+  * Fixed the interpretation of some tags as being optional in IFD 1
+    (to match the EXIF 2.2 spec) which stops them from being erroneously
+    removed from a file when EXIF_DATA_OPTION_IGNORE_UNKNOWN_TAGS is set
+  * Changed exif_tag_get_support_level_in_ifd() to return a value when possible
+    when the data type for the given EXIF data is unknown. This will cause
+    tags to be added or deleted when tag fixup is requested even, without a
+    data type being set.
+  * Added support for writing Pentax and Casio type2 MakerNotes
+  * Improved display of Pentax and Casio type2 MakerNotes
+  * Completely fixed bug #1617997 to display APEX values correctly
+  * Stopped some crashes due to read-beyond-buffer accesses in MakerNotes
+  * Don't abort MakerNote parsing after the first invalid tag
+  * Sped up exif_content_fix()
+  * Fixed negative exposure values in Canon makernotes (bug #2797280)
+  * New API entry point: exif_loader_get_buf()
+
+
+libexif-0.6.17 (2008-11-06):
+  * Updated translations: cs, de, pl, sk, vi
+  * New translations: nl, sv, en_CA
+  * Bug fixes: #1773810, #1774626, #1536244, CVE-2007-6351, CVE-2007-6352,
+    #2071600 and others
+  * Enhanced support of Canon and Olympus makernotes 
+  * Added support for Fuji and Sanyo makernotes
+  * Added support for the NO_VERBOSE_TAG_STRINGS and NO_VERBOSE_TAG_DATA
+    macros to reduce size for embedded applications
+  * Added support for more tags
+
+
+libexif-0.6.16 (2007-06-12):
+  * Security fix: CVE-2006-4168 aka IDEF1514.
+  * Updated translations: cz, pl, vi
+
+
+New in 0.6.15 (2007-05-23) since 0.6.14 (2007-05-10):
+
+  * Added support for 2 new types of Pentax makernotes & Casio type2 makernote
+
+  * Added support for Win XP metadata (Author, Comment, KeyWords, Title,
+    Subject) tags
+
+  * Bug fixes:
+    [ 1443183 ] install error when doxygen is not present.
+
+  * New translations: Czech, Slovak.
+
+  * Improved doxygen generated API and code internals
+    documentation. Made building of code internals docs optional
+    (--enable-internal-docs) as the call graphs take quite long to
+    build. Made building any docs optional (--disable-docs).
+
+
+New in 0.6.14 (2007-05-10) since 0.6.13 (2005-12-27):
+
+  * Bug fixes: #1457501, #1471060, #1525770, #1617991, #1703284, #1716196
+
+  * Extended support of Canon, Nikon, Olympus makernotes
+
+  * Added option EXIF_DATA_OPTION_DONT_CHANGE_MAKER_NOTE to prevent
+    modification of maker notes
+
+  * Other fixes and improvements which include API/ABI additions.
+
+
+New in 0.6.13 (2005-12-27) since 0.6.12 (2005-03-13):
+
+  * Bug fixes: #803191, #1051994, #1054321, #1054323, #1196787
+  
+  * For pkg-config users, force usage of #include <libexif/exif-*.h>
+    (disable #include <exif-.h>)
+
+  * Updated German translation
+
+  * Build system tuning
+
+  * Misc changes:
+    Fix COPYRIGHT tag, fix memory corruption, use qsort.
+
+
+New in 0.6.12 (2005-03-13) since 0.6.11 (2004-10-16):
+
+  * Final fix of Ubuntu Security Notice USN-91-1 (CAN-2005-0664)
+    https://bugzilla.ubuntulinux.org/show_bug.cgi?id=7152
+
+  * Updated build system with cross compile capabilities
+
+  * Small fixes:
+    Fix tag order, use even offsets, improve Nikon&Olympus mnote tags.
+
+
+New in 0.6.11 (2004-10-16) since 0.6.10 (2004-08-27):
+
+  * Improved tag names, titles, and descriptions.
+
+  * Bug fixes for memory leaks, format strings, month one off, ...
+
+  * Support for Watcom compiler (requires manual copying of files)
+
+
+New in 0.6.10 (2004-08-27) since 0.5.9 (2002-12-11):
+
+  * New tags suppored, and added a few more checks.
+
+  * API changes
+
+  * libmnote has been merged back into libexif
+
+
+General remarks:
+
+  * This file contains changes visible to users.
+
+  * Small bug fixes (typos, memory leaks, ...) and feature
+    enhancements (new tag types, ...) are not mentioned
+    explicitly.
+
+  * Apart from that, I would like to ask committers to update this
+    file when they commit "big" user visible changes.
+
+  * If someone wants to reconstruct past changes and log them here,
+    you're welcome to.

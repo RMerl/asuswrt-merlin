@@ -1,0 +1,551 @@
+.\"     Title: ntlm_auth
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: User Commands
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "NTLM_AUTH" "1" "09/30/2009" "Samba 3\&.0" "User Commands"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+ntlm_auth \- tool to allow external access to Winbind\'s NTLM authentication function
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCntlm_auth\F[] [\-d\ debuglevel] [\-l\ logdir] [\-s\ <smb\ config\ file>]
+.fam
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+\FCntlm_auth\F[]
+is a helper utility that authenticates users using NT/LM authentication\&. It returns 0 if the users is authenticated successfully and 1 if access was denied\&. ntlm_auth uses winbind to access the user and authentication data for a domain\&. This utility is only indended to be used by other programs (currently
+Squid
+and
+mod_ntlm_winbind)
+.SH "OPERATIONAL REQUIREMENTS"
+.PP
+The
+\fBwinbindd\fR(8)
+daemon must be operational for many of these commands to function\&.
+.PP
+Some of these commands also require access to the directory
+\FCwinbindd_privileged\F[]
+in
+\FC$LOCKDIR\F[]\&. This should be done either by running this command as root or providing group access to the
+\FCwinbindd_privileged\F[]
+directory\&. For security reasons, this directory should not be world\-accessable\&.
+.SH "OPTIONS"
+.PP
+\-\-helper\-protocol=PROTO
+.RS 4
+Operate as a stdio\-based helper\&. Valid helper protocols are:
+.PP
+squid\-2\&.4\-basic
+.RS 4
+Server\-side helper for use with Squid 2\&.4\'s basic (plaintext) authentication\&.
+.RE
+.PP
+squid\-2\&.5\-basic
+.RS 4
+Server\-side helper for use with Squid 2\&.5\'s basic (plaintext) authentication\&.
+.RE
+.PP
+squid\-2\&.5\-ntlmssp
+.RS 4
+Server\-side helper for use with Squid 2\&.5\'s NTLMSSP authentication\&.
+.sp
+Requires access to the directory
+\FCwinbindd_privileged\F[]
+in
+\FC$LOCKDIR\F[]\&. The protocol used is described here:
+http://devel\&.squid\-cache\&.org/ntlm/squid_helper_protocol\&.html\&. This protocol has been extended to allow the NTLMSSP Negotiate packet to be included as an argument to the
+\FCYR\F[]
+command\&. (Thus avoiding loss of information in the protocol exchange)\&.
+.RE
+.PP
+ntlmssp\-client\-1
+.RS 4
+Client\-side helper for use with arbitrary external programs that may wish to use Samba\'s NTLMSSP authentication knowledge\&.
+.sp
+This helper is a client, and as such may be run by any user\&. The protocol used is effectively the reverse of the previous protocol\&. A
+\FCYR\F[]
+command (without any arguments) starts the authentication exchange\&.
+.RE
+.PP
+gss\-spnego
+.RS 4
+Server\-side helper that implements GSS\-SPNEGO\&. This uses a protocol that is almost the same as
+\FCsquid\-2\&.5\-ntlmssp\F[], but has some subtle differences that are undocumented outside the source at this stage\&.
+.sp
+Requires access to the directory
+\FCwinbindd_privileged\F[]
+in
+\FC$LOCKDIR\F[]\&.
+.RE
+.PP
+gss\-spnego\-client
+.RS 4
+Client\-side helper that implements GSS\-SPNEGO\&. This also uses a protocol similar to the above helpers, but is currently undocumented\&.
+.RE
+.PP
+ntlm\-server\-1
+.RS 4
+Server\-side helper protocol, intended for use by a RADIUS server or the \'winbind\' plugin for pppd, for the provision of MSCHAP and MSCHAPv2 authentication\&.
+.sp
+This protocol consists of lines in the form:
+\FCParameter: value\F[]
+and
+\FCParameter:: Base64\-encode value\F[]\&. The presence of a single period
+\FC\&.\F[]
+indicates that one side has finished supplying data to the other\&. (Which in turn could cause the helper to authenticate the user)\&.
+.sp
+Curently implemented parameters from the external program to the helper are:
+.PP
+Username
+.RS 4
+The username, expected to be in Samba\'s
+\m[blue]\fBunix charset\fR\m[]\&.
+.PP \fBExample\ \&1.\ \&\fR Username: bob
+.PP \fBExample\ \&2.\ \&\fR Username:: Ym9i
+.RE
+.PP
+Username
+.RS 4
+The user\'s domain, expected to be in Samba\'s
+\m[blue]\fBunix charset\fR\m[]\&.
+.PP \fBExample\ \&3.\ \&\fR Domain: WORKGROUP
+.PP \fBExample\ \&4.\ \&\fR Domain:: V09SS0dST1VQ
+.RE
+.PP
+Full\-Username
+.RS 4
+The fully qualified username, expected to be in Samba\'s
+\m[blue]\fBunix charset\fR\m[]
+and qualified with the
+\m[blue]\fBwinbind separator\fR\m[]\&.
+.PP \fBExample\ \&5.\ \&\fR Full\-Username: WORKGROUP\ebob
+.PP \fBExample\ \&6.\ \&\fR Full\-Username:: V09SS0dST1VQYm9i
+.RE
+.PP
+LANMAN\-Challenge
+.RS 4
+The 8 byte
+\FCLANMAN Challenge\F[]
+value, generated randomly by the server, or (in cases such as MSCHAPv2) generated in some way by both the server and the client\&.
+.PP \fBExample\ \&7.\ \&\fR LANMAN\-Challege: 0102030405060708
+.RE
+.PP
+LANMAN\-Response
+.RS 4
+The 24 byte
+\FCLANMAN Response\F[]
+value, calculated from the user\'s password and the supplied
+\FCLANMAN Challenge\F[]\&. Typically, this is provided over the network by a client wishing to authenticate\&.
+.PP \fBExample\ \&8.\ \&\fR LANMAN\-Response: 0102030405060708090A0B0C0D0E0F101112131415161718
+.RE
+.PP
+NT\-Response
+.RS 4
+The >= 24 byte
+\FCNT Response\F[]
+calculated from the user\'s password and the supplied
+\FCLANMAN Challenge\F[]\&. Typically, this is provided over the network by a client wishing to authenticate\&.
+.PP \fBExample\ \&9.\ \&\fR NT\-Response: 0102030405060708090A0B0C0D0E0F101112131415161718
+.RE
+.PP
+Password
+.RS 4
+The user\'s password\&. This would be provided by a network client, if the helper is being used in a legacy situation that exposes plaintext passwords in this way\&.
+.PP \fBExample\ \&10.\ \&\fR Password: samba2
+.PP \fBExample\ \&11.\ \&\fR Password:: c2FtYmEy
+.RE
+.PP
+Request\-User\-Session\-Key
+.RS 4
+Apon sucessful authenticaiton, return the user session key associated with the login\&.
+.PP \fBExample\ \&12.\ \&\fR Request\-User\-Session\-Key: Yes
+.RE
+.PP
+Request\-LanMan\-Session\-Key
+.RS 4
+Apon sucessful authenticaiton, return the LANMAN session key associated with the login\&.
+.PP \fBExample\ \&13.\ \&\fR Request\-LanMan\-Session\-Key: Yes
+.RE
+.if n \{\
+.sp
+.\}
+.RS 4
+.BM yellow
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBWarning\fR
+.ps -1
+.br
+Implementors should take care to base64 encode
+		any data (such as usernames/passwords) that may contain malicous user data, such as
+		a newline\&.  They may also need to decode strings from
+		the helper, which likewise may have been base64 encoded\&..sp .5v
+.EM yellow
+.RE
+.RE
+.RE
+.PP
+\-\-username=USERNAME
+.RS 4
+Specify username of user to authenticate
+.RE
+.PP
+\-\-domain=DOMAIN
+.RS 4
+Specify domain of user to authenticate
+.RE
+.PP
+\-\-workstation=WORKSTATION
+.RS 4
+Specify the workstation the user authenticated from
+.RE
+.PP
+\-\-challenge=STRING
+.RS 4
+NTLM challenge (in HEXADECIMAL)
+.RE
+.PP
+\-\-lm\-response=RESPONSE
+.RS 4
+LM Response to the challenge (in HEXADECIMAL)
+.RE
+.PP
+\-\-nt\-response=RESPONSE
+.RS 4
+NT or NTLMv2 Response to the challenge (in HEXADECIMAL)
+.RE
+.PP
+\-\-password=PASSWORD
+.RS 4
+User\'s plaintext password
+.sp
+If not specified on the command line, this is prompted for when required\&.
+.sp
+For the NTLMSSP based server roles, this parameter specifies the expected password, allowing testing without winbindd operational\&.
+.RE
+.PP
+\-\-request\-lm\-key
+.RS 4
+Retreive LM session key
+.RE
+.PP
+\-\-request\-nt\-key
+.RS 4
+Request NT key
+.RE
+.PP
+\-\-diagnostics
+.RS 4
+Perform Diagnostics on the authentication chain\&. Uses the password from
+\FC\-\-password\F[]
+or prompts for one\&.
+.RE
+.PP
+\-\-require\-membership\-of={SID|Name}
+.RS 4
+Require that a user be a member of specified group (either name or SID) for authentication to succeed\&.
+.RE
+.PP
+\-d|\-\-debuglevel=level
+.RS 4
+\fIlevel\fR
+is an integer from 0 to 10\&. The default value if this parameter is not specified is 0\&.
+.sp
+The higher this value, the more detail will be logged to the log files about the activities of the server\&. At level 0, only critical errors and serious warnings will be logged\&. Level 1 is a reasonable level for day\-to\-day running \- it generates a small amount of information about operations carried out\&.
+.sp
+Levels above 1 will generate considerable amounts of log data, and should only be used when investigating a problem\&. Levels above 3 are designed for use only by developers and generate HUGE amounts of log data, most of which is extremely cryptic\&.
+.sp
+Note that specifying this parameter here will override the
+\m[blue]\fBlog level\fR\m[]
+parameter in the
+\FCsmb\&.conf\F[]
+file\&.
+.RE
+.PP
+\-V
+.RS 4
+Prints the program version number\&.
+.RE
+.PP
+\-s <configuration file>
+.RS 4
+The file specified contains the configuration details required by the server\&. The information in this file includes server\-specific information such as what printcap file to use, as well as descriptions of all the services that the server is to provide\&. See
+\FCsmb\&.conf\F[]
+for more information\&. The default configuration file name is determined at compile time\&.
+.RE
+.PP
+\-l|\-\-log\-basename=logdirectory
+.RS 4
+Base directory name for log/debug files\&. The extension
+\fB"\&.progname"\fR
+will be appended (e\&.g\&. log\&.smbclient, log\&.smbd, etc\&.\&.\&.)\&. The log file is never removed by the client\&.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\&.
+.RE
+.SH "EXAMPLE SETUP"
+.PP
+To setup ntlm_auth for use by squid 2\&.5, with both basic and NTLMSSP authentication, the following should be placed in the
+\FCsquid\&.conf\F[]
+file\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.fam C
+.ps -1
+.nf
+.if t \{\
+.sp -1
+.\}
+.BB lightgray adjust-for-leading-newline
+.sp -1
+
+auth_param ntlm program ntlm_auth \-\-helper\-protocol=squid\-2\&.5\-ntlmssp
+auth_param basic program ntlm_auth \-\-helper\-protocol=squid\-2\&.5\-basic
+auth_param basic children 5
+auth_param basic realm Squid proxy\-caching web server
+auth_param basic credentialsttl 2 hours
+.EB lightgray adjust-for-leading-newline
+.if t \{\
+.sp 1
+.\}
+.fi
+.fam
+.ps +1
+.if n \{\
+.RE
+.\}
+.if n \{\
+.sp
+.\}
+.RS 4
+.BM yellow
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.PP
+This example assumes that ntlm_auth has been installed into your path, and that the group permissions on
+\FCwinbindd_privileged\F[]
+are as described above\&.
+.sp .5v
+.EM yellow
+.RE
+.PP
+To setup ntlm_auth for use by squid 2\&.5 with group limitation in addition to the above example, the following should be added to the
+\FCsquid\&.conf\F[]
+file\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.fam C
+.ps -1
+.nf
+.if t \{\
+.sp -1
+.\}
+.BB lightgray adjust-for-leading-newline
+.sp -1
+
+auth_param ntlm program ntlm_auth \-\-helper\-protocol=squid\-2\&.5\-ntlmssp \-\-require\-membership\-of=\'WORKGROUP\eDomain Users\'
+auth_param basic program ntlm_auth \-\-helper\-protocol=squid\-2\&.5\-basic \-\-require\-membership\-of=\'WORKGROUP\eDomain Users\'
+.EB lightgray adjust-for-leading-newline
+.if t \{\
+.sp 1
+.\}
+.fi
+.fam
+.ps +1
+.if n \{\
+.RE
+.\}
+.SH "TROUBLESHOOTING"
+.PP
+If you\'re experiencing problems with authenticating Internet Explorer running under MS Windows 9X or Millenium Edition against ntlm_auth\'s NTLMSSP authentication helper (\-\-helper\-protocol=squid\-2\&.5\-ntlmssp), then please read
+the Microsoft Knowledge Base article #239869 and follow instructions described there\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The ntlm_auth manpage was written by Jelmer Vernooij and Andrew Bartlett\&.

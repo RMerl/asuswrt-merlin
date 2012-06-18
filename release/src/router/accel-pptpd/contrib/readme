@@ -1,0 +1,8 @@
+pppd-allow-mppe.patch
+---------------------
+
+This patch allows pppd conditionaly This patch allows you to include mppe when 
+the client requires. To do this you need to replace the option require-mppe-128 
+to allow-mppe-128.
+
+

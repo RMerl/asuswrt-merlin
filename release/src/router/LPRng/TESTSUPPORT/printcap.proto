@@ -1,0 +1,76 @@
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1995 Patrick Powell, San Diego State University
+#     papowell@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: TESTSUPPORT/printcap.proto
+# PURPOSE: printcap prototype
+# printcap.proto,v 3.2 1997/01/24 20:27:06 papowell Exp
+########################################################################## 
+#
+# This is a set of printcap entries used for testing and an example of the
+# printcap database format.  The '#start xx' and '#end' lines are use
+# to generate other files.
+#
+# These are comments
+# Note that t1 starts a printcap entry
+#start t1
+t1
+# to explore the 'autohold', remove comment from next line
+# and reinstall initial job files by using 'make files'
+#	:ah
+	:sd=_TMP_LPD/t1
+	:cm=Test Printer 1
+	:rw
+	:lf=log
+#	:db=4,network,database,receive
+	:lp=_TMP_/t1_lp
+	:ld=leader\n
+	:tr=trailer\n
+	:of=_TMP_LPD/lpf -D10
+	:if=_TMP_LPD/filter -D10 -delay5
+	:ff=formfeed\n
+#end t1
+#example of remote printer
+# The lp=t1@_HOST_ forces the LPD to forward
+#
+#start t2
+t2|Test Printer 2:sd=_TMP_LPD/t2:lp=t1@_HOST_:lf=log
+#	:db=4,network,database,receive
+#end t2
+#
+# The following entry is used in a database to specify the
+# name of a remote printer.  The actual printer printcap is
+# in lpd_printcap
+#
+#start t3
+t3:lp=t3@_HOST_
+#	:db=4,network,database,receive
+#end t3
+#
+# server and subserver queues
+# t4 is main server entry, t5 is a subserver
+#
+#start t4
+t4:sd=_TMP_LPD/t4:sv=t5,t6
+#	:db=4,network,database,receive
+#end t4
+#start t5
+t5:sd=_TMP_LPD/t5:ss=t4:lp=_TMP_/t5_lp
+#	:db=4,network,database,receive
+#end t5
+#start t6
+t6:sd=_TMP_LPD/t6:ss=t4:lp=_TMP_/t6_lp
+#	:db=4,network,database,receive
+#end t6
+# use this when you want to explicitly specify a list of printers
+# to be used for all queries
+#start all
+# This line can used when using a database to specify the
+# set of accessible printers.  Normally it would default
+# to the entire printcap information.
+#all:all=t1,t2,t3,t4,t5,t6
+#end all

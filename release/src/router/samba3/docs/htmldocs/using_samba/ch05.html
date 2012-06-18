@@ -1,0 +1,1779 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Chapter 5. Unix Clients</h1>
+
+<p><a name="INDEX-1"/>In <a href="ch03.html">Chapter 3</a> we showed you how to configure Windows systems
+to access shared resources on both Windows and Samba servers. This
+has probably opened up a whole new world of computing for
+you&mdash;one in which you have to run to a Windows system every time
+you want to copy a file between Unix and Windows! In this chapter, we
+will show you the &quot;other
+side&quot;&mdash;how to access SMB shares from your
+favorite Unix system.</p>
+
+<p>You can access SMB resources from Unix in three ways, depending on
+your version of Unix. A program included with the Samba distribution
+called <em class="emphasis">smbclient</em><a name="INDEX-2"/> can be used to connect with a share on
+the network in a manner similar to using <em class="emphasis">ftp</em>
+when transferring files to or from an FTP site.</p>
+
+<p>If your system is running Linux, you can use the
+<a name="INDEX-3"/>smbfs
+filesystem to mount SMB shares right onto your Linux filesystem, just
+as you would mount a disk partition or NFS filesystem. The SMB shares
+can then be accessed and manipulated by all programs running on the
+Linux system: command shells, desktop GUI interfaces, and application
+software.</p>
+
+<p>On some BSD-based systems, including Mac OS X, a pair of utilities
+named <em class="emphasis">smbutil</em> <a name="INDEX-4"/>and <em class="emphasis">mount_smbfs</em>
+<a name="INDEX-5"/>can be used to query SMB servers and
+mount shares.</p>
+
+<p>For other Unix variants,
+<em class="emphasis">smbsh</em><a name="INDEX-6"/> can be run to enable common shell
+commands such as <em class="emphasis">cd</em>, <em class="emphasis">ls</em>,
+<em class="emphasis">mv, wc</em>, and <em class="emphasis">grep</em> to access
+and manipulate files and directories on SMB shares. This effectively
+extends the reach of the Unix shell and utilities beyond the Unix
+filesystem and into the SMB network.</p>
+
+<p>All the Unix clients can access shares offered by either Windows
+systems or Samba servers. We have already shown you how to set up a
+share on a Samba server and could use that as an example to work
+with. But it's much more fun to use the Unix clients
+with shares served by Windows systems. So before we start covering
+the Unix clients in detail, we will take a quick detour and show you
+how to set up file shares on both Windows 95/98/Me and Windows
+NT/2000/XP systems.</p>
+
+
+<div class="sect1"><a name="samba2-CHP-5-SECT-1"/>
+
+<h2 class="head1">Sharing Files on Windows 95/98/Me</h2>
+
+<p>When <a name="INDEX-7"/><a name="INDEX-8"/>sharing files on Windows 95/98/Me, you
+can authenticate users in two different ways.
+<a name="INDEX-9"/><a name="INDEX-10"/>Share-level security is the default
+and is easy to use. However, it is not as secure and can require
+users to type in passwords when connecting to shares. User-level
+security offers a better security model and can be used if you have
+either a Samba or Windows NT/2000 server on your network performing
+user authentication.</p>
+
+<p>To configure the type of access control for your system, open the
+Control Panel, double-click the Network icon, then click the Access
+Control tab. You should see the dialog box shown in <a href="ch05.html#samba2-CHP-5-FIG-1">Figure 5-1</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-5-FIG-1"/><img src="figs/sam2_0501.gif"/></div><h4 class="head4">Figure 5-1. The Access Control tab of the Windows 98 Network Control Panel window</h4>
+
+<p>Click the &quot;Share-level access
+control&quot; or &quot;User-level access
+control&quot; radio button, depending on which you want
+to use. When using user-level access control, you will also need to
+fill in the name of your workgroup or Windows NT domain. Reboot as
+requested.</p>
+
+<p>To share a folder, right-click the folder's icon and
+select Sharing . . . . This will open the Sharing tab of the
+folder's Properties dialog box. Click the
+&quot;Shared As:&quot; radio button, and fill
+in a name for the share (which defaults to the
+folder's name) and a description, which will be
+visible to client users. If you don't want the share
+to be visible in the Network Neighborhood view of other Windows
+clients, pick a name for the share that ends in a dollar sign
+(<tt class="literal">$</tt>).</p>
+
+<p><a href="ch05.html#samba2-CHP-5-FIG-2">Figure 5-2</a> shows what the Sharing tab of the
+folder's Properties dialog box will look like when
+using share-level security. The security settings are very simple.
+You can select a radio button for read-only access or full
+(read/write) access, or have the user's permissions
+(either read-only or read/write) depend on which password they use.
+In accordance with which you select, you will be asked to assign
+either or both of the read-only and full-access passwords for the
+share.</p>
+
+<div class="figure"><a name="samba2-CHP-5-FIG-2"/><img src="figs/sam2_0502.gif"/></div><h4 class="head4">Figure 5-2. The Sharing tab of the folder's Properties dialog, with share-level security</h4>
+
+<p>If your system is configured with user-level security, the Sharing
+tab of the folder's Properties dialog box will look
+like <a href="ch05.html#samba2-CHP-5-FIG-3">Figure 5-3</a>. As you can see,
+we've created a share named
+&quot;DATA&quot;, and used the Add . . .
+button to create permissions that allow read-only access for all
+domain users and read/write (full access) for <tt class="literal">jay</tt>.</p>
+
+<div class="figure"><a name="samba2-CHP-5-FIG-3"/><img src="figs/sam2_0503.gif"/></div><h4 class="head4">Figure 5-3. The Sharing tab of the folder Properties dialog, with user-level security</h4>
+
+<p>When you are done specifying your settings for the share, click on
+the OK button, and the share will become available to users on
+network clients. Unless you chose a share name ending in a dollar
+sign, you can see it in the Network Neighborhood or My Network Places
+of Windows clients on the network. You can also now use the Unix
+clients described in this chapter to connect to the share.</p>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-5-SECT-2"/>
+
+<h2 class="head1">Sharing Files on Windows NT/2000/XP</h2>
+
+<p>To create a file share on <a name="INDEX-11"/><a name="INDEX-12"/><a name="INDEX-13"/><a name="INDEX-14"/>Windows NT/2000/XP, you first must
+log in to the system as any member of the Administrators, Power
+Users, or Server Operators groups. Right-click the icon of a folder
+you wish to share, and click Sharing . . . in the pop-up menu. The
+Sharing tab of the folder's Properties dialog box
+will appear, as shown in <a href="ch05.html#samba2-CHP-5-FIG-4">Figure 5-4</a>. Click the
+&quot;Share this folder&quot; radio button.</p>
+
+<div class="figure"><a name="samba2-CHP-5-FIG-4"/><img src="figs/sam2_0504.gif"/></div><h4 class="head4">Figure 5-4. The Sharing tab of the folder's Properties dialog on Windows 2000</h4>
+
+<p>Share name: will default to the name of the folder, and you can
+change it if you want. One reason you might want to use a different
+name for the share is to make the share not appear in browse lists
+(as displayed by the Network Neighborhood, for example). This can be
+done by using a share name ending in a dollar sign
+(<tt class="literal">$</tt>). You can also add a description of the share
+in the Comment: text area. The description will appear to users of
+network clients and can help them understand the contents of the
+share.</p>
+
+<p><a name="INDEX-15"/><a name="INDEX-16"/><a name="INDEX-17"/><a name="INDEX-18"/><a name="INDEX-19"/>By clicking the Permissions button,
+you can set permissions for the share on a user-by-user basis. This
+is equivalent to the user-level security of Windows 95/98/Me file
+sharing. On Windows NT/2000/XP, Microsoft recommends that share
+permissions be set to allow full access by everyone, with the
+permissions controlled on a file-by-file basis using filesystem
+access control lists
+(<a name="INDEX-20"/>ACLs). The actual permissions given
+to network clients are a combination of the share permissions and
+file access permissions. To edit the ACL for the folder, click the
+Security tab. For more information on ACLs, see <a href="ch08.html#samba2-CHP-8-SECT-3">Section 8.3</a> in <a href="ch08.html">Chapter 8</a>.</p>
+
+<p>If you want, you can limit the number of users who can concurrently
+connect to the share using the &quot;User
+limit:&quot; radio button. The New Share button allows
+you to create multiple file shares for the same folder, each having
+its own name, comment, user limit, and other parameters.</p>
+
+<p>When you are done, click the OK button, and the folder will be
+accessible from clients on the network.</p>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-5-SECT-3"/>
+
+<h2 class="head1">smbclient</h2>
+
+<p>The Samba Team supplies <em class="emphasis">smbclient</em><a name="INDEX-21"/> as a basic part of the Samba suite. At
+first, it might seem to be a primitive interface to the SMB network,
+but <em class="emphasis">smbclient</em> is actually a versatile tool. It
+can be used for browsing shares on servers, testing configurations,
+debugging, accessing shared printers, backing up shared data, and
+automating administrative tasks in shell scripts. And unlike
+<tt class="literal">smbfs</tt><a name="INDEX-22"/><a name="INDEX-23"/><a name="INDEX-24"/> and <em class="emphasis">smbsh</em>,
+<em class="emphasis">smbclient</em> works on all Unix variants that
+support Samba.</p>
+
+<p>In this chapter we'll focus mostly on running
+<em class="emphasis">smbclient</em> as an interactive shell, using its
+<em class="emphasis">ftp</em>-like commands to access shared directories
+on the network. Using <em class="emphasis">smbclient</em> to access
+printers and perform backups will be covered in <a href="ch10.html">Chapter 10</a>.</p>
+
+<p>A complete reference to <em class="emphasis">smbclient</em> is found in
+<a href="appc.html">Appendix C</a>.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-5-SECT-3.1"/>
+
+<h3 class="head2">Listing Services</h3>
+
+<p><a name="INDEX-25"/>The <em class="emphasis">-L</em> option
+can be used with <em class="emphasis">smbclient</em> to list the resources
+on a single computer. Assuming the Samba server is configured to take
+the role of the master browser, we can obtain a list of the computers
+in the domain or workgroup like this:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>smbclient -L toltec</b></tt>
+added interface ip=172.16.1.1 bcast=172.16.1.255 nmask=255.255.255.0
+Password:
+Domain=[METRAN] OS=[Unix] Server=[Samba 2.2.5]
+
+    Sharename      Type      Comment
+    ---------      ----      -------
+    test           Disk      For testing only, please
+    IPC$           IPC       IPC Service (Samba 2.2.5)
+    ADMIN$         Disk      IPC Service (Samba 2.2.5)
+
+    Server               Comment
+    ---------            -------
+    MAYA                 Windows 98
+    MIXTEC               Samba 2.2.5
+    TOLTEC               Samba 2.2.5
+    ZAPOTEC              
+
+    Workgroup            Master
+    ---------            -------
+    METRAN               TOLTEC</pre></blockquote>
+
+<p>In the column labeled &quot;Server&quot;,
+<tt class="literal">maya</tt>, <tt class="literal">mixtec</tt>, and
+<tt class="literal">zapotec</tt> are shown along with toltec, the Samba
+server. The services on <tt class="literal">toltec</tt> are listed under
+&quot;Sharename&quot;. The IPC$ and ADMIN$
+shares are standard Windows services that are used for network
+communication and administrative purposes, and
+<em class="filename">test</em> is the directory we added as a share in
+<a href="ch02.html">Chapter 2</a>.</p>
+
+<p>Now that we know the names of computers in the domain, we can list
+services on any of those computers. For example, here is how we would
+list the services offered by <tt class="literal">maya</tt>, a Windows 98
+workstation:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>smbclient -L maya</b></tt>
+added interface ip=172.16.1.1 bcast=172.16.1.255 nmask=255.255.255.0
+Password:
+
+
+    Sharename      Type      Comment
+    ---------      ----      -------
+    PRINTER$       Disk      
+    HP             Printer   HP 932C on Maya
+    D              Disk      D: on Maya
+    E              Disk      E: on Maya
+
+    ADMIN$         Disk      
+    IPC$           IPC       Remote Inter Process Communication
+
+    Server               Comment
+    ---------            -------
+
+    Workgroup            Master
+    ---------            -------</pre></blockquote>
+
+<p>A shared printer is attached to <tt class="literal">maya</tt>, so we see
+the PRINTER$ administrative service, along with the HP share for the
+printer itself. Also on <tt class="literal">maya</tt> are the D and E
+shares, which allow access across the network to
+<tt class="literal">maya</tt>'s D: and E: drives. It is
+normal for the Server and Workgroup sections to be empty when listing
+services on a Windows client.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-5-SECT-3.2"/>
+
+<h3 class="head2">Authenticating with smbclient</h3>
+
+<p><a name="INDEX-26"/>As with any other SMB client,
+<em class="emphasis">smbclient</em> needs to supply a username and
+password if it is authenticating in a domain environment or if it is
+contacting a Samba server that is set up with user-level security. In
+a workgroup environment, it will at least need a password to use when
+connecting with a password-protected resource.</p>
+
+<p>By default, <em class="emphasis">smbclient</em> uses the username of the
+user who runs it and then prompts for a password. If you are using
+<em class="emphasis">smbclient</em> a lot, you might tire of entering your
+password every time.</p>
+
+<p><em class="emphasis">smbclient</em> supports some alternate methods of
+entering a username and password. The password can be entered on the
+command line, like this:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>smbclient //maya/e jayspassword</b></tt></pre></blockquote>
+
+<p>Or both the username and password can be supplied by using the
+<em class="emphasis">-U</em> option, including the username and password
+separated by a percent (<tt class="literal">%</tt>) character:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>smbclient //maya/e -U kelly%kellyspassword</b></tt></pre></blockquote>
+
+<p>This method is useful if you are logged in to the system under an
+account that is not Samba-enabled or you are testing your
+configuration to see how it treats another user. With either method,
+you can avoid having to enter the username and/or password each time
+you run <em class="emphasis">smbclient</em> by creating an alias for the
+command or creating a shell function or shell script. For example,
+with the <em class="emphasis">bash</em> shell, it is possible to define a
+function like this:</p>
+
+<blockquote><pre class="code">smbcl(  )
+{
+    smbclient $* -U jay%jayspassword
+}</pre></blockquote>
+
+<p>Adding the definition to the shell's startup script
+(which would be <em class="filename">~/.bash_profile</em> for
+<em class="emphasis">bash</em>) would result in the definition affecting
+all subsequent shell invocations.</p>
+
+<p>Another method that can be used to supply both the username and
+password is to set the USER and <a name="INDEX-27"/><a name="INDEX-28"/>PASSWD environment variables. Either
+set the USER environment variable using the
+<em class="replaceable">username</em>%<em class="replaceable">password</em>
+format, or set the USER environment variable to the username, and set
+PASSWD to the user's password.</p>
+
+<p>It is also possible to create a credentials file containing the
+username on the first line and the password on the second line, like
+this:</p>
+
+<blockquote><pre class="code">username = jay
+password = jayspassword</pre></blockquote>
+
+<p>Then, <em class="emphasis">smbclient</em> is run using the
+<em class="emphasis">-A</em> option to specify the name of the file:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>smbclient //maya/e -A ~/.smbpw</b></tt></pre></blockquote>
+
+<a name="samba2-CHP-5-NOTE-120"/><blockquote class="note"><h4 class="objtitle">NOTE</h4>
+<p>Of the methods we described in this section, the only one that is
+really secure is the default method of allowing
+<em class="emphasis">smbclient</em><a name="INDEX-29"/> to
+prompt for the password and typing in the password without echoing.</p>
+
+<p>If security is a concern, you definitely should avoid providing your
+password on the command line because it is very easy for
+&quot;shoulder surfers&quot; to obtain, as
+well as anyone who looks through your shell's
+command history.</p>
+
+<p>If you keep your Samba password in a credentials file, shell startup
+file, or shell script, make sure the file's
+permissions prohibit other users from reading or writing it. (Use an
+octal permissions mode of 0600.) Security experts never keep
+passwords in files owned by nonroot users or accessible by anyone
+other than the superuser. As part of their security policy, some
+organizations do not permit passwords to be stored in files, so you
+might want to check first before using this method.</p>
+
+<p>The authentication method that uses the USER and PASSWD environment
+variables isn't any more secure. Environment
+variables are usually set either on the command line or in one or
+more of the shell's startup files, so this method
+suffers from the same weaknesses we've just
+discussed. In addition, any program run by the user has access to the
+shell's environment variables, making a Trojan horse
+attack on the PASSWD variable really easy!</p>
+</blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-5-SECT-3.3"/>
+
+<h3 class="head2">An Interactive smbclient Session</h3>
+
+<p><a name="INDEX-30"/>A common use for
+<em class="emphasis">smbclient</em> is to use it as an
+<em class="emphasis">ftp</em>-like shell to access SMB resources on the
+network. To begin a session, <em class="emphasis">smbclient</em> must be
+provided with the UNC of a resource (which you can find using the
+<em class="emphasis">-L</em> option) on the command line, like this:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>smbclient //maya/e</b></tt>
+added interface ip=172.16.1.3 bcast=172.16.1.255 nmask=255.255.255.0
+Password: 
+smb: \&gt;</pre></blockquote>
+
+<p>Forward slashes are accepted by <em class="emphasis">smbclient</em> for
+the share's UNC, which makes entering the UNC on the
+command line easier. Backslashes can also be used, but they must be
+quoted or escaped, and it is somewhat more difficult to type
+'<tt class="literal">\\maya\e</tt>' or <tt class="literal">\\\\maya\\e</tt>.
+After connecting to the share, <em class="emphasis">smbclient</em>
+displays the <tt class="literal">smb: \&gt;</tt> prompt, waiting for a
+command to be entered. Commands are similar to those with which you
+might be familiar in <em class="emphasis">ftp</em> and are also somewhat
+similar to Unix shell commands. To get a list of
+<em class="emphasis">smbclient</em><a name="INDEX-31"/> commands, use the
+<em class="emphasis">help</em> command:</p>
+
+<blockquote><pre class="code">smb: \&gt; <tt class="userinput"><b>help</b></tt>
+ls             dir            du             lcd            cd             
+pwd            get            mget           put            mput           
+rename         more           mask           del            open           
+rm             mkdir          md             rmdir          rd             
+prompt         recurse        translate      lowercase      print          
+printmode      queue          cancel         quit           q              
+exit           newer          archive        tar            blocksize      
+tarmode        setmode        help           ?              history        
+!</pre></blockquote>
+
+<p>Some commands in the previous list are synonyms for other commands.
+For example, the <em class="emphasis">?</em> command is a synonym for
+<em class="emphasis">help</em>. You can give this command the name of
+another command as an argument to get a concise reminder of what the
+command does and how to use it:</p>
+
+<blockquote><pre class="code">smb: \&gt; <tt class="userinput"><b>? ls</b></tt>
+HELP ls:
+        &lt;mask&gt; list the contents of the current directory</pre></blockquote>
+
+<p>The term <tt class="literal">&lt;mask&gt;</tt> refers to a file-matching
+pattern as commonly found in Unix shells and utilities. For example:</p>
+
+<blockquote><pre class="code">smb: \&gt; <tt class="userinput"><b>ls *doc</b></tt>
+  ms-ProfPol-wp.doc                   A      131  Tue Dec 18 09:12:34 2002
+  smbclient.doc                       A    33969  Mon Dec 10 20:22:24 2002
+  smbmount.doc                        A     7759  Mon Dec 10 20:20:00 2002
+
+                      48590 blocks of size 524288. 40443 blocks available</pre></blockquote>
+
+<p>lists all files ending in &quot;doc&quot; in
+the current directory on the remote system. In the listing, the
+leftmost column shows the filename. Moving left to right, we see the
+file's MS-DOS attributes, then its size, and the
+time it was last modified.</p>
+
+<p>As with any other Unix utility, <em class="emphasis">smbclient</em> has a
+working directory on the local host. It also has another current
+directory on the remote SMB share. With
+<em class="citetitle">smbclient</em>, the <em class="emphasis">cd</em> command
+is used to move around on the remote system:</p>
+
+<blockquote><pre class="code">smb: \&gt; <tt class="userinput"><b>cd trans  </b></tt> 
+smb: \trans\&gt;</pre></blockquote>
+
+<p>Notice how the prompt changes to reflect the new current working
+directory. To change your current directory on the local system, use
+the <em class="emphasis">lcd</em> command:</p>
+
+<blockquote><pre class="code">smb: \trans\&gt; <tt class="userinput"><b>lcd /u/snd</b></tt>
+the local directory is now /u/snd</pre></blockquote>
+
+<p>Most of <em class="emphasis">smbclient</em>'s commands
+are for performing operations on remote files and directories. There
+is no command for listing the contents of the local directory.
+However, <em class="emphasis">smbclient</em> allows a shell escape. Any
+command preceded by an exclamation point (<tt class="literal">!</tt>) is
+interpreted as a shell command and is run in a subshell on the local
+system. For example:</p>
+
+<blockquote><pre class="code">smb: \trans\&gt; <tt class="userinput"><b>! ls -l</b></tt>
+total 16
+drwxrwxr-x    2 jay      jay          4096 Jan 10 14:46 dr220-fet
+drwxrwxr-x    2 jay      jay          4096 Sep 22 12:16 dr220-tube
+-rw-rw-r--    1 jay      jay           131 Jan 10 02:22 readme.txt
+drwxrwxr-x    7 jay      jay          4096 Jan 10 02:19 xl1</pre></blockquote>
+
+<p>lists the contents of <em class="filename">/u/snd</em>. By using
+<em class="emphasis">smbclient</em>'s commands to operate
+on the remote system&mdash;and shell-escaped commands to operate on
+the local system&mdash;it is possible to manipulate data on both
+systems without having to exit <em class="emphasis">smbclient</em> or open
+another shell window.</p>
+
+<p><a name="INDEX-32"/><a name="INDEX-33"/>File transfer is performed using
+the <em class="emphasis">get</em> and
+<em class="emphasis">put</em><a name="INDEX-34"/><a name="INDEX-35"/> commands. The <em class="emphasis">get</em>
+command transfers a single file from the remote to the local system,
+and the <em class="emphasis">put</em> command copies a file from the local
+to the remote system. For example, the following command copies the
+file <em class="filename">readme.txt</em> to the SMB share:</p>
+
+<blockquote><pre class="code">smb: \trans\&gt; <tt class="userinput"><b>put readme.txt</b></tt>
+putting file readme.txt as \trans\readme.txt (127.9 kb/s) (average 10.7 kb/s)</pre></blockquote>
+
+<a name="samba2-CHP-5-NOTE-121"/><blockquote class="note"><h4 class="objtitle">NOTE</h4>
+<p>Unlike <em class="emphasis">ftp</em>, <em class="emphasis">smbclient</em> does
+not have <em class="emphasis">ascii</em> and <em class="emphasis">binary</em>
+commands to set the type of the file that is being transferred.
+Before transferring a text file from a Unix system to a Windows or
+Macintosh system, you might want to use the GNU
+<em class="emphasis">unix2dos</em><a name="INDEX-36"/> command to reformat newlines in the
+file to work with the carriage return linefeed (CRLF) standard:</p>
+
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>unix2dos text_file &gt;text_file.txt</b></tt></pre></blockquote>
+
+
+<p>and then transfer the CRLF-formatted version. After transferring a
+text file from a Windows or Macintosh system to Unix, you can use the
+GNU <em class="emphasis">dos2unix</em><a name="INDEX-37"/> command to perform the inverse
+operation:</p>
+
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>dos2unix text_file.txt &gt;text_file</b></tt></pre></blockquote>
+</blockquote>
+
+<p>To transfer more than one file with a single command, you can use the
+<em class="emphasis">mget</em><a name="INDEX-38"/><a name="INDEX-39"/> and <em class="emphasis">mput</em> commands,
+which accept a list of filenames in the command line. The list can be
+provided by typing in the filenames on the command line separated by
+spaces, or the group of files can be specified with a pattern as one
+would use in Unix shell commands. The command:</p>
+
+<blockquote><pre class="code">smb: \trans\&gt; <tt class="userinput"><b>mget plain/*</b></tt></pre></blockquote>
+
+<p>copies all the files in the directory <em class="filename">plain</em> on
+the SMB share to the current directory on the local system. By
+default, <em class="emphasis">smbclient</em> prompts for each file, asking
+if you want to copy it:</p>
+
+<blockquote><pre class="code">smb: \trans\&gt; <tt class="userinput"><b>mget plain/*</b></tt>
+Get file tomm.wav? n
+Get file toml.wav? n
+Get file tomh.wav? n
+Get file snare.wav? n
+Get file rim.wav? n
+Get file handclap.wav? n
+Get file bassdrum.wav? n</pre></blockquote>
+
+<p>If you are sure you want to copy all the files, you can turn off
+prompting with the <em class="emphasis">prompt</em> command, like this:</p>
+
+<blockquote><pre class="code">smb: \trans\&gt; <tt class="userinput"><b>prompt</b></tt>
+prompting is now off</pre></blockquote>
+
+<p>By default, if you specify the name of a directory,
+<em class="emphasis">smbclient</em> will not copy the contents of the
+directory. To transfer the entire contents of directories listed in
+the <em class="emphasis">mput</em> or <em class="emphasis">mget</em> command,
+you must first use the <em class="emphasis">recurse</em> command:</p>
+
+<blockquote><pre class="code">smb: \trans\&gt; <tt class="userinput"><b>recurse</b></tt>
+directory recursion is now on</pre></blockquote>
+
+<p>After setting things up with the
+<em class="emphasis">prompt</em><a name="INDEX-40"/><a name="INDEX-41"/> and <em class="emphasis">recurse</em>
+commands, we can copy a directory like this:</p>
+
+<blockquote><pre class="code">smb: \trans\&gt; <tt class="userinput"><b>mget acc</b></tt>
+getting file tomm.wav of size 55494 as tomm.wav (2580.6 kb/s) (average 2087.3 kb/s)
+getting file toml.wav of size 57220 as toml.wav (2660.9 kb/s) (average 2167.6 kb/s)
+getting file tomh.wav of size 55936 as tomh.wav (2601.2 kb/s) (average 2220.8 kb/s)
+getting file snare.wav of size 22132 as snare.wav (1200.7 kb/s) (average 2123.7 kb/s)
+getting file rim.wav of size 8314 as rim.wav (1623.8 kb/s) (average 2110.8 kb/s)
+getting file handclap.wav of size 14180 as handclap.wav (1978.2 kb/s) (average 2106.2 
+kb/s)
+getting file bassdrum.wav of size 6950 as bassdrum.wav (2262.3 kb/s) (average 2108.5 
+kb/s)</pre></blockquote>
+
+<p><a name="INDEX-42"/>Directory recursion applies to all
+commands, so if an <em class="emphasis">ls</em> command is used while
+directory recursion is on, all files in the directory tree are
+listed. To turn directory recursion off again, simply re-enter the
+command. At the same time, you might also wish to toggle prompting
+back to its initial state:</p>
+
+<blockquote><pre class="code">smb: \trans\&gt; <tt class="userinput"><b>recurse</b></tt>
+directory recursion is now off
+smb: \trans\&gt; <tt class="userinput"><b>prompt</b></tt>
+prompting is now on</pre></blockquote>
+
+<p>There are other <em class="emphasis">smbclient</em> commands that you
+might find useful. The <em class="emphasis">mkdir</em> command can be used
+to create a directory; <em class="emphasis">rmdir</em> removes a
+directory; <em class="emphasis">rm</em> deletes a file; and
+<em class="emphasis">rename</em> changes a file's name.
+These behave very similarly to their Unix shell counterparts. <a href="appc.html">Appendix C</a> contains a complete reference to
+<em class="emphasis">smbclient</em> and its command set.</p>
+
+<p>To exit <em class="emphasis">smbclient</em>, use the
+<em class="emphasis">exit</em> or <em class="emphasis">quit</em> command:</p>
+
+<a name="INDEX-43"/><blockquote><pre class="code">smb: \trans\&gt; <tt class="userinput"><b>quit </b></tt></pre></blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-5-SECT-3.4"/>
+
+<h3 class="head2">Programming with smbclient</h3>
+
+<p><a name="INDEX-44"/>The <em class="emphasis">-c</em> option
+<em class="emphasis">of smbclient</em> allows a list of commands to be
+passed on the command line. To copy the file
+<em class="filename">\\maya\e\trans\readme.txt</em> to
+<em class="filename">/u/snd/readme.txt</em>, we might use the command:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>smbclient //maya/e -c &quot;lcd /u/snd; cd trans; get readme.txt&quot; -A ~/.smbpw</b></tt></pre></blockquote>
+
+<p>Everything that <em class="emphasis">smbclient</em> needs to know to
+perform the operation has been specified in the command. There is no
+interactive session, so a command such as this can be placed inside a
+shell script or a program in some other programming language.</p>
+
+<p>By using <em class="emphasis">smbclient</em> in this manner, it is
+possible to create customized commands using shell functions, scripts
+or aliases. For example, suppose we wanted a command to print a short
+listing of files in a shared directory, showing just the names of the
+files. Using a <em class="emphasis">bash</em> function, we could define a
+command <em class="emphasis">smbls</em> as follows:</p>
+
+<blockquote><pre class="code">smbls(  )
+{
+        share=`echo $1 | cut -d '/' -f '1-4'`
+        dir=`echo $1 | cut -d '/' -f '5-'`
+        smbclient $share -c &quot;cd $dir; ls&quot; -A ~/.smbpw | \
+                        grep &quot;^  &quot; | cut -d ' ' -f 3 - | sort
+}</pre></blockquote>
+
+<p>After defining this function, we can use <em class="emphasis">smbls</em>
+like this:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>smbls //maya/e</b></tt>
+CD-images
+lectures
+ms-ProfPol-wp.doc
+profile-map
+readme.txt
+RECYCLED
+smbclient.doc
+smbmount.doc
+smbsh.txt
+trans
+$ <tt class="userinput"><b>smbls //maya/e/lectures</b></tt>
+.
+..
+lecture1.mp3
+lecture2.mp3
+lecture3.mp3
+lecture4.mp3
+lecture5.mp3
+lecture6.mp3
+lecture7.mp3
+lecture8.mp3
+lecture9.mp3</pre></blockquote>
+
+<p>Another use for <em class="emphasis">smbclient</em> in scripts is
+performing administrative tasks. Suppose a group of users on Windows
+clients are sharing a set of files as part of a project on which they
+are working. Instead of expecting them to coordinate making daily
+backups, we could write a script that copies the share to the Samba
+server and run the script nightly as a cron job. The directory on the
+Samba server could be shared as well, allowing any of the users to
+retrieve a backup file on their own, without having to bother an
+administrator.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-5-SECT-3.5"/>
+
+<h3 class="head2">Backups with smbclient</h3>
+
+<p>A major use of <em class="emphasis">smbclient</em><a name="INDEX-45"/><a name="INDEX-46"/> is to create and restore backups of
+SMB file shares. The backup files <em class="emphasis">smbclient</em>
+writes are in tar format, making them easy to work with and portable
+among all Unix versions. Using <em class="emphasis">smbclient</em> on a
+Unix server to run network backups can result in a more centralized
+and easily managed solution for providing data integrity because both
+SMB shares and NFS filesystems can be backed up on the same system.</p>
+
+<p>You can use <em class="emphasis">smbclient</em> to perform backups in two
+ways. When backing up an entire share, the simplest method is to use
+the <em class="emphasis">-Tc</em> option on the command line:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbclient //maya/e -A samba-domain-pw -Tc &gt;maya-e.tar</b></tt></pre></blockquote>
+
+<p>This will create a tar archive of the <em class="filename">\\maya\e</em>
+share in the file <em class="filename">maya-e.tar</em>. By using the
+<em class="emphasis">-D</em> option, it is possible to back up a directory
+in the share, rather than the whole share:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbclient //maya/e -A samba-domain-pw -D trans -Tc &gt;maya-e.tar</b></tt></pre></blockquote>
+
+<p>This causes <em class="emphasis">smbclient</em> to change its working
+directory to the <em class="filename">trans</em> directory of the
+<em class="filename">\\maya\e</em> share before starting the backup. It is
+also possible to use
+<em class="emphasis">smbclient</em>'s
+<em class="emphasis">tar</em> command in interactive mode, like this:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbclient //maya/e </b></tt>
+added interface ip=172.16.1.3 bcast=172.16.1.255 nmask=255.255.255.0
+Password:
+smb: \&gt; <tt class="userinput"><b>cd trans</b></tt>
+smb: \trans\&gt; <tt class="userinput"><b>tarmode full hidden system quiet</b></tt>
+smb: \trans\&gt; <tt class="userinput"><b>tar c maya-e-trans.tar</b></tt></pre></blockquote>
+
+<p>With the previous code, only the <em class="emphasis">trans</em>
+subdirectory in the <em class="emphasis">\\maya\e</em> share will be
+backed up, using the settings specified in the
+<em class="emphasis">tarmode</em> command. To have this type of backup run
+automatically from a script, use the <em class="emphasis">-c</em> option:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbclient //maya/e -A samba-domain-pw -c &quot;cd trans; tarmode full hidden \</b></tt>
+<tt class="userinput"><b>    system quiet; tar &gt;maya-e-trans.tar&quot;</b></tt></pre></blockquote>
+
+<p>Using either the <em class="emphasis">-T</em> command-line option or
+<em class="emphasis">smbclient</em>'s
+<em class="emphasis">tar</em> command, additional options can be supplied.
+It is necessary to specify either the <em class="emphasis">c</em> option
+to create a backup archive or the <em class="emphasis">x</em> option to
+extract (restore) one.<a name="FNPTR-1"/><a href="#FOOTNOTE-1">[1]</a> </p>
+
+<p>The other options can be appended to the option string
+and are explained in the section on <em class="emphasis">smbclient</em> in
+<a href="appc.html">Appendix C</a>. They allow you to create incremental
+backups, specify which files to include or exclude from the backup,
+and specify a few other miscellaneous settings. For example, suppose
+we wish to create an incremental backup of a share and reset the
+archive bit on the files to set things up for the next incremental
+backup. Instead of using the interactive commands:</p>
+
+<blockquote><pre class="code">smb: \&gt; <tt class="userinput"><b>tarmode inc reset quiet</b></tt>
+smb: \&gt; <tt class="userinput"><b>tar c backup.tar</b></tt></pre></blockquote>
+
+<p>we could either use the interactive command:</p>
+
+<blockquote><pre class="code">smb: \&gt; <tt class="userinput"><b>tar cgaq backup.tar</b></tt></pre></blockquote>
+
+<p>or specify the <em class="emphasis">-Tcgaq</em> option on the
+<em class="emphasis">smbclient</em> command line.</p>
+
+<p>Your best strategy for using <em class="emphasis">smbclient</em> for
+network backups depends on your local configuration. If you have only
+a few Windows systems sharing a small amount of data, you might
+create a script containing <em class="emphasis">smbclient -Tc</em>
+commands to back up each share to a separate tar file, placing the
+files in a directory that is included with regular backups of the
+Unix system. If you have huge SMB shares on your network, you might
+prefer to write the backup directly to a tape drive. You can do this
+with <em class="emphasis">smbclient</em> just as you would with a Unix
+<em class="emphasis">tar</em> command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbclient //maya/d -A samba-domain-pw -Tc &gt;/dev/tape</b></tt></pre></blockquote>
+
+<p>After you have become more familiar with
+<em class="emphasis">smbclient</em> and have an automated backup system in
+place, you might find that using Samba has dramatically decreased
+your anxiety regarding the integrity of your
+network's data. The authors of this book are
+experienced Unix system administrators, and we highly recommend
+having a backup strategy that has been carefully planned,
+implemented, and most importantly, <em class="emphasis">tested and known to work
+as it is supposed to</em>.</p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-5-SECT-4"/>
+
+<h2 class="head1">smbfs</h2>
+
+<p>On Linux, the <a name="INDEX-47"/>smbfs filesystem can be used to mount
+SMB shares onto the Linux filesystem in a manner similar to mounting
+disk partitions on NFS filesystems. The result is so transparent that
+users on the Linux system might never be aware that they are
+accessing files through a Windows or Samba server. Files and
+directories appear as any other files or directories on the local
+Linux system, although there are a few differences in behavior
+relating to ownership and permissions.<a name="FNPTR-2"/><a href="#FOOTNOTE-2">[2]</a></p>
+
+<p>Although smbfs is based on the Samba code, it is not itself part of
+the Samba distribution. Instead, it is included with Linux as a
+standard part of the Linux filesystem support.</p>
+
+<p>The <em class="emphasis">smbmount</em> and
+<em class="emphasis">smbmnt</em><a name="INDEX-48"/> programs are part of the Samba
+distribution and are needed on the client to mount smbfs filesystems.
+Samba must be compiled with the <tt class="literal">--with-smbmount</tt>
+configure option to make sure these programs are compiled. They refer
+to <em class="filename">smb.conf</em> for information they need regarding
+the local system and network configuration, so you will need a
+working <em class="filename">smb.conf</em><a name="INDEX-49"/><a name="INDEX-50"/>
+file on the system, even if it is not acting as a Samba server.
+ <a name="INDEX-51"/><a name="INDEX-52"/><a name="INDEX-53"/></p>
+
+
+<div class="sect2"><a name="samba2-CHP-5-SECT-4.1"/>
+
+<h3 class="head2">Mounting an smbfs Filesystem</h3>
+
+<p>The <em class="emphasis">smbmount</em><a name="INDEX-54"/> command is used to mount an smbfs
+filesystem into the Linux filesystem. The basic usage is:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbmount </b></tt><em class="replaceable">Share-UNC mount-point</em><tt class="userinput"><b> -o </b></tt><em class="replaceable">options</em></pre></blockquote>
+
+<p>Replace <em class="replaceable">Share-UNC</em> with the UNC for the SMB
+share, and <em class="replaceable">mount-point</em> with the full path
+to the directory in the Linux filesystem to use as the mount point.
+The <em class="replaceable">options</em> argument is used to set the
+exact manner in which the share is mounted. Let's
+look at an example of a <em class="emphasis">smbmount</em> command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbmount //maya/e /smb/e \</b></tt>
+<tt class="userinput"><b>    -o &quot;credentials=/home/jay/.smbpw,uid=jay,gid=jay,fmask=664,dmask=775&quot;</b></tt></pre></blockquote>
+
+<p>Here we are mounting share <em class="filename">\\maya\e</em> from a
+Windows 98 system on the mount point <em class="filename">/smb/e</em> on
+the Linux system.</p>
+
+<a name="samba2-CHP-5-NOTE-122"/><blockquote class="note"><h4 class="objtitle">NOTE</h4>
+<p>If your Linux kernel doesn't include smbfs support,
+you will get the error message:</p>
+
+<blockquote><pre class="code">ERROR: smbfs filesystem not supported by the kernel</pre></blockquote>
+
+
+<p>In this case, you must configure and compile a new kernel to include
+support for smbfs. When smbfs is installed, and an SMB share is
+mounted, you can run the command:</p>
+
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>cat /proc/filesystems</b></tt></pre></blockquote>
+
+<p>and see a line that looks like:</p>
+
+<blockquote><pre class="code">nodev   smbfs</pre></blockquote>
+
+
+<p>in the command's output.</p>
+</blockquote>
+
+<p>The mount point must exist before <em class="emphasis">smbmount</em> is
+run and can be created using the <em class="emphasis">mkdir</em> command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>mkdir /smb/e</b></tt></pre></blockquote>
+
+<p>The argument to the <em class="emphasis">-o</em> option might look a
+little complex. It is a comma-separated list of
+<em class="replaceable">key</em><tt class="literal">=</tt><em class="replaceable">value</em>
+pairs. The <tt class="literal">credentials</tt> key is set to the name of
+the credentials file, which is used to give
+<em class="emphasis">smbmount</em> a valid username and password with
+which to authenticate while connecting to the share. The format is
+identical to that used by <em class="emphasis">smbclient</em> (as
+explained in the previous section), so you can use the same
+credentials file for both clients. If you want, you can use the
+<em class="replaceable">key</em>=<em class="replaceable">value</em> pair
+<tt class="literal">username</tt>=<em class="replaceable">name</em>%<em class="replaceable">password</em>
+to specify the username and password directly in the
+<em class="emphasis">smbmount</em> command, although this is considerably
+less secure.</p>
+
+<a name="samba2-CHP-5-NOTE-123"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>The <em class="emphasis">smbmount</em> command accepts the same
+authentication methods as <em class="emphasis">smbclient</em>. The
+comments in the section on <em class="emphasis">smbclient</em> regarding
+supplying passwords on the command line&mdash;and keeping passwords
+in files and environment variables&mdash;also apply here.</p>
+</blockquote>
+
+<p>The rest of the options tell <em class="emphasis">smbmount</em> how to
+translate between the SMB filesystem and the Unix filesystem, which
+differ in their handling of ownership and permissions. The
+<em class="emphasis">uid</em> and <em class="emphasis">gid</em> options specify
+the owner and group to be assigned to all directories and files in
+the mounted share.</p>
+
+<p>The <em class="emphasis">fmask</em><a name="INDEX-55"/> and
+<em class="emphasis">dmask</em><a name="INDEX-56"/> options specify
+<a name="INDEX-57"/>bitmasks for
+permissions of files and directories, respectively. These bitmasks
+are logically ANDed with whatever permissions are granted by the
+server to create the effective permissions on the client Unix system.
+On the server side, the permissions granted depend on the
+server's operating system. For a Windows 95/98/Me
+server using share-mode security, the MS-DOS read-only attribute can
+be set on individual files and directories and combined with the Full
+Access or Read Only permissions on the share as a whole. In
+user-level security mode, Windows 95/98/Me can have ACL-like
+permissions applied to the entire share, as discussed in <a href="ch04.html">Chapter 4</a>. Windows NT/2000/XP support ACLs on individual
+files and directories, with Full Control, Change, or Read permissions
+that can be applied to the entire share. If the server is a Samba
+server, the permissions are whatever is defined by the Samba share
+and the local Unix system for the individual files and directories.
+In every case, the permissions applied to the share act to further
+limit access, beyond what is specified for the individual files and
+directories.</p>
+
+<a name="samba2-CHP-5-NOTE-124"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>You might think that the <em class="emphasis">fmask</em> and
+<em class="emphasis">dmask</em> permission masks can be used only to
+reduce the effective permissions on files and directories, but this
+is not always the case. For example, suppose that a file is being
+shared by a Windows 95/98/Me server using share-mode security and
+that some number of users have been given the Full Access password
+for the share. If the share is mounted with
+<em class="emphasis">smbmount</em> using an <em class="emphasis">fmask</em> of
+666, read/write permissions are granted on the Unix system not only
+for the owner, but for everyone else on the Unix system as well!</p>
+</blockquote>
+
+<p>After mounting the <em class="filename">\\maya\d</em> share to
+<em class="filename">/smb/e</em>, here is what the contents of
+<em class="filename">/smb/e</em> look like:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>cd /smb/e ; ls -l</b></tt>
+total 47
+drwxrwxr-x    1 jay      jay           512 Jan  8 20:21 CD-images
+drwxrwxr-x    1 jay      jay           512 Jan  6 21:50 lectures
+-rw-rw-r--    1 jay      jay           131 Dec 18 09:12 ms-ProfPol-wp.doc
+-rw-rw-r--    1 jay      jay            59 Dec 18 09:12 profile-map
+-rw-rw-r--    1 jay      jay           131 Jan 15 05:01 readme.txt
+drwxrwxr-x    1 jay      jay           512 Feb  4  2002 RECYCLED
+-rw-rw-r--    1 jay      jay         33969 Dec 10 20:22 smbclient.doc
+-rw-rw-r--    1 jay      jay          7759 Dec 10 20:20 smbmount.doc
+-rw-rw-r--    1 jay      jay          1914 Dec 10 20:17 smbsh.txt
+drwxrwxr-x    1 jay      jay           512 Jan 10 03:54 trans</pre></blockquote>
+
+<p>For the most part, the files and directories contained in the mounted
+smbfs filesystem will work just like any others, except for
+limitations imposed by the nature of SMB networking. For example, not
+even the superuser can perform the operation:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>chown root lectures</b></tt>
+chown: changing ownership of 'lectures': Operation not permitted</pre></blockquote>
+
+<p>because SMB shares do not intrinsically support the idea of
+ownership. Some odd behaviors can result from this. For example, the
+command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>chmod 777 readme.txt</b></tt></pre></blockquote>
+
+<p>does not produce an error message, although nothing has been changed.
+The file <em class="filename">readme.txt</em> still has permissions set to
+664:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>ls -l readme.txt</b></tt>
+-rw-rw-r--    1 jay      jay           131 Jan 15 05:01 readme.txt</pre></blockquote>
+
+<p>Aside from little things such as these, the mounted smbfs filesystem
+can be used in conjunction with virtually any application, and you
+might be pleasantly surprised at how nicely it integrates with your
+Linux-based computing environment. You can even create symbolic links
+in the Unix filesystem, pointing to files and directories inside SMB
+shares. However, unless the server is a Samba server that supports
+Unix CIFS extensions, you will not be able to create a symbolic link
+inside the mounted smbfs filesystem.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-5-SECT-4.2"/>
+
+<h3 class="head2">Mounting smbfs Filesystems Automatically</h3>
+
+<p><a name="INDEX-58"/>As with other types of
+filesystems, an smbfs filesystem can be mounted automatically during
+system bootup by creating an entry for it in
+<em class="filename">/etc/fstab</em>. The format for the entry is as
+follows:</p>
+
+<blockquote><pre class="code"><em class="replaceable">Share-UNC mount-point</em>  smbfs  <em class="replaceable">options</em> 0 0</pre></blockquote>
+
+<p>Replace <em class="replaceable">Share-UNC</em> with the UNC of the
+share (using the forward slash format), and replace
+<em class="replaceable">mount-point</em> with the name of the directory
+in the Linux filesystem on which the share will be mounted. In place
+of <em class="replaceable">options</em>, simply use the string that you
+used with the <em class="emphasis">-o</em> flag in the
+<em class="emphasis">smbmount</em> command.</p>
+
+<p>Once you have found the arguments to use with the
+<em class="emphasis">smbmount</em> command to mount the share the way you
+like it, it is a very simple matter to create the entry for
+<em class="filename">/etc/fstab</em>. The <em class="emphasis">smbmount</em>
+command we used to mount the share <em class="filename">\\maya\e</em> on
+<em class="filename">/smb/e</em> would translate to this
+<em class="filename">/etc/fstab</em> entry:</p>
+
+<blockquote><pre class="code">//maya/e /smb/e  smbfs  
+credentials=/home/jay/.smbpw,uid=jay,gid=jay,fmask=664,dmask=775 0 0
+
+<i class="lineannotation">(Please note that this should all go on one line.)</i></pre></blockquote>
+<a name="samba2-CHP-5-NOTE-125"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>If you make a mistake in modifying
+<em class="filename">/etc/fstab</em><a name="INDEX-59"/><a name="INDEX-60"/>, your system might not
+reboot properly, and you might be forced to boot into single-user
+mode to fix the problem. Before you edit
+<em class="filename">/etc/fstab</em>, be sure to make a backup copy of it,
+and be prepared to recover your system if anything goes wrong.</p>
+</blockquote>
+
+<p>Once the entry has been added, the system will automatically mount
+the share when booting. Or, the system administrator can manually
+mount or unmount the share with commands such as these:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>mount /smb/e</b></tt>
+# <tt class="userinput"><b>umount /smb/e</b></tt></pre></blockquote>
+
+<a name="samba2-CHP-5-NOTE-126"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>It is possible to use <em class="emphasis">mount</em> and
+<em class="emphasis">umount</em> by giving them the UNC for the share
+using forward slashes, as in our <em class="filename">/etc/fstab</em>
+entry. However, be careful about this. A share might be listed more
+than once in <em class="filename">/etc/fstab</em> so that it can be
+mounted at more than one place in the Linux filesystem. If you use
+the UNC to specify the share you wish to mount or unmount, you might
+cause it to be mounted or unmounted at another mount point from the
+one you intended.</p>
+</blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-5-SECT-4.3"/>
+
+<h3 class="head2">Common smbmount Options</h3>
+
+<p><a href="ch05.html#samba2-CHP-5-TABLE-1">Table 5-1</a> lists
+<em class="replaceable">key</em><tt class="literal">=</tt><em class="replaceable">value</em>
+pairs that can be used with the <em class="emphasis">-o</em> option of
+<em class="emphasis">smbmount</em> or in the options field of the
+<em class="filename">/etc/fstab</em> entry for the smbfs filesystem. See
+the <em class="emphasis">smbmount</em> manual page for a complete list of
+options.</p>
+
+<a name="samba2-CHP-5-TABLE-1"/><h4 class="head4">Table 5-1. smbmount options</h4><table border="1">
+
+
+
+
+<tr>
+<th>
+<p>Key</p>
+</th>
+<th>
+<p>Value</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">username</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>Provides the username, and optionally the password and workgroup, for
+authentication.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">password</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>Provides the share or domain password, if it hasn't
+been supplied by another means.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">credentials</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>Name of file containing the username and password.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">uid</tt></p>
+</td>
+<td>
+<p>string or numeric</p>
+</td>
+<td>
+<p>User ID to apply to all files and directories of the mounted share.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">gid</tt></p>
+</td>
+<td>
+<p>string or numeric</p>
+</td>
+<td>
+<p>Group ID to apply to all files and directories of the mounted share.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">fmask</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Permissions to apply to files. Default is based on current umask.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">dmask</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Permissions to apply to directories. Default is based on current
+umask.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">debug</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Debug level.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">workgroup</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>Name of workgroup of remote server.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">guest</tt></p>
+</td>
+<td>
+<p>(none)</p>
+</td>
+<td>
+<p>Suppresses password prompt.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">ro</tt></p>
+</td>
+<td>
+<p>(none)</p>
+</td>
+<td>
+<p>Mount read-only.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">rw</tt></p>
+</td>
+<td>
+<p>(none)</p>
+</td>
+<td>
+<p>Mount read/write. This is the default.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">ttl</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Amount of time to cache the contents of directories. Defaults to 1000
+ms <a name="INDEX-62"/>.</p>
+</td>
+</tr>
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-5-SECT-5"/>
+
+<h2 class="head1">smbsh</h2>
+
+<p>The <em class="emphasis">smbsh</em><a name="INDEX-63"/> program is part of the Samba suite and
+works on some, but not all, Unix variants.<a name="FNPTR-3"/><a href="#FOOTNOTE-3">[3]</a> Effectively, it adds a wrapper around the
+user's command shell, enabling it and common Unix
+utilities to work on files and directories in SMB shares, in addition
+to files and directories in the local Unix filesystem. From the
+user's perspective, the effect is that of a
+simulated mount of the SMB shares onto the Unix filesystem.</p>
+
+<p><em class="emphasis">smbsh</em> works by running the shell and programs
+run from it in an environment in which calls to the standard C
+library are redirected to the
+<em class="emphasis">smbwrapper</em><a name="INDEX-64"/> library, which has support for
+operating on SMB shares. This redirection can work only if the
+program being run is dynamically linked. Fortunately, modern Unix
+versions ship with most common utilities linked dynamically rather
+than statically.</p>
+
+<a name="samba2-CHP-5-NOTE-127"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>To determine whether a program is dynamically or statically linked,
+try using the <em class="emphasis">file</em> command.</p>
+</blockquote>
+
+<p>To use <em class="emphasis">smbsh</em>, your Samba installation must be
+configured using the configure option
+<tt class="literal">--with-smbwrapper</tt>.</p>
+
+<p>If you have a number of Unix systems with the same host operating
+system and architecture and don't want to bother
+with a full Samba installation, you can simply move the following
+files to the other systems:</p>
+
+<blockquote><pre class="code">/usr/local/samba/bin/smbsh
+/usr/local/samba/bin/smbwrapper.so
+/usr/local/samba/lib/smb.conf</pre></blockquote>
+
+<p>Make sure that <em class="filename">/usr/local/samba/bin</em> is in your
+shell's search path. The
+<em class="filename">smb.conf</em><a name="INDEX-65"/><a name="INDEX-66"/> file is
+needed only for <em class="emphasis">smbsh</em> to determine the workgroup
+or domain and does not need to be as elaborate as your Samba
+server's configuration file.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-5-SECT-5.1"/>
+
+<h3 class="head2">An Interactive Session with smbsh</h3>
+
+<p><a name="INDEX-67"/>To start <em class="emphasis">smbsh</em>,
+simply type in the <em class="emphasis">smbsh</em> command at the shell
+prompt. You will be prompted for a username and password with which
+to authenticate on the SMB network:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>smbsh</b></tt>
+Username: davecb
+Password:
+smbsh$</pre></blockquote>
+
+<p>While working within the <em class="emphasis">smbsh</em> shell, you have a
+virtual <em class="filename">/smb</em> directory. This does not actually
+exist in the Unix filesystem and is supported within
+<em class="emphasis">smbsh</em> only to help organize the SMB shares in a
+structure familiar to Unix users. You can list the contents of the
+<em class="filename">/smb</em> virtual directory and get a list of
+workgroups in the local network, which are also presented as virtual
+directories:</p>
+
+<blockquote><pre class="code">smbsh$ <tt class="userinput"><b>cd /smb ; ls</b></tt>
+ZOOL PLANK BACIL</pre></blockquote>
+
+<p>You can change your working directory to one of the workgroup virtual
+directories, and listing one of them will show the computers in the
+workgroup:</p>
+
+<blockquote><pre class="code">smbsh$ <tt class="userinput"><b>cd ZOOL ; ls</b></tt>
+ANTILLES         DODO             MILO             SEAL
+ARGON            HANGGLIDE        OSTRICH          SPARTA
+BALLET           INFUSION         PLAQUE           THEBES
+CHABLIS          JAZ              PRAETORIAN       TJ
+COBRA            KIKO             RAYOPCI          TRANCE
+COUGUR           MACHINE-HEADPCI  RUMYA            VIPERPCI
+CRUSTY           MATHUMA          SCOT</pre></blockquote>
+
+<p>Likewise, you can change your current directory to, and list the
+contents of, a computer virtual directory, and then you can see a
+listing of shares offered by that computer:</p>
+
+<blockquote><pre class="code">smbsh$ <tt class="userinput"><b>cd scot ; ls</b></tt>
+ADMIN$      davecb      nc          np2s        pl
+ace         dhcp-mrk03  np          nps         xp
+cl          ep          np2         opcom</pre></blockquote>
+
+<p>This is the lowest level of
+<em class="emphasis">smbsh</em>'s virtual directory
+system. Once you <em class="emphasis">cd</em> into a share, you are within
+the SMB share on the remote computer:</p>
+
+<blockquote><pre class="code">smbsh$ <tt class="userinput"><b>cd davecb ; ls</b></tt>
+Mail                                mkanalysis_dirs.idx
+SUNWexplo                           nfs.ps
+Sent                                nsmail
+allsun.html                         projects.txt
+bin                                 sumtimex</pre></blockquote>
+
+<p>Once in a remote share, most of the Unix shell utilities will work,
+and you can operate on files and directories much as you would on any
+Unix system. You can even create symbolic links in the Unix
+filesystem pointing to files and directories in the SMB share.
+However, attempts to create symbolic links in the SMB share will fail
+unless the share is being served by Samba with support for Unix CIFS
+extensions.</p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-5-SECT-6"/>
+
+<h2 class="head1">smbutil and mount_smbfs</h2>
+
+<p>The <em class="emphasis">smbutil</em> and <em class="emphasis">mount_smbfs</em>
+programs provide SMB client functionality for FreeBSD, Darwin, and
+Mac OS X. Neither of the programs is part of the Samba distribution;
+however, we are including them to give you a little additional
+support in case you have BSD-related Unix systems on your network.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-5-SECT-6.1"/>
+
+<h3 class="head2">smbutil</h3>
+
+<p>The <em class="emphasis">smbutil</em><a name="INDEX-68"/> program provides functionality similar
+to some of the Samba suite's command-line utilities.
+It can be used to list the shares available on an SMB server or
+perform NetBIOS name lookups.</p>
+
+<p>The first argument given to <em class="emphasis">smbutil</em> is one of a
+number of subcommands and is usually followed by arguments specific
+to the subcommand. For example, to list the resources offered by a
+server, use the <em class="emphasis">view</em> subcommand, and enter your
+server password when prompted:</p>
+
+<blockquote><pre class="code">% <tt class="userinput"><b>smbutil view //vamana</b></tt>
+Password:
+Share        Type        Comment
+-------------------------------------------------------------
+public        disk
+SS2500        printer     Stylus Scan 2500
+IPC$          pipe        IPC Service (Samba 2.2.5)
+ADMIN$        disk        IPC Service (Samba 2.2.5)
+leonvs        disk        User Home Directories
+
+5 shares listed from 5 available</pre></blockquote>
+
+<p>If you wish to connect to the server with a username that differs
+from that on your client, you can specify it on the command line by
+preceding the name of the server with the username and using an at
+sign (<tt class="literal">@</tt>) as a separator:</p>
+
+<blockquote><pre class="code">% <tt class="userinput"><b>smbutil view //leonvs@vamana</b></tt></pre></blockquote>
+
+<p>You can also include the password after the username, using a colon
+(:) as a separator, to avoid being prompted for
+it:</p>
+
+<blockquote><pre class="code">% <tt class="userinput"><b>smbutil view //leonvs:leonspassword@vamana</b></tt></pre></blockquote>
+
+<p>Typing your password in the open like this is strongly discouraged.
+It's a little better if you use an encrypted
+password, which you can generate using
+<em class="emphasis">smbutil</em>'s
+<em class="emphasis">crypt</em> subcommand:</p>
+
+<blockquote><pre class="code">% <tt class="userinput"><b>smbutil crypt leonspassword</b></tt>
+$$1625a5723293f0710e5faffcfc6</pre></blockquote>
+
+<p>This can then be used in place of a clear-text password. However, the
+encryption is not particularly strong and will foil only the most
+casual inspection. As noted earlier, the only reasonably secure
+method of providing a password is to be prompted for it.</p>
+
+<p>While starting up, <em class="emphasis">smbutil</em> reads the file
+<em class="filename">.nsmbrc</em><a name="INDEX-69"/> in the user's home
+directory. Also, the file
+<em class="filename">/usr/local/etc/nsmb.conf</em><a name="INDEX-70"/><a name="INDEX-71"/> is read, and directives in that file
+override those in users'
+<em class="filename">~/.nsmbrc</em> files. This is to allow administrators
+to apply mandatory settings to all users. Directives can be placed in
+this file using the section and parameter format similar to that of
+the Samba configuration file. A list of common configuration
+parameters is given in <a href="ch05.html#samba2-CHP-5-TABLE-2">Table 5-2</a>.</p>
+
+<p>For example, to keep your password in your
+<em class="filename">~/.nsmbrc</em> file, you can create an entry in the
+file such as the following:</p>
+
+<blockquote><pre class="code">[VAMANA:LEONVS]
+    password=$$1625a5723293f0710e5faffcfc6</pre></blockquote>
+
+<p>The section heading in brackets specifies the SMB
+server's NetBIOS name and the username to which the
+subsequent parameter settings apply. (The hostname and username
+should be supplied in uppercase characters.) Section headings can
+also consist of just a hostname or can contain a share name as a
+third element for specifying parameters applicable to a single share.
+Finally, if a <tt class="literal">[default]</tt> section is present, the
+settings in it apply to all connections.</p>
+
+<p>The following example <em class="filename">.nsmbrc</em> shows some of the
+other parameters you might use:</p>
+
+<blockquote><pre class="code">[default]
+    username=leonvs
+    # NetBIOS name server
+    nbns=192.168.1.3
+
+[VAMANA]
+    # server IP address
+    addr=192.168.1.6
+    workgroup=TEST
+
+[VAMANA:LEONVS]
+    password=$$1625a5723293f0710e5faffcfc6</pre></blockquote>
+
+<p>Another thing you can do with <em class="emphasis">smbutil</em> is
+<a name="INDEX-72"/><a name="INDEX-73"/><a name="INDEX-74"/>translate between IP addresses or DNS
+names and
+<a name="INDEX-75"/>NetBIOS
+names. For example, the <em class="emphasis">status</em> subcommand takes
+an IP address or DNS hostname as an argument and returns the
+corresponding SMB server's NetBIOS name and
+workgroup:</p>
+
+<blockquote><pre class="code">% <tt class="userinput"><b>smbutil status 192.168.1.6</b></tt>
+Workgroup: TEST
+Server: VAMANA</pre></blockquote>
+
+<p>The <em class="emphasis">lookup</em> subcommand returns the IP address
+associated with a given NetBIOS hostname. A NetBIOS name server can
+be optionally specified with the <em class="emphasis">-w</em> argument:</p>
+
+<blockquote><pre class="code">% <tt class="userinput"><b>smbutil lookup -w 192.168.1.3 VAMANA</b></tt>
+Got response from 192.168.1.3
+IP address of VAMANA: 192.168.1.6</pre></blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-5-SECT-6.2"/>
+
+<h3 class="head2">mount_smbfs</h3>
+
+<p>The <em class="emphasis">mount_smbfs</em><a name="INDEX-76"/> program performs essentially the same
+function as <em class="emphasis">smbmount</em> on Linux. It mounts an SMB
+share on a directory in the local filesystem. The SMB share can then
+be accessed just like any other directory, subject to some behavioral
+differences noted earlier in <a href="ch05.html#samba2-CHP-5-SECT-4.1">Section 5.4.1</a>.</p>
+
+<p>The command synopsis for <em class="emphasis">mount_smbfs</em> is:</p>
+
+<blockquote><pre class="code">mount_smbfs <em class="replaceable">[options]</em> <em class="replaceable">Share-UNC</em> <em class="replaceable">mount-point</em></pre></blockquote>
+
+<p>where <em class="replaceable">Share-UNC</em> is of the form:</p>
+
+<blockquote><pre class="code">//[<em class="replaceable">workgroup</em>;][<em class="replaceable">username</em>[:<em class="replaceable">password</em>]@]<em class="replaceable">server</em>[/<em class="replaceable">share</em>]</pre></blockquote>
+
+<p>For example:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>mount_smbfs '//TEST;leonvs:$$1625a5723293f0710e5faffcfc6@vamana/leonvs' /</b></tt>
+\<tt class="userinput"><b>Volumes/leonvs</b></tt></pre></blockquote>
+
+<p>The ownership and permissions of the mount point determine the
+default ownership and permissions for files and directories in the
+mounted share. These can be modified with command-line arguments,
+like this:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>mount_smbfs -u leonvs -g admin -f 0750 -d 0755 //leonvs@vamana/leonvs </b></tt>
+\<tt class="userinput"><b>/Volumes/leonvs</b></tt></pre></blockquote>
+
+<p>In this example, the files and directories in the mounted share will
+be owned by the user leonvs and the group admin, with files and
+directories having permissions 750 and 755, respectively. (As usual,
+the permissions are specified in the octal format used by the Unix
+<em class="emphasis">chmod</em> command.)</p>
+
+<p>The <em class="emphasis">mount_smbfs</em><a name="INDEX-77"/><a name="INDEX-78"/> command
+also makes use of settings in
+<em class="filename">/usr/local/etc/nsmb.conf</em> and
+<em class="filename">~/.nsmbrc</em>, as described earlier. A list of
+common configuration parameters and command-line options is provided
+in <a href="ch05.html#samba2-CHP-5-TABLE-2">Table 5-2</a>.</p>
+
+<a name="samba2-CHP-5-TABLE-2"/><h4 class="head4">Table 5-2. Common smbutil and mount_smbfs options</h4><table border="1">
+
+
+
+
+<tr>
+<th>
+<p>Command-line option</p>
+</th>
+<th>
+<p>Configuration file parameter</p>
+</th>
+<th>
+<p>Description</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">-I</tt> <em class="replaceable">hostname</em></p>
+</td>
+<td>
+<p><tt class="literal">addr</tt></p>
+</td>
+<td>
+<p>Avoid NetBIOS name resolution and connect to the server using the
+specified DNS hostname or IP address.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>-N</p>
+</td>
+<td>
+<p><em class="emphasis">none</em></p>
+</td>
+<td>
+<p>Do not prompt for a password.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>-R <em class="replaceable">count</em></p>
+</td>
+<td>
+<p><tt class="literal">retry_count</tt></p>
+</td>
+<td>
+<p>Number of times to retry connection before giving up.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>-T <em class="replaceable">seconds</em></p>
+</td>
+<td>
+<p><tt class="literal">timeout</tt></p>
+</td>
+<td>
+<p>Timeout, in seconds, per connection request.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>-U <em class="replaceable">username</em></p>
+</td>
+<td>
+<p><tt class="literal">username</tt></p>
+</td>
+<td>
+<p>Username to use for authentication. Defaults to Unix username.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>-W <em class="replaceable">workgroup</em></p>
+</td>
+<td>
+<p><tt class="literal">workgroup</tt></p>
+</td>
+<td>
+<p>Name of workgroup of remote server.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>-d <em class="replaceable">mode</em></p>
+</td>
+<td>
+<p><em class="emphasis">none</em></p>
+</td>
+<td>
+<p>Permissions to apply to directories in the mounted share. Defaults to
+the same as the file permissions, plus an execute (search) bit
+whenever the read bit is set.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>-f <em class="replaceable">mode</em></p>
+</td>
+<td>
+<p><em class="filename">none</em></p>
+</td>
+<td>
+<p>Permissions to apply to files in the mounted share. Defaults to the
+same as the permissions set on the directory used as the mount point.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>-g <em class="replaceable">group</em></p>
+</td>
+<td>
+<p><em class="emphasis">none</em></p>
+</td>
+<td>
+<p>Name or numeric GID to apply to all files and directories in the
+mounted share. Defaults to the group of the directory used as the
+mount point.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>-n <em class="replaceable">long</em></p>
+</td>
+<td>
+<p><em class="emphasis">none</em></p>
+</td>
+<td>
+<p>Disable support for long filenames. Restrict filenames to 8.3 naming
+standard.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>-u <em class="replaceable">username</em></p>
+</td>
+<td>
+<p><em class="emphasis">none</em></p>
+</td>
+<td>
+<p>Username or numeric UID to apply as the owner of all files and
+directories in the mounted share. Defaults to the owner of the
+directory used as the mount point.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>-w <em class="replaceable">hostname</em></p>
+</td>
+<td>
+<p><tt class="literal">nbns</tt></p>
+</td>
+<td>
+<p>Hostname or IP address of the NetBIOS name server.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><em class="emphasis">none</em></p>
+</td>
+<td>
+<p><tt class="literal">password</tt></p>
+</td>
+<td>
+<p>Password to use for authentication.</p>
+</td>
+</tr>
+
+</table>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-5-SECT-6.3"/>
+
+<h3 class="head2">Mac OS X</h3>
+
+<p><a name="INDEX-79"/>In addition to
+<em class="emphasis">smbutil</em> and <em class="emphasis">mount_smbfs</em>, OS
+X includes a graphical interface to the functionality they provide.
+To use this interface, open the Go menu and select the Connect to
+Server . . . menu item. Instead of using a UNC, specify the share in
+the form of a Uniform Resource Identifier (URI) with a prefix of
+<tt class="literal">smb://</tt> entered in the Address field, as shown in
+<a href="ch05.html#samba2-CHP-5-FIG-5">Figure 5-5</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-5-FIG-5"/><img src="figs/sam2_0505.gif"/></div><h4 class="head4">Figure 5-5. OS X Connect to Server dialog</h4>
+
+<p>You can specify a server, share, workgroup, username, and password
+(optionally encrypted with <em class="emphasis">smbutil crypt</em>) in the
+URI, in the same format as the UNC argument to
+<em class="emphasis">mount_smbfs</em>. If you don't
+specify a share name in the URI, you will be shown a window that lets
+you choose from a list of shares available to mount. See <a href="ch05.html#samba2-CHP-5-FIG-6">Figure 5-6</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-5-FIG-6"/><img src="figs/sam2_0506.gif"/></div><h4 class="head4">Figure 5-6. Selecting a share to mount</h4>
+
+<p>Only guest-accessible shares will show up in the list until
+you've authenticated. After pressing the
+Authenticate button, you'll be prompted for a
+workgroup, username, and password, as shown in <a href="ch05.html#samba2-CHP-5-FIG-7">Figure 5-7</a>. You'll also see this dialog
+if you provide a share name in the URI, but not a username and
+password.<a name="FNPTR-4"/><a href="#FOOTNOTE-4">[4]</a></p>
+
+<div class="figure"><a name="samba2-CHP-5-FIG-7"/><img src="figs/sam2_0507.gif"/></div><h4 class="head4">Figure 5-7. Client authentication</h4>
+
+<p>As usual for Mac OS X, shares are mounted under
+<em class="filename">/Volumes</em>, but show up in the root of the Finder
+hierarchy.</p>
+
+<p>If you have a WINS server on your network, you can provide the
+server's IP address in the Directory Access
+application, or by using the <tt class="literal">wins</tt>
+<tt class="literal">server</tt> parameter in
+<em class="filename">/etc/smb.conf</em>.</p>
+
+<p>If you don't know the name of a server to which you
+wish to connect, you can look for it in the browse list, using the
+graphical frontend to the <em class="emphasis">nmblookup</em> command
+provided with Samba. Click the downward-pointing arrow in the Connect
+to Server . . . dialog box to show a hierarchical, column-based view
+of available workgroups and servers, similar to that shown in <a href="ch05.html#samba2-CHP-5-FIG-8">Figure 5-8</a>. If your client is also acting as an SMB file
+server, it won't show up in its own browse
+list.<a name="INDEX-80"/></p>
+
+<div class="figure"><a name="samba2-CHP-5-FIG-8"/><a name="INDEX-81"/><img src="figs/sam2_0508.gif"/></div><h4 class="head4">Figure 5-8. Browsing the network</h4>
+
+
+</div>
+
+
+</div>
+
+<hr/><h4 class="head4">Footnotes</h4><blockquote><a name="FOOTNOTE-1"/> <p><a href="#FNPTR-1">[1]</a> An alternative to extracting
+the tar archive directly to the SMB share is to use the Unix
+system's <em class="emphasis">tar</em> command to extract
+it to a directory on the Unix server, then copy the desired file(s)
+to a shared directory. This allows a greater amount of control over
+the restoration process, as when correcting for an accidental file
+deletion or reverting a set of files to a previous condition.</p>
+<a name="FOOTNOTE-2"/> <p><a href="#FNPTR-2">[2]</a> Samba Versions
+2.2.4 and later have support for Unix CIFS extensions developed by
+Hewlett-Packard, which add full support for Unix ownership, group,
+and permissions in smbfs filesystems when shared between two Samba
+systems. You will also need a recent version of smbfs in your Linux
+kernel.</p> <a name="FOOTNOTE-3"/> <p><a href="#FNPTR-3">[3]</a> At the
+time of this writing, <em class="emphasis">smbsh</em> does not work on
+HP/UX or Linux. However, Linux support might return in the
+future.</p> <a name="FOOTNOTE-4"/> <p><a href="#FNPTR-4">[4]</a> If you've previously
+stored your authentication information in a Keychain, you will
+instead be prompted for your Keychain password.</p> </blockquote><hr/><h4 class="head4"><a href="toc.html">TOC</a></h4></body></html>

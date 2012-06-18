@@ -1,0 +1,15 @@
+Add these to the START and END of texmf.cnf
+   /usr/local/share/texmf/web2c/texmf.cnf
+
+main_memory = 1100000
+param_size = 1500
+stack_size = 1500
+hash_extra = 25000
+string_vacancies = 45000
+pool_free = 47500 
+nest_size = 500
+save_size = 5000
+pool_size = 500000
+max_strings = 55000
+font_mem_size= 400000
+

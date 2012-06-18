@@ -1,0 +1,131 @@
+.TH RED 8 "13 December 2001" "iproute2" "Linux"
+.SH NAME
+red \- Random Early Detection 
+.SH SYNOPSIS
+.B tc qdisc ... red
+.B limit 
+bytes
+.B min 
+bytes 
+.B max 
+bytes 
+.B avpkt
+bytes
+.B burst 
+packets
+.B [ ecn ] [ bandwidth
+rate
+.B ] probability
+chance
+
+.SH DESCRIPTION
+Random Early Detection is a classless qdisc which manages its queue size
+smartly. Regular queues simply drop packets from the tail when they are
+full, which may not be the optimal behaviour. RED also performs tail drop,
+but does so in a more gradual way.
+
+Once the queue hits a certain average length, packets enqueued have a
+configurable chance of being marked (which may mean dropped). This chance
+increases linearly up to a point called the
+.B max
+average queue length, although the queue might get bigger.
+
+This has a host of benefits over simple taildrop, while not being processor
+intensive. It prevents synchronous retransmits after a burst in traffic,
+which cause further retransmits, etc.
+
+The goal is the have a small queue size, which is good for interactivity
+while not disturbing TCP/IP traffic with too many sudden drops after a burst
+of traffic.
+
+Depending on if ECN is configured, marking either means dropping or
+purely marking a packet as overlimit.
+.SH ALGORITHM
+The average queue size is used for determining the marking
+probability. This is calculated using an Exponential Weighted Moving
+Average, which can be more or less sensitive to bursts.
+
+When the average queue size is below 
+.B min
+bytes, no packet will ever be marked. When it exceeds 
+.B min, 
+the probability of doing so climbs linearly up
+to 
+.B probability, 
+until the average queue size hits
+.B max
+bytes. Because 
+.B probability 
+is normally not set to 100%, the queue size might
+conceivably rise above 
+.B max
+bytes, so the 
+.B limit
+parameter is provided to set a hard maximum for the size of the queue.
+
+.SH PARAMETERS
+.TP 
+min
+Average queue size at which marking becomes a possibility.
+.TP 
+max
+At this average queue size, the marking probability is maximal. Should be at
+least twice
+.B min
+to prevent synchronous retransmits, higher for low 
+.B min.
+.TP 
+probability
+Maximum probability for marking, specified as a floating point
+number from 0.0 to 1.0. Suggested values are 0.01 or 0.02 (1 or 2%,
+respectively).
+.TP 
+limit
+Hard limit on the real (not average) queue size in bytes. Further packets
+are dropped. Should be set higher than max+burst. It is advised to set this
+a few times higher than 
+.B max.
+.TP
+burst
+Used for determining how fast the average queue size is influenced by the
+real queue size. Larger values make the calculation more sluggish, allowing
+longer bursts of traffic before marking starts. Real life experiments
+support the following guideline: (min+min+max)/(3*avpkt).
+.TP 
+avpkt
+Specified in bytes. Used with burst to determine the time constant for
+average queue size calculations. 1000 is a good value.
+.TP
+bandwidth
+This rate is used for calculating the average queue size after some
+idle time. Should be set to the bandwidth of your interface. Does not mean
+that RED will shape for you! Optional.
+.TP
+ecn
+As mentioned before, RED can either 'mark' or 'drop'. Explicit Congestion
+Notification allows RED to notify remote hosts that their rate exceeds the
+amount of bandwidth available. Non-ECN capable hosts can only be notified by
+dropping a packet.  If this parameter is specified, packets which indicate
+that their hosts honor ECN will only be marked and not dropped, unless the
+queue size hits
+.B limit
+bytes. Needs a tc binary with RED support compiled in. Recommended.
+
+.SH SEE ALSO
+.BR tc (8)
+
+.SH SOURCES
+.TP 
+o
+Floyd, S., and Jacobson, V., Random Early Detection gateways for
+Congestion Avoidance. http://www.aciri.org/floyd/papers/red/red.html
+.TP 
+o
+Some changes to the algorithm by Alexey N. Kuznetsov.
+
+.SH AUTHORS
+Alexey N. Kuznetsov, <kuznet@ms2.inr.ac.ru>,  Alexey Makarenko
+<makar@phoenix.kharkov.ua>, J Hadi Salim <hadi@nortelnetworks.com>.  
+This manpage maintained by bert hubert <ahu@ds9a.nl>
+
+

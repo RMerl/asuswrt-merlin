@@ -1,0 +1,82 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Appendix D. Downloading Samba with CVS</h1>
+
+
+<p>In <a href="ch02.html">Chapter 2</a> we showed you how to download the
+latest stable version of Samba published by the Samba developers. For
+most purposes (including virtually all production servers) this
+procedure will meet your needs. However, sometimes you might want to
+run a version of Samba that includes the latest bug fixes and
+features, maybe for research and testing purposes, or just to see
+what the Samba developers have been up to lately.</p>
+
+<p>The Samba team keeps the latest updates of the Samba source code in a
+<a name="INDEX-1"/><a name="INDEX-2"/>Concurrent Versions System
+(CVS) repository. CVS is a freely available
+<a name="INDEX-3"/>configuration management tool
+and is distributed under the GNU General Public License. You can
+download the latest copy from <a href="http://www.cvshome.org/">http://www.cvshome.org/</a>. The Samba team
+describes various ways to access its CVS repository at <a href="http://www.samba.org/samba/cvs.html">http://www.samba.org/samba/cvs.html</a>.</p>
+
+<a name="samba2-APP-D-NOTE-162"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>Although the CVS code contains the latest features, it also contains
+the latest bugs and sometimes won't even compile
+properly! If you prefer a less &quot;bleeding
+edge&quot; release, try looking in the
+<em class="filename">alpha</em> and <em class="filename">pre</em> directories
+on the Samba FTP server. The <em class="filename">alpha</em> directory
+contains alpha releases, and the <em class="emphasis">pre</em> directory
+contains (usually more stable) prerelease versions. (See <a href="ch02.html">Chapter 2</a> for information on downloading via FTP.) Alpha
+releases might be a little behind the latest CVS code, but are less
+buggy and usually compile properly on the more common Unix versions.</p>
+</blockquote>
+
+<p>One of the nicest things about CVS is its ability to handle remote
+logins. This means that people across the globe on the Internet can
+download and update various source files for any project that uses a
+CVS repository. Such is the case with Samba. Once you have CVS
+installed on your system, you must first log in to the Samba source
+server with the following command:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>cvs -d :pserver:cvs@pserver.samba.org:/cvsroot login</b></tt></pre></blockquote>
+
+<p>When you are prompted for a password, enter <tt class="literal">cvs</tt>.
+You are connected to the CVS server at
+<tt class="literal">pserver.samba.org</tt>. Once you are connected, you can
+download the latest source tree with the following command:<a name="FNPTR-1"/><a href="#FOOTNOTE-1">[1]</a></p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>cvs -z5 -d :pserver:pserver@pserver.samba.org:/cvsroot co samba</b></tt></pre></blockquote>
+
+<p>This downloads the entire Samba distribution (file by file) into a
+directory called <em class="filename">samba</em>, created in your current
+directory. The <em class="filename">samba</em> directory has the same
+structure as the Samba source distribution described in <a href="ch02.html">Chapter 2</a>, except that it has additional directories
+named <em class="filename">CVS</em> throughout the source tree. These
+directories are used by CVS to store information about each file in
+the source tree and how to update them. After the download is
+completed, you can follow the instructions in <a href="ch02.html">Chapter 2</a> to configure, compile, and install your new
+Samba release.</p>
+
+<p>The Samba developers typically update the Samba source code one or
+more times per day. Whenever you want to catch up to the latest
+changes, simply <em class="emphasis">cd</em> to the
+<em class="filename">samba</em> directory and run the following command:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>cvs update -d -P</b></tt></pre></blockquote>
+
+<p>Each time you do this, you will need to reconfigure, recompile, and
+reinstall to update your installation as we showed you in <a href="ch02.html">Chapter 2</a>.</p>
+
+<hr/><h4 class="head4">Footnotes</h4><blockquote><a name="FOOTNOTE-1"/>
+<p><a href="#FNPTR-1">[1]</a> The <tt class="literal">-z</tt> option causes the transfer to be made
+in GNU gzip compressed format and requires the
+<em class="filename">gzip</em> program to be installed on your system to
+work. If you do not have <em class="filename">gzip</em>, omit the
+<tt class="literal">-z</tt> option.</p> </blockquote><hr/><h4 class="head4"><a href="toc.html">TOC</a></h4>
+
+</body></html>

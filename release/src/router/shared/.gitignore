@@ -1,0 +1,7 @@
+*.o
+*.a
+*.so
+.*.depend
+version
+version.h
+rtconfig.h

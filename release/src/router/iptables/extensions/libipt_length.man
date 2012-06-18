@@ -1,0 +1,4 @@
+This module matches the length of a packet against a specific value
+or range of values.
+.TP
+.BR "--length " "[!] \fIlength\fP[:\fIlength\fP]"

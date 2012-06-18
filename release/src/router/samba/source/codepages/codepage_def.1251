@@ -1,0 +1,56 @@
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#   
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+# Codepage definition file for Code Page 1251 - AmigaOS Cyrillic
+# defines lower->upper mapping.
+# Written by Michael Malyshev ( Michael_Malyshev@mail.ru )
+
+# The columns are :
+# lower    upper   map upper to lower    map lower to upper
+#
+  0xA8     0xB8    True                  True
+  0xC0     0xE0    True                  True
+  0xC1     0xE1    True                  True
+  0xC2     0xE2    True                  True
+  0xC3     0xE3    True                  True
+  0xC4     0xE4    True                  True
+  0xC5     0xE5    True                  True
+  0xC6     0xE6    True                  True
+  0xC7     0xE7    True                  True
+  0xC8     0xE8    True                  True
+  0xC9     0xE9    True                  True
+  0xCA     0xEA    True                  True
+  0xCB     0xEB    True                  True
+  0xCC     0xEC    True                  True
+  0xCD     0xED    True                  True
+  0xCE     0xEE    True                  True
+  0xCF     0xEF    True                  True
+  0xD0     0xF0    True                  True
+  0xD1     0xF1    True                  True
+  0xD2     0xF2    True                  True
+  0xD3     0xF3    True                  True
+  0xD4     0xF4    True                  True
+  0xD5     0xF5    True                  True
+  0xD6     0xF6    True                  True
+  0xD7     0xF7    True                  True
+  0xD8     0xF8    True                  True
+  0xD9     0xF9    True                  True
+  0xDA     0xFA    True                  True
+  0xDB     0xFB    True                  True
+  0xDC     0xFC    True                  True
+  0xDD     0xFD    True                  True
+  0xDE     0xFE    True                  True
+  0xDF     0xFF    True                  True

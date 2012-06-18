@@ -1,0 +1,317 @@
+From 27a28684fa518d92af24266eadc5d2efcc152104 Mon Sep 17 00:00:00 2001
+From: Bernhard Reutner-Fischer <rep.dot.nop@gmail.com>
+Date: Sat, 01 Aug 2009 14:32:42 +0000
+Subject: pull unifdef from master
+
+  patch up to fa6b1e952629879dd715730637ffa3b45eb83285
+
+Signed-off-by: Bernhard Reutner-Fischer <rep.dot.nop@gmail.com>
+---
+diff --git a/extra/scripts/unifdef.c b/extra/scripts/unifdef.c
+index 552025e..abc3996 100644
+--- a/extra/scripts/unifdef.c
++++ b/extra/scripts/unifdef.c
+@@ -63,8 +63,8 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/usr.bin/unifdef/unifdef.c,v 1.20 2005/05
+  *     also make it possible to handle all "dodgy" directives correctly.
+  */
+ 
++#include <errno.h>
+ #include <ctype.h>
+-#include <err.h>
+ #include <stdarg.h>
+ #include <stdbool.h>
+ #include <stdio.h>
+@@ -72,6 +72,12 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/usr.bin/unifdef/unifdef.c,v 1.20 2005/05
+ #include <string.h>
+ #include <unistd.h>
+ 
++/* Avoid err.h since uClibc can disable these things */
++#define vwarnx(fmt, args)   ({ fprintf(stderr, "unifdef: "); vfprintf(stderr, fmt, args); fprintf(stderr, "\n"); })
++#define warnx(fmt, args...) fprintf(stderr, "unifdef: " fmt "\n", ## args)
++#define errx(exit_code, fmt, args...) ({ warnx(fmt, ## args); exit(exit_code); })
++#define err(exit_code, fmt, args...)  errx(exit_code, fmt ": %s", ## args, strerror(errno))
++
+ size_t strlcpy(char *dst, const char *src, size_t siz);
+ 
+ /* types of input lines: */
+@@ -206,7 +212,7 @@ static void             done(void);
+ static void             error(const char *);
+ static int              findsym(const char *);
+ static void             flushline(bool);
+-static Linetype         getline(void);
++static Linetype         get_line(void);
+ static Linetype         ifeval(const char **);
+ static void             ignoreoff(void);
+ static void             ignoreon(void);
+@@ -296,6 +302,7 @@ main(int argc, char *argv[])
+ 		input = stdin;
+ 	}
+ 	process();
++	debug("bug at line %d", __LINE__);
+ 	abort(); /* bug */
+ }
+ 
+@@ -438,8 +445,10 @@ done(void)
+ static void
+ ignoreoff(void)
+ {
+-	if (depth == 0)
++	if (depth == 0) {
++		debug("bug at line %d", __LINE__);
+ 		abort(); /* bug */
++	}
+ 	ignoring[depth] = ignoring[depth-1];
+ }
+ static void
+@@ -471,8 +480,10 @@ nest(void)
+ static void
+ unnest(void)
+ {
+-	if (depth == 0)
++	if (depth == 0) {
++		debug("bug at line %d", __LINE__);
+ 		abort(); /* bug */
++	}
+ 	depth -= 1;
+ }
+ static void
+@@ -512,7 +523,7 @@ process(void)
+ 
+ 	for (;;) {
+ 		linenum++;
+-		lineval = getline();
++		lineval = get_line();
+ 		trans_table[ifstate[depth]][lineval]();
+ 		debug("process %s -> %s depth %d",
+ 		    linetype_name[lineval],
+@@ -526,7 +537,7 @@ process(void)
+  * help from skipcomment().
+  */
+ static Linetype
+-getline(void)
++get_line(void)
+ {
+ 	const char *cp;
+ 	int cursym;
+@@ -596,8 +607,11 @@ getline(void)
+ 				linestate = LS_DIRTY;
+ 		}
+ 		/* skipcomment should have changed the state */
+-		if (linestate == LS_HASH)
+-			abort(); /* bug */
++// Hmm hppens sometimes on valid files
++//		if (linestate == LS_HASH) {
++//			debug("bug at line %d", __LINE__);
++//			abort(); /* bug */
++//		}
+ 	}
+ 	if (linestate == LS_DIRTY) {
+ 		while (*cp != '\0')
+@@ -649,24 +663,31 @@ static const struct ops {
+ 	eval_fn *inner;
+ 	struct op {
+ 		const char *str;
++		int short_circuit_val;
+ 		int (*fn)(int, int);
+ 	} op[5];
+ } eval_ops[] = {
+-	{ eval_table, { { "||", op_or } } },
+-	{ eval_table, { { "&&", op_and } } },
+-	{ eval_table, { { "==", op_eq },
+-			{ "!=", op_ne } } },
+-	{ eval_unary, { { "<=", op_le },
+-			{ ">=", op_ge },
+-			{ "<", op_lt },
+-			{ ">", op_gt } } }
++	{ eval_table, { { "||", 1, op_or } } },
++	{ eval_table, { { "&&", 0, op_and } } },
++	{ eval_table, { { "==", -1, op_eq },
++			{ "!=", -1, op_ne } } },
++	{ eval_unary, { { "<=", -1, op_le },
++			{ ">=", -1, op_ge },
++			{ "<", -1, op_lt },
++			{ ">", -1, op_gt } } }
+ };
+ 
+ /*
+- * Function for evaluating the innermost parts of expressions,
+- * viz. !expr (expr) defined(symbol) symbol number
++ * Function for evaluating the innermost parts of expressions, viz.
++ * "!expr", "(expr)", "defined(symbol)", "defined symbol", "symbol", "number".
+  * We reset the keepthis flag when we find a non-constant subexpression.
+  */
++// TODO: we use LT_IF both as "I don't know whether it's false or true"
++// (example: "#if defined FOO") and when we see syntax error
++// (example: "#if (1 || 2" - no closing paren!), but this is wrong.
++// Binary && and || need to distinguish these cases in order to handle this:
++// "#if defined KNOWN_UNDEFINED && FOO" - discard
++// "#if defined KNOWN_UNDEFINED && (syntax_error_here" - do not discard!
+ static Linetype
+ eval_unary(const struct ops *ops, int *valp, const char **cpp)
+ {
+@@ -678,39 +699,60 @@ eval_unary(const struct ops *ops, int *valp, const char **cpp)
+ 	if (*cp == '!') {
+ 		debug("eval%d !", ops - eval_ops);
+ 		cp++;
+-		if (eval_unary(ops, valp, &cp) == LT_IF)
++		if (eval_unary(ops, valp, &cp) == LT_IF) {
++			*cpp = cp;
+ 			return (LT_IF);
++		}
+ 		*valp = !*valp;
++
+ 	} else if (*cp == '(') {
++		Linetype expr_res;
++
+ 		cp++;
+-		debug("eval%d (", ops - eval_ops);
+-		if (eval_table(eval_ops, valp, &cp) == LT_IF)
+-			return (LT_IF);
++		debug("eval%d (%s", ops - eval_ops, cp);
++		expr_res = eval_table(eval_ops, valp, &cp);
+ 		cp = skipcomment(cp);
++		*cpp = cp;
+ 		if (*cp++ != ')')
+ 			return (LT_IF);
++		*cpp = cp;
++		if (expr_res == LT_IF)
++			return (LT_IF);
++
+ 	} else if (isdigit((unsigned char)*cp)) {
+ 		debug("eval%d number", ops - eval_ops);
+ 		*valp = strtol(cp, &ep, 0);
+ 		cp = skipsym(cp);
++
+ 	} else if (strncmp(cp, "defined", 7) == 0 && endsym(cp[7])) {
++		bool parens;
++
+ 		cp = skipcomment(cp+7);
+-		debug("eval%d defined", ops - eval_ops);
+-		if (*cp++ != '(')
+-			return (LT_IF);
+-		cp = skipcomment(cp);
++		debug("eval%d defined '%s'", ops - eval_ops, cp);
++		parens = (*cp == '(');
++		if (parens)
++			cp = skipcomment(cp+1);
+ 		sym = findsym(cp);
+-		if (sym < 0)
+-			return (LT_IF);
+-		*valp = (value[sym] != NULL);
+ 		cp = skipsym(cp);
+ 		cp = skipcomment(cp);
+-		if (*cp++ != ')')
++		if (parens) {
++			if (*cp != ')')
++				return (LT_IF);
++			cp = skipcomment(cp+1);
++		}
++		*cpp = cp;
++		if (sym < 0) {
++			debug("sym not found, returning LT_IF");
+ 			return (LT_IF);
++		}
++		*valp = (value[sym] != NULL);
+ 		keepthis = false;
++
+ 	} else if (!endsym(*cp)) {
+ 		debug("eval%d symbol", ops - eval_ops);
+ 		sym = findsym(cp);
++		cp = skipsym(cp);
++		*cpp = cp;
+ 		if (sym < 0)
+ 			return (LT_IF);
+ 		if (value[sym] == NULL)
+@@ -720,8 +762,8 @@ eval_unary(const struct ops *ops, int *valp, const char **cpp)
+ 			if (*ep != '\0' || ep == value[sym])
+ 				return (LT_IF);
+ 		}
+-		cp = skipsym(cp);
+ 		keepthis = false;
++
+ 	} else {
+ 		debug("eval%d bad expr", ops - eval_ops);
+ 		return (LT_IF);
+@@ -738,15 +780,18 @@ eval_unary(const struct ops *ops, int *valp, const char **cpp)
+ static Linetype
+ eval_table(const struct ops *ops, int *valp, const char **cpp)
+ {
++	Linetype left_side;
+ 	const struct op *op;
+ 	const char *cp;
+ 	int val;
+ 
+-	debug("eval%d", ops - eval_ops);
++	debug("eval%d '%s'", ops - eval_ops, *cpp);
++	left_side = ops->inner(ops+1, valp, cpp);
+ 	cp = *cpp;
+-	if (ops->inner(ops+1, valp, &cp) == LT_IF)
+-		return (LT_IF);
++
+ 	for (;;) {
++		Linetype right_side;
++
+ 		cp = skipcomment(cp);
+ 		for (op = ops->op; op->str != NULL; op++)
+ 			if (strncmp(cp, op->str, strlen(op->str)) == 0)
+@@ -754,14 +799,37 @@ eval_table(const struct ops *ops, int *valp, const char **cpp)
+ 		if (op->str == NULL)
+ 			break;
+ 		cp += strlen(op->str);
+-		debug("eval%d %s", ops - eval_ops, op->str);
+-		if (ops->inner(ops+1, &val, &cp) == LT_IF)
++		debug("eval%d '%s'", ops - eval_ops, op->str);
++		right_side = ops->inner(ops+1, &val, &cp);
++		*cpp = cp;
++
++		/* If short_circuit_val is 0 or 1, we can ignore
++		 * right side if left size is known, and its value
++		 * (i.e., *valp) is 0 or !0, respectively */
++		if (left_side != LT_IF && op->short_circuit_val == !!*valp) {
++			debug("op->short_circuit_val:%d *valp:%d cp:'%s'",
++					op->short_circuit_val, *valp, cp);
++			*valp = !!*valp;
++			break;
++		}
++		/* Same for the right side */
++		if (right_side != LT_IF && op->short_circuit_val == !!val) {
++			debug("op->short_circuit_val:%d val:%d cp:'%s'",
++					op->short_circuit_val, val, cp);
++			left_side = right_side;
++			*valp = !!val;
++			break;
++		}
++
++		if (left_side == LT_IF || right_side == LT_IF)
+ 			return (LT_IF);
+ 		*valp = op->fn(*valp, val);
++		left_side = right_side;
+ 	}
+ 
+-	*cpp = cp;
+-	debug("eval%d = %d", ops - eval_ops, *valp);
++	debug("eval%d = %d LT_IF:%d", ops - eval_ops, *valp, (left_side == LT_IF));
++	if (left_side == LT_IF)
++		return (LT_IF);
+ 	return (*valp ? LT_TRUE : LT_FALSE);
+ }
+ 
+@@ -779,7 +847,7 @@ ifeval(const char **cpp)
+ 	debug("eval %s", *cpp);
+ 	keepthis = killconsts ? false : true;
+ 	ret = eval_table(eval_ops, &val, cpp);
+-	debug("eval = %d", val);
++	debug("val:%d ret:%d keepthis:%d", val, ret, keepthis);
+ 	return (keepthis ? LT_IF : ret);
+ }
+ 
+@@ -886,6 +954,7 @@ skipcomment(const char *cp)
+ 				incomment = C_COMMENT;
+ 			continue;
+ 		default:
++			debug("bug at line %d", __LINE__);
+ 			abort(); /* bug */
+ 		}
+ 	return (cp);
+--
+cgit v0.8.2.1

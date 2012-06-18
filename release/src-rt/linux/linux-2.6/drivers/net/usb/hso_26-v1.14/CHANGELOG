@@ -1,0 +1,261 @@
+v1.14	Jan Dumon
+	Added some more missing product ID's + some cosmetic changes.
+	Removed the one-line function hso_free_device
+	reset_device should be inside #ifdef CONFIG_HSO_AUTOPM
+	Cosmetic changes to bring the linux kernel version and this one closer
+	together.
+	Don't attempt to set flow control flags on other ports than the modem port.
+	This causes a 5 second timeout when the ports are opened because v2 firmware
+	ignores this request.
+	Return NETDEV_TX_OK instead of the result of usb_submit_urb.
+	Otherwise, a packet could end up being sent in a loop if there are usb
+	troubles.
+	Support for big-endian machines. (cfr. patch by Peter Henn).
+	Don't attempt to read from a port when the corresponding linux device is not
+	open. (cfr. patch by Daniel Hauser on Pharscape.org)
+	v1.13 Jan Dumon
+	Added vendor/product id for the 509.
+	Recover from a messed up bus which can happen after a hibernate.
+	Added missing Vendor/Product ID's for Pico Trex.
+	Fixed opening port while in selective suspend. (patch by JeroenE)
+	hso_connect: Removed at+cops=0 and added to check to see if connection is already up.
+v1.12	Jan Dumon
+	Added missing Vendor/Product ID's
+	Use the port_spec received from the device to create the network device
+	instead of a fixed value. The HSO_INFO_CRC_BUG flag could be missed 
+	this way.
+v1.11	Jan Dumon
+	Changed the order of things when stopping the network interface.
+	This fixes the crash that still could happen by a hot removal of the device.
+v1.10	Jan Dumon
+	Set a bunch of pointers to NULL after they were freed.
+	This fixes a crash triggered by a hot removal of the device.
+v1.9	Denis Joseph Barrow
+	Fixed supports_autosuspend in the hso_driver structure 
+	to be only defined if the CONFIG_HSO_AUTOPM is defined.
+	Denis Joseph Barrow
+	Fixed 2 bugs found by Jeroen Elebaut
+	Compiling on 2.6.20 didn't work because my check
+	the NETDEV_HAVE_DEV define was out by 1 kernel release
+	i.e. the net_device structure didn't have the dev
+	member defined till 2.6.21 rather than 2.6.20
+	also print_hex_dump_bytes doesn't exist till 2.6.22
+	so I had to define a static of this function which does this
+	for CONFIG_HSO_DEBUG on kernels prior to 2.6.22
+	Denis Joseph Barrow
+	Added 1 liner patch submitted by Oliver Neukum
+	which fixed flag marking device was running
+	before URBs were submitted in hso_net_open
+	which might cause them to complete too early
+	& fail to resubmit.
+	Denis Joseph Barrow
+	Added names of option hso developers to hso.c
+	Denis Joseph Barrow
+	Fixed kernel oops when opening control port,
+	as code mistakenly thought it was a modem port 
+	& issued a tiocmget_submit_urb to it.
+	Denis Joseph Barrow
+	Fixed compile bug when CONFIG_HSO_DEBUG is defined.
+	Denis Joseph Barrow
+	Fixed code to compile on 2.6.11
+	Fixed incorrect usage of kref_put.
+	Denis Joseph Barrow
+	Fixed a bug in hso_connect.sh which had some
+	form of italic quotes in the AT+CGDCONT command
+	got from a previous bugfix.
+	Denis Joseph Barrow
+	Removed retry_unthrottle_workfunc code I accidently
+	left lying around.
+v1.8	Denis Joseph Barrow
+	Added safe_usb_unlink_urb & safe_usb_kill_urb
+	which check whether a urb is in flight before stopping it.
+	kernels prior to 2.6.24 will do a kernel oops if the
+	device is disconnected while networking is going on
+	if this check isn't done. linux kernels 2.6.24 on do the 
+	check if (!urb->ep) return; in usb_kill_urb & usb_submit_urb 
+	we cant do this because urb->ep doesn't exist prior to 2.6.24.
+        prior to 2.6.23 so we need the -EINPROGRESS check.
+	Denis Joseph Barrow 
+	Small mod to AT+CGDCONT call in hso_connect.sh
+	reported as a bug.
+	Denis Joseph Barrow
+	hso_suspend & hso_resume are used by software suspend
+	& suspend to disk as well as autosuspend
+	these functions are always defined in
+	include/linux/usb.h so I'm leaving them defined in all
+	cases for safety as there are several config options
+	whose names have been changed between kernel versions
+	which may use these function.
+	Denis Joseph Barrow
+	Added patch by Paulius Zeleckas to set rfkill type to WWAN.
+	Denis Joseph Barrow
+	Added some new device id's supported by the hso driver.
+	Denis Joseph Barrow
+	Added Johnathan McDowells from patch which prevents an oops crash 
+	in rfkill from netdev@vger.kernel.org.
+	Denis Joseph Barrow 
+	Moved serial_open_count in hso_serial_open to
+	prevent crashes owing to the serial structure being made NULL
+	when hso_serial_close is called even though hso_serial_open
+	returned -ENODEV also put in sanity check in hso_serial_close
+	to check for a valid serial structure which should prevent
+	the most reproducable crash in the driver when the hso device
+	is disconnected while in use.
+	Denis Joseph Barrow
+	Added Data Carrier Detect etc. to hso_tiocmget.
+	Took out /proc filesystem hso related stuff to force
+	connection manager developers to use /sys filesystem stuff.
+	Made function of common code which made ttyHSx /proc filesystem
+	entries for mux & bulk serial devices.
+v1.7    Denis Joseph Barrow
+	Added back old procfs entries so that legacy versions
+	of connection managers still work.
+	Denis Joseph Barrow
+	Added Joffry Bellavia's port.sh script.
+	which locates application,diagnostic & control ports
+	for the user.
+v1.6	Denis Joseph Barrow
+	Put MOD_INFO back to show if CONFIG_HSO_AUTOPM & CONFIG_HSO_DEBUG
+        is set or not removed warning about disabling CONFIG_HSO_AUTOPM if
+        the kernel version is too old, also fixed some sloppyness found
+	by Peter Henn.
+
+	Fixed compile bug which left reset_resume method
+	defined for kernels prior to 2.6.22 where it didn't exist.
+v1.5    Denis Joseph Barrow
+	Updated README
+
+	Applied Adrian Bunks hso_create_bulk_serial_device(): 
+	fix of a double free patch from the linux-usb mailing list.
+
+	Made usb_drivers reset_resume function point to
+	hso_resume this fixes problems when the network
+	interface is left idle for a few minutes.
+	Possibly reset_resume should initialise hardware
+        more but this works in the common case.
+
+        Added check for IFF_UP in hso_resume this should
+        eliminate -EINVAL (-22) errors caused from
+        urb's being submitted twice once by hso_resume
+        & once in hso_net_open if suspend/resume USB power saving
+	mode is enabled.
+
+        Added s setpwr.sh script so that USB power saving mode can
+        be switched on or off quickly in the driver without having
+        to walk through sysfs.
+
+        Removed usb_driver_claim_interface & usb_driver_release_interface
+        calls as they were deemed by Paulius Zaleckas on the
+        linux usb mailing list to be unneccessary.
+
+        Improved hso_connect.sh script to make it automatically
+        detect the application port.
+        Improved hso_connect.sh so that it automatically finds
+        the application port.
+
+	Removed usb_driver_claim_interface & usb_driver_release_interface
+	calls as they were deemed by Paulius Zaleckas on the
+	linux usb mailing list to be unneccessary.
+
+v1.5-rc1 Denis Joseph Barrow
+	Took updates upto 2.6.27-rc5,
+	A new structure hso_mutex_table had to be declared statically
+	& used as as hso_device mutex_lock(&serial->parent->mutex) etc
+	is freed in hso_serial_open & hso_serial_close by kref_put while
+	the mutex is still in use.
+	This is a substantial change but should make the driver much stabler.
+	Patch to stop loss of characters on the hso modems,
+	this patch throttles & unthrottles the modem by
+	not putting out urbs until the tty/line discipline layer
+	has enough space for newly received packets.
+	serial ports. This is required for firmware diagnostics
+	being done at Option.
+
+v2.6.27-rc3 Denis Joseph Barrow
+	Taking code directly from 2.6.27-rc3 will be using
+	the official linux kernel version as a basis for
+	our future releases & porting our bugfixes onto this.
+
+	Denis Joseph Barrow
+	Fixed a problem found by a firmware engineer, the
+	program basically in hso_std_serial_write_bulk_callback was being
+	not sanity checking serial->tty was not NULL before calling tty_wakeup
+	this resulted in a race condition where urbs  after
+    	serial->tty was shut down. maybe more needs to be done here.
+
+    	Moved kref_put in hso_serial_close as refcnt was incorrectly
+    	going to zero  when serial->open_count went to zero
+    	which was not consistent with hso_serial_open.
+	A similar patch was posted to the linux usb mailing list.
+
+	
+1.4     Denis Joseph Barrow
+        Fixed dev_kfree_skb happening too many times when hso_start_net_device
+        is called from hso_resume. This manifests itself as a crash after a
+        kernel message saying that the hso driver is transmitting lingering data
+    
+        Renamed hso driver printk macros to have a prefix HSO_ this
+        was needed as the kernel also defines a macro called WARN in 2.6.27-rc1
+        which hso.h also defined.
+    
+        Fixed a tty line stuff needed to compile for 2.6.27-rc1
+    
+        Made calls to hso_mux_submit_intr_urb use GFP_ATOMIC in their
+        allocations like the 2.6.27-rc1 driver this prevents the kernel
+        trying to sleep while in interrupt.
+1.3	Peter Henn
+	- correct USB interface initialisation for ICON322
+	- correct some compile warnings
+1.2	Filip Aben
+	- Added frame length lower boundary checking
+	- Catch failed opens and unwanted closes.
+	- Set DTR/RTS at open()
+	- Add hso_tiocmset() locking
+	- Use usb_unlink_urb() when in_interrupt.
+	- Removed 'Suspend' modinfo and replace with more general 'Flags' which should contain all compiler defines.
+
+1.1	Filip Aben
+	- Added SIOCSETSUSPEND ioctl for serial ports: Enables or disables selective suspend if supported by kernel. 
+	- Added SIOCSETRADIO ioctl for serial ports:  Enabled or disables the radio.
+	- Icon401 support
+	- Added sysfs support
+	- Added GE40x, GTM382 devices
+	- Fixed APP2 port support
+	- Fixed crash when closing active port
+1.0	Filip Aben
+	- Fixed Interrupt endpoint bug for HS speed devices ( Icon321 )
+	- Major overhaul of devices structure and way of working. Should be a bit cleaner now.
+0.9	Sven Duytschaever
+	- added suspend, resume, autosuspend and autoresume
+	- minor restructuring of the code
+	- Icon031 enumeration fix
+	- added DTR and RTS handling
+	Filip Aben
+	- Added IP downlink recovery
+	- Fixed rescheduling while atomic crash.
+	- Changed serial writing mechanism
+	- Added port types to our per-device 'ttys' proc entry.
+	- Added multi-rx-urbs for modem downlink
+	- Replaced semaphore by safer spinlock
+	- Merged in Stefano Klinke's Icon031 patch
+0.8     Peter Henn
+        - Add device id for some new cards
+	- Fix for 2.6.18 & 2.6.19 compilation ( courtesy of Pharscape forum user joke_dst )
+0.7	Filip Aben
+      	- Added 2.6.12+ compatability
+0.6     Marco Himmer ( Option )
+        - Send REZERO UNIT command to switch from UMS to 3G device
+        - Move packed out of struct to avoid compiler warning
+0.5	Filip Aben ( Option )
+	- Removed internal project names from comments
+ 	- Removed dependency on Modem port which is not always there 
+ 	- Added USB id's for other compatible Option devices
+0.4	Andrew Bird (Sphere Systems Ltd)
+ 	Initial support for Circuit Switched interface - no H/W handshaking
+0.3	Andrew Bird (Sphere Systems Ltd)
+	Multiple device support, startup & shutdown cleanups
+0.2	Andrew Bird (Sphere Systems Ltd)
+	Initial port to 2.6, target 2.6.21/22	
+0.1	Option International
+	2.4 driver 
+ 

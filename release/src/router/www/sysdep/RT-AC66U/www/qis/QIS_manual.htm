@@ -1,0 +1,129 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="stylesheet" type="text/css" href="/form_style.css">
+<link rel="stylesheet" type="text/css" href="qis_style.css">
+<script type="text/JavaScript" src="/state.js"></script>
+<script type="text/JavaScript" src="/general.js"></script>
+<script type="text/JavaScript" src="/form.js"></script>
+<script type="text/JavaScript" src="/help.js"></script>
+<script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
+<script type="text/JavaScript">
+var $j = jQuery.noConflict();
+
+function QKInternet_load_body(){
+	parent.set_step("t2");
+	if(repeater_support < 0)
+		$("repeaterMode").style.display = "none";
+		
+	document.getElementById("nextButton").focus();	
+}
+
+function setScenerion(mode){
+	if(mode == '1'){
+		parent.document.QKform.sw_mode.value = 1;
+		$j("#Senario").attr("src", "/images/New_ui/rt.jpg");
+		$j("#mode_desc").html("<#OP_GW_desc#>");
+		document.form.sw_mode_radio[0].focus();
+	}	
+	else if(mode == '2'){
+		var pstaDesc = "";
+		pstaDesc += "The RT-AC66U can be configured in Media bridge mode.";
+		pstaDesc += "This mode provide multiple entertainment devices fastest 802.11ac wifi connection simultaneously.";
+		pstaDesc += "To setup the Media bridge mode, you need two RT-AC66U routers, one configured as the Media station and the other as a router.";
+		pstaDesc += "Setup the first RT-AC66U as router then configure the second RT-AC66U as 802.11ac Media bridge and you can simply connect PCs, Smart TV, game console, DVR, media player to Media bridge via Ethernet cable.";
+		pstaDesc += "<br><br><br>";
+
+		parent.document.QKform.sw_mode.value = 2;
+		$j("#Senario").attr("src", "/images/New_ui/re.jpg");
+		$j("#mode_desc").html(pstaDesc);
+		document.form.sw_mode_radio[1].focus();
+	}
+	else if(mode == '3'){
+		parent.document.QKform.sw_mode.value = 3;
+		$j("#Senario").attr("src", "/images/New_ui/ap.jpg");
+		$j("#mode_desc").html("<#OP_AP_desc#>");
+		document.form.sw_mode_radio[2].focus();
+	}
+}
+
+function submitForm(){
+	if(parent.document.QKform.sw_mode.value == "1"){
+		document.form.action = "/qis/QIS_detect.htm";
+		document.form.submit();
+	}
+	else if(parent.document.QKform.sw_mode.value == "2"){
+		// 
+		document.form.action = "/qis/QIS_sitesurvey.htm";
+		document.form.submit();
+	}
+	else{
+		document.form.action = "/qis/QIS_lanip.htm";
+		document.form.submit();
+	}
+}
+
+function submitenter(myfield,e)
+{	
+	var keycode;
+	if (window.event) keycode = window.event.keyCode;
+	else if (e) keycode = e.which;
+	else return true;
+
+	if (keycode == 13){
+		submitForm();
+   	return false;
+  }
+	else
+   	return true;
+}
+</script>
+</head>
+<body onLoad="QKInternet_load_body();" onunload="" onKeyPress="submitenter(this,event)">
+<form method="post" name="form" action="/start_apply.htm" onsubmit="return submitForm();">
+<input type="hidden" name="current_page" value="QIS_lanip.htm">
+<input type="hidden" name="next_page" value="QIS_wireless.htm">   
+<input type="hidden" name="prev_page" value="">
+<input type="hidden" name="flag" value="adv_ap_mode">
+<div class="QISmain">
+<div class="formfonttitle" style="padding:6 0 0 10;">
+		<div>
+			<table width="730px">
+				<tr>
+					<td align="left">
+						<span class="description_down"><#OP_desc1#></span>
+					</td>
+					<td align="right">
+						<img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+</div>
+<br/>
+
+	<div style="width:95%; margin:0 auto; padding-bottom:3px;">
+		<span style="font-size:16px; font-weight:bold;color:white;text-shadow: 1px 1px 0px black">
+			<input type="radio" name="sw_mode_radio" class="input" value="1" onclick="setScenerion(1);" <% nvram_match("sw_mode", "1", "checked"); %>><#OP_GW_item#>
+			&nbsp;&nbsp;
+			<span id="repeaterMode"><input type="radio" name="sw_mode_radio" class="input" value="2" onclick="setScenerion(2);" <% nvram_match("sw_mode", "2", "checked"); %>>Media bridge</span>
+			&nbsp;&nbsp;
+			<input type="radio" name="sw_mode_radio" class="input" value="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><#OP_AP_item#>
+		</span>
+	<div id="mode_desc" style="font-family:Georgia, Arial, sans-serif;position:relative;display:block;margin-top:10px;margin-left:5px;height:60px;z-index:90;">
+			<#OP_GW_desc#>
+	</div>
+	<br/>
+	<div style="margin-top:40px;margin-bottom:60px;"><img id="Senario" width="100%" height="132px" src="/images/New_ui/rt.jpg">
+	</div>	
+
+<div class="apply_gen" style="margin-top:30px">
+	<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen" >
+</div>
+</div>
+</form>
+</body>

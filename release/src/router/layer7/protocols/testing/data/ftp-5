@@ -1,0 +1,50 @@
+220 Welcome to ftp.kernel.org.
+USER anonymous
+331 Please specify the password.
+PASS -wget@
+230-			    Welcome to the
+230-
+230-			LINUX KERNEL ARCHIVES
+230-			    ftp.kernel.org
+230-
+230-		    "Much more than just kernels"
+230-
+230-	   IF YOU'RE ACCESSING THIS SITE VIA A WEB BROWSER
+230-		PLEASE USE THE HTTP URL BELOW INSTEAD!
+230-
+230----->       If you are looking for mirror sites, please go       <----
+230----->		    to mirrors.kernel.org instead                <----
+230-
+230-This site is provided as a public service by the Kernel Dot Org
+230-Organization, Inc.  Bandwidth is provided by The Internet Software
+230-Consortium, Inc.  This server is located in San Francisco, California,
+230-USA; use in violation of any applicable laws strictly prohibited.
+230-
+230-Due to U.S. Exports Regulations, all cryptographic software on this
+230-site is subject to the following legal notice:
+230-
+230-    This site includes publicly available encryption source code
+230-    which, together with object code resulting from the compiling of
+230-    publicly available source code, may be exported from the United
+230-    States under License Exception "TSU" pursuant to 15 C.F.R. Section
+230-    740.13(e).
+230-
+230-This legal notice applies to cryptographic software only.  Please see
+230-the Bureau of Industry and Security (http://www.bis.doc.gov/) for more
+230-information about current U.S. regulations.
+230-
+230-Neither the Kernel Dot Org Organization, Inc. nor its sponsors make
+230-any guarantees, explicit or implicit, about the contents of this site.
+230-Use at your own risk.
+230-
+230-This site is accessible via the following mechanisms:
+230-
+230-	FTP		ftp://ftp.kernel.org/pub/
+230-	HTTP		http://www.kernel.org/pub/
+230-	RSYNC		rsync://rsync.kernel.org/pub/
+230-
+230-NFS and SMB/CIFS are no longer available.
+230-
+230-For comments on this site, please contact <ftpadmin@kernel.org>.
+230-Please do not use this address for questions that are not related to
+230-the operation of this site.  

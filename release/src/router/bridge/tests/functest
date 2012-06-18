@@ -1,0 +1,171 @@
+#! /bin/bash
+BR=${1:-"br549"}
+ETH=${2:-"eth0"}
+maxports=${3:-1000}
+
+echo "Ethernet Bridge functional test"
+
+echo -n "Testing kernel: " ; uname -a
+echo -n "Utilities:      " ; brctl -V
+
+# fetch ip of working $ETH
+IP=`/sbin/ifconfig $ETH | sed -n -e 's/^.*inet addr:\([0-9][0-9\.]*\).*$/\1/p'`
+echo "Using IP address $IP"
+
+# All commands in this part must succeed
+set -e
+
+echo "0. Creating  $maxports dummy devices"
+modprobe dummy numdummies=$maxports
+
+echo "1. Creating bridge $BR"
+brctl addbr $BR 
+brctl stp $BR on
+
+echo "2. Add $ETH"
+ifconfig $ETH 0.0.0.0
+brctl addif $BR $ETH
+
+echo "3. Bring up bridge"
+ifconfig $BR $IP
+
+echo "4 Bring up another bridge"
+brctl addbr "brx%d"
+ifconfig brx0 1.1.1.1
+
+echo "5 Bring down bridge"
+ifconfig brx0 down
+brctl delbr brx0
+
+echo -n  "6. Add " $maxports " ports:"
+for (( i=1; i < $maxports; i++))
+do
+	brctl addif $BR dummy$i
+	if [[ $(( $i % 10 )) -eq 10 ]]
+	then echo -n '.'
+	fi
+done
+echo
+
+echo -n "7. Delete those ports:"
+for (( i=1; i < $maxports; i++))
+do
+  	brctl delif $BR dummy$i
+	if [[ $(( $i % 10 )) -eq 10 ]]
+	then echo -n '.'
+	fi
+done
+echo
+
+echo "8. Notififer cases"
+brctl addif $BR dummy0
+
+echo "8a Device down"
+ifconfig dummy0 down
+
+echo "8b Change device address"
+ifconfig dummy0 hw ether 00:0d:02:03:04:05
+
+echo "8c. Device up"
+ifconfig dummy0 up
+
+echo "8d Unregister device (slow)"
+rmmod dummy
+echo "** Done"
+
+modprobe dummy numdummies=2
+
+set +e
+
+echo "10 Error cases"
+echo -n "  duplicate bridge - "
+brctl addbr $BR
+
+echo -n "  bridge to bridge - "
+brctl addbr brTmp
+brctl addif $BR brTmp
+
+echo -n "  already in other bridge - "
+brctl addif brTmp $ETH
+
+echo -n "  already in this bridge - "
+brctl addif $BR $ETH
+
+echo -n "  remove from wrong bridge - "
+brctl delif brTmp $ETH
+brctl delbr brTmp
+
+echo -n "  remove bridge $ETH - "
+brctl delbr $ETH 
+
+echo -n "  remove bridge bogus - "
+brctl delbr bogus 
+
+echo -n "  remove still active bridge - "
+brctl delbr $BR 
+
+echo -n "  zero hw address - "
+ifconfig dummy0 hw ether 00:00:00:00:00:00
+brctl addif $BR dummy0
+
+echo -n "  duplicate hw address - "
+ifconfig dummy0 hw ether 00:0d:01:00:00:00
+ifconfig dummy1 hw ether 00:0d:01:00:00:00
+brctl addif $BR dummy0
+brctl addif $BR dummy1
+# leave dummy0 for next test.
+
+echo "10 Tuning"
+set -e
+brctl stp $BR off
+brctl stp $BR on
+brctl setageing $BR 4000
+brctl setbridgeprio $BR 1
+brctl setfd $BR 120
+brctl sethello $BR 20
+brctl setmaxage $BR 1000
+brctl setpathcost $BR dummy0 50
+brctl setportprio $BR dummy0 2
+
+echo "Status check"
+brctl show
+read  -p "Ok?"
+brctl showstp $BR
+read  -p "Ok?"
+brctl showmacs $BR
+read  -p "Ok?"
+
+
+echo "30 Shutdown"
+ifconfig $BR down
+brctl delbr $BR
+ifconfig $ETH $IP
+
+echo "31 Remove bridge module"
+rmmod bridge
+rmmod dummy
+rmmod bridge
+
+echo "32 Check for dead bridge cleanup"
+brctl addbr $BR
+rmmod bridge
+modprobe bridge
+sleep 1
+
+echo "33 Remove module with race"
+brctl addbr $BR 
+ifconfig $BR 9.9.9.9
+
+rmmod --wait bridge &
+sleep 2
+brctl addbr brXX 
+if ifconfig brXX 1.1.1.1 ; then
+    echo "?? ifconfig succeeded"
+    ifconfig brXX down
+fi
+
+ifconfig $BR down
+wait
+
+echo "*** Done ***"
+

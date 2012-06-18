@@ -1,0 +1,16 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>ldbadd</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="ldbadd.1"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ldbadd &#8212; Command-line utility for adding records to an LDB</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">ldbadd</code> [-h] [-H LDB-URL] [ldif-file1] [ldif-file2] [...]</p></div></div><div class="refsect1" lang="en"><a name="id2522946"></a><h2>DESCRIPTION</h2><p>ldbadd adds records to an ldb(7) database. It reads 
+		the ldif(5) files specified on the command line and adds 
+		the records from these files to the LDB database, which is specified 
+		by the -H option or the LDB_URL environment variable.
+	</p><p>If - is specified as a ldb file, the ldif input is read from 
+		standard input.</p></div><div class="refsect1" lang="en"><a name="id2483331"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">-h</span></dt><dd><p>
+		Show list of available options.</p></dd><dt><span class="term">-H &lt;ldb-url&gt;</span></dt><dd><p>
+				LDB URL to connect to. See ldb(7) for details.
+			</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2483365"></a><h2>ENVIRONMENT</h2><div class="variablelist"><dl><dt><span class="term">LDB_URL</span></dt><dd><p>LDB URL to connect to (can be overrided by using the 
+					-H command-line option.)</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2483387"></a><h2>VERSION</h2><p>This man page is correct for version 4.0 of the Samba suite.</p></div><div class="refsect1" lang="en"><a name="id2483522"></a><h2>SEE ALSO</h2><p>ldb(7), ldbmodify, ldbdel, ldif(5)</p></div><div class="refsect1" lang="en"><a name="id2483532"></a><h2>AUTHOR</h2><p> ldb was written by 
+		 <a class="ulink" href="http://samba.org/~tridge/" target="_top">Andrew Tridgell</a>.
+	</p><p>
+If you wish to report a problem or make a suggestion then please see
+the <a class="ulink" href="http://ldb.samba.org/" target="_top">http://ldb.samba.org/</a> web site for
+current contact and maintainer information.
+	</p><p>This manpage was written by Jelmer Vernooij.</p></div></div></body></html>

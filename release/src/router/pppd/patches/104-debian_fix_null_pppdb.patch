@@ -1,0 +1,25 @@
+From: Martin.Lottermoser@t-online.de
+Subject: Bug#308136: Debian bug 308136 (SEGV in pppd)
+
+The function update_db_entry() may only be called if pppdb is not NULL;
+unfortunately in this situation it is. Other calls to update_db_entry()
+are protected against this, see, e.g., the end of script_setenv().
+
+diff -ruNp ppp-2.4.4b1.orig/pppd/main.c ppp-2.4.4b1/pppd/main.c
+--- ppp-2.4.4b1.orig/pppd/main.c	2005-11-13 17:59:44.000000000 +0100
++++ ppp-2.4.4b1/pppd/main.c	2005-11-13 17:59:35.000000000 +0100
+@@ -1929,9 +1929,11 @@ script_setenv(var, value, iskey)
+ 		free(p-1);
+ 		script_env[i] = newstring;
+ #ifdef USE_TDB
+-		if (iskey && pppdb != NULL)
+-		    add_db_key(newstring);
+-		update_db_entry();
++		if (pppdb != NULL) {
++		    if (iskey)
++			add_db_key(newstring);
++		    update_db_entry();
++		}
+ #endif
+ 		return;
+ 	    }

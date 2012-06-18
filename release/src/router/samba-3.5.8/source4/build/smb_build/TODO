@@ -1,0 +1,25 @@
+- use pkg-config files in the buildsystem?
+- let the build system implement some make functions($(patsubst),$(wildcard),...) and use our own implementations where `make' does not support them
+- include extra_flags.txt using Makefile construction if 
+  supported by current make
+- fix shared module loading for selftest during builds without install
+- remove recursive dependency between LIBSOCKET, LIBCLI_NBT and LIBCLI_RESOLVE
+- clearer distinction between dcerpc and ndr. seperate interface tables? Maybe get rid of 
+  NDR's table altogether and use dlopen/dlsym ?
+- saner names for:
+	libcli.so.0.0.1 (rename to libsmb?)
+	libcli_cldap.so.0.0.1 (rename to libcldap?)
+	libcli_nbt.so.0.0.1 (rename to libnbt?)
+	libcli_wrepl.so.0.0.1 (rename to libwrepl?)
+- generate headermap.txt
+
+set of test scripts that check the code:
+- configure_check_unused.pl
+- find_unused_macros.pl
+- find_unused_makefilevars.pl
+- find_unused_options.sh
+- findstatic.pl
+- minimal_includes.pl
+- check dependencies based on #include lines ?
+- check whether private headers are not used outside their own subsystem
+- undocumented (no manpage) installed binaries

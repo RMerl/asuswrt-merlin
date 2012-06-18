@@ -1,0 +1,94 @@
+mailto(samba@samba.org)
+
+manpage(lmhosts htmlcommand((5)))(5)(23 Oct 1998)(Samba)(SAMBA)
+
+label(NAME)
+manpagename(lmhosts)(The Samba NetBIOS hosts file)
+
+label(SYNOPSIS)
+manpagesynopsis() 
+
+lmhosts is the bf(Samba) NetBIOS name to IP address mapping file.
+
+label(DESCRIPTION)
+manpagedescription()
+
+This file is part of the bf(Samba) suite.
+
+bf(lmhosts) is the bf(Samba) NetBIOS name to IP address mapping file.  It
+is very similar to the bf(/etc/hosts) file format, except that the
+hostname component must correspond to the NetBIOS naming format.
+
+label(FILEFORMAT)
+manpagesection(FILE FORMAT)
+
+It is an ASCII file containing one line for NetBIOS name. The two
+fields on each line are separated from each other by white space. Any
+entry beginning with # is ignored. Each line in the lmhosts file
+contains the following information :
+
+startit()
+
+it() bf(IP Address) - in dotted decimal format.
+
+it() bf(NetBIOS Name) - This name format is a maximum fifteen
+character host name, with an optional trailing tt('#') character
+followed by the NetBIOS name type as two hexadecimal digits.
+
+If the trailing tt('#') is omitted then the given IP address will be
+returned for all names that match the given name, whatever the NetBIOS
+name type in the lookup.
+
+endit()
+
+An example follows :
+
+# nl()
+# Sample Samba lmhosts file. nl()
+# nl()
+192.9.200.1	TESTPC nl()
+192.9.200.20	NTSERVER#20 nl()
+192.9.200.21	SAMBASERVER nl()
+
+Contains three IP to NetBIOS name mappings. The first and third will
+be returned for any queries for the names tt("TESTPC") and
+tt("SAMBASERVER") respectively, whatever the type component of the
+NetBIOS name requested.
+
+The second mapping will be returned only when the tt("0x20") name type
+for a name tt("NTSERVER") is queried. Any other name type will not be
+resolved.
+
+The default location of the bf(lmhosts) file is in the same directory
+as the url(bf(smb.conf))(smb.conf.html) file.
+
+label(VERSION)
+manpagesection(VERSION)
+
+This man page is correct for version 2.0 of the Samba suite.
+
+label(SEEALSO)
+manpageseealso()
+
+url(bf(smb.conf (5)))(smb.conf.5.html#nameresolveorder),
+url(bf(smbclient (1)))(smbclient.1.html#minusR),
+url(bf(smbpasswd (8)))(smbpasswd.8.html#minusR), url(bf(samba (7)))(samba.7.html).
+
+label(AUTHOR)
+manpageauthor()
+
+The original Samba software and related utilities were created by
+Andrew Tridgell email(samba@samba.org). Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+
+The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+url(bf(ftp://ftp.icce.rug.nl/pub/unix/))(ftp://ftp.icce.rug.nl/pub/unix/))
+and updated for the Samba2.0 release by Jeremy Allison.
+email(samba@samba.org).
+
+See url(bf(samba (7)))(samba.7.html) to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.

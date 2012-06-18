@@ -1,0 +1,805 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 2. Small Office Networking</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"><link rel="home" href="index.html" title="Samba-3 by Example"><link rel="up" href="ExNetworks.html" title="Part I. Example Network Configurations"><link rel="prev" href="simple.html" title="Chapter 1. No-Frills Samba Servers"><link rel="next" href="secure.html" title="Chapter 3. Secure Office Networking"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 2. Small Office Networking</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="simple.html">Prev</a> </td><th width="60%" align="center">Part I. Example Network Configurations</th><td width="20%" align="right"> <a accesskey="n" href="secure.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="small"></a>Chapter 2. Small Office Networking</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="small.html#id2555462">Introduction</a></span></dt><dd><dl><dt><span class="sect2"><a href="small.html#id2555484">Assignment Tasks</a></span></dt></dl></dd><dt><span class="sect1"><a href="small.html#id2555545">Dissection and Discussion</a></span></dt><dd><dl><dt><span class="sect2"><a href="small.html#id2555593">Technical Issues</a></span></dt><dt><span class="sect2"><a href="small.html#id2555791">Political Issues</a></span></dt></dl></dd><dt><span class="sect1"><a href="small.html#id2555812">Implementation</a></span></dt><dd><dl><dt><span class="sect2"><a href="small.html#id2557356">Validation</a></span></dt><dt><span class="sect2"><a href="small.html#id2558004">Notebook Computers: A Special Case</a></span></dt><dt><span class="sect2"><a href="small.html#id2558030">Key Points Learned</a></span></dt></dl></dd><dt><span class="sect1"><a href="small.html#id2558104">Questions and Answers</a></span></dt></dl></div><p>
+	<a class="link" href="simple.html" title="Chapter 1. No-Frills Samba Servers">&#8220;No-Frills Samba Servers&#8221;</a> focused on the basics of simple yet effective
+	network solutions. Network administrators who take pride in their work
+	(that's most of us, right?) take care to deliver what our users want,
+	but not too much more. If we make things too complex, we confound our users
+	and increase costs of network ownership. A professional network manager
+	avoids the temptation to put too much pizazz into the way that the network
+	operates. Some creativity is helpful, but keep it under control 
+	good advice that the following two scenarios illustrate.
+	</p><p>
+	<a class="indexterm" name="id2555418"></a>
+	In one case the network administrator of a mid-sized company spent three
+	months building a new network to replace an old Netware server. What he
+	delivered had all the bells and whistles he could muster. There were a
+	few teething problems during the changeover, nothing serious but a little
+	disruptive all the same. Users were exposed to many changes at once. The
+	network administrator was asked to resign two months after implementing
+	the new system because so many staff complained they had lost time and
+	were not happy with the new network.  Everything was automated, and he
+	delivered more features than any advanced user could think of. He was
+	just too smart for his own good.
+	</p><p>
+	In the case of the other company, a new network manager was appointed
+	to oversee the replacement of a LanTastic network with an MS Windows
+	NT 4.0 network. He had the replacement installed and operational within
+	two weeks. Before installation and changeover, he called a meeting to
+	explain to all users what was going to happen, how it would affect them,
+	and that he would be available 24 hours a day to help them transition.
+	One week after conversion, he held another meeting asking for cooperation
+	in the introduction of a few new features that would help to make life
+	easier. Network users were thrilled with the help he provided. The network
+	he implemented was nowhere near as complex as in the first example, had fewer
+	features, and yet he had happy users. Months later he was still adding
+	new innovations. He always asked the users if a
+	particular feature was what they wanted. He asked his boss for a raise
+	and got it. He often told me, &#8220;<span class="quote">Always keep a few new tricks up your
+	sleeves for when you need them.</span>&#8221; Was he smart? You decide. Let's
+	get on with our next exercise.
+	</p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2555462"></a>Introduction</h2></div></div></div><p>
+	Abmas Accounting has grown. Mr. Meany likes you and says he knew you
+	were the right person for the job. That's why he asked you to install the
+	new server. The past few months have been hard work. You advised Mr. Meany
+	that it is time for a change. Abmas now has 52 users, having acquired an
+	investment consulting business recently. The new users were added to the
+	network without any problems.
+	</p><p>
+	Some of the Windows clients are nearly past their use-by date.  You found damaged and unusable software on
+	some of the workstations that came with the acquired business and found some machines in need of both
+	hardware and software maintenance.
+	</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2555484"></a>Assignment Tasks</h3></div></div></div><p>
+		<a class="indexterm" name="id2555492"></a>
+		Mr. Meany is retiring in 12 months. Before he goes, he wants you to help ensure
+		that the business is running efficiently. Many of the new staff want notebook
+		computers.  They visit customer business premises and need to use local network
+		facilities; these users are technically competent. The company uses a
+		business application that requires Windows XP Professional. In short, a complete
+		client upgrade is about to happen. Mr. Meany told you that he is working
+		on another business acquisition and that by the time he retires there will be
+		80 to 100 users.
+		</p><p>
+		Mr. Meany is not concerned about security. He wants to make it easier for
+		staff to do their work. He has hired you to help him appoint a full-time
+		network manager before he retires. Above all, he says he is investing in
+		the ability to grow. He is determined to live his lifelong dream and
+		hand the business over to a bright and capable executive who can make
+		things happen. This means your network design must cope well with
+		growth.
+		</p><p>
+		In a few months, Abmas will require an Internet connection for email and so
+		that staff can easily obtain software updates. Mr. Meany is warming up to
+		the installation of antivirus software but is not yet ready to approve
+		this expense. He told you to spend the money a virus scanner costs
+		on better quality notebook computers for mobile users.
+		</p><p>
+		One of Mr. Meany's golfing partners convinced him to buy new laser
+		printers, one black only, the other a color laser printer. Staff support
+		the need for a color printer so they can present more attractive proposals
+		and reports.
+		</p><p>
+		Mr. Meany also asked if it would be possible for one of the staff to manage
+		user accounts from the Windows desktop. That person will be responsible for
+		basic operations.
+		</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2555545"></a>Dissection and Discussion</h2></div></div></div><p>
+	What are the key requirements in this business example? A quick review indicates
+	a need for
+	</p><div class="itemizedlist"><ul type="disc"><li><p>
+		Scalability, from 52 to over 100 users in 12 months
+		</p></li><li><p>
+		Mobile computing capability
+		<a class="indexterm" name="id2555566"></a>
+		</p></li><li><p>
+		Improved reliability and usability
+		</p></li><li><p>
+		Easier administration
+		</p></li></ul></div><p>
+	In this instance the installed Linux system is assumed to be a Red Hat Linux Fedora Core2 server
+	(as in <a class="link" href="simple.html#AccountingOffice" title="Accounting Office">&#8220;Accounting Office&#8221;</a>).
+
+	</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2555593"></a>Technical Issues</h3></div></div></div><p>
+		<a class="indexterm" name="id2555600"></a>
+		<a class="indexterm" name="id2555606"></a>
+		<a class="indexterm" name="id2555613"></a>
+		<a class="indexterm" name="id2555619"></a>
+		<a class="indexterm" name="id2555625"></a>
+		It is time to implement a domain security environment. You will use the <code class="constant">
+		smbpasswd</code> (default) backend. You should implement a DHCP server. There is no need to
+		run DNS at this time, but the system will use WINS. The domain name will be <code class="constant">
+		BILLMORE</code>. This time, the name of the server will be <code class="constant">SLEETH</code>.
+		</p><p>
+		All printers will be configured as DHCP clients. The DHCP server will assign
+		the printer a fixed IP address by way of its Ethernet interface (MAC) address.
+		See <a class="link" href="small.html#dhcp01" title="Example 2.2. Abmas Accounting DHCP Server Configuration File /etc/dhcpd.conf">&#8220;Abmas Accounting DHCP Server Configuration File  /etc/dhcpd.conf&#8221;</a>.
+                </p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+		The <code class="filename">smb.conf</code> file you are creating in this exercise can be used with equal effectiveness
+		with Samba-2.2.x series releases. This is deliberate so that in the next chapter it is
+		possible to start with the installation that you have created here, migrate it
+		to a Samba-3 configuration, and then secure the system further. Configurations following
+		this one utilize features that may not be supported in Samba-2.2.x releases.
+		However, you should note that the examples in each chapter start with the assumption
+		that a fresh new installation is being effected.
+		</p></div><p>
+		Later on, when the Internet connection is implemented, you will add DNS as well as
+		other enhancements. It is important that you plan accordingly.
+		</p><p>
+		<a class="indexterm" name="id2555684"></a>
+		You have split the network into two separate areas. Each has its own Ethernet switch.
+		There are 20 users on the accounting network and 32 users on the financial services
+		network. The server has two network interfaces, one serving each network. The
+		network printers will be located in a central area. You plan to install the new
+		printers and keep the old printer in use also.
+		</p><p>
+		You will provide separate file storage areas for each business entity. The old system
+		will go away, accounting files will be handled under a single directory, and files will
+		be stored under customer name, not under a personal work area. Staff will be made
+		responsible for file location, so the old share point must be maintained.
+		</p><p>
+		Given that DNS will not be used, you will configure WINS name resolution for UNIX
+		hostname name resolution.
+		</p><p>
+		<a class="indexterm" name="id2555715"></a>
+		<a class="indexterm" name="id2555723"></a>
+		It is necessary to map Windows Domain Groups to UNIX groups. It is
+		advisable to also map Windows Local Groups to UNIX groups. Additionally, the two
+		key staff groups in the firm are accounting staff and financial services staff.
+		For these, it is necessary to create UNIX groups as well as Windows Domain Groups.
+		</p><p>
+		In the sample <code class="filename">smb.conf</code> file, you have configured Samba to call the UNIX
+		<code class="literal">groupadd</code> to add group entries. This utility does not permit
+		the addition of group names that contain uppercase characters or spaces. This
+		is considered a bug. The <code class="literal">groupadd</code> is part of the
+		<code class="literal">shadow-utils</code> open source software package.  A later release
+		of this package may have been patched to resolve this bug.  If your operating
+		platform has this bug, it means that attempts to add a Windows Domain Group that
+		has either a space or uppercase characters in it will fail. See
+		<span class="emphasis"><em>TOSHARG2</em></span>, Chapter 11, Section 11.3.1, Example 11.1, for
+		more information.
+		</p><p>
+		<a class="indexterm" name="id2555777"></a>
+		Vendor-supplied printer drivers will be installed on each client. The CUPS print
+		spooler on the UNIX host will be operated in <code class="constant">raw</code> mode.
+		</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2555791"></a>Political Issues</h3></div></div></div><p>
+		Mr. Meany is an old-school manager. He sets the rules and wants to see compliance.
+		He is willing to spend money on things he believes are of value. You need more
+		time to convince him of real priorities.
+		</p><p>
+		Go ahead, buy better notebooks. Wouldn't it be neat if they happened to be
+		supplied with antivirus software? Above all, demonstrate good purchase value and remember
+		to make your users happy.
+		</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2555812"></a>Implementation</h2></div></div></div><p>
+	<a class="indexterm" name="id2555820"></a>
+	In this example, the assumption is made that this server is being configured from a clean start.
+	The alternate approach could be to demonstrate the migration of the system that is documented
+	in <a class="link" href="simple.html#AcctgNet" title="Implementation">&#8220;Implementation&#8221;</a> to meet the new requirements. The decision to treat this case, as with
+	future examples, as a new installation is based on the premise that you can determine
+	the migration steps from the information provided in <a class="link" href="ntmigration.html" title="Chapter 9. Migrating NT4 Domain to Samba-3">&#8220;Migrating NT4 Domain to Samba-3&#8221;</a>.
+	Additionally, a fresh installation makes the example easier to follow.
+	</p><p>
+	<a class="indexterm" name="id2555846"></a>
+	Each user will be given a home directory on the UNIX system, which will be available as a private
+	share. Two additional shares will be created, one for the accounting department and the other for
+	the financial services department. Network users will be given access to these shares by way
+	of group membership.
+	</p><p>
+	<a class="indexterm" name="id2555861"></a>
+	UNIX group membership is the primary mechanism by which Windows Domain users will be granted
+	rights and privileges within the Windows environment.
+	</p><p>
+	<a class="indexterm" name="id2555875"></a>
+	The user <code class="literal">alanm</code> will be made the owner of all files. This will be preserved
+	by setting the sticky bit (set UID/GID) on the top-level directories.
+	</p><div class="figure"><a name="acct2net"></a><p class="title"><b>Figure 2.1. Abmas Accounting  52-User Network Topology</b></p><div class="figure-contents"><div class="mediaobject"><img src="images/acct2net.png" alt="Abmas Accounting 52-User Network Topology"></div></div></div><br class="figure-break"><div class="procedure"><a name="id2555930"></a><p class="title"><b>Procedure 2.1. Server Installation Steps</b></p><ol type="1"><li><p>
+		Using UNIX/Linux system tools, name the server <code class="constant">sleeth</code>.
+		</p></li><li><p>
+		<a class="indexterm" name="id2555951"></a>
+		Place an entry for the machine <code class="constant">sleeth</code> in the <code class="filename">/etc/hosts</code>.
+		The printers are network attached, so there should be entries for the
+		network printers also. An example <code class="filename">/etc/hosts</code> file is shown here:
+</p><pre class="screen">
+192.168.1.1     sleeth sleeth1
+192.168.2.1     sleeth2
+192.168.1.10    hplj6
+192.168.1.11    hplj4
+192.168.2.10    qms
+</pre><p>
+		</p></li><li><p>
+		Install the Samba-3 binary RPM from the Samba-Team FTP site.
+		</p></li><li><p>
+		Install the ISC DHCP server using the UNIX/Linux system tools available to you.
+		</p></li><li><p>
+		<a class="indexterm" name="id2556002"></a>
+		<a class="indexterm" name="id2556008"></a>
+		<a class="indexterm" name="id2556014"></a>
+		<a class="indexterm" name="id2556020"></a>
+		Because Samba will be operating over two network interfaces and clients on each side
+		may want to be able to reach clients on the other side, it is imperative that IP forwarding
+		is enabled. Use the system tool of your choice to enable IP forwarding. In the
+		absence of such a tool on the Linux system, add to the <code class="filename">/etc/rc.d/rc.local</code>
+		file an entry as follows:
+</p><pre class="screen">
+echo 1 &gt; /proc/sys/net/ipv4/ip_forward
+</pre><p>
+		This causes the Linux kernel to forward IP packets so that it acts as a router.
+		</p></li><li><p>
+		Install the <code class="filename">smb.conf</code> file as shown in <a class="link" href="small.html#acct2conf" title="Example 2.3. Accounting Office Network smb.conf File [globals] Section">&#8220;Accounting Office Network smb.conf File  [globals] Section&#8221;</a> and
+		<a class="link" href="small.html#acct3conf" title="Example 2.4. Accounting Office Network smb.conf File Services and Shares Section">&#8220;Accounting Office Network smb.conf File  Services and Shares Section&#8221;</a>. Combine these two examples to form a single
+		<code class="filename">/etc/samba/smb.conf</code> file.
+		</p></li><li><p>
+		<a class="indexterm" name="id2556080"></a>
+		Add the user <code class="literal">root</code> to the Samba password backend:
+</p><pre class="screen">
+<code class="prompt">root# </code> smbpasswd -a root
+New SMB password: XXXXXXX
+Retype new SMB password: XXXXXXX
+<code class="prompt">root# </code>
+</pre><p>
+		<a class="indexterm" name="id2556109"></a>
+		This is the Windows Domain Administrator password. Never delete this account from
+		the password backend after Windows Domain Groups have been initialized. If you delete
+		this account, your system is crippled. You cannot restore this account,
+		and your Samba server can no longer be administered.
+		</p></li><li><p>
+		<a class="indexterm" name="id2556126"></a>
+		Create the username map file to permit the <code class="constant">root</code> account to be called
+		<code class="constant">Administrator</code> from the Windows network environment. To do this, create
+		the file <code class="filename">/etc/samba/smbusers</code> with the following contents:
+</p><pre class="screen">
+####
+# User mapping file
+####
+# File Format
+# -----------
+# Unix_ID = Windows_ID
+#
+# Examples:
+# root = Administrator
+# janes = "Jane Smith"
+# jimbo = Jim Bones
+#
+# Note: If the name contains a space it must be double quoted.
+#       In the example above the name 'jimbo' will be mapped to Windows
+#       user names 'Jim' and 'Bones' because the space was not quoted.
+#######################################################################
+root = Administrator
+####
+# End of File
+####
+</pre><p>
+		</p></li><li><p>
+		<a class="indexterm" name="id2556167"></a>
+		Create and map Windows Domain Groups to UNIX groups. A sample script is provided in
+		<a class="link" href="small.html#initGrps" title="Example 2.1. Script to Map Windows NT Groups to UNIX Groups">&#8220;Script to Map Windows NT Groups to UNIX Groups&#8221;</a>. Create a file containing this script. We called ours
+		<code class="filename">/etc/samba/initGrps.sh</code>. Set this file so it can be executed,
+		and then execute the script. Sample output should be as follows:
+
+</p><div class="example"><a name="initGrps"></a><p class="title"><b>Example 2.1. Script to Map Windows NT Groups to UNIX Groups</b></p><div class="example-contents"><a class="indexterm" name="id2556195"></a><pre class="screen">
+#!/bin/bash
+#
+# initGrps.sh
+#
+
+# Create UNIX groups
+groupadd acctsdep
+groupadd finsrvcs
+
+# Map Windows Domain Groups to UNIX groups
+net groupmap add ntgroup="Domain Admins"  unixgroup=root type=d
+net groupmap add ntgroup="Domain Users"   unixgroup=users type=d
+net groupmap add ntgroup="Domain Guests"  unixgroup=nobody type=d
+
+# Add Functional Domain Groups
+net groupmap add ntgroup="Accounts Dept"  unixgroup=acctsdep type=d
+net groupmap add ntgroup="Financial Services" unixgroup=finsrvcs type=d
+</pre></div></div><p><br class="example-break">
+
+</p><pre class="screen">
+<code class="prompt">root# </code> chmod 755 initGrps.sh
+<code class="prompt">root# </code> cd /etc/samba
+<code class="prompt">root# </code> ./initGrps.sh
+Updated mapping entry for Domain Admins
+Updated mapping entry for Domain Users
+Updated mapping entry for Domain Guests
+No rid or sid specified, choosing algorithmic mapping
+Successfully added group Accounts Dept to the mapping db
+No rid or sid specified, choosing algorithmic mapping
+Successfully added group Domain Guests to the mapping db
+
+<code class="prompt">root# </code> cd /etc/samba
+<code class="prompt">root# </code> net groupmap list | sort
+Account Operators (S-1-5-32-548) -&gt; -1
+Accounts Dept (S-1-5-21-194350-25496802-3394589-2003) -&gt; acctsdep
+Administrators (S-1-5-32-544) -&gt; -1
+Backup Operators (S-1-5-32-551) -&gt; -1
+Domain Admins (S-1-5-21-194350-25496802-3394589-512) -&gt; root
+Domain Guests (S-1-5-21-194350-25496802-3394589-514) -&gt; nobody
+Domain Users (S-1-5-21-194350-25496802-3394589-513) -&gt; users
+Financial Services (S-1-5-21-194350-25496802-3394589-2005) -&gt; finsrvcs
+Guests (S-1-5-32-546) -&gt; -1
+Power Users (S-1-5-32-547) -&gt; -1
+Print Operators (S-1-5-32-550) -&gt; -1
+Replicators (S-1-5-32-552) -&gt; -1
+System Operators (S-1-5-32-549) -&gt; -1
+Users (S-1-5-32-545) -&gt; -1
+</pre><p>
+		</p></li><li><p>
+		<a class="indexterm" name="id2556273"></a>
+		<a class="indexterm" name="id2556280"></a>
+		<a class="indexterm" name="id2556288"></a>
+		For each user who needs to be given a Windows Domain account, make an entry in the
+		<code class="filename">/etc/passwd</code> file as well as in the Samba password backend.
+		Use the system tool of your choice to create the UNIX system accounts, and use the Samba
+		<code class="literal">smbpasswd</code> program to create the Domain user accounts.
+		</p><p>
+		<a class="indexterm" name="id2556313"></a>
+		<a class="indexterm" name="id2556319"></a>
+		<a class="indexterm" name="id2556325"></a>
+		There are a number of tools for user management under UNIX, such as
+		<code class="literal">useradd</code> and <code class="literal">adduser</code>, as well as a plethora of custom
+		tools. With the tool of your choice, create a home directory for each user.
+		</p></li><li><p>
+		Using the preferred tool for your UNIX system, add each user to the UNIX groups created
+		previously, as necessary. File system access control will be based on UNIX group membership.
+		</p></li><li><p>
+		Create the directory mount point for the disk subsystem that is mounted to provide
+		data storage for company files. In this case the mount point is indicated in the <code class="filename">smb.conf</code>
+		file is <code class="filename">/data</code>. Format the file system as required, mount the formatted
+		file system partition using <code class="literal">mount</code>,
+		and make the appropriate changes in <code class="filename">/etc/fstab</code>.
+		</p></li><li><p>
+		Create the top-level file storage directories are follows:
+</p><pre class="screen">
+<code class="prompt">root# </code> mkdir -p /data/{accounts,finsvcs}
+<code class="prompt">root# </code> chown -R root:root /data
+<code class="prompt">root# </code> chown -R alanm:accounts /data/accounts
+<code class="prompt">root# </code> chown -R alanm:finsvcs /data/finsvcs
+<code class="prompt">root# </code> chmod -R ug+rwx,o+rx-w /data
+</pre><p>
+		Each department is responsible for creating its own directory structure within its
+		share. The directory root of the <code class="literal">accounts</code> share is <code class="filename">/data/accounts</code>.
+		The directory root of the <code class="literal">finsvcs</code> share is <code class="filename">/data/finsvcs</code>.
+		</p></li><li><p>
+		Configure the printers with the IP addresses as shown in <a class="link" href="small.html#acct2net" title="Figure 2.1. Abmas Accounting 52-User Network Topology">&#8220;Abmas Accounting  52-User Network Topology&#8221;</a>.
+		Follow the instructions in the manufacturers' manuals to permit printing to port 9100.
+		This allows the CUPS spooler to print using raw mode protocols.
+		<a class="indexterm" name="id2556469"></a>
+		<a class="indexterm" name="id2556475"></a>
+		</p></li><li><p>
+		<a class="indexterm" name="id2556488"></a>
+		<a class="indexterm" name="id2556496"></a>
+		Configure the CUPS Print Queues as follows:
+</p><pre class="screen">
+<code class="prompt">root# </code> lpadmin -p hplj4 -v socket://192.168.1.11:9100 -E
+<code class="prompt">root# </code> lpadmin -p hplj6 -v socket://192.168.1.10:9100 -E
+<code class="prompt">root# </code> lpadmin -p qms -v socket://192.168.2.10:9100 -E
+</pre><p>
+		<a class="indexterm" name="id2556527"></a>
+		This creates the necessary print queues with no assigned print filter.
+		</p></li><li><p>
+		<a class="indexterm" name="id2556541"></a>
+		<a class="indexterm" name="id2556547"></a>
+		<a class="indexterm" name="id2556554"></a>
+		Edit the file <code class="filename">/etc/cups/mime.convs</code> to uncomment the line:
+</p><pre class="screen">
+application/octet-stream     application/vnd.cups-raw      0     -
+</pre><p>
+		</p></li><li><p>
+		<a class="indexterm" name="id2556578"></a>
+		Edit the file <code class="filename">/etc/cups/mime.types</code> to uncomment the line:
+</p><pre class="screen">
+application/octet-stream
+</pre><p>
+		</p></li><li><p>
+		<a class="indexterm" name="id2556601"></a>
+		Using your favorite system editor, create an <code class="filename">/etc/dhcpd.conf</code> with the
+		contents as shown in <a class="link" href="small.html#dhcp01" title="Example 2.2. Abmas Accounting DHCP Server Configuration File /etc/dhcpd.conf">&#8220;Abmas Accounting DHCP Server Configuration File  /etc/dhcpd.conf&#8221;</a>.
+</p><div class="example"><a name="dhcp01"></a><p class="title"><b>Example 2.2. Abmas Accounting DHCP Server Configuration File  <code class="filename">/etc/dhcpd.conf</code></b></p><div class="example-contents"><a class="indexterm" name="id2556633"></a><pre class="screen">
+default-lease-time 86400;
+max-lease-time 172800;
+default-lease-time 86400;
+
+option ntp-servers 192.168.1.1;
+option domain-name "abmas.biz";
+option domain-name-servers 192.168.1.1, 192.168.2.1;
+option netbios-name-servers 192.168.1.1, 192.168.2.1;
+option netbios-node-type 8;
+### NOTE ###
+# netbios-node-type=8 means set clients to Hybrid Mode
+#   so they will use Unicast communication with the WINS
+#   server and thus reduce the level of UDP broadcast
+#   traffic by up to 90%.
+############
+
+subnet 192.168.1.0 netmask 255.255.255.0 {
+	range dynamic-bootp 192.168.1.128 192.168.1.254;
+	option subnet-mask 255.255.255.0;
+	option routers 192.168.1.1;
+	allow unknown-clients;
+	host hplj4 {
+		hardware ethernet 08:00:46:7a:35:e4;
+		fixed-address 192.168.1.10;
+		}
+	host hplj6 {
+		hardware ethernet 00:03:47:cb:81:e0;
+		fixed-address 192.168.1.11;
+		}
+	}
+subnet 192.168.2.0 netmask 255.255.255.0 {
+	range dynamic-bootp 192.168.2.128 192.168.2.254;
+	option subnet-mask 255.255.255.0;
+	option routers 192.168.2.1;
+	allow unknown-clients;
+	host qms {
+		hardware ethernet 01:04:31:db:e1:c0;
+		fixed-address 192.168.1.10;
+		}
+	}
+subnet 127.0.0.0 netmask 255.0.0.0 {
+	}
+</pre></div></div><p><br class="example-break">
+		</p></li><li><p>
+		Use the standard system tool to start Samba and CUPS and configure them to start
+		automatically at every system reboot. For example,
+		</p><p>
+		<a class="indexterm" name="id2556677"></a>
+		<a class="indexterm" name="id2556683"></a>
+		<a class="indexterm" name="id2556690"></a>
+		<a class="indexterm" name="id2556696"></a>
+		<a class="indexterm" name="id2556702"></a>
+</p><pre class="screen">
+<code class="prompt">root# </code> chkconfig dhcp on
+<code class="prompt">root# </code> chkconfig smb on
+<code class="prompt">root# </code> chkconfig cups on
+<code class="prompt">root# </code> /etc/rc.d/init.d/dhcp restart
+<code class="prompt">root# </code> /etc/rc.d/init.d/smb restart
+<code class="prompt">root# </code> /etc/rc.d/init.d/cups restart
+</pre><p>
+		</p></li><li><p>
+		<a class="indexterm" name="id2556752"></a>
+		<a class="indexterm" name="id2556759"></a>
+		<a class="indexterm" name="id2556767"></a>
+		<a class="indexterm" name="id2556773"></a>
+		<a class="indexterm" name="id2556780"></a>
+		<a class="indexterm" name="id2556786"></a>
+		Configure the name service switch (NSS) to handle WINS-based name resolution.
+		Since this system does not use a DNS server, it is safe to remove this option from
+		the NSS configuration. Edit the <code class="filename">/etc/nsswitch.conf</code> file so that
+		the <code class="constant">hosts:</code> entry looks like this:
+</p><pre class="screen">
+hosts:	files wins
+</pre><p>
+		</p></li></ol></div><div class="example"><a name="acct2conf"></a><p class="title"><b>Example 2.3. Accounting Office Network <code class="filename">smb.conf</code> File  [globals] Section</b></p><div class="example-contents"><table class="simplelist" border="0" summary="Simple list"><tr><td># Global parameters</td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td><a class="indexterm" name="id2556844"></a><em class="parameter"><code>workgroup = BILLMORE</code></em></td></tr><tr><td><a class="indexterm" name="id2556854"></a><em class="parameter"><code>passwd chat = *New*Password* %n\n*Re-enter*new*password* %n\n *Password*changed*</code></em></td></tr><tr><td><a class="indexterm" name="id2556866"></a><em class="parameter"><code>username map = /etc/samba/smbusers</code></em></td></tr><tr><td><a class="indexterm" name="id2556876"></a><em class="parameter"><code>syslog = 0</code></em></td></tr><tr><td><a class="indexterm" name="id2556887"></a><em class="parameter"><code>name resolve order = wins bcast hosts</code></em></td></tr><tr><td><a class="indexterm" name="id2556898"></a><em class="parameter"><code>printcap name = CUPS</code></em></td></tr><tr><td><a class="indexterm" name="id2556908"></a><em class="parameter"><code>show add printer wizard = No</code></em></td></tr><tr><td><a class="indexterm" name="id2556919"></a><em class="parameter"><code>add user script = /usr/sbin/useradd -m -G users '%u'</code></em></td></tr><tr><td><a class="indexterm" name="id2556931"></a><em class="parameter"><code>delete user script = /usr/sbin/userdel -r '%u'</code></em></td></tr><tr><td><a class="indexterm" name="id2556942"></a><em class="parameter"><code>add group script = /usr/sbin/groupadd '%g'</code></em></td></tr><tr><td><a class="indexterm" name="id2556953"></a><em class="parameter"><code>delete group script = /usr/sbin/groupdel '%g'</code></em></td></tr><tr><td><a class="indexterm" name="id2556965"></a><em class="parameter"><code>add user to group script = /usr/sbin/usermod -A '%g' '%u'</code></em></td></tr><tr><td><a class="indexterm" name="id2556976"></a><em class="parameter"><code>add machine script = /usr/sbin/useradd -s /bin/false -d /var/lib/nobody '%u'</code></em></td></tr><tr><td><a class="indexterm" name="id2556988"></a><em class="parameter"><code>logon script = scripts\login.bat</code></em></td></tr><tr><td><a class="indexterm" name="id2556999"></a><em class="parameter"><code>logon path =  </code></em></td></tr><tr><td><a class="indexterm" name="id2557009"></a><em class="parameter"><code>logon drive = X:</code></em></td></tr><tr><td><a class="indexterm" name="id2557020"></a><em class="parameter"><code>domain logons = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2557030"></a><em class="parameter"><code>preferred master = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2557041"></a><em class="parameter"><code>wins support = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2557051"></a><em class="parameter"><code>printing = CUPS</code></em></td></tr></table></div></div><br class="example-break"><div class="example"><a name="acct3conf"></a><p class="title"><b>Example 2.4. Accounting Office Network <code class="filename">smb.conf</code> File  Services and Shares Section</b></p><div class="example-contents"><table class="simplelist" border="0" summary="Simple list"><tr><td> </td></tr><tr><td><em class="parameter"><code>[homes]</code></em></td></tr><tr><td><a class="indexterm" name="id2557091"></a><em class="parameter"><code>comment = Home Directories</code></em></td></tr><tr><td><a class="indexterm" name="id2557102"></a><em class="parameter"><code>valid users = %S</code></em></td></tr><tr><td><a class="indexterm" name="id2557112"></a><em class="parameter"><code>read only = No</code></em></td></tr><tr><td><a class="indexterm" name="id2557123"></a><em class="parameter"><code>browseable = No</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[printers]</code></em></td></tr><tr><td><a class="indexterm" name="id2557141"></a><em class="parameter"><code>comment = SMB Print Spool</code></em></td></tr><tr><td><a class="indexterm" name="id2557152"></a><em class="parameter"><code>path = /var/spool/samba</code></em></td></tr><tr><td><a class="indexterm" name="id2557162"></a><em class="parameter"><code>printable = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2557173"></a><em class="parameter"><code>guest ok = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2557183"></a><em class="parameter"><code>use client driver = Yes</code></em></td></tr><tr><td><a class="indexterm" name="id2557193"></a><em class="parameter"><code>browseable = No</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[netlogon]</code></em></td></tr><tr><td><a class="indexterm" name="id2557212"></a><em class="parameter"><code>comment = Network Logon Service</code></em></td></tr><tr><td><a class="indexterm" name="id2557223"></a><em class="parameter"><code>path = /data/%U</code></em></td></tr><tr><td><a class="indexterm" name="id2557234"></a><em class="parameter"><code>valid users = %S</code></em></td></tr><tr><td><a class="indexterm" name="id2557244"></a><em class="parameter"><code>read only = No</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[accounts]</code></em></td></tr><tr><td><a class="indexterm" name="id2557263"></a><em class="parameter"><code>comment = Accounting Files</code></em></td></tr><tr><td><a class="indexterm" name="id2557273"></a><em class="parameter"><code>path = /data/accounts</code></em></td></tr><tr><td><a class="indexterm" name="id2557284"></a><em class="parameter"><code>valid users = %G</code></em></td></tr><tr><td><a class="indexterm" name="id2557294"></a><em class="parameter"><code>read only = No</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[finsvcs]</code></em></td></tr><tr><td><a class="indexterm" name="id2557313"></a><em class="parameter"><code>comment = Financial Service Files</code></em></td></tr><tr><td><a class="indexterm" name="id2557324"></a><em class="parameter"><code>path = /data/finsvcs</code></em></td></tr><tr><td><a class="indexterm" name="id2557334"></a><em class="parameter"><code>valid users = %G</code></em></td></tr><tr><td><a class="indexterm" name="id2557345"></a><em class="parameter"><code>read only = No</code></em></td></tr></table></div></div><br class="example-break"><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2557356"></a>Validation</h3></div></div></div><p>
+		Does everything function as it ought? That is the key question at this point.
+		Here are some simple steps to validate your Samba server configuration.
+		</p><div class="procedure"><a name="id2557368"></a><p class="title"><b>Procedure 2.2. Validation Steps</b></p><ol type="1"><li><p>
+			<a class="indexterm" name="id2557378"></a>
+			If your <code class="filename">smb.conf</code> file has bogus options or parameters, this may cause Samba
+			to refuse to start. The first step should always be to validate the contents
+			of this file by running:
+</p><pre class="screen">
+<code class="prompt">root# </code> testparm -s
+Load smb config files from smb.conf
+Processing section "[homes]"
+Processing section "[printers]"
+Processing section "[netlogon]"
+Processing section "[accounts]"
+Processing section "[service]"
+Loaded services file OK.
+# Global parameters
+[global]
+        workgroup = BILLMORE
+        passwd chat = *New*Password* \
+		%n\n *Re-enter*new*password* %n\n *Password*changed*
+        username map = /etc/samba/smbusers
+        syslog = 0
+        name resolve order = wins bcast hosts
+        printcap name = CUPS
+        show add printer wizard = No
+        add user script = /usr/sbin/useradd -m -G users '%u'
+        delete user script = /usr/sbin/userdel -r '%u'
+        add group script = /usr/sbin/groupadd '%g'
+        delete group script = /usr/sbin/groupdel '%g'
+        add user to group script = /usr/sbin/usermod -A '%g' '%u'
+        add machine script = /usr/sbin/useradd
+				-s /bin/false -d /var/lib/nobody '%u'
+        logon script = scripts\logon.bat
+        logon path =
+        logon drive = X:
+        domain logons = Yes
+        preferred master = Yes
+        wins support = Yes
+...
+### Remainder cut to save space ###
+</pre><p>
+			The inclusion of an invalid parameter (say one called dogbert) would generate an
+			error as follows:
+</p><pre class="screen">
+Unknown parameter encountered: "dogbert"
+Ignoring unknown parameter "dogbert"
+</pre><p>
+			Clear away all errors before proceeding, and start or restart samba as necessary.
+			</p></li><li><p>
+			<a class="indexterm" name="id2557458"></a>
+			<a class="indexterm" name="id2557464"></a>
+			<a class="indexterm" name="id2557470"></a>
+			<a class="indexterm" name="id2557476"></a>
+			Check that the Samba server is running:
+</p><pre class="screen">
+<code class="prompt">root# </code> ps ax | grep mbd
+14244 ?        S      0:00 /usr/sbin/nmbd -D
+14245 ?        S      0:00 /usr/sbin/nmbd -D
+14290 ?        S      0:00 /usr/sbin/smbd -D
+
+$rootprompt; ps ax | grep winbind
+14293 ?        S     0:00 /usr/sbin/winbindd -D
+14295 ?        S     0:00 /usr/sbin/winbindd -D
+</pre><p>
+			The <code class="literal">winbindd</code> daemon is running in split mode (normal), so there are also
+			two instances of it. For more information regarding <code class="literal">winbindd</code>, see
+			<span class="emphasis"><em>TOSHARG2</em></span>, Chapter 23, Section 23.3. The single instance of
+			<code class="literal">smbd</code> is normal.
+			</p></li><li><p>
+			<a class="indexterm" name="id2557527"></a>
+			Check that an anonymous connection can be made to the Samba server:
+</p><pre class="screen">
+<code class="prompt">root# </code> smbclient -L localhost -U%
+
+        Sharename      Type      Comment
+        ---------      ----      -------
+        netlogon       Disk      Network Logon Service
+        accounts       Disk      Accounting Files
+        finsvcs        Disk      Financial Service Files
+        IPC$           IPC       IPC Service (Samba3)
+        ADMIN$         IPC       IPC Service (Samba3)
+        hplj4          Printer   Hewlett-Packard LaserJet 4
+        hplj6          Printer   Hewlett-Packard LaserJet 6
+        qms            Printer   QMS Magicolor Laser Printer XXXX
+
+        Server               Comment
+        ---------            -------
+        SLEETH               Samba 3.0.20
+
+        Workgroup            Master
+        ---------            -------
+        BILLMORE             SLEETH
+</pre><p>
+			This demonstrates that an anonymous listing of shares can be obtained. This is the equivalent
+			of browsing the server from a Windows client to obtain a list of shares on the server.
+			The <code class="constant">-U%</code> argument means to send a <code class="constant">NULL</code> username and
+			a <code class="constant">NULL</code> password.
+			</p></li><li><p>
+			<a class="indexterm" name="id2557578"></a>
+			<a class="indexterm" name="id2557584"></a>
+			<a class="indexterm" name="id2557590"></a>
+			Verify that the printers have the IP addresses assigned in the DHCP server configuration file.
+			The easiest way to do this is to ping the printer name. Immediately after the ping response
+			has been received, execute <code class="literal">arp -a</code> to find the MAC address of the printer
+			that has responded. Now you can compare the IP address and the MAC address of the printer
+			with the configuration information in the <code class="filename">/etc/dhcpd.conf</code> file. They
+			should, of course, match. For example,
+</p><pre class="screen">
+<code class="prompt">root# </code> ping hplj4
+PING hplj4 (192.168.1.11) 56(84) bytes of data.
+64 bytes from hplj4 (192.168.1.11): icmp_seq=1 ttl=64 time=0.113 ms
+
+<code class="prompt">root# </code> arp -a
+hplj4 (192.168.1.11) at 08:00:46:7A:35:E4 [ether] on eth0
+</pre><p>
+			The MAC address <code class="constant">08:00:46:7A:35:E4</code> matches that specified for the
+			IP address from which the printer has responded and the entry for it in the
+			<code class="filename">/etc/dhcpd.conf</code> file.
+			</p></li><li><p>
+			<a class="indexterm" name="id2557651"></a>
+			Make an authenticated connection to the server using the <code class="literal">smbclient</code> tool:
+</p><pre class="screen">
+<code class="prompt">root# </code> smbclient //sleeth/accounts -U alanm
+Password: XXXXXXX
+smb: \&gt; dir
+  .                          D        0  Sun Nov  9 01:28:34 2003
+  ..                         D        0  Sat Aug 16 17:24:26 2003
+  .mc                       DH        0  Sat Nov  8 21:57:38 2003
+  .qt                       DH        0  Fri Sep  5 00:48:25 2003
+  SMB                        D        0  Sun Oct 19 23:04:30 2003
+  Documents                  D        0  Sat Nov  1 00:31:51 2003
+  xpsp1a_en_x86.exe           131170400  Sun Nov  2 01:25:44 2003
+
+           65387 blocks of size 65536. 28590 blocks available
+smb: \&gt; q
+</pre><p>
+			</p></li></ol></div></div><div class="procedure"><a name="id2557699"></a><p class="title"><b>Procedure 2.3. Windows XP Professional Client Configuration</b></p><ol type="1"><li><p>
+		Configure clients to the network settings shown in <a class="link" href="small.html#acct2net" title="Figure 2.1. Abmas Accounting 52-User Network Topology">&#8220;Abmas Accounting  52-User Network Topology&#8221;</a>.
+		All clients use DHCP for TCP/IP protocol stack configuration.
+		<a class="indexterm" name="id2557717"></a>
+		<a class="indexterm" name="id2557723"></a>
+		DHCP configures all Windows clients to use the WINS Server address <code class="constant">192.168.1.1</code>.
+		</p></li><li><p>
+		Join the Windows Domain called <code class="constant">BILLMORE</code>. Use the Domain Administrator
+		username <code class="constant">root</code> and the SMB password you assigned to this account.
+		A detailed step-by-step procedure for joining a Windows 200x/XP Professional client to
+		a Windows Domain is given in <a class="link" href="appendix.html" title="Chapter 15. A Collection of Useful Tidbits">&#8220;A Collection of Useful Tidbits&#8221;</a>, <a class="link" href="appendix.html#domjoin" title="Joining a Domain: Windows 200x/XP Professional">&#8220;Joining a Domain: Windows 200x/XP Professional&#8221;</a>.
+		Reboot the machine as prompted and then log on using a Domain User account.
+		</p></li><li><p>
+		Verify on each client that the machine called <code class="constant">SLEETH</code>
+		is visible in <span class="guimenu">My Network Places</span>, that it is
+		possible to connect to it and see the shares <span class="guimenuitem">accounts</span>
+		 and <span class="guimenuitem">finsvcs</span>,
+		and that it is possible to open that share to reveal its contents.
+		</p></li><li><p>
+		Instruct all users to log onto the workstation using their assigned username and password.
+		</p></li><li><p>
+		Install a printer on each using the following steps:
+		</p><div class="procedure"><ol type="1"><li><p>
+				Click <span class="guimenu">Start</span> &#8594; <span class="guimenuitem">Settings</span> &#8594; <span class="guimenuitem">Printers</span>+<span class="guiicon">Add Printer</span>+<span class="guibutton">Next</span>. Do not click <span class="guimenuitem">Network printer</span>.
+					Ensure that <span class="guimenuitem">Local printer</span> is selected.
+				</p></li><li><p>
+				Click <span class="guibutton">Next</span>. In the
+				<span class="guimenuitem">Manufacturer:</span> panel, select <code class="constant">HP</code>.
+				In the <span class="guimenuitem">Printers:</span> panel, select the printer called
+				<code class="constant">HP LaserJet 4</code>. Click <span class="guibutton">Next</span>.
+				</p></li><li><p>
+				In the <span class="guimenuitem">Available ports:</span> panel, select
+				<code class="constant">FILE:</code>. Accept the default printer name by clicking
+				<span class="guibutton">Next</span>. When asked, &#8220;<span class="quote">Would you like to print a
+				test page?</span>&#8221;, click <span class="guimenuitem">No</span>. Click
+				<span class="guibutton">Finish</span>.
+				</p></li><li><p>
+				You may be prompted for the name of a file to print to. If so, close the
+				dialog panel. Right-click <span class="guiicon">HP LaserJet 4</span> &#8594; <span class="guimenuitem">Properties</span> &#8594; <span class="guisubmenu">Details (Tab)</span> &#8594; <span class="guimenuitem">Add Port</span>.
+				</p></li><li><p>
+				In the <span class="guimenuitem">Network</span> panel, enter the name of
+				the print queue on the Samba server as follows: <code class="constant">\\SERVER\hplj4</code>.
+				Click <span class="guibutton">OK</span>+<span class="guibutton">OK</span> to complete the installation.
+				</p></li><li><p>
+				Repeat the printer installation steps above for the HP LaserJet 6 printer
+				as well as for the QMS Magicolor XXXX laser printer.
+				</p></li></ol></div></li></ol></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2558004"></a>Notebook Computers: A Special Case</h3></div></div></div><p>
+	As a network administrator, you already know how to create local machine accounts for Windows 200x/XP
+	Professional systems. This is the preferred solution to provide continuity of work for notebook users
+	so that absence from the office network environment does not become a barrier to productivity.
+	</p><p>
+	By creating a local machine account that has the same username and password as you create for that
+	user in the Windows Domain environment, the user can log onto the machine locally and still
+	transparently access network resources as if logged onto the domain itself. There are some trade-offs
+	that mean that as the network is more tightly secured, it becomes necessary to modify Windows client
+	configuration somewhat.
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2558030"></a>Key Points Learned</h3></div></div></div><p>
+		In this network design and implementation exercise, you created a Windows NT4-style Domain
+		Controller using Samba-3.0.20. Following these guidelines, you experienced
+		and implemented several important aspects of Windows networking. In the next chapter,
+		you build on the experience. These are the highlights from this chapter:
+		</p><div class="itemizedlist"><ul type="disc"><li><p>
+			<a class="indexterm" name="id2558050"></a>
+			You implemented a DHCP server, and Microsoft Windows clients were able to obtain all necessary
+			network configuration settings from this server.
+			</p></li><li><p>
+			<a class="indexterm" name="id2558063"></a>
+			You created a Windows Domain Controller. You were able to use the network logon service
+			and successfully joined Windows 200x/XP Professional clients to the Domain.
+			</p></li><li><p>
+			<a class="indexterm" name="id2558076"></a>
+			You created raw print queues in the CUPS printing system. You maintained a simple
+			printing system so that all users can share centrally managed printers. You installed
+			native printer drivers on the Windows clients.
+			</p></li><li><p>
+			You experienced the benefits of centrally managed user accounts on the server.
+			</p></li><li><p>
+			You offered Mobile notebook users a solution that allows them to continue to work
+			while away from the office and not connected to the corporate network.
+			</p></li></ul></div></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2558104"></a>Questions and Answers</h2></div></div></div><p>
+	Your new Domain Controller is ready to serve you. What does it mean? Here are some questions and answers that
+	may help.
+	</p><div class="qandaset"><dl><dt>1. <a href="small.html#id2558117">
+		What is the key benefit of using DHCP to configure Windows client TCP/IP stacks?
+		</a></dt><dt>2. <a href="small.html#id2558144">
+		Are there any DHCP server configuration parameters in the /etc/dhcpd.conf
+		that should be noted in particular?
+		</a></dt><dt>3. <a href="small.html#id2558175">
+		Is it possible to create a Windows Domain account that is specifically called Administrator?
+		</a></dt><dt>4. <a href="small.html#id2558211">
+		Why is it necessary to give the Windows Domain Administrator a UNIX UID of 0?
+		</a></dt><dt>5. <a href="small.html#id2558250">
+		One of my junior staff needs the ability to add machines to the Domain, but I do not want to give him
+		root access. How can we do this?
+		</a></dt><dt>6. <a href="small.html#id2558289">
+		Why must I map Windows Domain Groups to UNIX groups?
+		</a></dt><dt>7. <a href="small.html#id2558325">
+		I deleted my root account and now I cannot add it back! What can I do?
+		</a></dt><dt>8. <a href="small.html#id2558393">
+		When I run net groupmap list, it reports a group called Administrators
+		as well as Domain Admins. What is the difference between them?
+		</a></dt><dt>9. <a href="small.html#id2558437">
+		What is the effect of changing the name of a Samba server or of changing the Domain name?
+		</a></dt><dt>10. <a href="small.html#id2558487">
+		How can I manage user accounts from my Windows XP Professional workstation?
+		</a></dt></dl><table border="0" summary="Q and A Set"><col align="left" width="1%"><tbody><tr class="question"><td align="left" valign="top"><a name="id2558117"></a><a name="id2558119"></a><p><b>1.</b></p></td><td align="left" valign="top"><p>
+		What is the key benefit of using DHCP to configure Windows client TCP/IP stacks?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		First and foremost, portability. It means that notebook users can move between
+		the Abmas office and client offices (so long as they, too, use DHCP) without having to manually
+		reconfigure their machines. It also means that when they work from their home environments
+		either using DHCP assigned addressing or when using dial-up networking, settings such as
+		default routes and DNS server addresses that apply only to the Abmas office environment do
+		not interfere with remote operations. This is an extremely important feature of DHCP.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2558144"></a><a name="id2558146"></a><p><b>2.</b></p></td><td align="left" valign="top"><p>
+		Are there any DHCP server configuration parameters in the <code class="filename">/etc/dhcpd.conf</code>
+		that should be noted in particular?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		Yes. The configuration you created automatically provides each client with the IP address
+		of your WINS server. It also configures the client to preferentially register NetBIOS names
+		with the WINS server, and then instructs the client to first query the WINS server when a
+		NetBIOS machine name needs to be resolved to an IP Address. This configuration
+		results in far lower UDP broadcast traffic than would be the case if WINS was not used.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2558175"></a><a name="id2558177"></a><p><b>3.</b></p></td><td align="left" valign="top"><p>
+		Is it possible to create a Windows Domain account that is specifically called <code class="constant">Administrator</code>?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		You can surely create a Windows Domain account called <code class="constant">Administrator</code>. It is also
+		possible to map that account so that it has the effective UNIX UID of 0. This way it isn't
+		necessary to use the <em class="parameter"><code>username map</code></em> facility to map this account to the UNIX
+		account called <code class="constant">root</code>.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2558211"></a><a name="id2558213"></a><p><b>4.</b></p></td><td align="left" valign="top"><p>
+		Why is it necessary to give the Windows Domain <code class="constant">Administrator</code> a UNIX UID of 0?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		The Windows Domain <code class="constant">Administrator</code> account is the most privileged account that
+		exists on the Windows platform. This user can change any setting, add, delete, or modify user
+		accounts, and completely reconfigure the system. The equivalent to this account in the UNIX
+		environment is the <code class="constant">root</code> account. If you want to permit the Windows Domain
+		Administrator to manage accounts as well as permissions, privileges, and security
+		settings within the Domain and on the Samba server, equivalent rights must be assigned. This is
+		achieved with the <code class="constant">root</code> UID equal to 0.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2558250"></a><a name="id2558252"></a><p><b>5.</b></p></td><td align="left" valign="top"><p>
+		One of my junior staff needs the ability to add machines to the Domain, but I do not want to give him
+		<code class="constant">root</code> access. How can we do this?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		Users who are members of the <code class="constant">Domain Admins</code> group can add machines to the
+		Domain. This group is mapped to the UNIX group account called <code class="constant">root</code>
+		(or the equivalent <code class="constant">wheel</code> on some UNIX systems) that has a GID of 0.
+		This must be the primary GID of the account of the user who is a member of the Windows <code class="constant">
+		Domain Admins</code> account.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2558289"></a><a name="id2558291"></a><p><b>6.</b></p></td><td align="left" valign="top"><p>
+		Why must I map Windows Domain Groups to UNIX groups?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		Samba-3 does not permit a Domain Group to become visible to Domain network clients unless the account
+		has a UNIX group account equivalent. The Domain groups that should be given UNIX equivalents are
+		<span class="guimenu">Domain Guests</span>, <span class="guimenu">Domain Users</span>, and <span class="guimenu">Domain Admins</span>.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2558325"></a><a name="id2558328"></a><p><b>7.</b></p></td><td align="left" valign="top"><p>
+		I deleted my <code class="constant">root</code> account and now I cannot add it back! What can I do?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		This is a nasty problem. Fortunately, there is a solution.
+		</p><div class="procedure"><ol type="1"><li><p>
+			Back up your existing configuration files in case you need to restore them.
+			</p></li><li><p>
+			Rename the <code class="filename">group_mapping.tdb</code> file.
+			</p></li><li><p>
+			Use the <code class="literal">smbpasswd</code> to add the root account.
+			</p></li><li><p>
+			Restore the <code class="filename">group_mapping.tdb</code> file.
+			</p></li></ol></div></td></tr><tr class="question"><td align="left" valign="top"><a name="id2558393"></a><a name="id2558395"></a><p><b>8.</b></p></td><td align="left" valign="top"><p>
+		When I run <code class="literal">net groupmap list</code>, it reports a group called <span class="guimenu">Administrators</span>
+		as well as <span class="guimenu">Domain Admins</span>. What is the difference between them?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		The group called <span class="guimenu">Administrators</span> is representative of the same account that would be
+		present as the Local Group account on a Domain Member server or workstation. Samba uses only Domain
+		Groups at this time. A Workstation or Server Local Group has no meaning in a Samba context. This
+		may change at some later date. These accounts are provided only so that security objects are correctly shown.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2558437"></a><a name="id2558440"></a><p><b>9.</b></p></td><td align="left" valign="top"><p>
+		What is the effect of changing the name of a Samba server or of changing the Domain name?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		If you elect to change the name of the Samba server, on restarting <code class="literal">smbd</code>,
+		Windows security identifiers are changed. In the case of a standalone server or a Domain Member server,
+		the machine SID is changed. This may break Domain membership. In the case of a change of the Domain name
+		(Workgroup name), the Domain SID is changed. This affects all Domain memberships.
+		</p><p>
+		If it becomes necessary to change either the server name or the Domain name, be sure to back up the respective
+		SID before the change is made. You can back up the SID using the <code class="literal">net getlocalsid</code> (Samba-3)
+		or the <code class="literal">smbpasswd</code> (Samba-2.2.x). To change the SID, you use the same tool. Be sure
+		to check the man page for this command for detailed instructions regarding the steps involved.
+		</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2558487"></a><a name="id2558489"></a><p><b>10.</b></p></td><td align="left" valign="top"><p>
+		How can I manage user accounts from my Windows XP Professional workstation?
+		</p></td></tr><tr class="answer"><td align="left" valign="top"></td><td align="left" valign="top"><p>
+		Samba-3 implements a Windows NT4-style security domain architecture. This type of Domain cannot
+		be managed using tools present on a Windows XP Professional installation. You may download from the
+		Microsoft Web site the SRVTOOLS.EXE package. Extract it into the directory from which you wish to use
+		it. This package extracts the tools: <code class="literal">User Manager for Domains</code>, <code class="literal">Server Manager</code>, and <code class="literal">Event
+		Viewer</code>. You may use the <span class="guimenu">User Manager for Domains</span> to manage your Samba-3
+		Domain user and group accounts. Of course, you do need to be logged on as the <code class="constant">Administrator</code>
+		for the Samba-3 Domain. It may help to log on as the <code class="constant">root</code> account.
+		</p></td></tr></tbody></table></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="simple.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="ExNetworks.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="secure.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 1. No-Frills Samba Servers </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 3. Secure Office Networking</td></tr></table></div></body></html>

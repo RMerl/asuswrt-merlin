@@ -1,0 +1,2 @@
+cur_dir=`pwd`
+./configure --prefix=$cur_dir/_inst \

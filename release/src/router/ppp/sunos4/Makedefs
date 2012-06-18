@@ -1,0 +1,13 @@
+#
+# defines common to several Makefiles
+#
+
+INSTALL= install -o root -g daemon
+
+BINDIR = /usr/local/etc
+MANDIR = /usr/local/man
+ETCDIR = /etc/ppp
+
+# To use gcc, uncomment the next line.
+#CC = gcc
+COPTS = -O

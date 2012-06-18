@@ -1,0 +1,51 @@
+.\" .nh
+.\" .ad l
+.TH "hotplug2" "8" "August 2006" "hotplug2" "hotplug2"
+.SH "NAME"
+hotplug2 \- embeddable hotplug support binary
+.SH "SYNOPSIS"
+\fBhotplug2\fR
+[options]
+.SH "DESCRIPTION"
+.PP 
+The hotplug2 application allows automatical loading of modules, based on the events sent by kernel, which can be invoked artifically (eg. using udevtrigger).
+.PP 
+The purpose of hotplug2 is not to be a replacement of udev, instead it should be helpful during hardware autodetection in initrd / initramfs.
+.PP 
+.SH "PARAMETERS"
+.TP 
+\fB\-\-coldplug\fR, \fB\-\-no\-coldplug\fR
+Run or do not run coldplug application after starting hotplug2. Default is to run coldplug. Coldplug is what handles initial device probing. Separate application is reasonable, as you may want to use eg. a shell script for this purpose instead.
+.TP 
+\fB\-\-persistent\fR, \fB\-\-no\-persistent\fR
+Keep hotplug2 running even after all events have been processed, waiting for more. The default behavior is not to be persistent: note that it will still block until at least one event has been processed. 
+.TP 
+\fB\-\-dumb\fR, \fB\-\-no\-dumb\fR
+Run or do not run hotplug2 in dumb mode. Dumb mode means that rules are being ignored, the only action taken is mload modules to all devices whose uevent exports MODALIAS. Only available if compiled with HAVE_RULES.
+\fB\-\-override\fR, \fB\-\-no\-override\fR
+Allows hotplug2 behavior overriding for different rules, using various flags. See hotplug2 rules documentation for details. The default is not to allow overriding, the flags are therefore ignored.
+.TP 
+\fB\-\-max\-children <value>\fR
+Set the value of maximum children hotplug2 may have running simultaneously. Default is 20.
+.TP 
+\fB\-\-set\-coldplug\-cmd <cmd>\fR
+Sets the application used to perform coldplug. Default is '/sbin/udevtrigger'. Is executed using execvp() call.
+.TP 
+\fB\-\-set\-modprobe\-cmd <cmd>\fR
+Sets the application used to perform modprobe. It only gets used in dumb mode. Default is to autodetect: if '/bin/modprobe' is from module\-init\-tools, use '/sbin/modprobe', otherwise use '/sbin/hotplug2\-modwrap'.
+\fB\-\-set\-rules\-file <file>\fR
+Sets the path to the file containing hotplug2 rules.
+.SH "SIGNALS"
+.TP 
+\fBSIGUSR1\fR
+The USR1 signal makes hotplug2 switch persistency mode from persistent to non\-persistent and vice versa. If the mode is switched to non\-persistent and it appears that all events already sent were processed, hotplug2 terminates itself.
+.SH "AUTHOR"
+.PP 
+Written by iSteve
+<isteve@bofh.cz>
+.SH "SEE ALSO"
+.PP 
+\fBudev\fR(7),
+\fBudevd\fR(8),
+\fBudevinfo\fR(8),
+\fBudevmonitor\fR(8)

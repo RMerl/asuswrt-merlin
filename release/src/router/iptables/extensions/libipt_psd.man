@@ -1,0 +1,18 @@
+Attempt to detect TCP and UDP port scans. This match was derived from
+Solar Designer's scanlogd.
+.TP
+.BI "--psd-weight-threshold " "threshold"
+Total weight of the latest TCP/UDP packets with different
+destination ports coming from the same host to be treated as port
+scan sequence.
+.TP
+.BI "--psd-delay-threshold " "delay"
+Delay (in hundredths of second) for the packets with different
+destination ports coming from the same host to be treated as
+possible port scan subsequence.
+.TP
+.BI "--psd-lo-ports-weight " "weight"
+Weight of the packet with privileged (<=1024) destination port.
+.TP
+.BI "--psd-hi-ports-weight " "weight"
+Weight of the packet with non-priviliged destination port.

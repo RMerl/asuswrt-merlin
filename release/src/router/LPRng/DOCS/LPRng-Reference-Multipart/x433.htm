@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>PATH Environment Variable and Utilities</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Installation" href="installation.htm">
+    <link rel="PREVIOUS" title="Installation" href=
+    "installation.htm">
+    <link rel="NEXT" title=
+    "Network Mounted File System and Spool Directories" href=
+    "nfsmount.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "installation.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 2.
+          Installation</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "nfsmount.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN433">2.2. <var class=
+      "ENVAR">PATH</var> Environment Variable and
+      Utilities</a></h1>
+
+      <p>Make sure that directory where you you have installed the
+      GNU tools is one of the first entries in the shell search
+      <var class="ENVAR">PATH</var> environment variable. For
+      example, if you have installed the utilities in the (default)
+      directory <tt class="FILENAME">/usr/local/bin</tt>, this
+      should be one of the first entries in the <var class=
+      "ENVAR">PATH</var>. For example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN440"></a>
+<pre class="SCREEN">
+    PATH=/usr/local/bin:/bin:/sbin:/usr/bin
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If you are compiling the distribution on a Solaris system
+      you will need to use the utilities in the <tt class=
+      "FILENAME">/usr/ccs/bin</tt> directory. This directory must
+      be in the <var class="ENVAR">PATH</var> <span class=
+      "emphasis"><i class="EMPHASIS">after</i></span> the directory
+      where the GNU utilities have been installed. For example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN446"></a>
+<pre class="SCREEN">
+    PATH=/usr/local/bin:/bin:/sbin:/usr/bin:/usr/ccs/bin
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Check to see that the GNU <b class="APPLICATION">make</b>
+      utility and not the default OS <b class=
+      "APPLICATION">make</b> is being used by default. Use <tt
+      class="COMMAND">make -v</tt> to determine what version you
+      are using:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN452"></a>
+
+        <p class="LITERALLAYOUT"><samp class="PROMPT">h4: {1}
+        %</samp> <kbd class="USERINPUT">make -v</kbd><br>
+        GNU&nbsp;Make&nbsp;version&nbsp;3.78,&nbsp;by&nbsp;Richard&nbsp;Stallman&nbsp;and&nbsp;Roland&nbsp;McGrath.<br>
+
+        Copyright&nbsp;(C)&nbsp;1988-1999</p>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "installation.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "nfsmount.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">
+          Installation</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "installation.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Network
+          Mounted File System and Spool Directories</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

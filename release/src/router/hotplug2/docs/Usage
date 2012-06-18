@@ -1,0 +1,89 @@
+
+  2.6 Kernels
+
+The following examples demonstrate usage for one-time hardware detection.
+
+Recommended usage for InitRD, if you do not have any modules you want to
+load manually:
+---
+hotplug2 --no-persistent --coldplug
+------
+
+Recommended usage for InitRD, if you have modules you want to load manually:
+---
+#!/bin/sh
+
+echo "Starting detection"
+
+hotplug2 --persistent --coldplug &
+modprobe module1
+modprobe module2
+modprobe module3
+killall -USR1 hotplug2
+wait
+
+echo "Detection over"
+------
+
+Please note that if you run hotplug2 and udevd simultaneously, both will
+suffer significant slowdown.
+
+To have hotplug2 running permanently and perform coldplug, run:
+hotplug2 --persistent --coldplug
+
+(note that hotplug2 will not daemonize itself, you have to use an equivalent
+to Debian's start-stop-daemon, or otherwise ensure it daemonizes)
+
+The suggested base rules are in /examples.
+
+
+  2.4 Kernels
+
+Since 0.8, hotplug2 provides a trivial binary "hotplug2-dnode" that forwards 
+events taken from  the obsolete /proc/sys/kernel/hotplug interface into netlink
+formatted as uevents, so that hotplug2 (or possibly also udev) can read them
+and work with them.
+
+The hotplug2-dnode application also creates MODALIAS variable if missing and
+if it can be created.
+
+You enable the support by:
+ echo /sbin/hotplug2-dnode > /proc/sys/kernel/hotplug
+
+Please note that udevtrigger will not work for 2.4 kernels. For this reason,
+"hotplug2-coldplug-2.4" application is provided; it handles coldplugging of
+PCI and USB devices. It works on 2.6 kernels as well, but "udevtrigger" does
+the job far better.
+
+Therefore, run hotplug2 using this command:
+ hotplug2 [your usual params] --set-coldplug-cmd /path/to/hotplug2-coldplug-2.4
+
+To simplify loading of modules, using the MODALIAS variable, you have to
+generate module aliases for your modules out of the busmaps. To do this, the
+application "generate_alias" has been written.
+
+Usage of generate_alias:
+ generate_alias --prefix /lib/modules/`uname -r` \
+	--output /lib/modules/`uname -r`/modules.alias
+
+Now, you can use hotplug2 with MODALIAS like on 2.6. See the base rules in 
+the /examples directory.
+
+
+To revise the steps, shortly:
+
+ * After a new installation of a 2.4 kernel, run generate_alias:
+ generate_alias --prefix /lib/modules/`uname -r` \
+	--output /lib/modules/`uname -r`/modules.alias
+	
+ * In your init script, run:
+ echo /sbin/hotplug2-dnode > /proc/sys/kernel/hotplug
+ hotplug2 --persistent --set-coldplug-cmd /sbin/hotplug2-coldplug-2.4
+ 
+ (note that hotplug2 will not daemonize itself, you have to use an equivalent
+ to Debian's start-stop-daemon, or otherwise ensure it daemonizes)
+ 
+ * That's it, you're done!
+
+Please note that 2.4 support has not been thoroughly tested. Report bugs,
+send patches.

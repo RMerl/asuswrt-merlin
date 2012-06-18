@@ -1,0 +1,144 @@
+From 2f07c00863045b0540bb9857f0ccddef1600bb95 Mon Sep 17 00:00:00 2001
+From: Mike Frysinger
+Date: Sat, 05 Jan 2008 17:56:48 +0000
+Subject: Merge r20609 by vda from trunk:
+
+realpath: reduce stack usage from 3*PATH_MAX (12k) to 1*PATH_MAX (4k).
+reduction is achieved by direct use of user-supplied PATH_MAX sized
+buffer for result (without intermediate copy) and changes
+in copy_buf[] usage - now it is used for both "source" pathname
+and link name (it works because they have to be less than PATH_MAX combined,
+otherwise we return NULL).
+---
+diff --git a/libc/stdlib/realpath.c b/libc/stdlib/realpath.c
+index aae8580..99afbde 100644
+--- a/libc/stdlib/realpath.c
++++ b/libc/stdlib/realpath.c
+@@ -43,20 +43,23 @@ libc_hidden_proto(getcwd)
+ #define MAX_READLINKS 32
+ 
+ #ifdef __STDC__
+-char *realpath(const char *path, char resolved_path[])
++char *realpath(const char *path, char got_path[])
+ #else
+-char *realpath(path, resolved_path)
++char *realpath(path, got_path)
+ const char *path;
+-char resolved_path[];
++char got_path[];
+ #endif
+ {
+ 	char copy_path[PATH_MAX];
+-	char link_path[PATH_MAX];
+-	char got_path[PATH_MAX];
+-	char *new_path = got_path;
++	/* use user supplied buffer directly - reduces stack usage */
++	/* char got_path[PATH_MAX]; */
+ 	char *max_path;
++	char *new_path;
++	size_t path_len;
+ 	int readlinks = 0;
+-	int n;
++#ifdef S_IFLNK
++	int link_len;
++#endif
+ 
+ 	if (path == NULL) {
+ 		__set_errno(EINVAL);
+@@ -67,17 +70,20 @@ char resolved_path[];
+ 		return NULL;
+ 	}
+ 	/* Make a copy of the source path since we may need to modify it. */
+-	if (strlen(path) >= PATH_MAX - 2) {
++	path_len = strlen(path);
++	if (path_len >= PATH_MAX - 2) {
+ 		__set_errno(ENAMETOOLONG);
+ 		return NULL;
+ 	}
+-	strcpy(copy_path, path);
+-	path = copy_path;
+-	max_path = copy_path + PATH_MAX - 2;
+-	/* If it's a relative pathname use getcwd for starters. */
++	/* Copy so that path is at the end of copy_path[] */
++	strcpy(copy_path + (PATH_MAX-1) - path_len, path);
++	path = copy_path + (PATH_MAX-1) - path_len;
++	max_path = got_path + PATH_MAX - 2; /* points to last non-NUL char */
++	new_path = got_path;
+ 	if (*path != '/') {
+-		/* Ohoo... */
+-		getcwd(new_path, PATH_MAX - 1);
++		/* If it's a relative pathname use getcwd for starters. */
++		if (!getcwd(new_path, PATH_MAX - 1))
++			return NULL;
+ 		new_path += strlen(new_path);
+ 		if (new_path[-1] != '/')
+ 			*new_path++ = '/';
+@@ -112,7 +118,7 @@ char resolved_path[];
+ 		}
+ 		/* Safely copy the next pathname component. */
+ 		while (*path != '\0' && *path != '/') {
+-			if (path > max_path) {
++			if (new_path > max_path) {
+ 				__set_errno(ENAMETOOLONG);
+ 				return NULL;
+ 			}
+@@ -124,35 +130,32 @@ char resolved_path[];
+ 			__set_errno(ELOOP);
+ 			return NULL;
+ 		}
+-		/* See if latest pathname component is a symlink. */
++		path_len = strlen(path);
++		/* See if last (so far) pathname component is a symlink. */
+ 		*new_path = '\0';
+-		n = readlink(got_path, link_path, PATH_MAX - 1);
+-		if (n < 0) {
++		link_len = readlink(got_path, copy_path, PATH_MAX - 1);
++		if (link_len < 0) {
+ 			/* EINVAL means the file exists but isn't a symlink. */
+ 			if (errno != EINVAL) {
+-				/* Make sure it's null terminated. */
+-				*new_path = '\0';
+-				strcpy(resolved_path, got_path);
+ 				return NULL;
+ 			}
+ 		} else {
++			/* Safe sex check. */
++			if (path_len + link_len >= PATH_MAX - 2) {
++				__set_errno(ENAMETOOLONG);
++				return NULL;
++			}
+ 			/* Note: readlink doesn't add the null byte. */
+-			link_path[n] = '\0';
+-			if (*link_path == '/')
++			/* copy_path[link_len] = '\0'; - we don't need it too */
++			if (*copy_path == '/')
+ 				/* Start over for an absolute symlink. */
+ 				new_path = got_path;
+ 			else
+ 				/* Otherwise back up over this component. */
+ 				while (*(--new_path) != '/');
+-			/* Safe sex check. */
+-			if (strlen(path) + n >= PATH_MAX - 2) {
+-				__set_errno(ENAMETOOLONG);
+-				return NULL;
+-			}
+-			/* Insert symlink contents into path. */
+-			strcat(link_path, path);
+-			strcpy(copy_path, link_path);
+-			path = copy_path;
++			/* Prepend symlink contents to path. */
++			memmove(copy_path + (PATH_MAX-1) - link_len - path_len, copy_path, link_len);
++			path = copy_path + (PATH_MAX-1) - link_len - path_len;
+ 		}
+ #endif							/* S_IFLNK */
+ 		*new_path++ = '/';
+@@ -162,6 +165,5 @@ char resolved_path[];
+ 		new_path--;
+ 	/* Make sure it's null terminated. */
+ 	*new_path = '\0';
+-	strcpy(resolved_path, got_path);
+-	return resolved_path;
++	return got_path;
+ }
+--
+cgit v0.8.2.1

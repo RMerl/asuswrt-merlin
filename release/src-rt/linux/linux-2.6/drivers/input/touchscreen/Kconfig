@@ -1,0 +1,222 @@
+#
+# Touchscreen driver configuration
+#
+menuconfig INPUT_TOUCHSCREEN
+	bool "Touchscreens"
+	help
+	  Say Y here, and a list of supported touchscreens will be displayed.
+	  This option doesn't affect the kernel.
+
+	  If unsure, say Y.
+
+if INPUT_TOUCHSCREEN
+
+config TOUCHSCREEN_ADS7846
+	tristate "ADS7846/TSC2046 and ADS7843 based touchscreens"
+	depends on SPI_MASTER
+	depends on HWMON = n || HWMON
+	help
+	  Say Y here if you have a touchscreen interface using the
+	  ADS7846/TSC2046 or ADS7843 controller, and your board-specific
+	  setup code includes that in its table of SPI devices.
+
+	  If HWMON is selected, and the driver is told the reference voltage
+	  on your board, you will also get hwmon interfaces for the voltage
+	  (and on ads7846/tsc2046, temperature) sensors of this chip.
+
+	  If unsure, say N (but it's safe to say "Y").
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called ads7846.
+
+config TOUCHSCREEN_BITSY
+	tristate "Compaq iPAQ H3600 (Bitsy) touchscreen"
+	depends on SA1100_BITSY
+	select SERIO
+	help
+	  Say Y here if you have the h3600 (Bitsy) touchscreen.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called h3600_ts_input.
+
+config TOUCHSCREEN_CORGI
+	tristate "SharpSL (Corgi and Spitz series) touchscreen driver"
+	depends on PXA_SHARPSL
+	default y
+	help
+	  Say Y here to enable the driver for the touchscreen on the
+	  Sharp SL-C7xx and SL-Cxx00 series of PDAs.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called corgi_ts.
+
+config TOUCHSCREEN_GUNZE
+	tristate "Gunze AHL-51S touchscreen"
+	select SERIO
+	help
+	  Say Y here if you have the Gunze AHL-51 touchscreen connected to
+	  your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called gunze.
+
+config TOUCHSCREEN_ELO
+	tristate "Elo serial touchscreens"
+	select SERIO
+	help
+	  Say Y here if you have an Elo serial touchscreen connected to
+	  your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called elo.
+
+config TOUCHSCREEN_MTOUCH
+	tristate "MicroTouch serial touchscreens"
+	select SERIO
+	help
+	  Say Y here if you have a MicroTouch (3M) serial touchscreen connected to
+	  your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called mtouch.
+
+config TOUCHSCREEN_MK712
+	tristate "ICS MicroClock MK712 touchscreen"
+	help
+	  Say Y here if you have the ICS MicroClock MK712 touchscreen
+	  controller chip in your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called mk712.
+
+config TOUCHSCREEN_HP600
+	tristate "HP Jornada 680/690 touchscreen"
+	depends on SH_HP6XX && SH_ADC
+	help
+	  Say Y here if you have a HP Jornada 680 or 690 and want to
+          support the built-in touchscreen.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called hp680_ts_input.
+
+config TOUCHSCREEN_PENMOUNT
+	tristate "Penmount serial touchscreen"
+	select SERIO
+	help
+	  Say Y here if you have a Penmount serial touchscreen connected to
+	  your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called penmount.
+
+config TOUCHSCREEN_TOUCHRIGHT
+	tristate "Touchright serial touchscreen"
+	select SERIO
+	help
+	  Say Y here if you have a Touchright serial touchscreen connected to
+	  your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called touchright.
+
+config TOUCHSCREEN_TOUCHWIN
+	tristate "Touchwin serial touchscreen"
+	select SERIO
+	help
+	  Say Y here if you have a Touchwin serial touchscreen connected to
+	  your system.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called touchwin.
+
+config TOUCHSCREEN_UCB1400
+	tristate "Philips UCB1400 touchscreen"
+	select AC97_BUS
+	help
+	  This enables support for the Philips UCB1400 touchscreen interface.
+	  The UCB1400 is an AC97 audio codec.  The touchscreen interface
+	  will be initialized only after the ALSA subsystem has been
+	  brought up and the UCB1400 detected.  You therefore have to
+	  configure ALSA support as well (either built-in or modular,
+	  independently of whether this driver is itself built-in or
+	  modular) for this driver to work.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called ucb1400_ts.
+
+config TOUCHSCREEN_USB_COMPOSITE
+	tristate "USB Touchscreen Driver"
+	depends on USB_ARCH_HAS_HCD
+	select USB
+	help
+	  USB Touchscreen driver for:
+	  - eGalax Touchkit USB (also includes eTurboTouch CT-410/510/700)
+	  - PanJit TouchSet USB
+	  - 3M MicroTouch USB (EX II series)
+	  - ITM
+	  - some other eTurboTouch
+	  - Gunze AHL61
+	  - DMC TSC-10/25
+
+	  Have a look at <http://linux.chapter7.ch/touchkit/> for
+	  a usage description and the required user-space stuff.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called usbtouchscreen.
+
+config TOUCHSCREEN_USB_EGALAX
+	default y
+	bool "eGalax, eTurboTouch CT-410/510/700 device support" if EMBEDDED
+	depends on TOUCHSCREEN_USB_COMPOSITE
+
+config TOUCHSCREEN_USB_PANJIT
+	default y
+	bool "PanJit device support" if EMBEDDED
+	depends on TOUCHSCREEN_USB_COMPOSITE
+
+config TOUCHSCREEN_USB_3M
+	default y
+	bool "3M/Microtouch EX II series device support" if EMBEDDED
+	depends on TOUCHSCREEN_USB_COMPOSITE
+
+config TOUCHSCREEN_USB_ITM
+	default y
+	bool "ITM device support" if EMBEDDED
+	depends on TOUCHSCREEN_USB_COMPOSITE
+
+config TOUCHSCREEN_USB_ETURBO
+	default y
+	bool "eTurboTouch (non-eGalax compatible) device support" if EMBEDDED
+	depends on TOUCHSCREEN_USB_COMPOSITE
+
+config TOUCHSCREEN_USB_GUNZE
+	default y
+	bool "Gunze AHL61 device support" if EMBEDDED
+	depends on TOUCHSCREEN_USB_COMPOSITE
+
+config TOUCHSCREEN_USB_DMC_TSC10
+	default y
+	bool "DMC TSC-10/25 device support" if EMBEDDED
+	depends on TOUCHSCREEN_USB_COMPOSITE
+
+endif

@@ -1,0 +1,27 @@
+Current:
+
+Things which might need doing:
+
+- default private dbclient keys
+
+- Make options.h generated from configure perhaps?
+
+- handle /etc/environment in AIX
+
+- check that there aren't timing issues with valid/invalid user authentication
+  feedback.
+
+- Binding to different interfaces
+
+- CTR mode
+- SSH_MSG_IGNORE sending to improve CBC security
+- DH Group Exchange possibly, or just add group14 (whatever it's called today)
+
+- fix scp.c for IRIX
+
+- Be able to use OpenSSH keys for the client? or at least have some form of 
+  encrypted keys.
+
+- Client agent forwarding
+
+- Handle restrictions in ~/.ssh/authorized_keys ?

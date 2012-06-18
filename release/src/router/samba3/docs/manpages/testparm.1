@@ -1,0 +1,296 @@
+.\"     Title: testparm
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: User Commands
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "TESTPARM" "1" "09/30/2009" "Samba 3\&.0" "User Commands"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+testparm \- check an smb\&.conf configuration file for internal correctness
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCtestparm\F[] [\-s] [\-h] [\-v] [\-L\ <servername>] [\-t\ <encoding>] {config\ filename} [hostname\ hostIP]
+.fam
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+\FCtestparm\F[]
+is a very simple test program to check an
+\fBsmbd\fR(8)
+configuration file for internal correctness\&. If this program reports no problems, you can use the configuration file with confidence that
+\FCsmbd \F[]
+will successfully load the configuration file\&.
+.PP
+Note that this is
+\fINOT\fR
+a guarantee that the services specified in the configuration file will be available or will operate as expected\&.
+.PP
+If the optional host name and host IP address are specified on the command line, this test program will run through the service entries reporting whether the specified host has access to each service\&.
+.PP
+If
+\FCtestparm\F[]
+finds an error in the
+\FC smb\&.conf\F[]
+file it returns an exit code of 1 to the calling program, else it returns an exit code of 0\&. This allows shell scripts to test the output from
+\FCtestparm\F[]\&.
+.SH "OPTIONS"
+.PP
+\-s
+.RS 4
+Without this option,
+\FCtestparm\F[]
+will prompt for a carriage return after printing the service names and before dumping the service definitions\&.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\&.
+.RE
+.PP
+\-V
+.RS 4
+Prints the program version number\&.
+.RE
+.PP
+\-L servername
+.RS 4
+Sets the value of the %L macro to
+\fIservername\fR\&. This is useful for testing include files specified with the %L macro\&.
+.RE
+.PP
+\-v
+.RS 4
+If this option is specified, testparm will also output all options that were not used in
+\fBsmb.conf\fR(5)
+and are thus set to their defaults\&.
+.RE
+.PP
+\-t encoding
+.RS 4
+Output data in specified encoding\&.
+.RE
+.PP
+\-\-parameter\-name parametername
+.RS 4
+Dumps the named parameter\&. If no section\-name is set the view is limited by default to the global section\&. It is also possible to dump a parametrical option\&. Therfore the option has to be separated by a colon from the parametername\&.
+.RE
+.PP
+\-\-section\-name sectionname
+.RS 4
+Dumps the named section\&.
+.RE
+.PP
+configfilename
+.RS 4
+This is the name of the configuration file to check\&. If this parameter is not present then the default
+\fBsmb.conf\fR(5)
+file will be checked\&.
+.RE
+.PP
+hostname
+.RS 4
+If this parameter and the following are specified, then
+\FCtestparm\F[]
+will examine the
+\fIhosts allow\fR
+and
+\fIhosts deny\fR
+parameters in the
+\fBsmb.conf\fR(5)
+file to determine if the hostname with this IP address would be allowed access to the
+\FCsmbd\F[]
+server\&. If this parameter is supplied, the hostIP parameter must also be supplied\&.
+.RE
+.PP
+hostIP
+.RS 4
+This is the IP address of the host specified in the previous parameter\&. This address must be supplied if the hostname parameter is supplied\&.
+.RE
+.SH "FILES"
+.PP
+\fBsmb.conf\fR(5)
+.RS 4
+This is usually the name of the configuration file used by
+\fBsmbd\fR(8)\&.
+.RE
+.SH "DIAGNOSTICS"
+.PP
+The program will issue a message saying whether the configuration file loaded OK or not\&. This message may be preceded by errors and warnings if the file did not load\&. If the file was loaded OK, the program then dumps all known service details to stdout\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+\fBsmb.conf\fR(5),
+\fBsmbd\fR(8)
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original Samba man pages were written by Karl Auer\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\&.icce\&.rug\&.nl/pub/unix/) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

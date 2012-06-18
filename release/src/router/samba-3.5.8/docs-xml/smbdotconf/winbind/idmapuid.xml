@@ -1,0 +1,21 @@
+<samba:parameter name="idmap uid"
+			 type="string"
+                 context="G"
+                 advanced="1" developer="1" hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<synonym>winbind uid</synonym>
+<description>
+	<para>
+	The idmap uid parameter specifies the range of user ids that are 
+	allocated for use in mapping UNIX users to NT user SIDs. This 
+	range of ids should have no existing local
+	or NIS users within it as strange conflicts can occur otherwise.</para>
+
+	<para>See also the <smbconfoption name="idmap backend"/> and
+	<smbconfoption name="idmap config"/> options.
+	</para>
+</description>
+
+<value type="default"></value>
+<value type="example">10000-20000</value>
+</samba:parameter>

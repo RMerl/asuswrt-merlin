@@ -1,0 +1,62 @@
+mt-daapd (0.2.5-1) unstable; urgency=low
+  * Fix for iTunes 6.0.5
+
+ -- Ron Pedde <ron@pedde.com>  Tue,  4 Jul 2006 01:50:00 -0600
+
+mt-daapd (0.2.4-1) unstable; urgency=low
+  * Fix for iTunes 6.0.4
+
+ -- Ron Pedde <ron@pedde.com>  Wed,  1 Mar 2006 18:48:00 -0600
+
+mt-daapd (0.2.3-1) unstable; urgency=low
+  * Fix mDNS advertising on amd64 and freebsd in 0.2.2
+
+ -- Ron Pedde <ron@pedde.com>  Sun, 11 Sep 2005 14:09:00 -0500
+	
+mt-daapd (0.2.2-1) unstable; urgency=low
+  * Fixes for iTunes 5
+
+ -- Ron Pedde <ron@pedde.com>  Thu,  8 Sep 2005 01:55:00 -0500
+	
+mt-daapd (0.2.1.1-1) unstable; urgency=low
+  * Trivial fixes for stupid bugs
+
+ -- Ron Pedde <ron@pedde.com>  Sat,  5 Feb 2005 15:18:00 -0600
+
+mt-daapd (0.2.1-1) unstable; urgency=low
+  * Add support for ogg metainfo
+  * Add support for xing/lame tags
+  * Better connect speed
+  * More bug fixes
+
+ -- Ron Pedde <ron@pedde.com>  Sat, 29 Jan 2005 23:09:00 -0600
+	
+mt-daapd (0.2.1-pre1-1) unstable; urgency=low
+  * Add support for background filesystem scans
+  * More aac and id3 tags
+  * Various bug fixes
+
+ -- Ron Pedde <ron@pedde.com>  Sat, 23 Oct 2004 19:10:00 -0500
+
+mt-daapd (0.2.0-1) unstable; urgency=low
+  * Add gdbm database
+  * Add support for .m4a and .m4p
+  * Various bug fixes
+
+ -- Ron Pedde <ron@pedde.com>  Mon,  6 Apr 2004 21:10:00 -0600
+	
+mt-daapd (0.1.1-1) unstable; urgency=low
+
+  * Add track information
+  * Support for Solaris
+  * Format string fixes
+  * Support for Howl 0.9 or better
+
+ -- Ron Pedde <ron@pedde.com>  Thu, 29 Jan 2004 11:37:14 -0600
+
+mt-daapd (0.1.0-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Aubin Paul <debian@outlyer.org>  Tue,  6 Jan 2004 08:16:53 -0500
+

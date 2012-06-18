@@ -1,0 +1,466 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Load Balance Queues and Printer Pools</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title="Holding and Releasing Jobs" href=
+    "x3515.htm">
+    <link rel="NEXT" title="Routing Jobs To Print Queues" href=
+    "x3694.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x3515.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x3694.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN3593">4.17. Load Balance Queues
+      and Printer Pools</a></h1>
+
+      <p>A Load Balance Queue provides a way to use multiple
+      printers for a single print queue. All jobs are normally sent
+      to the main or load balance queue which then dispatches the
+      jobs to <span class="emphasis"><i class=
+      "EMPHASIS">server</i></span> queues or printers that do the
+      actual printing as they become available. You can also send
+      jobs to the individual server printers if they have special
+      processing or setups required for a particular job. Because
+      all of the server printers are shared by the load balance
+      queue, they are said to be in a <span class="emphasis"><i
+      class="EMPHASIS">printer pool</i></span>.</p>
+
+      <p>Edit the printcap file so it have the contents indicated
+      below, create the <tt class="FILENAME">/tmp/lp2</tt> and <tt
+      class="FILENAME">/tmp/lp3</tt> files with <var class=
+      "LITERAL">0777</var> permissions, use <tt class=
+      "COMMAND">checkpc -f</tt> to check the printcap, and then use
+      <tt class="COMMAND">lpc reread</tt> to restart the <b class=
+      "APPLICATION">lpd</b> server.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3605"></a>
+<pre class="SCREEN">
+    # printcap
+    lp:force_localhost
+    lp:server
+      :sd=/var/spool/lpd/%P
+      :sv=lp2,lp3
+    lp2:force_localhost
+    lp2:server
+      :ss=lp
+      :sd=/var/spool/lpd/%P
+      :lp=/tmp/lp2
+    lp3:force_localhost
+    lp3:server
+      :ss=lp
+      :sd=/var/spool/lpd/%P
+      :lp=/tmp/lp2
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <var class="LITERAL">:sv=...</var> option flags the
+      queue as a load balance queue and lists the queues that are
+      used for load balancing. The <var class=
+      "LITERAL">:ss=...</var> option flags the queue as a server
+      for a load balance queue and specifies the name of the load
+      balance queue. When a job is sent to the load balance queue
+      the <b class="APPLICATION">lpd</b> server checks to see which
+      server queues are available and then the first one to become
+      available.</p>
+
+      <p>Execute the following commands to print the <tt class=
+      "FILENAME">/tmp/hi</tt> file and observe the results:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3613"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {274} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (subservers lp2, lp3)
+     Queue: no printable jobs in queue
+     Status: job 'papowell@h4+42' removed at 07:29:57.924
+    Server Printer: lp2@h4  (serving lp)
+     Queue: no printable jobs in queue
+    Server Printer: lp3@h4  (serving lp)
+     Queue: no printable jobs in queue
+    <samp class="PROMPT">h4: {275} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {276} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (subservers lp2, lp3)
+     Queue: 1 printable job
+     Server: pid 4063 active
+     Status: waiting for subserver to finish at 07:31:08.074
+     Rank   Owner/ID           Class Job Files        Size Time
+    1      papowell@h4+62        A    62 /tmp/hi         3 07:31:07
+    Server Printer: lp2@h4  (serving lp)
+     Queue: no printable jobs in queue
+    Server Printer: lp3@h4  (serving lp)
+     Queue: no printable jobs in queue
+    <samp class="PROMPT">h4: {277} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (subservers lp2, lp3)
+     Queue: no printable jobs in queue
+     Status: no more jobs to process in load balance queue at 07:31:12.317
+    Server Printer: lp2@h4  (serving lp)
+     Queue: no printable jobs in queue
+    Server Printer: lp3@h4  (serving lp)
+     Queue: no printable jobs in queue
+     Status: job 'papowell@h4+62' removed at 07:31:10.311
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The first <b class="APPLICATION">lpq</b> command shows how
+      the status is displayed for a load balance queue - the queue
+      and its server queues are shown as well. Next, we use <b
+      class="APPLICATION">lpr</b> to print a job (job id <var
+      class="LITERAL">papowell@h4+62</var>). We then use a couple
+      of <b class="APPLICATION">lpq</b> commands to see how the job
+      is first sent to the <var class="LITERAL">lp</var> queue,
+      which then forwards it to the <var class="LITERAL">lp3</var>
+      queue, which then processes it and removes it. (For purposes
+      of demonstration we have artificially slowed down the
+      operation of the load balance queue so that the jobs will
+      remain in the queue for sufficient time for us to display
+      their status.) We can send another job to the load balance
+      queue:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3630"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {278} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {279} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (subservers lp2, lp3)
+     Queue: no printable jobs in queue
+     Status: no more jobs to process in load balance queue at 07:37:17.953
+    Server Printer: lp2@h4  (serving lp)
+     Queue: no printable jobs in queue
+     Status: job 'papowell@h4+89' removed at 07:37:15.936
+    Server Printer: lp3@h4  (serving lp)
+     Queue: no printable jobs in queue
+     Status: job 'papowell@h4+81' removed at 07:36:40.116
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>This time we see that the job was put in <var class=
+      "LITERAL">lp2</var>. The normal load balance queue operation
+      is to use the server queues in round robin order.</p>
+
+      <p>While this simple configuration is suitable for a large
+      number of configurations, there are situations where server
+      queue must be chosen <span class="emphasis"><i class=
+      "EMPHASIS">dynamically</i></span>. For example, if the server
+      queues are actually transferring jobs to remote clients then
+      as soon as the job is sent to the remote client the queue
+      appears empty and available for use. To correctly check to
+      see if the queue is available, the status of the remote queue
+      or destination of the server queue must be checked.</p>
+
+      <p>To handle this situation, a <var class=
+      "LITERAL">:chooser</var> program or filter can be used. When
+      the load balance queue is trying to decide where to send a
+      job, it first checks the server queues to see if they are
+      enabled for printing. If a <var class=
+      "LITERAL">:chooser</var> program is specified in the load
+      balance queue printcap entry, then it is started with the
+      normal filter options and environment variables, supplemented
+      as discussed below. The <var class="LITERAL">:chooser</var>
+      program will read a list of candidate queues from its
+      <acronym class="ACRONYM">STDIN</acronym>, write the chosen
+      one to its <acronym class="ACRONYM">STDOUT</acronym>, and
+      then exit. The <b class="APPLICATION">lpd</b> server checks
+      the <var class="LITERAL">:chooser</var> exit code - if it is
+      zero (successful) then the chosen queue is used otherwise the
+      exit code is used for the result value of processing the job.
+      This allows the chooser process to not only control the
+      destination of the job but also to hold, remove, or abort the
+      job handling process. If the <var class=
+      "LITERAL">:chooser</var> does not specify a queue, then the
+      job is skipped and another job is chosen.</p>
+
+      <p>One side effect of the using a chooser program is that
+      while there are jobs that can be processed in the queue the
+      <b class="APPLICATION">lpd</b> server needs to periodically
+      check to see if a server queue has become available. If it
+      did this continually then a very high load would be put on
+      the system. Instead, the <var class=
+      "LITERAL">chooser_interval</var> option specifies a maximum
+      time in seconds (default 10 seconds) between the times that
+      the <b class="APPLICATION">lpd</b> server checks to see if
+      there is an available server.</p>
+
+      <p>Edit the printcap file so it have the contents indicated
+      below, create the <tt class="FILENAME">/tmp/lp2</tt> and <tt
+      class="FILENAME">/tmp/lp3</tt> files with <var class=
+      "LITERAL">0777</var> permissions. Then create the <tt class=
+      "FILENAME">/tmp/chooser.script</tt> with the contents
+      indicated below, and give it <var class="LITERAL">0755</var>
+      (executable) permissions. Make sure that the path to the <b
+      class="APPLICATION">head</b> program used in <tt class=
+      "FILENAME">chooser.script</tt> is correct. Use <tt class=
+      "COMMAND">checkpc -f</tt> to check the printcap, and then use
+      <tt class="COMMAND">lpc reread</tt> to restart the <b class=
+      "APPLICATION">lpd</b> server.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3664"></a>
+<pre class="SCREEN">
+    # printcap
+    lp:force_localhost
+    lp:server
+      :sd=/var/spool/lpd/%P
+      :sv=lp2,lp3
+      :chooser=/tmp/chooser.script
+    lp2:force_localhost
+    lp2:server
+      :ss=lp
+      :sd=/var/spool/lpd/%P
+      :lp=/tmp/lp2
+    lp3:force_localhost
+    lp3:server
+      :ss=lp
+      :sd=/var/spool/lpd/%P
+      :lp=/tmp/lp2
+    
+    # /tmp/chooser.script
+    
+    #!/bin/sh
+    echo CHOOSER $0 $@ &gt;&gt;/tmp/chooser
+    set &gt;&gt;/tmp/chooser
+    /usr/bin/head -1
+    exit 0
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Now run the following commands:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3667"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {280} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {281} %</samp> <kbd class=
+"USERINPUT">lpq -lll</kbd>
+    Printer: lp@h4  (subservers lp2, lp3)
+     Queue: no printable jobs in queue
+     Status: CHOOSER selected 'lp3' at 14:02:50.605
+     Status: transferring 'papowell@h4+178' 
+          to subserver 'lp3' at 14:02:50.614
+     Status: transfer 'papowell@h4+178' 
+          to subserver 'lp3' finished at 14:02:50.624
+     Status: job 'papowell@h4+178' removed at 14:02:50.632
+     Status: starting subserver 'lp3' at 14:02:50.632
+     Status: waiting for server queue process to exit at 14:02:50.651
+     Status: subserver pid 10182 exit status 'JSUCC' at 14:02:52.872
+     Status: no more jobs to process in load balance queue at 14:02:52.879
+    Server Printer: lp2@h4  (serving lp)
+     Queue: no printable jobs in queue
+    Server Printer: lp3@h4  (serving lp)
+     Queue: no printable jobs in queue
+     Status: waiting for subserver to exit at 14:02:50.748
+     Status: subserver pid 10183 starting at 14:02:50.820
+     Status: accounting at start at 14:02:50.821
+     Status: opening device '/tmp/lp3' at 14:02:50.833
+     Status: printing job 'papowell@h4+178' at 14:02:50.834
+     Status: processing 'dfA178h4.private', size 3, format 'f', \
+          IF filter 'none - passthrough' at 14:02:50.838
+     Status: printing finished at 14:02:50.839
+     Status: accounting at end at 14:02:50.839
+     Status: finished 'papowell@h4+178', status 'JSUCC' at 14:02:50.841
+     Status: subserver pid 10183 exit status 'JSUCC' at 14:02:50.843
+     Status: lp3@h4.private: job 'papowell@h4+178' printed at 14:02:50.856
+     Status: job 'papowell@h4+178' removed at 14:02:50.871
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>As you see from the example above, the <acronym class=
+      "ACRONYM">CHOOSER</acronym> selected <var class=
+      "LITERAL">lp3</var> for use. Let us look at the <tt class=
+      "FILENAME">/tmp/chooser</tt> file and see how the <tt class=
+      "FILENAME">chooser.script</tt> program was run:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3678"></a>
+<pre class="SCREEN">
+    CHOOSER -Apapowell@h4+113 -CA -D2000-06-01-14:02:13.313 -Hh4.private \
+       -J/tmp/hi -Lpapowell -Plp -Qlp -aacct -b3 -d/var/tmp/LPD/lp \
+       -hh4.private -j113 -kcfA113h4.private -l66 -npapowell -sstatus \
+       -t2000-06-01-14:02:13.379 -w80 -x0 -y0 acct
+    USER=papowell
+    LD_LIBRARY_PATH=/lib:/usr/lib:/usr/5lib:/usr/ucblib
+    HOME=/home/papowell
+    PRINTCAP_ENTRY=lp
+     :chooser=/var/tmp/LPD/chooser
+     :lp=/tmp/lp
+     :sd=/var/tmp/LPD/lp
+     :server
+     :sv=lp2,lp3
+    
+    lp2=change=0x0
+     done_time=0x1
+     held=0x0
+     move=0x0
+     printable=0x0
+     printer=lp2
+     printing_aborted=0x0
+     printing_disabled=0x0
+     queue_control_file=control.lp2
+     server=0
+     spooldir=/var/tmp/LPD/lp2
+    lp3=change=0x0
+     done_time=0x2
+     held=0x0
+     move=0x0
+     printable=0x0
+     printer=lp3
+     printing_aborted=0x0
+     printing_disabled=0x0
+     queue_control_file=control.lp3
+     server=0
+     spooldir=/var/tmp/LPD/lp3
+    PS1=$
+    OPTIND=1
+    PS2=&gt;
+    SPOOL_DIR=/var/tmp/LPD/lp
+    LOGNAME=papowell
+    CONTROL=Hh4.private
+    Ppapowell
+    J/tmp/hi
+    CA
+    Lpapowell
+    Apapowell@h4+113
+    D2000-06-01-14:02:13.313
+    Qlp
+    N/tmp/hi
+    fdfA113h4.private
+    UdfA113h4.private
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>As you can see, the program is invoked with the same
+      options as a normal filter. In addition, the printcap
+      information for each server queue is passed in an environment
+      variable with the name of the server queue. This means that
+      if there is information needed by the chooser program to test
+      for the availability of hardware, etc., this can be placed in
+      the printcap information.</p>
+
+      <p>One of the limitations of using the <var class=
+      "LITERAL">:chooser</var> program is that you may have a high
+      overhead associated with running the program. The <b class=
+      "APPLICATION">LPRng</b> software provides support for linking
+      in a user provided routine that does the same thing as the
+      <var class="LITERAL">:chooser</var> program. This routine has
+      the following API or interface:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3685"></a>
+<pre class="SCREEN">
+    Printcap Option: chooser_routine
+       chooser_routine@  - default - do not use chooser routine
+       chooser_routine   - use chooser routine
+    
+    Configuration:
+       configure --with-chooser_routine=name --with-user_objs=objectfile.o
+          defines the CHOOSER_ROUTINE compilation option to name
+          includes the objectfile.o in the library.
+    
+    extern int CHOOSER_ROUTINE( struct line_list *servers,
+        struct line_list *available, int *use_subserver );
+      servers:    all subserver queues for this load balance queue
+      available:  subserver queues to choose from
+      use_subserver: chosen subserver queue
+      RETURNS:
+         0 - use the 'use_subserver' value as index into servers
+             list for server to use
+         != 0 - set job status to value returned.
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>See the <tt class=
+      "FILENAME">LPRng/src/common/lpd_jobs.c</tt> and <tt class=
+      "FILENAME">LPRng/src/common/user_objs.c</tt> files for
+      details of the servers, available, and user_subserver
+      parameters. The <tt class="FILENAME">user_objs.c</tt> file
+      provides a simple template that can be used as a starting
+      point for a more complex routine. You should modify the code
+      in the <tt class="FILENAME">user_objs.c</tt> file and then
+      use the configure options shown above to cause the <tt class=
+      "FILENAME">user_objs.c</tt> file to be compiled and linked
+      into the <b class="APPLICATION">LPRng</b> executables.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x3515.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x3694.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Holding and
+          Releasing Jobs</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Routing Jobs
+          To Print Queues</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

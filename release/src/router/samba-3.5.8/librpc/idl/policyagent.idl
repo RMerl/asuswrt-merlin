@@ -1,0 +1,13 @@
+
+/* IPSec policy agent (Win2k) */
+[
+	uuid("d335b8f6-cb31-11d0-b0f9-006097ba4e54"),
+	version(1.5),
+    	pointer_default(unique),
+	helpstring("IPSec Policy Agent")
+] interface policyagent
+{
+	/*****************/
+	/* Function 0x00 */
+	[todo] WERROR policyagent_Dummy();
+}

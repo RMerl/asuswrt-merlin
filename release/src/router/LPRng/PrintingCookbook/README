@@ -1,0 +1,11 @@
+                 PrintingCookbook
+                  Patrick Powell
+
+The Printing Cookbook is a collection of procedures on how to do
+common printint setup and testing tasks.
+
+The HTML directory contains the HTML version of the Printing Cookbook
+presenation as a single file with graphics.
+
+The PDF directory contains both PostScript and PDF versions of the Printing
+Cookbook.

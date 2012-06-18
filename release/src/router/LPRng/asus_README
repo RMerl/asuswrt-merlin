@@ -1,0 +1,10 @@
+2003/11/18 15:00 by JYWeng
+version: v1.0
+
+from LPRng-3.8.22 and pntsvr.c
+usb printer driver has to be v0.11
+"usb only" version is compiled with Makefile properly set(USBONLY defined)
+
+Note: working binaries (lpd and lpd_only) and printer.c are placed in ./working_binaries
+      printer.o.rename should be renamed back
+

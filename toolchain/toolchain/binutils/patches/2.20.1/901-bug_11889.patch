@@ -1,0 +1,319 @@
+http://sourceware.org/bugzilla/show_bug.cgi?id=11889
+
+===================================================================
+RCS file: /cvs/src/src/binutils/ChangeLog,v
+retrieving revision 1.1670
+retrieving revision 1.1671
+diff -u -r1.1670 -r1.1671
+--- src/binutils/ChangeLog	2010/08/13 13:03:45	1.1670
++++ src/binutils/ChangeLog	2010/08/13 16:02:16	1.1671
+@@ -1,3 +1,14 @@
++2010-08-13  Dan Rosenberg  <dan.j.rosenberg@gmail.com>
++
++	PR binutils/11889
++	* readelf.c (get_32bit_elf_symbols): Check for a corrupt
++	sh_entsize.
++	(get_64bit_elf_symbols): Likewise.
++	(process_symbol_table): Likewise.
++	(process_section_groups): Check for corrupt headers.
++	(process_version_sections): Check for corrupt indicies.
++	(process_corefile_note_segment): Likewise.
++
+ 2010-02-05  Christophe Lyon  <christophe.lyon@st.com>
+ 
+ 	* objdump.c (disassemble_bytes): Clear aux->reloc before printing
+===================================================================
+RCS file: /cvs/src/src/binutils/readelf.c,v
+retrieving revision 1.512
+retrieving revision 1.513
+diff -u -r1.512 -r1.513
+--- src/binutils/readelf.c	2010/08/13 13:03:46	1.512
++++ src/binutils/readelf.c	2010/08/13 16:02:16	1.513
+@@ -4046,15 +4046,30 @@
+ get_32bit_elf_symbols (FILE * file, Elf_Internal_Shdr * section)
+ {
+   unsigned long number;
+-  Elf32_External_Sym * esyms;
++  Elf32_External_Sym * esyms = NULL;
+   Elf_External_Sym_Shndx * shndx;
+-  Elf_Internal_Sym * isyms;
++  Elf_Internal_Sym * isyms = NULL;
+   Elf_Internal_Sym * psym;
+   unsigned int j;
+ 
++  /* Run some sanity checks first.  */
++  if (section->sh_entsize == 0)
++    {
++      error (_("sh_entsize is zero\n"));
++      return NULL;
++    }
++
++  number = section->sh_size / section->sh_entsize;
++
++  if (number * sizeof (Elf32_External_Sym) > section->sh_size + 1)
++    {
++      error (_("Invalid sh_entsize\n"));
++      return NULL;
++    }
++
+   esyms = (Elf32_External_Sym *) get_data (NULL, file, section->sh_offset, 1,
+                                            section->sh_size, _("symbols"));
+-  if (!esyms)
++  if (esyms == NULL)
+     return NULL;
+ 
+   shndx = NULL;
+@@ -4066,28 +4081,19 @@
+                                                    symtab_shndx_hdr->sh_offset,
+                                                    1, symtab_shndx_hdr->sh_size,
+                                                    _("symtab shndx"));
+-      if (!shndx)
+-	{
+-	  free (esyms);
+-	  return NULL;
+-	}
++      if (shndx == NULL)
++	goto exit_point;
+     }
+ 
+-  number = section->sh_size / section->sh_entsize;
+   isyms = (Elf_Internal_Sym *) cmalloc (number, sizeof (Elf_Internal_Sym));
+ 
+   if (isyms == NULL)
+     {
+       error (_("Out of memory\n"));
+-      if (shndx)
+-	free (shndx);
+-      free (esyms);
+-      return NULL;
++      goto exit_point;
+     }
+ 
+-  for (j = 0, psym = isyms;
+-       j < number;
+-       j++, psym++)
++  for (j = 0, psym = isyms; j < number; j++, psym++)
+     {
+       psym->st_name  = BYTE_GET (esyms[j].st_name);
+       psym->st_value = BYTE_GET (esyms[j].st_value);
+@@ -4102,9 +4108,11 @@
+       psym->st_other = BYTE_GET (esyms[j].st_other);
+     }
+ 
++ exit_point:
+   if (shndx)
+     free (shndx);
+-  free (esyms);
++  if (esyms)
++    free (esyms);
+ 
+   return isyms;
+ }
+@@ -4119,6 +4127,21 @@
+   Elf_Internal_Sym * psym;
+   unsigned int j;
+ 
++  /* Run some sanity checks first.  */
++  if (section->sh_entsize == 0)
++    {
++      error (_("sh_entsize is zero\n"));
++      return NULL;
++    }
++
++  number = section->sh_size / section->sh_entsize;
++
++  if (number * sizeof (Elf64_External_Sym) > section->sh_size + 1)
++    {
++      error (_("Invalid sh_entsize\n"));
++      return NULL;
++    }
++
+   esyms = (Elf64_External_Sym *) get_data (NULL, file, section->sh_offset, 1,
+                                            section->sh_size, _("symbols"));
+   if (!esyms)
+@@ -4140,7 +4163,6 @@
+ 	}
+     }
+ 
+-  number = section->sh_size / section->sh_entsize;
+   isyms = (Elf_Internal_Sym *) cmalloc (number, sizeof (Elf_Internal_Sym));
+ 
+   if (isyms == NULL)
+@@ -4965,6 +4987,12 @@
+ 	      symtab = GET_ELF_SYMBOLS (file, symtab_sec);
+ 	    }
+ 
++	  if (symtab == NULL)
++	    {
++	      error (_("Corrupt header in group section `%s'\n"), name);
++	      continue;
++	    }
++
+ 	  sym = symtab + section->sh_info;
+ 
+ 	  if (ELF_ST_TYPE (sym->st_info) == STT_SECTION)
+@@ -6773,6 +6800,10 @@
+ 		int j;
+ 		int isum;
+ 
++		/* Check for negative or very large indicies.  */
++		if ((unsigned char *) edefs + idx < (unsigned char *) edefs)
++		  break;
++
+ 		vstart = ((char *) edefs) + idx;
+ 		if (vstart + sizeof (*edef) > endbuf)
+ 		  break;
+@@ -6793,6 +6824,11 @@
+ 		printf (_("  Index: %d  Cnt: %d  "),
+ 			ent.vd_ndx, ent.vd_cnt);
+ 
++		/* Check for overflow.  */
++		if ((unsigned char *)(vstart + ent.vd_aux) < (unsigned char *) vstart
++		    || (unsigned char *)(vstart + ent.vd_aux) > (unsigned char *) endbuf)
++		  break;
++
+ 		vstart += ent.vd_aux;
+ 
+ 		eaux = (Elf_External_Verdaux *) vstart;
+@@ -6809,6 +6845,11 @@
+ 
+ 		for (j = 1; j < ent.vd_cnt; j++)
+ 		  {
++		    /* Check for overflow.  */
++		    if ((unsigned char *)(vstart + aux.vda_next) < (unsigned char *) vstart
++			|| (unsigned char *)(vstart + aux.vda_next) > (unsigned char *) endbuf)
++		      break;
++
+ 		    isum   += aux.vda_next;
+ 		    vstart += aux.vda_next;
+ 
+@@ -6826,11 +6867,13 @@
+ 		      printf (_("  %#06x: Parent %d, name index: %ld\n"),
+ 			      isum, j, aux.vda_name);
+ 		  }
++
+ 		if (j < ent.vd_cnt)
+ 		  printf (_("  Version def aux past end of section\n"));
+ 
+ 		idx += ent.vd_next;
+ 	      }
++
+ 	    if (cnt < section->sh_info)
+ 	      printf (_("  Version definition past end of section\n"));
+ 
+@@ -6874,6 +6917,9 @@
+ 		int isum;
+ 		char * vstart;
+ 
++		if ((unsigned char *) eneed + idx < (unsigned char *) eneed)
++		  break;
++
+ 		vstart = ((char *) eneed) + idx;
+ 		if (vstart + sizeof (*entry) > endbuf)
+ 		  break;
+@@ -6895,6 +6941,11 @@
+ 
+ 		printf (_("  Cnt: %d\n"), ent.vn_cnt);
+ 
++		/* Check for overflow.  */
++		if ((unsigned char *)(vstart + ent.vn_aux) < (unsigned char *) vstart
++		    || (unsigned char *)(vstart + ent.vn_aux) > (unsigned char *) endbuf)
++		  break;
++
+ 		vstart += ent.vn_aux;
+ 
+ 		for (j = 0, isum = idx + ent.vn_aux; j < ent.vn_cnt; ++j)
+@@ -6922,6 +6973,11 @@
+ 		    printf (_("  Flags: %s  Version: %d\n"),
+ 			    get_ver_flags (aux.vna_flags), aux.vna_other);
+ 
++		    /* Check for overflow.  */
++		    if ((unsigned char *)(vstart + aux.vna_next) < (unsigned char *) vstart
++			|| (unsigned char *)(vstart + aux.vna_next) > (unsigned char *) endbuf)
++		      break;
++
+ 		    isum   += aux.vna_next;
+ 		    vstart += aux.vna_next;
+ 		  }
+@@ -6961,6 +7017,8 @@
+ 	    found = 1;
+ 
+ 	    symbols = GET_ELF_SYMBOLS (file, link_section);
++	    if (symbols == NULL)
++	      break;
+ 
+ 	    string_sec = section_headers + link_section->sh_link;
+ 
+@@ -7022,6 +7080,16 @@
+ 		      nn = printf ("%4x%c", data[cnt + j] & 0x7fff,
+ 				   data[cnt + j] & 0x8000 ? 'h' : ' ');
+ 
++		      /* If this index value is greater than the size of the symbols
++		         array, break to avoid an out-of-bounds read,  */
++		      if ((unsigned long)(cnt + j) >=
++		         ((unsigned long)link_section->sh_size /
++			  (unsigned long)link_section->sh_entsize))
++		        {
++		          warn (_("invalid index into symbol array\n"));
++		          break;
++			}
++
+ 		      check_def = 1;
+ 		      check_need = 1;
+ 		      if (symbols[cnt + j].st_shndx >= elf_header.e_shnum
+@@ -7729,9 +7797,17 @@
+ 	      && section->sh_type != SHT_DYNSYM)
+ 	    continue;
+ 
++	  if (section->sh_entsize == 0)
++	    {
++	      printf (_("\nSymbol table '%s' has a sh_entsize of zero!\n"),
++		      SECTION_NAME (section));
++	      continue;
++	    }
++
+ 	  printf (_("\nSymbol table '%s' contains %lu entries:\n"),
+ 		  SECTION_NAME (section),
+ 		  (unsigned long) (section->sh_size / section->sh_entsize));
++
+ 	  if (is_32bit_elf)
+ 	    printf (_("   Num:    Value  Size Type    Bind   Vis      Ndx Name\n"));
+ 	  else
+@@ -10825,7 +10901,7 @@
+ 
+   pnotes = (Elf_External_Note *) get_data (NULL, file, offset, 1, length,
+                                            _("notes"));
+-  if (!pnotes)
++  if (pnotes == NULL)
+     return 0;
+ 
+   external = pnotes;
+@@ -10849,7 +10925,8 @@
+ 
+       next = (Elf_External_Note *) (inote.descdata + align_power (inote.descsz, 2));
+ 
+-      if (((char *) next) > (((char *) pnotes) + length))
++      if (   ((char *) next > ((char *) pnotes) + length)
++	  || ((char *) next <  (char *) pnotes))
+ 	{
+ 	  warn (_("corrupt note found at offset %lx into core notes\n"),
+ 		(unsigned long) ((char *) external - (char *) pnotes));
+@@ -10860,6 +10937,17 @@
+ 
+       external = next;
+ 
++      /* Prevent out-of-bounds indexing.  */
++      if (inote.namedata + inote.namesz >= (char *) pnotes + length
++	  || inote.namedata + inote.namesz < inote.namedata)
++        {
++          warn (_("corrupt note found at offset %lx into core notes\n"),
++                (unsigned long) ((char *) external - (char *) pnotes));
++          warn (_(" type: %lx, namesize: %08lx, descsize: %08lx\n"),
++                inote.type, inote.namesz, inote.descsz);
++          break;
++        }
++
+       /* Verify that name is null terminated.  It appears that at least
+ 	 one version of Linux (RedHat 6.0) generates corefiles that don't
+ 	 comply with the ELF spec by failing to include the null byte in
+-- 

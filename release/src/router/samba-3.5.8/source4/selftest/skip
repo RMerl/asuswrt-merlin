@@ -1,0 +1,66 @@
+# This file contains a list of regular expressions matching testsuites that 
+# should be skipped during "make test".
+#
+# Possible reasons for adding a testsuite here:
+# * Testsuite functionality not implemented on the server side
+# * Testsuite crashes during run
+# * Testsuite crashes server
+# * Testsuite contains "flapping" tests (sometimes success, sometimes failure)
+# * Testsuite hangs indefinitely
+#
+# If a testsuite is partially succeeding, please list the failing bits 
+# in the selftest/knownfail file rather than disabling the testsuite completely.
+#
+# If a testsuite is very slow, please add it to selftest/slow instead.
+#
+# Please add a comment for each testsuite you disable explaining why 
+# it is being skipped.
+raw.composite
+base.iometer
+base.casetable
+base.nttrans
+base.scan.maxfid
+raw.hold.oplock		# Not a test, but a way to block other clients for a test
+raw.ping.pong		# Needs second server to test
+rpc.samr.accessmask
+raw.scan.eamax
+samba4.ntvfs.cifs.raw.qfileinfo.ipc
+smb2.notify
+smb2.scan
+smb2.lease
+smb2.durable.open
+ntvfs.cifs.base.charset
+ntvfs.cifs.base.iometer
+ntvfs.cifs.base.casetable
+ntvfs.cifs.base.nttrans
+ntvfs.cifs.base.scan-maxfid
+ntvfs.cifs.base.utable
+ntvfs.cifs.base.smb
+ntvfs.cifs.raw.composite
+ntvfs.cifs.raw.notify
+ntvfs.cifs.raw.scan-eamax
+ntvfs.cifs.raw.context
+ntvfs.cifs.raw.qfileinfo.ipc
+rpc.dssync
+rpc.samsync
+rpc.remact							# Not provided by Samba 4
+rpc.oxidresolve						# Not provided by Samba 4
+rpc.eventlog						# Not provided by Samba 4
+rpc.initshutdown					# Not provided by Samba 4
+rpc.svcctl							# Not provided by Samba 4
+rpc.atsvc							# Not provided by Samba 4
+rpc.frsapi							# Not provided by Samba 4
+rpc.ntsvcs							# Not provided by Samba 4
+^samba4.base.samba3.*						# Samba3-specific test
+^samba4.ntvfs.cifs.base.samba3.*				# Samba3-specific test
+^samba4.raw.samba3.*						# Samba3-specific test
+^samba4.ntvfs.cifs.raw.samba3.*					# Samba3-specific test
+samba4.ntvfs.cifs.raw.
+^samba4.rpc..*samba3.*						# Samba3-specific test
+^samba4.net.domopen.*$				# Hangs for some reason
+^samba4.net.api.become.dc.*$			# Fails
+nss.test						# Fails
+raw.offline 			# Samba 4 doesn't have much offline support yet
+rpc.autoidl  # this one just generates a lot of noise, and is no longer useful
+samba4.rpc.countcalls # this is not useful now we have full IDL
+samba4.rap.scan # same thing here - we have docs now

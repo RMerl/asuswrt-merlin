@@ -1,0 +1,233 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Spool Control File</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Spool Queues and Files" href=
+    "spoolqueue.htm">
+    <link rel="PREVIOUS" title="Queue Lock File " href=
+    "queuelockfile.htm">
+    <link rel="NEXT" title="Log and Status Files " href=
+    "logfiles.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "queuelockfile.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          13. Spool Queues and Files</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "logfiles.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="QUEUECONTROLFILE">13.3. Spool
+      Control File</a></h1>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">spool_control_file</var><span
+          class="emphasis"><i class="EMPHASIS">spool queue control
+          file - default control.%P</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The spool control file is used to control the operations
+      of the spooler, and is in the spool or control directory. The
+      file name specified by the <var class=
+      "LITERAL">queue_control_file</var> option (default <var
+      class="LITERAL">control.%P</var> - the %P is expanded to the
+      print queue name); in our example, the control file would be:
+      <tt class="FILENAME">/var/lpd/pr/control.pr</tt>.</p>
+
+      <p>The <b class="APPLICATION">lpc</b> program sends spool
+      control requests to the <b class="APPLICATION">lpd</b>
+      daemon, which updates the control file and then signals the
+      appropriate spool server processes that an update has been
+      performed. The control file contents have the form:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6356"></a>
+<pre class="SCREEN">
+    key value
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The following keys and their values are currently
+      supported.</p>
+
+      <div class="INFORMALTABLE">
+        <a name="AEN6359"></a>
+
+        <table border="1" frame="border" rules="all" class=
+        "CALSTABLE">
+          <col>
+          <col>
+          <col>
+
+          <thead>
+            <tr>
+              <th>Key</th>
+
+              <th>Value</th>
+
+              <th>Purpose</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td><var class="LITERAL">printing_disabled</var></td>
+
+              <td>0 or 1</td>
+
+              <td>disable printing of jobs in queue</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">spooling_disabled</var></td>
+
+              <td>0 or 1</td>
+
+              <td>disable placing jobs in queue</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">holdall</var></td>
+
+              <td>0 or 1</td>
+
+              <td>hold jobs until released</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">redirect</var></td>
+
+              <td><var class="LITERAL">printer</var></td>
+
+              <td>transfer jobs to indicated printer</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">class</var></td>
+
+              <td><var class="LITERAL">glob expression</var></td>
+
+              <td>print only jobs whose class matches glob
+              expression</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">server_order</var></td>
+
+              <td><var class="LITERAL">printer name list</var></td>
+
+              <td>preferred order of printer use</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">debug</var></td>
+
+              <td><var class="LITERAL">debugging options</var></td>
+
+              <td>debugging and tracing</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>The <var class="LITERAL">printing_disabled</var> and <var
+      class="LITERAL">spooling_disabled</var> are managed using the
+      <tt class="COMMAND">lpc start</tt>, <tt class="COMMAND">lpc
+      stop</tt>, <tt class="COMMAND">lpc enable</tt> and <tt class=
+      "COMMAND">lpc disable</tt> commands. Similarly, <var class=
+      "LITERAL">holdall</var> is enabled and disabled by <var
+      class="LITERAL">holdall</var> and <var class=
+      "LITERAL">noholdall</var> commands respectively. When holdall
+      is enabled, jobs placed in the print queue will be held until
+      they are explicitly released for printing by an <tt class=
+      "COMMAND">lpc release</tt> command.</p>
+
+      <p>The <var class="LITERAL">redirect</var> entry is used to
+      redirect or transfer jobs which are spooled to this queue to
+      another queue, and is managed by the redirect command. The
+      <tt class="COMMAND">lpc redirect off</tt> removes the
+      redirect entry from the control file.</p>
+
+      <p>The <var class="LITERAL">class</var> entry is similar in
+      operation to the <var class="LITERAL">holdall</var>, but
+      allows jobs whose class identification matches the glob
+      expression to be printed. This can be useful when you have
+      special forms or paper required for a print job, and want to
+      run only these jobs when the paper is in the printer.</p>
+
+      <p>The <var class="LITERAL">server_order</var> entry is
+      created and updated for a multiple printer queue. It records
+      the order in which printers should next be used for normal
+      print operations. This allows <span class="emphasis"><i
+      class="EMPHASIS">round robin</i></span> use of printers,
+      rather than having all jobs printed to the first printer in
+      the list of printers.</p>
+
+      <p>The <var class="LITERAL">debug</var> entry is set by the
+      <tt class="COMMAND">lpc debug</tt> command, and is used to
+      enable or disable debugging and tracing information for a
+      spool queue. This facility is for diagnostic purposes
+      only.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "queuelockfile.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "logfiles.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Queue Lock
+          File</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "spoolqueue.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Log and Status
+          Files</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

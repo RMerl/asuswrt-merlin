@@ -1,0 +1,50 @@
+Here's something that Paul Blackman sent me that may be useful:
+
+-------------------
+I created this script to do a few things that smbstatus doesn't at the
+moment.  Perhaps you might want to include these.  Sorry I haven't
+added things at source level, script was quick&easy.
+
+*******
+#!/bin/csh
+if ($1 == "-p") then
+  smbstatus -p |sort -u
+else if ($1 == "-c") then
+  echo There are `smbstatus -p |sort -u |grep -n -v z |grep -c :` unique smbd processes running.
+ else if ($1 == "-l") then
+  echo `date '+ %d/%m/%y %H:%M:%S'` `smbstatus -p |sort -u |grep -n -v z |grep -c :` >>$2
+else if ($1 == "-cs") then
+  echo There are `smbstatus |awk '$1==share {n++;} END {print n}' share=$2` concurrent connections to share: $2
+else if ($1 == "-csl") then
+ echo `date '+ %d/%m/%y %H:%M:%S'` `smbstatus |awk '$1==share {n++;} END {print n}' share=$2` >>$3
+else
+ echo "'smbstat -c'         ==> Count unique smbd processes."
+ echo "'smbstat -p'         ==> List unique smbd processes."
+ echo "'smbstat -l logfile' ==> Append a log entry for the number of"
+ echo "                          concurrent and unique processes to logfile."
+ echo "'smbstat -cs sharename'"
+ echo "                     ==> Count processes connected to sharename (assumed unique)"
+ echo "'smbstat -csl sharename logfile'"
+ echo "                     ==> Append a log entry for the number of concurrent"
+ echo "                         processes connected to sharename (assumed unique)"
+endif
+******
+
+Run this script from cron eg.
+
+0,5,10,15,20,25,30,35,40,50,55 * * * * /usr/local/samba/bin/smbstat -l /usr/local/samba/var/smbdcount.log
+
+and you get a good idea of usage over time.
+
+Cheers,
+~^ MIME OK ^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~
+    o        |  Paul Blackman                  ictinus@lake.canberra.edu.au
+        o    |  Co-operative Research              ------------------------
+   o  _      |  Centre For Freshwater Ecology.        Ph.  (Aus) 06 2012518
+  -- (") o   |  University of Canberra, Australia.       Fax. "  06 2015038
+    \_|_--   |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |      |  "Spend a little love and get high"
+    _/ \_    |                                              - Lenny Kravitz
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~ SAMBA Web Pages: http://samba.org/samba/ ~~~~~~~~~~~~~~
+

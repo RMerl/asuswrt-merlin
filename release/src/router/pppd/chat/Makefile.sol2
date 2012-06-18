@@ -1,0 +1,19 @@
+#
+# Makefile for chat on Solaris 2
+#
+
+include ../Makedefs.com
+
+CFLAGS = $(COPTS) -DNO_USLEEP -DSOL2
+
+all:	chat
+
+chat: chat.o
+	$(CC) -o chat chat.o
+
+install: chat
+	$(INSTALL) -f $(BINDIR) chat
+	$(INSTALL) -m 444 -f $(MANDIR)/man8 chat.8
+
+clean:
+	rm -f *~ *.o chat

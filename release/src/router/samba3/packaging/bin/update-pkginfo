@@ -1,0 +1,28 @@
+#!/bin/bash
+
+VERSION=$1
+RELEASE=$2
+REVISION=$3
+
+if [ "x${REVISION}" = "x" ]; then
+	RPMREVISION=""
+else
+	RPMREVISION=".${REVISION}"
+fi
+
+if [ $# -ne 3 ]; then
+    echo Usage: update-pkginfo VERSION RELEASE REVISION
+    exit 1
+fi
+# PREV=`echo ${REVISION} | sed 's/[^0-9]//g'`
+# PREV="."`echo ${REVISION} | sed 's/[0-9]//g'`".${PREV}"
+
+for f in `du -a | awk '{print $2}' | grep \.tmpl$`; do
+        f2=`echo $f | sed s/.tmpl//g`
+        echo $f2
+        sed -e s/PVERSION/$VERSION/g \
+		-e s/PRELEASE/$RELEASE/g \
+		-e s/PREVISION/${REVISION}/g \
+		-e s/PRPMREV/${RPMREVISION}/g < $f > $f2
+done
+

@@ -1,0 +1,1813 @@
+.TH IP 8 "17 January 2002" "iproute2" "Linux"
+.SH NAME
+ip \- show / manipulate routing, devices, policy routing and tunnels
+.SH SYNOPSIS
+
+.ad l
+.in +8
+.ti -8
+.B ip
+.RI "[ " OPTIONS " ] " OBJECT " { " COMMAND " | "
+.BR help " }"
+.sp
+
+.ti -8
+.IR OBJECT " := { "
+.BR link " | " addr " | " route " | " rule " | " neigh " | " tunnel " | "\
+maddr " | "  mroute " | " monitor " }"
+.sp
+
+.ti -8
+.IR OPTIONS " := { " 
+\fB\-V\fR[\fIersion\fR] |
+\fB\-s\fR[\fItatistics\fR] |
+\fB\-r\fR[\fIesolve\fR] |
+\fB\-f\fR[\fIamily\fR] {
+.BR inet " | " inet6 " | " ipx " | " dnet " | " link " } | "
+\fB\-o\fR[\fIneline\fR] }
+
+.ti -8
+.BI "ip link set " DEVICE
+.RB "{ " up " | " down " | " arp " { " on " | " off " } |"
+.br
+.BR promisc " { " on " | " off " } |"
+.br
+.BR allmulti " { " on " | " off " } |"
+.br
+.BR dynamic " { " on " | " off " } |"
+.br
+.BR multicast " { " on " | " off " } |"
+.br
+.B  txqueuelen
+.IR PACKETS " |"
+.br
+.B  name
+.IR NEWNAME " |"
+.br
+.B  address
+.IR LLADDR " |"
+.B  broadcast 
+.IR LLADDR " |"
+.br
+.B  mtu
+.IR MTU " }"
+
+.ti -8
+.B ip link show
+.RI "[ " DEVICE " ]"
+
+.ti -8
+.BR "ip addr" " { " add " | " del " } " 
+.IB IFADDR " dev " STRING
+
+.ti -8
+.BR "ip addr" " { " show " | " flush " } [ " dev
+.IR STRING " ] [ "
+.B  scope
+.IR SCOPE-ID " ] [ "
+.B  to 
+.IR PREFIX " ] [ " FLAG-LIST " ] [ "
+.B  label
+.IR PATTERN " ]"
+
+.ti -8
+.IR IFADDR " := " PREFIX " | " ADDR
+.B  peer
+.IR PREFIX " [ "
+.B  broadcast
+.IR ADDR " ] [ "
+.B  anycast
+.IR ADDR " ] [ "
+.B  label
+.IR STRING " ] [ "
+.B  scope
+.IR SCOPE-ID " ]"
+
+.ti -8
+.IR SCOPE-ID " := "
+.RB "[ " host " | " link " | " global " | "
+.IR NUMBER " ]"
+
+.ti -8
+.IR FLAG-LIST " := [ "  FLAG-LIST " ] " FLAG
+
+.ti -8
+.IR FLAG " := "
+.RB "[ " permanent " | " dynamic " | " secondary " | " primary " | "\
+tentative " | " deprecated " ]"
+
+.ti -8
+.BR "ip route" " { "
+.BR list " | " flush " } "
+.I  SELECTOR
+
+.ti -8
+.B  ip route get 
+.IR ADDRESS " [ "
+.BI from " ADDRESS " iif " STRING"
+.RB " ] [ " oif 
+.IR STRING " ] [ "
+.B  tos
+.IR TOS " ]"
+
+.ti -8
+.BR "ip route" " { " add " | " del " | " change " | " append " | "\
+replace " | " monitor " } "
+.I  ROUTE
+
+.ti -8
+.IR SELECTOR " := "
+.RB "[ " root
+.IR PREFIX " ] [ "
+.B  match
+.IR PREFIX " ] [ "
+.B  exact
+.IR PREFIX " ] [ "
+.B  table
+.IR TABLE_ID " ] [ "
+.B  proto
+.IR RTPROTO " ] [ "
+.B  type
+.IR TYPE " ] [ "
+.B  scope
+.IR SCOPE " ]"
+
+.ti -8
+.IR ROUTE " := " NODE_SPEC " [ " INFO_SPEC " ]"
+
+.ti -8
+.IR NODE_SPEC " := [ " TYPE " ] " PREFIX " ["
+.B  tos
+.IR TOS " ] [ "
+.B  table
+.IR TABLE_ID " ] [ "
+.B  proto
+.IR RTPROTO " ] [ "
+.B  scope
+.IR SCOPE " ] [ "
+.B  metric
+.IR METRIC " ]"
+
+.ti -8
+.IR INFO_SPEC " := " "NH OPTIONS FLAGS" " ["
+.B  nexthop
+.IR NH " ] ..."
+
+.ti -8
+.IR NH " := [ "
+.B  via
+.IR ADDRESS " ] [ "
+.B  dev
+.IR STRING " ] [ "
+.B  weight
+.IR NUMBER " ] " NHFLAGS
+
+.ti -8
+.IR OPTIONS " := " FLAGS " [ "
+.B  mtu
+.IR NUMBER " ] [ "
+.B  advmss
+.IR NUMBER " ] [ "
+.B  rtt
+.IR NUMBER " ] [ "
+.B  rttvar
+.IR NUMBER " ] [ "
+.B  window
+.IR NUMBER " ] [ "
+.B  cwnd
+.IR NUMBER " ] [ "
+.B  ssthresh
+.IR REALM " ] [ "
+.B  realms
+.IR REALM " ]"
+
+.ti -8
+.IR TYPE " := [ "
+.BR unicast " | " local " | " broadcast " | " multicast " | "\
+throw " | " unreachable " | " prohibit " | " blackhole " | " nat " ]"
+
+.ti -8
+.IR TABLE_ID " := [ "
+.BR local "| " main " | " default " | " all " |"
+.IR NUMBER " ]"
+
+.ti -8
+.IR SCOPE " := [ "
+.BR host " | " link " | " global " |"
+.IR NUMBER " ]"
+
+.ti -8
+.IR FLAGS " := [ "
+.BR equalize " ]"
+
+.ti -8
+.IR NHFLAGS " := [ "
+.BR onlink " | " pervasive " ]"
+
+.ti -8
+.IR RTPROTO " := [ "
+.BR kernel " | " boot " | " static " |"
+.IR NUMBER " ]"
+
+.ti -8
+.B  ip rule
+.RB " [ " list " | " add " | " del " | " flush " ]"
+.I  SELECTOR ACTION
+
+.ti -8
+.IR SELECTOR " := [ "
+.B  from
+.IR PREFIX " ] [ "
+.B  to
+.IR PREFIX " ] [ "
+.B  tos
+.IR TOS " ] [ "
+.B  fwmark
+.IR FWMARK " ] [ "
+.B  dev
+.IR STRING " ] [ "
+.B  pref
+.IR NUMBER " ]"
+
+.ti -8
+.IR ACTION " := [ "
+.B  table
+.IR TABLE_ID " ] [ "
+.B  nat
+.IR ADDRESS " ] [ "
+.BR prohibit " | " reject " | " unreachable " ] [ " realms
+.RI "[" SRCREALM "/]" DSTREALM " ]"
+
+.ti -8
+.IR TABLE_ID " := [ "
+.BR local " | " main " | " default " |"
+.IR NUMBER " ]"
+
+.ti -8
+.BR "ip neigh" " { " add " | " del " | " change " | " replace " } { "
+.IR ADDR " [ "
+.B  lladdr
+.IR LLADDR " ] [ "
+.BR nud " { " permanent " | " noarp " | " stale " | " reachable " } ] | " proxy
+.IR ADDR " } [ "
+.B  dev
+.IR DEV " ]"
+
+.ti -8
+.BR "ip neigh" " { " show " | " flush " } [ " to
+.IR PREFIX " ] [ "
+.B  dev
+.IR DEV " ] [ "
+.B  nud
+.IR STATE " ]"
+
+.ti -8
+.BR "ip tunnel" " { " add " | " change " | " del " | " show " }"
+.RI "[ " NAME " ]"
+.br
+.RB "[ " mode " { " ipip " | " gre " | " sit " } ]"
+.br
+.RB "[ " remote
+.IR ADDR " ] [ "
+.B  local
+.IR ADDR " ]"
+.br
+.RB "[ [" i "|" o "]" seq " ] [ [" i "|" o "]" key
+.IR KEY " ] [ "
+.RB "[" i "|" o "]" csum " ] ]"
+.br
+.RB "[ " ttl
+.IR TTL " ] [ "
+.B  tos
+.IR TOS " ] [ "
+.RB "[" no "]" pmtudisc " ]"
+.br
+.RB "[ " dev
+.IR PHYS_DEV " ]"
+
+.ti -8
+.IR ADDR " := { " IP_ADDRESS " |"
+.BR any " }"
+
+.ti -8
+.IR TOS " := { " NUMBER " |"
+.BR inherit " }"
+
+.ti -8
+.IR TTL " := { " 1 ".." 255 " | "
+.BR inherit " }"
+
+.ti -8
+.IR KEY " := { " DOTTED_QUAD " | " NUMBER " }"
+
+.ti -8
+.BR "ip maddr" " [ " add " | " del " ]"
+.IB MULTIADDR " dev " STRING
+
+.ti -8
+.BR "ip maddr show" " [ " dev
+.IR STRING " ]"
+
+.ti -8
+.BR "ip mroute show" " ["
+.IR PREFIX " ] [ "
+.B  from
+.IR PREFIX " ] [ "
+.B  iif
+.IR DEVICE " ]"
+
+.ti -8
+.BR "ip monitor" " [ " all " |"
+.IR LISTofOBJECTS " ]"
+.in -8
+.ad b
+
+.SH OPTIONS
+
+.TP
+.BR "\-V" , " -Version"
+print the version of the
+.B ip
+utility and exit.
+
+.TP
+.BR "\-s" , " \-stats", " \-statistics"
+output more information.  If the option
+appears twice or more, the amount of information increases.
+As a rule, the information is statistics or some time values.
+
+.TP
+.BR "\-f" , " \-family"
+followed by protocol family identifier:
+.BR "inet" , " inet6"
+or
+.B link
+,enforce the protocol family to use.  If the option is not present,
+the protocol family is guessed from other arguments.  If the rest 
+of the command line does not give enough information to guess the
+family,
+.B ip
+falls back to the default one, usually
+.B inet
+or
+.BR "any" .
+.B link
+is a special family identifier meaning that no networking protocol
+is involved.
+
+.TP
+.B \-4
+shortcut for
+.BR "-family inet" .
+
+.TP
+.B \-6
+shortcut for
+.BR "\-family inet6" .
+
+.TP
+.B \-0
+shortcut for
+.BR "\-family link" .
+
+.TP
+.BR "\-o" , " \-oneline"
+output each record on a single line, replacing line feeds
+with the
+.B '\'
+character. This is convenient when you want to count records 
+with
+.BR wc (1)
+ or to
+.BR grep (1)
+the output.
+
+.TP
+.BR "\-r" , " \-resolve"
+use the system's name resolver to print DNS names instead of
+host addresses.
+
+.SH IP - COMMAND SYNTAX
+
+.SS
+.I OBJECT
+
+.TP
+.B link
+- network device.
+
+.TP
+.B address
+- protocol (IP or IPv6) address on a device.
+.TP
+.B neighbour
+- ARP or NDISC cache entry.
+
+.TP
+.B route
+- routing table entry.
+
+.TP
+.B rule
+- rule in routing policy database.
+
+.TP
+.B maddress
+- multicast address.
+
+.TP
+.B mroute
+- multicast routing cache entry.
+
+.TP
+.B tunnel
+- tunnel over IP.
+
+.PP
+The names of all objects may be written in full or
+abbreviated form, f.e.
+.B address
+is abbreviated as
+.B addr
+or just
+.B a.
+
+.SS
+.I COMMAND
+
+Specifies the action to perform on the object.
+The set of possible actions depends on the object type.
+As a rule, it is possible to
+.BR "add" , " delete"
+and
+.B show
+(or
+.B list
+) objects, but some objects do not allow all of these operations
+or have some additional commands.  The
+.B help
+command is available for all objects.  It prints
+out a list of available commands and argument syntax conventions.
+.sp
+If no command is given, some default command is assumed.
+Usually it is
+.B list
+or, if the objects of this class cannot be listed,
+.BR "help" .
+
+.SH ip link - network device configuration
+
+.B link
+is a network device and the corresponding commands
+display and change the state of devices.
+
+.SS ip link set - change device attributes
+
+.TP
+.BI dev " NAME " (default)
+.I NAME
+specifies network device to operate on.
+
+.TP
+.BR up " and " down
+change the state of the device to
+.B UP
+or
+.BR "DOWN" .
+
+.TP
+.BR "arp on " or " arp off"
+change the
+.B NOARP
+flag on the device.
+
+.TP
+.BR "multicast on " or " multicast off"
+change the
+.B MULTICAST
+flag on the device.
+
+.TP
+.BR "dynamic on " or " dynamic off"
+change the
+.B DYNAMIC
+flag on the device.
+
+.TP
+.BI name " NAME"
+change the name of the device.  This operation is not
+recommended if the device is running or has some addresses
+already configured.
+
+.TP
+.BI txqueuelen " NUMBER"
+.TP 
+.BI txqlen " NUMBER"
+change the transmit queue length of the device.
+
+.TP
+.BI mtu " NUMBER"
+change the 
+.I MTU
+of the device.
+
+.TP
+.BI address " LLADDRESS"
+change the station address of the interface.
+
+.TP
+.BI broadcast " LLADDRESS"
+.TP
+.BI brd " LLADDRESS"
+.TP
+.BI peer " LLADDRESS"
+change the link layer broadcast address or the peer address when
+the interface is
+.IR "POINTOPOINT" .
+
+.PP
+.B Warning:
+If multiple parameter changes are requested,
+.B ip
+aborts immediately after any of the changes have failed.
+This is the only case when
+.B ip
+can move the system to an unpredictable state.  The solution
+is to avoid changing several parameters with one
+.B ip link set
+call.
+
+.SS  ip link show - display device attributes
+
+.TP
+.BI dev " NAME " (default)
+.I NAME
+specifies the network device to show.
+If this argument is omitted all devices are listed.
+
+.TP
+.B up
+only display running interfaces.
+
+.SH ip address - protocol address management.
+
+The
+.B address
+is a protocol (IP or IPv6) address attached
+to a network device.  Each device must have at least one address
+to use the corresponding protocol.  It is possible to have several
+different addresses attached to one device.  These addresses are not
+discriminated, so that the term
+.B alias
+is not quite appropriate for them and we do not use it in this document.
+.sp
+The
+.B ip addr
+command displays addresses and their properties, adds new addresses
+and deletes old ones.
+
+.SS ip address add - add new protocol address.
+
+.TP
+.BI dev " NAME"
+the name of the device to add the address to.
+
+.TP
+.BI local " ADDRESS " (default)
+the address of the interface. The format of the address depends
+on the protocol. It is a dotted quad for IP and a sequence of
+hexadecimal halfwords separated by colons for IPv6.  The
+.I ADDRESS
+may be followed by a slash and a decimal number which encodes
+the network prefix length.
+
+.TP
+.BI peer " ADDRESS"
+the address of the remote endpoint for pointopoint interfaces.
+Again, the
+.I ADDRESS
+may be followed by a slash and a decimal number, encoding the network
+prefix length.  If a peer address is specified, the local address
+cannot have a prefix length.  The network prefix is associated
+with the peer rather than with the local address.
+
+.TP
+.BI broadcast " ADDRESS"
+the broadcast address on the interface.
+.sp
+It is possible to use the special symbols
+.B '+'
+and
+.B '-'
+instead of the broadcast address.  In this case, the broadcast address
+is derived by setting/resetting the host bits of the interface prefix.
+
+.TP
+.BI label " NAME"
+Each address may be tagged with a label string.
+In order to preserve compatibility with Linux-2.0 net aliases,
+this string must coincide with the name of the device or must be prefixed
+with the device name followed by colon.
+
+.TP
+.BI scope " SCOPE_VALUE"
+the scope of the area where this address is valid.
+The available scopes are listed in file
+.BR "/etc/iproute2/rt_scopes" .
+Predefined scope values are:
+
+.in +8
+.B global
+- the address is globally valid.
+.sp
+.B site
+- (IPv6 only) the address is site local, i.e. it is
+valid inside this site.
+.sp
+.B link
+- the address is link local, i.e. it is valid only on this device.
+.sp
+.B host
+- the address is valid only inside this host.
+.in -8
+
+.SS ip address delete - delete protocol address
+.B Arguments:
+coincide with the arguments of
+.B ip addr add.
+The device name is a required argument.  The rest are optional.
+If no arguments are given, the first address is deleted.
+
+.SS ip address show - look at protocol addresses
+
+.TP
+.BI dev " NAME " (default)
+name of device.
+
+.TP
+.BI scope " SCOPE_VAL"
+only list addresses with this scope.
+
+.TP
+.BI to " PREFIX"
+only list addresses matching this prefix.
+
+.TP
+.BI label " PATTERN"
+only list addresses with labels matching the
+.IR "PATTERN" .
+.I PATTERN
+is a usual shell style pattern.
+
+.TP
+.BR dynamic " and " permanent
+(IPv6 only) only list addresses installed due to stateless
+address configuration or only list permanent (not dynamic)
+addresses.
+
+.TP
+.B tentative
+(IPv6 only) only list addresses which did not pass duplicate
+address detection.
+
+.TP
+.B deprecated
+(IPv6 only) only list deprecated addresses.
+
+.TP
+.BR primary " and " secondary
+only list primary (or secondary) addresses.
+
+.SS ip address flush - flush protocol addresses
+This command flushes the protocol addresses selected by some criteria.
+
+.PP
+This command has the same arguments as
+.B show.
+The difference is that it does not run when no arguments are given.
+
+.PP
+.B Warning:
+This command (and other
+.B flush
+commands described below) is pretty dangerous.  If you make a mistake,
+it will not forgive it, but will cruelly purge all the addresses.
+
+.PP
+With the
+.B -statistics
+option, the command becomes verbose. It prints out the number of deleted
+addresses and the number of rounds made to flush the address list.  If
+this option is given twice,
+.B ip addr flush
+also dumps all the deleted addresses in the format described in the
+previous subsection.
+
+.SH ip neighbour - neighbour/arp tables management.
+
+.B neighbour
+objects establish bindings between protocol addresses and
+link layer addresses for hosts sharing the same link.
+Neighbour entries are organized into tables. The IPv4 neighbour table
+is known by another name - the ARP table.
+
+.P
+The corresponding commands display neighbour bindings
+and their properties, add new neighbour entries and delete old ones.
+
+.SS ip neighbour add - add a new neighbour entry
+.SS ip neighbour change - change an existing entry
+.SS ip neighbour replace - add a new entry or change an existing one
+
+These commands create new neighbour records or update existing ones.
+
+.TP
+.BI to " ADDRESS " (default)
+the protocol address of the neighbour. It is either an IPv4 or IPv6 address.
+
+.TP
+.BI dev " NAME"
+the interface to which this neighbour is attached.
+
+.TP
+.BI lladdr " LLADDRESS"
+the link layer address of the neighbour.
+.I LLADDRESS
+can also be
+.BR "null" .
+
+.TP
+.BI nud " NUD_STATE"
+the state of the neighbour entry.
+.B nud
+is an abbreviation for 'Neigh bour Unreachability Detection'.
+The state can take one of the following values:
+
+.in +8
+.B permanent
+- the neighbour entry is valid forever and can be only
+be removed administratively.
+.sp
+
+.B noarp
+- the neighbour entry is valid. No attempts to validate
+this entry will be made but it can be removed when its lifetime expires.
+.sp
+
+.B reachable
+- the neighbour entry is valid until the reachability
+timeout expires.
+.sp
+
+.B stale
+- the neighbour entry is valid but suspicious.
+This option to
+.B ip neigh
+does not change the neighbour state if it was valid and the address
+is not changed by this command.
+.in -8
+
+.SS ip neighbour delete - delete a neighbour entry
+This command invalidates a neighbour entry.
+
+.PP
+The arguments are the same as with
+.BR "ip neigh add" ,
+except that
+.B lladdr
+and
+.B nud
+are ignored.
+
+.PP
+.B Warning:
+Attempts to delete or manually change a
+.B noarp
+entry created by the kernel may result in unpredictable behaviour.
+Particularly, the kernel may try to resolve this address even
+on a
+.B NOARP
+interface or if the address is multicast or broadcast.
+
+.SS ip neighbour show - list neighbour entries
+
+This commands displays neighbour tables.
+
+.TP
+.BI to " ADDRESS " (default)
+the prefix selecting the neighbours to list.
+
+.TP
+.BI dev " NAME"
+only list the neighbours attached to this device.
+
+.TP
+.B unused
+only list neighbours which are not currently in use.
+
+.TP
+.BI nud " NUD_STATE"
+only list neighbour entries in this state.
+.I NUD_STATE
+takes values listed below or the special value
+.B all
+which means all states.  This option may occur more than once.
+If this option is absent,
+.B ip
+lists all entries except for
+.B none
+and
+.BR "noarp" .
+
+.SS ip neighbour flush - flush neighbour entries
+This command flushes neighbour tables, selecting
+entries to flush by some criteria.
+
+.PP
+This command has the same arguments as
+.B show.
+The differences are that it does not run when no arguments are given,
+and that the default neighbour states to be flushed do not include
+.B permanent
+and
+.BR "noarp" .
+
+.PP
+With the
+.B -statistics
+option, the command becomes verbose.  It prints out the number of
+deleted neighbours and the number of rounds made to flush the
+neighbour table.  If the option is given
+twice,
+.B ip neigh flush
+also dumps all the deleted neighbours.
+
+.SH ip route - routing table management
+Manipulate route entries in the kernel routing tables keep
+information about paths to other networked nodes.
+.sp
+.B Route types:
+
+.in +8
+.B unicast
+- the route entry describes real paths to the destinations covered
+by the route prefix.
+
+.sp
+.B unreachable
+- these destinations are unreachable.  Packets are discarded and the
+ICMP message
+.I host unreachable
+is generated.
+The local senders get an
+.I EHOSTUNREACH
+error.
+
+.sp
+.B blackhole
+- these destinations are unreachable.  Packets are discarded silently.
+The local senders get an
+.I EINVAL
+error.
+
+.sp
+.B prohibit
+- these destinations are unreachable.  Packets are discarded and the
+ICMP message
+.I communication administratively prohibited
+is generated.  The local senders get an
+.I EACCES
+error.
+
+.sp
+.B local
+- the destinations are assigned to this host.  The packets are looped
+back and delivered locally.
+
+.sp
+.B broadcast
+- the destinations are broadcast addresses.  The packets are sent as
+link broadcasts.
+
+.sp
+.B throw
+- a special control route used together with policy rules. If such a
+route is selected, lookup in this table is terminated pretending that
+no route was found.  Without policy routing it is equivalent to the
+absence of the route in the routing table.  The packets are dropped
+and the ICMP message
+.I net unreachable
+is generated.  The local senders get an
+.I ENETUNREACH
+error.
+
+.sp
+.B nat
+- a special NAT route.  Destinations covered by the prefix
+are considered to be dummy (or external) addresses which require translation
+to real (or internal) ones before forwarding.  The addresses to translate to
+are selected with the attribute
+.B Warning:
+Route NAT is no longer supported in Linux 2.6.
+
+
+.BR "via" .
+.sp
+.B anycast
+.RI "- " "not implemented"
+the destinations are
+.I anycast
+addresses assigned to this host.  They are mainly equivalent
+to
+.B local
+with one difference: such addresses are invalid when used
+as the source address of any packet.
+
+.sp
+.B multicast
+- a special type used for multicast routing.  It is not present in
+normal routing tables.
+.in -8
+
+.P
+.B Route tables:
+Linux-2.x can pack routes into several routing
+tables identified by a number in the range from 1 to 255 or by
+name from the file
+.B /etc/iproute2/rt_tables
+. By default all normal routes are inserted into the
+.B main
+table (ID 254) and the kernel only uses this table when calculating routes.
+
+.sp
+Actually, one other table always exists, which is invisible but
+even more important.  It is the
+.B local
+table (ID 255).  This table
+consists of routes for local and broadcast addresses.  The kernel maintains
+this table automatically and the administrator usually need not modify it
+or even look at it.
+
+The multiple routing tables enter the game when
+.I policy routing
+is used.
+
+.SS ip route add - add new route
+.SS ip route change - change route
+.SS ip route replace - change or add new one
+
+.TP
+.BI to " TYPE PREFIX " (default)
+the destination prefix of the route.  If
+.I TYPE
+is omitted,
+.B ip
+assumes type
+.BR "unicast" .
+Other values of
+.I TYPE
+are listed above.
+.I PREFIX
+is an IP or IPv6 address optionally followed by a slash and the
+prefix length.  If the length of the prefix is missing,
+.B ip
+assumes a full-length host route.  There is also a special
+.I PREFIX
+.B default
+- which is equivalent to IP
+.B 0/0
+or to IPv6
+.BR "::/0" .
+
+.TP
+.BI tos " TOS"
+.TP
+.BI dsfield " TOS"
+the Type Of Service (TOS) key.  This key has no associated mask and
+the longest match is understood as: First, compare the TOS
+of the route and of the packet.  If they are not equal, then the packet
+may still match a route with a zero TOS.
+.I TOS
+is either an 8 bit hexadecimal number or an identifier
+from
+.BR "/etc/iproute2/rt_dsfield" .
+
+.TP
+.BI metric " NUMBER"
+.TP
+.BI preference " NUMBER"
+the preference value of the route.
+.I NUMBER
+is an arbitrary 32bit number.
+
+.TP
+.BI table " TABLEID"
+the table to add this route to.
+.I TABLEID
+may be a number or a string from the file
+.BR "/etc/iproute2/rt_tables" .
+If this parameter is omitted,
+.B ip
+assumes the
+.B main
+table, with the exception of
+.BR local " , " broadcast " and " nat
+routes, which are put into the
+.B local
+table by default.
+
+.TP
+.BI dev " NAME"
+the output device name.
+
+.TP
+.BI via " ADDRESS"
+the address of the nexthop router.  Actually, the sense of this field
+depends on the route type.  For normal
+.B unicast
+routes it is either the true next hop router or, if it is a direct
+route installed in BSD compatibility mode, it can be a local address
+of the interface.  For NAT routes it is the first address of the block
+of translated IP destinations.
+
+.TP
+.BI src " ADDRESS"
+the source address to prefer when sending to the destinations
+covered by the route prefix.
+
+.TP
+.BI realm " REALMID"
+the realm to which this route is assigned.
+.I REALMID
+may be a number or a string from the file
+.BR "/etc/iproute2/rt_realms" .
+
+.TP
+.BI mtu " MTU"
+.TP
+.BI "mtu lock" " MTU"
+the MTU along the path to the destination.  If the modifier
+.B lock
+is not used, the MTU may be updated by the kernel due to
+Path MTU Discovery.  If the modifier
+.B lock
+is used, no path MTU discovery will be tried, all packets
+will be sent without the DF bit in IPv4 case or fragmented
+to MTU for IPv6.
+
+.TP
+.BI window " NUMBER"
+the maximal window for TCP to advertise to these destinations,
+measured in bytes.  It limits maximal data bursts that our TCP
+peers are allowed to send to us.
+
+.TP
+.BI rtt " NUMBER"
+the initial RTT ('Round Trip Time') estimate.
+
+.TP
+.BI rttvar " NUMBER " "(2.3.15+ only)"
+the initial RTT variance estimate.
+
+.TP
+.BI ssthresh " NUMBER " "(2.3.15+ only)"
+an estimate for the initial slow start threshold.
+
+.TP
+.BI cwnd " NUMBER " "(2.3.15+ only)"
+the clamp for congestion window.  It is ignored if the
+.B lock
+flag is not used.
+
+.TP
+.BI advmss " NUMBER " "(2.3.15+ only)"
+the MSS ('Maximal Segment Size') to advertise to these
+destinations when establishing TCP connections.  If it is not given,
+Linux uses a default value calculated from the first hop device MTU.
+(If the path to these destination is asymmetric, this guess may be wrong.)
+
+.TP
+.BI reordering " NUMBER " "(2.3.15+ only)"
+Maximal reordering on the path to this destination.
+If it is not given, Linux uses the value selected with
+.B sysctl
+variable
+.BR "net/ipv4/tcp_reordering" .
+
+.TP
+.BI nexthop " NEXTHOP"
+the nexthop of a multipath route.
+.I NEXTHOP
+is a complex value with its own syntax similar to the top level
+argument lists:
+
+.in +8
+.BI via " ADDRESS"
+- is the nexthop router.
+.sp
+
+.BI dev " NAME"
+- is the output device.
+.sp
+
+.BI weight " NUMBER"
+- is a weight for this element of a multipath
+route reflecting its relative bandwidth or quality.
+.in -8
+
+.TP
+.BI scope " SCOPE_VAL"
+the scope of the destinations covered by the route prefix.
+.I SCOPE_VAL
+may be a number or a string from the file
+.BR "/etc/iproute2/rt_scopes" .
+If this parameter is omitted,
+.B ip
+assumes scope
+.B global
+for all gatewayed
+.B unicast
+routes, scope
+.B link
+for direct
+.BR unicast " and " broadcast
+routes and scope
+.BR host " for " local
+routes.
+
+.TP
+.BI protocol " RTPROTO"
+the routing protocol identifier of this route.
+.I RTPROTO
+may be a number or a string from the file
+.BR "/etc/iproute2/rt_protos" .
+If the routing protocol ID is not given,
+.B ip assumes protocol
+.B boot
+(i.e. it assumes the route was added by someone who doesn't
+understand what they are doing).  Several protocol values have
+a fixed interpretation.
+Namely:
+
+.in +8
+.B redirect
+- the route was installed due to an ICMP redirect.
+.sp
+
+.B kernel
+- the route was installed by the kernel during autoconfiguration.
+.sp
+
+.B boot
+- the route was installed during the bootup sequence.
+If a routing daemon starts, it will purge all of them.
+.sp
+
+.B static
+- the route was installed by the administrator
+to override dynamic routing. Routing daemon will respect them
+and, probably, even advertise them to its peers.
+.sp
+
+.B ra
+- the route was installed by Router Discovery protocol.
+.in -8
+
+.sp
+The rest of the values are not reserved and the administrator is free
+to assign (or not to assign) protocol tags.
+
+.TP
+.B onlink
+pretend that the nexthop is directly attached to this link,
+even if it does not match any interface prefix.
+
+.TP
+.B equalize
+allow packet by packet randomization on multipath routes.
+Without this modifier, the route will be frozen to one selected
+nexthop, so that load splitting will only occur on per-flow base.
+.B equalize
+only works if the kernel is patched.
+
+.SS ip route delete - delete route
+
+.B ip route del
+has the same arguments as
+.BR "ip route add" ,
+but their semantics are a bit different.
+
+Key values
+.RB "(" to ", " tos ", " preference " and " table ")"
+select the route to delete.  If optional attributes are present,
+.B ip
+verifies that they coincide with the attributes of the route to delete.
+If no route with the given key and attributes was found,
+.B ip route del
+fails.
+
+.SS ip route show - list routes
+the command displays the contents of the routing tables or the route(s)
+selected by some criteria.
+
+.TP
+.BI to " SELECTOR " (default)
+only select routes from the given range of destinations.
+.I SELECTOR
+consists of an optional modifier
+.RB "(" root ", " match " or " exact ")"
+and a prefix.
+.BI root " PREFIX"
+selects routes with prefixes not shorter than
+.IR PREFIX "."
+F.e.
+.BI root " 0/0"
+selects the entire routing table.
+.BI match " PREFIX"
+selects routes with prefixes not longer than
+.IR PREFIX "."
+F.e.
+.BI match " 10.0/16"
+selects
+.IR 10.0/16 ","
+.IR 10/8 " and " 0/0 ,
+but it does not select
+.IR 10.1/16 " and " 10.0.0/24 .
+And
+.BI exact " PREFIX"
+(or just
+.IR PREFIX ")"
+selects routes with this exact prefix. If neither of these options
+are present,
+.B ip
+assumes
+.BI root " 0/0"
+i.e. it lists the entire table.
+
+.TP
+.BI tos " TOS"
+.BI dsfield " TOS"
+only select routes with the given TOS.
+
+.TP
+.BI table " TABLEID"
+show the routes from this table(s).  The default setting is to show
+.BR table main "."
+.I TABLEID
+may either be the ID of a real table or one of the special values:
+.sp
+.in +8
+.B all
+- list all of the tables.
+.sp
+.B cache
+- dump the routing cache.
+.in -8
+
+.TP
+.B cloned
+.TP
+.B cached
+list cloned routes i.e. routes which were dynamically forked from
+other routes because some route attribute (f.e. MTU) was updated.
+Actually, it is equivalent to
+.BR "table cache" "."
+
+.TP
+.BI from " SELECTOR"
+the same syntax as for
+.BR to ","
+but it binds the source address range rather than destinations.
+Note that the
+.B from
+option only works with cloned routes.
+
+.TP
+.BI protocol " RTPROTO"
+only list routes of this protocol.
+
+.TP
+.BI scope " SCOPE_VAL"
+only list routes with this scope.
+
+.TP
+.BI type " TYPE"
+only list routes of this type.
+
+.TP
+.BI dev " NAME"
+only list routes going via this device.
+
+.TP
+.BI via " PREFIX"
+only list routes going via the nexthop routers selected by
+.IR PREFIX "."
+
+.TP
+.BI src " PREFIX"
+only list routes with preferred source addresses selected
+by
+.IR PREFIX "."
+
+.TP
+.BI realm " REALMID"
+.TP
+.BI realms " FROMREALM/TOREALM"
+only list routes with these realms.
+
+.SS ip route flush - flush routing tables
+this command flushes routes selected by some criteria.
+
+.sp
+The arguments have the same syntax and semantics as the arguments of
+.BR "ip route show" ,
+but routing tables are not listed but purged.  The only difference is
+the default action:
+.B show
+dumps all the IP main routing table but
+.B flush
+prints the helper page.
+
+.sp
+With the
+.B -statistics
+option, the command becomes verbose. It prints out the number of
+deleted routes and the number of rounds made to flush the routing
+table. If the option is given
+twice,
+.B ip route flush
+also dumps all the deleted routes in the format described in the
+previous subsection.
+
+.SS ip route get - get a single route
+this command gets a single route to a destination and prints its
+contents exactly as the kernel sees it.
+
+.TP
+.BI to " ADDRESS " (default)
+the destination address.
+
+.TP
+.BI from " ADDRESS"
+the source address.
+
+.TP
+.BI tos " TOS"
+.TP
+.BI dsfield " TOS"
+the Type Of Service.
+
+.TP
+.BI iif " NAME"
+the device from which this packet is expected to arrive.
+
+.TP
+.BI oif " NAME"
+force the output device on which this packet will be routed.
+
+.TP
+.B connected
+if no source address 
+.RB "(option " from ")"
+was given, relookup the route with the source set to the preferred
+address received from the first lookup.
+If policy routing is used, it may be a different route.
+
+.P
+Note that this operation is not equivalent to
+.BR "ip route show" .
+.B show
+shows existing routes.
+.B get
+resolves them and creates new clones if necessary.  Essentially,
+.B get
+is equivalent to sending a packet along this path.
+If the
+.B iif
+argument is not given, the kernel creates a route
+to output packets towards the requested destination.
+This is equivalent to pinging the destination
+with a subsequent
+.BR "ip route ls cache" ,
+however, no packets are actually sent.  With the
+.B iif
+argument, the kernel pretends that a packet arrived from this interface
+and searches for a path to forward the packet.
+
+.SH ip rule - routing policy database management
+
+.BR "Rule" s
+in the routing policy database control the route selection algorithm.
+
+.P
+Classic routing algorithms used in the Internet make routing decisions
+based only on the destination address of packets (and in theory,
+but not in practice, on the TOS field).
+
+.P
+In some circumstances we want to route packets differently depending not only
+on destination addresses, but also on other packet fields: source address,
+IP protocol, transport protocol ports or even packet payload.
+This task is called 'policy routing'.
+
+.P
+To solve this task, the conventional destination based routing table, ordered
+according to the longest match rule, is replaced with a 'routing policy
+database' (or RPDB), which selects routes by executing some set of rules.
+
+.P
+Each policy routing rule consists of a
+.B selector
+and an
+.B action predicate.
+The RPDB is scanned in the order of increasing priority. The selector
+of each rule is applied to {source address, destination address, incoming
+interface, tos, fwmark} and, if the selector matches the packet,
+the action is performed.  The action predicate may return with success.
+In this case, it will either give a route or failure indication
+and the RPDB lookup is terminated. Otherwise, the RPDB program
+continues on the next rule.
+
+.P
+Semantically, natural action is to select the nexthop and the output device.
+
+.P
+At startup time the kernel configures the default RPDB consisting of three
+rules:
+
+.TP
+1.
+Priority: 0, Selector: match anything, Action: lookup routing
+table
+.B local
+(ID 255).
+The
+.B local
+table is a special routing table containing
+high priority control routes for local and broadcast addresses.
+.sp
+Rule 0 is special. It cannot be deleted or overridden.
+
+.TP
+2.
+Priority: 32766, Selector: match anything, Action: lookup routing
+table
+.B main
+(ID 254).
+The
+.B main
+table is the normal routing table containing all non-policy
+routes. This rule may be deleted and/or overridden with other
+ones by the administrator.
+
+.TP
+3.
+Priority: 32767, Selector: match anything, Action: lookup routing
+table
+.B default
+(ID 253).
+The
+.B default
+table is empty.  It is reserved for some post-processing if no previous
+default rules selected the packet.
+This rule may also be deleted.
+
+.P
+Each RPDB entry has additional
+attributes.  F.e. each rule has a pointer to some routing
+table.  NAT and masquerading rules have an attribute to select new IP
+address to translate/masquerade.  Besides that, rules have some
+optional attributes, which routes have, namely
+.BR "realms" .
+These values do not override those contained in the routing tables.  They
+are only used if the route did not select any attributes.
+
+.sp
+The RPDB may contain rules of the following types:
+
+.in +8
+.B unicast
+- the rule prescribes to return the route found
+in the routing table referenced by the rule.
+
+.B blackhole
+- the rule prescribes to silently drop the packet.
+
+.B unreachable
+- the rule prescribes to generate a 'Network is unreachable' error.
+
+.B prohibit
+- the rule prescribes to generate 'Communication is administratively
+prohibited' error.
+
+.B nat
+- the rule prescribes to translate the source address
+of the IP packet into some other value.
+.in -8
+
+.SS ip rule add - insert a new rule
+.SS ip rule delete - delete a rule
+
+.TP
+.BI type " TYPE " (default)
+the type of this rule.  The list of valid types was given in the previous
+subsection.
+
+.TP
+.BI from " PREFIX"
+select the source prefix to match.
+
+.TP
+.BI to " PREFIX"
+select the destination prefix to match.
+
+.TP
+.BI iif " NAME"
+select the incoming device to match.  If the interface is loopback,
+the rule only matches packets originating from this host.  This means
+that you may create separate routing tables for forwarded and local
+packets and, hence, completely segregate them.
+
+.TP
+.BI tos " TOS"
+.TP
+.BI dsfield " TOS"
+select the TOS value to match.
+
+.TP
+.BI fwmark " MARK"
+select the
+.B fwmark
+value to match.
+
+.TP
+.BI priority " PREFERENCE"
+the priority of this rule.  Each rule should have an explicitly
+set
+.I unique
+priority value.
+
+.TP
+.BI table " TABLEID"
+the routing table identifier to lookup if the rule selector matches.
+
+.TP
+.BI realms " FROM/TO"
+Realms to select if the rule matched and the routing table lookup
+succeeded.  Realm 
+.I TO
+is only used if the route did not select any realm.
+
+.TP
+.BI nat " ADDRESS"
+The base of the IP address block to translate (for source addresses).
+The 
+.I ADDRESS
+may be either the start of the block of NAT addresses (selected by NAT
+routes) or a local host address (or even zero).
+In the last case the router does not translate the packets, but
+masquerades them to this address.
+
+.B Warning:
+Changes to the RPDB made with these commands do not become active
+immediately.  It is assumed that after a script finishes a batch of
+updates, it flushes the routing cache with
+.BR "ip route flush cache" .
+
+.SS ip rule flush - also dumps all the deleted rules.
+This command has no arguments.
+
+.SS ip rule show - list rules
+This command has no arguments.
+
+.SH ip maddress - multicast addresses management
+
+.B maddress
+objects are multicast addresses.
+
+.SS ip maddress show - list multicast addresses
+
+.TP
+.BI dev " NAME " (default)
+the device name.
+
+.SS ip maddress add - add a multicast address
+.SS ip maddress delete - delete a multicast address
+these commands attach/detach a static link layer multicast address
+to listen on the interface.
+Note that it is impossible to join protocol multicast groups
+statically.  This command only manages link layer addresses.
+
+.TP
+.BI address " LLADDRESS " (default)
+the link layer multicast address.
+
+.TP
+.BI dev " NAME"
+the device to join/leave this multicast address.
+
+.SH ip mroute - multicast routing cache management
+.B mroute
+objects are multicast routing cache entries created by a user level
+mrouting daemon (f.e.
+.B pimd
+or
+.B mrouted
+).
+
+Due to the limitations of the current interface to the multicast routing
+engine, it is impossible to change
+.B mroute
+objects administratively, so we may only display them.  This limitation
+will be removed in the future.
+
+.SS ip mroute show - list mroute cache entries
+
+.TP
+.BI to " PREFIX " (default)
+the prefix selecting the destination multicast addresses to list.
+
+.TP
+.BI iif " NAME"
+the interface on which multicast packets are received.
+
+.TP
+.BI from " PREFIX"
+the prefix selecting the IP source addresses of the multicast route.
+
+.SH ip tunnel - tunnel configuration
+.B tunnel
+objects are tunnels, encapsulating packets in IPv4 packets and then
+sending them over the IP infrastructure.
+
+.SS ip tunnel add - add a new tunnel
+.SS ip tunnel change - change an existing tunnel
+.SS ip tunnel delete - destroy a tunnel
+
+.TP
+.BI name " NAME " (default)
+select the tunnel device name.
+
+.TP
+.BI mode " MODE"
+set the tunnel mode.  Three modes are currently available:
+.BR ipip ", " sit " and " gre "."
+
+.TP
+.BI remote " ADDRESS"
+set the remote endpoint of the tunnel.
+
+.TP
+.BI local " ADDRESS"
+set the fixed local address for tunneled packets.
+It must be an address on another interface of this host.
+
+.TP
+.BI ttl " N"
+set a fixed TTL 
+.I N
+on tunneled packets.
+.I N
+is a number in the range 1--255. 0 is a special value
+meaning that packets inherit the TTL value. 
+The default value is:
+.BR "inherit" .
+
+.TP
+.BI tos " T"
+.TP
+.BI dsfield " T"
+set a fixed TOS
+.I T
+on tunneled packets.
+The default value is:
+.BR "inherit" .
+
+.TP
+.BI dev " NAME" 
+bind the tunnel to the device
+.I NAME
+so that tunneled packets will only be routed via this device and will
+not be able to escape to another device when the route to endpoint
+changes.
+
+.TP
+.B nopmtudisc
+disable Path MTU Discovery on this tunnel.
+It is enabled by default.  Note that a fixed ttl is incompatible
+with this option: tunnelling with a fixed ttl always makes pmtu
+discovery.
+
+.TP
+.BI key " K"
+.TP
+.BI ikey " K"
+.TP
+.BI okey " K"
+.RB ( " only GRE tunnels " )
+use keyed GRE with key
+.IR K ". " K
+is either a number or an IP address-like dotted quad.
+The
+.B key
+parameter sets the key to use in both directions.
+The
+.BR ikey " and " okey
+parameters set different keys for input and output.
+   
+.TP
+.BR csum ", " icsum ", " ocsum
+.RB ( " only GRE tunnels " )
+generate/require checksums for tunneled packets.
+The 
+.B ocsum
+flag calculates checksums for outgoing packets.
+The
+.B icsum
+flag requires that all input packets have the correct
+checksum.  The
+.B csum
+flag is equivalent to the combination
+.BR "icsum ocsum" .
+
+.TP
+.BR seq ", " iseq ", " oseq
+.RB ( " only GRE tunnels " )
+serialize packets.
+The
+.B oseq
+flag enables sequencing of outgoing packets.
+The
+.B iseq
+flag requires that all input packets are serialized.
+The
+.B  seq
+flag is equivalent to the combination 
+.BR "iseq oseq" .
+.B It isn't work. Don't use it.
+
+.SS ip tunnel show - list tunnels
+This command has no arguments.
+
+.SH ip monitor and rtmon - state monitoring
+
+The
+.B ip
+utility can monitor the state of devices, addresses
+and routes continuously.  This option has a slightly different format.
+Namely, the
+.B monitor
+command is the first in the command line and then the object list follows:
+
+.BR "ip monitor" " [ " all " |"
+.IR LISTofOBJECTS " ]"
+
+.I OBJECT-LIST
+is the list of object types that we want to monitor.
+It may contain
+.BR link ", " address " and " route "."
+If no
+.B file
+argument is given,
+.B ip
+opens RTNETLINK, listens on it and dumps state changes in the format
+described in previous sections.
+
+.P
+If a file name is given, it does not listen on RTNETLINK,
+but opens the file containing RTNETLINK messages saved in binary format
+and dumps them.  Such a history file can be generated with the
+.B rtmon
+utility.  This utility has a command line syntax similar to
+.BR "ip monitor" .
+Ideally,
+.B rtmon
+should be started before the first network configuration command
+is issued. F.e. if you insert:
+.sp
+.in +8
+rtmon file /var/log/rtmon.log
+.in -8
+.sp
+in a startup script, you will be able to view the full history
+later.
+
+.P
+Certainly, it is possible to start
+.B rtmon
+at any time.
+It prepends the history with the state snapshot dumped at the moment
+of starting.
+
+.SH HISTORY
+.B ip
+was written by Alexey N. Kuznetsov and added in Linux 2.2.
+.SH SEE ALSO
+.BR tc (8)
+.br
+.RB "IP Command reference " ip-cref.ps
+.br
+.RB "IP tunnels " ip-cref.ps
+
+.SH AUTHOR
+Original Manpage  by Michail Litvak <mci@owl.openwall.com>

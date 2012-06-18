@@ -1,0 +1,583 @@
+.\"     Title: mount.cifs
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "MOUNT\&.CIFS" "8" "09/30/2009" "Samba 3\&.0" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+mount.cifs \- mount using the Common Internet File System (CIFS)
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCmount\&.cifs\F[] {service} {mount\-point} [\-o\ options]
+.fam
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+mount\&.cifs mounts a Linux CIFS filesystem\&. It is usually invoked indirectly by the
+\fBmount\fR(8)
+command when using the "\-t cifs" option\&. This command only works in Linux, and the kernel must support the cifs filesystem\&. The CIFS protocol is the successor to the SMB protocol and is supported by most Windows servers and many other commercial servers and Network Attached Storage appliances as well as by the popular Open Source server Samba\&.
+.PP
+The mount\&.cifs utility attaches the UNC name (exported network resource) specified as
+\fIservice\fR
+(using //server/share syntax, where "server" is the server name or IP address and "share" is the name of the share) to the local directory
+\fImount\-point\fR\&. It is possible to set the mode for mount\&.cifs to setuid root to allow non\-root users to mount shares to directories for which they have write permission\&.
+.PP
+Options to
+\fImount\&.cifs\fR
+are specified as a comma\-separated list of key=value pairs\&. It is possible to send options other than those listed here, assuming that the cifs filesystem kernel module (cifs\&.ko) supports them\&. Unrecognized cifs mount options passed to the cifs vfs kernel code will be logged to the kernel log\&.
+.PP
+\fImount\&.cifs\fR
+causes the cifs vfs to launch a thread named cifsd\&. After mounting it keeps running until the mounted resource is unmounted (usually via the umount utility)\&.
+.SH "OPTIONS"
+.PP
+user=\fIarg\fR
+.RS 4
+specifies the username to connect as\&. If this is not given, then the environment variable
+\fIUSER\fR
+is used\&. This option can also take the form "user%password" or "workgroup/user" or "workgroup/user%password" to allow the password and workgroup to be specified as part of the username\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.BM yellow
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+The cifs vfs accepts the parameter
+\fIuser=\fR, or for users familiar with smbfs it accepts the longer form of the parameter
+\fIusername=\fR\&. Similarly the longer smbfs style parameter names may be accepted as synonyms for the shorter cifs parameters
+\fIpass=\fR,\fIdom=\fR
+and
+\fIcred=\fR\&.
+.sp .5v
+.EM yellow
+.RE
+.RE
+.PP
+password=\fIarg\fR
+.RS 4
+specifies the CIFS password\&. If this option is not given then the environment variable
+\fIPASSWD\fR
+is used\&. If the password is not specified directly or indirectly via an argument to mount,
+\fImount\&.cifs\fR
+will prompt for a password, unless the guest option is specified\&.
+.sp
+Note that a password which contains the delimiter character (i\&.e\&. a comma \',\') will fail to be parsed correctly on the command line\&. However, the same password defined in the PASSWD environment variable or via a credentials file (see below) or entered at the password prompt will be read correctly\&.
+.RE
+.PP
+credentials=\fIfilename\fR
+.RS 4
+specifies a file that contains a username and/or password and optionally the name of the workgroup\&. The format of the file is:
+.sp
+.if n \{\
+.RS 4
+.\}
+.fam C
+.ps -1
+.nf
+.if t \{\
+.sp -1
+.\}
+.BB lightgray adjust-for-leading-newline
+.sp -1
+
+		username=\fIvalue\fR
+		password=\fIvalue\fR
+		workgroup=\fIvalue\fR
+.EB lightgray adjust-for-leading-newline
+.if t \{\
+.sp 1
+.\}
+.fi
+.fam
+.ps +1
+.if n \{\
+.RE
+.\}
+.sp
+This is preferred over having passwords in plaintext in a shared file, such as
+\FC/etc/fstab\F[]\&. Be sure to protect any credentials file properly\&.
+.RE
+.PP
+uid=\fIarg\fR
+.RS 4
+sets the uid that will own all files on the mounted filesystem\&. It may be specified as either a username or a numeric uid\&. For mounts to servers which do support the CIFS Unix extensions, such as a properly configured Samba server, the server provides the uid, gid and mode so this parameter should not be specified unless the server and client uid and gid numbering differ\&. If the server and client are in the same domain (e\&.g\&. running winbind or nss_ldap) and the server supports the Unix Extensions then the uid and gid can be retrieved from the server (and uid and gid would not have to be specified on the mount\&. For servers which do not support the CIFS Unix extensions, the default uid (and gid) returned on lookup of existing files will be the uid (gid) of the person who executed the mount (root, except when mount\&.cifs is configured setuid for user mounts) unless the "uid=" (gid) mount option is specified\&. For the uid (gid) of newly created files and directories, ie files created since the last mount of the server share, the expected uid (gid) is cached as long as the inode remains in memory on the client\&. Also note that permission checks (authorization checks) on accesses to a file occur at the server, but there are cases in which an administrator may want to restrict at the client as well\&. For those servers which do not report a uid/gid owner (such as Windows), permissions can also be checked at the client, and a crude form of client side permission checking can be enabled by specifying file_mode and dir_mode on the client\&. Note that the mount\&.cifs helper must be at version 1\&.10 or higher to support specifying the uid (or gid) in non\-numeric form\&.
+.RE
+.PP
+gid=\fIarg\fR
+.RS 4
+sets the gid that will own all files on the mounted filesystem\&. It may be specified as either a groupname or a numeric gid\&. For other considerations see the description of uid above\&.
+.RE
+.PP
+port=\fIarg\fR
+.RS 4
+sets the port number on the server to attempt to contact to negotiate CIFS support\&. If the CIFS server is not listening on this port or if it is not specified, the default ports will be tried i\&.e\&. port 445 is tried and if no response then port 139 is tried\&.
+.RE
+.PP
+servern=\fIarg\fR
+.RS 4
+Specify the server netbios name (RFC1001 name) to use when attempting to setup a session to the server\&. Although rarely needed for mounting to newer servers, this option is needed for mounting to some older servers (such as OS/2 or Windows 98 and Windows ME) since when connecting over port 139 they, unlike most newer servers, do not support a default server name\&. A server name can be up to 15 characters long and is usually uppercased\&.
+.RE
+.PP
+netbiosname=\fIarg\fR
+.RS 4
+When mounting to servers via port 139, specifies the RFC1001 source name to use to represent the client netbios machine name when doing the RFC1001 netbios session initialize\&.
+.RE
+.PP
+file_mode=\fIarg\fR
+.RS 4
+If the server does not support the CIFS Unix extensions this overrides the default file mode\&.
+.RE
+.PP
+dir_mode=\fIarg\fR
+.RS 4
+If the server does not support the CIFS Unix extensions this overrides the default mode for directories\&.
+.RE
+.PP
+ip=\fIarg\fR
+.RS 4
+sets the destination IP address\&. This option is set automatically if the server name portion of the requested UNC name can be resolved so rarely needs to be specified by the user\&.
+.RE
+.PP
+domain=\fIarg\fR
+.RS 4
+sets the domain (workgroup) of the user
+.RE
+.PP
+guest
+.RS 4
+don\'t prompt for a password
+.RE
+.PP
+iocharset
+.RS 4
+Charset used to convert local path names to and from Unicode\&. Unicode is used by default for network path names if the server supports it\&. If iocharset is not specified then the nls_default specified during the local client kernel build will be used\&. If server does not support Unicode, this parameter is unused\&.
+.RE
+.PP
+ro
+.RS 4
+mount read\-only
+.RE
+.PP
+rw
+.RS 4
+mount read\-write
+.RE
+.PP
+setuids
+.RS 4
+If the CIFS Unix extensions are negotiated with the server the client will attempt to set the effective uid and gid of the local process on newly created files, directories, and devices (create, mkdir, mknod)\&. If the CIFS Unix Extensions are not negotiated, for newly created files and directories instead of using the default uid and gid specified on the the mount, cache the new file\'s uid and gid locally which means that the uid for the file can change when the inode is reloaded (or the user remounts the share)\&.
+.RE
+.PP
+nosetuids
+.RS 4
+The client will not attempt to set the uid and gid on on newly created files, directories, and devices (create, mkdir, mknod) which will result in the server setting the uid and gid to the default (usually the server uid of the user who mounted the share)\&. Letting the server (rather than the client) set the uid and gid is the default\&.If the CIFS Unix Extensions are not negotiated then the uid and gid for new files will appear to be the uid (gid) of the mounter or the uid (gid) parameter specified on the mount\&.
+.RE
+.PP
+perm
+.RS 4
+Client does permission checks (vfs_permission check of uid and gid of the file against the mode and desired operation), Note that this is in addition to the normal ACL check on the target machine done by the server software\&. Client permission checking is enabled by default\&.
+.RE
+.PP
+noperm
+.RS 4
+Client does not do permission checks\&. This can expose files on this mount to access by other users on the local client system\&. It is typically only needed when the server supports the CIFS Unix Extensions but the UIDs/GIDs on the client and server system do not match closely enough to allow access by the user doing the mount\&. Note that this does not affect the normal ACL check on the target machine done by the server software (of the server ACL against the user name provided at mount time)\&.
+.RE
+.PP
+directio
+.RS 4
+Do not do inode data caching on files opened on this mount\&. This precludes mmaping files on this mount\&. In some cases with fast networks and little or no caching benefits on the client (e\&.g\&. when the application is doing large sequential reads bigger than page size without rereading the same data) this can provide better performance than the default behavior which caches reads (readahead) and writes (writebehind) through the local Linux client pagecache if oplock (caching token) is granted and held\&. Note that direct allows write operations larger than page size to be sent to the server\&. On some kernels this requires the cifs\&.ko module to be built with the CIFS_EXPERIMENTAL configure option\&.
+.RE
+.PP
+mapchars
+.RS 4
+Translate six of the seven reserved characters (not backslash, but including the colon, question mark, pipe, asterik, greater than and less than characters) to the remap range (above 0xF000), which also allows the CIFS client to recognize files created with such characters by Windows\'s POSIX emulation\&. This can also be useful when mounting to most versions of Samba (which also forbids creating and opening files whose names contain any of these seven characters)\&. This has no effect if the server does not support Unicode on the wire\&.
+.RE
+.PP
+nomapchars
+.RS 4
+Do not translate any of these seven characters (default)
+.RE
+.PP
+intr
+.RS 4
+currently unimplemented
+.RE
+.PP
+nointr
+.RS 4
+(default) currently unimplemented
+.RE
+.PP
+hard
+.RS 4
+The program accessing a file on the cifs mounted file system will hang when the server crashes\&.
+.RE
+.PP
+soft
+.RS 4
+(default) The program accessing a file on the cifs mounted file system will not hang when the server crashes and will return errors to the user application\&.
+.RE
+.PP
+noacl
+.RS 4
+Do not allow POSIX ACL operations even if server would support them\&.
+.sp
+The CIFS client can get and set POSIX ACLs (getfacl, setfacl) to Samba servers version 3\&.0\&.10 and later\&. Setting POSIX ACLs requires enabling both XATTR and then POSIX support in the CIFS configuration options when building the cifs module\&. POSIX ACL support can be disabled on a per mount basis by specifying "noacl" on mount\&.
+.RE
+.PP
+nocase
+.RS 4
+Request case insensitive path name matching (case sensitive is the default if the server suports it)\&.
+.RE
+.PP
+sec=
+.RS 4
+Security mode\&. Allowed values are:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+none attempt to connection as a null user (no name)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+krb5 Use Kerberos version 5 authentication
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+krb5i Use Kerberos authentication and packet signing
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ntlm Use NTLM password hashing (default)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ntlmi Use NTLM password hashing with signing (if /proc/fs/cifs/PacketSigningEnabled on or if server requires signing also can be the default)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ntlmv2 Use NTLMv2 password hashing
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ntlmv2i Use NTLMv2 password hashing with packet signing
+.sp
+.RE
+[NB This [sec parameter] is under development and expected to be available in cifs kernel module 1\&.40 and later]
+.RE
+.PP
+nobrl
+.RS 4
+Do not send byte range lock requests to the server\&. This is necessary for certain applications that break with cifs style mandatory byte range locks (and most cifs servers do not yet support requesting advisory byte range locks)\&.
+.RE
+.PP
+sfu
+.RS 4
+When the CIFS Unix Extensions are not negotiated, attempt to create device files and fifos in a format compatible with Services for Unix (SFU)\&. In addition retrieve bits 10\-12 of the mode via the SETFILEBITS extended attribute (as SFU does)\&. In the future the bottom 9 bits of the mode mode also will be emulated using queries of the security descriptor (ACL)\&. [NB: requires version 1\&.39 or later of the CIFS VFS\&. To recognize symlinks and be able to create symlinks in an SFU interoperable form requires version 1\&.40 or later of the CIFS VFS kernel module\&.
+.RE
+.PP
+serverino
+.RS 4
+Use inode numbers (unique persistent file identifiers) returned by the server instead of automatically generating temporary inode numbers on the client\&. Although server inode numbers make it easier to spot hardlinked files (as they will have the same inode numbers) and inode numbers may be persistent (which is userful for some sofware), the server does not guarantee that the inode numbers are unique if multiple server side mounts are exported under a single share (since inode numbers on the servers might not be unique if multiple filesystems are mounted under the same shared higher level directory)\&. Note that not all servers support returning server inode numbers, although those that support the CIFS Unix Extensions, and Windows 2000 and later servers typically do support this (although not necessarily on every local server filesystem)\&. Parameter has no effect if the server lacks support for returning inode numbers or equivalent\&.
+.RE
+.PP
+noserverino
+.RS 4
+client generates inode numbers (rather than using the actual one from the server) by default\&.
+.RE
+.PP
+nouser_xattr
+.RS 4
+(default) Do not allow getfattr/setfattr to get/set xattrs, even if server would support it otherwise\&.
+.RE
+.PP
+rsize=\fIarg\fR
+.RS 4
+default network read size (usually 16K)\&. The client currently can not use rsize larger than CIFSMaxBufSize\&. CIFSMaxBufSize defaults to 16K and may be changed (from 8K to the maximum kmalloc size allowed by your kernel) at module install time for cifs\&.ko\&. Setting CIFSMaxBufSize to a very large value will cause cifs to use more memory and may reduce performance in some cases\&. To use rsize greater than 127K (the original cifs protocol maximum) also requires that the server support a new Unix Capability flag (for very large read) which some newer servers (e\&.g\&. Samba 3\&.0\&.26 or later) do\&. rsize can be set from a minimum of 2048 to a maximum of 130048 (127K or CIFSMaxBufSize, whichever is smaller)
+.RE
+.PP
+wsize=\fIarg\fR
+.RS 4
+default network write size (default 57344) maximum wsize currently allowed by CIFS is 57344 (fourteen 4096 byte pages)
+.RE
+.PP
+\-\-verbose
+.RS 4
+Print additional debugging information for the mount\&. Note that this parameter must be specified before the \-o\&. For example:
+.sp
+mount \-t cifs //server/share /mnt \-\-verbose \-o user=username
+.RE
+.SH "SERVICE FORMATTING AND DELIMITERS"
+.PP
+It\'s generally preferred to use forward slashes (/) as a delimiter in service names\&. They are considered to be the "universal delimiter" since they are generally not allowed to be embedded within path components on Windows machines and the client can convert them to blackslashes (\e) unconditionally\&. Conversely, backslash characters are allowed by POSIX to be part of a path component, and can\'t be automatically converted in the same way\&.
+.PP
+mount\&.cifs will attempt to convert backslashes to forward slashes where it\'s able to do so, but it cannot do so in any path component following the sharename\&.
+.SH "ENVIRONMENT VARIABLES"
+.PP
+The variable
+\fIUSER\fR
+may contain the username of the person to be used to authenticate to the server\&. The variable can be used to set both username and password by using the format username%password\&.
+.PP
+The variable
+\fIPASSWD\fR
+may contain the password of the person using the client\&.
+.PP
+The variable
+\fIPASSWD_FILE\fR
+may contain the pathname of a file to read the password from\&. A single line of input is read and used as the password\&.
+.SH "NOTES"
+.PP
+This command may be used only by root, unless installed setuid, in which case the noeexec and nosuid mount flags are enabled\&.
+.SH "CONFIGURATION"
+.PP
+The primary mechanism for making configuration changes and for reading debug information for the cifs vfs is via the Linux /proc filesystem\&. In the directory
+\FC/proc/fs/cifs\F[]
+are various configuration files and pseudo files which can display debug information\&. There are additional startup options such as maximum buffer size and number of buffers which only may be set when the kernel cifs vfs (cifs\&.ko module) is loaded\&. These can be seen by running the modinfo utility against the file cifs\&.ko which will list the options that may be passed to cifs during module installation (device driver load)\&. For more information see the kernel file
+\FCfs/cifs/README\F[]\&.
+.SH "BUGS"
+.PP
+Mounting using the CIFS URL specification is currently not supported\&.
+.PP
+The credentials file does not handle usernames or passwords with leading space\&.
+.PP
+Note that the typical response to a bug report is a suggestion to try the latest version first\&. So please try doing that first, and always include which versions you use of relevant software when reporting bugs (minimum: mount\&.cifs (try mount\&.cifs \-V), kernel (see /proc/version) and server type you are trying to contact\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 1\&.52 of the cifs vfs filesystem (roughly Linux kernel 2\&.6\&.24)\&.
+.SH "SEE ALSO"
+.PP
+Documentation/filesystems/cifs\&.txt and fs/cifs/README in the linux kernel source tree may contain additional options and information\&.
+.PP
+\fBumount.cifs\fR(8)
+.SH "AUTHOR"
+.PP
+Steve French
+.PP
+The syntax and manpage were loosely based on that of smbmount\&. It was converted to Docbook/XML by Jelmer Vernooij\&.
+.PP
+The maintainer of the Linux cifs vfs and the userspace tool
+\fImount\&.cifs\fR
+is
+Steve French\&. The
+Linux CIFS Mailing list
+is the preferred place to ask questions regarding these programs\&.

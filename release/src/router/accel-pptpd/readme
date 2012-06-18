@@ -1,0 +1,118 @@
+Overview
+--------
+The ACCEL-PPTP is PPTP client/server based on POPTOP (http://www.poptop.org) and PPTPCLIENT (http://pptpclient.sourceforge.net).
+ACCEL-PPTP uses kernel module to increase performance and decrease system usage.
+For more documentation about PPTP visit POPTOP web site.
+ACCEL-PPTP was successfully tested on about 1200 connections and system usage has been decreased by ~50% on comparisons with the
+original poptop server.
+
+
+Requirment
+----------
+1. modern linux distribution
+1. kernel-2.6.15 or later with PPPoX support or kernel-2.4.x patched for PPPoX support (2.4.x not fully tested)
+2. pppd-2.4.2 or later
+
+Compilation
+-----------
+Make sure you have configured kernel headers in /usr/src/linux or /lib/modules/`uname -r`/build,
+or specify other location via KDIR environment variable
+make client - compiles only client's part of package
+make server - full compilation
+
+Insallation
+-----------
+Do make client_install for installing pptp client.
+Do make server_install for installing pptp server.
+
+
+Configuration
+-------------
+If you are beginner in PPTP please read documentation available on POPTOP web site.
+Configuration is same as original pptpd and pptp.
+Exception in configuration of client is:
+replace line in peer config file (for instance, /etc/ppp/peers/my_vpn):
+  pty "pptp x.x.x.x ...." 
+to 
+  plugin "pptp.so"
+  pptp_server x.x.x.x
+  pptp_phone xxxx (optional)
+  pptp_window xxx (optional) - this is sliding window size (at current time automatic algorithm is not implemented),
+                               set it to  3-10 for low-speed connections,
+                                      to   >10 for hi-speed connections. 
+  
+Remove lock option in /etc/ppp/options.pptp, /etc/ppp/options.pptpd or similar if it exists.
+
+See configuration example in example directory.
+
+
+Warning !!!
+-----------
+1. This driver conflicts with ip_gre driver (in kernel), so make sure that ip_gre is not built-in or loaded at run time.
+2. Never mix connections of accel-pptp and original pptpd, before starting accel-pptp make sure that no connections
+   of original pptpd exists.
+3. If you are switching from <2.6.23 to >=2.6.23 kernel or vi”e-versa then rebuild and reinstall entire package, 
+   not just kernel module.
+
+
+Kernel module
+-------------
+Kernel module is available as separated module and as patch for kernel.
+You can use either separated module or patch for kernel.
+There is only patch for 2.6.18 kernel now. If you wish patch for other kernels please mail me.
+
+ppp_generic_smp
+---------------
+This driver is replacement of kernel's ppp_generic for better smp performance.
+It is disables by default, to enable you should uncomment "#obj-m      += ppp_generic_smp.o" in kernel/driver/Makefile.
+
+
+Thanks
+------
+Thanks to Kirill Yushkov for debug support and donations.
+
+
+http://accel-pptp.sourceforge.net/
+mail: xeb@mail.ru, xeb@linux.vsi.ru
+ICQ: 337258064
+Jabber: xeb@city.veganet.ru, xeb@linux.vsi.ru
+MDIR = extra
+
+KDIR ?= $(shell sh find_kernel_headers)
+
+obj-m      += pptp.o
+
+CURRENT = $(shell uname -r)
+
+
+ifndef MAKING_MODULES
+all: kernel_headers
+	make -C $(KDIR) SUBDIRS=$(PWD) modules
+endif
+
+ifneq (,$(findstring 2.4.,$(CURRENT)))
+install:
+	@if test ! -d /lib/modules/$(CURRENT)/extra; then \
+	    mkdir /lib/modules/$(CURRENT)/extra; \
+	fi; \
+	cp -v $(TARGET).o /lib/modules/$(CURRENT)/extra/$(TARGET).o && /sbin/depmod -a
+else
+install:	
+	make -C $(KDIR) SUBDIRS=$(PWD) modules_install
+endif
+
+kernel_headers:
+	@if test -z "$(KDIR)"; then \
+	    echo "kernel headers not found"; \
+	    exit 1; \
+	else \
+	    echo "using \"$(KDIR)\" kernel headers"; \
+	fi
+
+
+clean:
+	-rm -f *.o *.ko .*.cmd .*.flags *.mod.c
+
+ifneq (,$(findstring 2.4.,$(CURRENT)))
+include $(KDIR)/Rules.make
+endif

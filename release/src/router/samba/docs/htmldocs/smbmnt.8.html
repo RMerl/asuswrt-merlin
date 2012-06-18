@@ -1,0 +1,48 @@
+
+
+ 
+
+
+
+<html><head><title>smbmnt (1)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>smbmnt (1)</h1>
+<h2>Samba</h2>
+<h2>25 September 1999</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    smbmnt - helper utility for mounting SMB filesystems
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+    
+<strong>smbmnt</strong> mount-point [ -s share ] [ -r ] [ -u uid ] [ -g gid ] [ -f mask ] [ -d mask ] 
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>smbmnt is a helper application used by the smbmount program to do the
+actual mounting of SMB shares. smbmnt is meant to be installed setuid
+root so that normal users can mount their smb shares. It checks
+whether the user has write permissions on the mount point and then
+mounts the directory.
+<p>The smbmnt program is normally invoked by smbmount. It should not be
+invoked directly by users.
+<p><p></p><dt><strong><strong>-r</strong></strong><dd> mount the filesystem read-only
+<p><p></p><dt><strong><strong>-u uid</strong></strong><dd> specify the uid that the files will be owned by
+<p><p></p><dt><strong><strong>-g gid</strong></strong><dd> specify the gid that the files will be owned by
+<p><p></p><dt><strong><strong>-f mask</strong></strong><dd> specify the octal file mask applied 
+<p><p></p><dt><strong><strong>-d mask</strong></strong><dd> specify the octal directory mask applied 
+<p><h2>AUTHOR</h2>
+    
+The maintainer of smbfs, smbmnt and smbmount is Andrew Tridgell
+<a href="mailto:tridge@samba.org"><em>tridge@samba.org</em></a>
+</body>
+</html>

@@ -1,0 +1,360 @@
+AC_INIT
+AC_CANONICAL_SYSTEM
+AM_INIT_AUTOMAKE(cyassl,1.6.5)
+AM_CONFIG_HEADER(ctaocrypt/include/config.h)
+
+
+dnl Include m4
+sinclude(lib_socket_nsl.m4)
+sinclude(acx_pthread.m4)
+
+
+# make sure configure doesn't add to CFLAGS
+CFLAGS="$CFLAGS $C_EXTRA_FLAGS"    
+
+AC_PROG_CC
+AM_PROG_AS
+AC_PROG_INSTALL
+AC_LIBTOOL_WIN32_DLL
+AC_PROG_LIBTOOL
+
+AC_PREFIX_DEFAULT(/usr/local/cyassl)
+
+AC_C_BIGENDIAN
+
+AC_CHECK_SIZEOF(long, 4)
+AC_CHECK_SIZEOF(long long, 8)
+
+
+OPTIMIZE_CFLAGS="-Os -fomit-frame-pointer"
+OPTIMIZE_FAST_CFLAGS="-O3 -fomit-frame-pointer"
+OPTIMIZE_HUGE_CFLAGS="-funroll-loops -DTFM_SMALL_SET"
+DEBUG_CFLAGS="-g -DDEBUG -DDEBUG_CYASSL"
+
+
+# DEBUG
+AC_ARG_ENABLE(debug,
+    [  --enable-debug          Enable CyaSSL debugging support (default: disabled)],
+    [ ENABLED_DEBUG=$enableval ],
+    [ ENABLED_DEBUG=no ]
+    )
+if test "$ENABLED_DEBUG" = "yes"
+then
+  # Full debug. Very slow in some cases
+  CFLAGS="$DEBUG_CFLAGS $CFLAGS"
+else
+  # Optimized version. No debug
+  CFLAGS="$CFLAGS -DNDEBUG"
+fi
+
+
+# SMALL BUILD
+AC_ARG_ENABLE(small,
+    [  --enable-small          Enable smallest build (default: disabled)],
+    [ ENABLED_SMALL=$enableval ],
+    [ ENABLED_SMALL=no ]
+    )
+if test "$ENABLED_SMALL" = "yes"
+then
+  # make small no tls build with smallest cipher
+  # if you only want server or client you can define NO_CYASSL_SERVER or
+  # NO_CYASSL_CLIENT but then some of the examples and testsuite won't build
+  # note that TLS needs HMAC
+  CFLAGS="-DNO_TLS -DNO_HMAC -DNO_AES -DNO_DES3 -DNO_SHA256 -DNO_ERROR_STRINGS -DNO_HC128 -DNO_RABBIT -DNO_PSK -DNO_DSA -DNO_DH $CFLAGS"
+fi
+
+
+# SINGLE THREADED
+AC_ARG_ENABLE(singleThreaded,
+    [  --enable-singleThreaded Enable CyaSSL single threaded (default: disabled)],
+    [ ENABLED_SINGLETHREADED=$enableval ],
+    [ ENABLED_SINGLETHREADED=no ]
+    )
+if test "$ENABLED_SINGLETHREADED" = "yes"
+then
+  CFLAGS="-DSINGLE_THREADED $CFLAGS"
+fi
+
+
+# DTLS
+AC_ARG_ENABLE(dtls,
+    [  --enable-dtls           Enable CyaSSL DTLS (default: disabled)],
+    [ ENABLED_DTLS=$enableval ],
+    [ ENABLED_DTLS=no ]
+    )
+if test "$ENABLED_DTLS" = "yes"
+then
+  CFLAGS="-DCYASSL_DTLS $CFLAGS"
+fi
+
+
+# OPENSSL Extra Compatibility
+AC_ARG_ENABLE(opensslExtra,
+    [  --enable-opensslExtra   Enable extra OpenSSL API, size+ (default: disabled)],
+    [ ENABLED_OPENSSLEXTRA=$enableval ],
+    [ ENABLED_OPENSSLEXTRA=no ]
+    )
+if test "$ENABLED_OPENSSLEXTRA" = "yes"
+then
+  CFLAGS="-DOPENSSL_EXTRA $CFLAGS"
+fi
+
+
+# IPv6 Test Apps
+AC_ARG_ENABLE(ipv6,
+    [  --enable-ipv6           Enable testing of IPV6 (default: disabled)],
+    [ ENABLED_IPV6=$enableval ],
+    [ ENABLED_IPV6=no ]
+    )
+
+if test "$ENABLED_IPV6" = "yes"
+then
+    CFLAGS="$CFLAGS -DTEST_IPV6"
+fi
+
+
+# fastmath
+AC_ARG_ENABLE(fastmath,
+    [  --enable-fastmath       Enable fast math for BigInts(default: disabled)],
+    [ ENABLED_FASTMATH=$enableval ],
+    [ ENABLED_FASTMATH=no ]
+    )
+
+if test "$ENABLED_FASTMATH" = "yes"
+then
+    CFLAGS="$CFLAGS -DUSE_FAST_MATH"
+fi
+
+
+# fast HUGE math
+AC_ARG_ENABLE(fasthugemath,
+    [  --enable-fasthugemath   Enable fast math + huge code for BigInts(def: off)],
+    [ ENABLED_FASTHUGEMATH=$enableval ],
+    [ ENABLED_FASTHUGEMATH=no ]
+    )
+
+if test "$ENABLED_FASTHUGEMATH" = "yes"
+then
+    ENABLED_FASTMATH="yes"
+    CFLAGS="$CFLAGS -DUSE_FAST_MATH"
+fi
+
+
+# big cache
+AC_ARG_ENABLE(bigcache,
+    [  --enable-bigcache       Enable big session cache (default: disabled)],
+    [ ENABLED_BIGCACHE=$enableval ],
+    [ ENABLED_BIGCACHE=no ]
+    )
+
+if test "$ENABLED_BIGCACHE" = "yes"
+then
+    CFLAGS="$CFLAGS -DBIG_SESSION_CACHE"
+fi
+
+
+# HUGE cache
+AC_ARG_ENABLE(hugecache,
+    [  --enable-hugecache      Enable huge session cache (default: disabled)],
+    [ ENABLED_HUGECACHE=$enableval ],
+    [ ENABLED_HUGECACHE=no ]
+    )
+
+if test "$ENABLED_HUGECACHE" = "yes"
+then
+    CFLAGS="$CFLAGS -DHUGE_SESSION_CACHE"
+fi
+
+
+# SNIFFER
+AC_ARG_ENABLE(sniffer,
+    [  --enable-sniffer        Enable CyaSSL sniffer support (default: disabled)],
+    [ ENABLED_SNIFFER=$enableval ],
+    [ ENABLED_SNIFFER=no ]
+    )
+
+if test "$ENABLED_SNIFFER" = "yes"
+then
+    CFLAGS="$CFLAGS -DCYASSL_SNIFFER -DOPENSSL_EXTRA"
+fi
+
+AM_CONDITIONAL([BUILD_SNIFFER], [test "x$ENABLED_SNIFFER" = "xyes"])
+
+# AES-NI
+AC_ARG_ENABLE(aesni,
+    [  --enable-aesni          Enable CyaSSL AES-NI support (default: disabled)],
+    [ ENABLED_AESNI=$enableval ],
+    [ ENABLED_AESNI=no ]
+    )
+
+if test "$ENABLED_AESNI" = "yes"
+then
+    CFLAGS="$CFLAGS -DCYASSL_AESNI"
+    if test "$GCC" = "yes"
+    then
+        # GCC needs these flags, icc doesn't
+        CFLAGS="$CFLAGS -maes -msse4"
+    fi
+fi
+
+AM_CONDITIONAL([BUILD_AESNI], [test "x$ENABLED_AESNI" = "xyes"])
+
+
+# RIPEMD
+AC_ARG_ENABLE(ripemd,
+    [  --enable-ripemd         Enable CyaSSL RIPEMD-160 support (default: disabled)],
+    [ ENABLED_RIPEMD=$enableval ],
+    [ ENABLED_RIPEMD=no ]
+    )
+
+if test "$ENABLED_RIPEMD" = "yes"
+then
+    CFLAGS="$CFLAGS -DCYASSL_RIPEMD"
+fi
+
+AM_CONDITIONAL([BUILD_RIPEMD], [test "x$ENABLED_RIPEMD" = "xyes"])
+
+
+# SHA512
+AC_ARG_ENABLE(sha512,
+    [  --enable-sha512         Enable CyaSSL SHA-160 support (default: disabled)],
+    [ ENABLED_SHA512=$enableval ],
+    [ ENABLED_SHA512=no ]
+    )
+
+if test "$ENABLED_SHA512" = "yes"
+then
+    CFLAGS="$CFLAGS -DCYASSL_SHA512"
+fi
+
+AM_CONDITIONAL([BUILD_SHA512], [test "x$ENABLED_SHA512" = "xyes"])
+
+
+# SESSION CERTS
+AC_ARG_ENABLE(sessioncerts,
+    [  --enable-sessioncerts   Enable session cert storing (default: disabled)],
+    [ ENABLED_SESSIONCERTS=$enableval ],
+    [ ENABLED_SESSIONCERTS=no ]
+    )
+
+if test "$ENABLED_SESSIONCERTS" = "yes"
+then
+    CFLAGS="$CFLAGS -DSESSION_CERTS"
+fi
+
+
+# KEY GENERATION
+AC_ARG_ENABLE(keygen,
+    [  --enable-keygen         Enable key generation (default: disabled)],
+    [ ENABLED_KEYGEN=$enableval ],
+    [ ENABLED_KEYGEN=no ]
+    )
+
+if test "$ENABLED_KEYGEN" = "yes"
+then
+    CFLAGS="$CFLAGS -DCYASSL_KEY_GEN"
+fi
+
+
+# CERT GENERATION
+AC_ARG_ENABLE(certgen,
+    [  --enable-certgen        Enable cert generation (default: disabled)],
+    [ ENABLED_CERTGEN=$enableval ],
+    [ ENABLED_CERTGEN=no ]
+    )
+
+if test "$ENABLED_CERTGEN" = "yes"
+then
+    CFLAGS="$CFLAGS -DCYASSL_CERT_GEN"
+fi
+
+
+# LIBZ
+trylibzdir=""
+AC_ARG_WITH(libz,
+    [  --with-libz=PATH        PATH to libz install (default /usr/) ],
+    [
+        AC_MSG_CHECKING([for libz])
+        CPPFLAGS="$CPPFLAGS -DHAVE_LIBZ"
+        LIBS="$LIBS -lz"
+
+        AC_TRY_LINK([#include <zlib.h>], [ deflateInit(NULL, 8); ],
+            [ libz_linked=yes ], [ libz_linked=no ])
+
+        if test "x$libz_linked" == "xno" ; then
+            if test "x$withval" != "xno" ; then
+                trylibzdir=$withval
+            fi
+            if test "x$withval" == "xyes" ; then
+                trylibzdir="/usr"
+            fi
+
+            LDFLAGS="$LDFLAGS -L$trylibzdir/lib"
+            CPPFLAGS="$CPPFLAGS -I$trylibzdir/include"
+
+            AC_TRY_LINK([#include <zlib.h>], [ deflateInit(NULL, 8); ],
+                [ libz_linked=yes ], [ libz_linked=no ])
+
+            if test "x$libz_linked" == "xno" ; then
+                AC_MSG_ERROR([libz isn't found.
+                If it's already installed, specify its path using --with-libz=/dir/])
+            fi
+            AC_MSG_RESULT([yes])
+        else
+            AC_MSG_RESULT([yes])
+        fi
+
+    ]
+)
+
+
+# OPTIMIZE FLAGS
+if test "$GCC" = "yes"
+then
+    if test "$ENABLED_DEBUG" = "no"
+    then
+        if test "$ENABLED_FASTMATH" = "yes"
+        then
+            CFLAGS="$CFLAGS $OPTIMIZE_FAST_CFLAGS"
+            if test "$ENABLED_FASTHUGEMATH" = "yes"
+            then
+                CFLAGS="$CFLAGS $OPTIMIZE_HUGE_CFLAGS"
+            fi
+        else
+            CFLAGS="$CFLAGS $OPTIMIZE_CFLAGS"
+        fi
+    fi
+fi
+
+
+
+
+ACX_PTHREAD
+
+LIBS="$PTHREAD_LIBS $LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+
+LIB_SOCKET_NSL
+
+AC_SUBST(CFLAGS)
+AC_SUBST(LIBS)
+
+
+
+# FINAL
+AC_CONFIG_FILES(Makefile dnl
+        ctaocrypt/Makefile dnl
+        ctaocrypt/src/Makefile dnl
+        ctaocrypt/test/Makefile dnl
+        ctaocrypt/benchmark/Makefile dnl
+        src/Makefile dnl
+        examples/Makefile dnl
+        examples/client/Makefile dnl
+        examples/server/Makefile dnl
+        examples/echoclient/Makefile dnl
+        examples/echoserver/Makefile dnl
+        testsuite/Makefile dnl
+        sslSniffer/Makefile dnl
+        sslSniffer/sslSnifferTest/Makefile)
+AC_OUTPUT
+

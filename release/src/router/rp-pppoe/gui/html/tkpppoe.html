@@ -1,0 +1,182 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <!-- LIC: GPL -->
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.76 [en] (X11; U; Linux 2.2.14-5.0 i686) [Netscape]">
+   <title>TkPPPoE Manual</title>
+</head>
+<body text="#000000" bgcolor="#FFFFFF" link="#0000EF" vlink="#59188E" alink="#FF0000">
+
+<center>
+<h1>tkpppoe - A GUI for managing PPPoE Connections</h1>
+</center>
+
+<h1>Introduction</h1>
+
+TkPPPoE is a graphical user interface for managing PPPoE connections.  It
+performs two different functions:
+<ul>
+<li>TkPPPoE lets you <em>define</em> connection properties.  This step must
+be done as root.
+<li>TkPPPoE lets you <em>start and stop</em> PPPoE connections.  This step
+may be done as a normal user, depending on how you configured the connection.
+</ul>
+
+<h1>Defining Connections</h1>
+
+To define connections, start TkPPPoE as root.  You can do this from
+a terminal by typing <code>tkpppoe</code>, or from the KDE or GNOME menus
+by selecting <b>Internet : TkPPPoE</b>.  The following window pops up:
+
+<p>
+<center><img src="mainwin.png" width="361" height="73" alt="Main Window">
+</center>
+
+<p>
+Because you have not yet defined any connections, the connection property
+window also pops up:
+
+<p>
+<center><img src="props-basic.png" width="440" height="259" alt="Connection Properties - Basic">
+</center>
+
+You can pop up the connection property window at any time by clicking
+<b>New Connection...</b>  You can edit the properties of an existing
+connection by selecting the connection's name and clicking
+<b>Properties...</b>
+<h4>Basic Information</h4>
+
+Let's fill in the basic information:
+<ul>
+<li>For <b>Connection Name</b>, enter a unique name for this connection.  It
+can be anything you like, but must contain only letters, numbers, underscores
+or dashes.  In particular, it can't contain spaces.  If you have only one
+PPPoE connection, a good name is <b>Default</b>.
+<li>For <b>User Name</b>, enter the user name supplied by your ISP.  Enter
+only the user name; do not enter an "@isp.com" part.
+<li>For <b>Network</b>, you may have to enter your ISP's domain name.
+(For example, <b>isp.com</b>.)  Some DSL providers add this to your user
+name; others do not.  You may have to experiment a bit.  The two most likely
+choices are your ISP's domain name, or blank.  Try both.
+<li>For <b>Password</b>, enter the password your ISP provided you with.
+</ul>
+
+<h4>NIC and DNS</h4>
+Click on the <b>NIC and DNS</b> tab:
+
+<p>
+<center><img src="props-nic.png" width="440" height="259" alt="Connection Properties - NIC and DNS"></center>
+<p>
+<ul>
+<li>For <b>Ethernet Interface</b>, enter the Ethernet interface connected
+to the DSL modem.  It is something like <b>eth0</b> or <b>eth1</b>.  Click
+on <b>...</b> to browse a list of detected Ethernet interfaces.
+<li>For <b>DNS Setup</b>, you have three options:
+<ol>
+<li><b>From Server</b> means that the system will obtain DNS information from
+the PPPoE server.  This is the correct choice for most ISPs.
+<li><b>Specify</b> means that you will enter the IP addresses of your DNS
+servers manually.  In this case, enter the addresses in the <b>Primary DNS</b>
+and <b>Secondary DNS</b> entries.
+<li><b>Do not Adjust</b> means that you want RP-PPPoE to leave your
+DNS setup alone.  Use this if you are running your own caching DNS server
+or know that you don't want the DNS setup touched.
+</ol>
+</ul>
+
+<h4>Options</h4>
+Click on the <b>Options</b> tab:
+
+<p>
+<center><img src="props-options.png" width="440" height="259" alt="Connection Properties - Options"></center>
+<p>
+<ul>
+<li>If you want ordinary users to be able to start and stop this connection,
+enable <b>Allow use by non-root users</b>.  If you do not enable this,
+non-root users will be able to monitor the connection, but not control it.
+<li>If you want to use synchronous PPP, enable <b>Use synchronous PPP</b>.
+This is recommended as it conserves CPU usage, but may not work on some
+(misconfigured) Linux kernels.
+<li>For <b>Firewalling</b>, you have three options:
+<ol>
+<li><b>Stand-Alone</b> installs a simple firewall ruleset for stand-alone
+machines.  Use this if you have only a single computer connected to the DSL
+modem.
+<li><b>Masquerading</b> installs a simple firewall ruleset for using
+your Linux computer as an Internet sharing device.  If you have two Ethernet
+cards, you can connect one card to the DSL modem and the other to an
+internal LAN.  The masquerading firewall ruleset lets internal machines
+share the DSL connection.
+<li><b>None</b>.  If you already have your own firewall rules, or you wish
+to run servers on your machine, select None.  This is <em>not recommended</em>
+unless you take steps to secure your machine, and know what you are doing.
+</ol>
+</ul>
+
+<h4>Advanced</h4>
+Click on the <b>Advanced</b> tab:
+
+<p>
+<center><img src="props-advanced.png" width="440" height="259" alt="Connection Properties - Advanced"></center>
+<p>
+
+In most cases, you can leave <b>AC-Name</b> and <b>Service-Name</b> blank.
+In some cases, your ISP may require you to enter information in these fields;
+contact your ISP for more information.
+
+<h1>Controlling Connections</h1>
+For these examples, run <code>tkpppoe</code> as a normal user (not root).
+The main window appears like this:
+
+<p>
+<center><img src="mainwin-nonroot.png" width="206" height="73" alt="Main Window - Non-root">
+</center>
+<p>
+<ul>
+<li>To start a connection, press <b>Start</b>.  The two LEDs flash red
+and grey.  If the connection is established, they turn green.
+<li>To stop a connection, press <b>Stop</b>.
+</ul>
+
+<p>The two rectangles to the right of the connection name are the
+<em>status LEDs</em>.  The top LED corresponds to transmitted data and
+the bottom to received.  The LEDs are colored as follows:
+<ul>
+<li>Grey -- connection is not established.
+<li>Flashing red/grey -- connection is being started.
+<li>Green -- connection is up, but idle.
+<li>Yellow -- connection is up and data is being sent or received.
+<li>Red -- connection has been lost, but the system is trying to reestablish it.
+</ul>
+
+<p>
+When a connection is established, two graphs appear:
+
+<p>
+<center><img src="mainwin-busy.png" width="206" height="73" alt="Main Window - Established Connection">
+</center>
+<p>
+
+The left (red) graph shows transmitted packets and the average
+transmission speed (in bits per second) over the sample time.  The
+right (green) graph shows received packets.
+
+<h1>Miscellaneous Information</h1>
+<ul>
+<li>The connection menu has an entry called <b>User's Manual</b> which
+will pop up this user manual (if you have Netscape installed.)
+<li>You can define multiple PPPoE connections, but you should not use
+more than one simultaneuously unless you feel comfortable editing scripts
+and setting up routing tables.  By default, TkPPPoE tries to add a default
+route for connections.  This does not work well with multiple simultaneous
+connections.
+<li>If you exit from TkPPPoE, connections which are up remain up.  You
+have to explicitly stop connections if you want them terminated.
+</ul>
+<hr>
+<a href="http://www.roaringpenguin.com/pppoe/">TkPPPoE</a> is Copyright 2001 by <a href="http://www.roaringpenguin.com">Roaring Penguin Software Inc</a> and
+is licensed under the GNU General Public License.
+<p>Screenshots show TkPPPoE running under the <a href="http://www.xfce.org">XFCE</a> desktop, a lightweight UNIX and Linux desktop.
+</body>
+</html>

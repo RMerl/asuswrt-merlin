@@ -1,0 +1,250 @@
+<appendix label="F" id="SAMBA-AP-F">
+<title>Sample Configuration File</title>
+
+
+
+
+<para>
+<indexterm id="appf-idx-993481-0" class="startofrange"><primary>configuration files</primary><secondary>sample of</secondary></indexterm>This appendix gives an example of a production <filename>smb.conf</filename> file and looks at how many of the options are used in practice. The following is a slightly disguised version of one we used at a corporation with five Linux servers, five Windows for Workgroups clients and three NT Workstation clients:</para>
+
+
+<programlisting># smb.conf -- File Server System for: 1 Example.COM  BSC &amp; Management Office
+[globals]
+	workgroup = 1EG_BSC
+	interfaces = 10.10.1.14/24</programlisting>
+
+
+<para>We provide this service on only one of the machine's interfaces. The <literal>interfaces</literal> option sets its address and netmask, where <literal>/24</literal> is the same as using the netmask 255.255.255.0:</para>
+
+
+<programlisting>comment = Samba ver. %v
+	preexec = csh -c `echo /usr/samba/bin/smbclient \
+                     -M %m -I %I` &amp;</programlisting>
+
+
+<para>We use the <command>preexec</command> command to log information about all connections by machine name (<literal>%m</literal>) and IP address (<literal>%I)</literal>:</para>
+
+
+<programlisting># smbstatus will output various info on current status
+	status = yes
+	browseable = yes
+	printing = bsd
+
+	# the username that will be used for access to services
+	# specified with 'guest = ok'
+	guest account = samba</programlisting>
+
+
+<para>The default guest account was <literal>nobody</literal>, uid -1, which produced log messages on one of our machines saying "your server is being unfriendly," so we created a specific Samba guest account for browsing and printing:</para>
+
+
+<programlisting># superuser account - admin privileges to shares, with no
+	# restrictions
+	# WARNING - use this with care: files can be modified,
+	# regardless of file permissions
+	admin users = root
+
+	# who is NOT allowed to connect to ANY service
+	invalid users = @wheel, mail, deamon, adt</programlisting>
+
+
+<para>Daemons can't use Samba, only people. The <literal>invalid</literal> <literal>users</literal> option closes a security hole; it prevents intruders from breaking in by pretending to be a daemon process.</para>
+
+
+<programlisting># hosts that are ALLOWED or DENIED from connecting to ANY service
+	hosts allow = 10.10.1.
+	hosts deny = 10.10.1.6
+
+	# where the lock files will be located
+	lock directory = /var/lock/samba/locks
+
+	# debug log files
+	# %m = separate log for each NetBIOS name (each machine)
+	log file = /var/log/samba/log.%m
+
+	# We send priority 0, 1 and 2 messages to the system logs
+	syslog = 2
+
+	# If a WinPopup message is sent to the server,
+	# redirect it to a user via e-mail
+
+	message command = /bin/mail -s 'message from #% on %m' \
+                               pkelly &lt; %s; rm %s
+
+# ---------------------------------------------------
+# [globals] Performance Tuning
+# ---------------------------------------------------
+
+	# caching algorithm to reduce time doing getwd() calls.
+	getwd cache = yes
+
+	socket options = TCP_NODELAY
+
+	# tell the server whether the client is present and
+	# responding in seconds
+	keep alive = 60
+
+	# num minutes of inactivity before a connection is
+	# considered dead
+	dead time = 30
+
+	read prediction = yes
+	share modes = yes
+	max xmit = 17384
+	read size = 512</programlisting>
+
+
+<para>The <literal>share</literal> <literal>modes</literal>, <literal>max</literal>, <literal>xinit</literal>, and <literal>read</literal> <literal>size</literal> options are machine-specific (see <link linkend="SAMBA-AP-B">Appendix B</link>):</para>
+
+
+<programlisting># locking is done by the server
+	locking = yes
+
+	# control whether dos style attributes should be mapped
+	# to unix execute bits
+	map hidden = yes
+	map archive = yes
+	map system = yes</programlisting>
+
+
+<para>The three <literal>map</literal> options will work only on shares with a create mode that includes the execute bits (0111). Our <literal>homes</literal> and <literal>printers</literal> shares won't honor them, but the [<literal>www]</literal> share will:</para>
+
+
+<programlisting># ---------------------------------------------------------
+# [globals] Security and Domain Logon Services
+# ---------------------------------------------------------
+# connections are made with UID and GID, not as shares
+	security = user
+
+# boolean variable that controls whether passwords
+# will be encrypted
+	encrypt passwords = yes
+	passwd chat = "*New password:*" %n\r "*New password (again):*" %n\r \ "*Password changed*"
+	passwd program = /usr/bin/passwd %u
+
+# Always become the local master browser
+	domain master = yes
+	preferred master = yes
+	os level = 34
+
+# For domain logons to work correctly. Samba acts as a
+# primary domain controller.
+	domain logons = yes
+
+# Logon script to run for user off the server each time
+# username (%U) logs in.  Set the time, connect to shares,
+# virus checks, etc.
+	logon script = scripts\%U.bat
+
+[netlogon]
+	comment = "Domain Logon Services"
+	path = /u/netlogon
+	writable = yes
+	create mode = 444
+	guest ok = no
+	volume = "Network"</programlisting>
+
+
+<para>This share, discussed in <link linkend="SAMBA-CH-6">Chapter 6</link>, is required for Samba to work smoothly in a Windows NT domain:</para>
+
+
+<programlisting># -----------------------------------------------------------
+# [homes] User Home Directories
+# -----------------------------------------------------------
+[homes]
+	comment = "Home Directory for : %u "
+	path = /u/users/%u</programlisting>
+
+
+<para>The password file of the Samba server specifies each person's home directory as   <emphasis>/home/</emphasis><replaceable>machine_name</replaceable><emphasis>/</emphasis><replaceable>person</replaceable>, which NFS converts to point to the actual physicl location under <emphasis>/u/users</emphasis>. The <literal>path</literal> option in the <literal>[homes]</literal> share tells Samba the actual (non-NFS) location:</para>
+
+
+<programlisting>guest ok = no
+	read only = no
+	create mode = 644
+	writable = yes
+	browseable = no
+
+# -----------------------------------------------------------
+# [printers] System Printers
+# -----------------------------------------------------------
+[printers]
+	comment = "Printers"
+	path = /var/spool/lpd/samba
+	printcap name = /etc/printcap
+	printable = yes
+	public = no
+	writable = no
+
+	lpq command = /usr/bin/lpq -P%p
+	lprm command = /usr/bin/lprm -P%p %j
+	lppause command = /usr/sbin/lpc stop %p
+	lpresume command = /usr/sbin/lpc start %p
+
+	create mode = 0700
+
+	browseable = no
+	load printers = yes
+
+# -----------------------------------------------------------
+# Specific Descriptions: [programs] [data] [retail]
+# -----------------------------------------------------------
+[programs]
+	comment = "Shared Programs %T"
+	volume = "programs"</programlisting>
+
+
+<para>Shared Programs shows up in the Network Neighborhood, and <literal>programs</literal> is the volume name you specify when an installation program wants to know the label of the CD-ROM from which it thinks it's loading:</para>
+
+
+<programlisting>path = /u/programs
+	public = yes
+	writeable = yes
+	printable = no
+	create mode = 664
+[cdrom]
+	comment = "Unix CDROM"
+	path = /u/cdrom
+	public = no
+	writeable = no
+	printable = no
+	volume = "cdrom"
+
+[data]
+	comment =  "Data Directories %T"
+	path = /u/data
+	public = no
+	create mode = 770
+	writeable = yes
+	volume = "data"
+
+[nt4]
+	comment =  "NT4 Server"
+	path = /u/systems/nt4
+	public = yes
+	create mode = 770
+	writeable = yes
+	volume = "nt4_server"
+
+[www]
+	comment =  "WWW System"
+	path = /usr/www/http
+	public = yes
+	create mode = 775
+	writeable = yes
+	volume = "www_system"</programlisting>
+
+
+<para>The <literal>[www]</literal> share is the directory used on the Unix server to serve web pages. Samba makes the directory available to local PC users so the art department can update web pages.</para>
+
+
+
+
+
+
+
+
+
+
+
+</appendix>

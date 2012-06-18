@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<style>
+html{
+margin:0 0;
+padding:0px;
+}
+body{
+display: block;
+overflow: hidden;
+}
+</style>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript">
+var this_url;
+var m = new lang();
+var g_storage = new myStorage();
+
+$("document").ready(function() {
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	$('label#username').text(m.getString('title_username'));
+	$('label#password').text(m.getString('title_password'));
+	$('button#ok').text(m.getString('btn_ok'));
+	$('button#cancel').text(m.getString('btn_cancel'));
+	$('span#desc').text(m.getString('msg_sharelink'));
+	
+	this_url = getUrlVars()["v"];
+	
+	while( this_url.indexOf('%3Cbr%3E') != -1 )
+		this_url = this_url.replace('%3Cbr%3E','\n');
+	
+	$("#sharelink").text(this_url);
+	
+	select_all();
+});
+
+function doCancel(e) {
+	parent.closeJqmWindow(0);
+};
+
+function getUrlVars(){
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++){
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+}
+
+function onKeyHandler(e){
+	if(e.keyCode==13)
+		doOK(e);
+}
+
+function select_all(){
+	var text_val = $("#sharelink");
+	text_val.focus();
+	text_val.select();
+}
+</script>
+</head>
+<body>
+
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;">	
+	<tr>
+  	<td>
+			<table width="100%">
+				<td><tr>				  
+					<span id='desc'></span>
+				</td></tr>
+				<td><tr>				  
+					<textarea name="sharelink" id="sharelink" style="height:400px;width:570px"></textarea>
+				</td></tr>				
+			</table>  
+    </td>    
+  </tr>
+  <tr style='height:20px'></tr>
+  <tr>
+  	<td>
+  	<div class="table_block_footer" style="text-align:right">
+    	<button id="cancel" class="btnStyle" onClick="doCancel();">Close</button>
+    </div>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

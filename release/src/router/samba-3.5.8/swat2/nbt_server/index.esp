@@ -1,0 +1,24 @@
+<% page_header("columns", "NBT Server", "nbt_server"); 
+
+  libinclude("base.js");
+  libinclude("management.js");
+%>
+
+<h1>NBT Server</h1>
+
+<%
+writefln("The NBT server is: %s\n", server_status("nbt"));
+%>
+
+<h2>Packet statistics</h2>
+<%
+
+var stats = nbtd_statistics();
+if (stats == undefined) {
+	writefln("nbt server not running");
+} else {
+	simple_table(stats);
+}
+%>
+
+<% page_footer(); %>

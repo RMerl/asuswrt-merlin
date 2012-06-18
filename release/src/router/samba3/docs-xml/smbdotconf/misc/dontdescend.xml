@@ -1,0 +1,20 @@
+<samba:parameter name="dont descend"
+	         context="S"
+			 type="boolean"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>There are certain directories on some systems 
+	(e.g., the <filename moreinfo="none">/proc</filename> tree under Linux) that are either not 
+	of interest to clients or are infinitely deep (recursive). This 
+	parameter allows you to specify a comma-delimited list of directories 
+	that the server should always show as empty.</para>
+
+	<para>Note that Samba can be very fussy about the exact format 
+	of the &quot;dont descend&quot; entries. For example you may need <filename moreinfo="none">
+	./proc</filename> instead of just <filename moreinfo="none">/proc</filename>. 
+	Experimentation is the best policy :-)  </para>
+</description>
+
+<value type="default"></value>
+<value type="example">/proc,/dev</value>
+</samba:parameter>

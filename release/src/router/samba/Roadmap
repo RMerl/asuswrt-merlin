@@ -1,0 +1,45 @@
+Copyright (C) 1997-1999 - Samba-Team
+
+The Samba-Team are committed to an aggressive program to deliver quality
+controlled software to a well defined roadmap.
+
+The current Samba release 2.0.4 is called the "NT Security update".
+
+It correctly implements the Windows NT specific SMB calls,
+and will operate correctly as a client in a Windows NT
+Domain environment.
+
+In addition, the first implementation of the Web-based GUI
+management tool ships with 2.0.0, thus fullfilling some of
+the commitments made in the 1.9.18 release Roadmap document.
+
+Some work has been done on ensuring compatibility with
+Windows NT 5.0 (now Windows 2000 :-) although this is
+a somewhat (slowly) moving target.
+
+The following development objectives for future releases
+are in place:
+
+----------------------------------------------------------------------------
+2.0.x       -   "NT Security update" - Allowing Windows NT Clients to
+                manipulate file security and ownership using native tools.
+
+Note that the "NT Security update" part of the Roadmap has been
+achieved with the Samba 2.0.4 release.
+
+2.0.xx      -   "Thin Server" mode, allowing a Samba server to be
+                inserted into a network with no UNIX setup required.
+                Some management capabilities for Samba using native NT tools.
+                Provision of command-line equivalents to native NT tools.
+
+2.X         -   "Domain Controller" - able to serve as a Windows NT PDC.
+
+X.XX        -   "Full Domain Integration" - allowing both PDC and BDC modes.
+
+Note that it is a given that the Samba Team will continue to track
+Windows (NT/2000) update releases, ensuring that Samba will work
+well with whatever "Beta" releases Redmond throws our way :-).
+
+You may also note that the release numbers get fuzzier the
+further into the future the objectives get. This is intentional
+as we cannot yet commit to exact timeframes.

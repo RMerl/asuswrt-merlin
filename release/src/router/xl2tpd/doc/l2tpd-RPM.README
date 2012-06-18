@@ -1,0 +1,58 @@
+
+l2tpd RPM
+"""""""""
+
+This l2tpd RPM was originally created by Lenny Cartier
+<lenny@mandrakesoft.com> and Per Øyvind Karlsen <peroyvind@delonic.no>.
+Some details have been changed by me (see specfile changelog).
+Originally it only built on recent versions of Mandrake but it
+should now work on Red Hat, SuSE and older Mandrake versions as well.
+You may need to edit the specfile for non-Red Hat systems and 
+set a flag for your distribution of choice.
+
+I don't know for what purpose Mandrakesoft included the l2tpd RPM
+in Mandrake Cooker (Oct 21 2002), but my objective was to use it
+in combination with FreeS/WAN so that Windows IPsec clients can 
+connect to it.
+
+The original RPM by Mandrakesoft starts l2tpd at install and runs
+it at startup. This has been changed for this RPM to be on the safe
+side. The l2tpd sample config file is copied to the default l2tpd.conf
+but all contents are commented out. L2tpd will still start on all
+interfaces, though. This could be a security risk, so I decided
+to not start l2tpd at install. It is also not added to the startup
+configuration. You will have to edit the config file and start l2tpd 
+explicitly. 
+
+This RPM does not contain firewall rules. There is simply too much
+variation (iptables, ipchains, Lokkit, homegrown rules etc.) to make any
+assumptions about the particular firewall in place.
+
+The example configuration files included in this RPM
+reflect the following setup:
+
+
+=========  Internet
+
+---------  LAN
+
+  +-------------------+         +------------------+          +---------------+
+  | Win9x + MSL2TP or |  ipsec0 | Linux FreeS/WAN  |          | some internal |
+  | SSH, SoftRemote   |=========| l2tpd, pppd      |----------| server        |
+  | or Win2000/XP     |    eth0 |                  | eth1     |               |
+  +-------------------+         +------------------+          +---------------+
+                                       
+   234.234.234.234     eth0=ipsec0=      eth1=192.168.1.98  192.168.1.2
+                       123.123.123.123   ppp0=192.168.1.99
+
+
+   internal network: 192.168.1.x
+   (from which 192.168.1.128-192.168.1.254 are reserved for Road Warriors)
+
+More information about this RPM package can be found at:
+http://www.jacco2.dds.nl/networking/freeswan-l2tp.html
+This page contains the latest versions, source RPMs, etc.
+
+Thank you to everybody who has provided feedback!
+
+Jacco de Leeuw <jacco2@dds.nl>

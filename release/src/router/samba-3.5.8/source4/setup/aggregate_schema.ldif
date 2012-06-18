@@ -1,0 +1,3 @@
+dn: CN=Aggregate,${SCHEMADN}
+objectClass: top
+objectClass: subSchema

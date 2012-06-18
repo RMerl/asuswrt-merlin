@@ -1,0 +1,85 @@
+# add valgrind suppressions for the build farm here. Get the format
+# from the build farm log
+
+{
+   samba_dlopen1
+   Memcheck:Cond
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+}
+
+{
+   samba_dlopen2
+   Memcheck:Cond
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+}
+
+{
+   samba_dlopen3
+   Memcheck:Addr4
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+}
+
+{
+   samba_dlopen4
+   Memcheck:Cond
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+ }
+
+{
+   samba_dlopen5
+   Memcheck:Addr4
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+}
+
+{
+   samba_dlopen6
+   Memcheck:Cond
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+}
+
+{
+   samba_dlopen7
+   Memcheck:Addr4
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+}						
+
+{
+   samba_libc_dlsym1
+   Memcheck:Addr4
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:__libc_dlsym
+}

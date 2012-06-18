@@ -1,0 +1,272 @@
+From b8f1f91cc6d7b579fdb2370ab046565f9930aa09
+From: Mike Frysinger
+Date: Thu, 08 Oct 2009 02:51:55 +0000
+Subject: clean up O_CLOEXEC handling
+
+Drop the "#ifndef O_CLOEXEC" cruft, enable O_CLOEXEC in most fcntl.h
+headers, and import __ASSUME_O_CLOEXEC from glibc.
+
+Signed-off-by: Mike Frysinger <vapier@gentoo.org>
+---
+Index: uClibc-0.9.30.1/libc/pwd_grp/lckpwdf.c
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/pwd_grp/lckpwdf.c	2008-05-20 00:57:34.000000000 +0200
++++ uClibc-0.9.30.1/libc/pwd_grp/lckpwdf.c	2009-11-26 13:44:11.935757716 +0100
+@@ -75,7 +75,7 @@
+   /* Prevent problems caused by multiple threads.  */
+   __UCLIBC_MUTEX_LOCK(mylock);
+ 
+-  lock_fd = open (_PATH_PASSWD, O_WRONLY);
++  lock_fd = open (_PATH_PASSWD, O_WRONLY | O_CLOEXEC);
+   if (lock_fd == -1) {
+     /* Cannot create lock file.  */
+ 	goto DONE;
+@@ -97,6 +97,12 @@
+ 	goto DONE;
+   }
+ 
++#ifndef __ASSUME_O_CLOEXEC
++    /* Make sure file gets correctly closed when process finished.  */
++   fcntl (lock_fd, F_SETFD, FD_CLOEXEC);
++#endif
++
++
+   /* Now we have to get exclusive write access.  Since multiple
+      process could try this we won't stop when it first fails.
+      Instead we set a timeout for the system call.  Once the timer
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/alpha/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/alpha/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/alpha/bits/fcntl.h	2009-11-26 13:35:06.744980002 +0100
+@@ -50,9 +50,7 @@
+ # define O_NOFOLLOW	0200000	/* Do not follow links.  */
+ # define O_DIRECT	02000000 /* Direct disk access.  */
+ # define O_NOATIME	04000000 /* Do not set atime.  */
+-# if 0
+ # define O_CLOEXEC      010000000 /* Set close_on_exec.  */
+-# endif
+ #endif
+ 
+ #ifdef __USE_LARGEFILE64
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/arm/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/arm/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/arm/bits/fcntl.h	2009-11-26 13:35:06.744980002 +0100
+@@ -50,9 +50,7 @@
+ # define O_NOFOLLOW	0100000	/* Do not follow links.	 */
+ # define O_DIRECT	0200000	/* Direct disk access.	*/
+ # define O_NOATIME     01000000 /* Do not set atime.  */
+-# if 0
+ # define O_CLOEXEC     02000000 /* Set close_on_exec.  */
+-# endif
+ #endif
+ 
+ /* For now Linux has synchronisity options for data and read operations.
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/avr32/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/avr32/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/avr32/bits/fcntl.h	2009-11-26 13:35:06.748316654 +0100
+@@ -30,6 +30,7 @@
+ # define O_DIRECTORY	00200000	/* direct disk access */
+ # define O_NOFOLLOW	00400000	/* don't follow links */
+ # define O_NOATIME	01000000	/* don't set atime */
++# define O_CLOEXEC	02000000	/* set close_on_exec */
+ #endif
+ 
+ #ifdef __USE_LARGEFILE64
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/bfin/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/bfin/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/bfin/bits/fcntl.h	2009-11-26 13:37:03.357878847 +0100
+@@ -49,6 +49,8 @@
+ # define O_NOFOLLOW	0100000	/* Do not follow links.	 */
+ # define O_DIRECT	0200000	/* Direct disk access.	*/
+ # define O_STREAMING	04000000/* streaming access */
++# define O_NOATIME	01000000/* don't set atime */
++# define O_CLOEXEC	02000000/* set close_on_exec *
+ #endif
+ 
+ /* For now Linux has synchronisity options for data and read operations.
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/cris/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/cris/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/cris/bits/fcntl.h	2009-11-26 13:35:06.748316654 +0100
+@@ -50,6 +50,7 @@
+ # define O_DIRECTORY	0200000	/* Must be a directory.	 */
+ # define O_NOFOLLOW	0400000	/* Do not follow links.	 */
+ # define O_NOATIME	01000000 /* Do not set atime.  */
++# define O_CLOEXEC	02000000 /* set close_on_exec */
+ #endif
+ 
+ /* For now Linux has synchronisity options for data and read operations.
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/frv/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/frv/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/frv/bits/fcntl.h	2009-11-26 13:38:32.785785660 +0100
+@@ -46,6 +46,8 @@
+ # define O_DIRECTORY	0200000	/* Must be a directory.  */
+ # define O_NOFOLLOW	0400000	/* Do not follow links.  */
+ # define O_STREAMING	04000000/* streaming access */
++# define O_NOATIME	01000000/* don't set atime */
++# define O_CLOEXEC	02000000/* set close_on_exec */
+ #endif
+ 
+ /* For now Linux has synchronisity options for data and read operations.
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/hppa/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/hppa/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/hppa/bits/fcntl.h	2009-11-26 13:35:06.748316654 +0100
+@@ -50,6 +50,7 @@
+ # define O_DIRECTORY	00010000 /* Must be a directory. */
+ # define O_NOFOLLOW	00000200 /* Do not follow links. */
+ # define O_NOATIME	04000000 /* Do not set atime. */
++# define O_CLOEXEC	010000000 /* set close_on_exec */
+ #endif
+ 
+ #ifdef __USE_LARGEFILE64
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/i386/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/i386/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/i386/bits/fcntl.h	2009-11-26 13:35:06.748316654 +0100
+@@ -50,9 +50,7 @@
+ # define O_DIRECTORY	0200000	/* Must be a directory.	 */
+ # define O_NOFOLLOW	0400000	/* Do not follow links.	 */
+ # define O_NOATIME     01000000 /* Do not set atime.  */
+-# if 0
+ # define O_CLOEXEC     02000000 /* Set close_on_exec.  */
+-# endif
+ #endif
+ 
+ /* For now Linux has synchronisity options for data and read operations.
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/ia64/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/ia64/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/ia64/bits/fcntl.h	2009-11-26 13:35:06.748316654 +0100
+@@ -49,9 +49,7 @@
+ # define O_DIRECTORY	0200000	/* must be a directory */
+ # define O_NOFOLLOW	0400000 /* don't follow links */
+ # define O_NOATIME	01000000 /* Do not set atime.  */
+-# if 0
+ # define O_CLOEXEC	02000000 /* Set close_on_exec.  */
+-# endif
+ #endif
+ 
+ #ifdef __USE_LARGEFILE64
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/m68k/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/m68k/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/m68k/bits/fcntl.h	2009-11-26 13:35:06.748316654 +0100
+@@ -49,6 +49,7 @@
+ # define O_NOFOLLOW	0100000	/* Do not follow links.	 */
+ # define O_DIRECT	0200000	/* Direct disk access.	*/
+ # define O_NOATIME	01000000 /* Do not set atime.  */
++# define O_CLOEXEC	02000000 /* set close_on_exec */
+ #endif
+ 
+ /* For now Linux has synchronisity options for data and read operations.
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/microblaze/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/microblaze/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/microblaze/bits/fcntl.h	2009-11-26 13:39:20.148703335 +0100
+@@ -46,6 +46,8 @@
+ # define O_NOFOLLOW	0100000	/* Do not follow links.	 */
+ # define O_DIRECT	0200000	/* Direct disk access.	*/
+ # define O_STREAMING	04000000/* streaming access */
++# define O_NOATIME	01000000/* Do not set atime.  */
++# define O_CLOEXEC	02000000/* set close_on_exec */
+ #endif
+ 
+ /* For now Linux has synchronisity options for data and read operations.
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/mips/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/mips/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/mips/bits/fcntl.h	2009-11-26 13:35:06.748316654 +0100
+@@ -51,6 +51,7 @@
+ # define O_DIRECT	0x8000	/* Direct disk access hint.  */
+ # define O_DIRECTORY	0x10000	/* Must be a directory.	 */
+ # define O_NOATIME	0x40000	/* Do not set atime.  */
++# define O_CLOEXEC	02000000 /* set close_on_exec */
+ #endif
+ 
+ /* For now Linux has no synchronisity options for data and read operations.
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/powerpc/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/powerpc/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/powerpc/bits/fcntl.h	2009-11-26 13:35:06.748316654 +0100
+@@ -50,9 +50,7 @@
+ # define O_DIRECTORY	 040000	/* Must be a directory.	 */
+ # define O_NOFOLLOW	0100000	/* Do not follow links.	 */
+ # define O_NOATIME	01000000 /* Do not set atime.  */
+-# if 0
+ # define O_CLOEXEC	02000000 /* Set close_on_exec.  */
+-# endif
+ #endif
+ 
+ #ifdef __USE_LARGEFILE64
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/sh/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/sh/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/sh/bits/fcntl.h	2009-11-26 13:35:06.748316654 +0100
+@@ -50,9 +50,7 @@
+ # define O_DIRECTORY	0200000	/* Must be a directory.	 */
+ # define O_NOFOLLOW	0400000	/* Do not follow links.	 */
+ # define O_NOATIME     01000000 /* Do not set atime.  */
+-# if 0
+ # define O_CLOEXEC     02000000 /* Set close_on_exec.  */
+-# endif
+ #endif
+ 
+ /* For now Linux has synchronisity options for data and read operations.
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/sh64/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/sh64/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/sh64/bits/fcntl.h	2009-11-26 13:37:47.554540700 +0100
+@@ -46,6 +46,8 @@
+ # define O_DIRECTORY	0200000	/* Must be a directory.  */
+ # define O_NOFOLLOW	0400000	/* Do not follow links.  */
+ # define O_STREAMING	04000000/* streaming access */
++# define O_NOATIME	01000000/* Do not set atime.  */
++# define O_CLOEXEC	02000000/* set close_on_exec */
+ #endif
+ 
+ /* For now Linux has synchronisity options for data and read operations.
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/sparc/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/sparc/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/sparc/bits/fcntl.h	2009-11-26 13:35:06.751656343 +0100
+@@ -49,9 +49,7 @@
+ # define O_NOFOLLOW	0x20000 /* don't follow links */
+ # define O_DIRECT	0x100000 /* direct disk access hint */
+ # define O_NOATIME	0x200000 /* Do not set atime.  */
+-# if 0
+ # define O_CLOEXEC	0x400000 /* Set close_on_exit.  */
+-# endif
+ #endif
+ 
+ #ifdef __USE_LARGEFILE64
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/x86_64/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/x86_64/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/x86_64/bits/fcntl.h	2009-11-26 13:35:06.751656343 +0100
+@@ -50,9 +50,7 @@
+ # define O_DIRECTORY	0200000	/* Must be a directory.	 */
+ # define O_NOFOLLOW	0400000	/* Do not follow links.	 */
+ # define O_NOATIME     01000000 /* Do not set atime.  */
+-# if 0
+ # define O_CLOEXEC     02000000 /* Set close_on_exec.  */
+-# endif
+ #endif
+ 
+ /* For now Linux has synchronisity options for data and read operations.
+Index: uClibc-0.9.30.1/libc/sysdeps/linux/xtensa/bits/fcntl.h
+===================================================================
+--- uClibc-0.9.30.1.orig/libc/sysdeps/linux/xtensa/bits/fcntl.h	2008-11-15 16:55:31.000000000 +0100
++++ uClibc-0.9.30.1/libc/sysdeps/linux/xtensa/bits/fcntl.h	2009-11-26 13:35:06.751656343 +0100
+@@ -50,6 +50,7 @@
+ # define O_DIRECTORY	0200000	/* Must be a directory.	 */
+ # define O_NOFOLLOW	0400000	/* Do not follow links.	 */
+ # define O_NOATIME     01000000 /* Do not set atime.  */
++# define O_CLOEXEC     02000000 /* set close_on_exec */
+ #endif
+ 
+ /* For now Linux has synchronisity options for data and read operations.

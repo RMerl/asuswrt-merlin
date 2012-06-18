@@ -1,0 +1,32 @@
+Match on IPv4 header options like source routing, record route,
+timestamp and router-alert.
+.TP
+.B "--ssrr"
+To match packets with the flag strict source routing.
+.TP
+.B "--lsrr"
+To match packets with the flag loose source routing.
+.TP
+.B "--no-srr"
+To match packets with no flag for source routing.
+.TP
+.B "\fR[\fB!\fR]\fB --rr"
+To match packets with the RR flag.
+.TP
+.B "\fR[\fB!\fR]\fB --ts"
+To match packets with the TS flag.
+.TP
+.B "\fR[\fB!\fR]\fB --ra"
+To match packets with the router-alert option.
+.TP
+.B "\fR[\fB!\fR]\fB --any-opt"
+To match a packet with at least one IP option, or no IP option
+at all if ! is chosen.
+.TP
+Examples:
+.TP
+$ iptables -A input -m ipv4options --rr -j DROP
+will drop packets with the record-route flag.
+.TP
+$ iptables -A input -m ipv4options --ts -j DROP
+will drop packets with the timestamp flag.

@@ -1,0 +1,153 @@
+
+
+ 
+
+
+
+<html><head><title>nmblookup (1)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>nmblookup (1)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    nmblookup - NetBIOS over TCP/IP client used to lookup NetBIOS names
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+     
+<p><strong>nmblookup</strong> [<a href="nmblookup.1.html#minusM">-M</a>] [<a href="nmblookup.1.html#minusR">-R</a>] [<a href="nmblookup.1.html#minusS">-S</a>] [<a href="nmblookup.1.html#minusr">-r</a>] [<a href="nmblookup.1.html#minusA">-A</a>] [<a href="nmblookup.1.html#minush">-h</a>] [<a href="nmblookup.1.html#minusB">-B broadcast address</a>] [<a href="nmblookup.1.html#minusU">-U unicast address</a>] [<a href="nmblookup.1.html#minusd">-d debuglevel</a>] [<a href="nmblookup.1.html#minuss">-s smb config file</a>] [<a href="nmblookup.1.html#minusi">-i NetBIOS scope</a>] [<a href="nmblookup.1.html#minusT">-T</a>] <a href="nmblookup.1.html#name">name</a>
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This program is part of the <strong>Samba</strong> suite.
+<p><strong>nmblookup</strong> is used to query NetBIOS names and map them to IP
+addresses in a network using NetBIOS over TCP/IP queries. The options
+allow the name queries to be directed at a particular IP broadcast area
+or to a particular machine. All queries are done over UDP.
+<p><a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+    
+<p><dl>
+<p><a name="minusM"></a>
+<p></p><dt><strong><strong>-M</strong></strong><dd> Searches for a master browser by looking up the 
+NetBIOS name <a href="nmblookup.1.html#name"><strong>name</strong></a> with a type of 0x1d. If <a href="nmblookup.1.html#name"><strong>name</strong></a>
+is <code>"-"</code> then it does a lookup on the special name <code>__MSBROWSE__</code>.
+<p><a name="minusR"></a>
+<p></p><dt><strong><strong>-R</strong></strong><dd> Set the recursion desired bit in the packet to do a
+recursive lookup. This is used when sending a name query to a machine
+running a WINS server and the user wishes to query the names in the
+WINS server.  If this bit is unset the normal (broadcast responding)
+NetBIOS processing code on a machine is used instead. See rfc1001,
+rfc1002 for details.
+<p><a name="minusS"></a>
+<p></p><dt><strong><strong>-S</strong></strong><dd> Once the name query has returned an IP address then do a
+node status query as well. A node status query returns the NetBIOS names 
+registered by a host.
+<p><a name="minusr"></a>
+<p></p><dt><strong><strong>-r</strong></strong><dd> Try and bind to UDP port 137 to send and receive UDP
+datagrams. The reason for this option is a bug in Windows 95 where it
+ignores the source port of the requesting packet and only replies to
+UDP port 137. Unfortunately, on most UNIX systems root privilage is
+needed to bind to this port, and in addition, if the
+<a href="nmbd.8.html"><strong>nmbd</strong></a> daemon is running on this machine it also
+binds to this port.
+<p><a name="minusA"></a>
+<p></p><dt><strong><strong>-A</strong></strong><dd> Interpret &lt;name&gt; as an IP Address and do a node status
+query on this address.
+<p><a name="minush"></a>
+<p></p><dt><strong><strong>-h</strong></strong><dd> Print a help (usage) message.
+<p><a name="minusB"></a>
+<p></p><dt><strong><strong>-B broadcast address</strong></strong><dd> Send the query to the given broadcast
+address. Without this option the default behavior of nmblookup is to
+send the query to the broadcast address of the network
+interfaces as either auto-detected or defined in the 
+<a href="smb.conf.5.html#interfaces"><strong>interfaces</strong></a> parameter of the 
+<a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a> file.
+<p><a name="minusU"></a>
+<p></p><dt><strong><strong>-U unicast address</strong></strong><dd> Do a unicast query to the specified
+address or host <code>"unicast address"</code>. This option (along with the
+<a href="nmblookup.1.html#minusR"><strong>-R</strong></a> option) is needed to query a WINS server.
+<p><a name="minusd"></a>
+<p></p><dt><strong><strong>-d debuglevel</strong></strong><dd> debuglevel is an integer from 0 to 10.
+<p>The default value if this parameter is not specified is zero.
+<p>The higher this value, the more detail will be logged about the
+activities of <strong>nmblookup</strong>. At level 0, only critical errors and
+serious warnings will be logged.
+<p>Levels above 1 will generate considerable amounts of log data, and
+should only be used when investigating a problem. Levels above 3 are
+designed for use only by developers and generate HUGE amounts of
+data, most of which is extremely cryptic.
+<p>Note that specifying this parameter here will override the <a href="smb.conf.5.html#loglevel"><strong>log
+level</strong></a> parameter in the <a href="smb.conf.5.html"><strong>smb.conf
+(5)</strong></a> file.
+<p><a name="minuss"></a>
+<p></p><dt><strong><strong>-s smb.conf</strong></strong><dd> This parameter specifies the pathname to the
+Samba configuration file, <a href="smb.conf.5.html"><strong>smb.conf</strong></a>. 
+This file controls all aspects of
+the Samba setup on the machine.
+<p><a name="minusi"></a>
+<p></p><dt><strong><strong>-i scope</strong></strong><dd> This specifies a NetBIOS scope that <strong>nmblookup</strong> will use
+to communicate with when generating NetBIOS names. For details on the
+use of NetBIOS scopes, see rfc1001.txt and rfc1002.txt. NetBIOS scopes
+are <em>very</em> rarely used, only set this parameter if you are the
+system administrator in charge of all the NetBIOS systems you
+communicate with.
+<p><a name="minusT"></a>
+<p></p><dt><strong><strong>-T</strong></strong><dd> This causes any IP addresses found in the lookup to be
+looked up via a reverse DNS lookup into a DNS name, and printed out
+before each <code>"IP address   NetBIOS name"</code> pair that is the normal
+output.
+<p><a name="name"></a>
+<p></p><dt><strong><strong>name</strong></strong><dd> This is the NetBIOS name being queried. Depending upon
+the previous options this may be a NetBIOS name or IP address. If a
+NetBIOS name then the different name types may be specified by
+appending <code>#&lt;type&gt;</code> to the name. This name may also be <code>"*"</code>,
+which will return all registered names within a broadcast area.
+<p></dl>
+<p><a name="EXAMPLES"></a>
+<h2>EXAMPLES</h2>
+    
+<p><strong>nmblookup</strong> can be used to query a WINS server (in the same way
+<strong>nslookup</strong> is used to query DNS servers). To query a WINS server,
+<strong>nmblookup</strong> must be called like this:
+<p><code>nmblookup -U server -R 'name'</code>
+<p>For example, running :
+<p><code>nmblookup -U samba.org -R IRIX#1B'</code>
+<p>would query the WINS server samba.org for the domain master
+browser (1B name type) for the IRIX workgroup.
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite.
+<p><a name="SEEALSO"></a>
+<h2>SEE ALSO</h2>
+    
+<p><a href="samba.7.html"><strong>samba (7)</strong></a>, <a href="nmbd.8.html"><strong>nmbd (8)</strong></a>,
+<a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a>
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+<p></body>
+</html>

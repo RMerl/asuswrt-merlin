@@ -1,0 +1,21 @@
+.\" LIC: GPL
+.TH PPPOE-STOP 8 "21 February 2000"
+.UC 4
+.SH NAME
+pppoe-stop \- Shell script to shut down a PPPoE link
+.SH SYNOPSIS
+.B pppoe-stop \fR[\fIconfig_file\fR]
+
+.SH DESCRIPTION
+\fBpppoe-stop\fR is a shell script which stops the Roaring Penguin
+user-space PPPoE client.  If you omit \fIconfig_file\fR, the default
+file \fB/etc/ppp/pppoe.conf\fR is used.
+
+.SH AUTHOR
+\fBpppoe-stop\fR was written by David F. Skoll <dfs@roaringpenguin.com>.
+
+The \fBpppoe\fR home page is \fIhttp://www.roaringpenguin.com/pppoe/\fR.
+
+.SH SEE ALSO
+pppoe(8), pppoe-start(8), pppoe-connect(8), pppd(8), pppoe.conf(5), pppoe-setup(8), pppoe-status(8), pppoe-sniff(8), pppoe-relay(8), pppoe-server(8)
+

@@ -1,0 +1,60 @@
+/* -*- Mode: C; tab-width: 4 -*-
+ *
+ * Copyright (c) 2002 Apple Computer, Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+subsystem
+	DNSServiceDiscoveryReply 7250;
+
+ServerPrefix internal_;
+
+#include <mach/std_types.defs>
+#include <mach/mach_types.defs>
+
+import "DNSServiceDiscoveryDefines.h";
+
+type DNSCString = c_string[*:1024];
+type sockaddr_t = array[128] of char;
+
+simpleroutine DNSServiceDomainEnumerationReply_rpc(
+				reply: mach_port_t;
+                        in	resultType: int;
+                        in	replyDomain: DNSCString;
+                        in 	flags: int;
+				SendTime 	to: natural_t);
+
+simpleroutine DNSServiceBrowserReply_rpc(
+				reply: mach_port_t;
+                        in	resultType: int;
+                        in	replyName: DNSCString;
+                        in	replyType: DNSCString;
+                        in	replyDomain: DNSCString;
+                        in 	flags: int;
+				SendTime 	to: natural_t);
+
+                        
+simpleroutine DNSServiceRegistrationReply_rpc(
+				reply: mach_port_t;
+                        in	resultType: int;
+				SendTime 	to: natural_t);
+
+
+simpleroutine DNSServiceResolverReply_rpc(
+				reply: mach_port_t;
+                        in	interface: sockaddr_t;
+                        in	address: sockaddr_t;
+                        in	txtRecord: DNSCString;
+                        in 	flags: int;
+				SendTime 	to: natural_t);

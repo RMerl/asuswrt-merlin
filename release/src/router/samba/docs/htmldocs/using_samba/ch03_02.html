@@ -1,0 +1,260 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 3] 3.2 Setting Up Windows NT 4.0 Computers</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:31:26Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch03_01.html" TITLE="3.1 Setting Up Windows 95/98 Computers">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 3.1 Setting Up Windows 95/98 Computers" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch03_01.html" TITLE="3. Configuring Windows Clients">
+Chapter 3<br>
+Configuring Windows Clients</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch03_03.html" TITLE="3.3 An Introduction to SMB/CIFS">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 3.3 An Introduction to SMB/CIFS" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch03-23093">
+3.2 Setting Up Windows NT 4.0 Computers</a></h2><P CLASS="para">Configuring Windows NT is a little different than configuring Windows 95/98. In order to use Samba with Windows NT, you will need both the Workstation service and the TCP/IP protocol. Both come standard with NT, but we'll work through installing and configuring them because they may not be configured correctly.</p><P CLASS="para">
+There are six basic steps:</p><OL CLASS="orderedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-942212">
+</a>Assign the machine a name.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-942213">
+</a>Install the Workstation service.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-942214">
+</a>Install the TCP/IP protocol.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-942215">
+</a>Set the machine's name and IP address.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-948102">
+</a>Configure the DNS and WINS name services.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-948103">
+</a>Bind the protocol and service together.</p></li></ol><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch03-pgfId-948104">
+3.2.1 Basic Configuration</a></h3><P CLASS="para">This section presents an outline of the steps to follow for getting Windows NT to cooperate with Samba. If you need more details on Windows NT network administration, refer to Craig Hunt and Robert Bruce Thompsom's <CITE CLASS="citetitle">
+Windows NT TCP/IP Network Administration </cite>(O'Reilly), an excellent guide. You should perform these steps as the "Administrator" user.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942220">
+3.2.1.1 Name the machine</a></h4><P CLASS="para">The first thing you need to do is to give the machine a NetBIOS name. From the Control Panel, double click on the Network icon. This will take you to the Network dialog box for the machine. The first tab in this dialog box should be the Identification tab, as illustrated in <A CLASS="xref" HREF="ch03_02.html#ch03-82592">
+Figure 3.16</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-82592">
+Figure 3.16: Network panel Identification tab</a></h4><IMG CLASS="graphic" SRC="figs/sam.0316.gif" ALT="Figure 3.16"><P CLASS="para">
+Here, you need to identify your machine with a name (we use the name Artish here) and change the default workgroup to the one you specified in the <EM CLASS="emphasis">
+smb.conf</em> file of your Samba server. In this case, the workgroup name is SIMPLE. However, you cannot edit either name here (as you could in Windows 95/98), but instead must use the Change button below the two text fields. Pressing this button raises an Identification Changes dialog box, where you can reset the workgroup and the machine name, as shown in <A CLASS="xref" HREF="ch03_02.html#ch03-67735">
+Figure 3.17</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-67735">
+Figure 3.17: Changing the identification</a></h4><IMG CLASS="graphic" SRC="figs/sam.0317.gif" ALT="Figure 3.17"><P CLASS="para">A word of warning: you will have to set the machine name again later while configuring TCP/IP, so be sure that the two names match. The name you set here is the NetBIOS name. You're allowed to make it different from the TCP/IP hostname, but doing so is usually not a good thing. Don't worry that Windows NT forces the computer name and the workgroup to be all capital letters; it's smart enough to figure out what you mean when it connects to the network.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942248">
+3.2.1.2 Installing the TCP/IP protocol</a></h4><P CLASS="para">Next, select the Protocols tab in the Network dialog box, and look to see if you have the TCP/IP protocol installed, as shown in <A CLASS="xref" HREF="ch03_02.html#ch03-66055">
+Figure 3.18</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-66055">
+Figure 3.18: The Protocols tab</a></h4><IMG CLASS="graphic" SRC="figs/sam.0318.gif" ALT="Figure 3.18"><P CLASS="para">
+If the protocol is not installed, you need to add it. Press the Add button, which will display the Select Network Protocol dialog box shown in <A CLASS="xref" HREF="ch03_02.html#ch03-22321">
+Figure 3.19</a>. Unlike Windows 95/98, you should immediately see the TCP/IP protocol as one of the last protocols listed. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-22321">
+Figure 3.19: Select Network Protocol dialog box</a></h4><IMG CLASS="graphic" SRC="figs/sam.0319.gif" ALT="Figure 3.19"><P CLASS="para">
+Select TCP/IP<EM CLASS="emphasis">
+ </em>as the protocol and confirm it. If possible, install only the TCP/IP protocol. You usually do not want NetBEUI installed because this causes the machine to look for services under two different protocols, only one of which is likely in use.[<A CLASS="footnote" HREF="#ch03-pgfId-943371">2</a>]</p><BLOCKQUOTE CLASS="footnote">
+<DIV CLASS="footnote">
+<P CLASS="para">
+<A CLASS="footnote" NAME="ch03-pgfId-943371">[2]</a> A common occurrence: after looking at the unused protocol for a while, the machine will time out and try the good one. This fruitless searching gives you terrible performance and mysterious delays.</p></div></blockquote></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942278">
+3.2.1.3 Installing the Workstation service</a></h4><P CLASS="para">After installing TCP/IP, press the Services tab in the Network panel and check that you have a Workstation service, as shown at the end of the list in <A CLASS="xref" HREF="ch03_02.html#ch03-97222">
+Figure 3.20</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-97222">
+Figure 3.20: Network Services panel dialog box</a></h4><IMG CLASS="graphic" SRC="figs/sam.0320.gif" ALT="Figure 3.20"><P CLASS="para">
+This service is actually the Microsoft Networking Client, which allows the machine to access SMB services. The Workstation service is mandatory. The service is installed by default on both Windows NT Workstation 4.0 and Server 4.0. If it's not there, you can install it much like TCP/IP. In this case you need to press the Add button and then select Workstation Service, as shown in <A CLASS="xref" HREF="ch03_02.html#ch03-40000">
+Figure 3.21</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-40000">
+Figure 3.21: Select Network Service dialog box </a></h4><IMG CLASS="graphic" SRC="figs/sam.0321.gif" ALT="Figure 3.21"></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch03-85837">
+3.2.2 Configuring TCP/IP</a></h3><P CLASS="para">After you've installed the Workstation service, return to the Protocols tab and select the TCP/IP Protocol entry in the window. Then click the Properties button below the window. The Microsoft TCP/IP Protocol panel will be displayed. There are five tabs on the Windows NT panel, and (like Windows 95/98) you will need to work on three of them: </p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-942313">
+</a>IP address</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-942314">
+</a>DNS</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-942315">
+</a>WINS address</p></li></ul><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942317">
+3.2.2.1 IP Address tab</a></h4><P CLASS="para">The IP Address tab is shown in <A CLASS="xref" HREF="ch03_02.html#ch03-97098">
+Figure 3.22</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-97098">
+Figure 3.22: Microsoft TCP/IP Properties for Windows NT</a></h4><IMG CLASS="graphic" SRC="figs/sam.0322.gif" ALT="Figure 3.22"><P CLASS="para">Select the "Specify an IP address" radio button and enter the computer's address and subnet mask in the space provided for the proper adapter (Ethernet card). You or your network manager should have selected an address for the client on the same subnet (LAN) as the Samba server. For example, if the server's address is 192.168.236.86 and its network mask 255.255.255.0, you might use the address 192.168.236.10, if it is available, for the NT workstation, along with the same netmask. If you use DHCP on your network, select the "Obtain an IP Address from a DHCP server" button.</p><P CLASS="para">
+If you don't have an IP address to use, and you are on a network by yourself, steal ours, as the 192.168.<EM CLASS="emphasis">
+x.x</em> subnet is specifically reserved by the Internic for LANs. If you're not by yourself, see your system administrator for some available addresses on your network.</p><P CLASS="para">
+The gateway field refers to a machine typically known as a <EM CLASS="emphasis">
+router</em>. If you have routers connecting multiple networks, you should put in the IP address of the one on your subnet.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942339">
+3.2.2.2 DNS tab</a></h4><P CLASS="para">Next we go to the tab for DNS, as shown in <A CLASS="xref" HREF="ch03_02.html#ch03-61878">
+Figure 3.23</a>. This brings up the DNS panel. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-61878">
+Figure 3.23: The DNS panel</a></h4><IMG CLASS="graphic" SRC="figs/sam.0323.gif" ALT="Figure 3.23"><P CLASS="para">
+The Domain Name System (DNS) is responsible for translating human-readable computer names such as <EM CLASS="emphasis">
+atrish.example.com</em> into IP addresses such as 192.168.236.10. There are two ways to accomplish this on a NT machine. First, you can specify a DNS server to do the translation for you, or you can keep a local list of name/address pairs for your workstation to refer to.</p><P CLASS="para">
+For a LAN that's not on the Internet, the list of possible hosts is typically small and well known, and may be kept in a file locally. Networks that are connected to the Internet typically use DNS service since it isn't possible to guess ahead of time what addresses you might be accessing out on the net. If you are in doubt as to whether a DNS server is being used, or what its address might be, look at the file <EM CLASS="emphasis">
+/etc/resolv.conf</em> on your Samba server: any machine using DNS will have this file. It looks like the following:</p><PRE CLASS="programlisting">
+#resolv.conf 
+domain example.com 
+nameserver 127.0.0.1 
+nameserver 192.168.236.20</pre><P CLASS="para">
+In this example, the first nameserver in the list is 127.0.0.1, which indicates that the Samba server is also a DNS server for this LAN.[<A CLASS="footnote" HREF="#ch03-pgfId-946587">3</a>] In that case, you would use its network IP address (not 127.0.0.1, its localhost address) when filling in the DNS Configuration dialog box. Otherwise, use the other addresses you find in the lines beginning with <CODE CLASS="literal">
+nameserver</code>. Try to select ones on your own network. Any name servers listed in <EM CLASS="emphasis">
+/etc/resolv.conf</em> should work, but you'll get better performance by using a server nearby.</p><BLOCKQUOTE CLASS="footnote">
+<DIV CLASS="footnote">
+<P CLASS="para">
+<A CLASS="footnote" NAME="ch03-pgfId-946587">[3]</a> The address 127.0.0.1 is known as the <EM CLASS="emphasis">
+localhost</em> address, and always refers to itself. For example, if you type <CODE CLASS="literal">
+ping 127.0.0.1</code> on a Unix server, you should always get a response, as you're pinging the host itself.</p></div></blockquote><P CLASS="para">
+Finally, enter the machine name once more, making sure that it's the same one listed in the Identification tab of the Network dialog box (before the NetBIOS name). Also, enter the DNS domain on which this machine resides. For example, if your workstation has a domain name such as <EM CLASS="emphasis">
+example.com</em>, enter it here. You can safely ignore the other options.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942365">
+3.2.2.3 WINS Address tab</a></h4><P CLASS="para">If you are not using a DNS server, you still need a way of translating NetBIOS names to addresses and back again. We recommend that you configure both DNS and WINS; NT has a preference for WINS and WINS can use DNS as a fallback if  it cannot resolve any machine address. The WINS Address tab is shown in <A CLASS="xref" HREF="ch03_02.html#ch03-20855">
+Figure 3.24</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-20855">
+Figure 3.24: The WINS Address tab</a></h4><IMG CLASS="graphic" SRC="figs/sam.0324.gif" ALT="Figure 3.24"><P CLASS="para">
+If you have a WINS server, enter its address in the space marked Primary WINS Server. If your Samba server is providing WINS service (in other words, you have the line <CODE CLASS="literal">
+wins</code> <CODE CLASS="literal">
+service</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code> in the <EM CLASS="emphasis">
+smb.conf</em> file of your Samba server), provide the Samba server's IP address here. Otherwise, provide the address of another WINS server on your network.</p><P CLASS="para">
+You probably noticed that there is a field here for the adaptor; this field must specify the Ethernet adaptor that you're running TCP/IP on so that WINS will provide name service on the correct network. If you have both a LAN and a dialup adaptor, make sure you have the LAN's adaptor here.</p><P CLASS="para">
+Finally, select the "Enable DNS for Windows Resolution" checkbox, so WINS will try DNS as a fallback if it can't find a name. You can safely ignore the other options.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942383">
+3.2.2.4 Hosts files</a></h4><P CLASS="para">If you don't have either DNS or WINS, and you don't wish to use broadcast name resolution, you'll need to provide a table of IP addresses and hosts names, in standard Unix <I CLASS="filename">
+/etc/hosts</i> format. We recommend against this because maintenance of this file on any dynamic network is troublesome, but we will explain it just the same. The Windows host file should appear in the <EM CLASS="emphasis">
+\WINDOWS\HOSTS</em> directory of whatever local drive Windows is installed on. A sample follows:</p><PRE CLASS="programlisting">
+127.0.0.1        localhost
+192.168.236.1    escrime    escrime.example.com 
+192.168.236.2    riposte    riposte.example.com 
+192.168.236.3    wizzin     wizzin.example.com 
+192.168.236.4    touche     touche.example.com 
+192.168.236.5    gurgi      gurgi.example.com 
+192.168.236.6    jessiac    jessiac.example.com 
+192.168.236.7    skyline    skyline.example.com </pre><P CLASS="para">
+If you wish, you can copy the contents directly from the Samba server's<I CLASS="filename">
+ /etc/hosts</i>. The format is identical. This file will then serve the same purpose as the hosts file on the Unix server. Again, <EM CLASS="emphasis">
+hosts</em> files on Windows should only be used as a last resort.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942394">
+3.2.2.5 Bindings</a></h4><P CLASS="para">
+The term <I CLASS="firstterm">
+bindings</i> is a way of saying "connected together at configuration time." It means that the TCP/IP protocol will channel through the Ethernet card (instead of, say, a dialup connection), and is actually connected properly. If you return to the Network dialog box and set the Show field to "all services" and click on all the + buttons in the tree, you should see a display similar to <A CLASS="xref" HREF="ch03_02.html#ch03-83060">
+Figure 3.25</a>.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-83060">
+Figure 3.25: Service bindings</a></h4><IMG CLASS="graphic" SRC="figs/sam.0325.gif" ALT="Figure 3.25"><P CLASS="para">
+This means that the Workstation, Server, and NetBIOS interface services are connected to the WINS client. This is the correct binding for Microsoft TCP/IP. </p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch03-pgfId-942410">
+3.2.3 Connecting to the Samba Server</a></h3><P CLASS="para">You can safely leave the default values for the remainder of the tabs in the Network dialog box. Click on the OK button to complete the configuration. Once the proper files are loaded (if any), you will need to reboot in order for your changes to take effect.</p><P CLASS="para">
+Now for the big moment. Your Samba server is running and you have set up your NT client to communicate with it. After the machine reboots, login and double-click the Network Neighborhood icon on the desktop, and you should see your Samba server listed as a member of the workgroup, as shown in <A CLASS="xref" HREF="ch03_02.html#ch03-50785">
+Figure 3.26</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-50785">
+Figure 3.26: Windows NT Network Neighborhood</a></h4><IMG CLASS="graphic" SRC="figs/sam.0326.gif" ALT="Figure 3.26"><P CLASS="para">Double-clicking the server name will show the resources that the server is offering to the network, as shown in <A CLASS="xref" HREF="ch03_02.html#ch03-89532">
+Figure 3.27</a>. In this case, the test and the default printer are offered to the Window NT workstation. For more information, see the warning under the "Accessing the Samba Server" section, earlier in this chapter.    </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-89532">
+Figure 3.27: Server's shares</a></h4><IMG CLASS="graphic" SRC="figs/sam.0327.gif" ALT="Figure 3.27"><BLOCKQUOTE CLASS="warning">
+<P CLASS="para">
+<STRONG>
+WARNING:</strong> If you are presented with a dialog requesting the password for a user <CODE CLASS="literal">
+IPC$</code>, then Samba did not accept the password that was sent from the client. In this case, the username and the password that were created on the client side <EM CLASS="emphasis">
+must</em> match the username/password combination on the Samba server. If you are using Windows 98 or Windows NT Service Pack 3 or above, this is probably because the client is sending encrypted passwords instead of plaintext passwords. You can remedy this situation by performing two steps on the Samba server. First, add the following entry to the <CODE CLASS="literal">
+[global]</code> section of your Samba configuration file: <CODE CLASS="literal">
+encrypt password=yes</code>. Second, find the <I CLASS="filename">
+smbpasswd</i> program on the samba server (it is located in <I CLASS="filename">
+/usr/local/samba/bin</i> by default) and use it to add an entry to Samba's encrypted password database. For example, to add user <CODE CLASS="literal">
+steve</code> to Samba's encrypted password database, type <CODE CLASS="replaceable">
+<I>
+smbpasswd  -a steve</i></code>. The first time you enter this password, the program will output an error message indicating that the password database does not exist; it will then create the database, which is typically stored in <I CLASS="filename">
+/usr/local/samba/private/smbpasswd</i>.</p></blockquote><P CLASS="para">
+If you don't see the server listed, don't panic. Start the Windows NT Explorer (not Internet Explorer!) and select Map Network Drive from the Tools menu. A dialog box appears that allows you to type the name of your server and its share directory in Windows format. For example, you would enter <I CLASS="filename">
+\\</i><CODE CLASS="replaceable"><I>server</i></code><I CLASS="filename">\temp</i> if your server happened to be named "server." If things still aren't right, go directly to the section "The Fault Tree" in <a href="ch09_01.html"><b>Chapter 9</b></a>, to see if you can troubleshoot what is wrong with the network.</p><P CLASS="para">
+If it works, congratulations! Try writing to the server and sending data to the network printer. You will be pleasantly surprised how seamlessly everything works! Now that you've finished setting up the Samba server and its clients, we can starting talking about how Samba works and how to configure it to your liking.   </p></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch03_01.html" TITLE="3.1 Setting Up Windows 95/98 Computers">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 3.1 Setting Up Windows 95/98 Computers" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch03_03.html" TITLE="3.3 An Introduction to SMB/CIFS">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 3.3 An Introduction to SMB/CIFS" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+3.1 Setting Up Windows 95/98 Computers</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+3.3 An Introduction to SMB/CIFS</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

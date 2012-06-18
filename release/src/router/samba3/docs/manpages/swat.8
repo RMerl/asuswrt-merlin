@@ -1,0 +1,394 @@
+.\"     Title: swat
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "SWAT" "8" "09/30/2009" "Samba 3\&.0" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+swat \- Samba Web Administration Tool
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCswat\F[] [\-s\ <smb\ config\ file>] [\-a] [\-P]
+.fam
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+\FCswat\F[]
+allows a Samba administrator to configure the complex
+\fBsmb.conf\fR(5)
+file via a Web browser\&. In addition, a
+\FCswat\F[]
+configuration page has help links to all the configurable options in the
+\FCsmb\&.conf\F[]
+file allowing an administrator to easily look up the effects of any change\&.
+.PP
+\FCswat\F[]
+is run from
+\FCinetd\F[]
+.SH "OPTIONS"
+.PP
+\-s smb configuration file
+.RS 4
+The default configuration file path is determined at compile time\&. The file specified contains the configuration details required by the
+\fBsmbd\fR(8)
+server\&. This is the file that
+\FCswat\F[]
+will modify\&. The information in this file includes server\-specific information such as what printcap file to use, as well as descriptions of all the services that the server is to provide\&. See
+\FCsmb\&.conf\F[]
+for more information\&.
+.RE
+.PP
+\-a
+.RS 4
+This option disables authentication and places
+\FCswat\F[]
+in demo mode\&. In that mode anyone will be able to modify the
+\FCsmb\&.conf\F[]
+file\&.
+.sp
+\fIWARNING: Do NOT enable this option on a production server\&. \fR
+.RE
+.PP
+\-P
+.RS 4
+This option restricts read\-only users to the password management page\&.
+\FCswat\F[]
+can then be used to change user passwords without users seeing the "View" and "Status" menu buttons\&.
+.RE
+.PP
+\-d|\-\-debuglevel=level
+.RS 4
+\fIlevel\fR
+is an integer from 0 to 10\&. The default value if this parameter is not specified is 0\&.
+.sp
+The higher this value, the more detail will be logged to the log files about the activities of the server\&. At level 0, only critical errors and serious warnings will be logged\&. Level 1 is a reasonable level for day\-to\-day running \- it generates a small amount of information about operations carried out\&.
+.sp
+Levels above 1 will generate considerable amounts of log data, and should only be used when investigating a problem\&. Levels above 3 are designed for use only by developers and generate HUGE amounts of log data, most of which is extremely cryptic\&.
+.sp
+Note that specifying this parameter here will override the
+\m[blue]\fBlog level\fR\m[]
+parameter in the
+\FCsmb\&.conf\F[]
+file\&.
+.RE
+.PP
+\-V
+.RS 4
+Prints the program version number\&.
+.RE
+.PP
+\-s <configuration file>
+.RS 4
+The file specified contains the configuration details required by the server\&. The information in this file includes server\-specific information such as what printcap file to use, as well as descriptions of all the services that the server is to provide\&. See
+\FCsmb\&.conf\F[]
+for more information\&. The default configuration file name is determined at compile time\&.
+.RE
+.PP
+\-l|\-\-log\-basename=logdirectory
+.RS 4
+Base directory name for log/debug files\&. The extension
+\fB"\&.progname"\fR
+will be appended (e\&.g\&. log\&.smbclient, log\&.smbd, etc\&.\&.\&.)\&. The log file is never removed by the client\&.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\&.
+.RE
+.SH "INSTALLATION"
+.PP
+Swat is included as binary package with most distributions\&. The package manager in this case takes care of the installation and configuration\&. This section is only for those who have compiled swat from scratch\&.
+.PP
+After you compile SWAT you need to run
+\FCmake install \F[]
+to install the
+\FCswat\F[]
+binary and the various help files and images\&. A default install would put these in:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+/usr/local/samba/sbin/swat
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+/usr/local/samba/swat/images/*
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+/usr/local/samba/swat/help/*
+.sp
+.RE
+.SS "Inetd Installation"
+.PP
+You need to edit your
+\FC/etc/inetd\&.conf \F[]
+and
+\FC/etc/services\F[]
+to enable SWAT to be launched via
+\FCinetd\F[]\&.
+.PP
+In
+\FC/etc/services\F[]
+you need to add a line like this:
+.PP
+\FCswat 901/tcp\F[]
+.PP
+Note for NIS/YP and LDAP users \- you may need to rebuild the NIS service maps rather than alter your local
+\FC /etc/services\F[]
+file\&.
+.PP
+the choice of port number isn\'t really important except that it should be less than 1024 and not currently used (using a number above 1024 presents an obscure security hole depending on the implementation details of your
+\FCinetd\F[]
+daemon)\&.
+.PP
+In
+\FC/etc/inetd\&.conf\F[]
+you should add a line like this:
+.PP
+\FCswat stream tcp nowait\&.400 root /usr/local/samba/sbin/swat swat\F[]
+.PP
+Once you have edited
+\FC/etc/services\F[]
+and
+\FC/etc/inetd\&.conf\F[]
+you need to send a HUP signal to inetd\&. To do this use
+\FCkill \-1 PID \F[]
+where PID is the process ID of the inetd daemon\&.
+.SH "LAUNCHING"
+.PP
+To launch SWAT just run your favorite web browser and point it at "http://localhost:901/"\&.
+.PP
+Note that you can attach to SWAT from any IP connected machine but connecting from a remote machine leaves your connection open to password sniffing as passwords will be sent in the clear over the wire\&.
+.SH "FILES"
+.PP
+\FC/etc/inetd\&.conf\F[]
+.RS 4
+This file must contain suitable startup information for the meta\-daemon\&.
+.RE
+.PP
+\FC/etc/services\F[]
+.RS 4
+This file must contain a mapping of service name (e\&.g\&., swat) to service port (e\&.g\&., 901) and protocol type (e\&.g\&., tcp)\&.
+.RE
+.PP
+\FC/usr/local/samba/lib/smb\&.conf\F[]
+.RS 4
+This is the default location of the
+\fBsmb.conf\fR(5)
+server configuration file that swat edits\&. Other common places that systems install this file are
+\FC /usr/samba/lib/smb\&.conf\F[]
+and
+\FC/etc/smb\&.conf \F[]\&. This file describes all the services the server is to make available to clients\&.
+.RE
+.SH "WARNINGS"
+.PP
+\FCswat\F[]
+will rewrite your
+\fBsmb.conf\fR(5)
+file\&. It will rearrange the entries and delete all comments,
+\fIinclude=\fR
+and
+\fIcopy= \fR
+options\&. If you have a carefully crafted
+\FC smb\&.conf\F[]
+then back it up or don\'t use swat!
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+\FCinetd(5)\F[],
+\fBsmbd\fR(8),
+\fBsmb.conf\fR(5)
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original Samba man pages were written by Karl Auer\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\&.icce\&.rug\&.nl/pub/unix/) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

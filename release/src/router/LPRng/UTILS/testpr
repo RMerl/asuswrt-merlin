@@ -1,0 +1,39 @@
+#!/usr/local/bin/bash
+#
+#  use:  testpr [last job number [first job number]]
+# testpr script
+#
+# Throughput and lost file test script
+#
+#  Set up a print queue with:
+#   lp:sd=/tmp/lpd/%P
+#     :filter=/tmp/testfilter
+#     :lp=/dev/null
+#
+# /tmp/testfilter:
+#   #!/bin/sh
+#    #  The filter will create files in /tmp/files with the name
+#    #  corresponding to the first word in file
+#   if [ ! -d /tmp/files ] ; then mkdir /tmp/files ; fi
+#   read var
+#   var=`echo $var | sed -e 's,.*/,,'` 
+#   date >/tmp/files/$var
+#
+# now do:
+#
+# chmod a+x /tmp/testfilter
+# run checkpc 
+# 
+# Send jobs  using:
+# bash testpr (10 jobs)
+# bash testpr 100 (100 jobs)
+# bash testpr 200 100 (100, starting at id 100 jobs)
+
+P=-Pp
+set -x
+lprm $P all
+d=/tmp/files
+if [ ! -d $d ] ; then mkdir -p $d; fi
+chmod 777 $d;
+(cd $d; rm -f *;)
+for((i=${2:-0}; i < ${1:-10}; ++i)) ; do echo $i |lpr $P ; done;

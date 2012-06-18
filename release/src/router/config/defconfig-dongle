@@ -1,0 +1,59 @@
+#
+# Automatically generated make config: don't edit
+#
+# CONFIG_NAT is not set
+
+#
+# Base Features
+#
+CONFIG_NVRAM=y
+# CONFIG_SHARED is not set
+# CONFIG_LIBBCM is not set
+CONFIG_BUSYBOX=y
+CONFIG_BUSYBOX_CONFIG=dongle
+# CONFIG_BRIDGE is not set
+# CONFIG_VLAN is not set
+# CONFIG_IPTABLES is not set
+# CONFIG_LIBIPT is not set
+# CONFIG_GLIBC is not set
+CONFIG_UCLIBC=y
+CONFIG_LIBOPT=y
+
+#
+# Options
+#
+CONFIG_VENDOR=broadcom
+# CONFIG_UDHCPD is not set
+# CONFIG_PPP is not set
+# CONFIG_SES is not set
+# CONFIG_EZC is not set
+# CONFIG_NTP is not set
+# CONFIG_DNSMASQ is not set
+# CONFIG_UTILS is not set
+CONFIG_ETC=y
+CONFIG_RCS=rcS
+CONFIG_BCMWPA2=y
+# CONFIG_WCN is not set
+
+#
+# Additional C libraries
+#
+# CONFIG_LIBCRYPT is not set
+# CONFIG_LIBDL is not set
+# CONFIG_LIBM is not set
+# CONFIG_LIBNSL is not set
+# CONFIG_LIBPTHREAD is not set
+# CONFIG_LIBRESOLV is not set
+# CONFIG_LIBUTIL is not set
+
+#
+# Environment
+#
+PLATFORM=mipsel
+LINUXDIR=$(SRCBASE)/linux/linux
+LIBDIR=$(TOOLCHAIN)/lib
+USRLIBDIR=$(TOOLCHAIN)/usr/lib
+
+#
+# Internal Options
+#

@@ -1,0 +1,212 @@
+internals.txt, 8 May 1996
+Written by David Chappell <David.Chappell@mail.trincoll.edu>.
+
+This document describes some of the internal functions which must be
+understood by anyone wishing to add features to Samba.
+
+
+
+
+
+=============================================================================
+This section describes the macros defined in byteorder.h.  These macros 
+are used extensively in the Samba code.
+
+-----------------------------------------------------------------------------
+CVAL(buf,pos)
+
+returns the byte at offset pos within buffer buf as an unsigned character.
+
+-----------------------------------------------------------------------------
+PVAL(buf,pos)
+
+returns the value of CVAL(buf,pos) cast to type unsigned integer.
+
+-----------------------------------------------------------------------------
+SCVAL(buf,pos,val)
+
+sets the byte at offset pos within buffer buf to value val.
+
+-----------------------------------------------------------------------------
+SVAL(buf,pos)
+
+returns the value of the unsigned short (16 bit) little-endian integer at 
+offset pos within buffer buf.  An integer of this type is sometimes
+refered to as "USHORT".
+
+-----------------------------------------------------------------------------
+IVAL(buf,pos)
+
+returns the value of the unsigned 32 bit little-endian integer at offset 
+pos within buffer buf.
+
+-----------------------------------------------------------------------------
+SVALS(buf,pos)
+
+returns the value of the signed short (16 bit) little-endian integer at 
+offset pos within buffer buf.
+
+-----------------------------------------------------------------------------
+IVALS(buf,pos)
+
+returns the value of the signed 32 bit little-endian integer at offset pos
+within buffer buf.
+
+-----------------------------------------------------------------------------
+SSVAL(buf,pos,val)
+
+sets the unsigned short (16 bit) little-endian integer at offset pos within 
+buffer buf to value val.
+
+-----------------------------------------------------------------------------
+SIVAL(buf,pos,val)
+
+sets the unsigned 32 bit little-endian integer at offset pos within buffer 
+buf to the value val.
+
+-----------------------------------------------------------------------------
+SSVALS(buf,pos,val)
+
+sets the short (16 bit) signed little-endian integer at offset pos within 
+buffer buf to the value val.
+
+-----------------------------------------------------------------------------
+SIVALS(buf,pos,val)
+
+sets the signed 32 bit little-endian integer at offset pos withing buffer
+buf to the value val.
+
+-----------------------------------------------------------------------------
+RSVAL(buf,pos)
+
+returns the value of the unsigned short (16 bit) big-endian integer at 
+offset pos within buffer buf.
+
+-----------------------------------------------------------------------------
+RIVAL(buf,pos)
+
+returns the value of the unsigned 32 bit big-endian integer at offset 
+pos within buffer buf.
+
+-----------------------------------------------------------------------------
+RSSVAL(buf,pos,val)
+
+sets the value of the unsigned short (16 bit) big-endian integer at 
+offset pos within buffer buf to value val.
+refered to as "USHORT".
+
+-----------------------------------------------------------------------------
+RSIVAL(buf,pos,val)
+
+sets the value of the unsigned 32 bit big-endian integer at offset 
+pos within buffer buf to value val.
+
+
+
+
+
+=============================================================================
+This section describes the functions need to make a LAN Manager RPC call.
+This information had been obtained by examining the Samba code and the LAN
+Manager 2.0 API documentation.  It should not be considered entirely
+reliable.
+
+-----------------------------------------------------------------------------
+call_api(int prcnt, int drcnt, int mprcnt, int mdrcnt, 
+	char *param, char *data, char **rparam, char **rdata);
+
+This function is defined in client.c.  It uses an SMB transaction to call a
+remote api.
+
+The parameters are as follows:
+
+prcnt:   the number of bytes of parameters begin sent.
+drcnt:   the number of bytes of data begin sent.
+mprcnt:  the maximum number of bytes of parameters which should be returned
+mdrcnt:  the maximum number of bytes of data which should be returned
+param:   a pointer to the parameters to be sent.
+data:    a pointer to the data to be sent.
+rparam:  a pointer to a pointer which will be set to point to the returned
+	 paramters.  The caller of call_api() must deallocate this memory.
+rdata:   a pointer to a pointer which will be set to point to the returned 
+	 data.  The caller of call_api() must deallocate this memory.
+
+-----------------------------------------------------------------------------
+These are the parameters which you ought to send, in the order of their
+appearance in the parameter block:
+
+* An unsigned 16 bit integer API number.  You should set this value with
+SSVAL().  I do not know where these numbers are described.
+
+* An ASCIIZ string describing the parameters to the API function as defined
+in the LAN Manager documentation.  The first parameter, which is the server
+name, is ommited.  This string is based uppon the API function as described
+in the manual, not the data which is actually passed.
+
+* An ASCIIZ string describing the data structure which ought to be returned.
+
+* Any parameters which appear in the function call, as defined in the LAN
+Manager API documentation, after the "Server" and up to and including the
+"uLevel" parameters.
+
+* An unsigned 16 bit integer which gives the size in bytes of the buffer we
+will use to receive the returned array of data structures.  Presumably this
+should be the same as mdrcnt.  This value should be set with SSVAL().
+
+* An ASCIIZ string describing substructures which should be returned.  If no 
+substructures apply, this string is of zero length.
+
+-----------------------------------------------------------------------------
+The code in client.c always calls call_api() with no data.  It is unclear
+when a non-zero length data buffer would be sent.
+
+-----------------------------------------------------------------------------
+The returned parameters (pointed to by rparam), in their order of appearance
+are:
+
+* An unsigned 16 bit integer which contains the API function's return code. 
+This value should be read with SVAL().
+
+* An adjustment which tells the amount by which pointers in the returned
+data should be adjusted.  This value should be read with SVAL().  Basically, 
+the address of the start of the returned data buffer should have the returned
+pointer value added to it and then have this value subtracted from it in
+order to obtain the currect offset into the returned data buffer.
+
+* A count of the number of elements in the array of structures returned. 
+It is also possible that this may sometimes be the number of bytes returned.
+
+-----------------------------------------------------------------------------
+When call_api() returns, rparam points to the returned parameters.  The
+first if these is the result code.  It will be zero if the API call
+suceeded.  This value by be read with "SVAL(rparam,0)".
+
+The second parameter may be read as "SVAL(rparam,2)".  It is a 16 bit offset
+which indicates what the base address of the returned data buffer was when
+it was built on the server.  It should be used to correct pointer before
+use.
+
+The returned data buffer contains the array of returned data structures. 
+Note that all pointers must be adjusted before use.  The function
+fix_char_ptr() in client.c can be used for this purpose.
+
+The third parameter (which may be read as "SVAL(rparam,4)") has something to
+do with indicating the amount of data returned or possibly the amount of
+data which can be returned if enough buffer space is allowed.
+
+-----------------------------------------------------------------------------
+Certain data structures are described by means of ASCIIz strings containing
+code characters.  These are the code characters:
+
+W	a type byte little-endian unsigned integer
+N	a count of substructures which follow
+D	a four byte little-endian unsigned integer
+B	a byte (with optional count expressed as trailing ASCII digits)
+z	a four byte offset to a NULL terminated string
+l	a four byte offset to non-string user data
+b	an offset to data (with count expressed as trailing ASCII digits)
+r	pointer to returned data buffer???
+L	length in bytes of returned data buffer???
+h	number of bytes of information available???
+
+----------------------------------------------------------------------------

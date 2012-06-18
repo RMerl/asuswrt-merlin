@@ -1,0 +1,114 @@
+
+
+ 
+
+
+
+<html><head><title>testparm (1)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>testparm (1)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    testparm - check an smb.conf configuration file for internal correctness
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+     
+<p><strong>testparm</strong> [<a href="testparm.1.html#minuss">-s</a>] [<a href="testparm.1.html#minush">-h</a>] [<a href="testparm.1.html#minusL">-L servername</a>] [<a href="testparm.1.html#configfilename">configfilename</a>] [<a href="testparm.1.html#hostname">hostname</a> <a href="testparm.1.html#hostIP">hostIP</a>]
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This program is part of the <strong>Samba</strong> suite.
+<p><strong>testparm</strong> is a very simple test program to check an
+<a href="smbd.8.html"><strong>smbd</strong></a> configuration file for internal
+correctness. If this program reports no problems, you can use the
+configuration file with confidence that <a href="smbd.8.html"><strong>smbd</strong></a>
+will successfully load the configuration file.
+<p>Note that this is <em>NOT</em> a guarantee that the services specified in the
+configuration file will be available or will operate as expected.
+<p>If the optional host name and host IP address are specified on the
+command line, this test program will run through the service entries
+reporting whether the specified host has access to each service.
+<p>If <strong>testparm</strong> finds an error in the <a href="smb.conf.5.html"><strong>smb.conf</strong></a>
+file it returns an exit code of 1 to the calling program, else it returns
+an exit code of 0. This allows shell scripts to test the output from
+<strong>testparm</strong>.
+<p><a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+    
+<p><dl>
+<p><a name="minuss"></a>
+<p></p><dt><strong><strong>-s</strong></strong><dd> Without this option, <strong>testparm</strong> will prompt for a
+carriage return after printing the service names and before dumping
+the service definitions.
+<p><a name="minush"></a>
+<p></p><dt><strong><strong>-h</strong></strong><dd> Print usage message
+<p><a name="minusL"></a>
+<p></p><dt><strong><strong>-L servername</strong></strong><dd> Sets the value of the %L macro to servername. This
+is useful for testing include files specified with the %L macro.
+<p><a name="configfilename"></a>
+<p></p><dt><strong><strong>configfilename</strong></strong><dd> This is the name of the configuration file to
+check. If this parameter is not present then the default
+<a href="smb.conf.5.html"><strong>smb.conf</strong></a> file will be checked.
+<p><a name="hostname"></a>
+<p></p><dt><strong><strong>hostname</strong></strong><dd> If this parameter and the following are specified,
+then testparm will examine the <a href="smb.conf.5.html#hostsallow"><strong>"hosts
+allow"</strong></a> and <a href="smb.conf.5.html#hostsdeny"><strong>"hosts
+deny"</strong></a> parameters in the
+<a href="smb.conf.5.html"><strong>smb.conf</strong></a> file to determine if the hostname
+with this IP address would be allowed access to the
+<a href="smbd.8.html"><strong>smbd</strong></a> server. If this parameter is supplied, the
+<a href="testparm.1.html#hostIP">hostIP</a> parameter must also be supplied.
+<p><a name="hostIP"></a>
+<p></p><dt><strong><strong>hostIP</strong></strong><dd> This is the IP address of the host specified in the
+previous parameter. This address must be supplied if the hostname
+parameter is supplied.
+<p></dl>
+<p><a name="FILES"></a>
+<h2>FILES</h2>
+    
+<p><a href="smb.conf.5.html"><strong>smb.conf</strong></a>. This is usually the name of the
+configuration file used by <a href="smbd.8.html"><strong>smbd</strong></a>.
+<p><a name="DIAGNOSTICS"></a>
+<h2>DIAGNOSTICS</h2>
+    
+<p>The program will issue a message saying whether the configuration file
+loaded OK or not. This message may be preceded by errors and warnings
+if the file did not load. If the file was loaded OK, the program then
+dumps all known service details to stdout.
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite.
+<p><a name="SEEALSO"></a>
+<h2>SEE ALSO</h2>
+    
+<p><a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a>, <a href="smbd.8.html"><strong>smbd (8)</strong></a>
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+</body>
+</html>

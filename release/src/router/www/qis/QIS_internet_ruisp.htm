@@ -1,0 +1,348 @@
+﻿<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="stylesheet" type="text/css" href="/form_style.css">
+<link rel="stylesheet" type="text/css" href="qis_style.css">
+<script type="text/JavaScript" src="/form.js"></script>
+<script type="text/JavaScript" src="isp.js"></script>
+<script type="text/JavaScript" src="ruisp.js"></script>
+
+<script type="text/javascript">
+<% wan_get_parameter(); %>
+
+var cityNumber;
+var ispNumber;
+var serviceNumber;
+
+function QKISP_load_body(){
+	var cityArray = new Array();
+	for(var i = 0; i < city.length; i++) {
+		cityArray[i] = city[i][0];
+	}
+	cityArray.sort();
+	for(var i = 0; i < cityArray.length; i++) {
+		if(i == 0)
+			add_option(document.form.ispcity, cityArray[i], cityArray[i], 1);
+		else
+			add_option(document.form.ispcity, cityArray[i], cityArray[i], 0);
+	}
+	isp_option();
+	service_option();
+	show_input();
+}
+
+function isp_option()
+{
+	free_options(document.form.ispname);
+	var cityObj = document.form.ispcity;
+	for(var i = 0; i < city.length; i++) {
+		if(city[i][0] == cityObj.options[cityObj.selectedIndex].value)
+			cityNumber = i;
+	}
+
+	for(var i = 0; i < service.length; i++) {
+		if(service[i][0] == cityNumber) {
+			var ispObj = document.form.ispname;
+			var ispFound = false;
+			for(var j = 0; j < ispObj.options.length; j++) {
+				if(isp[service[i][1]] == ispObj.options[j].value)
+					ispFound = true;
+			}
+			if(!ispFound)
+				add_option(document.form.ispname, isp[service[i][1]], isp[service[i][1]], 0);
+		}
+	}
+}
+
+function service_option()
+{
+	free_options(document.form.ispservice);
+	var ispObj = document.form.ispname;
+	for(var i = 0; i < isp.length; i++) {
+		if(isp[i] == ispObj.options[ispObj.selectedIndex].value)
+			ispNumber = i;
+	}
+	for(var i = 0; i < service.length; i++) {
+		if(service[i][0] == cityNumber && service[i][1] == ispNumber) {
+			add_option(document.form.ispservice, wantype[service[i][2]], wantype[service[i][2]], 0);
+		}
+	}
+}
+
+function search_service()
+{
+	var showNumber = 0;
+	var serviceObj = document.form.ispservice;
+	for(var i = 0; i < wantype.length; i++) {
+		if(wantype[i] == serviceObj.options[serviceObj.selectedIndex].value)
+			serviceNumber = i;
+	}
+	
+	for(var i = 0; i < service.length; i++) {
+		if(service[i][0] == cityNumber && service[i][1] == ispNumber && service[i][2] == serviceNumber)
+			showNumber = service[i][3];
+	}
+	return showNumber;
+}
+
+function show_input(){
+	var showNumber = search_service();
+	var showIP = showNumber & 1;
+	var showMask = (showNumber >> 1) & 1; 
+	var showGW = (showNumber >> 2) & 1;
+	var showDNS = (showNumber >> 3) & 1;
+	var showMAC = (showNumber >> 4) & 1;
+	var showLogin = (showNumber >> 5) & 1;
+	var showPassword = (showNumber >> 6) & 1;
+	var showVPN = (showNumber >> 7) & 1;
+	document.getElementById('showip').style.display = showIP?'':'none';
+	document.getElementById('showmask').style.display = showMask?'':'none';
+	document.getElementById('showgateway').style.display = showGW?'':'none';
+	document.getElementById('showdns').style.display = showDNS?'':'none';
+	document.getElementById('showmac').style.display = showMAC?'':'none';
+	document.getElementById('showlogin').style.display = showLogin?'':'none';
+	document.getElementById('showpassword').style.display = showPassword?'':'none';
+	document.getElementById('showvpnserver').style.display = showVPN?'':'none';
+}
+
+function add_option(selectObj, str, value, selected){
+	var tail = selectObj.options.length;
+	
+	if(typeof(str) != "undefined")
+		selectObj.options[tail] = new Option(str);
+	else
+		selectObj.options[tail] = new Option();
+	
+	if(typeof(value) != "undefined")
+		selectObj.options[tail].value = value;
+	else
+		selectObj.options[tail].value = "";
+	
+	if(selected == 1)
+		selectObj.options[tail].selected = selected;
+}
+
+function free_options(selectObj){
+	if(selectObj == null)
+		return;
+	
+	for(var i = selectObj.options.length-1; i >= 0; --i){
+  		selectObj.options[i].value = null;
+		selectObj.options[i] = null;
+	}
+}
+
+function applyRule(){
+	var regex1 = /\//gi;
+	var regex2 = /-/gi;
+	var ispcity_array_tmp = eval(document.form.ispcity.value.replace(regex1,"_").replace(regex2,"_")); 
+	var selectedProfile;
+	document.form.sr_rulelist.value = "";
+
+	for(var i=0; i<ispcity_array_tmp.length; i++){
+		if(ispcity_array_tmp[i][2] == document.form.ispname.value){
+			selectedProfile = ispcity_array_tmp[i];
+			for(var j=3; j<selectedProfile.length; j++){
+				if(j == 3){
+					// handle wan_proto
+					if(selectedProfile[3].toLowerCase().indexOf("dhcp") != -1)
+						document.form.wan_proto.value = "dhcp";
+					else if(selectedProfile[3].toLowerCase().indexOf("static") != -1)
+						document.form.wan_proto.value = "static";
+					else if(selectedProfile[3].toLowerCase().indexOf("pppoe") != -1)
+						document.form.wan_proto.value = "pppoe";
+					else if(selectedProfile[3].toLowerCase().indexOf("l2tp") != -1)
+						document.form.wan_proto.value = "l2tp";
+					else if(selectedProfile[3].toLowerCase().indexOf("pptp") != -1)
+						document.form.wan_proto.value = "pptp";
+					else{
+						alert("WAN protocol error!");
+						return false;
+					}
+				}	
+				else{
+					if(selectedProfile[j] == "N")
+						document.form[j].disabled = true;
+					else if(selectedProfile[j] != "U")
+						document.form[j].value = selectedProfile[j];
+				}
+			}
+
+			break;
+		}
+	}
+
+	// handle dns
+	if(document.form.wan_dns.value == "Auto")
+		document.form.wan_dnsenable_x.value = 1;
+	else{
+		document.form.wan_dnsenable_x.value = 0;
+		document.form.wan_dns1_x.value = document.form.wan_dns.value.split(">")[0];
+		if(document.form.wan_dns.value.split(">")[1])
+			document.form.wan_dns2_x.value = document.form.wan_dns.value.split(">")[1];
+	}
+
+	// handle sr_rulelist
+	if(document.form.sr_rulelist.value != "")
+		document.form.sr_rulelist.value = "<" + document.form.sr_rulelist.value;
+
+	// handle wl1_mrate_x
+	document.form.wl1_mrate_x.value = document.form.wl0_mrate_x.value;
+
+	document.form.flag.value = "verify_detect";
+	document.getElementById("loadingIcon").style.display = "";
+	document.form.submit();
+}
+</script>
+</head>
+
+<body onload="QKISP_load_body();">
+<div id="navtxt" class="navtext" style="position:absolute; top:50px; left:-100px; visibility:hidden; font-family:Arial, Verdana"></div>
+<iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
+<form method="post" name="form" action="/start_apply.htm" target="hidden_frame" onsubmit="return applyRule()">
+
+<div class="QISmain">
+		<div>
+			<table width="730px">
+				<tr>
+					<td align="left">
+						<span class="description_down" id="page_title">Russia ISP setting (Demo)</span>
+					</td>
+					<td align="right">
+						<img style="cursor:pointer;" onclick="parent.gotoIndex();" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+
+<p class="QISGeneralFont"><#QIS_type_desc1#></p>
+
+<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="padding-left:100px;">
+<tr>
+  <th>City:</th>
+  <td>
+		<select class="input_option" name="ispcity" onChange="isp_option();service_option();show_input()"></select>
+  </td>
+</tr>
+
+<tr style="display:none">
+  <th>RU City:</th>
+  <td>
+		<select class="input_option" name="ispcity_ru" onChange="isp_option();service_option();show_input()"></select>
+  </td>
+</tr>
+
+<tr>
+  <th>ISP:</th>
+  <td>
+		<select class="input_option" name="ispname" onChange="service_option();show_input();"></select>
+  </td>
+</tr>
+
+<tr>
+  <th>Service:</th>
+  <td>
+		<select class="input_option" name="ispservice" onChange="show_input();"></select>
+  </td>
+</tr>
+
+<tr id="showip" style="display:none">
+  <th>WAN IP:</th>
+  <td>
+		<input class="input_32_table" style="height: 25px;" name="wan_ipaddr_x" type="text"/>
+  </td>
+</tr>
+
+<tr id="showmask" style="display:none">
+  <th>Mask:</th>
+  <td>
+		<input class="input_32_table" style="height: 25px;" name="wan_netmask_x" type="text"/>
+  </td>
+</tr>
+
+<tr id="showgateway" style="display:none">
+  <th>Gateway:</th>
+  <td>
+		<input class="input_32_table" style="height: 25px;" name="wan_gateway_x" type="text"/>
+  </td>
+</tr>
+
+<tr id="showdns" style="display:none">
+  <th>DNS1:</th>
+  <td>
+		<input class="input_32_table" style="height: 25px;" name="wan_dns" type="text"/>
+  </td>
+</tr>
+
+<tr id="showmac" style="display:none">
+  <th>MAC:</th>
+  <td>
+		<input class="input_32_table" style="height: 25px;" name="wan_hwaddr_x" type="text"/>
+  </td>
+</tr>
+
+<tr id="showlogin" style="display:none">
+  <th>Login:</th>
+  <td>
+		<input class="input_32_table" style="height: 25px;" name="wan_pppoe_username" type="text"/>
+  </td>
+</tr>
+
+<tr id="showpassword" style="display:none">
+  <th>Password:</th>
+  <td>
+		<input class="input_32_table" style="height: 25px;" name="wan_pppoe_passwd" type="text"/>
+  </td>
+</tr>
+
+<tr id="showvpnserver" style="display:none">
+  <th>VPN Server:</th>
+  <td>
+		<input class="input_32_table" style="height: 25px;" name="wan_heartbeat_x" type="text"/>
+  </td>
+</tr>
+
+<!-- russia ISP settings -->
+<input type="hidden" name="wan_pptp_options_x" value="">
+<input type="hidden" name="dhcp_enable_x" value="">
+<input type="hidden" name="mr_enable_x" value="">
+<input type="hidden" name="sr_enable_x" value="">
+<input type="hidden" name="lan_ipaddr" value="">
+<input type="hidden" name="wl0_mrate_x" value="">
+<input type="hidden" name="switch_stb_x" value="">
+<input type="hidden" name="sr_rulelist" value="">
+<!-- need to translate -->
+<input type="hidden" name="wan_proto" value="">
+<input type="hidden" name="wan_dnsenable_x" value="">
+<input type="hidden" name="wan_dns1_x" value="">
+<input type="hidden" name="wan_dns2_x" value="">
+<input type="hidden" name="wl1_mrate_x" value="">
+<!-- general submitting items -->
+<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+<input type="hidden" name="prev_page" value="QIS_internet_type.htm">
+<input type="hidden" name="current_page" value="/qis/QIS_internet_ruisp.htm">
+<input type="hidden" name="next_page" value="/QIS_wizard.htm">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_script" value="restart_wan">
+<input type="hidden" name="action_wait" value="10">
+<input type="hidden" name="flag" value="">
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="wan_unit" value="0">
+
+</table>
+</div>
+
+	<div class="apply_gen" style="margin-top:30px">
+  	<input type="button" id="prevButton" value="<#CTL_prev#>" onclick="location.href='QIS_internet_type.htm';" class="button_gen">
+  	<input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen">
+		<span id="loadHint" style="display:none"><#SAVE_note#></span>
+		<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
+	</div>
+
+</form>
+
+</body>
+</html>

@@ -1,0 +1,107 @@
+
+
+ 
+
+
+
+<html><head><title>make_unicodemap (1)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>make_unicodemap (1)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    make_unicodemap - Construct a unicode map file for Samba
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+     
+<p><strong>make_unicodemap</strong> <a href="make_unicodemap.1.html#codepage">codepage</a> <a href="make_unicodemap.1.html#inputfile">inputfile</a> <a href="make_unicodemap.1.html#outputfile">outputfile</a>
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This program is part of the <strong>Samba</strong> suite.
+<p><strong>make_unicodemap</strong> compiles text unicode map files into binary unicode
+map files for use with the internationalization features of Samba 2.0
+<p><a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+    
+<p><dl>
+<p><a name="codepage"></a>
+<p></p><dt><strong>codepage</strong><dd> This is the codepage or UNIX character set we are processing (a number, e.g. 850).
+<p><a name="inputfile"></a>
+<p></p><dt><strong>inputfile</strong><dd> This is the input file to process. This is a text unicode map file
+such as the ones found in the Samba <em>source/codepages</em> directory.
+<p><a name="outputfile"></a>
+<p></p><dt><strong>outputfile</strong><dd> This is the binary output file to produce.
+<p></dl>
+<p><a name="SambaCodepageFiles"></a>
+<h2>Samba Unicode Map Files</h2>
+    
+<p>A text Samba unicode map file is a description that tells
+Samba how to map characters from a specified DOS code page or UNIX character
+set to 16 bit unicode.
+<p>A binary Samba unicode map file is a binary representation of
+the same information, including a value that specifies what codepage
+or UNIX character set this file is describing.
+<p><a name="FILES"></a>
+<h2>FILES</h2>
+    
+<p><strong>CP&lt;codepage&gt;.TXT</strong>
+<p>These are the input (text) unicode map files provided in the Samba
+<em>source/codepages</em> directory.
+<p>A text unicode map file consists of multiple lines
+containing two fields. These fields are : 
+<p><dl>
+<p><li > <strong>character</strong>: which is the (hex) character mapped on this
+line.
+<p><li > <strong>unicode</strong>: which is the (hex) 16 bit unicode character that the
+character will map to.
+<p></dl>
+<p><strong>unicode_map.&lt;codepage&gt;</strong> These are the output (binary) unicode map files
+produced and placed in the Samba destination <em>lib/codepage</em>
+directory.
+<p><a name="INSTALLATION"></a>
+<h2>INSTALLATION</h2>
+    
+<p>The location of the server and its support files is a matter for
+individual system administrators. The following are thus suggestions
+only.
+<p>It is recommended that the <strong>make_unicodemap</strong> program be installed
+under the <em>/usr/local/samba</em> hierarchy, in a directory readable by
+all, writeable only by root. The program itself should be executable
+by all.  The program should NOT be setuid or setgid!
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite.
+<p><a name="SEEALSO"></a>
+<h2>SEE ALSO</h2>
+    
+<p><a href="smb.conf.5.html"><strong>smb.conf(5)</strong></a>, <a href="smbd.8.html"><strong>smbd (8)</strong></a>
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+</body>
+</html>

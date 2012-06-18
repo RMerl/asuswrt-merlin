@@ -1,0 +1,66 @@
+PPPoL2TP plugin
+===============
+
+The pppol2tp plugin lets pppd use the Linux kernel driver pppol2tp.ko
+to pass PPP frames in L2TP tunnels. The driver was integrated into the
+kernel in the 2.6.23 release. For kernels before 2.6.23, an
+out-of-tree kernel module is available from the pppol2tp-kmod package
+in the OpenL2TP project.
+
+Note that pppd receives only PPP control frames over the PPPoL2TP
+socket; data frames are handled entirely by the kernel.
+
+The pppol2tp plugin adds extra arguments to pppd and uses the Linux kernel
+PPP-over-L2TP driver to set up each session's data path.
+
+Arguments are:-
+
+pppol2tp <fd>                   - FD for PPPoL2TP socket
+pppol2tp_lns_mode               - PPPoL2TP LNS behavior. Default off.
+pppol2tp_send_seq               - PPPoL2TP enable sequence numbers in
+                                  transmitted data packets. Default off.
+pppol2tp_recv_seq               - PPPoL2TP enforce sequence numbers in
+                                  received data packets. Default off.
+pppol2tp_reorderto <millisecs>  - PPPoL2TP data packet reorder timeout.
+                                  Default 0 (no reordering).
+pppol2tp_debug_mask <mask>      - PPPoL2TP debug mask. Bitwise OR of
+				  1 - verbose debug
+				  2 - control
+				  4 - kernel transport
+				  8 - ppp packet data
+				  Default: 0 (no debug).
+pppol2tp_ifname <ifname>	- Name of PPP network interface visible
+				  to "ifconfig" and "ip link".
+				  Default: "pppN"
+pppol2tp_tunnel_id <id>		- L2TP tunnel_id tunneling this PPP
+				  session.
+pppol2tp_session_id <id>	- L2TP session_id of this PPP session.
+				  The tunnel_id/session_id pair is used
+				  when sending event messages to openl2tpd.
+
+pppd will typically be started by an L2TP daemon for each L2TP sesion,
+supplying one or more of the above arguments as required. The pppd
+user will usually have no visibility of these arguments.
+
+Two hooks are exported by this plugin.
+
+void (*pppol2tp_send_accm_hook)(int tunnel_id, int session_id,
+     uint32_t send_accm, uint32_t recv_accm);
+void (*pppol2tp_ip_updown_hook)(int tunnel_id, int session_id, int up);
+
+Credits
+=======
+
+This plugin was developed by Katalix Systems as part of the OpenL2TP
+project, http://openl2tp.sourceforge.net. OpenL2TP is a full-featured
+L2TP client-server, suitable for use as an enterprise L2TP VPN server
+or a VPN client.
+
+Please copy problems to the OpenL2TP mailing list:
+openl2tp-users@lists.sourceforge.net.
+
+Maintained by:
+	James Chapman
+	jchapman@katalix.com
+	Katalix Systems Ltd
+	http://www.katalix.com

@@ -1,0 +1,160 @@
+#!/usr/bin/perl -w
+
+# Auto dial script by Brian May <bam@snoopy.apana.org.au>
+
+use Proc::Daemon;
+use strict;
+use Sys::Syslog qw(:DEFAULT setlogsock);  # default set, plus setlogsock
+use Proc::WaitStat qw(:DEFAULT waitstat);
+
+
+Proc::Daemon::Init;
+open(PIDFILE,">/var/run/autopppd.pid");
+print(PIDFILE "$$");
+close(PIDFILE);
+
+sub toseconds($) {
+  my ($hours,$minutes,$seconds) = split(/:/,shift);
+  return ($hours*60+$minutes)*60+$seconds;
+}
+
+sub dseconds($) {
+  my ($total) = @_;
+
+  my $seconds = $total % 60; $total = ($total - $seconds)/60;
+  my $minutes = $total % 60; $total = ($total - $minutes)/60;
+  my $hours   = $total % 24; $total = ($total - $hours)/24;
+  my $days   = $total;
+  if ($days > 0) {
+    return(sprintf("%d-%02d:%02d:%02d",$days,$hours,$minutes,$seconds));
+  } else {
+    return(sprintf("%02d:%02d:%02d",$hours,$minutes,$seconds));
+  }
+}
+
+my $program="autopppd";
+
+setlogsock('unix');
+openlog($program, 'cons,pid', 'daemon');
+
+my $pppd_start_time;
+my $pppd_end_time;
+my $pppd_run_time;
+my $pppd_fail;
+my $delay=0;
+my $idelay=0;
+
+my @delays = (
+               toseconds("00:01:00"), # 1 minute
+               toseconds("00:07:00"), # 8 minutes
+               toseconds("00:07:00"), # 15 minutes
+               toseconds("00:15:00"), # 30 minutes
+               toseconds("00:30:00"), # 1 hour
+               toseconds("01:00:00"), # 2 hours
+               toseconds("01:00:00"), # 3 hours
+               toseconds("03:00:00"), # 6 hours
+               toseconds("06:00:00"), # 12 hours
+               toseconds("12:00:00"), # 24 hours
+               toseconds("24:00:00")  # 48 hours
+             );
+
+# action == 0 => immediate retry (!FIXME! needs to have some delay)
+# action == 1 => delayed retry
+# action == 2 => abort
+
+my $code = {
+  0 => { message=>"pppd detached",                              action=> 2 },
+  1 => { message=>"fatal error",                                action=> 2 },
+  2 => { message=>"options error",                              action=> 2 },
+  3 => { message=>"not setuid-root error",                      action=> 2 },
+  4 => { message=>"no kernel support for PPP",                  action=> 2 },
+  5 => { message=>"SIGINT or SIGTERM or SIGHUP",                action=> 1 },
+  6 => { message=>"Serial port locked",                         action=> 1 }, # should be 0
+  7 => { message=>"Serial port open error",                     action=> 1 },
+  8 => { message=>"Connect failed",                             action=> 1 },
+  9 => { message=>"Could not execute pty command",              action=> 1 },
+ 10 => { message=>"PPP negotiation failed",                     action=> 1 },
+ 11 => { message=>"Peer failed to authenticate",                action=> 1 },
+ 12 => { message=>"Link was idle",                              action=> 1 },
+ 13 => { message=>"Time limit exceeded",                        action=> 1 },
+ 14 => { message=>"call back not implemented",                  action=> 2 },
+ 15 => { message=>"peer not responding",                        action=> 1 },
+ 16 => { message=>"modem hang up",                              action=> 1 },
+ 17 => { message=>"Serial loopback detected",                   action=> 1 },
+ 18 => { message=>"Init script failed",                         action=> 1 },
+ 19 => { message=>"We failed to authenticate",                  action=> 1 },
+};
+
+while (1)
+{
+  $pppd_start_time=time;
+  syslog('info', 'restarting pppd');
+
+  # logging sometimes stopped working after ppp was running for
+  # some time. lets see if closing and reopening the log file helps...
+  closelog();
+
+  # run ppp
+  my $rc=system("pppd","-detach",@ARGV);
+
+  # reopon log file
+  openlog($program, 'cons,pid', 'daemon');
+
+  # calculate run time
+  $pppd_end_time=time;
+  $pppd_run_time=$pppd_end_time-$pppd_start_time;
+
+  my $pppd_code = ($? >> 8);
+  my $pppd_signal = $? & 127;
+  my $pppd_coredump = $? & 128;
+
+  $pppd_fail = 1;
+  if ($pppd_signal != 0) {
+    if ($pppd_coredump)
+    { syslog('err',"pppd died with signal $pppd_signal, coredump"); }
+    else
+    { syslog('err',"pppd died with signal $pppd_signal"); }
+  }
+  elsif ($pppd_coredump) {
+    syslog('err',"pppd died with coredump");
+  }
+  elsif (defined($code->{$pppd_code}) && $code->{$pppd_code}{"action"} == 0) {
+    syslog('err', "pppd returned: ".$code->{$pppd_code}{"message"}." ($pppd_code), immediate retry");
+    $pppd_fail = 0;
+  }
+  elsif (defined($code->{$pppd_code}) && $code->{$pppd_code}{"action"} == 1) {
+    syslog('err', "pppd returned: ".$code->{$pppd_code}{"message"}." ($pppd_code), delayed retry");
+    $pppd_fail = 1;
+  }
+  elsif (defined($code->{$pppd_code}) && $code->{$pppd_code}{"action"} >= 2) {
+    syslog('err', "pppd returned: ".$code->{$pppd_code}{"message"}." ($pppd_code), aborting");
+    exit(255);
+  }
+  elsif (defined($code->{$pppd_code}) && $code->{$pppd_code}{"action"} >= 2) {
+    syslog('err', "pppd returned: unknown error ($pppd_code), delayed retry");
+    $pppd_fail = 1;
+  }
+  # if it hasn't ran for at least an hour, then somthing went wrong
+  elsif ($pppd_run_time < toseconds("01:00:00")) {
+    syslog('err',"pppd session didn't last 1 hour, delayed retry");
+    $pppd_fail = 1;
+  }
+  else { $pppd_fail = 0; }
+
+  # if not failed, then reset delay.
+  if (!$pppd_fail) { $idelay = 0; }
+
+  # get next delay.
+  $delay = $delays[$idelay];
+
+  # log statistics.
+  syslog('info',"rc=".waitstat($rc)." runtime=".dseconds($pppd_run_time)." delay[$idelay]=".dseconds($delay)."");
+
+  # delay for desired time.
+  sleep($delay);
+
+  # increment delay for next time.
+  if (defined($delays[$idelay+1])) { $idelay++; }
+}
+
+closelog();

@@ -1,0 +1,393 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Simple Client Printcap Entry&#13;</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="NEXT" title="Simple Server Printcap Example" href=
+    "cm.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "printcapref.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "cm.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="SIMPLE">12.2. Simple Client
+      Printcap Entry</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">client</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">client printcap
+          entry</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">lp=</var><span class=
+          "emphasis"><i class="EMPHASIS">destination printer
+          information</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">rm=</var><span class=
+          "emphasis"><i class="EMPHASIS">remote host
+          (machine)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">rp=</var><span class=
+          "emphasis"><i class="EMPHASIS">remote
+          printer</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>I'll use this simple example to explain the basics of the
+      <b class="APPLICATION">LPRng</b> printcap format and
+      introduce some of the <b class="APPLICATION">LPRng</b>
+      network configuration options. Here is a simple printcap file
+      used to provide client programs (<var class="LITERAL">lpr,
+      lprm,</var> etc) with <span class="emphasis"><i class=
+      "EMPHASIS">remote printer</i></span> and <span class=
+      "emphasis"><i class="EMPHASIS">server</i></span>
+      information.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5525"></a>
+<pre class="SCREEN">
+    # printer lp1
+    lp1|printer1
+      :rm=localhost
+    # printer lp2 with continuation
+    lp2:\
+      :lp=pr@10.0.0.1:client
+    # printcap lp3, to printer pr, with overrides
+    lp3:rp=pr:rm=hp.private
+      :force_localhost@
+    # Simplest possible printcap entry - defaults for everything
+    lp4
+</pre>
+      </div>
+
+      <ol type="1">
+        <li>
+          <p>Lines starting with a <var class="LITERAL">#</var>
+          sign are comments, and all leading and trailing <span
+          class="emphasis"><i class=
+          "EMPHASIS">whitespace</i></span>, i.e. - spaces, tabs,
+          etc, are ignored. Empty lines are ignored as well.</p>
+        </li>
+
+        <li>
+          <p>A printcap entry starts with the printcap entry <span
+          class="emphasis"><i class="EMPHASIS">name</i></span>,
+          followed by one or more <span class="emphasis"><i class=
+          "EMPHASIS">aliases</i></span>, followed by one or more
+          options. In the above example we have three printcap
+          entries: <var class="LITERAL">lp1</var> with an alias
+          <var class="LITERAL">printer1</var> and <var class=
+          "LITERAL">lp2</var>, <var class="LITERAL">lp3</var>, and
+          <var class="LITERAL">lp4</var> with no aliases.</p>
+        </li>
+
+        <li>
+          <p>Aliases start with the <var class="LITERAL">|</var>
+          character and options with the <var class=
+          "LITERAL">:</var> character; tabs and spaces before and
+          after the <var class="LITERAL">|</var> or <var class=
+          "LITERAL">:</var> characters and at the start and end of
+          lines are ignored. You can use backslash (<var class=
+          "LITERAL">\</var>) at the end of a line to create a
+          multi-line value for an option. The backslash will cause
+          the next line to be appended to the current line; watch
+          out for comments and ends of printcap entries if you use
+          this facility. As you can see from the example, there is
+          no <var class="LITERAL">Name</var> printcap entry - this
+          is part of the <var class="LITERAL">cm</var> option on
+          the previous line.</p>
+        </li>
+
+        <li>
+          <p>Options take the form of a keyword/value pair,
+          i.e.-</p>
+
+          <p class="LITERALLAYOUT">:option=value<br>
+          :option#value&nbsp;&nbsp;&nbsp;(legacy,&nbsp;not&nbsp;advised&nbsp;for&nbsp;new&nbsp;systems)<br>
+
+          :option<br>
+          :option@</p>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>Option names are case insensitive, but option values
+          are not. While <var class="LITERAL">Ts</var> and <var
+          class="LITERAL">ts</var> are the same option name, <var
+          class="LITERAL">ts=Testing</var> and <var class=
+          "LITERAL">ts=testing</var> have their case preserved. A
+          string or integer value is specified by <var class=
+          "LITERAL">option=value</var> or <var class=
+          "LITERAL">option#value</var>.</p>
+        </li>
+
+        <li>
+          <p>The use of the legacy <var class=
+          "LITERAL">option#value</var> form is <acronym class=
+          "ACRONYM">NOT</acronym> recommended as some preprocessors
+          and database systems will treat <span class="emphasis"><i
+          class="EMPHASIS">#</i></span> as the start of a comment
+          and delete the remainder of the line. This has caused
+          great consternation for sysadmins who wonder why their
+          NIS distributed printcap entries have been mysteriously
+          truncated.</p>
+        </li>
+
+        <li>
+          <p>If you want to set a string option to <span class=
+          "emphasis"><i class="EMPHASIS">empty</i></span> value,
+          use <var class="LITERAL">option=</var>. The <var class=
+          "LITERAL">option</var> will set it to <var class=
+          "LITERAL">1</var>. If an option value contains a colon,
+          then use the C (or Perl or Tck/Tk) string escape <var
+          class="LITERAL">\072</var> to represent the value.</p>
+        </li>
+
+        <li>
+          <p>Boolean options are set TRUE (1) if no value follows
+          the keyword and FALSE (0) by appending a <var class=
+          "LITERAL">@</var>. For example <var class=
+          "LITERAL">sh</var> will set <var class="LITERAL">sh</var>
+          to TRUE and <var class="LITERAL">sh@</var> to FALSE.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>There may be multiple options on the same line, separated
+      by colons.</p>
+
+      <p>Now let's examine the first printcap entry in detail. It
+      is reproduced here for convenience:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5581"></a>
+<pre class="SCREEN">
+    # printer lp1
+    lp1|printer1
+      :rm=localhost
+</pre>
+      </div>
+
+      <ol type="1">
+        <li>
+          <p>We start with a comment, followed by the printcap
+          entry name and and alias. Aliases are useful when you
+          want to refer to a single printer or print queue by
+          different names. This can be useful in advanced printcap
+          and print queue setups. By default, the remote printer
+          name is the printcap entry name.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">rm</var> (remote machine or
+          host) option specifies the name or IP address of the <b
+          class="APPLICATION">lpd</b> host running <b class=
+          "APPLICATION">lpd</b>. In this example the remote host is
+          <var class="LITERAL">localhost</var> or the machine that
+          the client is running on and we assume that the <b class=
+          "APPLICATION">lpd</b> server is running on the localhost.
+          Thus, we would communicate with printer <var class=
+          "LITERAL">lp1@localhost</var>.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>Let's look at the next printcap entry:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5595"></a>
+<pre class="SCREEN">
+    # printer lp2 with continuation
+    lp2:\
+      :lp=pr@10.0.0.1:client
+</pre>
+      </div>
+
+      <ol type="1">
+        <li>
+          <p>The <var class="LITERAL">lp2</var> printcap entry
+          illustrates the use (and abuse) of the <var class=
+          "LITERAL">\</var> continuation. If you think about this,
+          we have really defined a printcap entry of the form:</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN5602"></a>
+<pre class="SCREEN">
+    lp2: :lp=pr@10.0.0.1:client
+</pre>
+          </div>
+          &#13;<br>
+          <br>
+
+          <p>Luckily, <b class="APPLICATION">LPRng</b> ignores
+          empty options like <var class="LITERAL">::</var>. While
+          it is strongly recommended that <var class=
+          "LITERAL">\</var> be avoided it may be necessary for
+          compatibility with other system utilities.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">lp=pr@10.0.0.1</var> literal
+          is an alternate way to specify a remote queue and server.
+          If the <var class="LITERAL">force_localhost</var> default
+          is being used, then the <b class="APPLICATION">LPRng</b>
+          clients will ignore the <var class=
+          "LITERAL">10.0.0.1</var> address and still connect to
+          <var class="LITERAL">pr@localhost</var>. There is further
+          discussion about this in the next section.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">client</var> option
+          explicitly labels client only printcap information. The
+          <b class="APPLICATION">lpd</b> server will ignore any
+          printcap with the <var class="LITERAL">client</var>
+          option. When constructing complex printcaps, this option
+          is used to keep ensure that you have consistent printcap
+          information.</p>
+        </li>
+      </ol>
+      The following printcap entry shows how to override the <var
+      class="LITERAL">force_localhost</var> default, and force the
+      <b class="APPLICATION">LPRng</b> clients to connect directly
+      to a remote server: 
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5622"></a>
+<pre class="SCREEN">
+    lp3:rp=pr:rm=hp.private
+      :force_localhost@
+</pre>
+      </div>
+
+      <ol type="1">
+        <li>
+          <p>The <var class="LITERAL">rp=</var> (remote printer)
+          remote print queue name to used when sending commands to
+          the <b class="APPLICATION">lpd</b> print server.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">force_localhost@</var>
+          literal is an example of a <span class="emphasis"><i
+          class="EMPHASIS">flag</i></span> option. The <var class=
+          "LITERAL">@</var> sets the literal value to 0 (false). We
+          set <var class="LITERAL">force_localhost</var> to false,
+          which now allows the <b class="APPLICATION">LPRng</b>
+          clients to connect directly to the specified remote
+          printer. In this example, the <tt class=
+          "FILENAME">hp.private</tt> could be a HP LaserJet Printer
+          with a JetDirect interface, which supports the RFC1179
+          protocol.</p>
+        </li>
+
+        <li>
+          <p>One disadvantages of sending a job directly to a
+          printer using the above method is that <b class=
+          "APPLICATION">lpr</b> program will not terminate or exit
+          until all of the files have been transferred to the
+          printer, and this may take a long time as the printer
+          processes the files as they are received.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>Now let's look at the last printcap entry:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5641"></a>
+<pre class="SCREEN">
+    # Simplest possible printcap entry - defaults for everything
+    lp4
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The last example is the simplest possible printcap entry.
+      This will cause <b class="APPLICATION">LPRng</b> clients to
+      use the default values for everything. The printer will be
+      <var class="LITERAL">lp4</var>, i.e. - the name of the
+      printcap, and the server will be <var class=
+      "LITERAL">localhost</var> if <var class=
+      "LITERAL">force_localhost</var> is set, or the value of the
+      <var class="LITERAL">default_remote_host</var> configuration
+      option if it is not.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "printcapref.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "cm.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Printcap
+          Database</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Simple Server
+          Printcap Example</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

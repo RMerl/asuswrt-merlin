@@ -1,0 +1,6 @@
+Allows you to add comments (up to 256 characters) to any rule.
+.TP
+.BI "--comment " "comment"
+.TP
+Example:
+iptables -A INPUT -s 192.168.0.0/16 -m comment --comment "A privatized IP block"

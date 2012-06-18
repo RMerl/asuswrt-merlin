@@ -1,0 +1,27 @@
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=12245
+
+--- trunk/gcc/ChangeLog	2009/02/23 16:39:52	144383
++++ trunk/gcc/ChangeLog	2009/02/23 16:46:32	144384
+@@ -1,6 +1,11 @@
+ 	* real.c (real_can_shorten_arithmetic): New.
+ 	* real.h (real_can_shorten_arithmetic): Declare.
+ 
++2009-02-23  Jan Hubicka  <jh@suse.cz>
++
++	PR c/12245
++	* ggc.h (htab_create_ggc): Use ggc_free to free hashtable when resizing.
++
+ 2009-02-21  Uros Bizjak  <ubizjak@gmail.com>
+ 
+ 	Backport from mainline:
+--- trunk/gcc/ggc.h	2009/02/23 16:39:52	144383
++++ trunk/gcc/ggc.h	2009/02/23 16:46:32	144384
+@@ -249,7 +249,7 @@
+ #define ggc_alloc_tree(LENGTH) ((tree) ggc_alloc_zone (LENGTH, &tree_zone))
+ 
+ #define htab_create_ggc(SIZE, HASH, EQ, DEL) \
+-  htab_create_alloc (SIZE, HASH, EQ, DEL, ggc_calloc, NULL)
++  htab_create_alloc (SIZE, HASH, EQ, DEL, ggc_calloc, ggc_free)
+ 
+ #define splay_tree_new_ggc(COMPARE)					 \
+   splay_tree_new_with_allocator (COMPARE, NULL, NULL,			 \

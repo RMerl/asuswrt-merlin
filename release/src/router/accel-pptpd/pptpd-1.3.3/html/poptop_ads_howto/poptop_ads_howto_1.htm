@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Poptop MSCHAP2 ADS Howto</title>
+</head>
+
+<body>
+<h3>PopTop + MSCHAPv2 + Samba + Radius + Microsoft Active Directory + Fedora Howto</h3>
+<p align="left">Copyright &copy; 2005 Wing S Kwok </p>
+<p align="right">by: Wing S Kwok<br>
+  email: skwok (at) acnielsen.com.au  </p>
+<p align="left"><strong>Revision History</strong>:</p>
+<dl>
+  <dt>Release 0.8 - 5 March 2006</dt>
+  <dd>- Updated information on pptpd, samba version</dd>
+  <dd>- Updated information on FC4 kernel version</dd>
+  <dd>- Added info on changing MTU size</dd>
+      <br>
+  <dt>Release 0.71 - 3 February 2006</dt>
+  <dd>- Problem with kernel 2.6.15 and ppp-2.4.3-5 is Gentoo specific. Corrected the document.</dd>
+	  <br>
+  <dt>Release 0.7 -- 1 February 2006</dt>
+      <dd>- Section 12.2 has been rewritten.</dd>
+	  <dd>- Updated information on Samba version.</dd>
+	  <dd>- Provided a link to information on problem with kernel 2.6.15 and ppp-2.4.3-5</dd>
+      <br>
+  <dt>Release 0.6 -- 5 January 2006</dt>
+      <dd>- Added a new section on pptp server administration.</dd>
+      <dd>- Updated information on Samba version. </dd>
+      <br>
+  <dt>Release 0.5 -- 17 November 2005</dt>
+      <dd>- Included info on kernel 2.6.15-rc1 and MPPE support</dd><br>
+  <dt>Release 0.4 -- 30 October 2005</dt>
+      <dd>- Updated kernel-ppp-mppe version number</dd><br>
+  <dt>Release 0.3 -- 23 October 2005</dt>
+      <dd>- added the Acknowledgements section</dd>
+	  <dd>- added information on problem with FC4 2.6.13 kernel and mppe kernel module </dd>
+      <dd>- added information on kernel upgrade and dkms_autoinstaller</dd>
+      <dd>- added information on pptp access control</dd>
+	  <dd>- updated the software version info to reflect the latest available version</dd><br>
+  <dt>Release 0.2 -- 23 September 2005</dt>
+      <dd>- Rewrote part of the pptp client configuration section and included split tunneling information.</dd><br>
+  <dt>Release 0.1 -- 12 September 2005</dt>
+      <dd>- added Kerberos version information</dd>
+      <dd>- added the full path of winbindd_privileged directory</dd>
+      <dd>- fixed the VBScript which had a few lines missing</dd>
+      <dd>- corrected a few typos </dd>
+</dl>
+<dl>
+   <dt>First Release -- 5 September 2005</dt>
+</dl>
+<p align="left">This document covers how to integrate Poptop with Microsoft Active Directory on Fedora Core 4. Two different implementations are described: a) winbind; and b) freeradius.</p>
+<hr>
+<a name="toc"></a>Table of Contents
+<dl><dt>1. <a href="#introduction">Introduction</a></dt>
+    <dt>2. <a href="#disclaimer">Disclaimer</a></dt>
+	<dt>3. <a href="#acknowledgement">Acknowledgements</a></dt>
+    <dt>4. <a href="poptop_ads_howto_2.htm">The Test Environment</a></dt>
+    <dt>5. <a href="poptop_ads_howto_3.htm#network">Network Configuration</a></dt>
+    <dd>5.1 <a href="poptop_ads_howto_3.htm#defaultroute">Default Route and Static Routes</a></dd>
+	<dd>5.2 <a href="poptop_ads_howto_3.htm#pforward">Enable Packet Forwarding</a></dd>
+    <dt>6. <a href="poptop_ads_howto_4.htm#mppe">Install MPPE Kernel Module</a></dt>
+	<dd>6.1 <a href="poptop_ads_howto_4.htm#autoinstaller">Kernel Upgrade and dkms_autoinstaller</a></dd>
+	<dt>7. <a href="poptop_ads_howto_4.htm#pppd_pptpd">pppd and  pptpd</a></dt>
+    <dd>7.1 <a href="poptop_ads_howto_4.htm#pppd">Upgrade pppd</a></dd>
+    <dd>7.2 <a href="poptop_ads_howto_4.htm#pptpd">Install pptpd</a></dd>
+	<dt>8. <a href="poptop_ads_howto_5.htm">Kerberos</a></dt>
+	<dd>8.1 <a href="poptop_ads_howto_5.htm#krbconf">Configure Kerberos</a></dd>
+	<dd>8.2 <a href="poptop_ads_howto_5.htm#krbtest">Test Kerberos</a></dd>
+  <dt>9. <a href="poptop_ads_howto_6.htm">Samba</a></dt>
+  <dd>9.1 <a href="poptop_ads_howto_6.htm#smbconf">Configure Samba</a></dd>
+  <dd>9.2 <a href="poptop_ads_howto_6.htm#smbjoin">Join the AD Domain</a></dd>
+  <dt>10. <a href="poptop_ads_howto_7.htm">pptpd and winbindd</a></dt>
+  <dd>10.1 <a href="poptop_ads_howto_7.htm#wbtest">Enable and Test winbindd</a></dd>
+  <dd>10.2 <a href="poptop_ads_howto_7.htm#pptpconf">Configure pptpd</a></dd>
+  <dd>10.3 <a href="poptop_ads_howto_7.htm#access">PPTP Access Control</a></dd>
+  <dt>11. <a href="poptop_ads_howto_8.htm">Software for Radius Setup</a></dt>
+  <dt>12. <a href="poptop_ads_howto_8.htm#rclient">Radiusclient</a></dt>
+  <dd>12.1 <a href="poptop_ads_howto_8.htm#rclientconf">radiusclient.conf</a></dd>
+  <dd>12.2 <a href="poptop_ads_howto_8.htm#dict">dictionary.microsoft</a></dd>
+  <dt>13. <a href="poptop_ads_howto_9.htm">Freeradius</a></dt>
+  <dd>13.1 <a href="poptop_ads_howto_9.htm#mschap2">Configure Freeradius for MSCHAPv2</a></dd>
+  <dd>13.2 <a href="poptop_ads_howto_9.htm#access">PPTP Access Control</a></dd>
+  <dt>14 <a href="poptop_ads_howto_10.htm">pptpd and freeradius</a></dt>
+  <dd>14.1 <a href="poptop_ads_howto_10.htm#radiusd">Enable freeradius</a></dd>
+  <dd>14.2 <a href="poptop_ads_howto_10.htm#pptpdradius">Configure pptpd</a></dd>
+  <dt>15. <a href="poptop_ads_howto_11.htm">pptp Client Installation</a></dt>
+  <dd>15.1 <a href="poptop_ads_howto_11.htm#splittunnel">Split Tunneling</a></dd>
+  <dt>16. <a href="poptop_ads_howto_12.htm">pptp Server Administration </a></dt>
+  <dd>16.1 <a href="poptop_ads_howto_12.htm#whoisonline">Who is Online?</a></dd>
+  <dd>16.2 <a href="poptop_ads_howto_12.htm#accounting">Accounting</a></dd>
+  <dd>16.3 <a href="poptop_ads_howto_12.htm#disconnect">Disconnect a User</a></dd>
+</dl>
+
+<hr>
+<strong><a name="introduction"></a>1. Introduction</strong>
+<p>This document descibes how to  build a Linux PPTP server with Poptop and use Microsoft Active Directory to authenticate users. There are a few howtos on this topic, such as the <a href="http://poptop.sourceforge.net/dox/replacing-windows-pptp-with-linux-howto.phtml">Replacing a Windows PPTP Server with Linux Howto</a> maintained by Matt Alexander. Most of them, however, concentrate on Samba and winbind. I followed them and got it working in the test environment. Unfortunately, winbind does not scale very well in a AD setup which has thousands of objects. The AD in my work is a big tree. It spans across all continents and has thousands of users and groups. Winbind simply times out before it can harvest a complete list of users/groups.</p>
+<p align="left">The other way of doing it is with radius. Information on how to setup pptpd with radius against Active Directory is scarce. I can only find bits and pieces information from forums but never find any comprehensive documents. I spent days to try to get it configured properly. After countless frustrations and tears, I eventually got a working setup. I therefore decided to make this howto to document it. Hopefully, you will find it useful.</p>
+<p align="left">To make this howto complete, I include the winbind configuration as well although it may duplicate Matt's work.</p>
+<p align="left"><strong>Note</strong>: this howto is based on Fedora Core 4 and use pre-packaged RPMs whenever possible. If you are using other distributions or like to compile software, you will have to make the necessary adjustments.</p>
+<hr>
+<strong><a name="disclaimer"></a>2. Disclaimer</strong>
+<p>This document is provided as is. I have tried my best to make it as accurate as I can but it may contain wrong information. Use it at your own risk. </p>
+<p>I will greatly appreciate any comments on this document. </p>
+<hr>
+<a name="acknowledgement"></a><strong>3. Acknowledgements
+</strong>
+<p>Thanks to the following individuals who provided feedback and suggestions to make this document better.</p>
+<blockquote>
+  <p>Peter Mueller - suggested to add information on Kerberos version (R0.1) <br>
+    Francis Lessard - provided details on implementing pptp access control (R0.3)<br>
+    James Cameron - provided info on MPPE support on kernel v2.6.15-rc1 (R0.5) <br>
+	Phil Oester - pointed out the kernel-2.6.15/ppp-2.4.3-5 problem is Gentoo specific (R0.71) </p>
+</blockquote>
+<hr>
+
+<a href="poptop_ads_howto_2.htm">Next</a>
+&nbsp;&nbsp;<a href="#toc">Content</a>
+
+</body>
+</html>

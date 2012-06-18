@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>I want to replace lp, lpstat, etc, but my programs need
+    them</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="The Most Frequently Asked Questions "
+    href="faq.htm">
+    <link rel="PREVIOUS" title=
+    "What is RFC 1179, the Line Printer Daemon Protocol? " href=
+    "rfc1179.htm">
+    <link rel="NEXT" title="Remote Logger Operation" href=
+    "remotelogger.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "rfc1179.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          20. The Most Frequently Asked Questions</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "remotelogger.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN10839">20.7. I want to replace
+      lp, lpstat, etc, but my programs need them</a></h1>
+
+      <p><b class="APPLICATION">LPRng</b> was designed as a
+      replacement the BSD printing system. As such, it inherited
+      its command names and options from the latter. As you might
+      know, SystemV uses a totally different set of commands,
+      incompatible with the BSD ones.</p>
+
+      <p>The good news is that the <b class="APPLICATION">LPRng</b>
+      binaries include an emulation for the SystemV commands. (See
+      <a href="lpsimulation.htm">lp Simulation</a> for details.
+      Briefly, you create links to the appropriate programs, and
+      invoke them by the link names. <span class="emphasis"><i
+      class="EMPHASIS">Actually, these links are installed by
+      default in recent versions.</i></span></p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10848"></a>
+<pre class="SCREEN">
+    ln -s lpr lp
+    ln -s lpq lpstat
+    ln -s lprm cancel
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If you make these links, calling <var class=
+      "LITERAL">lp</var>, <var class="LITERAL">lpstat</var> and
+      <var class="LITERAL">cancel</var> will give you a (partial)
+      SVR4 emulation. They have their own man pages, which you
+      should read if you need the emulation.</p>
+
+      <p>Since it is a <span class="emphasis"><i class=
+      "EMPHASIS">partial</i></span> emulation, you shouldn't expect
+      everything to work. In particular, I would guess that any
+      script which relies on the output format of one of your
+      system binaries will break. Again, see <a href=
+      "lpsimulation.htm">lp Simulation</a> for more details or
+      additional suggestions.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "rfc1179.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "remotelogger.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">What is RFC
+          1179, the Line Printer Daemon Protocol?</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "faq.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Remote Logger
+          Operation</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,35 @@
+Copyright (C) 1997-2003 Samba-Team
+
+The Samba-Team are committed to an aggressive program to deliver quality
+controlled software to a well defined roadmap.
+
+The current Samba series of Samba 3.0.0 is called the "Domain Integration"
+release.
+
+The following development objectives for future releases
+are in progress:
+----------------------------------------------------------------------------
+Samba-3.0.20	The release that is focussing on scalability and domain
+				integration and migration. See the WHATSNEW.txt file for
+				update notes.
+
+Samba-3.0.x		Improvements in Management and Migration tools, &
+				general code stabilization work. It is recommended to use
+				only stable releases in production environments. You have
+				been duly warned!
+
+Samba-3.1.x		The test bed for all new developments. Do NOT use in any
+				production environment.
+
+Samba-4			Danger Will Robinson, a big code clean up with major
+			system redesign. More will be announced as this work
+			starts to take shape.
+
+
+Note that it is a given that the Samba-Team will continue to track
+Windows (NT/200x) update releases, ensuring that Samba will work
+well with whatever "Beta" releases Redmond throws our way :-).
+
+You may also note that the release numbers get fuzzier the
+further into the future the objectives get. This is intentional
+as we cannot commit to exact timeframes.

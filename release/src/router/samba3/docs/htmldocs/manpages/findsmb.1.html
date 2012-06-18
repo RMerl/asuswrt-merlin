@@ -1,0 +1,62 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>findsmb</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="findsmb.1"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>findsmb &#8212; list info about machines that respond to SMB 
+	name queries on a subnet</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">findsmb</code> [subnet broadcast address]</p></div></div><div class="refsect1" lang="en"><a name="id2522937"></a><h2>DESCRIPTION</h2><p>This perl script is part of the <a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a>
+	suite.</p><p><code class="literal">findsmb</code> is a perl script that
+	prints out several pieces of information about machines 
+	on a subnet that respond to SMB  name query requests.
+	It uses <a class="citerefentry" href="nmblookup.1.html"><span class="citerefentry"><span class="refentrytitle">nmblookup</span>(1)</span></a>
+	and <a class="citerefentry" href="smbclient.1.html"><span class="citerefentry"><span class="refentrytitle">smbclient</span>(1)</span></a>
+	to obtain this information.
+	</p></div><div class="refsect1" lang="en"><a name="id2483352"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">-r</span></dt><dd><p>Controls whether <code class="literal">findsmb</code> takes
+		bugs in Windows95 into account when trying to find a Netbios name
+		registered of the remote machine. This option is disabled by default
+		because it is specific to Windows 95 and Windows 95 machines only. 
+		If set, <a class="citerefentry" href="nmblookup.1.html"><span class="citerefentry"><span class="refentrytitle">nmblookup</span>(1)</span></a>
+		will be called with <code class="constant">-B</code> option.</p></dd><dt><span class="term">subnet broadcast address</span></dt><dd><p>Without this option, <code class="literal">findsmb
+		</code> will probe the subnet of the machine where 
+		<a class="citerefentry" href="findsmb.1.html"><span class="citerefentry"><span class="refentrytitle">findsmb</span>(1)</span></a>
+		is run. This value is passed to 
+		<a class="citerefentry" href="nmblookup.1.html"><span class="citerefentry"><span class="refentrytitle">nmblookup</span>(1)</span></a>
+		as part of the <code class="constant">-B</code> option.</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2483543"></a><h2>EXAMPLES</h2><p>The output of <code class="literal">findsmb</code> lists the following 
+	information for all machines that respond to the initial 
+	<code class="literal">nmblookup</code> for any name: IP address, NetBIOS name, 
+	Workgroup name, operating system, and SMB server version.</p><p>There will be a '+' in front of the workgroup name for 
+	machines that are local master browsers for that workgroup. There 
+	will be an '*' in front of the workgroup name for 
+	machines that are the domain master browser for that workgroup. 
+	Machines that are running Windows for Workgroups, Windows 95 or 
+	Windows 98 will 
+	not show any information about the operating system or server 
+	version.</p><p>The command with <code class="constant">-r</code> option
+	must be run on a system without <a class="citerefentry" href="nmbd.8.html"><span class="citerefentry"><span class="refentrytitle">nmbd</span>(8)</span></a>	running. 
+
+	If <code class="literal">nmbd</code> is running on the system, you will 
+	only  get the IP address and the DNS name of the machine. To 
+	get proper responses  from Windows 95 and Windows 98 machines, 
+	the command must be run as root and with <code class="constant">-r</code>
+	option on a machine without <code class="literal">nmbd</code> running.</p><p>For example, running <code class="literal">findsmb</code> 
+	without <code class="constant">-r</code> option set would yield output similar
+	to the following</p><pre class="programlisting">
+IP ADDR         NETBIOS NAME   WORKGROUP/OS/VERSION 
+--------------------------------------------------------------------- 
+192.168.35.10   MINESET-TEST1  [DMVENGR]
+192.168.35.55   LINUXBOX      *[MYGROUP] [Unix] [Samba 2.0.6]
+192.168.35.56   HERBNT2        [HERB-NT]
+192.168.35.63   GANDALF        [MVENGR] [Unix] [Samba 2.0.5a for IRIX]
+192.168.35.65   SAUNA          [WORKGROUP] [Unix] [Samba 1.9.18p10]
+192.168.35.71   FROGSTAR       [ENGR] [Unix] [Samba 2.0.0 for IRIX]
+192.168.35.78   HERBDHCP1     +[HERB]
+192.168.35.88   SCNT2         +[MVENGR] [Windows NT 4.0] [NT LAN Manager 4.0]
+192.168.35.93   FROGSTAR-PC    [MVENGR] [Windows 5.0] [Windows 2000 LAN Manager]
+192.168.35.97   HERBNT1       *[HERB-NT] [Windows NT 4.0] [NT LAN Manager 4.0]
+</pre></div><div class="refsect1" lang="en"><a name="id2483644"></a><h2>VERSION</h2><p>This man page is correct for version 3.0 of 
+	the Samba suite.</p></div><div class="refsect1" lang="en"><a name="id2483656"></a><h2>SEE ALSO</h2><p><a class="citerefentry" href="nmbd.8.html"><span class="citerefentry"><span class="refentrytitle">nmbd</span>(8)</span></a>,
+	<a class="citerefentry" href="smbclient.1.html"><span class="citerefentry"><span class="refentrytitle">smbclient</span>(1)</span></a>, and <a class="citerefentry" href="nmblookup.1.html"><span class="citerefentry"><span class="refentrytitle">nmblookup</span>(1)</span></a>
+	</p></div><div class="refsect1" lang="en"><a name="id2483689"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</p><p>The original Samba man pages were written by Karl Auer. 
+	The man page sources were converted to YODL format (another 
+	excellent piece of Open Source software, available at <a class="ulink" href="ftp://ftp.icce.rug.nl/pub/unix/" target="_top">ftp://ftp.icce.rug.nl/pub/unix/</a>) 
+	and updated for the Samba 2.0 release by Jeremy Allison.  The conversion to DocBook for 
+	Samba 2.2 was done by Gerald Carter. The conversion to DocBook
+	XML 4.2 for Samba 3.0 was done by Alexander Bokovoy.</p></div></div></body></html>

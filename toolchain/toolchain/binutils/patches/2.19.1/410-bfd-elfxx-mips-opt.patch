@@ -1,0 +1,15 @@
+--- binutils-2.17.50.0.8/bfd/elfxx-mips.orig	2007-01-11 00:09:58.000000000 +0100
++++ binutils-2.17.50.0.8/bfd/elfxx-mips.c	2007-01-11 00:11:54.000000000 +0100
+@@ -649,9 +649,9 @@
+    section.  */
+ 
+ #define ELF_DYNAMIC_INTERPRETER(abfd) 		\
+-   (ABI_N32_P (abfd) ? "/usr/lib32/libc.so.1" 	\
+-    : ABI_64_P (abfd) ? "/usr/lib64/libc.so.1" 	\
+-    : "/usr/lib/libc.so.1")
++   (ABI_N32_P (abfd) ? "/opt/lib32/libc.so.0" 	\
++    : ABI_64_P (abfd) ? "/opt/lib64/libc.so.0" 	\
++    : "/opt/lib/ld-uClibc.so.0")
+ 
+ #ifdef BFD64
+ #define MNAME(bfd,pre,pos) \

@@ -1,0 +1,78 @@
+#
+# Compilation utility functions
+#
+
+#
+# Unix SMB/Netbios implementation.
+# Copyright (C) Tim Potter 2000
+#   
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#   
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#   
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+#
+
+# Compile a program consisting of one .c file.  For example 
+# simple_compile "foo" will compile foo.c to the executable foo.exe
+# Use a second argument to specify link libraries.
+
+proc simple_compile { args } {
+    global srcdir
+    global subdir
+
+    # Compile up program
+
+    set program [lindex $args 0]
+    set libs [lindex $args 1]
+
+    if { $libs == "" } {
+    
+	set output [target_compile "$srcdir/$subdir/$program.c" \
+		"$srcdir/$subdir/$program" executable \
+		{additional_flags="-g"}]
+    } else {
+
+	set output [target_compile "$srcdir/$subdir/$program.c" \
+		"$srcdir/$subdir/$program" executable \
+		[list libs=$libs additional_flags="-g"]]
+    }
+
+    # Check for errors
+
+    if {$output != ""} {
+	perror "compile $program"
+	puts $output
+	return -1
+    }
+}
+
+# Compile a program from a Makefile.suffix
+
+proc simple_make { args } {
+    global srcdir
+    global subdir
+
+    # Compile up program with make
+
+    set suffix [lindex $args 0]
+    set program [lindex $args 1]
+
+    set output [util_start "make" \
+	    "-C $srcdir/$subdir -f Makefile.$suffix $program"]
+
+    # Check for errors
+
+    if { [regexp "Error" $output] } {
+        perror "make $program"
+        puts $output
+        return -1
+    }
+}

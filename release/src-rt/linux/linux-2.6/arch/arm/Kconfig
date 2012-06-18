@@ -1,0 +1,1049 @@
+#
+# For a description of the syntax of this configuration file,
+# see Documentation/kbuild/kconfig-language.txt.
+#
+
+mainmenu "Linux Kernel Configuration"
+
+config ARM
+	bool
+	default y
+	select RTC_LIB
+	select SYS_SUPPORTS_APM_EMULATION
+	help
+	  The ARM series is a line of low-power-consumption RISC chip designs
+	  licensed by ARM Ltd and targeted at embedded applications and
+	  handhelds such as the Compaq IPAQ.  ARM-based PCs are no longer
+	  manufactured, but legacy ARM-based PC hardware remains popular in
+	  Europe.  There is an ARM Linux project with a web page at
+	  <http://www.arm.linux.org.uk/>.
+
+config SYS_SUPPORTS_APM_EMULATION
+	bool
+
+config GENERIC_GPIO
+	bool
+	default n
+
+config GENERIC_TIME
+	bool
+	default n
+
+config GENERIC_CLOCKEVENTS
+	bool
+	default n
+
+config MMU
+	bool
+	default y
+
+config NO_IOPORT
+	bool
+	default n
+
+config EISA
+	bool
+	---help---
+	  The Extended Industry Standard Architecture (EISA) bus was
+	  developed as an open alternative to the IBM MicroChannel bus.
+
+	  The EISA bus provided some of the features of the IBM MicroChannel
+	  bus while maintaining backward compatibility with cards made for
+	  the older ISA bus.  The EISA bus saw limited use between 1988 and
+	  1995 when it was made obsolete by the PCI bus.
+
+	  Say Y here if you are building a kernel for an EISA-based machine.
+
+	  Otherwise, say N.
+
+config SBUS
+	bool
+
+config MCA
+	bool
+	help
+	  MicroChannel Architecture is found in some IBM PS/2 machines and
+	  laptops.  It is a bus system similar to PCI or ISA. See
+	  <file:Documentation/mca.txt> (and especially the web page given
+	  there) before attempting to build an MCA bus kernel.
+
+config GENERIC_HARDIRQS
+	bool
+	default y
+
+config STACKTRACE_SUPPORT
+	bool
+	default y
+
+config LOCKDEP_SUPPORT
+	bool
+	default y
+
+config TRACE_IRQFLAGS_SUPPORT
+	bool
+	default y
+
+config HARDIRQS_SW_RESEND
+	bool
+	default y
+
+config GENERIC_IRQ_PROBE
+	bool
+	default y
+
+config RWSEM_GENERIC_SPINLOCK
+	bool
+	default y
+
+config RWSEM_XCHGADD_ALGORITHM
+	bool
+
+config ARCH_HAS_ILOG2_U32
+	bool
+	default n
+
+config ARCH_HAS_ILOG2_U64
+	bool
+	default n
+
+config GENERIC_HWEIGHT
+	bool
+	default y
+
+config GENERIC_CALIBRATE_DELAY
+	bool
+	default y
+
+config ARCH_MAY_HAVE_PC_FDC
+	bool
+
+config ZONE_DMA
+	bool
+	default y
+
+config GENERIC_ISA_DMA
+	bool
+
+config FIQ
+	bool
+
+config ARCH_MTD_XIP
+	bool
+
+config VECTORS_BASE
+	hex
+	default 0xffff0000 if MMU || CPU_HIGH_VECTOR
+	default DRAM_BASE if REMAP_VECTORS_TO_RAM
+	default 0x00000000
+	help
+	  The base address of exception vectors.
+
+source "init/Kconfig"
+
+menu "System Type"
+
+choice
+	prompt "ARM system type"
+	default ARCH_VERSATILE
+
+config ARCH_AAEC2000
+	bool "Agilent AAEC-2000 based"
+	select ARM_AMBA
+	help
+	  This enables support for systems based on the Agilent AAEC-2000
+
+config ARCH_INTEGRATOR
+	bool "ARM Ltd. Integrator family"
+	select ARM_AMBA
+	select ICST525
+	help
+	  Support for ARM's Integrator platform.
+
+config ARCH_REALVIEW
+	bool "ARM Ltd. RealView family"
+	select ARM_AMBA
+	select ICST307
+	help
+	  This enables support for ARM Ltd RealView boards.
+
+config ARCH_VERSATILE
+	bool "ARM Ltd. Versatile family"
+	select ARM_AMBA
+	select ARM_VIC
+	select ICST307
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+	help
+	  This enables support for ARM Ltd Versatile board.
+
+config ARCH_AT91
+	bool "Atmel AT91"
+	select GENERIC_GPIO
+	help
+	  This enables support for systems based on the Atmel AT91RM9200
+	  and AT91SAM9xxx processors.
+
+config ARCH_CLPS7500
+	bool "Cirrus CL-PS7500FE"
+	select TIMER_ACORN
+	select ISA
+	select NO_IOPORT
+	help
+	  Support for the Cirrus Logic PS7500FE system-on-a-chip.
+
+config ARCH_CLPS711X
+	bool "Cirrus Logic CLPS711x/EP721x-based"
+	help
+	  Support for Cirrus Logic 711x/721x based boards.
+
+config ARCH_CO285
+	bool "Co-EBSA285"
+	select FOOTBRIDGE
+	select FOOTBRIDGE_ADDIN
+	help
+	  Support for Intel's EBSA285 companion chip.
+
+config ARCH_EBSA110
+	bool "EBSA-110"
+	select ISA
+	select NO_IOPORT
+	help
+	  This is an evaluation board for the StrongARM processor available
+	  from Digital. It has limited hardware on-board, including an
+	  Ethernet interface, two PCMCIA sockets, two serial ports and a
+	  parallel port.
+
+config ARCH_EP93XX
+	bool "EP93xx-based"
+	select ARM_AMBA
+	select ARM_VIC
+	help
+	  This enables support for the Cirrus EP93xx series of CPUs.
+
+config ARCH_FOOTBRIDGE
+	bool "FootBridge"
+	select FOOTBRIDGE
+	help
+	  Support for systems based on the DC21285 companion chip
+	  ("FootBridge"), such as the Simtec CATS and the Rebel NetWinder.
+
+config ARCH_NETX
+	bool "Hilscher NetX based"
+	select ARM_VIC
+	help
+	  This enables support for systems based on the Hilscher NetX Soc
+
+config ARCH_H720X
+	bool "Hynix HMS720x-based"
+	select ISA_DMA_API
+	help
+	  This enables support for systems based on the Hynix HMS720x
+
+config ARCH_IMX
+	bool "IMX"
+	help
+	  Support for Motorola's i.MX family of processors (MX1, MXL).
+
+config ARCH_IOP13XX
+	bool "IOP13xx-based"
+	depends on MMU
+	select PLAT_IOP
+	select PCI
+	select ARCH_SUPPORTS_MSI
+	help
+	  Support for Intel's IOP13XX (XScale) family of processors.
+
+config ARCH_IOP32X
+	bool "IOP32x-based"
+	depends on MMU
+	select PLAT_IOP
+	select PCI
+	help
+	  Support for Intel's 80219 and IOP32X (XScale) family of
+	  processors.
+
+config ARCH_IOP33X
+	bool "IOP33x-based"
+	depends on MMU
+	select PLAT_IOP
+	select PCI
+	help
+	  Support for Intel's IOP33X (XScale) family of processors.
+
+config ARCH_IXP23XX
+ 	bool "IXP23XX-based"
+	depends on MMU
+ 	select PCI
+	help
+	  Support for Intel's IXP23xx (XScale) family of processors.
+
+config ARCH_IXP2000
+	bool "IXP2400/2800-based"
+	depends on MMU
+	select PCI
+	help
+	  Support for Intel's IXP2400/2800 (XScale) family of processors.
+
+config ARCH_IXP4XX
+	bool "IXP4xx-based"
+	depends on MMU
+	select GENERIC_GPIO
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+	help
+	  Support for Intel's IXP4XX (XScale) family of processors.
+
+config ARCH_L7200
+	bool "LinkUp-L7200"
+	select FIQ
+	help
+	  Say Y here if you intend to run this kernel on a LinkUp Systems
+	  L7200 Software Development Board which uses an ARM720T processor.
+	  Information on this board can be obtained at:
+
+	  <http://www.linkupsys.com/>
+
+	  If you have any questions or comments about the Linux kernel port
+	  to this board, send e-mail to <sjhill@cotw.com>.
+
+config ARCH_KS8695
+	bool "Micrel/Kendin KS8695"
+	help
+	  Support for Micrel/Kendin KS8695 "Centaur" (ARM922T) based
+	  System-on-Chip devices.
+
+config ARCH_NS9XXX
+	bool "NetSilicon NS9xxx"
+	help
+	  Say Y here if you intend to run this kernel on a NetSilicon NS9xxx
+	  System.
+
+	  <http://www.digi.com/products/microprocessors/index.jsp>
+
+config ARCH_PNX4008
+	bool "Philips Nexperia PNX4008 Mobile"
+	help
+	  This enables support for Philips PNX4008 mobile platform.
+
+config ARCH_PXA
+	bool "PXA2xx-based"
+	depends on MMU
+	select ARCH_MTD_XIP
+	select GENERIC_GPIO
+	select GENERIC_TIME
+	help
+	  Support for Intel's PXA2XX processor line.
+
+config ARCH_RPC
+	bool "RiscPC"
+	select ARCH_ACORN
+	select FIQ
+	select TIMER_ACORN
+	select ARCH_MAY_HAVE_PC_FDC
+	select ISA_DMA_API
+	select NO_IOPORT
+	help
+	  On the Acorn Risc-PC, Linux can support the internal IDE disk and
+	  CD-ROM interface, serial and parallel port, and the floppy drive.
+
+config ARCH_SA1100
+	bool "SA1100-based"
+	select ISA
+	select ARCH_DISCONTIGMEM_ENABLE
+	select ARCH_MTD_XIP
+	select GENERIC_GPIO
+	help
+	  Support for StrongARM 11x0 based boards.
+
+config ARCH_S3C2410
+	bool "Samsung S3C2410, S3C2412, S3C2413, S3C2440, S3C2442, S3C2443"
+	select GENERIC_GPIO
+	help
+	  Samsung S3C2410X CPU based systems, such as the Simtec Electronics
+	  BAST (<http://www.simtec.co.uk/products/EB110ITX/>), the IPAQ 1940 or
+	  the Samsung SMDK2410 development board (and derivatives).
+
+config ARCH_SHARK
+	bool "Shark"
+	select ISA
+	select ISA_DMA
+	select PCI
+	help
+	  Support for the StrongARM based Digital DNARD machine, also known
+	  as "Shark" (<http://www.shark-linux.de/shark.html>).
+
+config ARCH_LH7A40X
+	bool "Sharp LH7A40X"
+	help
+	  Say Y here for systems based on one of the Sharp LH7A40X
+	  System on a Chip processors.  These CPUs include an ARM922T
+	  core with a wide array of integrated devices for
+	  hand-held and low-power applications.
+
+config ARCH_DAVINCI
+	bool "TI DaVinci"
+	select GENERIC_TIME
+	select GENERIC_CLOCKEVENTS
+	help
+	  Support for TI's DaVinci platform.
+
+config ARCH_OMAP
+	bool "TI OMAP"
+	select GENERIC_GPIO
+	select GENERIC_TIME
+	help
+	  Support for TI's OMAP platform (OMAP1 and OMAP2).
+
+endchoice
+
+source "arch/arm/mach-clps711x/Kconfig"
+
+source "arch/arm/mach-ep93xx/Kconfig"
+
+source "arch/arm/mach-footbridge/Kconfig"
+
+source "arch/arm/mach-integrator/Kconfig"
+
+source "arch/arm/mach-iop32x/Kconfig"
+
+source "arch/arm/mach-iop33x/Kconfig"
+
+source "arch/arm/mach-iop13xx/Kconfig"
+
+source "arch/arm/mach-ixp4xx/Kconfig"
+
+source "arch/arm/mach-ixp2000/Kconfig"
+
+source "arch/arm/mach-ixp23xx/Kconfig"
+
+source "arch/arm/mach-pxa/Kconfig"
+
+source "arch/arm/mach-sa1100/Kconfig"
+
+source "arch/arm/plat-omap/Kconfig"
+
+source "arch/arm/mach-omap1/Kconfig"
+
+source "arch/arm/mach-omap2/Kconfig"
+
+source "arch/arm/plat-s3c24xx/Kconfig"
+
+if ARCH_S3C2410
+source "arch/arm/mach-s3c2400/Kconfig"
+source "arch/arm/mach-s3c2410/Kconfig"
+source "arch/arm/mach-s3c2412/Kconfig"
+source "arch/arm/mach-s3c2440/Kconfig"
+source "arch/arm/mach-s3c2442/Kconfig"
+source "arch/arm/mach-s3c2443/Kconfig"
+endif
+
+source "arch/arm/mach-lh7a40x/Kconfig"
+
+source "arch/arm/mach-imx/Kconfig"
+
+source "arch/arm/mach-h720x/Kconfig"
+
+source "arch/arm/mach-versatile/Kconfig"
+
+source "arch/arm/mach-aaec2000/Kconfig"
+
+source "arch/arm/mach-realview/Kconfig"
+
+source "arch/arm/mach-at91/Kconfig"
+
+source "arch/arm/mach-netx/Kconfig"
+
+source "arch/arm/mach-ns9xxx/Kconfig"
+
+source "arch/arm/mach-davinci/Kconfig"
+
+source "arch/arm/mach-ks8695/Kconfig"
+
+# Definitions to make life easier
+config ARCH_ACORN
+	bool
+
+config PLAT_IOP
+	bool
+
+source arch/arm/mm/Kconfig
+
+config IWMMXT
+	bool "Enable iWMMXt support"
+	depends on CPU_XSCALE || CPU_XSC3
+	default y if PXA27x
+	help
+	  Enable support for iWMMXt context switching at run time if
+	  running on a CPU that supports it.
+
+#  bool 'Use XScale PMU as timer source' CONFIG_XSCALE_PMU_TIMER
+config XSCALE_PMU
+	bool
+	depends on CPU_XSCALE && !XSCALE_PMU_TIMER
+	default y
+
+if !MMU
+source "arch/arm/Kconfig-nommu"
+endif
+
+endmenu
+
+source "arch/arm/common/Kconfig"
+
+config FORCE_MAX_ZONEORDER
+	int
+	depends on SA1111
+	default "9"
+
+menu "Bus support"
+
+config ARM_AMBA
+	bool
+
+config ISA
+	bool
+	help
+	  Find out whether you have ISA slots on your motherboard.  ISA is the
+	  name of a bus system, i.e. the way the CPU talks to the other stuff
+	  inside your box.  Other bus systems are PCI, EISA, MicroChannel
+	  (MCA) or VESA.  ISA is an older system, now being displaced by PCI;
+	  newer boards don't support it.  If you have ISA, say Y, otherwise N.
+
+# Select ISA DMA controller support
+config ISA_DMA
+	bool
+	select ISA_DMA_API
+
+# Select ISA DMA interface
+config ISA_DMA_API
+	bool
+
+config PCI
+	bool "PCI support" if ARCH_INTEGRATOR_AP || ARCH_VERSATILE_PB || ARCH_IXP4XX || ARCH_KS8695
+	help
+	  Find out whether you have a PCI motherboard. PCI is the name of a
+	  bus system, i.e. the way the CPU talks to the other stuff inside
+	  your box. Other bus systems are ISA, EISA, MicroChannel (MCA) or
+	  VESA. If you have PCI, say Y, otherwise N.
+
+	  The PCI-HOWTO, available from
+	  <http://www.tldp.org/docs.html#howto>, contains valuable
+	  information about which PCI hardware does work under Linux and which
+	  doesn't.
+
+# Select the host bridge type
+config PCI_HOST_VIA82C505
+	bool
+	depends on PCI && ARCH_SHARK
+	default y
+
+source "drivers/pci/Kconfig"
+
+source "drivers/pcmcia/Kconfig"
+
+endmenu
+
+menu "Kernel Features"
+
+source "kernel/time/Kconfig"
+
+config SMP
+	bool "Symmetric Multi-Processing (EXPERIMENTAL)"
+	depends on EXPERIMENTAL && REALVIEW_MPCORE
+	help
+	  This enables support for systems with more than one CPU. If you have
+	  a system with only one CPU, like most personal computers, say N. If
+	  you have a system with more than one CPU, say Y.
+
+	  If you say N here, the kernel will run on single and multiprocessor
+	  machines, but will use only one CPU of a multiprocessor machine. If
+	  you say Y here, the kernel will run on many, but not all, single
+	  processor machines. On a single processor machine, the kernel will
+	  run faster if you say N here.
+
+	  See also the <file:Documentation/smp.txt>,
+	  <file:Documentation/i386/IO-APIC.txt>,
+	  <file:Documentation/nmi_watchdog.txt> and the SMP-HOWTO available at
+	  <http://www.linuxdoc.org/docs.html#howto>.
+
+	  If you don't know what to do here, say N.
+
+config NR_CPUS
+	int "Maximum number of CPUs (2-32)"
+	range 2 32
+	depends on SMP
+	default "4"
+
+config HOTPLUG_CPU
+	bool "Support for hot-pluggable CPUs (EXPERIMENTAL)"
+	depends on SMP && HOTPLUG && EXPERIMENTAL
+	help
+	  Say Y here to experiment with turning CPUs off and on.  CPUs
+	  can be controlled through /sys/devices/system/cpu.
+
+config LOCAL_TIMERS
+	bool "Use local timer interrupts"
+	depends on SMP && REALVIEW_MPCORE
+	default y
+	help
+	  Enable support for local timers on SMP platforms, rather then the
+	  legacy IPI broadcast method.  Local timers allows the system
+	  accounting to be spread across the timer interval, preventing a
+	  "thundering herd" at every timer tick.
+
+config PREEMPT
+	bool "Preemptible Kernel (EXPERIMENTAL)"
+	depends on EXPERIMENTAL
+	help
+	  This option reduces the latency of the kernel when reacting to
+	  real-time or interactive events by allowing a low priority process to
+	  be preempted even if it is in kernel mode executing a system call.
+	  This allows applications to run more reliably even when the system is
+	  under load.
+
+	  Say Y here if you are building a kernel for a desktop, embedded
+	  or real-time system.  Say N if you are unsure.
+
+config NO_IDLE_HZ
+	bool "Dynamic tick timer"
+	depends on !GENERIC_CLOCKEVENTS
+	help
+	  Select this option if you want to disable continuous timer ticks
+	  and have them programmed to occur as required. This option saves
+	  power as the system can remain in idle state for longer.
+
+	  By default dynamic tick is disabled during the boot, and can be
+	  manually enabled with:
+
+	    echo 1 > /sys/devices/system/timer/timer0/dyn_tick
+
+	  Alternatively, if you want dynamic tick automatically enabled
+	  during boot, pass "dyntick=enable" via the kernel command string.
+
+	  Please note that dynamic tick may affect the accuracy of
+	  timekeeping on some platforms depending on the implementation.
+	  Currently at least OMAP, PXA2xx and SA11x0 platforms are known
+	  to have accurate timekeeping with dynamic tick.
+
+config HZ
+	int
+	default 128 if ARCH_L7200
+	default 200 if ARCH_EBSA110 || ARCH_S3C2410
+	default OMAP_32K_TIMER_HZ if ARCH_OMAP && OMAP_32K_TIMER
+	default 100
+
+config AEABI
+	bool "Use the ARM EABI to compile the kernel"
+	help
+	  This option allows for the kernel to be compiled using the latest
+	  ARM ABI (aka EABI).  This is only useful if you are using a user
+	  space environment that is also compiled with EABI.
+
+	  Since there are major incompatibilities between the legacy ABI and
+	  EABI, especially with regard to structure member alignment, this
+	  option also changes the kernel syscall calling convention to
+	  disambiguate both ABIs and allow for backward compatibility support
+	  (selected with CONFIG_OABI_COMPAT).
+
+	  To use this you need GCC version 4.0.0 or later.
+
+config OABI_COMPAT
+	bool "Allow old ABI binaries to run with this kernel (EXPERIMENTAL)"
+	depends on AEABI && EXPERIMENTAL
+	default y
+	help
+	  This option preserves the old syscall interface along with the
+	  new (ARM EABI) one. It also provides a compatibility layer to
+	  intercept syscalls that have structure arguments which layout
+	  in memory differs between the legacy ABI and the new ARM EABI
+	  (only for non "thumb" binaries). This option adds a tiny
+	  overhead to all syscalls and produces a slightly larger kernel.
+	  If you know you'll be using only pure EABI user space then you
+	  can say N here. If this option is not selected and you attempt
+	  to execute a legacy ABI binary then the result will be
+	  UNPREDICTABLE (in fact it can be predicted that it won't work
+	  at all). If in doubt say Y.
+
+config ARCH_DISCONTIGMEM_ENABLE
+	bool
+	default (ARCH_LH7A40X && !LH7A40X_CONTIGMEM)
+	help
+	  Say Y to support efficient handling of discontiguous physical memory,
+	  for architectures which are either NUMA (Non-Uniform Memory Access)
+	  or have huge holes in the physical address space for other reasons.
+	  See <file:Documentation/vm/numa> for more.
+
+config NODES_SHIFT
+	int
+	default "4" if ARCH_LH7A40X
+	default "2"
+	depends on NEED_MULTIPLE_NODES
+
+source "mm/Kconfig"
+
+config LEDS
+	bool "Timer and CPU usage LEDs"
+	depends on ARCH_CDB89712 || ARCH_CO285 || ARCH_EBSA110 || \
+		   ARCH_EBSA285 || ARCH_IMX || ARCH_INTEGRATOR || \
+		   ARCH_LUBBOCK || MACH_MAINSTONE || ARCH_NETWINDER || \
+		   ARCH_OMAP || ARCH_P720T || ARCH_PXA_IDP || \
+		   ARCH_SA1100 || ARCH_SHARK || ARCH_VERSATILE || \
+		   ARCH_AT91 || MACH_TRIZEPS4 || ARCH_DAVINCI || \
+		   ARCH_KS8695
+	help
+	  If you say Y here, the LEDs on your machine will be used
+	  to provide useful information about your current system status.
+
+	  If you are compiling a kernel for a NetWinder or EBSA-285, you will
+	  be able to select which LEDs are active using the options below. If
+	  you are compiling a kernel for the EBSA-110 or the LART however, the
+	  red LED will simply flash regularly to indicate that the system is
+	  still functional. It is safe to say Y here if you have a CATS
+	  system, but the driver will do nothing.
+
+config LEDS_TIMER
+	bool "Timer LED" if (!ARCH_CDB89712 && !ARCH_OMAP) || \
+			    MACH_OMAP_H2 || MACH_OMAP_PERSEUS2
+	depends on LEDS
+	depends on !GENERIC_CLOCKEVENTS
+	default y if ARCH_EBSA110
+	help
+	  If you say Y here, one of the system LEDs (the green one on the
+	  NetWinder, the amber one on the EBSA285, or the red one on the LART)
+	  will flash regularly to indicate that the system is still
+	  operational. This is mainly useful to kernel hackers who are
+	  debugging unstable kernels.
+
+	  The LART uses the same LED for both Timer LED and CPU usage LED
+	  functions. You may choose to use both, but the Timer LED function
+	  will overrule the CPU usage LED.
+
+config LEDS_CPU
+	bool "CPU usage LED" if (!ARCH_CDB89712 && !ARCH_EBSA110 && \
+			!ARCH_OMAP) || MACH_OMAP_H2 || MACH_OMAP_PERSEUS2
+	depends on LEDS
+	help
+	  If you say Y here, the red LED will be used to give a good real
+	  time indication of CPU usage, by lighting whenever the idle task
+	  is not currently executing.
+
+	  The LART uses the same LED for both Timer LED and CPU usage LED
+	  functions. You may choose to use both, but the Timer LED function
+	  will overrule the CPU usage LED.
+
+config ALIGNMENT_TRAP
+	bool
+	depends on CPU_CP15_MMU
+	default y if !ARCH_EBSA110
+	help
+	  ARM processors cannot fetch/store information which is not
+	  naturally aligned on the bus, i.e., a 4 byte fetch must start at an
+	  address divisible by 4. On 32-bit ARM processors, these non-aligned
+	  fetch/store instructions will be emulated in software if you say
+	  here, which has a severe performance impact. This is necessary for
+	  correct operation of some network protocols. With an IP-only
+	  configuration it is safe to say N, otherwise say Y.
+
+endmenu
+
+menu "Boot options"
+
+# Compressed boot loader in ROM.  Yes, we really want to ask about
+# TEXT and BSS so we preserve their values in the config files.
+config ZBOOT_ROM_TEXT
+	hex "Compressed ROM boot loader base address"
+	default "0"
+	help
+	  The physical address at which the ROM-able zImage is to be
+	  placed in the target.  Platforms which normally make use of
+	  ROM-able zImage formats normally set this to a suitable
+	  value in their defconfig file.
+
+	  If ZBOOT_ROM is not enabled, this has no effect.
+
+config ZBOOT_ROM_BSS
+	hex "Compressed ROM boot loader BSS address"
+	default "0"
+	help
+	  The base address of an area of read/write memory in the target
+	  for the ROM-able zImage which must be available while the
+	  decompressor is running. It must be large enough to hold the
+	  entire decompressed kernel plus an additional 128 KiB.
+	  Platforms which normally make use of ROM-able zImage formats
+	  normally set this to a suitable value in their defconfig file.
+
+	  If ZBOOT_ROM is not enabled, this has no effect.
+
+config ZBOOT_ROM
+	bool "Compressed boot loader in ROM/flash"
+	depends on ZBOOT_ROM_TEXT != ZBOOT_ROM_BSS
+	help
+	  Say Y here if you intend to execute your compressed kernel image
+	  (zImage) directly from ROM or flash.  If unsure, say N.
+
+config CMDLINE
+	string "Default kernel command string"
+	default ""
+	help
+	  On some architectures (EBSA110 and CATS), there is currently no way
+	  for the boot loader to pass arguments to the kernel. For these
+	  architectures, you should supply some command-line options at build
+	  time by entering them here. As a minimum, you should specify the
+	  memory size and the root device (e.g., mem=64M root=/dev/nfs).
+
+config XIP_KERNEL
+	bool "Kernel Execute-In-Place from ROM"
+	depends on !ZBOOT_ROM
+	help
+	  Execute-In-Place allows the kernel to run from non-volatile storage
+	  directly addressable by the CPU, such as NOR flash. This saves RAM
+	  space since the text section of the kernel is not loaded from flash
+	  to RAM.  Read-write sections, such as the data section and stack,
+	  are still copied to RAM.  The XIP kernel is not compressed since
+	  it has to run directly from flash, so it will take more space to
+	  store it.  The flash address used to link the kernel object files,
+	  and for storing it, is configuration dependent. Therefore, if you
+	  say Y here, you must know the proper physical address where to
+	  store the kernel image depending on your own flash memory usage.
+
+	  Also note that the make target becomes "make xipImage" rather than
+	  "make zImage" or "make Image".  The final kernel binary to put in
+	  ROM memory will be arch/arm/boot/xipImage.
+
+	  If unsure, say N.
+
+config XIP_PHYS_ADDR
+	hex "XIP Kernel Physical Location"
+	depends on XIP_KERNEL
+	default "0x00080000"
+	help
+	  This is the physical address in your flash memory the kernel will
+	  be linked for and stored to.  This address is dependent on your
+	  own flash usage.
+
+config KEXEC
+	bool "Kexec system call (EXPERIMENTAL)"
+	depends on EXPERIMENTAL
+	help
+	  kexec is a system call that implements the ability to shutdown your
+	  current kernel, and to start another kernel.  It is like a reboot
+	  but it is indepedent of the system firmware.   And like a reboot
+	  you can start any kernel with it, not just Linux.
+
+	  It is an ongoing process to be certain the hardware in a machine
+	  is properly shutdown, so do not be surprised if this code does not
+	  initially work for you.  It may help to enable device hotplugging
+	  support.
+
+endmenu
+
+if (ARCH_SA1100 || ARCH_INTEGRATOR || ARCH_OMAP || ARCH_IMX )
+
+menu "CPU Frequency scaling"
+
+source "drivers/cpufreq/Kconfig"
+
+config CPU_FREQ_SA1100
+	bool
+	depends on CPU_FREQ && (SA1100_H3100 || SA1100_H3600 || SA1100_H3800 || SA1100_LART || SA1100_PLEB || SA1100_BADGE4 || SA1100_HACKKIT)
+	default y
+
+config CPU_FREQ_SA1110
+	bool
+	depends on CPU_FREQ && (SA1100_ASSABET || SA1100_CERF || SA1100_PT_SYSTEM3)
+	default y
+
+config CPU_FREQ_INTEGRATOR
+	tristate "CPUfreq driver for ARM Integrator CPUs"
+	depends on ARCH_INTEGRATOR && CPU_FREQ
+	default y
+	help
+	  This enables the CPUfreq driver for ARM Integrator CPUs.
+
+	  For details, take a look at <file:Documentation/cpu-freq>.
+
+	  If in doubt, say Y.
+
+config CPU_FREQ_IMX
+	tristate "CPUfreq driver for i.MX CPUs"
+	depends on ARCH_IMX && CPU_FREQ
+	default n
+	help
+	  This enables the CPUfreq driver for i.MX CPUs.
+
+	  If in doubt, say N.
+
+endmenu
+
+endif
+
+menu "Floating point emulation"
+
+comment "At least one emulation must be selected"
+
+config FPE_NWFPE
+	bool "NWFPE math emulation"
+	depends on !AEABI || OABI_COMPAT
+	---help---
+	  Say Y to include the NWFPE floating point emulator in the kernel.
+	  This is necessary to run most binaries. Linux does not currently
+	  support floating point hardware so you need to say Y here even if
+	  your machine has an FPA or floating point co-processor podule.
+
+	  You may say N here if you are going to load the Acorn FPEmulator
+	  early in the bootup.
+
+config FPE_NWFPE_XP
+	bool "Support extended precision"
+	depends on FPE_NWFPE
+	help
+	  Say Y to include 80-bit support in the kernel floating-point
+	  emulator.  Otherwise, only 32 and 64-bit support is compiled in.
+	  Note that gcc does not generate 80-bit operations by default,
+	  so in most cases this option only enlarges the size of the
+	  floating point emulator without any good reason.
+
+	  You almost surely want to say N here.
+
+config FPE_FASTFPE
+	bool "FastFPE math emulation (EXPERIMENTAL)"
+	depends on (!AEABI || OABI_COMPAT) && !CPU_32v3 && EXPERIMENTAL
+	---help---
+	  Say Y here to include the FAST floating point emulator in the kernel.
+	  This is an experimental much faster emulator which now also has full
+	  precision for the mantissa.  It does not support any exceptions.
+	  It is very simple, and approximately 3-6 times faster than NWFPE.
+
+	  It should be sufficient for most programs.  It may be not suitable
+	  for scientific calculations, but you have to check this for yourself.
+	  If you do not feel you need a faster FP emulation you should better
+	  choose NWFPE.
+
+config VFP
+	bool "VFP-format floating point maths"
+	depends on CPU_V6 || CPU_ARM926T
+	help
+	  Say Y to include VFP support code in the kernel. This is needed
+	  if your hardware includes a VFP unit.
+
+	  Please see <file:Documentation/arm/VFP/release-notes.txt> for
+	  release notes and additional status information.
+
+	  Say N if your target does not have VFP hardware.
+
+endmenu
+
+menu "Userspace binary formats"
+
+source "fs/Kconfig.binfmt"
+
+config ARTHUR
+	tristate "RISC OS personality"
+	depends on !AEABI
+	help
+	  Say Y here to include the kernel code necessary if you want to run
+	  Acorn RISC OS/Arthur binaries under Linux. This code is still very
+	  experimental; if this sounds frightening, say N and sleep in peace.
+	  You can also say M here to compile this support as a module (which
+	  will be called arthur).
+
+endmenu
+
+menu "Power management options"
+
+source "kernel/power/Kconfig"
+
+endmenu
+
+source "net/Kconfig"
+
+menu "Device Drivers"
+
+source "drivers/base/Kconfig"
+
+source "drivers/connector/Kconfig"
+
+if ALIGNMENT_TRAP || !CPU_CP15_MMU
+source "drivers/mtd/Kconfig"
+endif
+
+source "drivers/parport/Kconfig"
+
+source "drivers/pnp/Kconfig"
+
+source "drivers/block/Kconfig"
+
+source "drivers/acorn/block/Kconfig"
+
+if PCMCIA || ARCH_CLPS7500 || ARCH_IOP32X || ARCH_IOP33X || ARCH_IXP4XX \
+	|| ARCH_L7200 || ARCH_LH7A40X || ARCH_PXA || ARCH_RPC \
+	|| ARCH_S3C2410 || ARCH_SA1100 || ARCH_SHARK || FOOTBRIDGE \
+	|| ARCH_IXP23XX
+source "drivers/ide/Kconfig"
+endif
+
+source "drivers/scsi/Kconfig"
+
+source "drivers/ata/Kconfig"
+
+source "drivers/md/Kconfig"
+
+source "drivers/message/fusion/Kconfig"
+
+source "drivers/ieee1394/Kconfig"
+
+source "drivers/message/i2o/Kconfig"
+
+source "drivers/net/Kconfig"
+
+source "drivers/isdn/Kconfig"
+
+# input before char - char/joystick depends on it. As does USB.
+
+source "drivers/input/Kconfig"
+
+source "drivers/char/Kconfig"
+
+source "drivers/i2c/Kconfig"
+
+source "drivers/spi/Kconfig"
+
+source "drivers/w1/Kconfig"
+
+source "drivers/hwmon/Kconfig"
+
+#source "drivers/l3/Kconfig"
+
+source "drivers/misc/Kconfig"
+
+source "drivers/mfd/Kconfig"
+
+source "drivers/leds/Kconfig"
+
+source "drivers/media/Kconfig"
+
+source "drivers/video/Kconfig"
+
+source "sound/Kconfig"
+
+source "drivers/hid/Kconfig"
+
+source "drivers/usb/Kconfig"
+
+source "drivers/mmc/Kconfig"
+
+source "drivers/rtc/Kconfig"
+
+endmenu
+
+source "fs/Kconfig"
+
+source "arch/arm/oprofile/Kconfig"
+
+source "arch/arm/Kconfig.debug"
+
+source "security/Kconfig"
+
+source "crypto/Kconfig"
+
+source "lib/Kconfig"

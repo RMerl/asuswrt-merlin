@@ -1,0 +1,924 @@
+  Samba meta FAQ
+  Dan Shearer & Paul Blackman, ictinus@samba.org
+  v 0.3, 7 Oct '97
+
+  This is the meta-Frequently Asked Questions (FAQ) document for Samba,
+  the free and very popular SMB and CIFS server product. It contains
+  overview information for the Samba suite of programs, a quick-start
+  guide, and pointers to all other Samba documentation. Other FAQs exist
+  for specific client and server issues, and HOWTO documents for more
+  extended topics to do with Samba software. Current to version Samba
+  1.9.17. Please send any corrections to the author.
+  ______________________________________________________________________
+
+  Table of Contents:
+
+  1.      Quick Reference Guides to Samba Documentation
+
+  1.1.    Samba for the Impatient
+
+  1.2.    All Samba Documentation
+
+  2.      General Information
+
+  2.1.    What is Samba?
+
+  2.2.    What is the current version of Samba?
+
+  2.3.    Where can I get it?
+
+  2.4.    What do the version numbers mean?
+
+  2.5.    Where can I go for further information?
+
+  2.6.    How do I subscribe to the Samba Mailing Lists?
+
+  2.7.    Something's gone wrong - what should I do?
+
+  2.8.    How do I submit patches or bug reports?
+
+  2.9.    What if I have an URGENT message for the developers?
+
+  2.10.   What if I need paid-for support?
+
+  2.11.   Pizza supply details
+
+  3.      About the CIFS and SMB Protocols
+
+  3.1.    What is the Server Message Block (SMB) Protocol?
+
+  3.2.    What is the Common Internet Filesystem (CIFS)?
+
+  3.3.    What is Browsing?
+
+  4.      Designing A SMB and CIFS Network
+
+  4.1.    Workgroups, Domains, Authentication and Browsing
+
+  4.1.1.  Defining the Terms
+
+  4.1.2.  Sharelevel (Workgroup) Security Services
+
+  4.1.3.  Authentication Domain Mode Services
+
+  4.2.    Authentication Schemes
+
+
+  4.2.1.  NIS
+
+  4.2.2.  Kerberos
+
+  4.2.3.  FTP
+
+  4.2.4.  Default Server Method
+
+  4.2.5.  Client-side Database Only
+
+  4.3.    Post-Authentication: Netlogon, Logon Scripts, Profiles
+
+  5.      Cross-Protocol File Sharing
+
+  6.      Miscellaneous
+
+  6.1.    Is Samba Year 2000 compliant?
+  ______________________________________________________________________
+
+  11..  QQuuiicckk RReeffeerreennccee GGuuiiddeess ttoo SSaammbbaa DDooccuummeennttaattiioonn
+
+
+  We are endeavouring to provide links here to every major class of
+  information about Samba or things related to Samba. We cannot list
+  every document, but we are aiming for all documents to be at most two
+  referrals from those listed here. This needs constant maintaining, so
+  please send the author your feedback.
+
+
+  11..11..  SSaammbbaa ffoorr tthhee IImmppaattiieenntt
+
+
+  You know you should read the documentation but can't wait to start?
+  What you need to do then is follow the instructions in the following
+  documents in the order given. This should be enough to get a fairly
+  simple site going quickly. If you have any problems, refer back to
+  this meta-FAQ and follow the links to find more reading material.
+
+
+
+     GGeettttiinngg SSaammbbaa::
+        The fastest way to get Samba going is and install it is to have
+        an operating system for which the Samba team has put together an
+        installation package. To see if your OS is included have a look
+        at the directory /pub/samba/Binary_Packages/"OS_Vendor" on your
+        nearest mirror site <../MIRRORS>. If it is included follow the
+        installation instructions in the README file there and then do
+        some ``basic testing''. If you are not so fortunate, follow the
+        normal ``download instructions'' and then continue with
+        ``building and installing Samba''.
+
+
+     BBuuiillddiinngg aanndd IInnssttaalllliinngg SSaammbbaa::
+        At the moment there are two kinds of Samba server installs
+        besides the prepackaged binaries mentioned in the previous step.
+        You need to decide if you have a Unix or close relative
+        <../UNIX_INSTALL.txt> or other supported operating system
+        <Samba-Server-FAQ.html#PortInfo>.
+
+
+     BBaassiicc TTeessttiinngg::
+        Try to connect using the supplied smbclient command-line
+        program. You need to know the IP hostname of your server. A
+        service name must be defined in smb.conf, as given in the
+        examples (under many operating systems if there is a homes
+        service you can just use a valid username.) Then type smbclient
+        \hostnamevicename Under most Unixes you will need to put the
+        parameters within quotation marks. If this works, try connecting
+        from one of the SMB clients you were planning to use with Samba.
+
+
+     DDeebbuugg sseeqquueennccee::
+        If you think you have completed the previous step and things
+        aren't working properly work through the diagnosis recipe.
+        <../DIAGNOSIS.txt>
+
+
+     EExxppoorrttiinngg ffiilleess ttoo SSMMBB cclliieennttss::
+        You should read the manual pages for smb.conf, but here is a
+        quick answer guide. <Samba-Server-FAQ.html#Exporting>
+
+
+     CCoonnttrroolllliinngg uusseerr aacccceessss::
+        the quickest and dirtiest way of sharing resources is to use
+        ``share level security.'' If you want to spend more time and
+        have a proper username and password database you must read the
+        paragraph on ``domain mode security.'' If you want encryption
+        (eg you are using Windows NT clients) follow the SMB encryption
+        instructions. <Samba-Server-FAQ.html#SMBEncryptionSteps>
+
+
+     BBrroowwssiinngg::
+        if you are happy to type in "\samba-serverrename" at the client
+        end then do not read any further. Otherwise you need to
+        understand the ``browsing terminology'' and read  <Samba-Server-
+        FAQ.html#NameBrowsing>.
+
+
+     PPrriinnttiinngg::
+        See the printing quick answer guide. <Samba-Server-
+        FAQ.html#Printing>
+
+
+  If you have got everything working to this point, you can expect Samba
+  to be stable and secure: these are its greatest strengths. However
+  Samba has a great deal to offer and to go further you must do some
+  more reading. Speed and security optimisations, printer accounting,
+  network logons, roving profiles, browsing across multiple subnets and
+  so on are all covered either in this document or in those it refers
+  to.
+
+
+  11..22..  AAllll SSaammbbaa DDooccuummeennttaattiioonn
+
+
+
+  +o  Meta-FAQ. This is the mother of all documents, and is the one you
+     are reading now. The latest version is always at
+     <http://samba.org/[.....]> but there is probably a much
+     nearer mirror site <../MIRRORS> which you should use instead.
+
+  +o  <Samba-Server-FAQ.html> is the best starting point for information
+     about server-side issues. Includes configuration tips and pointers
+     for Samba on particular operating systems (with 40 to choose
+     from...)
+
+  +o  <Samba-Client-FAQ.html> is the best starting point for information
+     about client-side issues, includes a list of all clients that are
+     known to work with Samba.
+
+  +o  manual pages <samba-man-index.html> contains descriptions of and
+     links to all the Samba manual pages, in Unix man and postscript
+     format.
+
+  +o  <samba-txt-index.html> has descriptions of and links to a large
+     number of text files have been contributed to samba covering many
+     topics. These are gradually being absorbed into the FAQs and HOWTOs
+     but in the meantime you might find helpful answers here.
+
+  +o
+
+
+  22..  GGeenneerraall IInnffoorrmmaattiioonn
+
+
+  All about Samba - what it is, how to get it, related sources of
+  information, how to understand the numbering scheme, pizza details.
+
+
+  22..11..  WWhhaatt iiss SSaammbbaa??
+
+
+  Samba is a suite of programs which work together to allow clients to
+  access to a server's filespace and printers via the SMB (Server
+  Message Block) and CIFS (Common Internet Filesystem) protocols.
+  Initially written for Unix, Samba now also runs on Netware, OS/2, VMS,
+  StratOS and Amigas. Ports to BeOS and other operating systems are
+  underway. Samba gives the capability for these operating systems to
+  behave much like a LAN Server, Windows NT Server or Pathworks machine,
+  only with added functionality and flexibility designed to make life
+  easier for administrators.
+
+  This means that using Samba you can share a server's disks and
+  printers to many sorts of network clients, including Lan Manager,
+  Windows for Workgroups, Windows NT, Linux, OS/2, and AIX. There is
+  also a generic client program supplied as part of the Samba suite
+  which gives a user on the server an ftp-like interface to access
+  filespace and printers on any other SMB/CIFS servers.
+
+  SMB has been implemented over many protocols, including XNS, NBT, IPX,
+  NetBEUI and TCP/IP. Samba only uses TCP/IP. This is not likely to
+  change although there have been some requests for NetBEUI support.
+
+  Many users report that compared to other SMB implementations Samba is
+  more stable, faster, and compatible with more clients. Administrators
+  of some large installations say that Samba is the only SMB server
+  available which will scale to many tens of thousands of users without
+  crashing.  The easy way to test these claims is to download it and try
+  it for yourself!
+
+  The suite is supplied with full source code under the GNU Public
+  License <../COPYING>. The GPL means that you can use Samba for
+  whatever purpose you wish (including changing the source or selling it
+  for money) but under all circumstances the source code must be made
+  freely available. A copy of the GPL must always be included in any
+  copy of the package.
+
+  The primary creator of the Samba suite is Andrew Tridgell. Later
+  versions incorporate much effort by many net.helpers. The man pages
+  and this FAQ were originally written by Karl Auer.
+
+
+  22..22..  WWhhaatt iiss tthhee ccuurrrreenntt vveerrssiioonn ooff SSaammbbaa??
+
+
+  At time of writing, the current version was 1.9.17. If you want to be
+  sure check the bottom of the change-log file.
+  <ftp://samba.org/pub/samba/alpha/change-log>
+  For more information see ``What do the version numbers mean?''
+
+
+  22..33..  WWhheerree ccaann II ggeett iitt??
+
+
+  The Samba suite is available via anonymous ftp from samba.org
+  and many mirror <../MIRRORS> sites. You will get much faster
+  performance if you use a mirror site. The latest and greatest versions
+  of the suite are in the directory:
+
+  /pub/samba/
+
+  Development (read "alpha") versions, which are NOT necessarily stable
+  and which do NOT necessarily have accurate documentation, are
+  available in the directory:
+
+  /pub/samba/alpha
+
+  Note that binaries are NOT included in any of the above. Samba is
+  distributed ONLY in source form, though binaries may be available from
+  other sites. Most Linux distributions, for example, do contain Samba
+  binaries for that platform. The VMS, OS/2, Netware and Amiga and other
+  ports typically have binaries made available.
+
+  A special case is vendor-provided binary packages. Samba binaries and
+  default configuration files are put into packages for a specific
+  operating system. RedHat Linux and Sun Solaris (Sparc and x86) is
+  already included, and others such as OS/2 may follow. All packages are
+  in the directory:
+
+  /pub/samba/Binary_Packages/"OS_Vendor"
+
+
+  22..44..  WWhhaatt ddoo tthhee vveerrssiioonn nnuummbbeerrss mmeeaann??
+
+
+  It is not recommended that you run a version of Samba with the word
+  "alpha" in its name unless you know what you are doing and are willing
+  to do some debugging. Many, many people just get the latest
+  recommended stable release version and are happy. If you are brave, by
+  all means take the plunge and help with the testing and development -
+  but don't install it on your departmental server. Samba is typically
+  very stable and safe, and this is mostly due to the policy of many
+  public releases.
+
+  How the scheme works:
+
+
+  1. When major changes are made the version number is increased. For
+     example, the transition from 1.9.16 to 1.9.17. However, this
+     version number will not appear immediately and people should
+     continue to use 1.9.15 for production systems (see next point.)
+
+  2. Just after major changes are made the software is considered
+     unstable, and a series of alpha releases are distributed, for
+     example 1.9.16alpha1. These are for testing by those who know what
+     they are doing.  The "alpha" in the filename will hopefully scare
+     off those who are just looking for the latest version to install.
+
+  3. When Andrew thinks that the alphas have stabilised to the point
+     where he would recommend new users install it, he renames it to the
+     same version number without the alpha, for example 1.9.17.
+
+  4. Inevitably bugs are found in the "stable" releases and minor patch
+     levels are released which give us the pXX series, for example
+     1.9.17p2.
+
+  So the progression goes:
+
+
+                  1.9.16p10       (production)
+                  1.9.16p11       (production)
+                  1.9.17alpha1    (test sites only)
+                    :
+                  1.9.17alpha20   (test sites only)
+                  1.9.17          (production)
+                  1.9.17p1        (production)
+
+
+
+  The above system means that whenever someone looks at the samba ftp
+  site they will be able to grab the highest numbered release without an
+  alpha in the name and be sure of getting the current recommended
+  version.
+
+
+  22..55..  WWhheerree ccaann II ggoo ffoorr ffuurrtthheerr iinnffoorrmmaattiioonn??
+
+
+  There are a number of places to look for more information on Samba,
+  including:
+
+
+  +o  Two mailing lists devoted to discussion of Samba-related matters.
+     See below for subscription information.
+
+  +o  The newsgroup comp.protocols.smb, which has a great deal of
+     discussion about Samba.
+
+  +o  The WWW site 'SAMBA Web Pages' at  <http://samba.org/samba/>
+     includes:
+
+
+  +o  Links to man pages and documentation, including this FAQ
+
+  +o  A comprehensive survey of Samba users
+
+  +o  A searchable hypertext archive of the Samba mailing list
+
+  +o  Links to Samba source code, binaries, and mirrors of both
+
+  +o  This FAQ and the rest in its family
+
+
+
+  22..66..  HHooww ddoo II ssuubbssccrriibbee ttoo tthhee SSaammbbaa MMaaiilliinngg LLiissttss??
+
+
+  Send email to listproc@samba.org. Make sure the subject line is
+  blank, and include the following two lines in the body of the message:
+
+
+
+       subscribe samba Firstname Lastname
+       subscribe samba-announce Firstname Lastname
+
+
+
+
+  Obviously you should substitute YOUR first name for "Firstname" and
+  YOUR last name for "Lastname"! Try not to send any signature, it
+  sometimes confuses the list processor.
+
+  The samba list is a digest list - every eight hours or so it sends a
+  single message containing all the messages that have been received by
+  the list since the last time and sends a copy of this message to all
+  subscribers. There are thousands of people on this list.
+
+  If you stop being interested in Samba, please send another email to
+  listproc@samba.org. Make sure the subject line is blank, and
+  include the following two lines in the body of the message:
+
+
+
+       unsubscribe samba
+       unsubscribe samba-announce
+
+
+
+
+  The FFrroomm:: line in your message _M_U_S_T be the same address you used when
+  you subscribed.
+
+
+  22..77..  SSoommeetthhiinngg''ss ggoonnee wwrroonngg -- wwhhaatt sshhoouulldd II ddoo??
+
+
+  ## ****** IIMMPPOORRTTAANNTT!! ****** ##
+
+
+  DO NOT post messages on mailing lists or in newsgroups until you have
+  carried out the first three steps given here!
+
+
+  1. See if there are any likely looking entries in this FAQ!  If you
+     have just installed Samba, have you run through the checklist in
+     DIAGNOSIS.txt <ftp://samba.org/pub/samba/DIAGNOSIS.txt>? It
+     can save you a lot of time and effort.  DIAGNOSIS.txt can also be
+     found in the docs directory of the Samba distribution.
+
+  2. Read the man pages for smbd, nmbd and smb.conf, looking for topics
+     that relate to what you are trying to do.
+
+  3. If there is no obvious solution to hand, try to get a look at the
+     log files for smbd and/or nmbd for the period during which you were
+     having problems. You may need to reconfigure the servers to provide
+     more extensive debugging information - usually level 2 or level 3
+     provide ample debugging info. Inspect these logs closely, looking
+     particularly for the string "Error:".
+
+  4. If you need urgent help and are willing to pay for it see ``Paid
+     Support''.
+
+  If you still haven't got anywhere, ask the mailing list or newsgroup.
+  In general nobody minds answering questions provided you have followed
+  the preceding steps. It might be a good idea to scan the archives of
+  the mailing list, which are available through the Samba web site
+  described in the previous section. When you post be sure to include a
+  good description of your environment and your problem.
+
+  If you successfully solve a problem, please mail the FAQ maintainer a
+  succinct description of the symptom, the problem and the solution, so
+  that an explanation can be incorporated into the next version.
+
+
+
+
+  22..88..  HHooww ddoo II ssuubbmmiitt ppaattcchheess oorr bbuugg rreeppoorrttss??
+
+
+  If you make changes to the source code, _p_l_e_a_s_e submit these patches so
+  that everyone else gets the benefit of your work. This is one of the
+  most important aspects to the maintainence of Samba. Send all patches
+  to samba@samba.org. Do not send patches to Andrew Tridgell
+  or any other individual, they may be lost if you do.
+
+  Patch format ------------
+
+  If you are sending a patch to fix a problem then please don't just use
+  standard diff format. As an example, samba received this patch
+  from someone:
+
+  382a #endif 381a #if !defined(NEWS61)
+
+  How are we supposed to work out what this does and where it goes?
+  These sort of patches only work if we both have identical files in the
+  first place. The Samba sources are constantly changing at the hands of
+  multiple developers, so it doesn't work.
+
+  Please use either context diffs or (even better) unified diffs. You
+  get these using "diff -c4" or "diff -u". If you don't have a diff that
+  can generate these then please send manualy commented patches to I
+  know what is being changed and where. Most patches are applied by hand
+  so the info must be clear.
+
+  This is a basic guideline that will assist us with assessing your
+  problem more efficiently :
+
+  Machine Arch: Machine OS: OS Version: Kernel:
+
+  Compiler: Libc Version:
+
+  Samba Version:
+
+  Network Layout (description):
+
+  What else is on machine (services, etc):
+
+  Some extras :
+
+
+  +o  what you did and what happened
+
+  +o  relevant parts of a debugging output file with debuglevel higher.
+     If you can't find the relevant parts, please ask before mailing
+     huge files.
+
+  +o  anything else you think is useful to trace down the bug
+
+
+  22..99..  WWhhaatt iiff II hhaavvee aann UURRGGEENNTT mmeessssaaggee ffoorr tthhee ddeevveellooppeerrss??
+
+
+  If you have spotted something very serious and believe that it is
+  important to contact the developers quickly send a message to samba-
+  urgent@samba.org. This will be processed more quickly than mail
+  to samba. Please think carefully before using this address. An
+  example of its use might be to report a security hole.
+
+  Examples of things _n_o_t to send to samba-urgent include problems
+  getting Samba to work at all and bugs that cannot potentially cause
+  damage.
+
+  22..1100..  WWhhaatt iiff II nneeeedd ppaaiidd--ffoorr ssuuppppoorrtt??
+
+
+  Samba has a large network of consultants who provide Samba support on
+  a commercial basis. The list is included in the package in
+  <../Support.txt>, and the latest version will always be on the main
+  samba ftp site. Any company in the world can request that the samba
+  team include their details in Support.txt so we can give no guarantee
+  of their services.
+
+
+  22..1111..  PPiizzzzaa ssuuppppllyy ddeettaaiillss
+
+
+  Those who have registered in the Samba survey as "Pizza Factory" will
+  already know this, but the rest may need some help. Andrew doesn't ask
+  for payment, but he does appreciate it when people give him pizza.
+  This calls for a little organisation when the pizza donor is twenty
+  thousand kilometres away, but it has been done.
+
+
+  1. Ring up your local branch of an international pizza chain and see
+     if they honour their vouchers internationally. Pizza Hut do, which
+     is how the entire Canberra Linux Users Group got to eat pizza one
+     night, courtesy of someone in the US.
+
+  2. Ring up a local pizza shop in Canberra and quote a credit card
+     number for a certain amount, and tell them that Andrew will be
+     collecting it (don't forget to tell him.) One kind soul from
+     Germany did this.
+
+  3. Purchase a pizza voucher from your local pizza shop that has no
+     international affiliations and send it to Andrew. It is completely
+     useless but he can hang it on the wall next to the one he already
+     has from Germany :-)
+
+  4. Air freight him a pizza with your favourite regional flavours. It
+     will probably get stuck in customs or torn apart by hungry sniffer
+     dogs but it will have been a noble gesture.
+
+
+  33..  AAbboouutt tthhee CCIIFFSS aanndd SSMMBB PPrroottooccoollss
+
+
+
+  33..11..  WWhhaatt iiss tthhee SSeerrvveerr MMeessssaaggee BBlloocckk ((SSMMBB)) PPrroottooccooll??
+
+  SMB is a filesharing protocol that has had several maintainers and
+  contributors over the years including Xerox, 3Com and most recently
+  Microsoft. Names for this protocol include LAN Manager and Microsoft
+  Networking. Parts of the specification has been made public at several
+  versions including in an X/Open document, as listed at
+  <ftp://ftp.microsoft.com/developr/drg/CIFS/>. No specification
+  releases were made between 1992 and 1996, and during that period
+  Microsoft became the SMB implementor with the largest market share.
+  Microsoft developed the specification further for its products but for
+  various reasons connected with developer's workload rather than market
+  strategy did not make the changes public. This culminated with the
+  "Windows NT 0.12" version released with NT 3.5 in 1995 which had
+  significant improvements and bugs. Because Microsoft client systems
+  are so popular, it is fair to say that what Microsoft with Windows
+  affects all suppliers of SMB server products.
+
+  From 1994 Andrew Tridgell began doing some serious work on his
+  Smbserver (now Samba) product and with some helpers started to
+  implement more and more of these protocols. Samba began to take a
+  significant share of the SMB server market.
+
+
+  33..22..  WWhhaatt iiss tthhee CCoommmmoonn IInntteerrnneett FFiilleessyysstteemm ((CCIIFFSS))??
+
+  The initial pressure for Microsoft to document their current SMB
+  implementation came from the Samba team, who kept coming across things
+  on the wire that Microsoft either didn't know about or hadn't
+  documented anywhere (even in the sourcecode to Windows NT.) Then Sun
+  Microsystems came out with their WebNFS initiative, designed to
+  replace FTP for file transfers on the Internet. There are many
+  drawbacks to WebNFS (including its scope - it aims to replace HTTP as
+  well!) but the concept was attractive. FTP is not very clever, and why
+  should it be harder to get files from across the world than across the
+  room?
+
+  Some hasty revisions were made and an Internet Draft for the Common
+  Internet Filesystem (CIFS) was released. Note that CIFS is not an
+  Internet standard and is a very long way from becoming one, BUT the
+  protocol specification is in the public domain and ongoing discussions
+  concerning the spec take place on a public mailing list according to
+  the rules of the Internet Engineering Task Force. For more information
+  and pointers see  <http://samba.org/cifs/>
+
+  The following is taken from  <http://www.microsoft.com/intdev/cifs/>
+
+
+      CIFS defines a standard remote file system access protocol for use
+      over the Internet, enabling groups of users to work together and
+      share documents across the Internet or within their corporate
+      intranets. CIFS is an open, cross-platform technology based on the
+      native file-sharing protocols built into Microsoft Windows and
+      other popular PC operating systems, and supported on dozens of
+      other platforms, including UNIX. With CIFS, millions of computer
+      users can open and share remote files on the Internet without having
+      to install new software or change the way they work."
+
+
+
+  If you consider CIFS as a backwardsly-compatible refinement of SMB
+  that will work reasonably efficiently over the Internet you won't be
+  too far wrong.
+
+  The net effect is that Microsoft is now documenting large parts of
+  their Windows NT fileserver protocols. The security concepts embodied
+  in Windows NT are part of the specification, which is why Samba
+  documentation often talks in terms of Windows NT. However there is no
+  reason why a site shouldn't conduct all its file and printer sharing
+  with CIFS and yet have no Microsoft products at all.
+
+
+  33..33..  WWhhaatt iiss BBrroowwssiinngg??
+
+  The term "Browsing" causes a lot of confusion. It is the part of the
+  SMB/CIFS protocol which allows for resource discovery. For example, in
+  the Windows NT Explorer it is possible to see a "Network
+  Neighbourhood" of computers in the same SMB workgroup. Clicking on the
+  name of one of these machines brings up a list of file and printer
+  resources for connecting to. In this way you can cruise the network,
+  seeing what things are available. How this scales to the Internet is a
+  subject for debate. Look at the CIFS list archives to see what the
+  experts think.
+
+
+
+
+  44..  DDeessiiggnniinngg AA SSMMBB aanndd CCIIFFSS NNeettwwoorrkk
+
+
+  The big issues for installing any network of LAN or WAN file and print
+  servers are
+
+
+  +o  How and where usernames, passwords and other security information
+     is stored
+
+  +o  What method can be used for locating the resources that users have
+     permission to use
+
+  +o  What protocols the clients can converse with
+
+
+  If you buy Netware, Windows NT or just about any other LAN fileserver
+  product you are expected to lock yourself into the product's preferred
+  answers to these questions. This tendancy is restrictive and often
+  very expensive for a site where there is only one kind of client or
+  server, and for sites with a mixture of operating systems it often
+  makes it impossible to share resources between some sets of users.
+
+  The Samba philosophy is to make things as easy as possible for
+  administators, which means allowing as many combinations of clients,
+  servers, operating systems and protocols as possible.
+
+
+  44..11..  WWoorrkkggrroouuppss,, DDoommaaiinnss,, AAuutthheennttiiccaattiioonn aanndd BBrroowwssiinngg
+
+
+  From the point of view of networking implementation, Domains and
+  Workgroups are _e_x_a_c_t_l_y the same, except for the client logon sequence.
+  Some kind of distributed authentication database is associated with a
+  domain (there are quite a few choices) and this adds so much
+  flexibility that many people think of a domain as a completely
+  different entity to a workgroup. From Samba's point of view a client
+  connecting to a service presents an authentication token, and it if it
+  is valid they have access. Samba does not care what mechanism was used
+  to generate that token in the first place.
+
+  The SMB client logging on to a domain has an expectation that every
+  other server in the domain should accept the same authentication
+  information.  However the network browsing functionality of domains
+  and workgroups is identical and is explained in  <../BROWSING.txt>.
+
+  There are some implementation differences: Windows 95 can be a member
+  of both a workgroup and a domain, but Windows NT cannot. Windows 95
+  also has the concept of an "alternative workgroup". Samba can only be
+  a member of a single workgroup or domain, although this is due to
+  change with a future version when nmbd will be split into two daemons,
+  one for WINS and the other for browsing ( <../NetBIOS.txt> explains
+  what WINS is.)
+
+
+  44..11..11..  DDeeffiinniinngg tthhee TTeerrmmss
+
+
+
+
+     WWoorrkkggrroouupp
+        means a collection of machines that maintain a common browsing
+        database containing information about their shared resources.
+        They do not necessarily have any security information in common
+        (if they do, it gets called a Domain.) The browsing database is
+        dynamic, modified as servers come and go on the network and as
+        resources are added or deleted. The term "browsing" refers to a
+        user accessing the database via whatever interface the client
+        provides, eg the OS/2 Workplace Shell or Windows 95 Explorer.
+        SMB servers agree between themselves as to which ones will
+        maintain the browsing database. Workgroups can be anywhere on a
+        connected TCP/IP network, including on different subnets or even
+        on the Interet. This is a very tricky part of SMB to implement.
+
+
+     MMaasstteerr BBrroowwsseerrss
+        are machines which holds the master browsing database for a
+        workgroup or domain. There are two kinds of Master Browser:
+
+
+     +o  Domain Master Browser, which holds the master browsing
+        information for an entire domain, which may well cross multiple
+        TCP/IP subnets.
+
+     +o  Local Master Browser, which holds the master browsing database
+        for a particular subnet and communicates with the Domain Master
+        Browser to get information on other subnets.
+
+        Subnets are differentiated because browsing is based on
+        broadcasts, and broadcasts do not pass through routers. Subnets
+        are not routed: while it is possible to have more than one
+        subnet on a single network segment this is regarded as very bad
+        practice.
+
+        Master Browsers (both Domain and Local) are elected dynamically
+        according to an algorithm which is supposed to take into account
+        the machine's ability to sustain the browsing load. Samba can be
+        configured to always act as a master browser, ie it always wins
+        elections under all circumstances, even against systems such as
+        a Windows NT Primary Domain Controller which themselves expect
+        to win.
+
+        There are also Backup Browsers which are promoted to Master
+        Browsers in the event of a Master Browser disappearing from the
+        network.
+
+        Alternative terms include confusing variations such as "Browse
+        Master", and "Master Browser" which we are trying to eliminate
+        from the Samba documentation.
+
+
+     DDoommaaiinn CCoonnttrroolllleerr
+        is a term which comes from the Microsoft and IBM etc
+        implementation of the LAN Manager protocols. It is tied to
+        authentication. There are other ways of doing domain
+        authentication, but the Windows NT method has a large market
+        share. The general issues are discussed in  <../DOMAIN.txt> and
+        a Windows NT-specific discussion is in  <../DOMAIN_CONTROL.txt>.
+
+
+
+  44..11..22..  SShhaarreelleevveell ((WWoorrkkggrroouupp)) SSeeccuurriittyy SSeerrvviicceess
+
+
+  With the Samba setting "security = SHARE", all shared resources
+  information about what password is associated with them but only hints
+  as to what usernames might be valid (the hint can be 'all users', in
+  which case any username will work. This is usually a bad idea, but
+  reflects both the initial implementations of SMB in the mid-80s and
+  its reincarnation with Windows for Workgroups in 1992. The idea behind
+  workgroup security was that small independant groups of people could
+  share information on an ad-hoc basis without there being an
+  authentication infrastructure present or requiring them to do more
+  than fill in a dialogue box.
+
+
+  44..11..33..  AAuutthheennttiiccaattiioonn DDoommaaiinn MMooddee SSeerrvviicceess
+
+
+  With the Samba settings "security = USER" or "security = SERVER"
+  accesses to all resources are checked for username/password pair
+  matches in a more rigorous manner. To the client, this has the effect
+  of emulating a Microsoft Domain. The client is not concerned whether
+  or not Samba looks up a Windows NT SAM or does it in some other way.
+
+
+  44..22..  AAuutthheennttiiccaattiioonn SScchheemmeess
+
+
+  In the simple case authentication information is stored on a single
+  server and the user types a password on connecting for the first time.
+  However client operating systems often require a password before they
+  can be used at all, and in addition users usually want access to more
+  than one server. Asking users to remember many different passwords in
+  different contexts just does not work. Some kind of distributed
+  authentication database is needed. It must cope with password changes
+  and provide for assigning groups of users the same level of access
+  permissions. This is why Samba installations often choose to implement
+  a Domain model straight away.
+
+  Authentication decisions are some of the biggest in designing a
+  network.  Are you going to use a scheme native to the client operating
+  system, native to the server operating system, or newly installed on
+  both? A list of options relevant to Samba (ie that make sense in the
+  context of the SMB protocol) follows. Any experiences with other
+  setups would be appreciated. refer to server FAQ for "passwd chat"
+  passwd program password server etc etc...
+
+
+  44..22..11..  NNIISS
+
+
+  For Windows 95, Windows for Workgroups and most other clients Samba
+  can be a domain controller and share the password database via NIS
+  transparently. Windows NT is different.  Free NIS NT client
+  <http://www.dcs.qmw.ac.uk/~williams>
+
+
+  44..22..22..  KKeerrbbeerrooss
+
+
+  Kerberos for US users only: Kerberos overview
+  <http://www.cygnus.com/product/unifying-security.html> Download
+  Kerberos <http://www.cygnus.com/product/kerbnet-download.html>
+
+
+  44..22..33..  FFTTPP
+
+
+  Other NT w/s logon hack via NT
+
+
+  44..22..44..  DDeeffaauulltt SSeerrvveerr MMeetthhoodd
+
+
+
+
+
+  44..22..55..  CClliieenntt--ssiiddee DDaattaabbaassee OOnnllyy
+
+
+
+  44..33..  PPoosstt--AAuutthheennttiiccaattiioonn:: NNeettllooggoonn,, LLooggoonn SSccrriippttss,, PPrrooffiilleess
+
+
+  See  <../DOMAIN.txt>
+
+
+  55..  CCrroossss--PPrroottooccooll FFiillee SShhaarriinngg
+
+
+  Samba is an important tool for...
+
+  It is possible to...
+
+  File protocol gateways...
+
+  "Setting up a Linux File Server"
+  http://vetrec.mit.edu/people/narf/linux.html
+
+  Two free implementations of Appletalk for Unix are Netatalk,
+  <http://www.umich.edu/~rsug/netatalk/>, and CAP,
+  <http://www.cs.mu.oz.au/appletalk/atalk.html>. What Samba offers MS
+  Windows users, these packages offer to Macs. For more info on these
+  packages, Samba, and Linux (and other UNIX-based systems) see
+  <http://www.eats.com/linux_mac_win.html> 3.5) Sniffing your nework
+
+
+
+  66..  MMiisscceellllaanneeoouuss
+
+
+  66..11..  IIss SSaammbbaa YYeeaarr 22000000 ccoommpplliiaanntt??
+
+
+  The CIFS protocol that Samba implements negotiates times in various
+  formats, all of which are able to cope with dates beyond 2000.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

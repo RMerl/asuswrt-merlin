@@ -1,0 +1,60 @@
+!==
+!== Speed2.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:	Paul Cochrane <paulc@dth.scot.nhs.uk>
+Organization: 	Dundee Limb Fitting Centre
+Date:		Fri, 10 Apr 1998
+Subject: 	Samba SPEED.TXT comment
+=============================================================================
+
+This might be relevant to Client Tuning. I have been trying various methods
+of getting win95 to talk to Samba quicker. The results I have come up with
+are:
+
+1. Install the W2setup.exe file from www.microsoft.com. This is an 
+update for the winsock stack and utilities which improve performance.
+
+2. Configure the win95 TCPIP registry settings to give better 
+perfomance. I use a program called MTUSPEED.exe which I got off the 
+net. There are various other utilities of this type freely available. 
+The setting which give the best performance for me are:
+
+(a) MaxMTU                  Remove
+(b) RWIN                    Remove
+(c) MTUAutoDiscover         Disable
+(d) MTUBlackHoleDetect      Disable
+(e) Time To Live            Enabled
+(f) Time To Live - HOPS     32
+(g) NDI Cache Size          0
+
+3. I tried virtually all of the items mentioned in the document and 
+the only one which made a difference to me was the socket options. It 
+turned out I was better off without any!!!!! 
+
+In terms of overall speed of transfer, between various win95 clients 
+and a DX2-66 20MB server with a crappy NE2000 compatible and old IDE 
+drive (Kernel 2.0.30). The transfer rate was reasonable for 10 baseT.
+
+The figures are:          Put              Get 
+P166 client 3Com card:    420-440kB/s      500-520kB/s
+P100 client 3Com card:    390-410kB/s      490-510kB/s
+DX4-75 client NE2000:     370-380kB/s      330-350kB/s
+
+I based these test on transfer two files a 4.5MB text file and a 15MB 
+textfile. The results arn't bad considering the hardware Samba is 
+running on. It's a crap machine!!!!
+
+The updates mentioned in 1 and 2 brought up the transfer rates from 
+just over 100kB/s in some clients.
+
+A new client is a P333 connected via a 100MB/s card and hub. The 
+transfer rates from this were good: 450-500kB/s on put and 600+kB/s 
+on get.
+
+Looking at standard FTP throughput, Samba is a bit slower (100kB/s 
+upwards). I suppose there is more going on in the samba protocol, but 
+if it could get up to the rate of FTP the perfomance would be quite 
+staggering.
+
+Paul Cochrane
+

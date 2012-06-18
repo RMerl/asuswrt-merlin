@@ -1,0 +1,92 @@
+Linux Kernel patch sumbittal checklist
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here are some basic things that developers should do if they want to see their
+kernel patch submissions accepted more quickly.
+
+These are all above and beyond the documentation that is provided in
+Documentation/SubmittingPatches and elsewhere regarding submitting Linux
+kernel patches.
+
+
+
+1: Builds cleanly with applicable or modified CONFIG options =y, =m, and
+   =n.  No gcc warnings/errors, no linker warnings/errors.
+
+2: Passes allnoconfig, allmodconfig
+
+3: Builds on multiple CPU architectures by using local cross-compile tools
+   or something like PLM at OSDL.
+
+4: ppc64 is a good architecture for cross-compilation checking because it
+   tends to use `unsigned long' for 64-bit quantities.
+
+5: Matches kernel coding style(!)
+
+6: Any new or modified CONFIG options don't muck up the config menu.
+
+7: All new Kconfig options have help text.
+
+8: Has been carefully reviewed with respect to relevant Kconfig
+   combinations.  This is very hard to get right with testing -- brainpower
+   pays off here.
+
+9: Check cleanly with sparse.
+
+10: Use 'make checkstack' and 'make namespacecheck' and fix any problems
+    that they find.  Note: checkstack does not point out problems explicitly,
+    but any one function that uses more than 512 bytes on the stack is a
+    candidate for change.
+
+11: Include kernel-doc to document global kernel APIs.  (Not required for
+    static functions, but OK there also.) Use 'make htmldocs' or 'make
+    mandocs' to check the kernel-doc and fix any issues.
+
+12: Has been tested with CONFIG_PREEMPT, CONFIG_DEBUG_PREEMPT,
+    CONFIG_DEBUG_SLAB, CONFIG_DEBUG_PAGEALLOC, CONFIG_DEBUG_MUTEXES,
+    CONFIG_DEBUG_SPINLOCK, CONFIG_DEBUG_SPINLOCK_SLEEP all simultaneously
+    enabled.
+
+13: Has been build- and runtime tested with and without CONFIG_SMP and
+    CONFIG_PREEMPT.
+
+14: If the patch affects IO/Disk, etc: has been tested with and without
+    CONFIG_LBD.
+
+15: All codepaths have been exercised with all lockdep features enabled.
+
+16: All new /proc entries are documented under Documentation/
+
+17: All new kernel boot parameters are documented in
+    Documentation/kernel-parameters.txt.
+
+18: All new module parameters are documented with MODULE_PARM_DESC()
+
+19: All new userspace interfaces are documented in Documentation/ABI/.
+    See Documentation/ABI/README for more information.
+
+20: Check that it all passes `make headers_check'.
+
+21: Has been checked with injection of at least slab and page-allocation
+    fauilures.  See Documentation/fault-injection/.
+
+    If the new code is substantial, addition of subsystem-specific fault
+    injection might be appropriate.
+
+22: Newly-added code has been compiled with `gcc -W' (use "make
+    EXTRA_CFLAGS=-W").  This will generate lots of noise, but is good for
+    finding bugs like "warning: comparison between signed and unsigned".
+
+23: Tested after it has been merged into the -mm patchset to make sure
+    that it still works with all of the other queued patches and various
+    changes in the VM, VFS, and other subsystems.
+
+24: Avoid whitespace damage such as indenting with spaces or whitespace
+    at the end of lines.  You can test this by feeding the patch to
+    "git apply --check --whitespace=error-all"
+
+25: Check your patch for general style as detailed in
+    Documentation/CodingStyle.  Check for trivial violations with the
+    patch style checker prior to submission (scripts/checkpatch.pl).
+    You should be able to justify all violations that remain in
+    your patch.

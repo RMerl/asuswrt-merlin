@@ -1,0 +1,13 @@
+.PS
+ w = 1.5;
+ Conf: box wid w "/etc/lpd.conf";
+ UPc: box wid w "${HOME}/.printcap" with .n at Conf.s+(0,-.25)
+ Pc: box wid w "/etc/printcap" with .n at UPc.s +(0,-.25);
+ m = (Conf.n.y + Pc.s.y)/2;
+ Lpr: box "lpr" "lprm" "lpq" "lpc" ht 1.5i with .w at (Pc.e.x+.5i,m)
+ Lpd: box "lpd" with .w at Lpr.e+(.5,0)
+arrow from Lpr.w to Conf.e;
+arrow from Lpr.w to UPc.e;
+arrow from Lpr.w to Pc.e;
+arrow from Lpr.e to Lpd.w;
+.PE

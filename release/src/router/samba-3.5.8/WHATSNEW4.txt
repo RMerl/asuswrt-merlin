@@ -1,0 +1,123 @@
+What's new in Samba 4 alpha8
+============================
+
+Samba 4 is the ambitious next version of the Samba suite that is being
+developed in parallel to the stable 3.0 series. The main emphasis in
+this branch is support for the Active Directory logon protocols used
+by Windows 2000 and above.
+
+Samba4 alpha8 follows on from the alpha release series we have been
+publishing since September 2007
+
+WARNINGS
+========
+
+Samba4 alpha8 is not a final Samba release.  That is more a reference
+to Samba4's lack of the features we expect you will need than a
+statement of code quality, but clearly it hasn't seen a broad
+deployment yet.  If you were to upgrade Samba3 (or indeed Windows) to
+Samba4, you would find many things work, but that other key features
+you may have relied on simply are not there yet.
+
+For example, while Samba 3.0 is an excellent member of a Active
+Directory domain, Samba4 is happier as a domain controller, and it is
+in this role where it has seen deployment into production.
+
+Samba4 is subjected to an awesome battery of tests on an
+automated basis, we have found Samba4 to be very stable in it's
+behaviour.  We have to recommend against upgrading production servers
+from Samba 3 to Samba 4 at this stage, because there may be the features on
+which you may rely that are not present, or the mapping of
+your configuration and user database may not be complete. 
+
+If you are upgrading, or looking to develop, test or deploy Samba4, you should
+backup all configuration and data.
+
+NEW FEATURES
+============
+
+Samba4 supports the server-side of the Active Directory logon environment
+used by Windows 2000 and later, so we can do full domain join
+and domain logon operations with these clients.
+
+Our Domain Controller (DC) implementation includes our own built-in
+LDAP server and Kerberos Key Distribution Center (KDC) as well as the
+Samba3-like logon services provided over CIFS.  We correctly generate
+the infamous Kerberos PAC, and include it with the Kerberos tickets we
+issue.
+
+The new VFS features in Samba 4 adapts the filesystem on the server to
+match the Windows client semantics, allowing Samba 4 to better match
+windows behaviour and application expectations.  This includes file
+annotation information (in streams) and NT ACLs in particular.  The
+VFS is backed with an extensive automated test suite.
+
+A new scripting interface has been added to Samba 4, allowing
+Python programs to interface to Samba's internals.
+
+The Samba 4 architecture is based around an LDAP-like database that
+can use a range of modular backends.  One of the backends supports
+standards compliant LDAP servers (including OpenLDAP), and we are
+working on modules to map between AD-like behaviours and this backend.
+We are aiming for Samba 4 to be powerful frontend to large
+directories.
+
+CHANGES SINCE alpha7
+=====================
+
+In the time since Samba4 alpha7 was released in Feburary 2009, Samba has
+continued to evolve, but you may particularly notice these areas 
+(in no particular order):
+
+ Samba4 now includes the full AD schema, as used in Microsoft Windows 2008
+
+ LDB (the core Samba4 database library) now handles large number of
+ users and groups much more efficiently
+
+These are just some of the user-visible highlights of the work done in
+the past few months.  More details of the work done 'under the hood'
+can be found in our GIT history.
+
+
+CHANGES
+=======
+
+Those familiar with Samba 3 can find a list of user-visible changes
+since that release series in the NEWS file.
+
+KNOWN ISSUES
+============
+
+- Domain member support is in it's infancy, and is not comparable to
+  the support found in Samba3.
+
+- There is no printing support in the current release.
+
+- There is no NetBIOS browsing support in the current release
+
+- The Samba4 port of the CTDB clustering support is not yet complete
+
+- Clock Synchronisation is critical.  Many 'wrong password' errors are
+  actually due to Kerberos objecting to a clock skew between client
+  and server.  (The NTP work in the previous alphas are partly to assist
+  with this problem).
+
+RUNNING Samba4
+==============
+
+A short guide to setting up Samba 4 can be found in the howto.txt file
+in root of the tarball.
+
+DEVELOPMENT and FEEDBACK
+========================
+Bugs can be filed at https://bugzilla.samba.org/ but please be aware
+that many features are simply not expected to work at this stage.  
+
+The Samba Wiki at http://wiki.samba.org should detail some of these
+development plans.
+
+Development and general discussion about Samba 4 happens mainly on
+the #samba-technical IRC channel (on irc.freenode.net) and
+the samba-technical mailing list (see http://lists.samba.org/ for
+details).
+

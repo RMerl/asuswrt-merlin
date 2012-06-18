@@ -1,0 +1,180 @@
+Thanks to the following folks who made the LPRng software possible:
+
+Developer:
+Patrick Powell <papowell@lprng.com>
+
+LPRng - 1996 - 1999
+  These folks have greatly contributed by sending patches, requests,
+  warnings,  and pleas for changes or improvements,  and are really
+  the driving force behind LPRng.  Also,  thanks to the many others
+  who did not make it to the list,  but whose contributions were,
+  none the less, greatly appreciated.
+
+
+  In (semi) alphatical order:  
+
+	Heinz-Ado Arnolds <arnolds@ifns.de>
+	Damon W Atkins <zdxa21@gascor.vic.gov.au>
+	Jos Backus <jos@oce.nl>
+	Jeff Bacon <bacon@twinight.org>
+	Don Badrak <dbadrak@geo.census.gov>
+	Jan Barte <yann@plato.uni-paderborn.de>
+	Marc Baudoin <Marc.Baudoin@hsc.fr.net>
+	Oved Ben-Aroya <oved@ns.technion.ac.il>
+	Carsten Benecke <benecke@informatik.uni-hamburg.de>
+	Ole Benner <olb@kom.auc.dk>
+	Thierry Besancon <Thierry.Besancon@lps.ens.fr>
+	Zygo Blaxell <zblaxell@myrus.com>
+	Uri Blumenthal <uri@ibm.net>
+	Sherwood Botsford <sherwood@space.ualberta.ca>
+	Paul Burry <rpburry@magi.com>
+	John Callaghan <callagh4@pilot.msu.edu>
+	Gary Cender <gcender@eng.dowjones.com>
+	David Coelho <drc@ppt.com>
+	Garrett D'Amore <garrett@qualcomm.com>
+	Bertrand Decouty <Bertrand.Decouty@irisa.fr>
+	Panos Dimakopoulos <dimakop@cti.gr>
+	Jarrod Douglas <jarrod@cs.curtin.edu.au>
+	James P. Dugal <jpd@usl.edu>
+	Avery Earle <ae@play.psych.mun.ca>
+	Niklas Edmundsson <nikke@ing.umu.se>
+	Paul Eggert <eggert@twinsun.com>
+	Jussi Eloranta <eloranta@voimax.voima.jkl.fi>
+	Jon E. Ferguson <jon@media.mit.edu>
+	Horst Fickensche <horst.fickenscher@it.erlm.siemens.de>
+	Markus Fleck <fleck@informatik.uni-bonn.de>
+	Albert Fluegel <albert.fluegel@hl.siemens.de>
+	Per Foreby <perf@efd.lth.se>
+	Carson Gaspar <carson@lehman.com>
+	Guy Geens <Guy.Geens@elis.rug.ac.be>
+	Dave Goldhammer <Dave.Goldhammer@Colorado.EDU>
+	Dwaine C. Gonyier <virtual@panthra.catt.ncsu.edu>
+	Tony Graham <Tony.Graham@uni-c.dk>
+	Brad Greer <brad@cac.washington.edu>
+	Patrick Hildenbrand <patrick@emea.ers.ibm.com>
+	Carl Hilton <chilton@dns2.sac.usace.army.mil>
+	Ken Hornstein <kenh@cmf.nrl.navy.mil>
+	Lee Muh Hwa <cceleemh@dolphin.cc.nus.sg>
+	Philip J. Nesser II <pjnesser@nesser.com>
+	Edan Idzerda <edan@mtu.edu>
+	Christian Illinger <illinger@lepsi.in2p3.fr>
+	Park Jae-hyon <jhpark@entropy.kaist.ac.kr>
+	Helmut Jarausch <jarausch@igpm.rwth-aachen.de>
+	Christophe Kalt <kalt@research.bell-labs.com>
+	Charles Karney <karney@pppl.gov>
+	Petri Kaukasoina <kaukasoi@elektroni.ee.tut.fi>
+	Jost Krieger <Jost.Krieger@ruhr-uni-bochum.de>
+	Christian Kuehnke <Christian.Kuehnke@arbi.Informatik.Uni-Oldenburg.DE>
+	John R Lane <lanejohn@cps.msu.edu>
+	Andrew Leahy <A.Leahy@st.nepean.uws.edu.au>
+	Elliot Lee <sopwith@cuc.edu>
+	Marty Leisner <leisner@sdsp.mc.xerox.com>
+	George Lindholm <lindholm@cheshire.ucs.ubc.ca>
+	David Livingstone <davidl@scdes.cn.ca>
+	Qing Long <qinglong@Bolizm.ihep.su>
+	Alan F Lundin <aflundi@sandia.gov>
+	Desmond Macauley <desmondm@eng.dowjones.com>
+	Al Marquardt <almar@uiuc.edu>
+	Norman R. McBride <N.R.McBride@city.ac.uk>
+	Duncan McEwan <duncan@MCS.VUW.AC.NZ>
+	K.D. Meyer <meyer@uni-trier.de>
+	Todd C. Miller <Todd.Miller@cs.colorado.edu>
+	Walter Misar <misar@rbg.informatik.tu-darmstadt.de>
+	Stefan Monnier <stefan.monnier@lia.di.epfl.ch>
+	Tim Mooney <mooney@dogbert.cc.ndsu.NoDak.edu>
+	Chad Mynhier <mynhier@cs.utk.edu>
+	Scott Nelson <nelson@canopus.llnl.gov>
+	Nathan Neulinger <nneul@umr.edu>
+	Dirk Nitschke <ms3a512@math.uni-hamburg.de>
+	Chris O'Regan <chris@ECE.concordia.CA>
+	Jesse Off <joff@cnde.iastate.edu>
+	Martin Pahl <pahl@tnt.uni-hannover.de>
+	John Perkins <john@cs.wisc.edu>
+	Giray Pultar <pultar@pprd.abbott.com>
+	Todd Rannow <rannow@msc.edu>
+	Andrew Richards <physajr@phys.canterbury.ac.nz>
+	Keith Richardson <keithr@ms.com>
+	Michel Robitaille <robitail@IRO.UMontreal.CA>
+	Florian La Roche <florian@knorke.saar.de>
+	Brad Rogers <brad@ast.lmco.com>
+	Bernhard Rosenkraenzer <root@BOL-SubNet.ml.org>
+	Ron Roskens <roskens@cs.umn.edu>
+	Sven Rudolph <sr1@inf.tu-dresden.de>
+	Cortney Sampson <sampson@physics.utoronto.ca>
+	Ed Santiago <esm@lanl.gov>
+	Wolfgang Scherer <ws@ecosys.de>
+	Gerhard Schneider <gs@ilfb.tuwien.ac.at>
+	Rainer Schoepf <schoepf@uni-mainz.de>
+	Yuji Shinozaki <yuji@cs.duke.edu>
+	Chen Shiyuan <csy@hjc.edu.sg>
+	Alan Shutko <ats@shep1.wustl.edu>
+	Lennart Sorth <Lennart.Sorth@ecmwf.int>
+	Klaus Steinberger <Klaus.Steinberger@Physik.Uni-Muenchen.DE>
+	David Stenglein <david.stenglein@citicorp.com>
+	Harlan Stenn <harlan.stenn@pfcs.com>
+	Jim Stosick <Jim.Stosick@Forsythe.Stanford.EDU>
+	Scott Sutherland <scott@math.sunysb.edu>
+	Paul Szabo <psz@maths.usyd.edu.au>
+	Frank Terhaar-Yonkers <fty@cisco.com>
+	Sergio Tessaris <tessaris@ictp.trieste.it>
+	Jens Thiel <thielj@athene.informatik.uni-bonn.de>
+	Jens Thiel <thielj@uran.informatik.uni-bonn.de>
+	Anthony Thyssen <anthony@cit.gu.edu.au>
+	Cecil R. Whitaker <cwhitak@nswc.navy.mil>
+	Doug White <dwhite@gdi.uoregon.edu>
+	Simon Wilkinson <sxw@dcs.ed.ac.uk>
+	Dirk Wrocklage <dirkw@uni-paderborn.de>
+	Chao-Wen Young <kiki@eng.dowjones.com>
+	Paul Zablosky <zablosky@ucs.ubc.ca>
+	Reinhard Zierke <zierke@informatik.uni-hamburg.de>
+
+LPRng - The Alpha Version
+  1994-1996
+    The lprng@lprng.com mailing list,  and many folks on it who made
+    comments and requests for features, changes, etc.
+
+    Alpha Minus Portablility Testers:
+      Michael Joosten <joost@ori.cadlab.de>
+      Ken Lalonde <ken@cs.toronto.edu>
+      Marty Leisner <leisner@sdsp.mc.xerox.com>
+
+  1996
+  psfilter (psrev, banner) derived from: LPRPS Version 2.6 PLP
+	James Clark <jjc@jclark.com>
+
+
+PLP4.0 - The baseline distribution
+    Justin Mason <jmason@iona.ie> - PLP4.0 - archvist and maintainer
+
+PLP4.0 Contributors:
+  Corey Minyard <minyard@wf-rch.cirr.com>
+  Stuart Kemp <stuart@cs.jcu.edu.au>
+  Angus Duggan <angus@harlequin.co.uk>
+  Julian Turnbull <jst@dcs.edinburgh.ac.uk>
+  Paul Haldane <Paul.Haldane@edinburgh.ac.uk>
+  Michael Joosten <joost@ori.cadlab.de>
+  Bjarne Steinsbo <bjarne@hsr.no>
+  Todd C. Miller <Todd.Miller@cs.colorado.edu>
+  Eric C Hagberg <hagberg@mail.med.cornell.edu>
+  maf@math.chalmers.se (Martin Forssen)
+  Stefano Ianigro <w_stef@unibw-hamburg.de>
+  Greg Wohletz <greg@cs.unlv.edu>
+  Michael Haardt <u31b3hs@POOL.Informatik.RWTH-Aachen.DE>
+  Julian Anderson <jules@comp.vuw.ac.nz>
+  George Harrach <ghharrac@ouray.Denver.Colorado.EDU>
+  but@unibw-hamburg.de (Lothar Butsch)
+  dmc900@durras.anu.edu.au (David M Clarke)
+  Harlan Stenn <harlan@landmark.com>
+  Ed Santiago <esm@lanl.gov>
+  Panos Dimakopoulos <dimakop@cti.gr>
+  dorab@twinsun.com (Dorab Patel)
+  Rick Martin <rickm@cs.umb.edu>
+  Baba Z Buehler <baba@beckman.uiuc.edu>
+  Bertrand Wallrich <Bertrand.Wallrich@loria.fr>
+  jarausch@igpm.igpm.rwth-aachen.de (Helmut Jarausch)
+  Dave Alden <alden@math.ohio-state.edu>
+  Jan Barte <yann@uni-paderborn.de>
+  Hendrik.Klompmaker@Beheer.zod.wau.nl (hendrik klompmaker)
+
+LPRng - Thousands and Thousands
+  

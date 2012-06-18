@@ -1,0 +1,3342 @@
+Summary of changes from v112 to v113
+============================================
+
+David Zeuthen (1):
+      vol_id: do not fail if unable to drop privileges
+
+Kay Sievers (12):
+      add missing ChangeLog
+      make ATTR{[$SUBSYSTEM/$KERNEL]<attr>}="<value>" working
+      rules: recognize partitions and disk devices properly
+      rules: SUSE update
+      atomically replace existing nodes and symlinks
+      do not try to create existing file
+      info() for ignore_remove
+      rules: SUSE update
+      Makefile: check for missing ChangeLog or RELEASE-NOTES at release
+      allow to disable the replacement of unusual characters
+      no newline in log messages
+      udevd: do not use syslog if --verbose (debugging) is used
+
+Tobias Klauser (1):
+      fix typo in udev_utils_run.c
+
+
+Summary of changes from v111 to v112
+============================================
+
+Fabio Massimo Di Nitto (1):
+      rules: ignore partitons that span the entire disk
+
+Hannes Reinecke (1):
+      cciss device support
+
+Kay Sievers (34):
+      udevd: close /proc/meminfo after reading
+      create_floppy_devices: remove dead "unlink" code
+      volume_id: add function documentation
+      udev_db: escape path names with \x00 instead of %00
+      udevsettle: use long options
+      replace_chars: replace spaces in node name
+      volume_id: add and export string encoding function
+      vol_id: export encoded strings
+      rules: use encoded strings instead of skipping characters
+      udevtest: print message before log output
+      volume_id: escape % character
+      replace_chars: replace % character
+      IMPORT: do not mangle whitespace
+      scsi_id: do not install symlink in /sbin
+      rules: SUSE update
+      volume_id: terminate overlong label strings
+      scsi_id: add long options
+      rules: use long options for scsi_id
+      path_id: skip subsystem directory
+      rules: fix cciss rule
+      rules: SUSE update
+      scsi_id: fix typo in help text
+      fix "do not access parent" warning for ATTR{}
+      sysfs: add device lookup by $SUBSYSYTEM:$KERNEL
+      events for "bus" and "class" registration must be matched as "subsystem"
+      udevtest: add --subsystem option
+      sysfs: change order of subsystem lookup
+      add $sys substitution
+      add TEST=="<file>" key
+      add "[$SUBSYSTEM/$KERNEL]<attribute>" lookup
+      sysfs: handle bus/class top-level directories
+      sysfs: skip unknown sysfs directories
+      rules: SUSE update
+      release 112
+
+Miklos Vajna (2):
+      create_floppy_devices: add man page
+      path_id: remove on make uninstall
+
+Ryan Lortie (1):
+      volume_id: support for long-filename based labels
+
+Scott James Remnant (2):
+      replace_untrusted_chars: replace all whitespace with space
+      run_program: log "info" not "error" if program is missing
+
+
+Summary of changes from v110 to v111
+============================================
+
+Kay Sievers (19):
+      rules: SUSE update
+      rules: Fedora update
+      volume_id: use md native uuid format
+      vol_id: use long options
+      volume_id: add volume_id_get_* functions
+      vol_id: use volume_id_get_*
+      udevd: use fgets() to read /proc files
+      volume_id: add internal UUID_STRING
+      volume_id: add DDF support
+      vol_id: README update
+      volume_id: rename UUID_64BIT_LE/BE
+      vol_id: add ID_FS_UUID_SAFE
+      rules: use ID_FS_UUID_SAFE
+      rules: SUSE update
+      volume_id: give access to list of all available probers
+      vol_id: use libvolume_id prober list for --probe-all
+      volume_id: add remaining names for prober lookup by type
+      rules: SUSE update
+      volume_id: vol_id depends on libvolume_id
+
+Matthias Schwarzott (2):
+      volume_id: fix Makefile for parallel make
+      rules: Gentoo update
+
+
+Summary of changes from v109 to v110
+============================================
+
+Harald Hoyer (1):
+      udevcontrol: allow to set global variables in udevd
+
+Kay Sievers (13):
+      remove eventrecorder.sh
+      update SUSE rules
+      volume_id: add md metadata 1.0, 1.1, 1.2 support
+      unset variable with ENV{VAR}=""
+      delete copies of default rules in SUSE rules
+      volume_id: ext - fix endianess in version number
+      rules: Fedora update
+      volume_id: old md metadata has only 32 bit for the uuid
+      volume_id: minix version 3 support
+      don't create $tempnode for devices without major
+      usb_id: add <devpath> to help text
+      ata_id: use getopt_long()
+      rules: SUSE update
+
+Matthias Schwarzott (3):
+      Makefile: respect CFLAGS/LDFLAGS
+      rules: Gentoo update
+      ata_id: don't log error for libata devices on older kernels
+
+
+Summary of changes from v108 to v109
+============================================
+
+Harald Hoyer (1):
+      create_floppy_devices: create nodes with correct selinux context
+
+Kay Sievers (11):
+      udevtest: export ACTION string if given as option
+      update SUSE rules
+      make ACTION!="add|change" working
+      udevtest: import uevent variables if possible
+      udevinfo: export all information stored in database
+      default rules: add libata compat links
+      create_path: don't fail if something else created the directory
+      udevd: fix serialization of events
+      path_id: remove broken example
+      libvolume_id: do not install static library
+      update SUSE rules
+
+Matthias Schwarzott (2):
+      update Gentoo rules
+      persistent device naming: add joystick links
+
+VMiklos (1):
+      path_id: add man page
+
+
+Summary of changes from v107 to v108
+============================================
+
+Kay Sievers (3):
+      udevinfo: relax check for the correct device if looked up by name
+      don't write to sysfs files during test run
+      finally remove the directory event-multiplexer crap
+
+Matthias Schwarzott (2):
+      write_cd_rules: set default link type to "by-id" for usb and ieee1394 devices
+      update Gentoo rules
+
+Pozsar Balazs (1):
+      udevsettle: read udev not kernel seqnum first
+
+
+Summary of changes from v106 to v107
+============================================
+
+Jean Tourrilhes (1):
+      udevtest: export UDEV_LOG if we changed it
+
+Kay Sievers (33):
+      man: add missing options to various man pages
+      man: fix typo
+      create_floppy_devices: apply specified mode without umask
+      man: spelling fixes
+      udevmonitor: add switch for kernel and udev events
+      default rules: wait for 0:0:0:0 scsi devices only
+      update Fedora rules
+      delete dasd_id, it moved to s390-tools
+      update Gentoo rules
+      encode db-file names, instead of just replacing '/'
+      update internal variables if we see $DEVPATH during IMPORT
+      increase /proc/stat buffer
+      maintain index over device-names to devpath relation
+      restore overwritten symlinks when the device goes away
+      store devpath with the usual leading slash
+      add link_priority to rule options, and store it in database
+      pick actual valid device in udev_db_lookup_name
+      cleanup already existing db-entries and db-index on device update
+      selinux: move selinux_exit() to the main programs
+      remove old error message
+      read list of devices from index, make index private to database
+      priority based symlink handling
+      volume_id: get rid of compiler warning
+      udevinfo: remove -d option
+      update %n on netif name change
+      if a node goes away, possibly restore a waiting symlink
+      update TODO
+      man: add "link_priority" option
+      update SUSE rules
+      udevtest: add --force mode
+      udevinfo: print link priority
+      usb_id: append target:lun to storage device serial
+      run_directory: add final warning before removal
+
+Marco d'Itri (1):
+      update Debian rules
+
+Matthias Schwarzott (2):
+      udevd: cleanup std{in,our,err} on startup
+      udevmonitor: fix swapped event switch descriptions
+
+
+Summary of changes from v105 to v106
+============================================
+
+A. Costa (1):
+      man: fix typos in scsi_id and udevd
+
+Andrey Borzenkov (2):
+      vol_id: add -L to print raw partition label
+      vol_id: document -L
+
+Jamie Wellnitz (1):
+      persistent device naming: tape devices and medium changers
+
+Kay Sievers (15):
+      exclude parent devices from DRIVER== match
+      volume_id: really fix endianess bug in linux_raid detection
+      release 105
+      man: correct udevinfo --export-db
+      path_id: append LUN to iSCSI path
+      create_floppy_devices: add option for owner/group
+      update example rules
+      apply format chars to ATTR before writing to sysfs
+      add (subsystem) to udevmonitor output
+      update DRIVER== changes
+      remove --version from the udevinfo man page
+      add test for an attribute which contains an operator char
+      man: add note about parent matching behavior
+      scsi_id: accept tabs in /etc/scsi_id.conf
+      remove dead rule in persistent tape rules
+
+Matthias Schwarzott (4):
+      correct typo in extras/scsi_id/scsi_id.conf
+      fix retry-loop in netif-rename code
+      add option --version to udevd
+      rule_generator: fix for creating rules on read-only filesystem
+
+Peter Breitenlohner (1):
+      fix INSTALL_PROGRAM vs. INSTALL_SCRIPT
+
+Sergey Vlasov (3):
+      udevd: init signal pipe before daemonizing
+      unlink old database file before creating a new one
+      fix %c $string substitution
+
+Theodoros V. Kalamatianos (1):
+      fix udev attribute names with a colon
+
+
+Summary of changes from v104 to v105
+============================================
+
+A. Costa (1):
+      man: fix typos in scsi_id and udevd
+
+Andrey Borzenkov (2):
+      vol_id: add -L to print raw partition label
+      vol_id: document -L
+
+Kay Sievers (2):
+      exclude parent devices from DRIVER== match
+      volume_id: really fix endianess bug in linux_raid detection
+
+Matthias Schwarzott (2):
+      correct typo in extras/scsi_id/scsi_id.conf
+      fix retry-loop in netif-rename code
+
+Peter Breitenlohner (1):
+      fix INSTALL_PROGRAM vs. INSTALL_SCRIPT
+
+Sergey Vlasov (3):
+      udevd: init signal pipe before daemonizing
+      unlink old database file before creating a new one
+      fix %c $string substitution
+
+
+Summary of changes from v103 to v104
+============================================
+
+Kay Sievers (12):
+      update Fedora rules
+      update example rules
+      update SUSE rules
+      update SUSE rules
+      volume_id: fix endianess bug in linux_raid detection
+      man: fix udevmonitor text
+      man: recreate from xml
+      rename config "filename" to "dir"
+      remove outdated documentation
+      rename "udev.c" to "test-udev.c" - it is only for testing
+      update Fedora rules
+      use git-archive instead of git-tar-tree
+
+Kazuhiro Inaoka (1):
+      inotify syscall definitions for M32R
+
+Marco d'Itri (2):
+      write_cd_rules: identity-based persistence
+      scsi_id: remove trailing garbage from ID_SERIAL_SHORT
+
+Russell Coker (1):
+      SELinux: label created symlink instead of node
+
+
+Summary of changes from v102 to v103
+============================================
+
+Kay Sievers:
+      persistent storage rules: skip gnbd devices
+      volume_id: add checksum check to via_raid
+      volume_id: add comment about hfs uuid conversion
+      update SUSE rules
+      update Fedora rules
+
+
+Summary of changes from v101 to v102
+============================================
+
+Daniel Drake:
+      writing_udev_rules: fix typo in example rule
+
+Kay Sievers:
+      create missing ChangeLog for version 101
+      update SUSE rules
+      update default rules
+      first try "subsystem" link at a parent device, before guessing
+      if /sys/subsystem exists, skip class, bus, block scanning
+      scsi_id: export ID_SERIAL_SHORT without vendor/product
+      update SUSE rules
+
+MUNEDA Takahiro:
+      path_id: fix SAS disk handling
+
+
+Summary of changes from v100 to v101
+============================================
+
+Arjan Opmeer:
+      fix udevinfo help text typo
+
+Bryan Kadzban:
+      cleanup default rules
+      add IMPORT operations to the udev man page
+
+Kay Sievers:
+      remove Makefile magic for leading '0' in version
+      udevd: use getopt_long()
+      udevd: add --verbose option to log also to stdout
+      udevd: add --debug-trace option
+      rule_generator: improve net rule comment generation
+      volume_id: correct iso9660 high sierra header
+      warn if a PHYSEDV* key, the "device" link, or a parent attribute is used
+      don't print PHYSDEV* warnings for old WAIT_FOR_SYSFS rules
+      udevinfo: print error in --attribute-walk
+      udev_sysfs: unify symlink resolving
+      udevtrigger: trigger devices sorted by their dependency
+      fix spelling in deprecation warning
+      release 101
+
+Michał Bartoszkiewicz:
+      udevtrigger: fix typo that prevents partition events
+
+Miles Lane:
+      clarify "specified user/group unknown" error
+
+Piter PUNK:
+      update slackware rules
+
+VMiklos:
+      update Frugalware rules
+
+
+Summary of changes from v099 to v100
+============================================
+
+Kay Sievers:
+      update SUSE rules
+      fix messed up ChangeLog from release 099
+      man: add $attr{} section about symlinks
+      revert persistent-storage ata-serial '_' '-' replacement
+
+
+Summary of changes from v098 to v099
+============================================
+
+Greg KH:
+      update Gentoo rules
+
+Kay Sievers:
+      udev_db.c: include <sys/stat.h>
+      use fnmatch() instead of our own pattern match code
+      rename major/minor variable to maj/min to avoid warning
+      update source file headers
+      udevtest: print header that ENV{} can't work
+      update TODO
+      udevtrigger: options to filter by subsystem and sysfs attribute
+      udevtrigger: remove unused longindex
+      udevinfo: use long options
+      udevd: use files instead of symlinks for /dev/.udev/queue,failed
+      udevtrigger: fix pattern match
+      reorder options in udevinfo man page
+      udevinfo: fix SUBSYTEMS spelling error
+      fix ENV{TEST}="Test: $env{TEST}"
+      let $attr{symlink} return the last element of the path
+      cdrom_id: add rules file to call cdrom_id
+      udevinfo: do not show symlinks as attributes in --attribute-walk
+      remove broken name_cdrom.pl
+
+Marco d'Itri:
+      update Debian rules
+      run_program: close pipe fd's which are connected to child process
+      add persistent rules generator for net devices and optical drives
+
+MUNEDA Takahiro:
+      changes rules for ata disk from '_' to '-'
+
+Sergey Vlasov:
+      make struct option arrays static const
+      fix "subsytem" typo
+
+
+Summary of changes from v097 to v098
+============================================
+
+Alex Merry:
+      udevtest: allow /sys in the devpath paramter
+
+Harald Hoyer:
+      selinux: init once in the daemon, not in every event process
+
+Kay Sievers:
+      udevd: remove huge socket buffer on the control socket
+      man page: fix typo
+      rename udev_libc_wrapper -> udev_sysdeps
+      db: store devpath - node relationship for all devices
+      udevinfo: allow -a -n <node>
+      udevinfo, udevtest: simplify '/sys' stripping from devpath argument
+      lookup_user, lookup_group: report "unknown user" and "lookup failed"
+      consistent key naming to match only the event device or include all parent devices
+      skip rule, if too may keys of the same type are used
+      introduce ATTR{file}="value" to set sysfs attributes
+      update SUSE rules
+      update default rules
+      export DRIVER for older kernels as a replacement for PHYSDEVDRIVER
+      fix typo in SUBSYSTEMS key parsing
+      udevtrigger: add --retry-failed
+      volume_id: add suspend partition detection
+      vol_id: use primary group of 'nobody' instead of 'nogroup'
+      remove built-in /etc/passwd /etc/group parser
+      always expect KEY{value} on ATTR, ATTRS, ENV keys
+      use new key names in test programs
+      cleanup commandline argument handling
+      db: don't create a db file for only a node name to store
+      man: add ATTR{file}="value" assignment
+
+Lennart Poettering:
+      volume_id: fix fat32 cluster chain traversal
+
+Marco d'Itri:
+      fix 'unknow user' error from getpwnam/getgrnam
+      fix rc when using udev --daemon
+      update Debian rules
+
+Michał Bartoszkiewicz:
+      man pages: fix typos
+
+
+Summary of changes from v096 to v097
+============================================
+
+Anssi Hannula:
+      add joystick support to persistent input rules
+
+Kay Sievers:
+      firmware.sh: remove needless '/'
+      vol_id: add --skip-raid and --probe-all option
+      switch uevent netlink socket to group 1 only
+      increase /proc/stat read buffer
+      use "change" instead of "online" events
+      remove 'static' from local variable
+      libvolume_id: add parameter 'size' to all probe functions
+      man pages: replace 'device-path' by 'devpath'
+      man pages: work around xmlto which tries to be smart
+      refresh vol_id man page
+      udevinfo: add DRIVER==
+      Makefile: fix dependency
+      libvolume_id: read ufs2 label
+      switch ifdef __KLIBC__ to ifndef __GLIBC__
+      report failing getpwnam/getgrnam as error
+      rename udevcontrol message types and variables
+      initialize unused sockets to -1
+      udevd: remove useless udevinitsend parameter
+      update README
+      udevd: autotune max_childs/max_childs_running
+      update frugalware rules
+      update SUSE rules
+      move default rules to etc/udev/rules.d/
+      add 'crypto' devices to persistent storage rules
+      add late.rules to default rules
+      update Fedora rules
+      don't report an error on overlong comment lines
+      update SUSE rules
+      udevd: read DRIVER from the environment
+
+Marco d'Itri:
+      make rename_netif() error messages useful
+      path_id: fix an harmless syntax error
+
+Piter PUNK:
+      update slackware rules
+
+Richard Purdie:
+      Fix inotify syscalls on ARM
+
+
+Summary of changes from v095 to v096
+============================================
+
+Kay Sievers:
+      Makefiles: fix .PHONY for man page target
+      allow longer devpath values
+      path_id: prepare for new sysfs layout
+
+
+Summary of changes from v094 to v095
+============================================
+
+Kay Sievers:
+      update SUSE rules
+      don't remove symlinks if they are already there
+      allow "online" events to create/update symlinks
+      udevinfo: clarify parent device attribute use
+      update SUSE rules
+      netif rename: optimistic loop for the name to become free
+      remove broken %e enumeration
+
+Tobias Klauser:
+      print usage of udevcontrol when no or invalid command is given
+
+
+Summary of changes from v093 to v094
+============================================
+
+Daniel Drake:
+      update "writing udev rules"
+
+Kay Sievers:
+      libvolume_id: gfs + gfs2 support
+      remove MODALIAS key and substitution
+      add persistent-input.rules
+
+Marco d'Itri:
+      update Debian rules
+
+
+Summary of changes from v092 to v093
+============================================
+
+Hannes Reinecke:
+      path_id: add support for iSCSI devices
+
+Kay Sievers:
+      libvolume_id: fat - check for signature at end of sector
+      libvolume_id: add more software raid signatures
+      update Fedora rules
+      path_id: prevent endless loop for SAS devices on older kernels
+      remove udevsend
+      replace binary firmware helper with shell script
+      skip device mapper devices for persistent links
+
+
+Summary of changes from v091 to v092
+============================================
+
+Kay Sievers:
+      don't include stropts.h, some libc's don't like it
+      udevd: create leading directories for /dev/.udev/uevent_seqnum
+      vol_id: fix logging from libvolume_id's log function
+      update SUSE rules
+      update SUSE rules
+      add more warnings for invalid key operations
+      fix offsetof() build issue with recent glibc
+      selinux: fix typo in block device node selection
+      vol_id: add NetWare volume detection
+      edd_id: fix "(null)" output if "mbr_signature" does not exist
+      update Fedora rules
+      libvolume_id: nss - use different uuid
+
+Libor Klepac:
+      path_id: add platform and serio support
+
+Marco d'Itri:
+      update Debian rules
+      path_id: fix bashism
+
+
+Summary of changes from v090 to v091
+============================================
+
+Hannes Reinecke:
+      path_id: fix SAS device path generation
+
+Kay Sievers:
+      udevtest: don't try to delete symlinks
+      persistent rules: fix typo in dm rule
+      allow NAME=="value" to check for already assigned value
+      udevd: export initial sequence number on startup
+
+
+Summary of changes from v089 to v090
+============================================
+
+Kay Sievers:
+      udevd: export current seqnum and add udevsettle
+      volume_id: fix endianess conversion typo for FAT32
+      merge device event handling and make database content available on "remove"
+      set default udevsettle timeout to 3 minutes
+      export INTERFACE_OLD if we renamed a netif
+      let udevmonitor show the possibly renamed devpath
+      volume_id: move some debug to info level
+      udevtrigger: fix event order
+      usb_id: remove uneeded code
+      remove old symlinks before creating current ones
+      path_id: fix loop for SAS devices
+      apply format char to variables exported by ENV
+
+Marco d'Itri:
+      add inotify support for hppa and MIPS and log if inotify is not available
+
+Matt Kraai:
+      fix typo in error message
+
+
+Summary of changes from v088 to v089
+============================================
+
+Hannes Reinecke:
+      path_id: add bus to USB path
+
+Kay Sievers:
+      change rule to skip removable IDE devices
+      don't create uuid/label links for raid members
+      volume_id: provide library
+      fix rule order for persistent tape links
+      update man page
+      volume_id: provide a custom debug function
+      volume_id: rename subdirectory
+      volume_id: use shared library by default
+      because is better than cause
+      volume_id: remove some global symbols
+      volume_id: define exported symbols
+      remove all stripping code
+      man pages: mention udev(7) not udev(8)
+      update Debian rules
+      move all *_id programs to /lib/udev/
+      update Red Hat rules
+      update SUSE rules
+      pass CROSS_COMPILE to AR and RANLIB down to extras/
+      volume_id: update README
+      volume_id: generate man page from xml source
+      update README
+      fix symlink targets in Makefiles
+
+
+Summary of changes from v087 to v088
+============================================
+
+Hannes Reinecke:
+      persistent links: add scsi tape links and usb path support
+
+Kay Sievers:
+      volume_id: add squashfs detection
+      reset signal handler in event process
+      correct use of fcntl()
+      add udevtrigger to request events for coldplug
+      add ',' to trusted chars
+      volume_id: remove partition table parsing code
+      volume_id: remove all partition table support
+      fix spelling error in debug string
+      rename "persistent disk" to "persistent storage"
+      fix output for USB path
+
+
+Summary of changes from v086 to v087
+============================================
+
+Hannes Reinecke:
+      path_id: support SAS devices
+
+Kay Sievers:
+      fix persistent disk rules to exclude removable IDE drives
+      warn about %e, MODALIAS, $modalias
+      remove devfs rules and scripts
+
+Masatake YAMATO:
+      typo in debug text in udev_run_hotplugd.c
+
+
+Summary of changes from v085 to v086
+============================================
+
+Kay Sievers:
+      volume_id: replace __packed__ by PACKED macro
+      volume_id: split raid and filesystem detection
+      volume_id: add missing return
+      udevd: fix queue export for multiple events for the same device
+
+Kyle McMartin:
+      workaround missing kernel headers for some architectures
+
+Nix:
+      update to udev-084/doc/writing_udev_rules
+
+
+Summary of changes from v084 to v085
+============================================
+
+Andrey Borzenkov:
+      Fix trivial spelling errors in RELEASE-NOTES
+
+Jeroen Roovers:
+      fix typo in parisc support to path_id
+
+Kay Sievers:
+      make WAIT_FOR_SYSFS usable in non "wait-only" rules
+      fix typo in man page
+      include sys/socket.h for klibc build
+      cramfs detection for bigendian
+      exit WAIT_FOR_SYSFS if the whole device goes away
+      update SUSE rules
+      update Red Hat rules
+      update Gentoo rules
+      include errno.h in udev_libc_wrapper.c
+
+
+Summary of changes from v083 to v084
+============================================
+
+Kay Sievers:
+      update SUSE rules
+      switch CROSS to CROSS_COMPILE
+      replace fancy silent build program by simple kernel build like logic
+      move manpages to top level
+      remove UDEVD_UEVENT_INITSEND
+      whitespace fixes
+      scsi_id: remove dead files
+      optimize sysfs device and attribute cache
+      let SYSFS{} look at the device, not only the parent device
+      add debug output to sysfs operations
+
+
+Summary of changes from v082 to v083
+============================================
+
+Andrey Borzenkov:
+      man page: document when substitutions are applied for RUN and other keys
+      check for ignore_device in loop looks redundant
+
+Kay Sievers:
+      udevstart: fix NAME="" which prevents RUN from being executed
+      find programs in /lib/udev for IMPORT if {program} is not given
+      don't add $SUBSYSTEM automatically as $1 to programs
+      remove redundant substitution of RUN key
+
+
+Summary of changes from v081 to v082
+============================================
+
+Andrey Borzenkov:
+      substitute format chars in RUN after rule matching
+
+Kay Sievers:
+      scsi_id, usb_id: request device parent by subsystem
+      path_id: work with "all devices in /sys/devices"
+      ignore all messages with missing devpath or action
+      Makefile: remove dynamic config file generation
+      path_id: handle fiber channel (Hannes Reinecke <hare@suse.de>)
+      usb_id: don't fail on other subsytems than "scsi"
+      don't do RUN if "ignore_device" is given
+      increase kernel uevent buffer size
+      move udev(8) manpage to udev(7)
+      recreate man pages from xml source
+      remove udev, udevstart, udevsend from the default installation
+      update SUSE rules
+      rename apply_format() cause it is public now
+      udevtest: add udev_rules_apply_format() to RUN keys
+      let "ignore_device" always return the event successfully
+
+Olivier Blin:
+      fixes udev build with -fpie
+
+
+Summary of changes from v080 to v081
+============================================
+
+Kay Sievers:
+      add DEVLINKS to "remove" event
+      better log text and comments
+      vol_id: probe volume as user nobody
+      fix BUS, ID, $id usage
+      prepare moving of /sys/class devices to /sys/devices
+
+
+Summary of changes from v079 to v080
+============================================
+
+Brent Cook:
+      fix dependency for make -j2
+
+coly:
+      fix man page typos
+
+Kay Sievers:
+      update RELEASE-NOTES + TODO
+      fix typo in man page
+      update TODO
+      update SUSE rules
+      path_id: fix invalid character class
+      replace libsysfs
+
+Marco d'Itri:
+      udev_selinux.c: include udev.h
+
+
+Summary of changes from v078 to v079
+============================================
+
+Kay Sievers:
+      don't log error if database does not exist
+      use udev_root instead of "/dev"in selinux matchpathcon_init_prefix()
+      scsi_id: read page 0x80 with libata drives
+      update SUSE rules
+      remove %e from man page
+
+
+Summary of changes from v077 to v078
+============================================
+
+Greg Kroah-Hartman:
+      Update Gentoo udev main rule file.
+      add parisc support to path_id
+
+Hannes Reinecke:
+      scsi_id: -u fold multiple consecutive whitespace chars into single '_'
+
+Harald Hoyer:
+      optimize SELinux path match
+
+Kay Sievers:
+      update README
+      allow C99 statements
+      fix segfaulting create_floppy_devices
+      update SUSE rules
+      remove unused variables
+      remove default settings in udev.conf
+      clearenv() is now part of klibc
+      add DEVLINKS to the event environment
+
+Kurt Garloff:
+      scsi_id: support pre-SPC3 page 83 format
+
+
+Summary of changes from v076 to v077
+============================================
+
+Kay Sievers:
+      merge two consecutive static strlcat's
+      don't return an error, if "ignore_device" is used
+      remove outdated and misleading stuff
+      move SEQNUM event skipping to udevsend
+      update RELEASE-NOTES
+      update SUSE rules
+      allow programs in /lib/udev called without the path
+      update SUSE rules
+      add target to to generate ChangeLog section
+      update Red Hat rules
+
+Marco d'Itri:
+      allow to overwrite the configured udev_root by exporting UDEV_ROOT
+      let udevsend ignore events with SEQNUM set
+      update Debian rules
+
+
+Summary of changes from v75 to v076
+============================================
+
+Kay Sievers:
+      fix typo in eventrecorder
+      volume_id: include stddef.h header
+      remove misleading install instructions
+      remove all built-in wait_for_sysfs logic
+      add linux/types.h back, old glibc-kernel-headers want it
+      volume_id: use glibc's byteswap
+      udevd: ignore all messages without DEVPATH
+      udevd: track exit status of event process
+      udevd: export event queue and event state
+      remove "udev_db" option from config file
+      Makefile: remove exec_prefix and srcdir
+      update README and RELEASE-NOTES
+      udevd: track killed event processes as failed
+      update README
+      don't start udevd from udevsend
+      udevd: add a missing return
+      libvolume_id: fix weird fat volume recognition
+      move some helpers from extras to /lib/udev
+
+Scott James Remnant:
+      move delete_path() to utils
+      clean-up empty queue directories
+      Makefile: fail, if submake fails
+
+
+Summary of changes from v74 to v075
+============================================
+
+Greg Kroah-Hartman:
+      Make run_directory.c stat the place it is going to try to run.
+
+Kay Sievers:
+      forgot the ChangeLog for 074
+      volume_id: provide libvolume_id.a file
+      remove our own copy of klibc
+      remove outdated HOWTO
+      update TODO
+      update SUSE rules
+      remove completely useless start script
+      fix tests and remove no longer useful stuff
+      replace udeveventrecorder by a shell script
+
+
+Summary of changes from v73 to v074
+============================================
+
+Kay Sievers:
+      never queue events with TIMEOUT set
+      let NAME="" supress node creation, but do RUN keys
+      remove udevinitsend
+      update .gitignore
+
+Marco d'Itri:
+      add strerror() to error logs
+      move some logging from dbg() to info()
+
+
+Summary of changes from v72 to v073
+============================================
+
+Kay Sievers:
+      udevd: depend on netlink and remove all sequence reorder logic
+      print useconds in udevmonitor
+      add RELEASE-NOTES, update TODO
+
+
+Summary of changes from v71 to v072
+============================================
+
+Ananth N Mavinakayanahalli:
+  libsysfs: translate devpath of the symlinked class devices to its real path
+
+Jan Luebbe:
+  add man pages for *_id programs
+
+Kay Sievers:
+  volume_id: add OCFS Version 1
+  volume_id: add Veritas fs
+  volume_id: check ext fs for valid blocksize, cause magic is only 2 bytes
+  volume_id: move blocksize validation to fix jbd recognition
+  volume_id: fix typo in ocfs
+  volume_id: add vxfs include
+  volume_id: make FAT32 recognition more robust
+  volume_id: Version 051
+  volume_id: fix typo in ext blocksize check
+  volume_id: Version 052
+  FAQ: remove confusing statement about module loading
+  cleanup compiler/linker flags
+  use DESTDIR on uninstall, no need to pass prefix to submake
+  allow to pass STRIPCMD, to skip stripping of binaries
+  cleanup make release
+  fix the new warnings I asked for
+  move rules parsing into daemon
+  "make STRIPCMD=" will disable the stripping of binaries
+  remove no longer working udevd-test program
+  "STRIPCMD=" for the EXTRAS
+  add dummy inotify syscalls on unsupported architecture
+  remove no longer needed waiting for "dev" file
+  revert the "read symlink as device patch"
+  use libsysfs to translate the class linke to the device path
+  libsysfs: remove brute-force "bus", "driver" searching for old kernels
+  test: add "driver" and "bus" links to test sysfs tree
+  update RELEASE-NOTES
+  udevd: don't daemonize before initialization
+  log to console if syslog is not available
+  udevd: disable OOM
+  remove precompiled rules option
+  export DEVNAME on "remove" only if we really got a node to remove
+  fix typo in umask()
+
+
+Summary of changes from v70 to v071
+============================================
+
+Greg Kroah-Hartman:
+      Remove the udev.spec file as no one uses it anymore
+
+John Hull:
+      edd_id: check that EDD id is unique
+
+Kay Sievers:
+      ata_id: open volume O_NONBLOCK
+      add "Persistent Device Naming" rules file for disks
+      scsi_id: switch temporary node creation to /dev
+      volume_id: set reiser instead of reiserfs for filesystem type
+      update devfs rules header
+      update Debian rules
+      update Fedora rules
+      update Debian rules
+      remove no longer needed includes
+      switch tools and volume_id from LGPL to GPLv2
+      add edd-*-part%n to the persistent.rules
+      update Debian persistent rules
+      clarify README
+      udevd: fix initial timeout handling
+      force event socket buffer size to 16MB
+      udevd: move logging from err to info for non-hotplug uevent
+      fix selinux compilation
+      libsysfs: accept sysmlinks to directories instead of real directories
+
+Marco d'Itri:
+      run_directory: fix typo in "make install"
+
+
+Summary of changes from v069 to v070
+============================================
+
+Amir Shalem:
+  udevd: fix udevd read() calls to leave room for null byte
+
+Edward Goggin:
+  scsi_id: derive a UID for a SCSI-2 not compliant with the page 83
+
+Greg Kroah-Hartman:
+  fix nbd error messages with a gentoo rule hack
+  fix scsi_id rule in gentoo config file
+
+Jürg Billeter:
+  EXTRAS/Makefile: fix install targets to match main Makefile
+
+Kay Sievers:
+  volume_id: fix error handling with failing read()
+  EXTRAS: cleanup and sync all Makefiles
+  add install test to 'make buildtest'
+  update RELEASE-NOTES
+
+Olivier Blin:
+  fix a debug text typo in udev_rules.c
+
+
+Summary of changes from v068 to v069
+============================================
+
+Amir Shalem:
+  fix typo in firmware_helper
+
+Duncan Sands:
+  firmware_helper: fix write count
+
+Kay Sievers:
+  *_id: fix zero length in set_str()
+  add program name to logged error
+  fix exit code of udevinitsend and udevmonitor
+  udevd: keep the right order for messages without SEQNUM
+  volume_id: don't probe for mac_partition_maps
+  udevmonitor: cleanup on exit
+  path_id: remove SUSE specific PATH
+  update SUSE rules
+  add pci_express to bus list
+  update SUSE rules
+  store ENV{key}="value" exported keys in the database
+  fix lookup for name in the udevdb, it should return the devpath
+  prepare for new HAL udevdb dump
+  print persistent data with "udevinfo -q all"
+  change parameter order of udev_db_search_name()
+  add and use name_list_cleanup() for cleaning up the string lists
+  don't store devpath in udevdb, we don't need it
+  add uft8 validation for safe volume label exporting
+  start to enforce plain ascii or valid utf8
+  use WRITE_END/READ_END for the pipe index
+  remove not needed sig_flag for state of signal_pipe
+  don't reenter get_udevd_msg() if message is ignored
+  rename ...trailing_char() to ...trailing_chars()
+  vol_id: ID_LABEL_SAFE will no longer contain fancy characters
+  udevd: move some logging to "info" and "err"
+  remove special TIMEOUT handling from incoming queue
+  udev_test.pl: we replace untrusted chars with '_'
+  check the udevdb before assigning a new %e
+  update RELEASE-NOTES
+  udevinfo: add database export
+  write man page masters in DocBook XML
+  udevinfo: rename dump() to export()
+  test the automatic man page rebuild and checkin
+  Makefile: remove all the duplicated rules
+  all man pages rewritten to use DocBook XML
+  add missing udevsend man page
+  also forgot udevmonitor.8
+  udevinfo: restore -d option
+  scsi_id: rename SYSFS to LIBSYSFS
+  add edd_id tool to match BIOS EDD disk information
+  move and update libsysfs.txt
+  klibc: update to version 1.1.1
+  delete cdromsymlinks* - obsoleted by cdrom_id and IMPORT rules
+  delete docs/persistent_naming - obsoleted by persistent disk names
+  delete old Fedora html page
+  add "totally outdated" header to docs/overview :)
+  update SUSE rules
+  fix useless but funny name_cdrom.pl script to work again
+  update TODO
+  Makefile: fix prerequisits for $(PROGRAMS)
+  Makefile: cleanup install targets
+  remove chassis_id program
+  fic gcov use and move it into the Makefile
+  FAQ: update things that have changed
+
+Thierry Vignaud:
+  switch to '==' in raid-devfs.sh
+
+
+Summary of changes from v067 to v068
+============================================
+
+Greg Kroah-Hartman:
+  add EXTRAS documentation to the README file.
+  Always open the cdrom drive in non-blocking mode in cdrom_id
+  cdrom_id: change err() to info() to help with debugging problems
+
+Kay Sievers:
+  cleanup some debug output and move to info level + unify select() loops
+  move udevmonitor to /usr/sbin
+  ENV{TEST}=="1" compares and ENV{TEST}="1" sets the environment
+  vol_id: fix sloppy error handling
+  fix typo in cdrom_id syslog
+  bring std(in|out|err) fd's in a sane state
+  fix printed udevmonitor header
+
+
+Summary of changes from v066 to v067
+============================================
+
+Greg Kroah-Hartman:
+  added the cdrom.h #defines directly into the cdrom_id.c file
+
+Kay Sievers:
+  update SUSE rules
+  fix make install, as we don't provide a default rule set anymore
+  fix more compiler warnings ...
+  fix udevstart event ordering, we want /dev/null very early
+  don't fail too bad, if /dev/null does not exist
+
+
+Summary of changes from v065 to v066
+============================================
+
+Greg Kroah-Hartman:
+  update gentoo rule file.
+  Created cdrom_id program to make it easier to determine cdrom types
+  added cdrom_id to the build check
+  updated gentoo rule file to handle removable ide devices.
+  changed cdrom_id exports to be easier to understand and consistant with other _id programs.
+  fix klibc build issue in cdrom_id.c
+  Change the gentoo rules to use cdrom_id instead of cdsymlink.sh
+  changed location of gentoo helper apps to be /sbin instead of in scripts dir
+  tweak the gentoo rules some more.
+
+Kay Sievers:
+  add NETLINK define for the lazy distros
+  read sysfs attribute also from parent class device
+  switch some strlcpy's to memcpy
+  allow clean shutdown of udevd
+  add flag for reading of precompiled rules
+  update distro rules files
+  add SUSE rules
+  update SUSE rules
+  add firmware_helper to load firmware
+  more distro rules updates
+  update README
+  remove example rules and put the dev.d stuff into the run_directory folder
+  trivial text cleanups
+  update SUSE rules
+  split udev_util in several files
+  update SUSE rules
+  allow logging of all output from executed tools
+  add Usage: to udevmonitor and udevcontrol
+  move some logging to the info level
+
+Thierry Vignaud:
+  fix udevinfo output
+
+
+Summary of changes from v064 to v065
+============================================
+
+Greg Kroah-Hartman:
+  Added persistent name rules for block devices to gentoo rule file.
+  Added horrible (but fun) path_id script to extras.
+  Update gentoo rules file.
+
+Kay Sievers:
+  update release notes for next version
+  add udevmonitor, to debug netlink+udev events at the same time
+  allow RUN to send the environment to a local socket
+  fix GGC signed pointer warnings and switch volume_id to stdint
+
+
+Summary of changes from v063 to v064
+============================================
+
+Andre Masella:
+  volume_id: add OCFS (Oracle Cluster File System) support
+
+Hannes Reinecke:
+  usb_id: fix typo
+  add ID_BUS to *_id programs
+  create_floppy_devices: add tool to create floppy nodes based on sysfs info
+
+Kay Sievers:
+  move code to its own files
+  make SYSFS{} usable for all devices
+  add padding to rules structure
+  allow rules to have labels and skip to next label
+  thread unknown ENV{key} match as empty value
+
+
+Summary of changes from v062 to v063
+============================================
+
+Anton Farygin:
+  fix typo in GROUP value application
+
+Greg Kroah-Hartman:
+  add 'make tests' as I'm always typing that one wrong...
+  Really commit the udev_run_devd changes...
+  Fixed udev_run_devd to run the /etc/dev.d/DEVNAME/ files too
+  fix position of raw rules in gentoo config file
+
+Hannes Reinecke:
+  dasd_id: add s390 disk-label prober
+  fix usb_id and let scsi_id ignore "illegal request"
+
+Kay Sievers:
+  volume_id: remove s390 dasd handling, it is dasd_id now
+  trivial fixes for *_id programs
+  IMPORT: add {parent} to import the persistent data of the parent device
+  allow multiple values to be matched with KEY=="value1|value2"
+  udevd: set incoming socket buffer SO_RCVBUF to maximum
+  remember mapped rules state
+  ata_id: check for empty serial number
+  compile dasd only on s390
+
+Ville Skyttä:
+  correct default mode documentation in udev
+
+
+Summary of changes from v061 to v062
+============================================
+
+Kay Sievers:
+  fix symlink values separated by multiple spaces
+  update RELEASE-NOTES
+  fix typo in group assignment
+  fix default-name handling and NAME="" rules
+  add WAIT_FOR_SYSFS key to loop until a file in sysfs arrives
+  fix unquoted strings in udevinitsend
+
+Summary of changes from v060 to v061
+============================================
+
+Greg Kroah-Hartman:
+  Sync up the Debian rules files
+  fix cdrom symlink problem in gentoo rules
+  Fix ChangeLog titles
+
+Kay Sievers:
+  update RELEASE-NOTES
+  we want to provide OPTFLAGS
+  rename ALARM_TIMEOUT to UDEV_ALARM_TIMEOUT
+  udevd: optimize env-key parsing
+  don't resolve OWNER, GROUP on precompile if string contains %, $
+  set default device node to /dev
+  create udevdb files only if somehting interesting happened
+  pack parsed rules list
+  replace useless defines by inline text
+  move rule matches to function
+  add usb_id program to generate usb-storage device identifiers
+  add IEEE1394 rules to the gentoo rule file
+  fake also kernel-name if we renamed a netif
+  allow OPTIONS to be recognized for /sys/modules /sys/devices events
+  switch gentoo rules to new operators
+
+
+Summary of changes from v059 to v060
+============================================
+
+Greg Kroah-Hartman:
+  Fix the gentoo udev rules to allow the box to boot properly
+
+Gustavo Zacarias:
+  Udev doesn't properly build with $CROSS
+
+Kay Sievers:
+  Keep udevstart from skipping devices without a 'dev' file
+
+Marco d'Itri:
+  #define NETLINK_KOBJECT_UEVENT
+
+
+Summary of changes from v058 to v059
+============================================
+
+Greg Kroah-Hartman:
+  Update the gentoo rule file
+  Fix udevinfo for empty sysfs directories
+  Fix makefile to allow 'make release' to work with git
+
+Hannes Reinecke:
+  udev: fix netdev RUN handling
+  udevcontrol: fix exit code
+
+Kay Sievers:
+  prepare RELEASE-NOTES
+  add ID_TYPE to the id probers
+  add -x to scsi_id to export the queried values in env format
+  store the imported device information in the udevdb
+  rename udev_volume_id to vol_id and add --export option
+  add ata_id to read serial numbers from ATA drives
+  IMPORT allow to import program returned keys into the env
+  unify execute_command() and execute_program()
+  IMPORT=<file> allow to import a shell-var style config-file
+  allow rules to be compiled to one binary file
+  fix the fix and change the file to wait for to the "bus" link
+  fix udevstart and let all events trvel trough udev
+  prepare for module loading rules and add MODALIAS key
+  remove device node, when type block/char has changed
+  Makefile: remove dev.d/ hotplug.d/ from install target
+  udevcontrol: add max_childs command
+  udevd: control log-priority of the running daemon with udevcontrol
+  udeveventrecorder: add small program that writes an event to disk
+  klibc: add missing files
+  udevinitsend: handle replay messages correctly
+  udev man page: add operators
+  udevd: allow starting of udevd with stopped exec-queue
+  klibc: version 1.0.14
+  udev: handle all events - not only class and block devices
+  volume_id: use udev-provided log-level
+  udev: clear lists if a new value is assigned
+  udev: move dev.d/ handling to external helper
+  udev: allow final assignments :=
+  udevd: improve timeout handling
+  Makefile: fix DESTDIR
+  udevd: add initsend
+  udevd: add udevcontrol
+  udevd: listen for netlink events
+
+Stefan Schweizer:
+  Dialout group fix for capi devices in the gentoo rules file
+
+Summary of changes from v057 to v058
+============================================
+
+Daniel Drake:
+  o Writing udev rules docs update
+
+Darren Salt:
+  o update cdsymlinks to latest version
+
+Greg Kroah-Hartman:
+  o remove detach_state files from the sysfs test tree
+  o Update permissions on test scripts so they will run properly now
+  o hopefully fix up the symlinks in the test directory
+  o Removed klibc/klibc.spec as it is autogenerated
+  o Added symlinks thanks to Kay's script and git hacking
+  o add Red Hat/Fedora html documenation
+  o Update Red Hat default udev rules
+
+Kay Sievers:
+  o selinux: fix handling during creation of symlinks
+  o Fedora udev.rules update
+  o libsysfs: version 2.0
+  o klibc: version 1.0.7
+
+Masanao Igarashi:
+  o Fix libsysfs issue with relying on the detach_state file to be
+
+Summary of changes from v056 to v057
+============================================
+
+<tklauser:access.unizh.ch>:
+  o fix stupid all_partitions bug
+
+Kay Sievers:
+  o add test for make -j4 to build-check
+  o klibc: version 1.0.6
+  o update Debian rules
+  o apply default permissions only for devices that will need it
+  o adapt RELEASE-NOTES
+  o udev_volume_id: fix endianess macros
+  o udev-test.pl: add test for DEVNAME export to RUN environment
+  o update the man page to reflect the recent changes
+  o export DEVNAME to RUN-key executed programs
+  o fix make -j4 and the local klibc-install
+  o update RELEASE-NOTES
+  o add RUN key to be able to run rule based notification
+  o fix udevtest to print the error if logging is disabled
+  o move execute_program to utils + add action to init_device
+  o correct correction for error path for PROGRAM execution
+  o correct error path for PROGRAM execution
+  o klibc: version 1.0.5
+  o check for strlen()==0 before accessing strlen()-1
+  o allow to match against empty key values
+  o read %s{}-sysfs values at any device in the chain
+  o udev_rules.c: don't change sysfs_device while walking up the device chain
+  o klibc: strlcpy/strlcat - don't alter destination if size == 0
+  o fix klibc's broken strlcpy/strlcat
+  o udevinfo: print SYSFS attribute the same way we match it
+  o remove untrusted chars read from sysfs-values or returned by PROGRAM
+  o udevinfo: print errors to stderr instead of stdout
+  o klibc: version 1.0.4
+  o support log-priority levels in udev.conf
+  o test-suite: remove UDEV_TEST, it's not needed anymore
+  o libsysfs: remove trailing slash on SYSFS_PATH override
+
+
+Summary of changes from v055 to v056
+============================================
+
+<tklauser:access.unizh.ch>:
+  o fix header paths in udev_libc_wrapper.c
+
+Kay Sievers:
+  o udev-test.pl: use more common user/group names
+  o klibc: remove SCCS directories from the temporary klibc install
+  o udev-test.pl: add a test where the group cannot be found in /etc/passwd
+  o udev-test.pl: add check for textual uid/gid
+  o fix bad typo that prevents the GROUP to be applied
+  o udevd: don't delay events with TIMEOUT in the environment
+  o klibc: use klcc wrapper instead of our own Makefile
+  o change call_foreach_file to return a list
+
+
+Summary of changes from v054 to v055
+============================================
+
+<jkluebs:luebsphoto.com>:
+  o This patch causes the remove handler to check that each symlink actually points to the correct devnode and skip it if it does not.
+
+<pebenito:gentoo.org>:
+  o udev selinux fix
+
+<tklauser:access.unizh.ch>:
+  o The following patch fixes some warnings when compiling volume_id from udev with the -Wall compiler flag. Define _GNU_SOURCE for strnlen() and correct the path to logging.h
+  o The following patch fixes a warning when compiling chassis_id from udev with the -Wall compiler flag. There are too much conversions in the format string of sscanf(). One %d can be dropped.
+
+Greg Kroah-Hartman:
+  o fix raid rules
+  o added frugalware udev ruleset
+  o merge selinux and Kay's symlink fixes together
+
+Hannes Reinecke:
+  o volume_id: Fix label/uuid reading for reiserfs
+
+Kay Sievers:
+  o add udevstart to the RELEASE-NOTES
+  o volume_id: version 43
+  o clarify the shortcomings of %e
+  o correct rule match for devices without a physical device
+  o remove unneeded code, libsysfs does this for us
+  o add final release note
+  o add ENV{} key to match agains environment variables
+  o simplify sysfs_pair handling
+  o add a test and simplify debug statement
+  o support =, ==, !=, += for the key match and assignment
+  o add OPTION="last_rule" to skip any later rule
+  o rename namedev_dev to udev_rule
+  o correct enum device_type
+  o remove udevstart on make clean
+  o volume_id: version 42
+  o volume_id: version 41
+  o remove unneeded include
+  o The path to dlist.h is not correct
+  o udevinfo -d: use '=' as separator, cause ':' may be a part of the devpath
+  o klibc: version 1.0.3
+  o add RELEASE-NOTES file
+  o test suite: move "driver" link to physical device
+  o remove PLACE key match
+  o don't lookup "root" in the userdb
+  o fix ia64 compile
+  o fix segfaulting udev while DRIVER matching
+  o cleanup list.h
+  o klibc: version 0.214
+  o rename device_list->list to device_list->node
+  o replace strncpy()/strncat() by strlcpy()/strlcat()
+  o split udev and udevstart
+  o udev_volume_id: version 39
+  o rename LOG to USE_LOG in all places
+  o remove Makefile magic for klibc integration
+  o klibc_fixups: remove no longer needed stuff
+  o udev_volume_id: volume_id v38
+  o use numeric owner/group as default values to avoid parsing userdb
+  o fix up segfaulting binaries with new klibc
+  o udevinfo -d: speed-up device dump
+  o klibc: version 0.211
+  o klibc_fixups: remove unneeded stuff
+  o replace weird defines by real code
+  o udev-test.pl: remove useless tests
+  o allow unlimitied count of symlinks
+  o unmap db-file after use
+  o remove typedef for call_foreach_file() handler function
+  o correct udev_init_device
+  o rename attributes to options
+  o kill stupid gcc4 warning
+  o trivial clenaup of namedev code
+  o klibc: check for gcc4
+  o klibc: update v0.205
+
+Thierry Vignaud:
+  o gentoo rule update for raid devices
+
+
+Summary of changes from v053 to v054
+============================================
+
+<tklauser:access.unizh.ch>:
+  o udev_volume_id: add Reiser4 support
+
+Kay Sievers:
+  o namedev: skip backslashes only if followed by newline
+  o wait_for_sysfs: add joydev
+  o udevinfo: print devpath -> node relationship for all devices
+  o trivial rename of some variables
+  o klibc v0.199
+  o big libsysfs diet (pre 2.0 version)
+  o udev_volume_id: volume_id v35
+  o add "serio" to bus list
+  o determine device type in udev_init_device()
+  o move kernel name/number evaluation into udev_init_device()
+  o detect NAME="" as ignore_device rule
+  o trivial namedev cleanup
+  o cleanup db functions
+  o clean up match_place()
+  o switch device type to enum
+  o switch major/minor to dev_t
+  o remove the device node only if the major/minor number matches
+  o libsysfs: work around a klibc bug
+  o introduce OPTIONS=ignore_device, ignore_remove, all_partitions" key
+  o namedev: execute PROGRAM only once and not possibly for every physical device
+
+Patrick Mansfield:
+  o update scsi_id to work with libsysfs changes
+
+
+Summary of changes from v052 to v053
+============================================
+
+Greg Kroah-Hartman:
+  o fix gentoo fb permission issue
+  o allow simple-build-check.sh to go faster if MAKEOPTS is set
+  o make the release tarballs have writable files in them
+  o remove gentoo permission file as it's not valid anymore
+
+Kay Sievers:
+  o fix special file mode mask for temporary device node
+  o udevstart: simplify "dev" file searching
+  o udev_volume_id: remove temporary node creation and parent handling
+  o add %P modifier to query the node name of the parent device
+  o udev_volume_id: remove __packed__ from dasd structure as it does not work
+  o create /block/*/range count of partitons for all_partitions
+
+Patrick Mansfield:
+  o scsi_id changes for use with udev %N and %p
+
+
+Summary of changes from v051 to v052
+============================================
+
+<md:linux.it>:
+  o debian: update rules files
+  o raid-devfs.sh: devfs names for hardware RAID controllers
+  o scsi_id: when udevstart is started, /tmp is not writeable
+  o cdsymlinks.sh: trivial fix, the variable is initialized to '', not 0
+
+<sschweizer:gmail.com>:
+  o gentoo/udev.rules: add default permissions for sound devices
+
+Greg Kroah-Hartman:
+  o fix example comment in ide-devfs.sh
+  o Add infiniband to gentoo rules
+  o Another gentoo fix, adding dvb support
+  o Fix gentoo bug #76056 (fb device group permissions.)
+  o Fix gentoo bug #81102, device nodes for the pktcdvd device
+
+Kay Sievers:
+  o provide temporary device node for callouts to access the device
+  o udev_volume_id: fix dasd disklabel reading with -l option
+  o udev_volume_id: volume_id version 034
+  o udev_volume_id: rename probe_ibm into probe_dasd
+  o udev_volume_id: volume_id version 032
+  o Makefile: add some more warnings and prepare for clean gcc4 compile
+  o Makefile: cleanup conditional config option sections
+  o fix -Wsign-compare warnings
+  o chassis_id: clean compilation and fix bad function parameter passing
+  o simple_build_check: make it possible to pass KERNEL_DIR
+  o selinux: cleanup udev integration
+
+Michael Buesch:
+  o trivial: remove _all_ trailing slashes with no_trailing_slash()
+  o trivial: fix signedness
+  o namdev: allow symlink-only rules to specify node permissions
+  o udevd: fix valgrind warning
+
+
+Summary of changes from v050 to v051
+============================================
+
+<roland:digitalvampire.org>:
+  o This fixes a silly mistake in how udevinfo prints the major and minor numbers (right now it prints the minor next to "MAJOR" and the major next to "MINOR" ;)
+
+<tklauser:access.unizh.chbk>:
+  o I tried to compile udev 050plus with the GCC 4.0 snapshot 200412119 and got two errors about possibly uninitialized structs, so I fixed this. 
+
+Christian Bornträger:
+  o udev_volume_id: fix -d option
+
+Greg Kroah-Hartman:
+  o gentoo fb permission fix
+  o fix gcc 2.96 issue in libsysfs
+  o remove the lfs startup script on request of the author
+  o clean up the aoe char device rules, and delete the block one as it's not needed
+  o add aoe block and char device rules to the gentoo rule file
+  o fix udev_volume_id build error
+
+Hannes Reinecke:
+  o rearrange link order in Makefile
+
+Kay Sievers:
+  o udev_volume_id: new version of volume_id
+  o klibc: update to version 0.198
+  o udev_volume_id: fix FAT label reading
+  o klibc: update to version 0.196
+  o udevd: throttle the forking of processes
+  o udevd: add possible initialization of expected_seqnum
+  o udevd: it's obviously not the brightest idea to exit a device node manager if it doesn't find /dev/null
+  o udevd: separate socket handling to prepare for other event sources
+  o udevd: support -d switch to become a daemon
+  o udev_volume_id: version 27
+  o udevd: split up message receiving an queueing
+  o remove useless warning if udev.conf contains keys not read by udev itself
+  o improve event sequence serialization
+  o remove udevsend syslog noise on udevd startup
+  o limit the initial timeout of the udevd event handling
+  o correct detection of hotplug.d/ udevsend loop
+  o correct log statement
+  o remove default_* permissions from udev.conf file
+  o update Fedora config files and add some more tests
+  o allow permissions only rules
+  o add SUBSYSTEM rule to catch all block devices and apply the disk permissions
+  o update Fedora config files
+  o handle renamed network interfaces properly if we manage hotplug.d/
+  o allow multiline rules by backslash at the end of the line
+  o add OnStream tape drive rules
+  o simplify rules file by setting default mode to 0660
+  o simplify permission application
+  o I broke the extras/ again. Add simple build test script now
+  o Merge vrfy.org:/home/kay/src/udev into vrfy.org:/home/kay/src/udev.kay
+  o initial merge of fedora udev.permissions into udev.rules
+  o remove permissions file mentioning from the udev man page
+  o fix some typos in gentoo's udev.rules introduced by the merge
+
+Michael Buesch:
+  o The attached patch fixes the code path if namedev_name_device() fails
+
+Summary of changes from v049 to v050
+============================================
+
+<harald:redhat.com>:
+  o selinux patch
+
+<tklauser:access.unizh.ch>:
+  o I made some more changes to the manpage of udev including
+
+Kay Sievers:
+  o update libsysfs to CVS version and fix segfaulting attribute reading
+  o klibc supports LOG_PID now, so remove our own implementation
+  o avoid building klibc test programs and pass SUBDIRS= to klibc clean
+
+
+Summary of changes from v048 to v049
+============================================
+
+Greg Kroah-Hartman:
+  o fix 'make clean' error in klibc
+
+Kay Sievers:
+  o update klibc to 0.194
+  o export DEVNAME regardless of the state of udev_dev_d
+  o add class specific files for class/spi_transport and class/spi_host
+  o udevd-test.pl: remove wrong date calculation
+  o check earlier if we should run as udevstart
+  o remove double initialization
+  o include missing header to udevtest.c
+  o add -V option to udev to print the version number
+  o prevent udev node creatinon for "class" registration
+  o udevd: serialization of the event sequence of a chain of devices
+  o add a class/fc_host file to the list of what to wait for
+  o udev_volume_id: links sysfs.a instead of all objects
+
+Martin Schlemmer:
+  o remove leftover from udevinfo's -d option
+
+
+Summary of changes from v047 to v048
+============================================
+
+Greg Kroah-Hartman:
+  o fix udev_volume_id so it will now build properly
+  o fix scsi_id build errors due to changes in the main udev makefile
+
+
+Summary of changes from v046 to v047
+============================================
+
+<klauser:access.unizh.ch>:
+  o Various typos and other litte errors in udev.8.in
+
+<sjoerd:spring.luon.net>:
+  o DEVNAME on device removal
+
+<sschweizer:gmail.com>:
+  o Allow GROUP to have modifiers in it
+
+Greg Kroah-Hartman:
+  o add more debian rules files
+  o move distro specific config files into their own directories
+  o update debian rules files
+  o added asterix rules to the gentoo file
+  o use udevstart for udev.init.* files
+  o delete a bunch of files no longer needed
+  o fix gentoo scsi cdrom rule
+  o Fix the multithreaded build again
+  o merge
+  o comment out ability to run udev-test.pl with valgrind
+  o fix spurious valgrind warning in udev
+  o fix udevinfo '-q path' option as it was not working
+  o merge
+  o fix parallel build error
+
+Kay Sievers:
+  o update Fedora dev.d/ example and remove unused conf.d/ directory
+  o don't install distribution specific init script on "make install"
+  o restore OWNER/GROUP assignment in rule coming from RESULT
+  o make gcov compile scripts working with recent gcc
+  o fix udev-test/udev-test.pl to work with again
+  o add net/atml and class/ppdev to the wait_for_sysfs exception list
+  o add net/nlv* devices to the exception list
+  o add "pcmcia" and "fc_transport" to the wait_for_sysfs lists
+  o remove unused timestamp field
+  o simplify permission handling
+  o handle /etc/hotplug.d/ only if the event comes from udevd
+  o trivial cleanups and change some comments
+  o remove unused variables
+  o udevsend/udevd handle events without a subsystem
+  o use blacklist on device "remove" and remove dev.d/ call code duplication
+  o update the man pages and correct Usage: hints
+  o don't call the hotplug scripts with a test run
+  o don't call dev.d/ scripts twice, if directory = subsystem
+  o remove archive file if we changed something
+  o link archive insted of objects
+  o rename udev_lib to udev_utils and dev_d to udev_multiplex
+  o handle whole hotplug event with udevd/udev
+  o integrate wait_for_sysfs in udev
+  o make the searched multiplex directories conditionally
+  o add MANAGED_EVENT to the forked udev environment
+  o export DEVNAME on remove event
+  o export udev_log flag to the environment
+  o remove my test code
+  o add support for /devices-devices without any file to wait for
+  o Patch from Alex Riesen <raa.lkml@gmail.com>
+  o add a bunch of busses to the list of what to wait for
+  o close connection to syslog in forked udevd child
+  o udevd exit path cleanup
+  o fix network device naming bug
+
+
+Summary of changes from v045 to v046
+============================================
+
+Greg Kroah-Hartman:
+  o make spotless for releases
+
+Kay Sievers:
+  o Don't try to print major/minor for devices without a dev file
+  o remove get_device_type and merge that into udev_set_values()
+  o prevent udevd crash if DEVPATH is not set
+  o add ippp and bcrypt to the exception lists of wait_for_sysfs
+  o let klibc add the trailing newline to syslog conditionally
+  o disable logging for udevstart
+  o add NAME{ignore_remove} attribute
+  o remove historical SYSFS_attr="value" format
+  o don't wait for sysfs if the kernel(2.6.10-rc2) tells us what not to expect
+  o change key names in udevinfo sysfs walk to match the kernel
+  o support DRIVER as a rule key
+  o support SUBSYSTEM as a rule key
+  o rename udevdb* to udev_db*
+  o Make dev.d/ handling a separate processing stage
+  o make the udev object available to more processing stages
+  o remove udev_lib dependency from udevsend, which makes it smaller
+  o add ACTION to udev object to expose it to the whole process
+  o make udevinfo's -r option also workimg for symlink queries
+  o let udev act as udevstart if argv[1] == "udevstart"
+  o improve udevinfo sysfs info walk
+  o add sysfs info walk to udevinfo
+  o pass the whole event environment to udevd
+  o replace tdb database by simple lockless file database
+
+
+Summary of changes from v044 to v045
+============================================
+
+Martin Schlemmer:
+  o Some updates for Gentoo's udev rules
+
+
+Summary of changes from v043 to v044
+============================================
+
+Greg Kroah-Hartman:
+  o add cdsymlinks.sh support to gentoo rules file
+  o fix gentoo legacy tty rule
+  o remove 'sudo' usage from the Makefile
+  o make udev-test.pl test for root permissions before running
+
+Kay Sievers:
+  o reduce syslog noise of udevsend if multiple instances try to start udevd
+  o add i2c-dev to the list of devices without a bus
+
+
+Summary of changes from v042 to v043
+============================================
+
+Greg Kroah-Hartman:
+  o add test target to makefile
+  o add dumb script to show all sysfs devices in the system
+
+Kay Sievers:
+  o Shut up wait_for_sysfs class/net failure messages, as it's not possible to
+    get that right for all net devices. Kernels later than 2.6.10-rc1 will
+    handle that by carrying the neccessary information in the hotplug event.  
+  o wait() for specific pid to return from fork()
+  o Don't use any syslog() in signal handler, cause it may deadlock
+  o Add support for highpoint ataraid to volume_id to suppress label reading on raid set members.
+  o Add a bunch of devices without "device" symlinks
+  o Exit, if udevtest cannot open the device (segfault)
+  o Patches from Harald Hoyer <harald@redhat.com>
+  o Apply the default permissions even if we found a entry in the permissions
+    file. Correct one test, as the default is applied correctly now and the
+    mode will no longer be 0000.
+  o add test for format chars in multiple symlinks to replace
+  o Add net/vmnet and class/zaptel to the list of devices without physical device
+
+
+Summary of changes from v040 to v042
+============================================
+
+Greg Kroah-Hartman:
+  o add inotify to the rules for gentoo
+
+Kay Sievers:
+  o skip waiting for device if we get a bad event for class creation and not for a device underneath it
+  o add net/pan and net/bnep handling
+  o switch wait for bus_file to stat() instead of open() add net/tun device handling add ieee1394 device handling
+  o Remove the last klibc specific line from the main udev code Move _KLIBC_HAS_ARCH_SIG_ATOMIC_T to the fixup file which is automatically included by the Makefile is we build with klibc
+  o ignore *.rej files from failed patches
+  o update to libsysfs 1.2.0 and add some stuff klib_fixup Now we have only the sysfs.h file different from the upstream version to map our dbg() macro.
+  o improve klibc fixup integration
+  o cleanup udevd/udevstart
+  o expose sysfs functions for sharing it
+
+
+Summary of changes from v039 to v040
+============================================
+
+<jk:blackdown.de>:
+  o wait_for_sysfs update for dm devices
+
+Greg Kroah-Hartman:
+  o sparse cleanups on the tree
+  o fix stupid cut-and-paste error for msr devices on gentoo boxes
+  o add *~ to bk ignore list
+  o delete udevruler.c as per Kay's request
+  o fix up the wait_for_sysfs_test script a bit
+
+Kay Sievers:
+  o fix debug in volume id / fix clashing global var name
+  o volume_id fix
+  o $local user
+  o cleanup netif handling and netif-dev.d/ events
+  o big cleanup of internal udev api
+  o don't wait for dummy devices
+  o close the syslog
+  o Fix ppp net devices in wait_for_sysfs
+  o Fix wait_for_sysfs messages (more debugging info)
+
+
+Summary of changes from v038 to v039
+============================================
+
+Greg Kroah-Hartman:
+  o Hopefully fix the vcs issue in wait_for_sysfs
+  o take out & from wait_for_sysfs_test that I previously missed
+  o add very nice cdsymlinks scripts
+  o add some helper scripts for dvb and input devices
+  o add debian config files
+  o let the extras/ programs build "pretty" also
+  o tweak the ccdv program to handle files in subdirectories being built
+  o crap, I messed up the 'sed' instances pretty badly, this fixes the config and man page mess
+  o fix broken 'make -j5' functionality
+
+Kay Sievers:
+  o swich attribute open() to simple stat()
+  o wait_for_sysfs update for /class/firmware and /class/net/irda devices
+  o fix unusual sysfs behavior for pcmcia_socket
+  o remove sleeps from udev as it is external now
+  o delete udevruler?
+  o Makefile fix
+
+Patrick Mansfield:
+  o update udev to scsi_id 0.7
+  o pass SYSFS setting down for extras builds
+  o move assignments past local variables
+
+
+Summary of changes from v037 to v038
+============================================
+
+<andrew.patterson:hp.com>:
+  o Re: Problem parsing %s in udev rules
+
+Greg Kroah-Hartman:
+  o fix up error in building extras and libsysfs
+
+Summary of changes from v036 to v037
+============================================
+
+<md:linux.it>:
+  o small udev patch
+
+Greg Kroah-Hartman:
+  o fix compilation warning in tdb log message
+  o Fix build error with klibc due to recent changes
+  o merge
+  o add wait_for_sysfs test script to the tarball to help people debug their boxes
+  o add ipsec to wait_for_sysfs ignore list
+  o added ccdv to bk ignore list
+  o a few more Makefile tweaks for the quiet feature
+  o Make the build silent, thanks to a helper program from ncftp
+  o rename files to have '_' instead of '-' in them
+  o change max time to wait in wait_for_sysfs to 10 seconds to hopefully handle some slow machines
+  o add support for class/raw/ to wait_for_sysfs
+  o fix up Makefile for wait_for_sysfs udev_version.h dependancy
+  o remove the debian specific file, as they don't want to share with the rest of the world :(
+
+Kay Sievers:
+  o prevent deadlocks on an corrupt udev database
+  o wait_for_sysfs_update
+
+Michael Buesch:
+  o fix asmlinkage
+  o fix incompatible pointer type warning
+
+
+Summary of changes from v035 to v036
+============================================
+
+Greg Kroah-Hartman:
+  o add the error number to the error message in wait_for_sysfs to help out in debugging problems
+
+Summary of changes from v034 to v035
+============================================
+
+Greg Kroah-Hartman:
+  o added ieee1394 support to wait_for_sysfs
+  o update wait_for_sysfs with a bunch more devices thanks to user reports
+
+Summary of changes from v033 to v034
+============================================
+
+Kay Sievers:
+  o wait_for_sysfs bluetooth class update
+
+Greg Kroah-Hartman:
+  o add comment in wait_for_sysfs to explain the structure better
+  o Revert previous dev_d.c change, it's not what is causing HAL problems
+  o hm, somethings odd with DEVPATH, see if this fixes it
+  o 33_bk mark for the makefile
+  o wait_for_sysfs: clean up the logic for the list of devices that we do not expect device symlinks for
+  o get rid of annoying extra lines in the syslog for some libsysfs debug messages
+  o added support for i2c devices in wait_for_sysfs.c
+  o add support for i2c-adapter devices to wait_for_sysfs.c
+
+Summary of changes from v032 to v033
+============================================
+
+<harald:redhat.com>:
+  o udev close on exec
+  o some cleanups and security fixes
+  o some cleanups and security fixes
+  o selinux for udev
+  o cleanup PATCH for extras/chassis_id/Makefile
+
+<kpfleming:backtobasicsmgmt.com>:
+  o respect prefix= setting in built udev.conf (updated)
+
+Greg Kroah-Hartman:
+  o add support for usb interfaces to wait_for_sysfs to keep it quiet
+  o enable native tdb spinlocks on i386 platforms
+  o delete extras/multipath-tools as per the author's request
+  o be paranoid in dev_d.c
+  o add USE_SELINUX to README documentation so people have a chance to see what is going on
+  o update the selinux.h file to start to look sane
+  o update bk ignore list for the wait_for_sysfs binary
+  o kdetv wants to see device nodes in /dev
+  o update comments in scsi-devfs.sh
+  o fix up Makefiles to get the klibc build working properly
+  o update bk ignore list for new klibc generated files
+  o oops forgot to add the new klibc/include directory
+  o update klibc to version 0.181
+
+Kay Sievers:
+  o fix problems with dev.d and udevstart
+  o wait_for_sysfs debug cleanup
+  o fix problems using scsi_id with udevstart
+  o update volume_id
+  o finally solve the bad sysfs-timing for all of us
+  o volume-id build fix and update
+  o switch udev's seqnum to u64
+  o add enum tests
+  o fix udev segfaults with bad permissions file
+
+Patrick Mansfield:
+  o update udev to include scsi_id 0.6
+
+
+Summary of changes from v031 to v032
+============================================
+
+<harald:redhat.com>:
+  o udev parse bug
+
+Kay Sievers:
+  o handle only block and class devices
+  o fix udevstart badly broken in udev 031
+
+
+Summary of changes from v030 to v031
+============================================
+
+<arun:codemovers.org>:
+  o udev - read long lines from config files overflow fix
+
+<ballarin.marc:gmx.de>:
+  o Update the FAQ with info about hardlink security
+
+<david:fubar.dk>:
+  o compatibility symlinks for udev
+
+David Weinehall:
+  o Minor POSIX-fixes for udev
+
+Greg Kroah-Hartman:
+  o add symlink for video rule
+  o add a "first" list to udevstart and make it contain the class/mem/ devices
+  o fix compiler warning in udevtest.c
+  o Fix old-style pty breakage in rules file for tty device
+  o add rules for i386 cpu devices
+  o add permission for legotower usb devices
+
+Kay Sievers:
+  o Fix naming ethernet devices in udevstart
+  o update udev_volume_id
+  o let /sbin/hotplug execute udev earlier
+  o pass SEQNUM trough udevd
+  o fix manpages based on esr's spambot
+
+Martin Schlemmer:
+  o add microcode rule to permissions.gentoo file
+
+Michael Buesch:
+  o Try to provide a bit of security for hardlinks to /dev entries
+
+Olaf Hering:
+  o udevsend depends on udev_lib.o
+
+Tom Rini:
+  o fix UDEV_NO_SLEEP
+  o clean up start_udev a bit
+  o Make udev/udevstart be one binary
+  o Add 'asmlinkage' to udev-030
+
+
+Summary of changes from v029 to v030
+============================================
+
+Greg Kroah-Hartman:
+  o fix stupid off-by-one bug that caused udevstart to die on x86-64 boxes
+
+
+Summary of changes from v028 to v029
+============================================
+
+Greg Kroah-Hartman:
+  o add permission rule for jogdial device
+  o fix dumb bug I added to udevstart
+  o make a "last list" of devices for udevstart to operate on last
+  o fix permission problem with input event and ts nodes for gentoo
+  o change default perms of misc/rtc to be readable by anyone
+
+Olaf Hering:
+  o allow NAME_SIZE > SYSFS_PATH_MAX
+
+
+Summary of changes from v027 to v028
+============================================
+
+<atul.sabharwal:intel.com>:
+  o Patch for chassis_id exras module
+
+Daniel Drake:
+  o Writing udev rules doc update
+
+Greg Kroah-Hartman:
+  o clean up block whitelist search logic a bit
+  o reverse order of scanning of udevstart to look at class before block
+
+Kay Sievers:
+  o update udev_volume_id
+
+Leann Ogasawara:
+  o udevstart performance increase
+
+Patrick Mansfield:
+  o update udev scsi_id to scsi_id 0.5
+
+
+Summary of changes from v026 to v027
+============================================
+
+<fork0:users.sf.net>:
+  o fix handle leak in udev_lib.c
+
+Greg Kroah-Hartman:
+  o tweak the gentoo default permission rules as they are wrong for tty and misc devices
+
+
+Summary of changes from v025 to v026
+============================================
+
+Arnd Bergmann:
+  o udev rpm fix
+
+Greg Kroah-Hartman:
+  o add test for ! in partition name
+  o 025_bk mark
+  o Update to version 117 of klibc (from version 108)
+  o add volume_id ignore rule for bk
+  o add volume_id support to the udev.spec file
+  o remove dbus and selinux stuff from the udev.spec file
+  o delete udev_selinux as it doesn't work properly and is the wrong way to do it
+  o Deleted the udev_dbus extra as it didn't really work properly and HAL has a real solution now
+  o add udev.permissions.slackware file
+  o udevstart: close open directories
+
+Kay Sievers:
+  o fix udevd zombies
+  o catchup with recent klibc
+  o Re: udevsend fallback
+  o udev_volume_id update
+  o udev callout for reading filesystem labels
+  o udev callout for reading filesystem labels
+  o udev default config layout changes
+
+Leann Ogasawara:
+  o evaluate getenv() return value for udev_config.c
+
+Summary of changes from v024 to v025
+============================================
+
+<md:linux.it>:
+  o devfs.sh-ide-floppy
+
+<sjoerd:spring.luon.net>:
+  o DEVNODE -> DEVNAME transition fixes
+
+Daniel Drake:
+  o Update writing udev rules docs
+
+Greg Kroah-Hartman:
+  o make dev.d call each directory in the directory chain of the device name, instead of just the whole name
+  o add devd_test script
+  o add more permissions based on SuSE's recommendations
+  o added rules for tun and raw devices
+  o add udev conf.d file
+  o Switch the default config to point to a directory for the rules and permission files
+  o update the Red Hat .dev files to work on other distros
+  o add dbus.dev, pam_console.dev and selinux.dev files for /etc/dev.d/default/ usage
+  o add hints for red hat users from Leann Ogasawara <ogasawara@osdl.org>
+  o add scripts to run gcov for udev from Leann Ogasawara <ogasawara@osdl.org>
+  o change permissions on udevd test scripts
+  o Fix build process for users who have LC_ALL set to a non-english language
+  o Added expanded tests to the test framework from Leann Ogasawara <ogasawara@osdl.org>
+  o added execelent "writing udev rules" document from Daniel Drake <dan@reactivated.net>
+  o added rule to put USB printers in their proper places
+  o added rules for CAPI devices
+  o added a dev.d alsa script to help people out
+
+Kay Sievers:
+  o fix test regressions
+  o udev_selinux changes
+  o udevd test script
+  o udev_dbus changes
+  o fix devpath for netdev
+
+Leann Ogasawara:
+  o gcov for udev
+
+
+Summary of changes from v023 to v024
+============================================
+
+<atul.sabharwal:intel.com>:
+  o Add README for chassis_id
+  o Add chassis_id program to extras directory
+
+<chris_friesen:sympatico.ca>:
+  o udevd race conditions and performance,  assorted cleanups
+
+<hare:suse.de>:
+  o fix SEGV in libsysfs/dlist.c
+
+<maryedie:osdl.org>:
+  o add OSDL documentation for persistent naming
+
+<md:linux.it>:
+  o small ide-devfs.sh fix
+
+Greg Kroah-Hartman:
+  o remove compiler warning from udevd.c
+  o only generate udev.8 on the fly, not all other man pages
+  o update bk ignore list some more
+  o update bk ignore list
+  o switch to generate the man pages during the normal build, not during the install
+  o convert udev.8.in to use @udevdir@ macro for make install
+  o first step of making man pages dynamically generated
+  o add install and uninstall the etc/dev.d/net/hotplug.dev file to the Makefile
+  o tweak net_test a bit
+  o fix some segfaults when running udevtest for network devices
+  o make a net_test test script using udevtest
+  o handle the subsytem if provided in udevtest
+  o add hotplug.dev script to handle renamed network devices
+  o add a bunch of network class devices to the test sysfs tree
+  o add udevruler to the bk ignore list
+  o update RFC-dev.d docs due to DEVNODE to DEVNAME change
+  o clean up chassis_id coding style
+  o clean up the OSDL document formatting a bit
+  o add netlink rules to devfs and gentoo rules files
+  o added USB device rules to rules files
+  o clean up the gentoo rules file a bit more, adding dri rules
+  o fix up udev.rules to handle oss rules better
+  o 023_bk mark
+  o fix udev.spec file for where udevtest should be placed
+
+Kay Sievers:
+  o tweak node unlink handling
+  o switch udevd's msg_dump() to #define
+  o handle netdev in udevruler
+  o man page cleanup
+  o put config info in db for netdev
+  o increase udevd event timeout
+  o udevstart fix
+  o put netdev handling and dev.d/ in manpages
+  o DEVPATH for netdev
+  o netdev - udevdb+dev.d changes
+  o udevd race conditions and performance,  assorted cleanups - take 2
+  o udevinfo patch
+  o dev_d.c file sorting and cleanup
+  o apply all_partitions rule to main block device only
+
+
+Summary of changes from v022 to v023
+============================================
+
+Kay Sievers:
+  o hmm, handle net devices with udev?
+  o correct apply_format() for symlink only rules
+  o don't init namedev on remove
+  o first stupid try for a rule compose gui
+  o replace fgets() with mmap() and introduce udev_lib.[hc]
+  o make udevtest a real program :)
+
+Daniel E. F. Stekloff:
+  o udevinfo patch
+
+Greg Kroah-Hartman:
+  o create the /etc/dev.d/ directories in 'make install'
+  o actually have udev run files ending in .dev in the /etc/dev.d/ directory as documented
+  o added RFC-dev.d document detailing how /etc/dev.d/ works
+  o fixed up udev.spec to handle selinux stuff properly now
+  o remove USE_DBUS and USE_SELINUX flags from the README as they are no longer present
+  o remove selinux stuff from the main Makefile
+  o move udev_selinux into extras/selinux
+  o fix dbus build in the udev.spec file
+  o remove dbus stuff from main Makefile
+  o move udev_dbus to extras/dbus
+  o udev_dbus can now compile properly, but linnking is another story
+  o remove udev_dbus.h from Makefile
+  o first cut at standalone udev_selinux program
+  o remove selinux support from udev core as it's no longer needed
+  o first cut at standalone udev_dbus program
+  o add get_devnode() helper to udev_lib for udev_dbus program
+  o remove dbus code from core udev code as it's no longer needed to be there
+  o add /etc/dev.d/ support for udev add and remove events
+  o fix build error in namedev.c caused by previous patch
+  o 022_bk tag
+  o fix 'make spotless' to really do that in klibc
+  o add a question/answer about automounting usb devices to the FAQ
+  o mark scsi-devfs.sh as executable
+  o Increase the name size as requested by Richard Gooch <rgooch@ras.ucalgary.ca>
+  o fix udevtest to build properly after the big udev_lib change
+
+Olaf Hering:
+  o uninitialized variable for mknod and friend
+
+Richard Gooch:
+  o SCSI logical and physical names for udev
+
+Theodore Y. T'so:
+  o Trivial man page typo fixes to udev
+
+
+Summary of changes from v021 to v022
+============================================
+
+<ananth:in.ibm.com>:
+  o more Libsysfs updates
+  o Libsysfs updates
+
+<async:cc.gatech.edu>:
+  o fix HOWTO-udev_for_dev for udevdir
+
+Kay Sievers:
+  o udev-test.pl cleanup
+  o add dev node test to udev-test.pl
+  o add permission tests
+  o "symlink only" test
+  o callout part selector tweak
+  o cleanup callout fork
+  o allow to specify node permissions in the rule
+  o man page beauty
+  o put symlink only rules to the man page
+  o rename strn*() macros to strmax
+  o conditional remove of trailing sysfs whitespace
+  o clarify udevinfo text
+  o better fix for NAME="foo-%c{N}" gets a truncated name
+  o overall trivial trivial cleanup
+  o fix NAME="foo-%c{N}" gets a truncated name
+  o cleanup mult field string handling
+
+<ken:cgi101.com>:
+  o fix a type in docs/libsysfs.txt
+  o Added line to udev.permissions.redhat
+  o Include more examples in the docs area for gentoo and redhat
+
+<md:linux.it>:
+  o udevstart fixes
+
+Greg Kroah-Hartman:
+  o add big major tests to udev-test.pl
+  o add a test for a minor over 255
+  o udev-test.pl: print out major:minor and perm test "ok" if is ok
+  o make perm and major:minor test errors be reported properly
+  o remove extra ; in namedev_parse.c
+  o Added multipath-tools 0.1.1 release
+  o deleted current extras/multipath directory
+  o 021_bk mark
+  o fix the build for older versions of gcc
+
+Hanna V. Linder:
+  o Small fix to remove extra "will" in man page
+
+Olaf Hering:
+  o make spotless
+  o udev* segfaults with new klibc
+
+Patrick Mansfield:
+  o add tests for NAME="foo-%c{N}"
+
+Summary of changes from v020 to v021
+============================================
+
+Kay Sievers:
+  o install udevinfo in /usr/bin
+  o blacklist pcmcia_socket
+
+Greg Kroah-Hartman:
+  o fix udev.spec to find udevinfo now that it has moved to /usr/bin
+  o Fix another problem with Makefile installing initscript
+  o fix the Makefile to install the init script into the proper directory
+  o make spec file turn off selinux support by default
+
+
+Summary of changes from v019 to v020
+============================================
+
+<christophe.varoqui:free.fr>:
+  o multipath update
+
+Kay Sievers:
+  o man page udevstart
+  o cleanup udevstart
+  o bugfix for local user
+  o unlink bugfix
+  o TODO update
+  o clarify udevinfo device walk
+  o udevinfo symlink reverse query
+  o fix stroul endptr use
+  o add $local user spport for permissions
+  o udev - man page update
+  o udev - fix debug info for multiple rule file config
+  o udev - kill udevd on install
+  o udev - activate formt length attribute
+  o udev - safer sprintf() use
+
+<md:linux.it>:
+  o no error on enoent
+  o escape dashes in man pages
+  o remove usage of expr in ide-devfs.sh
+
+<rml:ximian.com>:
+  o automatically install correct initscript
+  o update documetation for $local
+
+Andrey Borzenkov:
+  o Add symlink only rules support
+
+Greg Kroah-Hartman:
+  o update the TODO list as we already have a devfs config file
+  o make start_udev use udevstart binary
+  o install udevstart
+  o Remove Debian permission files as the Debian maintainer doesn't seem to want to share :(
+  o update the Gentoo rules files
+  o Add Red Hat rules and permissions files
+  o add udevstart to the ignore list
+  o add udevstart program based on a old patch from Harald Hoyer <harald@redhat.com>
+  o unlink the file before we try to create it
+  o Merge greg@bucket:/home/greg/src/udev into kroah.com:/home/greg/src/udev
+
+
+Summary of changes from v018 to v019
+============================================
+
+Kay Sievers:
+  o TODO update
+  o udev - correct relative symlink
+  o udev - safer string handling - part four
+  o udev - safer string handling - part three
+  o udev - safer string handling - part two
+  o udev - man page update
+  o udev - safer string handling all over the place
+  o manpage update
+  o udev - allow all files in a directory as the config
+  o udev - simple klibc textual uid/gid handling
+
+Andrey Borzenkov:
+  o do not remove real .udev.tdb during RPM build
+
+Greg Kroah-Hartman:
+  o add new TODO item about local user permissions
+  o Add initial SELinux support for udev
+  o fix build for very old versions of make
+  o remove limit of the number of args passed to PROGRAM
+  o force udev to include the internal version of libsysfs and never the external one
+  o fix up libsysfs header file usage to fix bug reports from users that have sysfsutils installed already
+  o remove udevtest on 'make clean'
+  o remove udevd priority TODO item, as it's not needed at all
+
+Patrick Mansfield:
+  o update udev scsi_id to scsi_id 0.4
+
+
+Summary of changes from v017 to v018
+============================================
+
+<ext.devoteam.varoqui:sncf.fr>:
+  o [PATCH] symlink dm-[0-9]* rule
+  o update extras/multipath
+
+<john-hotplug:fjellstad.org>:
+  o init.d debian patch
+
+Kay Sievers:
+  o udev - TODO update
+  o udev - add %s{filename} to man page
+  o udev - udevd/udevsend man page
+  o udev - switch callout part selector to {attribute}
+  o udev - switch SYSFS_file to SYSFS{file}
+  o udev - create all partitions of blockdevice
+  o allow SYSFS{file}
+  o Adding '%s' format specifier to NAME and SYMLINK
+
+Greg Kroah-Hartman:
+  o added some scsi_id files to the bk ignore file
+  o added scsi_id and some more documentation to the udev.spec file
+  o update udev.rules.gentoo with new config file format
+  o Update the Gentoo udev.rules and udev.permissions files
+  o Create a udev.rules.examples file to hold odd udev.rules
+  o add udevd priority issue to the TODO list
+  o more HOWTO cleanups
+  o add HOWTO detailing how to use udev to manage /dev
+  o mv libsysfs/libsysfs.h to libsysfs/sysfs/libsysfs.h to make it easier to use
+  o add start_udev init script
+  o add support for UDEV_NO_SLEEP env variable so Gentoo people will be happy
+  o start up udevd ourselves in the init script to give it some good priorities
+  o update the red hat init script to handle nodes that are not present
+  o add a "old style" SYSFS_attribute test to udev-test.pl
+  o Have udevsend report more info in debug mode
+  o Have udevd report it's version in debug mode
+  o fix up bug created for udevtest in previous partition creation patch
+  o update the udev.spec to add udevtest and make some more Red Hat suggested changes
+  o add ability to install udevtest to Makefile
+  o 017_bk mark
+  o Add another test to udev-test.pl and fix a bug when only running 1 test
+  o Fix bug where we did not use the "converted" kernel name if we had no rule
+
+Patrick Mansfield:
+  o udev use new libsysfs header file location
+  o udev add some ID tests
+
+
+Summary of changes from v016 to v017
+============================================
+
+<azarah:nosferatu.za.org>:
+  o make logging a config option
+
+<christophe.varoqui:free.fr>:
+  o more udev-016/extras/multipath
+  o more udev-016/extras/multipath
+  o update extras/multipath
+
+Kay Sievers:
+  o udev - keep private data out of the database?
+  o better credential patch
+  o udevd - client access authorization
+  o compile udevd with klibc
+  o udev - fix "ignore method"
+  o udev - fix cdrom symlink rule
+  o convert udevsend/udevd to DGRAM and single-threaded
+  o udevd - kill the lockfile
+  o udevd - fix socket path length
+  o udevd - switch socket path to abstract namespace
+  o udevd - allow to bypass sequence number
+  o include used function
+
+Greg Kroah-Hartman:
+  o add udev_log to the documentation
+  o fix offsetof() define in klibc
+  o add some .spec file changes from Red Hat
+  o update the init.d udev script based on a patch from Red Hat
+  o remove the .udev.tdb when installing or uninstalling to be safe
+  o remove the database at startup
+  o fix bug in permission handling
+  o update klibc to version .107
+  o update the bitkeeper ignore file list
+  o add udevtest program to build
+  o fix problem where usb devices can be either the main device or the interface
+  o more logging.h cleanups to be a bit more flexible
+  o stop using mode_t as different libcs define it in different ways :(
+  o remove some more KLIBC fixups that are no longer needed
+  o let udev-test.pl run an individual test if you ask it to
+  o Handle the '!' character that some block devices have
+  o add a block device with a ! in the name, and a test for this
+  o fix up 'make release' to use bk to build the export tree
+  o fix log option code so that it actually works for all udev programs
+  o finish syncing up with klibc
+  o sync with latest version of klibc (0.107)
+  o fix up Makefile dependancies for udev_version.h
+
+Patrick Mansfield:
+  o udev add wild card compare for ID
+  o udev kill extra bus_id compares in match_id
+
+
+Summary of changes from v015 to v016
+============================================
+
+<elkropac:students.zcu.cz>:
+  o get_dev_number() in extras/ide-devfs.sh
+
+<rrm3:rrm3.org>:
+  o FAQ udev.rules.devfs
+
+Greg Kroah-Hartman:
+  o add udevd and udevsend to the spec file
+  o make /etc/hotplug.d/default/udev.hotplug symlink point to udevsend now
+  o add KERNEL_DIR option so that the distros will be happy
+  o make udevsend binary even smaller
+  o udevsend now almost compiles with klibc, struct sockaddr_un is only problem now
+  o fix up logging code so that it can be built without it being enabled
+  o rework the logging code so that each program logs with the proper name in the syslog
+  o remove logging.c as it's no longer needed
+  o kill the last examples that contained the %D option
+  o remove a __KLIBC__ tests in libsysfs, as klibc now supports getpagesize()
+  o udevd - remove stupid locking error I wrote
+  o update to klibc version 0.101, fixing the stdin bug
+  o fix Makefile typo for USE_LSB install
+  o allow dbus code to actually build again
+
+Kay Sievers:
+  o let udevsend build with klibc
+  o udevd - config cleanup
+  o udevd - cleanup and better timeout handling
+  o fix possible buffer overflow
+  o udevd - next round of fixes
+  o udevinfo - missing options for man page
+  o udev - trivial style cleanup
+
+
+Summary of changes from v014 to v015
+============================================
+
+<mbuesch:freenet.de>:
+  o LFS init script update
+
+Greg Kroah-Hartman:
+  o update klibc to version 0.98
+  o clean up udevinfo on 'make clean'
+  o add udevinfo man page to spec file
+  o remove command line documentation from udev man page
+  o create initial version of udevinfo man page
+  o added URL to spec file
+  o add udevinfo to udev.spec file
+  o add udevinfo to install target of Makefile
+  o rip out command line code from udev, now that we have udevinfo
+  o udevinfo doesn't need to declare main_envp
+  o move get_pair to udev_config.c because udevinfo doesn't need all of namedev.o
+  o more makefile cleanups
+  o move udevinfo into the main build and clean up the main Makefile a bit
+  o clean up compiler warnings if building using klibc
+  o make udevd only have one instance running at a time
+  o new testd.block script for debugging
+  o udevsnd : clean up message creation logic a bit
+  o make bk ignore udevd and udevsend binaries
+  o whitespace cleanups
+  o remove TODO item about BUS value, as it is now done
+  o add support for figuring out which device on the sysfs "chain" the rule applies to
+
+Kay Sievers:
+  o udevinfo - now a real program :)
+  o udevd - cleanup and better timeout handling
+  o udev - next round of udev event order daemon
+  o fix udevd exec
+  o udev - udevinfo with device chain walk
+  o spilt udev into pieces
+
+
+Summary of changes from v013 to v014
+============================================
+
+<ananthmg:rediffmail.com>:
+  o libsysfs update for refresh + namedev.c changes
+
+<christophe.varoqui:free.fr>:
+  o udev-013/extras/multipath update
+
+<flamingice:sourmilk.net>:
+  o minor patch for devfs rules
+
+Kay Sievers:
+  o udev - program to query all device attributes to build a rule
+  o set default owner/group in db - update
+  o udev - reverse user query options
+  o udev - kill %D from udev-test.pl
+  o add udev logging to info log
+  o udev - mention format string escape char in man page
+
+Greg Kroah-Hartman:
+  o misc code cleanups
+  o fixup logging.h to handle different logging options properly
+  o clean up the logging patch a bit to make the option more like the other options
+  o remove the %D modifier as it is not longer needed
+  o remove unneeded keyboard rule
+  o add usb_host and pci_bus to the class blacklist
+  o added input device rules to udev.rules and udev.rules.devfs
+  o 013_bk mark
+
+Hanna V. Linder:
+  o set default owner/group in db
+  o small cut n paste error fix
+
+Patrick Mansfield:
+  o update udev scsi_id to scsi_id 0.3
+
+
+Summary of changes from v012 to v013
+============================================
+
+<eike-hotplug:sf-tec.de>:
+  o LSB init script and other stuff
+
+<elkropac:students.zcu.cz>:
+  o fix udev directory for Debian init script
+
+<tiggi:infa.abo.fi>:
+  o udev 012 old gcc fixup
+
+Christophe Saout:
+  o add IGNORE rule type
+  o small cleanup
+
+Greg Kroah-Hartman:
+  o update TODO with some new, small items
+  o Cset exclude: greg@kroah.com|ChangeSet|20040113010256|48515
+  o update the README in a few places
+  o fix -d typo in the manpage update
+  o Fix stupid gcc "optimization" of 1 character printk() calls.... Ick
+  o oops, forgot to fix up the PROGRAM result from ID to RESULT in the config files
+  o Add alsa device rules and a few other devfs rules
+  o fix a few stale comments in namedev.c
+  o convert the default rules files to the new format
+  o convert the test shell scripts to the config file format
+  o add bus test for usb-serial bus
+  o Add some helpful messages if the user uses the older config file format
+  o added dri rule to the default config file
+  o added init.d udev script for debian
+  o add a script that tests the IGNORE rule
+  o add silly script that names cdrom drives based on the cd in them
+  o add cdrom rule for ide cdrom
+  o replace list_for_each with list_for_each_entry, saving a few lines of code
+  o add a blacklist of class devices we do not want to look at
+
+Kay Sievers:
+  o fix klibc with printf() and gcc
+  o udev - small script optimization
+  o udev - introduce format escape char
+  o udev - more CALLOUT is PROGRAM now
+  o udev - CALLOUT is PROGRAM now
+  o update documentation for new config file format
+  o more advanced user query options
+  o udev - simple debug tweak
+  o udev - drop all methods :)
+  o udev - advanced user query options
+  o udev - Makefile error
+  o udev - make exec_callout() reusable
+  o udev - exec status fix for klibc
+  o fix Silly udev script
+
+
+Summary of changes from v011 to v012
+============================================
+
+<azarah:nosferatu.za.org>:
+  o make symlink work properly if there is already a file in its place
+  o Fix udev gcc-2.95.4 compat
+
+<christophe.varoqui:free.fr>:
+  o extras multipath update
+  o extras multipath update
+
+Kay Sievers:
+  o mention user callable udev + options in man page
+  o make udev user callable to query the database
+  o depend on all .h files
+  o cleanup namedev_parse debug text
+  o extend exec_program[]
+  o ide-devfs.sh update
+  o fix for apply_format()
+  o check for empty symlink string
+  o 'ide' missing in bus_files[]
+  o small trivial cleanup of latest changes
+
+<mbuesch:freenet.de>:
+  o introduce signal handler
+
+<rml:ximian.com>:
+  o udev spec file update
+
+Greg Kroah-Hartman:
+  o minor grammer fixes for the udev_vs_devfs document
+  o move the dbus config file to etc/dbus-1/system.d/
+  o move the config files to etc/udev to clean up main directory a bit
+  o add Gentoo versions of the rules and permissions files
+  o if using glibc, link dynamically, as no one like 500Kb udev binaries
+  o minor change to udev_vs_devfs document
+  o added udev vs devfs supid document to the tree
+  o move the signal handling registration to after we have initialized enough stuff
+  o make ide-devfs.sh executable in the tree
+  o udev.permissions.debian - forgot the dm nodes
+  o update the udev.permissions.debian file with new entries
+  o added udev.init script for the Linux From Scratch project
+
+
+
+Summary of changes from v010 to v011
+============================================
+
+<mbuesch:freenet.de>:
+  o proper cleanup on udevdb_init() failure
+
+<mh:nadir.org>:
+  o patch udev 009-010 rpm spec file
+
+<svetljo:gmx.de>:
+  o fix udev sed Makefile usage
+
+Greg Kroah-Hartman:
+  o add documentation about the BUS key being optional for the LABEL rule
+  o add tests for LABEL rule with a device that has no bus
+  o Don't require the BUS value for the LABEL rule
+  o If a LABEL rule has a BUS id, then we must check to see if the device is on a bus
+  o add documentation about the BUS key being optional for the CALLOUT rule
+  o If a CALLOUT rule has a BUS id, then we must check to see if the device is on a bus
+  o Don't require the BUS value for the CALLOUT rule
+  o add test for callout rule with a device that has no bus
+  o 010_bk stamp
+  o added different build options to the rpm udev.spec file
+  o add pci to the bus_files list
+  o check for empty line a bit better in the parser
+  o more init script cleanups, the stop target now calls udev to cleanup instead of just removing the whole /udev directory
+  o make udev init script run udev in the background to let startup go much faster
+  o fix long delay for all devices in namedev
+
+
+Summary of changes from v009 to v010
+============================================
+
+<ananth:in.ibm.com>:
+  o change pgsize
+
+<christophe.varoqui:free.fr>:
+  o extras multipath update
+  o extras multipath update
+  o extras multipath update
+  o extras multipath update
+
+Kay Sievers:
+  o fix udev-test.pl
+  o small cleanup udev-remove.c
+  o experimental CALLOUT script for devfs ide node creation with cd, disc, part
+  o add any valid device
+  o introduce format char 'k' for kernel-name
+  o trivial make fixes
+  o don't overwrite old config on install
+  o udev-remove.c cleanups
+  o bug in udev-remove.c
+  o trivial cleanup parser changes
+
+<roman.kagan:itep.ru>:
+  o fix comment and whitespace handling in config files
+
+Adam Kropelin:
+  o Allow build with empty EXTRAS
+
+Daniel E. F. Stekloff:
+  o libsysfs 0.4.0 patch
+  o fix scsi_id segfault with udev-009
+  o add libsysfs docs
+
+David T. Hollis:
+  o mark config files as such in the rpm spec file
+
+Greg Kroah-Hartman:
+  o fix complier warning in namedev.c
+  o add documentation for the new '%k' modifier (kernel name replacement)
+  o add documentation about the multiple sysfs values that are now allowed for the LABEL rule
+  o add tests for multi-file LABEL rules
+  o add ability to have up to 5 SYSFS_ file/value pairs for the LABEL rule
+  o Just live with a sleep(1) in namedev for now until libsysfs is fixed up
+  o try to wait until the proper device file shows up in sysfs
+  o remove unneeded TODO and FIXME entry
+  o clean up the stand-alone tests to work properly on other people's machines
+  o add tests to catch whitespace and comment config file parsing errors
+
+
+Summary of changes from v008 to v009
+============================================
+
+<christophe.varoqui:free.fr>:
+  o more extras/multipath changes
+  o and more extras/multipath updates
+  o more extras/multipath updates
+  o yet more extras/multipath
+  o more extras/multipath updates
+  o extras/multipath update
+
+<david:fubar.dk>:
+  o D-BUS patch for udev-008
+
+<eike-hotplug:sf-tec.de>:
+  o add init.d/udev to "make install"
+  o add init.d/udev to the spec file
+
+Kay Sievers:
+  o don't rely on field order in namedev_parse
+  o get part of callout return string
+  o remove '\n' from end of callout return
+  o man-page mention multiple symlinks
+  o allow multiple symlinks
+  o cleanup man & remove symlink comment
+  o experimental (very simple) SYMLINK creation
+  o man page beauty
+  o pattern match for label method
+  o a bug in linefeed removal
+
+<rml:ximian.com>:
+  o remove udev from runlevels on uninstall
+  o install initscript in udev rpm
+
+Daniel E. F. Stekloff:
+  o pre-libsysfs-0.4.0 patch
+
+Greg Kroah-Hartman:
+  o signal fixes due to klibc update
+  o sync klibc with release 0.95
+  o add mol permissions to the debian permissions file
+  o update the FAQ with info about bad modprobe events from the devfs scheme
+  o some cleanups due to the need for LABEL rules to use "SYSFS_" now
+  o Add restart target to the etc/init.d/udev script
+  o tweak the config file generation portion of the Makefile a bit
+  o change devfs disk name rule from 'disk' to 'disc'
+  o add vc support to udev.rules.devfs
+  o added a devfs udev config file from Marco d'Itri <md@Linux.IT>
+  o set default mode to 0600 to be safer
+  o Makefile tweaks for the DBUS build
+  o update the FAQ due to the latest devfs mess on lkml and also due to symlinks now working
+  o document the different Makefile config options that we have
+  o change USE_DBUS to DBUS in Makefile, and disable it by default as it's still to hard to build on all systems
+  o fix formatting of udev_dbus.c to use tabs.  Also get it to build properly now
+  o move all of the DBUS logic into one file and remove all of the #ifdef crud from the main code
+
+Olaf Hering:
+  o dump latest klibc into the udev build tree
+  o use udevdir in udev.conf
+
+Patrick Mansfield:
+  o better allow builds of extras programs under udev
+  o update udev extras/scsi_id to version 0.2
+
+
+Summary of changes from v007 to v008
+============================================
+
+<azarah:nosferatu.za.org>:
+  o more config file parsing robustness
+
+<christophe.varoqui:free.fr>:
+  o udev-007/extras/multipath update
+
+Arnd Bergmann:
+  o Build failure - missing linux/limits.h include?
+  o Add format modifier for devfs like naming
+  o klibc makefile fixes
+
+Daniel E. F. Stekloff:
+  o another patch for path problem
+  o quick fix for libsysfs bus
+  o libsysfs changes for sysfsutils 0.3.0
+
+Greg Kroah-Hartman:
+  o fix up some duplicated function compiler warnings in libsysfs
+  o fix some compiler warnings in the tdb code
+  o Added Kay's name to the man page
+  o update the wildcard documentation in the man page to show the new styles supported
+  o fix permission handling logic
+  o enable default_mode ability to actually build
+  o add support for the default_mode variable, as it is documented
+  o show permissions and groups in the label_test
+  o remove some items off of the TODO list, as they are now done
+  o fix up the tests to work without all of the environ variables
+  o get rid of the majority of the debug environment variables
+  o Update the man page to show the new config file, it's format, and how to use it
+  o fix up the tests to support the rules file name change
+  o add support for a main udev config file, udev.conf
+  o turn debugging messages off by default
+  o split out the namedev config parsing logic to namedev_parse.c
+  o rename namedev's get_attr() to be main namedev_name_device() as that's what it really is
+  o add devfs like tty rules as an example in the default config file
+  o operate on the rules in the order they are in the config file (within the rule type) instead of operating on them backwards.
+  o Cset exclude: dsteklof@us.ibm.com|ChangeSet|20031126173159|56255
+  o add test for checking the BUS value
+  o fix problem where we were not looking at the BUS value
+  o add scsi and pci bus links in the test sysfs tree
+  o add test and documentation for new %D devfs format modifier
+  o changed the default location of the database to /udev/.udev.tdb to be LSB compliant
+  o get rid of functions in klibc_fixups that are now in klibc
+  o sync up with the 0.84 version of klibc
+  o fix udev init.d script to handle all class devices in sysfs
+  o fix the test.block and test.tty scripts due to their moveing.  Also add a test.all script
+  o 007_bk version change to Makefile
+
+Kay Sievers:
+  o pattern matching for namedev
+  o catch replace device by wildcard
+  o udev.8 tweak numeric id text
+  o udev-test.pl add subdir test
+  o namedev.c strcat tweak
+  o overall whitespace + debug text conditioning
+  o udev-test.pl - tweaks
+
+Martin Hicks:
+  o Add -nodefaultlibs while compiling against klibc
+
+Olaf Hering:
+  o ARCH detection for ppc
+
+Patrick Mansfield:
+  o fix udev parallel builds with klibc
+
+
+Summary of changes from v006 to v007
+============================================
+
+<md:linux.it>:
+  o fix segfault in parsing bad udev.permissions file
+
+Greg Kroah-Hartman:
+  o update default config file with a CALLOUT rule, and more documentation
+  o updated the man page with the latest format specifier changes
+  o added ability to put format specifiers in the CALLOUT program string
+  o tweak udev-test.pl to report '0' errors if that's what happened
+  o only build klibc_fixups.c if we are actually using klibc
+  o add support for string group and string user names in udev.permissions
+  o add getgrnam and getpwnam to klibc_fixups files
+  o remove Makefile.klibc
+  o add udev-test perl script from Kay Sievers <kay.sievers@vrfy.org> which blows away my puny shell scripts
+  o added debian's version of udev.permissions
+  o change to 006_bk version
+
+Kay Sievers:
+  o format char for CALLOUT output
+  o more namedev whitespace cleanups
+  o support arguments in callout exec
+  o namedev.c - change order of fields in CALLOUT
+  o namedev.c whitespace + debug text cleanup
+  o man page with udev.permissions wildcard
+
+Olaf Hering:
+  o static klibc udev does not link against crt0.o
+
+Summary of changes from v005 to v006
+============================================
+
+<chris_friesen:sympatico.ca>:
+  o faster test scripts
+
+Arnd Bergmann:
+  o more robust config file parsing in namedev.c
+  o add bus id modifier
+
+Daniel E. F. Stekloff:
+  o patch for libsysfs sysfs directory handling
+
+Greg Kroah-Hartman:
+  o add another line to udev.permissions in the proper format
+  o tweak replace_test
+  o fix permissions to work properly now
+  o add real udev.permissions file to test directory
+  o fix namedev.c to build with older version of gcc
+  o add dumb test for all of the different modifiers
+  o update the TODO list with more items that people can easily do
+  o move the test.block and test.tty scripts to the test/ directory
+  o add remove actions to the test scripts
+  o turn DEBUG_PARSER off by default
+  o add some documentation for the %b modifier to the default config file
+  o fix make install rule for when the udev symlink is already there
+  o change release target in makefile
+  o change debug level on printf values for now
+  o updated demo config file
+  o add some documentation of the modifiers to the default config file
+  o add demo config file
+  o updated bk ignore list for klibc generated files
+  o add printf option to label test to verify it works
+  o fix up printf-like functionality due to previous changes
+  o get the major/minor number before we name the device
+  o add scsi_id "extra" program from Patrick Mansfield <patmans@us.ibm.com>
+  o Add multipath "extra" program from Christophe Varoqui, <christophe.varoqui@free.fr>
+  o trailing whitespace cleanups
+  o splig LABEL and NUMBER into separate functions
+  o add TOPO regression test
+  o move TOPOLOGY rule to it's own function
+  o fix bug where NUMBER and TOPOLOGY would not work for partitions
+  o clean up the way we find the sysdevice for a block device for namedev
+  o updated label test script (tests for partitions now.)
+  o split REPLACE and CALLOUT into separate functions
+  o add debug line for REPLACE call
+  o add replace test
+  o add more sysfs test tree files
+  o change UDEV_SYSFS_PATH environment variable due to libsysfs change
+  o fix bug in klibc's isspace function
+  o fix udev-add.c to build properly with older versions of gcc
+  o add prototype for ftruncate to klibc
+  o Remove a few items from the TODO list that are already done
+  o version number to 005_bk
+  o pull some klibc stuff into the make Makefile to try to stay in sync
+  o klibc build fixes
+
+Kay Sievers:
+  o apply permissions.conf support for wildcard and default name
+  o man page with included placeholder list
+  o implement printf-like placeholder support for NAME
+  o more manpage tweaks
+  o add support for subdirs
+  o add uid/gid to nodes
+
+Olaf Hering:
+  o DESTDIR for udev
+
+Paul Mundt:
+  o Fixup path for kernel includes when building with klibc
+
+Robert Love:
+  o udev init script
+
+
+Summary of changes from v004 to v005
+============================================
+
+<kay:vrfy.org>:
+  o namedev.c comments + debug patch
+  o man page update
+
+Greg Kroah-Hartman:
+  o ignore the klibc/linux symlink
+  o add klibc linux symlink info to the README
+  o get 'make release' to work properly again
+  o added README info for how to build using klibc
+  o turn off debugging if we are building with klibc
+  o turn off debugging in namedev
+  o added vsyslog support to klibc
+  o add ftruncate to klibc
+  o klibc specific tweaks
+  o libsysfs does not need mntent.h in it's header file
+  o udev build tweaks to tdb's spinlock code
+  o klibc makefile changes
+  o build tdb and libsysfs from the same makefile as udev
+  o udev-add build cleanups for other libc versions
+  o tweak tdb to build within udev better
+  o make libsysfs spit debug messages to the same place as the rest of udev
+  o make libsysfs build cleanly
+  o updated bk ignore list
+  o added klibc version 0.82 (cvs tree) to the udev tree
+  o makefile fix for now
+  o Merge greg@bucket:/home/greg/src/udev into kroah.com:/home/greg/src/udev
+  o hm, makefile bug with so many files...  will fix later
+  o regression tests starting to be added
+  o fix LABEL bug for device files (not class files.)
+  o more warning flags to the build
+  o got rid of struct device_attr
+  o rename namedev.permissions and namedev.config to udev.permissions and udev.config
+  o fix dbg line in namedev.c
+  o more overrides of config info with env variables if in test mode
+  o Fix bug causing udev to sleep forever waiting for dev file to show up
+  o change version to 004_bk
+  o make config files, sysfs root, and udev root configurable from config variables
+
+Robert Love:
+  o udev: sleep_for_dev() bits
+  o udev: another canidate for static
+
+
+Summary of changes from v003 to v004
+============================================
+
+Daniel E. F. Stekloff:
+  o new version of libsysfs patch
+
+Greg Kroah-Hartman:
+  o 004 release
+  o major database cleanups
+  o Changed test.block and test.tty to take ACTION from the command line
+  o don't sleep if 'dev' file is already present on device add
+  o fix comment about how the "dev" file is made up
+  o more database work.  Now we only store the info we really need right now
+  o add BUS= bug to TODO list so it will not get forgotten
+  o spec file changes
+  o test.block changes
+  o ok, rpm likes the "_" character instead of "-" better
+  o change the version to 003-bk to keep things sane with people using the bk tree
+  o got "remove of named devices" working
+  o fix segfaults when dealing with partitions
+
+Kay Sievers:
+  o man file update
+  o man page update
+
+Robert Love:
+  o udev: mode should be mode_t
+  o udev: trivial trivialities
+  o udev: cool test scripts again
+  o udev spec file symlink support
+  o udev: cool test scripts
+  o udev spec file bits
+
+
+Summary of changes from v0.2 to v003
+============================================
+
+Daniel E. F. Stekloff:
+  o udevdb patch
+  o udevdb prototype
+
+Greg Kroah-Hartman:
+  o update the spec file for the new version and install process
+  o fix makefile release rule to not drop tdb.h file
+  o Add FAQ for udev
+  o removed AUTHORS and INSTALL files as they were pretty pointless
+  o copyright updates
+  o Add AUTHORS and INSTALL files
+  o TODO updates
+  o Updatd the README
+  o updated the TODO list
+  o add udev man page (basically just a place holder for now.)
+  o added uninstall support
+  o added install target for makefile so people don't have to do it by hand anymore
+  o add version to debug log on startup
+  o tell the user what mknod() we are trying to do
+  o add dbg_parse() to cut down on parse file debugging statements
+  o put config files and database in /etc/udev by default
+  o add ols 2003 udev paper to docs/
+  o clean up some debugging stuff in namedev.c
+  o do not build the tdb binary programs, only the objects
+  o merge tdb into the build process
+  o Added tdb code from latest cvs version in the samba tree
+  o added my name to the .spec file
+  o minor cleanups
+  o cleanup the mknod code a bit
+  o remove mknod callout
+  o handle new major:minor format of dev files that showed up in 2.6.0-test2-bk3 or so
+  o oops, everything was getting created as 000 mode, try to fix this up, but fail...
+  o more test stuff
+
+Olaf Hering:
+  o print udev pid
+
+Patrick Mansfield:
+  o add callout config type to udev
+
+Paul Mundt:
+  o Fix TDB cross compilation
+  o udev spec file
+  o udev/libsysfs cross compile fixes
+
+
+Summary of changes from v0.1 to v0.2
+============================================
+
+Greg Kroah-Hartman:
+  o more test stuff
+  o removed unneeded stuff from udev.h
+  o added 0.2 change log info
+  o start working on label support, and fix some segfaults for block devices
+  o test config file changes
+  o add NUMBER support (basically same logic as TOPOLOGY, perhaps we should
+    merge this...)
+  o added topology support
+  o got REPLACE to work properly
+  o make struct config_device contain a struct device_attr instead of
+    duplicating the mess
+  o block test
+  o split the tests up into different files
+  o split udev main logic into udev-add and udev-remove
+  o Clean up the namedev interface a bit, making the code smaller
+  o bk: update ignore list
+  o update the tests to handle block devices too
+  o add initial libsysfs support
+  o added libsysfs to the build
+  o added libsysfs code from sysutils-0.1.1-071803 release
+  o namedev config files are fully parsed
+  o more permission tests
+  o make log_message spit out warnings so I don't have to spend forever
+    chasing down stupid bugs that aren't there...
+  o added klibc makefile
+  o Initial namedev parsing of config files
+  o sleep for 2 seconds to give the kernel a chance to actually create the
+    files we need
+  o pick a better default UDEV_ROOT
+  o fix up the test to actually work
+  o added more documentation in README and TODO files
+
+
+Summary of changes up to v0.1
+============================================
+
+Greg Kroah-Hartman:
+  o added more documentation in README and TODO files
+  o updated the documentation
+  o cleaned up the makefile a bit
+  o remove now works!
+  o restructure code to be able to actually get remove_node() to work
+  o Creating nodes actually works
+  o added stupid test script for debugging
+  o added initial documentation and gpl license
+  o enabled debugging
+  o updated ignore list
+  o added initial files
+  o fixed up config
+  o Initial repository create
+  o BitKeeper file /home/greg/src/udev/udev/ChangeSet
+

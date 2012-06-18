@@ -1,0 +1,38 @@
+<samba:parameter name="lpresume command"
+                 context="S"
+				 type="string"
+		 print="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This parameter specifies the command to be 
+    executed on the server host in order to restart or continue 
+    printing or spooling a specific print job.</para>
+
+    <para>This command should be a program or script which takes 
+    a printer name and job number to resume the print job. See 
+    also the <smbconfoption name="lppause command"/> parameter.</para>
+
+    <para>If a <parameter moreinfo="none">%p</parameter> is given then the printer name 
+    is put in its place. A <parameter moreinfo="none">%j</parameter> is replaced with 
+    the job number (an integer).</para>
+		
+    <para>Note that it is good practice to include the absolute path 
+    in the <parameter moreinfo="none">lpresume command</parameter> as the PATH may not 
+    be available to the server.</para>
+		
+    <para>See also the <smbconfoption name="printing"/> parameter.</para>
+
+    <para>Default: Currently no default value is given 
+    to this string, unless the value of the <parameter moreinfo="none">printing</parameter> 
+    parameter is <constant>SYSV</constant>, in which case the default is:</para>
+
+    <para><command moreinfo="none">lp -i %p-%j -H resume</command></para>
+
+    <para>or if the value of the <parameter moreinfo="none">printing</parameter> parameter 
+    is <constant>SOFTQ</constant>, then the default is:</para>
+
+    <para><command moreinfo="none">qstat -s -j%j -r</command></para>
+</description>
+
+<value type="example">/usr/bin/lpalt %p-%j -p2</value>
+</samba:parameter>

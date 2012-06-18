@@ -1,0 +1,2 @@
+/* Copyright (c): 2002-2005 (Germany): United Internet, 1&1, GMX, Schlund+Partner, Alturo */
+function QxMenuSeparator(){QxWidget.call(this);this.setTimerCreate(false);this._line=new QxWidget();this._line.setCssClassName("QxMenuSeparatorLine");this._line.setAnonymous(true);this._line.setTimerCreate(false);this.add(this._line);this.addEventListener("mousedown",this._g1);};QxMenuSeparator.extend(QxWidget,"QxMenuSeparator");proto.hasMenu=function(){return false;};proto._modifyState=function(){return true;};proto._g1=function(e){e.stopPropagation();};

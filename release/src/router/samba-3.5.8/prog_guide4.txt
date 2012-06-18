@@ -1,0 +1,792 @@
+
+
+THIS IS INCOMPLETE! I'M ONLY COMMITING IT IN ORDER TO SOLICIT COMMENTS
+FROM A FEW PEOPLE. DON'T TAKE THIS AS THE FINAL VERSION YET.
+
+
+Samba4 Programming Guide
+========================
+
+.. contents::
+
+The internals of Samba4 are quite different from previous versions of
+Samba, so even if you are an experienced Samba developer please take
+the time to read through this document.
+
+This document will explain both the broad structure of Samba4, and
+some of the common coding elements such as memory management and
+dealing with macros.
+
+
+Coding Style
+------------
+
+In past versions of Samba we have basically let each programmer choose
+their own programming style. Unfortunately the result has often been
+that code that other members of the team find difficult to read. For
+Samba version 4 I would like to standardise on a common coding style
+to make the whole tree more readable. For those of you who are
+horrified at the idea of having to learn a new style, I can assure you
+that it isn't as painful as you might think. I was forced to adopt a
+new style when I started working on the Linux kernel, and after some
+initial pain found it quite easy.
+
+That said, I don't want to invent a new style, instead I would like to
+adopt the style used by the Linux kernel. It is a widely used style
+with plenty of support tools available. See Documentation/CodingStyle
+in the Linux source tree. This is the style that I have used to write
+all of the core infrastructure for Samba4 and I think that we should
+continue with that style.
+
+I also think that we should most definately *not* adopt an automatic
+reformatting system in cvs (or whatever other source code system we
+end up using in the future). Such automatic formatters are, in my
+experience, incredibly error prone and don't understand the necessary
+exceptions. I don't mind if people use automated tools to reformat
+their own code before they commit it, but please do not run such
+automated tools on large slabs of existing code without being willing
+to spend a *lot* of time hand checking the results.
+
+Finally, I think that for code that is parsing or formatting protocol
+packets the code layout should strongly reflect the packet
+format. That means ordring the code so that it parses in the same
+order as the packet is stored on the wire (where possible) and using
+white space to align packet offsets so that a reader can immediately
+map any line of the code to the corresponding place in the packet.
+
+
+Static and Global Data
+----------------------
+
+The basic rule is "avoid static and global data like the plague". What
+do I mean by static data? The way to tell if you have static data in a
+file is to use the "size" utility in Linux. For example if we run::
+
+  size libcli/raw/*.o
+
+in Samba4 then you get the following::
+
+   text    data     bss     dec     hex filename
+   2015       0       0    2015     7df libcli/raw/clikrb5.o
+    202       0       0     202      ca libcli/raw/clioplock.o
+     35       0       0      35      23 libcli/raw/clirewrite.o
+   3891       0       0    3891     f33 libcli/raw/clisession.o
+    869       0       0     869     365 libcli/raw/clisocket.o
+   4962       0       0    4962    1362 libcli/raw/clispnego.o
+   1223       0       0    1223     4c7 libcli/raw/clitransport.o
+   2294       0       0    2294     8f6 libcli/raw/clitree.o
+   1081       0       0    1081     439 libcli/raw/raweas.o
+   6765       0       0    6765    1a6d libcli/raw/rawfile.o
+   6824       0       0    6824    1aa8 libcli/raw/rawfileinfo.o
+   2944       0       0    2944     b80 libcli/raw/rawfsinfo.o
+    541       0       0     541     21d libcli/raw/rawioctl.o
+   1728       0       0    1728     6c0 libcli/raw/rawnegotiate.o
+    723       0       0     723     2d3 libcli/raw/rawnotify.o
+   3779       0       0    3779     ec3 libcli/raw/rawreadwrite.o
+   6597       0       0    6597    19c5 libcli/raw/rawrequest.o
+   5580       0       0    5580    15cc libcli/raw/rawsearch.o
+   3034       0       0    3034     bda libcli/raw/rawsetfileinfo.o
+   5187       0       0    5187    1443 libcli/raw/rawtrans.o
+   2033       0       0    2033     7f1 libcli/raw/smb_signing.o
+
+notice that the "data" and "bss" columns are all zero? That is
+good. If there are any non-zero values in data or bss then that
+indicates static data and is bad (as a rule of thumb).
+
+Lets compare that result to the equivalent in Samba3::
+
+   text    data     bss     dec     hex filename
+   3978       0       0    3978     f8a libsmb/asn1.o
+  18963       0     288   19251    4b33 libsmb/cliconnect.o
+   2815       0    1024    3839     eff libsmb/clidgram.o
+   4038       0       0    4038     fc6 libsmb/clientgen.o
+   3337     664     256    4257    10a1 libsmb/clierror.o
+  10043       0       0   10043    273b libsmb/clifile.o
+    332       0       0     332     14c libsmb/clifsinfo.o
+    166       0       0     166      a6 libsmb/clikrb5.o
+   5212       0       0    5212    145c libsmb/clilist.o
+   1367       0       0    1367     557 libsmb/climessage.o
+    259       0       0     259     103 libsmb/clioplock.o
+   1584       0       0    1584     630 libsmb/cliprint.o
+   7565       0     256    7821    1e8d libsmb/cliquota.o
+   7694       0       0    7694    1e0e libsmb/clirap.o
+  27440       0       0   27440    6b30 libsmb/clirap2.o
+   2905       0       0    2905     b59 libsmb/clireadwrite.o
+   1698       0       0    1698     6a2 libsmb/clisecdesc.o
+   5517       0       0    5517    158d libsmb/clispnego.o
+    485       0       0     485     1e5 libsmb/clistr.o
+   8449       0       0    8449    2101 libsmb/clitrans.o
+   2053       0       4    2057     809 libsmb/conncache.o
+   3041       0     256    3297     ce1 libsmb/credentials.o
+   1261       0    1024    2285     8ed libsmb/doserr.o
+  14560       0       0   14560    38e0 libsmb/errormap.o
+   3645       0       0    3645     e3d libsmb/namecache.o
+  16815       0       8   16823    41b7 libsmb/namequery.o
+   1626       0       0    1626     65a libsmb/namequery_dc.o
+  14301       0    1076   15377    3c11 libsmb/nmblib.o
+  24516       0    2048   26564    67c4 libsmb/nterr.o
+   8661       0       8    8669    21dd libsmb/ntlmssp.o
+   3188       0       0    3188     c74 libsmb/ntlmssp_parse.o
+   4945       0       0    4945    1351 libsmb/ntlmssp_sign.o
+   1303       0       0    1303     517 libsmb/passchange.o
+   1221       0       0    1221     4c5 libsmb/pwd_cache.o
+   2475       0       4    2479     9af libsmb/samlogon_cache.o
+  10768      32       0   10800    2a30 libsmb/smb_signing.o
+   4524       0      16    4540    11bc libsmb/smbdes.o
+   5708       0       0    5708    164c libsmb/smbencrypt.o
+   7049       0    3072   10121    2789 libsmb/smberr.o
+   2995       0       0    2995     bb3 libsmb/spnego.o
+   3186       0       0    3186     c72 libsmb/trustdom_cache.o
+   1742       0       0    1742     6ce libsmb/trusts_util.o
+    918       0      28     946     3b2 libsmb/unexpected.o
+
+notice all of the non-zero data and bss elements? Every bit of that
+data is a bug waiting to happen.
+
+Static data is evil as it has the following consequences:
+- it makes code much less likely to be thread-safe
+- it makes code much less likely to be recursion-safe
+- it leads to subtle side effects when the same code is called from multiple places
+- doesn't play well with shared libraries or plugins
+
+Static data is particularly evil in library code (such as our internal
+smb and rpc libraries). If you can get rid of all static data in
+libraries then you can make some fairly strong guarantees about the
+behaviour of functions in that library, which really helps.
+
+Of course, it is possible to write code that uses static data and is
+safe, it's just much harder to do that than just avoid static data in
+the first place. We have been tripped up countless times by subtle
+bugs in Samba due to the use of static data, so I think it is time to
+start avoiding it in new code. Much of the core infrastructure of
+Samba4 was specifically written to avoid static data, so I'm going to
+be really annoyed if everyone starts adding lots of static data back
+in.
+
+So, how do we avoid static data? The basic method is to use context
+pointers. When reading the Samba4 code you will notice that just about
+every function takes a pointer to a context structure as its first
+argument. Any data that the function needs that isn't an explicit
+argument to the function can be found by traversing that context. 
+
+Note that this includes all of the little caches that we have lying
+all over the code in Samba3. I'm referring to the ones that generally
+have a "static int initialised" and then some static string or integer
+that remembers the last return value of the function. Get rid of them!
+If you are *REALLY* absolutely completely certain that your personal
+favourite mini-cache is needed then you should do it properly by
+putting it into the appropriate context rather than doing it the lazy
+way by putting it inside the target function. I would suggest however
+that the vast majority of those little caches are useless - don't
+stick it in unless you have really firm benchmarking results that show
+that it is needed and helps by a significant amount.
+
+Note that Samba4 is not yet completely clean of static data like
+this. I've gotten the smbd/ directory down to 24 bytes of static data,
+and libcli/raw/ down to zero. I've also gotten the ntvfs layer and all
+backends down to just 8 bytes in ntvfs_base.c. The rest still needs
+some more work.
+
+Also note that truly constant data is OK, and will not in fact show up
+in the data and bss columns in "size" anyway (it will be included in
+"text"). So you can have constant tables of protocol data.
+
+
+How to use talloc
+-----------------
+
+Please see the separate document, lib/talloc/talloc_guide.txt
+You _must_ read this if you want to program in Samba4.
+
+
+Interface Structures
+--------------------
+
+One of the biggest changes in Samba4 is the universal use of interface
+structures. Go take a look through include/smb_interfaces.h now to get
+an idea of what I am talking about.
+
+In Samba3 many of the core wire structures in the SMB protocol were
+never explicitly defined in Samba. Instead, our parse and generation
+functions just worked directly with wire buffers. The biggest problem
+with this is that is tied our parse code with our "business logic"
+much too closely, which meant the code got extremely confusing to
+read.
+
+In Samba4 we have explicitly defined interface structures for
+everything in the protocol. When we receive a buffer we always parse
+it completely into one of these structures, then we pass a pointer to
+that structure to a backend handler. What we must *not* do is make any
+decisions about the data inside the parse functions. That is critical
+as different backends will need different portions of the data. This
+leads to a golden rule for Samba4:
+
+  "don't design interfaces that lose information"
+
+In Samba3 our backends often received "condensed" versions of the
+information sent from clients, but this inevitably meant that some
+backends could not get at the data they needed to do what they wanted,
+so from now on we should expose the backends to all of the available
+information and let them choose which bits they want.
+
+Ok, so now some of you will be thinking "this sounds just like our
+msrpc code from Samba3", and while to some extent this is true there
+are extremely important differences in the approach that are worth
+pointing out.
+
+In the Samba3 msrpc code we used explicit parse structures for all
+msrpc functions. The problem is that we didn't just put all of the
+real variables in these structures, we also put in all the artifacts
+as well. A good example is the security descriptor strucrure that
+looks like this in Samba3::
+
+	typedef struct security_descriptor_info
+	{
+		uint16 revision; 
+		uint16 type;    
+
+		uint32 off_owner_sid;
+		uint32 off_grp_sid;
+		uint32 off_sacl;
+		uint32 off_dacl;
+
+		SEC_ACL *dacl;
+		SEC_ACL *sacl;
+		DOM_SID *owner_sid; 
+		DOM_SID *grp_sid;
+	} SEC_DESC;
+
+The problem with this structure is all the off_* variables. Those are
+not part of the interface, and do not appear in any real descriptions
+of Microsoft security descriptors. They are parsing artifacts
+generated by the IDL compiler that Microsoft use. That doesn't mean
+they aren't needed on the wire - indeed they are as they tell the
+parser where to find the following four variables, but they should
+*NOT* be in the interface structure.
+
+In Samba3 there were unwritten rules about which variables in a
+structure a high level caller has to fill in and which ones are filled
+in by the marshalling code. In Samba4 those rules are gone, because
+the redundent artifact variables are gone. The high level caller just
+sets up the real variables and the marshalling code worries about
+generating the right offsets.
+
+The same rule applies to strings. In many places in the SMB and MSRPC
+protocols complex strings are used on the wire, with complex rules
+about padding, format, alighment, termination etc. None of that
+information is useful to a high level calling routine or to a backend - its 
+all just so much wire fluff. So, in Samba4 these strings are
+just "char \*" and are always in our internal multi-byte format (which
+is usually UTF8). It is up to the parse functions to worry about
+translating the format and getting the padding right.
+
+The one exception to this is the use of the WIRE_STRING type, but that
+has a very good justification in terms of regression testing. Go and
+read the comment in smb_interfaces.h about that now.
+
+So, here is another rule to code by. When writing an interface
+structure think carefully about what variables in the structure can be
+left out as they are redundent. If some length is effectively defined
+twice on the wire then only put it once in the packet. If a length can
+be inferred from a null termination then do that and leave the length
+out of the structure completely. Don't put redundent stuff in
+structures!
+
+
+Async Design
+------------
+
+Samba4 has an asynchronous design. That affects *lots* of the code,
+and the implications of the asynchronous design needs to be considered
+just about everywhere.
+
+The first aspect of the async design to look at is the SMB client
+library. Lets take a look at the following three functions in
+libcli/raw/rawfile.c::
+
+	struct cli_request *smb_raw_seek_send(struct cli_tree *tree, struct smb_seek *parms);
+	NTSTATUS smb_raw_seek_recv(struct cli_request *req, struct smb_seek *parms);
+	NTSTATUS smb_raw_seek(struct cli_tree *tree, struct smb_seek *parms);
+
+Go and read them now then come back.
+
+Ok, first notice there there are 3 separate functions, whereas the
+equivalent code in Samba3 had just one. Also note that the 3rd
+function is extremely simple - its just a wrapper around calling the
+first two in order.
+
+The three separate functions are needed because we need to be able to
+generate SMB calls asynchronously. The first call, which for smb calls
+is always called smb_raw_XXXX_send(), constructs and sends a SMB
+request and returns a "struct cli_request" which acts as a handle for
+the request. The caller is then free to do lots of other calls if it
+wants to, then when it is ready it can call the smb_raw_XXX_recv()
+function to receive the reply. 
+
+If all you want is a synchronous call then call the 3rd interface, the
+one called smb_raw_XXXX(). That just calls the first two in order, and
+blocks waiting for the reply. 
+
+But what if you want to be called when the reply comes in? Yes, thats
+possible. You can do things like this::
+
+    struct cli_request *req;
+
+    req = smb_raw_XXX_send(tree, params);
+
+    req->async.fn = my_callback;
+    req->async.private = my_private_data;
+
+then in your callback function you can call the smb_raw_XXXX_recv()
+function to receive the reply. Your callback will receive the "req"
+pointer, which you can use to retrieve your private data from
+req->async.private.
+
+Then all you need to do is ensure that the main loop in the client
+library gets called. You can either do that by polling the connection
+using cli_transport_pending() and cli_request_receive_next() or you
+can use transport->idle.func to setup an idle function handler to call
+back to your main code. Either way, you can build a fully async
+application.
+
+In order to support all of this we have to make sure that when we
+write a piece of library code (SMB, MSRPC etc) that we build the
+separate _send() and _recv() functions. It really is worth the effort.
+
+Now about async in smbd, a much more complex topic.
+
+The SMB protocol is inherently async. Some functions (such as change
+notify) often don't return for hours, while hundreds of other
+functions pass through the socket. Take a look at the RAW-MUX test in
+the Samba4 smbtorture to see some really extreme examples of the sort
+of async operations that Windows supports. I particularly like the
+open/open/close sequence where the 2nd open (which conflicts with the
+first) succeeds because the subsequent close is answered out of order.
+
+In Samba3 we handled this stuff very badly. We had awful "pending
+request" queues that allocated full 128k packet buffers, and even with
+all that crap we got the semantics wrong. In Samba4 I intend to make
+sure we get this stuff right.
+
+So, how do we do this? We now have an async interface between smbd and
+the NTVFS backends. Whenever smbd calls into a backend the backend has
+an option of answer the request in a synchronous fashion if it wants
+to just like in Samba3, but it also has the option of answering the
+request asynchronously. The only backend that currently does this is
+the CIFS backend, but I hope the other backends will soon do this to.
+
+To make this work you need to do things like this in the backend::
+
+  req->control_flags |= REQ_CONTROL_ASYNC;
+
+that tells smbd that the backend has elected to reply later rather
+than replying immediately. The backend must *only* do this if
+req->async.send_fn is not NULL. If send_fn is NULL then it means that
+the smbd front end cannot handle this function being replied to in an
+async fashion.
+
+If the backend does this then it is up to the backend to call
+req->async.send_fn() when it is ready to reply. It the meantime smbd
+puts the call on hold and goes back to answering other requests on the
+socket.
+
+Inside smbd you will find that there is code to support this. The most
+obvious change is that smbd splits each SMB reply function into two
+parts - just like the client library has a _send() and _recv()
+function, so smbd has a _send() function and the parse function for
+each SMB.
+
+As an example go and have a look at reply_getatr_send() and
+reply_getatr() in smb_server/reply.c. Read them? Good.
+
+Notice that reply_getatr() sets up the req->async structure to contain
+the send function. Thats how the backend gets to do an async reply, it
+calls this function when it is ready. Also notice that reply_getatr()
+only does the parsing of the request, and does not do the reply
+generation. That is done by the _send() function. 
+
+The only missing piece in the Samba4 right now that prevents it being
+fully async is that it currently does the low level socket calls (read
+and write on sockets) in a blocking fashion. It does use select() to
+make it somewhat async, but if a client were to send a partial packet
+then delay before sending the rest then smbd would be stuck waiting
+for the second half of the packet. 
+
+To fix this I plan on making the socket calls async as well, which
+luckily will not involve any API changes in the core of smbd or the
+library. It just involves a little bit of extra code in clitransport.c
+and smbd/request.c. As a side effect I hope that this will also reduce
+the average number of system calls required to answer a request, so we
+may see a performance improvement.
+
+
+NTVFS
+-----
+
+One of the most noticeable changes in Samba4 is the introduction of
+the NTVFS layer. This provided the initial motivation for the design
+of Samba4 and in many ways lies at the heart of the design.
+
+In Samba3 the main file serving process (smbd) combined the handling
+of the SMB protocol with the mapping to POSIX semantics in the same
+code. If you look in smbd/reply.c in Samba3 you see numerous places
+where POSIX assumptions are mixed tightly with SMB parsing code. We
+did have a VFS layer in Samba3, but it was a POSIX-like VFS layer, so
+no matter how you wrote a plugin you could not bypass the POSIX
+mapping decisions that had already been made before the VFS layer was
+called.
+
+In Samba4 things are quite different. All SMB parsing is performed in
+the smbd front end, then fully parsed requests are passed to the NTVFS
+backend. That backend makes any semantic mapping decisions and fills
+in the 'out' portion of the request. The front end is then responsible
+for putting those results into wire format and sending them to the
+client.
+
+Lets have a look at one of those request structures. Go and read the
+definition of "union smb_write" and "enum write_level" in
+include/smb_interfaces.h. (no, don't just skip reading it, really go
+and read it. Yes, that means you!).
+
+Notice the union? That's how Samba4 allows a single NTVFS backend
+interface to handle the several different ways of doing a write
+operation in the SMB protocol. Now lets look at one section of that
+union::
+
+	/* SMBwriteX interface */
+	struct {
+		enum write_level level;
+
+		struct {
+			uint16 fnum;
+			SMB_BIG_UINT offset;
+			uint16 wmode;
+			uint16 remaining;
+			uint32 count;
+			const char *data;
+		} in;
+		struct {
+			uint32 nwritten;
+			uint16 remaining;
+		} out;
+	} writex;
+
+see the "in" and "out" sections? The "in" section is for parameters
+that the SMB client sends on the wire as part of the request. The smbd
+front end parse code parses the wire request and fills in all those
+parameters. It then calls the NTVFS interface which looks like this::
+
+  NTSTATUS (*write)(struct request_context *req, union smb_write *io);
+
+and the NTVFS backend does the write request. The backend then fills
+in the "out" section of the writex structure and gives the union back
+to the front end (either by returning, or if done in an async fashion
+then by calling the async send function. See the async discussion
+elsewhere in this document).
+
+The NTVFS backend knows which particular function is being requested
+by looking at io->generic.level. Notice that this enum is also
+repeated inside each of the sub-structures in the union, so the
+backend could just as easily look at io->writex.level and would get
+the same variable.
+
+Notice also that some levels (such as splwrite) don't have an "out"
+section. This happens because there is no return value apart from a
+status code from those SMB calls. 
+
+So what about status codes? The status code is returned directly by
+the backend NTVFS interface when the call is performed
+synchronously. When performed asynchronously then the status code is
+put into req->async.status before the req->async.send_fn() callback is
+called.
+
+Currently the most complete NTVFS backend is the CIFS backend. I don't
+expect this backend will be used much in production, but it does
+provide the ideal test case for our NTVFS design. As it offers the
+full capabilities that are possible with a CIFS server we can be sure
+that we don't have any gaping holes in our APIs, and that the front
+end code is flexible enough to handle any advances in the NT style
+feature sets of Unix filesystems that make come along.
+
+
+Process Models
+--------------
+
+In Samba3 we supported just one process model. It just so happens that
+the process model that Samba3 supported is the "right" one for most
+users, but there are situations where this model wasn't ideal.
+
+In Samba4 you can choose the smbd process model on the smbd command
+line. 
+
+
+DCERPC binding strings
+----------------------
+
+When connecting to a dcerpc service you need to specify a binding
+string. 
+
+The format is:
+
+  TRANSPORT:host[flags]
+
+where TRANSPORT is either ncacn_np for SMB or ncacn_ip_tcp for RPC/TCP
+
+"host" is an IP or hostname or netbios name. If the binding string 
+identifies the server side of an endpoint, "host" may be an empty 
+string.
+
+"flags" can include a SMB pipe name if using the ncacn_np transport or
+a TCP port number if using the ncacn_ip_tcp transport, otherwise they
+will be auto-determined.
+
+other recognised flags are:
+
+  sign      : enable ntlmssp signing
+  seal      : enable ntlmssp sealing
+  spnego    : use SPNEGO instead of NTLMSSP authentication
+  krb5      : use KRB5 instead of NTLMSSP authentication
+  connect   : enable rpc connect level auth (auth, but no sign or seal)
+  validate  : enable the NDR validator
+  print     : enable debugging of the packets
+  bigendian : use bigendian RPC
+  padcheck  : check reply data for non-zero pad bytes
+
+
+Here are some examples:
+
+   ncacn_np:myserver
+   ncacn_np:myserver[samr]
+   ncacn_np:myserver[\pipe\samr]
+   ncacn_np:myserver[/pipe/samr]
+   ncacn_np:myserver[samr,sign,print]
+   ncacn_np:myserver[sign,spnego]
+   ncacn_np:myserver[\pipe\samr,sign,seal,bigendian]
+   ncacn_np:myserver[/pipe/samr,seal,validate]
+   ncacn_np:
+   ncacn_np:[/pipe/samr]
+   ncacn_ip_tcp:myserver
+   ncacn_ip_tcp:myserver[1024]
+   ncacn_ip_tcp:myserver[sign,seal]
+   ncacn_ip_tcp:myserver[spnego,seal]
+
+
+IDEA: Maybe extend UNC names like this?
+
+ smbclient //server/share
+ smbclient //server/share[sign,seal,spnego]
+
+DCERPC Handles
+--------------
+The various handles that are used in the RPC servers should be created and 
+fetch using the dcesrv_handle_* functions.
+
+Use dcesrv_handle_new(struct dcesrv_connection \*, uint8 handle_type) to obtain 
+a new handle of the specified type. Handle types are unique within each 
+pipe.
+
+The handle can later be fetched again using::
+
+	struct dcesrv_handle *dcesrv_handle_fetch(struct dcesrv_connection *dce_conn, struct policy_handle *p, uint8 handle_type)
+
+and destroyed by::
+
+	dcesrv_handle_destroy(struct dcesrv_handle *).
+
+User data should be stored in the 'data' member of the dcesrv_handle struct.
+
+
+MSRPC
+-----
+
+
+
+ - ntvfs
+ - testing
+ - command line handling
+ - libcli structure
+ - posix reliance
+ - uid/gid handling
+ - process models
+ - static data
+ - msrpc
+
+
+don't zero structures! avoid ZERO_STRUCT() and talloc_zero()
+
+
+GMT vs TZ in printout of QFILEINFO timezones
+
+put in full UNC path in tconx
+
+test timezone handling by using a server in different zone from client
+
+do {} while (0) system
+
+NT_STATUS_IS_OK() is NOT the opposite of NT_STATUS_IS_ERR()
+
+need to implement secondary parts of trans2 and nttrans in server and
+client
+
+document access_mask in openx reply
+
+check all capabilities and flag1, flag2 fields (eg. EAs)
+
+large files -> pass thru levels
+
+setpathinfo is very fussy about null termination of the file name
+
+the overwrite flag doesn't seem to work on setpathinfo RENAME_INFORMATION
+
+END_OF_FILE_INFORMATION and ALLOCATION_INFORMATION don't seem to work
+via setpathinfo
+
+on w2k3 setpathinfo DISPOSITION_INFORMATION fails, but does have an
+effect. It leaves the file with SHARING_VIOLATION.
+
+on w2k3 trans2 setpathinfo with any invalid low numbered level causes
+the file to get into a state where DELETE_PENDING is reported, and the
+file cannot be deleted until you reboot
+
+trans2 qpathinfo doesn't see the delete_pending flag correctly, but
+qfileinfo does!
+
+get rid of strtok
+
+add programming documentation note about lp_set_cmdline()
+
+need to add a wct checking function in all client parsing code,
+similar to REQ_CHECK_WCT()
+
+need to make sure that NTTIME is a round number of seconds when
+converted from time_t
+
+not using a zero next offset in SMB_FILE_STREAM_INFORMATION for last
+entry causes explorer exception under win2000
+
+
+if the server sets the session key the same for a second SMB socket as
+an initial socket then the client will not re-authenticate, it will go
+straight to a tconx, skipping session setup and will use all the
+existing parameters! This allows two sockets with the same keys!?
+
+
+removed blocking lock code, we now queue the whole request the same as
+we queue any other pending request. This allows for things like a
+close() while a pending blocking lock is being processed to operate
+sanely.
+
+disabled change notify code
+
+disabled oplock code
+
+
+
+MILESTONES
+==========
+
+
+client library and test code
+----------------------------
+
+  convert client library to new structure
+  get smbtorture working
+  get smbclient working
+  expand client library for all requests
+  write per-request test suite
+  gentest randomised test suite
+  separate client code as a library for non-Samba use
+
+server code
+-----------
+  add remaining core SMB requests
+  add IPC layer
+  add nttrans layer
+  add rpc layer
+  fix auth models (share, server, rpc)
+  get net command working
+  connect CIFS backend to server level auth
+  get nmbd working
+  get winbindd working
+  reconnect printing code
+  restore removed smbd options
+  add smb.conf macro substitution code
+  add async backend notification 
+  add generic timer event mechanism
+
+clustering code
+---------------
+
+  write CIFS backend
+  new server models (break 1-1)
+  test clustered models
+  add fulcrum statistics gathering
+
+docs
+----
+
+  conference paper
+  developer docs
+
+svn instructions
+
+Ideas
+-----
+
+ - store all config in config.ldb
+
+ - load from smb.conf if modtime changes
+
+ - dump full system config with ldbsearch
+
+ - will need the ability to form a ldif difference file
+
+ - advanced web admin via a web ldb editor
+
+ - normal web admin via web forms -> ldif
+
+ - config.ldb will replace smb.conf, secrets.tdb, shares.tdb etc
+
+ - subsystems in smbd will load config parameters for a share
+   using ldbsearch at tconx time
+
+ - need a loadparm equivalent module that provides parameter defaults
+
+ - start smbd like this:  "smbd -C tdb://etc/samba/config.ldb" or
+   "smbd -C ldapi://var/run/ldapi"
+
+ - write a tool that generates a template ldap schema from an existing
+   ldb+tdb file
+
+ - no need to HUP smbd to reload config
+
+ - how to handle configuration comments? same problem as SWAT
+
+
+BUGS:
+  add a test case for last_entry_offset in trans2 find interfaces
+  conn refused
+  connect -> errno
+  no 137 resolution not possible
+  should not fallback to anon when pass supplied
+  should check pass-thu cap bit, and skip lots of tests
+  possibly allow the test suite to say "allow oversized replies" for trans2 and other calls
+  handle servers that don't have the setattre call in torture
+  add max file coponent length test and max path len test
+  check for alloc failure in all core reply.c and trans2.c code where allocation size depends on client parameter
+
+case-insenstive idea:
+  all filenames on disk lowercase
+  real case in extended attribute
+  keep cache of what dirs are all lowercase
+  when searching for name, don't search if dir is definately all lowercase
+  when creating file, use dnotify to tell if someone else creates at
+  same time
+
+solve del *.* idea:
+  make mangle cache dynamic size
+  fill during a dir scan
+  setup a timer
+  destroy cache after 30 sec
+  destroy if a 2nd dir scan happens on same dir
+

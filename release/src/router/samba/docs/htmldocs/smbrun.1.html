@@ -1,0 +1,86 @@
+
+
+ 
+
+
+
+<html><head><title>smbrun (1)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>smbrun (1)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    smbrun - interface program between smbd and external programs
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+     
+<p><strong>smbrun</strong> <a href="smbrun.1.html#shellcommand">shell-command</a>
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This program is part of the <strong>Samba</strong> suite.
+<p><strong>smbrun</strong> is a very small 'glue' program, which runs shell commands
+for the <a href="smbd.8.html"><strong>smbd</strong></a> daemon <a href="smbd.8.html"><strong>smbd
+(8)</strong></a>.
+<p>It first changes to the highest effective user and group ID that it
+can, then runs the command line provided using the system() call. This
+program is necessary to allow some operating systems to run external
+programs as non-root.
+<p><a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+    
+<p><dl>
+<p><a name="shellcommand"></a>
+<p></p><dt><strong><strong>shell-command</strong></strong><dd> The shell command to execute.  The command
+should have a fully-qualified path.
+<p></dl>
+<p><a name="ENVIRONMENTVARIABLES"></a>
+<h2>ENVIRONMENT VARIABLES</h2>
+    
+<p>The <em>PATH</em> variable set for the environment in which <strong>smbrun</strong> is
+executed will affect what executables are located and executed if a
+fully-qualified path is not given in the command.
+<p><a name="DIAGNOSTICS"></a>
+<h2>DIAGNOSTICS</h2>
+    
+<p>If <strong>smbrun</strong> cannot be located or cannot be executed by
+<a href="smbd.8.html"><strong>smbd</strong></a> then appropriate messages will be found in
+the <a href="smbd.8.html"><strong>smbd</strong></a> logs. Other diagnostics are dependent
+on the shell-command being run. It is advisable for your shell
+commands to issue suitable diagnostics to aid trouble-shooting.
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite.
+<p><a name="SEEALSO"></a>
+<h2>SEE ALSO</h2>
+    
+<p><a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a>, <a href="smbd.8.html"><strong>smbd (8)</strong></a>
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+</body>
+</html>

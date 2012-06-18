@@ -1,0 +1,55 @@
+ntpclient is an NTP (RFC-1305) client for unix-alike computers.
+Its functionality is a small subset of xntpd, but IMHO performs
+better (or at least has the potential to function better) within
+that limited scope.  Since it is much smaller than xntpd, it is
+also more relevant for embedded computers.
+
+ntpclient is Copyright 1997, 1999, 2000 Larry Doolittle, and may
+be freely used and copied according to the terms of the GNU
+General Public License, version 2.
+
+ntpclient home page: http://doolittle.faludi.com/ntpclient/
+
+To build on Linux, type "make".  Solaris and other Unix users will
+probably need to adjust the Makefile slightly.  It's not complicated.
+
+Usage: ntpclient [options]
+options:
+ -c count     stop after count time measurements (default 0 means go forever)
+ -d           print diagnostics (feature can be disabled at compile time)
+ -h hostname  (mandatory) NTP server host, against which to measure system time
+ -i interval  check time every interval seconds (default 600)
+ -l           attempt to lock local clock to server using adjtimex(2)
+ -p port      local NTP client UDP port (default 0 means "any available")
+ -r           replay analysis code based on stdin
+ -s           simple clock set (implies -c 1)
+
+Mortal users can use this program for monitoring, but not clock setting
+(with the -s or -l switches).  The -l switch has not been well tested.
+Simulation (with -r) actually looks halfway decent, so locking should be
+OK too, but it needs some tuning.
+
+The test.dat file has 200 lines of sample output.  Its first few lines,
+with the output column headers that are shown when the -d option is
+chosen, are:
+ day   second     elapsed    stall     skew  dispersion  freq
+51785 180.386    1398.0     40.3  953773.9    793.5  -1240000
+51785 780.382    1358.0     41.3  954329.0    915.5  -1240000
+51785 1380.381    1439.0     56.0  954871.3    915.5  -1240000
+
+day, second: time of measurement
+elapsed:     total time from query to response (microseconds)
+stall:       time the server reports that it sat on the request (microseconds)
+skew:        difference between local time and server time (microseconds)
+dispersion:  reported by server, see RFC-1305 (microseconds)
+freq:        local clock frequency adjustment (Linux only, ppm*65536)
+
+test.dat is suitable for piping into ntpclient -r.  I have over 53000
+samples (lines) archived for study, that I don't include here.
+They are spaced 10 minutes apart, representing over a year of data
+logging (not continuous, unfortunately).
+
+envelope is a perl script that I have used for my lock studies.
+It's kind of a hack and not worth documenting here.
+
+       - Larry Doolittle  <larry@doolittle.boa.org>

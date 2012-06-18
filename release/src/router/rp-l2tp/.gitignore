@@ -1,0 +1,11 @@
+*.orig
+*~
+*.o
+*.so
+*.a
+Makefile
+l2tpd
+.depend
+config.cache
+config.log
+config.status

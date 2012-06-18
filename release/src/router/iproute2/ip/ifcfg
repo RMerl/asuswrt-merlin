@@ -1,0 +1,145 @@
+#! /bin/bash
+
+CheckForwarding () {
+  local sbase fwd
+  sbase=/proc/sys/net/ipv4/conf
+  fwd=0
+  if [ -d $sbase ]; then
+    for dir in $sbase/*/forwarding; do
+      fwd=$[$fwd + `cat $dir`]
+    done
+  else
+    fwd=2
+  fi
+  return $fwd
+}
+
+RestartRDISC () {
+  killall -HUP rdisc || rdisc -fs
+}
+
+ABCMaskLen () {
+  local class;
+
+  class=${1%%.*}
+  if [ "$1" = "" -o $class -eq 0 -o $class -ge 224 ]; then return 0
+  elif [ $class -ge 224 ]; then return 0
+  elif [ $class -ge 192 ]; then return 24
+  elif [ $class -ge 128 ]; then return 16
+  else return 8; fi
+}
+
+label="label $1"
+ldev="$1"
+dev=${1%:*}
+if [ "$dev" = "" -o "$1" = "help" ]; then
+  echo "Usage: ifcfg DEV [[add|del [ADDR[/LEN]] [PEER] | stop]" 1>&2
+  echo "       add - add new address" 1>&2
+  echo "       del - delete address" 1>&2
+  echo "       stop - completely disable IP" 1>&2
+  exit 1
+fi
+shift
+
+CheckForwarding
+fwd=$?
+if [ $fwd -ne 0 ]; then
+  echo "Forwarding is ON or its state is unknown ($fwd). OK, No RDISC." 1>&2
+fi
+
+
+deleting=0
+case "$1" in
+add) shift ;;
+stop)
+  if [ "$ldev" != "$dev" ]; then
+    echo "Cannot stop alias $ldev" 1>&2
+    exit 1;
+  fi
+  ip -4 addr flush dev $dev $label || exit 1
+  if [ $fwd -eq 0 ]; then RestartRDISC; fi
+  exit 0 ;;
+del*)
+  deleting=1; shift ;;
+*)
+esac
+
+ipaddr=
+pfxlen=
+if [ "$1" != "" ]; then
+  ipaddr=${1%/*}
+  if [ "$1" != "$ipaddr" ]; then
+    pfxlen=${1#*/}
+  fi
+  if [ "$ipaddr" = "" ]; then
+    echo "$1 is bad IP address." 1>&2
+    exit 1
+  fi
+fi
+shift
+
+peer=$1
+if [ "$peer" != "" ]; then
+  if [ "$pfxlen" != "" -a "$pfxlen" != "32" ]; then
+    echo "Peer address with non-trivial netmask." 1>&2
+    exit 1
+  fi
+  pfx="$ipaddr peer $peer"
+else
+  if [ "$pfxlen" = "" ]; then
+    ABCMaskLen $ipaddr
+    pfxlen=$?
+  fi
+  pfx="$ipaddr/$pfxlen"
+fi
+
+if [ "$ldev" = "$dev" -a "$ipaddr" != "" ]; then
+  label=
+fi
+
+if [ $deleting -ne 0 ]; then
+  ip addr del $pfx dev $dev $label || exit 1
+  if [ $fwd -eq 0 ]; then RestartRDISC; fi
+  exit 0
+fi
+
+
+if ! ip link set up dev $dev ; then
+  echo "Error: cannot enable interface $dev." 1>&2
+  exit 1
+fi
+if [ "$ipaddr" = "" ]; then exit 0; fi
+
+if ! arping -q -c 2 -w 3 -D -I $dev $ipaddr ; then
+  echo "Error: some host already uses address $ipaddr on $dev." 1>&2
+  exit 1
+fi
+
+if ! ip address add $pfx brd + dev $dev $label; then
+  echo "Error: failed to add $pfx on $dev." 1>&2
+  exit 1
+fi
+
+arping -q -A -c 1 -I $dev $ipaddr
+noarp=$?
+( sleep 2 ;
+  arping -q -U -c 1 -I $dev $ipaddr ) >& /dev/null </dev/null &
+
+ip route add unreachable 224.0.0.0/24 >& /dev/null 
+ip route add unreachable 255.255.255.255 >& /dev/null
+if [ `ip link ls $dev | grep -c MULTICAST` -ge 1 ]; then
+  ip route add 224.0.0.0/4 dev $dev scope global >& /dev/null
+fi
+
+if [ $fwd -eq 0 ]; then
+  if [ $noarp -eq 0 ]; then
+    ip ro append default dev $dev metric 30000 scope global
+  elif [ "$peer" != "" ]; then
+    if ping -q -c 2 -w 4 $peer ; then
+      ip ro append default via $peer dev $dev metric 30001
+    fi
+  fi
+  RestartRDISC
+fi
+
+exit 0

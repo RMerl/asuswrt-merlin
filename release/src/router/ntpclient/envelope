@@ -1,0 +1,75 @@
+#!/usr/bin/perl
+
+# open(D, "./ntpclient -d -r < test2.dat|") || die;
+open(D, "awk '{\$3=\$3-800;print \$0}' ~/scratch/xfer/time/log.ir30gw.h | ./ntpclient -d -r|") || die;
+
+open(GC,"|gnuplot") || die;
+$oldfh=select(GC); $|=1; select($oldfh);
+print GC "$ARGV[0]\n";
+shift(@ARGV);
+
+$rawplot=0;
+
+sub closeout {
+	print LN "$maxxs $maxxo\n";
+	print LX "$maxxs $maxxo\n";
+	close MN;
+	close MX;
+	close RN;
+	close RX;
+	close LN;
+	close LX;
+	close LP;
+	if ($rawplot) { $cmd = "plot \"rawmax.dat\", \"rawmin.dat\"$xplots$nplots\n"; }
+	      # else    { $cmd = "plot \"max.dat\", \"min.dat\", \"rawmax.dat\", \"rawmin.dat\", \"loop.dat\"\n"; }
+	      else    { $cmd = "plot \"max.dat\", \"min.dat\", \"loop.dat\" with lines, 0.9*x>0.3?-(x-0.3)*6000:-x*600, 0.9*x<-0.3?-(x+0.3)*6000:-x*600\n"; }
+	
+	if ($use) {
+		print GC $cmd || die;
+		$user=<>;
+		print GC $user;
+	}
+	$use=0;
+	$nplots="";
+	$xplots="";
+}
+
+sub bound_write {
+	($FD, $slope, $offset) = @_;
+	if ($FD eq "MX" && $slope < $maxxs && $slope > $minxs) {
+		print MN "$slope $offset\n" || die;
+	}
+	if ($FD eq "MN" && $slope < $maxxs && $slope > $minxs) {
+		print MN "$slope $offset\n" || die;
+	}
+}
+$first=1;
+$use=0;
+$nplots="";
+$xplots="";
+$scale=0.001;    # make raw and envelope fit on same scale
+$scale=1.0  if ($rawplot);
+while(<D>) {
+	chomp();
+	@A=split();
+	if (/^contemplate/) {
+		if (!$first) { closeout(); }
+		$first=0;
+		open(MN, ">min.dat")     || die;
+		open(MX, ">max.dat")     || die;
+		open(RN, ">rawmin.dat")  || die;
+		open(RX, ">rawmax.dat")  || die;
+		open(LN, ">loopmin.dat") || die;
+		open(LX, ">loopmax.dat") || die;
+		open(LP, ">loop.dat")    || die;
+	}
+	if (/^minseg/) {$use=1; $nplots .= ", $A[2]*x+$A[4]"; print MN "$A[2] $A[4]\n" || die; }
+	if (/^maxseg/) {$use=1; $xplots .= ", $A[2]*x+$A[4]"; print MX "$A[2] $A[4]\n" || die; }
+	if (/^mincro/) {$use=1; $xplots .= ", $A[1]*x+$A[3] title 'mincross'"; $minxs=$A[1]; $minxo=$A[3]; print LN "$A[1] $A[3]\n"; print LX "$A[1] $A[3]\n";}
+	if (/^maxcro/) {$use=1; $nplots .= ", $A[1]*x+$A[3] title 'maxcross'"; $maxxs=$A[1]; $maxxo=$A[3]; }
+	if (/^interp/ && $A[2]>$minxs && $A[2]<$maxxs) {$use=1; print LN "$A[2] $A[3]\n"; print LX "$A[2] $A[4]\n";}
+	if (/^hist/)   { $st=$A[2]*$scale; print RN "$st $A[4]\n"; print RX "$st $A[5]\n";}
+	if (/^loop/)   { print LP "$A[1] $A[2]\n"; }
+	if (/^xontemplate/ || /^delta_f/ || /^find_df_center/) { print "$_\n"; }
+}
+closeout();

@@ -1,0 +1,370 @@
+.ds VE LPRng-3.9.0
+.TH LPD.PERMS 5 \*(VE "LPRng"
+.SH NAME
+.nf
+lpd.perms \- permissions control file for the LPRng line printer spooler system
+.fi
+.SH DESCRIPTION
+The file \fBlpd.perms\fR is used to provide permission information for
+the LPRng Printer spooler system.
+Blank lines and all
+characters after a hash sign (``#'') to the end of line are ignored.
+If a hash sign is desired in the
+permission information,
+it should be escaped with a backslash
+(``\\'').
+All other lines
+specify permissions entry and should be of the following form:
+.RS
+ACCEPT [[not] key = value[,value]* ]*
+.br
+REJECT [[not] key = value[,value]* ]*
+.br
+DEFAULT ACCEPT
+.br
+DEFAULT REJECT
+.RE
+.PP
+Each LPD service request is checked against
+the entries in the permissions database or file.
+The following is a typical permissions file:
+.RS
+.nf
+.ft CW
+# Set default permissions
+DEFAULT ACCEPT
+# Reject any connections from outside our subnet
+REJECT SERVICE=X NOT REMOTEIP=130.191.0.0/255.255.0.0
+# Only accept spooling (LPR) from
+# Engineering Lab or the Dean's office
+REJECT SERVICE=R NOT REMOTEHOST=*.eng.sdsu.edu,dean.sdsu.edu
+# Do not accept forwarded jobs for printing
+REJECT SERVICE=R FORWARD
+# Allow only the administrators control access
+ACCEPT SERVICE=C,M REMOTEHOST=spooler.eng.sdsu.edu REMOTEUSER=root,papowell
+ACCEPT SERVICE=C,M SERVER REMOTEUSER=root,papowell
+# Allow only the user on the same host who spooled job to remove it
+ACCEPT SERVICE=M SAMEUSER SAMEHOST
+# Allow users to check status
+ACCEPT SERVICE=C LPC=status
+# Require connection for other operations over UNIX socket
+# not TCP/IP port.  Effectively requiring them to be made from the
+# localhost
+ACCEPT SERVICE=C UNIXSOCKET
+REJECT SERVICE=C
+
+# Variation - accept all spooled jobs,  but then apply
+#  permissions checking when job is printed.  Allows
+#  prevents remote spoolers from locking up trying resend
+#  same request
+ACCEPT SERVICE=R
+REJECT SERVICE=P NOT REMOTEHOST=*.eng.sdsu.edu,dean.sdsu.edu
+.RE
+.fi
+.sp
+.LP
+Permission checking is done by using a set of keys (or fields)
+with associated values to check for permission.
+The SERVICE key has value P for printing (i.e.- unspooling),
+R for spooling (i.e.- LPR request),
+P for printing (i.e., after job has been spooled),
+C printer control (i.e. - LPC),
+M for removal (i.e.- LPRM request),
+and
+Q for queue information (i.e.- LPQ request).
+The
+.l X
+key is used when checking for connection information.
+.LP
+Initially,
+all of the keys have undefined or NULL values,
+and are assigned values during the permissions checking process.
+When a connection is made to the server,
+it assigns
+The REMOTEHOST (alias REMOTEIP) key the list of IP addresses and hostnames
+determined by doing a reverse Domain Name Service (DNS)
+lookup on the remote host's IP address.
+If the reverse DNS fails,
+then only the IP address will be used.
+The REMOTEPORT (PORT is an alias for REMOTEPORT) is assigned
+the port number of the connection origination.
+The UNIXSOCKET key will match (be true) if the connection
+is over a UNIX socket.
+By convention,
+this is from the localhost. 
+Finally,
+the SERVICE value is assigned X,
+and the lpd server will check the database to see if the
+connection is accepted or rejected.
+.LP
+The server will then read the request information from the connection.
+If the request is for an authenticated data transfer,
+the server will invoke the appropriate authentication mechanism
+which will assign AUTH a true (or matching) value,
+AUTHTYPE the type of authentication,
+AUTHUSER the authenticated user id value, which may differ from the
+actual user name,
+and AUTHFROM the authenticated identification of the originator
+of the request,
+which may be a server if the request is forwarded.
+.LP
+Next,
+the SERVICE value is set to R, C, M, or Q depending on whether it is
+an LPR, LPC, LPRM, or LPQ request,
+and the LPC value set to the requested LPC command if it was an LPC
+request.
+If the request contained a user name,
+then REMOTEUSER is set to this name.
+If the request contained a printer name,
+then PRINTER is set to the printer name.
+If the request is a print request,
+then the HOST value is set to the list of host names and IP
+addresses given by a DNS lookup of the value in the
+H field of the job.
+The database is scanned again to determine if the operation can be
+performed on the requested queue.
+To simplify the rule writing,
+if the operation requires modification or checking of individual
+jobs,
+such as the LPC, LPQ, or LPRM commands,
+then the various checks that depend on jobs will succeed in this step.
+.LP
+Finally,
+if the operation requires modification or checking of individual
+jobs,
+such as the LPC, LPQ, or LPRM commands,
+then the specified print queue is scanned,
+and for each job in the print queue,
+the HOST and USER values are set to the host and user
+values in the control file for the job.
+.LP
+The database is checked as follows.
+Each line of the permissions file is scanned for key names and
+values, and these are matched against the request keys information.
+When all matches on a line are made,
+then search terminates with the specified action (ACCEPT/REJECT).
+If no match is found the default permission value is used.
+The
+DEFAULT key is used to specify the current default permission to
+be used for successful matches or if there is no match after
+scanning the entire permissions database.
+.LP
+The following keys provide some additional checking capabilties.
+The REMOTEGROUP entry checks that the REMOTEUSER
+value appears in a group or netgroup entry in the system database,
+and the GROUP entry for the USER value.
+For example,
+GROUP=student*,staff*
+would check to see if any of the group names matching
+student* or staff* have the specified user name in them.
+If a system has the
+.I netgroups
+capability,
+a printer, group, or remotegroup name starting with a
+\f(CW@\fP
+will be treated as a netgroup name,
+and specified user name or printer will be checked to see if
+it is in the group.
+.LP
+The SERVER entry will be true (match) if the request originated from
+the print server.
+The SAMEHOST is true (matches) if the REMOTEHOST and HOST values
+have a common entry,
+i.e. - are the same host.
+The SAMEUSER is true (matches) if the REMOTEUSER and USER values are identical.
+The AUTHSAMEUSER is true (matches) if the AUTHUSER 
+value that orginated the request and the AUTHUSER which
+was used to transfer a job are identical.
+AUTHJOB is true (matches) if the job was transferred using authentication.
+The FORWARD value is an alias for NOT SAMEHOST.
+.LP
+The CONTROLLINE value can be used to determine if there is a matching line
+in the control file.
+This facility has been used to ensure that jobs contain various
+information fields in order to be printed.
+.LP
+.sp
+.nf
+.ne 20v
+.ta \w'Key__________'u +\w'Match_'u +\w'Connect_'u +\w'Job___'u +\w'Job____'u +\w'LPQ__'u +\w'LPRM__'u +\w'LPC'u
+Key	Match	Connect	Job	Job	LPQ	LPRM	LPC
+\0	\0	\0	Spool	Print
+SERVICE	S	'X'	'R'	'P'	'Q'	'M'	'C,S'
+USER	S	-	JUSR	JUSR	JUSR	JUSR	JUSR
+HOST	S	RH	JH	JH	JH	JH	JH
+GROUP	S	-	JUSR	JUSR	JUSR	JUSR	JUSR
+REMOTEPORT	N	PORT	PORT	-	PORT	PORT	PORT
+REMOTEUSER	S	-	JUSR	JUSR	JUSR	CUSR	CUSR
+REMOTEHOST	S	RH	RH	JH	RH	RH	RH
+UNIXSOCKET	V	SK	SK	SK	SK	SK	SK
+REMOTEGROUP	S	-	JUSR	JUSR	JUSR	CUSR	CUSR
+CONTROLLINE	S	-	CL	CL	CL	CL	CL
+PRINTER	S	-	PR	PR	PR	PR	PR
+FORWARD	V	-	SA	-	-	SA	SA
+SAMEHOST	V	-	SA	-	SA	SA	SA
+SAMEUSER	V	-	-	-	SU	SU	SU
+SERVER	V	-	SV	-	SV	SV	SV
+AUTH	V	-	AU	-	AU	AU	AU
+AUTHTYPE	S	-	AU	-	AU	AU	AU
+AUTHUSER	S	-	AU	-	AU	AU	AU
+AUTHSAMEUSER	S	-	AU	-	AU	AU	AU
+AUTHFROM	S	-	AU	-	AU	AU	AU
+AUTHJOB	V	-	AU	-	AU	AU	AU
+  PORT is alias for REMOTEPORT
+  REMOTEIP is alias for REMOTEHOST
+  IP is alias for HOST
+
+.ta 3m +\w'RH = REMOTEHOST    'u
+KEY:
+	JH = HOST	host in control file
+	RH = REMOTEHOST	connecting host name/IP
+	JUSR = USER	user in control file
+	CUSR = REMOTEUSER	user from control request
+	JIP= IP	host/IP addr of host in control file
+	RIP= REMOTEIP	host/IP addr of requesting host
+	PORT=	connecting host origination port
+    SK=  match if connection over a UNIX socket
+	CONTROLLINE=	pattern match of control line in control file
+	FW= IP of source of request == IP of host in control file
+	SA= IP of source of request == IP of host in control file
+	SU= user from request == user in control file
+	SA= IP of source of request == IP of server host
+	SV= matches if from same address as server
+	AU= value determined by server authentication operation
+		AUTH is true if authenticated transfer,
+		TYPE is set to the type of authentication (pgp, kerberos, etc)
+		AUTHUSER is user authentication id
+		AUTHFROM is sender authentication id (can be remote server)
+		AUTHSAMEUSER matches if remote user authentication id matches original
+			user authentication id
+		AUTHJOB it true if print job has authentication
+Match: S = string with wild card, IP = IPaddress[/netmask],
+	N = low[-high] number range, V = exact value match
+SERVICE: 'X' - Connection request; 'R' - lpr request from remote host;
+    'P' - print job in queue; 'Q' - lpq request, 'M' - lprm request;
+    'C' - lpc spool control request; 'S' - lpc spool status request
+	'U' - administratively allowed user operation
+NOTE: when printing (P action), the remote and job check values
+	(i.e. - RUSR, JUSR) are identical.
+.fi
+.sp
+.PP
+The special key
+.I letter=patterns
+searches the control file line starting with the 
+(upper case) letter,
+and is usually used with printing and spooling checks.
+For example,
+C=A*,B*
+would check that the class information (i.e.- line in the control file
+starting with C) had a value starting with A or B.
+.PP
+A permission line consists of a list of tests and a result value.
+If all of the tests succeed, then a match has been found and the
+permission testing completes with the result value.  You use the
+DEFAULT reserved word to set the default ACCEPT/DENY result.
+The NOT keyword will reverse the sense of a test.
+.PP
+Each test can have one or more optional values separated by
+commas. For example USER=john,paul,mark has 3 test values.
+The Match value specifies how the matching is done.
+.sp
+.nf
+S = string type match - string match with glob.
+.ta 4n +4n +4n +4n +4n +4n
+.nf
+	Format:  string with wildcards (*)
+		* matches 0 or more chars
+	Character comparison is case insensitive.
+	For example - USER=th*s matches uTHS, This, This, Theses
+.sp
+IP = IP address and submask.  IP address must be in dotted form.
+	Format: x.x.x.x[/y.y.y.y or /z] 
+		x.x.x.x is IP address
+	    y.y.y.y is optional submask, default is 255.255.255.255
+        z is a netmask with most significant z bits set.
+	Match is done by IP address to a 32 bit value and using:
+		success = ((x ^ IP ) & y) == 0   (C language notation)
+	i.e.- only bits where mask is non-zero are used in comparison.
+	For example - IP=130.191.0.0/255.255.0.0 matches all address 130.191.X.X
+	IP=130.191.0.0/16 has the same value.
+.sp
+N = numerical range  -  low-high integer range.
+	Format: low[-high]
+	Example: PORT=0-1023 matches a port in range 0 - 1023 (privileged)
+.fi
+.PP
+The authentication entries
+AUTH, AUTHTYPE,
+AUTHUSER, AUTHSAMEUSER and AUTHFROM
+can be used to check permissions for authenticated operations. 
+AUTH is set (true) if authentication was done.
+We can use this to reject non-authenticated transfers:
+.br
+REJECT NOT AUTH
+.br
+The AUTHTYPE will match the authentication type
+being used or requested by the remote client or server.
+The AUTHUSER matches the original client authentication information
+used by the client to make a request to the server,
+and the AUTHFROM matches the sender authentication information.
+The AUTHSAMEUSER will match if the remote client or user authentication
+id is the same as that used for the job generation.
+.SH "LPC=OP"
+.PP
+The LPC=op entry is useful to allow various users to 
+perform administration operations.
+The following permissions entry would
+allows users to hold or release their own jobs:
+.br
+ACCEPT SERVICE=C SAMEUSER SAMEHOST LPC=release
+.SH "DNS, IPV6, AND MULTIHOMED HOSTS"
+.PP
+There is a subtle problem with names and IP addresses which are
+obtained for 'multi-homed hosts', i.e. - those with multiple
+ethernet interfaces,  and for IPV6 (IP Version 6),  in which a host
+can have multiple addresses,  and for the normal host which can have
+both a short name and a fully qualified domain name.
+.PP
+When performing an IP address match,  the entire list of IP addresses
+for a system will now be checked.  If one of these matches, then success
+is reported.  Similarly,  the entire list of host names and aliases will
+be checked.  If one of these matches,  then success will be reported.
+.br
+.SH FILES
+.PP
+The files used by LPRng are set by values in the
+printer configuration file.
+The following are a commonly used set of default values.
+.nf
+.ta \w'/var/spool/lpd/printcap.<hostname>           'u
+_LPD_CONF_PATH_	LPRng configuration file
+${HOME}/.printcap	user printer description file
+_PRINTCAP_PATH_	printer description file
+_LPD_PERMS_PATH_	permissions
+_LOCKFILE_	lock file for queue control
+/var/spool/lpd		spool directories
+/var/spool/lpd/QUEUE/control	queue control
+/var/spool/lpd/QUEUE/log	trace or debug log file
+/var/spool/lpd/QUEUE/acct	accounting file
+/var/spool/lpd/QUEUE/status	status file
+.fi
+.SH "SEE ALSO"
+lpd.conf(5),
+lpc(8),
+lpd(8),
+checkpc(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+pr(1), lprng_certs(1), lprng_index_certs(1).
+.SH "HISTORY"
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+The LPRng mailing list is lprng@lprng.com;
+subscribe by sending mail to lprng-request@lprng.com with
+the word subscribe in the body.
+The software is available from ftp://ftp.lprng.com/pub/LPRng.
+.SH "AUTHOR"
+Patrick Powell <papowell@lprng.com>.

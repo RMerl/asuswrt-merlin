@@ -1,0 +1,470 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Opening the Output Device&#13;</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Job Processing" href="jobsteps.htm">
+    <link rel="PREVIOUS" title="Spool Queue Processing " href=
+    "spoolq.htm">
+    <link rel="NEXT" title="Printing Banners " href=
+    "bannerprinting.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "spoolq.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          15. Job Processing</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "bannerprinting.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="OPENDEVICE">15.5. Opening the
+      Output Device</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">achk</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Accounting check at
+          start</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">af=</var><span class=
+          "emphasis"><i class="EMPHASIS">Accounting
+          File</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">ar</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Remote printer accounting
+          enabled</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">as=</var><span class=
+          "emphasis"><i class="EMPHASIS">Accounting at
+          start</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">connect_grace=</var><span class=
+          "emphasis"><i class="EMPHASIS">Time between
+          jobs</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">connect_interval=</var><span
+          class="emphasis"><i class="EMPHASIS">Connection
+          interval</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">connect_timeout=</var><span
+          class="emphasis"><i class="EMPHASIS">Connection
+          timeout</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">control_filter=</var><span class=
+          "emphasis"><i class="EMPHASIS">Control file
+          filter</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">ff=</var><span class=
+          "emphasis"><i class="EMPHASIS">form feed</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">fo</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">form feed on
+          open</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">la</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Local printer accounting
+          enabled</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">ld=</var><span class=
+          "emphasis"><i class="EMPHASIS">leader on open
+          (initialization string)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">lk</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Lock IO
+          device</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">lp=</var><span class=
+          "emphasis"><i class="EMPHASIS">IO device
+          pathname</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">nb</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Nonblocking device
+          open</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">network_connect_grace=</var><span
+          class="emphasis"><i class="EMPHASIS">Interval in secs
+          between jobs</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">of=</var><span class=
+          "emphasis"><i class="EMPHASIS">of filter</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">retry_econnrefused</var> FLAG
+          <span class="emphasis"><i class="EMPHASIS">Retry if open
+          failed</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">retry_nolink</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Retry if open
+          failed</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">rm=</var><span class=
+          "emphasis"><i class="EMPHASIS">the remote machine to send
+          the job to</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">rp=</var><span class=
+          "emphasis"><i class="EMPHASIS">the remote print queue to
+          send the job to</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">rw</var> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">device opened RW
+          flag</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">server_tmp_dir=</var><span class=
+          "emphasis"><i class="EMPHASIS">temporary
+          directory</i></span></p>
+        </li>
+      </ul>
+      Sequence of Operations: 
+
+      <ol type="1">
+        <li>
+          <p>During the server operations, it will try to create
+          temporary files in the print queue spool directory. If
+          this is not desirable, it will create them in the <var
+          class="LITERAL">server_tmp_dir</var> directory.</p>
+        </li>
+
+        <li>
+          <p>If the accounting file specified by <var class=
+          "LITERAL">af</var> exists, it is opened (af_fd) and the
+          af_fd is passed as file descriptor 3 to all filters. If
+          the <var class="LITERAL">af</var> value has the form <var
+          class="LITERAL">af=|/program</var> then the program is
+          started and the program <acronym class=
+          "ACRONYM">STDIN</acronym> is used as af_fd. If the <var
+          class="LITERAL">af</var> value has the form <var class=
+          "LITERAL">af=host%port</var>, then a TCP/IP connection to
+          the corresponding port on the remote host is made and the
+          port used as af_fd. In the latter two cases, the filter
+          <acronym class="ACRONYM">STDIN</acronym> (file descriptor
+          0) is actually opened read/write, and is used when
+          information is needed from the accounting filter or
+          remote server. See <a href=
+          "accountingref.htm#ACCOUNTINGSERVER">Accounting Printcap
+          Options</a> for more information on the <b class=
+          "APPLICATION">LPRng</b> accounting support.</p>
+        </li>
+
+        <li>
+          <p><a name="ACCOUNTSTART"></a> If <var class=
+          "LITERAL">la</var> (local accounting) is true and we are
+          printing a job or <var class="LITERAL">ar</var> (remote
+          accounting) is true and we are transferring a job, the
+          <var class="LITERAL">as</var> value is examined. If it is
+          a filter (program) specification, then the program is
+          started with its <acronym class="ACRONYM">STDIN</acronym>
+          attached to <tt class="FILENAME">/dev/null</tt>, <acronym
+          class="ACRONYM">STDOUT</acronym> will be read by the
+          print spooler, <acronym class="ACRONYM">STDERR</acronym>
+          output will be written to the error log. The lpd program
+          will wait until the accounting filter program terminates,
+          and examine the error code for action, as for the other
+          filters (see <a href=
+          "printingjob.htm#ERRORCODES">errorcodes</a> below). If
+          the exit status is 0, (JSUCC) then the printing process
+          will continue, if JHOLD the job will be held, if JREMOVE
+          the job will be removed, if JFAIL the job processing will
+          terminate with a JFAIL indication, otherwise the job
+          processing will terminate with a JABORT indication.</p>
+        </li>
+
+        <li>
+          <p>If the accounting filter exited with a JSUCC (no error
+          code) and the <var class="LITERAL">achk</var> (accounting
+          check) flag is set, the line read from the accounting
+          filter <acronym class="ACRONYM">STDOUT</acronym> will be
+          examined. This line should be <var class=
+          "LITERAL">accept</var>, <var class="LITERAL">hold</var>,
+          <var class="LITERAL">fail</var>, <var class=
+          "LITERAL">remove</var>, otherwise the job processing
+          terminates with a JABORT indication. An <var class=
+          "LITERAL">accept</var> will allow the job to be printed,
+          <var class="LITERAL">hold</var> will hold the job, <var
+          class="LITERAL">fail</var> will cause the job to fail,
+          <var class="LITERAL">remove</var> will cause the job to
+          be removed.</p>
+        </li>
+
+        <li>
+          <p>If the <var class="LITERAL">connect_grace</var> value
+          is non-zero and the server is opening a device or <var
+          class="LITERAL">network_connect_grace</var> is non-zero
+          and a network connection is being made, the server will
+          pause the specified time. This is to accommodate devices
+          which need a recovery time between jobs.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">lp</var> option is checked to
+          determine the type of IO device.</p>
+
+          <div class="INFORMALTABLE">
+            <a name="AEN7143"></a>
+
+            <table border="1" frame="border" rules="all" class=
+            "CALSTABLE">
+              <col>
+              <col>
+
+              <thead>
+                <tr>
+                  <th>Format</th>
+
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td><tt class="FILENAME">/pathname</tt></td>
+
+                  <td>Absolute pathname of IO device</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">pr@host</var></td>
+
+                  <td>transfer to <var class="LITERAL">pr</var> on
+                  remote <var class="LITERAL">host</var></td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">host%port</var></td>
+
+                  <td>open a TCP/IP connection to port on host.
+                  host can be name or IP address</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">|filter</var></td>
+
+                  <td>run the filter program; it <acronym class=
+                  "ACRONYM">STDIN</acronym> will be used as
+                  device</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>The IO device specified by <var class=
+          "LITERAL">lp</var> is opened write-only or read-write if
+          the <var class="LITERAL">rw</var> flag is true, and the
+          resulting file descriptor is io_fd. If the <var class=
+          "LITERAL">nb</var> flag is set, a non-blocking open will
+          be done as well. If the <var class="LITERAL">lk</var>
+          (lock device) flag is true, the device will be locked
+          against use by other <b class="APPLICATION">lpd</b>
+          servers.</p>
+        </li>
+
+        <li>
+          <p>If a <var class="LITERAL">host%port</var> combination,
+          a TCP/IP connection will be opened to the remote port and
+          the connection will be used as io_fd.</p>
+        </li>
+
+        <li>
+          <p>If a filter program is specified, the filter program
+          will be run and the <acronym class=
+          "ACRONYM">STDIN</acronym> of the filter will be used as
+          the device file descriptor.</p>
+        </li>
+
+        <li>
+          <p>If a <var class="LITERAL">rp@rm</var> combination, or
+          none of the above combinations are true and the <var
+          class="LITERAL">rm</var> and <var class=
+          "LITERAL">rp</var> values are non-zero, then the job will
+          be transferred to a remote printer. The type of operation
+          will be a job transfer, rather than printing
+          operation.</p>
+        </li>
+
+        <li>
+          <p>If the <var class="LITERAL">connect_timeout</var>
+          value is non-zero, a timeout is setup for the device or
+          socket open. If the device or connection open does not
+          succeed within the timeout, then the open operation
+          fails.</p>
+        </li>
+
+        <li>
+          <p>If a connection is to a network address (i.e. - <code
+          class="FUNCTION">connect()</code> system call) and the
+          connection attempt fails with an <acronym class=
+          "ACRONYM">ECONNREFUSED</acronym> error, if the <var
+          class="LITERAL">retry_econnrefused</var> flag is set then
+          the connection attempt is retried, but this time using an
+          alternative port number. See <a href=
+          "rfc1179ref.htm">RFC1179</a> for details. This is
+          repeated until all of the possible originating port
+          numbers are exhausted.</p>
+        </li>
+
+        <li>
+          <p>If the open or connect operation fails, and the <var
+          class="LITERAL">retry_nolink</var> flag is set, then the
+          server will pause for a minimum of <var class=
+          "LITERAL">connect_grace</var> plus a multiple of <var
+          class="LITERAL">connect_interval</var> seconds based on
+          the number of attempts before retrying the open
+          operation. Note that the interval may increase as the
+          number of attempts increases.</p>
+        </li>
+
+        <li>
+          <p>If printing a job and the <var class=
+          "LITERAL">:of</var> filter is specified, it is created
+          with its <acronym class="ACRONYM">STDOUT</acronym> (fd 1)
+          attached to the io_fd. Its stdin (of_fd) will be used in
+          the steps listed below. If there is no <var class=
+          "LITERAL">:of</var> filter, then the of_fd value will be
+          the io_fd descriptor.</p>
+        </li>
+
+        <li>
+          <p>If transferring a job and the <var class=
+          "LITERAL">control_filter</var> option is specified, then
+          the program specified by the <var class=
+          "LITERAL">control_filter</var> value will be run. It will
+          have its <acronym class="ACRONYM">STDIN</acronym> set to
+          the control file, and its <acronym class=
+          "ACRONYM">STDOUT</acronym> output will be used as the new
+          value of the control file to transfer to the remote host.
+          See <a href="filteroptions.htm">Filter Command Line
+          Options and Environment Variables</a> for details of
+          options passed to the control filter, and <a href=
+          "printingjob.htm#ERRORCODES">errorcodes</a> for the exit
+          codes of the filter.</p>
+        </li>
+
+        <li>
+          <p>If the operation is a job transfer, the operation
+          proceeds as outlined in <a href=
+          "rfc1179ref.htm">RFC1179</a>, and then the <a href=
+          "normalterm.htm">Normal Termination</a> operations are
+          carried out.</p>
+        </li>
+
+        <li>
+          <p>If the operation is a print operation and the <var
+          class="LITERAL">ld</var> (leader on open) value is
+          provided, the string is translated (escapes removed) and
+          written to the of_fd file descriptor.</p>
+        </li>
+
+        <li>
+          <p>If the <var class="LITERAL">fo</var> (form feed on
+          open) flag is true, then the <var class=
+          "LITERAL">ff</var> (form feed) string is translated
+          (escapes removed) and written to the of_fd file
+          descriptor.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "spoolq.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "bannerprinting.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Spool Queue
+          Processing</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "jobsteps.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Printing
+          Banners</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,66 @@
+.\" LIC: GPL
+.TH PPPOE-CONNECT 8 "21 February 2000"
+.UC 4
+.SH NAME
+pppoe-connect \- Shell script to manage a PPPoE link
+
+.SH SYNOPSIS
+.B pppoe-connect \fR[\fIconfig_file\fR]
+.P
+.B pppoe-connect \fR\fIinterface user\fR [\fIconfig_file\fR]
+
+
+.SH DESCRIPTION
+\fBpppoe-connect\fR is a shell script which manages a PPPoE connection
+using the Roaring Penguin user-space PPPoE client.  If you omit
+\fIconfig_file\fR, the default file \fB/etc/ppp/pppoe.conf\fR is used.
+If you supply \fIinterface\fR and \fIuser\fR, then they override the
+Ethernet interface and user-name settings in the configuration file.
+.P
+Note that normally, you should \fInot\fR invoke \fBpppoe-connect\fR
+directly.  Instead, use \fBpppoe-start\fR to bring up the PPPoE connection.
+.P
+\fBpppoe-connect\fR first reads a configuration file.  It then brings
+up a PPPoE connection.  If the connection ever drops, a message is logged
+to syslog, and \fBpppoe-connect\fR re-establishes the connection.  In addition,
+each time the connection is dropped or cannot be established,
+\fBpppoe-connect\fR executes the script \fB/etc/ppp/pppoe-lost\fR if it
+exists and is executable.
+
+.P
+The shell script \fBpppoe-stop\fR causes \fBpppoe-connect\fR to break out
+of its loop, bring the connection down, and exit.
+
+.SH TECHNICAL DETAILS
+\fBpppoe-connect\fR uses the following shell variables from the
+configuration file:
+
+.TP
+.B ETH
+The Ethernet interface connected to the DSL modem (for example, eth0).
+
+.TP
+.B USER
+The PPPoE user-id (for example, b1xxnxnx@sympatico.ca).
+
+.TP
+.B PIDFILE
+A file in which to write the process-ID of the pppoe-connect process
+(for example, \fB/var/run/pppoe.pid\fR).  Two additional files
+($PIDFILE.pppd and $PIDFILE.pppoe) hold the process-ID's of the
+\fBpppd\fR and \fBpppoe\fR processes, respectively.
+
+.P
+By using different configuration files with different PIDFILE
+settings, you can manage multiple PPPoE connections.  Just specify the
+configuration file as an argument to \fBpppoe-start\fR and
+\fBpppoe-stop\fR.
+
+.SH AUTHOR
+\fBpppoe-connect\fR was written by David F. Skoll <dfs@roaringpenguin.com>.
+
+The \fBpppoe\fR home page is \fIhttp://www.roaringpenguin.com/pppoe/\fR.
+
+.SH SEE ALSO
+pppoe(8), pppoe-start(8), pppoe-stop(8), pppd(8), pppoe.conf(5), pppoe-setup(8), pppoe-status(8), pppoe-sniff(8), pppoe-server(8), pppoe-relay(8)
+

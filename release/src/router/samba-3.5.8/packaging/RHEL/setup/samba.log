@@ -1,0 +1,9 @@
+/var/log/samba/*.log /var/log/samba/log.smbd /var/log/samba/log.nmbd {
+    notifempty
+    missingok
+    sharedscripts
+    copytruncate
+    postrotate
+	/bin/kill -HUP `cat /var/run/smbd.pid /var/run/nmbd.pid /var/run/winbindd.pid 2> /dev/null` 2> /dev/null || true
+    endscript
+}

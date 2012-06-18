@@ -1,0 +1,371 @@
+From e0d5ddea110ceba8a20b3d151deb981d7fa07dd4 Mon Sep 17 00:00:00 2001
+From: Mike Frysinger
+Date: Sat, 05 Jan 2008 17:54:17 +0000
+Subject: Merge r20474 by bernds from trunk:
+
+Add hidden symbols for a number of pthread functions, and use them to ensure
+that all entries in the __pthread_functions point to functions within
+libpthread, not identically-named functions in libc.
+---
+diff --git a/libpthread/linuxthreads.old/attr.c b/libpthread/linuxthreads.old/attr.c
+index 9deeee0..30294af 100644
+--- a/libpthread/linuxthreads.old/attr.c
++++ b/libpthread/linuxthreads.old/attr.c
+@@ -25,6 +25,19 @@
+ #include "pthread.h"
+ #include "internals.h"
+ 
++libpthread_hidden_proto(pthread_attr_destroy)
++libpthread_hidden_proto(pthread_attr_init)
++libpthread_hidden_proto(pthread_attr_getdetachstate)
++libpthread_hidden_proto(pthread_attr_setdetachstate)
++libpthread_hidden_proto(pthread_attr_getinheritsched)
++libpthread_hidden_proto(pthread_attr_setinheritsched)
++libpthread_hidden_proto(pthread_attr_setschedparam)
++libpthread_hidden_proto(pthread_attr_getschedparam)
++libpthread_hidden_proto(pthread_attr_getschedpolicy)
++libpthread_hidden_proto(pthread_attr_setschedpolicy)
++libpthread_hidden_proto(pthread_attr_getscope)
++libpthread_hidden_proto(pthread_attr_setscope)
++
+ /* NOTE: With uClibc I don't think we need this versioning stuff.
+  * Therefore, define the function pthread_attr_init() here using
+  * a strong symbol. */
+@@ -45,6 +58,7 @@ int pthread_attr_init(pthread_attr_t *attr)
+   attr->__stacksize = STACK_SIZE - ps;
+   return 0;
+ }
++libpthread_hidden_def(pthread_attr_init)
+ 
+ /* uClibc: leave out this for now. */
+ #if DO_PTHREAD_VERSIONING_WITH_UCLIBC
+@@ -70,6 +84,8 @@ int pthread_attr_destroy(pthread_attr_t *attr attribute_unused)
+ {
+   return 0;
+ }
++libpthread_hidden_def(pthread_attr_destroy)
++
+ 
+ int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)
+ {
+@@ -79,12 +95,14 @@ int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)
+   attr->__detachstate = detachstate;
+   return 0;
+ }
++libpthread_hidden_def(pthread_attr_setdetachstate)
+ 
+ int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate)
+ {
+   *detachstate = attr->__detachstate;
+   return 0;
+ }
++libpthread_hidden_def(pthread_attr_getdetachstate)
+ 
+ int pthread_attr_setschedparam(pthread_attr_t *attr,
+                                const struct sched_param *param)
+@@ -97,6 +115,7 @@ int pthread_attr_setschedparam(pthread_attr_t *attr,
+   memcpy (&attr->__schedparam, param, sizeof (struct sched_param));
+   return 0;
+ }
++libpthread_hidden_def(pthread_attr_setschedparam)
+ 
+ int pthread_attr_getschedparam(const pthread_attr_t *attr,
+                                struct sched_param *param)
+@@ -104,6 +123,7 @@ int pthread_attr_getschedparam(const pthread_attr_t *attr,
+   memcpy (param, &attr->__schedparam, sizeof (struct sched_param));
+   return 0;
+ }
++libpthread_hidden_def(pthread_attr_getschedparam)
+ 
+ int pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy)
+ {
+@@ -112,12 +132,14 @@ int pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy)
+   attr->__schedpolicy = policy;
+   return 0;
+ }
++libpthread_hidden_def(pthread_attr_setschedpolicy)
+ 
+ int pthread_attr_getschedpolicy(const pthread_attr_t *attr, int *policy)
+ {
+   *policy = attr->__schedpolicy;
+   return 0;
+ }
++libpthread_hidden_def(pthread_attr_getschedpolicy)
+ 
+ int pthread_attr_setinheritsched(pthread_attr_t *attr, int inherit)
+ {
+@@ -126,12 +148,14 @@ int pthread_attr_setinheritsched(pthread_attr_t *attr, int inherit)
+   attr->__inheritsched = inherit;
+   return 0;
+ }
++libpthread_hidden_def(pthread_attr_setinheritsched)
+ 
+ int pthread_attr_getinheritsched(const pthread_attr_t *attr, int *inherit)
+ {
+   *inherit = attr->__inheritsched;
+   return 0;
+ }
++libpthread_hidden_def(pthread_attr_getinheritsched)
+ 
+ int pthread_attr_setscope(pthread_attr_t *attr, int scope)
+ {
+@@ -145,12 +169,14 @@ int pthread_attr_setscope(pthread_attr_t *attr, int scope)
+     return EINVAL;
+   }
+ }
++libpthread_hidden_def(pthread_attr_setscope)
+ 
+ int pthread_attr_getscope(const pthread_attr_t *attr, int *scope)
+ {
+   *scope = attr->__scope;
+   return 0;
+ }
++libpthread_hidden_def(pthread_attr_getscope)
+ 
+ int __pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize)
+ {
+diff --git a/libpthread/linuxthreads.old/cancel.c b/libpthread/linuxthreads.old/cancel.c
+index ac66c58..7940967 100644
+--- a/libpthread/linuxthreads.old/cancel.c
++++ b/libpthread/linuxthreads.old/cancel.c
+@@ -37,6 +37,8 @@ extern void __rpc_thread_destroy(void);
+ # error "Define either _STACK_GROWS_DOWN or _STACK_GROWS_UP"
+ #endif
+ 
++libpthread_hidden_proto(pthread_setcancelstate)
++libpthread_hidden_proto(pthread_setcanceltype)
+ 
+ int pthread_setcancelstate(int state, int * oldstate)
+ {
+@@ -51,6 +53,7 @@ int pthread_setcancelstate(int state, int * oldstate)
+     __pthread_do_exit(PTHREAD_CANCELED, CURRENT_STACK_FRAME);
+   return 0;
+ }
++libpthread_hidden_def(pthread_setcancelstate)
+ 
+ int pthread_setcanceltype(int type, int * oldtype)
+ {
+@@ -65,6 +68,7 @@ int pthread_setcanceltype(int type, int * oldtype)
+     __pthread_do_exit(PTHREAD_CANCELED, CURRENT_STACK_FRAME);
+   return 0;
+ }
++libpthread_hidden_def(pthread_setcanceltype)
+ 
+ int pthread_cancel(pthread_t thread)
+ {
+@@ -165,6 +169,7 @@ void _pthread_cleanup_push_defer(struct _pthread_cleanup_buffer * buffer,
+   THREAD_SETMEM(self, p_canceltype, PTHREAD_CANCEL_DEFERRED);
+   THREAD_SETMEM(self, p_cleanup, buffer);
+ }
++strong_alias(_pthread_cleanup_push_defer,__pthread_cleanup_push_defer)
+ 
+ void _pthread_cleanup_pop_restore(struct _pthread_cleanup_buffer * buffer,
+ 				  int execute)
+@@ -178,6 +183,8 @@ void _pthread_cleanup_pop_restore(struct _pthread_cleanup_buffer * buffer,
+       THREAD_GETMEM(self, p_canceltype) == PTHREAD_CANCEL_ASYNCHRONOUS)
+     __pthread_do_exit(PTHREAD_CANCELED, CURRENT_STACK_FRAME);
+ }
++strong_alias(_pthread_cleanup_pop_restore,__pthread_cleanup_pop_restore)
++
+ 
+ void __pthread_perform_cleanup(char *currentframe)
+ {
+diff --git a/libpthread/linuxthreads.old/condvar.c b/libpthread/linuxthreads.old/condvar.c
+index 3d77f78..23e7139 100644
+--- a/libpthread/linuxthreads.old/condvar.c
++++ b/libpthread/linuxthreads.old/condvar.c
+@@ -25,6 +25,16 @@
+ #include "queue.h"
+ #include "restart.h"
+ 
++libpthread_hidden_proto(pthread_cond_broadcast)
++libpthread_hidden_proto(pthread_cond_destroy)
++libpthread_hidden_proto(pthread_cond_init)
++libpthread_hidden_proto(pthread_cond_signal)
++libpthread_hidden_proto(pthread_cond_wait)
++libpthread_hidden_proto(pthread_cond_timedwait)
++
++libpthread_hidden_proto(pthread_condattr_destroy)
++libpthread_hidden_proto(pthread_condattr_init)
++
+ int pthread_cond_init(pthread_cond_t *cond,
+                       const pthread_condattr_t *cond_attr attribute_unused)
+ {
+@@ -32,12 +42,14 @@ int pthread_cond_init(pthread_cond_t *cond,
+   cond->__c_waiting = NULL;
+   return 0;
+ }
++libpthread_hidden_def(pthread_cond_init)
+ 
+ int pthread_cond_destroy(pthread_cond_t *cond)
+ {
+   if (cond->__c_waiting != NULL) return EBUSY;
+   return 0;
+ }
++libpthread_hidden_def(pthread_cond_destroy)
+ 
+ /* Function called by pthread_cancel to remove the thread from
+    waiting on a condition variable queue. */
+@@ -132,6 +144,7 @@ int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
+   __pthread_mutex_lock(mutex);
+   return 0;
+ }
++libpthread_hidden_def(pthread_cond_wait)
+ 
+ static int
+ pthread_cond_timedwait_relative(pthread_cond_t *cond,
+@@ -233,6 +246,7 @@ int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
+   /* Indirect call through pointer! */
+   return pthread_cond_timedwait_relative(cond, mutex, abstime);
+ }
++libpthread_hidden_def(pthread_cond_timedwait)
+ 
+ int pthread_cond_signal(pthread_cond_t *cond)
+ {
+@@ -248,6 +262,7 @@ int pthread_cond_signal(pthread_cond_t *cond)
+   }
+   return 0;
+ }
++libpthread_hidden_def(pthread_cond_signal)
+ 
+ int pthread_cond_broadcast(pthread_cond_t *cond)
+ {
+@@ -266,16 +281,19 @@ int pthread_cond_broadcast(pthread_cond_t *cond)
+   }
+   return 0;
+ }
++libpthread_hidden_def(pthread_cond_broadcast)
+ 
+ int pthread_condattr_init(pthread_condattr_t *attr attribute_unused)
+ {
+   return 0;
+ }
++libpthread_hidden_def(pthread_condattr_init)
+ 
+ int pthread_condattr_destroy(pthread_condattr_t *attr attribute_unused)
+ {
+   return 0;
+ }
++libpthread_hidden_def(pthread_condattr_destroy)
+ 
+ int pthread_condattr_getpshared (const pthread_condattr_t *attr attribute_unused, int *pshared)
+ {
+diff --git a/libpthread/linuxthreads.old/join.c b/libpthread/linuxthreads.old/join.c
+index 4bdc77a..250b471 100644
+--- a/libpthread/linuxthreads.old/join.c
++++ b/libpthread/linuxthreads.old/join.c
+@@ -25,10 +25,12 @@
+ #include "restart.h"
+ #include "debug.h" /* PDEBUG, added by StS */
+ 
++libpthread_hidden_proto (pthread_exit)
+ void pthread_exit(void * retval)
+ {
+   __pthread_do_exit (retval, CURRENT_STACK_FRAME);
+ }
++libpthread_hidden_def (pthread_exit)
+ 
+ void __pthread_do_exit(void *retval, char *currentframe)
+ {
+diff --git a/libpthread/linuxthreads.old/pthread.c b/libpthread/linuxthreads.old/pthread.c
+index 19e8265..bdb64fd 100644
+--- a/libpthread/linuxthreads.old/pthread.c
++++ b/libpthread/linuxthreads.old/pthread.c
+@@ -284,6 +284,41 @@ int __libc_allocate_rtsig (int high)
+ 
+ static void pthread_initialize(void) __attribute__((constructor));
+ 
++libpthread_hidden_proto(pthread_attr_destroy)
++libpthread_hidden_proto(pthread_attr_init)
++libpthread_hidden_proto(pthread_attr_getdetachstate)
++libpthread_hidden_proto(pthread_attr_setdetachstate)
++libpthread_hidden_proto(pthread_attr_getinheritsched)
++libpthread_hidden_proto(pthread_attr_setinheritsched)
++libpthread_hidden_proto(pthread_attr_setschedparam)
++libpthread_hidden_proto(pthread_attr_getschedparam)
++libpthread_hidden_proto(pthread_attr_getschedpolicy)
++libpthread_hidden_proto(pthread_attr_setschedpolicy)
++libpthread_hidden_proto(pthread_attr_getscope)
++libpthread_hidden_proto(pthread_attr_setscope)
++
++libpthread_hidden_proto(pthread_exit)
++
++libpthread_hidden_proto(pthread_equal)
++libpthread_hidden_proto(pthread_self)
++libpthread_hidden_proto(pthread_getschedparam)
++libpthread_hidden_proto(pthread_setschedparam)
++
++libpthread_hidden_proto(pthread_setcancelstate)
++libpthread_hidden_proto(pthread_setcanceltype)
++libpthread_hidden_proto(_pthread_cleanup_push_defer)
++libpthread_hidden_proto(_pthread_cleanup_pop_restore)
++
++libpthread_hidden_proto(pthread_cond_broadcast)
++libpthread_hidden_proto(pthread_cond_destroy)
++libpthread_hidden_proto(pthread_cond_init)
++libpthread_hidden_proto(pthread_cond_signal)
++libpthread_hidden_proto(pthread_cond_wait)
++libpthread_hidden_proto(pthread_cond_timedwait)
++
++libpthread_hidden_proto(pthread_condattr_destroy)
++libpthread_hidden_proto(pthread_condattr_init)
++
+ struct pthread_functions __pthread_functions =
+   {
+ #if !(USE_TLS && HAVE___THREAD)
+@@ -638,11 +673,13 @@ pthread_t pthread_self(void)
+   pthread_descr self = thread_self();
+   return THREAD_GETMEM(self, p_tid);
+ }
+-
++libpthread_hidden_def (pthread_self)
++    
+ int pthread_equal(pthread_t thread1, pthread_t thread2)
+ {
+   return thread1 == thread2;
+ }
++libpthread_hidden_def (pthread_equal)
+ 
+ /* Helper function for thread_self in the case of user-provided stacks */
+ 
+@@ -714,6 +751,7 @@ int pthread_setschedparam(pthread_t thread, int policy,
+     __pthread_manager_adjust_prio(th->p_priority);
+   return 0;
+ }
++libpthread_hidden_def(pthread_setschedparam)
+ 
+ int pthread_getschedparam(pthread_t thread, int *policy,
+                           struct sched_param *param)
+@@ -734,6 +772,7 @@ int pthread_getschedparam(pthread_t thread, int *policy,
+   *policy = pol;
+   return 0;
+ }
++libpthread_hidden_def(pthread_getschedparam)
+ 
+ /* Process-wide exit() request */
+ 
+diff --git a/libpthread/linuxthreads.old/sysdeps/pthread/pthread.h b/libpthread/linuxthreads.old/sysdeps/pthread/pthread.h
+index 448636b..870e37f 100644
+--- a/libpthread/linuxthreads.old/sysdeps/pthread/pthread.h
++++ b/libpthread/linuxthreads.old/sysdeps/pthread/pthread.h
+@@ -635,6 +635,9 @@ extern void _pthread_cleanup_pop (struct _pthread_cleanup_buffer *__buffer,
+ extern void _pthread_cleanup_push_defer (struct _pthread_cleanup_buffer *__buffer,
+ 					 void (*__routine) (void *),
+ 					 void *__arg) __THROW;
++extern void __pthread_cleanup_push_defer (struct _pthread_cleanup_buffer *__buffer,
++					  void (*__routine) (void *),
++					  void *__arg) __THROW;
+ 
+ /* Remove a cleanup handler as pthread_cleanup_pop does, but also
+    restores the cancellation type that was in effect when the matching
+@@ -645,6 +648,8 @@ extern void _pthread_cleanup_push_defer (struct _pthread_cleanup_buffer *__buffe
+ 
+ extern void _pthread_cleanup_pop_restore (struct _pthread_cleanup_buffer *__buffer,
+ 					  int __execute) __THROW;
++extern void __pthread_cleanup_pop_restore (struct _pthread_cleanup_buffer *__buffer,
++					   int __execute) __THROW;
+ #endif
+ 
+ 
+--
+cgit v0.8.2.1

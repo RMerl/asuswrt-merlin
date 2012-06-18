@@ -1,0 +1,2 @@
+/* Copyright (c): 2002-2005 (Germany): United Internet, 1&1, GMX, Schlund+Partner, Alturo */
+function QxToolBarPart(){QxWidget.call(this);this.setTop(0);this.setBottom(0);this._handle=new QxToolBarPartHandle;this.add(this._handle);};QxToolBarPart.extend(QxWidget,"QxToolBarPart");proto.dispose=function(){if(this.getDisposed()){return;};QxWidget.prototype.dispose.call(this);if(this._handle){this._handle.dispose();this._handle=null;};return true;};

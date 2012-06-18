@@ -1,0 +1,19 @@
+This module matches a set of source or destination ports.  Up to 15
+ports can be specified.  It can only be used in conjunction with
+.B "-p tcp"
+or
+.BR "-p udp" .
+.TP
+.BR "--source-ports " "\fIport\fP[,\fIport\fP[,\fIport\fP...]]"
+Match if the source port is one of the given ports.  The flag
+.B --sports
+is a convenient alias for this option.
+.TP
+.BR "--destination-ports " "\fIport\fP[,\fIport\fP[,\fIport\fP...]]"
+Match if the destination port is one of the given ports.  The flag
+.B --dports
+is a convenient alias for this option.
+.TP
+.BR "--ports " "\fIport\fP[,\fIport\fP[,\fIport\fP...]]"
+Match if the both the source and destination ports are equal to each
+other and to one of the given ports.

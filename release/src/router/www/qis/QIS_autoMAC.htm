@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link type="text/css" rel="stylesheet" href="/qis/qis_style.css">
+<link type="text/css" rel="stylesheet" href="/form_style.css">
+<style>
+.test_css{
+	padding-left:10px;
+	font-size:13px;
+	font-weight:bolder;
+	color: #FFFFFF;
+}
+</style>
+<script type="text/JavaScript" src="/jquery.js"></script>
+<script type="text/javascript">
+var now_flag = '<% get_parameter("flag"); %>';
+
+var autodet_state = -1;
+
+var wanstate = -1;
+var wansbstate = -1;
+var wanauxstate = -1;
+
+function initial(){
+	parent.doAutoMAC();
+	parent.set_step("t1");
+	
+	$("#string_obj1")[0].innerHTML = "<#QIS_autoMAC_desc3#>";
+	$("#string_obj2")[0].innerHTML = "<#QIS_autoMAC_desc1#>";
+	
+	setTimeout("start_mac_clone();", 2000);
+}
+
+function start_mac_clone(){
+	$("#string_obj2")[0].innerHTML = "<#QIS_autoMAC_desc2#>";
+	
+	$.ajax({
+		url: '/automac.asp',
+		dataType: 'script',
+		
+		error: function(xhr){
+			setTimeout("start_mac_clone();", 3000);
+		},
+		success: function(response){
+			setTimeout("ajax_detectWAN();", 3000);
+		}
+	});
+}
+
+function ajax_detectWAN(){
+	$.ajax({
+		url: '/WAN_info.asp',
+		dataType: 'script',
+		
+		error: function(xhr){
+			setTimeout("ajax_detectWAN();", 1000);
+		},
+		success: function(response){
+			if(autodet_state >= 2 && wanstate == 2 && wanauxstate != 1){
+				$("#img_obj2")[0].src = "/images/checked_qis.gif";
+				$("#string_obj2")[0].innerHTML = "<#QIS_autoMAC_result_desc2#>";
+				
+				document.redirectForm.prev_page.value = "/qis/QIS_autoMAC.htm";
+				
+				setTimeout("gotoPage('/qis/QIS_detectWAN.htm', 'auto_way_static', 0);", 2000);
+			}
+			else if(autodet_state < 2){
+				setTimeout("ajax_detectWAN();", 1000);
+			}
+			else{
+				$("#img_obj2")[0].src = "/images/button-close.gif";
+				$("#img_obj2")[0].width = 30;
+				$("#img_obj2")[0].height = 30;
+				$("#string_obj1")[0].innerHTML = "<#QIS_autoMAC_result_desc3#>";
+				
+				setTimeout("gotoPage('/qis/QIS_resetModem.htm', '', 0);", 2000);
+			}
+		}
+	});
+}
+
+function safe_call_ajax(){
+	clearTimeout(id_of_setTimeout);
+	id_of_setTimeout = setTimeout("ajax_detectWAN();", 3000);
+}
+
+function gotoPage(dst_url, flag, isParent){
+	if(isParent && isParent == 1)
+		document.redirectForm.target = "_parent";
+	else
+		document.redirectForm.target = "";
+	document.redirectForm.action = dst_url;
+	document.redirectForm.flag.value = flag;
+	document.redirectForm.submit();
+}
+</script>
+</head>
+
+<body onLoad="initial();">
+<div class="QISmain">
+	<div id='waitarea'>
+
+		<div>
+			<table width="730px">
+				<tr>
+					<td align="left">
+						<span class="description_down">Auto MAC Clone</span>
+					</td>
+					<td align="right">
+						<img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+
+		<br/><br/>
+		<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
+			<tr>
+				<td align="right">
+					<img id="img_obj1" src="/images/button-close.gif" width="30" height="30"></span>
+				</td>
+				<td class="test_css">
+					<strong><span id="string_obj1"></span></strong>
+				</td>
+			</tr>
+			<tr>
+				<td align="right">
+					<img id="img_obj2" src="/images/InternetScan.gif" width="20" height="20"></span>
+				</td>
+				<td class="test_css">
+					<strong><span id="string_obj2"></span></strong>
+				</td>
+			</tr>
+		</table>
+		
+		<div id="fresharea" style="display:none">
+			<input type="button" class="button_gen" width="72" onclick="gotoPage('/qis/QIS_detect.htm', '', 0);" value="<#QKSet_detect_freshbtn#>">
+			<input type="button" class="button_gen" width="72" onclick="parent.location.href='/index.asp';" value="<#CTL_Setting#>">
+		</div>
+	</div>
+<br/>
+<br/>
+</div>
+
+<form method="post" name="redirectForm" action="" target="">
+<input type="hidden" name="flag" value="">
+<input type="hidden" name="prev_page" value="">
+</form>
+</body>

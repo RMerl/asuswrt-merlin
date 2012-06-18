@@ -1,0 +1,27 @@
+%-12345X@PJL
+@PJL RDYMSG DISPLAY = ":"
+@PJL USTATUSOFF
+@PJL USTATUS JOB = ON
+@PJL USTATUS DEVICE = ON
+@PJL USTATUS PAGE = ON
+@PJL USTATUS TIMED = 10
+@PJL ENTER LANGUAGE = POSTSCRIPT
+%!
+%!PS-Adobe-3.0
+%% one page (i.e. - a page with a 1 on it)
+%%/Times-Roman
+/Courier
+findfont 200 scalefont setfont
+72 300 moveto
+(1) show
+showpage
+%-12345X@PJL
+@PJL RDYMSG DISPLAY = ":"
+@PJL EOJ NAME = ":"
+@PJL USTATUSOFF
+@PJL USTATUS JOB = ON
+@PJL USTATUS DEVICE = ON
+@PJL USTATUS PAGE = ON
+@PJL USTATUS TIMED = 10
+@PJL RDYMSG DISPLAY = "Done: :"
+%-12345X

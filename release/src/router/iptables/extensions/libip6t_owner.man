@@ -1,0 +1,23 @@
+This module attempts to match various characteristics of the packet
+creator, for locally-generated packets.  It is only valid in the
+.B OUTPUT
+chain, and even this some packets (such as ICMPv6 ping responses) may
+have no owner, and hence never match.  This is regarded as experimental.
+.TP
+.BI "--uid-owner " "userid"
+Matches if the packet was created by a process with the given
+effective user id.
+.TP
+.BI "--gid-owner " "groupid"
+Matches if the packet was created by a process with the given
+effective group id.
+.TP
+.BI "--pid-owner " "processid"
+Matches if the packet was created by a process with the given
+process id.
+.TP
+.BI "--sid-owner " "sessionid"
+Matches if the packet was created by a process in the given session
+group.
+.TP
+.B NOTE: pid, sid and command matching are broken on SMP

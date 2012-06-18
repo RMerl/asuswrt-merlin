@@ -1,0 +1,7 @@
+2001-08-26  Johannes Erdfelt  <jerdfelt@valinux.com>
+
+	* Remove Docdir from spec file to meet LHS. Thanks to Daniel Resare
+
+2000-02-15  Johannes Erdfelt  <jerdfelt@valinux.com>
+
+	* Created

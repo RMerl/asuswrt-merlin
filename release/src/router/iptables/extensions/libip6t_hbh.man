@@ -1,0 +1,7 @@
+This module matches the parameters in Hop-by-Hop Options header
+.TP
+.BR "--hbh-len " "[!] \fIlength\fP"
+Total length of this header in octets.
+.TP
+.BR "--hbh-opts " "\fItype\fP[:\fIlength\fP][,\fItype\fP[:\fIlength\fP]...]"
+numeric type of option and the length of the option data in octets.

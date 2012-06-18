@@ -1,0 +1,5 @@
+This directory contains patterns that may not be of general interest,
+such as patterns for "protocols" that are really subsets of other
+protocols (example: Quicktime HTTP).  For HTTP subsets, you should
+consider using a transparent proxy rather than l7-filter.
+# Copyright (C) 2008 Matthew Strait, Ethan Sommer; See ../LICENSE

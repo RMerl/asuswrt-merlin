@@ -1,0 +1,736 @@
+udev 113
+========
+Bugfixes.
+
+Final merge of patches/features from the Ubuntu package.
+
+udev 112
+========
+Bugfixes.
+
+Control characters in filesystem label strings are no longer silenty
+removed, but hex-encoded, to be able to uniquely identify the device
+by its symlink in /dev/disk/by-label/.
+If libvolume_id is used by mount(8), LABEL= will work as expected,
+if slashes or other characters are used in the label string.
+
+To test the existence of a file, TEST=="<file>" and TEST!="<file>"
+can be specified now. The TEST key accepts an optional mode mask
+TEST{0100}=="<is executable file>".
+
+Scsi_id now supports a mode without expecting scsi-specific sysfs
+entries to allow the extraction of cciss-device persistent properties.
+
+udev 111
+========
+Bugfixes.
+
+In the future, we may see uuid's which are just simple character
+strings (see the DDF Raid Specification). For that reason vol_id now
+exports ID_FS_UUID_SAFE, just like ID_FS_LABEL_SAFE. For things like
+the creation of symlinks, the *_SAFE values ensure, that no control
+or whitespace characters are used in the filename.
+
+Possible users of libvolume_id, please use the volume_id_get_* functions.
+The public struct will go away in a future release of the library.
+
+udev 110
+========
+Bugfixes.
+
+Removal of useless extras/eventrecorder.sh.
+
+udev 109
+========
+Bugfixes.
+
+udev 108
+========
+Bugfixes.
+
+The directory multiplexer for dev.d/ and hotplug.d are finally removed
+from the udev package.
+
+udev 107
+========
+Bugfixes.
+
+Symlinks can have priorities now, the priority is assigned to the device
+and specified with OPTIONS="link_priority=100". Devices with higher
+priorities overwrite the symlinks of devices with lower priorities.
+If the device that currently owns the link, goes away, the symlink
+will be removed, and recreated, pointing to the next device with the
+highest actual priority. This should make /dev/disk/by-{label,uuid,id}
+more reliable, if multiple devices contain the same metadata and overwrite
+these symlinks.
+
+The dasd_id program is removed from the udev tree, and dasdinfo, with the
+needed rules, are part of the s390-tools now.
+
+Please add KERNEL=="[0-9]*:[0-9]*" to the scsi wait-for-sysfs rule,
+we may get the scsi sysfs mess fixed some day, and this will only catch
+the devices we are looking for.
+
+USB serial numbers for storage devices have the target:lun now appended,
+to make it possibble to distinguish broken multi-lun devices with all
+the same SCSI identifiers.
+
+Note: The extra "run_directory" which searches and executes stuff in
+/etc/hotplug.d/ and /etc/dev.d/ is long deprecated, and will be removed
+with the next release. Make sure, that you don't use it anymore, or
+provides your own implementation of that inefficient stuff.
+We are tired of reports about a "slow udev", because these directories
+contain stuff, that runs with _every_ event, instead of using rules,
+that run programs only for the matching events.
+
+udev 106
+========
+Bugfixes.
+
+udev 105
+========
+Bugfixes.
+
+DRIVER== will match only for devices that actually have a real
+driver. DRIVERS== must be used, if parent devices should be
+included in the match.
+
+Libvolume_id's "linux_raid" detection needed another fix.
+
+udev 104
+========
+Bugfixes.
+
+udev 103
+========
+Add additional check to volume_id detection of via_raid, cause
+some company decided to put a matching pattern all over the empty
+storage area of their music players.
+
+udev 102
+========
+Fix path_id for SAS devices.
+
+udev 101
+========
+The udev daemon can be started with --debug-trace now, which will
+execute all events serialized to get a chance to catch a possible
+action that crashes the box.
+
+A warning is logged, if PHYSDEV* keys, the "device" link, or a parent
+device attribute like $attr{../file} is used, only WAIT_FOR_SYSFS rules
+are excluded from the warning. Referencing parent attributes directly
+may break when something in the kernel driver model changes. Udev will
+just find the attribute by walking up the parent chain.
+
+Udevtrigger now sorts the list of devices depending on the device
+dependency, so a "usb" device is triggered after the parent "pci"
+device.
+
+udev 100
+========
+Revert persistent-storage ata-serial '_' '-' replacement.
+
+udev 099
+========
+Bugfixes.
+
+Udevtrigger can now filter the list of devices to be triggered. Matches
+for subsystems or sysfs attributes can be specified.
+
+The entries in /dev/.udev/queue and /dev/.udev/failed have changed to
+zero-sized files to avoid pointing to /sys and confuse broken tools which
+scan the /dev directory. To retry failed events, udevtrigger --retry-failed
+should be used now.
+
+The rules and scripts to create udev rules for persistent network
+devices and optical drives are in the extras/rules_generator directory
+now. If you use something similar, please consider replacing your own
+version with this, to share the support effort. The rule_generator
+installs its own rules into /etc/udev/rules.d.
+
+The cdrom_id tool installs its own rule now in /etc/udev/rules.d, cause
+the rule_generator depends on cdrom_id to be called in an earlier rule.
+
+udev 098
+========
+Bugfixes.
+
+Renaming of some key names (the old names still work):
+BUS -> SUBSYSTEMS, ID -> KERNELS, SYSFS -> ATTRS, DRIVER -> DRIVERS.
+(The behavior of the key DRIVER will change soon in one of the next
+releases, to match only the event device, please switch to DRIVERS
+instead. If DRIVER is used, it will behave like DRIVERS, but an error
+is logged.
+With the new key names, we have a more consistent and simpler scheme.
+We can match the properties of the event device only, with: KERNEL,
+SUBSYSTEM, ATTR, DRIVER. Or include all the parent devices in the match,
+with: KERNELS, SUBSYSTEMS, ATTRS, DRIVERS. ID, BUS, SYSFS, DRIVER are no
+longer mentioned in the man page and should be switched in the rule
+files.
+
+ATTR{file}="value" can be used now, to write to a sysfs file of the
+event device. Instead of:
+  ..., SYSFS{type}=="0|7|14", RUN+="/bin/sh -c 'echo 60 > /sys$$DEVPATH/timeout'"
+we now can do:
+  ..., ATTR{type}=="0|7|14", ATTR{timeout}="60"
+
+All the PHYSDEV* keys are deprecated and will be removed from a
+future kernel:
+  PHYDEVPATH -    is the path of a parent device and should not be
+                  needed at all.
+  PHYSDEVBUS -    is just a SUBSYSTEM value of a parent, and can be
+                  matched with SUBSYSTEMS==
+  PHYSDEVDRIVER - for bus devices it is available as ENV{DRIVER}.
+                  Newer kernels will have DRIVER in the environment,
+                  for older kernels udev puts in. Class device will
+                  no longer carry this property of a parent and
+                  DRIVERS== can be used to match such a parent value.
+Note that ENV{DRIVER} is only available for a few bus devices, where
+the driver is already bound at device event time. On coldplug, the
+events for a lot devices are already bound to a driver, and they will have
+that value set. But on hotplug, at the time the kernel creates the device,
+it can't know what driver may claim the device after that, therefore
+in most cases it will be empty.
+
+Failed events should now be re-triggered with:
+   udevtrigger --retry-failed.
+Please switch to this command, so we keep the details of the /dev/.udev/failed/
+files private to the udev tools. We may need to switch the current symlink
+target, cause some obviously broken tools try to scan all files in /dev
+including /dev/.udev/, find the links to /sys and end up stat()'ing sysfs files
+million times. This takes ages on slow boxes.
+
+The udevinfo attribute walk (-a) now works with giving a device node
+name (-n) instead of a devpath (-p). The query now always works, also when
+no database file was created by udev.
+
+The built-in /etc/passwd /etc/group parser is removed, we always depend on
+getpwnam() and getgrnam() now. One of the next releases will depend on
+fnmatch() and may use getopt_long().
+
+udev 097
+========
+Bugfixes and small improvements.
+
+udev 096
+========
+Fix path_id for recent kernels.
+
+udev 095
+========
+%e is finally gone.
+
+Added support for swapping network interface names, by temporarily
+renaming the device and wait for the target name to become free.
+
+udev 094
+========
+The built-in MODALIAS key and substitution is removed.
+
+udev 093
+========
+The binary firmware helper is replaced by the usual simple
+shell script. Udevsend is removed from the tree.
+
+udev 092
+========
+Bugfix release.
+
+udev 091
+========
+Some more keys require the correct use of '==' and '=' depending
+on the kind of operation beeing an assignment or a match. Rules
+with invalid operations are skipped and logged to syslog. Please
+test with udevtest if the parsing of your rules throws errors and
+fix possibly broken rules.
+
+udev 090
+========
+Provide "udevsettle" to wait for all current udev events to finish.
+It also watches the current kernel netlink queue by comparing the
+even sequence number to make sure that there are no current pending
+events that have not already arrived in the daemon.
+
+udev 089
+========
+Fix rule to skip persistent rules for removable IDE devices, which
+also skipped optical IDE drives.
+
+All *_id program are installed in /lib/udev/ by default now.
+
+No binary is stripped anymore as this should be done in the
+packaging process and not at build time.
+
+libvolume_id is provided as a shared library now and vol_id is
+linked against it. Also one of the next HAL versions will require
+this library, and the HAL build process will also require the
+header file to be installed. The copy of the same code in HAL will
+be removed to have only a single copy left on the system.
+
+udev 088
+========
+Add persistent links for SCSI tapes. The rules file is renamed
+to 60-persistent-storage.rules.
+
+Create persistent path for usb devices. Can be used for all sorts
+of devices that can't be distinguished by other properties like
+multiple identical keyboards and mice connected to the same box.
+
+Provide "udevtrigger" program to request events on coldplug. The
+shell script is much too slow with thousends of devices.
+
+udev 087
+========
+Fix persistent disk rules to exclude removable IDE drives.
+
+Warn if %e, $modalias or MODALIAS is used.
+
+udev 086
+========
+Fix queue export, which wasn't correct for subsequent add/remove
+events for the same device.
+
+udev 085
+========
+Fix cramfs detection on big endian.
+
+Make WAIT_FOR_SYSFS usable in "normal" rules and silent if the whole
+device goes away.
+
+udev 084
+========
+If BUS== and SYSFS{}== have been used in the same rule, the sysfs
+attributes were only checked at the parent device that matched the
+by BUS requested subsystem. Fix it to also look at the device we
+received the event for.
+
+Build variable CROSS has changed to CROSS_COMPILE to match the kernel
+build name.
+
+udev 083
+========
+Fix a bug where NAME="" would prevent RUN from beeing executed.
+
+RUN="/bin/program" does not longer automatically add the subsystem
+as the first parameter. This is from the days of /sbin/hotplug
+which is dead now and it's just confusing to need to add a space at
+the end of the program name to prevent this.
+If you use rules that need the subsystem as the first parameter,
+like the old "udev_run_hotlugd" and "udev_run_devd", add the subsystem
+to the key like RUN+="/bin/program $env{SUBSYSTEM}".
+
+udev 082
+========
+The udev man page has moved to udev(7) as it does not describe a command
+anymore. The programs udev, udevstart and udevsend are no longer installed
+by default and must be copied manually, if they should be installed or
+included in a package.
+
+Fix a bug where "ignore_device" could run earlier collected RUN keys before
+the ignore rule was applied.
+
+More preparation for future sysfs changes. usb_id and scsi_id no longer
+depend on a magic order of devices in the /devices chain. Specific devices
+should be requested by their subsytem.
+
+This will always find the scsi parent device without depending on a specific
+path position:
+  dev = sysfs_device_get(devpath);
+  dev_usb = sysfs_device_get_parent_with_subsystem(dev, "scsi");
+
+The "device" link in the current sysfs layout will be automatically
+_resolved_ as a parent and in the new sysfs layout it will just _be_ the
+parent in the devpath. If a device is requested by it's symlink, like all
+class devices in the new sysfs layout will look like, it gets automatically
+resolved and substituted with the real devpath and not the symlink path.
+
+Note:
+A similar logic must be applied to _all_ sysfs users, including
+scripts, that search along parent devices in sysfs. The explicit use of
+the "device" link must be avoided. With the future sysfs layout all
+DEVPATH's will start with /devices/ and have a "subsystem" symlink poiting
+back to the "class" or the "bus". The layout of the parent devices in
+/devices is not necessarily expected to be stable across kernel releases and
+searching for parents by their subsystem should make sysfs users tolerant
+for changed parent chains.
+
+udev 081
+========
+Prepare udev to work with the experimental kernel patch, that moves
+/sys/class devices to /sys/devices and /sys/block to /sys/class/block.
+
+Clarify BUS, ID, $id usage and fix $id behavior. This prepares for
+moving the class devices to /sys/devices.
+
+Thanks again to Marco for help finding a hopefully nice compromise
+to make %b simpler and working again.
+
+udev 080
+========
+Complete removal of libsysfs, replaced by simple helper functions
+which are much simpler and a bit faster. The udev daemon operatesentirely
+on event parameters and does not use sysfs for simple rules anymore.
+Please report any new bugs/problems, that may be caused by this big
+change. They will be fixed immediately.
+
+The enumeration format character '%e' is deprecated and will be
+removed sometimes from a future udev version. It never worked correctly
+outside of udevstart, so we can't use it with the new parallel
+coldplug. A simple enumeration is as useless as the devfs naming
+scheme, just get rid of both if you still use it.
+
+MODALIAS and $modalias is not needed and will be removed from one of
+the next udev versions, replace it in all rules with ENV{MODALIAS} or
+the sysfs "modalias" value.
+
+Thanks a lot to Marco for all his help on finding and fixing bugs.
+
+udev 079
+========
+Let scsi_id request libata drive serial numbers from page 0x80.
+
+Renamed etc/udev/persistent.rules to persistent-disk.rules and
+added /dev/disk/by-name/* for device mapper device names.
+
+Removed %e from the man page. It never worked reliably outside
+of udevstart and udevstart is no longer recommended to use.
+
+udev 078
+========
+Symlinks are now exported to the event environment. Hopefully it's no
+longer needed to run udevinfo from an event process, like it was
+mentioned on the hotplug list:
+  UDEV  [1134776873.702967] add@/block/sdb
+  ...
+  DEVNAME=/dev/sdb
+  DEVLINKS=/dev/disk/by-id/usb-IBM_Memory_Key_0218B301030027E8 /dev/disk/by-path/usb-0218B301030027E8:0:0:0
+
+udev 077
+========
+Fix a problem if udevsend is used as the hotplug handler and tries to use
+syslog, which causes a "vc" event loop. 2.6.15 will make udevsend obsolete
+and this kind of problems will hopefully go away soon.
+
+udev 076
+========
+All built-in logic to work around bad sysfs timing is removed with this
+version. The need to wait for sysfs files is almost fixed with a kernel
+version that doesn't work with this udev version anyway. Until we fix
+the timing of the "bus" link creation, the former integrated logic should
+be emulated by a rule placed before all other rules:
+  ACTION=="add", DEVPATH=="/devices/*", ENV{PHYSDEVBUS}=="?*", WAIT_FOR_SYSFS="bus"
+
+The option "udev_db" does no longer exist. All udev state will be in
+/$udev_root/.udev/ now, there is no longer an option to set this
+to anything else.
+If the init script or something else used this value, just depend on
+this hardcoded path. But remember _all_content_ of this directory is
+still private to udev and can change at any time.
+
+Default location for rule sripts and helper programs is now: /lib/udev/.
+Everything that is not useful on the commandline should go into this
+directory. Some of the helpers in the extras folder are installed there
+now. The rules need to be changed, to find the helpers there.
+
+Also /lib/udev/devices is recommended as a directory where packages or
+the user can place real device nodes, which get copied over to /dev at
+every boot. This should replace the various solutions with custom config
+files.
+
+Udevsend does no longer start the udev daemon. This must be done with
+the init script that prepares /dev on tmpfs and creates the initial nodes,
+before starting the daemon.
+
+udev 075
+========
+Silent a too verbose error logging for the old hotplug.d/ dev.d/
+emulation.
+
+The copy of klibc is removed. A systemwide installed version of klibc
+should be used to build a klibc udev now.
+
+udev 074
+========
+NAME="" will not create any nodes, but execute RUN keys. To completely
+ignore an event the OPTION "ignore_device" should be used.
+
+After removal of the reorder queue, events with a TIMEOUT can be executed
+without any queuing now.
+
+udev 073
+========
+Fixed bug in udevd, if inotify is not available. We depend on netlink
+uevents now, kernels without that event source will not work with that
+version of udev anymore.
+
+udev 072
+========
+The rule parsing happens now in the daemon once at startup, all udev
+event processes inherit the already parsed rules from the daemon.
+It is shipped with SUSE10.0 and reduces heavily the system load at
+startup. The option to save precompiled rules and let the udev process
+pick the them up is removed, as it's no longer needed.
+
+Kernel 2.6.15 will have symlinks at /class/input pointing to the real
+device. Libsysfs is changed to "translate" the requested link into the
+real device path, as it would happen with the hotplug event. Otherwise
+device removal and the udev database will not work.
+
+Using 'make STRIPCMD=' will leave the binaries unstripped for debugging
+and packaging.
+
+A few improvements for vol_id, the filesytem probing code.
+
+udev 071
+========
+Fix a stupid typo in extras/run_directory for "make install".
+
+scsi_id creates the temporary devnode now in /dev for usage with a
+non-writable /tmp directory.
+
+The uevent kernel socket buffer can carry app. 50.000 events now,
+let's see who can break this again. :)
+
+The upcoming kernel will have a new input driver core integration.
+Some class devices are now symlinks to the real device. libsysfs
+needs a fix for this to work correctly. Udevstart of older udev
+versions will _not_ create these devices!
+
+udev 070
+========
+Fix a 'install' target in the Makefile, that prevents EXTRAS from
+beeing installed.
+
+udev 069
+========
+A bunch of mostly trivial bugfixes. From now on no node name or
+symlink name can contain any character than plain whitelisted ascii
+characters or validated utf8 byte-streams. This is needed for the
+/dev/disk/by-label/* links, because we import untrusted data and
+export it to the filesystem.
+
+udev 068
+========
+More bugfixes. If udevd was started from the kernel, we don't
+have stdin/stdout/stderr, which broke the forked tools in some
+situations.
+
+udev 067
+========
+Bugfix. udevstart event ordering was broken for a long time.
+The new run_program() uncovered it, because /dev/null was not
+available while we try to run external programs.
+Now udevstart should create it before we run anything.
+
+udev 066
+========
+Minor bugfixes and some distro rules updates. If you don't have the
+persistent disk rules in /dev/disk/by-*/* on your distro, just
+grab it from here. :)
+
+udev 065
+========
+We can use socket communication now to pass events from udev to
+other programs:
+  RUN+="socket:/org/freedesktop/hal/udev_event"
+will pass the whole udev event to the HAL daemon without the need
+for a forked helper. (See ChangeLog for udevmonitor, as an example)
+
+udev 064
+========
+Mostly bugfixes and see ChangeLog.
+
+The test for the existence of an environment value should be
+switched from:
+  ENV{KEY}=="*" to ENV{KEY}=="?*"
+because "*" will not fail anymore, if the key does not exist or
+is empty.
+
+udev 063
+========
+Bugfixes and a few tweaks described in the ChangeLog.
+
+udev 062
+========
+Mostly a Bugfix release.
+
+Added WAIT_FOR_SYSFS="<attribute>" to be able to fight against the sysfs
+timing with custom rules.
+
+udev 061
+========
+We changed the  internal rule storage format. Our large rule files took
+2 MB of RAM, with the change we are down to 99kB.
+
+If the device-node has been created with default name and no symlink or
+options are to remenber, it is not longer stored in the udevdb. HAL will
+need to be updated to work correctly with that change.
+
+To overrride optimization flags, OPTFLAGS may be used now.
+
+udev 060
+========
+Bugfix release.
+
+udev 059
+========
+Major changes happened with this release. The goal is to take over the
+complete kernel-event handling and provide a more efficient way to dispatch
+kernel events. Replacing most of the current shell script logic and the
+kernel forked helper with a netlink-daemon and a rule-based event handling.
+
+o udevd listens to netlink events now. The first valid netlink event
+  will make udevd ignore any message from udevsend that contains a
+  SEQNUM, to avoid duplicate events. The forked events can be disabled
+  with:
+    echo "" > /proc/sys/kernel/hotplug
+  For full support, the broken input-subsytem needs to be fixed, not to
+  bypass the driver core.
+
+o /etc/dev.d/ + /etc/hotplug.d/ directory multiplexing is completely
+  removed from udev itself and must be emulated by calling small
+  helper binaries provided in the extras folder:
+    make EXTRAS=extras/run_directory/
+  will build udev_run_devd and udev_run_hotplugd, which can be called
+  from a rule if needed:
+    RUN+="/sbin/udev_run_hotplugd"
+  The recommended way to handle this is to convert all the calls from
+  the directories to explicit udev rules and get completely rid of the
+  multiplexing. (To catch a ttyUSB event, you now no longer need to
+  fork and exit 300 tty script instances you are not interested in, it
+  is just one rule that matches exactly the device.)
+
+o udev handles now _all_ events not just events for class and block
+  devices, this way it is possible to control the complete event
+  behavior with udev rules. Especially useful for rules like:
+    ACTION="add", DEVPATH="/devices/*", MODALIAS=="?*", RUN+="/sbin/modprobe $modalias"
+
+o As used in the modalias rule, udev supports now textual
+  substitution placeholder along with the usual format chars. This
+  needs to be documented, for now it's only visible in udev_rules_parse.c.
+
+o The rule keys support now more operations. This is documented in the
+  man page. It is possible to add values to list-keys like the SYMLINK
+  and RUN list with KEY+="value" and to clear the list by assigning KEY="".
+  Also "final"-assignments are supported by using KEY:="value", which will
+  prevent changing the key by any later rule.
+
+o kernel 2.6.12 has the "detached_state" attribute removed from
+  sysfs, which was used to recognize sysfs population. We switched that
+  to wait for the "bus" link, which is only available in kernels after 2.6.11.
+  Running this udev version on older kernels may cause a short delay for
+  some events.
+
+o To provide infrastructure for persistent device naming, the id programs:
+  scsi_id, vol_id (former udev_volume_id), and ata_id (new) are able now
+  to export the probed data in environment key format:
+    pim:~ # /sbin/ata_id --export /dev/hda
+    ID_MODEL=HTS726060M9AT00
+    ID_SERIAL=MRH401M4G6UM9B
+    ID_REVISION=MH4OA6BA
+
+  The following rules:
+    KERNEL="hd*[!0-9]", IMPORT="/sbin/ata_id --export $tempnode"
+    KERNEL="hd*[!0-9]", ENV{ID_SERIAL}=="?*", SYMLINK+="disk/by-id/$env{ID_MODEL}_$env{ID_SERIAL}"
+
+  Will create:
+    kay@pim:~> tree /dev/disk
+    /dev/disk
+    |-- by-id
+    |   |-- HTS726060M9AT00_MRH401M4G6UM9B -> ../../hda
+    |   `-- IBM-Memory_Key -> ../../sda
+    |-- by-label
+    |   |-- swap -> ../../hda1
+    |   |-- date -> ../../sda1
+    |   `-- home -> ../../hda3
+    `-- by-uuid
+        |-- 2E08712B0870F2E7 -> ../../hda3
+        |-- 9352cfef-7687-47bc-a2a3-34cf136f72e1 -> ../../hda1
+        |-- E845-7A89 -> ../../sda1
+        `-- b2a61681-3812-4f13-a4ff-920d70604299 -> ../../hda2
+
+  The IMPORT= operation will import these keys in the environment and make
+  it available for later PROGRAM= and RUN= executed programs. The keys are
+  also stored in the udevdb and can be queried from there with one of the
+  next udev versions.
+
+o A few binaries are silently added to the repository, which can be used
+  to replay kernel events from initramfs instead of using coldplug. udevd
+  can be instructed now to queue-up events while the stored events from
+  initramfs are filled into the udevd-queue. This code is still under
+  development and there is no documentation now besides the code itself.
+  The additional binaries get compiled, but are not installed by default.
+
+o There is also a temporary fix for a performance problem where too many
+  events happen in parallel and every event needs to parse the rules.
+  udev can now read precompiled rules stored on disk. This is likely to be
+  replaced by a more elegant solution in a future udev version.
+
+udev 058
+========
+With kernel version 2.6.12, the sysfs file "detached_state" was removed.
+Fix for libsysfs not to expect this file was added.
+
+udev 057
+========
+All rules are applied now, but only the first matching rule with a NAME-key
+will be applied. All later rules with NAME-key are completely ignored. This
+way system supplied symlinks or permissions gets applied to user-defined
+naming rules.
+
+Note:
+Please check your rules setup, if you may need to add OPTIONS="last_rule"
+to some rules, to keep the old behavior.
+
+The rules are read on "remove"-events too. That makes is possible to match
+with keys that are available on remove (KERNEL, SUBSYSTEM, ID, ENV, ...) to
+instruct udev to ignore an event (OPTIONS="ignore_device").
+The new ACTION-key may be used to let a rule act only at a "remove"-event.
+
+The new RUN-key supports rule-based execution of programs after device-node
+handling. This is meant as a general replacement for the dev.d/-directories
+to give fine grained control over the execution of programs.
+
+The %s{}-sysfs format char replacement values are searched at any of the
+devices in the device chain now, not only at the class-device.
+
+We support log priority levels now. The value udev_log in udev.conf is used
+to determine what is printed to syslog. This makes it possible to
+run a version with compiled-in debug messages in a production environment
+which is sometimes needed to find a bug.
+It is still possible to supress the inclusion of _any_ syslog usage with
+USE_LOG=false to create the smallest possible binaries if needed.
+The configured udev_log value can be overridden with the environment variable
+UDEV_LOG.
+
+udev 056
+========
+Possible use of a system-wide klibc:
+  make USE_KLIBC=true KLCC=/usr/bin/klcc all
+will link against an external klibc and our own version will be ignored.
+
+udev 055
+========
+We support an unlimited count of symlinks now.
+
+If USE_STATIC=true is passed to a glibc build, we link statically and use
+a built-in userdb parser to resolve user and group names.
+
+The PLACE= key is gone. It can be replaced by an ID= for a long time, because
+we walk up the chain of physical devices to find a match.
+
+The KEY="<value>" format supports '=', '==', '!=,' , '+=' now. This makes it
+easy to skip certain attribute matches without composing rules with weird
+character class negations like:
+  KERNEL="[!s][!c][!d]*"
+this can now be replaced with:
+  KERNEL!="scd*"
+The current simple '=' is still supported, and should work as it does today,
+but existing rules should be converted if possible, to be better readable.
+
+We have new ENV{}== key now, to match against a maximum of 5 environment
+variables.
+
+udevstart is its own binary again, because we don't need co carry this araound
+with every forked event.

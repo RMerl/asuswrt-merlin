@@ -1,0 +1,152 @@
+#  FreeBSD LPRng Distribution Port Generation
+#       Patrick Powell
+#    Tue Jun  6 18:06:07 PDT 2000
+#
+#  The scripts in this directory largely automate the process
+#    of building a LPRng port or package for FreeBSD.  They
+#    a) ${MAKE} the pkg-plist and other files
+#    b) do a slew of regression tests, etc.
+#    c) make a port or package
+#
+#  Added targets for package/port/testers:
+#    All REPEAT ALL of these targets have security loopholes and should NOT
+#    be used on a system where other users are active.  You have been
+#    warned.
+#
+#   plist:    this makes the pkg-plist. It is assumed
+#             that you will do this on a standalone system, so
+#             it is not paranoid about testing for files, etc.
+#             You are warned.
+#   checkit:  you should use this target to (literally) checkit
+#             to ${MAKE} sure the package installs
+#   cleanit:  you should use this target to clean things up.
+#             This is the equivalent of 'distclean'
+#   packageit:  ${MAKE} a package, install it, clean it, abuse it,
+#             and otherwise torture test it.  Used for checking
+#             to ${MAKE} sure scripts work
+#   addit:    use pkg_add
+#   removeit: use pkg_delete
+#
+#Step 1: untar the distribution and then go the the FreeBSD support directory:
+#    tar zxvf LPRng-...tgz
+#    cd LPRng*/DI*/FR*
+#
+#Step 2: (For the VERY paranoid)
+#   read the rest of this Makefile!
+#	${MAKE} -f Makefile.build checkit
+#     this does all sorts of tests, etc.
+#   The final result is LPRng installed and a port made in this
+#   directory.
+#
+#Step 2: (For the blithely accepting)
+#   ${MAKE} -f Makefile.build plist
+#   ${MAKE} port
+#
+
+
+all:
+	@echo "checkit:  you should use this target to (literally) checkit"
+	@echo "		 to ${MAKE} sure the package installs and to generate a port."
+	@echo "		 Does:  make makesum plist deinstall reinstall package port"
+
+	@echo "cleanit:  you should use this target to clean things up."
+	@echo "		 This is the equivalent of 'distclean'"
+	@echo "packageit:  ${MAKE} a package, install it, clean it, abuse it,"
+	@echo "		 and otherwise torture test it.  Used for checking"
+	@echo "		 to ${MAKE} sure scripts work"
+	@echo "plist:    this makes the pkg-plist. It is assumed"
+	@echo "		 that you will do this on a standalone system, so"
+	@echo "		 it is not paranoid about testing for files, etc."
+	@echo "addit:    use pkg_add"
+	@echo "removeit: use pkg_delete"
+
+checkit:
+	-v=`pkg_info |grep ${PORTNAME} | sed -e 's/ .*//'`; pkg_delete $$v
+	${MAKE} clean makesum
+	${MAKE} -f Makefile.build plist
+	-${MAKE} deinstall
+	${MAKE} reinstall FORCE_PKG_REGISTER=YES
+	${MAKE} package FORCE_PKG_REGISTER=YES
+	${MAKE} deinstall
+	pkg_add ${DISTNAME}*z
+	pkg_delete ${DISTNAME}
+	${MAKE} -f Makefile.build port
+
+plist:
+	-${MAKE} deinstall
+	${MAKE} all
+	MAN1=`cd work/*/man; ls *1`; MAN5=`cd work/*/man; ls *5`; MAN8=`cd work/*/man; ls *8`; \
+	MAN1=`echo $$MAN1`; MAN5=`echo $$MAN5`; MAN8=`echo $$MAN8`; \
+	perl -spi \
+		-e "s/^MAN1=.*/MAN1=$$MAN1/;" \
+		-e "s/^MAN5=.*/MAN5=$$MAN5/;" \
+		-e "s/^MAN8=.*/MAN8=$$MAN8/;" \
+		Makefile
+	${MAKE} FORCE_PKG_REGISTER=YES VERBOSE_INSTALL="set -x" reinstall MAKEPACKAGE=YES  2>&1 |tee /tmp/install.log
+	sed -n -e "/\/man\//d" -e "/^\/usr\/bin\/install/s,.* ${PREFIX}/,,p" /tmp/install.log |sort >pkg-plist
+	sed -n -e "/\/usr\/bin\/install.*sample/s,.* ${PREFIX}/,,p" /tmp/install.log >>pkg-plist
+	sed -n -e "/\/usr\/bin\/install.*.sh/s,.* ${PREFIX}/,,p" /tmp/install.log >>pkg-plist
+	find ${DOCSDIR} -type f | sed -e 's,${DOCSDIR}/,%%PORTDOCS%%%%DOCSDIR%%/,' >>pkg-plist
+	echo '%%PORTDOCS%%@dirrm %%DOCSDIR%%/Reference' >>pkg-plist
+	echo '%%PORTDOCS%%@dirrm %%DOCSDIR%%/PrintingCookbook' >>pkg-plist
+	echo '%%PORTDOCS%%@dirrm %%DOCSDIR%%' >>pkg-plist
+
+# put the updated postinstall script into the package directory
+	if [ -f ${WRKSRC}/preremove ] ; then ${CP} ${WRKSRC}/preremove pkg-deinstall; fi
+	if [ -f ${WRKSRC}/postinstall ] ; then ${CP} ${WRKSRC}/postinstall pkg-install; fi
+
+	sed -e 's!DOCSDIR!${DOCSDIR}!' files-pkg-message >pkg-message
+	-${MAKE} deinstall
+
+# do the tests in the book.  But we cheat a bit
+packageit:
+	-${RM} -f *.*z
+	-${MAKE} deinstall
+	${MAKE} reinstall FORCE_PKG_REGISTER=YES
+	${MAKE} package
+	${MAKE} deinstall
+	pkg_add *.*z
+	pkg_delete ${DISTNAME}
+
+addit:
+	pkg_add ${DISTNAME}.*z
+removeit:
+	pkg_delete ${DISTNAME}
+
+port:
+	-pkg_delete ${DISTNAME}
+	rm -rf *.*z *.bak *.tbz2 /tmp/${PORTNAME}
+	mkdir /tmp/${PORTNAME}
+	-cp Makefile distinfo files-* pkg-* /tmp/${PORTNAME}
+	cd /tmp; shar ` find ${PORTNAME} -print` >${PORTNAME}.port ; rm -rf ${PORTNAME}
+	cd /tmp; sh ${PORTNAME}.port; cd ${PORTNAME}; ${MAKE} install
+
+cleanit:
+	rm -rf pkg-plist distinfo *.*z work
+	cp /dev/null pkg-plist
+
+TESTDIR=/tmp/DISTDIR
+test-fetch:
+	-rm -rf ${TESTDIR}
+	${MKDIR} ${TESTDIR}
+	(cd ${TESTDIR}; \
+	 for file in ${DISTFILES}; do \
+			md5 /usr/ports/distfiles/$${file}; \
+			for site in `${SORTED_MASTER_SITES_CMD}`; do \
+			    ${ECHO_MSG} ">> Attempting to fetch from $${site}."; \
+				DIR=${DIST_SUBDIR}; \
+				case $${file} in \
+				*/*)	${MKDIR} $${file%/*}; \
+						args="-o $${file} $${site}$${file}";; \
+				*)		args=$${site}$${file};; \
+				esac; \
+				if ${SETENV} ${FETCH_ENV} ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${args} ${FETCH_AFTER_ARGS}; then \
+					${ECHO_MSG} ">> OK $${file} from $${site}"; \
+					md5 $${file}; \
+				else \
+					${ECHO_MSG} ">> FAIL $${file} from $${site}";\
+				fi \
+			done; \
+	 done)
+
+.include "Makefile"

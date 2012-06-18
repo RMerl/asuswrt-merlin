@@ -1,0 +1,235 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 2] 2.3 Compiling and Installing Samba</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:29:09Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_02.html" TITLE="2.2 Configuring Samba">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 2.2 Configuring Samba" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch02_01.html" TITLE="2. Installing Samba on a Unix System">
+Chapter 2<br>
+Installing Samba on a Unix System</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_04.html" TITLE="2.4 A Basic Samba Configuration File">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 2.4 A Basic Samba Configuration File" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch02-13217">
+2.3 Compiling and Installing Samba</a></h2><P CLASS="para">At this point you should be ready to build the Samba executables. Compiling is also easy: in the <I CLASS="filename">
+source</i> directory, type <CODE CLASS="literal">
+make</code> on the command line. The <I CLASS="filename">
+make</i> utility will produce a stream of explanatory and success messages, beginning with:</p><PRE CLASS="programlisting">
+Using FLAGS = -O -Iinclude ...</pre><P CLASS="para">
+This build includes compiles for both <EM CLASS="emphasis">
+smbd</em> and <EM CLASS="emphasis">
+nmbd</em>, and ends in a linking command for <I CLASS="filename">
+bin/make_ printerdef</i>. For example, here is a sample make of Samba version 2.0.4 on a Linux server:</p><PRE CLASS="programlisting"><CODE CLASS="literal"># </code>make
+Using FLAGS =  -O -Iinclude -I./include -I./ubiqx -I./smbwrapper  -DSMBLOGFILE=&quot;/usr/local/samba/var/log.smb&quot; -DNMBLOGFILE=&quot;/usr/local/samba/var/log.nmb&quot; -DCONFIGFILE=&quot;/usr/local/samba/lib/smb.conf&quot; -DLMHOSTSFILE=&quot;/usr/local/samba/lib/lmhosts&quot;   -DSWATDIR=&quot;/usr/local/samba/swat&quot; -DSBINDIR=&quot;/usr/local/samba/bin&quot; -DLOCKDIR=&quot;/usr/local/samba/var/locks&quot; -DSMBRUN=&quot;/usr/local/samba/bin/smbrun&quot; -DCODEPAGEDIR=&quot;/usr/local/samba/lib/codepages&quot; -DDRIVERFILE=&quot;/usr/local/samba/lib/printers.def&quot; -DBINDIR=&quot;/usr/local/samba/bin&quot; -DHAVE_INCLUDES_H -DPASSWD_PROGRAM=&quot;/bin/passwd&quot; -DSMB_PASSWD_FILE=&quot;/usr/local/samba/private/smbpasswd&quot;
+Using FLAGS32 =  -O -Iinclude -I./include -I./ubiqx -I./smbwrapper  -DSMBLOGFILE=&quot;/usr/local/samba/var/log.smb&quot; -DNMBLOGFILE=&quot;/usr/local/samba/var/log.nmb&quot; -DCONFIGFILE=&quot;/usr/local/samba/lib/smb.conf&quot; -DLMHOSTSFILE=&quot;/usr/local/samba/lib/lmhosts&quot;   -DSWATDIR=&quot;/usr/local/samba/swat&quot; -DSBINDIR=&quot;/usr/local/samba/bin&quot; -DLOCKDIR=&quot;/usr/local/samba/var/locks&quot; -DSMBRUN=&quot;/usr/local/samba/bin/smbrun&quot; -DCODEPAGEDIR=&quot;/usr/local/samba/lib/codepages&quot; -DDRIVERFILE=&quot;/usr/local/samba/lib/printers.def&quot; -DBINDIR=&quot;/usr/local/samba/bin&quot; -DHAVE_INCLUDES_H -DPASSWD_PROGRAM=&quot;/bin/passwd&quot; -DSMB_PASSWD_FILE=&quot;/usr/local/samba/private/smbpasswd&quot;
+Using LIBS = -lreadline -ldl  -lcrypt -lpam
+Compiling smbd/server.c
+Compiling smbd/files.c
+Compiling smbd/chgpasswd.c
+
+<EM CLASS="emphasis">...(content omitted)...</em>
+
+Compiling rpcclient/cmd_samr.c
+Compiling rpcclient/cmd_reg.c
+Compiling rpcclient/cmd_srvsvc.c
+Compiling rpcclient/cmd_netlogon.c
+Linking bin/rpcclient
+Compiling utils/smbpasswd.c
+Linking bin/smbpasswd
+Compiling utils/make_smbcodepage.c
+Linking bin/make_smbcodepage
+Compiling utils/nmblookup.c
+Linking bin/nmblookup
+Compiling utils/make_printerdef.c
+Linking bin/make_printerdef</pre><P CLASS="para">
+If you encounter problems when compiling, check the Samba documentation to see if it is easily fixable. Another possibility is to search or post to the Samba mailing lists, which are given at the end of <a href="ch09_03.html">Chapter 9</a>, and on the Samba home page. Most compilation issues are system specific and almost always easy to overcome.</p><P CLASS="para">
+Now that the files have been compiled, you can install them into the directories you identified with the command:</p><PRE CLASS="programlisting"># <CODE CLASS="userinput"><B>make install</b></code></pre><P CLASS="para">
+If you happen to be upgrading, your old Samba files will be saved with the extension <EM CLASS="emphasis">
+ .old</em>, and you can go back to that previous version with the command <CODE CLASS="literal">
+make</code> <CODE CLASS="literal">
+revert</code>. After doing a <CODE CLASS="literal">
+make</code> <CODE CLASS="literal">
+install</code>, you should copy the <EM CLASS="emphasis">
+.old  </em>files (if they exist) to a new location or name. Otherwise, the next time you install Samba, the original <EM CLASS="emphasis">
+.old</em>  will be overwritten without warning and you could lose your earlier version. If you configured Samba to use the default locations for files, the new files will be installed in the directories listed in <A CLASS="xref" HREF="ch02_03.html#ch02-pgfId-939627">
+Table 2.2</a>. Remember that you need to  perform the installation from an account that has write privileges on these target directories; this is typically the root account. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch02-pgfId-939627">
+Table 2.2: Samba Installation Directories </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Directory</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Description</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<EM CLASS="emphasis">
+/usr/local/samba</em></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">Main tree</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<EM CLASS="emphasis">
+/usr/local/samba/bin</em></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Binaries</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<EM CLASS="emphasis">
+/usr/local/samba/lib</em></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<EM CLASS="emphasis">
+smb.conf</em>, <EM CLASS="emphasis">
+lmhosts</em>, configuration files, etc.</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<EM CLASS="emphasis">
+/usr/local/samba/man</em></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Samba documentation</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<EM CLASS="emphasis">
+/usr/local/samba/private</em></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Samba encrypted password file</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<EM CLASS="emphasis">
+/usr/local/samba/swat</em></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+SWAT files</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<EM CLASS="emphasis">
+/usr/local/samba/var</em></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Samba log files, lock files, browse list info, shared memory files, process ID files</p></td></tr></tbody></table><P CLASS="para">
+Throughout the remainder of the book, we occasionally refer to the location of the main tree as <CODE CLASS="replaceable">
+<I>
+samba_dir</i></code>. In most configurations, this is the base directory of the installed Samba package: <I CLASS="filename">
+/usr/local/samba</i>.</p><BLOCKQUOTE CLASS="warning">
+<P CLASS="para">
+<STRONG>
+WARNING:</strong> Watch out if you've made <I CLASS="filename">
+/usr</i> a read-only partition. You will want to put the logs, locks, and password files somewhere else.</p></blockquote><P CLASS="para">
+Here is the installation that we performed on our machine. You can see that we used <I CLASS="filename">
+/usr/local/samba</i> as the base directory for the distribution (e.g., <CODE CLASS="replaceable">
+<I>
+samba_dir</i></code>):</p><PRE CLASS="programlisting">
+# <CODE CLASS="userinput"><B>make install</b></code>
+Using FLAGS = -O -Iinclude -I./include -I./ubiqx -I./smbwrapper  -DSMBLOGFILE=&quot;/usr/local/samba/var/log.smb&quot; -DNMBLOGFILE=&quot;/usr/local/samba/var/log.nmb&quot; -DCONFIGFILE=&quot;/usr/local/samba/lib/smb.conf&quot; -
+
+<I CLASS="lineannotation">...(content omitted)...</i>
+
+The binaries are installed. You may restore the old binaries
+(if there were any) using the command &quot;make revert&quot;. You may
+uninstall the binaries using the command &quot;make uninstallbin&quot;
+or &quot;make uninstall&quot; to uninstall binaries, man pages and shell
+scripts.
+
+<I CLASS="lineannotation">...(content omitted)...</i>
+
+============================================================
+The SWAT files have been installed. Remember to read the 
+README for information on enabling and using SWAT.
+============================================================</pre><P CLASS="para">
+If the last message is about SWAT, you've successfully installed all the files. Congratulations! You now have Samba on your system!</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch02-pgfId-943188">
+2.3.1 Final Installation Steps</a></h3><P CLASS="para">There are a couple of final steps to perform. Specifically, add the Samba Web Administration Tool (SWAT) to the <I CLASS="filename">
+/etc/services</i> and <I CLASS="filename">
+/etc/inetd.conf</i> configuration files. SWAT runs as a daemon under <EM CLASS="emphasis">
+inetd</em> and provides a forms-based editor in your web browser for creating and modifying SMB configuration files.</p><OL CLASS="orderedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch02-pgfId-943198">
+</a>To add SWAT, add the following line to the end of the <I CLASS="filename">
+/etc/services</i> file:</p></li></ol><PRE CLASS="programlisting">
+swat   901/tcp</pre><OL CLASS="orderedlist" START="2">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch02-pgfId-938792">
+</a>Add these lines to <I CLASS="filename">
+/etc/inetd.conf.</i> (Check your <I CLASS="filename">
+inetd.conf</i> manual page to see the exact format of the<I CLASS="filename">
+ inetd.conf</i> file if it differs from the following example.) Don't forget to change the path to the SWAT binary if you installed it in a different location from the default <I CLASS="filename">
+/usr/local/samba</i>.</p></li></ol><PRE CLASS="programlisting">
+swat   stream  tcp  nowait.400  root  /usr/local/samba/bin/swat  swat</pre><P CLASS="para">
+And that's pretty much it for the installation. Before you can start up Samba, however, you need to create a configuration file for it. </p></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_02.html" TITLE="2.2 Configuring Samba">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 2.2 Configuring Samba" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_04.html" TITLE="2.4 A Basic Samba Configuration File">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 2.4 A Basic Samba Configuration File" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+2.2 Configuring Samba</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+2.4 A Basic Samba Configuration File</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

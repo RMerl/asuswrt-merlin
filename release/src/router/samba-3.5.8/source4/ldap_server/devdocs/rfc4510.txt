@@ -1,0 +1,395 @@
+
+
+
+
+
+
+Network Working Group                                   K. Zeilenga, Ed.
+Request for Comments: 4510                           OpenLDAP Foundation
+Obsoletes: 2251, 2252, 2253, 2254, 2255,                       June 2006
+           2256, 2829, 2830, 3377, 3771
+Category: Standards Track
+
+
+             Lightweight Directory Access Protocol (LDAP):
+                    Technical Specification Road Map
+
+Status of This Memo
+
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+
+Copyright Notice
+
+   Copyright (C) The Internet Society (2006).
+
+Abstract
+
+   The Lightweight Directory Access Protocol (LDAP) is an Internet
+   protocol for accessing distributed directory services that act in
+   accordance with X.500 data and service models.  This document
+   provides a road map of the LDAP Technical Specification.
+
+1.  The LDAP Technical Specification
+
+   The technical specification detailing version 3 of the Lightweight
+   Directory Access Protocol (LDAP), an Internet Protocol, consists of
+   this document and the following documents:
+
+      LDAP: The Protocol [RFC4511]
+      LDAP: Directory Information Models [RFC4512]
+      LDAP: Authentication Methods and Security Mechanisms [RFC4513]
+      LDAP: String Representation of Distinguished Names [RFC4514]
+      LDAP: String Representation of Search Filters [RFC4515]
+      LDAP: Uniform Resource Locator [RFC4516]
+      LDAP: Syntaxes and Matching Rules [RFC4517]
+      LDAP: Internationalized String Preparation [RFC4518]
+      LDAP: Schema for User Applications [RFC4519]
+
+
+
+
+
+
+
+Zeilenga                    Standards Track                     [Page 1]
+
+RFC 4510                   LDAP: TS Road Map                   June 2006
+
+
+   The terms "LDAP" and "LDAPv3" are commonly used to refer informally
+   to the protocol specified by this technical specification.  The LDAP
+   suite, as defined here, should be formally identified in other
+   documents by a normative reference to this document.
+
+   LDAP is an extensible protocol.  Extensions to LDAP may be specified
+   in other documents.  Nomenclature denoting such combinations of
+   LDAP-plus-extensions is not defined by this document but may be
+   defined in some future document(s).  Extensions are expected to be
+   truly optional.  Considerations for the LDAP extensions described in
+   BCP 118, RFC 4521 [RFC4521] fully apply to this revision of the LDAP
+   Technical Specification.
+
+   IANA (Internet Assigned Numbers Authority) considerations for LDAP
+   described in BCP 64, RFC 4520 [RFC4520] apply fully to this revision
+   of the LDAP technical specification.
+
+1.1.  Conventions
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in BCP 14 [RFC2119].
+
+2.  Relationship to X.500
+
+   This technical specification defines LDAP in terms of [X.500] as an
+   X.500 access mechanism.  An LDAP server MUST act in accordance with
+   the X.500 (1993) series of International Telecommunication Union -
+   Telecommunication Standardization (ITU-T) Recommendations when
+   providing the service.  However, it is not required that an LDAP
+   server make use of any X.500 protocols in providing this service.
+   For example, LDAP can be mapped onto any other directory system so
+   long as the X.500 data and service models [X.501][X.511], as used in
+   LDAP, are not violated in the LDAP interface.
+
+   This technical specification explicitly incorporates portions of
+   X.500(93).  Later revisions of X.500 do not automatically apply to
+   this technical specification.
+
+3.  Relationship to Obsolete Specifications
+
+   This technical specification, as defined in Section 1, obsoletes
+   entirely the previously defined LDAP technical specification defined
+   in RFC 3377 (and consisting of RFCs 2251-2256, 2829, 2830, 3771, and
+   3377 itself).  The technical specification was significantly
+   reorganized.
+
+
+
+
+
+Zeilenga                    Standards Track                     [Page 2]
+
+RFC 4510                   LDAP: TS Road Map                   June 2006
+
+
+   This document replaces RFC 3377 as well as Section 3.3 of RFC 2251.
+   [RFC4512] replaces portions of RFC 2251, RFC 2252, and RFC 2256.
+   [RFC4511] replaces the majority RFC 2251, portions of RFC 2252, and
+   all of RFC 3771.  [RFC4513] replaces RFC 2829, RFC 2830, and portions
+   of RFC 2251.  [RFC4517] replaces the majority of RFC 2252 and
+   portions of RFC 2256.  [RFC4519] replaces the majority of RFC 2256.
+   [RFC4514] replaces RFC 2253.  [RFC4515] replaces RFC 2254.  [RFC4516]
+   replaces RFC 2255.
+
+   [RFC4518] is new to this revision of the LDAP technical
+   specification.
+
+   Each document of this specification contains appendices summarizing
+   changes to all sections of the specifications they replace.  Appendix
+   A.1 of this document details changes made to RFC 3377.  Appendix A.2
+   of this document details changes made to Section 3.3 of RFC 2251.
+
+   Additionally, portions of this technical specification update and/or
+   replace a number of other documents not listed above.  These
+   relationships are discussed in the documents detailing these portions
+   of this technical specification.
+
+4.  Security Considerations
+
+   LDAP security considerations are discussed in each document
+   comprising the technical specification.
+
+5.  Acknowledgements
+
+   This document is based largely on RFC 3377 by J. Hodges and R.
+   Morgan, a product of the LDAPBIS and LDAPEXT Working Groups.  The
+   document also borrows from RFC 2251 by M. Wahl, T. Howes, and S.
+   Kille, a product of the ASID Working Group.
+
+   This document is a product of the IETF LDAPBIS Working Group.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Zeilenga                    Standards Track                     [Page 3]
+
+RFC 4510                   LDAP: TS Road Map                   June 2006
+
+
+6.  Normative References
+
+   [RFC2119]     Bradner, S., "Key words for use in RFCs to Indicate
+                 Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [RFC4511]     Sermersheim, J., Ed., "Lightweight Directory Access
+                 Protocol (LDAP): The Protocol", RFC 4511, June 2006.
+
+   [RFC4512]     Zeilenga, K., "Lightweight Directory Access Protocol
+                 (LDAP): Directory Information Models", RFC 4512, June
+                 2006.
+
+   [RFC4513]     Harrison, R., Ed., "Lightweight Directory Access
+                 Protocol (LDAP): Authentication Methods and Security
+                 Mechanisms", RFC 4513, June 2006.
+
+   [RFC4514]     Zeilenga, K., Ed., "Lightweight Directory Access
+                 Protocol (LDAP): String Representation of Distinguished
+                 Names", RFC 4514, June 2006.
+
+   [RFC4515]     Smith, M., Ed. and T. Howes, "Lightweight Directory
+                 Access Protocol (LDAP): String Representation of Search
+                 Filters", RFC 4515, June 2006.
+
+   [RFC4516]     Smith, M., Ed. and T. Howes, "Lightweight Directory
+                 Access Protocol (LDAP): Uniform Resource Locator", RFC
+                 4516, June 2006.
+
+   [RFC4517]     Legg, S., Ed., "Lightweight Directory Access Protocol
+                 (LDAP): Syntaxes and Matching Rules", RFC 4517, June
+                 2006.
+
+   [RFC4518]     Zeilenga, K., "Lightweight Directory Access Protocol
+                 (LDAP): Internationalized String Preparation", RFC
+                 4518, June 2006.
+
+   [RFC4519]     Sciberras, A., Ed., "Lightweight Directory Access
+                 Protocol (LDAP): Schema for User Applications", RFC
+                 4519, June 2006.
+
+   [RFC4520]     Zeilenga, K., "Internet Assigned Numbers Authority
+                 (IANA) Considerations for the Lightweight Directory
+                 Access Protocol (LDAP)", BCP 64, RFC 4520, June 2006.
+
+   [RFC4521]     Zeilenga, K., "Considerations for LDAP Extensions", BCP
+                 118, RFC 4521, June 2006.
+
+
+
+
+
+Zeilenga                    Standards Track                     [Page 4]
+
+RFC 4510                   LDAP: TS Road Map                   June 2006
+
+
+   [X.500]       International Telecommunication Union -
+                 Telecommunication Standardization Sector, "The
+                 Directory -- Overview of concepts, models and
+                 services", X.500(1993) (also ISO/IEC 9594-1:1994).
+
+   [X.501]       International Telecommunication Union -
+                 Telecommunication Standardization Sector, "The
+                 Directory -- Models", X.501(1993) (also ISO/IEC 9594-
+                 2:1994).
+
+   [X.511]       International Telecommunication Union -
+                 Telecommunication Standardization Sector, "The
+                 Directory: Abstract Service Definition", X.511(1993)
+                 (also ISO/IEC 9594-3:1993).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Zeilenga                    Standards Track                     [Page 5]
+
+RFC 4510                   LDAP: TS Road Map                   June 2006
+
+
+Appendix A.  Changes to Previous Documents
+
+   This appendix outlines changes this document makes relative to the
+   documents it replaces (in whole or in part).
+
+A.1. Changes to RFC 3377
+
+   This document is nearly a complete rewrite of RFC 3377 as much of the
+   material of RFC 3377 is no longer applicable.  The changes include
+   redefining the terms "LDAP" and "LDAPv3" to refer to this revision of
+   the technical specification.
+
+A.2. Changes to Section 3.3 of RFC 2251
+
+   The section was modified slightly (the word "document" was replaced
+   with "technical specification") to clarify that it applies to the
+   entire LDAP technical specification.
+
+Author's Address
+
+   Kurt D. Zeilenga
+   OpenLDAP Foundation
+
+   EMail: Kurt@OpenLDAP.org
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Zeilenga                    Standards Track                     [Page 6]
+
+RFC 4510                   LDAP: TS Road Map                   June 2006
+
+
+Full Copyright Statement
+
+   Copyright (C) The Internet Society (2006).
+
+   This document is subject to the rights, licenses and restrictions
+   contained in BCP 78, and except as set forth therein, the authors
+   retain all their rights.
+
+   This document and the information contained herein are provided on an
+   "AS IS" basis and THE CONTRIBUTOR, THE ORGANIZATION HE/SHE REPRESENTS
+   OR IS SPONSORED BY (IF ANY), THE INTERNET SOCIETY AND THE INTERNET
+   ENGINEERING TASK FORCE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED,
+   INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE
+   INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED
+   WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Intellectual Property
+
+   The IETF takes no position regarding the validity or scope of any
+   Intellectual Property Rights or other rights that might be claimed to
+   pertain to the implementation or use of the technology described in
+   this document or the extent to which any license under such rights
+   might or might not be available; nor does it represent that it has
+   made any independent effort to identify any such rights.  Information
+   on the procedures with respect to rights in RFC documents can be
+   found in BCP 78 and BCP 79.
+
+   Copies of IPR disclosures made to the IETF Secretariat and any
+   assurances of licenses to be made available, or the result of an
+   attempt made to obtain a general license or permission for the use of
+   such proprietary rights by implementers or users of this
+   specification can be obtained from the IETF on-line IPR repository at
+   http://www.ietf.org/ipr.
+
+   The IETF invites any interested party to bring to its attention any
+   copyrights, patents or patent applications, or other proprietary
+   rights that may cover technology that may be required to implement
+   this standard.  Please address the information to the IETF at
+   ietf-ipr@ietf.org.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is provided by the IETF
+   Administrative Support Activity (IASA).
+
+
+
+
+
+
+
+Zeilenga                    Standards Track                     [Page 7]
+

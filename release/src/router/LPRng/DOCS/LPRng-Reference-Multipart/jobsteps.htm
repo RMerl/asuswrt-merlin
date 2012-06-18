@@ -1,0 +1,250 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Job Processing</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="Legacy Compatibility" href=
+    "x6798.htm">
+    <link rel="NEXT" title="Submitting Jobs and Service Requests"
+    href="submitting.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x6798.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "submitting.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="JOBSTEPS"></a>Chapter 15. Job Processing</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>15.1. <a href=
+          "jobsteps.htm#CONFIGSETUP">Configuration and Setup
+          Options</a></dt>
+
+          <dt>15.2. <a href="submitting.htm">Submitting Jobs and
+          Service Requests</a></dt>
+
+          <dt>15.3. <a href="reception.htm">Job Reception</a></dt>
+
+          <dt>15.4. <a href="spoolq.htm">Spool Queue
+          Processing</a></dt>
+
+          <dt>15.5. <a href="opendevice.htm">Opening the Output
+          Device</a></dt>
+
+          <dt>15.6. <a href="bannerprinting.htm">Printing
+          Banners</a></dt>
+
+          <dt>15.7. <a href="printingjob.htm">Printing Job
+          Files</a></dt>
+
+          <dt>15.8. <a href="x7427.htm">Printing Banner At End of
+          Job</a></dt>
+
+          <dt>15.9. <a href="normalterm.htm">Normal
+          Termination</a></dt>
+
+          <dt>15.10. <a href="abnormalterm.htm">Abnormal
+          Termination</a></dt>
+
+          <dt>15.11. <a href="bk.htm">Forwarding Jobs</a></dt>
+
+          <dt>15.12. <a href="debugging.htm">Debugging</a></dt>
+        </dl>
+      </div>
+
+      <p>Much of the flexibility of the <b class=
+      "APPLICATION">LPRng</b> software is obtained from the ability
+      to control the details of each step of job processing. The
+      following section details each step in the processing of a
+      job, and explains the printcap options used to control each
+      operation.</p>
+
+      <p>Assume the <var class="LITERAL">pr</var> printcap entry
+      has the form:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6807"></a>
+<pre class="SCREEN">
+    pr
+        :lp=/dev/lp  OR  :lp=rp@rm
+        :sd=/var/spool/lpd/pr
+        :lf=log
+        :filter=/usr/local/bin/lpf
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Assume that we have used the following command to print a
+      set of files.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6810"></a>
+<pre class="SCREEN">
+    lpr -Ppr file1 file2
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>This will create a control file in the <tt class=
+      "FILENAME">/var/spool/lpd/pr</tt> directory with the
+      following contents (this is an example - in practice there
+      may be minor differences between the example and an actual
+      control file):</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6814"></a>
+<pre class="SCREEN">
+    Hh4.private
+    J/tmp/file1 /tmp/file2
+    CA
+    Lpapowell
+    Ppapowell
+    fdfA002230h4.private
+    N/tmp/file1
+    UdfA002230h4.private
+    fdfB002230h4.private
+    N/tmp/file2
+    UdfB002230h4.private
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>We will refer to this example throughout the following
+      sections.</p>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="CONFIGSETUP">15.1. Configuration
+        and Setup Options</a></h1>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">ipv6</var> FLAG <span class=
+            "emphasis"><i class="EMPHASIS">use IPV6 Network
+            facilities</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">default_tmp_dir=</var><span
+            class="emphasis"><i class="EMPHASIS">temporary
+            directory</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">lockfile=</var><span class=
+            "emphasis"><i class="EMPHASIS">lpd server lock
+            file</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">report_server_as=</var><span
+            class="emphasis"><i class="EMPHASIS">server name for
+            status reports</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">spool_dir_perms=</var><span
+            class="emphasis"><i class="EMPHASIS">spool directory
+            permissions</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">spool_file_perms=</var><span
+            class="emphasis"><i class="EMPHASIS">spool file
+            permissions</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>The <var class="LITERAL">ipv6</var> specifies that the
+        IPV6 protocol, rather than IPV4 will be used.</p>
+
+        <p>The <var class="LITERAL">lockfile</var> specifies the
+        location of the lock file used by the <b class=
+        "APPLICATION">lpd</b> server. This file has the port number
+        in the <var class="LITERAL">lpd_port</var> value appended
+        to form a unique lock file name.</p>
+
+        <p>The <var class="LITERAL">spool_dir_perms</var> and <var
+        class="LITERAL">spool_file_perms</var> (default 0700 and
+        0600 respectively) values are the (numeric) permissions for
+        the spool directory and spool files.</p>
+
+        <p>The <var class="LITERAL">report_server_as</var> option
+        allows an administrator to masquerade a server with another
+        name. This could be useful if various load sharing
+        activities are being carried out, or if there are problems
+        reconfiguring DNS to cause the correct server name to be
+        reported.</p>
+
+        <p>The <var class="LITERAL">default_tmp_dir</var> option
+        specifies a temporary directory to be used to hold files or
+        information temporarily if there is no spool directory
+        available.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x6798.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "submitting.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Legacy
+          Compatibility</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Submitting
+          Jobs and Service Requests</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

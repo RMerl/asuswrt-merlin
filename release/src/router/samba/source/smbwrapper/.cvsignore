@@ -1,0 +1,8 @@
+*.po
+*.po32
+kernel_stat.h
+smbsh
+tst
+tst.c
+wrapper.h
+xstat.c

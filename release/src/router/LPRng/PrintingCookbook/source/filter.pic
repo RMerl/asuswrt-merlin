@@ -1,0 +1,7 @@
+.PS
+ Lpd: box "lpd"
+ Filter: box "Filter" with .w at Lpd.e + (.5,0) ;
+ Printer: box "Printer" with .w at Filter.e + (.5,0) ;
+ arrow <-> from Lpd.e to Filter.w;
+ arrow <-> from Filter.e to Printer.w;
+.PE

@@ -1,0 +1,22 @@
+<samba:parameter name="aio write size"
+                 context="S"
+		 type="integer"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+  <para>If Samba has been built with asynchronous I/O support and this
+    integer parameter is set to non-zero value,
+    Samba will write to file asynchronously when size of request is bigger
+    than this value. Note that it happens only for non-chained and non-chaining
+    reads and when not using write cache.</para>
+
+  <para>Current implementation of asynchronous I/O in Samba 3.0 does support
+    only up to 10 outstanding asynchronous requests, read and write combined.</para>
+  
+  <related>write cache size</related>
+  <related>aio read size</related>
+</description>
+
+<value type="default">0</value>
+<value type="example">16384<comment> Use asynchronous I/O for writes bigger than 16KB
+    request size</comment></value>
+</samba:parameter>

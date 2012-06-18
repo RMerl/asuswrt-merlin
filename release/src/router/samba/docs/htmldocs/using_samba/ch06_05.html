@@ -1,0 +1,333 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 6] 6.5 Windows Domains</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:34:04Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch06_04.html" TITLE="6.4 Passwords">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 6.4 Passwords" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch06_01.html" TITLE="6. Users, Security, and Domains ">
+Chapter 6<br>
+Users, Security, and Domains </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch06_06.html" TITLE="6.6 Logon Scripts">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 6.6 Logon Scripts" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch06-23084">
+6.5 Windows Domains</a></h2><P CLASS="para">Now that you are comfortable with users and passwords on a Samba server, we can show you how to set up Samba to become a primary domain controller for Windows 95/98 and NT machines. Why use domains? The answer probably isn't obvious until you look behind the scenes, especially with Windows 95/98.</p><P CLASS="para">
+Recall that with traditional workgroups, Windows 95/98 simply accepts each username and password that you enter when logging on to the system. There are no unauthorized users with Windows 95/98; if a new user logs on, the operating system simply asks for a new password and authenticates the user against that password from then on. The only time that Windows 95/98 attempts to use the password you entered is when connecting to another share.</p><P CLASS="para">Domain logons, on the other hand, are similar to Unix systems. In order to log on to the domain, a valid username and password must be presented at startup, which is then authenticated against the primary domain controller's password database. If the password is invalid, the user is immediately notified and they cannot log on to the domain.</p><P CLASS="para">
+There's more good news: once you have successfully logged on to the domain, you can access any of the shares in the domain to which you have rights without having to reauthenticate yourself. More precisely, the primary domain controller returns a token to the client machine that allows it to access any share without consulting the PDC again. Although you probably won't notice the shift, this can be beneficial in cutting down network traffic. (You can disable this behavior if you wish by using the <CODE CLASS="literal">
+revalidate</code> option.)</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch06-36822">
+6.5.1 Configuring Samba for Windows Domain Logons</a></h3><P CLASS="para">
+If you wish to allow Samba to act as a domain controller, use the following sections to configure Samba and your clients to allow domain access. </p><P CLASS="para">
+If you would like more information on how to set up domains, see the <I CLASS="filename">
+DOMAINS.TXT</i> file that comes with the Samba distribution.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-962093">
+6.5.1.1 Windows 95/98 clients</a></h4><P CLASS="para">Setting up Samba as a PDC for Windows 95/98 clients is somewhat anticlimactic. All you really need to do on the server side is ensure that:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-962098">
+</a>Samba is the only primary domain controller for the current workgroup.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-963241">
+</a>There is a WINS server available on the network, either a Samba machine or a Windows NT server. (See <a href="ch07_01.html"><b>Chapter 7, <CITE CLASS="chapter">Printing and Name Resolution</cite></b></a>, for more information on WINS.)</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-962099">
+</a>Samba is using user-level security (i.e., it doesn't hand off password authentication to anyone else). You do not want to use domain-level security if Samba itself is acting as the PDC.</p></li></ul><P CLASS="para">
+At that point, you can insert the following options into your Samba configuration file:</p><PRE CLASS="programlisting">
+[global]
+	workgroup = SIMPLE
+	domain logons = yes
+
+# Be sure to set user-level security!
+
+	security = user
+
+# Be sure to become the primary domain controller!
+
+	os level = 34
+	local master = yes
+	preferred master = yes
+	domain master = yes</pre><P CLASS="para">
+The <CODE CLASS="literal">
+domain</code> <CODE CLASS="literal">
+logons</code> option enables Samba to perform domain authentication on behalf of other clients that request it. The name of the domain will be the same as the workgroup listed in the Samba configuration file, in this case: SIMPLE.</p><P CLASS="para">
+After that, you need to create a non-writable, non-public, non-browesable disk share called <CODE CLASS="literal">
+[netlogon]</code> (it does not matter where this share points to as long as each Windows client can connect to it): </p><PRE CLASS="programlisting">
+[netlogon]
+	comment = The domain logon service
+	path = /export/samba/logon
+	public = no
+	writeable = no
+	browsable = no</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-961711">
+6.5.1.2 Windows NT clients</a></h4><P CLASS="para">If you have Window NT clients on your system, there are a few more steps that need to be taken in order for Samba to act as their primary domain controller.</p><BLOCKQUOTE CLASS="warning">
+<P CLASS="para">
+<STRONG>
+WARNING:</strong> You will need to use at least Samba 2.1 to ensure that PDC functionality for Windows NT clients is present. Prior to Samba 2.1, only limited user authentication for NT clients was present. At the time this book went to press, Samba 2.0.5 was the latest version, but Samba  2.1 was available through CVS download. Instructions on downloading alpha versions of Samba are given in <a href="appe_01.html"><b>Appendix E, <CITE CLASS="appendix">Downloading Samba with CVS</cite></b></a>.</p></blockquote><P CLASS="para">
+As before, you need to ensure that Samba is a primary domain controller for the current workgroup and is using user-level security. However, you must also ensure that Samba is using encrypted passwords. In other words, alter the <CODE CLASS="literal">
+[global]</code> options the previous example to include the <CODE CLASS="literal">
+encrypted</code> <CODE CLASS="literal">
+passwords</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code> option, as shown here: </p><PRE CLASS="programlisting">
+[global]
+	workgroup = SIMPLE
+	encrypted passwords = yes
+	domain logons = yes
+
+	security = user </pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-961829">
+6.5.1.3 Creating trust accounts for NT clients</a></h4><P CLASS="para">
+This step is exclusively for Windows NT clients. All NT clients that connect to a primary domain controller make use of <I CLASS="firstterm">
+trust accounts</i>. These accounts allow a machine to log in to the PDC itself (not one of its shares), which means that the PDC can trust any further connections from users on that client. For all intents and purposes, a trust account is identical to a user account. In fact, we will be using standard Unix user accounts to emulate trust accounts for the Samba server.</p><P CLASS="para">
+The login name of a machine's trust account is the name of the machine with a dollar sign appended to it. For example, if our Windows NT machine is named <CODE CLASS="literal">
+chimaera</code>, the login account would be <CODE CLASS="literal">
+chimaera$</code>. The initial password of the account is simply the name of the machine in lowercase letters. In order to forge the trust account on the Samba server, you need to create a Unix account with the appropriate machine name, as well as an encrypted password entry in the <I CLASS="filename">
+smbpasswd</i> database.</p><P CLASS="para">
+Let's tackle the first part. Here, we only need to modify the <I CLASS="filename">
+/etc/passwd</i> file to support the trust account; there is no need to create a home directory or assign a shell to the "user" because the only part we are interested in is whether a login is permitted. Therefore, we can create a "dummy" account with the following entry:</p><PRE CLASS="programlisting">
+chimaera$:*:1000:900:Trust Account:/dev/null:/dev/null</pre><P CLASS="para">
+Note that we have also disabled the password field by placing a <CODE CLASS="literal">
+*</code> in it. This is because Samba will use the <I CLASS="filename">
+smbpasswd</i> file to contain the password instead, and we don't want anyone to telnet into the machine using that account. In fact, the only value other than the account name that is used here is the UID of the account for the encrypted password database (1000). This number must map to a unique resource ID on the NT server and cannot conflict with any other resource IDs. Hence, no NT user or group should map to this number or a networking error will occur.</p><P CLASS="para">
+Next, add the encrypted password using the <I CLASS="filename">
+smbpasswd</i> command, as follows: </p><PRE CLASS="programlisting"># <CODE CLASS="userinput"><B>smbpasswd -a -m chimaera</b></code>
+Added user chimaera$
+Password changed for user chimaera$</pre><P CLASS="para">
+The <CODE CLASS="literal">
+-m</code> option specifies that a machine trust account is being generated. The <I CLASS="filename">
+smbpasswd</i> program will automatically set the initial encrypted password as the NetBIOS name of the machine in lowercase letters; you don't need to enter it. When specifying this option on the command line, do not put a dollar sign after the machine name&nbsp;- it will be appended automatically. Once the encrypted password has been added, Samba is ready to handle domain logins from a NT client.</p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch06-pgfId-961709">
+6.5.2 Configuring Windows Clients for Domain Logons</a></h3><P CLASS="para">
+Once you have Samba configured for domain logons, you need to set up your Windows clients to log on to the domain at startup.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-962166">
+6.5.2.1 Windows 95/98</a></h4><P CLASS="para">With Windows 95/98, this can be done by raising the Network configuration dialog in the Windows Control Panel and selecting the Properties for "Client for Microsoft Networks." At this point, you should see a dialog box similar to <A CLASS="xref" HREF="ch06_05.html#ch06-48609">
+Figure 6.4</a>. Select the "Logon to Windows Domain" checkbox at the top of the dialog box, and enter the workgroup that is listed in the Samba configuration file as the Windows NT domain. Then click on OK and reboot the machine when asked.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch06-48609">
+Figure 6.4: Configuring a Windows 95/98 client for domain logons</a></h4><IMG CLASS="graphic" SRC="figs/sam.0604.gif" ALT="Figure 6.4"><BLOCKQUOTE CLASS="warning">
+<P CLASS="para">
+<STRONG>
+WARNING:</strong> If Windows complains that you are already logged into the domain,  you probably have an active connection to a share in the workgroup (such as a mapped network drive). Simply disconnect the resource temporarily by right-clicking on its icon and choosing the Disconnect pop-up menu item.</p></blockquote><P CLASS="para">
+When Windows reboots, you should see the standard login dialog with an addition: a field for a domain. The domain name should already be filled in, so simply enter your password and click on the OK button. At this point, Windows should consult the primary domain controller (Samba) to see if the password is correct. (You can check the log files if you want to see this in action.) If it worked, congratulations! You have properly configured Samba to act as a domain controller for Windows 95/98 machines and your client is successfully connected.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-961780">
+6.5.2.2 Windows NT 4.0</a></h4><P CLASS="para">To configure Windows NT for domain logons, open the Network configuration dialog in the Windows NT Control Panel. The first tab that you see should list the identification of the machine.</p><P CLASS="para">
+Press the Change button and you should see the dialog box shown in <A CLASS="xref" HREF="ch06_05.html#ch06-89804">
+Figure 6.5</a>. In this dialog box, you can choose to have the Windows NT client become a member of the domain by selecting the radio button marked Domain in the "Member of" box. Then, type in the domain that you wish the client to login to; it should be the same as the workgroup that you specified in the Samba configuration file. Do not check the box marked "Create a Computer Account in the Domain"&nbsp;- Samba does not currently support this functionality. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch06-89804">
+Figure 6.5: Configuring a Windows NT client for domain logons</a></h4><IMG CLASS="graphic" SRC="figs/sam.0605.gif" ALT="Figure 6.5"><BLOCKQUOTE CLASS="warning">
+<P CLASS="para">
+<STRONG>
+WARNING:</strong> Like Windows 95/98, if NT complains that you are already logged in, you probably have an active connection to a share in the workgroup (such as a mapped network drive). Disconnect the resource temporarily by right-clicking on its icon and choosing the Disconnect pop-up menu item.</p></blockquote><P CLASS="para">
+After you press the OK button, Windows should present you with a small dialog box welcoming you to the domain. At this point, you will need to reset the Windows NT machine. Once it comes up again, the machine will automatically present you with a log on screen similar to the one for Windows 95/98 clients. You can now log in using any account that you have already on the Samba server that is configured to accept logins.</p><BLOCKQUOTE CLASS="warning">
+<P CLASS="para">
+<STRONG>
+WARNING:</strong> Be sure to select the correct domain in the Windows NT logon dialog box. Once selected, it may take a moment for Windows NT to build the list of available domains.</p></blockquote><P CLASS="para">
+After you enter the password, Windows NT should consult the primary domain controller (Samba) to see if the password is correct. Again, you can check the log files if you want to see this in action. If it worked, you have successfully configured Samba to act as a domain controller for Windows NT machines.</p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch06-pgfId-961353">
+6.5.3 Domain Options</a></h3><P CLASS="para">
+<A CLASS="xref" HREF="ch06_05.html#ch06-53106">
+Table 6.9</a> shows the options that are commonly used in association with domain logons. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch06-53106">
+Table 6.9: Windows 95/98 Domain Logon Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+domain logons</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Indicates whether Windows domain logons are to be used.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+domain group map</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Name of the file used to map Unix to Windows NT domain groups.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+domain user map</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Name of the file used to map Unix to Windows NT domain users.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+local group map</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Name of the file used to map Unix to Windows NT local groups.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+revalidate</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, Samba forces users to authenticate themselves with each connection to a share.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-960379">
+6.5.3.1 domain logons</a></h4><P CLASS="para">
+This option configures Samba to accept domain logons as a primary domain controller. When a client successfully logs on to the domain, Samba will return a special token to the client that allows the client to access domain shares without consulting the PDC again for authentication. Note that the Samba machine must be in user-level security (<CODE CLASS="literal">security</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+user</code>) and must be the PDC in order for this option to function. In addition, Windows machines will expect a <CODE CLASS="literal">
+[netlogon]</code> share to exist on the Samba server (see the section <A CLASS="xref" HREF="ch06_05.html#ch06-36822">
+Section 6.5.1, Configuring Samba for Windows Domain Logons</a>, earlier in this chapter).</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-966160">
+6.5.3.2 domain group map</a></h4><P CLASS="para">
+This option specifies the location of a mapping file designed to translate Windows NT domain group names to Unix group names. The file should reside on the Samba server. For example:</p><PRE CLASS="programlisting">
+/usr/local/samba/private/groups.mapping</pre><P CLASS="para">
+The file has a simple format:</p><PRE CLASS="programlisting"><CODE CLASS="replaceable"><I>UnixGroup = NTGroup</i></code></pre><P CLASS="para">
+An example is:</p><PRE CLASS="programlisting">
+admin = Administrative</pre><P CLASS="para">
+The specified Unix group should be a valid group in the <I CLASS="filename">
+/etc/group</i> file. The NT group should be the name to which you want the Unix group to map on an NT client. This option will work only with Windows NT clients.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-961959">
+6.5.3.3 domain user map</a></h4><P CLASS="para">
+This option specifies the location of a mapping file designed to translate Unix usernames to Windows NT domain usernames. The file should reside on the Samba server. For example:</p><PRE CLASS="programlisting">/usr/local/samba/private/domainuser.mapping</pre><P CLASS="para">The file has a simple format:</p><PRE CLASS="programlisting"><CODE CLASS="replaceable"><I>UnixUsername</i></code> = [\\<CODE CLASS="replaceable"><I>Domain</i></code>\\]<CODE CLASS="replaceable"><I>NTUserName</i></code></pre><P CLASS="para">
+An example entry is:</p><PRE CLASS="programlisting">
+joe = Joseph Miller</pre><P CLASS="para">
+The Unix name specified should be a valid username in the <I CLASS="filename">
+/etc/passwd</i> file. The NT name should be the username to which you want to Unix username to map on an NT client. This option will work with Windows NT clients only.</p><P CLASS="para">
+If you would like more information on how Windows NT uses domain usernames and local groups, we recommend Eric Pearce's <CITE CLASS="citetitle">
+Windows NT in a Nutshell</cite>, published by O'Reilly.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-961962">
+6.5.3.4 local group map</a></h4><P CLASS="para">
+This option specifies the location of a mapping file designed to translate Windows NT local group names to Unix group names. Local group names include those such as Administrator and Users. The file should reside on the Samba server. For example:</p><PRE CLASS="programlisting">/usr/local/samba/private/localgroup.mapping</pre><P CLASS="para">The file has a simple format:</p><PRE CLASS="programlisting"><CODE CLASS="replaceable"><I>UnixGroup</i></code> = [BUILTIN\]<CODE CLASS="replaceable"><I>NTGroup</i></code></pre><P CLASS="para">
+An example entry is:</p><PRE CLASS="programlisting">
+root = BUILTIN\Administrators</pre><P CLASS="para">
+This option will work with Windows NT clients only. For more information, see Eric Pearce's <CITE CLASS="citetitle">
+Windows NT in a Nutshell</cite> (O'Reilly).</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch06-pgfId-962075">
+6.5.3.5 revalidate</a></h4><P CLASS="para">
+This share-level option tells Samba to force users to authenticate with passwords each time they connect to a different share on a machine, no matter what level of security is in place on the Samba server. The default value is <CODE CLASS="literal">
+no</code>, which allows users to be trusted once they successfully authenticate themselves. You can override it as:</p><PRE CLASS="programlisting">
+revalidate = yes</pre><P CLASS="para">
+You can use this option to increase security on your system. However, you should weigh it against the inconvenience of having users revalidate themselves to every share. </p></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch06_04.html" TITLE="6.4 Passwords">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 6.4 Passwords" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch06_06.html" TITLE="6.6 Logon Scripts">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 6.6 Logon Scripts" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+6.4 Passwords</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+6.6 Logon Scripts</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

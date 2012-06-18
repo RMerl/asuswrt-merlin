@@ -1,0 +1,190 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 4] 4.3 Configuration File Options</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:32:06Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_02.html" TITLE="4.2 Special Sections">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.2 Special Sections" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch04_01.html" TITLE="4. Disk Shares ">
+Chapter 4<br>
+Disk Shares </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_04.html" TITLE="4.4 Server Configuration">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.4 Server Configuration" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch04-46076">
+4.3 Configuration File Options</a></h2><P CLASS="para">
+Samba has well over 200 configuration options at its disposal. So let's start off easy by introducing some of the options you can use to modify the configuration file itself. </p><P CLASS="para">
+As we hinted earlier in the chapter, configuration files are by no means static. You can instruct Samba to include or even replace configuration options as it is processing them. The options to do this are summarized in <A CLASS="xref" HREF="ch04_03.html#ch04-94939">
+Table 4.2</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch04-94939">
+Table 4.2: Configuration File Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+config file</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified name)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the location of a configuration file to use instead of the current one.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+include</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified name)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies an additional segment of configuration options to be included at this point in the configuration file.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+copy</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (name of share)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Allows you to clone the configuration options of another share in the current share.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr></tbody></table><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-pgfId-960146">
+4.3.1 config file</a></h3><P CLASS="para">
+The global <CODE CLASS="literal">
+config</code> <CODE CLASS="literal">
+file</code> option specifies a replacement configuration file that will be loaded when the option is encountered. If the target file exists, the remainder of the current configuration file, as well as the options encounter so far, will be discarded; Samba will configure itself entirely with the options in the new file. The <CODE CLASS="literal">
+config</code> <CODE CLASS="literal">
+file</code> option takes advantage of the variables above, which is useful in the event that you want load a special configuration file based on the machine name or user of the client that it connecting. </p><P CLASS="para">
+For example, the following line instructs Samba to use a configuration file specified by the NetBIOS name of the client connecting, if such a file exists. If it does, options specified in the original configuration file are ignored. The following example attempts to lead a new configuration file based on the client's NetBIOS name: </p><PRE CLASS="programlisting">
+[global]
+	config file = /usr/local/samba/lib/smb.conf.%m</pre><P CLASS="para">
+If the configuration file specified does not exist, the option is ignored and Samba will continue to configure itself based on the current file.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-pgfId-960151">
+4.3.2 include</a></h3><P CLASS="para">
+This option, discussed in greater detail earlier, copies the target file into the current configuration file at the point specified, as shown in <A CLASS="xref" HREF="ch04_03.html#ch04-97340">
+Figure 4.1</a>. This option also takes advantage of the variables specified earlier in the chapter, which is useful in the event that you want load configuration options based on the machine name or user of the client that it connecting. You can use this option as follows:</p><PRE CLASS="programlisting">
+[global]
+	include = /usr/local/samba/lib/smb.conf.%m</pre><P CLASS="para">
+If the configuration file specified does not exist, the option is ignored. Remember that any option specified previously is overridden. In <A CLASS="xref" HREF="ch04_03.html#ch04-97340">
+Figure 4.1</a>, all three options will override their previous values.   </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch04-97340">
+Figure 4.1: The include option in a Samba configuration file</a></h4><IMG CLASS="graphic" SRC="figs/sam.0401.gif" ALT="Figure 4.1"><P CLASS="para">
+The <CODE CLASS="literal">
+include</code> option cannot understand the variables <CODE CLASS="literal">
+%u</code> (user), <CODE CLASS="literal">
+%p</code> (current share's rout directory), or <CODE CLASS="literal">
+%s</code> (current share) because they are not set at the time the file is read.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-pgfId-960290">
+4.3.3 copy</a></h3><P CLASS="para">
+The <CODE CLASS="literal">
+copy</code> configuration option allows you to clone the configuration options of the share name that you specify in the current share. The target share must appear earlier in the configuration file than the share that is performing the copy. For example:</p><PRE CLASS="programlisting">
+[template]
+	writable = yes
+	browsable = yes
+	valid users = andy, dave, peter
+
+[data]
+	path = /usr/local/samba
+	copy = template</pre><P CLASS="para">
+Note that any options in the share that invoked the <CODE CLASS="literal">
+copy</code> directive will override those in the cloned share; it does not matter whether they appear before or after the <CODE CLASS="literal">
+copy</code><I CLASS="filename">
+</i> directive.<I CLASS="filename">
+</i> </p></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_02.html" TITLE="4.2 Special Sections">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.2 Special Sections" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_04.html" TITLE="4.4 Server Configuration">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.4 Server Configuration" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+4.2 Special Sections</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+4.4 Server Configuration</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

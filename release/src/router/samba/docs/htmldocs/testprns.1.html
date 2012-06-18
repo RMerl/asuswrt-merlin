@@ -1,0 +1,98 @@
+
+
+ 
+
+
+
+<html><head><title>testprns (1)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>testprns (1)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    testprns - check printer name for validity with smbd 
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+     
+<p><strong>testprns</strong> <a href="testprns.1.html#printername">printername</a> [<a href="testprns.1.html#printcapname">printcapname</a>]
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This program is part of the <strong>Samba</strong> suite.
+<p><strong>testprns</strong> is a very simple test program to determine whether a
+given printer name is valid for use in a service to be provided by
+<a href="smbd.8.html"><strong>smbd</strong></a>.
+<p>"Valid" in this context means "can be found in the printcap
+specified". This program is very stupid - so stupid in fact that it
+would be wisest to always specify the printcap file to use.
+<p><a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+    
+<p><dl>
+<p><a name="printername"></a>
+<p></p><dt><strong><strong>printername</strong></strong><dd> The printer name to validate.
+<p>Printer names are taken from the first field in each record in the
+printcap file, single printer names and sets of aliases separated by
+vertical bars ("|") are recognized. Note that no validation or
+checking of the printcap syntax is done beyond that required to
+extract the printer name. It may be that the print spooling system is
+more forgiving or less forgiving than <strong>testprns</strong>. However, if
+<strong>testprns</strong> finds the printer then <a href="smbd.8.html"><strong>smbd</strong></a> should
+do so as well.
+<p><a name="printcapname"></a>
+<p></p><dt><strong><strong>printcapname</strong></strong><dd> This is the name of the printcap file within
+which to search for the given printer name.
+<p>If no printcap name is specified <strong>testprns</strong> will attempt to scan the
+printcap file name specified at compile time.
+<p></dl>
+<p><a name="FILES"></a>
+<h2>FILES</h2>
+    
+<p><strong>/etc/printcap</strong> This is usually the default printcap file to
+scan. See <strong>printcap (5)</strong>.
+<p><a name="DIAGNOSTICS"></a>
+<h2>DIAGNOSTICS</h2>
+    
+<p>If a printer is found to be valid, the message "Printer name
+&lt;printername&gt; is valid" will be displayed.
+<p>If a printer is found to be invalid, the message "Printer name
+&lt;printername&gt; is not valid" will be displayed.
+<p>All messages that would normally be logged during operation of the
+<a href="samba.7.html"><strong>Samba</strong></a> daemons are logged by this program to the
+file <code>test.log</code> in the current directory. The program runs at
+debuglevel 3, so quite extensive logging information is written. The
+log should be checked carefully for errors and warnings.
+<p>Other messages are self-explanatory.
+<p><a name="SEEALSO"></a>
+<h2>SEE ALSO</h2>
+    
+<p><strong>printcap (5)</strong>, <a href="smbd.8.html"><strong>smbd (8)</strong></a>, <a href="smbclient.1.html"><strong>smbclient
+(1)</strong></a>
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+</body>
+</html>

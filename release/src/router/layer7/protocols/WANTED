@@ -1,0 +1,67 @@
+Below is a list of protocols that we might want to have.  The existence 
+of a protocol on this list does not mean that we have researched it 
+extensively (or at all), so some (probably many) may be obsolete, 
+unpopular, misnamed, redundant, etc.
+
+Please read HOWTO for information on writing patterns.
+
+P2P:
+MANOLITO (Blubster, Piolet, RockItNet)
+PeerCast
+IceShare
+Freecast
+CoolStreaming
+Cybersky-TV
+ANts P2P
+AsagumoWeb
+Avalanche (known to be vaporware as of June 2005)
+CAKE
+Chord
+Coral
+EarthStation 5
+FileTopia
+FotoSwap
+GNUnet
+Groove
+iFolder
+konspire2b
+Madster/Aimster
+OpenExt
+P-Grid
+JXTA
+Peersites
+MojoNation
+Mnet
+Octoshape
+Solipsis
+SPIN
+Swarmcast
+WASTE
+WinNY
+Legion
+
+Chat:
+Gadu-gadu - a popular Polish instant messenger protocol
+Zephyr
+SMS/SMPP
+
+VoIP:
+GameComm - http://www.gamecomm.com/
+Roger Wilco - http://rogerwilco.gamespy.com/
+IPCC? - http://en.wikipedia.org/wiki/FrontRange_Solutions
+IAX - http://en.wikipedia.org/wiki/IAX
+PeerMe - http://www.peerme.com/
+Megaco (a.k.a. H.248)
+MGCP
+Skinny Client Control Protocol
+MiNET
+CorNet-IP
+Jajah - http://en.wikipedia.org/wiki/Jajah
+
+Misc:
+LDAP - Lightweight Directory Access Protocol
+MS-SQL - Microsoft SQL Mon and Server traffic
+NFS - Network File System
+RTCP - Real-time control protocol
+SunRPC - Sun's Remote Procedure Calls
+XDMCP - X-Windows Display Manager Control Protocol

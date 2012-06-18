@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Spool Queues and Files</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="Solaris, Newsprint and FrameMaker"
+    href="x6263.htm">
+    <link rel="NEXT" title="Queue Lock File " href=
+    "queuelockfile.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x6263.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "queuelockfile.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="SPOOLQUEUE"></a>Chapter 13. Spool Queues and
+      Files</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>13.1. <a href="spoolqueue.htm#AEN6313">Spool
+          Queue</a></dt>
+
+          <dt>13.2. <a href="queuelockfile.htm">Queue Lock
+          File</a></dt>
+
+          <dt>13.3. <a href="queuecontrolfile.htm">Spool Control
+          File</a></dt>
+
+          <dt>13.4. <a href="logfiles.htm">Log and Status
+          Files</a></dt>
+
+          <dt>13.5. <a href="jobfiles.htm">Job Files</a></dt>
+
+          <dt>13.6. <a href="x6660.htm">Job Hold File</a></dt>
+
+          <dt>13.7. <a href="ah.htm">Job State</a></dt>
+
+          <dt>13.8. <a href="useidentifier.htm">Job
+          Identifier</a></dt>
+        </dl>
+      </div>
+
+      <p>When files are accepted by the <b class=
+      "APPLICATION">lpd</b> server for printing, they are stored in
+      a spool queue directory, together with other files
+      controlling the print operation. This section describes these
+      files and how the <b class="APPLICATION">LPRng</b> software
+      uses them.</p>
+
+      <p>For descriptive purposes, we will use the following
+      printcap entry as a guide:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6311"></a>
+<pre class="SCREEN">
+    pr|alias
+      :sd=/var/lpd/pr_public
+      :cd=/var/lpd/pr
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="AEN6313">13.1. Spool
+        Queue</a></h1>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">sd=</var><span class=
+            "emphasis"><i class="EMPHASIS">Spool queue directory
+            name</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>The <var class="OPTION">:sd</var> option in the printcap
+        entry specifies the spool queue directory. If there is no
+        <var class="OPTION">:sd</var> entry or value, then the
+        printer can only be used by the clients such as <b class=
+        "APPLICATION">lpq</b> to locate the destination for a print
+        job. All information, files, etc., for a print queue is
+        stored in the spool directory.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x6263.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "queuelockfile.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Solaris,
+          Newsprint and FrameMaker</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Queue Lock
+          File</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,449 @@
+.ds VE LPRng-3.9.0
+'\" e
+.\" @(#)lp.1 1.36 95/10/09 SMI; from SVr4
+.\" Copyright 1989 AT&T
+.\" Copyright (c) 1995, Sun Microsystems, Inc.
+.\" All Rights Reserved
+.\" Portions Copyright (c) 1992, X/Open Company Limited
+.\" Portions Copyright (c) 1996, Patrick Powell
+.\" All Rights Reserved
+.ig
+.EQ
+gsize 10
+delim $$
+.EN
+..
+.TH LP 1 \*(VE "LPRng"
+.SH NAME
+lp \- send requests to an LPRng print service
+.SH SYNOPSIS
+.B lp
+[
+.B \-A
+] [
+.B \-B
+] [
+.B \-c
+] [
+.B \-G
+] [
+.B \-m
+] [
+.B \-p
+] [
+.B \-s
+] [
+.B \-w
+] [
+.BI \-d " dest"
+]
+.if n .ti +5n
+[
+.BI \-f " form-name"
+[
+.B \-d any
+] ]
+.if t .ti +5n
+[
+.BI \-H " special-handling"
+]
+.if n .ti +5n
+[
+.BI \-n " number"
+] [
+.BI \-o " option"
+] [
+.BI \-P " page-list"
+]
+.if n .ti +5n
+[
+.BI \-q " priority-level"
+]
+.if t .ti +5n
+[
+.BI \-S " character-set"
+[
+.B \-d any
+] ]
+.if n .ti +5n
+[
+.BI \-S " print-wheel"
+] [
+.BI \-t " title"
+]
+.if t .ti +5n
+.if n .ti +5n
+[
+.BI \-T " content-type"
+[
+.B \-r
+] ] [
+.BI \-y " mode-list"
+]
+.if n .ti +5n
+[
+.BI \-X " path"
+]
+[
+.BI \-D " debug-options"
+]
+.if n .ti +5n
+[
+.IR file \|.\|.\|.
+]
+.SH DESCRIPTION
+.IX "lp command" "" "\fLlp\fP \(em send requests to an LP print service"
+.IX "LPRng print services" "print files" "" "print files \(em \fLlp\fP"
+.IX "printers" "send requests" "" "send requests \(em \fLlp\fP"
+.LP
+The LPRng
+\f3lpr\fP
+client supports an \f3lp\fP interface when invoked with the
+\f3lp\fP
+program name.
+This is usually done by making a symbolic link to the
+\f3lpr\fP program with the name
+\f3lp\fP.
+This is similar to the
+.BR ex (1)
+and
+.BR vi (1)
+programs.
+The supported form of the \f3lp\fP command
+arranges for the named \f2file(s)\fP and associated information
+(collectively called a
+.IR request )
+to be printed.
+If no file names are specified on the command line,
+the standard input is assumed.
+The standard input may be specified
+along with a named \f2file\f1(s)
+on the command line by listing the file name(s)
+and specifying \`\f3\-\f1\' (dash)
+for the standard input.
+The \f2files\f1 will be printed
+in the order in which they appear on the shell command line.
+.LP
+The
+.SM LP
+print service
+associates a unique \f2request-ID\f1
+with each request
+and displays it on the standard output.
+The job number portion or full request-ID can be used later with
+.BR cancel (1)
+or
+.BR lprm (1)
+when canceling a job or when determining its status.
+See 
+.BR cancel (1)
+and
+.BR lprm (1)
+for details about canceling a request,
+and
+.BR lpstat (1)
+and
+.BR lpq (1)
+for information about checking the status of a print request.
+.SH OPTIONS
+.LP
+Options to
+.B lp
+always precede any file names,
+but may be specified in any order.
+The following options are available for
+.BR lp :
+.TP 15
+.B \-A
+Use authenticated transfer.
+Note that this is not a standard
+.BR lp (1)
+option but has been added for compatibilty with LPRng.
+The authentication type is set by the value of the AUTH environment variable.
+.B \-B
+Process jobs using filters specified in the printcap information.
+The filter output is combined into a single file and sent to the print spooler.
+.TP 15
+.B \-c
+Make a copy
+of the
+.I file
+before printing.
+(This has no effect as LPRng always sends
+jobs immediately to the remote server for printing.)
+.TP
+.BI \-d " dest"
+The print queue or printer to be used.
+By default,
+the destination printer
+is taken from
+the command line
+.I dest
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
+.TP
+\f3\-f \f2form-name\f1
+Print the request on the form
+.IR form-name .
+This sets the job class to
+.I form-name
+and is similar to the lpr -C option.
+.B \-G
+Process jobs using filters specified in the printcap information.
+The filter output for individual files is sent to the print spooler.
+.TP 15
+.BI \-H " special-handling"
+These options are ignored.
+.TP 15
+.B \-m
+Send mail (see
+.BR mail (1))
+after the files have been printed.
+The mail address is taken from the USER enviroment
+variable.
+By default, no mail is sent
+upon normal completion of the print request.
+.TP
+.BI \-n " number"
+Print
+.I number
+copies (default is
+.BR 1 )
+of the output.
+.br
+.ne 5
+.TP
+.BI \-o " option"
+Specify printer-dependent
+.IR options .
+Several such
+.I options
+may be collected by specifying
+the
+.B \-o
+keyletter more than once
+(\f3\-o $option sub 1$\f3
+\-o $option sub 2$\f2 ... \f3\-o $option sub n$\f1),
+or by specifying
+the \f3\-o\f1 keyletter followed by
+a list of options
+enclosed in double quotes
+(that is, \f3\-o "$option sub 1$\f3
+$option sub 2$\f3 \f2... $option sub n$\f3"\f1).
+The following options have a immediate effect;
+other options are passed as a
+.B Z
+line entry in the control file,
+i.e. - as an 
+.BI lpr (1)
+.B \-Z
+option.
+.RS 15
+.TP 10
+.B nobanner
+Do not print a banner page with this request.
+This is the same as the
+.BI lpr (1)
+.B -h
+(no header) option.
+.TP  10
+\f3width\f2=number\f1
+Print this request with page-width set to
+\f2number\f1.
+This is the same as the
+.BI lpr (1)
+.BI -w " width"
+option.
+.RE
+.TP 15
+.BI \-P " page-list"
+Print the pages specified in \f2page-list\f1.
+This option is ignored.
+.TP
+.B \-p
+Enable notification on completion of the print request.
+This option is ignored.
+.TP
+.BI \-q " priority-level"
+Assign this request \f2priority-level\f1 in the printing queue.
+The values of \f2priority-level\f1 range from
+.BR 0 ,
+the highest priority, to
+.BR 25 ,
+the lowest priority.  If a priority is not specified, the default
+for the print service is used, as assigned by the system administrator.
+A priority limit may be assigned to individual users by the
+system administrator.
+The numerical values are translated to corresponding letter
+priority values.
+.TP 15
+.B \-s
+Suppress messages from \f3lp\f1
+such as those that begin with "\f3request id is\f1\|.\|.\|."
+.PD 0
+.TP 15
+\f3\-S \f2character-set \f1
+.TP 15
+\f3\-S \f2print-wheel\f1
+.PD
+Print this request using the specified \f2character-set\f1
+or \f2print-wheel\f1.
+The options are passed as an
+.BI lpr (1)
+.B \-Z
+option.
+.br
+.ne 7
+.TP
+\f3\-t \f2title\f1
+Print
+.I title
+on the banner page of the output.
+If
+.I title
+is not supplied the name of the file is printed on the banner
+page.
+Enclose \f2title\fP in quotes if it contains blanks.
+.TP
+\f3\-T \f2content-type\f1 [\f3\-r\f1]
+Print the request on a printer that can support
+the specified \f2content-type\f1.
+The
+\f2content-type\f1
+is passed as an
+.BI lpr (1)
+.B \-Z
+option.
+.TP
+\f3\-w\f1
+Write a message on the user's terminal after the
+.I files
+have been printed.
+This option is ignored.
+.TP
+.BI \-X " path"
+Filter individual job files using the specified program and send
+the filter output to the print spooler.
+.TP
+\f3\-y \f2mode-list\f1
+Print this request
+according to the printing modes listed in \f2mode-list\f1.
+The
+\f2mode-list-type\f1
+is passed as an
+.BI lpr (1)
+.B \-Z
+option.
+.TP
+\f3\-D \f2debug-optios\f1
+A list of debug options for the program.
+These can be a number (debug level) or keyword and level (flag),
+such as 9, network, network+2, etc.
+.ne 15
+.SH OPERANDS
+The following operands are supported by
+.BR lp :
+.TP 15
+.I file
+A path name of a file to be output.
+If no
+.I file
+operands are specified,
+or if a
+.I file
+operand is
+.BR \- ,
+the standard input will be used.
+The
+.BR \-
+option must be last in the list.
+.SH "PRINTCAP INFORMATION"
+.LP
+The printer names and other information is obtained by using a printcap
+file or some other database.
+The ${HOME}/.printcap
+file can be used to specify user level options and configuration
+information.
+See
+printcap(5)
+for more information. 
+.SH ENVIRONMENT
+.PP
+By default,
+the destination printer
+is taken from
+the command line
+.I dest
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
+.SH "EXIT STATUS"
+.PP
+The following exit values are returned:
+.TP 15
+.B "zero (0)"
+Successful completion
+.TP
+.B "nonzero (!= 0)"
+An error occurred.
+.SH FILES
+.PP
+The files used by LPRng are set by values in the
+LPRng configuration file.  The default values are:
+.nf
+.ta \w'/var/spool/lpd/printcap.<hostname>           'u
+_LPD_CONF_PATH_	LPRng configuration file
+${HOME}/.printcap	user printer description file
+_PRINTCAP_PATH_	printer description file
+_LPD_PERMS_PATH_	permissions
+_LOCKFILE_	lock file for queue control
+/var/spool/lpd		spool directories
+/var/spool/lpd/QUEUE/control	queue control
+/var/spool/lpd/QUEUE/log	trace or debug log file
+/var/spool/lpd/QUEUE/acct	accounting file
+/var/spool/lpd/QUEUE/status	status file
+.fi
+.SH SEE ALSO
+lpd.conf(5),
+lpc(8),
+lpd(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.perms(5),
+pr(1), lprng_certs(1), lprng_index_certs(1).
+.SH DIAGNOSTICS
+.nf
+Most of the diagnostics are self explanatory.
+If you are puzzled over the exact cause of failure,
+set the debugging level on (-D5) and run again.
+The debugging information will 
+help you to pinpoint the exact cause of failure.
+.fi
+.SH "HISTORY"
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+The LPRng mailing list is lprng@lprng.com;
+subscribe by sending mail to lprng-request@lprng.com with
+the word subscribe in the body.
+The software is available from ftp://ftp.lprng.com/pub/LPRng.
+.SH "AUTHOR"
+Patrick Powell <papowell@lprng.com>.

@@ -1,0 +1,131 @@
+#!/usr/bin/perl
+
+use English;
+use IO::Socket;
+
+my $JSUCC = 0;
+my $JABORT = 33;
+my $JNOSPOOL = 38;
+my $JNOPRINT = 39;
+
+my $debug = 0;
+my $optind;
+
+# pull out the options
+my($key,$value,$opt,$long,$opt_c);
+
+for( $i = 0; $i < @ARGV; ++$i ){
+    $opt = $ARGV[$i];
+    print STDERR "XX opt= $opt\n" if $debug;
+    if( $opt eq '-c' ){
+        $opt_c = 1;
+    } elsif( ($key, $value) = ($opt =~ /^-(.)(.*)/) ){
+        if( $value eq "" ){
+            $value = $ARGV[++$i];
+        }
+        ${"opt_$key"} = $value;
+        print STDERR "XX opt_$key = " . ${"opt_$key"} . "\n" if $debug;
+    } else {
+        $optind = $i;
+        last;
+    }
+    print STDERR "XX opt_P = $opt_P\n" if $debug;
+}
+
+$long = 0;  # short
+
+if( defined($opt_T) ){
+    print STDERR "XX CHECK_REMOTE opt_T=$opt_T\n" if $debug;
+    if( $opt_T =~ /debug/ ){
+        $debug = 1;
+    }
+    if( $opt_T =~ /short/ ){
+        $long = 1;
+    }
+    if( $opt_T =~ /long/ ){
+        $long = 0;
+    }
+}
+
+print STDERR "XX CHECK_REMOTE opt_P=$opt_P\n" if $debug;
+print STDERR "XX CHECK_REMOTE " . join(" ",@ARGV) . "\n" if $debug;
+
+if( !defined($opt_P) ){
+    print STDERR "$0: no -P value\n";
+    exit( $JABORT );
+}
+
+$printer = $opt_P;
+
+while( checkstatus( $printer, $long ) ){
+    print STDERR "XX CHECK_REMOTE sleeping\n" if $debug;
+    sleep(10);
+}
+
+exit $JSUCC;
+
+sub checkstatus {
+    my ($printer,$long) = @_;
+    my ($remote,$port);
+    my ($count, $socket, $line);
+
+    if( $long ){
+        $long = 4;
+    } else {
+        $long = 3;
+    }
+    if( $printer =~ /@/ ){
+        ($printer,$remote) = $printer =~ m/(.*)@(.*)/;
+    }
+    $remote="localhost" unless $remote;
+
+    if( $remote =~ /%/ ){
+        ($remote,$port) = $remote =~ m/(.*)%(.*)/;
+    }
+    $port = 515 unless $port;
+    print STDERR "XX CHECK_REMOTE remote='$remote', port='$port', pr='$printer', op='$long'\n" if $debug;
+
+    $socket = getconnection( $remote, $port );
+
+    $count = -1;
+    # send the command
+    printf $socket "%c%s\n", $long, $printer;
+
+    while ( defined( $line = <$socket>) && $count < 0 ){
+        chomp $line;
+        print STDERR "XX CHECKREMOTE '$line'\n" if $debug;
+        if( $line =~ /printing disa/ ){
+            print STDERR "XX CHECKREMOTE printing disable\n" if $debug;
+            exit $JNOPRINT;
+        } elsif( $line =~ /spooling disa/ ){
+            print STDERR "XX CHECKREMOTE printing disable\n" if $debug;
+            exit $JNOSPOOL;
+        } elsif( $line =~ /([0-9]*)\s+job.?$/ ){
+            $count = $1;
+            print STDERR "XX CHECKREMOTE $count jobs\n" if $debug;
+        }
+    }
+    close $socket;
+    if( $count < 0 ){
+        print STDERR "CHECKREMOTE cannot decode status\n";
+        exit $JABORT;
+    }
+    return $count;
+}
+
+sub getconnection {
+    my ($remote,$port) = @_;
+    my ($socket);
+    print STDERR "XX CHECK_REMOTE remote='$remote', port=$port\n" if $debug;
+    $socket = IO::Socket::INET->new(
+        Proto => "tcp",
+        PeerAddr => $remote,
+        PeerPort => $port,
+        );
+    if( !$socket ){
+        print STDERR "CHECK_REMOTE IO::Socket::INET failed - $!\n";
+        exit $JABORT;
+    }
+    $socket->autoflush(1);
+    $socket;
+}

@@ -1,0 +1,1916 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+
+<chapter id="NetCommand">
+<chapterinfo>
+	&author.jht;
+	&author.vl;
+	&author.gd;
+	<pubdate>May 9, 2005</pubdate>
+</chapterinfo>
+
+<title>Remote and Local Management: The Net Command</title>
+
+<para>
+<indexterm><primary>net</primary></indexterm>
+<indexterm><primary>remote management</primary></indexterm>
+<indexterm><primary>command-line</primary></indexterm>
+<indexterm><primary>scripted control</primary></indexterm>
+The <command>net</command> command is one of the new features of Samba-3 and is an attempt to provide a useful
+tool for the majority of remote management operations necessary for common tasks. The <command>net</command>
+tool is flexible by design and is intended for command-line use as well as for scripted control application.
+</para>
+
+<para>
+<indexterm><primary>net</primary></indexterm>
+<indexterm><primary>network administrator's toolbox</primary></indexterm>
+<indexterm><primary>smbgroupedit</primary></indexterm>
+<indexterm><primary>rpcclient</primary></indexterm>
+Originally introduced with the intent to mimic the Microsoft Windows command that has the same name, the
+<command>net</command> command has morphed into a very powerful instrument that has become an essential part
+of the Samba network administrator's toolbox. The Samba Team has introduced tools, such as
+<command>smbgroupedit</command> and <command>rpcclient</command>, from which really useful capabilities have
+been integrated into the <command>net</command>. The <command>smbgroupedit</command> command was absorbed
+entirely into the <command>net</command>, while only some features of the <command>rpcclient</command> command
+have been ported to it. Anyone who finds older references to these utilities and to the functionality they
+provided should look at the <command>net</command> command before searching elsewhere.
+</para>
+
+<para>
+A Samba-3 administrator cannot afford to gloss over this chapter because to do so will almost certainly cause
+the infliction of self-induced pain, agony, and desperation. Be warned: this is an important chapter.
+</para>
+
+	<sect1>
+	<title>Overview</title>
+
+	<para>
+<indexterm><primary>standalone</primary></indexterm>
+<indexterm><primary>domain member</primary></indexterm>
+<indexterm><primary>PDC</primary></indexterm>
+<indexterm><primary>BDC</primary></indexterm>
+<indexterm><primary>DMS</primary></indexterm>
+<indexterm><primary>authentication</primary></indexterm>
+	The tasks that follow the installation of a Samba-3 server, whether standalone or domain member, of a
+	domain controller (PDC or BDC) begins with the need to create administrative rights. Of course, the
+	creation of user and group accounts is essential for both a standalone server and a PDC.
+	In the case of a BDC or a Domain Member server (DMS), domain user and group accounts are obtained from
+	the central domain authentication backend.
+	</para>
+
+	<para>
+<indexterm><primary>server type</primary></indexterm>
+<indexterm><primary>local UNIX groups</primary></indexterm>
+<indexterm><primary>mapped</primary></indexterm>
+<indexterm><primary>domain global group</primary></indexterm>
+<indexterm><primary>UID</primary></indexterm>
+<indexterm><primary>GID</primary></indexterm>
+<indexterm><primary>access rights</primary></indexterm>
+<indexterm><primary>net</primary></indexterm>
+	Regardless of the type of server being installed, local UNIX groups must be mapped to the Windows
+	networking domain global group accounts. Do you ask why? Because Samba always limits its access to
+	the resources of the host server by way of traditional UNIX UID and GID controls. This means that local
+	groups must be mapped to domain global groups so that domain users who are members of the domain
+	global groups can be given access rights based on UIDs and GIDs local to the server that is hosting
+	Samba. Such mappings are implemented using the <command>net</command> command.
+	</para>
+
+	<para>
+<indexterm><primary>PDC</primary></indexterm>
+<indexterm><primary>BDC</primary></indexterm>
+<indexterm><primary>DMS</primary></indexterm>
+<indexterm><primary>security account</primary></indexterm>
+<indexterm><primary>domain authentication</primary></indexterm>
+<indexterm><primary>trust accounts</primary></indexterm>
+<indexterm><primary>net</primary></indexterm>
+	UNIX systems that are hosting a Samba-3 server that is running as a member (PDC, BDC, or DMS) must have
+	a machine security account in the domain authentication database (or directory). The creation of such
+	security (or trust) accounts is also handled using the <command>net</command> command.
+	</para>
+
+	<para>
+<indexterm><primary>interdomain trusts</primary></indexterm>
+<indexterm><primary>net</primary></indexterm>
+<indexterm><primary>administrative duties</primary></indexterm>
+<indexterm><primary>user management</primary></indexterm>
+<indexterm><primary>group management</primary></indexterm>
+<indexterm><primary>share management</primary></indexterm>
+<indexterm><primary>printer management</primary></indexterm>
+<indexterm><primary>printer migration</primary></indexterm>
+<indexterm><primary>SID management</primary></indexterm>
+	The establishment of interdomain trusts is achieved using the <command>net</command> command also, as
+	may a plethora of typical administrative duties such as user management, group management, share and
+	printer management, file and printer migration, security identifier management, and so on.
+	</para>
+
+	<para>
+<indexterm><primary>net</primary></indexterm>
+<indexterm><primary>man pages</primary></indexterm>
+	The overall picture should be clear now: the <command>net</command> command plays a central role
+	on the Samba-3 stage. This role will continue to be developed. The inclusion of this chapter is
+	evidence of its importance, one that has grown in complexity to the point that it is no longer considered
+	prudent to cover its use fully in the online UNIX man pages.
+	</para>
+
+	</sect1>
+	
+	<sect1>
+	<title>Administrative Tasks and Methods</title>
+
+	<para>
+<indexterm><primary>net</primary></indexterm>
+<indexterm><primary>ADS</primary></indexterm>
+<indexterm><primary>Distributed Computing Environment</primary><see>DCE</see></indexterm>
+<indexterm><primary>Remote Procedure Call</primary><see>RPC</see></indexterm>
+	The basic operations of the <command>net</command> command are documented here. This documentation is not
+	exhaustive, and thus it is incomplete. Since the primary focus is on migration from Windows servers to a Samba
+	server, the emphasis is on the use of the Distributed Computing Environment Remote Procedure Call (DCE RPC)
+	mode of operation. When used against a server that is a member of an Active Directory domain, it is preferable
+	(and often necessary) to use ADS mode operations. The <command>net</command> command supports both, but not
+	for every operation. For most operations, if the mode is not specified, <command>net</command> will
+	automatically fall back via the <constant>ads</constant>, <constant>rpc</constant>, and
+	<constant>rap</constant> modes.  Please refer to the man page for a more comprehensive overview of the
+	capabilities of this utility.
+	</para>
+
+	</sect1>
+
+	<sect1>
+	<title>UNIX and Windows Group Management</title>
+
+	<para>
+<indexterm><primary>Active Directory</primary></indexterm>
+<indexterm><primary>net</primary><secondary>rpc</secondary></indexterm>
+<indexterm><primary>net</primary><secondary>ads</secondary></indexterm>
+<indexterm><primary>net</primary><secondary>rap</secondary></indexterm>
+<indexterm><primary>RAP</primary></indexterm>
+	As stated, the focus in most of this chapter is on use of the <command>net rpc</command> family of
+	operations that are supported by Samba. Most of them are supported by the <command>net ads</command>
+	mode when used in connection with Active Directory. The <command>net rap</command> operating mode is
+	also supported for some of these operations. RAP protocols are used by IBM OS/2 and by several
+	earlier SMB servers.
+	</para>
+
+	<para>
+<indexterm><primary>net</primary></indexterm>
+<indexterm><primary>user management</primary></indexterm>
+<indexterm><primary>group management</primary></indexterm>
+	Samba's <command>net</command> tool implements sufficient capability to permit all common administrative
+	tasks to be completed from the command line. In this section each of the essential user and group management
+	facilities are explored.
+	</para>
+
+	<para>
+<indexterm><primary>groups</primary></indexterm>
+<indexterm><primary>domain</primary><secondary>groups</secondary></indexterm>
+<indexterm><primary>local</primary><secondary>groups</secondary></indexterm>
+<indexterm><primary>domain user accounts</primary></indexterm>
+	Samba-3 recognizes two types of groups: <emphasis>domain groups</emphasis> and <emphasis>local
+	groups</emphasis>. Domain groups can contain (have as members) only domain user accounts. Local groups
+	can contain local users, domain users, and domain groups as members.
+	</para>
+
+	<para>
+	The purpose of a local group is to permit file permission to be set for a group account that, like the
+	usual UNIX/Linux group, is persistent across redeployment of a Windows file server.
+	</para>
+
+	<sect2>
+	<title>Adding, Renaming, or Deletion of Group Accounts</title>
+
+	<para>
+	Samba provides file and print services to Windows clients. The file system resources it makes available
+	to the Windows environment must, of necessity, be provided in a manner that is compatible with the
+	Windows networking environment. UNIX groups are created and deleted as required to serve operational
+	needs in the UNIX operating system and its file systems.
+	</para>
+
+	<para>
+	In order to make available to the Windows environment, Samba has a facility by which UNIX groups can
+	be mapped to a logical entity, called a Windows (or domain) group. Samba supports two types of Windows
+	groups, local and global. Global groups can contain as members, global users. This membership is
+	affected in the normal UNIX manner, but adding UNIX users to UNIX groups. Windows user accounts consist
+	of a mapping between a user SambaSAMAccount (logical entity) and a UNIX user account. Therefore, 
+	a UNIX user is mapped to a Windows user (i.e., is given a Windows user account and password) and the
+	UNIX groups to which that user belongs, is mapped to a Windows group account. The result is that in
+	the Windows account environment that user is also a member of the Windows group account by virtue
+	of UNIX group memberships.
+	</para>
+
+	<para>
+	The following sub-sections that deal with management of Windows groups demonstrates the relationship
+	between the UNIX group account and its members to the respective Windows group accounts. It goes on to
+	show how UNIX group members automatically pass-through to Windows group membership as soon as a logical
+	mapping has been created.
+	</para>
+
+	<sect3>
+	<title>Adding or Creating a New Group</title>
+
+	<para>
+	Before attempting to add a Windows group account, the currently available groups can be listed as shown
+	here:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>group</tertiary></indexterm>
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>group list</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc group list -Uroot%not24get
+Password:
+Domain Admins
+Domain Users
+Domain Guests
+Print Operators
+Backup Operators
+Replicator
+Domain Computers
+Engineers
+</screen>
+	</para>
+
+<?latex \newpage ?>
+	<para>
+	A Windows group account called <quote>SupportEngrs</quote> can be added by executing the following
+command:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>group add</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc group add "SupportEngrs" -Uroot%not24get
+</screen>
+	The addition will result in immediate availability of the new group account as validated by executing
+this command:
+<screen>
+&rootprompt; net rpc group list -Uroot%not24get
+Password:
+Domain Admins
+Domain Users
+Domain Guests
+Print Operators
+Backup Operators
+Replicator
+Domain Computers
+Engineers
+SupportEngrs
+</screen>
+	</para>
+
+	<para>
+<indexterm><primary>POSIX</primary></indexterm>
+<indexterm><primary>smbldap-groupadd</primary></indexterm>
+<indexterm><primary>getent</primary></indexterm>
+	The following demonstrates that the POSIX (UNIX/Linux system account) group has been created by calling
+	the <smbconfoption name="add group script">/opt/IDEALX/sbin/smbldap-groupadd -p "%g"</smbconfoption> interface
+	script:
+<screen>
+&rootprompt; getent group
+...
+Domain Admins:x:512:root
+Domain Users:x:513:jht,lct,ajt,met
+Domain Guests:x:514:
+Print Operators:x:550:
+Backup Operators:x:551:
+Replicator:x:552:
+Domain Computers:x:553:
+Engineers:x:1002:jht
+SupportEngrs:x:1003:
+</screen>
+	The following demonstrates that the use of the <command>net</command> command to add a group account
+results in immediate mapping of the POSIX group that has been created to the Windows group account as shown
+here:
+<indexterm><primary>net</primary><secondary>groupmap</secondary><tertiary>list</tertiary></indexterm>
+<screen>
+&rootprompt; net groupmap list
+Domain Admins (S-1-5-21-72630-4128915-11681869-512) -> Domain Admins
+Domain Users (S-1-5-21-72630-4128915-11681869-513) -> Domain Users
+Domain Guests (S-1-5-21-72630-4128915-11681869-514) -> Domain Guests
+Print Operators (S-1-5-21-72630-4128915-11681869-550) -> Print Operators
+Backup Operators (S-1-5-21-72630-4128915-11681869-551) -> Backup Operators
+Replicator (S-1-5-21-72630-4128915-11681869-552) -> Replicator
+Domain Computers (S-1-5-21-72630-4128915-11681869-553) -> Domain Computers
+Engineers (S-1-5-21-72630-4128915-11681869-3005) -> Engineers
+SupportEngrs (S-1-5-21-72630-4128915-11681869-3007) -> SupportEngrs
+</screen>
+	</para>
+
+	</sect3>
+
+	<sect3>
+	<title>Mapping Windows Groups to UNIX Groups</title>
+
+	<para>
+<indexterm><primary>mapped</primary></indexterm>
+<indexterm><primary>Windows groups</primary></indexterm>
+<indexterm><primary>system groups</primary></indexterm>
+<indexterm><primary>access controls</primary></indexterm>
+	Windows groups must be mapped to UNIX system (POSIX) groups so that file system access controls
+	can be asserted in a manner that is consistent with the methods appropriate to the operating
+	system that is hosting the Samba server.
+	</para>
+
+	<para>
+<indexterm><primary>access controls</primary></indexterm>
+<indexterm><primary>UID</primary></indexterm>
+<indexterm><primary>GID</primary></indexterm>
+<indexterm><primary>locally known UID</primary></indexterm>
+	All file system (file and directory) access controls, within the file system of a UNIX/Linux server that is
+	hosting a Samba server, are implemented using a UID/GID identity tuple. Samba does not in any way override
+	or replace UNIX file system semantics. Thus it is necessary that all Windows networking operations that
+	access the file system provide a mechanism that maps a Windows user to a particular UNIX/Linux group
+	account. The user account must also map to a locally known UID. Note that the <command>net</command>
+	command does not call any RPC-functions here but directly accesses the passdb.
+	</para>
+
+	<para>
+<indexterm><primary>default mappings</primary></indexterm>
+<indexterm><primary>Domain Admins</primary></indexterm>
+<indexterm><primary>Domain Users</primary></indexterm>
+<indexterm><primary>Domain Guests</primary></indexterm>
+<indexterm><primary>Windows group</primary></indexterm>
+<indexterm><primary>UNIX group</primary></indexterm>
+<indexterm><primary>mapping</primary></indexterm>
+	Samba depends on default mappings for the <constant>Domain Admins, Domain Users</constant>, and
+	<constant>Domain Guests</constant> global groups. Additional groups may be added as shown in the
+	examples just given. There are times when it is necessary to map an existing UNIX group account
+	to a Windows group. This operation, in effect, creates a Windows group account as a consequence
+	of creation of the mapping.
+	</para>
+
+	<para>
+<indexterm><primary>net</primary><secondary>groupmap</secondary><tertiary>modify</tertiary></indexterm>
+<indexterm><primary>net</primary><secondary>groupmap</secondary><tertiary>add</tertiary></indexterm>
+<indexterm><primary>net</primary><secondary>groupmap</secondary><tertiary>delete</tertiary></indexterm>
+	The operations that are permitted include: <constant>add</constant>, <constant>modify</constant>,
+	and <constant>delete</constant>. An example of each operation is shown here.
+	</para>
+
+	<note><para>
+	Commencing with Samba-3.0.23 Windows Domain Groups must be explicitly created. By default, all
+	UNIX groups are exposed to Windows networking as Windows local groups.
+	</para></note>
+
+	<para>
+	An existing UNIX group may be mapped to an existing Windows group by this example:
+<screen>
+&rootprompt; net groupmap modify ntgroup="Domain Users" unixgroup=users
+</screen>
+	An existing UNIX group may be mapped to a new Windows group as shown here:
+<screen>
+&rootprompt; net groupmap add ntgroup="EliteEngrs" unixgroup=Engineers type=d
+</screen>
+	Supported mapping types are 'd' (domain global) and 'l' (domain local).
+	A Windows group may be deleted, and then a new Windows group can be mapped to the UNIX group by
+	executing these commands:
+<screen>
+&rootprompt; net groupmap delete ntgroup=Engineers
+&rootprompt; net groupmap add ntgroup=EngineDrivers unixgroup=Engineers type=d
+</screen>
+	The deletion and addition operations affected only the logical entities known as Windows groups, or domain
+	groups. These operations are inert to UNIX system groups, meaning that they neither delete nor create UNIX
+	system groups. The mapping of a UNIX group to a Windows group makes the UNIX group available as Windows
+	groups so that files and folders on domain member clients (workstations and servers) can be given
+	domain-wide access controls for domain users and groups.
+	</para>
+
+	<para>
+	Two types of Windows groups can be created: <constant>domain (global)</constant> and <constant>local</constant>.
+	In the previous examples the Windows groups created were of type <constant>domain</constant> or global. The
+	following command will create a Windows group of type <constant>local</constant>.
+<screen>
+&rootprompt; net groupmap add ntgroup=Pixies unixgroup=pixies type=l
+</screen>
+	Supported mapping types are 'd' (domain global) and 'l' (domain local), a domain local group in Samba is
+	treated as local to the individual Samba server. Local groups can be used with Samba to enable multiple
+	nested group support.
+	</para>
+
+	</sect3>
+
+	<sect3>
+	<title>Deleting a Group Account</title>
+
+	<para>
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>group delete</tertiary></indexterm>
+	A group account may be deleted by executing the following command:
+<screen>
+&rootprompt; net rpc group delete SupportEngineers -Uroot%not24get
+</screen>
+	</para>
+
+	<para>
+	Validation of the deletion is advisable. The same commands may be executed as shown above.
+	</para>
+
+	</sect3>
+
+	<sect3>
+	<title>Rename Group Accounts</title>
+
+	<note><para>
+	This command is not documented in the man pages; it is implemented in the source code, but it does not
+	work at this time. The example given documents, from the source code, how it should work. Watch the
+	release notes of a future release to see when this may have been fixed.
+	</para></note>
+
+	<para>
+	Sometimes it is necessary to rename a group account. Good administrators know how painful some managers'
+	demands can be if this simple request is ignored. The following command demonstrates how the Windows group
+	<quote>SupportEngrs</quote> can be renamed to <quote>CustomerSupport</quote>:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>group rename</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc group rename SupportEngrs \
+    CustomerSupport -Uroot%not24get
+</screen>
+	</para>
+
+	</sect3>
+
+	</sect2>
+
+	<sect2 id="grpmemshipchg">
+	<title>Manipulating Group Memberships</title>
+
+	<para>
+	Three operations can be performed regarding group membership. It is possible to (1) add Windows users
+	to a Windows group, to (2) delete Windows users from Windows groups, and to (3) list the Windows users that are
+	members of a Windows group.
+	</para>
+
+	<para>
+	To avoid confusion, it makes sense to check group membership before attempting to make any changes.
+	The <command>getent group</command> will list UNIX/Linux group membership. UNIX/Linux group members are
+	seen also as members of a Windows group that has been mapped using the <command>net groupmap</command>
+	command (see <link linkend="groupmapping"/>). The following list of UNIX/Linux group membership shows
+	that the user <constant>ajt</constant> is a member of the UNIX/Linux group <constant>Engineers</constant>.
+<screen>
+&rootprompt; getent group
+...
+Domain Admins:x:512:root
+Domain Users:x:513:jht,lct,ajt,met,vlendecke
+Domain Guests:x:514:
+Print Operators:x:550:
+Backup Operators:x:551:
+Replicator:x:552:
+Domain Computers:x:553:
+Engineers:x:1000:jht,ajt
+</screen>
+	The UNIX/Linux groups have been mapped to Windows groups, as is shown here:
+<screen>
+&rootprompt; net groupmap list
+Domain Admins (S-1-5-21-72630-412605-116429-512) -> Domain Admins
+Domain Users (S-1-5-21-72630-412605-116429-513) -> Domain Users
+Domain Guests (S-1-5-21-72630-412605-116429-514) -> Domain Guests
+Print Operators (S-1-5-21-72630-412605-116429-550) -> Print Operators
+Backup Operators (S-1-5-21-72630-412605-116429-551) -> Backup Operators
+Replicator (S-1-5-21-72630-412605-116429-552) -> Replicator
+Domain Computers (S-1-5-21-72630-412605-116429-553) -> Domain Computers
+Engineers (S-1-5-21-72630-412605-116429-3001) -> Engineers
+</screen>
+	</para>
+
+	<para>
+	Given that the user <constant>ajt</constant> is already a member of the UNIX/Linux group and, via the
+	group mapping, a member of the Windows group, an attempt to add this account again should fail. This is
+	demonstrated here:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>group addmem</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc group addmem "MIDEARTH\Engineers" ajt -Uroot%not24get
+Could not add ajt to MIDEARTH\Engineers: NT_STATUS_MEMBER_IN_GROUP
+</screen>
+	This shows that the group mapping between UNIX/Linux groups and Windows groups is effective and
+	transparent.
+	</para>
+
+	<para>
+	To permit the user <constant>ajt</constant> to be added using the <command>net rpc group</command> utility,
+	this account must first be removed. The removal and confirmation of its effect is shown here:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>group delmem</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc group delmem "MIDEARTH\Engineers" ajt -Uroot%not24get
+&rootprompt; getent group Engineers
+Engineers:x:1000:jht
+&rootprompt; net rpc group members Engineers -Uroot%not24get
+MIDEARTH\jht
+</screen>
+	In this example both at the UNIX/Linux system level, the group no longer has the <constant>ajt</constant>
+	as a member. The above also shows this to be the case for Windows group membership.
+	</para>
+
+	<para>
+	The account is now added again, using the <command>net rpc group</command> utility:
+<screen>
+&rootprompt; net rpc group addmem "MIDEARTH\Engineers" ajt -Uroot%not24get
+&rootprompt; getent group Engineers
+Engineers:x:1000:jht,ajt
+&rootprompt; net rpc group members Engineers -Uroot%not24get
+MIDEARTH\jht
+MIDEARTH\ajt
+</screen>
+	</para>
+
+	<para>
+	In this example the members of the Windows <constant>Domain Users</constant> account are validated using
+	the <command>net rpc group</command> utility. Note the this contents of the UNIX/Linux group was shown
+	four paragraphs earlier. The Windows (domain) group membership is shown here:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>group members</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc group members "Domain Users" -Uroot%not24get
+MIDEARTH\jht
+MIDEARTH\lct
+MIDEARTH\ajt
+MIDEARTH\met
+MIDEARTH\vlendecke
+</screen>
+	This express example shows that Windows group names are treated by Samba (as with
+	MS Windows) in a case-insensitive manner:
+<screen>
+&rootprompt; net rpc group members "DomAiN USerS" -Uroot%not24get
+MIDEARTH\jht
+MIDEARTH\lct
+MIDEARTH\ajt
+MIDEARTH\met
+MIDEARTH\vlendecke
+</screen>
+	</para>
+
+	<note><para>
+	An attempt to specify the group name as <constant>MIDEARTH\Domain Users</constant> in place of
+	just simply <constant>Domain Users</constant> will fail. The default behavior of the net rpc group
+	is to direct the command at the local machine. The Windows group is treated as being local to the machine.
+	If it is necessary to query another machine, its name can be specified using the <constant>-S
+	servername</constant> parameter to the <command>net</command> command.
+	</para></note>
+
+	</sect2>
+
+	<sect2 id="nestedgrpmgmgt">
+	<title>Nested Group Support</title>
+
+	<para>
+	It is possible in Windows (and now in Samba also) to create a local group that has members (contains),
+	domain users, and domain global groups.  Creation of the local group <constant>demo</constant> is
+	achieved by executing:
+<screen>
+&rootprompt; net rpc group add demo -L -S MORDON -Uroot%not24get
+</screen>
+	The -L switch means create a local group. Use the -S argument to direct the operation to a particular
+	server. The parameters to the -U argument should be for a user who has appropriate administrative right
+	and privileges on the machine.
+	</para>
+
+	<para>
+	Addition and removal of group members can be achieved using the <constant>addmem</constant> and
+	<constant>delmem</constant> subcommands of <command>net rpc group</command> command. For example,
+	addition of <quote>DOM\Domain Users</quote> to the local group <constant>demo</constant> would be
+	done by executing:
+<screen>
+&rootprompt; net rpc group addmem demo "DOM\Domain Users" -Uroot%not24get
+</screen>
+	</para>
+
+	<para>
+	The members of a nested group can be listed by executing the following:
+<screen>
+&rootprompt; net rpc group members demo -Uroot%not24get
+DOM\Domain Users
+DOM\Engineers
+DOM\jamesf
+DOM\jht
+</screen>
+	</para>
+
+	<para>
+	Nested group members can be removed (deleted) as shown here:
+<screen>
+&rootprompt; net rpc group delmem demo "DOM\jht" -Uroot%not24get
+</screen>
+	</para>
+
+	<sect3>
+	<title>Managing Nest Groups on Workstations from the Samba Server</title>
+
+	<para>
+	Windows network administrators often ask on the Samba mailing list how it is possible to grant everyone
+	administrative rights on their own workstation. This is of course a very bad practice, but commonly done
+	to avoid user complaints. Here is how it can be done remotely from a Samba PDC or BDC:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>group addmem</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc group addmem "Administrators" "Domain Users" \
+    -S WINPC032 -Uadministrator%secret
+</screen>
+	</para>
+
+	<para>
+	This can be scripted, and can therefore be performed as a user logs onto the domain from a Windows
+	workstation. Here is a simple example that shows how this can be done.
+	</para>
+
+	<procedure>
+	<title>Automating User Addition to the Workstation Power Users Group</title>
+
+		<step><para>
+		Create the script shown in <link linkend="autopoweruserscript"></link> and locate it in
+		the directory <filename>/etc/samba/scripts</filename>, named as <filename>autopoweruser.sh</filename>.
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>group addmem</tertiary></indexterm>
+<indexterm><primary>autopoweruser.sh</primary></indexterm>
+<indexterm><primary>/etc/samba/scripts</primary></indexterm>
+		</para></step>
+
+<example id="autopoweruserscript">
+<title>Script to Auto-add Domain Users to Workstation Power Users Group</title>
+<screen>
+#!/bin/bash
+
+/usr/bin/net rpc group addmem "Power Users" "DOMAIN_NAME\$1" \
+                   -UAdministrator%secret -S $2
+
+exit 0
+</screen>
+</example>
+
+		<step><para>
+		Set the permissions on this script to permit it to be executed as part of the logon process:
+<screen>
+&rootprompt; chown root:root /etc/samba/autopoweruser.sh
+&rootprompt; chmod 755 /etc/samba/autopoweruser.sh
+</screen>
+		</para></step>
+
+		<step><para>
+		Modify the &smb.conf; file so the <literal>NETLOGON</literal> stanza contains the parameters
+		shown in <link linkend="magicnetlogon">the Netlogon Example smb.conf file</link> as shown.
+		</para></step>
+
+<example id="magicnetlogon">
+<title>A Magic Netlogon Share</title>
+<smbconfblock>
+<smbconfsection name="[netlogon]"/>
+<smbconfoption name="comment">Netlogon Share</smbconfoption>
+<smbconfoption name="path">/var/lib/samba/netlogon</smbconfoption>
+<smbconfoption name="root preexec">/etc/samba/scripts/autopoweruser.sh %U %m</smbconfoption>
+<smbconfoption name="read only">Yes</smbconfoption>
+<smbconfoption name="guest ok">Yes</smbconfoption>
+</smbconfblock>
+</example>
+
+		<step><para>
+		Ensure that every Windows workstation Administrator account has the same password that you
+		have used in the script shown in <link linkend="magicnetlogon">the Netlogon Example smb.conf
+		file</link>
+		</para></step>
+
+</procedure>
+
+	<para>
+	This script will be executed every time a user logs on to the network. Therefore every user will
+	have local Windows workstation management rights. This could of course be assigned using a group,
+	in which case there is little justification for the use of this procedure. The key justification
+	for the use of this method is that it will guarantee that all users have appropriate rights on
+	the workstation.
+	</para>
+
+	</sect3>
+
+	</sect2>
+
+	</sect1>
+
+	<sect1>
+	<title>UNIX and Windows User Management</title>
+
+	<para>
+<indexterm><primary>user account</primary></indexterm>
+<indexterm><primary>UNIX/Linux user account</primary></indexterm>
+<indexterm><primary>UID</primary></indexterm>
+<indexterm><primary>POSIX account</primary></indexterm>
+<indexterm><primary>range</primary></indexterm>
+<indexterm><primary>Windows user accounts</primary></indexterm>
+<indexterm><primary>winbindd</primary></indexterm>
+<indexterm><primary>account information</primary></indexterm>
+	Every Windows network user account must be translated to a UNIX/Linux user account. In actual fact,
+	the only account information the UNIX/Linux Samba server needs is a UID.  The UID is available either
+	from a system (POSIX) account or from a pool (range) of UID numbers that is set aside for the purpose
+	of being allocated for use by Windows user accounts. In the case of the UID pool, the UID for a
+	particular user will be allocated by <command>winbindd</command>.
+	</para>
+
+	<para>
+	Although this is not the appropriate place to discuss the <smbconfoption name="username map"/> facility,
+	this interface is an important method of mapping a Windows user account to a UNIX account that has a
+	different name. Refer to the man page for the &smb.conf; file for more information regarding this
+	facility. User name mappings cannot be managed using the <command>net</command> utility.
+	</para>
+
+	<sect2 id="sbeuseraddn">
+	<title>Adding User Accounts</title>
+
+	<para>
+	The syntax for adding a user account via the <command>net</command> (according to the man page) is shown
+	here:
+<screen>
+net [&lt;method&gt;] user ADD &lt;name&gt; [-c container] [-F user flags] \
+    [misc. options] [targets]
+</screen>
+	The user account password may be set using this syntax:
+<screen>
+net rpc password &lt;username&gt; [&lt;password&gt;] -Uadmin_username%admin_pass
+</screen>
+	</para>
+
+	<para>
+	The following demonstrates the addition of an account to the server <constant>FRODO</constant>:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>user add</tertiary></indexterm>
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>user password</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc user add jacko -S FRODO -Uroot%not24get
+Added user jacko
+</screen>
+	The account password can be set with the following methods (all show the same operation):
+<screen>
+&rootprompt; net rpc password jacko f4sth0rse -S FRODO -Uroot%not24get
+&rootprompt; net rpc user password jacko f4sth0rse \
+    -S FRODO -Uroot%not24get
+</screen>
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>Deletion of User Accounts</title>
+
+	<para>
+	Deletion of a user account can be done using the following syntax:
+<screen>
+net [&lt;method&gt;] user DELETE &lt;name&gt; [misc. options] [targets]
+</screen>
+	The following command will delete the user account <constant>jacko</constant>:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>user delete</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc user delete jacko -Uroot%not24get
+Deleted user account
+</screen>
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>Managing User Accounts</title>
+
+	<para>
+	Two basic user account operations are routinely used: change of password and querying which groups a user
+	is a member of. The change of password operation is shown in <link linkend="sbeuseraddn"/>.
+	</para>
+
+	<para>
+	The ability to query Windows group membership can be essential. Here is how a remote server may be
+	interrogated to find which groups a user is a member of:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>user info</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc user info jacko -S SAURON -Uroot%not24get
+net rpc user info jacko -S SAURON -Uroot%not24get
+Domain Users
+Domain Admins
+Engineers
+TorridGroup
+BOP Shop
+Emergency Services
+</screen>
+	</para>
+
+	<para>
+	It is also possible to rename user accounts:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>user rename</tertiary></indexterm>oldusername newusername
+	Note that this operation does not yet work against Samba Servers. It is, however, possible to rename useraccounts on
+	Windows Servers.
+
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>User Mapping</title>
+
+	<para>
+<indexterm><primary>logon name</primary></indexterm>
+<indexterm><primary>/etc/samba/smbusers</primary></indexterm>
+<indexterm><primary>username map</primary></indexterm>
+	In some situations it is unavoidable that a user's Windows logon name will differ from the login ID
+	that user has on the Samba server. It is possible to create a special file on the Samba server that
+	will permit the Windows user name to be mapped to a different UNIX/Linux user name. The &smb.conf;
+	file must also be amended so that the <constant>[global]</constant> stanza contains the parameter:
+<screen>
+username map = /etc/samba/smbusers
+</screen>
+	The content of the <filename>/etc/samba/smbusers</filename> file is shown here:
+<screen>
+parsonsw: "William Parsons"
+marygee: geeringm
+</screen>
+	In this example the Windows user account <quote>William Parsons</quote> will be mapped to the UNIX user
+	<constant>parsonsw</constant>, and the Windows user account <quote>geeringm</quote> will be mapped to the
+	UNIX user <constant>marygee</constant>.
+	</para>
+
+	</sect2>
+
+	</sect1>
+
+	<sect1>
+	<title>Administering User Rights and Privileges</title>
+
+	<para>
+<indexterm><primary>credentials</primary></indexterm>
+<indexterm><primary>manage printers</primary></indexterm>
+<indexterm><primary>manage shares</primary></indexterm>
+<indexterm><primary>manage groups</primary></indexterm>
+<indexterm><primary>manage users</primary></indexterm>
+	With all versions of Samba earlier than 3.0.11 the only account on a Samba server that could
+	manage users, groups, shares, printers, and such was the <constant>root</constant> account. This caused
+	problems for some users and was a frequent source of scorn over the necessity to hand out the
+	credentials for the most security-sensitive account on a UNIX/Linux system.
+	</para>
+
+	<para>
+<indexterm><primary>delegate administrative privileges</primary></indexterm>
+<indexterm><primary>normal user</primary></indexterm>
+<indexterm><primary>rights and privilege</primary></indexterm>
+<indexterm><primary>privilege management</primary></indexterm>
+<indexterm><primary>groups of users</primary></indexterm>
+	New to Samba version 3.0.11 is the ability to delegate administrative privileges as necessary to either
+	a normal user or to groups of users. The significance of the administrative privileges is documented
+	in <link linkend="rights"/>. Examples of use of the <command>net</command> for user rights and privilege
+	management is appropriate to this chapter.
+	</para>
+
+	<note><para>
+	When user rights and privileges are correctly set, there is no longer a need for a Windows
+	network account for the <constant>root</constant> user (nor for any synonym of it) with a UNIX UID=0.
+	Initial user rights and privileges can be assigned by any account that is a member of the <constant>
+	Domain Admins</constant> group. Rights can be assigned to user as well as group accounts.
+	</para></note>
+
+	<para>
+	By default, no privileges and rights are assigned. This is demonstrated by executing the command
+	shown here:
+<screen>
+&rootprompt; net rpc rights list accounts -U root%not24get
+BUILTIN\Print Operators
+No privileges assigned
+
+BUILTIN\Account Operators
+No privileges assigned
+
+BUILTIN\Backup Operators
+No privileges assigned
+
+BUILTIN\Server Operators
+No privileges assigned
+
+BUILTIN\Administrators
+No privileges assigned
+
+Everyone
+No privileges assigned
+</screen>
+	</para>
+
+	<para>
+	The <command>net</command> command can be used to obtain the currently supported capabilities for rights
+	and privileges using this method:
+<indexterm><primary>SeMachineAccountPrivilege</primary></indexterm>
+<indexterm><primary>SePrintOperatorPrivilege</primary></indexterm>
+<indexterm><primary>SeAddUsersPrivilege</primary></indexterm>
+<indexterm><primary>SeRemoteShutdownPrivilege</primary></indexterm>
+<indexterm><primary>SeDiskOperatorPrivilege</primary></indexterm>
+<indexterm><primary>SeBackupPrivilege</primary></indexterm>
+<indexterm><primary>SeRestorePrivilege</primary></indexterm>
+<indexterm><primary>SeTakeOwnershipPrivilege</primary></indexterm>
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>rights list</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc rights list -U root%not24get
+     SeMachineAccountPrivilege  Add machines to domain
+      SePrintOperatorPrivilege  Manage printers
+           SeAddUsersPrivilege  Add users and groups to the domain
+     SeRemoteShutdownPrivilege  Force shutdown from a remote system
+       SeDiskOperatorPrivilege  Manage disk shares
+             SeBackupPrivilege  Back up files and directories
+            SeRestorePrivilege  Restore files and directories
+      SeTakeOwnershipPrivilege  Take ownership of files or other objects
+</screen>
+	Machine account privilege is necessary to permit a Windows NT4 or later network client to be added to the
+	domain. The disk operator privilege is necessary to permit the user to manage share ACLs and file and
+	directory ACLs for objects not owned by the user.
+	</para>
+
+	<para>
+	In this example, all rights are assigned to the <constant>Domain Admins</constant> group. This is a good
+	idea since members of this group are generally expected to be all-powerful. This assignment makes that
+	the reality:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>rights grant</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc rights grant "MIDEARTH\Domain Admins" \
+    SeMachineAccountPrivilege SePrintOperatorPrivilege \
+    SeAddUsersPrivilege SeRemoteShutdownPrivilege \
+    SeDiskOperatorPrivilege  -U root%not24get
+Successfully granted rights.
+</screen>
+	Next, the domain user <constant>jht</constant> is given the privileges needed for day-to-day
+	administration:
+<screen>
+&rootprompt; net rpc rights grant "MIDEARTH\jht" \
+    SeMachineAccountPrivilege SePrintOperatorPrivilege \
+    SeAddUsersPrivilege SeDiskOperatorPrivilege \
+    -U root%not24get
+Successfully granted rights.
+</screen>
+	</para>
+
+	<para>
+	The following step permits validation of the changes just made:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>rights list accounts</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc rights list accounts -U root%not24get
+MIDEARTH\jht
+SeMachineAccountPrivilege
+SePrintOperatorPrivilege
+SeAddUsersPrivilege
+SeDiskOperatorPrivilege
+
+BUILTIN\Print Operators
+No privileges assigned
+
+BUILTIN\Account Operators
+No privileges assigned
+
+BUILTIN\Backup Operators
+No privileges assigned
+
+BUILTIN\Server Operators
+No privileges assigned
+
+BUILTIN\Administrators
+No privileges assigned
+
+Everyone
+No privileges assigned
+
+MIDEARTH\Domain Admins
+SeMachineAccountPrivilege
+SePrintOperatorPrivilege
+SeAddUsersPrivilege
+SeRemoteShutdownPrivilege
+SeDiskOperatorPrivilege
+</screen>
+	</para>
+
+	</sect1>
+
+	<sect1>
+	<title>Managing Trust Relationships</title>
+
+	<para>
+	There are essentially two types of trust relationships: the first is between domain controllers and domain
+	member machines (network clients), the second is between domains (called interdomain trusts). All
+	Samba servers that participate in domain security require a domain membership trust account, as do like
+	Windows NT/200x/XP workstations.
+	</para>
+
+	<sect2>
+	<title>Machine Trust Accounts</title>
+
+	<para>
+	The net command looks in the &smb.conf; file to obtain its own configuration settings. Thus, the following
+	command 'knows' which domain to join from the &smb.conf; file.
+	</para>
+
+	<para>
+	A Samba server domain trust account can be validated as shown in this example:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>testjoin</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc testjoin
+Join to 'MIDEARTH' is OK
+</screen>
+	Where there is no domain membership account, or when the account credentials are not valid, the following
+	results will be observed:
+<screen>
+net rpc testjoin -S DOLPHIN
+Join to domain 'WORLDOCEAN' is not valid
+</screen>
+	</para>
+
+	<para>
+	The equivalent command for joining a Samba server to a Windows ADS domain is shown here:
+<indexterm><primary>net</primary><secondary>ads</secondary><tertiary>testjoin</tertiary></indexterm>
+<screen>
+&rootprompt; net ads testjoin
+Using short domain name -- TAKEAWAY
+Joined 'LEMONADE' to realm 'TAKEAWAY.BIZ'
+</screen>
+	In the event that the ADS trust was not established, or is broken for one reason or another, the following
+	error message may be obtained:
+<screen>
+&rootprompt; net ads testjoin -UAdministrator%secret
+Join to domain is not valid
+</screen>
+	</para>
+
+	<para>
+	The following demonstrates the process of creating a machine trust account in the target domain for the
+	Samba server from which the command is executed:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>join</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc join -S FRODO -Uroot%not24get
+Joined domain MIDEARTH.
+</screen>
+	The joining of a Samba server to a Samba domain results in the creation of a machine account. An example
+	of this is shown here:
+<screen>
+&rootprompt; pdbedit -Lw merlin\$
+merlin$:1009:9B4489D6B90461FD6A3EC3AB96147E16:\
+176D8C554E99914BDF3407DEA2231D80:[S          ]:LCT-42891919:
+</screen>
+	The S in the square brackets means this is a server (PDC/BDC) account. The domain join can be cast to join
+	purely as a workstation, in which case the S is replaced with a W (indicating a workstation account). The
+	following command can be used to affect this:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>join member</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc join member -S FRODO -Uroot%not24get
+Joined domain MIDEARTH.
+</screen>
+	Note that the command-line parameter <constant>member</constant> makes this join specific. By default
+	the type is deduced from the &smb.conf; file configuration. To specifically join as a PDC or BDC, the
+	command-line parameter will be <constant>[PDC | BDC]</constant>. For example:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>join bdc</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc join bdc -S FRODO -Uroot%not24get
+Joined domain MIDEARTH.
+</screen>
+	It is best to let Samba figure out the domain join type from the settings in the &smb.conf; file.
+	</para>
+
+	<para>
+	The command to join a Samba server to a Windows ADS domain is shown here:
+<indexterm><primary>net</primary><secondary>ads</secondary><tertiary>join</tertiary></indexterm>
+<screen>
+&rootprompt; net ads join -UAdministrator%not24get
+Using short domain name -- GDANSK
+Joined 'FRANDIMITZ' to realm 'GDANSK.ABMAS.BIZ'
+</screen>
+	</para>
+
+	<para>
+	There is no specific option to remove a machine account from an NT4 domain. When a domain member that is a
+	Windows machine is withdrawn from the domain, the domain membership account is not automatically removed
+	either. Inactive domain member accounts can be removed using any convenient tool. If necessary, the
+	machine account can be removed using the following <command>net</command> command:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>user delete</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc user delete HERRING\$ -Uroot%not24get
+Deleted user account.
+</screen>
+	The removal is made possible because machine accounts are just like user accounts with a trailing $
+	character. The account management operations treat user and machine accounts in like manner.
+	</para>
+
+	<para>
+	A Samba-3 server that is a Windows ADS domain member can execute the following command to detach from the
+	domain:
+<indexterm><primary>net</primary><secondary>ads</secondary><tertiary>leave</tertiary></indexterm>
+<screen>
+&rootprompt; net ads leave
+</screen>
+	</para>
+
+	<para>
+	Detailed information regarding an ADS domain can be obtained by a Samba DMS machine by executing the
+	following:
+<indexterm><primary>net</primary><secondary>ads</secondary><tertiary>status</tertiary></indexterm>
+<screen>
+&rootprompt; net ads status
+</screen>
+	The volume of information is extensive. Please refer to the book <quote>Samba-3 by Example</quote>,
+	Chapter 7 for more information regarding its use. This book may be obtained either in print or online from
+	the <ulink url="http://www.samba.org/samba/docs/Samba3-ByExample.pdf">Samba-3 by Example</ulink>.
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>Interdomain Trusts</title>
+
+	<para>
+	Interdomain trust relationships form the primary mechanism by which users from one domain can be granted
+	access rights and privileges in another domain. 
+	</para>
+
+	<para>
+	To discover what trust relationships are in effect, execute this command:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>trustdom list</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc trustdom list -Uroot%not24get
+Trusted domains list:
+
+none
+
+Trusting domains list:
+
+none
+</screen>
+	There are no interdomain trusts at this time; the following steps will create them.
+	</para>
+
+	<para>
+	It is necessary to create a trust account in the local domain. A domain controller in a second domain can
+	create a trusted connection with this account. That means that the foreign domain is being trusted
+	to access resources in the local domain. This command creates the local trust account:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>trustdom add</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc trustdom add DAMNATION f00db4r -Uroot%not24get
+</screen>
+	The account can be revealed by using the <command>pdbedit</command> as shown here:
+<screen>
+&rootprompt; pdbedit -Lw DAMNATION\$
+DAMNATION$:1016:9AC1F121DF897688AAD3B435B51404EE: \
+7F845808B91BB9F7FEF44B247D9DC9A6:[I         ]:LCT-428934B1:
+</screen>
+	A trust account will always have an I in the field within the square brackets.
+	</para>
+
+	<para>
+	If the trusting domain is not capable of being reached, the following command will fail:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>trustdom list</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc trustdom list -Uroot%not24get
+Trusted domains list:
+
+none
+
+Trusting domains list:
+
+DAMNATION           S-1-5-21-1385457007-882775198-1210191635
+</screen>
+	The above command executed successfully; a failure is indicated when the following response is obtained:
+<screen>
+net rpc trustdom list -Uroot%not24get
+Trusted domains list:
+
+DAMNATION           S-1-5-21-1385457007-882775198-1210191635
+
+Trusting domains list:
+
+DAMNATION           domain controller is not responding
+</screen>
+	</para>
+
+	<para>
+	Where a trust account has been created on a foreign domain, Samba is able to establish the trust (connect with)
+	the foreign account. In the process it creates a one-way trust to the resources on the remote domain. This
+	command achieves the objective of joining the trust relationship:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>trustdom establish</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc trustdom establish DAMNATION
+Password: xxxxxxx	== f00db4r
+Could not connect to server TRANSGRESSION
+Trust to domain DAMNATION established
+</screen>
+	Validation of the two-way trust now established is possible as shown here:
+<screen>
+&rootprompt; net rpc trustdom list -Uroot%not24get
+Trusted domains list:
+
+DAMNATION           S-1-5-21-1385457007-882775198-1210191635
+
+Trusting domains list:
+
+DAMNATION           S-1-5-21-1385457007-882775198-1210191635
+</screen>
+	</para>
+
+	<para>
+	Sometimes it is necessary to remove the ability for local users to access a foreign domain. The trusting
+	connection can be revoked as shown here:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>trustdom revoke</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc trustdom revoke DAMNATION -Uroot%not24get
+</screen>
+	At other times it becomes necessary to remove the ability for users from a foreign domain to be able to
+	access resources in the local domain. The command shown here will do that:
+<screen>
+&rootprompt; net rpc trustdom del DAMNATION -Uroot%not24get
+</screen>
+
+	</para>
+
+	</sect2>
+
+	</sect1>
+
+	<sect1>
+	<title>Managing Security Identifiers (SIDS)</title>
+
+	<para>
+<indexterm><primary>security identifier</primary></indexterm>
+<indexterm><primary>SID</primary></indexterm>
+<indexterm><primary>desktop profiles</primary></indexterm>
+<indexterm><primary>user encoded</primary></indexterm>
+<indexterm><primary>group SID</primary></indexterm>
+	The basic security identifier that is used by all Windows networking operations is the Windows security
+	identifier (SID). All Windows network machines (servers and workstations), users, and groups are
+	identified by their respective SID. All desktop profiles are also encoded with user and group SIDs that
+	are specific to the SID of the domain to which the user belongs.
+	</para>
+
+	<para>
+<indexterm><primary>machine SID</primary></indexterm>
+<indexterm><primary>domain SID</primary></indexterm>
+<indexterm><primary>SID</primary></indexterm>
+<indexterm><primary>rejoin</primary></indexterm>
+	It is truly prudent to store the machine and/or domain SID in a file for safekeeping. Why? Because 
+	a change in hostname or in the domain (workgroup) name may result in a change in the SID. When you
+	have the SID on hand, it is a simple matter to restore it. The alternative is to suffer the pain of
+	having to recover user desktop profiles and perhaps rejoin all member machines to the domain.
+	</para>
+
+	<para>
+	First, do not forget to store the local SID in a file. It is a good idea to put this in the directory
+	in which the &smb.conf; file is also stored. Here is a simple action to achieve this:
+<indexterm><primary>net</primary><secondary>getlocalsid</secondary></indexterm>
+<screen>
+&rootprompt; net getlocalsid > /etc/samba/my-sid
+</screen>
+	Good, there is now a safe copy of the local machine SID. On a PDC/BDC this is the domain SID also.
+	</para>
+
+	<para>
+	The following command reveals what the former one should have placed into the file called
+	<filename>my-sid</filename>:
+<screen>
+&rootprompt; net getlocalsid
+SID for domain MERLIN is: S-1-5-21-726309263-4128913605-1168186429
+</screen>
+	</para>
+
+	<para>
+	If ever it becomes necessary to restore the SID that has been stored in the <filename>my-sid</filename>
+	file, simply copy the SID (the string of characters that begins with <constant>S-1-5-21</constant>) to
+	the command line shown here:
+<indexterm><primary>net</primary><secondary>setlocalsid</secondary></indexterm>
+<screen>
+&rootprompt; net setlocalsid S-1-5-21-1385457007-882775198-1210191635
+</screen>
+	Restoration of a machine SID is a simple operation, but the absence of a backup copy can be very
+	problematic.
+	</para>
+
+	<para>
+	The following operation is useful only for machines that are being configured as a PDC or a BDC.
+	DMS and workstation clients should have their own machine SID to avoid
+	any potential namespace collision. Here is the way that the BDC SID can be synchronized to that
+	of the PDC (this is the default NT4 domain practice also):
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>getsid</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc getsid -S FRODO -Uroot%not24get
+Storing SID S-1-5-21-726309263-4128913605-1168186429 \
+    for Domain MIDEARTH in secrets.tdb
+</screen>
+	Usually it is not necessary to specify the target server (-S FRODO) or the administrator account
+	credentials (-Uroot%not24get).
+	</para>
+
+	</sect1>
+	
+	<sect1>
+	<title>Share Management</title>
+
+	<para>
+	Share management is central to all file serving operations. Typical share operations include:
+	</para>
+
+	<itemizedlist>
+		<listitem><para>Creation/change/deletion of shares</para></listitem>
+		<listitem><para>Setting/changing ACLs on shares</para></listitem>
+		<listitem><para>Moving shares from one server to another</para></listitem>
+		<listitem><para>Change of permissions of share contents</para></listitem>
+	</itemizedlist>
+
+	<para>
+	Each of these are dealt with here insofar as they involve the use of the <command>net</command>
+	command. Operations outside of this command are covered elsewhere in this document.
+	</para>
+
+	<sect2>
+	<title>Creating, Editing, and Removing Shares</title>
+
+	<para>
+	A share can be added using the <command>net rpc share</command> command capabilities.
+	The target machine may be local or remote and is specified by the -S option. It must be noted
+	that the addition and deletion of shares using this tool depends on the availability of a suitable
+	interface script. The interface scripts Sambas <command>smbd</command> uses are called
+	<smbconfoption name="add share command"/>, <smbconfoption name="delete share command"/> and
+	<smbconfoption name="change share command"/>. A set of example scripts are provided in the Samba source
+	code tarball in the directory <filename>~samba/examples/scripts</filename>.
+	</para>
+
+	<para>
+	The following steps demonstrate the use of the share management capabilities of the <command>net</command>
+	utility. In the first step a share called <constant>Bulge</constant> is added. The sharepoint within the
+	file system is the directory <filename>/data</filename>. The command that can be executed to perform the
+	addition of this share is shown here:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>share add</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc share add Bulge=/data -S MERLIN -Uroot%not24get
+</screen>
+	Validation is an important process, and by executing the command <command>net rpc share</command>
+	with no other operators it is possible to obtain a listing of available shares, as shown here:
+<screen>
+&rootprompt; net rpc share -S MERLIN -Uroot%not24get
+profdata
+archive
+Bulge   &lt;--- This one was added
+print$
+netlogon
+profiles
+IPC$
+kyocera
+ADMIN$
+</screen>
+	</para>
+
+	<para>
+	Often it is desirable also to permit a share to be removed using a command-line tool.
+	The following step permits the share that was previously added to be removed:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>share delete</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc share delete Bulge -S MERLIN -Uroot%not24get
+</screen>
+	A simple validation shown here demonstrates that the share has been removed:
+<screen>
+&rootprompt; net rpc share -S MERLIN -Uroot%not24get
+profdata
+archive
+print$
+netlogon
+profiles
+IPC$
+ADMIN$
+kyocera
+</screen>
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>Creating and Changing Share ACLs</title>
+
+	<para>
+	At this time the <command>net</command> tool cannot be used to manage ACLs on Samba shares. In MS Windows 
+	language this is called Share Permissions.
+	</para>
+
+	<para>
+	It is possible to set ACLs on Samba shares using either the SRVTOOLS NT4 Domain Server Manager
+	or using the Computer Management MMC snap-in. Neither is covered here,
+	but see <link linkend="AccessControls"/>.
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>Share, Directory, and File Migration</title>
+
+	<para>
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>vampire</tertiary></indexterm>
+	Shares and files can be migrated in the same manner as user, machine, and group accounts.
+	It is possible to preserve access control settings (ACLs) as well as security settings
+	throughout the migration process. The <command>net rpc vampire</command> facility is used
+	to migrate accounts from a Windows NT4 (or later) domain to a Samba server. This process
+	preserves passwords and account security settings and is a precursor to the migration
+	of shares and files.
+	</para>
+
+	<para>
+	The <command>net rpc share</command> command may be used to migrate shares, directories,
+	files, and all relevant data from a Windows server to a Samba server.
+	</para>
+
+	<para>
+	A set of command-line switches permit the creation of almost direct clones of Windows file
+	servers. For example, when migrating a fileserver, file ACLs and DOS file attributes from
+	the Windows server can be included in the migration process and will reappear, almost identically,
+	on the Samba server when the migration has been completed.
+	</para>
+
+	<para>
+	The migration process can be completed only with the Samba server already being fully operational.
+	The user and group accounts must be migrated before attempting to migrate data
+	share, files, and printers. The migration of files and printer configurations involves the use
+	of both SMB and MS DCE RPC services. The benefit of the manner in which the migration process has
+	been implemented is that the possibility now exists to use a Samba server as a man-in-middle migration
+	service that affects a transfer of data from one server to another. For example, if the Samba
+	server is called MESSER, the source Windows NT4 server is called PEPPY, and the target Samba
+	server is called GONZALES, the machine MESSER can be used to effect the migration of all data
+	(files and shares) from PEPPY to GONZALES. If the target machine is not specified, the local
+	server is assumed by default - as net's general rule of thumb .
+	</para>
+
+	<para>
+	The success of server migration requires a firm understanding of the structure of the source
+	server (or domain) as well as  the processes on which the migration is critically dependant.
+	</para>
+
+	<para>
+	There are two known limitations to the migration process:
+	</para>
+
+	<orderedlist>
+		<listitem><para>
+		The <command>net</command> command requires that the user credentials provided exist on both
+		the migration source and the migration target.
+		</para></listitem>
+
+		<listitem><para>
+		Printer settings may not be fully or may be incorrectly migrated. This might in particular happen
+		when migrating a Windows 2003 print server to Samba.
+		</para></listitem>
+	</orderedlist>
+
+	<sect3>
+	<title>Share Migration</title>
+
+	<para>
+	The <command>net rpc share migrate</command> command operation permits the migration of plain
+	share stanzas. A stanza contains the parameters within which a file or print share are defined.
+	The use of this migration method will create share stanzas that have as parameters the file
+	system directory path, an optional description, and simple security settings that permit write
+	access to files. One of the first steps necessary following migration is to review the share
+	stanzas to ensure that the settings are suitable for use.
+	</para>
+
+	<para>
+	The shares are created on the fly as part of the migration process. The <command>smbd</command>
+	application does this by calling on the operating system to execute the script specified by the 
+	&smb.conf; parameter <parameter>add share command</parameter>.
+	</para>
+
+	<para>
+	There is a suitable example script for the <parameter>add share command</parameter> in the
+	<filename>$SAMBA_SOURCES/examples/scripts</filename> directory. It should be noted that
+	the account that is used to drive the migration must, of necessity, have appropriate file system
+	access privileges and have the right to create shares and to set ACLs on them. Such rights are
+	conferred by these rights: <parameter>SeAddUsersPrivilege</parameter> and <parameter>SeDiskOperatorPrivilege</parameter>.
+	For more information regarding rights and privileges please refer to <link linkend="rights"/>.
+	</para>
+
+	<para>
+	The syntax of the share migration command is shown here:
+<screen>
+net rpc share MIGRATE SHARES &lt;share-name&gt; -S &lt;source&gt;
+        [--destination=localhost] [--exclude=share1,share2] [-v]
+</screen>
+	When the parameter &lt;share-name&gt; is omitted, all shares will be migrated. The potentially
+	large list of available shares on the system that is being migrated can be limited using the
+	<parameter>--exclude</parameter> switch. For example:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>share migrate</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc share migrate shares myshare\
+         -S win2k -U administrator%secret"
+</screen>
+	This will migrate the share <constant>myshare</constant> from the server <constant>win2k</constant>
+	to the Samba Server using the permissions that are tied to the account <constant>administrator</constant> 
+	with the password <constant>secret</constant>. The account that is used must be the same on both the
+	migration source server and the target Samba server. The use of the <command>net rpc
+	vampire</command>, prior to attempting the migration of shares, will ensure that accounts will be
+	identical on both systems. One precaution worth taking before commencement of migration of shares is
+	to validate that the migrated accounts (on the Samba server) have the needed rights and privileges.
+	This can be done as shown here:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>right list accounts</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc right list accounts -Uroot%not24get
+</screen>
+	The steps taken so far perform only the migration of shares. Directories and directory contents
+	are not migrated by the steps covered up to this point.
+	</para>
+
+	</sect3>
+
+	<sect3>
+	<title>File and Directory Migration</title>
+
+	<para>
+	Everything covered to this point has been done in preparation for the migration of file and directory
+	data. For many people preparation is potentially boring and the real excitement only begins when file
+	data can be used. The next steps demonstrate the techniques that can be used to transfer (migrate)
+	data files using the <command>net</command> command.
+	</para>
+
+	<para>
+	Transfer of files from one server to another has always been a challenge for MS Windows
+	administrators because Windows NT and 200X servers do not always include the tools needed. The
+	<command>xcopy</command> from Windows NT is not capable of preserving file and directory ACLs, 
+	it does so only with Windows 200x. Microsoft does provide a
+	utility that can copy ACLs (security settings) called <command>scopy</command>, but it is provided only
+	as part of the Windows NT or 200X Server Resource Kit.
+	</para>
+
+	<para>
+	There are several tools, both commercial and freeware, that can be used from a Windows server to copy files
+	and directories with full preservation of security settings. One of the best known of the free tools is
+	called <command>robocopy</command>.
+	</para>
+
+	<para>
+	The <command>net</command> utility can be used to copy files and directories with full preservation of
+	ACLs as well as DOS file attributes. Note that including ACLs makes sense only where the destination
+	system will operate within the same security context as the source system. This applies both to a
+	DMS and to domain controllers that result from a vampired domain.
+	Before file and directory migration, all shares must already exist.
+	</para>
+
+	<para>
+	The syntax for the migration commands is shown here:
+<screen>
+net rpc share MIGRATE FILES &lt;share-name&gt; -S &lt;source&gt;
+    [--destination=localhost] [--exclude=share1,share2]
+    [--acls] [--attrs] [--timestamps] [-v]
+</screen>
+	If the &lt;share-name&gt; parameter is omitted, all shares will be migrated. The potentially large
+	list of shares on the source system can be restricted using the <parameter>--exclude</parameter> command
+	switch.
+	</para>
+
+	<para>
+	Where it is necessary to preserve all file ACLs, the <parameter>--acls</parameter> switch should be added
+	to the above command line. Original file timestamps can be preserved by specifying the
+	<parameter>--timestamps</parameter> switch, and the DOS file attributes (i.e., hidden, archive, etc.) can
+	be preserved by specifying the <parameter>--attrs</parameter> switch.
+	</para>
+
+	<note><para>
+	The ability to preserve ACLs depends on appropriate support for ACLs as well as the general file system
+	semantics of the host operating system on the target server. A migration from one Windows file server to
+	another will perfectly preserve all file attributes. Because of the difficulty of mapping Windows ACLs
+	onto a POSIX ACLs-supporting system, there can be no perfect migration of Windows ACLs to a Samba server.
+	</para></note>
+
+	<para>
+	The ACLs that result on a Samba server will most probably not match the originating ACLs. Windows supports
+	the possibility of files that are owned only by a group. Group-alone file ownership is not possible under
+	UNIX/Linux. Errors in migrating group-owned files can be avoided by using the &smb.conf; file
+	<smbconfoption name="force unknown acl user">yes</smbconfoption> parameter. This facility will
+	automatically convert group-owned files into correctly user-owned files on the Samba server.
+	</para>
+
+	<para>
+	An example for migration of files from a machine called <constant>nt4box</constant> to the Samba server
+	from which the process will be handled is shown here:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>share migrate files</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc share migrate files -S nt4box --acls \
+    --attrs -U administrator%secret
+</screen>
+	</para>
+
+	<para>
+	This command  will migrate all files and directories from all file shares on the Windows server called
+	<constant>nt4box</constant> to the Samba server from which migration is initiated. Files that are group-owned
+	will be owned by the user account <constant>administrator</constant>.
+	</para>
+
+	</sect3>
+	
+	<sect3>
+	<title>Share-ACL Migration</title>
+	<para>
+	It is possible to have share-ACLs (security descriptors) that won't allow you, even as Administrator, to
+	copy any files or directories into it. Therefor the migration of the share-ACLs has been put into a separate
+	function:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>share migrate security</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc share migrate security -S nt4box -U administrator%secret
+</screen>
+	</para>
+
+	<para>
+	This command will only copy the share-ACL of each share on nt4box to your local samba-system.
+	</para>
+	</sect3>
+
+	<sect3>
+	<title>Simultaneous Share and File Migration</title>
+
+	<para>
+	The operating mode shown here is just a combination of the previous three. It first migrates
+	share definitions and then all shared files and directories and finally migrates the share-ACLs:
+<screen>
+net rpc share MIGRATE ALL &lt;share-name&gt; -S &lt;source&gt;
+    [--exclude=share1, share2] [--acls] [--attrs] [--timestamps] [-v]
+</screen>
+	</para>
+
+	<para>
+	An example of simultaneous migration is shown here:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>share migrate all</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc share migrate all -S w2k3server -U administrator%secret
+</screen>
+	This will generate a complete server clone of the <parameter>w2k3server</parameter> server.
+	</para>
+
+	</sect3>
+
+	</sect2>
+
+	<sect2>
+	<title>Printer Migration</title>
+
+	<para>
+	The installation of a new server, as with the migration to a new network environment, often is similar to
+	building a house; progress is very rapid from the laying of foundations up to the stage at which
+	the house can be locked up, but the finishing off appears to take longer and longer as building
+	approaches completion.
+	</para>
+
+	<para>
+	Printing needs vary greatly depending on the network environment and may be very simple or complex. If
+	the need is very simple, the best solution to the implementation of printing support may well be to
+	re-install everything from a clean slate instead of migrating older configurations. On the other hand,
+	a complex network that is integrated with many international offices and a complex arrangement of local branch
+	offices, each of which form an inter-twined maze of printing possibilities, the ability to migrate all
+	printer configurations is decidedly beneficial. To manually re-establish a complex printing network
+	will take much time and frustration. Often it will not be possible to find driver files that are
+	currently in use, necessitating the installation of newer drivers. Newer drivers often implement
+	printing features that will necessitate a change in the printer usage. Additionally, with very complex
+	printer configurations it becomes almost impossible to re-create the same environment &smbmdash; no matter
+	how extensively it has been documented.
+	</para>
+
+	<para>
+	The migration of an existing printing architecture involves the following:
+	</para>
+
+	<itemizedlist>
+		<listitem><para>Establishment of print queues.</para></listitem>
+
+		<listitem><para>Installation of printer drivers (both for the print server and for Windows clients.</para></listitem>
+
+		<listitem><para>Configuration of printing forms.</para></listitem>
+
+		<listitem><para>Implementation of security settings.</para></listitem>
+
+		<listitem><para>Configuration of printer settings.</para></listitem>
+	</itemizedlist>
+
+	<para>
+	The Samba <command>net</command> utility permits printer migration from one Windows print server
+	to another. When this tool is used to migrate printers to a Samba server <command>smbd</command>,
+	the application that receives the network requests to create the necessary services must call out
+	to the operating system in order to create the underlying printers. The call-out is implemented
+	by way of an interface script that can be specified by the &smb.conf; file parameter
+	<smbconfoption name="add printer script"/>. This script is essential to the migration process.
+	A suitable example script may be obtained from the <filename>$SAMBA_SOURCES/examples/scripts</filename>
+	directory. Take note that this script must be customized to suit the operating system environment
+	and may use its tools to create a print queue.
+	</para>
+
+	<para>
+	Each of the components listed above can be completed separately, or they can be completed as part of an
+	automated operation. Many network administrators prefer to deal with migration issues in a manner that
+	gives them the most control, particularly when things go wrong. The syntax for each operation is now
+	briefly described.
+	</para>
+
+	<para>
+	Printer migration from a Windows print server (NT4 or 200x) is shown. This instruction causes the
+	printer share to be created together with the underlying print queue:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>printer migrate printers</tertiary></indexterm>
+<screen>
+net rpc printer MIGRATE PRINTERS [printer] [misc. options] [targets]
+</screen>
+	Printer drivers can be migrated from the Windows print server to the Samba server using this
+	command-line instruction:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>printer migrate drivers</tertiary></indexterm>
+<screen>
+net rpc printer MIGRATE DRIVERS [printer] [misc. options] [targets]
+</screen>
+	Printer forms can be migrated with the following operation:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>printer migrate forms</tertiary></indexterm>
+<screen>
+net rpc printer MIGRATE FORMS [printer] [misc. options] [targets]
+</screen>
+	Printer security settings (ACLs) can be migrated from the Windows server to the Samba server using this command:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>printer migrate security</tertiary></indexterm>
+<screen>
+net rpc printer MIGRATE SECURITY [printer] [misc. options] [targets]
+</screen>
+	Printer configuration settings include factors such as paper size and default paper orientation.
+	These can be migrated from the Windows print server to the Samba server with this command:
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>printer migrate settings</tertiary></indexterm>
+<screen>
+net rpc printer MIGRATE SETTINGS [printer] [misc. options] [targets]
+</screen>
+	</para>
+
+	<para>
+	Migration of printers including the above-mentioned sets of information may be completed
+	with a single command using this syntax:
+<screen>
+net rpc printer MIGRATE ALL [printer] [misc. options] [targets]
+</screen>
+	</para>
+
+	</sect2>
+
+	</sect1>
+
+	<sect1>
+	<title>Controlling Open Files</title>
+
+	<para>
+	The man page documents the <command>net file</command> function suite, which provides the tools to
+	close open files using either RAP or RPC function calls. Please refer to the man page for specific
+	usage information.
+	</para>
+
+	</sect1>
+
+	<sect1>
+	<title>Session and Connection Management</title>
+
+	<para>
+	The session management interface of the <command>net session</command> command uses the old RAP
+	method to obtain the list of connections to the Samba server, as shown here:
+<indexterm><primary>net</primary><secondary>rap</secondary><tertiary>session</tertiary></indexterm>
+<screen>
+&rootprompt; net rap session -S MERLIN -Uroot%not24get
+Computer             User name            Client Type        Opens Idle time
+------------------------------------------------------------------------------
+\\merlin             root                 Unknown Client         0 00:00:00
+\\marvel             jht                  Unknown Client         0 00:00:00
+\\maggot             jht                  Unknown Client         0 00:00:00
+\\marvel             jht                  Unknown Client         0 00:00:00
+</screen>
+	</para>
+
+	<para>
+	A session can be closed by executing a command as shown here:
+<screen>
+&rootprompt; net rap session close marvel -Uroot%not24get
+</screen>
+	</para>
+
+	</sect1>
+
+	<sect1>
+	<title>Printers and ADS</title>
+
+	<para>
+	When Samba-3 is used within an MS Windows ADS environment, printers shared via Samba will not be browseable
+	until they have been published to the ADS domain. Information regarding published printers may be obtained
+	from the ADS server by executing the <command>net ads print info</command> command following this syntax:
+<indexterm><primary>net</primary><secondary>ads</secondary><tertiary>printer info</tertiary></indexterm>
+<screen>
+net ads printer info &lt;printer_name&gt; &lt;server_name&gt; -Uadministrator%secret
+</screen>
+	If the asterisk (*) is used in place of the printer_name argument, a list of all printers will be
+	returned.
+	</para>
+
+	<para>
+	To publish (make available) a printer to ADS, execute the following command:
+<indexterm><primary>net</primary><secondary>ads</secondary><tertiary>printer publish</tertiary></indexterm>
+<screen>
+net ads printer publish &lt;printer_name&gt; -Uadministrator%secret
+</screen>
+	This publishes a printer from the local Samba server to ADS.
+	</para>
+
+	<para>
+	Removal of a Samba printer from ADS is achieved by executing this command:
+<indexterm><primary>net</primary><secondary>ads</secondary><tertiary>printer remove</tertiary></indexterm>
+<screen>
+net ads printer remove &lt;printer_name&gt; -Uadministrator%secret
+</screen>
+	</para>
+
+	<para>
+	A generic search (query) can also be made to locate a printer across the entire ADS domain by executing:
+<indexterm><primary>net</primary><secondary>ads</secondary><tertiary>printer search</tertiary></indexterm>
+<screen>
+net ads printer search &lt;printer_name&gt; -Uadministrator%secret
+</screen>
+	</para>
+
+	</sect1>
+
+	<sect1>
+	<title>Manipulating the Samba Cache</title>
+
+	<para>
+	Please refer to the <command>net</command> command man page for information regarding cache management.
+	</para>
+
+	</sect1>
+
+	<sect1>
+	<title>Managing IDMAP UID/SID Mappings</title>
+
+	<para>
+	The IDMAP UID to SID, and SID to UID, mappings that are created by <command>winbindd</command> can be
+	backed up to a text file. The text file can be manually edited, although it is highly recommended that
+	you attempt this only if you know precisely what you are doing.
+	</para>
+
+	<para>
+	An IDMAP text dump file can be restored (or reloaded). There are two situations that may necessitate
+	this action: a) The existing IDMAP file is corrupt, b) It is necessary to install an editted version
+	of the mapping information.
+	</para>
+
+	<para>
+	Winbind must be shut down to dump the IDMAP file. Before restoring a dump file, shut down
+	<command>winbindd</command> and delete the old <filename>winbindd_idmap.tdb</filename> file.
+	</para>
+
+	<sect2>
+	<title>Creating an IDMAP Database Dump File</title>
+
+	<para>
+	The IDMAP database can be dumped to a text file as shown here:
+<screen>
+net idmap dump &lt;full_path_and_tdb_filename&gt; &gt; dumpfile.txt
+</screen>
+	Where a particular build of Samba the run-time tdb files are stored in the
+	<filename>/var/lib/samba</filename> directory the following commands to create the dump file will suffice:
+<screen>
+net idmap dump /var/lib/samba/winbindd_idmap.tdb &gt; idmap_dump.txt
+</screen>
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>Restoring the IDMAP Database Dump File</title>
+
+	<para>
+	The IDMAP dump file can be restored using the following command:
+<screen>
+net idmap restore idmap_dump.txt
+</screen>
+	Where the Samba run-time tdb files are stored in the <filename>/var/lib/samba</filename> directory
+    the following command can be used to restore the data to the tdb file:
+<screen>
+net idmap restore /var/lib/samba/winbindd_idmap.tdb &lt; idmap_dump.txt
+</screen>
+	</para>
+
+	</sect2>
+
+	</sect1>
+
+	<sect1 id="netmisc1">
+	<title>Other Miscellaneous Operations</title>
+
+	<para>
+	The following command is useful for obtaining basic statistics regarding a Samba domain. This command does
+	not work with current Windows XP Professional clients.
+<indexterm><primary>net</primary><secondary>rpc</secondary><tertiary>info</tertiary></indexterm>
+<screen>
+&rootprompt; net rpc info
+Domain Name: RAPIDFLY
+Domain SID: S-1-5-21-399034208-633907489-3292421255
+Sequence number: 1116312355
+Num users: 720
+Num domain groups: 27
+Num local groups: 6
+</screen>
+	</para>
+
+	<para>
+	Another useful tool is the <command>net time</command> tool set. This tool may be used to query the
+	current time on the target server as shown here:
+<indexterm><primary>net</primary><secondary>time</secondary></indexterm>
+<screen>
+&rootprompt; net time -S SAURON
+Tue May 17 00:50:43 2005
+</screen>
+	In the event that it is the intent to pass the time information obtained to the UNIX
+	<command>/bin/time</command>, it is a good idea to obtain the time from the target server in a format
+	that is ready to be passed through. This may be done by executing:
+<indexterm><primary>net</primary><secondary>time</secondary><tertiary>system</tertiary></indexterm>
+<screen>
+&rootprompt; net time system -S FRODO
+051700532005.16
+</screen>
+	The time can be set on a target server by executing:
+<indexterm><primary>net</primary><secondary>time</secondary><tertiary>set</tertiary></indexterm>
+<screen>
+&rootprompt; net time set -S MAGGOT -U Administrator%not24get
+Tue May 17 00:55:30 MDT 2005
+</screen>
+	It is possible to obtain the time zone of a server by executing the following command against it:
+<indexterm><primary>net</primary><secondary>time</secondary><tertiary>zone</tertiary></indexterm>
+<screen>
+&rootprompt; net time zone -S SAURON
+-0600
+</screen>
+	</para>
+
+	</sect1>
+
+</chapter>

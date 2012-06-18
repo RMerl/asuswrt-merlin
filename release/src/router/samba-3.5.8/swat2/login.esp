@@ -1,0 +1,60 @@
+<% page_header("plain", "SWAT Login", "");
+   libinclude("auth.js");
+   include("/scripting/forms.js");
+
+if (request['SESSION_EXPIRED'] == "True") {
+   write("<b>Your session has expired - please authenticate again<br /></b>\n");
+}
+
+var f = FormObj("login", 3, 1);
+f.element[0].label = "Username";
+f.element[0].value = form['Username'];
+f.element[1].label = "Password";
+f.element[1].value = form['Password'];
+f.element[1].type  = "password";
+f.element[2].label = "Domain";
+f.element[2].type  = "select";
+f.element[2].list  = getDomainList();
+f.submit[0] = "Login";
+
+f.display();
+%>
+
+<%
+	if (request.REQUEST_METHOD == "POST") {
+		var creds = credentials_init();
+		creds.set_username(form.Username);
+		creds.set_password(form.Password);
+		creds.set_domain(form.Domain);
+		creds.set_workstation(request['REMOTE_HOST']);
+
+		auth = userAuth(creds, request['REMOTE_SOCKET_ADDRESS']);
+		if (auth == undefined) {
+			write("<b>Invalid login - please try again<br /></b>\n");
+		} else if (auth.result) {
+			session.AUTHENTICATED = true;
+			session.authinfo = new Object();
+
+			session.authinfo.username = auth.username;
+			session.authinfo.domain = auth.domain;
+			session.authinfo.credentials = creds;
+			session.authinfo.session_info = auth.session_info;
+			session.authinfo.user_class = auth.user_class;
+			
+			/* if the user was asking for the login page, then now
+			   redirect them to the main page. Otherwise just
+			   redirect them to the current page, which will now
+			   show its true content */
+			if (request.REQUEST_URI == "/login.esp") {
+			   redirect(session_uri("/"));
+			} else {
+			   redirect(session_uri(request.REQUEST_URI));
+			}
+		} else if (auth.report == undefined) {
+			write("<b>Login failed - please try again<br /></b>\n");
+		} else {
+			write("<b>Login failed: " + auth.report + " - please try again<br /></b>\n");
+		}
+	}
+%>
+<% page_footer(); %>

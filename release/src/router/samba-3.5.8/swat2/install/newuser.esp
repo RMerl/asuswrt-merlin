@@ -1,0 +1,50 @@
+<% page_header("columns", "Add a user", "install"); 
+
+  include("/scripting/forms.js");
+  libinclude("base.js");
+  libinclude("provision.js");
+%>
+
+<h1>Add a user</h1>
+
+<%
+var f = FormObj("newuser", 0, 2);
+var i;
+var rand = random_init();
+
+f.add("USERNAME", "User Name");
+f.add("UNIXNAME", "Unix Name");
+f.add("PASSWORD", "Password", "password");
+f.add("CONFIRM", "Confirm Password", "password");
+f.submit[0] = "Add";
+f.submit[1] = "Cancel";
+
+if (form['submit'] == "Cancel") {
+	redirect("/");
+}
+
+
+if (form['submit'] == "Add" && 
+    form.USERNAME != undefined) {
+	var goodpass = (form.CONFIRM == form.PASSWORD);
+
+	if (!goodpass) {
+		write("<h3>Passwords don't match.  Please try again.</h3>");
+		f.display();
+	} else {
+		if (form.UNIXNAME == undefined) {
+			form.UNIXNAME = form.USERNAME;
+		}
+		if (form.PASSWORD == undefined) {
+			form.PASSWORD = rand.randpass();
+		}
+		newuser(form.USERNAME, form.UNIXNAME, form.PASSWORD, writefln, 
+			session.authinfo.session_info, session.authinfo.credentials);
+	}
+} else {
+	f.display();
+}
+%>
+
+
+<% page_footer(); %>

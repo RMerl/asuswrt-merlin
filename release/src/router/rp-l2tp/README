@@ -1,0 +1,35 @@
+# LIC: GPL
+
+This is a user-space implementation of L2TP (RFC 2661) for Linux.
+
+Copying
+-------
+
+All software included in this package is Copyright 2002 Roaring
+Penguin Software Inc.  You may distribute it under the terms of the
+GNU General Public License (the "GPL"), Version 2, or (at your option)
+any later version.
+
+Handlers
+--------
+
+Part of the l2tp code is implemented in the l2tpd program, and part of
+it is implemented as "handlers".  A handler is a shared-object library
+which is dynamically linked into l2tpd at run-time using the
+"load-handler" configuration directive.
+
+Although the handlers included with this package (sync-pppd and cmd)
+are licensed under the GPL, as a special exception, you may write your
+own handlers which link to code in this package and not release them
+under the GPL.  There may be other reasons why your handlers must
+be released under the GPL (for example, they may link with other GPL'd
+code), but in the absence of other reasons, you may keep your handlers
+proprietary.
+
+Installation
+------------
+
+./configure && make
+make install
+
+Now read l2tpd(8) and l2tp.conf(5)

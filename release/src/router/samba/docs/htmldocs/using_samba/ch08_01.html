@@ -1,0 +1,267 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 8] Additional Samba Information </title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:35:49Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch07_03.html" TITLE="7.3 Name Resolution with Samba">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 7.3 Name Resolution with Samba" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+Chapter 8</font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_02.html" TITLE="8.2 Magic Scripts">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 8.2 Magic Scripts" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div class="samplechapter">
+<H1 CLASS="chapter">
+<A CLASS="title" NAME="ch08-74589">
+8. Additional Samba Information </a></h1><DIV CLASS="htmltoc">
+<P>
+<B>
+Contents:</b><br>
+<A CLASS="sect1" HREF="#ch08-56646" TITLE="8.1 Supporting Programmers">
+Supporting Programmers</a><br>
+<A CLASS="sect1" HREF="ch08_02.html" TITLE="8.2 Magic Scripts">
+Magic Scripts</a><br>
+<A CLASS="sect1" HREF="ch08_03.html" TITLE="8.3 Internationalization">
+Internationalization</a><br>
+<A CLASS="sect1" HREF="ch08_04.html" TITLE="8.4 WinPopup Messages">
+WinPopup Messages</a><br>
+<A CLASS="sect1" HREF="ch08_05.html" TITLE="8.5 Recently Added Options">
+Recently Added Options</a><br>
+<A CLASS="sect1" HREF="ch08_06.html" TITLE="8.6 Miscellaneous Options">
+Miscellaneous Options</a><br>
+<A CLASS="sect1" HREF="ch08_07.html" TITLE="8.7 Backups with smbtar">
+Backups with smbtar</a></p><P>
+</p></div><P CLASS="para">
+This chapter wraps up our coverage of the <I CLASS="filename">
+smb.conf</i> configuration file with some miscellaneous options that can perform a variety of tasks. We will talk briefly about options for supporting programmers, internationalization, messages, and common Windows bugs. For the most part, you will use these options only in isolated circumstances. We also cover performing automated backups with the <I CLASS="filename">
+smbtar</i> command at the end of this chapter. So without further ado, let's jump into our first subject: options to help programmers.</p><DIV CLASS="sect1">
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="s1"></a>
+<A CLASS="title" NAME="ch08-56646">
+8.1 Supporting Programmers</a></h2><P CLASS="para">If you have programmers accessing your Samba server, you'll want to be aware of the special options listed in <A CLASS="xref" HREF="ch08_01.html#ch08-73167">
+Table 8.1</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch08-73167">
+Table 8.1: Programming Configuration Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+time server</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, <EM CLASS="emphasis">
+nmbd</em> announces itself as a SMB time service to Windows clients.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+time offset</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical (number of minutes)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Adds a specified number of minutes to the reported time.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+0</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+dos filetimes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Allows non-owners of a file to change its time if they can write to it.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+dos filetime</code></p><P CLASS="para">
+<CODE CLASS="literal">
+resolution</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Causes file times to be rounded to the next even second.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+fake directory create times</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets directory times to avoid a MS <EM CLASS="emphasis">
+nmake</em> bug.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr></tbody></table><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-958487">
+8.1.1 Time Synchronization</a></h3><P CLASS="para">Time synchronization can be very important to programmers. Consider the following options:</p><PRE CLASS="programlisting">
+time service = yes
+dos filetimes = yes
+fake directory create times = yes
+dos filetime resolution = yes
+delete readonly = yes</pre><P CLASS="para">
+If you set these options, Samba shares will provide the kind of compatible file times that Visual C++, <EM CLASS="emphasis">
+nmake</em>, and other Microsoft programming tools require. Otherwise, PC <EM CLASS="emphasis">
+make</em> programs will tend to think that all the files in a directory need to be recompiled every time. Obviously, this is not the behavior you want.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch08-pgfId-958495">
+8.1.1.1 time server</a></h4><P CLASS="para">
+If your Samba server has an accurate clock, or if it's a client of one of the Unix network time servers, you can instruct it to advertise itself as an SMB time server by setting the <CODE CLASS="literal">
+time</code> <CODE CLASS="literal">
+server</code> option as follows:</p><PRE CLASS="programlisting">
+[global]
+	time service = yes</pre><P CLASS="para">
+The client will still have to request the correct time with the following DOS command, substituting the Samba server name in at the appropriate point:</p><PRE CLASS="programlisting">
+C:\NET TIME \\<CODE CLASS="replaceable"><I>server</i></code> /YES /SET</pre><P CLASS="para">
+This command can be placed in a Windows logon script (see <a href="ch06_01.html"><b>Chapter 6, <CITE CLASS="chapter">Users, Security, and Domains </cite></b></a>).</p><P CLASS="para">
+By default, the <CODE CLASS="literal">
+time</code> <CODE CLASS="literal">
+server</code> option is normally set to <CODE CLASS="literal">
+no</code>. If you turn this service on, you can use the command above to keep the client clocks from drifting. Time synchronization is important to clients using programs such as <EM CLASS="emphasis">
+make</em>, which compile based on the last time the file was changed. Incorrectly synchronized times can cause such programs to either remake all files in a directory, which wastes time, or not recompile a source file that was just modified because of a slight clock drift.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch08-pgfId-958501">
+8.1.1.2 time offset</a></h4><P CLASS="para">
+To deal with clients that don't process daylight savings time properly, Samba provides the <CODE CLASS="literal">
+time</code> <CODE CLASS="literal">
+offset</code> option. If set, it adds the specified number of minutes to the current time. This is handy if you're in Newfoundland and Windows doesn't know about the 30-minute time difference there:</p><PRE CLASS="programlisting">
+[global]
+	time offset = 30</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch08-pgfId-958505">
+8.1.1.3 dos filetimes</a></h4><P CLASS="para">
+Traditionally, only the root user and the owner of a file can change its last-modified date on a Unix system. The share-level <CODE CLASS="literal">
+dos</code> <CODE CLASS="literal">
+filetimes</code> option allows the Samba server to mimic the characteristics of a DOS/Windows machine: any user can change the last modified date on a file in that share if he or she has write permission to it. In order to do this, Samba uses its root privileges to modify the timestamp on the file. </p><P CLASS="para">
+By default, this option is disabled. Setting this option to <CODE CLASS="literal">
+yes</code> is often necessary to allow PC <EM CLASS="emphasis">
+make</em> programs to work properly. Without it, they cannot change the last-modified date themselves. This often results in the program thinking <EM CLASS="emphasis">
+all</em> files need recompiling when they really don't. </p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch08-pgfId-958509">
+8.1.1.4 dos filetime resolution</a></h4><P CLASS="para">
+<CODE CLASS="literal">
+dos</code> <CODE CLASS="literal">
+filetime</code> <CODE CLASS="literal">
+resolution</code> is share-level option. If set to <CODE CLASS="literal">
+yes</code>, Samba will arrange to have the file times rounded to the closest two-second boundary. This option exists primarily to satisfy a quirk in Windows that prevents Visual C++ from correctly recognizing that a file has not changed. You can enable it as follows:</p><PRE CLASS="programlisting">
+[data]
+	dos filetime resolution = yes</pre><P CLASS="para">
+We recommend using this option only if you are using Microsoft Visual C++ on a Samba share that supports opportunistic locking.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch08-pgfId-958515">
+8.1.1.5 fake directory create times</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+fake</code> <CODE CLASS="literal">
+directory</code> <CODE CLASS="literal">
+create</code> <CODE CLASS="literal">
+times</code> option exists to keep PC <EM CLASS="emphasis">
+make</em> programs sane. VFAT and NTFS filesystems record the creation date of a specific directory while Unix does not. Without this option, Samba takes the earliest recorded date it has for the directory (often the last-modified date of a file) and returns it to the client. If this is not sufficient, set the following option under a share definition:</p><PRE CLASS="programlisting">
+[data]
+	fake directory create times = yes</pre><P CLASS="para">
+If set, Samba will adjust the directory create time it reports to the hardcoded value January 1st, 1980. This is primarily used to convince the Visual C++ <EM CLASS="emphasis">
+nmake</em> program that any object files in its build directories are indeed younger than the creation date of the directory itself and need to be recompiled.</p></div></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch07_03.html" TITLE="7.3 Name Resolution with Samba">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 7.3 Name Resolution with Samba" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_02.html" TITLE="8.2 Magic Scripts">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 8.2 Magic Scripts" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">7.3 Name Resolution with Samba</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+8.2 Magic Scripts</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

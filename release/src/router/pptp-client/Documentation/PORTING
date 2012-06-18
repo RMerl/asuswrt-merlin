@@ -1,0 +1,56 @@
+pptp uses very few linux-specific features, and should be easily
+portable to most Unix systems.
+
+Two things to watch:
+  1)
+  The code in pty.[ch] to find a free pty/tty pair.  This was
+  conceptually borrowed from the xterm sources, which need to
+  do more or less the same thing.  *But* the xterm sources had
+  a heck of a lot more system-specific #defines to cover all
+  the eccentric unix variants out there.  If you are porting
+  this code to a non-unix system, I would recommend downloading
+  the xterm sources to find out how pty.[ch] should look for
+  your system.  Xterm is in the standard X distribution, or
+  you can download SRRMs from ftp.redhat.com.
+
+  Configure the xterm sources for your machine, and then preprocess
+  main.c with these configuration options.  E.g. I did:
+
+    [cananian@cananian xterm-sb_right-ansi-3d]# make main.o
+    rm -f main.o
+    gcc -c -O2 -fno-strength-reduce -m486     -I/usr/X11R6/include
+    -Dlinux -D__i386__ -D_POSIX_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE
+    -DX_LOCALE  -DFUNCPROTO=15 -DNARROWPROTO    -DUTMP -DUSE_TTY_GROUP
+    -DOSMAJORVERSION=2             -DOSMINORVERSION=0 main.c
+
+  So the appropriate preprocessing command would be:
+
+    [cananian@cananian xterm-sb_right-ansi-3d]# gcc -E -O2
+    -fno-strength-reduce -m486 -I/usr/X11R6/include -Dlinux -D__i386__
+    -D_POSIX_SOURCE -D_BSD_SOURCE -D_SVID_SOURCE -DX_LOCALE
+    -DFUNCPROTO=15 -DNARROWPROTO -DUTMP -DUSE_TTY_GROUP
+    -DOSMAJORVERSION=2 -DOSMINORVERSION=0 main.c > main.CPP 
+
+  Grok through the sources to figure out how the ptys are allocated on
+  your machine.  I suspect many people will want to look carefully at
+  the function pty_search(), but there are architectures that have
+  other, built-in, functions for doing the same thing.
+
+  Add the code to pty.[ch] with the proper #ifdefs, mail a patch back
+  to me at <cananian@alumni.princeton.edu> and you're good to go!
+
+  2) The pptp_gre_copy function opens an IP protocol socket with:
+
+     s = socket(AF_INET, SOCK_RAW, PPTP_PROTO);
+
+  where PPTP_PROTO is #define'd in the code to be 47.  I *think* that
+  this should work across Unix variants, but if your system has a
+  different method for opening a non-TCP, raw-IP-protocol-47 socket,
+  then you'll have to make some changes here, and perhaps in
+  decaps_gre and encaps_gre as well.
+
+OK. Those are the only two potential non-portabilities I can think
+of.  I should really be using automake/autoconf, of course, as well.
+  --Scott 15Dec1997
+--------------------------------------------------------------------
+C. Scott Ananian <cananian@alumni.princeton.edu>

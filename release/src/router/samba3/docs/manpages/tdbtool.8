@@ -1,0 +1,297 @@
+.\"     Title: tdbtool
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "TDBTOOL" "8" "09/30/2009" "Samba 3\&.0" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+tdbtool \- manipulate the contents TDB files
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCtdbtool\F[]
+.fam
+.fam C
+.HP \w'\ 'u
+\FCtdbtool\F[] \fITDBFILE\fR [\fICOMMANDS\fR...]
+.fam
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(1)
+suite\&.
+.PP
+\FCtdbtool\F[]
+a tool for displaying and altering the contents of Samba TDB (Trivial DataBase) files\&. Each of the commands listed below can be entered interactively or provided on the command line\&.
+.SH "COMMANDS"
+.PP
+\fBcreate\fR \fITDBFILE\fR
+.RS 4
+Create a new database named
+\fITDBFILE\fR\&.
+.RE
+.PP
+\fBopen\fR \fITDBFILE\fR
+.RS 4
+Open an existing database named
+\fITDBFILE\fR\&.
+.RE
+.PP
+\fBerase\fR
+.RS 4
+Erase the current database\&.
+.RE
+.PP
+\fBdump\fR
+.RS 4
+Dump the current database as strings\&.
+.RE
+.PP
+\fBcdump\fR
+.RS 4
+Dump the current database as connection records\&.
+.RE
+.PP
+\fBkeys\fR
+.RS 4
+Dump the current database keys as strings\&.
+.RE
+.PP
+\fBhexkeys\fR
+.RS 4
+Dump the current database keys as hex values\&.
+.RE
+.PP
+\fBinfo\fR
+.RS 4
+Print summary information about the current database\&.
+.RE
+.PP
+\fBinsert\fR \fIKEY\fR \fIDATA\fR
+.RS 4
+Insert a record into the current database\&.
+.RE
+.PP
+\fBmove\fR \fIKEY\fR \fITDBFILE\fR
+.RS 4
+Move a record from the current database into
+\fITDBFILE\fR\&.
+.RE
+.PP
+\fBstore\fR \fIKEY\fR \fIDATA\fR
+.RS 4
+Store (replace) a record in the current database\&.
+.RE
+.PP
+\fBshow\fR \fIKEY\fR
+.RS 4
+Show a record by key\&.
+.RE
+.PP
+\fBdelete\fR \fIKEY\fR
+.RS 4
+Delete a record by key\&.
+.RE
+.PP
+\fBlist\fR
+.RS 4
+Print the current database hash table and free list\&.
+.RE
+.PP
+\fBfree\fR
+.RS 4
+Print the current database and free list\&.
+.RE
+.PP
+\fB!\fR \fICOMMAND\fR
+.RS 4
+Execute the given system command\&.
+.RE
+.PP
+\fBfirst\fR
+.RS 4
+Print the first record in the current database\&.
+.RE
+.PP
+\fBnext\fR
+.RS 4
+Print the next record in the current database\&.
+.RE
+.PP
+\fBquit\fR
+.RS 4
+Exit
+\FCtdbtool\F[]\&.
+.RE
+.SH "CAVEATS"
+.PP
+The contents of the Samba TDB files are private to the implementation and should not be altered with
+\FCtdbtool\F[]\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0\&.25 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

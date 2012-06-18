@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Poptop MSCHAP2 ADS Howto</title>
+</head>
+
+<body>
+<p><strong>14. pptpd and freeradius </strong></p>
+<p>The section covers the configuration of pptpd + freeradius + AD. If you are looking at the integration via winbind. Go to <a href="poptop_ads_howto_7.htm">this section</a>.</p>
+<hr>
+<a name="radiusd"></a><strong>14.1 Enable freeradius</strong>
+<p>To enable radiusd on bootup, use the chkconfig command.</p>
+<blockquote>
+  <pre>[root@pptp ~]# chkconfig radiusd on </pre>
+</blockquote>
+<p>To start radiusd in daemon mode:
+</p>
+<blockquote>
+  <pre>[root@pptp ~]# service radiusd start
+Starting RADIUS server: Sun Sep  4 11:26:24 2005 : Info: Starting - reading configuration files ...<br>[  OK  ]</pre>
+</blockquote>
+<p></p>
+<hr>
+<a name="pptpdradius"></a><strong>14.2 Configure pptpd </strong>
+<p>There are two configuration files for pptpd. The first one is /etc/pptpd.conf. You can very much keep it as it is except the ip address range for the ppp connections. Edit the file and add two lines at the bottom to specify the local ip address and the ip address pool for the remote connections. </p>
+<blockquote>
+  <pre>localip 10.0.0.10<br>remoteip 10.0.0.101-200 </pre>
+</blockquote>
+<p>10.0.0.10 is the ip address of the internal network card eth0. The remoteip is the address pool for the remote connections. </p>
+<p>The second configuration file is /etc/ppp/options.pptpd. I stripped off all remarks from my options.pptpd and it is like this:</p>
+<blockquote>
+  <pre>name pptpd
+refuse-pap<br>refuse-chap<br>refuse-mschap<br>require-mschap-v2<br>require-mppe-128
+ms-dns 10.0.0.1
+ms-wins 10.0.0.1
+proxyarp
+lock
+nobsdcomp
+novj
+novjccomp
+nologfd
+auth
+nodefaultroute
+plugin radius.so
+plugin radattr.so</pre>
+</blockquote>
+<p>There are two plugins we used in here. The first one radius.so is required while the second one radattr.so is optional. Radattr.so basically records the parameters passed from radius to pppd in a file. Check the man page of pppd-radattr for details. </p>
+<p>Then, we need to fix the permission of a winbind directory.</p>
+<blockquote>
+  <pre>[root@pptp ~]# chgrp radiusd /var/cache/samba/winbindd_privileged/</pre>
+</blockquote>
+<p>If you have Windows XP clients, you may want to reduce the MTU size. Add the  line, /sbin/ifconfig $1 mtu 1400, to /etc/ppp/ip-up as shown in the following list.</p>
+<blockquote>
+  <pre>[root@pptp ppp]# cat ip-up
+#!/bin/bash
+# This file should not be modified -- make local changes to
+# /etc/ppp/ip-up.local instead
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+export PATH
+
+LOGDEVICE=$6
+REALDEVICE=$1
+
+[ -f /etc/sysconfig/network-scripts/ifcfg-${LOGDEVICE} ] && /etc/sysconfig/network-scripts/ifup-post ifcfg-${LOGDEVICE}
+
+/etc/ppp/ip-up.ipv6to4 ${LOGDEVICE}
+
+[ -x /etc/ppp/ip-up.local ] && /etc/ppp/ip-up.local "$@"
+
+<strong>/sbin/ifconfig $1 mtu 1400</strong>
+exit 0</pre>
+</blockquote>
+<p>The above example reduces the MTU size to 1400. In my environment, I found that XP will connect the VPN and ping all servers without problems, however, it cannot connect to the Microsoft Exchange server properly. Reduce the MTU size to 1400 fixed the problem.</p>
+<p>After fixing the files and permission, we can start pptpd and connect to it from remote client. To start it:</p>
+<blockquote>
+  <pre>[root@pptp ~]# chkconfig pptpd on<br><br>[root@pptp ~]# service pptpd start<br>Starting pptpd: [  OK  ]	 </pre>
+</blockquote>
+<p>That's all on the server side. </p>
+<p><strong>Note</strong>: The client PCs require special configurations. It will be discussed in <a href="poptop_ads_howto_11.htm">here</a>.</p>
+<hr>
+<a href="poptop_ads_howto_11.htm">Next</a> &nbsp;&nbsp;<a href="poptop_ads_howto_9.htm">Previous</a>&nbsp;&nbsp;<a href="poptop_ads_howto_1.htm#toc">Content</a>
+<p>&nbsp;</p>
+</body>
+</html>

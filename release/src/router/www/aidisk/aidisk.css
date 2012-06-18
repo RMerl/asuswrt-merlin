@@ -1,0 +1,119 @@
+﻿/* CSS Document */
+
+body {
+	background-color: #4d595d;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+
+.title{font-family :Verdana;font-size : 12px;line-height : 200%;border;font-weight:bold;padding-bottom:10px;text-align:center;}
+.top-input {font-family :Verdana;font-size : 11px;text-align:center;color:#000000;line-height : 200%;border: 1px solid  #7f9db9;background-color:#e1f0f5  }
+.title1 {font-family :Verdana;font-size : 11px;font-weight:bold;color:#ffffff;text-align:center;}
+
+.input{color:#3b5f71;border:1px solid #7398ac;background-color:#cae9f3;font-family :Verdana;font-size : 11px;padding-left:5px;}
+.mapmessage{font-family :Verdana;font-size : 11px;text-align:center;padding-top:2px;padding-bottom:10px}
+.mapmessage1{font-family :Verdana;font-size : 11px;text-align:center;padding-top:2px;padding-bottom:10px;padding-right:20px}
+
+.textbox{
+	padding:10px;
+	border:1px solid #d4e8ef;
+	background-color:#97beda;
+	font-size:13px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+.textbox li{
+	list-style-type:square;
+	line-height:180%;
+}
+
+.top-messgae3 {font-family :Verdana;font-size : 11px;text-align:center;color:#000000;background-color:#6692b0;font-weight:bold}
+
+.table1px{border: 1px solid #7ea7bd;border-collapse: collapse; background-color:#FFF; font-size:11px; line-height:100%; margin:0px 0px 5px 10px;}
+.table1px th{font-family :Verdana;font-size:12px;text-align:center;color:#000000; font-weight:bold; background-color:#7aa3bd; height:20px; line-height:20px;}
+
+/*=================================main option================================*/
+.main-top {	padding-top:25px;}	
+.main-top-name{font-family :Verdana;font-size : 12px;font-weight:bold;padding-left:25px;}
+.option {border:#6c8fb0 solid 1px;	border-width: 1px;	background-color:#a2cedf;}
+
+
+.short_btn {width: 105px;font-family:Verdana ;font-size : 11px; text-align:center;  line-height:25px;}
+.short_btn a { height: 31px;	text-decoration: none;	}
+.short_btn a:link, .short_btn a:visited {
+	color: #002157;	display: block;	background: url(../images/button-next.gif);
+	}
+.short_btn a:hover,.short_btn a:active {	color: #ffffff;	background: url(../images/button-next.gif) 0 -31px;}
+
+.long_btn {width: 200px;font-family:Verdana ;font-size : 11px; text-align:center;  line-height:25px;}
+.long_btn a { height: 31px;	text-decoration: none;	}
+.long_btn a:link, .long_btn a:visited {
+	color: #002157;	display: block;	background: url(../images/button-long.gif) no-repeat;
+	}
+.long_btn a:hover,.long_btn a:active {	color: #ffffff;	background: url(../images/button-long.gif) no-repeat 0 -31px;}
+
+.short_btn_disabled {
+	width:105px;
+	height:31px;
+	color:#CCCCCC;
+	font-family:Verdana;
+	font-size:11px;
+	text-align:center;
+	line-height:25px;
+	background: url(../images/button-next-disable.gif);
+	cursor: default;
+}
+
+.tbg2{font-family :Verdana;font-size : 11px;color:#000000;font-weight:normal;background-color:#9bc1d2}
+
+.Bigtitle{font-family:Verdana;font-size:18px;text-align:center;color:#000000;font-weight:bold; text-align:center; }
+
+.aidiskdesc{
+	font-family:Verdana;
+	font-size:11px;
+	line-height:200%;
+	padding:5px;
+	margin-left:20px;
+	margin-top:5px;
+}
+
+
+.option{border: 1px solid #74b6a94}
+.accountbox{border: 1px dotted #7197ab}
+
+.Help thead{
+	font-family:Verdana;
+	font-size:12px;
+	line-height:19px;
+	font-weight:bold;
+	color:#000000;
+	background-image:url(images/title-bg-2.gif);
+	}
+.Help tbody{
+	font-family:Verdana;
+	font-size:12px;
+	background-color: #FFFFCC;
+	text-align:left;
+	line-height:150%;
+}
+.inputtext{
+	font-size:11px;
+	font-family:Verdana;
+	margin-left:5px;
+}
+
+.alert_string{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size:18px;
+	font-weight:bold;
+	line-height:150%;
+	color:#FFCC00;
+	display:none;
+	width:auto;
+	margin-left:auto;
+	margin-right:auto;
+	margin-top:150px;
+	margin-left: 230px;
+	color:#FFF;
+}

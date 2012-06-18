@@ -1,0 +1,13 @@
+<% page_header("columns", "RPC Server", "servers"); 
+
+  libinclude("base.js");
+  libinclude("management.js");
+%>
+
+<h1>RPC Server</h1>
+
+<%
+writefln("Status: %s\n", stream_server_status("rpc"));
+%>
+
+<% page_footer(); %>

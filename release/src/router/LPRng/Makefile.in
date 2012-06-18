@@ -1,0 +1,269 @@
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-2001 Patrick Powell, San Diego, CA
+#     papowell@lprng.com
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: Makefile.in
+# PURPOSE: top level Makefile for LPD Software
+# $Id: Makefile.in,v 1.1.1.1 2008/10/15 03:28:09 james26_jang Exp $
+########################################################################## 
+
+#**************###########**************
+# You must use ANSI C and GNU Make!
+#***************************************
+
+PACKAGE=@PACKAGE@
+VERSION=@VERSION@
+SRC=@srcdir@
+@SET_MAKE@
+INSTALL=@INSTALL@
+
+# prefix
+prefix=@prefix@
+# exec prefix
+exec_prefix=@exec_prefix@
+# for binaries
+bindir=@bindir@
+# for admin type of binaries
+sbindir=@sbindir@
+# for the filters
+libexecdir=@libexecdir@
+# for the configuration stuff
+sysconfdir=@sysconfdir@
+# for the man pages
+mandir=@mandir@
+# top build directory
+top_builddir=.
+
+LPD_PERMS_PATH=\"@LPD_PERMS_PATH@\"
+LPD_CONF_PATH=\"@LPD_CONF_PATH@\"
+PRINTCAP_PATH=\"@PRINTCAP_PATH@\"
+LPD_PATH=\"@LPD_DIR@/lpd\"
+SHELL="@SHELL@"
+LOCKFILE=\"@LOCKFILE@\"
+PSHOWALL="@PSHOWALL@"
+FILTER_DIR=@FILTER_DIR@
+LOCALEDIR=@LOCALEDIR@
+INIT=@INIT@
+USE_NLS=@USE_NLS@
+LIBTOOL=@LIBTOOL@
+
+#=============================================================================
+# List the directories you want to generate:
+# DIRS for all, clean, etc.
+# ALLDIRS for other such as documentation
+#=============================================================================
+
+DIRS= UTILS src po man
+INSTALLDIRS= UTILS src po man
+FILES=./postinstall ./preremove ./postremove ./lpd.conf
+ALLDIRS= ${DIRS} ${SRC}/TESTSUPPORT ${SRC}/DOCS
+
+###############################################################################
+
+all: ${DIRS} ${FILES}
+
+SCRIPTS=init.freebsd init.linux init.redhat init.linuxsb init.solaris ltmain postinstall.freebsd postinstall.generic postinstall.linux postinstall.solaris postremove.generic postremove.solaris preinstall.solaris preremove.freebsd preremove.generic preremove.linux preremove.solaris
+
+$(SCRIPTS): header
+	cat header ${SRC}/$@.sh >$@
+	chmod 755 $@;
+
+header: Makefile
+	@echo "#!@SHELL@" >$@
+	@echo PREFIX=$(prefix) >>$@
+	@echo LPD_PATH=$(LPD_PATH) >>$@
+	@echo INSTALL=\"$(INSTALL)\" >>$@
+	@echo LPD_PERMS_PATH=$(LPD_PERMS_PATH) >>$@
+	@echo LPD_CONF_PATH=$(LPD_CONF_PATH) >>$@
+	@echo PRINTCAP_PATH=$(PRINTCAP_PATH) >>$@
+	@echo SYSCONFDIR=$(sysconfdir) >>$@
+	@echo SBINDIR=$(sbindir) >>$@
+	@echo FILTER_DIR=$(FILTER_DIR) >>$@
+	@echo LOCKFILE=$(LOCKFILE) >>$@
+	@echo PSHOWALL=\"$(PSHOWALL)\"  >>$@
+	@echo "VERSION=$(VERSION)" >>$@
+	@echo "INIT=$(INIT)" >>$@
+	@echo "MANDIR=$(mandir)" >>$@
+
+./postinstall: $(SCRIPTS) Makefile
+	OSNAME=@OSNAME@; case "@OSNAME@" in \
+	 *linux* ) OSNAME=linux;; \
+	 *freebsd* ) OSNAME=freebsd;; \
+	 *solaris* ) OSNAME=solaris;; \
+	esac; \
+	if test -f postinstall.$${OSNAME} ; then s=postinstall.$${OSNAME} ; else s=postinstall.generic; fi; \
+	echo POSTINSTALL "'$$s'"; cp $$s postinstall;
+
+./preremove: $(SCRIPTS) Makefile
+	OSNAME=@OSNAME@; case "@OSNAME@" in *linux* ) OSNAME=linux;; esac; \
+	if test -f preremove.$${OSNAME} ; then s=preremove.$${OSNAME} ; else s=preremove.generic; fi; \
+	echo PREREMOVE "'$$s'"; cp $$s preremove;
+
+./postremove: $(SCRIPTS) Makefile
+	OSNAME=@OSNAME@; case "@OSNAME@" in *linux* ) OSNAME=linux;; esac; \
+	if test -f postremove.$${OSNAME} ; then s=postremove.$${OSNAME} ; else s=postremove.generic; fi; \
+	echo POSTREMOVE "'$$s'"; cp $$s postremove;
+
+# define default target
+.PHONY: all warn TAGS clean uninstall install  info dvi check \
+	tar send realclean mostlyclean distclean dist update ci cifiles $(ALLDIRS) \
+
+MAKETARGET=all
+
+###############################################################################
+$(ALLDIRS):
+	if [ "$@" != po -o "$(USE_NLS)" != "no" ] ; then \
+		cd $@; $(MAKE) localedir=${LOCALEDIR} \
+			DESTDIR=$(DESTDIR) $(MAKETARGET) ; \
+	fi
+
+TAGS clean::
+	-$(MAKE) MAKETARGET=$@ DESTDIR=$(DESTDIR) $(DIRS)
+
+clean::
+	-rm -f header lpd.conf $(FILES) $(SCRIPTS) postinstall preremove postremove a.out
+	-rm -f *.bak ? ?.* core *.old *~ po/*~
+
+install: all
+	$(MAKE) MAKETARGET=$@ DESTDIR=$(DESTDIR) $(INSTALLDIRS)
+
+	if [ "${POSTINSTALL}" != "NO" -a "${POSTINSTALL}" != "no" ] ; then \
+		MAKEINSTALL=YES DESTDIR=$(DESTDIR) $(SHELL) postinstall ; \
+	fi;
+	@echo "";
+
+info dvi check:
+
+./lpd.conf: src/lpd.conf
+	cp src/lpd.conf $@
+	chmod 644 $@
+
+src/lpd.conf:
+	cd src; $(MAKE) MAKETARGET=lpd.conf
+
+realclean mostlyclean distclean: clean
+	rm -rf DISTRIBUTIONS/FreeBSD*/work DISTRIBUTIONS/FreeBSD*/*.tgz ;
+	$(MAKE) MAKETARGET=$@ DESTDIR=$(DESTDIR) $(ALLDIRS)
+	rm -f `find . -type f -name '*.old' -print` \
+	 `find . -type f -name '*.bak' -print` \
+	 `find . -type f -name '*.orig' -print` \
+	  configure.lineno config.cache config.log config.status lpd.conf libtool \
+	  Makefile */Makefile po/POTFILES
+	rm -f `find . -type f -name '*.in' -print | sed -e 's/\.in$$//' -e /configure/d `
+
+###############################################################################
+uninstall:
+	echo "you must uninstall by hand"
+
+ci: cifiles
+	for i in $(ALLDIRS); do \
+		case $$i in \
+		po ) ;; \
+		* ) $(MAKE) MAKETARGET=$@ $$i ;; \
+		esac; \
+	done;
+	chmod 755 `find . -name install-sh -print`
+	chmod 755 `find . -name mkinstalldirs -print`
+
+#CI=
+#CO=-kv
+CO=-l
+
+cifiles:
+	for i in . $(ALLDIRS); do \
+		if test ! -d $$i/RCS ; then \
+			mkdir $$i/RCS; \
+		fi; \
+	done;
+	checkin() { \
+		(set +e; rcs -l $$1; exit 0); \
+		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
+	}; \
+	for i in * */Makefile po/* ; do \
+		if test -f "$$i" ; then \
+			case "$$i" in  \
+			*.mo ) ;; \
+			config.* ) ;; \
+			configure ) ;; \
+			* ) checkin $$i ;; \
+			esac; \
+		fi; \
+	done;
+
+###############################################################################
+# Update the patch level when you make a new version
+# do this before you start changes
+# Don't even think about making this configurable, it is for
+# distribution and update purposes only!
+#  Patrick Powell
+###############################################################################
+
+update:
+	rm -f src/include/license.h src/include/copyright.h
+	sed -e 's/"/\\"/g' -e 's/.*/"&",/' LICENSE >src/include/license.h
+	sed -e 's/"/\\"/g' -e 's/.*/"&",/' COPYRIGHT >src/include/copyright.h
+	for i in VERSION ./src/include/patchlevel.h configure.in ; do \
+		rcs -l $$i; chmod +w $$i; \
+	done;
+	if [ -x /bin/pwd ] ; then DIR=`/bin/pwd`; fi ; \
+	if [ -x /usr/bin/pwd ] ; then DIR=`/usr/bin/pwd`; fi ; \
+	DIR=`echo $${DIR} | sed 's,.*/,,'`; \
+	DIRVER=` echo $${DIR} | sed 's,.*-,,'`; \
+	echo DIR $${DIR}, DIRVER $${DIRVER}; \
+	echo "#define PATCHLEVEL \"$${DIR}\"" >./src/include/patchlevel.h; \
+	echo $${DIR} >VERSION; \
+	S=`echo *.sh | sed -e 's/\.sh//g'`; \
+	perl -spi -e "s,=.*,=$${DIRVER}, if(/^VERSION=/ or /^#.* VERSION=/); \
+		s,^DISTNAME=.*,DISTNAME=$${DIR},; \
+		s,^PORTNAME=.*,PORTNAME=$(PACKAGE),; \
+		s,^PORTVERSION=.*,PORTVERSION=$${DIRVER},; \
+		s,package name \".*\",package name \"$${DIR}\",; \
+		s,^SCRIPTS=.*,SCRIPTS=$$S,;" \
+		configure.in lpd.perms.in \
+		DISTRIBUTIONS/*/Makefile \
+		po/Makefile.in.in printcap
+	perl -spi -e 's,.*,"Project-Id-Version: $(PACKAGE) $(VERSION)\\n", if(/^"Project-Id/);' \
+		po/*.po
+	sh CREATE_CONFIGURE
+	sh STANDARD_configuration
+#	ci $(CI) -l -f -mUpdate -t-Initial Makefile DOCS/Makefile src/Makefile
+	for i in DOCS man ; do \
+		(cd $$i ; $(MAKE) $@ ); \
+	done;
+	for i in po ; do \
+		(cd $$i ; $(MAKE) update-po ); \
+	done
+
+###############################################################################
+# Make a gnutar distribution
+#   - note that not all the source tree is sent out
+#
+###############################################################################
+
+tar: distclean
+	rm -f */Makefile Makefile
+	chmod 755 `find . -name install-sh -print`
+	chmod 755 `find . -name mkinstalldirs -print`
+	chmod -R +w .
+	if [ -x /bin/pwd ] ; then DIR=`/bin/pwd`; fi ; \
+	if [ -x /usr/bin/pwd ] ; then DIR=`/usr/bin/pwd`; fi ; \
+	echo $${DIR}; \
+	DIR=`echo $${DIR} | sed 's,.*/,,'`; \
+		cd ..; \
+		tar '--exclude=RCS' -zcf $${DIR}.tgz $${DIR}; \
+		md5 $${DIR}.tgz | pgp -fast -u papowell@lprng > $${DIR}.tgz.md5
+	@echo ""
+
+configure: configure.in
+	autoconf
+	autoheader
+
+dist: update ci distclean tar send
+redist: ci distclean tar send
+
+send:
+	if [ -f ../SENDTO ] ; then (cd ..; sh SENDTO) ; fi

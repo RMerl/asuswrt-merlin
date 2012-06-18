@@ -1,0 +1,1995 @@
+<chapter label="8" id="SAMBA-CH-8">
+<title>Additional Samba Information </title>
+
+
+
+
+<para>This chapter wraps up our coverage of the <filename>smb.conf</filename> configuration file with some miscellaneous options that can perform a variety of tasks. We will talk briefly about options for supporting programmers, internationalization, messages, and common Windows bugs. For the most part, you will use these options only in isolated circumstances. We also cover performing automated backups with the <filename>smbtar</filename> command at the end of this chapter. So without further ado, let's jump into our first subject: options to help programmers.</para>
+
+
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="8.1" id="ch08-56646">
+<title>Supporting Programmers</title>
+
+
+<para>
+<indexterm id="ch08-idx-965254-0" class="startofrange"><primary>programmers, support for</primary></indexterm>If <indexterm id="ch08-idx-965351-0" class="startofrange"><primary>smb.conf (Samba configuration) file</primary><secondary>options for</secondary><tertiary>supporting programmers</tertiary></indexterm>you have programmers accessing your Samba server, you'll want to be aware of the special options listed in <link linkend="ch08-73167">Table 8.1</link>.</para>
+
+
+<table label="8.1" id="ch08-73167">
+<title>Programming Configuration Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>time server</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If <literal>yes</literal>, <emphasis>nmbd</emphasis> announces itself as a SMB time service to Windows clients.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>time offset</literal></para></entry>
+
+<entry colname="col2"><para>numerical (number of minutes)</para></entry>
+
+<entry colname="col3"><para>Adds a specified number of minutes to the reported time.</para></entry>
+
+<entry colname="col4"><para><literal>0</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>dos filetimes</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Allows non-owners of a file to change its time if they can write to it.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>dos filetime</literal></para>
+
+<para><literal>resolution</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Causes file times to be rounded to the next even second.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>fake directory create times</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Sets directory times to avoid a MS <emphasis>nmake</emphasis> bug.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect2 role="" label="8.1.1" id="ch08-SECT-1.1">
+<title>Time Synchronization</title>
+
+
+<para>
+<indexterm id="ch08-idx-965360-0"><primary>synchronizing</primary><secondary>time, options for</secondary></indexterm>
+<indexterm id="ch08-idx-965360-1"><primary>time snychronization, options for</primary></indexterm>Time synchronization can be very important to programmers. Consider the following options:</para>
+
+
+<programlisting>time service = yes
+dos filetimes = yes
+fake directory create times = yes
+dos filetime resolution = yes
+delete readonly = yes</programlisting>
+
+
+<para>If you set these options, Samba shares will provide the kind of compatible file times that Visual C++, <emphasis>nmake</emphasis>, and other Microsoft programming tools require. Otherwise, PC <emphasis>make</emphasis> programs will tend to think that all the files in a directory need to be recompiled every time. Obviously, this is not the behavior you want.</para>
+
+
+<sect3 role="" label="8.1.1.1" id="ch08-SECT-1.1.1">
+<title>time server</title>
+
+
+<para>If your Samba server has an accurate clock, or if it's a client of one of the Unix network time servers, you can instruct it to advertise itself as an SMB time server by setting the<indexterm id="ch08-idx-965946-0"><primary>time server option</primary></indexterm> <literal>time</literal> <literal>server</literal> option as follows:</para>
+
+
+<programlisting>[global]
+	time service = yes</programlisting>
+
+
+<para>The client will still have to request the correct time with the following DOS command, substituting the Samba server name in at the appropriate point:</para>
+
+
+<programlisting>C:\NET TIME \\<replaceable>server</replaceable> /YES /SET</programlisting>
+
+
+<para>This command can be placed in a Windows logon script (see <link linkend="SAMBA-CH-6">Chapter 6</link>).</para>
+
+
+<para>By default, the <literal>time</literal> <literal>server</literal> option is normally set to <literal>no</literal>. If you turn this service on, you can use the command above to keep the client clocks from drifting. Time synchronization is important to clients using programs such as <emphasis>make</emphasis>, which compile based on the last time the file was changed. Incorrectly synchronized times can cause such programs to either remake all files in a directory, which wastes time, or not recompile a source file that was just modified because of a slight clock drift.</para>
+</sect3>
+
+
+
+<sect3 role="" label="8.1.1.2" id="ch08-SECT-1.1.2">
+<title>time offset</title>
+
+
+<para>To deal with clients that don't process daylight savings time properly, Samba provides the <literal>time</literal> <literal>offset</literal> option. If set, it adds the specified number of minutes to the current time. This is handy if you're in Newfoundland and Windows doesn't know about the 30-minute time difference there:</para>
+
+
+<programlisting>[global]
+	time offset = 30</programlisting>
+</sect3>
+
+
+
+<sect3 role="" label="8.1.1.3" id="ch08-SECT-1.1.3">
+<title>dos filetimes</title>
+
+
+<para>Traditionally, only the root user and the owner of a file can change its last-modified date on a Unix system. The share-level <literal>dos</literal> <literal>filetimes</literal> option allows the Samba server to mimic the characteristics of a DOS/Windows machine: any user can change the last modified date on a file in that share if he or she has write permission to it. In order to do this, Samba uses its root privileges to modify the timestamp on the file.</para>
+
+
+<para>By default, this option is disabled. Setting this option to <literal>yes</literal> is often necessary to allow PC <emphasis>make</emphasis> programs to work properly. Without it, they cannot change the last-modified date themselves. This often results in the program thinking <emphasis>all</emphasis> files need recompiling when they really don't.</para>
+</sect3>
+
+
+
+<sect3 role="" label="8.1.1.4" id="ch08-SECT-1.1.4">
+<title>dos filetime resolution</title>
+
+
+<para><literal>dos</literal>
+<indexterm id="ch08-idx-965949-0"><primary>os filetime resolution option</primary></indexterm> <literal>filetime</literal> <literal>resolution</literal> is share-level option. If set to <literal>yes</literal>, Samba will arrange to have the file times rounded to the closest two-second boundary. This option exists primarily to satisfy a quirk in Windows that prevents Visual C++ from correctly recognizing that a file has not changed. You can enable it as follows:</para>
+
+
+<programlisting>[data]
+	dos filetime resolution = yes</programlisting>
+
+
+<para>We recommend using this option only if you are using Microsoft Visual C++ on a Samba share that supports opportunistic locking.</para>
+</sect3>
+
+
+
+<sect3 role="" label="8.1.1.5" id="ch08-SECT-1.1.5">
+<title>fake directory create times</title>
+
+
+<para>The <literal>fake</literal>
+<indexterm id="ch08-idx-965950-0"><primary>fake directory create times option</primary></indexterm> <literal>directory</literal> <literal>create</literal> <literal>times</literal> option exists to keep PC <emphasis>make</emphasis> programs sane. VFAT and NTFS filesystems record the creation date of a specific directory while Unix does not. Without this option, Samba takes the earliest recorded date it has for the directory (often the last-modified date of a file) and returns it to the client. If this is not sufficient, set the following option under a share definition:</para>
+
+
+<programlisting>[data]
+	fake directory create times = yes</programlisting>
+
+
+<para>If set, Samba will adjust the directory create time it reports to the hardcoded value January 1st, 1980. This is primarily used to convince the Visual C++ <emphasis>nmake</emphasis> program that any object files in its build directories are indeed younger than the creation date of the directory itself and need to be recompiled.<indexterm id="ch08-idx-965924-0" class="endofrange" startref="ch08-idx-965351-0"/></para>
+</sect3>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="8.2" id="ch08-79987">
+<title>Magic Scripts</title>
+
+
+<para>
+<indexterm id="ch08-idx-965216-0"><primary>magic scripts</primary></indexterm>
+<indexterm id="ch08-idx-965216-1"><primary>scripts</primary><secondary>magic</secondary></indexterm>The following options deal with <firstterm>magic scripts</firstterm> on the Samba server. Magic scripts are a method of running programs on Unix and redirecting the output back to the <indexterm id="ch08-idx-965385-0"><primary>SMB (Server Message Block)</primary><secondary>magic scripts</secondary></indexterm>SMB client. These are essentially an experimental hack. However, some users and their programs still rely on these two options for their programs to function correctly. Magic scripts are not widely trusted and their use is highly discouraged by the Samba team. See <link linkend="ch08-33693">Table 8.2</link> for more information.</para>
+
+
+<table label="8.2" id="ch08-33693">
+<title>Networking Configuration Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>magic script</literal></para></entry>
+
+<entry colname="col2"><para>
+<indexterm id="ch08-idx-965386-0"><primary>networking</primary><secondary>options</secondary><tertiary>magic script</tertiary></indexterm>string (fully-qualified filename)</para></entry>
+
+<entry colname="col3"><para>Sets the name of a file to be executed by Samba, as the logged-on user, when closed.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>magic output</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified filename)</para></entry>
+
+<entry colname="col3"><para>Sets a file to log output from the magic file.</para></entry>
+
+<entry colname="col4"><para><emphasis>scriptname.out</emphasis></para></entry>
+
+<entry colname="col5"><para>Share</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect2 role="" label="8.2.1" id="ch08-SECT-2.0.1">
+<title>magic script</title>
+
+
+<para>If the <literal>magic</literal>
+<indexterm id="ch08-idx-965952-0"><primary>magic script option</primary></indexterm> <literal>script</literal> option is set to a filename and the client creates a file by that name in that share, Samba will run the file as soon as the user has opened and closed it. For example, let's assume that the following option was created in the share <literal>[accounting]</literal>:</para>
+
+
+<programlisting>[accounting]
+	magic script = tally.sh</programlisting>
+
+
+<para>Samba continually monitors the files in that share. If one by the name of <emphasis>tally.sh</emphasis> is closed (after being opened) by a user, Samba will execute the contents of that file locally. The file will be passed to the shell to execute; it must therefore be a legal Unix shell script. This means that it must have newline characters as line endings instead of Windows CR/LFs. In addition, it helps if you use the <literal>#!</literal> directive at the beginning of the file to indicate under which shell the script should run.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.2.2" id="ch08-SECT-2.0.2">
+<indexterm id="ch08-idx-965953-0"><primary>magic output option</primary></indexterm>
+<title>
+magic output</title>
+
+
+<para>This option specifies an output file that the script specified by the <literal>magic</literal> <literal>script</literal> option will send output to. You must specify a filename in a writable directory:</para>
+
+
+<programlisting>[accounting]
+	magic script = tally.sh
+	magic output = /var/log/magicoutput</programlisting>
+
+
+<para>If this option is omitted, the default output file is the name of the script (as stated in the <literal>magic</literal> <literal>script</literal> option) with the extension <emphasis>.out</emphasis> appended onto it.<indexterm id="ch08-idx-965526-0" class="endofrange" startref="ch08-idx-965254-0"/></para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="8.3" id="ch08-91233">
+<title>Internationalization</title>
+
+
+<para>
+<indexterm id="ch08-idx-965219-0" class="startofrange"><primary>internationalization</primary></indexterm>
+<indexterm id="ch08-idx-965219-1" class="startofrange"><primary>foreign-language characters</primary></indexterm>
+<indexterm id="ch08-idx-965219-2" class="startofrange"><primary>localization</primary></indexterm>Samba has a limited ability to speak foreign tongues: if you need to deal with characters that aren't in standard ASCII, some options that can help you are shown in <link linkend="ch08-40870">Table 8.3</link>. Otherwise, you can skip over this section.</para>
+
+
+<table label="8.3" id="ch08-40870">
+<title>Networking Configuration Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>client code page</literal></para></entry>
+
+<entry colname="col2"><para>Described in this section</para></entry>
+
+<entry colname="col3"><para>Sets a code page to expect from clients</para></entry>
+
+<entry colname="col4"><para>850</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>character set</literal></para></entry>
+
+<entry colname="col2"><para>Described in this section</para></entry>
+
+<entry colname="col3"><para>Translates code pages into alternate UNIX character sets</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>coding system</literal></para></entry>
+
+<entry colname="col2"><para>Described in this section</para></entry>
+
+<entry colname="col3"><para>Translates code page 932 into an Asian character set</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>valid chars</literal></para></entry>
+
+<entry colname="col2"><para>string (set of characters)</para></entry>
+
+<entry colname="col3"><para>Obsolete: formerly added individual characters to a code page, and had to be used after setting client code page</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect2 role="" label="8.3.1" id="ch08-17721">
+<indexterm id="ch08-idx-965956-0"><primary>client code page option</primary></indexterm>
+<title>
+client code page</title>
+
+
+<para>The character sets on Windows platforms hark back to the original concept of a <emphasis>code page</emphasis>
+<indexterm id="ch08-idx-965388-0"><primary>code pages</primary></indexterm>. These code pages are used by DOS and Windows clients to determine rules for mapping lowercase letters to uppercase letters. Samba can be instructed to use a variety of code pages through the use of the global <literal>client</literal> <literal>code</literal> <literal>page</literal> option in order to match the corresponding code page in use on the client. This option loads a code-page definition file, and can take the values specified in <link linkend="ch08-20815">Table 8.4</link>.</para>
+
+
+<table label="8.4" id="ch08-20815">
+<title>Valid Code Pages with Samba 2.0 </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Code Page</para></entry>
+
+<entry colname="col2"><para>Definition</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>437</literal></para></entry>
+
+<entry colname="col2"><para>
+<indexterm id="ch08-idx-965389-0"><primary>Samba</primary><secondary>version 2.0</secondary><tertiary>code pages for</tertiary></indexterm>MS-DOS Latin (United States)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>737</literal></para></entry>
+
+<entry colname="col2"><para>Windows 95 Greek</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>850</literal></para></entry>
+
+<entry colname="col2"><para>MS-DOS Latin 1 (Western European)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>852</literal></para></entry>
+
+<entry colname="col2"><para>MS-DOS Latin 2 (Eastern European)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>861</literal></para></entry>
+
+<entry colname="col2"><para>MS-DOS Icelandic</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>866</literal></para></entry>
+
+<entry colname="col2"><para>MS-DOS Cyrillic (Russian)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>932</literal></para></entry>
+
+<entry colname="col2"><para>MS-DOS Japanese Shift-JIS</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>936</literal></para></entry>
+
+<entry colname="col2"><para>MS-DOS Simplified Chinese</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>949</literal></para></entry>
+
+<entry colname="col2"><para>MS-DOS Korean Hangul</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>950</literal></para></entry>
+
+<entry colname="col2"><para>MS-DOS Traditional Chinese</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>You can set the client code page as follows:</para>
+
+
+<programlisting>[global]
+	client code page = 852</programlisting>
+
+
+<para>The default value of this option is 850. You can use the <emphasis>make_smbcodepage</emphasis> tool that comes with Samba (by default in <filename>/usr/local/samba/bin</filename> ) to create your own SMB code pages, in the event that those listed earlier are not sufficient.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.3.2" id="ch08-SECT-3.0.2">
+<title>character set</title>
+
+
+<para>The global <literal>character</literal> <literal>set</literal> option can be used to convert filenames offered through a DOS code page (see the previous section, <link linkend="ch08-17721">Section 8.3.1</link>) to equivalents that can be represented by Unix character sets other than those in the United States. For example, if you want to convert the Western European MS-DOS character set on the client to a Western European Unix character set on the server, you can use the following in your configuration file:</para>
+
+
+<programlisting>[global]
+	client code page = 850
+	character set = ISO8859-1</programlisting>
+
+
+<para>Note that you must include a <literal>client</literal> <literal>code</literal> <literal>page</literal> option to specify the character set from which you are converting. The valid character sets (and their matching code pages) that Samba 2.0 accepts are listed in <link linkend="ch08-14126">Table 8.5</link>:</para>
+
+
+<table label="8.5" id="ch08-14126">
+<title>Valid Character Sets with Samba 2.0 </title>
+
+<tgroup cols="3">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Character Set</para></entry>
+
+<entry colname="col2"><para>Matching Code Page</para></entry>
+
+<entry colname="col3"><para>Definition</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>ISO8859-1</literal></para></entry>
+
+<entry colname="col2"><para><literal>850</literal>
+<indexterm id="ch08-idx-965390-0"><primary>Samba</primary><secondary>version 2.0</secondary><tertiary>character sets</tertiary></indexterm></para></entry>
+
+<entry colname="col3"><para>Western European Unix</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ISO8859-2</literal></para></entry>
+
+<entry colname="col2"><para><literal>852</literal></para></entry>
+
+<entry colname="col3"><para>Eastern European Unix</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ISO8859-5</literal></para></entry>
+
+<entry colname="col2"><para><literal>866</literal></para></entry>
+
+<entry colname="col3"><para>Russian Cyrillic Unix</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>KOI8-R</literal></para></entry>
+
+<entry colname="col2"><para><literal>866</literal></para></entry>
+
+<entry colname="col3"><para>Alternate Russian Cyrillic Unix</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>Normally, the <literal>character</literal> <literal>set</literal> option is disabled completely.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.3.3" id="ch08-SECT-3.0.3">
+<title>coding system</title>
+
+
+<para>The <literal>coding</literal>
+<indexterm id="ch08-idx-965965-0"><primary>coding system option</primary></indexterm> <literal>system</literal> option is similar to the <literal>character</literal> <literal>set</literal> option. However, its purpose is to determine how to convert a Japanese Shift JIS code page into an appropriate Unix character set. In order to use this option, the <literal>client</literal> <literal>code</literal> <literal>page</literal> option described previously must be set to page 932. The valid coding systems that Samba 2.0 accepts are listed in <link linkend="ch08-57476">Table 8.6</link>.</para>
+
+
+<table label="8.6" id="ch08-57476">
+<title>Valid Coding System Parameters with Samba 2.0 </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Character Set</para></entry>
+
+<entry colname="col2"><para>Definition</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>SJIS</literal></para></entry>
+
+<entry colname="col2"><para>
+<indexterm id="ch08-idx-965393-0"><primary>Samba</primary><secondary>version 2.0</secondary><tertiary>coding system parameters</tertiary></indexterm>Standard Shift JIS</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>JIS8</literal></para></entry>
+
+<entry colname="col2"><para>Eight-bit JIS codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>J8BB</literal></para></entry>
+
+<entry colname="col2"><para>Eight-bit JIS codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>J8BH</literal></para></entry>
+
+<entry colname="col2"><para>Eight-bit JIS codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>J8@B</literal></para></entry>
+
+<entry colname="col2"><para>Eight-bit JIS codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>J8@J</literal></para></entry>
+
+<entry colname="col2"><para>Eight-bit JIS codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>J8@H</literal></para></entry>
+
+<entry colname="col2"><para>Eight-bit JIS codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>JIS7</literal></para></entry>
+
+<entry colname="col2"><para>Seven-bit JIS codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>J7BB</literal></para></entry>
+
+<entry colname="col2"><para>Seven-bit JIS codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>J7BH</literal></para></entry>
+
+<entry colname="col2"><para>Seven-bit JIS codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>J7@B</literal></para></entry>
+
+<entry colname="col2"><para>Seven-bit JIS codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>J7@J</literal></para></entry>
+
+<entry colname="col2"><para>Seven-bit JIS codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>J7@H</literal></para></entry>
+
+<entry colname="col2"><para>Seven-bit JIS codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>JUNET</literal></para></entry>
+
+<entry colname="col2"><para>JUNET codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>JUBB</literal></para></entry>
+
+<entry colname="col2"><para>JUNET codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>JUBH</literal></para></entry>
+
+<entry colname="col2"><para>JUNET codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>JU@B</literal></para></entry>
+
+<entry colname="col2"><para>JUNET codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>JU@J</literal></para></entry>
+
+<entry colname="col2"><para>JUNET codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>JU@H</literal></para></entry>
+
+<entry colname="col2"><para>JUNET codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>EUC</literal></para></entry>
+
+<entry colname="col2"><para>EUC codes</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>HEX</literal></para></entry>
+
+<entry colname="col2"><para>Three-byte hexidecimal code</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>CAP</literal></para></entry>
+
+<entry colname="col2"><para>Three-byte hexidecimal code (Columbia Appletalk Program)</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.3.4" id="ch08-SECT-3.0.4">
+<title>valid chars</title>
+
+
+<para>The <literal>valid</literal>
+<indexterm id="ch08-idx-965969-0"><primary>valid chars option</primary></indexterm> <literal>chars</literal> option is an older Samba feature that will add individual characters to a code page. However, this option is being phased out in favor of more modern coding systems. You can use this option as follows:</para>
+
+
+<programlisting>valid chars = &Icirc;
+valid chars = 0450:0420 0x0A20:0x0A00
+valid chars = A:a</programlisting>
+
+
+<para>Each of the characters in the list specified should be separated by spaces. If there is a colon between two characters or their numerical equivalents, the data to the left of the colon is considered an uppercase character, while the data to the right is considered the lowercase character. You can represent characters both by literals (if you can type them) and by octal, hexidecimal, or decimal Unicode equivalents.</para>
+
+
+<para>We recommend against using this option. Instead, go with one of the standard code pages listed earlier in this section. If you do use this option, however, it must be listed after the <literal>client</literal> <literal>code</literal> <literal>page</literal> to which you wish to add the character. Otherwise, the characters will not be added.<indexterm id="ch08-idx-965533-0" class="endofrange" startref="ch08-idx-965219-0"/>
+<indexterm id="ch08-idx-965533-1" class="endofrange" startref="ch08-idx-965219-1"/>
+<indexterm id="ch08-idx-965533-2" class="endofrange" startref="ch08-idx-965219-2"/></para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="8.4" id="ch08-82569">
+<title>WinPopup Messages</title>
+
+
+<para>
+<indexterm id="ch08-idx-965227-0"><primary>WinPopup tool</primary></indexterm>
+<indexterm id="ch08-idx-965227-1"><primary>Windows 95/98</primary><secondary>WinPopup tool</secondary></indexterm>
+<indexterm id="ch08-idx-965227-2"><primary>messages</primary><secondary>WinPopup</secondary></indexterm>You can use the WinPopup tool (<filename>WINPOPUP.EXE </filename>  ) in Windows to send messages to users, machines, or entire workgroups on the network. This tool is provided with Windows 95 OSR2 and comes standard with Windows 98. With either Windows 95 or 98, however, you need to be running WinPopup to receive and send WinPopup messages. With Windows NT, you can still receive messages without starting such a tool; they will automatically appear in a small dialog box on the screen when received. The WinPopup application is shown in <link linkend="ch08-66444">Figure 8.1</link>.</para>
+
+
+<figure label="8.1" id="ch08-66444">
+<title>The WinPopup application</title>
+
+<graphic width="502" depth="360" fileref="figs/sam.0801.gif"></graphic>
+</figure>
+
+<para>Samba has a single WinPopup messaging option, <literal>message</literal> <literal>command</literal>, as shown in <link linkend="ch08-18671">Table 8.7</link>.</para>
+
+
+<table label="8.7" id="ch08-18671">
+<title>WinPopup Configuration Option </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameter</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>message command</literal></para></entry>
+
+<entry colname="col2"><para>
+<indexterm id="ch08-idx-965394-0"><primary>Unix</primary><secondary>options</secondary><tertiary sortas="messaging">for messaging</tertiary></indexterm>
+<indexterm id="ch08-idx-965394-1"><primary>locks/locking files</primary><secondary>messaging option for</secondary></indexterm>
+<indexterm id="ch08-idx-965394-2"><primary>oplocks</primary><secondary>messaging option for</secondary></indexterm>string (fully-qualified pathname)</para></entry>
+
+<entry colname="col3"><para>Sets a command to run on Unix when a WinPopup message is received.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect2 role="" label="8.4.1" id="ch08-SECT-4.0.1">
+<title>message command</title>
+
+
+<para>Samba's <literal>message</literal>
+<indexterm id="ch08-idx-965971-0"><primary>message command option</primary></indexterm> <literal>command</literal> option sets the path to a program that will run on the server when a Windows popup message arrives at the server. The command will be executed using the <literal>guest</literal> <literal>account</literal> user. What to do with one of these is questionable since it's probably for the Samba administrator, and Samba doesn't know his or her name. If you know there's a human using the console, the Samba team once suggested the following:</para>
+
+
+<programlisting>[global]
+	message command = /bin/csh -c 'xedit %s; rm %s' &amp;</programlisting>
+
+
+<para>Note the use of variables here. The <literal>%s</literal> variable will become the file that the message is in. This file should be deleted when the command is finished with it; otherwise, there will be a buildup of pop-up files collecting on the Samba server. In addition, the command must fork its own process (note the &amp; after the command); otherwise the client may suspend and wait for notification that the command was sent successfully before continuing.</para>
+
+
+<para>In addition to the standard variables, <link linkend="ch08-29758">Table 8.8</link> shows the three unique variables that you can use in a <literal>message</literal> <literal>command</literal>.</para>
+
+
+<table label="8.8" id="ch08-29758">
+<title>Message Command Variables </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Variable</para></entry>
+
+<entry colname="col2"><para>Definition</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>%s</literal></para></entry>
+
+<entry colname="col2"><para>The name of the file in which the message resides</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%</literal>f</para></entry>
+
+<entry colname="col2"><para>The name of the client that sent the message</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>%t</literal></para></entry>
+
+<entry colname="col2"><para>The name of the machine that is the destination of the message</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="8.5" id="ch08-SECT-5">
+<title>Recently Added Options</title>
+
+
+<para>
+<indexterm id="ch08-idx-965236-0"><primary>Samba</primary><secondary>version 2.0</secondary><tertiary>new options</tertiary></indexterm>Samba has several options that appeared around the time of Samba 2.0, but are not entirely supported. However, we will give you a brief overview of their workings in this section. These options are shown in <link linkend="ch08-72538">Table 8.9</link>.</para>
+
+
+<table label="8.9" id="ch08-72538">
+<title>Recently Added Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>change notify timeout</literal></para></entry>
+
+<entry colname="col2"><para>numerical (number of seconds)</para></entry>
+
+<entry colname="col3"><para>Sets the interval between checks when a client asks to wait for a change in a specified directory.</para></entry>
+
+<entry colname="col4"><para><literal>60</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>machine password timeout</literal></para></entry>
+
+<entry colname="col2"><para>numerical (number of seconds)</para></entry>
+
+<entry colname="col3"><para>Sets the renewal interval for NT domain machine passwords.</para></entry>
+
+<entry colname="col4"><para><literal>604,800</literal> (1 week )</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>stat cache</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If <literal>yes</literal>, Samba will cache recent name mappings.</para></entry>
+
+<entry colname="col4"><para><literal>yes</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>stat cache size</literal></para></entry>
+
+<entry colname="col2"><para>numerical</para></entry>
+
+<entry colname="col3"><para>Sets the size of the stat cache.</para></entry>
+
+<entry colname="col4"><para><literal>50</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect2 role="" label="8.5.1" id="ch08-SECT-5.0.1">
+<title>change notify timeout</title>
+
+
+<para>The <literal>change</literal>
+<indexterm id="ch08-idx-965973-0"><primary>change notify timeout option</primary></indexterm> <literal>notify</literal> <literal>timeout</literal> global option emulates a Windows NT SMB feature called <firstterm>change notification</firstterm>
+<indexterm id="ch08-idx-965415-0"><primary>change notification, new option for (Samba version 2.0)</primary></indexterm>. This allows a client to request that a Windows NT server periodically monitor a specific directory on a share for any changes. If any changes occur, the server will notify the client.</para>
+
+
+<para>As of version 2.0, Samba will perform this function for its clients. However, performing these checks too often can slow the server down considerably. This option sets the time period that Samba should wait between such checks. The default is one minute (60 seconds); however, you can use this option to specify an alternate time that Samba should wait between performing checks:</para>
+
+
+<programlisting>[global]
+	change notify timeout = 30</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.5.2" id="ch08-SECT-5.0.2">
+<title>machine password timeout</title>
+
+
+<para>The <literal>machine</literal>
+<indexterm id="ch08-idx-965974-0"><primary>machine password timeout option</primary></indexterm> <literal>password</literal> <literal>timeout</literal> global option sets a retention period for NT <indexterm id="ch08-idx-965417-0"><primary>domains</primary><secondary>new option for password timeout (Samba version 2.0)</secondary></indexterm>
+<indexterm id="ch08-idx-965417-1"><primary>Windows NT</primary><secondary>passwords</secondary><tertiary>new option for timeout (Samba version 2.0)</tertiary></indexterm>domain machine passwords. The default is currently set to the same time period that Windows NT 4.0 uses: 604,800 seconds (one week). Samba will periodically attempt to change the <firstterm>machine account password</firstterm>, which is a password used specifically by another server to report changes to it. This option specifies the number of seconds that Samba should wait before attempting to change that password. The following example changes it to a single day, by specifying the following:</para>
+
+
+<programlisting>[global]
+	machine password timeout = 86400</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.5.3" id="ch08-SECT-5.0.3">
+<title>stat cache</title>
+
+
+<para>The <literal>stat</literal>
+<indexterm id="ch08-idx-965977-0"><primary>stat cache option</primary></indexterm> <literal>cache</literal> global option turns on caching of recent case-insensitive name mappings. The default is <literal>yes</literal>. The Samba team recommends that you never change this parameter.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.5.4" id="ch08-SECT-5.0.4">
+<title>stat cache size</title>
+
+
+<para>
+<indexterm id="ch08-idx-965418-0"><primary>cache size, new option for (Samba version 2.0)</primary></indexterm>The <literal>stat</literal>
+<indexterm id="ch08-idx-965978-0"><primary>stat cache size option</primary></indexterm> <literal>cache</literal> <literal>size</literal> global option sets the size of the cache entries to be used for the <literal>stat</literal> <literal>cache</literal> option. The default here is 50. Again, the Samba team recommends that you never change this parameter.</para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="8.6" id="ch08-70923">
+<title>Miscellaneous Options</title>
+
+
+<para>
+<indexterm id="ch08-idx-965426-0"><primary>operating systems</primary><secondary>miscellaneous options for</secondary></indexterm>
+<indexterm id="ch08-idx-965426-1"><primary>Windows 95/98</primary><secondary>miscellaneous options for</secondary></indexterm>
+<indexterm id="ch08-idx-965426-2"><primary>Unix</primary><secondary>options</secondary><tertiary>miscellaneous</tertiary></indexterm>Many Samba options are present to deal with operating system issues on either  Unix or Windows. The options shown in <link linkend="ch08-83566">Table 8.10</link> deal specifically with some of these known problems. We usually don't change these and we recommend the same to you.</para>
+
+
+<table label="8.10" id="ch08-83566">
+<title>Miscellaneous Options </title>
+
+<tgroup cols="5">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<colspec colnum="4" colname="col4"/>
+<colspec colnum="5" colname="col5"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Option</para></entry>
+
+<entry colname="col2"><para>Parameters</para></entry>
+
+<entry colname="col3"><para>Function</para></entry>
+
+<entry colname="col4"><para>Default</para></entry>
+
+<entry colname="col5"><para>Scope</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>deadtime</literal></para></entry>
+
+<entry colname="col2"><para>
+<indexterm id="ch08-idx-965429-0" class="startofrange"><primary>bug avoidance options</primary></indexterm>numerical (<indexterm id="ch08-idx-965437-0" class="startofrange"><primary>bug avoidance options</primary><secondary>list of</secondary></indexterm>number of minutes)</para></entry>
+
+<entry colname="col3"><para>Specifies the number of minutes of inactivity before a connection should be terminated.</para></entry>
+
+<entry colname="col4"><para><literal>0</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>dfree command</literal></para></entry>
+
+<entry colname="col2"><para>string (command)</para></entry>
+
+<entry colname="col3"><para>Used to provide a command that returns disk free space in a format recognized by Samba.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>fstype</literal></para></entry>
+
+<entry colname="col2"><para><literal>NTFS</literal>, <literal>FAT</literal>, or <literal>Samba</literal></para></entry>
+
+<entry colname="col3"><para>Sets the filesystem type reported by the server to the client.</para></entry>
+
+<entry colname="col4"><para><literal>NTFS</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>keep alive</literal></para></entry>
+
+<entry colname="col2"><para>seconds</para></entry>
+
+<entry colname="col3"><para>Sets the number of seconds between checks for an inoperative client.</para></entry>
+
+<entry colname="col4"><para>(none)</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>max disk size</literal></para></entry>
+
+<entry colname="col2"><para>numerical (size in MB)</para></entry>
+
+<entry colname="col3"><para>Sets the largest disk size to return to a client, some of which have limits. Does not affect actual operations on the disk.</para></entry>
+
+<entry colname="col4"><para>(infinity)</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>max mux</literal></para></entry>
+
+<entry colname="col2"><para>numerical</para></entry>
+
+<entry colname="col3"><para>Sets the maximum number of simultaneous SMB operations that clients may make.</para></entry>
+
+<entry colname="col4"><para><literal>50</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>max open files</literal></para></entry>
+
+<entry colname="col2"><para>numerical</para></entry>
+
+<entry colname="col3"><para>Limits number of open files to be below Unix limits.</para></entry>
+
+<entry colname="col4"><para><literal>10,000</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>max xmit</literal></para></entry>
+
+<entry colname="col2"><para>numerical</para></entry>
+
+<entry colname="col3"><para>Specifies the maximum packet size that Samba will send.</para></entry>
+
+<entry colname="col4"><para><literal>65,535</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>nt pipe support</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Turns off an experimental NT feature, for benchmarking or in case of an error.</para></entry>
+
+<entry colname="col4"><para><literal>yes</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>nt smb support</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Turns off an experimental NT feature, for benchmarking or in case of an error.</para></entry>
+
+<entry colname="col4"><para><literal>yes</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ole locking compatib-ility</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>Remaps out-of-range lock requests used on Windows to fit in allowable range on Unix. Turning it off causes Unix lock errors.</para></entry>
+
+<entry colname="col4"><para><literal>yes</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>panic action</literal></para></entry>
+
+<entry colname="col2"><para>command</para></entry>
+
+<entry colname="col3"><para>Program to run if Samba server fails; for debugging.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>set directory</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If <literal>yes</literal>, allows VMS clients to issue <literal>set</literal> <literal>dir</literal> commands.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>smbrun</literal></para></entry>
+
+<entry colname="col2"><para>string (fully-qualified command)</para></entry>
+
+<entry colname="col3"><para>Sets the command Samba uses as a wrapper for shell commands.</para></entry>
+
+<entry colname="col4"><para>None</para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>status</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If <literal>yes</literal>, allows Samba to monitor status for <literal>smbstatus</literal> command.</para></entry>
+
+<entry colname="col4"><para><literal>yes</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>strict sync</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If <literal>no</literal>, ignores Windows applications requests to perform a sync-to-disk.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>sync always</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If <literal>yes</literal>, forces all client writes to be committed to disk before returning from the call.</para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>strip dot</literal></para></entry>
+
+<entry colname="col2"><para>boolean</para></entry>
+
+<entry colname="col3"><para>If <literal>yes</literal>, strips trailing dots from Unix filenames.<indexterm id="ch08-idx-965441-0" class="endofrange" startref="ch08-idx-965437-0"/></para></entry>
+
+<entry colname="col4"><para><literal>no</literal></para></entry>
+
+<entry colname="col5"><para>Global</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<sect2 role="" label="8.6.1" id="ch08-SECT-6.0.1">
+<indexterm id="ch08-idx-965979-0"><primary>deadtime option</primary></indexterm>
+<title>
+deadtime</title>
+
+
+<para>This global option sets the number of minutes that Samba will wait for an inactive client before closing its session with the Samba server. A client is considered inactive when it has no open files and there is no data being sent from it. The default value for this option is 0, which means that Samba never closes any connections no matter how long they have been inactive. You can override it as follows:</para>
+
+
+<programlisting>[global]
+	deadtime = 10</programlisting>
+
+
+<para>This tells Samba to terminate any inactive client sessions after 10 minutes. For most networks, setting this option as such will work because reconnections from the client are generally performed transparently to the user.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.2" id="ch08-SECT-6.0.2">
+<indexterm id="ch08-idx-965980-0"><primary>dfree command option</primary></indexterm>
+<title>
+dfree command</title>
+
+
+<para>
+<indexterm id="ch08-idx-965466-0"><primary>free space on disk, option for</primary></indexterm>This global option is used on systems that incorrectly determine the free space left on the disk. So far, the only confirmed system that needs this option set is Ultrix. There is no default value for this option, which means that Samba already knows how to compute the free disk space on its own and the results are considered reliable. You can override it as follows:</para>
+
+
+<programlisting>[global]
+	dfree command = /usr/local/bin/dfree</programlisting>
+
+
+<para>This option should point to a script that should return the total disk space in a block, and the number of available blocks. The Samba documentation recommends the following as a usable script:</para>
+
+
+<programlisting>#!/bin/sh
+df $1 | tail -1 | awk '{print $2" "$4}'</programlisting>
+
+
+<para>On System V machines, the following will work:</para>
+
+
+<programlisting>#!/bin/sh
+/usr/bin/df $1 | tail -1 | awk '{print $3" "$5}'</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.3" id="ch08-SECT-6.0.3">
+<indexterm id="ch08-idx-965983-0"><primary>fstype option</primary></indexterm>
+<title>
+fstype</title>
+
+
+<para>This share-level option sets the type of <indexterm id="ch08-idx-965467-0"><primary>filesystems</primary><secondary>reporting on by Samba, option for</secondary></indexterm>filesystem that Samba reports when queried by the client. There are three strings that can be used as a value to this configuration option, as listed in <link linkend="ch08-80519">Table 8.11</link>.</para>
+
+
+<table label="8.11" id="ch08-80519">
+<title>Filesystem Types </title>
+
+<tgroup cols="2">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Variable</para></entry>
+
+<entry colname="col2"><para>Definition</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>NTFS</para></entry>
+
+<entry colname="col2"><para>
+<indexterm id="ch08-idx-965468-0"><primary>filesystems</primary><secondary>types</secondary></indexterm>Microsoft Windows NT filesystem</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>FAT</para></entry>
+
+<entry colname="col2"><para>DOS FAT filesystem</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Samba</para></entry>
+
+<entry colname="col2"><para>Samba filesystem</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>The default value for this option is <literal>NTFS</literal>, which represents a Windows NT filesystem. There probably isn't a need to specify any other type of filesystem. However, if you need to, you can override it per share as follows:</para>
+
+
+<programlisting>[data]
+	fstype = FAT</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.4" id="ch08-SECT-6.0.4">
+<title>keep alive</title>
+
+
+<para>
+<indexterm id="ch08-idx-965469-0"><primary>keep-alive packets, option for</primary></indexterm>This global option specifies the number of seconds that Samba waits between sending NetBIOS <emphasis>keep-alive packets</emphasis>. These packets are used to ping a client to detect whether it is still alive and on the network. The default value for this option is <literal>0</literal>, which means that Samba will not send any such packets at all. You can override it as follows:</para>
+
+
+<programlisting>[global]
+	keep alive = 10</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.5" id="ch08-SECT-6.0.5">
+<indexterm id="ch08-idx-965985-0"><primary>max disk size option</primary></indexterm>
+<title>
+max disk size</title>
+
+
+<para>
+<indexterm id="ch08-idx-965470-0"><primary>disk shares</primary><secondary>maximum size of, option for</secondary></indexterm>This global option specifies an illusory limit, in megabytes, for each of the shares that Samba is using. You would typically set this option to prevent clients with older operating systems from incorrectly processing large disk spaces, such as those over one gigabyte.</para>
+
+
+<para>The default value for this option is <literal>0</literal>, which means there is no upper limit at all. You can override it as follows:</para>
+
+
+<programlisting>[global]
+	max disk size = 1000</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.6" id="ch08-SECT-6.0.6">
+<indexterm id="ch08-idx-965986-0"><primary>max mux option</primary></indexterm>
+<title>
+max mux</title>
+
+
+<para>
+<indexterm id="ch08-idx-965471-0"><primary>SMB (Server Message Block)</primary><secondary>maximum number of operations, option&nbsp;for</secondary></indexterm>This global option specifies the maximum number of concurrent SMB operations that Samba allows. The default value for this option is <literal>50</literal>. You can override it as follows:</para>
+
+
+<programlisting>[global]
+	max mux = 100</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.7" id="ch08-SECT-6.0.7">
+<indexterm id="ch08-idx-965987-0"><primary>max open files option</primary></indexterm>
+<title>
+max open files</title>
+
+
+<para>
+<indexterm id="ch08-idx-965478-0"><primary>files</primary><secondary>open, option for maximum number&nbsp;of</secondary></indexterm>This global option specifies the maximum number of open files that Samba should allow at any given time for all processes. This value must be equal to or less than the amount allowed by the operating system, which varies from system to system. The default value for this option is <literal>10,000</literal>. You can override it as follows:</para>
+
+
+<programlisting>[global]
+	max open files = 8000</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.8" id="ch08-SECT-6.0.8">
+<indexterm id="ch08-idx-965988-0"><primary>max xmit option</primary></indexterm>
+<title>
+max xmit</title>
+
+
+<para>
+<indexterm id="ch08-idx-965482-0"><primary>packets</primary><secondary>maximum size of, option for</secondary></indexterm>This global option sets the maximum size of packets that Samba exchanges with a client. In some cases, setting a smaller maximum packet size can increase performance, especially with Windows for Workgroups. The default value for this option is <literal>65535</literal>. You can override it as follows:</para>
+
+
+<programlisting>[global]
+	max xmit = 4096</programlisting>
+
+
+<para><link linkend="appb-19919">Section 2.2.2.6</link> in <link linkend="SAMBA-AP-B">Appendix B</link>," shows some uses for this option.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.9" id="ch08-SECT-6.0.9">
+<indexterm id="ch08-idx-965989-0"><primary>nt pipe support option</primary></indexterm>
+<title>
+nt pipe support</title>
+
+
+<para>
+<indexterm id="ch08-idx-965483-0"><primary>Windows NT</primary><secondary>pipes, option for</secondary></indexterm>This global option is used by developers to allow or disallow Windows NT clients the ability to make connections to the NT SMB-specific IPC$ pipes. As a user, you should never need to override the default:</para>
+
+
+<programlisting>[global]
+	nt pipe support = yes</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.10" id="ch08-SECT-6.0.10">
+<indexterm id="ch08-idx-965990-0"><primary>nt smb support option</primary></indexterm>
+<title>
+nt smb support</title>
+
+
+<para>
+<indexterm id="ch08-idx-965484-0"><primary>Windows NT</primary><secondary>SMB, option for</secondary></indexterm>
+<indexterm id="ch08-idx-965484-1"><primary>SMB (Server Message Block)</primary><secondary>option for NT-specific options</secondary></indexterm>This global option is used by developers to negotiate NT-specific SMB options with Windows NT clients. The Samba team has discovered that slightly better performance comes from setting this value to <literal>no</literal>. However, as a user, you should probably not override the default:</para>
+
+
+<programlisting>[global]
+	nt smb support = yes</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.11" id="ch08-SECT-6.0.11">
+<indexterm id="ch08-idx-965991-0"><primary>ole locking compatibility option</primary></indexterm>
+<title>
+ole locking compatibility</title>
+
+
+<para>This global option turns off Samba's internal byte-range locking manipulation in files, which gives compatibility with Object Linking and Embedding (OLE) applications that use high byte-range locks as a method of interprocess communication. The default value for this option is <literal>yes</literal>. If you trust your Unix locking mechanisms, you can override it as follows:</para>
+
+
+<programlisting>[global]
+	ole locking compatibility = no</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.12" id="ch08-SECT-6.0.12">
+<indexterm id="ch08-idx-965992-0"><primary>panic action option</primary></indexterm>
+<title>
+panic action</title>
+
+
+<para>
+<indexterm id="ch08-idx-965492-0"><primary>fatal error, option for</primary></indexterm>This global option specifies a command to execute in the event that Samba itself encounters a fatal error when loading or running. There is no default value for this option. You can specify an action as follows:</para>
+
+
+<programlisting>[global]
+	panic action = /bin/csh -c
+          'xedit &lt; "Samba has shutdown unexpectedly!'</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.13" id="ch08-SECT-6.0.13">
+<indexterm id="ch08-idx-965993-0"><primary>set directory option</primary></indexterm>
+<title>
+set directory</title>
+
+
+<para>This boolean share-level option allows <indexterm id="ch08-idx-965497-0"><primary>Digital Pathworks clients, option for</primary></indexterm>Digital Pathworks clients to use the <literal>setdir</literal> command to change directories on the server. If you are not using the Digital Pathworks client, you should not need to alter this option. The default value for this option is <literal>no</literal>. You can override it per share as follows:</para>
+
+
+<programlisting>[data]
+	set directory = yes</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.14" id="ch08-SECT-6.0.14">
+<indexterm id="ch08-idx-965994-0"><primary>smbrun option</primary></indexterm>
+<title>
+smbrun</title>
+
+
+<para>This option sets the location of the <emphasis>smbrun</emphasis> executable, which Samba uses as a wrapper to run shell commands. The default value for this option is automatically configured by Samba when it is compiled. If you did not install Samba to the standard directory, you can specify where the binary is as follows:</para>
+
+
+<programlisting>[global]
+	smbrun = /usr/local/bin/smbrun</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.15" id="ch08-SECT-6.0.15">
+<indexterm id="ch08-idx-965995-0"><primary>status option</primary></indexterm>
+<title>
+status</title>
+
+
+<para>This global option indicates whether Samba should log all <indexterm id="ch08-idx-965499-0"><primary>active connections, option for</primary></indexterm>
+<indexterm id="ch08-idx-965499-1"><primary>connections</primary><secondary>active, option for</secondary></indexterm>active connections to   a status file. This file is used only by the <emphasis>smbstatus</emphasis> command. If you have no intentions of using this command, you can set this option to <literal>no</literal>, which can result in a small increase of speed on the server. The default value for this option is <literal>yes</literal>. You can override it as follows:</para>
+
+
+<programlisting>[global]
+	status = no</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.16" id="ch08-SECT-6.0.16">
+<indexterm id="ch08-idx-965996-0"><primary>strict sync option</primary></indexterm>
+<title>
+strict sync</title>
+
+
+<para>This share-level option determines whether Samba honors all requests to perform a <indexterm id="ch08-idx-965500-0"><primary>disk sync, options for</primary></indexterm>disk sync when requested to do so by a client. Many clients request a disk sync when they are really just trying to flush data to their own open files. As a result, this can substantially slow a Samba server down. The default value for this option is <literal>no</literal>. You can override it as follows:</para>
+
+
+<programlisting>[data]
+	strict sync = yes</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.17" id="ch08-SECT-6.0.17">
+<indexterm id="ch08-idx-965997-0"><primary>sync always option</primary></indexterm>
+<title>
+sync always</title>
+
+
+<para>This share-level option decides whether every write to disk should be followed by a disk synchronization before the write call returns control to the client. Even if the value of this option is <literal>no</literal>, clients can request a disk synchronization; see the <literal>strict</literal> <literal>sync</literal> option above. The default value for this option is <literal>no</literal>. You can override it per share as follows:</para>
+
+
+<programlisting>[data]
+	sync always = yes</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="8.6.18" id="ch08-SECT-6.0.18">
+<indexterm id="ch08-idx-965998-0"><primary>strip dot option</primary></indexterm>
+<title>
+strip dot</title>
+
+
+<para>This global option determines whether to remove the <indexterm id="ch08-idx-965502-0"><primary>trailing dot, option for</primary></indexterm>
+<indexterm id="ch08-idx-965502-1"><primary>filenames</primary><secondary>Unix, option for</secondary></indexterm>
+<indexterm id="ch08-idx-965502-2"><primary>Unix</primary><secondary>filenames, option for</secondary></indexterm>trailing dot from Unix filenames that are formatted with a dot at the end. The default value for this option is <literal>no</literal>. You can override it per share as follows:</para>
+
+
+<programlisting>[global]
+	strip dot = yes</programlisting>
+
+
+<para>This option is now considered obsolete; the user should use the <literal>mangled</literal> <literal>map</literal> option insead.<indexterm id="ch08-idx-965454-0" class="endofrange" startref="ch08-idx-965429-0"/></para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="8.7" id="ch08-74829">
+<title>Backups with smbtar</title>
+
+
+<para>
+<indexterm id="ch08-idx-965244-0" class="startofrange"><primary>smbtar program</primary></indexterm>
+<indexterm id="ch08-idx-965244-1" class="startofrange"><primary>backups, with smbtar program</primary></indexterm>Our final topic in this chapter is the <filename>smbtar</filename> tool. One common problem with modem PCs is that floppies and even CD-ROMs are often too small to use for backups. However, buying one tape drive per machine would also be silly. Consequently, many sites don't back up their PCs at all. Instead, they reinstall them using floppy disks and CD-ROMs when they fail.</para>
+
+
+<para>Thankfully, Samba provides us with another option: you can back up PCs' data using the <filename>smbtar</filename> tool. This can be done on a regular basis if you keep user data on your Samba system, or only occasionally, to save the local applications and configuration files and thus make repairs and reinstallations quicker.</para>
+
+
+<para>To back up PCs from a <indexterm id="ch08-idx-965519-0"><primary>Unix</primary><secondary>servers, backing up computers from</secondary></indexterm>Unix server, you need to do three things:</para>
+
+
+<orderedlist>
+<listitem><para>Ensure that File and Printer Sharing is installed on the PC and is bound to the TCP/IP protocol.</para></listitem>
+<listitem><para>Explicitly share a disk on the PC so it can be read from the server.</para></listitem>
+<listitem><para>Set up the backup scripts on the server.</para></listitem>
+</orderedlist>
+
+<para>We'll use Windows 95/98 to illustrate the first two steps. Go to the Networking icon in the Control Panel window, and check that <indexterm id="ch08-idx-965520-0"><primary sortas="File and Printer Sharing for Microsoft Networks">"File and Printer Sharing for Microsoft Networks"</primary></indexterm>File and Printer Sharing for Microsoft Networks is currently listed in the top window, as shown in <link linkend="ch08-18303">Figure 8.2</link>.</para>
+
+
+<figure label="8.2" id="ch08-18303">
+<title>The Networking window</title>
+
+<graphic width="502" depth="368" fileref="figs/sam.0802.gif"></graphic>
+</figure>
+
+<para>If "File and printer sharing for Microsoft Networks" isn't installed, you can install it  by clicking on the Add button on the Network panel. After pressing it, you will be asked what service to add. Select Service and move forward, and you will be asked for a vendor and a service to install. Finally, select "File and printer sharing for Microsoft Networks," and click on Done to install the service.</para>
+
+
+<para>Once you've installed "File and printer sharing for Microsoft Networks," return to the Network panel and select the TCP/IP protocol that is tied to your Samba network adapter. Then, click on the Properties button and choose the Bindings tab at the top. You should see a dialog box similar to <link linkend="ch08-41042">Figure 8.3</link>. Here, you'll need to verify that the "File and Printer Sharing" checkbox is checked, giving it access to TCP/IP. At this point you can share disks with other machines on the net.</para>
+
+
+<figure label="8.3" id="ch08-41042">
+<title>TCP/IP Bindings</title>
+
+<graphic width="502" depth="248" fileref="figs/sam.0803.gif"></graphic>
+</figure>
+
+<para>The next step is to share the disk you want to back up with the tape server. Go to My Computer and select, for example, the My Documents directory. Then right-click on the icon and select its Properties. This should yield the dialog box in <link linkend="ch08-64918">Figure 8.4</link>.</para>
+
+
+<figure label="8.4" id="ch08-64918">
+<title>My Documents Properties</title>
+
+<graphic width="502" depth="352" fileref="figs/sam.0804.gif"></graphic>
+</figure>
+
+<para>Select the Sharing tab and turn file sharing on. You now have the choice to share the disk as read-only, read-write (Full), or either, each with separate password. This is the Windows 95/98 version, so it provides only share-level security. In this example, we made it read/write and set a password, as shown in <link linkend="ch08-29192">Figure 8.5</link>. When you enter the password and click on OK, you'll be prompted to re-enter it. After that, you have finished the second step.</para>
+
+
+<figure label="8.5" id="ch08-29192">
+<title>MyFiles Properties as shared</title>
+
+<graphic width="502" depth="374" fileref="figs/sam.0805.gif"></graphic>
+</figure>
+
+<para>Finally, the last step is to set up a backup script on the tape server, using the <filename>smbtar</filename> program. The simplest script might contain only a single line and would be something like the following:</para>
+
+
+<programlisting>smbtar -s client -t /dev/rst0 -x "My Documents" -p <replaceable>password</replaceable></programlisting>
+
+
+<para>This unconditionally backs up the <emphasis>//client/My Documents</emphasis> share to the device <filename>/dev/rst0</filename>. Of course, this is excessively simple and quite insecure. What you will want to do will depend on your existing backup scheme.</para>
+
+
+<para>However, to whet your appetite, here are some possibilities of what <filename>smbtar</filename> can do:</para>
+
+
+<itemizedlist>
+<listitem><para>Back up files incrementally using the DOS archive bit (the <literal>-i</literal> option). This requires the client share to be accessed read-write so the bit can be cleared by <filename>smbtar</filename></para></listitem>
+<listitem><para>Back up only files that have changed since a specified date (using the <literal>-N</literal> <replaceable>filename </replaceable>option)</para></listitem>
+<listitem><para>Back up entire PC drives, by sharing all of C: or D:, for example, and backing that up</para></listitem>
+</itemizedlist>
+
+<para>Except for the first example, each of these can be done with the PC sharing set to read-only, reducing the security risk of having passwords in scripts and passing them on the command line.<indexterm id="ch08-idx-965514-0" class="endofrange" startref="ch08-idx-965244-0"/>
+<indexterm id="ch08-idx-965514-1" class="endofrange" startref="ch08-idx-965244-1"/></para>
+</sect1>
+</chapter>

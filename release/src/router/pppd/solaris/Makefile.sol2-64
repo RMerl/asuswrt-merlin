@@ -1,0 +1,88 @@
+#
+# Makefile for 64-bit STREAMS modules for Solaris 2.
+#
+# $Id: Makefile.sol2-64,v 1.3 2004/11/15 00:57:54 carlsonj Exp $
+#
+
+include Makedefs.sol2
+
+# Sun's cc flag for LP64 compilation / linkage
+COPTS 		+= -xchip=ultra -xarch=v9 -Wc,-xcode=abs32 -Wc,-Qiselect-regsym=0 -xO3 -xspace -W0,-Lt
+
+# subdirectory where 64-bit objects / binaries will be placed
+LP64DIR		= sparcv9
+
+# Name of legacy Makefile (for 32-bit binaries)
+STD_MAKE	= Makefile.sol2
+
+COMP_OBJS	= $(LP64DIR)/ppp_comp.o $(LP64DIR)/bsd-comp.o \
+		$(LP64DIR)/deflate.o $(LP64DIR)/zlib.o $(LP64DIR)/vjcompress.o \
+		$(LP64DIR)/ppp_comp_mod.o
+
+all:	std_objs $(LP64DIR) ppp ppp_ahdl ppp_comp
+
+std_objs:
+	$(MAKE) -f $(STD_MAKE) all
+
+ppp:	$(LP64DIR)/ppp.o $(LP64DIR)/ppp_mod.o
+	$(LD) -r -o $(LP64DIR)/$@ $(LP64DIR)/ppp.o $(LP64DIR)/ppp_mod.o
+	chmod +x $(LP64DIR)/$@
+
+ppp_ahdl: $(LP64DIR)/ppp_ahdlc.o $(LP64DIR)/ppp_ahdlc_mod.o
+	$(LD) -r -o $(LP64DIR)/$@ $(LP64DIR)/ppp_ahdlc.o \
+		$(LP64DIR)/ppp_ahdlc_mod.o
+	chmod +x $(LP64DIR)/$@
+
+ppp_comp: $(COMP_OBJS)
+	$(LD) -r -o $(LP64DIR)/$@ $(COMP_OBJS)
+	chmod +x $(LP64DIR)/$@
+
+$(LP64DIR)/bsd-comp.o: ../modules/bsd-comp.c
+	$(CC) $(CFLAGS) -c $? -o $@
+$(LP64DIR)/deflate.o: ../modules/deflate.c
+	$(CC) $(CFLAGS) -c $? -o $@
+$(LP64DIR)/ppp.o:	ppp.c
+	$(CC) $(CFLAGS) -c $? -o $@
+$(LP64DIR)/ppp_mod.o:	ppp_mod.c
+	$(CC) $(CFLAGS) -c $? -o $@
+$(LP64DIR)/ppp_ahdlc_mod.o: ppp_ahdlc_mod.c
+	$(CC) $(CFLAGS) -c $? -o $@
+$(LP64DIR)/ppp_ahdlc.o: ppp_ahdlc.c
+	$(CC) $(CFLAGS) -c $? -o $@
+$(LP64DIR)/ppp_comp.o: ppp_comp.c
+	$(CC) $(CFLAGS) -c $? -o $@
+$(LP64DIR)/ppp_comp_mod.o: ppp_comp_mod.c
+	$(CC) $(CFLAGS) -c $? -o $@
+$(LP64DIR)/vjcompress.o: ../modules/vjcompress.c
+	$(CC) $(CFLAGS) -c $? -o $@
+$(LP64DIR)/zlib.o:	../common/zlib.c
+	$(CC) $(CFLAGS) -c $? -o $@
+
+$(LP64DIR):
+	mkdir -m 755 -p $@
+
+install:
+	/usr/sbin/modunload -i 0
+	cp ppp ppp.conf /kernel/drv
+	cp ppp_comp ppp_ahdl /kernel/strmod
+	cp $(LP64DIR)/ppp /kernel/drv/$(LP64DIR)
+	cp $(LP64DIR)/ppp_comp $(LP64DIR)/ppp_ahdl /kernel/strmod/$(LP64DIR)
+	if grep clone:ppp /etc/minor_perm; then :; else \
+	  echo clone:ppp 0644 root sys >>/etc/minor_perm; fi
+	/usr/sbin/rem_drv ppp 2>/dev/null || true
+	/usr/sbin/modunload -i 0
+	/usr/sbin/add_drv ppp
+
+SRCS	= ppp.c ppp_mod.c ppp_ahdlc.c ppp_ahdlc_mod.c \
+	ppp_comp.c ../modules/bsd-comp.c ../modules/deflate.c \
+	../common/zlib.c ../modules/vjcompress.c ppp_comp_mod.c
+
+lint:
+	$(LINT64) $(SRCS)
+
+lint-32:
+	$(LINT32) $(SRCS)
+
+clean:
+	$(MAKE) -f $(STD_MAKE) clean
+	rm -f $(LP64DIR)/ppp $(LP64DIR)/ppp_comp $(LP64DIR)/ppp_ahdl $(LP64DIR)/*.o $(LP64DIR)/*~ $(LP64DIR)/core

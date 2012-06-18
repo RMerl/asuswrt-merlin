@@ -1,0 +1,10 @@
+. basicsmb.fns
+
+password="samba"
+security="invalidusers"
+(test_smb_conf_setup && test_smbpasswd $password) || exit 1
+
+(test_listfilesauth_should_deny $security) || exit 1
+
+security="validusers"
+(test_listfilesauth $security) || exit 1

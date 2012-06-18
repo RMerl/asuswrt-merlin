@@ -1,0 +1,924 @@
+/* include/config.h.in.  Generated automatically from configure.in by autoheader.  */
+
+/* Define if on AIX 3.
+   System headers sometimes define this.
+   We just want to avoid a redefinition error message.  */
+#ifndef _ALL_SOURCE
+#undef _ALL_SOURCE
+#endif
+
+/* Define if type char is unsigned and you are not using gcc.  */
+#ifndef __CHAR_UNSIGNED__
+#undef __CHAR_UNSIGNED__
+#endif
+
+/* Define to empty if the keyword does not work.  */
+#undef const
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef gid_t
+
+/* Define if your system has a working fnmatch function.  */
+#undef HAVE_FNMATCH
+
+/* Define if you have a working `mmap' system call.  */
+#undef HAVE_MMAP
+
+/* Define if your struct stat has st_rdev.  */
+#undef HAVE_ST_RDEV
+
+/* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
+#undef HAVE_SYS_WAIT_H
+
+/* Define as __inline if that's what the C compiler calls it.  */
+#undef inline
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef mode_t
+
+/* Define if your C compiler doesn't accept -c and -o together.  */
+#undef NO_MINUS_C_MINUS_O
+
+/* Define to `long' if <sys/types.h> doesn't define.  */
+#undef off_t
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef pid_t
+
+/* Define as the return type of signal handlers (int or void).  */
+#undef RETSIGTYPE
+
+/* Define to `unsigned' if <sys/types.h> doesn't define.  */
+#undef size_t
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define if you can safely include both <sys/time.h> and <time.h>.  */
+#undef TIME_WITH_SYS_TIME
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef uid_t
+
+/* Define if your processor stores words with the most significant
+   byte first (like Motorola and SPARC, unlike Intel and VAX).  */
+#undef WORDS_BIGENDIAN
+
+#undef HAVE_VOLATILE
+#undef HAVE_BROKEN_READDIR
+#undef HAVE_ERRNO_DECL
+#undef HAVE_LONGLONG
+#undef HAVE_OFF64_T
+#undef HAVE_REMSH
+#undef HAVE_UNSIGNED_CHAR
+#undef HAVE_UTIMBUF
+#undef HAVE_SIG_ATOMIC_T_TYPE
+#undef ssize_t
+#undef ino_t
+#undef ssize_t
+#undef loff_t
+#undef offset_t
+#undef aclent_t
+#undef HAVE_CONNECT
+#undef HAVE_SHORT_INO_T
+#undef WITH_SMBWRAPPER
+#undef WITH_AFS
+#undef WITH_DFS
+#undef SUNOS5
+#undef SUNOS4
+#undef LINUX
+#undef AIX
+#undef BSD
+#undef IRIX
+#undef IRIX6
+#undef HPUX
+#undef QNX
+#undef SCO
+#undef OSF1
+#undef NEXT2
+#undef RELIANTUNIX
+#undef HAVE_SHARED_MMAP
+#undef HAVE_MMAP
+#undef HAVE_SYSV_IPC
+#undef HAVE_FCNTL_LOCK
+#undef HAVE_FTRUNCATE_EXTEND
+#undef FTRUNCATE_NEEDS_ROOT
+#undef HAVE_TRAPDOOR_UID
+#undef HAVE_ROOT
+#undef HAVE_UNION_SEMUN
+#undef HAVE_GETTIMEOFDAY_TZ
+#undef HAVE_SOCK_SIN_LEN
+#undef STAT_READ_FILSYS
+#undef STAT_STATFS2_BSIZE
+#undef STAT_STATFS2_FSIZE
+#undef STAT_STATFS2_FS_DATA
+#undef STAT_STATFS3_OSF1
+#undef STAT_STATFS4
+#undef STAT_STATVFS
+#undef STAT_STATVFS64
+#undef HAVE_IFACE_AIX
+#undef HAVE_IFACE_IFCONF
+#undef HAVE_IFACE_IFREQ
+#undef HAVE_CRYPT
+#undef HAVE_PUTPRPWNAM
+#undef HAVE_SET_AUTH_PARAMETERS
+#undef WITH_SYSLOG
+#undef WITH_PROFILE
+#undef WITH_SSL
+#undef WITH_LDAP
+#undef WITH_NISPLUS
+#undef WITH_PAM
+#undef WITH_NISPLUS_HOME
+#undef WITH_AUTOMOUNT
+#undef WITH_SMBMOUNT
+#undef HAVE_BROKEN_GETGROUPS
+#undef REPLACE_GETPASS
+#undef REPLACE_INET_NTOA
+#undef HAVE_FILE_MACRO
+#undef HAVE_FUNCTION_MACRO
+#undef HAVE_SETRESUID_DECL
+#undef HAVE_SETRESUID
+#undef WITH_NETATALK
+#undef WITH_UTMP
+#undef HAVE_INO64_T
+#undef HAVE_STRUCT_FLOCK64
+#undef SIZEOF_INO_T
+#undef SIZEOF_OFF_T
+#undef STAT_STATVFS64
+#undef HAVE_LIBREADLINE
+#undef HAVE_KERNEL_OPLOCKS
+#undef HAVE_IRIX_SPECIFIC_CAPABILITIES
+#undef HAVE_INT16_FROM_RPC_RPC_H
+#undef HAVE_UINT16_FROM_RPC_RPC_H
+#undef HAVE_INT32_FROM_RPC_RPC_H
+#undef HAVE_UINT32_FROM_RPC_RPC_H
+#undef KRB4_AUTH
+#undef KRB5_AUTH
+#undef SEEKDIR_RETURNS_VOID
+#undef HAVE_DIRENT_D_OFF
+#undef HAVE_GETSPNAM
+#undef HAVE_BIGCRYPT
+#undef HAVE_GETPRPWNAM
+#undef HAVE_FSTAT64
+#undef HAVE_LSTAT64
+#undef HAVE_STAT64
+#undef HAVE_SETRESGID
+#undef HAVE_SETRESGID_DECL
+#undef HAVE_SHADOW_H
+#undef HAVE_MEMSET
+#undef HAVE_STRCASECMP
+#undef HAVE_STRUCT_DIRENT64
+#undef HAVE_TRUNCATED_SALT
+#undef BROKEN_NISPLUS_INCLUDE_FILES
+#undef HAVE_RPC_AUTH_ERROR_CONFLICT
+#undef HAVE_EXPLICIT_LARGEFILE_SUPPORT
+#undef USE_BOTH_CRYPT_CALLS
+#undef HAVE_BROKEN_FCNTL64_LOCKS
+#undef HAVE_SECURE_MKSTEMP
+#undef HAVE_FNMATCH
+#undef USE_SETEUID
+#undef USE_SETRESUID
+#undef USE_SETREUID
+#undef USE_SETUIDX
+#undef NEED_SGI_SEMUN_HACK
+#undef SYSCONF_SC_NGROUPS_MAX
+#undef HAVE_UT_UT_NAME
+#undef HAVE_UT_UT_USER
+#undef HAVE_UT_UT_ID
+#undef HAVE_UT_UT_HOST
+#undef HAVE_UT_UT_TIME
+#undef HAVE_UT_UT_TV
+#undef HAVE_UX_UT_SYSLEN
+#undef COMPILER_SUPPORTS_LL
+
+/* The number of bytes in a int.  */
+#undef SIZEOF_INT
+
+/* The number of bytes in a long.  */
+#undef SIZEOF_LONG
+
+/* The number of bytes in a short.  */
+#undef SIZEOF_SHORT
+
+/* Define if you have the __acl function.  */
+#undef HAVE___ACL
+
+/* Define if you have the __chdir function.  */
+#undef HAVE___CHDIR
+
+/* Define if you have the __close function.  */
+#undef HAVE___CLOSE
+
+/* Define if you have the __closedir function.  */
+#undef HAVE___CLOSEDIR
+
+/* Define if you have the __dup function.  */
+#undef HAVE___DUP
+
+/* Define if you have the __dup2 function.  */
+#undef HAVE___DUP2
+
+/* Define if you have the __facl function.  */
+#undef HAVE___FACL
+
+/* Define if you have the __fchdir function.  */
+#undef HAVE___FCHDIR
+
+/* Define if you have the __fcntl function.  */
+#undef HAVE___FCNTL
+
+/* Define if you have the __fork function.  */
+#undef HAVE___FORK
+
+/* Define if you have the __fstat function.  */
+#undef HAVE___FSTAT
+
+/* Define if you have the __fstat64 function.  */
+#undef HAVE___FSTAT64
+
+/* Define if you have the __fxstat function.  */
+#undef HAVE___FXSTAT
+
+/* Define if you have the __getcwd function.  */
+#undef HAVE___GETCWD
+
+/* Define if you have the __getdents function.  */
+#undef HAVE___GETDENTS
+
+/* Define if you have the __llseek function.  */
+#undef HAVE___LLSEEK
+
+/* Define if you have the __lseek function.  */
+#undef HAVE___LSEEK
+
+/* Define if you have the __lstat function.  */
+#undef HAVE___LSTAT
+
+/* Define if you have the __lstat64 function.  */
+#undef HAVE___LSTAT64
+
+/* Define if you have the __lxstat function.  */
+#undef HAVE___LXSTAT
+
+/* Define if you have the __open function.  */
+#undef HAVE___OPEN
+
+/* Define if you have the __open64 function.  */
+#undef HAVE___OPEN64
+
+/* Define if you have the __opendir function.  */
+#undef HAVE___OPENDIR
+
+/* Define if you have the __pread function.  */
+#undef HAVE___PREAD
+
+/* Define if you have the __pread64 function.  */
+#undef HAVE___PREAD64
+
+/* Define if you have the __pwrite function.  */
+#undef HAVE___PWRITE
+
+/* Define if you have the __pwrite64 function.  */
+#undef HAVE___PWRITE64
+
+/* Define if you have the __read function.  */
+#undef HAVE___READ
+
+/* Define if you have the __readdir function.  */
+#undef HAVE___READDIR
+
+/* Define if you have the __readdir64 function.  */
+#undef HAVE___READDIR64
+
+/* Define if you have the __seekdir function.  */
+#undef HAVE___SEEKDIR
+
+/* Define if you have the __stat function.  */
+#undef HAVE___STAT
+
+/* Define if you have the __stat64 function.  */
+#undef HAVE___STAT64
+
+/* Define if you have the __sys_llseek function.  */
+#undef HAVE___SYS_LLSEEK
+
+/* Define if you have the __telldir function.  */
+#undef HAVE___TELLDIR
+
+/* Define if you have the __write function.  */
+#undef HAVE___WRITE
+
+/* Define if you have the __xstat function.  */
+#undef HAVE___XSTAT
+
+/* Define if you have the _acl function.  */
+#undef HAVE__ACL
+
+/* Define if you have the _chdir function.  */
+#undef HAVE__CHDIR
+
+/* Define if you have the _close function.  */
+#undef HAVE__CLOSE
+
+/* Define if you have the _closedir function.  */
+#undef HAVE__CLOSEDIR
+
+/* Define if you have the _dup function.  */
+#undef HAVE__DUP
+
+/* Define if you have the _dup2 function.  */
+#undef HAVE__DUP2
+
+/* Define if you have the _facl function.  */
+#undef HAVE__FACL
+
+/* Define if you have the _fchdir function.  */
+#undef HAVE__FCHDIR
+
+/* Define if you have the _fcntl function.  */
+#undef HAVE__FCNTL
+
+/* Define if you have the _fork function.  */
+#undef HAVE__FORK
+
+/* Define if you have the _fstat function.  */
+#undef HAVE__FSTAT
+
+/* Define if you have the _fstat64 function.  */
+#undef HAVE__FSTAT64
+
+/* Define if you have the _getcwd function.  */
+#undef HAVE__GETCWD
+
+/* Define if you have the _getdents function.  */
+#undef HAVE__GETDENTS
+
+/* Define if you have the _llseek function.  */
+#undef HAVE__LLSEEK
+
+/* Define if you have the _lseek function.  */
+#undef HAVE__LSEEK
+
+/* Define if you have the _lstat function.  */
+#undef HAVE__LSTAT
+
+/* Define if you have the _lstat64 function.  */
+#undef HAVE__LSTAT64
+
+/* Define if you have the _open function.  */
+#undef HAVE__OPEN
+
+/* Define if you have the _open64 function.  */
+#undef HAVE__OPEN64
+
+/* Define if you have the _opendir function.  */
+#undef HAVE__OPENDIR
+
+/* Define if you have the _pread function.  */
+#undef HAVE__PREAD
+
+/* Define if you have the _pread64 function.  */
+#undef HAVE__PREAD64
+
+/* Define if you have the _pwrite function.  */
+#undef HAVE__PWRITE
+
+/* Define if you have the _pwrite64 function.  */
+#undef HAVE__PWRITE64
+
+/* Define if you have the _read function.  */
+#undef HAVE__READ
+
+/* Define if you have the _readdir function.  */
+#undef HAVE__READDIR
+
+/* Define if you have the _readdir64 function.  */
+#undef HAVE__READDIR64
+
+/* Define if you have the _seekdir function.  */
+#undef HAVE__SEEKDIR
+
+/* Define if you have the _stat function.  */
+#undef HAVE__STAT
+
+/* Define if you have the _stat64 function.  */
+#undef HAVE__STAT64
+
+/* Define if you have the _telldir function.  */
+#undef HAVE__TELLDIR
+
+/* Define if you have the _write function.  */
+#undef HAVE__WRITE
+
+/* Define if you have the atexit function.  */
+#undef HAVE_ATEXIT
+
+/* Define if you have the bigcrypt function.  */
+#undef HAVE_BIGCRYPT
+
+/* Define if you have the bzero function.  */
+#undef HAVE_BZERO
+
+/* Define if you have the chmod function.  */
+#undef HAVE_CHMOD
+
+/* Define if you have the chown function.  */
+#undef HAVE_CHOWN
+
+/* Define if you have the chroot function.  */
+#undef HAVE_CHROOT
+
+/* Define if you have the connect function.  */
+#undef HAVE_CONNECT
+
+/* Define if you have the creat64 function.  */
+#undef HAVE_CREAT64
+
+/* Define if you have the crypt function.  */
+#undef HAVE_CRYPT
+
+/* Define if you have the crypt16 function.  */
+#undef HAVE_CRYPT16
+
+/* Define if you have the dup2 function.  */
+#undef HAVE_DUP2
+
+/* Define if you have the endnetgrent function.  */
+#undef HAVE_ENDNETGRENT
+
+/* Define if you have the execl function.  */
+#undef HAVE_EXECL
+
+/* Define if you have the fcvt function.  */
+#undef HAVE_FCVT
+
+/* Define if you have the fcvtl function.  */
+#undef HAVE_FCVTL
+
+/* Define if you have the fopen64 function.  */
+#undef HAVE_FOPEN64
+
+/* Define if you have the fseek64 function.  */
+#undef HAVE_FSEEK64
+
+/* Define if you have the fseeko64 function.  */
+#undef HAVE_FSEEKO64
+
+/* Define if you have the fstat function.  */
+#undef HAVE_FSTAT
+
+/* Define if you have the fstat64 function.  */
+#undef HAVE_FSTAT64
+
+/* Define if you have the fsync function.  */
+#undef HAVE_FSYNC
+
+/* Define if you have the ftell64 function.  */
+#undef HAVE_FTELL64
+
+/* Define if you have the ftello64 function.  */
+#undef HAVE_FTELLO64
+
+/* Define if you have the ftruncate function.  */
+#undef HAVE_FTRUNCATE
+
+/* Define if you have the ftruncate64 function.  */
+#undef HAVE_FTRUNCATE64
+
+/* Define if you have the getauthuid function.  */
+#undef HAVE_GETAUTHUID
+
+/* Define if you have the getcwd function.  */
+#undef HAVE_GETCWD
+
+/* Define if you have the getdents function.  */
+#undef HAVE_GETDENTS
+
+/* Define if you have the getgrent function.  */
+#undef HAVE_GETGRENT
+
+/* Define if you have the getgrnam function.  */
+#undef HAVE_GETGRNAM
+
+/* Define if you have the getnetgrent function.  */
+#undef HAVE_GETNETGRENT
+
+/* Define if you have the getprpwnam function.  */
+#undef HAVE_GETPRPWNAM
+
+/* Define if you have the getpwanam function.  */
+#undef HAVE_GETPWANAM
+
+/* Define if you have the getrlimit function.  */
+#undef HAVE_GETRLIMIT
+
+/* Define if you have the getspnam function.  */
+#undef HAVE_GETSPNAM
+
+/* Define if you have the glob function.  */
+#undef HAVE_GLOB
+
+/* Define if you have the grantpt function.  */
+#undef HAVE_GRANTPT
+
+/* Define if you have the initgroups function.  */
+#undef HAVE_INITGROUPS
+
+/* Define if you have the innetgr function.  */
+#undef HAVE_INNETGR
+
+/* Define if you have the llseek function.  */
+#undef HAVE_LLSEEK
+
+/* Define if you have the lseek64 function.  */
+#undef HAVE_LSEEK64
+
+/* Define if you have the lstat64 function.  */
+#undef HAVE_LSTAT64
+
+/* Define if you have the memmove function.  */
+#undef HAVE_MEMMOVE
+
+/* Define if you have the memset function.  */
+#undef HAVE_MEMSET
+
+/* Define if you have the mktime function.  */
+#undef HAVE_MKTIME
+
+/* Define if you have the mmap64 function.  */
+#undef HAVE_MMAP64
+
+/* Define if you have the open64 function.  */
+#undef HAVE_OPEN64
+
+/* Define if you have the pathconf function.  */
+#undef HAVE_PATHCONF
+
+/* Define if you have the pipe function.  */
+#undef HAVE_PIPE
+
+/* Define if you have the pread function.  */
+#undef HAVE_PREAD
+
+/* Define if you have the pread64 function.  */
+#undef HAVE_PREAD64
+
+/* Define if you have the putprpwnam function.  */
+#undef HAVE_PUTPRPWNAM
+
+/* Define if you have the pwrite function.  */
+#undef HAVE_PWRITE
+
+/* Define if you have the pwrite64 function.  */
+#undef HAVE_PWRITE64
+
+/* Define if you have the rand function.  */
+#undef HAVE_RAND
+
+/* Define if you have the random function.  */
+#undef HAVE_RANDOM
+
+/* Define if you have the rdchk function.  */
+#undef HAVE_RDCHK
+
+/* Define if you have the readdir64 function.  */
+#undef HAVE_READDIR64
+
+/* Define if you have the rename function.  */
+#undef HAVE_RENAME
+
+/* Define if you have the select function.  */
+#undef HAVE_SELECT
+
+/* Define if you have the set_auth_parameters function.  */
+#undef HAVE_SET_AUTH_PARAMETERS
+
+/* Define if you have the setenv function.  */
+#undef HAVE_SETENV
+
+/* Define if you have the setgidx function.  */
+#undef HAVE_SETGIDX
+
+/* Define if you have the setgroups function.  */
+#undef HAVE_SETGROUPS
+
+/* Define if you have the setluid function.  */
+#undef HAVE_SETLUID
+
+/* Define if you have the setnetgrent function.  */
+#undef HAVE_SETNETGRENT
+
+/* Define if you have the setpriv function.  */
+#undef HAVE_SETPRIV
+
+/* Define if you have the setsid function.  */
+#undef HAVE_SETSID
+
+/* Define if you have the setuidx function.  */
+#undef HAVE_SETUIDX
+
+/* Define if you have the sigaction function.  */
+#undef HAVE_SIGACTION
+
+/* Define if you have the sigblock function.  */
+#undef HAVE_SIGBLOCK
+
+/* Define if you have the sigprocmask function.  */
+#undef HAVE_SIGPROCMASK
+
+/* Define if you have the snprintf function.  */
+#undef HAVE_SNPRINTF
+
+/* Define if you have the srand function.  */
+#undef HAVE_SRAND
+
+/* Define if you have the srandom function.  */
+#undef HAVE_SRANDOM
+
+/* Define if you have the stat64 function.  */
+#undef HAVE_STAT64
+
+/* Define if you have the strcasecmp function.  */
+#undef HAVE_STRCASECMP
+
+/* Define if you have the strchr function.  */
+#undef HAVE_STRCHR
+
+/* Define if you have the strdup function.  */
+#undef HAVE_STRDUP
+
+/* Define if you have the strerror function.  */
+#undef HAVE_STRERROR
+
+/* Define if you have the strftime function.  */
+#undef HAVE_STRFTIME
+
+/* Define if you have the strpbrk function.  */
+#undef HAVE_STRPBRK
+
+/* Define if you have the strtoul function.  */
+#undef HAVE_STRTOUL
+
+/* Define if you have the syscall function.  */
+#undef HAVE_SYSCALL
+
+/* Define if you have the sysconf function.  */
+#undef HAVE_SYSCONF
+
+/* Define if you have the usleep function.  */
+#undef HAVE_USLEEP
+
+/* Define if you have the utime function.  */
+#undef HAVE_UTIME
+
+/* Define if you have the utimes function.  */
+#undef HAVE_UTIMES
+
+/* Define if you have the vsnprintf function.  */
+#undef HAVE_VSNPRINTF
+
+/* Define if you have the waitpid function.  */
+#undef HAVE_WAITPID
+
+/* Define if you have the yp_get_default_domain function.  */
+#undef HAVE_YP_GET_DEFAULT_DOMAIN
+
+/* Define if you have the <arpa/inet.h> header file.  */
+#undef HAVE_ARPA_INET_H
+
+/* Define if you have the <compat.h> header file.  */
+#undef HAVE_COMPAT_H
+
+/* Define if you have the <ctype.h> header file.  */
+#undef HAVE_CTYPE_H
+
+/* Define if you have the <dirent.h> header file.  */
+#undef HAVE_DIRENT_H
+
+/* Define if you have the <fcntl.h> header file.  */
+#undef HAVE_FCNTL_H
+
+/* Define if you have the <glob.h> header file.  */
+#undef HAVE_GLOB_H
+
+/* Define if you have the <grp.h> header file.  */
+#undef HAVE_GRP_H
+
+/* Define if you have the <history.h> header file.  */
+#undef HAVE_HISTORY_H
+
+/* Define if you have the <limits.h> header file.  */
+#undef HAVE_LIMITS_H
+
+/* Define if you have the <memory.h> header file.  */
+#undef HAVE_MEMORY_H
+
+/* Define if you have the <ndir.h> header file.  */
+#undef HAVE_NDIR_H
+
+/* Define if you have the <net/if.h> header file.  */
+#undef HAVE_NET_IF_H
+
+/* Define if you have the <netinet/in_ip.h> header file.  */
+#undef HAVE_NETINET_IN_IP_H
+
+/* Define if you have the <netinet/in_systm.h> header file.  */
+#undef HAVE_NETINET_IN_SYSTM_H
+
+/* Define if you have the <netinet/ip.h> header file.  */
+#undef HAVE_NETINET_IP_H
+
+/* Define if you have the <netinet/tcp.h> header file.  */
+#undef HAVE_NETINET_TCP_H
+
+/* Define if you have the <poll.h> header file.  */
+#undef HAVE_POLL_H
+
+/* Define if you have the <readline.h> header file.  */
+#undef HAVE_READLINE_H
+
+/* Define if you have the <readline/history.h> header file.  */
+#undef HAVE_READLINE_HISTORY_H
+
+/* Define if you have the <readline/readline.h> header file.  */
+#undef HAVE_READLINE_READLINE_H
+
+/* Define if you have the <rpc/rpc.h> header file.  */
+#undef HAVE_RPC_RPC_H
+
+/* Define if you have the <rpcsvc/nis.h> header file.  */
+#undef HAVE_RPCSVC_NIS_H
+
+/* Define if you have the <rpcsvc/yp_prot.h> header file.  */
+#undef HAVE_RPCSVC_YP_PROT_H
+
+/* Define if you have the <rpcsvc/ypclnt.h> header file.  */
+#undef HAVE_RPCSVC_YPCLNT_H
+
+/* Define if you have the <security/pam_appl.h> header file.  */
+#undef HAVE_SECURITY_PAM_APPL_H
+
+/* Define if you have the <shadow.h> header file.  */
+#undef HAVE_SHADOW_H
+
+/* Define if you have the <stdarg.h> header file.  */
+#undef HAVE_STDARG_H
+
+/* Define if you have the <stdlib.h> header file.  */
+#undef HAVE_STDLIB_H
+
+/* Define if you have the <string.h> header file.  */
+#undef HAVE_STRING_H
+
+/* Define if you have the <strings.h> header file.  */
+#undef HAVE_STRINGS_H
+
+/* Define if you have the <stropts.h> header file.  */
+#undef HAVE_STROPTS_H
+
+/* Define if you have the <sys/acl.h> header file.  */
+#undef HAVE_SYS_ACL_H
+
+/* Define if you have the <sys/capability.h> header file.  */
+#undef HAVE_SYS_CAPABILITY_H
+
+/* Define if you have the <sys/cdefs.h> header file.  */
+#undef HAVE_SYS_CDEFS_H
+
+/* Define if you have the <sys/dir.h> header file.  */
+#undef HAVE_SYS_DIR_H
+
+/* Define if you have the <sys/dustat.h> header file.  */
+#undef HAVE_SYS_DUSTAT_H
+
+/* Define if you have the <sys/fcntl.h> header file.  */
+#undef HAVE_SYS_FCNTL_H
+
+/* Define if you have the <sys/filio.h> header file.  */
+#undef HAVE_SYS_FILIO_H
+
+/* Define if you have the <sys/filsys.h> header file.  */
+#undef HAVE_SYS_FILSYS_H
+
+/* Define if you have the <sys/fs/s5param.h> header file.  */
+#undef HAVE_SYS_FS_S5PARAM_H
+
+/* Define if you have the <sys/fs/vx_quota.h> header file.  */
+#undef HAVE_SYS_FS_VX_QUOTA_H
+
+/* Define if you have the <sys/id.h> header file.  */
+#undef HAVE_SYS_ID_H
+
+/* Define if you have the <sys/ioctl.h> header file.  */
+#undef HAVE_SYS_IOCTL_H
+
+/* Define if you have the <sys/mman.h> header file.  */
+#undef HAVE_SYS_MMAN_H
+
+/* Define if you have the <sys/mode.h> header file.  */
+#undef HAVE_SYS_MODE_H
+
+/* Define if you have the <sys/mount.h> header file.  */
+#undef HAVE_SYS_MOUNT_H
+
+/* Define if you have the <sys/ndir.h> header file.  */
+#undef HAVE_SYS_NDIR_H
+
+/* Define if you have the <sys/param.h> header file.  */
+#undef HAVE_SYS_PARAM_H
+
+/* Define if you have the <sys/priv.h> header file.  */
+#undef HAVE_SYS_PRIV_H
+
+/* Define if you have the <sys/resource.h> header file.  */
+#undef HAVE_SYS_RESOURCE_H
+
+/* Define if you have the <sys/security.h> header file.  */
+#undef HAVE_SYS_SECURITY_H
+
+/* Define if you have the <sys/select.h> header file.  */
+#undef HAVE_SYS_SELECT_H
+
+/* Define if you have the <sys/socket.h> header file.  */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define if you have the <sys/sockio.h> header file.  */
+#undef HAVE_SYS_SOCKIO_H
+
+/* Define if you have the <sys/statfs.h> header file.  */
+#undef HAVE_SYS_STATFS_H
+
+/* Define if you have the <sys/statvfs.h> header file.  */
+#undef HAVE_SYS_STATVFS_H
+
+/* Define if you have the <sys/syscall.h> header file.  */
+#undef HAVE_SYS_SYSCALL_H
+
+/* Define if you have the <sys/termio.h> header file.  */
+#undef HAVE_SYS_TERMIO_H
+
+/* Define if you have the <sys/time.h> header file.  */
+#undef HAVE_SYS_TIME_H
+
+/* Define if you have the <sys/unistd.h> header file.  */
+#undef HAVE_SYS_UNISTD_H
+
+/* Define if you have the <sys/vfs.h> header file.  */
+#undef HAVE_SYS_VFS_H
+
+/* Define if you have the <sys/wait.h> header file.  */
+#undef HAVE_SYS_WAIT_H
+
+/* Define if you have the <syscall.h> header file.  */
+#undef HAVE_SYSCALL_H
+
+/* Define if you have the <termio.h> header file.  */
+#undef HAVE_TERMIO_H
+
+/* Define if you have the <termios.h> header file.  */
+#undef HAVE_TERMIOS_H
+
+/* Define if you have the <unistd.h> header file.  */
+#undef HAVE_UNISTD_H
+
+/* Define if you have the <utime.h> header file.  */
+#undef HAVE_UTIME_H
+
+/* Define if you have the <utmp.h> header file.  */
+#undef HAVE_UTMP_H
+
+/* Define if you have the <utmpx.h> header file.  */
+#undef HAVE_UTMPX_H
+
+/* Define if you have the cups library (-lcups).  */
+#undef HAVE_LIBCUPS
+
+/* Define if you have the dl library (-ldl).  */
+#undef HAVE_LIBDL
+
+/* Define if you have the gen library (-lgen).  */
+#undef HAVE_LIBGEN
+
+/* Define if you have the inet library (-linet).  */
+#undef HAVE_LIBINET
+
+/* Define if you have the nsl library (-lnsl).  */
+#undef HAVE_LIBNSL
+
+/* Define if you have the nsl_s library (-lnsl_s).  */
+#undef HAVE_LIBNSL_S
+
+/* Define if you have the readline library (-lreadline).  */
+#undef HAVE_LIBREADLINE
+
+/* Define if you have the resolv library (-lresolv).  */
+#undef HAVE_LIBRESOLV
+
+/* Define if you have the sec library (-lsec).  */
+#undef HAVE_LIBSEC
+
+/* Define if you have the security library (-lsecurity).  */
+#undef HAVE_LIBSECURITY
+
+/* Define if you have the socket library (-lsocket).  */
+#undef HAVE_LIBSOCKET

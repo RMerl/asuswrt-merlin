@@ -1,0 +1,24 @@
+A quick list of rules for committing stuff into netfilter svn:
+
+- Always include the Name of the Author/Contributor in the SVN comment
+  like 'fix for foo (Au Thor)'
+
+- make sure that you have set the executable bits on an 'extensions/.*-test'
+  script before adding/committing it to SVN
+
+- If the commit fixes a bugzilla bug, please include '(Closes: #bugnr)' in
+  the commit message
+
+- Make sure you don't commit to svn while a feature freeze is announced
+
+- For new extensions, there are two possible cases:
+	1) header files are just in patch-o-matic patch, you need an
+	   'extensions/.*-test' script to have a conditional build
+	2) header files are in patch-o-matic patch, and copied to
+	   'netfilter/include/linux/netfilter_xxx'.  This way the extension
+	   can be built _unconditionally_, and thus be included in
+	   'extensions/Makefile'.  Make sure to keep the headers in sync!
+
+  Usually '1)' is used, but in case something is expected to show up in the
+  kernel soon, we should already make userspace support unconditionally.
+

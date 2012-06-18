@@ -1,0 +1,11 @@
+Please carefully review any script within the packaging directory tree to
+ensure that it is safe to execute. If you do not have the skill to determine
+that these scripts are safe then please do NOT use them.
+
+If you wish to create and install samba binary files for your system it
+may be better to change to the source directory and then run:
+
+	./configure
+	make
+	make install
+

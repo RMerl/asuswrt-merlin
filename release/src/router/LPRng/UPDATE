@@ -1,0 +1,37 @@
+#!/bin/sh
+DIR=`pwd | sed -e 's,.*/,,'`
+PREFIX=`echo $DIR | sed -e 's,-.*,,'`
+TAIL=`echo $DIR | sed -e 's,^[^-]*-,,'`
+LAST=`echo $TAIL | sed -e 's,^.*\.,,'`
+BEFORE=`echo $TAIL | sed -e 's,\.[0-9]*$,.,'`
+INCR=`expr $LAST "+" 1`
+#if [ $INCR -ge 10 ] ; then
+#	echo $DIR needs to be modified to next minor version
+#	BEFORE=`echo $TAIL | sed -e 's,\.[0-9]*\.[0-9]*$,.,'`
+#	LAST=`echo $TAIL | sed -e 's,\.[0-9]*$,,' -e 's,^.*\.,,'`
+#	INCR=`expr $LAST "+" 1`
+#	if [ $INCR -ge 10 ] ; then
+#		echo $DIR needs to be modified to next major version
+#		BEFORE="";
+#		LAST=`echo $TAIL | sed -e 's,\.[0-9]*\.[0-9]*$,,' -e 's,^.*\-,,'`
+#		INCR=`expr $LAST "+" 1`
+#		INCR="$INCR.0"
+#	fi
+#	INCR="$INCR.0"
+#fi
+NEW=$PREFIX-$BEFORE$INCR
+echo NEW $NEW
+(
+cd ..; mv $DIR $NEW; rm -f $PREFIX;
+ln -s $NEW $PREFIX
+)
+(
+echo Version $NEW - `date`
+echo ""
+echo ""
+cat CHANGES ;
+) >/tmp/CHANGES$NEW
+mv CHANGES /tmp/CHANGES.OLD
+cp /tmp/CHANGES$NEW CHANGES
+if [ ! -f Makefile ] ; then configure; fi
+make update

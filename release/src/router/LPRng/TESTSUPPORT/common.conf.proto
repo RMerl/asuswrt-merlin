@@ -1,0 +1,20 @@
+#
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1995 Patrick Powell, San Diego State University
+#     papowell@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: TESTSUPPORT/common.conf.proto
+# PURPOSE: include file for lpd.conf
+# common.conf.proto,v 3.1 1996/12/28 21:40:46 papowell Exp
+########################################################################## 
+originate_port 2000 3000
+lpd_port 4000
+#user 0
+#group 0
+send_timeout 10
+logfile _TMP_LPD/logfile
+use_identifier yes

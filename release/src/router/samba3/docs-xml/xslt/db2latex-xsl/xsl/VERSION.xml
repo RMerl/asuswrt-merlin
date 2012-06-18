@@ -1,0 +1,24 @@
+<?xml version='1.0'?>
+<!--############################################################################# 
+ |	$Id: VERSION.xml,v 1.6 2004/01/31 12:47:11 j-devenish Exp $
+ |- #############################################################################
+ |	$Author: j-devenish $
+ |														
+ |   PURPOSE:
+ + ############################################################################## -->
+
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version='1.0'>
+<xsl:variable name="VERSION">0.8pre1</xsl:variable>
+<xsl:variable name="LASTRELEASE">0.7</xsl:variable>
+<xsl:variable name="TAG">
+  <xsl:variable name="RCSTAG" select="substring-before(substring-after('$Name: DB2LATEX_0_8PRE1 $',concat('$','Name: ')),'$')"/>
+  <xsl:choose>
+    <xsl:when test="normalize-space($RCSTAG)=''">HEAD</xsl:when>
+    <xsl:otherwise><xsl:value-of select="$RCSTAG" /></xsl:otherwise>
+  </xsl:choose>
+</xsl:variable>
+<xsl:variable name="CVSVERSION">$Id: VERSION.xml,v 1.6 2004/01/31 12:47:11 j-devenish Exp $</xsl:variable>
+
+
+</xsl:stylesheet>
+

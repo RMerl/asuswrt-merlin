@@ -1,0 +1,274 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Protocol Requests and Replies</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="RFC 1179 - Line Printer Daemon Protocol "
+    href="rfc1179ref.htm">
+    <link rel="PREVIOUS" title=
+    "RFC 1179 - Line Printer Daemon Protocol " href=
+    "rfc1179ref.htm">
+    <link rel="NEXT" title="Job Transfer " href="jobtransfer.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "rfc1179ref.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          19. RFC 1179 - Line Printer Daemon Protocol</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "jobtransfer.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="REMOTESUPPORT">19.2. Protocol
+      Requests and Replies</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">remote_support=</var><span class=
+          "emphasis"><i class="EMPHASIS">Remote operations
+          supported</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>After a connection has been established, a request can be
+      sent to the <b class="APPLICATION">lpd</b> server. The
+      request consists of a single octet indicating the request
+      type, followed by the printer (or print queue) name, followed
+      by a set of options for the request, followed by a LF (line
+      feed) character.</p>
+
+      <div class="TABLE">
+        <a name="RF1179COMMANDS"></a>
+
+        <p><b>Table 19-1. RFC1179 Commands</b></p>
+
+        <table border="1" frame="border" rules="all" class=
+        "CALSTABLE">
+          <col>
+          <col>
+          <col>
+          <col>
+
+          <thead>
+            <tr>
+              <th>NNN</th>
+
+              <th>RFC1179</th>
+
+              <th>Operation</th>
+
+              <th>program</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>1</td>
+
+              <td>yes</td>
+
+              <td>start print</td>
+
+              <td><b class="APPLICATION">lpc</b></td>
+            </tr>
+
+            <tr>
+              <td>2</td>
+
+              <td>yes</td>
+
+              <td>transfer a printer job</td>
+
+              <td><b class="APPLICATION">lpr</b></td>
+            </tr>
+
+            <tr>
+              <td>3</td>
+
+              <td>yes</td>
+
+              <td>print short form of queue status</td>
+
+              <td><b class="APPLICATION">lpr</b></td>
+            </tr>
+
+            <tr>
+              <td>4</td>
+
+              <td>yes</td>
+
+              <td>print long form of queue status</td>
+
+              <td><b class="APPLICATION">lpr</b></td>
+            </tr>
+
+            <tr>
+              <td>5</td>
+
+              <td>yes</td>
+
+              <td>remove jobs</td>
+
+              <td><b class="APPLICATION">lprm</b></td>
+            </tr>
+
+            <tr>
+              <td>6</td>
+
+              <td><b class="APPLICATION">LPRng</b></td>
+
+              <td>do control operation</td>
+
+              <td><b class="APPLICATION">lpc</b></td>
+            </tr>
+
+            <tr>
+              <td>7</td>
+
+              <td><b class="APPLICATION">LPRng</b></td>
+
+              <td>transfer a block format print job</td>
+
+              <td><b class="APPLICATION">lpr</b></td>
+            </tr>
+
+            <tr>
+              <td>8</td>
+
+              <td><b class="APPLICATION">LPRng</b></td>
+
+              <td>secure command transfer</td>
+
+              <td><b class="APPLICATION">lpc</b></td>
+            </tr>
+
+            <tr>
+              <td>9</td>
+
+              <td><b class="APPLICATION">LPRng</b></td>
+
+              <td>verbose status information</td>
+
+              <td><b class="APPLICATION">lpr</b></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>After the request has been sent, then a reply will be
+      returned. In general the reply has the following form:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10059"></a>
+<pre class="SCREEN">
+    \000\n    Success
+    \NNN\n    Failure (NNN is error code)
+    text\n    Text or status information
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>As can be seen, this protocol is extremely simple, but
+      there are a set of problems due to the loosely written
+      language of RFC1179.</p>
+
+      <ol type="1">
+        <li>
+          <p>Firstly, while RFC1179 sets limits on the lengths of
+          commands, it does not strictly set limits on the
+          characters set used in the commands. This can result in
+          problems when trying to print status information, headers
+          on banners, and other details.</p>
+        </li>
+
+        <li>
+          <p>The original RFC1179 protocol did not provide any way
+          to do remote control of queues or <b class=
+          "APPLICATION">lpd</b> servers. This has been added to the
+          protocol. As a side effect, if you try to use <b class=
+          "APPLICATION">lpc</b> to control a non-<b class=
+          "APPLICATION">LPRng</b> printer, it will not work.</p>
+        </li>
+
+        <li>
+          <p>You can specify that a network printer is non-<b
+          class="APPLICATION">LPRng</b> by using the <var class=
+          "LITERAL">remote_support=RQVMC</var> option and specify
+          the operations supported by the printer. The letters R,
+          Q, M, and C stand for <b class="APPLICATION">lpr</b>, <b
+          class="APPLICATION">lpq</b>, <b class=
+          "APPLICATION">lprm</b>, and <b class=
+          "APPLICATION">lpc</b> operations respectively, and
+          indicate that these are supported. If <var class=
+          "LITERAL">remote_support</var> does not allow a
+          particular operation, then the <b class=
+          "APPLICATION">LPRng</b> software will not send a
+          corresponding request to the printer. For example, <var
+          class="LITERAL">remote_support=R</var> would restrict
+          operations to spooling jobs only, and the <b class=
+          "APPLICATION">LPRng</b> software would not query the
+          printer for status.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "rfc1179ref.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "jobtransfer.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">RFC 1179 - Line
+          Printer Daemon Protocol</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "rfc1179ref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Job
+          Transfer</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,47 @@
+The idea of passive OS fingerprint matching exists for quite a long time,
+but was created as extension fo OpenBSD pf only some weeks ago.
+Original idea was lurked in some OpenBSD mailing list (thanks
+grange@open...) and than adopted for Linux netfilter in form of this code.
+
+Original fingerprint table was created by Michal Zalewski <lcamtuf@coredump.cx>.
+
+This module compares some data(WS, MSS, options and it's order, ttl,
+df and others) from first SYN packet (actually from packets with SYN
+bit set) with dynamically loaded OS fingerprints.
+.TP
+.B "--log 1/0" 
+If present, OSF will log determined genres even if they don't match
+desired one.	
+0 - log all determined entries, 
+1 - only first one.
+
+In syslog you find something like this:
+.IP
+ipt_osf: Windows [2000:SP3:Windows XP Pro SP1, 2000 SP3]: 11.22.33.55:4024 -> 11.22.33.44:139
+.IP
+ipt_osf: Unknown: 16384:106:1:48:020405B401010402 44.33.22.11:1239 -> 11.22.33.44:80
+.TP
+.B "--smart"
+if present, OSF will use some smartness to determine remote OS.
+OSF will use initial TTL only if source of connection is in our local network.
+.TP
+.B "--netlink"
+If present, OSF will log all events also through netlink NETLINK_NFLOG groupt 1.
+.TP
+.BI "--genre " "[!] string"
+Match a OS genre by passive fingerprinting
+.P
+Example:
+
+#iptables -I INPUT -j ACCEPT -p tcp -m osf --genre Linux --log 1 --smart
+
+NOTE: -p tcp is obviously required as it is a TCP match.
+
+Fingerprints can be loaded and read through /proc/sys/net/ipv4/osf file.
+One can flush all fingerprints with following command:
+.IP
+echo -en FLUSH > /proc/sys/net/ipv4/osf
+.P
+Only one fingerprint per open/write/close.
+
+Fingerprints can be downloaded from http://www.openbsd.org/cgi-bin/cvsweb/src/etc/pf.os

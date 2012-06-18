@@ -1,0 +1,28 @@
+The new version 1.3 of the jffs filesystem reserves only 1 block of
+flash memory for overhead -- typically 64 KB.  The original version
+reserves 4 blocks -- typically 256 KB.
+
+In the extreme situation where there is only one block of flash, ver
+1.3 can operate with NO reserved space, albeit with the danger of
+corruption if the power fails while a write is taking place.  Due to
+this danger, this "zero reserve" mode is only enabled when there is
+exactly 1 block of flash AND the filesystem is mounted with the
+otherwise unused MS_MANDLOCK option (or "-o mand" on the mount command
+line).
+
+The original jffs code had a handful of bugs, and a couple of design
+flaws.  The bad results from design flaws could be obscured by
+increasing the amount of reserved space, so that's why the original
+code reserved a large amount of flash for overhead.  This didn't fix
+or avoid the flaws, just made them less likely to occur.  The bugs and
+flaws were much more likely to be triggered when the flash is very
+small or when the free space is a very low percentage of the flash size.
+
+The original version could not easily be tested, since it could
+operate only on real flash memory, and therefore testing was slow
+(each block erase takes about one second) and used up the lifetime of
+the flash memory.  This version has the ability to use RAM instead of
+actual flash for testing, so these problems can be side-stepped.  It
+as been tested by creating, deleting, and re-writing several millions
+of files of random sizes, using many different sizes of flash
+filesystems (from 1 block to 10 blocks).

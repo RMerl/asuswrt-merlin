@@ -1,0 +1,27 @@
+From 8a227f31655d4cf1e06ceb62d6805a88516d69d4
+From: Bernhard Reutner-Fischer
+Date: Wed, 03 Feb 2010 19:15:24 +0000
+Subject: __uClibc_main: use __pagesize to protect against recursion
+
+Signed-off-by: Bernhard Reutner-Fischer <rep.dot.nop@gmail.com>
+---
+diff --git a/libc/misc/internals/__uClibc_main.c b/libc/misc/internals/__uClibc_main.c
+index 19acbe0..6e520fa 100644
+--- a/libc/misc/internals/__uClibc_main.c
++++ b/libc/misc/internals/__uClibc_main.c
+@@ -168,11 +168,9 @@ extern void __uClibc_init(void);
+ libc_hidden_proto(__uClibc_init)
+ void __uClibc_init(void)
+ {
+-    static smallint been_there_done_that;
+-
+-    if (been_there_done_that)
++    /* Don't recurse */
++    if (__pagesize)
+ 	return;
+-    been_there_done_that++;
+ 
+     /* Setup an initial value.  This may not be perfect, but is
+      * better than  malloc using __pagesize=0 for atexit, ctors, etc.  */
+--
+cgit v0.8.2.1

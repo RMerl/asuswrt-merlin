@@ -1,0 +1,103 @@
+Change log $Id: CHANGELOG,v 1.1 2008-12-04 12:29:16 michael Exp $
+==========
+Changes to comgt
+================
+Fri Oct. 20th 2006 Paul Hardwick
+    - Scripts distributed with package are now located in scripts sub-directory
+    - Install now copies scripts to /etc/comgt see scripts/README for list of scripts
+    - comgt now implements search priority order for scripts - 1)internal, 2)working directory, 3)/etc/comgt
+    - Added search path for device - /dev/noz2, /dev/ttyUSB2, /dev/modem so -d option is not needed in most cases
+    - Added APN and PIN scripts which use environment variables to set these values - see man page
+
+Wed Aug 16 2006 Paul Hardwick
+    - For copyright reasons Project and Application now called comgt
+    - Adding CVS version control keywords in preparation for initial Sourceforge import
+    - Added -V version command and moved version info into header.
+    - Initial 0.31 Sourceforge tar.
+
+Changes to gcom
+===============
+Tues Jan 03 2006 Paul Hardwick
+    - Updated gcom for GT EDGE support and added many new built-in scripts
+    - Re-wrote the header file to make it easier to maintain
+    - Updated man-pages
+    - Put it under version control since this utility will now be maintained.
+    - http://peck.gotdns.com/svn/gcom
+    
+Mon Jan 24 2005 Martin Gregorie
+   - changed option handler to avoid reporting a NULL option when no
+     arguments were supplied or when an invalid option was given.
+   - changed the help display to fit neatly on a 25 x 80 telnet or
+     ssh screen.
+   - created the man page from dcon and previous gcom documentation.
+   - created the COMPILING, CHANGELOG, MANIFEST and TODO files from
+     pre-existing documentation.
+
+October 2003 Paul Hardwick
+   0 Minor changes to make dcon compile with current gcc without 
+     errors or warnings.
+   1 Added gcom.h which provides "built-in" scripts and a support 
+     routine of specific use to (Option) gsm type modems.
+   2 Modified script loading so that by default every script is 
+     pre-pended with an internal "default" script that opens the 
+     serial port correctly, checks if a PIN is required (prompting 
+     the user if needed) then checks registration status and signal 
+     strength. If you call the other built-in scripts then this 
+     default is not executed.
+   3 Added "-s" option to skip the internal default script. If this 
+     option is used then the user must manually open the serial port 
+     with the right baud rate.
+
+Changes to dcon, all done by Daniel.Chouinard
+---------------
+Wed Jan  1 15:32:04 EST 1997
+   - Made it case independent.
+   - Happy new year!
+   - Indexed labels, major speed improvement.
+
+Mon Dec 30 21:10:46 EST 1996 not distributed
+   - Fixed select() on comfd so that `pppd connect 'dcon script'` works again.
+
+
+Mon Dec 23 16:10:24 EST 1996 not distributed
+ 22 hour session!
+   - Added $right(), $left(), $dirname(), $basename(), $hex(), $hexu(), $oct(),
+     $script(), $tolower(), $toupper(), and verbose() functions.
+   - Added abort, flash, and dump commands.
+   - Fixed #!/usr/local/bin/dcon support.
+   - Fixed re-entrant getstring() bug.
+   - Normalized gettoken() and getstring()
+   - Used getopt() instead of if...else if...else if...
+   - Added 0xffff (hex), 07777 (octal), 0%1111 (binary) notations.
+   - Added [$]a0-z9 variable ranges and managed (Woohee!) to keep it
+     compatible with old syntax.
+   - Only allocate strings as needed.
+   - Much better error reporting and exit code handling.
+   - Pulled a groin muscle while sitting crooked.  Go figure.
+   - Created makescript.
+   - Added automatic xterm call in ppp-ex.scr when in X.
+   - Doc: Contents, syntax, error reporting, added new functions, etc...
+
+Wed Dec 11 18:30:42 EST 1996
+   - Changed my E-mail address in doc.
+   - Added a fix to dogoto() so that the label gets printed in log
+     (less confusing to see if a goto or gosub in test executed or not.)
+   - Had lasagna for supper.
+
+Sometime a while ago before I moved (August 1996, I think)
+   - Ansified code and Makefile, contributed by John Gotts.
+     (You guys out there are such purists!  :)
+
+Sat Jul 20 08:19:13 EDT 1996  V: 0.96
+   - Better error reporting.
+
+Fri Jul 19 22:29:37 EDT 1996
+   - Got a bug report from Glen Thigpen that dcon-0.91 reports "Token too long"
+     errors.  Found that dcon didn't deal with non-terminated last lines
+     properly.  Fixed.
+
+Mon Apr 29 21:38:04 EDT 1996  V: 0.95
+   - Got a bug report from J. Van Koll reporting that the included
+     ppp-ex.scr had two lines that were truncated.  Modified ppp-ex.scr
+
+

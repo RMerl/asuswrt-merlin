@@ -1,0 +1,51 @@
+<samba:parameter name="logon script"
+                 context="G"
+                 advanced="1" developer="1"
+				 type="string"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This parameter specifies the batch file (<filename>.bat</filename>) or NT command file
+	(<filename>.cmd</filename>) to be downloaded and run on a machine when a user successfully logs in.  The file
+	must contain the DOS style CR/LF line endings. Using a DOS-style editor to create the file is recommended.
+	</para>
+		
+	<para>
+	The script must be a relative path to the <smbconfsection name="[netlogon]"/> service.  If the [netlogon]
+	service specifies a <smbconfoption name="path"/> of <filename
+	moreinfo="none">/usr/local/samba/netlogon</filename>, and <smbconfoption name="logon
+	script">STARTUP.BAT</smbconfoption>, then the file that will be downloaded is:
+<programlisting>
+	/usr/local/samba/netlogon/STARTUP.BAT
+</programlisting>
+	</para>
+
+	<para>
+	The contents of the batch file are entirely your choice.  A suggested command would be to add <command
+	moreinfo="none">NET TIME \\SERVER /SET /YES</command>, to force every machine to synchronize clocks with the
+	same time server.  Another use would be to add <command moreinfo="none">NET USE U: \\SERVER\UTILS</command>
+	for commonly used utilities, or 
+<programlisting>
+<userinput>NET USE Q: \\SERVER\ISO9001_QA</userinput>
+</programlisting> 
+	for example.
+	</para>
+
+	<para>
+	Note that it is particularly important not to allow write access to the [netlogon] share, or to grant users
+	write permission on the batch files in a secure environment, as this would allow the batch files to be
+	arbitrarily modified and security to be breached.	
+	</para>
+
+	<para>
+	This option takes the standard substitutions, allowing you to have separate logon scripts for each user or
+	machine.
+	</para>
+
+	<para>
+	This option is only useful if Samba is set up as a logon server.
+	</para>
+</description>
+<value type="default"></value>
+<value type="example">scripts\%U.bat</value>
+</samba:parameter>

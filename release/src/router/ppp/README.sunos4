@@ -1,0 +1,62 @@
+This file describes the installation process for ppp-2.3 on systems
+running SunOS 4.1.x (or the equivalent).
+
+The STREAMS modules in the sunos4 directory provide kernel support for
+PPP on SunOS 4.1.x systems.  They have been tested under SunOS 4.1.3
+on a SparcStation 1+.  They should work under earlier SunOS 4.1.x
+systems, but no guarantees are given.
+
+These modules are designed to be loaded into the running kernel using
+the `modload' command.
+
+
+Installation.
+*************
+
+1. Run the configure script and make the user-level programs and the
+kernel modules.
+
+	./configure
+	make
+
+If you wish to compile using gcc instead of cc, edit the
+sunos4/Makedefs file and uncomment the line saying "CC = gcc".  You
+can also change the C compiler options by editing the COPTS
+definition.
+
+2. Install the pppd, pppstats and chat programs and the loadable
+module object files (you need to be root to do this):
+
+	make install
+
+By default, the programs and the loadable module object files go into
+/usr/local/etc.  Doing `make install' also copies a script called
+ppp.INSTALL into /dev, and makes ppp.LOAD, ppp.UNLOAD, ppp.MKDEV and
+ppp.RMDEV links to it.  You can change the installation directories by
+editing sunos4/Makedefs.
+
+3. Load the ppp modules (you need to be root for this too):
+
+	/dev/ppp.LOAD
+
+You will want to do this in your /etc/rc.local file once you have
+everything installed.  I suggest you put something like the following
+in /etc/rc.local (or /etc/loadable, if you have one):
+
+	if [ -f /dev/ppp.AUTOLOAD ]; then
+		/dev/ppp.LOAD
+	fi
+
+and then create a /dev/ppp.AUTOLOAD file with the command
+
+	touch /dev/ppp.AUTOLOAD
+
+It is not advisable to unload the "if_ppp" module, because it creates
+network interface units, and SunOS does not provide any way to destroy
+network interfaces once created.  If you do unload it, the system will
+probably crash at some later stage.
+
+If you have previously had ppp-2.2 installed, you may have statements
+in your /etc/rc.local to load the ppp module.  You will need to remove
+those.  Having done this, you will need to reboot to remove the old
+ppp module and load the new modules.

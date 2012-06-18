@@ -1,0 +1,101 @@
+<HTML>
+<HEAD>
+<TITLE> Samba meta FAQ: About the CIFS and SMB Protocols</TITLE>
+</HEAD>
+<BODY>
+<A HREF="Samba-meta-FAQ-2.html">Previous</A>
+<A HREF="Samba-meta-FAQ-4.html">Next</A>
+<A HREF="Samba-meta-FAQ.html#toc3">Table of Contents</A>
+<HR>
+<H2><A NAME="s3">3. About the CIFS and SMB Protocols</A></H2>
+
+<P>
+<A NAME="CifsSmb"></A> 
+</P>
+
+<H2><A NAME="ss3.1">3.1 What is the Server Message Block (SMB) Protocol?</A></H2>
+
+<P>SMB is a filesharing protocol that has had several maintainers and
+contributors over the years including Xerox, 3Com and most recently
+Microsoft. Names for this protocol include LAN Manager and Microsoft 
+Networking. Parts of the specification has been made public at several 
+versions including in an X/Open document, as listed at 
+<A HREF="ftp://ftp.microsoft.com/developr/drg/CIFS/">ftp://ftp.microsoft.com/developr/drg/CIFS/</A>. No specification
+releases were made between 1992 and 1996, and during that period
+Microsoft became the SMB implementor with the largest market share.
+Microsoft developed the specification further for its products but for
+various reasons connected with developer's workload rather than market
+strategy did not make the changes public. This culminated with the 
+"Windows NT 0.12" version released with NT 3.5 in 1995 which had significant 
+improvements and bugs. Because Microsoft client systems are so popular,
+it is fair to say that what Microsoft with Windows affects all suppliers
+of SMB server products.</P>
+<P>From 1994 Andrew Tridgell began doing some serious work on his 
+Smbserver (now Samba) product and with some helpers started to 
+implement more and more of these protocols. Samba began to take 
+a significant share of the SMB server market.</P>
+
+
+<H2><A NAME="ss3.2">3.2 What is the Common Internet Filesystem (CIFS)?</A></H2>
+
+<P>The initial pressure for Microsoft to document their current SMB
+implementation came from the Samba team, who kept coming across things
+on the wire that Microsoft either didn't know about or hadn't documented
+anywhere (even in the sourcecode to Windows NT.) Then Sun Microsystems
+came out with their WebNFS initiative, designed to replace FTP for file
+transfers on the Internet. There are many drawbacks to WebNFS (including
+its scope - it aims to replace HTTP as well!) but the concept was
+attractive. FTP is not very clever, and why should it be harder to get
+files from across the world than across the room? </P>
+<P>Some hasty revisions were made and an Internet Draft for the Common
+Internet Filesystem (CIFS) was released. Note that CIFS is not an
+Internet standard and is a very long way from becoming one, BUT the
+protocol specification is in the public domain and ongoing discussions
+concerning the spec take place on a public mailing list according to the
+rules of the Internet Engineering Task Force. For more information and
+pointers see 
+<A HREF="http://samba.org/cifs/">http://samba.org/cifs/</A></P>
+<P>The following is taken from 
+<A HREF="http://www.microsoft.com/intdev/cifs/">http://www.microsoft.com/intdev/cifs/</A></P>
+<P>
+<PRE>
+    CIFS defines a standard remote file system access protocol for use
+    over the Internet, enabling groups of users to work together and
+    share documents across the Internet or within their corporate
+    intranets. CIFS is an open, cross-platform technology based on the
+    native file-sharing protocols built into Microsoft® Windows® and
+    other popular PC operating systems, and supported on dozens of
+    other platforms, including UNIX®. With CIFS, millions of computer
+    users can open and share remote files on the Internet without having
+    to install new software or change the way they work.&quot;
+</PRE>
+</P>
+<P>If you consider CIFS as a backwardsly-compatible refinement of SMB that
+will work reasonably efficiently over the Internet you won't be too far
+wrong.</P>
+<P>The net effect is that Microsoft is now documenting large parts of their
+Windows NT fileserver protocols. The security concepts embodied in
+Windows NT are part of the specification, which is why Samba
+documentation often talks in terms of Windows NT. However there is no
+reason why a site shouldn't conduct all its file and printer sharing
+with CIFS and yet have no Microsoft products at all.</P>
+
+
+<H2><A NAME="ss3.3">3.3 What is Browsing? </A></H2>
+
+<P>The term "Browsing" causes a lot of confusion. It is the part of the
+SMB/CIFS protocol which allows for resource discovery. For example, in
+the Windows NT Explorer it is possible to see a "Network Neighbourhood"
+of computers in the same SMB workgroup. Clicking on the name of one of 
+these machines brings up a list of file and printer resources for
+connecting to. In this way you can cruise the network, seeing what
+things are available. How this scales to the Internet is a subject for
+debate. Look at the CIFS list archives to see what the experts think.</P>
+
+
+<HR>
+<A HREF="Samba-meta-FAQ-2.html">Previous</A>
+<A HREF="Samba-meta-FAQ-4.html">Next</A>
+<A HREF="Samba-meta-FAQ.html#toc3">Table of Contents</A>
+</BODY>
+</HTML>

@@ -1,0 +1,112 @@
+﻿/* CSS Document */
+.upnp_bottom{;border-bottom : 1px dotted #6699cc; text-align:left; height:5px;}
+.upnp{font-family :Verdana;font-size : 12px;line-height : 160%;text-align:left; height:30px;}
+.upnpdesp{
+	font-family:Verdana;
+	font-size:11px;
+	line-height:150%;
+	}
+	
+.qosbar {
+	color: #333333;
+	height:19px;
+	font-family: Arial, Verdana, Helvetica, sans-serif;
+	font-size: 11px;
+	line-height:19px;
+	float:left;	
+	display:none;
+}
+
+#game {background-image:url(images/band-color1.gif);}
+#internet {background-image:url(images/band-color2.gif);}
+#aidisk {background-image:url(images/band-color3.gif);}
+#streaming {background-image:url(images/band-color4.gif);}
+#p2p {
+	font-size:11px;
+	color: #333333;
+	height:19px;
+	line-height:19px;
+	font-family: Arial, Verdana, Helvetica, sans-serif;
+	float:left;
+}
+
+#qospipe {
+	width:410px;
+	height:19px;
+	background-color:#7aa3bd;
+	margin:10px auto 10px auto;
+	font-family:Verdana;
+	color:#FFF;
+	font-size:10px;
+	line-height:19px;
+	padding:1px;
+	border:2px inset #CCC;	
+}
+
+.qosbutton1 { background: url(images/band-1.gif) no-repeat center; width:100px; height:90px;}
+.qosbutton1:hover{ background: url(images/band-1r.gif) no-repeat center; cursor:pointer;}
+.qosbutton2 { background: url(images/band-2.gif) no-repeat center;}
+.qosbutton2:hover{ background: url(images/band-2r.gif) no-repeat center; cursor:pointer;}
+.qosbutton3 { background: url(images/band-3.gif) no-repeat center;}
+.qosbutton3:hover{ background: url(images/band-3r.gif) no-repeat center; cursor:pointer;}
+.qosbutton4 { background: url(images/band-4.gif) no-repeat center;}
+.qosbutton4:hover{ background: url(images/band-4r.gif) no-repeat center; cursor:pointer;}	
+
+#qosbox a span{ display:none}
+#qosbox a:hover span{ display:block; font-size:11px; font-family:Verdana, Arial, Helvetica, sans-serif;}
+.band{font-family :Verdana;font-size : 11px;line-height : 160%;text-align:center;}
+.bandtext{ width:400px; height:50px; font-family :Verdana; font-size:13px; color:#4e73a1; font-weight:bold; text-align:center; line-height:50px; background-image:url(images/band-arrow.gif);}
+
+.apply1 {width:105px; font-family:Verdana; font-size:11px; text-align:center;}
+.apply1 a {height:16px; text-decoration:none;}
+.apply1 a:link, .apply1 a:visited {
+	color:#002157; display:block; background:url(images/button-next.gif);
+	padding-left:5px; padding-top:5px; padding-bottom:10px;}
+.apply1 a:hover, .apply1 a:active {color:#ffffff; background:url(images/button-next.gif) 0 -31px;}
+
+.apply1 {width:105px; font-family:Verdana; font-size:11px; text-align:center;}
+.apply1 a {height:16px; text-decoration:none;}
+.apply1 a:link, .apply1 a:visited {
+	color:#002157; display:block; background:url(images/button-next.gif);
+	padding-left:5px; padding-top:5px; padding-bottom:10px;}
+.apply1 a:hover, .apply1 a:active {color:#ffffff; background:url(images/button-next.gif) 0 -31px;}
+
+
+#Senario{
+	width:686px;
+	height:132px;
+	background-repeat: no-repeat;
+}
+
+#Senario span{
+	height:18px;
+	background-color:#FFF;
+	font-size:12px;
+	font-family: Arial, Verdana;
+	font-weight:bold;
+	-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)"; /*IE8*/
+	filter:alpha(opacity=80);  /*IE5¡BIE5.5¡BIE6¡BIE7*/
+	opacity: .8;  /*Opera9.0+¡BFirefox1.5+¡BSafari¡BChrome*/	
+	position:absolute;
+	border:1px solid #999;
+	padding:0px 5px 0px 5px;
+	line-height:18px;
+	z-index:98;
+}
+
+#switch_hint{
+	margin:167px 0px 0px 143px;
+	background:url(images/switch_hint.gif) 0 0 no-repeat;
+	position:absolute;
+	z-index:97;
+	width:200px;
+	height:215px;
+}
+#mode_btn{
+	margin:297px 0px 0px 223px;
+	background:url(images/mode_btn.gif) 0 0 no-repeat;
+	position:absolute;
+	z-index:98;
+	width:19px;
+	height:18px;
+}

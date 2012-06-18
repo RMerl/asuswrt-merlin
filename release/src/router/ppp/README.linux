@@ -1,0 +1,297 @@
+		PPP for Linux
+		-------------
+
+		Paul Mackerras
+		8 March 2001
+
+		for ppp-2.4.1
+
+1. Introduction
+---------------
+
+The Linux PPP implementation includes both kernel and user-level
+parts.  This package contains the user-level part, which consists of
+the PPP daemon (pppd) and associated utilities.  In the past this
+package has contained updated kernel drivers.  This is no longer
+necessary, as the current 2.2 and 2.4 kernel sources contain
+up-to-date drivers.
+
+The Linux PPP implementation is capable of being used both for
+initiating PPP connections (as a `client') or for handling incoming
+PPP connections (as a `server').  Note that this is an operational
+distinction, based on how the connection is created, rather than a
+distinction that is made in the PPP protocols themselves.
+
+Mostly this package is used for PPP connections over modems connected
+via asynchronous serial ports, so this guide concentrates on this
+situation.
+
+The PPP protocol consists of two parts.  One is a scheme for framing
+and encoding packets, the other is a series of protocols called LCP,
+IPCP, PAP and CHAP, for negotiating link options and for
+authentication.  This package similarly consists of two parts: a
+kernel module which handles PPP's low-level framing protocol, and a
+user-level program called pppd which implements PPP's negotiation
+protocols.
+
+The kernel module assembles/disassembles PPP frames, handles error
+detection, and forwards packets between the serial port and either the
+kernel network code or the user-level program pppd.  IP packets go
+directly to the kernel network code.  So once pppd has negotiated the
+link, it in practice lies completely dormant until you want to take
+the link down, when it negotiates a graceful disconnect.
+
+
+2. Installation
+---------------
+
+2.1 Kernel driver
+
+Assuming you are running a recent 2.2 or 2.4 (or later) series kernel,
+the kernel source code will contain an up-to-date kernel PPP driver.
+If the PPP driver was included in your kernel configuration when your
+kernel was built, then you only need to install the user-level
+programs.  Otherwise you will need to get the source tree for your
+kernel version, configure it with PPP included, and recompile.  Most
+Linux distribution vendors ship kernels with PPP included in the
+configuration.
+
+The PPP driver can be either compiled into the kernel or compiled as a
+kernel module.  If it is compiled into the kernel, the PPP driver is
+included in the kernel image which is loaded at boot time.  If it is
+compiled as a module, the PPP driver is present in one or more files
+under /lib/modules and is loaded into the kernel when needed.
+
+The 2.2 series kernels contain an older version of the kernel PPP
+driver, one which doesn't support multilink.  If you want multilink,
+you need to run the latest 2.4 series kernel.  The kernel PPP driver
+was completely rewritten for the 2.4 series kernels to support
+multilink and to allow it to operate over diverse kinds of
+communication medium (the 2.2 driver only operates over serial ports
+and devices which look like serial ports, such as pseudo-ttys).
+
+Under the 2.2 kernels, if PPP is compiled as a module, the PPP driver
+modules should be present in the /lib/modules/`uname -r`/net directory
+(where `uname -r` represents the kernel version number).  The PPP
+driver module itself is called ppp.o, and there will usually be
+compression modules there, ppp_deflate.o and bsd_comp.o, as well as
+slhc.o, which handles TCP/IP header compression.  If the PPP driver is
+compiled into the kernel, the compression code will still be compiled
+as modules, for kernels before 2.2.17pre12.  For 2.2.17pre12 and later,
+if the PPP driver is compiled in, the compression code will also.
+
+Under the 2.4 kernels, there are two PPP modules, ppp_generic.o and
+ppp_async.o, plus the compression modules (ppp_deflate.o, bsd_comp.o
+and slhc.o).  If the PPP generic driver is compiled into the kernel,
+the other four can then be present either as modules or compiled into
+the kernel.  There is a sixth module, ppp_synctty.o, which is used for
+synchronous tty devices such as high-speed WAN adaptors.
+
+
+2.2 User-level programs
+
+If you obtained this package in .rpm or .deb format, you simply follow
+the usual procedure for installing the package.
+
+If you are using the .tar.gz form of this package, then cd into the
+ppp-2.4.1b1 directory you obtained by unpacking the archive and issue
+the following commands:
+
+$ ./configure
+$ make
+# make install
+
+The `make install' has to be done as root.  This makes and installs
+four programs and their man pages: pppd, chat, pppstats and pppdump.
+If the /etc/ppp configuration directory doesn't exist, the `make
+install' step will create it and install some default configuration
+files.
+
+
+2.3 System setup for 2.4 kernels
+
+Under the 2.4 series kernels, pppd needs to be able to open /dev/ppp,
+character device (108,0).  If you are using devfs (the device
+filesystem), the /dev/ppp node will automagically appear when the
+ppp_generic module is loaded, or at startup if ppp_generic is compiled
+in.
+
+If you have ppp_generic as a module, and you are using devfsd (the
+devfs daemon), you will need to add a line like this to your
+/etc/devfsd.conf:
+
+LOOKUP		ppp		MODLOAD
+
+Otherwise you will need to create a /dev/ppp device node with the
+commands:
+
+# mknod /dev/ppp c 108 0
+# chmod 600 /dev/ppp
+
+If you use module autoloading and have PPP as a module, you will need
+to add the following to your /etc/modules.conf or /etc/conf.modules:
+
+alias /dev/ppp		ppp_generic
+alias char-major-108	ppp_generic
+alias tty-ldisc-3	ppp_async
+alias tty-ldisc-14	ppp_synctty
+alias ppp-compress-21	bsd_comp
+alias ppp-compress-24	ppp_deflate
+alias ppp-compress-26	ppp_deflate
+
+
+2.4 System setup under 2.2 series kernels
+
+Under the 2.2 series kernels, you should add the following to your
+/etc/modules.conf or /etc/conf.modules:
+
+alias tty-ldisc-3	ppp
+alias ppp-compress-21	bsd_comp
+alias ppp-compress-24	ppp_deflate
+alias ppp-compress-26	ppp_deflate
+
+
+3. Getting help with problems
+-----------------------------
+
+If you have problems with your PPP setup, or you just want to ask some
+questions, or better yet if you can help others with their PPP
+questions, then you should join the linux-ppp mailing list.  Send an
+email to majordomo@vger.kernel.org with a line in the body saying
+
+subscribe linux-ppp
+
+To leave the mailing list, send an email to majordomo@vger.kernel.org
+with a line in the body saying
+
+unsubscribe linux-ppp
+
+To send a message to the list, email it to linux-ppp@vger.kernel.org.
+You don't have to be subscribed to send messages to the list.
+
+You can also email me (paulus@linuxcare.com.au) but I am overloaded
+with email and I can't respond to most messages I get in a timely
+fashion.
+
+There are also several relevant news groups, such as comp.protocols.ppp,
+comp.os.linux.networking, or comp.os.linux.setup.
+
+
+4. Configuring your dial-out PPP connections
+--------------------------------------------
+
+Some Linux distribution makers include tools in their distributions
+for setting up PPP connections.  For example, for Red Hat Linux and
+derivatives, you should probably use linuxconf or netcfg to set up
+your PPP connections.
+
+The two main windowing environments for Linux, KDE and Gnome, both
+come with GUI utilities for configuring and controlling PPP dial-out
+connections.  They are convenient and relatively easy to configure.
+
+A third alternative is to use a PPP front-end package such as wvdial
+or ezppp.  These also will handle most of the details of talking to
+the modem and setting up the PPP connection for you.
+
+Assuming that you don't want to use any of these tools, you want to
+set up the configuration manually yourself, then read on.  This
+document gives a brief description and example.  More details can be
+found by reading the pppd and chat man pages and the PPP-HOWTO.
+
+We assume that you have a modem that uses the Hayes-compatible AT
+command set connected to an async serial port (e.g. /dev/ttyS0) and
+that you are dialling out to an ISP.  
+
+The trickiest and most variable part of setting up a dial-out PPP
+connection is the part which involves getting the modem to dial and
+then invoking PPP service at the far end.  Generally, once both ends
+are talking PPP the rest is relatively straightforward.
+
+Now in fact pppd doesn't know anything about how to get modems to dial
+or what you have to say to the system at the far end to get it to talk
+PPP.  That's handled by an external program such as chat, specified
+with the connect option to pppd.  Chat takes a series of strings to
+expect from the modem interleaved with a series of strings to send to
+the modem.  See the chat man page for more information.  Here is a
+simple example for connecting to an ISP, assuming that the ISP's
+system starts talking PPP as soon as it answers the phone:
+
+pppd connect 'chat -v "" AT OK ATDT5551212 ~' \
+	/dev/ttyS0 57600 crtscts debug defaultroute
+
+Going through pppd's options in order:
+    connect 'chat ...'  This gives a command to run to contact the
+    PPP server.  Here the supplied 'chat' program is used to dial a
+    remote computer.  The whole command is enclosed in single quotes
+    because pppd expects a one-word argument for the 'connect' option.
+    The options to 'chat' itself are:
+
+         -v            verbose mode; log what we do to syslog
+         ""            don't wait for any prompt, but instead...
+	 AT	       send the string "AT"
+	 OK	       expect the response "OK", then
+         ATDT5551212   dial the modem, then
+         ~             wait for a ~ character, indicating the start
+		       of a PPP frame from the server
+
+    /dev/ttyS0	       specifies which serial port the modem is connected to
+    57600	       specifies the baud rate to use
+    crtscts	       use hardware flow control using the RTS & CTS signals
+    debug	       log the PPP negotiation with syslog
+    defaultroute       add default network route via the PPP link
+
+Pppd will write error messages and debugging logs to the syslogd
+daemon using the facility name "daemon".  These messages may already
+be logged to the console or to a file like /var/log/messages; consult
+your /etc/syslog.conf file to see.  If you want to make all pppd
+messages go to a file such as /var/log/ppp-debug, add the line
+
+daemon.*					/var/log/ppp-debug
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+           This is one or more tabs. Do not use spaces.
+
+to syslog.conf; make sure to put one or more TAB characters (not
+spaces!) between the two fields.  Then you need to create an empty
+/var/log/ppp-debug file with a command such as
+
+	touch /var/log/ppp-debug
+
+and then restart syslogd, usually by sending it a SIGHUP signal with a
+command like this:
+
+	killall -HUP syslogd
+
+
+4.1 Is the link up?
+
+The main way to tell if your PPP link is up and operational is the
+ifconfig ("interface configuration") command.  Type
+
+	/sbin/ifconfig
+
+at a shell prompt.  It should print a list of interfaces including one
+like this example:
+
+ppp0      Link encap Point-to-Point Protocol
+          inet addr 192.76.32.3  P-t-P 129.67.1.165  Mask 255.255.255.0
+          UP POINTOPOINT RUNNING  MTU 1500  Metric 1
+          RX packets 33 errors 0 dropped 0 overrun 0
+          TX packets 42 errors 0 dropped 0 overrun 0
+
+Assuming that ifconfig shows the ppp network interface, you can test
+the link using the ping command like this:
+
+	/sbin/ping -c 3 129.67.1.165
+
+where the address you give is the address shown as the P-t-P address
+in the ifconfig output.  If the link is operating correctly, you
+should see output like this:
+
+  PING 129.67.1.165 (129.67.1.165): 56 data bytes
+  64 bytes from 129.67.1.165: icmp_seq=0 ttl=255 time=268 ms
+  64 bytes from 129.67.1.165: icmp_seq=1 ttl=255 time=247 ms
+  64 bytes from 129.67.1.165: icmp_seq=2 ttl=255 time=266 ms
+  --- 129.67.1.165 ping statistics ---
+  3 packets transmitted, 3 packets received, 0% packet loss
+  round-trip min/avg/max = 247/260/268 ms
+

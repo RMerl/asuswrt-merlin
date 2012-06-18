@@ -1,0 +1,12 @@
+#!/bin/sh
+# Copyright (C) John H Terpstra 1998
+#
+RPMDIR=`rpm --showrc | awk '/^rpmdir/ { print $3}'`
+SPECDIR=`rpm --showrc | awk '/^specdir/ { print $3}'`
+SRCDIR=`rpm --showrc | awk '/^sourcedir/ { print $3}'`
+USERID=`id -u`
+GRPID=`id -g`
+
+( cd ../../.. ; chown -R ${USERID}.${GRPID} ${SRCDIR}/samba-PVERSION )
+( cd ../../.. ; tar czvf ${SRCDIR}/samba-PVERSION.tar.gz samba-PVERSION )
+rpm -ba -v samba.spec

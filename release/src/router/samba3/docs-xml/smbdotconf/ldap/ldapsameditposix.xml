@@ -1,0 +1,93 @@
+<samba:parameter name="ldapsam:editposix"
+	context="G"
+	type="string"
+		 advanced="1" developer="0"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+	<para>
+	Editposix is an option that leverages ldapsam:trusted to make it simpler to manage a domain controller
+	eliminating the need to set up custom scripts to add and manage the posix users and groups. This option
+	will instead directly manipulate the ldap tree to create, remove and modify user and group entries.
+	This option also requires a running winbindd as it is used to allocate new uids/gids on user/group
+	creation. The allocation range must be therefore configured.
+	</para>
+
+	<para>
+	To use this option, a basic ldap tree must be provided and the ldap suffix parameters must be properly
+	configured. On virgin servers the default users and groups (Administrator, Guest, Domain Users,
+	Domain Admins, Domain Guests) can be precreated with the command <command moreinfo="none">net sam
+	provision</command>. To run this command the ldap server must be running, Winindd must be running and
+	the smb.conf ldap options must be properly configured.
+
+	The typical ldap setup used with the <smbconfoption name="ldapsam:trusted">yes</smbconfoption> option
+	is usually sufficient to use <smbconfoption name="ldapsam:editposix">yes</smbconfoption> as well.
+	</para>
+
+	<para>
+	An example configuration can be the following:
+
+	<programlisting>
+	encrypt passwords = true
+	passdb backend = ldapsam
+
+	ldapsam:trusted=yes
+	ldapsam:editposix=yes
+
+	ldap admin dn = cn=admin,dc=samba,dc=org
+	ldap delete dn = yes
+	ldap group suffix = ou=groups
+	ldap idmap suffix = ou=idmap
+	ldap machine suffix = ou=computers
+	ldap user suffix = ou=users
+	ldap suffix = dc=samba,dc=org
+
+	idmap backend = ldap:"ldap://localhost"
+
+	idmap uid = 5000-50000
+	idmap gid = 5000-50000
+	</programlisting>
+
+	This configuration assume the ldap server have been loaded with a base tree like described
+	in the following ldif:
+
+	<programlisting>
+	dn: dc=samba,dc=org
+	objectClass: top
+	objectClass: dcObject
+	objectClass: organization
+	o: samba.org
+	dc: samba
+
+	dn: cn=admin,dc=samba,dc=org
+	objectClass: simpleSecurityObject
+	objectClass: organizationalRole
+	cn: admin
+	description: LDAP administrator
+	userPassword: secret
+
+	dn: ou=users,dc=samba,dc=org
+	objectClass: top
+	objectClass: organizationalUnit
+	ou: users
+
+	dn: ou=groups,dc=samba,dc=org
+	objectClass: top
+	objectClass: organizationalUnit
+	ou: groups
+
+	dn: ou=idmap,dc=samba,dc=org
+	objectClass: top
+	objectClass: organizationalUnit
+	ou: idmap
+
+	dn: ou=computers,dc=samba,dc=org
+	objectClass: top
+	objectClass: organizationalUnit
+	ou: computers
+	</programlisting>
+	</para>
+
+</description>
+<value type="default">no</value>
+</samba:parameter>

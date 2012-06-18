@@ -1,0 +1,7 @@
+-O2
+-fomit-frame-pointer
+-Wall
+-Wcast-align
+-Wcast-qual
+-Wwrite-strings
+-Wno-uninitialized

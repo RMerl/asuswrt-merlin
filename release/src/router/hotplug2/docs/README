@@ -1,0 +1,41 @@
+
+  Introduction
+
+The following readme are cuts from the linux-hotplug-devel mailing list announcement.
+http://marc.theaimsgroup.com/?l=linux-hotplug-devel&m=115720744227751&w=2
+
+--
+Hotplug2 is aimed at early Linux user space, that is, initramfs or initrd,
+possibly also at embedded devices (such as WRT-like routers) or very weak
+machines, such as 386/486 (some still use them as workstations).
+
+Hotplug2 connects to the uevent netlink socket and read events. The
+application generally operates in two modes, dumb and smart.
+
+In dumb mode, when event arrives, we generally only check if it has MODALIAS
+set; if yes, we spawn modprobe and carry on.
+
+In smart mode, simple form of rules are applied. Those rules allow matching of
+the variables obtained by the uevent socket and allows execution of
+applications, with those variables set as their environmental variables.
+Further documentation of rules syntax is available at the homepage of the
+project.
+
+Hotplug2 supports cold plugging simply by calling the 'udevtrigger' binary
+internally. As udevtrigger is fairly independent on the rest of udev, it can be
+easily embedded along with Hotplug2. Given that Hotplug2 is in it's infancy,
+this can be considered a minor detail and replaced some time later.
+
+The advantages over udev are, as I believe:
+ * Faster (way faster!) processing of events, because far less actions are
+performed. 
+ * The size is (obviously) also way smaller, which is a generic advantage;)
+
+The disadvantages would be:
+ * Far less actions are performed and far less actions _can_ be performed.
+ 
+Therefore, as said earlier, Hotplug2 definitely is not aimed as replacement
+for udev on desktop, with the exception of initramfs / initrd.
+---
+
+To enable debugging, compile with -DDEBUG.

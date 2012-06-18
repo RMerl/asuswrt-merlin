@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<refentry id="ldbmodify.1">
+
+<refmeta>
+	<refentrytitle>ldbmodify</refentrytitle>
+	<manvolnum>1</manvolnum>
+</refmeta>
+
+
+<refnamediv>
+	<refname>ldbmodify</refname>
+	<refpurpose>Modify records in a LDB database</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>ldbmodify</command>
+		<arg choice="opt">-H LDB-URL</arg>
+		<arg choice="opt">ldif-file</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>
+		ldbmodify changes, adds and deletes records in a LDB database. 
+		The changes that should be made to the LDB database are read from 
+		the specified LDIF-file. If - is specified as the filename, input is read from stdin.
+	</para>
+
+	<para>For now, see ldapmodify(1) for details on the LDIF file format.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+			<term>-H &lt;ldb-url&gt;</term>
+			<listitem><para>
+				LDB URL to connect to. See ldb(7) for details.
+			</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>ENVIRONMENT</title>
+
+	<variablelist>
+		<varlistentry><term>LDB_URL</term>
+			<listitem><para>LDB URL to connect to (can be overrided by using the 
+					-H command-line option.)</para></listitem>
+		</varlistentry>
+	</variablelist>
+	
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 4.0 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+
+	<para>ldb(7), ldbedit</para>
+
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para> ldb was written by 
+		 <ulink url="http://samba.org/~tridge/">Andrew Tridgell</ulink>.
+	</para>
+
+	<para>
+If you wish to report a problem or make a suggestion then please see
+the <ulink url="http://ldb.samba.org/"/> web site for
+current contact and maintainer information.
+	</para>
+
+	<para>This manpage was written by Jelmer Vernooij.</para>
+	
+</refsect1>
+
+</refentry>

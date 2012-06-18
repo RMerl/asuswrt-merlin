@@ -1,0 +1,95 @@
+Copyright (C) 1997-1998 - Samba-Team
+
+The Samba package you have just unpacked contains the following:
+
+Directory	Notes:
+=========	======
+
+docs		(Samba Documentation):
+----		----------------------
+
+	The Samba documentation for the 2.0 release has had all the man pages
+	converted to YODL source format. Because of this the man pages
+	are now available in both traditional man page format (in
+	the doc/manpages directory) and in HTML format (in the 
+	docs/htmldocs directory).
+
+	The text documentation files have been moved into a
+	docs/textdocs directory and are in the (slow) process
+	of being converted to YODL source format to allow them
+	to be easily converted to HTML/SGML.
+    
+	Note in particular two files - docs/textdocs/<your OS>_INSTALL.txt 
+	and docs/textdocs/DIAGNOSIS.txt.
+
+	There is the potential for there to be many *INSTALL.txt files, one
+	for each OS that Samba supports. However we are moving all this into
+	the new structure. For now, most people will be using UNIX_INSTALL.txt.
+
+	Please pay close attention to all the files with a .txt extension
+	in the docs/textdocs directory. Most problems can be solved by reference
+	to the two files mentioned.
+
+	The FAQ documentation can be accessed starting from Samba-meta-FAQ.html,
+	in the docs/faq directory. This is incomplete, but to quote from the 
+	abstract, it:
+	
+	"contains overview information for the Samba suite of programs, 
+	a quick-start guide, and pointers to all other Samba documentation. 
+	Other FAQs exist for specific client and server issues, and HOWTO 
+	documents for more extended topics to do with Samba software."
+
+
+examples	(Example configuration files):
+--------	------------------------------
+
+	Please pay close attention to the reference smb.conf file
+	smb.conf.default that has now been included as the master guide.
+
+	Do read the smb.conf manual page in considering what settings are
+	appropriate for your site.
+
+
+packaging	(Only for those wishing to build binary distributions):
+---------	-------------------------------------------------------
+
+	Currently support is included for the following Linux Distributions :
+	
+		Pacfic HiTech, RedHat and SuSE.
+
+	In addition, packaging support is available for SGI and Solaris systems.
+	We hope that other Unix OS vendors will contribute their binary
+	distribution packaging control files - and we hope to make their binary
+	packages available on the master ftp site under:
+
+		ftp://samba.org/pub/samba/Binary_Packages/"OS_Vendor"
+
+
+source		(The official Samba source files - expect more of these!):
+------		----------------------------------------------------------
+
+	To build your own binary files you will need a suitable ansi C
+	compiler.
+
+	For Samba 2.0 the GNU autoconf system has been adopted. In
+	order to build a default Samba for your platform cd into
+	the source/ directory and then type :
+
+		./configure
+
+	followed by :
+
+		make
+
+	To install the binaries built by the above type :
+
+		make install
+ 
+	then set up your configuration files.
+
+	NOTE: OS Vendors who provide Samba binary packages will generally
+	integrate all Samba files into their preferred directory locations.
+	These may differ from the default location ALWAYS used by the Samba
+	sources. Please be careful when upgrading a vendor provided binary
+	distribution from files you have built yourself.
+

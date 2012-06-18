@@ -1,0 +1,6 @@
+*.orig
+*.diff
+*~
+*.o
+*.depend
+rc

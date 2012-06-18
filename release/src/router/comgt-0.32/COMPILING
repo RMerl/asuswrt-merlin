@@ -1,0 +1,33 @@
+Building comgt
+=============
+Switch to the directory where files from comgt.xxxx.tgz were unpacked. Run:
+
+	make all
+
+You can run comgt immediately if your datacard is plugged in and you have the appropriate permissions to access the device.
+
+To install comgt, sigmon and their documentation, become root,
+make sure you're in the directory where comgt was compiled and run:
+
+	make install
+
+This will install comgt and sigmon in /usr/local/bin and their manpages 
+in /usr/local/man/man1. If this doesn't match your installation or you 
+want to install the executables and manpages somewhere else, simply 
+edit the EXE and MAN macro definitions on lines 3 and 4 of Makefile.
+
+To remove the executables and manpages, become root, make sure you're 
+in the directory where comgt was compiled and run:
+
+	make uninstall
+
+To tidy to after installing comgt, make sure you're logged in as the
+user who compiled comgt and in the directory where comgt was compiled.
+Then run:
+
+	make clean
+
+The example scripts included in the distribution are left in the
+build directory.
+ 
+$Id: COMPILING,v 1.1 2008-12-04 12:29:16 michael Exp $

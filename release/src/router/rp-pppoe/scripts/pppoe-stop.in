@@ -1,0 +1,96 @@
+#!/bin/sh
+# @configure_input@
+#***********************************************************************
+#
+# pppoe-stop
+#
+# Shell script to bring down a PPPoE connection
+#
+# Copyright (C) 2000 Roaring Penguin Software Inc.
+#
+# $Id$
+#
+# This file may be distributed under the terms of the GNU General
+# Public License.
+#
+# LIC: GPL
+#
+# Usage: pppoe-stop [config_file]
+# If config_file is omitted, defaults to /etc/ppp/pppoe.conf
+#
+#***********************************************************************
+
+# Set to "C" locale so we can parse messages from commands
+LANG=C
+export LANG
+
+ME="`basename $0`"
+LOGGER="/usr/bin/logger -t $ME"
+CONFIG="$1"
+if [ "$CONFIG" = "" ] ; then
+    CONFIG=/etc/ppp/pppoe.conf
+fi
+
+if [ ! -f "$CONFIG" -o ! -r "$CONFIG" ] ; then
+    echo "$ME: Cannot read configuration file '$CONFIG'" >& 2
+    exit 1
+fi
+export CONFIG
+. $CONFIG
+
+PPPOE_PIDFILE="$PIDFILE.pppoe"
+PPPD_PIDFILE="$PIDFILE.pppd"
+STARTPID="$PIDFILE.start"
+
+# Backward config file compatibility
+if test "$DEMAND" = "" ; then
+	DEMAND=no
+fi
+
+# Ignore SIGTERM
+trap "" 15
+
+# Check for pidfile
+if [ -r "$PIDFILE" ] ; then
+    PID=`cat $PIDFILE`
+
+    # Check if still running
+    kill -0 $PID > /dev/null 2>&1
+    if [ $? != 0 ] ; then
+	echo "$ME: The pppoe-connect script (PID $PID) appears to have died" >& 2
+    fi
+
+    # Kill pppd, which should in turn kill pppoe
+    if [ -r "$PPPD_PIDFILE" ] ; then
+	PPPD_PID=`cat "$PPPD_PIDFILE"`
+	$LOGGER -p daemon.notice "Killing pppd"
+	echo "Killing pppd ($PPPD_PID)"
+	kill $PPPD_PID > /dev/null 2>&1 || exit 1
+    fi
+
+    # Kill pppoe-start
+    PIDS=`cat $STARTPID`
+    kill -0 $PIDS > /dev/null 2>&1
+    if [ $? = 0 ] ; then
+	$LOGGER -p daemon.notice "Killing pppoe-connect"
+	kill $PIDS > /dev/null 2>&1
+    fi
+
+    # Kill pppoe-connect
+    $LOGGER -p daemon.notice "Killing pppoe-connect"
+    echo "Killing pppoe-connect ($PID)"
+    kill -9 $PID > /dev/null 2>&1
+
+    # Kill pppd again, in case it's still hanging around
+    if [ -r "$PPPD_PIDFILE" ] ; then
+	PPPD_PID=`cat "$PPPD_PIDFILE"`
+	kill -9 $PPPD_PID > /dev/null 2>&1 || exit 1
+    fi
+
+    rm -f "$PIDFILE" "$PPPD_PIDFILE" "$PPPOE_PIDFILE" "$STARTPID"
+else
+    echo "$ME: No PPPoE connection appears to be running" >&2
+    exit 1
+fi
+
+exit 0

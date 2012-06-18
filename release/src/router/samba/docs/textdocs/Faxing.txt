@@ -1,0 +1,222 @@
+!==
+!== Faxing.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:    Gerhard Zuber <zuber@berlin.snafu.de>
+Date:			August 5th 1997.
+Status:			Current
+
+Subject:        F A X I N G   with  S A M B A
+==========================================================================
+
+This text describes how to turn your SAMBA-server into a fax-server
+for any environment, especially for Windows.
+   Author: Gerhard Zuber <zuber@berlin.snafu.de>
+   Version: 1.4
+   Date: 04. Aug. 1997
+
+Requirements:
+   UNIX box (Linux preferred) with SAMBA and a faxmodem
+   ghostscript package
+   mgetty+sendfax package
+   pbm package (portable bitmap tools)
+
+FTP sites:
+   sunsite.unc.edu:/pub/Linux/system/Serial/mgetty+sendfax*
+   tsx-11.mit.edu:/pub/linux/sources/sbin/mgetty+sendfax
+   ftp.leo.org:/pub/comp/networking/communication/modem/mgetty/mgetty1.1.6-May05.tar.gz
+
+   pbm10dec91.tgz
+   ftp.leo.org:/pub/comp/networking/communication/modem/mgetty/pbm10dec91.tgz
+   sunsite.unc.edu: ..../apps/graphics/convert/pbmplus-10dec91-bin.tar.gz
+   ftp.gwdg.de/pub/linux/grafik/pbmplus.src.tar.Z (this is 10dec91 source)
+                 or ???   pbm10dec91.tgz pbmplus10dec91.tgz
+
+
+making mgetty+sendfax running:
+==============================
+
+   go to source tree: /usr/src/mgetty+sendfax
+   cp policy.h-dist policy.h
+
+   change your settings: valid tty ports, modem initstring, Station-Id
+
+#define MODEM_INIT_STRING       "AT &F S0=0 &D3 &K3 &C1\\\\N2"
+
+#define FAX_STATION_ID  "49 30 12345678"
+
+#define FAX_MODEM_TTYS  "ttyS1:ttyS2:ttyS3"
+
+   Modem initstring is for rockwell based modems
+   if you want to use mgetty+sendfax as PPP-dialin-server,
+   define AUTO_PPP in Makefile:
+
+CFLAGS=-O2 -Wall -pipe -DAUTO_PPP
+
+   compile it and install the package.
+   edit your /etc/inittab and let mgetty running on your preferred
+   ports:
+
+s3:45:respawn:/usr/local/sbin/mgetty ttyS2 vt100
+
+   now issue a
+      kill -HUP 1
+   and enjoy with the lightning LEDs on your modem
+   your now are ready to receive faxes !
+
+
+   if you want a PPP dialin-server, edit 
+      /usr/local/etc/mgetty+sendfax/login.config
+
+/AutoPPP/ -     ppp     /usr/sbin/pppd auth debug passive modem 
+
+
+   Note: this package automatically decides between a fax call and
+         a modem call. In case of modem call you get a login prompt !
+
+Tools for printing faxes:
+=========================
+
+   your incomed faxes are in:
+    /var/spool/fax/incoming
+
+   print it with:
+
+     for i in *
+     do
+     g3cat $i | g3tolj | lpr -P hp
+     done
+
+   in case of low resolution use instead:
+
+     g3cat $i | g3tolj -aspect 2 | lpr -P hp
+
+
+   g3cat is in the tools-section, g3tolj is in the contrib-section
+   for printing to HP lasers.
+
+   If you want to produce files for displaying and printing with Windows, use
+   some tools from the pbm-package like follow
+
+     g3cat $i | g3topbm - |  ppmtopcx - >$i.pcx  
+
+   and view it with your favourite Windows tool (maybe paintbrush)
+
+
+Now making the fax-server:
+===========================
+
+    fetch the file
+       mgetty+sendfax/frontends/winword/faxfilter
+
+    and place it in
+
+      /usr/local/etc/mgetty+sendfax/
+
+    prepare your faxspool file as mentioned in this file
+    edit fax/faxspool.in and reinstall or change the final
+    /usr/local/bin/faxspool too.
+
+            if [ "$user" = "root" -o "$user" = "fax" -o \
+                 "$user" = "lp" -o "$user" = "daemon" -o "$user" = "bin" ]
+
+    find the first line and change the second.
+
+    make sure you have pbmtext (from the pbm-package). This is
+    needed for creating the small header line on each page.
+    Notes on pbmplus:
+    Some peoples had problems with precompiled binaries (especially
+    at linux) with a shared lib libgr.so.x.x. The better way is
+    to fetch the source and compile it. One needs only pbmtext for
+    generating the small line on top of each page /faxheader). Install
+    only the individual programs you need. If you install the full
+    package then install pbmplus first and then mgetty+sendfax, because
+    this package has some changed programs by itself (but not pbmtext).
+
+    make sure your ghostscript is functional. You need fonts !
+    I prefer these from the OS/2 disks
+
+    prepare your faxheader
+      /usr/local/etc/mgetty+sendfax/faxheader
+
+    edit your /etc/printcap file:
+
+# FAX 
+lp3|fax:\
+        :lp=/dev/null:\
+        :sd=/usr/spool/lp3:\
+        :if=/usr/local/etc/mgetty+sendfax/faxfilter:sh:sf:mx#0:\
+        :lf=/usr/spool/lp3/fax-log:
+
+
+
+
+    edit your /usr/local/samba/lib/smb.conf
+
+    so you have a smb based printer named "fax"
+
+
+The final step:
+===============
+
+    Now you have a printer called "fax" which can be used via
+    TCP/IP-printing (lpd-system) or via SAMBA (windows printing).
+
+    On every system you are able to produce postscript-files you
+    are ready to fax.
+
+    On Windows 3.1 95 and NT:
+
+    Install a printer wich produces postscript output,
+       e.g.  apple laserwriter
+
+    connect the "fax" to your printer 
+
+
+    Now write your first fax. Use your favourite wordprocessor,
+    write, winword, notepad or whatever you want, and start
+    with the headerpage.
+
+    Usually each fax has a header page. It carries your name,
+    your address, your phone/fax-number.
+
+    It carries also the recipient, his address and his *** fax
+    number ***. Now here is the trick:
+
+    Use the text:
+       Fax-Nr: 123456789
+    as the recipients fax-number. Make sure this text does not
+    occur in regular text ! Make sure this text is not broken
+    by formatting information, e.g. format it as a single entity.
+    (Windows Write and Win95 Wordpad are functional, maybe newer
+    versions of Winword are breaking formatting information).
+
+    The trick is that postscript output is human readable and
+    the faxfilter program scans the text for this pattern and
+    uses the found number as the fax-destination-number.
+
+    Now print your fax through the fax-printer and it will be
+    queued for later transmission. Use faxrunq for sending the
+    queue out.
+
+    Notes of SAMBA smb.conf:
+    Simply use fall through from the samba printer to the unix
+    printer. Sample:
+
+
+ printcap name = /etc/printcap
+ print command = /usr/bin/lpr -r -P %p %s
+ lpq command = /usr/bin/lpq -P %p
+ lprm command = /usr/bin/lprm -P %p %j
+
+
+[fax]
+    comment = FAX (mgetty+sendfax)
+    path = /tmp
+    printable = yes
+    public = yes
+    create mode = 0700
+    browseable = yes
+    guest ok = no
+
+
+

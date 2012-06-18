@@ -1,0 +1,1 @@
+test $(pwd) = $(busybox pwd)

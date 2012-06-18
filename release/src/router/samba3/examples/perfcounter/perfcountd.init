@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# Copyright (C) Gerald Carter            2005
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+####################################################################
+
+## This file should have uid root, gid sys and chmod 744
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+killproc() 
+{
+	pid=`ps aux | grep $1 | egrep -v '(grep|perfcountd)' | awk '{print $2}'`
+	if [ x"$pid" != "x" ]; then
+		kill $pid
+	fi
+}
+
+# Start/stop processes 
+
+case "$1"
+in
+start)
+	/opt/samba/bin/perfcount -d -f /var/lib/samba/perfmon 2> /dev/null
+	if [ $? -ne 0 ]; then
+		echo "Failed!"
+		exit 1
+	fi
+	echo "done!"
+	;;
+stop)
+	killproc perfcount
+	;;
+
+status)
+	pid=`ps aux | grep perfcount | egrep -v '(grep|perfcountd)' | awk '{print $2}'`
+	if [ x"$pid" = "x" ]; then
+		echo "Dead!"
+		exit 2;
+	fi
+	echo "OK!"
+	;;
+restart)
+	$0 stop && $0 start
+   	;;
+
+*)
+   	echo "Usage: $0 { start|stop|restart|status }"
+   	;;
+esac
+
+

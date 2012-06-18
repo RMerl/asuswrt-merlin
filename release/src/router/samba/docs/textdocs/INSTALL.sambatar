@@ -1,0 +1,33 @@
+Contributor:	Ricky Poulten <poultenr@logica.co.uk>
+Date:		Unknown
+Status:		Current
+
+Subject:	Using smbtar
+=============================================================================
+
+Please see the readme and the man page for general info.
+
+1) Follow the samba installation instructions.
+
+2) If all goes well, test it out by creating a share on your PC (called
+backup for example) then doing something like,
+
+  ./smbtar -s mypc -t /dev/rmt/0ubn -x backup
+
+substituting whatever your tape drive is for the -t option, or set your
+tape environmental variable.
+
+If all does not go well, feel free to mail the author (poultenr@logica.co.uk)
+about bug reports / help / money / pizza / etc.
+
+3) Read the man page and the NOTES file for more information
+
+4) Work smbtar into your usual nightly backup scheme (presuming you
+have one :-}).
+
+
+NOTE:
+
+If you have problems with smbtar then it's probably best to contact the
+author Ricky Poulten (poultenr@logica.co.uk).
+

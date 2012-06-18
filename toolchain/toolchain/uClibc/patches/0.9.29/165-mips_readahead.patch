@@ -1,0 +1,169 @@
+From 085d5c04d5d1c57d6f325ed5830cd453e612772e Mon Sep 17 00:00:00 2001
+From: Mike Frysinger
+Date: Sat, 05 Jan 2008 17:21:28 +0000
+Subject: Merge r18708 by vapier from trunk:
+
+Atsushi Nemoto writes:
+Current MIPS readahead(), posix_fadvise(), posix_fadvise64() do not
+match with kernel on all ABIs.
+
+On O32 ABI, a padding is needed before a long long argument.
+On N32/N64, a long long argument should be passed via a single register.
+---
+diff --git a/libc/sysdeps/linux/mips/Makefile.arch b/libc/sysdeps/linux/mips/Makefile.arch
+index c79aee8..da5ca1e 100644
+--- a/libc/sysdeps/linux/mips/Makefile.arch
++++ b/libc/sysdeps/linux/mips/Makefile.arch
+@@ -7,7 +7,8 @@
+ 
+ CSRC := \
+ 	__longjmp.c  brk.c setjmp_aux.c mmap.c __syscall_error.c \
+-	cacheflush.c pread_write.c sysmips.c _test_and_set.c sigaction.c
++	cacheflush.c pread_write.c sysmips.c _test_and_set.c sigaction.c \
++	readahead.c posix_fadvise.c posix_fadvise64.c
+ 
+ SSRC := bsd-_setjmp.S bsd-setjmp.S setjmp.S clone.S syscall.S pipe.S
+ 
+diff --git a/libc/sysdeps/linux/mips/posix_fadvise.c b/libc/sysdeps/linux/mips/posix_fadvise.c
+new file mode 100644
+index 0000000..8546d96
+--- a/dev/null
++++ b/libc/sysdeps/linux/mips/posix_fadvise.c
+@@ -0,0 +1,39 @@
++/* vi: set sw=4 ts=4: */
++/*
++ * posix_fadvise() for MIPS uClibc
++ * http://www.opengroup.org/onlinepubs/009695399/functions/posix_fadvise.html
++ *
++ * Copyright (C) 2000-2006 Erik Andersen <andersen@uclibc.org>
++ *
++ * Licensed under the LGPL v2.1, see the file COPYING.LIB in this tarball.
++ */
++
++#include <features.h>
++#include <unistd.h>
++#include <errno.h>
++#include <endian.h>
++#include <stdint.h>
++#include <sys/types.h>
++#include <sys/syscall.h>
++#include <fcntl.h>
++
++int posix_fadvise(int fd, off_t offset, off_t len, int advice)
++{
++/* MIPS kernel only has NR_fadvise64 which acts as NR_fadvise64_64 */
++#ifdef __NR_fadvise64
++	INTERNAL_SYSCALL_DECL(err);
++# if _MIPS_SIM == _ABIO32
++	int ret = INTERNAL_SYSCALL(fadvise64, err, 7, fd, 0,
++		__LONG_LONG_PAIR ((long) (offset >> 31), (long) offset),
++		__LONG_LONG_PAIR ((long) (len >> 31), (long) len),
++		advice);
++# else /* N32 || N64 */
++	int ret = INTERNAL_SYSCALL(fadvise64, err, 4, fd, offset, len, advice);
++# endif
++	if (INTERNAL_SYSCALL_ERROR_P (ret, err))
++		return INTERNAL_SYSCALL_ERRNO (ret, err);
++	return 0;
++#else
++	return ENOSYS;
++#endif
++}
+diff --git a/libc/sysdeps/linux/mips/posix_fadvise64.c b/libc/sysdeps/linux/mips/posix_fadvise64.c
+new file mode 100644
+index 0000000..d9b89d1
+--- a/dev/null
++++ b/libc/sysdeps/linux/mips/posix_fadvise64.c
+@@ -0,0 +1,43 @@
++/* vi: set sw=4 ts=4: */
++/*
++ * posix_fadvise64() for MIPS uClibc
++ * http://www.opengroup.org/onlinepubs/009695399/functions/posix_fadvise.html
++ *
++ * Copyright (C) 2000-2006 Erik Andersen <andersen@uclibc.org>
++ *
++ * Licensed under the LGPL v2.1, see the file COPYING.LIB in this tarball.
++ */
++
++#include <features.h>
++#include <unistd.h>
++#include <errno.h>
++#include <endian.h>
++#include <stdint.h>
++#include <sys/types.h>
++#include <sys/syscall.h>
++#include <fcntl.h>
++
++#ifdef __UCLIBC_HAS_LFS__
++
++int posix_fadvise64(int fd, __off64_t offset, __off64_t len, int advice)
++{
++/* MIPS kernel only has NR_fadvise64 which acts as NR_fadvise64_64 */
++#ifdef __NR_fadvise64
++	INTERNAL_SYSCALL_DECL(err);
++# if _MIPS_SIM == _MIPS_SIM_ABI32
++	int ret = INTERNAL_SYSCALL(fadvise64, err, 7, fd, 0,
++		__LONG_LONG_PAIR ((long) (offset >> 32), (long) offset),
++		__LONG_LONG_PAIR ((long) (len >> 32), (long) len),
++		advice);
++# else /* N32 || N64 */
++	int ret = INTERNAL_SYSCALL(fadvise64, err, 4, fd, offset, len, advice);
++# endif
++	if (INTERNAL_SYSCALL_ERROR_P (ret, err))
++		return INTERNAL_SYSCALL_ERRNO (ret, err);
++	return 0;
++#else
++	return ENOSYS;
++#endif
++}
++
++#endif /* __UCLIBC_HAS_LFS__ */
+diff --git a/libc/sysdeps/linux/mips/readahead.c b/libc/sysdeps/linux/mips/readahead.c
+new file mode 100644
+index 0000000..8fe75fd
+--- a/dev/null
++++ b/libc/sysdeps/linux/mips/readahead.c
+@@ -0,0 +1,41 @@
++/* Provide kernel hint to read ahead.
++   Copyright (C) 2002, 2003, 2004 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, write to the Free
++   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
++   02111-1307 USA.  */
++
++#include <errno.h>
++#include <fcntl.h>
++#include <sys/types.h>
++#include <sys/syscall.h>
++
++#ifdef __UCLIBC_HAS_LFS__
++#include <_lfs_64.h>
++# ifdef __NR_readahead
++
++ssize_t readahead(int fd, off64_t offset, size_t count)
++{
++#  if _MIPS_SIM == _ABIO32
++	return INLINE_SYSCALL (readahead, 5, fd, 0,
++		__LONG_LONG_PAIR ((off_t) (offset >> 32), (off_t) offset),
++		count);
++#  else /* N32 || N64 */
++	return INLINE_SYSCALL (readahead, 3, fd, offset, count);
++#  endif
++}
++
++# endif
++#endif
+--
+cgit v0.8.2.1

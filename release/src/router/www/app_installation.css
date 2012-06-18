@@ -1,0 +1,107 @@
+﻿div.wrapper { margin: 0 auto; width: 730px;}
+td.sidenav { width:200px;}
+body {font-family: Verdana, Tohoma, Arial, Helvetica, sans-serif;padding:0;margin:0;line-height:120%;}
+.wrapperDesc { margin: 0 auto; width: 570px;}
+.app_table{
+	width:750px;
+	padding:5px; 
+	padding-top:20px; 
+	margin-top:-160px; 
+	position:relative;
+	background-color:#4d595d;
+	align:left;
+	behavior: url(/PIE.htc);
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+}
+.line_export{
+	height:20px;
+	width:736px;
+}
+.appicon{
+}
+.app_name{
+	margin-left:10px;
+	font-weight:bold;
+	font-size: 18px;
+	margin-top:10px;
+}
+.app_desc{
+	margin-left:10px;
+	margin-top:10px;
+	font-style: italic;
+}
+.app_ver{
+	font-size: 10px;
+	margin-left:10px;
+	text-decoration: none;
+}
+.app_action{
+	margin-left:10px;
+	text-decoration: underline;
+	font-family: Lucida Console;
+	font-weight: bolder;
+	font-size: 12px;
+	cursor:pointer;
+}
+.app_no_action{
+	margin-right:10px;
+	font-family: Lucida Console;
+	font-weight: bolder;
+	font-size: 12px;
+}
+.app_state{
+	margin-top:100px;
+	margin-left:130px;
+	margin-right:130px;
+	font-size:20px;	
+	text-align:center;
+	line-height:35px;
+}
+.MethodDesc{
+	margin-top: -10px;	
+	font-style: italic;
+	color: #999;
+}
+.imdShade{
+	-moz-box-shadow: 15px 15px 10px #333;
+	-webkit-box-shadow: 15px 15px 10px #333;
+	box-shadow: 15px 15px 10px #333;
+}
+.statusBar{
+	margin:auto;		
+}
+.loadingBlock{
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	behavior: url(/PIE.htc);
+	border-radius: 10px 10px 10px 10px;
+	border: 0px;
+}
+
+#app_table table tr:hover{
+	background-color: #444f53;
+	*background-color: #4D595D;
+}
+#partition_div table tr:hover{
+	background-color: #444f53;
+	*background-color: #4D595D;
+}
+
+.app_table_radius_left{
+	-webkit-border-radius: 10px 0 0 10px;
+	-moz-border-radius: 10px 0 0 10px;	
+	border-radius: 10px 0 0 10px;
+}
+.app_table_radius_right{
+	-webkit-border-radius: 0 10px 10px 0;
+	-moz-border-radius: 0 10px 10px 0;	
+	border-radius: 0 10px 10px 0;
+}
+
+.iconUSBdisk{background:url(images/New_ui/USBExt/USBdisk.png) no-repeat 0% 0%;	width:89px; height:89px; cursor:pointer;}
+.iconUSBdisk:hover{background:url(images/New_ui/USBExt/USBdisk.png) no-repeat 0% -102px;	width:89px; height:89px; cursor:pointer;}
+.iconUSBdisk_noquota{background:url(images/New_ui/USBExt/USBdisk.png) no-repeat 0% 0%;	width:89px; height:89px; cursor:pointer;}
+.iconUSBdisk_noquota:hover{background:url(images/New_ui/USBExt/USBdisk.png) no-repeat 0% 111%;	width:89px; height:89px; cursor:pointer;}

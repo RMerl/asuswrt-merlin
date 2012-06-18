@@ -1,0 +1,18 @@
+<samba:parameter name="comment"
+                 context="S"
+				 type="string"
+                 basic="1" advanced="1" share="1" print="1" developer="1" 
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This is a text field that is seen next to a share 
+	when a client does a queries the server, either via the network 
+	neighborhood or via <command moreinfo="none">net view</command> to list what shares 
+	are available.</para>
+
+	<para>If you want to set the string that is displayed next to the 
+		machine name then see the <smbconfoption name="server string"/> parameter.</para>
+
+</description>
+<value type="default"><comment>No comment</comment></value>
+<value type="example">Fred's Files</value>
+</samba:parameter>

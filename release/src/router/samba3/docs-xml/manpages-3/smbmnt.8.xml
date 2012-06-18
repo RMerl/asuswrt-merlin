@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="smbmnt.8">
+
+<refmeta>
+	<refentrytitle>smbmnt</refentrytitle>
+	<manvolnum>8</manvolnum>
+</refmeta>
+
+
+<refnamediv>
+	<refname>smbmnt</refname>
+	<refpurpose>helper utility for mounting SMB filesystems</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>smbmnt</command>
+		<arg choice="req">mount-point</arg>
+		<arg choice="opt">-s &lt;share&gt;</arg>
+		<arg choice="opt">-r</arg>
+		<arg choice="opt">-u &lt;uid&gt;</arg>
+		<arg choice="opt">-g &lt;gid&gt;</arg>
+		<arg choice="opt">-f &lt;mask&gt;</arg>
+		<arg choice="opt">-d &lt;mask&gt;</arg>
+		<arg choice="opt">-o &lt;options&gt;</arg>
+		<arg choice="opt">-h</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para><command>smbmnt</command> is a helper application used 
+	by the smbmount program to do the actual mounting of SMB shares. 
+	<command>smbmnt</command> can be installed setuid root if you want
+	normal users to be able to mount their SMB shares.</para>
+
+	<para>A setuid smbmnt will only allow mounts on directories owned
+	by the user, and that the user has write permission on.</para>
+
+	<para>The <command>smbmnt</command> program is normally invoked 
+	by <citerefentry><refentrytitle>smbmount</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>. It should not be invoked directly by users. </para>
+
+	<para>smbmount searches the normal PATH for smbmnt. You must ensure
+	that the smbmnt version in your path matches the smbmount used.</para>
+
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>-r</term>
+		<listitem><para>mount the filesystem read-only 
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-u uid</term>
+		<listitem><para>specify the uid that the files will 
+		be owned by </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-g gid</term>
+		<listitem><para>specify the gid that the files will be 
+		owned by </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-f mask</term>
+		<listitem><para>specify the octal file mask applied
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-d mask</term>
+		<listitem><para>specify the octal directory mask 
+		applied  </para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-o options</term>
+		<listitem><para>
+		list of options that are passed as-is to smbfs, if this
+		command is run on a 2.4 or higher Linux kernel.
+		</para></listitem>
+		</varlistentry>
+
+		&stdarg.help;
+
+	</variablelist>
+</refsect1>
+
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>Volker Lendecke, Andrew Tridgell, Michael H. Warfield 
+	and others.</para>
+	
+	<para>The current maintainer of smbfs and the userspace
+	tools <command>smbmount</command>, <command>smbumount</command>,
+	and <command>smbmnt</command> is <ulink 
+	url="mailto:urban@teststation.com">Urban Widmark</ulink>.
+	The <ulink url="mailto:samba@samba.org">SAMBA Mailing list</ulink>
+	is the preferred place to ask questions regarding these programs.
+	</para>
+	
+	<para>The conversion of this manpage for Samba 2.2 was performed 
+	by Gerald Carter. The conversion to DocBook XML 4.2 for Samba 3.0
+	was done by Alexander Bokovoy.</para>
+</refsect1>
+
+</refentry>

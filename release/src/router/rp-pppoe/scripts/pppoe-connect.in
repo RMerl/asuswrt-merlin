@@ -1,0 +1,319 @@
+#!/bin/sh
+# @configure_input@
+#***********************************************************************
+#
+# pppoe-connect
+#
+# Shell script to connect to a PPPoE provider
+#
+# Copyright (C) 2000 Roaring Penguin Software Inc.
+#
+# $Id$
+#
+# This file may be distributed under the terms of the GNU General
+# Public License.
+#
+# LIC: GPL
+#
+# Usage: pppoe-connect [config_file]
+#        pppoe-connect interface user [config_file]
+# Second form overrides USER and ETH from config file.
+# If config_file is omitted, defaults to /etc//ppp/pppoe.conf
+#
+#***********************************************************************
+
+# From AUTOCONF
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+localstatedir=/var
+
+# Paths to programs
+IFCONFIG=/sbin/ifconfig
+PPPD=@PPPD@
+SETSID=@SETSID@
+PPPOE=@sbindir@/pppoe
+LOGGER="/usr/bin/logger -t `basename $0`"
+
+# Set to "C" locale so we can parse messages from commands
+LANG=C
+export LANG
+
+# Must be root
+if test "`@ID@ -u`" != 0 ; then
+    echo "$0: You must be root to run this script" >& 2
+    exit 1
+fi
+
+if test "$SETSID" != "" -a ! -x "$SETSID"; then
+    SETSID=""
+fi
+
+CONFIG=/etc//ppp/pppoe.conf
+USER=""
+ETH=""
+
+# Sort out command-line arguments
+case "$#" in
+    1)
+    CONFIG="$1"
+    ;;
+    3)
+    CONFIG="$3"
+    ;;
+esac
+
+if test ! -f "$CONFIG" -o ! -r "$CONFIG" ; then
+    echo "$0: Cannot read configuration file '$CONFIG'" >& 2
+    exit 1
+fi
+export CONFIG
+. $CONFIG
+
+PPPOE_PIDFILE="$PIDFILE.pppoe"
+PPPD_PIDFILE="$PIDFILE.pppd"
+
+# Check for command-line overriding of ETH and USER
+case "$#" in
+    2|3)
+    ETH="$1"
+    USER="$2"
+    ;;
+esac
+
+# Check that config file is sane
+if test "$USER" = "" ; then
+    echo "$0: Check '$CONFIG' -- no setting for USER" >& 2
+    exit 1
+fi
+if test "$ETH" = "" ; then
+    echo "$0: Check '$CONFIG' -- no setting for ETH" >& 2
+    exit 1
+fi
+
+PPPD_PID=0
+
+# Catch common error
+if test "$DEBUG" = "1" ; then
+    echo "*** If you want to use DEBUG, invoke pppoe-start, not pppoe-connect."
+    exit 1
+fi
+
+if test "$DEBUG" != "" ; then
+    if test "$LINUX_PLUGIN" != "" ; then
+	echo "Cannot use DEBUG mode and LINUX_PLUGIN at the same time."
+	echo "Kernel-mode PPPoE is experimental and unsupported."
+	exit 1
+    fi
+    echo "* The following section identifies your Ethernet interface" >> $DEBUG
+    echo "* and user name.  Some ISP's need 'username'; others" >> $DEBUG
+    echo "* need 'username@isp.com'.  Try both" >> $DEBUG
+    echo "ETH=$ETH; USER=$USER" >> $DEBUG
+    echo "---------------------------------------------" >> $DEBUG
+fi
+
+# MTU of Ethernet card attached to modem MUST be 1500.  This apparently
+# fails on some *BSD's, so we'll only do it under Linux
+
+if test `uname -s` = Linux ; then
+    $IFCONFIG $ETH up mtu 1500
+    # For 2.4 kernels.  Will fail on 2.2.x, but who cares?
+    modprobe ppp_generic > /dev/null 2>&1
+    modprobe ppp_async > /dev/null 2>&1
+    modprobe ppp_synctty > /dev/null 2>&1
+    if test -n "$LINUX_PLUGIN" ; then
+	modprobe pppox > /dev/null 2>&1
+	modprobe pppoe > /dev/null 2>&1
+    fi
+fi
+
+if test "$SYNCHRONOUS" = "yes" ; then
+    PPPOE_SYNC=-s
+    PPPD_SYNC=sync
+	# Increase the chances of it working on Linux...
+    if test `uname -s` = Linux ; then
+	modprobe n_hdlc > /dev/null 2>&1
+    fi
+else
+    PPPOE_SYNC=""
+    PPPD_SYNC=""
+fi
+
+if test -n "$ACNAME" ; then
+    ACNAME="-C $ACNAME"
+fi
+
+if test -n "$SERVICENAME" ; then
+    SERVICENAMEOPT="-S $SERVICENAME"
+else
+    SERVICENAMEOPT=""
+fi
+
+if test "$CLAMPMSS" = "no" ; then
+    CLAMPMSS=""
+else
+    CLAMPMSS="-m $CLAMPMSS"
+fi
+
+# If DNSTYPE is SERVER, we must use "usepeerdns" option to pppd.
+if test "$DNSTYPE" = "SERVER" ; then
+    PEERDNS=yes
+    USEPEERDNS=yes
+fi
+
+if test "$PEERDNS" = "yes" ; then
+    PEERDNS="usepeerdns"
+else
+    PEERDNS=""
+fi
+
+# Backward config file compatibility -- PEERDNS used to be USEPEERDNS
+if test "$USEPEERDNS" = "yes" ; then
+    PEERDNS="usepeerdns"
+fi
+if test "$USEPEERDNS" = "no" ; then
+    PEERDNS=""
+fi
+
+
+# Backward config file compatibility
+if test "$DEMAND" = "" ; then
+    DEMAND=no
+fi
+
+if test "$DEMAND" = "no" ; then
+    DEMAND=""
+else
+    DEMAND="demand persist idle $DEMAND 10.112.112.112:10.112.112.113 ipcp-accept-remote ipcp-accept-local connect true noipdefault ktune"
+fi
+
+case "$FIREWALL" in
+    STANDALONE)
+    . /etc/ppp/firewall-standalone
+    ;;
+    MASQUERADE)
+    . /etc/ppp/firewall-masq
+    ;;
+esac
+
+# If we're using kernel-mode PPPoE on Linux...
+if test "$LINUX_PLUGIN" != "" ; then
+    PLUGIN_OPTS="plugin $LINUX_PLUGIN nic-$ETH"
+    if test -n "$SERVICENAME" ; then
+	PLUGIN_OPTS="$PLUGIN_OPTS rp_pppoe_service $SERVICENAME"
+    fi
+    modprobe pppoe > /dev/null 2>&1
+fi
+
+if test "$DEFAULTROUTE" != "no" ; then
+    DEFAULTROUTE="defaultroute"
+else
+    DEFAULTROUTE=""
+fi
+
+# Standard PPP options we always use
+PPP_STD_OPTIONS="$PLUGIN_OPTS noipdefault noauth default-asyncmap $DEFAULTROUTE hide-password nodetach $PEERDNS mtu 1492 mru 1492 noaccomp nodeflate nopcomp novj novjccomp user $USER lcp-echo-interval $LCP_INTERVAL lcp-echo-failure $LCP_FAILURE $PPPD_EXTRA"
+
+# Jigger DNS if required...
+if test "$DNSTYPE" = "SERVER" ; then
+    # Sorry, dude...
+    rm -f /etc/resolv.conf
+    ln -s /etc/ppp/resolv.conf /etc/resolv.conf
+elif test "$DNSTYPE" = "SPECIFY" ; then
+    # Sorry, dude...
+    rm -f /etc/resolv.conf
+    echo "nameserver $DNS1" > /etc/resolv.conf
+    if test -n "$DNS2" ; then
+	echo "nameserver $DNS2" >> /etc/resolv.conf
+    fi
+fi
+
+# PPPoE invocation
+PPPOE_CMD="$PPPOE -p $PPPOE_PIDFILE -I $ETH -T $PPPOE_TIMEOUT -U $PPPOE_SYNC $CLAMPMSS $ACNAME $SERVICENAMEOPT $PPPOE_EXTRA"
+if test "$DEBUG" != "" ; then
+    if test "$DEMAND" != "" ; then
+	echo "(Turning off DEMAND for debugging purposes)"
+	DEMAND=""
+    fi
+    echo "* The following section shows the pppd command we will invoke" >> $DEBUG
+    echo "pppd invocation" >> $DEBUG
+    echo "$SETSID $PPPD pty '$PPPOE_CMD' $PPP_STD_OPTIONS $PPPD_SYNC debug" >> $DEBUG
+    echo "---------------------------------------------" >> $DEBUG
+    $SETSID $PPPD pty "$PPPOE_CMD -D $DEBUG-0" \
+	$PPP_STD_OPTIONS \
+	$PPPD_SYNC \
+	debug >> $DEBUG 2>&1
+    echo "---------------------------------------------" >> $DEBUG
+    echo "* The following section is an extract from your log." >> $DEBUG
+    echo "* Look for error messages from pppd, such as" >> $DEBUG
+    echo "* a lack of kernel support for PPP, authentication failure" >> $DEBUG
+    echo "* etc." >> $DEBUG
+    if test -f "/var/log/messages" ; then
+	echo "Extract from /var/log/messages" >> $DEBUG
+	grep 'ppp' /var/log/messages | tail -150 >> $DEBUG
+    elif test -f "/var/adm/messages"; then
+	echo "Extract from /var/adm/messages" >> $DEBUG
+	grep 'ppp' /var/adm/messages | tail -150 >> $DEBUG
+    else
+        echo "Can't find messages file (looked for /var/{log,adm}/messages" >> $DEBUG
+    fi
+    date >> $DEBUG
+    echo "---------------------------------------------" >> $DEBUG
+    echo "* The following section is a dump of the packets" >> $DEBUG
+    echo "* sent and received by rp-pppoe.  If you don't see" >> $DEBUG
+    echo "* any output, it's an Ethernet driver problem.  If you only" >> $DEBUG
+    echo "* see three PADI packets and nothing else, check your cables" >> $DEBUG
+    echo "* and modem.  Make sure the modem lights flash when you try" >> $DEBUG
+    echo "* to connect.  Check that your Ethernet card is in" >> $DEBUG
+    echo "* half-duplex, 10Mb/s mode.  If all else fails," >> $DEBUG
+    echo "* try using pppoe-sniff." >> $DEBUG
+    echo "rp-pppoe debugging dump" >> $DEBUG
+    cat $DEBUG-0 >> $DEBUG
+    rm -f $DEBUG-0
+    for i in 1 2 3 4 5 6 7 8 9 10 ; do
+	echo ""
+	echo ""
+	echo ""
+    done
+    echo "*** Finished debugging run.  Please review the file"
+    echo "*** '$DEBUG' and try to"
+    echo "*** figure out what is going on."
+    echo "***"
+    echo "*** Unfortunately, we can NO LONGER accept debugging"
+    echo "*** output for analysis.  Please do not send this to"
+    echo "*** Roaring Penguin; it is too time-consuming for"
+    echo "*** us to deal with all the analyses we have been sent."
+    exit 0
+fi
+
+echo $$ > $PIDFILE
+
+while [ true ] ; do
+    if test "$OVERRIDE_PPPD_COMMAND" != "" ; then
+	$SETSID $OVERRIDE_PPPD_COMMAND &
+	echo "$!" > $PPPD_PIDFILE
+    elif test "$LINUX_PLUGIN" != "" ; then
+	$SETSID $PPPD $PPP_STD_OPTIONS $DEMAND &
+	echo "$!" > $PPPD_PIDFILE
+    else
+	$SETSID $PPPD pty "$PPPOE_CMD" \
+	    $PPP_STD_OPTIONS \
+	    $DEMAND \
+	    $PPPD_SYNC &
+	echo "$!" > $PPPD_PIDFILE
+    fi
+    wait
+
+    if test "$RETRY_ON_FAILURE" = "no" ; then
+	exit
+    fi
+
+    # Run /etc/ppp/pppoe-lost if it exists
+    test -x /etc/ppp/pppoe-lost && /etc/ppp/pppoe-lost
+
+    # Re-establish the connection
+    $LOGGER -p daemon.notice \
+        "PPPoE connection lost; attempting re-connection."
+
+    # Wait a bit in case a problem causes tons of log messages :-)
+    sleep 5
+done

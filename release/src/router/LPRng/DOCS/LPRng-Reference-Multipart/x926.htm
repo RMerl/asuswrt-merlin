@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Checking System Installation with checkpc</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Installation" href="installation.htm">
+    <link rel="PREVIOUS" title=
+    "System and User Printcap, lpd.conf, and lpd.perms files "
+    href="requireconfig.htm">
+    <link rel="NEXT" title="Compilation and Install" href=
+    "x962.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "requireconfig.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 2.
+          Installation</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x962.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN926">2.7. Checking System
+      Installation with <b class="APPLICATION">checkpc</b></a></h1>
+
+      <p>The <b class="APPLICATION">checkpc</b> program is used to
+      make sure that the spool directories and files used by <b
+      class="APPLICATION">LPRng</b> have the correct permissions
+      and are in place. By default, <b class=
+      "APPLICATION">checkpc</b> will check permissions and report
+      if there are any problems. You should run this as <var class=
+      "LITERAL">root</var>. For example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN934"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {2} #</samp> <kbd class=
+"USERINPUT">checkpc</kbd>
+    Warning - No configuration file '/etc/lpd.conf'
+    Warning - No lpd only printcap file found in '/etc/lpd_printcap'
+    Warning -  ** cannot open '/var/run/lpd.printer' - 'Permission denied'
+    Warning -  bad directory - /var/spool/lpd/lp
+    Warning -   Printer 'lp' spool dir '/var/spool/lpd/lp' needs fixing
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>In the above example, <b class="APPLICATION">checkpc</b>
+      has discovered that the <tt class="FILENAME">lpd.conf</tt>
+      file is missing. This is a serious problem and indicates that
+      the software may be incorrectly installed.</p>
+
+      <p>The <var class="LITERAL">lpd only printcap</var> message
+      is usually of concern to administrators who wish to use some
+      of <b class="APPLICATION">LPRng</b>'s more exotic
+      configuration options. It is possible to have separate <tt
+      class="FILENAME">printcap</tt> files for client and server
+      programs. This is useful when <tt class=
+      "FILENAME">printcap</tt> files get extremely large and cuts
+      down substantially on system management problems.</p>
+
+      <p>The <var class="LITERAL">permission denied</var> message
+      for <tt class="FILENAME">/var/run/lpd.printer</tt> is
+      serious, as the <b class="APPLICATION">lpd</b> server uses
+      this as a lock file.</p>
+
+      <p>The <var class="LITERAL">bad directory</var> message about
+      the spool directory is usually caused by wrong permissions or
+      a missing directory.</p>
+
+      <p>The <tt class="COMMAND">checkpc -f</tt> (fix) option
+      causes <b class="APPLICATION">checkpc</b> to take action to
+      rectify errors. The <tt class="COMMAND">checkpc -f -V</tt>
+      (verbose) option causes the fixup activity to be displayed a
+      well:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN956"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {3} #</samp> <kbd class=
+"USERINPUT">checkpc -f -V</kbd>
+    Checking for configuration files '/etc/lpd.conf'
+      found '/usr/local/etc/lpd.conf', mod 0100644
+    Checking for printcap files '/etc/printcap'
+      found '/usr/local/etc/printcap', mod 0100644
+    Checking for lpd only printcap files '/etc/lpd_printcap'
+     DaemonUID 1, DaemonGID 1
+    Using Config file '/etc/lpd.conf'
+    LPD lockfile '/var/run/lpd.printer'
+     Checking directory: '/var/run'
+       directory '/var'
+       directory '/var/run'
+      checking '/var/run/lpd.printer' file
+    
+    Checking printer 'lp'
+     Checking directory: '/var/spool/lp'
+       directory '/var'
+       directory '/var/spool'
+       directory '/var/spool/lp'
+      file 'control.lp', zero length file unchanged in 1 hours
+      file 'status.lp', zero length file unchanged in 1 hours
+      file 'status', zero length file unchanged in 1 hours
+      file 'log', zero length file unchanged in 1 hours
+      file 'acct', zero length file unchanged in 1 hours
+      checking 'control.lp' file
+      checking 'status.lp' file
+      checking 'status' file
+      cleaning 'status' file, 0K bytes: no truncation
+      checking 'log' file
+      cleaning 'log' file, 0K bytes: no truncation
+      checking 'acct' file
+      cleaning 'acct' file, 0K bytes: no truncation
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p><b class="APPLICATION">checkpc</b> will create the spool
+      directories and any missing files, and fix the permissions of
+      existing files.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "requireconfig.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x962.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">System and User
+          Printcap, lpd.conf, and lpd.perms files</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "installation.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Compilation
+          and Install</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,10 @@
+EXEC = wscd
+
+clean:
+	rm -rf *.o *~ *.bak 
+
+romfs:
+	$(ROMFSINST) wscd /bin/wscd
+	$(ROMFSINST) xml/WFADeviceDesc.xml /etc_ro/xml/WFADeviceDesc.xml
+	$(ROMFSINST) xml/WFAWLANConfigSCPD.xml /etc_ro/xml/WFAWLANConfigSCPD.xml
+

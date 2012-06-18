@@ -1,0 +1,525 @@
+.ds VE LPRng-3.9.0
+.TH LPR 1 \*(VE "LPRng"
+.ig
+Thu Jul 20 07:19:29 PDT 1995 Patrick Powell
+..
+.SH NAME
+lpr \- off line print
+.SH SYNOPSIS
+.B lpr
+[
+.B \-A
+]
+[
+.B \-B
+]
+[
+.B \-b,l
+]
+[
+.BI \-C " class"
+]
+[
+.BI \-D " debugopt"
+]
+.ti +5n
+[
+.BI \-F " filterformat"
+]
+[
+.B \-G
+]
+[
+.B \-h
+]
+[
+.BI \-i " indentcols"
+]
+.ti +5n
+[
+.B \-k
+]
+[
+.BI \-J " job"
+]
+[
+.BI \-K,# " copies"
+]
+.ti +5n
+[
+.BI \-m " mailTo"
+]
+[
+.BI \-P " printer"
+]
+[
+.B \-r
+]
+.ti +5n
+[
+.BI \-R " remoteAccount"
+]
+[
+.B \-s
+]
+[
+.BI \-T " title"
+]
+[
+.BI \-U " user"
+]
+.ti +5n
+[
+.B \-V
+]
+[
+.BI \-w " width"
+]
+[
+.BI \-X " userfile"
+]
+[
+.B \-Y
+]
+[
+.BI \-Z " options"
+]
+[
+.BI \-1,2,3,4 " font"
+]
+[
+.B \-\-
+]
+.ti +5n
+[
+.IR filename " \|.\|.\|."
+]
+.SH DESCRIPTION
+.B Lpr
+uses a spooling daemon to print the named files when facilities
+become available.  If no names appear, the standard input is assumed.
+.SH OPTIONS
+.TP 5
+.B \-A
+The authentication type is set by the value of the AUTH environment variable.
+.TP 5
+.B \-B
+Do filtering of job files by the filters specified by the printcap.
+Combine the output of the filtering operation into a single job file and then
+send the single file to the lpd print spooler.
+.TP 5
+.B "\-b, \-l"
+either of these flags specifies a
+binary or literal file,
+and no (or minimial) processing is to be done by the print spooling system.
+Printed using the
+.I f
+format filter (:if=... or :filter=...).
+.TP 5
+.BI \-C " class"
+Specify the job classification for use on the burst page and to
+set the priority.
+Priorities range from A (lowest) to Z (highest);
+the default priority is A.
+For example,
+.br
+.ti +0.5i
+lpr \-C B foo.c
+.br
+sets the priority/class to B and the file foo.c is printed.
+.TP 5
+\fB\-D\fP\ \fIdebugoptions\fP
+Debugging is controlled using the
+.B \-D
+option. This accepts a comma-separated list of debugging
+settings. These settings take one of two forms: 
+.BI facility =value, 
+or
+.B value 
+to set an overall default value.
+.TP 5
+\fB\-F\fI filterformat\fR
+Filter or format specification.
+By default,
+input is assumed to a standard text file and the
+.I f
+format is used;
+the output device is assmed to be a simple line printer.
+Other formats available are listed below.
+Not all formats may be available on all printers;
+see
+.BR printcap (5)
+for details.
+Formats are single lower case letters;
+the following are the valid arguments for
+.B \-F
+together with the assumed type of data.
+For compatibility with previous versions of
+.BR lpr ,
+the format types can be used as options themselves
+(i.e. by omitting the
+.BR F )
+except where noted below,
+a warning may be issued in such cases.
+.\".RS 5
+.TP 5
+\fB\-G\fP
+Similar to the
+\fB\-B\fP option,
+but only processes individual files.
+.TP 5
+\fB\-h\fP
+No banner or header for this job.
+.TP 5
+.BI \-i " indentcols"
+Indent input by indentcols.
+Note that this option is not supported on all printers.
+.TP 5
+.BI -J " jobname"
+Specify the job name to print on the burst page;
+defaults to the name of files in the job or
+.I "(STDIN)"
+if input is from a pipe.
+.TP 5
+\fB\-K\fP\fIcopies\fP,\0\fB\-#\fP\fIcopies\fP
+Specify the number of copies of each file to be printed.
+You may or may not get the requested number of copies depending on the
+intelligence of the remote printing system.
+.TP 5
+.B \-k
+.B lpr
+normally creates a temporary file
+for the input read from stdin before sending it to the remote
+printer.
+The
+.B \-k
+(kut-through) option
+will simply copy from STDIN to the destination print spooling system.
+If you kill the job in the middle of creation
+then the partly transferred file will get printed.
+This option may not work with very large jobs,
+non-LPRng spoolers,
+or
+when you have encryption or authentication enabled.
+.TP 5
+.BI \-m " mailTo"
+Send mail upon unsuccessful completion to user
+.IR mailTo .
+The mailTo value has been used to do such things as
+specify email (user@host), paging (page:user@host),
+both (user@host,page:user@host)
+and all sorts of other notifier information.
+See the LPRng HOWTO for details on how this is implemented.
+.TP 5
+.BI \-P " printer"
+By default,
+the destination printer
+is taken from
+the command line
+.I "-P printer"
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
+.TP 5
+.BI \-R " remoteAccount"
+Specify accounting information to be used by a remote system that prints
+your output.
+.sp
+This parameter
+can be used to specify a billing code to be charged for the
+printing.
+.TP 5
+.B \-r
+The DREADED
+.B "REMOVE AFTER PRINTING"
+option.
+Beware, for 
+.I lpr
+will delete the files after spooling them.
+Present by demand from users for compatibility with other Berkeley lpr
+implementation,
+but really should NOT be present.
+.TP 5
+.BI \-T "  title"
+Specify the title used by
+.BR pr (1);
+defaults to the file name.
+.TP 5
+\fB\-U\fP\ \fIusername\fP
+The
+.B \-U
+option is used to specify a user name
+for the job.
+This is available only to ROOT or users listed in the
+.I allow_user_setting
+configuration option.
+This is obviously a security loophole,
+but it is present to allow systems such as SAMBA
+to submit jobs on behalf of users.
+See
+.B "Authenticated Transfers"
+below.
+.TP 5
+.B \-V
+Verbose mode. Additional -V flags increase verbosity.
+Use debug flags for extreme verbosity.
+.TP 5
+.BI \-w " width"
+Specify the page width for printing the job.
+.BI \-X " path"
+User specified filter for job files.  Processing is done on
+the client host.
+.B \-Y
+Make a direct connection to the printer device and do not spool.
+.TP 5
+.BI -Z " options"
+Pass the specified options to the print spooler.
+Used when additional or specialized information
+must be provided to the spooler.
+.TP 5
+.B "OBSOLETE OPTIONS Lower case \-c, \-d, \-g, \-n, \-t, \-v"
+Used to indicate:
+.B \-c
+is data produced by
+.BR cifplot (l),
+.B \-d 
+is
+.BR tex (l)
+(DVI format from Stanford),
+.B \-g
+is
+standard plot data as produced by the
+.BR plot (3X)
+routines,
+.B \-n
+and
+.B \-t
+is output from (device independent)
+.BR troff ,
+.B \-v
+a raster image for devices like the Benson Varian.
+.B "These are obsolete."
+These are retained for historical compatibility,
+but most of their functionality has been replaced by the
+abilities of the printer support system to determine the
+file type and do the appropriate conversions.
+.\".RE
+.TP 5
+.B "OBSOLETE OPTION \-p"
+.B "This is obsolete."
+This option is retained for historical compatibility,
+but this functionality should be implemented on the
+client system before sending the job to the printer.
+Use
+.BR pr (1)
+to format the files,
+then print using 
+.I f
+format.
+This may not be supported on the print system.
+.TP 5
+.B "OBSOLETE \-s"
+This flag is included for compatibility with other versions of
+.BR lpr .
+In these versions it will create a symbolic link to the files to be
+printed.  
+.B Lpr
+now sends files directly to the server and it is irrelevant.
+.TP 5
+.BI "OBSOLETE OPTIONS \-1,2,3,4" "fontname"
+Specify a font to be mounted on font position \fIi\fR
+for TROFF printing (Obsolete).
+.SH FILENAMES
+.PP
+By default,
+if no filenames are specified
+.B lpr
+will read stdin and print it.
+.SH "AUTHENTICATED TRANSFERS"
+.PP
+The original LPR network protocol defined in RFC1179 did not
+provide for user to server authentication.
+This is now supported by LPRng.
+See the LPRng support documentation for details on its operation
+and support.
+.SH COMPATIBILITY 
+.PP
+The LPRng version of
+.B lpr
+attempts to be functionaly compatible with common implementations of
+.BR lpr .
+However,
+there are some commands and functionality that are deliberately missing.
+.IP "\fB\-s\fP\ Symbolic Links" 5
+(Berkeley LPR) This option specified that a symbolic link
+to the original data file
+rather than a copy of the data file was to be used when spooling jobs.
+This opens up a variety of security problems,
+as well as being ineffective when printing to a remote host.
+.SH "THE -B, -Y, -X filter ULTRA-LIGHTWEIGHT PRINTING OPTIONS"
+.PP
+LPRng supports ultra-lightweight printing by eliminating the need
+for a print spooler.
+This is quite dangerous, but makes the lpr client very lightweight.
+The
+.B \-Y
+command line option and the
+.B :direct
+printcap option enables lpr to connect directly to a specified port
+or use a program to send a job.
+This filter also enables client side filtering,  so if there are
+any filters specified in the printcap entry they will be used.
+For example:
+.nf
+lpr -Y -Phost%port file1 file2 ...
+ approximately equivalent to:
+   for i in file1 file2 ...; do
+     ${filter} <$i;
+  # ${filter} is filter from printcap
+   done  >host%port (TCP/IP connection)
+
+lpr -Y -Phost%port -X userfilter file1 file2 ...
+ approximately equivalent to:
+   for i in file1 file2 ...; do
+     userfilter <$i;
+   done  >host%port (TCP/IP connection)
+
+Summary:
+   -P host%port    > TCP/IP connection to host%port
+   -P /dev/lp      > /dev/lp
+   -P '|/program'  | /program
+
+SPECIAL CASE
+lpr -Y -Ppr@host -X userfilter file1 file2 ...
+ approximately equivalent to:
+   for i in file1 file2 ...; do
+     userfilter <$i >temp.$i;
+   done
+   lpr -Ppr@host temp.file1 temp.file2
+.fi
+.PP
+The
+.B \-B
+option or the :lpr_bounce is used to filter and make a single file out
+of a set of print files and then forward them.
+.RS
+.nf
+lpr -B -Ppr@host
+  approximately equivalent to:
+   lpr -Y -P/tmp/tempfile file1 file2 ...
+   lpr -Ppr@host /tmp/tempfile
+.fi
+.RE
+.PP
+You can also use a printcap entry and the
+.B :direct
+options.
+.RS
+.nf
+Printcap:
+   lp:direct:lp=h14%9100:remote_support=R
+lpr -Plp file1 file2
+   Same as:
+lpr -Plp -Y -Ph14%9100 file1 file2
+.fi
+.RE
+.PP
+The
+.B :remote_support
+option is used to prevent the
+.B lpq
+and
+.B lpc
+program from attempting to send jobs to the device.
+
+.SH ENVIRONMENT
+.PP
+By default,
+the destination printer
+is taken from
+the command line
+.I "-P printer"
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
+.SH "EXIT STATUS"
+.PP
+The following exit values are returned:
+.TP 15
+.B "zero (0)"
+Successful completion.
+.TP
+.B "non-zero (!=0)"
+An error occurred.
+.SH "PRINTCAP INFORMATION"
+.LP
+The printer names and other information is obtained by using a printcap
+file or some other database.
+The ${HOME}/.printcap
+file can be used to specify user level options and configuration
+information.
+See
+printcap(5)
+for more information. 
+.SH FILES
+.PP
+The files used by LPRng are set by values in the
+printer configuration file.
+The following are a commonly used set of default values.
+.nf
+.ta \w'/var/spool/lpd/printcap.<hostname>           'u
+_LPD_CONF_PATH_	LPRng configuration file
+${HOME}/.printcap	user printer description file
+_PRINTCAP_PATH_	printer description file
+_LPD_PERMS_PATH_	permissions
+_LOCKFILE_	lock file for queue control
+/var/spool/lpd		spool directories
+/var/spool/lpd/QUEUE/control	queue control
+/var/spool/lpd/QUEUE/log	trace or debug log file
+/var/spool/lpd/QUEUE/acct	accounting file
+/var/spool/lpd/QUEUE/status	status file
+.fi
+.SH "SEE ALSO"
+.BR lpd.conf (5),
+.BR lpc (8),
+.BR lpd (8),
+.BR checkpc (8),
+.BR lpq (1),
+.BR lprm (1),
+.BR checkpc (8),
+.BR printcap (5),
+.BR lpd.perms (5),
+.BR pr (1).
+.SH DIAGNOSTICS
+.nf
+Most of the diagnostics are self explanatory.
+If you are puzzled over the exact cause of failure,
+set the debugging level on (-D5) and run again.
+The debugging information will 
+help you to pinpoint the exact cause of failure.
+.fi
+.SH "HISTORY"
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+The LPRng mailing list is lprng@lprng.com;
+subscribe by sending mail to lprng-request@lprng.com with
+the word subscribe in the body.
+The software is available from ftp://ftp.lprng.com/pub/LPRng.
+.SH "AUTHOR"
+Patrick Powell <papowell@lprng.com>.

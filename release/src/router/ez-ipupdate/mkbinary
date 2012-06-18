@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+
+exes="ez-ipupdate"
+files="ez-ipupdate.lsm README example*.conf"
+
+arch=`uname -m`
+
+case $arch in
+  i?86) arch=i386;;
+  sun*) arch=sparc;;
+  ppc) arch=ppc;;
+  *) ;;
+esac
+
+os=`uname -s | tr '[A-Z]' '[a-z]'`
+
+make || { echo "error encountered"; exit 1; }
+
+version=`./ez-ipupdate -V | awk '{print $3}'`
+
+dir=ez-ipupdate-${version}-${os}-${arch}
+
+rm -rf $dir
+mkdir $dir || { echo "error encountered"; exit 1; }
+
+for f in $exes; do strip $f; done
+cp $exes $dir || { echo "error encountered"; exit 1; }
+cp $files $dir || { echo "error encountered"; exit 1; }
+
+GZIP=--best tar chozf $dir.tar.gz $dir || { echo "error encountered"; exit 1; }
+rm -rf $dir
+
+echo "package $dir.tar.gz created"
+

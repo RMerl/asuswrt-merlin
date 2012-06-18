@@ -1,0 +1,18 @@
+# LIC: GPL
+
+ServPoET
+--------
+
+ServPoET is a commercial version of the PPPoE server.  While everything
+you received in this package is licensed under the GNU General Public
+License, ServPoET is not free software and is licensed under a traditional
+commercial license.
+
+ServPoET features RADIUS support, support for different realms,
+real-time server status reporting and a friendly curses-based GUI for
+administration.  For information on ServPoET:
+
+Contact Fine Point Technologies, Inc.  (http://www.finepoint.com/)
+
+--
+David F. Skoll <dfs@roaringpenguin.com>

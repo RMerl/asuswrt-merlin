@@ -1,0 +1,34 @@
+Primary site is:
+	http://developer.osdl.org/dev/iproute2
+
+Original FTP site is:
+	ftp://ftp.inr.ac.ru/ip-routing/
+
+How to compile this.
+--------------------
+1. Look at start of Makefile and set correct values for:
+
+KERNEL_INCLUDE should point to correct linux kernel include directory.
+Default (/usr/src/linux/include) is right as rule.
+
+DBM_INCLUDE points to the directory with db_185.h which
+is the include file used by arpd to get to the old format Berkely
+database routines.  Often this is in the db-devel package.
+
+2. make
+
+The makefile will automatically build a file Config which
+contains whether or not ATM is available, etc.
+
+3. To make documentation, cd to doc/ directory , then
+   look at start of Makefile and set correct values for
+   PAGESIZE=a4		, ie: a4 , letter ...	(string)
+   PAGESPERPAGE=2	, ie: 1 , 2 ...		(numeric)
+   and make there. It assumes, that latex, dvips and psnup
+   are in your path.
+
+Stephen Hemminger
+shemminger@osdl.org
+
+Alexey Kuznetsov
+kuznet@ms2.inr.ac.ru

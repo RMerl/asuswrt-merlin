@@ -1,0 +1,15 @@
+Building with the diet libc
+---------------------------
+
+This package optionally can be built with the diet libc instead of the
+glibc to provide small statically linked programs.  The resulting package
+has no dependency on any other package.
+
+To use the diet libc, make sure the latest versions of the dietlibc-dev
+package is installed, and set DEB_BUILD_OPTIONS=diet in the environment
+when building the package, e.g.:
+
+ # apt-get install dietlibc-dev
+ $ DEB_BUILD_OPTIONS=diet fakeroot apt-get source -b dropbear
+
+ -- Gerrit Pape <pape@smarden.org>, Sat, 17 Jul 2004 19:09:34 +0000

@@ -1,0 +1,223 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Simple Server Printcap Example</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Simple Client Printcap Entry "
+    href="simple.htm">
+    <link rel="NEXT" title=
+    "Using :oh To Select Printcap Information" href="x5732.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "simple.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x5732.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="CM">12.3. Simple Server Printcap
+      Example</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">cm=</var><span class=
+          "emphasis"><i class="EMPHASIS">comment for
+          status</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">filter=</var><span class=
+          "emphasis"><i class="EMPHASIS">job filter</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">lf=</var><span class=
+          "emphasis"><i class="EMPHASIS">log file</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">af=</var><span class=
+          "emphasis"><i class="EMPHASIS">accounting
+          file</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">lp=</var><span class=
+          "emphasis"><i class="EMPHASIS">output
+          device</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">mx=</var><span class=
+          "emphasis"><i class="EMPHASIS">maximum job
+          size</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">sd=</var><span class=
+          "emphasis"><i class="EMPHASIS">spool directory
+          file</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The previous section discussed printcap entries for use by
+      the client programs. Now we will discuss printcap entries for
+      use by the <b class="APPLICATION">lpd</b> server. In simple
+      configurations or when we have the <var class=
+      "LITERAL">force_localhost</var> option enabled we can use the
+      same printcap for both <b class="APPLICATION">LPRng</b>
+      clients and the <b class="APPLICATION">lpd</b> server.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5687"></a>
+<pre class="SCREEN">
+    # Local ASCII printer
+    lp1|printer
+      :server
+      :cm=Dumb printer
+      :lp=/dev/lp1
+      :sd=/var/spool/lpd/lp1
+      :lf=log:af=acct
+      :filter=/usr/local/libexec/filters/ifhp
+      :mx=0
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <ol type="1">
+        <li>
+          <p>The printcap entry name is <var class=
+          "LITERAL">lp1</var>. This information will be displayed
+          when requesting status information using the <b class=
+          "APPLICATION">lpq</b> program.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">printer</var> alias. This
+          allows a single spool queue to have multiple names.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">:server</var> option
+          specifies this printcap entry is only used by <b class=
+          "APPLICATION">lpd</b> server.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">:cm</var> field supplies a
+          information field for <b class="APPLICATION">lpq</b>
+          (printer status) output.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">:lp</var> value specifies the
+          destination file, device or remote spool queue to which
+          data is sent. In this example it is the device <tt class=
+          "FILENAME">/dev/lp1</tt>. By default, IO devices are
+          opened for <span class="emphasis"><i class=
+          "EMPHASIS">write-only</i></span> operation.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">:sd=/path</var> specifies the
+          <span class="emphasis"><i class="EMPHASIS">spool
+          directory</i></span> where print job files are stored
+          until they are printed.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">:lf</var> and <var class=
+          "LITERAL">:af</var> options specify the names of the log
+          and accounting files, respectively. These have the
+          default values <var class="LITERAL">log</var> and <var
+          class="LITERAL">acct</var> respectively. If not an
+          absolute path, the file is relative to the spool queue
+          directory. If these files don't exist, they will not be
+          created, and no logging or accounting will be done. You
+          will need to create them manually (e.g., by using <var
+          class="LITERAL">touch</var>) or by using the <span class=
+          "emphasis"><i class="EMPHASIS"><a href=
+          "checkpc.htm">checkpc</a></i></span> program. If you do
+          not want a log or accounting file, then use <var class=
+          "LITERAL">:lf=</var>, i.e. - no value.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">:filter=/path</var> option
+          specifies a filter program to be used to process job
+          files. Filters and print formats are discussed in <a
+          href="filters.htm">Filters</a>.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">mx</var> indicates the maximum
+          file size for a print job. Specifying 0 means that there
+          is no limit.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "simple.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x5732.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Simple Client
+          Printcap Entry</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Using :oh To
+          Select Printcap Information</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

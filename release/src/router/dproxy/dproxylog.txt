@@ -1,0 +1,101 @@
+2001/12/06 14:55 by CMChang
+ Only process A (ipv4), PTR resource records (RR). The other RRs
+ are passed the external real DNS server and don't cache it.
+ 1. version: v0.5 (updated from v0.4)
+    original source: dproxy-nexgen.tar.gz
+ 3. dproxy.c
+    -- initial retval=0 from -1 in function dns_handle_new_query()
+       to pass other RR to real DNS server
+    -- only cache those whose type is A or PTR in dns_handle_request()
+
+2001/11/19 21:11 by CMChang
+ To support the blocking of some DNS name (keyword)
+ 1. version: v0.4 (updated from v0.3a)
+    original source: dproxy-nexgen.tar.gz
+ 2. Makefile for mipsel platform
+    -- change CC=mipsel-linux-gcc from CC=arm-linux-gcc
+ 3. dproxy.c
+    -- call deny_lookup_name() in function dns_handle_new_query()
+ 4. cache.c, cache.h
+    -- add two functions: deny_lookup_name() and deny_byname()
+
+2001/12/27 13:22 by CMChang
+ 1. version: v0.3a (updated from v0.3)
+    original source: dproxy-nexgen.tar.gz
+ 2. dproxy.h
+    -- change NAME_SIZE to 256 from 255
+    -- change MAX_LIST_SIZE to 150 from 100
+ 3. dns_list.c
+    -- del oldest one when too many requests are coming in function
+       dns_list_add()
+    -- malloc(sizeof(dns_request_t)) instead of malloc(size()*10)
+       in function dns_list_add()
+
+2001/10/29 20:41 by CMChang
+ 1. version: v0.3 (updated from v0.2)
+    original source: dproxy-nexgen.tar.gz
+ 2. cache.c
+    -- Bug: "dns_cache_count" should increase when new one is coming
+            in function cache_name_append()
+    -- for the hosts in /etc/hosts, no the active time in function
+       cache_add_hosts_entries()
+
+2001/08/09 20:02 by CMChang
+ In v0.1, dproxy forks itself to process a new query, so sometimes
+ all memory is exhausted, specially when pppd changes its dynamic
+ IP address from ISP.
+ 1. version: v0.2 (updated from original source)
+    original source: dproxy-nexgen.tar.gz
+ 2. ./Makefile
+    -- CC=arm-linux-gcc
+ 3. dns.h for alignment problem
+    -- add __attribute__((packed)) to some structs (not all structs),
+       please note the element "f" of struct "header_flags"
+    -- add "int duplicate_queries" in struct "dns_request_t"
+ 4. dproxy.h
+    -- add definitions of DNS_DEBUG, DNS_TICK_TIME, CACHE_CHECK_TIME,
+       MAX_CACHE_NUM, MAX_LIST_SIZE
+ 5. dns_decode.c
+    -- redefine SET_UINT16, SET_UINT32 for alignment
+    -- modify variable "addr" for alignment in dns_decode_request()
+    -- protect "rr->data" for max size in dns_decode_rr()
+    -- exception handling (protection) in functions dns_decode_name()
+       and dns_decode_reverse_name()
+ 6. dproxy.c
+    -- add variable "cc" for compiling issue (EOF) in get_options()
+       ("char" is considered as "unsigned char" in ARM compiler)
+    -- add the function forward_dns_query(), which assumes the
+       nameservers in "/etc/resolv.conf" as its external server
+    -- call forward_dns_query() in dns_handle_new_query()
+    -- change checking tick time (DNS_TICK_TIME, CACHE_CHECK_TIME)
+       in function dns_main_loop()
+    -- process DNS_DEBUG to exclude debug()
+ 7. dns_construct.c
+    -- redefine SET_UINT16_TO_N, SET_UINT32_TO_N for alignment
+ 8. dns_list.c
+    -- initialize time_pending, duplicate_queries in dns_list_add()
+    -- process variable "dns_list_size" to limit list size in
+       dns_list_add() and dns_list_remove()
+       (each list item needs about 11 Kbytes memory)
+ 9. cache.c
+    -- process variable "dns_cache_count" to limit cache file size
+       in cache_name_append() and cache_purge()
+    -- for the hosts in /etc/hosts, the active time is changed from
+       0 to -86400 (24 hrs)
+
+2001/07/05 19:15 by CMChang
+ Implement DNS proxy in ARM and Linux v2.4
+ 1. version: v0.1 (updated from original source)
+    original source: dproxy-0.5.tar.gz
+ 2. ./Makefile
+    -- CC=arm-linux-gcc
+ 3. ./dproxy.c
+    -- add variable "cc" for compiling issue
+       ("char" is considered as "unsigned char" in ARM compiler)
+ 4. ./cache.c
+    -- add a variable "cache_count" to limit cache count <= 100
+    -- process the above variable "cache_count" in functions
+       cache_name_append() and cache_purge()
+ 5. DNS proxy purges the old items in the cache file only when
+    a new request is coming
+

@@ -1,0 +1,299 @@
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=27017
+
+--- trunk/gcc/ChangeLog	2008/11/13 20:04:18	141828
++++ trunk/gcc/ChangeLog	2008/11/13 21:04:32	141829
+@@ -1,6 +1,15 @@
+ 	"abstract and needed", do not release its DECL_INITIAL() content
+ 	will be needed to emit debug info.
+ 
++2008-11-13  Jakub Jelinek  <jakub@redhat.com>
++
++	PR c++/27017
++	* dwarf2out.c (prune_unused_types_walk_local_classes): New function.
++	(prune_unused_types_walk): Call it for non-perennial local classes.
++	Set die_mark to 2 if recursing on children.  If die_mark is 1 on
++	entry, just set it to 2 and recurse on children, don't walk attributes
++	again.
++
+ 2008-11-13  Uros Bizjak  <ubizjak@gmail.com>
+ 
+ 	Backport from mainline:
+--- trunk/gcc/dwarf2out.c	2008/11/13 20:04:18	141828
++++ trunk/gcc/dwarf2out.c	2008/11/13 21:04:32	141829
+@@ -16248,6 +16248,37 @@
+     }
+ }
+ 
++/* For local classes, look if any static member functions were emitted
++   and if so, mark them.  */
++
++static void
++prune_unused_types_walk_local_classes (dw_die_ref die)
++{
++  dw_die_ref c;
++
++  if (die->die_mark == 2)
++    return;
++
++  switch (die->die_tag)
++    {
++    case DW_TAG_structure_type:
++    case DW_TAG_union_type:
++    case DW_TAG_class_type:
++      break;
++
++    case DW_TAG_subprogram:
++      if (!get_AT_flag (die, DW_AT_declaration)
++	  || die->die_definition != NULL)
++	prune_unused_types_mark (die, 1);
++      return;
++
++    default:
++      return;
++    }
++
++  /* Mark children.  */
++  FOR_EACH_CHILD (die, c, prune_unused_types_walk_local_classes (c));
++}
+ 
+ /* Walk the tree DIE and mark types that we actually use.  */
+ 
+@@ -16256,12 +16287,34 @@
+ {
+   dw_die_ref c;
+ 
+-  /* Don't do anything if this node is already marked.  */
+-  if (die->die_mark)
++  /* Don't do anything if this node is already marked and
++     children have been marked as well.  */
++  if (die->die_mark == 2)
+     return;
+ 
+   switch (die->die_tag)
+     {
++    case DW_TAG_structure_type:
++    case DW_TAG_union_type:
++    case DW_TAG_class_type:
++      if (die->die_perennial_p)
++	break;
++
++      for (c = die->die_parent; c; c = c->die_parent)
++	if (c->die_tag == DW_TAG_subprogram)
++	  break;
++
++      /* Finding used static member functions inside of classes
++	 is needed just for local classes, because for other classes
++	 static member function DIEs with DW_AT_specification
++	 are emitted outside of the DW_TAG_*_type.  If we ever change
++	 it, we'd need to call this even for non-local classes.  */
++      if (c)
++	prune_unused_types_walk_local_classes (die);
++
++      /* It's a type node --- don't mark it.  */
++      return;
++
+     case DW_TAG_const_type:
+     case DW_TAG_packed_type:
+     case DW_TAG_pointer_type:
+@@ -16269,9 +16322,6 @@
+     case DW_TAG_volatile_type:
+     case DW_TAG_typedef:
+     case DW_TAG_array_type:
+-    case DW_TAG_structure_type:
+-    case DW_TAG_union_type:
+-    case DW_TAG_class_type:
+     case DW_TAG_interface_type:
+     case DW_TAG_friend:
+     case DW_TAG_variant_part:
+@@ -16293,10 +16343,15 @@
+       break;
+   }
+ 
+-  die->die_mark = 1;
++  if (die->die_mark == 0)
++    {
++      die->die_mark = 1;
++
++      /* Now, mark any dies referenced from here.  */
++      prune_unused_types_walk_attribs (die);
++    }
+ 
+-  /* Now, mark any dies referenced from here.  */
+-  prune_unused_types_walk_attribs (die);
++  die->die_mark = 2;
+ 
+   /* Mark children.  */
+   FOR_EACH_CHILD (die, c, prune_unused_types_walk (c));
+--- trunk/gcc/testsuite/ChangeLog	2008/11/13 20:04:18	141828
++++ trunk/gcc/testsuite/ChangeLog	2008/11/13 21:04:32	141829
+@@ -1,6 +1,12 @@
+ 	PR c++/37932
+ 	* g++.dg/conversion/bitfield11.C: New test.
+ 
++2008-11-13  Jakub Jelinek  <jakub@redhat.com>
++
++	PR c++/27017
++	* g++.dg/debug/dwarf2/localclass1.C: New test.
++	* g++.dg/debug/dwarf2/localclass2.C: New test.
++
+ 2008-11-13  Uros Bizjak  <ubizjak@gmail.com>
+ 
+ 	Backport from mainline:
+--- /dev/null
++++ trunk/gcc/testsuite/g++.dg/debug/dwarf2/localclass1.C	2008/11/13 21:04:32	141829
+@@ -0,0 +1,76 @@
++// PR c++/27017
++// { dg-do compile }
++// { dg-options "-gdwarf-2 -dA -feliminate-unused-debug-types -fno-merge-debug-strings" }
++
++int
++foo (int arg1)
++{
++  struct localstruct1
++  {
++    static inline int staticfn1 (int arg2)
++    {
++      int var2 = arg2 << 2;
++      return arg2 + var2;
++    }
++    static int staticfn2 (int arg3)
++    {
++      int var3 = arg3 << 2;
++      return arg3 + var3;
++    }
++    static inline int staticfn3 (int arg4)
++    {
++      int var4 = arg4 << 2;
++      return arg4 + var4;
++    }
++    static int staticfn4 (int arg5)
++    {
++      int var5 = arg5 << 2;
++      return arg5 + var5;
++    }
++    int method1 (int arg6)
++    {
++      int var6 = arg6 << 2;
++      return arg6 + var6;
++    }
++  };
++  struct localstruct2
++  {
++    static inline int staticfn5 (int arg7)
++    {
++      int var7 = arg7 << 2;
++      return arg7 + var7;
++    }
++    static int staticfn6 (int arg8)
++    {
++      int var8 = arg8 << 2;
++      return arg8 + var8;
++    }
++  };
++  return localstruct1::staticfn1 (arg1) + localstruct1::staticfn2 (arg1);
++}
++
++int
++main ()
++{
++  return foo (1) - 10;
++}
++
++// { dg-final { scan-assembler "main\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "foo\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "staticfn1\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "staticfn2\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "staticfn3\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "staticfn4\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "staticfn5\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "staticfn6\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "method1\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "arg1\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "arg2\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "arg3\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "arg4\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "arg5\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "arg6\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "arg7\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "arg8\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "localstruct1\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "localstruct2\[^\n\r\]*DW_AT_name" } }
+--- /dev/null
++++ trunk/gcc/testsuite/g++.dg/debug/dwarf2/localclass2.C	2008/11/13 21:04:32	141829
+@@ -0,0 +1,76 @@
++// PR c++/27017
++// { dg-do compile }
++// { dg-options "-gdwarf-2 -dA -O2 -feliminate-unused-debug-types -fno-merge-debug-strings" }
++
++int
++foo (int arg1)
++{
++  struct localstruct1
++  {
++    static inline int staticfn1 (int arg2)
++    {
++      int var2 = arg2 << 2;
++      return arg2 + var2;
++    }
++    static int staticfn2 (int arg3)
++    {
++      int var3 = arg3 << 2;
++      return arg3 + var3;
++    }
++    static inline int staticfn3 (int arg4)
++    {
++      int var4 = arg4 << 2;
++      return arg4 + var4;
++    }
++    static int staticfn4 (int arg5)
++    {
++      int var5 = arg5 << 2;
++      return arg5 + var5;
++    }
++    int method1 (int arg6)
++    {
++      int var6 = arg6 << 2;
++      return arg6 + var6;
++    }
++  };
++  struct localstruct2
++  {
++    static inline int staticfn5 (int arg7)
++    {
++      int var7 = arg7 << 2;
++      return arg7 + var7;
++    }
++    static int staticfn6 (int arg8)
++    {
++      int var8 = arg8 << 2;
++      return arg8 + var8;
++    }
++  };
++  return localstruct1::staticfn1 (arg1) + localstruct1::staticfn2 (arg1);
++}
++
++int
++main ()
++{
++  return foo (1) - 10;
++}
++
++// { dg-final { scan-assembler "main\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "foo\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "staticfn1\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "staticfn2\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "staticfn3\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "staticfn4\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "staticfn5\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "staticfn6\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "method1\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "arg1\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "arg2\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "arg3\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "arg4\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "arg5\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "arg6\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "arg7\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "arg8\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler "localstruct1\[^\n\r\]*DW_AT_name" } }
++// { dg-final { scan-assembler-not "localstruct2\[^\n\r\]*DW_AT_name" } }

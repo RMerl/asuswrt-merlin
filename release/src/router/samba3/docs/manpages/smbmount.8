@@ -1,0 +1,435 @@
+.\"     Title: smbmount
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: [FIXME: manual]
+.\"    Source: [FIXME: source]
+.\"  Language: English
+.\"
+.TH "SMBMOUNT" "8" "09/30/2009" "[FIXME: source]" "[FIXME: manual]"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+smbmount \- mount an smbfs filesystem
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCsmbmount\F[] {service} {mount\-point} [\-o\ options]
+.fam
+.SH "DESCRIPTION"
+.PP
+\FCsmbmount\F[]
+mounts a Linux SMB filesystem\&. It is usually invoked as
+\FCmount\&.smbfs\F[]
+by the
+\fBmount\fR(8)
+command when using the "\-t smbfs" option\&. This command only works in Linux, and the kernel must support the smbfs filesystem\&.
+.PP
+WARNING:
+\FCsmbmount\F[]
+is deprecated and not maintained any longer\&.
+\FCmount\&.cifs\F[]
+(mount \-t cifs) should be used instead of
+\FCsmbmount\F[]\&.
+.PP
+Options to
+\FCsmbmount\F[]
+are specified as a comma\-separated list of key=value pairs\&. It is possible to send options other than those listed here, assuming that smbfs supports them\&. If you get mount failures, check your kernel log for errors on unknown options\&.
+.PP
+\FCsmbmount\F[]
+is a daemon\&. After mounting it keeps running until the mounted smbfs is umounted\&. It will log things that happen when in daemon mode using the "machine name" smbmount, so typically this output will end up in
+\FClog\&.smbmount\F[]\&. The
+\FC smbmount\F[]
+process may also be called mount\&.smbfs\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.BM yellow
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.PP
+
+\FCsmbmount\F[]
+calls
+\fBsmbmnt\fR(8)
+to do the actual mount\&. You must make sure that
+\FCsmbmnt\F[]
+is in the path so that it can be found\&.
+.sp .5v
+.EM yellow
+.RE
+.SH "OPTIONS"
+.PP
+username=<arg>
+.RS 4
+specifies the username to connect as\&. If this is not given, then the environment variable
+\fB USER\fR
+is used\&. This option can also take the form "user%password" or "user/workgroup" or "user/workgroup%password" to allow the password and workgroup to be specified as part of the username\&.
+.RE
+.PP
+password=<arg>
+.RS 4
+specifies the SMB password\&. If this option is not given then the environment variable
+\FCPASSWD\F[]
+is used\&. If it can find no password
+\FCsmbmount\F[]
+will prompt for a password, unless the guest option is given\&.
+.sp
+Note that passwords which contain the argument delimiter character (i\&.e\&. a comma \',\') will failed to be parsed correctly on the command line\&. However, the same password defined in the PASSWD environment variable or a credentials file (see below) will be read correctly\&.
+.RE
+.PP
+credentials=<filename>
+.RS 4
+specifies a file that contains a username and/or password\&. The format of the file is:
+.sp
+.if n \{\
+.RS 4
+.\}
+.fam C
+.ps -1
+.nf
+.if t \{\
+.sp -1
+.\}
+.BB lightgray adjust-for-leading-newline
+.sp -1
+
+username=value
+password=value
+.EB lightgray adjust-for-leading-newline
+.if t \{\
+.sp 1
+.\}
+.fi
+.fam
+.ps +1
+.if n \{\
+.RE
+.\}
+.sp
+This is preferred over having passwords in plaintext in a shared file, such as
+\FC/etc/fstab\F[]\&. Be sure to protect any credentials file properly\&.
+.RE
+.PP
+krb
+.RS 4
+Use kerberos (Active Directory)\&.
+.RE
+.PP
+netbiosname=<arg>
+.RS 4
+sets the source NetBIOS name\&. It defaults to the local hostname\&.
+.RE
+.PP
+uid=<arg>
+.RS 4
+sets the uid that will own all files on the mounted filesystem\&. It may be specified as either a username or a numeric uid\&.
+.RE
+.PP
+gid=<arg>
+.RS 4
+sets the gid that will own all files on the mounted filesystem\&. It may be specified as either a groupname or a numeric gid\&.
+.RE
+.PP
+port=<arg>
+.RS 4
+sets the remote SMB port number\&. The default is 445, fallback is 139\&.
+.RE
+.PP
+fmask=<arg>
+.RS 4
+sets the file mask\&. This determines the permissions that remote files have in the local filesystem\&. This is not a umask, but the actual permissions for the files\&. The default is based on the current umask\&.
+.RE
+.PP
+dmask=<arg>
+.RS 4
+Sets the directory mask\&. This determines the permissions that remote directories have in the local filesystem\&. This is not a umask, but the actual permissions for the directories\&. The default is based on the current umask\&.
+.RE
+.PP
+debug=<arg>
+.RS 4
+Sets the debug level\&. This is useful for tracking down SMB connection problems\&. A suggested value to start with is 4\&. If set too high there will be a lot of output, possibly hiding the useful output\&.
+.RE
+.PP
+ip=<arg>
+.RS 4
+Sets the destination host or IP address\&.
+.RE
+.PP
+workgroup=<arg>
+.RS 4
+Sets the workgroup on the destination
+.RE
+.PP
+sockopt=<arg>
+.RS 4
+Sets the TCP socket options\&. See the
+\fBsmb.conf\fR(5)
+\fIsocket options\fR
+option\&.
+.RE
+.PP
+scope=<arg>
+.RS 4
+Sets the NetBIOS scope
+.RE
+.PP
+guest
+.RS 4
+Don\'t prompt for a password
+.RE
+.PP
+ro
+.RS 4
+mount read\-only
+.RE
+.PP
+rw
+.RS 4
+mount read\-write
+.RE
+.PP
+iocharset=<arg>
+.RS 4
+sets the charset used by the Linux side for codepage to charset translations (NLS)\&. Argument should be the name of a charset, like iso8859\-1\&. (Note: only kernel 2\&.4\&.0 or later)
+.RE
+.PP
+codepage=<arg>
+.RS 4
+sets the codepage the server uses\&. See the iocharset option\&. Example value cp850\&. (Note: only kernel 2\&.4\&.0 or later)
+.RE
+.PP
+ttl=<arg>
+.RS 4
+sets how long a directory listing is cached in milliseconds (also affects visibility of file size and date changes)\&. A higher value means that changes on the server take longer to be noticed but it can give better performance on large directories, especially over long distances\&. Default is 1000ms but something like 10000ms (10 seconds) is probably more reasonable in many cases\&. (Note: only kernel 2\&.4\&.2 or later)
+.RE
+.SH "ENVIRONMENT VARIABLES"
+.PP
+The variable
+\fBUSER\fR
+may contain the username of the person using the client\&. This information is used only if the protocol level is high enough to support session\-level passwords\&. The variable can be used to set both username and password by using the format username%password\&.
+.PP
+The variable
+\fBPASSWD\fR
+may contain the password of the person using the client\&. This information is used only if the protocol level is high enough to support session\-level passwords\&.
+.PP
+The variable
+\fBPASSWD_FILE\fR
+may contain the pathname of a file to read the password from\&. A single line of input is read and used as the password\&.
+.SH "OTHER COMMANDS"
+.PP
+File systems that have been mounted using the
+\FCsmbmount\F[]
+can be unmounted using the
+\FCsmbumount\F[]
+or the UNIX system
+\FCumount\F[]
+command\&.
+.SH "BUGS"
+.PP
+Passwords and other options containing , can not be handled\&. For passwords an alternative way of passing them is in a credentials file or in the PASSWD environment\&.
+.PP
+The credentials file does not handle usernames or passwords with leading space\&.
+.PP
+One smbfs bug is important enough to mention here, even if it is a bit misplaced:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Mounts sometimes stop working\&. This is usually caused by smbmount terminating\&. Since smbfs needs smbmount to reconnect when the server disconnects, the mount will eventually go dead\&. An umount/mount normally fixes this\&. At least 2 ways to trigger this bug are known\&.
+.sp
+.RE
+.PP
+Note that the typical response to a bug report is suggestion to try the latest version first\&. So please try doing that first, and always include which versions you use of relevant software when reporting bugs (minimum: samba, kernel, distribution)
+.SH "SEE ALSO"
+.PP
+Documentation/filesystems/smbfs\&.txt in the linux kernel source tree may contain additional options and information\&.
+.PP
+FreeBSD also has a smbfs, but it is not related to smbmount
+.PP
+For Solaris, HP\-UX and others you may want to look at
+\fBsmbsh\fR(1)
+or at other solutions, such as Sharity or perhaps replacing the SMB server with a NFS server\&.
+.SH "AUTHOR"
+.PP
+Volker Lendecke, Andrew Tridgell, Michael H\&. Warfield and others\&.
+.PP
+The current maintainer of smbfs and the userspace tools
+\FCsmbmount\F[],
+\FCsmbumount\F[], and
+\FCsmbmnt\F[]
+is
+Urban Widmark\&. The
+SAMBA Mailing list
+is the preferred place to ask questions regarding these programs\&.
+.PP
+The conversion of this manpage for Samba 2\&.2 was performed by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

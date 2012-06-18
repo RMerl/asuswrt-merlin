@@ -1,0 +1,214 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 4] 4.4 Server Configuration</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:32:07Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_03.html" TITLE="4.3 Configuration File Options">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.3 Configuration File Options" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch04_01.html" TITLE="4. Disk Shares ">
+Chapter 4<br>
+Disk Shares </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_05.html" TITLE="4.5 Disk Share Configuration">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.5 Disk Share Configuration" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch04-71382">
+4.4 Server Configuration</a></h2><P CLASS="para">Now it's time to begin configuring your Samba server. Let's introduce three basic configuration options that can appear in the <CODE CLASS="literal">
+[global]</code> section of your <I CLASS="filename">
+smb.conf</i> file:</p><PRE CLASS="programlisting">
+[global]
+	#  Server configuration parameters
+	netbios name = HYDRA
+	server string = Samba %v on (%L)
+	workgroup = SIMPLE</pre><P CLASS="para">
+This configuration file is pretty simple; it advertises the Samba server on a NBT network under the NetBIOS name <CODE CLASS="literal">
+hydra</code>. In addition, the machine belongs to the workgroup SIMPLE and displays a description to clients that includes the Samba version number as well as the NetBIOS name of the Samba server.</p><P CLASS="para">
+If you had to enter <CODE CLASS="literal">
+encrypt passwords=yes </code>in your earlier configuration file, you should do so here as well.</p><P CLASS="para">
+Go ahead and try this configuration file. Create a file named <I CLASS="filename">
+smb.conf</i> under the <I CLASS="filename">
+/usr/local/samba/lib</i> directory with the text listed above. Then reset the Samba server and use a Windows client to verify the results. Be sure that your Windows clients are in the SIMPLE workgroup as well. After clicking on the Network Neighborhood on a Windows client, you should see a window similar to <A CLASS="xref" HREF="ch04_04.html#ch04-38915">
+Figure 4.2</a>. (In this figure, <CODE CLASS="literal">
+phoenix</code> and <CODE CLASS="literal">
+chimaera</code> are our Windows clients.) </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch04-38915">
+Figure 4.2: Network Neighborhood showing the Samba server</a></h4><IMG CLASS="graphic" SRC="figs/sam.0402.gif" ALT="Figure 4.2"><P CLASS="para">
+You can verify the <CODE CLASS="literal">
+server</code> <CODE CLASS="literal">
+string</code> by listing the details of the Network Neighborhood window (select the Details menu item under the View menu), at which point you should see a window similar to <A CLASS="xref" HREF="ch04_04.html#ch04-50900">
+Figure 4.3</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch04-50900">
+Figure 4.3: Network Neighborhood details listing</a></h4><IMG CLASS="graphic" SRC="figs/sam.0403.gif" ALT="Figure 4.3"><P CLASS="para">
+If you were to click on the Hydra icon, a window should appear that shows the services that it provides. In this case, the window would be completely empty because there are no shares on the server yet.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-pgfId-961293">
+4.4.1 Server Configuration Options</a></h3><P CLASS="para">
+<A CLASS="xref" HREF="ch04_04.html#ch04-61150">Table 4.3</a> summarizes the server configuration options introduced previously. Note that all three of these options are global in scope; in other words, they must appear in the <CODE CLASS="literal">
+[global]</code> section of the configuration file. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch04-61150">
+Table 4.3: Server Configuration Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+netbios name</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the primary NetBIOS name of the Samba server.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Server DNS hostname</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+server string</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets a descriptive string for the Samba server.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+Samba %v</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+workgroup</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the NetBIOS group of machines that the server belongs to.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Defined at compile time</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-955762">
+4.4.1.1 netbios name</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+netbios</code> <CODE CLASS="literal">
+name</code> option allows you to set the NetBIOS name of the server. For example:</p><PRE CLASS="programlisting">
+netbios name = YORKVM1</pre><P CLASS="para">
+The default value for this configuration option is the server's hostname; that is, the first part of its complete DNS machine name. For example, a machine with the DNS name <CODE CLASS="literal">
+ruby.ora.com</code> would be given the NetBIOS name <CODE CLASS="literal">
+RUBY</code> by default. While you can use this option to restate the machine's NetBIOS name in the configuration file (as we did previously), it is more commonly used to assign the Samba server a NetBIOS name other than its current DNS name. Remember that the name given must follow the rules for valid NetBIOS machine names as outlines in <a href="ch01_01.html"><b>Chapter 1, <CITE CLASS="chapter">Learning the Samba</cite></b></a>.</p><P CLASS="para">
+Changing the NetBIOS name of the server is not recommended unless you have a good reason. One such reason might be if the hostname of the machine is not unique because the LAN is divided over two or more DNS domains. For example, YORKVM1 is a good NetBIOS candidate for <i>vm1.york.example.com</i> to differentiate it from <EM CLASS="emphasis">
+vm1.falkirk.example.com</em>, which has the same hostname but resides in a different DNS domain.</p><P CLASS="para">
+Another use of this option is for relocating SMB services from a dead or retired machine. For example, if <CODE CLASS="literal">
+SALES</code> is the SMB server for the department, and it suddenly dies, you could immediately reset <CODE CLASS="literal">
+netbios</code> <CODE CLASS="literal">
+name</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+SALES</code> on a backup Samba machine that's taking over for it. Users won't have to change their drive mappings to a different machine; new connections to <CODE CLASS="literal">
+SALES</code> will simply go to the new machine.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-955977">
+4.4.1.2 server string</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+server</code> <CODE CLASS="literal">
+string</code> parameter defines a comment string that will appear next to the server name in both the Network Neighborhood (when shown with the Details menu) and the comment entry of the Microsoft Windows print manager. You can use the standard variables to provide information in the description. For example, our entry earlier was:</p><PRE CLASS="programlisting">
+[global]
+	server string = Samba %v on (%h)</pre><P CLASS="para">
+The default for this option simply presents the current version of Samba and is equivalent to:</p><PRE CLASS="programlisting">
+server string = Samba %v</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-955973">
+4.4.1.3 workgroup</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+workgroup</code> parameter sets the current workgroup where the Samba server will advertise itself. Clients that wish to access shares on the Samba server should be on the same NetBIOS workgroup. Remember that workgroups are really just NetBIOS group names, and must follow the standard NetBIOS naming conventions outlined in <a href="ch01_01.html"><b>Chapter 1</b></a>. For example:</p><PRE CLASS="programlisting">
+[global]
+	workgroup = SIMPLE</pre><P CLASS="para">
+The default option for this parameter is set at compile time. If the entry is not changed in the makefile, it will be <CODE CLASS="literal">
+WORKGROUP</code>. Because this tends to be the workgroup name of every unconfigured NetBIOS network, we recommend that you always set your workgroup name in the Samba configuration file.[<A CLASS="footnote" HREF="#ch04-pgfId-962322">2</a>] </p><BLOCKQUOTE CLASS="footnote">
+<DIV CLASS="footnote">
+<P CLASS="para">
+<A CLASS="footnote" NAME="ch04-pgfId-962322">[2]</a> We should also mention that it is an inherently bad idea to have a workgroup that shares the same name as a server.</p></div></blockquote></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_03.html" TITLE="4.3 Configuration File Options">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.3 Configuration File Options" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_05.html" TITLE="4.5 Disk Share Configuration">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.5 Disk Share Configuration" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+4.3 Configuration File Options</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+4.5 Disk Share Configuration</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

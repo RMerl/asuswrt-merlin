@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Printer Load Balancing</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Dynamic Routing " href=
+    "destinations.htm">
+    <link rel="NEXT" title="Locations of Printcap Files " href=
+    "printcappath.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "destinations.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "printcappath.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="LOADBALANCE">12.14. Printer Load
+      Balancing</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">ss=</var><span class=
+          "emphasis"><i class="EMPHASIS">queue served by
+          printer</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">sv=</var><span class=
+          "emphasis"><i class="EMPHASIS">printers where jobs are
+          sent (servers)</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>In a large site, you could have several equivalent
+      printers, which will be used by many people. The reason for
+      this is, of course, to increase the printer output by
+      enabling several jobs to be printed at once. A load balance
+      print queue is one that feeds jobs to other queues and has a
+      <var class="LITERAL">sv=q1,q2,...</var> printcap entry that
+      specifies the destination or server queues. These must be
+      print queue entries and have spool directories on the
+      server.</p>
+
+      <p>The service queues have a <var class=
+      "LITERAL">ss=</var><span class="emphasis"><i class=
+      "EMPHASIS">mainqueue</i></span> printcap entry This informs
+      the <b class="APPLICATION">lpd</b> server that the queue
+      operates under the control of the <span class="emphasis"><i
+      class="EMPHASIS">mainqueue</i></span> print queue, and is fed
+      jobs from it.</p>
+
+      <p>During normal operation, when the <b class=
+      "APPLICATION">lpd</b> server has a job to print in the <span
+      class="emphasis"><i class="EMPHASIS">mainqueue</i></span>, it
+      will check to see if there is an idle <span class=
+      "emphasis"><i class="EMPHASIS">service</i></span> queue. If
+      there is, it will transfer the job to the service queue
+      spooling directory and start the service queue printing
+      activities.</p>
+
+      <p>Even though the queues are not meant for direct use,
+      people can print directly to individual queues. This allows a
+      specific load sharing printer to be used. If you wanted to
+      <span class="emphasis"><i class="EMPHASIS">hide</i></span>
+      the load sharing printers, i.e. - not allow direct spooling
+      to them, then you would simply remove the non-server entries
+      from the printcap.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "destinations.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "printcappath.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Dynamic
+          Routing</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Locations of
+          Printcap Files</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

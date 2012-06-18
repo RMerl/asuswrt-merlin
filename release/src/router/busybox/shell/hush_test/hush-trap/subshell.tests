@@ -1,0 +1,20 @@
+# Non-empty traps should be reset in subshell
+
+# HUP is special in interactive shells
+trap '' HUP
+# QUIT is always special
+trap '' QUIT
+# SYS is not special
+trap '' SYS
+# WINCH is harmless
+trap 'bad: caught WINCH' WINCH
+# With TERM we'll check whether it is reset
+trap 'bad: caught TERM'  TERM
+
+# using bash, because we don't have $PPID (yet)
+(trap; bash -c 'kill -HUP   $PPID'; echo Ok)
+(trap; bash -c 'kill -QUIT  $PPID'; echo Ok)
+(trap; bash -c 'kill -SYS   $PPID'; echo Ok)
+(trap; bash -c 'kill -WINCH $PPID'; echo Ok)
+(trap; bash -c 'kill -TERM  $PPID'; echo Bad: TERM is not reset)
+echo Done

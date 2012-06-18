@@ -1,0 +1,39 @@
+core-y += arch/um/sys-i386/ arch/i386/crypto/
+
+TOP_ADDR := $(CONFIG_TOP_ADDR)
+
+ifeq ($(CONFIG_MODE_SKAS),y)
+  ifneq ($(CONFIG_MODE_TT),y)
+     START := 0x8048000
+  endif
+endif
+
+LDFLAGS			+= -m elf_i386
+ELF_ARCH		:= $(SUBARCH)
+ELF_FORMAT 		:= elf32-$(SUBARCH)
+OBJCOPYFLAGS  		:= -O binary -R .note -R .comment -S
+
+ifeq ("$(origin SUBARCH)", "command line")
+ifneq ("$(shell uname -m | sed -e s/i.86/i386/)", "$(SUBARCH)")
+CFLAGS			+= $(call cc-option,-m32)
+AFLAGS			+= $(call cc-option,-m32)
+LINK-y			+= $(call cc-option,-m32)
+UML_OBJCOPYFLAGS	+= -F $(ELF_FORMAT)
+
+export LDFLAGS HOSTCFLAGS HOSTLDFLAGS UML_OBJCOPYFLAGS
+endif
+endif
+
+ARCH_KERNEL_DEFINES += -U__$(SUBARCH)__ -U$(SUBARCH)
+
+# First of all, tune CFLAGS for the specific CPU. This actually sets cflags-y.
+include $(srctree)/arch/i386/Makefile.cpu
+
+# prevent gcc from keeping the stack 16 byte aligned. Taken from i386.
+cflags-y += $(call cc-option,-mpreferred-stack-boundary=2)
+
+# Prevent sprintf in nfsd from being converted to strcpy and resulting in
+# an unresolved reference.
+cflags-y += -ffreestanding
+
+CFLAGS += $(cflags-y)

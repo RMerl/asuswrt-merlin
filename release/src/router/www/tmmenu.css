@@ -1,0 +1,434 @@
+﻿/*
+	Tomato GUI
+	Copyright (C) 2006-2009 Jonathan Zarate
+	http://www.polarcloud.com/tomato/
+
+	For use with Tomato Firmware only.
+	No part of this file may be used without permission.
+*/
+
+
+a {
+	text-decoration: none;
+	color: #af4141;
+}
+
+table {
+	empty-cells: show;
+}
+
+form {
+	padding: 0;
+	margin: 0;
+}
+
+input,
+select {
+}
+input[type='checkbox'][disabled] {
+	opacity: 0.3;
+}
+input[type='text'],
+input[type='password'] {
+	padding: 0;
+	margin: 1px;
+}
+input[type='checkbox'] {
+	padding: 0;
+	margin: 1px 0 2px 0;
+}
+input[type='radio'] {
+	padding-left: 0;
+	margin-left: 0;
+}
+select {
+	margin: 0;
+}
+.error {
+	background: #ffffd0;
+}
+.error-focused {
+	border: 1px dashed #f77;
+}
+
+#container {
+	background: #fff;
+	border-spacing: 0;
+	width: 900px;
+	margin: 2px auto;
+	margin-bottom: 50px;
+}
+
+#header {
+	background: #af4141;
+	padding: 30px 10px 20px 10px;
+	border-bottom: 2px dotted #ddd;
+}
+#header .title {
+	font: 25px sans-serif;
+	color: #fff;
+	font-weight: bold;
+}
+#header .version {
+	font: 15px sans-serif;
+	color: #eee;
+	font-weight: bold;
+}
+
+#navi {
+	width: 130px;
+	font-size: 12px;
+	border-right: 1px solid #f0f0f0;
+	padding: 20px 0;
+	vertical-align: top;
+}
+#navi a {
+	display: block;
+	color: #af4141;
+}
+#navi a:hover {
+	background: #BF6060;
+	border: none;
+	color: #fff;
+}
+
+#navi a.indent1 {
+	padding: 2px 0 2px 10px;
+}
+#navi a.indent2 {
+	padding: 2px 0 2px 25px;
+}
+
+#navi .active {
+	font-weight: bold;
+}
+
+#content {
+	padding: 5px 4px 20px 4px;
+	vertical-align: top;
+	width: 770px;
+}
+
+#ident {
+	color: #aaa;
+	text-align: right;
+	padding-right: 5px;
+	font-size: 11px;
+}
+
+#tabs {
+	padding: 0;
+	margin: 0;
+}
+#tabs li {
+	display: inline;
+	list-style: none;
+	background-color: #1F2D35;
+}
+#tabs a {
+	padding-top: 3px;
+	padding-bottom: 10px;
+	padding-left: 10px;
+	padding-right: 10px;
+	font-family: Verdana;
+	font-size: 12px;
+	font-weight: bold;
+	display: block;
+	float: left;
+	margin: 0;
+	text-align: center;
+	text-decoration: none;
+	height: 15px;
+	color: #000000
+	background-color: #1F2D35;
+	background: url(/images/statusTitle.gif) repeat-x;"
+}
+
+.active {
+	background-color: #1F2D35;
+	color: #FFFFFF;
+	font-weight: bold;
+	border-width: 2px;
+	background: url(/images/svg_th_hover.png) repeat-x;"
+}
+#tabs a.active {
+	background-color: #1F2D35;
+	color: #FFFFFF;
+	font-weight: bold;
+	border-width: 2px;
+	background: url(/images/svg_th_hover.png) repeat-x;"
+}
+#tabs a:hover {
+	/*background-color:#000000;*/
+	background: url(/images/svg_th_hover.png) repeat-x;"
+	color: #FFFFFF;
+	font-weight: bold;
+}
+
+.section-title {
+	font-size: 14px;
+	color: #444;
+	margin: 0 0 10px 0;
+	padding-bottom: 4px;
+	border-bottom: 1px solid #f0f0f0;
+}
+.section {
+	padding: 0px 0px 0px 0px;
+}
+.section ul {
+	margin-left: 0px;
+	padding-left: 15px;
+}
+table.fields {
+}
+.fields td {
+	padding: 2px 0;
+}
+.fields td.title {
+	width: 150px;
+}
+.fields td.title.indent1 {
+	padding: 1px 15px 1px 0;
+}
+.fields td.title.indent2 {
+	padding: 1px 5px 1px 10px;
+}
+.fields .spacer {
+	height: 8px;
+}
+.fields td.content {
+	width: 585px;					/* zzz	Opera likes this fixed px */
+	vertical-align: top;
+}
+
+
+.tomato-grid {
+	padding: 0;
+	margin: -5px 5px -5px -5px;
+	border-spacing: 1px;
+	border-collapse: separate;
+	background: #999999;
+	width: 101.7%;
+}
+.tomato-grid td {
+	padding: 5px;
+	margin: 0px;
+	font: 12px sans-serif;
+}
+.tomato-grid .header {
+	background: #e7e7e7;
+	cursor: pointer;
+}
+.tomato-grid .header td {
+	height: 20px;
+	font: 12px sans-serif;
+	color: #ffffff;
+	background: #4E6D95;
+}
+.tomato-grid .footer {
+	background: #f0f0f0;
+}
+.tomato-grid .odd {
+	background: #f7f7f7;
+	cursor: pointer;
+}
+.tomato-grid .even {
+	background: #fff;
+	cursor: pointer;
+}
+.tomato-grid .disabled {
+	color: #999;
+}
+.tomato-grid .odd:hover,
+.tomato-grid .even:hover {
+	background: #f7e0e0;
+}
+.tomato-grid input {
+	margin: 0;
+	padding: 0;
+}
+.tomato-grid .edit {
+	padding: 0;
+	margin: 0;
+}
+.tomato-grid .editor {
+	background: #f0f0f0;
+}
+.tomato-grid .controls {
+	background: #f0f0f0;
+	text-align: right;
+}
+.tomato-grid .sortasc {
+	background-image: url(up.gif);
+	background-position: 97% 60%;
+	background-repeat: no-repeat;
+}
+.tomato-grid .sortdes {
+	background-image: url(dn.gif);
+	background-position: 97% 80%;
+	background-repeat: no-repeat;
+}
+.tomato-grid a {
+	color: #407050;
+}
+.tomato-grid a:hover {
+	color: #fff;
+}
+.tomato-grid input,
+.tomato-grid select {
+	width: 98%;
+}
+.tomato-grid .controls input {
+	font: 11px sans-serif;
+	width: 60px;
+}
+
+#tg-row-panel {
+	position: absolute;
+	margin: 0;
+	padding: 0;
+}
+#tg-row-panel img {
+	cursor: pointer;
+	opacity: 0.6;
+	margin: 0;
+	padding: 0;
+	background: #fff;
+	border: 1px solid #fff;
+}
+#tg-row-panel img:hover {
+	opacity: 1;
+	border: 1px solid #eee;
+}
+
+#refresh-time {
+	width: 120px;
+}
+#refresh-spinner {
+	visibility: hidden;
+	vertical-align: middle;
+}
+
+#notice1 {
+	margin: auto;
+	padding: 5px 5px;
+	width: 400px;
+	border: 1px solid #cbb;
+	background: #ffc;
+}
+
+.note-disabled,
+.note-disabledw,
+.note-warning {
+	background: #f7f7f7;
+	border: 1px solid #aaa;
+	width: 10em;
+	padding: 0.5em;
+	margin: 1em;
+	font-size: 0.9em
+}
+.note-disabledw,
+.note-warning {
+	width: 20em;
+}
+
+#ntpkiss {
+	background: #f7f7f7;
+	width: 50%;
+	padding: 4px;
+}
+#ntpkiss div {
+	border-top: 1px solid #e7e7e7;
+	padding: 4px;
+	margin-top: 4px;
+	text-align: right;
+}
+
+.bwmg {
+	padding: 4px;
+	margin: 0 0 3px 0;
+	width: 680px;
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+.bwmg th{
+	padding: 4px;
+	font-family:Verdana;
+	background-color:#1F2D35;
+	font-weight:normal;
+	line-height:30px;
+	text-align:right;
+	font-size:12px;
+	border: 1px solid black;
+}
+.bwmg td {
+	line-height:30px;
+	padding: 4px;
+	margin: 0px;
+	font: 12px Verdana;
+	background-color:#475A5F;
+	border: 1px solid black;
+}
+.bwmg .header {
+	background: #e7e7e7;
+}
+.bwmg .header td {
+	font: 12px Verdana;
+	font-weight: bold;
+}
+.bwmg .footer {
+	background: #f0f0f0;
+}
+.bwmg .odd {
+	background: #f7f7f7;
+}
+.bwmg .even {
+	background: #fff;
+}
+.rtitle {
+	width: 25%;
+	background: url(/images/general_th.gif) repeat;
+}
+.bwmg {
+	width: 25%;
+}
+.bwmg .dl,
+.bwmg .ul,
+.bwmg .total {
+	width: 25%;
+	text-align: right;
+}
+
+#bwm-controls .selected {
+	padding: 0 0px 0 4px;
+	font-weight: bold;
+	text-decoration: underline;
+}
+
+#trace-error {
+	padding: 0.2em 1em 0.2em 1em;
+	background: #fec;
+}
+
+#bwm-input {
+	font-family:Verdana;
+	font-size:11px;
+	color:#000000;
+	line-height:200%;
+	border: 1px solid  #7f9db9;
+}
+
+/*Viz Add  20110223   ---start*/
+.FormTitle{
+	line-height:160%;
+	font-size:12px;
+	font-family:Arial, Verdana, Arial, Helvetica, sans-serif;
+	color:white;
+	position:relative
+}
+
+.TM_select{
+	text-align:right;
+	padding:5px; 
+}
+/*Viz Add  20110223   --- end */

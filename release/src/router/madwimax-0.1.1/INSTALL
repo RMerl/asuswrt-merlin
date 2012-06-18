@@ -1,0 +1,51 @@
+madWiMAX: INSTALL
+
+These are the essential steps for compiling and installing this
+software.
+
+Prerequisites
+-------------
+
+ * Linux kernel with TUN/TAP support
+ * libusb-1.0 (http://libusb.wiki.sourceforge.net/Libusb1.0)
+ * asciidoc and docbook2x (for man pages)
+ * udev (optionally)
+
+Compiling
+---------
+
+If you are compiling from SCM you have to run
+   autoreconf --install
+first to create the 'configure' script.
+
+To compile the software run:
+   ./configure <options>
+   make
+
+You can get the list of configure options by running
+   ./configure --help
+
+Installing
+----------
+
+make install
+
+Udev rules
+----------
+
+By default, 'make install' puts an udev rules file to /etc/udev/rules.d
+directory if it is present. This file allows the driver to be started
+automatically if the device is plugged in. You can manually disable this
+feature by commenting out the appropriate lines in the rules file. Or even
+by supplying --without-udev option to the 'configure' script.
+
+Event scripts
+-------------
+
+madWiMAX uses user-supplied scripts to configure network. For example, to
+run DHCP client and configure iptables rules. madWiMAX comes with several
+scripts, optimized for some environments. They live in scripts/events. To
+select script event.sh.<name>.in to install pass --with-script=<name>
+option to 'configure' script. If you don't want to install any of the
+bundled scripts, pass --without-script.
+By default, 'generic' script is installed.

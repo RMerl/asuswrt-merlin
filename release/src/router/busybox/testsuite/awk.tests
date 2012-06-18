@@ -1,0 +1,199 @@
+#!/bin/sh
+
+# Copyright 2007 by Denys Vlasenko <vda.linux@googlemail.com>
+# Licensed under GPL v2, see file LICENSE for details.
+
+. ./testing.sh
+
+# testing "description" "command" "result" "infile" "stdin"
+
+testing "awk -F case 0" "awk -F '[#]' '{ print NF }'" ""    "" ""
+testing "awk -F case 1" "awk -F '[#]' '{ print NF }'" "0\n" "" "\n"
+testing "awk -F case 2" "awk -F '[#]' '{ print NF }'" "2\n" "" "#\n"
+testing "awk -F case 3" "awk -F '[#]' '{ print NF }'" "3\n" "" "#abc#\n"
+testing "awk -F case 4" "awk -F '[#]' '{ print NF }'" "3\n" "" "#abc#zz\n"
+testing "awk -F case 5" "awk -F '[#]' '{ print NF }'" "4\n" "" "#abc##zz\n"
+testing "awk -F case 6" "awk -F '[#]' '{ print NF }'" "4\n" "" "z#abc##zz\n"
+testing "awk -F case 7" "awk -F '[#]' '{ print NF }'" "5\n" "" "z##abc##zz\n"
+
+# 4294967295 = 0xffffffff
+testing "awk bitwise op"  "awk '{ print or(4294967295,1) }'" "4.29497e+09\n" "" "\n"
+optional DESKTOP
+testing "awk hex const 1" "awk '{ print or(0xffffffff,1) }'" "4.29497e+09\n" "" "\n"
+testing "awk hex const 2" "awk '{ print or(0x80000000,1) }'" "2.14748e+09\n" "" "\n"
+testing "awk oct const"   "awk '{ print or(01234,1) }'"      "669\n"         "" "\n"
+SKIP=
+
+# check that "hex/oct integer" heuristic doesn't kick in on 00NN.NNN
+testing "awk floating const with leading zeroes" \
+	"awk '{ printf \"%f %f\n\", \"000.123\", \"009.123\" }'" \
+	"0.123000 9.123000\n" \
+	"" "\n"
+
+# long field seps requiring regex
+testing "awk long field sep" "awk -F-- '{ print NF, length(\$NF), \$NF }'" \
+	"2 0 \n3 0 \n4 0 \n5 0 \n" \
+	"" \
+	"a--\na--b--\na--b--c--\na--b--c--d--"
+
+# '@(samp|code|file)\{' is an invalid extended regex (unmatched '{'),
+# but gawk 3.1.5 does not bail out on it.
+testing "awk gsub falls back to non-extended-regex" \
+	"awk 'gsub(\"@(samp|code|file)\{\",\"\");'; echo \$?" "0\n" "" "Hi\n"
+
+optional TAR BUNZIP2 FEATURE_SEAMLESS_BZ2
+test x"$SKIP" != x"1" && tar xjf awk_t1.tar.bz2
+testing "awk 'gcc build bug'" \
+	"awk -f awk_t1_opt-functions.awk -f awk_t1_opth-gen.awk <awk_t1_input | md5sum" \
+	"f842e256461a5ab1ec60b58d16f1114f  -\n" \
+	"" ""
+rm -rf awk_t1_* 2>/dev/null
+SKIP=
+
+Q='":"'
+
+testing "awk NF in BEGIN" \
+	"awk 'BEGIN { print ${Q} NF ${Q} \$0 ${Q} \$1 ${Q} \$2 ${Q} }'" \
+	":0::::\n" \
+	"" ""
+
+prg='
+function b(tmp) {
+	tmp = 0;
+	print "" tmp; #this line causes the bug
+	return tmp;
+}
+function c(tmpc) {
+	tmpc = b(); return tmpc;
+}
+BEGIN {
+	print (c() ? "string" : "number");
+}'
+testing "awk string cast (bug 725)" \
+	"awk '$prg'" \
+	"0\nnumber\n" \
+	"" ""
+
+testing "awk handles whitespace before array subscript" \
+	"awk 'BEGIN { arr [3] = 1; print arr [3] }'" "1\n" "" ""
+
+prg='
+BEGIN {
+  u["a"]=1
+  u["b"]=1
+  u["c"]=1
+  v["d"]=1
+  v["e"]=1
+  v["f"]=1
+  for (l in u) {
+    print "outer1", l;
+    for (l in v) {
+      print " inner", l;
+    }
+    print "outer2", l;
+  }
+  print "end", l;
+  l="a"
+  exit;
+}'
+testing "awk nested loops with the same variable" \
+	"awk '$prg'" \
+	"\
+outer1 a
+ inner d
+ inner e
+ inner f
+outer2 f
+outer1 b
+ inner d
+ inner e
+ inner f
+outer2 f
+outer1 c
+ inner d
+ inner e
+ inner f
+outer2 f
+end f
+" \
+	"" ""
+
+prg='
+BEGIN {
+  u["a"]=1
+  u["b"]=1
+  u["c"]=1
+  v["d"]=1
+  v["e"]=1
+  v["f"]=1
+  for (l in u) {
+    print "outer1", l;
+    for (l in v) {
+      print " inner", l;
+      break;
+    }
+    print "outer2", l;
+  }
+  print "end", l;
+  l="a"
+  exit;
+}'
+# It's not just buggy, it enters infinite loop. Thus disabled
+false && test x"$SKIP_KNOWN_BUGS" = x"" && testing "awk nested loops with the same variable and break" \
+	"awk '$prg'" \
+	"\
+outer1 a
+ inner d
+outer2 d
+outer1 b
+ inner d
+outer2 d
+outer1 c
+ inner d
+outer2 d
+end d
+" \
+	"" ""
+
+prg='
+function f() {
+  for (l in v) {
+    print " inner", l;
+    return;
+  }
+}
+
+BEGIN {
+  u["a"]=1
+  u["b"]=1
+  u["c"]=1
+  v["d"]=1
+  v["e"]=1
+  v["f"]=1
+  for (l in u) {
+    print "outer1", l;
+    f();
+    print "outer2", l;
+  }
+  print "end", l;
+  l="a"
+  exit;
+}'
+# It's not just buggy, it enters infinite loop. Thus disabled
+false && test x"$SKIP_KNOWN_BUGS" = x"" && testing "awk nested loops with the same variable and return" \
+	"awk '$prg'" \
+	"\
+outer1 a
+ inner d
+outer2 d
+outer1 b
+ inner d
+outer2 d
+outer1 c
+ inner d
+outer2 d
+end d
+" \
+	"" ""
+
+exit $FAILCOUNT

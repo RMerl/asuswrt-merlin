@@ -1,0 +1,25 @@
+Ok, script attached ... seems to be working ok for me, 
+tried to install and remove a few times. It does the
+right thing with the smf when installing, you can then 
+simply enable the service. Upon removal it cleans up the
+files but won't clean up the services (I think until
+a reboot) ... I've only started looking at the new 
+packages stuff in the last day or two, so I could be 
+missing something, but I can't find any way to force
+ a proper cleanup.
+
+It requires that you have a writable repository setup 
+as per the docs on the opensolaris website and it will
+create a dnsmasq package (package name is a variable 
+in the script). The script takes a version number for 
+the package and assumes that it's in the contrib/Solaris10 
+directory, it then works out the base tree directory 
+from $0.
+
+i.e.  $ contrib/Solaris10/create_package 2.52-1
+or   $ cd contrib/Solaris10; ./create_package 2.52-1
+
+It's a bit more complex than it could be because I 
+prefer putting the daemon in /usr/sbin and the config 
+in /etc, so the script will actually create a new 
+version of the existing contrib dnsmasq.xml.

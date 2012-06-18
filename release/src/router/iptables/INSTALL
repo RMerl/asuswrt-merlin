@@ -1,0 +1,47 @@
+FOLLOW THESE STEPS:
+
+0) There may be some outstanding bugfixes or tweaks which are not yet
+   in the official kernel.  Those are now (as of iptables-1.2.7) kept
+   in a seperate package, called patch-o-matic.  It is available from
+   ftp://ftp.netfilter.org/pub/patch-o-matic/
+
+1) Next, make the package.
+	% make KERNEL_DIR=<<where-you-built-your-kernel>>
+
+2) Finally, you need to to install the shared libraries, and the binary:
+	# make install KERNEL_DIR=<<where-you-built-your-kernel>>
+
+If you are a developer, you can install the headers, development libraries
+and associated development man pages, with:
+	# make install-devel
+
+That's it!
+================================================================
+PROBLEMS YOU MAY ENCOUNTER:
+
+1) This package requires a 2.4.4 kernel, or above.
+
+2) If you get the kernel directory wrong, you may see a message like:
+	Please try `make KERNEL_DIR=path-to-correct-kernel'
+
+3) If you want to specify alternate directories for installation
+(instead of /usr/local/ bin lib man), do this:
+
+	% make BINDIR=/usr/bin LIBDIR=/usr/lib MANDIR=/usr/man
+	# make BINDIR=/usr/bin LIBDIR=/usr/lib MANDIR=/usr/man install
+
+4) If you want to build a statically linked version of the iptables binary,
+   without the need for loading the plugins at runtime (e.g. for an embedded
+   device or router-on-a-disk), please use
+
+	% make NO_SHARED_LIBS=1
+
+5) If you want to build a single BusyBox style multipurpose binary instead of
+   the individual iptables, iptables-save and iptables-restore binaries, then
+   please use
+
+	% make DO_MULTI=1
+
+NOTE: make sure you build with at least the correct LIBDIR=
+specification, otherwise iptables(8) won't know where to find the
+dynamic objects.

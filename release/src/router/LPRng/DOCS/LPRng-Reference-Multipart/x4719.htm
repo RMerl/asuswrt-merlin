@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>lprm Job Selection</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="lprm - Job Removal Program " href=
+    "lprm.htm">
+    <link rel="PREVIOUS" title="lprm - Job Removal Program " href=
+    "lprm.htm">
+    <link rel="NEXT" title="lpc - Administration Program " href=
+    "lpc.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "lprm.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 8.
+          <b class="APPLICATION">lprm</b> - Job Removal
+          Program</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "lpc.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN4719">8.2. <b class=
+      "APPLICATION">lprm</b> Job Selection</a></h1>
+
+      <p>Jobs are selected by providing a job number, or <var
+      class="LITERAL">glob</var> pattern that is matched to the
+      user name and and job identifier. If multiple patterns are
+      provided each is applied in turn against the jobs in a queue
+      until all have been tried. If any one of the patterns match
+      then the job status is displayed.</p>
+
+      <p>If no selection information is provided then the user name
+      performing the request is used as the selection pattern, and
+      only the first job that matches is removed.</p>
+
+      <p>The <var class="LITERAL">all</var> pattern will match all
+      jobs in the queue.</p>
+
+      <p>The user must have permission to control the queue or to
+      remove a selected job in order for job removal to
+      succeed.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "lprm.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "lpc.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top"><b class=
+          "APPLICATION">lprm</b> - Job Removal Program</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "lprm.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top"><b class=
+          "APPLICATION">lpc</b> - Administration Program</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

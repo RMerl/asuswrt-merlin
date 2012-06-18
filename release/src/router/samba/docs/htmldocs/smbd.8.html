@@ -1,0 +1,378 @@
+
+
+ 
+
+
+
+<html><head><title>smbd (8)</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>smbd (8)</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    smbd - server to provide SMB/CIFS services to clients
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+    
+<p><strong>smbd</strong> [<a href="smbd.8.html#minusD">-D</a>] [<a href="smbd.8.html#minusa">-a</a>] [<a href="smbd.8.html#minuso">-o</a>] [<a href="smbd.8.html#minusP">-P</a>] [<a href="smbd.8.html#minush">-h</a>] [<a href="smbd.8.html#minusV">-V</a>] [<a href="smbd.8.html#minusd">-d debuglevel</a>] [<a href="smbd.8.html#minusl">-l log file</a>] [<a href="smbd.8.html#minusp">-p port number</a>] [<a href="smbd.8.html#minusO">-O socket options</a>] [<a href="smbd.8.html#minuss">-s configuration file</a>]
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This program is part of the <strong>Samba</strong> suite.
+<p><strong>smbd</strong> is the server daemon that provides filesharing and printing
+services to
+Windows clients. The server provides filespace and printer services to
+clients using the SMB (or CIFS) protocol. This is compatible with the
+LanManager protocol, and can service LanManager clients.  These
+include MSCLIENT 3.0 for DOS, Windows for Workgroups, Windows 95,
+Windows NT, OS/2, DAVE for Macintosh, and smbfs for Linux.
+<p>An extensive description of the services that the server can provide
+is given in the man page for the configuration file controlling the
+attributes of those services (see 
+<a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a>.  This man page
+will not describe the services, but will concentrate on the
+administrative aspects of running the server.
+<p>Please note that there are significant security implications to
+running this server, and the 
+<a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a> manpage should be
+regarded as mandatory reading before proceeding with installation.
+<p>A session is created whenever a client requests one. Each client gets
+a copy of the server for each session. This copy then services all
+connections made by the client during that session. When all
+connections from its client are closed, the copy of the server for
+that client terminates.
+<p>The configuration file, and any files that it includes, are
+automatically reloaded every minute, if they change.  You can force a
+reload by sending a SIGHUP to the server.  Reloading the configuration
+file will not affect connections to any service that is already
+established.  Either the user will have to disconnect from the
+service, or smbd killed and restarted.
+<p><a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+    
+<p><dl>
+<p><a name="minusD"></a>
+<p></p><dt><strong><strong>-D</strong></strong><dd> If specified, this parameter causes the server to operate as a
+daemon. That is, it detaches itself and runs in the background,
+fielding requests on the appropriate port. Operating the server as a
+daemon is the recommended way of running smbd for servers that provide
+more than casual use file and print services.
+<p>By default, the server will NOT operate as a daemon. 
+<p><a name="minusa"></a>
+<p></p><dt><strong><strong>-a</strong></strong><dd> If this parameter is specified, each new connection will
+append log messages to the log file.  This is the default.
+<p><a name="minuso"></a>
+<p></p><dt><strong><strong>-o</strong></strong><dd> If this parameter is specified, the log files will be
+overwritten when opened.  By default, the log files will be appended
+to.
+<p><a name="minusP"></a>
+<p></p><dt><strong><strong>-P</strong></strong><dd> Passive option. Causes smbd not to send any network traffic
+out. Used for debugging by the developers only.
+<p><a name="minush"></a>
+<p></p><dt><strong><strong>-h</strong></strong><dd> Prints the help information (usage) for <strong>smbd</strong>.
+<p><a name="minusV"></a>
+<p></p><dt><strong><strong>-V</strong></strong><dd> Prints the version number for <strong>smbd</strong>.
+<p><a name="minusd"></a>
+<p></p><dt><strong><strong>-d debuglevel</strong></strong><dd> debuglevel is an integer from 0 to 10.
+<p>The default value if this parameter is not specified is zero.
+<p>The higher this value, the more detail will be logged to the log files
+about the activities of the server. At level 0, only critical errors
+and serious warnings will be logged. Level 1 is a reasonable level for
+day to day running - it generates a small amount of information about
+operations carried out.
+<p>Levels above 1 will generate considerable amounts of log data, and
+should only be used when investigating a problem. Levels above 3 are
+designed for use only by developers and generate HUGE amounts of log
+data, most of which is extremely cryptic.
+<p>Note that specifying this parameter here will override the <a href="smb.conf.5.html#loglevel"><strong>log
+level</strong></a> parameter in the <a href="smb.conf.5.html"><strong>smb.conf
+(5)</strong></a> file.
+<p><a name="minusl"></a> 
+<p></p><dt><strong><strong>-l log file</strong></strong><dd> If specified, <em>log file</em> specifies
+a log filename into which informational and debug messages from the
+running server will be logged. The log file generated is never removed
+by the server although its size may be controlled by the <a href="smb.conf.5.html#maxlogsize"><strong>max
+log size</strong></a> option in the <a href="smb.conf.5.html"><strong>smb.conf
+(5)</strong></a> file.  The default log file name is specified
+at compile time.
+<p><a name="minusO"></a>
+<p></p><dt><strong><strong>-O socket options</strong></strong><dd> See the <a href="smb.conf.5.html#socketoptions"><strong>socket
+options</strong></a> parameter in the
+<a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a> file for details.
+<p><a name="minusp"></a>
+<p></p><dt><strong><strong>-p port number</strong></strong><dd> port number is a positive integer value.  The
+default value if this parameter is not specified is 139.
+<p>This number is the port number that will be used when making
+connections to the server from client software. The standard
+(well-known) port number for the SMB over TCP is 139, hence the
+default. If you wish to run the server as an ordinary user rather than
+as root, most systems will require you to use a port number greater
+than 1024 - ask your system administrator for help if you are in this
+situation.
+<p>In order for the server to be useful by most clients, should you
+configure it on a port other than 139, you will require port
+redirection services on port 139, details of which are outlined in
+rfc1002.txt section 4.3.5.
+<p>This parameter is not normally specified except in the above
+situation.
+<p><a name="minuss"></a>
+<p></p><dt><strong><strong>-s configuration file</strong></strong><dd>
+The file specified contains the configuration details required by the
+server.  The information in this file includes server-specific
+information such as what printcap file to use, as well as descriptions
+of all the services that the server is to provide. See <strong>smb.conf
+(5)</strong> for more information.
+The default configuration file name is determined at compile time.
+<p></dl>
+<p><a name="FILES"></a>
+<h2>FILES</h2>
+    
+<p><strong>/etc/inetd.conf</strong>
+<p>If the server is to be run by the inetd meta-daemon, this file must
+contain suitable startup information for the meta-daemon. See the
+section <a href="smbd.8.html#INSTALLATION">INSTALLATION</a> below.
+<p><strong>/etc/rc</strong>
+<p>(or whatever initialization script your system uses).
+<p>If running the server as a daemon at startup, this file will need to
+contain an appropriate startup sequence for the server. See the
+section <a href="smbd.8.html#INSTALLATION">INSTALLATION</a> below.
+<p><strong>/etc/services</strong>
+<p>If running the server via the meta-daemon inetd, this file must
+contain a mapping of service name (e.g., netbios-ssn) to service port
+(e.g., 139) and protocol type (e.g., tcp). See the section
+<a href="smbd.8.html#INSTALLATION">INSTALLATION</a> below.
+<p><strong>/usr/local/samba/lib/smb.conf</strong>
+<p>This is the default location of the <em>smb.conf</em> server configuration
+file. Other common places that systems install this file are
+<em>/usr/samba/lib/smb.conf</em> and <em>/etc/smb.conf</em>.
+<p>This file describes all the services the server is to make available
+to clients. See <a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a> for more information.
+<p><a name="LIMITATIONS"></a>
+<h2>LIMITATIONS</h2>
+    
+<p>On some systems <strong>smbd</strong> cannot change uid back to root after a
+setuid() call.  Such systems are called "trapdoor" uid systems. If you
+have such a system, you will be unable to connect from a client (such
+as a PC) as two different users at once. Attempts to connect the
+second user will result in "access denied" or similar.
+<p><a name="ENVIRONMENTVARIABLES"></a>
+<h2>ENVIRONMENT VARIABLES</h2>
+    
+<p><strong>PRINTER</strong>
+<p>If no printer name is specified to printable services, most systems
+will use the value of this variable (or "lp" if this variable is not
+defined) as the name of the printer to use. This is not specific to
+the server, however.
+<p><a name="INSTALLATION"></a>
+<h2>INSTALLATION</h2>
+    
+<p>The location of the server and its support files is a matter for
+individual system administrators. The following are thus suggestions
+only.
+<p>It is recommended that the server software be installed under the
+/usr/local/samba hierarchy, in a directory readable by all, writeable
+only by root. The server program itself should be executable by all,
+as users may wish to run the server themselves (in which case it will
+of course run with their privileges).  The server should NOT be
+setuid. On some systems it may be worthwhile to make smbd setgid to an
+empty group. This is because some systems may have a security hole
+where daemon processes that become a user can be attached to with a
+debugger. Making the smbd file setgid to an empty group may prevent
+this hole from being exploited. This security hole and the suggested
+fix has only been confirmed on old versions (pre-kernel 2.0) of Linux
+at the time this was written. It is possible that this hole only
+exists in Linux, as testing on other systems has thus far shown them
+to be immune.
+<p>The server log files should be put in a directory readable and
+writeable only by root, as the log files may contain sensitive
+information.
+<p>The configuration file should be placed in a directory readable and
+writeable only by root, as the configuration file controls security for
+the services offered by the server. The configuration file can be made
+readable by all if desired, but this is not necessary for correct
+operation of the server and is not recommended. A sample configuration
+file "smb.conf.sample" is supplied with the source to the server -
+this may be renamed to "smb.conf" and modified to suit your needs.
+<p>The remaining notes will assume the following:
+<p><dl>
+<p><li > <strong>smbd</strong> (the server program) installed in /usr/local/samba/bin
+<p><li > <strong>smb.conf</strong> (the configuration file) installed in /usr/local/samba/lib
+<p><li > log files stored in /var/adm/smblogs
+<p></dl>
+<p>The server may be run either as a daemon by users or at startup, or it
+may be run from a meta-daemon such as inetd upon request. If run as a
+daemon, the server will always be ready, so starting sessions will be
+faster. If run from a meta-daemon some memory will be saved and
+utilities such as the tcpd TCP-wrapper may be used for extra security.
+For serious use as file server it is recommended that <strong>smbd</strong> be run
+as a daemon.
+<p>When you've decided, continue with either 
+<a href="smbd.8.html#RUNNINGTHESERVERASADAEMON">RUNNING THE SERVER AS A DAEMON</a> or 
+<a href="smbd.8.html#RUNNINGTHESERVERONREQUEST">RUNNING THE SERVER ON REQUEST</a>.
+<p><a name="RUNNINGTHESERVERASADAEMON"></a>
+<h2>RUNNING THE SERVER AS A DAEMON</h2>
+    
+<p>To run the server as a daemon from the command line, simply put the
+<a href="smbd.8.html#minusD"><strong>-D</strong></a> option on the command line. There is no need to place an
+ampersand at the end of the command line - the <a href="smbd.8.html#minusD"><strong>-D</strong></a> option causes
+the server to detach itself from the tty anyway.
+<p>Any user can run the server as a daemon (execute permissions
+permitting, of course). This is useful for testing purposes, and may
+even be useful as a temporary substitute for something like ftp. When
+run this way, however, the server will only have the privileges of the
+user who ran it.
+<p>To ensure that the server is run as a daemon whenever the machine is
+started, and to ensure that it runs as root so that it can serve
+multiple clients, you will need to modify the system startup
+files. Wherever appropriate (for example, in /etc/rc), insert the
+following line, substituting port number, log file location,
+configuration file location and debug level as desired:
+<p><code>/usr/local/samba/bin/smbd -D -l /var/adm/smblogs/log -s /usr/local/samba/lib/smb.conf</code>
+<p>(The above should appear in your initialization script as a single line. 
+Depending on your terminal characteristics, it may not appear that way in
+this man page. If the above appears as more than one line, please treat any 
+newlines or indentation as a single space or TAB character.)
+<p>If the options used at compile time are appropriate for your system,
+all parameters except <a href="smbd.8.html#minusD"><strong>-D</strong></a> may be
+omitted. See the section <a href="smbd.8.html#OPTIONS">OPTIONS</a> above.
+<p><a name="RUNNINGTHESERVERONREQUEST"></a>
+<h2>RUNNING THE SERVER ON REQUEST</h2>
+    
+<p>If your system uses a meta-daemon such as <strong>inetd</strong>, you can arrange to
+have the smbd server started whenever a process attempts to connect to
+it. This requires several changes to the startup files on the host
+machine. If you are experimenting as an ordinary user rather than as
+root, you will need the assistance of your system administrator to
+modify the system files.
+<p>You will probably want to set up the NetBIOS name server <a href="nmbd.8.html"><strong>nmbd</strong></a> at
+the same time as <strong>smbd</strong>. To do this refer to the man page for
+<a href="nmbd.8.html"><strong>nmbd (8)</strong></a>.
+<p>First, ensure that a port is configured in the file <code>/etc/services</code>. The
+well-known port 139 should be used if possible, though any port may be
+used.
+<p>Ensure that a line similar to the following is in <code>/etc/services</code>:
+<p><code>netbios-ssn	139/tcp</code>
+<p>Note for NIS/YP users - you may need to rebuild the NIS service maps
+rather than alter your local <code>/etc/services file</code>.
+<p>Next, put a suitable line in the file <code>/etc/inetd.conf</code> (in the unlikely
+event that you are using a meta-daemon other than inetd, you are on
+your own). Note that the first item in this line matches the service
+name in <code>/etc/services</code>.  Substitute appropriate values for your system
+in this line (see <strong>inetd (8)</strong>):
+<p><code>netbios-ssn stream tcp nowait root /usr/local/samba/bin/smbd -d1 -l/var/adm/smblogs/log -s/usr/local/samba/lib/smb.conf</code>
+<p>(The above should appear in <code>/etc/inetd.conf</code> as a single
+line. Depending on your terminal characteristics, it may not appear
+that way in this man page.  If the above appears as more than one
+line, please treat any newlines or indentation as a single space or
+TAB character.)
+<p>Note that there is no need to specify a port number here, even if you
+are using a non-standard port number.
+<p>Lastly, edit the configuration file to provide suitable services. To
+start with, the following two services should be all you need:
+<p><pre>
+
+
+[homes]
+  writeable = yes
+
+[printers]
+ writeable = no
+ printable = yes
+ path = /tmp
+ public = yes
+
+
+</pre>
+
+<p>This will allow you to connect to your home directory and print to any
+printer supported by the host (user privileges permitting).
+<p><a name="TESTINGTHEINSTALLATION"></a>
+<h2>TESTING THE INSTALLATION</h2>
+    
+<p>If running the server as a daemon, execute it before proceeding. If
+using a meta-daemon, either restart the system or kill and restart the
+meta-daemon. Some versions of inetd will reread their configuration
+tables if they receive a HUP signal.
+<p>If your machine's name is "fred" and your name is "mary", you should
+now be able to connect to the service <code>\\fred\mary</code>.
+<p>To properly test and experiment with the server, we recommend using
+the smbclient program (see 
+<a href="smbclient.1.html"><strong>smbclient (1)</strong></a>) and also going through
+the steps outlined in the file <em>DIAGNOSIS.txt</em> in the <em>docs/</em>
+directory of your Samba installation.
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite.
+<p><a name="DIAGNOSTICS"></a>
+<h2>DIAGNOSTICS</h2>
+    
+<p>Most diagnostics issued by the server are logged in a specified log
+file. The log file name is specified at compile time, but may be
+overridden on the command line.
+<p>The number and nature of diagnostics available depends on the debug
+level used by the server. If you have problems, set the debug level to
+3 and peruse the log files.
+<p>Most messages are reasonably self-explanatory. Unfortunately, at the time
+this man page was created, there are too many diagnostics available
+in the source code to warrant describing each and every diagnostic. At
+this stage your best bet is still to grep the source code and inspect
+the conditions that gave rise to the diagnostics you are seeing.
+<p><a name="SIGNALS"></a>
+<h2>SIGNALS</h2>
+    
+<p>Sending the smbd a SIGHUP will cause it to re-load its smb.conf
+configuration file within a short period of time.
+<p>To shut down a users smbd process it is recommended that SIGKILL (-9)
+<em>NOT</em> be used, except as a last resort, as this may leave the shared
+memory area in an inconsistent state. The safe way to terminate an
+smbd is to send it a SIGTERM (-15) signal and wait for it to die on
+its own.
+<p>The debug log level of smbd may be raised
+by sending it a SIGUSR1 <code>(kill -USR1 &lt;smbd-pid&gt;)</code> and lowered by
+sending it a SIGUSR2 <code>(kill -USR2 &lt;smbd-pid&gt;)</code>. This is to allow
+transient problems to be diagnosed, whilst still running at a normally
+low log level.
+<p>Note that as the signal handlers send a debug write, they are not
+re-entrant in smbd. This you should wait until smbd is in a state of
+waiting for an incoming smb before issuing them. It is possible to
+make the signal handlers safe by un-blocking the signals before the
+select call and re-blocking them after, however this would affect
+performance.
+<p><a name="SEEALSO"></a>
+<h2>SEE ALSO</h2>
+    
+<p><strong>hosts_access (5)</strong>, <strong>inetd (8)</strong>, <a href="nmbd.8.html"><strong>nmbd (8)</strong></a>,
+<a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a>, <a href="smbclient.1.html"><strong>smbclient
+(1)</strong></a>, <a href="testparm.1.html"><strong>testparm (1)</strong></a>,
+<a href="testprns.1.html"><strong>testprns (1)</strong></a>, and the Internet RFC's
+<strong>rfc1001.txt</strong>, <strong>rfc1002.txt</strong>. In addition the CIFS (formerly SMB)
+specification is available as a link from the Web page :
+<a href="http://samba.org/cifs/">http://samba.org/cifs/</a>.
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full list of contributors
+and details on how to submit bug reports, comments etc.
+</body>
+</html>

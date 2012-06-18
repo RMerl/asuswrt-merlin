@@ -1,0 +1,317 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 30. Unicode/Charsets</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"><link rel="home" href="index.html" title="The Official Samba 3.0.x HOWTO and Reference Guide"><link rel="up" href="optional.html" title="Part III. Advanced Configuration"><link rel="prev" href="integrate-ms-networks.html" title="Chapter 29. Integrating MS Windows Networks with Samba"><link rel="next" href="Backup.html" title="Chapter 31. Backup Techniques"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 30. Unicode/Charsets</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="integrate-ms-networks.html">Prev</a> </td><th width="60%" align="center">Part III. Advanced Configuration</th><td width="20%" align="right"> <a accesskey="n" href="Backup.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="unicode"></a>Chapter 30. Unicode/Charsets</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Jelmer</span> <span class="othername">R.</span> <span class="orgname">The Samba Team</span> <span class="surname">Vernooij</span></h3><div class="affiliation"><span class="orgname">The Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jelmer@samba.org">jelmer@samba.org</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="othername">H.</span> <span class="orgname">Samba Team</span> <span class="surname">Terpstra</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jht@samba.org">jht@samba.org</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">TAKAHASHI</span> <span class="surname">Motonobu</span></h3><span class="contrib">Japanese character support</span> <div class="affiliation"><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:monyo@home.monyo.com">monyo@home.monyo.com</a>&gt;</code></p></div></div></div></div><div><p class="pubdate">25 March 2003</p></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="unicode.html#id2669832">Features and Benefits</a></span></dt><dt><span class="sect1"><a href="unicode.html#id2669883">What Are Charsets and Unicode?</a></span></dt><dt><span class="sect1"><a href="unicode.html#id2670017">Samba and Charsets</a></span></dt><dt><span class="sect1"><a href="unicode.html#id2670152">Conversion from Old Names</a></span></dt><dt><span class="sect1"><a href="unicode.html#id2670184">Japanese Charsets</a></span></dt><dd><dl><dt><span class="sect2"><a href="unicode.html#id2670324">Basic Parameter Setting</a></span></dt><dt><span class="sect2"><a href="unicode.html#id2670972">Individual Implementations</a></span></dt><dt><span class="sect2"><a href="unicode.html#id2671095">Migration from Samba-2.2 Series</a></span></dt></dl></dd><dt><span class="sect1"><a href="unicode.html#id2671241">Common Errors</a></span></dt><dd><dl><dt><span class="sect2"><a href="unicode.html#id2671247">CP850.so Can't Be Found</a></span></dt></dl></dd></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2669832"></a>Features and Benefits</h2></div></div></div><p>
+<a class="indexterm" name="id2669840"></a>
+Every industry eventually matures. One of the great areas of maturation is in
+the focus that has been given over the past decade to make it possible for anyone
+anywhere to use a computer. It has not always been that way. In fact, not so long
+ago, it was common for software to be written for exclusive use in the country of
+origin.
+</p><p>
+Of all the effort that has been brought to bear on providing native
+language support for all computer users, the efforts of the
+<a class="ulink" href="http://www.openi18n.org/" target="_top">Openi18n organization</a>
+is deserving of special mention.
+</p><p>
+<a class="indexterm" name="id2669868"></a>
+Samba-2.x supported a single locale through a mechanism called 
+<span class="emphasis"><em>codepages</em></span>. Samba-3 is destined to become a truly transglobal
+file- and printer-sharing platform.
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2669883"></a>What Are Charsets and Unicode?</h2></div></div></div><p>
+<a class="indexterm" name="id2669891"></a>
+Computers communicate in numbers. In texts, each number is 
+translated to a corresponding letter. The meaning that will be assigned 
+to a certain number depends on the <span class="emphasis"><em>character set (charset)
+</em></span> that is used. 
+</p><p>
+<a class="indexterm" name="id2669909"></a>
+<a class="indexterm" name="id2669915"></a>
+A charset can be seen as a table that is used to translate numbers to 
+letters. Not all computers use the same charset (there are charsets 
+with German umlauts, Japanese characters, and so on). The American Standard Code
+for Information Interchange (ASCII) encoding system has been the normative character
+encoding scheme used by computers to date. This employs a charset that contains 
+256 characters. Using this mode of encoding, each character takes exactly one byte.
+</p><p>
+<a class="indexterm" name="id2669933"></a>
+<a class="indexterm" name="id2669940"></a>
+There are also charsets that support extended characters, but those need at least
+twice as much storage space as does ASCII encoding. Such charsets can contain
+<code class="literal">256 * 256 = 65536</code> characters, which is more than all possible
+characters one could think of. They are called multibyte charsets because they use
+more then one byte to store one character. 
+</p><p>
+<a class="indexterm" name="id2669962"></a>
+One standardized multibyte charset encoding scheme is known as
+<a class="ulink" href="http://www.unicode.org/" target="_top">unicode</a>.  A big advantage of using a
+multibyte charset is that you only need one. There is no need to make sure two
+computers use the same charset when they are communicating.
+</p><p>
+<a class="indexterm" name="id2669982"></a>
+<a class="indexterm" name="id2669989"></a>
+<a class="indexterm" name="id2669996"></a>
+Old Windows clients use single-byte charsets, named 
+<em class="parameter"><code>codepages</code></em>, by Microsoft. However, there is no support for 
+negotiating the charset to be used in the SMB/CIFS protocol. Thus, you 
+have to make sure you are using the same charset when talking to an older client.
+Newer clients (Windows NT, 200x, XP) talk Unicode over the wire.
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2670017"></a>Samba and Charsets</h2></div></div></div><p>
+<a class="indexterm" name="id2670025"></a>
+<a class="indexterm" name="id2670032"></a>
+As of Samba-3, Samba can (and will) talk Unicode over the wire. Internally, 
+Samba knows of three kinds of character sets: 
+</p><div class="variablelist"><dl><dt><span class="term"><a class="link" href="smb.conf.5.html#UNIXCHARSET" target="_top">unix charset</a></span></dt><dd><p>
+<a class="indexterm" name="id2670064"></a>
+<a class="indexterm" name="id2670070"></a>
+		This is the charset used internally by your operating system. 
+		The default is <code class="constant">UTF-8</code>, which is fine for most 
+		systems and covers all characters in all languages. The default
+		in previous Samba releases was to save filenames in the encoding of the 
+		clients  for example, CP850 for Western European countries.
+		</p></dd><dt><span class="term"><a class="link" href="smb.conf.5.html#DISPLAYCHARSET" target="_top">display charset</a></span></dt><dd><p>This is the charset Samba uses to print messages
+		on your screen. It should generally be the same as the <em class="parameter"><code>unix charset</code></em>.
+		</p></dd><dt><span class="term"><a class="link" href="smb.conf.5.html#DOSCHARSET" target="_top">dos charset</a></span></dt><dd><p>This is the charset Samba uses when communicating with 
+		DOS and Windows 9x/Me clients. It will talk Unicode to all newer clients.
+		The default depends on the charsets you have installed on your system.
+		Run <code class="literal">testparm -v | grep "dos charset"</code> to see 
+		what the default is on your system. 
+		</p></dd></dl></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2670152"></a>Conversion from Old Names</h2></div></div></div><p>
+<a class="indexterm" name="id2670160"></a>
+Because previous Samba versions did not do any charset conversion, 
+characters in filenames are usually not correct in the UNIX charset but only 
+for the local charset used by the DOS/Windows clients.
+</p><p>Bjoern Jacke has written a utility named <a class="ulink" href="http://j3e.de/linux/convmv/" target="_top">convmv</a>
+that can convert whole directory structures to different charsets with one single command. 
+</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2670184"></a>Japanese Charsets</h2></div></div></div><p>
+Setting up Japanese charsets is quite difficult. This is mainly because:
+</p><div class="itemizedlist"><ul type="disc"><li><p>
+<a class="indexterm" name="id2670200"></a>
+		The Windows character set is extended from the original legacy Japanese
+		standard (JIS X 0208) and is not standardized. This means that the strictly
+		standardized implementation cannot support the full Windows character set.
+	</p></li><li><p>
+<a class="indexterm" name="id2670215"></a>
+<a class="indexterm" name="id2670221"></a>
+<a class="indexterm" name="id2670228"></a>
+<a class="indexterm" name="id2670235"></a>
+<a class="indexterm" name="id2670242"></a>
+		Mainly for historical reasons, there are several encoding methods in
+		Japanese, which are not fully compatible with each other. There are
+		two major encoding methods. One is the Shift_JIS series used in Windows
+		and some UNIXes. The other is the EUC-JP series used in most UNIXes
+		and Linux. Moreover, Samba previously also offered several unique encoding
+		methods, named CAP and HEX, to keep interoperability with CAP/NetAtalk and
+		UNIXes that can't use Japanese filenames.  Some implementations of the
+		EUC-JP series can't support the full Windows character set.
+	</p></li><li><p>There are some code conversion tables between Unicode and legacy
+		Japanese character sets. One is compatible with Windows, another one
+		is based on the reference of the Unicode consortium, and others are 
+		a mixed implementation. The Unicode consortium does not officially
+		define any conversion tables between Unicode and legacy character
+		sets, so there cannot be standard one.
+	</p></li><li><p>The character set and conversion tables available in iconv() depend
+		on the iconv library that is available. Next to that, the Japanese locale 
+		names may be different on different systems.  This means that the value of 
+		the charset parameters depends on the implementation of iconv() you are using.
+		</p><p>
+<a class="indexterm" name="id2670291"></a>
+<a class="indexterm" name="id2670298"></a>
+<a class="indexterm" name="id2670305"></a>
+<a class="indexterm" name="id2670312"></a>
+		Though 2-byte fixed UCS-2 encoding is used in Windows internally,
+		Shift_JIS series encoding is usually used in Japanese environments
+		as ASCII encoding is in English environments.
+	</p></li></ul></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2670324"></a>Basic Parameter Setting</h3></div></div></div><p>
+<a class="indexterm" name="id2670331"></a>
+	The <a class="link" href="smb.conf.5.html#DOSCHARSET" target="_top">dos charset</a> and 
+	<a class="link" href="smb.conf.5.html#DISPLAYCHARSET" target="_top">display charset</a>
+	should be set to the locale compatible with the character set 
+	and encoding method used on Windows. This is usually CP932
+	but sometimes has a different name.
+	</p><p>
+<a class="indexterm" name="id2670367"></a>
+<a class="indexterm" name="id2670374"></a>
+<a class="indexterm" name="id2670380"></a>
+	The <a class="link" href="smb.conf.5.html#UNIXCHARSET" target="_top">unix charset</a> can be either Shift_JIS series,
+	EUC-JP series, or UTF-8. UTF-8 is always available, but the availability of other locales
+	and the name itself depends on the system.
+	</p><p>
+	Additionally, you can consider using the Shift_JIS series as the
+	value of the <a class="link" href="smb.conf.5.html#UNIXCHARSET" target="_top">unix charset</a>
+	parameter by using the vfs_cap module, which does the same thing as
+	setting &#8220;<span class="quote">coding system = CAP</span>&#8221; in the Samba 2.2 series.
+	</p><p>
+	Where to set <a class="link" href="smb.conf.5.html#UNIXCHARSET" target="_top">unix charset</a>
+	to is a difficult question. Here is a list of details, advantages, and
+	disadvantages of using a certain value.
+	</p><div class="variablelist"><dl><dt><span class="term">Shift_JIS series</span></dt><dd><p>
+			Shift_JIS series means a locale that is equivalent to <code class="constant">Shift_JIS</code>,
+			used as a standard on Japanese Windows. In the case of <code class="constant">Shift_JIS</code>,
+			for example, if a Japanese filename consists of 0x8ba4 and 0x974c
+			(a 4-bytes Japanese character string meaning &#8220;<span class="quote">share</span>&#8221;) and &#8220;<span class="quote">.txt</span>&#8221;
+			is written from Windows on Samba, the filename on UNIX becomes
+			0x8ba4, 0x974c, &#8220;<span class="quote">.txt</span>&#8221; (an 8-byte BINARY string), same as Windows.
+			</p><p>Since Shift_JIS series is usually used on some commercial-based
+			UNIXes; hp-ux and AIX as the Japanese locale (however, it is also possible
+			to use the EUC-JP locale series). To use Shift_JIS series on these platforms,
+			Japanese filenames created from Windows can be referred to also on
+			UNIX.</p><p>
+			If your UNIX is already working with Shift_JIS and there is a user 
+			who needs to use Japanese filenames written from Windows, the
+			Shift_JIS series is the best choice.  However, broken filenames
+			may be displayed, and some commands that cannot handle non-ASCII
+			filenames may be aborted during parsing filenames. Especially, there
+			may be &#8220;<span class="quote">\ (0x5c)</span>&#8221; in filenames, which need to be handled carefully.
+			It is best to not touch filenames written from Windows on UNIX.
+			</p><p>
+			Note that most Japanized free software actually works with EUC-JP
+			only. It is good practice to verify that the Japanized free software can work
+			with Shift_JIS.
+			</p></dd><dt><span class="term">EUC-JP series</span></dt><dd><p>
+<a class="indexterm" name="id2670515"></a>
+<a class="indexterm" name="id2670522"></a>
+			EUC-JP series means a locale that is equivalent to the industry
+			standard called EUC-JP, widely used in Japanese UNIX (although EUC
+			contains specifications for languages other than Japanese, such as
+			EUC-KR). In the case of EUC-JP series, for example, if a Japanese
+			filename consists of 0x8ba4 and 0x974c and &#8220;<span class="quote">.txt</span>&#8221; is written from
+			Windows on Samba, the filename on UNIX becomes 0xb6a6, 0xcdad,
+			&#8220;<span class="quote">.txt</span>&#8221; (an 8-byte BINARY string). 
+			</p><p>
+<a class="indexterm" name="id2670546"></a>
+<a class="indexterm" name="id2670553"></a>
+<a class="indexterm" name="id2670560"></a>
+<a class="indexterm" name="id2670567"></a>
+<a class="indexterm" name="id2670574"></a>
+<a class="indexterm" name="id2670580"></a>
+<a class="indexterm" name="id2670587"></a>
+<a class="indexterm" name="id2670594"></a>
+<a class="indexterm" name="id2670601"></a>
+<a class="indexterm" name="id2670608"></a>
+			Since EUC-JP is usually used on open source UNIX, Linux, and FreeBSD, and on commercial-based UNIX, Solaris,
+			IRIX, and Tru64 UNIX as Japanese locale (however, it is also possible on Solaris to use Shift_JIS and UTF-8,
+			and on Tru64 UNIX it is possible to use Shift_JIS). To use EUC-JP series, most Japanese filenames created from
+			Windows can be referred to also on UNIX. Also, most Japanized free software works mainly with EUC-JP only.
+			</p><p>
+			It is recommended to choose EUC-JP series when using Japanese filenames on UNIX.
+			</p><p>
+			Although there is no character that needs to be carefully treated
+			like &#8220;<span class="quote">\ (0x5c)</span>&#8221;, broken filenames may be displayed and some
+			commands that cannot handle non-ASCII filenames may be aborted
+			during parsing filenames.
+			</p><p>
+<a class="indexterm" name="id2670641"></a>
+			Moreover, if you built Samba using differently installed libiconv,
+			the eucJP-ms locale included in libiconv and EUC-JP series locale
+			included in the operating system may not be compatible. In this case, you may need to
+			avoid using incompatible characters for filenames.
+			</p></dd><dt><span class="term">UTF-8</span></dt><dd><p>
+			UTF-8 means a locale equivalent to UTF-8, the international standard defined by the Unicode consortium. In
+			UTF-8, a <em class="parameter"><code>character</code></em> is expressed using 1 to 3 bytes. In case of the Japanese language,
+			most characters are expressed using 3 bytes. Since on Windows Shift_JIS, where a character is expressed with 1
+			or 2 bytes is used to express Japanese, basically a byte length of a UTF-8 string the length of the UTF-8
+			string is 1.5 times that of the original Shift_JIS string. In the case of UTF-8, for example, if a Japanese
+			filename consists of 0x8ba4 and 0x974c, and &#8220;<span class="quote">.txt</span>&#8221; is written from Windows on Samba, the filename
+			on UNIX becomes 0xe585, 0xb1e6, 0x9c89, &#8220;<span class="quote">.txt</span>&#8221; (a 10-byte BINARY string).
+			</p><p>
+			For systems where iconv() is not available or where iconv()'s locales
+			are not compatible with Windows, UTF-8 is the only locale available.
+			</p><p> 
+			There are no systems that use UTF-8 as the default locale for Japanese.
+			</p><p>
+			Some broken filenames may be displayed, and some commands that
+			cannot handle non-ASCII filenames may be aborted during parsing
+			filenames. Especially, there may be &#8220;<span class="quote">\ (0x5c)</span>&#8221; in filenames, which
+			must be handled carefully, so you had better not touch filenames
+			written from Windows on UNIX.
+			</p><p>
+<a class="indexterm" name="id2670722"></a>
+<a class="indexterm" name="id2670728"></a>
+<a class="indexterm" name="id2670735"></a>
+			In addition, although it is not directly concerned with Samba, since
+			there is a delicate difference between the iconv() function, which is
+			generally used on UNIX, and the functions used on other platforms,
+			such as Windows and Java, so far is concerens the conversion between
+			Shift_JIS and Unicode UTF-8 must be done with care and recognition
+			of the limitations involved in the process.
+			</p><p>
+<a class="indexterm" name="id2670752"></a>
+			Although Mac OS X uses UTF-8 as its encoding method for filenames,
+			it uses an extended UTF-8 specification that Samba cannot handle, so
+			UTF-8 locale is not available for Mac OS X.
+			</p></dd><dt><span class="term">Shift_JIS series + vfs_cap (CAP encoding)</span></dt><dd><p>
+<a class="indexterm" name="id2670773"></a>
+<a class="indexterm" name="id2670780"></a>
+<a class="indexterm" name="id2670786"></a>
+			CAP encoding means a specification used in CAP and NetAtalk, file
+			server software for Macintosh. In the case of CAP encoding, for
+			example, if a Japanese filename consists of 0x8ba4 and 0x974c, and
+			&#8220;<span class="quote">.txt</span>&#8221; is written from Windows on Samba, the filename on UNIX
+			becomes &#8220;<span class="quote">:8b:a4:97L.txt</span>&#8221; (a 14 bytes ASCII string). 
+			</p><p>
+			For CAP encoding, a byte that cannot be expressed as an ASCII
+			character (0x80 or above) is encoded in an &#8220;<span class="quote">:xx</span>&#8221; form. You need to take
+			care of containing a &#8220;<span class="quote">\(0x5c)</span>&#8221; in a filename, but filenames are not
+			broken in a system that cannot handle non-ASCII filenames.
+			</p><p>
+			The greatest merit of CAP encoding is the compatibility of encoding
+			filenames with CAP or NetAtalk. These are respectively the Columbia Appletalk
+			Protocol, and the NetAtalk Open Source software project.
+			Since these software applications write a file name on UNIX with CAP encoding, if a
+			directory is shared with both Samba and NetAtalk, you need to use
+			CAP encoding to avoid non-ASCII filenames from being broken.
+			</p><p>
+			However, recently, NetAtalk has been
+			patched on some systems to write filenames with EUC-JP (e.g., Japanese original Vine Linux).
+			In this case, you need to choose EUC-JP series instead of CAP encoding.
+			</p><p>
+			vfs_cap itself is available for non-Shift_JIS series locales for
+			systems that cannot handle non-ASCII characters or systems that
+			share files with NetAtalk.
+			</p><p>
+			To use CAP encoding on Samba-3, you should use the unix charset parameter and VFS 
+			as in <a class="link" href="unicode.html#vfscap-intl" title="Example 30.1. VFS CAP">the VFS CAP smb.conf file</a>.
+			</p><div class="example"><a name="vfscap-intl"></a><p class="title"><b>Example 30.1. VFS CAP</b></p><div class="example-contents"><table class="simplelist" border="0" summary="Simple list"><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td># the locale name "CP932" may be different</td></tr><tr><td><a class="indexterm" name="id2670886"></a><em class="parameter"><code>dos charset = CP932</code></em></td></tr><tr><td><a class="indexterm" name="id2670897"></a><em class="parameter"><code>unix charset = CP932</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[cap-share]</code></em></td></tr><tr><td><a class="indexterm" name="id2670918"></a><em class="parameter"><code>vfs option = cap</code></em></td></tr></table></div></div><br class="example-break"><p>
+<a class="indexterm" name="id2670933"></a>
+<a class="indexterm" name="id2670940"></a>
+<a class="indexterm" name="id2670946"></a>
+<a class="indexterm" name="id2670953"></a>
+			You should set CP932 if using GNU libiconv for unix charset. With this setting,
+			filenames in the &#8220;<span class="quote">cap-share</span>&#8221; share are written with CAP encoding.
+			</p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2670972"></a>Individual Implementations</h3></div></div></div><p>
+Here is some additional information regarding individual implementations:
+</p><div class="variablelist"><dl><dt><span class="term">GNU libiconv</span></dt><dd><p>
+			To handle Japanese correctly, you should apply the patch
+			<a class="ulink" href="http://www2d.biglobe.ne.jp/~msyk/software/libiconv-patch.html" target="_top">libiconv-1.8-cp932-patch.diff.gz</a>
+			to libiconv-1.8.
+			</p><p>
+			Using the patched libiconv-1.8, these settings are available:
+			</p><pre class="programlisting">
+dos charset = CP932
+unix charset = CP932 / eucJP-ms / UTF-8
+		|       |
+		|       +-- EUC-JP series
+		+-- Shift_JIS series
+display charset = CP932
+</pre><p>
+			Other Japanese locales (for example, Shift_JIS and EUC-JP) should not
+			be used because of the lack of the compatibility with Windows.
+			</p></dd><dt><span class="term">GNU glibc</span></dt><dd><p>
+			To handle Japanese correctly, you should apply a <a class="ulink" href="http://www2d.biglobe.ne.jp/~msyk/software/glibc/" target="_top">patch</a>
+			to glibc-2.2.5/2.3.1/2.3.2 or should use the patch-merged versions, glibc-2.3.3 or later.
+			</p><p>
+			Using the above glibc, these setting are available:
+			</p><table class="simplelist" border="0" summary="Simple list"><tr><td><a class="indexterm" name="id2671048"></a><em class="parameter"><code>dos charset = CP932</code></em></td></tr><tr><td><a class="indexterm" name="id2671060"></a><em class="parameter"><code>unix charset = CP932 / eucJP-ms / UTF-8</code></em></td></tr><tr><td><a class="indexterm" name="id2671072"></a><em class="parameter"><code>display charset = CP932</code></em></td></tr></table><p>
+			</p><p>
+			Other Japanese locales (for example, Shift_JIS and EUC-JP) should not
+			be used because of the lack of the compatibility with Windows.
+			</p></dd></dl></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2671095"></a>Migration from Samba-2.2 Series</h3></div></div></div><p> 
+Prior to Samba-2.2 series, the &#8220;<span class="quote">coding system</span>&#8221; parameter was used. The default codepage in Samba
+2.x was code page 850. In the Samba-3 series this has been replaced with the <a class="link" href="smb.conf.5.html#UNIXCHARSET" target="_top">unix charset</a> parameter.  <a class="link" href="unicode.html#japancharsets" title="Table 30.1. Japanese Character Sets in Samba-2.2 and Samba-3">Japanese Character Sets in Samba-2.2 and Samba-3</a>
+shows the mapping table when migrating from the Samba-2.2 series to Samba-3.
+</p><div class="table"><a name="japancharsets"></a><p class="title"><b>Table 30.1. Japanese Character Sets in Samba-2.2 and Samba-3</b></p><div class="table-contents"><table summary="Japanese Character Sets in Samba-2.2 and Samba-3" border="1"><colgroup><col align="center"><col align="center"></colgroup><thead><tr><th align="center">Samba-2.2 Coding System</th><th align="center">Samba-3 unix charset</th></tr></thead><tbody><tr><td align="center">SJIS</td><td align="center">Shift_JIS series</td></tr><tr><td align="center">EUC</td><td align="center">EUC-JP series</td></tr><tr><td align="center">EUC3<sup>[<a name="id2671191" href="#ftn.id2671191" class="footnote">a</a>]</sup></td><td align="center">EUC-JP series</td></tr><tr><td align="center">CAP</td><td align="center">Shift_JIS series + VFS</td></tr><tr><td align="center">HEX</td><td align="center">currently none</td></tr><tr><td align="center">UTF8</td><td align="center">UTF-8</td></tr><tr><td align="center">UTF8-Mac<sup>[<a name="id2671222" href="#ftn.id2671222" class="footnote">b</a>]</sup></td><td align="center">currently none</td></tr><tr><td align="center">others</td><td align="center">none</td></tr></tbody><tbody class="footnotes"><tr><td colspan="2"><div class="footnote"><p><sup>[<a name="ftn.id2671191" href="#id2671191" class="para">a</a>] </sup>Only exists in Japanese Samba version</p></div><div class="footnote"><p><sup>[<a name="ftn.id2671222" href="#id2671222" class="para">b</a>] </sup>Only exists in Japanese Samba version</p></div></td></tr></tbody></table></div></div><br class="table-break"></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2671241"></a>Common Errors</h2></div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2671247"></a>CP850.so Can't Be Found</h3></div></div></div><p>&#8220;<span class="quote">Samba is complaining about a missing <code class="filename">CP850.so</code> file.</span>&#8221;</p><p>
+		CP850 is the default <a class="link" href="smb.conf.5.html#DOSCHARSET" target="_top">dos charset</a>.
+		The <a class="link" href="smb.conf.5.html#DOSCHARSET" target="_top">dos charset</a> is used to convert data to the codepage used by your DOS clients.
+		If you do not have any DOS clients, you can safely ignore this message. </p><p>
+		CP850 should be supported by your local iconv implementation. Make sure you have all the required packages installed.
+		If you compiled Samba from source, make sure that the configure process found iconv. This can be
+		confirmed by checking the <code class="filename">config.log</code> file that is generated when
+		<code class="literal">configure</code> is executed.</p></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="integrate-ms-networks.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="optional.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="Backup.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 29. Integrating MS Windows Networks with Samba </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 31. Backup Techniques</td></tr></table></div></body></html>

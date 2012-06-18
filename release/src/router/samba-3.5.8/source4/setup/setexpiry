@@ -1,0 +1,72 @@
+#!/usr/bin/python
+#
+# Sets the user password expiry on a Samba4 server
+# Copyright Jelmer Vernooij 2008
+#
+# Based on the original in EJS:
+# Copyright Andrew Tridgell 2005
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import sys
+
+# Find right directory when running from source tree
+sys.path.insert(0, "bin/python")
+
+import samba.getopt as options
+import optparse
+
+from samba.auth import system_session
+from samba.samdb import SamDB
+
+parser = optparse.OptionParser("setexpiry [username] [options]")
+sambaopts = options.SambaOptions(parser)
+parser.add_option_group(sambaopts)
+parser.add_option_group(options.VersionOptions(parser))
+credopts = options.CredentialsOptions(parser)
+parser.add_option_group(credopts)
+parser.add_option("-H", help="LDB URL for database or target server", type=str)
+parser.add_option("--filter", help="LDAP Filter to set password on", type=str)
+parser.add_option("--days", help="Days to expiry", type=int)
+parser.add_option("--noexpiry", help="Password does never expire", action="store_true")
+
+opts, args = parser.parse_args()
+
+filter = opts.filter
+
+if (len(args) == 0) and (filter is None):
+	print "Either the username or '--filter' must be specified!"
+	parser.print_usage()
+	sys.exit(1)
+
+days = opts.days
+if days is None:
+	days = 0
+
+if filter is None:
+	username = args[0]
+	filter = "(&(objectClass=user)(sAMAccountName=%s))" % (username)
+
+lp = sambaopts.get_loadparm()
+creds = credopts.get_credentials(lp)
+
+if opts.H is not None:
+	url = opts.H
+else:
+	url = lp.get("sam database")
+
+samdb = SamDB(url=url, session_info=system_session(), credentials=creds, lp=lp)
+
+samdb.setexpiry(filter, days*24*3600, no_expiry_req=opts.noexpiry)

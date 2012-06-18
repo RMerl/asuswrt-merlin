@@ -1,0 +1,8 @@
+while [ "X" = "X" ] ; do
+	read -p "READY " new
+	import new.png
+	if [ "$new" != "" ] ; then
+		echo "NEW $new.png"
+		mv new.png $new.png
+	fi
+done

@@ -1,0 +1,3448 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Chapter 9. Users and Security</h1>
+
+ 
+
+<p><a name="INDEX-1"/>In this chapter, we
+cover the basic concepts of managing security in Samba so that you
+can set up your Samba server with a security policy suited to your
+network.</p>
+
+<p>One of Samba's most complicated tasks lies in
+reconciling the security models of Unix and Windows systems. Samba
+must identify users by associating them with valid usernames and
+groups, authenticate them by checking their passwords, then control
+their access to resources by comparing their access rights to the
+permissions on files and directories. These are complex topics on
+their own, and it doesn't help that there are three
+different operating system types to deal with (Unix, Windows
+95/98/Me, and Windows NT/2000/XP) and that Samba supports multiple
+methods of handling user authentication.</p>
+
+
+
+<div class="sect1"><a name="samba2-CHP-9-SECT-1"/>
+
+<h2 class="head1">Users and Groups</h2>
+
+<p><a name="INDEX-2"/>Let's start
+out as simply as possible and add support for a single user. The
+easiest way to set up a client user is to create a Unix account (and
+home directory) for that individual on the server and notify Samba of
+the user's existence. You can do the latter by
+creating a disk share that maps to the user's home
+directory in the Samba configuration file and restricting access to
+that user with the <tt class="literal">valid</tt><a name="INDEX-3"/>
+<tt class="literal">users</tt> option. For example:</p>
+
+<blockquote><pre class="code">[dave]
+        path = /home/dave
+        comment = Dave's home directory
+        writable = yes
+        valid users = dave</pre></blockquote>
+
+<p>The <tt class="literal">valid</tt> <tt class="literal">users</tt> option lists
+the users allowed to access the share. In this case, only the user
+<tt class="literal">dave</tt> is allowed to access the share. In some
+situations it is possible to specify that any user can access a disk
+share by using the <tt class="literal">guest</tt> <tt class="literal">ok</tt>
+parameter. Because we don't wish to allow guest
+access, that option is absent here. If you allow both authenticated
+users and guest users access to the same share, you can make some
+files accessible to guest users by assigning world-readable
+permissions to those files while restricting access to other files to
+particular users or groups.</p>
+
+<p>When client users access a Samba share, they have to pass two levels
+of restriction. Unix permissions on files and directories apply as
+usual, and configuration parameters specified in the Samba
+configuration file apply as well. In other words, a client must first
+pass Samba's security mechanisms (e.g.,
+authenticating with a valid username and password, passing the check
+for the <tt class="literal">valid</tt> <tt class="literal">users</tt> parameter
+and the <tt class="literal">read</tt> <tt class="literal">only</tt> parameter,
+etc.), as well as the normal Unix file and directory permissions of
+its Unix-side user, before it can gain read/write access to a share.</p>
+
+<p>Remember that you can abbreviate the user's home
+directory by using the <tt class="literal">%H</tt><a name="INDEX-4"/> variable. In addition, you can use the
+Unix username variable <tt class="literal">%u</tt><a name="INDEX-5"/> and/or the client username variable
+<tt class="literal">%U</tt><a name="INDEX-6"/> in your options as well. For
+example :</p>
+
+<blockquote><pre class="code">[dave]
+    comment = %U home directory
+    writable = yes
+    valid users = dave
+    path = %H</pre></blockquote>
+
+<p>With a single user accessing a home directory, access permissions are
+taken care of when the user account is created. The home directory is
+owned by the user, and permissions on it are set appropriately.
+However, if you're creating a shared directory for
+group access, you need to perform a few more steps.
+Let's take a stab at a
+<a name="INDEX-7"/>group share for the
+accounting department in the <em class="emphasis">smb.conf</em> file:</p>
+
+<blockquote><pre class="code">[accounting]
+    comment = Accounting Department Directory
+    writable = yes
+    valid users = @account
+    path = /home/samba/accounting
+    create mode = 0660
+    directory mode = 0770</pre></blockquote>
+
+<p>The first thing we did differently is to specify
+<tt class="literal">@account</tt> as the valid user instead of one or more
+individual usernames. This is shorthand for saying that the valid
+users are represented by the Unix group <tt class="literal">account</tt>.
+These users will need to be added to the group entry
+<tt class="literal">account</tt> in the
+<a name="INDEX-8"/><a name="INDEX-9"/>system group file (
+<em class="filename">/etc/group</em><a name="INDEX-10"/>
+or equivalent) to be recognized as part of the group. Once they are,
+Samba will recognize those users as valid users for the share.</p>
+
+<p>In addition, you need to create a shared directory that the members
+of the group can access and point to it with the
+<tt class="literal">path</tt> configuration option. Here are the Unix
+commands that create the shared directory for the accounting
+department (assuming <em class="emphasis">/home/samba</em> already
+exists):</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>mkdir /home/samba/accounting</b></tt>
+# <tt class="userinput"><b>chgrp account /home/samba/accounting</b></tt>
+# <tt class="userinput"><b>chmod 770 /home/samba/accounting</b></tt></pre></blockquote>
+
+<p>There are two other options in this <em class="filename">smb.conf</em>
+example, both of which we saw in the previous chapter. These options
+are <tt class="literal">create</tt><a name="INDEX-11"/> <tt class="literal">mode</tt> and
+<tt class="literal">directory</tt><a name="INDEX-12"/> <tt class="literal">mode</tt>. These
+options set the maximum file and directory permissions that a new
+file or directory can have. In this case, we have denied all world
+access to the contents of this share. (This is reinforced by the
+<em class="emphasis">chmod</em> command, shown earlier.)<a name="INDEX-13"/></p>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-1.1"/>
+
+<h3 class="head2">Handling Multiple Individual Users</h3>
+
+<p><a name="INDEX-14"/>Let's return
+to user shares for a moment. If we have several users for whom to set
+up home directory shares, we probably want to use the special
+<tt class="literal">[homes]</tt> share that we introduced in <a href="ch08.html">Chapter 8</a>. With the
+<tt class="literal">[homes]</tt><a name="INDEX-15"/> share, all we need to say is:</p>
+
+<blockquote><pre class="code">[homes]
+    browsable = no
+    writable = yes</pre></blockquote>
+
+<p>The <tt class="literal">[homes]</tt> share is a special section of the
+Samba configuration file. If a user attempts to connect to an
+ordinary share that doesn't appear in the
+<em class="filename">smb.conf</em> file (such as specifying it with a UNC
+in Windows Explorer), Samba will search for a
+<tt class="literal">[homes]</tt> share. If one exists, the incoming share
+name is assumed to be a username and is queried as such in the
+password database ( <em class="filename">/etc/passwd</em> or equivalent)
+file of the Samba server. If it appears, Samba assumes the client is
+a Unix user trying to connect to his home directory.</p>
+
+<p>As an illustration, let's assume that
+<tt class="literal">sofia</tt> is attempting to connect to a share called
+<tt class="literal">[sofia]</tt> on the Samba server. There is no share by
+that name in the configuration file, but a <tt class="literal">[homes]</tt>
+share exists and user <tt class="literal">sofia</tt> is present in the
+password database, so Samba takes the following steps:</p>
+
+<ol><li>
+<p>Samba creates a new disk share called <tt class="literal">[sofia]</tt> with
+the <tt class="literal">path</tt> specified in the
+<tt class="literal">[homes]</tt> section. If no <tt class="literal">path</tt>
+option is specified in <tt class="literal">[homes]</tt>, Samba initializes
+it to her home directory.</p>
+</li><li>
+<p>Samba initializes the new share's options from the
+defaults in <tt class="literal">[globals]</tt>, as well as any overriding
+options in <tt class="literal">[homes]</tt> with the exception of
+<tt class="literal">browsable</tt>.</p>
+</li><li>
+<p>Samba connects <tt class="literal">sofia</tt>'s client to
+that share.</p>
+</li></ol>
+<p>The <tt class="literal">[homes]</tt> share is a fast, painless way to
+create shares for your user community without having to duplicate the
+information from the password database file in the
+<em class="filename">smb.conf</em> file. It does have some
+<a name="INDEX-16"/>peculiarities, however, that we need to
+point out:</p>
+
+<ul><li>
+<p>The <tt class="literal">[homes]</tt> section can represent any account on
+the machine, which isn't always desirable. For
+example, it can potentially create a share for
+<tt class="literal">root</tt>, <tt class="literal">bin</tt>,
+<tt class="literal">sys</tt>, <tt class="literal">uucp</tt>, and the like. You
+can set a global
+<tt class="literal">invalid</tt><a name="INDEX-17"/> <tt class="literal">users</tt> option
+to protect against this.</p>
+</li><li>
+<p>The meaning of the
+<tt class="literal">browsable</tt><a name="INDEX-18"/> configuration option is
+different from other shares; it indicates only that a
+<tt class="literal">[homes]</tt> section won't show up in
+the local browse list, not that the <tt class="literal">[alice]</tt> share
+won't. When the <tt class="literal">[alice]</tt> section
+is created (after the initial connection), it will use the
+<tt class="literal">browsable</tt> value from the
+<tt class="literal">[globals]</tt> section for that share, not the value
+from <tt class="literal">[homes]</tt>.</p>
+</li></ul>
+<p>As we mentioned, there is no need for a path statement in
+<tt class="literal">[homes]</tt> if the users have Unix home directories in
+the server's <em class="filename">/etc/passwd</em> file.
+You should ensure that a valid home directory does exist, however, as
+Samba will not automatically create a home directory for a user and
+will refuse a tree connect if the user's directory
+does not exist or is not accessible. <a name="INDEX-19"/></p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-9-SECT-2"/>
+
+<h2 class="head1">Controlling Access to Shares</h2>
+
+<p><a name="INDEX-20"/><a name="INDEX-21"/>Often you will need to restrict the users who
+can access a specific share for security reasons. This is very easy
+to do with Samba because it contains a wealth of options for creating
+practically any security configuration. Let's
+introduce a few configurations that you might want to use in your own
+Samba setup.</p>
+
+<p>We've seen what happens when you specify valid
+users. However, you are also allowed to specify a list of
+<a name="INDEX-22"/>invalid users&mdash;users who should never be
+allowed access to Samba or its shares. This is done with the
+<tt class="literal">invalid</tt><a name="INDEX-23"/> <tt class="literal">users</tt>
+option. We hinted at one frequent use of this option earlier: a
+global default with the <tt class="literal">[homes]</tt> section to ensure
+that various system users and superusers cannot be forged for access.
+For example:</p>
+
+<blockquote><pre class="code">[global]
+    invalid users = root bin daemon adm sync shutdown \
+                        halt mail news uucp operator
+    auto services = dave peter bob
+
+[homes]
+    browsable = no
+    writable = yes</pre></blockquote>
+
+<p>The <tt class="literal">invalid</tt> <tt class="literal">users</tt> option, like
+<tt class="literal">valid</tt> <tt class="literal">users</tt>, can take group
+names, preceded by an at sign (<tt class="literal">@</tt>), as well as
+usernames. In the event that a user or group appears in both lists,
+the <tt class="literal">invalid</tt> <tt class="literal">users</tt> option takes
+precedence, and the user or group is denied access to the share.</p>
+
+<p>At the other end of the spectrum, you can explicitly specify users
+who will be allowed <a name="INDEX-24"/><a name="INDEX-25"/>superuser (root) access to a share with
+the <tt class="literal">admin</tt><a name="INDEX-26"/> <tt class="literal">users</tt>
+option. An example follows:</p>
+
+<blockquote><pre class="code">[sales]
+        path = /home/sales
+        comment = Sedona Real Estate Sales Data
+        writable = yes
+        valid users = sofie shelby adilia
+        admin users = mike</pre></blockquote>
+
+<p>This option takes both group names and usernames. In addition, you
+can specify NIS netgroups by preceding them with an
+<tt class="literal">@</tt> as well; if the netgroup is not found, Samba
+will assume that you are referring to a standard Unix group.</p>
+
+<p>Be careful if you assign administrative privileges to a share for an
+entire group. The Samba Team highly recommends you avoid using this
+option, as it essentially gives root access to the specified users or
+groups for that share.</p>
+
+<p>If you wish to force read-only or read/write access on users who
+access a share, you can do so with the
+<tt class="literal">read</tt><a name="INDEX-27"/> <tt class="literal">list</tt> and
+<tt class="literal">write</tt> <tt class="literal">list</tt> options,
+respectively. These options can be used on a per-share basis to
+restrict a writable share or to grant write access to specific users
+in a read-only share, respectively. For example:</p>
+
+<blockquote><pre class="code">[sales]
+        path = /home/sales
+        comment = Sedona Real Estate Sales Data
+        read only = yes
+        write list = sofie shelby</pre></blockquote>
+
+<p>The <tt class="literal">write</tt><a name="INDEX-28"/> <tt class="literal">list</tt> option
+cannot override Unix permissions. If you've created
+the share without giving the <tt class="literal">write-list</tt> user write
+permission on the Unix system, she will be denied write access
+regardless of the setting of <tt class="literal">write</tt>
+<tt class="literal">list</tt>.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-2.1"/>
+
+<h3 class="head2">Guest Access</h3>
+
+<p><a name="INDEX-29"/>As mentioned
+earlier, you can configure a share using
+<tt class="literal">guest</tt><a name="INDEX-30"/> <tt class="literal">ok</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt> to allow access to guest
+users. This works only when using share-level security, which we will
+cover later in this chapter. When a user connects as a guest,
+authenticating with a username and password is unnecessary, but Samba
+still needs a way to map the connected client to a user on the local
+system. The <tt class="literal">guest</tt><a name="INDEX-31"/>
+<tt class="literal">account</tt> parameter can be used in the share to
+specify the Unix account that guest users should be assigned when
+connecting to the Samba server. The default value for this is set
+during compilation and is typically <tt class="literal">nobody</tt>, which
+works well with most Unix versions. However, on some systems the
+<tt class="literal">nobody</tt><a name="INDEX-32"/> account is not allowed to access some
+services (e.g., printing), and you might need to set the guest user
+to <tt class="literal">ftp</tt> or some other account instead.</p>
+
+<p>If you wish to restrict access in a share only to guests&mdash;in
+other words, all clients connect as the guest account when accessing
+the share&mdash;you can use the <tt class="literal">guest</tt>
+<tt class="literal">only</tt> option in conjunction with the
+<tt class="literal">guest</tt> <tt class="literal">ok</tt> option, as shown in
+the following example:</p>
+
+<blockquote><pre class="code">[sales]
+        path = /home/sales
+        comment = Sedona Real Estate Sales Data
+        writable = yes
+        guest ok = yes
+        guest account = ftp
+        guest only = yes</pre></blockquote>
+
+<p>Make sure you specify <tt class="literal">yes</tt> for both
+<tt class="literal">guest</tt> <tt class="literal">only</tt> and
+<tt class="literal">guest</tt> <tt class="literal">ok</tt>; otherwise, Samba will
+not use the guest account that you specify.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-2.2"/>
+
+<h3 class="head2">Access Control Options</h3>
+
+<p><a href="ch09.html#samba2-CHP-9-TABLE-1">Table 9-1</a> <a name="INDEX-33"/><a name="INDEX-34"/>summarizes the options that you can use
+to control access to shares.</p>
+
+<a name="samba2-CHP-9-TABLE-1"/><h4 class="head4">Table 9-1. Share-level access options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">admin users</tt></p>
+</td>
+<td>
+<p>string (list of usernames)</p>
+</td>
+<td>
+<p>Users who can perform operations as root</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">valid users</tt></p>
+</td>
+<td>
+<p>string (list of usernames)</p>
+</td>
+<td>
+<p>Users who can connect to a share</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">invalid users</tt></p>
+</td>
+<td>
+<p>string (list of usernames)</p>
+</td>
+<td>
+<p>Users who will be denied access to a share</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">read list</tt></p>
+</td>
+<td>
+<p>string (list of usernames)</p>
+</td>
+<td>
+<p>Users who have read-only access to a writable share</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">write list</tt></p>
+</td>
+<td>
+<p>string (list of usernames)</p>
+</td>
+<td>
+<p>Users who have read/write access to a read-only share</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">max connections</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Maximum number of connections for a share at a given time</p>
+</td>
+<td>
+<p><tt class="literal">0</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">guest only</tt> <tt class="literal">(only guest)</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, allows only guest access</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">guest account</tt></p>
+</td>
+<td>
+<p>string (name of account)</p>
+</td>
+<td>
+<p>Unix account that will be used for guest access</p>
+</td>
+<td>
+<p><tt class="literal">nobody</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-2.2.1"/>
+
+<a name="INDEX-35"/><h3 class="head3">admin users</h3>
+
+<p>This option specifies a list of users that perform file operations as
+if they were <tt class="literal">root</tt>. This means that they can modify
+or destroy any other user's files, regardless of the
+permissions. Any files that they create will have root ownership and
+will use the default group of the admin user. The
+<tt class="literal">admin</tt> <tt class="literal">users</tt> option allows PC
+users to act as administrators for particular shares. Be very careful
+when using this option, and make sure good password and other
+security policies are in place.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-2.2.2"/>
+
+<a name="INDEX-36"/><a name="INDEX-37"/><h3 class="head3">valid users, invalid users</h3>
+
+<p>These two options let you enumerate the users and groups who are
+granted or denied access to a particular share. You can enter a list
+of user and/or group names. If a name is prefixed by an at sign
+(<tt class="literal">@</tt>), it is interpreted as a group name&mdash;with
+NIS groups searched before Unix groups. If the name is prefixed by a
+plus sign (<tt class="literal">+</tt>), it is interpreted as the name of a
+Unix group, and NIS is not searched. If the name is prefixed by an
+ampersand (<tt class="literal">&amp;</tt>), it is interpreted as an NIS
+group name rather than as a Unix group name. The plus sign and
+ampersand can be used together to specify whether NIS or Unix groups
+are searched first. For example:</p>
+
+<blockquote><pre class="code">[database]
+    valid users = mary ellen sue &amp;sales +marketing @dbadmin
+    invalid users = gavin syd dana &amp;techies +&amp;helpdesk</pre></blockquote>
+
+<p>In the <tt class="literal">valid</tt> <tt class="literal">users</tt> parameter,
+users <tt class="literal">mary</tt>, <tt class="literal">ellen</tt>, and
+<tt class="literal">sue</tt> are allowed access to the
+<tt class="literal">[database]</tt> share, as are the members of the Unix
+group <tt class="literal">marketing</tt> and NIS/Unix group
+<tt class="literal">dbadmin</tt>. The <tt class="literal">invalid</tt>
+<tt class="literal">users</tt> parameter denies access to the share by
+users <tt class="literal">gavin</tt>, <tt class="literal">syd</tt>, and
+<tt class="literal">dana</tt>, as well as members of the NIS group
+<tt class="literal">techies</tt> and Unix/NIS group
+<tt class="literal">helpdesk</tt>. In this last case, the list of Unix
+groups is searched first for the <tt class="literal">helpdesk</tt> group,
+and if it is not found there, the list of NIS groups is searched.</p>
+
+<p>The important rule to remember with these options is that any name or
+group in the <tt class="literal">invalid</tt> <tt class="literal">users</tt> list
+will <em class="emphasis">always</em> be denied access, even if it is
+included (in any form) in the <tt class="literal">valid</tt>
+<tt class="literal">users</tt> list.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-2.2.3"/>
+
+<a name="INDEX-38"/><a name="INDEX-39"/><h3 class="head3">read list, write list</h3>
+
+<p>Like the <tt class="literal">valid</tt> <tt class="literal">users</tt>
+<tt class="literal">and</tt> <tt class="literal">invalid</tt>
+<tt class="literal">users</tt> options, this pair of options specifies
+which users have read-only access to a writable share and read/write
+access to a read-only share, respectively. The value of either
+options is a list of users. The <tt class="literal">read</tt>
+<tt class="literal">list</tt> parameter overrides any other Samba
+permissions granted&mdash;as well as Unix file permissions on the
+server system&mdash;to deny users write access.
+<tt class="literal">The</tt> <tt class="literal">write</tt>
+<tt class="literal">list</tt> parameter overrides other Samba permissions
+to grant write access, but cannot grant write access if the user
+lacks write permissions for the file on the Unix system. You can
+specify NIS or Unix group names by prefixing the name with an at sign
+(such as <tt class="literal">@users</tt>). Neither configuration option has
+a default value associated with it.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-2.2.4"/>
+
+<a name="INDEX-40"/><h3 class="head3">max connections</h3>
+
+<p>This option specifies the maximum number of client connections that a
+share can have at any given time. Any connections that are attempted
+after the maximum is reached will be rejected. The default value is
+<tt class="literal">0</tt>, which is a special case that allows an
+unlimited number of connections. You can override it per share as
+follows:</p>
+
+<blockquote><pre class="code">[accounting]
+    max connections = 30</pre></blockquote>
+
+<p>This option is useful in the event that you need to limit the number
+of users who are accessing a licensed program or piece of data
+concurrently.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-2.2.5"/>
+
+<a name="INDEX-41"/><h3 class="head3">guest only</h3>
+
+<p>This share-level option (also called <tt class="literal">only</tt>
+<tt class="literal">guest</tt>) forces a connection to a share to be
+performed with the user specified by the <tt class="literal">guest</tt>
+<tt class="literal">account</tt> option. The share to which this is applied
+must explicitly specify <tt class="literal">guest</tt>
+<tt class="literal">ok</tt> <tt class="literal">=</tt> <tt class="literal">yes</tt> for
+this option to be recognized by Samba. The default value for this
+option is <tt class="literal">no</tt>.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-2.2.6"/>
+
+<a name="INDEX-42"/><h3 class="head3">guest account</h3>
+
+<p>This option specifies the name of the account to be used for guest
+access to shares in Samba. The default for this option varies from
+system to system, but it is often set to <tt class="literal">nobody</tt>.
+Some default user accounts have trouble connecting as guest users. If
+that occurs on your system, the Samba Team recommends using the
+<tt class="literal">ftp</tt> account as the guest user. <a name="INDEX-43"/> <a name="INDEX-44"/><a name="INDEX-45"/></p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-2.3"/>
+
+<h3 class="head2">Username Options</h3>
+
+<p><a href="ch09.html#samba2-CHP-9-TABLE-2">Table 9-2</a> shows two additional options that Samba
+can use to correct for incompatibilities in usernames between Windows
+and Unix.</p>
+
+<a name="samba2-CHP-9-TABLE-2"/><h4 class="head4">Table 9-2. Username options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">username</tt> <tt class="literal">map</tt></p>
+</td>
+<td>
+<p>string (filename)</p>
+</td>
+<td>
+<p>Sets the name of the username mapping file</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">username</tt> <tt class="literal">level</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Indicates the number of capital letters to use when trying to match a
+username</p>
+</td>
+<td>
+<p><tt class="literal">0</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-2.3.1"/>
+
+<a name="INDEX-46"/><h3 class="head3">username map</h3>
+
+<p>Client usernames on an SMB network can be relatively long (up to 255
+characters), while usernames on a Unix network often cannot be longer
+than eight characters. This means that an individual user can have
+one username on a client and another (shorter) one on the Samba
+server. You can get past this issue by<em class="firstterm">
+</em><a name="INDEX-47"/>mapping a free-form client
+username to a Unix username of eight or fewer characters. It is
+placed in a standard text file, using a format that
+we'll describe shortly. You can then specify the
+pathname to Samba with the global <tt class="literal">username</tt>
+<tt class="literal">map</tt> option. Be sure to restrict access to this
+file; make the root user the file's owner and deny
+write access to others (with octal permissions of 744 or 644).
+Otherwise, an untrusted user with access to the file can easily map
+his client username to the root user of the Samba server.</p>
+
+<p>You can specify this option as follows:</p>
+
+<blockquote><pre class="code">[global]
+    username map = /usr/local/samba/private/usermap.txt</pre></blockquote>
+
+<p>Each entry in the username map file should be listed as follows: the
+Unix username, followed by an equal sign (<tt class="literal">=</tt>),
+followed by one or more whitespace-separated SMB client usernames.
+Note that unless instructed otherwise (i.e., a guest connection),
+Samba will expect both the client and the server user to have the
+same password. You can also map NT groups to one or more specific
+Unix groups using the <tt class="literal">@</tt> sign. Here are some
+examples:</p>
+
+<blockquote><pre class="code">jarwin = JosephArwin
+manderso = MarkAnderson
+users = @account</pre></blockquote>
+
+<p>You can also use the asterisk to specify a wildcard that matches any
+free-form client username as an entry in the username map file:</p>
+
+<blockquote><pre class="code">nobody = *</pre></blockquote>
+
+<p>Comments can be placed in the file by starting the line with a hash
+mark (<tt class="literal">#</tt>) or a semicolon (<tt class="literal">;</tt>).</p>
+
+<p>Note that you can also use this file to redirect one Unix user to
+another user. Be careful, though, as Samba and your client might not
+notify the user that the mapping has been made and Samba might be
+expecting a different password.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-2.3.2"/>
+
+<a name="INDEX-48"/><h3 class="head3">username level</h3>
+
+<p>SMB clients (such as Windows) will often send usernames in SMB
+connection requests entirely in capital letters; in other words,
+client usernames are not necessarily case-sensitive. On a Unix
+server, however, usernames <em class="emphasis">are</em> case-sensitive:
+the user <tt class="literal">ANDY</tt> is different from the user
+<tt class="literal">andy</tt>. By default, Samba attacks this problem by
+doing the following:</p>
+
+<ol><li>
+<p>Checking for a user account with the exact name sent by the client</p>
+</li><li>
+<p>Testing the username in all lowercase letters</p>
+</li><li>
+<p>Testing the username in lowercase letters with only the first letter
+capitalized</p>
+</li></ol>
+<p>If you wish to have Samba attempt more combinations of upper- and
+lowercase letters, you can use the <tt class="literal">username</tt>
+<tt class="literal">level</tt> global configuration option. This option
+takes an integer value that specifies how many letters in the
+username should be capitalized when attempting to connect to a share.
+You can specify this option as follows:</p>
+
+<blockquote><pre class="code">[global]
+    username level = 3</pre></blockquote>
+
+<p>In this case, Samba attempts all possible permutations of usernames
+having three capital letters. The larger the number, the more
+computations Samba has to perform to match the username, and the
+longer the authentication will take.</p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-9-SECT-3"/>
+
+<h2 class="head1">Authentication of Clients</h2>
+
+<p><a name="INDEX-49"/>At
+this point, we should discuss how Samba authenticates users. Each
+user who attempts to connect to a share not allowing guest access
+must provide a password to
+<a name="INDEX-50"/>make a successful connection. What
+Samba does with that password&mdash;and consequently the strategy
+Samba will use to handle user authentication&mdash;is the arena of
+the <tt class="literal">security</tt> configuration option. Samba currently
+supports <a name="INDEX-51"/><a name="INDEX-52"/><a name="INDEX-53"/>four
+<a name="INDEX-54"/>security levels on its network:
+<em class="firstterm">share</em>, <em class="firstterm">user</em>,
+<em class="firstterm">server</em>, and <em class="firstterm">domain</em>.</p>
+
+<dl>
+<dt><b><a name="INDEX-55"/>Share-level security</b></dt>
+<dd>
+<p>Each share in the workgroup has one or more passwords associated with
+it. Anyone who knows a valid password for the share can access it.</p>
+</dd>
+
+
+
+<dt><b><a name="INDEX-56"/>User-level security</b></dt>
+<dd>
+<p>Each share in the workgroup is configured to allow access from
+certain users. With each initial tree connection, the Samba server
+verifies users and their passwords to allow them access to the share.</p>
+</dd>
+
+
+
+<dt><b><a name="INDEX-57"/>Server-level security</b></dt>
+<dd>
+<p>This is the same as user-level security, except that the Samba server
+uses another server to validate users and their passwords before
+granting access to the share.</p>
+</dd>
+
+
+
+<dt><b><a name="INDEX-58"/>Domain-level security</b></dt>
+<dd>
+<p>Samba becomes a member of a Windows NT domain and uses one of the
+domain's domain controllers&mdash;either the PDC or
+a BDC&mdash;to perform authentication. Once authenticated, the user
+is given a special token that allows her access to any share with
+appropriate access rights. With this token, the domain controller
+will not have to revalidate the user's password each
+time she attempts to access another share within the domain. The
+domain controller can be a Windows NT/2000 PDC or BDC, or Samba
+acting as a Windows NT PDC.</p>
+</dd>
+
+</dl>
+
+<p>Each security policy can be implemented with the global
+<tt class="literal">security</tt> option, as shown in <a href="ch09.html#samba2-CHP-9-TABLE-3">Table 9-3</a>.</p>
+
+<a name="samba2-CHP-9-TABLE-3"/><h4 class="head4">Table 9-3. Security option</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">security</tt><a name="INDEX-59"/></p>
+</td>
+<td>
+<p><tt class="literal">domain</tt>, <tt class="literal">server</tt>,
+<tt class="literal">share</tt>, or <tt class="literal">user</tt></p>
+</td>
+<td>
+<p>Indicates the type of security that the Samba server will use</p>
+</td>
+<td>
+<p><tt class="literal">user</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-3.1"/>
+
+<h3 class="head2">Share-Level Security</h3>
+
+<p>With share-level security, each share has one or more passwords
+associated with it, with the client being authenticated when first
+connecting to the share. This differs from the other modes of
+security in that there are no restrictions as to whom can access a
+share, as long as that individual knows the correct password. Shares
+often have multiple passwords. For example, one password might grant
+read-only access, while another might grant read/write access.
+Security is maintained as long as unauthorized users do not discover
+the password for a share to which they shouldn't
+have access.</p>
+
+<p>OS/2 and Windows 95/98/Me both support share-level security on their
+resources. You can set up share-level security with Windows 95/98/Me
+by first enabling share-level security using the Access Control tab
+of the Network Control Panel dialog. Then select the
+&quot;Share-level access control&quot; radio
+button (which deselects the &quot;User-level access
+control&quot; radio button), as shown in <a href="ch09.html#samba2-CHP-9-FIG-1">Figure 9-1</a>, and click the OK button. Reboot as requested.</p>
+
+<div class="figure"><a name="samba2-CHP-9-FIG-1"/><img src="figs/sam2_0901.gif"/></div><h4 class="head4">Figure 9-1. Selecting share-level security on a Windows 95/98/Me system</h4>
+
+<p>Next, right-click a resource&mdash;such as a hard drive or a
+CD-ROM&mdash;and select the Properties menu item. This will bring up
+the Resource Properties dialog box. Select the Sharing tab at the top
+of the dialog box, and enable the resource as Shared As. From here,
+you can configure how the shared resource will appear to individual
+users, as well as assign whether the resource will appear as
+read-only, read/write, or a mix, depending on the password that is
+supplied.</p>
+
+<p>You might be thinking that this security model is not a good fit for
+Samba&mdash;and you would be right. In fact, if you set the
+<tt class="literal">security</tt> <tt class="literal">=</tt>
+<tt class="literal">share</tt> option in the Samba configuration file,
+Samba will still reuse the username/password combinations in the
+system password files to authenticate access. More precisely, Samba
+will take the following steps when a client requests a connection
+using share-level security:</p>
+
+<ol><li>
+<p>When a connection is requested, Samba will accept the password and
+(if sent) the username of the client.</p>
+</li><li>
+<p>If the share is <tt class="literal">guest</tt> <tt class="literal">only</tt> ,
+the user is immediately granted access to the share with the rights
+of the user specified by the <tt class="literal">guest</tt>
+<tt class="literal">account</tt> parameter; no password checking is
+performed.</p>
+</li><li>
+<p>For other shares, Samba appends the username to a list of users who
+are allowed access to the share. It then attempts to validate the
+password given in association with that username. If successful,
+Samba grants the user access to the share with the rights assigned to
+that user. The user will not need to authenticate again unless a
+<tt class="literal">revalidate</tt> <tt class="literal">=</tt>
+<tt class="literal">yes</tt> option has been set inside the share.</p>
+</li><li>
+<p>If the authentication is unsuccessful, Samba attempts to validate the
+password against the list of users previously compiled during
+attempted connections, as well as those specified under the share in
+the configuration file. If the password matches that of any username
+(as specified in the system password file, typically
+<em class="filename">/etc/passwd </em>), the user is granted access to the
+share under that username.</p>
+</li><li>
+<p>However, if the share has a <tt class="literal">guest</tt>
+<tt class="literal">ok</tt> or <tt class="literal">public</tt> option set, the
+user will default to access with the rights of the user specified by
+the <tt class="literal">guest</tt> <tt class="literal">account</tt> option.</p>
+</li></ol>
+<p>You can indicate in the configuration file which users should be
+initially placed on the share-level security user list by using the
+<tt class="literal">username</tt> configuration option, as shown here:</p>
+
+<blockquote><pre class="code">[global]
+    security = share
+
+[accounting1]
+    path = /home/samba/accounting1
+    guest ok = no
+    writable = yes
+    username = davecb, pkelly, andyo</pre></blockquote>
+
+<p>Here, when a user attempts to connect to a share, Samba verifies the
+sent password against each user in its own list, in addition to the
+passwords of users <tt class="literal">davecb</tt>,
+<tt class="literal">pkelly</tt>, and <tt class="literal">andyo</tt>. If any of
+the passwords match, the connection is verified, and the user is
+allowed. Otherwise, connection to the specific share will fail.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-3.2"/>
+
+<h3 class="head2">Share-Level Security Options</h3>
+
+<p><a href="ch09.html#samba2-CHP-9-TABLE-4">Table 9-4</a> shows the options typically associated
+with <em class="firstterm">share-level
+security</em><a name="INDEX-60"/>.</p>
+
+<a name="samba2-CHP-9-TABLE-4"/><h4 class="head4">Table 9-4. Share-level access options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">only user</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, usernames specified by
+<tt class="literal">username</tt> are the only ones allowed</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">username</tt> (<tt class="literal">user</tt> or
+<tt class="literal">users</tt>)</p>
+</td>
+<td>
+<p>string (list of usernames)</p>
+</td>
+<td>
+<p>Users against which a client's password is tested</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-3.2.1"/>
+
+<a name="INDEX-61"/><h3 class="head3">only user</h3>
+
+<p>This Boolean option indicates whether Samba will allow connections to
+a share using share-level security based solely on the individuals
+specified in the <tt class="literal">username</tt> option, instead of those
+users compiled on Samba's internal list. The default
+value for this option is <tt class="literal">no</tt>. You can override it
+per share as follows:</p>
+
+<blockquote><pre class="code">[global]
+    security = share
+[data]
+    username = andy, peter, valerie
+    only user = yes</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-3.2.2"/>
+
+<a name="INDEX-62"/><h3 class="head3">username</h3>
+
+<p>This option presents a list of usernames and/or group names against
+which Samba tests a connection password to allow access. It is
+typically used with clients that have share-level security to allow
+connections to a particular service based solely on a qualifying
+password&mdash;in this case, one that matches a password set up for a
+specific user:</p>
+
+<blockquote><pre class="code">[global]
+    security = share
+[data]
+    username = andy, peter, terry</pre></blockquote>
+
+<p>You can enter a list of usernames and/or group names. If a name is
+prefixed by an at sign (<tt class="literal">@</tt>), it is interpreted as a
+group name, with NIS groups searched before Unix groups. If the name
+is prefixed by a plus sign (<tt class="literal">+</tt>), it is interpreted
+as the name of a Unix group, and NIS is not searched. If the name is
+prefixed by an ampersand (<tt class="literal">&amp;</tt>), it is
+interpreted as an NIS group name rather than a Unix group name. The
+plus sign and ampersand can be used together to specify whether NIS
+or Unix groups are searched first. When Samba encounters a group name
+in this option, it attempts to authenticate each user in the group
+until if finds one that succeeds. Beware that this can be very
+inefficient.</p>
+
+<p>We recommend against using this option unless you are implementing a
+Samba server with share-level security.</p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-3.3"/>
+
+<h3 class="head2">User-Level Security</h3>
+
+<p>The default mode of security with Samba is <em class="firstterm">user-level
+security</em><a name="INDEX-63"/>. With this method, each share is
+assigned specific users that can access it. When a user requests a
+connection to a share, Samba authenticates by validating the given
+username and password with the authorized users in the configuration
+file and the passwords in the password database of the Samba server.
+As mentioned earlier in the chapter, one way to isolate which users
+are allowed access to a specific share is by using the
+<tt class="literal">valid</tt> <tt class="literal">users</tt> option for each
+share:</p>
+
+<blockquote><pre class="code">[global]
+    security = user
+
+[accounting1]
+    writable = yes
+    valid users = bob, joe, sandy</pre></blockquote>
+
+<p>Each user listed can connect to the share if the password provided
+matches the password stored in the system password database on the
+server. Once the initial authentication succeeds, the client will not
+need to supply a password again to access that share unless the
+<tt class="literal">revalidate</tt> <tt class="literal">=</tt>
+<tt class="literal">yes</tt> option has been set.</p>
+
+<p>Passwords can be sent to the Samba server in either an encrypted or a
+nonencrypted format. If you have both types of systems on your
+network, you should ensure that the passwords represented by each
+user are stored both in a traditional account database and
+Samba's encrypted password database. This way,
+authorized users can gain access to their shares from any type of
+client.<a name="FNPTR-1"/><a href="#FOOTNOTE-1">[1]</a> However, we recommend that you
+move your system to encrypted passwords and abandon nonencrypted
+passwords if security is an issue. <a href="ch09.html#samba2-CHP-9-SECT-4">Section 9.4</a> of this chapter
+explains how to use encrypted as well as nonencrypted passwords.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-3.4"/>
+
+<h3 class="head2">Server-Level Security</h3>
+
+<p><em class="firstterm">Server-level
+security</em><a name="INDEX-64"/> is similar to user-level security.
+However, with server-level security, Samba delegates password
+authentication to another SMB password server&mdash;typically another
+Samba server or a Windows NT/2000 server acting as a PDC on the
+network. Note that Samba still maintains its list of shares and their
+configuration in its <em class="filename">smb.conf</em> file. When a
+client attempts to make a connection to a particular share, Samba
+validates that the user is indeed authorized to connect to the share.
+Samba then attempts to validate the password by passing the username
+and password to the SMB password server. If the password is accepted,
+a session is established with the client. See <a href="ch09.html#samba2-CHP-9-FIG-2">Figure 9-2</a> for an illustration of this setup.</p>
+
+<div class="figure"><a name="samba2-CHP-9-FIG-2"/><img src="figs/sam2_0902.gif"/></div><h4 class="head4">Figure 9-2. A typical system setup using server-level security</h4>
+
+<p>You can configure Samba to use a separate password server under
+server-level security with the use of the
+<tt class="literal">password</tt><a name="INDEX-65"/> <tt class="literal">server</tt>
+global configuration option, as follows:</p>
+
+<blockquote><pre class="code">[global]
+    security = server
+    password server = mixtec toltec</pre></blockquote>
+
+<p>Note that you can specify more than one machine as the target of the
+<tt class="literal">password</tt> <tt class="literal">server</tt>; Samba moves
+down the list of servers in the event that its first choice is
+unreachable. The servers identified by the
+<tt class="literal">password</tt> <tt class="literal">server</tt> option are
+given as NetBIOS names, not their DNS names or equivalent IP
+addresses. Also, if any of the servers reject the given password, the
+connection automatically fails&mdash;Samba will not attempt another
+server.</p>
+
+<p>One caveat: when using this option, you still need an account
+representing that user on the regular Samba server. This is because
+the Unix operating system needs a username to perform various I/O
+operations. The preferable method of handling this is to give the
+user an account on the Samba server but disable the
+account's password by replacing it in the system
+password file (e.g., <em class="filename">/etc/passwd </em>) with an
+asterisk (*).</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-3.5"/>
+
+<h3 class="head2">Domain-Level Security</h3>
+
+<p>With <em class="firstterm">domain-level
+security</em><a name="INDEX-66"/>, the Samba server acts as a member of
+a Windows domain. Recall from <a href="ch01.html">Chapter 1</a> that each
+domain has a primary domain controller, which can be a Windows
+NT/2000 or Samba server offering password authentication. The domain
+controller keeps track of users and passwords in its own database and
+authenticates each user when she first logs on and wishes to access
+another machine's shares.</p>
+
+<p>As mentioned earlier in this chapter, Samba has a similar ability to
+offer user-level security, but that option is Unix-centric and
+assumes that the authentication occurs via Unix password files. If
+the Unix machine is part of an NIS or NIS+ domain, Samba
+authenticates users transparently against a shared password file in
+typical Unix fashion. Samba then provides access to the NIS or NIS+
+domain from Windows. There is, of course, no relationship between the
+NIS concept of a domain and a Windows NT domain.</p>
+
+<p>Configuring Samba for domain-level security is covered in <a href="ch04.html">Chapter 4</a> in <a href="ch04.html#samba2-CHP-4-SECT-7">Section 4.7</a>. <a name="INDEX-67"/></p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-9-SECT-4"/>
+
+<h2 class="head1">Passwords</h2>
+
+<p><a name="INDEX-68"/>Passwords
+are a thorny issue with Samba. So much so, in fact, that they are
+often the first major problem that users encounter when they install
+Samba. At this point, we need to delve deeper into Samba to discover
+what is happening on the network.</p>
+
+<p>Passwords sent from individual clients can be either encrypted or
+nonencrypted. Encrypted passwords are, of course, more secure. A
+nonencrypted, plain-text password can be easily read with a
+packet-sniffing program, such as the modified
+<em class="emphasis">tcpdump</em> program for Samba that we used in <a href="ch01.html">Chapter 1</a>. Whether passwords are encrypted by default
+depends on the operating system that the client is using to connect
+to the Samba server. <a href="ch09.html#samba2-CHP-9-TABLE-5">Table 9-5</a> lists which
+<a name="INDEX-69"/>Windows operating
+systems encrypt their passwords and which send plain-text passwords
+by default.</p>
+
+<a name="samba2-CHP-9-TABLE-5"/><h4 class="head4">Table 9-5. Windows operating systems with encrypted passwords</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Operating system</p>
+</th>
+<th>
+<p>Encrypted or plain text</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p>Windows for Workgroups</p>
+</td>
+<td>
+<p>Plain text</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows 95</p>
+</td>
+<td>
+<p>Plain text</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows 95 with SMB Update</p>
+</td>
+<td>
+<p>Encrypted</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows 98</p>
+</td>
+<td>
+<p>Encrypted</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows Me</p>
+</td>
+<td>
+<p>Encrypted</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows NT 3.x</p>
+</td>
+<td>
+<p>Plain text</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows NT 4.0 before SP <tt class="literal">3</tt></p>
+</td>
+<td>
+<p>Plain text</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows NT 4.0 after SP 3</p>
+</td>
+<td>
+<p>Encrypted</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows 2000</p>
+</td>
+<td>
+<p>Encrypted</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows XP</p>
+</td>
+<td>
+<p>Encrypted</p>
+</td>
+</tr>
+
+</table>
+
+<p>Three different encryption methods are used. Windows 95/98/Me clients
+use a method inherited from Microsoft's LAN Manager
+network software. Windows NT/2000/XP systems use a newer system,
+called NT LAN Manager, or NTLM. A newer version of this (called NT
+LAN Manager Version 2, or NTLMv2) uses a different method for
+password hashing.</p>
+
+<p>If encrypted passwords are supported, Samba stores the encrypted
+passwords in a file called <em class="filename">smbpasswd</em>. By
+default, this file is located in the <em class="filename">private</em>
+directory of the Samba distribution (typically
+<em class="filename">/usr/local/samba/private</em>). At the same time, the
+client stores an encrypted version of a user's
+password on its own system. The plain-text password is never stored
+on either system. Each system encrypts the password automatically
+using a standard algorithm when the password is set or changed.</p>
+
+<p>When a client requests a connection to an SMB server that supports
+encrypted passwords (such as Samba or Windows NT/2000/XP), the two
+computers undergo the following negotiations:</p>
+
+<ol><li>
+<p>The client attempts to negotiate a protocol with the server.</p>
+</li><li>
+<p>The server responds with a protocol and indicates that it supports
+encrypted passwords. At this time, it sends back a randomly generated
+8-byte challenge string.</p>
+</li><li>
+<p>The client uses the challenge string as a key to encrypt its already
+encrypted password using an algorithm predefined by the negotiated
+protocol. It then sends the result to the server.</p>
+</li><li>
+<p>The server does the same thing with the encrypted password stored in
+its database. If the results match, the passwords are equivalent, and
+the user is authenticated.</p>
+</li></ol>
+<p>Note that even though the original passwords are not involved in the
+authentication process, you need to be very careful that the
+encrypted passwords located inside the <em class="filename">smbpasswd</em>
+file are guarded from unauthorized users. If they are compromised, an
+unauthorized user can break into the system by replaying the steps of
+the previous algorithm. The encrypted passwords are just as sensitive
+as the plain-text passwords&mdash;this is known as
+<em class="firstterm">plain-text-equivalent</em> data in the cryptography
+world. Of course, your local security policy should require that the
+clients safeguard their plain-text-equivalent passwords as well.</p>
+
+<p>You can configure Samba to accept encrypted passwords with the
+following global additions to <em class="filename">smb.conf</em>. Note
+that we explicitly name the location of the Samba password file:</p>
+
+<blockquote><pre class="code">[global]
+    security = user
+    encrypt passwords = yes
+    smb passwd file = /usr/local/samba/private/smbpasswd</pre></blockquote>
+
+<p>Samba, however, will not accept any users until the
+<em class="filename">smbpasswd</em> file has been created and the users
+have been added to it with the <em class="emphasis">smbpasswd</em>
+command, as we showed you in <a href="ch02.html">Chapter 2</a>.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-4.1"/>
+
+<h3 class="head2">Disabling Encrypted Passwords on the Client</h3>
+
+<p><a name="INDEX-70"/><a name="INDEX-71"/>While Unix authentication has been
+in use for decades&mdash;including the use of
+<em class="emphasis">telnet</em> and <em class="emphasis">rlogin</em> access
+across the Internet&mdash;it embodies well-known security risks.
+Plaintext passwords are sent over the Internet and can be retrieved
+from TCP packets by malicious snoopers. However, if you feel that
+your network is secure and you wish to use standard Unix
+<em class="filename">/etc/passwd</em> authentication for all clients, you
+can do so, but you must disable encrypted passwords on those Windows
+clients that default to using them.</p>
+
+<p>To do this, you must modify the Windows registry on each client
+system. The Samba distribution includes the <em class="filename">.reg</em>
+files you need for this, located in the source
+distribution's <em class="filename">/docs/Registry</em>
+directory. Depending on the platform, you use one of the following
+files:</p>
+
+<blockquote class="simplelist">
+
+<p><em class="filename">Win95_PlainPassword.reg</em></p>
+
+<p><em class="filename">Win98_PlainPassword.reg</em></p>
+
+<p><em class="filename">WinME_PlainPassword.reg</em></p>
+
+<p><em class="filename">NT_PlainPassword.reg</em></p>
+
+<p><em class="filename">Win2000_PlainPassword.reg</em></p>
+
+</blockquote>
+
+<p>(For Windows XP, use the <em class="filename">.reg</em> file for Windows
+2000.) You can perform the installation by copying the appropriate
+<em class="filename">.reg</em> file to a DOS floppy, inserting the floppy
+in the client's floppy drive, and running the
+<em class="filename">.reg</em> file from the Run menu item in the
+client's Start menu. (Or you can just double-click
+the file's icon.)</p>
+
+<p>After you reboot the machine, the client will not encrypt its hashed
+passwords before sending them to the server. This means that the
+plain-text passwords can been seen in the TCP packets that are
+broadcast across the network. Again, we encourage you not to do this
+unless you are absolutely sure that your network is secure.</p>
+
+<p>If passwords are not encrypted, use these two lines in your Samba
+configuration file:</p>
+
+<blockquote><pre class="code">[global]
+    security = user
+    encrypt passwords = no</pre></blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-4.2"/>
+
+<h3 class="head2">The smbpasswd File</h3>
+
+<p>Samba stores its encrypted passwords in a file called
+<em class="filename">smbpasswd</em><a name="INDEX-72"/>,
+which by default resides in the
+<em class="filename">/usr/local/samba/private</em> directory. The
+<em class="filename">smbpasswd</em> file should be guarded as closely as
+the Unix system's password file (either
+<em class="filename">/etc/passwd</em> or
+<em class="filename">/etc/shadow</em>). Only the root user should have
+read/write access to the <em class="filename">private</em> directory, and
+no other users should have access to it at all. In addition, the
+<em class="filename">smbpasswd</em> file should have all access denied to
+all users except for root. When things are set up for good security,
+long listings of the <em class="filename">private</em> directory and
+<em class="filename">smbpasswd</em> file look like the following:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>ls -ld /usr/local/samba/private</b></tt>
+drwx- - - - - -   2 root   root   4096 Nov 26 01:11 /usr/local/samba/private
+# <tt class="userinput"><b>ls -l /usr/local/samba/private/smbpasswd</b></tt>
+-rw- - - - - - -   1 root   root    204 Nov 26 01:11 /usr/local/samba/private/smbpasswd</pre></blockquote>
+
+<p>Before you can use encrypted passwords, you need to create an entry
+for each Unix user in the <em class="filename">smbpasswd</em> file. The
+structure of the file is somewhat similar to a Unix
+<em class="filename">passwd</em> file, but has different fields. <a href="ch09.html#samba2-CHP-9-FIG-3">Figure 9-3</a> illustrates the layout of the
+<em class="filename">smbpasswd</em> file; the entry shown is actually one
+line in the file.</p>
+
+<div class="figure"><a name="samba2-CHP-9-FIG-3"/><img src="figs/sam2_0903.gif"/></div><h4 class="head4">Figure 9-3. Structure of the smbpasswd file entry (actually one line)</h4>
+
+<p>Normally, entries in the <em class="filename">smbpasswd</em> file are
+created automatically by the <em class="emphasis">smbpasswd</em> command.
+Still, you might like to know how to interpret data within the
+<em class="filename">smbpasswd</em> file, in case you'd
+like to see what accounts are stored in it or even modify it
+manually. Here is a breakdown of the individual fields:</p>
+
+<dl>
+<dt><b>Username</b></dt>
+<dd>
+<p>This is the username of the account. It is taken directly from the
+system password file.</p>
+</dd>
+
+
+
+<dt><b>UID</b></dt>
+<dd>
+<p>This is the user ID (UID) of the account. Like the username, it is
+taken directly from the system password file and must match the UID
+there.</p>
+</dd>
+
+
+
+<dt><b>LAN Manager Password Hash</b></dt>
+<dd>
+<p>This is a 32-bit hexadecimal sequence that represents the password
+Windows 95/98/Me clients will use. It is derived by splitting the
+password into two 7-character strings, with all lowercase letters
+forced into uppercase. If fewer than 14 characters are in the
+password, the strings are padded with nulls. Then each 7-character
+string is converted to a 56-bit DES key and used to encrypt the
+constant string <tt class="literal">KGS!@#$%</tt>. The two 64-bit results
+are concatenated and stored as the password hash.</p>
+
+
+<p>If there is currently no password for the user, the first 11
+characters of the hash will consist of the sequence
+<tt class="literal">NO</tt> <tt class="literal">PASSWORD</tt> followed by
+<tt class="literal">X</tt> characters for the remainder. If the password
+has been disabled, it will consist of 32 <tt class="literal">X</tt>
+characters.</p>
+</dd>
+
+
+<dt><b>NT LAN Manager (NTLM) Password Hash</b></dt>
+<dd>
+<p>This is a 32-bit hexadecimal sequence that represents the password
+Windows NT/2000/XP clients will use. It is derived by hashing the
+user's password (represented as a 16-bit
+little-endian Unicode sequence) with an MD4 hash. The password is not
+converted to uppercase letters first.</p>
+</dd>
+
+
+
+<dt><b>Account Flags</b></dt>
+<dd>
+<p>This field consists of 11 characters between two braces ( [ ] ). Any
+of the following characters can appear in any order; the remaining
+characters should be spaces:</p>
+
+
+<dl>
+<dt><b>U</b></dt>
+<dd>
+<p>This account is a standard user account.</p>
+</dd>
+
+
+
+<dt><b>D</b></dt>
+<dd>
+<p>This account is currently disabled, and Samba should not allow any
+logins.</p>
+</dd>
+
+
+
+<dt><b>N</b></dt>
+<dd>
+<p>This account has no password associated with it.</p>
+</dd>
+
+
+
+<dt><b>W</b></dt>
+<dd>
+<p>This is a workstation trust account that can be used to configure
+Samba as a PDC when allowing Windows NT machines to join its domain.</p>
+</dd>
+
+</dl>
+</dd>
+
+
+<dt><b>Last Change Time</b></dt>
+<dd>
+<p>This code consists of the characters <tt class="literal">LCT-</tt> followed
+by a hexadecimal representation of the number of seconds since the
+epoch (midnight on January 1, 1970) that the entry was last changed.
+<a name="INDEX-73"/></p>
+</dd>
+
+</dl>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-4.3"/>
+
+<h3 class="head2">Password Synchronization</h3>
+
+<p><a name="INDEX-74"/><a name="INDEX-75"/>Having a regular password (either in
+<em class="filename">/etc/passwd</em> or <em class="filename">/etc/shadow</em>)
+and an encrypted version of the same password (in the
+<em class="filename">smbpasswd</em> file) can be troublesome when you need
+to change both of them. Luckily, Samba affords you a limited ability
+to keep your passwords synchronized. Samba has a pair of
+configuration options to update a user's regular
+Unix password automatically when the encrypted password is changed on
+the system. The feature can be activated by specifying the
+<tt class="literal">unix</tt><a name="INDEX-76"/> <tt class="literal">password</tt>
+<tt class="literal">sync</tt> global configuration option:</p>
+
+<blockquote><pre class="code">[global]
+    unix password sync = yes</pre></blockquote>
+
+<p>With this option enabled, Samba attempts to change the
+user's regular password (as <tt class="literal">root</tt>)
+when the encrypted version is changed with
+<em class="filename">smbpasswd</em>. However, two other options have to be
+set correctly for this to work.</p>
+
+<p>The easier of the two is <tt class="literal">passwd</tt>
+<tt class="literal">program</tt>. This option simply specifies the Unix
+command used to change a user's standard system
+password. It is set to <tt class="literal">/bin/passwd</tt>
+<tt class="literal">%u</tt> by default. With some Unix systems, this is
+sufficient, and you do not need to change anything. Others, such as
+Red Hat Linux, use <em class="emphasis">/usr/bin/passwd</em> instead. In
+addition, you might want to change this to another program or script
+at some point in the future. For example, let's
+assume that you want to use a script called
+<em class="emphasis">changepass</em> to change a user's
+password. Recall that you can use the variable <tt class="literal">%u</tt>
+to represent the current Unix username. So the example becomes:</p>
+
+<blockquote><pre class="code">[global]
+    unix password sync = yes
+    passwd program = changepass %u</pre></blockquote>
+
+<p>Note that this program is called as the <tt class="literal">root</tt> user
+when the <tt class="literal">unix</tt> <tt class="literal">password</tt>
+<tt class="literal">sync</tt> option is set to <tt class="literal">yes</tt>. This
+is because Samba does not necessarily have the old plain-text
+password of the user.</p>
+
+<p>The harder option to configure is
+<tt class="literal">passwd</tt><a name="INDEX-77"/> <tt class="literal">chat</tt>. The
+<tt class="literal">passwd</tt> <tt class="literal">chat</tt> option works like a
+Unix chat script. It specifies a series of strings to send, as well
+as responses to expect from the program specified by the
+<tt class="literal">passwd</tt> <tt class="literal">program</tt> option. For
+example, this is what the default <tt class="literal">passwd</tt>
+<tt class="literal">chat</tt> looks like. The delimiters are the spaces
+between each grouping of characters:</p>
+
+<blockquote><pre class="code">passwd chat = *old*password* %o\n *new*password* %n\n *new*password* %n\n *changed*</pre></blockquote>
+
+<p>The first grouping represents a response expected from the
+password-changing program. Note that it can contain wildcards
+(<tt class="literal">*</tt>), which help to generalize the chat programs to
+handle a variety of similar outputs. Here,
+<tt class="literal">*old*password*</tt> indicates that Samba is expecting
+any line from the password program containing the letters
+<tt class="literal">old</tt> followed by the letters
+<tt class="literal">password</tt>, without regard for what comes before,
+after, or between them. If Samba does not receive the expected
+response, the password change will fail.</p>
+
+<p>The second grouping indicates what Samba should send back once the
+data in the first grouping has been matched. In this case, you see
+<tt class="literal">%o\n</tt>. This response is actually two items: the
+variable <tt class="literal">%o</tt> represents the old password, while the
+<tt class="literal">\n</tt> is a newline character. So, in effect, this
+will &quot;type&quot; the old password into
+the standard input of the password-changing program, and then
+&quot;press&quot; Enter.</p>
+
+<p>Following that is another response grouping, followed by data that
+will be sent back to the password-changing program. (In fact, this
+response/send pattern continues indefinitely in any standard Unix
+<em class="emphasis">chat</em> script.) The script continues until the
+final pattern is matched.</p>
+
+<p>You can help match the response strings sent from the password
+program with the characters listed in <a href="ch09.html#samba2-CHP-9-TABLE-6">Table 9-6</a>.
+In addition, you can use the characters listed in <a href="ch09.html#samba2-CHP-9-TABLE-7">Table 9-7</a> to help formulate your response.</p>
+
+<a name="samba2-CHP-9-TABLE-6"/><h4 class="head4">Table 9-6. Password chat response characters</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Character</p>
+</th>
+<th>
+<p>Definition</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">*</tt></p>
+</td>
+<td>
+<p>Zero or more occurrences of any character.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>&quot;<tt class="literal"> </tt>&quot;</p>
+</td>
+<td>
+<p>Allows you to include matching strings that contain spaces. Asterisks
+are still considered wildcards even inside of quotes, and you can
+represent a null response with empty quotes.</p>
+</td>
+</tr>
+
+</table>
+
+<a name="samba2-CHP-9-TABLE-7"/><h4 class="head4">Table 9-7. Password chat send characters</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Character</p>
+</th>
+<th>
+<p>Definition</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">%o</tt></p>
+</td>
+<td>
+<p>The user's old password</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%n</tt></p>
+</td>
+<td>
+<p>The user's new password</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">\n</tt></p>
+</td>
+<td>
+<p>The linefeed character</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">\r</tt></p>
+</td>
+<td>
+<p>The carriage-return character</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">\t</tt></p>
+</td>
+<td>
+<p>The tab character</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">\s</tt></p>
+</td>
+<td>
+<p>A space</p>
+</td>
+</tr>
+
+</table>
+
+<p>For example, you might want to change your password chat to the
+following entry. This handles scenarios in which you do not have to
+enter the old password. In addition, this also handles the new
+<tt class="literal">all</tt> <tt class="literal">tokens</tt>
+<tt class="literal">updated</tt> <tt class="literal">successfully</tt> string
+that Red Hat Linux sends:</p>
+
+<blockquote><pre class="code">passwd chat = *New password* %n\n *new password* %n\n *success*</pre></blockquote>
+
+<p>Again, the default chat should be sufficient for many Unix systems.
+If it isn't, you can use the
+<tt class="literal">passwd</tt> <tt class="literal">chat</tt>
+<tt class="literal">debug</tt> global option to set up a new chat script
+for the password change program. The <tt class="literal">passwd</tt>
+<tt class="literal">chat</tt> <tt class="literal">debug</tt> option logs
+everything during a password chat. This option is a simple Boolean,
+as shown here:</p>
+
+<blockquote><pre class="code">[global]
+    unix password sync = yes
+    passwd chat debug = yes
+    log level = 100</pre></blockquote>
+
+<p>After you activate the password chat debug feature, all I/O received
+by Samba through the password chat can be sent to the
+<em class="filename">log.smbd</em> Samba log file with a debug level of
+100, which is why we entered a new <tt class="literal">log</tt>
+<tt class="literal">level</tt> option as well. As this can often generate
+multitudes of error logs, it can be more efficient to use your own
+script&mdash;by setting the <tt class="literal">passwd</tt>
+<tt class="literal">program</tt> option&mdash;in place of
+<em class="filename">/bin/passwd</em> to record what happens during the
+exchange. Be careful because the log file contains the passwords in
+plain text. Keeping files containing plain-text passwords can (or
+<em class="emphasis">should</em>) be against local security policy in your
+organization, and it also might raise serious legal issues. Make sure
+to protect your log files with strict file permissions and to delete
+them as soon as you've grabbed the information you
+need. If possible, use the <tt class="literal">passwd</tt>
+<tt class="literal">chat</tt> <tt class="literal">debug</tt> option only while
+your own password is being changed.</p>
+
+<p>The operating system on which Samba is running might have strict
+requirements for valid passwords to make them more impervious to
+dictionary attacks and the like. Users should be made aware of these
+restrictions when changing their passwords.</p>
+
+<p>Earlier we said that password synchronization is limited. This is
+because there is no reverse synchronization of the encrypted
+<em class="filename">smbpasswd</em> file when a standard Unix password is
+updated by a user. There are various strategies to get around this,
+including NIS and freely available implementations of the Pluggable
+Authentication Modules (PAM) standard, but none of them really solves
+all the problems.</p>
+
+<p>More information regarding passwords can be found in the in the Samba
+source distribution file
+<em class="filename">docs/htmldocs/ENCRYPTION.html</em>.<a name="INDEX-80"/></p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-4.4"/>
+
+<h3 class="head2">Password Configuration Options</h3>
+
+<p><a name="INDEX-81"/><a name="INDEX-82"/>The options in <a href="ch09.html#samba2-CHP-9-TABLE-8">Table 9-8</a> will help you work with passwords in Samba.</p>
+
+<a name="samba2-CHP-9-TABLE-8"/><h4 class="head4">Table 9-8. Password configuration options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">encrypt</tt> <tt class="literal">passwords</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, enables encrypted passwords.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">unix password</tt> <tt class="literal">sync</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, updates the standard Unix password
+database when a user changes his encrypted password.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">passwd chat</tt></p>
+</td>
+<td>
+<p>string (chat commands)</p>
+</td>
+<td>
+<p>Sequence of commands sent to the password program.</p>
+</td>
+<td>
+<p>See earlier section on this option</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">passwd chat</tt> <tt class="literal">debug</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, sends debug logs of the password-change
+process to the log files with a level of 100.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">passwd program</tt></p>
+</td>
+<td>
+<p>string (Unix command)</p>
+</td>
+<td>
+<p>Program to be used to change passwords.</p>
+</td>
+<td>
+<p><tt class="literal">/bin/passwd</tt> <tt class="literal">%u</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">password level</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Number of capital-letter permutations to attempt when matching a
+client's password.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">update</tt> <tt class="literal">encrypted</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, updates the encrypted password file when a
+client connects to a share with a plain-text password.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">null passwords</tt></p>
+</td>
+<td>
+<p>Boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, allows access for users with null
+passwords.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">smb passwd file</tt></p>
+</td>
+<td>
+<p>string (filename)</p>
+</td>
+<td>
+<p>Name of the encrypted password file.</p>
+</td>
+<td>
+<p><tt class="literal">/usr/local/samba/private/smbpasswd</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">hosts equiv</tt></p>
+</td>
+<td>
+<p>string (filename)</p>
+</td>
+<td>
+<p>Name of a file that contains hosts and users that can connect without
+using a password.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">use rhosts</tt></p>
+</td>
+<td>
+<p>string (filename)</p>
+</td>
+<td>
+<p>Name of a .<em class="emphasis">rhosts</em> file that allows users to
+connect without using a password.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-4.4.1"/>
+
+<h3 class="head3">encrypt passwords</h3>
+
+<p>The <tt class="literal">encrypt</tt><a name="INDEX-83"/>
+<tt class="literal">passwords</tt> global option switches Samba from using
+plain-text passwords to encrypted passwords for authentication.
+Encrypted passwords will be expected from clients if the option is
+set to <tt class="literal">yes</tt>:</p>
+
+<blockquote><pre class="code">encrypt passwords = yes</pre></blockquote>
+
+<p>In Samba 2.2.x versions and with previous versions, encrypted
+passwords are disabled by default. This was changed in Samba 3.0 to
+make encrypted passwords enabled by default.</p>
+
+<p>If you use encrypted passwords, you must have a valid
+<em class="filename">smbpasswd</em> file in place and populated with
+usernames that authenticate with encrypted passwords. (See <a href="ch09.html#samba2-CHP-9-SECT-4.2">Section 9.4.2</a> earlier in
+this chapter.) In addition, Samba must know the location of the
+<em class="filename">smbpasswd</em> file; if it is not in the default
+location (typically
+<em class="filename">/usr/local/samba/private/smbpasswd</em> ), you can
+explicitly name it using the <tt class="literal">smb</tt>
+<tt class="literal">passwd</tt> <tt class="literal">file</tt> option.</p>
+
+<p>If you wish, you can use <tt class="literal">update</tt>
+<tt class="literal">encrypted</tt> to force Samba to update the
+<em class="filename">smbpasswd</em> file with encrypted passwords each
+time a client connects using a nonencrypted password.</p>
+
+<p>If you have a mixture of clients on your network, with some of them
+using encrypted passwords and others using plain-text passwords, you
+can use the <tt class="literal">include</tt> option to make Samba treat
+each client appropriately. To do this, create individual
+configuration files based on the client name (<tt class="literal">%m</tt>).
+These host-specific configuration files can contain an
+<tt class="literal">encrypted</tt> <tt class="literal">passwords</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt> option that activates
+only when those clients are connecting to the server.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-4.4.2"/>
+
+<a name="INDEX-84"/><h3 class="head3">unix password sync</h3>
+
+<p>The <tt class="literal">unix</tt> <tt class="literal">password</tt>
+<tt class="literal">sync</tt> global option allows Samba to update the
+standard Unix password file when a user changes her encrypted
+password. The encrypted password is stored on a Samba server in the
+<em class="filename">smbpasswd</em> file, which is located by default in
+<em class="filename">/usr/local/samba/private</em>. You can activate this
+feature as follows:</p>
+
+<blockquote><pre class="code">[global]
+    unix password sync = yes</pre></blockquote>
+
+<p>If this option is enabled, Samba changes the encrypted password and,
+in addition, attempts to change the standard Unix password by passing
+the username and new password to the program specified by the
+<tt class="literal">passwd</tt> <tt class="literal">program</tt> option
+(described earlier). Note that Samba does not necessarily have access
+to the plain-text password for this user, so the password changing
+program must be invoked as <tt class="literal">root</tt>.<a name="FNPTR-2"/><a href="#FOOTNOTE-2">[2]</a> If the Unix password change does not
+succeed, for whatever reason, the SMB password is not changed either.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-4.4.3"/>
+
+<a name="INDEX-85"/><h3 class="head3">passwd chat</h3>
+
+<p>This option specifies a series of send/response strings similar to a
+Unix chat script, which interface with the password-changing program
+on the Samba server. <a href="ch09.html#samba2-CHP-9-SECT-4.3">Section 9.4.3</a> earlier in this
+chapter covers this option in detail.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-4.4.4"/>
+
+<h3 class="head3">passwd chat debug</h3>
+
+<p>If set to <tt class="literal">yes</tt>, the
+<tt class="literal">passwd</tt><a name="INDEX-86"/> <tt class="literal">chat</tt>
+<tt class="literal">debug</tt> global option logs everything sent or
+received by Samba during a password chat. All the I/O received by
+Samba through the password chat is sent to the Samba logs with a
+debug level of 100; you must specify <tt class="literal">log</tt>
+<tt class="literal">level</tt> <tt class="literal">=</tt> <tt class="literal">100</tt>
+for the information to be recorded. <a href="ch09.html#samba2-CHP-9-SECT-4.3">Section 9.4.3</a> earlier in this
+chapter describes this option in more detail. Be aware that if you do
+set this option, the plain-text passwords will be visible in the
+debugging logs, which could be a security hazard if they are not
+properly secured. It is against the security policy of some
+organizations for system administrators to have access to
+users' passwords.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-4.4.5"/>
+
+<h3 class="head3">passwd program</h3>
+
+<p>The <tt class="literal">passwd</tt><a name="INDEX-87"/>
+<tt class="literal">program</tt> option specifies a program on the Unix
+Samba server that Samba can use to update the standard system
+password file when the encrypted password file is updated. This
+option defaults to the standard <em class="emphasis">passwd</em> program,
+usually located in the <em class="filename">/bin</em> directory. The
+<tt class="literal">%u</tt> variable is typically used as the requesting
+user when the command is executed. The actual handling of input and
+output to this program during execution is handled through the
+<tt class="literal">passwd</tt> <tt class="literal">chat</tt> option. <a href="ch09.html#samba2-CHP-9-SECT-4.3">Section 9.4.3</a> earlier in this
+chapter covers this option in detail.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-4.4.6"/>
+
+<a name="INDEX-88"/><h3 class="head3">password level</h3>
+
+<p>With SMB, nonencrypted (or plain-text) passwords are sent with
+capital letters, just like the usernames mentioned previously. Many
+Unix users, however, choose passwords with both upper- and lowercase
+letters. Samba, by default, only attempts to match the password
+entirely in lowercase letters and not capitalizing the first letter.</p>
+
+<p>Like <tt class="literal">username</tt> <tt class="literal">level</tt>, a
+<tt class="literal">password</tt> <tt class="literal">level</tt> option can be
+used to attempt various permutations of the password with capital
+letters. This option takes an integer value that specifies how many
+letters in the password should be capitalized when attempting to
+connect to a share. You can specify this option as follows:</p>
+
+<blockquote><pre class="code">[global]
+    password level = 3</pre></blockquote>
+
+<p>In this case, Samba then attempts all permutations of the password it
+can compute having three capital letters. The larger the number, the
+more computations Samba has to perform to match the password, and the
+longer a connection to a specific share might take.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-4.4.7"/>
+
+<a name="INDEX-89"/><h3 class="head3">update encrypted</h3>
+
+<p>For sites switching over to the encrypted password format, Samba
+provides an option that should help with the transition. The
+<tt class="literal">update</tt> <tt class="literal">encrypted</tt> option allows
+a site to ease into using encrypted passwords from plain-text
+passwords. You can activate this option as follows:</p>
+
+<blockquote><pre class="code">[global]
+    update encrypted = yes</pre></blockquote>
+
+<p>This instructs Samba to create an encrypted version of each
+user's Unix password in the
+<em class="filename">smbpasswd</em> file each time she connects to a
+share. When this option is enabled, you must have the
+<tt class="literal">encrypt</tt> <tt class="literal">passwords</tt> option set to
+<tt class="literal">no</tt> so that the client passes plain-text passwords
+to Samba to update the files. Once each user has connected at least
+once, you can set <tt class="literal">encrypted</tt>
+<tt class="literal">passwords</tt> <tt class="literal">=</tt>
+<tt class="literal">yes</tt>, allowing you to use only the encrypted
+passwords. The user must already have a valid entry in the
+<em class="filename">smbpasswd</em> file for this option to work.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-4.4.8"/>
+
+<a name="INDEX-90"/><h3 class="head3">null passwords</h3>
+
+<p>This global option tells Samba whether to allow access from users
+that have null passwords (encrypted or nonencrypted) set in their
+accounts. The default value is <tt class="literal">no</tt>. You can
+override it as follows:</p>
+
+<blockquote><pre class="code">null passwords = yes</pre></blockquote>
+
+<p>We highly recommend against doing so because of the security risks
+this option can present to your system, including inadvertent access
+to system users (such as <tt class="literal">bin</tt>) in the system
+password file who have null passwords set.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-4.4.9"/>
+
+<a name="INDEX-91"/><h3 class="head3">smb passwd file</h3>
+
+<p>This global option identifies the location of the encrypted password
+database. By default, it is set to
+<em class="filename">/usr/local/samba/private/smbpasswd</em>. You can
+override it as follows:</p>
+
+<blockquote><pre class="code">[global]
+    smb passwd file = /etc/samba/smbpasswd</pre></blockquote>
+
+<p>This location, for example, is common on many Red Hat distributions
+on which Samba has been installed using an RPM package.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-4.4.10"/>
+
+<a name="INDEX-92"/><h3 class="head3">hosts equiv</h3>
+
+<p>This global option specifies the name of a standard Unix
+<em class="filename">hosts.equiv</em> file that allows hosts or users to
+access shares without specifying a password. You can specify the
+location of such a file as follows:</p>
+
+<blockquote><pre class="code">[global]
+    hosts equiv = /etc/hosts.equiv</pre></blockquote>
+
+<p>The default value for this option does not specify any
+<em class="filename">hosts.equiv</em> file. Because using a
+<em class="filename">hosts.equiv</em> file is a huge security risk, we
+strongly recommend against using this option.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-4.4.11"/>
+
+<a name="INDEX-93"/><h3 class="head3">use rhosts</h3>
+
+<p>This global option specifies the name of a standard Unix
+user's <em class="filename">.rhosts</em> file that allows
+foreign hosts to access shares without specifying a password. You can
+specify the location of such a file as follows:</p>
+
+<blockquote><pre class="code">[global]
+    use rhosts = /home/dave/.rhosts</pre></blockquote>
+
+<p>The default value for this option does not specify any
+<em class="filename">.rhosts</em> file. Like the <tt class="literal">hosts</tt>
+<tt class="literal">equiv</tt> option discussed earlier, using such a file
+is a security risk. We highly recommend that you do not use this
+option unless you are confident in the security of your network.
+<a name="INDEX-94"/>
+<a name="INDEX-95"/><a name="INDEX-96"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-9-SECT-5"/>
+
+<h2 class="head1">Authentication with winbind</h2>
+
+<p><a name="INDEX-97"/><a name="INDEX-98"/>In <a href="ch03.html">Chapter 3</a>, we
+showed you how to add Windows clients to a network in which user
+accounts were maintained on the Samba server. We added a user account
+to the Windows client using the same username and password as an
+account on the Unix system. This method works well in many computing
+environments. However, if a Samba server is added to a Windows
+network that already has a Windows NT/2000 primary domain controller,
+the PDC has a preexisting database of user accounts and group
+information that is used for authentication. It can be a big chore to
+transfer that database manually to the Unix server, and later
+maintain and synchronize the Unix and Windows databases.</p>
+
+<p>In <a href="ch04.html">Chapter 4</a>, we showed you how to add a Samba
+server as a domain member server to a network having a Windows
+NT/2000 primary domain controller. We set <tt class="literal">security</tt>
+<tt class="literal">=</tt> <tt class="literal">domain</tt> in the Samba
+configuration file to have the Samba server hand off authentication
+to the Windows PDC. Using that method, passwords are kept only on the
+PDC, but it is still necessary to set up user accounts on the Unix
+side to make sure each client has a valid Unix UID and group ID
+(GID). This is necessary for maintaining the file ownerships and
+permissions of the Unix security model. Whenever Samba performs an
+operation on the Unix filesystem on behalf of the Windows client, the
+user must have a valid UID and GID on the local Unix system.</p>
+
+<p>A facility that has recently been added to Samba, winbind, allows the
+Windows <a name="INDEX-99"/>PDC to handle
+not only authentication, but the user and group information as well.
+Winbind works by extending the Unix user and group databases beyond
+the standard <em class="filename">/etc/passwd</em> and
+<em class="filename">/etc/group</em> files such that users and groups on
+the Windows PDC also exist as valid users and groups on the Unix
+system. The extension applies to the entire Unix system and allows
+users who are members of a Windows domain to perform any action on
+the Unix system that a local user would, including logging in to the
+Unix system by <em class="emphasis">telnet</em> or even on the local
+system, using their domain usernames and passwords.</p>
+
+<p>When winbind is in use, administration of user accounts can be done
+on the Windows PDC, without having to repeat the tasks on the Unix
+side. This includes password expiration and allowing users to change
+their passwords, which would otherwise not be practical. Aside from
+simplifying domain administration and being a great time saver,
+winbind lets Samba be used in computing environments where it
+otherwise might not be allowed.</p>
+<a name="samba2-CHP-9-NOTE-143"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>Because this is a chapter on security, we want to point out that some
+issues might relate to allowing a Windows system to authenticate
+users accessing a Unix system! Whatever you might think of the
+relative merits of Unix and Windows security models (and even more
+importantly, their <em class="emphasis">implementations</em>), one thing
+is certain: adding winbind support to your Samba server greatly
+complicates the authentication system overall&mdash;and quite
+possibly allows more opportunities for crackers.</p>
+
+<p>We present winbind in this chapter not as a means of improving
+security, but rather as a further example of Samba's
+ability to integrate itself into a modern Windows environment.</p>
+</blockquote>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-5.1"/>
+
+<h3 class="head2">Installing winbind</h3>
+
+<p><a name="INDEX-100"/>Installing
+and configuring winbind is fairly complicated and involves the
+following steps:</p>
+
+<ol><li>
+<p>Reconfigure, recompile, and reinstall Samba&mdash;to add support for
+winbind.</p>
+</li><li>
+<p>Configure the Unix name server switch.</p>
+</li><li>
+<p>Modify the Samba configuration file.</p>
+</li><li>
+<p>Start and test the <em class="emphasis">winbindd</em> daemon.</p>
+</li><li>
+<p>Configure the system to start and stop the
+<em class="emphasis">winbindd</em> daemon automatically.</p>
+</li><li>
+<p>Optionally, configure PAM for use with winbind.</p>
+</li></ol>
+<p>At the time this book was written, winbind was supported only on
+Linux, so all of the following directions are specific to it. Other
+Unix flavors might be supported at a later time. In addition, we
+assume you have a Windows NT/2000 primary domain controller running
+on your network.</p>
+
+<p>First, you will need to configure and compile Samba using the
+<tt class="literal">--with-winbind</tt> configure option. Directions for
+doing this are included in <a href="ch02.html">Chapter 2</a> in <a href="ch02.html#samba2-CHP-2-SECT-3">Section 2.3</a>. As usual, run
+<em class="emphasis">make install</em> to reinstall the Samba binaries.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-5.2"/>
+
+<h3 class="head2">Configuring nsswitch</h3>
+
+<p><a name="INDEX-101"/>When
+Samba is compiled after being configured with the
+<tt class="literal">--with-winbind</tt> option, the compilation process
+produces a library called
+<em class="filename">libnss_winbind.so</em><a name="INDEX-102"/> in the
+<em class="filename">source/nsswitch</em> directory. This library needs to
+be copied to the <em class="filename">/lib</em> directory:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>cp nsswitch/libnss_winbind.so /lib</b></tt></pre></blockquote>
+
+<p>Also, a symbolic link must be created for winbind to be fully
+functional:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>ln -s /lib/libnss_winbind.so /lib/libnss_winbind.so.2</b></tt></pre></blockquote>
+
+<a name="samba2-CHP-9-NOTE-144"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>The name of this symbolic link is correct for Samba 2.2.3 and Red Hat
+7.1. The name might change&mdash;with a higher version number in the
+extension&mdash;in future releases. See the
+<em class="emphasis">winbindd</em> manual page for details.</p>
+</blockquote>
+
+<p>Next, we need to modify <em class="filename">/etc/nsswitch.conf</em> to
+make the lines for <tt class="literal">passwd</tt> and
+<tt class="literal">group</tt> look like this:</p>
+
+<blockquote><pre class="code">passwd:     files winbind
+group:      files winbind</pre></blockquote>
+
+<p>Then activate these changes by issuing the following command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>/sbin/ldconfig</b></tt></pre></blockquote>
+
+<p>What we've just done is reconfigure the Linux name
+service switch, which allows name service and other tasks to be
+configured to use the traditional method (files in the
+<em class="filename">/etc</em> directory) or an extension coded in a
+library, such as the <em class="filename">libnss_winbind.so</em> library
+we've just installed. We've
+specified in our configuration that Samba will search for user and
+group information first in the <em class="filename">/etc/passwd</em> and
+<em class="filename">/etc/group files</em>, and if they are not found
+there, in the winbind service.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-5.3"/>
+
+<h3 class="head2">Modifying smb.conf</h3>
+
+<p><a name="INDEX-103"/><a name="INDEX-104"/>To use winbind, we must have our Samba
+server added to the Windows NT domain as a domain member server (as
+we described in <a href="ch04.html">Chapter 4</a>) and also add some
+parameters to the Samba configuration file to configure winbind. In
+addition to the options required to configure Samba as a domain
+member server, we need:</p>
+
+<blockquote><pre class="code">[global]
+    winbind uid = 10000-20000
+    winbind gid = 10000-20000</pre></blockquote>
+
+<p>The <tt class="literal">winbind</tt> <tt class="literal">uid</tt> and
+<tt class="literal">winbind</tt> <tt class="literal">gid</tt> options tell
+winbind how to map between Windows relative identifiers (RIDs) and
+Unix UIDs and GIDs. Windows uses RIDs to identify users and groups
+within the domain, and to function, the Unix system must have a UID
+and GID associated with every user and group RID that is received
+from the Windows primary domain controller. The
+<tt class="literal">winbind</tt> <tt class="literal">uid</tt> and
+<tt class="literal">winbind</tt> <tt class="literal">gid</tt> parameters simply
+provide winbind with a range of UIDs and GIDs, respectively, that are
+allocated by the system administrator for Windows NT domain users and
+groups. You can use whatever range you want for each; just make sure
+the lowest number in the range does not conflict with any entries in
+your <em class="filename">/etc/passwd</em> or
+<em class="filename">/etc/group</em> files at any time, either now or in
+the future. It is important to be conservative about this. Once
+winbind adds an RID to UID/GID mapping to its database, it is very
+difficult to modify the mapping.</p>
+<a name="samba2-CHP-9-NOTE-145"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p><a name="INDEX-105"/>The file
+<em class="filename">/usr/local/samba/locks/winbindd_idmap.tdb</em>
+contains winbind's RID mapping file by default. We
+suggest you regard this file as extremely sensitive and make sure to
+guard it carefully against any kind of harm or loss. If you lose it,
+you will have to re-create it manually, which can be a very
+labor-intensive task.</p>
+</blockquote>
+
+<a name="samba2-CHP-9-NOTE-145a"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>Be careful when adding local users after domain users have started
+accessing the Samba server. The domain users will have entries
+created for them by winbind in <em class="filename">/etc/passwd,</em> with
+UIDs in the range you specify. If you are using a method of creating
+new accounts that automatically assigns UIDs, it might choose UIDs by
+adding 1 to the highest UID assigned thus far, which will be the most
+recent UID added by winbind. (This is the case on Red Hat Linux, with
+the <em class="emphasis">useradd</em> script, for example.) The UID for
+the new local user will be within the range allocated for winbind,
+which will have undesired effects. Make sure to add new local users
+using a method that assigns them UIDs in the proper range. For
+example, you can use the <em class="emphasis">-u</em> option of
+<em class="emphasis">useradd</em> to specify the UID to assign to the new
+user.</p>
+</blockquote>
+
+<p>Restart the Samba daemons to put your changes to the configuration
+file into effect. If you have not already done so while adding your
+Samba server as a domain member server, you must issue the command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbpasswd -j </b></tt><em class="replaceable">domain</em><tt class="userinput"><b> -r </b></tt><em class="replaceable">pdc</em><tt class="userinput"><b> -U Administrator</b></tt></pre></blockquote>
+
+<p>as we described in <a href="ch04.html">Chapter 4</a>. At this point, you
+can start the <em class="emphasis">winbindd</em> daemon:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>winbindd</b></tt></pre></blockquote>
+
+<p><a name="INDEX-106"/>You might want to
+run a <em class="emphasis">ps ax</em> command to see that the
+<em class="emphasis">winbindd</em> daemon is running. Now, to make sure
+everything we've done up to this point works, we can
+use Samba's <em class="emphasis">wbinfo</em> command:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>wbinfo -u</b></tt>
+METRAN\Administrator
+METRAN\bebe
+METRAN\Guest
+METRAN\jay
+METRAN\linda
+$ <tt class="userinput"><b>wbinfo -g</b></tt>
+METRAN\Domain Admins
+METRAN\Domain Guests
+METRAN\Domain Users</pre></blockquote>
+
+<p>The <em class="emphasis">-u</em> option queries the domain controller for
+a list of domain users, and the <em class="emphasis">-g</em> option asks
+for the list of groups. The output shows that the Samba host system
+can query the Windows PDC through winbind.</p>
+
+<p>Another thing to check is the list of users and groups, using the
+<em class="emphasis">getent</em> command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>getent passwd</b></tt>
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:
+daemon:x:2:2:daemon:/sbin:
+    <i class="lineannotation">... deleted ...</i>
+jay:x:500:500:Jay Ts:/home/jay:/bin/bash
+rik:x:501:501::/home/rik:/bin/bash
+METRAN\Administrator:x:10000:10000::/home/METRAN/administrator:/bin/bash
+METRAN\bebe:x:10001:10000:Bebe Larta:/home/METRAN/bebe:/bin/bash
+METRAN\Guest:x:10002:10000::/home/METRAN/guest:/bin/bash
+METRAN\jay:x:10003:10000:Jay Ts:/home/METRAN/jay:/bin/bash
+METRAN\linda:x:10004:10000:Linda Lewis:/home/METRAN/linda:/bin/bash
+
+# getent group
+root:x:0:root
+bin:x:1:root,bin,daemon
+daemon:x:2:root,bin,daemon
+    <i class="lineannotation">... deleted ...</i>
+jay:x:500:
+rik:x:501:
+METRAN\Domain Admins:x:10001:METRAN\Administrator
+METRAN\Domain Guests:x:10002:METRAN\Guest
+METRAN\Domain Users:x:10000:METRAN\Administrator,METRAN\jay,METRAN\linda,METRAN\bebe</pre></blockquote>
+
+<p>This shows that the Linux system is finding the domain users and
+groups through winbind, in addition to those in the
+<em class="filename">/etc/passwd</em> and <em class="filename">/etc/group</em>
+files. If this part doesn't work as shown earlier,
+with the domain users and groups listed after the local ones, check
+to make sure you made the symbolic link to
+<em class="filename">libnss_winbind.so</em> in <em class="filename">/lib</em>
+correctly.</p>
+
+<p>Now you can try connecting to a Samba share from a Windows system
+using a domain account. You can either log on to the domain from a
+Windows NT/2000/XP workstation or use <em class="emphasis">smbclient</em>
+with the <em class="emphasis">-U</em> option to specify a username.</p>
+
+<a name="samba2-CHP-9-NOTE-147"/><blockquote class="note"><h4 class="objtitle">NOTE</h4>
+<p>If you get errors while attempting to log on to the domain, it is
+probably because you had previously configured the client system with
+a computer account on another domain controller. Commonly, you get a
+dialog box that says, &quot;The domain
+<em class="replaceable">NAME</em> is not available.&quot;
+On a Windows 2000 system, the fix is to log in to the system as an
+administrative user and open the Control Panel, double-click the
+System icon, click the Network Identification tab, then click the
+Properties button. In the dialog that comes up, click the
+&quot;Workgroup:&quot; radio button and fill
+in the name of the workgroup (you can use the same name as the
+domain). Click the OK buttons in the dialogs, and reboot if
+requested.</p>
+
+<p>This removes the computer account from the primary domain controller.
+Now log in again as the administrative user and repeat the previous
+directions, but change from the workgroup back to the domain. This
+creates a new computer account that
+&quot;fits&quot; the workstation to the new
+primary domain controller. If your network has backup domain
+controllers, it will take up to 15 minutes for the new computer
+account to propagate to the BDCs.</p>
+
+<p>If you are using Windows NT/XP, the method is slightly different. For
+the exact procedure, see the section in <a href="ch04.html">Chapter 4</a>
+that is specific to your Windows version.</p>
+</blockquote>
+
+<p>After logging in as a domain user, try creating a file or two in a
+Samba share. (You might need to change the permissions on the shared
+directory&mdash;say, to 777&mdash;to allow this access. This is very
+permissive, but after you finish reading this section, you will
+understand how to change ownership and permissions on the directory
+to restrict access to selected domain users.) After
+you've created files by one or more domain users,
+take a look at the directory's contents from a Linux
+shell. You will see something like this:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>ls -l /u</b></tt>
+-rwxrw-rw-    1 METRAN\b METRAN\D        0 Apr 13 00:00 bebes-file.doc
+-rwxrw-rw-    1 METRAN\l METRAN\D        0 Apr 12 23:58 lindas-file.doc
+drwxrwxr-x    6 jay      jay          4096 Jan 15 05:12 snd
+<b class="emphasis-bold">$ ls -ln /u</b>
+total 4
+-rwxrw-rw-    1 10001    10000           0 Apr 13 00:00 bebes-file.doc
+-rwxrw-rw-    1 10004    10000           0 Apr 12 23:58 lindas-file.doc
+drwxrwxr-x    6 500      500          4096 Jan 15 05:12 snd</pre></blockquote>
+
+<p>We can even use the domain usernames and groups from the Linux shell:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>chown 'METRAN\linda:METRAN\Domain Users' /u</b></tt>
+# <tt class="userinput"><b>ls -ldu /u</b></tt>
+drwxrwxrwx    3 METRAN\l METRAN\D     4096 Apr 13 00:44 /u
+# <tt class="userinput"><b>ls -ldn /u</b></tt>
+drwxrwxrwx    3 10004    10000        4096 Apr 13 00:00 /u</pre></blockquote>
+
+<p>Notice how the owner and group are listed as being those of the
+domain user and group. Unfortunately, the GNU <em class="emphasis">ls</em>
+command won't show the full names of the domain
+users and groups, but we can use the <em class="emphasis">-ln</em> listing
+to show the UIDs and GIDs and then translate with the
+<em class="emphasis">wbinfo</em> command:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>wbinfo -s `wbinfo -U 10004`</b></tt>
+METRAN\LINDA 1
+$ <tt class="userinput"><b>wbinfo -s `wbinfo -G 10000`</b></tt>
+METRAN\Domain Users 2</pre></blockquote>
+
+<p>(It's a bit messy, but it works, and it shows that
+the winbind system is working!) At this point, you might want to
+modify your <em class="filename">/etc/rc.d/init.d/smb</em> script to start
+and stop the <em class="emphasis">winbindd</em> daemon automatically along
+with the <em class="emphasis">smbd</em> and <em class="emphasis">nmbd</em>
+daemons. Starting with the script we presented in <a href="ch02.html">Chapter 2</a>, we first add this code to the
+<em class="emphasis">start( )</em> function:</p>
+
+<blockquote><pre class="code">echo -n $&quot;Starting WINBIND services: &quot;
+/usr/local/samba/bin/winbindd
+ERROR2=$?
+if [ $ERROR2 -ne 0 ]
+then
+    ERROR=1
+fi
+echo</pre></blockquote>
+
+<p>The previous code should be located after the code that starts
+<em class="emphasis">nmbd</em> and before the <em class="emphasis">return</em>
+statement.</p>
+
+<a name="samba2-CHP-9-NOTE-148"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>We start <em class="emphasis">winbindd</em> after
+<em class="emphasis">nmbd</em> because <em class="emphasis">winbindd</em> needs
+<em class="emphasis">nmbd</em> to be running to work properly.</p>
+</blockquote>
+
+<p>In the <tt class="function">stop( )</tt> function, we add the following:</p>
+
+<blockquote><pre class="code">echo -n $&quot;Shutting down WINBIND services: &quot;
+/bin/kill -TERM -a winbindd
+ERROR2=$?
+if [ $ERROR2 -ne 0 ]
+then
+    ERROR=1
+fi
+echo</pre></blockquote>
+
+<p>Again, this code should be located after the code that stops
+<em class="emphasis">nmbd</em> and before the <em class="emphasis">return</em>
+statement. <a name="INDEX-107"/></p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-5.4"/>
+
+<h3 class="head2">Configuring PAM</h3>
+
+<p><a name="INDEX-108"/>Most
+popular Linux distributions use <a name="INDEX-109"/>Pluggable
+Authentication Modules (PAM), a suite of shared libraries that
+provide a centralized source of authentication for applications
+running on the Unix system. PAM can be configured differently for
+each application (or service) that uses it, without needing to
+recompile the application. As a hypothetical example, if an
+organization's security policy mandated the use of
+passwords exactly 10 characters in length, a PAM module could be
+written to check the length of passwords submitted by users and
+reject any attempts to use a longer or shorter password. PAM would
+then be reconfigured to include the new module for services such as
+<em class="emphasis">ftp</em>, console login, and GUI login that call upon
+PAM to authenticate users.</p>
+
+<p>If you are not already familiar with PAM, we suggest you read the
+documentation provided with the Linux PAM package before continuing.
+On most Linux systems, it is located in the
+<em class="filename">/usr/share/doc</em> directory hierarchy. Another
+resource is the <em class="citetitle">Linux-PAM System
+Administrator's
+Guide</em><a name="INDEX-110"/>, which you can find
+on the Internet at <a href="http://www.kernel.org/pub/linux/libs/pam">http://www.kernel.org/pub/linux/libs/pam</a>.</p>
+
+<p>The rest of this section is about using the PAM module provided in
+the Samba distribution to enable Windows domain users to authenticate
+on the Linux system hosting Samba. Depending on which services you
+choose to configure, this allows Windows domain users to log in on a
+local console (or through <em class="emphasis">telnet</em>), log in to a
+GUI desktop on the Linux system, authenticate with an FTP server
+running on the Linux system, or use other services normally limited
+to users who have an account on the Linux system. The PAM module
+authenticates Windows domain users by querying winbind, which passes
+the authentication off to a Windows NT domain controller.</p>
+
+<p>As an example, we will show how to allow Windows domain users to log
+in to a text console on the Linux system and get a command shell and
+home directory. The method used in our example can be applied (with
+variations) to other services.</p>
+
+<p>All users who can log in to the Linux system need a shell and a home
+directory. Unix and Linux keep this user information in the password
+file (<em class="filename">/etc/passwd</em> ), but information about
+Windows users isn't located there. Instead, in the
+Samba configuration file, we add the following to notify winbind what
+the shell and home directory for Windows domain users will be:</p>
+
+<blockquote><pre class="code">[global]
+    template shell = /bin/bash
+    template homedir = /home/%D/%U</pre></blockquote>
+
+<p>The first line sets the
+<tt class="literal">template</tt><a name="INDEX-111"/> <tt class="literal">shell</tt>
+parameter, which tells winbind what shell to use for domain users
+that are logging in to the Unix host. The
+<tt class="literal">template</tt><a name="INDEX-112"/>
+<tt class="literal">homedir</tt> parameter specifies the location of
+users' home directories. The <tt class="literal">%D</tt>
+variable is replaced by the name of the domain in which the
+user's account resides, and <tt class="literal">%U</tt> is
+replaced by the user's username in that domain.</p>
+
+<p>Before the domain users can successfully log in, their home
+directories must be created manually. To add a single account for
+<tt class="literal">linda</tt> in the METRAN domain, we would use these
+commands:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>mkdir /home/METRAN</b></tt>
+# <tt class="userinput"><b>chmod 755 /home/METRAN</b></tt>
+
+# <tt class="userinput"><b>mkdir /home/METRAN/linda</b></tt>
+# <tt class="userinput"><b>chown 'METRAN\linda:METRAN\Domain Users' /home/METRAN/linda</b></tt>
+# <tt class="userinput"><b>chmod 700 /home/METRAN/linda</b></tt></pre></blockquote>
+<a name="samba2-CHP-9-NOTE-149"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>One side effect of creating the home directories is that if the Samba
+server is configured with a <tt class="literal">[homes]</tt> share, the
+domain users can see and access their home directories through
+Samba's file sharing.</p>
+</blockquote>
+
+<p>Next, we need to compile and install the PAM module in the Samba
+distribution. From the source directory in the Samba distribution,
+issue the following commands:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>make nsswitch/pam_winbind.so</b></tt>
+# <tt class="userinput"><b>cp nsswitch/pam_winbind.so /lib/security</b></tt></pre></blockquote>
+
+<p>and check that it was copied over correctly:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>ls /lib/security/pam_winbind.so</b></tt>
+/lib/security/pam_winbind.so</pre></blockquote>
+
+<p>On Red Hat Linux, the PAM configuration files reside in
+<em class="filename">/etc/pam.d</em>. Before making any modifications, we
+strongly advise making a backup of this directory:</p>
+
+<blockquote><pre class="code"># cp -pR /etc/pam.d /etc/pam.d.backup</pre></blockquote>
+
+<p>The reason for this is that we will be modifying the Linux
+system's means of authenticating logins, and if our
+configuration goes awry, all users (including
+<tt class="literal">root</tt>) will be locked out of the system. In case
+the worst happens, we would reboot into single-user mode (by typing
+<tt class="literal">linux</tt> <tt class="literal">single</tt> at the LILO:
+prompt) or boot a rescue disk, and then we would issue these two
+commands:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>mv /etc/pam.d /etc/pam.d.bad</b></tt>
+# <tt class="userinput"><b>mv /etc/pam.d.backup /etc/pam.d</b></tt></pre></blockquote>
+
+<p>Be very careful to make sure you can recover from any errors you make
+because when PAM encounters any configuration information it
+doesn't understand, its action is not to allow
+access. This means you must be sure to enter everything correctly!
+You might want to leave yourself logged in as root on a spare virtual
+terminal while you are modifying your PAM configuration to ensure
+yourself a means of easy recovery.</p>
+
+<p>In the <em class="filename">/etc/pam.d</em> directory, you will encounter
+a file for each service that uses PAM. We are interested only in the
+file corresponding to the login service, which is called
+<em class="filename">login</em>. It contains the following lines:</p>
+
+<blockquote><pre class="code">auth       required     /lib/security/pam_securetty.so
+auth       required     /lib/security/pam_stack.so service=system-auth
+auth       required     /lib/security/pam_nologin.so
+account    required     /lib/security/pam_stack.so service=system-auth
+password   required     /lib/security/pam_stack.so service=system-auth
+session    required     /lib/security/pam_stack.so service=system-auth
+session    optional     /lib/security/pam_console.so</pre></blockquote>
+
+<p>The lines starting with <tt class="literal">auth</tt> are related to the
+function of authentication&mdash;that is, printing a password prompt,
+accepting the password, verifying that it is correct, and matching
+the user to a valid user and group ID. The line starting with
+<tt class="literal">account</tt> is for account management, which allows
+access to be controlled by other factors, such as what times during
+the day a user is allowed access. We are not concerned with the lines
+starting with <tt class="literal">password</tt> or
+<tt class="literal">session</tt> because winbind does not add to either of
+those functions.</p>
+
+<p>The third column lists the PAM module, possibly with arguments, that
+is called in for the task. The
+<em class="filename">pam_stack.so</em><a name="INDEX-113"/> module has been added by Red Hat to act
+somewhat like a macro or a subroutine. It calls the file in the
+<em class="filename">pam.d</em> directory named by the service argument.
+In this case, the file <em class="filename">/etc/pam.d/system-auth</em>
+contains a common set of lines that are used as a default for many
+services. Because we want to customize the login service for winbind,
+we first replace the <em class="filename">pam_stack.so</em> lines for
+<tt class="literal">auth</tt> and <tt class="literal">account</tt> with the
+<tt class="literal">auth</tt> and <tt class="literal">account</tt> lines from
+<em class="filename">/etc/pam.d/system-auth</em>. This yields:</p>
+
+<blockquote><pre class="code">auth       required     /lib/security/pam_securetty.so
+<b class="emphasis-bold">auth       required     /lib/security/pam_env.so</b>
+<b class="emphasis-bold">auth       sufficient   /lib/security/pam_unix.so likeauth nullok</b>
+<b class="emphasis-bold">auth       required     /lib/security/pam_deny.so</b>
+auth       required     /lib/security/pam_nologin.so
+<b class="emphasis-bold">account    required     /lib/security/pam_unix.so</b>
+password   required     /lib/security/pam_stack.so service=system-auth
+session    required     /lib/security/pam_stack.so service=system-auth
+session    optional     /lib/security/pam_console.so</pre></blockquote>
+
+<p>To add winbind support, we need to add a line in both the
+<tt class="literal">auth</tt> and <tt class="literal">account</tt> sections to
+call the
+<em class="filename">pam_winbind.so</em><a name="INDEX-114"/> module:</p>
+
+<blockquote><pre class="code">auth       required     /lib/security/pam_securetty.so
+auth       required     /lib/security/pam_env.so
+<b class="emphasis-bold">auth       sufficient   /lib/security/pam_winbind.so</b>
+auth       sufficient   /lib/security/pam_unix.so <b class="emphasis-bold">use_first_pass</b> likeauth nullok
+auth       required     /lib/security/pam_deny.so
+auth       required     /lib/security/pam_nologin.so
+<b class="emphasis-bold">account    sufficient   /lib/security/pam_winbind.so</b>
+account    required     /lib/security/pam_unix.so
+password   required     /lib/security/pam_stack.so service=system-auth
+session    required     /lib/security/pam_stack.so service=system-auth
+session    optional     /lib/security/pam_console.so</pre></blockquote>
+
+<p>The keywords <tt class="literal">required</tt> and
+<tt class="literal">sufficient</tt> in the second column are significant.
+The keyword <tt class="literal">required</tt> specifies that the result
+returned by the module (either to pass or fail the authentication)
+must be taken into account, whereas the keyword
+<tt class="literal">sufficient</tt> specifies that if the module
+successfully authenticates the user, no further lines need to be
+processed. By specifying <tt class="literal">sufficient</tt> for the
+<em class="filename">pam_winbind.so</em> module, we let winbind attempt to
+authenticate users, and if it succeeds, the PAM system returns to the
+application. If the <em class="filename">pam_winbind.so</em> module
+doesn't find the user or the password does not
+match, the PAM system continues with the next line, which performs
+authentication according to the usual Linux user authentication. This
+way, both domain users and local users can log in.</p>
+
+<p>Notice that we also added the <tt class="literal">use_first_pass</tt>
+argument to the <em class="filename">pam_unix.so</em> module in the
+<tt class="literal">auth</tt> section. By default, both the
+<em class="filename">pam_winbind.so</em> and
+<em class="filename">pam_unix.so</em> modules print a password prompt and
+accept a password. In cases where users are logging in to the Linux
+system using their local accounts, this would require them to enter
+their password twice. The <tt class="literal">user_first_pass</tt> argument
+tells the <em class="filename">pam_unix.so</em> module to reuse the
+password that was given to the <em class="filename">pam_winbind.so</em>
+module, which results in users having to enter the password only
+once.</p>
+
+<p>After modifying the <em class="filename">login</em> configuration file,
+switch to a spare virtual console and make sure you can still log in
+using a regular Linux account. If not, check your modifications
+carefully and try again until you get it right. Then log in using a
+domain user account from the Windows PDC database to check that the
+winbind authentication works. You will need to specify the username
+in <em class="replaceable">DOMAIN</em>\<em class="replaceable">user</em>
+format, like this:</p>
+
+<blockquote><pre class="code">login: METRAN\linda
+Password:</pre></blockquote>
+
+<p>More information on configuring winbind can be found in the Samba
+source distribution file
+<em class="filename">docs/htmldocs/winbind.html</em>, and in the
+<em class="emphasis">winbindd</em> manual page. If you would like to learn
+more about configuring PAM, we recommend the web page <a href="http://www.kernel.org/pub/linux/libs/pam/">http://www.kernel.org/pub/linux/libs/pam/</a> as
+a starting place. Some of the documentation for Linux PAM, including
+Red Hat's extensions, can also be found on Red Hat
+Linux in
+<em class="filename">/usr/share/doc/pam-</em><em class="replaceable">version</em>.
+<a name="INDEX-115"/></p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-9-SECT-5.5"/>
+
+<h3 class="head2">winbind Configuration Options</h3>
+
+<p><a href="ch09.html#samba2-CHP-9-TABLE-9">Table 9-9</a> <a name="INDEX-116"/><a name="INDEX-117"/>summarizes some commonly used options
+that you can use to configure winbind.</p>
+
+<a name="samba2-CHP-9-TABLE-9"/><h4 class="head4">Table 9-9. winbind options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">winbind</tt> <tt class="literal">separator</tt></p>
+</td>
+<td>
+<p>string (single character)</p>
+</td>
+<td>
+<p>Character to use as a separator in domain usernames and group names</p>
+</td>
+<td>
+<p>Backslash (<tt class="literal">\</tt>)</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">winbind uid</tt></p>
+</td>
+<td>
+<p>string (numeric range)</p>
+</td>
+<td>
+<p>Range of UIDs for RID-to-UID mapping</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">winbind gid</tt></p>
+</td>
+<td>
+<p>string (numeric range)</p>
+</td>
+<td>
+<p>Range of GIDs for RID-to-GID mapping</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">winbind cache time</tt></p>
+</td>
+<td>
+<p>numeric</p>
+</td>
+<td>
+<p>Number of seconds the <em class="emphasis">winbindd</em> daemon caches
+user and group data</p>
+</td>
+<td>
+<p><tt class="literal">15</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">template</tt> <tt class="literal">homedir</tt></p>
+</td>
+<td>
+<p>string (directory name)</p>
+</td>
+<td>
+<p>Directory to be used as the home directory of the logged-in domain
+user</p>
+</td>
+<td>
+<p><tt class="literal">/home/%D/%U</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">template</tt> <tt class="literal">shell</tt></p>
+</td>
+<td>
+<p>string (command name)</p>
+</td>
+<td>
+<p>The program to use as the logged-in domain user's
+shell</p>
+</td>
+<td>
+<p><tt class="literal">/bin/false</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-5.5.1"/>
+
+<a name="INDEX-118"/><h3 class="head3">winbind separator</h3>
+
+<p>On Windows systems, the backslash (<tt class="literal">\</tt>) is commonly
+used as a separator in file names, UNCs, and the names of domain
+users and groups. For example, an account in the METRAN domain with a
+username of <tt class="literal">linda</tt> would be written as
+<tt class="literal">METRAN\linda</tt>. On Unix systems, the backslash is
+commonly used as a metacharacter for quoting, so the account would
+have to be specified as <tt class="literal">METRAN\\linda</tt> or
+'<tt class="literal">METRAN\linda</tt>'. The winbind separator parameter
+allows another character to be used instead of the backslash
+character, making it much easier to type in domain user and group
+names. For example, with:</p>
+
+<blockquote><pre class="code">[global]
+    winbind separator = +</pre></blockquote>
+
+<p>the aforementioned account could be written simply as
+<tt class="literal">METRAN+linda</tt> on the Unix host, making it
+unnecessary to use additional backslashes or single quotes. Winbind
+then uses the same format for reporting domain user and group names.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-5.5.2"/>
+
+<a name="INDEX-119"/><h3 class="head3">winbind uid</h3>
+
+<p>As part of <em class="emphasis">winbindd</em> 's task of
+letting Windows NT domain users function as local users on the Unix
+host, <em class="emphasis">winbindd</em> supplies a Unix UID that is
+linked to the Windows RID of the domain user. The
+<tt class="literal">winbind</tt> <tt class="literal">uid</tt> parameter allows
+the Unix system administrator to allocate a range of UIDs for this
+purpose. It is very important that this range not overlap any UIDs
+used for other purposes on the Unix system, so we recommend you begin
+your range at a very high number, one much larger than the number of
+local users and NIS users that will ever exist. For example,
+<tt class="literal">winbind</tt> <tt class="literal">uid</tt> might be defined
+as:</p>
+
+<blockquote><pre class="code">[global]
+    winbind uid = 10000-15000</pre></blockquote>
+
+<p>on a system that would never have more than 9,999 local and NIS
+users, or for that matter, any other entries in
+<em class="filename">/etc/passwd</em> that would use up another UID.
+Because the example allocates 5,000 UIDs to
+<em class="emphasis">winbindd</em>, the assumption is that there will
+never be more than 5,000 domain users accessing the Samba host.</p>
+
+<p>If your method for adding new local users to the system assigns UIDs
+automatically, make sure it does not assign them within the range of
+UIDs allocated to winbind. This might happen if the algorithm used
+adds 1 to the highest UID assigned thus far.</p>
+
+<p>There is no default for <tt class="literal">winbind</tt>
+<tt class="literal">uid</tt>, so you must specify it in your Samba
+configuration file for winbind to work.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-5.5.3"/>
+
+<a name="INDEX-120"/><h3 class="head3">winbind gid</h3>
+
+<p>This option works like <tt class="literal">winbind</tt>
+<tt class="literal">uid</tt>, except that it is for allocating a range of
+GIDs for use with <em class="emphasis">winbindd</em>. You might not need
+to allocate as many GIDs as UIDs because you probably have relatively
+few domain groups that need corresponding GIDs. (In many cases, users
+are all members of the Domain Users group, requiring only one GID.)
+However, it is best to play it safe, so make sure to allocate many
+more GIDs than you think you will need.</p>
+
+<p>As with <tt class="literal">winbind</tt> <tt class="literal">uid</tt>, if you are
+using a method of adding new local users to your Unix host that
+automatically assigns GIDs, either make sure the method used
+doesn't conflict with winbind or set the GIDs
+manually.</p>
+
+<p>There is no default for <tt class="literal">winbind</tt>
+<tt class="literal">gid</tt>, so you must specify it in your Samba
+configuration file for winbind to work.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-5.5.4"/>
+
+<a name="INDEX-121"/><h3 class="head3">winbind cache time</h3>
+
+<p>The <em class="emphasis">winbindd</em> daemon maintains a cache of user
+and group data that has been retrieved from the Windows PDC to reduce
+network queries and increase performance. The
+<tt class="literal">winbind</tt> <tt class="literal">cache</tt>
+<tt class="literal">time</tt> parameter allows the amount of time (in
+seconds) <em class="emphasis">winbindd</em> can use the cached data before
+querying the PDC to check for an update. By default, this interval is
+set to 15 seconds. This means that when any part of a user or group
+account on the PDC is modified, it can take up to 15 seconds for
+<em class="emphasis">winbindd</em> to update its own database.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-5.5.5"/>
+
+<a name="INDEX-122"/><h3 class="head3">template homedir</h3>
+
+<p>When the local Unix system is configured to allow domain users to log
+in, the user must be provided with a home directory for many
+programs, including command shells, to function properly. The
+<tt class="literal">template</tt> <tt class="literal">homedir</tt> option is used
+to set the name of the home directory. In the name of the directory,
+<tt class="literal">%D</tt> is replaced by the name of the Windows NT
+domain the user is in, and <tt class="literal">%U</tt> is replaced by his
+username. By default, <tt class="literal">template</tt>
+<tt class="literal">homedir</tt> is set to <tt class="literal">/home/%D/%U</tt>,
+which works fine for a network in which there might be more than one
+Windows NT domain, and it is possible for different people in
+different domains to have the same username. If you are sure you will
+never have more than one Windows NT domain on your network, or you
+have more than one domain but know for sure that unique users have
+identical usernames in each multiple domain, you might prefer to set
+<tt class="literal">template</tt> <tt class="literal">homedir</tt> like this:</p>
+
+<blockquote><pre class="code">[global]
+    template homedir = /home/%U</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-9-SECT-5.5.6"/>
+
+<a name="INDEX-123"/><h3 class="head3">template shell</h3>
+
+<p>This option specifies the program to use as the shell for domain
+users who are logged in to the Unix host. By default, it is set to
+<em class="emphasis">/bin/false</em>, which effectively denies domain
+users to log in. If you wish to allow logins for domain users, set
+<tt class="literal">template</tt> <tt class="literal">shell</tt> to a valid
+command shell (or other program) that you want to act as the textual
+interface the domain users will receive when logged in. A common
+setting on Linux would be:</p>
+
+<blockquote><pre class="code">[global]
+    template shell = /bin/bash</pre></blockquote>
+
+<p>which would give users the Bash shell for their interactive login
+sessions. <a name="INDEX-124"/><a name="INDEX-125"/> <a name="INDEX-126"/><a name="INDEX-127"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<hr/><h4 class="head4">Footnotes</h4><blockquote><a name="FOOTNOTE-1"/> <p><a href="#FNPTR-1">[1]</a> Having both encrypted and nonencrypted
+password clients on your network is one of the reasons why Samba
+allows you to include (or not include) various options in the Samba
+configuration file based on the client operating system or machine
+name variables.</p> <a name="FOOTNOTE-2"/>
+<p><a href="#FNPTR-2">[2]</a> This is because the Unix <em class="emphasis">passwd</em> program,
+which is the usual target for this operation, allows
+<tt class="literal">root</tt> to change a user's password
+without the security restriction that requests the old password of
+that user.</p> </blockquote><hr/><h4 class="head4"><a href="toc.html">TOC</a></h4></body></html>

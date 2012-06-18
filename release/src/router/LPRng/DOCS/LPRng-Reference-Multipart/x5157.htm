@@ -1,0 +1,402 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>HP JetDirect Interface</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printer Communication and Protocols "
+    href="printercomm.htm">
+    <link rel="PREVIOUS" title=
+    "Network Print Server Configuration Information" href=
+    "x4976.htm">
+    <link rel="NEXT" title="Problems With Network Print Servers"
+    href="x5193.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x4976.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          11. Printer Communication and Protocols</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x5193.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN5157">11.7. HP JetDirect
+      Interface</a></h1>
+
+      <p>The HP JetDirect Interface is one of the most widely used
+      for network printers. For this reason it also has the most
+      widely known set of problems. The user is strongly urged to
+      upgrade to the latest version of firmware available for the
+      unit. Problems with older versions of firmware include system
+      lockups that require powerup level resets.</p>
+
+      <p>Newer versions of the HP JetDirect Interface have a Web
+      Browser based configuration system. After you have assigned
+      an IP address to the printer you can connect to the
+      configuration port and configure the printer using the
+      browser. If you run into configuration problems then you will
+      most likely need to use the Microsoft Windows based JetDirect
+      Configuration Software to reset or reconfigure the
+      printer.</p>
+
+      <p>Older HPJetDirect cards can be configured only through
+      through the front panel or through a set of network files.
+      Here is a summary of the methods used from UNIX systems, or
+      to use when you are desperate, to configure the printer.</p>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN5162">11.7.1. Resetting To
+        Factory Defaults</a></h2>
+
+        <p>Most internal HP JetDirect print servers can be reset to
+        factory defaults (or cold-reset) by turning the printer off
+        and holding down the <var class="LITERAL">Online</var> or
+        <var class="LITERAL">Go</var> button while turning the
+        printer back on. The printer control panel display should
+        read <var class="LITERAL">Cold Reset</var>, <var class=
+        "LITERAL">Restoring Factory Settings</var>, or something
+        similar.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN5169">11.7.2. Setting Up IP
+        Networking and Address</a></h2>
+
+        <p>You can set the network address from the front panel.
+        Reset the printer, put it in offline mode. and then use the
+        MENU, +-, SELECT keys as follows:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN5172"></a>
+<pre class="SCREEN">
+     MENU  -&gt; MIO MENU (use MENU to display MIO MENU)
+     ITEM  -&gt; CFG NETWORK=NO*
+     +     -&gt; CFG NETWORK=YES
+     ENTER -&gt; CFG NETWORK=YES*
+     ITEM  -&gt; TCP/IP=OFF* (use ITEM to display TCP/IP)
+     +     -&gt; TCP/IP=ON
+     ENTER -&gt; TCP/IP=ON*
+     ITEM  -&gt; CFG TCP/IP=NO* (use ITEM to display TCP/IP)
+     +     -&gt; CFG TCP/IP=YES
+     ENTER -&gt; CFG TCP/IP=YES*
+     ITEM  -&gt; BOOTP=NO*
+         (Enable BOOTP if you want to - see below)
+     ITEM  -&gt; IP BYTE 1=0*
+         This is IP address MSB byte.
+         Use +- keys to change value, and then ENTER to change
+         Use ITEM keys to get IP BYTE=2,3,4
+     ITEM  -&gt; SM BYTE 1=255*
+          This is the subnet mask value
+         Use +- keys to change value, and then ENTER to change
+         Use ITEM keys to get IP BYTE=2,3,4
+     ITEM  -&gt; LG BYTE 1=255*
+         This is the Syslog server (LoGger) IP address
+         Use +- keys to change value, and then ENTER to change
+         Use ITEM keys to get IP BYTE=2,3,4
+     ITEM  -&gt; GW BYTE 1=255*
+         This is the subnet gateway (router) IP address
+         Use +- keys to change value, and then ENTER to change
+         Use ITEM keys to get IP BYTE=2,3,4
+     ITEM  -&gt; TIMEOUT=90
+          This is the connection timeout value.  It puts a limit
+         on time between connections.  A value of 10 is reasonable.
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN5174">11.7.3. BOOTP
+        Information</a></h2>
+
+        <p>If you have a bootp server, you can put this information
+        in the bootptab file. To use this, you must enable the
+        bootp option on the printer. The T144 option specifies a
+        file to be read from the bootp server. This file is read by
+        using the TFTP protocol, and you must have a TFTPD server
+        enabled. Here is a sample bootptab entry.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN5177"></a>
+<pre class="SCREEN">
+    # Example /etc/bootptab: database for bootp server (/etc/bootpd).
+    # Blank lines and lines beginning with '#' are ignored.
+    #
+    # Legend:
+    #
+    #       first field -- hostname
+    #                       (may be full domain name)
+    #
+    #       hd -- home directory
+    #       bf -- bootfile
+    #       cs -- cookie servers
+    #       ds -- domain name servers
+    #       gw -- gateways
+    #       ha -- hardware address
+    #       ht -- hardware type
+    #       im -- impress servers
+    #       ip -- host IP address
+    #       lg -- log servers
+    #       lp -- LPR servers
+    #       ns -- IEN-116 name servers
+    #       rl -- resource location protocol servers
+    #       sm -- subnet mask
+    #       tc -- template host (points to similar host entry)
+    #       to -- time offset (seconds)
+    #       ts -- time servers
+    #
+    # Be careful about including backslashes where they're needed.
+    # Weird (bad) things can happen when a backslash is omitted
+    # where one is intended.
+    #
+    peripheral1:
+    :hn:ht=ether:vm=rfc1048:
+    :ha=08000903212F:
+    :ip=190.40.101.22:
+    :sm=255.255.255.0:
+    :gw=190.40.101.1:
+    :lg=190.40.101.3:
+    :T144="hpnp/peripheral1.cfg":
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>If you are using the T144 option, you will need to
+        create the configuration file. The sample configuration
+        file from the HP Direct distribution is included below.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN5180"></a>
+<pre class="SCREEN">
+    #
+    # Example HP Network Peripheral Interface configuration file
+    #
+    # Comments begin with '#' and end at the end of the line.
+    # Blank lines are ignored.  Entries cannot span lines.
+    
+    # Name is the peripheral (or node) name.  It is displayed on the
+    # peripheral's self-test page or configuration plot, and when sysName
+    # is obtained through SNMP.  This name can be provided in the BOOTP
+    # response or can be specified in the NPI configuration file to
+    # prevent the BOOTP response from overflowing the packet.  The domain
+    # portion of the name is not necessary because the peripheral does
+    # not perform Domain Name System (DNS) searches.  Name is limited to
+    # 64 characters.
+    
+    name: picasso
+    
+    # Location describes the physical location of the peripheral.  This
+    # is the value used by the interface for the MIB-II sysLocation
+    # object.  The default location is undefined.  Only printable ASCII
+    # characters are allowed.  Maximum length is 64 characters.
+    
+    location: 1st floor, south wall
+    
+    # Contact is the name of the person who administers or services the
+    # peripheral and may include how to contact this person.  It is
+    # limited to 64 characters.  This is the value used by the interface
+    # for the MIB-II sysContact object.  The default contact is undefined.
+    # Only printable ASCII characters are allowed.  Maximum length is 64
+    # characters.
+    
+    contact: Phil, ext 1234
+    
+    # The host access list contains the list of hosts or networks of
+    # hosts that are allowed to connect to the peripheral.  The format
+    # is "allow: netnum [mask]", where netnum is a network number or a
+    # host IP address.  Mask is an address mask of bits to apply to the
+    # network number and connecting host's IP address to verify access
+    # to the peripheral.  The mask usually matches the network or subnet
+    # mask, but this is not required.  If netnum is a host IP address,
+    # the mask 255.255.255.255 can be omitted.  Up to ten access list
+    # entries are permitted.
+    
+    # to allow all of network 10 to access the peripheral:
+    allow: 10.0.0.0  255.0.0.0
+    
+    # to allow a single host without specifying the mask:
+    allow: 15.1.2.3
+    
+    # Idle timeout is the time (in seconds) after which an idle
+    # print data connection is closed.  A value of zero disables
+    # the timeout mechanism.  The default timeout is 90 seconds.
+    
+    idle-timeout: 120
+    
+    # A community name is a password that allows SNMP access to MIB
+    # values on the network peripheral.
+    # Community names are not highly secure;
+    # they are not encrypted across the network.  The get community name
+    # determines which SNMP GetRequests are responded to.  By default,
+    # the network peripheral responds to all GetRequests.  The get
+    # community name is limited to 32 characters.
+    
+    #
+    # For hpnpstat and hpnpadmin, the community name can be stored in
+    # /usr/lib/hpnp/hpnpsnmp.
+    
+    get-community-name: blue
+    
+    # The set community name is similar to the get community name.  The
+    # set community name determines which SNMP SetRequests are responded
+    # to.  In addition, SetRequests are only honored if the sending host
+    # is on the host access list.  By default, the network peripheral
+    # does not respond to any SetRequests.  The set community name is
+    # limited to 32 characters.
+    #
+    # The set community name can come from /usr/lib/hpnp/hpnpsnmp if it
+    # is the same as the get community name.  We recommend that the set
+    # community name be different from the get community name though.
+    
+    set-community-name: yellow
+    
+    # SNMP traps are asynchronous notifications of some event
+    # that has occurred.
+    # SNMP traps are useful only with network management software.
+    # Traps are sent to specific hosts and include a trap community
+    # name.  Up to four hosts can be sent SNMP traps.
+    # The trap community name is limited to
+    # 32 characters.  The default name is public.
+    
+    trap-community-name: red
+    
+    # The SNMP trap destination list specifies systems to which SNMP
+    # traps are sent.  Up to four IP addresses are allowed.  If no
+    # trap destinations are listed, traps are not sent.
+    
+    trap-dest: 15.1.2.3
+    trap-dest: 15.2.3.4
+    
+    # The SNMP authentication trap parameter enables or disables the
+    # sending of SNMP authentication traps.  Authentication traps indicate
+    # that an SNMP request was received and the community name check
+    # failed.  By default, the parameter is off.
+    
+    authentication-trap: on
+    
+    # The syslog-facility parameter sets the source facility identifier
+    # that the card uses when issuing syslog messages.  Other facilities,
+    # for example, include the kernel (LOG_KERN), the mail system
+    # (LOG_MAIL), and the spooling system (LOG_LPR).  The card only allows
+    # its syslog facility to be configured to one of the local user values
+    # (LOG_LOCAL0 through LOG_LOCAL7).  The selectible option strings,
+    # local0 through local7 (configured to LOG_LOCAL0 through LOG_LOCAL7,
+    # respectively) are case insensitive.  The default syslog-facility
+    # for the card is LOG_LPR.
+    
+    syslog-facility: local2
+    
+    # This parameter allows the card to treat hosts on other subnets as
+    # if the hosts were on the card's subnet.  This parameter determines
+    # the TCP Maximum Segment Size (MSS) advertised by the card to hosts
+    # on other subnets and affects the card's initial receive-window
+    # size.  The card will use a TCP MSS of 1460 bytes for local hosts,
+    # and 536 bytes for a non-local host.  The default is off, that is,
+    # the card will use the maximum packet sizes only on the card's
+    # configured subnet.
+    #
+    # The configuration utility does not allow access to this parameter.
+    # If you want to configure it, you must manually edit the NPI
+    # configuration file and add it to the bottom of the entry for the
+    # network peripheral.
+    
+    subnets-local: on
+    
+    # This parameter affects how the card handles TCP connection requests
+    # from the host.  By default, the JetDirect MPS card will accept a
+    # TCP connection even if the peripheral is off-line.  If this parameter
+    # is set to "on", then the card will only accept a TCP connection
+    # when the peripheral is on-line.
+    
+    old-idle-mode: off
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN5182">11.7.4. Telnet
+        Configuration</a></h2>
+
+        <p>You can telnet to the JetDirect interface and use the
+        command line mode. There is a very simple help facility
+        available that you can invoke by entering <var class=
+        "LITERAL">?</var> at the prompt.</p>
+
+        <p>Different versions of HP JetDirect cards have different
+        commands. You will have to experiment to find out which
+        ones are supported.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN5187">11.7.5. Disabling
+        Banner Page Generation</a></h2>
+
+        <p>You can do this by making a telnet connection to the
+        JetDirect interface and use the command line mode. There is
+        a very simple help facility available that you can invoke
+        by entering <var class="LITERAL">?</var> at the prompt.</p>
+
+        <p>The configuration command <var class="LITERAL">banner:
+        0</var> will disable banners. You may need to save the
+        configuration after you have changed it and then do a power
+        up reset of the printer to have it take effect.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x4976.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x5193.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Network Print
+          Server Configuration Information</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printercomm.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Problems With
+          Network Print Servers</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

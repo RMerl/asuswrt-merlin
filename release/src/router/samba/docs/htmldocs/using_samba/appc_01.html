@@ -1,0 +1,3497 @@
+<HTML>
+<HEAD>
+<TITLE>[Appendix C] Samba Configuration Option Quick Reference</title>
+</head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appb_03.html" TITLE="B.3 Sizing Samba Servers">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: B.3 Sizing Samba Servers" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+Appendix C</font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appd_01.html" TITLE="D. Downloading Samba with CVS">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: D. Downloading Samba with CVS" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div class="samplechapter">
+<H1 CLASS="appendix">
+<A CLASS="title" NAME="appc-23653">
+C. Samba Configuration Option Quick Reference</a></h1><P CLASS="para">The following pages list each of the Samba configuration options. If an option is applicable only to the global section, "[global]" will appear before its name. Any lists mentioned are space separated, except where noted. A glossary of terms follows the options.</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>admin users = user list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: user list</p>
+
+<P CLASS="para">
+List of users who will be granted root permissions on the share by Samba.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>allow hosts = host list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: any</p>
+
+<P CLASS="para">
+Synonym for <CODE CLASS="literal">
+hosts allow</code>. List of machines that may connect to a share.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>alternate permissions = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Obsolete. Has no effect in Samba 2. Files will be shown as read-only if the owner can't write them. In Samba 1.9 and earlier, setting this option would set the DOS filesystem read-only attribute on any file the user couldn't read. This in turn required the <CODE CLASS="literal">
+delete readonly</code> option.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] announce as = system type</i></b>
+<P CLASS="refpurpose">Default: NT</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: NT, Win95, WfW</p>
+
+<P CLASS="para">
+Have Samba announce itself as something other than an NT server. Discouraged because it interferes with serving browse lists.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] announce version = number.number</i></b>
+<P CLASS="refpurpose">Default: 4.2</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: any</p>
+
+<P CLASS="para">
+Instructs Samba to announce itself as an older version SMB server. Discouraged.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] auto services = share list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: any shares</p>
+
+<P CLASS="para">
+List of shares that will always appear in browse lists. A synonym is <CODE CLASS="literal">
+preload</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>available = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to NO, denies access to a share. Doesn't affect browsing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] bind interfaces only = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, shares and browsing will be provided only on interfaces in an interfaces list (see <CODE CLASS="literal">
+interfaces</code>). New in Samba 1.9.18. If you set this option to YES, be sure to add 127.0.0.1 to the interfaces list to allow <EM CLASS="emphasis">
+smbpasswd</em> to connect to the local machine to change passwords. This is a convienence option; it does not improve security.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>browsable = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Allows a share to be announced in browse lists.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>blocking locks = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, honors byte range lock requests with time limits for queuing the request and retrying it until the time period expires. New in Samba 2.0.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] browse list = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Turns on/off <CODE CLASS="literal">
+browse</code> <CODE CLASS="literal">
+list</code> from this server. Avoid changing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] case sensitive = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, uses exactly the case the client supplied when trying to resolve a filename. If NO, matches either upper- or lowercase name. Avoid changing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] case sig names = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Synonym for <CODE CLASS="literal">
+case sensitive</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] change notify timeout = number</i></b>
+<P CLASS="refpurpose">Default: 60</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: positive number</p>
+
+<P CLASS="para">
+Sets the number of seconds between checks when a client asks for notification of changes in a directory. Introduced in Samba 2.0 to limit the performance cost of the checks. Avoid lowering.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>character set = name</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: ISO8859-1, ISO8859-2, ISO8859-5, KOI8-R</p>
+
+<P CLASS="para">
+If set, translates from DOS code pages to the Western European (ISO8859-1), Eastern European (ISO8859-2), Russian Cyrillic (ISO8859-5), or Alternate Russian (KOI8-R) character set. The <CODE CLASS="literal">
+client code page</code> must be set to 850.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>client code page = name</i></b>
+<P CLASS="refpurpose">Default: 437 (US MS-DOS)</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: See <a href="ch08_03.html#ch08-20815"><b>Table 8.4</b></a></p>
+
+<P CLASS="para">
+Sets the DOS code page explicitly, overriding any previous <CODE CLASS="literal">
+valid chars</code> settings. Examples of values are 850 for European, 437 is the US standard, and 932 for Japanese Shift-JIS. Introduced in Samba 1.9.19.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>coding system = code</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: euc, cap, hex, hexN, sjis, j8bb, j8bj, jis8, j8bh, j8@b, j8@j, j8@h, j7bb, j7bj, jis7, j7bh, j7@b, j7@j, j7@h, jubb, jubj, junet, jubh, ju@b, ju@j, ju@h</p>
+
+<P CLASS="para">
+Sets the coding system used, notably for Kanji. This is employed for filenames and should  correspond to the code page in use. The <CODE CLASS="literal">
+client code page</code> option must be set to 932 (Japanese Shift-JIS). Introduced in Samba 2.0.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>comment = text</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: a text string or NULL</p>
+
+<P CLASS="para">
+Sets the comment that appears beside a share in a NET VIEW or the details list of a Microsoft directory window. See also the <CODE CLASS="literal">
+server string</code> configuration option.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] config file = pathname</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Unix pathname</p>
+
+<P CLASS="para">
+Selects an additional Samba configuration file to read instead of the current one. Used to relocate the configuration file, or used with %-variables to select custom configuration files for some users or machines. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>copy = section name</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: existing section's name</p>
+
+<P CLASS="para">
+Copies the configuration of a previously seen share into the share where it appears. Used with %-variables to select custom configurations for machines, architectures and users. The copied section must be earlier in the configuration file. Copied options are of lesser priority than those explicitly listed in the section.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>create mask = octal value</i></b>
+<P CLASS="refpurpose">Default: 0744</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: octal permission bits, 0-0777</p>
+
+<P CLASS="para">
+Also called <CODE CLASS="literal">
+create mode</code>. Sets the maximum allowable permissions for new files (e.g., 0755). See also <CODE CLASS="literal">
+directory mask</code>. To require certain permissions to be set, see <CODE CLASS="literal">
+force create mask/force directory mask</code>. This option stopped affecting directories in Samba 1.9.17, and the default value changed in Samba 2.0.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>create mode = octal permission bits</i></b>
+<P CLASS="refpurpose">Default: 0744</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: octal permission bits, 0-0777</p>
+
+<P CLASS="para">
+Synonym for <CODE CLASS="literal">
+create mask</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] deadtime = minutes</i></b>
+<P CLASS="refpurpose">Default: 0 </p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: minutes</p>
+
+<P CLASS="para">
+The time in minutes before an unused connection will be terminated. Zero means forever. Used to keep clients from tying up server resources forever. If used, clients will have to auto-reconnect after minutes of inactivity. See also <CODE CLASS="literal">
+keepalive</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] debug level = number</i></b>
+<P CLASS="refpurpose">Default: 0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+Sets the logging level used. Values of 3 or more slow Samba noticeably. A synonym is <CODE CLASS="literal">
+log level</code>. Recommended value: 1.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] debug timestamp = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Timestamps all log messages. Can be turned off when it's not useful (e.g., in debugging). New in Samba 2.0.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] default = name</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: share name</p>
+
+<P CLASS="para">
+Also called <CODE CLASS="literal">
+default service</code>. The name of a service (share) to provide if someone requests a service they don't have permission to use or which doesn't exist. As of Samba 1.9.14, the path will be set from the name the client specified, with any "_" characters changed to "/" characters, allowing access to any directory on the Samba server. Use is strongly discouraged.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>default case = case</i></b>
+<P CLASS="refpurpose">Default: LOWER</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: LOWER, UPPER</p>
+
+<P CLASS="para">
+Sets the case in which to store new filenames. LOWER indicates mixed case, UPPER indicates uppercase letters.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] default service = share name</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: share name</p>
+
+<P CLASS="para">
+Synonym for <CODE CLASS="literal">
+default</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>delete readonly = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: NO, YES</p>
+
+<P CLASS="para">
+Allow delete requests to remove read-only files. This is not allowed in DOS/Windows, but is normal in Unix, which has separate directory permissions. Used with programs like RCS, or with the older <CODE CLASS="literal">
+alternate permissions</code> option.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>delete veto files = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: NO, YES</p>
+
+<P CLASS="para">
+Allow delete requests for a directory containing files or subdirectories the user can't see due to the <CODE CLASS="literal">
+veto files</code> option. If set to NO, the directory will not be deleted and will still contain invisible files.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>deny hosts = host list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: host list</p>
+
+<P CLASS="para">
+A synonym is <CODE CLASS="literal">
+hosts deny</code>. Specifies a list of machines from which to refuse connections or shares.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] dfree command = command</i></b>
+<P CLASS="refpurpose">Default: varies</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: shell command</p>
+
+<P CLASS="para">
+A command to run on the server to return disk free space. Not needed unless the OS command does not work properly.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>directory = pathname</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: pathname</p>
+
+<P CLASS="para">
+Synonym for <CODE CLASS="literal">
+path</code>. A directory provided by a file share, or used by a printer share. Set automatically in the <CODE CLASS="literal">
+[homes]</code> share to user's home directory, otherwise defaults to<I CLASS="filename">
+ /tmp</i>. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>directory mask = octal permission bits</i></b>
+<P CLASS="refpurpose">Default: 0755</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: octal value from 0 to 0777</p>
+
+<P CLASS="para">
+Also called <CODE CLASS="literal">
+directory mode</code>. Sets the maximum allowable permissions for newly created directories. To require certain permissions be set, see the <CODE CLASS="literal">
+force create mask</code> and <CODE CLASS="literal">
+force directory mask</code> options.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>directory mode = octal permission bits</i></b>
+<P CLASS="refpurpose">Default: 0755</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: octal value from 0 to 0777</p>
+
+<P CLASS="para">
+Synonym for <CODE CLASS="literal">
+directory mask</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] dns proxy = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, and if <CODE CLASS="literal">
+wins server = YES</code>, look up hostnames in DNS if they are not found using WINS.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] domain logons = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Allow Windows 95/98 or NT clients to log on to an NT-like domain.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] domain master = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Become a domain master browser list collector if possible for the entire workgroup/domain. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>dont descend = comma-list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: comma-separated list of paths</p>
+
+<P CLASS="para">
+Does not allow a change directory or search in the directories specified. This is a browsing convenience option; it doesn't provide any extra security.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>dos filetimes = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Allow non-owners to change file times if they can write to the file. See also <CODE CLASS="literal">
+dos filetime resolution</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>dos filetime resolution = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Set file times on Unix to match DOS standards (round to next even second). Recommended if using Visual C++ or a PC <EM CLASS="emphasis">
+make</em> program to avoid remaking the programs unnecesarily. Use with the <CODE CLASS="literal">
+dos filetimes</code> option.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] encrypt passwords = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Uses Windows NT-style password encryption. Requires an <I CLASS="filename">
+smbpasswd</i> on the Samba server.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>exec = command</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: shell command</p>
+
+<P CLASS="para">
+Synonym of <CODE CLASS="literal">
+preexec</code>, a command to run as the user just before connecting to the share.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>fake directory create times = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Bug fix for users of Microsoft <EM CLASS="emphasis">
+nmake</em>. If set, Samba will set directory create times such that <EM CLASS="emphasis">
+nmake</em> won't remake all files every time.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>fake oplocks = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Return YES whenever a client asks if it can lock a file and cache it locally, but does not enforce lock on the server. Use only for read-only disks, as Samba now supports real <CODE CLASS="literal">
+oplocks</code> and has per-file overrides. See also <CODE CLASS="literal">
+oplocks</code> and <CODE CLASS="literal">
+veto oplock files</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>follow symlinks = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, Samba will follow symlinks in a file share or shares. See the <CODE CLASS="literal">
+wide links</code> option if you want to restrict symlinks to just the current share.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>force create mask = octal permission bits</i></b>
+<P CLASS="refpurpose">Default: 0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: octal value from 0 to 0777</p>
+
+<P CLASS="para">
+Provides bits that will be <CODE CLASS="literal">
+OR</code>ed into the permissions of newly created files. Used with the <CODE CLASS="literal">
+create mode</code> configuration option.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>force create mode = octal permission bits</i></b>
+<P CLASS="refpurpose">Default: 0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: octal value from 0 to 0777</p>
+
+<P CLASS="para">
+Synonym for <CODE CLASS="literal">
+force create mask</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>force directory mask = octal permission bits</i></b>
+<P CLASS="refpurpose">Default: 0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: octal value from 0 to 0777</p>
+
+<P CLASS="para">
+Provides bits that will be <CODE CLASS="literal">
+OR</code>ed into the permissions of newly created directories, forcing those bits to be set. Used with <CODE CLASS="literal">
+directory mode</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>force directory mode = octal permission bits</i></b>
+<P CLASS="refpurpose">Default: 0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: octal value from 0 to 0777</p>
+
+<P CLASS="para">
+Synonym for <CODE CLASS="literal">
+force</code> <CODE CLASS="literal">
+directory</code> <CODE CLASS="literal">
+mask</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>force group = unix group</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: group</p>
+
+<P CLASS="para">
+Sets the effective group name assigned to all users accessing a share. Used to override user's normal groups.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>force user = name</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: username</p>
+
+<P CLASS="para">
+Sets the effective username assigned to all users accessing a share. Discouraged.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>fstype = string</i></b>
+<P CLASS="refpurpose">Default: NTFS</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: NTFS, FAT, Samba</p>
+
+<P CLASS="para">
+Sets the filesystem type reported to the client. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] getwd cache = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Cache current directory for performance. Recommended with the <CODE CLASS="literal">
+wide links</code> option.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>group = group</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: unix group</p>
+
+<P CLASS="para">
+An obsolete form of <CODE CLASS="literal">
+force group</code>. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>guest account = user</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: username</p>
+
+<P CLASS="para">
+Sets the name of the unprivileged Unix account to use for tasks like printing and for accessing shares marked with <CODE CLASS="literal">
+guest ok</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>guest ok = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, passwords are not needed for this share. Synonym of <CODE CLASS="literal">
+public</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>guest only = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Forces user of a share to do so as the guest account. Requires <CODE CLASS="literal">
+guest</code> <CODE CLASS="literal">
+ok</code> or <CODE CLASS="literal">
+public</code> to be <CODE CLASS="literal">
+yes</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>hide dot files = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Treats files beginning with a dot in a share as if they had the DOS/Windows hidden attribute set.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>hide files = slash-separated list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list of patterns, separated by <CODE CLASS="literal">
+/</code> characters</p>
+
+<P CLASS="para">
+List of file or directory names to set the DOS hidden attribute on. Names may contain <CODE CLASS="literal">
+?</code> or <CODE CLASS="literal">
+*</code> pattern-characters and <CODE CLASS="literal">
+%</code>-variables. See also <CODE CLASS="literal">
+hide</code> <CODE CLASS="literal">
+dot</code> <CODE CLASS="literal">
+files</code> and <CODE CLASS="literal">
+veto</code> <CODE CLASS="literal">
+files</code>. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] homedir map = NIS map name</i></b>
+<P CLASS="refpurpose">Default: auto.home</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: NIS map name</p>
+
+<P CLASS="para">
+Used with <CODE CLASS="literal">
+nis homedir</code> to locate user's Unix home directory from Sun NIS (not NIS+).</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>hosts allow = host list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list of hostnames</p>
+
+<P CLASS="para">
+Synonym of <CODE CLASS="literal">
+allow hosts</code>, a list of machines that can access a share or shares. If NULL (the default) any machine can access the share unless there is a <CODE CLASS="literal">
+hosts deny</code> option. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>hosts deny = host list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list of hostnames</p>
+
+<P CLASS="para">
+Synonym of <CODE CLASS="literal">
+deny hosts</code>, a list of machines that cannot connect to a share or shares. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] hosts equiv = pathname</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: pathname</p>
+
+<P CLASS="para">
+Path to a file of trusted machines from which password-less logins are allowed. Strongly discouraged, because Windows/NT users can always override the user name, the only security in this scheme.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>include = pathname</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: pathname</p>
+
+<P CLASS="para">
+Include the named file in <I CLASS="filename">
+smb.conf</i> at the line where it appears. This option does not understand the variables <CODE CLASS="literal">
+%u</code> (user), <CODE CLASS="literal">
+%P</code> (current share's root directory), or <CODE CLASS="literal">
+%S</code> (current share name), because they are not set at the time the file is read.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<!-- added for 2.0.7,. davecb -->
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>inherit permissions = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set, subdirectories will be created with the same permissions
+as the directory they are in.  This overrides
+<CODE CLASS="literal">create mask, directory mask, force create mode
+</CODE> and <CODE CLASS="literal"> force directory mode</CODE>, but
+not <CODE CLASS="literal">map archive, map hidden </CODE> and <CODE CLASS="literal">
+map system</CODE>. Will never set the <CODE CLASS="literal">setuid
+</CODE> bit. New in 2.0.7, this is a means of ensuring Unix permissions
+can be propagated to subdirectories, especially in [homes].<p>
+
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+<!-- end of 2.0.7 -->
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] interfaces = interface list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: IP addresses separated by spaces</p>
+
+<P CLASS="para">
+Sets the interfaces to which Samba will respond. The default is the machine's primary interface only. Recommended on multihomed machines or to override erroneous addresses and netmasks.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>invalid users = user list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list of users</p>
+
+<P CLASS="para">
+List of users that will not be permitted access to a share or shares. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] keepalive = number</i></b>
+<P CLASS="refpurpose">Default: 0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number of seconds</p>
+
+<P CLASS="para">
+Number of seconds between checks for a crashed client. The default of 0 causes no checks to be performed. Recommended if you want checks more often than every four hours. 3600 (10 minutes) is reasonable. See also <CODE CLASS="literal">
+socket options</code> for another approach.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] kernel oplocks = boolean</i></b>
+<P CLASS="refpurpose">Default: automatic</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Break oplock when a Unix process accesses an <EM CLASS="emphasis">
+oplocked</em> file, preventing corruption. Set to YES on operating systems supporting this, otherwise set to NO. New in Samba 2.0; supported on SGI, and hopefully soon on Linux and BSD. Avoid changing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] ldap filter = various</i></b>
+<P CLASS="refpurpose">Default: varies</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: various</p>
+
+<P CLASS="para">
+Options beginning with <CODE CLASS="literal">
+ldap</code> are part of an experimental (circa Samba 2.0) use of the Lightweight Directory Access Protocol (LDAP) general directory/distributed database for user, name, and host information. This option is reserved for future use.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] ldap port = various</i></b>
+<P CLASS="refpurpose">Default: various</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: various</p>
+
+<P CLASS="para">
+Options beginning with <CODE CLASS="literal">
+ldap</code> are part of an experimental (circa Samba 2.0) use of the Lightweight Directory Access Protocol (LDAP) general directory/distributed database for user, name, and host information. This option is reserved for future use.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] ldap root = various</i></b>
+<P CLASS="refpurpose">Default: various</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: various</p>
+
+<P CLASS="para">
+Options beginning with <CODE CLASS="literal">
+ldap</code> are part of an experimental (circa Samba 2.0) use of the Lightweight Directory Access Protocol (LDAP) general directory/distributed database for user, name, and host information. This option is reserved for future use.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] ldap server = various</i></b>
+<P CLASS="refpurpose">Default: various</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: various</p>
+
+<P CLASS="para">
+Options beginning with <CODE CLASS="literal">
+ldap</code> are part of an experimental (circa Samba 2.0) use of the Lightweight Directory Access Protocol (LDAP) general directory/distributed database for user, name, and host information. This option is reserved for future use.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] ldap suffix = various</i></b>
+<P CLASS="refpurpose">Default: various</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: various</p>
+
+<P CLASS="para">
+Options beginning with <CODE CLASS="literal">
+ldap</code> are part of an experimental (circa Samba 2.0) use of the Lightweight Directory Access Protocol (LDAP) general directory/distributed database for user, name, and host information. This option is reserved for future use.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] load printers = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Load all printer names from the system printer capabilities into browse list. Uses configuration options from the <CODE CLASS="literal">
+[printers]</code> section.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] local master = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Stands for election as the local master browser. See also <CODE CLASS="literal">
+domain master</code> and <CODE CLASS="literal">
+os level</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] lm announce = value</i></b>
+<P CLASS="refpurpose">Default: AUTO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: AUTO, YES, NO</p>
+
+<P CLASS="para">
+Produce OS/2 SMB broadcasts at an interval specified by the <CODE CLASS="literal">
+lm interval</code> option. YES/NO turns them on/off unconditionally. AUTO causes the Samba server to wait for a LAN Manager announcement from another client before sending one out. Required for OS/2 client browsing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] lm interval = seconds</i></b>
+<P CLASS="refpurpose">Default: 60</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+Sets the time period, in seconds, between OS/2 SMB broadcast announcements.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] lock directory = pathname</i></b>
+<P CLASS="refpurpose">Default: <EM CLASS="emphasis">
+/usr/local/samba/var/locks</em></p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: pathname</p>
+
+<P CLASS="para">
+Set a directory to keep lock files in. The directory must be writable by Samba, readable by everyone.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>locking = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Perform file locking. If set to NO, Samba will accept lock requests but will not actually lock resources. Recommended only for read-only file systems.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] log file = pathname</i></b>
+<P CLASS="refpurpose">Default: varies</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: pathname</p>
+
+<P CLASS="para">
+Set name and location of the log file. Allows all %-variables.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] log level = number</i></b>
+<P CLASS="refpurpose">Default: 0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+A synonym of <CODE CLASS="literal">
+debug level</code>. Sets the logging level used. Values of 3 or more slow the system noticeably.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] logon drive = drive</i></b>
+<P CLASS="refpurpose">Default: None</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: DOS drive name</p>
+
+<P CLASS="para">
+Sets the drive on Windows NT (only) of the <CODE CLASS="literal">
+logon path</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] logon home = path</i></b>
+<P CLASS="refpurpose">Default: <EM CLASS="emphasis">
+\\</em><CODE CLASS="replaceable"><I>%</i></code></p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Unix pathname</p>
+
+<P CLASS="para">
+Sets the home directory of a Windows 95/98 or NT Workstation user. Allows <CODE CLASS="literal">
+NET</code> <CODE CLASS="literal">
+USE</code> <CODE CLASS="literal">
+H:/HOME</code> from the command prompt.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] logon path = pathname</i></b>
+<P CLASS="refpurpose">Default: <EM CLASS="emphasis">
+\\</em><CODE CLASS="replaceable"><I>N</i></code><EM CLASS="emphasis">\</em><CODE CLASS="replaceable"><I>%U</i></code><EM CLASS="emphasis">\profile</em></p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Windows pathname</p>
+
+<P CLASS="para">
+Sets path to Windows profile directory. This contains <EM CLASS="emphasis">
+USER.MAN</em> and/or <EM CLASS="emphasis">
+USER.DAT</em> profile files and the Windows 95 Desktop, Start Menu, Network Neighborhood, and programs folders. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] logon script = pathname</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: pathname</p>
+
+<P CLASS="para">
+Sets pathname relative to <CODE CLASS="literal">
+[netlogin]</code> share of a DOS/NT script to run on the client at login time. Allows all %-variables.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>lppause command = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: varies</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: fully-qualfied Unix shell command</p>
+
+<P CLASS="para">
+Sets the command to pause a print job. Honors the <CODE CLASS="literal">
+%p</code> (printer name) and <CODE CLASS="literal">
+%j</code> (job number) variables. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>lpresume command = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: varies</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: fully-qualified Unix shell command</p>
+
+<P CLASS="para">
+Sets the command to resume a paused print job. Honors the <CODE CLASS="literal">
+%p</code> (printer name) and <CODE CLASS="literal">
+%j</code> (job number) variables. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] lpq cache time = seconds</i></b>
+<P CLASS="refpurpose">Default: 10</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number of seconds</p>
+
+<P CLASS="para">
+Sets how long to keep print queue (<CODE CLASS="literal">lpq</code>) status is cached, in seconds.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>lpq command = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: varies</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: fully-qualfied Unix shell command</p>
+
+<P CLASS="para">
+Sets the command used to get printer status. Usually initialized to a default value by the <CODE CLASS="literal">
+printing</code> option. Honors the <CODE CLASS="literal">
+%p</code> (printer name) variable.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>lprm command = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: varies</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: fully-qualified Unix shell command</p>
+
+<P CLASS="para">
+Sets the command to delete a print job. Usually initialized to a default value by the <CODE CLASS="literal">
+printing</code> option. Honors the <CODE CLASS="literal">
+%p</code> (printer name) and <CODE CLASS="literal">
+%j</code> (job number) variables.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>machine password timeout = seconds</i></b>
+<P CLASS="refpurpose">Default: 604,800</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number of seconds</p>
+
+<P CLASS="para">
+Sets the period between (NT domain) machine password changes. Default is 1 week, or 604,800 seconds.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>magic output = pathname</i></b>
+<P CLASS="refpurpose">Default: <EM CLASS="emphasis">
+script.out</em></p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Unix pathname</p>
+
+<P CLASS="para">
+Sets the output file for the discouraged <CODE CLASS="literal">
+magic scripts</code> option. Default is the script name, followed by the extension <EM CLASS="emphasis">
+.out</em>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>magic script = pathname</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Unix pathname</p>
+
+<P CLASS="para">
+Sets a filename for execution via a shell whenever the file is closed from the client, to allow clients to run commands on the server. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>mangle case = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: allowable values: YES, NO</p>
+
+<P CLASS="para">
+Mangle a name if it is in mixed case.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>mangled map = map list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list of to-from pairs</p>
+
+<P CLASS="para">
+Set up a table of names to remap (e.g., <EM CLASS="emphasis">
+.html</em> to <EM CLASS="emphasis">
+.htm</em>). </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>mangled names = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Sets Samba to abbreviate names that are too long or have unsupported characters to the DOS 8.3 style. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>mangling char = character</i></b>
+<P CLASS="refpurpose">Default: ~</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: character</p>
+
+<P CLASS="para">
+Sets the unique mangling character used in all mangled names.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] mangled stack = number</i></b>
+<P CLASS="refpurpose">Default: 50</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+Sets the size of a cache of recently-mangled filenames.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>map aliasname = pathname</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Unix pathname</p>
+
+<P CLASS="para">
+Points to a file of Unix group/NT group pairs, one per line. This is used to map NT aliases to Unix group names. See also the configuration options <CODE CLASS="literal">
+username</code> <CODE CLASS="literal">
+map</code> and <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+groupname</code>. Introduced in Samba 2.0.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>map archive = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, Samba sets the executable-by-user (0100) bit on Unix files if the DOS archive attribute is set. Recommended: if used, the <CODE CLASS="literal">
+create mask</code> must contain the 0100 bit.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>map hidden = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, sets executable-by-other (0001) bit on Unix files if the DOS hidden attribute is set. If used, the <CODE CLASS="literal">
+create mask</code> option must contain the  0001 bit.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>map groupname = pathname</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: pathname</p>
+
+<P CLASS="para">
+Points to a file of Unix group/NT group, one per line. This is used to map NT group names to Unix group names. See also the configuration options <CODE CLASS="literal">
+username</code> <CODE CLASS="literal">
+map</code> and <CODE CLASS="literal">
+map</code> <CODE CLASS="literal">
+aliasname</code>. Introduced in Samba 2.0.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>map system = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, Samba sets the executable-by-group (0010) bit on Unix files if the DOS system attribute is set. If used, the <CODE CLASS="literal">
+create mask</code> must contain the  0010 bit.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>max connections = number</i></b>
+<P CLASS="refpurpose">Default: 0 (infinity)</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+Set maximum number of connections allowed to a share from each individual client machine.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] max disk size = number</i></b>
+<P CLASS="refpurpose">Default: 0 (unchanged)</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: size in MB</p>
+
+<P CLASS="para">
+Sets maximum disk size/free-space size (in megabytes) to return to client. Some clients or applications can't understand large maximum disk sizes.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] max log size = number</i></b>
+<P CLASS="refpurpose">Default: 5000</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: size in KB</p>
+
+<P CLASS="para">
+Sets the size (in kilobytes) at which Samba will start a new log file. The current log file will be renamed with an <EM CLASS="emphasis">
+.old</em> extension, replacing any previous file with that name. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] max mux = number</i></b>
+<P CLASS="refpurpose">Default: 50</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+Sets the number of simultaneous operations that Samba clients may make. Avoid changing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] max packet = number</i></b>
+<P CLASS="refpurpose">Default: N/A</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+Synonym for <CODE CLASS="literal">
+packet size</code>. Obsolete as of Samba 1.7. Use <CODE CLASS="literal">
+max xmit</code> instead.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] max open files = number</i></b>
+<P CLASS="refpurpose">Default: 10,000</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+Limits the number of files a Samba process will try to keep open at one time. Samba allows you to set this to less than the Unix maximum. This option is a workaround for a separate problem. Avoid changing. This option was introduced in Samba 2.0.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] max ttl = seconds</i></b>
+<P CLASS="refpurpose">Default: 14400 (4 hrs)</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: time in seconds</p>
+
+<P CLASS="para">
+Sets the time to keep NetBIOS names in <EM CLASS="emphasis">
+nmbd</em> cache while trying to perform a lookup on it. Avoid changing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] max wins ttl = seconds</i></b>
+<P CLASS="refpurpose">Default: 259200 (3 days)</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: time in seconds</p>
+
+<P CLASS="para">
+Limits time-to-live of a NetBIOS name in <EM CLASS="emphasis">
+nmbd</em> WINS cache, in seconds. Avoid changing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] max xmit = bytes</i></b>
+<P CLASS="refpurpose">Default: 65535</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: size in bytes</p>
+
+<P CLASS="para">
+Sets maximum packet size that will be negotiated by Samba. Tuning parameter for slow links and older client bugs. Values less than 2048 are discouraged.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] message command = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: shell command</p>
+
+<P CLASS="para">
+Sets the command on the server to run when a WinPopup message arrives from a client. The command must end in "<CODE CLASS="literal">&amp;</code>" to allow immediate return. Honors all %-variables except <CODE CLASS="literal">
+%u</code> (user), and supports the extra variables <CODE CLASS="literal">
+%s</code> (filename the message is in), <CODE CLASS="literal">
+%t</code> (destination machine), and <CODE CLASS="literal">
+%f</code> (from).</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>min print space = kilobytes</i></b>
+<P CLASS="refpurpose">Default: 0 (unlimited)</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: space in KB</p>
+
+<P CLASS="para">
+Sets minimum spool space required before accepting a print request.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<!-- 2.0.7, davecb -->
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>min password length  = characters</i></b>
+<P CLASS="refpurpose">Default: 5</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: decimal number of characters</p>
+
+<P CLASS="para">
+Sets the shortest password Samba will pass to the Unix passwd command.
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+<!-- sne 2.0.7 -->
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] min wins ttl = seconds</i></b>
+<P CLASS="refpurpose">Default: 21600 (6 hrs)</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: time in seconds</p>
+
+<P CLASS="para">
+Sets minimum time-to-live of a NetBIOS name in <EM CLASS="emphasis">
+nmbd</em> WINS cache, in seconds. Avoid changing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>name resolve order = list</i></b>
+<P CLASS="refpurpose">Default: lmhosts wins hosts bcast</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list of lmhosts, wins, hosts and bcast</p>
+
+<P CLASS="para">
+Sets order of lookup when trying to get IP address from names. The <CODE CLASS="literal">
+hosts</code> parameter carrries out a regular name look up using the server's normal sources: <EM CLASS="emphasis">
+/etc/hosts</em>, DNS, NIS, or a combination of them. Introduced in Samba 1.9.18p4.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] netbios aliases = list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list of netbios names</p>
+
+<P CLASS="para">
+Adds additional NetBIOS names by which a Samba server will advertise itself.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>netbios name = hostname</i></b>
+<P CLASS="refpurpose">Default: varies</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: host name</p>
+
+<P CLASS="para">
+Sets the NetBIOS name by which a Samba server is known, or primary name if NetBIOS aliases exist. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<!-- 2.0.7, davecb -->
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>netbios scope = string</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: string</p>
+
+<P CLASS="para">
+Sets the NetBIOS scope string. Samba will not communicate with a machine
+with a different scope. This was an early predecessor of workgroups: avoid
+setting it. Added in 2.0.7. <!-- why was it added, anyway? -->
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+<!-- end 2.0.7 -->
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] networkstation user login = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to NO, clients will not do a full login when <CODE CLASS="literal">
+security = server</code>. Avoid changing. Turning it off is a temporary workaround (introduced in Samba 1.9.18p3) for NT trusted domains bug. Automatic correction was introduced in Samba 1.9.18p10; the parameter may eventually be removed.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] nis homedir = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, the <CODE CLASS="literal">
+homedir map</code> will be used to look up the user's home-directory server name and return it to the client. The client will contact that machine to connect to the share. This avoids mounting from a machine that doesn't actually have the disk. The machine with the home directories must be an SMB server.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] nt pipe support = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Allows turning off NT-specific pipe calls. This is a developer/benchmarking option and may be removed in the future. Avoid changing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] nt smb support = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, allow NT-specific SMBs to be used. This is a developer/benchmarking option and may be removed in the future. Avoid changing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] null passwords = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, allows access to accounts that have null passwords. Strongly discouraged.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>ole locking compatibility = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, locking ranges will be mapped to avoid Unix locks crashing when Windows uses locks above 32KB. You should avoid changing this option. Introduced in Samba 1.9.18p10. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>only guest = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+A synonym for <CODE CLASS="literal">
+guest only</code>. Forces user of a share to login as the guest account. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>only user = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Requires that users of the share be on a <CODE CLASS="literal">
+username =</code> list. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>oplocks = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, support local caching of <EM CLASS="emphasis">
+opportunistic</em> locked files on client. This option is recommended because it improves performance by about 30%. See also <CODE CLASS="literal">
+fake</code> <CODE CLASS="literal">
+oplocks</code> and <CODE CLASS="literal">
+veto</code> <CODE CLASS="literal">
+oplock</code> <CODE CLASS="literal">
+files</code>. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] os level = number</i></b>
+<P CLASS="refpurpose">Default: 0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+Sets the candidacy of the server when electing a browse master. Used with the <CODE CLASS="literal">
+domain</code> <CODE CLASS="literal">
+master</code> or <CODE CLASS="literal">
+local</code> <CODE CLASS="literal">
+master</code> options. You can set a higher value than a competing operating system if you want Samba to win. Windows for Workgroups and Windows 95 use 1, Windows NT client uses 17, and Windows NT Server uses 33.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] packet size = bytes</i></b>
+<P CLASS="refpurpose">Default: 65535</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number in bytes</p>
+
+<P CLASS="para">
+Obsolete. Discouraged synonym of <CODE CLASS="literal">
+max packet</code>. See <CODE CLASS="literal">
+max xmit</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] passwd chat debug = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Logs an entire password chat, including passwords passed, with a log level of 100. For debugging only. Introduced in Samba 1.9.18p5.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] passwd chat = command sequence</i></b>
+<P CLASS="refpurpose">Default: compiled-in value</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Unix server commands</p>
+
+<P CLASS="para">
+Sets the command used to change passwords on the server. Supports the variables <CODE CLASS="literal">
+%o</code> (old password) and <CODE CLASS="literal">
+%n</code> (new password) and allows <CODE CLASS="literal">
+\r</code> <CODE CLASS="literal">
+\n</code> <CODE CLASS="literal">
+\t</code> and <CODE CLASS="literal">
+\s</code> (space) escapes in the sequence.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] passwd program = program</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Unix server program</p>
+
+<P CLASS="para">
+Sets the command used to change user's password. Will be run as <CODE CLASS="literal">
+root</code>. Supports <CODE CLASS="literal">
+%u</code> (user).</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] password level = number</i></b>
+<P CLASS="refpurpose">Default: 0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+Specifies the number of uppercase letter permutations used to match passwords. Workaround for clients that change passwords to a single case before sending them to the Samba server. Causes repeated login attempts with passwords in different cases, which can trigger account lockouts. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] password server = netbios names</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list of NetBIOS names</p>
+
+<P CLASS="para">
+A list of SMB servers that will validate passwords for you. Used with an NT password server (PDC or BDC) and the <CODE CLASS="literal">
+security</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+server</code> or <CODE CLASS="literal">
+security</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+domain</code> configuration options. Caution: an NT password server must allow logins from the Samba server.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>panic action = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: fully-qualfied Unix shell command</p>
+
+<P CLASS="para">
+Sets the command to run when Samba panics. For Samba developers and testers, <CODE CLASS="literal">
+/usr/bin/X11/xterm -display :0 -e gdb /samba/bin/smbd %d</code> is a possible value.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>path = pathname</i></b>
+<P CLASS="refpurpose">Default: varies</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: pathname</p>
+
+<P CLASS="para">
+Sets the path to the directory provided by a file share or used by a printer share. Set automatically in <CODE CLASS="literal">
+[homes]</code> share to user's home directory, otherwise defaults to<I CLASS="filename">
+ /tmp</i>. Honors the <CODE CLASS="literal">
+%u</code> (user) and <CODE CLASS="literal">
+%m</code> (machine) variables.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>postexec = /absolute_  path/command</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: fully-qualified Unix shell command</p>
+
+<P CLASS="para">
+Sets a command to run as the user after disconnecting from the share. See also the options <CODE CLASS="literal">
+preexec</code>, <CODE CLASS="literal">
+root preexec</code>, and <CODE CLASS="literal">
+root postexec</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>postscript = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Flags a printer as PostScript to avoid a Windows bug by inserting <CODE CLASS="literal">
+%!</code> as the first line. Works only if printer actually is PostScript compatible.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>preexec = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: fully-qualified Unix shell command</p>
+
+<P CLASS="para">
+Sets a command to run as the user before connecting to the share. See also the options <CODE CLASS="literal">
+postexec</code>, <CODE CLASS="literal">
+root preexec</code>, and <CODE CLASS="literal">
+root postexec</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] preferred master = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, Samba is preferred to become the master browser. Causes Samba to call a browsing election when it comes online.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>preload = share list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list of services</p>
+
+<P CLASS="para">
+Synonym of <CODE CLASS="literal">
+auto</code> <CODE CLASS="literal">
+services</code>. Specifies a list of shares that will always appear in browse lists.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>preserve case = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, this option leaves filenames in the case sent by client. If no, it forces filenames to the case specified by the <CODE CLASS="literal">
+default</code> <CODE CLASS="literal">
+case</code> option. See also <CODE CLASS="literal">
+short preserve case</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>print command = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: varies</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: fully-qualified Unix shell command</p>
+
+<P CLASS="para">
+Sets the command used to send a spooled file to the printer. Usually initialized to a default value by the <CODE CLASS="literal">
+printing</code> option. This option honors the <CODE CLASS="literal">
+%p</code> (printer name), <CODE CLASS="literal">
+%s</code> (spool file) and <CODE CLASS="literal">
+%f</code> (spool file as a relative path) variables. Note that the command in the value of the option must include file deletion of the spool file.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>print ok = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Synonym of <CODE CLASS="literal">
+printable</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>printable = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Sets a share to be a print share. Required for all printers.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] printcap name = pathname</i></b>
+<P CLASS="refpurpose">Default: <EM CLASS="emphasis">
+/etc/printcap</em></p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: pathname</p>
+
+<P CLASS="para">
+Sets the path to the printer capabilities file used by the <CODE CLASS="literal">
+[printers]</code> share. The default value changes to <I CLASS="filename">
+/etc/qconfig</i> under AIX and <I CLASS="filename">
+lpstat</i> on System V.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>printer = name</i></b>
+<P CLASS="refpurpose">Default: <CODE CLASS="literal">
+lp</code></p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: printer name</p>
+
+<P CLASS="para">
+Sets the name of the Unix printer.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>printer driver = printer driver name</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: exact printer driver string used by Windows</p>
+
+<P CLASS="para">
+Sets the string to pass to Windows when asked what driver to use to prepare files for a printer share. Note that the value is case sensitive.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] printer driver file = path</i></b>
+<P CLASS="refpurpose">Default: <EM CLASS="emphasis">
+samba-lib/printers.def</em></p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Unix pathname</p>
+
+<P CLASS="para">
+Sets the location of a<EM CLASS="emphasis">
+ msprint.def</em> file, usable by Windows 95/98.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>printer driver location = path</i></b>
+<P CLASS="refpurpose">Default: <EM CLASS="emphasis">
+\\</em><CODE CLASS="replaceable"><I>server</i></code><EM CLASS="emphasis">\PRINTER$</em></p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Windows network path</p>
+
+<P CLASS="para">
+Sets the location of the driver for a particular printer. The value is a pathname for a share that stores the printer driver files.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>printer name = name</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: name</p>
+
+<P CLASS="para">
+Synonym of <CODE CLASS="literal">
+printer</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>printing = style</i></b>
+<P CLASS="refpurpose">Default: bsd</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: bsd, sysv, hpux, aix, qnx, plp, lprng</p>
+
+<P CLASS="para">
+Sets printing style to one of the above, instead of the compiled-in value. This sets initial values of at least the <CODE CLASS="literal">
+print</code> <CODE CLASS="literal">
+command</code>, <CODE CLASS="literal">
+print</code> <CODE CLASS="literal">
+command</code>, <CODE CLASS="literal">
+lpq</code> <CODE CLASS="literal">
+command</code>, and <CODE CLASS="literal">
+lprm</code> <CODE CLASS="literal">
+command</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] protocol = protocol</i></b>
+<P CLASS="refpurpose">Default: NT1</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: NT1, LANMAN2, LANMAN1, COREPLUS, CORE</p>
+
+<P CLASS="para">
+Sets SMB protocol version to one of the allowable values. Resetting is highly discouraged. Only for backwards compatibility with older-client bugs.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>public = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, passwords are not needed for this share. A synonym is <CODE CLASS="literal">
+guest ok</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>queuepause command = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: varies</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: valid Unix command</p>
+
+<P CLASS="para">
+Sets the command used to pause a print queue. Usually initialized to a default value by the <CODE CLASS="literal">
+printing</code> option. Introduced in Samba 1.9.18p10.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>queueresume command = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: varies</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: valid Unix command</p>
+
+<P CLASS="para">
+Sets the command used to resume a print queue. Usually initialized to a default value by the <CODE CLASS="literal">
+printing</code> option. Introduced in Samba 1.9.18p10.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>read bmpx = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Obsolete. Do not change.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>read list = comma-separated list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: comma-separated list of users</p>
+
+<P CLASS="para">
+Specifies a list of users given read-only access to a writeable share. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>read only = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Sets a share to read-only. Antonym of <CODE CLASS="literal">
+writable</code> and <CODE CLASS="literal">
+write ok</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] read prediction = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Reads ahead data for read-only files. Obsolete; removed in Samba 2.0.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] read raw = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Allows fast streaming reads over TCP using 64K buffers. Recommended.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] read size = bytes</i></b>
+<P CLASS="refpurpose">Default: 2048</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: size in bytes</p>
+
+<P CLASS="para">
+Sets a buffering option for servers with mismatched disk and network speeds. Requires experimentation. Avoid changing. Should not exceed 65536.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] remote announce = remote list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list of remote addresses</p>
+
+<P CLASS="para">
+Adds workgroups to the list on which the Samba server will announce itself. Specified as IP address/workgroup (for instance, 192.168.220.215/SIMPLE) with multiple groups separated by spaces. Allows directed broadcasts. The server will appear on those workgroup's browse lists. Does not require WINS.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] remote browse sync = address list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: IP-address list</p>
+
+<P CLASS="para">
+Enables Samba-only browse list synchronization with other Samba local master browsers. Addresses can be specific addresses or directed broadcasts (i.e., ###.###.###.255). The latter will cause Samba to hunt down the local master.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>revalidate = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, requires users to re-enter passwords even after a successful initial logon to a share with a password.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] root = pathname</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Unix pathname</p>
+
+<P CLASS="para">
+Synonym for <CODE CLASS="literal">
+root directory</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] root dir = pathname</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Unix pathname</p>
+
+<P CLASS="para">
+Synonym for <CODE CLASS="literal">
+root directory</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] root directory = pathname</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Unix pathname</p>
+
+<P CLASS="para">
+Specifies a directory to <CODE CLASS="literal">
+chroot()</code> to before starting daemons. Prevents any access below that directory tree. See also the <CODE CLASS="literal">
+wide links</code> configuration option.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>root postexec = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: fully-qualified Unix shell command</p>
+
+<P CLASS="para">
+Sets a command to run as root after disconnecting from the share. See also <CODE CLASS="literal">
+preexec</code>, <CODE CLASS="literal">
+postexec</code>, and <CODE CLASS="literal">
+root</code> <CODE CLASS="literal">
+preexec</code> configuration options. Runs after the user's <CODE CLASS="literal">
+postexec</code> command. Use with caution.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>root preexec = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: fully-qualified Unix shell command</p>
+
+<P CLASS="para">
+Sets a command to run as root before connecting to the share. See also <CODE CLASS="literal">
+preexec</code>, <CODE CLASS="literal">
+postexec</code>, and <CODE CLASS="literal">
+root</code> <CODE CLASS="literal">
+postexec</code> configuration options. Runs before the user's <CODE CLASS="literal">
+preexec</code> command. Use with caution.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] security = value</i></b>
+<P CLASS="refpurpose">Default: share in Samba 1.0, user in 2.0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: share, user, server, domain</p>
+
+<P CLASS="para">
+Sets password-security policy. If <CODE CLASS="literal">
+security</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+share</code>, services have a shared password, available to everyone. If <CODE CLASS="literal">
+security</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+user</code>, users have (Unix) accounts and passwords. If <CODE CLASS="literal">
+security</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+server</code>, users have accounts and passwords and a separate machine authenticates them for Samba. If <CODE CLASS="literal">
+security</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+domain</code>, full NT-domain authentication is done. See also the <CODE CLASS="literal">
+password server</code> and <CODE CLASS="literal">
+encrypted passwords</code> configuration options. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] server string = text</i></b>
+<P CLASS="refpurpose">Default: Samba <CODE CLASS="literal">
+%v</code> in 2.0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: string</p>
+
+<P CLASS="para">
+Sets the name that appears beside a server in browse lists. Honors the <CODE CLASS="literal">
+%v</code> (Samba version number) and <CODE CLASS="literal">
+%h</code> (hostname) variables.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>set directory = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Allows DEC Pathworks client to use the <EM CLASS="emphasis">
+set dir</em> command.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] shared file entries = number</i></b>
+<P CLASS="refpurpose">Default: 113</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+Obsolete; do not use.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>shared mem size = bytes</i></b>
+<P CLASS="refpurpose">Default: 102400</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: size in bytes</p>
+
+<P CLASS="para">
+If compiled with FAST_SHARE_MODES (mmap), sets the shared memory size in bytes. Avoid changing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] smb passwd file = path</i></b>
+<P CLASS="refpurpose">Default: <I CLASS="filename">
+/usr/local/samba/private/smbpasswd</i></p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: Unix pathname</p>
+
+<P CLASS="para">
+Overrides compiled-in path to password file if <CODE CLASS="literal">
+encrypted passwords</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code>. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] smbrun = /absolute_ path/command</i></b>
+<P CLASS="refpurpose">Default: compiled-in value</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: smbrun command</p>
+
+<P CLASS="para">
+Overrides compiled-in path to <I CLASS="filename">
+smbrun</i> binary. Avoid changing.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>share modes = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, this option supports Windows-style whole-file (deny mode) locks.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>short preserve case = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, leaves mangled 8.3-style filenames in the case sent by client. If no, it forces the case to that specified by the <CODE CLASS="literal">
+default case</code> option. See also <CODE CLASS="literal">
+preserve case</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] socket address = IP address</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: IP address</p>
+
+<P CLASS="para">
+Sets address on which to listen for connections. Default is to listen to all addresses. Used to support multiple virtual interfaces on one server. Highly discouraged. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] socket options = socket option list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list</p>
+
+<P CLASS="para">
+Sets OS-specific socket options. <CODE CLASS="literal">
+SO_KEEPALIVE</code> has TCP check clients every 4 hours to see if they are still accessible. <CODE CLASS="literal">
+TCP_NODELAY</code> sends even tiny packets to keep delay low. Recommended wherever the operating system supports them. See <a href="appb_01.html"><b>Appendix B, <CITE CLASS="appendix">Samba Performance Tuning</cite></b></a>, for more information.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<!-- 2.0.7, davecb -->
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] source environment = string</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: pathname</p>
+
+<P CLASS="para">
+This pathname parameter causes Samba to read a list of environment
+variables from a named file on startup. This can be useful in setting
+up Samba in a clustered environment. This is new in 2.0.7.</p>
+
+<p> The file must be owned by root and not be world writable,
+and if the filename begins with a "|" (pipe) character, it must point to
+a command which is neither world writable nor resides
+in a world writable directory.</p>
+
+<p> The data should be in the form of lines such as
+<CODE CLASS="literal">SAMBA_NETBIOS_NAME=myhostname</CODE>.
+This variable will then be available in the smb.conf files as $%SAMBA_NETBIOS_NAME.</p>
+
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+<!-- end of 2.0.7 -->
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] status = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, logs connections to a file (or shared memory) accessible to <I CLASS="filename">
+smbstatus</i>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>strict sync = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, Samba will synchronize to disk whenever the client sets the sync bit in a packet. If set to NO, Samba flushes data to disk whenever buffers fill. Defaults to NO because Windows 98 Explorer sets the bit (incorrectly) in all packets. Introduced in Samba 1.9.18p10.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>strict locking = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, Samba checks locks on every access, not just on demand and at open time. Not recommended.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] strip dot = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Removes trailing dots from filenames. Use <CODE CLASS="literal">
+mangled map</code> instead.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] syslog = number</i></b>
+<P CLASS="refpurpose">Default: 1</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+Sets number of Samba log messages to send to <I CLASS="filename">
+syslog</i>. Higher is more verbose. The <I CLASS="filename">
+syslog.conf</i> file must have suitable logging enabled.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] syslog only = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, log only to <EM CLASS="emphasis">
+syslog, </em>not standard Samba log files.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>sync always = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, Samba calls<EM CLASS="emphasis">
+ fsync</em>(3) after every write. Avoid except for debugging crashing servers.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] time offset = minutes</i></b>
+<P CLASS="refpurpose">Default: 0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: minutes</p>
+
+<P CLASS="para">
+Sets number of minutes to add to system time zone calculation. Provided to fix a client daylight-savings bug; not recommended.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] time server = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If YES, <EM CLASS="emphasis">
+nmbd</em> will provide time service to its clients.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>unix password sync = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set, will attempt to change the user's Unix password whenever the user changes his or her SMB password. Used to ease synchronization of Unix and Microsoft password databases. Added in Samba 1.9.18p4. See also <CODE CLASS="literal">
+passwd chat</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>unix realname = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set, will provide the GCOS field of <I CLASS="filename">
+/etc/passwd</i> to the client as the user's full name.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>update encrypted = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Updates the Microsoft-format password file when a user logs in with unencrypted passwords. Provided to ease conversion to encryped passwords for Windows 95/98 and NT. Added in Samba 1.9.18p5.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>user = comma-separated list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: comma-separated list of user names</p>
+
+<P CLASS="para">
+Synonym for <CODE CLASS="literal">
+username</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>username = comma-separated list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: comma-separated list of user names</p>
+
+<P CLASS="para">
+Sets a list of users to try to log in as for a share or shares with share-level security. Synonyms are <CODE CLASS="literal">
+user</code> and <CODE CLASS="literal">
+users</code>. Discouraged. Use <CODE CLASS="literal">
+NET USE \\</code><CODE CLASS="replaceable"><I>server</i></code><CODE CLASS="literal">\</code><CODE CLASS="replaceable"><I>share </i></code><CODE CLASS="literal">%</code><CODE CLASS="replaceable"><I>user</i></code> from the client instead.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>username level = number</i></b>
+<P CLASS="refpurpose">Default: 0</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: number</p>
+
+<P CLASS="para">
+Number of uppercase letter permutations allowed to match Unix usernames. Workaround for Windows feature (single-case usernames). Use is discouraged.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] username map = pathname</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: pathname</p>
+
+<P CLASS="para">
+Names a file of Unix-to-Windows name pairs; used to map different spellings of account names and those Windows usernames longer than eight characters.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<!-- 2.0.7 -->
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] utmp = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+This is available if Samba has been configured with the option
+<CODE CLASS="literal"> --with-utmp</CODE>.
+If set, Samba will add utmp/utmpx records whenever a
+connection is made to a Samba server. New in 2.0.7, sites may use this 
+to record the user connecting to a Samba share.
+</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] utmp directory = string</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: pathname</p>
+
+<P CLASS="para">
+This is available if Samba has been configured with the option 
+<CODE CLASS="literal">--with-utmp</CODE>. If it and <CODE CLASS="literal">
+utmp </CODE> are set, Samba will look in the specified directory
+insteqad of the default system directory for utmp/utmpx files.
+New in 2.0.7, also called <CODE CLASS="literal"> utmp dir</CODE>.
+</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+<!-- end of 2.0.7 ->
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>valid chars = list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list of numeric values</p>
+
+<P CLASS="para">
+Semi-obsolete. Adds national characters to a character set map. Overridden by <CODE CLASS="literal">
+client code page</code>. </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>valid users = user list</i></b>
+<P CLASS="refpurpose">Default: NULL (everyone)</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: list of users</p>
+
+<P CLASS="para">
+List of users that can log in to a share.  </p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>veto files = slash-list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: slash-separated list of filenames</p>
+
+<P CLASS="para">
+List of files not to allow the client to see when listing a directory's contents. See also <CODE CLASS="literal">
+delete veto files</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>veto oplock files = slash-list</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: slash-separated list of filenames</p>
+
+<P CLASS="para">
+List of files not to oplock (and cache on clients). See also <CODE CLASS="literal">
+oplocks</code> and <CODE CLASS="literal">
+fake oplocks</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>volume = share name</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: string</p>
+
+<P CLASS="para">
+Sets the volume label of a disk share, notably a CD-ROM.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>wide links = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, Samba will follow symlinks out of the current disk share(s). See also the <CODE CLASS="literal">
+root dir</code> and <CODE CLASS="literal">
+follow symlinks</code> options.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] wins proxy = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, <EM CLASS="emphasis">
+nmbd</em> will proxy resolution requests to WINS servers on behalf of old clients, which use broadcasts. WINS server is typically on another subnet.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] wins server = host</i></b>
+<P CLASS="refpurpose">Default: NULL</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: hostname</p>
+
+<P CLASS="para">
+Sets the DNS name or IP address of the WINS server.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] wins support = boolean</i></b>
+<P CLASS="refpurpose">Default: NO</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+If set to YES, Samba activates WINS service. The <CODE CLASS="literal">
+wins server</code> option must not be set if <CODE CLASS="literal">
+wins support = yes</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] workgroup = name</i></b>
+<P CLASS="refpurpose">Default: compiled-in</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: workgroup name</p>
+
+<P CLASS="para">
+Sets the workgroup to which things will be served. Overrides compiled-in value. Choosing a name other than <CODE CLASS="literal">
+WORKGROUP</code> is strongly recommended.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>writable = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Antonym for <CODE CLASS="literal">
+read only</code>; synonym of <CODE CLASS="literal">
+write ok</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>write list = comma-separated list</i></b>
+<P CLASS="refpurpose">Default: NULL (everyone)</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: comma-separated list of users</p>
+
+<P CLASS="para">
+List of users that are given read-write access to a read-only share. See also <CODE CLASS="literal">
+read list</code>.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<!-- 2.0.7 addendum, davecb -->
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>write cache size = decimal number</i></b>
+<P CLASS="refpurpose">Default: 0 (Disabled)</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: decimal number of bytes</p>
+
+<P CLASS="para">
+Sets the size of a write buffer that Samba uses to pre-accumulate
+write into, so as to write with a particular size that's optimal for
+a given filesystem. Typically this is used with RAID drives, which
+have a preferred write size, systems with large memory and slow disks, etc.</p>
+
+<p> As of Samba 2.0.7, this applies to the first 10 oplocked files,
+which are also found in shares where this option is set.
+</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+<!-- end of 2.0.7 addendum -->
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>write ok = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Synonym of the <CODE CLASS="literal">
+writable</code> configuration option.</p>
+</div>
+</blockquote>
+</div>
+<p>&nbsp;</p>
+
+<DIV CLASS="refentry">
+<DIV CLASS="refnamediv"><b><i>[global] write raw = boolean</i></b>
+<P CLASS="refpurpose">Default: YES</p></div><BLOCKQUOTE>
+<DIV CLASS="refsynopsisdiv">
+<P CLASS="para">Allowable values: YES, NO</p>
+
+<P CLASS="para">
+Allows fast streaming writes over TCP, using 64KB buffers. Recommended.</p>
+</div>
+</blockquote>
+
+<DIV CLASS="refsect1"><h2>Glossary of Configuration Values</h2>
+<DL CLASS="variablelist">
+<DT CLASS="term">Address list</dt><DD CLASS="listitem">
+<P CLASS="para">
+A space-separated list of IP addresses in ###.###.###.### format.</p></dd><DT CLASS="term">
+Comma-separated list</dt><DD CLASS="listitem">
+<P CLASS="para">
+A list of items separated by commas.</p></dd><DT CLASS="term">
+Command</dt><DD CLASS="listitem">
+<P CLASS="para">
+A Unix command, with full path and parameters.</p></dd><DT CLASS="term">
+Host list</dt><DD CLASS="listitem">
+<P CLASS="para">
+A space-separated list of hosts. Allows IP addresses, address masks, domain names, ALL, and EXCEPT</p></dd><DT CLASS="term">
+Interface list</dt><DD CLASS="listitem">
+<P CLASS="para">
+A space-separated list of interfaces, in either address/netmask or address/n-bits format. For example, 192.168.2.10/24 or 192.168.2.10/255.255.255.0</p></dd><DT CLASS="term">
+Map list</dt><DD CLASS="listitem">
+<P CLASS="para">
+A space-separated list of file-remapping strings such as <CODE CLASS="literal">
+(*.html</code> <CODE CLASS="literal">
+*.htm)</code>.</p></dd><DT CLASS="term">
+Remote list</dt><DD CLASS="listitem">
+<P CLASS="para">
+A space-separated list of subnet-broadcast-address/workgroup pairs. For example, 192.168.2.255/SERVERS 192.168.4.255/STAFF.</p></dd><DT CLASS="term">
+Service (share) list</dt><DD CLASS="listitem">
+<P CLASS="para">
+A space-separated list of share names, without the enclosing square brackets.</p></dd><DT CLASS="term">
+Slash-list</dt><DD CLASS="listitem">
+<P CLASS="para">
+A list of filenames, separated by "/" characters to allow embedded spaces. For example, <CODE CLASS="literal">
+/.*/fred</code> <CODE CLASS="literal">
+flintstone/*.frk/</code>.</p></dd><DT CLASS="term">
+Text</dt><DD CLASS="listitem">
+<P CLASS="para">
+One line of text. </p></dd><DT CLASS="term">
+User list</dt><DD CLASS="listitem">
+<P CLASS="para">
+A space-separated list of usernames. In Samba 1.9, <CODE CLASS="literal">
+@group-name</code> will include everyone in Unix group <CODE CLASS="literal">
+group-name</code>. In Samba 2.0, <CODE CLASS="literal">
+@group-name</code> includes whomever is in the NIS netgroup <CODE CLASS="literal">
+group_name</code> if one exists, otherwise whomever is in the Unix group <CODE CLASS="literal">
+group_name</code>. In addition, +<CODE CLASS="literal">
+group_name</code> is a Unix group, &amp;<CODE CLASS="literal">
+group_name</code> is an NIS netgroup, and &amp;+ and +&amp; cause an ordered search of both Unix and NIS groups.</p></dd></dl></div>
+<DIV CLASS="refsect1">
+<h2>Configuration File Variables</h2>
+<P CLASS="para">
+<A CLASS="xref" HREF="appc_01.html#appc-88529">
+Table C.1</a> lists of Samba configuration file variables. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="appc-88529">
+Table C.1: Variables in Alphabetic Order </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Name</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Meaning</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%a</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Client's architecture (one of Samba, WfWg, WinNT, Win95, or UNKNOWN)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%d</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Current server process's processID </p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%f</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Print-spool file as a relative path (printing only)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%f</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+User from which a message was sent (messages only)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%G</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Primary group name of <CODE CLASS="literal">
+%U</code> (requested username) </p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%g</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Primary group name of <CODE CLASS="literal">
+%u</code> (actual username)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%H</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Home directory of <CODE CLASS="literal">
+%u</code> (actual username)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%h</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Samba server's (Internet) hostname</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%I</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Client's IP address </p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%j</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Print job number (printing only)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%L</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Samba server's NetBIOS name (virtual servers have multiple names)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%M</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Client's (Internet) hostname </p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%m</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Client's NetBIOS name </p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%n</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+New password (password change only)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%N</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Name of the NIS home directory server (without NIS, same as <CODE CLASS="literal">
+%L</code>)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%o</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Old password (password change only)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%P</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Current share's root directory (actual)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%p</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Current share's root directory (in an NIS homedir map)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%p</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Print filename (printing only)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%R</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Protocol level in use (one of CORE, COREPLUS, LANMAN1, LANMAN2, or NT1)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%S</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Current share's name </p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%s</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Filename the message is in (messages only)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%s</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Print-spool file name (printing only)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%T</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Current date and time </p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%t</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Destination machine (messages only)</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%u</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Current share's username </p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%U</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Requested username for current share </p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%v</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Samba version</p></td></tr></tbody></table></div></blockquote></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appb_03.html" TITLE="B.3 Sizing Samba Servers">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: B.3 Sizing Samba Servers" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appd_01.html" TITLE="D. Summary of Samba Daemons and Commands">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: D. Summary of Samba Daemons and Commands" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+B.3 Sizing Samba Servers</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+D. Summary of Samba Daemons and Commands</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

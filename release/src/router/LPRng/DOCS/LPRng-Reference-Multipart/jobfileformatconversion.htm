@@ -1,0 +1,1025 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Job File Format Conversion with Filters</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title="Print Job Filters" href=
+    "printjobfilters.htm">
+    <link rel="NEXT" title="Printcap Basics" href="x3103.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "printjobfilters.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x3103.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="JOBFILEFORMATCONVERSION">4.10. Job
+      File Format Conversion with Filters</a></h1>
+
+      <p>One of the major problems that face new users to UNIX
+      printing is when they have a printer that has a proprietary
+      print job format such as the HP DeskJet series of printers.
+      The solution to this problem is quite simple: generate your
+      output in PostScript, and then use the <a href=
+      "installation.htm#GHOSTSCRIPT">GhostScript</a> program to
+      convert the GhostScript output to a format compatible with
+      your printer.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2761"></a>
+<pre class="SCREEN">
+    lp:filter=/usr/local/lib/filters/myfilter:...
+    
+    /tmp/myfilter:
+    
+    #!/bin/sh
+    /usr/local/bin/gs -dSAFER -dNOPAUSE -q -sDEVICE=djet500 \
+        -sOutputFile=- - &amp;&amp; exit 0
+    exit 2
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>This simple <span class="emphasis"><i class=
+      "EMPHASIS">tutorial</i></span> example suffers from some
+      serious problems. If you accidentally send a non-PostScript
+      file to the printer GhostScript will detect this and exit
+      with an error message but only after trying to interpret the
+      input file as PostScript. If the input file was a text file,
+      this can result in literally thousands of error messages and
+      hundreds of pages of useless output.</p>
+
+      <p>In order to make a more robust filter we need to meet the
+      following minimum requirements:</p>
+
+      <ol type="1">
+        <li>
+          <p>The file type should be determined, and only files
+          that are PostScript should be passed to GhostScript.</p>
+        </li>
+
+        <li>
+          <p>We may have some conversion routines that can convert
+          files into PostScript files and then we can send them to
+          GhostScript for raster conversion.</p>
+        </li>
+
+        <li>
+          <p>If we cannot convert a file, then we should simply
+          terminate the printing and cause the spooler to remove
+          the job.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>The <b class="APPLICATION">ifhp</b> Print Filter program
+      is a companion to the <b class="APPLICATION">LPRng</b>
+      software and does this type of operation. If you are using
+      Linux, then you may find the <span class="emphasis"><i class=
+      "EMPHASIS">RedHat Print Filters</i></span> (<a href=
+      "http://www.debian.org" target=
+      "_top">http://www.debian.org</a>) installed and in use on
+      your system. The <span class="emphasis"><i class=
+      "EMPHASIS">magicfilter</i></span> developed by H. Peter Anvin
+      <a href="http://www.debian.org" target=
+      "_top">http://www.debian.org</a> is distributed with Debian
+      Linux. The <b class="APPLICATION">apsfilter</b> by Andreas
+      Klemm <a href="http://www.freebsd.org/~andreas/index.html"
+      target="_top">http://www.freebsd.org/~andreas/index.html</a>
+      is also widely used, although now most of its functionality
+      is directly available in <b class="APPLICATION">LPRng</b>.
+      Finally, the <b class="APPLICATION">a2ps</b> (Ascii to
+      PostScript) converter by <a href="demaille@inf.enst.fr"
+      target="_top">Akim Demaille</a> and <a href="santana@st.com"
+      target="_top">Miguel Santana</a> is available from <a href=
+      "www-inf.enst.fr/~demaille/a2ps" target=
+      "_top">www-inf.enst.fr/~demaille/a2ps</a>. This package
+      provides a very nice set of facilities for massaging,
+      mangling, bending, twisting, and being downright nasty with
+      text or other files.</p>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN2787">4.10.1. Simple Filter
+        with File Format Detection</a></h2>
+
+        <p>Since this is a tutorial, we will demonstrate a simple
+        way to make your own <span class="emphasis"><i class=
+        "EMPHASIS">multi-format</i></span> print filter, and
+        provide insight into how more complex filters work.</p>
+
+        <p>The <a href="installation.htm#FILEPROG">file</a> utility
+        developed by Ian F. Darwin uses a database of file
+        signatures to determine what the contents of a file are.
+        For example:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2793"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {191} %</samp> <kbd class=
+"USERINPUT">cd /tmp</kbd>
+    <samp class="PROMPT">h4: {192} %</samp> <kbd class=
+"USERINPUT">echo hi &gt;hi</kbd>
+    <samp class="PROMPT">h4: {193} %</samp> <kbd class=
+"USERINPUT">gzip -c hi &gt;hi.gz</kbd>
+    <samp class="PROMPT">h4: {194} %</samp> <kbd class=
+"USERINPUT">echo "%!PS-Adobe-3.0" &gt;test.ps</kbd>
+    <samp class="PROMPT">h4: {195} %</samp> <kbd class=
+"USERINPUT">gzip -c test.ps &gt;test.ps.gz</kbd>
+    <samp class="PROMPT">h4: {196} %</samp> <kbd class=
+"USERINPUT">file hi hi.gz test.ps test.ps.gz</kbd>
+    hi:        ASCII text
+    hi.gz:     gzip compressed data, deflated
+    test.ps:   PostScript document text conforming at level 3.0
+    test.ps.gz: gzip compressed data, deflated
+    <samp class="PROMPT">h4: {197} %</samp> <kbd class=
+"USERINPUT">file - &lt;test.ps</kbd>
+    standard input: PostScript document text conforming at level 3.0
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>If we are given a file, we can now use <b class=
+        "APPLICATION">file</b> to recognize the file type and if
+        the file type is suitable for our printer we can send it to
+        the printer, otherwise we can reject it. The following is a
+        simple yet very powerful shell script that does this.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2811"></a>
+<pre class="SCREEN">
+    #!/bin/sh
+    # set up converters
+    gs="/usr/local/bin/gs -dSAFER -dNOPAUSE -q -sDEVICE=djet500 \
+        -sOutputFile=/dev/fd/3 - 3&gt;&amp;1 1&gt;&amp;2"
+    a2ps="/usr/local/bin/a2ps -q -B -1 -M Letter --borders=no -o-"
+    decompress=""
+    # get the file type
+    type=`file - | tr A-Z a-z | sed -e 's/  */_/g'`;
+    echo TYPE $type &gt;&amp;2
+    case "$type" in
+      *gzip_compressed* ) decompress="gunzip -c |" compressed="compressed" ;;
+    esac
+    
+    # we need to rewind the file
+    perl -e "seek STDIN, 0, 0;"
+    
+    if test "X$decompress" != "X" ; then
+        type=`$decompress head | file - | tr A-Z a-z | sed -e 's/  */_/g'`;
+        echo COMPRESSED TYPE $type &gt;&amp;2
+        # we need to rewind the file
+        perl -e "seek STDIN, 0, 0;"
+    fi
+    case "$type" in
+      *postscript* ) process="$gs" ;;
+      *text* )       process="$a2ps | $gs" ;;
+      * )
+        echo "Cannot print type $compressed '$type'" &gt;&amp;2
+        # exit with JREMOVE status
+        exit 3
+        ;;
+    esac
+    # in real life, replace 'echo' with 'exec'
+    echo "$decompress $process"
+    # exit with JABORT if this fails
+    exit 2
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Copy this to the <tt class="FILENAME">/tmp/majik</tt>
+        file, and give it <var class="LITERAL">0755</var>
+        (executable) permissions. Here is an example of the output
+        of the script:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2816"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {198} %</samp> <kbd class=
+"USERINPUT">/tmp/majik &lt;test.ps.gz</kbd>
+    TYPE standard_input:_gzip_compressed_data,_deflated...
+    COMPRESSED TYPE standard_input:_postscript_document_level_3.0
+    gunzip -c | /usr/local/bin/gs -dSAFER -dNOPAUSE -q -sDEVICE=djet500 \
+       -sOutputFile=/dev/fd/3 - 3&gt;&amp;1 1&gt;&amp;2
+    <samp class="PROMPT">h4: {199} %</samp> <kbd class=
+"USERINPUT">/tmp/majik &lt;/tmp/hi</kbd>
+    TYPE standard_input:_ascii_text
+     /usr/local/bin/a2ps -q -B -1 -M Letter --borders=no -o- \
+      | /usr/local/bin/gs -dSAFER -dNOPAUSE -q -sDEVICE=djet500 \
+       -sOutputFile=/dev/fd/3 - 3&gt;&amp;1 1&gt;&amp;2
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The first part of the script sets up a standard set of
+        commands that we will use in the various conversions. A
+        full blown package for conversion would use a database or
+        setup file to get these values. We then use the <b class=
+        "APPLICATION">file</b> utility to determine the input file
+        type. The output of the <b class="APPLICATION">file</b>
+        utility is translated to lower case and multiple blanks and
+        tabs are removed.</p>
+
+        <p>We use a simple shell <var class="LITERAL">case</var>
+        statement to determine if we have a compressed file and get
+        a decompression program to use. We reapply the <b class=
+        "APPLICATION">file</b> utility to the decompressed file (if
+        it was compressed) and get the file type.</p>
+
+        <p>Finally we use another <var class="LITERAL">case</var>
+        statement to get the output converter and then we run the
+        command. For tutorial purposes, we use an <tt class=
+        "COMMAND">echo</tt> rather than an <tt class=
+        "COMMAND">exec</tt> so we can see the actual command,
+        rather than the output.</p>
+
+        <p>Just for completeness, here is <b class=
+        "APPLICATION">majikperl</b>:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2834"></a>
+<pre class="SCREEN">
+    #!/usr/bin/perl
+    eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
+        if $running_under_some_shell;
+                # this emulates #! processing on NIH machines.
+                # (remove #! line above if indigestible)
+    my($gs) = "/usr/local/bin/gs -dSAFER -dNOPAUSE -q -sDEVICE=djet500 \
+        -sOutputFile=/dev/fd/3 - 3&gt;&amp;1 1&gt;&amp;2";
+    my($a2ps)="/usr/local/bin/a2ps -q -B -1 -M Letter --borders=no -o-";
+    
+    my($decompress,$compressed,$process,$type);
+    $decompress=$compressed=$process=$type="";
+    
+    # get the file type
+    $type = ` file - `;
+    $type =~ tr /A-Z/a-z/;
+    $type =~ s/\s+/_/g;
+    print STDERR "TYPE $type\n";
+    ($decompress,$compressed) = ("gunzip -c |", "gzipped")
+      if( $type =~ /gzip_compressed/ );
+    print STDERR "decompress $decompress\n";
+    unless( seek STDIN, 0, 0 ){
+        print "seek STDIN failed - $!\n"; exit 2; }
+    if( $decompress ne "" ){
+        $type = ` $decompress file - `;
+        $type =~ tr /A-Z/a-z/;
+        $type =~ s/\s+/_/g;
+        print STDERR "COMPRESSED TYPE $type\n";
+        unless( seek STDIN, 0, 0 ){
+            print "seek STDIN failed - $!\n"; exit 2; }
+    }
+    $_ = $type;
+    if( /postscript/ ){
+        $process="$gs";
+    } elsif( /_text_/ ){
+        $process="$a2ps | $gs" ;;
+    } else {
+        print STDERR "Cannot print $compressed '$type'" &gt;&amp;2;
+        # JREMOVE
+        exit 3;
+    }
+    exec "$decompress $process";
+    print "exec failed - $!\n";
+    exit 2;
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN2836">4.10.2. The <b class=
+        "APPLICATION">ifhp</b> Filter</a></h2>
+
+        <p>The <a href="secftp.htm">ifhp</a> Print Filter is the
+        companion print filter supplied with <b class=
+        "APPLICATION">LPRng</b> and is normally installed together
+        with the <b class="APPLICATION">LPRng</b> software. <b
+        class="APPLICATION">Ifhp</b> supports a wide range of
+        PostScript, PCL, text, and raster printers, and can be
+        configured to support almost any type of printer with a
+        stream based interface. It provides diagnostic and error
+        information as well as accounting information. It
+        recognizes a wide range of file types by using the <b
+        class="APPLICATION">file</b> utility and the pattern
+        matching technique demonstrated in the previous section,
+        and can do selective conversions from one format to
+        others.</p>
+
+        <p>The <a href="x291.htm#POSTSCRIPT">PostScript</a> and <a
+        href="x291.htm#PCL">PCL</a> printer job languages are
+        supported by most printer manufacturers. However, in order
+        to have a job printed correctly the following steps must be
+        taken.</p>
+
+        <ol type="1">
+          <li>
+            <p>The printer must be put into a known <span class=
+            "emphasis"><i class="EMPHASIS">initial</i></span> state
+            by sending it the appropriate reset strings or
+            performing a correct set of IO operations.</p>
+          </li>
+
+          <li>
+            <p>If accounting is being done, then the printer
+            accounting information must be obtained and recorded.
+            See <a href="accountingref.htm">Accounting</a> for more
+            information about <b class="APPLICATION">LPRng</b>
+            support for accounting.</p>
+          </li>
+
+          <li>
+            <p>The file to be printed must be checked to see if it
+            is compatible with the printer, and if not, a format
+            conversion program invoked to convert it to the
+            required format.</p>
+          </li>
+
+          <li>
+            <p>If the user selects a set of printer specific
+            options such as landscape mode, duplex printing,
+            multiple copies, or special paper, the appropriate
+            commands must be sent to the printer to select these
+            options.</p>
+          </li>
+
+          <li>
+            <p>The file must be transferred to the printer and the
+            printer is monitored for any error conditions.</p>
+          </li>
+
+          <li>
+            <p>Any required end of job commands are sent to the
+            printer, and the printer monitored for error conditions
+            while the job finishes printing.</p>
+          </li>
+
+          <li>
+            <p>If accounting is being done, the printer accounting
+            information such as page count and time used must be
+            obtained and recorded. See <a href=
+            "accountingref.htm">Accounting</a> for more information
+            about <b class="APPLICATION">LPRng</b> support for
+            accounting.</p>
+          </li>
+        </ol>
+        <br>
+        <br>
+
+        <p>The <b class="APPLICATION">ifhp</b> filter uses the <tt
+        class="FILENAME">ifhp.conf</tt> configuration file to
+        determine the actions and commands appropriate for various
+        models of printers. See the <b class="APPLICATION">ifhp</b>
+        documentation for details about the format and contents of
+        this file. This file contains entries for a large number of
+        PostScript, PJL, and other printers. The default printer
+        used by <b class="APPLICATION">ifhp</b> is the HP LaserJet
+        4M Plus which supports PostScript, PCL, and PJL. The
+        commands and formats used by this printer is compatible
+        with a large number of other HP printers.</p>
+
+        <p>We will demonstrate how to add the <b class=
+        "APPLICATION">ifhp</b> filter to your printcap entry. Find
+        the path to the <b class="APPLICATION">ifhp</b> filter
+        using the <b class="APPLICATION">find</b> command as we did
+        in the previous exercise. Modify the printcap as shown
+        below and use <tt class="COMMAND">lpc lpd</tt> to restart
+        <b class="APPLICATION">lpd</b>.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2879"></a>
+<pre class="SCREEN">
+    lp:sd=/var/spool/lpd/%P
+      :force_localhost
+      :lp=/tmp/lp
+      :ifhp=model=default
+      # modify the path to ifhp appropriately
+      :filter=/usr/local/libexec/filters/ifhp
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Now print the <tt class="FILENAME">/tmp/hi</tt> and then
+        display <tt class="FILENAME">/tmp/lp</tt> using a text
+        editor such as <b class="APPLICATION">vi</b> or <b class=
+        "APPLICATION">emacs</b> that shows control characters:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2886"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {200} %</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/lp</kbd>
+    <samp class="PROMPT">h4: {201} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {202} %</samp> <kbd class=
+"USERINPUT">vi /tmp/lp</kbd>
+    ^[%-12345X@PJL
+    @PJL JOB NAME = "PID 405" DISPLAY = "papowell"
+    @PJL RDYMSG DISPLAY = "papowell"
+    @PJL USTATUSOFF
+    @PJL USTATUS JOB = ON
+    @PJL USTATUS DEVICE = ON
+    @PJL USTATUS PAGE = ON
+    @PJL USTATUS TIMED = 10
+    @PJL ENTER LANGUAGE = PCL
+    ^]E^]&amp;^]&amp;k2G^]&amp;s0C^]&amp;l0O^]9^](s0P^](s10.00H^](s4099Thi
+    ^]E^]%-12345X@PJL
+    @PJL RDYMSG DISPLAY = "papowell"
+    @PJL EOJ NAME = "PID 405"
+    @PJL USTATUSOFF
+    @PJL USTATUS JOB = ON
+    @PJL USTATUS DEVICE = ON
+    @PJL USTATUS PAGE = ON
+    @PJL USTATUS TIMED = 10
+    @PJL RDYMSG DISPLAY = ""
+    ^[%-12345X
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The output now contains all of the control sequences and
+        setup codes needed to print a text file on the default
+        printer. The <var class="LITERAL">:ifhp=model=default</var>
+        printcap entry is used by <b class="APPLICATION">ifhp</b>
+        to get the information it needs to perform its operation.
+        The following options are commonly provided in the <var
+        class="LITERAL">:ifhp=</var> option to configure the <b
+        class="APPLICATION">ifhp</b> filter.</p>
+
+        <div class="TABLE">
+          <a name="IFHPOPTS"></a>
+
+          <p><b>Table 4-3. :ifhp= Options</b></p>
+
+          <table border="1" frame="border" rules="all" class=
+          "CALSTABLE">
+            <col>
+            <col>
+
+            <thead>
+              <tr>
+                <th>Option</th>
+
+                <th>Purpose</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td><var class="LITERAL">model=</var><span class=
+                "emphasis"><i class="EMPHASIS">name</i></span></td>
+
+                <td>Use <span class="emphasis"><i class=
+                "EMPHASIS">name</i></span> entry in <var class=
+                "LITERAL">ifhp.conf</var></td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">status</var> or <var
+                class="LITERAL">status@</var></td>
+
+                <td>Printer does or does not provide status
+                information</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">sync</var>, <var class=
+                "LITERAL">sync@</var>, <var class=
+                "LITERAL">sync=</var><span class="emphasis"><i
+                class="EMPHASIS">(ps|pjl)</i></span> </td>
+
+                <td>Printer does or does not indicate ready to
+                operate at start of job, or use PostScript or PJL
+                code sequence to determine if printer is
+                ready.</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">pagecount</var>, <var
+                class="LITERAL">pagecount@</var>, <var class=
+                "LITERAL">pagecount=</var><span class="emphasis"><i
+                class="EMPHASIS">(ps|pjl)</i></span> </td>
+
+                <td>Printer does or does not have pagecount
+                support, or use PostScript or PJL code sequence to
+                determine pagecount.</td>
+              </tr>
+
+              <tr>
+                <td><var class="LITERAL">waitend</var>, <var class=
+                "LITERAL">waitend@</var>, <var class=
+                "LITERAL">waitend=</var><span class="emphasis"><i
+                class="EMPHASIS">(ps|pjl)</i></span> </td>
+
+                <td>Wait or do not wait for end of job, or send
+                PostScript or PJL code sequence to have printer
+                report end of job.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>The <var class="LITERAL">model=</var><span class=
+        "emphasis"><i class="EMPHASIS">name</i></span> entry is
+        used to specify the configuration entry in the <var class=
+        "LITERAL">ifhp.conf</var> file to be used by <b class=
+        "APPLICATION">ifhp</b>. This entry usually has all of the
+        specific information needed by the <b class=
+        "APPLICATION">ifhp</b> filter.</p>
+
+        <p>The <var class="LITERAL">status</var> option is the most
+        common option usually provided in a printcap entry. This
+        option is needed when the communication with the printer is
+        <span class="emphasis"><i class=
+        "EMPHASIS">write-only</i></span> and no status information
+        will be returned. If a printer normally supports returning
+        status information then the <var class=
+        "LITERAL">ifhp.conf</var> configuration entry will indicate
+        this and the <b class="APPLICATION">ifhp</b> filter will
+        try to get status. When no status is returned it will
+        either terminate operation after a timeout or sit in an
+        endless loop waiting for status. By specifying <var class=
+        "LITERAL">status@</var> you will suppress getting status.
+        This also has the effect of doing <var class=
+        "LITERAL">sync@</var>, <var class=
+        "LITERAL">pagecount@</var>, and <var class=
+        "LITERAL">waitend@</var></p>
+
+        <p>The <var class="LITERAL">sync</var> option is used to
+        cause <b class="APPLICATION">ifhp</b> to wait for an <span
+        class="emphasis"><i class="EMPHASIS">end of job</i></span>
+        indication from the printer before starting the next job.
+        This is usually done in order to make sure that all jobs
+        have been flushed from a printer before starting another
+        job. If you specify <var class="LITERAL">sync@</var> then
+        you may get slightly faster startup but at the expense of
+        losing the ends of previous print jobs.</p>
+
+        <p>The <var class="LITERAL">pagecount</var> option is used
+        to cause <b class="APPLICATION">ifhp</b> to get the value
+        of a hardware pagecounter from the printer. If your printer
+        supports such an item then the <var class=
+        "LITERAL">ifhp.conf</var> configuration option usually
+        indicates this. However, it takes a small amount of time to
+        get the pagecounter information from the printer and you
+        may not need it. Use <var class="LITERAL">sync@</var> if
+        you do not want page counts.</p>
+
+        <p>Finally, <var class="LITERAL">waitend</var> option is
+        used to cause <b class="APPLICATION">ifhp</b> to wait for
+        an <span class="emphasis"><i class="EMPHASIS">end of
+        job</i></span> indication from the printer before exiting.
+        If you specify <var class="LITERAL">waitend@</var> then the
+        filter will exit immediately after sending the job, but you
+        will possibly lose any error information or status reports
+        from the printer.</p>
+
+        <p>For a complete list of all of the <b class=
+        "APPLICATION">ifhp</b> options please see the IFHP
+        documentation.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="JAGGIES">4.10.3. The Jaggies -
+        LF to CR-LF Conversion With lpf</a></h2>
+
+        <p>When printing to vintage hard copy devices or to
+        printers that support a <span class="emphasis"><i class=
+        "EMPHASIS">text</i></span> mode, many UNIX users discover
+        that their output suffers from a case of the jaggies.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2977"></a>
+<pre class="SCREEN">
+    Input file:
+    
+      This is
+      a nice day
+    
+    Output:
+    
+      This is
+             a nice day
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>UNIX systems terminate lines with a single <acronym
+        class="ACRONYM">NL</acronym> (new line) character. This
+        causes the printer to move down one line on the printing
+        page but does not change its horizontal position and print
+        the next character at the left margin. This is done by
+        using the <acronym class="ACRONYM">CR</acronym> (carriage
+        return) character. You need to convert the single <acronym
+        class="ACRONYM">NL</acronym> to a <var class=
+        "LITERAL">CR-LF</var> combination and the <b class=
+        "APPLICATION">lpf</b> filter supplied with <b class=
+        "APPLICATION">LPRng</b> does this.</p>
+
+        <p>First, locate the <b class="APPLICATION">lpf</b> filter.
+        You can find it by using the command:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2988"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h9: {160} %</samp> <kbd class=
+"USERINPUT">find /usr/ -type f -name lpf -print</kbd>
+    /usr/libexec/lpr/lpf
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>We will first see what the output is like without <b
+        class="APPLICATION">lpf</b>, and then see what it does.
+        Modify the <b class="APPLICATION">lp</b> printcap entry as
+        shown below and then use <tt class="COMMAND">lpc
+        restart</tt> to restart the <b class="APPLICATION">lpd</b>
+        server.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN2997"></a>
+<pre class="SCREEN">
+    lp:sd=/var/spool/lpd/%P
+      :force_localhost
+      :lp=/tmp/lp
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Print a file and view the output using the following
+        commands. If you do not have the <b class=
+        "APPLICATION">od</b> (octal dump) program, try using <b
+        class="APPLICATION">hexdump</b> or some other appropriate
+        program that displays the numerical contents of the
+        file.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3002"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {203} %</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/lp</kbd>
+    <samp class="PROMPT">h4: {204} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {205} %</samp> <kbd class=
+"USERINPUT">od -bc /tmp/lp</kbd>
+    0000000  150 151 012
+               h   i  \n
+    0000003
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Now we will use the <b class="APPLICATION">lpf</b>
+        filter. Modify the printcap as shown below and use <tt
+        class="COMMAND">lpc reread</tt> to cause <b class=
+        "APPLICATION">lpd</b> to reread the configuration
+        information.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3014"></a>
+<pre class="SCREEN">
+    lp:sd=/var/spool/lpd/%P
+      :force_localhost
+      :lp=/tmp/lp
+      # modify the path to lpf appropriately
+      :filter=/usr/local/libexec/filters/lpf
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Now reprint the file:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3017"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {206} %</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/lp</kbd>
+    <samp class="PROMPT">h4: {207} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {208} %</samp> <kbd class=
+"USERINPUT">od -bc /tmp/lp</kbd>
+    od -bc /tmp/lp
+    0000000  150 151 015 012
+               h   i  \r  \n
+    0000004
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>As you see, <b class="APPLICATION">lpf</b> changes the
+        <var class="LITERAL">LF</var> to a <var class=
+        "LITERAL">CR-LF</var> sequence.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN3029">4.10.4. Store and
+        Forward Spool Queues</a></h2>
+
+        <p>Up to now we have assumed that associated with each
+        spool queue is a hardware printing device. When a job is
+        sent to the spool queue the <b class="APPLICATION">lpd</b>
+        server will take actions to filter it and then send it to
+        the printing device.</p>
+
+        <p>However, we can also have <span class="emphasis"><i
+        class="EMPHASIS">store and forward</i></span> spool queues.
+        These queue act to simply buffer jobs and then forward them
+        to another spooler. The following printcap entry shows how
+        you can specify a store and forward queue.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3035"></a>
+<pre class="SCREEN">
+    # store and forward using classical BSD :rm:rp
+    lp:rp=pr:rm=host
+      :sd=/var/spool/lpd/%P
+      :server
+    # store and forward using <b class=
+"APPLICATION">LPRng</b> lp=pr@host
+    lp:lp=pr@host
+      :sd=/var/spool/lpd/%P
+      :server
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The legacy <var class="LITERAL">:rp</var> (remote
+        printer) and <var class="LITERAL">:rm</var> (remote host)
+        format can be used to specify the print queue and
+        destination host for jobs sent to this queue. The <b class=
+        "APPLICATION">LPRng</b> <var class=
+        "LITERAL">:lp=pr@host</var> format serves the same
+        function, and has precedence over the <var class=
+        "LITERAL">:rm:rp</var> form.</p>
+
+        <p>Edit the printcap file so it has contents indicated
+        below, use <tt class="COMMAND">checkpc -f</tt> to check the
+        printcap, and then use <tt class="COMMAND">lpc reread</tt>
+        to restart the <b class="APPLICATION">lpd</b> server.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3048"></a>
+<pre class="SCREEN">
+    lp:force_localhost
+    lp:server
+      :sd=/var/spool/lpd/%P
+      :lp=lp2@localhost
+    lp2:force_localhost
+    lp2:server
+      :sd=/var/spool/lpd/%P
+      :lp=/tmp/lp2
+</pre>
+        </div>
+        Execute the following commands to print the <tt class=
+        "FILENAME">/tmp/hi</tt> file and observe the results: 
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3051"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {209} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {210} %</samp> <kbd class=
+"USERINPUT">lpq -lll</kbd>
+    Printer: lp@h4 (dest lp2@localhost)
+     Queue: no printable jobs in queue
+     Status: sending control file 'cfA029h4.private' \
+        to lp2@localhost at 09:39:57.719
+     Status: completed sending 'cfA029h4.private' \
+        to lp2@localhost at 09:39:57.724
+     Status: sending data file 'dfA029h4.private' \
+        to lp2@localhost at 09:39:57.727
+     Status: completed sending 'dfA029h4.private' \
+        to lp2@localhost at 09:39:57.925
+     Status: done job 'papowell@h4+29' transfer \
+        to lp2@localhost at 09:39:57.926
+     Status: subserver pid 29031 exit status 'JSUCC' at 09:39:57.953
+     Status: lp@h4.private: job 'papowell@h4+29' printed at 09:39:57.961
+     Status: job 'papowell@h4+29' removed at 09:39:57.993
+    Printer: lp2@h4
+     Queue: no printable jobs in queue
+     Status: no banner at 09:39:58.054
+     Status: printing data file 'dfA029h4.private', size 3 at 09:39:58.054
+     Status: printing done 'papowell@h4+29' at 09:39:58.054
+     Status: accounting at end at 09:39:58.054
+     Status: finished 'papowell@h4+29', status 'JSUCC' at 09:39:58.054
+     Status: subserver pid 29033 exit status 'JSUCC' at 09:39:58.056
+     Status: lp2@h4.private: job 'papowell@h4+29' printed at 09:39:58.056
+     Status: job 'papowell@h4+29' removed at 09:39:58.069
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>As we see from the status, our job was sent to the <var
+        class="LITERAL">lp</var> spool queue first. It was store
+        there and then the <b class="APPLICATION">lpd</b> server
+        transferred it to the <var class="LITERAL">lp2</var> spool
+        queue, where it was printed to the file <tt class=
+        "FILENAME">/tmp/lp2</tt>.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN3062">4.10.5. Filtering Job
+        Files In Transit</a></h2>
+
+        <p>One of the major problems with store and forward
+        operation is that the destination spool queue may not
+        actually be a spool queue - it can be a printer. Many
+        network printers provide an RFC1179 compatible network
+        interface and act, for job forwarding purposes, like a host
+        running a limited capability BSD print spooler.</p>
+
+        <p>By adding a filter to the printcap information we can
+        modify the format of a job file so that it is compatible
+        with the destination printer.</p>
+
+        <p>Edit the printcap and <tt class=
+        "FILENAME">/tmp/testf</tt> files so they have the contents
+        indicated below, give <tt class="FILENAME">/tmp/testf</tt>
+        executable permissions, use <tt class="COMMAND">checkpc
+        -f</tt> to check the printcap, and then use <tt class=
+        "COMMAND">lpc reread</tt> to restart the <b class=
+        "APPLICATION">lpd</b> server.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3072"></a>
+<pre class="SCREEN">
+    # set /tmp/testf to contain the following
+    #   and chmod 755 /tmp/testf
+    #!/bin/sh
+    echo TESTF $0 $@
+    /bin/cat
+    exit 0
+    
+    # printcap
+    lp:force_localhost
+    lp:server
+      :sd=/var/spool/lpd/%P
+      :lp=lp2@localhost
+      :filter=/tmp/testf
+      :bq_format=ffl
+    lp2:force_localhost
+    lp2:server
+      :sd=/var/spool/lpd/%P
+      :lp=/tmp/lp2
+</pre>
+        </div>
+        Execute the following commands to print the <tt class=
+        "FILENAME">/tmp/hi</tt> file and observe the results: 
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3075"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {211} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {212} %</samp> <kbd class=
+"USERINPUT">lpq -llll</kbd>
+    <samp class="PROMPT">h4: {213} %</samp> <kbd class=
+"USERINPUT">lpq -llll</kbd>
+    Printer: lp@h4 (dest lp2@localhost)
+     Queue: no printable jobs in queue
+     Status: no banner at 09:55:53.681
+     Status: printing data file 'dfA086h4.private', size 3, \
+        IF filter 'testf' at 09:55:53.683
+     Status: IF filter finished at 09:55:53.713
+     Status: printing done 'papowell@h4+86' at 09:55:53.714
+     Status: sending job 'papowell@h4+86' to lp2@localhost at 09:55:53.734
+     Status: connecting to 'localhost', attempt 1 at 09:55:53.735
+     Status: connected to 'localhost' at 09:55:53.739
+     Status: requesting printer lp2@localhost at 09:55:53.740
+     Status: sending control file 'cfA086h4.private' 
+          to lp2@localhost at 09:55:53.752
+     Status: completed sending 'cfA086h4.private' 
+          to lp2@localhost at 09:55:53.757
+     Status: sending data file 'dfA086h4.private' 
+          to lp2@localhost at 09:55:53.758
+     Status: completed sending 'dfA086h4.private' 
+          to lp2@localhost at 09:55:53.939
+     Status: done job 'papowell@h4+86' transfer 
+          to lp2@localhost at 09:55:53.940
+     Status: subserver pid 29088 exit status 'JSUCC' at 09:55:53.980
+     Status: lp@h4.private: job 'papowell@h4+86' printed at 09:55:53.983
+     Status: job 'papowell@h4+86' removed at 09:55:53.998
+    Printer: lp2@h4
+     Queue: no printable jobs in queue
+     Status: subserver pid 29092 starting at 09:55:54.005
+     Status: accounting at start at 09:55:54.005
+     Status: opening device '/tmp/lp2' at 09:55:54.005
+     Status: printing job 'papowell@h4+86' at 09:55:54.005
+     Status: no banner at 09:55:54.006
+     Status: printing data file 'dfA086h4.private', size 298 at 09:55:54.006
+     Status: printing done 'papowell@h4+86' at 09:55:54.006
+     Status: accounting at end at 09:55:54.006
+     Status: finished 'papowell@h4+86', status 'JSUCC' at 09:55:54.006
+     Status: subserver pid 29092 exit status 'JSUCC' at 09:55:54.008
+     Status: lp2@h4.private: job 'papowell@h4+86' printed at 09:55:54.008
+     Status: job 'papowell@h4+86' removed at 09:55:54.020
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>We have displayed a bit more status information so that
+        we can see what the actions the <var class=
+        "LITERAL">lp</var> queue carries out. It first <span class=
+        "emphasis"><i class="EMPHASIS">processes</i></span> the job
+        data file using the <b class="APPLICATION">testf</b> filter
+        and puts the results in a temporary file. Then it sends the
+        contents of the temporary file to the <var class=
+        "LITERAL">lp2</var> queue. The <var class=
+        "LITERAL">lp2</var> queue receives the converted job file
+        and then prints it to the <tt class=
+        "FILENAME">/tmp/lp2</tt> file in turn.</p>
+
+        <p>By default, each file in a job is processed by a print
+        file and the processed output is then sent to the
+        destintion as individual job files, each with the format
+        specified by the value of the <var class=
+        "LITERAL">bq_format</var> (default <var class=
+        "LITERAL">f</var>) option. The <var class=
+        "LITERAL">bq_format</var> option has the format <var class=
+        "LITERAL">iOiO...d</var>; each <var class="LITERAL">i</var>
+        is the original format and the corresponding <var class=
+        "LITERAL">O</var> is the output format. If there is an odd
+        number of characters then the last unmatched character is
+        used as the default format, otherwise no translation is
+        done. For example, <var class="LITERAL">flrfl</var> will
+        cause the <var class="LITERAL">f</var> format to be mapped
+        to <var class="LITERAL">l</var>, <var class=
+        "LITERAL">r</var> to <var class="LITERAL">f</var>, and any
+        others to <var class="LITERAL">l</var>.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "printjobfilters.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x3103.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Print Job
+          Filters</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Printcap
+          Basics</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

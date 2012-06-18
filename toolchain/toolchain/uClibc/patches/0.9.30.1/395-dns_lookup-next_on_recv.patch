@@ -1,0 +1,38 @@
+From 05ef2d67dcfca516e49e133d9f7e3c62feed2358
+From: Ingo van Lil
+Date: Wed, 28 Jul 2010 12:52:08 +0000
+Subject: Immediately try next nameserver on recv() failure
+
+If there is a problem communicating with a nameserver the __dns_lookup()
+function will not immediately advance to the next nameserver but instead
+continue waiting until the timeout expires. This will cause a 30 second
+delay even if no nameserver is configured in resolv.conf and no DNS is
+running on localhost.
+
+Signed-off-by: Ingo van Lil <inguin@gmx.de>
+Acked-by: Roman I Khimov <khimov@altell.ru>
+Signed-off-by: Bernhard Reutner-Fischer <rep.dot.nop@gmail.com>
+---
+diff --git a/libc/inet/resolv.c b/libc/inet/resolv.c
+--- a/libc/inet/resolv.c
++++ b/libc/inet/resolv.c
+@@ -930,10 +930,14 @@ int attribute_hidden __dns_lookup(const char *name,
+ 		}
+ #endif
+ 
+-		len = recv(fd, packet, PACKETSZ, 0);
++		len = recv(fd, packet, PACKETSZ, MSG_DONTWAIT);
+ 		if (len < HFIXEDSZ) {
+-			/* too short! */
+-			goto again;
++			/* too short!
++			 * If the peer did shutdown then retry later,
++			 * try next peer on error. */
++			if (len >= 0)
++				goto again;
++			goto tryall;
+ 		}
+ 
+ 		__decode_header(packet, &h);
+--
+cgit v0.8.2.1

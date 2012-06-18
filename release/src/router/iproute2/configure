@@ -1,0 +1,27 @@
+#! /bin/bash
+# This is not an autconf generated configure
+#
+INCLUDE=${1:-"$PWD/include"}
+
+echo "# Generated config based on" $INCLUDE >Config
+
+echo "TC schedulers"
+
+echo -n " ATM	"
+cat >/tmp/atmtest.c <<EOF
+#include <atm.h>
+int main(int argc, char **argv) {
+	struct atm_qos qos;
+	(void) text2qos("aal5,ubr:sdu=9180,rx:none",&qos,0);
+	return 0;
+}
+EOF
+gcc -I$INCLUDE -o /tmp/atmtest /tmp/atmtest.c -latm >/dev/null 2>&1 
+if [ $? -eq 0 ]
+then
+    echo "TC_CONFIG_ATM:=y" >>Config
+    echo yes
+else
+    echo no
+fi
+rm -f /tmp/atmtest.c /tmp/atmtest

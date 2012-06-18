@@ -1,0 +1,83 @@
+libvorbis 1.2.3 (2009-07-09) -- "Xiph.Org libVorbis I 20090709"
+
+ * correct a vorbisfile bug that prevented proper playback of
+   Vorbis files where all audio in a logical stream is in a
+   single page
+ * Additional decode setup hardening against malicious streams
+ * Add 'OV_EXCLUDE_STATIC_CALLBACKS' define for developers who 
+   wish to avoid avoid unused symbol warnings from the static
+   callbacks defined in vorbisfile.h
+
+libvorbis 1.2.2 (2009-06-24) -- "Xiph.Org libVorbis I 20090624"
+
+ * define VENDOR and ENCODER strings
+ * seek correctly in files bigger than 2 GB (Windows)
+ * fix regression from CVE-2008-1420; 1.0b1 files work again
+ * mark all tables as constant to reduce memory occupation
+ * additional decoder hardening against malicious streams
+ * substantially reduce amount of seeking performed by Vorbisfile
+ * Multichannel decode bugfix 
+ * build system updates
+ * minor specification clarifications/fixes
+
+libvorbis 1.2.1 (unreleased) -- "Xiph.Org libVorbis I 20080501"
+
+ * Improved robustness with corrupt streams.
+ * New ov_read_filter() vorbisfile call allows filtering decoded
+   audio as floats before converting to integer samples.
+ * Fix an encoder bug with multichannel streams.
+ * Replaced RTP payload format draft with RFC 5215.
+ * Bare bones self test under 'make check'.
+ * Fix a problem encoding some streams between 14 and 28 kHz.
+ * Fix a numerical instability in the edge extrapolation filter.
+ * Build system improvements.
+ * Specification correction.
+
+libvorbis 1.2.0 (2007-07-25) -- "Xiph.Org libVorbis I 20070622"
+
+ * new ov_fopen() convenience call that avoids the common
+   stdio conflicts with ov_open() and MSVC runtimes.
+ * libvorbisfile now handles multiplexed streams
+ * improve robustness to corrupt input streams
+ * fix a minor encoder bug
+ * updated RTP draft
+ * build system updates
+ * minor corrections to the specification
+
+libvorbis 1.1.2 (2005-11-27) -- "Xiph.Org libVorbis I 20050304"
+
+ * fix a serious encoder bug with gcc 4 optimized builds
+ * documentation and spec fixes
+ * updated VS2003 and XCode builds
+ * new draft RTP encapsulation spec
+
+libvorbis 1.1.1 (2005-06-27) -- "Xiph.Org libVorbis I 20050304"
+
+ * bug fix to the bitrate management encoder interface
+ * bug fix to properly set packetno field in the encoder
+ * new draft RTP encapsulation spec
+ * library API documentation improvements
+
+libvorbis 1.1.0 (2004-09-22) -- "Xiph.Org libVorbis I 20040629"
+
+ * merges tuning improvements from Aoyumi's aoTuV with fixups
+ * new managed bitrate (CBR) mode support
+ * new vorbis_encoder_ctl() interface
+ * extensive documentation updates
+ * application/ogg mimetype is now official
+ * autotools cleanup from Thomas Vander Stichele
+ * SymbianOS build support from Colin Ward at CSIRO
+ * various bugfixes
+ * various packaging improvements
+
+libvorbis 1.0.1 (2003-11-17) -- "Xiph.Org libVorbis I 20030909"
+
+ * numerous bug fixes
+ * specification corrections
+ * new crosslap and halfrate APIs for game use
+ * packaging and build updates
+
+libvorbis 1.0.0 (2002-07-19) -- "Xiph.Org libVorbis I 20020717"
+
+ * first stable release
+

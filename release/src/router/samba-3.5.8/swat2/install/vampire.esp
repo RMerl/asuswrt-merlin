@@ -1,0 +1,130 @@
+<% page_header("columns", "Windows to Samba Migration", "install"); 
+
+  include("/scripting/forms.js");
+  libinclude("base.js");
+  libinclude("provision.js");
+
+  var misc = misc_init();
+%>
+
+<h1>Windows to Samba4 domain migration</h1>
+
+<%
+var f = FormObj("Provisioning", 0, 2);
+var i;
+var lp = loadparm_init();
+
+if ((session.authinfo.user_class == "ADMINISTRATOR")
+	 || (session.authinfo.user_class == "SYSTEM")) {
+
+	if (lp.get("realm") == "") {
+		lp.set("realm", lp.get("workgroup") + ".example.com");
+	}
+
+
+	var subobj = provision_guess();
+	/* Don't supply default password for web interface */
+	subobj.ADMINPASS = "";
+
+	f.add("REALM", "DNS Domain Name");
+	f.add("DOMAIN", "NetBIOS Domain Name");
+	f.add("ADMIN", "Administrator Username");
+	f.add("ADMINPASS", "Administrator Password", "password");
+	f.add("HOSTNAME", "My Hostname");
+	f.add("HOSTIP", "My Host's IP");
+	f.add("DEFAULTSITE", "Default Site");
+	f.submit[0] = "Migrate";
+	f.submit[1] = "Cancel";
+
+	if (form['submit'] == "Cancel") {
+		redirect("/");
+	}
+
+	if (form['submit'] == "Migrate") {
+		for (r in form) {
+			subobj[r] = form[r];
+		}
+	}
+	
+	for (i=0;i<f.element.length;i++) {
+		f.element[i].value = subobj[f.element[i].name];
+	}
+	
+	if (form['submit'] == "Migrate") {
+	       	/* overcome an initially blank smb.conf */
+		lp.set("realm", subobj.REALM);
+		lp.set("workgroup", subobj.DOMAIN);
+		lp.reload();
+
+		if (subobj.ADMINPASS == "") {
+			write("<h3>We need the administrator password for the " + subobj.DOMAIN + " domain to proceed.  Please try again.</h3>");
+			f.display();
+		} else if (!provision_validate(subobj, writefln)) {
+			f.display();
+		} else if (strupper(lp.get("server role")) == "domain controller") {
+			writefln("You need to set 'server role' to 'member server' before starting the migration process");
+		} else {
+			var creds = credentials_init();
+			var samdb;
+			creds.set_username(form.ADMIN);
+			creds.set_password(form.ADMINPASS);
+			creds.set_domain(form.DOMAIN);
+			creds.set_realm(form.REALM);
+
+			var info = new Object();
+			var paths = provision_default_paths(subobj);
+			var session_info = session.authinfo.session_info;
+			var credentials = session.authinfo.credentials;
+
+			provision_fix_subobj(subobj, paths);
+		
+			info.session_info = session_info;
+			info.message = writefln;
+			info.subobj = subobj;
+
+			/* Setup a basic database structure, but don't setup any users */
+			if (!provision(subobj, writefln, true, paths,
+				       session_info, credentials, false)) {
+				writefln("Provision failed!");
+
+				/* Join domain */
+			} else if (!join_domain(form.DOMAIN, form.HOSTNAME, misc.SEC_CHAN_BDC, creds, writefln)) {
+				writefln("Domain Join failed!");
+			
+				/* Vampire */
+			} else if (!vampire(form.DOMAIN, session.authinfo.session_info, 
+					    session.authinfo.credentials, writefln)) {
+				writefln("Failed to syncronsise remote domain into local database!");
+			} else if (!provision_dns(subobj, writefln, paths,
+						  session.authinfo.session_info, session.authinfo.credentials)) {
+				writefln("DNS Provision failed!");
+			} else if (!(samdb = open_ldb(info, paths.samdb, false))) {
+				writefln("Opening " + paths.samdb + " failed!");
+				info.samdb = samdb;
+			} else if (!setup_name_mappings(info, samdb)) {
+				writefln("Setup of name mappings failed!");			
+			} else {
+				var zonepath = paths.dns;
+				%>
+<h3>Database migrated!</h3>
+You need to do the following to complete the process:
+<ul>
+	<li>Install the <b>@@zonepath</b> zone file into your bind install, and restart bind
+	<li>Change your smb.conf to set "server role = domain controller"
+	<li>Shutdown your existing PDC and any other DCs
+	<li>Restart smbd
+</ul>
+<%
+			}
+		}
+	} else {
+		f.display();
+	}
+} else {
+	redirect("/");
+}
+
+%>
+
+
+<% page_footer(); %>

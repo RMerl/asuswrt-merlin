@@ -1,0 +1,2727 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Chapter 6. The Samba Configuration File</h1>
+
+
+<p><a name="INDEX-1"/>In
+previous chapters, we showed you how to install Samba on a Unix
+server and set up Windows clients to use a simple disk share. This
+chapter will show you how Samba can assume more productive roles on
+your network.</p>
+
+<p>Samba's daemons, <em class="emphasis">smbd</em> and
+<em class="emphasis">nmbd</em>, are controlled through a single ASCII
+file, <em class="filename">smb.conf</em>, that can contain over 300 unique
+options (also called parameters). Some of these options you will use
+and change frequently; others you might never use, depending on how
+much functionality you want Samba to offer its clients.</p>
+
+<p>This chapter introduces the structure of the Samba configuration file
+and shows you how to use options to create and modify disk shares.
+Subsequent chapters will discuss browsing, how to configure users,
+security, printing, and other topics related to implementing Samba on
+your network.</p>
+
+
+
+<div class="sect1"><a name="samba2-CHP-6-SECT-1"/>
+
+<h2 class="head1">The Samba Configuration File</h2>
+
+<p>The Samba configuration file, called <em class="filename">smb.conf</em> by
+default, uses the same format as Windows
+<em class="filename">.ini</em><a name="INDEX-2"/><a name="INDEX-3"/> files. If you have ever worked with a
+<em class="filename">.ini</em> file, you will find
+<em class="filename">smb.conf</em> easy to create and modify. Even if you
+haven't, you will find the format to be simple and
+easy to learn. Here is an example of a Samba
+<a name="INDEX-4"/>configuration
+file:</p>
+
+<blockquote><pre class="code">[global]
+    workgroup = METRAN
+    encrypt passwords = yes
+    wins support = yes
+    log level = 1 
+    max log size = 1000
+    read only = no
+[homes] 
+    browsable = no
+    map archive = yes
+[printers] 
+    path = /var/tmp
+    printable = yes
+    min print space = 2000
+[test]
+    browsable = yes
+    read only = yes
+    path = /usr/local/samba/tmp</pre></blockquote>
+
+<p>This configuration file is based on the one we created in <a href="ch02.html">Chapter 2</a> and sets up a workgroup in which Samba
+authenticates users using encrypted passwords and the default
+user-level security method. Samba is providing WINS name server
+support. We've configured very basic event logging
+to use a log file not to exceed 1MB in size. The
+<tt class="literal">[homes]</tt> share has been added to allow Samba to
+create a disk share for the home directory of each user who has a
+standard Unix account on the server. In addition, each printer
+registered on the server will be publicly available, as will a single
+read-only share that maps to the
+<em class="filename">/usr/local/samba/tmp</em> directory.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-6-SECT-1.1"/>
+
+<h3 class="head2">Configuration File Structure</h3>
+
+<p><a name="INDEX-5"/>Let's take another
+look at this configuration file, this time from a higher level:</p>
+
+<blockquote><pre class="code">[global] 
+    ...
+[homes] 
+    ...
+[printers] 
+    ...
+[test] 
+    ...</pre></blockquote>
+
+<p><a name="INDEX-6"/><a name="INDEX-7"/>The
+names inside the square brackets delineate unique
+<em class="firstterm">sections</em> of the <em class="filename">smb.conf</em>
+file; each section names the share (or service) to which the section
+refers. For example, the <tt class="literal">[test]</tt> and
+<tt class="literal">[homes]</tt> sections are unique disk shares; they
+contain options that map to specific directories on the Samba server.
+The <tt class="literal">[printers]</tt> share contains options that map to
+various printers on the server. All the sections defined in the
+<em class="filename">smb.conf</em> file, with the exception of the
+<tt class="literal">[global]</tt> section, will be available as a disk or
+printer share to clients connecting to the Samba server.</p>
+
+<p>The remaining lines are individual configuration options for that
+share. These options will continue until a new section is encountered
+or until the end of the file is reached. Each configuration option
+follows a simple format:</p>
+
+<blockquote><pre class="code"><em class="replaceable">option</em> = <em class="replaceable">value</em></pre></blockquote>
+
+<p><a name="INDEX-8"/>Options in
+the <em class="filename">smb.conf</em> file are set by assigning a value
+to them. We should warn you up front that some of the option names in
+Samba are poorly chosen. For example, <tt class="literal">read</tt>
+<tt class="literal">only</tt> is self-explanatory and is typical of many
+recent Samba options. The <tt class="literal">public</tt> option is an
+older option and is vague. It now has a less-confusing synonym
+<tt class="literal">guest</tt> <tt class="literal">ok</tt> (meaning it can be
+accessed by guests). <em class="emphasis">Appendix B</em> contains an
+alphabetical index of all the configuration options and their
+meanings.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-1.1.1"/>
+
+<h3 class="head3">Whitespace, quotes, and commas</h3>
+
+<p>An important item to remember about configuration options is that all
+whitespace within the <em class="replaceable">value</em> is
+significant. For example, consider the following option:</p>
+
+<blockquote><pre class="code">volume = The Big Bad Hard Drive Number 3543</pre></blockquote>
+
+<p>Samba strips away the spaces up to the first <tt class="literal">T</tt> in
+<tt class="literal">The</tt>. These whitespaces are insignificant. The rest
+of the whitespaces are significant and will be recognized and
+preserved by Samba when reading in the file. Space is not significant
+in option names (such as <tt class="literal">read</tt>
+<tt class="literal">only</tt>), but we recommend you follow convention and
+keep spaces between the words of options.</p>
+
+<p>If you feel safer including quotation marks at the beginning and end
+of a configuration option's value, you can do so.
+Samba will ignore these quotation marks when it encounters them.
+Never use quotation marks around an option name; Samba will treat
+this as an error.</p>
+
+<p>Usually, you can use whitespaces or commas to separate a series of
+values in a list. These two options are equivalent:</p>
+
+<blockquote><pre class="code">netbios aliases = sales, accounting, payroll
+netbios aliases = sales accounting payroll</pre></blockquote>
+
+<p>In some cases, you must use one form of separation&mdash;sometimes
+spaces are required, and sometimes commas.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-1.1.2"/>
+
+<h3 class="head3">Capitalization</h3>
+
+<p><a name="INDEX-9"/>Capitalization
+is not important in the Samba configuration file except in locations
+where it would confuse the underlying operating system. For example,
+let's assume that you included the following option
+in a share that pointed to <em class="filename">/export/samba/simple
+</em>:</p>
+
+<blockquote><pre class="code">PATH = /EXPORT/SAMBA/SIMPLE</pre></blockquote>
+
+<p>Samba would have no problem with the <tt class="literal">path</tt>
+configuration option appearing entirely in capital letters. However,
+when it tries to connect to the given directory, it would be
+unsuccessful because the Unix filesystem <em class="emphasis">is</em>
+case-sensitive. Consequently, the path listed would not be found, and
+clients could not connect to the share.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-1.1.3"/>
+
+<h3 class="head3">Line continuation</h3>
+
+<p><a name="INDEX-10"/>You can continue a line in the
+Samba configuration file using the backslash, like this:</p>
+
+<blockquote><pre class="code">comment = The first share that has the primary copies \
+          of the new Teamworks software product.</pre></blockquote>
+
+<p>Because of the backslash, these two lines will be treated as one line
+by Samba. The second line begins at the first nonwhitespace character
+that Samba encounters; in this case, the <tt class="literal">o</tt> in
+<tt class="literal">of</tt>.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-1.1.4"/>
+
+<h3 class="head3">Comments</h3>
+
+<p><a name="INDEX-11"/>You can
+insert comments in the <em class="filename">smb.conf</em> configuration
+file by starting a line with either a hash (<tt class="literal">#</tt>) or
+a semicolon ( <tt class="literal">;</tt> ). For this purpose, both
+characters are equivalent. For example, the first three lines in the
+following example would be considered comments:</p>
+
+<blockquote><pre class="code">#  This is the printers section. We have given a minimum print 
+;  space of 2000 to prevent some errors that we've seen when
+;  the spooler runs out of space.
+
+[printers] 
+    public = yes
+    min print space = 2000</pre></blockquote>
+
+<p>Samba will ignore all comment lines in its configuration file; there
+are no limitations to what can be placed on a comment line after the
+initial hash mark or semicolon. Note that the line continuation
+character (<tt class="literal">\</tt>) will <em class="emphasis">not</em> be
+honored on a commented line. Like the rest of the line, it is
+ignored.</p>
+<a name="samba2-CHP-6-NOTE-128"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>Samba does not allow mixing of comment lines and parameters. Be
+careful not to put comments on the same line as anything else, such
+as:</p>
+
+
+<blockquote><pre class="code">path = /d # server's data partition</pre></blockquote>
+
+
+<p>Errors such as this, where the parameter value is defined with a
+string, can be tricky to notice. The <em class="emphasis">testparm</em>
+program won't complain, and the only clues
+you'll receive are that
+<em class="emphasis">testparm</em> reports the <tt class="literal">path</tt>
+parameter set to <tt class="literal">/d # server's data partition</tt>, and
+the failures that result when clients attempt to access the share.</p>
+</blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-1.1.5"/>
+
+<h3 class="head3">Changes at runtime</h3>
+
+<p><a name="INDEX-12"/>You can modify the
+<em class="filename">smb.conf</em> configuration file and any of its
+options at any time while the Samba daemons are running. By default,
+Samba checks the configuration file every 60 seconds. If it finds any
+changes, they are immediately put into effect.</p>
+
+<a name="samba2-CHP-6-NOTE-129"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>Having Samba check the configuration file automatically can be
+convenient, but it also means that if you edit
+<em class="filename">smb.conf</em> directly, you might be immediately
+changing your network's <a name="INDEX-13"/>configuration every time you save the
+file. If you're making anything more than a minor
+change, it may be wiser to copy <em class="filename">smb.conf</em> to a
+temporary file, edit that, run <tt class="literal">testparm</tt>
+<em class="replaceable">filename</em> to check it, and then copy the
+temporary file back to <em class="filename">smb.conf</em>. That way, you
+can be sure to put all your changes into effect at once, and only
+after you are confident that you have created the exact configuration
+you wish to implement.</p>
+</blockquote>
+
+<p>If you don't want to wait for the configuration file
+to be reloaded automatically, you can force a reload either by
+sending a hangup signal to the <em class="emphasis">smbd</em> and
+<em class="emphasis">nmbd</em> processes or simply by restarting the
+daemons. Actually, it can be a good idea to restart the daemons
+because it forces the clients to disconnect and reconnect, ensuring
+that the new configuration is applied to all clients. We showed you
+how to restart the daemons in <a href="ch02.html">Chapter 2</a>, and
+sending them a hangup (HUP) signal is very similar. On Linux, it can
+be done with the command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>killall -HUP smbd nmbd</b></tt></pre></blockquote>
+
+<p>In this case, not all changes will be immediately recognized by
+clients. For example, changes to a share that is currently in use
+will not be registered until the client disconnects and reconnects to
+that share. In addition, server-specific parameters such as the
+workgroup or NetBIOS name of the server will not go into effect
+immediately either. (This behavior was implemented intentionally
+because it keeps active clients from being suddenly disconnected or
+encountering unexpected access problems while a session is open.)
+<a name="INDEX-14"/></p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-6-SECT-1.2"/>
+
+<h3 class="head2">Variables</h3>
+
+<p><a name="INDEX-15"/>Because a
+new copy of the<em class="filename"> </em><em class="emphasis">smbd</em> daemon
+is created for each connecting client, it is possible for each client
+to have its own customized configuration file. Samba allows a
+limited, yet useful, form of variable substitution in the
+configuration file to allow information about the Samba server and
+the client to be included in the configuration at the time the client
+connects. Inside the configuration file, a variable begins with a
+percent sign (<tt class="literal">%</tt>), followed by a single upper- or
+lowercase letter, and can be used only on the right side of a
+configuration option (i.e., after the equal sign). An example is:</p>
+
+<blockquote><pre class="code">[pub]
+    path = /home/ftp/pub/%a</pre></blockquote>
+
+<p>The <tt class="literal">%a</tt><a name="INDEX-16"/> stands for the client
+system's architecture and will be replaced as shown
+in <a href="ch06.html#samba2-CHP-6-TABLE-1">Table 6-1</a>.</p>
+
+<a name="samba2-CHP-6-TABLE-1"/><h4 class="head4">Table 6-1. %a substitution</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Client operating system
+(&quot;architecture&quot;)</p>
+</th>
+<th>
+<p>Replacement string</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p>Windows for Workgroups</p>
+</td>
+<td>
+<p><tt class="literal">WfWg</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows 95 and Windows 98</p>
+</td>
+<td>
+<p><tt class="literal">Win95</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows NT</p>
+</td>
+<td>
+<p><tt class="literal">WinNT</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Windows 2000 and Windows XP</p>
+</td>
+<td>
+<p><tt class="literal">Win2K</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Samba</p>
+</td>
+<td>
+<p><tt class="literal">Samba</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>Any OS not listed earlier</p>
+</td>
+<td>
+<p><tt class="literal">UNKNOWN</tt></p>
+</td>
+</tr>
+
+</table>
+
+<p>In this example, Samba will assign a unique path for the
+<tt class="literal">[pub]</tt> share to client systems based on what
+operating system they are running. The paths that each client would
+see as its share differ according to the client's
+architecture:</p>
+
+<blockquote><pre class="code">/home/ftp/pub/WfwG
+/home/ftp/pub/Win95
+/home/ftp/pub/WinNT
+/home/ftp/pub/Win2K
+/home/ftp/pub/Samba
+/home/ftp/pub/UNKNOWN</pre></blockquote>
+
+<p>Using variables in this manner comes in handy if you wish to have
+different users run custom configurations based on their own unique
+characteristics or conditions.
+<a name="INDEX-17"/><a name="INDEX-18"/>Samba
+has 20 variables, as shown in <a href="ch06.html#samba2-CHP-6-TABLE-2">Table 6-2</a>.</p>
+
+<a name="samba2-CHP-6-TABLE-2"/><h4 class="head4">Table 6-2. Samba variables</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Variable</p>
+</th>
+<th>
+<p>Definition</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><b class="emphasis-bold">Client variables</b></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%a</tt><a name="INDEX-19"/></p>
+</td>
+<td>
+<p>Client's architecture (see <a href="ch06.html#samba2-CHP-6-TABLE-1">Table 6-1</a>)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%I</tt><a name="INDEX-20"/></p>
+</td>
+<td>
+<p>Client's IP address (e.g., 172.16.1.2)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%m</tt><a name="INDEX-21"/></p>
+</td>
+<td>
+<p>Client's NetBIOS name</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%M</tt><a name="INDEX-22"/></p>
+</td>
+<td>
+<p>Client's DNS name</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><b class="emphasis-bold">User variables</b></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%u</tt><a name="INDEX-23"/></p>
+</td>
+<td>
+<p>Current Unix username</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%U</tt><a name="INDEX-24"/></p>
+</td>
+<td>
+<p>Requested client username (not always used by Samba)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%H</tt><a name="INDEX-25"/></p>
+</td>
+<td>
+<p>Home directory of <tt class="literal">%u</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%g</tt><a name="INDEX-26"/></p>
+</td>
+<td>
+<p>Primary group of <tt class="literal">%u</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%G</tt><a name="INDEX-27"/></p>
+</td>
+<td>
+<p>Primary group of <tt class="literal">%U</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><b class="emphasis-bold">Share variables</b></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%S</tt><a name="INDEX-28"/></p>
+</td>
+<td>
+<p>Current share's name</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%P</tt><a name="INDEX-29"/></p>
+</td>
+<td>
+<p>Current share's root directory</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%p</tt><a name="INDEX-30"/></p>
+</td>
+<td>
+<p>Automounter's path to the share's
+root directory, if different from <tt class="literal">%P</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><b class="emphasis-bold">Server variables</b></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%d</tt><a name="INDEX-31"/></p>
+</td>
+<td>
+<p>Current server process ID</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%h</tt><a name="INDEX-32"/></p>
+</td>
+<td>
+<p>Samba server's DNS hostname</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%L</tt><a name="INDEX-33"/></p>
+</td>
+<td>
+<p>Samba server's NetBIOS name</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%N</tt><a name="INDEX-34"/></p>
+</td>
+<td>
+<p>Home directory server, from the automount map</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%v</tt><a name="INDEX-35"/></p>
+</td>
+<td>
+<p>Samba version</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><b class="emphasis-bold">Miscellaneous variables</b></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%R</tt><a name="INDEX-36"/></p>
+</td>
+<td>
+<p>The SMB protocol level that was negotiated</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%T</tt><a name="INDEX-37"/></p>
+</td>
+<td>
+<p>The current date and time</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a name="INDEX-38"/>%$<em class="replaceable">var</em></p>
+</td>
+<td>
+<p>The value of environment variable <tt class="literal">var</tt></p>
+</td>
+</tr>
+
+</table>
+
+<p>Here's another example of using
+<a name="INDEX-39"/><a name="INDEX-40"/><a name="INDEX-41"/>variables: let's say there
+are five clients on your network, but one client,
+<tt class="literal">maya</tt>, requires a slightly different
+<tt class="literal">[homes]</tt> configuration. With Samba,
+it's simple to handle this:</p>
+
+<blockquote><pre class="code">[homes] 
+    ...
+    include = /usr/local/samba/lib/smb.conf.%m
+    ...</pre></blockquote>
+
+<p>The <tt class="literal">include</tt> option here causes a separate
+configuration file for each particular NetBIOS machine
+(<tt class="literal">%m</tt>) to be read in addition to the current file.
+If the hostname of the client system is <tt class="literal">maya</tt>, and
+if a <em class="filename">smb.conf.maya</em> file exists in the
+<em class="filename">/usr/local/samba/lib</em> directory, Samba will
+insert that configuration file into the default one. If any
+configuration options are restated in
+<em class="filename">smb.conf.maya</em>, those values will override any
+options previously encountered in that share. Note that we say
+&quot;previously.&quot; If any options are
+restated in the main configuration file after the
+<tt class="literal">include</tt> option, Samba will honor those restated
+values for the share in which they are defined.</p>
+
+<p>If the file specified by the <tt class="literal">include</tt> parameter
+does not exist, Samba will not generate an error. In fact, it
+won't do anything at all. This allows you to create
+only one extra configuration file for <tt class="literal">maya</tt> when
+using this strategy, instead of one for each client that is on the
+network.</p>
+
+<p>Client-specific configuration files can be used to customize
+particular clients. They also can be used to make debugging Samba
+easier. For example, if we have one client with a problem, we can use
+this approach to give it a private log file with a more verbose
+logging level. This allows us to see what Samba is doing without
+slowing down all the other clients or overflowing the disk with
+useless logs.</p>
+
+<p>You can use the variables in <a href="ch06.html#samba2-CHP-6-TABLE-2">Table 6-2</a> to give
+custom values to a variety of Samba options. We will highlight
+several of these options as we move through the next few chapters.
+<a name="INDEX-42"/></p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-6-SECT-2"/>
+
+<h2 class="head1">Special Sections</h2>
+
+<p>Now that we've gotten our feet wet with variables,
+there are a few special sections of the Samba configuration file that
+we should talk about. Again, don't worry if you do
+not understand every configuration option listed here;
+we'll go over each of them in the upcoming chapters.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-6-SECT-2.1"/>
+
+<h3 class="head2">The [ global] Section</h3>
+
+<p>The <tt class="literal">[global]</tt><a name="INDEX-43"/><a name="INDEX-44"/> section appears in virtually
+every Samba configuration file, even though it is not mandatory.
+There are two purposes for the <tt class="literal">[global]</tt> section.
+Server-wide settings are defined here, and any options that apply to
+shares will be used as a default in all share definitions, unless
+overridden within the share definition.</p>
+
+<p>To illustrate this, let's again look at the example
+at the beginning of the chapter:</p>
+
+<blockquote><pre class="code">[global]
+    workgroup = METRAN
+    encrypt passwords = yes
+    wins support = yes
+    log level = 1 
+    max log size = 1000
+    read only = no
+[homes] 
+    browsable = no
+    map archive = yes
+[printers] 
+    path = /var/tmp
+    printable = yes
+    min print space = 2000
+[test]
+    browsable = yes
+    read only = yes
+    path = /usr/local/samba/tmp</pre></blockquote>
+
+<p>When a client connects to the <tt class="literal">[test]</tt> share, Samba
+first reads the <tt class="literal">[global]</tt> section and sets the
+option <tt class="literal">read</tt> <tt class="literal">only</tt>
+<tt class="literal">=</tt> <tt class="literal">no</tt> as the global default for
+each share it encounters throughout the configuration file. This
+includes the <tt class="literal">[homes]</tt> and <tt class="literal">[test]</tt>
+shares. When it reads the definition of the <tt class="literal">[test]</tt>
+share, it then finds the configuration option <tt class="literal">read</tt>
+<tt class="literal">only</tt> <tt class="literal">=</tt> <tt class="literal">yes</tt>
+and overrides the default from the <tt class="literal">[global]</tt>
+section with the value <tt class="literal">yes</tt>.</p>
+
+<p>Any option that appears before the first marked section is assumed to
+be a global option. This means that the <tt class="literal">[global]</tt>
+section heading is not absolutely required; however, we suggest you
+always include it for clarity and to ensure future compatibility.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-6-SECT-2.2"/>
+
+<h3 class="head2">The [ homes] Section</h3>
+
+<p>If a client attempts to connect to a share that
+doesn't appear in the <em class="filename">smb.conf</em>
+file, Samba will search for a
+<tt class="literal">[homes]</tt><a name="INDEX-45"/><a name="INDEX-46"/> share in the
+configuration file. If a <tt class="literal">[homes]</tt> share exists, the
+unresolved share name is assumed to be a Unix username. If that
+username appears in the password database on the Samba server, Samba
+assumes the client is a Unix user trying to connect to her home
+directory on the server.</p>
+
+<p>For example, assume a client system is connecting to the Samba server
+<tt class="literal">toltec</tt> for the first time and tries to connect to
+a share named <tt class="literal">[alice]</tt>. There is no
+<tt class="literal">[alice]</tt> share defined in the
+<em class="filename">smb.conf</em> file, but there is a
+<tt class="literal">[homes]</tt>, so Samba searches the password database
+file and finds an <tt class="literal">alice</tt> user account is present on
+the system. Samba then checks the password provided by the client
+against user <tt class="literal">alice</tt>'s Unix
+password&mdash;either with the password database file if
+it's using nonencrypted passwords or with
+Samba's <em class="filename">smbpasswd</em> file if
+encrypted passwords are in use. If the passwords match, Samba knows
+it has guessed right: the user <tt class="literal">alice</tt> is trying to
+connect to her home directory. Samba will then create a share called
+<tt class="literal">[alice]</tt> for her, with the share's
+path set to <tt class="literal">alice</tt>'s home
+directory.</p>
+
+<p>The process of using the <tt class="literal">[homes]</tt> section to create
+users (and dealing with their passwords) is discussed in more detail
+in <a href="ch09.html">Chapter 9</a>.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-6-SECT-2.3"/>
+
+<h3 class="head2">The [printers] Section</h3>
+
+<p>The third special section is called
+<tt class="literal">[printers]</tt><a name="INDEX-47"/><a name="INDEX-48"/> and is similar to
+<tt class="literal">[homes]</tt>. If a client attempts to connect to a
+share that isn't in the
+<em class="filename">smb.conf</em> file and its name
+can't be found in the password file, Samba will
+check to see if it is a printer share. Samba does this by reading the
+printer capabilities file (usually
+<em class="filename">/etc/printcap</em>) to see if the share name appears
+there.<a name="FNPTR-1"/><a href="#FOOTNOTE-1">[1]</a> If it does, Samba creates a share named after the
+printer.</p>
+
+<p>This means that as with <tt class="literal">[homes]</tt>, you
+don't have to maintain a share for each system
+printer in the <em class="filename">smb.conf</em> file. Instead, Samba
+honors the Unix printer registry if you ask it to, and it provides
+the registered printers to the client systems. However, there is a
+potential difficulty: if you have an account named
+<tt class="literal">fred</tt> and a printer named <tt class="literal">fred</tt>,
+Samba will always find the user account first, even if the client
+really needed to connect to the printer.</p>
+
+<p>The process of setting up the <tt class="literal">[printers]</tt> share is
+discussed in more detail in <a href="ch10.html">Chapter 10</a>.</p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-6-SECT-3"/>
+
+<h2 class="head1">Configuration Options</h2>
+
+<p><a name="INDEX-49"/>Options in
+the Samba configuration files fall into one of two categories:
+<em class="firstterm">global</em> options or <em class="firstterm">share</em>
+options. Each category dictates where an option can appear in the
+configuration file.</p>
+
+<dl>
+<dt><b>Global options</b></dt>
+<dd>
+<p>Global options must appear in the <tt class="literal">[global]</tt> section
+and nowhere else. These are options that typically apply to the
+behavior of the Samba server itself and not to any of its shares.</p>
+</dd>
+
+
+
+<dt><b>Share options</b></dt>
+<dd>
+<p>Share options can appear in share definitions, the
+<tt class="literal">[global]</tt> section, or both. If they appear in the
+<tt class="literal">[global]</tt> section, they will define a default
+behavior for all shares unless a share overrides the option with a
+value of its own.</p>
+</dd>
+
+</dl>
+
+<p>In addition, configuration options can take three kinds of values.
+They are as follows:</p>
+
+<dl>
+<dt><b>Boolean</b></dt>
+<dd>
+<p>These are simply yes or no values, but can be represented by any of
+the following: <tt class="literal">yes</tt>, <tt class="literal">no</tt>,
+<tt class="literal">true</tt>, <tt class="literal">false</tt>,
+<tt class="literal">1</tt>, or <tt class="literal">0</tt>. The values are
+case-insensitive: <tt class="literal">YES</tt> is the same as
+<tt class="literal">yes</tt>.</p>
+</dd>
+
+
+
+<dt><b>Numeric</b></dt>
+<dd>
+<p>This is a decimal, hexadecimal, or octal number. The standard
+<tt class="literal">0x</tt><em class="emphasis">nn</em> syntax is used for
+hexadecimal and <tt class="literal">0</tt><em class="emphasis">nnn</em> for
+octal.</p>
+</dd>
+
+
+
+<dt><b>String</b></dt>
+<dd>
+<p>This is a string of case-sensitive characters, such as a filename or
+a username.</p>
+</dd>
+
+</dl>
+
+
+<div class="sect2"><a name="samba2-CHP-6-SECT-3.1"/>
+
+<h3 class="head2">Configuration File Options</h3>
+
+<p>You can instruct Samba to include or replace configuration options as
+it is processing them. The options to do this are summarized in <a href="ch06.html#samba2-CHP-6-TABLE-3">Table 6-3</a>.</p>
+
+<a name="samba2-CHP-6-TABLE-3"/><h4 class="head4">Table 6-3. Configuration file options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">config</tt> <tt class="literal">file</tt></p>
+</td>
+<td>
+<p>string (name of file)</p>
+</td>
+<td>
+<p>Sets the location of a configuration file to use instead of the
+current one</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">include</tt></p>
+</td>
+<td>
+<p>string (name of file)</p>
+</td>
+<td>
+<p>Specifies an additional set of configuration options to be included
+in the configuration file</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">copy</tt></p>
+</td>
+<td>
+<p>string (name of share)</p>
+</td>
+<td>
+<p>Allows you to clone the configuration options of another share in the
+current share</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-3.1.1"/>
+
+<h3 class="head3">config file</h3>
+
+<p>The global <tt class="literal">config</tt><a name="INDEX-50"/> <tt class="literal">file</tt>
+option specifies a replacement configuration file that will be loaded
+when the option is encountered. If the target file exists, the
+remainder of the current configuration file, as well as the options
+encountered so far, will be discarded, and Samba will configure
+itself entirely with the options in the new file. Variables can be
+used with the <tt class="literal">config</tt> <tt class="literal">file</tt>
+option, which is useful in the event that you want to use a special
+configuration file based on the NetBIOS machine name or user of the
+client that is connecting.</p>
+
+<p>For example, the following line instructs Samba to use a
+configuration file specified by the NetBIOS name of the client
+connecting, if such a file exists. If it does, options specified in
+the original configuration file are ignored:</p>
+
+<blockquote><pre class="code">[global]
+    config file = /usr/local/samba/lib/smb.conf.%m</pre></blockquote>
+
+<p>If the configuration file specified does not exist, the option is
+ignored, and Samba will continue to configure itself based on the
+current file. This allows a default configuration file to serve most
+clients, while providing for exceptions with customized configuration
+files.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-3.1.2"/>
+
+<h3 class="head3">include</h3>
+
+<p>This <a name="INDEX-51"/>option, discussed in greater detail
+earlier, copies the target file into the current configuration file
+at the point specified, as shown in <a href="ch06.html#samba2-CHP-6-FIG-1">Figure 6-1</a>.
+This option also can be used with variables. You can use this option
+as follows:</p>
+
+<blockquote><pre class="code">[global]
+    include = /usr/local/samba/lib/smb.conf.%m</pre></blockquote>
+
+<p>If the configuration file specified does not exist, the option is
+ignored. Options in the include file override any option specified
+previously, but not options that are specified later. In <a href="ch06.html#samba2-CHP-6-FIG-1">Figure 6-1</a>, all three options will override their
+previous values.</p>
+
+<div class="figure"><a name="samba2-CHP-6-FIG-1"/><img src="figs/sam2_0601.gif"/></div><h4 class="head4">Figure 6-1. The include option in a Samba configuration file</h4>
+
+<p>The <tt class="literal">include</tt> option does not work with the
+variables <tt class="literal">%u</tt> (user), <tt class="literal">%P</tt>
+(current share's root directory), or
+<tt class="literal">%S</tt> (current share's name) because
+they are not set at the time the <tt class="literal">include</tt> parameter
+is processed.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-3.1.3"/>
+
+<h3 class="head3">copy</h3>
+
+<p>The <tt class="literal">copy</tt><a name="INDEX-52"/> configuration option allows you to clone
+the configuration options of the share name that you specify in the
+current share. The target share must appear earlier in the
+configuration file than the share that is performing the copy. For
+example:</p>
+
+<blockquote><pre class="code">[template]
+    writable = yes
+    browsable = yes
+    valid users = andy, dave, jay
+
+[data]
+    path = /usr/local/samba
+    copy = template</pre></blockquote>
+
+<p>Note that any options in the share that invoked the
+<tt class="literal">copy</tt> directive will override those in the cloned
+share; it does not matter whether they appear before or after the
+<tt class="literal">copy</tt> directive. <a name="INDEX-53"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-6-SECT-4"/>
+
+<h2 class="head1">Server Configuration</h2>
+
+<p><a name="INDEX-54"/>We will now start from
+scratch and build a configuration file for our Samba server. First we
+will introduce three basic configuration options that can appear in
+the <tt class="literal">[global]</tt> section of the
+<em class="filename">smb.conf</em> file:</p>
+
+<blockquote><pre class="code">[global]
+    #  Server configuration parameters
+    netbios name = toltec
+    server string = Samba %v on %L
+    workgroup = METRAN
+    encrypt passwords = yes</pre></blockquote>
+
+<p>This configuration file is pretty simple; it advertises the Samba
+server under the NetBIOS name <tt class="literal">toltec</tt>. In addition,
+it places the system in the METRAN workgroup and displays a
+description to clients that includes the Samba version number, as
+well as the NetBIOS name of the Samba server.</p>
+
+<a name="samba2-CHP-6-NOTE-130"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>If you used the line <tt class="literal">encrypt passwords = yes</tt> in
+your earlier configuration file, you should do so here as well.</p>
+</blockquote>
+
+<p>If you like, you can go ahead and try this configuration file. Create
+a file named <em class="filename">smb.conf</em> under the
+<em class="filename">/usr/local/samba/lib</em> directory with the text
+listed earlier. Then restart the Samba server and use a Windows
+client to verify the results. Be sure that your Windows clients are
+in the METRAN workgroup as well. After double-clicking the Network
+Neighborhood on a Windows client, you should see a window similar to
+<a href="ch06.html#samba2-CHP-6-FIG-2">Figure 6-2</a>. (In this figure,
+<tt class="literal">Mixtec</tt> is another Samba server,
+<tt class="literal">a</tt>nd <tt class="literal">Zapotec</tt> is a Windows
+client.)</p>
+
+<div class="figure"><a name="samba2-CHP-6-FIG-2"/><img src="figs/sam2_0602.gif"/></div><h4 class="head4">Figure 6-2. Network Neighborhood showing Toltec, the Samba server</h4>
+
+<p>You can verify the <tt class="literal">server</tt>
+<tt class="literal">string</tt> by listing the details of the Network
+Neighborhood window (select Details in the View menu). You should see
+a window similar to <a href="ch06.html#samba2-CHP-6-FIG-3">Figure 6-3</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-6-FIG-3"/><img src="figs/sam2_0603.gif"/></div><h4 class="head4">Figure 6-3. Network Neighborhood details listing</h4>
+
+<p>If you were to click the <em class="filename">toltec</em> icon, a window
+should appear that shows the services that it provides. In this case,
+the window would be completely empty because there are no shares on
+the server yet.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-6-SECT-4.1"/>
+
+<h3 class="head2">Server Configuration Options</h3>
+
+<p><a href="ch06.html#samba2-CHP-6-TABLE-4">Table 6-4</a> summarizes the server configuration
+options introduced previously. All three of these options are global
+in scope, so they must appear in the <tt class="literal">[global]</tt>
+section of the configuration file.<a name="INDEX-55"/></p>
+
+<a name="samba2-CHP-6-TABLE-4"/><h4 class="head4">Table 6-4. Server configuration options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">netbios</tt> <tt class="literal">name</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>NetBIOS name of the Samba server</p>
+</td>
+<td>
+<p>Server's unqualified DNS hostname</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">workgroup</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>NetBIOS group to which the server belongs</p>
+</td>
+<td>
+<p>Defined at compile time</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">server</tt> <tt class="literal">string</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>Descriptive string for the Samba server</p>
+</td>
+<td>
+<p><tt class="literal">Samba %v</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-4.1.1"/>
+
+<h3 class="head3">netbios name</h3>
+
+<p>The <tt class="literal">netbios</tt><a name="INDEX-56"/> <tt class="literal">name</tt> option
+allows you to set the NetBIOS name of the server. For example:</p>
+
+<blockquote><pre class="code">netbios name = YORKVM1</pre></blockquote>
+
+<p>The default value for this configuration option is the
+server's hostname&mdash;that is, the first part of
+its fully qualified domain name. For example, a system with the DNS
+name <tt class="literal">ruby.ora.com</tt> would be given the NetBIOS name
+<tt class="literal">RUBY</tt> by default. While you can use this option to
+restate the system's NetBIOS name in the
+configuration file (as we did previously), it is more commonly used
+to assign the Samba server a NetBIOS name other than its current DNS
+name. Remember that the name given must follow the rules for valid
+NetBIOS machine names as outlined in <a href="ch01.html">Chapter 1</a>.</p>
+
+<p>Changing the NetBIOS name of the server is not recommended unless you
+have a good reason. One such reason might be if the hostname of the
+system is not unique because the LAN is divided over two or more DNS
+domains. For example, YORKVM1 is a good NetBIOS candidate for
+<tt class="literal">vm1.york.example.com</tt> to differentiate it from
+<tt class="literal">vm1.falkirk.example.com</tt>, which has the same
+hostname but resides in a different DNS domain.</p>
+
+<p>Another use of this option is for relocating SMB services from a dead
+or retired system. For example, if <tt class="literal">SALES</tt> is the
+SMB server for the department and it suddenly dies, you could
+immediately reset <tt class="literal">netbios</tt> <tt class="literal">name</tt>
+<tt class="literal">=</tt> <tt class="literal">SALES</tt> on a backup Samba
+server that's taking over for it. Users
+won't have to change their drive mappings to a
+different server; new connections to <tt class="literal">SALES</tt> will
+simply go to the new server.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-4.1.2"/>
+
+<h3 class="head3">workgroup</h3>
+
+<p>The <tt class="literal">workgroup</tt><a name="INDEX-57"/> parameter sets the
+current workgroup (or domain) in which the Samba server will
+advertise itself. Clients that wish to access shares on the Samba
+server should be in the same NetBIOS group. Remember that workgroups
+are really just NetBIOS group names and must follow the standard
+NetBIOS naming conventions outlined in <a href="ch01.html">Chapter 1</a>.</p>
+
+<p>The default option for this parameter is set at compile time to
+<tt class="literal">WORKGROUP</tt>. Because this is the default workgroup
+name of every unconfigured Windows and Samba system, we recommend
+that you always set your workgroup name in the Samba configuration
+file. When choosing your workgroup name, try to avoid making it the
+same name as a server or user. This will avoid possible problems with
+WINS name resolution.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-4.1.3"/>
+
+<h3 class="head3">server string</h3>
+
+<p>The <tt class="literal">server</tt><a name="INDEX-58"/> <tt class="literal">string</tt>
+parameter defines a comment string that will appear next to the
+server name in both the Network Neighborhood (when shown with the
+Details view) and the comment entry of the Microsoft Windows printer
+manager.<a name="FNPTR-2"/><a href="#FOOTNOTE-2">[2]</a> </p>
+
+<p>You can use variables to provide
+information in the description. For example, our entry earlier was:</p>
+
+<blockquote><pre class="code">[global]
+    server string = Samba %v on (%h)</pre></blockquote>
+
+<p>The default for this option simply presents the current version of
+Samba and is equivalent to:</p>
+
+<a name="INDEX-59"/><blockquote><pre class="code">server string = Samba %v</pre></blockquote>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-6-SECT-5"/>
+
+<h2 class="head1">Disk Share Configuration</h2>
+
+<p><a name="INDEX-60"/><a name="INDEX-61"/>We mentioned in the previous section that
+there were no disk shares on the <tt class="literal">toltec</tt> server.
+Let's continue building the configuration file and
+create an empty disk share called <tt class="literal">[data]</tt>. Here are
+the additions that will do it:</p>
+
+<blockquote><pre class="code">[data]
+    path = /export/samba/data
+    comment = Data Drive
+    volume = Sample-Data-Drive
+    writable = yes</pre></blockquote>
+
+<p>The <tt class="literal">[data]</tt> share is typical for a Samba disk
+share. The share maps to the directory <em class="filename">/export/samba/data
+</em>on the Samba server. We've also provided
+a comment that describes the share as a <tt class="literal">Data</tt>
+<tt class="literal">Drive</tt>, as well as a volume name for the share
+itself.</p>
+
+<p>Samba's default is to create a read-only share. As a
+result, the <tt class="literal">writable</tt> option needs to be explicitly
+set for each disk share you wish to make writable.</p>
+
+<p>We will also need to create the
+<em class="filename">/export/samba/data</em> directory on the Samba server
+with the following commands:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>mkdir /export/samba/data</b></tt>
+# <tt class="userinput"><b>chmod 777 /export/samba/data</b></tt></pre></blockquote>
+
+<p>Now, if we connect to the <tt class="literal">toltec</tt> server again by
+double-clicking its icon in the Windows Network Neighborhood, we will
+see a single share entitled <tt class="literal">data</tt>, as shown in
+<a href="ch06.html#samba2-CHP-6-FIG-4">Figure 6-4</a>. This share has read/write access, so
+files can be copied to or from it.</p>
+
+<div class="figure"><a name="samba2-CHP-6-FIG-4"/><img src="figs/sam2_0604.gif"/></div><h4 class="head4">Figure 6-4. The initial data share on the Samba server</h4>
+
+
+<div class="sect2"><a name="samba2-CHP-6-SECT-5.1"/>
+
+<h3 class="head2">Disk Share Configuration Options</h3>
+
+<p>The basic Samba configuration options for disk shares previously
+introduced are listed in <a href="ch06.html#samba2-CHP-6-TABLE-5">Table 6-5</a>.</p>
+
+<a name="samba2-CHP-6-TABLE-5"/><h4 class="head4">Table 6-5. Basic share configuration options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">path</tt> <tt class="literal">(directory)</tt></p>
+</td>
+<td>
+<p>string (directory name)</p>
+</td>
+<td>
+<p>Sets the Unix directory that will be provided for a disk share or
+used for spooling by a printer share.</p>
+</td>
+<td>
+<p><tt class="literal">/tmp</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">comment</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>Sets the comment that appears with the share.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">volume</tt></p>
+</td>
+<td>
+<p>string</p>
+</td>
+<td>
+<p>Sets the MS-DOS volume name for the share.</p>
+</td>
+<td>
+<p>Share name</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">read only</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, allows read-only access to a share.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">writable</tt> <tt class="literal">(write ok or writeable)</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">no</tt>, allows read-only access to a share. If
+<tt class="literal">yes</tt>, both reading and writing are allowed.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-5.1.1"/>
+
+<h3 class="head3">path</h3>
+
+<p>This <a name="INDEX-63"/>option, which has the synonym
+<tt class="literal">directory</tt>, indicates the pathname for the root of
+the shared directory or printer. You can choose any directory on the
+Samba server, so long as the owner of the Samba process that is
+connecting has read and write access to that directory. If the path
+is for a printing share, it should point to a temporary directory
+where files can be written on the server before being spooled to the
+target printer ( <em class="filename"> /tmp</em> and
+<em class="filename">/var/spool</em> are popular choices). If this path is
+for a disk share, the contents of the folder representing the share
+name on the client will match the contents of the directory on the
+Samba server.</p>
+
+<p>The directory specified as the value for <tt class="literal">path</tt> can
+be given as a relative path, in which case it will be relative to the
+directory specified by the <tt class="literal">root</tt>
+<tt class="literal">directory</tt> parameter. Because
+<tt class="literal">root</tt> <tt class="literal">directory</tt> defaults to root
+(<em class="filename">/</em> ), it is generally a good idea to use
+absolute paths for the <tt class="literal">path</tt> parameter, unless
+<tt class="literal">root</tt> <tt class="literal">directory</tt> has been set to
+something other than the default.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-5.1.2"/>
+
+<h3 class="head3">comment</h3>
+
+<p>The <tt class="literal">comment</tt><a name="INDEX-64"/> option allows you to enter a
+comment that will be sent to the client when it attempts to browse
+the share. The user can see the comment by using the Details view on
+the share folder or with the <em class="emphasis">net view</em> command at
+an MS-DOS prompt. For example, here is how you might insert a comment
+for a share:</p>
+
+<blockquote><pre class="code">[network]
+    comment = Network Drive
+    path = /export/samba/network</pre></blockquote>
+
+<p>Be sure not to confuse the <tt class="literal">comment</tt> option, which
+documents a Samba server's shares, with the
+<tt class="literal">server</tt> <tt class="literal">string</tt> option, which
+documents the server itself.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-5.1.3"/>
+
+<h3 class="head3">volume</h3>
+
+<p>This <a name="INDEX-65"/>option allows you to specify the volume
+name of the share, which would otherwise default to the name of the
+share given in the <em class="filename">smb.conf</em> file.</p>
+
+<p>Some software installation programs check the volume name of the
+distribution CD-ROM to make sure the correct CD-ROM is in the drive
+before attempting to install from it. If you copy the contents of the
+CD-ROM into a network share and wish to install from there, you can
+use this option to make sure the installation program sees the
+correct volume name:</p>
+
+<blockquote><pre class="code">[network]
+    comment = Network Drive
+    volume = ASVP-102-RTYUIKA
+    path = /home/samba/network</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-5.1.4"/>
+
+<h3 class="head3">read only, writable</h3>
+
+<p>The options <tt class="literal">read</tt><a name="INDEX-66"/> <tt class="literal">only</tt>
+and <tt class="literal">writable</tt><a name="INDEX-67"/> (also called
+<tt class="literal">writeable</tt><a name="INDEX-68"/> or
+<tt class="literal">write</tt><a name="INDEX-69"/> <tt class="literal">ok</tt> ) are really two
+ways of saying the same thing, but they are approached from opposite
+ends. For example, you can set either of the following options in the
+<tt class="literal">[global]</tt> section or in an individual share:</p>
+
+<blockquote><pre class="code">read only = yes
+writable = no</pre></blockquote>
+
+<p>If either option is set as shown, data can be read from a share, but
+cannot be written to it. You might think you would need this option
+only if you were creating a read-only share. However, note that this
+read-only behavior is the <em class="emphasis">default</em> action for
+shares; if you want to be able to write data to a share, you must
+explicitly specify one of the following options in the configuration
+file for each share:</p>
+
+<blockquote><pre class="code">read only = no
+writable = yes</pre></blockquote>
+
+<p>If you specify more than one occurrence of either option, Samba will
+adhere to the last value it encounters for the share. <a name="INDEX-70"/><a name="INDEX-71"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-6-SECT-6"/>
+
+<h2 class="head1">Networking Options with Samba</h2>
+
+<p><a name="INDEX-72"/><a name="INDEX-73"/>If
+you're running <a name="INDEX-74"/><a name="INDEX-75"/>Samba on a multihomed
+system (on multiple subnets), you will need to configure Samba to use
+all the network interfaces. Another use for the options presented in
+this section is to implement better security by allowing or
+disallowing connections on the specified interfaces.</p>
+
+<p>Let's assume that our Samba server can access both
+the subnets 192.168.220.* and 134.213.233.*. Here are our additions
+to the configuration file to add the networking configuration
+options:</p>
+
+<blockquote><pre class="code">[global]
+    #  Networking configuration options
+    hosts allow = 192.168.220. 134.213.233.
+    hosts deny = 192.168.220.102
+    interfaces = 192.168.220.100/255.255.255.0 \
+                    134.213.233.110/255.255.255.0
+    bind interfaces only = yes</pre></blockquote>
+
+<p>Take a look at the <tt class="literal">hosts</tt><a name="INDEX-76"/> <tt class="literal">allow</tt>
+and <tt class="literal">hosts</tt><a name="INDEX-77"/> <tt class="literal">deny</tt> options. If these
+options sound familiar, you're probably thinking of
+the <em class="filename">hosts.allow</em> and
+<em class="filename">hosts.deny</em> files that are found in the
+<em class="filename">/etc</em> directories of many Unix systems. The
+purpose of these options is identical to those files; they provide a
+means of security by allowing or denying the connections of other
+hosts based on their IP addresses. We could use the
+<em class="filename">hosts.allow</em> and <em class="filename">hosts.deny</em>
+files, but we are using this method instead because there might be
+services on the server that we want others to access without also
+giving them access to Samba's disk or printer
+shares.</p>
+
+<p>With the <tt class="literal">hosts</tt> <tt class="literal">allow</tt> option,
+we've specified a 192.168.220 IP address, which is
+equivalent to saying: &quot;All hosts on the 192.168.220
+subnet.&quot; However, we've explicitly
+specified in a <tt class="literal">hosts</tt> <tt class="literal">deny</tt> line
+that 192.168.220.102 is not to be allowed access.</p>
+
+<p>You might be wondering why 192.168.220.102 will be denied even though
+it is still in the subnet matched by the <tt class="literal">hosts</tt>
+<tt class="literal">allow</tt> option. It is important to understand how
+Samba sorts out the rules specified by <tt class="literal">hosts</tt>
+<tt class="literal">allow</tt> and <tt class="literal">hosts</tt> <tt class="literal">deny</tt>
+:</p>
+
+<ol><li>
+<p>If no <tt class="literal">allow</tt> or <tt class="literal">deny</tt> options are
+defined anywhere in <em class="filename">smb.conf</em>, Samba will allow
+connections from any system.</p>
+</li><li>
+<p>If <tt class="literal">hosts</tt> <tt class="literal">allow</tt> or
+<tt class="literal">hosts</tt> <tt class="literal">deny</tt> options are defined
+in the <tt class="literal">[global]</tt> section of
+<em class="filename">smb.conf</em>, they will apply to all shares, even if
+either option is defined in one or more of the shares.</p>
+</li><li>
+<p>If only a <tt class="literal">hosts</tt> <tt class="literal">allow</tt> option is
+defined for a share, only the hosts listed will be allowed to use the
+share. All others will be denied.</p>
+</li><li>
+<p>If only a <tt class="literal">hosts</tt> <tt class="literal">deny</tt> option is
+defined for a share, any client which is not on the list will be able
+to use the share.</p>
+</li><li>
+<p>If both a <tt class="literal">hosts</tt> <tt class="literal">allow</tt> and
+<tt class="literal">hosts</tt> <tt class="literal">deny</tt> option are defined,
+a host must appear in the allow list and not appear in the deny list
+(in any form) to access the share. Otherwise, the host will not be
+allowed.</p>
+</li></ol><a name="samba2-CHP-6-NOTE-131"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>Take care that you don't explicitly allow a host to
+access a share, but then deny access to the entire subnet of which
+the host is part.</p>
+</blockquote>
+
+<p>Let's look at another example of that final item.
+Consider the following options:</p>
+
+<blockquote><pre class="code">hosts allow = 111.222.
+hosts deny = 111.222.333.</pre></blockquote>
+
+<p>In this case, only the hosts that belong to the subnet 111.222.*.*
+will be allowed access to the Samba shares. However, if a client
+belongs to the 111.222.333.* subnet, it will be denied access, even
+though it still matches the qualifications outlined by
+<tt class="literal">hosts</tt> <tt class="literal">allow</tt>. The client must
+appear on the <tt class="literal">hosts</tt> <tt class="literal">allow</tt> list
+and <em class="emphasis">must not</em> appear on the
+<tt class="literal">hosts</tt> <tt class="literal">deny</tt> list to gain access
+to a Samba share.</p>
+
+<p>The other two options that we've specified are
+<tt class="literal">interfaces</tt> and <tt class="literal">bind</tt>
+<tt class="literal">interface</tt> <tt class="literal">only</tt>.
+Let's look at the <tt class="literal">interfaces</tt>
+option first. Samba, by default, sends data only from the primary
+network interface, which in our example is the 192.168.220.100
+subnet. If we would like it to send data to more than that one
+interface, we need to specify the complete list with the
+<tt class="literal">interfaces</tt> option. In the previous example,
+we've bound Samba to interface with both subnets
+(192.168.220 and 134.213.233) on which the system is operating by
+specifying the other network interface address: 134.213.233.100. If
+you have more than one interface on your computer, you should always
+set this option, as there is no guarantee that the primary interface
+that Samba chooses will be the right one.</p>
+
+<p>Finally, the <tt class="literal">bind</tt> <tt class="literal">interfaces</tt>
+<tt class="literal">only</tt> option instructs the
+<em class="filename">nmbd</em> process not to accept any broadcast
+messages other than on the subnets specified with the
+<tt class="literal">interfaces</tt> option. This is different from the
+<tt class="literal">hosts</tt> <tt class="literal">allow</tt> and
+<tt class="literal">hosts</tt> <tt class="literal">deny</tt> options, which
+prevent clients from making connections to services, but not from
+receiving broadcast messages. Using the <tt class="literal">bind</tt>
+<tt class="literal">interfaces</tt> <tt class="literal">only</tt> option is a way
+to shut out all datagrams from foreign subnets. In addition, it
+instructs the <em class="emphasis">smbd</em> process to bind to only the
+interface list given by the <em class="emphasis">interfaces</em> option.
+This restricts the networks that Samba will serve.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-6-SECT-6.1"/>
+
+<h3 class="head2">Networking Options</h3>
+
+<p>The networking options we introduced earlier are summarized in <a href="ch06.html#samba2-CHP-6-TABLE-6">Table 6-6</a>.</p>
+
+<a name="samba2-CHP-6-TABLE-6"/><h4 class="head4">Table 6-6. Networking configuration options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">hosts allow (allow</tt> <tt class="literal">hosts)</tt></p>
+</td>
+<td>
+<p>string (list of hostnames)</p>
+</td>
+<td>
+<p>Client systems that can connect to Samba.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">hosts deny (deny</tt> <tt class="literal">hosts)</tt></p>
+</td>
+<td>
+<p>string (list of hostnames)</p>
+</td>
+<td>
+<p>Client systems that cannot connect to Samba.</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">interfaces</tt></p>
+</td>
+<td>
+<p>string (list of IP/netmask combinations)</p>
+</td>
+<td>
+<p>Network interfaces Samba will respond to. Allows correcting defaults.</p>
+</td>
+<td>
+<p>System-dependent</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">bind</tt></p>
+
+<p><tt class="literal">interfaces only</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>If set to <tt class="literal">yes</tt>, Samba will bind only to those
+interfaces specified by the <tt class="literal">interfaces</tt> option.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-6.1.1"/>
+
+<h3 class="head3">hosts allow</h3>
+
+<p>The <tt class="literal">hosts</tt> <tt class="literal">allow</tt> option
+(sometimes written as <tt class="literal">allow</tt>
+<tt class="literal">hosts</tt>) specifies the clients that have permission
+to access shares on the Samba server, written as a comma- or
+space-separated list of hostnames of systems or their IP addresses.
+You can gain quite a bit of security by simply placing your
+LAN's subnet address in this option.</p>
+
+<p>You can specify any of the following formats for this option:</p>
+
+<ul><li>
+<p>Hostnames, such as <tt class="literal">ftp.example.com</tt> .</p>
+</li><li>
+<p>IP addresses, such as <tt class="literal">130.63.9.252</tt>.</p>
+</li><li>
+<p>Domain names, which can be differentiated from individual hostnames
+because they start with a dot. For example,
+<tt class="literal">.ora.com</tt> represents all systems within the
+<em class="emphasis">ora.com</em> domain.</p>
+</li><li>
+<p>Netgroups, which start with an at sign (<tt class="literal">@</tt>), such
+as <tt class="literal">@printerhosts</tt>. Netgroups are usually available
+only on systems running NIS or NIS+. If netgroups are supported on
+your system, there should be a <tt class="literal">netgroups</tt> manual
+page that describes them in more detail.</p>
+</li><li>
+<p>Subnets, which end with a dot. For example,
+<tt class="literal">130.63.9</tt>. means all the systems whose IP addresses
+begin with 130.63.9.</p>
+</li><li>
+<p>The keyword <tt class="literal">ALL</tt>, which allows any client access.</p>
+</li><li>
+<p>The keyword <tt class="literal">EXCEPT</tt> followed by one or more names,
+IP addresses, domain names, netgroups, or subnets. For example, you
+could specify that Samba allow all hosts except those on the
+192.168.110 subnet with <tt class="literal">hosts</tt>
+<tt class="literal">allow</tt> <tt class="literal">=</tt> <tt class="literal">ALL</tt>
+<tt class="literal">EXCEPT</tt> <tt class="literal">192.168.110</tt>. (remember
+to include the trailing dot).</p>
+</li></ul>
+<p>Using the <tt class="literal">ALL</tt> keyword by itself is almost always a
+bad idea because it means that crackers on any network can access
+your Samba server.</p>
+
+<p>The hostname <tt class="literal">localhost</tt>, for the loopback address
+127.0.0.1, is included in the <tt class="literal">hosts</tt>
+<tt class="literal">allow</tt> list by default and does not need to be
+listed explicitly unless you have specified the
+<tt class="literal">bind</tt> <tt class="literal">interfaces</tt>
+<tt class="literal">only</tt> parameter. This address is required for Samba
+to work properly.</p>
+
+<p>Other than that, there is no default value for the
+<tt class="literal">hosts</tt> <tt class="literal">allow</tt> configuration
+option. The default course of action in the event that neither the
+<tt class="literal">hosts</tt> <tt class="literal">allow</tt> or
+<tt class="literal">hosts</tt> <tt class="literal">deny</tt> option is specified
+in <em class="filename">smb.conf</em> is to allow access from all sources.</p>
+
+<a name="samba2-CHP-6-NOTE-132"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>If you specify <tt class="literal">hosts allow</tt> in the
+<tt class="literal">[global]</tt> section, that definition will override
+any <tt class="literal">hosts allow</tt> lines in the share definitions.
+This is the opposite of the usual behavior, which is for parameters
+set in share definitions to override default values set in the
+<tt class="literal">[global]</tt> section.<a name="INDEX-78"/></p>
+</blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-6.1.2"/>
+
+<h3 class="head3">hosts deny</h3>
+
+<p>The <tt class="literal">hosts</tt> <tt class="literal">deny</tt> option
+(synonymous with <tt class="literal">deny</tt> <tt class="literal">hosts</tt>)
+specifies client systems that do not have permission to access a
+share, written as a comma- or space-separated list of hostnames or
+their IP addresses. Use the same format for specifying clients as the
+<tt class="literal">hosts</tt> <tt class="literal">allow</tt> option earlier. For
+example, to restrict access to the server from everywhere but
+<tt class="literal">example.com</tt>, you could write:</p>
+
+<blockquote><pre class="code">hosts deny = ALL EXCEPT .example.com</pre></blockquote>
+
+<p>There is no default value for the <tt class="literal">hosts</tt>
+<tt class="literal">deny</tt> configuration option, although the default
+course of action in the event that neither option is specified is to
+allow access from all sources. Also, if you specify this option in
+the <tt class="literal">[global]</tt> section of the configuration file, it
+will override any <tt class="literal">hosts</tt> <tt class="literal">deny</tt>
+options defined in shares. If you wish to deny access to specific
+shares, omit both the <tt class="literal">hosts</tt>
+<tt class="literal">allow</tt> and <tt class="literal">hosts</tt>
+<tt class="literal">deny</tt> options from the <tt class="literal">[global]</tt>
+section of the configuration file.</p>
+
+<a name="samba2-CHP-6-NOTE-133"/><blockquote class="note"><h4 class="objtitle">NOTE</h4>
+<p>Never include the loopback address (<tt class="literal">localhost</tt> at
+IP address 127.0.0.1) in the <tt class="literal">hosts deny</tt> list. The
+<em class="filename">smbpasswd</em> program needs to connect through the
+loopback address to the Samba server as a client to change a
+user's encrypted password. If the loopback address
+is disabled, the locally generated packets requesting the change of
+the encrypted password will be discarded by Samba.</p>
+
+
+<p>In addition, both local browsing propagation and some functions of
+SWAT require access to the Samba server through the loopback address
+and will not work correctly if this address is disabled.
+<a name="INDEX-79"/></p>
+</blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-6.1.3"/>
+
+<h3 class="head3">interfaces</h3>
+
+<p>The <tt class="literal">interfaces</tt><a name="INDEX-80"/> option specifies the
+networks that you want the Samba server to recognize and respond to.
+This option is handy if you have a computer that resides on more than
+one network subnet. If this option is not set, Samba searches for the
+primary network interface of the server (typically the first Ethernet
+card) upon startup and configures itself to operate on only that
+subnet. If the server is configured for more than one subnet and you
+do not specify this option, Samba will only work on the first subnet
+it encounters. You must use this option to force Samba to serve the
+other subnets on your network.</p>
+
+<p>The value of this option is one or more sets of IP address/netmask
+pairs, as in the following:</p>
+
+<blockquote><pre class="code">interfaces = 192.168.220.100/255.255.255.0 192.168.210.30/255.255.255.0</pre></blockquote>
+
+<p>You can optionally specify a
+<a name="INDEX-81"/><a name="INDEX-82"/>CIDR format bitmask, like this:</p>
+
+<blockquote><pre class="code">interfaces = 192.168.220.100/24 192.168.210.30/24</pre></blockquote>
+
+<p>The number after the slash specifies the number of bits that will be
+set in the netmask. For example, the number 24 means that the first
+24 (of 32) bits will be set in the bitmask, which is the same as
+specifying 255.255.255.0 as the netmask. Likewise, 16 would be
+equivalent to a netmask of 255.255.0.0, and 8 would be the same as a
+netmask of 255.0.0.0.</p>
+<a name="samba2-CHP-6-NOTE-135"/><blockquote class="note"><h4 class="objtitle">WARNING</h4>
+<p>This option might not work correctly if you are using DHCP.</p>
+</blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-6.1.4"/>
+
+<h3 class="head3">bind interfaces only</h3>
+
+<p>The <tt class="literal">bind</tt><a name="INDEX-83"/>
+<tt class="literal">interfaces</tt> <tt class="literal">only</tt> option can be
+used to force the <em class="emphasis">smbd</em> and
+<em class="emphasis">nmbd</em> processes to respond only to those
+addresses specified by the <tt class="literal">interfaces</tt> option. The
+<em class="emphasis">nmbd</em> process normally binds to the all-addresses
+interface (0.0.0.0.) on ports 137 and 138, allowing it to receive
+broadcasts from anywhere. However, you can override this behavior
+with the following:</p>
+
+<blockquote><pre class="code">bind interfaces only = yes</pre></blockquote>
+
+<p>This will cause Samba to ignore any packets (including broadcast
+packets) whose source address does not correspond to any of the
+network interfaces specified by the <tt class="literal">interfaces</tt>
+option. You should avoid using this option if you want to allow
+temporary network connections, such as those created through SLIP or
+PPP. It's very rare that this option is needed, and
+it should be used only by experts.</p>
+
+<a name="samba2-CHP-6-NOTE-136"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>If you set <tt class="literal">bind interfaces only</tt> to <tt class="literal">yes</tt>
+, add the <a name="INDEX-84"/><a name="INDEX-85"/><a name="INDEX-86"/>local host
+address (127.0.01) to the
+&quot;interfaces&quot; list. Otherwise,
+<em class="emphasis">smbpasswd</em> will be unable to connect to the
+server using its default mode in order to change a password, local
+browse list propagation will fail, and some functions of swat will
+not work properly. <a name="INDEX-87"/><a name="INDEX-88"/></p>
+</blockquote>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-6-SECT-7"/>
+
+<h2 class="head1">Virtual Servers</h2>
+
+<p><a name="INDEX-89"/>Virtual
+servers can be used to create the illusion of having multiple servers
+on the network, when in reality there is only one. The technique is
+simple to implement: a system simply registers more than one NetBIOS
+name in association with its IP address. There are tangible benefits
+to doing this.</p>
+
+<p>For example, the accounting department might have an
+<tt class="literal">accounting</tt> server, and clients of it would see
+just the accounting disks and printers. The marketing department
+could have its own server, <tt class="literal">marketing</tt>, with its own
+reports, and so on. However, all the services would be provided by
+one medium-size Unix server (and one relaxed administrator) instead
+of having one small server per department.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-6-SECT-7.1"/>
+
+<h3 class="head2">Virtual Server Configuration Options</h3>
+
+<p><a name="INDEX-90"/><a name="INDEX-91"/>Samba will allow a server to use more
+than one NetBIOS name with the <tt class="literal">netbios</tt>
+<tt class="literal">aliases</tt> option. See <a href="ch06.html#samba2-CHP-6-TABLE-7">Table 6-7</a>.</p>
+
+<a name="samba2-CHP-6-TABLE-7"/><h4 class="head4">Table 6-7. Virtual server configuration options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">netbios</tt> <tt class="literal">aliases</tt></p>
+</td>
+<td>
+<p>string (list of NetBIOS names)</p>
+</td>
+<td>
+<p>Additional NetBIOS names to respond to, for use with multiple
+&quot;virtual&quot; Samba servers</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-7.1.1"/>
+
+<h3 class="head3">netbios aliases</h3>
+
+<p>The <tt class="literal">netbios</tt><a name="INDEX-92"/>
+<tt class="literal">aliases</tt> option can be used to give the Samba
+server more than one NetBIOS name. Each NetBIOS name listed as a
+value will be displayed in the Network Neighborhood of Windows
+clients. When a connection is requested to any of the servers, it
+will connect to the same Samba server.</p>
+
+<p>This might come in handy, for example, if you're
+transferring three departments' data to a single
+Unix server with larger and faster disks and are retiring or
+reallocating the old Windows NT/2000 servers. If the three servers
+are called <tt class="literal">sales</tt>, <tt class="literal">accounting</tt>,
+and <tt class="literal">admin</tt>, you can have Samba represent all three
+servers with the following options:</p>
+
+<blockquote><pre class="code">[global]
+    netbios aliases = sales accounting admin
+    include = /usr/local/samba/lib/smb.conf.%L</pre></blockquote>
+
+<p>See <a href="ch06.html#samba2-CHP-6-FIG-5">Figure 6-5</a> for what the Network Neighborhood
+would display from a client. When a client attempts to connect to
+Samba, it will specify the name of the server to which
+it's trying to connect, which is made available in
+the configuration file through the <tt class="literal">%L</tt> variable. If
+the requested server is <tt class="literal">sales</tt>, Samba will include
+the file <em class="filename">/usr/local/samba/lib/smb.conf.sales</em>.
+This file might contain global and share declarations exclusively for
+the sales team, such as the following:</p>
+
+<blockquote><pre class="code">[global]
+    workgroup = SALES
+    hosts allow = 192.168.10.255
+
+[sales2003]
+    path = /usr/local/samba/sales/sales2003/
+...</pre></blockquote>
+
+<p>This particular example would set the workgroup to SALES as well and
+set the IP address to allow connections only from the SALES subnet
+(192.168.10). In addition, it would offer shares specific to the
+sales department.</p>
+
+<div class="figure"><a name="samba2-CHP-6-FIG-5"/><img src="figs/sam2_0605.gif"/></div><h4 class="head4">Figure 6-5. Using NetBIOS aliases for a Samba server</h4>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-6-SECT-8"/>
+
+<h2 class="head1">Logging Configuration Options</h2>
+
+<p><a name="INDEX-93"/><a name="INDEX-94"/>Occasionally,
+we need to find out what Samba is up to. This is especially true when
+Samba is performing an unexpected action or is not performing at all.
+To find out this information, we need to check
+Samba's log files to see exactly why it did what it
+did.</p>
+
+<p>Samba <a name="INDEX-95"/>log files
+can be as brief or verbose as you like. Here is an example of what a
+Samba log file looks like:</p>
+
+<blockquote><pre class="code">[2002/07/21 13:23:25, 3] smbd/service.c:close_cnum(514)
+  maya (172.16.1.6) closed connection to service IPC$
+[2002/07/21 13:23:25, 3] smbd/connection.c:yield_connection(40)
+  Yielding connection to IPC$
+[2002/07/21 13:23:25, 3] smbd/process.c:process_smb(615)
+  Transaction 923 of length 49
+[2002/07/21 13:23:25, 3] smbd/process.c:switch_message(448)
+  switch message SMBread (pid 467)
+[2002/07/21 13:23:25, 3] lib/doscalls.c:dos_ChDir(336)
+  dos_ChDir to /home/samba
+[2002/07/21 13:23:25, 3] smbd/reply.c:reply_read(2199)
+  read fnum=4207 num=2820 nread=2820
+[2002/07/21 13:23:25, 3] smbd/process.c:process_smb(615)
+  Transaction 924 of length 55
+[2002/07/21 13:23:25, 3] smbd/process.c:switch_message(448)
+  switch message SMBreadbraw (pid 467)
+[2002/07/21 13:23:25, 3] smbd/reply.c:reply_readbraw(2053)
+  readbraw fnum=4207 start=130820 max=1276 min=0 nread=1276
+[2002/07/21 13:23:25, 3] smbd/process.c:process_smb(615)
+  Transaction 925 of length 55
+[2002/07/21 13:23:25, 3] smbd/process.c:switch_message(448)
+  switch message SMBreadbraw (pid 467)</pre></blockquote>
+
+<p>Much of this information is of use only to Samba programmers.
+However, we will go over the meaning of some of these entries in more
+detail in <a href="ch12.html">Chapter 12</a>.</p>
+
+<p>Samba contains six options that allow users to describe how and where
+logging information should be written. Each of these are global
+options and cannot appear inside a share definition. Here is an
+example of some logging options that we are adding to our
+configuration file:</p>
+
+<blockquote><pre class="code">[global]
+    log level = 2
+    log file = /var/log/samba.log.%m
+    max log size = 50
+    debug timestamp = yes</pre></blockquote>
+
+<p>Here, we've added a custom log file that reports
+information up to debug level 2. This is a relatively light debugging
+level. The logging level ranges from 1 to 10, where level 1 provides
+only a small amount of information and level 10 provides a plethora
+of low-level information. Levels 2 or 3 will provide us with useful
+debugging information without wasting disk space on our server. In
+practice, you should avoid using log levels greater than 3 unless you
+are working on the Samba source code.</p>
+
+<p>The logging file is located in the <em class="filename">/var/log</em>
+directory thanks to the <tt class="literal">log</tt>
+<tt class="literal">file</tt> configuration option. However, we can use
+variable substitution to create log files specifically for individual
+users or clients, such as with the <tt class="literal">%m</tt> variable in
+the following line:</p>
+
+<blockquote><pre class="code">log file = /usr/local/logs/samba.log.%m</pre></blockquote>
+
+<p>Isolating the log messages can be invaluable in tracking down a
+network error if you know the problem is coming from a specific
+client system or user.</p>
+
+<p>We've added a precaution to the log files: no one
+log file can exceed 50 KB in size, as specified by the
+<tt class="literal">max</tt> <tt class="literal">log</tt> <tt class="literal">size</tt>
+option. If a log file exceeds this size, the contents are moved to a
+file with the same name but with the suffix <em class="emphasis">.old</em>
+appended. If the <em class="emphasis">.old</em> file already exists, it is
+overwritten and its contents are lost. The original file is cleared,
+waiting to receive new logging information. This prevents the hard
+drive from being overwhelmed with Samba log files during the life of
+the Samba daemons.</p>
+
+<p>We have decided to write the timestamps of the messages in the logs
+with the <tt class="literal">debug</tt> <tt class="literal">timestamp</tt>
+option, which is the default behavior. This will place a timestamp in
+each message written to the logging file. If we were not interested
+in this information, we could specify <tt class="literal">no</tt> for this
+option instead.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-6-SECT-8.1"/>
+
+<h3 class="head2">Using syslog</h3>
+
+<p>If you wish to use the system logger
+(<a name="INDEX-96"/>syslog<em class="filename">
+</em>) in addition to or in place of the standard Samba logging
+file, Samba provides options for this as well. However, to use
+syslog, the first thing you will have to do is make sure that Samba
+was built with the <tt class="literal">configure</tt>
+<tt class="literal">--with-syslog</tt> option. See <a href="ch02.html">Chapter 2</a> for more information on configuring and
+compiling Samba. See <a href="appe.html">Appendix E</a> for more
+information about the <tt class="literal">--with-syslog</tt> option.</p>
+
+<p>Once that is done, you will need to configure your
+<em class="filename">/etc/syslog.conf</em><a name="INDEX-97"/> to accept logging information from Samba.
+If there is not already a <tt class="literal">daemon.*</tt> entry in the
+<em class="filename">/etc/syslog.conf</em> file, add the following:</p>
+
+<blockquote><pre class="code">daemon.*        /var/log/daemon.log</pre></blockquote>
+
+<p>This specifies that any logging information from system daemons will
+be stored in the <em class="filename">/var/log/daemon.log</em> file. This
+is where the Samba information will be stored as well. From there,
+you can set a value for the <tt class="literal">syslog</tt> parameter in
+your Samba configuration file to specify which logging messages are
+to be sent to syslog. Only messages that have debug levels lower than
+the value of the <tt class="literal">syslog</tt> parameter will be sent to
+syslog. For example, setting the following:</p>
+
+<blockquote><pre class="code">syslog = 3</pre></blockquote>
+
+<p>specifies that any logging messages with a level of 2 or below will
+be sent to both syslog and the Samba logging files. (The mappings to
+<em class="filename">syslog</em> priorities are described in the upcoming
+section &quot;syslog.&quot;) To continue the
+example, let's assume that we have set the
+<tt class="literal">log</tt> <tt class="literal">level</tt> option to 4. Logging
+messages with levels of 2 and 1 will be sent to both syslog and the
+Samba logging files, and messages with a level of 3 or 4 will be sent
+to the Samba logging files, but not to syslog. If the
+<tt class="literal">syslog</tt> value exceeds the <tt class="literal">log</tt>
+<tt class="literal">level</tt> value, nothing will be sent to syslog.</p>
+
+<p>If you want to specify that messages be sent only to syslog&mdash;and
+not to the standard Samba logging files&mdash;you can place this
+option in the configuration file:</p>
+
+<blockquote><pre class="code">syslog only = yes</pre></blockquote>
+
+<p>If this is the case, any logging information above the number
+specified in the <tt class="literal">syslog</tt> option will be discarded,
+as with the <tt class="literal">log</tt> <tt class="literal">level</tt> option.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-6-SECT-8.2"/>
+
+<h3 class="head2">Logging Configuration Options</h3>
+
+<p><a href="ch06.html#samba2-CHP-6-TABLE-8">Table 6-8</a> lists each logging configuration option
+that Samba can use.</p>
+
+<a name="samba2-CHP-6-TABLE-8"/><h4 class="head4">Table 6-8. Logging configuration options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">log file</tt></p>
+</td>
+<td>
+<p>string (name of file)</p>
+</td>
+<td>
+<p>Name of the log file that Samba is to use. Works with all variables.</p>
+</td>
+<td>
+<p>Specified in Samba makefile</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">log level</tt></p>
+
+<p><tt class="literal">(debug level)</tt></p>
+</td>
+<td>
+<p>numeric (0-10)</p>
+</td>
+<td>
+<p>Amount of log/debug messages that are sent to the log file. 0 is
+none; 3 is considerable.</p>
+</td>
+<td>
+<p><tt class="literal">1</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">max log size</tt></p>
+</td>
+<td>
+<p>numeric (size in KB)</p>
+</td>
+<td>
+<p>Maximum size of log file.</p>
+</td>
+<td>
+<p><tt class="literal">5000</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">debug timestamp</tt> <tt class="literal">(timestamp logs)</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">no</tt>, doesn't timestamp logs,
+making them easier to read during heavy debugging.</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">syslog</tt></p>
+</td>
+<td>
+<p>numeric (0-10)</p>
+</td>
+<td>
+<p>Level of messages sent to <em class="emphasis">syslog</em>. Those levels
+below <tt class="literal">syslog</tt> <tt class="literal">level</tt> will be sent
+to the system logger.</p>
+</td>
+<td>
+<p><tt class="literal">1</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">syslog only</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, uses <em class="emphasis">syslog</em> entirely
+and sends no output to the Samba log files.</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-8.2.1"/>
+
+<h3 class="head3">log file</h3>
+
+<p>By default, Samba writes log information to text files in the
+<em class="filename">/usr/local/samba/var</em> directory. The
+<tt class="literal">log</tt><a name="INDEX-98"/> <tt class="literal">file</tt> option can be
+used to set the name of the log file to another location. For
+example, to put the Samba log information in
+<em class="filename">/usr/local/logs/samba.log</em>, you could use the
+following:</p>
+
+<blockquote><pre class="code">[global]
+    log file = /usr/local/logs/samba.log</pre></blockquote>
+
+<p>You can use variable substitution to create log files specifically
+for individual users or clients.</p>
+
+<p>You can override the default log file location using the
+<em class="emphasis">-l</em> command-line switch when either daemon is
+started. However, this does not override the <tt class="literal">log</tt>
+<tt class="literal">file</tt> option. If you do specify this parameter,
+initial logging information will be sent to the file specified after
+<em class="emphasis">-l</em> (or the default specified in the Samba
+makefile) until the daemons have processed the
+<em class="filename">smb.conf</em> file and know to redirect it to a new
+log file.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-8.2.2"/>
+
+<h3 class="head3">log level</h3>
+
+<p>The <tt class="literal">log</tt><a name="INDEX-99"/> <tt class="literal">level</tt> option
+sets the amount of data to be logged. Normally this is set to 0 or 1.
+However, if you have a specific problem, you might want to set it at
+3, which provides the most useful debugging information you would
+need to track down a problem. Levels above 3 provide information
+that's primarily for the developers to use for
+chasing internal bugs, and it slows down the server considerably.
+Therefore, we recommend that for normal day-to-day operation, you
+avoid setting this option to anything above 3.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-8.2.3"/>
+
+<h3 class="head3">max log size</h3>
+
+<p>The <tt class="literal">max</tt><a name="INDEX-100"/> <tt class="literal">log</tt>
+<tt class="literal">size</tt> option sets the maximum size, in kilobytes,
+of the debugging log file that Samba keeps. When the log file exceeds
+this size, the current log file is renamed to add a
+<em class="filename">.old</em> extension (erasing any previous file with
+that name) and a new debugging log file is started with the original
+name. For example:</p>
+
+<blockquote><pre class="code">[global]
+    log file = /usr/local/logs/samba.log.%m
+    max log size = 1000</pre></blockquote>
+
+<p>Here, if the size of any log file exceeds 1MB, Samba renames the log
+file <em class="emphasis">samba.log</em>.
+<em class="replaceable">machine-name</em><em class="emphasis">.old</em>,
+and a new log file is generated. If there is already a file with the
+<em class="emphasis">.old</em> extension, Samba deletes it. We highly
+recommend setting this option in your configuration files because
+debug logging (even at lower levels) can quietly eat away at your
+available disk space. Using this option protects unwary
+administrators from suddenly discovering that most of the space on a
+disk or partition has been swallowed up by a single Samba log file.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-8.2.4"/>
+
+<h3 class="head3">debug timestamp or timestamp logs</h3>
+
+<p>If you happen to be debugging a network problem and you find that the
+timestamp information within the Samba log lines gets in the way, you
+can turn it off by giving either the
+<tt class="literal">timestamp</tt><a name="INDEX-101"/> <tt class="literal">logs</tt> or the
+synonymous <tt class="literal">debug</tt><a name="INDEX-102"/>
+<tt class="literal">timestamp</tt> option a value of <tt class="literal">no</tt>.
+For example, a regular Samba log file presents its output in the
+following form:</p>
+
+<blockquote><pre class="code">12/31/01 12:03:34 toltec (172.16.1.1) connect to server network as user jay</pre></blockquote>
+
+<p>With a <tt class="literal">no</tt> value for this option, the output would
+appear without the timestamp:</p>
+
+<blockquote><pre class="code">toltec (172.16.1.1) connect to server network as user jay</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-8.2.5"/>
+
+<h3 class="head3">syslog</h3>
+
+<p>The <tt class="literal">syslog</tt><a name="INDEX-103"/> option causes Samba log
+messages to be sent to the Unix system logger. The type of log
+information to be sent is specified as a numeric value. Like the
+<tt class="literal">log</tt> <tt class="literal">level</tt> option, it can be a
+number from 0 to 10. Logging information with a level less than the
+number specified will be sent to the system logger. Debug logs
+greater than or equal to the <tt class="literal">syslog</tt> level, but
+less than log level, will still be sent to the standard Samba log
+files. For example:</p>
+
+<blockquote><pre class="code">[global]
+    log level = 3
+    syslog = 1</pre></blockquote>
+
+<p>With this, all logging information with a level of 0 would be sent to
+the standard Samba logs and the system logger, while information with
+levels 1, 2, and 3 would be sent only to the standard Samba logs.
+Levels above 3 are not logged at all. All messages sent to the system
+logger are mapped to a priority level that the syslogd daemon
+understands, as shown in <a href="ch06.html#samba2-CHP-6-TABLE-9">Table 6-9</a>. The default
+level is 1.</p>
+
+<a name="samba2-CHP-6-TABLE-9"/><h4 class="head4">Table 6-9. syslog priority conversion</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Log level</p>
+</th>
+<th>
+<p>syslog priority</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p>0</p>
+</td>
+<td>
+<p><tt class="literal">LOG_ERR</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>1</p>
+</td>
+<td>
+<p><tt class="literal">LOG_WARNING</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>2</p>
+</td>
+<td>
+<p><tt class="literal">LOG_NOTICE</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>3</p>
+</td>
+<td>
+<p><tt class="literal">LOG_INFO</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p>4 and above</p>
+</td>
+<td>
+<p><tt class="literal">LOG_DEBUG</tt></p>
+</td>
+</tr>
+
+</table>
+
+<p>If you wish to use <em class="emphasis">syslog</em>, you will have to run
+<tt class="literal">configure</tt> <tt class="literal">--with-syslog</tt> when
+compiling Samba, and you will need to configure your
+<em class="filename">/etc/syslog.conf</em> to suit. (See <a href="ch06.html#samba2-CHP-6-SECT-8.1">Section 6.8.1</a>, earlier in this chapter.)</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-6-SECT-8.2.6"/>
+
+<h3 class="head3">syslog only</h3>
+
+<p>The <tt class="literal">syslog</tt><a name="INDEX-104"/> <tt class="literal">only</tt> option
+tells Samba not to use its own logging files at all and to use only
+the system logger. To enable this, specify the following option in
+the global section of the Samba configuration file:</p>
+
+<a name="INDEX-105"/><a name="INDEX-106"/><a name="INDEX-107"/><blockquote><pre class="code">[global]
+    syslog only = yes</pre></blockquote>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<hr/><h4 class="head4">Footnotes</h4><blockquote><a name="FOOTNOTE-1"/> <p><a href="#FNPTR-1">[1]</a> Depending on your system, this file might not
+be <em class="emphasis">/etc/printcap</em>. You can use the
+<em class="emphasis">testparm</em> command that comes with Samba to dump
+the parameter definitions and determine the value of the
+<tt class="literal">printcap</tt> <tt class="literal">name</tt> configuration
+option. The value assigned to it is the default value chosen when
+Samba was configured and compiled, which should be correct.</p>
+<a name="FOOTNOTE-2"/> <p><a href="#FNPTR-2">[2]</a> We are referring here to the window that
+opens when a printer icon in the Printers control panel is
+double-clicked.</p> </blockquote><hr/><h4 class="head4"><a href="toc.html">TOC</a></h4></body></html>

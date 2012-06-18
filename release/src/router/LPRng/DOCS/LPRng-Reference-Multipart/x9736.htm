@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Authorization and Quotas</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Accounting " href="accountingref.htm">
+    <link rel="PREVIOUS" title="Accounting File" href="x9696.htm">
+    <link rel="NEXT" title=
+    "Accessing Printer Hardware Pagecounters" href="x9761.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x9696.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          18. Accounting</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x9761.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN9736">18.4. Authorization and
+      Quotas</a></h1>
+
+      <p>In addition to simply recording accounting information the
+      accounting procedures can be used to check print quotas or
+      update databases. This is done by using the Accounting Check
+      <var class="LITERAL">:achk</var> flag and the <var class=
+      "LITERAL">:as</var>, <var class="LITERAL">:ae</var>, and <var
+      class="LITERAL">:af</var> network connection or program
+      capabilities.</p>
+
+      <p>If the <var class="LITERAL">:achk</var> flag is set and
+      the <var class="LITERAL">:as=</var> option specifies a
+      program to be run, or the <var class="LITERAL">:af=</var>
+      option specifies a program to be run or a network connection
+      then output of the program or information read from the
+      network connection is used to control the handling of the
+      job. If the <var class="LITERAL">:as=</var> option specifies
+      a program to be run then the program is run and the exit code
+      and output is saved. If the <var class="LITERAL">:as=</var>
+      option specifies a string and the <var class=
+      "LITERAL">:af=</var> option specifies a program to be run or
+      a remote host to be contacted then the <var class=
+      "LITERAL">:as=</var> value is written to the program STDIN or
+      remote host. The program STDOUT or network connection is read
+      and saved and the program exit code is saved.</p>
+
+      <p>If the information was read from a program, then the exit
+      code of the program is checked:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN9752"></a>
+<pre class="SCREEN">
+    Exit Code    Action
+    JSUCC (0)    process data read
+    JFAIL        retry with JFAIL status
+    JHOLD        hold job
+    JREMOVE      remove job
+    JABORT       abort processing jobs
+    other        abort processing jobs
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If the information was read from a network connection or
+      the program exited with JSUCC (0) then the start of the first
+      line of the information read is used. If this line starts
+      with the following case insensitive words then the following
+      actions are taken:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN9755"></a>
+<pre class="SCREEN">
+    Word         Action
+    (blank)      process job
+    ACCEPT       process job
+    FAIL         retry with JFAIL status
+    HOLD         hold job
+    REMOVE       remove job
+    (other)      abort processing jobs
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>These facilities can be used to implement a wide variety
+      of quota mechanisms. The most simple method is to create a
+      script or program that can be run as the <var class=
+      "LITERAL">:as=</var> program. This would connect to a
+      database server or check a database to see if user quotas had
+      been exceeded. If they had, then it would return a <var
+      class="LITERAL">REMOVE</var> or <var class=
+      "LITERAL">HOLD</var> status as appropriate.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x9696.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x9761.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Accounting
+          File</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "accountingref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Accessing
+          Printer Hardware Pagecounters</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,11 @@
+Preparation Date: Fri Aug 21, 1998
+Preparer:	  John H Terpstra <jht@samba.org>
+
+Instructions:	Preparing Samba Packages for Red Hat Linux 5.X
+===============================================================
+
+We provide support only for current versions of Red Hat Linux.
+
+To produce the RPMS simply type:
+	sh makerpms.sh
+

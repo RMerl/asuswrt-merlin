@@ -1,0 +1,55 @@
+<!--
+	vim:ft=dtd
+	Samba extensions to DocBook 
+	PUBLIC identifier: -//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN
+	URL: http://www.samba.org/samba/DTD/samba-doc
+
+	Copyright (C) Jelmer Vernooij 2003-2005
+ -->
+
+<!ENTITY % local.tech.char.class "|smbconfoption|smbconfsection">
+<!ENTITY % local.linespecific.class "|smbconfblock">
+<!ENTITY % local.informal.class "|imagefile">
+
+<!ENTITY % DocBookDTD 
+	PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+ %DocBookDTD;
+
+<!ENTITY % samba.entities PUBLIC 
+	"-//Samba-Team//ENTITIES Samba Specific Entities V1.0//EN" 
+	"samba.entities">
+%samba.entities;
+
+<!ELEMENT smbconfblock ((smbconfoption|smbconfsection|smbconfcomment)*)>
+<!ELEMENT smbconfcomment (#PCDATA)>
+<!ELEMENT smbconfsection EMPTY>
+<!ATTLIST smbconfsection
+	name CDATA #REQUIRED>
+<!ELEMENT smbconfoption (#PCDATA|replaceable)*>
+<!ATTLIST smbconfoption 
+	name CDATA #REQUIRED>
+
+
+<!ELEMENT imagefile (#PCDATA)>
+<!ATTLIST imagefile scale CDATA #IMPLIED>
+<!ELEMENT samba:parameter (synonym*,description,related*,value*)>
+<!ATTLIST samba:parameter 
+	name CDATA #REQUIRED
+	type CDATA #REQUIRED
+	context CDATA #REQUIRED
+	advanced CDATA #IMPLIED
+	developer CDATA #IMPLIED
+	wizard CDATA #IMPLIED
+	basic CDATA #IMPLIED
+	print CDATA #IMPLIED
+>
+<!ELEMENT description ANY>
+<!ELEMENT synonym (#PCDATA)>
+<!ELEMENT related (#PCDATA)>
+<!ELEMENT value (#PCDATA|comment)*>
+<!ATTLIST value 
+	type CDATA #REQUIRED>
+<!ELEMENT comment (#PCDATA)>
+<!ATTLIST ulink 
+	noescape CDATA #IMPLIED>

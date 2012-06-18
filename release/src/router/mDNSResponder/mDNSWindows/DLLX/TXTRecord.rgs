@@ -1,0 +1,27 @@
+HKCR
+{
+	Bonjour.TXTRecord.1 = s 'TXTRecord Class'
+	{
+		CLSID = s '{AFEE063C-05BA-4248-A26E-168477F49734}'
+	}
+	Bonjour.TXTRecord = s 'TXTRecord Class'
+	{
+		CLSID = s '{AFEE063C-05BA-4248-A26E-168477F49734}'
+		CurVer = s 'Bonjour.TXTRecord.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {AFEE063C-05BA-4248-A26E-168477F49734} = s 'TXTRecord Class'
+		{
+			ProgID = s 'Bonjour.TXTRecord.1'
+			VersionIndependentProgID = s 'Bonjour.TXTRecord'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			val AppID = s '%APPID%'
+			'TypeLib' = s '{18FBED6D-F2B7-4EC8-A4A4-46282E635308}'
+		}
+	}
+}

@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<style>
+html{
+	margin:0 0;
+	padding:0px;
+}
+body{
+	display: block;
+	overflow: hidden;
+}
+</style>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<link href="tabs.css" rel="stylesheet" type="text/css">
+<script type="text/javascript">
+var m = new lang();
+var g_storage = new myStorage();
+
+$("document").ready(function() {
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	// 預設顯示第一個 Tab
+	var _showTab = 0;
+	$('ul.tabs li').eq(_showTab).addClass('active');
+	$('.tab_content').hide().eq(_showTab).show();
+	
+	// 當 li 頁籤被點擊時...
+	// 若要改成滑鼠移到 li 頁籤就切換時, 把 click 改成 mouseover
+	$('ul.tabs li').click(function() {
+		// 找出 li 中的超連結 href(#id)
+		var $this = $(this),
+			_clickTab = $this.find('a').attr('href');
+		// 把目前點擊到的 li 頁籤加上 .active
+		// 並把兄弟元素中有 .active 的都移除 class
+		$this.addClass('active').siblings('.active').removeClass('active');
+		// 淡入相對應的內容並隱藏兄弟元素
+		$(_clickTab).stop(false, true).fadeIn().siblings().hide();
+ 		
+		return false;
+	}).find('a').focus(function(){
+		this.blur();
+	});
+	
+	$("button#btn_rescan").click(function(){
+		$("button#btn_rescan").attr("disabled", true);
+		$("button#btn_rescan").text("Wait");
+		parent.doRescanSamba();
+	});
+	
+	$('li#rescan a').text(m.getString('title_rescan'));
+	$('li#filter a').text(m.getString('title_filter'));
+	$('button#ok').text(m.getString('btn_ok'));
+	$('button#cancel').text(m.getString('btn_cancel'));
+	$('#btn_rescan').text(m.getString('btn_rescan'));
+	$('span#desc_rescan').text(m.getString('title_desc_rescan'));
+});
+
+function doOK(e) {
+	parent.closeJqmWindow();
+};
+
+function doCancel(e) {
+	parent.closeJqmWindow();
+};
+
+function getUrlVars(){
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++){
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+}
+</script>
+</head>
+<body>
+
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;">
+	<tr>
+  	<td>
+	    <div class="abgne_tab">
+				<ul class="tabs">
+					<li id='rescan'><a href="#tab1">重新搜尋</a></li>
+					<!--<li id='filter'><a href="#tab2">資料輸入</a></li>-->
+				</ul>
+				<div class="tab_container">
+					<div id="tab1" class="tab_content">
+						<span id="desc_rescan"></span>
+						<button id="btn_rescan">開始重新搜尋</button>
+				  </div>
+				  <!--
+					<div id="tab2" class="tab_content">			    	
+					</div>
+					-->
+				</div>
+			</div>
+    </td>    
+  </tr>
+  <tr style='height:20px'></tr>
+  <tr>
+  	<td>
+  	<div class="table_block_footer" style="text-align:right">
+    	<button id="ok" class='btnStyle' onClick="doOK();" disabled="true">OK</button>
+      <button id="cancel" class="btnStyle" onClick="doCancel();">Close</button>
+    </div>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

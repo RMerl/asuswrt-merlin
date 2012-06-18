@@ -1,0 +1,269 @@
+From e816ba79e66583216ac5d971e3a0c82e23fcb1db
+From: Denis Vlasenko
+Date: Thu, 12 Mar 2009 20:56:59 +0000
+Subject: linuxthreads fixes from Will Newton (will.newton AT gmail.com):
+ * share Sys V semaphores in order to get appropriate SEM_UNDO semantics.
+ * correct guardaddr in pthread_free() for TLS case
+ * move spinlock unlocking before restart()
+ * When exit was called from a signal handler, the restart from the manager processing the exit request instead restarted the thread in pthread_cond_timedwait. (see http://sources.redhat.com/ml/libc-ports/2006-05/msg00000.html)
+
+Signed-off-by: Bernhard Reutner-Fischer <rep.dot.nop@gmail.com>
+---
+diff --git a/libpthread/linuxthreads/descr.h b/libpthread/linuxthreads/descr.h
+index 24ec30b..47a9acd 100644
+--- a/libpthread/linuxthreads/descr.h
++++ b/libpthread/linuxthreads/descr.h
+@@ -123,9 +123,7 @@ struct _pthread_descr_struct
+       union dtv *dtvp;
+       pthread_descr self;	/* Pointer to this structure */
+       int multiple_threads;
+-# ifdef NEED_DL_SYSINFO
+       uintptr_t sysinfo;
+-# endif
+     } data;
+     void *__padding[16];
+   } p_header;
+diff --git a/libpthread/linuxthreads/manager.c b/libpthread/linuxthreads/manager.c
+index b0a2a37..69a2d48 100644
+--- a/libpthread/linuxthreads/manager.c
++++ b/libpthread/linuxthreads/manager.c
+@@ -742,15 +742,15 @@ static int pthread_handle_create(pthread_t *thread, const pthread_attr_t *attr,
+ 	  pid = __clone2(pthread_start_thread_event,
+   		 (void **)new_thread_bottom,
+ 			 (char *)stack_addr - new_thread_bottom,
+-			 CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND |
++			 CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_SYSVSEM |
+ 			 __pthread_sig_cancel, new_thread);
+ #elif _STACK_GROWS_UP
+ 	  pid = __clone(pthread_start_thread_event, (void *) new_thread_bottom,
+-			CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND |
++			CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_SYSVSEM |
+ 			__pthread_sig_cancel, new_thread);
+ #else
+ 	  pid = __clone(pthread_start_thread_event, stack_addr,
+-			CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND |
++			CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_SYSVSEM |
+ 			__pthread_sig_cancel, new_thread);
+ #endif
+ 	  saved_errno = errno;
+@@ -783,15 +783,15 @@ static int pthread_handle_create(pthread_t *thread, const pthread_attr_t *attr,
+       pid = __clone2(pthread_start_thread,
+ 		     (void **)new_thread_bottom,
+                      (char *)stack_addr - new_thread_bottom,
+-		     CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND |
++		     CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_SYSVSEM |
+ 		     __pthread_sig_cancel, new_thread);
+ #elif _STACK_GROWS_UP
+       pid = __clone(pthread_start_thread, (void *) new_thread_bottom,
+-		    CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND |
++		    CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_SYSVSEM |
+ 		    __pthread_sig_cancel, new_thread);
+ #else
+       pid = __clone(pthread_start_thread, stack_addr,
+-		    CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND |
++		    CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_SYSVSEM |
+ 		    __pthread_sig_cancel, new_thread);
+ #endif /* !NEED_SEPARATE_REGISTER_STACK */
+       saved_errno = errno;
+@@ -892,10 +892,11 @@ static void pthread_free(pthread_descr th)
+ #ifdef _STACK_GROWS_UP
+ # ifdef USE_TLS
+       size_t stacksize = guardaddr - th->p_stackaddr;
++      guardaddr = th->p_stackaddr;
+ # else
+       size_t stacksize = guardaddr - (char *)th;
+-# endif
+       guardaddr = (char *)th;
++# endif
+ #else
+       /* Guardaddr is always set, even if guardsize is 0.  This allows
+ 	 us to compute everything else.  */
+diff --git a/libpthread/linuxthreads/pthread.c b/libpthread/linuxthreads/pthread.c
+index 36961a1..f077515 100644
+--- a/libpthread/linuxthreads/pthread.c
++++ b/libpthread/linuxthreads/pthread.c
+@@ -743,17 +743,17 @@ int __pthread_initialize_manager(void)
+ 	  pid = __clone2(__pthread_manager_event,
+ 			 (void **) __pthread_manager_thread_bos,
+ 			 THREAD_MANAGER_STACK_SIZE,
+-			 CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND,
++			 CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_SYSVSEM,
+ 			 mgr);
+ #elif _STACK_GROWS_UP
+ 	  pid = __clone(__pthread_manager_event,
+ 			(void **) __pthread_manager_thread_bos,
+-			CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND,
++			CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_SYSVSEM,
+ 			mgr);
+ #else
+ 	  pid = __clone(__pthread_manager_event,
+ 			(void **) __pthread_manager_thread_tos,
+-			CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND,
++			CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_SYSVSEM,
+ 			mgr);
+ #endif
+ 
+@@ -783,13 +783,13 @@ int __pthread_initialize_manager(void)
+ #ifdef NEED_SEPARATE_REGISTER_STACK
+       pid = __clone2(__pthread_manager, (void **) __pthread_manager_thread_bos,
+ 		     THREAD_MANAGER_STACK_SIZE,
+-		     CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND, mgr);
++		     CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_SYSVSEM, mgr);
+ #elif _STACK_GROWS_UP
+       pid = __clone(__pthread_manager, (void **) __pthread_manager_thread_bos,
+-		    CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND, mgr);
++		    CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_SYSVSEM, mgr);
+ #else
+       pid = __clone(__pthread_manager, (void **) __pthread_manager_thread_tos,
+-		    CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND, mgr);
++		    CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_SYSVSEM, mgr);
+ #endif
+     }
+   if (__builtin_expect (pid, 0) == -1) {
+@@ -976,6 +976,10 @@ static void pthread_onexit_process(int retcode, void *arg)
+     struct pthread_request request;
+     pthread_descr self = thread_self();
+ 
++    /* Make sure we come back here after suspend(), in case we entered
++       from a signal handler.  */
++    THREAD_SETMEM(self, p_signal_jmp, NULL);
++
+     request.req_thread = self;
+     request.req_kind = REQ_PROCESS_EXIT;
+     request.req_args.exit.code = retcode;
+@@ -1205,13 +1209,13 @@ void __pthread_wait_for_restart_signal(pthread_descr self)
+ 
+ void __pthread_restart_old(pthread_descr th)
+ {
+-  if (atomic_increment(&th->p_resume_count) == -1)
++  if (pthread_atomic_increment(&th->p_resume_count) == -1)
+     kill(th->p_pid, __pthread_sig_restart);
+ }
+ 
+ void __pthread_suspend_old(pthread_descr self)
+ {
+-  if (atomic_decrement(&self->p_resume_count) <= 0)
++  if (pthread_atomic_decrement(&self->p_resume_count) <= 0)
+     __pthread_wait_for_restart_signal(self);
+ }
+ 
+@@ -1222,7 +1226,7 @@ __pthread_timedsuspend_old(pthread_descr self, const struct timespec *abstime)
+   int was_signalled = 0;
+   sigjmp_buf jmpbuf;
+ 
+-  if (atomic_decrement(&self->p_resume_count) == 0) {
++  if (pthread_atomic_decrement(&self->p_resume_count) == 0) {
+     /* Set up a longjmp handler for the restart signal, unblock
+        the signal and sleep. */
+ 
+@@ -1279,9 +1283,9 @@ __pthread_timedsuspend_old(pthread_descr self, const struct timespec *abstime)
+      being delivered. */
+ 
+   if (!was_signalled) {
+-    if (atomic_increment(&self->p_resume_count) != -1) {
++    if (pthread_atomic_increment(&self->p_resume_count) != -1) {
+       __pthread_wait_for_restart_signal(self);
+-      atomic_decrement(&self->p_resume_count); /* should be zero now! */
++      pthread_atomic_decrement(&self->p_resume_count); /* should be zero now! */
+       /* woke spontaneously and consumed restart signal */
+       return 1;
+     }
+diff --git a/libpthread/linuxthreads/specific.c b/libpthread/linuxthreads/specific.c
+index 92eec3d..764bf1e 100644
+--- a/libpthread/linuxthreads/specific.c
++++ b/libpthread/linuxthreads/specific.c
+@@ -104,13 +104,14 @@ int pthread_key_delete(pthread_key_t key)
+      that if the key is reallocated later by pthread_key_create, its
+      associated values will be NULL in all threads.
+ 
+-     If no threads have been created yet, clear it just in the
+-     current thread.  */
++     If no threads have been created yet, or if we are exiting, clear
++     it just in the current thread.  */
+ 
+   struct pthread_key_delete_helper_args args;
+   args.idx1st = key / PTHREAD_KEY_2NDLEVEL_SIZE;
+   args.idx2nd = key % PTHREAD_KEY_2NDLEVEL_SIZE;
+-  if (__pthread_manager_request != -1)
++  if (__pthread_manager_request != -1
++      && !(__builtin_expect (__pthread_exit_requested, 0)))
+     {
+       struct pthread_request request;
+ 
+@@ -203,8 +204,9 @@ void __pthread_destroy_specifics()
+   __pthread_lock(THREAD_GETMEM(self, p_lock), self);
+   for (i = 0; i < PTHREAD_KEY_1STLEVEL_SIZE; i++) {
+     if (THREAD_GETMEM_NC(self, p_specific[i]) != NULL) {
+-      free(THREAD_GETMEM_NC(self, p_specific[i]));
++      void *p = THREAD_GETMEM_NC(self, p_specific[i]);
+       THREAD_SETMEM_NC(self, p_specific[i], NULL);
++      free(p);
+     }
+   }
+   __pthread_unlock(THREAD_GETMEM(self, p_lock));
+diff --git a/libpthread/linuxthreads/spinlock.c b/libpthread/linuxthreads/spinlock.c
+index f325402..f0cf19c 100644
+--- a/libpthread/linuxthreads/spinlock.c
++++ b/libpthread/linuxthreads/spinlock.c
+@@ -637,8 +637,20 @@ void __pthread_alt_unlock(struct _pthread_fastlock *lock)
+ #if defined HAS_COMPARE_AND_SWAP
+ 	wait_node_dequeue(pp_head, pp_max_prio, p_max_prio);
+ #endif
++
++      /* Release the spinlock *before* restarting.  */
++#if defined TEST_FOR_COMPARE_AND_SWAP
++      if (!__pthread_has_cas)
++#endif
++#if !defined HAS_COMPARE_AND_SWAP || defined TEST_FOR_COMPARE_AND_SWAP
++	{
++	  __pthread_release(&lock->__spinlock);
++	}
++#endif
++
+       restart(p_max_prio->thr);
+-      break;
++
++      return;
+     }
+   }
+ 
+diff --git a/libpthread/linuxthreads/spinlock.h b/libpthread/linuxthreads/spinlock.h
+index 210ead4..2a3c227 100644
+--- a/libpthread/linuxthreads/spinlock.h
++++ b/libpthread/linuxthreads/spinlock.h
+@@ -172,7 +172,8 @@ static __inline__ int __pthread_alt_trylock (struct _pthread_fastlock * lock)
+ 
+ /* Operations on pthread_atomic, which is defined in internals.h */
+ 
+-static __inline__ long atomic_increment(struct pthread_atomic *pa)
++static __inline__ long
++pthread_atomic_increment (struct pthread_atomic *pa)
+ {
+     long oldval;
+ 
+@@ -184,7 +185,8 @@ static __inline__ long atomic_increment(struct pthread_atomic *pa)
+ }
+ 
+ 
+-static __inline__ long atomic_decrement(struct pthread_atomic *pa)
++static __inline__ long
++pthread_atomic_decrement (struct pthread_atomic *pa)
+ {
+     long oldval;
+ 
+diff --git a/libpthread/linuxthreads/sysdeps/i386/tls.h b/libpthread/linuxthreads/sysdeps/i386/tls.h
+index 2abd3a0..4c9b680 100644
+--- a/libpthread/linuxthreads/sysdeps/i386/tls.h
++++ b/libpthread/linuxthreads/sysdeps/i386/tls.h
+@@ -46,9 +46,7 @@ typedef struct
+   dtv_t *dtv;
+   void *self;		/* Pointer to the thread descriptor.  */
+   int multiple_threads;
+-#ifdef NEED_DL_SYSINFO
+   uintptr_t sysinfo;
+-#endif
+ } tcbhead_t;
+ 
+ #else /* __ASSEMBLER__ */
+--
+cgit v0.8.2.1

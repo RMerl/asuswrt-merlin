@@ -1,0 +1,30 @@
+Hi,
+
+This public key is the GPG public key I use to sign the bridge-utils
+and bridge-utils-devel RPM packages. You can use this key to verify
+the integrity of those packages.
+
+Lennert Buytenhek
+<buytenh@gnu.org>
+
+
+
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: GnuPG v1.0.1 (GNU/Linux)
+Comment: For info see http://www.gnupg.org
+
+mQGiBDiT6YIRBADbn6OduygntL0gYcBD3333gje45DSWl0PVghw9CtJQUZRZSBFp
+Z1CgkxI1F3kza4gJwIj/fgtuC8PWi1200rOwCLL8kLkFIH9Zy0VEuXskoXLeDU/f
+V14e+9GVtoVLQ5Bx2bTez3+2dEU7N0axKH5MJQsyWZx+U863unNk/qGO1wCgjYZ5
+zKhTuvWnR51tYjdwbfXyq0sD/iflTEUFkQ0MEQc/eJ+RU9kL55GyhT7f227CR6XZ
+/d2LCUkdaCdihAsJLXEL66gS7MOUd5I6dolPXG0vG0wQMBqt/jcKr2JRZsSf2Zjg
+IxTvlv+6h6LyaHBiq45yCAE1KC2ka2ebtdK0BubdRjKlxDMmGJMrMTeK6RsLbDej
+SEhqBACTtgUO9gOAFB53TAAjpftMW91mTOiokg1znKxqunbJ/4Ndo9Z9KI1m4wH8
+RsyGJBEkwlR5PNjnLZbE0ET2hk01RLFWX8yDXORXDx1bkcW/NJgMkyUua3A2QaTV
+D1SdIfnMLB2vg4FzjUdo9QXS+zNQ24jS7G6tDq8McvVM2DSwp7Q3TGVubmVydCBC
+dXl0ZW5oZWsgKFJQTSBzaWduYXR1cmUga2V5KSA8YnV5dGVuaEBnbnUub3JnPohW
+BBMRAgAWBQI4k+mCBAsKBAMDFQMCAxYCAQIXgAAKCRD/CxH2tC7NLt6pAKCGnrIT
+EfdFTc5S/Fz+LAYokMWKTwCfU7DQG4bkaOJTcv5fRUOD4UZ2MTk=
+=om8h
+-----END PGP PUBLIC KEY BLOCK-----

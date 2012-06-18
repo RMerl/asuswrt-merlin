@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>AppleTalk Support</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="System Specific Notes " href=
+    "systemspecific.htm">
+    <link rel="PREVIOUS" title="AIX" href="aix.htm">
+    <link rel="NEXT" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "aix.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 3.
+          System Specific Notes</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "tutorial.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="APPLETALK">3.4. AppleTalk
+      Support</a></h1>
+
+      <p>Netatalk is used to communicate from TCP/IP to AppleTalk
+      printers and vice versa. The Netatalk distribution FAQ is at:
+      <a href="http://www.umich.edu/~rsug/netatalk" target=
+      "_top">http://www.umich.edu/~rsug/netatalk</a>. Also, The
+      University of Melbourne web site <a href=
+      "http://www.cs.mu.oz.au/appletalk/" target=
+      "_top">http://www.cs.mu.oz.au/appletalk/</a> has additional
+      tutorial and installation information. In addition, Anders
+      Brownworth's Web page <a href=
+      "http://thehamptons.com/anders/netatalk/" target=
+      "_top">http://thehamptons.com/anders/netatalk/</a> has a
+      useful collection of information for Linux users.</p>
+
+      <p>The University of Michigan doesn't seem to be doing
+      anything more for <b class="APPLICATION">netatalk</b>, and
+      Adrian Sun has continued development. You'll find his updates
+      at <a href="ftp://ftp.cobaltnet.com/pub/users/asun/testing/"
+      target=
+      "_top">ftp://ftp.cobaltnet.com/pub/users/asun/testing/</a> He
+      has improved <b class="APPLICATION">netatalk</b> considerably
+      over the last UMich version. Documentation on <b class=
+      "APPLICATION">netatalk</b> is, unfortunately, almost
+      non-existent.</p>
+
+      <p>There are a couple of very active mail lists for Netatalk:
+      <a href="mailto:netatalk-admins@umich.edu" target=
+      "_top">netatalk-admins@umich.edu</a> and <a href=
+      "mailto:linux-atalk@netspace.org" target=
+      "_top">linux-atalk@netspace.org</a>.</p>
+
+      <p>After you have installed and gotten <b class=
+      "APPLICATION">netatalk</b> working you can use the following
+      AppleTalk configuration file to print from a Macintosh to an
+      <b class="APPLICATION">LPRng</b> printer.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1657"></a>
+<pre class="SCREEN">
+    Your 32 Character Printer Name:\
+            :pr=|/your/path/to/lpr -Pprintername:\
+            :op=username.for.printing:\
+            :pd=/your/path/to/ppd/files/yourprinter.ppd:
+    
+    Examples:
+    
+    Student Printers:\
+            :pr=|/usr/bin/lpr -Pstudent:\
+            :op=root:\
+            :pd=/var/spool/lpd/student/HP4000.PPD:
+    HP 2500c:\
+            :pr=|/usr/bin/lpr -Php2500c:\
+            :op=root:\
+            :pd=/var/spool/lpd/hp2500c/HP2500.PPD:
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "aix.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "tutorial.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">AIX</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "systemspecific.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Print Spooling
+          Tutorial</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

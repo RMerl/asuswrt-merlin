@@ -1,0 +1,34 @@
+############################################################################
+#	info chk
+############################################################################
+opengt
+set com 115200n81
+set senddelay 0.05
+waitquiet 2 0.5
+  :start
+    send "AT"
+    send "+CFUN?"
+    send "^m"
+    waitfor 20 "+CFUN?","Error"
+    if % = -1 goto timeout
+    if % = 0 goto getlist
+    print "Error response from device\n"
+    exit 1
+  :getlist
+    let c=0
+    print "Getting results: "
+  :waiting    
+    print "."
+    get 2 "^m" $s
+    if % = -1 goto stillwaiting
+    waitquiet 1 0.2
+    print "\n"
+    print $s,"\n\n==============================================================\n"
+    exit 1
+  :stillwaiting
+    if c > 60 goto timeout
+    let c=c+1
+    goto waiting
+  :timeout
+    print "Timeout\n"
+    exit 1

@@ -1,0 +1,453 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Job Options and the Z Control File Entry</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title="Routing Jobs To Print Queues" href=
+    "x3694.htm">
+    <link rel="NEXT" title="Interfacing to Non-LPRng Spoolers"
+    href="x3885.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x3694.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x3885.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN3767">4.19. Job Options and the
+      Z Control File Entry</a></h1>
+
+      <p>Many printers have special capabilities such as printing
+      in landscape mode, duplex printing, binding, or stapling.
+      These capabilities are usually invoked or enabled by the
+      print spooler sending special printer control commands to the
+      printer based on values it finds in the control file. The <b
+      class="APPLICATION">LPRng</b> print spooler uses the <var
+      class="LITERAL">Z</var> line in the control file to specify
+      these options, while other print spoolers such as the Sun
+      Microsystems Solaris <b class="APPLICATION">lp</b> system
+      pass them on the <var class="LITERAL">S</var> line.</p>
+
+      <p>Job formatting options are specified using the <tt class=
+      "COMMAND">lpr -Z</tt> option. The <b class=
+      "APPLICATION">lpr</b> program concatenates the <var class=
+      "LITERAL">-Z</var> options and puts them in the control file
+      as a single <var class="LITERAL">Z</var> line. For
+      example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3779"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {289} %</samp> <kbd class=
+"USERINPUT">lpc stop</kbd>
+    Printer: lp@h4
+    lp@h4.private: stopped
+    <samp class="PROMPT">h4: {290} %</samp> <kbd class=
+"USERINPUT">lpr -Zthis -Zthat /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {291} %</samp> <kbd class=
+"USERINPUT">cat /var/spool/lp/cf*</kbd>
+    Hh4.private
+    Ppapowell
+    J/tmp/hi
+    CA
+    Lpapowell
+    Zthis,that
+    Apapowell@h4+115
+    D2000-05-05-10:05:41.351
+    Qlp
+    N/tmp/hi
+    fdfA115h4.private
+    UdfA115h4.private
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>As we see, the <var class="LITERAL">Z</var> options have
+      been put into the control file on the <var class=
+      "LITERAL">Z</var> line. The <var class="LITERAL">Z</var>
+      option values are passed to filters on the command line as
+      the <var class="LITERAL">-Z</var> command line option. These
+      values are used by the <b class="APPLICATION">ifhp</b> filter
+      to determine what control commands to send to the printer and
+      how to format the print job output. Because each printer is
+      different and supports a different set of capabilities it is
+      impossible to have a set of job options supported across all
+      printers. The following are supported by the <b class=
+      "APPLICATION">ifhp</b> configuration where possible. Many of
+      these options rely on the printer supporting PostScript or
+      having the appropriate PCL commands to do the indicated
+      operation.</p>
+
+      <ul>
+        <li>
+          <p>-Zlandscape -Zportrait - select landscape or portrait
+          orientation.</p>
+        </li>
+
+        <li>
+          <p>-Zduplex -Zsimplex - select duplex (both sides of a
+          page) or simplex (single side of a page) printing.</p>
+        </li>
+
+        <li>
+          <p>-Zletter -Zlegal -Zledger -Za4 -Za5 -Zenvelope
+          -Ztransparency - select a paper size</p>
+        </li>
+
+        <li>
+          <p>-Zinupper -Zinmiddle -Zinlower - select input media
+          from the appropriate input tray</p>
+        </li>
+
+        <li>
+          <p>-Zmanual - select input from the manual feed</p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN3805">4.19.1. Setting Job
+        Options Using the Printcap</a></h2>
+
+        <p>An alternative to this method of using <b class=
+        "APPLICATION">lpr</b> and the <var class="LITERAL">-Z</var>
+        option is to define a set of spool queues which will put
+        the necessary options into the job control file. This can
+        be done by the <b class="APPLICATION">lpr</b> program when
+        the job is generated, or by the <b class=
+        "APPLICATION">lpd</b> spooler when the job is processed.
+        The The options specified by the <var class=
+        "LITERAL">:prefix_z</var>, <var class=
+        "LITERAL">:append_z</var>, and <var class=
+        "LITERAL">:delete_z</var> are prefixed, appended, or
+        deleted from the current set of <var class=
+        "LITERAL">Z</var> control file options by the <b class=
+        "APPLICATION">lpr</b> program when the job is submitted and
+        they are specified in the printcap for the queue, or by the
+        <b class="APPLICATION">lpd</b> spooler when the job is
+        submitted to the queue. We can use this capapbility to
+        configure print queues to a desired set of <var class=
+        "LITERAL">Z</var> options into the control file. For
+        example:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3819"></a>
+<pre class="SCREEN">
+    landscape:lp=%P@server
+    landscape:server:tc=.common
+      :lp=raw@server:append_z=landscape:delete_z=portrait
+    raw:server:tc=.common:lp=....
+      :filter=/usr/local/libexec/filters/ifhp
+    .common:sd=/var/spool/lpd/%P
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>When a job is sent to the <var class=
+        "LITERAL">landscape</var> queue, the control file <var
+        class="LITERAL">Z</var> line will have the <var class=
+        "LITERAL">portrait</var> option removed and the <var class=
+        "LITERAL">landscape</var> option appended. The <var class=
+        "LITERAL">:delete_z</var> values are glob patterns and
+        options that match are removed from the option list.
+        Options are assumed to be separated by commas or semicolons
+        in the option list.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN3827">4.19.2. Converting
+        SystemV Options to LPRng Options</a></h2>
+
+        <p>On some SystemV <b class="APPLICATION">lp</b> print
+        spoolers, the <tt class="COMMAND">lp -o option</tt>, puts
+        the option information into the control file <var class=
+        "LITERAL">S</var> line, and on other systems on the puts
+        the option information into the control file <var class=
+        "LITERAL">O</var> line. To convert these options to <b
+        class="APPLICATION">LPRng</b> <var class="LITERAL">Z</var>
+        options use the <var class=
+        "LITERAL">:prefix_option_to_option=from,from... to</var>
+        facility to prefix the <span class="emphasis"><i class=
+        "EMPHASIS">from</i></span> control file lines to the <span
+        class="emphasis"><i class="EMPHASIS">to</i></span> control
+        file line. For example:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3839"></a>
+<pre class="SCREEN">
+    # System V to LPRng - S and O to Z options
+    convert:server:tc=.common
+      :lp=raw@server:prefix_option_to_option=S,O Z
+    # LPRng to System V O options
+    convert:server:tc=.common
+        :lp=raw@server:prefix_option_to_option=Z O
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN3841">4.19.3. Selecting a
+        Single Option - Muliple Queues</a></h2>
+
+        <p>Here is an example of how you can set up queues that
+        will append the appropriate <var class="LITERAL">Z</var>
+        option to select landscape mode, do duplex printing, or
+        select legal or ledger size paper:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3845"></a>
+<pre class="SCREEN">
+    landscape:lp=%P@server
+    landscape:server:tc=.common
+        :lp=raw@server:append_z=landscape
+    duplex:lp=%P@server
+    duplex:server:tc=.common
+        :lp=raw@server:append_z=duplex
+    ledger:lp=%P@server
+    ledger:server:tc=.common
+        :lp=raw@server:append_z=ledger
+    legal:lp=%P@server
+    legal:server:tc=.common
+        :lp=raw@server:append_z=legal
+    raw:server:tc=.common:lp=....
+      :filter=/usr/local/libexec/filters/ifhp
+    .common:sd=/var/spool/lpd/%P
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The problem with this method is that for each option we
+        need to define a queue whose only purpose is to append the
+        appropriate option and then forward this to the main print
+        queue.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="INCOMINGCONTROLFILTER">4.19.4.
+        Selecting Multiple Options - Single Queue</a></h2>
+
+        <p>In the previous section, we showed how to set up a queue
+        that would append a single option to the control file <var
+        class="LITERAL">Z</var> line. If we want to have
+        combinations of option options specified by the printer
+        name then we will have to create a large number of queues
+        each with a different set of options and each appending a
+        different set of values. The problem becomes compounded
+        when we have many printers, each of which requires these
+        options.</p>
+
+        <p>The solution to this problem originated with the <b
+        class="APPLICATION">apsfilter</b> program written by
+        Andreas Klemm and Thomas Bueschgens. They made the
+        observeration that if we know the name of the print queue
+        then we can use this name to select options for the
+        printer. The <b class="APPLICATION">LPRng</b> provides this
+        functionality by using wildcard queues and <span class=
+        "emphasis"><i class="EMPHASIS">editing</i></span> or <span
+        class="emphasis"><i class="EMPHASIS">filtering</i></span>
+        the control file when the job is submitted to the spool
+        queue.</p>
+
+        <p>The <var class=
+        "LITERAL">incoming_control_filter=/path</var> option
+        specifies a filter that processes the incoming job control
+        file. It should be used to update and/or modify information
+        on the option lines of the control files of incoming jobs.
+        It reads the control file on its <acronym class=
+        "ACRONYM">STDIN</acronym>, writes the new control file on
+        its <acronym class="ACRONYM">STDOUT</acronym>, and then
+        exits. A 0 exit code value causes normal processing of the
+        job, <var class="LITERAL">JHOLD</var> will hold the job,
+        and any other value will cause the job to be discarded.</p>
+
+        <p>The following shows how we can set up a single queue
+        that will allow various combinations of options to be
+        selected by the format of the queue name:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3863"></a>
+<pre class="SCREEN">
+    # for clients
+    pr|pr_*:lp=%Q@server
+    # for server
+    pr|pr_*:server
+      :tc=.common:lp=....
+      :incoming_control_filter=/usr/local/libexec/filters/update_z
+      :filter=/usr/local/libexec/filters/ifhp
+    .common:sd=/var/spool/lpd/%P
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The <var class="LITERAL">pr</var> and <var class=
+        "LITERAL">pr_*</var> aliases will match printer <var class=
+        "LITERAL">pr</var> all print queue names starting with <var
+        class="LITERAL">pr_</var>. We can then use various suffixes
+        to select job options. The following filter program uses
+        the <var class="LITERAL">_landscape</var>, <var class=
+        "LITERAL">_legal</var>, and <var class=
+        "LITERAL">_ledger</var> suffixes to set the corresponding
+        option in the <var class="LITERAL">Z</var> file. This
+        program and other are available in the <b class=
+        "APPLICATION">LPRng</b> distribution in the <tt class=
+        "FILENAME">UTILS</tt> directory. You should note that
+        additional options can be specified as desired.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3876"></a>
+<pre class="SCREEN">
+    #
+    #!/usr/bin/perl
+    # update_z script:
+    # Determine the options according to the format of the queue name
+    #  Inspired by the psfilter code of Andreas Klemm
+    #  and Thomas Bueschgens 
+    # First, get command line arguments
+    #
+    use Getopt::Std;
+    my(%args,$Q,$Zopts,@file);
+    getopts(
+    "A:B:C:D:E:F:G:H:I:J:K:L:M:N:O:P:Q:R:S:T:U:V:W:X:Y:Z:" .
+    "a:b:cd:e:f:g:h:i:j:k:l:m:n:o:p:q:r:s:t:u:v:w:x:y:z:",
+    \%args );
+    # read stdin
+    @file = &lt;STDIN&gt;;
+    $Zopts = "";
+    # first use command line Queue name
+    $Q = $args{"Q"};
+    if( not $Q and (($Q) = grep(/^Q/,@file)) ){
+       # next use control file Queue name
+        chomp $Q if $Q;
+    }
+    # now we split up the name and use as parameters for Z options
+    while( $Q =~ /_([^_]+)/g ){
+        # you can add them or test and then add them
+        if( $1 eq "landscape"
+            or $1 eq "legal"
+            or $1 eq "ledger" ){
+            $Zopts .= ",$1"
+        }
+    }
+    if( $Zopts ){
+        # remove leading comma
+        $Zopts = substr( $Zopts, 1 );
+        #replace or prefix Z options
+        if( not (grep { s/$/,$Zopts/ if /^Z/; } @file) ){
+            print "Z" . $Zopts . "\n";
+        }
+    }
+    print @file if( @file );
+    exit 0
+    
+    Example Input Control file:
+    
+    ...
+    Zover
+    Qlp_landscape_ledger
+    ...
+    
+    Modified output:
+    
+    ...
+    Zover,landscape,ledger
+    Qlp_landscape_ledger
+    ...
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The Perl script first uses the <code class=
+        "FUNCTION">getopts</code> function to parse the command
+        line options. If there is not a command line <var class=
+        "LITERAL">-Q</var> option then the control file <var class=
+        "LITERAL">Q</var> line is used after stripping the trailing
+        newline. The queue name is then split up into parts
+        separated by underscores (<var class="LITERAL">_</var>) and
+        those used as option names. As shown in the example, the
+        literal values are placed in the control file. You can also
+        use the following code segment to translate short forms of
+        options into longer ones:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN3883"></a>
+<pre class="SCREEN">
+    while( $Q =~ /_([^_]+)/g ){
+        # you can add them or test and then add them
+        Zopts .= ",landscape" if( $1 eq "ld" );
+        Zopts .= ",ledger" if( $1 eq "11" );
+        Zopts .= ",legal" if( $1 eq "15" );
+        Zopts .= ",a4" if( $1 eq "a4" );
+    }
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x3694.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x3885.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Routing Jobs To
+          Print Queues</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Interfacing to
+          Non-LPRng Spoolers</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

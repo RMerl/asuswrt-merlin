@@ -1,0 +1,48 @@
+#
+# Makefile for pppd under Solaris 2.
+# $Id: Makefile.sol2,v 1.1.1.4 2003/10/14 08:09:53 sparq Exp $
+#
+
+include ../solaris/Makedefs
+
+COPTS	+= -xO2 -xspace -W0,-Lt
+CFLAGS	=  -I../include -DSVR4 -DSOL2 $(COPTS)
+LIBS	= -lsocket -lnsl
+
+OBJS	=  main.o magic.o fsm.o lcp.o ipcp.o upap.o chap.o md5.o tty.o \
+	ccp.o auth.o options.o demand.o utils.o	sys-solaris.o tdb.o
+
+#
+# uncomment the following to enable plugins
+#
+CFLAGS	+= -DPLUGIN
+LIBS	+= -ldl
+
+#
+# Solaris 8 and above accomodates /var/run, so uncomment the
+# following to place pppd process IDs on that location
+#
+#CFLAGS += -D_PATH_VARRUN='"/var/run/"'
+
+#
+# uncomment the following to enable IPv6
+#
+# Solaris 8 and on includes support for IPv6
+#
+#CFLAGS	+= -DINET6
+#OBJS	+= ipv6cp.o eui64.o
+
+#
+# Make targets
+#
+all: pppd
+
+pppd:	$(OBJS)
+	$(CC) -o pppd $(OBJS) $(LIBS)
+
+install:
+	$(INSTALL) -f $(BINDIR) -m 4755 -u root pppd
+	$(INSTALL) -f $(MANDIR)/man8 -m 444 pppd.8
+
+clean:
+	rm -f $(OBJS) pppd *~ core y.tab.c y.tab.h

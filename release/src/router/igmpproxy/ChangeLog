@@ -1,0 +1,317 @@
+commit 0e8e7fde2d68f9ea9b5095c24231024be281393c
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Mon Oct 5 21:31:42 2009 +0500
+
+    Release 0.1
+
+commit 68ba90446e02825073b779bd0628c4f34833665d
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Thu Oct 1 00:09:38 2009 +0500
+
+    Fix building on FreeBSD 8.0 (wrt #2870461)
+    
+    Several IGMP_* macroses was deprecated in r189347/v800069 and
+    removed in r193938/v800098. Redefine them if needed.
+
+commit 74c2e1aa414f33585562d6783a3290ac63ee6c69
+Author: Martin Djernaes <djernaes@users.sourceforge.net>
+Date:   Sun Sep 6 16:41:22 2009 +0500
+
+    Fix netmask detection on interfaces with multiple addresses
+    
+    When having multiple IP addresses on an interface the netmask retrieved for
+    each IP address is not correct. The reason is that ioctrl for
+    SIOCGIFNETMASK will just provide the first netmask when no IP address is
+    provided in the call.
+
+commit 64144607195b779396a49179518aade24707cbbc
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Fri Sep 4 01:38:27 2009 +0500
+
+    Generate ChangeLog and AUTHORS by Git
+
+commit 94dd711318384e7b121924db0177a65b2fc38471
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun Aug 16 19:45:04 2009 +0500
+
+    Release 0.1 beta5
+
+commit 3ac424f82ab9f281dd3a0bfccbc92352bd5512c0
+Author: Damjan Cvetko <zobo@users.sourceforge.net>
+Date:   Sun Aug 16 19:28:30 2009 +0500
+
+    Improve getIfByAddress() function (wrt #2835052)
+    
+    getIfByAddress does not find the best iterface in case of overlaping
+    networks. This patchs scans through all interfaces (and networks) and picks
+    the one with the longest subnet.
+
+commit 8ca5a29b56390020f27d4106643cd623cdb12bb2
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun Aug 16 18:37:58 2009 +0500
+
+    Fix nextConfigToken() function (wrt #2838154)
+    
+    The nextConfigToken() returns NULL when EOF reached even if token
+    was read already. This results in loss of last token in file usually.
+    Let it return unterminated token if it is non-empty already.
+
+commit 954674bc4ec6a689b1de2f2a2766e993df1e2705
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Thu May 14 01:14:56 2009 +0500
+
+    Release 0.1 beta4
+
+commit a7908b855ecb6959ea08ef3b374ff2aca9939cf0
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Thu May 14 01:10:35 2009 +0500
+
+    Update README etc.
+
+commit 62fa19975ff4daa8e31a9b07bf33ddc8cd0129f8
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Thu May 14 01:06:44 2009 +0500
+
+    State licenses in the COPYING
+
+commit 3ac3ae462ca35ec7f1f22d968bf4fab0807d636f
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun May 10 05:01:21 2009 +0500
+
+    Remove pointless backslashes in configure.ac
+
+commit 3c4118949b6a19b384b08e171a5294b0ea307e08
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun May 10 02:19:30 2009 +0500
+
+    Replace bzero() with memset()
+
+commit ee07cb5bfd2514503d0564d2aee0656203d9a91e
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sat May 9 02:09:28 2009 +0500
+
+    Remove redundant #include
+
+commit 56e37ad6ba0c6aade86c1407ea55abb8b445d119
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sat May 9 02:00:03 2009 +0500
+
+    Add DragonFly BSD support
+
+commit eccefd205c3fb326b6ae1b79676238fc349f8be8
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sat May 9 01:57:07 2009 +0500
+
+    Add missed format argument in acceptLeaveMessage()
+
+commit 16c55bd5ab6a9608099252fa320ddbc0a05fca0a
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Wed May 6 01:29:04 2009 +0500
+
+    Avoid inclusion if linux/in.h (wrt #2787118)
+    
+    The linux/in.h header conflicts with the netinet/in.h header in
+    certain Linux distributions. So let's ensure that linux/in.h will
+    never be included neither directly nor from linux/mroute.h.
+
+commit e01624e123c5a24310a4fb7f70ab6178278c3b7a
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun May 3 22:00:33 2009 +0500
+
+    Release 0.1 beta3
+
+commit a3c84e48a1ff32812aac92ca0dba923ca7dd4ca0
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun May 3 21:53:56 2009 +0500
+
+    Show version in help message
+    
+    Also remove unused Version constant.
+
+commit f880a472f6b835d8139adc27908206a11a50846f
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun May 3 21:43:01 2009 +0500
+
+    Remove IF_DEBUG macros
+    
+    IF_DEBUG macros hides my_log(LOG_DEBUG...) calls. Thus it is redundant.
+
+commit 6b1a4beb839f41ecc7468e2680f5d0eedbd49b35
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun May 3 21:29:16 2009 +0500
+
+    Break long lines in build scripts
+
+commit 55dcd57b8cfac25a4eeafae5a18ab85a07484418
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun May 3 21:19:19 2009 +0500
+
+    Remove hardcoded version strings from man pages
+
+commit e7880c542e38bae8efa16b148a431488456f5594
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun May 3 20:52:58 2009 +0500
+
+    Move mrouted-LICENSE out of doc directory
+
+commit 9fee127b13336776d2e6019db8c22ee7de9bf36f
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun May 3 20:32:31 2009 +0500
+
+    Use strdup() instead of malloc() and strcpy()
+
+commit d34dee7ea0b03ba98806558a1eebf78061ce8878
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun May 3 20:30:44 2009 +0500
+
+    Eliminate message about IGMP_MEMBERSHIP_QUERY ignored
+
+commit 32de2bfbad537f6e60edddaefa6c240b2811c567
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun May 3 20:25:30 2009 +0500
+
+    Add OpenBSD support
+
+commit a85c620eccea244c80a34c3403b2ea7055616703
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun May 3 04:16:53 2009 +0500
+
+    Add NetBSD support
+
+commit d61d57c50b8b2399ff90e32da687686cf068680a
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sat May 2 05:07:12 2009 +0500
+
+    Remove outdated bug report email address
+
+commit 14edc6d6dab34e5e51bc12a61f45bae753235e98
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sat May 2 04:49:38 2009 +0500
+
+    Improve OS checking mechanism
+    
+    Hide all OS-specific things in os-*.h headers and let autoconf select
+    proper header. Also add check for struct sockaddr_in.sin_len member.
+
+commit b23a4c9f9edd43a22759930ae969ee420c270456
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sat May 2 04:48:23 2009 +0500
+
+    Do not close std* streams in non-debug mode
+
+commit 7256cb378db4b839f0138cc9422971f5fb353de1
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Fri Apr 17 21:16:47 2009 +0500
+
+    Clean up configure.ac and add check for sockaddr.sa_len member
+
+commit eb6f3eababbca43c517a1407e5af66ed384bf07d
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Fri Apr 17 20:04:32 2009 +0500
+
+    Install igmpproxy to sbin directory
+
+commit e22427f33150970f6bef3106ac018d7138dfbadb
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Fri Apr 17 20:03:46 2009 +0500
+
+    Add missing igmpproxy.h to list of sources
+
+commit 68fb7638f36c85c44b2a8a33e28af58c65de8a06
+Author: Christian Ruppert <idl0r@gentoo.org>
+Date:   Thu Apr 9 21:28:04 2009 +0500
+
+    Add missing 'h' to the getopt() optstring
+
+commit bae0b7b42ec948442945648878dbc8ef3ee1d2c5
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sat Apr 4 00:38:37 2009 +0500
+
+    Rework logging
+    
+    Allow to control verbosity with -v option.
+    Don't write to syslog in debug mode.
+    Don't fork in background. Let start-stop-deamon do this.
+    
+    Also update man-pages and help messages.
+
+commit df0ffb7998cbbd3ab09c100f48dead6adb93aa2c
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sat Apr 4 00:38:06 2009 +0500
+
+    Move igmpproxy.conf out of src directory
+
+commit 4c36c1ea8f9822f96031cff8f40ca3fc7cb93db3
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Mon Mar 9 22:03:46 2009 +0400
+
+    Initial FreeBSD support
+    
+    Based on IGMPproxy port to FreeBSD made by
+    Pavel Korshunov and gygenot.
+
+commit fdc5cc59655a59f7f73af78d6606b5c45b9c1071
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun Mar 8 20:37:17 2009 +0400
+
+    Move to C99 and clean up the code
+    
+    Listen to compiler's warnings.
+    Use standard integer and boolean types.
+    Remove redundant version.h.
+
+commit b535f70ec3dfc73a767592739c8aa44583e7e833
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun Mar 8 17:53:24 2009 +0400
+
+    Rename defs.h to igmpproxy.h
+
+commit 2df90756d378de822d6ece6aa0a340cab6a489e4
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Sun Mar 8 16:17:20 2009 +0400
+
+    Add bootstrap script
+
+commit 3393d1cd7c0f13cc91fa3ec974eb2cd1409bb720
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Fri Feb 27 22:28:03 2009 +0400
+
+    Remove stuff generated by autotools
+
+commit 576b42c7fc71757a33dbac0ebc388f8eebd81fe3
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Mon Feb 23 00:36:39 2009 +0400
+
+    Fix logging to syslog
+    
+    Do not write textual representation of message severity
+    because syslog can do this itself. Also write only one
+    string at a time.
+
+commit 1223d5975a1da679d15120417365582a0054abc4
+Author: Constantin Baranov <const@mimas.ru>
+Date:   Mon Feb 23 00:22:20 2009 +0400
+
+    chmod -x on appropriate files
+
+commit 66145eee1d74c9edd23f3d72700911865b7a09bb
+Author: Conrad Kostecki <ConiKost@gmx.de>
+Date:   Mon Feb 23 00:18:48 2009 +0400
+
+    Remove banner
+
+commit 710d688641ca68d89a7b8958c7d84144d5fb1d9b
+Author: Alexey Charkov <alchark@gmail.com>
+Date:   Mon Feb 23 00:13:03 2009 +0400
+
+    Enable autotools
+    
+    I've packaged igmpproxy with GNU autotools, which will allow for a better
+    experience on Gentoo (CFLAGS, directory structure etc). Also, compile-time
+    warnings are fixed. As the project is dead, this is not even a fork :)
+
+commit f4c36aa73287b794e2c842564e82d2d4f3c1027f
+Author: Johnny Egeland <johnnyege@users.sourceforge.net>
+Date:   Mon Feb 23 00:10:48 2009 +0400
+
+    Initial import

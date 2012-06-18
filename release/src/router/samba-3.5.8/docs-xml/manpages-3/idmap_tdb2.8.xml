@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="idmap_tdb2.8">
+
+<refmeta>
+	<refentrytitle>idmap_tdb2</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.5</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>idmap_tdb2</refname>
+	<refpurpose>Samba's idmap_tdb2 Backend for Winbind</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<title>DESCRIPTION</title>
+
+	<para>
+	The idmap_tdb2 plugin is a substitute for the default idmap_tdb
+	backend used by winbindd for storing SID/uid/gid mapping tables
+	in clustered environments with Samba and CTDB.
+	</para>
+
+	<para>
+	In contrast to read only backends like idmap_rid, it is an allocating
+	backend: This means that it needs to allocate new user and group IDs in
+	order to create new mappings. The allocator can be provided by the
+	idmap_tdb2 backend itself or by any other allocating backend like
+	idmap_tdb or idmap_ldap. This is configured with the
+	parameter <parameter>idmap alloc backend</parameter>.
+	</para>
+
+	<para>
+	Note that in order for this (or any other allocating) backend to
+	function at all, the default backend needs to be writeable.
+	The ranges used for uid and gid allocation are the default ranges
+	configured by &quot;idmap uid&quot; and &quot;idmap gid&quot;.
+	</para>
+
+	<para>
+	Furthermore, since there is only one global allocating backend
+	responsible for all domains using writeable idmap backends,
+	any explicitly configured domain with idmap backend tdb2
+	should have the same range as the default range, since it needs
+	to use the global uid / gid allocator. See the example below.
+	</para>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>IDMAP OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>range = low - high</term>
+		<listitem><para>
+			Defines the available matching uid and gid range for which the
+			backend is authoritative.
+			If the parameter is absent, Winbind fails over to use
+			the &quot;idmap uid&quot; and &quot;idmap gid&quot; options
+			from smb.conf.
+		</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>IDMAP SCRIPT</title>
+
+	<para>
+	The tdb2 idmap backend supports a script for performing id mappings
+	through the smb.conf option <parameter>idmap : script</parameter>.
+	The script should accept the following command line options.
+	</para>
+
+	<programlisting>
+	SIDTOID S-1-xxxx
+	IDTOSID UID xxxx
+	IDTOSID GID xxxx
+	</programlisting>
+
+	<para>
+	And it should return one of the following responses as a single line of
+	text.
+	</para>
+
+	<programlisting>
+	UID:yyyy
+	GID:yyyy
+	SID:yyyy
+	ERR:yyyy
+	</programlisting>
+
+	<para>
+	Note that the script should cover the complete range of SIDs
+	that can be passed in for SID to Unix ID mapping, since otherwise
+	SIDs unmapped by the script might get mapped to IDs that had
+	previously been mapped by the script.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>
+	This example shows how tdb2 is used as a the default idmap backend.
+	It configures the idmap range through the global options for all
+	domains encountered. This same range is used for uid/gid allocation.
+	</para>
+
+	<programlisting>
+	[global]
+	idmap backend = tdb2
+	idmap uid = 1000000-2000000
+	idmap gid = 1000000-2000000
+	</programlisting>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>
+	The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.
+	</para>
+</refsect1>
+
+</refentry>

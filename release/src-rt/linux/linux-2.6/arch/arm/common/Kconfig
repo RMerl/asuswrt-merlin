@@ -1,0 +1,34 @@
+config ARM_GIC
+	bool
+
+config ARM_VIC
+	bool
+
+config ICST525
+	bool
+
+config ICST307
+	bool
+
+config SA1111
+	bool
+	select DMABOUNCE
+
+config DMABOUNCE
+	bool
+
+config TIMER_ACORN
+	bool
+
+config SHARP_LOCOMO
+	bool
+
+config SHARP_PARAM
+	bool
+
+config SHARPSL_PM
+	bool
+	select APM_EMULATION
+
+config SHARP_SCOOP
+	bool

@@ -1,0 +1,24 @@
+This module allows you to configure a simple cluster of nodes that share
+a certain IP and MAC address without an explicit load balancer in front of
+them.  Connections are statically distributed between the nodes in this
+cluster.
+.TP
+.BI "--new "
+Create a new ClusterIP.  You always have to set this on the first rule
+for a given ClusterIP.
+.TP
+.BI "--hashmode " "mode"
+Specify the hashing mode.  Has to be one of
+.B sourceip, sourceip-sourceport, sourceip-sourceport-destport
+.TP
+.BI "--clustermac " "mac"
+Specify the ClusterIP MAC address.  Has to be a link-layer multicast address
+.TP
+.BI "--total-nodes " "num"
+Number of total nodes within this cluster.
+.TP
+.BI "--local-node " "num"
+Local node number within this cluster.
+.TP
+.BI "--hash-init " "rnd"
+Specify the random seed used for hash initialization.

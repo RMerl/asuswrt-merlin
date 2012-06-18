@@ -1,0 +1,12 @@
+PKG=samba
+NAME=SMB based file/printer sharing
+ARCH=sparc
+VERSION=2.0.7
+CATEGORY=system
+VENDOR=Samba Group
+DESC=File and printer sharing for NT workstations
+HOTLINE=Please contact your local UNIX support group
+EMAIL=samba@samba.org
+CLASSES=none
+BASEDIR=/usr/local
+INTONLY=1

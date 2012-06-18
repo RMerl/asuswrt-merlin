@@ -1,0 +1,9 @@
+# Makefile for busybox
+#
+# Licensed under the GPL v2, see the file LICENSE in this tarball.
+
+lib-y :=
+
+lib-$(CONFIG_LPD) += lpd.o
+lib-$(CONFIG_LPR) += lpr.o
+lib-$(CONFIG_LPQ) += lpr.o

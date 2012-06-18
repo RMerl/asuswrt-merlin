@@ -1,0 +1,16 @@
+<samba:parameter name="unix extensions"
+                 context="G"
+				 type="boolean"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+ <description>
+    <para>This boolean parameter controls whether Samba 
+    implments the CIFS UNIX extensions, as defined by HP. 
+    These extensions enable Samba to better serve UNIX CIFS clients
+    by supporting features such as symbolic links, hard links, etc...
+    These extensions require a similarly enabled client, and are of
+    no current use to Windows clients.</para>
+</description>
+
+<value type="default">yes</value>
+</samba:parameter>

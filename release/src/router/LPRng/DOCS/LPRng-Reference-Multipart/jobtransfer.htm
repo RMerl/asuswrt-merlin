@@ -1,0 +1,341 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Job Transfer</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="RFC 1179 - Line Printer Daemon Protocol "
+    href="rfc1179ref.htm">
+    <link rel="PREVIOUS" title="Protocol Requests and Replies "
+    href="remotesupport.htm">
+    <link rel="NEXT" title="Data File Transfer" href="x10191.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "remotesupport.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          19. RFC 1179 - Line Printer Daemon Protocol</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x10191.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="JOBTRANSFER">19.3. Job
+      Transfer</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">longnumber</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Long job number (6
+          digits)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">send_data_first</var> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Send data files
+          first</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">use_shorthost</var><span class=
+          "emphasis"><i class="EMPHASIS">Use short
+          hostname</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>A job transfer operation starts with a job transfer
+      request, followed by several file transfer operations. At the
+      end of the file transfers, the connection should be
+      closed.</p>
+
+      <p>A file transfer request has the form:</p>
+
+      <div class="INFORMALTABLE">
+        <a name="AEN10100"></a>
+
+        <table border="1" frame="border" rules="all" class=
+        "CALSTABLE">
+          <col>
+          <col>
+
+          <thead>
+            <tr>
+              <th>Command</th>
+
+              <th>Purpose</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>\001\n</td>
+
+              <td>abort</td>
+            </tr>
+
+            <tr>
+              <td>\002nnnn cfname</td>
+
+              <td>control file transfer</td>
+            </tr>
+
+            <tr>
+              <td>\003nnnn dfname</td>
+
+              <td>data file transfer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <br>
+      <br>
+
+      <p>The abort operation is used to terminate job transfer and
+      indicate that the job should not be processed for printing.
+      The connection will be closed and the partly transferred job
+      will be discarded.</p>
+
+      <p>The control file and data file transfer commands have a
+      length (in bytes) of the file and the name of the file to be
+      transferred. When the command is received, the server will
+      reply with a status line:</p>
+
+      <div class="INFORMALTABLE">
+        <a name="AEN10118"></a>
+
+        <table border="1" frame="border" rules="all" class=
+        "CALSTABLE">
+          <col>
+          <col>
+
+          <thead>
+            <tr>
+              <th>Status</th>
+
+              <th>Purpose</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>\000</td>
+
+              <td>Accepted, proceed</td>
+            </tr>
+
+            <tr>
+              <td>\nnn</td>
+
+              <td>Rejected with error code</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <br>
+      <br>
+
+      <p>The reply is only a single octet. Some defective
+      implementations of RFC1179 send a LF after the octet, which
+      makes life very difficult. <b class="APPLICATION">LPRng</b>
+      makes an effort to detect these non-conforming RFC1179
+      systems and will accept jobs from them. However, it will not
+      send jobs to them.</p>
+
+      <p>If <b class="APPLICATION">LPRng</b> sends a reject code,
+      as an extension to RFC1179 it also sends an error message.
+      Note that the values for error codes are not defined, nor are
+      their causes. <b class="APPLICATION">LPRng</b> uses the
+      following values for error codes, which appear to be
+      compatible with many, but not all, of the BSD <b class=
+      "APPLICATION">lpd</b> based systems:</p>
+
+      <div class="INFORMALTABLE">
+        <a name="AEN10137"></a>
+
+        <table border="1" frame="border" rules="all" class=
+        "CALSTABLE">
+          <col>
+          <col>
+
+          <thead>
+            <tr>
+              <th>Code</th>
+
+              <th>Error</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>\000</td>
+
+              <td>Accepted, proceed</td>
+            </tr>
+
+            <tr>
+              <td>\001</td>
+
+              <td>Queue not accepting jobs</td>
+            </tr>
+
+            <tr>
+              <td>\002</td>
+
+              <td>Queue temporarily full, retry later</td>
+            </tr>
+
+            <tr>
+              <td>\003</td>
+
+              <td>Bad job format, do not retry</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <br>
+      <br>
+
+      <p>When the sender gets the reply indicating success, it
+      sends the <var class="LITERAL">nnnn</var> bytes of the
+      control or data file, followed by a <var class=
+      "LITERAL">\000</var> octet. The receiver will then reply as
+      above; a single <var class="LITERAL">\000</var> octet
+      indicating success.</p>
+
+      <p>The above procedure is carried out until all data files
+      and the control file of a job are transferred.</p>
+
+      <p>RFC1179 is silent on the following issues:</p>
+
+      <ol type="1">
+        <li>
+          <p>When sending a job, do you send the control file
+          first, followed by the data file(s), or the data files
+          first?</p>
+        </li>
+
+        <li>
+          <p>When sending multiple jobs, can you send them on a
+          single connection, or do you have to establish a new
+          connection for each job?</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p><b class="APPLICATION">LPRng</b> will <span class=
+      "emphasis"><i class="EMPHASIS">accept</i></span> jobs whether
+      they are sent control or data files first. By default, it
+      sends the control file first, followed by the data file. If
+      the destination system requires that the data files be sent
+      first, the <var class="LITERAL">send_data_first</var>
+      printcap option can be used to force data files to be sent
+      first.</p>
+
+      <p>RFC1179 states that: <a name="AEN10172"></a></p>
+
+      <blockquote class="BLOCKQUOTE">
+        <p>The name of the control file ... should start with ASCII
+        "cfA", followed by a three digit job number, followed by
+        the host name which has constructed the control file.</p>
+      </blockquote>
+      <br>
+      <br>
+
+      <p>The <span class="emphasis"><i class=
+      "EMPHASIS">should</i></span> in this wording indicates that
+      this is simply a guideline, and that other formats are
+      possible. Some of the major problems with this format are as
+      follows:</p>
+
+      <ol type="1">
+        <li>
+          <p>The restriction to 3 digits means that at most 1000
+          jobs can be in a queue. Strangely, some systems generate
+          far more than 1000 jobs a day, and need to archive them
+          on a regular basis. The <var class=
+          "LITERAL">longnumber</var> option will allow <b class=
+          "APPLICATION">LPRng</b> to use a 6 digit job number for
+          files in the print queue.</p>
+        </li>
+
+        <li>
+          <p>The host name format is not specified. Some
+          implementations consider that this is the short host
+          name, while others think it is the fully qualified domain
+          name (FQDN). <b class="APPLICATION">LPRng</b>, by
+          default, will use the FQDN host name. However, the <var
+          class="LITERAL">use_shorthost</var> option will force it
+          to use short host names in control and data files.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">cfA</var> control file name
+          was modified to allow the job priority to be used as the
+          A letter of the control file. By default, this is A
+          (lowest, i.e. <var class="LITERAL">cfA</var>) and but can
+          range to Z (highest, i.e. <var class=
+          "LITERAL">cfZ</var>). All known spoolers except <b class=
+          "APPLICATION">LPRng</b> seem to ignore the actual value
+          of the letter.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "remotesupport.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x10191.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Protocol
+          Requests and Replies</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "rfc1179ref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Data File
+          Transfer</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

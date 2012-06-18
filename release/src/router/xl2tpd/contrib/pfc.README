@@ -1,0 +1,15 @@
+
+Source: http://www.fli4l.de/en/home/news/
+
+If pppd supports "active precompiled filters", you can use this
+utiliy to generate them. This is useful for preventing the pppd
+to bring an on-demand connection up by spurious traffic, such
+as ntp or routing protocol packets.
+
+usage: pfc <expressiona> > /etc/ppp/your.active.filter
+
+(specify precompiled-active-filter=/etc/ppp/your.active.filter in the ppp
+ options file)
+
+example: ./pfc ntp and ldap 
+

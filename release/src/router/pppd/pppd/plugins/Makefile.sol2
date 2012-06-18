@@ -1,0 +1,27 @@
+#
+# Makefile for plugins on Solaris 2
+#
+# $Id: Makefile.sol2,v 1.3 2002/09/07 05:15:25 carlsonj Exp $
+#
+
+include ../../Makedefs.com
+
+CFLAGS	= -c -O -I.. -I../../include $(COPTS)
+LDFLAGS	= -G 
+
+all:	minconn.so
+
+minconn.so: minconn.o
+	ld -o $@ $(LDFLAGS) -h $@ minconn.o
+
+minconn.o: minconn.c
+	$(CC) $(CFLAGS) -c $? 
+
+passprompt.so: passprompt.o
+	ld -o $@ $(LDFLAGS) -h $@ passprompt.o
+
+passprompt.o: passprompt.c
+	$(CC) $(CFLAGS) -c $?
+
+clean:
+	rm -f *.o *.so

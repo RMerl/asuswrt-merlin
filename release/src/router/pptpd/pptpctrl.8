@@ -1,0 +1,134 @@
+.TH PPTPCTRL 8 "28 April 2004"
+.SH NAME
+pptpctrl - PPTP control connection manager
+.SH SYNOPSIS
+.B pptpctrl
+.IR pptp-debug-flag
+.IR no-ipparam-flag
+.IR ppp-options-value
+.IR ppp-speed-value
+.IR ppp-local-ip-value
+.IR ppp-remote-ip-value
+.RB [
+.IR pptp-call-id
+]
+.RB [
+.IR ppp-binary
+]
+.RB [
+.IR pptp-logwtmp
+]
+.SH DESCRIPTION
+.B pptpctrl
+is usually run by 
+.BR pptpd (8),
+but can also be run from
+.BR inetd (8)
+if some of the features of
+.BR pptpd (8),
+such as IP pool management, and inbuilt TCP wrappers, are not required.
+.SH OPTIONS
+.B pptpctrl 
+options are unconventional, as they are designed for use by
+.BR pptpd (8)
+rather than users.  The option order is critical.  Flag options
+consist of a 0 or 1, and must be present.  Value options consist of a
+0, or a 1 followed by the value.  Either the 0 or both the 1 and the
+value must be present.  The remaining options are optional, but must
+be present in the defined order.  The options are as follows:
+.TP
+pptp-debug-flag
+if set (1), enables debug messages to syslog from pptpctrl.  This has no
+effect on the setting of the PPP debug option.
+.TP
+no-ipparam-flag
+if set, 
+.B pptpctrl 
+will not pass the client's IP address to 
+.BR pppd (8)
+using the 
+.IR ipparam
+option.  See the
+.IR noipparam
+option in
+.BR pptpd.conf (5).
+.TP
+ppp-options-value
+file to use for PPP options.  See the
+.IR file
+option in 
+.BR pppd (8).
+.TP
+ppp-speed-value
+value for the
+.IR speed
+option given to
+.BR pppd (8).
+Note that on Linux, this parameter is ineffective.
+.TP
+ppp-local-ip-value
+if set, specifies the IP address that
+.BR pppd (8)
+is to use for the network interface on the server.  If not set, 
+.BR pppd (8)
+will determine it based on options; usually it will be the ethernet address of the server.
+.TP
+ppp-remote-ip-value
+if set, specifies the IP address that
+.BR pppd (8)
+is to use for the network interface on the client.  If not set,
+.BR pppd (8)
+will determine it based on options; usually it will be the ethernet address of the client, or an address given in 
+.IR chap-secrets.
+Must be set if
+.IR ppp-local-ip-value
+is set.
+.TP
+pptp-call-id
+if present, specifies the call identification for the PPTP session.  If omitted, the call identification is zero.  Normally the ID is allocated by
+.BR pptpd (8)
+and passed to pptpctrl.
+.TP
+ppp-binary
+if present, path to the PPP binary to use.  If omitted, the default
+value is used.
+.TP
+pptp-logwtmp
+if present, specifies whether 
+.BR wtmp (5)
+should be updated as users connect and disconnect.
+.SH FILES
+none.
+.SH AUTHORS
+Poptop is written by Matthew Ramsay <matthewr@moreton.com.au>, David Luyer
+<luyer@ucs.uwa.edu.au>, Kevin Thayer <tmk@netmagic.net>, Peter Galbavy
+<Peter.Galbavy@knowledge.com> and others. Development has been moved to
+SourceForge and worked on by Richard de Vroede <r.devroede@linvision.com>
+since June 26, 2002.
+.SH COPYRIGHT
+Copyright \(co 1999 Matthew Ramsay and others.
+.LP
+Poptop is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 2, or (at your option) any later
+version.
+.LP
+Poptop is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+.LP
+You should have received a copy of the GNU General Public License along
+with Poptop; see the file COPYING.  If not, write to the Free Software
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.SH AVAILABILITY
+The most recent version of Poptop is available for download from
+SourceForge at
+.IR http://sourceforge.net/projects/poptop . 
+.SH "SEE ALSO"
+.BR inetd (8),
+.BR inetd.conf (5),
+.BR pppd (8),
+.BR pptpd (8),
+.BR pptpd.conf (5),
+.BR tcpd (8).

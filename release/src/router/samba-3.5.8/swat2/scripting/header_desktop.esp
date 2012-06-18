@@ -1,0 +1,25 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Language" content="en-us" />
+
+  <title>@@global.page.title</title>
+
+<link rel="stylesheet" href="/style/qooxdoo/layouts/application.css" type="text/css" media="all" />
+<link rel="shortcut icon" href="/images/favicon.ico" />
+
+<script type="text/javascript" src="/style/qooxdoo/widgets/qooxdoo.js"></script>
+
+<style type="text/css" media="screen">
+body {
+  background-color:#3A6EA5;
+}
+</style>
+
+</head>
+
+<body>
+

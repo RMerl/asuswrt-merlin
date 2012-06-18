@@ -1,0 +1,25 @@
+<%
+/*
+	used for general purpose calls
+*/
+libinclude("server_call.js");
+
+/* register a call for clients to make */
+var call = servCallObj();
+
+/*
+  a remote printf, for displaying stuff on smbd stdout
+*/
+function srv_printf()
+{
+	var s = string_init();
+	print(s.vsprintf(arguments));
+	return undefined;
+}
+
+/* add some basic calls */
+call.add('srv_printf', srv_printf);
+
+/* run the function that was asked for */
+call.run();
+%>

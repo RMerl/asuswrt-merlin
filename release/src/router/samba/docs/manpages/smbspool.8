@@ -1,0 +1,85 @@
+.TH SMBSPOOL 8 "23 Jun 2001" "smbspool 2.0.10"
+.PP 
+.PP 
+.SH "NAME" 
+smbspool \- mount an SMB filesystem
+.PP 
+.SH "SYNOPSIS" 
+\fBsmbspool\fP job user title copies options [filename]
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+This program is part of the Samba suite\&.
+.PP 
+smbspool is a very small print spooling program that sends a print
+file to a SMB printer\&. The command-line arguments are position-dependent for
+compatibility with the Common UNIX Printing System, but you can use
+smbspool with any printing system or from a program or script\&.
+.PP 
+.SH "DEVICE URI" 
+.PP 
+smbspool specifies the destination using a Uniform Resource Identifier
+("URI") with a method of "smb"\&. This string can take a number of
+forms:
+.PP 
+.IP o 
+smb://server/printer
+.IP 
+.IP o 
+smb://workgroup/server/printer
+.IP 
+.IP o 
+smb://username:password@server/printer
+.IP 
+.IP o 
+smb://username:password@workgroup/server/printer
+.IP 
+.PP 
+smbspool tries to get the URI from argv[0]\&. If argv[0] contains the
+name of the program then it looks in the DEVICE_URI environment variable\&.
+.PP 
+Programs using the exec(2) functions can pass the URI in argv[0],
+while shell scripts must set the DEVICE_URI environment variable prior to
+running smbspool\&.
+.PP 
+.SH "OPTIONS" 
+.PP 
+The job argument (argv[1]) contains the job ID number and is presently
+not used by smbspool\&.
+.PP 
+The user argument (argv[2]) contains the print user\'s name and is
+presently not used by smbspool\&.
+.PP 
+The title argument (argv[3]) contains the job title string and is
+passed as the remote file name when sending the print job\&.
+.PP 
+The copies argument (argv[4]) contains the number of copies to be
+printed of the named file\&. If no filename is provided than this argument is
+not used by smbspool\&.
+.PP 
+The options argument (argv[5]) contains the print options in a single
+string and is presently not used by smbspool\&.
+.PP 
+The filename argument (argv[6]) contains the name of the file to print\&.
+If this argument is not specified then the print file is read from the
+standard input\&.
+.PP 
+.SH "VERSION" 
+.PP 
+This man page is correct for version 2\e&\&.0 of the Samba suite\e&\&.
+.PP 
+.SH "SEE ALSO" 
+\fBsmbd (8)\fP
+.PP 
+.SH "AUTHOR" 
+.PP 
+smbspool was written by Michael Sweet at Easy Software Products\&.
+.PP 
+The original Samba software and related utilities were created by
+Andrew Tridgell samba@samba\&.org\&. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed\&.
+.PP 
+See samba (7) to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc\&.

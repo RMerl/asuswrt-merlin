@@ -1,0 +1,40 @@
+#!/bin/sh
+
+top_builddir="@top_builddir@"
+localedir="@localedir@"
+
+destdir="$(pwd)/tmp-root"
+
+if test -d "${top_builddir}"; then :; else
+    echo "top_builddir \`${top_builddir}' not found"
+    exit 3
+fi
+
+echo -n "Test installation of translated messages..."
+if (cd "${top_builddir}/po" && make DESTDIR="${destdir}" install > /dev/null 2>&1); then
+    echo " done."
+else
+    echo " FAILED."
+    echo "Could not create test installation of translated messages"
+    exit 2
+fi
+
+binlocaledir="$(./print-localedir)"
+mylocaledir="${destdir}${binlocaledir}"
+if test -d "${destdir}${binlocaledir}"; then
+    echo "Test installation contains localedir \`${binlocaledir}'."
+else
+    echo "localedir \`${binlocaledir}' does not exist"
+    exit 1
+fi
+
+testnls="./test-nls ${mylocaledir}"
+if ${testnls}; then
+    echo "NLS test successful"
+    rm -rf "${destdir}"
+    exit 0
+else
+    echo "NLS test failed, not removing test installation from"
+    echo "    ${destdir}"
+    exit 1
+fi

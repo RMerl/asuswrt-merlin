@@ -1,0 +1,576 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Printcap Database</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="Serial Printers " href=
+    "secserial.htm">
+    <link rel="NEXT" title="Simple Client Printcap Entry " href=
+    "simple.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "secserial.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "simple.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="PRINTCAPREF"></a>Chapter 12. Printcap
+      Database</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>12.1. <a href="printcapref.htm#PRINTCAPPARSE">The
+          Printcap Parsing Rules</a></dt>
+
+          <dt>12.2. <a href="simple.htm">Simple Client Printcap
+          Entry</a></dt>
+
+          <dt>12.3. <a href="cm.htm">Simple Server Printcap
+          Example</a></dt>
+
+          <dt>12.4. <a href="x5732.htm">Using :oh To Select
+          Printcap Information</a></dt>
+
+          <dt>12.5. <a href="x5758.htm">Using the Wildcard Printcap
+          Entry</a></dt>
+
+          <dt>12.6. <a href="x5770.htm">Enterprise Strength
+          Printcap Example</a></dt>
+
+          <dt>12.7. <a href="x5787.htm">Remote Printer Using
+          RFC1179</a></dt>
+
+          <dt>12.8. <a href="x5821.htm">Remote Printer Using Socket
+          API</a></dt>
+
+          <dt>12.9. <a href="x5848.htm">Parallel Printer</a></dt>
+
+          <dt>12.10. <a href="serial.htm">Serial Printer</a></dt>
+
+          <dt>12.11. <a href="lpdbounce.htm">Bounce Queue</a></dt>
+
+          <dt>12.12. <a href="translateformat.htm">Job Format
+          Translation</a></dt>
+
+          <dt>12.13. <a href="destinations.htm">Dynamic
+          Routing</a></dt>
+
+          <dt>12.14. <a href="loadbalance.htm">Printer Load
+          Balancing</a></dt>
+
+          <dt>12.15. <a href="printcappath.htm">Locations of
+          Printcap Files</a></dt>
+
+          <dt>12.16. <a href="secoh.htm">Single Printcap File for
+          Large Installation</a></dt>
+
+          <dt>12.17. <a href="x6118.htm">Management Strategies for
+          Large Installations</a></dt>
+
+          <dt>12.18. <a href="secnis.htm">Using Programs To Get
+          Printcap Information</a></dt>
+
+          <dt>12.19. <a href="x6228.htm">Lexmark Printers</a></dt>
+
+          <dt>12.20. <a href="p450.htm">Tektronix Phaser
+          Printers</a></dt>
+
+          <dt>12.21. <a href="x6242.htm">Duplex Printing</a></dt>
+
+          <dt>12.22. <a href="x6263.htm">Solaris, Newsprint and
+          FrameMaker</a></dt>
+        </dl>
+      </div>
+
+      <p>As described in the <a href="tutorial.htm#OVERVIEW">Print
+      Spooling Overview</a>, the heart of the <b class=
+      "APPLICATION">LPRng</b> system is information in the <tt
+      class="FILENAME">printcap</tt> file. The printcap information
+      specifies:</p>
+
+      <ol type="1">
+        <li>
+          <p>The print queues available to users.</p>
+        </li>
+
+        <li>
+          <p>How client programs communicate with the <b class=
+          "APPLICATION">lpc</b> print server.</p>
+        </li>
+
+        <li>
+          <p>The configuration, location, and other information for
+          each print queue on the print server.</p>
+        </li>
+
+        <li>
+          <p>How the <b class="APPLICATION">lpd</b> server
+          processes jobs in each print queue.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>In order to explain a complex subject, we will start with
+      a set of simple printer configurations, and explain the
+      purpose and effect of each entry in the printcap.</p>
+
+      <p>For details about individual printcap options, see the
+      <span class="CITEREFENTRY"><span class=
+      "REFENTRYTITLE">printcap</span>(5)</span> man page from the
+      <b class="APPLICATION">LPRng</b> distribution, or use the <a
+      href="optionindex.htm">Index To All The Configuration and
+      Printcap Options</a> to find a specific printcap option and
+      its effects.</p>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="PRINTCAPPARSE">12.1. The
+        Printcap Parsing Rules</a></h1>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">client</var> FLAG <span class=
+            "emphasis"><i class="EMPHASIS">printcap entry valid
+            only for client programs</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">oh=</var><span class=
+            "emphasis"><i class="EMPHASIS">hosts where printcap
+            entry valid</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">server</var><span class=
+            "emphasis"><i class="EMPHASIS">printcap entry valid
+            only for lpd server</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">tc</var><span class=
+            "emphasis"><i class="EMPHASIS">add named printcap entry
+            contents</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>In this section, we will discuss the remaining tricky
+        parts of the <b class="APPLICATION">LPRng</b> printcap
+        database: combined client and server printcaps, host
+        specific printcap entries, and the <var class=
+        "LITERAL">tc</var> <span class="emphasis"><i class=
+        "EMPHASIS">include</i></span> facility.</p>
+
+        <p>The following is a complete description of how a
+        printcap file is processed:</p>
+
+        <ol type="1">
+          <li>
+            <p>When processing a printcap file, the <b class=
+            "APPLICATION">LPRng</b> software reads and parses each
+            entry individually. Leading whitespace is removed.
+            Lines starting with <var class="LITERAL">#</var> and
+            blank lines are ignored.</p>
+          </li>
+
+          <li>
+            <p>Lines ending with <var class="LITERAL">\</var> will
+            have the <var class="LITERAL">\</var> discarded, and
+            all lines of a printcap entry are joined by removing
+            the line separators (<var class="LITERAL">\n</var>) and
+            replacing them with a space.</p>
+          </li>
+
+          <li>
+            <p>The printcap entry is parsed, and the printcap name,
+            aliases, and options are determined. Colons <var class=
+            "LITERAL">:</var> act as option separators, and leading
+            and trailing whitespaces are removed.</p>
+          </li>
+
+          <li>
+            <p>Options are sorted and except for the <var class=
+            "LITERAL">tc=...</var> option only the last option
+            setting is retained.</p>
+          </li>
+
+          <li>
+            <p>If an option value requires a colon, then the <var
+            class="LITERAL">\:</var> or <var class=
+            "LITERAL">\072</var>, the same escaped character value
+            as used in the C, Perl, tcl, and other programming
+            languages, can be used.</p>
+          </li>
+
+          <li>
+            <p>Client programs will discard a printcap entry with a
+            <var class="LITERAL">server</var> option and server
+            programs will discard a printcap entry with a <var
+            class="LITERAL">client</var> options.</p>
+          </li>
+
+          <li>
+            <p>The <var class="LITERAL">oh</var> (<span class=
+            "emphasis"><i class="EMPHASIS">o</i></span>n this <span
+            class="emphasis"><i class="EMPHASIS">h</i></span>ost)
+            option specifies a list of IP addresses and mask pairs
+            or glob strings which are used to determine if this
+            printcap entry is valid for this host (see discussion
+            below).</p>
+          </li>
+
+          <li>
+            <p>After the above processing, if there is an existing
+            termcap entry with the same name, the two sets of
+            options are combined, with the last option setting
+            retained except for the <var class="LITERAL">tc</var>
+            entries which are combined.</p>
+          </li>
+
+          <li>
+            <p>When a printcap entry is actually used, the printcap
+            entries listed by the <var class="LITERAL">tc</var>
+            include option are extracted and combined in order.
+            This allows include entries to appear after the
+            referring printcap entry. Then printcap options will be
+            combined with the included ones. This has the effect
+            that the options specified in the printcap entry will
+            override the ones from the <var class=
+            "LITERAL">tc</var> included entries.</p>
+          </li>
+
+          <li>
+            <p>Finally, each string printcap option with a <span
+            class="emphasis"><i class="EMPHASIS">%X</i></span>
+            value has <span class="emphasis"><i class=
+            "EMPHASIS">%X</i></span> replaced by the following
+            values. Unspecified values will not be modified.</p>
+
+            <div class="INFORMALTABLE">
+              <a name="AEN5414"></a>
+
+              <table border="1" frame="border" rules="all" class=
+              "CALSTABLE">
+                <col>
+                <col>
+                <col>
+
+                <thead>
+                  <tr>
+                    <th>Key</th>
+
+                    <th>Value</th>
+
+                    <th>Purpose</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr>
+                    <td><var class="LITERAL">%P</var></td>
+
+                    <td>printcap entry primary name</td>
+
+                    <td>&nbsp;</td>
+                  </tr>
+
+                  <tr>
+                    <td><var class="LITERAL">%Q</var></td>
+
+                    <td>queue requested</td>
+
+                    <td>&nbsp;</td>
+                  </tr>
+
+                  <tr>
+                    <td><var class="LITERAL">%h</var></td>
+
+                    <td>short host name (host)</td>
+
+                    <td>&nbsp;</td>
+                  </tr>
+
+                  <tr>
+                    <td><var class="LITERAL">%H</var></td>
+
+                    <td>fully qualified host name
+                    (host.dns.whatever)</td>
+
+                    <td>&nbsp;</td>
+                  </tr>
+
+                  <tr>
+                    <td><var class="LITERAL">%R</var></td>
+
+                    <td>remote printer (rp value)</td>
+
+                    <td>&nbsp;</td>
+                  </tr>
+
+                  <tr>
+                    <td><var class="LITERAL">%M</var></td>
+
+                    <td>remote host (rm value)</td>
+
+                    <td>&nbsp;</td>
+                  </tr>
+
+                  <tr>
+                    <td><var class="LITERAL">%D</var></td>
+
+                    <td>date in YYYY-MM-DD format</td>
+
+                    <td>&nbsp;</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>When parsing multiple printcap files, these are
+            processed in order, and all of their printcap entries
+            are combined according to the above procedures. The
+            <var class="LITERAL">tc</var> resolution and <span
+            class="emphasis"><i class="EMPHASIS">%X</i></span>
+            expansion is done after all the files have been
+            processed.</p>
+          </li>
+        </ol>
+        <br>
+        <br>
+
+        <p>The following examples show how to use the above rules
+        to your advantage. You can combine both client and server
+        printcap information in a single file as well as dividing a
+        printcap entry into several parts. Here is an example:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN5455"></a>
+<pre class="SCREEN">
+    # seen by both client and server
+    lp1:lp=lp@pr1:mx=100
+    lp1:sd=/usr/local/spool/lp1:mx=0
+    # seen only by client
+    lp2:lp=lp@pr2:client
+    # seen only by server
+    lp2:lp=/dev/lp:server
+</pre>
+        </div>
+
+        <ol type="1">
+          <li>
+            <p>Printcap entries with the same name are combined.
+            The first printcap entry, <var class=
+            "LITERAL">lp1</var>, the information is seen by both
+            client and server. The next printcap entry, with the
+            same name <var class="LITERAL">lp1</var>, will be
+            combined with the first one. The order of options is
+            important - the entries are scanned in order and an
+            option will have the last value set. Thus, after having
+            read both the <var class="LITERAL">lp1</var> printcap
+            entries, both client and server will have:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN5463"></a>
+<pre class="SCREEN">
+    lp1:lp=lp@pr1
+      :mx=0
+      :sd=/usr/local/spool/lp1
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>The <var class="LITERAL">lp2</var> has a client and
+            server version. This is recommended when complex
+            printcaps on multiple hosts and servers are used. Thus,
+            the <b class="APPLICATION">LPRng</b> clients will
+            see:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN5469"></a>
+<pre class="SCREEN">
+    lp1
+      :lp=lp@pr1
+      :mx=0
+      :sd=/usr/local/spool/lp1
+    lp2
+      :client
+      :lp=lp@pr2
+</pre>
+            </div>
+            and the server will see: 
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN5471"></a>
+<pre class="SCREEN">
+    lp1
+      :lp=lp@pr1
+      :mx=0
+      :sd=/usr/local/spool/lp1
+    lp2
+      :lp=/dev/lp
+      :server
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+        </ol>
+        <br>
+        <br>
+
+        <p>If you have multiple printers of the same type whose
+        configuration is almost identical, then you can define a
+        set of <span class="emphasis"><i class=
+        "EMPHASIS">tc</i></span> only printcap entries containing
+        common information and use the <var class=
+        "LITERAL">tc</var> include facility.</p>
+
+        <p>Printcap entry names may start with period (<var class=
+        "LITERAL">.</var>), question mark (<var class=
+        "LITERAL">?</var>), or exclamation mark (<var class=
+        "LITERAL">!</var>), followed by one or more alphanumeric ,
+        underscore (<var class="LITERAL">_</var>) or hyphen (<var
+        class="LITERAL">-</var>) characters. Queue or printer names
+        start with an alphanumeric character. Printcap entries
+        whose names do not start with an alphanumeric character can
+        only be used as targets of the <var class=
+        "LITERAL">tc</var> include facility. For example:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN5483"></a>
+<pre class="SCREEN">
+    .hp:
+      :sd=/usr/local/spool/%P
+      :mx=0
+    hp1:tc=.hp,.filter
+      :lp=lp@10.0.0.1
+    hp2:tc=.hp,.filter
+      :lp=lp@10.0.0.2
+    .filter
+      :filter=/usr/local/libexec/filters/ifhp
+</pre>
+        </div>
+
+        <ol type="1">
+          <li>
+            <p>The <tt class="FILENAME">.hp</tt> and <tt class=
+            "FILENAME">.filter</tt> printcap entities are not spool
+            queue definitions. After <var class="LITERAL">tc</var>
+            include processing is completed, the printcap
+            information would resemble:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN5491"></a>
+<pre class="SCREEN">
+    hp1
+      :lp=lp@10.0.0.1
+      :filter=/usr/local/libexec/filters/ifhp
+      :mx=0
+      :sd=/usr/local/spool/%P
+    hp2
+      :lp=lp@10.0.0.2
+      :filter=/usr/local/libexec/filters/ifhp
+      :mx=0
+      :sd=/usr/local/spool/%P
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>The <var class="LITERAL">%X</var> processing will
+            replace <var class="LITERAL">%P</var> with the printcap
+            name, so we would have:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN5497"></a>
+<pre class="SCREEN">
+    hp1
+      :lp=lp@10.0.0.1
+      :filter=/usr/local/libexec/filters/ifhp
+      :mx=0
+      :sd=/usr/local/spool/hp1
+    hp2
+      :lp=lp@10.0.0.2
+      :filter=/usr/local/libexec/filters/ifhp
+      :mx=0
+      :sd=/usr/local/spool/hp2
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+        </ol>
+        <br>
+        <br>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "secserial.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "simple.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Serial
+          Printers</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Simple Client
+          Printcap Entry</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

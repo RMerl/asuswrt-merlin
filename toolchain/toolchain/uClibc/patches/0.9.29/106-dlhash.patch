@@ -1,0 +1,52 @@
+From c4158ecd28dcfb03ce564ba5236a2c4780314806 Mon Sep 17 00:00:00 2001
+From: Mike Frysinger
+Date: Sat, 05 Jan 2008 17:39:56 +0000
+Subject: Merge r20095 by vapier from trunk:
+
+Make sure that the DSO has an hash table into its elf, otherwise skip
+the lookup over next DSO.
+
+Signed-off-by: Carmelo Amoroso <carmelo.amoroso@st.com>
+---
+
+From 62181e83b61fa2a528fb905fef98aebfc9957249 Mon Sep 17 00:00:00 2001
+From: Mike Frysinger
+Date: Sat, 05 Jan 2008 17:44:59 +0000
+Subject: Merge r20204 by vapier from trunk:
+
+Do string comparisos as late as possible during symbol lookup.
+
+Signed-off-by: Carmelo Amoroso <carmelo.amoroso@st.com>
+---
+diff --git a/ldso/ldso/dl-hash.c b/ldso/ldso/dl-hash.c
+index f44d0ec..2043c25 100644
+--- a/ldso/ldso/dl-hash.c
++++ b/ldso/ldso/dl-hash.c
+@@ -161,6 +161,10 @@ char *_dl_find_hash(const char *name, struct dyn_elf *rpnt, struct elf_resolve *
+ 		if ((type_class &  ELF_RTYPE_CLASS_COPY) && tpnt->libtype == elf_executable)
+ 			continue;
+ 
++		/* If the hash table is empty there is nothing to do here.  */
++		if (tpnt->nbucket == 0)
++			continue;
++
+ 		/* Avoid calling .urem here. */
+ 		do_rem(hn, elf_hash_number, tpnt->nbucket);
+ 		symtab = (ElfW(Sym) *) tpnt->dynamic_info[DT_SYMTAB];
+@@ -199,12 +199,12 @@ char *_dl_find_hash(const char *name, st
+ 
+ 			if (type_class & (sym->st_shndx == SHN_UNDEF))
+ 				continue;
+-			if (_dl_strcmp(strtab + sym->st_name, name) != 0)
+-				continue;
+ 			if (sym->st_value == 0)
+ 				continue;
+ 			if (ELF_ST_TYPE(sym->st_info) > STT_FUNC)
+ 				continue;
++			if (_dl_strcmp(strtab + sym->st_name, name) != 0)
++				continue;
+ 
+ 			switch (ELF_ST_BIND(sym->st_info)) {
+ 			case STB_WEAK:
+--
+cgit v0.8.2.1

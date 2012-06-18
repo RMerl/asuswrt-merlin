@@ -1,0 +1,75 @@
+Template: pptpd/localip
+Type: string
+_Description: Local IP address of the virtual connections
+ Specify the local IP address for the virtual connections.
+ .
+ Please note that any address works as long as the local machine takes care
+ of the routing. But if you want to use MS-Windows networking, you should
+ use an IP address out of the LAN address space.
+ .
+ You can give only one address or you can give multiple addresses if you
+ want to, although they are really not needed. Multiple addresses can be
+ given as either "10.0.0.1,10.0.0.2,10.0.0.3" or "10.0.0.1-3". No spaces
+ should be used between commas or within addresses.
+
+Template: pptpd/remoteip
+Type: string
+_Description: A list of remote IP addresses for the virtual connections.
+ Specify the remote IP addresses for the virtual connections.
+ .
+ Please note that any addresses work as long as the local machine takes
+ care of the routing. But if you want to use MS-Windows networking, you
+ should use IP addresses out of the LAN address space.
+ .
+ You have to give one address for every concurrent connection. This will
+ depend on how many clients you expect to be online at the same time.
+ Multiple addresses can be given as either "10.0.0.1,10.0.0.2,10.0.0.3" or
+ "10.0.0.1-3". No spaces should be used between commas or within addresses.
+
+Template: pptpd/netmask
+Type: string
+_Description: Netmask used for virtual connections.
+ If you use IP addresses from the LAN address space, please use the same
+ netmask as on your LAN.
+
+Template: pptpd/wins
+Type: string
+_Description: IP address of your WINS server.
+ A WINS server is used for browsing available Computers in MS-Windows
+ networking. This address is transmitted to the clients,
+
+Template: pptpd/dns
+Type: string
+_Description: IP address of your DNS server.
+ This address is transmitted to the clients.
+
+Template: pptpd/mppe
+Type: boolean
+Default: true
+_Description: Do you want to use MPPE data encryption ?
+ The recommended way is to use the data encryption as it is one of the main
+ benefits of a VPN. When you want to use MPPE (Microsoft Point-to-Point
+ Encryption), you also  have to use CHAPMSv2 for authentication. . Note
+ that you have to install the modified ppp packages if you want to use this
+ data encryption.
+
+Template: pptpd/no-mppe
+Type: note
+_Description: Warning: data encryption is disabled.
+ All data transferred between the local network and the client will be
+ transmitted without encryption ! This is a security hole.
+ .
+ You have been warned. Now you loose your product warranty :)
+
+Template: pptpd/authentication
+Type: select
+_Choices: pap, chap, chapms, chapms-v2
+Default: chap
+_Description: Which authentication method do you want to use ?
+ Possible authentication methods are: - PAP - CHAP - CHAP with Microsoft
+ extensions - CHAP with Microsoft extensions v2
+ .
+ The recommended authentication method is one of the CHAP methods. However,
+ you have to use a separate database (/etc/ppp/chap-secrets) if you want to
+ use these. If you use PAP, you can use the standard system passwords when
+ the ppp-pam package is installed.

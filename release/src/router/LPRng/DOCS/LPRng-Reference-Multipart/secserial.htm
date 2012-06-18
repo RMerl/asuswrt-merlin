@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Serial Printers</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printer Communication and Protocols "
+    href="printercomm.htm">
+    <link rel="PREVIOUS" title="Parallel Port Printers" href=
+    "x5262.htm">
+    <link rel="NEXT" title="Printcap Database " href=
+    "printcapref.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x5262.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          11. Printer Communication and Protocols</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "printcapref.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="SECSERIAL">11.12. Serial
+      Printers</a></h1>
+
+      <p>If your printer is attached by a serial line, then you may
+      need to set the serial line characteristics before sending
+      the job to the printer. Here are a set of guidelines to
+      following when attaching a serial port printer to a serial
+      line.</p>
+
+      <p>1. Check to make sure that the line is not enabled for
+      login. Logins are usually managed by the <b class=
+      "APPLICATION">getty</b> (BSD) or <b class=
+      "APPLICATION">ttymon</b> (Solaris, SystemV). Check your
+      system documentation and make sure that these daemons are not
+      managing the serial line.</p>
+
+      <p>2. Check the permissions and ownership of the serial line.
+      For the most easy testing, set the permissions to 0666
+      (everybody can open for reading and writing). After you have
+      made sure that you can send jobs to the printer, you might
+      want to change the ownership of the serial line to the <b
+      class="APPLICATION">lpd</b> server and change the permissions
+      to 0600.</p>
+
+      <p>3. Make sure that you can print a test file on the printer
+      via the serial port. This may require setting the line
+      characteristics and then sending a file to the printer. You
+      should try to use 8 bit, no parity, with hardware flow
+      control and no special character interpretation, and
+      definitely no LF to CR/LF translation. The problem is that
+      different versions of UNIX systems have different sets of
+      stty(1) commands to do this. The following simple test script
+      can help in this.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5320"></a>
+<pre class="SCREEN">
+    #!/bin/sh
+    # 9600, no echo, no CR
+    FLAGS= 9600 -raw -parenb cs8 crtscts
+    DEV= /dev/tty01
+    (stty $FLAGS; stty 1&gt;&amp;2; cat $1 ) &lt;$DEV &gt;$DEV
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>This shows using stty to set the flags, then to print the
+      current settings, and then using cat a file to the output. If
+      you attach a dumb terminal to the serial port, you can even
+      use this script to ensure that input from the device is
+      echoed to the output with the correct speed, parity, etc.</p>
+
+      <p>Experience has shown that serially connected printers are
+      the least reliable and lowest speed. Where possible, it is
+      strongly recommended that they be attached to a <span class=
+      "emphasis"><i class="EMPHASIS">network print box</i></span>
+      which will provide a Socket API interface and handle the low
+      level network to serial port protocol conversions.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x5262.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "printcapref.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Parallel Port
+          Printers</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printercomm.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Printcap
+          Database</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

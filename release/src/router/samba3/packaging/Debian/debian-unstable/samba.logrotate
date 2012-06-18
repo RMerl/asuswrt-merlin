@@ -1,0 +1,21 @@
+/var/log/samba/log.smbd {
+	weekly
+	missingok
+	rotate 7
+	postrotate
+		invoke-rc.d --quiet samba reload > /dev/null
+	endscript
+	compress
+	notifempty
+}
+
+/var/log/samba/log.nmbd {
+	weekly
+	missingok
+	rotate 7
+	postrotate
+		[ ! -f /var/run/samba/nmbd.pid ] || kill -HUP `cat /var/run/samba/nmbd.pid`
+	endscript
+	compress
+	notifempty
+}

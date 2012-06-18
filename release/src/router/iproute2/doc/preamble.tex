@@ -1,0 +1,26 @@
+\textwidth   6.0in
+\textheight  8.5in
+
+\input SNAPSHOT
+
+\pagestyle{myheadings}
+\markboth{\protect\TITLE}{}
+\markright{{\protect\sc iproute2-ss\Draft}}
+
+% To print it in compact form: both sides on one sheet (psnup -2)
+\evensidemargin=\oddsidemargin
+
+\newenvironment{NB}{\bgroup \vskip 1mm\leftskip 1cm \footnotesize \noindent NB.
+}{\par\egroup \vskip 1mm}
+
+\def\threeonly{[2.3.15+ only] }
+
+\begin{document}
+
+\makeatletter
+\renewcommand{\@oddhead}{{\protect\sc iproute2-ss\Draft} \hfill \protect\arabic{page}}
+\makeatother
+\let\oldthefootnote\thefootnote
+\def\thefootnote{}
+\footnotetext{Copyright \copyright~1999 A.N.Kuznetsov}
+

@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>AppSocket TCP/IP Protocol</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printer Communication and Protocols "
+    href="printercomm.htm">
+    <link rel="PREVIOUS" title="Socket API " href="socketapi.htm">
+    <link rel="NEXT" title="Network Print Server Boxes " href=
+    "secnetwork.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "socketapi.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          11. Printer Communication and Protocols</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "secnetwork.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="APPSOCKET">11.4. AppSocket TCP/IP
+      Protocol</a></h1>
+
+      <p>The AppSocket interface is supported by Tektronix and some
+      other printer vendors. It is similar to the Socket API, with
+      a couple of significant differences.</p>
+
+      <ol type="1">
+        <li>
+          <p>The printer has two ports for network connections: a
+          TCP port 9100 for TCP/IP stream connections and a UDP
+          port for UDP packet connections.</p>
+        </li>
+
+        <li>
+          <p>When a 0 length UDP packet or a UDP packet containing
+          only <tt class="FILENAME">CR/LF</tt> is sent to UDP port
+          9101, the printer will return a packet to the sender
+          containing print status information. This information
+          indicates the printers current status (busy, idle,
+          printing) and any error conditions.</p>
+        </li>
+
+        <li>
+          <p>The format, reliability, and repeatability of the UDP
+          format and information is totally undocumented, and the
+          UPD port facility should be regarded as, at best, an
+          advisory function of the printer.</p>
+        </li>
+
+        <li>
+          <p>To send a job to the printer, a connection to TCP port
+          is made. This connection will be refused while the
+          printer is busy or has a connection to another host.</p>
+        </li>
+
+        <li>
+          <p>When the TCP connection is established, the
+          information to be printed can be sent over the TCP
+          connection. Bytes sent on this stream will be placed in
+          the input buffer of the Print Engine and processed.</p>
+        </li>
+
+        <li>
+          <p>An end of job (EOJ) sequence indication in the data
+          stream will cause the printer to terminate the
+          connection. This is different than the Socket API, where
+          the printer will keep the connection open. This means
+          that if the PostScript CTRL-D (end of job) character is
+          sent in a job, then the connection will be
+          terminated.</p>
+        </li>
+
+        <li>
+          <p>Some models of printers modify this behavior slightly
+          and will not terminate the connection, but will simply
+          ignore any data following the EOJ indication.</p>
+        </li>
+
+        <li>
+          <p>Some printers support bidirectional AppSocket
+          communication, and while the connection is open will
+          return error indications or status information.</p>
+        </li>
+
+        <li>
+          <p>Once all the data has been received and the job has
+          finished printing, the connection will be terminated by
+          the printer.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>The <b class="APPLICATION">ifhp</b> filter, one of the
+      helper programs for <b class="APPLICATION">LPRng</b>, is used
+      with <b class="APPLICATION">LPRng</b> to provide AppSocket
+      support. For details, please see the [<span class=
+      "CITATION">IFHP-HOWTO</span>] in the <a href=
+      "http://www.private/" target="_top"><b class=
+      "APPLICATION">ifhp</b> Distribution</a> and <a href=
+      "p450.htm">Tektronix P450 and Family</a> for details. The
+      following is a typical printcap entry for the AppSocket
+      protocol. The actual network connection to the printer is
+      made by the <b class="APPLICATION">ifhp</b> filter:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN4963"></a>
+<pre class="SCREEN">
+    lp:
+      # <b class=
+"APPLICATION">LPRng</b> opens a dummy connection for consistency
+      :lp=/dev/null
+      # we pass the ifhp filter options indicating that the
+      # Tektronics printer will need the appsocket protocol
+      # and to use port 35 at 10.0.0.1 to make the connection
+      # The ifhp filter may open and close the connection several
+      # times during the file transfer in order to ensure that
+      # the printer handles the job correctly.
+      :ifhp=model=tek,appsocket,dev=10.0.0.1%35
+      :filter=/usr/local/libexec/filters/ifhp
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "socketapi.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "secnetwork.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Socket API</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printercomm.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Network Print
+          Server Boxes</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

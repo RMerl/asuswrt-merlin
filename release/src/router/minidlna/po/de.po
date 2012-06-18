@@ -1,0 +1,122 @@
+# MiniDLNA translation template file
+# Justin Maggard <jmaggard@users.sourceforge.net>, 2010.
+#
+# MiniDLNA media server
+# Copyright (C) 2010  NETGEAR
+#
+# This file is part of MiniDLNA.
+#
+# MiniDLNA is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# MiniDLNA is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with MiniDLNA. If not, see <http://www.gnu.org/licenses/>.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: minidlna 1.0.18\n"
+"Report-Msgid-Bugs-To: jmaggard@users.sourceforge.net\n"
+"POT-Creation-Date: 2010-07-19 10:50-0700\n"
+"PO-Revision-Date: 2010-10-19 11:00-0800\n"
+"Last-Translator: Andi Miko <ReadyNAS_forum_user>\n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: scanner.c:163
+msgid "Unknown Date"
+msgstr "Unbekanntes Datum"
+
+#: scanner.c:191
+msgid "Unknown Camera"
+msgstr "Unbekannte Kamera"
+
+#: scanner.c:282
+msgid "- All Albums -"
+msgstr "- Alle Alben -"
+
+#: scanner.c:290 scanner.c:297 scanner.c:300
+msgid "Unknown Album"
+msgstr "Unbekanntes Album"
+
+#: scanner.c:323
+msgid "- All Artists -"
+msgstr "- Alle Interpreten -"
+
+#: scanner.c:331 scanner.c:337 scanner.c:340
+msgid "Unknown Artist"
+msgstr "Unbekannter Interpret"
+
+#: scanner.c:543
+msgid "Music"
+msgstr "Musik"
+
+#: scanner.c:544
+msgid "All Music"
+msgstr "Alle Titel"
+
+#: scanner.c:545
+msgid "Genre"
+msgstr "Genre"
+
+#: scanner.c:546
+msgid "Artist"
+msgstr "Interpret"
+
+#: scanner.c:547
+msgid "Album"
+msgstr "Album"
+
+#: scanner.c:548 scanner.c:552 scanner.c:557
+msgid "Folders"
+msgstr "Ordner"
+
+#: scanner.c:549
+msgid "Playlists"
+msgstr "Wiedergabelisten"
+
+#: scanner.c:550
+msgid "Video"
+msgstr "Video"
+
+#: scanner.c:551
+msgid "All Video"
+msgstr "Alle Videos"
+
+#: scanner.c:553
+msgid "Pictures"
+msgstr "Bilder"
+
+#: scanner.c:554
+msgid "All Pictures"
+msgstr "Alle Bilder"
+
+#: scanner.c:555
+msgid "Date Taken"
+msgstr "Aufnahmedatum"
+
+#: scanner.c:556
+msgid "Camera"
+msgstr "Kamera"
+
+#: scanner.c:558
+msgid "Browse Folders"
+msgstr "Ordner durchsuchen"
+
+#: scanner.c:721
+#, c-format
+msgid "Scanning %s\n"
+msgstr "%s wird gescannt ... \n"
+
+#: scanner.c:789
+#, c-format
+msgid "Scanning %s finished (%llu files)!\n"
+msgstr "Scan von %s abgeschlossen (%llu files)!\n"

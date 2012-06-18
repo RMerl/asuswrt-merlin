@@ -1,0 +1,16 @@
+<samba:parameter name="afs share"
+	         context="S"
+			 type="boolean"
+		 advanced="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter controls whether special AFS features are enabled
+	for this share. If enabled, it assumes that the directory exported via
+	the <parameter>path</parameter> parameter is a local AFS import. The
+	special AFS features include the attempt to hand-craft an AFS token
+	if you enabled --with-fake-kaserver in configure.
+	</para>
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

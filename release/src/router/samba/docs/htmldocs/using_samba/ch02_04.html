@@ -1,0 +1,186 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 2] 2.4 A Basic Samba Configuration File</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:29:10Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_03.html" TITLE="2.3 Compiling and Installing Samba">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 2.3 Compiling and Installing Samba" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch02_01.html" TITLE="2. Installing Samba on a Unix System">
+Chapter 2<br>
+Installing Samba on a Unix System</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_05.html" TITLE="2.5 Starting the Samba Daemons">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 2.5 Starting the Samba Daemons" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch02-13464">
+2.4 A Basic Samba Configuration File</a></h2><P CLASS="para">
+The key to configuring Samba is its lone configuration file: <I CLASS="filename">
+smb.conf</i>. This configuration file can be very simple or extremely complex, and the rest of this book is devoted to helping you get deeply personal with this file. For now, however, we'll show you how to set up a single file service, which will allow you to fire up the Samba daemons and see that everything is running as it should be. In later chapters, you will see how to configure Samba for more complicated and interesting tasks. </p><P CLASS="para">
+The installation process does not automatically create an <I CLASS="filename">
+smb.conf</i> configuration file, although several example files are included in the Samba distribution. To test the server software, though, we'll use the following file. It should be named <I CLASS="filename">
+smb.conf</i> and placed in the <EM CLASS="emphasis">
+/usr/local/samba/lib</em> directory.[<A CLASS="footnote" HREF="#ch02-pgfId-943223">5</a>]</p><BLOCKQUOTE CLASS="footnote">
+<DIV CLASS="footnote">
+<P CLASS="para">
+<A CLASS="footnote" NAME="ch02-pgfId-943223">[5]</a> If you did not compile Samba, but instead downloaded a binary, check with the documentation for the package to find out where it expects the <I CLASS="filename">
+smb.conf</i> file. If Samba came preinstalled with your Unix system, there is probably already an <I CLASS="filename">
+smb.conf</i> file somewhere on your system.</p></div></blockquote><PRE CLASS="programlisting">
+[global]
+	workgroup = SIMPLE 
+[test] 
+	comment = For testing only, please
+	path = /export/samba/test
+	read only = no
+	guest ok = yes</pre><P CLASS="para">
+This brief configuration file tells the Samba server to offer the directory <I CLASS="filename">
+/export/samba/test</i> on the server as an SMB/CIFS share called <CODE CLASS="literal">test</code>. The server also becomes part of the named workgroup SIMPLE, which each of the clients must also be a part of. (Use your own workgroup here if you already know what it is.) We'll use the <CODE CLASS="literal">
+[test]</code> share in the next chapter to set up the Windows clients. For now, you can complete the setup by performing the following commands as root on your Unix server:</p><PRE CLASS="programlisting"># <CODE CLASS="userinput"><B>mkdir /export/samba/test</b></code>
+# <CODE CLASS="userinput"><B>chmod 777 /export/samba/test</b></code></pre><P CLASS="para">
+We should point out that in terms of system security, this is the worst setup possible. For the moment, however, we only wish to test Samba, so we'll leave security out of the picture. In addition, there are some encrypted password issues that we will encounter with Windows clients later on, so this setup will afford us the least amount of headaches.</p><P CLASS="para">
+If you are using Windows 98 or Windows NT Service Pack 3 or above, you must add the following entry to the <CODE CLASS="literal">
+[global]</code> section of the Samba configuration file: <CODE CLASS="literal">
+encrypt passwords = yes</code>. In addition, you must use the <I CLASS="filename">
+smbpassword</i> program (typically located in    <I CLASS="filename">
+/usr/local/samba/bin/</i>) to reenter the username/password combinations of those users on the Unix server who should be able to access shares into Samba's encrypted client database. For example, if you wanted to allow Unix user <CODE CLASS="literal">
+steve</code> to access shares from an SMB client, you could type: <CODE CLASS="literal">
+smbpassword -a steve</code>. The first time a user is added, the program will output an error saying that the encrypted password database does not exist. Don't worry, it will then create the database for you. Make sure that the username/password combinations that you add to the encrypted database match the usernames and passwords that you intend to use on the Windows client side.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch02-pgfId-942383">
+2.4.1 Using SWAT</a></h3><P CLASS="para">With Samba 2.0, creating a configuration file is even easier than writing a configuration file by hand. You can use your browser to connect to <a href="http://localhost:901"><EM CLASS="emphasis">http://localhost:901</em></a>, and log on as the root account, as shown in <A CLASS="xref" HREF="ch02_04.html#ch02-60915">
+Figure 2.1</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch02-60915">
+Figure 2.1: SWAT login</a></h4><IMG CLASS="graphic" SRC="figs/sam.0201.gif" ALT="Figure 2.1"><P CLASS="para">
+After logging in, press the GLOBALS button at the top of the screen. You should see the Global Variables page shown in <A CLASS="xref" HREF="ch02_04.html#ch02-49138">
+Figure 2.2</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch02-49138">
+Figure 2.2: SWAT Global Variables page</a></h4><IMG CLASS="graphic" SRC="figs/sam.0202.gif" ALT="Figure 2.2"><P CLASS="para">
+In this example, set the workgroup field to SIMPLE and the security field to USER. The only other option you need to change from the menu is one determining which system on the LAN resolves NetBIOS addresses; this system is called the <EM CLASS="emphasis">
+WINS server</em>. At the very bottom of the page, set the wins support field to Yes, unless you already have a WINS server on your network. If you do, put the WINS server's IP address in the wins server field instead. Then return to the top and press the Commit Changes button to write the changes out to the <EM CLASS="emphasis">
+smb.conf</em> file.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch02-29175">
+Figure 2.3: SWAT Share Creation screen</a></h4><IMG CLASS="graphic" SRC="figs/sam.0203.gif" ALT="Figure 2.3"><P CLASS="para">
+Next, press the Shares icon. You should see a page similar to <A CLASS="xref" HREF="ch02_04.html#ch02-29175">
+Figure 2.3</a>. Choose Test in the field beside the Choose Share button. You will see the Share Parameters screen, as shown in <A CLASS="xref" HREF="ch02_04.html#ch02-37186">
+Figure 2.4</a>. We added a comment to remind us that this is a test share in the <I CLASS="filename">
+smb.conf</i> file. SWAT has copies of all that information here.</p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch02-37186">
+Figure 2.4: SWAT Share Parameters screen</a></h4><IMG CLASS="graphic" SRC="figs/sam.0204.gif" ALT="Figure 2.4"><P CLASS="para">
+If you press the View button, SWAT shows you the following <I CLASS="filename">
+smb.conf</i> file:</p><PRE CLASS="programlisting">
+# Samba config file created using SWAT
+# from localhost (127.0.0.1)
+# Date: 1998/11/27 15:42:40
+
+# Global parameters
+        workgroup = SIMPLE
+[test]
+        comment = For testing only, please
+        path = /export/samba/test
+        read only = no
+        guest ok = yes</pre><P CLASS="para">
+Once this configuration file is completed, you can skip the next step because the output of SWAT is guaranteed to be syntactically correct. </p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch02-pgfId-938862">
+2.4.2 Testing the Configuration File</a></h3><P CLASS="para">If you didn't use SWAT to create your configuration file, you should probably test it to ensure that it is syntactically correct. It may seem silly to run a test program against an eight-line configuration file, but it's good practice for the real ones that we'll be writing later on.</p><P CLASS="para">
+The test parser, <I CLASS="filename">
+testparm</i>, examines an <I CLASS="filename">
+smb.conf</i> file for syntax errors and reports any it finds along with a list of the services enabled on your machine. An example follows; you'll notice that in our haste to get the server running we mistyped <CODE CLASS="literal">
+workgroup</code> as <CODE CLASS="literal">
+workgrp</code> (the output is often lengthy, so we recommend capturing the last parts with the <CODE CLASS="literal">
+tee</code> command):</p><PRE CLASS="programlisting">
+Load smb config files from smb.conf
+Unknown parameter encountered: &quot;workgrp&quot;
+Ignoring unknown parameter &quot;workgrp&quot;
+Processing section &quot;[test]&quot;
+Loaded services file OK.
+Press enter to see a dump of your service definitions
+# Global parameters
+[global]
+        workgroup = WORKGROUP
+        netbios name = 
+        netbios aliases = 
+        server string = Samba 2.0.5a
+        interfaces = 
+        bind interfaces only = No
+
+<I CLASS="lineannotation">...(content omitted)...</i>
+
+[test]
+        comment = For testing only, please               
+	path = /export/samba/test
+        read only = No
+        guest ok = Yes</pre><P CLASS="para">
+The interesting parts are at the top and bottom. The top of the output will flag any syntax errors that you may have made, and the bottom lists the services that the server thinks it should offer. A word of advice: make sure that you and the server have the same expectations. </p><P CLASS="para">
+If everything looks good, then you are ready to fire up the server daemons! </p></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_03.html" TITLE="2.3 Compiling and Installing Samba">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 2.3 Compiling and Installing Samba" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_05.html" TITLE="2.5 Starting the Samba Daemons">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 2.5 Starting the Samba Daemons" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+2.3 Compiling and Installing Samba</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+2.5 Starting the Samba Daemons</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

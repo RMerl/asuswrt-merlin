@@ -1,0 +1,640 @@
+/*
+ * Dropbear - a SSH2 server
+ * 
+ * Copyright (c) 2002,2003 Matt Johnston
+ * All rights reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE. */
+
+#include "includes.h"
+#include "runopts.h"
+#include "signkey.h"
+#include "buffer.h"
+#include "dbutil.h"
+#include "algo.h"
+#include "tcpfwd.h"
+
+cli_runopts cli_opts; /* GLOBAL */
+
+static void printhelp();
+static void parse_hostname(const char* orighostarg);
+static void parse_multihop_hostname(const char* orighostarg, const char* argv0);
+static void fill_own_user();
+#ifdef ENABLE_CLI_PUBKEY_AUTH
+static void loadidentityfile(const char* filename);
+#endif
+#ifdef ENABLE_CLI_ANYTCPFWD
+static void addforward(const char* str, struct TCPFwdList** fwdlist);
+#endif
+#ifdef ENABLE_CLI_NETCAT
+static void add_netcat(const char *str);
+#endif
+
+static void printhelp() {
+
+	fprintf(stderr, "Dropbear client v%s\n"
+#ifdef ENABLE_CLI_MULTIHOP
+					"Usage: %s [options] [user@]host[/port][,[user@]host/port],...] [command]\n"
+#else
+					"Usage: %s [options] [user@]host[/port] [command]\n"
+#endif
+					"Options are:\n"
+					"-p <remoteport>\n"
+					"-l <username>\n"
+					"-t    Allocate a pty\n"
+					"-T    Don't allocate a pty\n"
+					"-N    Don't run a remote command\n"
+					"-f    Run in background after auth\n"
+					"-y    Always accept remote host key if unknown\n"
+					"-s    Request a subsystem (use for sftp)\n"
+#ifdef ENABLE_CLI_PUBKEY_AUTH
+					"-i <identityfile>   (multiple allowed)\n"
+#endif
+#ifdef ENABLE_CLI_LOCALTCPFWD
+					"-L <listenport:remotehost:remoteport> Local port forwarding\n"
+					"-g    Allow remote hosts to connect to forwarded ports\n"
+#endif
+#ifdef ENABLE_CLI_REMOTETCPFWD
+					"-R <listenport:remotehost:remoteport> Remote port forwarding\n"
+#endif
+					"-W <receive_window_buffer> (default %d, larger may be faster, max 1MB)\n"
+					"-K <keepalive>  (0 is never, default %d)\n"
+					"-I <idle_timeout>  (0 is never, default %d)\n"
+#ifdef ENABLE_CLI_NETCAT
+					"-B <endhost:endport> Netcat-alike forwarding\n"
+#endif				
+#ifdef ENABLE_CLI_PROXYCMD
+					"-J <proxy_program> Use program pipe rather than TCP connection\n"
+#endif
+#ifdef DEBUG_TRACE
+					"-v    verbose (compiled with DEBUG_TRACE)\n"
+#endif
+					,DROPBEAR_VERSION, cli_opts.progname,
+					DEFAULT_RECV_WINDOW, DEFAULT_KEEPALIVE, DEFAULT_IDLE_TIMEOUT);
+					
+}
+
+void cli_getopts(int argc, char ** argv) {
+
+	unsigned int i, j;
+	char ** next = 0;
+	unsigned int cmdlen;
+#ifdef ENABLE_CLI_PUBKEY_AUTH
+	int nextiskey = 0; /* A flag if the next argument is a keyfile */
+#endif
+#ifdef ENABLE_CLI_LOCALTCPFWD
+	int nextislocal = 0;
+#endif
+#ifdef ENABLE_CLI_REMOTETCPFWD
+	int nextisremote = 0;
+#endif
+#ifdef ENABLE_CLI_NETCAT
+	int nextisnetcat = 0;
+#endif
+	char* dummy = NULL; /* Not used for anything real */
+
+	char* recv_window_arg = NULL;
+	char* keepalive_arg = NULL;
+	char* idle_timeout_arg = NULL;
+
+	/* see printhelp() for options */
+	cli_opts.progname = argv[0];
+	cli_opts.remotehost = NULL;
+	cli_opts.remoteport = NULL;
+	cli_opts.username = NULL;
+	cli_opts.cmd = NULL;
+	cli_opts.no_cmd = 0;
+	cli_opts.backgrounded = 0;
+	cli_opts.wantpty = 9; /* 9 means "it hasn't been touched", gets set later */
+	cli_opts.always_accept_key = 0;
+	cli_opts.is_subsystem = 0;
+#ifdef ENABLE_CLI_PUBKEY_AUTH
+	cli_opts.privkeys = NULL;
+#endif
+#ifdef ENABLE_CLI_LOCALTCPFWD
+	cli_opts.localfwds = NULL;
+	opts.listen_fwd_all = 0;
+#endif
+#ifdef ENABLE_CLI_REMOTETCPFWD
+	cli_opts.remotefwds = NULL;
+#endif
+#ifdef ENABLE_CLI_PROXYCMD
+	cli_opts.proxycmd = NULL;
+#endif
+	/* not yet
+	opts.ipv4 = 1;
+	opts.ipv6 = 1;
+	*/
+	opts.recv_window = DEFAULT_RECV_WINDOW;
+
+	fill_own_user();
+
+	/* Iterate all the arguments */
+	for (i = 1; i < (unsigned int)argc; i++) {
+#ifdef ENABLE_CLI_PUBKEY_AUTH
+		if (nextiskey) {
+			/* Load a hostkey since the previous argument was "-i" */
+			loadidentityfile(argv[i]);
+			nextiskey = 0;
+			continue;
+		}
+#endif
+#ifdef ENABLE_CLI_REMOTETCPFWD
+		if (nextisremote) {
+			TRACE(("nextisremote true"))
+			addforward(argv[i], &cli_opts.remotefwds);
+			nextisremote = 0;
+			continue;
+		}
+#endif
+#ifdef ENABLE_CLI_LOCALTCPFWD
+		if (nextislocal) {
+			TRACE(("nextislocal true"))
+			addforward(argv[i], &cli_opts.localfwds);
+			nextislocal = 0;
+			continue;
+		}
+#endif
+#ifdef ENABLE_CLI_NETCAT
+		if (nextisnetcat) {
+			TRACE(("nextisnetcat true"))
+			add_netcat(argv[i]);
+			nextisnetcat = 0;
+			continue;
+		}
+#endif
+		if (next) {
+			/* The previous flag set a value to assign */
+			*next = argv[i];
+			if (*next == NULL) {
+				dropbear_exit("Invalid null argument");
+			}
+			next = NULL;
+			continue;
+		}
+
+		if (argv[i][0] == '-') {
+			/* A flag *waves* */
+
+			switch (argv[i][1]) {
+				case 'y': /* always accept the remote hostkey */
+					cli_opts.always_accept_key = 1;
+					break;
+				case 'p': /* remoteport */
+					next = &cli_opts.remoteport;
+					break;
+#ifdef ENABLE_CLI_PUBKEY_AUTH
+				case 'i': /* an identityfile */
+					/* Keep scp happy when it changes "-i file" to "-ifile" */
+					if (strlen(argv[i]) > 2) {
+						loadidentityfile(&argv[i][2]);
+					} else  {
+						nextiskey = 1;
+					}
+					break;
+#endif
+				case 't': /* we want a pty */
+					cli_opts.wantpty = 1;
+					break;
+				case 'T': /* don't want a pty */
+					cli_opts.wantpty = 0;
+					break;
+				case 'N':
+					cli_opts.no_cmd = 1;
+					break;
+				case 'f':
+					cli_opts.backgrounded = 1;
+					break;
+				case 's':
+					cli_opts.is_subsystem = 1;
+					break;
+#ifdef ENABLE_CLI_LOCALTCPFWD
+				case 'L':
+					nextislocal = 1;
+					break;
+				case 'g':
+					opts.listen_fwd_all = 1;
+					break;
+#endif
+#ifdef ENABLE_CLI_REMOTETCPFWD
+				case 'R':
+					nextisremote = 1;
+					break;
+#endif
+#ifdef ENABLE_CLI_NETCAT
+				case 'B':
+					nextisnetcat = 1;
+					break;
+#endif
+#ifdef ENABLE_CLI_PROXYCMD
+				case 'J':
+					next = &cli_opts.proxycmd;
+					break;
+#endif
+				case 'l':
+					next = &cli_opts.username;
+					break;
+				case 'h':
+					printhelp();
+					exit(EXIT_SUCCESS);
+					break;
+				case 'u':
+					/* backwards compatibility with old urandom option */
+					break;
+				case 'W':
+					next = &recv_window_arg;
+					break;
+				case 'K':
+					next = &keepalive_arg;
+					break;
+				case 'I':
+					next = &idle_timeout_arg;
+					break;
+#ifdef DEBUG_TRACE
+				case 'v':
+					debug_trace = 1;
+					break;
+#endif
+				case 'F':
+				case 'e':
+				case 'c':
+				case 'm':
+				case 'D':
+#ifndef ENABLE_CLI_REMOTETCPFWD
+				case 'R':
+#endif
+#ifndef ENABLE_CLI_LOCALTCPFWD
+				case 'L':
+#endif
+				case 'o':
+				case 'b':
+					next = &dummy;
+				default:
+					fprintf(stderr, 
+						"WARNING: Ignoring unknown argument '%s'\n", argv[i]);
+					break;
+			} /* Switch */
+			
+			/* Now we handle args where they might be "-luser" (no spaces)*/
+			if (next && strlen(argv[i]) > 2) {
+				*next = &argv[i][2];
+				next = NULL;
+			}
+
+			continue; /* next argument */
+
+		} else {
+			TRACE(("non-flag arg: '%s'", argv[i]))
+
+			/* Either the hostname or commands */
+
+			if (cli_opts.remotehost == NULL) {
+#ifdef ENABLE_CLI_MULTIHOP
+				parse_multihop_hostname(argv[i], argv[0]);
+#else
+				parse_hostname(argv[i]);
+#endif
+			} else {
+
+				/* this is part of the commands to send - after this we
+				 * don't parse any more options, and flags are sent as the
+				 * command */
+				cmdlen = 0;
+				for (j = i; j < (unsigned int)argc; j++) {
+					cmdlen += strlen(argv[j]) + 1; /* +1 for spaces */
+				}
+				/* Allocate the space */
+				cli_opts.cmd = (char*)m_malloc(cmdlen);
+				cli_opts.cmd[0] = '\0';
+
+				/* Append all the bits */
+				for (j = i; j < (unsigned int)argc; j++) {
+					strlcat(cli_opts.cmd, argv[j], cmdlen);
+					strlcat(cli_opts.cmd, " ", cmdlen);
+				}
+				/* It'll be null-terminated here */
+
+				/* We've eaten all the options and flags */
+				break;
+			}
+		}
+	}
+
+	/* And now a few sanity checks and setup */
+
+	if (cli_opts.remotehost == NULL) {
+		printhelp();
+		exit(EXIT_FAILURE);
+	}
+
+	if (cli_opts.remoteport == NULL) {
+		cli_opts.remoteport = "22";
+	}
+
+	/* If not explicitly specified with -t or -T, we don't want a pty if
+	 * there's a command, but we do otherwise */
+	if (cli_opts.wantpty == 9) {
+		if (cli_opts.cmd == NULL) {
+			cli_opts.wantpty = 1;
+		} else {
+			cli_opts.wantpty = 0;
+		}
+	}
+
+	if (cli_opts.backgrounded && cli_opts.cmd == NULL
+			&& cli_opts.no_cmd == 0) {
+		dropbear_exit("command required for -f");
+	}
+	
+	if (recv_window_arg) {
+		opts.recv_window = atol(recv_window_arg);
+		if (opts.recv_window == 0 || opts.recv_window > MAX_RECV_WINDOW) {
+			dropbear_exit("Bad recv window '%s'", recv_window_arg);
+		}
+	}
+	if (keepalive_arg) {
+		if (m_str_to_uint(keepalive_arg, &opts.keepalive_secs) == DROPBEAR_FAILURE) {
+			dropbear_exit("Bad keepalive '%s'", keepalive_arg);
+		}
+	}
+
+	if (idle_timeout_arg) {
+		if (m_str_to_uint(idle_timeout_arg, &opts.idle_timeout_secs) == DROPBEAR_FAILURE) {
+			dropbear_exit("Bad idle_timeout '%s'", idle_timeout_arg);
+		}
+	}
+
+#ifdef ENABLE_CLI_NETCAT
+	if (cli_opts.cmd && cli_opts.netcat_host) {
+		dropbear_log(LOG_INFO, "Ignoring command '%s' in netcat mode", cli_opts.cmd);
+	}
+#endif
+	
+}
+
+#ifdef ENABLE_CLI_PUBKEY_AUTH
+static void loadidentityfile(const char* filename) {
+
+	struct SignKeyList * nextkey;
+	sign_key *key;
+	int keytype;
+
+	key = new_sign_key();
+	keytype = DROPBEAR_SIGNKEY_ANY;
+	if ( readhostkey(filename, key, &keytype) != DROPBEAR_SUCCESS ) {
+
+		fprintf(stderr, "Failed loading keyfile '%s'\n", filename);
+		sign_key_free(key);
+
+	} else {
+
+		nextkey = (struct SignKeyList*)m_malloc(sizeof(struct SignKeyList));
+		nextkey->key = key;
+		nextkey->next = cli_opts.privkeys;
+		nextkey->type = keytype;
+		cli_opts.privkeys = nextkey;
+	}
+}
+#endif
+
+#ifdef ENABLE_CLI_MULTIHOP
+
+/* Sets up 'onion-forwarding' connections. This will spawn
+ * a separate dbclient process for each hop.
+ * As an example, if the cmdline is
+ *   dbclient wrt,madako,canyons
+ * then we want to run:
+ *   dbclient -J "dbclient -B canyons:22 wrt,madako" canyons
+ * and then the inner dbclient will recursively run:
+ *   dbclient -J "dbclient -B madako:22 wrt" madako
+ * etc for as many hosts as we want.
+ *
+ * Ports for hosts can be specified as host/port.
+ */
+static void parse_multihop_hostname(const char* orighostarg, const char* argv0) {
+	char *userhostarg = NULL;
+	char *last_hop = NULL;;
+	char *remainder = NULL;
+
+	/* both scp and rsync parse a user@host argument
+	 * and turn it into "-l user host". This breaks
+	 * for our multihop syntax, so we suture it back together.
+	 * This will break usernames that have both '@' and ',' in them,
+	 * though that should be fairly uncommon. */
+	if (cli_opts.username 
+			&& strchr(cli_opts.username, ',') 
+			&& strchr(cli_opts.username, '@')) {
+		unsigned int len = strlen(orighostarg) + strlen(cli_opts.username) + 2;
+		userhostarg = m_malloc(len);
+		snprintf(userhostarg, len, "%s@%s", cli_opts.username, orighostarg);
+	} else {
+		userhostarg = m_strdup(orighostarg);
+	}
+
+	last_hop = strrchr(userhostarg, ',');
+	if (last_hop) {
+		if (last_hop == userhostarg) {
+			dropbear_exit("Bad multi-hop hostnames");
+		}
+		*last_hop = '\0';
+		last_hop++;
+		remainder = userhostarg;
+		userhostarg = last_hop;
+	}
+
+	parse_hostname(userhostarg);
+
+	if (last_hop) {
+		/* Set up the proxycmd */
+		unsigned int cmd_len = 0;
+		if (cli_opts.proxycmd) {
+			dropbear_exit("-J can't be used with multihop mode");
+		}
+		if (cli_opts.remoteport == NULL) {
+			cli_opts.remoteport = "22";
+		}
+		cmd_len = strlen(remainder) 
+			+ strlen(cli_opts.remotehost) + strlen(cli_opts.remoteport)
+			+ strlen(argv0) + 30;
+		cli_opts.proxycmd = m_malloc(cmd_len);
+		snprintf(cli_opts.proxycmd, cmd_len, "%s -B %s:%s %s", 
+				argv0, cli_opts.remotehost, cli_opts.remoteport, remainder);
+	}
+}
+#endif /* !ENABLE_CLI_MULTIHOP */
+
+/* Parses a [user@]hostname[/port] argument. */
+static void parse_hostname(const char* orighostarg) {
+	char *userhostarg = NULL;
+	char *port = NULL;
+
+	userhostarg = m_strdup(orighostarg);
+
+	cli_opts.remotehost = strchr(userhostarg, '@');
+	if (cli_opts.remotehost == NULL) {
+		/* no username portion, the cli-auth.c code can figure the
+		 * local user's name */
+		cli_opts.remotehost = userhostarg;
+	} else {
+		cli_opts.remotehost[0] = '\0'; /* Split the user/host */
+		cli_opts.remotehost++;
+		cli_opts.username = userhostarg;
+	}
+
+	if (cli_opts.username == NULL) {
+		cli_opts.username = m_strdup(cli_opts.own_user);
+	}
+
+	port = strchr(cli_opts.remotehost, '/');
+	if (port) {
+		*port = '\0';
+		cli_opts.remoteport = port+1;
+	}
+
+	if (cli_opts.remotehost[0] == '\0') {
+		dropbear_exit("Bad hostname");
+	}
+}
+
+#ifdef ENABLE_CLI_NETCAT
+static void add_netcat(const char* origstr) {
+	char *portstr = NULL;
+	
+	char * str = m_strdup(origstr);
+	
+	portstr = strchr(str, ':');
+	if (portstr == NULL) {
+		TRACE(("No netcat port"))
+		goto fail;
+	}
+	*portstr = '\0';
+	portstr++;
+	
+	if (strchr(portstr, ':')) {
+		TRACE(("Multiple netcat colons"))
+		goto fail;
+	}
+	
+	if (m_str_to_uint(portstr, &cli_opts.netcat_port) == DROPBEAR_FAILURE) {
+		TRACE(("bad netcat port"))
+		goto fail;
+	}
+	
+	if (cli_opts.netcat_port > 65535) {
+		TRACE(("too large netcat port"))
+		goto fail;
+	}
+	
+	cli_opts.netcat_host = str;
+	return;
+	
+fail:
+	dropbear_exit("Bad netcat endpoint '%s'", origstr);
+}
+#endif
+
+static void fill_own_user() {
+	uid_t uid;
+	struct passwd *pw = NULL; 
+
+	uid = getuid();
+
+	pw = getpwuid(uid);
+	if (pw == NULL || pw->pw_name == NULL) {
+		dropbear_exit("Unknown own user");
+	}
+
+	cli_opts.own_user = m_strdup(pw->pw_name);
+}
+
+#ifdef ENABLE_CLI_ANYTCPFWD
+/* Turn a "listenport:remoteaddr:remoteport" string into into a forwarding
+ * set, and add it to the forwarding list */
+static void addforward(const char* origstr, struct TCPFwdList** fwdlist) {
+
+	char * listenport = NULL;
+	char * connectport = NULL;
+	char * connectaddr = NULL;
+	struct TCPFwdList* newfwd = NULL;
+	char * str = NULL;
+
+	TRACE(("enter addforward"))
+
+	/* We need to split the original argument up. This var
+	   is never free()d. */ 
+	str = m_strdup(origstr);
+
+	listenport = str;
+
+	connectaddr = strchr(str, ':');
+	if (connectaddr == NULL) {
+		TRACE(("connectaddr == NULL"))
+		goto fail;
+	}
+	*connectaddr = '\0';
+	connectaddr++;
+
+	connectport = strchr(connectaddr, ':');
+	if (connectport == NULL) {
+		TRACE(("connectport == NULL"))
+		goto fail;
+	}
+	*connectport = '\0';
+	connectport++;
+
+	newfwd = (struct TCPFwdList*)m_malloc(sizeof(struct TCPFwdList));
+
+	/* Now we check the ports - note that the port ints are unsigned,
+	 * the check later only checks for >= MAX_PORT */
+	if (m_str_to_uint(listenport, &newfwd->listenport) == DROPBEAR_FAILURE) {
+		TRACE(("bad listenport strtoul"))
+		goto fail;
+	}
+
+	if (m_str_to_uint(connectport, &newfwd->connectport) == DROPBEAR_FAILURE) {
+		TRACE(("bad connectport strtoul"))
+		goto fail;
+	}
+
+	newfwd->connectaddr = connectaddr;
+
+	if (newfwd->listenport > 65535) {
+		TRACE(("listenport > 65535"))
+		goto badport;
+	}
+		
+	if (newfwd->connectport > 65535) {
+		TRACE(("connectport > 65535"))
+		goto badport;
+	}
+
+	newfwd->have_reply = 0;
+	newfwd->next = *fwdlist;
+	*fwdlist = newfwd;
+
+	TRACE(("leave addforward: done"))
+	return;
+
+fail:
+	dropbear_exit("Bad TCP forward '%s'", origstr);
+
+badport:
+	dropbear_exit("Bad TCP port in '%s'", origstr);
+}
+#endif

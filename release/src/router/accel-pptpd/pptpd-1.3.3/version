@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Grab current version number from configure.in and emit on stdout
+#
+# $Id: version,v 1.1.1.1 2002/06/21 08:52:02 fenix_nl Exp $
+
+VER=`grep AM_INIT_AUTOMAKE configure.in | awk -F'[(),]' '{print $3}'`
+
+if [ "$1" == "-VERSION" ]
+then
+  echo $VER | awk -F'.' '{print $1}'
+  exit
+fi
+
+if [ "$1" == "-PATCHLEVEL" ]
+then
+  echo $VER | awk -F'.' '{print $2}'
+  exit
+fi
+
+if [ "$1" == "-SUBLEVEL" ]
+then
+  echo $VER | awk -F'.' '{print $3}'
+  exit
+fi
+
+echo $VER
+exit

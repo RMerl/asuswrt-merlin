@@ -1,0 +1,35 @@
+<% page_header("columns", "ESP Form Test", "esptest"); 
+   include("/scripting/forms.js");
+%>
+
+<%
+var f = FormObj("FormTest", 3, 2);
+f.element[0].label = "First Name";
+f.element[0].name  = "firstName";
+f.element[0].value = form['firstName'];
+f.element[1].label = "Last Name";
+f.element[1].name  = "lastName";
+f.element[1].value = form['lastName'];
+f.element[2].label = "Color";
+f.element[2].type  = "select";
+f.element[2].list  = new Array("Red", "Green", "Blue", "Yellow");
+f.element[2].value = form['Color'];
+f.submit[0] = "OK";
+f.submit[1] = "Cancel";
+
+f.display();
+
+<%
+  /* if its a post then the user has filled in the form, so
+     report the values 
+  */
+  if (form['submit'] == "OK") {
+%>
+  You chose firstName=@@form['firstName'] lastName=@@form['lastName']<p>
+  
+<%
+   simple_table(form);
+  }
+%>
+
+<% page_footer(); %>

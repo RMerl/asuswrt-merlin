@@ -1,0 +1,11 @@
+#
+# reserved values
+#
+0	global
+255	nowhere
+254	host
+253	link
+#
+# pseudo-reserved
+#
+200	site

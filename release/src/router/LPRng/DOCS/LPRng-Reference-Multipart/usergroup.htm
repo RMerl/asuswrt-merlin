@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Daemon User and Daemon Group</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Installation" href="installation.htm">
+    <link rel="PREVIOUS" title=
+    "Network Mounted File System and Spool Directories" href=
+    "nfsmount.htm">
+    <link rel="NEXT" title="Configuration" href="x485.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "nfsmount.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 2.
+          Installation</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x485.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="USERGROUP">2.4. Daemon User and
+      Daemon Group</a></h1>
+
+      <p>The <b class="APPLICATION">lpd</b> server is started at
+      system initialization time and initially runs as ROOT
+      (Effective <acronym class="ACRONYM">UID</acronym> 0). It
+      performs all file and other operations with <span class=
+      "emphasis"><i class="EMPHASIS">non-privileged</i></span> user
+      <var class="LITERAL">daemon</var> Effective <acronym class=
+      "ACRONYM">UID</acronym> and group <var class=
+      "LITERAL">daemon</var> Effective GID, and does a <code class=
+      "FUNCTION">setuid()</code> to these UID and GID values when
+      running programs. The client programs such as <b class=
+      "APPLICATION">lpr</b> operate with the effective user IDs of
+      the user which started them.</p>
+
+      <p>Most UNIX systems already have user <var class=
+      "LITERAL">daemon</var> and group <var class=
+      "LITERAL">daemon</var>, or a similar ones. If suitable user
+      and group IDs are not present then the appropriate system
+      administration tools should be used to create them. The
+      configuration <var class="LITERAL">--with-userid=UID</var>
+      and <var class="LITERAL">--with-groupid=GID</var> can be used
+      to specify the user and group IDs. The user ID must <span
+      class="emphasis"><i class="EMPHASIS">not</i></span> have
+      login capability.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "nfsmount.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x485.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Network Mounted
+          File System and Spool Directories</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "installation.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">
+          Configuration</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

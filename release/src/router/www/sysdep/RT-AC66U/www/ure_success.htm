@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="shortcut icon" href="images/favicon.png">
+<link rel="icon" href="images/favicon.png">
+<title><#Web_Title#> - <#WPS_PBCbutton_hint_success#></title>
+
+<link rel="stylesheet" type="text/css" href="/qis/qis_style.css">
+<link rel="stylesheet" type="text/css" href="other.css">
+<link rel="stylesheet" type="text/css" href="survey.css">
+<link rel="stylesheet" type="text/css" href="usp_style.css">
+
+<style type="text/css">
+</style>
+
+<script>
+
+<% login_state_hook(); %>
+
+var remoteIP = '<% nvram_get("lan_gateway"); %>';
+var reIP = '<% nvram_get("lan_ipaddr"); %>';
+var clientIP = login_ip_str_now();
+
+function initial(){
+
+	document.getElementById("remoteIP").innerHTML = (remoteIP == "")?"<#CTL_unknown#>":remoteIP;
+	
+	document.getElementById("repeaterIP").innerHTML = reIP;
+	document.getElementById("repeaterIP2").innerHTML = reIP;
+
+	document.getElementById("clientIP").innerHTML = clientIP;
+}
+
+function gotoAdvSetting(){
+	parent.location = "http://"+ reIP;
+}
+
+function addBookmarkForBrowser(sTitle) {
+	 sTitle = sTitle+" - "+ reIP;
+	 
+   if (document.all){
+      window.external.addFavorite('http://'+reIP, sTitle);
+   }
+   else if (window.sidebar && window.sidebar.addPanel){
+      window.sidebar.addPanel(sTitle, 'http://'+reIP, "");
+   }
+   else {
+			addBookmarkForBrowser = function() {
+				alert("<#Browser_action_not_support_addfavorite#>");
+			}
+   }
+}
+</script>
+</head>
+
+<body onload="initial();" class="LevelQIS">
+<script>
+	var sw_mode = '<% nvram_get("sw_mode"); %>';
+	if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
+		sw_mode = 2;
+
+	if(sw_mode != 2){
+		alert("<#page_not_support_mode_hint#>");
+		location.href = "/index.asp";
+	}
+</script>
+<noscript>
+	<div class="popup_bg" style="display:block">
+		<div style="margin:200px auto; width:300px; background-color:#006699; color:#FFFFFF; line-height:150%; border:3px solid #FFF; padding:5px;"><#not_support_script#></p></div>
+	</div>
+</noscript>
+<table width="705"  border="0" align="center" cellpadding="0" cellspacing="0">
+  <tr>
+  	<td colspan="3" height="55" valign="top" background="images/qis_title.gif"><div class="modelName" style="margin:28px 0px 0px 180px;"><#Web_Title2#></div></td>
+  </tr>
+</table>
+<table width="705"  border="0" align="center" cellpadding="0" cellspacing="0">
+  <tr>
+    <td valign="top" width="187" height="350" style="background:url(images/re_banner.gif) 0px bottom no-repeat">
+		<span id="remoteIP" class="iptag" style="margin:65px 0px 0px 60px;"></span>
+		<span id="repeaterIP" class="iptag" style="margin:205px 0px 0px 60px; background-color:#FFCC00"></span>
+		<span id="clientIP" class="iptag" style="margin:320px 0px 0px 60px;"></span>
+	</td>
+    <td width="510" height="380" valign="top" >
+<div  class="survey_main">
+	<div class="description_down" id="title_item"><#APSurvey_action_ConnectingStatus24#></div>
+	<br/>
+		<ol>
+  	      <li>
+  	      	<a href="javascript:gotoAdvSetting();"><#CTL_Setting#></a>: <#QKSet_finish_moveto8#>
+  	      </li>
+  	      <li>
+  	      	<a href="javascript:addBookmarkForBrowser('ASUS RT-N66U');"><#Browser_action_addfavorite#></a>: <#Browser_action_addfavorite_hint1#>&nbsp;<span id="repeaterIP2" class="iptag" style="position:relative;background-color:#FFCC00"></span>&nbsp;<#Browser_action_addfavorite_hint2#>
+  	      </li>
+  	      <li>
+  	      	<a href="survey.htm"><#APSurvey_action_search_again_hint1#></a>: <#APSurvey_action_search_again_hint2#>
+  	      </li>  	      
+    	</ol>
+</div>
+
+<div class="survey_foot"></div>
+    </td>
+    <td width="8" height="380"valign="top" background="images/qis_right.gif" ></td>
+  </tr>
+	<tr>
+		<td height="12" colspan="3" style="background: url('images/qis_bottom.gif') no-repeat">&nbsp;</td>
+	</tr>
+</table>
+</body>
+</html>

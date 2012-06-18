@@ -1,0 +1,16 @@
+#!/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/sbin:/usr/kerberos/bin:/usr/bin:/bin:/usr/local/bin:/usr/X11R6/bin
+export PATH
+f=`echo LPR*[0-9]`;
+if [ -n "$f" ] ; then
+  for i in $f ; do
+    mv $i $i.x;
+    rm -rf $i.x &
+  done
+fi
+f=`ls /usr/src/redhat/SOURCES/LPRng*z | tail -1`
+echo Using $f
+if [ -n "$f" ] ; then
+  tar zxvf $f
+fi
+cd L*[0-9]/DIS*/RPM* ; make checkit

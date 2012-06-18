@@ -1,0 +1,49 @@
+
+(Add new translation to DICT from DOC files)
+
+
+1. goto router\tools\Win32_AsusWrtTransHelper
+
+2. put translated files to folder, translated (DOC)
+
+3. run modify_to_abbrev.sh
+
+4. run word2txt.exe (remeber use Setting buton to change dest folder)
+
+5. run AsusWrtTransHelper
+
+6. goto Win32_AsusWrtTransHelper\asuswrt_output
+
+7. *** use dictviewer to check *** , click untrans
+
+After dictviewer checked, some dict files may lack of strings.
+
+use use Win32_AsusWrtTransHelper to add them
+
+
+(Auto add untranslated strings)
+
+Rule :
+
+a. It uses EN.dict as baseline file.
+b. Untranslated marking only handles base string. It excludes ModelDep strngs.
+
+How to Use :
+
+1. click go button
+
+2. goto asuswrt_output_untranslated
+
+3. copy & paste to www folder if you want to add those untranslated strings
+
+
+-----------------
+
+Note :
+
+Some translator may add new line in translation.
+
+Please remove them first and run word2txt.
+
+hint , WORD : ^p
+

@@ -1,0 +1,76 @@
+#!/bin/sh
+#
+# A sample script to establish PPP session(s) via SSH 1.x
+#
+# Adi Masputra <adi.masputra@sun.com>
+# Jan 24, 2000
+#
+
+#
+# You'd definitely want to change the following addresses to suit
+# your network configuration
+#
+LOC_IP=10.0.0.1
+REM_IP=10.0.0.2
+NETMASK=255.255.0.0
+
+export LOC_IP REM_IP
+
+#
+# This is the remote peer where sshd is running, either
+# its hostname or IP address
+#
+PPPD_RHOST=myremotehost
+
+#
+# For this example, we assume that pppd on both local and remote
+# machines reside in the same place, /usr/local/bin/pppd
+#
+PPPD_LOC=/usr/local/bin/pppd
+
+#
+# The location of local options file (where ssh client is running).
+# Note that the sample options file included in the distribution
+# may need further customizations, depending on your needs. The 'noauth'
+# option specified in the file is there to simplify the example, although
+# some may choose to have it there and rely on ssh authentication
+# instead.
+#
+PPPD_LOC_OPT=/etc/ppp/options-ssh-loc
+
+#
+# The location of remote options file (where sshd daemon is running)
+# Note that the sample options file included in the distribution
+# may need further customizations, depending on your needs. The 'noauth'
+# option specified in the file is there to simplify the example, although
+# some may choose to have it there and rely on ssh authentication
+# instead. Also note that the remote options file need to include the 'notty'
+# options for this to work.
+#
+PPPD_REM_OPT=/etc/ppp/options-ssh-rem
+
+#
+# The location of ssh client on the local machine
+#
+SSH_LOC=/usr/local/bin/ssh
+
+export PPPD_LOC PPPD_LOC_OPT PPPD_REM_OPT PPPD_RHOST SSH_LOC
+
+#
+# Uncomment the following to enable IPv6, note that the IPv6 support 
+# needs to be enabled during compilation
+#
+# PPPD_IPV6='+ipv6 ipv6cp-use-ipaddr'
+export PPPD_IPV6
+
+#
+# And execute pppd with the pty option, specifying ssh client as the
+# slave side of the pseudo-tty master/slave pair. Note that on this example,
+# ssh has been compiled to allow NULL encryption (thus the '-c none' option),
+# but in reality, you'd probably want to specify the encryption algorithm.
+# See the man page of ssh(1) for details.
+#
+exec $PPPD_LOC \
+        pty '$SSH_LOC -c none $PPPD_RHOST $PPPD_LOC $REM_IP:$LOC_IP $PPPD_IPV6 file $PPPD_REM_OPT' \
+        $LOC_IP:$REM_IP netmask $NETMASK $PPPD_IPV6 file $PPPD_LOC_OPT
+

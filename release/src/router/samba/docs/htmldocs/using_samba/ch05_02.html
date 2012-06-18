@@ -1,0 +1,429 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 5] 5.2 Filesystem Differences</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:32:56Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_01.html" TITLE="5.1 Browsing">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 5.1 Browsing" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch05_01.html" TITLE="5. Browsing and Advanced Disk Shares ">
+Chapter 5<br>
+Browsing and Advanced Disk Shares </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_03.html" TITLE="5.3 File Permissions and Attributes on MS-DOS and Unix">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 5.3 File Permissions and Attributes on MS-DOS and Unix" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch05-34221">
+5.2 Filesystem Differences</a></h2><P CLASS="para">One of the biggest issues for which Samba has to correct is the difference between Unix and non-Unix filesystems. This includes items such as handling symbolic links, hidden files, and dot files. In addition, file permissions can also be a headache if not accounted for properly. This section describes how to use Samba to make up for some of those annoying differences, and even how to add some new functionality of its own.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-963262">
+5.2.1 Hiding and Vetoing Files</a></h3><P CLASS="para">There are some cases when we need to ensure that a user cannot see or access a file at all. Other times, we don't want to keep a user from accessing a file&nbsp;- we just want to hide it when they view the contents of the directory. On Windows systems, an attribute of files allows them to be hidden from a folder listing. With Unix, the traditional way of hiding files in a directory is to precede them with a dot (.). This prevents items such as configuration files or defaults from being seen when performing an ordinary <CODE CLASS="literal">
+ls</code> command. Keeping a user from accessing a file at all, however, involves working with permissions on files and or directories.</p><P CLASS="para">
+The first option we should discuss is the boolean <CODE CLASS="literal">
+hide</code> <CODE CLASS="literal">
+dot</code> <CODE CLASS="literal">
+files</code>. This option does exactly what it says. When set to <CODE CLASS="literal">
+yes</code>, the option treats files beginning with a period (.) as hidden. If set to <CODE CLASS="literal">
+no</code>, those files are always shown. The important thing to remember is that the files are only hidden. If the user has chosen to show all hidden files while browsing (e.g., using the Folder Options menu item under the View menu in Windows 98), they will still be able to see the files, as shown in <A CLASS="xref" HREF="ch05_02.html#ch05-77260">
+Figure 5.2</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch05-77260">
+Figure 5.2: Hidden files in the [data] share</a></h4><IMG CLASS="graphic" SRC="figs/sam.0502.gif" ALT="Figure 5.2"><P CLASS="para">
+Instead of simply hiding files beginning with a dot, you can also specify a string pattern to Samba for files to hide, using the <CODE CLASS="literal">
+hide</code> <CODE CLASS="literal">
+files</code> option. For example, let's assume that we specified the following in our example <CODE CLASS="literal">
+[data]</code> share:</p><PRE CLASS="programlisting">
+[data]
+	path = /home/samba/data
+	browseable = yes
+	guest ok = yes
+	writeable = yes
+	case sensitive = no
+	hide files = /*.java/*README*/</pre><P CLASS="para">
+Each entry for this option must begin, end, or be separated from another with a slash (/) character, even if there is only one pattern listed. This convention allows spaces to appear in filenames. In this example, the share directory would appear as shown in <A CLASS="xref" HREF="ch05_02.html#ch05-19743">
+Figure 5.3</a>. Again, note that we have set the Windows 98 option to view hidden files for the window. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch05-19743">
+Figure 5.3: Hiding files based on filename patterns</a></h4><IMG CLASS="graphic" SRC="figs/sam.0503.gif" ALT="Figure 5.3"><P CLASS="para">If we want to prevent users from seeing files at all, we can instead use the <CODE CLASS="literal">
+veto</code> <CODE CLASS="literal">
+files</code> option. This option, which takes the same syntax as the <CODE CLASS="literal">
+hide</code> <CODE CLASS="literal">
+files</code> option, specifies a list of files that should never be seen by the user. For example, let's change the <CODE CLASS="literal">
+[data]</code> share to the following:</p><PRE CLASS="programlisting">
+[data]
+	path = /home/samba/data
+	browseable = yes
+	guest ok = yes
+	writeable = yes
+	case sensitive = no
+	veto files = /*.java/*README*/</pre><P CLASS="para">
+The syntax of this option is identical to the <CODE CLASS="literal">
+hide</code> <CODE CLASS="literal">
+files</code> configuration option: each entry must begin, end, or be separated from another with a slash (<CODE CLASS="literal">/</code>) character, even if there is only one pattern listed. By doing so, the files <CODE CLASS="literal">
+hello.java</code> and <CODE CLASS="literal">
+README</code> will simply disappear from the directory, and the user will not be able to access them through SMB. </p><P CLASS="para">
+There is one other question that we need to address. What happens if the user tries to delete a directory that contains vetoed files? This is where the <CODE CLASS="literal">
+delete</code> <CODE CLASS="literal">
+veto</code> <CODE CLASS="literal">
+files</code> option comes in. If this boolean option is set to <CODE CLASS="literal">
+yes</code>, the user is allowed to delete both the regular files and the vetoed files in the directory, and the directory itself will be removed. If the option is set to <CODE CLASS="literal">
+no</code>, the user will not be able to delete the vetoed files, and consequently the directory will not be deleted either. From the user's perspective, the directory will appear to be empty, but cannot be removed.</p><P CLASS="para">
+The <CODE CLASS="literal">
+dont</code> <CODE CLASS="literal">
+descend</code> directive specifies a list of directories whose contents Samba should not allow to be visible. Note that we say <EM CLASS="emphasis">
+contents</em>, not the directory itself. Users will be able to enter a directory marked as such, but they are prohibited from descending the directory tree any farther&nbsp;- they will always see an empty folder. For example, let's use this option with a more basic form of the share that we defined earlier in the chapter:</p><PRE CLASS="programlisting">
+[data]
+	path = /home/samba/data
+	browseable = yes
+	guest ok = yes
+	writeable = yes
+	case sensitive = no
+	dont descend = config defaults</pre><P CLASS="para">
+In addition, let's assume that the <I CLASS="filename">
+/home/samba/data</i> directory has the following contents:</p><PRE CLASS="programlisting">
+drwxr-xr-x   6 tom      users     1024 Jun 13 09:24 .
+drwxr-xr-x   8 root     root      1024 Jun 10 17:53 ..
+-rw-r--r--   2 tom      users     1024 Jun  9 11:43 README
+drwxr-xr-x   3 tom      users     1024 Jun 13 09:28 config
+drwxr-xr-x   3 tom      users     1024 Jun 13 09:28 defaults
+drwxr-xr-x   3 tom      users     1024 Jun 13 09:28 market</pre><P CLASS="para">
+If the user then connects to the share, he or she would see the directories shown in <A CLASS="xref" HREF="ch05_02.html#ch05-62659">
+Figure 5.4</a>. However, the contents of the <I CLASS="filename">
+/config</i> and <I CLASS="filename">
+/defaults</i> directories would appear empty to the user, even if other folders or files existed in them. In addition, users cannot write any data to the folder (which prevents them from creating a file or folder with the same name as one that is already there but invisible). If a user attempts to do so, he or she will receive an "Access Denied" message. <CODE CLASS="literal">
+dont</code> <CODE CLASS="literal">
+descend</code> is an administrative option, not a security option, and is not a substitute for good file permissions.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch05-62659">
+Figure 5.4: Contents of the [data] share with dont descend </a></h4><IMG CLASS="graphic" SRC="figs/sam.0504.gif" ALT="Figure 5.4"></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-963441">
+5.2.2 Links</a></h3><P CLASS="para">DOS and NT filesystems don't have symbolic links; Windows 95/98/NT systems approximate this with "shortcuts" instead. Therefore, when a client tries to open a symbolic link on a Samba server share, Samba attempts to follow the link to find the real file and let the client open it, as if he or she were on a Unix machine. If you don't want to allow this, set the <CODE CLASS="literal">
+follow</code> <CODE CLASS="literal">
+symlinks</code> option:</p><PRE CLASS="programlisting">
+[data]
+	path = /home/samba/data
+	browseable = yes
+	guest ok = yes
+	writeable = yes
+	case sensitive = no
+	follow symlinks = no</pre><P CLASS="para">
+You can test this by creating a directory on the Unix server inside the share as the user that you are logging in with. Enter the following commands:</p><PRE CLASS="programlisting">
+% <CODE CLASS="userinput"><B>mkdir hello; cd hello</b></code>
+% <CODE CLASS="userinput"><B>cat &quot;This is a test&quot; &gt;hello.txt</b></code>
+% <CODE CLASS="userinput"><B>ln -s hello.txt &quot;Link to hello&quot;</b></code></pre><P CLASS="para">
+This results in the two files shown in the window in <A CLASS="xref" HREF="ch05_02.html#ch05-36377">
+Figure 5.5</a>. Normally, if you click on either one, you will receive a file which has the text "This is a test" inside of it. However, with the <CODE CLASS="literal">
+follow</code> <CODE CLASS="literal">
+symlinks</code> option set to <CODE CLASS="literal">
+no</code>, you should receive an error similar to the dialog in <A CLASS="xref" HREF="ch05_02.html#ch05-36377">
+Figure 5.5</a> if you click on "Link to hello."  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch05-36377">
+Figure 5.5: An error dialog trying to follow symbolic links when forbidden by Samba</a></h4><IMG CLASS="graphic" SRC="figs/sam.0505.gif" ALT="Figure 5.5"><P CLASS="para">
+Finally, let's discuss the <CODE CLASS="literal">
+wide</code> <CODE CLASS="literal">
+links</code> option. This option, if set to <CODE CLASS="literal">
+yes</code>, allows the client user to follow symbolic links that point outside the shared directory tree, including files or directories at the other end of the link. For example, let's assume that we modified the <CODE CLASS="literal">
+[data]</code> share as follows:</p><PRE CLASS="programlisting">
+[data]
+	path = /home/samba/data
+	browseable = yes
+	guest ok = yes
+	writeable = yes
+	case sensitive = no
+	follow symlinks = yes
+	wide links = yes</pre><P CLASS="para">
+As long as the <CODE CLASS="literal">
+follow</code> <CODE CLASS="literal">
+symlinks</code> option is enabled, this will cause Samba to follow all symbolic links outside the current share tree. If we create a file outside the share (for example, in someone's home directory) and then create a link to it in the share as follows:</p><PRE CLASS="programlisting">
+ln -s ~tom/datafile ./datafile</pre><P CLASS="para">
+then you will be able to open the file in Tom's directory as per the target file's permissions.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch05-pgfId-963127">
+5.2.3 Filesystem Options</a></h3><P CLASS="para">
+<A CLASS="xref" HREF="ch05_02.html#ch05-48353">Table 5.4</a> shows a breakdown of the options we discussed earlier. We recommend the defaults for most, except those listed in the following descriptions. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch05-48353">
+Table 5.4: Filesystem Configuration Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+unix realname</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Provides Unix user's full name to client.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+dont descend</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (list of directories)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Indicates a list of directories whose contents Samba should make invisible to clients.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+follow symlinks</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If set to <CODE CLASS="literal">
+no</code>, Samba will not honor symbolic links.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+getwd cache</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If set to <CODE CLASS="literal">
+yes</code>, Samba will use a cache for <CODE CLASS="literal">
+getwd()</code> calls.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+wide links</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If set to <CODE CLASS="literal">
+yes</code>, Samba will follow symbolic links outside the share.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+hide dot files</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If set to <CODE CLASS="literal">
+yes</code>, treats Unix hidden files as hidden files in Windows.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+hide files</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (list of files)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+List of file patterns to treat as hidden.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+veto files</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (list of files)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+List of file patterns to never show.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+delete veto files</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If set to <CODE CLASS="literal">
+yes</code>, will delete files matched by <CODE CLASS="literal">
+veto files</code> when the directory they reside in is deleted.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958657">
+5.2.3.1 unix realname</a></h4><P CLASS="para">
+Some programs require a full username in order to operate. For example, a Windows email program often needs to associate a username with a given real name. If your system password file contains the real names of users in the GCOS field, the <CODE CLASS="literal">
+unix</code> <CODE CLASS="literal">
+realname</code> option instructs Samba to provide this information to clients. Without it, the name of the user will simply be his or her login ID. For example, if your Unix password file contains the following line:</p><PRE CLASS="programlisting">
+rcollins:/KaBfco47Rer5:500:500:Robert Collins:
+/home/rcollins:/bin/ksh</pre><P CLASS="para">
+And the option in the configuration file is:</p><PRE CLASS="programlisting">
+[global]
+	unix realname = yes</pre><P CLASS="para">
+then the name Robert Collins will be provided to any client that requests the real name of user <CODE CLASS="literal">
+rcollins</code>. You typically don't need to bother with this option.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958929">
+5.2.3.2 dont descend</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+dont</code> <CODE CLASS="literal">
+descend</code> option can be used to specify various directories that should appear empty to the client. Note that the directory itself will still appear. However, Samba will not show any of the contents of the directory to the client user. This is not a good option to use as a security feature (a user could probably find a way around it); it really is meant only as a convenience to keep client users from browsing into directories that might have sensitive files. See our example earlier in this section.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958663">
+5.2.3.3 follow symlinks</a></h4><P CLASS="para">This option, which is discussed in greater detail earlier, controls whether Samba will follow a symbolic link in the Unix operating system to the target, or if it should return an error to the client user. If the option is set to <CODE CLASS="literal">
+yes</code>, the target of the link will be interpreted as the file.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-963512">
+5.2.3.4 getwd cache</a></h4><P CLASS="para">
+This global option specifies whether Samba should use a local cache for the Unix <CODE CLASS="literal">
+getwd()</code> (get current working directory) system call. You can override the default value of <CODE CLASS="literal">
+yes</code> as follows:</p><PRE CLASS="programlisting">
+[global]
+	getwd cache = no</pre><P CLASS="para">
+Setting this option to <CODE CLASS="literal">
+yes</code> can significantly increase the time it takes to resolve the working directory, especially if the <CODE CLASS="literal">
+wide</code> <CODE CLASS="literal">
+links</code> option is set to <CODE CLASS="literal">
+no</code>. You should normally not need to alter this option.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-960186">
+5.2.3.5 wide links</a></h4><P CLASS="para">
+This option specifies whether the client user can follow symbolic links that point outside the shared directory tree. This includes any files or directories at the other end of the link, as long as the permissions are correct for the user. The default value for this option is <CODE CLASS="literal">
+yes</code>. Note that this option will not be honored if the <CODE CLASS="literal">
+follow</code> <CODE CLASS="literal">
+symlinks</code> options is set to <CODE CLASS="literal">
+no</code>. Setting this option to <CODE CLASS="literal">
+no</code> slows <EM CLASS="emphasis">
+smbd</em> considerably.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958655">
+5.2.3.6 hide files</a></h4><P CLASS="para">The <CODE CLASS="literal">
+hide</code> <CODE CLASS="literal">
+files</code> option provides one or more directory or filename patterns to Samba. Any file matching this pattern will be treated as a hidden file from the perspective of the client. Note that this simply means that the DOS hidden attribute is set, which may or may not mean that the user can actually see it while browsing.</p><P CLASS="para">
+Each entry in the list must begin, end, or be separated from another entry with a slash (<CODE CLASS="literal">/</code>) character, even if there is only one pattern listed. This allows spaces to appear in the list. Asterisks can be used as a wildcard to represent zero or more characters. Questions marks can be used to represent exactly one character. For example:</p><PRE CLASS="programlisting">
+hide files = /.jav*/README.???/</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-963549">
+5.2.3.7 hide dot files</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+hide</code> <CODE CLASS="literal">
+dot</code> <CODE CLASS="literal">
+files</code> option hides any files on the server that begin with a dot (.) character, in order to mimic the functionality behind several shell commands that are present on Unix systems. Like <CODE CLASS="literal">
+hide</code> <CODE CLASS="literal">
+files</code>, those files that begin with a dot have the DOS hidden attribute set, which doesn't necessarily guarantee that a client cannot view them. The default value for this option is <CODE CLASS="literal">
+yes</code>. </p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-963556">
+5.2.3.8 veto files</a></h4><P CLASS="para">
+More stringent than the hidden files state is the state provided by the <CODE CLASS="literal">
+veto</code> <CODE CLASS="literal">
+files</code> configuration option. Samba won't even admit these files exist. You cannot list or open them from the client. In reality, this isn't a trustworthy security option. It is actually a mechanism to keep PC programs from deleting special files, such as ones used to store the resource fork of a Macintosh file on a Unix filesystem. If both Windows and Macs are sharing the same files, this can prevent ill-advised power users from removing files the Mac users need.</p><P CLASS="para">
+The syntax of this option is identical to that of the <CODE CLASS="literal">
+hide</code> <CODE CLASS="literal">
+files</code> configuration option: each entry must begin, end, or be separated from another with a slash (/) character, even if only one pattern is listed. Asterisks can be used as a wildcard to represent zero or more characters. Questions marks can be used to represent exactly one character. For example:</p><PRE CLASS="programlisting">
+veto files = /*config/*default?/</pre><P CLASS="para">
+This option is primarily administrative&nbsp;- not a substitute for good file permissions.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch05-pgfId-958851">
+5.2.3.9 delete veto files</a></h4><P CLASS="para">This option tells Samba to delete vetoed files when a user attempts to delete the directory in which they reside. The default value is <CODE CLASS="literal">
+no</code>. This means if a user tries to delete a directory that contains a vetoed file, the file (and the directory) will not be deleted. Instead, the directory will remain and appear to be empty from the perspective of the user. If set to <CODE CLASS="literal">
+yes</code>, the directory and the vetoed files will be deleted.</p></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_01.html" TITLE="5.1 Browsing">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 5.1 Browsing" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_03.html" TITLE="5.3 File Permissions and Attributes on MS-DOS and Unix">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 5.3 File Permissions and Attributes on MS-DOS and Unix" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+5.1 Browsing</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+5.3 File Permissions and Attributes on MS-DOS and Unix</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

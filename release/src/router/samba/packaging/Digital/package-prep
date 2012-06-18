@@ -1,0 +1,30 @@
+tar xvf skeleton.tar
+NOWDIR=`pwd`;
+( cd /usr/local;
+	if [ -x man ]; then mv man man.orig; fi
+	if [ -x samba ]; then mv samba samba.orig; fi
+	ln -sf $NOWDIR/usr/local/man man;
+	ln -sf $NOWDIR/usr/local/samba samba; )
+gunzip samba-2.0.0.tar.gz
+tar xvf samba-2.0.0.tar
+cd samba-2.0.0/source
+./configure
+make
+make install
+cd $NOWDIR/usr/local/samba
+cp -pr man ../
+rm -rf man
+cd $NOWDIR
+tar cvf install.tar usr var
+cd samba-2.0.0/source
+rm -f ../source/bin/*
+make clean
+cd ../..
+tar cvf samba-2.0.0.tar samba-2.0.0
+rm -rf samba-2.0.0
+rm -rf usr var
+cd ..
+find samba-2.0.0 -print | cpio -o > samba-2.0.0-OSF1-v4.0-beta5.cpio
+gzip samba-2.0.0-OSF1-v4.0-beta5.cpio
+cd samba-2.0.0
+tar xvf install.tar

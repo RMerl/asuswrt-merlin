@@ -1,0 +1,167 @@
+Introduction
+------------
+sdparm is a utility for listing and potentially changing SCSI disk
+parameters. More generally it can be used on any device that uses
+a SCSI command set. Apart form SCSI disks, examples of devices that
+use SCSI command sets are ATAPI CD/DVD drives, SCSI and ATAPI tape
+drives and SCSI enclosures.
+
+This utility was originally written for Linux. It has been ported
+to FreeBSD, Solaris, Tru64, and Windows.
+
+Relationship to sg3_utils
+-------------------------
+This package shares code with sg3_utils (version 1.25). With the
+subversion revision control system this is done by having sdparm's
+"include/" and "lib/" subdirectories pointing to the correspondingly
+named directories in the sg3_utils package using the "svn:externals"
+property. These two "external" directories include more files than
+sdparm uses. The excess files include "lib/Makefile.am" and
+"lib/Makefile.in". The "Makfile.am" in sdparm's "src/" directory does
+the main part of the build. When the tarball is generated for this
+utility, various files are "exported" out of the subversion repository
+and "svn:externals" redirection is no longer visible (but the unused
+files are visible).
+
+Currently the shared code is statically compiled into each package.
+It is the intention of the author to make a common library called
+libsgutils.so in a separate package that both sdparm and sg3_utils
+will depend on at some point in the future.
+
+Documentation
+-------------
+The executable outputs a usage message when the "--help" (or '-h' or '-?')
+option is given. Many syntax errors also result in the usage message being
+printed. There is also a man page which is in section 8 (administration
+and privileged commands). It can be accessed with "man sdparm" once this
+package is installed. Prior to installation the man page can be viewed
+from this package's main directory with "man doc/sdparm.8".
+
+There is a web page at http://www.torque.net/sg/sdparm.html and a copy
+of that html file is placed in the "doc" directory.
+
+Build infrastructure
+--------------------
+This packages uses the automake and autoconf tools. The generating
+files (scripts) are configure.ac, Makefile.am, src/Makefile.am and
+autogen.sh . The autogen.sh script only needs to be executed if one of
+the other generating files in the above list is changed.
+
+There is a rpm "spec" file in the main directory: sdparm.spec .
+There are debian build files in the "debian" directory and a
+script called build_debian.sh in the main directory.
+
+License
+-------
+This utility is covered by a FreeBSD license. The intention of the author
+is that both open source and commercial entities can re-use this code.
+Naturally credit and improvement/bug feedback are encouraged. The part
+of this code that others may be able to re-use is the information in
+the tables in sdparm_data.c and sg_lib.c . This is information garnered
+from SCSI drafts and standards at http://www.t10.org (plus some
+information from the ATA drafts and standards at http://www.t13.org ).
+Vendor specific mode page information is found in the sdparm_data_vendor.c
+file and is derived from vendor product manuals.
+
+Notes
+-----
+More specific information about building this package can be found in
+the INSTALL file. The contents of COPYING is a FreeBSD license (rather
+than the GPL v2 found in the usual template).
+
+Linux port
+----------
+The utility can be used on any device that supports the SG_IO ioctl. In
+the linux 2.4 series that is only the scsi generic (i.e. /dev/sg* )
+device nodes. In the linux 2.6 series the supported device nodes has
+expanded to all other SCSI device nodes (e.g. /dev/sd* and /dev/sr*)
+plus block devices such as /dev/hdc when the associated device is a
+DVD drive. Most man page and www.torque.net/sg/sdparm.html web page
+examples use linux device node names.
+
+FreeBSD port
+------------
+Virtually all of sdparm's features work with FreeBSD. SCSI commands are
+routed through the CAM pass through interface. The author tested sdparm
+with FreeBSD version 5.3 and found SCSI disks worked with the "da" device
+(e.g. 'sdparm  /dev/da0'). SCSI tape drives can be accessed via the "sa"
+device via /dev nodes starting with "esa", "nsa" and "sa". To access cd/dvd
+drives, the kernel needs to be build with the "atapicam" device after which
+access is via the "cd" device. Other SCSI devices are "ses" (for enclosure
+services), "ch" (media changer (for tapes)), and "pr" for processor device
+type (e.g. SAF-TE devices). All these device may also be accessed via
+the "pass" device. To see the mapping between the "pass" device name and
+the corresponding higher level device node try "camcontrol devlist".
+
+Solaris port
+------------
+Currently assumes gcc is present.
+
+
+Tru64 (osf) port
+----------------
+??
+
+
+Win32 port
+----------
+This port only supports Windows NT, 2000, 2003 and XP (not 95, 98, ME or
+earlier). It uses the Microsoft SCSI Pass Through "Direct" (SPTD) rather
+than ASPI32 which requires a dll from Adaptec.
+
+The source can be built in a cygwin environment and can run in a cygwin
+bash shell. It can also run in a DOS shell if the cygwin1.dll is put in an
+appropriate place.
+Alternatively the source can be built with the MinGW compiler using its
+MSYS shell. This removes the dependence on the cygwin1.dll file.
+
+The device naming schemes attempt to follow what DOS does, with a few short
+cuts. If volume "D:" is an ATAPI DVD drive then the actual file opened
+is "\\.\D:". All device nodes of interest to sdparm have a leading "\\.\"
+so if the user doesn't supply it, sdparm will. Thus 'sdparm d:' should work.
+Note that volume names map to Windows partitions so there can be multiple
+volume names per disk. SCSI devices (or those that use a SCSI command set)
+can also be accessed via their "class" driver. These have names
+like "PhysicalDrive<n>", "CDROM<n>" and "TAPE<n>" where <n> is a number
+starting at 0. Since "PhysicalDrive" is tedious to type, a shortened
+form "PD" is accepted.  So if "PD3" is a SCSI disk (or a SATA disk behind
+a SAT layer) then 'sdparm pd3' should work.
+
+Finally there is a lower level "SCSI<n>:" interface that addresses a SCSI
+adapter. The device needs further sub-addressing in the form of a bus
+number (also called a PathId), a target identifier and a lun (logical
+unit number). sdparm uses this notation: "SCSI<n>:<bus>,<target>,<lun>".
+The trailing ",<lun>" may be omitted in which case a lun of 0 is assumed.
+Once a device has been "claimed" by an upper level "class" driver the
+OS will not allow it to be accessed via the "SCSI<n>:" interface. Hence
+this is only needed for special devices (e.g. with processor or SES
+peripheral device type) that are not claimed by the class drivers.
+
+The '--wscan' (or '-w') option has been added to show the mapping between
+the volume name(s), class driver name and the "SCSI<n>:" name. It attempts
+to place all device names for the same device on the same line followed
+by its INQUIRY string. Unfortunately each USB or IEEE 1394 device may
+appear on two lines. Here is an example of the output:
+
+# sdparm -w
+SCSI0:0,0,0       C:    PD0      IC25N040ATCS05-0        CS4O  *
+SCSI1:0,0,0       D:    CDROM0   HITACHI DVD-ROM GD-S200 0034
+SCSI2:0,0,0       I: +  PD5      QUANTUM LPS525S         3110
+SCSI2:0,6,0             TAPE0    SONY    SDT-7000        0192
+                  E:             Generic USB SD Reader   1.00  pdt=0
+                        PD1      Generic USB SD Reader   1.00
+
+The last two lines are actually one device. The "*" at the end of
+the first line flags that the SCSI-2 INQUIRY response is not quite
+correct, usually indicative of an ATA disk. The "+" after the "I:"
+indicates that several volume names (letters) map to that device.
+That usually means there are two or more partitions which Windows
+recognizes. Devices for which no class device name is found
+(e.g. the column that starts with "PD0" above) have their SCSI
+"peripheral device type" (pdt) value placed at the end of the line.
+The longer "PhysicalDrive" name, shown in Windows documentation,
+may be used but "PD" is obviously quicker to type.
+
+
+Douglas Gilbert
+8th October 2007

@@ -1,0 +1,17 @@
+#
+#	Experimental extensions, configuration only (for check-items)
+#	Names/numbers as per the MERIT extensions (if possible).
+#
+ATTRIBUTE	NAS-Identifier		32	string
+ATTRIBUTE	Proxy-State		33	string
+ATTRIBUTE	Login-LAT-Service	34	string
+ATTRIBUTE	Login-LAT-Node		35	string
+ATTRIBUTE	Login-LAT-Group		36	string
+ATTRIBUTE	Framed-AppleTalk-Link	37	integer
+ATTRIBUTE	Framed-AppleTalk-Network 38	integer
+ATTRIBUTE	Framed-AppleTalk-Zone	39	string
+ATTRIBUTE       Acct-Input-Packets	47	integer
+ATTRIBUTE       Acct-Output-Packets	48	integer
+# 8 is a MERIT extension.
+VALUE		Service-Type		Authenticate-Only	8
+

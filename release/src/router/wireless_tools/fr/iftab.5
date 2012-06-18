@@ -1,0 +1,196 @@
+.\" Jean II - HPL - 2004
+.\" iftab.5
+.\"
+.\" Traduction 2004/08/25 Maxime CHARPENNE (voir
+.\" http://www.delafond.org/traducmanfr/)
+.\" 1ère traduction        : version 27-pre25
+.\"
+.TH IFTAB 5 "01 mars 2004" "wireless-tools" "Manuel du Programmeur Linux"
+.\"
+.\" NAME part
+.\"
+.SH NOM
+iftab \- informations statiques sur les interfaces réseau
+.\"
+.\" DESCRIPTION part
+.\"
+.SH DESCRIPTION
+Le fichier
+.B /etc/iftab
+contient de l'information descriptive à propos des diverses interfaces réseau.
+.B iftab
+n'est utilisé que par le programme
+.IR ifrename (8)
+pour assigner un nom d'interface réseau cohérent à chaque interface réseau.
+.PP
+.B /etc/iftab
+définit un ensemble de
+.RI "correspondances («\ " mappings "\ »)."
+Chaque correspondance contient un nom d'interface et un ensemble de sélecteurs
+(«\ selectors\ »). Les sélecteurs permettent à
+.B ifrename
+d'identifier chaque interface réseau du système. Si une interface réseau
+correspond à tous les descripteurs d'une correspondance,
+.B ifrename
+essaye de changer le nom de l'interface par le nom de l'interface donné dans la
+correspondance.
+.\"
+.\" MAPPINGS part
+.\"
+.SH CORRESPONDANCES («\ MAPPINGS\ »)
+Chaque correspondance est décrite sur une ligne distincte, elle commence avec
+.IR "interface name" " (nom d'interface),"
+et contient un ensemble de
+.RI "descripteurs («\ " descriptors "\ »),"
+séparés par des espaces ou des tabulations.
+.PP
+La relation entre les descripteurs d'une correspondance est un
+.IR "et logique" .
+Une correspondance s'applique à une interface réseau seulement si tous les
+descripteurs s'appliquent. Si une interface réseau ne supporte pas un
+descripteur particulier, elle ne s'appliquera à aucune correspondance qui
+utilise ce descripteur.
+.PP
+Si vous voulez utiliser des descripteurs alternatifs pour un nom d'interface
+(ou logique), spécifiez deux correspondances différentes avec le même nom
+d'interface (une par ligne).
+.B Ifrename
+utilise toujours la première correspondance en commençant par la
+.I fin
+de
+.BR iftab ,
+donc les correspondances les plus restrictives devraient être définies en
+dernier.
+.\"
+.\" INTERFACE NAME part
+.\"
+.SH NOM D'INTERFACE
+La première partie de chaque correspondance est un nom d'interface. Si une
+interface réseau correspond à tous les descripteurs d'une correspondance,
+.B ifrename
+essaye de changer le nom de l'interface par le nom de l'interface donné dans la
+correspondance.
+.PP
+Le nom de l'interface d'une correspondance est soit un nom d'interface complet
+(comme
+.IR eth2 " ou " wlan0 )
+ou un motif de nom d'interface contenant un seul caractère joker (comme
+.IR eth* " ou " wlan* ).
+Dans le cas d'un caractère joker («\ wildcard\ »), le noyau remplace le
+caractère '*' par le plus petit entier disponible faisant un nom d'interface
+unique.
+.\"
+.\" DESCRIPTORS part
+.\"
+.SH DESCRIPTEURS («\ DESCRIPTORS\ »)
+Chaque descripteur est composé d'un nom de descripteur et d'une valeur de
+descripteur. Les descripteurs définissent un attribut statique d'une interface
+réseau, le but étant d'identifier de manière unique chaque périphérique.
+.PP
+La plupart des utilisateurs n'utiliseront que le sélecteur
+.BR mac ,
+les autres sélecteurs étant pour une configuration plus spécialisée.
+.TP
+.BI mac " adresse mac"
+Correspond à l'Adresse MAC de l'interface avec l'adresse MAC spécifiée.
+L'adresse MAC de l'interface peut être montrée en utilisant
+.IR ifconfig (8)
+ou
+.IR ip (8).
+L'adresse MAC spécifiée peut contenir une '*' pour la correspondance joker
+(«\ wildcard matching\ »).
+.br
+C'est le plus commun des sélecteurs, vu que chaque interface possède une
+adresse MAC unique, ce qui permet de les identifier sans ambiguïté.
+.TP
+.BI arp " arp type"
+Fait correspondre le Type ARP («\ ARP Type\ ») (aussi appelé «\ Link Type\ »)
+de l'interface avec le type ARP spécifié. Le Type ARP de l'interface peut être
+montré en utilisant
+.IR ifconfig (8)
+ou
+.IR ip (8).
+.br
+Ce sélecteur est utile quand un pilote crée plusieurs interfaces réseau pour
+une seule carte réseau.
+.TP
+.BI driver " driver name"
+Fait correspondre le Nom de Pilote («\ Driver Name\ ») de l'interface avec le
+nom de pilote spécifié. Le Nom de Pilote de l'interface peut être montré en
+utilisant
+.IR "ethtool -i" (8).
+.TP
+.BI businfo " bus information"
+Fait correspondre l'Information de Bus («\ Bus Information\ ») de l'interface
+avec l'information de bus spécifiée. L'Information de Bus de l'interface peut
+être montrée en utilisant
+.IR "ethtool -i" (8).
+.TP
+.BI baseaddress " base address"
+Fait correspondre l'Adresse de Base («\ Base Address\ ») de l'interface avec
+l'adresse de base spécifiée. L'Adresse de Base de l'interface peut être montrée
+en utilisant
+.IR ifconfig (8).
+.br
+Ce sélecteur n'est utile que pour les cartes ISA et EISA car la plupart des
+cartes utilisent l'allocation dynamique pour l'Adresse de Base.
+.TP
+.BI irq " irq line"
+Fait correspondre la Ligne IRQ (interruption) de l'interface avec la ligne IRQ
+spécifiée. La Ligne IRQ de l'interface peut être montrée en utilisant
+.IR ifconfig (8).
+.br
+Ce sélecteur n'est habituellement pas suffisant pour identifier de manière
+unique une interface, car les Lignes IRQ peuvent être partagées.
+.TP
+.BI iwproto " wireless protocol"
+Fait correspondre le Protocole Wireless de l'interface avec le protocole
+wireless spécifié. Le Protocole Wireless de l'interface peut être montré
+en utilisant
+.IR iwconfig (8).
+.br
+Ce sélecteur n'est valable que pour les interfaces wireless et n'est pas
+suffisant pour en identifier une de manière unique.
+.\"
+.\" EXAMPLE part
+.\"
+.SH EXEMPLE
+# Ceci est un commentaire
+.br
+eth2		mac 08:00:09:DE:82:0E
+.br
+eth3		driver wavelan interrupt 15 baseaddress 0x390
+.br
+eth4		driver pcnet32 businfo 0000:02:05.0
+.br
+air*		mac 00:07:0E:* arp 1
+.\"
+.\" AUTHOR part
+.\"
+.SH AUTEUR
+Jean Tourrilhes \- jt@hpl.hp.com
+.\"
+.\" TRADUCTION part
+.\"
+.SH TRADUCTION
+Maxime CHARPENNE, août 2004 (wireless_tools.27-pre25).
+.\"
+.\" AVERTISSEMENT part
+.\"
+.SH AVERTISSEMENT SUR LA TRADUCTION
+Il est possible que cette traduction soit imparfaite ou périmée. En cas de
+doute, veuillez vous reporter au document original en langue anglaise fourni
+avec le programme.
+.\"
+.\" FILES part
+.\"
+.SH FICHIERS
+.I /etc/iftab
+.\"
+.\" SEE ALSO part
+.\"
+.SH VOIR AUSSI
+.BR ifrename (8),
+.BR ifconfig (8),
+.BR ip (8),
+.BR iwconfig (8).

@@ -1,0 +1,655 @@
+
+INTERNET-DRAFT                                   David Boreham, Netscape
+                                                 Jim Sermersheim, Novell
+                                                Anoop Anantha, Microsoft
+                                               Michael Armijo, Microsoft
+ldapext Working Group                                      6 April, 2000
+
+
+     LDAP Extensions for Scrolling View Browsing of Search Results
+
+                  draft-ietf-ldapext-ldapv3-vlv-04.txt
+                This document expires on 5 October 2000
+
+1.  Status of this Memo
+
+This document is an Internet-Draft and is in full conformance  with  all
+provisions  of Section 10 of RFC2026.  Internet-Drafts are working docu-
+ments of the Internet Engineering Task Force (IETF), its areas, and  its
+working  groups.   Note  that  other  groups may also distribute working
+documents as Internet-Drafts.
+
+Internet-Drafts are draft documents valid for a maximum  of  six  months
+and  may  be  updated,  replaced, or obsoleted by other documents at any
+time.  It is inappropriate to use Internet- Drafts as reference material
+or to cite them other than as "work in progress."
+
+The   list   of   current   Internet-Drafts   can   be    accessed    at
+http://www.ietf.org/ietf/1id-abstracts.txt
+
+The list  of  Internet-Draft  Shadow  Directories  can  be  accessed  at
+http://www.ietf.org/shadow.html.
+
+2.  Abstract
+
+This document describes a Virtual List View control  extension  for  the
+LDAP  Search  operation.  This control is designed to allow the "virtual
+list box" feature, common in existing  commercial  e-mail  address  book
+applications, to be supported efficiently by LDAP servers. LDAP servers'
+inability to support this client feature is a significant impediment  to
+LDAP replacing proprietary protocols in commercial e-mail systems.
+
+The control allows a client to specify that the  server  return,  for  a
+given  LDAP search with associated sort keys, a contiguous subset of the
+search result set. This subset is specified in terms of offsets into the
+ordered list, or in terms of a greater than or equal comparison value.
+
+3.  Background
+
+A Virtual List is a graphical user interface  technique  employed  where
+
+
+
+Boreham et al                                                   [Page 1]
+
+
+
+
+
+RFC DRAFT                                                     April 2000
+
+
+ordered lists containing a large number of entries need to be displayed.
+A window containing a small number of visible list entries is drawn. The
+visible  portion of the list may be relocated to different points within
+the list by means of user input. This input  can  be  to  a  scroll  bar
+slider; from cursor keys; from page up/down keys; from alphanumeric keys
+for "typedown".  The user is given the impression that they  may  browse
+the  complete  list  at  will,  even  though  it may contain millions of
+entries. It is the fact  that  the  complete  list  contents  are  never
+required  at  any one time that characterizes Virtual List View.  Rather
+than fetch the complete list from wherever it is stored (typically  from
+disk  or  a  remote  server), only that information which is required to
+display the part of the list currently in view is fetched.  The  subject
+of  this  document is the interaction between client and server required
+to implement this functionality in the context of  the  results  from  a
+sorted LDAP search request.
+
+For example, suppose an e-mail address book application displays a  list
+view  onto  the  list  containing the names of all the holders of e-mail
+accounts at a large  university.  The  list  is  sorted  alphabetically.
+While  there  may  be  tens  of  thousands  of entries in this list, the
+address book list view displays only 20 such accounts at any  one  time.
+The  list has an accompanying scroll bar and text input window for type-
+down.  When first displayed, the list view shows the first 20 entries in
+the  list,  and  the  scroll  bar slider is positioned at the top of its
+range. Should the user drag the slider to the bottom of its  range,  the
+displayed  contents  of the list view should be updated to show the last
+20 entries in the list. Similarly, if the slider is positioned somewhere
+in  the  middle  of  its travel, the displayed contents of the list view
+should be updated to contain the 20 entries  located  at  that  relative
+position  within the complete list.  Starting from any display point, if
+the user uses the cursor keys or clicks on the  scroll  bar  to  request
+that  the  list  be scrolled up or down by one entry, the displayed con-
+tents should be updated to reflect this. Similarly the  list  should  be
+displayed  correctly  when  the  user requests a page scroll up or down.
+Finally, when the user types characters in  the  type-down  window,  the
+displayed  contents of the list should "jump" or "seek" to the appropri-
+ate point within the list.  For example, if  the  user  types  "B",  the
+displayed  list could center around the first user with a name beginning
+with the letter "B".  When this happens, the scroll  bar  slider  should
+also be updated to reflect the new relative location within the list.
+
+This document defines a request control which extends  the  LDAP  search
+operation.  Always  used  in  conjunction  with  the server side sorting
+control[SSS], this allows a client  to  retrieve  selected  portions  of
+large  search result set in a fashion suitable for the implementation of
+a virtual list view.
+
+The key words "MUST", "SHOULD", and "MAY" used in this document  are  to
+
+
+
+Boreham et al                                                   [Page 2]
+
+
+
+
+
+RFC DRAFT                                                     April 2000
+
+
+be interpreted as described in [Bradner97].
+
+4.  Client-Server Interaction
+
+The Virtual List View control extends a regular  LDAP  Search  operation
+which must also include a server-side sorting control[SSS].  Rather than
+returning the complete set of  appropriate  SearchResultEntry  messages,
+the server is instructed to return a contiguous subset of those entries,
+taken from the sorted result set, centered around  a  particular  target
+entry. Henceforth, in the interests of brevity, the sorted search result
+set will be referred to as "the list".
+
+The sort control MAY  contain  any  sort  specification  valid  for  the
+server.  The  attributeType field in the first SortKeyList sequence ele-
+ment has special significance for "typedown".
+
+The desired target entry, and the number of entries to be returned  both
+before,  and after, that target entry in the list, are determined by the
+client's VirtualListViewRequest control.
+
+When the server returns the set of entries to the client, it attaches  a
+VirtualListViewResponse  control  to  the SearchResultDone message.  The
+server returns in this control: its current estimate for the  list  con-
+tent  count,  the  location  within the list corresponding to the target
+entry, and any error codes.
+
+The target entry is specified in the VirtualListViewRequest  control  by
+one  of  two methods. The first method is for the client to indicate the
+target entry's offset within the list.  The second way is for the client
+to  supply  an  attribute assertion value. The value is compared against
+the values of the attribute specified as the primary  sort  key  in  the
+sort  control  attached  to the search operation.  The first sort key in
+the SortKeyList is the primary sort key.  The target entry is the  first
+entry  in  the  list with value greater than or equal to (in the primary
+sort order), the presented value.  The  order  is  determined  by  rules
+defined  in  [SSS].   Selection  of  the  target  entry by this means is
+designed to implement "typedown".  Note that  it  is  possible  that  no
+entry  satisfies  these  conditions,  in  which  case there is no target
+entry. This condition is indicated by the server returning  the  special
+value contentCount + 1 in the target position field.
+
+Because the server may not have an accurate estimate of  the  number  of
+entries in the list, and to take account of cases where the list size is
+changing during the time the user browses  the  list,  and  because  the
+client  needs  a  way  to indicate specific list targets "beginning" and
+"end", offsets within the list are transmitted between client and server
+as  ratios---offset  to content count. The server sends its latest esti-
+mate as to the number of entries in the  list  (content  count)  to  the
+
+
+
+Boreham et al                                                   [Page 3]
+
+
+
+
+
+RFC DRAFT                                                     April 2000
+
+
+client  in  every  response control.  The client sends its assumed value
+for the content count in every request control.  The server examines the
+content  count  and  offsets  presented  by  the client and computes the
+corresponding offsets within the list, based on its own idea of the con-
+tent count.
+
+     Si = Sc * (Ci / Cc)
+
+     Where:
+     Si is the actual list offset used by the server
+     Sc is the server's estimate for content count
+     Ci is the client's submitted offset
+     Cc is the client's submitted content count
+     The result is rounded to the nearest integer.
+
+If the content count is stable, and the client returns to the server the
+content  count most recently received, Cc = Sc and the offsets transmit-
+ted become the actual server list offsets.
+
+The following special cases are allowed:  a  client  sending  a  content
+count  of zero (Cc = 0) means "client has no idea what the content count
+is, server MUST use its own content  count  estimate  in  place  of  the
+client's".  An offset value of one (Ci = 1) always means that the target
+is the first entry in the list. Client specifying an offset which equals
+the  content count specified in the same request control (Ci = Cc) means
+that the target is the last entry in the list.  Ci may only  equal  zero
+when Cc is also zero. This signifies the last entry in the list.
+
+Because the server always returns contentCount and  targetPosition,  the
+client  can always determine which of the returned entries is the target
+entry. Where the number of entries returned is the same  as  the  number
+requested,  the  client  is able to identify the target by simple arith-
+metic. Where the number of entries returned  is  not  the  same  as  the
+number  requested  (because the requested range crosses the beginning or
+end of the list, or both), the client must use the target  position  and
+content  count  values  returned  by  the  server to identify the target
+entry. For example, suppose that 10 entries before and 10 after the tar-
+get  were  requested, but the server returns 13 entries, a content count
+of 100 and a target position of 3. The client  can  determine  that  the
+first entry must be entry number 1 in the list, therefore the 13 entries
+returned are the first 13 entries in the list, and  the  target  is  the
+third one.
+
+A server-generated context identifier MAY be  returned  to  clients.   A
+client  receiving  a  context identifier SHOULD return it unchanged in a
+subsequent request which relates to the same list.  The purpose of  this
+interaction  is  to enhance the performance and effectiveness of servers
+which employ approximate positioning.
+
+
+
+Boreham et al                                                   [Page 4]
+
+
+
+
+
+RFC DRAFT                                                     April 2000
+
+
+5.  The Controls
+
+Support for the virtual list view control extension is indicated by  the
+presence  of  the  OID "2.16.840.1.113730.3.4.9" in the supportedControl
+attribute of a server's root DSE.
+
+5.1.  Request Control
+
+This control is included in the SearchRequest message  as  part  of  the
+controls  field  of  the  LDAPMessage,  as  defined in Section 4.1.12 of
+[LDAPv3].  The controlType is set to "2.16.840.1.113730.3.4.9". The cri-
+ticality   SHOULD be set to TRUE. If this control is included in a Sear-
+chRequest message, a Server Side Sorting request control [SSS] MUST also
+be  present  in  the  message. The controlValue is an OCTET STRING whose
+value is the BER-encoding of the following SEQUENCE:
+
+          VirtualListViewRequest ::= SEQUENCE {
+                  beforeCount    INTEGER (0..maxInt),
+                  afterCount     INTEGER (0..maxInt),
+                  CHOICE {
+                          byoffset [0] SEQUENCE {
+                           offset          INTEGER (0 .. maxInt),
+                           contentCount    INTEGER (0 .. maxInt) },
+                          greaterThanOrEqual [1] AssertionValue },
+                  contextID     OCTET STRING OPTIONAL }
+
+beforeCount indicates how many  entries  before  the  target  entry  the
+client  wants  the  server  to  send. afterCount indicates the number of
+entries after the target entry the client  wants  the  server  to  send.
+offset and contentCount identify the target entry as detailed in section
+4.  greaterThanOrEqual  is  an  attribute  assertion  value  defined  in
+[LDAPv3].  If  present, the value supplied in greaterThanOrEqual is used
+to determine the target entry by  comparison  with  the  values  of  the
+attribute  specified as the primary sort key. The first list entry who's
+value is no less than (less than or equal to  when  the  sort  order  is
+reversed)  the  supplied value is the target entry. If present, the con-
+textID field contains the value of the most recently received  contextID
+field  from  a  VirtualListViewResponse control. The type AssertionValue
+and value maxInt are defined in  [LDAPv3].   contextID  values  have  no
+validity outwith the connection on which they were received.  That is, a
+client should not submit a contextID which it received from another con-
+nection, a connection now closed, or a different server.
+
+
+5.2.  Response Control
+
+This control is included in the SearchResultDone message as part of  the
+controls   field  of the  LDAPMessage, as  defined in Section  4.1.12 of
+
+
+
+Boreham et al                                                   [Page 5]
+
+
+
+
+
+RFC DRAFT                                                     April 2000
+
+
+[LDAPv3].
+
+The controlType is set to "2.16.840.1.113730.3.4.10". The criticality is
+FALSE (MAY be absent).  The controlValue is an OCTET STRING, whose value
+is the BER encoding of a value of the following SEQUENCE:
+
+     VirtualListViewResponse ::= SEQUENCE {
+             targetPosition    INTEGER (0 .. maxInt),
+             contentCount     INTEGER (0 .. maxInt),
+             virtualListViewResult ENUMERATED {
+             success (0),
+             operationsError (1),
+             unwillingToPerform (53),
+             insufficientAccessRights (50),
+             busy (51),
+             timeLimitExceeded (3),
+             adminLimitExceeded (11),
+             sortControlMissing (60),
+             offsetRangeError (61),
+             other (80) },
+             contextID     OCTET STRING OPTIONAL }
+
+targetPosition gives the list offset for the target entry.  contentCount
+gives  the  server's  estimate  of  the current number of entries in the
+list.  Together these give sufficient  information  for  the  client  to
+update  a  list box slider position to match the newly retrieved entries
+and identify the target entry. The contentCount value returned SHOULD be
+used  in  a  subsequent  VirtualListViewRequest control.  contextID is a
+server-defined octet string. If present, the contents of  the  contextID
+field  SHOULD be returned to the server by a client in a subsequent Vir-
+tualListViewRequest control.
+
+The virtualListViewResult codes which  are  common  to  the  LDAP  sear-
+chResponse  (adminLimitExceeded,  timeLimitExceeded, busy, operationsEr-
+ror, unwillingToPerform, insufficientAccessRights) have the  same  mean-
+ings  as  defined  in [LDAPv3], but they pertain specifically to the VLV
+operation.  For example, the server could exceed an administration limit
+processing  a  SearchRequest with a VirtualListViewRequest control. How-
+ever, the same administration limit would not  be  exceeded  should  the
+same  SearchRequest  be submitted by the client without the VirtualList-
+ViewRequest control.  In this case, the client  can  determine  that  an
+administration limit has been exceeded in servicing the VLV request, and
+can if it chooses resubmit the SearchRequest  without  the  VirtualList-
+ViewRequest control.
+
+insufficientAccessRights means that the server denied the client permis-
+sion to perform the VLV operation.
+
+
+
+
+Boreham et al                                                   [Page 6]
+
+
+
+
+
+RFC DRAFT                                                     April 2000
+
+
+If the server determines that the results of the search presented exceed
+the  range  provided  by  the  32-bit  offset  values,  it  MUST  return
+offsetRangeError.
+
+6.  Protocol Example
+
+Here we walk through the client-server interaction for a  specific  vir-
+tual list view example:  The task is to display a list of all 78564 peo-
+ple in the US company "Ace Industry".  This will be done by  creating  a
+graphical  user  interface  object  to display the list contents, and by
+repeatedly sending different versions of  the  same  virtual  list  view
+search  request  to the server. The list view displays 20 entries on the
+screen at a time.
+
+We form a search with baseDN "o=Ace Industry, c=us"; search  scope  sub-
+tree;  filter "objectClass=inetOrgPerson". We attach a server sort order
+control to the search, specifying ascending sort on attribute  "cn".  To
+this  base  search,  we  attach a virtual list view request control with
+contents determined by the user activity and  send  the  search  to  the
+server.  We  display the results from each search in the list window and
+update the slider position.
+
+When the list view is first displayed, we want to  initialize  the  con-
+tents showing the beginning of the list. Therefore, we set beforeCount =
+0, afterCount = 19, contentCount = 0, offset = 1 and send the request to
+the  server.  The  server duly returns the first 20 entries in the list,
+plus the content count = 78564 and  targetPosition  =  1.  We  therefore
+leave  the  scroll  bar  slider  at its current location (the top of its
+range).
+
+Say that next the user drags the scroll bar slider down to the bottom of
+its  range.   We now wish to display the last 20 entries in the list, so
+we set beforeCount = 19, afterCount = 0, contentCount = 78564, offset  =
+78564 and send the request to the server. The server returns the last 20
+entries in the list, plus the content count = 78564 and targetPosition =
+78564.
+
+Next the user presses a page up key. Our page size  is  20,  so  we  set
+beforeCount  =  0,  afterCount  =  19,  contentCount  =  78564, offset =
+78564-19-20 and send the request to the server. The server  returns  the
+preceding  20  entries  in  the list, plus the content count = 78564 and
+targetPosition = 78525.
+
+Now the user grabs the scroll bar slider and drags it to 68% of the  way
+down its travel. 68% of 78564 is 53424 so we set beforeCount = 9, after-
+Count = 10, contentCount = 78564, offset = 53424 and send the request to
+the  server.  The  server  returns the preceding 20 entries in the list,
+plus the content count = 78564 and targetPosition = 53424.
+
+
+
+Boreham et al                                                   [Page 7]
+
+
+
+
+
+RFC DRAFT                                                     April 2000
+
+
+Lastly, the user types the letter "B". We set beforeCount  =  9,  after-
+Count  =  10  and  greaterThanOrEqual  = "B". The server finds the first
+entry in the list not less  than  "B",  let's  say  "Babs  Jensen",  and
+returns the nine preceding entries, the target entry, and the proceeding
+10 entries.  The server returns content count = 78564 and targetPosition
+=  5234  and so the client updates its scroll bar slider to 6.7% of full
+scale.
+
+7.  Notes for Implementers
+
+While the feature is expected  to  be  generally  useful  for  arbitrary
+search  and  sort  specifications, it is specifically designed for those
+cases where the result set is very large.  The intention  is  that  this
+feature be implemented efficiently by means of pre-computed indices per-
+taining to a set of specific cases. For example, an offset  relating  to
+"all  the  employees in the local organization, sorted by surname" would
+be a common case.
+
+The intention for client software is that the feature should fit  easily
+with  the  host  platform's  graphical user interface facilities for the
+display of scrolling lists. Thus the task  of  the  client  implementers
+should  be  one of reformatting up the requests for information received
+from the list view code to match the format of  the  virtual  list  view
+request and response controls.
+
+Client implementers should note that any offset value  returned  by  the
+server  may  be  approximate. Do not design clients > which only operate
+correctly when offsets are exact.
+
+Server implementers using indexing technology which features approximate
+positioning  should  consider  returning context identifiers to clients.
+The use of a context identifier will allow  the  server  to  distinguish
+between client requests which relate to different displayed lists on the
+client. Consequently the server can decide more intelligently whether to
+reposition an existing database cursor accurately to within a short dis-
+tance of its current position, or to reposition to an approximate  posi-
+tion. Thus the client will see precise offsets for "short" repositioning
+(e.g. paging up or down), but approximate offsets for a  "long"  reposi-
+tion (e.g. a slider movement).
+
+Server implementers are free to return  status  code  unwillingToPerform
+should  their  server  be  unable  to service any particular VLV search.
+This might be because the resolution of the  search  is  computationally
+infeasible,  or  because excessive server resources would be required to
+service the search.
+
+Client implementers should note that this control is only defined  on  a
+client  interaction  with a single server. If a server returns referrals
+
+
+
+Boreham et al                                                   [Page 8]
+
+
+
+
+
+RFC DRAFT                                                     April 2000
+
+
+as a part of its response to the search request, the client is responsi-
+ble  for  deciding when and how to apply this control to the referred-to
+servers, and how to collate the results from multiple servers.
+
+
+8.  Relationship to "Simple Paged Results"
+
+These controls are designed to support the virtual list view, which  has
+proved  hard  to  implement  with  the  Simple  Paged  Results mechanism
+[SPaged]. However, the controls described  here  support  any  operation
+possible with the Simple Paged Results mechanism. The two mechanisms are
+not complementary, rather one has a superset of  the  other's  features.
+One  area where the mechanism presented here is not a strict superset of
+the Simple Paged Results scheme is that here we require a sort order  to
+be specified. No such requirement is made for paged results.
+
+
+9.  Security Considerations
+
+Server implementers may wish to consider whether  clients  are  able  to
+consume  excessive  server  resources  in requesting virtual list opera-
+tions. Access control to the feature itself; configuration options  lim-
+iting  the  feature's  use  to certain predetermined search base DNs and
+filters; throttling mechanisms designed to limit  the  ability  for  one
+client to soak up server resources, may be appropriate.
+
+Consideration should be given as to whether a client  will  be  able  to
+retrieve  the complete contents, or a significant subset of the complete
+contents of the directory using this feature. This may be undesirable in
+some  circumstances and consequently it may be necessary to enforce some
+access control.
+
+Clients can, using this control, determine how  many  entries  are  con-
+tained  within  a  portion  of  the  DIT. This may constitute a security
+hazard. Again, access controls may be appropriate.
+
+Server implementers SHOULD exercise caution concerning  the  content  of
+the  contextID.   Should the contextID contain internal server state, it
+may be possible for a malicious client to use that information  to  gain
+unauthorized access to information.
+
+10.  Acknowledgements
+
+Chris Weider of Microsoft co-authored a previous version of  this  docu-
+ment.
+
+
+
+
+
+
+Boreham et al                                                   [Page 9]
+
+
+
+
+
+RFC DRAFT                                                     April 2000
+
+
+11.  References
+
+[LDAPv3]
+     Wahl, M, S. Kille and T. Howes, "Lightweight Directory Access  Pro-
+     tocol (v3)", Internet Standard, December, 1997. RFC2251.
+
+[SPaged]
+     Weider, C, A. Herron, A.  Anantha,  and  T.  Howes,  "LDAP  Control
+     Extension  for  Simple   Paged   Results   Manipulation", September
+     1999. RFC2696
+
+[SSS]Wahl, M, A. Herron and T. Howes, "LDAP Control Extension for Server
+     Side  Sorting  of  Search  Results",  Internet  Draft, April, 1999.
+     Available as draft-ietf-asid-ldapv3-sorting-02.txt.
+
+[Bradner97]
+     Bradner, S., "Key Words for use in  RFCs  to  Indicate  Requirement
+     Levels", BCP 14, RFC 2119, March 1997.
+
+12.  Authors' Addresses
+
+   David Boreham
+   iPlanet e-commerce solutions
+   501 E. Middlefield Road
+   Mountain View, CA 94043, USA
+   +1 650 937-5206
+   dboreham@netscape.com
+
+   Jim Sermersheim
+   Novell
+   122 East 1700 South
+   Provo, Utah 84606, USA
+   jimse@novell.com
+
+   Anoop Anantha
+   Microsoft Corp.
+   1 Microsoft Way
+   Redmond, WA 98052, USA
+   +1 425 882-8080
+   anoopa@microsoft.com
+
+   Michael Armijo
+   Microsoft Corp.
+   1 Microsoft Way
+   Redmond, WA 98052, USA
+   +1 425 882-8080
+   micharm@microsoft.com
+   This document expires on 5 October 2000
+
+
+
+Boreham et al                                                  [Page 10]
+
+
+
+
+
+RFC DRAFT                                                     April 2000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Boreham et al                                                  [Page 11]
+
+

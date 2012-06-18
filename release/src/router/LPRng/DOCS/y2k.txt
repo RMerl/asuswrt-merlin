@@ -1,0 +1,40 @@
+             Year 2000 Compliance
+                Patrick Powell
+              Astart Technologies
+               San Diego, CA 92123
+
+                 Original Aug 30, 1998
+                 Updated July 1, 1999
+
+
+Statement:
+
+   The LPRng software has no known Year 2000 data dependencies.
+
+   Where necessary,  dates are generated using values relative to
+the UNIX Epoch,  and will be consistent to 2034 at a conservative
+estimate.
+
+   However,  since LPRng uses the RFC1179 standard for job and data file
+transfer,  and other systems provide information in a form which may
+not be consistent,  the LPRng author takes no reponsibility for other
+defective implementations and the effects of using these defective
+implementations with LPRng.
+
+   Testing has been done on the following systems:
+   1. BSDI UNIX, Version 3.0/3.1  (May 1998)
+   2. FreeBSD 2.5  (July 1998)
+   3. Red Hat Linux 5.1  (July 1998)
+   4. Solaris 2.6 (Intel and Sparc Versions) (May 1998)
+
+There were no observed problems with date formats using the LPRng
+software in toto.  The software was NOT tested with the native LPD
+or LP (system V) print spoolers.
+
+Note: logging and other operations generate textual timestamps in
+either a short (hh:mm) or extended (yyyy-mm-dd-hh:mm:ss) format.
+The choice of short of extended formats is controlled by a simple
+configuration option.
+
+Patrick Powell
+Sun Aug 30 17:02:02 PDT 1998

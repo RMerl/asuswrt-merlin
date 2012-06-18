@@ -1,0 +1,22 @@
+ Authors:
+----------
+iSteve <isteve@bofh.cz>
+
+ Contributions:
+----------------
+nbd (rules override patch, various fixes, suggestions, testing etc.)
+Tomas Janousek <tomi@nomi.cz> (Makefiles, SVN hosting)
+
+ Thanks to:
+------------
+jikos (Various kernel related consultation)
+pasky (help with inputmap)
+Randy Dunlap (help with isapnpmap)
+Igor2 (provided testing machines)
+yanek (provided testing machines)
+Zdenek Styblik (provided testing OpenWRT device)
+OpenWRT team (for trusting this project)
+mtu (debugging, testing, ideas)
+mnemoc (trivial sanity changes on makefiles, linux24 compat patches)
+
+...anyone taking more than a short peek at the software.

@@ -1,0 +1,45 @@
+#!@PERL
+eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
+    if $running_under_some_shell;
+            # this emulates #! processing on NIH machines.
+            # (remove #! line above if indigestible)
+
+use Getopt::Std;
+my(%args,%options);
+# get the arguments
+getopts(
+	"a:b:cd:e:f:g:h:i:j:l:m:n:o:p:q:r:s:t:u:v:w:x:y:z:" .
+	"A:B:C:D:E:F:G:H:I:J:L:M:N:O:P:Q:R:S:T:U:V:W:X:Y:Z:",
+	\%args );
+
+# Now handle options
+# set :key=value  -> $option{$key}=$value
+# set :key@       -> $option{$key}="0"
+# set :key        -> $option{$key}="1"
+
+ map {
+	if( m/^\s*:([^=]+)=(.*)/ ){
+     $options{$1}=$2;
+	} elsif( m/^\s*:([^=]+)\@$/ ){
+	 $options{$1}="0";
+    } elsif( m/^\s*:([^=]+)/ ){
+	 $options{$1}="1";
+    } elsif( m/^\s*([^|]+)/ ){
+	 $options{"Printer"}=$1;
+	}
+ } split( "\n", $ENV{'PRINTCAP_ENTRY'});
+
+# get the control file entries
+
+ map {
+	if( m/^\s*([A-Z])(.*)/ ){
+     $options{$1}=$2;
+	} elsif( m/^\s*([a-z])/ ){
+	 $options{'Format'}=$1;
+	}
+ } split( "\n", $ENV{'CONTROL'});
+
+ for (keys %options){ print "option $_='$options{$_}'\n"; }
+ while( <> ){
+	print;
+ }

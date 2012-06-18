@@ -1,0 +1,5 @@
+This is an experimental module.  It matches on whether the 
+packet is part of a master connection or one of its children (or grandchildren,
+etc).  For instance, most packets are level 0.  FTP data transfer is level 1.
+.TP
+.BR "--childlevel " "[!] \fIlevel\fP"

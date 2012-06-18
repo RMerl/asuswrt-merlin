@@ -1,0 +1,1501 @@
+!==
+!== cifsntdomain.txt for Samba release 2.0.10 23 Jun 2001
+!==
+NT Domain Authentication
+------------------------
+
+Authors:	- Luke Kenneth Casson Leighton (lkcl@switchboard.net)
+--------	- Paul Ashton                  (paul@argo.demon.co.uk)
+		- Duncan Stansfield            (duncans@sco.com)
+
+		  Copyright (C) 1997 Luke Kenneth Casson Leighton
+		  Copyright (C) 1997 Paul Ashton
+		  Copyright (C) 1997 Duncan Stansfield
+
+Version:	0.024 (01Nov97)
+--------
+
+Distribution:	Unlimited and encouraged, for the purposes of implementation
+-------------	and comments.  Feedback welcomed by the authors.
+
+Liability:	Absolutely none accepted implicitly or explicitly, direct
+----------	or consequentially, for use, abuse, misuse, lack of use,
+		misunderstandings, mistakes, omissions, mis-information for
+		anything in or not in, related to or not related to, or
+		pertaining to this document, or anything else that a lawyer
+		can think of or not think of.
+
+Warning:	Please bear in mind that an incorrect implementation of this
+--------	protocol can cause NT workstation to fail irrevocably, for
+		which the authors accept no liability (see above).  Please
+		contact your vendor if you have any problems.
+
+Sources:	- Packet Traces from Netmonitor (Service Pack 1 and above)
+--------	- Paul Ashton and Luke Leighton's other "NT Domain" doc.
+		- CIFS documentation - cifs6.txt
+		- CIFS documentation - cifsrap2.txt
+
+Original:	http://mailhost.cb1.com/~lkcl/cifsntdomain.txt.
+---------	(Controlled copy maintained by lkcl@switchboard.net)
+
+Credits:	- Paul Ashton: loads of work with Net Monitor; 
+--------	  understanding the NT authentication system;
+		  reference implementation of the NT domain support on which
+		  this document is originally based.
+		- Duncan Stansfield: low-level analysis of MSRPC Pipes.
+		- Linus Nordberg: producing c-code from Paul's crypto spec.
+		- Windows Sourcer development team
+
+
+Contents:
+---------
+
+   1) Introduction
+
+   2) Structures and notes
+
+      2.1) Notes
+      2.3) Enumerations
+      2.3) Structures
+
+   3) Transact Named Pipe Header/Tail
+
+      3.1) MSRPC Pipes
+      3.2) Header
+      3.3) Tail
+
+   4) NTLSA Transact Named Pipe
+
+      4.1) LSA Open Policy
+      4.2) LSA Query Info Policy
+      4.3) LSA Enumerate Trusted Domains
+      4.4) LSA Open Secret
+      4.5) LSA Close
+      4.6) LSA Lookup SIDS
+      4.7) LSA Lookup Names
+
+   5) NETLOGON rpc Transact Named Pipe
+
+      5.1) LSA Request Challenge
+      5.2) LSA Authenticate 2
+      5.3) LSA Server Password Set
+      5.4) LSA SAM Logon
+      5.5) LSA SAM Logoff
+
+   6) \\MAILSLOT\NET\NTLOGON
+
+      6.1) Query for PDC
+      6.2) SAM Logon
+
+   7) SRVSVC Transact Named Pipe
+
+      7.1) Net Share Enum
+      7.2) Net Server Get Info
+
+
+Appendix:
+---------
+
+   A1) Cryptographic side of NT Domain Authentication
+   
+       A1.1) Definitions
+       A1.2) Protocol
+       A1.3) Comments
+
+   A2) SIDs and RIDs
+
+       A2.1) Well-known SIDs
+
+             A2.1.1) Universal well-known SIDs
+             A2.1.2) NT well-known SIDs
+
+       A2.2) Well-known RIDS
+      
+             A2.2.1) Well-known RID users
+             A2.2.2) Well-known RID groups
+             A2.2.3) Well-known RID aliases
+
+
+
+1) Introduction
+---------------
+
+
+This document contains information to provide an NT workstation with login
+services, without the need for an NT server.
+
+It should be possible to select a domain instead of a workgroup (in the NT
+workstation's TCP/IP settings) and after the obligatory reboot, type in a
+username, password, select a domain and successfully log in.  I would
+appreciate any feedback on your experiences with this process, and any
+comments, corrections and additions to this document.
+
+
+The packets described here can be easily derived from (and are probably
+better understood using) Netmon.exe.  You will need to use the version
+of Netmon that matches your system, in order to correctly decode the
+NETLOGON, lsarpc and srvsvc Transact pipes.  This document is derived from
+NT Service Pack 1 and its corresponding version of Netmon.  It is intended
+that an annotated packet trace be produced, which will likely be more
+instructive than this document.
+
+Also needed, to fully implement NT Domain Login Services, is the 
+document describing the cryptographic part of the NT authentication.
+This document is available from comp.protocols.smb; from the ntsecurity.net
+digest and from the samba digest, amongst other sources.
+
+A copy is available from:
+
+http://ntbugtraq.rc.on.ca/SCRIPTS/WA.EXE?A2=ind9708&L=ntbugtraq&O=A&P=2935
+http://mailhost.cb1.com/~lkcl/crypt.html
+
+
+A c-code implementation, provided by Linus Nordberg <linus@incolumitas.se>
+of this protocol is available from:
+
+http://samba.org/cgi-bin/mfs/01/digest/1997/97aug/0391.html
+http://mailhost.cb1.com/~lkcl/crypt.txt
+
+
+Also used to provide debugging information is the Check Build version of
+NT workstation, and enabling full debugging in NETLOGON.  This is
+achieved by setting the following REG_SZ registry key to 0x1ffffff:
+
+HKLM\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters
+
+- Incorrect direct editing of the registry can cause your machine to fail.
+  Then again, so can incorrect implementation of this protocol.
+  See "Liability:" above.
+
+
+Bear in mind that each packet over-the-wire will have its origin in an
+API call.  Therefore, there are likely to be structures, enumerations
+and defines that are usefully documented elsewhere.
+
+
+This document is by no means complete or authoritative.  Missing sections
+include, but are not limited to:
+
+- the meaning (and use by NT) of SIDs and RIDs.
+
+- mappings of RIDs to usernames (and vice-versa).
+
+- what a User ID is and what a Group ID is.
+
+- the exact meaning/definition of various magic constants or enumerations.
+
+- the reply error code and use of that error code when a workstation
+  becomes a member of a domain (to be described later).  Failure to
+  return this error code will make the workstation report that it is
+  already a member of the domain.
+
+- the cryptographic side of the NetrServerPasswordSet command, which would
+  allow the workstation to change its password.  This password is used to
+  generate the long-term session key.  [It is possible to reject this
+  command, and keep the default workstation password].
+   
+
+2) Notes and Structures
+-----------------------
+
+
+2.1) Notes
+----------
+
+- In the SMB Transact pipes, some "Structures", described here, appear to be
+  4-byte aligned with the SMB header, at their start.  Exactly which
+  "Structures" need aligning is not precisely known or documented.
+
+- In the UDP NTLOGON Mailslots, some "Structures", described here, appear to be
+  2-byte aligned with the start of the mailslot, at their start.
+
+- Domain SID is of the format S-revision-version-auth1-auth2...authN.
+  e.g S-1-5-123-456-789-123-456.  the 5 could be a sub-revision.
+
+- any undocumented buffer pointers must be non-zero if the string buffer it
+  refers to contains characters.  exactly what value they should be is unknown.
+  0x0000 0002 seems to do the trick to indicate that the buffer exists.  a
+  NULL buffer pointer indicates that the string buffer is of zero length.
+  If the buffer pointer is NULL, then it is suspected that the structure it
+  refers to is NOT put into (or taken out of) the SMB data stream.  This is
+  empirically derived from, for example, the LSA SAM Logon response packet,
+  where if the buffer pointer is NULL, the user information is not inserted
+  into the data stream.  Exactly what happens with an array of buffer pointers
+  is not known, although an educated guess can be made.
+
+- an array of structures (a container) appears to have a count and a pointer.
+  if the count is zero, the pointer is also zero.  no further data is put
+  into or taken out of the SMB data stream.  if the count is non-zero, then
+  the pointer is also non-zero.  immediately following the pointer is the
+  count again, followed by an array of container sub-structures.  the count
+  appears a third time after the last sub-structure.
+
+  
+2.2) Enumerations
+-----------------
+
+- MSRPC Header type.  command number in the msrpc packet header
+
+    MSRPC_Request:   0x00
+    MSRPC_Response:  0x02
+    MSRPC_Bind:      0x0B
+    MSRPC_BindAck:   0x0C
+
+- MSRPC Packet info.  the meaning of these flags is undocumented
+
+    FirstFrag:     0x01 
+    LastFrag:      0x02 
+    NotaFrag:      0x04  
+    RecRespond:    0x08  
+    NoMultiplex:   0x10  
+    NotForIdemp:   0x20  
+    NotforBcast:   0x40  
+    NoUuid:        0x80 
+
+
+2.3) Structures
+---------------
+
+- sizeof VOID* is 32 bits.
+
+- sizeof char is 8 bits.
+
+- UTIME is 32 bits, indicating time in seconds since 01jan1970.  documented
+  in cifs6.txt (section 3.5 page, page 30).
+
+- NTTIME is 64 bits.  documented in cifs6.txt (section 3.5 page, page 30).
+
+- DOM_SID (domain SID structure) :
+
+        UINT32             num of sub-authorities in domain SID
+        UINT8              SID revision number
+        UINT8              num of sub-authorities in domain SID
+        UINT8[6]           6 bytes for domain SID - Identifier Authority.
+        UINT16[n_subauths] domain SID sub-authorities
+
+  Note: the domain SID is documented elsewhere.
+
+- STR (string) :
+
+        char[]             null-terminated string of ascii characters.
+
+- UNIHDR (unicode string header) :
+
+        UINT16             length of unicode string
+        UINT16             max length of unicode string
+        UINT32             4 - undocumented.
+   
+- UNIHDR2 (unicode string header plus buffer pointer) :
+
+        UNIHDR             unicode string header
+        VOID*              undocumented buffer pointer
+
+- UNISTR (unicode string) :
+
+        UINT16[]           null-terminated string of unicode characters.
+
+- NAME (length-indicated unicode string) :
+
+        UINT32             length of unicode string
+        UINT16[]           null-terminated string of unicode characters.
+
+- UNISTR2 (aligned unicode string) :
+
+        UINT8[]            padding to get unicode string 4-byte aligned
+                           with the start of the SMB header.
+        UINT32             max length of unicode string
+        UINT32             0 - undocumented
+        UINT32             length of unicode string
+        UINT16[]           string of uncode characters.
+
+- OBJ_ATTR (object attributes) :
+
+        UINT32             0x18 - length (in bytes) including the length field.
+        VOID*              0 - root directory (pointer)
+        VOID*              0 - object name (pointer)
+        UINT32             0 - attributes (undocumented)
+        VOID*              0 - security descriptior (pointer)
+        UINT32             0 - security quality of service
+        
+- POL_HND (LSA policy handle) :
+
+    char[20]           policy handle
+
+- DOM_SID2 (domain SID structure, SIDS stored in unicode) :
+
+        UINT32             5 - SID type
+        UINT32             0 - undocumented
+        UNIHDR2            domain SID unicode string header
+        UNISTR             domain SID unicode string
+
+  Note:	there is a conflict between the unicode string header and the
+	unicode string itself as to which to use to indicate string
+	length.  this will need to be resolved.
+
+  Note:	the SID type indicates, for example, an alias; a well-known group etc.
+	this is documented somewhere.
+
+- DOM_RID (domain RID structure) :
+
+        UINT32             5 - well-known SID.  1 - user SID (see ShowACLs)
+        UINT32             5 - undocumented
+        UINT32             domain RID 
+        UINT32             0 - domain index out of above reference domains
+        
+
+- LOG_INFO (server, account, client structure) :
+
+  Note:	logon server name starts with two '\' characters and is upper case.
+
+  Note:	account name is the logon client name from the LSA Request Challenge,
+	with a $ on the end of it, in upper case.
+
+        VOID*       undocumented buffer pointer
+        UNISTR2     logon server unicode string
+        UNISTR2     account name unicode string
+        UINT16      sec_chan - security channel type
+        UNISTR2     logon client machine unicode string
+
+- CLNT_SRV (server, client names structure) :
+
+  Note:	logon server name starts with two '\' characters and is upper case.
+
+        VOID*       undocumented buffer pointer
+        UNISTR2     logon server unicode string
+        VOID*       undocumented buffer pointer
+        UNISTR2     logon client machine unicode string
+
+- CREDS (credentials + time stamp)
+
+        char[8]     credentials
+        UTIME       time stamp
+    
+- CLNT_INFO2 (server, client structure, client credentials) :
+
+  Note: whenever this structure appears in a request, you must take a copy
+	of the client-calculated credentials received, because they will be
+	used in subsequent credential checks.  the presumed intention is to
+	maintain an authenticated request/response trail.
+        
+        CLNT_SRV     client and server names
+        UINT8[]      ???? padding, for 4-byte alignment with SMB header.
+        VOID*        pointer to client credentials.
+        CREDS        client-calculated credentials + client time
+
+- CLNT_INFO (server, account, client structure, client credentials) :
+
+  Note: whenever this structure appears in a request, you must take a copy
+	of the client-calculated credentials received, because they will be
+	used in subsequent credential checks.  the presumed intention is to
+	maintain an authenticated request/response trail.
+        
+        LOG_INFO    logon account info
+        CREDS       client-calculated credentials + client time
+
+- ID_INFO_1 (id info structure, auth level 1) :
+
+    VOID*         ptr_id_info_1
+    UNIHDR        domain name unicode header
+    UINT32        param control
+    UINT64        logon ID
+    UNIHDR        user name unicode header
+    UNIHDR        workgroup name unicode header
+    char[16]      arc4 LM OWF Password
+    char[16]      arc4 NT OWF Password
+    UNISTR2       domain name unicode string
+    UNISTR2       user name unicode string
+    UNISTR2       workstation name unicode string
+
+- SAM_INFO (sam logon/logoff id info structure) :
+
+  Note: presumably, the return credentials is supposedly for the server to
+        verify that the credential chain hasn't been compromised.
+
+        CLNT_INFO2  client identification/authentication info
+        VOID*       pointer to return credentials.
+        CRED        return credentials - ignored.
+        UINT16      logon level
+        UINT16      switch value
+
+        switch (switch_value)
+        case 1:
+        {
+            ID_INFO_1     id_info_1;
+        }
+
+- GID (group id info) :
+
+        UINT32      group id
+        UINT32      user attributes (only used by NT 3.1 and 3.51)
+
+- DOM_REF (domain reference info) :
+
+        VOID*                    undocumented buffer pointer.
+        UINT32                   num referenced domains?
+        VOID*                    undocumented domain name buffer pointer.
+        UINT32                   32 - max number of entries
+        UINT32                   4 - num referenced domains?
+
+        UNIHDR2                  domain name unicode string header
+        UNIHDR2[num_ref_doms-1]  referenced domain unicode string headers
+
+        UNISTR                   domain name unicode string
+        DOM_SID[num_ref_doms]    referenced domain SIDs
+
+- DOM_INFO (domain info, levels 3 and 5 are the same)) :
+
+        UINT8[]     ??? padding to get 4-byte alignment with start of SMB header
+        UINT16      domain name string length * 2
+        UINT16      domain name string length * 2
+        VOID*       undocumented domain name string buffer pointer
+        VOID*       undocumented domain SID string buffer pointer
+        UNISTR2     domain name (unicode string)
+        DOM_SID     domain SID
+
+- USER_INFO (user logon info) :
+
+    Note: it would be nice to know what the 16 byte user session key is for.
+
+        NTTIME            logon time
+        NTTIME            logoff time
+        NTTIME            kickoff time
+        NTTIME            password last set time
+        NTTIME            password can change time
+        NTTIME            password must change time
+
+        UNIHDR            username unicode string header
+        UNIHDR            user's full name unicode string header
+        UNIHDR            logon script unicode string header
+        UNIHDR            profile path unicode string header
+        UNIHDR            home directory unicode string header
+        UNIHDR            home directory drive unicode string header
+
+        UINT16            logon count
+        UINT16            bad password count
+
+        UINT32            User ID
+        UINT32            Group ID
+        UINT32            num groups
+        VOID*             undocumented buffer pointer to groups.
+
+        UINT32            user flags
+        char[16]          user session key
+
+        UNIHDR            logon server unicode string header
+        UNIHDR            logon domain unicode string header
+        VOID*             undocumented logon domain id pointer
+        char[40]          40 undocumented padding bytes.  future expansion?
+
+        UINT32            0 - num_other_sids?
+        VOID*             NULL - undocumented pointer to other domain SIDs.
+        
+        UNISTR2           username unicode string
+        UNISTR2           user's full name unicode string
+        UNISTR2           logon script unicode string
+        UNISTR2           profile path unicode string
+        UNISTR2           home directory unicode string
+        UNISTR2           home directory drive unicode string
+
+        UINT32            num groups
+        GID[num_groups]   group info
+
+        UNISTR2           logon server unicode string
+        UNISTR2           logon domain unicode string
+
+        DOM_SID           domain SID
+        DOM_SID[num_sids] other domain SIDs?
+
+- SH_INFO_1_PTR (pointers to level 1 share info strings):
+
+Note:	see cifsrap2.txt section5, page 10.
+
+	0 for shi1_type indicates a  Disk.
+	1 for shi1_type indicates a  Print Queue.
+	2 for shi1_type indicates a  Device.
+	3 for shi1_type indicates an IPC pipe.
+	0x8000 0000 (top bit set in shi1_type) indicates a hidden share.
+
+        VOID*        shi1_netname - pointer to net name
+        UINT32       shi1_type    - type of share.  0 - undocumented.
+        VOID*        shi1_remark  - pointer to comment.
+
+- SH_INFO_1_STR (level 1 share info strings) :
+
+        UNISTR2      shi1_netname - unicode string of net name
+        UNISTR2      shi1_remark  - unicode string of comment.
+
+- SHARE_INFO_1_CTR :
+
+    share container with 0 entries:
+
+        UINT32        0 - EntriesRead
+        UINT32        0 - Buffer
+
+    share container with > 0 entries:
+
+        UINT32                      EntriesRead
+        UINT32                      non-zero - Buffer
+        UINT32                      EntriesRead
+
+        SH_INFO_1_PTR[EntriesRead]  share entry pointers
+        SH_INFO_1_STR[EntriesRead]  share entry strings
+
+        UINT8[]                     padding to get unicode string 4-byte
+                                    aligned with start of the SMB header.
+        UINT32                      EntriesRead
+    	UINT32                      0 - padding
+
+- SERVER_INFO_101 :
+
+Note:	see cifs6.txt section 6.4 - the fields described therein will be
+	of assistance here.  for example, the type listed below is the
+	same as fServerType, which is described in 6.4.1.
+
+	SV_TYPE_WORKSTATION        0x00000001  All workstations
+	SV_TYPE_SERVER             0x00000002  All servers
+	SV_TYPE_SQLSERVER          0x00000004  Any server running with SQL
+	                                       server
+	SV_TYPE_DOMAIN_CTRL        0x00000008  Primary domain controller
+	SV_TYPE_DOMAIN_BAKCTRL     0x00000010  Backup domain controller
+	SV_TYPE_TIME_SOURCE        0x00000020  Server running the timesource
+					       service
+	SV_TYPE_AFP                0x00000040  Apple File Protocol servers
+	SV_TYPE_NOVELL             0x00000080  Novell servers
+	SV_TYPE_DOMAIN_MEMBER      0x00000100  Domain Member
+	SV_TYPE_PRINTQ_SERVER      0x00000200  Server sharing print queue
+	SV_TYPE_DIALIN_SERVER      0x00000400  Server running dialin service.
+	SV_TYPE_XENIX_SERVER       0x00000800  Xenix server
+	SV_TYPE_NT                 0x00001000  NT server
+	SV_TYPE_WFW                0x00002000  Server running Windows for
+
+	SV_TYPE_SERVER_NT          0x00008000  Windows NT non DC server
+	SV_TYPE_POTENTIAL_BROWSER  0x00010000  Server that can run the browser
+	                                       service
+	SV_TYPE_BACKUP_BROWSER     0x00020000  Backup browser server
+	SV_TYPE_MASTER_BROWSER     0x00040000  Master browser server
+	SV_TYPE_DOMAIN_MASTER      0x00080000  Domain Master Browser server
+	SV_TYPE_LOCAL_LIST_ONLY    0x40000000  Enumerate only entries marked
+	                                       "local"
+	SV_TYPE_DOMAIN_ENUM        0x80000000  Enumerate Domains. The pszServer
+	                                       and pszDomain parameters must be
+	                                       NULL.
+
+        UINT32        500 - platform_id
+        VOID*         pointer to name
+        UINT32        5 - major version
+        UINT32        4 - minor version
+        UINT32        type (SV_TYPE_... bit field)
+        VOID*         pointer to comment
+
+        UNISTR2       sv101_name - unicode string of server name
+        UNISTR2       sv_101_comment  - unicode string of server comment.
+
+        UINT8[]       padding to get unicode string 4-byte
+                      aligned with start of the SMB header.
+
+
+
+3) MSRPC over Transact Named Pipe
+---------------------------------
+
+For details on the SMB Transact Named Pipe, see cifs6.txt
+
+
+3.1) MSRPC Pipes
+----------------
+
+The MSRPC is conducted over an SMB Transact Pipe with a name of "\PIPE\".
+You must first obtain a 16 bit file handle, by sending a SMBopenX with the
+pipe name "\PIPE\srvsvc" for example.  You can then perform an SMB Trans,
+and must carry out an SMBclose on the file handle once you are finished.
+
+Trans Requests must be sent with two setup UINT16s, no UINT16 params (none
+known about), and UINT8 data parameters sufficient to contain the MSRPC
+header, and MSRPC data.  The first UINT16 setup parameter must be either
+0x0026 to indicate an RPC, or 0x0001 to indicate Set Named Pipe Handle
+state.  The second UINT16 parameter must be the file handle for the pipe,
+obtained above.
+
+The Data section for an API Command of 0x0026 (RPC pipe) in the Trans
+Request is the RPC Header, followed by the RPC Data.  The Data section for
+an API Command of 0x0001 (Set Named Pipe Handle state) is two bytes.  The
+only value seen for these two bytes is 0x00 0x43.
+
+
+MSRPC Responses are sent as response data inside standard SMB Trans
+responses, with the MSRPC Header, MSRPC Data and MSRPC tail.
+
+
+It is suspected that the Trans Requests will need to be at least 2-byte
+aligned (probably 4-byte).  This is standard practice for SMBs.  It is also
+independent of the observed 4-byte alignments with the start of the MSRPC
+header, including the 4-byte alignment between the MSRPC header and the
+MSRPC data.
+
+
+First, an SMBtconX connection is made to the IPC$ share.  The connection
+must be made using encrypted passwords, not clear-text.  Then, an SMBopenX
+is made on the pipe.  Then, a Set Named Pipe Handle State must be sent,
+after which the pipe is ready to accept API commands.  Lastly, and SMBclose
+is sent.
+
+
+To be resolved:
+
+    lkcl/01nov97 there appear to be two additional bytes after the null-
+    terminated \PIPE\ name for the RPC pipe.  Values seen so far are
+    listed below:
+
+        initial SMBopenX request:         RPC API command 0x26 params:
+
+        "\\PIPE\\lsarpc"                  0x65 0x63; 0x72 0x70; 0x44 0x65;
+        "\\PIPE\\srvsvc"                  0x73 0x76; 0x4E 0x00; 0x5C 0x43;
+
+
+3.2) Header
+-----------
+
+[section to be rewritten, following receipt of work by Duncan Stansfield]
+
+
+Interesting note: if you set packed data representation to 0x0100 0000
+then all 4-byte and 2-byte word ordering is turned around!
+
+The start of each of the NTLSA and NETLOGON named pipes begins with:
+
+00  UINT8         5 - RPC major version
+01  UINT8         0 - RPC minor version
+02  UINT8         2 - RPC response packet
+03  UINT8         3 - (FirstFrag bit-wise or with LastFrag)
+04  UINT32        0x1000 0000 - packed data representation
+08  UINT16        fragment length - data size (bytes) inc header and tail.
+0A  UINT16        0 - authentication length 
+0C  UINT32        call identifier.  matches 12th UINT32 of incoming RPC data.
+10  UINT32        allocation hint - data size (bytes) minus header and tail.
+14  UINT16        0 - presentation context identifier
+16  UINT8         0 - cancel count
+17  UINT8         in replies: 0 - reserved; in requests: opnum - see #defines.
+18  ......        start of data (goes on for allocation_hint bytes)
+
+
+RPC_Packet for request, response, bind and bind acknowledgement.
+{
+  
+  UINT8 versionmaj        # reply same as request (0x05)
+  UINT8 versionmin        # reply same as request (0x00)
+  UINT8 type              # one of the MSRPC_Type enums
+  UINT8 flags             # reply same as request (0x00 for Bind, 0x03 for Request)
+  UINT32 representation   # reply same as request (0x00000010)
+  UINT16 fraglength       # the length of the data section of the SMB trans packet
+  UINT16 authlength       
+  UINT32 callid           # call identifier. (e.g. 0x00149594)
+
+  * stub USE TvPacket     # the remainder of the packet depending on the "type"
+}
+
+
+# the interfaces are numbered. as yet I haven't seen more than one interface
+# used on the same pipe name
+# srvsvc
+#   abstract (0x4B324FC8, 0x01D31670, 0x475A7812, 0x88E16EBF, 0x00000003)
+#   transfer (0x8A885D04, 0x11C91CEB, 0x0008E89F, 0x6048102B, 0x00000002)
+RPC_Iface RW
+{
+  UINT8 byte[16]    # 16 bytes of number
+  UINT32 version    # the interface number
+}
+
+
+# the remainder of the packet after the header if "type" was Bind
+# in the response header, "type" should be BindAck
+RPC_ReqBind RW
+{
+  UINT16 maxtsize       # maximum transmission fragment size (0x1630)
+  UINT16 maxrsize       # max receive fragment size (0x1630)
+  UINT32 assocgid       # associated group id (0x0)
+  UINT32 numelements    # the number of elements (0x1)
+  UINT16 contextid      # presentation context identifier (0x0)
+  UINT8 numsyntaxes     # the number of syntaxes (has always been 1?)(0x1)
+  UINT8[]               # 4-byte alignment padding, against SMB header
+
+  * abstractint USE RPC_Iface # num and vers. of interface client is using
+  * transferint USE RPC_Iface # num and vers. of interface to use for replies
+}
+
+
+RPC_Address RW
+{
+  UINT16 length        # length of the string including null terminator
+  * port USE string    # the string above in single byte, null terminated form
+}
+
+
+# the response to place after the header in the reply packet
+RPC_ResBind RW
+{
+  UINT16 maxtsize                   # same as request
+  UINT16 maxrsize                   # same as request
+  UINT32 assocgid                   # zero
+
+  * secondaddr USE RPC_Address     # the address string, as described earlier
+
+  UINT8[]                           # 4-byte alignment padding, against SMB header
+
+  UINT8 numresults                  # the number of results (0x01)
+
+  UINT8[]                           # 4-byte alignment padding, against SMB header
+  UINT16 result                     # result (0x00 = accept)
+  UINT16 reason                     # reason (0x00 = no reason specified)
+
+  * transfersyntax USE RPC_Iface   # the transfer syntax from the request
+}
+
+
+# the remainder of the packet after the header for every other other
+# request
+RPC_ReqNorm RW
+{
+  UINT32 allochint         # the size of the stub data in bytes
+  UINT16 prescontext       # presentation context identifier (0x0)
+  UINT16 opnum             # operation number (0x15)
+
+  * stub USE TvPacket      # a packet dependent on the pipe name
+                           # (probably the interface) and the op number)
+}
+
+
+# response to a request
+RPC_ResNorm RW
+{
+  UINT32 allochint         # size of the stub data in bytes
+  UINT16 prescontext       # presentation context identifier (same as request)
+  UINT8 cancelcount        # cancel count? (0x0)
+  UINT8 reserved           # 0 - one byte padding
+
+  * stub USE TvPacket      # the remainder of the reply
+}
+
+
+3.3) Tail
+---------
+
+The end of each of the NTLSA and NETLOGON named pipes ends with:
+
+    ......        end of data
+    UINT32        return code
+
+
+
+3.4 RPC Bind / Bind Ack
+-----------------------
+
+RPC Binds are the process of associating an RPC pipe (e.g \PIPE\lsarpc)
+with a "transfer syntax" (see RPC_Iface structure).  The purpose for doing
+this is unknown.
+
+Note:	The RPC_ResBind SMB Transact request is sent with two uint16 setup
+	parameters.  The first is 0x0026; the second is the file handle
+	returned by the SMBopenX Transact response.
+
+Note:	The RPC_ResBind members maxtsize, maxrsize and assocgid are the
+	same in the response as the same members in the RPC_ReqBind.  The
+	RPC_ResBind member transfersyntax is the same in the response as
+	the
+
+Note:	The RPC_ResBind response member secondaddr contains the name
+	of what is presumed to be the service behind the RPC pipe.  The
+	mapping identified so far is:
+
+		initial SMBopenX request:          RPC_ResBind response:
+
+		"\\PIPE\\srvsvc"                   "\\PIPE\\ntsvcs"
+		"\\PIPE\\samr"                     "\\PIPE\\lsass"
+		"\\PIPE\\lsarpc"                   "\\PIPE\\lsass"
+		"\\PIPE\\wkssvc"                   "\\PIPE\\wksvcs"
+		"\\PIPE\\NETLOGON"                 "\\PIPE\\NETLOGON"
+
+Note:	The RPC_Packet fraglength member in both the Bind Request and Bind
+	Acknowledgment must contain the length of the entire RPC data,
+	including the RPC_Packet header.  
+
+Request:
+
+    RPC_Packet
+    RPC_ReqBind
+
+Response:
+
+    RPC_Packet
+    RPC_ResBind
+
+
+
+4) NTLSA Transact Named Pipe
+----------------------------
+        
+The sequence of actions taken on this pipe are:
+
+- Establish a connection to the IPC$ share (SMBtconX).  use encrypted passwords.
+- Open an RPC Pipe with the name "\\PIPE\\lsarpc".  Store the file handle.
+- Using the file handle, send a Set Named Pipe Handle state to 0x4300.
+- Send an LSA Open Policy request.  Store the Policy Handle.
+- Using the Policy Handle, send LSA Query Info Policy requests, etc.
+- Using the Policy Handle, send an LSA Close.
+- Close the IPC$ share.
+
+
+Defines for this pipe, identifying the query are:
+
+- LSA Open Policy:               0x2c
+- LSA Query Info Policy:         0x07
+- LSA Enumerate Trusted Domains: 0x0d
+- LSA Open Secret:               0xff
+- LSA Lookup SIDs:               0xfe
+- LSA Lookup Names:              0xfd
+- LSA Close:                     0x00
+
+
+4.1) LSA Open Policy
+--------------------
+
+Note:	The policy handle can be anything you like.
+
+Request:
+
+	VOID*     buffer pointer
+    UNISTR2   server name - unicode string starting with two '\'s
+    OBJ_ATTR  object attributes
+    UINT32    1 - desired access
+
+Response:
+
+    POL_HND   LSA policy handle
+
+    return    0 - indicates success
+
+
+4.2) LSA Query Info Policy
+--------------------------
+
+Note:	The info class in response must be the same as that in the request.
+
+Request:
+
+    POL_HND   LSA policy handle
+    UINT16    info class (also a policy handle?)
+
+Response:
+
+    VOID*     undocumented buffer pointer
+    UINT16    info class (same as info class in request).
+    
+    switch (info class)
+    case 3:
+    case 5:
+    {
+        DOM_INFO domain info, levels 3 and 5 (are the same).
+    }
+
+    return    0 - indicates success
+
+
+4.3) LSA Enumerate Trusted Domains
+----------------------------------
+
+Request:
+
+    no extra data
+
+Response:
+
+    UINT32     0 - enumeration context
+    UINT32     0 - entries read
+    UINT32     0 - trust information
+
+    return     0x8000 001a - "no trusted domains" success code
+
+
+4.4) LSA Open Secret
+--------------------
+
+Request:
+
+    no extra data
+
+Response:
+
+    UINT32    0 - undocumented
+    UINT32    0 - undocumented
+    UINT32    0 - undocumented
+    UINT32    0 - undocumented
+    UINT32    0 - undocumented
+
+    return    0x0C00 0034 - "no such secret" success code
+
+
+4.5) LSA Close
+--------------
+
+Request:
+
+    POL_HND   policy handle to be closed
+
+Response:
+
+    POL_HND   0s - closed policy handle (all zeros)
+
+    return    0 - indicates success
+
+
+4.6) LSA Lookup SIDS
+--------------------
+
+Note:	num_entries in response must be same as num_entries in request.
+
+Request:
+
+    POL_HND            LSA policy handle
+    UINT32             num_entries
+    VOID*              undocumented domain SID buffer pointer
+    VOID*              undocumented domain name buffer pointer
+    VOID*[num_entries] undocumented domain SID pointers to be looked up.
+    DOM_SID[num_entries] domain SIDs to be looked up.
+    char[16]           completely undocumented 16 bytes.
+
+Response:
+
+    DOM_REF               domain reference response
+
+    UINT32                num_entries (listed above)
+    VOID*                 undocumented buffer pointer
+
+    UINT32                num_entries (listed above)
+    DOM_SID2[num_entries] domain SIDs (from Request, listed above).
+
+    UINT32                num_entries (listed above)
+
+    return                0 - indicates success
+
+
+4.7) LSA Lookup Names
+---------------------
+
+Note:	num_entries in response must be same as num_entries in request.
+
+Request:
+
+    POL_HND            LSA policy handle
+    UINT32             num_entries
+    UINT32             num_entries
+    VOID*              undocumented domain SID buffer pointer
+    VOID*              undocumented domain name buffer pointer
+    NAME[num_entries]  names to be looked up.
+    char[]             undocumented bytes - falsely translated SID structure?
+
+Response:
+
+    DOM_REF               domain reference response
+
+    UINT32                num_entries (listed above)
+    VOID*                 undocumented buffer pointer
+
+    UINT32                num_entries (listed above)
+    DOM_RID[num_entries]  domain SIDs (from Request, listed above).
+
+    UINT32                num_entries (listed above)
+
+    return                0 - indicates success
+
+
+
+5) NETLOGON rpc Transact Named Pipe
+-----------------------------------
+
+The sequence of actions taken on this pipe are:
+
+- Establish a connection to the IPC$ share (SMBtconX).  use encrypted passwords.
+- Open an RPC Pipe with the name "\\PIPE\\NETLOGON".  Store the file handle.
+- Using the file handle, send a Set Named Pipe Handle state to 0x4300.
+- Create Client Challenge. Send LSA Request Challenge.  Store Server Challenge.
+- Calculate Session Key.  Send an LSA Auth 2 Challenge.  Store Auth2 Challenge.
+- Calc/Verify Client Creds.  Send LSA Srv PW Set.  Calc/Verify Server Creds.
+- Calc/Verify Client Creds.  Send LSA SAM Logon .  Calc/Verify Server Creds.
+- Calc/Verify Client Creds.  Send LSA SAM Logoff.  Calc/Verify Server Creds.
+- Close the IPC$ share.
+
+
+Defines for this pipe, identifying the query are:
+
+- LSA Request Challenge:         0x04
+- LSA Server Password Set:       0x06
+- LSA SAM Logon:                 0x02
+- LSA SAM Logoff:                0x03
+- LSA Auth 2:                    0x0f
+- LSA Logon Control:             0x0e
+
+
+5.1) LSA Request Challenge
+--------------------------
+
+Note:	logon server name starts with two '\' characters and is upper case.
+
+Note:	logon client is the machine, not the user.
+
+Note:	the initial LanManager password hash, against which the challenge
+	is issued, is the machine name itself (lower case).  there will be
+	calls issued (LSA Server Password Set) which will change this, later.
+	refusing these calls allows you to always deal with the same password
+	(i.e the LM# of the machine name in lower case).
+
+Request:
+
+    VOID*       undocumented buffer pointer
+    UNISTR2     logon server unicode string
+    UNISTR2     logon client unicode string
+    char[8]     client challenge
+
+Response:
+
+    char[8]     server challenge
+
+    return    0 - indicates success
+
+
+
+5.2) LSA Authenticate 2
+-----------------------
+
+Note:	in between request and response, calculate the client credentials,
+	and check them against the client-calculated credentials (this
+	process uses the previously received client credentials).
+
+Note:	neg_flags in the response is the same as that in the request.
+
+Note:	you must take a copy of the client-calculated credentials received
+	here, because they will be used in subsequent authentication packets.
+
+Request:
+
+    LOG_INFO    client identification info
+
+    char[8]     client-calculated credentials
+    UINT8[]     padding to 4-byte align with start of SMB header.
+    UINT32      neg_flags - negotiated flags (usual value is 0x0000 01ff)
+
+Response:
+
+    char[8]     server credentials.
+    UINT32      neg_flags - same as neg_flags in request.
+
+    return    0 - indicates success.  failure value unknown.
+
+
+5.3) LSA Server Password Set
+----------------------------
+
+Note:	the new password is suspected to be a DES encryption using the old
+	password to generate the key.
+
+Note:	in between request and response, calculate the client credentials,
+	and check them against the client-calculated credentials (this
+	process uses the previously received client credentials).
+
+Note:	the server credentials are constructed from the client-calculated
+	credentials and the client time + 1 second.
+
+Note:	you must take a copy of the client-calculated credentials received
+	here, because they will be used in subsequent authentication packets.
+
+Request:
+
+    CLNT_INFO   client identification/authentication info
+    char[]      new password - undocumented.
+    
+Response:
+
+    CREDS       server credentials.  server time stamp appears to be ignored.
+
+    return    0 - indicates success; 0xC000 006a indicates failure
+
+
+5.4) LSA SAM Logon
+------------------
+
+Note:	valid_user is True iff the username and password hash are valid for
+	the requested domain.
+
+Request:
+
+    SAM_INFO    sam_id structure
+
+Response:
+
+    VOID*       undocumented buffer pointer
+    CREDS       server credentials.  server time stamp appears to be ignored.
+    
+    if (valid_user)
+    {
+		UINT16      3 - switch value indicating USER_INFO structure.
+        VOID*     non-zero - pointer to USER_INFO structure
+        USER_INFO user logon information
+
+        UINT32    1 - Authoritative response; 0 - Non-Auth?
+
+        return    0 - indicates success
+    }
+    else
+    {
+		UINT16    0 - switch value.  value to indicate no user presumed.
+        VOID*     0x0000 0000 - indicates no USER_INFO structure.
+
+        UINT32    1 - Authoritative response; 0 - Non-Auth?
+
+        return    0xC000 0064 - NT_STATUS_NO_SUCH_USER.
+    }
+
+
+5.5) LSA SAM Logoff
+--------------------
+
+Note:	presumably, the SAM_INFO structure is validated, and a (currently
+	undocumented) error code returned if the Logoff is invalid.
+
+Request:
+
+    SAM_INFO    sam_id structure
+
+Response:
+
+    VOID*       undocumented buffer pointer
+    CREDS       server credentials.  server time stamp appears to be ignored.
+
+    return      0 - indicates success.  undocumented failure indication.
+
+
+6) \\MAILSLOT\NET\NTLOGON
+-------------------------
+
+Note:	mailslots will contain a response mailslot, to which the response
+	should be sent.  the target NetBIOS name is REQUEST_NAME<20>, where
+	REQUEST_NAME is the name of the machine that sent the request.
+
+
+6.1) Query for PDC
+------------------
+
+Note:	NTversion, LMNTtoken, LM20token in response are the same as those
+	given in the request.
+
+Request:
+
+    UINT16         0x0007 - Query for PDC
+    STR            machine name
+    STR            response mailslot
+    UINT8[]        padding to 2-byte align with start of mailslot.
+    UNISTR         machine name
+    UINT32         NTversion
+    UINT16         LMNTtoken
+    UINT16         LM20token
+
+Response:
+
+    UINT16         0x000A - Respose to Query for PDC
+    STR            machine name (in uppercase)
+    UINT8[]        padding to 2-byte align with start of mailslot.
+    UNISTR         machine name
+    UNISTR         domain name
+    UINT32         NTversion (same as received in request)
+    UINT16         LMNTtoken (same as received in request)
+    UINT16         LM20token (same as received in request)
+
+
+6.2) SAM Logon
+--------------
+
+Note:	machine name in response is preceded by two '\' characters.
+
+Note:	NTversion, LMNTtoken, LM20token in response are the same as those
+	given in the request.
+
+Note:	user name in the response is presumably the same as that in the request.
+
+Request:
+
+    UINT16         0x0012 - SAM Logon
+    UINT16         request count
+    UNISTR         machine name
+    UNISTR         user name
+    STR            response mailslot
+    UINT32         alloweable account
+    UINT32         domain SID size
+    char[sid_size] domain SID, of sid_size bytes.
+    UINT8[]        ???? padding to 4? 2? -byte align with start of mailslot.
+    UINT32         NTversion
+    UINT16         LMNTtoken
+    UINT16         LM20token
+    
+Response:
+
+    UINT16         0x0013 - Response to SAM Logon
+    UNISTR         machine name
+    UNISTR         user name - workstation trust account
+    UNISTR         domain name 
+    UINT32         NTversion
+    UINT16         LMNTtoken
+    UINT16         LM20token
+
+
+
+7) SRVSVC Transact Named Pipe
+-----------------------------
+
+
+Defines for this pipe, identifying the query are:
+
+- Net Share Enum :              0x0f
+- Net Server Get Info :         0x15
+
+
+7.1) Net Share Enum
+------------------
+
+Note:	share level and switch value in the response are presumably the 
+	same as those in the request.
+
+Note:	cifsrap2.txt (section 5) may be of limited assistance here.
+
+Request:
+
+    VOID*             pointer (to server name?)
+	UNISTR2           server name
+
+    UINT8[]           padding to get unicode string 4-byte aligned
+                      with the start of the SMB header.
+
+    UINT32            share level
+    UINT32            switch value
+
+    VOID*             pointer to SHARE_INFO_1_CTR
+    SHARE_INFO_1_CTR  share info with 0 entries
+
+    UINT32            preferred maximum length (0xffff ffff)
+
+Response:
+
+    UINT32            share level
+    UINT32            switch value
+
+    VOID*             pointer to SHARE_INFO_1_CTR
+    SHARE_INFO_1_CTR  share info (only added if share info ptr is non-zero)
+
+    return            0 - indicates success
+
+
+7.2) Net Server Get Info
+------------------
+
+Note:	level is the same value as in the request.
+
+Request:
+
+	UNISTR2           server name
+    UINT32            switch level
+
+Response:
+
+    UINT32            switch level
+    VOID*             pointer to SERVER_INFO_101
+
+    SERVER_INFO_101   server info (only added if server info ptr is non-zero)
+
+    return            0 - indicates success
+
+
+
+Appendix
+--------
+
+A1) Cryptographic side of NT Domain Authentication
+--------------------------------------------------
+
+
+A1.1) Definitions
+-----------------
+
+Add(A1,A2): Intel byte ordered addition of corresponding 4 byte words
+in arrays A1 and A2
+
+E(K,D): DES ECB encryption of 8 byte data D using 7 byte key K
+
+lmowf(): Lan man hash
+
+ntowf(): NT hash
+
+PW: md4(machine_password) == md4(lsadump $machine.acc) ==
+pwdump(machine$) (initially) == md4(lmowf(unicode(machine)))
+
+ARC4(K,Lk,D,Ld): ARC4 encryption of data D of length Ld with key K of
+length Lk
+
+v[m..n(,l)]: subset of v from bytes m to n, optionally padded with
+zeroes to length l
+
+Cred(K,D): E(K[7..7,7],E(K[0..6],D)) computes a credential
+
+Time(): 4 byte current time
+
+Cc,Cs: 8 byte client and server challenges Rc,Rs: 8 byte client and
+server credentials
+
+
+A1.2) Protocol
+--------------
+
+C->S ReqChal,Cc S->C Cs
+
+C & S compute session key Ks = E(PW[9..15],E(PW[0..6],Add(Cc,Cs)))
+
+C: Rc = Cred(Ks,Cc) C->S Authenticate,Rc S: Rs = Cred(Ks,Cs),
+assert(Rc == Cred(Ks,Cc)) S->C Rs C: assert(Rs == Cred(Ks,Cs))
+
+On joining the domain the client will optionally attempt to change its
+password and the domain controller may refuse to update it depending
+on registry settings. This will also occur weekly afterwards.
+
+C: Tc = Time(), Rc' = Cred(Ks,Rc+Tc) C->S ServerPasswordSet,Rc',Tc,
+arc4(Ks[0..7,16],lmowf(randompassword()) C: Rc = Cred(Ks,Rc+Tc+1) S:
+assert(Rc' == Cred(Ks,Rc+Tc)), Ts = Time() S: Rs' = Cred(Ks,Rs+Tc+1)
+S->C Rs',Ts C: assert(Rs' == Cred(Ks,Rs+Tc+1)) S: Rs = Rs'
+
+User: U with password P wishes to login to the domain (incidental data
+such as workstation and domain omitted)
+
+C: Tc = Time(), Rc' = Cred(Ks,Rc+Tc) C->S NetLogonSamLogon,Rc',Tc,U,
+arc4(Ks[0..7,16],16,ntowf(P),16), arc4(Ks[0..7,16],16,lmowf(P),16) S:
+assert(Rc' == Cred(Ks,Rc+Tc)) assert(passwords match those in SAM) S:
+Ts = Time()
+
+S->C Cred(Ks,Cred(Ks,Rc+Tc+1)),userinfo(logon script,UID,SIDs,etc) C:
+assert(Rs == Cred(Ks,Cred(Rc+Tc+1)) C: Rc = Cred(Ks,Rc+Tc+1)
+
+
+A1.3) Comments
+--------------
+
+On first joining the domain the session key could be computed by
+anyone listening in on the network as the machine password has a well
+known value. Until the machine is rebooted it will use this session
+key to encrypt NT and LM one way functions of passwords which are
+password equivalents. Any user who logs in before the machine has been
+rebooted a second time will have their password equivalent exposed. Of
+course the new machine password is exposed at this time anyway.
+
+None of the returned user info such as logon script, profile path and
+SIDs *appear* to be protected by anything other than the TCP checksum.
+
+The server time stamps appear to be ignored.
+
+The client sends a ReturnAuthenticator in the SamLogon request which I
+can't find a use for.  However its time is used as the timestamp
+returned by the server.
+
+The password OWFs should NOT be sent over the network reversibly
+encrypted. They should be sent using ARC4(Ks,md4(owf)) with the server
+computing the same function using the owf values in the SAM.
+
+
+A2) SIDs and RIDs
+-----------------
+
+SIDs and RIDs are well documented elsewhere.
+
+A SID is an NT Security ID (see DOM_SID structure).  They are of the form:
+
+	S-revision-NN-SubAuth1-SubAuth2-SubAuth3... 
+	S-revision-0xNNNNNNNNNNNN-SubAuth1-SubAuth2-SubAuth3...
+
+currently, the SID revision is 1.
+The Sub-Authorities are known as Relative IDs (RIDs).
+
+
+A2.1) Well-known SIDs
+---------------------
+
+
+A2.1.1) Universal well-known SIDs
+---------------------------------
+
+	Null SID                     S-1-0-0
+	World                        S-1-1-0
+	Local                        S-1-2-0
+	Creator Owner ID             S-1-3-0
+	Creator Group ID             S-1-3-1
+	Creator Owner Server ID      S-1-3-2
+	Creator Group Server ID      S-1-3-3
+	
+	(Non-unique IDs)             S-1-4
+
+
+A2.1.2) NT well-known SIDs
+--------------------------
+
+	NT Authority          S-1-5
+	Dialup                S-1-5-1
+
+	Network               S-1-5-2
+	Batch                 S-1-5-3
+	Interactive           S-1-5-4
+	Service               S-1-5-6
+	AnonymousLogon        S-1-5-7       (aka null logon session)
+	Proxy                 S-1-5-8
+	ServerLogon           S-1-5-8       (aka domain controller account)
+	
+	(Logon IDs)           S-1-5-5-X-Y
+	
+	(NT non-unique IDs)   S-1-5-0x15-...
+	
+	(Built-in domain)     s-1-5-0x20
+	
+
+
+A2.2) Well-known RIDS
+---------------------
+
+A RID is a sub-authority value, as part of either a SID, or in the case
+of Group RIDs, part of the DOM_GID structure, in the USER_INFO_1
+structure, in the LSA SAM Logon response.
+
+
+A2.2.1) Well-known RID users
+----------------------------
+
+	DOMAIN_USER_RID_ADMIN          0x0000 01F4
+	DOMAIN_USER_RID_GUEST          0x0000 01F5
+
+
+
+A2.2.2) Well-known RID groups
+----------------------------
+
+	DOMAIN_GROUP_RID_ADMINS        0x0000 0200
+	DOMAIN_GROUP_RID_USERS         0x0000 0201
+	DOMAIN_GROUP_RID_GUESTS        0x0000 0202
+
+
+
+A2.2.3) Well-known RID aliases
+------------------------------
+
+	DOMAIN_ALIAS_RID_ADMINS        0x0000 0220
+	DOMAIN_ALIAS_RID_USERS         0x0000 0221
+	DOMAIN_ALIAS_RID_GUESTS        0x0000 0222
+	DOMAIN_ALIAS_RID_POWER_USERS   0x0000 0223
+
+	DOMAIN_ALIAS_RID_ACCOUNT_OPS   0x0000 0224
+	DOMAIN_ALIAS_RID_SYSTEM_OPS    0x0000 0225
+	DOMAIN_ALIAS_RID_PRINT_OPS     0x0000 0226
+	DOMAIN_ALIAS_RID_BACKUP_OPS    0x0000 0227
+
+	DOMAIN_ALIAS_RID_REPLICATOR    0x0000 0228
+
+

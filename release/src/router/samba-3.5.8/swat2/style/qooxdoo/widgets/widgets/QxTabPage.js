@@ -1,0 +1,2 @@
+/* Copyright (c): 2002-2005 (Germany): United Internet, 1&1, GMX, Schlund+Partner, Alturo */
+function QxTabPage(vTab){QxWidget.call(this);this.setLeft(10);this.setRight(10);this.setBottom(10);this.setTop(10);if(isValid(vTab)){this.setTab(vTab);};};QxTabPage.extend(QxWidget,"QxTabPage");QxTabPage.addProperty({name:"tab",type:Object});proto._modifyTab=function(_b1,_b2,_b3,_b4){if(_b2){_b2.setPage(null,_b4);};if(_b1){_b1.setPage(this,_b4);};return true;};proto._shouldBecomeCreated=function(){var vTab=this.getTab();return vTab?vTab.getChecked():false;};

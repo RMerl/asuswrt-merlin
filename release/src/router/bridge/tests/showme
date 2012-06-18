@@ -1,0 +1,10 @@
+#!/bin/bash
+BR=${1:-"br549"}
+
+while true;
+do
+	brctl show
+	brctl showstp $BR
+	brctl showmacs $BR
+	sleep 5
+done

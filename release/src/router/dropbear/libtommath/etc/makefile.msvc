@@ -1,0 +1,23 @@
+#MSVC Makefile
+#
+#Tom St Denis
+
+CFLAGS = /I../ /Ox /DWIN32 /W3
+
+pprime: pprime.obj
+	cl pprime.obj ../tommath.lib 
+
+mersenne: mersenne.obj
+	cl mersenne.obj ../tommath.lib
+	
+tune: tune.obj
+	cl tune.obj ../tommath.lib
+
+mont: mont.obj
+	cl mont.obj ../tommath.lib
+	
+drprime: drprime.obj
+	cl drprime.obj ../tommath.lib
+
+2kprime: 2kprime.obj
+	cl 2kprime.obj ../tommath.lib

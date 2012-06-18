@@ -1,0 +1,24 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>smbmnt</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="smbmnt.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>smbmnt &#8212; helper utility for mounting SMB filesystems</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">smbmnt</code> {mount-point} [-s &lt;share&gt;] [-r] [-u &lt;uid&gt;] [-g &lt;gid&gt;] [-f &lt;mask&gt;] [-d &lt;mask&gt;] [-o &lt;options&gt;] [-h]</p></div></div><div class="refsect1" lang="en"><a name="id2483354"></a><h2>DESCRIPTION</h2><p><code class="literal">smbmnt</code> is a helper application used 
+	by the smbmount program to do the actual mounting of SMB shares. 
+	<code class="literal">smbmnt</code> can be installed setuid root if you want
+	normal users to be able to mount their SMB shares.</p><p>A setuid smbmnt will only allow mounts on directories owned
+	by the user, and that the user has write permission on.</p><p>The <code class="literal">smbmnt</code> program is normally invoked 
+	by <a class="citerefentry" href="smbmount.8.html"><span class="citerefentry"><span class="refentrytitle">smbmount</span>(8)</span></a>. It should not be invoked directly by users. </p><p>smbmount searches the normal PATH for smbmnt. You must ensure
+	that the smbmnt version in your path matches the smbmount used.</p></div><div class="refsect1" lang="en"><a name="id2483407"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">-r</span></dt><dd><p>mount the filesystem read-only 
+		</p></dd><dt><span class="term">-u uid</span></dt><dd><p>specify the uid that the files will 
+		be owned by </p></dd><dt><span class="term">-g gid</span></dt><dd><p>specify the gid that the files will be 
+		owned by </p></dd><dt><span class="term">-f mask</span></dt><dd><p>specify the octal file mask applied
+		</p></dd><dt><span class="term">-d mask</span></dt><dd><p>specify the octal directory mask 
+		applied  </p></dd><dt><span class="term">-o options</span></dt><dd><p>
+		list of options that are passed as-is to smbfs, if this
+		command is run on a 2.4 or higher Linux kernel.
+		</p></dd><dt><span class="term">-h|--help</span></dt><dd><p>Print a summary of command line options.
+</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2483614"></a><h2>AUTHOR</h2><p>Volker Lendecke, Andrew Tridgell, Michael H. Warfield 
+	and others.</p><p>The current maintainer of smbfs and the userspace
+	tools <code class="literal">smbmount</code>, <code class="literal">smbumount</code>,
+	and <code class="literal">smbmnt</code> is <a class="ulink" href="mailto:urban@teststation.com" target="_top">Urban Widmark</a>.
+	The <a class="ulink" href="mailto:samba@samba.org" target="_top">SAMBA Mailing list</a>
+	is the preferred place to ask questions regarding these programs.
+	</p><p>The conversion of this manpage for Samba 2.2 was performed 
+	by Gerald Carter. The conversion to DocBook XML 4.2 for Samba 3.0
+	was done by Alexander Bokovoy.</p></div></div></body></html>

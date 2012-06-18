@@ -1,0 +1,261 @@
+Review Checklist for RCU Patches
+
+
+This document contains a checklist for producing and reviewing patches
+that make use of RCU.  Violating any of the rules listed below will
+result in the same sorts of problems that leaving out a locking primitive
+would cause.  This list is based on experiences reviewing such patches
+over a rather long period of time, but improvements are always welcome!
+
+0.	Is RCU being applied to a read-mostly situation?  If the data
+	structure is updated more than about 10% of the time, then
+	you should strongly consider some other approach, unless
+	detailed performance measurements show that RCU is nonetheless
+	the right tool for the job.
+
+	The other exception would be where performance is not an issue,
+	and RCU provides a simpler implementation.  An example of this
+	situation is the dynamic NMI code in the Linux 2.6 kernel,
+	at least on architectures where NMIs are rare.
+
+1.	Does the update code have proper mutual exclusion?
+
+	RCU does allow -readers- to run (almost) naked, but -writers- must
+	still use some sort of mutual exclusion, such as:
+
+	a.	locking,
+	b.	atomic operations, or
+	c.	restricting updates to a single task.
+
+	If you choose #b, be prepared to describe how you have handled
+	memory barriers on weakly ordered machines (pretty much all of
+	them -- even x86 allows reads to be reordered), and be prepared
+	to explain why this added complexity is worthwhile.  If you
+	choose #c, be prepared to explain how this single task does not
+	become a major bottleneck on big multiprocessor machines (for
+	example, if the task is updating information relating to itself
+	that other tasks can read, there by definition can be no
+	bottleneck).
+
+2.	Do the RCU read-side critical sections make proper use of
+	rcu_read_lock() and friends?  These primitives are needed
+	to suppress preemption (or bottom halves, in the case of
+	rcu_read_lock_bh()) in the read-side critical sections,
+	and are also an excellent aid to readability.
+
+	As a rough rule of thumb, any dereference of an RCU-protected
+	pointer must be covered by rcu_read_lock() or rcu_read_lock_bh()
+	or by the appropriate update-side lock.
+
+3.	Does the update code tolerate concurrent accesses?
+
+	The whole point of RCU is to permit readers to run without
+	any locks or atomic operations.  This means that readers will
+	be running while updates are in progress.  There are a number
+	of ways to handle this concurrency, depending on the situation:
+
+	a.	Make updates appear atomic to readers.  For example,
+		pointer updates to properly aligned fields will appear
+		atomic, as will individual atomic primitives.  Operations
+		performed under a lock and sequences of multiple atomic
+		primitives will -not- appear to be atomic.
+
+		This is almost always the best approach.
+
+	b.	Carefully order the updates and the reads so that
+		readers see valid data at all phases of the update.
+		This is often more difficult than it sounds, especially
+		given modern CPUs' tendency to reorder memory references.
+		One must usually liberally sprinkle memory barriers
+		(smp_wmb(), smp_rmb(), smp_mb()) through the code,
+		making it difficult to understand and to test.
+
+		It is usually better to group the changing data into
+		a separate structure, so that the change may be made
+		to appear atomic by updating a pointer to reference
+		a new structure containing updated values.
+
+4.	Weakly ordered CPUs pose special challenges.  Almost all CPUs
+	are weakly ordered -- even i386 CPUs allow reads to be reordered.
+	RCU code must take all of the following measures to prevent
+	memory-corruption problems:
+
+	a.	Readers must maintain proper ordering of their memory
+		accesses.  The rcu_dereference() primitive ensures that
+		the CPU picks up the pointer before it picks up the data
+		that the pointer points to.  This really is necessary
+		on Alpha CPUs.	If you don't believe me, see:
+
+			http://www.openvms.compaq.com/wizard/wiz_2637.html
+
+		The rcu_dereference() primitive is also an excellent
+		documentation aid, letting the person reading the code
+		know exactly which pointers are protected by RCU.
+
+		The rcu_dereference() primitive is used by the various
+		"_rcu()" list-traversal primitives, such as the
+		list_for_each_entry_rcu().  Note that it is perfectly
+		legal (if redundant) for update-side code to use
+		rcu_dereference() and the "_rcu()" list-traversal
+		primitives.  This is particularly useful in code
+		that is common to readers and updaters.
+
+	b.	If the list macros are being used, the list_add_tail_rcu()
+		and list_add_rcu() primitives must be used in order
+		to prevent weakly ordered machines from misordering
+		structure initialization and pointer planting.
+		Similarly, if the hlist macros are being used, the
+		hlist_add_head_rcu() primitive is required.
+
+	c.	If the list macros are being used, the list_del_rcu()
+		primitive must be used to keep list_del()'s pointer
+		poisoning from inflicting toxic effects on concurrent
+		readers.  Similarly, if the hlist macros are being used,
+		the hlist_del_rcu() primitive is required.
+
+		The list_replace_rcu() primitive may be used to
+		replace an old structure with a new one in an
+		RCU-protected list.
+
+	d.	Updates must ensure that initialization of a given
+		structure happens before pointers to that structure are
+		publicized.  Use the rcu_assign_pointer() primitive
+		when publicizing a pointer to a structure that can
+		be traversed by an RCU read-side critical section.
+
+5.	If call_rcu(), or a related primitive such as call_rcu_bh(),
+	is used, the callback function must be written to be called
+	from softirq context.  In particular, it cannot block.
+
+6.	Since synchronize_rcu() can block, it cannot be called from
+	any sort of irq context.
+
+7.	If the updater uses call_rcu(), then the corresponding readers
+	must use rcu_read_lock() and rcu_read_unlock().  If the updater
+	uses call_rcu_bh(), then the corresponding readers must use
+	rcu_read_lock_bh() and rcu_read_unlock_bh().  Mixing things up
+	will result in confusion and broken kernels.
+
+	One exception to this rule: rcu_read_lock() and rcu_read_unlock()
+	may be substituted for rcu_read_lock_bh() and rcu_read_unlock_bh()
+	in cases where local bottom halves are already known to be
+	disabled, for example, in irq or softirq context.  Commenting
+	such cases is a must, of course!  And the jury is still out on
+	whether the increased speed is worth it.
+
+8.	Although synchronize_rcu() is a bit slower than is call_rcu(),
+	it usually results in simpler code.  So, unless update
+	performance is critically important or the updaters cannot block,
+	synchronize_rcu() should be used in preference to call_rcu().
+
+	An especially important property of the synchronize_rcu()
+	primitive is that it automatically self-limits: if grace periods
+	are delayed for whatever reason, then the synchronize_rcu()
+	primitive will correspondingly delay updates.  In contrast,
+	code using call_rcu() should explicitly limit update rate in
+	cases where grace periods are delayed, as failing to do so can
+	result in excessive realtime latencies or even OOM conditions.
+
+	Ways of gaining this self-limiting property when using call_rcu()
+	include:
+
+	a.	Keeping a count of the number of data-structure elements
+		used by the RCU-protected data structure, including those
+		waiting for a grace period to elapse.  Enforce a limit
+		on this number, stalling updates as needed to allow
+		previously deferred frees to complete.
+
+		Alternatively, limit only the number awaiting deferred
+		free rather than the total number of elements.
+
+	b.	Limiting update rate.  For example, if updates occur only
+		once per hour, then no explicit rate limiting is required,
+		unless your system is already badly broken.  The dcache
+		subsystem takes this approach -- updates are guarded
+		by a global lock, limiting their rate.
+
+	c.	Trusted update -- if updates can only be done manually by
+		superuser or some other trusted user, then it might not
+		be necessary to automatically limit them.  The theory
+		here is that superuser already has lots of ways to crash
+		the machine.
+
+	d.	Use call_rcu_bh() rather than call_rcu(), in order to take
+		advantage of call_rcu_bh()'s faster grace periods.
+
+	e.	Periodically invoke synchronize_rcu(), permitting a limited
+		number of updates per grace period.
+
+9.	All RCU list-traversal primitives, which include
+	list_for_each_rcu(), list_for_each_entry_rcu(),
+	list_for_each_continue_rcu(), and list_for_each_safe_rcu(),
+	must be within an RCU read-side critical section.  RCU
+	read-side critical sections are delimited by rcu_read_lock()
+	and rcu_read_unlock(), or by similar primitives such as
+	rcu_read_lock_bh() and rcu_read_unlock_bh().
+
+	Use of the _rcu() list-traversal primitives outside of an
+	RCU read-side critical section causes no harm other than
+	a slight performance degradation on Alpha CPUs.  It can
+	also be quite helpful in reducing code bloat when common
+	code is shared between readers and updaters.
+
+10.	Conversely, if you are in an RCU read-side critical section,
+	you -must- use the "_rcu()" variants of the list macros.
+	Failing to do so will break Alpha and confuse people reading
+	your code.
+
+11.	Note that synchronize_rcu() -only- guarantees to wait until
+	all currently executing rcu_read_lock()-protected RCU read-side
+	critical sections complete.  It does -not- necessarily guarantee
+	that all currently running interrupts, NMIs, preempt_disable()
+	code, or idle loops will complete.  Therefore, if you do not have
+	rcu_read_lock()-protected read-side critical sections, do -not-
+	use synchronize_rcu().
+
+	If you want to wait for some of these other things, you might
+	instead need to use synchronize_irq() or synchronize_sched().
+
+12.	Any lock acquired by an RCU callback must be acquired elsewhere
+	with irq disabled, e.g., via spin_lock_irqsave().  Failing to
+	disable irq on a given acquisition of that lock will result in
+	deadlock as soon as the RCU callback happens to interrupt that
+	acquisition's critical section.
+
+13.	SRCU (srcu_read_lock(), srcu_read_unlock(), and synchronize_srcu())
+	may only be invoked from process context.  Unlike other forms of
+	RCU, it -is- permissible to block in an SRCU read-side critical
+	section (demarked by srcu_read_lock() and srcu_read_unlock()),
+	hence the "SRCU": "sleepable RCU".  Please note that if you
+	don't need to sleep in read-side critical sections, you should
+	be using RCU rather than SRCU, because RCU is almost always
+	faster and easier to use than is SRCU.
+
+	Also unlike other forms of RCU, explicit initialization
+	and cleanup is required via init_srcu_struct() and
+	cleanup_srcu_struct().	These are passed a "struct srcu_struct"
+	that defines the scope of a given SRCU domain.	Once initialized,
+	the srcu_struct is passed to srcu_read_lock(), srcu_read_unlock()
+	and synchronize_srcu().  A given synchronize_srcu() waits only
+	for SRCU read-side critical sections governed by srcu_read_lock()
+	and srcu_read_unlock() calls that have been passd the same
+	srcu_struct.  This property is what makes sleeping read-side
+	critical sections tolerable -- a given subsystem delays only
+	its own updates, not those of other subsystems using SRCU.
+	Therefore, SRCU is less prone to OOM the system than RCU would
+	be if RCU's read-side critical sections were permitted to
+	sleep.
+
+	The ability to sleep in read-side critical sections does not
+	come for free.	First, corresponding srcu_read_lock() and
+	srcu_read_unlock() calls must be passed the same srcu_struct.
+	Second, grace-period-detection overhead is amortized only
+	over those updates sharing a given srcu_struct, rather than
+	being globally amortized as they are for other forms of RCU.
+	Therefore, SRCU should be used in preference to rw_semaphore
+	only in extremely read-intensive situations, or in situations
+	requiring SRCU's read-side deadlock immunity or low read-side
+	realtime latency.
+
+	Note that, rcu_assign_pointer() and rcu_dereference() relate to
+	SRCU just as they do to other forms of RCU.

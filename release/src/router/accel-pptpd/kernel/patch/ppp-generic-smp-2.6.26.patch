@@ -1,0 +1,165 @@
+--- a/drivers/net/ppp_generic.c	2008-07-14 01:51:29.000000000 +0400
++++ b/drivers/net/ppp_generic.c	2009-03-01 00:17:03.000000000 +0300
+@@ -44,6 +44,7 @@
+ #include <linux/stddef.h>
+ #include <linux/device.h>
+ #include <linux/mutex.h>
++#include <linux/workqueue.h>
+ #include <net/slhc_vj.h>
+ #include <asm/atomic.h>
+ 
+@@ -114,7 +115,8 @@
+ 	void		*rc_state;	/* its internal state 98 */
+ 	unsigned long	last_xmit;	/* jiffies when last pkt sent 9c */
+ 	unsigned long	last_recv;	/* jiffies when last pkt rcvd a0 */
+-	struct net_device *dev;		/* network interface device a4 */
++	struct net_device *dev;		/* network interface device a4 */	
++	struct work_struct xmit_work;	
+ #ifdef CONFIG_PPP_MULTILINK
+ 	int		nxchan;		/* next channel to send something on */
+ 	u32		nxseq;		/* next sequence number to send */
+@@ -154,6 +156,10 @@
+ 	struct ppp	*ppp;		/* ppp unit we're connected to */
+ 	struct list_head clist;		/* link in list of channels per unit */
+ 	rwlock_t	upl;		/* protects `ppp' */
++
++	struct work_struct recv_work;
++	struct sk_buff_head rq;		/* receive queue for pppd */
++
+ #ifdef CONFIG_PPP_MULTILINK
+ 	u8		avail;		/* flag used in multilink stuff */
+ 	u8		had_frag;	/* >= 1 fragments have been sent */
+@@ -270,6 +276,7 @@
+ static void ppp_destroy_channel(struct channel *pch);
+ 
+ static struct class *ppp_class;
++static struct workqueue_struct *kpppd_workqueue;
+ 
+ /* Translates a PPP protocol number to a NP index (NP == network protocol) */
+ static inline int proto_to_npindex(int proto)
+@@ -849,6 +856,13 @@
+ 	int err;
+ 
+ 	printk(KERN_INFO "PPP generic driver version " PPP_VERSION "\n");
++	
++	kpppd_workqueue = create_workqueue("kpppd");
++	if (!kpppd_workqueue){
++	    printk(KERN_ERR "failed to create workqueue\n");
++	    return -1;
++	}
++	    
+ 	err = register_chrdev(PPP_MAJOR, "ppp", &ppp_device_fops);
+ 	if (!err) {
+ 		ppp_class = class_create(THIS_MODULE, "ppp");
+@@ -858,10 +872,12 @@
+ 		}
+ 		device_create(ppp_class, NULL, MKDEV(PPP_MAJOR, 0), "ppp");
+ 	}
+-
++	
+ out:
+-	if (err)
++	if (err) {
++		destroy_workqueue(kpppd_workqueue);
+ 		printk(KERN_ERR "failed to register PPP device (%d)\n", err);
++	}
+ 	return err;
+ 
+ out_chrdev:
+@@ -869,6 +885,12 @@
+ 	goto out;
+ }
+ 
++static void ppp_xmit_work(struct work_struct *work)
++{
++    struct ppp *ppp=container_of(work,typeof(*ppp),xmit_work);
++    ppp_xmit_process(ppp);
++}
++
+ /*
+  * Network interface unit routines.
+  */
+@@ -908,7 +930,7 @@
+ 
+ 	netif_stop_queue(dev);
+ 	skb_queue_tail(&ppp->file.xq, skb);
+-	ppp_xmit_process(ppp);
++	queue_work(kpppd_workqueue,&ppp->xmit_work);
+ 	return 0;
+ 
+  outf:
+@@ -1453,13 +1475,29 @@
+ {
+ 	ppp_recv_lock(ppp);
+ 	/* ppp->dev == 0 means interface is closing down */
+-	if (ppp->dev)
+-		ppp_receive_frame(ppp, skb, pch);
+-	else
++	if (ppp->dev) {
++		skb_queue_tail(&pch->rq, skb);
++		queue_work(kpppd_workqueue,&pch->recv_work);
++	} else
+ 		kfree_skb(skb);
+ 	ppp_recv_unlock(ppp);
+ }
+ 
++static void ppp_recv_work(struct work_struct *work)
++{
++    struct channel *pch=container_of(work,typeof(*pch),recv_work);
++    struct sk_buff *skb;
++    
++    ppp_recv_lock(pch->ppp);
++    
++    while((skb=skb_dequeue(&pch->rq))){
++	if (pch->ppp->dev)
++	    ppp_receive_frame(pch->ppp, skb, pch);
++    }
++    
++    ppp_recv_unlock(pch->ppp);
++}
++
+ void
+ ppp_input(struct ppp_channel *chan, struct sk_buff *skb)
+ {
+@@ -2000,6 +2038,8 @@
+ 	chan->ppp = pch;
+ 	init_ppp_file(&pch->file, CHANNEL);
+ 	pch->file.hdrlen = chan->hdrlen;
++	INIT_WORK(&pch->recv_work,ppp_recv_work);
++	skb_queue_head_init(&pch->rq);
+ #ifdef CONFIG_PPP_MULTILINK
+ 	pch->lastseq = -1;
+ #endif /* CONFIG_PPP_MULTILINK */
+@@ -2419,6 +2459,7 @@
+ 	INIT_LIST_HEAD(&ppp->channels);
+ 	spin_lock_init(&ppp->rlock);
+ 	spin_lock_init(&ppp->wlock);
++	INIT_WORK(&ppp->xmit_work,ppp_xmit_work);
+ #ifdef CONFIG_PPP_MULTILINK
+ 	ppp->minseq = -1;
+ 	skb_queue_head_init(&ppp->mrq);
+@@ -2529,6 +2570,7 @@
+ 		slhc_free(ppp->vj);
+ 		ppp->vj = NULL;
+ 	}
++	cancel_work_sync(&ppp->xmit_work);
+ 	skb_queue_purge(&ppp->file.xq);
+ 	skb_queue_purge(&ppp->file.rq);
+ #ifdef CONFIG_PPP_MULTILINK
+@@ -2664,6 +2706,8 @@
+ 	}
+ 	skb_queue_purge(&pch->file.xq);
+ 	skb_queue_purge(&pch->file.rq);
++	cancel_work_sync(&pch->recv_work);
++	skb_queue_purge(&pch->rq);
+ 	kfree(pch);
+ }
+ 
+@@ -2676,6 +2720,7 @@
+ 	unregister_chrdev(PPP_MAJOR, "ppp");
+ 	device_destroy(ppp_class, MKDEV(PPP_MAJOR, 0));
+ 	class_destroy(ppp_class);
++	destroy_workqueue(kpppd_workqueue);
+ }
+ 
+ /*

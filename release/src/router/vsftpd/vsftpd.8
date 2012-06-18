@@ -1,0 +1,34 @@
+.\" Copyright (c) 2001 Daniel Jacobowitz <dan@debian.org>
+.Dd March 8, 2001
+.Dt VSFTPD 8
+.Sh NAME
+.Nm vsftpd
+.Nd Very Secure FTP Daemon
+.Sh SYNOPSIS
+.Nm vsftpd
+.Op Ar configuration file
+.Sh DESCRIPTION
+.Nm vsftpd
+is the Very Secure File Transfer Protocol Daemon. The server can be launched
+via a
+.Dq super-server
+such as
+.Xr inetd 8
+or
+.Xr xinetd 8 .
+Alternatively, vsftpd can be launched in standalone mode, in which case vsftpd
+itself will listen on the network. This latter mode is easier to use, and
+recommended. It is activated by setting
+.Pa listen=YES
+in
+.Pa /etc/vsftpd.conf .
+Direct execution of the
+.Nm vsftpd
+binary will then launch the FTP service ready for immediate client connections.
+.Sh OPTIONS
+An optional
+.Op configuration file
+may be given on the command line.  The default configuration file is
+.Pa /etc/vsftpd.conf .
+.Sh SEE ALSO
+.Xr vsftpd.conf 5

@@ -1,0 +1,256 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Setting Up the Tutorial Configuration</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title="Sample Printcap Entry" href=
+    "sampleprintcap.htm">
+    <link rel="NEXT" title="Restoring Original Configuration" href=
+    "restoring.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "sampleprintcap.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "restoring.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="TUTORIALCONFIG">4.3. Setting Up
+      the Tutorial Configuration</a></h1>
+
+      <p>The previous section has given a very high level view of
+      printing operations and shown a sample of some printcap
+      files. In order to do experiment with these LPRng facilities,
+      we will need to be able to modify the <tt class=
+      "FILENAME">printcap</tt> information and try various system
+      configurations.</p>
+
+      <p>We will use a series of simple printcap entries during
+      this tutorial. We will assume that the <b class=
+      "APPLICATION">LPRng</b> system is using the <tt class=
+      "FILENAME">/etc/printcap</tt> file. If your system is
+      configured to use another one, then you can make a symbolic
+      link from <tt class="FILENAME">/etc/printcap</tt> or you can
+      simply use your default <tt class="FILENAME">printcap</tt>
+      file.</p>
+
+      <p>Save the existing <tt class="FILENAME">printcap</tt> file
+      and then create a new printcap file with the contents as
+      shown below. You will need to have ROOT (superuser)
+      permissions to change the file and perform some of the
+      maintenance operations.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1787"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {78} #</samp> <kbd class=
+"USERINPUT">cd /etc</kbd> 
+    <samp class="PROMPT">h4: {79} #</samp> <kbd class=
+"USERINPUT">mv printcap printcap.orig</kbd>
+    <samp class="PROMPT">h4: {80} #</samp> <kbd class=
+"USERINPUT">vi printcap</kbd>
+    <kbd class="USERINPUT">#  printcap file contents:</kbd>
+    <kbd class="USERINPUT">lp:sd=/var/spool/lpd/%P</kbd>
+    <kbd class="USERINPUT"> :force_localhost</kbd>
+    <kbd class="USERINPUT"> :lp=/tmp/lp</kbd>
+    <kbd class="USERINPUT">lp2:sd=/var/spool/lpd/%P</kbd>
+    <kbd class="USERINPUT"> :force_localhost</kbd>
+    <kbd class="USERINPUT"> :lp=/tmp/lp2</kbd>
+    <samp class="PROMPT">h4: {81} #</samp> <kbd class=
+"USERINPUT">#  set permissions so everybody can read file</kbd>
+    <samp class="PROMPT">h4: {82} #</samp> <kbd class=
+"USERINPUT">chmod 666 printcap</kbd>
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>We save the original <tt class="FILENAME">printcap</tt>
+      file and create a new one. We give the file world writable
+      permissions so that later we can modify this file without
+      needing to have root permissions. The <tt class=
+      "FILENAME">printcap</tt> file has two entries: <var class=
+      "LITERAL">lp</var> and <var class="LITERAL">lp2</var>. Each
+      print queue on the server needs a spool file to hold print
+      jobs, jobs, and the <var class="LITERAL">:sd</var> value
+      specifies its location. The <var class="LITERAL">%P</var>
+      value is replaced with the name of the printer when it is
+      used. In classical BSD operation each host has an <b class=
+      "APPLICATION">lpd</b> print spooler running on the local host
+      (we use localhost in this manual for simplicity). Files were
+      copied to spool directories on the localhost and then then
+      print spooler would send them to the destination, which could
+      be another print spooler. This meant that each localhost
+      machine had to have a print spooler and spool queue directory
+      structure. Management of this becomes very difficult in large
+      organizations. The <var class="LITERAL">force_localhost</var>
+      forces this mode of operation and means that the <b class=
+      "APPLICATION">lpd</b> server and clients must run on the same
+      host.</p>
+
+      <p>We use files for the output devices (<var class=
+      "LITERAL">:lp=</var>) so that we can see easily view the
+      output (and also to save trees). We will also need to have
+      some simple test files. Create the files using the following
+      commands.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1818"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {83} #</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/lp</kbd>
+    <samp class="PROMPT">h4: {84} #</samp> <kbd class=
+"USERINPUT">cp /dev/null /tmp/lp2</kbd>
+    <samp class="PROMPT">h4: {85} #</samp> <kbd class=
+"USERINPUT">chmod 666  /tmp/lp /tmp/lp2</kbd>
+    <samp class="PROMPT">h4: {86} #</samp> <kbd class=
+"USERINPUT">echo hi &gt;/tmp/hi</kbd>
+    <samp class="PROMPT">h4: {87} #</samp> <kbd class=
+"USERINPUT">echo there &gt;/tmp/there</kbd>
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>We will use a <span class="emphasis"><i class=
+      "EMPHASIS">dummy</i></span> <tt class=
+      "FILENAME">lpd.perms</tt> file that allows all users to do
+      anything. This is useful for testing, but dangerous in a
+      working environment.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1833"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {88} #</samp> <kbd class=
+"USERINPUT">#  we modify the lpd.perms to allow an ordinary user to control</kbd>
+    <samp class="PROMPT">h4: {89} #</samp> <kbd class=
+"USERINPUT">mv lpd.perms lpd.perms.orig</kbd>
+    <samp class="PROMPT">h4: {90} #</samp> <kbd class=
+"USERINPUT">echo "DEFAULT ACCEPT" &gt;lpd.perms</kbd>
+    <samp class="PROMPT">h4: {91} #</samp> <kbd class=
+"USERINPUT">chmod 666 lpd.perms</kbd>
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Finally we run <tt class="COMMAND">checkpc</tt> to make
+      sure that our printcap is correct and to create the necessary
+      spool directories:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1845"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {92} #</samp> <kbd class=
+"USERINPUT">checkpc -f -V</kbd>
+    Checking printer 'lp'
+     Checking directory: '/var/spool/lp'
+       directory '/var'
+       directory '/var/spool'
+       directory '/var/spool/lp'
+     Warning -   changing ownership '/var/spool/lp' to 1/1
+       checking 'control.lp' file
+       checking 'status.lp' file
+       checking 'status' file
+       cleaning 'status' file, 0K bytes: no truncation
+       checking 'log' file
+       cleaning 'log' file, 0K bytes: no truncation
+       checking 'acct' file
+       cleaning 'acct' file, 0K bytes: no truncation
+    Checking printer 'lp2'
+      Checking directory: '/var/spool/lp2'
+        directory '/var'
+      ....
+    <samp class="PROMPT">h4: {93} #</samp> <kbd class=
+"USERINPUT">lpc reread</kbd>
+    <samp class="PROMPT">h4: {94} #</samp> <kbd class=
+"USERINPUT">lpd</kbd>
+    <samp class="PROMPT">h4: {95} #</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4
+       Queue: no printable jobs in queue
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p><a href="checkpc.htm"><b class=
+      "APPLICATION">Checkpc</b></a> performs consistency checks on
+      the printcap file and spool queue entries. The <tt class=
+      "COMMAND">checkpc -f</tt> (fix) option will change
+      permissions and create directories and can only be executed
+      by ROOT. <a href="checkpc.htm"><b class=
+      "APPLICATION">Checkpc</b></a> has other functions as well -
+      you can view printcap information, see default configuration
+      values, and remove junk files from spool queues with it.</p>
+
+      <p>The <tt class="COMMAND">lpc reread</tt> command sends a
+      request to the <b class="APPLICATION">lpd</b> server to
+      reread the configuration and printcap information. The <b
+      class="APPLICATION">lpd</b> command is added as insurance in
+      case your <b class="APPLICATION">lpd</b> server is not
+      running. The <tt class="COMMAND">exit</tt> command restores
+      ordinary user privileges, and the <b class=
+      "APPLICATION">lpq</b> command is used to check that the
+      server is running. Finally, we check to see that the <tt
+      class="COMMAND">lpc reread</tt> command is accepted from an
+      ordinary user.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "sampleprintcap.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "restoring.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Sample Printcap
+          Entry</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Restoring
+          Original Configuration</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

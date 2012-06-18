@@ -1,0 +1,77 @@
+Abstract:
+---------
+This document attempts to outline the requirements for SWAT 2. In particular, 
+this is an attempt to bring together some ideas in order to stimulate though
+about what exactly we want SWAT to do.
+
+
+Introduction:
+-------------
+Swat, as it exists in Samba 3 and before, is not significantly more than an
+editor for smb.conf. The interface seems targeted at users who are already
+familiar with smb.conf configuration. 
+
+For version 4 of the Samba suite, we would like to provide a swat that becomes
+the definitive tool for configuring Samba. As this is a fairly difficult task,
+it is imperative that a significant amount of thought is given to both the
+internal structure and the user interface of Swat.
+
+
+Current Issues:
+---------------
+- swat completely destroys the current format of smb.conf. Any ordering of
+  parameters, comments, and whitespace formatting will be lost.
+
+- though the wizard is very useful, it does not provide enough functionality
+  to setup a first time user. (e.g. the workgroup cannot be set in the wizard)
+
+- in almost all configurations, many of the displayed params should be left
+  empty. (i.e. netbios aliases)
+
+- installation is not easy for most users
+
+- nobody uses it
+
+
+Future Issues:
+--------------
+- The number of configuration parameters, as much as we all hate them, are
+  likely to grow. Many will be for small strings or such things. The current
+  SWAT layout will not handle this very well
+
+
+Wishlist:
+---------
+- a registry editor in swat
+
+- the advanced / developer options available, but hidden from basic users
+
+- a more beginner-oriented wizard
+  - I (vance) would like to see a something that asks a few questions, like
+    what do you want to do? (check all that apply)
+    o  share files
+    o  share printers
+    o  be a domain controller
+
+    what kind of network are you on? (choose one)
+    o  home network, no domain, no passwords
+    o  small office network, no domain
+    o  small office network, pre-existing domain
+    o  medium network, pre-existing domain
+    o  large network, pre-existing domain
+
+    what kind of computers are on your network? (check all that apply)
+    o  w31
+    o  W9x
+    o  NT
+    o  w2k
+    o  xp / w2k3
+
+- a "make copy" function for shares, to allow users to clone existing shares
+  then edit them
+
+- some smarts for parameters:
+  - a user/group selector for things like valid users, admin users, read list,
+    write list, etc.
+  - an fs navigator for path type things
+  

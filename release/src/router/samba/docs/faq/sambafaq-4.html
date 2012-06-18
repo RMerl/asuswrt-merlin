@@ -1,0 +1,37 @@
+<HTML>
+<HEAD>
+<TITLE> Samba FAQ: Specific client application problems</TITLE>
+</HEAD>
+<BODY>
+<A HREF="sambafaq-3.html">Previous</A>
+<A HREF="sambafaq-5.html">Next</A>
+<A HREF="sambafaq.html#toc4">Table of Contents</A>
+<HR>
+<H2><A NAME="s4">4. Specific client application problems</A></H2>
+
+<P> 
+<A NAME="client_problems"></A> 
+</P>
+
+<H2><A NAME="ss4.1">4.1 MS Office Setup reports "Cannot change properties of '\MSOFFICE\SETUP.INI'"</A></H2>
+
+<P> 
+<A NAME="cant_change_properties"></A> 
+
+When installing MS Office on a Samba drive for which you have admin
+user permissions, ie. admin users = username, you will find the
+setup program unable to complete the installation.</P>
+<P>To get around this problem, do the installation without admin user
+permissions The problem is that MS Office Setup checks that a file is
+rdonly by trying to open it for writing.</P>
+<P>Admin users can always open a file for writing, as they run as root.
+You just have to install as a non-admin user and then use "chown -R"
+to fix the owner.</P>
+
+
+<HR>
+<A HREF="sambafaq-3.html">Previous</A>
+<A HREF="sambafaq-5.html">Next</A>
+<A HREF="sambafaq.html#toc4">Table of Contents</A>
+</BODY>
+</HTML>

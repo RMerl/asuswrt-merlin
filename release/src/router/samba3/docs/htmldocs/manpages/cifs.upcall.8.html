@@ -1,0 +1,24 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>cifs.upcall</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="cifs.upcall.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>cifs.upcall &#8212; Userspace upcall helper for Common Internet File System (CIFS)</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">cifs.upcall</code> [-c] [-v] {keyid}</p></div></div><div class="refsect1" lang="en"><a name="id2522953"></a><h2>DESCRIPTION</h2><p>This tool is part of the <a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>cifs.upcall is a userspace helper program for the linux CIFS client
+filesystem. There are a number of activities that the kernel cannot easily
+do itself. This program is a callout program that does these things for the
+kernel and then returns the result.</p><p>cifs.upcall is generally intended to be run when the kernel calls
+request-key(8) for a particular key type. While it
+can be run directly from the command-line, it's not generally intended
+to be run that way.</p></div><div class="refsect1" lang="en"><a name="id2483361"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">-c</span></dt><dd><p>When handling a kerberos upcall, use a service principal that starts with "cifs/". The default is to use the "host/" service principal.
+		</p></dd><dt><span class="term">-v</span></dt><dd><p>Print version number and exit.
+		</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2483395"></a><h2>CONFIGURATION FOR KEYCTL</h2><p>cifs.upcall is designed to be called from the kernel via the request-key callout program. This requres that request-key be told where and how to call this program. The current cifs.upcall program handles two different key types:</p><div class="variablelist"><dl><dt><span class="term">cifs.spnego</span></dt><dd><p>This keytype is for retrieving kerberos session keys
+		</p></dd><dt><span class="term">dns_resolver</span></dt><dd><p>This key type is for resolving hostnames into IP addresses
+		</p></dd></dl></div><p>To make this program useful for CIFS, you'll need to set up entries for them in request-key.conf(5). Here's an example of an entry for each key type:</p><pre class="programlisting">
+#OPERATION  TYPE           D C PROGRAM ARG1 ARG2...
+#=========  =============  = = ==========================================
+create	    cifs.spnego    * * /usr/local/sbin/cifs.upcall -c %k
+create      dns_resolver   * * /usr/local/sbin/cifs.upcall %k
+</pre><p>
+See <a class="citerefentry" href="request-key.conf5..html"><span class="citerefentry"><span class="refentrytitle">request-key.conf(5)</span></span></a> for more info on each field.
+</p></div><div class="refsect1" lang="en"><a name="id2483582"></a><h2>SEE ALSO</h2><p>
+	<a class="citerefentry" href="request-key.conf.5.html"><span class="citerefentry"><span class="refentrytitle">request-key.conf</span>(5)</span></a>,
+	<a class="citerefentry" href="mount.cifs.8.html"><span class="citerefentry"><span class="refentrytitle">mount.cifs</span>(8)</span></a>
+	</p></div><div class="refsect1" lang="en"><a name="id2483608"></a><h2>AUTHOR</h2><p>Igor Mammedov wrote the cifs.upcall program.</p><p>Jeff Layton authored this manpage.</p><p>The maintainer of the Linux CIFS VFS is Steve French.</p><p>The <a class="ulink" href="mailto:linux-cifs-client@lists.samba.org" target="_top">Linux
+		CIFS Mailing list</a> is the preferred place to ask
+		questions regarding these programs.
+	</p></div></div></body></html>

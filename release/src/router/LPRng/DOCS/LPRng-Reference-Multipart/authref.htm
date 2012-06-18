@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Authentication</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title="More Examples" href="x8947.htm">
+    <link rel="NEXT" title="User Identification" href="x8974.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x8947.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x8974.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AUTHREF">17.7.
+      Authentication</a></h1>
+
+      <p>One of the major problems in a print spooler system is
+      providing privacy and authentication services for users. One
+      method is to construct a specific set of protocols which will
+      be used for providing the privacy or authentication; another
+      is to provide a simple interface to a set of tools that will
+      do the authentication and/or encryption.</p>
+
+      <p><b class="APPLICATION">LPRng</b> provides native support
+      for the MIT Kerberos 4 extensions and Kerberos 5
+      authentication.</p>
+
+      <p><b class="APPLICATION">LPRng</b> uses the OpenSSL
+      libraries to support SSL authentication and encrypted data
+      transfers.</p>
+
+      <p><b class="APPLICATION">LPRng</b> has native support for
+      the PGP (Pretty Good Privacy) program and can sign and
+      optionally encrypt command and responses between servers and
+      clients. Due to legal restrictions, an external PGP program
+      must be used for this purpose.</p>
+
+      <p>A simple MD5 hash based authentication scheme is also
+      provided as an example to illustrate how new or different
+      authentication methods can be adddd.</p>
+
+      <p>Finally, <b class="APPLICATION">LPRng</b> provide a
+      general purpose interface allowing users to insert their own
+      authentication methods, either at the program level or at the
+      code level.</p>
+
+      <p>A careful study of the authentication problem shows that
+      it should be done during reception of commands and/or jobs
+      from a remote user and/or spooler. At this time the following
+      must be done:</p>
+
+      <ol type="1">
+        <li>
+          <p>The received command must be checked for consistency,
+          and the remote user and host must be determined.</p>
+        </li>
+
+        <li>
+          <p>The remote user and host must be authenticated.</p>
+        </li>
+
+        <li>
+          <p>The command and/or spooling operation must be carried
+          out.</p>
+        </li>
+
+        <li>
+          <p>The results must be returned to the remote system.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x8947.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x8974.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">More
+          Examples</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">User
+          Identification</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

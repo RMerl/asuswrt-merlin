@@ -1,0 +1,492 @@
+<!doctype linuxdoc system> <!-- -*- SGML -*- -->
+<!--
+ v 0.1 23 Aug 1997 	Dan Shearer 
+			Original Samba-Client-FAQ.sgml from Paul's sambafaq.sgml
+ v 0.2 25 Aug 1997	Dan
+ v 0.3 7  Oct 1997	Paul, changed email address from ictinus@lake... to ictinus@samba.anu
+-->
+
+
+<article>
+
+<title> Samba Server FAQ
+
+<author>Dan Shearer & Paul Blackman, <tt>ictinus@samba.org</tt>
+
+<date>v 0.3, 7 Oct '97
+
+<abstract> This is the <em>Server</em> Frequently Asked Questions (FAQ)
+document for Samba, the free and very popular SMB and CIFS server
+product. A general <url url="Samba-meta-FAQ.html" name="meta FAQ">
+exists and also a companion <url url="Samba-Client-FAQ.html"
+name="Client FAQ">, together with more detailed HOWTO documents on
+topics to do with Samba software. This is current to Samba version
+1.9.17. Please send any corrections to the author. 
+
+</abstract>
+
+<toc>
+
+<sect>What is Samba?<p><label id="WhatIsSamba">
+
+See the <url url="Samba-meta-FAQ.html#introduction" name="meta FAQ
+introduction"> if you don't have any idea what Samba does.
+
+Samba has many features that are not supported in other CIFS and SMB
+implementations, all of which are commercial. It approaches some
+problems from a different angle.
+
+Some of its features include:
+<itemize>
+<item>extremely dynamic runtime configuration
+<item>host as well as username/password security
+<item>scriptable SMB client
+<item>automatic home directory exporting
+<item>automatic printer exporting
+<item>intelligent dead connection timeouts
+<item>guest connections
+</itemize>
+
+Look at the <url url="samba-man-index.html" name="manual pages"> included with the package for a full list of
+features. The components of the suite are (in summary):
+
+<descrip>
+
+<tag/smbd/ the SMB server. This handles actual connections from clients,
+doing all the interfacing with the <url
+url="Samba-meta-FAQ.html#DomainModeSecurity" name="authentication
+database"> for file, permission and username work.
+
+<tag/nmbd/ the NetBIOS name server, which helps clients locate servers,
+maintaining the <url url="Samba-meta-FAQ.html#BrowseAndDomainDefs"
+name="authentication database"> doing the browsing work and managing
+domains as this capability is being built into Samba.
+
+<tag/smbclient/ the scriptable commandline SMB client program.
+Useful for automated work, printer filters and testing purposes. It is
+more CIFS-compliant than most commercial implementations. Note that this
+is not a filesystem. The Samba team does not supply a network filesystem
+driver, although the smbfs filesystem for Linux is derived from
+smbclient code.
+
+<tag/smbrun/ a little 'glue' program to help the server run
+external programs.
+
+<tag/testprns/ a program to test server access to printers
+
+<tag/testparms/ a program to test the Samba configuration file
+for correctness
+
+<tag/smb.conf/ the Samba configuration file
+
+<tag/examples/ many examples have been put together for the different
+operating systems that Samba supports.
+
+<tag/Documentation!/ DON'T neglect to read it - you will save a great
+deal of time!
+
+</descrip>
+
+<sect>How do I get the CIFS, SMB and NetBIOS protocols?<p><label id="ServerProtocols">
+
+See the <url url="Samba-meta-FAQ.html#CifsSmb" name="meta FAQ
+on CIFS and SMB"> if you don't have any idea what these protocols are.
+
+CIFS and SMB are implemented by the main Samba fileserving daemon, smbd.
+[.....]
+
+nmbd speaks a limited amount of CIFS (...) but is mostly concerned with
+NetBIOS. NetBIOS is [....]
+
+RFC1001, RFC1002 [...]
+
+So, provided you have got Samba correctly installed and running you have
+all three of these protocols. Some operating systems already come with
+stacks for all or some of these, such as SCO Unix, OS/2 and [...] In this
+case you must [...]
+
+<sect1>What server operating systems are supported?<p><label id="PortInfo">
+
+At the last count, Samba runs on about 40 operating systems! This
+section looks at general questions about running Samba on the different
+platforms. Issues specific to particular operating systems are dealt
+with in elsewhere in this document.
+
+Many of the ports have been done by people outside the Samba team keen
+to get the advantages of Samba. The Samba team is currently trying to
+bring as many of these ports as possible into the main source tree and
+integrate the documentation. Samba is an integration tool, and so it has
+been made as easy as possible to port. The platforms most widely used
+and thus best tested are Linux and SunOS.
+
+This migration has not been completed yet. This means that some
+documentation is on web sites [...]
+
+There are two main families of Samba ports, Unix and other. The Unix
+ports cover anything that remotely resembles Unix and includes some
+extremely old products as well as best-sellers, tiny PCs to massive
+multiprocessor machines supporting hundreds of thousands of users. Samba
+has been run on more than 30 Unix and Unix-like operating systems.
+
+<sect2>Running Samba on a Unix or Unix-like system<p><label id="OnUnix">
+
+<url url="../UNIX-SMB.txt"> describes some of the issues that confront a
+SMB implementation on unix, and how Samba copes with them. They may help
+people who are looking at unix<->PC interoperability.
+
+There is great variation between Unix implementations, especially those
+not adhering to the Common Unix Specification agreed to in 1996. Things
+that can be quite tricky are [.....]
+
+There are also some considerable advantages conferred on Samba running
+under Unix compared to, say, Windows NT or LAN Server. Unix has [...]
+
+At time of writing, the Makefile claimed support for:
+<itemize>
+<item> A/UX 3.0
+<item> AIX
+<item> Altos Series 386/1000
+<item> Amiga
+<item> Apollo Domain/OS sr10.3
+<item> BSDI 
+<item> B.O.S. (Bull Operating System)
+<item> Cray, Unicos 8.0
+<item> Convex
+<item> DGUX. 
+<item> DNIX.
+<item> FreeBSD
+<item> HP-UX
+<item> Intergraph. 
+<item> Linux with/without shadow passwords and quota
+<item> LYNX 2.3.0
+<item> MachTen (a unix like system for Macintoshes)
+<item> Motorola 88xxx/9xx range of machines
+<item> NetBSD
+<item> NEXTSTEP Release 2.X, 3.0 and greater (including OPENSTEP for Mach).
+<item> OS/2 using EMX 0.9b
+<item> OSF1
+<item> QNX 4.22
+<item> RiscIX. 
+<item> RISCOs 5.0B
+<item> SEQUENT. 
+<item> SCO (including: 3.2v2, European dist., OpenServer 5)
+<item> SGI.
+<item> SMP_DC.OSx v1.1-94c079 on Pyramid S series
+<item> SONY NEWS, NEWS-OS (4.2.x and 6.1.x)
+<item> SUNOS 4
+<item> SUNOS 5.2, 5.3, and 5.4 (Solaris 2.2, 2.3, and '2.4 and later')
+<item> Sunsoft ISC SVR3V4
+<item> SVR4
+<item> System V with some berkely extensions (Motorola 88k R32V3.2).
+<item> ULTRIX.
+<item> UNIXWARE
+<item> UXP/DS
+</itemize>
+
+
+<sect2>Running Samba on systems unlike Unix<p><label id="OnUnlikeUnix">
+
+More recently Samba has been ported to a number of operating systems
+which can provide a BSD Unix-like implementation of TCP/IP sockets.
+These include OS/2, Netware, VMS, StratOS, Amiga and MVS. BeOS,
+Windows NT and several others are being worked on but not yet available
+for use.
+
+Home pages for these ports are:
+
+[...  ]
+
+<sect1>Exporting server resources with Samba<p><label id="Exporting">
+
+Files, printers, CD ROMs and other local devices. Network devices,
+including networked filesystems and remote printer queues. Other devices
+such as [....]
+
+        1.4) Configuring SHARES
+                1.4.1) Homes service
+                1.4.2) Public services
+                1.4.3) Application serving
+                1.4.4) Team sharing a Samba resource
+
+        1.5) Printer configuration
+                1.5.1) Berkeley LPR/LPD systems
+                1.5.2) ATT SysV lp systems
+                1.5.3) Using a private printcap file
+                1.5.4) Use of the smbprint utility
+                1.5.5) Printing from Windows to Unix
+                1.5.6) Printing from Unix to Windows
+
+<sect1>Name Resolution and Browsing<p><label id="NameBrowsing">
+
+See also <url url="../BROWSING.txt">
+
+        1.6) Name resolution issues
+                1.6.1) LMHOSTS file and when to use it
+                1.6.2) configuring WINS (support, server, proxy)
+                1.6.3) configuring DNS proxy
+
+        1.7) Problem Diagnosis
+        1.8) What NOT to do!!!!
+
+	3.2) Browse list managment
+        3.3) Name resolution mangement
+
+
+<sect1>Handling SMB Encryption<p><label id="SMBEncryptionSteps">
+
+SMB encryption is ...
+
+...in <url url="../ENCRYPTION.txt"> there is...
+
+Samba compiled with libdes - enabling encrypted passwords
+
+
+<sect2>Laws in different countries affecting Samba<p><label id="CryptoLaws">
+
+<sect2>Relationship between encryption and Domain Authentication<p>
+
+<sect1> Files and record locking
+
+                3.1.1) Old DOS clients
+                3.1.2) Opportunistic locking and the consequences
+                3.1.3) Files caching under Windows for Workgroups, Win95 and NT
+    
+    Some of the foregoing links into Client-FAQ
+
+<sect1>Managing Samba Log files<p><label id="LogFiles">
+
+<sect1>I can't see the Samba server in any browse lists!<p><label id="no_browse">
+ See <url url="ftp://samba.org/pub/samba/BROWSING.txt" name="BROWSING.txt">
+ for more information on browsing.  Browsing.txt can also be found
+ in the docs directory of the Samba source.
+
+If your GUI client does not permit you to select non-browsable
+servers, you may need to do so on the command line. For example, under
+Lan Manager you might connect to the above service as disk drive M:
+thusly:
+<tscreen><verb>
+   net use M: \\mary\fred
+</verb></tscreen>
+The details of how to do this and the specific syntax varies from
+client to client - check your client's documentation.
+
+<sect1>Some files that I KNOW are on the server doesn't show up when I view the files from my client! <p> <label id="missing_files">
+See the next question.
+
+<sect1>Some files on the server show up with really wierd filenames when I view the files from my client! <p> <label id="strange_filenames">
+If you check what files are not showing up, you will note that they
+are files which contain upper case letters or which are otherwise not
+DOS-compatible (ie, they are not legal DOS filenames for some reason).
+
+The Samba server can be configured either to ignore such files
+completely, or to present them to the client in "mangled" form. If you
+are not seeing the files at all, the Samba server has most likely been
+configured to ignore them.  Consult the man page smb.conf(5) for
+details of how to change this - the parameter you need to set is
+"mangled names = yes".
+
+<sect1>My client reports "cannot locate specified computer" or similar<p><label id="cant_see_server">
+This indicates one of three things: You supplied an incorrect server
+name, the underlying TCP/IP layer is not working correctly, or the
+name you specified cannot be resolved.
+
+After carefully checking that the name you typed is the name you
+should have typed, try doing things like pinging a host or telnetting
+to somewhere on your network to see if TCP/IP is functioning OK. If it
+is, the problem is most likely name resolution.
+
+If your client has a facility to do so, hardcode a mapping between the
+hosts IP and the name you want to use. For example, with Man Manager
+or Windows for Workgroups you would put a suitable entry in the file
+LMHOSTS. If this works, the problem is in the communication between
+your client and the netbios name server. If it does not work, then
+there is something fundamental wrong with your naming and the solution
+is beyond the scope of this document.
+
+If you do not have any server on your subnet supplying netbios name
+resolution, hardcoded mappings are your only option. If you DO have a
+netbios name server running (such as the Samba suite's nmbd program),
+the problem probably lies in the way it is set up. Refer to Section
+Two of this FAQ for more ideas.
+
+By the way, remember to REMOVE the hardcoded mapping before further
+tests :-)     
+
+<sect1>My client reports "cannot locate specified share name" or similar<p> <label id="cant_see_share">
+This message indicates that your client CAN locate the specified
+server, which is a good start, but that it cannot find a service of
+the name you gave.
+
+The first step is to check the exact name of the service you are
+trying to connect to (consult your system administrator). Assuming it
+exists and you specified it correctly (read your client's doco on how
+to specify a service name correctly), read on:
+
+<itemize>
+<item> Many clients cannot accept or use service names longer than eight characters.
+<item> Many clients cannot accept or use service names containing spaces.
+<item> Some servers (not Samba though) are case sensitive with service names.
+<item> Some clients force service names into upper case.
+</itemize>
+
+<sect1>My client reports "cannot find domain controller", "cannot log on to the network" or similar <p> <label id="cant_see_net">
+Nothing is wrong - Samba does not implement the primary domain name
+controller stuff for several reasons, including the fact that the
+whole concept of a primary domain controller and "logging in to a
+network" doesn't fit well with clients possibly running on multiuser
+machines (such as users of smbclient under Unix). Having said that,
+several developers are working hard on building it in to the next
+major version of Samba. If you can contribute, send a message to
+<htmlurl url="mailto:samba@samba.org" name="samba@samba.org"> !
+
+Seeing this message should not affect your ability to mount redirected
+disks and printers, which is really what all this is about.
+
+For many clients (including Windows for Workgroups and Lan Manager),
+setting the domain to STANDALONE at least gets rid of the message.
+
+<sect1>Printing doesn't work :-(<p> <label id="no_printing"> 
+
+Make sure that the specified print command for the service you are
+connecting to is correct and that it has a fully-qualified path (eg.,
+use "/usr/bin/lpr" rather than just "lpr", if you happen to be using
+Unix).
+
+Make sure that the spool directory specified for the service is
+writable by the user connected to the service. 
+
+Make sure that the user specified in the service is permitted to use
+the printer.
+
+Check the debug log produced by smbd. Search for the printer name and
+see if the log turns up any clues. Note that error messages to do with
+a service ipc$ are meaningless - they relate to the way the client
+attempts to retrieve status information when using the LANMAN1
+protocol.
+
+If using WfWg then you need to set the default protocol to TCP/IP, not
+Netbeui. This is a WfWg bug.
+
+If using the Lanman1 protocol (the default) then try switching to
+coreplus.  Also not that print status error messages don't mean
+printing won't work. The print status is received by a different
+mechanism.
+
+<sect1>My programs install on the server OK, but refuse to work properly<p><label id="programs_wont_run">
+There are numerous possible reasons for this, but one MAJOR
+possibility is that your software uses locking. Make sure you are
+using Samba 1.6.11 or later. It may also be possible to work around
+the problem by setting "locking=no" in the Samba configuration file
+for the service the software is installed on. This should be regarded
+as a strictly temporary solution.
+
+In earlier Samba versions there were some difficulties with the very
+latest Microsoft products, particularly Excel 5 and Word for Windows
+6. These should have all been solved. If not then please let Andrew
+Tridgell know via email at <htmlurl url="mailto:samba@samba.org" name="samba@samba.org">.
+
+<sect1>My "server string" doesn't seem to be recognised<p><label id="bad_server_string">
+OR My client reports the default setting, eg. "Samba 1.9.15p4", instead
+of what I have changed it to in the smb.conf file.
+
+You need to use the -C option in nmbd. The "server string" affects
+what smbd puts out and -C affects what nmbd puts out.
+ 
+Current versions of Samba (1.9.16 +) have combined these options into
+the "server string" field of smb.conf, -C for nmbd is now obsolete.
+
+<sect1>My client reports "This server is not configured to list shared resources" <p> <label id="cant_list_shares">
+Your guest account is probably invalid for some reason. Samba uses the
+guest account for browsing in smbd.  Check that your guest account is
+valid.
+
+See also 'guest account' in smb.conf man page.
+
+<sect1>Issues specific to Unix and Unix-like systems<p><label id="UnixIssues">
+
+<sect2>Printing doesn't work with my Unix Samba server<p> <label id="no_printing"> 
+
+The user "nobody" often has problems with printing, even if it worked
+with an earlier version of Samba. Try creating another guest user other
+than "nobody".
+
+<sect2>Log message "you appear to have a trapdoor uid system" <p><label id="trapdoor_uid">
+This can have several causes. It might be because you are using a uid
+or gid of 65535 or -1. This is a VERY bad idea, and is a big security
+hole. Check carefully in your /etc/passwd file and make sure that no
+user has uid 65535 or -1. Especially check the "nobody" user, as many
+broken systems are shipped with nobody setup with a uid of 65535.
+
+It might also mean that your OS has a trapdoor uid/gid system :-)
+
+This means that once a process changes effective uid from root to
+another user it can't go back to root. Unfortunately Samba relies on
+being able to change effective uid from root to non-root and back
+again to implement its security policy. If your OS has a trapdoor uid
+system this won't work, and several things in Samba may break. Less
+things will break if you use user or server level security instead of
+the default share level security, but you may still strike
+problems.
+
+The problems don't give rise to any security holes, so don't panic,
+but it does mean some of Samba's capabilities will be unavailable.
+In particular you will not be able to connect to the Samba server as
+two different uids at once. This may happen if you try to print as a
+"guest" while accessing a share as a normal user. It may also affect
+your ability to list the available shares as this is normally done as
+the guest user.
+
+Complain to your OS vendor and ask them to fix their system.
+
+Note: the reason why 65535 is a VERY bad choice of uid and gid is that
+it casts to -1 as a uid, and the setreuid() system call ignores (with
+no error) uid changes to -1. This means any daemon attempting to run
+as uid 65535 will actually run as root. This is not good!
+
+<sect1>Issues specific to IBM OS/2 systems<p><label id="OS2Issues">
+
+<url url="http://carol.wins.uva.nl/~leeuw/samba/samba2.html" name="Samba for OS/2">
+
+<sect1>Issues specific to IBM MVS systems<p><label id="MVSIssues">
+
+<url url="ftp://ftp.mks.com/pub/samba/" name="Samba for OS/390 MVS">
+
+<sect1>Issues specific to Digital VMS systems<p><label id="VMSIssues">
+
+<sect1>Issues specific to Amiga systems<p><label id="AmigaIssues">
+
+<url url="http://www.gbar.dtu.dk/~c948374/Amiga/Samba/" name="Samba for Amiga">
+
+There is a mailing list for Samba on the Amiga.
+
+                                Subscribing.
+
+   Send an email to rask-samba-request@kampsax.dtu.dk with the word subscribe
+in the message. The list server will use the address in the Reply-To: or
+From: header field, in that order.
+
+                               Unsubscribing.
+
+   Send an email to rask-samba-request@kampsax.dtu.dk with the word
+unsubscribe in the message. The list server will use the address in the
+Reply-To: or From: header field, in that order. If you are unsure which
+address you are subscribed with, look at the headers. You should see a
+"From " (no colon) or Return-Path: header looking something like
+
+   rask-samba-owner-myname=my.domain@kampsax.dtu.dk
+
+where myname=my.domain gives you the address myname@my.domain. This also
+means that I will always be able to find out which address is causing
+bounces, for example.
+                                List archive.
+
+   Messages sent to the list are archived in HTML. See the mailing list home
+page at <URL url="http://www.gbar.dtu.dk/~c948374/Amiga/Samba/mailinglist/">
+
+<sect1>Issues specific to Novell IntraNetware systems<p><label id="NetwareIssues">
+
+<sect1>Issues specific to Stratos VOS systems<p><label id="NetwareIssues">
+
+<url url="ftp://ftp.stratus.com/pub/vos/tools/" name="Samba for Stratus VOS">
+
+</article>

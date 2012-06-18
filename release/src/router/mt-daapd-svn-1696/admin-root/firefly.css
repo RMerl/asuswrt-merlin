@@ -1,0 +1,167 @@
+/* General */
+
+body 
+{ background: #ffffff;
+  font: 0.7em Verdana, Helvetica, Arial, sans-serif;
+  color: #000000;
+  margin: 0;
+  padding: 0;
+}
+#main_table {
+  border-width: 0;
+}
+img {
+  border: 0px;
+}
+
+/*
+div.ministatus
+{ text-align: right;
+  padding: 1em;
+}
+*/
+
+a
+{ color: blue;
+  text-decoration: none;
+}
+
+a:hover
+{ color: blue;
+  text-decoration: underline; 
+}
+
+/* Navigation */
+div.naviheader {
+  background-color: #A3C1E8; 
+  padding: 0.5em 0em 0.5em 1em;
+  margin: 1em 0em 0em 0em;
+  font-weight: bold;
+  border-color: #A3C1E8;
+  border-style: solid;
+  border-width: 1px 1px 0 1px;
+}
+
+div.navibox
+{ padding: 0.5em 0em 0.5em 0em;
+  margin: 0em 0em 1em 0em;
+  border-color: #A3C1E8;
+  border-style: solid;
+  border-width: 0 1px 1px 1px;
+  background-color: #f0f0f0;
+}
+
+
+/* Main */
+
+h1,h2,h3
+{ border-bottom: 1px solid #A3C1E8;
+}
+
+
+p.license {
+  text-align: justify;
+}
+
+pre {
+  font-size: 120%;
+}
+
+.playlistfield {
+  width: 300px;
+}
+
+table {
+  border: 1px solid #A3C1E8;
+}
+
+th {
+  font-weight: bold;
+  padding: 0 1em 0 1em;
+  background: #A3C1E8;
+  color: #000000;
+  text-align: left;
+}
+
+td {
+  padding: 0 1em 0 1em;
+}
+
+#navigation {
+  float: left;/*74A8F5*/
+  background-color: #A3C1E8;
+  padding-top: 1em;
+  height: 500px;
+}
+#navigation ul {
+  padding: 0;
+  margin: 0;
+}
+#navigation li {
+  padding: 0;
+  margin: 0;
+  list-style-type: none;
+}
+#navigation li a {
+  font-size: 120%;
+  display: block;	
+  width: 12em;
+  text-decoration:none;
+  color: #000000;
+  padding: 2px 0.5em 2px 0.5em;
+  border-color: #ffffff;
+  border-width: 1px 0 1px 0;
+  border-style: solid;
+}
+#navigation li a:hover {
+  background-color: #F2BB73;
+  color: #000000;
+/*  border: 1px solid #F47D24;*/
+}
+#navigation li a.naviselected {
+  background-color: #ffffff; 
+}
+.links {
+  padding-top: 1em;
+  padding-left: .5em;
+}
+#tagline {
+  padding: 0.25em 0 0.25em 0.5em;
+  border-color: #F47D24;
+  border-style: solid;
+  border-width: 1px 0 1px 0;
+  background-color: #F2BB73
+}
+#firefly_head {
+  background-color: #f0f0f0;
+  padding-top: 4px;
+  padding-left: .5em;
+}
+#spinner {
+  margin-left: 1em;
+}
+/* config.html */
+#toggle_basic_advanced {
+  font: icon !important;
+}
+/* smart.html */
+#pl_editor {
+  width: 400px;
+}
+#pl_editor label {
+  float: left;
+  width: 7em;
+  font: icon;
+  padding-top: .3em;
+  padding-left: 1em;
+}
+
+#playlist_buttons {
+  float: right;
+}
+#pl_warning {
+  background-color: yellow;
+  padding: 1em;
+  border: 1px solid #8CACBB;
+  width: 40em;
+}

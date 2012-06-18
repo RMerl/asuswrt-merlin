@@ -1,0 +1,405 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>LPC Requests</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="RFC 1179 - Line Printer Daemon Protocol "
+    href="rfc1179ref.htm">
+    <link rel="PREVIOUS" title="lprm Requests" href="x10453.htm">
+    <link rel="NEXT" title="Block Job Transfer" href=
+    "sendblockformat.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x10453.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          19. RFC 1179 - Line Printer Daemon Protocol</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "sendblockformat.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="LPCREREAD">19.8. LPC
+      Requests</a></h1>
+
+      <p><b class="APPLICATION">LPRng</b> has extended the RFC1179
+      protocol to allow queue and printer control commands to be
+      sent to the <b class="APPLICATION">lpd</b> server. The format
+      of these commands are:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10474"></a>
+<pre class="SCREEN">
+    \006printer user key [options]
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The following commands are supported.</p>
+
+      <div class="TABLE">
+        <a name="LPCCOMMANDS"></a>
+
+        <p><b>Table 19-3. LPC Commands</b></p>
+
+        <table border="1" frame="border" rules="all" class=
+        "CALSTABLE">
+          <col>
+          <col>
+
+          <thead>
+            <tr>
+              <th>Command</th>
+
+              <th>Operation</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>Command</td>
+
+              <td>Operation</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">active
+              [printer[@host]]</var></td>
+
+              <td>check to see if server accepting connections</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">abort (printer[@host] |
+              all)</var> </td>
+
+              <td>terminate server process printing job</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">disable (printer[@host] |
+              all)</var> </td>
+
+              <td>disable queueing</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">debug (printer[@host] | all)
+              debugparms</var> </td>
+
+              <td>set debug level for printer</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">enable (printer[@host] |
+              all)</var> </td>
+
+              <td>enable queueing</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">hold (printer[@host] | all)
+              (name[@host] | job | all)*</var> </td>
+
+              <td>hold job</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">holdall (printer[@host] |
+              all)</var> </td>
+
+              <td>hold all jobs on</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">kill (printer[@host] |
+              all)</var> </td>
+
+              <td>stop and restart server</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">lpd [printer[@host]]</var>
+              </td>
+
+              <td>get <b class="APPLICATION">lpd</b> PID for
+              server</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">lpq (printer[@host] | all)
+              (name[@host] | job | all)*</var> </td>
+
+              <td>invoke <b class="APPLICATION">lpq</b></td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">lprm (printer[@host] | all)
+              (name[@host]|host|job| all)*</var> </td>
+
+              <td>invoke <b class="APPLICATION">lprm</b></td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">move printer (user|jobid)*
+              target</var> </td>
+
+              <td>move jobs to new queue</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">noholdall (printer[@host] |
+              all)</var> </td>
+
+              <td>hold all jobs off</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">printcap (printer[@host] |
+              all)</var> </td>
+
+              <td>report printcap values</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">quit</var> </td>
+
+              <td>exit LPC</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">redirect (printer[@host] |
+              all) (printer@host | off )*</var> </td>
+
+              <td>redirect jobs</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">release (printer[@host] |
+              all) (name[@host] | job | all)*</var> </td>
+
+              <td>release job</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">reread
+              [printer[@host]]</var></td>
+
+              <td><b class="APPLICATION">lpd</b> reread database
+              information</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">start (printer[@host] |
+              all)</var> </td>
+
+              <td>start printing</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">status (printer[@host] |
+              all)</var> </td>
+
+              <td>status of printers</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">stop (printer[@host] |
+              all)</var> </td>
+
+              <td>stop printing</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">topq (printer[@host] | all)
+              (name[@host] | job | all)*</var> </td>
+
+              <td>reorder job</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">defaultq</var> </td>
+
+              <td>default queue for <b class="APPLICATION">lpd</b>
+              server</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">local (printer | all)</var>
+              </td>
+
+              <td>client printcap and configuration
+              information</td>
+            </tr>
+
+            <tr>
+              <td><var class="LITERAL">server (printer | all)</var>
+              </td>
+
+              <td>server printcap and configuration
+              information</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Many of these commands support extremely specialized
+      operations for print queue management, However, the following
+      are the most commonly used and are supported by the BSD <b
+      class="APPLICATION">lpd</b> print spooling system as
+      well:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">start, stop, enable,
+          disable</var> Start and stop will start and stop printing
+          for a specified queue. Enable and disable enable and
+          disable sending and/or accepting jobs for the queue.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">abort, kill</var> Abort will
+          cause the process doing the actual job printing to be
+          terminated. Kill does an abort, and then restarts the
+          printing process. These commands are used to restart a
+          queue printing after some disaster.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">topq</var> Places selected jobs
+          at the top of the print queue.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">status</var> Shows a status
+          display of the print spools on the server.</p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The following commands are extensions to the basic set
+      provided by the BSD <b class="APPLICATION">lpd</b>
+      system.</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">lpq, lprm</var> Invokes the lpq
+          or lprm program from lpc. Useful when in the interactive
+          mode.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">hold, holdall, release</var> The
+          hold command will cause the selected jobs to be held
+          until released. The holdall jobs sets all jobs submitted
+          to the queue to be held until released. The release
+          command releases jobs for printing. If a job has had an
+          error and is in the error state, the release command will
+          cause it to be reprinted.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">move, redirect</var> The move
+          command will move selected jobs to the specified spool
+          queue. The redirect command sends all jobs submitted to
+          the queue to be sent to the specified queue.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">active, lpd, reread</var> The
+          active command will connect to the server for the
+          printer. This is used to check to see if non-<b class=
+          "APPLICATION">LPRng</b> print servers are active. The lpd
+          command will connect to the server and get the process id
+          (PID) of the <b class="APPLICATION">lpd</b> server. The
+          reread command causes a SIGHUP signal to be sent to the
+          lpd process, causing it to reread the <tt class=
+          "FILENAME">lpd.conf</tt>, <tt class=
+          "FILENAME">printcap</tt>, and <tt class=
+          "FILENAME">lpd.perms</tt> files. This is done when
+          configuration information has been modified and the
+          administrator wants to have the server use the new
+          information.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">debug</var> This is a desperation
+          facility for developers that allows dynamic enabling of
+          debug information generation. Not normally used in
+          general operation.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">local, server</var> These
+          commands will print out the configuration information in
+          the local <tt class="FILENAME">lpd.conf</tt> file, as
+          well as the printcap information for the specified
+          printers; <var class="LITERAL">client</var> prints what
+          the <b class="APPLICATION">LPRng</b> clients (<var class=
+          "LITERAL">lpr, lpq, ...</var>) would use while <var
+          class="LITERAL">server</var> prints what the <b class=
+          "APPLICATION">LPRng</b> server (<b class=
+          "APPLICATION">lpd</b>) would use if running on this host.
+          This is an extremely useful diagnostic tool for
+          administrators. Not normally used in general
+          operation.</p>
+        </li>
+      </ul>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x10453.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "sendblockformat.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top"><b class=
+          "APPLICATION">lprm</b> Requests</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "rfc1179ref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Block Job
+          Transfer</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

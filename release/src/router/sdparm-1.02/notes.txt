@@ -1,0 +1,48 @@
+The sdparm utility uses the MODE SENSE SCSI command to read device parameters
+and the MODE SELECT SCSI command to change them. CD/DVD drives (and their
+media) have a large amount of information that either the user can't change
+or are characteristics of the media. The MMC set has a GET CONFIGURATION
+SCSI command to fetch information (basically capabilities) that the user is
+not able to change. To read this information see the sg_get_config utility in
+the sg3_utils package. Earlier versions of MMC put information in the "CD/DVD
+(MM) capabilities and mechanical status" mode page that is now found in the
+GET CONFIGURATION feature and profile pages. The sdparm utility shows the
+CD/DVD capabilities and mechanical status mode page which has information up
+to about "DVD-R" vintage. Thereafter, (MMC-4 and MMC-5) information
+about "DVD+R" and later (e.g. BD and HD-DVD) are in feature and profile pages
+fetched with the GET CONFIGURATION command.
+
+
+There is a C program called chk_sdparm_data.c in the src directory for
+checking the integrity of the mode items in the sdparm_data.c file. A simple
+example for building chk_sdparm_data is given inside the source file. The
+sdparm_data.c file only needs to be checked for integrity after new mode
+page items are added or changed.
+
+
+The linux hdparm utility is usually found in the /sbin and sometimes in
+the /usr/sbin directory. That location is not usually on the PATH of a
+non-root user. Since hdparm is mainly used on disks, this is an appropriate
+place. Currently in Linux sdparm is placed in the /usr/bin directory (by
+the sdparm.spec file) or /usr/local/bin (by 'make install' when not
+overridden by option given to "./configure"). This allows both root and
+non-root users to access sdparm. Permissions on SCSI disks devices should be
+sufficient to stop a non-root user changing parameters unless they have both
+read and write permissions. Non-root users should be able read SCSI disk (or
+other device) parameters if they have read permissions on the appropriate
+device. A typical SCSI disk has permissions like this:
+  # ls -l /dev/sda
+  brw-r-----  1 root disk 8, 0 Jul 28  2005 /dev/sda
+
+There are also CD/DVD drives to consider. Many distributions give non-root
+(GUI) users permissions (and indeed ownership) of these devices. This allows
+users to "burn" CDs and DVDs. Almost all CD/DVD drives use MMC which is a
+SCSI command set. Hence sdparm is appropriate to read and change parameters
+on CD/DVD drives. A typical (ATAPI transport) CD/DVD drive has permissions
+like this (where "fred" is the GUI user):
+  # ls -l /dev/hdc
+  brw-------  1 fred  disk 22, 0 Jul 28  2005 /dev/hdc
+
+
+Doug Gilbert
+24th September 2007

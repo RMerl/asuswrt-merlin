@@ -1,0 +1,133 @@
+<%
+/******************************/
+/* server side AJAJ functions */
+libinclude("server_call.js");
+
+/* this is a call that the client js code can make - it just adds
+   some more elements to the passed object, then returns the object */
+function testfunc(x) {
+	var sys = sys_init();
+	x.nttime = sys.nttime();
+	x.timestring = sys.httptime(x.nttime);
+	return x;
+}
+
+/* register a call for clients to make */
+var call = servCallObj();
+call.add('testfunc', testfunc);
+
+/* run the function that was asked for */
+call.run();
+
+  /***********************/
+  /* now the main page */
+  page_header("columns", "ESP qooxdoo test", "esptest"); 
+%>
+
+<script type="text/javascript" src="/scripting/client/encoder.js"></script>
+<script type="text/javascript" src="/scripting/client/call.js"></script>
+
+<h1>Samba4 qooxdoo test</h1>
+
+  <script type="text/javascript">
+
+  window.application.main = function()
+  {
+    var inlineWidget = new QxInline;
+    var fieldSet = new QxFieldSet("thefieldset");
+
+    with(fieldSet)
+    {
+	    setWidth("40%");
+	    setMinHeight(400);
+	    setBottom(48);
+	    setMinWidth(500);
+    };
+
+    var gl = new QxGridLayout("auto,auto,auto,auto,auto", "100%");
+    gl.setEdge(0);
+    gl.setCellPaddingTop(3);
+    gl.setCellPaddingBottom(3);
+
+    inlineWidget.add(fieldSet);
+
+    var d = this.getClientWindow().getDocument();
+
+    var stopit = 0;
+    var shared = new Object();
+
+    function callback(o) {
+	    shared = o;
+	    var r = "Response:\\n";
+	    for (var i in shared) {
+		    r = r + "\\t" + i + " : " + shared[i] + "\\n";
+	    }
+	    ta.setText(r);
+	    if (shared.start_time == 0) {
+		    shared.start_time = shared.nttime;
+	    }
+	    shared.time_diff = shared.nttime - shared.start_time;
+	    shared.rate = shared.counter / (shared.time_diff * 0.0000001);
+	    shared.counter++;
+	    if (stopit == 0) {
+		    server_call_url("@@request.REQUEST_URI", 'testfunc', callback, shared);
+	    }
+    }
+
+    function start_call() { 
+    	    srv_printf("Starting calls ... (stopit=%d)\\n", stopit);
+	    stopit = 0;
+	    shared.counter = 0;
+	    shared.start_time = 0;
+	    server_call_url("@@request.REQUEST_URI", 'testfunc', callback, shared);
+    };
+
+    function stop_call() { 
+	    srv_printf("Stopping calls\\n");
+	    stopit = 1;
+    };
+
+    function myButton(name, label, call) {
+        var b = new QxButton(label);
+	b.setWidth("25%");
+	b.addEventListener("click", call);
+	return b;
+    };
+
+    function myCheckBox(label, name, value) {
+	    var w = new QxCheckBox(label, value, name, value);
+	    w.setWidth("100%");
+	    return w;
+    }
+
+    var c1 = myCheckBox("Enable The Server", 'checkbox1', false);
+    var c2 = myCheckBox("Another Server", 'checkbox2', true);
+    var t3 = new QxTextField("hello");
+    var b1 = myButton("send", "Make Call", start_call);
+    var b2 = myButton("stop", "Stop Call", stop_call);
+    var ta = new QxTextArea;
+    ta.setText("initial text");
+    ta.setWidth("80%");
+    ta.setHeight(150);
+    ta.setVerticalAlign("top");
+
+    gl.add(c1, { row : 1, col : 1 });
+    gl.add(c2, { row : 2, col : 1 });
+    gl.add(t3, { row : 3, col : 1, scaleHorizontal: true });
+    gl.add(b1, { row : 4, col : 1 });
+    gl.add(ta, { row : 5, col : 1 });
+    gl.add(b2, { row : 6, col : 1 });
+
+    fieldSet.add(gl);
+
+    inlineWidget.add(fieldSet);
+
+    d.add(inlineWidget, "canvas");
+  };
+
+  </script>
+
+
+ <div id="canvas" style="overflow:hidden;position:static;margin-top:38px;margin-left:10px;margin-right:700px;width:700px"></div>
+
+<% page_footer(); %>

@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Example Permission File</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title="Permission File Location " href=
+    "permspath.htm">
+    <link rel="NEXT" title="Complex Permission Checking" href=
+    "x8932.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "permspath.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x8932.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN8919">17.4. Example Permission
+      File</a></h1>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN8922"></a>
+<pre class="SCREEN">
+    # allow root on server to control jobs
+    ACCEPT SERVICE=C SERVER REMOTEUSER=root
+    ACCEPT SERVICE=C LPC=lpd
+    REJECT SERVICE=C
+    #
+    # allow same user on originating host to remove a job
+    ACCEPT SERVICE=M SAMEHOST SAMEUSER
+    # allow root on server to remove a job
+    ACCEPT SERVICE=M SERVER REMOTEUSER=root
+    REJECT SERVICE=M
+    # all other operations allowed
+    DEFAULT ACCEPT
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>In the above sample, we first specify that lp<var class=
+      "LITERAL">C</var> commands from user <var class=
+      "LITERAL">root</var> on the lpd server will be accepted. This
+      is traditionally the way that most lpc commands operate. We
+      also allow anybody to use the <tt class="COMMAND">lpc
+      lpd</tt> command. We reject any other <b class=
+      "APPLICATION">lpc</b> requests.</p>
+
+      <p>We accept lpr<var class="LITERAL">M</var> requests from
+      the host and user that submitted the job, as well as from
+      root on the server, and reject any others.</p>
+
+      <p>Finally, all other types of commands (lpq, lpr) are
+      allowed by default.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "permspath.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x8932.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Permission File
+          Location</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Complex
+          Permission Checking</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

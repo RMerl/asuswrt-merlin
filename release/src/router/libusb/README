@@ -1,0 +1,41 @@
+libusb-compat-0.1
+=================
+
+A compatibility layer allowing applications written for libusb-0.1 to work
+with libusb-1.0. libusb-compat-0.1 attempts to look, feel, smell and walk
+like libusb-0.1.
+
+Do not attempt to install libusb-0.1 and libusb-compat-0.1 on the same system.
+
+Known quirks/differences from libusb-0.1:
+ 1. usb_resetep(), a previously deprecated function, is implemented as
+    equivalent to calling usb_clear_halt().
+ 2. libusb-0.1 allowed you to open a device which you did not have permission
+    to do anything useful with (all I/O requests would immediately fail).
+    libusb-compat-0.1 does not allow you to open such devices. You can still
+    read descriptor info without opening a device.
+ 3. usb_device's "num_children" attribute is hardcoded to 0, and "children"
+    is hardcoded to NULL. Do you need this information in your software? Let
+    us know on the mailing list, and we'll add it.
+ 4. Some libusb-0.1 users may have implemented I/O cancellation by running
+    transfers in their own threads and simply killing the thread when they
+    don't want to do the transfer any more. This is bad programming practice
+    for obvious reasons, and this lack of functionality was one of the primary
+    drivers for libusb-1.0 development. With libusb-1.0 or libusb-compat-0.1
+    backed by libusb-1.0, forcefully killing threads in this way is likely
+    to cause all libusb I/O to halt. Instead, port your application to use
+    libusb-1.0's asynchronous transfer API, which supports transfer
+    cancellation.
+ 5. Error codes returned on certain events may not exactly match the error
+    codes returned by libusb-0.1. Patches accepted to bring us closer to the
+    behaviour of libusb-0.1 on Linux.
+
+libusb homepage:
+http://libusb.sourceforge.net
+
+Use the mailing list for questions, comments, etc:
+https://sourceforge.net/mailarchive/forum.php?forum_name=libusb-devel
+
+- Daniel Drake <dsd@gentoo.org>
+(use the mailing list rather than mailing developers directly)
+

@@ -1,0 +1,64 @@
+!==
+!== OS2-Client-HOWTO.txt for Samba release 2.0.10 23 Jun 2001
+!==
+
+
+Q. How can I configure OS/2 Warp Connect or OS/2 Warp 4 as a client for Samba?
+
+A. A more complete answer to this question can be found on:
+   http://carol.wins.uva.nl/~leeuw/samba/warp.html
+
+   Basically, you need three components:
+
+   * The File and Print Client ('IBM Peer')
+   * TCP/IP ('Internet support') 
+   * The "NetBIOS over TCP/IP" driver ('TCPBEUI')
+
+   Installing the first two together with the base operating system on a blank
+   system is explained in the Warp manual. If Warp has already been installed,
+   but you now want to install the networking support, use the "Selective
+   Install for Networking" object in the "System Setup" folder.
+
+   Adding the "NetBIOS over TCP/IP" driver is not described in the manual and
+   just barely in the online documentation. Start MPTS.EXE, click on OK, click 
+   on "Configure LAPS" and click on "IBM OS/2 NETBIOS OVER TCP/IP" in 
+   'Protocols'.  This line is then moved to 'Current Configuration'. Select 
+   that line, click on "Change number" and increase it from 0 to 1. Save this
+   configuration.
+
+   If the Samba server(s) is not on your local subnet, you can optionally add
+   IP names and addresses of these servers to the "Names List", or specify a 
+   WINS server ('NetBIOS Nameserver' in IBM and RFC terminology). For Warp 
+   Connect you may need to download an update for 'IBM Peer' to bring it on 
+   the same level as Warp 4. See the webpage mentioned above.
+
+
+Q. How can I configure OS/2 Warp 3 (not Connect), OS/2 1.2, 1.3 or 2.x for
+   Samba?
+
+A. You can use the free Microsoft LAN Manager 2.2c Client for OS/2 from
+   ftp://ftp.microsoft.com/BusSys/Clients/LANMAN.OS2/
+   See http://carol.wins.uva.nl/~leeuw/lanman.html for more information on
+   how to install and use this client. In a nutshell, edit the file \OS2VER 
+   in the root directory of the OS/2 boot partition and add the lines
+
+   20=setup.exe
+   20=netwksta.sys
+   20=netvdd.sys
+
+   before you install the client. Also, don't use the included NE2000 driver
+   because it is buggy. Try the NE2000 or NS2000 driver from
+   <a href="ftp://ftp.cdrom.com/pub/os2/network/ndis/">
+   ftp://ftp.cdrom.com/pub/os2/network/ndis/</a> instead.
+
+
+Q. Are there any other issues when OS/2 (any version) is used as a client?
+
+A. When you do a NET VIEW or use the "File and Print Client Resource Browser",
+   no Samba servers show up. This can be fixed by a patch from
+   http://carol.wins.uva.nl/~leeuw/samba/fix.html
+   The patch will be included in a later version of Samba. It also fixes a
+   couple of other problems, such as preserving long filenames when objects
+   are dragged from the Workplace Shell to the Samba server. 
+
+

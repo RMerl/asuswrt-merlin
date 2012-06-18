@@ -1,0 +1,6 @@
+Package: xl2tpd
+Section: net
+Priority: optional
+Depends: openswan
+Obsoletes: l2tpd
+Description: Xelerance Xl2tp daemon

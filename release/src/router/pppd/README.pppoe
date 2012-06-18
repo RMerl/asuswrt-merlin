@@ -1,0 +1,93 @@
+		PPPoE Support
+		-------------
+
+		Michal Ostrowski
+		8 August 2001
+
+		for ppp-2.4.2
+		Updated for ppp-2.4.5 by Paul Mackerras, Sep 08
+
+1. Introduction
+---------------
+
+This document describes the support for PPP over Ethernet (PPPoE)
+included with this package.  It is assumed that the reader is
+familiar with Linux PPP (as it pertains to tty/modem-based
+connections).  In particular, users of PPP in the Linux 2.2 series
+kernels should ensure they are familiar with the changes to the PPP
+implementation in the 2.4 series kernels before attempting to use
+PPPoE features.
+
+If you are not familiar with PPP, I recommend looking at other
+packages which include end-user configuration tools, such as Roaring
+Penguin (http://www.roaringpenguin.com/pppoe).
+
+PPPoE is a protocol typically used by *DSL providers to manage IP
+addresses and authenticate users.  Essentially, PPPoE provides for a
+PPP connection to be established not over a physical serial-line or
+modem, but over a logical connection between two unique MAC-addresses
+on an ethernet network.  Once the PPPoE layer discovers the end-points
+to be used in the link and negotiates it, frames may be sent to and
+received from the PPPoE layer just as if the link was a serial line
+(or that is how it's supposed to be).
+
+With this in mind, the goal of the implementation of PPPoE support in
+Linux is to allow users to simply specify that the device they intend
+to use for the PPP connection is an ethernet device (i.e. "eth0") and
+the rest of the system should function as usual.
+
+2. Using PPPoE
+--------------
+
+This section is a quick guide for getting PPPoE working, to allow one
+to connect to their ISP who is providing PPPoE based services.
+
+1.  Enable "Prompt for development and/or incomplete code/drivers" and
+    "PPP over Ethernet" in your kernel configuration.  Most distributions
+    will include the kernel PPPoE module by default.
+
+2.  Compile and install your kernel.
+
+3.  Install the ppp package.
+
+4.  Add the following line to /etc/ppp/options:
+
+    plugin rp-pppoe.so
+
+    The effect of this line is simply to make "eth0", "eth1",
+    ....,"ethx" all valid device names for pppd (just like ttyS0,
+    ttyS1).
+
+5.  Add the necessary authentication options to your pppd
+    configuration (i.e. PAP/CHAP information).  If you wish to
+    maintain seperate configurations for different devices you may
+    place configuration options in device-specific configuration
+    files: /etc/ppp/options.devname (devname=ttyS0, ttyS1, eth0, eth1
+    or any other valid device name).
+
+6.  Invoke pppd with the appropriate device name: e.g. "pppd eth0"
+
+
+Do not include any compression or flow control options in your PPPoE
+configuration.  They will be ignored.
+
+Again, here it is assumed that the reader is familiar with the general
+process of configuring PPP.  The steps outlined here refer only to the
+steps and configuration options which are PPPoE specific, and it is
+assumed that the reader will also configure other aspects of the system
+(e.g. PAP authentication parameters).
+
+3.  Advanced Functionality
+--------------------------
+
+For more advanced functionality (such as providing PPPoE services) and
+user configuration tools, look to the Roaring Penguin PPPoE software
+package (http://www.roaringpenguin.com/pppoe).
+
+4.  Credits
+-----------
+
+The PPPoE plugin included in this package is a component of the
+Roaring Penguin PPPoE package, included in this package courtesy of
+Roaring Penguin Software. (http://www.roaringpenguin.com).
+

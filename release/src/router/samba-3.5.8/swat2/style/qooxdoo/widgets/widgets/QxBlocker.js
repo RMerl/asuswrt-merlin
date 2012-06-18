@@ -1,0 +1,2 @@
+/* Copyright (c): 2002-2005 (Germany): United Internet, 1&1, GMX, Schlund+Partner, Alturo */
+function QxBlocker(){QxWidget.call(this);this.setLocation(0,0);this.setRight(0);this.setBottom(0);this.setZIndex(1e6);if((new QxClient).isMshtml()){this.setBackgroundImage((new QxImageManager).getBlank());};};QxBlocker.extend(QxWidget,"QxBlocker");

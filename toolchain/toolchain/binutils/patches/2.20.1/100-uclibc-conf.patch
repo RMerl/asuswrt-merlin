@@ -1,0 +1,12 @@
+diff -urB binutils-2.19.1/configure binutils/configure
+--- binutils-2.19.1/configure	2008-09-04 06:18:16.000000000 +0400
++++ binutils/configure	2009-09-10 12:10:00.000000000 +0400
+@@ -2600,7 +2600,7 @@
+     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
+     ;;
+   mips*-*-*)
+-    noconfigdirs="$noconfigdirs gprof ${libgcj}"
++    noconfigdirs="$noconfigdirs ${libgcj}"
+     libgloss_dir=mips
+     ;;
+   romp-*-*)

@@ -1,0 +1,605 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Updating Print Spooler Software and Startup
+    Scripts</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Installation" href="installation.htm">
+    <link rel="PREVIOUS" title="Installation Problems" href=
+    "x1000.htm">
+    <link rel="NEXT" title=
+    "Emulation for UNIX SystemV lp and lpstat " href=
+    "lpsimulation.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x1000.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 2.
+          Installation</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "lpsimulation.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="UPDATE">2.10. Updating Print
+      Spooler Software and Startup Scripts</a></h1>
+
+      <p>If you are replacing your existing print spooling spooling
+      system, you must shut down and remove the existing print
+      spooler software before installing the <b class=
+      "APPLICATION">LPRng</b> software. This process is fairly
+      system dependent, and requires a small amount of system
+      expertise.</p>
+
+      <p>To assist in this process the <b class=
+      "APPLICATION">LPRng</b> installation has a set of <var class=
+      "LITERAL">preinstall</var>, <var class=
+      "LITERAL">postinstall</var>, <var class=
+      "LITERAL">preremove</var>, and <var class=
+      "LITERAL">postremove</var> scripts in the distribution that
+      may be suitable for your local system use. If these fail to
+      work during the system installation, you will need to carry
+      out the steps described here by hand.</p>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN1093">2.10.1. SunOS, Linux,
+        and BSD Derived Systems</a></h2>
+
+        <p>The <var class="LITERAL">SunOS</var>, <var class=
+        "LITERAL">Linux</var>, and <var class="LITERAL">BSD</var>
+        derived systems such as <var class="LITERAL">BSDi</var>,
+        <var class="LITERAL">FreeBSD</var>, <var class=
+        "LITERAL">OpenBSD</var>, and others use a version of the
+        <span class="emphasis"><i class=
+        "EMPHASIS">legacy</i></span> or <span class="emphasis"><i
+        class="EMPHASIS">vintage</i></span> <b class=
+        "APPLICATION">lpd</b> print server and the <b class=
+        "APPLICATION">lpr</b>, <b class="APPLICATION">lprm</b>, <b
+        class="APPLICATION">lpq</b>, and <b class=
+        "APPLICATION">lpc</b> client programs. By convention, most
+        of the printing related programs are in the <tt class=
+        "FILENAME">/usr/bin</tt>, <tt class=
+        "FILENAME">/usr/sbin</tt>, <tt class=
+        "FILENAME">/usr/libexec</tt>, and <tt class=
+        "FILENAME">/usr/ucb</tt> directories.</p>
+
+        <p>The <b class="APPLICATION">lpd</b> print spooler is
+        started by either the <tt class="COMMAND">rc</tt> startup
+        script or by a <span class="emphasis"><i class=
+        "EMPHASIS">startup script</i></span> file in the <tt class=
+        "FILENAME">/etc/rc.d/init.d</tt> or <tt class=
+        "FILENAME">/etc/init.d</tt> directory. You can first locate
+        the startup commands as follows.</p>
+
+        <ol type="1">
+          <li>
+            <p>Use the <span class="CITEREFENTRY"><span class=
+            "REFENTRYTITLE">find</span>(1)</span> utility to search
+            the <tt class="FILENAME">/etc</tt> directory for the
+            file that contains the startup command.</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN1126"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {23} #</samp> <kbd class=
+"USERINPUT">cd /etc</kbd>
+    <samp class="PROMPT">h4: {24} #</samp> <kbd class=
+"USERINPUT">find . -type f -exec grep -l lpd {} \; -print</kbd>
+    ./rc.local
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>Examine each of the files found find the one that
+            starts the <b class="APPLICATION">lpd</b> print
+            spooler. You can simply comment out the command or
+            change it to start the <b class="APPLICATION">LPRng</b>
+            <b class="APPLICATION">lpd</b> print server.</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN1137"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {25} #</samp> <kbd class=
+"USERINPUT">more /etc/rc.local</kbd>
+    if [ -f /etc/printcap  -a -f /usr/libexec/lpd ] ; then
+      /usr/libexec/lpd ;
+    fi
+    
+    --- change this to
+    if [ -f /etc/printcap  -a -f /usr/sbin/lpd ] ; then
+      /usr/sbin/lpd ;
+    fi
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>If you have an existing <tt class=
+            "FILENAME">printcap</tt> file, then you should either
+            copy this to the location used by <b class=
+            "APPLICATION">LPRng</b> or make a symbolic link to
+            it.</p>
+          </li>
+        </ol>
+        <br>
+        <br>
+
+        <p>Next we kill the currently running <b class=
+        "APPLICATION">lpd</b> process.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1147"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {26} #</samp> <kbd class=
+"USERINPUT">ps -auxw |grep lpd</kbd>
+    papowell 23932  0.0  0.3  224  184  p3  S+  10:40AM  0:00.01 grep lpd
+    daemon  17763  0.0  0.2  448  120  ??  IWs  29Mar99  0:01.35 (lpd)
+    <samp class="PROMPT">h4: {27} %</samp> <kbd class=
+"USERINPUT">kill 135</kbd>
+    <samp class="PROMPT">h4: {28} %</samp> <kbd class=
+"USERINPUT">kill 135</kbd>
+    135: No such process
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Next, you should remove or rename the existing print
+        system executables. The following example shows how to use
+        the <b class="APPLICATION">find</b> utility to track down
+        candidates.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1157"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {29} #</samp> <kbd class=
+"USERINPUT">find /usr -type f -name lp\*  -print &gt;/tmp/candidates</kbd>
+    <samp class="PROMPT">h4: {30} #</samp> <kbd class=
+"USERINPUT">find /sbin -type f -name lp\*  -print &gt;&gt;/tmp/candidates</kbd>
+    <samp class="PROMPT">h4: {31} #</samp> <kbd class=
+"USERINPUT">cat /tmp/candidates</kbd>
+    /usr/bin/lpunlock
+    /usr/bin/lpqall.faces
+    /usr/bin/lpq             &lt;---- old
+    /usr/bin/lpr             &lt;---- old
+    /usr/bin/lprm            &lt;---- old
+    /usr/bin/lptest
+    /usr/doc/samba-1.9.18p10/examples/printer-accounting/lp-acct
+    /usr/man/man1/lpq.1
+    /usr/man/man1/lpr.1
+    /usr/man/man1/lprm.1
+    /usr/man/man1/lptest.1
+    /usr/man/man4/lp.4
+    /usr/man/man8/lpc.8
+    /usr/man/man8/lpd.8
+    /usr/sbin/lpc            &lt;--- old
+    /usr/sbin/lpd            &lt;--- old
+    /usr/sbin/lpf            &lt;--- old
+    <samp class="PROMPT">h4: {32} #</samp> <kbd class=
+"USERINPUT">mv /usr/bin/lpq  /usr/bin/lpq.old</kbd>
+    <samp class="PROMPT">h4: {33} #</samp> <kbd class=
+"USERINPUT">mv /usr/bin/lpr  /usr/bin/lpr.old</kbd>
+    <samp class="PROMPT">h4: {34} #</samp> <kbd class=
+"USERINPUT">mv /usr/bin/lprm /usr/bin/lprm.old</kbd>
+    <samp class="PROMPT">h4: {35} #</samp> <kbd class=
+"USERINPUT">mv /usr/sbin/lpc /usr/sbin/lpc.old</kbd>
+    <samp class="PROMPT">h4: {36} #</samp> <kbd class=
+"USERINPUT">mv /usr/sbin/lpd /usr/sbin/lpd.old</kbd>
+    <samp class="PROMPT">h4: {37} #</samp> <kbd class=
+"USERINPUT">mv /usr/sbin/lpf /usr/sbin/lpf.old</kbd>
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>After all this, you should now run <tt class=
+        "COMMAND">checkpc -f</tt> (as root) to make sure that the
+        <b class="APPLICATION">LPRng</b> configuration is present
+        and correctly set up, and then start <b class=
+        "APPLICATION">lpd</b> by hand. You should try to use <b
+        class="APPLICATION">lpq</b> to see if the spool queues are
+        present and set up correctly and the system is
+        functional.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1183"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {38} #</samp> <kbd class=
+"USERINPUT">checkpc -f</kbd>
+    <samp class="PROMPT">h4: {39} #</samp> <kbd class=
+"USERINPUT">lpd</kbd>
+    <samp class="PROMPT">h4: {40} #</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lw4@h2  'Hp : LaserWriter'
+     Queue: no printable jobs in queue
+     Status: job 'root@h2+884' removed at 11:27:25.864
+     Filter_status: done at 11:27:25.766
+    <samp class="PROMPT">h4: {41} #</samp> <kbd class=
+"USERINPUT">lpr /etc/motd</kbd>
+    <samp class="PROMPT">h4: {42} #</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lw4@h2  'Hp : LaserWriter'
+     Queue: no printable jobs in queue
+     Status: job 'root@h2+888' removed at 11:27:25.864
+     Filter_status: done at 11:33:17.020
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Finally, you should reboot your machine and make sure
+        that the <b class="APPLICATION">lpd</b> print server starts
+        correctly.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="SOLARISINSTALL">2.10.2. Solaris,
+        HP-UX, and other SysVR4 Derived Systems</a></h2>
+
+        <p>The original SysVR4 (System V, Release 4) software did
+        not have any support for RFC1179 network printing (Berkeley
+        <b class="APPLICATION">lpd</b>). Support for this was added
+        in a wide variety of different ways. There are a wide range
+        of different ways that this was done, but most are based on
+        the following system or process structure.</p>
+
+        <p>The <var class="LITERAL">lpsched</var> process (<tt
+        class="FILENAME">/usr/lib/lp/lpsched/</tt>) process
+        performs many of the functions of the <b class=
+        "APPLICATION">LPRng</b> and BSD <b class=
+        "APPLICATION">lpd</b> server. This process is responsible
+        for overseeing job printing and starting processes for
+        handling the print queues on the local host. This process
+        must be shut down and the running print spooling servers
+        terminated before <b class="APPLICATION">LPRng</b> can be
+        correctly installed. While there is no simple and reliable
+        method of shutting down a running <var class=
+        "LITERAL">lpsched</var> process and the associated network
+        services, it is simple to <span class="emphasis"><i class=
+        "EMPHASIS">prevent</i></span> the process from being
+        started.</p>
+
+        <p>The <tt class="FILENAME">preinstall.solaris</tt> script
+        is a file in the <b class="APPLICATION">LPRng</b>
+        distribution that contains most of the commands needed to
+        remove the Solaris System V printing software. These are
+        explained in detail in the sections below. The procedures
+        outlined below can be used on other SystemVR4 systems.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1212"></a>
+<pre class="SCREEN">
+    #!/bin/sh
+    # This is an effort to automate the setup
+    #  needed to install the <b class=
+"APPLICATION">LPRng</b> software on the
+    #  Solaris OS.  This is effectively a one way path.
+    #  You are warned.
+    PATH=/etc:/usr/etc:/usr/bin:/bin:/sbin:/usr/sbin:$PATH
+    # remove the init.d entry and links
+    for i in /etc/rc*.d/*lp ; do
+        b=`basename $i`;
+        d=`dirname $i`;
+        mv $i $d/UNUSED.$b.UNUSED
+    done
+    # rename files
+    renameit () {
+        for i in $* ; do
+            if [ -f $i -a '!' -f $i.old ] ; then
+                echo "renaming $i $i.old";
+                mv $i $i.old
+            fi
+        done
+    }
+    renameit /usr/bin/lp /usr/bin/lpstat /usr/sbin/lpadmin \
+      /usr/sbin/lpfilter /usr/sbin/lpforms /usr/sbin/lpmove \
+      /usr/sbin/lpshut /usr/sbin/lpsystem /usr/sbin/lpusers \
+      /usr/ucb/lpc /usr/ucb/lpq /usr/ucb/lpr /usr/ucb/lprm \
+      /usr/ucb/lptest /usr/lib/lp/lpsched /usr/lib/lp/lpNet
+    # remove the cron entry
+    if [ -f /var/spool/cron/crontabs/lp ] ; then
+        mv /var/spool/cron/crontabs/lp \
+           /var/spool/cron/UNUSED.crontabs.lp
+    fi
+    # comment out inetd.conf entry
+    if egrep '^printer' /etc/inetd.conf &gt;/dev/null 2&gt;&amp; ; then
+        mv /etc/inetd.conf /etc/inetd.conf.bak
+        sed -e 's/^printer/# printer/' &lt;/etc/inetd.conf.bak \
+           &gt;/etc/inetd.conf
+    fi
+    # remove the nlsadmin entry
+    nlsadmin -r lpd tcp
+    nlsadmin -r lp tcp
+    echo REBOOT SYSTEM and then install LPRng
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>First, you will need to remove the <tt class=
+        "FILENAME">/etc/rc</tt> startup files in the <tt class=
+        "FILENAME">/etc/rc*.d</tt> directories that start the <var
+        class="LITERAL">lpsched</var> process; see the <var class=
+        "LITERAL">init</var> program man page for details. You can
+        find these files by using:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1220"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {43} #</samp> <kbd class=
+"USERINPUT">cd /</kbd>
+    <samp class="PROMPT">h4: {44} #</samp> <kbd class=
+"USERINPUT">find . -type f -exec grep -l lpsched {} \; -print &gt;/tmp/files</kbd>
+    <samp class="PROMPT">h4: {45} #</samp> <kbd class=
+"USERINPUT">cat /tmp/files</kbd>
+    /etc/rc0.d/K20lp
+    /etc/rc2.d/K20lp
+    /etc/rc2.d/S80lp
+    /etc/init.d/lp
+    <samp class="PROMPT">h4: {46} #</samp> <kbd class=
+"USERINPUT">ls -l ` cat /tmp/files `</kbd>
+    lrwxrwxr-x 1 root bin 1 Dec 29 23:39 /etc/rc0.d/K20lp -&gt; ../../init.d/lp
+    lrwxrwxr-x 1 root bin 1 Dec 29 23:39 /etc/rc2.d/K20lp -&gt; ../../init.d/lp
+    lrwxrwxr-x 1 root bin 1 Dec 29 23:39 /etc/rc2.d/S80lp -&gt; ../../init.d/lp
+    -rwxr--r-- 5 root sys 460 Sep 1 1998 /etc/rcS.d/K39lp
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>You can remove these files, or simply comment out all of
+        the executable commands in the <tt class=
+        "FILENAME">/etc/init.d/lp</tt> file. Next, find all of the
+        printing related commands and rename them. For example:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1232"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {47} #</samp> <kbd class=
+"USERINPUT">find /usr -type f -name lp\* -print &gt;/etc/printingfiles</kbd>
+    <samp class="PROMPT">h4: {48} #</samp> <kbd class=
+"USERINPUT">cat /tmp/printingfiles</kbd>
+    /usr/bin/lp
+    /usr/bin/lpstat
+    /usr/lib/lp/bin/lp.cat
+    /usr/lib/lp/bin/lp.set
+    /usr/lib/lp/bin/lp.tell
+    /usr/lib/lp/lpNet
+    /usr/lib/lp/lpsched
+    /usr/lib/lp/lpdata
+    /usr/sbin/lpadmin
+    /usr/sbin/lpfilter
+    /usr/sbin/lpforms
+    /usr/sbin/lpmove
+    /usr/sbin/lpshut
+    /usr/sbin/lpsystem
+    /usr/sbin/lpusers
+    /usr/ucb/lpc
+    /usr/ucb/lpq
+    /usr/ucb/lpr
+    /usr/ucb/lprm
+    /usr/ucb/lptest
+    <samp class="PROMPT">h4: {49} #</samp> <kbd class=
+"USERINPUT">vi /tmp/printingfiles  # remove ones you want to save</kbd>
+    <samp class="PROMPT">h4: {50} #</samp> <kbd class=
+"USERINPUT">for i in ` cat /tmp/printingfiles ` ; do</kbd>
+    <samp class="PROMPT">&gt;</samp> <kbd class=
+"USERINPUT"> if [ -f $i -a '!' -f $i.old ] ; then  mv $i $i.old ; fi;</kbd>
+    <samp class="PROMPT">&gt;</samp> <kbd class=
+"USERINPUT">done</kbd>
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>On some systems there may be a <tt class=
+        "COMMAND">cron</tt> file <tt class=
+        "FILENAME">/var/spool/cron/crontabs/lp</tt> which is used
+        to to periodically update and roll over error logs. You may
+        want to remove this file or comment out its contents.</p>
+
+        <p>Check the <tt class="FILENAME">/etc/inetd.conf</tt> file
+        for a line like the one below and comment it out. This line
+        is not present on all systems.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1251"></a>
+<pre class="SCREEN">
+    printer stream tcp nowait root /usr/lib/print/in.lpd in.lpd
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Use <tt class="COMMAND">nlsadmin</tt> to force the <var
+        class="LITERAL">TCP/IP listener</var> to release the port,
+        as illustrated below. This may not be present on all
+        system.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1256"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {51} #</samp> <kbd class=
+"USERINPUT">nlsadmin -v tcp</kbd>
+    lpd  \x00020203000000000000000000000000  ENABLED  \
+      NORPC  root  NOMODULES  /var/spool/lp/fifos/listenBSD  #
+    0  \x00020ACE000000000000000000000000  ENABLED    \
+      NORPC  root  NOMODULES  /usr/lib/saf/nlps_server  #
+    lp  NOADDR  ENABLED  NORPC  root  NOMODULES \
+      /var/spool/lp/fifos/listenS5  #
+    <samp class="PROMPT">h4: {52} #</samp> <kbd class=
+"USERINPUT">nlsadmin -r lpd tcp</kbd>
+    <samp class="PROMPT">h4: {53} #</samp> <kbd class=
+"USERINPUT">nlsadmin -r lp tcp</kbd>
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>Run <tt class="COMMAND">pmadm -l</tt> as shown
+        below.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1266"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h2.private: {2} #</samp> <kbd class=
+"USERINPUT">pmadm -l</kbd>
+    PMTAG    PMTYPE   SVCTAG   FLGS ID    &lt;PMSPECIFIC&gt;
+    zsmon    ttymon   ttya     u    root  /dev/term/a I - /usr/bin/login ...
+    zsmon    ttymon   ttyb     u    root  /dev/term/b I - /usr/bin/login ...
+</pre>
+        </div>
+        If you see <tt class="COMMAND">zsmon</tt> entries for
+        SystemV <tt class="COMMAND">lpsched</tt> support, then use
+        <tt class="COMMAND">pmadm -r</tt> to remove them. These may
+        not be present on all system. See the <tt class=
+        "COMMAND">pmadm</tt> man page for details on the <var
+        class="LITERAL">-r</var> literal.<br>
+        <br>
+
+        <p>You must now <tt class="COMMAND">reboot</tt> the
+        host.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1277"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {54} #</samp> <kbd class=
+"USERINPUT">shutdown -y "Whooga! Whooga! Dive! Dive! System going down."</kbd>
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>When the system reboots, make sure that there is no
+        process listening on port 515 (printer port) by using:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1282"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {55} #</samp> <kbd class=
+"USERINPUT">telnet localhost 515</kbd>
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>If you can connect, then there is a problem beyond the
+        scope of these instructions.</p>
+
+        <p>Compile and/or install the <b class=
+        "APPLICATION">LPRng</b> software. Make sure that the <b
+        class="APPLICATION">LPRng</b> startup files have been
+        installed correctly in <tt class=
+        "FILENAME">/etc/init.d/lprng</tt> and that the symbolic
+        links to the file have been made correctly. The <b class=
+        "APPLICATION">LPRng</b> startup file will usually have the
+        following contents and you should use the same filename
+        formats that the <b class="APPLICATION">lp</b> startup
+        files had for the links to the <tt class=
+        "FILENAME">/etc/init.d/lprng</tt> startup file:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1294"></a>
+<pre class="SCREEN">
+    LPD_PATH=/usr/sbin/lpd
+    SHOWALL=-e
+    case "$1" in
+      start)
+            # Start daemons.
+            /bin/echo "Starting lpd: \c"
+            ${LPD_PATH}
+            /bin/echo ""
+            ;;
+      stop)
+            # Stop daemons.
+            /bin/echo "Shutting down lpd: \c"
+            kill -INT `ps ${SHOWALL} \
+               | awk '/lpd/{ print $1;}'` &gt;/dev/null 2&gt;&amp;1
+            /bin/echo " server stopped";
+            ;;
+      *)
+            echo "Usage: $0 {start|stop}"
+            exit 1
+            ;;
+    esac
+</pre>
+        </div>
+        Start the <b class="APPLICATION">lpd</b> server and then
+        test it: 
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN1297"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {56} #</samp> <kbd class=
+"USERINPUT">checkpc -f</kbd>
+    <samp class="PROMPT">h4: {57} #</samp> <kbd class=
+"USERINPUT">/usr/sbin/lpd (or /usr/local/sbin/lpd)</kbd>
+    <samp class="PROMPT">h4: {58} #</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp
+     Queue: no printable jobs in queue
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x1000.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "lpsimulation.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Installation
+          Problems</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "installation.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Emulation for
+          UNIX SystemV <b class="APPLICATION">lp</b> and <b class=
+          "APPLICATION">lpstat</b></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

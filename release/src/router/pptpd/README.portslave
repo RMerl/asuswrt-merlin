@@ -1,0 +1,12 @@
+Contributed by Russell Coker on Debian Bug#126486.
+
+/etc/pptp.conf:
+option /etc/ppp/pptp.options
+localip 192.168.236.133
+# refer pptpd to use the pptp-portslave script instead of regular pppd
+pppd /usr/sbin/pptp-portslave
+
+/etc/portslave/pslave.conf:
+# configure it as usual, but with lines defined for pseudo-tty devices
+s{1000-1063}.tty   pts/{0-63}
+

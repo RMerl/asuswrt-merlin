@@ -1,0 +1,58 @@
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#   
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+# Codepage definition file for Code Page 737 - Windows '95 Greek
+# defines lower->upper mapping.
+# Written by Manousaridis Haris <genesis@the.forthnet.gr>
+
+# The columns are :
+# lower    upper   map upper to lower    map lower to upper
+#
+   0x87     0x80   True                  True
+   0x98     0x80   True                  True
+   0x99     0x81   True                  True
+   0x9A     0x82   True                  True
+   0x9B     0x83   True                  True
+   0x9C     0x84   True                  True
+   0x9D     0x85   True                  True
+   0x9E     0x86   True                  True
+   0x9F     0x87   True                  True
+   0xA0     0x88   True                  True
+   0xA1     0x89   True                  True
+   0xA2     0x8A   True                  True
+   0xA3     0x8B   True                  True
+   0xA4     0x8C   True                  True
+   0xA5     0x8D   True                  True
+   0xA6     0x8E   True                  True
+   0xA7     0x8F   True                  True
+   0xA8     0x90   True                  True
+   0xA9     0x91   True                  True
+   0xAA     0x91   True                  True
+   0xAB     0x92   True                  True
+   0xAC     0x93   True                  True
+   0xAD     0x94   True                  True
+   0xAE     0x95   True                  True
+   0xAF     0x96   True                  True
+   0xE0     0x97   True                  True
+   0xE1     0xEA   True                  True
+   0xE2     0xEB   True                  True
+   0xE3     0xEC   True                  True
+   0xE4     0xF4   True                  True
+   0xE5     0xED   True                  True
+   0xE6     0xEE   True                  True
+   0xE7     0xEF   True                  True
+   0xE8     0xF5   True                  True
+   0xE9     0xF0   True                  True

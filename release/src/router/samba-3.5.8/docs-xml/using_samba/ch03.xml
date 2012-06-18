@@ -1,0 +1,1384 @@
+<chapter label="3" id="SAMBA-CH-3">
+<title>Configuring Windows Clients</title>
+
+
+
+
+<para>
+<indexterm id="ch03-idx-947918-0" class="startofrange"><primary>Windows clients</primary><secondary>configuring</secondary></indexterm>
+<indexterm id="ch03-idx-947918-1" class="startofrange"><primary>configuring Windows clients</primary></indexterm>You'll be glad to know that configuring Windows to use your new Samba server is quite simple. SMB is Microsoft's native language for resource sharing on a local area network, so much of the installation and setup on the Windows client side has been taken care of already. The primary issues that we will cover in this chapter involve communication and coordination between Windows and Unix, two completely different operating systems.</para>
+
+
+<para>Samba uses TCP/IP to talk to its clients on the network. If you aren't already using TCP/IP on your Windows computers, this chapter will show you how to install it. Then you'll need to configure your Windows machines to operate on a TCP/IP network. Once these two requirements have been taken care of, we can show how to access a shared disk on the Samba server.</para>
+
+
+<para>This chapter is divided into three sections. The first section covers setting up Windows 95/98 computers while the second covers Windows NT 4.0 machines. The final section provides some prerequisite information on how SMB connections are made from Windows clients and servers, which is useful as we move into the later chapters of the book.</para>
+
+
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="3.1" id="ch03-55770">
+<title>Setting Up Windows 95/98 Computers</title>
+
+
+<para>
+<indexterm id="ch03-idx-947927-0" class="startofrange"><primary>Windows clients</primary><secondary>configuring</secondary><tertiary>Windows95/98 computers</tertiary></indexterm>
+<indexterm id="ch03-idx-947927-1" class="startofrange"><primary>configuring Windows clients</primary><secondary>Windows 95/98 computers</secondary></indexterm>Unfortunately, Windows 95/98 wasn't designed for a PC to have more than one user; that concept is more inherent to a Unix operating system or Windows NT. However, <indexterm id="ch03-idx-947953-0"><primary>Windows 95/98</primary><secondary>multiple users, support for</secondary></indexterm>Windows 95/98 does have <emphasis>limited</emphasis> support for multiple users: if you tell it, the operating system will keep a separate <indexterm id="ch03-idx-947955-0"><primary>user profiles (Windows 95/98)</primary></indexterm>profile (desktop layout) and password file for each user. This is a far cry from true multiuser security. In other words, Windows 95/98 won't try to keep one user from destroying the work of another on the local hard drive like Unix, but profiles are a place to start.</para>
+
+
+<sect2 role="" label="3.1.1" id="ch03-SECT-1.1">
+<title>Accounts and Passwords</title>
+
+
+<para>
+<indexterm id="ch03-idx-947956-0" class="startofrange"><primary>accounts</primary></indexterm>
+<indexterm id="ch03-idx-947956-1" class="startofrange"><primary>passwords</primary><secondary>Windows 95/98</secondary></indexterm>
+<indexterm id="ch03-idx-947956-2" class="startofrange"><primary>usernames</primary><secondary>Windows 95/98</secondary></indexterm>The first thing we need to do is to tell Windows to keep user profiles separate, and to collect usernames and passwords to authenticate anyone trying to access a Samba share. We do so via the <indexterm id="ch03-idx-947957-0"><primary>Password settings (Windows 95/98)</primary></indexterm>Password settings in the Control Panel. If you are not familiar with the Windows Control Panel, you can access it by choosing the Settings menu item from the pop-up menu of the Start button in the lower-left corner of the screen. Alternatively, you'll find it as a folder under the icon in the upper-left corner that represents your computer and is typically labeled <indexterm id="ch03-idx-947958-0"><primary>My Computer (Windows 95/98)</primary></indexterm>My Computer.</para>
+
+
+<para>After selecting the Passwords icon in the Control Panel, click on the User Profiles tab on the far right. You should see the dialog box shown in <link linkend="ch03-84319">Figure 3.1</link>. Then click the lower of the two radio buttons that starts "Users can customize their preferences...." This causes Windows to store a separate profile for each user, and saves the username and password you provide, which it will use later when it connects to an SMB/CIFS server. Finally, check <emphasis>both</emphasis> the options under the User Profile Settings border, as shown in the figure.</para>
+
+
+<figure label="3.1" id="ch03-84319">
+<title>The Passwords Properties panel</title>
+
+<graphic width="502" depth="289" fileref="figs/sam.0301.gif"></graphic>
+</figure>
+
+<para>The next step is to select the Change Passwords tab on the left side of the dialog box. In order for Samba to allow you access to its shares, the username and password you give to Windows must match the account and password on the Samba server. If you don't have this tab in your dialog box, don't worry; it's probably because you haven't given yourself a Windows username and password yet. Simply click the OK button at the bottom and respond Yes when Windows asks to reboot. Then, skip down to <link linkend="ch03-57581">Section 3.1.1.2</link>.</para>
+
+
+<sect3 role="" label="3.1.1.1" id="ch03-SECT-1.1.1">
+<title>Changing the Windows password</title>
+
+
+<para>
+<indexterm id="ch03-idx-947966-0"><primary>passwords</primary><secondary>Windows 95/98</secondary><tertiary>changing</tertiary></indexterm>After selecting the Change Passwords tab, the dialog box in <link linkend="ch03-26778">Figure 3.2</link> will appear.</para>
+
+
+<figure label="3.2" id="ch03-26778">
+<title>The Change Passwords tab</title>
+
+<graphic width="502" depth="306" fileref="figs/sam.0302.gif"></graphic>
+</figure>
+
+<para>Select the Change Windows Password button. The <indexterm id="ch03-idx-947967-0"><primary>Change Windows Password dialog box</primary></indexterm>Change Windows Password dialog box should appear, as shown in <link linkend="ch03-97002">Figure 3.3</link>. From here, you can change your password to match the password of the account on the Samba server through which you intend to log in.</para>
+
+
+<figure label="3.3" id="ch03-97002">
+<title>The Change Windows Password dialog box</title>
+
+<graphic width="502" depth="135" fileref="figs/sam.0303.gif"></graphic>
+</figure>
+</sect3>
+
+
+
+<sect3 role="" label="3.1.1.2" id="ch03-57581">
+<title>Logging in for the first time</title>
+
+
+<para>
+<indexterm id="ch03-idx-947969-0"><primary>log files/logging</primary><secondary>in for the first time (Samba)</secondary></indexterm>
+<indexterm id="ch03-idx-947969-1"><primary>Samba</primary><secondary>logging in for the first time</secondary></indexterm>If you didn't have a Change Passwords tab in the Passwords Properties window, then after Windows has finished rebooting, it will ask you to log in with a username and a password. Give yourself the same username and password that you have on the Samba server. After confirming your new username and password, or if you already have one, Windows should ask you if you want to have a <indexterm id="ch03-idx-947970-0"><primary>profiles</primary><secondary>creating</secondary></indexterm>profile, using the dialog shown in <link linkend="ch03-48947">Figure 3.4</link>. <indexterm id="ch03-idx-947961-0" class="endofrange" startref="ch03-idx-947956-0"/>
+<indexterm id="ch03-idx-947961-1" class="endofrange" startref="ch03-idx-947956-1"/>
+<indexterm id="ch03-idx-947961-2" class="endofrange" startref="ch03-idx-947956-2"/></para>
+
+
+<figure label="3.4" id="ch03-48947">
+<title>Windows Networking profiles</title>
+
+<graphic width="502" depth="121" fileref="figs/sam.0304.gif"></graphic>
+</figure>
+
+<para>Answer Yes, upon which Windows will create a separate profile and password file for you and save a copy of your password in the file. Now when you connect to Samba, Windows will send its password, which will be used to authenticate you for each share. We won't worry about profiles for the moment; we'll cover them in <link linkend="SAMBA-CH-6">Chapter 6</link>. We should point out, however, that there is a small security risk: someone can steal the <indexterm id="ch03-idx-947972-0"><primary>password file, security and</primary></indexterm>password file and decrypt the passwords because it's weakly encrypted. Unfortunately, there isn't a solution to this with Windows 95/98. In Windows 2000 (NT 5.0), the password encryption should be replaced with a much better algorithm.</para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="3.1.2" id="ch03-36280">
+<title>Setting Up the Network</title>
+
+
+<para>
+<indexterm id="ch03-idx-947983-0" class="startofrange"><primary>networking</primary><secondary>setting up</secondary></indexterm>The next thing we need to do is make sure we have the <indexterm id="ch03-idx-947973-0"><primary>TCP/IP networking protocol</primary><secondary>checking setup</secondary></indexterm>TCP/IP networking protocol set up correctly. To do this, double-click on the <indexterm id="ch03-idx-947975-0"><primary>Network icon</primary><secondary>Windows 95/98</secondary></indexterm>Network icon in the Control Panel. You should see the network configuration dialog box, as shown in <link linkend="ch03-15320">Figure 3.5</link>.</para>
+
+
+<figure label="3.5" id="ch03-15320">
+<title>The Windows 95/98 Network panel</title>
+
+<graphic width="502" depth="371" fileref="figs/sam.0305.gif"></graphic>
+</figure>
+
+<para>Microsoft networking works by binding specific protocols, such as IPX or TCP/IP, to a specific hardware device, such as an <indexterm id="ch03-idx-947977-0"><primary>Ethernet adaptor cards</primary></indexterm>Ethernet card or a <indexterm id="ch03-idx-948013-0"><primary>dialup connection</primary></indexterm>dialup connection. By routing a <indexterm id="ch03-idx-947976-0"><primary>protocols</primary><secondary>routed through a hardware device</secondary></indexterm>protocol through a hardware device, the machine can act as a client or server for a particular type of network. For Samba, we are interested in binding the TCP/IP protocol through a networking device, making the machine a client for Microsoft networks. Thus, when the dialog box appears, you should see at least the Client for Microsoft Networks component installed on the machine, and hopefully a networking device (preferably an Ethernet card) bound to the TCP/IP protocol. If there is only one networking hardware device, you'll see the TCP/IP protocol listed below that device. If it appears similar to <link linkend="ch03-15320">Figure 3.5</link>, the protocol is bound to the device.</para>
+
+
+<para>You may also see <indexterm id="ch03-idx-947979-0"><primary sortas="File and Printer Sharing for Microsoft Networks">"File and Printer Sharing for Microsoft Networks"</primary></indexterm>"File and printer sharing for Microsoft Networks," which is useful. In addition, you might see <indexterm id="ch03-idx-947981-0"><primary>NetBEUI (NetBIOS Extended User Interface)</primary></indexterm>NetBEUI or <indexterm id="ch03-idx-947982-0"><primary>Novell Networking</primary></indexterm>Novell Networking, which are standard with Windows installations but undesirable when TCP/IP is running. Remove NetBEUI if you possibly can&mdash;it's unnecessary and makes debugging Windows browsing difficult. If you don't have any Novell servers on your network, you can remove Novell (IPX/SPX) as well.</para>
+
+
+<sect3 role="" label="3.1.2.1" id="ch03-SECT-1.2.1">
+<title>Adding TCP/IP</title>
+
+
+<para>
+<indexterm id="ch03-idx-947991-0" class="startofrange"><primary>TCP/IP networking protocol</primary><secondary>adding/configuring</secondary></indexterm>If you don't see TCP/IP listed at all, you'll need to install the protocol. If you already have TCP/IP, skip this section, and continue with <link linkend="ch03-48802">Section 3.1.3</link>, later in this chapter.</para>
+
+
+<para>Installing TCP/IP isn't difficult since Microsoft distributes its own version of TCP/IP for free on their installation CD-ROM. You can add the protocol by clicking on the Add button below the component window. Indicate that you wish to add a specific protocol by selecting Protocol and clicking Add... on the following dialog box, which should look similar to <link linkend="ch03-24245">Figure 3.6</link>.</para>
+
+
+<figure label="3.6" id="ch03-24245">
+<title>Selecting a protocol to install</title>
+
+<graphic width="502" depth="195" fileref="figs/sam.0306.gif"></graphic>
+</figure>
+
+<para>After that, select the protocol TCP/IP from manufacturer Microsoft, as shown in <link linkend="ch03-50801">Figure 3.7</link>, then click OK. After doing so, you will be returned to the network dialog. Click OK there to close the dialog box, upon which Windows will install the necessary components from disk and reboot the machine.</para>
+
+
+<figure label="3.7" id="ch03-50801">
+<title>Selecting a protocol to install</title>
+
+<graphic width="502" depth="296" fileref="figs/sam.0307.gif"></graphic>
+</figure>
+</sect3>
+
+
+
+<sect3 role="" label="3.1.2.2" id="ch03-SECT-1.2.2">
+<title>Configuring TCP/IP</title>
+
+
+<para>
+<indexterm id="ch03-idx-948011-0"><primary>configuring TCP/IP networking protocol</primary></indexterm>If you have more than one networking device (for example, both an <indexterm id="ch03-idx-948014-0"><primary>Ethernet adaptor cards</primary><secondary>linking to TCP/IP networking protocol</secondary></indexterm>Ethernet card and a dialup networking <indexterm id="ch03-idx-948015-0"><primary>modem, linking to TCP/IP networking protocol</primary></indexterm>modem), each appropriate hardware device should be "linked" to the TCP/IP protocol with an arrow, as shown in <link linkend="ch03-61576">Figure 3.8</link>. Select the TCP/IP protocol linked to the networking device that will be accessing the Samba network. When it is highlighted, click the<indexterm id="ch03-idx-948019-0"><primary>Properties button (Windows 95/98)</primary></indexterm> Properties button.</para>
+
+
+<figure label="3.8" id="ch03-61576">
+<title>Selecting the correct TCP/IP protocol</title>
+
+<graphic width="502" depth="389" fileref="figs/sam.0308.gif"></graphic>
+</figure>
+
+<para>After doing so, the <indexterm id="ch03-idx-948028-0"><primary>TCP/IP Properties panel (Windows 95/98)</primary></indexterm>TCP/IP Properties panel for that device is displayed, as shown in <link linkend="ch03-73526">Figure 3.9</link>.</para>
+
+
+<figure label="3.9" id="ch03-73526">
+<title>STCP/IP Properties panel</title>
+
+<graphic width="502" depth="303" fileref="figs/sam.0309.gif"></graphic>
+</figure>
+
+<para>There are seven tabs near the top of this panel, and you will need to configure four of them:</para>
+
+
+<itemizedlist>
+<listitem><para>IP address</para></listitem>
+<listitem><para>DNS configuration</para></listitem>
+<listitem><para>WINS configuration</para></listitem>
+<listitem><para>Bindings</para></listitem>
+</itemizedlist>
+</sect3>
+
+
+
+<sect3 role="" label="3.1.2.3" id="ch03-SECT-1.2.3">
+<title>IP Address tab </title>
+
+
+<para>The <indexterm id="ch03-idx-948038-0"><primary>IP Address tab</primary><secondary>Windows 95/98</secondary></indexterm>
+<indexterm id="ch03-idx-948038-1"><primary>DHCP (Dynamic Host Configuration Protocol)</primary></indexterm>IP Address tab is shown in <link linkend="ch03-73526">Figure 3.9</link>. Press the "Specify an IP address" radio button and enter the client's address and subnet <indexterm id="ch03-idx-948214-0"><primary>masks</primary><secondary>subnet</secondary></indexterm>
+<indexterm id="ch03-idx-948214-1"><primary>subnets</primary><secondary>mask</secondary></indexterm>mask in the space provided. You or your network manager should have selected an address for the machine. The values should place the computer on the same subnet as the Samba server. For example, if the server's address is 192.168.236.86, and its network <indexterm id="ch03-idx-948217-0"><primary>masks</primary><secondary>netmasks</secondary></indexterm>
+<indexterm id="ch03-idx-948217-1"><primary>netmasks</primary></indexterm>
+<indexterm id="ch03-idx-948217-2"><primary>network masks</primary><see>netmasks</see></indexterm>mask 255.255.255.0, you might use address 192.168.236.10 (if it is available) for the Windows 98 computer, along with the same netmask as the server. If you already use DHCP on your network to provide IP addresses to Windows machines, select the "Obtain an IP address automatically" button.</para>
+</sect3>
+
+
+
+<sect3 role="" label="3.1.2.4" id="ch03-SECT-1.2.4">
+<title>DNS Configuration tab</title>
+
+
+<para>
+<indexterm id="ch03-idx-948039-0"><primary>DNS Configuration tab</primary></indexterm>Domain Name Service (<indexterm id="ch03-idx-948040-0"><primary>DNS (Domain Name System)</primary></indexterm>
+<indexterm id="ch03-idx-948040-1"><primary>Domain Name System</primary><see>DNS</see></indexterm>DNS) is responsible for translating Internet computer names such as <emphasis>hobbes.example.com</emphasis> into machine-readable IP addresses such as 192.168.236.10. There are two ways to accomplish this on a Windows 98 machine: you can specify a server to do the translation for you or you can keep a local list of name/address pairs to refer to.</para>
+
+
+<para>Networks that are connected to the Internet typically use a server, since the hosts files required would otherwise be huge. For an unconnected LAN, the list of possible hosts is small and well-known and might be kept on a Unix machine in the <emphasis>/etc/hosts</emphasis>
+<indexterm id="ch03-idx-948046-0"><primary sortas="etc/hosts file">/etc/hosts file</primary></indexterm> file. If you are in doubt as to whether a DNS server is being used, or what its address might be, look at the file <emphasis>/etc/resolv.conf</emphasis>
+<indexterm id="ch03-idx-948047-0"><primary sortas="etc/resolv.conf file">/etc/resolv.conf file </primary></indexterm> on your Unix servers. Any machine using DNS will have this file, which looks like:</para>
+
+
+<programlisting>#resolv.conf
+domain example.com
+nameserver 127.0.0.1
+nameserver 192.168.236.20</programlisting>
+
+
+<para>In the example shown, the second <literal>nameserver</literal> line in the list contains the IP address of another machine on the local network: 192.168.236.20. It's a good candidate for a DNS server.<footnote label="1" id="ch03-pgfId-942097">
+
+
+<para>We can disqualify the other address because every Unix machine has a localhost address of 127.0.0.1 whether it is connected to a network or not. This address is required for some system tools to operate correctly.</para>
+
+
+</footnote></para>
+
+
+<para>You must type the correct IP address of one or more DNS servers (note that you <emphasis>cannot</emphasis> use its Internet name, such as <emphasis>dns.oreilly.com</emphasis>) into the appropriate field in <link linkend="ch03-86883">Figure 3.10</link>. Be sure not to use 127.0.0.1&mdash;that will never be the correct DNS server address!</para>
+
+
+<para>Try to select addresses on your own network. Any name servers listed in <emphasis>/etc/resolv.conf</emphasis> should work, but you'll get better performance by using a server nearby. (If you don't find <emphasis>/etc/resolv.conf</emphasis> files on your Unix machines, just disable DNS until you can find the address of at least one DNS server.) Let's assume you only have one DNS server, and its address is 192.168.236.20. Click the Enable DNS radio button, as shown in <link linkend="ch03-86883">Figure 3.10</link>, and add the server's address to the top DNS Server Search Order field.</para>
+
+
+<figure label="3.10" id="ch03-86883">
+<title>The DNS Configuration tab</title>
+
+<graphic width="502" depth="360" fileref="figs/sam.0310.gif"></graphic>
+</figure>
+
+<para>Also, provide the name of the Windows 95/98 machine and the Internet domain you're in. You can safely ignore the Domain Suffix Search Order field for anything related to Samba.</para>
+</sect3>
+
+
+
+<sect3 role="" label="3.1.2.5" id="ch03-SECT-1.2.5">
+<title>WINS Configuration tab</title>
+
+
+<para>
+<indexterm id="ch03-idx-948063-0"><primary>WINS Configuration tab</primary></indexterm>WINS is the <indexterm id="ch03-idx-948065-0"><primary>WINS (Windows Internet Name Service)</primary></indexterm>
+<indexterm id="ch03-idx-948065-1"><primary>Windows Internet Name Service</primary><see>WINS</see></indexterm>Windows Internet Name Service, its version of a <indexterm id="ch03-idx-948066-0"><primary>NetBIOS (Network Basic Input/Output System)</primary><secondary>name server (NBNS)</secondary></indexterm>NetBIOS name server. If you've enabled WINS on Samba, you must tell Windows the Samba server's address. If you are using WINS servers that are entirely Windows NT, enter each of them here as well. The dialog box shown after selecting the WINS Configuration tab is shown in <link linkend="ch03-95608">Figure 3.11</link>.</para>
+
+
+<figure label="3.11" id="ch03-95608">
+<title>The WINS Configuration tab</title>
+
+<graphic width="502" depth="389" fileref="figs/sam.0311.gif"></graphic>
+</figure>
+
+<warning role="ora">
+<para>Do <emphasis>not</emphasis> mix a Samba WINS server and a Windows NT server as a primary/backup combination in the WINS dialog. Because the two cannot replicate their databases, this will cause name resolution to perform incorrectly.</para>
+
+</warning>
+
+<para>From here, select Enable WINS Resolution and enter the <indexterm id="ch03-idx-948058-0"><primary>WINS (Windows Internet Name Service)</primary><secondary>servers</secondary></indexterm>WINS server's address in the space provided, then press Add. Do not enter anything in the Scope ID field.</para>
+</sect3>
+
+
+
+<sect3 role="" label="3.1.2.6" id="ch03-SECT-1.2.6">
+<title>Hosts files</title>
+
+
+<para>
+<indexterm id="ch03-idx-948067-0"><primary>hosts</primary><secondary>files (Windows 95/98)</secondary></indexterm>If you do not have either DNS or WINS, and you don't wish to use <indexterm id="ch03-idx-948070-0"><primary>broadcast resolution</primary></indexterm>broadcast resolution, you'll need to provide a table of IP addresses and hostnames, in the standard Unix <filename>/etc/hosts</filename> format. On a Windows machine, this goes in <indexterm id="ch03-idx-948075-0"><primary sortas="Windows/HOSTS directory">\WINDOWS\HOSTS directory</primary></indexterm>\WINDOWS\HOSTS under whichever drive you installed Windows on (typically C:\). A sample host file follows:</para>
+
+
+<programlisting># 127.0.0.1             localhost
+192.168.236.1       escrime.example.com 	escrime
+192.168.236.2      riposte.example.com 	riposte
+192.168.236.3       wizzin.example.com 	wizzin
+192.168.236.4       touche.example.com 	touche
+192.168.236.10     hobbes.example.com 	hobbes</programlisting>
+
+
+<para>You can copy this file directly from any of your Unix machines' <emphasis>/etc/hosts</emphasis> <indexterm id="ch03-idx-948074-0"><primary sortas="etc/hosts file">/etc/hosts file</primary></indexterm>; the format is identical. However, <emphasis>you should only use hosts files in Windows as a last resort for name resolution</emphasis>
+<indexterm id="ch03-idx-948069-0"><primary>name resolution</primary></indexterm>.</para>
+</sect3>
+
+
+
+<sect3 role="" label="3.1.2.7" id="ch03-SECT-1.2.7">
+<title>Check the bindings</title>
+
+
+<para>The final tab to look at is <indexterm id="ch03-idx-948076-0"><primary>Bindings tab</primary></indexterm>Bindings, as shown in <link linkend="ch03-42906">Figure 3.12</link>.</para>
+
+
+<figure label="3.12" id="ch03-42906">
+<title>The Bindings tab</title>
+
+<graphic width="502" depth="249" fileref="figs/sam.0312.gif"></graphic>
+</figure>
+
+<para>You should have a check beside Client for Microsoft Networks, indicating that it's using TCP/IP. If you have <indexterm id="ch03-idx-948077-0"><primary sortas="File and Printer Sharing for Microsoft Networks">"File and Printer Sharing for Microsoft Networks"</primary></indexterm>"File and printer sharing for Microsoft Networks" in the dialog, it should also be checked, as shown in the figure.<indexterm id="ch03-idx-947986-0" class="endofrange" startref="ch03-idx-947983-0"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="3.1.3" id="ch03-48802">
+<title>Setting Your Name and Workgroup </title>
+
+
+<para>
+<indexterm id="ch03-idx-948082-0"><primary>naming</primary><secondary>TCP/IP networking protocol, setting machine name for</secondary></indexterm>
+<indexterm id="ch03-idx-948082-1"><primary>workgroups</primary><secondary>setting</secondary></indexterm>Finally, press the OK button in the TCP/IP configuration panel, and you'll be taken back to the Network Configuration screen. Then select the <indexterm id="ch03-idx-948078-0"><primary>Identification tab</primary></indexterm>Identification tab, which will take you to the dialog box shown in <link linkend="ch03-42408">Figure 3.13</link>.</para>
+
+
+<figure label="3.13" id="ch03-42408">
+<title>The Identification tab</title>
+
+<graphic width="502" depth="285" fileref="figs/sam.0313.gif"></graphic>
+</figure>
+
+<para>Here, for the second time, set your machine's name. This time, instead of your DNS hostname and domain, you're setting your <indexterm id="ch03-idx-948084-0"><primary>NetBIOS name</primary><secondary>setting</secondary><tertiary>Windows 95/98</tertiary></indexterm>NetBIOS name. However, it is best to make this the <emphasis>same</emphasis> as your hostname. Try not to make a <indexterm id="ch03-idx-948085-0"><primary>spelling, caution with</primary></indexterm>spelling mistake: it can be very confusing to configure a machine if TCP thinks it's <literal>fred</literal> and SMB thinks its <literal>ferd</literal> !</para>
+
+
+<para>You also set your workgroup name here. In our case, it's SIMPLE, but if you used a different one in <link linkend="SAMBA-CH-2">Chapter 2</link>, when creating the Samba configuration file, use that here as well. Try to avoid calling it WORKGROUP or you'll be in the same workgroup as every unconfigured (or ill-configured) machine in the world.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="3.1.4" id="ch03-13238">
+<title>Accessing the Samba Server</title>
+
+
+<para>
+<indexterm id="ch03-idx-948086-0"><primary>Samba server</primary><secondary>accessing</secondary></indexterm>
+<indexterm id="ch03-idx-948086-1"><primary>accessing Samba server</primary></indexterm>Click on the OK button to complete the configuration; you will need to reboot in order for your changes to take effect.</para>
+
+
+<para>Now for the big moment. Your Samba server is running, and you have set up your Windows 95/98 client to communicate with it. After rebooting, log in and double-click the <indexterm id="ch03-idx-948087-0"><primary>Network Neighborhood icon</primary></indexterm>Network Neighborhood icon on the desktop. You should see your Samba server listed as a member of the workgroup, as shown in <link linkend="ch03-88553">Figure 3.14</link>.</para>
+
+
+<figure label="3.14" id="ch03-88553">
+<title>Windows Network Neighborhood</title>
+
+<graphic width="502" depth="139" fileref="figs/sam.0314.gif"></graphic>
+</figure>
+
+<para>Double-clicking the server name will show the resources that the server is offering to the network, as shown in <link linkend="ch03-17463">Figure 3.15</link> (in this case a printer and the <emphasis>test</emphasis> directory).</para>
+
+
+<figure label="3.15" id="ch03-17463">
+<title>Shares on Server</title>
+
+<graphic width="502" depth="152" fileref="figs/sam.0315.gif"></graphic>
+</figure>
+
+<warning role="ora">
+<para>If you are presented with a dialog requesting the password for a user <literal>IPC$</literal>, then Samba did not accept the password that was sent from the client. In this case, the username and the password that were created on the client side <emphasis>must</emphasis> match the username/password combination on the Samba server. If you are using Windows 98 or Windows NT Service Pack 3 or above, this is probably because the client is sending encrypted passwords instead of plaintext passwords. You can remedy this situation by performing two steps on the Samba server. First, add the following entry to the <literal>[global]</literal> section of your Samba configuration file: <literal>encrypt password=yes</literal>. Second, find the <filename>smbpasswd</filename> program on the samba server (it is located in <filename>/usr/local/samba/bin</filename> by default) and use it to add an entry to Samba's encrypted password database. For example, to add user <literal>steve</literal> to Samba's encrypted password database, type <replaceable>smbpasswd  -a steve</replaceable>. The first time you enter this password, the program will output an error message indicating that the password database does not exist; it will then create the database, which is typically stored in <filename>/usr/local/samba/private/smbpasswd</filename>.</para>
+
+</warning>
+
+<para>If you don't see the server listed, start Windows Explorer (not Internet Explorer!) and select <indexterm id="ch03-idx-948088-0"><primary>Map Network Drive option</primary></indexterm>Map Network Drive from the Tools menu. This will give you a dialog box into which you can type the name of your server and the share <literal>test </literal>in the <indexterm id="ch03-idx-948089-0"><primary>Windows UNC format</primary></indexterm>Windows UNC format: <filename>\\</filename><replaceable>server</replaceable><filename>\test</filename>, like we did in the first chapter. This should attempt to contact the Samba server and its temporary share. If things still aren't right, go to <link linkend="SAMBA-CH-9">Chapter 9</link>, for troubleshooting assistance.<indexterm id="ch03-idx-947933-0" class="endofrange" startref="ch03-idx-947927-0"/>
+<indexterm id="ch03-idx-947933-1" class="endofrange" startref="ch03-idx-947927-1"/></para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="3.2" id="ch03-23093">
+<title>Setting Up Windows NT 4.0 Computers</title>
+
+
+<para>
+<indexterm id="ch03-idx-947940-0" class="startofrange"><primary>Windows clients</primary><secondary>configuring</secondary><tertiary>Windows NT 4.0 computers</tertiary></indexterm>
+<indexterm id="ch03-idx-947940-1" class="startofrange"><primary>configuring Windows clients</primary><secondary>Windows NT 4.0 computers</secondary></indexterm>Configuring Windows NT is a little different than configuring Windows 95/98. In order to use Samba with Windows NT, you will need both the Workstation service and the TCP/IP protocol. Both come standard with NT, but we'll work through installing and configuring them because they may not be configured correctly.</para>
+
+
+<para>There are six basic steps:</para>
+
+
+<orderedlist>
+<listitem><para>Assign the machine a name.</para></listitem>
+<listitem><para>Install the Workstation service.</para></listitem>
+<listitem><para>Install the TCP/IP protocol.</para></listitem>
+<listitem><para>Set the machine's name and IP address.</para></listitem>
+<listitem><para>Configure the DNS and WINS name services.</para></listitem>
+<listitem><para>Bind the protocol and service together.</para></listitem>
+</orderedlist>
+
+<sect2 role="" label="3.2.1" id="ch03-SECT-2.1">
+<title>Basic Configuration</title>
+
+
+<para>
+<indexterm id="ch03-idx-948108-0" class="startofrange"><primary>configuring Windows clients</primary><secondary>Windows NT 4.0 computers</secondary><tertiary>basic configuration</tertiary></indexterm>This section presents an outline of the steps to follow for getting Windows NT to cooperate with Samba. If you need more details on Windows NT network administration, refer to Craig Hunt and Robert Bruce Thompsom's <citetitle>Windows NT TCP/IP Network Administration </citetitle>(O'Reilly), an excellent guide. You should perform these steps as the "Administrator" user.</para>
+
+
+<sect3 role="" label="3.2.1.1" id="ch03-SECT-2.1.1">
+<title>Name the machine</title>
+
+
+<para>
+<indexterm id="ch03-idx-948120-0"><primary>naming</primary><secondary>NT computers</secondary></indexterm>
+<indexterm id="ch03-idx-948120-1"><primary>Windows NT</primary><secondary>naming, caution with</secondary></indexterm>The first thing you need to do is to give the machine a <indexterm id="ch03-idx-948122-0"><primary>NetBIOS name</primary><secondary>setting</secondary><tertiary>Windows NT</tertiary></indexterm>NetBIOS name. From the Control Panel, double click on the <indexterm id="ch03-idx-948123-0"><primary>Network icon</primary><secondary>Windows NT</secondary></indexterm>Network icon. This will take you to the <indexterm id="ch03-idx-948124-0"><primary>Network dialog box (Windows NT)</primary></indexterm>Network dialog box for the machine. The first tab in this dialog box should be the Identification tab, as illustrated in <link linkend="ch03-82592">Figure 3.16</link>.</para>
+
+
+<figure label="3.16" id="ch03-82592">
+<title>Network panel Identification tab</title>
+
+<graphic width="502" depth="260" fileref="figs/sam.0316.gif"></graphic>
+</figure>
+
+<para>Here, you need to identify your machine with a name (we use the name Artish here) and change the default workgroup to the one you specified in the <emphasis>smb.conf</emphasis>
+<indexterm id="ch03-idx-948125-0"><primary>smb.conf (Samba configuration) file</primary></indexterm> file of your Samba server. In this case, the workgroup name is SIMPLE. However, you cannot edit either name here (as you could in Windows 95/98), but instead must use the Change button below the two text fields. Pressing this button raises an <indexterm id="ch03-idx-948126-0"><primary>Identification Changes dialog box (Windows NT)</primary></indexterm>Identification Changes dialog box, where you can reset the workgroup and the machine name, as shown in <link linkend="ch03-67735">Figure 3.17</link>.</para>
+
+
+<figure label="3.17" id="ch03-67735">
+<title>Changing the identification</title>
+
+<graphic width="502" depth="360" fileref="figs/sam.0317.gif"></graphic>
+</figure>
+
+<para>
+<indexterm id="ch03-idx-948129-0"><primary>naming</primary><secondary>NT computers</secondary><tertiary>caution with</tertiary></indexterm>A word of warning: you will have to set the machine name again later while configuring TCP/IP, so be sure that the two names match. The name you set here is the NetBIOS name. You're allowed to make it different from the TCP/IP hostname, but doing so is usually not a good thing. Don't worry that Windows NT forces the computer name and the workgroup to be all capital letters; it's smart enough to figure out what you mean when it connects to the network.</para>
+</sect3>
+
+
+
+<sect3 role="" label="3.2.1.2" id="ch03-SECT-2.1.2">
+<title>Installing the TCP/IP protocol</title>
+
+
+<para>
+<indexterm id="ch03-idx-948143-0"><primary>TCP/IP networking protocol</primary><secondary>installing</secondary></indexterm>
+<indexterm id="ch03-idx-948143-1"><primary>installing TCP/IP protocol</primary></indexterm>Next, select the <indexterm id="ch03-idx-948150-0"><primary>Protocols tab</primary></indexterm>Protocols tab in the Network dialog box, and look to see if you have the TCP/IP protocol installed, as shown in <link linkend="ch03-66055">Figure 3.18</link>.</para>
+
+
+<figure label="3.18" id="ch03-66055">
+<title>The Protocols tab</title>
+
+<graphic width="502" depth="257" fileref="figs/sam.0318.gif"></graphic>
+</figure>
+
+<para>If the protocol is not installed, you need to add it. Press the Add button, which will display the <indexterm id="ch03-idx-948148-0"><primary>Select Network Protocol dialog box</primary></indexterm>Select Network Protocol dialog box shown in <link linkend="ch03-22321">Figure 3.19</link>. Unlike Windows 95/98, you should immediately see the TCP/IP protocol as one of the last protocols listed.</para>
+
+
+<figure label="3.19" id="ch03-22321">
+<title>Select Network Protocol dialog box</title>
+
+<graphic width="502" depth="285" fileref="figs/sam.0319.gif"></graphic>
+</figure>
+
+<para>Select TCP/IP<emphasis></emphasis> as the protocol and confirm it. If possible, install only the TCP/IP protocol. You usually do not want <indexterm id="ch03-idx-948149-0"><primary>NetBEUI (NetBIOS Extended User Interface)</primary><secondary>Windows NT computers and</secondary></indexterm>NetBEUI installed because this causes the machine to look for services under two different protocols, only one of which is likely in use.<footnote label="2" id="ch03-pgfId-943371">
+
+
+<para>A common occurrence: after looking at the unused protocol for a while, the machine will time out and try the good one. This fruitless searching gives you terrible performance and mysterious delays.</para>
+
+
+</footnote></para>
+</sect3>
+
+
+
+<sect3 role="" label="3.2.1.3" id="ch03-SECT-2.1.3">
+<title>Installing the Workstation service</title>
+
+
+<para>
+<indexterm id="ch03-idx-948151-0"><primary>Workstation service, installing</primary></indexterm>
+<indexterm id="ch03-idx-948151-1"><primary>installing Workstation service</primary></indexterm>
+<indexterm id="ch03-idx-948151-2"><primary>services</primary><secondary>Workstation</secondary></indexterm>After installing TCP/IP, press the <indexterm id="ch03-idx-948152-0"><primary>Services tab</primary></indexterm>Services tab in the Network panel and check that you have a Workstation service, as shown at the end of the list in <link linkend="ch03-97222">Figure 3.20</link>.</para>
+
+
+<figure label="3.20" id="ch03-97222">
+<title>Network Services panel dialog box</title>
+
+<graphic width="502" depth="289" fileref="figs/sam.0320.gif"></graphic>
+</figure>
+
+<para>This service is actually the <indexterm id="ch03-idx-948153-0"><primary>Microsoft Networking Client</primary></indexterm>Microsoft Networking Client, which allows the machine to access SMB services. The Workstation service is mandatory. The service is installed by default on both <indexterm id="ch03-idx-948154-0"><primary>Windows NT Workstation 4.0</primary></indexterm>
+<indexterm id="ch03-idx-948155-0"><primary>Windows NT Server 4.0</primary></indexterm>Windows NT Workstation 4.0 and <indexterm id="ch03-idx-948159-0"><primary>TCP/IP networking protocol</primary><secondary>installing</secondary></indexterm>
+<indexterm id="ch03-idx-948159-1"><primary>installing TCP/IP protocol</primary></indexterm>Server 4.0. If it's not there, you can install it much like TCP/IP. In this case you need to press the Add button and then select Workstation Service, as shown in <link linkend="ch03-40000">Figure 3.21</link>.</para>
+
+
+<figure label="3.21" id="ch03-40000">
+<indexterm id="ch03-idx-948115-0" class="endofrange" startref="ch03-idx-948108-0"/><title>Select Network Service dialog box </title>
+
+<graphic width="502" depth="285" fileref="figs/sam.0321.gif"></graphic>
+</figure>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="3.2.2" id="ch03-85837">
+<title>Configuring TCP/IP</title>
+
+
+<para>
+<indexterm id="ch03-idx-948163-0" class="startofrange"><primary>TCP/IP networking protocol</primary><secondary>configuring</secondary></indexterm>
+<indexterm id="ch03-idx-948163-1" class="startofrange"><primary>configuring TCP/IP networking protocol</primary></indexterm>After you've installed the Workstation service, return to the <indexterm id="ch03-idx-948172-0"><primary>Protocols tab</primary></indexterm>Protocols tab and select the TCP/IP Protocol entry in the window. Then click the Properties button below the window. The Microsoft TCP/IP Protocol panel will be displayed. There are five tabs on the Windows NT panel, and (like Windows 95/98) you will need to work on three of them:</para>
+
+
+<itemizedlist>
+<listitem><para>IP address</para></listitem>
+<listitem><para>DNS</para></listitem>
+<listitem><para>WINS address</para></listitem>
+</itemizedlist>
+
+<sect3 role="" label="3.2.2.1" id="ch03-SECT-2.2.1">
+<title>IP Address tab</title>
+
+
+<para>
+<indexterm id="ch03-idx-948191-0"><primary>IP Address tab</primary><secondary>Windows NT</secondary></indexterm>The IP Address tab is shown in <link linkend="ch03-97098">Figure 3.22</link>.</para>
+
+
+<figure label="3.22" id="ch03-97098">
+<title>Microsoft TCP/IP Properties for Windows NT</title>
+
+<graphic width="502" depth="380" fileref="figs/sam.0322.gif"></graphic>
+</figure>
+
+<para>
+<indexterm id="ch03-idx-948212-0"><primary>Windows NT</primary><secondary>IP address, setting</secondary></indexterm>
+<indexterm id="ch03-idx-948212-1"><primary>IP address</primary><secondary>setting for Windows NT computers</secondary></indexterm>Select the "Specify an IP address" radio button and enter the computer's address and <indexterm id="ch03-idx-948231-0"><primary>subnets</primary><secondary>mask</secondary></indexterm>
+<indexterm id="ch03-idx-948231-1"><primary>masks</primary><secondary>subnet</secondary></indexterm>subnet mask in the space provided for the proper adapter (Ethernet card). You or your network manager should have selected an address for the client on the same subnet (LAN) as the Samba server. For example, if the server's address is 192.168.236.86 and its network mask 255.255.255.0, you might use the address 192.168.236.10, if it is available, for the NT workstation, along with the same <indexterm id="ch03-idx-948235-0"><primary>netmasks</primary></indexterm>netmask. If you use <indexterm id="ch03-idx-948242-0"><primary>DHCP (Dynamic Host Configuration Protocol)</primary></indexterm>DHCP on your network, select the "Obtain an IP Address from a DHCP server" button.</para>
+
+
+<tip role="ora">
+<para>If you don't have an IP address to use, and you are on a network by yourself, steal ours, as the 192.168.<emphasis>x.x</emphasis> subnet is specifically reserved by the Internic for LANs. If you're not by yourself, see your system administrator for some available addresses on your network.</para>
+
+</tip>
+
+<para>The<indexterm id="ch03-idx-948244-0"><primary>gateway field</primary></indexterm> gateway field refers to a machine typically known as a <emphasis>router</emphasis>
+<indexterm id="ch03-idx-948243-0"><primary>routers, TCP/IP configuring and</primary></indexterm>. If you have routers connecting multiple networks, you should put in the IP address of the one on your subnet.</para>
+</sect3>
+
+
+
+<sect3 role="" label="3.2.2.2" id="ch03-SECT-2.2.2">
+<title>DNS tab</title>
+
+
+<para>
+<indexterm id="ch03-idx-948199-0"><primary>DNS (Domain Name System)</primary><secondary>tab</secondary></indexterm>Next we go to the tab for DNS, as shown in <link linkend="ch03-61878">Figure 3.23</link>. This brings up the DNS panel.</para>
+
+
+<figure label="3.23" id="ch03-61878">
+<title>The DNS panel</title>
+
+<graphic width="502" depth="407" fileref="figs/sam.0323.gif"></graphic>
+</figure>
+
+<para>The <indexterm id="ch03-idx-948248-0"><primary>DNS (Domain Name System)</primary><secondary>configuring</secondary></indexterm>
+<indexterm id="ch03-idx-948248-1"><primary>configuring DNS (Windows NT)</primary></indexterm>Domain Name System (DNS) is responsible for translating human-readable computer names such as <emphasis>atrish.example.com</emphasis> into IP addresses such as 192.168.236.10. There are two ways to accomplish this on a NT machine. First, you can specify a DNS server to do the translation for you, or you can keep a local list of name/address pairs for your workstation to refer to.</para>
+
+
+<para>For a LAN that's not on the Internet, the list of possible hosts is typically small and well known, and may be kept in a file locally. Networks that are connected to the Internet typically use DNS service since it isn't possible to guess ahead of time what addresses you might be accessing out on the net. If you are in doubt as to whether a DNS server is being used, or what its address might be, look at the file <emphasis>/etc/resolv.conf</emphasis> on your Samba server: any machine using DNS will have this file. It looks like the following:</para>
+
+
+<programlisting>#resolv.conf
+domain example.com
+nameserver 127.0.0.1
+nameserver 192.168.236.20</programlisting>
+
+
+<para>In this example, the first nameserver in the list is 127.0.0.1, which indicates that the Samba server is also a DNS server for this LAN.<footnote label="3" id="ch03-pgfId-946587">
+
+
+<para>The address 127.0.0.1 is known as the <emphasis>localhost</emphasis>
+<indexterm id="ch03-idx-948263-0"><primary>localhost</primary><secondary>address</secondary></indexterm> address, and always refers to itself. For example, if you type <literal>ping 127.0.0.1</literal> on a Unix server, you should always get a response, as you're pinging the host itself.</para>
+
+
+</footnote> In that case, you would use its network IP address (not 127.0.0.1, its localhost address) when filling in the DNS Configuration dialog box. Otherwise, use the other addresses you find in the lines beginning with <literal>nameserver</literal>. Try to select ones on your own network. Any name servers listed in <emphasis>/etc/resolv.conf</emphasis> should work, but you'll get better performance by using a server nearby.</para>
+
+
+<para>Finally, enter the machine name once more, making sure that it's the same one listed in the Identification tab of the Network dialog box (before the NetBIOS name). Also, enter the DNS domain on which this machine resides. For example, if your workstation has a domain name such as <emphasis>example.com</emphasis>, enter it here. You can safely ignore the other options.</para>
+</sect3>
+
+
+
+<sect3 role="" label="3.2.2.3" id="ch03-SECT-2.2.3">
+<title>WINS Address tab</title>
+
+
+<para>
+<indexterm id="ch03-idx-948207-0"><primary>WINS Address tab (Windows NT panel)</primary></indexterm>
+<indexterm id="ch03-idx-948207-1"><primary>WINS (Windows Internet Name Service)</primary><secondary>address, configuring</secondary></indexterm>
+<indexterm id="ch03-idx-948207-2"><primary>configuring WINS address</primary></indexterm>If you are not using a DNS server, you still need a way of translating NetBIOS names to addresses and back again. We recommend that you configure both DNS and WINS; <indexterm id="ch03-idx-948268-0"><primary>Windows NT</primary><secondary>WINS address and</secondary></indexterm>NT has a preference for WINS and WINS can use DNS as a fallback if  it cannot resolve any machine address. The WINS Address tab is shown in <link linkend="ch03-20855">Figure 3.24</link>.</para>
+
+
+<figure label="3.24" id="ch03-20855">
+<title>The WINS Address tab</title>
+
+<graphic width="502" depth="342" fileref="figs/sam.0324.gif"></graphic>
+</figure>
+
+<para>If you have a WINS server, enter its address in the space marked Primary WINS Server. If your Samba server is providing WINS service (in other words, you have the line <literal>wins</literal> <literal>service</literal> <literal>=</literal> <literal>yes</literal> in the <emphasis>smb.conf</emphasis> file of your Samba server), provide the Samba server's IP address here. Otherwise, provide the address of another WINS server on your network.</para>
+
+
+<para>You probably noticed that there is a field here for the adaptor; this field must specify the <indexterm id="ch03-idx-948269-0"><primary>Ethernet adaptor cards</primary></indexterm>Ethernet adaptor that you're running TCP/IP on so that WINS will provide name service on the correct network. If you have both a LAN and a dialup adaptor, make sure you have the LAN's adaptor here.</para>
+
+
+<para>Finally, select the "Enable DNS for Windows Resolution" checkbox, so WINS will try <indexterm id="ch03-idx-948270-0"><primary>DNS (Domain Name System)</primary><secondary sortas="fallback for WINS address">as fallback for WINS address</secondary></indexterm>DNS as a fallback if it can't find a name. You can safely ignore the other options.</para>
+</sect3>
+
+
+
+<sect3 role="" label="3.2.2.4" id="ch03-SECT-2.2.4">
+<title>Hosts files</title>
+
+
+<para>
+<indexterm id="ch03-idx-948271-0"><primary>hosts</primary><secondary>files (Windows NT computers)</secondary></indexterm>If you don't have either DNS or WINS, and you don't wish to use broadcast name resolution, you'll need to provide a table of IP addresses and hosts names, in standard Unix <filename>/etc/hosts</filename> format. We recommend against this because maintenance of this file on any dynamic network is troublesome, but we will explain it just the same. The Windows host file should appear in the <emphasis>\WINDOWS\HOSTS</emphasis>
+<indexterm id="ch03-idx-948273-0"><primary sortas="WINDOWS\HOSTS directory">\WINDOWS\HOSTS directory</primary></indexterm> directory of whatever local drive Windows is installed on. A sample follows:</para>
+
+
+<programlisting>127.0.0.1       localhost
+192.168.236.1    escrime    escrime.example.com
+192.168.236.2    riposte    riposte.example.com
+192.168.236.3    wizzin     wizzin.example.com
+192.168.236.4    touche     touche.example.com
+192.168.236.5    gurgi      gurgi.example.com
+192.168.236.6    jessiac    jessiac.example.com
+192.168.236.7    skyline    skyline.example.com</programlisting>
+
+
+<para>If you wish, you can copy the contents directly from the Samba server's<filename> /etc/hosts</filename>. The format is identical. This file will then serve the same purpose as the hosts file on the Unix server. Again, <emphasis>hosts</emphasis> files on Windows should only be used as a last resort.</para>
+</sect3>
+
+
+
+<sect3 role="" label="3.2.2.5" id="ch03-SECT-2.2.5">
+<title>Bindings</title>
+
+
+<para>The term <firstterm>bindings</firstterm>
+<indexterm id="ch03-idx-948274-0"><primary>bindings</primary></indexterm>
+<indexterm id="ch03-idx-948274-1"><primary>service bindings</primary></indexterm> is a way of saying "connected together at configuration time." It means that the TCP/IP protocol will channel through the Ethernet card (instead of, say, a dialup connection), and is actually connected properly. If you return to the Network dialog box and set the Show field to "all services" and click on all the + buttons in the tree, you should see a display similar to <link linkend="ch03-83060">Figure 3.25</link>.</para>
+
+
+<figure label="3.25" id="ch03-83060">
+<title>Service bindings</title>
+
+<graphic width="502" depth="332" fileref="figs/sam.0325.gif"></graphic>
+</figure>
+
+<para>This means that the Workstation, Server, and NetBIOS interface services are connected to the WINS client. This is the correct binding for Microsoft TCP/IP.<indexterm id="ch03-idx-948166-0" class="endofrange" startref="ch03-idx-948163-0"/>
+<indexterm id="ch03-idx-948166-1" class="endofrange" startref="ch03-idx-948163-1"/></para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="3.2.3" id="ch03-SECT-2.3">
+<title>Connecting to the Samba Server</title>
+
+
+<para>
+<indexterm id="ch03-idx-948286-0"><primary>Samba server</primary><secondary>connecting to</secondary></indexterm>You can safely leave the default values for the remainder of the tabs in the Network dialog box. Click on the OK button to complete the configuration. Once the proper files are loaded (if any), you will need to reboot in order for your changes to take effect.</para>
+
+
+<para>Now for the big moment. Your Samba server is running and you have set up your NT client to communicate with it. After the machine reboots, login and double-click the <indexterm id="ch03-idx-948283-0"><primary>Network Neighborhood icon</primary><secondary>viewing Samba server</secondary></indexterm>
+<indexterm id="ch03-idx-948283-1"><primary>Samba server</primary><secondary>viewing via Network Neighborhood icon</secondary></indexterm>Network Neighborhood icon on the desktop, and you should see your Samba server listed as a member of the workgroup, as shown in <link linkend="ch03-50785">Figure 3.26</link>.</para>
+
+
+<figure label="3.26" id="ch03-50785">
+<title>Windows NT Network Neighborhood</title>
+
+<graphic width="502" depth="163" fileref="figs/sam.0326.gif"></graphic>
+</figure>
+
+<para>
+<indexterm id="ch03-idx-949153-0"><primary>Samba server</primary><secondary>resources offered</secondary></indexterm>Double-clicking the server name will show the resources that the server is offering to the network, as shown in <link linkend="ch03-89532">Figure 3.27</link>. In this case, the test and the default printer are offered to the Window NT workstation. For more information, see the warning under <link linkend="ch03-13238">Section 3.1.4</link> earlier in this chapter.</para>
+
+
+<figure label="3.27" id="ch03-89532">
+<title>Server's shares</title>
+
+<graphic width="502" depth="152" fileref="figs/sam.0327.gif"></graphic>
+</figure>
+
+<warning role="ora">
+<para>If you are presented with a dialog requesting the password for a user <literal>IPC$</literal>, then Samba did not accept the password that was sent from the client. In this case, the username and the password that were created on the client side <emphasis>must</emphasis> match the username/password combination on the Samba server. If you are using Windows 98 or Windows NT Service Pack 3 or above, this is probably because the client is sending encrypted passwords instead of plaintext passwords. You can remedy this situation by performing two steps on the Samba server. First, add the following entry to the <literal>[global]</literal> section of your Samba configuration file: <literal>encrypt password=yes</literal>. Second, find the <filename>smbpasswd</filename> program on the samba server (it is located in <filename>/usr/local/samba/bin</filename> by default) and use it to add an entry to Samba's encrypted password database. For example, to add user <literal>steve</literal> to Samba's encrypted password database, type <replaceable>smbpasswd  -a steve</replaceable>. The first time you enter this password, the program will output an error message indicating that the password database does not exist; it will then create the database, which is typically stored in <filename>/usr/local/samba/private/smbpasswd</filename>.</para>
+
+</warning>
+
+<para>If you don't see the server listed, don't panic. Start the Windows NT Explorer (not Internet Explorer!) and select Map Network Drive from the Tools menu. A dialog box appears that allows you to type the name of your server and its share directory in Windows format. For example, you would enter <filename>\\</filename><replaceable>server</replaceable><filename>\temp</filename> if your server happened to be named "server." If things still aren't right, go directly to <link linkend="ch09-29538">Section 9.2</link> in <link linkend="SAMBA-CH-9">Chapter 9</link>, to see if you can troubleshoot what is wrong with the network.</para>
+
+
+<para>If it works, congratulations! Try writing to the server and sending data to the network printer. You will be pleasantly surprised how seamlessly everything works! Now that you've finished setting up the Samba server and its clients, we can starting talking about how Samba works and how to configure it to your liking. <indexterm id="ch03-idx-947946-0" class="endofrange" startref="ch03-idx-947940-0"/>
+<indexterm id="ch03-idx-947946-1" class="endofrange" startref="ch03-idx-947940-1"/></para>
+</sect2>
+</sect1>
+
+
+
+
+
+
+
+
+
+<sect1 role="" label="3.3" id="ch03-64069">
+<title>An Introduction to SMB/CIFS</title>
+
+
+<para>
+<indexterm id="ch03-idx-948288-0" class="startofrange"><primary>SMB (Server Message Block)</primary></indexterm>We'll wrap up this chapter with a short tutorial on SMB/CIFS. SMB/CIFS is the protocol that Windows 95/98 and NT machines use to communicate with the Samba server and each other. At a high level, the SMB protocol suite is relatively simple. It includes commands for all of the file and print operations that you might do on a local disk or printer, such as:</para>
+
+
+<itemizedlist>
+<listitem><para> Opening and closing a file</para></listitem>
+<listitem><para> Creating and deleting files and directories</para></listitem>
+<listitem><para> Reading and writing a file</para></listitem>
+<listitem><para> Searching for files</para></listitem>
+<listitem><para> Queueing and dequeueing files to a print spool</para></listitem>
+</itemizedlist>
+
+<para>Each of these operations can be encoded into an SMB message and transmitted to and from a server. The original name SMB comes from their data format: these are versions of the standard DOS system-call data structures, or <firstterm>Server Message Blocks</firstterm>, redesigned for transmitting to another machine across a network.</para>
+
+
+<sect2 role="" label="3.3.1" id="ch03-SECT-3.1">
+<title>SMB Format</title>
+
+
+<para>
+<indexterm id="ch03-idx-948317-0"><primary>SMB (Server Message Block)</primary><secondary>format of</secondary></indexterm>Richard <indexterm id="ch03-idx-948318-0"><primary>Sharpe, Richard</primary></indexterm>Sharpe of the Samba team defines SMB as a "request-response" protocol.<footnote label="4" id="ch03-pgfId-942928">
+
+
+<para>See <systemitem role="url">http://anu.samba.org/cifs/docs/what-is-smb.html</systemitem> for Richard's excellent summary of SMB.</para>
+
+
+</footnote> In effect, this means that a client sends an SMB request to a server, and the server sends an <indexterm id="ch03-idx-948320-0"><primary>SMB (Server Message Block)</primary><secondary>resources for further information</secondary></indexterm>
+<indexterm id="ch03-idx-948320-1"><primary>URLs (uniform resource locators)</primary><secondary>SMB (Server Message Block)</secondary></indexterm>SMB response back to the client. Rarely does a server send a message that is not in response to a client.</para>
+
+
+<para>An SMB message is not as complex as you might think. Let's take a closer look at the internal structure of such a message. It can be broken down into two parts: the <firstterm>header</firstterm>
+<indexterm id="ch03-idx-948321-0"><primary>header, SMB</primary></indexterm>, which is a fixed size, and the <firstterm>command string</firstterm>, whose size can vary dramatically based on the contents of the message.</para>
+
+
+<sect3 role="" label="3.3.1.1" id="ch03-SECT-3.1.1">
+<title>SMB header format</title>
+
+
+<para><link linkend="ch03-31015">Table 3.1</link> shows the format of an SMB header. SMB commands are not required to use all the fields in the SMB header. For example, when a client first attempts to connect to a server, it does not yet have a <indexterm id="ch03-idx-948332-0"><primary>tree identifier (TID)</primary></indexterm>
+<indexterm id="ch03-idx-948332-1"><primary>TID (tree identifier)</primary></indexterm>tree identifier (TID) value&mdash;one is assigned after it successfully connects&mdash;so a <indexterm id="ch03-idx-948333-0"><primary>null TID</primary></indexterm>null TID (0xFFFF) is placed in its header field. Other fields may be padded with zeros when not used.</para>
+
+
+<para>The fields of the SMB header are listed in <link linkend="ch03-31015">Table 3.1</link>.</para>
+
+
+<table label="3.1" id="ch03-31015">
+<title>SMB Header Fields  </title>
+
+<tgroup cols="3">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Field</para></entry>
+
+<entry colname="col2"><para>Size (bytes)</para></entry>
+
+<entry colname="col3"><para>Description</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>0xFF 'SMB'</literal></para></entry>
+
+<entry colname="col2"><para><literal>1</literal></para></entry>
+
+<entry colname="col3"><para>
+<indexterm id="ch03-idx-948337-0"><primary>SMB (Server Message Block)</primary><secondary>header</secondary></indexterm>Protocol identifier</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>COM</literal></para></entry>
+
+<entry colname="col2"><para><literal>1</literal></para></entry>
+
+<entry colname="col3"><para>Command code, from 0x00 to 0xFF</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>RCLS</literal></para></entry>
+
+<entry colname="col2"><para><literal>1</literal></para></entry>
+
+<entry colname="col3"><para>Error class</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>REH</literal></para></entry>
+
+<entry colname="col2"><para><literal>1</literal></para></entry>
+
+<entry colname="col3"><para>Reserved</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>ERR</literal></para></entry>
+
+<entry colname="col2"><para><literal>2</literal></para></entry>
+
+<entry colname="col3"><para>Error code</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>REB</literal></para></entry>
+
+<entry colname="col2"><para><literal>1</literal></para></entry>
+
+<entry colname="col3"><para>Reserved</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>RES</literal></para></entry>
+
+<entry colname="col2"><para><literal>14</literal></para></entry>
+
+<entry colname="col3"><para>Reserved</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>TID</literal></para></entry>
+
+<entry colname="col2"><para><literal>2</literal></para></entry>
+
+<entry colname="col3"><para>Tree identifier; a unique ID for a resource in use by client</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>PID</literal></para></entry>
+
+<entry colname="col2"><para><literal>2</literal></para></entry>
+
+<entry colname="col3"><para>Caller process ID</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>UID</literal></para></entry>
+
+<entry colname="col2"><para><literal>2</literal></para></entry>
+
+<entry colname="col3"><para>User identifier</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>MID</literal></para></entry>
+
+<entry colname="col2"><para><literal>2</literal></para></entry>
+
+<entry colname="col3"><para>Multiplex identifier; used to route requests inside a process</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+</sect3>
+
+
+
+<sect3 role="" label="3.3.1.2" id="ch03-SECT-3.1.2">
+<title>SMB command format</title>
+
+
+<para><firstterm></firstterm>
+<indexterm id="ch03-idx-948328-0"><primary>command string, SMB</primary></indexterm>Immediately after the header is a variable number of bytes that constitute an SMB command or reply. Each command, such as Open File (COM field identifier: <literal>SMBopen</literal>) or Get Print Queue (<literal>SMBsplretq </literal>), has its own set of parameters and data. Like the SMB header fields, not all of the command fields need to be filled, depending on the specific command. For example, the Get Server Attributes (<literal>SMBdskattr</literal>) command sets the WCT and BCC fields to zero. The fields of the command segment are shown in <link linkend="ch03-38178">Table 3.2</link>.</para>
+
+
+<table label="3.2" id="ch03-38178">
+<title>SMB Command Contents </title>
+
+<tgroup cols="3">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Field</para></entry>
+
+<entry colname="col2"><para>Size in Bytes</para></entry>
+
+<entry colname="col3"><para>Description</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para><literal>WCT</literal></para></entry>
+
+<entry colname="col2"><para><literal>1</literal></para></entry>
+
+<entry colname="col3"><para><firstterm></firstterm>
+<indexterm id="ch03-idx-948340-0"><primary>SMB (Server Message Block)</primary><secondary>command string</secondary></indexterm>Word count</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>VWV</literal></para></entry>
+
+<entry colname="col2"><para>Variable</para></entry>
+
+<entry colname="col3"><para>Parameter words (size given by WCT)</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>BCC</literal></para></entry>
+
+<entry colname="col2"><para><literal>2</literal></para></entry>
+
+<entry colname="col3"><para>Parameter byte count</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para><literal>DATA</literal></para></entry>
+
+<entry colname="col2"><para>Variable</para></entry>
+
+<entry colname="col3"><para>Data (size given by BCC)</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>Don't worry if you don't understand each of these fields; they are not necessary for using Samba at an administrator level. However, they do come in handy when debugging system messages. We will show you some of the more common SMB messages that clients and servers send using a modified version of <filename>tcpdump</filename> later in this section. (If you would like an SMB sniffer with a graphical interface, try "ethereal," which uses the GTK libraries; see the Samba homepage for more information on this tool.)</para>
+
+
+<tip id="ch03-resources-for-further-information" role="ora">
+<para>If you would like more information on each of the commands for the SMB protocol, see the SMB/CIFS documentation at <systemitem role="ftpurl">ftp://ftp.microsoft.com/developr/drg/CIFS/</systemitem>.</para>
+
+</tip>
+</sect3>
+
+
+
+<sect3 role="" label="3.3.1.3" id="ch03-SECT-3.1.3">
+<title>SMB variations</title>
+
+
+<para>The SMB protocol has been extended with new commands several times since its inception. Each new version is backwards compatible with the previous versions. This makes it quite possible for a LAN to have various clients and servers running different versions of the SMB protocol at once.</para>
+
+
+<para><link linkend="ch03-67366">Table 3.3</link> outlines the major versions of the SMB protocol. Within each "dialect" of SMB are many sub-versions that include commands supporting particular releases of major operating systems. The ID string is used by clients and servers to determine what level of the protocol they will speak to each other.</para>
+
+
+<table label="3.3" id="ch03-67366">
+<title>SMB Protocol Dialects </title>
+
+<tgroup cols="3">
+<colspec colnum="1" colname="col1"/>
+<colspec colnum="2" colname="col2"/>
+<colspec colnum="3" colname="col3"/>
+<thead>
+<row>
+
+<entry colname="col1"><para>Protocol Name</para></entry>
+
+<entry colname="col2"><para>ID String</para></entry>
+
+<entry colname="col3"><para>Used By</para></entry>
+
+</row>
+
+</thead>
+
+<tbody>
+<row>
+
+<entry colname="col1"><para>Core</para></entry>
+
+<entry colname="col2"><para><literal>PC NETWORK PROGRAM 1.0</literal></para></entry>
+
+<entry colname="col3"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Core Plus</para></entry>
+
+<entry colname="col2"><para><literal>MICROSOFT NETWORKS 1.03 </literal></para></entry>
+
+<entry colname="col3"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>LAN Manager 1.0</para></entry>
+
+<entry colname="col2"><para><literal>LANMAN1.0</literal></para></entry>
+
+<entry colname="col3"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>LAN Manager 2.0</para></entry>
+
+<entry colname="col2"><para><literal>LM1.2X002</literal></para></entry>
+
+<entry colname="col3"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>LAN Manager 2.1</para></entry>
+
+<entry colname="col2"><para><literal>LANMAN2.1</literal></para></entry>
+
+<entry colname="col3"></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>NT LAN Manager 1.0</para></entry>
+
+<entry colname="col2"><para><literal>NT LM 0.12</literal></para></entry>
+
+<entry colname="col3"><para>Windows NT 4.0</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Samba's NT LM 0.12</para></entry>
+
+<entry colname="col2"><para><literal>Samba</literal></para></entry>
+
+<entry colname="col3"><para>Samba</para></entry>
+
+</row>
+
+<row>
+
+<entry colname="col1"><para>Common Internet File System</para></entry>
+
+<entry colname="col2"><para><literal>CIFS 1.0</literal></para></entry>
+
+<entry colname="col3"><para>Windows 2000</para></entry>
+
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+
+<para>Samba implements the <literal>NT</literal> <literal>LM</literal> <literal>0.12</literal> specification for NT LAN Manager 1.0. It is backwards compatible with all of the other SMB variants. The CIFS specification is, in reality, LAN Manager 0.12 with a few specific additions.</para>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="3.3.2" id="ch03-SECT-3.2">
+<title>SMB Clients and Servers</title>
+
+
+<para>As mentioned earlier, SMB is a client/server protocol. In the purest sense, this means that a client sends a request to a server, which acts on the request and returns a reply. However, the client/server roles can often be reversed, sometimes within the context of a single SMB session. For example, consider the two Windows 95/98 computers in <link linkend="ch03-69480">Figure 3.28</link>. The computer named WIZZIN shares a printer to the network, and the computer named ESCRIME shares a disk directory. WIZZIN is in the client role when accessing ESCRIME's network drive, and in the server role when printing a job for ESCRIME.</para>
+
+
+<figure label="3.28" id="ch03-69480">
+<title>Two computers that both have resources to share</title>
+
+<graphic width="502" depth="153" fileref="figs/sam.0328.gif"></graphic>
+</figure>
+
+<para>This brings out an important point in Samba terminology:</para>
+
+
+<itemizedlist>
+<listitem><para>A <firstterm>server</firstterm> is a machine with a resource to share.</para></listitem>
+<listitem><para>A <firstterm>client</firstterm> is a machine that wishes to use that resource.</para></listitem>
+<listitem><para>A server can be a client (of another computer's resource) at any given time.</para></listitem>
+</itemizedlist>
+
+<para>Note that there are no implications as to the amount of resources that make up a server, or whether it has a large disk space or fast processor. A server could be an old 486 with a printer attached to it, or it could be an UltraSparc station with a 10 gigabyte disk service.</para>
+
+
+<para>Microsoft Windows products have both the SMB client and server built in to the operating system. <indexterm id="ch03-idx-948356-0"><primary>Windows NT</primary><secondary>client/server and</secondary></indexterm>Wndows NT 4.0 uses a newer SMB protocol than Windows for Workgroups, and it offers an enhanced form of network security which will be discussed in <link linkend="SAMBA-CH-6">Chapter 6</link>. In addition, there are a large number of commercial <indexterm id="ch03-idx-948361-0"><primary>SMB (Server Message Block)</primary><secondary>commercial products for</secondary></indexterm>SMB server products available from companies such as Sun, Compaq, SCO, Hewlett-Packard, Syntax, and IBM. Unfortunately, on the client side there are far fewer offerings, limited mainly to Digital Equipment's Pathworks product, and of course, Samba.</para>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="3.3.3" id="ch03-SECT-3.3">
+<title>A Simple SMB Connection</title>
+
+
+<para>
+<indexterm id="ch03-idx-948363-0"><primary>SMB (Server Message Block)</primary><secondary>making a simple connection</secondary></indexterm>
+<indexterm id="ch03-idx-948363-1"><primary>connections</primary><secondary>SMB</secondary></indexterm>Before we close this chapter, let's take a look at a simple SMB connection. This is some pretty technical data&mdash;which isn't really necessary to administer Samba&mdash;so you can skip over it if you like. We present this information largely as a way to help you get familiar with how the SMB protocol negotiates connections with other computers on the network.</para>
+
+
+<para>There are four steps that the client and server must complete in order to establish a connection to a resource:</para>
+
+
+<orderedlist>
+<listitem><para> Establish a virtual connection.</para></listitem>
+<listitem><para> Negotiate the protocol variant to speak.</para></listitem>
+<listitem><para> Set session parameters.</para></listitem>
+<listitem><para> Make a tree connection to a resource.</para></listitem>
+</orderedlist>
+
+<para>We will examine each of these steps through the eyes of a useful tool that we mentioned earlier: the modified <filename>tcpdump</filename>
+<indexterm id="ch03-idx-948362-0"><primary>tcpdump utility</primary></indexterm>
+<indexterm id="ch03-idx-948362-1"><primary>downloads</primary><secondary>tcpdump utility</secondary></indexterm> that is available from the Samba web site.</para>
+
+
+<tip role="ora">
+<para>You can download this program at <filename>samba.org</filename> in the <filename>samba/ftp/tcpdump-smb</filename> directory; the latest version as of this writing is 3.4-5. Use this program as you would use the standard <filename>tcpdump</filename> application, but add the <literal>-s 1500</literal> switch to ensure that you get the whole packet and not just the first few bytes.</para>
+
+</tip>
+
+<sect3 role="" label="3.3.3.1" id="ch03-SECT-3.3.1">
+<title>Establishing a virtual connection</title>
+
+
+<para>
+<indexterm id="ch03-idx-948365-0"><primary>connections</primary><secondary>virtual</secondary></indexterm>
+<indexterm id="ch03-idx-948365-1"><primary>virtual connection</primary></indexterm>When a user first makes a request to access a network disk or send a print job to a remote printer, NetBIOS takes care of making a connection at the <indexterm id="ch03-idx-948366-0"><primary>session layer, connection at</primary></indexterm>session layer. The result is a bidirectional virtual channel between the client and server. In reality, there are only two messages that the client and server need to establish this connection. This is shown in the following example session request and response, as captured by <filename>tcpdump</filename> :</para>
+
+
+<programlisting>&gt;&gt;&gt; NBT Packet
+NBT Session Request
+Flags=0x81000044
+Destination=ESCRIME      NameType=0x20 (Server)
+Source=WIZZIN            NameType=0x00 (Workstation)
+
+&gt;&gt;&gt; NBT Packet
+NBT Session Granted
+Flags=0x82000000</programlisting>
+</sect3>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="3.3.4" id="ch03-SECT-3.4">
+<title>Negotiating the Protocol Variant</title>
+
+
+<para>
+<indexterm id="ch03-idx-948367-0"><primary>protocols</primary><secondary>variant, negotiating</secondary></indexterm>At this point, there is an open channel between the client and server. Next, the client sends a message to the server to negotiate an SMB protocol. As mentioned earlier, the client sets its <indexterm id="ch03-idx-948373-0"><primary>tree identifier (TID)</primary></indexterm>
+<indexterm id="ch03-idx-948373-1"><primary>TID (tree identifier)</primary></indexterm>tree identifier (TID) field to zero, since it does not yet know what TID to use. A <emphasis>tree identifier</emphasis> is a number that represents a connection to a share on a server.</para>
+
+
+<para>The command in the message is <literal>SMBnegprot</literal>, a request to negotiate a protocol variant that will be used for the entire session. Note that the client sends to the server a list of all of the variants that it can speak, not vice versa.</para>
+
+
+<para>The server responds to the <literal>SMBnegprot</literal> request with an index into the list of variants that the client offered, starting with index 0, or with the value 0xFF if none of the protocol variants are acceptable. Continuing this example, the server responds with the value 5, which indicates that the <literal>NT</literal> <literal>LM</literal> <literal>0.12</literal> dialect will be used for the remainder of the session:</para>
+
+
+<programlisting>&gt;&gt;&gt; NBT Packet
+NBT Session Packet
+Flags=0x0
+Length=154
+
+SMB PACKET: SMBnegprot (REQUEST)
+SMB Command   =  0x72
+Error class   =  0x0
+Error code    =  0
+Flags1        =  0x0
+Flags2        =  0x0
+Tree ID       =  0
+Proc ID       =  5371
+UID           =  0
+MID           =  385
+Word Count    =  0
+Dialect=PC NETWORK PROGRAM 1.0
+Dialect=MICROSOFT NETWORKS 3.0
+Dialect=DOS LM1.2X002
+Dialect=DOS LANMAN2.1
+Dialect=Windows for Workgroups 3.1a
+Dialect=NT LM 0.12
+
+&gt;&gt;&gt; NBT Packet
+NBT Session Packet
+Flags=0x0
+Length=69
+
+SMB PACKET: SMBnegprot (REPLY)
+SMB Command   =  0x72
+Error class   =  0x0
+Error code    =  0
+Flags1        =  0x0
+Flags2        =  0x1
+Tree ID       =  0
+Proc ID       =  5371
+UID           =  0
+MID           =  385
+Word Count    =  02
+[000] 05 00</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="3.3.5" id="ch03-SECT-3.5">
+<title>Set Session and Login Parameters</title>
+
+
+<para>
+<indexterm id="ch03-idx-948377-0"><primary>session parameters, setting</primary></indexterm>
+<indexterm id="ch03-idx-948377-1"><primary>login parameters, setting</primary></indexterm>The next step is to transmit session and login parameters for the session. This includes the account name and password (if there is one), the workgroup name, the maximum size of data that can be transferred, and the number of pending requests that may be in the queue at any one time.</para>
+
+
+<para>In the following example, the Session Setup command presented allows for an additional SMB command to be piggybacked onto it. The letter X at the end of the command name indicates this, and the hexadecimal code of the second command is given in the <literal>Com2</literal> field. In this case the command is <literal>0x75</literal>, which is the Tree Connect and X command. The <literal>SMBtconX</literal> message looks for the name of the resource in the <command>smb_buf</command> buffer. (This is the last field listed in the following request.) In this example, <command>smb_buf</command> contains the string <literal>\\ESCRIME\PUBLIC</literal>, which is the full pathname to a shared directory on node ESCRIME. Using the "and X" commands like this speeds up each transaction, since the server doesn't have to wait on the client to make a second request.</para>
+
+
+<para>Note that the <indexterm id="ch03-idx-948382-0"><primary>TID (tree identifier)</primary></indexterm>
+<indexterm id="ch03-idx-948382-1"><primary>tree identifier (TID)</primary></indexterm>TID is still zero. The server will provide a TID to the client once the session has been established and a connection has been made to the requested resource. In addition, note that the password is sent in the open. We can change this later using encrypted passwords:</para>
+
+
+<programlisting>&gt;&gt;&gt; NBT Packet
+NBT Session Packet
+Flags=0x0
+Length=139
+
+SMB PACKET: SMBsesssetupX (REQUEST)
+SMB Command   =  0x73
+Error class   =  0x0
+Error code    =  0
+Flags1        =  0x10
+Flags2        =  0x0
+Tree ID       =  0
+Proc ID       =  5371
+UID           =  1
+MID           =  385
+Word Count    =  13
+Com2=0x75
+Res1=0x0
+Off2=106
+MaxBuffer=2920
+MaxMpx=2
+VcNumber=0
+SessionKey=0x1FF2
+CaseInsensitivePasswordLength=1
+CaseSensitivePasswordLength=1
+Res=0x0
+Capabilities=0x1
+Pass1&amp;Pass2&amp;Account&amp;Domain&amp;OS&amp;LanMan=
+  KRISTIN PARKSTR Windows 4.0 Windows 4.0
+PassLen=2
+Passwd&amp;Path&amp;Device=
+smb_bcc=22
+smb_buf[]=\\ESCRIME\PUBLIC</programlisting>
+</sect2>
+
+
+
+
+
+<sect2 role="" label="3.3.6" id="ch03-SECT-3.6">
+<title>Making Connection to a Resource</title>
+
+
+<para>
+<indexterm id="ch03-idx-948383-0"><primary>connections</primary><secondary>resources, connecting to</secondary></indexterm>
+<indexterm id="ch03-idx-948383-1"><primary>resources, connecting to</primary></indexterm>For the final step, the server returns a TID to the client, indicating that the user has been authorized access and that the resource is ready to be used. It also sets the <command>ServiceType</command> field to "A" to indicate that this is a file service. Available service types are:</para>
+
+
+<itemizedlist>
+<listitem><para> "A" for a disk or file</para></listitem>
+<listitem><para> "LPT1" for a spooled output</para></listitem>
+<listitem><para> "COMM" for a direct-connect printer or modem</para></listitem>
+<listitem><para> "IPC" for a named pipe</para></listitem>
+</itemizedlist>
+
+<para>The output is:</para>
+
+
+<programlisting>&gt;&gt;&gt; NBT Packet
+NBT Session Packet
+Flags=0x0
+Length=78
+
+SMB PACKET: SMBsesssetupX (REPLY)
+SMB Command   =  0x73
+Error class   =  0x0
+Error code    =  0
+Flags1        =  0x80
+Flags2        =  0x1
+Tree ID       =  121
+Proc ID       =  5371
+UID           =  1
+MID           =  385
+Word Count    =  3
+Com2=0x75
+Off2=68
+Action=0x1
+[000] Unix Samba 1.9.1
+[010] PARKSTR
+
+SMB PACKET: SMBtconX (REPLY) (CHAINED)
+smbvwv[]=
+Com2=0xFF
+Off2=78
+smbbuf[]=
+ServiceType=A:</programlisting>
+
+
+<para>Now that a TID has been assigned, the client may issue any sort of command that it would use on a local disk drive. It can open files, read and write to them, delete them, create new files, search for filenames, and so<indexterm id="ch03-idx-948291-0" class="endofrange" startref="ch03-idx-948288-0"/> on.<indexterm id="ch03-idx-947921-0" class="endofrange" startref="ch03-idx-947918-0"/>
+<indexterm id="ch03-idx-947921-1" class="endofrange" startref="ch03-idx-947918-1"/></para>
+</sect2>
+</sect1>
+</chapter>

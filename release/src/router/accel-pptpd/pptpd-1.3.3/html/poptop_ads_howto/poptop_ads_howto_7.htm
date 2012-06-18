@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Poptop MSCHAP2 ADS Howto</title>
+</head>
+
+<body>
+<p><strong>10. pptpd and winbindd </strong></p>
+<p>The section covers how to configure pptpd + winbindd + AD. If you are working on the freeradius configuration, you may skip this section and go to the <a href="poptop_ads_howto_8.htm">next one</a>. </p>
+<p>Most of the hard work has been done in the previous sections. You are very close to the final stage.</p>
+<hr>
+<strong><a name="wbtest"></a>10.1 Enable and Test winbindd</strong>
+<p>pptpd requires only winbindd but not smbd. If you are not using the pptpd server as a samba file server, you will not need to run smbd. Start winbindd with the &quot;service&quot; command.</p>
+<blockquote>
+  <pre>[root@pptp ~]# service winbind start<br>Starting Winbind services: [  OK  ] </pre>
+</blockquote>
+<p>Winbind starts and spawns two threads. </p>
+<blockquote>
+  <pre>[root@pptp ~]# ps -ef | grep winbind | grep -v grep<br>root     18762     1  0 15:59 ?        00:00:00 winbindd<br>root     18763 18762  0 15:59 ?        00:00:00 winbindd</pre>
+</blockquote>
+<p>Wait a few minutes for winbindd to contact the domain controller. Then we can test if winbindd is working fine. If you see no error messages from the wbinfo command, you are in business. </p>
+<blockquote>
+  <pre>[root@acna-pptp etc]# wbinfo -t<br>checking the trust secret via RPC calls succeeded
+<br>[root@acna-pptp etc]# wbinfo -u<br>EXAMPLE+Administrator<br>EXAMPLE+Guest<br>EXAMPLE+SUPPORT_388945a0<br>EXAMPLE+DC1$<br>EXAMPLE+krbtgt<br>EXAMPLE+skwok<br>EXAMPLE+ldapuser<br>EXAMPLE+pptpdsvr$ 
+</pre>
+</blockquote>
+<p>To enable winbind on bootup, use the chkconfig command.</p>
+<blockquote>
+  <pre>[root@pptp ~]# chkconfig winbind on </pre>
+</blockquote><p></p>
+<hr>
+<strong><a name="pptpconf"></a>10.2 Configure pptpd </strong>
+<p>There are two configuration files for pptpd. The first one is /etc/pptpd.conf. You can very much keep it as it is except the ip address range for the ppp connections. Edit the file and add two lines at the bottom to specify the local ip address and the ip address pool for the remote connections. </p>
+<blockquote>
+  <pre>localip 10.0.0.10<br>remoteip 10.0.0.101-200 </pre>
+</blockquote>
+<p>10.0.0.10 is the ip address of the internal network card eth0. The remoteip is the address pool for the remote connections. </p>
+<p>The second configuration file is /etc/ppp/options.pptpd. I stripped off all remarks from my options.pptpd and it is like this:</p>
+<blockquote>
+  <pre>name pptpd
+refuse-pap<br>refuse-chap<br>refuse-mschap<br>require-mschap-v2<br>require-mppe-128
+ms-dns 10.0.0.1
+ms-wins 10.0.0.1
+proxyarp
+lock
+nobsdcomp
+novj
+novjccomp
+nologfd
+auth
+nodefaultroute
+plugin winbind.so
+ntlm_auth-helper &quot;/usr/bin/ntlm_auth --helper-protocol=ntlm-server-1&quot;</pre>
+</blockquote>
+<p>If you have Windows XP clients, you may want to reduce the MTU size. Add the  line, /sbin/ifconfig $1 mtu 1400, to /etc/ppp/ip-up as shown in the following list.</p>
+<blockquote>
+  <pre>[root@pptp ppp]# cat ip-up
+#!/bin/bash
+# This file should not be modified -- make local changes to
+# /etc/ppp/ip-up.local instead
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+export PATH
+
+LOGDEVICE=$6
+REALDEVICE=$1
+
+[ -f /etc/sysconfig/network-scripts/ifcfg-${LOGDEVICE} ] && /etc/sysconfig/network-scripts/ifup-post ifcfg-${LOGDEVICE}
+
+/etc/ppp/ip-up.ipv6to4 ${LOGDEVICE}
+
+[ -x /etc/ppp/ip-up.local ] && /etc/ppp/ip-up.local "$@"
+
+<strong>/sbin/ifconfig $1 mtu 1400</strong>
+exit 0</pre>
+</blockquote>
+<p>The above example reduces the MTU size to 1400. In my environment, I found that XP will connect the VPN and ping all servers without problems, however, it cannot connect to the Microsoft Exchange server properly. Reduce the MTU size to 1400 fixed the problem.</p>
+<p>After fixing the files, we can start pptpd and connect to it from remote client. To start it:</p>
+<blockquote>
+  <pre>[root@pptp ~]# chkconfig pptpd on<br><br>[root@pptp ~]# service pptpd start<br>Starting pptpd: [  OK  ]</pre>
+</blockquote><p></p>
+<hr>
+<strong><a name="access"></a>10.3 PPTP Access Control </strong>
+<p>The above configuration allows everyone with a valid userID in the AD to connect to the pptpd server. If you want to restrict access to a group of users, you can create a group, say VPN_Allowed, in the AD. Add users to the group and modify the ntml_auth-helper line in the  /etc/ppp/options.pptpd:</p>
+<blockquote>
+  <pre>ntlm_auth-helper &quot;/usr/bin/ntlm_auth --helper-protocol=ntlm-server-1 <span class="790285904-18102005">--require-membership-of=EXAMPLE+VPN-Allowed</span>&quot; </pre>
+</blockquote>
+<p>That's all on the server side. If winbind works for you, you can proceed to configure the client. The client PCs require special configurations and is discussed in <a href="poptop_ads_howto_11.htm">here</a>.</p>
+<hr>
+<a href="poptop_ads_howto_8.htm">Next</a> &nbsp;&nbsp;<a href="poptop_ads_howto_6.htm">Previous</a>&nbsp;&nbsp;<a href="poptop_ads_howto_1.htm#toc">Content</a></body>
+</html>

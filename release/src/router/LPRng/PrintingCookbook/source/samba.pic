@@ -1,0 +1,13 @@
+.PS
+ Lpd: box "lpd"
+ F: box dotted "Filter" with .w at Lpd.e + (.5,0) ;
+ Filter: box "Transfer" "Program" with .w at F.e + (.5,0) ;
+ Printer: box "Spooler" "or" "Printer" with .w at Filter.e + (1.5,0) ;
+ arrow <-> from Lpd.e to F.w;
+ arrow <-> from F.e to Filter.w;
+ arrow <-> from Filter.e to Printer.w;
+ m = (Filter.e.x + Printer.w.x)/2;
+ "Package" at (m,Filter.e.y+.25)
+ "Specific" at (m,Filter.e.y+.125)
+ box wid .001 ht .001 at (Printer.e.x,Filter.e.y+.375) 
+.PE

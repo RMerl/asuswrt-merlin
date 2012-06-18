@@ -1,0 +1,180 @@
+# Makefile to create LPRng, ifhp, and LPRngTool
+#  targets:
+#   make all       - does unpack, configure, build
+#     make unpack    - untars the latest releases, creates symlinks to distributions
+#     make configure - does configure in distributions, create .configured in subdirectory
+#     make build     - does a make all in the subdirs 
+#   make install     - does a make install in the subdirs 
+#                           and some fixup of files
+#   make printcap    - cd PRINTCAP and makes/installs new printcap...
+#                      see PRINTCAP/Makefile for details
+#   make lpd.perms lpd.conf - cd to LPD_PERMS, LPD_CONF and does install
+#                      - lpd.perms is usually the only thing needed
+#   make clean     - does a make clean in the subdirs 
+
+# what distributions do you want
+dist=ifhp LPRng LPRngTool
+# what configuration files do you want
+config=PRINTCAP LPD_PERMS
+
+sysconfdir=/etc/lpd
+filterdir=/usr/libexec/filters
+#filters=transmeta.bp
+
+#
+#  Directory and file names:
+#    --prefix=PREFIX         install architecture-independent files in PREFIX
+#                            [/usr/local]
+#    --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
+#                            [same as prefix]
+#    --bindir=DIR            user executables in DIR [EPREFIX/bin]
+#    --sbindir=DIR           system admin executables in DIR [EPREFIX/sbin]
+#    --libexecdir=DIR        program executables in DIR [EPREFIX/libexec]
+#    --datadir=DIR           read-only architecture-independent data in DIR
+#                            [PREFIX/share]
+#    --sysconfdir=DIR        read-only single-machine data in DIR [PREFIX/etc]
+#    --sharedstatedir=DIR    modifiable architecture-independent data in DIR
+#                            [PREFIX/com]
+#    --localstatedir=DIR     modifiable single-machine data in DIR [PREFIX/var]
+#    --libdir=DIR            object code libraries in DIR [EPREFIX/lib]
+#    --includedir=DIR        C header files in DIR [PREFIX/include]
+#    --oldincludedir=DIR     C header files for non-gcc in DIR [/usr/include]
+#    --infodir=DIR           info documentation in DIR [PREFIX/info]
+#    --mandir=DIR            man documentation in DIR [PREFIX/man]
+#    --srcdir=DIR            find the sources in DIR [configure dir or ..]
+#    --program-prefix=PREFIX prepend PREFIX to installed program names
+#    --program-suffix=SUFFIX append SUFFIX to installed program names
+#    --program-transform-name=PROGRAM
+#                            run sed PROGRAM on installed program names
+#   --disable-strip                   disable stripping binaries by default
+#   --enable-shared[=PKGS]  build shared libraries [default=yes]
+#   --enable-static[=PKGS]  build static libraries [default=yes]
+#   --enable-fast-install[=PKGS]  optimize for fast installation [default=yes]
+#   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
+#   --disable-libtool-lock  avoid locking (might break parallel builds)
+
+all_config=--prefix=/usr --mandir=/usr/share/man --sysconfdir=${sysconfdir} --with-filterdir=${filterdir} --disable-shared
+
+# LPRng 
+#   --enable-unix_socket              add unix socket for localhost connections
+#   --with-unix_socket_path=DIR       unix socket path (default /var/run/lprng)
+#   --disable-setuid                  do not install client executables setuid root
+#   --enable-priv_ports               require connections from privileged ports
+#   --disable-force_localhost         disable force_localhost default
+#   --disable-require_configfiles     client programs require lpd.conf, printcap
+#   --enable-kerberos                 enable kerberos support
+#   --enable-mit_kerberos4            enable MIT Kerberos 4 support
+#   --disable-kerberos_checks         disable kerberos library location and checking for support
+#   --with-lpddir=DIR                 lpd executable directory (default ${sbindir})
+#   --with-lpd_conf_path=PATH         path of lpd.conf (default: ${sysconfdir}/lpd.conf)
+#   --with-lpd_perms_path=PATH        path of lpd.perms (default: ${sysconfdir}/lpd.perms)
+#   --with-printcap_path=PATH         path of printcap (default ${sysconfdir}/printcap)
+#   --with-lpd_printcap_path=PATH     path of lpd_printcap (default ${sysconfdir}/lpd_printcap)
+#   --with-initpath=PATH              path of lpd startup file (default /usr/local/etc/rc.d/lprng.sh)
+#                                        use 'no' to disable installation and lpd startup
+#   --with-lockfile=PATH              lockfile PATH, default /var/run/lpd 
+#   --with-ld_libary_path=PATH        LD_LIBRARY_PATH value, default /lib:/usr/lib:/usr/local/lib 
+#   --with-filter_path=PATH           filter PATH value, default /bin:/usr/bin:/usr/local/bin 
+#   --with-userid=NAME                run LPRng software as this userid, default daemon 
+#   --with-groupid=NAME               run LPRng software as this groupid, default daemon 
+#   --with-done_jobs=N                retain last N job status, default 1
+#   --with-done_jobs_max_age=N        retain job status N seconds, default 0 - no expiry
+#   --with-chooser_routine=NAME       load balance queue chooser routine name in user object file 
+#   --with-order_routine=NAME         queue order routine name in user object file 
+#   --with-user_objs=NAME             user specified object file 
+#   --with-user_include=NAME          include file with function prototypes for user object file 
+#   --with-filterdir=DIR              filter directory (default ${libexecdir}/filters)
+
+LPRng_config=${all_config} --with-userid=lp --with-groupid=lp
+
+# ifhp
+#  --with-ifhp_conf=path   ifhp.conf config file (default \${sysconfdir}/ifhp.conf)
+
+ifhp_config=${all_config}
+
+# LPRngTool
+#  --with-printcap_path=PATH    location of printcap file (default \${sysconfdir}/printcap)
+#  --with-spool_directory=PATH  location of spool directories (default /var/spool/lpd)
+#  --with-ifhp_path=PATH        location of ifhp filter (default: \${FILTER_DIR}/ifhp)
+#  --with-ifhp_conf=PATH        location of ifhp configuration file (default: \${sysconfdir}/ifhp.conf)
+#  --with-filterdir=DIR         filter directory (default \${libexecdir}/filters)
+
+LPRngTool_config=${all_config} --with-spool_directory=/var/spool/lpd
+
+all: unpack configure build
+.PHONEY: all unpack lpd.conf lpd.perms reconfigure configure build install
+
+unpack: ${dist}
+
+${dist}:
+	set -e; \
+	d=`ls | grep "$@-.*tgz\$$" | tail -1` ; \
+	if [ "$$d" = "" ] ; then \
+		echo "no distribution for $@"; \
+		exit 1; \
+	fi; \
+	dir=`echo $$d |sed -e s/.tgz//` ; \
+	if [ "$$dir" = "" ] ; then \
+		echo "no could be extracted directory for $@" ; \
+		exit 1; \
+	fi; \
+	if [ ! -d $$dir ] ; then tar zxvf $$d; fi ; \
+	if [ ! -d $$dir ] ; then \
+		echo "tar failed to create $$dir"; \
+		exit 1; \
+	fi; \
+	rm -f $@; ln -s $$dir $@
+
+reconfigure:
+	for i in ${dist}; do rm -f $$i/.configured; done;
+
+configure:
+	for i in ${dist} ; do \
+		set -e; \
+		if [ ! -f $$i/.configured ] ; then \
+			set -e; \
+			case $$i in \
+			LPRngTool ) p="${LPRngTool_config}" ;; \
+			ifhp ) p="${ifhp_config}" ;; \
+			LPRng ) p="${LPRng_config}"  ;; \
+			esac ; \
+			if (cd $$i; ./configure $$p ) ; then date > $$i/.configured; else exit 1; fi ; \
+		fi; \
+	done
+
+build:
+	for i in ${dist} ${config} ; do \
+		if [ -f $$i/Makefile ] ; then \
+			( cd $$i; make SYSCONFDIR=${sysconfdir} all) ; \
+		fi ; \
+	done;
+
+install: 
+	for i in ${dist} ; do \
+		if [ -f $$i/Makefile ] ; then \
+			( cd $$i; make SYSCONFDIR=${sysconfdir} install); \
+		fi; \
+	done;
+
+	for i in ${filters} ; do \
+		install -c -m 755 -o root -g bin $$i ${filterdir}/; \
+	done
+
+clean:
+	for i in ${dist}; do \
+		if [ -f $$i/Makefile ] ; then (cd $$i; make clean); fi; \
+	done;
+
+realclean:
+	for i in ${dist}; do rm -rf $${i} $${i}-*[0-9]; done
+
+tar: clean
+	if [ -x /bin/pwd ] ; then DIR=`/bin/pwd`; fi ; \
+	if [ -x /usr/bin/pwd ] ; then DIR=`/usr/bin/pwd`; fi ; \
+	echo $${DIR}; \
+	DIR=`echo $${DIR} | sed 's,.*/,,'`; \
+		cd ..; \
+		tar zcf $${DIR}.tgz $${DIR}; \
+		md5sum $${DIR}.tgz > $${DIR}.tgz.md5
+	@echo ""
+

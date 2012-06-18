@@ -1,0 +1,137 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>ldb</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="ldb.3"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ldb<p><b>The Samba Project</b></p> &#8212; A light-weight database library</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">#include &lt;ldb.h&gt;</pre></div><div class="refsect1" lang="en"><a name="id2522906"></a><h2>description</h2><p>
+ldb is a light weight embedded database library and API. With a
+programming interface that is very similar to LDAP, ldb can store its
+data either in a tdb(3) database or in a real LDAP database.
+	</p><p>
+When used with the tdb backend ldb does not require any database
+daemon. Instead, ldb function calls are processed immediately by the
+ldb library, which does IO directly on the database, while allowing
+multiple readers/writers using operating system byte range locks. This
+leads to an API with very low overheads, often resulting in speeds of
+more than 10x what can be achieved with a more traditional LDAP
+architecture.
+	</p><p>
+In a taxonomy of databases ldb would sit half way between key/value
+pair databases (such as berkley db or tdb) and a full LDAP
+database. With a structured attribute oriented API like LDAP and good
+indexing capabilities, ldb can be used for quite sophisticated
+applications that need a light weight database, without the
+administrative overhead of a full LDAP installation.
+	</p><p>
+Included with ldb are a number of useful command line tools for
+manipulating a ldb database. These tools are similar in style to the
+equivalent ldap command line tools.
+	</p><p>
+In its default mode of operation with a tdb backend, ldb can also be
+seen as a "schema-less LDAP". By default ldb does not require a
+schema, which greatly reduces the complexity of getting started with
+ldb databases. As the complexity of you application grows you can take
+advantage of some of the optional schema-like attributes that ldb
+offers, or you can migrate to using the full LDAP api while keeping
+your exiting ldb code.
+	</p><p>
+If you are new to ldb, then I suggest starting with the manual pages
+for ldbsearch(1) and ldbedit(1), and experimenting with a local
+database. Then I suggest you look at the ldb_connect(3) and
+ldb_search(3) manual pages.
+	</p></div><div class="refsect1" lang="en"><a name="id2483332"></a><h2>TOOLS</h2><div class="itemizedlist"><ul type="disc"><li><p>
+			<span class="application">ldbsearch(1)</span>
+			  - command line ldb search utility
+		</p></li><li><p>
+			<span class="application">ldbedit(1)</span>
+			 - edit all or part of a ldb database using your favourite editor
+		</p></li><li><p>
+			<span class="application">ldbadd(1)</span>
+			 - add records to a ldb database using LDIF formatted input
+		</p></li><li><p>
+			<span class="application">ldbdel(1)</span>
+			 - delete records from a ldb database
+		</p></li><li><p>
+			<span class="application">ldbmodify(1)</span>
+			 - modify records in a ldb database using LDIF formatted input
+		</p></li></ul></div></div><div class="refsect1" lang="en"><a name="id2483518"></a><h2>FUNCTIONS</h2><div class="itemizedlist"><ul type="disc"><li><p>
+			<code class="function">ldb_connect(3)</code>
+			 - connect to a ldb backend
+		</p></li><li><p>
+			<code class="function">ldb_search(3)</code>
+			 - perform a database search
+		</p></li><li><p>
+			<code class="function">ldb_add(3)</code>
+			 - add a record to the database
+		</p></li><li><p>
+			<code class="function">ldb_delete(3)</code>
+			 - delete a record from the database
+		</p></li><li><p>
+			<code class="function">ldb_modify(3)</code>
+			 - modify a record in the database
+		</p></li><li><p>
+			<code class="function">ldb_errstring(3)</code>
+			 - retrieve extended error information from the last operation
+		</p></li><li><p>
+			<code class="function">ldb_ldif_write(3)</code>
+			 - write a LDIF formatted message
+		</p></li><li><p>
+			<code class="function">ldb_ldif_write_file(3)</code>
+			 - write a LDIF formatted message to a file
+		</p></li><li><p>
+			<code class="function">ldb_ldif_read(3)</code>
+			 - read a LDIF formatted message
+		</p></li><li><p>
+			<code class="function">ldb_ldif_read_free(3)</code>
+			 - free the result of a ldb_ldif_read()
+		</p></li><li><p>
+			<code class="function">ldb_ldif_read_file(3)</code>
+			 - read a LDIF message from a file
+		</p></li><li><p>
+			<code class="function">ldb_ldif_read_string(3)</code>
+			 - read a LDIF message from a string
+		</p></li><li><p>
+			<code class="function">ldb_msg_find_element(3)</code>
+			 - find an element in a ldb_message
+		</p></li><li><p>
+			<code class="function">ldb_val_equal_exact(3)</code>
+			 - compare two ldb_val structures
+		</p></li><li><p>
+			<code class="function">ldb_msg_find_val(3)</code>
+			 - find an element by value
+		</p></li><li><p>
+			<code class="function">ldb_msg_add_empty(3)</code>
+			 - add an empty message element to a ldb_message
+		</p></li><li><p>
+			<code class="function">ldb_msg_add(3)</code>
+			 - add a non-empty message element to a ldb_message
+		</p></li><li><p>
+			<code class="function">ldb_msg_element_compare(3)</code>
+			 - compare two ldb_message_element structures
+		</p></li><li><p>
+			<code class="function">ldb_msg_find_int(3)</code>
+			 - return an integer value from a ldb_message
+		</p></li><li><p>
+			<code class="function">ldb_msg_find_uint(3)</code>
+			 - return an unsigned integer value from a ldb_message
+		</p></li><li><p>
+			<code class="function">ldb_msg_find_double(3)</code>
+			 - return a double value from a ldb_message
+		</p></li><li><p>
+			<code class="function">ldb_msg_find_string(3)</code>
+			 - return a string value from a ldb_message
+		</p></li><li><p>
+			<code class="function">ldb_set_alloc(3)</code>
+			 - set the memory allocation function to be used by ldb
+		</p></li><li><p>
+			<code class="function">ldb_set_debug(3)</code>
+			 - set a debug handler to be used by ldb
+		</p></li><li><p>
+			<code class="function">ldb_set_debug_stderr(3)</code>
+			 - set a debug handler for stderr output
+		</p></li></ul></div></div><div class="refsect1" lang="en"><a name="id2481467"></a><h2>Author</h2><p>
+		ldb was written by 
+		 <a class="ulink" href="http://samba.org/~tridge/" target="_top">Andrew Tridgell</a>.
+	</p><p>
+If you wish to report a problem or make a suggestion then please see
+the <a class="ulink" href="http://ldb.samba.org/" target="_top">http://ldb.samba.org/</a> web site for
+current contact and maintainer information.
+	</p><p>
+ldb is released under the GNU Lesser General Public License version 2
+or later. Please see the file COPYING for license details.
+	</p></div></div></body></html>

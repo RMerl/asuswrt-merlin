@@ -1,0 +1,286 @@
+commit 713a4c3c2097e6d060d41718b2005490dfd7c71c
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Jul 9 22:15:32 2009 +0100
+
+    v0.1.3 release
+
+commit 3874dfa6141e0e4cee8ccc6c3d4ff522698ebd7d
+Author: John Smith <john@smith.com>
+Date:   Thu Jul 9 22:13:45 2009 +0100
+
+    Improve libusb-config for cross-compiling (SF#2809877)
+    
+    The sed applied to this file only affects to assignments that happen
+    at the start of the line.
+    
+    This fixes cross compiling for OpenWRT, etc.
+
+commit 15bf9b0a2d3fed8f0fe69d002a4fcd0140679f2d
+Author: Kyle McKay <mackyle@gmail.com>
+Date:   Fri Jun 19 22:11:02 2009 +0100
+
+    Improved error code compatibility
+    
+    libusb-1.0 can return result codes 0, -1 through -12 and -99.  The old
+    libusb-0.1 software was always returning the negative of an errno.h
+    error code.
+    
+    Unfortunately the current version of libusb-compat passes through some
+    of the libusb-1.0 error codes unchanged.  (Some of the error codes are
+    translated for some functions and different ones for other functions
+    but plenty are not translated.)
+    
+    The patch attached to the below bug report makes sure all libusb-1.0
+    error codes are translated into the libusb-0.1 equivalent negative of
+    an errno.h define value.  Additionally, this patch makes sure that
+    errno is always being set as some callers of libusb-0.1 expect that to
+    be the case.  Finally since errno is now always being set by libusb-
+    compat, the implementation of usb_strerror is changed to return
+    strerror(errno) instead of the unhelpful "Unknown error".
+
+commit 3ffc1160f0599ceb503aa2e0dbbf51a5b72bb9b9
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu Jun 11 23:50:59 2009 +0100
+
+    v0.1.2 release
+
+commit 29af8617ad6d460c3bff927f17c4938dab8f10d3
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 29 12:28:05 2009 -0400
+
+    Better handling of library initialization failure
+
+commit f0909ef85c5bf2ee8655864041e5e0453adc9ff0
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Thu May 28 09:28:50 2009 -0400
+
+    v0.1.1 release
+
+commit b090e024b9dbd8d94ba6f2b6eeb629d3fd461d6e
+Author: Stanislav Brabec <sbrabec@suse.cz>
+Date:   Wed May 27 15:39:54 2009 -0400
+
+    Sanitize more endpoint addresses
+    
+    For maximum compatibility, this makes libusb-compat-0.1 behave like
+    libusb-0.1 on BSD, where endpoint addresses are sanitized for all control
+    and bulk transfers. (Linux and Darwin also sanitize some of these)
+
+commit cf9ce427f4bb62b7d575b70b299f1a582fb1baa1
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Dec 13 20:30:54 2008 +0000
+
+    v0.1.0 release
+
+commit c2ffa94cbcab67324aebc1b32dad69f875b6481a
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Dec 13 20:25:27 2008 +0000
+
+    Document the danger of forcefully killing threads
+    
+    Ludovic Rousseau has explained that he achieved transfer cancellation in
+    libusb-0.1 by running each transfer in it's own thread, and forcefully
+    killing the thread when he doesn't want the transfer any more.
+    
+    This bad programming practice is imposed by libusb-0.1 not offering any
+    way to cancel ongoing transfers. Someone should rewrite libusb-0.1 to
+    avoid this limitation. Oh, wait...
+    
+    Killing libusb-1.0 threads while they are event handling will often
+    result in I/O halt. Document this in the README.
+
+commit 14e5a692c62c07e9698e5b51b4da5f48a7da1912
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri Nov 21 16:52:42 2008 +0000
+
+    v0.1.0-beta3 release
+
+commit 8cc08f2c34f0efb809b98b4704e70a3c350cc9a1
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun Aug 10 17:05:08 2008 -0500
+
+    Allow usb_set_debug before usb_init()
+    
+    Xiofan Chen reports that this worked on libusb-0.1.
+    Also fix NULL initialization of ctx.
+
+commit 0dc6967ca823d177503fe91de67de9801496cfec
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jun 28 21:35:11 2008 -0500
+
+    v0.1.0-beta2 release
+
+commit 788e70c700d1d3a00e9deee67aa24b7c920650e2
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat Jun 28 21:33:09 2008 -0500
+
+    Update to new libusb context API
+
+commit 7999d97c699493da2e04fa7e9cd9bfe4e080c49f
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue Jun 17 18:19:16 2008 -0500
+
+    Fixup read endpoint addresses
+    
+    This doesn't make much sense, but libusb-0.1 does it, so we will do it
+    too.
+
+commit fcf3834702d6dab8ce1181678131376f1badd62d
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 26 00:05:32 2008 +0100
+
+    v0.1.0-beta1 release
+
+commit c7746a0c411b2e4edec178d1ae7783d40152bc7b
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 23 16:01:18 2008 +0100
+
+    link usb_set_debug to libusb_set_debug
+
+commit 1c59b329f3f4f8644011b37414695df2c5e54586
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 23 15:32:30 2008 +0100
+
+    don't log anything by default
+    
+    Only log messages if the user asked for them using usb_set_debug()
+    
+    Ludovic Rousseau pointed out that library users may close stdout/stderr
+    and those file descriptors may be reused for other things.
+
+commit fa323490e8e66fe0e95e1545d0c921e947ed6f93
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Tue May 20 16:27:17 2008 +0100
+
+    Update for new libusb_open API
+    
+    Pointed out by Soumen Mondal
+
+commit c5c6684c06bcf8e922601fc1c0d994552abf1e92
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 19 16:15:17 2008 +0100
+
+    Add emulation info to pkg-config file
+    
+    Ludovic Rousseau requested a way of distinguishing between
+    libusb-compat-0.1 and the real libusb-0.1, and suggested this approach.
+    
+    You can access this info through pkg-config e.g.:
+    	pkg-config --variable=emulated libusb
+
+commit 49057f6ce5cd4d51e31594f290b2dd3c9f1dbaf8
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 19 15:21:04 2008 +0100
+
+    Pretend to be libusb-0.1.12
+    
+    Pointed out by Ludovic Rousseau: some programs check for specific libusb
+    versions, so pretend to be v0.1.12.
+
+commit 727fe5651bfcdd789c2ea4ce462df398b4cacc69
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Fri May 16 23:38:46 2008 +0100
+
+    remove FIXME about parent-child relationships
+    
+    Doesn't seem worth this holding things up.
+
+commit 2b6bdd1aeca38bb4211b704fd76faa0f41272807
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 10 22:17:26 2008 +0100
+
+    Update for new descriptors API
+
+commit bb248deecfc6b7718ef849ad9f3f394483d429c8
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sat May 10 15:36:54 2008 +0100
+
+    update for new libusb configuration API
+
+commit b8893bca200a24acbda8ba9d2816da743e8783a0
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 16:33:37 2008 +0100
+
+    match error reporting better, and handle endpoint halts
+
+commit f06d81be9634a0b160caa11cd66f7fcc9354b28a
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 16:32:47 2008 +0100
+
+    make log function static
+
+commit a390eee8402634f5ecefc617832af1b4fd8af2ee
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 15:13:40 2008 +0100
+
+    add usb_set_debug
+    
+    Pointed out by Xiaofan Chen
+
+commit c062b2b41183d98ac8a5f568d84472b422ec8285
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 15:11:36 2008 +0100
+
+    populate bus->dirname and dev->filename
+    
+    lsusb uses these. Problem spotted by Xiaofan Chen
+
+commit 71225af5613d512b3a26ed94410f6d6ed2cebb30
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Mon May 5 00:37:12 2008 +0100
+
+    fix timeout handling for bulk/interrupt IO
+
+commit 2bb614e567d921a80224139b01742b718f8d420a
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 17:29:15 2008 +0100
+
+    implement a couple more functions
+
+commit 1ad492d8b46e4b41f5193f461ec356ec95368875
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 17:18:11 2008 +0100
+
+    installation fixes
+
+commit 89dde2002fc4f08a5b90bd7e143c6ec06d86d279
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 16:55:50 2008 +0100
+
+    add testlibusb example from libusb-0.1
+
+commit b9478137cb8a6f4a6ba758c3b3d3bc5173a623d8
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 16:53:45 2008 +0100
+
+    implement usb_get_driver_np() and usb_detach_kernel_driver_np()
+
+commit eae1ee2b7bac39f408a9ee61f1e3a80e6425e483
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 16:28:32 2008 +0100
+
+    control transfer functions
+
+commit 493e756b5b08ba98b612679bcc210d87c20859f0
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 14:25:28 2008 +0100
+
+    bulk and interrupt I/O
+
+commit ce86f26e5d8f49001cee79a40b0baebbcc965d1d
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 14:11:28 2008 +0100
+
+    Implement remaining device operations
+
+commit 78740a7b8f537bc3d6b6c0c09368be453ff3c4d9
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 01:15:50 2008 +0100
+
+    implement some device operations
+
+commit 7d7cb91be1307aa6e56c0534e3fba20afc45977d
+Author: Daniel Drake <dsd@gentoo.org>
+Date:   Sun May 4 00:59:56 2008 +0100
+
+    Initial commit

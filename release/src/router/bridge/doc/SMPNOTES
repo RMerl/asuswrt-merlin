@@ -1,0 +1,21 @@
+Notes on the (20000210) SMP-ization of the bridging code:
+
+Each bridge has a hash table of MAC addresses. This table is protected
+by a rwlock hash_lock. The entries are refcounted; 'getting' an entry
+is done in the usual way: read_lock the table, find the entry,
+increment it's refcount and unlock the table. Bottom half context
+acquires this lock in read as well as write mode, therefore we always
+need to locally disable BHs when acquiring this lock.
+
+Each bridge also has an rwlock called lock. This slightly misnamed
+lock protects the bridge's port_list. All stp code acquires this lock
+in read mode, the only piece of code that acquires this lock in write
+mode is the ioctl code (br_ioctl.c). Bottom halves never acquire this
+lock in write mode, therefore we can use read_lock instead of
+read_lock_bh in all cases.
+
+All ioctls are globally serialized by the semaphore ioctl_mutex. All
+code which acquires the bridge lock in write mode also acquires
+ioctl_mutex. Therefore, if we have already grabbed ioctl_mutex we
+don't need to read_lock the bridge lock anymore; the ioctl_mutex will
+protect against concurrent writers.

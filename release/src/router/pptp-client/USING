@@ -1,0 +1,98 @@
+Usage Notes
+
+pptp is started as a psuedo-tty child process using pppd's pty option:
+
+	pppd call provider [pppd-options] \
+	pty "/usr/sbin/pptp hostname --nolaunchpppd [pptp-options]"
+
+where hostname is the host name or IP address of the PPTP server.
+
+pptp can also start pppd itself:
+
+	pptp hostname [pptp-options] [pppd-options]
+
+Note the unusual order of arguments, the hostname comes before the
+pptp options, and the pppd options come last.
+
+So, for example:
+
+	pptp my.pptp.host debug name cananian \
+	remotename ntdialup 172.18.0.2:172.18.0.3
+
+	route add -net 172.18.0.0 netmask 255.255.0.0 gw 172.18.0.3
+
+You will see three pptp-related processes in your process list: a call
+manager, a GRE/PPP en/decapsulator, and pppd.  To shut down the pptp
+connection, kill the pppd process.
+
+NOTE THAT PPTP MUST BE RUN AS ROOT.  This is so that it can generate
+GRE packets using a raw socket.
+
+Most trouble with pptp will probably be due to incorrect pppd
+configuration.  Be sure you thoroughly understand MS-CHAP support in
+pppd.  Use the 'debug' option to pppd to log connection information;
+this will help you trouble-shoot the pppd side of pptp.
+
+See the project web site for diagnosis assistance.
+
+QUIRKS HANDLING:
+
+Some ADSL providers and some ADSL hardware are buggy or not conforming
+to the RFC, and require special handling.  To this end, pptp supports
+a 'quirks' mechanism.  Currently, only '--quirks BEZEQ_ISRAEL' is
+defined, for connecting to Bezeq (the Israeli phone company) ADSL
+service.
+
+Only *some* of the equipment used by Bezeq needs this option, but even
+the equipment that does not need it works fine with it.  If you use
+Bezeq, you probably want the '--quirks BEZEQ_ISRAEL' switch.
+
+More information on Bezeq's ADSL service can be found at
+http://vipe.technion.il/~mulix/adsl-howto.txt and
+http://damyen.technion.ac.il/~dani/adsl-howto.txt.
+
+TESTING MULTIPLE TUNNELS:
+
+For testing of PPTP servers, the client can be used to establish
+multiple tunnels from multiple IP addresses.  The addresses must be
+routable; this is something you'd do on a local area network.
+
+1. use an address pool on a concentrator.
+
+2. write an ip-up script (e.g. /etc/ppp/ip-up.local or /etc/ppp/ip-up.d)
+
+	#!/bin/sh
+	export PATH=/sbin:/usr/sbin:/bin:/usr/bin
+	REALDEVICE=$1
+	PEERADDR=$6
+	ifconfig ${REALDEVICE} dstaddr ${PEERADDR}
+
+The script performs an "ifconfig pppx dstaddr xx.xx.xx.xx" where
+xx.xx.xx.xx is the private address of the concentrator so that the
+routing works without having to do iptables or ipchains.  The address
+used is given on the pptp command line.
+
+3. create distinct source interfaces with:
+
+        ifconfig eth0:n xx.xx.xx.xx netmask yy.yy.yy.yy 
+
+Where "n" is the alias interface number, "xx.xx.xx.xx" is the new
+address, and "yy.yy.yy.yy" is the network mask.
+
+4. connect with
+
+	pptp concentrator --bind xx.xx.xx.xx name \
+        xx remotename yy ipparam yy.yy.yy.yy 
+                                       ^ (private address of concentrator).
+
+Where "xx.xx.xx.xx" is the address of the source interface, "xx" is
+the local name of the tunnel, "yy" is the remote name of the tunnel,
+and "yy.yy.yy.yy" is the private address of the concentrator.  This is
+passed to the ip-up script as the sixth argument.
+
+See also the following test scripts;
+
+test-multiple-tunnels-1.sh  creates multiple source interfaces
+test-multiple-tunnels-2.sh  creates multiple tunnels
+
+$Id: USING,v 1.6 2003/02/15 04:32:50 quozl Exp $	

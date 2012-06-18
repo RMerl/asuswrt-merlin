@@ -1,0 +1,2 @@
+/* Copyright (c): 2002-2005 (Germany): United Internet, 1&1, GMX, Schlund+Partner, Alturo */
+function QxUserApplication(){if(QxUserApplication._instance){return QxUserApplication._instance;};QxTarget.call(this);QxUserApplication._instance=this;};QxUserApplication.extend(QxTarget,"QxUserApplication");proto.dispose=function(){if(this.getDisposed()){return;};var dispose_start=(new Date).valueOf();QxTarget.prototype.dispose.call(this);QxObject.dispose();QxDebug("QxUserApplication","Dispose total:"+((new Date).valueOf()-dispose_start)+"ms");};

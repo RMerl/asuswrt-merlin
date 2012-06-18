@@ -1,0 +1,88 @@
+
+   Protocol Security
+
+   Summary
+
+                                                         by Peter Mueller
+
+   PPTP is known to be a faulty protocol. The designers of the protocol,
+   Microsoft, recommend not to use it due to the inherent risks. Lots of
+   people use PPTP anyway due to ease of use, but that doesn't mean it is
+   any less hazardous. The maintainers of PPTP Client and Poptop
+   recommend using OpenVPN (SSL based) or IPSec instead.
+
+   (Posted on [1]2005-08-10 to the [2]mailing list)
+     _________________________________________________________________
+
+   Why not use PPTP?
+
+                                                         by James Cameron
+
+   The point to point tunneling protocol (PPTP) is not secure enough for
+   some information security policies.
+
+   It's the nature of the MSCHAP V2 authentication, how it can be broken
+   trivially by capture of the datastream, and how MPPE depends on the
+   MSCHAP tokens for cryptographic keys. MPPE is also only 128-bit,
+   reasonably straightforward to attack, and the keys used at each end
+   are the same, which lowers the effort required to succeed. The obvious
+   lack of two-factor authentication, instead relying on a single
+   username and password, is also a risk. The increasing use of domestic
+   wireless systems makes information capture more likely.
+
+   However, that doesn't mean people don't accept the risks. There are
+   many corporations and individuals using PPTP with full knowledge of
+   these risks. Some use mitigating controls, and some don't.
+
+   Many people seem to judge the security of a protocol by the
+   availability of the implementation, the ease of installation, or the
+   level of documentation on our web site. Improving the documentation is
+   the purpose of this web site, and we aren't doing that in order to say
+   anything about the risks of the software! Any judgement of security
+   should be rigorously applied to the design and implementation alone.
+
+   PPTP on Linux, and Microsoft's PPTP, both implement fixes for
+   vulnerabilities that were detected years ago in Microsoft's PPTP. But
+   there remain the design vulnerabilities that cannot be fixed without
+   changing the design. The changes needed would break interoperability.
+   We can't change the Linux PPTP design, because it would stop working
+   with Microsoft PPTP. They can't change their design, because it would
+   stop working with all the other components out there, such as Nortel
+   and Cisco, embedded routers, ADSL modems and their own Windows
+   installed base.
+
+   The only option then is to deprecate the product and promote the
+   replacement. Microsoft promote something else. Our choice for Open
+   Source systems is OpenVPN or IPsec.
+
+   Level of acceptance isn't a good indicator of risk either. Some have
+   said that the shipping of MSCHAP V2, MPPE and PPTP in Linux
+   distributions is an indication of design security, but that's not the
+   reason. It's for interoperability. As an example, see how Linux
+   distributions still ship telnet, ftp, and rsh, even though these
+   components are insecure because they reveal the password in cleartext
+   in the network packets. The same can be said of many other components
+   and packages.
+
+   Our recommendations are;
+
+    1. do not implement PPTP between open source systems, because there's
+       no justification, better security can be had from OpenVPN or
+       IPsec,
+
+    2. do not implement PPTP servers unless the justification is that the
+       clients must not have to install anything to get going (Microsoft
+       PPTP is included already), and be aware of the risks of
+       information interception,
+
+    3. do not implement PPTP clients unless the justification is that the
+       server only provides PPTP, and there's nothing better that can be
+       used, and again be aware of the risks of information interception.
+
+   (Posted on [3]2005-08-10 to the [2]mailing list)
+
+References
+
+   1. http://marc.theaimsgroup.com/?l=poptop-server&m=112369621702624&w=2
+   2. http://pptpclient.sourceforge.net/contact.phtml#list
+   3. http://marc.theaimsgroup.com/?l=poptop-server&m=112365342910897&w=2

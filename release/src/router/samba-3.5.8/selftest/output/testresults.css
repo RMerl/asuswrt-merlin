@@ -1,0 +1,129 @@
+/* Stylesheet for Samba test results. 
+ *
+ * Partially based on the CSS file from lcov.
+ */
+
+/* All views: main title format */
+td.title
+{
+	text-align:     center;
+	padding-bottom: 10px;
+	font-family:    sans-serif;
+	font-size:      20pt;
+	font-style:     italic;
+	font-weight:    bold;
+}
+
+/* Index table headers */
+td.tableHead
+{
+	text-align:       center;
+	color:            #FFFFFF;
+	background-color: #6688D4;
+	font-family:      sans-serif;
+	font-size:        120%;
+	font-weight:      bold;
+}
+
+/* Testsuite names */
+td.testSuite
+{
+	text-align:       left;
+	padding-left:     10px;
+	padding-right:    20px; 
+	color:            #284FA8;
+	background-color: #DAE7FE;
+	font-family:      monospace;
+}
+
+/* Successful */
+td.resultOk
+{
+	text-align:       right;
+	padding-left:     10px;
+	padding-right:    10px;
+	background-color: #A7FC9D;
+	font-weight:      bold;
+}
+
+/* Failure */
+td.resultFailure
+{
+	text-align:       right;
+	padding-left:     10px;
+	padding-right:    10px;
+	background-color: #FF0000;
+	font-weight:      bold;
+}
+
+/* Expected failure */
+td.resultExpectedFailure
+{
+	text-align:       right;
+	padding-left:     10px;
+	padding-right:    10px;
+	background-color: #FFA500;
+	font-weight:      bold;
+}
+
+/* Skipped */
+td.resultSkipped
+{
+	text-align:       center;
+	padding-left:     10px;
+	padding-right:    10px;
+	background-color: #FFEA20;
+	font-weight:      bold;
+}
+
+td.duration
+{
+	text-align: right;
+}
+
+td.durationSkipped
+{
+	text-align: right;
+}
+
+td.outputSkipped
+{
+	background-color: #FFEA20;
+}
+
+td.outputOk
+{
+	background-color: #A7FC9D;
+}
+
+td.outputFailure
+{
+	background-color: #FF0000;
+}
+
+td.outputExpectedFailure
+{
+	background-color: #FFA500;
+}
+
+div.reason
+{
+	text-align: center;
+	font-weight: bold;
+}
+
+span.control
+{
+	display: none;
+}
+
+div.duration
+{
+	text-align: right;
+	font-weight: bold;
+}
+
+div.command
+{
+	background-color: gray;
+}

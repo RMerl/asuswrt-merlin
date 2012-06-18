@@ -1,0 +1,20 @@
+GNUTELLA CONNECT/0.6
+X-Max-TTL: 3
+X-Dynamic-Querying: 0.1
+X-Version: 4.8
+X-Query-Routing: 0.1
+User-Agent: LimeWire/4.4.5
+Vendor-Message: 0.1
+X-Ultrapeer-Query-Routing: 0.1
+GGEP: 0.5
+Listen-IP: 66.93.17.216:6349
+Accept-Encoding: deflate
+Pong-Caching: 0.1
+X-Guess: 0.1
+X-Ultrapeer: False
+X-Degree: 32
+X-Locale-Pref: en
+Remote-IP: 24.49.218.201
+
+GNUTELLA/0.6 503 I am a shielded leaf node
+

@@ -1,0 +1,85 @@
+.TH SMBSH 1 "23 Jun 2001" "smbsh 2.0.10"
+.PP 
+.SH "NAME" 
+smbsh \- Allows access to Windows NT filesystem using UNIX commands
+.PP 
+.SH "SYNOPSIS" 
+.PP 
+\fBsmbsh\fP
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+This program is part of the \fBSamba\fP suite\&.
+.PP 
+\fBsmbsh\fP allows you to access an NT filesystem using UNIX commands
+such as \fBls\fP, \fBegrep\fP, and \fBrcp\fP\&. You must use a shell that
+is dynmanically linked in order for \fBsmbsh\fP to work correctly\&.
+.PP 
+To use the \fBsmbsh\fP command, execute \fBsmbsh\fP from the prompt and
+enter the username and password that authenticate you to the
+machine running the Windows NT operating system\&.
+.PP 
+
+.DS 
+ 
+
+system% smbsh
+Username: user
+Password:
+
+.DE 
+ 
+
+.PP 
+Any dynamically linked command you execute from this shell will
+access the \fB/smb\fP directory using the smb protocol\&.
+For example, the command 
+.PP 
+\f(CWls /smb\fP
+.PP 
+will show all the machines in your workgroup\&.
+The command 
+.PP 
+\f(CWls /smb/<machine-name>\fP
+.PP 
+will show the share names for that machine\&. You could then, for example, use the 
+\fBcd\fP command to change directories, \fBvi\fP to edit files, and \fBrcp\fP
+to copy files\&.
+.PP 
+.SH "VERSION" 
+.PP 
+This man page is correct for the 2\&.0\&.3 of the Samba suite\&.
+.PP 
+.SH "BUGS" 
+.PP 
+\fBsmbsh\fP works by intercepting the standard libc calls with the dynamically loaded
+versions in \fBsmbwrapper\&.o\fP\&. Not all calls have been "wrapped" so some programs
+may not function correctly under \fBsmbsh\fP\&.
+.PP 
+Programs which are not dynamically linked cannot make use of \fBsmbsh\fP\'s 
+functionality\&. Most versions of UNIX have a \fBfile\fP command that will describe how
+a program was linked\&.
+.PP 
+.SH "SEE ALSO" 
+.PP 
+\fBsmb\&.conf (5)\fP,
+\fBsmbd (8)\fP\&.
+.PP 
+.SH "AUTHOR" 
+.PP 
+The original Samba software and related utilities were created by
+Andrew Tridgell (samba@samba\&.org)\&. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed\&.
+.PP 
+The original Samba man pages were written by Karl Auer\&. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+\fBftp://ftp\&.icce\&.rug\&.nl/pub/unix/\fP)
+and updated for the Samba2\&.0 release by Jeremy Allison\&.
+samba@samba\&.org\&.
+.PP 
+See \fBsamba (7)\fP to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc\&.
+.PP 

@@ -1,0 +1,19 @@
+<samba:parameter name="use spnego"
+                 context="G"
+				 type="boolean"
+                 developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This variable controls controls whether samba will try 
+    to use Simple and Protected NEGOciation (as specified by rfc2478) with 
+    WindowsXP and Windows2000 clients to agree upon an authentication mechanism. 
+</para>
+
+<para>
+    Unless further issues are discovered with our SPNEGO
+    implementation, there is no reason this should ever be
+	disabled.</para>
+</description>
+
+<value type="default">yes</value>
+</samba:parameter>

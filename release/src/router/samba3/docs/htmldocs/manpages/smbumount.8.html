@@ -1,0 +1,17 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>smbumount</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="smbumount.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>smbumount &#8212; smbfs umount for normal users</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">smbumount</code> {mount-point}</p></div></div><div class="refsect1" lang="en"><a name="id2522918"></a><h2>DESCRIPTION</h2><p>With this program, normal users can unmount smb-filesystems, 
+	provided that it is suid root.  <code class="literal">smbumount</code> has 
+	been written to give normal Linux users more control over their 
+	resources. It is safe to install this program suid root, because only 
+	the user who has mounted a filesystem is allowed to unmount it again.  
+	For root it is not necessary to use smbumount. The normal umount 
+	program works perfectly well.</p><p>WARNING: <code class="literal">smbumount</code> is deprecated and not
+        maintained any longer. <code class="literal">umount.cifs</code> 
+        should be used instead of <code class="literal">smbumount</code>.</p></div><div class="refsect1" lang="en"><a name="id2522963"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">mount-point</span></dt><dd><p>The directory to unmount.</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2483356"></a><h2>SEE ALSO</h2><p><a class="citerefentry" href="smbmount.8.html"><span class="citerefentry"><span class="refentrytitle">smbmount</span>(8)</span></a></p></div><div class="refsect1" lang="en"><a name="id2483372"></a><h2>AUTHOR</h2><p>Volker Lendecke, Andrew Tridgell, Michael H. Warfield 
+	and others.</p><p>The current maintainer of smbfs and the userspace
+	tools <code class="literal">smbmount</code>, <code class="literal">smbumount</code>,
+	and <code class="literal">smbmnt</code> is <a class="ulink" href="mailto:urban@teststation.com" target="_top">Urban Widmark</a>.
+	The <a class="ulink" href="mailto:samba@samba.org" target="_top">SAMBA Mailing list</a>
+	is the preferred place to ask questions regarding these programs.
+	</p><p>The conversion of this manpage for Samba 2.2 was performed 
+	by Gerald Carter. The conversion to DocBook XML 4.2 for Samba 3.0
+	was done by Alexander Bokovoy.</p></div></div></body></html>

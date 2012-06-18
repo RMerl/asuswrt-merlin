@@ -1,0 +1,19 @@
+<samba:parameter name="read only"
+                 context="S"
+				 type="boolean"
+                 basic="1" advanced="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>An inverted synonym is <smbconfoption name="writeable"/>.</para>
+
+    <para>If this parameter is <constant>yes</constant>, then users 
+    of a service may not create or modify files in the service's 
+    directory.</para>
+
+    <para>Note that a printable service (<command moreinfo="none">printable = yes</command>)
+    will <emphasis>ALWAYS</emphasis> allow writing to the directory 
+    (user privileges permitting), but only via spooling operations.</para>
+</description>
+
+<value type="default">yes</value>
+</samba:parameter>

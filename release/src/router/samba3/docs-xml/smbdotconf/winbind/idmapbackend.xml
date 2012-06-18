@@ -1,0 +1,28 @@
+<samba:parameter name="idmap backend"
+                 context="G"
+		 type="string"
+                 advanced="1" developer="1" hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	The idmap backend provides a plugin interface for Winbind to use
+	varying backends to store SID/uid/gid mapping tables.  This
+	option is mutually exclusive with the newer and more flexible
+	<smbconfoption name="idmap domains"/> parameter. The main difference
+	between the &quot;idmap backend&quot; and the &quot;idmap domains&quot;
+	is that the former only allows one backend for all domains while the
+	latter supports configuring backends on a per domain basis.
+	</para>
+
+	<para>Examples of SID/uid/gid backends include tdb (<citerefentry>
+	<refentrytitle>idmap_tdb</refentrytitle><manvolnum>8</manvolnum></citerefentry>),
+	ldap (<citerefentry><refentrytitle>idmap_ldap</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>), rid (<citerefentry>
+	<refentrytitle>idmap_rid</refentrytitle><manvolnum>8</manvolnum></citerefentry>),
+	and ad (<citerefentry><refentrytitle>idmap_tdb</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>).
+	</para>
+</description>
+
+<value type="default">tdb</value>
+</samba:parameter>

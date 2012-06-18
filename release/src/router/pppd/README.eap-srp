@@ -1,0 +1,149 @@
+EAP with MD5-Challenge and SRP-SHA1 support
+by James Carlson, Sun Microsystems
+Version 2, September 22nd, 2002
+
+
+1.  What it does
+
+    The Extensible Authentication Protocol (EAP; RFC 2284) is a
+    security protocol that can be used with PPP.  It provides a means
+    to plug in multiple optional authentication methods.
+
+    This implementation includes the required default MD5-Challenge
+    method, which is similar to CHAP (RFC 1994), as well as the new
+    SRP-SHA1 method.  This latter method relies on an exchange that is
+    not vulnerable to dictionary attacks (as is CHAP), does not
+    require the server to keep a cleartext copy of the secret (as in
+    CHAP), supports identity privacy, and produces a temporary shared
+    key that could be used for data encryption.
+
+    The SRP-SHA1 method is based on draft-ietf-pppext-eap-srp-03.txt,
+    a work in progress.
+
+2.  Required libraries
+
+    Two other packages are required first.  Download and install
+    OpenSSL and Thomas Wu's SRP implementation.
+
+	http://www.openssl.org/ (or ftp://ftp.openssl.org/source/)
+	http://srp.stanford.edu/
+
+    Follow the directions in each package to install the SSL and SRP
+    libraries.  Once SRP is installed, you may run tconf as root to
+    create known fields, if desired.  (This step is not required.)
+
+3.  Installing the patch
+
+    The EAP-SRP patch described here is integrated into this version
+    of pppd.  The following patch may be used with older pppd sources:
+
+	ftp://playground.sun.com/carlsonj/eap/ppp-2.4.1-eap-1.tar.gz
+
+    Configure, compile, and install as root.  You may want to edit
+    pppd/Makefile after configuring to enable or disable optional
+    features.
+
+	% ./configure
+	% make
+	% su
+	# make install
+
+    If you use csh or tcsh, run "rehash" to pick up the new commands.
+
+    If you're using Solaris, and you run into trouble with the
+    pseudonym feature on the server side ("no DES here" shows in the
+    log file), make sure that you have the "domestic" versions of the
+    DES libraries linked.  You should see "crypt_d" in "ldd
+    /usr/local/bin/pppd".  If you see "crypt_i" instead, then make
+    sure that /usr/lib/libcrypt.* links to /usr/lib/libcrypt_d.*.  (If
+    you have the international version of Solaris, then you won't have
+    crypt_d.  You might want to find an alternative DES library.)
+
+4.  Adding the secrets
+
+    On the EAP SRP-SHA1 client side, access to the cleartext secret is
+    required.  This can be done in two ways:
+
+	- Enter the client name, server name, and password in the
+          /etc/ppp/srp-secrets file.  This file has the same format as
+          the existing chap-secrets and pap-secrets files.
+
+	  clientname servername "secret here"
+
+	- Use the "password" option in any of the standard
+          configuration files (or the command line) to specify the
+          secret.
+
+	  password "secret here"
+
+    On the EAP SRP-SHA1 server side, a secret verifier is required.
+    This is a one-way hash of the client's name and password.  To
+    generate this value, run the srp-entry program (see srp-entry(8)).
+    This program prompts for the client name and the passphrase (the
+    secret).  The output will be an entry, such as the following,
+    suitable for use in the server's srp-secrets file.  Note that if
+    this is transferred by cut-and-paste, the entry must be a single
+    line of text in the file.
+
+pppuser srpserver 0:LFDpwg4HBLi4/kWByzbZpW6pE95/iIWBSt7L.DAkHsvwQphtiq0f6reoUy/1LC1qYqjcrV97lCDmQHQd4KIACGgtkhttLdP3KMowvS0wLXLo25FPJeG2sMAUEWu/HlJPn2/gHyh9aT.ZxUs5MsoQ1E61sJkVBc.2qze1CdZiQGTK3qtWRP6DOpM1bfhKtPoVm.g.MiCcTMWzc54xJUIA0mgKtpthE3JrqCc81cXUt4DYi5yBzeeGTqrI0z2/Gj8Jp7pS4Fkq3GmnYjMxnKfQorFXNwl3m7JSaPa8Gj9/BqnorJOsnSMlIhBe6dy4CYytuTbNb4Wv/nFkmSThK782V:2cIyMp1yKslQgE *
+
+    The "secret" field consists of three entries separated by colons.
+    The first entry is the index of the modulus and generator from
+    SRP's /etc/tpasswd.conf.  If the special value 0 is used, then the
+    well-known modulus/generator value is used (this is recommended,
+    because it is much faster).  The second value is the verifier
+    value.  The third is the password "salt."  These latter two values
+    are encoded in base64 notation.
+
+    For EAP MD5-Challenge, both client and server use the existing
+    /etc/ppp/chap-secrets file.
+
+5.  Configuration options
+
+    There are two main options relating to EAP available for the
+    client.  These are:
+
+	refuse-eap		- refuse to authenticate with EAP
+	srp-use-pseudonym	- use the identity privacy if
+				  offered by server
+
+    The second option stores a pseudonym, if offered by the EAP
+    SRP-SHA1 server, in the $HOME/.ppp_pseudonym file.  The pseudonym
+    is typically an encrypted version of the client identity.  During
+    EAP start-up, the pseudonym stored in this file is offered to the
+    peer as the identity.  If this is accepted by the peer, then
+    eavesdroppers will be unable to determine the identity of the
+    client.  Each time the client is authenticated, the server will
+    offer a new pseudoname to the client using an obscured (reversibly
+    encrypted) message.  Thus, access across successive sessions
+    cannot be tracked.
+
+    There are two main options for EAP on the server:
+
+	require-eap		- require client to use EAP
+	srp-pn-secret "string"	- set server's pseudoname secret
+
+    The second option sets the long-term secret used on the server to
+    encrypt the user's identity to produce pseudonames.  The
+    pseudoname is constructed by hashing this string with the current
+    date (to the nearest day) with SHA1, then using this hash as the
+    key for a DES encryption of the client's name.  The date is added
+    to the hash for two reasons.  First, this allows the pseudonym to
+    change daily.  Second, it allows the server to decode any previous
+    pseudonym by trying previous dates.
+
+    See the pppd(8) man page for additional options.
+
+6.  Comments welcome!
+
+    This is still an experimental implementation.  It has been tested
+    and reviewed carefully for correctness, but may still be
+    incomplete or have other flaws.  All comments are welcome.  Please
+    address them to the author:
+
+		james.d.carlson@sun.com
+
+    or, for EAP itself or the SRP extensions to EAP, to the IETF PPP
+    Extensions working group:
+
+		ietf-ppp@merit.edu

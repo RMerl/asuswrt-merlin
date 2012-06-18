@@ -1,0 +1,221 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 6] Users, Security, and Domains </title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:33:28Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_05.html" TITLE="5.5 Locks and Oplocks">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 5.5 Locks and Oplocks" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+Chapter 6</font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch06_02.html" TITLE="6.2 Controlling Access to Shares">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 6.2 Controlling Access to Shares" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div class="samplechapter">
+<H1 CLASS="chapter">
+<A CLASS="title" NAME="ch06-88749">
+6. Users, Security, and Domains </a></h1><DIV CLASS="htmltoc">
+<P>
+<B>
+Contents:</b><br>
+<A CLASS="sect1" HREF="#ch06-92902" TITLE="6.1 Users and Groups">
+Users and Groups</a><br>
+<A CLASS="sect1" HREF="ch06_02.html" TITLE="6.2 Controlling Access to Shares">
+Controlling Access to Shares</a><br>
+<A CLASS="sect1" HREF="ch06_03.html" TITLE="6.3 Authentication Security">
+Authentication Security</a><br>
+<A CLASS="sect1" HREF="ch06_04.html" TITLE="6.4 Passwords">
+Passwords</a><br>
+<A CLASS="sect1" HREF="ch06_05.html" TITLE="6.5 Windows Domains">
+Windows Domains</a><br>
+<A CLASS="sect1" HREF="ch06_06.html" TITLE="6.6 Logon Scripts">
+Logon Scripts</a></p><P>
+</p></div><P CLASS="para">
+This chapter discusses how to configure users with the Samba server. This topic may seem straightforward at first, but you'll soon discover that there are several ancillary problems that can crop up. One issue that Samba administrators have difficulty with is user authentication&nbsp;- password and security problems are by far the most common support questions on the Samba mailing lists. Learning why various authentication mechanisms work on certain architectures (and don't on others) can save you a tremendous amount of time testing and debugging Samba users in the future.</p><DIV CLASS="sect1">
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="s1"></a>
+<A CLASS="title" NAME="ch06-92902">
+6.1 Users and Groups</a></h2><P CLASS="para">Before we start, we need to warn you up front that if you are connecting to Samba with a Windows 98 or NT 4.0 Workstation SP3, you need to configure your server for encrypted passwords before you can make a connection; otherwise, the clients will refuse to connect to the Samba server. This is because each of those Windows clients sends encrypted passwords, and Samba needs to be configured to expect and decrypt them. We'll show you how to set up Samba for this task later in the chapter, assuming you haven't already tackled this problem in <a href="ch02_01.html"><b>Chapter 2, <CITE CLASS="chapter">Installing Samba on a Unix System</cite></b></a>.</p><P CLASS="para">Let's start with a single user. The easiest way to set up a client user is to create a Unix account (and home directory) for that individual on the server, and notify Samba of the user's existence. You can do the latter by creating a disk share that maps to the user's home directory in the Samba configuration file, and restricting access to that user with the <CODE CLASS="literal">
+valid</code> <CODE CLASS="literal">
+users</code> option. For example:</p><PRE CLASS="programlisting">
+[dave]
+		path = /home/dave
+		comment = Dave's home directory
+		writeable = yes<B CLASS="emphasis.bold">
+		valid users = dave</b></pre><P CLASS="para">
+The <CODE CLASS="literal">
+valid</code> <CODE CLASS="literal">
+users</code> option lists the users that will be allowed to access the share.  In this case, only the user <CODE CLASS="literal">
+dave</code> is allowed to access the share. In the previous chapters, we specified that any user could access a disk share using the <CODE CLASS="literal">
+guest</code> <CODE CLASS="literal">
+ok</code> parameter. Because we don't wish to allow guest access, that option is absent here. We could grant both authenticated users and guest users access to a specific share if we wanted to. The difference between the two typically involves access rights for each of the files. </p><P CLASS="para">
+Remember that you can abbreviate the user's home directory by using the <CODE CLASS="literal">
+%H</code> variable. In addition, you can use the Unix username variable <CODE CLASS="literal">
+%u</code> and/or the client username variable <CODE CLASS="literal">
+%U</code> in your options as well. For example<EM CLASS="emphasis"></em>:</p><PRE CLASS="programlisting">
+[dave]
+	comment = %U home directory
+	writeable = yes
+	valid users = dave
+	path = %H</pre><P CLASS="para">
+Both of these examples work as long as the Unix user that Samba uses to represent the client has read/write access to the directory referenced by the <CODE CLASS="literal">
+path</code> option. In other words, a client must first pass Samba's security mechanisms (e.g., encrypted passwords, the <CODE CLASS="literal">
+valid users</code> option, etc.) as well as the normal Unix file and directory permissions of its Unix-side user <EM CLASS="emphasis">
+before</em> it can gain read/write access to a share.</p><P CLASS="para">
+With a single user accessing a home directory, access permissions are taken care of when the operating system creates the user account. However, if you're creating a shared directory for group access, there are a few more steps you need to perform. Let's take a stab at a group share for the accounting department in the <EM CLASS="emphasis">
+smb.conf</em> file:</p><PRE CLASS="programlisting">
+[accounting]
+	comment = Accounting Department Directory
+	writeable = yes
+	valid users = @account
+	path = /home/samba/accounting
+	create mode = 0660
+	directory mode = 0770</pre><P CLASS="para">
+The first thing that you might notice we did differently is to specify <CODE CLASS="literal">
+@account</code> as the valid user instead of one or more individual usernames. This is shorthand for saying that the valid users are represented by the Unix group <CODE CLASS="literal">
+account</code>. These users will need to be added to the group entry <CODE CLASS="literal">
+account</code> in the system group file (<I CLASS="filename">/etc/group</i> or equivalent) to be recognized as part of the group. Once they are, Samba will recognize those users as valid users for the share.</p><P CLASS="para">
+In addition, you will need to create a shared directory that the members of the group can access, which is pointed to by the <CODE CLASS="literal">
+path</code> configuration option. Here are the Unix commands that create the shared directory for the accounting department (assuming <EM CLASS="emphasis">
+/home/samba</em> already exists):</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">#</code> mkdir /home/samba/accounting</b><B CLASS="emphasis.bold">
+<CODE CLASS="literal">#</code> chgrp account /home/samba/accounting</b><B CLASS="emphasis.bold">
+<CODE CLASS="literal">#</code> chmod 770 /home/samba/accounting</b></pre><P CLASS="para">
+There are two other options in this <I CLASS="filename">
+smb.conf</i> example, both of which we saw in the previous chapter. These options are <CODE CLASS="literal">
+create</code> <CODE CLASS="literal">
+mode</code> and <CODE CLASS="literal">
+directory</code> <CODE CLASS="literal">
+mode</code>. These options set the maximum file and directory permissions that a new file or directory can have. In this case, we have denied all world access to the contents of this share. (This is reinforced by the <EM CLASS="emphasis">
+chmod</em> command, shown earlier.).</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch06-pgfId-968835">
+6.1.1 The [homes] Share</a></h3><P CLASS="para">
+Let's return to user shares for a moment. If we have several users to set up home directory shares for, we probably want to use the special <CODE CLASS="literal">
+[homes]</code> share that we introduced in <a href="ch05_01.html"><b>Chapter 5, <CITE CLASS="chapter">Browsing and Advanced Disk Shares</cite></b></a>. With the <CODE CLASS="literal">
+[homes]</code> share, all we need to say is: </p><PRE CLASS="programlisting">
+[homes]
+<CODE CLASS="literal">
+	</code>browsable = no
+	writable = yes</pre><P CLASS="para">
+The <CODE CLASS="literal">
+[homes]</code> share is a special section of the Samba configuration file. If a user attempts to connect to an ordinary share that doesn't appear in the <I CLASS="filename">
+smb.conf</i> file (such as specifying it with a UNC in Windows Explorer), Samba will search for a <CODE CLASS="literal">
+[homes]</code> share. If one exists, the incoming share name is assumed to be a username and is queried as such in the password database (<I CLASS="filename">/etc/passwd</i> or equivalent) file of the Samba server. If it appears, Samba assumes the client is a Unix user trying to connect to his or her home directory.</p><P CLASS="para">
+As an illustration, let's assume that <CODE CLASS="literal">
+sofia</code> is attempting to connect to a share called [<CODE CLASS="literal">sofia]</code> on the Samba server. There is no share by that name in the configuration file, but a <CODE CLASS="literal">
+[homes]</code> share exists and user <CODE CLASS="literal">
+sofia</code> is present in the password database, so Samba takes the following steps:</p><OL CLASS="orderedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-957527">
+</a>Samba creates a new disk share called <CODE CLASS="literal">
+[sofia]</code> with the <CODE CLASS="literal">
+path</code> specified in the <CODE CLASS="literal">
+[homes]</code> section. If there is no <CODE CLASS="literal">
+path</code> option specified in <CODE CLASS="literal">
+[homes]</code>, Samba initializes it to her home directory.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-957528">
+</a>Samba initializes the new share's options from the defaults in <CODE CLASS="literal">
+[globals]</code>, and any overriding options in <CODE CLASS="literal">
+[homes]</code> with the exception of <CODE CLASS="literal">
+browseable</code>.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-957529">
+</a>Samba connects <CODE CLASS="literal">
+sofia</code>'s client to that share.</p></li></ol><P CLASS="para">
+The <CODE CLASS="literal">
+[homes]</code> share is a fast, painless way to create shares for your user community without having to duplicate the information from the password database file in the <I CLASS="filename">
+smb.conf</i> file. It does have some peculiarities, however, that we need to point out:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-957531">
+</a>The <CODE CLASS="literal">
+[homes]</code> section can represent any account on the machine, which isn't always desirable. For example, it can potentially create a share for <EM CLASS="emphasis">
+root</em>, <EM CLASS="emphasis">
+bin</em>, <EM CLASS="emphasis">
+sys</em>, <EM CLASS="emphasis">
+uucp</em>, and the like. (You can set a global <CODE CLASS="literal">
+invalid</code> <CODE CLASS="literal">
+users</code> option to protect against this.)</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch06-pgfId-957533">
+</a>The meaning of the <CODE CLASS="literal">
+browseable</code> configuration option is different from other shares; it indicates only that a <CODE CLASS="literal">
+[homes]</code> section won't show up in the local browse list, not that the <CODE CLASS="literal">
+[alice]</code> share won't. When the <CODE CLASS="literal">
+[alice]</code> section is created (after the initial connection), it will use the browsable value from the <CODE CLASS="literal">
+[globals]</code> section for that share, not the value from <CODE CLASS="literal">
+[homes]</code>.</p></li></ul><P CLASS="para">
+As we mentioned, there is no need for a path statement in <CODE CLASS="literal">
+[homes]</code> if the users have Unix home directories in the server's <I CLASS="filename">
+/etc/passwd</i> file. You should ensure that a valid home directory does exist, however, as Samba will not automatically create a home directory for a user, and will refuse a tree connect if the user's directory does not exist or is not accessible. </p></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch05_05.html" TITLE="5.5 Locks and Oplocks">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 5.5 Locks and Oplocks" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch06_02.html" TITLE="6.2 Controlling Access to Shares">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 6.2 Controlling Access to Shares" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+5.5 Locks and Oplocks</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+6.2 Controlling Access to Shares</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

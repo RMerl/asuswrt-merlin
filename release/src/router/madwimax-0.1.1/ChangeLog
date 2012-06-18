@@ -1,0 +1,642 @@
+2009-07-04 03:00  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/protocol.c, src/protocol.h, src/wimax.c: Major protocol code
+	  rewrite and generalization.
+
+2009-07-04 00:28  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* man/madwimax.8.txt, src/wimax.c: Update help and man according to
+	  recent changes.
+
+2009-07-04 00:14  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Add an option for event script path (based on
+	  theMIROn's patch). Handle
+	  ssid better as well. (Closes issue #21)
+
+2009-07-03 17:46  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Fix libusb.h include (based on theMIROn's patch).
+
+2009-06-17 14:46  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* configure.ac, man/Makefile.am, scripts/events/Makefile.am: Check
+	  for asciidoc and docbook2x-man in configure for proper man page
+	  generation. Also one can now completely disable man pages using
+	  --without-man-pages configure switch. (Closes issue #11.)
+
+2009-06-15 12:09  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* man/madwimax.8.txt, src/wimax.c: Add 'ssid' option to support
+	  non-Yota networks without recompilation (based on the patch from
+	  Alexei Tarnakin).
+
+2009-05-08 18:14  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Fix VID:PID endianness problem (issue 15).
+
+2009-04-19 17:51  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* INSTALL, README, TODO, man/madwimax.8.txt: Fix some documentation
+	  issues.
+
+2009-04-18 21:57  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* man/Makefile.am: Don't output man page to stdout because this
+	  will make an empty file if docbook2x is missing.
+
+2009-04-17 20:21  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* man/Makefile.am: Remove generated man pages on clean.
+
+2009-04-17 08:38  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* man/Makefile.am: Use docbook2x-man instead of xsltproc for
+	  xml->man conversion.
+
+2009-04-14 21:49  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* configure.ac, src/Makefile.am: Move libusb1_LIBS to the end of
+	  madwimax ld flags.
+
+2009-04-14 21:45  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* configure.ac, scripts/events/Makefile.am: Change sysconfdir
+	  globally.
+
+2009-04-14 13:53  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: End child process if event script cannot be launched
+	  (thanks Alexander Monakov for pointing this out).
+
+2009-04-13 02:17  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Initialize timeval structure to prevent negative
+	  delay.
+
+2009-04-13 00:37  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/protocol.c, src/protocol.h, src/wimax.c: Pass network id to
+	  fill_auth_set_cmd instead of using a hard-coded value.
+
+2009-04-12 07:22  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/protocol.c: One more update.
+
+2009-04-12 07:19  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* README, src/logging.c, src/logging.h, src/protocol.h,
+	  src/tap_dev.c, src/tap_dev.h, src/wimax.c, src/wimax.h: Update
+	  project descriptions.
+
+2009-04-11 23:32  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* scripts/events/Makefile.am: Install to etc/madwimax by default,
+	  instead of plain etc.
+
+2009-04-11 23:31  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* AUTHORS, ChangeLog: Fix email address.
+
+2009-04-11 23:29  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Fix embedded help.
+
+2009-04-11 23:27  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* Makefile.am, configure.ac, man, man/Makefile.am,
+	  man/madwimax.8.txt: Add madwimax man page.
+
+2009-04-09 19:53  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* scripts/udev/z60_madwimax.rules.in: Update udev rules. Start
+	  madwimax by default when device is plugged.
+
+2009-04-09 11:40  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* scripts/events/event.sh.generic.in,
+	  scripts/events/event.sh.wl500g.in: Don't use xargs in scripts.
+
+2009-04-08 23:42  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* scripts/events/event.sh.generic.in: Use absolute paths in generic
+	  script.
+
+2009-04-08 23:39  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Add VID:PID of LRTC (Lithuanian mWimax network)
+	  version of SWC-U200.
+
+2009-03-19 22:26  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* scripts/events/event.sh.generic.in: Fix generic script (thanks
+	  Druker).
+
+2009-03-15 02:00  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Always wait for all specified events in
+	  process_events_by_mask. Previous behaviour was too unpredictable.
+
+2009-03-10 23:17  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* scripts/udev/z60_madwimax.rules.in, src/wimax.c: Add support for
+	  SWC-E100 (thanks rumikk).
+
+2009-03-01 23:40  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* TODO, configure.ac: Print message if pkg-config or libusb-1.0 are
+	  not found by configure.
+
+2009-02-12 12:06  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* TODO: Update TODO.
+
+2009-02-11 13:18  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* ChangeLog, INSTALL, NEWS, configure.ac: Bump version to 0.1.0.
+	  Update docs.
+
+2009-02-11 08:54  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* .gitignore, scripts/events/Makefile.am: Fix make dist and
+	  distclean targets. Fix .gitignore.
+
+2009-02-10 19:18  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* scripts/events/event.sh.wl500g.in, src/wimax.c: Fix event issue.
+	  Remove the old masquerade rule when interface goes down.
+
+2009-02-10 18:52  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Fix set_coe.
+
+2009-02-10 18:46  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* TODO, scripts/events, scripts/events/event.sh.generic.in,
+	  scripts/events/event.sh.wl500g.in, src/wimax.c: Update wl500g
+	  script. Add if-create and if-release events.
+
+2009-02-08 00:29  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/logging.c, src/logging.h, src/protocol.c, src/protocol.h,
+	  src/tap_dev.c, src/tap_dev.h, src/wimax.c, src/wimax.h: Fix
+	  copyright notices in source files.
+
+2009-02-07 23:44  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* scripts/events: Fix svn:ignore.
+
+2009-02-07 22:16  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* configure.ac, scripts/events/Makefile.am,
+	  scripts/events/event.sh.generic.in, scripts/events/event.sh.in,
+	  scripts/events/event.sh.wl500g.in: Can now select a script to
+	  use. Add generic and wl500g scripts.
+
+2009-02-06 12:20  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* INSTALL, THANKS, TODO: Various documentation updates.
+
+2009-02-06 12:04  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* scripts/if-up-down: Delete old directory for event scripts.
+
+2009-02-05 22:07  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Fix bug in device list size calculation.
+
+2009-02-05 20:45  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/logging.c: Flush log file after each entry.
+
+2009-02-05 08:10  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Detach modem interface kernel driver if active and
+	  reattach it at exit.
+
+2009-02-05 01:06  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Name network interface wimax* instead of tap*.
+
+2009-02-05 01:05  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/tap_dev.c: Remove old code.
+
+2009-02-04 23:25  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Print some info about the scanned devices.
+
+2009-02-03 23:46  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/protocol.c, src/wimax.c: Rearranged message log levels.
+
+2009-02-03 23:22  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* TODO, src/logging.c, src/logging.h, src/wimax.c: Add logging to
+	  file option.
+
+2009-02-01 00:37  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* configure.ac, src/logging.c, src/logging.h, src/wimax.c: Log to
+	  syslog if daemonized.
+
+2009-01-31 23:08  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/logging.c, src/logging.h, src/protocol.c, src/wimax.c: Rename
+	  the logging functions: debug -> wmlog.
+
+2009-01-31 22:59  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/logging.c, src/protocol.c, src/wimax.c: Print new line after
+	  every debug message.
+
+2009-01-27 15:20  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Set default MTU to 1386.
+
+2009-01-25 20:58  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* ., scripts/events: Fix svn:ignore.
+
+2009-01-24 15:19  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* .gitignore, configure.ac, scripts/Makefile.am, scripts/events,
+	  scripts/events/Makefile.am, scripts/events/event.sh.in,
+	  scripts/if-up-down/Makefile.am, scripts/if-up-down/if-down,
+	  scripts/if-up-down/if-up, src/wimax.c: update scripts
+
+2009-01-24 15:18  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* include/Makefile.am: add git last commit to the version string
+
+2009-01-24 15:18  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* .gitignore: add .gitignore
+
+2009-01-17 02:28  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/Makefile.am: Fix madwimax LDFLAGS for wl500g environment.
+
+2009-01-16 23:50  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* include, src: Fix svn:ignore.
+
+2009-01-16 23:45  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* Makefile.am, configure.ac, scripts, scripts/Makefile.am,
+	  scripts/if-up-down, scripts/if-up-down/Makefile.am, scripts/udev,
+	  scripts/udev/Makefile.am, scripts/udev/z60_madwimax.rules,
+	  scripts/udev/z60_madwimax.rules.in, src/Makefile.am,
+	  src/logging.c, src/protocol.c, src/wimax.c: Work on build scripts
+	  mostly done.
+
+2009-01-16 10:56  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* include/Makefile.am: Prepend svn revision with 'r' for clarity.
+
+2009-01-16 10:52  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* ., Makefile.am, configure.ac, include, include/Makefile.am,
+	  src/Makefile.am, src/logging.c, src/logging.h, src/wimax.c,
+	  src/wimax.h: Move all debug/logging output code to logging.[ch].
+	  Include svn revision in the version string.
+
+2009-01-15 23:23  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Add an option for version printing. Work on option
+	  parsing code.
+
+2009-01-15 18:57  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* TODO, scripts/udev/z60_madwimax.rules, src/wimax.c: Add various
+	  device matching methods.
+
+2009-01-15 14:41  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Change mtu to 1400.
+
+2009-01-15 09:28  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Print an explanation text in case of problems with
+	  the TAP interface.
+
+2009-01-14 23:38  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Add list of the supported devices.
+
+2009-01-14 14:16  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Exit only when device is disconnected.
+
+2009-01-09 04:18  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Add an option to detach pseudo-DVD kernel driver on
+	  startup.
+
+2009-01-09 03:28  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Explicitely specify libusb context.
+
+2009-01-08 23:42  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/wimax.c: Fix bugs.
+
+2009-01-08 12:46  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* configure.ac, scripts/if-up-down/if-up, src/wimax.c: Update
+	  configure.ac. Run if-down on exit.
+
+2009-01-08 11:13  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* TODO: Update TODO.
+
+2009-01-08 10:58  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* scripts/if-up-down/if-down, scripts/if-up-down/if-up: Set
+	  svn:executable for scripts.
+
+2009-01-08 10:53  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* scripts/if-up-down, scripts/if-up-down/if-down,
+	  scripts/if-up-down/if-up, src/tap_dev.c, src/wimax.c: Run
+	  user-supplied scripts on network connect/disconnect.
+
+2008-12-30 17:29  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* configure.ac, src/tap_dev.c: Add more checks reported by
+	  autoscan.
+
+2008-12-30 14:36  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* ., src: Update svn:ignore.
+
+2008-12-30 14:32  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* AUTHORS, ChangeLog, Makefile, Makefile.am, TODO, configure.ac,
+	  src/Makefile.am: Use autotools to build and install everything.
+
+2008-12-29 03:38  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* TODO: Update TODO.
+
+2008-12-29 03:25  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* src/tap_dev.c, src/tap_dev.h, src/wimax.c: Set tap interface mtu.
+
+2008-12-28 15:34  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* Makefile: Add libpthread to the linked libraries.
+
+2008-12-28 13:24  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* Makefile, protocol.c, protocol.h, scripts, scripts/udev,
+	  scripts/udev/z60_madwimax.rules, src, src/protocol.c,
+	  src/protocol.h, src/tap_dev.c, src/tap_dev.h, src/wimax.c,
+	  src/wimax.h, tap_dev.c, tap_dev.h, wimax.c, wimax.h,
+	  z60_madwimax.rules: Reorganize files.
+
+2008-12-28 13:18  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Change the error message.
+
+2008-12-28 13:13  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* NEWS, wimax.c: Immediately exit when device is lost. Update NEWS
+	  for the new release.
+
+2008-12-28 12:56  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Fix previous commit.
+
+2008-12-28 02:49  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Move daemonizing code up to make udev happier.
+
+2008-12-27 17:32  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Some refactoring.
+
+2008-12-27 12:20  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Bring TAP interface up/down when connected/disconnected.
+
+2008-12-27 11:12  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, wimax.c, wimax.h: Rename net_found to link_status.
+	  Make state change affect also link_status.
+
+2008-12-27 10:41  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* 025_madwimax.rules, z60_madwimax.rules: Fix the order of the
+	  rules.
+
+2008-12-26 06:49  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* 025_madwimax.rules: Fix udev rules file header.
+
+2008-12-26 06:43  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* 025_madwimax.rules: Add udev rules example.
+
+2008-12-26 04:15  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Change the semantics of process_events_by_mask: return
+	  only when all the events in the mask happened or on timeout.
+
+2008-12-26 03:58  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, wimax.c: Further rework of events handling.
+
+2008-12-26 00:39  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* Makefile: Explicitly specify source files to prevent some
+	  unwanted things from happening.
+
+2008-12-26 00:23  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c, wimax.h: Minor changes.
+
+2008-12-25 20:01  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* tap_dev.c, tap_dev.h, tun_dev.c, tun_dev.h, wimax.c: Rename
+	  tun_dev.[ch] to tap_dev.[ch].
+
+2008-12-25 19:59  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* tun_dev.c: Fix tun_dev.c copyright notice.
+
+2008-12-25 19:55  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* tun_dev.c, tun_dev.h: Add functions to bring the TAP interface up
+	  and down.
+
+2008-12-25 03:21  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* TODO: Updated TODO.
+
+2008-12-24 04:50  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Replace a lot of checks with a macro.
+
+2008-12-24 04:18  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, protocol.h, wimax.c, wimax.h: Work on 5745 exchange.
+
+2008-12-22 09:46  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* TODO: Updated TODO.
+
+2008-12-22 01:57  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, protocol.h, wimax.c: Control the diode.
+
+2008-12-22 00:31  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, protocol.h, wimax.c: Add a widescan request. Update
+	  some function names.
+
+2008-12-21 00:51  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Add args handling via getopt and support for
+	  daemonizing.
+
+2008-12-20 21:50  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Remove connection state check.
+
+2008-12-20 15:34  Vladislav Isenbaev <isenbaev@gmail.com>
+
+	* wimax.c: Added line feeds in some debug messages
+
+2008-12-20 14:08  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Fix several bugs in process_events_by_mask.
+
+2008-12-20 13:46  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Pass arguments properly (fix commit 47).
+
+2008-12-20 13:20  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c, wimax.h: Do more intelligent event processing through
+	  event masks and timeouts.
+
+2008-12-20 12:06  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Fixed process_events (also fixed commit 45).
+
+2008-12-20 11:56  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Only send packets in the 'NORMAL' state.
+
+2008-12-20 11:51  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* TODO, wimax.c: Add callbacks for pollfd added/removed events.
+
+2008-12-19 18:31  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* TODO, wimax.c: Allow all types of packets since the hardware
+	  handles them correctly.
+
+2008-12-19 18:29  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* tun_dev.c, tun_dev.h: Add functions to get/set TAP interface
+	  flags.
+
+2008-12-19 15:41  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* COPYING, INSTALL, NEWS, README, TODO: Add several files required
+	  by the GNU coding standards.
+
+2008-12-19 13:34  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c: Remove the unneeded header.
+
+2008-12-19 05:54  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, protocol.h, tun_dev.c, tun_dev.h, wimax.c, wimax.h: -
+	  poll TAP fd along with others
+	  - do packet exchange between TAP and the modem (IP only)
+	  (based on Vladislav Isenbaev's patch)
+
+2008-12-19 03:25  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* Makefile, protocol.c, tun_dev.c, tun_dev.h, wimax.c: Add -Wall to
+	  CFLAGS and eliminate warnings (thanks Vladislav Isenbaev for
+	  suggestion).
+
+2008-12-16 20:48  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, protocol.h, wimax.c: Send one more request to get to
+	  'NORMAL' state.
+
+2008-12-16 01:16  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, protocol.h, wimax.c, wimax.h: Add several requests
+	  and parse the responses (currently untested).
+
+2008-12-16 00:17  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* tun_dev.c, tun_dev.h, wimax.c: Set tap MAC to the one reported by
+	  the device.
+
+2008-12-16 00:16  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.h: Fixed field sizes.
+
+2008-12-15 19:55  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Fix minor bug.
+
+2008-12-15 17:51  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, tun_dev.c, tun_dev.h, wimax.c, wimax.h: Add tun_dev.c
+	  from VTun (vtun.sourceforge.net) to handle tap interface
+	  allocation. Some refactoring.
+
+2008-12-15 00:25  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, wimax.c, wimax.h: Some refactoring.
+
+2008-12-13 23:58  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, wimax.c, wimax.h: Print network status.
+
+2008-12-13 23:27  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, protocol.h, wimax.c: Add scan loop.
+
+2008-12-13 22:41  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, protocol.h, wimax.c, wimax.h: Add several requests
+	  and parse the responses.
+
+2008-12-13 16:12  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* protocol.c, wimax.c: Turn on continuous async read.
+
+2008-12-13 16:00  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* Makefile, protocol.c, protocol.h, wimax.c, wimax.h: Move protocol
+	  related stuff to protocol.[ch].
+
+2008-12-13 13:34  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Dump both hex and ASCII.
+
+2008-12-13 12:46  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Add initial response processing.
+
+2008-11-30 23:03  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* wimax.c: Added first async request.
+
+2008-11-14 13:40  Alexander Gordeev <lasaine@lvk.cs.msu.su>
+
+	* Makefile, wimax.c: Initial code import.
+
+2008-11-14 13:06  
+
+	* .: Initial directory structure.
+

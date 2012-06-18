@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# unit test for uuencode to test functionality.
+# Copyright 2006 by Erik Hovland <erik@hovland.org>
+# Licensed under GPL v2, see file LICENSE for details.
+
+# AUDIT: Unit tests for uuencode
+
+. ./testing.sh
+
+# testing "test name" "options" "expected result" "file input" "stdin"
+#   file input will be file called "input"
+#   test can create a file "actual" instead of writing to stdout
+
+# Test setup of standard input
+saved_umask=$(umask)
+umask 0
+testing "uuencode sets standard input mode correctly" \
+        "uuencode foo </dev/null | head -n 1 | grep -q 666 && echo yes" "yes\n" "" ""
+umask $saved_umask
+
+testing "uuencode correct encoding" "uuencode bb_uuenc_test.out" \
+"begin 644 bb_uuenc_test.out\nM5&AE(&9A<W0@9W)E>2!F;W@@:G5M<&5D(&]V97(@=&AE(&QA>GD@8G)O=VX@\n%9&]G+@H\`\n\`\nend\n" \
+        "" "The fast grey fox jumped over the lazy brown dog.\n"
+testing "uuencode correct base64 encoding" "uuencode -m bb_uuenc_test.out" \
+"begin-base64 644 bb_uuenc_test.out\nVGhlIGZhc3QgZ3JleSBmb3gganVtcGVkIG92ZXIgdGhlIGxhenkgYnJvd24g\nZG9nLgo=\n====\n" \
+        "" "The fast grey fox jumped over the lazy brown dog.\n"
+exit $FAILCOUNT

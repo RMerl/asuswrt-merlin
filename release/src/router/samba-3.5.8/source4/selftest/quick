@@ -1,0 +1,38 @@
+# This file contains regexes matching the tests that should be run 
+# when doing a "quicktest" - verifying whether the build is working 
+# rather than trying to see what exactly is broken.
+#
+# This should be as quick as possible but cover as much code as possible.
+base.unlink
+base.attr
+base.delete
+base.tcon
+base.open
+base.chkpath
+raw.qfsinfo
+raw.qfileinfo
+raw.sfileinfo
+raw.mkdir
+raw.seek
+raw.open
+raw.write
+raw.unlink
+raw.read
+raw.close
+raw.ioctl
+raw.rename
+raw.eas
+raw.streams
+base.open 
+rpc.altercontext
+rpc.join
+rpc.echo
+rpc.schannel
+rpc.netlogon
+rpc.unixinfo
+rpc.handles
+rpc.altercontext
+rpc.join
+rpc.handles
+rpc.echo
+smb.signing

@@ -1,0 +1,135 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Appendix A] A.4 Setting Up SSL Proxy</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:41:41Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_03.html" TITLE="A.3 Installing SSLeay">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: A.3 Installing SSLeay" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="appendix" REL="up" HREF="appa_01.html" TITLE="A. Configuring Samba with SSL">
+Appendix A<br>
+Configuring Samba with SSL</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_05.html" TITLE="A.5 SSL Configuration Options">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: A.5 SSL Configuration Options" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="appa-pgfId-986788">
+A.4 Setting Up SSL Proxy</a></h2><P CLASS="para">
+The SSL Proxy program is available as a standalone binary or as source code. You can download it from <A CLASS="systemitem.url" HREF="http://obdev.at/Products/sslproxy.html">
+http://obdev.at/Products/sslproxy.html</a>.</p><P CLASS="para">
+Once it is downloaded, you can configure and compile it like Samba. We will configure it on a Windows NT system. However, setting it up for a Unix system involves a nearly identical series of steps. Be sure that you are the superuser (administrator) for the next series of steps.</p><P CLASS="para">
+If you downloaded the binary for Windows NT, you should have the following files in a directory:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-986793">
+</a><I CLASS="filename">
+cygwinb19.dll</i></p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-986794">
+</a><I CLASS="filename">
+README.TXT</i></p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-986795">
+</a><I CLASS="filename">
+sslproxy.exe</i></p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-986796">
+</a><I CLASS="filename">
+dummyCert.pem</i></p></li></ul><P CLASS="para">
+The only one that you will be interested in is the SSL Proxy executable. Copy over the <EM CLASS="emphasis">
+phoenix.pem</em> and <EM CLASS="emphasis">
+phoenix.key</em> files that you generated earlier for the client to the same directory as the SSL proxy executable. Make sure that the directory is secure from the prying eyes of other users.</p><P CLASS="para">
+The next step is to ensure that the Windows NT machine can resolve the NetBIOS name of the Samba server. This means that you should either have a WINS server up and running (the Samba server can perform this task with the <CODE CLASS="literal">
+wins</code> <CODE CLASS="literal">
+support</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code> option) or have it listed in the appropriate <EM CLASS="emphasis">
+hosts</em> file of the system. See <a href="ch07_01.html"><b>Chapter 7, <CITE CLASS="chapter">Printing and Name Resolution</cite></b></a>, for more information on WINS server.[<A CLASS="footnote" HREF="#appa-pgfId-986801">1</a>]</p><BLOCKQUOTE CLASS="footnote">
+<DIV CLASS="footnote">
+<P CLASS="para">
+<A CLASS="footnote" NAME="appa-pgfId-986801">[1]</a> If you are running SSL Proxy on a Unix server, you should ensure that the DNS name of the Samba server can be resolved.</p></div></blockquote><P CLASS="para">
+Finally, start up SSL Proxy with the following command. Here, we assume that <CODE CLASS="literal">
+hydra</code> is the name of the Samba server:</p><PRE CLASS="programlisting">
+# <CODE CLASS="userinput"><B>C:\SSLProxy&gt;sslproxy -l 139 -R hydra -r 139 -n -c phoenix.pem -k phoenix.key</b></code></pre><P CLASS="para">
+This tells SSL Proxy to listen for connections to port 139 and relay those requests to port 139 on the NetBIOS machine <CODE CLASS="literal">
+hydra</code>. It also instructs SSL Proxy to use the <I CLASS="filename">
+phoenix.pem</i> and <I CLASS="filename">
+phoenix.key</i> files to generate the certificate and keys necessary to initiate the SSL connection. SSL Proxy responds with:</p><PRE CLASS="programlisting">
+Enter PEM pass phrase:</pre><P CLASS="para">
+Enter the PEM pass phrase of the client keypair that you generated, <EM CLASS="emphasis">
+not</em> the certificate authority. You should then see the following output:</p><PRE CLASS="programlisting">
+SSL: No verify locations, trying default
+proxy ready, listening for connections</pre><P CLASS="para">
+That should take care of the client. You can place this command in a startup sequence on either Unix or Windows NT if you want this functionality available at all times. Be sure to set any clients you have connecting to the NT server (including the NT server itself) to point to this server instead of the Samba server.</p><P CLASS="para">
+After you've completed setting this up, try to connect using clients that proxy through the NT server. You should find that it works almost transparently.</p></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_03.html" TITLE="A.3 Installing SSLeay">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: A.3 Installing SSLeay" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_05.html" TITLE="A.5 SSL Configuration Options">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: A.5 SSL Configuration Options" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+A.3 Installing SSLeay</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+A.5 SSL Configuration Options</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

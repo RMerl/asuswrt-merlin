@@ -1,0 +1,65 @@
+.\" $Id: l2tpd.8 3323 2011-09-21 18:45:48Z lly.dev $ 
+.\" LIC: GPL
+.TH L2TPD 8 "11 March 2002"
+.UC 4
+.SH NAME
+l2tpd \- user-space L2TP daemon.
+.SH SYNOPSIS
+.B l2tpd \fR[\fIoptions\fR]
+
+.SH DESCRIPTION
+\fBl2tpd\fR is a user-space L2TP daemon.  L2TP is the Layer Two
+Tunneling Protocol described in RFC 2661.  It allows you to tunnel
+PPP sessions over a network or transport protocol (in this case, UDP.)
+
+.SH OPTIONS
+.TP
+.B \-d \fInum\fR
+Sets the debug level to \fInum\fR.  Of interest mostly to
+\fBl2tpd\fR developers.  \fInum\fR is a bitmask; set it to
+65535 for maximum debugging information.
+
+.TP
+.B \-f
+Do not fork.  Normally, \fBl2tpd\fR forks and puts itself in the
+background.  This option causes it to stay running in the foreground.
+
+.SH L2TPD ARCHITECTURE
+
+The \fBl2tpd\fR program itself contains \fIonly\fR code necessary
+for processing L2TP datagrams and maintaining L2TP tunnels and
+sessions.  It does \fInot\fR contain code for interacting with
+\fBpppd\fR or for users to control session establishment and teardown.
+These functions are performed by \fIhandlers\fR, which are
+shared-object libraries dynamically loaded at run-time.
+.PP
+The handlers currently distributed with \fBl2tpd\fR include:
+.TP
+.B sync-pppd.so
+A shared-library which interfaces with \fBpppd\fR and allows \fBl2tpd\fR
+to act as both an LAC and an LNS.
+.TP
+.B cmd.so
+A simple command-interpreter which listens on a UNIX-domain socket
+and allows you to start and stop L2TP sessions.
+.PP
+\fBl2tpd\fR is a single-threaded, event-driven program.  It should be
+fairly lightweight and efficient.
+
+.SH L2TPD CONFIGURATION
+On startup, \fBl2tpd\fR reads the configuration file \fB/etc/l2tp/l2tp.conf\fR.
+This configuration file sets operating parameters, describes peers and loads
+and configures handlers.  See \fBl2tp.conf\fR(5) for configuration
+file details.
+
+.SH FILES
+.TP
+.B /etc/l2tp/l2tp.conf
+Main configuration file.
+.TP
+.B /var/run/l2tpctrl
+Control socket for \fBcmd.so\fR handler.
+
+.SH AUTHORS
+\fBl2tpd\fR was written by David F. Skoll <dfs@roaringpenguin.com>.
+

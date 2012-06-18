@@ -1,0 +1,357 @@
+.\"     Title: nmblookup
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: User Commands
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "NMBLOOKUP" "1" "09/30/2009" "Samba 3\&.0" "User Commands"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+nmblookup \- NetBIOS over TCP/IP client used to lookup NetBIOS names
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCnmblookup\F[] [\-M] [\-R] [\-S] [\-r] [\-A] [\-h] [\-B\ <broadcast\ address>] [\-U\ <unicast\ address>] [\-d\ <debug\ level>] [\-s\ <smb\ config\ file>] [\-i\ <NetBIOS\ scope>] [\-T] [\-f] {name}
+.fam
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+\FCnmblookup\F[]
+is used to query NetBIOS names and map them to IP addresses in a network using NetBIOS over TCP/IP queries\&. The options allow the name queries to be directed at a particular IP broadcast area or to a particular machine\&. All queries are done over UDP\&.
+.SH "OPTIONS"
+.PP
+\-M
+.RS 4
+Searches for a master browser by looking up the NetBIOS name
+\fIname\fR
+with a type of
+\fB0x1d\fR\&. If
+\fI name\fR
+is "\-" then it does a lookup on the special name
+\fB__MSBROWSE__\fR\&. Please note that in order to use the name "\-", you need to make sure "\-" isn\'t parsed as an argument, e\&.g\&. use :
+\fBnmblookup \-M \-\- \-\fR\&.
+.RE
+.PP
+\-R
+.RS 4
+Set the recursion desired bit in the packet to do a recursive lookup\&. This is used when sending a name query to a machine running a WINS server and the user wishes to query the names in the WINS server\&. If this bit is unset the normal (broadcast responding) NetBIOS processing code on a machine is used instead\&. See RFC1001, RFC1002 for details\&.
+.RE
+.PP
+\-S
+.RS 4
+Once the name query has returned an IP address then do a node status query as well\&. A node status query returns the NetBIOS names registered by a host\&.
+.RE
+.PP
+\-r
+.RS 4
+Try and bind to UDP port 137 to send and receive UDP datagrams\&. The reason for this option is a bug in Windows 95 where it ignores the source port of the requesting packet and only replies to UDP port 137\&. Unfortunately, on most UNIX systems root privilege is needed to bind to this port, and in addition, if the
+\fBnmbd\fR(8)
+daemon is running on this machine it also binds to this port\&.
+.RE
+.PP
+\-A
+.RS 4
+Interpret
+\fIname\fR
+as an IP Address and do a node status query on this address\&.
+.RE
+.PP
+\-n <primary NetBIOS name>
+.RS 4
+This option allows you to override the NetBIOS name that Samba uses for itself\&. This is identical to setting the
+\m[blue]\fBnetbios name\fR\m[]
+parameter in the
+\FCsmb\&.conf\F[]
+file\&. However, a command line setting will take precedence over settings in
+\FCsmb\&.conf\F[]\&.
+.RE
+.PP
+\-i <scope>
+.RS 4
+This specifies a NetBIOS scope that
+\FCnmblookup\F[]
+will use to communicate with when generating NetBIOS names\&. For details on the use of NetBIOS scopes, see rfc1001\&.txt and rfc1002\&.txt\&. NetBIOS scopes are
+\fIvery\fR
+rarely used, only set this parameter if you are the system administrator in charge of all the NetBIOS systems you communicate with\&.
+.RE
+.PP
+\-W|\-\-workgroup=domain
+.RS 4
+Set the SMB domain of the username\&. This overrides the default domain which is the domain defined in smb\&.conf\&. If the domain specified is the same as the servers NetBIOS name, it causes the client to log on using the servers local SAM (as opposed to the Domain SAM)\&.
+.RE
+.PP
+\-O socket options
+.RS 4
+TCP socket options to set on the client socket\&. See the socket options parameter in the
+\FCsmb\&.conf\F[]
+manual page for the list of valid options\&.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\&.
+.RE
+.PP
+\-B <broadcast address>
+.RS 4
+Send the query to the given broadcast address\&. Without this option the default behavior of nmblookup is to send the query to the broadcast address of the network interfaces as either auto\-detected or defined in the
+\fIinterfaces\fR
+parameter of the
+\fBsmb.conf\fR(5)
+file\&.
+.RE
+.PP
+\-U <unicast address>
+.RS 4
+Do a unicast query to the specified address or host
+\fIunicast address\fR\&. This option (along with the
+\fI\-R\fR
+option) is needed to query a WINS server\&.
+.RE
+.PP
+\-d|\-\-debuglevel=level
+.RS 4
+\fIlevel\fR
+is an integer from 0 to 10\&. The default value if this parameter is not specified is 0\&.
+.sp
+The higher this value, the more detail will be logged to the log files about the activities of the server\&. At level 0, only critical errors and serious warnings will be logged\&. Level 1 is a reasonable level for day\-to\-day running \- it generates a small amount of information about operations carried out\&.
+.sp
+Levels above 1 will generate considerable amounts of log data, and should only be used when investigating a problem\&. Levels above 3 are designed for use only by developers and generate HUGE amounts of log data, most of which is extremely cryptic\&.
+.sp
+Note that specifying this parameter here will override the
+\m[blue]\fBlog level\fR\m[]
+parameter in the
+\FCsmb\&.conf\F[]
+file\&.
+.RE
+.PP
+\-V
+.RS 4
+Prints the program version number\&.
+.RE
+.PP
+\-s <configuration file>
+.RS 4
+The file specified contains the configuration details required by the server\&. The information in this file includes server\-specific information such as what printcap file to use, as well as descriptions of all the services that the server is to provide\&. See
+\FCsmb\&.conf\F[]
+for more information\&. The default configuration file name is determined at compile time\&.
+.RE
+.PP
+\-l|\-\-log\-basename=logdirectory
+.RS 4
+Base directory name for log/debug files\&. The extension
+\fB"\&.progname"\fR
+will be appended (e\&.g\&. log\&.smbclient, log\&.smbd, etc\&.\&.\&.)\&. The log file is never removed by the client\&.
+.RE
+.PP
+\-T
+.RS 4
+This causes any IP addresses found in the lookup to be looked up via a reverse DNS lookup into a DNS name, and printed out before each
+.sp
+\fIIP address \&.\&.\&.\&. NetBIOS name\fR
+.sp
+pair that is the normal output\&.
+.RE
+.PP
+\-f
+.RS 4
+Show which flags apply to the name that has been looked up\&. Possible answers are zero or more of: Response, Authoritative, Truncated, Recursion_Desired, Recursion_Available, Broadcast\&.
+.RE
+.PP
+name
+.RS 4
+This is the NetBIOS name being queried\&. Depending upon the previous options this may be a NetBIOS name or IP address\&. If a NetBIOS name then the different name types may be specified by appending \'#<type>\' to the name\&. This name may also be \'*\', which will return all registered names within a broadcast area\&.
+.RE
+.SH "EXAMPLES"
+.PP
+\FCnmblookup\F[]
+can be used to query a WINS server (in the same way
+\FCnslookup\F[]
+is used to query DNS servers)\&. To query a WINS server,
+\FCnmblookup\F[]
+must be called like this:
+.PP
+\FCnmblookup \-U server \-R \'name\'\F[]
+.PP
+For example, running :
+.PP
+\FCnmblookup \-U samba\&.org \-R \'IRIX#1B\'\F[]
+.PP
+would query the WINS server samba\&.org for the domain master browser (1B name type) for the IRIX workgroup\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+\fBnmbd\fR(8),
+\fBsamba\fR(7), and
+\fBsmb.conf\fR(5)\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original Samba man pages were written by Karl Auer\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\&.icce\&.rug\&.nl/pub/unix/) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

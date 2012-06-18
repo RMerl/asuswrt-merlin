@@ -1,0 +1,100 @@
+diff -urbB ppp-2.4.4/pppd/ipv6cp.c ppp/pppd/ipv6cp.c
+--- ppp-2.4.4/pppd/ipv6cp.c	2005-08-26 03:59:34.000000000 +0400
++++ ppp/pppd/ipv6cp.c	2008-12-24 17:53:47.000000000 +0300
+@@ -151,6 +151,7 @@
+  */
+ 
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
+ #include <netdb.h>
+@@ -1064,7 +1065,9 @@
+     return (rc);			/* Return final code */
+ }
+ 
+-
++#if defined(SOL2) || defined(__linux__)
++int ether_to_eui64(eui64_t *p_eui64);
++#endif
+ /*
+  * ipv6_check_options - check that any IP-related options are OK,
+  * and assign appropriate defaults.
+diff -urbB ppp-2.4.4/pppdump/bsd-comp.c ppp/pppdump/bsd-comp.c
+--- ppp-2.4.4/pppdump/bsd-comp.c	2004-02-02 06:36:46.000000000 +0300
++++ ppp/pppdump/bsd-comp.c	2008-12-24 17:53:47.000000000 +0300
+@@ -383,7 +383,7 @@
+ 	|| options[0] != CI_BSD_COMPRESS || options[1] != CILEN_BSD_COMPRESS
+ 	|| BSD_VERSION(options[2]) != BSD_CURRENT_VERSION
+ 	|| BSD_NBITS(options[2]) != db->maxbits
+-	|| decomp && db->lens == NULL)
++	|| (decomp && db->lens == NULL))
+ 	return 0;
+ 
+     if (decomp) {
+@@ -556,11 +556,11 @@
+     u_int n_bits = db->n_bits;
+     u_int tgtbitno = 32-n_bits;	/* bitno when we have a code */
+     struct bsd_dict *dictp;
+-    int explen, i, seq, len;
++    int explen, seq, len;
+     u_int incode, oldcode, finchar;
+     u_char *p, *rptr, *wptr;
+     int ilen;
+-    int dlen, space, codelen, extra;
++    int dlen=0, codelen, extra;
+ 
+     rptr = cmsg;
+     if (*rptr == 0)
+@@ -616,7 +616,7 @@
+ 	}
+ 
+ 	if (incode > max_ent + 2 || incode > db->maxmaxcode
+-	    || incode > max_ent && oldcode == CLEAR) {
++	    || (incode > max_ent && oldcode == CLEAR)) {
+ 	    if (db->debug) {
+ 		printf("bsd_decomp%d: bad code 0x%x oldcode=0x%x ",
+ 		       db->unit, incode, oldcode);
+diff -urbB ppp-2.4.4/pppdump/deflate.c ppp/pppdump/deflate.c
+--- ppp-2.4.4/pppdump/deflate.c	2004-02-02 06:36:46.000000000 +0300
++++ ppp/pppdump/deflate.c	2008-12-24 17:53:47.000000000 +0300
+@@ -237,8 +237,8 @@
+ {
+     struct deflate_state *state = (struct deflate_state *) arg;
+     u_char *rptr, *wptr;
+-    int rlen, olen, ospace;
+-    int seq, i, flush, r, decode_proto;
++    int rlen, olen;
++    int seq, r;
+ 
+     rptr = mi;
+     if (*rptr == 0)
+diff -urbB ppp-2.4.4/pppdump/pppdump.c ppp/pppdump/pppdump.c
+--- ppp-2.4.4/pppdump/pppdump.c	2004-02-02 06:36:46.000000000 +0300
++++ ppp/pppdump/pppdump.c	2008-12-24 17:53:47.000000000 +0300
+@@ -34,6 +34,7 @@
+  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  */
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <unistd.h>
+ #include <stdlib.h>
+ #include <time.h>
+@@ -191,7 +192,7 @@
+ 	    show_time(f, c);
+ 	    break;
+ 	default:
+-	    printf("?%.2x\n");
++	    printf("?%.2x\n", c);
+ 	}
+     }
+ }
+@@ -421,7 +422,7 @@
+ 	    show_time(f, c);
+ 	    break;
+ 	default:
+-	    printf("?%.2x\n");
++	    printf("?%.2x\n", c);
+ 	}
+     }
+ }

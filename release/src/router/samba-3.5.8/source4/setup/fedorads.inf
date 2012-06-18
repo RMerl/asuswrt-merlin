@@ -1,0 +1,30 @@
+[General]
+SuiteSpotUserID = ${ROOT}
+FullMachineName=   ${HOSTNAME}.${DNSDOMAIN}
+ServerRoot=   ${LDAPDIR}
+
+[slapd]
+ldapifilepath=${LDAPDIR}/ldapi
+Suffix= ${DOMAINDN}
+RootDN= ${LDAPMANAGERDN}
+RootDNPwd= ${LDAPMANAGERPASS}
+ServerIdentifier= samba4
+${SERVERPORT}
+
+inst_dir= ${LDAPDIR}/slapd-samba4
+config_dir= ${LDAPDIR}/slapd-samba4
+schema_dir= ${LDAPDIR}/slapd-samba4/schema
+lock_dir= ${LDAPDIR}/slapd-samba4/lock
+log_dir= ${LDAPDIR}/slapd-samba4/logs
+run_dir= ${LDAPDIR}/slapd-samba4/logs
+db_dir= ${LDAPDIR}/slapd-samba4/db
+bak_dir= ${LDAPDIR}/slapd-samba4/bak
+tmp_dir= ${LDAPDIR}/slapd-samba4/tmp
+ldif_dir= ${LDAPDIR}/slapd-samba4/ldif
+cert_dir= ${LDAPDIR}/slapd-samba4
+
+start_server= 0
+install_full_schema= 0
+SchemaFile=${LDAPDIR}/99_ad.ldif
+ConfigFile = ${LDAPDIR}/fedorads-partitions.ldif
+ConfigFile = ${LDAPDIR}/fedorads-sasl.ldif

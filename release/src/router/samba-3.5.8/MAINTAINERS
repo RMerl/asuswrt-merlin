@@ -1,0 +1,40 @@
+##
+## List of current Samba Maintainers 
+##
+
+This file contains a list of developers responsible for 
+portions of the Samba 3.0 code.  It also lists developers
+responsible for 3rd party projects that work with Samba
+(e.g. vfs modules).
+
+Note that this list is for your benefit, but please do not
+abuse it by constantly emailing a stream of help questions
+to the maintainers.  Some are more open to direct 
+communication than others and some struggle with enormous
+amounts of email every day.
+
+All bug reports for code that is maintained *within* the 
+Samba subversion tree should be filed at https://bugzilla.samba.org/.
+
+
+Feature/Function	Developer
+----------------	---------
+
+documentation 		John Terpstra <jht@samba.org>
+
+libmsrpc		Chris Nichols <skel@samba.org>
+
+libsmbclient		Derrell Lipman <derrell@samba.org>
+
+pdb_*sql		Collen Blijenberg <collen@hermanjordan.nl>
+				Herwin Weststrate <herwin@snt.utwente.nl>
+
+			http://pdbsql.sourceforge.net/
+
+printing		Gerald (Jerry) Carter <jerry@samba.org>
+
+samba-vscan		Rainer Link <rainer@openantivirus.org>
+
+
+--
+Please report any errors in this file to <samba-technical@samba.org>

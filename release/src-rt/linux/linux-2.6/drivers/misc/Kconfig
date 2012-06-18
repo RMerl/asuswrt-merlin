@@ -1,0 +1,191 @@
+#
+# Misc strange devices
+#
+
+menu "Misc devices"
+
+config IBM_ASM
+	tristate "Device driver for IBM RSA service processor"
+	depends on X86 && PCI && EXPERIMENTAL
+	---help---
+	  This option enables device driver support for in-band access to the
+	  IBM RSA (Condor) service processor in eServer xSeries systems.
+	  The ibmasm device driver allows user space application to access
+	  ASM (Advanced Systems Management) functions on the service
+	  processor. The driver is meant to be used in conjunction with
+	  a user space API.
+	  The ibmasm driver also enables the OS to use the UART on the
+	  service processor board as a regular serial port. To make use of
+	  this feature serial driver support (CONFIG_SERIAL_8250) must be
+	  enabled.
+
+	  WARNING: This software may not be supported or function
+	  correctly on your IBM server. Please consult the IBM ServerProven
+	  website <http://www.pc.ibm.com/ww/eserver/xseries/serverproven> for
+	  information on the specific driver level and support statement
+	  for your IBM server.
+
+config PHANTOM
+	tristate "Sensable PHANToM"
+	depends on PCI
+	help
+	  Say Y here if you want to build a driver for Sensable PHANToM device.
+
+	  If you choose to build module, its name will be phantom. If unsure,
+	  say N here.
+
+
+	  If unsure, say N.
+
+config SGI_IOC4
+	tristate "SGI IOC4 Base IO support"
+	depends on PCI
+	---help---
+	  This option enables basic support for the IOC4 chip on certain
+	  SGI IO controller cards (IO9, IO10, and PCI-RT).  This option
+	  does not enable any specific functions on such a card, but provides
+	  necessary infrastructure for other drivers to utilize.
+
+	  If you have an SGI Altix with an IOC4-based card say Y.
+	  Otherwise say N.
+
+config TIFM_CORE
+	tristate "TI Flash Media interface support (EXPERIMENTAL)"
+	depends on EXPERIMENTAL && PCI
+	help
+	  If you want support for Texas Instruments(R) Flash Media adapters
+	  you should select this option and then also choose an appropriate
+	  host adapter, such as 'TI Flash Media PCI74xx/PCI76xx host adapter
+	  support', if you have a TI PCI74xx compatible card reader, for
+	  example.
+	  You will also have to select some flash card format drivers. MMC/SD
+	  cards are supported via 'MMC/SD Card support: TI Flash Media MMC/SD
+	  Interface support (MMC_TIFM_SD)'.
+
+          To compile this driver as a module, choose M here: the module will
+	  be called tifm_core.
+
+config TIFM_7XX1
+	tristate "TI Flash Media PCI74xx/PCI76xx host adapter support (EXPERIMENTAL)"
+	depends on PCI && TIFM_CORE && EXPERIMENTAL
+	default TIFM_CORE
+	help
+	  This option enables support for Texas Instruments(R) PCI74xx and
+	  PCI76xx families of Flash Media adapters, found in many laptops.
+	  To make actual use of the device, you will have to select some
+	  flash card format drivers, as outlined in the TIFM_CORE Help.
+
+          To compile this driver as a module, choose M here: the module will
+	  be called tifm_7xx1.
+
+config ASUS_LAPTOP
+        tristate "Asus Laptop Extras (EXPERIMENTAL)"
+        depends on X86
+        depends on ACPI
+	depends on EXPERIMENTAL && !ACPI_ASUS
+	depends on LEDS_CLASS
+	depends on BACKLIGHT_CLASS_DEVICE
+        ---help---
+	  This is the new Linux driver for Asus laptops. It may also support some
+	  MEDION, JVC or VICTOR laptops. It makes all the extra buttons generate
+	  standard ACPI events that go through /proc/acpi/events. It also adds
+	  support for video output switching, LCD backlight control, Bluetooth and
+	  Wlan control, and most importantly, allows you to blink those fancy LEDs.
+
+	  For more information and a userspace daemon for handling the extra
+	  buttons see <http://acpi4asus.sf.net/>.
+
+	  If you have an ACPI-compatible ASUS laptop, say Y or M here.
+
+config MSI_LAPTOP
+        tristate "MSI Laptop Extras"
+        depends on X86
+        depends on ACPI_EC
+        depends on BACKLIGHT_CLASS_DEVICE
+        ---help---
+	  This is a driver for laptops built by MSI (MICRO-STAR
+	  INTERNATIONAL):
+
+	  MSI MegaBook S270 (MS-1013)
+	  Cytron/TCM/Medion/Tchibo MD96100/SAM2000
+
+	  It adds support for Bluetooth, WLAN and LCD brightness control.
+
+	  More information about this driver is available at
+	  <http://0pointer.de/lennart/tchibo.html>.
+
+	  If you have an MSI S270 laptop, say Y or M here.
+
+config SONY_LAPTOP
+	tristate "Sony Laptop Extras"
+	depends on X86 && ACPI
+	select BACKLIGHT_CLASS_DEVICE
+	  ---help---
+	  This mini-driver drives the SNC and SPIC devices present in the ACPI
+	  BIOS of the Sony Vaio laptops.
+
+	  It gives access to some extra laptop functionalities like Bluetooth,
+	  screen brightness control, Fn keys and allows powering on/off some
+	  devices.
+
+	  Read <file:Documentation/sony-laptop.txt> for more information.
+
+config SONYPI_COMPAT
+	bool "Sonypi compatibility"
+	depends on SONY_LAPTOP
+	  ---help---
+	  Build the sonypi driver compatibility code into the sony-laptop driver.
+
+config THINKPAD_ACPI
+	tristate "ThinkPad ACPI Laptop Extras"
+	depends on X86 && ACPI
+	select BACKLIGHT_CLASS_DEVICE
+	select HWMON
+	---help---
+	  This is a driver for the IBM and Lenovo ThinkPad laptops. It adds
+	  support for Fn-Fx key combinations, Bluetooth control, video
+	  output switching, ThinkLight control, UltraBay eject and more.
+	  For more information about this driver see 
+	  <file:Documentation/thinkpad-acpi.txt> and <http://ibm-acpi.sf.net/> .
+
+	  This driver was formely known as ibm-acpi.
+
+	  If you have an IBM or Lenovo ThinkPad laptop, say Y or M here.
+
+config THINKPAD_ACPI_DEBUG
+	bool "Verbose debug mode"
+	depends on THINKPAD_ACPI
+	default n
+	---help---
+	  Enables extra debugging information, at the expense of a slightly
+	  increase in driver size.
+
+	  If you are not sure, say N here.
+
+config THINKPAD_ACPI_DOCK
+	bool "Legacy Docking Station Support"
+	depends on THINKPAD_ACPI
+	depends on ACPI_DOCK=n
+	default n
+	---help---
+	  Allows the thinkpad_acpi driver to handle docking station events.
+	  This support was made obsolete by the generic ACPI docking station
+	  support (CONFIG_ACPI_DOCK).  It will allow locking and removing the
+	  laptop from the docking station, but will not properly connect PCI
+	  devices.
+
+	  If you are not sure, say N here.
+
+config THINKPAD_ACPI_BAY
+	bool "Legacy Removable Bay Support"
+	depends on THINKPAD_ACPI
+	default y
+	---help---
+	  Allows the thinkpad_acpi driver to handle removable bays.  It will
+	  eletrically disable the device in the bay, and also generate
+	  notifications when the bay lever is ejected or inserted.
+
+	  If you are not sure, say Y here.
+
+
+endmenu

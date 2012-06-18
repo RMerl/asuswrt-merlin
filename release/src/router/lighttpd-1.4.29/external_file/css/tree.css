@@ -1,0 +1,46 @@
+.tree {
+	font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	padding: 10px;
+	white-space: nowrap;
+	
+}
+/*
+img{
+	background:transparent url("style.png") no-repeat top left;
+}
+*/
+.tree img {
+	width: 18px;
+	height: 18px;
+	border: 0px;
+	vertical-align: text-bottom;
+}
+.tree a {
+	color: #000;
+	text-decoration: none;
+	cursor: pointer;
+}
+.tree a:hover {
+	color: #ff0000;
+	text-decoration: underline;
+	cursor: pointer;
+}
+/*
+img.base{
+	background-position: -56px 0;
+	padding:0px;
+}
+
+img.page{
+	background-position: -56px -18px;
+}
+
+img.join{
+	background-position: -56px -36px;
+}
+
+img.joinbottom{
+	background-position: -56px -54px;
+}
+*/

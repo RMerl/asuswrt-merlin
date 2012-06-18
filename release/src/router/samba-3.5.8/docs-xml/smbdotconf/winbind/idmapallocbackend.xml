@@ -1,0 +1,33 @@
+<samba:parameter name="idmap alloc backend"
+                 context="G"
+		 type="string"
+                 advanced="1" developer="1" hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	The idmap alloc backend provides a plugin interface for Winbind to use
+	when allocating Unix uids/gids for Windows SIDs. This option refers
+	to the name of the idmap module which will provide the id allocation
+	functionality. Please refer to the man page for each idmap plugin to
+	determine whether or not the module implements the allocation feature.
+	The most common plugins are the tdb (<citerefentry>
+	<refentrytitle>idmap_tdb</refentrytitle><manvolnum>8</manvolnum></citerefentry>)
+	and ldap (<citerefentry><refentrytitle>idmap_ldap</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>) libraries.
+	</para>
+
+	<para>
+	This parameter defaults to the value <smbconfoption name="idmap
+	backend"/> was set to, so by default winbind will allocate Unix IDs
+	from the default backend. You will only need to set this parameter
+	explicitly if you have an external source for Unix IDs, like a central
+	database service somewhere in your company.
+	</para>
+
+	<para>
+	Also refer to the <smbconfoption name="idmap alloc config"/> option.
+	</para>
+</description>
+
+<value type="example">tdb</value>
+</samba:parameter>

@@ -1,0 +1,12 @@
+This target is an extension of the QUEUE target. As opposed to QUEUE, it allows
+you to put a packet into any specific queue, identified by its 16-bit queue
+number.  
+.TP
+.BR "--queue-num " "\fIvalue"
+This specifies the QUEUE number to use. Valud queue numbers are 0 to 65535. The default value is 0.
+.TP
+It can only be used with Kernel versions 2.6.14 or later, since it requires
+the
+.B
+nfnetlink_queue
+kernel support.

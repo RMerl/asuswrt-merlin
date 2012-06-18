@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Interfacing to Non-LPRng Spoolers</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title=
+    "Job Options and the Z Control File Entry" href="x3767.htm">
+    <link rel="NEXT" title="Debugging, Tracing, and Log Files"
+    href="x3917.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x3767.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x3917.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN3885">4.20. Interfacing to
+      Non-LPRng Spoolers</a></h1>
+
+      <p>Given the large number of defective RFC1179
+      implementations that are currently in use, there will come a
+      time when the administrator will discover that their printer
+      with its built-in network interface, the non-UNIX based print
+      spooler on a mainframe, or even a new print spooler on a new
+      OS distribution will not accept jobs from the <b class=
+      "APPLICATION">LPRng</b> system. Usually this is caused by the
+      presence, absence, or order of lines in the control file
+      being sent to the remote system. To deal with this particular
+      problem, the <var class="LITERAL">:bk</var>, <var class=
+      "LITERAL">:control_file_line_order</var>, <var class=
+      "LITERAL">:nline_after_file</var>, and <var class=
+      "LITERAL">:control_filter</var> options are used.</p>
+
+      <p>The <var class="LITERAL">:bk</var> (BSD Kompatibility)
+      option causes the lpd server to remove all but an extremely
+      small subset of lines from the control file, and to put the
+      lines in the most commonly used order. In addition it will
+      make the control and data files names extremely short and
+      simple. This almost always solves compatibility problems when
+      sending jobs to older <span class="emphasis"><i class=
+      "EMPHASIS">vintage</i></span> print spoolers or UNIX
+      systems.</p>
+
+      <p>If this does not solve the problem, then you can specify
+      the allowed control file lines and their order using the <var
+      class="LITERAL">control_file_line_order=...</var> option. For
+      example, <var class=
+      "LITERAL">control_file_line_order=CJPMD</var> would allow
+      only control file lines starting with <var class=
+      "LITERAL">C</var>, <var class="LITERAL">J</var>, <var class=
+      "LITERAL">P</var>, <var class="LITERAL">M</var>, and <var
+      class="LITERAL">D</var>, and this order in the control file.
+      Note that this does not provide <span class="emphasis"><i
+      class="EMPHASIS">missing</i></span> line values, it only
+      controls line values that are present in the control file.
+      You should also use the <var class="LITERAL">:bk</var> option
+      as well.</p>
+
+      <p>You might run into some <span class="emphasis"><i class=
+      "EMPHASIS">really</i></span> unusual implementations where
+      the control file <var class="LITERAL">N</var> (file name)
+      information must come <span class="emphasis"><i class=
+      "EMPHASIS">after</i></span> the control file name. This is
+      forced by the <var class="LITERAL">:nline_after_file</var>
+      option.</p>
+
+      <p>If these horrible kludges do not solve your compatibility
+      problems then we turn to the very large hammer and edit the
+      control file. The very last step before transfering the
+      control file to the remote server is to filter it using the
+      <var class="LITERAL">:control_filter=/path</var> program
+      specified in the printcap. The <var class=
+      "LITERAL">:control_filter</var> reads the control file from
+      <acronym class="ACRONYM">STDIN</acronym> and writes the
+      modified control file to <acronym class=
+      "ACRONYM">STDOUT</acronym>. No consistency checking or
+      validity checks are done on the new control file and the
+      result is transferred directly to the remote system. If the
+      <var class="LITERAL">:control_filter</var> exits with a 0
+      status, then the normal processing continues. Any other
+      status will cause the transfer operation to be aborted and an
+      error reported.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x3767.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x3917.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Job Options and
+          the Z Control File Entry</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Debugging,
+          Tracing, and Log Files</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,13 @@
+;
+; This is comment
+;
+
+[MODEL]
+DSL-N55U
+EN
+
+[MODEL]
+RT-N56U
+EN
+
+[END]

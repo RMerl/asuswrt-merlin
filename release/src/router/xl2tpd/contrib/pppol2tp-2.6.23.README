@@ -1,0 +1,3 @@
+No patch is required for linux 2.6.23 and up. The kernel comes native
+support for kernel mode l2tp. You can verify this by looking for
+the file /usr/include/linux/if_pppol2tp.h

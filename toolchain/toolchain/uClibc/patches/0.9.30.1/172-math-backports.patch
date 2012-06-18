@@ -1,0 +1,677 @@
+libm: Backports from trunk
+
+ 195931714a882765af150167115dcc9077da2213 libm: remove int_WRAPPER_C99 macro, add test which checks that I did not break it
+ 8f6064f5ce689226a528026f196a10c5ba7500d5 libm: fix testuite failure in modf
+ ae73aafe99fa6bb5e7422f2bdedea39f03ead72c libm: fix powf testcase failures
+ 4435b3ae24b6f76892b7c06c300687c23fab2729 libm: fix rint/scalb testcase failures
+ e9807e243b454b06f279d7593abaeb74c73aef1e libm: fix remaining failures in test-float
+ 0b73115a0961fca9e042e02ed644cb85e251cbb6 libm: fix scalb testsuite failures
+
+diff -urBp uClibc-0.9.30.1/libm/e_pow.c uClibc/libm/e_pow.c
+--- uClibc-0.9.30.1/libm/e_pow.c	2008-09-26 18:50:16.000000000 +0400
++++ uClibc/libm/e_pow.c	2010-11-01 14:16:27.000000000 +0300
+@@ -26,25 +26,26 @@ static char rcsid[] = "$NetBSD: e_pow.c,
+  *	3. Return x**y = 2**n*exp(y'*log2)
+  *
+  * Special cases:
+- *	1.  (anything) ** 0  is 1
+- *	2.  (anything) ** 1  is itself
+- *	3.  (anything) ** NAN is NAN
+- *	4.  NAN ** (anything except 0) is NAN
+- *	5.  +-(|x| > 1) **  +INF is +INF
+- *	6.  +-(|x| > 1) **  -INF is +0
+- *	7.  +-(|x| < 1) **  +INF is +0
+- *	8.  +-(|x| < 1) **  -INF is +INF
+- *	9.  +-1         ** +-INF is NAN
+- *	10. +0 ** (+anything except 0, NAN)               is +0
+- *	11. -0 ** (+anything except 0, NAN, odd integer)  is +0
+- *	12. +0 ** (-anything except 0, NAN)               is +INF
+- *	13. -0 ** (-anything except 0, NAN, odd integer)  is +INF
+- *	14. -0 ** (odd integer) = -( +0 ** (odd integer) )
+- *	15. +INF ** (+anything except 0,NAN) is +INF
+- *	16. +INF ** (-anything except 0,NAN) is +0
+- *	17. -INF ** (anything)  = -0 ** (-anything)
+- *	18. (-anything) ** (integer) is (-1)**(integer)*(+anything**integer)
+- *	19. (-anything except 0 and inf) ** (non-integer) is NAN
++ *	1.  +-1 ** anything  is 1.0
++ *	2.  +-1 ** +-INF     is 1.0
++ *	3.  (anything) ** 0  is 1
++ *	4.  (anything) ** 1  is itself
++ *	5.  (anything) ** NAN is NAN
++ *	6.  NAN ** (anything except 0) is NAN
++ *	7.  +-(|x| > 1) **  +INF is +INF
++ *	8.  +-(|x| > 1) **  -INF is +0
++ *	9.  +-(|x| < 1) **  +INF is +0
++ *	10  +-(|x| < 1) **  -INF is +INF
++ *	11. +0 ** (+anything except 0, NAN)               is +0
++ *	12. -0 ** (+anything except 0, NAN, odd integer)  is +0
++ *	13. +0 ** (-anything except 0, NAN)               is +INF
++ *	14. -0 ** (-anything except 0, NAN, odd integer)  is +INF
++ *	15. -0 ** (odd integer) = -( +0 ** (odd integer) )
++ *	16. +INF ** (+anything except 0,NAN) is +INF
++ *	17. +INF ** (-anything except 0,NAN) is +0
++ *	18. -INF ** (anything)  = -0 ** (-anything)
++ *	19. (-anything) ** (integer) is (-1)**(integer)*(+anything**integer)
++ *	20. (-anything except 0 and inf) ** (non-integer) is NAN
+  *
+  * Accuracy:
+  *	pow(x,y) returns x**y nearly rounded. In particular
+@@ -114,8 +115,14 @@ ivln2_l  =  1.92596299112661746887e-08; 
+ 	u_int32_t lx,ly;
+ 
+ 	EXTRACT_WORDS(hx,lx,x);
++    /* x==1: 1**y = 1 (even if y is NaN) */
++	if (hx==0x3ff00000 && lx==0) {
++		return x;
++	}
++	ix = hx&0x7fffffff;
++
+ 	EXTRACT_WORDS(hy,ly,y);
+-	ix = hx&0x7fffffff;  iy = hy&0x7fffffff;
++	iy = hy&0x7fffffff;
+ 
+     /* y==zero: x**0 = 1 */
+ 	if((iy|ly)==0) return one;
+@@ -147,13 +154,13 @@ ivln2_l  =  1.92596299112661746887e-08; 
+ 
+     /* special value of y */
+ 	if(ly==0) {
+-	    if (iy==0x7ff00000) {	/* y is +-inf */
+-	        if(((ix-0x3ff00000)|lx)==0)
+-		    return  y - y;	/* inf**+-1 is NaN */
+-	        else if (ix >= 0x3ff00000)/* (|x|>1)**+-inf = inf,0 */
+-		    return (hy>=0)? y: zero;
+-	        else			/* (|x|<1)**-,+inf = inf,0 */
+-		    return (hy<0)?-y: zero;
++	    if (iy==0x7ff00000) {       /* y is +-inf */
++	        if (((ix-0x3ff00000)|lx)==0)
++		    return one;	        /* +-1**+-inf is 1 (yes, weird rule) */
++	        if (ix >= 0x3ff00000)   /* (|x|>1)**+-inf = inf,0 */
++		    return (hy>=0) ? y : zero;
++	        /* (|x|<1)**-,+inf = inf,0 */
++		return (hy<0) ? -y : zero;
+ 	    }
+ 	    if(iy==0x3ff00000) {	/* y is  +-1 */
+ 		if(hy<0) return one/x; else return x;
+@@ -161,7 +168,7 @@ ivln2_l  =  1.92596299112661746887e-08; 
+ 	    if(hy==0x40000000) return x*x; /* y is  2 */
+ 	    if(hy==0x3fe00000) {	/* y is  0.5 */
+ 		if(hx>=0)	/* x >= +0 */
+-		return __ieee754_sqrt(x);
++		    return __ieee754_sqrt(x);
+ 	    }
+ 	}
+ 
+diff -urBp uClibc-0.9.30.1/libm/e_scalb.c uClibc/libm/e_scalb.c
+--- uClibc-0.9.30.1/libm/e_scalb.c	2008-12-22 14:55:13.000000000 +0300
++++ uClibc/libm/e_scalb.c	2010-11-01 14:40:50.000000000 +0300
+@@ -15,9 +15,9 @@ static char rcsid[] = "$NetBSD: e_scalb.
+ #endif
+ 
+ /*
+- * __ieee754_scalb(x, fn) is provide for
+- * passing various standard test suite. One
+- * should use scalbn() instead.
++ * __ieee754_scalb(x, fn) is provided for
++ * passing various standard test suites.
++ * One should use scalbn() instead.
+  */
+ 
+ #include "math.h"
+diff -urBp uClibc-0.9.30.1/libm/float_wrappers.c uClibc/libm/float_wrappers.c
+--- uClibc-0.9.30.1/libm/float_wrappers.c	2009-02-24 17:31:14.000000000 +0300
++++ uClibc/libm/float_wrappers.c	2010-11-01 14:16:15.000000000 +0300
+@@ -400,10 +400,9 @@ long lroundf (float x)
+ float modff (float x, float *iptr)
+ {
+ 	double y, result;
+-	result = modf ( x, &y );
++	result = modf( x, &y );
+ 	*iptr = (float)y;
+ 	return (float) result;
+-
+ }
+ #endif
+ 
+diff -urBp uClibc-0.9.30.1/libm/ldouble_wrappers.c uClibc/libm/ldouble_wrappers.c
+--- uClibc-0.9.30.1/libm/ldouble_wrappers.c	2010-11-01 14:10:34.000000000 +0300
++++ uClibc/libm/ldouble_wrappers.c	2010-11-01 14:16:03.000000000 +0300
+@@ -13,17 +13,6 @@
+ #include "math.h"
+ #include <complex.h>
+ 
+-#if defined __NO_LONG_DOUBLE_MATH
+-# define int_WRAPPER_C99(func) /* not needed */
+-# else
+-# define int_WRAPPER_C99(func) \
+-int func##l(long double x) \
+-{ \
+-    return func((double) x); \
+-} \
+-libm_hidden_def(func##l)
+-#endif
+-
+ /* Implement the following, as defined by SuSv3 */
+ #if 0
+ long double acoshl(long double);
+@@ -553,27 +542,32 @@ long double truncl (long double x)
+ #endif
+ 
+ 
+-#if defined __DO_C99_MATH__
+-
+-#ifdef L_fpclassifyl
+-int_WRAPPER_C99(__fpclassify)
+-#endif
+-
+-#ifdef L_finitel
+-int_WRAPPER_C99(__finite)
+-#endif
++#if defined __DO_C99_MATH__ && !defined __NO_LONG_DOUBLE_MATH
+ 
+-#ifdef L_signbitl
+-int_WRAPPER_C99(__signbit)
+-#endif
+-
+-#ifdef L_isnanl
+-int_WRAPPER_C99(__isnan)
+-#endif
+-
+-#ifdef L_isinfl
+-int_WRAPPER_C99(__isinf)
+-#endif
++# ifdef L_fpclassifyl
++int_WRAPPER1(__fpclassify)
++libm_hidden_def(__fpclassifyl)
++# endif
++
++# ifdef L_finitel
++int_WRAPPER1(__finite)
++libm_hidden_def(__finitel)
++# endif
++
++# ifdef L_signbitl
++int_WRAPPER1(__signbit)
++libm_hidden_def(__signbitl)
++# endif
++
++# ifdef L_isnanl
++int_WRAPPER1(__isnan)
++libm_hidden_def(__isnanl)
++# endif
++
++# ifdef L_isinfl
++int_WRAPPER1(__isinf)
++libm_hidden_def(__isinfl)
++# endif
+ 
+ #endif /* DO_C99_MATH */
+ 
+diff -urBp uClibc-0.9.30.1/libm/s_ilogb.c uClibc/libm/s_ilogb.c
+--- uClibc-0.9.30.1/libm/s_ilogb.c	2008-09-26 18:50:16.000000000 +0400
++++ uClibc/libm/s_ilogb.c	2010-11-01 14:16:56.000000000 +0300
+@@ -15,9 +15,10 @@ static char rcsid[] = "$NetBSD: s_ilogb.
+ #endif
+ 
+ /* ilogb(double x)
+- * return the binary exponent of non-zero x
+- * ilogb(0) = 0x80000001
+- * ilogb(inf/NaN) = 0x7fffffff (no signal is raised)
++ * return the binary exponent of x
++ * ilogb(+-0) = FP_ILOGB0
++ * ilogb(+-inf) = INT_MAX
++ * ilogb(NaN) = FP_ILOGBNAN (no signal is raised)
+  */
+ 
+ #include "math.h"
+@@ -32,21 +33,35 @@ static char rcsid[] = "$NetBSD: s_ilogb.
+ {
+ 	int32_t hx,lx,ix;
+ 
+-	GET_HIGH_WORD(hx,x);
++	GET_HIGH_WORD(hx, x);
+ 	hx &= 0x7fffffff;
+-	if(hx<0x00100000) {
+-	    GET_LOW_WORD(lx,x);
+-	    if((hx|lx)==0)
+-		return 0x80000001;	/* ilogb(0) = 0x80000001 */
+-	    else			/* subnormal x */
+-		if(hx==0) {
+-		    for (ix = -1043; lx>0; lx<<=1) ix -=1;
+-		} else {
+-		    for (ix = -1022,hx<<=11; hx>0; hx<<=1) ix -=1;
++
++	if (hx < 0x00100000) {
++		GET_LOW_WORD(lx, x);
++		if ((hx|lx)==0)  /* +-0, ilogb(0) = FP_ILOGB0 */
++			return FP_ILOGB0;
++		/* subnormal x */
++		ix = -1043;
++		if (hx != 0) {
++			ix = -1022;
++			lx = (hx << 11);
+ 		}
+-	    return ix;
++		/* each leading zero mantissa bit makes exponent smaller */
++		for (; lx > 0; lx <<= 1)
++			ix--;
++		return ix;
+ 	}
+-	else if (hx<0x7ff00000) return (hx>>20)-1023;
+-	else return 0x7fffffff;
++
++	if (hx < 0x7ff00000) /* normal x */
++		return (hx>>20) - 1023;
++
++	if (FP_ILOGBNAN != (~0U >> 1)) {
++		GET_LOW_WORD(lx, x);
++		if (hx == 0x7ff00000 && lx == 0)  /* +-inf */
++			return ~0U >> 1; /* = INT_MAX */
++	}
++
++	/* NAN. ilogb(NAN) = FP_ILOGBNAN */
++	return FP_ILOGBNAN;
+ }
+ libm_hidden_def(ilogb)
+diff -urBp uClibc-0.9.30.1/libm/s_modf.c uClibc/libm/s_modf.c
+--- uClibc-0.9.30.1/libm/s_modf.c	2008-09-26 18:50:16.000000000 +0400
++++ uClibc/libm/s_modf.c	2010-11-01 14:16:15.000000000 +0300
+@@ -51,10 +51,8 @@ static double one = 1.0;
+ 	    } else {
+ 		i = (0x000fffff)>>j0;
+ 		if(((i0&i)|i1)==0) {		/* x is integral */
+-		    u_int32_t high;
+ 		    *iptr = x;
+-		    GET_HIGH_WORD(high,x);
+-		    INSERT_WORDS(x,high&0x80000000,0);	/* return +-0 */
++		    INSERT_WORDS(x,i0&0x80000000,0);	/* return +-0 */
+ 		    return x;
+ 		} else {
+ 		    INSERT_WORDS(*iptr,i0&(~i),0);
+@@ -62,18 +60,17 @@ static double one = 1.0;
+ 		}
+ 	    }
+ 	} else if (j0>51) {		/* no fraction part */
+-	    u_int32_t high;
+ 	    *iptr = x*one;
+-	    GET_HIGH_WORD(high,x);
+-	    INSERT_WORDS(x,high&0x80000000,0);	/* return +-0 */
++	    /* We must handle NaNs separately.  */
++	    if (j0 == 0x400 && ((i0 & 0xfffff) | i1))
++	      return x*one;
++	    INSERT_WORDS(x,i0&0x80000000,0);	/* return +-0 */
+ 	    return x;
+ 	} else {			/* fraction part in low x */
+ 	    i = ((u_int32_t)(0xffffffff))>>(j0-20);
+ 	    if((i1&i)==0) { 		/* x is integral */
+-	        u_int32_t high;
+ 		*iptr = x;
+-		GET_HIGH_WORD(high,x);
+-		INSERT_WORDS(x,high&0x80000000,0);	/* return +-0 */
++		INSERT_WORDS(x,i0&0x80000000,0);	/* return +-0 */
+ 		return x;
+ 	    } else {
+ 	        INSERT_WORDS(*iptr,i0,i1&(~i));
+diff -urBp uClibc-0.9.30.1/libm/s_rint.c uClibc/libm/s_rint.c
+--- uClibc-0.9.30.1/libm/s_rint.c	2008-09-26 18:50:16.000000000 +0400
++++ uClibc/libm/s_rint.c	2010-11-01 14:16:34.000000000 +0300
+@@ -44,41 +44,57 @@ TWO52[2]={
+ 	double x;
+ #endif
+ {
+-	int32_t i0,j0,sx;
++	int32_t i0, j0, sx;
+ 	u_int32_t i,i1;
+-	double w,t;
++	double t;
++	/* We use w = x + 2^52; t = w - 2^52; trick to round x to integer.
++	 * This trick requires that compiler does not optimize it
++	 * by keeping intermediate result w in a register wider than double.
++	 * Declaring w volatile assures that value gets truncated to double
++	 * (unfortunately, it also forces store+load):
++	 */
++	volatile double w;
++
+ 	EXTRACT_WORDS(i0,i1,x);
+-	sx = (i0>>31)&1;
+-	j0 = ((i0>>20)&0x7ff)-0x3ff;
+-	if(j0<20) {
+-	    if(j0<0) {
+-		if(((i0&0x7fffffff)|i1)==0) return x;
++	/* Unbiased exponent */
++	j0 = ((((u_int32_t)i0) >> 20)&0x7ff)-0x3ff;
++
++	if (j0 > 51) {
++		//Why bother? Just returning x works too
++		//if (j0 == 0x400)  /* inf or NaN */
++		//	return x+x;
++		return x;  /* x is integral */
++	}
++
++	/* Sign */
++	sx = ((u_int32_t)i0) >> 31;
++
++	if (j0<20) {
++	    if (j0<0) { /* |x| < 1 */
++		if (((i0&0x7fffffff)|i1)==0) return x;
+ 		i1 |= (i0&0x0fffff);
+ 		i0 &= 0xfffe0000;
+ 		i0 |= ((i1|-i1)>>12)&0x80000;
+ 		SET_HIGH_WORD(x,i0);
+-	        w = TWO52[sx]+x;
+-	        t =  w-TWO52[sx];
++		w = TWO52[sx]+x;
++		t = w-TWO52[sx];
+ 		GET_HIGH_WORD(i0,t);
+ 		SET_HIGH_WORD(t,(i0&0x7fffffff)|(sx<<31));
+-	        return t;
++		return t;
+ 	    } else {
+ 		i = (0x000fffff)>>j0;
+-		if(((i0&i)|i1)==0) return x; /* x is integral */
++		if (((i0&i)|i1)==0) return x; /* x is integral */
+ 		i>>=1;
+-		if(((i0&i)|i1)!=0) {
+-		    if(j0==19) i1 = 0x40000000; else
+-		    i0 = (i0&(~i))|((0x20000)>>j0);
++		if (((i0&i)|i1)!=0) {
++		    if (j0==19) i1 = 0x40000000;
++		    else i0 = (i0&(~i))|((0x20000)>>j0);
+ 		}
+ 	    }
+-	} else if (j0>51) {
+-	    if(j0==0x400) return x+x;	/* inf or NaN */
+-	    else return x;		/* x is integral */
+ 	} else {
+ 	    i = ((u_int32_t)(0xffffffff))>>(j0-20);
+-	    if((i1&i)==0) return x;	/* x is integral */
++	    if ((i1&i)==0) return x;	/* x is integral */
+ 	    i>>=1;
+-	    if((i1&i)!=0) i1 = (i1&(~i))|((0x40000000)>>(j0-20));
++	    if ((i1&i)!=0) i1 = (i1&(~i))|((0x40000000)>>(j0-20));
+ 	}
+ 	INSERT_WORDS(x,i0,i1);
+ 	w = TWO52[sx]+x;
+diff --git a/test/math/c99_test.c b/test/math/c99_test.c
+new file mode 100644
+index 0000000..fd6feea
+--- a/dev/null
++++ b/test/math/c99_test.c
+@@ -0,0 +1,117 @@
++//#define _GNU_SOURCE 1
++#include <math.h>
++#include <float.h>
++#include <stdlib.h>
++#include <stdint.h>
++#include <limits.h>
++#include <stdio.h>
++
++#define check_d1(func, param, expected) \
++do { \
++	int err; hex_union ur; hex_union up; \
++	double result = func(param); up.f = param; ur.f = result; \
++	errors += (err = (result != (expected))); \
++	err \
++	? printf("FAIL: %s(%g/"HEXFMT")=%g/"HEXFMT" (expected %g)\n", \
++		#func, (double)(param), (long long)up.hex, result, (long long)ur.hex, (double)(expected)) \
++	: printf("PASS: %s(%g)=%g\n", #func, (double)(param), result); \
++} while (0)
++
++#define check_i1(func, param, expected) \
++do { \
++	int err; hex_union up; \
++	long long result = func(param); up.f = param; \
++	errors += (err = (result != (expected))); \
++	err \
++	? printf("FAIL: %s(%g/"HEXFMT")=%lld/%llu (expected %llu)\n", \
++		#func, (double)(param), (long long)up.hex, result, result, (long long)(expected)) \
++	: printf("PASS: %s(%g)=%lld/%llu\n", #func, (double)(param), result, result); \
++} while (0)
++
++#define HEXFMT "%08llx"
++typedef union {
++	double f;
++	uint64_t hex;
++} hex_union;
++
++double zero = 0.0;
++double minus_zero = 0.0;
++double nan_value = 0.0;
++int errors = 0;
++
++int main(void)
++{
++	nan_value /= nan_value;
++	minus_zero = copysign(zero, -1.0);
++
++	check_i1(isfinite, 1.0, 1);
++	check_i1(isfinite, 2.0, 1);
++	check_i1(isfinite, 3.0, 1);
++	check_i1(isfinite, DBL_MAX, 1);
++	check_i1(isfinite, FLT_MAX, 1);
++	check_i1(isfinite, HUGE_VAL, 0);
++	check_i1(isfinite, HUGE_VALF, 0);
++	check_i1(isfinite, HUGE_VALL, 0);
++	check_i1(isfinite, nan_value, 0);
++	check_i1(isfinite, nan_value, 0);
++	check_i1(isfinite, nan_value, 0);
++
++	check_i1(isnan, 1.0, 0);
++	check_i1(isnan, 2.0, 0);
++	check_i1(isnan, 3.0, 0);
++	check_i1(isnan, DBL_MAX, 0);
++	check_i1(isnan, FLT_MAX, 0);
++	check_i1(isnan, HUGE_VAL, 0);
++	check_i1(isnan, HUGE_VALF, 0);
++	check_i1(isnan, HUGE_VALL, 0);
++	check_i1(isnan, (float)HUGE_VALL, 0);
++	check_i1(isnan, nan_value, 1);
++	check_i1(isnan, nan_value, 1);
++	check_i1(isnan, nan_value, 1);
++
++	check_i1(isinf, 1.0, 0);
++	check_i1(isinf, 2.0, 0);
++	check_i1(isinf, 3.0, 0);
++	check_i1(isinf, DBL_MAX, 0);
++	check_i1(isinf, FLT_MAX, 0);
++	check_i1(isinf, (float)DBL_MAX, 1);
++	check_i1(isinf, HUGE_VAL, 1);
++	check_i1(isinf, HUGE_VALF, 1);
++	check_i1(isinf, HUGE_VALL, 1);
++	check_i1(isinf, (float)HUGE_VALL, 1);
++	check_i1(isinf, nan_value, 0);
++	check_i1(isinf, nan_value, 0);
++	check_i1(isinf, nan_value, 0);
++
++	check_i1(fpclassify, minus_zero, FP_ZERO);
++	check_i1(fpclassify, 0.0, FP_ZERO);
++	check_i1(fpclassify, 1.0, FP_NORMAL);
++	check_i1(fpclassify, 2.0, FP_NORMAL);
++	check_i1(fpclassify, 3.0, FP_NORMAL);
++	check_i1(fpclassify, DBL_MIN/1.01, FP_SUBNORMAL);
++	check_i1(fpclassify, DBL_MIN, FP_NORMAL);
++	check_i1(fpclassify, DBL_MAX, FP_NORMAL);
++	check_i1(fpclassify, FLT_MAX, FP_NORMAL);
++	check_i1(fpclassify, DBL_MAX, FP_NORMAL);
++	check_i1(fpclassify, DBL_MAX*1.01, FP_INFINITE);
++	check_i1(fpclassify, HUGE_VAL, FP_INFINITE);
++	check_i1(fpclassify, HUGE_VALF, FP_INFINITE);
++	check_i1(fpclassify, HUGE_VALL, FP_INFINITE);
++	check_i1(fpclassify, (float)HUGE_VALL, FP_INFINITE);
++	check_i1(fpclassify, nan_value, FP_NAN);
++	check_i1(fpclassify, nan_value, FP_NAN);
++	check_i1(fpclassify, nan_value, FP_NAN);
++
++	check_i1(!!signbit, -1.0, 1);
++	check_i1(!!signbit, minus_zero, 1);
++	check_i1(!!signbit, 0.0, 0);
++	check_i1(!!signbit, HUGE_VAL, 0);
++	check_i1(!!signbit, HUGE_VALF, 0);
++	check_i1(!!signbit, HUGE_VALL, 0);
++	check_i1(!!signbit, -HUGE_VAL, 1);
++	check_i1(!!signbit, -HUGE_VALF, 1);
++	check_i1(!!signbit, -HUGE_VALL, 1);
++
++	printf("Errors: %d\n", errors);
++	return errors;
++}
+diff --git a/test/math/ilogb.c b/test/math/ilogb.c
+new file mode 100644
+index 0000000..e439f8c
+--- a/dev/null
++++ b/test/math/ilogb.c
+@@ -0,0 +1,52 @@
++#include <math.h>
++#include <float.h>
++#include <stdlib.h>
++#include <stdint.h>
++#include <limits.h>
++#include <stdio.h>
++
++#define check_d1(func, param, expected) \
++do { \
++	int err; hex_union ur; hex_union up; \
++	double result = func(param); up.f = param; ur.f = result; \
++	errors += (err = (result != (expected))); \
++	err \
++	? printf("FAIL: %s(%g/"HEXFMT")=%g/"HEXFMT" (expected %g)\n", \
++		#func, (double)(param), (long long)up.hex, result, (long long)ur.hex, (double)(expected)) \
++	: printf("PASS: %s(%g)=%g\n", #func, (double)(param), result); \
++} while (0)
++
++#define check_i1(func, param, expected) \
++do { \
++	int err; hex_union up; \
++	long long result = func(param); up.f = param; \
++	errors += (err = (result != (expected))); \
++	err \
++	? printf("FAIL: %s(%g/"HEXFMT")=%lld/%llu (expected %llu)\n", \
++		#func, (double)(param), (long long)up.hex, result, result, (long long)(expected)) \
++	: printf("PASS: %s(%g)=%lld/%llu\n", #func, (double)(param), result, result); \
++} while (0)
++
++#define HEXFMT "%08llx"
++typedef union {
++	double f;
++	uint64_t hex;
++} hex_union;
++
++double nan_value = 0.0;
++int errors = 0;
++
++int main(void)
++{
++	nan_value /= nan_value;
++
++	check_i1(ilogb, 0.0, FP_ILOGB0);
++	check_i1(ilogb, HUGE_VAL, INT_MAX);
++	check_i1(ilogb, nan_value, FP_ILOGBNAN);
++	check_i1(ilogbf, 0.0, FP_ILOGB0);
++	check_i1(ilogbf, HUGE_VALF, INT_MAX);
++	check_i1(ilogbf, nan_value, FP_ILOGBNAN);
++
++	printf("Errors: %d\n", errors);
++	return errors;
++}
+diff -urBp uClibc-0.9.30.1/test/math/Makefile uClibc/test/math/Makefile
+--- uClibc-0.9.30.1/test/math/Makefile	2010-11-01 14:10:34.000000000 +0300
++++ uClibc/test/math/Makefile	2010-11-01 14:38:12.000000000 +0300
+@@ -3,9 +3,11 @@
+ 
+ include ../../.config
+ 
+-TESTS := basic-test rint signgam tst-definitions test-fpucw test-float test-ifloat test-double test-idouble
++TESTS := basic-test tst-definitions test-fpucw test-float test-ifloat test-double test-idouble \
++    rint signgam ilogb
++# gamma (removed from TESTS, need to add "small errors are ok" machinery there)
+ ifeq ($(UCLIBC_HAS_LONG_DOUBLE_MATH),y)
+-TESTS += test-ldouble test-ildoubl compile_test
++TESTS += test-ldouble test-ildoubl compile_test c99_test
+ else
+ CFLAGS_basic-test := -DNO_LONG_DOUBLE
+ endif
+diff -urBp uClibc-0.9.30.1/test/math/rint.c uClibc/test/math/rint.c
+--- uClibc-0.9.30.1/test/math/rint.c	2008-07-23 15:23:36.000000000 +0400
++++ uClibc/test/math/rint.c	2010-11-01 14:38:12.000000000 +0300
+@@ -1,11 +1,33 @@
+ #include <math.h>
++#include <float.h>
+ #include <stdlib.h>
++#include <stdint.h>
+ #include <stdio.h>
+ 
+-int main(void) {
+-    double d1, d2;
+-    d1 = 0.6;  d2 = rint(d1);
+-    printf("d1 = %f, d2 = %f\n", d1, d2);
+-    return 0;
+-}
++#define check_d1(func, param, expected) \
++do { \
++	int err; hex_union ur; hex_union up; \
++	double result = func(param); up.f = param; ur.f = result; \
++	errors += (err = (result != (expected))); \
++	err \
++	? printf("FAIL: %s(%g/"HEXFMT")=%g/"HEXFMT" (expected %g)\n", \
++		#func, (double)(param), (long long)up.hex, result, (long long)ur.hex, (double)(expected)) \
++	: printf("PASS: %s(%g)=%g\n", #func, (double)(param), result); \
++} while (0)
++
++#define HEXFMT "%08llx"
++typedef union {
++	double f;
++	uint64_t hex;
++} hex_union;
++double result;
++
++int errors = 0;
+ 
++int main(void)
++{
++	check_d1(rint, 0.6, 1.0);
++
++	printf("Errors: %d\n", errors);
++	return errors;
++}
+diff -urBp uClibc-0.9.30.1/test/math/signgam.c uClibc/test/math/signgam.c
+--- uClibc-0.9.30.1/test/math/signgam.c	2010-11-01 03:00:00.000000000 +0300
++++ uClibc/test/math/signgam.c	2010-11-01 03:00:00.000000000 +0300
+@@ -1,18 +1,28 @@
+ #define _XOPEN_SOURCE 600
+ #include <math.h>
++#include <float.h>
+ #include <stdio.h>
+ 
+ double zero = 0.0;
+ double mzero;
+ 
+-int
+-main (void)
++int main(void)
+ {
+-  double d;
+-  mzero = copysign (zero, -1.0);
+-  d = lgamma (zero);
+-  printf ("%g %d\n", d, signgam);
+-  d = lgamma (mzero);
+-  printf ("%g %d\n", d, signgam);
+-  return 0;
++	double d;
++	int errors = 0;
++
++	mzero = copysign(zero, -1.0);
++
++	d = lgamma(zero);
++	printf("%g %d\n", d, signgam);
++	errors += !(d == HUGE_VAL);
++	errors += !(signgam == 1);
++
++	d = lgamma(mzero);
++	printf("%g %d\n", d, signgam);
++	errors += !(d == HUGE_VAL);
++	errors += !(signgam == -1);
++
++	printf("Errors: %d\n", errors);
++	return errors;
+ }
+-- 

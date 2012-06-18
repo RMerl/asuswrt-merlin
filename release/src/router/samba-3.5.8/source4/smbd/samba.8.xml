@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="samba.8">
+
+<refmeta>
+	<refentrytitle>samba</refentrytitle>
+	<manvolnum>8</manvolnum>
+</refmeta>
+
+
+<refnamediv>
+	<refname>samba</refname>
+	<refpurpose>server to provide filesharing- and directory services to clients</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>samba</command>
+		<arg choice="opt">-i</arg>
+		<arg choice="opt">-M model</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+	<para>This program is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para><command>samba</command> is the server daemon that 
+	provides filesharing and directory services to Windows clients. 
+	The server provides filespace and directory services to
+	clients using the SMB (or CIFS) protocol and other 
+	related protocols such as DCE/RPC, LDAP and Kerberos. 
+	</para>
+
+	<para>
+	Clients supported include MSCLIENT 3.0 for DOS, Windows for 
+	Workgroups, Windows 95/98/ME, Windows NT, Windows 2000/XP/2003, 
+	OS/2, DAVE for Macintosh, and cifsfs for Linux.</para>
+
+	<para>An extensive description of the services that the 
+	server can provide is given in the man page for the 
+	configuration file controlling the attributes of those 
+	services (see <citerefentry><refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry>.  This man page will not describe the 
+	services, but will concentrate on the administrative aspects 
+	of running the server.</para>
+
+	<para>Please note that there are significant security 
+	implications to running this server, and the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry> manual page should be regarded as mandatory reading before 
+	proceeding with installation.</para>
+
+	<para>As of Samba 4, there is a single daemon that incorporates the 
+		functionality of both smbd and nmbd that are present in older versions 
+		of Samba.</para>
+
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>-i</term>
+		<listitem><para>If this parameter is specified it causes the
+		server to run "interactively", not as a daemon, even if the
+		server is executed on the command line of a shell. Setting this
+		parameter negates the implicit deamon mode when run from the
+		command line. <command>samba</command> also logs to standard
+		output, as if the <command>-S</command> parameter had been
+		given.
+		</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-M model</term>
+		<listitem><para>This parameter can be used to specify the 
+		&quot;process model&quot; samba should use. This determines 
+		how concurrent clients are handled. Available process 
+		models include <emphasis>single</emphasis> (everything in 
+		a single process), <emphasis>standard</emphasis> (similar 
+		behaviour to that of Samba 3), <emphasis>thread</emphasis> 
+		(single process, different threads.
+		</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>FILES</title>
+
+	<variablelist>
+		<varlistentry>
+		<term><filename>/etc/rc</filename></term>
+		<listitem><para>or whatever initialization script your 
+		system uses).</para>
+
+		<para>If running the server as a daemon at startup, 
+		this file will need to contain an appropriate startup 
+		sequence for the server. </para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term><filename>/etc/services</filename></term>
+		<listitem><para>If running the server via the 
+		meta-daemon <command>inetd</command>, this file 
+		must contain a mapping of service name (e.g., netbios-ssn) 
+		to service port (e.g., 139) and protocol type (e.g., tcp). 
+		</para></listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term><filename>/usr/local/samba/lib/smb.conf</filename></term>
+		<listitem><para>This is the default location of the <citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry> server configuration file. Other common places that systems 
+		install this file are <filename>/usr/samba/lib/smb.conf</filename> 
+		and <filename>/etc/samba/smb.conf</filename>.</para>
+		
+		<para>This file describes all the services the server 
+		is to make available to clients. See <citerefentry><refentrytitle>smb.conf</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry> for more information.</para>
+		</listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 4 of 
+	the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>DIAGNOSTICS</title>
+
+	<para>Most diagnostics issued by the server are logged 
+	in a specified log file. The log file name is specified 
+	at compile time, but may be overridden on the command line.</para>
+
+	<para>The number and nature of diagnostics available depends 
+	on the debug level used by the server. If you have problems, set 
+	the debug level to 3 and peruse the log files.</para>
+
+	<para>Most messages are reasonably self-explanatory. Unfortunately, 
+	at the time this man page was created, there are too many diagnostics 
+	available in the source code to warrant describing each and every 
+	diagnostic. At this stage your best bet is still to grep the 
+	source code and inspect the conditions that gave rise to the 
+	diagnostics you are seeing.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para><citerefentry><refentrytitle>hosts_access</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry>
+	<citerefentry><refentrytitle>smb.conf</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>smbclient</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>testparm</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry>, and the 
+	Internet RFC's	<filename>rfc1001.txt</filename>, <filename>rfc1002.txt</filename>. 
+	In addition the CIFS (formerly SMB) specification is available 
+	as a link from the Web page <ulink noescape="1" url="http://samba.org/cifs/"> 
+	http://samba.org/cifs/</ulink>.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+	
+</refsect1>
+
+</refentry>

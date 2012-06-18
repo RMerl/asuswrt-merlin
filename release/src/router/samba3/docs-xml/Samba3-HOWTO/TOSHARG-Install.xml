@@ -1,0 +1,703 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE chapter PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<chapter id="install">
+<chapterinfo>
+	&author.tridge;
+	&author.jelmer;
+	&author.jht;
+	&author.kauer;
+	&author.danshearer;
+	<!-- Isn't some of this written by others as well? -->
+
+</chapterinfo>
+
+<title>How to Install and Test SAMBA</title>
+
+<sect1>
+	<title>Obtaining and Installing Samba</title>
+
+	<para>
+	<indexterm><primary>packages</primary></indexterm>
+	Binary packages of Samba are included in almost any Linux or UNIX distribution. There are also some
+	packages available at <ulink url="http://samba.org/">the Samba home page</ulink>. Refer to the manual of your
+	operating system for details on installing packages for your specific operating system.
+	</para>
+
+	<para>
+	<indexterm><primary>compile</primary></indexterm>
+	If you need to compile Samba from source, check <link linkend="compiling">How to Compile Samba</link>.
+	</para>
+
+</sect1>
+
+<sect1>
+	<title>Configuring Samba (smb.conf)</title>
+
+	<para>
+	<indexterm><primary>/etc/samba/smb.conf</primary></indexterm>
+	<indexterm><primary>SWAT</primary></indexterm>
+	Samba's configuration is stored in the &smb.conf; file, which usually resides in
+	<filename>/etc/samba/smb.conf</filename> or <filename>/usr/local/samba/lib/smb.conf</filename>. You can either
+	edit this file yourself or do it using one of the many graphical tools that are available, such as the
+	Web-based interface SWAT, that is included with Samba.
+	</para>
+
+	<sect2>
+	<title>Configuration File Syntax</title>
+
+	<para>
+	<indexterm><primary>section name</primary></indexterm>
+	The &smb.conf; file uses the same syntax as the various old <filename>.ini</filename> files in Windows
+	3.1: Each file consists of various sections, which are started by putting the section name between brackets
+	(<literal>[]</literal>) on a new line. Each contains zero or more key/value pairs separated by an equality
+	sign (<literal>=</literal>). The file is just a plaintext file, so you can open and edit it with your favorite
+	editing tool.
+	</para>
+
+	<para>
+	<indexterm><primary>meta-service</primary></indexterm>
+	<indexterm><primary>print</primary><secondary>queue</secondary></indexterm>
+	<indexterm><primary>share</primary></indexterm>
+	<indexterm><primary>spooler.</primary></indexterm>
+	<indexterm><primary>print</primary><secondary>spooler</secondary></indexterm>
+	<indexterm><primary>spool</primary><secondary>directory</secondary></indexterm>
+	Each section in the &smb.conf; file represents either a share or a meta-service on the Samba server. The
+	section <literal>[global]</literal> is special, since it contains settings that apply to the whole Samba
+	server.  Samba supports a number of meta-services, each of which serves its own purpose. For example, the
+	<literal>[homes]</literal> share is a meta-service that causes Samba to provide a personal home share for
+	each user. The <literal>[printers]</literal> share is a meta-service that establishes print queue support
+	and that specifies the location of the intermediate spool directory into which print jobs are received
+	from Windows clients prior to being dispatched to the UNIX/Linux print spooler.
+	</para>
+
+	<para>
+<indexterm><primary>printers</primary></indexterm>
+<indexterm><primary>meta-service</primary></indexterm>
+<indexterm><primary>printcap</primary></indexterm>
+<indexterm><primary>lpstat</primary></indexterm>
+<indexterm><primary>CUPS API</primary></indexterm>
+<indexterm><primary>browseable</primary></indexterm>
+	The <literal>printers</literal> meta-service will cause every printer that is either specified in a
+	<literal>printcap</literal> file, via the <command>lpstat</command>,  or via the CUPS API, to be
+	published as a shared print queue. The <literal>printers</literal> stanza in the &smb.conf; file can
+	be set as not browseable. If it is set to be browseable, then it will be visible as if it is a share.
+	That makes no sense given that this meta-service is responsible only for making UNIX system printers
+	available as Windows print queues. If a <literal>comment</literal> parameter is specified, the value
+	of it will be displayed as part of the printer name in Windows Explorer browse lists.
+	</para>
+
+	<para>
+	<indexterm><primary>stanza</primary></indexterm>
+	Each section of the &smb.conf; file that specifies a share, or a meta-service, is called a stanza.
+	The <literal>global</literal> stanza specifies settings that affect all the other stanzas in the
+	&smb.conf; file. Configuration parameters are documented in the &smb.conf; man page. Some parameters
+	can be used only in the <literal>global</literal> stanza, some only in share or meta-service stanzas,
+	and some can be used globally or just within a share or meta-service stanza.
+	</para>
+
+	<para>
+	<indexterm><primary>minimal</primary><secondary>configuration</secondary></indexterm>
+	<link linkend="smbconfminimal">A minimal smb.conf</link> contains a very minimal &smb.conf;.
+	<indexterm><primary>minimal configuration</primary></indexterm>
+	</para>
+
+	<example id="smbconfminimal">
+		<title>A minimal smb.conf</title>
+		<smbconfblock>
+
+		<smbconfsection name="[global]"/>
+		<smbconfoption name="workgroup">WKG</smbconfoption>
+		<smbconfoption name="netbios name">MYNAME</smbconfoption>
+		<smbconfsection name="[share1]"/>
+		<smbconfoption name="path">/tmp</smbconfoption>
+
+		<smbconfsection name="[share2]"/>
+		<smbconfoption name="path">/my_shared_folder</smbconfoption>
+		<smbconfoption name="comment">Some random files</smbconfoption>
+	</smbconfblock>
+	</example>
+
+</sect2>
+
+<sect2 id="tdbdocs">
+	<title>TDB Database File Information</title>
+
+	<para>
+	This section contains brief descriptions of the databases that are used by Samba-3.
+	</para>
+
+	<para>
+<indexterm><primary>tdb file locations</primary></indexterm>
+	The directory in which Samba stores the tdb files is determined by compile-time directives. Samba-3 stores
+	tdb files in two locations. The best way to determine these locations is to execute the following
+	command:
+<screen>
+&rootprompt; smbd -b | grep PRIVATE_DIR
+   PRIVATE_DIR: /etc/samba/private
+</screen>
+	This means that the confidential tdb files are stored in the <filename>/etc/samba/private</filename>
+	directory. Samba-3 also uses a number of tdb files that contain more mundane data. The location of
+	these files can be found by executing:
+<screen>
+&rootprompt; smbd -b | grep LOCKDIR
+   LOCKDIR: /var/lib/samba
+</screen>
+	Therefore the remaining control files will, in the example shown, be stored in the
+	<filename>/var/lib/samba</filename> directory.
+	</para>
+
+	<para>
+<indexterm><primary>tdb file descriptions</primary></indexterm>
+	The persistent tdb files are described in <link linkend="tdbpermfiledesc">the Persistent TDB File
+	Descriptions table</link>. All persistent tdb files should be regularly backed up. Use the
+	<command>tdbbackup</command> utility to backup the tdb files. All persistent tdb files must be
+	preserved during machine migrations, updates and upgrades.
+	</para>
+
+	<para>
+	The temporary tdb files do not need to be backed up, nor do they need to be preseved across machine
+	migrations, updates or upgrades. The temporary tdb files are described in <link linkend="tdbtempfiledesc">
+	the Temporary TDB File Descriptions</link>.
+	</para>
+
+        <table frame='all' id="tdbpermfiledesc"><title>Persistent TDB File Descriptions</title>
+        <tgroup cols='2'>
+			<colspec align="left"/>
+			<colspec align="justify" colwidth="1*"/>
+			<colspec align="left"/>
+                <thead>
+                <row>
+                        <entry align="left">Name</entry>
+                        <entry align="justify">Description</entry>
+                </row>
+                </thead>
+                <tbody>
+		<row>
+			<entry>account_policy</entry>
+			<entry><para>Samba/NT account policy settings, includes password expiration settings.</para></entry>
+		</row>
+		<row>
+			<entry>group_mapping</entry>
+			<entry><para>Mapping table from Windows groups/SID to UNIX groups.</para></entry>
+		</row>
+		<row>
+			<entry>ntdrivers</entry>
+			<entry><para>Stores per-printer installed driver information.</para></entry>
+		</row>
+		<row>
+			<entry>ntforms</entry>
+			<entry><para>Stores per-printer installed forms information.</para></entry>
+		</row>
+		<row>
+			<entry>ntprinters</entry>
+			<entry><para>Stores the per-printer devmode configuration settings.</para></entry>
+		</row>
+		<row>
+			<entry>passdb</entry>
+			<entry><para>
+				Exists only when the tdbsam passwd backend is used. This file stores the
+				SambaSAMAccount information. Note: This file requires that user POSIX account information is
+				availble from either the /etc/passwd file, or from an alternative system source.
+			</para></entry>
+		</row>
+		<row>
+			<entry>registry</entry>
+			<entry><para>
+				Read-only Samba database of a Windows registry skeleton that provides support for exporting 
+				various database tables via the winreg RPCs.
+			</para></entry>
+		</row>
+		<row>
+			<entry>secrets</entry>
+			<entry><para>
+				This file stores the Workgroup/Domain/Machine SID, the LDAP directory update password, and
+				a further collection of critical environmental data that is necessary for Samba to operate
+				correctly. This file contains very sensitive information that must be protected. It is stored
+				in the PRIVATE_DIR directory.
+			</para></entry>
+		</row>
+		<row>
+			<entry>share_info</entry>
+			<entry><para>Stores per-share ACL information.</para></entry>
+		</row>
+		<row>
+			<entry>winbindd_idmap</entry>
+			<entry><para>Winbindd's local IDMAP database.</para></entry>
+		</row>
+		</tbody>
+	</tgroup>
+	</table>
+
+        <table frame='all' id="tdbtempfiledesc"><title>Temporary TDB File Descriptions</title>
+        <tgroup cols='3'>
+			<colspec align="left"/>
+			<colspec align="justify" colwidth="1*"/>
+			<colspec align="left"/>
+                <thead>
+                <row>
+                        <entry align="left">Name</entry>
+                        <entry align="justify">Description</entry>
+                        <entry align="center">Backup</entry>
+                </row>
+                </thead>
+                <tbody>
+		<row>
+			<entry>brlock</entry>
+			<entry><para>Byte-range locking information.</para></entry>
+			<entry>No</entry>
+		</row>
+		<row>
+			<entry>connections</entry>
+			<entry><para>A temporary cache for current connection information used to enforce max connections.</para></entry>
+			<entry>no</entry>
+		</row>
+		<row>
+			<entry>eventlog/*tdb</entry>
+			<entry><para>Records of eventlog entries. In most circumstances this is just a cache of system logs.</para></entry>
+			<entry>no</entry>
+		</row>
+		<row>
+			<entry>gencache</entry>
+			<entry><para>Generic caching database for dead WINS servers and trusted domain data.</para></entry>
+			<entry>no</entry>
+		</row>
+		<row>
+			<entry>login_cache</entry>
+			<entry><para>A temporary cache for login information, in particular bad password attempts.</para></entry>
+			<entry>no</entry>
+		</row>
+		<row>
+			<entry>messages</entry>
+			<entry><para>Temporary storage of messages being processed by smbd.</para></entry>
+			<entry>no</entry>
+		</row>
+		<row>
+			<entry>netsamlogon_cache</entry>
+			<entry><para>Caches user net_info_3 structure data from net_samlogon requests (as a domain member).</para></entry>
+			<entry>no</entry>
+		</row>
+		<row>
+			<entry>perfmon/*.tdb</entry>
+			<entry><para>Performance counter information.</para></entry>
+			<entry>no</entry>
+		</row>
+		<row>
+			<entry>printing/*.tdb</entry>
+			<entry><para>Cached output from lpq command created on a per-print-service basis.</para></entry>
+			<entry>no</entry>
+		</row>
+		<row>
+			<entry>schannel_store</entry>
+			<entry><para>
+				A confidential file, stored in the PRIVATE_DIR, containing crytographic connection
+				information so that clients that have temporarily disconnected can reconnect without
+				needing to renegotiate the connection setup process.
+			</para></entry>
+			<entry>no</entry>
+		</row>
+		<row>
+			<entry>sessionid</entry>
+			<entry><para>Temporary cache for miscellaneous session information and for utmp handling.</para></entry>
+			<entry>no</entry>
+		</row>
+		<row>
+			<entry>unexpected</entry>
+			<entry><para>Stores packets received for which no process is actively listening.</para></entry>
+			<entry>no</entry>
+		</row>
+		<row>
+			<entry>winbindd_cache</entry>
+			<entry><para>Cache of Identity information received from an NT4 domain or from ADS. Includes user
+				lists, etc.</para></entry>
+			<entry>yes</entry>
+		</row>
+		</tbody>
+	</tgroup>
+	</table>
+
+</sect2>
+
+<sect2>
+	<title>Starting Samba</title>
+
+	<para>
+	<indexterm><primary>daemon</primary></indexterm>
+	Samba essentially consists of two or three daemons. A daemon is a UNIX application that runs in the background and provides services.
+	An example of a service is the Apache Web server for which the daemon is called <command>httpd</command>. In the case of Samba there
+	are three daemons, two of which are needed as a minimum.
+	</para>
+
+	<para>
+	The Samba server is made up of the following daemons:
+	</para>
+
+	<variablelist>
+		<varlistentry><term>nmbd</term>
+			<listitem><para>
+			<indexterm><primary>smbd</primary></indexterm>
+			<indexterm><primary>starting samba</primary><secondary>smbd</secondary></indexterm>
+			This daemon handles all name registration and resolution requests. It is the primary vehicle involved
+			in network browsing. It handles all UDP-based protocols. The <command>nmbd</command> daemon should
+			be the first command started as part of the Samba startup process.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>smbd</term>
+			<listitem><para>
+			<indexterm><primary>nmbd</primary></indexterm>
+			<indexterm><primary>starting samba</primary><secondary>nmbd</secondary></indexterm>
+			This daemon handles all TCP/IP-based connection services for file- and print-based operations. It also
+			manages local authentication. It should be started immediately following the startup of <command>nmbd</command>.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>winbindd</term>
+			<listitem><para>
+			<indexterm><primary>winbindd</primary></indexterm>
+			<indexterm><primary>starting samba</primary><secondary>winbindd</secondary></indexterm>
+			This daemon should be started when Samba is a member of a Windows NT4 or ADS domain. It is also needed when
+			Samba has trust relationships with another domain. The <command>winbindd</command> daemon will check the
+			&smb.conf; file for the presence of the <parameter>idmap uid</parameter> and <parameter>idmap gid</parameter>
+			parameters. If they are are found, <command>winbindd</command> will use the values specified for
+			for UID and GID allocation. If these parameters are not specified, <command>winbindd</command>
+			will start but it will not be able to allocate UIDs or GIDs.
+			</para></listitem>
+		</varlistentry>
+	</variablelist>
+
+	<para>
+	<indexterm><primary>startup</primary><secondary>process</secondary></indexterm>
+	When Samba has been packaged by an operating system vendor, the startup process is typically a custom feature of its
+	integration into the platform as a whole. Please refer to your operating system platform administration manuals for
+	specific information pertaining to correct management of Samba startup.
+	</para>
+
+</sect2>
+	
+<sect2>
+	<title>Example Configuration</title>
+	
+	<para>
+	<indexterm><primary>examples</primary></indexterm>
+	<indexterm><primary>source code</primary></indexterm>
+	<indexterm><primary>distribution</primary></indexterm>
+	<indexterm><primary>tarball</primary></indexterm>
+	<indexterm><primary>package</primary></indexterm>
+	There are sample configuration files in the examples subdirectory in the source code distribution tarball
+	package. It is suggested you read them carefully so you can see how the options go together in practice. See
+	the man page for all the options.  It might be worthwhile to start out with the
+	<filename>smb.conf.default</filename> configuration file and adapt it to your needs. It contains plenty of comments.
+	</para>
+
+	<para>
+	<indexterm><primary>simplest</primary><secondary>configuration</secondary></indexterm>
+	The simplest useful configuration file would contain something like that shown in
+	<link linkend="simple-example">Another simple smb.conf File</link>.
+	<indexterm><primary>simple configuration</primary></indexterm>
+	</para>
+
+<example id="simple-example">
+<title>Another simple smb.conf File</title>
+<smbconfblock>
+<smbconfsection name="[global]"/>
+<smbconfoption name="workgroup">&example.workgroup;</smbconfoption>
+
+<smbconfsection name="[homes]"/>
+<smbconfoption name="guest ok">no</smbconfoption>
+<smbconfoption name="read only">no</smbconfoption>
+</smbconfblock>
+</example>
+	
+	<para>
+	<indexterm><primary>connections</primary></indexterm>
+	<indexterm><primary>account</primary></indexterm>
+	<indexterm><primary>login name</primary></indexterm>
+	<indexterm><primary>service name</primary></indexterm>
+	This will allow connections by anyone with an account on the server, using either
+	their login name or <smbconfsection name="homes"/> as the service name.
+	(Note: The workgroup that Samba should appear in must also be set. The default
+	workgroup name is WORKGROUP.)
+	</para>
+	
+	<para>
+	<indexterm><primary>smbd</primary></indexterm>
+	Make sure you put the &smb.conf; file in the correct place. Note, the correct location of this file
+	depends on how the binary files were built. You can discover the correct location by executing from
+	the directory that contains the <command>smbd</command> command file:
+<screen>
+&rootprompt; smbd -b | grep smb.conf
+</screen>
+	</para>
+
+	<para>
+	<indexterm><primary>security</primary><secondary>settings</secondary></indexterm>
+	For more information about security settings for the <smbconfsection name="[homes]"/> share, please refer to 
+	<link linkend="securing-samba">Securing Samba</link>.
+	</para>
+
+<sect3>
+	<title>Test Your Config File with <command>testparm</command></title>
+
+	<para>
+	<indexterm><primary>validate</primary></indexterm>
+	<indexterm><primary>testparm</primary></indexterm>
+	<indexterm><primary>misconfigurations</primary></indexterm>
+	It's important to validate the contents of the &smb.conf; file using the &testparm; program.
+	If testparm runs correctly, it will list the loaded services. If not, it will give an error message.
+	Make sure it runs correctly and that the services look reasonable before proceeding. Enter the command: 
+	<screen>
+	&rootprompt; testparm /etc/samba/smb.conf
+	</screen>
+	Testparm will parse your configuration file and report any unknown parameters or incorrect syntax.
+	It also performs a check for common misconfigurations and will issue a warning if one is found.
+	</para>
+
+	<para>
+	Always run testparm again whenever the &smb.conf; file is changed!
+	</para>
+
+	<para>
+	<indexterm><primary>smbd</primary></indexterm>
+	<indexterm><primary>nmbd</primary></indexterm>
+	<indexterm><primary>winbindd</primary></indexterm>
+	<indexterm><primary>configuration</primary><secondary>documentation</secondary></indexterm>
+	The &smb.conf; file is constantly checked by the Samba daemons <command>smbd</command> and every instance of
+	itself that it spawns, <command>nmbd</command> and <command>winbindd</command>. It is good practice to
+	keep this file as small as possible. Many administrators prefer to document Samba configuration settings
+	and thus the need to keep this file small goes against good documentation wisdom. One solution that may
+	be adopted is to do all documentation and configuration in a file that has another name, such as
+	<filename>smb.conf.master</filename>. The <command>testparm</command> utility can be used to generate a
+	fully optimized &smb.conf; file from this master configuration and documentation file as shown here:
+<screen>
+&rootprompt; testparm -s smb.conf.master > smb.conf
+</screen>
+	This administrative method makes it possible to maintain detailed configuration change records while at
+	the same time keeping the working &smb.conf; file size to the minimum necessary.
+	</para>
+
+</sect3>
+</sect2>
+
+<sect2>
+	<title>SWAT</title>
+
+	<para>
+	<indexterm><primary>swat</primary></indexterm>
+	SWAT is a Web-based interface that can be used to facilitate the configuration of Samba.  SWAT might not
+	be available in the Samba package that shipped with your platform, but in a separate package. If you need to build SWAT please read the SWAT man page regarding compilation, installation, and
+	configuration of SWAT from the source code.
+	</para>
+
+	<para>
+	To launch SWAT, just run your favorite Web browser and point it to
+	<ulink url="http://localhost:901/" noescape="1">http://localhost:901/</ulink>.
+	Replace <replaceable>localhost</replaceable> with the name of the computer on which
+	Samba is running if that is a different computer than your browser.
+	</para>
+
+	<para>
+	SWAT can be used from a browser on any IP-connected machine, but be aware that connecting from a remote
+	machine leaves your connection open to password sniffing because passwords will be sent over the wire in the clear.
+	</para>
+
+	<para>
+	Please note that re-writing the configuration file using SWAT will
+	remove all comments!
+	More information about SWAT can be found in <link linkend="SWAT">The Samba Web Administration Tool</link>.
+	</para>
+
+</sect2>
+
+</sect1>
+
+<sect1>
+	<title>List Shares Available on the Server</title>
+
+	<para>
+	To list shares that are available from the configured Samba server, execute the
+	following command:
+	</para>
+
+<para><screen>
+&prompt;<userinput>smbclient -L <replaceable>yourhostname</replaceable></userinput>
+</screen></para>
+
+	<para>
+	You should see a list of shares available on your server. If you do not, then
+	something is incorrectly configured. This method can also be used to see what shares 
+	are available on other SMB servers, such as Windows 2000.
+	</para>
+
+	<para>
+	If you choose user-level security, you may find that Samba requests a password
+	before it will list the shares. See the <command>smbclient</command> man page for details.
+	You can force it to list the shares without a password by adding the option
+	<option>-N</option> to the command line. 
+	</para>
+</sect1>
+
+<sect1>
+	<title>Connect with a UNIX Client</title>
+	
+	<para>
+	Enter the following command:
+<screen>
+&prompt;<userinput>smbclient <replaceable> //yourhostname/aservice</replaceable></userinput>
+</screen></para>
+	
+	<para>Typically <replaceable>yourhostname</replaceable> is the name of the host on which &smbd;
+	has been installed. The <replaceable>aservice</replaceable> is any service that has been defined in the &smb.conf;
+	file. Try your username if you just have a <smbconfsection name="[homes]"/> section in the &smb.conf; file.</para>
+
+	<para>Example: If the UNIX host is called <replaceable>bambi</replaceable> and a valid login name
+	is <replaceable>fred</replaceable>, you would type:</para>
+
+<para><screen>
+&prompt;<userinput>smbclient //<replaceable>bambi</replaceable>/<replaceable>fred</replaceable></userinput>
+</screen></para>
+</sect1>
+
+<sect1>
+	<title>Connect from a Remote SMB Client</title>
+
+	<para>
+	Now that Samba is working correctly locally, you can try to access it from other clients. Within a few
+	minutes, the Samba host should be listed in the Network Neighborhood on all Windows clients of its subnet.
+	Try browsing the server from another client or "mounting" it.
+	</para>
+
+	<para>
+	Mounting disks from a DOS, Windows, or OS/2 client can be done by running a command such as:
+<screen>
+&dosprompt;<userinput>net use m: \\servername\service</userinput>
+</screen>
+	Where the drive letter m: is any available drive letter. It is important to double-check that the
+	service (share) name that you used does actually exist.
+	</para>
+
+	<para>
+	Try printing, for example,
+<screen>
+&dosprompt;<userinput>net use lpt1:	\\servername\spoolservice</userinput>
+</screen>
+	The <literal>spoolservice</literal> is the name of the printer (actually the print queue) on the target
+	server. This will permit all print jobs that are captured by the lpt1: port on the Windows client to
+	be sent to the printer that owns the spoolservice that has been specified.
+	</para>
+
+<para>
+<screen>&dosprompt;<userinput>print filename</userinput>
+</screen></para>
+
+	<sect2>
+	<title>What If Things Don't Work?</title>
+	
+	<para>
+	You might want to read <link linkend="diagnosis">The Samba Checklist</link>.  If you are still
+	stuck, refer to <link linkend="problems">Analyzing and Solving Samba Problems</link>.  Samba has
+	been successfully installed at thousands of sites worldwide.  It is unlikely that your particular problem is
+	unique, so it might be productive to perform an Internet search to see if someone else has encountered your
+	problem and has found a way to overcome it.
+	</para>
+
+	<para>
+	If you are new to Samba, and particularly if you are new to Windows networking, or to UNIX/Linux,
+	the book <quote>Samba-3 by Example</quote> will help you to create a validated network environment.
+	Simply choose from the first five chapters the network design that most closely matches site needs,
+	then follow the simple step-by-step procedure to deploy it. Later, when you have a working network
+	you may well want to refer back to this book for further insight into opportunities for improvement.
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>Still Stuck?</title>
+
+	<para>
+	The best advice under the stress of abject frustration is to cool down! That may be challenging
+	of itself, but while you are angry or annoyed your ability to seek out a solution is somewhat
+	undermined. A cool head clears the way to finding the answer you are looking for. Just remember,
+	every problem has a solution &smbmdash; there is a good chance that someone else has found it
+	even though you can't right now. That will change with time, patience and learning.
+	</para>
+
+	<para>
+	Now that you have cooled down a bit, please refer to <link linkend="diagnosis">the Samba Checklist</link>
+	for a process that can be followed to identify the cause of your problem.
+	</para>
+
+	</sect2>
+
+</sect1>
+
+<sect1>
+<title>Common Errors</title>
+
+<para>
+The following questions and issues are raised repeatedly on the Samba mailing list.
+</para>
+
+<sect2>
+	<title>Large Number of smbd Processes</title>
+
+	<para>
+	Samba consists of three core programs: &nmbd;, &smbd;, and &winbindd;. &nmbd; is the name server message daemon,
+	&smbd; is the server message daemon, and &winbindd; is the daemon that handles communication with domain controllers.
+	</para>
+
+	<para>
+	If Samba is <emphasis>not</emphasis> running as a WINS server, then there will be one single instance of
+	 &nmbd; running on your system. If it is running as a WINS server, then there will be
+	two instances &smbmdash; one to handle the WINS requests.
+	</para>
+
+	<para>
+	&smbd; handles all connection requests. It spawns a new process for each client
+	connection made. That is why you may see so many of them, one per client connection.
+	</para>
+
+	<para>
+	&winbindd; will run as one or two daemons, depending on whether or not it is being
+	run in <emphasis>split mode</emphasis> (in which case there will be two instances).
+	</para>
+
+	</sect2>
+
+	<sect2>
+		<title>Error Message: open_oplock_ipc</title>
+
+	<para>
+	An error message is observed in the log files when &smbd; is started: <quote>open_oplock_ipc: Failed to
+	get local UDP socket for address 100007f. Error was Cannot assign requested.</quote>
+	</para>
+
+	<para>
+	Your loopback device isn't working correctly. Make sure it is configured correctly. The loopback
+	device is an internal (virtual) network device with the IP address <emphasis>127.0.0.1</emphasis>.
+	Read your OS documentation for details on how to configure the loopback on your system.
+	</para>
+
+	</sect2>
+
+	<sect2>
+		<title><quote><errorname>The network name cannot be found</errorname></quote></title>
+
+		<para>
+		This error can be caused by one of these misconfigurations:
+		</para>
+
+		<itemizedlist>
+			<listitem><para>You specified a nonexisting path
+			for the share in &smb.conf;.</para></listitem>
+
+			<listitem><para>The user you are trying to access the share with does not 
+			have sufficient permissions to access the path for
+			the share. Both read (r) and access (x) should be possible.</para></listitem>
+
+			<listitem><para>The share you are trying to access does not exist.</para></listitem>
+	</itemizedlist>
+
+	</sect2>
+</sect1>
+
+</chapter>

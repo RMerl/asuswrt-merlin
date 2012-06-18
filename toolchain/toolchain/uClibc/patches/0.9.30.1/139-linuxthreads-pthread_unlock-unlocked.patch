@@ -1,0 +1,112 @@
+Fix segfault when pthread_mutex_unlock() called against unlocked mutex.
+
+diff -uNBp a/libpthread/linuxthreads.old/mutex.c b/libpthread/linuxthreads.old/mutex.c
+--- a/libpthread/linuxthreads.old/mutex.c	2006-01-27 01:30:50.000000000 +0300
++++ b/libpthread/linuxthreads.old/mutex.c	2010-09-29 20:35:07.000000000 +0400
+@@ -171,8 +171,7 @@ int attribute_hidden __pthread_mutex_unl
+ {
+   switch (mutex->__m_kind) {
+   case PTHREAD_MUTEX_ADAPTIVE_NP:
+-    __pthread_unlock(&mutex->__m_lock);
+-    return 0;
++    return __pthread_unlock(&mutex->__m_lock);
+   case PTHREAD_MUTEX_RECURSIVE_NP:
+     if (mutex->__m_owner != thread_self())
+       return EPERM;
+@@ -181,8 +180,7 @@ int attribute_hidden __pthread_mutex_unl
+       return 0;
+     }
+     mutex->__m_owner = NULL;
+-    __pthread_unlock(&mutex->__m_lock);
+-    return 0;
++    return __pthread_unlock(&mutex->__m_lock);
+   case PTHREAD_MUTEX_ERRORCHECK_NP:
+     if (mutex->__m_owner != thread_self() || mutex->__m_lock.__status == 0)
+       return EPERM;
+diff -uNBp a/libpthread/linuxthreads.old/spinlock.c b/libpthread/linuxthreads.old/spinlock.c
+--- a/libpthread/linuxthreads.old/spinlock.c	2008-07-23 15:23:36.000000000 +0400
++++ b/libpthread/linuxthreads.old/spinlock.c	2010-09-29 20:33:12.000000000 +0400
+@@ -177,6 +177,9 @@ int __pthread_unlock(struct _pthread_fas
+   int maxprio;
+ #endif
+ 
++  if (lock->__status == 0)
++    return ENOLCK;
++
+ #if defined TEST_FOR_COMPARE_AND_SWAP
+   if (!__pthread_has_cas)
+ #endif
+diff -uNBp a/libpthread/linuxthreads/spinlock.c b/libpthread/linuxthreads/spinlock.c
+--- a/libpthread/linuxthreads/spinlock.c	2008-07-23 15:23:36.000000000 +0400
++++ b/libpthread/linuxthreads/spinlock.c	2010-10-08 13:46:48.000000000 +0400
+@@ -172,6 +172,9 @@ int __pthread_unlock(struct _pthread_fas
+   int maxprio;
+ #endif
+ 
++  if (lock->__status == 0)
++    return ENOLCK;
++
+ #if defined TEST_FOR_COMPARE_AND_SWAP
+   if (!__pthread_has_cas)
+ #endif
+diff -uNBp /dev/null b/test/pthread/ex8-mtx-odd.c
+--- /dev/null
++++ b/test/pthread/ex8-mtx-odd.c	2010-09-30 11:04:24.000000000 +0400
+@@ -0,0 +1,56 @@
++/* Copyright (C) 2002 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++   Contributed by Ulrich Drepper <drepper@redhat.com>, 2002.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, write to the Free
++   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
++   02111-1307 USA.  */
++
++#include <errno.h>
++#include <pthread.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <time.h>
++
++
++static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
++
++static int
++do_test (void)
++{
++
++  if (pthread_mutex_lock (&lock) != 0)
++    {
++      puts ("mutex_lock failed");
++      exit (1);
++    }
++
++  if (pthread_mutex_unlock (&lock) != 0)
++    {
++      puts ("mutex_unlock 1 failed");
++      exit (1);
++    }
++
++  if (pthread_mutex_unlock (&lock) == 0)
++    {
++      puts ("mutex_unlock 2 succeded");
++      exit (1);
++    }
++
++  return 0;
++}
++
++#define TEST_FUNCTION do_test ()
++#include "../test-skeleton.c"
+-- 

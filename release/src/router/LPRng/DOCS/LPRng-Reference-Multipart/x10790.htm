@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Job disappears and is never printed, but lpr
+    works</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="The Most Frequently Asked Questions "
+    href="faq.htm">
+    <link rel="PREVIOUS" title=
+    "Job is not in print queue, but it gets printed!" href=
+    "x10735.htm">
+    <link rel="NEXT" title=
+    "I get messages about bad control file format" href=
+    "x10807.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x10735.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          20. The Most Frequently Asked Questions</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x10807.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN10790">20.4. Job disappears and
+      is never printed, but lpr works</a></h1>
+
+      <p>This is a rather disconcerting problem, and usually occurs
+      when sending jobs to either a network printer or a
+      nonconforming <a href="rfc1179.htm">RFC1179</a> print
+      spooler. For details about <b class="APPLICATION">LPRng</b>
+      and RFC1179, see <a href="rfc1179ref.htm">RFC1179 and <b
+      class="APPLICATION">LPRng</b></a>, but here is a quick
+      explanation.</p>
+
+      <p>An <b class="APPLICATION">lpd</b> job consists of a
+      control file, which contains information about the job, and
+      one or more data files. RFC1179 is silent on the order that
+      jobs are sent; however some implementations REQUIRE that the
+      data files be sent first, followed by the control file.</p>
+
+      <p>SOLUTION:</p>
+
+      <p>Set the <var class="LITERAL">send_data_first</var> flag in
+      the printcap for the particular printer, or in the <tt class=
+      "FILENAME">lpd.conf</tt> configuration file. This is:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10803"></a>
+<pre class="SCREEN">
+    :send_data_first:  (printcap)
+    send_data_first    (lpd.conf)
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Note that some printers/servers INSIST on the control file
+      first; You can clear the flag using <var class=
+      "LITERAL">send_job_first@</var> if you need to.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x10735.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x10807.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Job is not in
+          print queue, but it gets printed!</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "faq.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">I get messages
+          about bad control file format</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

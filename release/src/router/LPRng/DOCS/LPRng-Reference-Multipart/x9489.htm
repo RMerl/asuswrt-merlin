@@ -1,0 +1,263 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Using MD5 for Authentication</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title="Using SSL for Authentication" href=
+    "x9412.htm">
+    <link rel="NEXT" title="Adding Authentication Support" href=
+    "x9556.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x9412.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x9556.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN9489">17.16. Using MD5 for
+      Authentication</a></h1>
+
+      <p><b class="APPLICATION">LPRng</b> has built-in support for
+      using MD5 digests as an authentication method. The
+      implementation is provided as an example of how to add user
+      level authentication into the <b class=
+      "APPLICATION">LPRng</b> system.</p>
+
+      <p>The method used to do authentication is very simple. Each
+      user has a file containing a set of keys that are used to
+      salt an md5 hash. The information being transferred has its
+      md5 checksum calculated using this salt, and is then
+      transferred to the destination, along with the md5 hash
+      result. At the destination the server will get the user id,
+      obtain the salt value from a key file, and then calculate the
+      md5 hash value. If the two are in agreement, authentication
+      is successful.</p>
+
+      <p>The keyfile used for md5 authentication contains an id
+      followed by a text string whose binary value is used as a
+      hash key:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN9496"></a>
+<pre class="SCREEN">
+    id1=key
+    id2=key
+    
+    Example:
+    
+    lpr@h2=tadf79asd%^1asdf
+    lpr@h1=fdfa%$^&amp;^%$
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9498">17.16.1. Printcap
+        Entries</a></h2>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">auth=md5</var><span class=
+            "emphasis"><i class="EMPHASIS">use MD5
+            authentication</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">auth_forward=md5</var><span
+            class="emphasis"><i class="EMPHASIS">forward using MD5
+            authentication</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">md5_id=</var><span class=
+            "emphasis"><i class="EMPHASIS">id for
+            server</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">md5_forward_id=</var><span
+            class="emphasis"><i class="EMPHASIS">id for
+            server</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">md5_server_keyfile=</var><span
+            class="emphasis"><i class="EMPHASIS">server
+            keyfile</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>Example printcap entry:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9523"></a>
+<pre class="SCREEN">
+    pr:
+        :lp=pr@wayoff
+        :auth=md5
+        :md5_id=lpr@wayoff.com
+    pr:server
+        :auth_forward=md5
+        :md5_id=lpr@wayoff.com
+        :md5_server_keyfile
+        :md5_forward_id=lpr@faroff.com
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The <var class="LITERAL">md5_id</var> value is used by
+        the client to obtain a hash key that is used to salt the
+        md5 calculation for client to server transfers. The <var
+        class="LITERAL">md5_forward_id</var> value is used by the
+        server to obtain a hash key that is used to salt the md5
+        calculation for server to server transfers.</p>
+
+        <p>The <var class="LITERAL">md5_server_keyfile</var>
+        contains the keys of users; the id sent as the connection
+        information is used to obtain the key from the file.</p>
+
+        <p>To set up md5 authentication, all that is needed is the
+        following.</p>
+
+        <ul>
+          <li>
+            <p>For each user generate a key and place it in the
+            server keyfile. This file should have the form:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN9534"></a>
+<pre class="SCREEN">
+    user1@host1=asdfasdfadf
+    user2@host2=a8789087asddasdf
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>Assign a key to the server, and set its printcap
+            entry to this key.</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN9538"></a>
+<pre class="SCREEN">
+    pr:
+        :lp=pr@wayoff
+        :auth=md5
+        :md5_id=lpr@wayoff.com
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>For each user, create a user key file with the
+            following format:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN9542"></a>
+<pre class="SCREEN">
+    lpr@wayoff = user1@host1 asdfasdfadf
+</pre>
+            </div>
+            The first entry corresponds to the <var class=
+            "LITERAL">md5_id</var> value in the printcap. The
+            second field is the <acronym class=
+            "ACRONYM">AUTHUSER</acronym> value supplied to the
+            server and which will be used to look up the key in the
+            servers key file. Finally, the last field is the salt
+            value for the md5 calculation.<br>
+            <br>
+          </li>
+        </ul>
+        <br>
+        <br>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9546">17.16.2. User
+        Environment Variables and Files</a></h2>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">MD5KEYFILE=5</var><span class=
+            "emphasis"><i class="EMPHASIS">location of user
+            keyfile</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>The <var class="LITERAL">MD5KEYFILE</var> environment
+        variable contains the path to the user keytab file.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x9412.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x9556.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Using SSL for
+          Authentication</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Adding
+          Authentication Support</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

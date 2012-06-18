@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+test "$1" = 'remove' || test "$1" = 'deconfigure' || exit 0
+if test -x /etc/init.d/dropbear; then
+  if test -x /usr/sbin/invoke-rc.d; then
+    invoke-rc.d dropbear stop
+  else
+    /etc/init.d/dropbear stop
+  fi
+fi

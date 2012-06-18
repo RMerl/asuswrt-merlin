@@ -1,0 +1,7 @@
+AC_SUBST(TALLOC_OBJ)
+AC_SUBST(TALLOC_CFLAGS)
+AC_SUBST(TALLOC_LIBS)
+
+AC_CHECK_HEADER(talloc.h,
+   [AC_CHECK_LIB(talloc, talloc_init, [TALLOC_LIBS="-ltalloc"]) ],
+   [PKG_CHECK_MODULES(TALLOC, talloc)])

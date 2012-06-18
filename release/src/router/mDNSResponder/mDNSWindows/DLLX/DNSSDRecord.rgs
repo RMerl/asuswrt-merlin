@@ -1,0 +1,27 @@
+HKCR
+{
+	Bonjour.DNSSDRecord.1 = s 'DNSSDRecord Class'
+	{
+		CLSID = s '{5E93C5A9-7516-4259-A67B-41A656F6E01C}'
+	}
+	Bonjour.DNSSDRecord = s 'DNSSDRecord Class'
+	{
+		CLSID = s '{5E93C5A9-7516-4259-A67B-41A656F6E01C}'
+		CurVer = s 'Bonjour.DNSSDRecord.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {5E93C5A9-7516-4259-A67B-41A656F6E01C} = s 'DNSSDRecord Class'
+		{
+			ProgID = s 'Bonjour.DNSSDRecord.1'
+			VersionIndependentProgID = s 'Bonjour.DNSSDRecord'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			val AppID = s '%APPID%'
+			'TypeLib' = s '{18FBED6D-F2B7-4EC8-A4A4-46282E635308}'
+		}
+	}
+}

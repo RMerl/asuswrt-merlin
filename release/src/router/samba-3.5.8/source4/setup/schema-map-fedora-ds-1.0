@@ -1,0 +1,39 @@
+#Standard OpenLDAP attributes
+name
+objectClasses
+createTimeStamp
+attributeTypes
+objectClass
+userPassword
+seeAlso
+modifyTimeStamp
+distinguishedName
+description
+cn
+dITContentRules
+top
+#This should be provided by the LDAP server, only in our schema to permit provision
+aci
+#Skip ObjectClasses
+#MiddleName has a conflicting OID
+2.16.840.1.113730.3.1.34:1.3.6.1.4.1.7165.4.255.1
+#defaultGroup has a conflicting OID
+1.2.840.113556.1.4.480:1.3.6.1.4.1.7165.4.255.2
+#This large integer format is unimplemented in OpenLDAP 2.3
+1.2.840.113556.1.4.906:1.3.6.1.4.1.1466.115.121.1.27
+#This case insensitive string isn't available
+1.2.840.113556.1.4.905:1.3.6.1.4.1.1466.115.121.1.15
+#Treat Security Descriptors as binary
+1.2.840.113556.1.4.907:1.3.6.1.4.1.1466.115.121.1.40
+#NumbericString is not supported in Fedora DS 1.0, map to a directory string
+1.3.6.1.4.1.1466.115.121.1.36:1.3.6.1.4.1.1466.115.121.1.15
+#Treat Object(DN-Binary) as a binary blob
+1.2.840.113556.1.4.903:1.3.6.1.4.1.1466.115.121.1.40
+#Printable String as IA5 String
+1.3.6.1.4.1.1466.115.121.1.44:1.3.6.1.4.1.1466.115.121.1.26
+#UTC Time as Generalized Time
+1.3.6.1.4.1.1466.115.121.1.53:1.3.6.1.4.1.1466.115.121.1.24
+#DN with String as Directory String
+1.2.840.113556.1.4.904:1.3.6.1.4.1.1466.115.121.1.15
+#Presentation Address as Directory String
+1.3.6.1.4.1.1466.115.121.1.43:1.3.6.1.4.1.1466.115.121.1.15

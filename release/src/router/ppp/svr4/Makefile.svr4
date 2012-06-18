@@ -1,0 +1,60 @@
+#
+# Makefile for STREAMS modules for SVR4.
+#
+# $Id: Makefile.svr4,v 1.1.1.4 2003/10/14 08:09:54 sparq Exp $
+#
+
+COPTS = -O
+
+CFLAGS= -D_KERNEL -DSVR4 -DLACHTCP -I../include $(COPTS)
+
+all:	ppp ppp_ahdl ppp_comp
+
+ppp:	ppp.o
+	ld -r -o $@ ppp.o
+
+ppp_ahdl: ppp_ahdlc.o
+	ld -r -o $@ ppp_ahdlc.o
+
+ppp_comp: ppp_comp.o bsd-comp.o vjcompress.o deflate.o zlib.o
+	ld -r -o $@ ppp_comp.o bsd-comp.o vjcompress.o deflate.o zlib.o
+
+bsd-comp.o: ../modules/bsd-comp.c
+	$(CC) $(CFLAGS) -c $?
+deflate.o: ../modules/deflate.c
+	$(CC) $(CFLAGS) -c $?
+ppp.o:	../modules/ppp.c
+	$(CC) $(CFLAGS) -c $?
+ppp_ahdlc.o: ../modules/ppp_ahdlc.c
+	$(CC) $(CFLAGS) -c $?
+ppp_comp.o: ../modules/ppp_comp.c
+	$(CC) $(CFLAGS) -c $?
+vjcompress.o: ../modules/vjcompress.c
+	$(CC) $(CFLAGS) -c $?
+zlib.o:	../common/zlib.c
+	$(CC) $(CFLAGS) -c $?
+
+install: all
+	cp ppp Driver.o
+	cp ppp.Master Master
+	cp ppp.System System
+	cp ppp.Node Node
+	/etc/conf/bin/idinstall -d ppp
+	/etc/conf/bin/idinstall -a ppp
+	cp ppp_comp Driver.o
+	cp ppp_comp.Master Master
+	cp ppp_comp.System System
+	/etc/conf/bin/idinstall -d ppp_comp
+	/etc/conf/bin/idinstall -a ppp_comp
+	cp ppp_ahdl Driver.o
+	cp ppp_ahdl.Master Master
+	cp ppp_ahdl.System System
+	/etc/conf/bin/idinstall -d ppp_ahdl
+	/etc/conf/bin/idinstall -a ppp_ahdl
+	@echo 
+	@echo 'NOTE: You must rebuild your kernel to incorporate the driver.'
+	@echo '(use /etc/conf/bin/idbuild)'
+	@echo
+
+clean:
+	rm -f ppp ppp_comp ppp_ahdl *.o *~ core

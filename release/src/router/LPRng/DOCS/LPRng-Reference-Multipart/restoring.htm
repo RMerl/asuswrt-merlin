@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Restoring Original Configuration</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title=
+    "Setting Up the Tutorial Configuration" href=
+    "tutorialconfig.htm">
+    <link rel="NEXT" title="Printing a File and Checking Status"
+    href="printingandchecking.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "tutorialconfig.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "printingandchecking.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="RESTORING">4.4. Restoring Original
+      Configuration</a></h1>
+
+      <p>To restore the original configuration, you simply need to
+      restore the original <tt class="FILENAME">printcap</tt> and
+      <tt class="FILENAME">lpd.perms</tt> file and then restart the
+      <b class="APPLICATION">lpd</b> server. These operations
+      require ROOT permissions.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN1875"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {96} #</samp> <kbd class=
+"USERINPUT">su</kbd>
+    <samp class="PROMPT">h4: {97} #</samp> <kbd class=
+"USERINPUT">cd /etc    OR    cd /usr/local/etc</kbd>
+    <samp class="PROMPT">h4: {98} #</samp> <kbd class=
+"USERINPUT">mv printcap.orig printcap</kbd>
+    <samp class="PROMPT">h4: {99} #</samp> <kbd class=
+"USERINPUT">mv lpd.perms.orig lpd.perms</kbd>
+    <samp class="PROMPT">h4: {100} #</samp> <kbd class=
+"USERINPUT">checkpc -f</kbd>
+    <samp class="PROMPT">h4: {101} #</samp> <kbd class=
+"USERINPUT">lpc reread</kbd>
+    <samp class="PROMPT">h4: {102} #</samp> <kbd class=
+"USERINPUT">rm -rf /var/spool/lpd/lp /var/spool/lpd/lp2</kbd>
+    <samp class="PROMPT">h4: {103} #</samp> <kbd class=
+"USERINPUT">rm -f /tmp/lp /tmp/lp2</kbd>
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "tutorialconfig.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "printingandchecking.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Setting Up the
+          Tutorial Configuration</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Printing a
+          File and Checking Status</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

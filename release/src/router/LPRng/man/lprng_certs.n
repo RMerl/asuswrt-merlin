@@ -1,0 +1,233 @@
+.ds VE LPRng-3.9.0
+.TH LPRNG_CERTS 1 \*(VE "LPRng"
+.ig
+lpbanner.1,v 3.33 1998/03/29 18:37:49 papowell Exp
+..
+.SH NAME
+lprng_certs \- lprng SSL certificate management
+.SH SYNOPSIS
+.B
+.nf
+lprng_certs option
+ Options:
+  init     - make directory structure
+  newca    - make new root CA
+  defaults - set new default values for certs
+  gen      - generate user, server, or signing cert
+  index [dir] - index cert files
+  verify [cert] - verify cert file
+  encrypt keyfile
+           - set or change keyfile password
+.nf
+.SH DESCRIPTION
+.PP
+The
+.B lprng_certs
+program is used to manage SSL certificates for the LPRng software.
+There SSL certificate structure consists of a hierarchy of
+certificates.
+The LPRng software assumes that the following types of certificates
+will be used:
+.IP "CA or root"
+A top level or self-signed certificate.
+.IP "signing"
+A certificate that can be used to sign other certificates.
+This is signed by the root CA or another signing certificate.
+.IP "user"
+A certificate used by a user to identify themselves to the
+lpd server.
+.IP "server"
+A certificate used by the
+.I lpd
+server to identify themselves to the
+user or other
+.I lpd
+servers.
+.SH "Signing Certificates"
+.PP
+All of the signing certificates,
+including the root certificate (root CA),
+_SSL_CA_FILE_,
+are in the same directory as the root CA file.
+Alternately,
+all of the signing certs can be concatenated and put into a single file,
+which by convention is assumed to have the same name as the root CA
+file,
+_SSL_CA_FILE_.
+The
+.BR ssl_ca_file ,
+.BR ssl_ca_path ,
+and
+.BR ssl_ca_key
+printcap and configuration options can be used to specify
+the locations of the root CA files,
+a directory containing the signing certificate files,
+and the private key file for the root CA file respectively.
+.PP
+The root certificate (root CA file)
+_SSL_CA_FILE_
+has a private key file
+_SSL_CA_KEY_
+as well.
+By convention,
+the private keys for the other signing certificate files are stored in the
+certificate file.
+.PP
+The OpenSSL software requires that this directory
+also contain a set of hash files which are,
+in effect,
+links to these files.
+.PP
+By default, all signing certificates are assumed to be
+in the same directory as the root certificate.
+.SH "Server Certificates"
+.PP
+The certificate used by the
+.I lpd
+server are kept in another
+directory.
+These files do not need to have hash links to them.
+By convention,
+the private keys for these certificate files are stored in the
+certificate file.
+The server certificate file
+is specified by the
+.B ssl_server_cert
+and has the default value
+_SSL_SERVER_CERT_.
+This file contains the cert and private key.
+The server certificate password  file is specified by the
+.B ssl_server_password
+option with the default value
+_SSL_SERVER_PASSWORD_
+and
+contains the password used to decrypt the servers private key and use it
+for authentication.
+This key file should be read only by the
+.I lpd
+server.
+.SH "User Certificates"
+.PP
+The certificates used by users are kept in a separate directory
+in the users home directory.
+By convention,
+the private keys for these certificate files are stored in the
+certificate file.
+.PP
+The user certificate file is specified by the
+.B LPR_SSL_FILE
+environment variable,
+otherwise the
+.B "${HOME}/.lpr/client.crt"
+is used.
+The password is taken from the file specified by the
+.B LPR_SSL_PASSWORD
+environment variable,
+otherwise the
+.B "${HOME}/.lpr/client.pwd"
+file is read.
+.PP
+.SH "USING LPRNG_CERTS" 
+.PP
+The organization of the SSL certificates used by LPRng is
+similar to that used by other programs such as the
+.B Apache
+.B mod_ssl
+support.
+The
+.B lprng_certs
+program is used to create the directory structure,
+create certificates for the root CA,
+signing,
+user and servers.
+In order to make managment simple,
+the following support is provided.
+.SH "lprng_certs init"
+.PP
+This command creates the directories used by the
+lpd
+server.
+It is useful when setting up a new 
+.B lpd
+server.
+.SH "lprng_certs newca"
+.PP
+This command creates a self-signed certificate,
+suitable for use as a root CA certificate.
+It also sets up a set of default values for other certificate creation.
+.SH "lprng_certs defaults"
+.PP
+This command is used to modify the set of default values.
+.PP
+The default values are listed and should be self-explanatory,
+except for the value of the
+.B signer
+certificate.
+By default,
+the root CA can be used to sign certificates.
+However,
+a signing certificate can be used as well.
+This allows delegation of signing authority without
+compromising the security of the root CA.
+.SH "lprng_certs gen"
+.PP
+This is used to generate a user, server, or signing certificate.
+.SH "lprng_certs index"
+.PP
+This is used to create the indexes for the signing certificates.
+.SH "lprng_certs verify [cert]"
+.PP
+This checks the certificate file using the Openssl
+.B "openssl verify"
+command.
+.SH "lprng_certs encrypt keyfile"
+.PP
+This removes all key information from the key file,
+reencrypts the key information, 
+and the puts the encrypted key information in the file.
+.SH "LPRng OPTIONS"
+.nf
+.ta \w'${HOME}/.lpr/client.crt  'u
+Option	Purpose
+ssl_ca_path	directory holding the SSL signing certs
+ssl_ca_file	file holding the root CA or all SSL signing certs
+ssl_server_cert	cert file for the server
+ssl_server_password	file containing password for server server
+${HOME}/.lpr/client.crt	client certificate file
+${HOME}/.lpr/client.pwd	client certificate private key password
+.SH "ENVIRONMENT VARIABLES"
+.nf
+.ta \w'${HOME}/.lpr/client.crt  'u
+LPR_SSL_FILE	client certificate file
+LPR_SSL_PASSWORD	client certificate private key password
+
+.SH "EXIT STATUS"
+.PP
+The following exit values are returned:
+.TP 15
+.B "zero (0)"
+Successful completion.
+.TP
+.B "non-zero (!=0)"
+An error occurred.
+.SH "SEE ALSO"
+.LP
+lpd.conf(5),
+lpc(8),
+lpd(8),
+checkpc(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.conf(5),
+pr(1), lprng_certs(1), lprng_index_certs(1).
+.SH "HISTORY"
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+The LPRng mailing list is lprng@lprng.com;
+subscribe by sending mail to lprng-request@lprng.com with
+the word subscribe in the body.
+The software is available from ftp://ftp.lprng.com/pub/LPRng.
+.SH "AUTHOR"
+Patrick Powell <papowell@lprng.com>.

@@ -1,0 +1,33 @@
+
+Here are a few quick points about DECnet support...
+
+ o iproute2 is the tool of choice for configuring the DECnet support for
+   Linux. For many features, it is the only tool which can be used to
+   configure them.
+
+ o No name resolution is available as yet, all addresses must be
+   entered numerically.
+
+ o Remember to set the hardware address of the interface using: 
+
+   ip link set ethX address xx:xx:xx:xx:xx:xx
+      (where xx:xx:xx:xx:xx:xx is the MAC address for your DECnet node
+       address)
+
+   if your Ethernet card won't listen to more than one unicast
+   mac address at once. If the Linux DECnet stack doesn't talk to
+   any other DECnet nodes, then check this with tcpdump and if its
+   a problem, change the mac address (but do this _before_ starting
+   any other network protocol on the interface)
+
+ o Whilst you can use ip addr add to add more than one DECnet address to an
+   interface, don't expect addresses which are not the same as the
+   kernels node address to work properly with 2.4 kernels. This should
+   be fine with 2.6 kernels as the routing code has been extensively
+   modified and improved.
+
+ o The DECnet support is currently self contained. It does not depend on
+   the libdnet library.
+
+Steve Whitehouse <steve@chygwyn.com>
+

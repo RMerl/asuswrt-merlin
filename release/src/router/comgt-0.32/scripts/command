@@ -1,0 +1,32 @@
+####################################################
+#
+# command - comgt script for command interaction
+#
+# Copyright (C) 2006  Paul Hardwick <paul@peck.org>
+#
+###################################################
+print "\nType command at prompt.\n"
+print "Empty input terminates.\n"
+print "#################\n"
+opengt
+set com 115200n81
+set senddelay 0.05
+waitquiet 1 0.2
+
+:loop1
+    print "Command: "
+    input $x
+    let c=len($x)
+    if c=1 goto end
+    let c=c-1
+    let $c=$left($x,c)
+    send $x
+    send "^m"
+    :loop2
+        print $a
+        get 1 "^m" $a
+        let a=len($a)
+        if a > 0 goto loop2
+    goto loop1
+:end
+print "#################\n"

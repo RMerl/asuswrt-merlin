@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="idmap_tdb.8">
+
+<refmeta>
+	<refentrytitle>idmap_tdb</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.5</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>idmap_tdb</refname>
+	<refpurpose>Samba's idmap_tdb Backend for Winbind</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<title>DESCRIPTION</title>
+
+	<para>
+	The idmap_tdb plugin is the default backend used by winbindd
+	for storing SID/uid/gid mapping tables.
+	</para>
+
+	<para>
+	In contrast to read only backends like idmap_rid, it is an allocating
+	backend: This means that it needs to allocate new user and group IDs in
+	order to create new mappings. The allocator can be provided by the
+	idmap_tdb backend itself or by any other allocating backend like
+	idmap_ldap or idmap_tdb2. This is configured with the
+	parameter <parameter>idmap alloc backend</parameter>.
+	</para>
+
+	<para>
+	Note that in order for this (or any other allocating) backend to
+	function at all, the default backend needs to be writeable.
+	The ranges used for uid and gid allocation are the default ranges
+	configured by &quot;idmap uid&quot; and &quot;idmap gid&quot;.
+	</para>
+
+	<para>
+	Furthermore, since there is only one global allocating backend
+	responsible for all domains using writeable idmap backends,
+	any explicitly configured domain with idmap backend tdb
+	should have the same range as the default range, since it needs
+	to use the global uid / gid allocator. See the example below.
+	</para>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>IDMAP OPTIONS</title>
+
+	<variablelist>
+                <varlistentry>
+		<term>range = low - high</term>
+                <listitem><para>
+			Defines the available matching uid and gid range for which the
+			backend is authoritative.
+			If the parameter is absent, Winbind fails over to use
+			the &quot;idmap uid&quot; and &quot;idmap gid&quot; options
+			from smb.conf.
+                </para></listitem>
+                </varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>
+	This example shows how tdb is used as a the default idmap backend.
+	It configures the idmap range through the global options for all
+	domains encountered. This same range is used for uid/gid allocation.
+	</para>
+
+	<programlisting>
+	[global]
+	# "idmap backend = tdb" is redundant here since it is the default
+	idmap backend = tdb
+	idmap uid = 1000000-2000000
+	idmap gid = 1000000-2000000
+	</programlisting>
+
+	<para>
+	This (rather theoretical) example shows how tdb can be used as the
+	allocating backend while ldap is the default backend used to store
+	the mappings.
+	It adds an explicit configuration for some domain DOM1, that
+	uses the tdb idmap backend. Note that the same range as the
+	default uid/gid range is used, since the allocator has to serve
+	both the default backend and the explicitly configured domain DOM1.
+	</para>
+
+	<programlisting>
+	[global]
+	idmap backend = ldap
+	idmap uid = 1000000-2000000
+	idmap gid = 1000000-2000000
+	# use a different uid/gid allocator:
+	idmap alloc backend = tdb
+
+	idmap config DOM1 : backend = tdb
+	idmap config DOM1 : range = 1000000-2000000
+	</programlisting>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>
+	The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.
+	</para>
+</refsect1>
+
+</refentry>

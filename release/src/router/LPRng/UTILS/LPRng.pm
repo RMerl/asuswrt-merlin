@@ -1,0 +1,775 @@
+#!/usr/bin/perl
+
+# read the lpd.conf file, and set up values from it
+
+package LPRng;
+require 5.003;
+use Exporter ();
+
+
+@ISA = qw(Exporter);
+@EXPORT = qw(
+Set_Debug
+Setup_LPRng
+Get_printer_name
+FixStrVals
+Setup_pc_entry
+Real_printer
+MatchHost
+MakeMask
+Read_printcap_file
+CheckRecurse
+Read_pc_entry
+Dump_index
+Dump_pc
+Read_conf
+Dump_conf
+Fix_value
+trimall
+Get_remote_pr_host
+getconnection
+sendit
+sendbuffer
+sendfile
+);
+
+use strict;
+use FileHandle;
+use Sys::Hostname;
+use Socket;
+use English;
+
+ sub FixStrVals( $ \% );
+ sub Setup_pc_entry( $ );
+ sub Real_printer( $ );
+ sub MatchHost( \@ $ );
+ sub MakeMask( $ );
+ sub Read_printcap_file( $ \% \% $ $ \@ );
+ sub CheckRecurse( $ \% \% $ $ \@ );
+ sub Read_pc_entry( $ );
+ sub Dump_index( $ \% );
+ sub Dump_pc( $ \% );
+ sub Read_conf( $ \% );
+ sub Dump_conf( $ \% );
+ sub Fix_value( $ );
+ sub trimall( $ );
+
+my(
+$Debug, %Init_hash, %Pc_hash, %Pc_index, @Hostname, %Keyvals,
+);
+
+# permanent values
+# Debug level
+#
+# %Init_hash: lpd.conf file values
+# %Pc_hash:   printcap entries
+# %Pc_index:  printcap entry names
+# @Hostname:  hostname information, used for 'oh' printcap information
+# 
+
+# maximum depth of recursion for printcap file lookup
+my($Max_depth) = 10;
+
+sub trimall( $ )
+{
+	my($line) = @_;
+	$line ||= "";
+	$line =~ s/^\s+//;
+	$line =~ s/\s+$//;
+	return( $line );
+}
+
+# convert a printcap or config file value into
+# a corresponding string or integer value
+
+sub Fix_value( $ )
+{
+	my($value) = @_;
+	if( $value =~ /^=/ or $value =~ /^#/ ){
+		$value = trimall( substr( $value, 1 ) );
+	} elsif ( $value =~ /^\@/ ){
+		$value = 0;
+	} else {
+		$value = 1;
+	}
+	return $value;
+}
+
+# sub Read_conf( $conf_file, \%conf_values )
+# Read a configuration file
+#  $conf_file = configuration file
+#  $conf_values = hash to store values in
+#
+
+
+sub Dump_conf( $ \% )
+{
+	my($title, $hash) = @_;
+	my($key);
+	print "$title config\n";
+	foreach $key (sort keys %$hash ){
+		print "  '$key'='". $hash->{$key} . "'\n";
+	}
+}
+
+sub Read_conf( $ \% )
+{
+	my($conf_file,$conf_values) = @_;
+	my($file,$key,$value,$line);
+
+	# open the conf file
+	$file = new FileHandle;
+	if( not defined( $file->open("<$conf_file")) ){
+		return "cannot open $conf_file - $!";
+	}
+	while( defined( $line = <$file>) ){
+		chomp $line;
+		next if not $line or $line =~ /^\s*#/;
+		($key,$value) = ($line =~ /^\s*([\w-]*)(.*)/);
+		$value = trimall($value);
+		($key = trimall($key)) =~ s/-/_/g;
+		print "key '$key'='$value'\n" if $Debug > 2;
+		$conf_values->{$key} = Fix_value( $value );
+		print "set key '$key'='" . $conf_values->{$key} . "'\n" if $Debug > 2;
+	}
+	$file->close;
+	Dump_conf( "Read_conf", %$conf_values ) if $Debug > 1;
+	return "";
+}
+
+# Dump_pc( $title, %Pc_hash )
+#  dump the printcap hash 
+#
+
+sub Dump_pc( $ \% )
+{
+	my($title, $hash) = @_;
+	my($key, $name);
+	$name = ();
+	$name = \@{$hash->{'NAME'}};
+	print "Dump_pc: $title pc '". join( "','",@$name) . "'\n";
+	foreach $key (sort keys %$hash ){
+		print "  '$key'='". $hash->{$key} . "'\n";
+	}
+}
+
+sub Dump_index( $ \% )
+{
+	my($title, $hash) = @_;
+	my($key);
+	print "Dump_index: $title index\n";
+	foreach $key (sort keys %$hash ){
+		print "  '$key'='". $hash->{$key} . "'\n";
+	}
+}
+
+# sub Read_pc_entry( $file )
+#  $file = filehandle
+#  find and read a printcap entry
+#
+
+my($lastline);
+
+sub Read_pc_entry( $ )
+{
+	my($file) = @_;
+	my($hash,$state,$escape,$line,@lines,$len,$i,@names);
+	my($key,$value,$add_next);
+	$state = "";
+	$hash = ();
+	$add_next = 0;
+	print "Read_pc_entry: starting\n" if $Debug > 1;
+	while( $lastline or defined( $lastline = <$file> ) ){
+		$line = trimall( $lastline );
+		print "line '$line'\n" if $Debug > 3;
+		if( not $line or $line =~ /^\s*#/ ){
+			$lastline = "";
+			next;
+		}
+		# beginning of next entry?
+		last if not $add_next and $line =~ /^\s*\w/ and $state ne "";
+		# we get rid of escapes at the end of the line
+		$lastline = "";
+		$add_next = 0;
+		($line, $escape) = ($line =~ /^(.*?)(\\*)$/);
+		if( defined( $escape ) ){
+			print "escape '$escape'\n" if $Debug > 3;
+			$len = length($escape);
+			if( $len % 2 ){
+				$escape = substr($escape,0,$len-1);
+				$add_next = 1;
+			}
+			$line .= $escape;
+		}
+		last if( not $state and $line =~ /^\s*include\s/ );
+		$state .= $line;
+		print "state '$state'\n" if $Debug > 3;
+	}
+	print "Read_pc_entry: final state '$state'\n" if $Debug > 2;
+	if( $state eq "" ){
+		return undef;
+	}
+	@lines = split( /\s*:+/,$state);
+	if( $Debug > 3 ){
+		print "Read_pc_entry: split values=\n";
+		for( $i = 0 ; $i < @lines; ++$i ){
+			print "[$i] '$lines[$i]'\n";
+		}
+	}
+	@names = split( /\s*\|+/, shift(@lines));
+	@names = map { trimall($_) } @names;
+	@{$hash->{'NAME'}} = @names;
+	foreach $line (@lines){
+		($key,$value) = ($line =~ /^\s*([\w-]*)(.*)/);
+		$value = trimall($value);
+		($key = trimall($key)) =~ s/-/_/g;
+		print "  key '$key'='$value'\n" if $Debug > 3;
+		$hash->{$key} = Fix_value( $value );
+		print "  set key '$key'='" . $hash->{$key} . "'\n" if $Debug > 3;
+	}
+	Dump_pc( "Read_pc_entry: final value", %$hash ) if $Debug > 1;
+	return $hash;
+}
+
+sub CheckRecurse( $ \% \% $ $ \@ )
+{
+	if( defined $lastline ){
+		my($v,$file) = split( ' ', $lastline );
+		if( $v eq 'include' ){
+			$lastline = "";
+			print "CheckRecurse: file '$file'\n" if $Debug>0;
+			my( $pc_file, $Pc_hash, $Pc_index, $server, $depth, $hostname ) = @_;
+			Read_printcap_file($file, %$Pc_hash, %$Pc_index, $server, $depth, @$hostname );
+		}
+	}
+}
+
+# sub Read_printcap_file(
+#  $pc_file - file name
+#  %Pc_hash - hash to store printcap values in
+#  %Pc_index - index of all printcap names
+#  $server   - if $server != 0 then a server, and use server printcap entries
+#  $depth    - recursion depth
+#  @Hostname - hostname information
+#
+#   read the printcap file and produce a
+#   hash with pointers to hashes of printcap vars
+#
+# Algorithm:
+#   open file
+#   while (read a printcap entry){
+#     decode the printcap entry
+#     if printcap values exist then
+#        merge values
+#     else
+#        create printcap entry
+#     endif
+#   endwhile
+
+sub Read_printcap_file( $ \% \% $ $ \@ )
+{
+	my( $pc_file, $Pc_hash, $Pc_index, $server, $depth, $hostname ) = @_;
+	my($file,$file_name,$hash,$key,$value,$names,$first,$name);
+	my($i,@n,@Hostentry);
+
+	# open the conf file
+	$file = new FileHandle;
+	++$depth;
+	print "Read_printcap_file: file '$pc_file', depth $depth\n" if $Debug>0;
+	if( $depth > $Max_depth ){
+		return "nesting too deep for '$pc_file'";
+	}
+	# get either file or filter
+	$file_name = trimall($pc_file);
+	if( ($file_name =~ s/^\|//) ){
+		$file_name = $file_name . '|';
+	} else {
+		$file_name = '<' . $file_name;
+	}
+	$file_name = FixStrVals( $file_name, %Keyvals );
+	print "Read_printcap_file: opening '$file_name'\n" if $Debug>0;
+	if( not defined( $file->open($file_name)) ){
+		return "cannot open '" . $file_name . "' - $!";
+	}
+	for(; defined( $hash = Read_pc_entry($file) );
+			CheckRecurse($pc_file, %$Pc_hash, %$Pc_index, $server, $depth, @$hostname ) ){
+		Dump_pc( "Read_printcap_file: checking", %$hash ) if $Debug > 1;
+		if( $hash->{'server'} and not $server ){
+			print "Read_printcap_file: " .
+				"server=(pc '$hash->{server}', need '$server')\n"
+				if $Debug>1;
+			next;
+		}
+		if( $hash->{'oh'} and not MatchHost( @$hostname, $hash->{'oh'} ) ){
+			print "Read_printcap_file: " .
+				"oh '$hash->{oh}' not matched\n" if $Debug>1;
+			next;
+		}
+		$names = $hash->{'NAME'};
+		$first = $names->[0]; 
+		# find out if we need to add or merge printcap
+		# entries
+		my(%k) = ();
+		for( $i = 1; $i < @$names; ++$i ){
+			$name = $names->[$i];
+			$k{$name} = $name;
+		}
+		$value = $Pc_hash->{$first}->{'NAME'};
+		if( defined @$value ){
+			for( $i = 1; $i < @$value; ++$i ){
+				$name = $value->[$i];
+				$k{$name} = $name;
+			}
+		}
+		@n = ( $first, sort keys %k );
+		@{$Pc_hash->{$first}->{'NAME'}} = @n;
+		foreach $key (keys %$hash){
+			$value = $hash->{$key};
+			if( $key ne 'NAME' ){
+				$Pc_hash->{$first}->{$key} = $value;
+			}
+		}
+		foreach $name (@$names){
+			$Pc_index->{$name} = $first;
+		}
+		if( not $Pc_index->{'FIRST'} ){
+			$Pc_index->{'FIRST'} = $first;
+		}
+		if( $Debug > 1 ){
+			Dump_index( "Read_printcap_file: after adding '$first'", %$Pc_index );
+			foreach $name (sort keys %$Pc_hash){
+				Dump_pc( "Read_printcap_file: after adding '$first'", %{$Pc_hash->{$name}} );
+			}
+		}
+	}
+	if( $Debug > 0 ){
+		Dump_index( "Read_printcap_file: after '$pc_file'", %$Pc_index );
+		foreach $name (sort keys %$Pc_hash){
+			Dump_pc( "Read_printcap_file: after '$pc_file'", %{$Pc_hash->{$name}} );
+		}
+	}
+}
+
+sub MakeMask( $ )
+{
+	my($mask) = @_;
+	my($mnum,$v,@v,$x,$i,$j,@d);
+	if( defined $mask ){
+		if( $mask =~ /\./ ){
+			$mnum = inet_aton( $mask );
+		} else {
+			if( $mask < 32 and $mask >= 0 ){
+				$v = pack( "N", (1 << $mask ) - 1);
+				@v = reverse split( '', unpack( "B32", $v ));
+				for( $i = 0; $i < 4; ++$i ){
+					$x = 0;
+					for( $j = 0; $j < 8; ++$j ){
+						$x *= 2;
+						$x += $v[$i*8+$j];
+					}
+					$d[$i] = $x;
+				}
+				$i = join(".", @d );
+				#print "MakeMask: generated $mask = '$i'\n" if $Debug > 5;
+				$mnum = inet_aton( $i );
+			} else {
+				$mnum = inet_aton( "255.255.255.255" );
+			}
+		}
+	} else {
+		$mnum = inet_aton( "255.255.255.255" );
+	}
+	print "MakeMask: $mask = '" . inet_ntoa( $mnum ) . "'\n" if $Debug > 5;
+	return $mnum;
+}
+
+# sub MatchHost( @Hostinfo, $matches )
+#   @Hostinfo is value returned by gethostbyname()
+#    ($name, $alises, $addrtype, $length, @addrs )
+#      0      1        2          3       4
+#   matches has format:  ((glob|ip/mask),)*
+
+sub MatchHost( \@ $ )
+{
+	my($hostinfo,$matches) = @_;
+	my(@list,$value,$addr,$mask,$anum,$mnum,$null,@v,$i,$ipaddr);
+	@list = split( '[,\s]', $matches );
+	foreach $value ( @list ){
+		print "Matchhost: '$value' to $hostinfo->[0]\n" if $Debug>2;
+		if( $value =~ /^\d/ ){
+			# we have addr/mask
+			$null = inet_aton("0.0.0.0");
+			($addr,$mask) = split( '/',$value );
+			$anum = inet_aton( $addr );
+			$mnum = MakeMask( $mask );
+			print "Matchhost: addr '" . inet_ntoa($anum) . "', mask '"
+				. inet_ntoa($mnum) . "'\n" if $Debug>3;
+			for($i = 4; $i < @$hostinfo; ++$i ){
+				$ipaddr = $hostinfo->[$i];
+				print "Matchhost: ipaddr '" . inet_ntoa($ipaddr) . "'\n" if $Debug>3;
+				$ipaddr = ($ipaddr ^ $anum) & $mnum;
+				print "Matchhost: result '" . inet_ntoa($ipaddr) . "'\n" if $Debug>3;
+				if( $ipaddr eq $null ){
+					print "Matchhost: found '".inet_ntoa( $hostinfo->[$i])."'\n" if $Debug>3;
+					return 1;
+				}
+			}
+		} else {
+			# we have glob str
+			$value =~ s/\./\\./g;
+			$value =~ s/\*/.*/g;
+			print "Matchhost: new value '$value'\n" if $Debug>3;
+			if( $hostinfo->[0] =~ /$value/ ){
+				print "Matchhost: found\n" if $Debug>3;
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+# sub Setup_pc_entry( $name )
+#  1. look up the pc entry
+#  2. set the initial values to configuration defaults
+#  3. combine the pc values
+# returns: hash of combined values
+
+sub Real_printer( $ )
+{
+	my($name) = @_;
+	$name = $Pc_index{$name};
+	return $name;
+}
+
+
+sub Setup_pc_entry( $ )
+{
+	my($name ) = @_;
+	my($real, %hash, $value, $key, $tc_val, @tc_list, %tc_hash );
+	$real = Real_printer( $name );
+	if( not $real ){
+		return undef;
+	}
+	print "Setup_pc_entry: pr '$name', using real '$real'\n" if $Debug > 2;
+	%hash = %Init_hash;
+	Dump_pc( "Setup_pc_entry: after init", %hash ) if $Debug > 3;
+		
+	$value = $Pc_hash{$real};
+	Dump_pc( "Setup_pc_entry: pc value for '$real'", %$value ) if $Debug > 3;
+	foreach $key (keys %$value){
+		print "Setup_pc_entry: setting '$key'='$value->{$key}'\n" if $Debug > 5;
+		$hash{$key} = $value->{$key};
+	}
+	Dump_pc( "Setup_pc_entry: pr '$name', real '$real'; result", %hash ) if $Debug > 1;
+	# now we have to resolve the TC values
+	#
+	$tc_val = $hash{'tc'};
+	$hash{'tc'} = "";
+	if( $tc_val ){
+		push @tc_list, split( /[\s,;:]/, $tc_val ); 
+	}
+	while( @tc_list ){
+		$tc_val = shift @tc_list; 
+		print "Setup_pc_entry: tc '$tc_val'" if $Debug > 5;
+		$real = Real_printer( $tc_val );
+		if( $tc_hash{$tc_val} ){
+			print STDERR "Setup_pc_entry: Printer '$name' has tc with multiple uses of '$tc_val', really '$real'";
+			return undef;
+		}
+		$tc_hash{$tc_val} = 1;
+		if( not defined $real ){
+			print STDERR "Setup_pc_entry: Printer '$name' missing tc entry for '$tc_val', really '$real'";
+			return undef;
+		}
+		$value = $Pc_hash{$real};
+		foreach $key (keys %$value){
+			print "Setup_pc_entry: setting '$key'='$value->{$key}'\n" if $Debug > 5;
+			if( $key ne 'NAME' ){
+				$hash{$key} = $value->{$key};
+			}
+		}
+		Dump_pc( "Setup_pc_entry: pr '$name', after tc '$real'", %hash ) if $Debug > 1;
+		$tc_val = $hash{'tc'};
+		$hash{'tc'} = "";
+		if( $tc_val ){
+			push @tc_list, split( '\s,;:', $tc_val ); 
+		}
+	}
+	return \%hash;
+}
+
+sub FixStrVals( $ \% )
+{
+	my($str, $hash ) = @_;
+	my( $key, $val );
+	while( $str =~ /%(.)/ ){
+		$key = $1;
+		print "FixStrVals: fixing '$key' in '$str'\n" if $Debug > 5;
+		$val = $hash->{$key};
+		$val = "" if( not defined $val );
+		$str =~ s/%$key/$val/g;
+	}
+	print "FixStrVals: final '$str'\n" if $Debug > 5;
+	return $str;
+}
+
+sub Get_printer_name( \% )
+{
+	my($Args) = shift;
+	my($printer);
+	$printer ||= $Args->{'P'};
+	$printer ||= $Pc_index{'FIRST'};
+	$printer ||= $Init_hash{'default_printer'};
+	print "Get_printer_name: '$printer'\n" if $Debug>0;
+	return( $printer );
+}
+
+
+sub Setup_LPRng( \% )
+{
+	my($Args) = @_;
+	my($pc_path,$file,$key);
+	# get the command line options
+	# get the hostname information
+	$key = hostname();
+	@Hostname = gethostbyname( $key );
+	# set up the key values
+	$Keyvals{'H'} = $Hostname[0];
+	#Read_conf("/var/tmp/LPD/lpd.conf", %Init_hash);
+	Read_conf("/etc/lpd.conf", %Init_hash);
+	$pc_path = "/etc/printcap";
+	if( $Init_hash{'printcap_path'} ){
+		$pc_path = $Init_hash{'printcap_path'};
+	}
+	foreach $file ( split( '[:,]', $pc_path ) ){
+		$file = FixStrVals( $file, %Keyvals );
+		Read_printcap_file($file, %Pc_hash, %Pc_index, 1, 0, @Hostname);
+	}
+}
+
+sub Set_Debug( $ )
+{
+	my($v) = $Debug;
+	$Debug = $_[0];
+}
+
+# sub Get_remote_pr_host( $Printer, $Pc_value );
+#  returns: ($pr, $remote, $port)
+#  $pr = remote printer, $remote = remote host, $port = port to use
+#
+#  if Pc_value 
+#    we use the lp value
+#    if no lp value, we use rp, rm value
+#  else
+#    we use the lp value
+#  if the lp value then we split it up
+#
+
+sub Get_remote_pr_host( $ $)
+{
+	my( $prname, $pc ) = @_;
+	my( $lp, $pr, $remote, $port );
+
+	if( defined $pc ){
+		$lp = $pc->{'lp'};
+	} else {
+		$lp = $prname;
+	}
+	# we now check to see if we have pr@host
+	if( defined $lp ){
+		if( $lp =~ /\@/ ){
+			($pr, $remote ) = split( '@', $lp );
+		} else {
+			$pr = $prname
+		}
+	} elsif( defined $pc ){
+		$pr = $pc->{'rp'};
+		$remote = $pc->{'rm'};
+	}
+	if( not $pr ){
+		$pr = $prname;
+	}
+	$pr = $prname if( $pr =~ /%P/ );
+
+	if( not $remote ){
+		if( defined $pc ){
+			$remote = "localhost" if $pc->{'force_localhost'};
+		} else {
+			$remote = "localhost" if $Init_hash{'force_localhost'};
+		}
+	}
+	if( not $remote ){
+		if( defined $pc ){
+			$remote = $pc->{'default_remote_host'};
+		} else {
+			$remote = $Init_hash{'default_remote_host'};
+		}
+	}
+	if( not $remote ){
+		$remote = "localhost";
+	}
+
+	($remote, $port ) = split( '%', $remote );
+
+	if( not $port ){
+		if( defined $pc ){
+			$port = $pc->{'lpd_port'};
+		} else {
+			$port = $Init_hash{'lpd_port'};
+		}
+	}
+	if( not $port ){
+		$port = "printer";
+	}
+	if( $port + 0 == 0 ){
+		$port = getservbyname( $port, "tcp" );
+	}
+	return( $pr, $remote, $port );
+}
+
+sub getconnection ($ $)
+{
+	my ($remote,$port) = @_;
+	my ($iaddr,$paddr,$proto);
+	my ($low_port, $high_port, $ports, $t, $euid ) if $Debug>0;
+	$ports = $Init_hash{'originate_port'};
+	if( $ports ){
+		($low_port, $high_port) = split( /[\s,;]+/, $ports );
+		print "low_port '$low_port', high_port '$high_port'\n" if $Debug>0;
+	}
+	$low_port += 0;
+	$high_port += 0;
+	print "num low_port '$low_port', high_port '$high_port'\n" if $Debug>0;
+
+	$iaddr = inet_aton($remote) or die "no host: $remote";
+	$paddr = sockaddr_in($port,$iaddr);
+	$proto = getprotobyname('tcp');
+	print "remote='$remote', port ='$port', iaddr='" . inet_ntoa($iaddr). "'\n" if $Debug;
+	$t = 0;
+	if( $low_port < $high_port and ($EUID == 0 or $UID == 0 ) ){
+		$euid = $EUID;
+		$EUID = 0;
+		while( $t == 0 and $low_port < $high_port ){
+			close(SOCK);
+			socket(SOCK,PF_INET,SOCK_STREAM,$proto) or die "socket: $!";
+			setsockopt( SOCK, SOL_SOCKET, SO_REUSEADDR, 1 )
+				or warn "setsockopt failed - $!\n"; 
+			if( bind( SOCK, sockaddr_in( $low_port, INADDR_ANY ) ) ){
+				$t = 1;
+			} else {
+				print "bind to $low_port failed - $!\n";
+				++$low_port;
+			}
+		}
+		$EUID = $euid;
+	}
+	if( $t == 0 ){
+		close(SOCK);
+		socket(SOCK,PF_INET,SOCK_STREAM,$proto) or die "socket: $!";
+		setsockopt( SOCK, SOL_SOCKET, SO_REUSEADDR, 1 ) or warn "setsockopt failed - $!\n"; 
+	}
+	connect(SOCK,$paddr) or die "connect: $!";
+	print "connection made\n" if $Debug;
+	# unbufferred IO
+	select(SOCK); $| = 1; select(STDOUT);
+	return \*SOCK;
+}
+
+sub sendit( $ $ )
+{
+	my( $SOCK, $line ) = @_;
+	my( $count );
+	print "sendit sending '$line'\n" if $Debug;
+	print $SOCK $line or die "print to socket failed - $!\n";
+	$line = "";
+	$count = read $SOCK, $line, 1;
+	print "sendit read $count\n" if $Debug;
+	if( !defined($count) ){
+		die "read error on socket - $!\n";
+	}
+	if( !$count ){
+		die "EOF on socket\n";
+	}
+	$count = unpack( "C", $line );
+	if( $count ){
+		print "error: ";
+		while( defined ( $line = <$SOCK> ) ){
+			print $line;
+		}
+		print "\n";
+		exit 1;
+	}
+	print "sendit no error\n" if $Debug;
+}
+
+sub sendbuffer( $ $ $ )
+{
+	my($SOCK, $line, $buffer ) = @_;
+	my( $count );
+	print "sendbuffer line '$line'\n" if $Debug;
+	sendit( $SOCK, $line );
+	print "sendbuffer buffer '$buffer'\n" if $Debug;
+	print $SOCK $buffer;
+	print $SOCK "\000";
+	$line = "";
+	$count = read $SOCK, $line, 1;
+	print "sendbuffer read $count\n" if $Debug;
+	if( !defined($count) ){
+		die "read error on socket - $!\n";
+	}
+	if( !$count ){
+		die "EOF on socket\n";
+	}
+	$count = unpack( "C", $line );
+	if( $count ){
+		print "error code: $count\n";
+		while( defined($line = <$SOCK>) ){
+			print $line;
+		}
+		print "\n";
+		exit 1;
+	}
+	print "sendbuffer no error\n" if $Debug;
+}
+
+sub sendfile ( $ $ $ )
+{
+	my( $SOCK, $name, $filename ) = @_;
+	my( $size, $line, $count );
+	open( FILE, "<$filename") or die "cannot open file '$filename'\n";
+	$size = -s FILE;
+	print "sendfile: '$name' size $size\n" if $Debug;
+	sendit( $SOCK, "\003$size $name\n" );
+	print "sendfile: sending file\n" if $Debug;
+	while( $size = read FILE, $line, 1024 ){
+		print "read $size bytes\n" if $Debug;
+		print $SOCK $line;
+	}
+	print "sendfile: finished\n" if $Debug;
+	if( !defined( $size ) ){
+		die "bad read from '$name' - $!\n";
+	}
+	print $SOCK "\000";
+	$line = "";
+	$count = read $SOCK, $line, 1;
+	print "sendfile: read $count\n" if $Debug;
+	if( !defined($count) ){
+		die "read error on socket - $!\n";
+	}
+	if( !$count ){
+		die "EOF on socket\n";
+	}
+	$count = unpack( "C", $line );
+	if( $count ){
+		print "error code: $count\n";
+		while( defined($line = <$SOCK>) ){
+			print $line;
+		}
+		print "\n";
+		exit 1;
+	}
+	print "sendfile: no error\n" if $Debug;
+}
+
+$Debug = 0;
+1;

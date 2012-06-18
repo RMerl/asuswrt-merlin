@@ -1,0 +1,79 @@
+#!gmake
+#
+# Makefile for tdb directory
+#
+
+CC = @CC@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+includedir = @includedir@
+libdir = @libdir@
+VPATH = @srcdir@:@libreplacedir@
+srcdir = @srcdir@
+builddir = @builddir@
+sharedbuilddir = @sharedbuilddir@
+INSTALLCMD = @INSTALL@
+CPPFLAGS = @CPPFLAGS@ -I$(srcdir)/include -Iinclude -I.
+LDFLAGS = @LDFLAGS@
+EXEEXT = @EXEEXT@
+SHLD = @SHLD@
+SHLD_FLAGS = @SHLD_FLAGS@
+PACKAGE_VERSION = @PACKAGE_VERSION@
+PICFLAG = @PICFLAG@
+SHLIBEXT = @SHLIBEXT@
+LIB_PATH_VAR = @LIB_PATH_VAR@
+teventdir = @teventdir@
+
+TALLOC_CFLAGS = @TALLOC_CFLAGS@
+TALLOC_LDFLAGS = @TALLOC_CFLAGS@
+TALLOC_LIBS = @TALLOC_LIBS@
+
+TEVENT_CFLAGS = @TEVENT_CFLAGS@
+TEVENT_LDFLAGS = @TEVENT_CFLAGS@
+TEVENT_LIBS = @TEVENT_LIBS@
+
+CFLAGS = $(CPPFLAGS) $(TALLOC_CFLAGS) $(TEVENT_CFLAGS) @CFLAGS@
+LDFLAGS = $(TALLOC_LDFLAGS) $(TEVENT_LDFLAGS) @LDFLAGS@
+LIBS = $(TALLOC_LIBS) $(TEVENT_LIBS) @LIBS@
+
+TEVENT_OBJ = @TEVENT_OBJ@ @LIBREPLACEOBJ@
+
+SONAMEFLAG = @SONAMEFLAG@
+VERSIONSCRIPT = @VERSIONSCRIPT@
+EXPORTSFILE = @EXPORTSFILE@
+
+default: all
+
+include $(teventdir)/tevent.mk
+include $(teventdir)/rules.mk
+
+all:: showflags dirs $(PROGS) $(TEVENT_SOLIB) libtevent.a
+
+install:: all
+$(TEVENT_SOLIB): $(TEVENT_OBJ)
+	$(SHLD) $(SHLD_FLAGS) $(LDFLAGS) $(LIBS) -o $@ $(TEVENT_OBJ) $(VERSIONSCRIPT) $(EXPORTSFILE) $(SONAMEFLAG)$(TEVENT_SONAME)
+
+shared-build: all
+	${INSTALLCMD} -d $(sharedbuilddir)/lib
+	${INSTALLCMD} -m 644 libtevent.a $(sharedbuilddir)/lib
+	${INSTALLCMD} -m 755 $(TEVENT_SOLIB) $(sharedbuilddir)/lib
+	ln -sf $(TEVENT_SOLIB) $(sharedbuilddir)/lib/$(TEVENT_SONAME)
+	ln -sf $(TEVENT_SOLIB) $(sharedbuilddir)/lib/libtevent.so
+	${INSTALLCMD} -d $(sharedbuilddir)/include
+	${INSTALLCMD} -m 644 $(srcdir)/tevent.h $(sharedbuilddir)/include
+
+check: test
+
+installcheck:: test install
+
+clean::
+	rm -f *.o *.a */*.o
+	rm -fr abi
+
+distclean:: clean
+	rm -f config.log config.status config.h config.cache
+	rm -f Makefile
+
+realdistclean:: distclean
+	rm -f configure config.h.in

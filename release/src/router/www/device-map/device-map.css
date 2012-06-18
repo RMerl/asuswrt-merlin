@@ -1,0 +1,26 @@
+﻿/* CSS Document */
+body {
+	background-color: #8fb9cc;
+}
+.top-title {text-align:Left;color:#ffffff;font-weight:bold;}
+.top-messgae {font-family :Verdana;font-size : 11px;text-align:left;color:#000000;font-weight:normal;text-align:left;background-color:#7aa3bd}
+.top-messgae1 {font-family :Verdana;font-size : 11px;text-align:left;color:#23344d;font-weight:normal;}
+.top-messgae2 {font-family :Verdana;font-size : 11px;text-align:left;color:#23344d;font-weight:bold;}
+.top-messgae3 {font-family :Verdana;font-size : 11px;text-align:center;color:#000000;background-color:#6692b0;font-weight:bold}
+.input{color:#3b5f71;border:1px solid #7398ac;background-color:#cae9f3;font-family :Verdana;font-size : 11px;padding-left:5px;}
+.button{color:#cae9f3 ;font-family :Verdana;font-size : 11px;border:1px solid #ffffff; background-color: #5588a4}
+.status{font-family :Verdana;font-size : 11px;border:1px solid #7c7c7c;background-color:#acc1ca;}
+.statustext{font-family :Verdana;font-size : 11px;color:##0066CC;}
+.line{border-bottom : 1px dotted #959595; }
+.text{font-family :Verdana;font-size : 11px;text-align:center;color:#23344d;font-weight:bold;}
+.tbg{font-family :Verdana;font-size : 11px;text-align:center;color:#23344d;font-weight:bold;background-color:#759bae}
+.tbg1{font-family :Verdana;font-size : 11px;text-align:left;color:#23344d;font-weight:normal;background-color:#9fccdd}
+.tbg2{font-family :Verdana;font-size : 11px;text-align:left;color:#197b30;font-weight:normal;background-color:#9fccdd}
+.tbg3{font-family :Verdana;font-size : 11px;text-align:left;color:#ee1c24;font-weight:normal;background-color:#9fccdd}
+.table1px{border: 1px solid #6699cc;border-collapse: collapse;}
+
+.title1 {font-family :Verdana;font-size : 11px;font-weight:bold;color:#000000;text-align:center;background-image : url(../images/title-bg.gif); }
+
+.top-messgaea {font-family :Verdana;font-size : 10px;text-align:left;color:#000000;font-weight:normal;text-align:left;background-color:#7aa3bd}
+.tbg2a{font-family :Verdana;font-size : 10px;text-align:center;color:#197b30;font-weight:normal;background-color:#9fccdd;}
+.tbg1a{font-family :Verdana;font-size : 10px;text-align:center;color:#23344d;font-weight:normal;background-color:#9fccdd}

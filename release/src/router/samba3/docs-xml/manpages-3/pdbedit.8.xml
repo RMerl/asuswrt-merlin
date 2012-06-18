@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="pdbedit.8">
+
+<refmeta>
+	<refentrytitle>pdbedit</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>pdbedit</refname>
+	<refpurpose>manage the SAM database (Database of Samba Users)</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>pdbedit</command>
+		<arg choice="opt">-L</arg>	
+		<arg choice="opt">-v</arg>	
+		<arg choice="opt">-w</arg>	
+		<arg choice="opt">-u username</arg>	
+		<arg choice="opt">-f fullname</arg>	
+		<arg choice="opt">-h homedir</arg>	
+		<arg choice="opt">-D drive</arg>	
+		<arg choice="opt">-S script</arg>
+		<arg choice="opt">-p profile</arg>	
+		<arg choice="opt">-a</arg>	
+		<arg choice="opt">-t, --password-from-stdin</arg>
+		<arg choice="opt">-m</arg>	
+		<arg choice="opt">-r</arg>	
+		<arg choice="opt">-x</arg>	
+		<arg choice="opt">-i passdb-backend</arg>	
+		<arg choice="opt">-e passdb-backend</arg>   
+		<arg choice="opt">-b passdb-backend</arg>
+		<arg choice="opt">-g</arg>
+		<arg choice="opt">-d debuglevel</arg>
+		<arg choice="opt">-s configfile</arg>
+		<arg choice="opt">-P account-policy</arg>
+		<arg choice="opt">-C value</arg>
+		<arg choice="opt">-c account-control</arg>
+		<arg choice="opt">-y</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The pdbedit program is used to manage the users accounts
+	stored in the sam database and can only be run by root.</para>
+
+	<para>The pdbedit tool uses the passdb modular interface and is
+	independent from the kind of users database used (currently there
+	are smbpasswd, ldap, nis+ and tdb based and more can be added
+	without changing the tool).</para>
+
+	<para>There are five main ways to use pdbedit: adding a user account,
+	removing a user account, modifing a user account, listing user
+	accounts, importing users accounts.</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+	<variablelist>
+		<varlistentry>
+		<term>-L</term>
+		<listitem><para>This option lists all the user accounts
+		present in the users database.
+		This option prints a list of user/uid pairs separated by
+		the ':' character.</para>
+		<para>Example: <command>pdbedit -L</command></para>
+		<para><programlisting>
+sorce:500:Simo Sorce
+samba:45:Test User
+</programlisting></para>
+		</listitem>
+		</varlistentry>
+		
+		
+		
+		<varlistentry>
+		<term>-v</term>
+		<listitem><para>This option enables the verbose listing format.
+		It causes pdbedit to list the users in the database, printing
+		out the account fields in a descriptive format.</para>
+
+		<para>Example: <command>pdbedit -L -v</command></para>
+		<para><programlisting>
+---------------
+username:       sorce
+user ID/Group:  500/500
+user RID/GRID:  2000/2001
+Full Name:      Simo Sorce
+Home Directory: \\BERSERKER\sorce
+HomeDir Drive:  H:
+Logon Script:   \\BERSERKER\netlogon\sorce.bat
+Profile Path:   \\BERSERKER\profile
+---------------
+username:       samba
+user ID/Group:  45/45
+user RID/GRID:  1090/1091
+Full Name:      Test User
+Home Directory: \\BERSERKER\samba
+HomeDir Drive:  
+Logon Script:   
+Profile Path:   \\BERSERKER\profile
+</programlisting></para>
+		</listitem>
+		</varlistentry>
+		
+		
+		
+		<varlistentry>
+		<term>-w</term>
+		<listitem><para>This option sets the "smbpasswd" listing format.
+		It will make pdbedit list the users in the database, printing
+		out the account fields in a format compatible with the
+		<filename>smbpasswd</filename> file format. (see the
+		<citerefentry><refentrytitle>smbpasswd</refentrytitle>
+		<manvolnum>5</manvolnum></citerefentry> for details)</para>
+
+		<para>Example: <command>pdbedit -L -w</command></para>
+		<programlisting>
+sorce:500:508818B733CE64BEAAD3B435B51404EE:
+          D2A2418EFC466A8A0F6B1DBB5C3DB80C:
+          [UX         ]:LCT-00000000:
+samba:45:0F2B255F7B67A7A9AAD3B435B51404EE:
+          BC281CE3F53B6A5146629CD4751D3490:
+          [UX         ]:LCT-3BFA1E8D:
+</programlisting>
+		</listitem>
+		</varlistentry>
+		
+		
+		<varlistentry>
+		<term>-u username</term>
+		<listitem><para>This option specifies the username to be
+		used for the operation requested (listing, adding, removing).
+		It is <emphasis>required</emphasis> in add, remove and modify
+		operations and <emphasis>optional</emphasis> in list
+		operations.</para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-f fullname</term>
+		<listitem><para>This option can be used while adding or
+		modifing a user account. It will specify the user's full
+		name. </para>
+
+		<para>Example: <command>-f "Simo Sorce"</command></para>
+		</listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-h homedir</term>
+		<listitem><para>This option can be used while adding or
+		modifing a user account. It will specify the user's home
+		directory network path.</para>
+
+		<para>Example: <command>-h "\\\\BERSERKER\\sorce"</command>
+		</para>
+		</listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-D drive</term>
+		<listitem><para>This option can be used while adding or
+		modifing a user account. It will specify the windows drive
+		letter to be used to map the home directory.</para>
+
+		<para>Example: <command>-D "H:"</command>
+		</para>
+		</listitem>
+		</varlistentry>
+		
+		
+		<varlistentry>
+		<term>-S script</term>
+		<listitem><para>This option can be used while adding or
+		modifing a user account. It will specify the user's logon
+		script path.</para>
+
+		<para>Example: <command>-S "\\\\BERSERKER\\netlogon\\sorce.bat"</command>
+		</para>
+		</listitem>
+		</varlistentry>
+		
+		
+		<varlistentry>
+		<term>-p profile</term>
+		<listitem><para>This option can be used while adding or
+		modifing a user account. It will specify the user's profile
+		directory.</para>
+
+		<para>Example: <command>-p "\\\\BERSERKER\\netlogon"</command>
+		</para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-G SID|rid</term>
+		<listitem><para>
+		This option can be used while adding or modifying a user account. It 
+		will specify the users' new primary group SID (Security Identifier) or 
+		rid. </para>
+
+		<para>Example: <command>-G S-1-5-21-2447931902-1787058256-3961074038-1201</command></para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-U SID|rid</term>
+		<listitem><para>
+		This option can be used while adding or modifying a user account. It 
+		will specify the users' new SID (Security Identifier) or 
+		rid. </para>
+
+		<para>Example: <command>-U S-1-5-21-2447931902-1787058256-3961074038-5004</command></para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-c account-control</term>
+		<listitem><para>This option can be used while adding or modifying a user
+				account. It will specify the users' account control property. Possible flags are listed below.
+	</para>
+
+	<para>
+		<itemizedlist>
+			<listitem><para>N: No password required</para></listitem>
+			<listitem><para>D: Account disabled</para></listitem>
+			<listitem><para>H: Home directory required</para></listitem>
+			<listitem><para>T: Temporary duplicate of other account</para></listitem>
+			<listitem><para>U: Regular user account</para></listitem>
+			<listitem><para>M: MNS logon user account</para></listitem>
+			<listitem><para>W: Workstation Trust Account</para></listitem>
+			<listitem><para>S: Server Trust Account</para></listitem>
+			<listitem><para>L: Automatic Locking</para></listitem>
+			<listitem><para>X: Password does not expire</para></listitem>
+			<listitem><para>I: Domain Trust Account</para></listitem>
+		</itemizedlist>
+	</para>
+
+		<para>Example: <command>-c "[X          ]"</command></para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-a</term>
+		<listitem><para>This option is used to add a user into the
+		database. This command needs a user name specified with
+		the -u switch. When adding a new user, pdbedit will also
+		ask for the password to be used.</para>
+
+		<para>Example: <command>pdbedit -a -u sorce</command>
+<programlisting>new password:
+retype new password
+</programlisting>
+</para>
+
+		<note><para>pdbedit does not call the unix password syncronisation 
+				script if <smbconfoption name="unix password sync"/>
+				has been set. It only updates the data in the Samba 
+				user database. 
+			</para>
+
+			<para>If you wish to add a user and synchronise the password
+				that immediately, use <command>smbpasswd</command>'s <option>-a</option> option.
+			</para>
+		</note>
+		</listitem>
+		</varlistentry>
+		
+		<varlistentry>
+		<term>-t, --password-from-stdin</term>
+		<listitem><para>This option causes pdbedit to read the password
+		from standard input, rather than from /dev/tty (like the
+		<command>passwd(1)</command> program does).  The password has
+		to be submitted twice and terminated by a newline each.</para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-r</term>
+		<listitem><para>This option is used to modify an existing user 
+		in the database. This command needs a user name specified with the -u 
+		switch. Other options can be specified to modify the properties of 
+		the specified user. This flag is kept for backwards compatibility, but 
+		it is no longer necessary to specify it.
+		</para></listitem>
+		</varlistentry>
+			
+		<varlistentry>
+		<term>-m</term>
+		<listitem><para>This option may only be used in conjunction 
+		with the <parameter>-a</parameter> option. It will make
+		pdbedit to add a machine trust account instead of a user
+		account (-u username will provide the machine name).</para>
+
+		<para>Example: <command>pdbedit -a -m -u w2k-wks</command>
+		</para>
+		</listitem>
+		</varlistentry>
+		
+		
+		<varlistentry>
+		<term>-x</term>
+		<listitem><para>This option causes pdbedit to delete an account
+		from the database. It needs a username specified with the
+		-u switch.</para>
+
+		<para>Example: <command>pdbedit -x -u bob</command></para>
+		</listitem>
+		</varlistentry>
+		
+
+		<varlistentry>
+		<term>-i passdb-backend</term>
+		<listitem><para>Use a different passdb backend to retrieve users
+                than the one specified in smb.conf. Can be used to import data into
+                your local user database.</para>
+
+		<para>This option will ease migration from one passdb backend to
+		another.</para>
+
+		<para>Example: <command>pdbedit -i smbpasswd:/etc/smbpasswd.old
+                </command></para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-e passdb-backend</term>
+		<listitem><para>Exports all currently available users to the
+		specified password database backend.</para>
+
+		<para>This option will ease migration from one passdb backend to
+		another and will ease backing up.</para>
+		
+		<para>Example: <command>pdbedit -e smbpasswd:/root/samba-users.backup</command></para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-g</term>
+		<listitem><para>If you specify <parameter>-g</parameter>,
+		then <parameter>-i in-backend -e out-backend</parameter>
+		applies to the group mapping instead of the user database.</para>
+
+		<para>This option will ease migration from one passdb backend to
+		another and will ease backing up.</para>
+		
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-b passdb-backend</term>
+		<listitem><para>Use a different default passdb backend. </para>
+
+		<para>Example: <command>pdbedit -b xml:/root/pdb-backup.xml -l</command></para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-P account-policy</term>
+		<listitem><para>Display an account policy</para>
+		<para>Valid policies are: minimum password age, reset count minutes, disconnect time,
+		user must logon to change password, password history, lockout duration, min password length,
+		maximum password age and bad lockout attempt.</para>
+
+		<para>Example: <command>pdbedit -P "bad lockout attempt"</command></para>
+<para><programlisting>
+account policy value for bad lockout attempt is 0
+</programlisting></para>
+
+		</listitem>
+		</varlistentry>
+
+
+		<varlistentry>
+		<term>-C account-policy-value</term>
+		<listitem><para>Sets an account policy to a specified value. 
+		This option may only be used in conjunction
+		with the <parameter>-P</parameter> option.
+		</para>
+
+		<para>Example: <command>pdbedit -P "bad lockout attempt" -C 3</command></para>
+<para><programlisting>
+account policy value for bad lockout attempt was 0
+account policy value for bad lockout attempt is now 3
+</programlisting></para>
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-y</term>
+		<listitem><para>If you specify <parameter>-y</parameter>,
+		then <parameter>-i in-backend -e out-backend</parameter>
+		applies to the account policies instead of the user database.</para>
+
+		<para>This option will allow to migrate account policies from their default
+		tdb-store into a passdb backend, e.g. an LDAP directory server.</para>
+
+		<para>Example: <command>pdbedit -y -i tdbsam: -e ldapsam:ldap://my.ldap.host</command></para>
+	
+		</listitem>
+		</varlistentry>
+
+		&stdarg.help;
+		&stdarg.server.debug;
+		&popt.common.samba;
+
+	</variablelist>
+</refsect1>
+
+
+<refsect1>
+	<title>NOTES</title>
+	
+	<para>This command may be used only by root.</para>
+</refsect1>
+
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.0 of 
+	the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para><citerefentry><refentrytitle>smbpasswd</refentrytitle>
+	<manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+
+	<para>The pdbedit manpage was written by Simo Sorce and Jelmer Vernooij.</para>
+
+</refsect1>
+
+</refentry>

@@ -1,0 +1,110 @@
+<!doctype linuxdoc system>
+
+<article>
+
+<title>NSTAT, IFSTAT and RTACCT Utilities
+<author>Alexey Kuznetosv, <tt/kuznet@ms2.inr.ac.ru/
+<date>some_negative_number, 20 Sep 2001
+<abstract>
+<tt/nstat/, <tt/ifstat/ and <tt/rtacct/ are simple tools helping
+to monitor kernel snmp counters and network interface statistics.
+</abstract>
+
+<p> These utilities are very similar, so that I describe
+them simultaneously, using name <tt/Xstat/ in the places which apply
+to all of them.
+
+<p>The format of the command is:
+
+<tscreen><verb>
+       Xstat [ OPTIONS ] [ PATTERN [ PATTERN ... ] ]
+</verb></tscreen>
+
+<p>
+<tt/PATTERN/ is shell style pattern, selecting identifier
+of SNMP variables or interfaces to show. Variable is displayed
+if one of patterns matches its name. If no patterns are given,
+<tt/Xstat/ assumes that user wants to see all the variables.  
+
+<p> <tt/OPTIONS/ is list of single letter options, using common unix
+conventions.
+
+<itemize>
+<item><tt/-h/  - show help page
+<item><tt/-?/  - the same, of course
+<item><tt/-v/, <tt/-V/  - print version of <tt/Xstat/ and exit
+<item><tt/-z/ - dump zero counters too. By default they are not shown.
+<item><tt/-a/ - dump absolute values of counters. By default <tt/Xstat/
+                calculates increments since the previous use.
+<item><tt/-s/ - do not update history, so that the next time you will
+                see counters including values accumulated to the moment
+                of this measurement too.
+<item><tt/-n/ - do not display anything, only update history.
+<item><tt/-r/ - reset history.
+<item><tt/-d INTERVAL/ - <tt/Xstat/ is run in daemon mode collecting
+                statistics. <tt/INTERVAL/ is interval between measurements
+                in seconds.
+<item><tt/-t INTERVAL/ - time interval to average rates. Default value
+                is 60 seconds. 
+<item><tt/-e/ - display extended information about errors (<tt/ifstat/ only).
+</itemize>
+
+<p>
+History is just dump saved in file <tt>/tmp/.Xstat.uUID</tt>
+or in file given by environment variables <tt/NSTAT_HISTORY/,
+<tt/IFSTAT_HISTORY/ and <tt/RTACCT_HISTORY/.
+Each time when you use <tt/Xstat/ values there are updated.
+If you use patterns, only the values which you _really_ see
+are updated. If you want to skip an unintersting period,
+use option <tt/-n/, or just output to <tt>/dev/null</tt>.
+
+<p>
+<tt/Xstat/ understands when history is invalidated by system reboot
+or source of information switched between different instances
+of daemonic <tt/Xstat/ and kernel SNMP tables and does not
+use invalid history.
+
+<p> Beware, <tt/Xstat/ will not produce sane output,
+when many processes use it simultaneously. If several processes
+under single user need this utility they should use environment
+variables to put their history in safe places
+or to use it with options <tt/-a -s/.
+
+<p>
+Well, that's all. The utility is very simple, but nevertheless
+very handy.
+
+<p> <bf/Output of XSTAT/
+<p> The first line of output is <tt/#/ followed by identifier
+of source of information, it may be word <tt/kernel/, when <tt/Xstat/
+gets information from kernel or some dotted decimal number followed
+by parameters, when it obtains information from running <tt/Xstat/ daemon.
+
+<p>In the case of <tt/nstat/ the rest of output consists of three columns:
+SNMP MIB identifier,
+its value (or increment since previous measurement) and average
+rate of increase of the counter per second. <tt/ifstat/ outputs
+interface name followed by pairs of counter and rate of its change.
+
+<p> <bf/Daemonic Xstat/
+<p> <tt/Xstat/ may be started as daemon by any user. This makes sense
+to avoid wrapped counters and to obtain reasonable long counters
+for large time. Also <tt/Xstat/ daemon calculates average rates.
+For the first goal sampling interval (option <tt/-d/) may be large enough,
+f.e. for gigabit rates byte counters overflow not more frequently than
+each 40 seconds and you may select interval of 20 seconds.
+From the other hand, when <tt/Xstat/ is used for estimating rates
+interval should be less than averaging period (option <tt/-t/), otherwise
+estimation loses in quality.
+
+Client <tt/Xstat/, before trying to get information from the kernel,
+contacts daemon started by this user, then it tries system wide
+daemon, which is supposed to be started by superuser. And only if
+none of them replied it gets information from kernel.
+
+<p> <bf/Environment/
+<p> <tt/NSTAT_HISTORY/ - name of history file for <tt/nstat/.
+<p> <tt/IFSTAT_HISTORY/ - name of history file for <tt/ifstat/.
+<p> <tt/RTACCT_HISTORY/ - name of history file for <tt/rtacct/.
+
+</article>

@@ -1,0 +1,48 @@
+From 16bcccab9323e4a284de21cb2bdb82cfb157ccd0 Mon Sep 17 00:00:00 2001
+From: Mike Frysinger
+Date: Sat, 05 Jan 2008 17:20:54 +0000
+Subject: Merge r18693 by vapier from trunk:
+
+Jean-Christian de Rivaz writes:
+I actually suspect this code into the file uClibc/libc/sysdeps/linux/common/poll.c:
+	tval.tv_nsec = (timeout % 1000) *1000;  <==== make only usec!
+From milisecond this really needs a * 1000000 to make nanosecond. Without this
+a 1100 milisecond timeout is converted into a 1 seconde and 100 microsecond
+timeout! This can explain the weird result of the test code.
+---
+
+From 79129ed9febdadaa84799df98b2e40b58c9442dc Mon Sep 17 00:00:00 2001
+From: Mike Frysinger
+Date: Sat, 05 Jan 2008 17:50:12 +0000
+Subject: Merge r20318 by jocke from trunk:
+
+Poll with zero timeout
+
+Jean-Christian de Rivaz writes:
+The attached patch solve an issue I faced while using the libdbus-glib
+waiting for a D-Bus message or the end of a glib timer at the same time.
+This specific case of use generate a poll call with a zero timeout. On
+platformes with the glibc a zero timeout poll return immetiately even if
+there is no file descriptor event. But on platformes with uClibc a zero
+timeout poll block until a file descriptor event occurs.
+
+diff --git a/libc/sysdeps/linux/common/poll.c b/libc/sysdeps/linux/common/poll.c
+index a8366cd..4fc5a32 100644
+--- a/libc/sysdeps/linux/common/poll.c
++++ b/libc/sysdeps/linux/common/poll.c
+@@ -36,8 +36,12 @@ int __libc_poll(struct pollfd *fds, nfds_t nfds, int timeout)
+ 	struct timespec *ts = NULL, tval;
+ 	if (timeout > 0) {
+ 		tval.tv_sec = timeout / 1000;
+-		tval.tv_nsec = (timeout % 1000) *1000;
++		tval.tv_nsec = (timeout % 1000) * 1000000;
+ 		ts = &tval;
++	} else if (timeout == 0) {
++		tval.tv_sec = 0;
++		tval.tv_nsec = 0;
++		ts = &tval;
+ 	}
+ 	return ppoll(fds, nfds, ts, NULL);
+ }
+--
+cgit v0.8.2.1

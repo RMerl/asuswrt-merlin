@@ -1,0 +1,206 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Accounting</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="Adding Authentication Support"
+    href="x9556.htm">
+    <link rel="NEXT" title="Accounting Information" href=
+    "x9682.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x9556.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x9682.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="ACCOUNTINGREF"></a>Chapter 18. Accounting</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>18.1. <a href=
+          "accountingref.htm#ACCOUNTINGSERVER">Accounting Printcap
+          Options</a></dt>
+
+          <dt>18.2. <a href="x9682.htm">Accounting
+          Information</a></dt>
+
+          <dt>18.3. <a href="x9696.htm">Accounting File</a></dt>
+
+          <dt>18.4. <a href="x9736.htm">Authorization and
+          Quotas</a></dt>
+
+          <dt>18.5. <a href="x9761.htm">Accessing Printer Hardware
+          Pagecounters</a></dt>
+
+          <dt>18.6. <a href="x9772.htm">Reliable
+          Accounting</a></dt>
+
+          <dt>18.7. <a href="x9787.htm"><b class=
+          "APPLICATION">LPRng</b> accounting.pl Utility</a></dt>
+        </dl>
+      </div>
+
+      <p>In Academic institutions, avoiding printing accounting has
+      been regarded as a challenge, an ongoing game of fat cat and
+      poor starving mouse, between the brutal and corrupt
+      Administration and the poor, downtrodden, over-charged
+      student. We will disregard the fact that if most students put
+      as much effort into their studies as in finding ways to avoid
+      accounting procedures then they would be Rhodes Scholar
+      material, but I digress...</p>
+
+      <p>There are two approaches to printing accounting: use
+      software determine the number of pages that should be printed
+      or use a hardware pagecounter facility on the printer to
+      accurately determine the number of pages used. While the
+      software method works well in a relatively error and security
+      compromise free environment and where print jobs do not jam,
+      for accurate account a hardware level pagecounter or some
+      other method must be used. LPRng provides facilities to use
+      either method to determine page counts.</p>
+
+      <p>There are also two methods available to store the actual
+      accounting information: the simple <span class="emphasis"><i
+      class="EMPHASIS">save to file</i></span> method and the more
+      complex <span class="emphasis"><i class="EMPHASIS">save to
+      program</i></span> method. LPRng provides support for both
+      methods.</p>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="ACCOUNTINGSERVER">18.1.
+        Accounting Printcap Options</a></h1>
+
+        <p>The accounting facilities are controlled and enabled by
+        the following entries in the printcap file.</p>
+
+        <div class="INFORMALTABLE">
+          <a name="AEN9651"></a>
+
+          <table border="1" frame="border" rules="all" class=
+          "CALSTABLE">
+            <col>
+            <col>
+            <col>
+
+            <thead>
+              <tr>
+                <th>Tag</th>
+
+                <th>Default Value</th>
+
+                <th>Purpose</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>af</td>
+
+                <td>NULL</td>
+
+                <td>accounting file name</td>
+              </tr>
+
+              <tr>
+                <td>as</td>
+
+                <td>"jobstart $H $n $P $k $b $t"</td>
+
+                <td>accounting info for job start</td>
+              </tr>
+
+              <tr>
+                <td>ae</td>
+
+                <td>"jobend $H $n $P $k $b $t"</td>
+
+                <td>accounting info for job end</td>
+              </tr>
+
+              <tr>
+                <td>achk</td>
+
+                <td>FALSE</td>
+
+                <td>&nbsp;</td>
+              </tr>
+
+              <tr>
+                <td>la</td>
+
+                <td>TRUE</td>
+
+                <td>do accounting for 'local' printer</td>
+              </tr>
+
+              <tr>
+                <td>ar</td>
+
+                <td>FALSE</td>
+
+                <td>do accounting for 'remote' transfers</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x9556.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x9682.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Adding
+          Authentication Support</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Accounting
+          Information</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

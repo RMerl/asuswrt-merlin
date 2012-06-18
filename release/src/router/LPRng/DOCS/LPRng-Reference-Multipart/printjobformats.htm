@@ -1,0 +1,216 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Print Job Formats</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Filters " href="filters.htm">
+    <link rel="PREVIOUS" title="Filter Exit Codes " href=
+    "exitcodes.htm">
+    <link rel="NEXT" title="OF Filter" href="ofdetails.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "exitcodes.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          16. Filters</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "ofdetails.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="PRINTJOBFORMATS">16.3. Print Job
+      Formats</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">:if</var>, <var class=
+          "LITERAL">cf</var>, <var class="LITERAL">df</var>, <var
+          class="LITERAL">gf</var>, <var class="LITERAL">nf</var>,
+          <var class="LITERAL">:of</var>, <var class=
+          "LITERAL">rf</var>, <var class="LITERAL">tf</var>, <var
+          class="LITERAL">vf</var>, <var class=
+          "LITERAL">X</var><var class="LITERAL">f</var>, <span
+          class="emphasis"><i class="EMPHASIS">Filter
+          programs</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p><b class="APPLICATION">LPRng</b> has inherited a set of
+      so-called `<span class="emphasis"><i class="EMPHASIS">print
+      formats</i></span>' from its BSD ancestor. The format was
+      used to specify the type of file that was being printed. The
+      <b class="APPLICATION">lpd</b> server used the print format
+      to select the filter for processing the file. The de<span
+      class="emphasis"><i class="EMPHASIS">f</i></span>ault format
+      is <var class="LITERAL">f</var>.</p>
+
+      <p>The user can specify the format (i.e., the file type) by
+      giving the appropriate option to <b class=
+      "APPLICATION">lpr</b>:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">-b</var> or <var class=
+          "LITERAL">-l</var>: Binary (literal) file. No processing
+          should be done. The <var class="LITERAL">l</var> format
+          is recorded as the file format.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">-c</var>: cifplot(1) output.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">-d</var>: TeX DVI file.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">-g</var>: Output from the
+          plot(3X) routines.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">-n</var> or <var class=
+          "LITERAL">-t</var>: (di)troff output.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">-p</var>: Text file that should
+          be pre-processed by the <var class="LITERAL">pr</var>
+          command, and then by the standard text filter.</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">-v</var>: Benson Varian raster
+          image.</p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>Alternatively, one can also use <var class=
+      "LITERAL">-Fx</var>, where <var class="LITERAL">x</var> is
+      the format specifier. (E.g., <var class="LITERAL">-Fc</var>
+      instead of <var class="LITERAL">-c</var>.) This last form
+      also allows you to use other (non-standard) format
+      specifiers.</p>
+
+      <p>The filter for format <var class="LITERAL">X</var> is the
+      value for the <var class="LITERAL">Xf</var> printcap option,
+      with some minor exceptions. The following <var class=
+      "LITERAL">Xf</var> options have a pre-defined meaning.</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">:if</var> The <var class=
+          "LITERAL">f</var> format filter, i.e. - for the default
+          <var class="LITERAL">f</var> format. All print jobs are
+          passed through this one, unless another format is
+          selected.</p>
+        </li>
+
+        <li>
+          <p><a name="CF"></a> <var class="LITERAL">cf</var>
+          Cifplot data filter (for <var class="LITERAL">-c</var>
+          format).</p>
+        </li>
+
+        <li>
+          <p><a name="DF"></a> <var class="LITERAL">df</var> Filter
+          for DVI files (<var class="LITERAL">-d</var>).</p>
+        </li>
+
+        <li>
+          <p><a name="GF"></a> <var class="LITERAL">gf</var> Graph
+          data filter (<var class="LITERAL">-g</var>).</p>
+        </li>
+
+        <li>
+          <p><a name="NF"></a> <var class="LITERAL">nf</var>
+          Ditroff data filter (<var class="LITERAL">-n</var>).</p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">:of</var> This filter is used for
+          processing the (optional) banner at the start and/or end
+          of the print job, and also for the interjob separators.
+          See <a href="ofdetails.htm">OF Filter</a> for
+          details.</p>
+        </li>
+
+        <li>
+          <p><a name="RF"></a> <var class="LITERAL">rf</var> Filter
+          for Fortran style files (<var class=
+          "LITERAL">-r</var>).</p>
+        </li>
+
+        <li>
+          <p><a name="TF"></a> <var class="LITERAL">tf</var> Troff
+          filter (<var class="LITERAL">-t</var>).</p>
+        </li>
+
+        <li>
+          <p><a name="VF"></a> <var class="LITERAL">vf</var>
+          (Versatek) raster image filter (<var class=
+          "LITERAL">-v</var>).</p>
+        </li>
+      </ul>
+      &#13;<br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "exitcodes.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "ofdetails.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Filter Exit
+          Codes</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "filters.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">OF Filter</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

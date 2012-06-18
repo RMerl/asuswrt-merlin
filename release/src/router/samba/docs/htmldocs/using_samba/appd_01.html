@@ -1,0 +1,1907 @@
+<HTML>
+<HEAD>
+<TITLE>Appendix D</title>
+</head>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appc_01.html" TITLE="C. Samba Configuration Option Quick Reference">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: C. Samba Configuration Option Quick Reference" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+Appendix D</font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appe_01.html" TITLE="E. Downloading Samba with CVS">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: E. Downloading Samba with CVS" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+
+<blockquote>
+<div class="samplechapter">
+<h1>Appendix D<br>
+Summary of Samba Daemons and Commands</h1>
+
+<p>
+This appendix is a reference listing of command-line options and other information to help you use the executables that come with Samba distribution.
+
+<DIV>
+<H2 CLASS="FM-HeadA">Samba Distribution Programs</h2>
+<P CLASS="Body">The following sections provide information about the command-line parameters for Samba programs.</p>
+<DIV>
+<H3 CLASS="HeadB">smbd</h3>
+<P CLASS="Body">The <EM CLASS="Emphasis">smbd</em>
+ program provides Samba's file and printer services, using one TCP/IP stream and one daemon per client. It is controlled from the default configuration file, <EM CLASS="Replaceable">samba_dir</em><EM CLASS="Emphasis">/lib/smb.conf</em>, and can be overridden by command-line options.</p>
+<P CLASS="Body">The configuration file is automatically re-evaluated every minute. If it has changed, most new options are immediately effective. You can force Samba to immediately reload the configuration file if you send a SIGHUP to <EM CLASS="Emphasis">smbd</em>
+. Reloading the configuration file, however, will not affect any clients that are already connected. To escape this &quot;grandfather&quot; configuration, a client would need to disconnect and reconnect, or the server itself would have to be restarted, forcing all clients to reconnect.</p>
+<DIV>
+<H4 CLASS="HeadC">Other signals</h4>
+<P CLASS="Body">To shut down a <EM CLASS="Emphasis">smbd</em>
+ process, send it the termination signal SIGTERM (-15) which allows it to die gracefully instead of a SIGKILL (-9). To increment the debug logging level of <EM CLASS="Emphasis">smbd</em>
+ at runtime, send the program a SIGUSR1 signal. To decrement it at runtime, send the program a SIGUSR2 signal. </p>
+</div>
+<DIV>
+<H4 CLASS="HeadC">Command-line options</h4>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-D</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">The <EM CLASS="Emphasis">smbd</em>
+ program is run as a daemon. This is the recommended way to use <EM CLASS="Emphasis">smbd</em> (it is also the default action). In addition, <EM CLASS="Emphasis">smbd</em> can also be run from <EM CLASS="Emphasis">inetd</em>.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-d</em>
+ <EM CLASS="Replaceable">debuglevel</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the debug (sometimes called logging) level. The level can range from 0 all the way to 10. Specifying the value on the command line overrides the value specified in the <EM CLASS="Filename">smb.conf</em>
+ file. Debug level 0 logs only the most important messages; level 1 is normal; levels 3 and above are primarily for debugging and slow <EM CLASS="Emphasis">smbd</em>
+ considerably.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-h</em>
+ </h4>
+<UL>
+<LI CLASS="ListVariable">Prints command-line usage information for the <EM CLASS="Filename">smbd</em>
+ program.</li>
+</ul>
+<DIV>
+<H4 CLASS="HeadC">Testing/debugging options</h4>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-a</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">If this is specified, each new connection to the Samba server will append all logging messages to the log file. This option is the opposite of <EM CLASS="Literal">-o</em>, and is the default.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-i</em>
+ <EM CLASS="Replaceable">scope</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">&nbsp;</li>
+<LI CLASS="ListVariable">This sets a NetBIOS scope identifier. Only machines with the same identifier will communicate with the server. The scope identifier was a predecessor to workgroups, and this option is included only for backwards compatibility.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-l</em>
+ <EM CLASS="Replaceable">log_file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Send the log messages to somewhere other than the location compiled in or specified in the <EM CLASS="Filename">smb.conf</em> file. The default is often <EM CLASS="Filename">/usr/local/samba/var/log.smb</em>, <EM CLASS="Filename">/usr/samba/var/log.smb,</em> or <EM CLASS="Filename">/var/log/log.smb</em>. The first two are strongly discouraged on Linux, where <EM CLASS="Filename">/usr</em>
+ may be a read-only filesystem. </li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-O</em>
+ <EM CLASS="Replaceable">socket_options</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This sets the TCP/IP socket options, using the same parameters as the <EM CLASS="Literal">socket</em>
+ <EM CLASS="Literal">options</em>
+ configuration option. It is often used for performance tuning and testing.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-o</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This option is the opposite of <EM CLASS="Literal">-a</em>. It causes log files to be overwritten when opened. Using this option saves hunting for the right log entries if you are performing a series of tests and inspecting the log file each time.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-P</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This option forces <EM CLASS="Filename">smbd</em>
+ not to send any network data out. This option is typically used only by Samba developers.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-P</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This option forces <EM CLASS="Filename">smbd</em>
+ not to send any network data out. This option is typically used only by Samba developers.  </li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-p</em>
+ <EM CLASS="Replaceable">port_number</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This sets the TCP/IP port number that the server will accept requests from. Currently, all Microsoft clients send only to the default port: 139.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-s</em>
+ <EM CLASS="Replaceable">configuration_file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Specifies the location of the Samba configuration file. Although the file defaults to <EM CLASS="Filename">/usr/local/samba/lib/smb.conf</em>, you can override it here on the command line, typically for debugging.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H3 CLASS="HeadB">nmbd</h3>
+<P CLASS="Body">The <EM CLASS="Emphasis">nmbd</em>
+ program is Samba's NetBIOS name and browsing daemon. It replies to broadcast NetBIOS over TCP/IP (NBT) name-service requests from SMB clients and optionally to Microsoft's Windows Internet Name Service (WINS) requests. Both of these are versions of the name-to-address lookup required by SMB clients. The broadcast version uses UDP/IP broadcast on the local subnet only, while WINS uses TCP/IP, which may be routed. If running as a WINS server, <EM CLASS="Emphasis">nmbd</em>
+ keeps a current name and address database in the file <EM CLASS="Filename">wins.dat</em> in the <EM CLASS="Literal">samba_dir</em><EM CLASS="Filename">/var/locks</em> directory.</p>
+<P CLASS="Body">An active <EM CLASS="Emphasis">nmbd</em>
+ program can also respond to browsing protocol requests used by the Windows Network Neighborhood. Browsing is a combined advertising, service announcement, and active directory protocol. This protocol provides a dynamic directory of servers and the disks and printers that the servers are providing. As with WINS, this was initially done by making UDP/IP broadcasts on the local subnet. Now, with the concept of a local master browser, it is done by making TCP/IP connections to a server. If <EM CLASS="Emphasis">nmbd</em>
+ is acting as a local master browser, it stores the browsing database in the file <EM CLASS="Filename">browse.dat</em> in the <EM CLASS="Literal">samba_dir</em><EM CLASS="Filename">/var/locks</em> directory.</p>
+<DIV>
+<H4 CLASS="HeadC">Signals</h4>
+<P CLASS="Body">Like <EM CLASS="Emphasis">smbd</em>, the <EM CLASS="Emphasis">nmbd</em> program responds to several Unix signals. Sending <EM CLASS="Emphasis">nmbd</em>
+ a SIGHUP signal will cause it to dump the names it knows about to the file <EM CLASS="Filename">namelist.debug</em>
+ in the <EM CLASS="Literal">samba_dir</em>
+/<EM CLASS="Emphasis">locks</em>
+ directory and its browsing database to the <EM CLASS="Filename">browse.dat </em>
+file in the same directory. To shut down a <EM CLASS="Emphasis">nmbd</em>
+ process send it a SIGTERM (-15) signal instead of a SIGKILL (-9) to allow it to die gracefully. You can increment the debug logging level of <EM CLASS="Emphasis">nmbd</em>
+ by sending it a SIGUSR1 signal; you can decrement it by sending a SIGUSR2 signal.</p>
+</div>
+<DIV>
+<H4 CLASS="HeadC">Command-line options</h4>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-D</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Instructs the <EM CLASS="Filename">nmbd</em>
+ program to run as a daemon. This is the recommended way to use <EM CLASS="Filename">nmbd</em>. In addition, <EM CLASS="Filename">nmbd</em> can also be run from <EM CLASS="FirstTerm">inetd</em>.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-d</em>
+ <EM CLASS="Replaceable">debuglevel</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the debug (sometimes called logging) level. The level can range from 0, all the way to 10. Specifying the value on the command line overrides the value specified in the <EM CLASS="Filename">smb.conf</em>
+ file. Debug level 0 logs only the most important messages; level 1 is normal; level 3 and above are primarily for debugging, and slow <EM CLASS="Emphasis">nmbd</em>
+ considerably.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-h</em>
+ </h4>
+<UL>
+<LI CLASS="ListVariable">Prints command-line usage information for the <EM CLASS="Filename">nmbd</em> program (also <EM CLASS="Literal">-?</em>).</li>
+</ul>
+<DIV>
+<H4 CLASS="HeadC">Testing/debugging options</h4>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-a</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">If this is specified, each new connection to the Samba server will append all logging messages to the log file. This option is the opposite of <EM CLASS="Literal">-o</em>, and is the default.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-H</em>
+ <EM CLASS="Replaceable">hosts_  file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This option loads a standard <EM CLASS="Emphasis">hosts</em>
+ file for name resolution. </li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-i</em>
+ <EM CLASS="Replaceable">scope</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This sets a NetBIOS scope identifier. Only machines with the same identifier will communicate with the server. The scope identifier was a predecessor to workgroups, and this option is included only for backward compatibility.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-l</em>
+ <EM CLASS="Replaceable">log_file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sends the log messages to somewhere other than the location compiled-in or specified in the <EM CLASS="Filename">smb.conf</em> file. The default is often <EM CLASS="Filename">/usr/local/samba/var/log.nmb</em>, <EM CLASS="Filename">/usr/samba/var/log.nmb,</em> or <EM CLASS="Filename">/var/log/log.nmb</em>. The first two are strongly discouraged on Linux, where <EM CLASS="Filename">/usr</em>
+ may be a read-only filesystem. </li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-n</em>
+ <EM CLASS="Replaceable">NetBIOS_name</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This option allows you to override the NetBIOS name by which the daemon will advertise itself. Specifying the option on the command line overrides the <EM CLASS="Literal">netbios</em>
+ <EM CLASS="Literal">name</em>
+ option in the Samba configuration file.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-O</em>
+ <EM CLASS="Replaceable">socket_options</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This sets the TCP/IP socket options, using the same parameters as the <EM CLASS="Literal">socket</em>
+ <EM CLASS="Literal">options</em>
+ configuration option. It is often used for performance tuning and testing.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-o</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This option is the opposite of <EM CLASS="Literal">-a</em>
+. It causes log files to be overwritten when opened. Using this option saves hunting for the right log entries if you are performing a series of tests and inspecting the log file each time.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-p</em>
+ <EM CLASS="Replaceable">port_number</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This sets the UDP/IP port number from which the server will accept requests. Currently, all Microsoft clients send only to the default port: 137.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-s</em>
+ <EM CLASS="Replaceable">configuration_file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Specifies the location of the Samba configuration file. Although the file defaults to <EM CLASS="Filename">/usr/local/samba/lib/smb.conf</em>, you can override it here on the command line, typically for debugging.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-v</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This option prints the current version of Samba.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H3 CLASS="HeadB">Samba Startup File </h3>
+<P CLASS="Body">Samba is normally started by running it from your Unix system's <EM CLASS="Filename">rc</em>
+ files at boot time. For systems with a System V-like set of <EM CLASS="Filename">/etc/rcN.d</em>
+ directories, this can be done by placing a suitably named script in the <EM CLASS="Filename">/rc</em>
+ directory. Usually, the script  starting Samba is called <EM CLASS="Emphasis">S91samba</em>
+, while the script stopping or &quot;killing&quot; Samba is called <EM CLASS="Emphasis">K91samba. </em>
+On Linux, the usual subdirectory for the scripts is <EM CLASS="Filename">/etc/rc2.d.</em>
+ On Solaris, the directory is <EM CLASS="Filename">/etc/rc3.d</em>
+. For machines with <EM CLASS="Filename">/etc/rc.local</em>
+ files, you would normally add the following lines to that file:</p>
+<P CLASS="Code">/usr/local/samba/bin/smbd -D</p>
+<P CLASS="Code">/usr/local/samba/bin/nmbd -D </p>
+<P CLASS="Body">The following example script supports two extra commands, <EM CLASS="Literal">status</em>
+ and <EM CLASS="Literal">restart</em>, in addition to the normal <EM CLASS="Literal">start</em>
+ and <EM CLASS="Literal">stop</em>
+ for System V machines:</p>
+
+<pre>
+#!/bin/sh
+#
+# /etc/rc2.d./S91Samba  --manage the SMB server in a System V manner
+#
+OPTS=&quot;-D&quot;
+#DEBUG=-d3
+PS=&quot;ps  ax&quot;
+SAMBA_DIR=/usr/local/samba
+case &quot;$1&quot; in
+'start')
+	echo &quot;samba &quot;
+	$SAMBA_DIR/bin/smbd $OPTS $DEBUG
+	$SAMBA_DIR/bin/nmbd $OPTS $DEBUG
+	;;
+'stop')
+	echo &quot;Stopping samba&quot;
+	$PS | awk '/usr.local.samba.bin/ { print $1}' |&#92;
+	xargs kill
+	;;
+'status')
+	x=`$PS | grep -v grep | grep '$SAMBA_DIR/bin'`
+	if [ ! &quot;$x&quot; ]; then
+		echo &quot;No samba processes running&quot;
+	else
+		echo &quot;  PID TT STAT  TIME COMMAND&quot;
+		echo &quot;$x&quot;
+	fi
+	;;
+'restart')
+	/etc/rc2.d/S91samba stop
+	/etc/rc2.d/S91samba start
+	/etc/rc2.d/S91samba status
+	;;
+*)
+	echo &quot;$0: Usage error -- you must say $0 start, stop, status or restart.&quot;
+	;;
+esac
+exit
+</pre>
+<P CLASS="Body">You'll need to set the actual paths and <EM CLASS="Literal">ps</em>
+ options to suit the machine you're using. In addition, you might want to add additional commands to tell Samba to reload its <EM CLASS="Filename">smb.conf</em>
+ file or dump its <EM CLASS="Emphasis">nmbd</em>
+ tables, depending on your actual needs. </p>
+</div>
+<DIV>
+<H3 CLASS="HeadB">smbsh</h3>
+<P CLASS="Body">The <EM CLASS="Emphasis">smbsh</em>
+ program lets you use a remote Windows share on your Samba server as if the share was a regular Unix directory. When it's run, it provides an extra directory tree under <EM CLASS="Filename">/smb</em>. Subdirectories of <EM CLASS="Filename">/smb</em>
+ are servers, and subdirectories of the servers are their individual disk and printer shares. Commands run by <EM CLASS="Emphasis">smbsh</em>
+ treat the <EM CLASS="Filename">/smb</em>
+ filesystem as if it were local to Unix. This means that you don't need <EM CLASS="Emphasis">smbmount</em>
+ in your kernel to mount Windows filesystems the way you mount with NFS filesystems. However, you do need to configure Samba with the <EM CLASS="Literal">--with-smbwrappers</em>
+ option to enable <EM CLASS="Filename">smbsh</em>.</p>
+<DIV>
+<H4 CLASS="HeadC">Options</h4>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-d</em>
+ debuglevel</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the debug (sometimes called logging) level. The level can range from 0, the default, all the way to 10. Debug level 0 logs only the most important messages; level 1 is normal; level 3 and above are primarily for debugging, and slow <EM CLASS="Emphasis">smbsh</em>
+ considerably.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-l</em>
+ <EM CLASS="Replaceable">logfile</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the name of the logfile to use.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-P</em>
+ <EM CLASS="Replaceable">prefix</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the root directory to mount the SMB filesystem. The default is <EM CLASS="Filename">/smb</em>.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-R</em>
+ <EM CLASS="Replaceable">resolve order</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the resolve order of the name servers. This option is similar to the <EM CLASS="Literal">resolve order</em>
+ configuration option, and can take any of the four parameters, <EM CLASS="Literal">lmhosts</em>, <EM CLASS="Literal">host</em>, <EM CLASS="Literal">wins</em>, and <EM CLASS="Literal">bcast</em>, in any order.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-U</em>
+ <EM CLASS="Replaceable">user</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Supports <EM CLASS="Replaceable">user%password.</em>
+</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-W</em>
+ <EM CLASS="Replaceable">workgroup</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the NetBIOS workgroup to which the client will connect.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H3 CLASS="HeadB">smbclient</h3>
+<P CLASS="Body">The <EM CLASS="Emphasis">smbclient</em>
+ program is the maid-of-all-work of the Samba suite. Initially intended as a testing tool, it has become a full command-line Unix client, with an FTP-like interactive client. Some of its options are still used for testing and tuning, and it makes a simple tool for ensuring that Samba is running on a server.</p>
+<P CLASS="Body">It's convenient to look at <EM CLASS="Emphasis">smbclient</em>
+ as a suite of programs:</p>
+<UL>
+<LI CLASS="ListBullet">FTP-like interactive file transfer program</li>
+<LI CLASS="ListBullet">Interactive printing program</li>
+<LI CLASS="ListBullet">Interactive tar program </li>
+<LI CLASS="ListBullet">Command-line message program</li>
+<LI CLASS="ListBullet">Command-line <EM CLASS="Emphasis">tar</em>
+ program (but see <EM CLASS="Emphasis">smbtar</em>
+ later)</li>
+<LI CLASS="ListBullet">&quot;What services do you have&quot; query program</li>
+<LI CLASS="ListBullet">Command-line debugging program</li>
+</ul>
+<DIV>
+<H4 CLASS="HeadC">General command-line options</h4>
+<P CLASS="Body">The program has the usual set of <EM CLASS="Emphasis">smbd</em>
+-like options, which apply to all the interactive and command-line use. The syntax is:</p>
+<P CLASS="Code">smbclient //<EM CLASS="Replaceable">server_name</em>
+/<EM CLASS="Replaceable">share_name</em>
+ [<EM CLASS="Replaceable">password</em>
+] [-<EM CLASS="Replaceable">options</em>
+]</p>
+<P CLASS="Body">Here is an explanation of each of the command-line options:</p>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-d</em>
+ <EM CLASS="Replaceable">debug_level</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the debug (logging) level, from 0 to 10, with <EM CLASS="Literal">A</em>
+ for all. Overrides the value in <EM CLASS="Filename">smb.conf</em>. Debug level 0 logs only the most important messages; level 1 is normal; debug level 3 and above are for debugging, and slow <EM CLASS="Emphasis">smbclient</em>
+ considerably.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-h</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Prints the command-line help information (usage) for smbclient.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-n</em>
+ <EM CLASS="Replaceable">NetBIOS_name</em>
+</h4>
+<P CLASS="ListSimple">Allows you to override the NetBIOS name by which the program will advertise itself. </p>
+<DIV>
+<H4 CLASS="HeadC">Smbclient operations</h4>
+<P CLASS="Body">Running <EM CLASS="Literal">smbclient</em><EM CLASS="Literal">//</em><EM CLASS="Replaceable">server_name</em><EM CLASS="Literal">/</em><EM CLASS="Replaceable">share</em>
+ will cause it to prompt you for a username and password. If the login is successful, it will connect to the share and give you a prompt much like an FTP prompt (the backslash in the prompt will be replaced by the current directory within the share as you move around the filesystem):</p>
+<P CLASS="Code">smb:&#92;&gt;</p>
+<P CLASS="Body">From this command line, you can use several FTP-like commands, as listed below. Arguments in square brackets are optional. </p>
+<TABLE>
+<CAPTION>
+<H4 CLASS="TableLabel"><A NAME="89417"></a>&nbsp;</h4>
+<H4 CLASS="TableTitle">smbclient Commands </h4>
+</caption>
+<TR>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">Command</p>
+</th>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">Description</p>
+</th>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">?</em>
+ <EM CLASS="Replaceable">command</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Provides list of commands or help on specified command.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">help</em>
+ [<EM CLASS="Replaceable">command</em>]</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Provides list of commands or help on specified command.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">!</em>
+ [<EM CLASS="Replaceable">command</em>]</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">If a command is specified, it will be run in a local shell. If not, you will be placed into a local shell on the client.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">dir</em>
+ [<EM CLASS="Replaceable">filename</em>]</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Displays any files matching <EM CLASS="Replaceable">filename</em>
+ in the current directory on the server, or all files if <EM CLASS="Replaceable">filename</em>
+ is omitted.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">ls</em>
+ [<EM CLASS="Replaceable">filename</em>]</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Displays any files matching <EM CLASS="Replaceable">filename</em>
+ in the current directory on the server, or all files if <EM CLASS="Replaceable">filename</em>
+ is omitted.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">cd</em>
+ [<EM CLASS="Replaceable">directory</em>]</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">If <EM CLASS="Replaceable">directory</em>
+ is specified, changes to the specified directory on the remote server. If not, reports the current directory on the remote machine.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">lcd</em>
+ [<EM CLASS="Replaceable">directory</em>]</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">If <EM CLASS="Replaceable">directory</em>
+ is specified, the current directory on the local machine will be changed. If not, the name of the current directory on the local machine will be reported.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">get</em>
+ <EM CLASS="Emphasis">remotefile </em>
+[<EM CLASS="Replaceable">localfile</em>]</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Copies the file <EM CLASS="Replaceable">remotefile</em> to the local machine. If a <EM CLASS="Replaceable">localfile</em>
+ is specified, uses that name to copy the file to. Treats the file as binary; does <EM CLASS="Emphasis">not</em>
+ do LF to CR/LF conversions.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">put</em>
+ <EM CLASS="Emphasis">localfile </em>
+[<EM CLASS="Replaceable">remotefile</em>]</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Copies <EM CLASS="Replaceable">localfile</em>
+ to the remote machine. If a <EM CLASS="Replaceable">remotefile</em>
+ is specified, uses that as the name to copy to on the remote server. Treats the file as binary; does <EM CLASS="Emphasis">not</em>
+ do LF to CR/LF conversions.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">mget</em>
+ <EM CLASS="Replaceable">pattern</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Gets all files matching <EM CLASS="Replaceable">pattern</em>
+ from the remote machine.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">mput</em>
+<EM CLASS="Replaceable"> pattern</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Places all local files matching <EM CLASS="Replaceable">pattern</em>
+ on the remote machine.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">prompt</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Toggles interactive prompting on and off for <EM CLASS="Literal">mget</em> and <EM CLASS="Literal">mput</em>.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">lowercase ON </em>
+ <br>
+
+(or<EM CLASS="Literal"> OFF</em>)</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">If lowercase is on, <EM CLASS="Emphasis">smbclient</em>
+ will convert filenames to lowercase during an <EM CLASS="Literal">mget</em>
+ or <EM CLASS="Literal">get</em>
+ (but not a <EM CLASS="Literal">mput</em> or <EM CLASS="Literal">put</em>).</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">del</em>
+ <EM CLASS="Replaceable">filename</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Delete a file on the remote machine.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">md</em>
+ <EM CLASS="Replaceable">directory</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Create a directory on the remote machine.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">mkdir</em>
+ <EM CLASS="Replaceable">directory</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Create a directory on the remote machine.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">rd</em>
+ <EM CLASS="Replaceable">directory</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Remove the specified directory on the remote machine.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">rmdir</em>
+ <EM CLASS="Replaceable">directory</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Remove the specified directory on the remote machine.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">setmode</em>
+ <EM CLASS="Replaceable">filename</em>
+ <EM CLASS="Literal">[+|-]rsha</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Set DOS filesystem attribute bits, using Unix-like modes. <EM CLASS="Literal">r</em>
+ is read-only, <EM CLASS="Literal">s</em>
+ is system, <EM CLASS="Literal">h</em>
+ is hidden, and <EM CLASS="Literal">a</em>
+ is archive.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">exit</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Exits <EM CLASS="Emphasis">smbclient</em>.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">quit</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Exits <EM CLASS="Emphasis">smbclient</em>.</p>
+</td>
+</tr>
+</table>
+<P CLASS="Body">There are also mask and recursive commands for large copies; see the <EM CLASS="Filename">smbclient</em>
+ manual page for details on how to use these. With the exception of mask, recursive, and the lack of an ASCII transfer mode, <EM CLASS="Emphasis">smbclient</em>
+ works exactly the same as FTP. Note that because it does binary transfers, Windows files copied to Unix will have lines ending in carriage-return and linefeed (<EM CLASS="Literal">&#92;r&#92;n</em>), not Unix's linefeed (<EM CLASS="Literal">&#92;n</em>).</p>
+</div>
+<DIV>
+<H4 CLASS="HeadC">Printing commands</h4>
+<P CLASS="Body">The <EM CLASS="Emphasis">smbclient</em>
+ program can also be used for access to a printer by connecting to a print share. Once connected, the commands shown below can be used to print. </p>
+<TABLE>
+<CAPTION>
+<H4 CLASS="TableLabel"><A NAME="39300"></a>&nbsp;</h4>
+<H4 CLASS="TableTitle">smbclient Printing Commands </h4>
+</caption>
+<TR>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">Command</p>
+</th>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">Description</p>
+</th>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">print</em>
+<EM CLASS="Replaceable"> filename</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Prints the file by copying it from the local machine to the remote one and then submitting it as a print job there.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">printmode</em>
+ <EM CLASS="Replaceable">text </em>
+|<EM CLASS="Replaceable"> graphics</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Instructs the server that the following files will be plain text (ASCII) or the binary graphics format that the printer requires. It's up to the user to ensure that the file is indeed the right kind.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">queue</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Displays the queue for the print share you're connected to, showing job ID, name, size, and status.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<DIV>
+<H4 CLASS="SidebarBody">Finally, to print from the <EM CLASS="Emphasis">smbclient</em>, use the <EM CLASS="Literal">-c</em>
+ option:</h4>
+<P CLASS="Code">cat <EM CLASS="Replaceable">printfile</em>
+ | smbclient //<EM CLASS="Replaceable">server</em>
+/<EM CLASS="Replaceable">printer_name</em>
+  -c &quot;print -&quot;</p>
+<DIV>
+<H4 CLASS="HeadC">Tar commands</h4>
+<P CLASS="Body"><EM CLASS="Emphasis">smbclient</em>
+ can tar up files from a file share. This is normally done from the command line using the <EM CLASS="Emphasis">smbtar</em>
+ command, but the commands shown below are also available interactively. </p>
+<TABLE>
+<CAPTION>
+<H4 CLASS="TableLabel"><A NAME="54517"></a>&nbsp;</h4>
+<H4 CLASS="TableTitle">smbclient Tar Commands </h4>
+</caption>
+<TR>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">Command</p>
+</th>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">Description</p>
+</th>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">tar c|x[IXbgNa]</em>
+ <EM CLASS="Replaceable">operands</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Performs a creation or extraction <EM CLASS="Emphasis">tar</em> similar to the command-line program. </p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">blocksize</em>
+ <EM CLASS="Replaceable">size</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Sets the block size to be used by <EM CLASS="Emphasis">tar</em>, in 512-byte blocks.</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">tarmode full|inc|reset|<br>
+
+noreset</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Makes <EM CLASS="Emphasis">tar</em>
+ pay attention to DOS archive bit for all following commands. In <EM CLASS="Literal">full</em>
+ mode (the default), <EM CLASS="Emphasis">tar</em>
+ will back up everything. In <EM CLASS="Literal">inc</em>
+ (incremental) mode, <EM CLASS="Emphasis">tar</em>
+ will back up only those files with the archive bit set. In <EM CLASS="Literal">reset</em>
+ mode, <EM CLASS="Emphasis">tar</em>
+ will reset the archive bit on all files it backs up (this requires the share to be writable), and in <EM CLASS="Literal">noreset</em>
+ mode the archive bit will not be reset even after the file has been backed up.</p>
+</td>
+</tr>
+</table>
+</div>
+<DIV>
+<H4 CLASS="HeadC">Command-line message program options</h4>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-M</em>
+ <EM CLASS="Replaceable">NetBIOS_machine_name</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This option allows you to send immediate messages using the WinPopup protocol to another computer. Once a connection is established, you can type your message, pressing control-D to end. If WinPopup is not running on the receiving machine, the program returns an error.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-U</em>
+ <EM CLASS="Replaceable">user</em>
+ </h4>
+<UL>
+<LI CLASS="ListVariable">This<EM CLASS="Replaceable"> </em>
+option allows you to indirectly control the FROM part of the message. </li>
+</ul>
+<DIV>
+<H4 CLASS="HeadC">Command-line tar program options</h4>
+<P CLASS="Body">The <EM CLASS="Literal">-T</em>
+ (tar), <EM CLASS="Literal">-D</em>
+ (starting directory), and <EM CLASS="Literal">-c</em>
+ (command) options are used together to tar up files interactively. This is better done with <EM CLASS="Filename">smbtar</em>, which will be discussed shortly. We don't recommend using <EM CLASS="Emphasis">smbclient</em>
+ directly as a <EM CLASS="Emphasis">tar</em>
+ program. </p>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-D</em>
+ <EM CLASS="Replaceable">initial_directory</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Changes to initial directory before starting.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-c</em>
+ <EM CLASS="Replaceable">command_string</em>
+ </h4>
+<UL>
+<LI CLASS="ListVariable">Passes a command string to the <EM CLASS="Emphasis">smbclient</em>
+ command interpreter, which treats it as a semicolon-separated list of commands to be executed. This is handy to say things such as <EM CLASS="Literal">tarmode</em> <EM CLASS="Literal">inc</em>, for example, which forces <EM CLASS="Literal">smbclient</em>
+ <EM CLASS="Literal">-T</em>
+ to back up only files with the archive bit set.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-T</em>
+ <EM CLASS="Replaceable">command filename</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Runs the <EM CLASS="Emphasis">tar</em>
+ driver, which is <EM CLASS="Emphasis">gtar</em>
+ compatible. The two main commands are: <EM CLASS="Literal">c</em>
+ (create) and <EM CLASS="Literal">x</em>
+ (extract), which may be followed by any of:</li>
+</ul>
+<DIV>
+<H4 CLASS="FM-ListVariableTermRunin"><EM CLASS="Literal">a</em>
+</h4>
+<P CLASS="FM-ListVariable">Resets archive bits once files are saved.</p>
+</div>
+<DIV>
+<H5 CLASS="FM-ListVariableTerm"><EM CLASS="Literal">b</em>
+ <EM CLASS="Replaceable">size</em>
+</h5>
+<P CLASS="FM-ListVariable">Sets blocksize in 512-byte units.</p>
+<DIV>
+<H4 CLASS="FM-ListVariableTermRunin"><EM CLASS="Literal">g</em>
+</h4>
+<P CLASS="FM-ListVariable">Backs up only files with the archive bit set.</p>
+</div>
+</div>
+<DIV>
+<H5 CLASS="FM-ListVariableTerm"><EM CLASS="Literal">I</em>
+ <EM CLASS="Replaceable">file</em>
+</h5>
+<P CLASS="FM-ListVariable">Includes files and directories (this is the default). Does not do pattern-matching.</p>
+</div>
+<DIV>
+<H5 CLASS="FM-ListVariableTerm"><EM CLASS="Literal">N</em>
+ <EM CLASS="Replaceable">filename</em>
+</h5>
+<P CLASS="FM-ListVariable">Backs up only those files newer than <EM CLASS="Replaceable">filename.</em>
+</p>
+<DIV>
+<H4 CLASS="FM-ListVariableTermRunin"><EM CLASS="Literal">q</em>
+</h4>
+<P CLASS="FM-ListVariable">Does not produce diagnostics.</p>
+</div>
+</div>
+<DIV>
+<H5 CLASS="FM-ListVariableTerm"><EM CLASS="Literal">X</em>
+ <EM CLASS="Replaceable">file</em>
+</h5>
+<P CLASS="FM-ListVariable">Excludes files.</p>
+<DIV>
+<H4 CLASS="HeadC">Command-line query program</h4>
+<P CLASS="Body">If <EM CLASS="Filename">smbclient</em>
+ is run as:</p>
+<P CLASS="Code">smbclient -L <EM CLASS="Replaceable">server_name</em>
+</p>
+<P CLASS="Body">it will list the shares and other services that machine provides. This is handy if you don't have <EM CLASS="Filename">smbwrappers</em>. It can also be helpful as a testing program in its own right.</p>
+</div>
+<DIV>
+<H4 CLASS="HeadC">Command-line debugging /diagnostic program options</h4>
+<P CLASS="Body">Any of the various modes of operation of <EM CLASS="Emphasis">smbclient</em>
+ can be used with the debugging and testing command-line options:</p>
+</div>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-B</em>
+ <EM CLASS="Replaceable">IP_addr</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the broadcast address.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-d</em>
+ <EM CLASS="Replaceable">debug_level</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the debug (sometimes called logging) level. The level can range from 0 all the way to 10. In addition, you can specify <EM CLASS="Literal">A</em>
+ for all debugging options. Debug level 0 logs only the most important messages; level 1 is normal; level 3 and above are primarily for debugging and slow operations considerably.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-E</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sends all messages to stderr instead of stdout.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-I</em>
+ <EM CLASS="Replaceable">IP_address</em>
+ </h4>
+<UL>
+<LI CLASS="ListVariable">Sets the IP address of the server to which it connects.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-i</em>
+ <EM CLASS="Replaceable">scope</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This sets a NetBIOS scope identifier. Only machines with the same identifier will communicate with the server. The scope identifier was a predecessor to workgroups, and this option is included only for backward compatibility.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-l</em>
+ <EM CLASS="Replaceable">log_file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sends the log messages to the specified file. </li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-N</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Suppresses the password prompt. Unless a password is specified on the command line or this parameter is specified, the client will prompt for a password.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-n</em>
+ <EM CLASS="Replaceable">NetBIOS_name</em>
+</h4>
+<P CLASS="ListSimple">This option allows you to override the NetBIOS name by which the daemon will advertise itself. </p>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-O</em>
+ <EM CLASS="Replaceable">socket_options</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the TCP/IP socket options using the same parameters as the <EM CLASS="Literal">socket</em>
+ <EM CLASS="Literal">options</em>
+ configuration option. It is often used for performance tuning and testing.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-p</em>
+ <EM CLASS="Replaceable">port_number</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the port number from which the client will accept requests.  </li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-R</em>
+ <EM CLASS="Replaceable">resolve_order</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the resolve order of the name servers. This option is similar to the <EM CLASS="Literal">resolve</em>
+ <EM CLASS="Literal">order</em>
+ configuration option, and can take any of the four parameters, <EM CLASS="Literal">lmhosts</em>, <EM CLASS="Literal">host</em>, <EM CLASS="Literal">wins</em>, and <EM CLASS="Literal">bcast</em>, in any order.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-s</em>
+ <EM CLASS="Replaceable">configuration_file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Specifies the location of the Samba configuration file. Used for debugging.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-t</em>
+ <EM CLASS="Replaceable">terminal_code</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the terminal code for Asian languages.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-U</em>
+ <EM CLASS="Replaceable">username</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the username and optionally password (e.g., <EM CLASS="Literal">-U</em>
+ <EM CLASS="Literal">fred%secret</em>).</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-W</em>
+ <EM CLASS="Replaceable">workgroup</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Specifies the workgroup that you want the client to connect as.</li>
+</ul>
+<P CLASS="Body">If you want to test a particular name service, run <EM CLASS="Emphasis">smbclient</em>
+ with <EM CLASS="Literal">-R</em>
+ and just the name of the service. This will force <EM CLASS="Emphasis">smbclient</em>
+ to use only the service you gave.<EM CLASS="Emphasis"></em>
+</p>
+</div>
+</div>
+<DIV>
+<H3 CLASS="HeadB">smbstatus</h3>
+<P CLASS="Body">The <EM CLASS="Filename">smbstatus</em>
+ program lists the current connections on a Samba server. There are three separate sections. The first section lists various shares that are in use by specific users. The second section lists the locked files that Samba currently has on all of its shares. Finally, the third section lists the amount of memory usage for each of the shares. For example:</p>
+<pre>
+# <EM CLASS="LineEmphasis">smbstatus</em>
+
+Samba version 2.0.3
+Service      uid      gid      pid     machine
+----------------------------------------------
+network      davecb   davecb   7470   phoenix  (192.168.220.101) Sun May 16 
+network      davecb   davecb   7589   chimaera (192.168.220.102) Sun May 16 
+&nbsp;
+Locked files:
+Pid    DenyMode   R/W        Oplock           Name
+--------------------------------------------------
+7589   DENY_NONE  RDONLY   EXCLUSIVE+BATCH  /home/samba/quicken/inet/common/system/help.bmp   Sun May 16 21:23:40 1999
+7470   DENY_WRITE RDONLY   NONE             /home/samba/word/office/findfast.exe              Sun May 16 20:51:08 1999
+7589   DENY_WRITE RDONLY   EXCLUSIVE+BATCH  /home/samba/quicken/lfbmp70n.dll                  Sun May 16 21:23:39 1999
+7589   DENY_WRITE RDWR     EXCLUSIVE+BATCH  /home/samba/quicken/inet/qdata/runtime.dat        Sun May 16 21:23:41 1999
+7470   DENY_WRITE RDONLY   EXCLUSIVE+BATCH  /home/samba/word/office/osa.exe                   Sun May 16 20:51:09 1999
+7589   DENY_WRITE RDONLY   NONE             /home/samba/quicken/qversion.dll                  Sun May 16 21:20:33 1999
+7470   DENY_WRITE RDONLY   NONE             /home/samba/quicken/qversion.dll                  Sun May 16 20:51:11 1999
+&nbsp;
+Share mode memory usage (bytes):
+   1043432(99%) free + 4312(0%) used + 832(0%) overhead = 1048576(100%) total
+</pre>
+<DIV>
+<H4 CLASS="HeadC">Options</h4>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-b</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Forces <EM CLASS="Filename">smbstatus</em>
+ to produce brief output. This includes the version of Samba and auditing information about the users that have logged into the server.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-d</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Gives verbose output, including each of the three reporting sections listed in the previous example. This is the default.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-L</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Forces <EM CLASS="Filename">smbstatus</em>
+ to print only the current file locks it has. This corresponds to the second section in a verbose output. </li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-p</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Prints a list of <EM CLASS="Filename">smbd</em>
+ process IDs only. This is often used for scripts.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-S</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Prints only a list of shares and their connections. This corresponds to the first section in a verbose output.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-s</em>
+ <EM CLASS="Replaceable">configuration_file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the Samba configuration file to use when processing this command.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-u</em>
+ <EM CLASS="Replaceable">username</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Limits the <EM CLASS="Filename">smbstatus</em>
+ report to the activity of a single user.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H3 CLASS="HeadB">smbtar</h3>
+<P CLASS="Body">The <EM CLASS="Emphasis">smbtar</em>
+ program is a shell script on top of <EM CLASS="Emphasis">smbclient</em>
+ that gives the program more intelligible options when doing tar operations. Functionally, it is equivalent to the Unix <EM CLASS="Emphasis">tar</em>
+ program.</p>
+<DIV>
+<H4 CLASS="HeadC">Options</h4>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-a</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Resets the archive bit mode</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-b</em>
+ <EM CLASS="Replaceable">blocksize</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Blocking size. Defaults to 20.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-d</em>
+ <EM CLASS="Replaceable">directory</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Changes to initial directory before restoring or backing up files.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-i</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Incremental mode; tar files are backed up only if they have the DOS archive bit set. The archive bit is reset after each file is read.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-l</em>
+ <EM CLASS="Replaceable">log_level</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable"> Sets the logging level.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-N</em>
+ <EM CLASS="Replaceable">filename</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Backs up only the files newer than the last modification date of <EM CLASS="Replaceable">filename</em>. For incremental backups.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-p</em>
+ <EM CLASS="Replaceable">password</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Specifies the password to use to access a share.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-r</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Restores files to the share from the tar file.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-s</em>
+ <EM CLASS="Replaceable">server</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Specifies the SMB/CIFS server in which the share resides.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-t</em>
+ <EM CLASS="Replaceable">tape</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Tape device or file. Default is the value of the environment variable <EM CLASS="Literal">$TAPE</em>, or <EM CLASS="Emphasis">tar.out</em>
+ if <EM CLASS="Literal">$TAPE</em>
+ isn't set.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-u</em>
+ <EM CLASS="Replaceable">user</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Specifies the user to connect to the share as. You can specify the password as well, in the format <EM CLASS="Replaceable">username</em><EM CLASS="Literal">%</em><EM CLASS="Replaceable">password</em>.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-v</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Specifies the use of verbose mode.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-X</em>
+ <EM CLASS="Replaceable">file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Tells <EM CLASS="FirstTerm">smbtar</em>
+ to exclude the specified file from the <EM CLASS="Emphasis">tar</em>
+ create or restore.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-x</em>
+ <EM CLASS="Replaceable">share</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">States the share name on the server to connect to. The default is <EM CLASS="Literal">backup</em>, which is a common share name to perform backups with.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="SidebarBody">For example, a trivial backup command to archive the data for user <EM CLASS="Literal">sue</em>
+ is:</h4>
+<P CLASS="Code"># <EM CLASS="LineEmphasis">smbtar -s pc_name -x sue -u sue -p secret -t sue.tar </em>
+</p>
+</div>
+</div>
+<DIV>
+<H3 CLASS="HeadB">nmblookup</h3>
+<P CLASS="Body">The <EM CLASS="Filename">nmblookup</em>
+ program is a client program that exercises the NetBIOS-over-UDP/IP name service for resolving NBT machine names into IP addresses. The command works by broadcasting its queries on the local subnet until a machine with that name responds. You can think of it as a Windows <EM CLASS="Emphasis">nslookup(1) </em>
+or <EM CLASS="EmailSite">dig(1). </em>
+This is useful for looking up both normal NetBIOS names, and the odd ones like        <EM CLASS="Literal">__MSBROWSE__</em>
+ that the Windows name services use to provide directory-like services. If you wish to query for a particular type of NetBIOS name, add the NetBIOS <EM CLASS="Literal">&lt;type&gt;</em>
+ to the end of the name.</p>
+<P CLASS="Body">The command line is:</p>
+<P CLASS="Code">nmblookup [-options] <EM CLASS="Replaceable">name</em>
+</p>
+<P CLASS="Body">The options supported are:</p>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-A</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Interprets <EM CLASS="Replaceable">name</em>
+ as an IP address and do a node-status query on this address.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-B</em>
+ <EM CLASS="Replaceable">broadcast _address</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sends the query to the given broadcast address. The default is to send the query to the broadcast address of the primary network interface.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-d</em>
+ <EM CLASS="Replaceable">debuglevel</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the debug (sometimes called logging) level. The level can range from 0 all the way to 10. Debug level 0 logs only the most important messages; level 1 is normal; level 3 and above are primarily for debugging and slow the program considerably.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-h</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Prints command-line usage information for the program.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-i</em>
+ <EM CLASS="Replaceable">scope</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets a NetBIOS scope identifier. Only machines with the same identifier will communicate with the server. The scope identifier was a predecessor to workgroups, and this option is included only for backward compatibility.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-M</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Searches for a local master browser. This is done with a broadcast searching for a machine that will respond to the special name <EM CLASS="Literal">__MSBROWSE__</em>, and then asking that machine for information, instead of broadcasting the query itself.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-R</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the recursion desired bit in the packet. This will cause the machine that responds to try to do a WINS lookup and return the address and any other information the WINS server has saved.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-r</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Use the root port of 137 for Windows 95 machines.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-S</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Once the name query has returned an IP address, does a node status query as well. This returns all the resource types that the machine knows about, with their numeric attributes. For example:</li>
+</ul>
+<pre>
+% <EM CLASS="LineEmphasis">nmblookup -d 4 -S elsbeth</em>
+received 6 names
+      ELSBETH                &lt;00&gt; - &lt;GROUP&gt; B &lt;ACTIVE&gt;
+      ELSBETH                &lt;03&gt; -         B &lt;ACTIVE&gt;
+      ELSBETH                &lt;1d&gt; -         B &lt;ACTIVE&gt;
+      ELSBETH                &lt;1e&gt; - &lt;GROUP&gt; B &lt;ACTIVE&gt;
+      ELSBETH                &lt;20&gt; -         B &lt;ACTIVE&gt;
+      ..__MSBROWSE__..       &lt;01&gt; - &lt;GROUP&gt; B &lt;ACTIVE&gt;
+</pre>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-s</em>
+ <EM CLASS="Replaceable">configuration_file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Specifies the location of the Samba configuration file. Although the file defaults to <EM CLASS="Filename">/usr/local/samba/lib/smb.conf</em>, you can override it here on the command-line, normally for debugging.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-T</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This option can be used to translate IP addresses into resolved names. </li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-U</em>
+ <EM CLASS="Replaceable">unicast_address</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Performs a unicast query to the specified address. Used with <EM CLASS="Literal">-R</em>
+ to query WINS servers.</li>
+</ul>
+<P CLASS="Body">Note that there is no workgroup option for <EM CLASS="Emphasis">nmblookup</em>; you can get around this by putting <EM CLASS="Literal">workgroup</em>
+ <EM CLASS="Literal">=</em>
+ <EM CLASS="Replaceable">workgroup_name </em>
+in a file and passing it to <EM CLASS="Emphasis">nmblookup</em>
+ with the <EM CLASS="Literal">-s</em>
+ <EM CLASS="Replaceable">smb.conf_file</em>
+ option. </p>
+</div>
+</div>
+<DIV>
+<H3 CLASS="HeadB">smbpasswd</h3>
+<P CLASS="Body">The <EM CLASS="Emphasis">smbpasswd</em>
+ password has two distinct sets of functions. When run by users, it changes their encrypted passwords. When run by <EM CLASS="Literal">root</em>, it updates the encrypted password file. When run by an ordinary user with no options, it connects to the primary domain controller and changes his or her Windows password.</p>
+<P CLASS="Body">The program will fail if <EM CLASS="Emphasis">smbd</em>
+ is not operating, if the <EM CLASS="Literal">hosts</em>
+ <EM CLASS="Literal">allow</em>
+ or <EM CLASS="Literal">hosts</em>
+ <EM CLASS="Literal">deny</em>
+ configuration options will not permit connections from localhost (IP address 127.0.0.1), or the <EM CLASS="Literal">encrypted</em>
+ <EM CLASS="Literal">passwords</em>
+ <EM CLASS="Literal">=</em>
+ <EM CLASS="Literal">no</em>
+ option is set.</p>
+<DIV>
+<H4 CLASS="HeadC">Regular user options</h4>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-D</em>
+ <EM CLASS="Replaceable">debug_level</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the debug (also called logging) level. The level can range from 0 to 10. Debug level 0 logs only the most important messages; level 1 is normal; level 3 and above are primarily for debugging and slow the program considerably.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-h</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Prints command-line usage information for the program.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-r</em>
+ <EM CLASS="Replaceable">remote_machine_name</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Specifies on which machine the password should change. The remote machine must be a primary domain controller (PDC).</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-R</em>
+ <EM CLASS="Replaceable">resolve_order</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets the resolve order of the name servers. This option is similar to the <EM CLASS="Literal">resolve</em>
+ <EM CLASS="Literal">order</em>
+ configuration option, and can take any of the four parameters, <EM CLASS="Literal">lmhosts</em>, <EM CLASS="Literal">host</em>, <EM CLASS="Literal">wins</em>, and <EM CLASS="Literal">bcast</em>,<EM CLASS="Literal"> </em> in any order.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-U</em>
+ <EM CLASS="Replaceable">username</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Used only with <EM CLASS="Literal">-r</em>, to modify a username that is spelled differently on the remote machine.</li>
+</ul>
+<DIV>
+<H4 CLASS="HeadC">Root-only options</h4>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-a</em>
+ <EM CLASS="Replaceable">username</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Adds a user to the encrypted password file.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-d</em>
+ <EM CLASS="Replaceable">username</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Disables a user in the encrypted password file.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-e</em>
+ <EM CLASS="Replaceable">username</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Enables a disabled user in the encrypted password file.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-m</em>
+ <EM CLASS="Replaceable">machine_name</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Changes a machine account's password. The machine accounts are used to authenticate machines when they connect to a primary or backup domain controller.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-j</em>
+ <EM CLASS="Replaceable">domain_name</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Adds a Samba server to a Windows NT Domain.</li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-n</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Sets no password for the user.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-s</em>
+ <EM CLASS="Replaceable">username</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Causes <EM CLASS="Emphasis">smbpasswd</em>
+ to be silent and to read its old and new passwords from standard input, rather than from <EM CLASS="Filename">/dev/tty</em>. This is useful for writing scripts.</li>
+</ul>
+</div>
+</div>
+<DIV>
+<H3 CLASS="HeadB">testparm</h3>
+<P CLASS="Body">The <EM CLASS="Emphasis">testparm</em>
+ program checks an <EM CLASS="Filename">smb.conf</em>
+ file for obvious errors and self-consistency. Its command line is:</p>
+<P CLASS="Code">testparm [options] <EM CLASS="Replaceable">configfile_name [hostname IP_addr]</em>
+</p>
+<P CLASS="Body">If the configuration file is not specified, the file at <EM CLASS="Replaceable">samba_dir</em>
+<EM CLASS="Filename">/lib/smb.conf</em>
+ is checked by default. If you specify a hostname and an IP address, an extra check will be made to ensure that the specified machine would be allowed to connect to Samba. If a hostname is specified, an IP address should be present as well.</p>
+<DIV>
+<H4 CLASS="HeadC">Options</h4>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-h</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Prints command-line information for the program.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-L</em>
+ server_name</h4>
+<UL>
+<LI CLASS="ListVariable">Resets the <EM CLASS="Literal">%L</em>
+ configuration variable to the specified server name. </li>
+</ul>
+<DIV>
+<H4 CLASS="ListVariableTermRunin"><EM CLASS="Literal">-s</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">This option prevents the <EM CLASS="Emphasis">testparm</em>
+ program from prompting the user to press the Enter key before printing a list of the configuration options for the server.</li>
+</ul>
+</div>
+</div>
+</div>
+<DIV>
+<H3 CLASS="HeadB">testprns</h3>
+<P CLASS="Body">The <EM CLASS="Emphasis">testprns</em>
+ program checks a specified printer name against the system printer capabilities (<EM CLASS="Filename">printcap</em>) file. Its command line is:</p>
+<P CLASS="Code">testprns <EM CLASS="Replaceable">printername</em>
+ [<EM CLASS="Replaceable">printcapname</em>]</p>
+<P CLASS="Body">If the <EM CLASS="Literal">printcapname</em>
+ isn't specified, Samba attempts to use one located in the <EM CLASS="Filename">smb.conf</em>
+ file. If one isn't specified there, Samba will try <EM CLASS="Filename">/etc/printcap</em>. If that fails, the program will generate an error.</p>
+</div>
+<DIV>
+<H3 CLASS="HeadB">rpcclient</h3>
+<P CLASS="Body">This is a new client that exercises the RPC (remote procedure call) interfaces of an SMB server. Like <EM CLASS="Emphasis">smbclient</em>, <EM CLASS="Emphasis">rpcclient</em>
+ started its life as a test program for the Samba developers and will likely stay that way for a while. Its command line is:</p>
+<P CLASS="Code">rpcclient //<EM CLASS="Replaceable">server</em>/<EM CLASS="Replaceable">share</em>
+</p>
+<P CLASS="Body">The command-line options are the same as the Samba 2.0 <EM CLASS="Emphasis">smbclient</em>, and the operations you can try are listed below. </p>
+<TABLE>
+<CAPTION>
+<H4 CLASS="TableLabel"><A NAME="65243"></a>&nbsp;</h4>
+<H4 CLASS="TableTitle">rpcclient commands </h4>
+</caption>
+<TR>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">Command</p>
+</th>
+<TH ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellHeading">Description</p>
+</th>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">regenum keyname</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Registry Enumeration (keys, values)</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">regdeletekey keyname </em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Registry Key Delete</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">regcreatekey keyname [keyvalue]</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Registry Key Create</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">regquerykey keyname</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Registry Key Query</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">regdeleteval valname</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Registry Value Delete</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">regcreateval valname valtype value</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Registry Key Create</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">reggetsec keyname</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Registry Key Security</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">regtestsec keyname</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Test Registry Key Security</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">ntlogin [username] [password]</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">NT Domain Login Test</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">wksinfo</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Workstation Query Info</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">srvinfo</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Server Query Info</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">srvsessions</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">List Sessions on a Server</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">srvshares</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">List shares on a server</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">srvconnections</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">List connections on a server </p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">srvfiles</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">List files on a server</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">lsaquery</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Query Info Policy (domain member or server)</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">lookupsids</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">Resolve names from SIDs</p>
+</td>
+</tr>
+<TR>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody"><EM CLASS="Literal">ntpass</em>
+</p>
+</td>
+<TD ROWSPAN="1" COLSPAN="1">
+<P CLASS="CellBody">NT SAM Password Change</p>
+</td>
+</tr>
+</table>
+</div>
+<DIV>
+<H3 CLASS="HeadB">tcpdump</h3>
+<P CLASS="Body">The <EM CLASS="Emphasis">tcpdump</em>
+ utility, a classic system administration tool, dumps all the packet headers it sees on an interface that match an expression. The version included in the Samba distribution is enhanced to understand the SMB protocol. The <EM CLASS="Emphasis">expression</em>
+ is a logical expression with &quot;and,&quot; &quot;or,&quot; and &quot;not,&quot; although sometimes it's very simple. For example, <EM CLASS="Literal">host</em>
+ <EM CLASS="Literal">escrime</em>
+ would select every packet going to or from <EM CLASS="Literal">escrime</em>. The expression is normally one or more of:</p>
+<UL>
+<LI CLASS="ListBullet"><EM CLASS="Literal">host</em>
+ <EM CLASS="Replaceable">name</em>
+</li>
+<LI CLASS="ListBullet"><EM CLASS="Literal">net network_number</em>
+</li>
+<LI CLASS="ListBullet"><EM CLASS="Literal">port</em>
+ <EM CLASS="Replaceable">number</em>
+</li>
+<LI CLASS="ListBullet"><EM CLASS="Literal">src</em>
+ <EM CLASS="Replaceable">name </em>
+</li>
+<LI CLASS="ListBullet"><EM CLASS="Literal">dst</em>
+ <EM CLASS="Replaceable">name</em>
+ </li>
+</ul>
+<P CLASS="Body">The most common options are <EM CLASS="Literal">src</em>
+ (source), <EM CLASS="Literal">dst</em>
+ (destination), and <EM CLASS="Literal">port</em>. For example, in the book we used the command: </p>
+<P CLASS="Code">tcpdump port not telnet</p>
+<P CLASS="Body">This dumps all the packets except telnet; we were logged-in via telnet and  wanted to see only the SMB packets. </p>
+<P CLASS="Body">Another <EM CLASS="Emphasis">tcpdump</em>
+ example is selecting traffic between server and either <EM CLASS="Literal">sue</em>
+ or <EM CLASS="Literal">joe</em>:</p>
+<P CLASS="Code">tcpdump host server and &#92;(sue or joe &#92;)</p>
+<P CLASS="Body">We recommend using the <EM CLASS="Literal">-s</em>
+ <EM CLASS="Literal">1500</em>
+ option so that you capture all of the SMB messages sent, instead of just the header information. </p>
+<DIV>
+<H4 CLASS="HeadC">Options</h4>
+<P CLASS="Body">There are many options, and many other kinds of expressions that can be used with <EM CLASS="Emphasis">tcpdump</em>. See the manual page for details on the advanced options. The most common options are as follows: </p>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-c</em>
+ <EM CLASS="Replaceable">count</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Forces the program to exit after receiving the specified number of packets.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-F</em>
+ <EM CLASS="Replaceable">file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Reads the expression from the specified file and ignores expressions on the command line.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-i</em>
+ <EM CLASS="Replaceable">interface</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Forces the program to listen on the specified interface.</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-r</em>
+ <EM CLASS="Replaceable">file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Reads packets from the specified file (captured with <EM CLASS="Literal">-w</em>).</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-s</em>
+ <EM CLASS="Replaceable">length</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Saves the specified number of bytes of data from each packet (rather than 68 bytes).</li>
+</ul>
+</div>
+<DIV>
+<H4 CLASS="ListVariableTerm"><EM CLASS="Literal">-w</em>
+ <EM CLASS="Replaceable">file</em>
+</h4>
+<UL>
+<LI CLASS="ListVariable">Writes the packets to the specified file.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</blockquote>
+
+
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appc_01.html" TITLE="">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: Appendix C." BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appe_01.html" TITLE="">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: Appendix E." BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+C. Samba Configuration Option Quick Reference</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+E. Downloading Samba with CVS</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+
+</html>

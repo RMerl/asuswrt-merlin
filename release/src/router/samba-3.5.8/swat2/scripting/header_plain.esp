@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+
+  <title>@@global.page.title</title>
+
+<link rel="stylesheet" href="/style/common.css" type="text/css" media="all" />
+<link rel="stylesheet" href="/style/columns.css" type="text/css" media="all" />
+<link rel="stylesheet" href="/style/swat.css" type="text/css" media="all" />
+<link rel="shortcut icon" href="/images/favicon.ico" />
+
+<!--[if gte IE 5.5]>
+	<style type="text/css">
+	/*<![CDATA[*/
+	.logo_hack {
+filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='/images/logo.png',sizingMethod='scale');
+	}
+	/*]]>*/ 
+	</style>
+<![endif]-->
+
+<!--[if lte IE 5]>
+	<style type="text/css">
+	/*<![CDATA[*/
+	.logo_hack {
+	background-image:url(/images/logo.gif);
+	background-position:center;
+	background-repeat:no-repeat;
+	top:23.5px;
+	left:-10px;
+	}
+	/*]]>*/
+        </style>
+<![endif]-->
+
+</head>
+
+
+<body>
+
+<div id="banner">
+  <div class="stripe"></div>
+</div>
+
+<div id="logo">
+  <div class="logo_hack"><a href="/"><img src="/images/linkpad.gif" alt="SWAT" /></a></div>
+</div>
+
+<div class="slogan">
+  <h4>Samba Web Administration Tool</h4>
+</div>
+
+<div id="content">
+  <div class="center">

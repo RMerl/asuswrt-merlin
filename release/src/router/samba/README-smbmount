@@ -1,0 +1,51 @@
+Date: February 26, 1999
+
+Subject: smbmount / smbmnt / smbumount
+=============================================================================
+
+The Samba-Team wishes to make known that the above programs are a part of
+the SMBFS software package for the Linux operating system. They are very
+definitely NOT part of Samba and are in general NOT supported by the
+Samba-Team.
+
+In repsonse to flames to comp.protocols.smb and to feedback to
+samba@samba.org we wish to place on record that the reason for which
+these programs have not received the attention that some folks expect
+from the Samba-Team is as stated above, they are NOT part of samba.
+
+Out of empathy for the Samba user base we have taken the liberty of
+including patched source code for the above "SMBFS package" utilities
+in the Samba tarball.
+
+Mike Warfield is temporary caretaker of SMBFS and may be contacted at
+mike@samba.org.
+
+In deference to the fact that these programs are NOT part of Samba
+the default binary packaging facilities included in the samba tarball
+do NOT automatically create the updates needed for the Linux 2.2.x
+kernel. If you require the updated smbmount / smbmnt / smbumount tools
+then it will be necessary to modify the samba2.spec file to include
+the --with-smbmount option to the samba "configure" script _AND_
+you will need to add these files to the appropriate locations in the "install"
+and "files" sections also. The platform specific RPM SPEC files that you
+will need to modify may be found under ~samba/packaging/"platform".
+
+The Samba-Team has considered the alternatives. These are:
+	1) Include all SMBFS code with Samba:
+		- rejected because we do not have the resources to support it.
+		- SMBFS is specific and limited to Linux
+	2) Just build the smbmount / smbmnt / smbumount binaries:
+		- doing this will break RPM dependencies for the SMBFS package
+		- this is not a good option either
+	3) Encourage people to use the "smbsh" utility that is part of samba
+		and is being developed to replace the need for "SMBFS"
+		- this is portable to platforms other than Linux
+		- it allows each user to authenticate as themselves instead
+		  of allowing all users to use an SMB session that is
+                  authenticated as just one user.
+
+We have chosen the later and hope that our users will understand and support
+the decision that has been made.
+
+For and on behalf of the Samba-Team
+John H Terpstra

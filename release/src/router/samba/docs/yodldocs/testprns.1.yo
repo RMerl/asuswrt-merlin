@@ -1,0 +1,98 @@
+mailto(samba@samba.org) 
+
+manpage(testprns htmlcommand((1)))(1)(23 Oct 1998)(Samba)(SAMBA)
+
+label(NAME)
+manpagename(testprns)(check printer name for validity with smbd )
+
+label(SYNOPSIS)
+manpagesynopsis() 
+
+bf(testprns) link(printername)(printername) [link(printcapname)(printcapname)]
+
+label(DESCRIPTION)
+manpagedescription()
+
+This program is part of the bf(Samba) suite.
+
+bf(testprns) is a very simple test program to determine whether a
+given printer name is valid for use in a service to be provided by
+url(bf(smbd))(smbd.8.html).
+
+"Valid" in this context means "can be found in the printcap
+specified". This program is very stupid - so stupid in fact that it
+would be wisest to always specify the printcap file to use.
+
+label(OPTIONS)
+manpageoptions()
+
+startdit()
+
+label(printername)
+dit(bf(printername)) The printer name to validate.
+
+Printer names are taken from the first field in each record in the
+printcap file, single printer names and sets of aliases separated by
+vertical bars ("|") are recognized. Note that no validation or
+checking of the printcap syntax is done beyond that required to
+extract the printer name. It may be that the print spooling system is
+more forgiving or less forgiving than bf(testprns). However, if
+bf(testprns) finds the printer then url(bf(smbd))(smbd.8.html) should
+do so as well.
+
+label(printcapname)
+dit(bf(printcapname)) This is the name of the printcap file within
+which to search for the given printer name.
+
+If no printcap name is specified bf(testprns) will attempt to scan the
+printcap file name specified at compile time.
+
+enddit()
+
+label(FILES)
+manpagesection(FILES)
+
+bf(/etc/printcap) This is usually the default printcap file to
+scan. See bf(printcap (5)).
+
+label(DIAGNOSTICS)
+manpagesection(DIAGNOSTICS)
+
+If a printer is found to be valid, the message "Printer name
+<printername> is valid" will be displayed.
+
+If a printer is found to be invalid, the message "Printer name
+<printername> is not valid" will be displayed.
+
+All messages that would normally be logged during operation of the
+url(bf(Samba))(samba.7.html) daemons are logged by this program to the
+file tt(test.log) in the current directory. The program runs at
+debuglevel 3, so quite extensive logging information is written. The
+log should be checked carefully for errors and warnings.
+
+Other messages are self-explanatory.
+
+label(SEEALSO)
+manpageseealso()
+
+bf(printcap (5)), url(bf(smbd (8)))(smbd.8.html), url(bf(smbclient
+(1)))(smbclient.1.html)
+
+label(AUTHOR)
+manpageauthor()
+
+The original Samba software and related utilities were created by
+Andrew Tridgell email(samba@samba.org). Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+
+The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+url(bf(ftp://ftp.icce.rug.nl/pub/unix/))(ftp://ftp.icce.rug.nl/pub/unix/))
+and updated for the Samba2.0 release by Jeremy Allison.
+email(samba@samba.org).
+
+See url(bf(samba (7)))(samba.7.html) to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.

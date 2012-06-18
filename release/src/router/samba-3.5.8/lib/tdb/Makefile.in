@@ -1,0 +1,79 @@
+#!gmake
+#
+# Makefile for tdb directory
+#
+
+CC = @CC@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+includedir = @includedir@
+libdir = @libdir@
+mandir = @mandir@
+VPATH = @srcdir@:@libreplacedir@
+srcdir = @srcdir@
+builddir = @builddir@
+sharedbuilddir = @sharedbuilddir@
+INSTALLCMD = @INSTALL@
+CPPFLAGS = @CPPFLAGS@ -I$(srcdir)/include -Iinclude 
+CFLAGS = $(CPPFLAGS) @CFLAGS@
+LDFLAGS = @LDFLAGS@
+EXEEXT = @EXEEXT@
+SHLD = @SHLD@
+SHLD_FLAGS = @SHLD_FLAGS@
+PACKAGE_VERSION = @PACKAGE_VERSION@
+PICFLAG = @PICFLAG@
+SHLIBEXT = @SHLIBEXT@
+PYTHON = @PYTHON@
+PYTHON_CONFIG = @PYTHON_CONFIG@
+PYTHON_BUILD_TARGET = @PYTHON_BUILD_TARGET@
+PYTHON_INSTALL_TARGET = @PYTHON_INSTALL_TARGET@
+PYTHON_CHECK_TARGET = @PYTHON_CHECK_TARGET@
+LIB_PATH_VAR = @LIB_PATH_VAR@
+tdbdir = @tdbdir@
+
+EXTRA_TARGETS = @DOC_TARGET@
+
+TDB_OBJ = @TDB_OBJ@ @LIBREPLACEOBJ@
+
+SONAMEFLAG = @SONAMEFLAG@
+VERSIONSCRIPT = @VERSIONSCRIPT@
+EXPORTSFILE = @EXPORTSFILE@
+
+XSLTPROC = @XSLTPROC@
+
+default: all
+
+include $(tdbdir)/tdb.mk
+include $(tdbdir)/rules.mk
+
+all:: showflags dirs $(PROGS) $(TDB_SOLIB) libtdb.a $(PYTHON_BUILD_TARGET) $(EXTRA_TARGETS)
+
+install:: all
+$(TDB_SOLIB): $(TDB_OBJ)
+	$(SHLD) $(SHLD_FLAGS) -o $@ $(TDB_OBJ) $(VERSIONSCRIPT) $(EXPORTSFILE) $(SONAMEFLAG)$(TDB_SONAME)
+
+shared-build: all
+	${INSTALLCMD} -d $(sharedbuilddir)/lib
+	${INSTALLCMD} -m 644 libtdb.a $(sharedbuilddir)/lib
+	${INSTALLCMD} -m 755 $(TDB_SOLIB) $(sharedbuilddir)/lib
+	ln -sf $(TDB_SOLIB) $(sharedbuilddir)/lib/$(TDB_SONAME)
+	ln -sf $(TDB_SOLIB) $(sharedbuilddir)/lib/libtdb.so
+	${INSTALLCMD} -d $(sharedbuilddir)/include
+	${INSTALLCMD} -m 644 $(srcdir)/include/tdb.h $(sharedbuilddir)/include
+
+check: test
+
+test:: $(PYTHON_CHECK_TARGET)
+installcheck:: test install
+
+clean::
+	rm -f *.o *.a */*.o
+	rm -fr abi
+
+distclean:: clean
+	rm -f config.log config.status include/config.h config.cache
+	rm -f Makefile
+
+realdistclean:: distclean
+	rm -f configure include/config.h.in

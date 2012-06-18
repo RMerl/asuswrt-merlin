@@ -1,0 +1,25 @@
+Would be nice if:
+
+- Add address learning limiting (hard limit at a fixed # of
+  addresses? or maybe using rate markers?). There is a nasty DoS in
+  here.
+
+- Add fdb entry port # change limiting. For example: if one MAC
+  address switches port more than once in the same second, there is
+  something wrong (somebody trying to spoof?), so print a warning.
+
+- Faster port state cycling; currently it takes 30 seconds for ports
+  to cycle to the forwarding state.
+
+- Detect port speed and adjust path cost accordingly?
+
+- Use MII ioctls for detecting link beat lost quickly?
+
+- Keep the IEEE 802.1d-mandated statistics (counters, mostly).
+
+- Maybe integrate Kristian's GNOME frontend (see PROJECTS) once it
+  stabilises. It looks nice.
+
+- A cgi bridge configurer (a la Samba's SWAT, yummy....)
+
+

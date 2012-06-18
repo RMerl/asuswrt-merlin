@@ -1,0 +1,23 @@
+From 6ff4fcbfe507605b2796eb8e7e44c7e8e4b33a28
+From: Henning Heinold 
+Date: Thu, 05 Aug 2010 16:22:12 +0000
+Subject: math: isnan is a C99 feature
+
+--- a/libc/sysdeps/linux/common/bits/mathcalls.h
++++ b/libc/sysdeps/linux/common/bits/mathcalls.h
+@@ -231,10 +231,14 @@
+ /* Return nonzero if VALUE is not a number.  */
+ __MATHDECL_PRIV (int,__isnan,, (_Mdouble_ __value), (__const__));
+ 
+-#if defined __USE_MISC || defined __USE_XOPEN
++#if defined __USE_MISC || defined __USE_XOPEN || defined __USE_ISOC99
++__BEGIN_NAMESPACE_C99
+ /* Return nonzero if VALUE is not a number.  */
+ __MATHDECL_PRIV (int,isnan,, (_Mdouble_ __value), (__const__));
++__END_NAMESPACE_C99
++#endif
+ 
++#if defined __USE_MISC || defined __USE_XOPEN
+ /* Bessel functions.  */
+ __MATHCALL (j0,, (_Mdouble_));
+ __MATHCALL (j1,, (_Mdouble_));

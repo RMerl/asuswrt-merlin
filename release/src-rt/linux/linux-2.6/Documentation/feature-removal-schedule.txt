@@ -1,0 +1,343 @@
+The following is a list of files and features that are going to be
+removed in the kernel source tree.  Every entry should contain what
+exactly is going away, why it is happening, and who is going to be doing
+the work.  When the feature is removed from the kernel, it should also
+be removed from this file.
+
+---------------------------
+
+What:	MXSER
+When:	December 2007
+Why:	Old mxser driver is obsoleted by the mxser_new. Give it some time yet
+	and remove it.
+Who:	Jiri Slaby <jirislaby@gmail.com>
+
+---------------------------
+
+What:	V4L2 VIDIOC_G_MPEGCOMP and VIDIOC_S_MPEGCOMP
+When:	October 2007
+Why:	Broken attempt to set MPEG compression parameters. These ioctls are
+	not able to implement the wide variety of parameters that can be set
+	by hardware MPEG encoders. A new MPEG control mechanism was created
+	in kernel 2.6.18 that replaces these ioctls. See the V4L2 specification
+	(section 1.9: Extended controls) for more information on this topic.
+Who:	Hans Verkuil <hverkuil@xs4all.nl> and
+	Mauro Carvalho Chehab <mchehab@infradead.org>
+
+---------------------------
+
+What:	/sys/devices/.../power/state
+	dev->power.power_state
+	dpm_runtime_{suspend,resume)()
+When:	July 2007
+Why:	Broken design for runtime control over driver power states, confusing
+	driver-internal runtime power management with:  mechanisms to support
+	system-wide sleep state transitions; event codes that distinguish
+	different phases of swsusp "sleep" transitions; and userspace policy
+	inputs.  This framework was never widely used, and most attempts to
+	use it were broken.  Drivers should instead be exposing domain-specific
+	interfaces either to kernel or to userspace.
+Who:	Pavel Machek <pavel@suse.cz>
+
+---------------------------
+
+What:	RAW driver (CONFIG_RAW_DRIVER)
+When:	December 2005
+Why:	declared obsolete since kernel 2.6.3
+	O_DIRECT can be used instead
+Who:	Adrian Bunk <bunk@stusta.de>
+
+---------------------------
+
+What:	raw1394: requests of type RAW1394_REQ_ISO_SEND, RAW1394_REQ_ISO_LISTEN
+When:	June 2007
+Why:	Deprecated in favour of the more efficient and robust rawiso interface.
+	Affected are applications which use the deprecated part of libraw1394
+	(raw1394_iso_write, raw1394_start_iso_write, raw1394_start_iso_rcv,
+	raw1394_stop_iso_rcv) or bypass	libraw1394.
+Who:	Dan Dennedy <dan@dennedy.org>, Stefan Richter <stefanr@s5r6.in-berlin.de>
+
+---------------------------
+
+What:	old NCR53C9x driver
+When:	October 2007
+Why:	Replaced by the much better esp_scsi driver.  Actual low-level
+	driver can be ported over almost trivially.
+Who:	David Miller <davem@davemloft.net>
+	Christoph Hellwig <hch@lst.de>
+
+---------------------------
+
+What:	Video4Linux API 1 ioctls and video_decoder.h from Video devices.
+When:	December 2006
+Files:	include/linux/video_decoder.h
+Why:	V4L1 AP1 was replaced by V4L2 API. during migration from 2.4 to 2.6
+	series. The old API have lots of drawbacks and don't provide enough
+	means to work with all video and audio standards. The newer API is
+	already available on the main drivers and should be used instead.
+	Newer drivers should use v4l_compat_translate_ioctl function to handle
+	old calls, replacing to newer ones.
+	Decoder iocts are using internally to allow video drivers to
+	communicate with video decoders. This should also be improved to allow
+	V4L2 calls being translated into compatible internal ioctls.
+Who:	Mauro Carvalho Chehab <mchehab@brturbo.com.br>
+
+---------------------------
+
+What:	PCMCIA control ioctl (needed for pcmcia-cs [cardmgr, cardctl])
+When:	November 2005
+Files:	drivers/pcmcia/: pcmcia_ioctl.c
+Why:	With the 16-bit PCMCIA subsystem now behaving (almost) like a
+	normal hotpluggable bus, and with it using the default kernel
+	infrastructure (hotplug, driver core, sysfs) keeping the PCMCIA
+	control ioctl needed by cardmgr and cardctl from pcmcia-cs is
+	unnecessary, and makes further cleanups and integration of the
+	PCMCIA subsystem into the Linux kernel device driver model more
+	difficult. The features provided by cardmgr and cardctl are either
+	handled by the kernel itself now or are available in the new
+	pcmciautils package available at
+	http://kernel.org/pub/linux/utils/kernel/pcmcia/
+Who:	Dominik Brodowski <linux@brodo.de>
+
+---------------------------
+
+What:	remove EXPORT_SYMBOL(kernel_thread)
+When:	August 2006
+Files:	arch/*/kernel/*_ksyms.c
+Funcs:	kernel_thread
+Why:	kernel_thread is a low-level implementation detail.  Drivers should
+        use the <linux/kthread.h> API instead which shields them from
+	implementation details and provides a higherlevel interface that
+	prevents bugs and code duplication
+Who:	Christoph Hellwig <hch@lst.de>
+
+---------------------------
+
+What:	CONFIG_FORCED_INLINING
+When:	June 2006
+Why:	Config option is there to see if gcc is good enough. (in january
+        2006). If it is, the behavior should just be the default. If it's not,
+	the option should just go away entirely.
+Who:    Arjan van de Ven
+
+---------------------------
+
+What:   eepro100 network driver
+When:   January 2007
+Why:    replaced by the e100 driver
+Who:    Adrian Bunk <bunk@stusta.de>
+
+---------------------------
+
+What:  drivers depending on OSS_OBSOLETE_DRIVER
+When:  options in 2.6.20, code in 2.6.22
+Why:   OSS drivers with ALSA replacements
+Who:   Adrian Bunk <bunk@stusta.de>
+
+---------------------------
+
+What:	Unused EXPORT_SYMBOL/EXPORT_SYMBOL_GPL exports
+	(temporary transition config option provided until then)
+	The transition config option will also be removed at the same time.
+When:	before 2.6.19
+Why:	Unused symbols are both increasing the size of the kernel binary
+	and are often a sign of "wrong API"
+Who:	Arjan van de Ven <arjan@linux.intel.com>
+
+---------------------------
+
+What:	vm_ops.nopage
+When:	Soon, provided in-kernel callers have been converted
+Why:	This interface is replaced by vm_ops.fault, but it has been around
+	forever, is used by a lot of drivers, and doesn't cost much to
+	maintain.
+Who:	Nick Piggin <npiggin@suse.de>
+
+---------------------------
+
+What:	Interrupt only SA_* flags
+When:	September 2007
+Why:	The interrupt related SA_* flags are replaced by IRQF_* to move them
+	out of the signal namespace.
+
+Who:	Thomas Gleixner <tglx@linutronix.de>
+
+---------------------------
+
+What:	PHYSDEVPATH, PHYSDEVBUS, PHYSDEVDRIVER in the uevent environment
+When:	October 2008
+Why:	The stacking of class devices makes these values misleading and
+	inconsistent.
+	Class devices should not carry any of these properties, and bus
+	devices have SUBSYTEM and DRIVER as a replacement.
+Who:	Kay Sievers <kay.sievers@suse.de>
+
+---------------------------
+
+What:	i2c-isa
+When:	December 2006
+Why:	i2c-isa is a non-sense and doesn't fit in the device driver
+	model. Drivers relying on it are better implemented as platform
+	drivers.
+Who:	Jean Delvare <khali@linux-fr.org>
+
+---------------------------
+
+What:	i2c_adapter.list
+When:	July 2007
+Why:	Superfluous, this list duplicates the one maintained by the driver
+	core.
+Who:	Jean Delvare <khali@linux-fr.org>,
+	David Brownell <dbrownell@users.sourceforge.net>
+
+---------------------------
+
+What:  drivers depending on OBSOLETE_OSS
+When:  options in 2.6.22, code in 2.6.24
+Why:   OSS drivers with ALSA replacements
+Who:   Adrian Bunk <bunk@stusta.de>
+
+---------------------------
+
+What:	ACPI hooks (X86_SPEEDSTEP_CENTRINO_ACPI) in speedstep-centrino driver
+When:	December 2006
+Why:	Speedstep-centrino driver with ACPI hooks and acpi-cpufreq driver are
+	functionally very much similar. They talk to ACPI in same way. Only
+	difference between them is the way they do frequency transitions.
+	One uses MSRs and the other one uses IO ports. Functionaliy of
+	speedstep_centrino with ACPI hooks is now merged into acpi-cpufreq.
+	That means one common driver will support all Intel Enhanced Speedstep
+	capable CPUs. That means less confusion over name of
+	speedstep-centrino driver (with that driver supposed to be used on
+	non-centrino platforms). That means less duplication of code and
+	less maintenance effort and no possibility of these two drivers
+	going out of sync.
+	Current users of speedstep_centrino with ACPI hooks are requested to
+	switch over to acpi-cpufreq driver. speedstep-centrino will continue
+	to work using older non-ACPI static table based scheme even after this
+	date.
+
+Who:	Venkatesh Pallipadi <venkatesh.pallipadi@intel.com>
+
+---------------------------
+
+What:	/sys/firmware/acpi/namespace
+When:	2.6.21
+Why:	The ACPI namespace is effectively the symbol list for
+	the BIOS.  The device names are completely arbitrary
+	and have no place being exposed to user-space.
+
+	For those interested in the BIOS ACPI namespace,
+	the BIOS can be extracted and disassembled with acpidump
+	and iasl as documented in the pmtools package here:
+	http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/utils
+Who:	Len Brown <len.brown@intel.com>
+
+---------------------------
+
+What:	ACPI procfs interface
+When:	July 2007
+Why:	After ACPI sysfs conversion, ACPI attributes will be duplicated
+	in sysfs and the ACPI procfs interface should be removed.
+Who:	Zhang Rui <rui.zhang@intel.com>
+
+---------------------------
+
+What:	/proc/acpi/button
+When:	August 2007
+Why:	/proc/acpi/button has been replaced by events to the input layer
+	since 2.6.20.
+Who:	Len Brown <len.brown@intel.com>
+
+---------------------------
+
+What:   sk98lin network driver
+When:   July 2007
+Why:    In kernel tree version of driver is unmaintained. Sk98lin driver
+	replaced by the skge driver. 
+Who:    Stephen Hemminger <shemminger@osdl.org>
+
+---------------------------
+
+What:	Compaq touchscreen device emulation
+When:	Oct 2007
+Files:	drivers/input/tsdev.c
+Why:	The code says it was obsolete when it was written in 2001.
+	tslib is a userspace library which does anything tsdev can do and
+	much more besides in userspace where this code belongs. There is no
+	longer any need for tsdev and applications should have converted to
+	use tslib by now.
+	The name "tsdev" is also extremely confusing and lots of people have
+	it loaded when they don't need/use it.
+Who:	Richard Purdie <rpurdie@rpsys.net>
+
+---------------------------
+
+What:	Multipath cached routing support in ipv4
+When:	in 2.6.23
+Why:	Code was merged, then submitter immediately disappeared leaving
+	us with no maintainer and lots of bugs.  The code should not have
+	been merged in the first place, and many aspects of it's
+	implementation are blocking more critical core networking
+	development.  It's marked EXPERIMENTAL and no distribution
+	enables it because it cause obscure crashes due to unfixable bugs
+	(interfaces don't return errors so memory allocation can't be
+	handled, calling contexts of these interfaces make handling
+	errors impossible too because they get called after we've
+	totally commited to creating a route object, for example).
+	This problem has existed for years and no forward progress
+	has ever been made, and nobody steps up to try and salvage
+	this code, so we're going to finally just get rid of it.
+Who:	David S. Miller <davem@davemloft.net>
+
+---------------------------
+
+What:	read_dev_chars(), read_conf_data{,_lpm}() (s390 common I/O layer)
+When:	December 2007
+Why:	These functions are a leftover from 2.4 times. They have several
+	problems:
+	- Duplication of checks that are done in the device driver's
+	  interrupt handler
+	- common I/O layer can't do device specific error recovery
+	- device driver can't be notified for conditions happening during
+	  execution of the function
+	Device drivers should issue the read device characteristics and read
+	configuration data ccws and do the appropriate error handling
+	themselves.
+Who:	Cornelia Huck <cornelia.huck@de.ibm.com>
+
+---------------------------
+
+What:	i2c-ixp2000, i2c-ixp4xx and scx200_i2c drivers
+When:	September 2007
+Why:	Obsolete. The new i2c-gpio driver replaces all hardware-specific
+	I2C-over-GPIO drivers.
+Who:	Jean Delvare <khali@linux-fr.org>
+
+---------------------------
+
+What:  drivers depending on OSS_OBSOLETE
+When:  options in 2.6.23, code in 2.6.25
+Why:   obsolete OSS drivers
+Who:   Adrian Bunk <bunk@stusta.de>
+
+---------------------------
+
+What: libata spindown skipping and warning
+When: Dec 2008
+Why:  Some halt(8) implementations synchronize caches for and spin
+      down libata disks because libata didn't use to spin down disk on
+      system halt (only synchronized caches).
+      Spin down on system halt is now implemented.  sysfs node
+      /sys/class/scsi_disk/h:c:i:l/manage_start_stop is present if
+      spin down support is available.
+      Because issuing spin down command to an already spun down disk
+      makes some disks spin up just to spin down again, libata tracks
+      device spindown status to skip the extra spindown command and
+      warn about it.
+      This is to give userspace tools the time to get updated and will
+      be removed after userspace is reasonably updated.
+Who:  Tejun Heo <htejun@gmail.com>
+
+---------------------------
+

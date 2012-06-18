@@ -1,0 +1,30 @@
+<samba:parameter name="ldapsam:trusted"
+	context="G"
+	type="string"
+		 advanced="1" developer="0"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+	<para>
+	By default, Samba as a Domain Controller with an LDAP backend needs to use the Unix-style NSS subsystem to
+	access user and group information. Due to the way Unix stores user information in /etc/passwd and /etc/group
+	this inevitably leads to inefficiencies. One important question a user needs to know is the list of groups he
+	is member of. The plain UNIX model involves a complete enumeration of the file /etc/group and its NSS
+	counterparts in LDAP. UNIX has optimized functions to enumerate group membership. Sadly, other functions that
+	are used to deal with user and group attributes lack such optimization.
+	</para>
+
+	<para>
+	To make Samba scale well in large environments, the <smbconfoption name="ldapsam:trusted">yes</smbconfoption>
+	option assumes that the complete user and group database that is relevant to Samba is stored in LDAP with the
+	standard posixAccount/posixGroup attributes. It further assumes that the Samba auxiliary object classes are 
+	stored together with the POSIX data in the same LDAP object. If these assumptions are met, 
+	<smbconfoption name="ldapsam:trusted">yes</smbconfoption> can be activated and Samba can bypass the 
+	NSS system to query user group memberships. Optimized LDAP queries can greatly speed up domain logon and 
+	administration tasks. Depending on the size of the LDAP database a factor of 100 or more for common queries 
+	is easily achieved.
+	</para>
+
+</description>
+<value type="default">no</value>
+</samba:parameter>

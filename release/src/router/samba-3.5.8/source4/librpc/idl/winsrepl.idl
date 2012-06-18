@@ -1,0 +1,175 @@
+#include "idl_types.h"
+
+/*
+   IDL structures for WINS replication protocol (port 42)
+
+   Note that WINS replication is not traditionally encoded using
+   IDL/NDR
+
+   Written by Andrew Tridgell <tridge@osdl.org>
+*/
+
+import "nbt.idl";
+
+interface wrepl
+{
+	const int WINS_REPLICATION_PORT = 42;
+
+	typedef [flag(NDR_BIG_ENDIAN)] struct {
+		ipv4address owner;
+		ipv4address ip;
+	} wrepl_ip;
+
+	typedef [flag(NDR_LITTLE_ENDIAN)] struct {
+		uint32      num_ips;
+		wrepl_ip    ips[num_ips];
+	} wrepl_address_list;
+
+	typedef [nodiscriminant] union {
+		[case(0)] ipv4address ip;
+		[case(2)] wrepl_address_list addresses;
+	} wrepl_addresses;
+
+	typedef [enum8bit] enum {
+		WREPL_TYPE_UNIQUE	= 0x0,
+		WREPL_TYPE_GROUP	= 0x1,
+		WREPL_TYPE_SGROUP	= 0x2,
+		WREPL_TYPE_MHOMED	= 0x3
+	} wrepl_name_type;
+
+	typedef [enum8bit] enum {
+		WREPL_STATE_ACTIVE	= 0x0,
+		WREPL_STATE_RELEASED	= 0x1,
+		WREPL_STATE_TOMBSTONE	= 0x2,
+		WREPL_STATE_RESERVED	= 0x3
+	} wrepl_name_state;
+
+	typedef [enum8bit] enum {
+		WREPL_NODE_B	= 0x0,
+		WREPL_NODE_P	= 0x1,
+		WREPL_NODE_M	= 0x2,
+		WREPL_NODE_H	= 0x3
+	} wrepl_name_node;
+
+	typedef [bitmap32bit] bitmap {
+		WREPL_FLAGS_RECORD_TYPE		= 0x00000003,
+		WREPL_FLAGS_RECORD_STATE	= 0x0000000C,
+		WREPL_FLAGS_REGISTERED_LOCAL	= 0x00000010,
+		WREPL_FLAGS_NODE_TYPE		= 0x00000060,
+		WREPL_FLAGS_IS_STATIC		= 0x00000080
+	} wrepl_flags;
+
+	typedef [v1_enum] enum {
+		WREPL_GROUP_FLAG_NO_GROUP	= 0x00000000,
+		WREPL_GROUP_FLAG_IS_GROUP	= 0x00000001
+	} wrepl_group_flag;
+
+#define WREPL_IS_GROUP(flags) (\
+	((((flags) & WREPL_FLAGS_RECORD_TYPE) == WREPL_TYPE_GROUP)|| \
+	(((flags) & WREPL_FLAGS_RECORD_TYPE) == WREPL_TYPE_SGROUP))\
+	? WREPL_GROUP_FLAG_IS_GROUP : WREPL_GROUP_FLAG_NO_GROUP)
+
+	typedef struct {
+		wrepl_nbt_name name;
+		wrepl_flags flags;
+		[flag(NDR_LITTLE_ENDIAN),value(WREPL_IS_GROUP(flags))] wrepl_group_flag is_group;
+		udlongr   id;
+		[switch_is(flags & 2)] wrepl_addresses addresses;
+		ipv4address unknown;
+	} wrepl_wins_name;
+
+	typedef struct {
+		uint32          num_names;
+		wrepl_wins_name names[num_names];
+	} wrepl_send_reply;
+
+	typedef struct {
+		ipv4address address;
+		udlongr     max_version;
+		udlongr     min_version;
+		uint32      type;
+	} wrepl_wins_owner;
+
+	typedef struct {
+		uint32           partner_count;
+		wrepl_wins_owner partners[partner_count];
+		ipv4address      initiator;
+	} wrepl_table;
+
+	typedef [v1_enum] enum {
+		WREPL_REPL_TABLE_QUERY  = 0,
+		WREPL_REPL_TABLE_REPLY  = 1,
+		WREPL_REPL_SEND_REQUEST = 2,
+		WREPL_REPL_SEND_REPLY   = 3,
+		WREPL_REPL_UPDATE       = 4,
+		WREPL_REPL_UPDATE2      = 5,
+		WREPL_REPL_INFORM       = 8,
+		WREPL_REPL_INFORM2      = 9
+	} wrepl_replication_cmd;
+
+	typedef [nodiscriminant] union {
+		[case(WREPL_REPL_TABLE_QUERY)] ;
+		[case(WREPL_REPL_TABLE_REPLY)]  wrepl_table      table;
+		[case(WREPL_REPL_SEND_REQUEST)] wrepl_wins_owner owner;
+		[case(WREPL_REPL_SEND_REPLY)]   wrepl_send_reply reply;
+		[case(WREPL_REPL_UPDATE)]       wrepl_table      table;
+		[case(WREPL_REPL_UPDATE2)]      wrepl_table      table;
+		[case(WREPL_REPL_INFORM)]       wrepl_table      table;
+		[case(WREPL_REPL_INFORM2)]      wrepl_table      table;
+	} wrepl_replication_info;
+
+	typedef struct {
+		wrepl_replication_cmd command;
+		[switch_is(command)] wrepl_replication_info info;
+	} wrepl_replication;
+
+	typedef struct {
+		uint32 assoc_ctx;
+		uint16 minor_version;
+		uint16 major_version;
+	} wrepl_start;
+
+	typedef struct {
+		uint32 reason;
+	} wrepl_stop;
+
+	typedef [v1_enum] enum {
+		WREPL_START_ASSOCIATION       = 0,
+		WREPL_START_ASSOCIATION_REPLY = 1,
+		WREPL_STOP_ASSOCIATION        = 2,
+		WREPL_REPLICATION             = 3
+	} wrepl_mess_type;
+
+	typedef [nodiscriminant] union {
+		[case(WREPL_START_ASSOCIATION)]       wrepl_start start;
+		[case(WREPL_START_ASSOCIATION_REPLY)] wrepl_start start_reply;
+		[case(WREPL_STOP_ASSOCIATION)]        wrepl_stop stop;
+		[case(WREPL_REPLICATION)]             wrepl_replication replication;
+	} wrepl_message;
+
+	/*
+	  the opcode appears to be a bitfield, but as far as I can tell
+	  you must always set the following bits. Additional bits don't
+	  seem to matter. Very strange.
+	*/
+	const int WREPL_OPCODE_BITS = 0x7800;
+
+
+	typedef [gensize,flag(NDR_BIG_ENDIAN|NDR_PAHEX),public] struct {
+		uint32                 opcode;
+		uint32                 assoc_ctx;
+		wrepl_mess_type        mess_type;
+		[switch_is(mess_type)] wrepl_message message;
+		[flag(NDR_REMAINING)] DATA_BLOB padding;
+	} wrepl_packet;
+
+	typedef [flag(NDR_BIG_ENDIAN|NDR_PAHEX),public] struct {
+		[value(ndr_size_wrepl_packet(&packet, ndr->iconv_convenience, ndr->flags))] uint32 size;
+		wrepl_packet    packet;
+	} wrepl_wrap;
+
+	void decode_winsrepl(
+		[in] wrepl_wrap p
+		);
+
+}

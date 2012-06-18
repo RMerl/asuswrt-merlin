@@ -1,0 +1,225 @@
+.\" -*- tab-width: 4 -*-
+.\" 
+.\" Copyright (c) 2004 Apple Computer, Inc. All Rights Reserved.
+.\" 
+.\" Licensed under the Apache License, Version 2.0 (the "License");
+.\" you may not use this file except in compliance with the License.
+.\" You may obtain a copy of the License at
+.\" 
+.\"     http://www.apache.org/licenses/LICENSE-2.0
+.\" 
+.\" Unless required by applicable law or agreed to in writing, software
+.\" distributed under the License is distributed on an "AS IS" BASIS,
+.\" WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+.\" See the License for the specific language governing permissions and
+.\" limitations under the License.
+.\"
+.\" $Log: mDNS.1,v $
+.\" Revision 1.8  2006/08/14 23:24:56  cheshire
+.\" Re-licensed mDNSResponder daemon source code under Apache License, Version 2.0
+.\"
+.\" Revision 1.7  2005/02/16 02:29:32  cheshire
+.\" Update terminology
+.\"
+.\" Revision 1.6  2005/02/10 22:35:28  cheshire
+.\" <rdar://problem/3727944> Update name
+.\"
+.\" Revision 1.5  2004/09/24 18:33:05  cheshire
+.\" <rdar://problem/3561780> Update man pages to clarify that mDNS and dns-sd are not intended for script use
+.\"
+.\" Revision 1.4  2004/09/22 22:18:48  cheshire
+.\" Update man page to cross-reference new dns-sd man page
+.\"
+.\" Revision 1.3  2004/05/19 00:31:28  cheshire
+.\" Add missing "name type domain" for -L option
+.\"
+.\" Revision 1.2  2004/05/18 18:58:29  cheshire
+.\" Refinements from Soren Spies
+.\"
+.\" Revision 1.1  2004/04/22 02:52:53  cheshire
+.\" <rdar://problem/3597463>: mDNSResponder missing man pages: mDNS
+.\"
+.\"
+.\"
+.Dd April 2004              \" Date
+.Dt mDNS 1                  \" Document Title
+.Os Darwin                  \" Operating System
+.\"
+.Sh NAME
+.Nm mDNS
+.Nd Multicast DNS (mDNS) & DNS Service Discovery (DNS-SD) Test Tool \" For whatis
+.\" 
+.Sh SYNOPSIS
+.Nm Fl R Ar name type domain port Op Ar key=value ...
+.Pp
+.Nm Fl B Ar      type domain
+.Pp
+.Nm Fl L Ar name type domain
+.\"
+.Sh DESCRIPTION
+The
+.Nm
+command is a network diagnostic tool, much like
+.Xr ping 8
+or
+.Xr traceroute 8 .
+However, unlike those tools, most of its functionality is not implemented in the
+.Nm
+executable itself, but in library code that is available to any application.
+The library API that
+.Nm
+uses is documented in
+.Pa /usr/include/DNSServiceDiscovery/DNSServiceDiscovery.h .
+Note that this Mach-based API, first introduced in Mac OS X 10.2,
+is now deprecated in favour of the newer
+.Pa /usr/include/dns_sd.h
+API, which is built on Unix Domain Sockets and is supported on
+multiple platforms.
+The command-line tool to exercise the cross-platform
+.Pa dns_sd.h
+API is
+.Xr dns-sd 1 .
+.Pp
+The
+.Nm
+command is primarily intended for interactive use.
+Because its command-line arguments and output format are subject to change,
+invoking it from a shell script will generally be fragile. Additionally,
+the asynchronous nature of DNS Service Discovery does
+not lend itself easily to script-oriented programming. For example,
+calls like "browse" never complete; the action of performing a "browse"
+sets in motion machinery to notify the client whenever instances of
+that service type appear or disappear from the network. These
+notifications continue to be delivered indefinitely, for minutes,
+hours, or even days, as services come and go, until the client
+explicitly terminates the call. This style of asynchronous interaction
+works best with applications that are either multi-threaded, or use a
+main event-handling loop to receive keystrokes, network data, and other
+asynchronous event notifications as they happen.
+.br
+If you wish to perform DNS Service Discovery operations from a
+scripting language, then the best way to do this is not to execute the
+.Nm
+command and then attempt to decipher the textual output, but instead to
+directly call the DNS-SD APIs using a binding for your chosen language.
+.br
+For example, if you are programming in Ruby, then you can
+directly call DNS-SD APIs using the dnssd package documented at
+.Pa <http://rubyforge.org/projects/dnssd/> .
+.br
+Similar bindings for other languages are also in development.
+.Pp
+.Bl -tag -width R
+.It Nm Fl R Ar name type domain port Op Ar key=value ...
+register (advertise) a service in the specified
+.Ar domain 
+with the given
+.Ar name
+and
+.Ar type
+as listening (on the current machine) on
+.Ar port.
+.Pp
+.Ar name
+can be arbitrary unicode text, containing any legal unicode characters
+(including dots, spaces, slashes, colons, etc. without restriction),
+up to 63 UTF-8 bytes long.
+.Ar type
+must be of the form "_app-proto._tcp" or "_app-proto._udp", where
+"app-proto" is an application protocol name registered at
+.Pa http://www.dns-sd.org/ServiceTypes.html .
+.Pp
+.Ar domain
+is the domain in which to register the service.
+In current implementations, only the local multicast domain "local" is
+supported. In the future, registering will be supported in any arbitrary
+domain that has a working DNS Update server [RFC 2136]. The
+.Ar domain
+"." is a synonym for "pick a sensible default" which today
+means "local".
+.Pp
+.Ar port
+is a number from 0 to 65535, and is the TCP or UDP port number upon
+which the service is listening.
+.Pp 
+Additional attributes of the service may optionally be described by
+key/value pairs, which are stored in the advertised service's DNS TXT
+record. Allowable keys and values are listed with the service
+registration at
+.Pa http://www.dns-sd.org/ServiceTypes.html .
+.It Nm Fl B Ar type domain
+browse for instances of service
+.Ar type
+in
+.Ar domain .
+.Pp
+For valid 
+.Ar type Ns s
+see
+.Pa http://www.dns-sd.org/ServiceTypes.html
+as described above. Omitting the
+.Ar domain
+or using "." means "pick a sensible default."
+.It Nm Fl L Ar name type domain
+look up and display the information necessary to contact and use the
+named service: the hostname of the machine where that service is
+available, the port number on which the service is listening, and (if
+present) TXT record attributes describing properties of the service.
+.Pp
+Note that in a typical application, browsing happens rarely, while lookup
+(or "resolving") happens every time the service is used. For example, a
+user browses the network to pick a default printer fairly rarely, but once
+a default printer has been picked, that named service is resolved to its
+current IP address and port number every time the user presses Cmd-P to
+print.
+.El
+.Sh EXAMPLES
+.Pp
+To advertise the existence of LPR printing service on port 515 on this
+machine, such that it will be discovered by the Mac OS X printing software
+and other DNS-SD compatible printing clients, use:
+.Pp
+.Dl Nm Fl R Ns \ \&"My Test\&" _printer._tcp. \&. 515 pdl=application/postscript
+.Pp
+For this registration to be useful, you need to actually have LPR service
+available on port 515. Advertising a service that does not exist is not
+very useful, and will be confusing and annoying to other people on the
+network.
+.Pp
+Similarly, to advertise a web page being served by an HTTP
+server on port 80 on this machine, such that it will show up in the
+Bonjour list in Safari and other DNS-SD compatible Web clients, use:
+.Pp
+.Dl Nm Fl R Ns \ \&"My Test\&" _http._tcp \&. 80 path=/path-to-page.html
+.Pp
+To find the advertised web pages on the local network (the same list that
+Safari shows), use:
+.Pp
+.Dl Nm Fl B Ns \ _http._tcp
+.Pp
+While that command is running, in another window, try the
+.Nm Fl R
+example given above to advertise a web page, and you should see the
+"Add" event reported to the
+.Nm Fl B
+window. Now press Ctrl-C in the
+.Nm Fl R
+window and you should see the "Remove" event reported to the
+.Nm Fl B
+window.
+.Pp
+.Sh FILES
+.Pa /usr/bin/mDNS \" Pathname
+.\"
+.Sh SEE ALSO
+.Xr dns-sd 1
+.Xr mDNSResponder 8
+.\"
+.Sh BUGS
+.Nm
+bugs are tracked in Apple Radar component "mDNSResponder".
+.\"
+.Sh HISTORY
+The
+.Nm
+command first appeared in Mac OS X 10.3 (Panther).

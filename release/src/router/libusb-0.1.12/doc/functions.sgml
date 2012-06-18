@@ -1,0 +1,540 @@
+  <title>Functions</title>
+
+  <reference id="ref.core">
+    <title>Core</title>
+    <partintro>
+      <!-- FIXME: Check spelling of "comprise" -->
+      <para>These functions comprise the core of libusb. They are used by all applications that utilize libusb.</para>
+    </partintro>
+
+    <refentry id="function.usbinit">
+      <refnamediv>
+        <refname>usb_init</refname>
+        <refpurpose>Initialize libusb</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>void <function>usb_init</function></funcdef>
+            <void>
+          </funcprototype>
+        </funcsynopsis>
+        <para>Just like the name implies, <function>usb_init</function> sets up some internal structures. <function>usb_init</function> <emphasis>must</emphasis> be called before any other libusb functions.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbfindbusses">
+      <refnamediv>
+        <refname>usb_find_busses</refname>
+        <refpurpose>Finds all USB busses on system</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_find_busses</function></funcdef>
+            <void>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_find_busses</function> will find all of the busses on the system. Returns the number of changes since previous call to this function (total of new busses and busses removed).</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbfinddevices">
+      <refnamediv>
+        <refname>usb_find_devices</refname>
+        <refpurpose>Find all devices on all USB devices</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_find_devices</function></funcdef>
+            <void>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_find_devices</function> will find all of the devices on each bus. This should be called after <xref linkend="function.usbfindbusses">. Returns the number of changes since the previous call to this function (total of new device and devices removed).</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbgetbusses">
+      <refnamediv>
+        <refname>usb_get_busses</refname>
+        <refpurpose>Return the list of USB busses found</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>struct usb_bus *<function>usb_get_busses</function></funcdef>
+            <void>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_get_busses</function> simply returns the value of the global variable <varname>usb_busses</varname>. This was implemented for those languages that support C calling convention and can use shared libraries, but don't support C global variables (like Delphi).</para>
+      </refsect1>
+    </refentry>
+  </reference>
+
+  <reference id="ref.deviceops">
+    <title>Device operations</title>
+    <partintro>
+      <para>This group of functions deal with the device. It allows you to open and close the device as well standard USB operations like setting the configuration, alternate settings, clearing halts and resetting the device. It also provides OS level operations such as claiming and releasing interfaces.</para>
+    </partintro>
+
+    <refentry id="function.usbopen">
+      <refnamediv>
+        <refname>usb_open</refname>
+        <refpurpose>Opens a USB device</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>usb_dev_handle *<function>usb_open</function></funcdef>
+            <paramdef>struct *usb_device <parameter>dev</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_open</function> is to be used to open up a device for use. <function>usb_open</function> must be called before attempting to perform any operations to the device. Returns a handle used in future communication with the device.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbclose">
+      <refnamediv>
+        <refname>usb_close</refname>
+        <refpurpose>Closes a USB device</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_close</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_close</function> closes a device opened with <xref linkend="function.usbopen">. No further operations may be performed on the handle after <function>usb_close</function> is called. Returns 0 on success or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbsetconfiguration">
+      <refnamediv>
+        <refname>usb_set_configuration</refname>
+        <refpurpose>Sets the active configuration of a device</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_set_configuration</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>configuration</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_set_configuration</function> sets the active configuration of a device. The <varname>configuration</varname> parameter is the value as specified in the descriptor field bConfigurationValue. Returns 0 on success or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbsetaltinterface">
+      <refnamediv>
+        <refname>usb_set_altinterface</refname>
+        <refpurpose>Sets the active alternate setting of the current interface</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_set_altinterface</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>alternate</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_set_altinterface</function> sets the active alternate setting of the current interface. The <varname>alternate</varname> parameter is the value as specified in the descriptor field bAlternateSetting. Returns 0 on success or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbresetep">
+      <refnamediv>
+        <refname>usb_resetep</refname>
+        <refpurpose>Resets state for an endpoint</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_resetep</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>unsigned int <parameter>ep</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_resetep</function> resets all state (like toggles) for the specified endpoint. The <varname>ep</varname> parameter is the value specified in the descriptor field bEndpointAddress. Returns 0 on success or &lt; 0 on error.</para>
+        <note>
+          <title>Deprecated</title>
+          <para><function>usb_resetep</function> is deprecated. You probably want to use <xref linkend="function.usbclearhalt">.</para>
+        </note>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbclearhalt">
+      <refnamediv>
+        <refname>usb_clear_halt</refname>
+        <refpurpose>Clears any halt status on an endpoint</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_clear_halt</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>unsigned int <parameter>ep</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_clear_halt</function> clears any halt status on the specified endpoint. The <varname>ep</varname> parameter is the value specified in the descriptor field bEndpointAddress. Returns 0 on success or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbreset">
+      <refnamediv>
+        <refname>usb_reset</refname>
+        <refpurpose>Resets a device</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_reset</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_reset</function> resets the specified device by sending a RESET down the port it is connected to. Returns 0 on success or &lt; 0 on error.</para>
+        <note>
+          <title>Causes re-enumeration</title>
+          <para>After calling <function>usb_reset</function>, the device will need to re-enumerate and thusly, requires you to find the new device and open a new handle. The handle used to call <function>usb_reset</function> will no longer work.</para>
+        </note>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbclaiminterface">
+      <refnamediv>
+        <refname>usb_claim_interface</refname>
+        <refpurpose>Claim an interface of a device</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_claim_interface</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>interface</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_claim_interface</function> claims the interface with the Operating System. The interface parameter is the value as specified in the descriptor field bInterfaceNumber. Returns 0 on success or &lt; 0 on error.</para>
+        <important>
+          <title>Must be called!</title>
+          <para><function>usb_claim_interface</function> <emphasis>must</emphasis> be called before you perform any operations related to this interface (like <xref linkend="function.usbsetaltinterface">, <xref linkend="function.usbbulkwrite">, etc).</para>
+        </important>
+
+        <table>
+          <title>Return Codes</title>
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry>code</entry>
+                <entry>description</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>-EBUSY</entry>
+                <entry>Interface is not available to be claimed</entry>
+              </row>
+              <row>
+                <entry>-ENOMEM</entry>
+                <entry>Insufficient memory</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbreleaseinterface">
+      <refnamediv>
+        <refname>usb_release_interface</refname>
+        <refpurpose>Releases a previously claimed interface</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_release_interface</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>interface</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_release_interface</function> releases an interface previously claimed with <xref linkend="function.usbclaiminterface">. The interface parameter is the value as specified in the descriptor field bInterfaceNumber. Returns 0 on success or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+  </reference>
+
+  <reference id="ref.control">
+    <title>Control Transfers</title>
+    <partintro>
+      <para>This group of functions allow applications to send messages to the default control pipe.</para>
+    </partintro>
+
+    <refentry id="function.usbcontrolmsg">
+      <refnamediv>
+        <refname>usb_control_msg</refname>
+        <refpurpose>Send a control message to a device</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_control_msg</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>requesttype</parameter></paramdef>
+            <paramdef>int <parameter>request</parameter></paramdef>
+            <paramdef>int <parameter>value</parameter></paramdef>
+            <paramdef>int <parameter>index</parameter></paramdef>
+            <paramdef>char *<parameter>bytes</parameter></paramdef>
+            <paramdef>int <parameter>size</parameter></paramdef>
+            <paramdef>int <parameter>timeout</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_control_msg</function> performs a control request to the default control pipe on a device. The parameters mirror the types of the same name in the USB specification. Returns number of bytes written/read or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbgetstring">
+      <refnamediv>
+        <refname>usb_get_string</refname>
+        <refpurpose>Retrieves a string descriptor from a device</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_get_string</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>index</parameter></paramdef>
+            <paramdef>int <parameter>langid</parameter></paramdef>
+            <paramdef>char *<parameter>buf</parameter></paramdef>
+            <paramdef>size_t <parameter>buflen</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_get_string</function> retrieves the string descriptor specified by index and langid from a device. The string will be returned in Unicode as specified by the USB specification. Returns the number of bytes returned in <varname>buf</varname> or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbgetstringsimple">
+      <refnamediv>
+        <refname>usb_get_string_simple</refname>
+        <refpurpose>Retrieves a string descriptor from a device using the first language</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_get_string_simple</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>index</parameter></paramdef>
+            <paramdef>char *<parameter>buf</parameter></paramdef>
+            <paramdef>size_t <parameter>buflen</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_get_string_simple</function> is a wrapper around <function>usb_get_string</function> that retrieves the string description specified by index in the first language for the descriptor and converts it into C style ASCII. Returns number of bytes returned in <varname>buf</varname> or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbgetdescriptor">
+      <refnamediv>
+        <refname>usb_get_descriptor</refname>
+        <refpurpose>Retrieves a descriptor from a device's default control pipe</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_get_descriptor</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>unsigned char <parameter>type</parameter></paramdef>
+            <paramdef>unsigned char <parameter>index</parameter></paramdef>
+            <paramdef>void *<parameter>buf</parameter></paramdef>
+            <paramdef>int <parameter>size</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_get_descriptor</function> retrieves a descriptor from the device identified by the <varname>type</varname> and <varname>index</varname> of the descriptor from the default control pipe. Returns number of bytes read for the descriptor or &lt; 0 on error.</para>
+        <para>See <xref linkend="function.usbgetdescriptorbyendpoint"> for a function that allows the control endpoint to be specified.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbgetdescriptorbyendpoint">
+      <refnamediv>
+        <refname>usb_get_descriptor_by_endpoint</refname>
+        <refpurpose>Retrieves a descriptor from a device</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_get_descriptor_by_endpoint</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>ep</parameter></paramdef>
+            <paramdef>unsigned char <parameter>type</parameter></paramdef>
+            <paramdef>unsigned char <parameter>index</parameter></paramdef>
+            <paramdef>void *<parameter>buf</parameter></paramdef>
+            <paramdef>int <parameter>size</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_get_descriptor_by_endpoint</function> retrieves a descriptor from the device identified by the <varname>type</varname> and <varname>index</varname> of the descriptor from the control pipe identified by <varname>ep</varname>. Returns number of bytes read for the descriptor or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+  </reference>
+
+  <reference id="ref.bulk">
+    <title>Bulk Transfers</title>
+    <partintro>
+      <para>This group of functions allow applications to send and receive data via bulk pipes.</para>
+    </partintro>
+
+    <refentry id="function.usbbulkwrite">
+      <refnamediv>
+        <refname>usb_bulk_write</refname>
+        <refpurpose>Write data to a bulk endpoint</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_bulk_write</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>ep</parameter></paramdef>
+            <paramdef>char *<parameter>bytes</parameter></paramdef>
+            <paramdef>int <parameter>size</parameter></paramdef>
+            <paramdef>int <parameter>timeout</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_bulk_write</function> performs a bulk write request to the endpoint specified by <varname>ep</varname>. Returns number of bytes written on success or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbbulkread">
+      <refnamediv>
+        <refname>usb_bulk_read</refname>
+        <refpurpose>Read data from a bulk endpoint</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_bulk_read</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>ep</parameter></paramdef>
+            <paramdef>char *<parameter>bytes</parameter></paramdef>
+            <paramdef>int <parameter>size</parameter></paramdef>
+            <paramdef>int <parameter>timeout</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_bulk_read</function> performs a bulk read request to the endpoint specified by <varname>ep</varname>. Returns number of bytes read on success or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+  </reference>
+
+  <reference id="ref.interrupt">
+    <title>Interrupt Transfers</title>
+    <partintro>
+      <para>This group of functions allow applications to send and receive data via interrupt pipes.</para>
+    </partintro>
+
+    <refentry id="function.usbinterruptwrite">
+      <refnamediv>
+        <refname>usb_interrupt_write</refname>
+        <refpurpose>Write data to an interrupt endpoint</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_interrupt_write</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>ep</parameter></paramdef>
+            <paramdef>char *<parameter>bytes</parameter></paramdef>
+            <paramdef>int <parameter>size</parameter></paramdef>
+            <paramdef>int <parameter>timeout</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_interrupt_write</function> performs an interrupt write request to the endpoint specified by <varname>ep</varname>. Returns number of bytes written on success or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbinterruptread">
+      <refnamediv>
+        <refname>usb_interrupt_read</refname>
+        <refpurpose>Read data from a interrupt endpoint</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_interrupt_read</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>ep</parameter></paramdef>
+            <paramdef>char *<parameter>bytes</parameter></paramdef>
+            <paramdef>int <parameter>size</parameter></paramdef>
+            <paramdef>int <parameter>timeout</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para><function>usb_interrupt_read</function> performs a interrupt read request to the endpoint specified by <varname>ep</varname>. Returns number of bytes read on success or &lt; 0 on error.</para>
+      </refsect1>
+    </refentry>
+  </reference>
+
+  <reference id="ref.nonportable">
+    <title>Non Portable</title>
+    <partintro>
+      <para>These functions are non portable. They may expose some part of the USB API on one OS or perhaps a couple, but not all. They are all marked with the string _np at the end of the function name.</para>
+      <para>A C preprocessor macro will be defined if the function is implemented. The form is LIBUSB_HAS_ prepended to the function name, without the leading "usb_", in all caps. For example, if usb_get_driver_np is implemented, LIBUSB_HAS_GET_DRIVER_NP will be defined.</para>
+    </partintro>
+
+    <refentry id="function.usbgetdrivernp">
+      <refnamediv>
+        <refname>usb_get_driver_np</refname>
+        <refpurpose>Get driver name bound to interface</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_get_driver_np</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>interface</parameter></paramdef>
+            <paramdef>char *<parameter>name</parameter></paramdef>
+            <paramdef>int <parameter>namelen</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para>This function will obtain the name of the driver bound to the interface specified by the parameter <parameter>interface</parameter> and place it into the buffer named <parameter>name</parameter> limited to <parameter>namelen</parameter> characters. Returns 0 on success or &lt; 0 on error.</para>
+        <para>Implemented on Linux only.</para>
+      </refsect1>
+    </refentry>
+
+    <refentry id="function.usbdetachkerneldrivernp">
+      <refnamediv>
+        <refname>usb_detach_kernel_driver_np</refname>
+        <refpurpose>Detach kernel driver from interface</refpurpose>
+      </refnamediv>
+      <refsect1>
+        <title>Description</title>
+        <funcsynopsis>
+          <funcprototype>
+            <funcdef>int <function>usb_detach_kernel_driver_np</function></funcdef>
+            <paramdef>usb_dev_handle *<parameter>dev</parameter></paramdef>
+            <paramdef>int <parameter>interface</parameter></paramdef>
+          </funcprototype>
+        </funcsynopsis>
+        <para>This function will detach a kernel driver from the interface specified by parameter <parameter>interface</parameter>. Applications using libusb can then try claiming the interface. Returns 0 on success or &lt; 0 on error.</para>
+        <para>Implemented on Linux only.</para>
+      </refsect1>
+    </refentry>
+  </reference>
+

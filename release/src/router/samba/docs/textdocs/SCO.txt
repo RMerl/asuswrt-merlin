@@ -1,0 +1,22 @@
+!==
+!== SCO.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:	Geza Makay <makayg@math.u-szeged.hu>
+Date:		Unknown
+Status:		Obsolete - Dates to SCO Unix v3.2.4 approx.
+
+Subject:	TCP/IP Bug in SCO Unix
+============================================================================
+
+There is an annoying TCPIP bug in SCO Unix. This causes corruption when
+transferring files with Samba.
+
+Geza Makay (makayg@math.u-szeged.hu) sends this information:
+
+The patch you need is UOD385 Connection Drivers SLS. It is available from
+SCO (ftp.sco.com, directory SLS, files uod385a.Z and uod385a.ltr.Z).
+
+You do not need anything else but the above patch. It installs in seconds,
+and corrected the Excel problem. We also had some other minor problems (not
+only with Samba) that disappeared by installing this patch.
+

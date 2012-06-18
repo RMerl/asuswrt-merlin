@@ -1,0 +1,404 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 7] 7.3 Name Resolution with Samba</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:35:08Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch07_02.html" TITLE="7.2 Printing to Windows Client Printers">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 7.2 Printing to Windows Client Printers" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch07_01.html" TITLE="7. Printing and Name Resolution">
+Chapter 7<br>
+Printing and Name Resolution</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="chapter" HREF="ch08_01.html" TITLE="8. Additional Samba Information ">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 8. Additional Samba Information " BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch07-12219">
+7.3 Name Resolution with Samba</a></h2><P CLASS="para">Before NetBIOS Name Servers (NBNS) came about, name resolution worked entirely by broadcast. If you needed a machine's address, you simply broadcast its name across the network and, in theory, the machine itself would reply. This approach is still possible: anyone looking for a machine named <CODE CLASS="literal">
+fred</code> can still broadcast a query and find out if it exists and what its IP address is. (We use this capability to troubleshoot Samba name services with the <CODE CLASS="literal">
+nmblookup</code> command in <a href="ch09_01.html"><b>Chapter 9, <CITE CLASS="chapter">Troubleshooting Samba</cite></b></a>.)</p><P CLASS="para">
+As you saw in the first chapter, however, broadcasting&nbsp;- whether it be browsing or name registration and resolution&nbsp;- does not pass easily across multiple subnets. In addition, many broadcasts tend to bog down networks. To solve this problem, Microsoft now provides the Windows Internet Naming Service (WINS), a cross-subnet NBNS, which Samba supports. With it, an administrator can designate a single machine to act as a WINS server, and can then provide each client that requires name resolution the address of the WINS server. Consequently, name registration and resolution requests can be directed to a single machine from any point on the network, instead of broadcast.</p><P CLASS="para">
+WINS and broadcasting are not the only means of name resolution, however. There are actually four mechanisms that can be used with Samba:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch07-pgfId-950848">
+</a>WINS</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch07-pgfId-950856">
+</a>Broadcasting</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch07-pgfId-950851">
+</a>Unix <I CLASS="filename">
+/etc/hosts</i> or NIS/NIS+ matches</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch07-pgfId-951953">
+</a><EM CLASS="emphasis">
+LMHOSTS</em> file</p></li></ul><P CLASS="para">
+Samba can use any or all of these name resolution methods in the order that you specify in the Samba configuration file using the <CODE CLASS="literal">
+name</code> <CODE CLASS="literal">
+resolve</code> <CODE CLASS="literal">
+order</code> parameter. However, before delving into configuration options, let's discuss the one that you've probably not encountered before: the <I CLASS="filename">
+LMHOSTS</i> file.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch07-pgfId-949950">
+7.3.1 The LMHOSTS File</a></h3><P CLASS="para">
+<I CLASS="filename">
+LMHOSTS</i> is the standard LAN Manager <EM CLASS="emphasis">
+hosts</em> file used to resolve names into IP addresses on the system. It is the NBT equivalent of the <I CLASS="filename">
+/etc/hosts</i> file that is standard on all Unix systems. By default, the file is usually stored as <I CLASS="filename">
+/usr/local/samba/lib/LMHOSTS</i> and shares a format similar to <I CLASS="filename">
+/etc/hosts</i>. For example:</p><PRE CLASS="programlisting">
+192.168.220.100    hydra
+192.168.220.101    phoenix</pre><P CLASS="para">
+The only difference is that the names on the right side of the entries are NetBIOS names instead of DNS names. Because they are NetBIOS names, you can assign resource types to them as well:</p><PRE CLASS="programlisting">
+192.168.220.100    hydra#20
+192.168.220.100    simple#1b
+192.168.220.101    phoenix#20</pre><P CLASS="para">
+Here, we've assigned the <CODE CLASS="literal">
+hydra</code> machine to be the primary domain controller of the <CODE CLASS="literal">
+SIMPLE</code> domain, as indicated by the resource type &lt;1B&gt; assigned to the name after <CODE CLASS="literal">
+hydra</code>'s IP address in the second line. The other two are standard workstations.</p><P CLASS="para">
+If you wish to place an <EM CLASS="emphasis">
+LMHOSTS</em> file somewhere other than the default location, you will need to notify the <EM CLASS="emphasis">
+nmbd</em> process upon start up, as follows:</p><PRE CLASS="programlisting">
+nmbd -H /etc/samba/lmhosts -D</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch07-pgfId-951120">
+7.3.2 Setting Up Samba to Use Another WINS Server</a></h3><P CLASS="para">You can set up Samba to use a WINS server somewhere else on the network by simply pointing it to the IP address of the WINS server. This is done with the global <CODE CLASS="literal">
+wins</code> <CODE CLASS="literal">
+server</code> configuration option, as shown here:</p><PRE CLASS="programlisting">
+[global]
+	wins server = 192.168.200.122</pre><P CLASS="para">
+With this option enabled, Samba will direct all WINS requests to the server at 192.168.200.122. Note that because the request is directed at a single machine, we don't have to worry about any of the problems inherent to broadcasting. However, though you have specified an IP address for a WINS server in the configuration file, Samba will not necessarily use the WINS server before other forms of name resolution. The order in which Samba attempts various name-resolution techniques is given with the <CODE CLASS="literal">
+name</code> <CODE CLASS="literal">
+resolve</code> <CODE CLASS="literal">
+order</code> configuration option, which we will discuss shortly.</p><P CLASS="para">
+If you have a Samba server on a subnet that still uses broadcasting and the Samba server knows the correct location of a WINS server on another subnet, you can configure the Samba server to forward any name resolution requests with the <CODE CLASS="literal">
+wins</code> <CODE CLASS="literal">
+proxy</code> option:</p><PRE CLASS="programlisting">
+[global]
+	wins server = 192.168.200.12
+	wins proxy = yes</pre><P CLASS="para">
+Use this only in situations where the WINS server resides on another subnet. Otherwise, the broadcast will reach the WINS server regardless of any proxying.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch07-83429">
+7.3.3 Setting Up Samba as a WINS Server</a></h3><P CLASS="para">You can set up Samba as a WINS server by setting two global options in the configuration file, as shown below:</p><PRE CLASS="programlisting">
+[global]
+	wins support = yes
+	name resolve order = wins lmhosts hosts bcast</pre><P CLASS="para">
+The <CODE CLASS="literal">
+wins</code> <CODE CLASS="literal">
+support</code> option turns Samba into a WINS server. Believe it or not, that's all you need to do! Samba handles the rest of the details behind the scenes, leaving you a relaxed administrator. The <CODE CLASS="literal">
+wins</code> <CODE CLASS="literal">
+support=yes</code> and the <CODE CLASS="literal">
+wins</code> <CODE CLASS="literal">
+server</code> option are mutually exclusive; you cannot simultaneously offer Samba as the WINS server and point to another system as the server.</p><P CLASS="para">
+If Samba is acting as a WINS server, you should probably get familiar with the <CODE CLASS="literal">
+name</code> <CODE CLASS="literal">
+resolve</code> <CODE CLASS="literal">
+order</code> option mentioned earlier. This option tells Samba the order of methods in which it tries to resolve a NetBIOS name. It can take up to four values:</p><DL CLASS="variablelist">
+<DT CLASS="term">
+lmhosts</dt><DD CLASS="listitem">
+<P CLASS="para">
+Uses a LAN Manager <EM CLASS="emphasis">
+LMHOSTS</em> file</p></dd><DT CLASS="term">
+hosts</dt><DD CLASS="listitem">
+<P CLASS="para">
+Uses the standard name resolution methods of the Unix system, <EM CLASS="emphasis">
+/etc/hosts</em>, DNS, NIS, or a combination (as configured for the system)</p></dd><DT CLASS="term">
+wins</dt><DD CLASS="listitem">
+<P CLASS="para">
+Uses the WINS server</p></dd><DT CLASS="term">
+bcast</dt><DD CLASS="listitem">
+<P CLASS="para">
+Uses a broadcast method</p></dd></dl><P CLASS="para">
+The order in which you specify them in the value is the order in which Samba will attempt name resolution when acting as a WINS server. For example, let's look at the value specified previously:</p><PRE CLASS="programlisting">
+name resolve order = wins lmhosts hosts bcast</pre><P CLASS="para">
+This means that Samba will attempt to use its WINS entries first for name resolution, followed by the LAN Manager <EM CLASS="emphasis">
+LMHOSTS</em> file on its system. Next, the hosts value causes it to use Unix name resolution methods. The word <CODE CLASS="literal">
+hosts</code> may be misleading; it covers not only the <I CLASS="filename">
+/etc/hosts</i> file, but also the use of DNS or NIS (as configured on the Unix host). Finally, if those three do not work, it will use a broadcast to try to locate the correct machine.</p><P CLASS="para">
+Finally, you can instruct a Samba server that is acting as a WINS server to check with the system's DNS server if a requested host cannot be found in its WINS database. With a typical Linux system, for example, you can find the IP address of the DNS server by searching the <I CLASS="filename">
+/etc/resolv.conf</i> file. In it, you might see an entry such as the following:</p><PRE CLASS="programlisting">
+nameserver 127.0.0.1
+nameserver 192.168.200.192</pre><P CLASS="para">
+This tells us that a DNS server is located at 192.168.220.192. (The 127.0.0.1 is the localhost address and is never a valid DNS server address.) </p><P CLASS="para">
+Use the global <CODE CLASS="literal">
+dns</code> <CODE CLASS="literal">
+proxy</code> option to alert Samba to use the configured DNS server:</p><PRE CLASS="programlisting">
+[global]
+	wins support = yes
+	name resolve order = wins lmhosts hosts bcast
+	dns proxy = yes</pre></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch07-pgfId-949952">
+7.3.4 Name Resolution Configuration Options</a></h3><P CLASS="para">Samba's WINS options are shown in <A CLASS="xref" HREF="ch07_03.html#ch07-82331">
+Table 7.5</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch07-82331">
+Table 7.5: WINS Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+wins support</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If set to <CODE CLASS="literal">
+yes</code>, Samba will act as a WINS server.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+wins server</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (IP address or DNS name)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Identifies a WINS server for Samba to use for name registration and resolution.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+wins proxy</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Allows Samba to act as a proxy to a WINS server on another subnet.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+dns proxy</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If set to <CODE CLASS="literal">
+yes</code>, a Samba WINS server will search DNS if it cannot find a name in WINS.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+name resolve order</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+lmhosts</code>, <CODE CLASS="literal">
+hosts</code>, <CODE CLASS="literal">
+wins</code>, or <CODE CLASS="literal">
+bcast</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies an order of the methods used to resolve NetBIOS names.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+lmhosts hosts wins bcast</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+max ttl</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the maximum time-to-live in seconds for a requested NetBIOS names.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+259200</code> (3 days)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+max wins ttl</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the maximum time-to-live in seconds for NetBIOS names given out by Samba as a WINS server.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+518400</code> (6 days)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+min wins ttl</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+numerical</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Specifies the minimum time-to-live in seconds for NetBIOS names given out by Samba as a WINS server.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+21600</code> (6 hours)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch07-pgfId-946762">
+7.3.4.1 wins support</a></h4><P CLASS="para">
+Samba will provide WINS name service to all machines in the network if you set the following in the <CODE CLASS="literal">
+[global]</code> section of the <I CLASS="filename">
+smb.conf</i> file:</p><PRE CLASS="programlisting">
+[global]
+    wins support = yes</pre><P CLASS="para">
+The default value is <CODE CLASS="literal">
+no</code>, which is typically used to allow another Windows NT server to become a WINS server. If you do enable this option, remember that a Samba WINS server currently cannot exchange data with any backup WINS servers. If activated, this option is mutually exclusive with the <CODE CLASS="literal">
+wins</code> <CODE CLASS="literal">
+server</code> parameter; you cannot set both to <CODE CLASS="literal">
+yes</code> at the same time or Samba will flag an error.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch07-pgfId-946766">
+7.3.4.2 wins server</a></h4><P CLASS="para">
+Samba will use an existing WINS server on the network if you specify the <CODE CLASS="literal">
+wins</code> <CODE CLASS="literal">
+server</code> global option in your configuration file. The value of this option is either the IP address or DNS name (not NetBIOS name) of the WINS server. For example:</p><PRE CLASS="programlisting">
+[global]
+    wins server = 192.168.220.110</pre><P CLASS="para">
+or:</p><PRE CLASS="programlisting">
+[global]
+    wins server = wins.example.com</pre><P CLASS="para">
+In order for this option to work, the <CODE CLASS="literal">
+wins</code> <CODE CLASS="literal">
+support</code> option must be set to <CODE CLASS="literal">
+no</code> (the default). Otherwise, Samba will report an error. You can specify only one WINS server using this option.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch07-pgfId-947973">
+7.3.4.3 wins proxy</a></h4><P CLASS="para">
+This option allows Samba to act as a proxy to another WINS server, and thus relay name registration and resolution requests from itself to the real WINS server, often outside the current subnet. The WINS server can be indicated through the <CODE CLASS="literal">
+wins</code> <CODE CLASS="literal">
+server</code> option. The proxy will then return the WINS response back to the client. You can enable this option by specifying the following in the <CODE CLASS="literal">
+[global]</code> section:</p><PRE CLASS="programlisting">
+[global]
+    wins proxy = yes</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch07-pgfId-946778">
+7.3.4.4 dns proxy</a></h4><P CLASS="para">
+If you want the domain name service (DNS) to be used if a name isn't found in WINS, you can set the following option:</p><PRE CLASS="programlisting">
+[global]
+    dns proxy = yes</pre><P CLASS="para">
+This will cause <I CLASS="filename">
+nmbd</i> to query for machine names using the server's standard domain name service. You may wish to deactivate this option if you do not have a permanent connection to your DNS server. Despite this option, we recommend using a WINS server. If you don't already have any WINS servers on your network, make one Samba machine a WINS server. Do not, however, make two Samba machines WINS servers (one primary and one backup) as they currently cannot exchange WINS databases.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch07-pgfId-949945">
+7.3.4.5 name resolve order</a></h4><P CLASS="para">
+The global <CODE CLASS="literal">
+name</code> <CODE CLASS="literal">
+resolve</code> <CODE CLASS="literal">
+order</code> option specifies the order of services that Samba will use in attempting name resolution. The default order is to use the <EM CLASS="emphasis">
+LMHOSTS</em> file, followed by standard Unix name resolution methods (some combination of    <I CLASS="filename">
+/etc/hosts</i>, DNS, and NIS), then query a WINS server, and finally use broadcasting to determine the address of a NetBIOS name. You can override this option by specifying something like the following:</p><PRE CLASS="programlisting">
+[global]
+    name resolve order = lmhosts wins hosts bcast</pre><P CLASS="para">
+This causes resolution to use the <EM CLASS="emphasis">
+LMHOSTS</em> file first, followed by a query to a WINS server, the system password file, and finally broadcasting. You need not use all four options if you don't want to. This option is covered in more detail in the section <A CLASS="xref" HREF="ch07_03.html#ch07-83429">
+Section 7.3.3, Setting Up Samba as a WINS Server</a>, earlier in this chapter.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch07-pgfId-949986">
+7.3.4.6 max ttl</a></h4><P CLASS="para">
+This option gives the maximum time to live (TTL) during which a NetBIOS name registered with the Samba server will remain active. You should never need to alter this value.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch07-pgfId-949988">
+7.3.4.7 max wins ttl</a></h4><P CLASS="para">
+This option give the maximum time to live (TTL) during which a NetBIOS name resolved from a WINS server will remain active. You should never need to change this value from its default.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch07-pgfId-949990">
+7.3.4.8 min wins ttl</a></h4><P CLASS="para">
+This option give the minimum time to live (TTL) during which a NetBIOS name resolved from a WINS server will remain active. You should never need to alter this value from its default. </p></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch07_02.html" TITLE="7.2 Printing to Windows Client Printers">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 7.2 Printing to Windows Client Printers" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="chapter" HREF="ch08_01.html" TITLE="8. Additional Samba Information ">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 8. Additional Samba Information " BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+7.2 Printing to Windows Client Printers</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+8. Additional Samba Information </td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

@@ -1,0 +1,103 @@
+
+<!--
+     File isonum.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+<!ENTITY amp              "&#x26;&#x00026;" ><!--=ampersand -->
+<!ENTITY apos             "&#x00027;" ><!--=apostrophe -->
+<!ENTITY ast              "&#x0002A;" ><!--/ast B: =asterisk -->
+<!ENTITY brvbar           "&#x000A6;" ><!--=broken (vertical) bar -->
+<!ENTITY bsol             "&#x0005C;" ><!--/backslash =reverse solidus -->
+<!ENTITY cent             "&#x000A2;" ><!--=cent sign -->
+<!ENTITY colon            "&#x0003A;" ><!--/colon P: -->
+<!ENTITY comma            "&#x0002C;" ><!--P: =comma -->
+<!ENTITY commat           "&#x00040;" ><!--=commercial at -->
+<!ENTITY copy             "&#x000A9;" ><!--=copyright sign -->
+<!ENTITY curren           "&#x000A4;" ><!--=general currency sign -->
+<!ENTITY darr             "&#x02193;" ><!--/downarrow A: =downward arrow -->
+<!ENTITY deg              "&#x000B0;" ><!--=degree sign -->
+<!ENTITY divide           "&#x000F7;" ><!--/div B: =divide sign -->
+<!ENTITY dollar           "&#x00024;" ><!--=dollar sign -->
+<!ENTITY equals           "&#x0003D;" ><!--=equals sign R: -->
+<!ENTITY excl             "&#x00021;" ><!--=exclamation mark -->
+<!ENTITY frac12           "&#x000BD;" ><!--=fraction one-half -->
+<!ENTITY frac14           "&#x000BC;" ><!--=fraction one-quarter -->
+<!ENTITY frac18           "&#x0215B;" ><!--=fraction one-eighth -->
+<!ENTITY frac34           "&#x000BE;" ><!--=fraction three-quarters -->
+<!ENTITY frac38           "&#x0215C;" ><!--=fraction three-eighths -->
+<!ENTITY frac58           "&#x0215D;" ><!--=fraction five-eighths -->
+<!ENTITY frac78           "&#x0215E;" ><!--=fraction seven-eighths -->
+<!ENTITY gt               "&#x0003E;" ><!--=greater-than sign R: -->
+<!ENTITY half             "&#x000BD;" ><!--=fraction one-half -->
+<!ENTITY horbar           "&#x02015;" ><!--=horizontal bar -->
+<!ENTITY hyphen           "&#x02010;" ><!--=hyphen -->
+<!ENTITY iexcl            "&#x000A1;" ><!--=inverted exclamation mark -->
+<!ENTITY iquest           "&#x000BF;" ><!--=inverted question mark -->
+<!ENTITY laquo            "&#x000AB;" ><!--=angle quotation mark, left -->
+<!ENTITY larr             "&#x02190;" ><!--/leftarrow /gets A: =leftward arrow -->
+<!ENTITY lcub             "&#x0007B;" ><!--/lbrace O: =left curly bracket -->
+<!ENTITY ldquo            "&#x0201C;" ><!--=double quotation mark, left -->
+<!ENTITY lowbar           "&#x0005F;" ><!--=low line -->
+<!ENTITY lpar             "&#x00028;" ><!--O: =left parenthesis -->
+<!ENTITY lsqb             "&#x0005B;" ><!--/lbrack O: =left square bracket -->
+<!ENTITY lsquo            "&#x02018;" ><!--=single quotation mark, left -->
+<!ENTITY lt               "&#x26;&#x0003C;" ><!--=less-than sign R: -->
+<!ENTITY micro            "&#x000B5;" ><!--=micro sign -->
+<!ENTITY middot           "&#x000B7;" ><!--/centerdot B: =middle dot -->
+<!ENTITY nbsp             "&#x000A0;" ><!--=no break (required) space -->
+<!ENTITY not              "&#x000AC;" ><!--/neg /lnot =not sign -->
+<!ENTITY num              "&#x00023;" ><!--=number sign -->
+<!ENTITY ohm              "&#x02126;" ><!--=ohm sign -->
+<!ENTITY ordf             "&#x000AA;" ><!--=ordinal indicator, feminine -->
+<!ENTITY ordm             "&#x000BA;" ><!--=ordinal indicator, masculine -->
+<!ENTITY para             "&#x000B6;" ><!--=pilcrow (paragraph sign) -->
+<!ENTITY percnt           "&#x00025;" ><!--=percent sign -->
+<!ENTITY period           "&#x0002E;" ><!--=full stop, period -->
+<!ENTITY plus             "&#x0002B;" ><!--=plus sign B: -->
+<!ENTITY plusmn           "&#x000B1;" ><!--/pm B: =plus-or-minus sign -->
+<!ENTITY pound            "&#x000A3;" ><!--=pound sign -->
+<!ENTITY quest            "&#x0003F;" ><!--=question mark -->
+<!ENTITY quot             "&#x00022;" ><!--=quotation mark -->
+<!ENTITY raquo            "&#x000BB;" ><!--=angle quotation mark, right -->
+<!ENTITY rarr             "&#x02192;" ><!--/rightarrow /to A: =rightward arrow -->
+<!ENTITY rcub             "&#x0007D;" ><!--/rbrace C: =right curly bracket -->
+<!ENTITY rdquo            "&#x0201D;" ><!--=double quotation mark, right -->
+<!ENTITY reg              "&#x000AE;" ><!--/circledR =registered sign -->
+<!ENTITY rpar             "&#x00029;" ><!--C: =right parenthesis -->
+<!ENTITY rsqb             "&#x0005D;" ><!--/rbrack C: =right square bracket -->
+<!ENTITY rsquo            "&#x02019;" ><!--=single quotation mark, right -->
+<!ENTITY sect             "&#x000A7;" ><!--=section sign -->
+<!ENTITY semi             "&#x0003B;" ><!--=semicolon P: -->
+<!ENTITY shy              "&#x000AD;" ><!--=soft hyphen -->
+<!ENTITY sol              "&#x0002F;" ><!--=solidus -->
+<!ENTITY sung             "&#x0266A;" ><!--=music note (sung text sign) -->
+<!ENTITY sup1             "&#x000B9;" ><!--=superscript one -->
+<!ENTITY sup2             "&#x000B2;" ><!--=superscript two -->
+<!ENTITY sup3             "&#x000B3;" ><!--=superscript three -->
+<!ENTITY times            "&#x000D7;" ><!--/times B: =multiply sign -->
+<!ENTITY trade            "&#x02122;" ><!--=trade mark sign -->
+<!ENTITY uarr             "&#x02191;" ><!--/uparrow A: =upward arrow -->
+<!ENTITY verbar           "&#x0007C;" ><!--/vert =vertical bar -->
+<!ENTITY yen              "&#x000A5;" ><!--/yen =yen sign -->

@@ -1,0 +1,18 @@
+#!/bin/sh
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1995 Patrick Powell, San Diego State University
+#     papowell@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: TESTSUPPORT/clearlog
+# PURPOSE: clears the log files of test software
+# clearlog,v 3.1 1996/12/28 21:40:46 papowell Exp
+########################################################################## 
+
+echo >/tmp/LPD/t1/log
+echo >/tmp/LPD/t2/log
+echo >/tmp/LPD/t4/log
+echo >/tmp/LPD/t5/log

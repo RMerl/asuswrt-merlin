@@ -1,0 +1,443 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Controlling the Print Queue</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title="Selecting the Print Queue" href=
+    "selectingprintqueue.htm">
+    <link rel="NEXT" title="Job Removal" href="jobremoval.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "selectingprintqueue.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "jobremoval.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="CONTROLLINGPRINTQUEUE">4.7.
+      Controlling the Print Queue</a></h1>
+
+      <p>The <b class="APPLICATION">lpc</b> command is used to
+      examine and control the print server operation. The <tt
+      class="COMMAND">lpc status</tt> command displays the
+      administrative status of a print queue. The <b class=
+      "APPLICATION">lpd</b> program caches status and job
+      information in order to improve performance. The <tt class=
+      "COMMAND">lpc flush</tt> command will flush the cached
+      information and cause the server to regenerate it. The <tt
+      class="COMMAND">lpc enable</tt> and <tt class="COMMAND">lpc
+      disable</tt> commands enable or disable spooling to the print
+      queue, and the <tt class="COMMAND">lpc stop</tt> and <tt
+      class="COMMAND">lpc start</tt> commands stop and start
+      printing (or transfers) of jobs in the print queue.</p>
+
+      <p>Let's look at the status displayed when we use these
+      commands:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2003"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {120} %</samp> <kbd class=
+"USERINPUT">lpc status</kbd>
+     Printer  Printing Spooling Jobs Server Subserver Redirect Status/(Debug)
+    lp@h4      enabled  enabled    0   none    none
+    <samp class="PROMPT">h4: {121} %</samp> <kbd class=
+"USERINPUT">lpc status all</kbd>
+     Printer  Printing Spooling Jobs Server Subserver Redirect Status/(Debug)
+    lp@h4      enabled  enabled    0    none    none
+    lp2@h4     enabled  enabled    0    none    none
+    <samp class="PROMPT">h4: {122} %</samp> <kbd class=
+"USERINPUT">lpc</kbd>
+    lpc&gt;status
+     Printer  Printing Spooling Jobs Server Subserver Redirect Status/(Debug)
+    lp@h4      enabled  enabled    0    none    none
+    lpc&gt;status all
+     Printer  Printing Spooling Jobs Server Subserver Redirect Status/(Debug)
+    lp@h4      enabled  enabled    0    none    none
+    lp2@h4     enabled  enabled    0    none    none
+    lpc&gt;quit
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <b class="APPLICATION">lpc</b> command can be used in
+      command line or interactive mode as shown above. When used
+      with no parameters it will run in interactive mode, reading
+      one or more commands from its standard input (<acronym class=
+      "ACRONYM">STDIN</acronym>). The <tt class="COMMAND">lpc
+      status</tt> command shows the administrative status of the
+      select print queue. The <var class="LITERAL">all</var> queue
+      name selects all print queues for display. As shown in the
+      above example, both print queues have printing and spooling
+      enabled and there are no jobs in the print queue. The <span
+      class="emphasis"><i class="EMPHASIS">Server</i></span> and
+      <span class="emphasis"><i class=
+      "EMPHASIS">Subserver</i></span> information shows if there is
+      a process which is printing jobs, and its helper process that
+      does the actual communication with the printer.</p>
+
+      <p>It might be puzzling at first why <b class=
+      "APPLICATION">LPRng</b> uses two processes for this
+      operation, but the reason is very simple. Many operating
+      system implementations have <span class="emphasis"><i class=
+      "EMPHASIS">memory leaks</i></span> that cause the actual
+      process size to grow as it runs. This is especially true if a
+      large number of databases such as the password, Domain Name
+      Server, or other system database is consulted frequently with
+      different queries. Since this is usually done quite a lot by
+      the process which deals with the actual printing, the
+      printing process would soon grow very large and then die when
+      it could no longer obtain more memory. The <span class=
+      "emphasis"><i class="EMPHASIS">Server</i></span> process will
+      fork or create a child process <span class="emphasis"><i
+      class="EMPHASIS">Subserver</i></span> process that is
+      responsible for the printing of a single job. When the job
+      printing has been completed, the <span class="emphasis"><i
+      class="EMPHASIS">Subserver</i></span> process will exit and
+      the <span class="emphasis"><i class=
+      "EMPHASIS">Server</i></span> process will then create another
+      child until there are no more jobs to be printed. The <span
+      class="emphasis"><i class="EMPHASIS">Redirect</i></span> and
+      <span class="emphasis"><i class="EMPHASIS">Debug</i></span>
+      fields will be discussed in later sections.</p>
+
+      <p>Now let's use the basic spool queue control commands:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2028"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {123} %</samp> <kbd class=
+"USERINPUT">lpc disable</kbd>
+    Printer: lp@h4
+    lp@h4.private: disabled
+    <samp class="PROMPT">h4: {124} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (spooling disabled)
+     Queue: no printable jobs in queue
+    <samp class="PROMPT">h4: {125} %</samp> <kbd class=
+"USERINPUT">lpc enable</kbd>
+    Printer: lp@h4
+    lp@h4.private: enabled
+    <samp class="PROMPT">h4: {126} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+    <samp class="PROMPT">h4: {127} %</samp> <kbd class=
+"USERINPUT">lpc stop</kbd>
+    Printer: lp@h4
+    lp@h4.private: stopped
+    <samp class="PROMPT">h4: {128} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (printing disabled)
+     Queue: no printable jobs in queue
+    <samp class="PROMPT">h4: {129} %</samp> <kbd class=
+"USERINPUT">lpc start</kbd>
+    Printer: lp@h4
+    lp@h4.private: started
+    <samp class="PROMPT">h4: {130} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>As we can see, the <b class="APPLICATION">lpc</b> command
+      also reports on the status of the print queue. Let's see what
+      happens when we print to a stopped queue:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2048"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {131} %</samp> <kbd class=
+"USERINPUT">lpc stop</kbd>
+    Printer: lp@h4
+    lp@h4.private: stopped
+    <samp class="PROMPT">h4: {132} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {133} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi /tmp/there</kbd>
+    <samp class="PROMPT">h4: {134} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (printing disabled)
+     Queue: 2 printable jobs
+     Server: no server active
+     Rank   Owner/ID               Class Job Files            Size Time
+    1      papowell@h4+17920         A 17920 /tmp/hi             3 18:14:22
+    2      papowell@h4+17922         A 17922 /tmp/hi,/tmp/there  9 18:14:30
+    <samp class="PROMPT">h4: {135} %</samp> <kbd class=
+"USERINPUT">lpc status</kbd>
+     Printer  Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+    lp@h4     disabled  enabled    2    none    none
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <b class="APPLICATION">lpc</b> status shows that we
+      have two jobs spooled. The <span class="emphasis"><i class=
+      "EMPHASIS">Rank</i></span> field shows the order, the <tt
+      class="FILENAME">Owner/ID</tt> shows the unique job ID that
+      is assigned to the job and the <span class="emphasis"><i
+      class="EMPHASIS">Class</i></span> field is the job class
+      (this may be changed with the <tt class="COMMAND">lpr -C
+      class</tt> option). The <span class="emphasis"><i class=
+      "EMPHASIS">Job</i></span> field shows the <span class=
+      "emphasis"><i class="EMPHASIS">job number</i></span> assigned
+      to this job in this particular spool queue. While the
+      <acronym class="ACRONYM">ID</acronym> value never changes as
+      a job moves through the <b class="APPLICATION">LPRng</b>
+      system, the <span class="emphasis"><i class="EMPHASIS">job
+      number</i></span> is specific to a particular spool queue and
+      may change if a job is <span class="emphasis"><i class=
+      "EMPHASIS">forwarded</i></span> to another spool queue that
+      has a job with the same job number. The <span class=
+      "emphasis"><i class="EMPHASIS">Size</i></span> field is the
+      total number of printable bytes in the job, and the <span
+      class="emphasis"><i class="EMPHASIS">Time</i></span> field
+      shows the timestamp associated with the job.</p>
+
+      <p>Now let's start the print queue and watch what
+      happens.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2075"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {136} %</samp> <kbd class=
+"USERINPUT">lpc start</kbd>
+    Printer: lp@h4
+    lp@h4.private: started
+    <samp class="PROMPT">h4: {137} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4
+     Queue: 2 printable jobs
+     Server: pid 17928 active
+     Unspooler: pid 17929 active
+     Status: opening device '/tmp/lp' at 18:14:43.921
+     Rank   Owner/ID             Class Job Files            Size Time
+    active papowell@h4+17920       A 17920 /tmp/hi             3 18:14:22
+    2      papowell@h4+17922       A 17922 /tmp/hi,/tmp/there  9 18:14:30
+    <samp class="PROMPT">h4: {138} %</samp> <kbd class=
+"USERINPUT">lpq -ll</kbd>
+    Printer: lp@h4
+     Queue: 2 printable jobs
+     Server: pid 17928 active
+     Unspooler: pid 17929 active
+     Status: printing job 'papowell@h4+17920' at 18:14:43.921
+     Status: no banner at 18:14:43.921
+     Status: printing data file 'dfA017920h4.private', size 57 at 18:14:43.922
+     Rank   Owner/ID             Class Job Files            Size Time
+    active papowell@h4+17920       A 17920 /tmp/hi             3 18:14:22
+    2      papowell@h4+17922       A 17922 /tmp/hi,/tmp/there  9 18:14:30
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <span class="emphasis"><i class=
+      "EMPHASIS">Rank</i></span> value of the first job has been
+      changed to <var class="LITERAL">active</var> and there is new
+      <span class="emphasis"><i class="EMPHASIS">Status</i></span>
+      information. If we use <tt class="COMMAND">lpq -ll</tt> we
+      can see the times that the various print operations are
+      carried out, and details of their success or failure.</p>
+
+      <p>We can also use the <b class="APPLICATION">lpc</b> command
+      to see the status of a particular job. We can select jobs by
+      the user name, the ID, or the job number. For example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2090"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {139} %</samp> <kbd class=
+"USERINPUT">lpc stop</kbd>
+    Printer: lp@h4
+    lp@h4.private: stopped
+    <samp class="PROMPT">h4: {140} %</samp> <kbd class=
+"USERINPUT">echo hi |lpr</kbd>
+    <samp class="PROMPT">h4: {141} %</samp> <kbd class=
+"USERINPUT">echo there | lpr</kbd>
+    <samp class="PROMPT">h4: {142} %</samp> <kbd class=
+"USERINPUT">echo test |lpr</kbd>
+    <samp class="PROMPT">h4: {143} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (printing disabled)
+     Queue: 3 printable jobs
+     Server: no server active
+     Status: job 'papowell@h4+17922' removed at 18:15:13.981
+     Rank   Owner/ID            Class Job Files           Size Time
+    1      papowell@h4+17959      A 17959 (stdin)            3 18:23:24
+    2      papowell@h4+17962      A 17962 (stdin)            6 18:23:30
+    3      papowell@h4+17970      A 17970 (stdin)            5 18:23:35
+    <samp class="PROMPT">h4: {144} %</samp> <kbd class=
+"USERINPUT">lpq 17970</kbd>
+    Printer: lp@h4  (printing disabled)
+     Queue: 3 printable jobs
+     Server: no server active
+     Status: job 'papowell@h4+17922' removed at 18:15:13.981
+     Rank   Owner/ID            Class Job Files           Size Time
+    3      papowell@h4+17970      A 17970 (stdin)            5 18:23:35
+    <samp class="PROMPT">h4: {145} %</samp> <kbd class=
+"USERINPUT">lpq papowell</kbd>
+    Printer: lp@h4  (printing disabled)
+     Queue: 3 printable jobs
+     Server: no server active
+     Status: job 'papowell@h4+17922' removed at 18:15:13.981
+     Rank   Owner/ID            Class Job Files           Size Time
+    1      papowell@h4+17959      A 17959 (stdin)            3 18:23:24
+    2      papowell@h4+17962      A 17962 (stdin)            6 18:23:30
+    3      papowell@h4+17970      A 17970 (stdin)            5 18:23:35
+    <samp class="PROMPT">h4: {146} %</samp> <kbd class=
+"USERINPUT">lpq -s 17970</kbd>
+    lp@h4  1 jobs
+    <samp class="PROMPT">h4: {147} %</samp> <kbd class=
+"USERINPUT">lpq -s papowell</kbd>
+    lp@h4  3 jobs
+    <samp class="PROMPT">h4: {148} %</samp> <kbd class=
+"USERINPUT">lpq -s nobody</kbd>
+    lp@h4  0 jobs
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>We use <tt class="COMMAND">lpq -Pqueuename</tt> to select
+      a specific print queue and <tt class="COMMAND">lpq -a</tt> or
+      <tt class="COMMAND">lpq -Pall</tt> to select all queues:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2116"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {149} %</samp> <kbd class=
+"USERINPUT">lpc -a stop</kbd>
+    Printer: lp@h4
+    lp@h4.private: stopped
+    Printer: lp2@h4
+    lp2@h4.private: stopped
+    <samp class="PROMPT">h4: {150} %</samp> <kbd class=
+"USERINPUT">lpc -Pall start</kbd>
+    Printer: lp@h4
+    lp@h4.private: started
+    Printer: lp2@h4
+    lp2@h4.private: started
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>You can use the <b class="APPLICATION">lpc</b> command in
+      <span class="emphasis"><i class=
+      "EMPHASIS">interactive</i></span> mode:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2125"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {151} %</samp> <kbd class=
+"USERINPUT">lpc</kbd>
+    lpc&gt;status
+     Printer  Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+    lp@h4      enabled  enabled    3    17990   17993
+    lpc&gt;status all
+     Printer  Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+    lp@h4      enabled  enabled    3    17990   17993
+    lp2@h4     enabled  enabled    3    none    none
+    lpc&gt;stop lp
+    Printer: lp@h4
+    lp@h4.private: stopped
+    lpc&gt;start lp
+    Printer: lp@h4
+    lp@h4.private: started
+    lpc&gt;quit
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <tt class="COMMAND">lpc topq</tt> command can be used
+      to put a job (or jobs) at the head of the spool queue. This
+      command is very useful when some job requires priority
+      service. You can select the job by using the job number or
+      the job ID.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2131"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {152} %</samp> <kbd class=
+"USERINPUT">lpc topq lp 17970</kbd>
+    Printer: lp@h4
+    lp: selected 'papowell@h4+17970'
+    lp@h4.private: started
+    <samp class="PROMPT">h4: {153} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4
+     Queue: 3 printable jobs
+     Server: pid 17999 active
+     Rank   Owner/ID          Class Job Files      Size Time
+    active papowell@h4+17970    A 17970 (stdin)      5 18:23:35
+    1      papowell@h4+17959    A 17959 (stdin)      3 18:23:24
+    2      papowell@h4+17962    A 17962 (stdin)      6 18:23:30
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "selectingprintqueue.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "jobremoval.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Selecting the
+          Print Queue</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Job
+          Removal</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

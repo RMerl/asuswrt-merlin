@@ -1,0 +1,37 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>vfs_gpfs</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="vfs_gpfs.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>vfs_gpfs &#8212; gpfs specific samba extensions like acls and prealloc</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">vfs objects = gpfs</code></p></div></div><div class="refsect1" lang="en"><a name="id2522928"></a><h2>DESCRIPTION</h2><p>This VFS module is part of the
+	<a class="citerefentry" href="samba.7.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(7)</span></a> suite.</p><p>The <code class="literal">gpfs</code> VFS module is the home
+	for all gpfs extensions that Samba requires for proper integration
+	with GPFS. It uses the GPL library interfaces provided by GPFS.
+	</p><p>Currently the gpfs vfs module provides extensions in following areas :
+	</p><div class="itemizedlist"><ul type="disc"><li><p>NFSv4 ACL Interfaces with configurable options for GPFS</p></li><li><p>Kernel oplock support on GPFS</p></li><li><p>Lease support on GPFS</p></li></ul></div><p>
+	</p><p><code class="literal">NOTE:</code>This module follows the posix-acl behaviour
+	and hence allows permission stealing via chown. Samba might allow at a later
+	point in time, to restrict the chown via this module as such restrictions
+	are the responsibility of the underlying filesystem than of Samba.
+	</p><p>This module is stackable.</p></div><div class="refsect1" lang="en"><a name="id2483368"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">nfs4:mode = [ simple | special ]</span></dt><dd><p>
+		Enable/Disable substitution of special IDs on GPFS. This parameter
+		should not affect the windows users in anyway. It only ensures that Samba
+		sets the special IDs - OWNER@ and GROUP@ ( mappings to simple uids )
+		that are relevant to GPFS.
+		</p><p>The following MODEs are understood by the module:</p><div class="itemizedlist"><ul type="disc"><li><p><code class="literal">simple(default)</code> - do not use special IDs in GPFS ACEs</p></li><li><p><code class="literal">special</code> - use special IDs in GPFS ACEs. </p></li></ul></div></dd><dt><span class="term">nfs4:acedup = [dontcare|reject|ignore|merge]</span></dt><dd><p>
+		This parameter configures how Samba handles duplicate ACEs encountered in GPFS ACLs.
+		GPFS allows/creates duplicate ACE for different bits for same ID.
+		</p><p>Following is the behaviour of Samba for different values :</p><div class="itemizedlist"><ul type="disc"><li><p><code class="literal">dontcare (default)</code> - copy the ACEs as they come</p></li><li><p><code class="literal">reject</code> - stop operation and exit with error on ACL set op</p></li><li><p><code class="literal">ignore</code> - don't include the second matching ACE</p></li><li><p><code class="literal">merge</code> - bitwise OR the 2 ace.flag fields and 2 ace.mask fields of the 2 duplicate ACEs into 1 ACE</p></li></ul></div></dd><dt><span class="term">nfs4:chown = [yes|no]</span></dt><dd><p>This parameter allows enabling or disabling the chown supported
+		by the underlying filesystem. This parameter should be enabled with
+		care as it might leave your system insecure.</p><p>Some filesystems allow chown as a) giving b) stealing. It is the latter
+		that is considered a risk.</p><p>Following is the behaviour of Samba for different values : </p><div class="itemizedlist"><ul type="disc"><li><p><code class="literal">yes</code> - Enable chown if as supported by the under filesystem</p></li><li><p><code class="literal">no (default)</code> - Disable chown</p></li></ul></div></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2483649"></a><h2>EXAMPLES</h2><p>A GPFS mount can be exported via Samba as follows :</p><pre class="programlisting">
+        <em class="parameter"><code>[samba_gpfs_share]</code></em>
+	<a class="link" href="smb.conf.5.html#VFSOBJECTS" target="_top">vfs objects = gpfs</a>
+	<a class="link" href="smb.conf.5.html#PATH" target="_top">path = /test/gpfs_mount</a>
+	<a class="link" href="smb.conf.5.html#NFS4:MODE" target="_top">nfs4: mode = special</a>
+	<a class="link" href="smb.conf.5.html#NFS4:ACEDUP" target="_top">nfs4: acedup = merge</a>
+</pre></div><div class="refsect1" lang="en"><a name="id2481486"></a><h2>CAVEATS</h2><p>The gpfs gpl libraries are required by <code class="literal">gpfs</code> VFS
+	module during both compilation and runtime.
+	Also this VFS module is tested to work on SLES 9/10 and RHEL 4.4
+	</p></div><div class="refsect1" lang="en"><a name="id2481504"></a><h2>VERSION</h2><p>This man page is correct for version 3.0.25 of the Samba suite.
+	</p></div><div class="refsect1" lang="en"><a name="id2481515"></a><h2>AUTHOR</h2><p>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</p><p>The GPFS VFS module was created with contributions from
+	Volker Lendecke and the developers at IBM.
+	</p><p> This manpage was created by the IBM FSCC team </p></div></div></body></html>

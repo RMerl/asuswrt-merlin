@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Copyright 2009 by Denys Vlasenko <vda.linux@googlemail.com>
+# Licensed under GPL v2, see file LICENSE for details.
+
+. ./testing.sh
+
+# testing "test name" "command" "expected result" "file input" "stdin"
+#   file input will be file called "input"
+#   test can create a file "actual" instead of writing to stdout
+
+testing "tail: +N with N > file length" \
+	"tail -c +55 2>&1; echo \$?" \
+	"0\n" \
+	"" "qw"
+
+exit $FAILCOUNT

@@ -1,0 +1,7 @@
+Here are some pointers to the needed ntp version.
+
+https://support.ntp.org/bugs/show_bug.cgi?id=1028
+
+The patch against ntp-dev-4.2.5p125
+https://support.ntp.org/bugs/attachment.cgi?id=457
+

@@ -1,0 +1,13 @@
+<% page_header("columns", "Kerberos Server", "servers"); 
+
+  libinclude("base.js");
+  libinclude("management.js");
+%>
+
+<h1>Kerberos Server</h1>
+
+<%
+writefln("Status: %s\n", server_status("kdc"));
+%>
+
+<% page_footer(); %>

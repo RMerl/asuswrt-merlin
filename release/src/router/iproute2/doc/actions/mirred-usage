@@ -1,0 +1,71 @@
+
+Very funky action. I do plan to add to a few more things to it
+This is the basic stuff. Idea borrowed from the way ethernet switches
+mirror and redirect packets.
+
+Usage: 
+
+mirred <DIRECTION> <ACTION> [index INDEX] <dev DEVICENAME> 
+where: 
+DIRECTION := <ingress | egress>
+ACTION := <mirror | redirect>
+INDEX is the specific policy instance id
+DEVICENAME is the devicename
+
+
+Mirroring essentially takes a copy of the packet whereas redirecting
+steals the packet and redirects to specified destination.
+
+Some examples:
+Host A is hooked  up to us on eth0
+
+tc qdisc add dev lo ingress
+# redirect all packets arriving on ingress of lo to eth0
+tc filter add dev lo parent ffff: protocol ip prio 10 u32 \
+match u32 0 0 flowid 1:2 action mirred egress redirect dev eth0
+
+On host A start a tcpdump on interface connecting to us.
+
+on our host ping -c 2 127.0.0.1
+
+Ping would fail sinc all packets are heading out eth0
+tcpudmp on host A would show them
+
+if you substitute the redirect with mirror above as in:
+tc filter add dev lo parent ffff: protocol ip prio 10 u32 \
+match u32 0 0 flowid 1:2 action mirred egress mirror dev eth0
+
+Then you should see the packets on both host A and the local
+stack (i.e ping would work).
+
+Even more funky example:
+
+#
+#allow 1 out 10 packets to randomly make it to the 
+# host A (Randomness uses the netrand generator)
+#
+tc filter add dev lo parent ffff: protocol ip prio 10 u32 \
+match u32 0 0 flowid 1:2 \
+action drop random determ ok 10\
+action mirred egress mirror dev eth0
+
+------
+Example 2:
+# for packets coming from 10.0.0.9:
+#Redirect packets on egress (to ISP A) if you exceed a certain rate
+# to eth1 (to ISP B) if you exceed a certain rate
+#
+
+tc qdisc add dev eth0 handle 1:0 root prio
+
+tc filter add dev eth0 parent 1:0 protocol ip prio 6 u32 \
+match ip src 10.0.0.9/32 flowid 1:16 \
+action police rate 100kbit burst 90k ok \
+action mirred egress mirror dev eth1
+
+---
+
+A more interesting example is when you mirror flows to a dummy device
+so you could tcpdump them (dummy by defaults drops all packets it sees).
+This is a very useful debug feature.
+

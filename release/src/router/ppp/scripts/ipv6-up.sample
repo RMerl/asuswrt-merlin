@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# This script is called with the following parameters:
+# interface tty speed local-address remote-address ipparam
+#
+
+
+# Start router advertisements on this link.
+# Based on radvd 0.5.0 behaviour
+
+DEVICE=$1
+
+CFGFILE=/usr/inet6/etc/radvd.conf-$DEVICE
+PIDFILE=/var/run/radvd-$DEVICE.pid
+
+if [ -x /usr/inet6/sbin/radvd && -f $CFGFILE ]; then
+    touch $PIDFILE
+    if [ ! -f $PIDFILE ]; then
+	echo "error: $PIDFILE is not a regular file. Aborting"
+	exit 0
+    fi
+
+    PID=`cat $PIDFILE`
+    if [ "$PID" != "" ]; then
+	ps h $PID >/dev/null 2>&1 && exit 0
+    fi
+
+    # radvd 0.5.0 doesn't write a pid-file so we do it here
+    # enabling debugging keeps radvd in foreground, putting it
+    # on background gives us the PID.
+    /usr/inet6/sbin/radvd -d 1 -C $CFGFILE &
+    echo $! >$PIDFILE
+fi

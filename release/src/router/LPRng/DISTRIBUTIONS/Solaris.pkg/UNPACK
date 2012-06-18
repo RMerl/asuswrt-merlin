@@ -1,0 +1,16 @@
+#!/bin/sh
+PATH=.:/usr/local/bin:/usr/local/sbin:/sbin:/usr/sbin:/bin:/usr/bin:/usr/contrib/bin:/usr/X11/bin:/usr/ccs/bin
+export PATH
+f=`echo LPR*[0-9]`;
+if [ -n "$f" ] ; then
+  for i in $f ; do
+    mv $i $i.x;
+    rm -rf $i.x &
+  done
+fi
+f=`ls LPRng*z | tail -1`
+echo Using $f
+if [ -n "$f" ] ; then
+  tar zxvf $f
+fi
+cd L*[0-9]/DIS*/Sol* ; make checkit

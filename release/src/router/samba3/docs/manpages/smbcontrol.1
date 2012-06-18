@@ -1,0 +1,393 @@
+.\"     Title: smbcontrol
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: User Commands
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "SMBCONTROL" "1" "09/30/2009" "Samba 3\&.0" "User Commands"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+smbcontrol \- send messages to smbd, nmbd or winbindd processes
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCsmbcontrol\F[] [\-i] [\-s]
+.fam
+.fam C
+.HP \w'\ 'u
+\FCsmbcontrol\F[] [destination] [message\-type] [parameter]
+.fam
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+\FCsmbcontrol\F[]
+is a very small program, which sends messages to a
+\fBsmbd\fR(8), a
+\fBnmbd\fR(8), or a
+\fBwinbindd\fR(8)
+daemon running on the system\&.
+.SH "OPTIONS"
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\&.
+.RE
+.PP
+\-s <configuration file>
+.RS 4
+The file specified contains the configuration details required by the server\&. The information in this file includes server\-specific information such as what printcap file to use, as well as descriptions of all the services that the server is to provide\&. See
+\FCsmb\&.conf\F[]
+for more information\&. The default configuration file name is determined at compile time\&.
+.RE
+.PP
+\-i
+.RS 4
+Run interactively\&. Individual commands of the form destination message\-type parameters can be entered on STDIN\&. An empty command line or a "q" will quit the program\&.
+.RE
+.PP
+destination
+.RS 4
+One of
+\fInmbd\fR,
+\fIsmbd\fR
+or a process ID\&.
+.sp
+The
+\fIsmbd\fR
+destination causes the message to "broadcast" to all smbd daemons\&.
+.sp
+The
+\fInmbd\fR
+destination causes the message to be sent to the nmbd daemon specified in the
+\FCnmbd\&.pid\F[]
+file\&.
+.sp
+If a single process ID is given, the message is sent to only that process\&.
+.RE
+.PP
+message\-type
+.RS 4
+Type of message to send\&. See the section
+\fBMESSAGE\-TYPES\fR
+for details\&.
+.RE
+.PP
+parameters
+.RS 4
+any parameters required for the message\-type
+.RE
+.SH "MESSAGE-TYPES"
+.PP
+Available message types are:
+.PP
+close\-share
+.RS 4
+Order smbd to close the client connections to the named share\&. Note that this doesn\'t affect client connections to any other shares\&. This message\-type takes an argument of the share name for which client connections will be closed, or the "*" character which will close all currently open shares\&. This may be useful if you made changes to the access controls on the share\&. This message can only be sent to
+\fBsmbd\fR\&.
+.RE
+.PP
+debug
+.RS 4
+Set debug level to the value specified by the parameter\&. This can be sent to any of the destinations\&.
+.RE
+.PP
+force\-election
+.RS 4
+This message causes the
+\FCnmbd\F[]
+daemon to force a new browse master election\&.
+.RE
+.PP
+ping
+.RS 4
+Send specified number of "ping" messages and wait for the same number of reply "pong" messages\&. This can be sent to any of the destinations\&.
+.RE
+.PP
+profile
+.RS 4
+Change profile settings of a daemon, based on the parameter\&. The parameter can be "on" to turn on profile stats collection, "off" to turn off profile stats collection, "count" to enable only collection of count stats (time stats are disabled), and "flush" to zero the current profile stats\&. This can be sent to any smbd or nmbd destinations\&.
+.RE
+.PP
+debuglevel
+.RS 4
+Request debuglevel of a certain daemon and write it to stdout\&. This can be sent to any of the destinations\&.
+.RE
+.PP
+profilelevel
+.RS 4
+Request profilelevel of a certain daemon and write it to stdout\&. This can be sent to any smbd or nmbd destinations\&.
+.RE
+.PP
+printnotify
+.RS 4
+Order smbd to send a printer notify message to any Windows NT clients connected to a printer\&. This message\-type takes the following arguments:
+.PP
+queuepause printername
+.RS 4
+Send a queue pause change notify message to the printer specified\&.
+.RE
+.PP
+queueresume printername
+.RS 4
+Send a queue resume change notify message for the printer specified\&.
+.RE
+.PP
+jobpause printername unixjobid
+.RS 4
+Send a job pause change notify message for the printer and unix jobid specified\&.
+.RE
+.PP
+jobresume printername unixjobid
+.RS 4
+Send a job resume change notify message for the printer and unix jobid specified\&.
+.RE
+.PP
+jobdelete printername unixjobid
+.RS 4
+Send a job delete change notify message for the printer and unix jobid specified\&.
+.RE
+.sp
+Note that this message only sends notification that an event has occured\&. It doesn\'t actually cause the event to happen\&.
+.sp
+This message can only be sent to
+\fBsmbd\fR\&.
+.RE
+.PP
+samsync
+.RS 4
+Order smbd to synchronise sam database from PDC (being BDC)\&. Can only be sent to
+\fBsmbd\fR\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.BM yellow
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+Not working at the moment
+.sp .5v
+.EM yellow
+.RE
+.RE
+.PP
+samrepl
+.RS 4
+Send sam replication message, with specified serial\&. Can only be sent to
+\fBsmbd\fR\&. Should not be used manually\&.
+.RE
+.PP
+dmalloc\-mark
+.RS 4
+Set a mark for dmalloc\&. Can be sent to both smbd and nmbd\&. Only available if samba is built with dmalloc support\&.
+.RE
+.PP
+dmalloc\-log\-changed
+.RS 4
+Dump the pointers that have changed since the mark set by dmalloc\-mark\&. Can be sent to both smbd and nmbd\&. Only available if samba is built with dmalloc support\&.
+.RE
+.PP
+shutdown
+.RS 4
+Shut down specified daemon\&. Can be sent to both smbd and nmbd\&.
+.RE
+.PP
+pool\-usage
+.RS 4
+Print a human\-readable description of all talloc(pool) memory usage by the specified daemon/process\&. Available for both smbd and nmbd\&.
+.RE
+.PP
+drvupgrade
+.RS 4
+Force clients of printers using specified driver to update their local version of the driver\&. Can only be sent to smbd\&.
+.RE
+.PP
+reload\-config
+.RS 4
+Force daemon to reload smb\&.conf configuration file\&. Can be sent to
+\fBsmbd\fR,
+\fBnmbd\fR, or
+\fBwinbindd\fR\&.
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+\fBnmbd\fR(8)
+and
+\fBsmbd\fR(8)\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original Samba man pages were written by Karl Auer\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\&.icce\&.rug\&.nl/pub/unix/) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

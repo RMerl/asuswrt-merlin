@@ -1,0 +1,24 @@
+<% page_header("columns", "ESP standard variables test", "esptest"); %>
+
+<h1>Samba4 showvars test</h1>
+
+<%
+   function showArray(name, array) {
+      write("<h3>Array: " + name + "</h3>\n");
+      if (array == undefined) {
+	 write("undefined<br>\n");
+      } else {
+	simple_table(array);
+      }
+   }
+
+   showArray("headers", headers);
+   showArray("application", application);
+   showArray("cookies", cookies);
+   showArray("files", files);
+   showArray("request", request);
+   showArray("server", server);
+   showArray("session", session);
+%>
+
+<% page_footer(); %>

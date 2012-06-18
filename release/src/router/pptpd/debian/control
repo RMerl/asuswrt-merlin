@@ -1,0 +1,15 @@
+Source: pptpd
+Section: net
+Priority: optional
+Maintainer: Rene Mayrhofer <rmayr@debian.org>
+Standards-Version: 3.0.1.0
+Build-Depends: libwrap0-dev, debhelper (>= 4.1.16)
+
+Package: pptpd
+Architecture: any
+Depends: ${shlibs:Depends}, ppp (>=2.4.2+20030811-1), netbase, debconf, perl-base
+Build-Depends: debhelper
+Description: PoPToP Point to Point Tunneling Server
+ This implements a Virtual Private Networking Server (VPN) that is compatible
+ with Microsoft VPN clients. It allows windows users to connect to an
+ internal firewalled network using their dialup.

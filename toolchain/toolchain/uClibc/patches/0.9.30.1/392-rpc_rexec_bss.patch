@@ -1,0 +1,35 @@
+Free 1k of static data (.bss)
+
+--- uClibc-0.9.30.1/libc/inet/rpc/rexec.c	2008-05-20 02:57:34.000000000 +0400
++++ uClibc/libc/inet/rpc/rexec.c	2009-11-07 17:19:33.000000000 +0300
+@@ -41,6 +41,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
++#include <malloc.h>
+ 
+ /* Experimentally off - libc_hidden_proto(memset) */
+ /* Experimentally off - libc_hidden_proto(strlen) */
+@@ -66,8 +67,7 @@ libc_hidden_proto(ruserpass)
+ #define SA_LEN(_x)      __libc_sa_len((_x)->sa_family)
+ extern int __libc_sa_len (sa_family_t __af) __THROW attribute_hidden;
+ 
+-int	rexecoptions;
+-char	ahostbuf[NI_MAXHOST] attribute_hidden;
++static char *ahostbuf = NULL;
+ 
+ libc_hidden_proto(rexec_af)
+ int
+@@ -97,8 +97,10 @@ rexec_af(char **ahost, int rport, const
+ 	}
+ 
+ 	if (res0->ai_canonname){
+-		strncpy(ahostbuf, res0->ai_canonname, sizeof(ahostbuf));
+-		ahostbuf[sizeof(ahostbuf)-1] = '\0';
++		if (!ahostbuf)
++			ahostbuf = __uc_malloc(NI_MAXHOST);
++		strncpy(ahostbuf, res0->ai_canonname, NI_MAXHOST);
++		ahostbuf[NI_MAXHOST-1] = '\0';
+ 		*ahost = ahostbuf;
+ 	}
+ 	else{

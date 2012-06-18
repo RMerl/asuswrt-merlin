@@ -1,0 +1,199 @@
+README for USB_ModeSwitch
+
+For up-to-date and more detailed information (plus a friendly forum) visit
+http://www.draisberghof.de/usb_modeswitch
+
+
+What it is
+==========
+
+USB_ModeSwitch is (surprise!) a small mode switching tool for controlling
+"flip flop" (multiple mode) USB devices.
+
+Several new USB devices (especially high-speed WAN stuff, based on cell phone
+chipsets containing that feature) have their MS Windows drivers onboard; when
+plugged in for the first time they act like a flash storage and start
+installing the driver from there.
+After installation (and on every consecutive plugging) the driver switches the
+mode internally, the storage device vanishes (in most cases), and a new device
+(like an USB modem) shows up. Modem maker "Option" calls that feature "ZeroCD
+(TM)" since it eliminates the need for shipping a separate driver carrier.
+
+In the beginning, nothing of this was documented in any form and there was
+hardly any Linux support available.
+On the good side, most of the known devices are working out of the box in all
+modes with the available Linux modules like "usb-storage" or serial USB drivers.
+That leaves only the problem of the mode-switching from storage to whatever
+the thing is supposed to do.
+
+Fortunately there are things like human intelligence, USB sniffing programs and
+"libusb". It is possible to eavesdrop the communication of the MS Windows
+driver, to isolate the command or action that does the switching, and to replay
+the same sequence in Linux.
+
+USB_ModeSwitch makes this process easy to handle by taking the relevant para-
+meters from a configuration file and doing all the initialization and communi-
+cation stuff, with heavy help from "libusb".
+It is mainly used automatically - via udev events and rules - to do the switch
+without any user interaction. But it can also be run as a command line tool,
+usually when trying to make unknown devices work with it.
+
+We have already collected a wide range of information on how to switch all
+sorts of devices. If you run into a new one that is unknown yet, don't despair:
+we can find out what you need to do!
+
+
+How to install
+==============
+
+!! You need the usb-modeswitch-data package from the same source as this !!
+
+If you have an earlier version installed, de-installation is recommended ("make
+uninstall"). The wrapper script location changed in 1.1.0, old ones might be
+orphaned in /usr/sbin.
+
+Important: you need "tcl" for the wrapper script to work; if you enter "tclsh"
+and you get a "%" prompt, you are set (to exit type "exit"). The "tcl" package
+is part of all distributions I know. Use version 8.4 and higher.
+If you are space-restricted you can also use the "jimsh" mini Tcl interpreter. The
+Tcl wrapper is compatible with the limited command set of this small shell. Since
+version 1.1.7 an alternative source package containing jimsh will be provided.
+The typical size of jimsh is 140 kB, or 70 kB in a compressed file system.
+
+To install the tool set, unpack and in the newly created directory use this line
+at the shell (as root):
+
+> make install
+
+This installs the small shell script, the dispatcher (wrapper) script, a global
+config file, the binary and a man page. If you chose the package with jimsh, the
+Tcl shell is configured, built and installed in the same step, optimized for
+size.
+
+Install the data package as well and you are set already; if your device is
+known, you should be able to just plug it and use it. If it doesn't work -
+we will find out why not.
+
+For manual use just run "usb_modeswitch" (as root). Work with the command
+line interface or with a setup file. You can use any file and give its path
+with the "-c" parameter.
+The file named "device_reference.txt" that you can find in this package is
+a device and configuration reference containing most known devices; you can
+use it as a base to create your own configuration file.
+It's heavily commented and should tell you what to do. It also contains a
+thorough explanation of all the parameters.
+
+Run "usb_modeswitch -h" to list the command line parameters.
+See also the provided man page.
+
+Note: manual use is intended for testing and analyzing !
+
+Once your new device is switching fine you can add a rule entry to the rules
+file to let udev run usb_modeswitch as soon as the default IDs are found
+(when the device is plugged). If you look into the rules file you will see
+immediately how your new entry should look like.
+The location is:
+/lib/udev/rules.d/40-usb_modeswitch.rules
+
+Then add your new setup file to the folder
+"/usr/share/usb_modeswitch". And don't forget to report your success !!
+
+Again, mind that the rules file and the config folder are installed by
+the usb_modeswitch data package.
+
+
+##########
+Important: libusb programs - like this tool - want to be run as root!
+##########
+
+
+
+Known working hardware, Troubleshooting
+=======================================
+
+Please see the homepage. Read carefully.
+For support questions use ONLY the forum.
+
+
+
+Contribute
+==========
+
+USB_ModeSwitch comes quite handy for experimenting with your own hardware if
+not supported yet. You could try this approach:
+
+Note the device's vendor and product ID from /proc/bus/usb/devices (or from the
+output of lsusb); the assigned driver is usually "usb-storage". Then try spying
+on the USB communication to the device with the same ID inside M$ Windoze. I
+recommend this tool:
+"SniffUSB" (http://benoit.papillault.free.fr/usbsnoop/index.php.en).
+
+PLEASE post any improvements, new device information and/or bug reports to the
+forum (see above) or send it to the author (see below)!
+
+
+Whodunit
+========
+
+Copyright 2007, 2008, 2009, 2010 Josua Dietze (mail to "usb_admin"
+ at the domain "draisberghof.de" or write a personal message through the forum
+ to "Josh"; NO SUPPORT QUESTIONS VIA E-MAIL, use the forum!)
+
+Command line parsing, decent usage/config output and handling, advanced options
+ and bugfixes:
+ Joakim Wennergren (jokedst) (gmail.com)
+
+TargetClass parameter implementation to support new Option devices/firmware:
+ Paul Hardwick (http://www.pharscape.org)
+
+Created with initial help from:
+ "usbsnoop2libusb.pl" by Timo Lindfors
+ (http://iki.fi/lindi/usb/usbsnoop2libusb.pl)
+
+Config file parsing stuff borrowed from:
+ Guillaume Dargaud (http://www.gdargaud.net/Hack/SourceCode.html)
+
+Hexstr2bin function borrowed from:
+ Jouni Malinen (http://hostap.epitest.fi/wpa_supplicant, from "common.c")
+
+Code, fixes and ideas from:
+ Aki Makkonen
+ Denis Sutter
+ Lucas Benedicic
+ Roman Laube
+ Luigi Iotti
+ Vincent Teoh
+ Tommy Cheng
+ Daniel Cooper
+ Andrew Bird
+ Yaroslav Levandovskiy
+ Sakis Dimopoulos
+ Steven Fernandez
+ Christophe Fergeau
+ Nils Radtke
+ Filip Aben
+ Amit Mendapara
+
+Device information contributors are named in the "device_reference.txt" file.
+
+
+Legal
+=====
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details:
+
+http://www.gnu.org/licenses/gpl.txt
+
+Or find it as the file COPYING in this folder.
+
+
+
+
+Last revised: 2011-02-25, Josua Dietze

@@ -1,0 +1,423 @@
+.\"     Title: nmbd
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "NMBD" "8" "09/30/2009" "Samba 3\&.0" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+nmbd \- NetBIOS name server to provide NetBIOS over IP naming services to clients
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCnmbd\F[] [\-D] [\-F] [\-S] [\-a] [\-i] [\-o] [\-h] [\-V] [\-d\ <debug\ level>] [\-H\ <lmhosts\ file>] [\-l\ <log\ directory>] [\-p\ <port\ number>] [\-s\ <configuration\ file>]
+.fam
+.SH "DESCRIPTION"
+.PP
+This program is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+\FCnmbd\F[]
+is a server that understands and can reply to NetBIOS over IP name service requests, like those produced by SMB/CIFS clients such as Windows 95/98/ME, Windows NT, Windows 2000, Windows XP and LanManager clients\&. It also participates in the browsing protocols which make up the Windows "Network Neighborhood" view\&.
+.PP
+SMB/CIFS clients, when they start up, may wish to locate an SMB/CIFS server\&. That is, they wish to know what IP number a specified host is using\&.
+.PP
+Amongst other services,
+\FCnmbd\F[]
+will listen for such requests, and if its own NetBIOS name is specified it will respond with the IP number of the host it is running on\&. Its "own NetBIOS name" is by default the primary DNS name of the host it is running on, but this can be overridden by the
+\m[blue]\fBnetbios name\fR\m[]
+in
+\FCsmb\&.conf\F[]\&. Thus
+\FCnmbd\F[]
+will reply to broadcast queries for its own name(s)\&. Additional names for
+\FCnmbd\F[]
+to respond on can be set via parameters in the
+\fBsmb.conf\fR(5)
+configuration file\&.
+.PP
+\FCnmbd\F[]
+can also be used as a WINS (Windows Internet Name Server) server\&. What this basically means is that it will act as a WINS database server, creating a database from name registration requests that it receives and replying to queries from clients for these names\&.
+.PP
+In addition,
+\FCnmbd\F[]
+can act as a WINS proxy, relaying broadcast queries from clients that do not understand how to talk the WINS protocol to a WINS server\&.
+.SH "OPTIONS"
+.PP
+\-D
+.RS 4
+If specified, this parameter causes
+\FCnmbd\F[]
+to operate as a daemon\&. That is, it detaches itself and runs in the background, fielding requests on the appropriate port\&. By default,
+\FCnmbd\F[]
+will operate as a daemon if launched from a command shell\&. nmbd can also be operated from the
+\FCinetd\F[]
+meta\-daemon, although this is not recommended\&.
+.RE
+.PP
+\-F
+.RS 4
+If specified, this parameter causes the main
+\FCnmbd\F[]
+process to not daemonize, i\&.e\&. double\-fork and disassociate with the terminal\&. Child processes are still created as normal to service each connection request, but the main process does not exit\&. This operation mode is suitable for running
+\FCnmbd\F[]
+under process supervisors such as
+\FCsupervise\F[]
+and
+\FCsvscan\F[]
+from Daniel J\&. Bernstein\'s
+\FCdaemontools\F[]
+package, or the AIX process monitor\&.
+.RE
+.PP
+\-S
+.RS 4
+If specified, this parameter causes
+\FCnmbd\F[]
+to log to standard output rather than a file\&.
+.RE
+.PP
+\-i
+.RS 4
+If this parameter is specified it causes the server to run "interactively", not as a daemon, even if the server is executed on the command line of a shell\&. Setting this parameter negates the implicit daemon mode when run from the command line\&.
+\FCnmbd\F[]
+also logs to standard output, as if the
+\fB\-S\fR
+parameter had been given\&.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\&.
+.RE
+.PP
+\-H <filename>
+.RS 4
+NetBIOS lmhosts file\&. The lmhosts file is a list of NetBIOS names to IP addresses that is loaded by the nmbd server and used via the name resolution mechanism
+\m[blue]\fBname resolve order\fR\m[]
+described in
+\fBsmb.conf\fR(5)
+to resolve any NetBIOS name queries needed by the server\&. Note that the contents of this file are
+\fINOT\fR
+used by
+\FCnmbd\F[]
+to answer any name queries\&. Adding a line to this file affects name NetBIOS resolution from this host
+\fIONLY\fR\&.
+.sp
+The default path to this file is compiled into Samba as part of the build process\&. Common defaults are
+\FC/usr/local/samba/lib/lmhosts\F[],
+\FC/usr/samba/lib/lmhosts\F[]
+or
+\FC/etc/samba/lmhosts\F[]\&. See the
+\fBlmhosts\fR(5)
+man page for details on the contents of this file\&.
+.RE
+.PP
+\-d|\-\-debuglevel=level
+.RS 4
+\fIlevel\fR
+is an integer from 0 to 10\&. The default value if this parameter is not specified is 0\&.
+.sp
+The higher this value, the more detail will be logged to the log files about the activities of the server\&. At level 0, only critical errors and serious warnings will be logged\&. Level 1 is a reasonable level for day\-to\-day running \- it generates a small amount of information about operations carried out\&.
+.sp
+Levels above 1 will generate considerable amounts of log data, and should only be used when investigating a problem\&. Levels above 3 are designed for use only by developers and generate HUGE amounts of log data, most of which is extremely cryptic\&.
+.sp
+Note that specifying this parameter here will override the
+\m[blue]\fBlog level\fR\m[]
+parameter in the
+\FCsmb\&.conf\F[]
+file\&.
+.RE
+.PP
+\-V
+.RS 4
+Prints the program version number\&.
+.RE
+.PP
+\-s <configuration file>
+.RS 4
+The file specified contains the configuration details required by the server\&. The information in this file includes server\-specific information such as what printcap file to use, as well as descriptions of all the services that the server is to provide\&. See
+\FCsmb\&.conf\F[]
+for more information\&. The default configuration file name is determined at compile time\&.
+.RE
+.PP
+\-l|\-\-log\-basename=logdirectory
+.RS 4
+Base directory name for log/debug files\&. The extension
+\fB"\&.progname"\fR
+will be appended (e\&.g\&. log\&.smbclient, log\&.smbd, etc\&.\&.\&.)\&. The log file is never removed by the client\&.
+.RE
+.PP
+\-p <UDP port number>
+.RS 4
+UDP port number is a positive integer value\&. This option changes the default UDP port number (normally 137) that
+\FCnmbd\F[]
+responds to name queries on\&. Don\'t use this option unless you are an expert, in which case you won\'t need help!
+.RE
+.SH "FILES"
+.PP
+\FC/etc/inetd\&.conf\F[]
+.RS 4
+If the server is to be run by the
+\FCinetd\F[]
+meta\-daemon, this file must contain suitable startup information for the meta\-daemon\&.
+.RE
+.PP
+\FC/etc/rc\F[]
+.RS 4
+or whatever initialization script your system uses)\&.
+.sp
+If running the server as a daemon at startup, this file will need to contain an appropriate startup sequence for the server\&.
+.RE
+.PP
+\FC/etc/services\F[]
+.RS 4
+If running the server via the meta\-daemon
+\FCinetd\F[], this file must contain a mapping of service name (e\&.g\&., netbios\-ssn) to service port (e\&.g\&., 139) and protocol type (e\&.g\&., tcp)\&.
+.RE
+.PP
+\FC/usr/local/samba/lib/smb\&.conf\F[]
+.RS 4
+This is the default location of the
+\fBsmb.conf\fR(5)
+server configuration file\&. Other common places that systems install this file are
+\FC/usr/samba/lib/smb\&.conf\F[]
+and
+\FC/etc/samba/smb\&.conf\F[]\&.
+.sp
+When run as a WINS server (see the
+\m[blue]\fBwins support\fR\m[]
+parameter in the
+\fBsmb.conf\fR(5)
+man page),
+\FCnmbd\F[]
+will store the WINS database in the file
+\FCwins\&.dat\F[]
+in the
+\FCvar/locks\F[]
+directory configured under wherever Samba was configured to install itself\&.
+.sp
+If
+\FCnmbd\F[]
+is acting as a
+\fI browse master\fR
+(see the
+\m[blue]\fBlocal master\fR\m[]
+parameter in the
+\fBsmb.conf\fR(5)
+man page,
+\FCnmbd\F[]
+will store the browsing database in the file
+\FCbrowse\&.dat \F[]
+in the
+\FCvar/locks\F[]
+directory configured under wherever Samba was configured to install itself\&.
+.RE
+.SH "SIGNALS"
+.PP
+To shut down an
+\FCnmbd\F[]
+process it is recommended that SIGKILL (\-9)
+\fINOT\fR
+be used, except as a last resort, as this may leave the name database in an inconsistent state\&. The correct way to terminate
+\FCnmbd\F[]
+is to send it a SIGTERM (\-15) signal and wait for it to die on its own\&.
+.PP
+\FCnmbd\F[]
+will accept SIGHUP, which will cause it to dump out its namelists into the file
+\FCnamelist\&.debug \F[]
+in the
+\FC/usr/local/samba/var/locks\F[]
+directory (or the
+\FCvar/locks\F[]
+directory configured under wherever Samba was configured to install itself)\&. This will also cause
+\FCnmbd\F[]
+to dump out its server database in the
+\FClog\&.nmb\F[]
+file\&.
+.PP
+The debug log level of nmbd may be raised or lowered using
+\fBsmbcontrol\fR(1)
+(SIGUSR[1|2] signals are no longer used since Samba 2\&.2)\&. This is to allow transient problems to be diagnosed, whilst still running at a normally low log level\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+
+\fBinetd\fR(8),
+\fBsmbd\fR(8),
+\fBsmb.conf\fR(5),
+\fBsmbclient\fR(1),
+\fBtestparm\fR(1),
+\fBtestprns\fR(1), and the Internet RFC\'s
+\FCrfc1001\&.txt\F[],
+\FCrfc1002\&.txt\F[]\&. In addition the CIFS (formerly SMB) specification is available as a link from the Web page
+http://samba\&.org/cifs/\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original Samba man pages were written by Karl Auer\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+ftp://ftp\&.icce\&.rug\&.nl/pub/unix/) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

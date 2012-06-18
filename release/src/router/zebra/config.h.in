@@ -1,0 +1,360 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* BSDI */
+#undef BSDI_NRL
+
+/* Disable BGP installation to zebra */
+#undef DISABLE_BGP_ANNOUNCE
+
+/* FreeBSD 3.2 */
+#undef FREEBSD_32
+
+/* GNU Linux */
+#undef GNU_LINUX
+
+/* Define to 1 if you have the <asm/types.h> header file. */
+#undef HAVE_ASM_TYPES_H
+
+/* Define to 1 if you have the `bcopy' function. */
+#undef HAVE_BCOPY
+
+/* Broken Alias */
+#undef HAVE_BROKEN_ALIASES
+
+/* Define to 1 if you have the `bzero' function. */
+#undef HAVE_BZERO
+
+/* Define to 1 if you have the `daemon' function. */
+#undef HAVE_DAEMON
+
+/* Define to 1 if you have the `getaddrinfo' function. */
+#undef HAVE_GETADDRINFO
+
+/* Define to 1 if you have the `getifaddrs' function. */
+#undef HAVE_GETIFADDRS
+
+/* GNU regexp library */
+#undef HAVE_GNU_REGEX
+
+/* ifaliasreq */
+#undef HAVE_IFALIASREQ
+
+/* Define to 1 if you have the `if_indextoname' function. */
+#undef HAVE_IF_INDEXTONAME
+
+/* Define to 1 if you have the `if_nametoindex' function. */
+#undef HAVE_IF_NAMETOINDEX
+
+/* in6addr global variables e.g. in6addr_loopback */
+#undef HAVE_IN6ADDR_GLOBAL
+
+/* in6_aliasreq */
+#undef HAVE_IN6_ALIASREQ
+
+/* Define to 1 if you have the `inet_aton' function. */
+#undef HAVE_INET_ATON
+
+/* Define to 1 if you have the <inet/nd.h> header file. */
+#undef HAVE_INET_ND_H
+
+/* inet_ntop */
+#undef HAVE_INET_NTOP
+
+/* inet_pton */
+#undef HAVE_INET_PTON
+
+/* in_pktinfo */
+#undef HAVE_INPKTINFO
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* IPv6 */
+#undef HAVE_IPV6
+
+/* IRDP */
+#undef HAVE_IRDP
+
+/* Define to 1 if you have the <kvm.h> header file. */
+#undef HAVE_KVM_H
+
+/* Define to 1 if you have the `crypt' library (-lcrypt). */
+#undef HAVE_LIBCRYPT
+
+/* Define to 1 if you have the `kvm' library (-lkvm). */
+#undef HAVE_LIBKVM
+
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
+
+/* Define to 1 if you have the `ncurses' library (-lncurses). */
+#undef HAVE_LIBNCURSES
+
+/* Define to 1 if you have the `nsl' library (-lnsl). */
+#undef HAVE_LIBNSL
+
+/* Define to 1 if you have the `readline' library (-lreadline). */
+#undef HAVE_LIBREADLINE
+
+/* Define to 1 if you have the `resolv' library (-lresolv). */
+#undef HAVE_LIBRESOLV
+
+/* Define to 1 if you have the `socket' library (-lsocket). */
+#undef HAVE_LIBSOCKET
+
+/* Define to 1 if you have the `termcap' library (-ltermcap). */
+#undef HAVE_LIBTERMCAP
+
+/* Define to 1 if you have the `tinfo' library (-ltinfo). */
+#undef HAVE_LIBTINFO
+
+/* Define to 1 if you have the <libutil.h> header file. */
+#undef HAVE_LIBUTIL_H
+
+/* Define to 1 if you have the `xnet' library (-lxnet). */
+#undef HAVE_LIBXNET
+
+/* Linux TCP Signature Option */
+#undef HAVE_LINUX_TCP_SIGNATURE
+
+/* Define to 1 if you have the <linux/version.h> header file. */
+#undef HAVE_LINUX_VERSION_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <netdb.h> header file. */
+#undef HAVE_NETDB_H
+
+/* Define to 1 if you have the <netinet6/nd6.h> header file. */
+#undef HAVE_NETINET6_ND6_H
+
+/* Define to 1 if you have the <netinet/icmp6.h> header file. */
+#undef HAVE_NETINET_ICMP6_H
+
+/* Define to 1 if you have the <netinet/in6.h> header file. */
+#undef HAVE_NETINET_IN6_H
+
+/* Define to 1 if you have the <netinet/in6_var.h> header file. */
+#undef HAVE_NETINET_IN6_VAR_H
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <netinet/in_var.h> header file. */
+#undef HAVE_NETINET_IN_VAR_H
+
+/* netlink */
+#undef HAVE_NETLINK
+
+/* NET-SNMP */
+#undef HAVE_NETSNMP
+
+/* Define to 1 if you have the <net/if_dl.h> header file. */
+#undef HAVE_NET_IF_DL_H
+
+/* Define to 1 if you have the <net/if_var.h> header file. */
+#undef HAVE_NET_IF_VAR_H
+
+/* Define to 1 if you have the <net/netopt.h> header file. */
+#undef HAVE_NET_NETOPT_H
+
+/* NET_RT_IFLIST */
+#undef HAVE_NET_RT_IFLIST
+
+/* OSPF NSSA */
+#undef HAVE_NSSA
+
+/* OSPF Opaque LSA */
+#undef HAVE_OPAQUE_LSA
+
+/* OpenBSD TCP Signature Option */
+#undef HAVE_OPENBSD_TCP_SIGNATURE
+
+/* OSPF TE */
+#undef HAVE_OSPF_TE
+
+/* /proc/net/dev */
+#undef HAVE_PROC_NET_DEV
+
+/* /proc/net/if_inet6 */
+#undef HAVE_PROC_NET_IF_INET6
+
+/* rt_addrinfo */
+#undef HAVE_RT_ADDRINFO
+
+/* rusage */
+#undef HAVE_RUSAGE
+
+/* sa_len */
+#undef HAVE_SA_LEN
+
+/* Define to 1 if you have the `setproctitle' function. */
+#undef HAVE_SETPROCTITLE
+
+/* scope id */
+#undef HAVE_SIN6_SCOPE_ID
+
+/* sin_len */
+#undef HAVE_SIN_LEN
+
+/* SNMP */
+#undef HAVE_SNMP
+
+/* Define to 1 if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
+/* sockaddr_dl */
+#undef HAVE_SOCKADDR_DL
+
+/* socklen_t */
+#undef HAVE_SOCKLEN_T
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strerror' function. */
+#undef HAVE_STRERROR
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
+/* Define to 1 if you have the <stropts.h> header file. */
+#undef HAVE_STROPTS_H
+
+/* sun_len */
+#undef HAVE_SUN_LEN
+
+/* Define to 1 if you have the <sys/conf.h> header file. */
+#undef HAVE_SYS_CONF_H
+
+/* Define to 1 if you have the <sys/ksym.h> header file. */
+#undef HAVE_SYS_KSYM_H
+
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
+
+/* Define to 1 if you have the <sys/sockio.h> header file. */
+#undef HAVE_SYS_SOCKIO_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/sysctl.h> header file. */
+#undef HAVE_SYS_SYSCTL_H
+
+/* Define to 1 if you have the <sys/times.h> header file. */
+#undef HAVE_SYS_TIMES_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* TCP Signature Option */
+#undef HAVE_TCP_SIGNATURE
+
+/* Use TCP for zebra communication */
+#undef HAVE_TCP_ZEBRA
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
+/* Inria IPv6 */
+#undef INRIA_IPV6
+
+/* KAME IPv6 */
+#undef KAME
+
+/* Linux IPv6 */
+#undef LINUX_IPV6
+
+/* NRL */
+#undef NRL
+
+/* OpenBSD */
+#undef OPEN_BSD
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* bgpd PID */
+#undef PATH_BGPD_PID
+
+/* ospf6d PID */
+#undef PATH_OSPF6D_PID
+
+/* ospfd PID */
+#undef PATH_OSPFD_PID
+
+/* ripd PID */
+#undef PATH_RIPD_PID
+
+/* ripngd PID */
+#undef PATH_RIPNGD_PID
+
+/* zebra PID */
+#undef PATH_ZEBRA_PID
+
+/* Define as the return type of signal handlers (`int' or `void'). */
+#undef RETSIGTYPE
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* SunOS 5 */
+#undef SUNOS_5
+
+/* Use PAM for authentication */
+#undef USE_PAM
+
+/* Version number of package */
+#undef VERSION
+
+/* VTY shell */
+#undef VTYSH
+
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
+
+/* Define to 1 if on AIX 3.
+   System headers sometimes define this.
+   We just want to avoid a redefinition error message.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+VERSION=$1
+RELEASE=$2
+
+for f in */*/*.tmpl; do
+	f2=`echo $f | sed s/.tmpl//g`
+	echo $f2
+	sed -e s/PVERSION/$VERSION/g -e s/PRELEASE/$RELEASE/g < $f > $f2
+done
+for f in */*.tmpl; do
+	f2=`echo $f | sed s/.tmpl//g`
+	echo $f2
+	sed -e s/PVERSION/$VERSION/g -e s/PRELEASE/$RELEASE/g < $f > $f2
+done

@@ -1,0 +1,15 @@
+This is used to explicitly override the core network stack's routing decision.
+.B mangle
+table.
+.TP
+.BI "--oif " "ifname"
+Route the packet through `ifname' network interface
+.TP
+.BI "--gw " "IPv6_address"
+Route the packet via this gateway
+.TP
+.BI "--continue "
+Behave like a non-terminating target and continue traversing the rules. Not valid in combination with `--tee'
+.TP
+.BI "--tee "
+Make a copy of the packet, and route that copy to the given destination. For the original, uncopied packet, behave like a non-terminating target and continue traversing the rules.  Not valid in combination with `--continue'

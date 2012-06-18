@@ -1,0 +1,309 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 4] 4.5 Disk Share Configuration</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:32:13Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_04.html" TITLE="4.4 Server Configuration">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.4 Server Configuration" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch04_01.html" TITLE="4. Disk Shares ">
+Chapter 4<br>
+Disk Shares </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_06.html" TITLE="4.6 Networking Options with Samba">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.6 Networking Options with Samba" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch04-14274">
+4.5 Disk Share Configuration</a></h2><P CLASS="para">We mentioned in the previous section that there were no disk shares on the <CODE CLASS="literal">
+hydra</code> server. Let's continue with the configuration file and create an empty disk share called [<CODE CLASS="literal">data</code>]. Here are the additions that will do it:</p><PRE CLASS="programlisting">
+[global]
+	netbios name = HYDRA
+	server string = Samba %v on (%L)
+	workgroup = SIMPLE
+
+[data]
+	path = /export/samba/data
+	comment = Data Drive
+	volume = Sample-Data-Drive
+	writeable = yes
+	guest ok = yes</pre><P CLASS="para">
+The <CODE CLASS="literal">
+[data]</code> share is typical for a Samba disk share. The share maps to a directory on the Samba server: <I CLASS="filename">
+/export/samba/data</i>. We've also provided a comment that describes the share as a <CODE CLASS="literal">
+Data</code> <CODE CLASS="literal">
+Drive</code>, as well as a volume name for the share itself.</p><P CLASS="para">
+The share is set to writeable so that users can write data to it; the default with Samba is to create a read-only share. As a result, this option needs to be explicitly set for each disk share you wish to make writeable.</p><P CLASS="para">
+You may have noticed that we set the <CODE CLASS="literal">
+guest</code> <CODE CLASS="literal">
+ok</code> parameter to <CODE CLASS="literal">
+yes</code>. While this isn't very security-conscious, there are some password issues that we need to understand before setting up individual users and authentication. For the moment, this will sidestep those issues and let anyone connect to the share.</p><P CLASS="para">
+Go ahead and make these additions to your configuration file. In addition, create the <I CLASS="filename">
+/export/samba/data</i> directory as root on your Samba machine with the following commands:</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">#</code> mkdir /export/samba/data</b><B CLASS="emphasis.bold">
+<CODE CLASS="literal"># </code>chmod 777 /export/samba/data</b></pre><P CLASS="para">
+Now, if you connect to the <CODE CLASS="literal">
+hydra</code> server again (you can do this by clicking on its icon in the Windows Network Neighborhood), you should see a single share listed entitled <CODE CLASS="literal">
+data</code>, as shown in <A CLASS="xref" HREF="ch04_05.html#ch04-13866">
+Figure 4.4</a>. This share should also have read/write access to it. Try creating or copying a file into the share. Or, if you're really feeling adventurous, you can even try mapping a network drive to it! </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch04-13866">
+Figure 4.4: The initial data share on the Samba server</a></h4><IMG CLASS="graphic" SRC="figs/sam.0404.gif" ALT="Figure 4.4"><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-pgfId-961433">
+4.5.1 Disk Share Configuration Options</a></h3><P CLASS="para">The basic Samba configuration options for disk shares previously introduced are listed in <A CLASS="xref" HREF="ch04_05.html#ch04-82964">
+Table 4.4</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch04-82964">
+Table 4.4: Basic Share Configuration Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+path (directory)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string (fully-qualified pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the Unix directory that will be provided for a disk share or used for spooling by a printer share</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+/tmp</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+guest ok (public)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If set to <CODE CLASS="literal">
+yes</code>, authentication is not needed to access this share</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+comment</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the comment that appears with the share</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+volume</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+string</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets the volume name: the DOS name of the physical drive</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share name</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+read only</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+yes</code>, allows read only access to a share.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+yes</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+writeable (write ok)</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+boolean</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+If <CODE CLASS="literal">
+no</code>, allows read only access to a share.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+no</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Share</p></td></tr></tbody></table><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-959473">
+4.5.1.1 path</a></h4><P CLASS="para">This option, which has the synonym <CODE CLASS="literal">
+directory</code>, indicates the pathname at the root of the file or printing share. You can choose any path on the Samba server, so long as the owner of the Samba process that is connecting has read and write access to that directory. If the path is for a printing share, it should point to a temporary directory where files can be written on the server before being spooled to the target printer (<I CLASS="filename">/tmp</i> and <I CLASS="filename">
+/var/spool</i> are popular choices). If this path is for a disk share, the contents of the folder representing the share name on the client will match the content of the directory on the Samba server. For example, if we have the following disk share listed in our configuration file:</p><PRE CLASS="programlisting">
+[network]
+	path = /export/samba/network
+	writable = yes
+<CODE CLASS="literal">
+	guest ok = yes</code></pre><P CLASS="para">
+And the contents of the directory <I CLASS="filename">
+/usr/local/network</i> on the Unix side are:</p><PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">$</code> ls -al /export/samba/network</b>
+</pre><PRE CLASS="programlisting">
+drwxrwxrwx  9  root   nobody  1024  Feb 16 17:17  .
+drwxr-xr-x  9  nobody nobody  1024  Feb 16 17:17  ..
+drwxr-xr-x  9  nobody nobody  1024  Feb 16 17:17  quicken
+drwxr-xr-x  9  nobody nobody  1024  Feb 16 17:17  tax98
+drwxr-xr-x  9  nobody nobody  1024  Feb 16 17:17  taxdocuments</pre><P CLASS="para">
+Then we should see the equivalent of <A CLASS="xref" HREF="ch04_05.html#ch04-88746">
+Figure 4.5</a> on the client side. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch04-88746">
+Figure 4.5: Windows client view of a network filesystem specified by path</a></h4><IMG CLASS="graphic" SRC="figs/sam.0405.gif" ALT="Figure 4.5"></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-943587">
+4.5.1.2 guest ok</a></h4><P CLASS="para">
+This option (which has an older synonym <CODE CLASS="literal">
+public</code>) allows or prohibits guest access to a share. The default value is <CODE CLASS="literal">
+no</code>. If set to <CODE CLASS="literal">
+yes</code>, it means that no username or password will be needed to connect to the share. When a user connects, the access rights will be equivalent to the designated guest user. The default account to which Samba offers the share is <CODE CLASS="literal">
+nobody</code>. However, this can be reset with the <CODE CLASS="literal">
+guest</code> <CODE CLASS="literal">
+account</code> configuration option. For example, the following lines allow guest user access to the <CODE CLASS="literal">
+[accounting]</code> share with the permissions of the <EM CLASS="emphasis">
+ftp</em> account:</p><PRE CLASS="programlisting">
+[global]
+	guest account = ftp
+[accounting]
+	path = /usr/local/account
+	guest ok = yes</pre><P CLASS="para">
+Note that users can still connect to the share using a valid username/password combination. If successful, they will hold the access rights granted by their own account and not the guest account. If a user attempts to log in and fails, however, he or she will default to the access rights of the guest account. You can mandate that every user who attaches to the share will be using the guest account (and will have the permissions of the guest) by setting the option <CODE CLASS="literal">
+guest</code> <CODE CLASS="literal">
+only</code> <CODE CLASS="literal">
+=</code> <CODE CLASS="literal">
+yes</code>.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-943593">
+4.5.1.3 comment</a></h4><P CLASS="para">
+The <CODE CLASS="literal">
+comment</code> option allows you to enter a comment that will be sent to the client when it attempts to browse the share. The user can see the comment by listing Details on the share folder under the appropriate computer in the Windows Network Neighborhood, or type the command <CODE CLASS="literal">
+NET</code> <CODE CLASS="literal">
+VIEW</code> at an MS-DOS prompt. For example, here is how you might insert a comment for a <CODE CLASS="literal">
+[network]</code> share:</p><PRE CLASS="programlisting">
+[network]
+	comment = Network Drive
+	path = /export/samba/network</pre><P CLASS="para">
+This yields a folder similar to <A CLASS="xref" HREF="ch04_05.html#ch04-34850">
+Figure 4.6</a> on the client side. Note that with the current configuration of Windows, this comment will not be shown once a share is mapped to a Windows network drive. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch04-34850">
+Figure 4.6: Windows client view of a share comment</a></h4><IMG CLASS="graphic" SRC="figs/sam.0406.gif" ALT="Figure 4.6"><P CLASS="para">
+Be sure not to confuse the <CODE CLASS="literal">
+comment</code> option, which documents a Samba server's shares, with the <CODE CLASS="literal">
+server</code> <CODE CLASS="literal">
+string</code> option, which documents the server itself.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-967445">
+4.5.1.4 volume</a></h4><P CLASS="para">
+This option allows you to specify the volume name of the share as reported by SMB. This normally resolves to the name of the share given in the <I CLASS="filename">
+smb.conf</i>  file. However, if you wish to name it something else (for whatever reason) you can do so with this option.</p><P CLASS="para">
+For example, an installer program may check the volume name of a CD-ROM to make sure the right CD-ROM is in the drive before attempting to install it. If you copy the contents of the CD-ROM into a network share, and wish to install from there, you can use this option to get around the issue:</p><PRE CLASS="programlisting">
+[network]
+	comment = Network Drive
+	volume = ASVP-102-RTYUIKA
+	path = /home/samba/network</pre></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch04-pgfId-952861">
+4.5.1.5 read only and writeable</a></h4><P CLASS="para">
+The options <CODE CLASS="literal">
+read</code> <CODE CLASS="literal">
+only</code> and <CODE CLASS="literal">
+writeable</code> (or <CODE CLASS="literal">
+write</code> <CODE CLASS="literal">
+ok</code>) are really two ways of saying the same thing, but approached from opposite ends. For example, you can set either of the following options in the <CODE CLASS="literal">
+[global]</code> section or in an individual share:</p><PRE CLASS="programlisting">
+read only = yes
+writeable = no</pre><P CLASS="para">
+If either option is set as shown, data can be read from a share, but cannot be written to it. You might think you would need this option only if you were creating a read-only share. However, note that this read-only behavior is the <EM CLASS="emphasis">
+default</em> action for shares; if you want to be able to write data to a share, you must explicitly specify one of the following options in the configuration file for each share:</p><PRE CLASS="programlisting">
+read only = no
+writeable = yes</pre><P CLASS="para">
+Note that if you specify more than one occurrence of either option, Samba will adhere to the last value it encounters for the share. </p></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_04.html" TITLE="4.4 Server Configuration">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.4 Server Configuration" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_06.html" TITLE="4.6 Networking Options with Samba">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.6 Networking Options with Samba" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+4.4 Server Configuration</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+4.6 Networking Options with Samba</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

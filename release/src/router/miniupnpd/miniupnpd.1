@@ -1,0 +1,73 @@
+.TH miniupnpd 1
+.SH NAME
+miniupnpd \- UPnP Internet Gateway Device Daemon
+.SH SYNOPSIS
+.B miniupnpd
+[-f file] [-i interface] [-o address]
+[-a address] [-p port] [-d] [-L] [-U]
+[-u uuid] [-s serial] [-m model_number] 
+[-q queue]
+[-t interval] [-P file]
+[-B down up] [-w url]
+.SH DESCRIPTION
+miniupnpd act as a UPnP Internet Gateway Device. It is designed
+to run on the gateway between the internet and a NAT'ed LAN. It provides
+an interface, as defined in the UPnP standard, for enabling
+clients on the LAN to ask for port redirections.
+.SH OPTIONS
+.TP
+.B \-f file
+load the config from file. default is /etc/miniupnpd.conf.
+.TP
+.B \-i interface
+interface used to connect to the internet.
+.TP
+.B \-o address
+address used to connect to the internet.
+default address of the interface will be used if not specified.
+.TP
+.B \-a address
+address on the LAN. -a option can by used multiple time if LAN is
+subdivised in several subnetworks.
+.TP
+.B \-p port
+port used for HTTP.
+.TP
+.B \-d
+debug mode : do not go to background, output messages on console
+and do not filter out low priority messages.
+.TP
+.B \-L
+set packet log in pf on
+.TP
+.B \-q queue
+set ALTQ queue in pf. filter rules must be enabled for this option 
+to have any effect.
+.TP
+.B \-U
+report system uptime instead of daemon uptime to clients.
+.TP
+.B \-u uuid
+set the uuid of the UPnP Internet Gateway Device.
+.TP
+.B \-s serial
+serial number for the UPnP Internet Gateway Device.
+.TP
+.B \-m number
+model number for the UPnP Internet Gateway Device.
+.TP
+.B \-t interval
+SSDP notify interval in seconds :
+SSDP announce messages will be broadcasted at this interval.
+.TP
+.B \-P file
+pid file. default is /var/run/miniupnpd.pid
+.TP
+.B \-B down up
+download and upload bitrates reported to clients.
+.TP
+.B \-w url
+presentation url. default is first address on LAN, port 80.
+.SH "SEE ALSO"
+minissdpd(1) miniupnpc(3)
+.SH BUGS

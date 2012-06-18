@@ -1,0 +1,87 @@
+#!/bin/sh
+
+#
+# For our package, and for the SMF script, we need to define where we
+# want things to go...
+#
+BIN_DIR="/usr/sbin"
+CONF_DIR="/etc"
+MAN_DIR="/usr/share/man/man8"
+
+PACKAGE_NAME="dnsmasq"
+
+#
+# Since we know we are in the contrib directory we can work out where
+# the rest of the tree is...
+#
+BASEDIR="`dirname $0`/../.."
+
+#
+# We need a version number to use for the package creation...
+#
+if [ $# != 1 ]; then
+	echo "Usage: $0 <package_version_number>" >&2
+	exit 1
+fi
+VERSION="$1"
+
+#
+# First thing we do is fix-up the smf file to use the paths we prefer...
+#
+if [ ! -f "${BASEDIR}/contrib/Solaris10/dnsmasq.xml" ]; then
+	echo "$0: unable to find contrib/Solaris10/dnsmasq.xml" >&2
+	exit 1
+fi
+
+echo "Fixing up smf file ... \c"
+cat "${BASEDIR}/contrib/Solaris10/dnsmasq.xml" | \
+	sed 	-e "s%/usr/local/etc%${CONF_DIR}%" \
+		-e "s%/usr/local/sbin%${BIN_DIR}%" \
+		-e "s%/usr/local/man%${MAN_DIR}%" > ${BASEDIR}/contrib/Solaris10/dnsmasq-pkg.xml
+echo "done."
+
+echo "Creating packaging file ... \c"
+cat <<EOF >${BASEDIR}/contrib/Solaris10/dnsmasq_package.inc
+#
+# header
+#
+set name=pkg.name		value="dnsmasq"
+set name=pkg.description	value="dnsmasq daemon - dns, dhcp, tftp etc"
+set name=pkg.detailed_url	value="http://www.thekelleys.org.uk/dnsmasq/doc.html"
+set name=info.maintainer	value="TBD (tbd@tbd.com)"
+set name=info.upstream		value="dnsmasq-discuss@lists.thekelleys.org.uk"
+set name=info.upstream_url	value="http://www.thekelleys.org.uk/dnsmasq/doc.html"
+#
+# dependencies ... none?
+#
+
+#
+# directories
+#
+dir mode=0755 owner=root group=bin path=${BIN_DIR}/
+dir mode=0755 owner=root group=sys path=${CONF_DIR}/
+dir mode=0755 owner=root group=sys path=${MAN_DIR}/
+dir mode=0755 owner=root group=sys path=/var/
+dir mode=0755 owner=root group=sys path=/var/svc
+dir mode=0755 owner=root group=sys path=/var/svc/manifest
+dir mode=0755 owner=root group=sys path=/var/svc/manifest/network
+
+#
+# files
+#
+file ${BASEDIR}/src/dnsmasq mode=0555 owner=root group=bin path=${BIN_DIR}/dnsmasq
+file ${BASEDIR}/man/dnsmasq.8 mode=0555 owner=root group=bin path=${MAN_DIR}/dnsmasq.8
+file ${BASEDIR}/dnsmasq.conf.example mode=0644 owner=root group=sys path=${CONF_DIR}/dnsmasq.conf preserve=strawberry
+file ${BASEDIR}/contrib/Solaris10/dnsmasq-pkg.xml mode=0644 owner=root group=sys path=/var/svc/manifest/network/dnsmasq.xml restart_fmri=svc:/system/manifest-import:default
+
+EOF
+echo "done."
+
+echo "Creating package..."
+eval `pkgsend open ${PACKAGE_NAME}@${VERSION}`
+pkgsend include ${BASEDIR}/contrib/Solaris10/dnsmasq_package.inc
+if [ "$?" = 0 ]; then
+	pkgsend close
+else
+	echo "Errors"
+fi

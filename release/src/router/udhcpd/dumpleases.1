@@ -1,0 +1,30 @@
+.TH DUMPLEASES 1 2001-09-27 GNU/Linux "GNU/Linux Administrator's Manual"
+.SH NAME
+dumpleases \- display leases granted by udhcp server
+.SH SYNOPSIS
+.B dumpleases
+.RI [ OPTION ]...
+.SH DESCRIPTION
+Display the DHCP leases granted by
+.BR udhcpd (8).
+.SH OPTIONS
+.TP
+.BR \-a ,\  \-\-absolute
+Interpret lease times as expiration time.
+.TP
+.BI \-f\  FILE,\  \-\-file= FILE
+Read lease information from
+.IR FILE .
+.TP
+.BR \-h ,\  \-\-help
+Display help.
+.TP
+.BR \-r ,\  \-\-remaining
+Interpret lease times as remaining time.
+.SH FILES
+.TP
+.I /var/lib/misc/udhcpd.leases
+Lease information file.
+.SH SEE ALSO
+.BR udhcpd (8),
+.BR udhcpd.conf (5).

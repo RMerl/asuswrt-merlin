@@ -1,0 +1,69 @@
+Patch from Fedora Linix
+
+--- ppp-2.4.3/pppd/ipv6cp.c~	2005-11-04 09:40:10.000000000 +0000
++++ ppp-2.4.3/pppd/ipv6cp.c	2005-11-04 10:20:14.000000000 +0000
+@@ -235,6 +235,8 @@ static option_t ipv6cp_option_list[] = {
+ 
+     { "ipv6cp-accept-local", o_bool, &ipv6cp_allowoptions[0].accept_local,
+       "Accept peer's interface identifier for us", 1 },
++    { "ipv6cp-accept-remote", o_bool, &ipv6cp_allowoptions[0].accept_remote,
++      "Accept peer's interface identifier for itself", 1 },
+ 
+     { "ipv6cp-use-ipaddr", o_bool, &ipv6cp_allowoptions[0].use_ip,
+       "Use (default) IPv4 address as interface identifier", 1 },
+@@ -427,6 +429,7 @@ ipv6cp_init(unit)
+     memset(ao, 0, sizeof(*ao));
+ 
+     wo->accept_local = 1;
++    wo->accept_remote = 1;
+     wo->neg_ifaceid = 1;
+     ao->neg_ifaceid = 1;
+ 
+@@ -952,7 +955,7 @@ ipv6cp_reqci(f, inp, len, reject_if_disa
+ 		orc = CONFREJ;		/* Reject CI */
+ 		break;
+ 	    }
+-	    if (!eui64_iszero(wo->hisid) && 
++	    if (!eui64_iszero(wo->hisid) && !wo->accept_remote &&
+ 		!eui64_equals(ifaceid, wo->hisid) && 
+ 		eui64_iszero(go->hisid)) {
+ 		    
+--- ppp-2.4.3/pppd/ipv6cp.h~	2002-12-04 23:03:32.000000000 +0000
++++ ppp-2.4.3/pppd/ipv6cp.h	2005-11-04 10:20:55.000000000 +0000
+@@ -150,7 +150,8 @@
+ typedef struct ipv6cp_options {
+     int neg_ifaceid;		/* Negotiate interface identifier? */
+     int req_ifaceid;		/* Ask peer to send interface identifier? */
+-    int accept_local;		/* accept peer's value for iface id? */
++    int accept_local;		/* accept peer's value for our iface id? */
++    int accept_remote;		/* accept peer's value for his iface id? */
+     int opt_local;		/* ourtoken set by option */
+     int opt_remote;		/* histoken set by option */
+     int use_ip;			/* use IP as interface identifier */
+--- ppp-2.4.3/pppd/pppd.8.orig	2009-09-06 20:06:59.000000000 +0400
++++ ppp-2.4.3/pppd/pppd.8	2009-09-06 20:07:42.000000000 +0400
+@@ -193,6 +193,9 @@
+ negotiation, unless the \fIipcp\-accept\-local\fR and/or
+ \fIipcp\-accept\-remote\fR options are given, respectively.
+ .TP
++.B +ipv6
++Enable the IPv6CP and IPv6 protocols.
++.TP
+ .B ipv6 \fI<local_interface_identifier>\fR,\fI<remote_interface_identifier>
+ Set the local and/or remote 64-bit interface identifier. Either one may be
+ omitted. The identifier must be specified in standard ascii notation of
+@@ -449,6 +449,14 @@
+ option is given, the \fIstring\fR supplied is given as the 6th
+ parameter to those scripts.
+ .TP
++.B ipv6cp\-accept\-local
++With this option, pppd will accept the peer's idea of our local IPv6
++address, even if the local IPv6 address was specified in an option.
++.TP
++.B ipv6cp\-accept\-remote
++With this option, pppd will accept the peer's idea of its (remote) IPv6
++address, even if the remote IPv6 address was specified in an option.
++.TP
+ .B ipv6cp\-max\-configure \fIn
+ Set the maximum number of IPv6CP configure-request transmissions to
+ \fIn\fR (default 10).

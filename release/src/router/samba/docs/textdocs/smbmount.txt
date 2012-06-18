@@ -1,0 +1,100 @@
+!==
+!== smbmount.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Date:           October 15, 1999
+Contributor:    Urban Widmark <urban@svenskatest.se>
+
+Subject:        smbmount usage and mount.smb
+===============================================================================
+
+Words
+-----
+
+smbfs      - A filesystem that gives you access to a SMB share as a filesystem.
+             This is done as a normal kernel filesystem. Currently this is for
+             Linux only.
+smbmount   - The program that does the initial SMB setup with the server.
+mount.smb  - A link to smbmount that is created (always in /sbin) when you
+             install samba.
+
+
+What's going on?
+----------------
+
+The syntax for mounting SMB shares has been changed so that shares can
+be mounted with the normal mount command. When giving a -t smbfs flag to
+mount it knows to call an external mount program, mount.smb. With the
+new syntax, smbmount can be that mount.smb (through a symlink).
+
+This requires a recent enough version of the mount program for Linux,
+you almost certainly have this (exact util-linux version anyone?).
+
+With the new format you should not have to call smbmount/mount.smb
+directly. Instead you do something like this:
+
+  mount -t smbfs -o user=tridge,passwd=foobar //fjall/test /data/test
+
+The current list of options are:
+      username=<arg>                  SMB username
+      password=<arg>                  SMB password
+      netbiosname=<arg>               source NetBIOS name
+      uid=<arg>                       mount uid or username
+      gid=<arg>                       mount gid or groupname
+      port=<arg>                      remote SMB port number
+      fmask=<arg>                     file umask
+      dmask=<arg>                     directory umask
+      debug=<arg>                     debug level
+      ip=<arg>                        destination host or IP address
+      workgroup=<arg>                 workgroup on destination
+      sockopt=<arg>                   TCP socket options
+      scope=<arg>                     NetBIOS scope
+      guest                           don't prompt for a password
+      ro                              mount read-only
+      rw                              mount read-write
+
+If you already have a mount.smb script you probably do not need it
+anymore.
+
+
+/etc/fstab
+----------
+
+One of the advantages with this setup is that you can put entries for
+smbfs in your fstab.
+
+
+autofs
+------
+
+mount.smb makes autofs integration much easier, since it is now
+"yet-another-filesystem".
+
+Before, autofs had to parse the given options and then send them to
+smbmount in the right format. This "right format" changed between
+1.9.x and 2.0.x (and even between 2.0 versions). That is a pain when
+multiple packages are involved, this new setup should be a cleaner
+interface.
+
+The only thing that now changes if smbclient changes options are what
+you have to put in your autofs maps.
+
+Example /etc/autofs.data:
+test -fstype=smb,username=tridge,password=foobar,uid=123 ://fjall/test
+
+
+Strange dates
+-------------
+
+This really has nothing to do with smbclient, but if you are using
+smbfs you're likely to read this file when you run into problems so I
+put ithere anyway ... :)
+
+In older versions of Linux (before 2.2.10) smbfs did not automatically
+recognise some buggy win95 servers. Instead there was an option for a
+workaround that could be set at compile time. The problem with setting
+that option was that it would give funny dates when looking at shares
+from a NT box.
+
+Upgrade to the latest 2.2 version (2.2.12 is fine) if you are having
+this problem. RedHat 6.0 comes with a kernel that is compiled with
+this option set.

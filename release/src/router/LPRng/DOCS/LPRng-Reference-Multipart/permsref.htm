@@ -1,0 +1,631 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Permissions and Authentication</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="ifhp Filter " href="ifhp.htm">
+    <link rel="NEXT" title="Rule Matching Procedures" href=
+    "x8680.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "ifhp.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x8680.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="PERMSREF"></a>Chapter 17. Permissions and
+      Authentication</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>17.1. <a href=
+          "permsref.htm#DEFAULTPERMISSION">Permission Checking
+          Algorithm</a></dt>
+
+          <dt>17.2. <a href="x8680.htm">Rule Matching
+          Procedures</a></dt>
+
+          <dt>17.3. <a href="permspath.htm">Permission File
+          Location</a></dt>
+
+          <dt>17.4. <a href="x8919.htm">Example Permission
+          File</a></dt>
+
+          <dt>17.5. <a href="x8932.htm">Complex Permission
+          Checking</a></dt>
+
+          <dt>17.6. <a href="x8947.htm">More Examples</a></dt>
+
+          <dt>17.7. <a href="authref.htm">Authentication</a></dt>
+
+          <dt>17.8. <a href="x8974.htm">User
+          Identification</a></dt>
+
+          <dt>17.9. <a href="x8980.htm">RFC1179 Protocol
+          Extensions</a></dt>
+
+          <dt>17.10. <a href="auth.htm">Authentication
+          Operations</a></dt>
+
+          <dt>17.11. <a href="x9083.htm">Permission
+          Checking</a></dt>
+
+          <dt>17.12. <a href="x9115.htm">PGP Authentication
+          Support</a></dt>
+
+          <dt>17.13. <a href="kerberos.htm">Using Kerberos 5 for
+          Authentication</a></dt>
+
+          <dt>17.14. <a href="x9386.htm">Using Kerberos 4 for
+          Authentication</a></dt>
+
+          <dt>17.15. <a href="x9412.htm">Using SSL for
+          Authentication</a></dt>
+
+          <dt>17.16. <a href="x9489.htm">Using MD5 for
+          Authentication</a></dt>
+
+          <dt>17.17. <a href="x9556.htm">Adding Authentication
+          Support</a></dt>
+        </dl>
+      </div>
+
+      <p>The contents of the <tt class=
+      "FILENAME">/etc/lpd.perms</tt> file are used to control
+      access to the <b class="APPLICATION">lpd</b> server
+      facilities. The model used for permission granting is similar
+      to packet filters. An incoming request is tested against a
+      list of rules, and the first match found determines the
+      action to be taken. The action is either <acronym class=
+      "ACRONYM">ACCEPT</acronym> or the request is granted, or
+      <acronym class="ACRONYM">REJECT</acronym> and the request is
+      denied. You can also establish a default action.</p>
+
+      <p>The following is a sample <tt class=
+      "FILENAME">lpd.perms</tt> file.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN8459"></a>
+<pre class="SCREEN">
+    # allow root on server to control jobs
+    ACCEPT SERVICE=C SERVER REMOTEUSER=root
+    REJECT SERVICE=C
+    #
+    # allow same user on originating host to remove a job
+    ACCEPT SERVICE=M SAMEHOST SAMEUSER
+    # allow root on server to remove a job
+    ACCEPT SERVICE=M SERVER REMOTEUSER=root
+    REJECT SERVICE=M
+    # all other operations allowed
+    DEFAULT ACCEPT
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Each line of the permissions file is a rule. A rule will
+      ACCEPT or REJECT a request if all of the patterns specified
+      in the rule match. If there is a match failure, the next rule
+      in sequence will be applied. If all of the rules are
+      exhausted, then the last specified default authorization will
+      be used.</p>
+
+      <p>The sense of a pattern match can be inverted using the NOT
+      keyword. For example, the rules with <var class=
+      "LITERAL">ACCEPT NOT REMOTEUSER=john,bill</var> succeeds only
+      if the REMOTEUSER value is defined and is not <var class=
+      "LITERAL">john</var> or <var class="LITERAL">bill</var>.</p>
+
+      <p>Each entry in a rule is a keyword which has is assigned a
+      value or list of values followed by an optional set of
+      patterns that are matched against these values. The following
+      table is a summary of the available keywords.</p>
+
+      <div class="TABLE">
+        <a name="PERMSKEYWORDS"></a>
+
+        <p><b>Table 17-1. Permission Keywords and Purpose</b></p>
+
+        <table border="1" frame="border" rules="all" class=
+        "CALSTABLE">
+          <col>
+          <col>
+
+          <thead>
+            <tr>
+              <th>Keyword</th>
+
+              <th>Match</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td><acronym class="ACRONYM">DEFAULT</acronym></td>
+
+              <td>default result</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">SERVICE</acronym></td>
+
+              <td>Checking lpC, lpR, lprM, lpQ, and Printing</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">USER</acronym></td>
+
+              <td>P (logname) field name in print job control
+              file.</td>
+            </tr>
+
+            <tr>
+              <td><acronym class=
+              "ACRONYM">REMOTEUSER</acronym></td>
+
+              <td>user name in request from remote host.</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">HOST</acronym></td>
+
+              <td>DNS and IP address information for the H (host)
+              field name in print job control file</td>
+            </tr>
+
+            <tr>
+              <td><acronym class=
+              "ACRONYM">REMOTEHOST</acronym></td>
+
+              <td>DNS and IP address information for the connection
+              from the remote host making the request</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">IP</acronym></td>
+
+              <td>Alias for HOST</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">REMOTEIP</acronym></td>
+
+              <td>Alias for REMOTEHOST</td>
+            </tr>
+
+            <tr>
+              <td><acronym class=
+              "ACRONYM">REMOTEPORT</acronym></td>
+
+              <td>Originating TCP/IP port for the connection from
+              the remote host making the request</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">PORT</acronym></td>
+
+              <td>Alias for PORT</td>
+            </tr>
+
+            <tr>
+              <td><acronym class=
+              "ACRONYM">UNIXSOCKET</acronym></td>
+
+              <td>Connection is on a UNIX socket, i.e. from
+              localhost</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">SAMEUSER</acronym></td>
+
+              <td>USER and REMOTEUSER matches</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">SERVER</acronym></td>
+
+              <td>request originates on lpd server</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">FORWARD</acronym></td>
+
+              <td>destination of job is not host</td>
+            </tr>
+
+            <tr>
+              <td><acronym class=
+              "ACRONYM">REMOTEGROUP</acronym></td>
+
+              <td>REMOTEUSER is in the specified group or netgroup
+              in the <b class="APPLICATION">lpd</b> server group
+              database.</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">GROUP</acronym></td>
+
+              <td>USER is in the specified group or netgroup in the
+              <b class="APPLICATION">lpd</b> server group
+              database.</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">LPC</acronym></td>
+
+              <td>LPC command in the LPC request.</td>
+            </tr>
+
+            <tr>
+              <td><acronym class=
+              "ACRONYM">CONTROLLINE</acronym></td>
+
+              <td>match a line in control file</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">AUTH</acronym></td>
+
+              <td>authentication type</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">AUTHUSER</acronym></td>
+
+              <td>authenticated user</td>
+            </tr>
+
+            <tr>
+              <td><acronym class=
+              "ACRONYM">AUTHSAMEUSER</acronym></td>
+
+              <td>same authenticated user</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">AUTHFROM</acronym></td>
+
+              <td>authenticated forwarder</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">AUTHJOB</acronym></td>
+
+              <td>authenticated job in queue</td>
+            </tr>
+
+            <tr>
+              <td><acronym class="ACRONYM">AUTHCA</acronym></td>
+
+              <td>SSL signing certificates for job</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="DEFAULTPERMISSION">17.1.
+        Permission Checking Algorithm</a></h1>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">default_permission=</var><span
+            class="emphasis"><i class="EMPHASIS">Default Permission
+            (accept)</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>The <b class="APPLICATION">lpd</b> server uses the
+        following algorithm to do permission checks.</p>
+
+        <ol type="1">
+          <li>
+            <p>The configuration information initially establishes
+            a default permission using the <var class=
+            "LITERAL">default_permission</var> configuration value.
+            This is used if an explicit permission is not
+            determined by the other steps in this algorithm.</p>
+          </li>
+
+          <li>
+            <p>Each line of the permissions file is a lists of
+            tests (patterns) and a permission value that is used if
+            all of the tests (patterns) on the line are successful.
+            A DEFAULT line sets the default result if all lines
+            fail.</p>
+          </li>
+
+          <li>
+            <p>Each line is executed in sequence until a match is
+            found. The first matching line terminates the
+            permission checking and the corresponding permission
+            value is used.</p>
+          </li>
+
+          <li>
+            <p>Each keyword has a value (or set of values) that are
+            matched against a set of patterns. If the keyword does
+            not have a value (or the <span class="emphasis"><i
+            class="EMPHASIS">null</i></span> value) then the match
+            will fail. Initially, all the keywords have a <var
+            class="LITERAL">null</var> value.</p>
+          </li>
+
+          <li>
+            <p>When a connection is received by the <b class=
+            "APPLICATION">lpd</b> server, REMOTEHOST and REMOTEPORT
+            are set to the the IP addresses and hostnames, and the
+            TCP/IP port of the host originating the IP address
+            respectively. REMOTEIP and IFHP are aliases for
+            REMOTEPORT and PORT is an alias for REMOTEPORT and are
+            provided for backwards compatibility with older
+            versions of <b class="APPLICATION">LPRng</b>. If the
+            connection was on a UNIX socket, then the UNIXSOCKET
+            flag is set. For example, a request originating from
+            <var class="LITERAL">10.0.0.2</var>, port 1011 would
+            set REMOTEIP to 10.0.0.2 and PORT to 1011.</p>
+          </li>
+
+          <li>
+            <p>The REMOTEHOST value is set to the result of doing a
+            reverse DNS lookup on the REMOTEIP address. This value
+            is the list of names <span class="emphasis"><i class=
+            "EMPHASIS">and</i></span> ip addresses in standard IP
+            notation (nnn.nnn.nnn.nnn) that are returned by the
+            lookup. If the DNS lookup fails then the REMOTEHOST
+            value is set to the REMOTEIP value. For example, lookup
+            of 10.0.0.2 would result in the names <tt class=
+            "FILENAME">h2.private</tt> and <tt class=
+            "FILENAME">patrick.private</tt>, and the only IP
+            address assigned to it was <var class=
+            "LITERAL">10.0.0.2</var>. The REMOTEHOST value would
+            then be the list <var class=
+            "LITERAL">h2.private,patrick.private,10.0.0.2</var>.</p>
+          </li>
+
+          <li>
+            <p>The SERVICE value is set to <var class=
+            "LITERAL">X</var> and then the permissions database is
+            scanned for a matching entry. The result is the
+            permission value of the first matching line or the
+            default permission. If the result is REJECT then the
+            connection is closed.</p>
+          </li>
+
+          <li>
+            <p>Next, a single line is read from the connection.
+            This line contains the request type, the print queue
+            name, and depending on the request type an optional
+            user name and options. The SERVICE value is set to <var
+            class="LITERAL">R,</var> <var class="LITERAL">Q,</var>
+            <var class="LITERAL">M,</var> and <var class=
+            "LITERAL">C,</var> for a <var class=
+            "LITERAL">lpR</var>, <var class="LITERAL">lpQ</var>,
+            <var class="LITERAL">lprM</var>, and <b class=
+            "APPLICATION">lpc</b> request respectively and PRINTER
+            to the print queue name.</p>
+          </li>
+
+          <li>
+            <p>If the request is for an <b class=
+            "APPLICATION">lpc</b> operation, the LPC value is set
+            to the name of the operation. For example, and <tt
+            class="COMMAND">lpc lpd</tt> operation</p>
+          </li>
+
+          <li>
+            <p>If the request contains a user name then REMOTEUSER
+            is assigned the user name.</p>
+          </li>
+
+          <li>
+            <p>If the request originates from the <b class=
+            "APPLICATION">lpd</b> server as determined by the
+            connection arriving from the <var class=
+            "LITERAL">localhost</var> address or an address
+            assigned to one of the network interfaces for this host
+            then the SERVER value is set to true (or matches).</p>
+          </li>
+
+          <li>
+            <p>If the request is for an authenticated transfer,
+            (see <a href="authref.htm">Authentication and
+            Encryption</a> ), then the authentication procedures
+            are carried out. After they have been performed, the
+            AUTH value is set to true, AUTHTYPE is set to the name
+            of the authentication method, AUTHUSER to the
+            authenticated identifier of the originator of the
+            request, and AUTHFROM to the authenticated identifier
+            of the originator of the connection.</p>
+          </li>
+
+          <li>
+            <p>Other matching keywords such as REMOTEGROUP use
+            values set at this time. These are discussed in the
+            next section.</p>
+          </li>
+
+          <li>
+            <p>The permission database is rescanned, this time to
+            see if there is permission to operate on the specified
+            spool queue. The permission database is first checked
+            to see if the requesting user has control (SERVICE=C)
+            permission. If they do, then they can perform any
+            operation on the spool queue. The scan is then repeated
+            for the actual request.</p>
+          </li>
+
+          <li>
+            <p>If there is no permission to perform the operation
+            then an error code and messages is returned on the
+            requesting connection.</p>
+          </li>
+
+          <li>
+            <p>If the operation is for a spool queue or server, no
+            other permissions checking is done. This includes the
+            <b class="APPLICATION">lpq</b> command, and most of the
+            <b class="APPLICATION">lpc</b> commands control queue
+            operations.</p>
+          </li>
+
+          <li>
+            <p>If the operation is for for individual jobs in a
+            spool queue, then the queue is scanned and job
+            information is extracted for each job in the queue. The
+            USER value is set to the job control file <var class=
+            "LITERAL">P</var> line. The value of the <var class=
+            "LITERAL">H</var> line in the control file is used to
+            perform a DNS lookup, and the HOST value is set to the
+            results of this lookup. IP is an alias for HOST, and is
+            retained for backwards compatibility.</p>
+          </li>
+
+          <li>
+            <p>The SAMEUSER value is set to true (or match) if the
+            REMOTEUSER value is identical to the USER value.
+            Similarly, SAMEHOST is set to true if the REMOTEHOST
+            value matches the HOST value. See the following
+            sections for other keywords such as GROUP.</p>
+          </li>
+
+          <li>
+            <p>The permission checking is done for each individual
+            job in a spool queue, and if it succeeds the action is
+            carried out on the job.</p>
+          </li>
+        </ol>
+        <br>
+        <br>
+
+        <p>These checks are applied on the arrival of a job from an
+        external connection. Unfortunately, there are a set of
+        print spooler implementations that do not handle job
+        rejection due to lack of permissions. These printers will
+        continually and repeatedly attempt to send a job for which
+        there is no printing permission until the job is removed by
+        administrative action. To accommodate these printers, we
+        must accept jobs for printing and then dispose of them.
+        This is done by using the SERVICE=P (printing) checks.
+        These checks are performed <span class="emphasis"><i class=
+        "EMPHASIS">after</i></span> the job has been accepted.</p>
+
+        <ol type="1">
+          <li>
+            <p>When a print spool is active and is printing or
+            forwarding jobs, before it processes a job it will read
+            the job control file and set the <acronym class=
+            "ACRONYM">USER</acronym> and <acronym class=
+            "ACRONYM">HOST</acronym> values as discussed in the
+            previous sections. It will also set the <acronym class=
+            "ACRONYM">AUTH</acronym>, <acronym class=
+            "ACRONYM">AUTHUSER</acronym>, and <acronym class=
+            "ACRONYM">AUTHJOB</acronym> values as well, if the job
+            was spooled by using an authenticated method.</p>
+          </li>
+
+          <li>
+            <p>The permissions database will be scanned and the
+            resulting permission determined. Note that the values
+            of the REMOTE keys are undefined, and tests using them
+            will have unpredictable effects.</p>
+          </li>
+
+          <li>
+            <p>If the job does not have permission to be printed,
+            it will normally be removed from the spool queue.</p>
+          </li>
+        </ol>
+        <br>
+        <br>
+
+        <p>While this model is very simple it can handle a wide
+        range of situations. However, it is really based on the
+        simple <span class="emphasis"><i class=
+        "EMPHASIS">trust</i></span> that users will not <span
+        class="emphasis"><i class="EMPHASIS">impersonate</i></span>
+        other users or hosts. If this is not the case, then more
+        elaborate procedures based on encryption and authentication
+        are called for.</p>
+
+        <p>There is a problem with permissions checking for <b
+        class="APPLICATION">lpq</b> (SERVICE=Q) requests. Since the
+        user name is not passed as part of the request, it is
+        impossible to use the REMOTEUSER clause to restrict <b
+        class="APPLICATION">lpq</b> operations.</p>
+
+        <p>The <var class="LITERAL">SERVICE=R</var> and <var class=
+        "LITERAL">SERVICE=P</var> facilities are provided to handle
+        problems with print spoolers that do not recognize a <span
+        class="emphasis"><i class="EMPHASIS">lack of
+        permission</i></span> error code, and will indefinitely
+        retry sending a job to the <b class="APPLICATION">lpd</b>
+        server. If this is the case, then the <var class=
+        "LITERAL">SERVICE=R</var> clause can be used to accept
+        jobs, and then the <var class="LITERAL">SERVICE=P</var>
+        clause will cause the <b class="APPLICATION">lpd</b> server
+        to remove of the job when it is scheduled for printing.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "ifhp.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x8680.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top"><b class=
+          "APPLICATION">ifhp</b> Filter</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Rule Matching
+          Procedures</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

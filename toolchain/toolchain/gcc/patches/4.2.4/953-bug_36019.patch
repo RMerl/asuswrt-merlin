@@ -1,0 +1,309 @@
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=36019
+
+2009-01-12  Dodji Seketeli  <dodji@redhat.com>
+
+    PR c++/36019
+gcc/cp/
+    * pt.c (parameter_of_template_p): New function.
+    * pt.c (get_template_info): Ditto.
+    * cp-tree.h: Declare those.
+    * name-lookup.c (binding_to_template_parms_of_scope_p): New
+    function.
+    (outer_binding): Take template parameters in account when looking for
+    a name binding.
+
+gcc/testsuite/
+    * g++.dg/lookup/hidden-class12.C: New test.
+    * g++.dg/lookup/hidden-class13.C: New test.
+    * g++.dg/lookup/hidden-class14.C: New test.
+    * g++.dg/lookup/hidden-class15.C: New test.
+    * g++.dg/lookup/hidden-class16.C: New test.
+    * gcc/testsuite/g++.old-deja/g++.benjamin/tem03.C: Adjust testcase.
+
+--- gcc-4_2-branch/gcc/cp/cp-tree.h	2009/01/12 21:56:28	143312
++++ gcc-4_2-branch/gcc/cp/cp-tree.h	2009/01/12 22:41:19	143313
+@@ -4163,6 +4163,8 @@
+ extern tree fold_non_dependent_expr		(tree);
+ extern bool explicit_class_specialization_p     (tree);
+ extern tree outermost_tinst_level		(void);
++extern tree get_template_info			(tree t);
++extern bool parameter_of_template_p		(tree, tree);
+ 
+ /* in repo.c */
+ extern void init_repo				(void);
+--- gcc-4_2-branch/gcc/cp/name-lookup.c	2009/01/12 21:56:28	143312
++++ gcc-4_2-branch/gcc/cp/name-lookup.c	2009/01/12 22:41:19	143313
+@@ -3850,9 +3850,33 @@
+   POP_TIMEVAR_AND_RETURN (TV_NAME_LOOKUP, result->value != error_mark_node);
+ }
+ 
++/* Subroutine of outer_binding.
++   Returns TRUE if BINDING is a binding to a template parameter of SCOPE,
++   FALSE otherwise.  */
++static bool
++binding_to_template_parms_of_scope_p (cxx_binding *binding,
++				      cxx_scope *scope)
++{
++  tree binding_value;
++
++  if (!binding || !scope)
++    return false;
++
++  binding_value = binding->value ?  binding->value : binding->type;
++
++  return (scope
++          && scope->this_entity
++          && get_template_info (scope->this_entity)
++          && parameter_of_template_p (binding_value,
++                                      TI_TEMPLATE (get_template_info \
++                                                    (scope->this_entity))));
++}
++
+ /* Return the innermost non-namespace binding for NAME from a scope
+-   containing BINDING, or, if BINDING is NULL, the current scope.  If
+-   CLASS_P is false, then class bindings are ignored.  */
++   containing BINDING, or, if BINDING is NULL, the current scope.
++   Please note that for a given template, the template parameters are
++   considered to be in the scope containing the current scope.
++   If CLASS_P is false, then class bindings are ignored.  */
+ 
+ cxx_binding *
+ outer_binding (tree name,
+@@ -3900,6 +3924,12 @@
+ 		return class_binding;
+ 	      }
+ 	  }
++	/* If SCOPE is a template and if NAME binds to one of its template parameters
++	   return the binding, otherwise we might miss it.  */
++	if (outer_scope && outer_scope->kind == sk_template_parms
++	    && binding_to_template_parms_of_scope_p (outer, scope))
++	  return outer;
++
+ 	scope = scope->level_chain;
+       }
+ 
+--- gcc-4_2-branch/gcc/cp/pt.c	2009/01/12 21:56:28	143312
++++ gcc-4_2-branch/gcc/cp/pt.c	2009/01/12 22:41:19	143313
+@@ -251,6 +251,25 @@
+   return error_mark_node;
+ }
+ 
++/* Return the template info node corresponding to T, whatever T is.  */
++
++tree
++get_template_info (tree t)
++{
++  tree tinfo = NULL_TREE;
++
++  if (DECL_P (t) && DECL_LANG_SPECIFIC (t))
++    tinfo = DECL_TEMPLATE_INFO (t);
++
++  if (!tinfo && TREE_CODE (t) == TYPE_DECL)
++    t = TREE_TYPE (t);
++
++  if (TAGGED_TYPE_P (t))
++    tinfo = TYPE_TEMPLATE_INFO (t);
++
++  return tinfo;
++}
++
+ /* Returns the template nesting level of the indicated class TYPE.
+ 
+    For example, in:
+@@ -5327,6 +5346,30 @@
+   return tree_last (current_tinst_level);
+ }
+ 
++/* Returns TRUE if PARM is a parameter of the template TEMPL.  */
++
++bool
++parameter_of_template_p (tree parm, tree templ)
++{
++  tree parms;
++  int i;
++
++  if (!parm || !templ)
++    return false;
++
++  gcc_assert (DECL_TEMPLATE_PARM_P (parm));
++  gcc_assert (TREE_CODE (templ) == TEMPLATE_DECL);
++
++  parms = DECL_TEMPLATE_PARMS (templ);
++  parms = INNERMOST_TEMPLATE_PARMS (parms);
++
++  for (i = 0; i < TREE_VEC_LENGTH (parms); ++i)
++    if (parm == TREE_VALUE (TREE_VEC_ELT (parms, i)))
++      return true;
++
++  return false;
++}
++
+ /* DECL is a friend FUNCTION_DECL or TEMPLATE_DECL.  ARGS is the
+    vector of template arguments, as for tsubst.
+ 
+--- gcc-4_2-branch/gcc/testsuite/g++.dg/lookup/hidden-class12.C	1970-01-01 03:00:00.000000000 +0300
++++ gcc-4_2-branch/gcc/testsuite/g++.dg/lookup/hidden-class12.C	2009-12-05 14:36:45.000000000 +0300
+@@ -0,0 +1,24 @@
++// Contributed by Dodji Seketeli <dodji@redhat.com>
++// Origin PR c++/36019
++// { dg-do compile }
++
++struct F {
++  static const int x = 0;
++};
++
++struct A {
++  template <typename A>
++  static int f ()
++  {
++    return A::x;
++  }
++};
++
++
++int
++main ()
++{
++  int i = A::f<F> ();
++  return i;
++}
++
+--- gcc-4_2-branch/gcc/testsuite/g++.dg/lookup/hidden-class13.C	1970-01-01 03:00:00.000000000 +0300
++++ gcc-4_2-branch/gcc/testsuite/g++.dg/lookup/hidden-class13.C	2009-12-05 14:36:55.000000000 +0300
+@@ -0,0 +1,25 @@
++// Contributed by Dodji Seketeli <dodji@redhat.com>
++// Origin PR c++/36019
++// { dg-do compile }
++
++struct F {
++  static const int x = 0;
++};
++
++struct B {
++  template <typename B>
++  struct C
++  {
++    static int f ()
++    {
++      return B::x;
++    }
++  };
++};
++
++int
++main ()
++{
++  int j = B::C<F>::f ();
++  return 0;
++}
+--- gcc-4_2-branch/gcc/testsuite/g++.dg/lookup/hidden-class14.C	1970-01-01 03:00:00.000000000 +0300
++++ gcc-4_2-branch/gcc/testsuite/g++.dg/lookup/hidden-class14.C	2009-12-05 14:37:04.000000000 +0300
+@@ -0,0 +1,23 @@
++// Contributed by Dodji Seketeli <dodji@redhat.com>
++// Origin PR c++/36019
++// { dg-do compile }
++
++struct F {
++  static const int x = 0;
++  typedef int A;
++};
++
++struct A {
++  template <typename A>
++  struct G : public F 
++  {
++    static const A i = 0;
++  };
++};
++
++int
++main ()
++{
++  return A::G<F>::i ;
++}
++
+--- gcc-4_2-branch/gcc/testsuite/g++.dg/lookup/hidden-class15.C	1970-01-01 03:00:00.000000000 +0300
++++ gcc-4_2-branch/gcc/testsuite/g++.dg/lookup/hidden-class15.C	2009-12-05 14:37:13.000000000 +0300
+@@ -0,0 +1,30 @@
++// Contributed by Dodji Seketeli <dodji@redhat.com>
++// Origin PR c++/36019
++// { dg-do compile }
++
++struct F {
++  static const int y = 0;
++};
++
++struct A {
++  static const int x = 0;
++};
++
++struct B : public A {
++  template <typename A>
++  struct C
++  {
++    static int f ()
++    {
++      return A::x; // { dg-error "'x' is not a member of 'F'" }
++    }
++  };
++};
++
++int
++main ()
++{
++  int j = B::C<F>::f ();
++  return 0;
++}
++
+--- gcc-4_2-branch/gcc/testsuite/g++.dg/lookup/hidden-class16.C	1970-01-01 03:00:00.000000000 +0300
++++ gcc-4_2-branch/gcc/testsuite/g++.dg/lookup/hidden-class16.C	2009-12-05 14:37:22.000000000 +0300
+@@ -0,0 +1,27 @@
++// Contributed by Dodji Seketeli <dodji@redhat.com>
++// Origin PR c++/36019
++// { dg-do compile }
++
++struct F {
++  static const int y = 0;
++};
++
++struct A {
++  static const int x = 0;
++};
++
++struct B : public A {
++  template <typename A>
++  static int f ()
++  {
++    return A::x; // { dg-error "'x' is not a member of 'F'" }
++  }
++};
++
++int
++main ()
++{
++  int j = B::f<F> ();
++  return 0;
++}
++
+--- gcc-4_2-branch/gcc/testsuite/g++.old-deja/g++.benjamin/tem03.C	2009/01/12 21:56:28	143312
++++ gcc-4_2-branch/gcc/testsuite/g++.old-deja/g++.benjamin/tem03.C	2009/01/12 22:41:19	143313
+@@ -83,7 +83,7 @@
+ template <class T10, int i> struct Xfour {// { dg-error "" } .*
+   int T10; // { dg-error "" } .*
+   void f(){
+-    char T10;
++    char T10; // { dg-error "declaration of 'char T10'" }
+   }
+ };
+ 
+@@ -126,8 +126,8 @@
+   template <class T161>
+   friend bool foo(T161 u)
+     {
+-      Xseven<T161, 5, int> obj; // { dg-error "" } .*
+-      return (obj.inst == u.inst); // { dg-error "" } .*
++      Xseven<T161, 5, int> obj;
++      return (obj.inst == u.inst);
+     }
+ 
+ };

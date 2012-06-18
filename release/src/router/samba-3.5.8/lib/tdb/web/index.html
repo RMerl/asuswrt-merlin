@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<TITLE>ldb</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000" VLINK="#292555" LINK="#292555" ALINK="#cc0033">
+
+<h1>tdb</h1>
+
+TDB is a Trivial Database. In concept, it is very much like GDBM, and BSD's DB 
+except that it allows multiple simultaneous writers and uses locking 
+internally to keep writers from trampling on each other. TDB is also extremely 
+small.
+
+<h2>Download</h2>
+You can download the latest releases of tdb from the <a
+href="http://samba.org/ftp/tdb">tdb directory</a> on the samba public
+source archive.
+
+
+<h2>Discussion and bug reports</h2>
+
+tdb does not currently have its own mailing list or bug tracking
+system. For now, please use the <a
+href="https://lists.samba.org/mailman/listinfo/samba-technical">samba-technical</a>
+mailing list, and the <a href="http://bugzilla.samba.org/">Samba
+bugzilla</a> bug tracking system.
+
+<h2>Download</h2>
+
+You can download the latest code either via git or rsync.<br>
+<br>
+To fetch via git see the following guide:<br>
+<a href="http://wiki.samba.org/index.php/Using_Git_for_Samba_Development">Using Git for Samba Development</a><br>
+Once you have cloned the tree switch to the master branch and cd into the source/lib/tdb directory.<br>
+<br>
+To fetch via rsync use these commands:
+
+<pre>
+  rsync -Pavz samba.org::ftp/unpacked/standalone_projects/lib/tdb .
+  rsync -Pavz samba.org::ftp/unpacked/standalone_projects/lib/replace .
+</pre>
+
+and build in tdb. It will find the replace library in the directory
+above automatically.
+
+</BODY>
+</HTML>

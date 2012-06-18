@@ -1,0 +1,25 @@
+#!/bin/sh
+
+localedir="@localedir@"
+build_alias="@build_alias@"
+host_alias="@host_alias@"
+
+binlocaledir="`@PRINT_LOCALEDIR@ 2> /dev/null`"
+
+if test "${localedir}" = "${binlocaledir}"; then
+    echo "Makefile and binary agree on localedir \`${localedir}'. Good."
+    exit 0
+else
+    echo "Makefile and binary disagree on localedir. Bad."
+    echo "  - Makefile says \`${localedir}'."
+    echo "  - binary   says \`${binlocaledir}'."
+
+    if test "${build_alias}" != "${host_alias}"; then
+	echo "However, you are cross-compiling, so this does not necessarily"
+	echo "have consequences."
+	exit 0
+    else
+	echo "Error: Could not determine binary localedir."
+	exit 1
+    fi
+fi

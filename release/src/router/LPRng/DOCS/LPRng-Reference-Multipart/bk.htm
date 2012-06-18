@@ -1,0 +1,251 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Forwarding Jobs</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Job Processing" href="jobsteps.htm">
+    <link rel="PREVIOUS" title="Abnormal Termination " href=
+    "abnormalterm.htm">
+    <link rel="NEXT" title="Debugging " href="debugging.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "abnormalterm.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          15. Job Processing</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "debugging.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="BK">15.11. Forwarding
+      Jobs</a></h1>
+
+      <p>Options:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">bk</var><span class="emphasis"><i
+          class="EMPHASIS">Berkeley compatible control
+          file</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">bq_format=</var><span class=
+          "emphasis"><i class="EMPHASIS">format of filtered
+          output</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">lpd_bounce</var><span class=
+          "emphasis"><i class="EMPHASIS">filter job and transfer
+          output</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">control_filter=</var><span class=
+          "emphasis"><i class="EMPHASIS">Control file
+          filter</i></span></p>
+        </li>
+
+        <li>
+          <p><var class=
+          "LITERAL">control_file_line_order=</var><span class=
+          "emphasis"><i class="EMPHASIS">Control file line
+          order</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">nline_after_file</var><span
+          class="emphasis"><i class="EMPHASIS">N line after data
+          file</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">send_data_first</var><span class=
+          "emphasis"><i class="EMPHASIS">send data files
+          first</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>If a spool queue is doing store and forward operations,
+      then rather than printing a job the control files and data
+      files are sent to the remote printer. In order to do this,
+      the following items must be arranged.</p>
+
+      <ul>
+        <li>
+          <p>If necessary, the job must be processed by filters on
+          the local host.</p>
+        </li>
+
+        <li>
+          <p>The control file must be prepared and updated
+          according to the requirements of the remote site.</p>
+        </li>
+
+        <li>
+          <p>A connection must be established to the remote
+          site.</p>
+        </li>
+
+        <li>
+          <p>The data files and control files must be transferred
+          to the remote site.</p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>One of the more serious problems is when a print spooler
+      (LPR) program does not generate print jobs in a manner
+      compatible with a remote system. While <b class=
+      "APPLICATION">LPRng</b> performs checks for improper
+      implementations of RFC1179, it will try to accept a job even
+      under the most severe abuse of the protocol. However, other
+      spoolers are not so forgiving. Some spoolers require that the
+      contents of the control file be in <span class="emphasis"><i
+      class="EMPHASIS">exactly</i></span> the order that the
+      original 1988 BSD <b class="APPLICATION">lpr</b> software
+      generated them. While some entries can be missing, all the
+      entries present in the file must be in an explicit order.</p>
+
+      <p>The <var class="LITERAL">bk</var> (Berkeley <b class=
+      "APPLICATION">lpd</b> compatible control file) option causes
+      <b class="APPLICATION">lpr</b> and <b class=
+      "APPLICATION">lpd</b> to reformat the control file, removing
+      objectionable entries. The control file of a job being sent
+      to a remote printer will have its control file entries
+      restricted to letters in (and the same order) as
+      HPJCLIMWT1234. You can use the <var class=
+      "LITERAL">control_file_line_order</var> option to specify an
+      even more restricted set, and use the <var class=
+      "LITERAL">nline_after_file</var> option to have the file
+      information line (<var class="LITERAL">N</var> value) come
+      after the data file entry.</p>
+
+      <p>However, there are some very odd commercial
+      implementations that require <span class="emphasis"><i class=
+      "EMPHASIS">more</i></span> information than is present. To
+      assist with this, the <var class=
+      "LITERAL">control_filter</var> option can be used. This
+      specifies a program that will process the control file before
+      it is sent to a remote destination. The <var class=
+      "LITERAL">control_filter</var> program is run with the
+      standard set of filter options. <acronym class=
+      "ACRONYM">STDIN</acronym> is attached to the control file and
+      the <acronym class="ACRONYM">STDOUT</acronym> will be used as
+      the control file value sent to the remote host.</p>
+
+      <p>The exit code of the <var class=
+      "LITERAL">control_filter</var> is used to determine whether
+      to proceed in processing. See <a href=
+      "printingjob.htm#ERRORCODES">Errorcodes</a> for details.</p>
+
+      <p>Sequence of Operations:</p>
+
+      <ol type="1">
+        <li>
+          <p>A copy of the control file information is made and the
+          copy will be modified during processing, rather than the
+          original.</p>
+        </li>
+
+        <li>
+          <p>If the <var class="LITERAL">lpd_bounce</var> option is
+          specified then a temporary file is created and the job is
+          printed using the procedures for printing to a device,
+          but to the file. This includes all of the filter
+          operations, banners, and so forth. The working copy of
+          the control file is set to have the temporary file as the
+          data file to be sent to the remote destination, and the
+          data file format is set to the <var class=
+          "LITERAL">bq_format</var> value.</p>
+        </li>
+
+        <li>
+          <p>The control file is rewritten according to the
+          requirements of the routing information, if any. For each
+          destination in the routing information and each copy, a
+          new job identifier value will be generated.</p>
+        </li>
+
+        <li>
+          <p>The control file is rewritten according to the <var
+          class="LITERAL">bk</var> and <var class=
+          "LITERAL">control_file_line_order</var> options. If a
+          control filter is specified, the control filter program
+          is run and the output of the program is used as the new
+          control file.</p>
+        </li>
+
+        <li>
+          <p>A connection is made to the remote host, and the data
+          and control files are transferred to the remote host
+          using the RFC1179 protocol. If the <var class=
+          "LITERAL">send_data_first</var> option is specified the
+          data files are sent first.</p>
+        </li>
+
+        <li>
+          <p>If the job was sent successfully, the job status is
+          updated in the same manner as for a printed job.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "abnormalterm.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "debugging.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Abnormal
+          Termination</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "jobsteps.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Debugging</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

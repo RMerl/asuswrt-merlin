@@ -1,0 +1,14 @@
+This is a set of shell scripts for testing Ethernet bridging.
+
+mkbr makes a simple bridge and clones the ip address.
+rmbr removes bridge
+
+The functional test needs two ethernets (eth0, eth1,
+and the dummy network device. It may screw up your route
+table. Also, it leaves eth0 in an bad state if test fails.
+
+The stresstest needs two ethernets (eth0 and eth1).
+For highest stress, traffic should be sent over the bridge
+while the test is ongoing.  The goal is to exercise, races
+that occur when traffic is flowing while management operations occur.
+

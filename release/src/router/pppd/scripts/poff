@@ -1,0 +1,104 @@
+#!/bin/sh
+
+# $Id: poff,v 1.1 2002/11/24 23:30:44 etbe Exp $
+# Written by John Hasler <john@dhh.gt.org> and based on work 
+# by Phil Hands <phil@hands.com>.  Distributed under the GNU GPL
+
+if [ -x /usr/bin/kill ]; then
+  KILL="/usr/bin/kill"
+else
+  KILL="/bin/kill"
+fi
+SIG=TERM
+DONE="stopped"
+MODE=""
+
+usage ()
+{
+   cat <<!EOF!
+usage: $0 [option] [provider]
+options:
+  -r        Cause pppd to drop the line and redial.
+  -d        Toggle the state of pppd's debug option.
+  -c        Cause pppd to renegotiate compression.
+  -a        Stop all pppd's.  'provider' will be ignored.
+  -h        Print this help summary and exit.
+  -v        Print version and exit.
+  none      Stop pppd.
+
+Options may not be combined.
+
+If 'provider' is omitted pppd will be stopped or signalled if and only if
+there is exactly one running unless the '-a' option was given.  If
+'provider' is supplied the pppd controlling the connection to that
+provider will be stopped or signalled.
+!EOF!
+}
+
+# Get option.  If there are none replace the "?" that getopts puts in
+# FLAG on error with "null".
+getopts rdcavh FLAG
+if [ "$?" -ne 0 ]; then
+    FLAG="null"
+fi
+
+# Check for additional options.  Should be none.
+getopts :rdcavh DUMMY
+if [ "$?" -eq 0 ]; then
+    echo "$0: Illegal option -- ${OPTARG}."
+    exit 1
+fi
+
+case $FLAG in
+ "r") SIG=HUP;  DONE=signalled; shift ;;
+ "d") SIG=USR1; DONE=signalled; shift ;;
+ "c") SIG=USR2; DONE=signalled; shift ;;
+ "a") MODE="all"; shift ;;
+ "v") echo "$0$Revision: 1.1 $_TrickToPrint_RCS_Revision"; exit 0 ;;
+ "h") usage; exit 0 ;;
+ "?") exit 1;
+esac
+
+# Get the PIDs of all the pppds running.  Could also get these from
+# /var/run, but pppd doesn't create .pid files until ppp is up.
+PIDS=`pidof pppd`
+
+# poff is pointless if pppd isn't running.
+if test -z "$PIDS"; then
+    echo "$0: No pppd is running.  None ${DONE}."
+    exit 1
+fi
+
+# Find out how many pppd's are running.
+N=`echo "$PIDS" | wc -w`
+
+# If there are no arguments we can't do anything if there is more than one
+# pppd running.
+if test "$#" -eq 0 -a "$N" -gt 1 -a $FLAG != "a" ; then
+    echo "$0: More than one pppd running and no "-a" option and 
+no arguments supplied. Nothing ${DONE}."
+    exit 1
+fi
+
+# If either there are no arguments or '-a' was specified kill all the
+# pppd's.
+if test "$#" -eq 0 -o "$MODE" = "all" ; then
+    $KILL -$SIG $PIDS || {
+        echo "$0: $KILL failed.  None ${DONE}."
+        exit 1
+    }
+    exit 0
+fi
+
+# There is an argument, so kill the pppd started on that provider.
+PID=`ps axw | grep "[ /]pppd call $1 *\$" | awk '{print $1}'`
+if test -n "$PID" ; then
+    $KILL -$SIG $PID || {
+        echo "$0: $KILL failed.  None ${DONE}."
+        exit 1
+    }
+else
+   echo "$0: I could not find a pppd process for provider '$1'. None ${DONE}."
+   exit 1
+fi
+exit 0

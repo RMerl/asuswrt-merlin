@@ -1,0 +1,28 @@
+<samba:parameter name="locking"
+				 type="boolean"
+                 context="S"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This controls whether or not locking will be 
+	performed by the server in response to lock requests from the 
+	client.</para>
+
+	<para>If <command moreinfo="none">locking = no</command>, all lock and unlock 
+	requests will appear to succeed and all lock queries will report 
+	that the file in question is available for locking.</para>
+
+	<para>If <command moreinfo="none">locking = yes</command>, real locking will be performed 
+	by the server.</para>
+
+	<para>This option <emphasis>may</emphasis> be useful for read-only 
+	filesystems which <emphasis>may</emphasis> not need locking (such as 
+	CDROM drives), although setting this parameter of <constant>no</constant> 
+	is not really recommended even in this case.</para>
+
+	<para>Be careful about disabling locking either globally or in a 
+	specific service, as lack of locking may result in data corruption. 
+	You should never need to set this parameter.</para>
+</description>
+
+<value type="boolean">yes</value>
+</samba:parameter>

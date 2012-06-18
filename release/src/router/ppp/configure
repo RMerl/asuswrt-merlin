@@ -1,0 +1,141 @@
+#!/bin/sh
+# $Id: configure,v 1.1.1.4 2003/10/14 08:09:52 sparq Exp $
+
+#  if [ -d /NextApps ]; then
+#    system="NeXTStep"
+#  else
+  system=`uname -s`
+  release=`uname -r`
+  machine=`uname -p`
+  arch=`uname -m`
+#  fi
+state="unknown"
+
+case $system in
+  Linux)
+    makext="linux";
+    ksrc="linux";
+    state="known";;
+  SunOS)
+    case $release in
+#      [0-3]*)	state="ancient";;
+#      4*)	state="known"; ksrc="sunos4"; makext="sunos4";;
+      5.[1-6]*)	state="known"; ksrc="solaris"; makext="sol2";;
+      5.[7-9]*)	state="known"; ksrc="solaris"; makext="sol2";
+              case $arch in
+		sun4u)	lp64='y';;
+		*)	;;
+	      esac;;
+    esac;;
+    NetBSD|FreeBSD|ULTRIX|OSF1|NeXTStep|SINIX-?|UNIX_SV|UNIX_System_V)
+      state="notincluded";;
+#    NetBSD)
+#      makext="bsd";
+#      case $release in
+#        0.*)	state="ancient";;
+#        1.0*)	state="ancient";;
+#        1.1*)	state="known"; ksrc="netbsd-1.1";;
+#        1.2*)	state="known"; ksrc="netbsd-1.2"; makext="netbsd-1.2";;
+#        1.[3-9]*|[2-9]*)
+#  		state="late"; ksrc="netbsd-1.2";;
+#      esac;;
+#    ULTRIX)
+#      makext="ultrix";
+#      case $release in
+#        [0-3]*)	state="ancient";;
+#        4.[01]*)	state="early"; ksrc="ultrix";;
+#        4.[234])	state="known"; ksrc="ultrix";;
+#      esac;;
+#    OSF1)
+#      makext="osf";
+#      case $release in
+#        V1.*)   state="neolithic"; ksrc="osf1";;
+#        V[23].*)	state="neolithic"; ksrc="osf1";;
+#        V4.*)	state="known"; ksrc="osf1";;
+#        V[5-9]*) state="late"; ksrc="osf1";;
+#      esac;;
+#    FreeBSD)
+#      makext="bsd";
+#      case $release in
+#        1.*)	state="known"; ksrc="freebsd-old";;
+#        2.[01]*)	state="known"; ksrc="freebsd-2.0";;
+#        2.2.[2-7]*) state="late"; ksrc="freebsd-2.0";;
+#        2.2.8*)   state="known"; ksrc="freebsd-2.2.8";;
+#        3.[0-1]*)	state="known"; ksrc="freebsd-3.0";;
+#      esac;;
+#    NeXTStep)
+#      makext="NeXT";
+#      ksrc="NeXT";
+#      state="known";;
+#    SINIX-?)
+#      case $release in
+#        5.4[01]) state=known; ksrc=svr4; makext=svr4;;
+#        5.4[2-9]) state=late; ksrc=svr4; makext=svr4;;
+#      esac;;
+#    # Intel SVR4 systems come with a bug in the uname program.  Unless
+#    # your provider fixed the bug, or you get a fix for it, uname -S will
+#    # overwrite the system name with the node name!
+#    UNIX_SV|UNIX_System_V|`uname -n`)
+#      case $release in
+#        4.0) state=known; ksrc=svr4; makext=svr4;;
+#        4.2) state=late; ksrc=svr4; makext=svr4;;
+#      esac;;
+esac
+
+if [ -d "$ksrc" ]; then :; else
+  state="notincluded"
+  unset ksrc
+fi
+
+case $state in
+  neolithic)
+    echo "This is a newer release on an outdated OS ($system)."
+    echo " This software may or may not work on this OS."
+    echo " You may want to download an older version of PPP for this OS.";;
+  ancient)
+    echo "This is an old release of a supported OS ($system)."
+    echo "This software cannot be used as-is on this system,"
+    echo "but you may be able to port it.  Good luck!"
+    exit;;
+  early)
+    echo "This is an old release of a supported OS ($system)."
+    echo "This software should install and run on this system,"
+    echo "but it hasn't been tested.";;
+  late)
+    echo "This is a newer release of $system than is supported by"
+    echo "this software.  It may or may not work.";;
+  unknown)
+    echo "This software has not been ported to this system.  Sorry.";;
+  notincluded)
+    echo "Support for this system has not been included"
+    echo "in this distribution.  Sorry.";;
+esac
+
+orig_makext=$makext
+
+if [ -d "$ksrc" ]; then
+  echo "Creating links to Makefiles."
+  rm -f Makefile
+  ln -s $ksrc/Makefile.top Makefile
+  echo "  Makefile -> $ksrc/Makefile.top"
+  if [ "$ksrc" = solaris ]; then
+    # Point to 64-bit Makefile extension
+    if [ "$lp64" = y ]; then
+      makext=$makext-64
+    fi
+    rm -f $ksrc/Makefile
+    ln -s Makefile.$makext $ksrc/Makefile
+    echo "  $ksrc/Makefile -> Makefile.$makext"
+    # Restore extension
+    if [ "$lp64" = y ]; then
+      makext=$orig_makext
+    fi
+  fi
+  for dir in pppd pppstats chat pppdump pppd/plugins pppd/plugins/pppoe; do
+    rm -f $dir/Makefile
+    if [ -f $dir/Makefile.$makext ]; then
+      ln -s Makefile.$makext $dir/Makefile
+      echo "  $dir/Makefile -> Makefile.$makext"
+    fi
+  done
+fi

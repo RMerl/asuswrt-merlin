@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<refentry id="ad2oLschema.1">
+
+<refmeta>
+	<refentrytitle>ad2oLschema</refentrytitle>
+	<manvolnum>1</manvolnum>
+</refmeta>
+
+
+<refnamediv>
+	<refname>ad2oLschema</refname>
+	<refpurpose>Converts AC-like LDAP schemas to OpenLDAP
+	compatible schema files</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>ad2oLschema</command>
+		<arg choice="opt">-I INPUT-FILE</arg>
+		<arg choice="opt">-O OUTPUT-FILE</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>ad2oLschema is a simple tool that converts AD-like LDIF
+	schema files into OpenLDAP schema files.</para>
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+		<varlistentry>
+		<term>-H url</term>
+		<listitem><para>URL to an LDB or LDAP server with an AD schema to read. 		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-I input-file</term> <listitem><para>AD schema
+		to read. If neither this nor -H is specified, the
+		schema file will be read from standard input.
+		</para></listitem>
+		</varlistentry>
+
+	<varlistentry>
+		<term>-O output-file</term>
+		<listitem><para>File to write OpenLDAP version of schema to.
+		</para></listitem>
+	</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 4.0 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+
+	<para>ldb(7), ldbmodify, ldbdel, ldif(5)</para>
+
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para> ldb was written by 
+		 <ulink url="http://samba.org/~tridge/">Andrew Tridgell</ulink>.
+		ad2oLschema was written by <ulink
+		 url="http://samba.org/~abartlet/">Andrew Bartlett</ulink>.
+	</para>
+
+	<para>
+If you wish to report a problem or make a suggestion then please see
+the <ulink url="http://ldb.samba.org/"/> web site for
+current contact and maintainer information.
+	</para>
+
+</refsect1>
+
+</refentry>

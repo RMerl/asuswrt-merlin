@@ -1,0 +1,34 @@
+<samba:parameter name="update encrypted"
+                 context="G"
+				 type="boolean"
+                 basic="1" advanced="1" developer="1"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+    <para>
+	This boolean parameter allows a user logging on with a plaintext password to have their encrypted (hashed)
+	password in the smbpasswd file to be updated automatically as they log on. This option allows a site to
+	migrate from plaintext password authentication (users authenticate with plaintext password over the
+	wire, and are checked against a UNIX account atabase) to encrypted password authentication (the SMB
+	challenge/response authentication mechanism) without forcing all users to re-enter their passwords via
+	smbpasswd at the time the change is made. This is a convenience option to allow the change over to encrypted
+	passwords to be made over a longer period.  Once all users have encrypted representations of their passwords
+	in the smbpasswd file this parameter should be set to <constant>no</constant>.
+	</para>
+
+    <para>
+	In order for this parameter to be operative the <smbconfoption name="encrypt passwords"/> parameter must 
+    be set to <constant>no</constant>. The default value of <smbconfoption name="encrypt
+	passwords">Yes</smbconfoption>. Note: This must be set to <constant>no</constant> for this <smbconfoption
+	name="update encrypted"/> to work.
+	</para>
+
+    <para>
+	Note that even when this parameter is set a user authenticating to <command moreinfo="none">smbd</command>
+	must still enter a valid password in order to connect correctly, and to update their hashed (smbpasswd)
+	passwords.
+	</para>
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

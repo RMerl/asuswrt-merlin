@@ -1,0 +1,26 @@
+.\" .nh
+.\" .ad l
+.TH "generate_alias" "8" "August 2006" "generate_alias" "generate_alias"
+.SH "NAME"
+generate_alias \- generate modules.alias out of various bus maps
+.SH "SYNOPSIS"
+\fBgenerate_alias\fR
+[options]
+.SH "DESCRIPTION"
+.PP 
+Application generate_alias allows creating of modalias (modules.alias) out of various bus maps, such as modules.pcimap, modules.ieee1394map etc., therefore providing standardised method of identifying hardware and matching it to relevant module.
+.PP 
+.SH "PARAMETERS"
+.TP 
+\fB\-\-prefix <path>\fR
+Sets the path to bus maps. Default is current working directory. Recommended is /lib/modules/`uname \-r`/
+.TP 
+\fB\-\-output <path>\fR
+Writes modalias to the given path. Default is stdout. Recommended it /lib/modules/`uname \-r`/modules.alias.
+.SH "AUTHOR"
+.PP 
+Written by iSteve
+<isteve@bofh.cz>
+.SH "SEE ALSO"
+.PP 
+\fBhotplug2\fR(8)

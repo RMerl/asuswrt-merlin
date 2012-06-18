@@ -1,0 +1,2 @@
+rm -f /var/run/lld2d*.pid
+/sbin/lld2d br0 eth1

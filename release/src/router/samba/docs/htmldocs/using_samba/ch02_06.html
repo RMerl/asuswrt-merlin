@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 2] 2.6 Testing the Samba Daemons</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:29:12Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_05.html" TITLE="2.5 Starting the Samba Daemons">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 2.5 Starting the Samba Daemons" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch02_01.html" TITLE="2. Installing Samba on a Unix System">
+Chapter 2<br>
+Installing Samba on a Unix System</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="chapter" HREF="ch03_01.html" TITLE="3. Configuring Windows Clients">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 3. Configuring Windows Clients" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch02-67898">
+2.6 Testing the Samba Daemons</a></h2><P CLASS="para">It's hard to believe, but we're nearly done with the Samba server setup. All that's left to do is to make sure that everything is working as we think it should. A convenient way to do this is to use the <I CLASS="filename"> smbclient</i> program to examine what the server is offering to the network. If everything is set up properly, you should be able to do the following:</p><PRE CLASS="programlisting">
+<CODE CLASS="userinput"><B># smbclient -U% -L localhost</b></code>
+
+Added interface ip=192.168.220.100 bcast=192.168.220.255 nmask=255.255.255.0
+Domain=[SIMPLE] OS=[Unix] Server=[Samba 2.0.5a]
+
+        Sharename      Type      Comment
+        ---------      ----      -------
+        test           Disk      For testing only, please
+        IPC$           IPC       IPC Service (Samba 2.0.5a)
+
+        Server               	    Comment
+        ---------            	    -------
+        HYDRA                	    Samba 2.0.5a
+
+        Workgroup            	    Master
+        ---------            	    -------
+        SIMPLE               	    HYDRA</pre><P CLASS="para">
+If there is a problem, don't panic! Try to start the daemons manually, and check the system output or the debug files at <I CLASS="filename">
+/usr/local/samba/var/log.smb</i> to see if you can determine what happened. If you think it may be a more serious problem, skip to <a href="ch07_01.html"><b>Chapter 7, <CITE CLASS="chapter"> Printing and Name Resolution</cite></b></a>, for help on troubleshooting the Samba daemons. </p><P CLASS="para">
+If it worked, congratulations! You now have successfully set up the Samba server with a disk share. It's a simple one, but we can use it to set up and test the Windows 95 and NT clients in the next chapter. Then we will start making it more interesting by adding services such as home directories, printers, and security, and seeing how to integrate the server into a larger Windows domain. </p></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_05.html" TITLE="2.5 Starting the Samba Daemons">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 2.5 Starting the Samba Daemons" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="chapter" HREF="ch03_01.html" TITLE="3. Configuring Windows Clients">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 3. Configuring Windows Clients" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+2.5 Starting the Samba Daemons</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+3. Configuring Windows Clients</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

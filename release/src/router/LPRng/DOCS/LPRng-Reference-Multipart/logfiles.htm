@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Log and Status Files</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Spool Queues and Files" href=
+    "spoolqueue.htm">
+    <link rel="PREVIOUS" title="Spool Control File " href=
+    "queuecontrolfile.htm">
+    <link rel="NEXT" title="Job Files" href="jobfiles.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "queuecontrolfile.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          13. Spool Queues and Files</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "jobfiles.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="LOGFILES">13.4. Log and Status
+      Files</a></h1>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">create_files</var><span class=
+          "emphasis"><i class="EMPHASIS">create log, accounting and
+          status files</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">lf=</var><span class=
+          "emphasis"><i class="EMPHASIS">log file name (default:
+          log)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">max_log_file_size#</var><span
+          class="emphasis"><i class="EMPHASIS">maximum log file
+          size (Kbytes)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">min_log_file_size#</var><span
+          class="emphasis"><i class="EMPHASIS">minimum log file
+          size (Kbytes)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">max_status_line#</var><span
+          class="emphasis"><i class="EMPHASIS">maximum status line
+          length (characters)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">max_status_size#</var><span
+          class="emphasis"><i class="EMPHASIS">maximum status file
+          size (Kbytes)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">min_status_size#</var><span
+          class="emphasis"><i class="EMPHASIS">minimum status file
+          size (Kbytes)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">ps=</var><span class=
+          "emphasis"><i class="EMPHASIS">filter status file name
+          (default: status)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">queue_status_file=</var><span
+          class="emphasis"><i class="EMPHASIS">queue status file
+          (default: status.%P)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">short_status_date=</var><span
+          class="emphasis"><i class="EMPHASIS">display short
+          (hh:mm) timestamp (default: true)</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>During operation, the <b class="APPLICATION">lpd</b>
+      server records the current printing operations in the spool
+      queue status file specified by the <var class=
+      "LITERAL">spool_status_file</var> option (default <var class=
+      "LITERAL">status.%P</var> - the %P is expanded to the print
+      queue name); for our example, this would be <tt class=
+      "FILENAME">/var/lpd/pr/status.pr</tt>. In order to prevent
+      this file from growing too large, the server will
+      periodically truncate the file. You can force creation of
+      these files by setting the <var class=
+      "LITERAL">create_files</var> option. The <var class=
+      "LITERAL">max_status_size</var> configuration or printcap
+      option sets the maximum size (in Kbytes) of the status file;
+      if the file exceeds this, only the last <var class=
+      "LITERAL">min_status_size</var> bytes or 25% of the maximum
+      size (default if not specified) will be preserved.</p>
+
+      <p>Similarly, the server logs its operations in the log file
+      specified by the <var class="LITERAL">lf</var> (log file)
+      option (default is <var class="LITERAL">lf=log</var>). The
+      <var class="LITERAL">max_log_file_size</var> value (default
+      0) specifies the maximum length of the log file in Kbytes. If
+      this value is non-zero, then the log file is truncated to
+      <var class="LITERAL">min_log_file_size</var> bytes or 25% of
+      the maximum file size. Again, the last portion of the log
+      file is preserved. If the <var class=
+      "LITERAL">max_log_file_size</var> value is 0, then the log
+      file grows without limit.</p>
+
+      <p>Some filters require an additional filter status file that
+      they use for recording additional filter status or other
+      operational information. The <var class="LITERAL">ps</var>
+      names this file, and it is passed to a print filter using the
+      <var class="LITERAL">$s</var> option (see <a href=
+      "filteroptions.htm">Filter Command Line Options and
+      Environment Variables</a> ).</p>
+
+      <p>The <acronym class="ACRONYM">STDERR</acronym> output for
+      filters is put into the printer status file. This allows the
+      filter to produce informative messages that can be displayed
+      as part of the user status. In addition, a separate status
+      file specified by the <var class="LITERAL">ps</var> (Printer
+      Status) can be used as well. This file is <span class=
+      "emphasis"><i class="EMPHASIS">not</i></span> truncated by
+      the <b class="APPLICATION">LPRng</b> system.</p>
+
+      <p>When reporting status information, the length of line
+      returned can be a problem. The <var class=
+      "LITERAL">max_status_line#79</var> option restricts the
+      status line to a maximum of 79 characters.</p>
+
+      <p>The <var class="LITERAL">short_status_date</var> (default
+      is true) option causes short (hour:minute) timestamps to be
+      displayed on status queries.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "queuecontrolfile.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "jobfiles.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Spool Control
+          File</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "spoolqueue.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Job Files</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

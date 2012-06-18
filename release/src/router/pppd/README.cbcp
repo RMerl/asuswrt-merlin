@@ -1,0 +1,51 @@
+	     Microsoft Call Back Configuration Protocol.
+			by Pedro Roque Marques
+			(updated by Paul Mackerras)
+
+The CBCP is a method by which the Microsoft Windows NT Server may
+implement additional security. It is possible to configure the server
+in such a manner so as to require that the client systems which
+connect with it are required that following a valid authentication to
+leave a method by which the number may be returned call.
+
+It is a requirement of servers to be so configured that the protocol be
+exchanged.
+
+So, this set of patches may be applied to the pppd process to enable
+the cbcp client *only* portion of the specification. It is primarily
+meant to permit connection with Windows NT Servers.
+
+The ietf-working specification may be obtained from ftp.microsoft.com
+in the developr/rfc directory.
+
+The ietf task group has decided to recommend that the LCP sequence be
+extended to permit the callback operation. For this reason, these
+patches are not 'part' of pppd but are an adjunct to the code.
+
+To enable CBCP support, all that is required is to uncomment the line
+in Makefile.linux that sets CBCP=y and recompile pppd.
+
+I use such script to make a callback:
+
+pppd debug nodetach /dev/modem 115200 crtscts modem	\
+callback 222222 name NAME remotename SERVER	\
+connect 'chat -v "" atz OK atdt111111 CONNECT ""'
+sleep 1
+pppd debug /dev/modem 115200 crtscts modem	\
+name NAME remotename SERVER defaultroute	\
+connect 'chat -v RING ATA CONNECT "\c"'
+
+First we invoke pppd with 'nodetach' option in order to not detach from
+the controlling terminal and 'callback NUMBER' option, then wait for
+1 second and invoke pppd again which waits for a callback (RING) and
+then answers (ATA). Number 222222 is a callback number, i.e. server will
+call us back at this number, while number 111111 is the number we are
+calling to.
+
+You have to put in /etc/ppp/chap-secrets the following two lines:
+
+NAME SERVER PASSWORD
+SERVER NAME PASSWORD
+
+You have to use your real login name, remote server name and password.
+

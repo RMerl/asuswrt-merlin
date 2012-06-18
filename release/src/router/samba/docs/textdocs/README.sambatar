@@ -1,0 +1,23 @@
+Contributor/s:	Martin.Kraemer <Martin.Kraemer@mch.sni.de>
+                and Ricky Poulten (ricky@logcam.co.uk)
+Date:		Unknown - circa 1994
+Status:		Obsoleted - smbtar has been a stable part of Samba
+		since samba-1.9.13
+
+Subject:	Sambatar (now smbtar)
+=============================================================================
+
+This is version 1.4 of my small extension to samba that allows PC shares
+to be backed up directly to a UNIX tape. It only has been tested under
+Solaris 2.3, Linux 1.1.59 and DG/UX 5.4r3.10 with version 1.9.13 of samba.
+
+See the file INSTALL for installation instructions, and
+the man page and NOTES file for some basic usage. Please let me know if you
+have any problems getting it to work under your flavour of Unix.
+
+This is only (yet another) intermediate version of sambatar.
+This version also comes with an extra gift, zen.bas, written in
+microsoft qbasic by a colleague. It is (apparently) based on a 70s
+British sci-fi series known as Blake's 7. If you have any questions
+about this program, or any suggestions (e.g. what about servillan.bas
+?), feel free to mail the author (of zen.bas) greenm@lilhd.logica.com.

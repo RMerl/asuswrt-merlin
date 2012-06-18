@@ -1,0 +1,636 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.2.2	//
+ADDR_HASH_SIZE	aaa.h	20;"	d
+AHBIT	avp.h	54;"	d
+ALENGTH	avp.h	61;"	d
+ALT_DEFAULT_AUTH_FILE	file.h	53;"	d
+ALT_DEFAULT_CONFIG_FILE	file.h	55;"	d
+AMBIT	avp.h	50;"	d
+ANALOG_BEARER	avp.h	72;"	d
+ASYNC_FRAMING	avp.h	69;"	d
+AVP_MAX	avp.c	21;"	d	file:
+AZBITS	avp.h	57;"	d
+BIN	Makefile	/^BIN=l2tpd$/;"	m
+BINARY	l2tp.h	38;"	d
+BINDIR	Makefile	/^BINDIR=\/usr\/sbin$/;"	m
+CALL_CACHE_SIZE	call.h	18;"	d
+CALL_PPP_OPTS	l2tp.h	42;"	d
+CDN	control.h	42;"	d
+CFBIT	l2tp.h	66;"	d
+CFLAGS	Makefile	/^CFLAGS= $(DFLAGS) -Wall -DSANITY $(OSFLAGS) $(FFLAGS)$/;"	m
+CLBIT	l2tp.h	60;"	d
+CONTEXT_DEFAULT	file.h	47;"	d
+CONTEXT_GLOBAL	file.h	44;"	d
+CONTEXT_LAC	file.h	46;"	d
+CONTEXT_LNS	file.h	45;"	d
+CONTROL_PIPE	l2tp.h	36;"	d
+CTBIT	l2tp.h	59;"	d
+CVER	l2tp.h	69;"	d
+CZBITS	l2tp.h	63;"	d
+DEBUG	misc.h	45;"	d
+DEFAULT_AUTH_FILE	file.h	52;"	d
+DEFAULT_CONFIG_FILE	file.h	54;"	d
+DEFAULT_MAX_BPS	l2tp.h	96;"	d
+DEFAULT_MAX_RETRIES	l2tp.h	91;"	d
+DEFAULT_MIN_BPS	l2tp.h	97;"	d
+DEFAULT_PID_FILE	file.h	56;"	d
+DEFAULT_RWS_SIZE	l2tp.h	92;"	d
+DEFAULT_RX_BPS	l2tp.h	95;"	d
+DEFAULT_TX_BPS	l2tp.h	94;"	d
+DFLAGS	Makefile	/^DFLAGS= -g -O2 -DDEBUG_PPPD -DDEBUG_CONTROL -DDEBUG_ENTROPY$/;"	m
+DIGITAL_BEARER	avp.h	73;"	d
+ERROR_INVALID	avp.h	81;"	d
+ERROR_LENGTH	avp.h	78;"	d
+ERROR_NORES	avp.h	80;"	d
+ERROR_NOTEXIST	avp.h	79;"	d
+ERROR_RESERVED	avp.h	77;"	d
+ETCDIR	Makefile	/^ETCDIR=\/etc$/;"	m
+F1	md5.c	175;"	d	file:
+F2	md5.c	176;"	d	file:
+F3	md5.c	177;"	d	file:
+F4	md5.c	178;"	d	file:
+FBIT	control.h	53;"	d
+FFLAGS	Makefile	/^FFLAGS= -DIP_ALLOCATION $/;"	m
+FIRMWARE_REV	l2tp.h	43;"	d
+HBIT	avp.h	67;"	d
+HDRS	Makefile	/^HDRS=l2tp.h avp.h misc.h control.h call.h scheduler.h file.h aaa.h md5.h$/;"	m
+HELLO_DELAY	l2tp.h	47;"	d
+HIGHFIRST	md5.c	9;"	d	file:
+Hello	control.h	33;"	d
+ICCN	control.h	40;"	d
+ICRP	control.h	39;"	d
+ICRQ	control.h	38;"	d
+IPADDY	misc.h	43;"	d
+LBIT	control.h	51;"	d
+LIBS	Makefile	/^LIBS= $(OSLIB) # -lefence # efence for malloc checking$/;"	m
+LOG_CRIT	misc.h	62;"	d
+LOG_DEBUG	misc.h	59;"	d
+LOG_LOG	misc.h	60;"	d
+LOG_WARN	misc.h	61;"	d
+MAXSTRLEN	l2tp.h	22;"	d
+MAXTIME	avp.h	63;"	d
+MAX_MSG	control.h	48;"	d
+MAX_RECV_SIZE	l2tp.h	103;"	d
+MAX_VECTOR_SIZE	aaa.h	22;"	d
+MBIT	avp.h	66;"	d
+MD5Context	md5.h	/^struct MD5Context$/;"	s
+MD5Final	md5.c	/^void MD5Final (unsigned char digest[16], struct MD5Context *ctx)$/;"	f
+MD5Init	md5.c	/^void MD5Init (struct MD5Context *ctx)$/;"	f
+MD5STEP	md5.c	181;"	d	file:
+MD5Transform	md5.c	/^void MD5Transform (uint32 buf[4], uint32 const in[16])$/;"	f
+MD5Update	md5.c	/^void MD5Update (struct MD5Context *ctx, unsigned char const *buf,$/;"	f
+MD5_CTX	md5.h	/^typedef struct MD5Context MD5_CTX;$/;"	t
+MD5_H	md5.h	2;"	d
+MD_SIG_SIZE	aaa.h	21;"	d
+MIN	l2tp.h	219;"	d
+MIN_PAYLOAD_HDR_LEN	l2tp.h	99;"	d
+NZL_TIMEOUT_DIVISOR	l2tp.h	84;"	d
+Nr	l2tp.h	/^    _u16 Nr;                    \/* Next received *\/$/;"	m	struct:control_hdr
+Nr	l2tp.h	/^    _u16 Nr;                    \/* Optional next received *\/$/;"	m	struct:payload_hdr
+Ns	l2tp.h	/^    _u16 Ns;                    \/* Next sent *\/$/;"	m	struct:control_hdr
+Ns	l2tp.h	/^    _u16 Ns;                    \/* Optional next sent *\/$/;"	m	struct:payload_hdr
+OBJS	Makefile	/^OBJS=l2tpd.o pty.o misc.o control.o avp.o call.o network.o avpsend.o scheduler.o file.o aaa.o md5.o$/;"	m
+OCCN	control.h	37;"	d
+OCRP	control.h	36;"	d
+OCRQ	control.h	35;"	d
+OSFLAGS	Makefile	/^OSFLAGS= -DLINUX -I\/usr\/include$/;"	m
+OUR_L2TP_VERSION	l2tp.h	105;"	d
+PAYLOAD_BUF	l2tp.h	88;"	d
+PAYLOAD_FUDGE	l2tp.h	98;"	d
+PFBIT	l2tp.h	109;"	d
+PLBIT	l2tp.h	108;"	d
+PPBIT	l2tp.h	114;"	d
+PPPD	l2tp.h	41;"	d
+PPP_ESCAPE	l2tp.h	176;"	d
+PPP_FCS	l2tp.h	181;"	d
+PPP_FLAG	l2tp.h	175;"	d
+PPP_GOODFCS	l2tp.h	180;"	d
+PPP_INITFCS	l2tp.h	179;"	d
+PPP_TRANS	l2tp.h	177;"	d
+PRBIT	l2tp.h	112;"	d
+PSBIT	l2tp.h	113;"	d
+PTBIT	l2tp.h	107;"	d
+PTY00	pty.c	21;"	d	file:
+PTY00	pty.c	27;"	d	file:
+PTY00	pty.c	33;"	d	file:
+PTY01	pty.c	23;"	d	file:
+PTY01	pty.c	29;"	d	file:
+PTY01	pty.c	35;"	d	file:
+PTY10	pty.c	22;"	d	file:
+PTY10	pty.c	28;"	d	file:
+PTY10	pty.c	34;"	d	file:
+PVER	l2tp.h	110;"	d
+PZBITS	l2tp.h	111;"	d
+RAND_DEV	l2tp.h	184;"	d
+RAND_EGD	l2tp.h	186;"	d
+RAND_SYS	l2tp.h	185;"	d
+RBIT	control.h	52;"	d
+RESULT_CLEAR	avp.h	82;"	d
+RESULT_ERROR	avp.h	83;"	d
+RESULT_EXISTS	avp.h	84;"	d
+SCCCN	control.h	30;"	d
+SCCRP	control.h	29;"	d
+SCCRQ	control.h	28;"	d
+SENSE_ALLOW	file.h	49;"	d
+SENSE_DENY	file.h	50;"	d
+SERVER_VERSION	l2tp.h	39;"	d
+SLI	control.h	46;"	d
+STATE_CHALLENGED	aaa.h	26;"	d
+STATE_COMPLETE	aaa.h	27;"	d
+STATE_NONE	aaa.h	25;"	d
+STRLEN	file.h	19;"	d
+SWAPS	misc.h	48;"	d
+SYNC_FRAMING	avp.h	70;"	d
+StopCCN	control.h	31;"	d
+TBIT	control.h	50;"	d
+TVGT	scheduler.h	71;"	d
+TVLESS	scheduler.h	65;"	d
+TVLESSEQ	scheduler.h	68;"	d
+UDP_LISTEN_PORT	l2tp.h	101;"	d
+USE_KERNEL	l2tp.h	233;"	d
+VECTOR_SIZE	aaa.h	23;"	d
+VENDOR_ERROR	avp.h	75;"	d
+VENDOR_ID	avp.h	42;"	d
+VENDOR_NAME	l2tp.h	40;"	d
+VER_L2TP	l2tp.h	169;"	d
+VER_PPTP	l2tp.h	170;"	d
+WEN	control.h	44;"	d
+_AAA_H	aaa.h	17;"	d
+_COMMON_H_	common.h	15;"	d
+_CONTROL_H	control.h	23;"	d
+_FILE_H	file.h	17;"	d
+_L2TP_H	l2tp.h	20;"	d
+_MISC_H	misc.h	16;"	d
+_OSPORT_H_	osport.h	18;"	d
+_SCHEDULER_H	scheduler.h	17;"	d
+_u16	common.h	/^typedef unsigned short _u16;$/;"	t
+_u64	common.h	/^typedef unsigned long long _u64;$/;"	t
+accesscontrol	file.h	/^    int accesscontrol;          \/* Use access control? *\/$/;"	m	struct:global
+active	file.h	/^    int active;                 \/* Is this actively in use? *\/$/;"	m	struct:lns
+active	file.h	/^    int active;                 \/* Is this connection in active use? *\/$/;"	m	struct:lac
+add_avp_rws	avpsend.c	/^int add_avp_rws (struct buffer *buf, _u16 rws)$/;"	f
+add_bearer_avp	avpsend.c	/^int add_bearer_avp (struct buffer *buf, int bearer)$/;"	f
+add_bearer_caps_avp	avpsend.c	/^int add_bearer_caps_avp (struct buffer *buf, _u16 caps)$/;"	f
+add_callid_avp	avpsend.c	/^int add_callid_avp (struct buffer *buf, _u16 callid, struct tunnel *t)$/;"	f
+add_challenge_avp	avpsend.c	/^int add_challenge_avp (struct buffer *buf, char *c, int len)$/;"	f
+add_chalresp_avp	avpsend.c	/^int add_chalresp_avp (struct buffer *buf, char *c, int len)$/;"	f
+add_control_hdr	control.c	/^void add_control_hdr (struct tunnel *t, struct call *c, struct buffer *buf)$/;"	f
+add_fcs	control.c	/^void add_fcs (struct buffer *buf)$/;"	f
+add_firmware_avp	avpsend.c	/^int add_firmware_avp (struct buffer *buf)$/;"	f
+add_frame_avp	avpsend.c	/^int add_frame_avp (struct buffer *buf, int frame)$/;"	f
+add_frame_caps_avp	avpsend.c	/^int add_frame_caps_avp (struct buffer *buf, _u16 caps)$/;"	f
+add_hostname_avp	avpsend.c	/^int add_hostname_avp (struct buffer *buf)$/;"	f
+add_maxbps_avp	avpsend.c	/^int add_maxbps_avp (struct buffer *buf, int speed)$/;"	f
+add_message_type_avp	avpsend.c	/^int add_message_type_avp (struct buffer *buf, _u16 type)$/;"	f
+add_minbps_avp	avpsend.c	/^int add_minbps_avp (struct buffer *buf, int speed)$/;"	f
+add_number_avp	avpsend.c	/^int add_number_avp (struct buffer *buf, char *no)$/;"	f
+add_opt	misc.c	/^struct ppp_opts *add_opt (struct ppp_opts *option, char *fmt, ...)$/;"	f
+add_payload_hdr	call.c	/^void add_payload_hdr (struct tunnel *t, struct call *c, struct buffer *buf)$/;"	f
+add_physchan_avp	avpsend.c	/^int add_physchan_avp (struct buffer *buf, unsigned int physchan)$/;"	f
+add_ppd_avp	avpsend.c	/^int add_ppd_avp (struct buffer *buf, _u16 ppd)$/;"	f
+add_protocol_avp	avpsend.c	/^int add_protocol_avp (struct buffer *buf)$/;"	f
+add_randvect_avp	avpsend.c	/^int add_randvect_avp (struct buffer *buf, char *c, int len)$/;"	f
+add_result_code_avp	avpsend.c	/^int add_result_code_avp (struct buffer *buf, _u16 result, _u16 error,$/;"	f
+add_rxspeed_avp	avpsend.c	/^int add_rxspeed_avp (struct buffer *buf, int speed)$/;"	f
+add_seqreqd_avp	avpsend.c	/^int add_seqreqd_avp (struct buffer *buf)$/;"	f
+add_serno_avp	avpsend.c	/^int add_serno_avp (struct buffer *buf, unsigned int serno)$/;"	f
+add_tunnelid_avp	avpsend.c	/^int add_tunnelid_avp (struct buffer *buf, _u16 tid)$/;"	f
+add_txspeed_avp	avpsend.c	/^int add_txspeed_avp (struct buffer *buf, int speed)$/;"	f
+add_vendor_avp	avpsend.c	/^int add_vendor_avp (struct buffer *buf)$/;"	f
+addr	aaa.h	/^    unsigned int addr;$/;"	m	struct:addr_ent
+addr	call.h	/^    unsigned int addr;          \/* Address reserved for this call *\/$/;"	m	struct:call
+addr_ent	aaa.h	/^struct addr_ent$/;"	s
+alarm	scheduler.c	/^static sigset_t alarm;$/;"	v	file:
+alarm_handler	scheduler.c	/^void alarm_handler (int signal)$/;"	f
+altauthfile	file.h	/^    char altauthfile[STRLEN];   \/* File containing authentication info *\/$/;"	m	struct:global
+altconfigfile	file.h	/^    char altconfigfile[STRLEN]; \/* File containing configuration info *\/$/;"	m	struct:global
+args	l2tpd.c	/^char *args;$/;"	v
+aschedule	scheduler.c	/^inline struct schedule_entry *aschedule (struct timeval tv,$/;"	f
+assigned_call_avp	avp.c	/^int assigned_call_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+assigned_tunnel_avp	avp.c	/^int assigned_tunnel_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+attr	avp.h	/^    _u16 attr;$/;"	m	struct:avp_hdr
+authfile	file.h	/^    char authfile[STRLEN];      \/* File containing authentication info *\/$/;"	m	struct:global
+authname	file.h	/^    char authname[STRLEN];      \/* Who we authenticate as *\/$/;"	m	struct:lac
+authname	file.h	/^    char authname[STRLEN];      \/* Who we authenticate as *\/$/;"	m	struct:lns
+authpeer	file.h	/^    int authpeer;               \/* Authenticate our peer? *\/$/;"	m	struct:lac
+authpeer	file.h	/^    int authpeer;               \/* Authenticate our peer? *\/$/;"	m	struct:lns
+authself	file.h	/^    int authself;               \/* Authenticate ourselves? *\/$/;"	m	struct:lac
+authself	file.h	/^    int authself;               \/* Authenticate ourselves? *\/$/;"	m	struct:lns
+autodial	file.h	/^    int autodial;               \/* Try to dial immediately? *\/$/;"	m	struct:lac
+avp	avp.h	/^struct avp$/;"	s
+avp_hdr	avp.h	/^struct avp_hdr$/;"	s
+avps	avp.c	/^struct avp avps[] = {$/;"	v
+bc	l2tp.h	/^    int bc;                     \/* Peer's bearer channels *\/$/;"	m	struct:tunnel
+bcmp	osport.h	25;"	d
+bcopy	osport.h	23;"	d
+bearer	call.h	/^    int bearer;                 \/* Bearer type of call *\/$/;"	m	struct:call
+bearer_caps_avp	avp.c	/^int bearer_caps_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+bearer_type_avp	avp.c	/^int bearer_type_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+bits	md5.h	/^    uint32 bits[2];$/;"	m	struct:MD5Context
+buf	md5.h	/^    uint32 buf[4];$/;"	m	struct:MD5Context
+buffer	misc.h	/^struct buffer$/;"	s
+bufferDump	misc.c	/^void bufferDump (char *buf, int buflen)$/;"	f
+bufferDumpWIDTH	misc.c	85;"	d	file:
+byteReverse	md5.c	/^void byteReverse (unsigned char *buf, unsigned longs)$/;"	f
+byteReverse	md5.c	32;"	d	file:
+bzero	osport.h	24;"	d
+c	file.h	/^    struct call *c;             \/* Our call *\/$/;"	m	struct:lac
+cLr	l2tp.h	/^    int cLr;                    \/* Last packet received by peer *\/$/;"	m	struct:tunnel
+call	call.h	/^struct call$/;"	s
+call_close	call.c	/^void call_close (struct call *c)$/;"	f
+call_head	l2tp.h	/^    struct call *call_head;     \/* Member calls *\/$/;"	m	struct:tunnel
+call_physchan_avp	avp.c	/^int call_physchan_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+call_rws	file.h	/^    int call_rws;               \/* Call rws *\/$/;"	m	struct:lac
+call_rws	file.h	/^    int call_rws;               \/* Call rws *\/$/;"	m	struct:lns
+call_serno_avp	avp.c	/^int call_serno_avp (struct tunnel *t, struct call *c, void *data, int datalen)$/;"	f
+calls	l2tp.h	/^    int calls;$/;"	m	struct:tunnel_list
+cdn_result_codes	avp.c	/^char *cdn_result_codes[] = {$/;"	v
+chal_them	l2tp.h	/^    struct challenge chal_them; \/* Our challenge to them *\/$/;"	m	struct:tunnel
+chal_us	l2tp.h	/^    struct challenge chal_us;   \/* Their Challenge to us *\/$/;"	m	struct:tunnel
+challenge	aaa.h	/^    unsigned char *challenge;       \/* The original challenge *\/$/;"	m	struct:challenge
+challenge	aaa.h	/^struct challenge$/;"	s
+challenge	file.h	/^    int challenge;              \/* Challenge authenticate the peer? *\/$/;"	m	struct:lac
+challenge	file.h	/^    int challenge;              \/* Challenge authenticate the peer? *\/$/;"	m	struct:lns
+challenge_avp	avp.c	/^int challenge_avp (struct tunnel *t, struct call *c, void *data, int datalen)$/;"	f
+chalresp_avp	avp.c	/^int chalresp_avp (struct tunnel *t, struct call *c, void *data, int datalen)$/;"	f
+chap_refuse	file.h	/^    int chap_refuse;            \/* Refuse CHAP authentication for us *\/$/;"	m	struct:lac
+chap_refuse	file.h	/^    int chap_refuse;            \/* Refuse CHAP authentication for us *\/$/;"	m	struct:lns
+chap_require	file.h	/^    int chap_require;           \/* Require CHAP auth for PPP *\/$/;"	m	struct:lac
+chap_require	file.h	/^    int chap_require;           \/* Require CHAP auth for PPP *\/$/;"	m	struct:lns
+check_control	control.c	/^inline int check_control (const struct buffer *buf, struct tunnel *t,$/;"	f
+check_payload	control.c	/^inline int check_payload (struct buffer *buf, struct tunnel *t,$/;"	f
+child_handler	l2tpd.c	/^void child_handler (int signal)$/;"	f
+cid	call.h	/^    int cid;                    \/* Their call number *\/$/;"	m	struct:call
+cid	l2tp.h	/^    _u16 cid;                   \/* Call ID *\/$/;"	m	struct:control_hdr
+cid	l2tp.h	/^    _u16 cid;                   \/* Caller ID *\/$/;"	m	struct:payload_hdr
+closeSs	call.h	/^    _u16 closeSs;               \/* What number was in Ns when we started to $/;"	m	struct:call
+closing	call.h	/^    int closing;                \/* Are we actually in the process of closing? *\/$/;"	m	struct:call
+cnu	call.h	/^    int cnu;                    \/* Do we need to send updated Ns, Nr values? *\/$/;"	m	struct:call
+configfile	file.h	/^    char configfile[STRLEN];    \/* File containing configuration info *\/$/;"	m	struct:global
+container	call.h	/^    struct tunnel *container;   \/* Tunnel we belong to *\/$/;"	m	struct:call
+control_fd	l2tpd.c	/^int control_fd;                 \/* descriptor of control area *\/$/;"	v
+control_finish	control.c	/^int control_finish (struct tunnel *t, struct call *c)$/;"	f
+control_hdr	l2tp.h	/^struct control_hdr$/;"	s
+control_rec_seq_num	l2tp.h	/^    _u16 control_rec_seq_num;   \/* Next expected to receive *\/$/;"	m	struct:tunnel
+control_seq_num	l2tp.h	/^    _u16 control_seq_num;       \/* Sequence for next packet *\/$/;"	m	struct:tunnel
+control_xmit	network.c	/^void control_xmit (void *b)$/;"	f
+control_zlb	control.c	/^void control_zlb (struct buffer *buf, struct tunnel *t, struct call *c)$/;"	f
+count	l2tp.h	/^    int count;                  \/* How many membmer calls? *\/$/;"	m	struct:tunnel
+count	l2tp.h	/^    int count;$/;"	m	struct:tunnel_list
+daemon	file.h	/^    int daemon;                 \/* Use daemon mode? *\/$/;"	m	struct:global
+daemonize	l2tpd.c	/^void daemonize() {$/;"	f
+data	scheduler.h	/^    void *data;                 \/* Data to be passed to func *\/$/;"	m	struct:schedule_entry
+data_rec_seq_num	call.h	/^    _u16 data_rec_seq_num;      \/* Sequence for next received payload packet *\/$/;"	m	struct:call
+data_seq_num	call.h	/^    _u16 data_seq_num;          \/* Sequence for next payload packet *\/$/;"	m	struct:call
+death_handler	l2tpd.c	/^void death_handler (int signal)$/;"	f
+debug	call.h	/^    int debug;$/;"	m	struct:call
+debug	file.h	/^    int debug;                  \/* Debug PPP? *\/$/;"	m	struct:lns
+debug	file.h	/^    int debug;$/;"	m	struct:lac
+debug	l2tp.h	/^    int debug;                  \/* Are we debugging or not? *\/$/;"	m	struct:tunnel
+debug_avp	network.c	/^int debug_avp = 1;              \/* Debug AVP negotiations? *\/$/;"	v
+debug_network	network.c	/^int debug_network = 0;          \/* Debug networking? *\/$/;"	v
+debug_state	network.c	/^int debug_state = 0;            \/* Debug state machine? *\/$/;"	v
+debug_tunnel	network.c	/^int debug_tunnel = 0;$/;"	v
+decrypt_avp	aaa.c	/^int decrypt_avp (char *buf, struct tunnel *t)$/;"	f
+defaultroute	file.h	/^    int defaultroute;           \/* Use as default route? *\/$/;"	m	struct:lac
+deflac	file.c	/^struct lac *deflac;$/;"	v
+deflns	file.c	/^struct lns *deflns;$/;"	v
+deschedule	scheduler.c	/^void deschedule (struct schedule_entry *s)$/;"	f
+description	avp.h	/^    char *description;          \/* A name, for debugging *\/$/;"	m	struct:avp
+destroy_call	call.c	/^void destroy_call (struct call *c)$/;"	f
+destroy_tunnel	l2tpd.c	/^void destroy_tunnel (struct tunnel *t)$/;"	f
+dethrottle	network.c	/^void dethrottle (void *call)$/;"	f
+dial_no	call.h	/^    char dial_no[128];          \/* jz: dialing number for outgoing call *\/$/;"	m	struct:call
+dial_no_tmp	l2tpd.c	/^char *dial_no_tmp;              \/* jz: Dialnumber for Outgoing Call *\/$/;"	v
+dialed	call.h	/^    char dialed[MAXSTRLEN];     \/* Number dialed for call *\/$/;"	m	struct:call
+dialed_number_avp	avp.c	/^int dialed_number_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+dialing	call.h	/^    char dialing[MAXSTRLEN];    \/* Original caller ID *\/$/;"	m	struct:call
+dialing_number_avp	avp.c	/^int dialing_number_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+die	call.h	/^    int die;$/;"	m	struct:call
+do_control	l2tpd.c	/^void do_control ()$/;"	f
+do_packet_dump	misc.c	/^void do_packet_dump (struct buffer *buf)$/;"	f
+encrypt_avp	aaa.c	/^void encrypt_avp (struct buffer *buf, _u16 len, struct tunnel *t)$/;"	f
+end	file.h	/^    unsigned int end;$/;"	m	struct:iprange
+entname	file.h	/^    char entname[STRLEN];       \/* Name of this entry *\/$/;"	m	struct:lac
+entname	file.h	/^    char entname[STRLEN];       \/* Name of this entry *\/$/;"	m	struct:lns
+error	call.h	/^    int error;                  \/* Error code *\/$/;"	m	struct:call
+errormsg	call.h	/^    char errormsg[MAXSTRLEN];   \/* Error message *\/$/;"	m	struct:call
+events	scheduler.c	/^struct schedule_entry *events;$/;"	v
+exclusive	file.h	/^    int exclusive;              \/* Only one tunnel per host? *\/$/;"	m	struct:lns
+expand_payload	control.c	/^inline int expand_payload (struct buffer *buf, struct tunnel *t,$/;"	f
+extract	network.c	/^inline void extract (void *buf, int *tunnel, int *call)$/;"	f
+fbit	call.h	/^    int fbit;                   \/* Use sequence numbers? *\/$/;"	m	struct:call
+fc	l2tp.h	/^    int fc;                     \/* Framing capabilities of peer *\/$/;"	m	struct:tunnel
+fcstab	l2tp.h	173;"	d
+fd	call.h	/^    int fd;                     \/* File descriptor for pty *\/$/;"	m	struct:call
+filerr	file.c	/^char filerr[STRLEN];$/;"	v
+firmware	l2tp.h	/^    int firmware;               \/* Peer's firmware revision *\/$/;"	m	struct:tunnel
+firmware_rev_avp	avp.c	/^int firmware_rev_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+fix_hdr	network.c	/^inline void fix_hdr (void *buf)$/;"	f
+forceuserspace	file.h	/^    int forceuserspace;         \/* Force userspace? *\/$/;"	m	struct:global
+frame	call.h	/^    int frame;                  \/* Framing being used *\/$/;"	m	struct:call
+frame_type_avp	avp.c	/^int frame_type_avp (struct tunnel *t, struct call *c, void *data, int datalen)$/;"	f
+framing_caps_avp	avp.c	/^int framing_caps_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+from	network.c	/^struct sockaddr_in server, from;        \/* Server and transmitter structs *\/$/;"	v
+func	scheduler.h	/^    void (*func) (void *);      \/* Function to execute *\/$/;"	m	struct:schedule_entry
+gconfig	file.c	/^struct global gconfig;$/;"	v
+getPtyMaster	pty.c	/^int getPtyMaster (char *tty10, char *tty01)$/;"	f
+get_addr	aaa.c	/^unsigned int get_addr (struct iprange *ipr)$/;"	f
+get_call	call.c	/^struct call *get_call (int tunnel, int call, unsigned int addr, int port)$/;"	f
+get_dev_entropy	misc.c	/^int get_dev_entropy(char *buf, int count)$/;"	f
+get_egd_entropy	misc.c	/^int get_egd_entropy(char *buf, int count)$/;"	f
+get_entropy	misc.c	/^int get_entropy (char *buf, int count)$/;"	f
+get_lns	aaa.c	/^struct lns *get_lns (struct tunnel *t)$/;"	f
+get_secret	aaa.c	/^int get_secret (char *us, char *them, char *secret, int size)$/;"	f
+get_sys_entropy	misc.c	/^int get_sys_entropy(char *buf, int count)$/;"	f
+get_tunnel	call.c	/^struct call *get_tunnel (int tunnel, unsigned int addr, int port)$/;"	f
+global	file.h	/^struct global$/;"	s
+global_serno	control.c	/^int global_serno = 1;$/;"	v
+halt	misc.h	64;"	d
+handle_avps	avp.c	/^int handle_avps (struct buffer *buf, struct tunnel *t, struct call *c)$/;"	f
+handle_challenge	aaa.c	/^int handle_challenge (struct tunnel *t, struct challenge *chal)$/;"	f
+handle_packet	control.c	/^inline int handle_packet (struct buffer *buf, struct tunnel *t,$/;"	f
+handle_special	control.c	/^void handle_special (struct buffer *buf, struct call *c, _u16 call)$/;"	f
+handler	avp.h	/^    int (*handler) (struct tunnel *, struct call *, void *, int);$/;"	m	struct:avp
+handler	file.h	/^    int (*handler) (char *word, char *value, int context, void *item);$/;"	m	struct:keyword
+hbit	file.h	/^    int hbit;                   \/* Permit hidden AVP's? *\/$/;"	m	struct:lac
+hbit	file.h	/^    int hbit;                   \/* Permit hidden AVP's? *\/$/;"	m	struct:lns
+hbit	l2tp.h	/^    int hbit;                   \/* Allow hidden AVP's? *\/$/;"	m	struct:tunnel
+head	l2tp.h	/^    struct tunnel *head;$/;"	m	struct:tunnel_list
+hello	control.c	/^void hello (void *tun)$/;"	f
+hello	l2tp.h	/^    struct schedule_entry *hello;$/;"	m	struct:tunnel
+host	file.h	/^struct host$/;"	s
+hostname	file.h	/^    char hostname[STRLEN];      \/* Hostname to report *\/$/;"	m	struct:lac
+hostname	file.h	/^    char hostname[STRLEN];      \/* Hostname to report *\/$/;"	m	struct:lns
+hostname	file.h	/^    char hostname[STRLEN];$/;"	m	struct:host
+hostname	l2tp.h	/^    char hostname[MAXSTRLEN];   \/* Remote hostname *\/$/;"	m	struct:tunnel
+hostname	network.c	/^char hostname[256];$/;"	v
+hostname_avp	avp.c	/^int hostname_avp (struct tunnel *t, struct call *c, void *data, int datalen)$/;"	f
+htons	misc.h	50;"	d
+htons	misc.h	53;"	d
+htons	misc.h	55;"	d
+idle	file.h	/^    int idle;                   \/* Idle timeout in seconds *\/$/;"	m	struct:lac
+idle	file.h	/^    int idle;                   \/* Idle timeout in seconds *\/$/;"	m	struct:lns
+ignore_avp	avp.c	/^int ignore_avp (struct tunnel *t, struct call *c, void *data, int datalen)$/;"	f
+in	md5.h	/^    unsigned char in[64];$/;"	m	struct:MD5Context
+index	osport.h	22;"	d
+init	l2tpd.c	/^void init (int argc,char *argv[])$/;"	f
+init_addr	aaa.c	/^void init_addr ()$/;"	f
+init_args	l2tpd.c	/^void init_args(int argc, char *argv[]) {$/;"	f
+init_config	file.c	/^int init_config ()$/;"	f
+init_network	network.c	/^int init_network (void)$/;"	f
+init_scheduler	scheduler.c	/^void init_scheduler (void)$/;"	f
+init_tunnel_list	l2tpd.c	/^void init_tunnel_list (struct tunnel_list *t)$/;"	f
+ip_used	aaa.c	/^static int ip_used (unsigned int addr)$/;"	f	file:
+iprange	file.h	/^struct iprange$/;"	s
+kernel_support	network.c	/^int kernel_support;             \/* Kernel Support there or not? *\/$/;"	v
+keyword	file.h	/^    char *keyword;$/;"	m	struct:keyword
+keyword	file.h	/^struct keyword$/;"	s
+l2tp_call	l2tpd.c	/^struct tunnel *l2tp_call (char *host, int port, struct lac *lac,$/;"	f
+lac	call.h	/^    struct lac *lac;            \/* LAC that owns us *\/$/;"	m	struct:call
+lac	file.h	/^struct lac$/;"	s
+lac	l2tp.h	/^    struct lac *lac;            \/* LAC that owns us *\/$/;"	m	struct:tunnel
+lac_call	l2tpd.c	/^struct call *lac_call (int tid, struct lac *lac, struct lns *lns)$/;"	f
+lac_disconnect	l2tpd.c	/^void lac_disconnect (int tid)$/;"	f
+lac_hangup	l2tpd.c	/^void lac_hangup (int cid)$/;"	f
+laclist	file.c	/^struct lac *laclist;$/;"	v
+lacs	file.h	/^    struct iprange *lacs;       \/* Hosts permitted to connect *\/$/;"	m	struct:lns
+lastsent	call.h	/^    struct timeval lastsent;    \/* When did we last send something? *\/$/;"	m	struct:call
+lbit	call.h	/^    int lbit;                   \/* Should we send length field? *\/$/;"	m	struct:call
+lbit	file.h	/^    int lbit;                   \/* Use the length field? *\/$/;"	m	struct:lac
+lbit	file.h	/^    int lbit;                   \/* Use the length field? *\/$/;"	m	struct:lns
+len	misc.h	/^    int len;$/;"	m	struct:buffer
+length	avp.h	/^    _u16 length;$/;"	m	struct:avp_hdr
+length	l2tp.h	/^    _u16 length;                \/* Length field *\/$/;"	m	struct:control_hdr
+length	l2tp.h	/^    _u16 length;                \/* Optional Length *\/$/;"	m	struct:payload_hdr
+listen_addy	network.c	/^unsigned int listen_addy = INADDR_ANY;  \/* Address to listen on *\/$/;"	v
+lns	call.h	/^    struct lns *lns;            \/* LNS that owns us *\/$/;"	m	struct:call
+lns	file.h	/^    struct host *lns;           \/* LNS's we can connect to *\/$/;"	m	struct:lac
+lns	file.h	/^struct lns$/;"	s
+lns	l2tp.h	/^    struct lns *lns;            \/* LNS that owns us *\/$/;"	m	struct:tunnel
+lnslist	file.c	/^struct lns *lnslist;$/;"	v
+localaddr	file.h	/^    unsigned int localaddr;     \/* Local IP address *\/$/;"	m	struct:lac
+localaddr	file.h	/^    unsigned int localaddr;     \/* Local IP for PPP connections *\/$/;"	m	struct:lns
+log	misc.c	/^void log (int level, const char *fmt, ...)$/;"	f
+m	avp.h	/^    int m;                      \/* Set M? *\/$/;"	m	struct:avp
+magic_lac_dial	l2tpd.c	/^void magic_lac_dial (void *data)$/;"	f
+magic_lac_tunnel	l2tpd.c	/^void magic_lac_tunnel (void *data)$/;"	f
+main	l2tpd.c	/^int main (int argc, char *argv[])$/;"	f
+maxlen	misc.h	/^    int maxlen;$/;"	m	struct:buffer
+md5	aaa.h	/^    struct MD5Context md5;$/;"	m	struct:challenge
+message_type_avp	avp.c	/^int message_type_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+mk_challenge	aaa.c	/^void mk_challenge (char *c, int length)$/;"	f
+msgtype	call.h	/^    int msgtype;                \/* What kind of message are we$/;"	m	struct:call
+msgtypes	avp.c	/^char *msgtypes[] = {$/;"	v
+needclose	call.h	/^    int needclose;              \/* Do we need to close this call? *\/$/;"	m	struct:call
+nego	call.h	/^    int nego;                   \/* Show negotiation? *\/$/;"	m	struct:call
+nego	l2tp.h	/^    int nego;                   \/* Show Negotiation? *\/$/;"	m	struct:tunnel
+network_thread	network.c	/^void network_thread ()$/;"	f
+new_buf	misc.c	/^struct buffer *new_buf (int size)$/;"	f
+new_call	call.c	/^struct call *new_call (struct tunnel *parent)$/;"	f
+new_lac	file.c	/^struct lac *new_lac ()$/;"	f
+new_lns	file.c	/^struct lns *new_lns ()$/;"	f
+new_outgoing	control.c	/^struct buffer *new_outgoing (struct tunnel *t)$/;"	f
+new_payload	call.c	/^struct buffer *new_payload (struct sockaddr_in peer)$/;"	f
+new_tunnel	l2tpd.c	/^struct tunnel *new_tunnel ()$/;"	f
+next	aaa.h	/^    struct addr_ent *next;$/;"	m	struct:addr_ent
+next	call.h	/^    struct call *next;          \/* Next call, for linking *\/$/;"	m	struct:call
+next	file.h	/^    struct host *next;$/;"	m	struct:host
+next	file.h	/^    struct iprange *next;$/;"	m	struct:iprange
+next	file.h	/^    struct lac *next;$/;"	m	struct:lac
+next	file.h	/^    struct lns *next;$/;"	m	struct:lns
+next	l2tp.h	/^    struct tunnel *next;        \/* Allows us to be linked easily *\/$/;"	m	struct:tunnel
+next	misc.h	/^    struct ppp_opts *next;$/;"	m	struct:ppp_opts
+next	scheduler.h	/^    struct schedule_entry *next;        \/* Next entry in queue *\/$/;"	m	struct:schedule_entry
+ntohs	misc.h	56;"	d
+null_handler	l2tpd.c	/^void null_handler(int sig)$/;"	f
+num	avp.h	/^    int num;                    \/* Number of AVP *\/$/;"	m	struct:avp
+o_pad	l2tp.h	/^    _u16 o_pad;                 \/* Optional offset padding *\/$/;"	m	struct:payload_hdr
+o_size	l2tp.h	/^    _u16 o_size;                \/* Optional offset size *\/$/;"	m	struct:payload_hdr
+oldptyconf	call.h	/^    struct termios *oldptyconf;$/;"	m	struct:call
+opt_destroy	misc.c	/^void opt_destroy (struct ppp_opts *option)$/;"	f
+option	misc.h	/^    char option[MAXSTRLEN];$/;"	m	struct:ppp_opts
+ourbc	l2tp.h	/^    int ourbc;                  \/* Our bearer channels *\/$/;"	m	struct:tunnel
+ourcid	call.h	/^    int ourcid;                 \/* Our call number *\/$/;"	m	struct:call
+ourfbit	call.h	/^    int ourfbit;                \/* Do we want sequence numbers? *\/$/;"	m	struct:call
+ourfc	l2tp.h	/^    int ourfc;                  \/* Our framing capabilities *\/$/;"	m	struct:tunnel
+ourrws	l2tp.h	/^    int ourrws;                 \/* Receive Window Size *\/$/;"	m	struct:tunnel
+ourtb	l2tp.h	/^    _u64 ourtb;                 \/* Our tie breaker *\/$/;"	m	struct:tunnel
+ourtid	l2tp.h	/^    int ourtid;                 \/* Our tunnel identifier *\/$/;"	m	struct:tunnel
+pLr	call.h	/^    int pLr;                    \/* Last packet received by peer *\/$/;"	m	struct:call
+packet_delay_avp	avp.c	/^int packet_delay_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+packet_dump	network.c	/^int packet_dump = 0;            \/* Dump packets? *\/$/;"	v
+pap_refuse	file.h	/^    int pap_refuse;             \/* Refuse PAP authentication for us *\/$/;"	m	struct:lac
+pap_refuse	file.h	/^    int pap_refuse;             \/* Refuse PAP authentication for us *\/$/;"	m	struct:lns
+pap_require	file.h	/^    int pap_require;            \/* Require PAP auth for PPP *\/$/;"	m	struct:lac
+pap_require	file.h	/^    int pap_require;            \/* Require PAP auth for PPP *\/$/;"	m	struct:lns
+parse_config	file.c	/^int parse_config (FILE * f)$/;"	f
+passwdauth	file.h	/^    int passwdauth;             \/* Authenticate by passwd file? (or PAM) *\/$/;"	m	struct:lns
+payload_hdr	l2tp.h	/^struct payload_hdr$/;"	s
+peer	l2tp.h	/^    struct sockaddr_in peer;    \/* Peer's Address *\/$/;"	m	struct:tunnel
+peer	misc.h	/^    struct sockaddr_in peer;$/;"	m	struct:buffer
+peername	file.h	/^    char peername[STRLEN];      \/* Force peer name to this *\/$/;"	m	struct:lac
+peername	file.h	/^    char peername[STRLEN];      \/* Force peer name to this *\/$/;"	m	struct:lns
+physchan	call.h	/^    int physchan;               \/* Physical channel ID *\/$/;"	m	struct:call
+pidfile	file.h	/^    char pidfile[STRLEN];       \/* File containing the pid number*\/$/;"	m	struct:global
+pnu	call.h	/^    int pnu;                    \/* ditto for payload packet *\/$/;"	m	struct:call
+port	file.h	/^    int port;                   \/* Port number to listen to *\/$/;"	m	struct:global
+port	file.h	/^    int port;$/;"	m	struct:host
+ppd	call.h	/^    int ppd;                    \/* Packet processing delay (of peer) *\/$/;"	m	struct:call
+ppd	l2tpd.c	/^int ppd = 1;                    \/* Packet processing delay *\/$/;"	v
+ppp_crc16_table	control.c	/^_u16 ppp_crc16_table[256] = {$/;"	v
+ppp_opts	misc.h	/^struct ppp_opts$/;"	s
+pppd	call.h	/^    int pppd;                   \/* PID of pppd *\/$/;"	m	struct:call
+pppoptfile	file.h	/^    char pppoptfile[STRLEN];    \/* File containing PPP options *\/$/;"	m	struct:lac
+pppoptfile	file.h	/^    char pppoptfile[STRLEN];    \/* File containing PPP options *\/$/;"	m	struct:lns
+pridns	file.h	/^    unsigned int pridns;        \/* Primary DNS server *\/$/;"	m	struct:lns
+print_challenge	aaa.c	/^inline void print_challenge (struct challenge *chal)$/;"	f
+print_md5	aaa.c	/^void print_md5 (void *md5)$/;"	f
+priwins	file.h	/^    unsigned int priwins;       \/* Primary WINS server *\/$/;"	m	struct:lns
+protocol_version_avp	avp.c	/^int protocol_version_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+proxyarp	file.h	/^    int proxyarp;               \/* Use proxy-arp? *\/$/;"	m	struct:lns
+proxyauth	file.h	/^    int proxyauth;              \/* Allow proxy authentication? *\/$/;"	m	struct:lns
+prx	call.h	/^    int prx;                    \/* What was the last packet we sent$/;"	m	struct:call
+qcid	call.h	/^    int qcid;                   \/* Quitting CID *\/$/;"	m	struct:call
+qtid	l2tp.h	/^    int qtid;                   \/* TID for disconnection *\/$/;"	m	struct:tunnel
+rand_source	common.h	/^int rand_source;$/;"	v
+rand_vector_avp	avp.c	/^int rand_vector_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+random	osport.h	32;"	d
+range	file.h	/^    struct iprange *range;      \/* Range of IP's we provide *\/$/;"	m	struct:lns
+read_packet	call.c	/^int read_packet (struct buffer *buf, int fd, int convert)$/;"	f
+receive_window_size_avp	avp.c	/^int receive_window_size_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+recycle_buf	misc.c	/^inline void recycle_buf (struct buffer *b)$/;"	f
+recycle_outgoing	control.c	/^inline void recycle_outgoing (struct buffer *buf, struct sockaddr_in peer)$/;"	f
+recycle_payload	call.c	/^inline void recycle_payload (struct buffer *buf, struct sockaddr_in peer)$/;"	f
+redial	file.h	/^    int redial;                 \/* Redial if disconnected *\/$/;"	m	struct:lac
+remoteaddr	file.h	/^    unsigned int remoteaddr;    \/* Force remote address to this *\/$/;"	m	struct:lac
+rend	misc.h	/^    void *rend;$/;"	m	struct:buffer
+reply	aaa.h	/^    unsigned char reply[MD_SIG_SIZE];   \/* What the peer sent *\/$/;"	m	struct:challenge
+reserve_addr	aaa.c	/^void reserve_addr (unsigned int addr)$/;"	f
+response	aaa.h	/^    unsigned char response[MD_SIG_SIZE];        \/* What we expect as a respsonse *\/$/;"	m	struct:challenge
+result	call.h	/^    int result;                 \/* Result code *\/$/;"	m	struct:call
+result_code_avp	avp.c	/^int result_code_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+retries	misc.h	/^    int retries;                \/* Again, if a control packet, how many retries? *\/$/;"	m	struct:buffer
+rmax	file.h	/^    int rmax;                   \/* Maximum # of consecutive redials *\/$/;"	m	struct:lac
+rsched	file.h	/^    struct schedule_entry *rsched;$/;"	m	struct:lac
+rstart	misc.h	/^    void *rstart;$/;"	m	struct:buffer
+rtimeout	file.h	/^    int rtimeout;               \/* Redial every this many # of seconds *\/$/;"	m	struct:lac
+rtries	file.h	/^    int rtries;                 \/* # of tries so far *\/$/;"	m	struct:lac
+rws	l2tp.h	/^    int rws;                    \/* Peer's Receive Window Size *\/$/;"	m	struct:tunnel
+rx_bytes	call.h	/^    int rx_bytes;               \/* received bytes *\/$/;"	m	struct:call
+rx_pkts	call.h	/^    int rx_pkts;                \/* Received packets *\/$/;"	m	struct:call
+rx_speed_avp	avp.c	/^int rx_speed_avp (struct tunnel *t, struct call *c, void *data, int datalen)$/;"	f
+rxspeed	call.h	/^    int rxspeed;                \/* Receive speed *\/$/;"	m	struct:call
+safe_copy	misc.c	/^inline void safe_copy (char *a, char *b, int size)$/;"	f
+sanity	l2tp.h	/^    int sanity;                 \/* check for sanity? *\/$/;"	m	struct:tunnel
+schedule	scheduler.c	/^struct schedule_entry *schedule (struct timeval tv, void (*func) (void *),$/;"	f
+schedule_entry	scheduler.h	/^struct schedule_entry$/;"	s
+schedule_lock	scheduler.c	/^void schedule_lock ()$/;"	f
+schedule_unlock	scheduler.c	/^void schedule_unlock ()$/;"	f
+secdns	file.h	/^    unsigned int secdns;        \/* Secondary DNS server *\/$/;"	m	struct:lns
+secret	aaa.h	/^    unsigned char secret[MAXSTRLEN];    \/* The shared secret *\/$/;"	m	struct:challenge
+secret	l2tp.h	/^    char secret[MAXSTRLEN];     \/* Secret to use *\/$/;"	m	struct:tunnel
+secwins	file.h	/^    unsigned int secwins;       \/* Secondary WINS server *\/$/;"	m	struct:lns
+self	l2tp.h	/^    struct call *self;$/;"	m	struct:tunnel
+send_zlb	control.c	/^void send_zlb (void *data)$/;"	f
+sense	file.h	/^    int sense;$/;"	m	struct:iprange
+seq_reqd	call.h	/^    int seq_reqd;               \/* Sequencing required? *\/$/;"	m	struct:call
+seq_reqd_avp	avp.c	/^int seq_reqd_avp (struct tunnel *t, struct call *c, void *data, int datalen)$/;"	f
+serno	call.h	/^    unsigned int serno;         \/* Call serial number *\/$/;"	m	struct:call
+server	network.c	/^struct sockaddr_in server, from;        \/* Server and transmitter structs *\/$/;"	v
+server_socket	network.c	/^int server_socket;              \/* Server socket *\/$/;"	v
+set_accesscontrol	file.c	/^int set_accesscontrol (char *word, char *value, int context, void *item)$/;"	f
+set_authfile	file.c	/^int set_authfile (char *word, char *value, int context, void *item)$/;"	f
+set_authname	file.c	/^int set_authname (char *word, char *value, int context, void *item)$/;"	f
+set_autodial	file.c	/^int set_autodial (char *word, char *value, int context, void *item)$/;"	f
+set_boolean	file.c	/^int set_boolean (char *word, char *value, int *ptr)$/;"	f
+set_challenge	file.c	/^int set_challenge (char *word, char *value, int context, void *item)$/;"	f
+set_debug	file.c	/^int set_debug (char *word, char *value, int context, void *item)$/;"	f
+set_defaultroute	file.c	/^int set_defaultroute (char *word, char *value, int context, void *item)$/;"	f
+set_error	misc.c	/^void set_error (struct call *c, int error, const char *fmt, ...)$/;"	f
+set_exclusive	file.c	/^int set_exclusive (char *word, char *value, int context, void *item)$/;"	f
+set_flow	file.c	/^int set_flow (char *word, char *value, int context, void *item)$/;"	f
+set_hbit	file.c	/^int set_hbit (char *word, char *value, int context, void *item)$/;"	f
+set_hostname	file.c	/^int set_hostname (char *word, char *value, int context, void *item)$/;"	f
+set_int	file.c	/^int set_int (char *word, char *value, int *ptr)$/;"	f
+set_ip	file.c	/^int set_ip (char *word, char *value, unsigned int *addr)$/;"	f
+set_iprange	file.c	/^int set_iprange (char *word, char *value, int context, void *item)$/;"	f
+set_lac	file.c	/^int set_lac (char *word, char *value, int context, void *item)$/;"	f
+set_lbit	file.c	/^int set_lbit (char *word, char *value, int context, void *item)$/;"	f
+set_lns	file.c	/^int set_lns (char *word, char *value, int context, void *item)$/;"	f
+set_localaddr	file.c	/^int set_localaddr (char *word, char *value, int context, void *item)$/;"	f
+set_papchap	file.c	/^int set_papchap (char *word, char *value, int context, void *item)$/;"	f
+set_passwdauth	file.c	/^int set_passwdauth (char *word, char *value, int context, void *item)$/;"	f
+set_port	file.c	/^int set_port (char *word, char *value, int context, void *item)$/;"	f
+set_pppoptfile	file.c	/^int set_pppoptfile (char *word, char *value, int context, void *item)$/;"	f
+set_rand_dev	file.c	/^int set_rand_dev ()$/;"	f
+set_rand_egd	file.c	/^int set_rand_egd (char *value)$/;"	f
+set_rand_source	file.c	/^int set_rand_source (char *word, char *value, int context, void *item)$/;"	f
+set_rand_sys	file.c	/^int set_rand_sys ()$/;"	f
+set_range	file.c	/^struct iprange *set_range (char *word, char *value, struct iprange *in)$/;"	f
+set_redial	file.c	/^int set_redial (char *word, char *value, int context, void *item)$/;"	f
+set_remoteaddr	file.c	/^int set_remoteaddr (char *word, char *value, int context, void *item)$/;"	f
+set_rmax	file.c	/^int set_rmax (char *word, char *value, int context, void *item)$/;"	f
+set_rtimeout	file.c	/^int set_rtimeout (char *word, char *value, int context, void *item)$/;"	f
+set_rws	file.c	/^int set_rws (char *word, char *value, int context, void *item)$/;"	f
+set_string	file.c	/^int set_string (char *word, char *value, char *ptr, int len)$/;"	f
+set_userspace	file.c	/^int set_userspace (char *word, char *value, int context, void *item)$/;"	f
+show_status	l2tpd.c	/^void show_status (int fd)$/;"	f
+srandom	osport.h	33;"	d
+ss	aaa.h	/^    unsigned char ss;           \/* State we're sending in *\/$/;"	m	struct:challenge
+start	file.h	/^    unsigned int start;$/;"	m	struct:iprange
+start	misc.h	/^    void *start;$/;"	m	struct:buffer
+start_pppd	l2tpd.c	/^int start_pppd (struct call *c, struct ppp_opts *opts)$/;"	f
+state	aaa.h	/^    int state;                  \/* What state is challenge in? *\/$/;"	m	struct:challenge
+state	call.h	/^    int state;                  \/* Current state *\/$/;"	m	struct:call
+state	l2tp.h	/^    int state;                  \/* State of tunnel *\/$/;"	m	struct:tunnel
+status_handler	l2tpd.c	/^void status_handler (int sig)$/;"	f
+stopccn_result_codes	avp.c	/^char *stopccn_result_codes[] = {$/;"	v
+sub_address_avp	avp.c	/^int sub_address_avp (struct tunnel *t, struct call *c, void *data,$/;"	f
+subaddy	call.h	/^    char subaddy[MAXSTRLEN];    \/* Sub address *\/$/;"	m	struct:call
+swaps	misc.c	/^inline void swaps (void *buf_v, int len)$/;"	f
+switch_io	l2tpd.c	/^int switch_io = 0;              \/* jz: Switch for Incoming or Outgoing Call *\/$/;"	v
+t	file.h	/^    struct tunnel *t;           \/* Our tunnel *\/$/;"	m	struct:lac
+t	file.h	/^    struct tunnel *t;           \/* Tunnel of this, if it's ready *\/$/;"	m	struct:lns
+tb	l2tp.h	/^    _u64 tb;                    \/* Their tie breaker *\/$/;"	m	struct:tunnel
+tid	l2tp.h	/^    _u16 tid;                   \/* Tunnel ID *\/$/;"	m	struct:control_hdr
+tid	l2tp.h	/^    _u16 tid;                   \/* Tunnel ID *\/$/;"	m	struct:payload_hdr
+tid	l2tp.h	/^    int tid;                    \/* Peer's tunnel identifier *\/$/;"	m	struct:tunnel
+toss	misc.c	/^inline void toss (struct buffer *buf)$/;"	f
+tun_rws	file.h	/^    int tun_rws;                \/* Receive window size (tunnel) *\/$/;"	m	struct:lac
+tun_rws	file.h	/^    int tun_rws;                \/* Receive window size (tunnel) *\/$/;"	m	struct:lns
+tunnel	l2tp.h	/^struct tunnel$/;"	s
+tunnel	misc.h	/^    struct tunnel *tunnel;      \/* Who owns this packet, if it's a control *\/$/;"	m	struct:buffer
+tunnel_list	l2tp.h	/^struct tunnel_list$/;"	s
+tunnels	l2tpd.c	/^struct tunnel_list tunnels;$/;"	v
+tv	scheduler.h	/^    struct timeval tv;          \/* Scheduled time to execute *\/$/;"	m	struct:schedule_entry
+tx_bytes	call.h	/^    int tx_bytes;               \/* transmitted bytes *\/$/;"	m	struct:call
+tx_pkts	call.h	/^    int tx_pkts;                \/* Transmitted packets *\/$/;"	m	struct:call
+tx_speed_avp	avp.c	/^int tx_speed_avp (struct tunnel *t, struct call *c, void *data, int datalen)$/;"	f
+txspeed	call.h	/^    int txspeed;                \/* Transmit speed *\/$/;"	m	struct:call
+type	misc.h	/^    int type;$/;"	m	struct:buffer
+uaddr	aaa.c	/^static struct addr_ent *uaddr[ADDR_HASH_SIZE];$/;"	v	file:
+udp_xmit	network.c	/^void udp_xmit (struct buffer *buf)$/;"	f
+uint32	md5.h	/^typedef unsigned int uint32;$/;"	t
+uint32	md5.h	/^typedef unsigned long uint32;$/;"	t
+unreserve_addr	aaa.c	/^void unreserve_addr (unsigned int addr)$/;"	f
+usage	l2tpd.c	/^void usage(void) {$/;"	f
+uts	l2tpd.c	/^struct utsname uts;$/;"	v
+vector	aaa.h	/^    unsigned char *vector;$/;"	m	struct:challenge
+vector_len	aaa.h	/^    unsigned int vector_len;$/;"	m	struct:challenge
+vendor	l2tp.h	/^    char vendor[MAXSTRLEN];     \/* Vendor of remote product *\/$/;"	m	struct:tunnel
+vendor_avp	avp.c	/^int vendor_avp (struct tunnel *t, struct call *c, void *data, int datalen)$/;"	f
+vendorid	avp.h	/^    _u16 vendorid;$/;"	m	struct:avp_hdr
+ver	l2tp.h	/^    _u16 ver;                   \/* Version and friends *\/$/;"	m	struct:payload_hdr
+ver	l2tp.h	/^    _u16 ver;                   \/* Version and more *\/$/;"	m	struct:control_hdr
+words	file.c	/^struct keyword words[] = {$/;"	v
+words	file.c	/^struct keyword words[];$/;"	v
+write_packet	control.c	/^inline int write_packet (struct buffer *buf, struct tunnel *t, struct call *c,$/;"	f
+wrong_length	avp.c	/^void wrong_length (struct call *c, char *field, int expected, int found,$/;"	f
+yesno	file.c	/^int yesno (char *value)$/;"	f
+zero	scheduler.c	/^static struct timeval zero;$/;"	v	file:
+zlb_xmit	call.h	/^    struct schedule_entry *zlb_xmit;$/;"	m	struct:call

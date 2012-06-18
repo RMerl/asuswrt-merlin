@@ -1,0 +1,117 @@
+This file is out of date - it remains here in case it is still of use.
+The basic naming convention is svr- and cli-  for seperate parts,
+then common- for common parts. Some files have no prefix.
+
+A brief rundown on which files do what, and their corresponding sections
+in the IETF drafts. The .c files usually have corresponding .h files.
+
+Transport layer  draft-ietf-secsh-transport-16.txt
+===============
+
+session.c		Contains the main select() loop, and handles setting
+			up/closing down ssh connections
+
+algo.c			Framework for handling various ciphers/hashes/algos,
+			and choosing between the lists of client/server
+			preferred ones
+
+kex.c			Key exchange routines, used at startup to negotiate
+			which algorithms to use, and also to obtain session
+			keys. This also runs when rekeying during the
+			connection.
+
+packet.c		Handles the basic packet encryption/decryption,
+			and switching to the appropriate packet handlers.
+			Called from session.c's main select loop.
+
+service.c		Handles service requests (userauth or connection)
+
+
+Authentication  draft-ietf-secsh-userauth-17.txt
+==============
+
+auth.c			General auth handling, including user checking etc,
+			passes different auth types to auth{passwd,pubkey}
+
+authpasswd.c		Handles /etc/passwd or /etc/shadow auth
+
+authpubkey.c		Handles ~/.ssh/authorized_keys auth
+
+
+Connection  draft-ietf-secsh-connect-17.txt
+==========
+
+channel.c		Channel handling routines - each shell/tcp conn/agent
+			etc is a channel.
+
+chansession.c		Handles shell/exec requests
+
+sshpty.c		From OpenSSH, allocates PTYs etc
+
+termcodes.c		Mapping of POSIX terminal codes to SSH terminal codes
+
+loginrec.c		From OpenSSH, handles utmp/wtmp logging
+
+x11fwd.c		Handles X11 forwarding
+
+agentfwd.c		Handles auth-agent forwarding requests
+
+localtcpfwd.c		Handles -L style tcp forwarding requests, setting
+			up the listening port and also handling connections
+			to that port (and subsequent channels)
+
+
+Program-related
+===============
+
+dbmulti.c		Combination binary chooser main() function
+
+dbutil.c		Various utility functions, incl logging, memory etc
+
+dropbearconvert.c	Conversion from dropbear<->openssh keys, uses
+			keyimport.c to do most of the work
+
+dropbearkey.c		Generates keys, calling gen{dss,rsa}
+
+keyimport.c		Modified from PuTTY, converts between key types
+
+main.c			dropbear's main(), handles listening, forking for
+			new connections, child-process limits
+
+runopts.c		Parses commandline options
+
+options.h		Compile-time feature selection
+
+config.h		Features selected from configure
+
+debug.h			Compile-time selection of debug features
+
+includes.h		Included system headers etc
+
+
+Generic Routines
+================
+
+signkey.c		A generic handler for pubkeys, switches to dss or rsa
+			depending on the key type
+
+rsa.c			RSA asymmetric crypto routines
+
+dss.c			DSS asymmetric crypto routines
+
+gendss.c		DSS key generation
+
+genrsa.c		RSA key generation
+
+bignum.c		Some bignum helper functions
+
+queue.c			A queue, used to enqueue encrypted packets to send
+
+random.c		PRNG, based on /dev/urandom or prngd
+
+atomicio.c		From OpenSSH, does `blocking' IO on non-blocking fds
+
+buffer.c		Buffer-usage routines, with size checking etc
+
+
+vim:set ts=8:

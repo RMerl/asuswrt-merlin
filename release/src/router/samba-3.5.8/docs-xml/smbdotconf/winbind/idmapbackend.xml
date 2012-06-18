@@ -1,0 +1,51 @@
+<samba:parameter name="idmap backend"
+                 context="G"
+		 type="string"
+                 advanced="1" developer="1" hide="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	The idmap backend provides a plugin interface for Winbind to use
+	varying backends to store SID/uid/gid mapping tables.
+	</para>
+
+	<para>
+	This option specifies the default backend that is used when no special
+	configuration set by <smbconfoption name="idmap config"/> matches the
+	specific request.
+	</para>
+
+	<para>
+	This default backend also specifies the place where winbind-generated
+	idmap entries will be stored. So it is highly recommended that you
+	specify a writable backend like <citerefentry>
+	<refentrytitle>idmap_tdb</refentrytitle> <manvolnum>8</manvolnum>
+	</citerefentry> or <citerefentry>
+	<refentrytitle>idmap_ldap</refentrytitle> <manvolnum>8</manvolnum>
+	</citerefentry> as the idmap backend. The <citerefentry>
+	<refentrytitle>idmap_rid</refentrytitle> <manvolnum>8</manvolnum>
+	</citerefentry> and <citerefentry>
+	<refentrytitle>idmap_ad</refentrytitle> <manvolnum>8</manvolnum>
+	</citerefentry> backends are not writable and thus will generate
+	unexpected results if set as idmap backend.
+	</para>
+
+	<para>
+	To use the rid and ad backends, please specify them via the
+	<smbconfoption name="idmap config"/> parameter, possibly also for the
+	domain your machine is member of, specified by <smbconfoption
+	name="workgroup"/>.
+	</para>
+
+	<para>Examples of SID/uid/gid backends include tdb (<citerefentry>
+	<refentrytitle>idmap_tdb</refentrytitle><manvolnum>8</manvolnum></citerefentry>),
+	ldap (<citerefentry><refentrytitle>idmap_ldap</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>), rid (<citerefentry>
+	<refentrytitle>idmap_rid</refentrytitle><manvolnum>8</manvolnum></citerefentry>),
+	and ad (<citerefentry><refentrytitle>idmap_ad</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry>).
+	</para>
+</description>
+
+<value type="default">tdb</value>
+</samba:parameter>

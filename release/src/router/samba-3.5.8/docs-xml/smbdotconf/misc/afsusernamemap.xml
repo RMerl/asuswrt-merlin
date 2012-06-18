@@ -1,0 +1,20 @@
+<samba:parameter name="afs username map"
+                 context="G"
+				 type="string"
+                 advanced="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+ <description>
+	<para>If you are using the fake kaserver AFS feature, you might
+	want to hand-craft the usernames you are creating tokens for.
+	For example this is necessary if you have users from several domain
+	in your AFS Protection Database. One possible scheme to code users
+	as DOMAIN+User as it is done by winbind with the + as a separator.
+	</para>
+
+	<para>The mapped user name must contain the cell name to log into,
+	so without setting this parameter there will be no token.</para>
+</description>
+
+<value type="default"/>
+<value type="example">%u@afs.samba.org</value>
+</samba:parameter>

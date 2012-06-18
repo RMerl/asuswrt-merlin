@@ -1,0 +1,24 @@
+#***********************************************************************
+#
+# Makefile
+#
+#***********************************************************************
+
+CC = mipsel-linux-gcc
+CFLAGS =  -I/home/gauss/asuswrt/release/src/router/curl-7.21.7/include  -I/home/gauss/asuswrt/release/src/router/libxml2/include  -I/home/gauss/asuswrt/release/src/router/openssl/include
+CFLAGS += -I/home/gauss/asuswrt/release/src-rt -I/home/gauss/asuswrt/release/src-rt/include -I. -I/home/gauss/asuswrt/release/src/router/shared
+#CFLAGS = -I/home/gauss/oleg/optware/staging/opt/include -I/home/gauss/optware_bulid/APP/DownloadMaster2/build/curl/include  -I/home/gauss/oleg/optware/staging/opt/include/libxml2  
+#LDFLAGS =  -L/home/gauss/asuswrt/release/src/router/mipsel-uclibc/install/curl/usr/lib  -L/home/gauss/asuswrt/release/src/router/mipsel-uclibc/install/libxml2/usr/lib  -L/home/gauss/asuswrt/release/src/router/mipsel-uclibc/install/openssl/usr/lib
+#LDFLAGS =  -L/home/gauss/optware_bulid/APP/DownloadMaster2/build/curl/lib  -L/home/gauss/oleg/optware/staging/opt/lib
+#CFLAGS = -g -rdynamic
+LDFLAGS =  -L/home/gauss/asuswrt/release/src/router/curl-7.21.7/lib/.libs  -L/home/gauss/asuswrt/release/src/router/libxml2/.libs  -L/home/gauss/asuswrt/release/src/router/openssl -L/home/gauss/asuswrt/release/src/router/nvram -L/home/gauss/asuswrt/release/src/router/shared -lshared
+#LDFLAGS =  -L/home/gauss/asuswrt/release/src/router/curl-7.21.7/lib/.libs  -L/home/gauss/asuswrt/release/src/router/libxml2/.libs  -L/home/gauss/asuswrt/release/src/router/openssl
+LIBS = -lcurl -lxml2 -lssl -lcrypto -lpthread -lnvram
+all: asuswebstorage
+asuswebstorage: asuswebstorage.o api.o function.o 
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBS)  $^ -o $@ 
+
+
+.PHONY: clean
+clean:
+	-rm -rf *.o asuswebstorage

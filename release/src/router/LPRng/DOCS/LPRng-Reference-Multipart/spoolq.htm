@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Spool Queue Processing</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Job Processing" href="jobsteps.htm">
+    <link rel="PREVIOUS" title="Job Reception " href=
+    "reception.htm">
+    <link rel="NEXT" title="Opening the Output Device " href=
+    "opendevice.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "reception.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          15. Job Processing</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "opendevice.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="SPOOLQ">15.4. Spool Queue
+      Processing</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">lpd_force_poll=</var><span class=
+          "emphasis"><i class="EMPHASIS">Force <b class=
+          "APPLICATION">lpd</b> to periodically poll print
+          queues</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">lpd_poll_time=</var><span class=
+          "emphasis"><i class="EMPHASIS">Time between
+          polls</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">max_servers_active=</var><span
+          class="emphasis"><i class="EMPHASIS">Maximum number of
+          active servers</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>When the <b class="APPLICATION">lpd</b> server starts, it
+      will fork a set of subserver processes, each which will
+      handle an individual queue.</p>
+
+      <p>If a system has a large number of queues, then this
+      forking operation may result in the <b class=
+      "APPLICATION">lpd</b> server exhausting the process
+      resources. To control this, the <var class=
+      "LITERAL">max_servers_active</var> value restricts the number
+      of active children to the specified value. If this value is
+      0, then 50% of the maximum system processes value will be
+      used.</p>
+
+      <p>Due to the limits on the number of processes, there may be
+      times when a job is placed in a queue, but the <b class=
+      "APPLICATION">lpd</b> server is unable to start handling the
+      job. When all of the children of the main <b class=
+      "APPLICATION">lpd</b> server have exited, the server starts a
+      timer. After <var class="LITERAL">lpd_poll_time</var>
+      seconds, it will scan the queues, looking for jobs to
+      process, and starts a process to service them. If it does not
+      find any jobs it remains idle.</p>
+
+      <p>The <var class="LITERAL">lpd_force_poll</var> flag causes
+      the server to periodically poll the queues. This is useful
+      when there is a high possibility that jobs could fail to be
+      printed due to high loads on the server.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "reception.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "opendevice.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Job
+          Reception</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "jobsteps.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Opening the
+          Output Device</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

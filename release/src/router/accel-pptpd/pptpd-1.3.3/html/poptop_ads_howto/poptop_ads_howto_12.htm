@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Poptop MSCHAP2 ADS Howto</title>
+</head>
+
+<body>
+<p><strong>16. pptp Server Administration </strong></p>
+<p>This section covers a few tricks on pptp server management. It is far from a complete guide. Any suggestions are welcome.</p>
+<p>The packages <strong>psacct</strong> and <strong>SysVinit</strong> are required for the utilities used in here. They should be installed by default. If they are  not, please install them through yum.</p>
+<blockquote>
+  <pre>[root@pptp ~]# yum install psacct SysVinit </pre>
+</blockquote><p></p>
+<hr>
+<strong><a name="whoisonline"></a>16.1 Who is Online?</strong>
+<p>To check who is online, the &quot;last&quot; command is used:</p>
+<blockquote>
+  <pre>[root@pptp ~]# last | grep ppp | grep still
+James    ppp3         202.xx.xxx.xxx   Sat Nov 19 17:38   still logged in   <br>Andrew   ppp1         220.xxx.xxx.xx   Sat Nov 19 17:23   still logged in   <br>Mary     ppp2         1.2.3.4          Sat Nov 19 16:59   still logged in   <br>Sue      ppp0         202.xx.xxx.xxx   Sat Nov 19 16:43   still logged in   <br>Mark     ppp7         203.xxx.xxx.xxx  Sat Nov 19 14:59   still logged in</pre>
+</blockquote>
+<p><strong><em>last</em></strong> is from SysVinit. It reads the information from /var/log/wtmp. </p>
+<p><strong>Note:</strong> for <em><strong>last</strong></em> to work properly, the logwtmp option in the /etc/pptpd.conf must be enabled. If you are sure there are pptp connections but see no output from the above mentioned command, check the logwtmp option in the pptpd.conf file is enabled. </p>
+<hr>
+<strong><a name="accounting"></a>16.2 Accounting </strong>
+<p>The &quot;ac&quot; utility from package psacct will provide a report on the connection time.</p>
+<blockquote>
+  <pre>[root@pptp ~]# ac -d -p
+        Amy                                  3.77
+        George                               0.08
+        Mark                                 1.78
+        Richard                              0.35
+        Lee                                  3.66
+        Simon                                5.78
+        Nicole                               1.05
+Nov  1  total       16.46
+        Amy                                  2.43
+        Nicole                               8.61
+        Richard                              4.77
+        Mark                                 0.90
+        Lee                                  4.68
+        Keith                                1.84
+Nov  2  total       23.23</pre>
+</blockquote>
+<p>The <em><strong>ac</strong></em> command reads the information from /var/log/wtmp. It has a lot of options. Read the man page for details. </p>
+<p><strong>Note</strong>: <br>
+  1. 
+If you want the statistics from older version of wtmp, use the -f parameter in &quot;ac&quot; to specify the file. <br>
+2. If users use shell to log in the server as well, the ac will return the connection time of both pptp and shell connections.
+</p>
+<hr> 
+<strong><a name="disconnect"></a>16.3 Disconnect a User</strong>
+<p>To disconnect an active connection, you will have to kill the pppd process associate with it. Firstly, run the command in section 16.1 to find out the remote ip address of the user. Say you want to disconnect Mary, her ip address in the above example is 1.2.3.4. Then, find the PID of the pppd process.
+</p>
+<blockquote>
+  <pre>[root@pptp /]# ps -ef | grep 1.2.3.4 | grep pppd
+root   8672  8671  0 16:59 ?      00:00:00 /usr/sbin/pppd local file /etc/ppp/options.pptpd 115200 
+                                               10.0.0.10:10.0.0.124 ipparam 1.2.3.4. 
+                                               plugin /usr/lib/pptpd/pptpd-logwtmp.so 
+                                               pptpd-original-ip 1.2.3.4</pre>
+</blockquote>
+<p>The second field of the output, 8672 in our example, is the PID of the pppd process. Kill the process will disconnect the user.</p>
+<blockquote>
+  <pre>[root@pptp /]# kill 8672</pre>
+</blockquote><br>
+<hr>
+<a href="poptop_ads_howto_11.htm">Previous</a>&nbsp;&nbsp;<a href="poptop_ads_howto_1.htm#toc">Content</a>
+</body>
+</html>

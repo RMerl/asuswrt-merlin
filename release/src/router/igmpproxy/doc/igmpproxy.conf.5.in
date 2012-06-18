@@ -1,0 +1,170 @@
+.\" .br - line break (nothing else on the line)
+.\" .B  - bold
+.\" .I  - green or kursive (on HTML)
+.\" .TP - paragraph ? (header line, followed by indented lines)
+.\"
+.TH igmpproxy.conf 5 "" "@PACKAGE_STRING@"
+.SH NAME
+igmpproxy.conf \- Configuration file for
+.BR igmpproxy (8)
+multicast daemon
+
+.SH DESCRIPTION
+.B igmpproxy.conf
+contains the configuration for the 
+.B igmpproxy
+multicast daemon. It defines which network interfaces should be
+used by the routing daemon. Each interface must be give one of the following roles:
+.B upstream
+,
+.B downstream
+or
+.B disabled
+.
+
+The
+.B upstream
+network interface is the outgoing interface which is responsible for communicating
+to availible multicast data sources. There can only be one upstream interface.
+
+.B Downstream
+network interfaces are the distribution interfaces to the destination networks, 
+where multicast clients can join groups and receive multicast data. One or more
+downstream interfaces must be configured.
+
+On
+.B disabled
+network interfaces all IGMP or multicast traffic is ignored altogether. If multiple
+IP addresses is used on one single interface (ae. eth0:1 ...), all interface
+aliases not in use should be configured as disabled.
+
+Any line in the configuration file starting with
+.B #
+is treated as a comment. Keywords and parameters can be distributed over many lines.
+The configuration file has two main keywords:
+
+.B quickleave
+.RS 
+Enables quickleave mode. In this mode the daemon will send a Leave IGMP message
+upstream as soon as it recieves a Leave message for any downstream interface.
+The daemon will then ask for Membership reports on the downstream interfaces, 
+and if a report is recieved the group is joined again upstream. Normally this
+is not noticed at all by clients on the downstream networks. If it's vital
+that the daemon should act exactly as a real multicast client on the upstream
+interface, this function should not be used. Disabling this function increases
+the risk of bandwidth saturation.
+.RE
+
+
+.B phyint 
+.I interface
+.I role 
+[ ratelimit 
+.I limit
+] [ threshold 
+.I ttl
+] [ altnet 
+.I networkaddr ... 
+]
+.RS
+Defines the state and settings of a network interface.
+.RE
+
+.SH PHYINT OPTIONS
+
+.B interface
+.RS
+The name of the interface the settings are for. This option is required for
+phyint settings.
+.RE
+
+.B role
+.RS
+The role of the interface. This should be either
+.B upstream
+(only one interface),
+.B downstream
+(one or more interfaces) or
+.B disabled
+. This option is required.
+.RE
+
+.B ratelimit
+.I limit
+.RS
+Defines a ratelimit for the network interface. If ratelimit is set to 0 (default),
+no ratelimit will be applied. This setting is optional.
+.RE
+
+.B threshold
+.I ttl
+.RS
+Defines the TTL threshold for the network interface. Packets with a lower TTL than the 
+threshols value will be ignored. This setting is optional, and by default the threshold is 1.
+.RE
+
+.B altnet
+.I networkaddr
+...
+.RS
+Defines alternate sources for multicasting and IGMP data. The network address must be on the 
+following format 'a.b.c.d/n'. By default the router will accept data from sources on the same
+network as configured on an interface. If the multicast source lies on a remote network, one
+must define from where traffic should be accepted. 
+
+This is especially useful for the upstream interface, since the source for multicast
+traffic is often from a remote location. Any number of altnet parameters can be specified.
+.RE
+
+.B whitelist
+.I networkaddr
+.RS
+Defines a whitelist for multicast groups. The network address must be in the following
+format 'a.b.c.d/n'. If you want to allow one single group use a network mask of /32,
+i.e. 'a.b.c.d/32'. 
+
+By default all multicast groups are allowed on any downstream interface. If at least one
+whitelist entry is defined, all igmp membership reports for not explicitly whitelisted
+multicast groups will be ignored and therefore not be served by igmpproxy. This is especially
+useful, if your provider does only allow a predefined set of multicast groups. These whitelists
+are only obeyed by igmpproxy itself, they won't prevent any other igmp client running on the
+same machine as igmpproxy from requesting 'unallowed' multicast groups.
+
+You may specify as many whitelist entries as needed. Although you should keep it as simple as
+possible, as this list is parsed for every membership report and therefore this increases igmp
+response times. Often used or large groups should be defined first, as parsing ends as soon as
+a group matches an entry.
+
+You may also specify whitelist entries for the upstream interface. Only igmp membership reports
+for explicitely whitelisted multicast groups will be sent out on the upstream interface. This
+is useful if you want to use multicast groups only between your downstream interfaces, like SSDP
+from a UPnP server.
+.RE
+
+.SH EXAMPLE
+## Enable quickleave
+quickleave
+.br
+## Define settings for eth0 (upstream)
+.br
+phyint eth0 upstream 
+       altnet 10.0.0.0/8
+       
+## Disable alternate IP on eth0 (eth0:0)
+.br
+phyint eth0:0 disabled
+
+## Define settings for eth1 (downstream)
+.br
+phyint eth1 downstream ratelimit 0 threshold 1
+
+## Define settings for eth2 (also downstream)
+.br
+phyint eth2 downstream
+
+
+.SH SEE ALSO
+.BR igmpproxy (8)
+
+.SH AUTHOR
+Originally written by Johnny Egeland <johnny@rlo.org>

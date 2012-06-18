@@ -1,0 +1,64 @@
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#   
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+# Codepage definition file for IBM Code Page 852 - MS-DOS Latin 2
+# defines lower->upper mapping.
+# Written by Leos Bitto <bitto@altec.cz>
+
+# The columns are :
+# lower    upper   map upper to lower    map lower to upper
+#
+   0x81    0x9A    True                  True
+   0x82    0x90    True                  True
+   0x83    0xB6    True                  True
+   0x84    0x8E    True                  True
+   0x85    0xDE    True                  True
+   0x86    0x8F    True                  True
+   0x87    0x80    True                  True
+   0x88    0x9D    True                  True
+   0x89    0xD3    True                  True
+   0x8B    0x8A    True                  True
+   0x8C    0xD7    True                  True
+   0x92    0x91    True                  True
+   0x93    0xE2    True                  True
+   0x94    0x99    True                  True
+   0x96    0x95    True                  True
+   0x98    0x97    True                  True
+   0x9C    0x9B    True                  True
+   0x9F    0xAC    True                  True
+   0xA0    0xB5    True                  True
+   0xA1    0xD6    True                  True
+   0xA2    0xE0    True                  True
+   0xA3    0xE9    True                  True
+   0xA5    0xA4    True                  True
+   0xA7    0xA6    True                  True
+   0xA9    0xA8    True                  True
+   0xAB    0x8D    True                  True
+   0xAD    0xB8    True                  True
+   0xBE    0xBD    True                  True
+   0xC7    0xC6    True                  True
+   0xD0    0xD1    True                  True
+   0xD4    0xD2    True                  True
+   0xD8    0xB7    True                  True
+   0xE4    0xE3    True                  True
+   0xE5    0xD5    True                  True
+   0xE7    0xE6    True                  True
+   0xEA    0xE8    True                  True
+   0xEC    0xED    True                  True
+   0xEE    0xDD    True                  True
+   0xFB    0xEB    True                  True
+   0xFD    0xFC    True                  True
+   0xFF    0xFF    True                  True

@@ -1,0 +1,192 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="stylesheet" type="text/css" href="../form_style.css">
+<link rel="stylesheet" type="text/css" href="qis_style.css">
+<script type="text/JavaScript" src="/state.js"></script>
+<script type="text/JavaScript" src="/general.js"></script>
+<script type="text/JavaScript" src="/form.js"></script>
+<style>
+span{
+	border:0px solid #FFFFFF;
+	color:#FFFFFF;
+	font-size:14px;
+	font-family:Arial, Helvetica, sans-serif;
+	/*width:27px;*/
+	text-align:right;
+	margin:0px auto;
+	ime-mode:disabled;
+}
+</style>
+<script type="text/JavaScript" src="/jstz.min.js"></script>
+<script>
+var w_Setting = "<% nvram_get("w_Setting"); %>";
+var detect_status = "<% nvram_get("dsltmp_autodet_state"); %>";
+var prctl_str = "default";
+var gvt_note = "";
+var vpi_val = "<% nvram_get("dsltmp_autodet_vpi"); %>";
+var vci_val = "<% nvram_get("dsltmp_autodet_vci"); %>";
+var encap_val = "<% nvram_get("dsltmp_autodet_encap"); %>";
+
+if(detect_status == "pppoe")
+	prctl_str = "PPPoE";
+else
+	prctl_str = "PPPoA";
+
+var encap_str = " , LLC";
+if (encap_val == "1") encap_str = " , VC";
+
+function QKfinish_load_body(){
+	parent.document.title = "<#Web_Title#> - <#QKSet_all_title#>";
+	parent.set_step("t2");
+
+	if(detect_status == "pppoe")
+		document.form.dsltmp_qis_proto.value = "pppoe";
+	else
+		document.form.dsltmp_qis_proto.value = "pppoa";
+
+	//Brazil timezone GMT-03:00
+	//India timezone GMT+05:30
+	var timezone = jstz.determine_timezone();
+	var timez = timezone.offset();
+
+	if (vpi_val == "0" && vci_val == "35" && encap_val == "0" && detect_status == "pppoe" && timez == "-03:00")
+	{	//Brazil - GVT
+		gvt_note = "<br><br>" + "(<#isp_br_gvt_note#>)"
+		document.getElementById('hint_msg').innerHTML = gvt_note;
+	}
+	else if (vpi_val == "0" && vci_val == "35" && encap_val == "0" && detect_status == "pppoe" && timez == "+05:30")
+	{	//India - BSNL (PPPOE). This will also change Dada Infosys and HCL Infinet Ltd's MTU to 1442, but it's ok.
+		document.form.dsltmp_qis_pppoe_mtu.value = "1442";
+	}
+	else if (vpi_val == "0" && vci_val == "35" && encap_val == "0" && detect_status == "pppoa" && timez == "+05:30")
+	{	//India - BSNL (PPPOA)
+		document.form.dsltmp_qis_pppoe_mtu.value = "1442";
+	}
+	else if (vpi_val == "0" && vci_val == "32" && encap_val == "0" && detect_status == "pppoe" && timez == "+05:30")
+	{	//India - MTNL (PPPOE)
+		document.form.dsltmp_qis_pppoe_mtu.value = "1442";
+	}
+	else if (vpi_val == "0" && vci_val == "32" && encap_val == "0" && detect_status == "pppoa" && timez == "+05:30")
+	{	//India - MTNL (PPPOA)
+		document.form.dsltmp_qis_pppoe_mtu.value = "1442";
+	}
+}
+
+function validForm(){
+		if(!validate_string(document.form.dsltmp_qis_pppoe_username)
+		|| !validate_string(document.form.dsltmp_qis_pppoe_passwd)
+		) {
+			alert("return false: "+document.form.dsltmp_qis_pppoe_username.value+"/"+document.form.dsltmp_qis_pppoe_passwd.value);
+			return false;
+		}
+	return true;
+}
+
+function submitForm(){
+		if(document.form.dsltmp_qis_pppoe_username.value == "" || document.form.dsltmp_qis_pppoe_passwd.value == "")
+		{
+			alert("User Name/Password cannot be empty.");
+			return false;
+		}
+		else
+		{
+	    if(validForm()){
+				document.form.next_page.value = "/qis/QIS_wireless.htm";
+				document.form.submit();
+	    }
+    }
+}
+
+function gotoHome() {
+	if (w_Setting == "0") {
+		alert("<#QIS_recommand_encryption#>");	
+		location.href = '/qis/QIS_wireless.htm';
+	}
+	else {
+		parent.location.href = '/index.asp';
+	}
+}
+</script>
+
+</head>
+
+<body onLoad="QKfinish_load_body();" >
+<form method="post" name="form" action="/start_apply.htm" target="">
+<input type="hidden" name="prev_page" value="/qis/QIS_manual_setting.htm">
+<input type="hidden" name="current_page" value="/qis/QIS_ppp_cfg.htm">
+<input type="hidden" name="next_page" value="">
+<input type="hidden" name="action_mode" value="apply">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_wait" value="">
+<input type="hidden" name="dsltmp_qis_vpi" value="<% nvram_get("dsltmp_autodet_vpi"); %>">
+<input type="hidden" name="dsltmp_qis_vci" value="<% nvram_get("dsltmp_autodet_vci"); %>">
+<input type="hidden" name="dsltmp_qis_proto" value="">
+<input type="hidden" name="dsltmp_qis_encap" value="<% nvram_get("dsltmp_autodet_encap"); %>">
+<input type="hidden" name="dsltmp_qis_pppoe_dial_on_demand" value="0">
+<input type="hidden" name="dsltmp_qis_pppoe_idletime" value="0">
+<input type="hidden" name="dsltmp_qis_pppoe_mtu" value="1492">
+<input type="hidden" name="dsltmp_qis_pppoe_mru" value="1492">
+<input type="hidden" name="dsltmp_qis_pppoe_service" value="">
+<input type="hidden" name="dsltmp_qis_pppoe_options" value="">
+<input type="hidden" name="dsltmp_qis_DHCPClient" value="1">
+<input type="hidden" name="dsltmp_qis_ipaddr" value="0.0.0.0">
+<input type="hidden" name="dsltmp_qis_netmask" value="0.0.0.0">
+<input type="hidden" name="dsltmp_qis_gateway" value="0.0.0.0">
+<input type="hidden" name="dsltmp_qis_dnsenable" value="1">
+<input type="hidden" name="dsltmp_qis_dns1" value="">
+<input type="hidden" name="dsltmp_qis_dns2" value="">
+<input type="hidden" name="dsltmp_qis_svc_cat" value="0">
+<input type="hidden" name="dsltmp_qis_pcr" value="0">
+<input type="hidden" name="dsltmp_qis_scr" value="0">
+<input type="hidden" name="dsltmp_qis_mbs" value="0">
+<input type="hidden" name="dsltmp_qis_dsl_pvc_set" value="1">
+
+<div class="QISmain">
+	<div class="formfonttitle" style="padding:0 0 0 10;">PPPoE/PPPoA</div>
+	<table width="730px">
+		<tr id="home_button">
+			<td align="right">
+				<img onclick="gotoHome();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+			</td>
+		</tr>
+	</table>		
+	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img style="width: 700px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+	<br/>
+
+<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
+  <tr>
+     &nbsp;&nbsp;&nbsp;<#pvccfg_PVC_type#> <script>document.write(prctl_str)</script>. <b>VPI/VCI = <% nvram_get("dsltmp_autodet_vpi"); %>/<% nvram_get("dsltmp_autodet_vci"); %><script>document.write(encap_str)</script></b><br>
+     &nbsp;&nbsp;&nbsp;<#PPP_cfg_usersel_desc#>
+     <div id=hint_msg></div>
+     <br><br>
+  </tr>
+  <tr>
+	<th width="120"><#BOP_account_user_item#></th>
+	<td>
+	  <input type="text" name="dsltmp_qis_pppoe_username" value="" maxlength="64" size="36"/>
+	</td>
+  </tr>
+  <tr>
+	<th width="120"><#BOP_account_pass_item#></th>
+	<td>
+	  <input type="password" name="dsltmp_qis_pppoe_passwd" value="" maxlength="32" size="36"/>
+	</td>
+  </tr>
+</table>
+
+	<div class="apply_gen" style="margin-top:30px">
+		<input type="button" id="prevButton" value="<#Manual_Setting_btn#>" onclick="gotoprev(document.form);" class="button_gen" >
+<!--
+		<input type="button" id="nextButton" value="Ethernet WAN" onclick="redirect_page('internet_type');" class="button_gen" >
+-->
+		<input type="button" id="nextButton" value="<#btn_next#>" onclick="submitForm();" class="button_gen">
+	</div>
+
+</div>
+</form>
+</body>
+</html>

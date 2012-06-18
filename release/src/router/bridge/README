@@ -1,0 +1,52 @@
+This version of the bridge utilities is for Linux 2.4 and 2.6,
+it uses the sysfs interface if possible on Linux 2.6
+
+
+---------------------------
+Lennert Buytenhek rewrote the linux bridging code
+because the old code was a big mess and nonextensible.
+
+The new code is published at:
+	http://bridge.sourceforge.net/
+
+
+
+Advantages of the new code are:
+- Support for multiple bridge port groups (i.e. multiple independent
+  bridges in one machine).
+- Each bridge is seen as a logical device, which allows you to do
+  firewalling between port groups for example.
+- Everything is dynamic; bridges are created dynamically using the
+  userspace configuration tool, ports are 'enslaved' dynamically, etc.
+- It is being actively maintained.
+- It uses a hash table for MAC addresses, not an AVL tree.
+- It's small (currently 4 pages of i386 code) and modular.
+- The source isn't a mess.
+- It works as a module.
+
+
+If you have any comments, questions or suggestions, please send email to
+the mailing list bridge@osdl.org
+--------------------------
+
+Files in this package:
+
+AUTHORS		Authors of this package
+
+COPYING		The GNU General Public License.
+
+Makefile	Recursive Makefile.
+
+README		This file.
+
+brctl/		The userspace bridge configuration tool.
+
+bridge-utils.spec
+		A .spec file for Red Hat package building. "rpm -tb
+		<tar.gz file>" ought to give you a .RPM file.
+
+doc/		Some documentation files.
+
+libbridge/	The bridge configuration interface library.
+
+misc/		Miscellaneous utilities.

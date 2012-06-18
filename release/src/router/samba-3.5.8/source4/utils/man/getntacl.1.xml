@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="getntacl.1">
+
+<refmeta>
+	<refentrytitle>getntacl</refentrytitle>
+	<manvolnum>1</manvolnum>
+</refmeta>
+
+
+<refnamediv>
+	<refname>getntacl</refname>
+	<refpurpose>Tool for displaying NT ACLs stored in extended attributes</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>getntacl</command>
+		<arg choice="req">filename</arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>Retrieves the NT security ACL on the specified file, as 
+stored in the filesystems' extended attribute. </para>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 4.0 of the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>This utility is part of the <ulink url="http://www.samba.org/">Samba</ulink> suite, which is developed by the global <ulink url="http://www.samba.org/samba/team/">Samba Team</ulink>.</para>
+
+	<para>This manpage was written by Jelmer Vernooij. </para>
+	
+</refsect1>
+
+</refentry>

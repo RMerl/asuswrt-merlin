@@ -1,0 +1,205 @@
+.TH PPTPD 8 "29 December 2005"
+.SH NAME
+pptpd - PPTP VPN daemon
+.SH SYNOPSIS
+.PP
+.B pptpd
+[ 
+.IR options
+]
+.SH DESCRIPTION
+.B pptpd
+is the Poptop PPTP daemon, which manages tunnelled PPP connections
+encapsulated in GRE using the PPTP VPN protocol.  It may contain
+features like IP address management and TCP wrappers if compiled in.
+.SH OPTIONS
+
+Here we document the command line options.  See 
+.BR pptpd.conf (5)
+for configuration directives, IP address allocation, routing, and
+firewall rules.
+
+.TP
+\fB-b\fR|\fB--bcrelay \fIinternal-interface
+specifies that broadcasts received on the server's internal 
+network interface should be relayed to the clients.
+
+.TP
+\fB-c\fR|\fB--conf \fIconf-file
+specifies the configuration file for
+.B pptpd
+(default
+.IR /etc/pptpd.conf )
+
+.TP
+.BR -d | --debug
+turns on debugging mode, causing more debugging messages to be sent
+to syslog.
+
+.TP
+\fB-e\fR|\fB--ppp \fIpppd-program
+use
+.I pppd-program
+in place of the default
+.BR pppd (8).
+
+.TP
+.BR -f | --fg
+run in the foreground instead of detaching from terminal
+
+.TP
+.BR -h | --help
+display program usage.
+
+.TP
+.BR -i | --noipparam
+do not send the client's IP address to ip-up scripts (required if you are using the 
+.BR pppd (8)
+.I ipparam
+option for some other purpose).
+
+.TP
+\fB-l\fR|\fB--listen \fIx.x.x.x
+specifies the local interface IP address to listen on.
+
+.TP
+\fB-o\fR|\fB--option \fIppp-conf-file
+specifies that pptpd should specify an alternate configuration file
+for the ppp daemon (the default is normally
+.I /etc/ppp/options
+but may vary depending on your ppp daemon).
+
+.TP
+\fB-p\fR|\fB--pidfile \fIpid-file
+specifies an alternate location to store the process ID file (default
+.IR /var/run/pptpd.pid ).
+
+.TP
+\fB-s\fR|\fB--speed \fIbaud
+specifies that the speed
+.I baud
+should be passed to the ppp daemon as the tty speed to use (in some
+cases this is ignored by the ppp daemon).
+
+.TP
+\fB-t\fR|\fB--stimeout \fIseconds
+specifies the number of seconds to wait for the first packet before
+dropping the connection. This is a denial of service protection
+feature.
+
+.TP
+\fB-T\fR|\fB--ptimeout \fImilliseconds
+number of miliseconds to wait for a PPTP "ack" packet after transmitting
+was stoped due to sliding window exceeded. The default is 1000 miliseconds.
+
+.TP
+\fB-k\fR|\fB--keep
+Keep connections after pptpd daemon exit. Default do not keep connections,
+all connections would be terminated on pptpd exit.
+
+.TP
+.BR -w | --logwtmp
+update
+.BR wtmp (5)
+as users connect and disconnect.  See
+.BR wtmp (1).
+
+.TP
+\fB-C\fR|\fB--connections \fIn
+limits the number of client connections that may be accepted.  Corresponds to the
+.BR connections
+option in 
+.IR pptpd.conf .
+If pptpd is allocating IP addresses (e.g. 
+.BR --delegate
+is not used) then the number of connections is also limited by the
+.BR remoteip
+option in 
+.IR pptpd.conf .
+
+.TP
+.BR -D | --delegate
+delegates the allocation of client IP addresses to 
+.BR pppd (8).
+Without this option, which is the default, pptpd manages the list of
+IP addresses for clients and passes the next free address to pppd.
+With this option, pptpd does not pass an address, and so pppd may use
+radius or chap-secrets to allocate an address.
+
+.TP
+.BR -v | --version
+displays the current version of the pptp daemon.
+
+.SH FILES
+/etc/pptpd.conf
+.br
+/var/run/pptpd.pid
+
+.SH DEBUGGING
+To turn on debugging, add 'debug' to /etc/pptpd.conf and your
+PPP options file, and restart pptpd.
+.br
+.LP
+Typically the PPP options file is options.pptpd in /etc/ppp, though on
+some distributions it may be pptpd-options.  Use your package manager
+to find it, e.g. 'rpm -ql pptpd | grep options' or 'dpkg --listfiles
+pptpd | grep options'.
+.br
+.LP
+You may need to configure syslogd to catch debug messages.  e.g. edit
+/etc/syslog.conf and add something similar to the example below, then
+restart syslogd.
+.br
+.LP
+# debug logging
+.br
+*.debug;mail.none                                       /var/log/debug
+.br
+.LP
+This will log all debug information, except mail, to the file
+/var/log/debug.  Note that this is a lot of information and might
+flood your disks.  If performance is an issue, you can try turning off
+sync during your debugging, by prefixing the destination with '-'.
+.br
+.LP
+# debug logging
+.br
+*.debug;mail.none                                       -/var/log/debug
+.br
+.LP
+Disable this line and restart syslog after you are done debugging.
+See the syslog man pages for more details.
+.br
+.LP
+
+.SH AUTHORS
+Poptop is written by Matthew Ramsay <matthewr@moreton.com.au>, David Luyer
+<luyer@ucs.uwa.edu.au>, Kevin Thayer <tmk@netmagic.net>, Peter Galbavy
+<Peter.Galbavy@knowledge.com> and others. Development has been moved to 
+SourceForge and worked on by Richard de Vroede <r.devroede@linvision.com> 
+since June 26, 2002.
+.SH COPYRIGHT
+Copyright \(co 1999 Matthew Ramsay and others.
+.LP
+Poptop is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 2, or (at your option) any later
+version.
+.LP
+Poptop is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+.LP
+You should have received a copy of the GNU General Public License along
+with Poptop; see the file COPYING.  If not, write to the Free Software
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.SH AVAILABILITY
+The most recent version of Poptop is available for download from
+SourceForge at
+.IR http://sourceforge.net/projects/poptop .
+.SH "SEE ALSO"
+.BR pppd (8),
+.BR pptpd (8),
+.BR pptpd.conf (5).
+.BR pppd-pptp (8)

@@ -1,0 +1,18 @@
+<samba:parameter name="wide links"
+		 context="S"
+		 type="boolean"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter controls whether or not links 
+	in the UNIX file system may be followed by the server. Links 
+	that point to areas within the directory tree exported by the 
+	server are always allowed; this parameter controls access only 
+	to areas that are outside the directory tree being exported.</para>
+
+	<para>Note that setting this parameter can have a negative 
+	effect on your server performance due to the extra system calls 
+	that Samba has to  do in order to perform the link checks.</para>
+</description>
+
+<value type="default">yes</value>
+</samba:parameter>

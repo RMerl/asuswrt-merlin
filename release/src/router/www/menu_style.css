@@ -1,0 +1,74 @@
+﻿#rx-sel{
+	text-align:center;
+}
+#tx-sel{
+	text-align:center;
+}
+
+
+/* TM Color select block  */
+#navigation-1 {
+	padding:1px 0;
+	margin:0px;
+	list-style:none;
+	width:50px;		
+	height:100%;		
+	font:normal 8pt verdana;
+}
+#navigation-1 li {
+	margin:0;
+	padding:0;
+	display:block;
+	float:left;			
+	position:relative;
+	left:50px;
+	width:13px;		
+}
+
+#navigation-1 li:hover a, #navigation-1 li a:hover, #navigation-1 li a:active {		/*mouse on img will do something*/
+	padding:3px 0;
+	display:block;
+	text-align:left;
+	text-decoration:none;
+	width:60px;		
+	height:13px;
+	border:1px solid ##B7E1F7;
+}
+
+#navigation-1 li ul.navigation-2 {		/*block list initial*/
+	margin:0;
+	padding:1px 1px 0;
+	list-style:none;
+	display:none;
+	width:60px;
+	position:absolute;
+	top:-114px;		
+	left:-33px;
+}
+#navigation-1 li:hover ul.navigation-2 {		/*show out block list*/
+	display:block;
+	margin-left:20px;
+}
+#navigation-1 li ul.navigation-2 li {	/*block list's block*/
+	width:60px;
+	clear:left;
+}
+/* Selected one block */
+#navigation-1 li ul.navigation-2 li:hover a{ 
+	clear:left;
+	padding:3px 0;
+	width:60px;
+	border-right:1px solid #B7E1F7;
+	border-bottom:1px solid #B7E1F7;
+	position:relative;
+	z-index:1000;
+}
+#navigation-1 li ul.navigation-2 li:active a{
+	clear:left;
+	padding:3px 0;
+	width:60px;
+	border:1px solid #569AC7;
+	position:relative;
+	z-index:1000;
+}
+/* TM Color select block  */

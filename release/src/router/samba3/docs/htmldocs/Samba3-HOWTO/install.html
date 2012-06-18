@@ -1,0 +1,317 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 1. How to Install and Test SAMBA</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"><link rel="home" href="index.html" title="The Official Samba 3.0.x HOWTO and Reference Guide"><link rel="up" href="introduction.html" title="Part I. General Installation"><link rel="prev" href="introduction.html" title="Part I. General Installation"><link rel="next" href="FastStart.html" title="Chapter 2. Fast Start: Cure for Impatience"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 1. How to Install and Test SAMBA</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="introduction.html">Prev</a> </td><th width="60%" align="center">Part I. General Installation</th><td width="20%" align="right"> <a accesskey="n" href="FastStart.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="install"></a>Chapter 1. How to Install and Test SAMBA</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Andrew</span> <span class="orgname">Samba Team</span> <span class="surname">Tridgell</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:tridge@samba.org">tridge@samba.org</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">Jelmer</span> <span class="othername">R.</span> <span class="orgname">The Samba Team</span> <span class="surname">Vernooij</span></h3><div class="affiliation"><span class="orgname">The Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jelmer@samba.org">jelmer@samba.org</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">John</span> <span class="othername">H.</span> <span class="orgname">Samba Team</span> <span class="surname">Terpstra</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:jht@samba.org">jht@samba.org</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">Karl</span> <span class="orgname">Samba Team</span> <span class="surname">Auer</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:kauer@biplane.com.au">kauer@biplane.com.au</a>&gt;</code></p></div></div></div></div><div><div class="author"><h3 class="author"><span class="firstname">Dan</span> <span class="orgname">Samba Team</span> <span class="surname">Shearer</span></h3><div class="affiliation"><span class="orgname">Samba Team<br></span><div class="address"><p><code class="email">&lt;<a class="email" href="mailto:dan@samba.org">dan@samba.org</a>&gt;</code></p></div></div></div></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="install.html#id2551936">Obtaining and Installing Samba</a></span></dt><dt><span class="sect1"><a href="install.html#id2551976">Configuring Samba (smb.conf)</a></span></dt><dd><dl><dt><span class="sect2"><a href="install.html#id2552018">Configuration File Syntax</a></span></dt><dt><span class="sect2"><a href="install.html#tdbdocs">TDB Database File Information</a></span></dt><dt><span class="sect2"><a href="install.html#id2552920">Starting Samba</a></span></dt><dt><span class="sect2"><a href="install.html#id2553100">Example Configuration</a></span></dt><dt><span class="sect2"><a href="install.html#id2553503">SWAT</a></span></dt></dl></dd><dt><span class="sect1"><a href="install.html#id2553561">List Shares Available on the Server</a></span></dt><dt><span class="sect1"><a href="install.html#id2553614">Connect with a UNIX Client</a></span></dt><dt><span class="sect1"><a href="install.html#id2553704">Connect from a Remote SMB Client</a></span></dt><dd><dl><dt><span class="sect2"><a href="install.html#id2553786">What If Things Don't Work?</a></span></dt><dt><span class="sect2"><a href="install.html#id2553827">Still Stuck?</a></span></dt></dl></dd><dt><span class="sect1"><a href="install.html#id2553859">Common Errors</a></span></dt><dd><dl><dt><span class="sect2"><a href="install.html#id2553869">Large Number of smbd Processes</a></span></dt><dt><span class="sect2"><a href="install.html#id2553956">Error Message: open_oplock_ipc</a></span></dt><dt><span class="sect2"><a href="install.html#id2553989">The network name cannot be found</a></span></dt></dl></dd></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2551936"></a>Obtaining and Installing Samba</h2></div></div></div><p>
+	<a class="indexterm" name="id2551943"></a>
+	Binary packages of Samba are included in almost any Linux or UNIX distribution. There are also some
+	packages available at <a class="ulink" href="http://samba.org/" target="_top">the Samba home page</a>. Refer to the manual of your
+	operating system for details on installing packages for your specific operating system.
+	</p><p>
+	<a class="indexterm" name="id2551961"></a>
+	If you need to compile Samba from source, check <a class="link" href="compiling.html" title="Chapter 42. How to Compile Samba">How to Compile Samba</a>.
+	</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2551976"></a>Configuring Samba (smb.conf)</h2></div></div></div><p>
+	<a class="indexterm" name="id2551983"></a>
+	<a class="indexterm" name="id2551990"></a>
+	Samba's configuration is stored in the <code class="filename">smb.conf</code> file, which usually resides in
+	<code class="filename">/etc/samba/smb.conf</code> or <code class="filename">/usr/local/samba/lib/smb.conf</code>. You can either
+	edit this file yourself or do it using one of the many graphical tools that are available, such as the
+	Web-based interface SWAT, that is included with Samba.
+	</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2552018"></a>Configuration File Syntax</h3></div></div></div><p>
+	<a class="indexterm" name="id2552025"></a>
+	The <code class="filename">smb.conf</code> file uses the same syntax as the various old <code class="filename">.ini</code> files in Windows
+	3.1: Each file consists of various sections, which are started by putting the section name between brackets
+	(<code class="literal">[]</code>) on a new line. Each contains zero or more key/value pairs separated by an equality
+	sign (<code class="literal">=</code>). The file is just a plaintext file, so you can open and edit it with your favorite
+	editing tool.
+	</p><p>
+	<a class="indexterm" name="id2552062"></a>
+	<a class="indexterm" name="id2552068"></a>
+	<a class="indexterm" name="id2552077"></a>
+	<a class="indexterm" name="id2552083"></a>
+	<a class="indexterm" name="id2552089"></a>
+	<a class="indexterm" name="id2552098"></a>
+	Each section in the <code class="filename">smb.conf</code> file represents either a share or a meta-service on the Samba server. The
+	section <code class="literal">[global]</code> is special, since it contains settings that apply to the whole Samba
+	server.  Samba supports a number of meta-services, each of which serves its own purpose. For example, the
+	<code class="literal">[homes]</code> share is a meta-service that causes Samba to provide a personal home share for
+	each user. The <code class="literal">[printers]</code> share is a meta-service that establishes print queue support
+	and that specifies the location of the intermediate spool directory into which print jobs are received
+	from Windows clients prior to being dispatched to the UNIX/Linux print spooler.
+	</p><p>
+<a class="indexterm" name="id2552141"></a>
+<a class="indexterm" name="id2552147"></a>
+<a class="indexterm" name="id2552153"></a>
+<a class="indexterm" name="id2552160"></a>
+<a class="indexterm" name="id2552166"></a>
+<a class="indexterm" name="id2552172"></a>
+	The <code class="literal">printers</code> meta-service will cause every printer that is either specified in a
+	<code class="literal">printcap</code> file, via the <code class="literal">lpstat</code>,  or via the CUPS API, to be
+	published as a shared print queue. The <code class="literal">printers</code> stanza in the <code class="filename">smb.conf</code> file can
+	be set as not browseable. If it is set to be browseable, then it will be visible as if it is a share.
+	That makes no sense given that this meta-service is responsible only for making UNIX system printers
+	available as Windows print queues. If a <code class="literal">comment</code> parameter is specified, the value
+	of it will be displayed as part of the printer name in Windows Explorer browse lists.
+	</p><p>
+	<a class="indexterm" name="id2552222"></a>
+	Each section of the <code class="filename">smb.conf</code> file that specifies a share, or a meta-service, is called a stanza.
+	The <code class="literal">global</code> stanza specifies settings that affect all the other stanzas in the
+	<code class="filename">smb.conf</code> file. Configuration parameters are documented in the <code class="filename">smb.conf</code> man page. Some parameters
+	can be used only in the <code class="literal">global</code> stanza, some only in share or meta-service stanzas,
+	and some can be used globally or just within a share or meta-service stanza.
+	</p><p>
+	<a class="indexterm" name="id2552265"></a>
+	<a class="link" href="install.html#smbconfminimal" title="Example 1.1. A minimal smb.conf">A minimal smb.conf</a> contains a very minimal <code class="filename">smb.conf</code>.
+	<a class="indexterm" name="id2552284"></a>
+	</p><div class="example"><a name="smbconfminimal"></a><p class="title"><b>Example 1.1. A minimal smb.conf</b></p><div class="example-contents"><table class="simplelist" border="0" summary="Simple list"><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td><a class="indexterm" name="id2552312"></a><em class="parameter"><code>workgroup = WKG</code></em></td></tr><tr><td><a class="indexterm" name="id2552322"></a><em class="parameter"><code>netbios name = MYNAME</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[share1]</code></em></td></tr><tr><td><a class="indexterm" name="id2552341"></a><em class="parameter"><code>path = /tmp</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[share2]</code></em></td></tr><tr><td><a class="indexterm" name="id2552360"></a><em class="parameter"><code>path = /my_shared_folder</code></em></td></tr><tr><td><a class="indexterm" name="id2552370"></a><em class="parameter"><code>comment = Some random files</code></em></td></tr></table></div></div><br class="example-break"></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="tdbdocs"></a>TDB Database File Information</h3></div></div></div><p>
+	This section contains brief descriptions of the databases that are used by Samba-3.
+	</p><p>
+<a class="indexterm" name="id2552398"></a>
+	The directory in which Samba stores the tdb files is determined by compile-time directives. Samba-3 stores
+	tdb files in two locations. The best way to determine these locations is to execute the following
+	command:
+</p><pre class="screen">
+<code class="prompt">root# </code> smbd -b | grep PRIVATE_DIR
+   PRIVATE_DIR: /etc/samba/private
+</pre><p>
+	This means that the confidential tdb files are stored in the <code class="filename">/etc/samba/private</code>
+	directory. Samba-3 also uses a number of tdb files that contain more mundane data. The location of
+	these files can be found by executing:
+</p><pre class="screen">
+<code class="prompt">root# </code> smbd -b | grep LOCKDIR
+   LOCKDIR: /var/lib/samba
+</pre><p>
+	Therefore the remaining control files will, in the example shown, be stored in the
+	<code class="filename">/var/lib/samba</code> directory.
+	</p><p>
+<a class="indexterm" name="id2552450"></a>
+	The persistent tdb files are described in <a class="link" href="install.html#tdbpermfiledesc" title="Table 1.1. Persistent TDB File Descriptions">the Persistent TDB File
+	Descriptions table</a>. All persistent tdb files should be regularly backed up. Use the
+	<code class="literal">tdbbackup</code> utility to backup the tdb files. All persistent tdb files must be
+	preserved during machine migrations, updates and upgrades.
+	</p><p>
+	The temporary tdb files do not need to be backed up, nor do they need to be preseved across machine
+	migrations, updates or upgrades. The temporary tdb files are described in <a class="link" href="install.html#tdbtempfiledesc" title="Table 1.2. Temporary TDB File Descriptions">
+	the Temporary TDB File Descriptions</a>.
+	</p><div class="table"><a name="tdbpermfiledesc"></a><p class="title"><b>Table 1.1. Persistent TDB File Descriptions</b></p><div class="table-contents"><table summary="Persistent TDB File Descriptions" border="1"><colgroup><col align="left"><col align="justify"></colgroup><thead><tr><th align="left">Name</th><th align="justify">Description</th></tr></thead><tbody><tr><td align="left">account_policy</td><td align="justify"><p>Samba/NT account policy settings, includes password expiration settings.</p></td></tr><tr><td align="left">group_mapping</td><td align="justify"><p>Mapping table from Windows groups/SID to UNIX groups.</p></td></tr><tr><td align="left">ntdrivers</td><td align="justify"><p>Stores per-printer installed driver information.</p></td></tr><tr><td align="left">ntforms</td><td align="justify"><p>Stores per-printer installed forms information.</p></td></tr><tr><td align="left">ntprinters</td><td align="justify"><p>Stores the per-printer devmode configuration settings.</p></td></tr><tr><td align="left">passdb</td><td align="justify"><p>
+				Exists only when the tdbsam passwd backend is used. This file stores the
+				SambaSAMAccount information. Note: This file requires that user POSIX account information is
+				availble from either the /etc/passwd file, or from an alternative system source.
+			</p></td></tr><tr><td align="left">registry</td><td align="justify"><p>
+				Read-only Samba database of a Windows registry skeleton that provides support for exporting 
+				various database tables via the winreg RPCs.
+			</p></td></tr><tr><td align="left">secrets</td><td align="justify"><p>
+				This file stores the Workgroup/Domain/Machine SID, the LDAP directory update password, and
+				a further collection of critical environmental data that is necessary for Samba to operate
+				correctly. This file contains very sensitive information that must be protected. It is stored
+				in the PRIVATE_DIR directory.
+			</p></td></tr><tr><td align="left">share_info</td><td align="justify"><p>Stores per-share ACL information.</p></td></tr><tr><td align="left">winbindd_idmap</td><td align="justify"><p>Winbindd's local IDMAP database.</p></td></tr></tbody></table></div></div><br class="table-break"><div class="table"><a name="tdbtempfiledesc"></a><p class="title"><b>Table 1.2. Temporary TDB File Descriptions</b></p><div class="table-contents"><table summary="Temporary TDB File Descriptions" border="1"><colgroup><col align="left"><col align="justify"><col align="left"></colgroup><thead><tr><th align="left">Name</th><th align="justify">Description</th><th align="center">Backup</th></tr></thead><tbody><tr><td align="left">brlock</td><td align="justify"><p>Byte-range locking information.</p></td><td align="left">No</td></tr><tr><td align="left">connections</td><td align="justify"><p>A temporary cache for current connection information used to enforce max connections.</p></td><td align="left">no</td></tr><tr><td align="left">eventlog/*tdb</td><td align="justify"><p>Records of eventlog entries. In most circumstances this is just a cache of system logs.</p></td><td align="left">no</td></tr><tr><td align="left">gencache</td><td align="justify"><p>Generic caching database for dead WINS servers and trusted domain data.</p></td><td align="left">no</td></tr><tr><td align="left">login_cache</td><td align="justify"><p>A temporary cache for login information, in particular bad password attempts.</p></td><td align="left">no</td></tr><tr><td align="left">messages</td><td align="justify"><p>Temporary storage of messages being processed by smbd.</p></td><td align="left">no</td></tr><tr><td align="left">netsamlogon_cache</td><td align="justify"><p>Caches user net_info_3 structure data from net_samlogon requests (as a domain member).</p></td><td align="left">no</td></tr><tr><td align="left">perfmon/*.tdb</td><td align="justify"><p>Performance counter information.</p></td><td align="left">no</td></tr><tr><td align="left">printing/*.tdb</td><td align="justify"><p>Cached output from lpq command created on a per-print-service basis.</p></td><td align="left">no</td></tr><tr><td align="left">schannel_store</td><td align="justify"><p>
+				A confidential file, stored in the PRIVATE_DIR, containing crytographic connection
+				information so that clients that have temporarily disconnected can reconnect without
+				needing to renegotiate the connection setup process.
+			</p></td><td align="left">no</td></tr><tr><td align="left">sessionid</td><td align="justify"><p>Temporary cache for miscellaneous session information and for utmp handling.</p></td><td align="left">no</td></tr><tr><td align="left">unexpected</td><td align="justify"><p>Stores packets received for which no process is actively listening.</p></td><td align="left">no</td></tr><tr><td align="left">winbindd_cache</td><td align="justify"><p>Cache of Identity information received from an NT4 domain or from ADS. Includes user
+				lists, etc.</p></td><td align="left">yes</td></tr></tbody></table></div></div><br class="table-break"></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2552920"></a>Starting Samba</h3></div></div></div><p>
+	<a class="indexterm" name="id2552928"></a>
+	Samba essentially consists of two or three daemons. A daemon is a UNIX application that runs in the background and provides services.
+	An example of a service is the Apache Web server for which the daemon is called <code class="literal">httpd</code>. In the case of Samba there
+	are three daemons, two of which are needed as a minimum.
+	</p><p>
+	The Samba server is made up of the following daemons:
+	</p><div class="variablelist"><dl><dt><span class="term">nmbd</span></dt><dd><p>
+			<a class="indexterm" name="id2552960"></a>
+			<a class="indexterm" name="id2552966"></a>
+			This daemon handles all name registration and resolution requests. It is the primary vehicle involved
+			in network browsing. It handles all UDP-based protocols. The <code class="literal">nmbd</code> daemon should
+			be the first command started as part of the Samba startup process.
+			</p></dd><dt><span class="term">smbd</span></dt><dd><p>
+			<a class="indexterm" name="id2552994"></a>
+			<a class="indexterm" name="id2553000"></a>
+			This daemon handles all TCP/IP-based connection services for file- and print-based operations. It also
+			manages local authentication. It should be started immediately following the startup of <code class="literal">nmbd</code>.
+			</p></dd><dt><span class="term">winbindd</span></dt><dd><p>
+			<a class="indexterm" name="id2553026"></a>
+			<a class="indexterm" name="id2553033"></a>
+			This daemon should be started when Samba is a member of a Windows NT4 or ADS domain. It is also needed when
+			Samba has trust relationships with another domain. The <code class="literal">winbindd</code> daemon will check the
+			<code class="filename">smb.conf</code> file for the presence of the <em class="parameter"><code>idmap uid</code></em> and <em class="parameter"><code>idmap gid</code></em>
+			parameters. If they are are found, <code class="literal">winbindd</code> will use the values specified for
+			for UID and GID allocation. If these parameters are not specified, <code class="literal">winbindd</code>
+			will start but it will not be able to allocate UIDs or GIDs.
+			</p></dd></dl></div><p>
+	<a class="indexterm" name="id2553084"></a>
+	When Samba has been packaged by an operating system vendor, the startup process is typically a custom feature of its
+	integration into the platform as a whole. Please refer to your operating system platform administration manuals for
+	specific information pertaining to correct management of Samba startup.
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2553100"></a>Example Configuration</h3></div></div></div><p>
+	<a class="indexterm" name="id2553107"></a>
+	<a class="indexterm" name="id2553113"></a>
+	<a class="indexterm" name="id2553120"></a>
+	<a class="indexterm" name="id2553126"></a>
+	<a class="indexterm" name="id2553132"></a>
+	There are sample configuration files in the examples subdirectory in the source code distribution tarball
+	package. It is suggested you read them carefully so you can see how the options go together in practice. See
+	the man page for all the options.  It might be worthwhile to start out with the
+	<code class="filename">smb.conf.default</code> configuration file and adapt it to your needs. It contains plenty of comments.
+	</p><p>
+	<a class="indexterm" name="id2553154"></a>
+	The simplest useful configuration file would contain something like that shown in
+	<a class="link" href="install.html#simple-example" title="Example 1.2. Another simple smb.conf File">Another simple smb.conf File</a>.
+	<a class="indexterm" name="id2553169"></a>
+	</p><div class="example"><a name="simple-example"></a><p class="title"><b>Example 1.2. Another simple smb.conf File</b></p><div class="example-contents"><table class="simplelist" border="0" summary="Simple list"><tr><td> </td></tr><tr><td><em class="parameter"><code>[global]</code></em></td></tr><tr><td><a class="indexterm" name="id2553198"></a><em class="parameter"><code>workgroup = MIDEARTH</code></em></td></tr><tr><td> </td></tr><tr><td><em class="parameter"><code>[homes]</code></em></td></tr><tr><td><a class="indexterm" name="id2553217"></a><em class="parameter"><code>guest ok = no</code></em></td></tr><tr><td><a class="indexterm" name="id2553228"></a><em class="parameter"><code>read only = no</code></em></td></tr></table></div></div><br class="example-break"><p>
+	<a class="indexterm" name="id2553241"></a>
+	<a class="indexterm" name="id2553247"></a>
+	<a class="indexterm" name="id2553254"></a>
+	<a class="indexterm" name="id2553260"></a>
+	This will allow connections by anyone with an account on the server, using either
+	their login name or <em class="parameter"><code>homes</code></em> as the service name.
+	(Note: The workgroup that Samba should appear in must also be set. The default
+	workgroup name is WORKGROUP.)
+	</p><p>
+	<a class="indexterm" name="id2553279"></a>
+	Make sure you put the <code class="filename">smb.conf</code> file in the correct place. Note, the correct location of this file
+	depends on how the binary files were built. You can discover the correct location by executing from
+	the directory that contains the <code class="literal">smbd</code> command file:
+</p><pre class="screen">
+<code class="prompt">root# </code> smbd -b | grep smb.conf
+</pre><p>
+	</p><p>
+	<a class="indexterm" name="id2553313"></a>
+	For more information about security settings for the <em class="parameter"><code>[homes]</code></em> share, please refer to 
+	<a class="link" href="securing-samba.html" title="Chapter 18. Securing Samba">Securing Samba</a>.
+	</p><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2553334"></a>Test Your Config File with <code class="literal">testparm</code></h4></div></div></div><p>
+	<a class="indexterm" name="id2553345"></a>
+	<a class="indexterm" name="id2553351"></a>
+	<a class="indexterm" name="id2553358"></a>
+	It's important to validate the contents of the <code class="filename">smb.conf</code> file using the <span class="application">testparm</span> program.
+	If testparm runs correctly, it will list the loaded services. If not, it will give an error message.
+	Make sure it runs correctly and that the services look reasonable before proceeding. Enter the command: 
+	</p><pre class="screen">
+	<code class="prompt">root# </code> testparm /etc/samba/smb.conf
+	</pre><p>
+	Testparm will parse your configuration file and report any unknown parameters or incorrect syntax.
+	It also performs a check for common misconfigurations and will issue a warning if one is found.
+	</p><p>
+	Always run testparm again whenever the <code class="filename">smb.conf</code> file is changed!
+	</p><p>
+	<a class="indexterm" name="id2553406"></a>
+	<a class="indexterm" name="id2553412"></a>
+	<a class="indexterm" name="id2553418"></a>
+	<a class="indexterm" name="id2553425"></a>
+	The <code class="filename">smb.conf</code> file is constantly checked by the Samba daemons <code class="literal">smbd</code> and every instance of
+	itself that it spawns, <code class="literal">nmbd</code> and <code class="literal">winbindd</code>. It is good practice to
+	keep this file as small as possible. Many administrators prefer to document Samba configuration settings
+	and thus the need to keep this file small goes against good documentation wisdom. One solution that may
+	be adopted is to do all documentation and configuration in a file that has another name, such as
+	<code class="filename">smb.conf.master</code>. The <code class="literal">testparm</code> utility can be used to generate a
+	fully optimized <code class="filename">smb.conf</code> file from this master configuration and documentation file as shown here:
+</p><pre class="screen">
+<code class="prompt">root# </code> testparm -s smb.conf.master &gt; smb.conf
+</pre><p>
+	This administrative method makes it possible to maintain detailed configuration change records while at
+	the same time keeping the working <code class="filename">smb.conf</code> file size to the minimum necessary.
+	</p></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2553503"></a>SWAT</h3></div></div></div><p>
+	<a class="indexterm" name="id2553510"></a>
+	SWAT is a Web-based interface that can be used to facilitate the configuration of Samba.  SWAT might not
+	be available in the Samba package that shipped with your platform, but in a separate package. If you need to build SWAT please read the SWAT man page regarding compilation, installation, and
+	configuration of SWAT from the source code.
+	</p><p>
+	To launch SWAT, just run your favorite Web browser and point it to
+	<a class="ulink" href="http://localhost:901/" target="_top">http://localhost:901/</a>.
+	Replace <em class="replaceable"><code>localhost</code></em> with the name of the computer on which
+	Samba is running if that is a different computer than your browser.
+	</p><p>
+	SWAT can be used from a browser on any IP-connected machine, but be aware that connecting from a remote
+	machine leaves your connection open to password sniffing because passwords will be sent over the wire in the clear.
+	</p><p>
+	Please note that re-writing the configuration file using SWAT will
+	remove all comments!
+	More information about SWAT can be found in <a class="link" href="SWAT.html" title="Chapter 37. SWAT: The Samba Web Administration Tool">The Samba Web Administration Tool</a>.
+	</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2553561"></a>List Shares Available on the Server</h2></div></div></div><p>
+	To list shares that are available from the configured Samba server, execute the
+	following command:
+	</p><pre class="screen">
+<code class="prompt">$ </code><strong class="userinput"><code>smbclient -L <em class="replaceable"><code>yourhostname</code></em></code></strong>
+</pre><p>
+	You should see a list of shares available on your server. If you do not, then
+	something is incorrectly configured. This method can also be used to see what shares 
+	are available on other SMB servers, such as Windows 2000.
+	</p><p>
+	If you choose user-level security, you may find that Samba requests a password
+	before it will list the shares. See the <code class="literal">smbclient</code> man page for details.
+	You can force it to list the shares without a password by adding the option
+	<code class="option">-N</code> to the command line. 
+	</p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2553614"></a>Connect with a UNIX Client</h2></div></div></div><p>
+	Enter the following command:
+</p><pre class="screen">
+<code class="prompt">$ </code><strong class="userinput"><code>smbclient <em class="replaceable"><code> //yourhostname/aservice</code></em></code></strong>
+</pre><p>Typically <em class="replaceable"><code>yourhostname</code></em> is the name of the host on which <span class="application">smbd</span>
+	has been installed. The <em class="replaceable"><code>aservice</code></em> is any service that has been defined in the <code class="filename">smb.conf</code>
+	file. Try your username if you just have a <em class="parameter"><code>[homes]</code></em> section in the <code class="filename">smb.conf</code> file.</p><p>Example: If the UNIX host is called <em class="replaceable"><code>bambi</code></em> and a valid login name
+	is <em class="replaceable"><code>fred</code></em>, you would type:</p><pre class="screen">
+<code class="prompt">$ </code><strong class="userinput"><code>smbclient //<em class="replaceable"><code>bambi</code></em>/<em class="replaceable"><code>fred</code></em></code></strong>
+</pre></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2553704"></a>Connect from a Remote SMB Client</h2></div></div></div><p>
+	Now that Samba is working correctly locally, you can try to access it from other clients. Within a few
+	minutes, the Samba host should be listed in the Network Neighborhood on all Windows clients of its subnet.
+	Try browsing the server from another client or "mounting" it.
+	</p><p>
+	Mounting disks from a DOS, Windows, or OS/2 client can be done by running a command such as:
+</p><pre class="screen">
+<code class="prompt">C:\&gt; </code><strong class="userinput"><code>net use m: \\servername\service</code></strong>
+</pre><p>
+	Where the drive letter m: is any available drive letter. It is important to double-check that the
+	service (share) name that you used does actually exist.
+	</p><p>
+	Try printing, for example,
+</p><pre class="screen">
+<code class="prompt">C:\&gt; </code><strong class="userinput"><code>net use lpt1:	\\servername\spoolservice</code></strong>
+</pre><p>
+	The <code class="literal">spoolservice</code> is the name of the printer (actually the print queue) on the target
+	server. This will permit all print jobs that are captured by the lpt1: port on the Windows client to
+	be sent to the printer that owns the spoolservice that has been specified.
+	</p><p>
+</p><pre class="screen"><code class="prompt">C:\&gt; </code><strong class="userinput"><code>print filename</code></strong>
+</pre><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2553786"></a>What If Things Don't Work?</h3></div></div></div><p>
+	You might want to read <a class="link" href="diagnosis.html" title="Chapter 38. The Samba Checklist">The Samba Checklist</a>.  If you are still
+	stuck, refer to <a class="link" href="problems.html" title="Chapter 39. Analyzing and Solving Samba Problems">Analyzing and Solving Samba Problems</a>.  Samba has
+	been successfully installed at thousands of sites worldwide.  It is unlikely that your particular problem is
+	unique, so it might be productive to perform an Internet search to see if someone else has encountered your
+	problem and has found a way to overcome it.
+	</p><p>
+	If you are new to Samba, and particularly if you are new to Windows networking, or to UNIX/Linux,
+	the book &#8220;<span class="quote">Samba-3 by Example</span>&#8221; will help you to create a validated network environment.
+	Simply choose from the first five chapters the network design that most closely matches site needs,
+	then follow the simple step-by-step procedure to deploy it. Later, when you have a working network
+	you may well want to refer back to this book for further insight into opportunities for improvement.
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2553827"></a>Still Stuck?</h3></div></div></div><p>
+	The best advice under the stress of abject frustration is to cool down! That may be challenging
+	of itself, but while you are angry or annoyed your ability to seek out a solution is somewhat
+	undermined. A cool head clears the way to finding the answer you are looking for. Just remember,
+	every problem has a solution  there is a good chance that someone else has found it
+	even though you can't right now. That will change with time, patience and learning.
+	</p><p>
+	Now that you have cooled down a bit, please refer to <a class="link" href="diagnosis.html" title="Chapter 38. The Samba Checklist">the Samba Checklist</a>
+	for a process that can be followed to identify the cause of your problem.
+	</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2553859"></a>Common Errors</h2></div></div></div><p>
+The following questions and issues are raised repeatedly on the Samba mailing list.
+</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2553869"></a>Large Number of smbd Processes</h3></div></div></div><p>
+	Samba consists of three core programs: <span class="application">nmbd</span>, <span class="application">smbd</span>, and <span class="application">winbindd</span>. <span class="application">nmbd</span> is the name server message daemon,
+	<span class="application">smbd</span> is the server message daemon, and <span class="application">winbindd</span> is the daemon that handles communication with domain controllers.
+	</p><p>
+	If Samba is <span class="emphasis"><em>not</em></span> running as a WINS server, then there will be one single instance of
+	 <span class="application">nmbd</span> running on your system. If it is running as a WINS server, then there will be
+	two instances  one to handle the WINS requests.
+	</p><p>
+	<span class="application">smbd</span> handles all connection requests. It spawns a new process for each client
+	connection made. That is why you may see so many of them, one per client connection.
+	</p><p>
+	<span class="application">winbindd</span> will run as one or two daemons, depending on whether or not it is being
+	run in <span class="emphasis"><em>split mode</em></span> (in which case there will be two instances).
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2553956"></a>Error Message: open_oplock_ipc</h3></div></div></div><p>
+	An error message is observed in the log files when <span class="application">smbd</span> is started: &#8220;<span class="quote">open_oplock_ipc: Failed to
+	get local UDP socket for address 100007f. Error was Cannot assign requested.</span>&#8221;
+	</p><p>
+	Your loopback device isn't working correctly. Make sure it is configured correctly. The loopback
+	device is an internal (virtual) network device with the IP address <span class="emphasis"><em>127.0.0.1</em></span>.
+	Read your OS documentation for details on how to configure the loopback on your system.
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2553989"></a>&#8220;<span class="quote"><span class="errorname">The network name cannot be found</span></span>&#8221;</h3></div></div></div><p>
+		This error can be caused by one of these misconfigurations:
+		</p><div class="itemizedlist"><ul type="disc"><li><p>You specified a nonexisting path
+			for the share in <code class="filename">smb.conf</code>.</p></li><li><p>The user you are trying to access the share with does not 
+			have sufficient permissions to access the path for
+			the share. Both read (r) and access (x) should be possible.</p></li><li><p>The share you are trying to access does not exist.</p></li></ul></div></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="introduction.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="introduction.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="FastStart.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Part I. General Installation </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 2. Fast Start: Cure for Impatience</td></tr></table></div></body></html>

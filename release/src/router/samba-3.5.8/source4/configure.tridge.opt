@@ -1,0 +1,2 @@
+#!/bin/sh
+./configure "$@" -C --prefix=/home/tridge/samba/samba4/prefix --enable-developer --enable-debug --enable-socket-wrapper 

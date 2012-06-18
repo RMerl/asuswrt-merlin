@@ -1,0 +1,212 @@
+!==
+!== HINTS.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:	Many
+Updated:	Not for a long time!
+
+Subject:	A collection of hints
+Status:		May be useful information but NOT current
+===============================================================================
+
+Here are some random hints that you may find useful. These really
+should be incorporated in the main docs someday.
+
+
+----------------------
+HINT: Always test your smb.conf with testparm before using it
+
+If your smb.conf file is invalid then samba will fail to load. Run
+testparm over it before you install it just to make sure there aren't
+any basic syntax or logical errors.
+
+
+----------------------
+HINT: Try printing with smbclient first
+
+If you have problems printing, test with smbclient first. Just connect using 
+"smbclient '\\server\printer' -P" and use the "print" command.
+
+Once this works, you know that Samba is setup correctly for printing,
+and you should be able to get it to work from your PCs.
+
+This particularly helps in getting the "print command" right.
+
+
+----------------------
+HINT: Mount cdroms with conv=binary
+
+Some OSes (notably Linux) default to auto detection of file type on
+cdroms and do cr/lf translation. This is a very bad idea when use with
+Samba. It causes all sorts of stuff ups.
+
+To overcome this problem use conv=binary when mounting the cdrom
+before exporting it with Samba.
+
+
+----------------------
+HINT: Convert between unix and dos text formats
+
+Jim barry has written an excellent drag-and-drop cr/lf converter for
+windows. Just drag your file onto the icon and it converts the file.
+
+Get it from
+ftp://samba.org/pub/samba/contributed/fixcrlf.zip
+
+---------------------- 
+HINT: Use the "username map" option
+
+If the usernames used on your PCs don't match those used on the unix
+server then you will find the "username map" option useful.
+
+-----------------------
+HINT: Use "security = user" in [global]
+
+If you have the same usernames on the unix box and the PCs or have
+mapped them with the "username map" option then choose "security =
+user" in the [global] section of smb.conf.
+
+This will mean your password is checked only when you first connect,
+and subsequent connections to printers, disks etc will go more
+smoothly and much faster.
+
+The main problem with "security = user" if you use WfWg is that you
+will ONLY be able to connect as the username that you log into WfWg
+with. This is because WfWg silently ignores the password field in the
+connect drive dialog box if the server is in user security mode.
+
+------------------------
+HINT: Make your printers not "guest ok"
+
+If your printers are not "guest ok" and you are using "security =
+user" and have matching unix and PC usernames then you will attach to
+the printer without trouble as your own username. This will mean you
+will be able to delete print jobs (in 1.8.06 and above) and printer
+accounting will be possible.
+
+
+-----------------------
+HINT: Use a sensible "guest" account
+
+Even if all your services are not available to "guest" you will need a
+guest account. This is because the browsing is done as guest. In many
+cases setting "guest account = ftp" will do the trick. Using the
+default guest account or "guest account = nobody" will give problems on
+many unixes. If in doubt create another account with minimal
+privilages and use it instead. Your users don't need to know the
+password of the guest account.
+
+
+-----------------------
+HINT: Use the latest TCP/IP stack from microsoft if you use Windows
+for workgroups.
+
+The early TCP/IP stacks had lots of bugs.
+
+Microsoft has released an incremental upgrade to their TCP/IP 32-Bit
+VxD drivers.  The latest release can be found on their ftp site at
+ftp.microsoft.com, located in /peropsys/windows/public/tcpip/wfwt32.exe.
+There is an update.txt file there that describes the problems that were
+fixed.  New files include WINSOCK.DLL, TELNET.EXE, WSOCK.386, VNBT.386,
+WSTCP.386, TRACERT.EXE, NETSTAT.EXE, and NBTSTAT.EXE.
+
+
+-----------------------
+HINT: nmbd can act as a "WINS" server
+
+By default SMB clients use broadcasts to find shares. Recent clients
+(such as WfWg) can use a "wins" server instead, whcih reduces your
+broadcast traffic and allows you to find names across routers.
+
+Just point your WfWg, Win95 and NT clients at the Samba box in the WINS option.
+
+Note: nmbd does not support all WINS operations. Anyone out there have
+a spec they could send me?
+
+-----------------------
+HINT: you may need to delete your .pwl files when you change password.
+
+WfWg does a lousy job with passwords. I find that if I change my
+password on either the unix box or the PC the safest thing to do is to
+delete the .pwl files in the windows directory. The PC will complain about not finding the files, but will soon get over it, allowing you to enter the new password.
+
+If you don't do this you may find that WfWg remembers and uses the old
+password, even if you told it a new one.
+
+Often WfWg will totally ignore a password you give it in a dialog box.
+
+----------------------
+HINT: Using MS Access
+
+Here are some notes on running MS-Access on a Samba drive from Stefan 
+Kjellberg <stefank@esi.com.au>
+
+1. Opening a database in 'exclusive' mode does NOT work. Samba ignores
+   r/w/share modes on file open.
+
+2. Make sure that you open the database as 'shared' and to 'lock modified
+   records'
+
+3. Of course locking must be enabled for the particular share (smb.conf)
+
+
+---------------------
+HINT: password cacheing in WfWg
+
+Here is a hint from michael@ecel.uwa.edu.au (Michael Simmons):
+
+In case people where not aware. There is a program call admincfg.exe
+on the last disk (disk 8) of the WFW 3.11 disk set.  To install it
+type EXPAND A:\ADMINCFG.EX_ C:\WINDOWS\ADMINCFG.EXE Then add an icon
+for it via the "Progam Manager" "New" Menu.  This program allows you
+to control how WFW handles passwords.  ie disable Password Caching etc
+for use with "security = user"
+
+
+--------------------
+HINT: file descriptor limits
+
+If you have problems with the limits on the number of open files you
+can edit local.h to fix it.
+
+--------------------
+HINT: HPUX initgroups() problem
+
+here is a hint from Frank Wales [frank@arcglade.demon.co.uk]:
+
+HP's implementation of supplementary groups is, er, non-standard (for
+hysterical reasons).  There are two group files, /etc/group and
+/etc/logingroup; the system maps UIDs to numbers using the former, but
+initgroups() reads the latter.  Most system admins who know the ropes
+symlink /etc/group to /etc/logingroup (hard link doesn't work for reasons
+too stupid to go into here).  initgroups() will complain if one of the
+groups you're in in /etc/logingroup has what it considers to be an invalid
+ID, which means outside the range [0..UID_MAX], where UID_MAX is (I think)
+60000 currently on HP-UX.  This precludes -2 and 65534, the usual 'nobody'
+GIDs.
+
+Perhaps you could suggest to users that, if they encounter this problem,
+they make sure that the programs that are failing to initgroups() be
+run as users not in any groups with GIDs outside the allowed range.
+
+This is documented in the HP manual pages under setgroups(2) and passwd(4).
+
+
+---------------------
+HINT: Patch your SCO system
+
+If you run SCO Unix then you may need to get important TCP/IP patches
+for Samba to work correctly. Try 
+
+Paul_Davis@mindlink.bc.ca writes:
+
+  I was having problems with Accpac using 1.9.02 on SCO Unix.  One
+  posting function reported corrupted data.  After installing uod385a,
+  the problem went away (a restore from backup and then another
+  run-thru).
+
+  It appears that the uod385a update for SCO may be fairly important for
+  a lot of different DOS and Windows software under Samba.
+
+  uod385a can be found at ftp.sco.com /SLS/uod385a.Z and uod385a.ltr.Z.
+
+

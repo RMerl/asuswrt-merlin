@@ -1,0 +1,14 @@
+ Distribution Support
+Tue Apr 18 02:49:45 PDT 2000
+
+The files in this directory are used as a starting point for 
+various distributions.  See the READMEs in each distribution.
+General approach:
+
+a) Copy the LPRng distribution to the target system.
+b) tar zxvf LPRng-....tgz 
+c) cd LPRng-.../DISTRIBUTION/system
+d) make checkit   or   make all
+
+There is a pretty good explanation of what is being done
+on each of the systems in the DISTRIBUTION/system/README file.

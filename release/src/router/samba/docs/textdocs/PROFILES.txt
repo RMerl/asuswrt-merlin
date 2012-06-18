@@ -1,0 +1,388 @@
+!==
+!== PROFILES.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributors:	Bruce Cook <BC3-AU@bigfoot.com>
+		Copyright (C) 1998 Bruce Cook
+
+		John Terpstra <samba@samba.org>
+		Copyright (C) 1998 John H. Terpstra
+
+		Wolfgang Ratzka <ratzka@hrz.uni-marburg.de>
+		Copyright (C) 1998 Wolfgang Ratzka
+
+Created:	April 11, 1998
+Updated:	April 11, 1998
+
+Subject:	User Profiles
+===========================================================================
+
+From BC3-AU@bigfoot.com Sat Apr 11 13:36:05 1998
+Date: Sat, 11 Apr 1998 17:13:49 +1000
+From: Bruce Cook <BC3-AU@bigfoot.com>
+To: Multiple recipients of list <samba-ntdom@samba.org>
+Subject: RE: A question about NT Domains
+
+Luke Kenneth Casson Leighton writes:
+ > On Fri, 10 Apr 1998, Jean-Francois Micouleau wrote:
+ > 
+ > > On Fri, 10 Apr 1998, Luke Kenneth Casson Leighton wrote:
+ > > 
+ > > > ah, then i need to explain better.  two or more users have identical
+ > > > profiles.  say only one user installs a program which adds additional keys
+ > > > into the registry.  those keys, as i understand it, will *not* be removed
+ > > > from HKEY_LOCAL_USER when subsequent users log in.
+ > > 
+ > > under W95 or NT ?
+ > 
+ > my experience is with Win95, but i expect the same for NT, and have been
+ > told that it is so by someone who runs NT admin training courses.
+ >  
+ > > and why do you want to have one profile shared between multiples users ?
+ > 
+ > you don't.  how did you get that impression?  i said multiple users with
+ > identical profiles, not multiple users sharing one profile.
+
+In my experience with both Win95 and NT, is that the HKEY_LOCAL_USER information
+is stored in USER.dat or NTuser.DAT for NT.  ALL of this branch is in this file
+and there is no overlap between any two users (Unless you have '95 set up
+to use a single common profile).
+
+[** lkcl: see jht's message for conditions under which an overlap can occur **]
+
+The HKEY_LOCAL_MACHINE branch is machine based, and shared by all users of that
+machine.
+
+
+[And now for a whole stack of caveats]
+
+1. User start menu paths are not stored in the registry (obviously) they're
+   a directory structure that located by settings in HKEY_LOCAL_USER.
+
+   If you want start menues / desktop / favorites to be individual to a user
+   you must set up your user registry so these can be located individually.
+   The easiest tool to manage this is the policy editor.
+   
+2. When you log onto 'Doze 95, it has to find the user registry.
+
+
+   If you have specified a common profile, a "default user" USER.DAT is used.
+
+   If you have specified individualised profiles, then USER.DAT will be found
+   by the following formula:
+
+	1. if NET USE x: /HOME was used at startup, try for x:\USER.DAT (where
+	   x: is any drive letter from A to Z.
+	   if no USER.DAT is found go to step 3
+
+	2. if no home is specified in a mapping,
+	   ...\windows\profiles\username\USER.DAT is used. If no USER.DAT exists
+	   go to step 3.
+
+	3. If neither of the previous two found a USER.DAT, then it will use
+	   a prototype USER.DAT which it will later save to the above specified
+	   path when the user logs out.
+
+	   The interesting thing here is that the prototype USER.DAT used here
+	   is actually a copy of the last USER.DAT used on this machine.  (This
+	   may be the effect that the original poster is seeing)
+
+	4. As discussed above the start menu and desktop are specified in the
+	   registry contained within USER.DAT.  When a new USER.DAT is created
+	   from a prototype, new directories are created for the start menu and
+	   desktop ACCORDING TO HOW THE COPIED PROTOTYPE DEFINES THEM.
+
+	   So if the prototype USER.DAT says that start menu is in H:\Start Menu
+	   but programs folder is C:\windows\start menu\programs, then the
+	   H:\start menu will be created, and the existing machine programs
+	   folder used.
+
+	   This means that is is important when creating roving profiles to get
+	   your prototype USER.DAT and general user directory structure set up
+	   exactly as you want it, and then make a copy of it that you know will
+	   be safe from modification.  When creating a new user you then copy
+	   this prototype into the new user area, so that the new user doesn't
+	   just inherit what the previous user had.
+
+
+3. When you log onto 'Doze NT, it has to find the user registry.
+
+
+   NT is easier to see what's going on, but follows much the same rules as
+   '95.  The big difference being that 'NT gets its profile location from
+   the login server when it's logged in. (On an NT system have a look at user
+   manager/user/profile - you will see that you can specify the user profile
+   path) Under NT3.51 this profile path was a path to NTuser.DAT, on 4.0 this
+   seems to be a path to a directory structure (haven't played with many NT4
+   servers)
+
+   I'm not sure how this works in samba, as I haven't yet tried the NT_DOM stuff
+   yet (Luke: I assume you have a keyword for this?)
+
+[lkcl: nt workstations should look in exactly the same places for things on
+       samba or other SMB servers as they do on an NT server, as long as that
+       SMB server looks like NT.  if anyone finds that something fails, alert
+       us on samba@samba.org and we'll look into it].
+
+   When an NT system find a user without a NTuser.DAT, it copies from a
+   prototype that it stores especially for this purpose, so while unlike '95
+   the user doesn't get whatever happened last on the machine, the user will
+   get a fairly minimalist configuration.
+
+[[jht:
+When a Win95 machine logs onto a Windows NT Domain the Win95 machine looks
+for the presence of a file called Config.Pol in the following location:
+	\\"Authenticating Server"\NETLOGON
+It reads this file and uses it to ammend both the desktop environment as well
+as the file %WinDir%\Profiles\%USERNAME%\User.DAT. As with Windows NT, on log
+out this file gets written back to the profile server into the %USERNAME%
+directory in the profile share.
+
+It is thus possible to share a common desktop profile between Windows NT and
+Windows 9x.
+:jht]]
+
+
+4. There are a *LOT* of reasons that the 'doze machine might not find USER.DAT
+   and therefore default to a prototype.
+
+	1. Can't execute logon script & therefore no /HOME mapping (Most common)
+	   .Make sure the script exists
+	   .that you have your logon script set right
+	   .Netlogon share must exist
+	   .Protection/ownership of the script and share
+
+	2. no /HOME mapping in the logon script
+
+	3. no home path specified in /etc/smb.conf (Or no home mapping set
+	   up for that user in NT's user manager)
+
+	4. Protection/ownership of the user directory
+
+	5. protection/ownership of USER.DAT
+
+	6. basic networking problems
+	   .Is the networking available (Test it by manually mapping
+		to both the user share and netlogon share)
+	   .Was the networking working during logon ?
+
+	7. Has it defaulted to a prototype, and then had you map the home
+	   directory afterwards ? - This will result in the bad prototype
+	   being written into the users home, and them being stuck with it,
+	   (Just replace USER.DAT again)
+
+
+5. Interesting NOTE
+
+	When '95 is performing the logon script, the HKEY_LOCAL_USERS has
+	NOT been mapped from the USER.DAT. What has been mapped at this stage
+	is the prototype registry (last one used).
+
+	I assume the reason for this is that '95 is waiting for the logon
+	script to complete so that it can identify where the user's home
+	directory is.
+
+	If at this point you attempt to do anything that uses the USER registry,
+	(installing something for example or reading something from the user
+	registry) you will actually be operating on the machine stored prototype
+	profile not the user profile.  This means that nothing will realy
+	happen to the user setup (No menu items, no settings etc).
+
+	To get around this you can name a process in the "run once" entries in
+	the HKEY_LOCAL_MACHINE branch, and these "run once" processes will be
+	executed once the USER.DAT is loaded, and all the user directories are
+	accessible.
+
+
+To sum up:
+
+	NET USE H: /HOME
+	is the key to getting your user profiles loaded from a server.
+	NET USE H: \\server\homes
+	Won't get it right without a lot of stuffing about.
+	 
+	Windoze '95 goes through a lot to bring you your user profile and
+	if anything goes wrong during this process, it will drop back to
+	using whatever profile was last used on the machine.
+	 
+
+From samba@aquasoft.com.au Sat Apr 11 13:48:54 1998
+Date: Sat, 11 Apr 1998 09:34:08 +1000
+From: Samba Bugs <samba@aquasoft.com.au>
+To: Multiple recipients of list <samba-ntdom@samba.org>
+Subject: Re: A question about NT Domains
+
+Just for the sake of completeness I thought I'd add a bit to this.
+Let's be clear about which files affect registry changes (or contents).
+
+Under NT, open a command prompt interface:
+cd %SystemRoot%\System32\config
+dir
+
+The standard registry files are:
+	Default	- all component default settings
+	System - all HKLM\System entries
+	Software - all HKLM\Software entries
+	Security - Domain/Machine releated User Rights & Privs.
+	SAM - the Security Access Manager database (ie:Passwords etc.)
+
+[[jht:
+The SAM and Security files are the only files that get synchronised between
+Windows NT Domain Controllers.
+:jht]]
+
+These are used by EVERYTHING!!
+
+When a user logs in the following files get checked:
+	1) \\"Authenticating Server"\NETLOGON\NTConfig.Pol
+	2) %SystemRoot%\Profiles\Policies\NTConfig.Pol
+		this one is a copy of the last NTConfig.Pol downloaded
+		from (1) above - if available.
+	3) %SystemRoot%\Policies\%UserName%\NTUser.DAT
+
+[[jht:
+The System Policy Editor on Windows NT can be used to create both the
+Windows 95 "Config.Pol" file, as well as the Windows NT "NTConfig.Pol"
+file. To create the Windows 95 policy file you MUST load the Windows 95
+policy template BEFORE creating the Config.Pol file.
+:jht]]
+
+The later, is first obtained from a profile server if the User_Init_Info
+passed from the Domain Logon Server specifies use of a roaming profile.
+If item (3) does NOT exist and/or NO default profile is available one gets
+created from the system default settings PLUS the last loaded file at item
+(2) above.
+ 
+The HKCU is always unique to the currently logged in user, BUT if the
+currently logged in user is using a shared profile that has NOT been made
+exclusive then on logout  the HKCU will be written over the top of the
+source files. That is why Mandatory profiles are essential when sharing a
+roaming profile.
+
+On Sat, 11 Apr 1998, Wolfgang Ratzka wrote:
+
+> Luke Kenneth Casson Leighton wrote:
+> 
+> > my experience is with Win95, but i expect the same for NT, and have been
+> > told that it is so by someone who runs NT admin training courses.
+> 
+> On NT it is quite definitely not so. HKCU will always be loaded completely from
+> the user's NTuser.dat file and unloaded again after logout.
+> In fact HKCU is not a proper registry hive but a symbolic reference to the subkey of
+> HKEY_USERS that corresponds to the current user. If more than one user 
+> is active on an NT machine (on plain vanilla NT this *is* possible if you have
+> services running as a non-system user; on WinFrame or Hydra multiple users
+> can be logged in) you will see several subkeys of HKU that correspond to
+> the active users and don't interfere with each other.
+> 
+> Of course some settings that a user can change do not go into the HKCU hive
+> but into HKLM, most notably the screen resolution and the number of colours
+> (you can use policies to prevent user's from changing these).
+> Some applications put information that should go into HKCU into HKLM instead.
+> (Hall of Shame: Netscape Communicator, Microsoft Office 97 [User dictionaries!]...).
+> Others just use plain good old INI files in their program directory or even 
+> in \WINNT\SYSTEM32. Those changes will not be user specific but machine 
+> specific and those programs will cause trouble, when one tries to run them
+> on WinFrame or Hydra... :-).
+> 
+> Summarizing:
+> 
+> Q: Will the next user inherit a previous user's additions
+>    to the HKCU registry hive?
+> A: Quite definitely not.
+
+Correct.
+
+> 
+> Q: Can a user foul up the configuration for the next user?
+> A: Quite definitely yes!
+
+See above. Yes, but not if correctly configured.
+
+> 
+> Q: Is this discussion out of place on the samba-ntdom list?
+> A: Errr....
+
+Errr... Really? I think it is. Do we, or do we not, want to help people to
+gain stable and dependable use of samba?
+
+> -- 
+> Wolfgang Ratzka (dialing in from home)
+
+Cheers,
+John H Terpstra (Also from home!!!!)
+
+=============================================================================
+Further notes by Bruce Cook
+
+Date: Sun, 12 Apr 1998 14:12:22 +1000
+From: Bruce Cook <BC3-AU@bigfoot.com>
+Subject: Re: Win95 / NT Profiles (was: RE: A question about NT Domains)
+
+Ah yes I knew there was something I forgot.
+here it is for completeness.
+
+=============================================================================
+
+When a user logs into a specific machine for the first time, they will be
+told that they've never logged into the machine, and would they like to
+store the user setting for future use.
+
+If the user answers NO, they will be nagged about this every time they
+log into the machine until they say YES. (How about it MS, could we
+possible do something about this feature?)
+
+When the user answers YES, thereafter upon logging out of the machine,
+a copy of the user's profile is also written onto the machines local disk
+for later use.
+
+When a user logs into a machine where his/her profile has previously been
+saved, a comparison is made between the date of the profile copy kept on
+the machine, and the date of the profile stored on the server.  In theory
+the server date should be later or the same.
+
+If the local machine date is later than the server date, the client
+machine will tell you the the settings on the local machine are more
+recent than those of the server, and would you like to user them instead.
+
+This occurs for a couple of reasons:
+	1. Server not available when the user logs out
+	2. Date mismatch between the server and the client
+	   (I always use NET TIME \\server /SET /YES in my logon scripts)
+
+
+Logging in with NO server available.
+
+In some cases a client will want to log into a network with no server
+available. (Portables away from the office, or a dead server)
+
+This can only happen if the administrator has NOT set the machine to
+give access only upon password verification from the server.
+(If the admin has done this, it can be circumvented by restarting
+ the machine in safe mode, and running poledit, or regedit and
+ disabling that feature)
+
+If you are able to log in while the server is unavailable, you have
+two choices
+	1. Log in as a user that previously stored a profile
+	   (The password won't have to match unless the machine
+	    is set up to store passwords)
+
+	2. log in as the default user (bit the cancel button or escape key)
+
+If you choose to use your profile stored on the local machine, there are
+several things you should be wary of:
+	1. the profile stored on the machine will be a copy of the last
+	   profile used when you logged into THAT machine.  You may get
+	   quite an old profile.
+	2. When you log out, that local profile is garunteed to be later
+	   than the one on the server, and if the server is available, or
+	   you later log into that machine when the server is available
+	   you could overwrite the good server profile with a bogus profile.
+
+
+Technique note:
+	I set portable computers up so that they don't use roaming profiles,
+	rather they have a single profile kept on the machine.  This means
+	that a user has the same desktop look an feel regardless of where
+	they are.   This follows the philosophy that laptops tend to be used
+	by only one person.	

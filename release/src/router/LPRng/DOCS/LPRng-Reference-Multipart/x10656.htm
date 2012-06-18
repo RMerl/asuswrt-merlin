@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Authenticated Transfer</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="RFC 1179 - Line Printer Daemon Protocol "
+    href="rfc1179ref.htm">
+    <link rel="PREVIOUS" title="Block Job Transfer" href=
+    "sendblockformat.htm">
+    <link rel="NEXT" title="The Most Frequently Asked Questions "
+    href="faq.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "sendblockformat.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          19. RFC 1179 - Line Printer Daemon Protocol</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "faq.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN10656">19.10. Authenticated
+      Transfer</a></h1>
+
+      <p>RFC1179 does not provide any authentication or encryption
+      mechanism for the transfer of jobs or commands to the <b
+      class="APPLICATION">lpd</b> print server. The Authenticated
+      Transfer operation was added to allow an encrypted or
+      authenticated transfer of print jobs or commands.</p>
+
+      <p>Since there are various restrictions on the incorporation
+      of authentication facilities into programs, <b class=
+      "APPLICATION">LPRng</b> supports authentication by providing
+      a simple interface to encryption programs.</p>
+
+      <p>The idea is that when authentication is required when
+      sending a job, <b class="APPLICATION">LPRng</b> will generate
+      a block transfer job as described for the <a href=
+      "sendblockformat.htm">Block Job Transfer</a> operation, and
+      then invoke a set of programs to encryt and transfer the
+      file, and encrypt and transfer the returned status.</p>
+
+      <p>Similarly, when sending a command, the command information
+      will be placed in a file and the encrypted file will be
+      transferred.</p>
+
+      <p>This technique means that the programs and support to do
+      encryption are external to <b class="APPLICATION">LPRng</b>,
+      and can use any type of method that they choose to implement
+      the secure and/or authenticated transfer.</p>
+
+      <p>See <a href="authref.htm">Authentication and
+      Encryption</a> for details on the authentication
+      interface.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "sendblockformat.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "faq.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Block Job
+          Transfer</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "rfc1179ref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">The Most
+          Frequently Asked Questions</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

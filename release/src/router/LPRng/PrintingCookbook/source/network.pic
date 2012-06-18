@@ -1,0 +1,13 @@
+.PS
+ Lpd: box "lpd";
+ Lpd2: box "lpd" with .n at Lpd.s+(1,-.5);
+ F2: box "Filter" with .w at Lpd2.e+(0.5,0);
+ P2: box "Printer" with .w at F2.e+(0.5,0);
+ P3: box "Printer" with .n at (P2.s.x,P2.s.y-.5);
+	arrow from Lpd2.e to F2.w;
+	arrow from F2.e to P2.w;
+	arrow dashed from Lpd.se to Lpd2.nw;
+	arrow dashed from Lpd.s to (Lpd.s.x,P3.w.y) to P3.w;
+ "lp=queue@host   lp=raw@10.0.0.1" ljust at Lpd2.n+(0,.25)
+ "lp=host%port    lp=10.0.0.1%9100" ljust at (Lpd2.sw.x,P3.w.y+.125)
+.PE

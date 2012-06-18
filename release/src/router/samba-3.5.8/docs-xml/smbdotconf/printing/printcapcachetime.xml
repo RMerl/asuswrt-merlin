@@ -1,0 +1,21 @@
+<samba:parameter name="printcap cache time"
+	context="G"
+	type="integer"
+		 print="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This option specifies the number of seconds before the printing
+    subsystem is again asked for the known printers.  If the value
+    is greater than 60 the initial waiting time is set to 60 seconds
+    to allow an earlier first rescan of the printing subsystem.
+    </para>
+
+    <para>Setting this parameter to 0 disables any rescanning for new 
+    or removed printers after the initial startup.
+    </para>
+</description>
+
+
+<value type="default">750</value>
+<value type="example">600</value>
+</samba:parameter>

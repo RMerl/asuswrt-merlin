@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Poptop MSCHAP2 ADS Howto</title>
+</head>
+
+<body>
+<p><strong>8. Kerberos</strong></p>
+<p>There are two different versions of the Kerberos client, version 4 from KTH and 5 from MIT. As Microsoft uses version 5, you should use the MIT version. FC4 includes the MIT one so you will be ok to use the stock standard one.</p>
+<p>Packages krb5-lib and krb5-workstation are required. They are installed by default. If they are not, please get the latest version from yum.</p>
+<hr>
+<a name="krbconf"></a><strong>8.1 Configure Kerberos</strong>
+<p>The configuration file of Kerberos is /etc/krb5.conf. To connect to AD, the settings must match the domain configuration.</p>
+<blockquote>
+  <pre>[logging]<br> default = FILE:/var/log/krb5libs.log<br> kdc = FILE:/var/log/krb5kdc.log<br> admin_server = FILE:/var/log/kadmind.log</pre>
+  <p>[libdefaults]<br>
+    <strong>default_realm = EXAMPLENET.ORG</strong><br>
+  dns_lookup_realm = false<br>
+  dns_lookup_kdc = false<br>
+  ticket_lifetime = 24h<br>
+  forwardable = yes</p>
+  <p>[realms]<br>
+    <strong>EXAMPLENET.ORG = {</strong><br>
+    <strong>kdc = dc1.examplenet.org:88</strong><br>
+  # admin_server = kerberos.example.com:749<br>
+  <strong>default_domain = examplenet.org</strong><br>
+  }</p>
+  <p>[domain_realm]<br>
+    <strong>.examplenet.org = EXAMPLENET.ORG<br>
+  examplenet.org = EXAMPLENET.ORG</strong></p>
+  <p>[kdc]<br>
+  profile = /var/kerberos/krb5kdc/kdc.conf</p>
+  <p>[appdefaults]<br>
+  pam = {<br>
+  debug = false<br>
+  ticket_lifetime = 36000<br>
+  renew_lifetime = 36000<br>
+  forwardable = true<br>
+  krb4_convert = false<br>
+  }</p>
+</blockquote>
+<p>Lines shown in bold are the ones you should pay attention to. Use uppercase as shown. </p>
+<hr>
+<a name="krbtest"></a><strong>8.2 Test Kerberos</strong>
+<p>Before trying to connect to AD, the AD DNS should have a A record for the pptp server. To add the A record, on your Windows DNS server, click Start -&gt; Administrative Tools -&gt; DNS. The dnsmgmt window pops up. Click on the &quot;+&quot; of &quot;Forward Lookup Zones&quot;. Right click on AD Domain name, in our test environment is EXAMPLENET.ORG, and choose &quot;New Host (A)...&quot;. Put in the server name and ip address and then press the &quot;Add Host&quot; button.</p>
+<p>When the DNS is ready, it is time to test Kerberos. Please note that the domain name must be in capital. </p>
+<blockquote>
+  <pre>[root@pptp etc]# kinit -V skwok@EXAMPLENET.ORG<br>Password for skwok@EXAMPLENET.ORG: <br>Authenticated to Kerberos v5 </pre>
+</blockquote>
+<p>To check the Kerberos tickets:</p>
+<blockquote>
+  <pre>[root@pptp etc]# klist<br>Ticket cache: FILE:/tmp/krb5cc_0<br>Default principal: skwok@EXAMPLENET.ORG</pre>
+  <pre>Valid starting Expires Service principal
+     09/03/05 14:43:47 09/04/05 00:43:04 krbtgt/EXAMPLENET.ORG@EXAMPLENET.ORG
+   renew until 09/04/05 14:43:47</pre>
+  <pre>Kerberos 4 ticket cache: /tmp/tkt0
+     klist: You have no tickets cached</pre>
+</blockquote>
+<p></p>
+<hr>
+<a href="poptop_ads_howto_6.htm">Next</a> &nbsp;&nbsp;<a href="poptop_ads_howto_4.htm">Previous</a>&nbsp;&nbsp;<a href="poptop_ads_howto_1.htm#toc">Content</a>
+<p>&nbsp;</p>
+</body>
+</html>

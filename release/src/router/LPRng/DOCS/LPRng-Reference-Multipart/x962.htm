@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Compilation and Install</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Installation" href="installation.htm">
+    <link rel="PREVIOUS" title=
+    "Checking System Installation with checkpc" href="x926.htm">
+    <link rel="NEXT" title="Installation Problems" href=
+    "x1000.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x926.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 2.
+          Installation</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x1000.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN962">2.8. Compilation and
+      Install</a></h1>
+
+      <p>Once you have decided on the configuration you want and
+      understand what files need to be installed, then you are
+      ready to do the install. It is extremely simple to extract
+      the files, configure, compile and install the software:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN965"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {4} %</samp> <kbd class=
+"USERINPUT">gunzip -c LPRng-&lt;version&gt;.tgz | tar xvf -</kbd>
+    <samp class="PROMPT">h4: {5} %</samp> <kbd class=
+"USERINPUT">cd LPRng-&lt;version&gt;</kbd>
+    <samp class="PROMPT">h4: {6} %</samp> <kbd class=
+"USERINPUT">./configure  [ ... configuration options ]</kbd>
+    <samp class="PROMPT">h4: {7} %</samp> <kbd class=
+"USERINPUT">make clean all</kbd>
+    <samp class="PROMPT">h4: {8} %</samp> <kbd class=
+"USERINPUT">su   # you must do the following commands as root</kbd>
+    <samp class="PROMPT">h4: {9} #</samp> <kbd class=
+"USERINPUT">make install</kbd>
+    <samp class="PROMPT">h4: {10} #</samp> <kbd class=
+"USERINPUT"># if checkpc did not run, do the next command</kbd>
+    <samp class="PROMPT">h4: {11} #</samp> <kbd class=
+"USERINPUT"># make sure checkpc and lpq are in your paths</kbd>
+    <samp class="PROMPT">h4: {12} #</samp> <kbd class=
+"USERINPUT"># if using CSH, use 'rehash' as well</kbd>
+    <samp class="PROMPT">h4: {13} #</samp> <kbd class=
+"USERINPUT">checkpc -f</kbd>
+    <samp class="PROMPT">h4: {14} #</samp> <kbd class=
+"USERINPUT"># check to see if the server is running</kbd>
+    <samp class="PROMPT">h4: {15} #</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>During installation you may get an error message
+      indicating that the <b class="APPLICATION">lpd</b> file could
+      not be installed or the <b class="APPLICATION">lpd</b> server
+      could not be started. If this is the case, then carry out the
+      appropriate steps in <a href="update.htm">Updating Print
+      Spooler Software and Startup Scripts</a> to remove the
+      existing print spooling software and then try to reinstall <b
+      class="APPLICATION">LPRng</b>. You should also to check the
+      <a href="systemspecific.htm">System Specific Notes</a>
+      section for any system specific installation
+      requirements.</p>
+
+      <p>While the <b class="APPLICATION">LPRng</b> installation
+      scripts try hard to set up the <b class="APPLICATION">lpd</b>
+      server in place, you will still need to reboot your host and
+      make sure that the various printing facilities are working
+      correctly after reboot.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x926.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x1000.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Checking System
+          Installation with <b class="APPLICATION">checkpc</b></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "installation.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Installation
+          Problems</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

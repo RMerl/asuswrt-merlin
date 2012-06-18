@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>I get messages about bad control file format</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="The Most Frequently Asked Questions "
+    href="faq.htm">
+    <link rel="PREVIOUS" title=
+    "Job disappears and is never printed, but lpr works" href=
+    "x10790.htm">
+    <link rel="NEXT" title=
+    "What is RFC 1179, the Line Printer Daemon Protocol? " href=
+    "rfc1179.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x10790.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          20. The Most Frequently Asked Questions</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "rfc1179.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN10807">20.5. I get messages
+      about bad control file format</a></h1>
+
+      <p>RFC1179 describes a set of fields that MAY appear in the
+      control file. It is silent if other ones can appear as well.
+      Unfortunately, some implementations will reject jobs unless
+      they contain ONLY fields from a very small set. In addition,
+      RFC1179 is silent about the ORDER the fields can appear.</p>
+
+      <p><b class="APPLICATION">LPRng</b> quite happily will accept
+      jobs from poor or nonconforming RFC1179 spooler programs, and
+      fix them up to be conformant.</p>
+
+      <p>If you are sending jobs to one of a non-conforming
+      spooler, you can force <b class="APPLICATION">LPRng</b> to
+      send jobs with only the fields described in RFC1179 by
+      setting the the <var class="LITERAL">:bk:</var> (BacKwards
+      compatible) flag in the printcap for your printer.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x10790.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "rfc1179.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Job disappears
+          and is never printed, but lpr works</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "faq.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">What is RFC
+          1179, the Line Printer Daemon Protocol?</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

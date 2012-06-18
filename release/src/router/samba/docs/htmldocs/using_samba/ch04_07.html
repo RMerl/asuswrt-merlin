@@ -1,0 +1,151 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 4] 4.7 Virtual Servers</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:32:17Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_06.html" TITLE="4.6 Networking Options with Samba">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.6 Networking Options with Samba" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch04_01.html" TITLE="4. Disk Shares ">
+Chapter 4<br>
+Disk Shares </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_08.html" TITLE="4.8 Logging Configuration Options">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.8 Logging Configuration Options" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch04-16899">
+4.7 Virtual Servers</a></h2><P CLASS="para">Virtual servers are a technique for creating the illusion of multiple NetBIOS servers on the network, when in reality there is only one. The technique is simple to implement: a machine simply registers more than one NetBIOS name in association with its IP address. There are tangible benefits to doing this.</p><P CLASS="para">
+The accounting department, for example, might have an <CODE CLASS="literal">
+accounting</code> server, and clients of it would see just the accounting disks and printers. The marketing department could have their own server, <CODE CLASS="literal">
+marketing</code>, with their own reports, and so on. However, all the services would be provided by one medium-sized Unix workstation (and one relaxed administrator), instead of having one small server and one administrator per department.</p><P CLASS="para">
+Samba will allow a Unix server to use more than one NetBIOS name with the <CODE CLASS="literal">
+netbios</code> <CODE CLASS="literal">
+aliases</code> option. See <A CLASS="xref" HREF="ch04_07.html#ch04-92259">
+Table 4.6</a>. </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch04-92259">
+Table 4.6: Virtual Server Configuration Options </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameters</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+netbios aliases</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">List of NetBIOS names</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Additional NetBIOS names to respond to, for use with multiple "virtual" Samba servers.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr></tbody></table><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch04-pgfId-962377">
+4.7.1 netbios aliases</a></h3><P CLASS="para">
+The <CODE CLASS="literal">
+netbios</code> <CODE CLASS="literal">
+aliases</code> option can be used to give the Samba server more than one NetBIOS name. Each NetBIOS name listed as a value will be displayed in the Network Neighborhood of a browsing machine. When a connection is requested to any machine, however, it will connect to the same Samba server.</p><P CLASS="para">
+This might come in handy, for example, if you're transferring three departments' data to a single Unix server with modern large disks, and are retiring or reallocating the old NT servers. If the three servers are called <CODE CLASS="literal">
+sales</code>, <CODE CLASS="literal">
+accounting</code>, and <CODE CLASS="literal">
+admin</code>, you can have Samba represent all three servers with the following options:</p><PRE CLASS="programlisting">
+[global]
+	netbios aliases = sales accounting admin
+	include = /usr/local/samba/lib/smb.conf.%L</pre><P CLASS="para">
+See <A CLASS="xref" HREF="ch04_07.html#ch04-28393">
+Figure 4.7</a> for what the Network Neighborhood would display from a client.When a client attempts to connect to Samba, it will specify the name of the server that it's trying to connect to, which you can access through the <CODE CLASS="literal">
+%L</code> variable. If the requested server is <CODE CLASS="literal">
+sales</code>, Samba will include the <I CLASS="filename">
+/usr/local/samba/lib/smb.conf.sales</i> file. This file might contain global and share declarations exclusively for the sales team, such as the following:</p><PRE CLASS="programlisting">
+[global]
+	workgroup = SALES
+	hosts allow = 192.168.10.255
+
+[sales1998]
+	path = /usr/local/samba/sales/sales1998/
+...</pre><P CLASS="para">
+This particular example would set the workgroup to SALES as well, and set the IP address to allow connections only from the SALES subnet (192.168.10). In addition, it would offer shares specific to the sales department.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch04-28393">
+Figure 4.7: Using NetBIOS aliases for a Samba server </a></h4><IMG CLASS="graphic" SRC="figs/sam.0407.gif" ALT="Figure 4.7"></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_06.html" TITLE="4.6 Networking Options with Samba">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 4.6 Networking Options with Samba" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch04_08.html" TITLE="4.8 Logging Configuration Options">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 4.8 Logging Configuration Options" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+4.6 Networking Options with Samba</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+4.8 Logging Configuration Options</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

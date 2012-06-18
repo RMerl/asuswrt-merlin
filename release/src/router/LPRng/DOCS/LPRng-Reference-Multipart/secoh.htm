@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Single Printcap File for Large Installation</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Locations of Printcap Files " href=
+    "printcappath.htm">
+    <link rel="NEXT" title=
+    "Management Strategies for Large Installations" href=
+    "x6118.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "printcappath.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x6118.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="SECOH">12.16. Single Printcap File
+      for Large Installation</a></h1>
+
+      <p>One of the major problems faced by administrators of large
+      sites is how to distribute printcap information. They would
+      like to have a single printcap file either distributed by a
+      file server (NFS) or by some other method such as <var class=
+      "LITERAL">rdist</var>. By using the <var class=
+      "LITERAL">server</var> and <var class="LITERAL">oh</var>
+      tags, information for the specific sites can be separated
+      out. For example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6098"></a>
+<pre class="SCREEN">
+    # printcap
+    pr1:lp=pr1@serverhost1:oh=*.eng.site.com,130.191.12.0/24
+    pr2:lp=pr1@serverhost1:oh=*.eng.site.com,130.191.12.0/24
+    pr1:lp=pr2@serverhost2:oh=*.admin.site.com
+    pr2:lp=pr2@serverhost2:oh=*.admin.site.com
+    pr1:server:oh=serverhost1.eng.com:lp=/dev/lp:tc=.common
+    pr2:server:oh=serverhost2.admin.com:lp=/dev/lp:tc=.common
+    .common:sd=/usr/local/lpd/%P
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The above example has some interesting effects. The <var
+      class="LITERAL">pattern</var> is used as a <span class=
+      "emphasis"><i class="EMPHASIS">glob</i></span> pattern and is
+      applied to the fully qualified domain name (FQDN) of the host
+      reading the printcap file. For example, <tt class=
+      "FILENAME">*.eng.site.com</tt> would match host <tt class=
+      "FILENAME">h1.eng.site.com</tt> but would not match <tt
+      class="FILENAME">h1.admin.site.com</tt>. Thus, the effects of
+      the first couple of entries would be to specify that the <var
+      class="LITERAL">pr1</var> and <var class="LITERAL">pr2</var>
+      printers on the <var class="LITERAL">eng</var> hosts would be
+      <var class="LITERAL">pr1@serverhost1</var>, and on the <var
+      class="LITERAL">admin</var> hosts would be <var class=
+      "LITERAL">pr2@serverhost2</var>,</p>
+
+      <p>Also, the lpd daemons on <var class=
+      "LITERAL">serverhost1</var> and <var class=
+      "LITERAL">serverhost2</var> would extract the additional
+      information for <var class="LITERAL">pr1</var> and <var
+      class="LITERAL">pr2</var> respectively, overriding the common
+      <var class="LITERAL">lp</var> entries.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "printcappath.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x6118.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Locations of
+          Printcap Files</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Management
+          Strategies for Large Installations</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

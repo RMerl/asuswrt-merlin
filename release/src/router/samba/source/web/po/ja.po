@@ -1,0 +1,336 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Free Software Foundation, Inc.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: swat(samba 2.0.5a)\n"
+"POT-Creation-Date: 1999-08-30 18:18-0700\n"
+"PO-Revision-Date: 1999-08-30 15:52-0700\n"
+"Last-Translator: Kazutomo Yoshii <kazutomo@turbolinux.com>\n"
+"Language-Team: TLJ DEV <tlj@pht.co.jp>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-2022-jp\n"
+"Content-Transfer-Encoding: EUC\n"
+
+#: cgi.c:296
+msgid "Installation Error"
+msgstr "インストレーションエラー"
+
+#: cgi.c:297
+msgid "SWAT must be installed via inetd. It cannot be run as a CGI script"
+msgstr ""
+"SWATは、CGIスクリプトして実行するのでなく、inetd経由で起動されるべきです。"
+
+#: statuspage.c:149
+msgid "Server Status"
+msgstr "サーバーステータス"
+
+#: statuspage.c:155
+msgid "Auto Refresh"
+msgstr "自動リフレッシュ"
+
+#: statuspage.c:157 statuspage.c:164
+msgid "Refresh Interval"
+msgstr "リフレッシュ間隔"
+
+#: statuspage.c:162
+msgid "Stop Refreshing"
+msgstr "リフレッシュ停止"
+
+#: statuspage.c:173
+msgid "Couldn't open status file"
+msgstr "ステータスファイルを開けませんでした。"
+
+#: statuspage.c:176
+msgid "You need to have status=yes in your smb config file"
+msgstr "smbコンフィグファイルで status=yesにする必要があります"
+
+#: statuspage.c:184
+msgid "version"
+msgstr "バージョン"
+
+#: statuspage.c:191
+msgid "Stop smbd"
+msgstr "smbdの停止"
+
+#: statuspage.c:194
+msgid "Start smbd"
+msgstr "smbdの開始"
+
+#: statuspage.c:197
+msgid "Restart smbd"
+msgstr "smbdの再起動"
+
+#: statuspage.c:206
+msgid "Stop nmbd"
+msgstr "nmbdの停止"
+
+#: statuspage.c:209
+msgid "Start nmbd"
+msgstr "nmbdの開始"
+
+#: statuspage.c:212
+msgid "Restart nmbd"
+msgstr "nmbdの再起動"
+
+#: statuspage.c:220
+msgid "Active Connections"
+msgstr "アクティブな接続"
+
+#: statuspage.c:225 statuspage.c:257
+msgid "Client"
+msgstr "クライアント"
+
+#: statuspage.c:225
+msgid "IP address"
+msgstr "IPアドレス"
+
+#: statuspage.c:254
+msgid "Active Shares"
+msgstr "アクティブな共有"
+
+#: statuspage.c:257
+msgid "Share"
+msgstr "共有"
+
+#: statuspage.c:257
+#, fuzzy
+msgid "User"
+msgstr "ユーザー"
+
+#: statuspage.c:257
+msgid "Group"
+msgstr "グループ"
+
+#: statuspage.c:257
+msgid "Data"
+msgstr "データ"
+
+#: statuspage.c:275
+msgid "Open Files"
+msgstr "ファイル"
+
+#: statuspage.c:278
+msgid "Sharing"
+msgstr "共有"
+
+#: statuspage.c:278
+msgid "File"
+msgstr "ファイル"
+
+#: statuspage.c:278
+msgid "Date"
+msgstr "日付"
+
+#: swat.c:150
+msgid "Samba Web Administration Tool"
+msgstr "Samba Web 管理ツール"
+
+#: swat.c:177
+msgid "Help"
+msgstr "へルプ"
+
+#: swat.c:185 swat.c:196 swat.c:206 swat.c:217 swat.c:228 swat.c:236
+#: swat.c:244 swat.c:255
+msgid "Set Default"
+msgstr "デフォルト"
+
+#: swat.c:330
+msgid "Base Options"
+msgstr "基本オプション"
+
+#: swat.c:331
+msgid "Security Options"
+msgstr "セキュリティ オプション"
+
+#: swat.c:332
+msgid "Logging Options"
+msgstr "ロギング オプション"
+
+#: swat.c:333
+msgid "Browse Options"
+msgstr "ブラウズ オプション"
+
+#: swat.c:334
+msgid "WINS Options"
+msgstr "WINS オプション"
+
+#: swat.c:335
+msgid "Miscellaneous Options"
+msgstr "そのほかのオプション"
+
+#: swat.c:336
+msgid "Locking Options"
+msgstr "ロッキングオプション"
+
+#: swat.c:337
+msgid "Logon Options"
+msgstr "ログオンオプション"
+
+#: swat.c:338
+msgid "Domain Options"
+msgstr "ドメインオプション"
+
+#: swat.c:339
+msgid "Protocol Options"
+msgstr "プロトコルオプション"
+
+#: swat.c:340
+msgid "Tuning Options"
+msgstr "チューニングオプション"
+
+#: swat.c:341
+msgid "Printing Options"
+msgstr "印刷オプション"
+
+#: swat.c:342
+msgid "Filename Handling"
+msgstr "ファイル名の処理"
+
+#: swat.c:492
+msgid "Current Config"
+msgstr "現在の設定"
+
+#: swat.c:497
+msgid "Normal View"
+msgstr "標準的な表示"
+
+#: swat.c:500
+msgid "Full View"
+msgstr "全て表示"
+
+#: swat.c:517
+msgid "Global Variables"
+msgstr "グローバル設定"
+
+#: swat.c:531 swat.c:636 swat.c:1006
+msgid "Commit Changes"
+msgstr "適用"
+
+#: swat.c:536 swat.c:640 swat.c:1009
+msgid "Reset Values"
+msgstr "リセット"
+
+#: swat.c:540 swat.c:643 swat.c:1012
+msgid "Advanced View"
+msgstr "詳細な表示"
+
+#: swat.c:543 swat.c:646 swat.c:1015
+msgid "Basic View"
+msgstr "基本的な表示"
+
+#: swat.c:553 swat.c:1028
+msgid "Advanced"
+msgstr "詳細"
+
+#: swat.c:574
+msgid "Share Parameters"
+msgstr "共有パラメータ"
+
+#: swat.c:604
+msgid "Choose Share"
+msgstr "共有選択"
+
+#: swat.c:612 swat.c:978 swat.c:982
+msgid "SELECTED"
+msgstr "選択済"
+
+#: swat.c:619
+msgid "Delete Share"
+msgstr "共有削除"
+
+#: swat.c:627
+msgid "Create Share"
+msgstr "共有作成"
+
+#: swat.c:797
+msgid "Server Password Management"
+msgstr "サーバーパスワード管理"
+
+#: swat.c:807 swat.c:869
+msgid "User Name"
+msgstr "ユーザー名"
+
+#: swat.c:811 swat.c:872
+msgid "Old Password"
+msgstr "旧パスワード"
+
+#: swat.c:815 swat.c:875
+msgid "New Password"
+msgstr "新パスワード"
+
+#: swat.c:818 swat.c:878
+msgid "Re-type New Password"
+msgstr "新パスワードの確認"
+
+#: swat.c:828 swat.c:894
+msgid "Change Password"
+msgstr "パスワードの変更"
+
+#: swat.c:840
+msgid "Add New User"
+msgstr "ユーザー追加"
+
+#: swat.c:842
+msgid "Disable User"
+msgstr "ユーザー非許可"
+
+#: swat.c:844
+msgid "Enable User"
+msgstr "ユーザー許可"
+
+#: swat.c:859
+msgid "Client/Server Password Management"
+msgstr "クライアント/サーバ パスワード管理"
+
+#: swat.c:881
+msgid "Remote Machine"
+msgstr "リモートマシン"
+
+#: swat.c:924
+msgid "Printer Parameters"
+msgstr "プリンターパラメータ"
+
+#: swat.c:927
+msgid "Important Note"
+msgstr "重要事項"
+
+#: swat.c:929
+msgid "Printer names marked with [*] in the Choose Printer drop-down box"
+msgstr "*が付いているプリンターは、"
+
+#: swat.c:931
+msgid "are autoloaded printers from "
+msgstr "自動設定されています。"
+
+#: swat.c:933
+msgid "Printcap Name"
+msgstr "(参照 Printcap Name)"
+
+#: swat.c:935
+msgid "Attempting to delete these printers from SWAT will have no effect.\n"
+msgstr "これらのプリンターをSWATから削除しようとしても何もおこりません。\n"
+
+#: swat.c:969
+msgid "Choose Printer"
+msgstr "プリンター選択"
+
+#: swat.c:989
+msgid "Delete Printer"
+msgstr "プリンター削除"
+
+#: swat.c:997
+msgid "Create Printer"
+msgstr "プリンター作成"
+
+
+
+
+
+
+
+
+
+

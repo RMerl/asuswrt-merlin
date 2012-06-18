@@ -1,0 +1,776 @@
+.TH SMBCLIENT 1 "23 Jun 2001" "smbclient 2.0.10"
+.PP 
+.SH "NAME" 
+smbclient \- ftp-like client to access SMB/CIFS resources on servers
+.PP 
+.SH "SYNOPSIS" 
+.PP 
+\fBsmbclient\fP servicename [password] [-s smb\&.conf] [-O socket options][-R name resolve order] [-M NetBIOS name] [-i scope] [-N] [-n NetBIOS name] [-d debuglevel] [-P] [-p port] [-l log basename] [-h] [-I dest IP] [-E] [-U username] [-L NetBIOS name] [-t terminal code] [-m max protocol] [-b buffersize] [-W workgroup] [-T<c|x>IXFqgbNan] [-D directory] [-c command string]
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+This program is part of the \fBSamba\fP suite\&.
+.PP 
+\fBsmbclient\fP is a client that can \'talk\' to an SMB/CIFS server\&. It
+offers an interface similar to that of the ftp program (see \fBftp
+(1)\fP)\&.  Operations include things like getting files from the server
+to the local machine, putting files from the local machine to the
+server, retrieving directory information from the server and so on\&.
+.PP 
+.SH "OPTIONS" 
+.PP 
+.IP 
+.IP "\fBservicename\fP" 
+servicename is the name of the service you want
+to use on the server\&. A service name takes the form
+\f(CW//server/service\fP where \fIserver\fP is the NetBIOS name of the SMB/CIFS
+server offering the desired service and \fIservice\fP is the name
+of the service offered\&. Thus to connect to the service \fIprinter\fP on
+the SMB/CIFS server \fIsmbserver\fP, you would use the servicename
+.IP 
+\f(CW//smbserver/printer\fP
+.IP 
+Note that the server name required is NOT necessarily the IP (DNS)
+host name of the server ! The name required is a NetBIOS server name,
+which may or may not be the same as the IP hostname of the machine
+running the server\&.
+.IP 
+The server name is looked up according to either the
+\fB-R\fP parameter to \fBsmbclient\fP or using the
+\fBname resolve order\fP
+parameter in the smb\&.conf file, allowing an administrator to change
+the order and methods by which server names are looked up\&.
+.IP 
+.IP "\fBpassword\fP" 
+password is the password required to access the
+specified service on the specified server\&. If this parameter is
+supplied, the \fB-N\fP option (suppress password prompt) is assumed\&.
+.IP 
+There is no default password\&. If no password is supplied on the
+command line (either by using this parameter or adding a password to
+the \fB-U\fP option (see below)) and the \fB-N\fP option is not specified,
+the client will prompt for a password, even if the desired service
+does not require one\&. (If no password is required, simply press ENTER
+to provide a null password\&.)
+.IP 
+Note: Some servers (including OS/2 and Windows for Workgroups) insist
+on an uppercase password\&. Lowercase or mixed case passwords may be
+rejected by these servers\&.
+.IP 
+Be cautious about including passwords in scripts\&.
+.IP 
+.IP "\fB-s smb\&.conf\fP" 
+This parameter specifies the pathname to the
+Samba configuration file, smb\&.conf\&. This file controls all aspects of
+the Samba setup on the machine and smbclient also needs to read this
+file\&.
+.IP 
+.IP "\fB-O socket options\fP" 
+TCP socket options to set on the client
+socket\&. See the socket options
+parameter in the \fBsmb\&.conf (5)\fP manpage for
+the list of valid options\&.
+.IP 
+.IP "\fB-R name resolve order\fP" 
+This option allows the user of
+smbclient to determine what name resolution services to use when
+looking up the NetBIOS name of the host being connected to\&.
+.IP 
+The options are :"lmhosts", "host", "wins" and "bcast"\&. They cause
+names to be resolved as follows :
+.IP 
+.IP 
+.IP o 
+\fBlmhosts\fP : Lookup an IP address in the Samba lmhosts file\&.
+The lmhosts file is stored in the same directory as the
+\fBsmb\&.conf\fP file\&.
+.IP 
+.IP o 
+\fBhost\fP : Do a standard host name to IP address resolution,
+using the system /etc/hosts, NIS, or DNS lookups\&. This method of name
+resolution is operating system depended for instance on IRIX or
+Solaris this may be controlled by the \fI/etc/nsswitch\&.conf\fP file)\&.  
+.IP 
+.IP o 
+\fBwins\fP : Query a name with the IP address listed in the \fBwins
+server\fP parameter in the smb\&.conf file\&. If 
+no WINS server has been specified this method will be ignored\&.
+.IP 
+.IP o 
+\fBbcast\fP : Do a broadcast on each of the known local interfaces
+listed in the \fBinterfaces\fP parameter
+in the smb\&.conf file\&. This is the least reliable of the name resolution
+methods as it depends on the target host being on a locally connected
+subnet\&. 
+.IP 
+.IP 
+If this parameter is not set then the name resolve order defined
+in the \fBsmb\&.conf\fP file parameter 
+(\fBname resolve order\fP)
+will be used\&.
+.IP 
+The default order is lmhosts, host, wins, bcast and without this
+parameter or any entry in the \fB"name resolve
+order"\fP parameter of the
+\fBsmb\&.conf\fP file the name resolution methods
+will be attempted in this order\&.
+.IP 
+.IP "\fB-M NetBIOS name\fP" 
+This options allows you to send messages,
+using the "WinPopup" protocol, to another computer\&. Once a connection
+is established you then type your message, pressing ^D (control-D) to
+end\&.
+.IP 
+If the receiving computer is running WinPopup the user will receive
+the message and probably a beep\&. If they are not running WinPopup the
+message will be lost, and no error message will occur\&.
+.IP 
+The message is also automatically truncated if the message is over
+1600 bytes, as this is the limit of the protocol\&.
+.IP 
+One useful trick is to cat the message through \fBsmbclient\fP\&.
+For example:
+.IP 
+\f(CWcat mymessage\&.txt | smbclient -M FRED\fP
+.IP 
+will send the message in the file \fImymessage\&.txt\fP to the machine FRED\&.
+.IP 
+You may also find the \fB-U\fP and \fB-I\fP options useful, as they allow
+you to control the FROM and TO parts of the message\&.
+.IP 
+See the \fBmessage command\fP
+parameter in the \fBsmb\&.conf (5)\fP for a description of how to handle
+incoming WinPopup messages in Samba\&.
+.IP 
+Note: Copy WinPopup into the startup group on your WfWg PCs if you
+want them to always be able to receive messages\&.
+.IP 
+.IP "\fB-i scope\fP" 
+This specifies a NetBIOS scope that smbclient will use
+to communicate with when generating NetBIOS names\&. For details on the
+use of NetBIOS scopes, see rfc1001\&.txt and rfc1002\&.txt\&. NetBIOS scopes
+are \fIvery\fP rarely used, only set this parameter if you are the
+system administrator in charge of all the NetBIOS systems you
+communicate with\&.
+.IP 
+.IP "\fB-N\fP" 
+If specified, this parameter suppresses the normal
+password prompt from the client to the user\&. This is useful when
+accessing a service that does not require a password\&.
+.IP 
+Unless a password is specified on the command line or this parameter
+is specified, the client will request a password\&.
+.IP 
+.IP "\fB-n NetBIOS name\fP" 
+By default, the client will use the local
+machine\'s hostname (in uppercase) as its NetBIOS name\&. This parameter
+allows you to override the host name and use whatever NetBIOS name you
+wish\&.
+.IP 
+.IP "\fB-d debuglevel\fP" 
+debuglevel is an integer from 0 to 10, or the
+letter \'A\'\&.
+.IP 
+The default value if this parameter is not specified is zero\&.
+.IP 
+The higher this value, the more detail will be logged to the log files
+about the activities of the client\&. At level 0, only critical errors
+and serious warnings will be logged\&. Level 1 is a reasonable level for
+day to day running - it generates a small amount of information about
+operations carried out\&.
+.IP 
+Levels above 1 will generate considerable amounts of log data, and
+should only be used when investigating a problem\&. Levels above 3 are
+designed for use only by developers and generate HUGE amounts of log
+data, most of which is extremely cryptic\&. If debuglevel is set to the
+letter \'A\', then \fIall\fP debug messages will be printed\&. This setting
+is for developers only (and people who \fIreally\fP want to know how the
+code works internally)\&.
+.IP 
+Note that specifying this parameter here will override the \fBlog
+level\fP parameter in the \fBsmb\&.conf
+(5)\fP file\&.
+.IP 
+.IP "\fB-P\fP" 
+This option is no longer used\&. The code in Samba2\&.0
+now lets the server decide the device type, so no printer specific
+flag is needed\&.
+.IP 
+.IP "\fB-p port\fP" 
+This number is the TCP port number that will be used
+when making connections to the server\&. The standard (well-known) TCP
+port number for an SMB/CIFS server is 139, which is the default\&.
+.IP 
+.IP "\fB-l logfilename\fP" 
+If specified, logfilename specifies a base
+filename into which operational data from the running client will be
+logged\&.
+.IP 
+The default base name is specified at compile time\&.
+.IP 
+The base name is used to generate actual log file names\&. For example,
+if the name specified was "log", the debug file would be
+\f(CWlog\&.client\fP\&.
+.IP 
+The log file generated is never removed by the client\&.
+.IP 
+.IP "\fB-h\fP" 
+Print the usage message for the client\&.
+.IP 
+.IP "\fB-I IP address\fP" 
+IP address is the address of the server to
+connect to\&. It should be specified in standard "a\&.b\&.c\&.d" notation\&.
+.IP 
+Normally the client would attempt to locate a named SMB/CIFS server by
+looking it up via the NetBIOS name resolution mechanism described
+above in the \fBname resolve order\fP parameter
+above\&. Using this parameter will force the client to assume that the
+server is on the machine with the specified IP address and the NetBIOS
+name component of the resource being connected to will be ignored\&.
+.IP 
+There is no default for this parameter\&. If not supplied, it will be
+determined automatically by the client as described above\&.
+.IP 
+.IP "\fB-E\fP" 
+This parameter causes the client to write messages to the
+standard error stream (stderr) rather than to the standard output
+stream\&.
+.IP 
+By default, the client writes messages to standard output - typically
+the user\'s tty\&.
+.IP 
+.IP "\fB-U username\fP" 
+This specifies the user name that will be used by
+the client to make a connection, assuming your server is not a downlevel
+server that is running a protocol level that uses passwords on shares,
+not on usernames\&.
+.IP 
+Some servers are fussy about the case of this name, and some insist
+that it must be a valid NetBIOS name\&.
+.IP 
+If no username is supplied, it will default to an uppercase version of
+the environment variable \f(CWUSER\fP or \f(CWLOGNAME\fP in that order\&.  If no
+username is supplied and neither environment variable exists the
+username "GUEST" will be used\&.
+.IP 
+If the \f(CWUSER\fP environment variable contains a \'%\' character,
+everything after that will be treated as a password\&. This allows you
+to set the environment variable to be \f(CWUSER=username%password\fP so
+that a password is not passed on the command line (where it may be
+seen by the ps command)\&.
+.IP 
+If the service you are connecting to requires a password, it can be
+supplied using the \fB-U\fP option, by appending a percent symbol ("%")
+then the password to username\&.  For example, to attach to a service as
+user \f(CW"fred"\fP with password \f(CW"secret"\fP, you would specify\&. 
+.br 
+.IP 
+\f(CW-U fred%secret\fP 
+.br 
+.IP 
+on the command line\&. Note that there are no spaces around the percent
+symbol\&.
+.IP 
+If you specify the password as part of username then the \fB-N\fP option
+(suppress password prompt) is assumed\&.
+.IP 
+If you specify the password as a parameter \fIAND\fP as part of username
+then the password as part of username will take precedence\&. Putting
+nothing before or nothing after the percent symbol will cause an empty
+username or an empty password to be used, respectively\&.
+.IP 
+The password may also be specified by setting up an environment
+variable called \f(CWPASSWD\fP that contains the users password\&. Note
+that this may be very insecure on some systems but on others allows
+users to script smbclient commands without having a password appear in
+the command line of a process listing\&.
+.IP 
+Note: Some servers (including OS/2 and Windows for Workgroups) insist
+on an uppercase password\&. Lowercase or mixed case passwords may be
+rejected by these servers\&.
+.IP 
+Be cautious about including passwords in scripts or in the
+\f(CWPASSWD\fP environment variable\&. Also, on many systems the command
+line of a running process may be seen via the \f(CWps\fP command to be
+safe always allow smbclient to prompt for a password and type it in
+directly\&.
+.IP 
+.IP "\fB-L\fP" 
+This option allows you to look at what services are
+available on a server\&. You use it as \f(CW"smbclient -L host"\fP and a
+list should appear\&.  The \fB-I\fP option may be useful if your NetBIOS
+names don\'t match your tcp/ip dns host names or if you are trying to
+reach a host on another network\&.
+.IP 
+.IP "\fB-t terminal code\fP" 
+This option tells smbclient how to interpret
+filenames coming from the remote server\&. Usually Asian language
+multibyte UNIX implementations use different character sets than
+SMB/CIFS servers (\fIEUC\fP instead of \fISJIS\fP for example)\&. Setting
+this parameter will let smbclient convert between the UNIX filenames
+and the SMB filenames correctly\&. This option has not been seriously
+tested and may have some problems\&.
+.IP 
+The terminal codes include \f(CWsjis\fP, \f(CWeuc\fP, \f(CWjis7\fP, \f(CWjis8\fP,
+\f(CWjunet\fP, \f(CWhex\fP, \f(CWcap\fP\&. This is not a complete list, check the
+Samba source code for the complete list\&.
+.IP 
+.IP "\fB-m max protocol level\fP" 
+With the new code in Samba2\&.0,
+\fBsmbclient\fP always attempts to connect at the maximum
+protocols level the server supports\&. This parameter is
+preserved for backwards compatibility, but any string
+following the \fB-m\fP will be ignored\&.
+.IP 
+.IP "\fB-b buffersize\fP" 
+This option changes the transmit/send buffer
+size when getting or putting a file from/to the server\&. The default
+is 65520 bytes\&. Setting this value smaller (to 1200 bytes) has been
+observed to speed up file transfers to and from a Win9x server\&.
+.IP 
+.IP "\fB-W WORKGROUP\fP" 
+Override the default workgroup specified in the
+\fBworkgroup\fP parameter of the
+\fBsmb\&.conf\fP file for this connection\&. This may
+be needed to connect to some servers\&.
+.IP 
+.IP "\fB-T tar options\fP" 
+smbclient may be used to create
+\fBtar (1)\fP compatible backups of all the files on an SMB/CIFS
+share\&. The secondary tar flags that can be given to this option are :
+.IP 
+.IP 
+.IP "\fBc\fP" 
+Create a tar file on UNIX\&. Must be followed by the
+name of a tar file, tape device or \f(CW"-"\fP for standard output\&. If
+using standard output you must turn the log level to its lowest value
+\f(CW-d0\fP to avoid corrupting your tar file\&. This flag is
+mutually exclusive with the \fBx\fP flag\&.
+.IP 
+.IP "\fBx\fP" 
+Extract (restore) a local tar file back to a
+share\&. Unless the \fB-D\fP option is given, the tar files will be
+restored from the top level of the share\&. Must be followed by the name
+of the tar file, device or \f(CW"-"\fP for standard input\&. Mutually exclusive
+with the \fBc\fP flag\&. Restored files have their creation times (mtime)
+set to the date saved in the tar file\&. Directories currently do not
+get their creation dates restored properly\&.
+.IP 
+.IP "\fBI\fP" 
+Include files and directories\&. Is the default
+behavior when filenames are specified above\&. Causes tar files to
+be included in an extract or create (and therefore everything else to
+be excluded)\&. See example below\&.  Filename globbing works 
+in one of two ways\&.  See \fBr\fP below\&.
+.IP 
+.IP "\fBX\fP" 
+Exclude files and directories\&. Causes tar files to
+be excluded from an extract or create\&. See example below\&.  Filename
+globbing works in one of two ways now\&. See \fBr\fP below\&.
+.IP 
+.IP "\fBb\fP" 
+Blocksize\&. Must be followed by a valid (greater than
+zero) blocksize\&.  Causes tar file to be written out in
+blocksize*TBLOCK (usually 512 byte) blocks\&.
+.IP 
+.IP "\fBg\fP" 
+Incremental\&. Only back up files that have the
+archive bit set\&. Useful only with the \fBc\fP flag\&.
+.IP 
+.IP "\fBq\fP" 
+Quiet\&. Keeps tar from printing diagnostics as it
+works\&.  This is the same as tarmode quiet\&.
+.IP 
+.IP "\fBr\fP" 
+Regular expression include or exclude\&.  Uses regular 
+regular expression matching for excluding or excluding files if 
+compiled with HAVE_REGEX_H\&. However this mode can be very slow\&. If 
+not compiled with HAVE_REGEX_H, does a limited wildcard match on * and 
+?\&.
+.IP 
+.IP "\fBN\fP" 
+Newer than\&. Must be followed by the name of a file
+whose date is compared against files found on the share during a
+create\&. Only files newer than the file specified are backed up to the
+tar file\&. Useful only with the \fBc\fP flag\&.
+.IP 
+.IP "\fBa\fP" 
+Set archive bit\&. Causes the archive bit to be reset
+when a file is backed up\&. Useful with the \fBg\fP and \fBc\fP flags\&.
+.IP 
+.IP 
+\fITar Long File Names\fP
+.IP 
+smbclient\'s tar option now supports long file names both on backup and
+restore\&. However, the full path name of the file must be less than
+1024 bytes\&.  Also, when a tar archive is created, smbclient\'s tar
+option places all files in the archive with relative names, not
+absolute names\&.
+.IP 
+\fITar Filenames\fP
+.IP 
+All file names can be given as DOS path names (with \f(CW\e\fP as the
+component separator) or as UNIX path names (with \f(CW/\fP as the
+component separator)\&.
+.IP 
+\fIExamples\fP
+.IP 
+.IP 
+.IP o 
+Restore from tar file backup\&.tar into myshare on mypc (no password on share)\&.
+.IP 
+\f(CWsmbclient //mypc/myshare "" -N -Tx backup\&.tar\fP
+.IP 
+.IP o 
+Restore everything except users/docs
+.IP 
+\f(CWsmbclient //mypc/myshare "" -N -TXx backup\&.tar users/docs\fP
+.IP 
+.IP o 
+Create a tar file of the files beneath users/docs\&.
+.IP 
+\f(CWsmbclient //mypc/myshare "" -N -Tc backup\&.tar users/docs\fP
+.IP 
+.IP o 
+Create the same tar file as above, but now use a DOS path name\&.
+.IP 
+\f(CWsmbclient //mypc/myshare "" -N -tc backup\&.tar users\eedocs\fP
+.IP 
+.IP o 
+Create a tar file of all the files and directories in the share\&.
+.IP 
+\f(CWsmbclient //mypc/myshare "" -N -Tc backup\&.tar *\fP
+.IP 
+.IP 
+.IP "\fB-D initial directory\fP" 
+Change to initial directory before
+starting\&. Probably only of any use with the tar \fB-T\fP option\&.
+.IP 
+.IP "\fB-c command string\fP" 
+command string is a semicolon separated
+list of commands to be executed instead of prompting from stdin\&.
+\fB-N\fP is implied by \fB-c\fP\&.
+.IP 
+This is particularly useful in scripts and for printing stdin to the
+server, e\&.g\&. \f(CW-c \'print -\'\fP\&.
+.IP 
+.PP 
+.SH "OPERATIONS" 
+.PP 
+Once the client is running, the user is presented with a prompt :
+.PP 
+\f(CWsmb:\e>\fP
+.PP 
+The backslash ("\e") indicates the current working directory on the
+server, and will change if the current working directory is changed\&.
+.PP 
+The prompt indicates that the client is ready and waiting to carry out
+a user command\&. Each command is a single word, optionally followed by
+parameters specific to that command\&. Command and parameters are
+space-delimited unless these notes specifically state otherwise\&. All
+commands are case-insensitive\&.  Parameters to commands may or may not
+be case sensitive, depending on the command\&.
+.PP 
+You can specify file names which have spaces in them by quoting the
+name with double quotes, for example "a long file name"\&.
+.PP 
+Parameters shown in square brackets (e\&.g\&., "[parameter]") are
+optional\&. If not given, the command will use suitable
+defaults\&. Parameters shown in angle brackets (e\&.g\&., "<parameter>") are
+required\&.
+.PP 
+Note that all commands operating on the server are actually performed
+by issuing a request to the server\&. Thus the behavior may vary from
+server to server, depending on how the server was implemented\&.
+.PP 
+The commands available are given here in alphabetical order\&.
+.PP 
+.IP 
+.IP "\fB? [command]\fP" 
+If "command" is specified,
+the \fB?\fP command will display a brief informative message about the
+specified command\&.  If no command is specified, a list of available
+commands will be displayed\&.
+.IP 
+.IP "\fB! [shell command]\fP" 
+If "shell command"
+is specified, the \fB!\fP  command will execute a shell locally and run
+the specified shell command\&. If no command is specified, a local shell
+will be run\&.
+.IP 
+.IP "\fBcd [directory name]\fP" 
+If "directory name" is
+specified, the current working directory on the server will be changed
+to the directory specified\&. This operation will fail if for any reason
+the specified directory is inaccessible\&.
+.IP 
+If no directory name is specified, the current working directory on
+the server will be reported\&.
+.IP 
+.IP "\fBdel <mask>\fP" 
+The client will request that the server
+attempt to delete all files matching "mask" from the current working
+directory on the server\&.
+.IP 
+.IP "\fBdir <mask>\fP" 
+A list of the files matching "mask" in
+the current working directory on the server will be retrieved from the
+server and displayed\&.
+.IP 
+.IP "\fBexit\fP" 
+Terminate the connection with the server and
+exit from the program\&.
+.IP 
+.IP "\fBget <remote file name> [local file name]\fP" 
+Copy the
+file called "remote file name" from the server to the machine running
+the client\&. If specified, name the local copy "local file name"\&.  Note
+that all transfers in smbclient are binary\&. See also the
+\fBlowercase\fP command\&.
+.IP 
+.IP "\fBhelp [command]\fP" 
+See the \fB?\fP
+command above\&.
+.IP 
+.IP "\fBlcd [directory name]\fP" 
+If "directory name" is
+specified, the current working directory on the local machine will
+be changed to the directory specified\&. This operation will fail if for
+any reason the specified directory is inaccessible\&.
+.IP 
+If no directory name is specified, the name of the current working
+directory on the local machine will be reported\&.
+.IP 
+.IP "\fBlowercase\fP" 
+Toggle lowercasing of filenames
+for the \fBget\fP and \fBmget\fP commands\&.
+.IP 
+When lowercasing is toggled ON, local filenames are converted to
+lowercase when using the \fBget\fP and \fBmget\fP
+commands\&. This is often useful when copying (say) MSDOS files from a
+server, because lowercase filenames are the norm on UNIX systems\&.
+.IP 
+.IP "\fBls <mask>\fP" 
+See the \fBdir\fP command above\&.
+.IP 
+.IP "\fBmask <mask>\fP" 
+This command allows the user to set
+up a mask which will be used during recursive operation of the
+\fBmget\fP and \fBmput\fP commands\&.
+.IP 
+The masks specified to the \fBmget\fP and
+\fBmput\fP commands act as filters for directories rather
+than files when recursion is toggled ON\&.
+.IP 
+The mask specified with the \&.B mask command is necessary to filter
+files within those directories\&. For example, if the mask specified in
+an \fBmget\fP command is "source*" and the mask specified
+with the mask command is "*\&.c" and recursion is toggled ON, the
+\fBmget\fP command will retrieve all files matching "*\&.c" in
+all directories below and including all directories matching "source*"
+in the current working directory\&.
+.IP 
+Note that the value for mask defaults to blank (equivalent to "*") and
+remains so until the mask command is used to change it\&. It retains the
+most recently specified value indefinitely\&. To avoid unexpected
+results it would be wise to change the value of \&.I mask back to "*"
+after using the \fBmget\fP or \fBmput\fP commands\&.
+.IP 
+.IP "\fBmd <directory name>\fP" 
+See the \fBmkdir\fP
+command\&.
+.IP 
+.IP "\fBmget <mask>\fP" 
+Copy all files matching mask from the
+server to the machine running the client\&.
+.IP 
+Note that mask is interpreted differently during recursive operation
+and non-recursive operation - refer to the \fBrecurse\fP
+and \fBmask\fP commands for more information\&. Note that all
+transfers in \&.B smbclient are binary\&. See also the
+\fBlowercase\fP command\&.
+.IP 
+.IP "\fBmkdir <directory name>\fP" 
+Create a new directory on
+the server (user access privileges permitting) with the specified
+name\&.
+.IP 
+.IP "\fBmput <mask>\fP" 
+Copy all files matching mask in
+the current working directory on the local machine to the current
+working directory on the server\&.
+.IP 
+Note that mask is interpreted differently during recursive operation
+and non-recursive operation - refer to the \fBrecurse\fP
+and \fBmask\fP commands for more information\&. Note that all
+transfers in \&.B smbclient are binary\&.
+.IP 
+.IP "\fBprint <file name>\fP" 
+Print the specified file
+from the local machine through a printable service on the server\&.
+.IP 
+See also the \fBprintmode\fP command\&.
+.IP 
+.IP "\fBprintmode <graphics or text>\fP" 
+Set the print
+mode to suit either binary data (such as graphical information) or
+text\&. Subsequent print commands will use the currently set print
+mode\&.
+.IP 
+.IP "\fBprompt\fP" 
+Toggle prompting for filenames during
+operation of the \fBmget\fP and \fBmput\fP
+commands\&.
+.IP 
+When toggled ON, the user will be prompted to confirm the transfer of
+each file during these commands\&. When toggled OFF, all specified files
+will be transferred without prompting\&.
+.IP 
+.IP "\fBput <local file name> [remote file name]\fP" 
+Copy the
+file called "local file name" from the machine running the client to
+the server\&. If specified, name the remote copy "remote file name"\&.
+Note that all transfers in smbclient are binary\&. See also the
+\fBlowercase\fP command\&.
+.IP 
+.IP "\fBqueue\fP" 
+Displays the print queue, showing the job
+id, name, size and current status\&.
+.IP 
+.IP "\fBquit\fP" 
+See the \fBexit\fP command\&.
+.IP 
+.IP "\fBrd <directory name>\fP" 
+See the \fBrmdir\fP
+command\&.
+.IP 
+.IP "\fBrecurse\fP" 
+Toggle directory recursion for the
+commands \fBmget\fP and \fBmput\fP\&.
+.IP 
+When toggled ON, these commands will process all directories in the
+source directory (i\&.e\&., the directory they are copying \&.IR from ) and
+will recurse into any that match the mask specified to the
+command\&. Only files that match the mask specified using the
+\fBmask\fP command will be retrieved\&. See also the
+\fBmask\fP command\&.
+.IP 
+When recursion is toggled OFF, only files from the current working
+directory on the source machine that match the mask specified to the
+\fBmget\fP or \fBmput\fP commands will be copied,
+and any mask specified using the \fBmask\fP command will be
+ignored\&.
+.IP 
+.IP "\fBrm <mask>\fP" 
+Remove all files matching mask from
+the current working directory on the server\&.
+.IP 
+.IP "\fBrmdir <directory name>\fP" 
+Remove the specified
+directory (user access privileges permitting) from the server\&.
+.IP 
+.IP "\fBtar <c|x>[IXbgNa]\fP" 
+Performs a tar operation - see
+the \fB-T\fP command line option above\&. Behavior may be
+affected by the \fBtarmode\fP command (see below)\&. Using
+g (incremental) and N (newer) will affect tarmode settings\&. Note that
+using the "-" option with tar x may not work - use the command line
+option instead\&.
+.IP 
+.IP "\fBblocksize <blocksize>\fP" 
+Blocksize\&. Must be
+followed by a valid (greater than zero) blocksize\&. Causes tar file to
+be written out in blocksize*TBLOCK (usually 512 byte) blocks\&.
+.IP 
+.IP "\fBtarmode <full|inc|reset|noreset>\fP" 
+Changes tar\'s
+behavior with regard to archive bits\&. In full mode, tar will back up
+everything regardless of the archive bit setting (this is the default
+mode)\&. In incremental mode, tar will only back up files with the
+archive bit set\&. In reset mode, tar will reset the archive bit on all
+files it backs up (implies read/write share)\&.
+.IP 
+.IP "\fBsetmode <filename> <perm=[+|\e-]rsha>\fP" 
+A version
+of the DOS attrib command to set file permissions\&. For example:
+.IP 
+\f(CWsetmode myfile +r\fP
+.IP 
+would make myfile read only\&.
+.IP 
+.PP 
+.SH "NOTES" 
+.PP 
+Some servers are fussy about the case of supplied usernames,
+passwords, share names (AKA service names) and machine names\&. If you
+fail to connect try giving all parameters in uppercase\&.
+.PP 
+It is often necessary to use the \fB-n\fP option when connecting to some
+types of servers\&. For example OS/2 LanManager insists on a valid
+NetBIOS name being used, so you need to supply a valid name that would
+be known to the server\&.
+.PP 
+smbclient supports long file names where the server supports the
+LANMAN2 protocol or above\&.
+.PP 
+.SH "ENVIRONMENT VARIABLES" 
+.PP 
+The variable \fBUSER\fP may contain the username of the person using the
+client\&.  This information is used only if the protocol level is high
+enough to support session-level passwords\&.
+.PP 
+The variable \fBPASSWD\fP may contain the password of the person using
+the client\&.  This information is used only if the protocol level is
+high enough to support session-level passwords\&.
+.PP 
+.SH "INSTALLATION" 
+.PP 
+The location of the client program is a matter for individual system
+administrators\&. The following are thus suggestions only\&.
+.PP 
+It is recommended that the smbclient software be installed in the
+/usr/local/samba/bin or /usr/samba/bin directory, this directory
+readable by all, writeable only by root\&. The client program itself
+should be executable by all\&. The client should \fINOT\fP be setuid or
+setgid!
+.PP 
+The client log files should be put in a directory readable and
+writeable only by the user\&.
+.PP 
+To test the client, you will need to know the name of a running
+SMB/CIFS server\&. It is possible to run \fBsmbd (8)\fP
+an ordinary user - running that server as a daemon on a
+user-accessible port (typically any port number over 1024) would
+provide a suitable test server\&.
+.PP 
+.SH "DIAGNOSTICS" 
+.PP 
+Most diagnostics issued by the client are logged in a specified log
+file\&. The log file name is specified at compile time, but may be
+overridden on the command line\&.
+.PP 
+The number and nature of diagnostics available depends on the debug
+level used by the client\&. If you have problems, set the debug level to
+3 and peruse the log files\&.
+.PP 
+.SH "VERSION" 
+.PP 
+This man page is correct for version 2\&.0 of the Samba suite\&.
+.PP 
+.SH "AUTHOR" 
+.PP 
+The original Samba software and related utilities were created by
+Andrew Tridgell samba@samba\&.org\&. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed\&.
+.PP 
+The original Samba man pages were written by Karl Auer\&. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+\fBftp://ftp\&.icce\&.rug\&.nl/pub/unix/\fP)
+and updated for the Samba2\&.0 release by Jeremy Allison\&.
+samba@samba\&.org\&.
+.PP 
+See \fBsamba (7)\fP to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc\&.

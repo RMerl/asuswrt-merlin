@@ -1,0 +1,50 @@
+Template: samba/generate_smbpasswd
+Type: boolean
+Default: false
+Description: Create samba password database, /var/lib/samba/passdb.tdb?
+ To be compatible with the defaults in most versions of Windows, Samba must
+ be configured to use encrypted passwords.  This requires user passwords to
+ be stored in a file separate from /etc/passwd. This file can be created
+ automatically, but the passwords must be added manually (by you or the
+ user) by running smbpasswd, and you must arrange to keep it up-to-date in
+ the future.  If you do not create it, you will have to reconfigure samba
+ (and probably your client machines) to use plaintext passwords. See
+ /usr/share/doc/samba-doc/htmldocs/ENCRYPTION.html from the samba-doc
+ package for more details.
+
+Template: samba/log_files_moved
+Type: note
+Description: Samba's log files have moved.
+ Starting with the first packages of Samba 2.2 for Debian the log files for
+ both Samba daemons (nmbd and smbd) are now stored in /var/log/samba/. The
+ names of the files are log.nmbd and log.smbd, for nmbd and smbd
+ respectively.
+ .
+ The old log files that were in /var/log/ will be moved to the new location
+ for you.
+
+Template: samba/nmbd_from_inetd
+Type: note
+Description: Running nmbd from inetd is no longer supported
+ Your system was previously configured to start nmbd and smbd from inetd. 
+ As of version 2.999+3.0.alpha20-4, nmbd will no longer be started from
+ inetd.  If you have modified your /etc/init.d/samba startup script, you
+ may need to adjust it by hand now so that nmbd will start.
+
+Template: samba/run_mode
+Type: select
+Choices: daemons, inetd
+Default: daemons
+Description: How do you want to run Samba?
+ The Samba daemon smbd can run as a normal daemon or from inetd. Running as
+ a daemon is the recommended approach.
+
+Template: samba/tdbsam
+Type: boolean
+Default: false
+Description: Move /etc/samba/smbpasswd to /var/lib/samba/passdb.tdb?
+ Samba 3.0 introduces a newer, more complete SAM database interface which
+ supersedes the /etc/samba/smbpasswd file.  Would you like your existing
+ smbpasswd file to be migrated to /var/lib/samba/passdb.tdb for you?  If you
+ plan to use another pdb backend (e.g., LDAP) instead, you should answer
+ 'no' here.

@@ -1,0 +1,162 @@
+--- Makefile.Linux
++++ Makefile.Linux	1999/01/14 08:41:28
+@@ -0,0 +1,48 @@
++#
++#
++# Makefile.Linux to integrate package into source tree of S.u.S.E.-Linux
++#
++# Copyright (C) 1996 S.u.S.E. GmbH Fuerth, Germany.
++#
++# Please send bug-fixes or comments to feedback@suse.de.
++#
++# Author: Florian La Roche  <florian@suse.de>
++#         Volker Lendecke   <vl@suse.de>
++#
++#
++
++doc=/usr/doc/packages/samba
++
++compile:
++	(cd source ; \
++		./configure --prefix=/usr --libdir=/etc \
++			--with-privatedir=/etc --localstatedir=/var/log \
++			--with-swatdir=/usr/lib/samba/swat )
++	make LOCKDIR=/var/lock/samba SBINDIR=/usr/sbin \
++		CODEPAGEDIR=/usr/lib/samba/codepages -C source
++
++install:
++	mkdir -p /usr/lib/samba
++	make install LOCKDIR=/var/lock/samba SBINDIR=/usr/sbin \
++		CODEPAGEDIR=/usr/lib/samba/codepages -C source
++	mkdir -p $(doc)
++	cp -a docs/* $(doc)
++	rm -rf $(doc)/*.[0-9] 
++	cp -R examples $(doc)
++	chmod 644 `find $(doc) -type f`
++	chmod 755 `find $(doc) -type d`
++	mkdir -p /usr/lib/samba/scripts
++	install -m 644 -o root -g root source/script/mksmbpasswd.sh \
++		/usr/sbin/mksmbpasswd.sh
++	install -m 644 -o root -g root source/script/updatesmbpasswd.sh \
++		/usr/sbin/updatesmbpasswd.sh
++	install -m 644 smb.conf /etc/smb.conf
++	install -m 644 lmhosts /etc/lmhosts
++	install -m 600 smbpasswd -o root -g root /etc/smbpasswd
++	install rc /sbin/init.d/smb
++	ln -sf ../smb /sbin/init.d/rc2.d/S20smb
++	ln -sf ../smb /sbin/init.d/rc2.d/K20smb
++	ln -sf ../smb /sbin/init.d/rc3.d/S20smb
++	ln -sf ../smb /sbin/init.d/rc3.d/K20smb
++	mkdir -p /var/adm/fillup-templates
++	cp rc.config.samba /var/adm/fillup-templates
+--- lmhosts
++++ lmhosts	1999/01/14 08:41:28
+@@ -0,0 +1,8 @@
++# This file provides the same function that the 
++# lmhosts file does for Windows.
++# It provides another way to map netbios names to ip addresses.
++# See the section on 'name resolve order' in the manual page to
++# smb.conf for more information.
++
++# Sample entry:
++# 192.168.1.1 samba
+--- rc
++++ rc	1999/01/14 08:41:28
+@@ -0,0 +1,32 @@
++#! /bin/sh
++# Copyright (c) 1996 StarDivision GmbH. All rights reserved.
++# Copyright (c) 1996 S.u.S.E. Gmbh Fuerth, Germany. All rights reserved.
++#
++# Author: Bastian Epting, StarDivision GmbH <be@stardivision.de>
++#      Florian La Roche, <florian@suse.de>
++#      Volker Lendecke, <vl@suse.de>
++#
++
++. /etc/rc.config
++
++test "$START_SMB" = "yes" || exit 0
++
++case "$1" in
++    start)
++        echo -n "Starting SMB services."
++        /usr/sbin/nmbd -D
++        /usr/sbin/smbd -D
++        echo
++        ;;
++    stop)
++        echo -n "Shutting down SMB services."
++        killproc -TERM /usr/sbin/nmbd
++        killproc -TERM /usr/sbin/smbd
++        echo
++        ;;
++    *)
++        echo "Usage: $0 {start|stop}"
++        exit 1
++esac
++
++exit 0
+--- rc.config.samba
++++ rc.config.samba	1999/01/14 08:41:28
+@@ -0,0 +1,5 @@
++#
++# start samba? ("yes" or "no")
++# Windows 95 / NT  -  File- and Printservices
++#
++START_SMB="no"
+--- smb.conf
++++ smb.conf	1999/01/14 08:41:28
+@@ -0,0 +1,48 @@
++[global]
++   workgroup = arbeitsgruppe
++   guest account = nobody
++   keep alive = 30
++   os level = 2
++   security = user
++   printing = bsd
++   printcap name = /etc/printcap
++   load printers = yes
++
++; Please uncomment the following entry and replace the 
++; ip number and netmask with the correct numbers for
++; your ethernet interface.
++;   interfaces = 192.168.1.1/255.255.255.0
++   
++; If you want Samba to act as a wins server, please set
++; 'wins support = yes'
++   wins support = no
++
++; If you want Samba to use an existing wins server,
++; please uncomment the following line and replace
++; the dummy with the wins server's ip number.
++;   wins server = 192.168.1.1
++
++[homes]
++   comment = Heimatverzeichnis
++   browseable = no
++   read only = no
++   create mode = 0750
++
++; The following share gives all users access to the Server's CD drive,
++; assuming it is mounted under /cd. To enable this share, please remove
++; the semicolons before the lines
++;
++; [cdrom]
++;   comment = Linux CD-ROM
++;   path = /cd
++;   read only = yes
++;   locking = no
++
++[printers]
++   comment = All Printers
++   browseable = no
++   printable = yes
++   public = no
++   read only = yes
++   create mode = 0700
++   directory = /tmp
+--- smbpasswd
++++ smbpasswd	1999/01/14 08:41:28
+@@ -0,0 +1,3 @@
++# Sample smbpasswd file.
++# To use this, set 'encrypt passwords = yes' in the [global]-section
++# of /etc/smb.conf

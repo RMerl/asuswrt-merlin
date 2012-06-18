@@ -1,0 +1,277 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 3] Configuring Windows Clients</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:31:14Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_06.html" TITLE="2.6 Testing the Samba Daemons">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 2.6 Testing the Samba Daemons" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+Chapter 3</font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch03_02.html" TITLE="3.2 Setting Up Windows NT 4.0 Computers">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 3.2 Setting Up Windows NT 4.0 Computers" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div class="samplechapter">
+<H1 CLASS="chapter">
+<A CLASS="title" NAME="ch03-91548">
+3. Configuring Windows Clients</a></h1><DIV CLASS="htmltoc">
+<P>
+<B>
+Contents:</b><br>
+<A CLASS="sect1" HREF="#ch03-55770" TITLE="3.1 Setting Up Windows 95/98 Computers">
+Setting Up Windows 95/98 Computers</a><br>
+<A CLASS="sect1" HREF="ch03_02.html" TITLE="3.2 Setting Up Windows NT 4.0 Computers">
+Setting Up Windows NT 4.0 Computers</a><br>
+<A CLASS="sect1" HREF="ch03_03.html" TITLE="3.3 An Introduction to SMB/CIFS">
+An Introduction to SMB/CIFS</a></p><P>
+</p></div><P CLASS="para">You'll be glad to know that configuring Windows to use your new Samba server is quite simple. SMB is Microsoft's native language for resource sharing on a local area network, so much of the installation and setup on the Windows client side has been taken care of already. The primary issues that we will cover in this chapter involve communication and coordination between Windows and Unix, two completely different operating systems.</p><P CLASS="para">
+Samba uses TCP/IP to talk to its clients on the network. If you aren't already using TCP/IP on your Windows computers, this chapter will show you how to install it. Then you'll need to configure your Windows machines to operate on a TCP/IP network. Once these two requirements have been taken care of, we can show how to access a shared disk on the Samba server.</p><P CLASS="para">
+This chapter is divided into three sections. The first section covers setting up Windows 95/98 computers while the second covers Windows NT 4.0 machines. The final section provides some prerequisite information on how SMB connections are made from Windows clients and servers, which is useful as we move into the later chapters of the book.</p><DIV CLASS="sect1">
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="s1"></a>
+<A CLASS="title" NAME="ch03-55770">
+3.1 Setting Up Windows 95/98 Computers</a></h2><P CLASS="para">Unfortunately, Windows 95/98 wasn't designed for a PC to have more than one user; that concept is more inherent to a Unix operating system or Windows NT. However, Windows 95/98 does have <EM CLASS="emphasis">
+limited</em> support for multiple users: if you tell it, the operating system will keep a separate profile (desktop layout) and password file for each user. This is a far cry from true multiuser security. In other words, Windows 95/98 won't try to keep one user from destroying the work of another on the local hard drive like Unix, but profiles are a place to start.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch03-pgfId-941931">
+3.1.1 Accounts and Passwords</a></h3><P CLASS="para">The first thing we need to do is to tell Windows to keep user profiles separate, and to collect usernames and passwords to authenticate anyone trying to access a Samba share. We do so via the Password settings in the Control Panel. If you are not familiar with the Windows Control Panel, you can access it by choosing the Settings menu item from the pop-up menu of the Start button in the lower-left corner of the screen. Alternatively, you'll find it as a folder under the icon in the upper-left corner that represents your computer and is typically labeled My Computer.</p><P CLASS="para">
+After selecting the Passwords icon in the Control Panel, click on the User Profiles tab on the far right. You should see the dialog box shown in <A CLASS="xref" HREF="ch03_01.html#ch03-84319">
+Figure 3.1</a>. Then click the lower of the two radio buttons that starts "Users can customize their preferences...." This causes Windows to store a separate profile for each user, and saves the username and password you provide, which it will use later when it connects to an SMB/CIFS server. Finally, check <EM CLASS="emphasis">
+both</em> the options under the User Profile Settings border, as shown in the figure.   </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-84319">
+Figure 3.1: The Passwords Properties panel</a></h4><IMG CLASS="graphic" SRC="figs/sam.0301.gif" ALT="Figure 3.1"><P CLASS="para">
+The next step is to select the Change Passwords tab on the left side of the dialog box. In order for Samba to allow you access to its shares, the username and password you give to Windows must match the account and password on the Samba server. If you don't have this tab in your dialog box, don't worry; it's probably because you haven't given yourself a Windows username and password yet. Simply click the OK button at the bottom and respond Yes when Windows asks to reboot. Then, skip down to the section entitled <A CLASS="xref" HREF="ch03_01.html#ch03-57581">
+Section 3.1.1.2, Logging in for the first time</a>.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-941948">
+3.1.1.1 Changing the Windows password</a></h4><P CLASS="para">After selecting the Change Passwords tab, the dialog box in <A CLASS="xref" HREF="ch03_01.html#ch03-26778">
+Figure 3.2</a> will appear.</p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-26778">
+Figure 3.2: The Change Passwords tab</a></h4><IMG CLASS="graphic" SRC="figs/sam.0302.gif" ALT="Figure 3.2"><P CLASS="para">
+Select the Change Windows Password button. The Change Windows Password dialog box should appear, as shown in <A CLASS="xref" HREF="ch03_01.html#ch03-97002">
+Figure 3.3</a>. From here, you can change your password to match the password of the account on the Samba server through which you intend to log in.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-97002">
+Figure 3.3: The Change Windows Password dialog box</a></h4><IMG CLASS="graphic" SRC="figs/sam.0303.gif" ALT="Figure 3.3"></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-57581">
+3.1.1.2 Logging in for the first time</a></h4><P CLASS="para">If you didn't have a Change Passwords tab in the Passwords Properties window, then after Windows has finished rebooting, it will ask you to log in with a username and a password. Give yourself the same username and password that you have on the Samba server. After confirming your new username and password, or if you already have one, Windows should ask you if you want to have a profile, using the dialog shown in <A CLASS="xref" HREF="ch03_01.html#ch03-48947">
+Figure 3.4</a>.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-48947">
+Figure 3.4: Windows Networking profiles</a></h4><IMG CLASS="graphic" SRC="figs/sam.0304.gif" ALT="Figure 3.4"><P CLASS="para">
+Answer Yes, upon which Windows will create a separate profile and password file for you and save a copy of your password in the file. Now when you connect to Samba, Windows will send its password, which will be used to authenticate you for each share. We won't worry about profiles for the moment; we'll cover them in <a href="ch06_01.html"><b>Chapter 6, <CITE CLASS="chapter">Users, Security, and Domains</cite></b></a>. We should point out, however, that there is a small security risk: someone can steal the password file and decrypt the passwords because it's weakly encrypted. Unfortunately, there isn't a solution to this with Windows 95/98. In Windows 2000 (NT 5.0), the password encryption should be replaced with a much better algorithm.</p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch03-36280">
+3.1.2 Setting Up the Network</a></h3><P CLASS="para">The next thing we need to do is make sure we have the TCP/IP networking protocol set up correctly. To do this, double-click on the Network icon in the Control Panel. You should see the network configuration dialog box, as shown in <A CLASS="xref" HREF="ch03_01.html#ch03-15320">
+Figure 3.5</a>.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-15320">
+Figure 3.5: The Windows 95/98 Network panel</a></h4><IMG CLASS="graphic" SRC="figs/sam.0305.gif" ALT="Figure 3.5"><P CLASS="para">
+Microsoft networking works by binding specific protocols, such as IPX or TCP/IP, to a specific hardware device, such as an Ethernet card or a dialup connection. By routing a protocol through a hardware device, the machine can act as a client or server for a particular type of network. For Samba, we are interested in binding the TCP/IP protocol through a networking device, making the machine a client for Microsoft networks. Thus, when the dialog box appears, you should see at least the Client for Microsoft Networks component installed on the machine, and hopefully a networking device (preferably an Ethernet card) bound to the TCP/IP protocol. If there is only one networking hardware device, you'll see the TCP/IP protocol listed below that device. If it appears similar to <A CLASS="xref" HREF="ch03_01.html#ch03-15320">
+Figure 3.5</a>, the protocol is bound to the device.</p><P CLASS="para">
+You may also see "File and printer sharing for Microsoft Networks," which is useful. In addition, you might see NetBEUI or Novell Networking, which are standard with Windows installations but undesirable when TCP/IP is running. Remove NetBEUI if you possibly can&nbsp;- it's unnecessary and makes debugging Windows browsing difficult. If you don't have any Novell servers on your network, you can remove Novell (IPX/SPX) as well.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942014">
+3.1.2.1 Adding TCP/IP</a></h4><P CLASS="para">If you don't see TCP/IP listed at all, you'll need to install the protocol. If you already have TCP/IP, skip this section, and continue with the section <A CLASS="xref" HREF="ch03_01.html#ch03-48802">
+Section 3.1.3, Setting Your Name and Workgroup</a>, later in this chapter.</p><P CLASS="para">
+Installing TCP/IP isn't difficult since Microsoft distributes its own version of TCP/IP for free on their installation CD-ROM. You can add the protocol by clicking on the Add button below the component window. Indicate that you wish to add a specific protocol by selecting Protocol and clicking Add... on the following dialog box, which should look similar to <A CLASS="xref" HREF="ch03_01.html#ch03-24245">
+Figure 3.6</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-24245">
+Figure 3.6: Selecting a protocol to install</a></h4><IMG CLASS="graphic" SRC="figs/sam.0306.gif" ALT="Figure 3.6"><P CLASS="para">
+After that, select the protocol TCP/IP from manufacturer Microsoft, as shown in <A CLASS="xref" HREF="ch03_01.html#ch03-50801">
+Figure 3.7</a>, then click OK. After doing so, you will be returned to the network dialog. Click OK there to close the dialog box, upon which Windows will install the necessary components from disk and reboot the machine.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-50801">
+Figure 3.7: Selecting a protocol to install</a></h4><IMG CLASS="graphic" SRC="figs/sam.0307.gif" ALT="Figure 3.7"></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942047">
+3.1.2.2 Configuring TCP/IP</a></h4><P CLASS="para">If you have more than one networking device (for example, both an Ethernet card and a dialup networking modem), each appropriate hardware device should be "linked" to the TCP/IP protocol with an arrow, as shown in <A CLASS="xref" HREF="ch03_01.html#ch03-61576">
+Figure 3.8</a>. Select the TCP/IP protocol linked to the networking device that will be accessing the Samba network. When it is highlighted, click the Properties button. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-61576">
+Figure 3.8: Selecting the correct TCP/IP protocol</a></h4><IMG CLASS="graphic" SRC="figs/sam.0308.gif" ALT="Figure 3.8"><P CLASS="para">
+After doing so, the TCP/IP Properties panel for that device is displayed, as shown in <A CLASS="xref" HREF="ch03_01.html#ch03-73526">
+Figure 3.9</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-73526">
+Figure 3.9: STCP/IP Properties panel</a></h4><IMG CLASS="graphic" SRC="figs/sam.0309.gif" ALT="Figure 3.9"><P CLASS="para">
+There are seven tabs near the top of this panel, and you will need to configure four of them: </p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-942078">
+</a>IP address</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-942079">
+</a>DNS configuration</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-942080">
+</a>WINS configuration</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch03-pgfId-942081">
+</a>Bindings</p></li></ul></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-948031">
+3.1.2.3 IP Address tab </a></h4><P CLASS="para">
+The IP Address tab is shown in <A CLASS="xref" HREF="ch03_01.html#ch03-73526">
+Figure 3.9</a>. Press the "Specify an IP address" radio button and enter the client's address and subnet mask in the space provided. You or your network manager should have selected an address for the machine. The values should place the computer on the same subnet as the Samba server. For example, if the server's address is 192.168.236.86, and its network mask 255.255.255.0, you might use address 192.168.236.10 (if it is available) for the Windows 98 computer, along with the same netmask as the server. If you already use DHCP on your network to provide IP addresses to Windows machines, select the "Obtain an IP address automatically" button.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942087">
+3.1.2.4 DNS Configuration tab</a></h4><P CLASS="para">Domain Name Service (DNS) is responsible for translating Internet computer names such as <EM CLASS="emphasis">
+hobbes.example.com</em> into machine-readable IP addresses such as 192.168.236.10. There are two ways to accomplish this on a Windows 98 machine: you can specify a server to do the translation for you or you can keep a local list of name/address pairs to refer to. </p><P CLASS="para">
+Networks that are connected to the Internet typically use a server, since the hosts files required would otherwise be huge. For an unconnected LAN, the list of possible hosts is small and well-known and might be kept on a Unix machine in the <EM CLASS="emphasis">
+/etc/hosts</em> file. If you are in doubt as to whether a DNS server is being used, or what its address might be, look at the file <EM CLASS="emphasis">
+/etc/resolv.conf</em> on your Unix servers. Any machine using DNS will have this file, which looks like:</p><PRE CLASS="programlisting">
+#resolv.conf
+domain example.com
+nameserver 127.0.0.1
+nameserver 192.168.236.20</pre><P CLASS="para">
+In the example shown, the second <CODE CLASS="literal">
+nameserver</code> line in the list contains the IP address of another machine on the local network: 192.168.236.20. It's a good candidate for a DNS server.[<A CLASS="footnote" HREF="#ch03-pgfId-942097">1</a>]</p><BLOCKQUOTE CLASS="footnote">
+<DIV CLASS="footnote">
+<P CLASS="para">
+<A CLASS="footnote" NAME="ch03-pgfId-942097">[1]</a> We can disqualify the other address because every Unix machine has a localhost address of 127.0.0.1 whether it is connected to a network or not. This address is required for some system tools to operate correctly.</p></div></blockquote><P CLASS="para">
+You must type the correct IP address of one or more DNS servers (note that you <EM CLASS="emphasis">
+cannot</em> use its Internet name, such as <EM CLASS="emphasis">
+dns.oreilly.com</em>) into the appropriate field in <A CLASS="xref" HREF="ch03_01.html#ch03-86883">
+Figure 3.10</a>. Be sure not to use 127.0.0.1&nbsp;- that will never be the correct DNS server address!</p><P CLASS="para">
+Try to select addresses on your own network. Any name servers listed in <EM CLASS="emphasis">
+/etc/resolv.conf</em> should work, but you'll get better performance by using a server nearby. (If you don't find <EM CLASS="emphasis">
+/etc/resolv.conf</em> files on your Unix machines, just disable DNS until you can find the address of at least one DNS server.) Let's assume you only have one DNS server, and its address is 192.168.236.20. Click the Enable DNS radio button, as shown in <A CLASS="xref" HREF="ch03_01.html#ch03-86883">
+Figure 3.10</a>, and add the server's address to the top DNS Server Search Order field. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-86883">
+Figure 3.10: The DNS Configuration tab</a></h4><IMG CLASS="graphic" SRC="figs/sam.0310.gif" ALT="Figure 3.10"><P CLASS="para">
+Also, provide the name of the Windows 95/98 machine and the Internet domain you're in. You can safely ignore the Domain Suffix Search Order field for anything related to Samba.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942117">
+3.1.2.5 WINS Configuration tab</a></h4><P CLASS="para">WINS is the Windows Internet Name Service, its version of a NetBIOS name server. If you've enabled WINS on Samba, you must tell Windows the Samba server's address. If you are using WINS servers that are entirely Windows NT, enter each of them here as well. The dialog box shown after selecting the WINS Configuration tab is shown in <A CLASS="xref" HREF="ch03_01.html#ch03-95608">
+Figure 3.11</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-95608">
+Figure 3.11: The WINS Configuration tab</a></h4><IMG CLASS="graphic" SRC="figs/sam.0311.gif" ALT="Figure 3.11"><BLOCKQUOTE CLASS="warning">
+<P CLASS="para">
+<STRONG>
+WARNING:</strong> Do <EM CLASS="emphasis">
+not</em> mix a Samba WINS server and a Windows NT server as a primary/backup combination in the WINS dialog. Because the two cannot replicate their databases, this will cause name resolution to perform incorrectly.</p></blockquote><P CLASS="para">
+From here, select Enable WINS Resolution and enter the WINS server's address in the space provided, then press Add. Do not enter anything in the Scope ID field.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942134">
+3.1.2.6 Hosts files</a></h4><P CLASS="para">If you do not have either DNS or WINS, and you don't wish to use broadcast resolution, you'll need to provide a table of IP addresses and hostnames, in the standard Unix <I CLASS="filename">
+/etc/hosts</i> format. On a Windows machine, this goes in \WINDOWS\HOSTS under whichever drive you installed Windows on (typically C:\). A sample host file follows:</p><PRE CLASS="programlisting">
+# 127.0.0.1        localhost
+192.168.236.1      escrime.example.com 	escrime
+192.168.236.2      riposte.example.com 	riposte
+192.168.236.3      wizzin.example.com 	wizzin
+192.168.236.4      touche.example.com 	touche
+192.168.236.10     hobbes.example.com 	hobbes</pre><P CLASS="para">
+You can copy this file directly from any of your Unix machines' <EM CLASS="emphasis">
+/etc/hosts</em>; the format is identical. However, <EM CLASS="emphasis">
+you should only use hosts files in Windows as a last resort for name resolution</em>.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch03-pgfId-942143">
+3.1.2.7 Check the bindings</a></h4><P CLASS="para">
+The final tab to look at is Bindings, as shown in <A CLASS="xref" HREF="ch03_01.html#ch03-42906">
+Figure 3.12</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-42906">
+Figure 3.12: The Bindings tab</a></h4><IMG CLASS="graphic" SRC="figs/sam.0312.gif" ALT="Figure 3.12"><P CLASS="para">
+You should have a check beside Client for Microsoft Networks, indicating that it's using TCP/IP. If you have "File and printer sharing for Microsoft Networks" in the dialog, it should also be checked, as shown in the figure. </p></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch03-48802">
+3.1.3 Setting Your Name and Workgroup </a></h3><P CLASS="para">Finally, press the OK button in the TCP/IP configuration panel, and you'll be taken back to the Network Configuration screen. Then select the Identification tab, which will take you to the dialog box shown in <A CLASS="xref" HREF="ch03_01.html#ch03-42408">
+Figure 3.13</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-42408">
+Figure 3.13: The Identification tab</a></h4><IMG CLASS="graphic" SRC="figs/sam.0313.gif" ALT="Figure 3.13"><P CLASS="para">
+Here, for the second time, set your machine's name. This time, instead of your DNS hostname and domain, you're setting your NetBIOS name. However, it is best to make this the <EM CLASS="emphasis">
+same</em> as your hostname. Try not to make a spelling mistake: it can be very confusing to configure a machine if TCP thinks it's <CODE CLASS="literal">
+fred</code> and SMB thinks its <CODE CLASS="literal">
+ferd</code> !</p><P CLASS="para">
+You also set your workgroup name here. In our case, it's SIMPLE, but if you used a different one in <a href="ch02_01.html"><b>Chapter 2, <CITE CLASS="chapter">Installing Samba on a Unix System</cite></b></a>, when creating the Samba configuration file, use that here as well. Try to avoid calling it WORKGROUP or you'll be in the same workgroup as every unconfigured (or ill-configured) machine in the world. </p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch03-13238">
+3.1.4 Accessing the Samba Server</a></h3><P CLASS="para">Click on the OK button to complete the configuration; you will need to reboot in order for your changes to take effect. </p><P CLASS="para">
+Now for the big moment. Your Samba server is running, and you have set up your Windows 95/98 client to communicate with it. After rebooting, log in and double-click the Network Neighborhood icon on the desktop. You should see your Samba server listed as a member of the workgroup, as shown in <A CLASS="xref" HREF="ch03_01.html#ch03-88553">
+Figure 3.14</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-88553">
+Figure 3.14: Windows Network Neighborhood</a></h4><IMG CLASS="graphic" SRC="figs/sam.0314.gif" ALT="Figure 3.14"><P CLASS="para">
+Double-clicking the server name will show the resources that the server is offering to the network, as shown in <A CLASS="xref" HREF="ch03_01.html#ch03-17463">
+Figure 3.15</a> (in this case a printer and the <EM CLASS="emphasis">
+test </em>directory).    </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch03-17463">
+Figure 3.15: Shares on Server</a></h4><IMG CLASS="graphic" SRC="figs/sam.0315.gif" ALT="Figure 3.15"><BLOCKQUOTE CLASS="warning">
+<P CLASS="para">
+<STRONG>
+WARNING:</strong> If you are presented with a dialog requesting the password for a user <CODE CLASS="literal">
+IPC$</code>, then Samba did not accept the password that was sent from the client. In this case, the username and the password that were created on the client side <EM CLASS="emphasis">
+must</em> match the username/password combination on the Samba server. If you are using Windows 98 or Windows NT Service Pack 3 or above, this is probably because the client is sending encrypted passwords instead of plaintext passwords. You can remedy this situation by performing two steps on the Samba server. First, add the following entry to the <CODE CLASS="literal">
+[global]</code> section of your Samba configuration file: <CODE CLASS="literal">
+encrypt password=yes</code>. Second, find the <I CLASS="filename">
+smbpasswd</i> program on the samba server (it is located in <I CLASS="filename">
+/usr/local/samba/bin</i> by default) and use it to add an entry to Samba's encrypted password database. For example, to add user <CODE CLASS="literal">
+steve</code> to Samba's encrypted password database, type <CODE CLASS="replaceable">
+<I>
+smbpasswd  -a steve</i></code>. The first time you enter this password, the program will output an error message indicating that the password database does not exist; it will then create the database, which is typically stored in <I CLASS="filename">
+/usr/local/samba/private/smbpasswd</i>.</p></blockquote><P CLASS="para">
+If you don't see the server listed, start Windows Explorer (not Internet Explorer!) and select Map Network Drive from the Tools menu. This will give you a dialog box into which you can type the name of your server and the share <CODE CLASS="literal">
+test </code>in the Windows UNC format: <I CLASS="filename">\\</i><CODE CLASS="replaceable"><I>server</i></code><I CLASS="filename">\test</i>, like we did in the first chapter. This should attempt to contact the Samba server and its temporary share. If things still aren't right, go to <a href="ch09_01.html"><b>Chapter 9, <CITE CLASS="chapter">Troubleshooting Samba</cite></b></a>, for troubleshooting assistance. </p></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_06.html" TITLE="2.6 Testing the Samba Daemons">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 2.6 Testing the Samba Daemons" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch03_02.html" TITLE="3.2 Setting Up Windows NT 4.0 Computers">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 3.2 Setting Up Windows NT 4.0 Computers" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+2.6 Testing the Samba Daemons</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+3.2 Setting Up Windows NT 4.0 Computers</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

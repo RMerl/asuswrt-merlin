@@ -1,0 +1,143 @@
+This directory contains a set of scripts which have been used on Linux
+as well as Solaris 2.x systems to initiate or maintain a connection 
+with PPP.  The files in this directory were contributed by Al Longyear 
+(longyear@netcom.com) and Adi Masputra (adi.masputra@sun.com)
+
+------------------------------------------------------------------------
+
+1. README
+
+This file. You are reading it. It is just documentation.
+
+------------------------------------------------------------------------
+
+2. ppp-on
+
+This script will initiate a connection to the PPP system. It will run
+the chat program with the connection script as a parameter. This is a
+possible security hole. However, it is simple. It is meant to replace
+the previous version of ppp-on which was not very functional.
+
+The ppp-on script has entries for the account name, password, IP
+addresses, and telephone numbers. The parameters are passed to the
+pppd process and, then in turn, to the second part of the connect
+script, as a set of environment variables.
+
+Please make sure that you put the full path name to the ppp-on-dialer
+script in the reference to it in ppp-on.
+
+------------------------------------------------------------------------
+
+3. ppp-on-dialer
+
+This is the second part to the simple calling script, ppp-on.  It
+executes the chat program to connect the user with a standard UNIX
+style getty/login connection sequence.
+
+------------------------------------------------------------------------
+
+4. callback
+
+This script may be used in lieu of the ppp-on-dialer to permit the
+common modem callback sequence. You may need to make changes to the
+expected prompt string for the modem.
+
+The script works by disabling the system's detection of the DCD
+condition and working on the modem status message "NO CARRIER" which
+is generated when the modem disconnects.
+
+It is crude. It does work for my modem connection. Use as you see fit.
+
+------------------------------------------------------------------------
+
+5. redialer
+
+The redialer script is a replacement for the ppp-on-dialer script.  It
+will do 'attack dialing' or 'demon dialing' of one or more telephone
+numbers. The first number which responds will be used for a
+connection.
+
+There is a limit of ten attempts and a 15 second delay between dialing
+attempts. Both values are set in the script.
+
+------------------------------------------------------------------------
+
+6. ppp-off
+
+This is a script which will terminate the active ppp connection. Use
+as either "ppp-off" to terminate ppp0, or "ppp-off <device>" to
+terminate the connection on <device>. For example, "ppp-off ppp2" will
+terminate the ppp2 connection.
+
+------------------------------------------------------------------------
+
+7. secure-card
+
+This script was written by Jim Isaacson <jcisaac@crl.com>. It is a script
+for the 'expect' programming language used with Tcl. You need to have
+expect and Tcl installed before this script may be used.
+
+This script will operate with a device marketed under the name "SecureCARD".
+This little device is mated with its controller. On the credit card size
+device, there is a sequence number which changes on a random basis. In order
+for you to connect you need to enter a fixed portion of your account name
+and the number which is displayed on this card device. The number must match
+the value at the controller in order for the account name to be used.
+
+The problem is that chat uses fixed response strings. In addition, the
+timing for running the script may prevent the use of a script that reads the
+value before it starts the dial sequence. What was needed was a script which
+asked the user at the user's console at the time that it is needed.
+
+This led to the use of expect.
+
+------------------------------------------------------------------------
+
+8. ppp-on-rsh
+
+This script will initiate a PPP connection to a remote machine using rsh.
+This is implemented by creating a master/slave pseudo-tty with the slave 
+pointing to rsh, specifically with the 'pty' and 'notty' options of pppd. 
+It is assumed that the remote machine contains some sort of trust 
+mechanisms (such as ~/.rhosts, et al) to allow the local machine to 
+connect via rsh as root.
+
+------------------------------------------------------------------------
+
+9. ppp-on-ssh
+
+This script will initiate a PPP connection to a remote machine using the 
+secure shell, or ssh. I've only tested this on ssh 1.x, so those of you 
+who are running ssh 2.x mahy need to modify the ssh options slightly.
+This is implemented by creating a master/slave pseudo-ttyt with the slave 
+pointing to ssh, specifically with the 'pty' and 'notty' options of pppd. 
+It is assumed that the remote machine can accept the ssh connection from 
+the local host, in the sense that all ssh authentication mechanisms have 
+been properly configured, so that a remote root user can open a ssh 
+connection.
+
+------------------------------------------------------------------------
+
+10. options-rsh-loc & options-rsh-rem
+
+These options files accompany the ppp-on-rsh script mentioned above. In 
+theory, you'd want to copy the options-rsh-rem to the remote machine where 
+in.rshd is running. The only extra option required on the remote machine 
+options file is the 'notty' option. In addition, all ASCII control characters 
+[0x00 to 0x1f], plus 0xff, are escaped. This may need to be modified 
+depending on the rsh (or pseudo-tty) implementation which may differ across 
+platforms, for further optimizations.
+
+------------------------------------------------------------------------
+
+11. options-ssh-loc & options-ssh-rem
+
+These options files accompany the ppp-on-ssh script mentioned above. I've
+only tested this on ssh 1.x, so those of you who are running ssh 2.x need
+to modify the ssh options slightly. In theory, you'd want to copy the 
+options-ssh-rem to the remote machine where sshd daemon is running. The only 
+extra options required on the remote machine options file is the 'notty' 
+option. In addition, all ASCII control characters [0x00 to 0x1f], plus 0xff, 
+are escaped. This may need to be modified depending on the ssh (or 
+pseudo-tty) implementation which may differ across platforms, for further 
+optimizations.

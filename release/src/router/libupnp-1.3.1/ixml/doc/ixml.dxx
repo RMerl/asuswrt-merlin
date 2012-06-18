@@ -1,0 +1,15 @@
+/**@name IXML v1.2 
+ * \begin{center}
+ *   {\bf Linux DOM2 XML Parser Version 1.2}
+ * 
+ *   Copyright (C) 2000-2003 Intel Corporation  ALL RIGHTS RESERVED
+ *
+ *   Revision 1.2.1 (\Date)
+ * \end{center}
+ */
+//@{
+  //@Include: intro.dxx
+  //@Include: license.dxx 
+  //@Include: ../inc/ixml.h
+//@}
+

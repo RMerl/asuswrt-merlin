@@ -1,0 +1,187 @@
+.\"
+.\"
+.\"   Authors:
+.\"    Lars Fenneberg		<lf@elemental.net>	 
+.\"
+.\"   This software is Copyright 1996-2000 by the above mentioned author(s), 
+.\"   All Rights Reserved.
+.\"
+.\"   The license which is distributed with this software in the file COPYRIGHT
+.\"   applies to this software. If your distribution is missing this file, you
+.\"   may request it from <pekkas@netcore.fi>.
+.\"
+.\"
+.\"
+.TH RADVD 8 "14 Dec 2010" "radvd @VERSION@" ""
+.SH NAME
+radvd \- router advertisement daemon for IPv6
+.SH SYNOPSIS
+.B radvd
+.B "[ \-hsvc ]"
+.BI "[ \-d " debuglevel " ]"
+.BI "[ \-C " configfile " ]"
+.BI "[ \-p " pidfile " ]"
+.BI "[ \-m " logmethod " ]"
+.BI "[ \-l " logfile " ]"
+.BI "[ \-f " facility " ]"
+.BI "[ \-t " chrootdir " ]"
+.BI "[ \-u " username " ]"
+
+.SH DESCRIPTION
+.B radvd
+is the router advertisement daemon for IPv6. It listens to router
+solicitations and sends router advertisements as described in
+"Neighbor Discovery for IP Version 6 (IPv6)" (RFC 4861).
+With these advertisements hosts can automatically configure their
+addresses and some other parameters. They also can choose a default
+router based on these advertisements.
+
+Note that if debugging is not enabled,
+.B radvd
+will not start if IPv6 forwarding is disabled.  IPv6 forwarding can be
+controlled via sysctl(8),
+.B net.ipv6.conf.all.forwarding
+on Linux or
+.B net.inet6.ip6.forwarding
+on BSD.
+
+Similarly, the configuration file must not be writable by others, and if
+non-root operation is requested, not even by self/own group.
+
+.SH OPTIONS
+
+For every one character option there is also a long option, which
+is listed right next to the "short" option name:
+
+.TP
+.BR "\-v" , " \-\-version"
+Displays the version of
+.I radvd
+and then aborts.
+.TP
+.BR "\-h" , " \-\-help"
+Displays a short usage description and then aborts.
+.TP
+.BR "\-s" , " \-\-singleprocess"
+On Linux if 
+.I username
+is specified, privilege separation is enabled and there will be
+two processes.
+This option disables privilege separation, and as a result,
+the non-privileged radvd process does not have permissions to
+change interface configuration.
+.TP
+.BR "\-c" , " \-\-configtest"
+Test configuration and do startup tests and then exit.
+.TP
+.BR "\-d " debuglevel, " \-\-debug " debuglevel
+With this option you turn on debugging information. The debugging level is
+an integer in the range from 1 to 5, from  quiet to very verbose. A
+debugging level of 0 completely turns off debugging. If a debugging level 
+greater than 0 is used,
+.I radvd
+doesn't background itself on start. The default debugging level is 0.
+.TP
+.BR "\-C " configfile, " \-\-config " configfile
+Specifies an alternate config file. Normally the compiled in default
+.I @PATH_RADVD_CONF@
+is used.
+.TP
+.BR "\-p " pidfile, " \-\-pidfile " pidfile
+Specifies an alternate pidfile. Normally the compiled in default
+.I @PATH_RADVD_PID@
+is used.
+.TP
+.BR "\-m " method, " \-\-logmethod " method
+Specifies the logging method to use. Possibly values are:
+.RS
+.TP
+.B none
+Completely disables any logging.
+.TP
+.B logfile
+Logs to the logfile which is specified by the
+.I \-l
+option. If no logfile is specified on the command line, then
+a compiled in default is used (see next option).
+.TP
+.B stderr
+Logs to standard error.
+.TP
+.B stderr_syslog
+Logs only the high messages (of at least LOG_ERR priority) to standard
+error, and everything to syslog (default method).
+.TP
+.B syslog
+Logs to syslog.
+.RE
+.PP
+.TP
+.BR "\-l " logfile, " \-\-logfile " logfile
+Specifies the logfile to use when using the logging method
+.IR logfile .
+The default logfile is
+.IR @PATH_RADVD_LOG@ .
+.TP
+.BR "\-f " facility, " \-\-facility " facility
+Specifies the facility (as an integer) when using syslog logging. Default
+is @LOG_FACILITY@.
+.TP
+.BR "\-t " chrootdir, " \-\-chrootdir " chrootdir
+If specified, switches to 
+.I chrootdir
+before doing anything else.  This directory and its
+subdirectories must have been populated first.
+For security reasons,
+.I \-u 
+must always be used when using
+.IR chrootdir .
+
+Note that on Linux
+.I radvd
+requires access to the
+.I /proc
+filesystem,
+so it is more challenging to set up the chroot environment.
+.TP
+.BR "\-u " username, " \-\-username " username
+If specified, drops root privileges and changes user ID to
+.I username
+and group ID to the primary group of
+.IR username .
+This is recommended for security reasons.
+You might also need to use
+.I \-p
+to point to a file in a
+.I username
+-writable directory (e.g. /var/run/radvd/radvd.pid).
+.SH FILES
+
+.nf
+@sbindir@/radvd
+@PATH_RADVD_CONF@
+@PATH_RADVD_PID@
+@PATH_RADVD_LOG@
+.fi
+.SH BUGS
+
+There certainly are some bugs. If you find them or have other
+suggestions please contact Pekka Savola <pekkas@netcore.fi>.
+
+.SH "SEE ALSO"
+
+.BR radvd.conf (5),
+.BR radvdump (8)
+.SH AUTHORS
+
+.nf
+Pedro Roque	<roque@di.fc.ul.pt>	- wrote first version for Linux
+Lars Fenneberg	<lf@elemental.net>	- previous maintainer
+Nathan Lutchansky	<lutchann@litech.org>	- previous maintainer
+Pekka Savola	<pekkas@netcore.fi>	- current maintainer
+Craig Metz	<cmetz@inner.net>	- port to NRL's IPv6 code for BSD4.4
+Marko Myllynen	<myllynen@lut.fi>	- RFC 2461 update, Mobile IPv6 support
+Jim Paris	<jim@jtan.com>		- Privilege separation support
+Reuben Hawkins  <reubenhwk@gmail.com>   - Many fixes and cleanups
+Pierre Ossman   <pierre@ossman.eu>      - RFC6106 (DNSSL) support
+.fi

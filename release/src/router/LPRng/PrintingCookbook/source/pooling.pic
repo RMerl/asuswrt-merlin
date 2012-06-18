@@ -1,0 +1,17 @@
+.PS
+C1: box wid 1.5 "lpr -Pmain";
+
+B1: box wid 1.5 "main" ":ss=s1,s2,s3" with .w at C1.e+(.5,0);
+
+P1: box wid 1.5 with .w at B1.e+(.5,0) "s1:";
+P2: box wid 1.5 with .n at P1.s+(0,-.5) "s2:";
+P3: box wid 1.5 with .n at P2.s+(0,-.5) "s2:";
+
+arrow from C1.e to B1.w;
+arrow from B1.e to P1.w;
+arrow from B1.e to P2.w;
+arrow from B1.e to P3.w;
+
+"All Queues on Same Server" ljust at C1.s+(0,-.5);
+
+.PE

@@ -1,0 +1,221 @@
+#
+# 22 August 2001  Steve Langasek <vorlon@debian.org>
+#
+# This file is a shell script that caches the results of configure
+# tests run on this system so they can be shared between configure
+# scripts and configure runs.  It is not useful on other systems.
+# If it contains results you don't want to keep, you may remove or edit it.
+#
+# By default, configure uses ./config.cache as the cache file,
+# creating it if it does not exist already.  You can give configure
+# the --cache-file=FILE option to use a different cache file; that is
+# what configure does when it calls configure scripts in
+# subdirectories, so they share the cache.
+# Giving --cache-file=/dev/null disables caching, for debugging configure.
+# config.status only pays attention to the cache file if you give it the
+# --recheck option to rerun configure.
+#
+#
+# This config.cache file contains a list of acceptable autoconf
+# values which can be used in compiling Samba for Debian woody/sid.
+#
+# Autoconf sorts options alphabetically in its output.  This file
+# groups options logically.
+
+
+# Load any architecture-specific settings
+if [ -n "$DEB_HOST_GNU_TYPE" \
+     -a -f ../debian/config.cache.${DEB_HOST_GNU_TYPE} ]; then
+	. ../debian/config.cache.${DEB_HOST_GNU_TYPE}
+fi
+
+
+# This is at the top because it's most in need of regular tweaking.
+# These are options which are supported on 2.4 kernels, but not on 2.2
+# kernels.
+
+samba_cv_HAVE_KERNEL_OPLOCKS_LINUX=${samba_cv_HAVE_KERNEL_OPLOCKS_LINUX=no}
+samba_cv_HAVE_KERNEL_CHANGE_NOTIFY=${samba_cv_HAVE_KERNEL_CHANGE_NOTIFY=no}
+samba_cv_HAVE_KERNEL_SHARE_MODES=${samba_cv_HAVE_KERNEL_SHARE_MODES=no}
+
+
+# These are present in 2.2 kernels, but not in 2.0...
+
+samba_cv_have_setresuid=${samba_cv_have_setresuid=yes}
+samba_cv_have_setresgid=${samba_cv_have_setresgid=yes}
+samba_cv_USE_SETRESUID=${samba_cv_USE_SETRESUID=yes}
+
+
+# Various basic libc/compiler stuff that it's blindingly obvious that
+# Linux supports (now watch me get bitten for saying that)
+
+ac_cv_c_const=${ac_cv_c_const=yes}
+ac_cv_c_inline=${ac_cv_c_inline=inline}
+samba_cv_volatile=${samba_cv_volatile=yes}
+ac_cv_dirent_d_off=${ac_cv_dirent_d_off=yes}
+ac_cv_func_bzero=${ac_cv_func_bzero=yes}
+ac_cv_func_chmod=${ac_cv_func_chmod=yes}
+ac_cv_func_chown=${ac_cv_func_chown=yes}
+ac_cv_func_chroot=${ac_cv_func_chroot=yes}
+ac_cv_func_connect=${ac_cv_func_connect=yes}
+ac_cv_func_dup2=${ac_cv_func_dup2=yes}
+ac_cv_func_execl=${ac_cv_func_execl=yes}
+ac_cv_func_fchmod=${ac_cv_func_fchmod=yes}
+ac_cv_func_fchown=${ac_cv_func_fchown=yes}
+ac_cv_func_fstat=${ac_cv_func_fstat=yes}
+ac_cv_func_fsync=${ac_cv_func_fsync=yes}
+ac_cv_func_ftruncate=${ac_cv_func_ftruncate=yes}
+ac_cv_func_getcwd=${ac_cv_func_getcwd=yes}
+ac_cv_func_getgrent=${ac_cv_func_getgrent=yes}
+ac_cv_func_getgrnam=${ac_cv_func_getgrnam=yes}
+ac_cv_func_getspnam=${ac_cv_func_getspnam=yes}
+ac_cv_func_glob=${ac_cv_func_glob=yes}
+ac_cv_func_grantpt=${ac_cv_func_grantpt=yes}
+ac_cv_func_initgroups=${ac_cv_func_initgroups=yes}
+ac_cv_func_llseek=${ac_cv_func_llseek=yes}
+ac_cv_func_memcmp_clean=${ac_cv_func_memcmp_clean=yes}
+ac_cv_func_memmove=${ac_cv_func_memmove=yes}
+ac_cv_func_memset=${ac_cv_func_memset=yes}
+ac_cv_func_mktime=${ac_cv_func_mktime=yes}
+ac_cv_func_pipe=${ac_cv_func_pipe=yes}
+ac_cv_func_poll=${ac_cv_func_poll=yes}
+ac_cv_func_pread=${ac_cv_func_pread=yes}
+ac_cv_func_pwrite=${ac_cv_func_pwrite=yes}
+ac_cv_func_rand=${ac_cv_func_rand=yes}
+ac_cv_func_random=${ac_cv_func_random=yes}
+ac_cv_func_readlink=${ac_cv_func_readlink=yes}
+ac_cv_func_rename=${ac_cv_func_rename=yes}
+ac_cv_func_select=${ac_cv_func_select=yes}
+ac_cv_func_setenv=${ac_cv_func_setenv=yes}
+ac_cv_func_setgroups=${ac_cv_func_setgroups=yes}
+ac_cv_func_setsid=${ac_cv_func_setsid=yes}
+ac_cv_func_sigaction=${ac_cv_func_sigaction=yes}
+ac_cv_func_sigblock=${ac_cv_func_sigblock=yes}
+ac_cv_func_sigprocmask=${ac_cv_func_sigprocmask=yes}
+ac_cv_func_snprintf=${ac_cv_func_snprintf=yes}
+ac_cv_func_srand=${ac_cv_func_srand=yes}
+ac_cv_func_srandom=${ac_cv_func_srandom=yes}
+ac_cv_func_strcasecmp=${ac_cv_func_strcasecmp=yes}
+ac_cv_func_strchr=${ac_cv_func_strchr=yes}
+ac_cv_func_strdup=${ac_cv_func_strdup=yes}
+ac_cv_func_strerror=${ac_cv_func_strerror=yes}
+ac_cv_func_strftime=${ac_cv_func_strftime=yes}
+ac_cv_func_strpbrk=${ac_cv_func_strpbrk=yes}
+ac_cv_func_strtoul=${ac_cv_func_strtoul=yes}
+ac_cv_func_symlink=${ac_cv_func_symlink=yes}
+ac_cv_func_usleep=${ac_cv_func_usleep=yes}
+ac_cv_func_utime=${ac_cv_func_utime=yes}
+ac_cv_func_utimes=${ac_cv_func_utimes=yes}
+ac_cv_func_vsnprintf=${ac_cv_func_vsnprintf=yes}
+ac_cv_func_waitpid=${ac_cv_func_waitpid=yes}
+ac_cv_type_ino_t=${ac_cv_type_ino_t=yes}
+ac_cv_type_mode_t=${ac_cv_type_mode_t=yes}
+ac_cv_type_pid_t=${ac_cv_type_pid_t=yes}
+ac_cv_type_size_t=${ac_cv_type_size_t=yes}
+ac_cv_type_uid_t=${ac_cv_type_uid_t=yes}
+samba_cv_socklen_t=${samba_cv_socklen_t=yes}
+
+# Yes, we know Linux supports fcntl locking.  Just ignore
+# any errors caused by building on an NFS mount.
+samba_cv_HAVE_FCNTL_LOCK=${samba_cv_HAVE_FCNTL_LOCK=yes}
+
+
+# smbwrapper doesn't work because the glibc maintainers don't want
+# to support transparent userland VFS.  We might as well preempt
+# any checks for shadowed symbols that are only useful for smbwrapper.
+
+ac_cv_func___chdir=${ac_cv_func___chdir=no}
+ac_cv_func__chdir=${ac_cv_func__chdir=no}
+ac_cv_func___close=${ac_cv_func___close=no}
+ac_cv_func__close=${ac_cv_func__close=no}
+ac_cv_func___closedir=${ac_cv_func___closedir=no}
+ac_cv_func__closedir=${ac_cv_func__closedir=no}
+ac_cv_func___dup=${ac_cv_func___dup=no}
+ac_cv_func__dup=${ac_cv_func__dup=no}
+ac_cv_func___dup2=${ac_cv_func___dup2=no}
+ac_cv_func__dup2=${ac_cv_func__dup2=no}
+ac_cv_func___fchdir=${ac_cv_func___fchdir=no}
+ac_cv_func__fchdir=${ac_cv_func__fchdir=no}
+ac_cv_func___fcntl=${ac_cv_func___fcntl=no}
+ac_cv_func__fcntl=${ac_cv_func__fcntl=no}
+ac_cv_func___fork=${ac_cv_func___fork=no}
+ac_cv_func__fork=${ac_cv_func__fork=no}
+ac_cv_func___fstat=${ac_cv_func___fstat=no}
+ac_cv_func__fstat=${ac_cv_func__fstat=no}
+ac_cv_func___fstat64=${ac_cv_func___fstat64=no}
+ac_cv_func__fstat64=${ac_cv_func__fstat64=no}
+ac_cv_func___fxstat=${ac_cv_func___fxstat=no}
+ac_cv_func___getcwd=${ac_cv_func___getcwd=no}
+ac_cv_func__getcwd=${ac_cv_func__getcwd=no}
+ac_cv_func___getdents=${ac_cv_func___getdents=no}
+ac_cv_func__getdents=${ac_cv_func__getdents=no}
+ac_cv_func___llseek=${ac_cv_func___llseek=no}
+ac_cv_func___sys_llseek=${ac_cv_func___sys_llseek=no}
+ac_cv_func__llseek=${ac_cv_func__llseek=no}
+ac_cv_func___lseek=${ac_cv_func___lseek=no}
+ac_cv_func__lseek=${ac_cv_func__lseek=no}
+ac_cv_func___lstat=${ac_cv_func___lstat=no}
+ac_cv_func__lstat=${ac_cv_func__lstat=no}
+ac_cv_func___lstat64=${ac_cv_func___lstat64=no}
+ac_cv_func__lstat64=${ac_cv_func__lstat64=no}
+ac_cv_func___lxstat=${ac_cv_func___lxstat=no}
+ac_cv_func___open=${ac_cv_func___open=no}
+ac_cv_func__open=${ac_cv_func__open=no}
+ac_cv_func___open64=${ac_cv_func___open64=no}
+ac_cv_func__open64=${ac_cv_func__open64=no}
+ac_cv_func___opendir=${ac_cv_func___opendir=no}
+ac_cv_func__opendir=${ac_cv_func__opendir=no}
+ac_cv_func___pread=${ac_cv_func___pread=no}
+ac_cv_func__pread=${ac_cv_func__pread=no}
+ac_cv_func___pread64=${ac_cv_func___pread64=no}
+ac_cv_func__pread64=${ac_cv_func__pread64=no}
+ac_cv_func___pwrite=${ac_cv_func___pwrite=no}
+ac_cv_func__pwrite=${ac_cv_func__pwrite=no}
+ac_cv_func___pwrite64=${ac_cv_func___pwrite64=no}
+ac_cv_func__pwrite64=${ac_cv_func__pwrite64=no}
+ac_cv_func___read=${ac_cv_func___read=no}
+ac_cv_func__read=${ac_cv_func__read=no}
+ac_cv_func___readdir=${ac_cv_func___readdir=no}
+ac_cv_func__readdir=${ac_cv_func__readdir=no}
+ac_cv_func___readdir64=${ac_cv_func___readdir64=no}
+ac_cv_func__readdir64=${ac_cv_func__readdir64=no}
+ac_cv_func___seekdir=${ac_cv_func___seekdir=no}
+ac_cv_func__seekdir=${ac_cv_func__seekdir=no}
+ac_cv_func___stat=${ac_cv_func___stat=no}
+ac_cv_func__stat=${ac_cv_func__stat=no}
+ac_cv_func___stat64=${ac_cv_func___stat64=no}
+ac_cv_func__stat64=${ac_cv_func__stat64=no}
+ac_cv_func___telldir=${ac_cv_func___telldir=no}
+ac_cv_func__telldir=${ac_cv_func__telldir=no}
+ac_cv_func___write=${ac_cv_func___write=no}
+ac_cv_func__write=${ac_cv_func__write=no}
+ac_cv_func___xstat=${ac_cv_func___xstat=no}
+
+
+
+# Miscellaneous stuff that isn't, and shouldn't be, available
+# in Debian.  Those interested in building debs for other systems may
+# need to remove some of these defines.
+
+ac_cv_func_bigcrypt=${ac_cv_func_bigcrypt=no}
+ac_cv_func_crypt16=${ac_cv_func_crypt16=no}
+ac_cv_func_getauthuid=${ac_cv_func_getauthuid=no}
+ac_cv_func_getprpwnam=${ac_cv_func_getprpwnam=no}
+ac_cv_func_getpwanam=${ac_cv_func_getpwanam=no}
+ac_cv_func_putprpwnam=${ac_cv_func_putprpwnam=no}
+ac_cv_func_rdchk=${ac_cv_func_rdchk=no}
+ac_cv_func_set_auth_parameters=${ac_cv_func_set_auth_parameters=no}
+ac_cv_func_setgidx=${ac_cv_func_setgidx=no}
+ac_cv_func_setluid=${ac_cv_func_setluid=no}
+ac_cv_func_setpriv=${ac_cv_func_setpriv=no}
+ac_cv_func_setuidx=${ac_cv_func_setuidx=no}
+ac_cv_lib_sec_bigcrypt=${ac_cv_lib_sec_bigcrypt=no}
+ac_cv_lib_sec_getprpwnam=${ac_cv_lib_sec_getprpwnam=no}
+ac_cv_lib_sec_getspnam=${ac_cv_lib_sec_getspnam=no}
+ac_cv_lib_sec_putprpwnam=${ac_cv_lib_sec_putprpwnam=no}
+ac_cv_lib_sec_set_auth_parameters=${ac_cv_lib_sec_set_auth_parameters=no}
+ac_cv_lib_security_bigcrypt=${ac_cv_lib_security_bigcrypt=no}
+ac_cv_lib_security_getprpwnam=${ac_cv_lib_security_getprpwnam=no}
+ac_cv_lib_security_getspnam=${ac_cv_lib_security_getspnam=no}
+ac_cv_lib_security_putprpwnam=${ac_cv_lib_security_putprpwnam=no}
+ac_cv_lib_security_set_auth_parameters=${ac_cv_lib_security_set_auth_parameters=no}

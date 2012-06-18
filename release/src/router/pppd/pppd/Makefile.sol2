@@ -1,0 +1,63 @@
+#
+# Makefile for pppd under Solaris 2.
+# $Id: Makefile.sol2,v 1.30 2008/01/30 14:26:52 carlsonj Exp $
+#
+
+include ../Makedefs.com
+
+CFLAGS	=  -I../include -DSVR4 -DSOL2 $(COPTS) '-DDESTDIR="@DESTDIR@"'
+LIBS	= -lsocket -lnsl
+
+OBJS	=  main.o magic.o fsm.o lcp.o ipcp.o upap.o chap-new.o eap.o md5.o \
+	tty.o ccp.o ecp.o auth.o options.o demand.o utils.o sys-solaris.o \
+	chap-md5.o session.o
+
+# Solaris uses shadow passwords
+CFLAGS	+= -DHAS_SHADOW
+
+#
+# Comment the following out to disable plugins
+#
+CFLAGS	+= -DPLUGIN
+LIBS	+= -ldl
+
+#
+# Solaris 8 and above accomodates /var/run, so uncomment the
+# following to place pppd process IDs on that location
+#
+#CFLAGS += -D_PATH_VARRUN='"/var/run/"'
+
+#
+# uncomment the following to enable IPv6
+#
+# Solaris 8 and on includes support for IPv6
+#
+#CFLAGS	+= -DINET6
+#OBJS	+= ipv6cp.o eui64.o
+
+# Uncomment to enable MS-CHAP
+#CFLAGS += -DUSE_CRYPT -DCHAPMS -DMSLANMAN -DHAVE_CRYPT_H
+#OBJS += chap_ms.o pppcrypt.o md4.o sha1.o
+
+# Uncomment for CBCP
+#CFLAGS += -DCBCP_SUPPORT
+#OBJS += cbcp.o
+
+# Uncomment for PAM
+#CFLAGS += -DUSE_PAM
+#LIBS += -lpam
+
+#
+# Make targets
+#
+all: pppd
+
+pppd:	$(OBJS)
+	$(CC) -o pppd $(OBJS) $(LIBS)
+
+install:
+	$(INSTALL) -f $(BINDIR) -m 4755 -u root pppd
+	$(INSTALL) -f $(MANDIR)/man8 -m 444 pppd.8
+
+clean:
+	rm -f $(OBJS) pppd *~ core y.tab.c y.tab.h

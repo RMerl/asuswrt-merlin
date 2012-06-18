@@ -1,0 +1,144 @@
+		Announcing Samba version 2.0
+		============================
+
+What is Samba?
+--------------
+
+Samba is a SMB file server that runs on Unix and other operating
+systems.  It allows these operating systems (currently Unix, Netware,
+OS/2 and AmigaDOS) to act as a file and print server for SMB and CIFS
+clients. There are many Lan-Manager compatible clients such as
+LanManager for DOS, Windows for Workgroups, Windows NT, Windows 95,
+Linux smbfs, OS/2, Pathworks and more.
+
+The package also includes a SMB client for accessing other SMB servers,
+and an advanced netbios/WINS nameserver for browsing support.
+
+What can it do for me?
+----------------------
+
+If you have any PCs running SMB clients, such as a PC running Windows
+for Workgroups, then you can mount file space or printers on a Samba
+host, so that directories, files and printers on the host are
+available on the PC.
+
+If you have any SMB servers such as Windows NT Server, Warp Server or
+Pathworks you may be able to replace them by or supplement them with
+Samba. One of Samba's big strengths is integration, so you can use it
+to tie together your Unix (or VMS etc) hosts and PC clients. If you
+are tired of the insecurity, expense and instability of PCNFS then Samba 
+may be for you.
+
+The client part of the package will also allow you to attach to other
+SMB-based servers (such as windows NT and windows for workgroups) so
+that you can copy files to and from your unix host. The client also
+allows you to access a SMB printer (such as one attached to an OS/2 or
+WfWg server) from Unix, using an entry in /etc/printcap, or by
+explicitly specifying the command used to print files.
+
+What are its features?
+------------------------
+
+Samba supports many features that are not supported in other SMB
+implementations (all of which are commercial). These include host as
+well as username/password security, a client, automatic home directory
+exporting, automatic printer exporting, dead connection timeouts,
+umask support, guest connections, name mangling and hidden and system
+attribute mapping. Look at the FAQs included with the package for
+a full list of features.
+
+What's new since 1.9?
+---------------------
+
+Lots of stuff. See the change log and man pages for details.
+In particular, please check the WHATSNEW.txt file in the root directory
+of each release. This file has current change/update information.
+
+Where can I get a client for my PC?
+-----------------------------------
+
+There is a free client for MS-DOS based PCs available from
+ftp.microsoft.com in the directory bussys/Clients/MSCLIENT/. Please
+read the licencing information before downloading. The add-on 32-bit
+TCP/IP Windows for Workgroups client is also very good. Windows 95,
+Windows NT and OS/2 come with suitable clients by default.
+
+What network protocols are supported?
+-------------------------------------
+
+Currently only TCP/IP is supported. There has been some discussion
+about ports to other protocols but nothing is yet available.
+
+There is a free TCP/IP implementation for Windows for Workgroups
+available from ftp.microsoft.com (it's small, fast and quite reliable). 
+
+How much does it cost?
+----------------------
+
+Samba software is free software. It is available under the
+GNU Public licence in source code form at no cost. Please read the
+file COPYING that comes with the package for more information.
+
+What operating systems does it support?
+---------------------------------------
+
+The code has been written to be as portable as possible. It has been
+"ported" to many unixes, which mostly required changing only a few
+lines of code. It has been run (to my knowledge) on at least these
+unixes:
+
+Linux, SunOS, Solaris, SVR4, Ultrix, OSF1, AIX, BSDI, NetBSD,
+Sequent, HP-UX, SGI, FreeBSD, NeXT, ISC, A/UX, SCO, Intergraph,
+Silicon Graphics Inc., Domain/OS and DGUX.
+
+Some of these have received more testing than others. If it doesn't
+work with your unix then it should be easy to fix. It has also been ported
+to Netware, OS/2 and the Amiga. A VMS port is available too. See the web site
+for more details.
+
+Who wrote it?
+-------------
+
+Many people on the internet have contributed to the development of
+Samba. The maintainer and original author is Andrew Tridgell, but
+large parts of the package were contributed by several people from all
+over the world. Please look at the file `change-log' for information
+on who did what bits.
+
+Where can I get it?
+-------------------
+
+The package is available via anonymous ftp from samba.org in
+the directory pub/samba/. 
+
+What about SMBServer?
+---------------------
+
+Samba used to be known as SMBServer, until it was pointed out that
+Syntax, who make a commercial Unix SMB based server, have trademarked
+that name. The name was then changed to Samba. Also, in 1992 a very
+early incarnation of Samba was distributed as nbserver.
+
+If you see any copies of nbserver or smbserver on ftp sites please let
+me or the ftp archive maintainer know, as I want to get them deleted.
+
+Where can I get more info?
+---------------------------
+
+Please join the mailing list if you want to discuss the development or
+use of Samba. To join the mailing list send mail to
+listproc@listproc.anu.edu.au with a body of "subscribe samba Your
+Name".
+
+There is also an announcement mailing list for new version
+announcements. Subscribe as above but with "subscribe samba-announce
+Your Name".
+
+There is also often quite a bit of discussion about Samba on the
+newsgroup comp.protocols.smb.
+
+A WWW site with lots of Samba info can be found at 
+http://samba.org/samba/
+
+The Samba Team (Contact: samba@samba.org)
+June 1996

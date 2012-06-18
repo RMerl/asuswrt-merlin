@@ -1,0 +1,22 @@
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1995 Patrick Powell, San Diego State University
+#     papowell@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: TESTSUPPORT/lpd_printcap.proto
+# PURPOSE: printcap prototype
+# lpd_printcap.proto,v 3.1 1996/12/28 21:40:46 papowell Exp
+########################################################################## 
+#
+# The following entry is used in a database to specify the
+# name of a remote printer.
+#
+#start t3
+t3:lp=t2@_HOST_:
+	:sd=_TMP_LPD/t3
+	:bqfilter:if=_TMP_LPD/bqfilter
+#	:db=9
+#end t3

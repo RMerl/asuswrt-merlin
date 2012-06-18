@@ -1,0 +1,150 @@
+﻿<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="shortcut icon" href="images/favicon.png">
+<link rel="icon" href="images/favicon.png">
+<script type="text/javascript">
+var page_modified = 0;
+var restart_time = 0;
+
+var current_page = '<% get_parameter("current_page"); %>';
+var next_page = '<% get_parameter("next_page"); %>';
+var action_script = '<% get_parameter("action_script"); %>';
+var action_mode = '<% get_parameter("action_mode"); %>';
+var action_wait = '<% get_parameter("action_wait"); %>';
+var group_id = '<% get_parameter("group_id"); %>';
+var getflag = '<% get_parameter("flag"); %>';
+var next_sw_mode = '<% get_parameter("sw_mode"); %>';
+
+function started_validating(){
+}
+
+function done_validating(action){
+	parent.done_validating(action, group_id);
+}
+
+function started_committing(){
+}
+
+function done_committing(){
+	page_modified = 1;
+}
+
+function no_changes_and_no_committing(){
+}
+
+function invalid_variable_value(variable, bad_value, message){
+}
+
+function restart_needed_time(second){
+	restart_time = second;
+}
+
+function delay_redirect(next_url){
+	document.redirectForm.action = next_url;
+	document.redirectForm.target = "";
+	document.redirectForm.submit();
+}
+
+function top_delay_redirect(next_url){
+	document.redirectForm.action = next_url;
+	document.redirectForm.target = "_parent";
+	document.redirectForm.submit();
+}
+
+function showdr_advise(setting){
+	if(parent.parent.document.forms[0].current_page.value == "/QIS_wizard.htm"
+			&& parent.parent.document.forms[0].wan_route_x.value == "IP_Bridged"
+			&& parent.parent.document.forms[0].wan_nat_x.value == "0"){
+		parent.parent.$('drword').innerHTML = "<#DrSurf_sweet_advise1#><br/><br/>";
+		setTimeout("parent.parent.$('drword').innerHTML = '<#DrSurf_sweet_advise3#><br/><br/>'", 10000);
+		setTimeout("parent.parent.detectLANstatus('"+next_page+"', '"+getflag+"');", restart_time*1000);
+	}
+	else if(setting == "finish"){
+		parent.parent.$('drword').innerHTML = "<#DrSurf_sweet_advise1#><br/><br/>";
+		parent.parent.detectLANstatus(next_page, getflag);
+	}
+	else{
+		parent.parent.$('drword').innerHTML = "<#DrSurf_sweet_advise1#><br/><br/>";
+		setTimeout("parent.parent.detectLANstatus('"+next_page+"', '"+getflag+"');", restart_time*1000);
+	}
+}
+
+function qis_delay_redirect(next_url){
+	parent.parent.document.redirectForm.action = next_url;
+	parent.parent.document.redirectForm.target = "contentM";
+	parent.parent.document.redirectForm.submit();
+}
+
+function initial(){
+	if(getflag == "sitesurvey"){
+		parent.setTimeout("update_site_info();", 1000);
+	}
+	else if(getflag == "wlcconnect"){
+		parent.errCount = 0;
+		parent.parent.$("LoadingBar").style.visibility = "visible";
+		parent.parent.showLoadingBar(parent.waitingTime);
+		parent.setTimeout("update_site_info();", parseInt(parent.waitingTime)*1000);
+	}
+	else if(page_modified == 1){
+		if(parent.parent.isWLclient()){
+			parent.parent.dr_advise();
+			setTimeout("showdr_advise();", 10000);
+		}
+		else if(getflag == "finish"){
+			if(parent.$("hidden_frame")){			
+				setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000);
+			}
+			else{
+				parent.parent.showLoading(restart_time, "waiting");
+				setTimeout("showdr_advise('finish');", (restart_time+1)*1000);
+			}
+		}
+		else if(getflag == "adv_ap_mode"){
+			parent.parent.$('drword').innerHTML = "<#LANConfig_ChangedLANIP#>";
+			setTimeout("parent.parent.hideLoading();	",15000);
+			setTimeout("parent.parent.dr_advise();",15000);
+		}
+		else{
+			parent.showLoading(restart_time);
+			if(navigator.userAgent.indexOf("Safari")  >= 0)
+				setTimeout("parent.parent.location.href='"+next_page+"';", restart_time*1000);
+			else
+				setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
+		}
+	}
+	else if(action_script == "reboot"){
+		parent.showLoading(restart_time);
+		setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
+	}
+	else{
+		
+		if(next_page == "/QIS_wizard.htm"){
+			if(navigator.userAgent.indexOf("Opera")  >= 0)
+					setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000);
+			else	
+					setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
+		}
+		else{
+			parent.parent.location.href = next_page;
+		}
+	}
+}
+</script>
+</head>
+
+<body onload="initial();">
+<form method="post" name="redirectForm" action="" target="">
+<input type="hidden" name="flag" value='<% get_parameter("flag"); %>'>
+</form>
+
+<% update_variables(); %>
+<% convert_asus_variables(); %>
+<% asus_nvram_commit(); %>
+<% notify_services(); %>
+
+</body>
+</html>

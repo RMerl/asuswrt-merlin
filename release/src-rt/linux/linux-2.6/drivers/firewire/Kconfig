@@ -1,0 +1,82 @@
+# -*- shell-script -*-
+
+comment "An alternative FireWire stack is available with EXPERIMENTAL=y"
+	depends on EXPERIMENTAL=n
+
+config FIREWIRE
+	tristate "IEEE 1394 (FireWire) support - alternative stack, EXPERIMENTAL"
+	depends on EXPERIMENTAL
+	select CRC_ITU_T
+	help
+	  This is the "Juju" FireWire stack, a new alternative implementation
+	  designed for robustness and simplicity.  You can build either this
+	  stack, or the classic stack (the ieee1394 driver, ohci1394 etc.)
+	  or both.
+
+	  To compile this driver as a module, say M here: the module will be
+	  called firewire-core.  It functionally replaces ieee1394, raw1394,
+	  and video1394.
+
+          NOTE:
+
+	  You should only build ONE of the stacks, unless you REALLY know what
+	  you are doing.  If you install both, you should configure them only as
+	  modules rather than link them statically, and you should blacklist one
+	  of the concurrent low-level drivers in /etc/modprobe.conf.  Add either
+
+	      blacklist firewire-ohci
+	  or
+	      blacklist ohci1394
+
+	  there depending on which driver you DON'T want to have auto-loaded.
+	  You can optionally do the same with the other IEEE 1394/ FireWire
+	  drivers.
+
+	  If you have an old modprobe which doesn't implement the blacklist
+	  directive, use either
+
+	       install firewire-ohci /bin/true
+	  or
+	       install ohci1394 /bin/true
+
+	  and so on, depending on which modules you DON't want to have
+	  auto-loaded.
+
+config FIREWIRE_OHCI
+	tristate "Support for OHCI FireWire host controllers"
+	depends on PCI && FIREWIRE
+	help
+	  Enable this driver if you have a FireWire controller based
+	  on the OHCI specification.  For all practical purposes, this
+	  is the only chipset in use, so say Y here.
+
+	  To compile this driver as a module, say M here:  The module will be
+	  called firewire-ohci.  It replaces ohci1394 of the classic IEEE 1394
+	  stack.
+
+          NOTE:
+
+	  If you also build ohci1394 of the classic stack, blacklist either
+	  ohci1394 or firewire-ohci to let hotplug load only the desired driver.
+
+config FIREWIRE_SBP2
+	tristate "Support for storage devices (SBP-2 protocol driver)"
+	depends on FIREWIRE && SCSI
+	help
+	  This option enables you to use SBP-2 devices connected to a
+	  FireWire bus.  SBP-2 devices include storage devices like
+	  harddisks and DVD drives, also some other FireWire devices
+	  like scanners.
+
+	  To compile this driver as a module, say M here:  The module will be
+	  called firewire-sbp2.  It replaces sbp2 of the classic IEEE 1394
+	  stack.
+
+	  You should also enable support for disks, CD-ROMs, etc. in the SCSI
+	  configuration section.
+
+          NOTE:
+
+	  If you also build sbp2 of the classic stack, blacklist either sbp2
+	  or firewire-sbp2 to let hotplug load only the desired driver.
+

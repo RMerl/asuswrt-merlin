@@ -1,0 +1,381 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>PGP Authentication Support</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title="Permission Checking" href=
+    "x9083.htm">
+    <link rel="NEXT" title="Using Kerberos 5 for Authentication"
+    href="kerberos.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x9083.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "kerberos.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN9115">17.12. PGP Authentication
+      Support</a></h1>
+
+      <p>PGP is a well known encryption and authentication program.
+      For more details see the web site <a href=
+      "http://www.pgp.net" target="_top">http://www.pgp.net</a> or
+      the ftp site <a href="ftp://ftp.pgp.net" target=
+      "_top">ftp://ftp.pgp.net</a>.</p>
+
+      <p><b class="APPLICATION">LPRng</b> has greatly simplified
+      the use of PGP for authentication by building in support as
+      follows.</p>
+
+      <ul>
+        <li>
+          <p>The <var class="LITERAL">user</var> and <var class=
+          "LITERAL">group</var> configuration entry (defaults <var
+          class="LITERAL">daemon</var> and <var class=
+          "LITERAL">daemon</var> respectively) specify the user and
+          group id used by the <b class="APPLICATION">lpd</b>
+          server for file and program execution. PGP uses the
+          current user id of the PGP process to determine the
+          locations of various configuration files and information.
+          In this discussion we will assume that <b class=
+          "APPLICATION">lpd</b> runs as uid <var class=
+          "LITERAL">daemon</var>.</p>
+        </li>
+
+        <li>
+          <p>By default, the PGP program expects the public and
+          secret key rings to be in the <tt class=
+          "FILENAME">$HOME/.pgp/</tt> directory to be readable only
+          by the user. In order to set up PGP authentication, make
+          sure that the <var class="LITERAL">daemon</var> account
+          has a home directory. Then use the <var class=
+          "LITERAL">su daemon</var> command to change effective UID
+          to daemon and run the <tt class="COMMAND">pgp -kg</tt>
+          (generate key) command as daemon. The <var class=
+          "LITERAL">daemon</var> user should not have a
+          password.</p>
+        </li>
+
+        <li>
+          <p>Each PGP key has an associated identifier. It is
+          recommended that the <b class="APPLICATION">lpd</b> key
+          be <var class="LITERAL">lpr@hostname</var>, where
+          hostname is the fully qualified domain name of the
+          server. A public and a private key file will be
+          created.</p>
+        </li>
+
+        <li>
+          <p>Next, place the passphrase for the <var class=
+          "LITERAL">daemon</var> user in <tt class=
+          "FILENAME">~daemon/.pgp/serverkey</tt>, and make sure it
+          has owner <var class="LITERAL">daemon</var> and <var
+          class="LITERAL">600</var> permissions (read/write only by
+          <var class="LITERAL">daemon</var>). This is extremely
+          important. If other users can read this file then
+          security will be severely compromised.</p>
+        </li>
+
+        <li>
+          <p>Next, distribute the <var class=
+          "LITERAL">lpr@hostname</var> public key to all users of
+          the <b class="APPLICATION">LPRng</b> server. This is
+          usually done by placing the public key in a well known
+          file location or making it available to users by some
+          form of Public Key Distribution system (PKD). The key can
+          be extracted and put into a text file using the following
+          commands:</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN9154"></a>
+<pre class="SCREEN">
+    pgp -kxa userid destfile keyfile
+    
+    Example:
+    &gt; pgp -kxa lpr@astart /tmp/lprkey ~daemon/.pgp/pubring.pgp
+    Key for user ID: lpr@astart
+    512-bit key, key ID BB261B89, created 1999/01/01
+    
+    Transport armor file: /tmp/lprkey.asc
+    Key extracted to file '/tmp/lprkey.asc'.
+</pre>
+          </div>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>To allow a user to send files to the server, their
+          public key must be put into the <var class=
+          "LITERAL">daemon</var> public key ring. This can be done
+          using:</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN9159"></a>
+<pre class="SCREEN">
+    pgp -ka /tmp/lprkey.asc
+</pre>
+          </div>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>Finally, the administrator will need to add users
+          public keys to the <var class="LITERAL">daemon</var>
+          users public key ring. This can most easily be done by
+          copying all the keys (in ASCII text form) to a single
+          file (<tt class="FILENAME">/tmp/keyfile</tt>)and
+          using:</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN9165"></a>
+<pre class="SCREEN">
+    su daemon
+    pgp -ka /tmp/keyfile ~daemon/.pgp/pubring.pgp
+</pre>
+          </div>
+          <br>
+          <br>
+        </li>
+
+        <li>
+          <p>If the <b class="APPLICATION">lpd</b> server is using
+          PGP to forward jobs or requests, the destination server's
+          public key must be put in the originating servers public
+          keyring. For example:</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN9170"></a>
+<pre class="SCREEN">
+    su daemon
+    pgp -ka /tmp/lpd.keyfile ~daemon/.pgp/pubring.pgp
+</pre>
+          </div>
+          <br>
+          <br>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="PGPPATH">17.12.1. Printcap
+        Configuration</a></h2>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">pgp_path=</var><span class=
+            "emphasis"><i class="EMPHASIS">path to PGP
+            program</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">pgp_id=</var><span class=
+            "emphasis"><i class="EMPHASIS">destination server key
+            used by clients</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">pgp_forward_id=</var><span
+            class="emphasis"><i class="EMPHASIS">destination server
+            used by server</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">pgp_server_key=</var><span
+            class="emphasis"><i class="EMPHASIS">path to server
+            passphrase file</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>Example printcap entry:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9193"></a>
+<pre class="SCREEN">
+    pr:
+        :lp=pr@wayoff
+        :auth=pgp
+        :pgp_id=lpr@wayoff.com
+        :pgp_path=/usr/local/bin/pgp
+    pr:server
+        :lp=pr@faroff
+        :auth_forward=pgp
+        :pgp_id=lpr@wayoff.com
+        :pgp_path=/usr/bin/pgp
+        :pgp_forward_id=lpr@faroff.com
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The <var class="LITERAL">pgp_path</var> value is the
+        path to the PGP program. The program must be executable by
+        all users.</p>
+
+        <p>The <var class="LITERAL">pgp_id</var> value is the id
+        used by PGP to look extract keys from key rings. When doing
+        a client to server transfer this will be supplied as the id
+        to be used for the destination, and the user's public
+        keyring will be checked for a key corresponding to this id.
+        When a request arrives at the server, the server will use
+        this value as the id of a key in its private key ring.
+        Finally, when a server is forwarding a request to a remote
+        server, it will use this value as the id of the key in its
+        private key ring to be used to sign or encode the
+        destination information.</p>
+
+        <p>The <var class="LITERAL">pgp_forward_id</var> value is
+        used by the <b class="APPLICATION">lpd</b> server as the id
+        to use to find a key for the destination.</p>
+
+        <p>The <var class="LITERAL">pgp_server_key</var> is the
+        path to the file containing the server passphrase. This
+        file will be read by <b class="APPLICATION">lpd</b> to get
+        the passphrase to unlock the server's keyring.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9205">17.12.2. User Files and
+        Environment Variables</a></h2>
+
+        <p>Options used:</p>
+
+        <ul>
+          <li>
+            <p><var class="LITERAL">PGPPASSFILE=</var><span class=
+            "emphasis"><i class="EMPHASIS">File to read PGP
+            passphrase from</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">PGPPASSFD=</var><span class=
+            "emphasis"><i class="EMPHASIS">File descriptor to read
+            PGP passphrase from</i></span></p>
+          </li>
+
+          <li>
+            <p><var class="LITERAL">PGPPASS=</var><span class=
+            "emphasis"><i class="EMPHASIS">PGP
+            passphrase</i></span></p>
+          </li>
+        </ul>
+        <br>
+        <br>
+
+        <p>One problem with using PGP is the need to have users
+        input their passphrases. The following methods can be
+        used.</p>
+
+        <ul>
+          <li>
+            <p>Put the passphrase in a file, say <tt class=
+            "FILENAME">$(HOME)/.pgp/.hidden</tt>, and set the
+            <acronym class="ACRONYM">PGPPASSFILE</acronym>
+            environment variable to the file name. This file will
+            be opened and read by PGP to get the passphrase. This
+            file should be owned by the user and have <var class=
+            "LITERAL">0600</var> or read/write only by user
+            permissions.</p>
+          </li>
+
+          <li>
+            <p>A more subtle solution is to use the <acronym class=
+            "ACRONYM">PGPPASSFD</acronym> environment variable
+            facility. This causes PGP to read the passphrase from a
+            file descriptor. If the user puts his passphrase in a
+            file, say <tt class=
+            "FILENAME">$(HOME)/.pgp/.hidden</tt>, then the
+            following shell script can be used:</p>
+
+            <div class="INFORMALEXAMPLE">
+              <a name="AEN9232"></a>
+<pre class="SCREEN">
+    #!/bin/sh
+    #  /usr/local/bin/pgplpr script - passphrase in $(HOME)/.pgp/.hidden
+    #
+    PGPASSFD=3 3&lt;$(HOME)/.pgp/.hidden lpr "$@"
+</pre>
+            </div>
+            <br>
+            <br>
+          </li>
+
+          <li>
+            <p>The least desirable method is to put the passphrase
+            in the <acronym class="ACRONYM">PGPPASS</acronym>
+            environment variable. Since the <var class=
+            "LITERAL">ps</var> command can be used to list the
+            environment variables of processes, this is highly
+            undesirable and should not be used under any
+            circumstances.</p>
+          </li>
+        </ul>
+        <br>
+        <br>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x9083.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "kerberos.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Permission
+          Checking</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Using Kerberos
+          5 for Authentication</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

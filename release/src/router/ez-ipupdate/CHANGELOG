@@ -1,0 +1,228 @@
+
+RCS file: /home/amackay/src/cvsroot/ez-ipupdate/ez-ipupdate.c,v
+Working file: ez-ipupdate.c
+head: 1.47
+branch:
+locks: strict
+access list:
+symbolic names:
+	release-2_6_0: 1.16
+	release-2_4_1b: 1.12
+	v0_9_0: 1.1.1.1
+	AMACKAY: 1.1.1
+keyword substitution: kv
+total revisions: 48;	selected revisions: 48
+description:
+----------------------------
+revision 1.47
+date: 2001/07/04 09:56:47;  author: amackay;  state: Exp;  lines: +171 -27
+added some new ipv6 tunnel service
+added run-as-euser
+fixed hn.org so it works again
+----------------------------
+revision 1.46
+date: 2001/07/04 08:49:26;  author: amackay;  state: Exp;  lines: +421 -239
+added easydns partner support
+re-arranged things to use an array of structs of services
+----------------------------
+revision 1.45
+date: 2001/04/04 17:20:12;  author: amackay;  state: Exp;  lines: +3 -5
+bug in the cache file handling that caused a segfault.
+----------------------------
+revision 1.44
+date: 2001/03/31 20:05:51;  author: amackay;  state: Exp;  lines: +11 -4
+better handeling of cache file errors.
+----------------------------
+revision 1.43
+date: 2001/03/23 08:46:43;  author: amackay;  state: Exp;  lines: +169 -6
+added contributed code for zoneedit service.
+----------------------------
+revision 1.42
+date: 2001/03/23 06:16:06;  author: amackay;  state: Exp;  lines: +129 -26
+added init() to services and added get_druation().
+----------------------------
+revision 1.41
+date: 2001/02/26 06:53:00;  author: amackay;  state: Exp;  lines: +44 -1
+added ip address taint checking for dyndns.org
+----------------------------
+revision 1.40
+date: 2000/12/17 22:52:20;  author: amackay;  state: Exp;  lines: +2 -2
+version 3.0.4, interface resolving now works for NetBSD too.
+----------------------------
+revision 1.39
+date: 2000/12/17 19:30:06;  author: amackay;  state: Exp;  lines: +4 -4
+fix for hn.org that cause the ip address to be ignored.
+----------------------------
+revision 1.38
+date: 2000/11/30 09:35:49;  author: amackay;  state: Exp;  lines: +41 -26
+fixed bug in the pidfile code and made IF_LOOKUP work for solaris.
+----------------------------
+revision 1.37
+date: 2000/11/29 20:27:26;  author: amackay;  state: Exp;  lines: +26 -3
+fixed some fgets() calls, fixed an include problem with cache_file.h and added
+example-dyns.conf to the dist.
+----------------------------
+revision 1.36
+date: 2000/11/24 23:14:33;  author: amackay;  state: Exp;  lines: +261 -34
+added support for hn.org and the use of a pid file.
+----------------------------
+revision 1.35
+date: 2000/11/18 23:04:21;  author: amackay;  state: Exp;  lines: +11 -10
+updated config files
+----------------------------
+revision 1.34
+date: 2000/11/18 22:35:32;  author: amackay;  state: Exp;  lines: +276 -365
+switched symantics so that you now must specify either an interface or an
+address for daemon mode. cleanup all the update functions and the check_info
+functions. fixed some bugs, fixed a MAJOR bug that I introduced in some time
+after 2.9.1 that caused daemon mode to not update properly (and get a lot of
+people banned, oops!). fixed the update code so that it is self throtlling
+(should have done that from the get go, espesially since adding the not
+updating properly in daemon mode bug).
+
+a major overhaul, thus -> 3.0.0
+----------------------------
+revision 1.33
+date: 2000/11/18 20:54:12;  author: amackay;  state: Exp;  lines: +21 -25
+pre manditory interface
+----------------------------
+revision 1.32
+date: 2000/11/17 11:34:46;  author: amackay;  state: Exp;  lines: +634 -206
+added support for dyns and fixed up stuff for dyndns
+----------------------------
+revision 1.31
+date: 2000/10/31 05:51:51;  author: amackay;  state: Exp;  lines: +119 -28
+updated to nic v2.0 for dyndns, also fixed some problems with not asking for a host.
+----------------------------
+revision 1.30
+date: 2000/10/23 17:54:17;  author: amackay;  state: Exp;  lines: +4 -7
+fixed some minor things in the code and cleaned up the example config files
+----------------------------
+revision 1.29
+date: 2000/10/23 09:52:27;  author: amackay;  state: Exp;  lines: +8 -11
+took out some debugging stuff and fixed exit() calls in daemon mode for cache file code.
+----------------------------
+revision 1.28
+date: 2000/10/23 09:48:29;  author: amackay;  state: Exp;  lines: +188 -28
+added support for a cache file for use across reboots and such.
+----------------------------
+revision 1.27
+date: 2000/10/16 06:57:12;  author: amackay;  state: Exp;  lines: +4 -2
+.
+----------------------------
+revision 1.26
+date: 2000/10/16 06:52:39;  author: amackay;  state: Exp;  lines: +292 -38
+added support for justlinux v2.0, now pgpow is justlinux v1.0 and justlinux is justlinux v2.0.
+----------------------------
+revision 1.25
+date: 2000/09/06 01:46:51;  author: amackay;  state: Exp;  lines: +9 -2
+added ip address as an arg if in deamon mode and using post update script.
+----------------------------
+revision 1.24
+date: 2000/09/05 03:25:13;  author: amackay;  state: Exp;  lines: +2 -1
+bug in configure.in for easydns.
+----------------------------
+revision 1.23
+date: 2000/08/22 17:23:16;  author: amackay;  state: Exp;  lines: +262 -83
+added support for easydns
+----------------------------
+revision 1.22
+date: 2000/08/18 16:03:16;  author: amackay;  state: Exp;  lines: +3 -3
+forgot to take out the mcheck() ing for non-debug releases.
+----------------------------
+revision 1.21
+date: 2000/08/03 02:22:32;  author: amackay;  state: Exp;  lines: +5 -6
+minor bugs, taking off the trailing slash for dyndns.
+----------------------------
+revision 1.20
+date: 2000/08/02 09:45:09;  author: amackay;  state: Exp;  lines: +454 -67
+merged in all of Jeremy Bopp's changes. these are a couple of bug fixes
+and support for tzo and gundip.
+also changed do_connect so that it closes fd if any errors.
+----------------------------
+revision 1.19
+date: 2000/08/02 09:42:38;  author: amackay;  state: Exp;  lines: +3 -3
+fixed un-noticeable bug
+----------------------------
+revision 1.18
+date: 2000/07/27 14:14:17;  author: amackay;  state: Exp;  lines: +30 -20
+fixed a big old bug in the max_interval stuff, thanks to Jasper for finding that one.
+fixed some stuff with running the command.
+----------------------------
+revision 1.17
+date: 2000/07/26 07:41:02;  author: amackay;  state: Exp;  lines: +179 -65
+added shell command execution and cleaned up some stuff that needed cleanin'
+----------------------------
+revision 1.16
+date: 2000/07/24 08:05:55;  author: amackay;  state: Exp;  lines: +6 -6
+version 2.6.0, this fixes the example file for dyndns to have the max-interval
+thing in there. also fixes where the sleep goes in dhs updates.
+----------------------------
+revision 1.15
+date: 2000/07/12 07:43:23;  author: amackay;  state: Exp;  lines: +239 -16
+added support for ods.org
+----------------------------
+revision 1.14
+date: 2000/07/12 06:27:10;  author: amackay;  state: Exp;  lines: +2 -1
+added line to help about the max time between updates for dhs.org users, the
+option was always there just not listed in the help message.
+----------------------------
+revision 1.13
+date: 2000/04/20 06:59:07;  author: amackay;  state: Exp;  lines: +31 -6
+added support for dyndns-static
+----------------------------
+revision 1.12
+date: 2000/04/19 04:26:07;  author: amackay;  state: Exp;  lines: +235 -23
+added support for dyndns.org and some cleanups.
+----------------------------
+revision 1.11
+date: 2000/04/01 18:20:13;  author: amackay;  state: Exp;  lines: +149 -5
+release 2.2.2, added update of mx record for stupid dhs.org
+----------------------------
+revision 1.10
+date: 2000/03/17 09:15:06;  author: amackay;  state: Exp;  lines: +2 -2
+comment change
+----------------------------
+revision 1.9
+date: 2000/03/17 08:45:26;  author: amackay;  state: Exp;  lines: +3 -1
+fixed socket leak for dhs and pgpow code.
+----------------------------
+revision 1.8
+date: 2000/02/29 09:39:12;  author: amackay;  state: Exp;  lines: +303 -47
+release 2.1.0b, added dhs code.
+----------------------------
+revision 1.7
+date: 2000/02/29 07:17:08;  author: amackay;  state: Exp;  lines: +95 -27
+I can't remember, probably the updates for 2.0.0 or 2.0.1
+----------------------------
+revision 1.6
+date: 1999/07/13 05:44:46;  author: amackay;  state: Exp;  lines: +297 -16
+check in, this version has a very strange coreing condition.
+----------------------------
+revision 1.5
+date: 1999/05/11 22:38:01;  author: amackay;  state: Exp;  lines: +14 -3
+added BSD daemon support.
+----------------------------
+revision 1.4
+date: 1999/04/21 03:12:26;  author: amackay;  state: Exp;  lines: +25 -9
+added some signal stuff.
+----------------------------
+revision 1.3
+date: 1999/04/20 07:59:51;  author: amackay;  state: Exp;  lines: +2 -2
+fixed some docs
+----------------------------
+revision 1.2
+date: 1999/04/20 07:55:41;  author: amackay;  state: Exp;  lines: +425 -89
+added a bunch o stuff:
+  Version 1.0.1 brings some new features such the useage of config files,
+  timeouts on I/O, set user id and many more.
+----------------------------
+revision 1.1
+date: 1999/04/19 00:34:59;  author: amackay;  state: Exp;
+branches:  1.1.1;
+Initial revision
+----------------------------
+revision 1.1.1.1
+date: 1999/04/19 00:34:59;  author: amackay;  state: Exp;  lines: +0 -0
+a client for the ez-ip.net dynamic domain service.
+=============================================================================

@@ -1,0 +1,83 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+#  provide information on connected users and open files
+#  Copyright ǒ Jelmer Vernooij 2008
+#
+#  Based on the original in EJS:
+#  Copyright Andrew Tridgell 2005
+#  Released under the GNU GPL version 3 or later
+#
+
+import os, sys
+
+sys.path.insert(0, "bin/python")
+
+import optparse
+import samba.getopt as options
+from samba import irpc, messaging
+
+def show_sessions(conn):
+	"""show open sessions"""
+
+	sessions = conn.smbsrv_information(irpc.SMBSRV_INFO_SESSIONS).next()
+	print "User                                  Client      Connected at"
+	print "-" * 79
+	for session in sessions:
+		fulluser = "%s/%s" % (session.account_name, session.domain_name)
+		print "%-30s %16s   %s" % (fulluser, session.client_ip, sys.httptime(session.connect_time))
+	print ""
+
+def show_tcons(open_connection):
+	"""show open tree connects"""
+	conn = open_connection("smb_server")
+	tcons = conn.smbsrv_information(irpc.SMBSRV_INFO_TCONS).next()
+	print "Share                                 Client      Connected at"
+	print "-" * 79
+	for tcon in tcons:
+		print "%-30s %16s   %s" % (tcon.share_name, tcon.client_ip, sys.httptime(tcon.connect_time))
+
+
+def show_nbt(open_connection):
+	"""show nbtd information"""
+	conn = open_connection("nbt_server")
+	stats = conn.nbtd_information(irpc.NBTD_INFO_STATISTICS).next()
+	print "NBT server statistics:"
+	fields = [("total_received", "Total received"),
+			  ("total_sent", "Total sent"),
+			  ("query_count", "Query count"),
+			  ("register_count", "Register count"),
+			  ("release_count", "Release count")]
+	for (field, description) in fields:
+		print "\t%s:\t%s" % (description, getattr(stats, field))
+	print
+
+parser = optparse.OptionParser("%s [options]" % sys.argv[0])
+sambaopts = options.SambaOptions(parser)
+parser.add_option_group(sambaopts)
+parser.add_option("--messaging-path", type="string", metavar="PATH",
+		          help="messaging path")
+parser.add_option("--nbt", help="show NetBIOS status", action="store_true")
+
+opts, args = parser.parse_args()
+
+lp = sambaopts.get_loadparm()
+
+print "%s" % lp.get("server string")
+
+messaging_path = (opts.messaging_path or os.path.join(lp.get("private dir"), "smbd.tmp", "messaging"))
+
+def open_connection(name):
+	return messaging.ClientConnection(name, messaging_path=messaging_path)
+
+if opts.nbt:
+	show_nbt(open_connection)
+else:
+	try:
+		conn = open_connection("smb_server")
+	except RuntimeError, (num, msg):
+		if msg == 'NT_STATUS_OBJECT_NAME_NOT_FOUND':
+			print "No active connections"
+	else:
+		show_sessions(conn)
+		show_tcons(conn)

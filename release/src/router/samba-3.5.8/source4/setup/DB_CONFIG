@@ -1,0 +1,6 @@
+set_cachesize   0       524288        0
+set_lg_regionmax        104857
+set_lg_max              1048576
+set_lg_bsize            209715
+set_lg_dir              ${LDAPDBDIR}/bdb-logs
+set_tmp_dir             ${LDAPDBDIR}/tmp

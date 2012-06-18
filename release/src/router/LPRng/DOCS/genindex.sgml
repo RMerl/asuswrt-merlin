@@ -1,0 +1,66 @@
+<index>
+
+<!-- This file was produced by collateindex.pl.         -->
+<!-- Remove this comment if you edit this file by hand! -->
+<!-- ULINK is abused here.
+
+      The URL attribute holds the URL that points from the index entry
+      back to the appropriate place in the output produced by the HTML
+      stylesheet. (It's much easier to calculate this URL in the first
+      pass.)
+
+      The Role attribute holds the ID (either real or manufactured) of
+      the corresponding INDEXTERM.  This is used by the print backends
+      to produce page numbers.
+
+      The entries below are sorted and collated into the correct order.
+      Duplicates may be removed in the HTML backend, but in the print
+      backends, it is impossible to suppress duplicate pages or coalesce
+      sequences of pages into a range.
+-->
+
+<title>Index</title>
+
+<indexentry>
+  <primaryie>download,
+    <ulink url="#MAILLIST" role="AEN191">Additional Resources </ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>FAQ,
+    <ulink url="#AEN216" role="AEN221">Frequently Asked Questions</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>Frequently Asked Questions,
+    <ulink url="#AEN216" role="AEN223">Frequently Asked Questions</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>FTP site,
+    <ulink url="#MAILLIST" role="AEN193">Additional Resources </ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>History,
+    <ulink url="#SECFEATURES" role="AEN147">What is LPRng?</ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>Mailing List,
+    <ulink url="#MAILLIST" role="AEN208">Additional Resources </ulink>
+  </primaryie>
+</indexentry>
+
+<indexentry>
+  <primaryie>Tutorial notes,
+    <ulink url="#MAILLIST" role="AEN214">Additional Resources </ulink>
+  </primaryie>
+</indexentry>
+
+</index>

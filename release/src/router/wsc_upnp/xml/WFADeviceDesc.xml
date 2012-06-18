@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+  <specVersion>
+    <major>1</major>
+    <minor>0</minor>
+  </specVersion>
+  <device>
+    <deviceType>urn:schemas-wifialliance-org:device:WFADevice:1</deviceType>
+    <friendlyName>ASUS Wireless Router</friendlyName>
+    <manufacturer>ASUSTeK Computer Inc.</manufacturer>
+    <manufacturerURL>http://www.asus.com</manufacturerURL>
+    <modelDescription>ASUS Wireless WPS Router</modelDescription>
+    <modelName>RT-N56U</modelName>
+    <modelNumber>RT-N56U</modelNumber>
+    <modelURL>http://www.asus.com</modelURL>
+    <serialNumber>00000000</serialNumber>
+    <UDN>uuid:Upnp-WSC-1_0-1234567890001</UDN>
+    <serviceList>
+      <service>
+        <serviceType>urn:schemas-wifialliance-org:service:WFAWLANConfig:1</serviceType>
+        <serviceId>urn:wifialliance-org:serviceId:WFAWLANConfig1</serviceId>
+        <SCPDURL>WFAWLANConfigSCPD.xml</SCPDURL>
+        <controlURL>control</controlURL>
+        <eventSubURL>event</eventSubURL>
+      </service>
+    </serviceList>
+  </device>
+</root>

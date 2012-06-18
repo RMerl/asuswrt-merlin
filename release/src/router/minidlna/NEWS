@@ -1,0 +1,67 @@
+1.0.24 - Released 14-Feb-2012
+--------------------------------
+- Fix playlist browsing with no SortOrder specified.
+- Fix inotify detection of caption file removal.
+- Handle an empty DeviceID from Zyxel media player SOAP request.
+- Fix false positives in playlist caching optimization when we have duplicate file names in different directories.
+- Trim the camera model name extracted from EXIF tags.
+- Add support for user-configurable log level settings.
+- Add DLNA.ORG_FLAGS support.
+
+1.0.23 - Released 23-Jan-2012
+--------------------------------
+- Enable the subtitle menu on some Samsung TV's.
+- Add subtitle support for Panasonic TV's.
+- Add workarounds for LifeTab tablets' bad behavior.
+- Speed up playlist parsing.
+- Make metadata-based virtual containers case insensitive.
+- Add folder art support (very few clients support this though).
+- Improve trimming of quotation marks.
+- Fix SRT caption support with the latest Samsung Series D firmware.
+- Fix subtitles on LG TV's for items whose titles don't have a dot in them.
+- Add support for the av:mediaClass tag, so some Sony devices can filter items by media type.
+- Fix inotify detection issues on first-level folders.
+- Work around LifeTab's broken DLNA support.
+- Add image rotation support during resize. (mostly useful for TiVo)
+
+1.0.22 - Released 24-Aug-2011
+--------------------------------
+- Add bookmark support for some Samsung TV's.
+- Fix a memory leak when certain model Samsung TV's or Roku devices are on the network.
+- Fix detection of Samsung Series D models.
+- Add WAV MIME workaround for Marantz Receivers and Roku SoundBridge.
+- Fix bitrate displayed on Microsoft PFS devices.
+- Fix a scanner crash when trying to scan image files with no read access.
+
+1.0.21 - Released 18-July-2011
+--------------------------------
+- Fix a few issues with new libav/ffmpeg versions.
+- Fix FF/REW of AVI files on Samsung Series B TV's.
+- Fix a crash bug when playing music on TiVo.
+- Add the ability to change the root media container.
+- Add WAV/RIFF INFO tag parsing support for the most common tags.
+- Fix a crash bug with clients that request a large number of results.
+
+1.0.20 - Released 09-June-2011
+--------------------------------
+- Fix a crash bug when scanning MPEG-TS files with odd packet sizes.
+- Fix AVI file streaming on Samsung A-Series TV's.
+- Improve support for the NETGEAR Digital Entertainer Live (EVA2000).
+- Add support for multiple network interfaces.
+- Add subtitle support for LG TV's and Blu-Ray players.
+- Fix some minor coding issues found by cppcheck.
+- Add client adaptation support for Toshiba Regza TV's.
+- Send known audio-only devices straight to the Music section on root requests.
+- Add client adaptation support for Roku SoundBridge audio clients.
+- Improve Sony client adaptation to allow support for more file types.
+- Add support for reading tags from MP4 video files with recent lavf versions.
+- Add support for Samsung's GetFeatureList method.
+
+1.0.19 - Released 11-Mar-2011
+--------------------------------
+- When called with -R, only remove art_cache and files.db in case users use an
+  imporant directory as their db dir.
+- Properly scan newly created directory symlinks.
+- Improve Windows 7 interoperability.
+- Add basic NLS support, so clients can display localized strings.
+- Optimize JPEG scaling by downscaling as much as possible during decompression.

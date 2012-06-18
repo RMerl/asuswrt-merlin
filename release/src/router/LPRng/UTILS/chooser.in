@@ -1,0 +1,59 @@
+#!@PERL@
+use Getopt::Std;
+my $debug = 1;    # always... sigh...
+my(%opt, @pc, %options);
+
+exit 1;
+
+# get command line options
+getopts( 'A:B:C:D:E:F:G:H:I:J:K:L:M:N:O:P:Q:R:T:S:U:V:W:X:Y:Z:'
+. 'a:b:cd:e:f:g:h:i:j:k:l:m:n:o:p:q:r:t:s:u:v:w:x:y:z:', \%opt );
+while( @ARGV ){ $opt{acct} = pop @ARGV ; };
+
+# split up the PRINTCAP_ENTRY environment variable value
+@pc = split /\n\s*:/s, ($ENV{PRINTCAP_ENTRY} || "");
+shift @pc;  # throw way first entry field, printer name
+# set the options 
+foreach (@pc){ # set the options values
+	if( /^(.+)=(.*)/ ){ $options{$1} = $2;
+	} elsif ( /^(.+)@/ ){ $options{$1} = 0;
+	} else { $options{$_} = 1; }
+}
+
+if( $debug ){ # for those interested
+	my $s = "";
+	foreach my $v (sort keys %options ){ $s .= "$v='$options{$v}',"; }
+	print STDERR "Printcap: '$s'\n";
+	$s="";
+	foreach my $v (sort keys %opt){ $s .= "$v='$opt{$v}',"; }
+	print STDERR "Args: '$s'\n";
+}
+
+my (@list, @destinations);
+if( $options{sv} ){ # if we have :sv then we read them from STDIN
+	while( <STDIN> ){ chomp; push @destinations, $_; }
+} else { # else we use the 'destinations' printcap value
+	@list = split /[,\s]+/, ($options{destinations} || "");
+    # and we randomize - this is a bit of perl magic
+	while( @list ){
+		push @destinations, splice( @list,rand(@list),1);
+	}
+}
+# and we split the destinations up...
+print STDERR "Destinations '@destinations'\n";# if $debug;
+
+# and now we search
+my $lpq="/usr/bin/lpq";
+foreach ( @destinations ){
+	my $status = "";
+	# run lpq
+	eval { alarm(10); $status = `$lpq -s -P$_`; }; alarm(0); chomp $status;
+	print STDERR "STATUS '$_' $status\n" if $debug;;
+	# we discard the various queues
+	# this has to be configured on an individual basis
+	next if( $status =~ /disabled/ or $status != / 0 jobs/ );
+	print STDERR "chose '$_' from @destinations\n";
+	print $_;
+	last;
+}
+exit 0

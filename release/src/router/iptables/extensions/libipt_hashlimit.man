@@ -1,0 +1,35 @@
+This patch adds a new match called 'hashlimit'.
+The idea is to have something like 'limit', but either per
+destination-ip or per (destip,destport) tuple.
+
+It gives you the ability to express
+.IP
+ '1000 packets per second for every host in 192.168.0.0/16'
+.IP
+ '100 packets per second for every service of 192.168.1.1'
+.P
+with a single iptables rule.
+.TP
+.BI "--hashlimit " "rate"
+A rate just like the limit match
+.TP
+.BI "--hashlimit-burst " "num"
+Burst value, just like limit match
+.TP
+.BI "--hashlimit-mode " "dstip,srcip,dstport,srcport"
+A comma-separated list of objects to take into consideration
+.TP
+.BI "--hashlimit-name " "foo"
+The name for the /proc/net/ipt_hashlimit/foo entry
+.TP
+.BI "--hashlimit-htable-size " "num"
+The number of buckets of the hash table
+.TP
+.BI "--hashlimit-htable-max " "num"
+Maximum entries in the hash
+.TP
+.BI "--hashlimit-htable-expire " "num"
+After how many miliseconds do hash entries expire
+.TP
+.BI "--hashlimit-htable-gcinterval " "num"
+How many miliseconds between garbage collection intervals

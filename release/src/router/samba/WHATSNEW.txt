@@ -1,0 +1,864 @@
+              WHATS NEW IN Samba 2.0.10
+              =========================
+
+Samba 2.0.10 is a security bugfix release. The security hole that is
+fixed would allow an attacker to exploit certain values of the "log
+file" option in Samba that contains the %m macro in order to overwrite
+system files and compromise security.
+
+Note that the Samba Team recommends that the much more advanced 2.2.x
+release of Samba be used by all sites. This release is only being made
+for sites that do not wish to upgrade to 2.2.x at this time.
+
+Samba Team
+June 2001
+
+----------------------
+
+Previous release notes for 2.0.9:
+
+Samba 2.0.9 is a security bugfix release. Previous versions of Samba
+had a bug with the handling of temporary files that allows local users
+to destroy data on local devices. This bug was discovered during a
+routine security audit by Caldera. While no exploitation of this bug
+is known to have occurred it is fairly easy to exploit so sites with
+untrusted local users should take the threat seriously.
+
+The only changes in 2.0.9 are the security updates. This is to
+maximise stability for those sites that cannot afford to risk any
+other sort of update. For most sites the Samba Team recommends that
+the new 2.2.x version of Samba be used instead, as that provides not
+only the security fixes but much greater functionality and many more
+bug fixes.
+
+
+Samba Team
+May 2001
+
+NOTE: The Samba 2.0.8 release was supposed to fix this security hole,
+but didn't.
+
+
+
+Previous release notes from 2.0.7
+---------------------------------
+
+This is the latest stable release of Samba. This is the
+version that all production Samba servers should be running
+for all current bug-fixes.
+
+New Documentation in 2.0.7
+--------------------------
+
+O'Reilly and Associates have donated their book "Using Samba"
+to the Samba community to be updated in a collaberative way
+along with the Samba software. Starting with this release the
+html of "Using Samba" will be distributed with the Samba software
+as the online documentation for Samba. Bug fixes for the book
+are encouraged as is new material. Please help us make this
+documentation the best it can be for Samba !
+
+SWAT (Samba Web Administration Tool) has been updated to
+add a link to the full text of "Using Samba" from the start
+screen.
+
+Note that this does not mean that the other documentation
+(man pages especially) are being abandoned. The Samba Team
+is still committed to updating and improving *all* the 
+documentation shipped with Samba.
+
+Also, as the source code for the book is moved into a more
+manageable format (not raw HTML) we are committed to making
+it available for editing by all interested parties. The
+current situation of only shipping HTML with the Samba software
+is a first attempt at getting this documentation integrated
+with the Samba software and should not be regarded as the only
+way in which this material will be made available (it was just
+the quickest way to get the book integrated into 2.0.7 :-).
+
+Windows 2000 Issues
+-------------------
+
+This version of Samba has been tested with Windows 2000 and
+the five known incompatibilities with Windows 2000 have been
+fixed. See the "Changes in 2.0.7" list below for details.
+
+New/Changed parameters in 2.0.7
+-------------------------------
+
+There is a new option to the autoconf "./configure" script.
+This is the "--with-utmp" (and attendant "--without-utmp")
+option. Running configure with this option will cause smbd
+to attempt to use utmp accounting for users who log on and
+log off to the Samba server.
+
+There are 5 new parameters in the smb.conf file.
+
+utmp
+utmp dir
+utmp hostname
+utmp consolidate
+wtmp directory
+
+These parameters are only available if the "--with-utmp"
+option was selected at configure time. The yes/no option "utmp"
+specifies whether utmp records should be recorded on user
+logon/logoff. It defaults to "no". The "utmp dir" and "wtmp dir"
+are string parameters specifying pathnames to the directories containing
+the utmp/wtmp file databases. See the smb.conf man page for more details.
+
+inherit permissions
+
+This boolean parameter causes newly created files and directories
+to inherit their initial permissions from their parent directory.
+This can be very useful in propagating such things as the set-group
+bit in directory heirarchies. See the smb.conf man page for more
+details.
+
+write cache size
+
+This integer parameter specifies (in bytes) the size of a user level
+per-file write cache that smbd will create for an oplocked file. This
+can improve performance significantly for writing files by causing
+writes to be done in large chunk sizes. If this parameter is set (it
+defaults to zero which means no write cache) to the stripe size of
+a raid volume then it will cause writes to be much more efficient.
+Up to 10 write caches can be active simultaneously per smbd (allocated
+for the first 10 oplocked file opens). All normal warnings about the
+dangers of user level caching of data apply. See the smb.conf man page
+for more details.
+
+source environment 
+
+This pathname parameter causes Samba to read a list of environment
+variables from a named file on startup. This can be useful in setting
+up Samba in a clustered environment. See the smb.conf man page for more
+details.
+
+Ability to delete users added
+-----------------------------
+
+SWAT and smbpasswd can now delete users from the Samba smbpasswd file.
+See the man page for smbpasswd for details.
+
+Roving profile behavior finalized
+---------------------------------
+
+The change in behavior with roving profiles (using the "logon home"
+parameter instead of the "logon path" parameter) introduced in 2.0.6
+has been discovered to be consistant with the way Windows NT behaves,
+and has been left as the default action. Please see the additional
+notes in the "logon home" parameter description in the smb.conf man
+page for more details.
+
+Changes in 2.0.7
+-----------------
+
+1). Fix for the semaphore promblems when compiling Samba with gcc on
+SGI IRIX 6.5.x.
+2). Quota support for Veritas filesystem added by David Lee.
+3). Incoming RPC code re-written to support multiple PDU input from
+the client. This should make the RPC subsystem more robust.
+4). Fix from Ying Chen @ IBM to inline many frequently called functions. This
+decreased CPU usage by 10%.
+5). Fix from Ying Chen @ IBM to use a hash table to lookup entries in the file
+cache. This is a significant improvement over the old linked-list
+lookup code.
+6). smbclient issues with native language support fixed. smbclient
+now uses UNIX filename character sets exclusively when communicating
+with libsmb library.
+7). smbclient fix to not print error messages when "putting" an
+empty file.
+8). smbclient fix to cope with spaces in filenames when recursing.
+9). Improved error reporting in smbclient when getting browse lists.
+10). NetBIOS "scope" now supported in all Samba code/tools.
+11). New mapping from code page 850 to UNIX "roman8" character set.
+12). Fix for crash bug if debug file handle couldn't be opened.
+13). Fix to allow mkdir to correctly set the high order permissions 
+bits for UNIX's that don't allow this by default.
+14). Fix to dynamically allocate group array for setgroups. Don't
+depend on NGROUPS_MAX being correctly defined in header files.
+15). Fix for crash bug in floating point in snprintf.
+16). "Safe" version of popen() included to allow use in code such
+as "source environment" patch.
+17). Fix for SWAT for trailing '\n' in asctime().
+18). Wildcard match fix from weidel@multichart.de for NT wildcard
+processing.
+19). unix_mask_match fixes for "veto files" parameter.
+20). Fix for system call bug when configuring on Linux kernel 2.0.x
+with glibc2.1.x.
+21). SO_REUSEPORT socket option added for HPUX.
+22). All recv() calls changed back to read() to fix Solaris 2.5.x bug.
+23). Some UNICODE conversion fixes. Not complete yet.
+24). NetShareEnum fix for Windows 2000. Don't ask for 64K as Win2k
+can't cope with this (returns "Out of memory" error).
+25). Fixes for cli_error() crashes.
+26). Fix for crash when connecting to password server by DNS name
+not NetBIOS name.
+27). Fix bug in demangling of compacted NetBIOS names.
+28). Fixes for slow locking code for VMS.
+29). Reply to short NetLogon packet in nmbd with short reply.
+30). Correctly allign userdata to prevent crashes in nmbd.
+31). Use talloc() in string buffer rotation code to prevent overwrites.
+32). Added multi-byte awareness to parameter loading code.
+33). Re-wrote password file modification code. We can now delete users
+atomically. Original patch from Bruce Tenison.
+34). Fixed bug in parsing smbpasswd type entries.
+35). Fixes from HP to the windows registry RPC emulation.
+36). Added ability to return RPC fault PDU to unknown calls. Needed to
+allow Windows 2000 to return UNIX permissions as NT ACLs.
+37). utmp code patch from T.D.Lee@durham.ac.uk. Not available on all
+platforms - test with ./configure.
+38). Inherit permissions fix from David Lee.
+39). Added write caching code for oplocked files.
+40). Workaround for new bug in Windows 2000 where NT file create using
+NTtransact call sends UNICODE without bothering to set the UNICODE flag
+bit.
+41). Workaround for new bug in Windows 2000 where it attempts to re-write
+existing ACLs to make them inherit only.
+42). Removed unused mmap code.
+43). Added correct implementation of share mode deny table. We now match
+Windows NT.
+44). Fix recursion bug with group enumeration.
+45). Fix from Bjart Kvarme to take into account changed machine passwords
+that haven't yet propagated from PDC to BDC.
+46). Correctly skip two byte length field when accepting RPC "start of
+message" packets in SMBwriteX on pipes.
+47). Added auto-detection of Windows 2000 clients.
+48). Fix bug with rollback of POSIX locks if a lock in a range fails to
+apply.
+49). Fix bug with registering startup smbd's in flat file.
+50). Ensure usernames are converted correctly between DOS codepages
+and UNIX character sets.
+51). Fix for timestamps being set incorrectly on copied files from
+Paul Eggert.
+52). Fix for parsing HP specific printer definitions in make_printerdef.
+53). Fix for smbclient doing an 'ls' on large directories from OS/2 servers
+from Christoph Pfisterer.
+54). Fix for WINS server code where "do you still want name?" request was
+being sent to the wrong IP address.
+55). Fixed "recursion desired" bits set in nmbd so we are identical to
+Windows NT.
+56). nmbd now should process logon packets from Win95, Win98 and both
+versions of the NT logon packet.
+57). Correctly set parameter offset value for first trans2 reply.
+58). Win2K will only accept volume labels in UNICODE.
+59). Ensure nmbd doesn't attempt to use the loopback interface when
+registering names.
+60). Fixed bug where smbd didn't return '.' or '..' on top level
+share directory listing.
+61). Fix for soft quotas not being set (make them equal to hardquota)
+from Norbert Püschel (Pueschel.Norbert@Walzbarren-VAW.ne.uunet.de).
+62). SWAT fixes for SCO UnixWare (SIGPIPE handling).
+63). Fix for nmbd DOS with redirect recursion.
+64). Fix for log files growing without bound from Mattias Gronlund.
+65). Fix for smbd crash bug in truncate is locked.
+66). Memory leak fix in mangle name code.
+
+Older release notes for Samba 2.0.x follow.
+
+Previous Release notes for 2.0.6
+---------------------------------
+
+New/Changed parameters in 2.0.6
+-------------------------------
+
+There are 6 new parameters in the smb.conf file.
+
+wins hook
+
+This parameter allows an external program to be called
+on all changes to a Samba WINS database, allowing dynamic
+DNS updates.
+
+debug hires timestamp
+debug pid
+debug uid
+
+The above 3 parameters provide greater debug information.
+
+preexec close
+rootpreexec close
+
+The above 2 parameters control the action taken on the
+success or failure of a 'preexec' script.
+
+There is also one removed parameter.
+
+mangle locks
+
+The addition of these new parameters and the removal of the old
+is described in more detail in the smb.conf man page,
+
+When using "security=domain" the "password server"
+parameter can now be set to the string "*', which will
+cause Samba to search for Domain controllers in the
+same way that Windows NT does. See the smb.conf man
+page for more details.
+
+The "interfaces" parameter in smb.conf can now be dynamically
+detected on startup and can also now take an interface name
+such as eth0. See the smb.conf man page for the details
+on the new features of the "interfaces" parameter.
+nmbd has been enhanced to use this feature.
+
+The syntax for the Linux-specific smbmount command has been changed
+and is now compatible with the standard mount command. See the modified
+smbmount man page for details.
+
+Support for the UNIX CUPS printer standard has been added.
+See www.cups.org for details. Thanks to the folks at Easy Software
+Products for this code. Set the printcap name to "cups" to
+enable this. See the smb.conf man page for details.
+
+Changes in 2.0.6
+-----------------
+
+1). 64-bit locking removed from Linux autoconf build. This fixes
+several Linux specific locking issues.
+2). Crash bug fix in smbclient recursive processing. Fix from
+E. Jay Berkenbilt (ejb@ql.org).
+3). "history" command added to smbclient if readline available.
+4). smbtar - updates files and directory message on restore.
+5). smbmnt - 'u', 'g', 'r', 'f', 'd' options added by Andrew. See
+man page for details.
+6). smbmount updated to be useable by autofs on Linux. See the
+samba/examples/autofs/README file for details.
+7). Bug fixed where TCP_NODELAY was not being used by default in smbd.
+8). Many oplock fixes. Samba now waits 30 seconds, not 45. Also
+smbd no longer aborts on client break failure, but logs a message
+and continues. This is what NT does. This should fix many "oplock
+break" message problems people have been having.
+9). New code from Andrew to dynamically detect interfaces. nmbd will
+now attempt to dynamically detect interface changes and register names
+as an interface goes "up".
+10). Win95 ioctl for print jobs added by Matt.
+11). Mapping for ISO8859-1 extended for codepage 437 and 850.
+12). Code Page 737 -> ISO-8859-7 (Greek-Hellenic) mapping added.
+13). Character strings now correctly converted from UNIX character set
+format to DOS codepage when read from smb.conf or external passwd or
+group files. Samba is now much more careful about what format external
+strings should be converted to/from.
+14). snprintf crash fix for IRIX 6.2 and below.
+15). Increased timestamp debug fixes (adds milliseconds and uid/pid if
+requested).
+16). Optimisation for wildcard exact match requests.
+17). Win95 wildcard semantics fix - unused code removed.
+18). 'mangle locks' parameter removed. This now done automatically.
+19). setXid() routines re-written to provide asserts and also to fix
+AIX versions prior to 4.1.x.
+20). MSG_WAITALL optimisation removed due to bugs in FreeBSD.
+21). Length fix when writing UNICODE string.
+22). oplock processing added to libsmb client code.
+23). Added more client error message strings.
+24). Fix bug with connecting to encrypted server when non-encrypted
+password given.
+25). In security=domain, password server extended to search for DC's
+if parameter = '*'.
+26). "root did not create samaphore" bug fixed.
+27). random generator initialized early to prevent icons not showing
+up in Win9x.
+28). Logging fix after SIGHUP.
+29). WINS hook external call added when nmbd is a WINS server.
+30). Support for CUPS printer protocol added by Michael Sweet.
+31). Support for NIS+ backend password database updates.
+32). Handle dashes in print job id's. Fix from Dom.Mitchell@palmerharvey.co.uk
+33). Race condition in UNIX password sync on some platforms fixed by Matt.
+34). Dirptr leak from Win98 fixed.
+35). Logic bug in handling of level II oplocks fixed.
+36). smbd crash bug fix when opening directories.
+37). Paranoia oplock fix from Charles Hoch (hoch@exemplary.com)
+38). Fix Win2k problem where DCE/RPC is done on SMBwrite as well as SMBwriteX.
+39). Fix Win95 redirector alignment bug that caused oplock break failures.
+40). Preexec close code added.
+41). Extra sanity checks in testparm code.
+42). oplock tests added to smbtorture.
+43). Tell SWAT user if logged in as root or not.
+44). Solaris packaging fixes donated by VERITAS.
+
+Older release notes for Samba 2.0.x follow.
+
+Previous Release notes for 2.0.5a
+---------------------------------
+
+IMPORTANT NOTE !
+----------------
+
+Version 2.0.5a of Samba contains three security bugfixes for
+problems in previous versions of Samba found by Olaf Kirch of
+Caldera Systems (www.caldera.com). The Samba Team would like
+to publicly thank Olaf for his help in doing a security review
+of our code and finding these bugs.
+
+The three bugs are one potentially exploitable buffer overrun
+bug (although no current exploits are known) in smbd and two
+denial of service bugs in nmbd. By default the smbd bug was not
+exploitable as shipped (the problem parameter was disabled by
+default) but instructions on protecting any version of Samba
+prior to 2.0.5 are included below.
+
+All these bugs have been fixed in Samba 2.0.5 and 2.0.5a.
+
+If using any version of Samba prior to 2.0.5 the administrator
+*MUST NOT* enable the "message command" parameter in smb.conf,
+and *MUST* remove any "message command" that is listed in any
+existing smb.conf file. No known instances of this attack being
+exploited have been reported.
+
+All Samba versions of nmbd prior to 2.0.5 are vulnerable to a
+denial of service attack causing nmbd to either crash or to go
+into an infinite loop. No known instances of this attack being
+exploited have been reported.
+
+New/Changed parameters in 2.0.5 and 2.0.5a.
+-------------------------------------------
+
+There are 5 new parameters in the smb.conf file.
+
+security mask
+force security mode
+directory security mask
+force directory secruty mode
+level2 oplocks
+
+The first 4 parameters are used to control the UNIX permissions bits
+that an NT client is allowed to modify. These parameters are now
+used instead of the older "create" parameters that were used in
+2.0.4 to allow an administrator to separate the two functions.
+
+Use of these new parameters is described in the smb.conf man page,
+and also in the documents :
+
+docs/textdocs/NT_Security.txt
+docs/htmldocs/NT_Security.html
+
+The fifth new parameter is described in the following section.
+
+Level II oplocks
+----------------
+
+Samba 2.0.5 now implements level2 oplocks. As this is new
+code this parameter is set to "off" by default. The benefit
+of level2 oplocks is to allow read-only file caching from
+multiple clients. This is of great speed benefit to shares
+that are serving application executable programs (.EXE's)
+that are usually not written to. To learn more about using
+level 2 oplocks read the parameter description in the smb.conf
+documentation or read the file :
+
+docs/textdocs/Speed.txt.
+
+Changes in 2.0.5a
+-----------------
+
+1). Fix for smbd crash bug in string_sub(). smbd was miscalculating
+memmove lengths on multiple '%' substitutions.
+2). Fix for wildcard matching bug for old DOS programs running on Win9x.
+3). Fix for Windows NT client changing passwords against a Samba server,
+intermittently failing.
+4). Fix for PPP link being detected as primary interface if using the
+same IP address as the primary.
+5). Ensure smbmount is built with RPM build.
+
+Changes in 2.0.5
+----------------
+
+1). smbmount for Linux systems has been re-written to use
+the libsmb code and clientutil.c is no longer used with it.
+2). A bug preventing directory opens using the NT SMB calls
+has been fixed.
+3). A related bug causing a file structure leak when directory
+opens were denied has been fixed.
+4). Fix for glibc2.1 bug on 32-bit systems being reported as 64
+bit.
+5). Prevent timestamps of 0 or -1 corrupting file timestamps.
+6). Fix for unusual delays when browsing shares using Windows
+2000 - fix added by Matt.
+7). Fix for smbpassword reading problems on Sparc Linux was fixed.
+8). Fix for compiling with SSL library.
+9). smbclient fix for crash when doing CR/LF conversion.
+10). smbclient now reports short read errors.
+11). smbclient now uses remote server workgroup to list servers by default.
+12). smbclient now has -b option to change transmit/send buffer size.
+13). smbclient fix for corrupting files when issuing multiple outstanding
+read requests.
+14). Printing bug where Linux was using SYSV printing by default fixed.
+Linux now set to be BSD printing by default.
+15). Change for Linux to use SYSV shared memory by default.
+16). Fix for using IP_TOS options on some systems.
+17). Fix for some systems that complained about static struct passwd
+buffers being modified.
+18). Range checking applied to all string substitutions. Theoretically
+not a bug, but much more rebust now.
+19). Level II oplocks implemented.
+20). Fix for Win2K client printing added.
+21). Always allow loopback (127.0.0.1) connects unless specifically denied.
+22). Patch for FreeBSD interface detection code from Archie Cobbs (archie@whistle.com).
+23). Return correct status from smbrun.
+24). snprintf fixes for floating point numbers.
+25). Force directories to always have zero size.
+26). Fix for "force group" and "force user" options. "force user" now
+always uses primary group of user as well. Force group now enhanced with '+'
+semantics (see smb.conf man page for details).
+27). Wildcard matching fix to get closer to WinNT semantics for Win9x clients.
+28). Potential crash bug fixed in wildcard matching code. This bug could also
+cause smbd to sometimes not see exact file matches.
+29). Read/write for sockets changed to use revc/send to allow optimisations
+later.
+30). Oplocks added to client library.
+31). Several purify fixes in IPC code.
+32). nmbd crash bug in processing strange NetBIOS names fixed.
+33). nmbd loop bug in processing strange NetBIOS names fixed.
+34). Paranoia fixes to processing of incoming WinPopup messages in smbd.
+35). Share mode code now auto initialised.
+36). Detect dead processes in IPC lock code.
+37). Explicit -V version switch added to command line processing.
+38). WORKGROUP(1b) name processing with no WINS server fixed.
+39). Win2k client detection code added by Matt.
+40). Fix to allow really short changenotify times to be honoured.
+41). Fix for NT delete finding the wrong file from Tine Smukavec
+(valentin.smukavec@hermes.si)
+42). SWAT fix to prevent stderr messages from breaking the Web client.
+43). testparm fixes to check more parameter conflicts.
+44). Relative paths not fetched via SWAT in CGI scripts.
+45). SWAT remote password change - remote host name not treated as a
+password field any more.
+
+Changes in 2.0.4b
+-----------------
+
+A bug with MS-Word 97 saving files with zero UNIX permissions
+was fixed. Even though a workaround is available (set force
+create mode = 644 on the share) Word is such an important
+application that a point fix was neccessary.
+
+Changes in 2.0.4a
+-----------------
+
+The text and html versions of NT_Security were missing from
+the shipping tarball. Also a compile bug for platforms that
+don't have usleep was fixed.
+
+Changes in 2.0.4
+----------------
+
+There are 5 new parameters and one modified parameter in
+the smb.conf file.
+
+allow trusted domains
+restrict anonymous
+mangle locks
+oplock break wait time
+oplock contention limit
+
+The modified parameter is :
+
+nt acl support
+
+Bugfixes added since 2.0.3
+--------------------------
+
+1). Fix for 8 character password problem when using HPUX and
+plaintext passwords.
+2). --with-pam option added to ./configure.
+3). Client fixes for memory leak and display of 64 bit values.
+4). Fixes for -E and -s option with smbclient.
+5). smbclient now allows -L //server or -L \\server
+6). smbtar fix for display of 64 bit values.
+7). Endian independence added to DCE/RPC code.
+8). DCE/RPC marshalling/unmarshalling code re-written to provide
+overflow reporting and sign and seal support.
+9). Bind NAK reply packet added to DCE/RPC code, used to correctly
+refuse bind requests (prevents NT system event log messages).
+10). Mapping of UNIX permissions into NT ACL's for get and set
+added.
+11). DCE/RPC enumeration of numbers of shares made dynamic. 
+Samba now has no limit on the number of exported shares seen.
+12). Fix to speed up random number seed generation on /dev/urandom
+being unavailable.
+13). Several memory fixes added by running Purify on the code.
+14). Read from client error messages improved.
+15). Fixed endianness used in UNICODE strings.
+16). Cope with ERRORmoredata in an RPC pipe client call.
+17). Check for malformed responses in nmbd register name.
+18). NT Encrypted password changing from the NT password dialog box
+now fully implmented.
+19). Mangle 64-bit lock ranges into 32-bits (NT bug!) on a 32-bit
+Samba platform.
+20). Allow file to be pseudo-openend in order to read security only.
+21). Improve filename mangling to reduce chance of collisions.
+22). Added code to prevent granting of oplocks when a file is under
+contention.
+23). Added tunable wait time before sending an oplock break request
+to a client if the client caused the break request. Helps with clients
+not responding to oplock breaks.
+24). Always respond negatively to queued local oplock break messages
+before shutdown. This can prevent "freezes" on an oplock error.
+25). Allow admin to restrict logons to correct domain when in domain
+level security.
+26). Added "restrict anonymous" patch from Andy (thwartedefforts@wonky.org)
+to prevent parameter substitution problems with anonymous connections.
+27). Fix SMBseek where seeking to a negative number sets the offset
+to zero.
+28). Fixed problem with mode getting corrupted in trans2 request
+(setting to zero means please ignore it).
+29). Correctly become the authenticated user on an authenticated
+DCE/RPC pipe request.
+30). Correctly reset debug level in nmbd if someone set it on the
+command line.
+31). Added more checking into testparm
+32). NetBench simulator added to smbtorture by Andrew.
+33). Fixed NIS+ option compile (was broken in 2.0.3).
+34). Recursive smbclient directory listing fix. Patch from E. Jay Berkenbilt
+(ejb@ql.org)
+
+Bugfixes added since 2.0.2
+--------------------------
+
+1). --with-ssl configure now include ssl include directory. Fix
+from Richard Sharpe.
+2). Patch for configure for glibc2.1 support (large files etc.).
+3). Several bugfixes for smbclient tar mode from Bob Boehmer
+(boehmer@worldnet.att.net) to fix smbclient aborting problems
+when restoring tar files.
+4). Some automount fixes for smbmount.
+5). Attempt to fix the AIX 4.1.x/3.x problems where smbd runs as
+root. As no-one has given us root access to such a server this
+cannot be tested fully, but should work.
+6). Crash bug fix in debug code where *real* uid rather than 
+*effective* uid was being checked before attempting to rotate
+log files. This fix should help a *lot* of people who were
+reporting smbd aborting in the middle of a copy operation.
+7). SIGALRM bugfix to ensure infinate file locks time out.
+8). New code to implement NT ACL reporting for cacls.exe program.
+9). UDP loopback socket rebind fix for Solaris.
+10). Ensure all UNICODE strings are correctly in little-endian
+format.
+11). smbpasswd file locking fix.
+12). Fixes for strncpy problems with glibc2.1.
+13). Ensure smbd correctly reports major and minor version number
+and server type when queried via NT rpc calls.
+14). Bugfix for short mangled names not being pulled off the
+mangled stack correctly.
+15). Fix for mapping of rwx bits being incorrectly overwritten
+when doing ATTRIB.EXE
+16). Fix for returning multiple PDU packets in NT rpc code. Should
+allow multiple shares to be returned correctly).
+17). Improved mapping of NT open access requests into UNIX open
+modes.
+18). Fix for copying files from an NTFS volume that contain
+multiple data forks. Added 'magic' error code NT needs.
+19). Fixed crash bug when primary NT authentication server
+is down, rolls over to secondaries correctly now.
+20). Fixed timeout processing to be timer based. Now will
+always occur even if smbd is under load.
+21). Fixed signed/unsigned problem in quotas code.
+22). Fixed bug where setting the password of a completely fresh
+user would end up setting the account disabled flag.
+23). Improved user logon messages to help admins having
+trouble with user authentication.
+
+Bugfixes added since 2.0.1
+--------------------------
+
+Note that due to a critical signal handling bug in 2.0.1,
+this release has been removed and replaced immediately with 
+2.0.2. The Samba Team would like to apologise for any problem
+this may have caused.
+
+1). Fixed smbd looping on SIGCLD problem. This was
+    caused by a missing break statement in a critical
+    piece of code.
+
+Bugfixes added since 2.0.0
+--------------------------
+
+1). Autoconf changes for gcc2.7.x and Solaris 2.5/2.6
+2). Autoconf changes to help HPUX configure correctly.
+3). Autoconf changes to allow lock directory to be set.
+4). Client fix to allow port to be set.
+5). clitar fix to send debug messages to stderr.
+6). smbmount race condition fix.
+7). Fix for bug where trying to browse large numbers of shares
+    generated an error from an NT client.
+8). Wrapper for setgroups for SunOS 4.x
+9). Fix for directory deleting failing from multiuser NT.
+10). Fix for crash bug if bitmap was full.
+11). Fix for Linux genrand where /dev/random could cause 
+     clients to timeout on connect if the entropy pool was
+     empty.
+12). The default PASSWD_CHAT may now be overridden in local.h
+13). HPUX printing fixes for default programs.
+14). Reverted (erroneous) code in MACHINE.SID generation that
+     was setting the sid to 0x21 - should be *decimal* 21.
+15). Fix for printing to remote machine under SVR4.
+16). Fix for chgpasswd wait being interrupted with EINTR.
+17). Fix for disk free routine. NT and Win98 now correctly
+     show greater than 2GB disks.
+18). Fix for crash bug in stat cache statistics printing.
+19). Fix for filenames ending in .~xx.
+20). Fix for access check code wait being interrupted with EINTR.
+21). Fix for password changes from "invalid password" to a valid
+     one setting the account disabled bit.
+22). Fix for smbd crash bug in SMBreadraw cache prime code.
+23). Fix for overly zealous lock range overflow reporting.
+24). Fix for large disk disk free reporting (NT SMB code).
+25). Fix for NT failing to truncate files correctly.
+26). Fix for smbd crash bug with SMBcancel calls.
+27). Additional -T flag to nmblookup to do reverse DNS on addresses.
+28). SWAT fix to start/stop smbd/nmbd correctly.
+
+Major changes in Samba 2.0
+--------------------------
+
+This is a MAJOR new release of Samba, the UNIX based SMB/CIFS file 
+and print server for Windows systems.
+
+There have been many changes in Samba since the last major release,
+1.9.18.  These have mainly been in the areas of performance and
+SMB protocol correctness.  In addition, a Web based GUI interface
+for configuring Samba has been added.
+
+In addition, Samba has been re-written to help portability to
+other POSIX-based systems, based on the GNU autoconf tool.
+
+There are many major changes in Samba for version 2.0.  Here are 
+some of them:
+
+=====================================================================
+
+1). Speed
+---------
+
+Samba has been benchmarked on high-end UNIX hardware as out-performing
+all other SMB/CIFS servers using the Ziff-Davis NetBench benchmark.
+Many changes to the code to optimise high-end performance have been made.
+
+2). Correctness
+---------------
+
+Samba now supports the Windows NT specific SMB requests.  This
+means that on platforms that are capable Samba now presents a
+64 bit view of the filesystem to Windows NT clients and is
+capable of handling very large files.
+
+3). Portability
+---------------
+
+Samba is now self-configuring using GNU autoconf, removing
+the need for people installing Samba to have to hand configure
+Makefiles, as was needed in previous versions.
+
+You now configure Samba by running "./configure" then "make".  See
+docs/textdocs/UNIX_INSTALL.txt for details.
+
+4). Web based GUI configuration
+-------------------------------
+
+Samba now comes with SWAT, a web based GUI config system.  See
+the swat man page for details on how to set it up.
+
+5). Cross protocol data integrity
+---------------------------------
+
+An open function interface has been defined to allow 
+"opportunistic locks" (oplocks for short) granted by Samba
+to be seen by other UNIX processes.  This allows complete
+cross protocol (NFS and SMB) data integrety using Samba
+with platforms that support this feature.
+
+6). Domain client capability
+----------------------------
+
+Samba is now capable of using a Windows NT PDC for user
+authentication in exactly the same way that a Windows NT
+workstation does, i.e. it can be a member of a Domain.  See
+docs/textdocs/DOMAIN_MEMBER.txt for details.
+
+7). Documentation Updates
+-------------------------
+
+All the reference parts of the Samba documentation (the
+manual pages) have been updated and converted to a document
+format that allows automatic generation of HTML, SGML, and
+text formats.  These documents now ship as standard in HTML
+and manpage format.
+
+=====================================================================
+
+NOTE - Some important option defaults changed
+---------------------------------------------
+
+Several parameters have changed their default values.  The most
+important of these is that the default security mode is now user
+level security rather than share level security.
+
+This (incompatible) change was made to ease new Samba installs
+as user level security is easier to use for Windows 95/98 and
+Windows NT clients.
+
+********IMPORTANT NOTE****************
+
+If you have no "security=" line in the [global] section of 
+your current smb.conf and you update to Samba 2.0 you will
+need to add the line :
+
+security=share
+
+to get exactly the same behaviour with Samba 2.0 as you
+did with previous versions of Samba.
+
+********END IMPORTANT NOTE*************
+
+In addition, Samba now defaults to case sensitivity options that
+match a Windows NT server precisely, that is, case insensitive 
+but case preserving.
+
+The default format of the smbpasswd file has also been
+changed for this release, although the new tools will read
+and write the old format, for backwards compatibility.
+
+=====================================================================
+
+NOTE - Primary Domain Controller Functionality
+----------------------------------------------
+
+This version of Samba contains code that correctly implements
+the undocumented Primary Domain Controller authentication
+protocols.  However, there is much more to being a Primary
+Domain Controller than serving Windows NT logon requests.
+
+A useful version of a Primary Domain Controller contains
+many remote procedure calls to do things like enumerate users, 
+groups, and security information, only some of which Samba currently
+implements. In addition, there are outstanding (known) bugs with
+using Samba as a PDC in this release that the Samba Team are actively
+working on. For this reason we have chosen not to advertise and 
+actively support Primary Domain Controller functionality with this
+release.
+
+This work is being done in the CVS (developer) versions of Samba,
+development of which continues at a fast pace.  If you are
+interested in participating in or helping with this development
+please join the Samba-NTDOM mailing list.  Details on joining
+are available at :
+
+http://samba.org/listproc/
+
+Details on obtaining CVS (developer) versions of Samba
+are available at:
+
+http://samba.org/cvs.html
+
+=====================================================================
+
+If you think you have found a bug please email a report to :
+
+        samba@samba.org
+
+As always, all bugs are our responsibility.
+
+Regards,
+
+        The Samba Team.  
+

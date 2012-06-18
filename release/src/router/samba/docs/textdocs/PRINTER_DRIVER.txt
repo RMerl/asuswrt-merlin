@@ -1,0 +1,238 @@
+!==
+!== PRINTER_DRIVER.txt for Samba release 2.0.10 23 Jun 2001
+!==
+==========================================================================
+	Supporting the famous PRINTER$ share
+ 
+ 	Jean-Francois.Micouleau@utc.fr, 10/26/97
+	modified by herb@sgi.com 1/2/98
+
+===========================================================================
+
+Disclaimer:
+
+	This ONLY works with Windows 95
+	It does NOT work with Windows NT 4
+
+
+Goal:
+
+	When you click on a samba shared printer, you can now install the driver
+	automatically onto the Windows 95 machine, as you would from an NT server.
+	
+How To:
+
+	It's a three step config.
+	
+	First, create a new directory, where you will put the driver files, and
+	make a share in smb.conf pointing to it.
+
+	Example:
+	
+		[printer$]
+   		  path=/usr/local/samba/printer
+   		  public=yes
+   		  browseable=yes
+
+	Second, you have to build the list of drivers required for a specific
+	printer. This is the most complicated thing to do. Get the files
+	'msprint.inf' and 'msprint2.inf' from Windows 95, the easiest way is to
+	grab them from a working Windows 95 computer. They are usually located
+	in 'c:\windows\inf'. Look in them for the printer you have. Run the new
+	program 'make_printerdef' with the file name and the printer name as
+	parameters. If you have drivers for an unsupported or updated printer,
+	first install these drivers on an Windows 95 system. There will be a
+	file created in your inf directory named 'oem?.inf' (where the ? is some
+	number). Use this file instead of msprint.inf.
+
+	Example: (from the /usr/local/samba/lib directory)
+		
+	make_printerdef msprint.inf "Apple LaserWriter" >> printers.def
+	 
+	The program will print out a list of required files to stderr.
+	Copy all the files listed into the directory you created in step 1.
+	If you have "preserve case = yes" make sure your files names match
+	EXACTLY the names listed.
+	
+	Third, you need to add 2 new parameters in smb.conf. One is in the
+	[global] section, called 'printer driver file' pointing to the printer
+	description file you just created, and the other in each printer share,
+	called 'printer driver location' pointing to where the client will get 
+	the drivers. Don't forget to set correctly the printer driver parameter
+	to the Windows printer name.
+
+	Example:
+	
+		[global]
+  		  printer driver file=/usr/local/samba/lib/printers.def
+
+		[lp]
+		   comment = My old printer laser
+		   browseable = yes
+		   printable = yes
+		   public = yes
+		   create mode = 0700
+		   printer driver=Apple LaserWriter
+		   printer driver location=\\%h\PRINTER$
+
+	%h will expand to the computer name, and PRINTER$ is the name of the
+	share created in step one.
+	
+	
+If it doesn't work for you, don't send flame ! It worked for me. In case of
+trouble don't hesitate to send me a mail with your smb.conf file and 
+printers.def
+
+
+*******  added by herb@sgi.com
+
+For those of you who like to know the details, and in case I have guessed
+wrong on some of the fields - The following is the format of the entries 
+in the printers.def file: (entries are 1 single line - they are split here 
+for readability)
+
+<Long Printer Name>:<Driver File Name>:<Data File Name>:<Help File Name>:
+<Language Monitor Name>:<Default Data Type>:<Comma Separated list of Files>
+
+The <Help File Name> and the <Language Monitor Name> can be empty.
+If no <Driver File Name> or <Data File Name> are specified in the inf file,
+these will default to the section name for the printer.
+
+The following is an excerpt from the MSPRINT2.INF file on a WIN95 machine.
+I have deleted all but the entries relating to installing a driver for the
+"QMS ColorScript 100 Model 30" printer. Using this "file" I'll try to 
+explain how the printers.def file is created.
+
+make_printerdef is run with the first argument being the name of this
+file (MSPRINT2.INF in this case) and the second argument being the
+name of the printer ("QMS ColorScript 100 Model 30" in this case).
+
+The printer name is first found in the "Model section" to obtain the
+name of the "Installer Section" (this is the name after the equal sign).
+We ignore the alternate name.
+
+The "Installer Section" contains entries for "CopyFiles" and "DataSection".
+The "CopyFiles" line gives a list of all the required files for this
+printer. If the name begins with an @ it is the name of a file (after
+you strip off the @), otherwise it is the name of a "Copy Section" which
+in turn is a list of files required. This printer has one file listed
+"QCS30503.SPD" and two sections "COLOR_QMS_100_30" and "PSCRIPT". The
+"COLOR_QMS_100_30" section is listed in the "[DestinationDirs]" as 
+having a value of 23. This means that all files listed in this section
+should go into the "color" subdirectory. The list of files to copy for
+this printer is thus:
+
+QCS30503.SPD,color\QMS10030.ICM,PSCRIPT.DRV,PSCRIPT.HLP,PSCRIPT.INI,
+TESTPS.TXT,APPLE380.SPD,FONTS.MFM,ICONLIB.DLL,PSMON.DLL
+
+From the "Data Section" we obtain values for "DriverFile", "HelpFile",
+and "LanguageMonitor". The % around the value for "LanguageMonitor"
+indicates that it is a string that can be localized so its actual value
+is obtained from the "[Strings]" section. The "Data Section" could also
+have contained an entry for "DefaultDataType".
+
+Using the information we have obtained we can now construct the entry
+for the printers.def file.
+
+<Long Printer Name>     -> QMS ColorScript 100 Model 30  (name given
+				on the command line)
+<Driver File Name>      -> PSCRIPT.DRV  (given in Data Section)
+<Data File Name>        -> QCS30503.SPD (defaults to Install Section name)
+<Help File Name>        -> PSCRIPT.HLP  (given in Data Section)
+<Language Monitor Name> -> PostScript Language Monitor  (given in Data Section)
+<Default Data Type>     -> RAW (default if not specified)
+
+
+So.... the enty (actually one line but split here for readability) would
+be:
+
+QMS ColorScript 100 Model 30:PSCRIPT.DRV:QCS30503.SPD:
+PSCRIPT.HLP:PostScript Language Monitor:RAW:
+QCS30503.SPD,color\QMS10030.ICM,PSCRIPT.DRV,PSCRIPT.HLP,PSCRIPT.INI,
+TESTPS.TXT,APPLE380.SPD,FONTS.MFM,ICONLIB.DLL,PSMON.DLL
+
+---------------------- Info from MSPRINT2.INF ------------------------
+;
+; The Manufacturer section lists all of the manufacturers that we will
+; display in the Dialog box
+
+[Manufacturer]
+"QMS"
+
+
+;
+; Model sections. Each section here corresponds with an entry listed in the
+; [Manufacturer] section, above. The models will be displayed in the order
+; that they appear in the INF file.
+;
+; Each model lists a variation of its own name as a compatible ID. This
+; is done primarily as an optimization during upgrade.
+;
+[QMS]
+"QMS ColorScript 100 Model 30"    = QCS30503.SPD,QMS_ColorScript_100_Model_30
+
+
+;
+; Installer Sections
+;
+; These sections control file installation, and reference all files that
+; need to be copied. The section name will be assumed to be the driver
+; file, unless there is an explicit DriverFile section listed.
+;
+[QCS30503.SPD]
+CopyFiles=@QCS30503.SPD,COLOR_QMS_100_30,PSCRIPT
+DataSection=PSCRIPT_DATA
+
+; Copy Sections
+;
+; Lists of files that are actually copied. These sections are referenced
+; from the installer sections, above. Only create a section if it contains
+; two or more files (if we only copy a single file, identify it in the
+; installer section, using the @filename notation) or if it's a color
+; profile (since the DestinationDirs can only handle sections, and not
+; individual files).
+;
+[COLOR_QMS_100_30]
+QMS10030.ICM
+
+[PSCRIPT]
+PSCRIPT.DRV
+PSCRIPT.HLP
+PSCRIPT.INI
+TESTPS.TXT
+APPLE380.SPD
+FONTS.MFM
+ICONLIB.DLL
+PSMON.DLL
+
+
+;
+; Data Sections
+;
+; These sections contain data that is shared between devices.
+;
+[PSCRIPT_DATA]
+DriverFile=PSCRIPT.DRV
+HelpFile=PSCRIPT.HLP
+LanguageMonitor=%PS_MONITOR%
+
+
+;
+; Color profiles go to the colors directory. All other files go to the
+; system directory
+;
+
+[DestinationDirs]
+DefaultDestDir=11
+COLOR_QMS_100_30=23
+COLOR_TEKTRONIX_200I=23
+COLOR_TEKTRONIX_III_PXI=23
+
+
+;
+; Localizable Strings
+;
+[Strings]
+MS="Microsoft"
+PS_MONITOR="PostScript Language Monitor,PSMON.DLL"
+

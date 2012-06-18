@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<TITLE>Setting up a Linux PPTP Client with WinNT PPTP Server</TITLE>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<H1>Setting up the Linux PPTP 1.0.2 client (and PPP 2.3.5) with Windows NT PPTP Server</H1>
+
+<HR>
+<A NAME="aboutsys"></A>
+<H2>About the systems</H2>
+<P>
+This document assumes the following:
+<ul>
+<li>remote machine name = orge
+<li>domain remote machine belongs to = gnoll
+<li>username on remote machine = billybob
+<li>password for billybob = bobbybill
+</ul>
+We want to connect our local machine to the remote machine using PPTP. The
+remote machine is a <I>Windows NT</I> box while our local machine is a
+<I>Linux box</I>.
+</P>
+
+<HR>
+
+<A NAME="chapsecrets"></A>
+<H2>PPP chap-secrets file</H2>
+<P>
+Find the <I>chap-secrets</I> file which should be in <I>/etc/ppp/</I>. This
+file should look like this:
+</P>
+<P>
+<TABLE>
+<TR><TD># chap-secrets</TD></TR><TR>
+<TD># client</TD><TD>server</TD><TD>secret</TD><TD>IP adresses</TD></TR><TR>
+<TD>gnoll\\billybob</TD><TD>orge</TD><TD>bobbybill</TD><TD></TD></TR>
+</TABLE>
+</P>
+
+<HR>
+<A NAME="debugging"></A>
+<H2>Setting up PPP debugging</H2>
+<P>
+PPP debugging is handled by <I>syslogd</I>. To setup debugging open
+<I>syslog.conf</I> which should be found in <I>/etc/</I> and add the following
+entry:
+</P>
+<P>
+<B>daemon.debug /var/log/pppd.log</B>
+</P>
+
+<HR>
+<A NAME="launchpptp"></A>
+<H2>Launching PPTP</H2>
+<P>
+The following command is issued on the linux box to connect to the remote NT
+machine.
+</P>
+<P>
+<B>pptp orge debug name gnoll\\billybob remotename orge</B>
+</P>
+
+<HR>
+<A NAME="errors"></A>
+<H2>Errors</H2>
+<P>
+<B>E=691</B><BR>
+This error occurs when you supply an incorrect username/password to the remote
+NT machine. Check the chap-secrets file and the command line where PPTP is
+launched.
+</P>
+
+<HR>
+<A NAME="testing"></A>
+<H2>Testing</H2>
+<P>
+<ul>
+<li> run 'ifconfig' and check that a ppp0 interface exists
+<li> find P-t-P: xxx.xxx.xxx.xxx from the output of ifconfig
+<li> run 'netstat -i' and record the RX-OK and TX-OK values for ppp0
+<li> type 'ping xxx.xxx.xxx.xxx'
+<li> run 'netstat -i' again and see if the values for RX and TX increased.. if yes then it would appear to be working ok....... in theory anyway.
+</ul>
+
+<HR>
+<A HREF="http://www.moretonbay.com/vpn/pptp.html">PoPToP Home Page</a>
+</BODY>
+</HTML>
+

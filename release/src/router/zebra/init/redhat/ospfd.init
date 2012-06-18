@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# chkconfig: - 16 84
+# description: An OSPF v2 routing engine for use with Zebra
+#
+# processname: ospfd
+# config: /etc/ospfd.conf
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+
+[ -f /etc/ospfd.conf ] || exit 0
+
+case "$1" in
+  start)
+	echo -n "Starting ospfd: "
+        daemon /usr/sbin/ospfd -d
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/ospfd
+	echo
+	;;
+  stop)
+	echo -n "Shutting down ospfd: "
+	killproc ospfd
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/ospfd
+	echo
+	;;
+  restart)
+        $0 stop
+        $0 start
+	RETVAL=$?
+        ;;
+  status)
+        status ospfd
+	RETVAL=$?
+        ;;
+  *)
+	echo "Usage: ospfd {start|stop|restart|status}"
+	exit 1
+esac
+
+exit $RETVAL

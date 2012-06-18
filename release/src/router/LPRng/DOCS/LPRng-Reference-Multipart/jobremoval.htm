@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Job Removal</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title="Controlling the Print Queue" href=
+    "controllingprintqueue.htm">
+    <link rel="NEXT" title="Print Job Filters" href=
+    "printjobfilters.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "controllingprintqueue.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "printjobfilters.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="JOBREMOVAL">4.8. Job
+      Removal</a></h1>
+
+      <p>Occasionally we print a file and then change our mind and
+      want to cancel the job. The <b class="APPLICATION">lprm</b>
+      command allows us to do this.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2141"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {154} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (printing disabled)
+     Queue: 3 printable jobs
+     Server: no server active
+     Status: job 'papowell@h4+17922' removed at 18:15:13.981
+     Rank   Owner/ID          Class Job Files      Size Time
+    1      papowell@h4+17959    A 17959 (stdin)       3 18:23:24
+    2      papowell@h4+17962    A 17962 (stdin)       6 18:23:30
+    3      papowell@h4+17970    A 17970 (stdin)       5 18:23:35
+    <samp class="PROMPT">h4: {155} %</samp> <kbd class=
+"USERINPUT">lprm</kbd>
+    Printer lp@h4:
+      checking perms 'papowell@h4+17959'
+      dequeued 'papowell@h4+17959'
+    <samp class="PROMPT">h4: {156} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (printing disabled)
+     Queue: 2 printable jobs
+     Server: no server active
+     Status: job 'papowell@h4+17922' removed at 18:15:13.981
+     Rank   Owner/ID          Class Job Files      Size Time
+    1      papowell@h4+17962    A 17962 (stdin)       6 18:23:30
+    2      papowell@h4+17970    A 17970 (stdin)       5 18:23:35
+    <samp class="PROMPT">h4: {157} %</samp> <kbd class=
+"USERINPUT">lprm 17970</kbd>
+    Printer lp@h4:
+      checking perms 'papowell@h4+17970'
+      dequeued 'papowell@h4+17970'
+    <samp class="PROMPT">h4: {158} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (printing disabled)
+     Queue: 1 printable job
+     Server: no server active
+     Status: job 'papowell@h4+17922' removed at 18:15:13.981
+     Rank   Owner/ID          Class Job Files     Size Time
+    1      papowell@h4+17962    A 17962 (stdin)      6 18:23:30
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>By default, the <b class="APPLICATION">lprm</b> command
+      removes the first job in the queue that the user has
+      permission to remove. Also, as shown in the example, you can
+      remove a job by specifying the job ID or the job number. If
+      you specify a user name, you remove <var class=
+      "LITERAL">all</var> of the user's jobs. This can be
+      dangerous:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2156"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {159} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (printing disabled)
+     Queue: 3 printable jobs
+     Server: no server active
+     Status: job 'papowell@h4+17922' removed at 18:15:13.981
+     Rank   Owner/ID          Class Job Files     Size Time
+    1      papowell@h4+17962    A 17962 (stdin)      6 18:23:30
+    2      papowell@h4+18499    A 18499 /tmp/hi      3 18:56:00
+    3      papowell@h4+18501    A 18501 /tmp/there   6 18:56:02
+    <samp class="PROMPT">h4: {160} %</samp> <kbd class=
+"USERINPUT">lprm papowell</kbd>
+    Printer lp@h4:
+      checking perms 'papowell@h4+17962'
+      dequeued 'papowell@h4+17962'
+      checking perms 'papowell@h4+18499'
+      dequeued 'papowell@h4+18499'
+      checking perms 'papowell@h4+18501'
+      dequeued 'papowell@h4+18501'
+    <samp class="PROMPT">h4: {161} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (printing disabled)
+     Queue: no printable jobs in queue
+     Status: job 'papowell@h4+17922' removed at 18:15:13.981
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The special user <var class="LITERAL">all</var> matches
+      all jobs in a print queue. Clearly you should be careful not
+      to specify <tt class="COMMAND">lprm all</tt> by accident.
+      Even more dangerous is the following command:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN2167"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {162} %</samp> <kbd class=
+"USERINPUT">lprm -a all</kbd>
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>As you might surmise, this removes <var class=
+      "LITERAL">all</var> print jobs in <var class=
+      "LITERAL">all</var> queues, which is an excellent way to
+      purge print queues of all jobs.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "controllingprintqueue.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "printjobfilters.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Controlling the
+          Print Queue</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Print Job
+          Filters</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

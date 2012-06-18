@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Poptop MSCHAP2 ADS Howto</title>
+</head>
+
+<body>
+<p><a name="test"></a><strong>4. The Test Environment</strong></p>
+<p>I have built a test environment as shown in the diagram. In the rest of the howto, the configurations of software are based on this topology. </p>
+<p><img src="diagram1.jpg"></p>
+<p>A Windows 2003 SP1 Server is set up as the AD domain controller, DNS server and WINS server. The pptp gateway is the Linux box which has 2 network cards. One connects to the internal network, 10.0.0.0/24, and the other one connects to the Internet with ip address 192.168.0.10/24. The internal network has two subnets, 10.0.0.0/24 and 172.16.0.0/24. </p>
+<p>The domain name of the Windows AD domain is EXAMPLENET.ORG and the corresponding netbios name is EXAMPLE. </p>
+<p><strong>Windows Domain Summary</strong>:</p>
+<table width="558" border="0">
+  <tr>
+    <td width="266">Domain Controller Name </td>
+    <td width="282">dc1.examplenet.org</td>
+  </tr>
+  <tr>
+    <td>Domain Controller IP Address </td>
+    <td>10.0.0.1</td>
+  </tr>
+  <tr>
+    <td>DNS IP Address </td>
+    <td>10.0.0.1</td>
+  </tr>
+  <tr>
+    <td>WINS IP Address </td>
+    <td>10.0.0.1</td>
+  </tr>
+  <tr>
+    <td>AD Domain Name </td>
+    <td>examplenet.org</td>
+  </tr>
+  <tr>
+    <td>AD Netbios Domain Name</td>
+    <td>example</td>
+  </tr>
+</table>
+
+</p>
+<hr>
+<a href="poptop_ads_howto_3.htm">Next</a> &nbsp;&nbsp;<a href="poptop_ads_howto_1.htm">Previous</a>&nbsp;&nbsp;<a href="poptop_ads_howto_1.htm#toc">Content</a></body>
+</html>

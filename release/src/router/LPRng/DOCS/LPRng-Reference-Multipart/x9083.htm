@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Permission Checking</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title="Authentication Operations" href=
+    "auth.htm">
+    <link rel="NEXT" title="PGP Authentication Support" href=
+    "x9115.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "auth.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x9115.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN9083">17.11. Permission
+      Checking</a></h1>
+
+      <p>When an authenticated transfer has been performed, the
+      following permission information will be provided.</p>
+
+      <ul>
+        <li>
+          <p>AUTH This value is <var class="LITERAL">true</var> or
+          <var class="LITERAL">match</var> if an authenticated
+          request was received.</p>
+        </li>
+
+        <li>
+          <p>AUTHTYPE=authtype This has the value of the <var
+          class="LITERAL">authtype</var> field in the
+          authentication request.</p>
+        </li>
+
+        <li>
+          <p>AUTHUSER=userinfo This is the <acronym class=
+          "ACRONYM">AUTHUSER</acronym> information provided by the
+          authentication protocol, and is usually the originating
+          user's identification.</p>
+        </li>
+
+        <li>
+          <p>AUTHFROM=frominfo This is the <acronym class=
+          "ACRONYM">AUTHUSER</acronym> information provided by the
+          authentication protocol, and is usually the originating
+          system (user or lpd server) identification.</p>
+        </li>
+
+        <li>
+          <p>AUTHSAMEUSER This item has effect only when checking
+          jobs in a spool queue. The <acronym class=
+          "ACRONYM">AUTHUSER</acronym> information from the request
+          is compared to the <acronym class=
+          "ACRONYM">AUTHUSER</acronym> information from the request
+          that created a job. If they are identical, the match
+          succeeds.</p>
+        </li>
+
+        <li>
+          <p>AUTHJOB This item has effect only when checking jobs
+          in a spool queue. If the job was transfered using an
+          authentication protocol the match succeeds.</p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>For example, to reject non-authenticated operations, the
+      following line could be put in the permissions file.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN9107"></a>
+<pre class="SCREEN">
+    REJECT NOT AUTH
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If a remote server has id information FFEDBEEFDEAF, then
+      the following will accept only forwarded jobs from this
+      server.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN9110"></a>
+<pre class="SCREEN">
+    ACCEPT AUTH AUTHFROM=FFEDBEEFDEAF
+    REJECT AUTH
+    REJECT NOT AUTH
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>To allow only authenticated users to remove jobs you can
+      use:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN9113"></a>
+<pre class="SCREEN">
+    ACCEPT AUTH SERVICE=R,M,L,P AUTHSAMEUSER
+    REJECT AUTH
+    REJECT NOT AUTH
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "auth.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x9115.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Authentication
+          Operations</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">PGP
+          Authentication Support</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

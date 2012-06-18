@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# Script to initiate a ppp connection. This is the first part of the
+# pair of scripts. This is not a secure pair of scripts as the codes
+# are visible with the 'ps' command.  However, it is simple.
+#
+# These are the parameters. Change as needed.
+TELEPHONE=555-1212	# The telephone number for the connection
+ACCOUNT=george		# The account name for logon (as in 'George Burns')
+PASSWORD=gracie		# The password for this account (and 'Gracie Allen')
+LOCAL_IP=0.0.0.0	# Local IP address if known. Dynamic = 0.0.0.0
+REMOTE_IP=0.0.0.0	# Remote IP address if desired. Normally 0.0.0.0
+NETMASK=255.255.255.0	# The proper netmask if needed
+#
+# Export them so that they will be available at 'ppp-on-dialer' time.
+export TELEPHONE ACCOUNT PASSWORD
+# 
+# This is the location of the script which dials the phone and logs
+# in.  Please use the absolute file name as the $PATH variable is not
+# used on the connect option.  (To do so on a 'root' account would be
+# a security hole so don't ask.)
+#
+DIALER_SCRIPT=/etc/ppp/ppp-on-dialer
+#
+# Initiate the connection
+# 
+# I put most of the common options on this command. Please, don't
+# forget the 'lock' option or some programs such as mgetty will not
+# work. The asyncmap and escape will permit the PPP link to work with
+# a telnet or rlogin connection. You are welcome to make any changes
+# as desired. Don't use the 'defaultroute' option if you currently
+# have a default route to an ethernet gateway.
+#
+exec /usr/sbin/pppd debug lock modem crtscts /dev/ttyS0 38400 \
+	asyncmap 20A0000 escape FF kdebug 0 $LOCAL_IP:$REMOTE_IP \
+	noipdefault netmask $NETMASK defaultroute connect $DIALER_SCRIPT

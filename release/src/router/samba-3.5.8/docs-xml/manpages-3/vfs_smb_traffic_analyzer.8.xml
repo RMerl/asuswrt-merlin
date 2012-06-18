@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="vfs_smb_traffic_analyzer.8">
+
+<refmeta>
+	<refentrytitle>smb_traffic_analyzer</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">System Administration tools</refmiscinfo>
+	<refmiscinfo class="version">3.5</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>vfs_smb_traffic_analyzer</refname>
+	<refpurpose>log Samba VFS read and write operations through a socket
+	to a helper application</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>vfs objects = smb_traffic_analyzer</command>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>This VFS module is part of the
+	<citerefentry><refentrytitle>samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+	<para>The <command>vfs_smb_traffic_analyzer</command> VFS module logs
+	client write and read operations on a Samba server and sends this data
+	over a socket to a helper program, which feeds a SQL database. More
+	information on the helper programs can be obtained from the
+	homepage of the project at:
+	http://holger123.wordpress.com/smb-traffic-analyzer/
+	</para>
+	<para><command>vfs_smb_traffic_analyzer</command> currently is aware
+	of the following VFS operations:</para>
+
+	<simplelist>
+        <member>write</member>
+        <member>pwrite</member>
+	<member>read</member>
+	<member>pread</member>
+	</simplelist>
+
+	<para><command>vfs_smb_traffic_analyzer</command> sends the following data
+	in a fixed format seperated by a comma through either an internet or a
+	unix domain socket:</para>
+	<programlisting>
+	BYTES|USER|DOMAIN|READ/WRITE|SHARE|FILENAME|TIMESTAMP
+	</programlisting>
+
+	<para>Description of the records:
+
+	<itemizedlist>
+	<listitem><para><command>BYTES</command> - the length in bytes of the VFS operation</para></listitem>
+	<listitem><para><command>USER</command> - the user who initiated the operation</para></listitem>
+	<listitem><para><command>DOMAIN</command> - the domain of the user</para></listitem>
+	<listitem><para><command>READ/WRITE</command> - either "W" for a write operation or "R" for read</para></listitem>
+	<listitem><para><command>SHARE</command> - the name of the share on which the VFS operation occured</para></listitem>
+	<listitem><para><command>FILENAME</command> - the name of the file that was used by the VFS operation</para></listitem>
+	<listitem><para><command>TIMESTAMP</command> - a timestamp, formatted as "yyyy-mm-dd hh-mm-ss.ms" indicating when the VFS operation occured</para></listitem>
+	</itemizedlist>
+
+	</para>
+
+	<para>This module is stackable.</para>
+
+</refsect1>
+
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<variablelist>
+
+		<varlistentry>
+                <term>smb_traffic_analyzer:mode = STRING</term>
+                <listitem>
+                <para>If STRING matches to "unix_domain_socket", the module will
+		use a unix domain socket located at /var/tmp/stadsocket, if
+		STRING contains an different string or is not defined, the module will
+		use an internet domain socket for data transfer.</para>
+
+                </listitem>
+                </varlistentry>
+
+
+		<varlistentry>
+		<term>smb_traffic_analyzer:host = STRING</term>
+		<listitem>
+		<para>The module will send the data to the system named with
+		the hostname STRING.</para>
+
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>smb_traffic_analyzer:port = STRING</term>
+		<listitem>
+		<para>The module will send the data using the TCP port given
+		in STRING.
+		</para>
+		</listitem>
+		</varlistentry>
+		<varlistentry>
+		<term>smb_traffic_analyzer:anonymize_prefix = STRING</term>
+		<listitem>
+		<para>The module will replace the user names with a prefix
+		given by STRING and a simple hash number.
+		</para>
+
+		</listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>smb_traffic_analyzer:total_anonymization = STRING</term>
+		<listitem>
+		<para>If STRING matches to 'yes', the module will replace
+		any user name with the string given by the option 
+		smb_traffic_analyzer:anonymize_prefix, without generating
+		an additional hash number. This means that any transfer data
+		will be mapped to a single user, leading to a total 
+		anonymization of user related data.</para>
+		</listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>EXAMPLES</title>
+
+	<para>The module running on share "example_share", using a unix domain socket</para>
+	<programlisting>
+	<smbconfsection name="[example_share]"/>
+	<smbconfoption name="path">/data/example</smbconfoption>
+	<smbconfoption name="vfs objects">smb_traffic_analyzer</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:mode">unix_domain_socket</smbconfoption>
+	</programlisting>
+
+	<para>The module running on share "example_share", using an internet socket,
+	connecting to host "examplehost" on port 3491.</para>
+	<programlisting>
+	<smbconfsection name="[example_share]"/>
+	<smbconfoption name="path">/data/example</smbconfoption>
+	<smbconfoption name="vfs objects">smb_traffic_analyzer</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:host">examplehost</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:port">3491</smbconfoption>
+	</programlisting>
+
+	<para>The module running on share "example_share", using an internet socket,
+	connecting to host "examplehost" on port 3491, anonymizing user names with
+	the prefix "User".</para>
+	<programlisting>
+	<smbconfsection name="[example_share]"/>
+	<smbconfoption name="path">/data/example</smbconfoption>
+	<smbconfoption name="vfs objects">smb_traffic_analyzer</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:host">examplehost</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:port">3491</smbconfoption>
+	<smbconfoption name="smb_traffic_analyzer:anonymize_prefix">User</smbconfoption>
+	</programlisting>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+	<para>This man page is correct for version 3.3 of the Samba suite.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+
+	<para>The original Samba software and related utilities
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar
+	to the way the Linux kernel is developed.</para>
+
+	<para>The original version of the VFS module and the
+	helper tools were created by Holger Hetterich.</para>
+</refsect1>
+
+</refentry>

@@ -1,0 +1,129 @@
+Samba4  OpenLDAP-Backend Quick-Howto
+====================================
+
+oliver@itc.li  -  August 2009
+
+
+This Mini-Howto describes in a very simplified way 
+how to setup Samba 4 (S4) (pre)Alpha 9 with the
+OpenLDAP (OL) -Backend.
+Use of OpenLDAP >= 2.4.17 is strongly recommended.
+
+
+1.) Download and compile OpenLDAP. 
+
+The use of (older) Versions shipped with Distributions often
+causes trouble, so dont use them. Configure-Example:
+
+#> ./configure --enable-overlays=yes --with-tls=yes --with-cyrus-sasl=yes
+#> make depend && make && make install
+
+Note: openssl and cyrus-sasl libs should be installed
+before compilation.
+
+
+
+
+2.) Final provision:
+
+(you can add --adminpass=<yourpass> to the parameters,
+otherwise a random password will be generated for 
+cn=Administrator,cn=users,<Your Base-DN>):
+
+#> setup/provision \
+   --ldap-backend-type=openldap \
+   --ol-slapd="/usr/local/libexec/slapd"
+   --username=samba-admin --realm=ldap.local.site \
+   --domain=LDAP --server-role='domain controller'\
+   --adminpass=linux
+
+At the End of the final provision you should get
+the following output (only partial here). Read it carefully:
+
+--------
+...
+A Kerberos configuration suitable for Samba 4 has been generated at /usr/local/samba/private/krb5.conf
+
+Use later the following commandline to start slapd, then Samba:
+/usr/local/libexec/slapd -f /usr/local/samba/private/ldap/slapd.conf -h ldapi://%2Fusr%2Flocal%2Fsamba%2Fprivate%2Fldap%2Fldapi
+
+This slapd-Commandline is also stored under: /usr/local/samba/private/ldap/slapd_command_file.sh
+Please install the phpLDAPadmin configuration located at /usr/local/samba/private/phpldapadmin-config.php into /etc/phpldapadmin/config.php
+Once the above files are installed, your Samba4 server will be ready to use
+Server Role:    domain controller
+Hostname:       ldapmaster
+NetBIOS Domain: LDAP
+DNS Domain:     ldap.local.site
+DOMAIN SID:     S-1-5-21-429312062-2328781357-2130201529
+Admin password: linux
+
+--------
+
+Our slapd in "provision-mode" wiil be shut down automatically 
+after final provision ends.
+
+
+3.) Run OL and S4:
+
+After you completed the other necessary steps (krb and named-specific),
+start first OL with the commandline displayed in the output under (3),
+(remember: the slapd-Commandline is also stored in the file ../slapd_command_file.sh)
+then S4.
+
+
+
+4.) Special Setup-Types:
+
+OpenLDAP-Online Configuration is now in use by default (olc):
+
+The olc will be setup automatically
+under ../private/slapd.d/.
+olc is accessible via "cn=samba-admin,cn=samba" and Base-DN "cn=config"
+olc is intended primarily for use in conjunction with MMR
+
+Attention: You have to start OL with the commandline
+displayed in the output under (3), but you have to set a 
+listening port of slapd manually:
+
+(e.g. -h ldap://ldapmaster.ldap.local.site:9000)
+
+Attention: You _should_not_ edit the olc-Sections
+"config" and "ldif", as these are vital to the olc itself.
+
+
+b) MultiMaster-Configuration (MMR):
+At this time (S4 (pre)Alpha9) the only possible Replication setup.
+Use the provision Parameter:
+
+ --ol-mmr-urls=<list of whitespace separated ldap-urls (and Ports <> 389!).
+
+e.g.:
+--ol-mmr-urls="ldap://ldapmaster1.ldap.local.site:9000 \ 
+   ldap://ldapmaster2.ldap.local.site:9000"
+
+Attention: You have to start OL with the commandline
+displayed in the output under (3), but you have to set a 
+listening port of slapd manually
+(e.g. -h ldap://ldapmaster1.ldap.local.site:9000)
+
+The Ports must be different from 389, as these are occupied by S4.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,233 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Dynamic Routing&#13;</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Job Format Translation " href=
+    "translateformat.htm">
+    <link rel="NEXT" title="Printer Load Balancing" href=
+    "loadbalance.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "translateformat.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "loadbalance.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="DESTINATIONS">12.13. Dynamic
+      Routing</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">destinations=</var><span class=
+          "emphasis"><i class="EMPHASIS">destinations for
+          jobs</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">router=</var><span class=
+          "emphasis"><i class="EMPHASIS">router
+          program</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p><b class="APPLICATION">LPRng</b> has the ability to route
+      a job to one or more destinations in a dynamic manner. This
+      is not the same as <span class="emphasis"><i class=
+      "EMPHASIS">load balancing</i></span>, as the destinations are
+      hard coded and not able to be changed. This is accomplished
+      by having a <var class="LITERAL">router</var> filter generate
+      a set of destinations. Here is a sample printcap entry:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5994"></a>
+<pre class="SCREEN">
+    t2|Test Printer 2
+        :sd=/var/spool/LPD/t2
+        :lf=log
+        :destinations=t1@server1,t1@server2,t1@localhost
+        :router=/usr/local/LPD/router
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>When a job arrives at the <b class="APPLICATION">lpd</b>
+      server, the 'router' filter is invoked with the standard
+      filter options which include the user, host, and other
+      information obtained from the control file. <acronym class=
+      "ACRONYM">STDIN</acronym> is connected to a temporary copy of
+      the control file, and the CONTROL environment variable is set
+      to the value of the actual control file itself.</p>
+
+      <p>The routing filter exit status is used as follows:</p>
+
+      <ul>
+        <li>
+          <p>0 (JSUCC) - normal processing</p>
+        </li>
+
+        <li>
+          <p>37 (JHOLD) - job is held</p>
+        </li>
+
+        <li>
+          <p>any other value - job is deleted from queue</p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The router filter writes to <acronym class=
+      "ACRONYM">STDOUT</acronym> a file specifying the destinations
+      for the job. The destinations entries in this file file have
+      the following format. Entry order is not important, but each
+      destination must end with the 'end' tag.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6009"></a>
+<pre class="SCREEN">
+    dest (destination queue)
+    copies (number of copies to be made)
+    priority (priority letter)
+    X(controlfile modifications)
+    end
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Example of router output:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6012"></a>
+<pre class="SCREEN">
+    dest t1@localhost
+    copies 2
+    CA
+    priority B
+    end
+    dest t2@localhost
+    CZ
+    priority Z
+    end
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>In this example, two copies of the job will be sent to the
+      t1 and t2 spool queue servers. The Class (C letter value) and
+      job priority information will be rewritten with the indicated
+      values.</p>
+
+      <p>If routing information is specified by the router filter
+      the job will be sent to the default destination.</p>
+
+      <p><b class="APPLICATION">lpq</b> will display job
+      information in a slightly different format for multiple
+      destination jobs. For example:</p>
+
+      <p class="LITERALLAYOUT">
+      Printer:&nbsp;t2@h4&nbsp;'Test&nbsp;Printer&nbsp;2'&nbsp;(routed/bounce&nbsp;queue&nbsp;to&nbsp;'t1@h2.private')<br>
+
+      &nbsp;&nbsp;Queue:&nbsp;1&nbsp;printable&nbsp;jobs&nbsp;in&nbsp;queue<br>
+
+      &nbsp;Rank&nbsp;&nbsp;Owner/ID&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Class&nbsp;Job&nbsp;Files&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Size&nbsp;Time<br>
+
+      active&nbsp;&nbsp;papowell@h4+707&nbsp;A&nbsp;707&nbsp;&nbsp;/tmp/hi&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3&nbsp;10:04:49<br>
+
+      &nbsp;-&nbsp;actv&nbsp;papowell@h4+707.1&nbsp;A&nbsp;707&nbsp;-&gt;t1@localhost&nbsp;&lt;cpy&nbsp;1/2&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3&nbsp;10:04:49<br>
+
+      &nbsp;-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;papowell@lprng2+707.2&nbsp;A&nbsp;707&nbsp;-&gt;t2@localhost&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3&nbsp;10:04:49</p>
+      <br>
+      <br>
+
+      <p>The routing information is displayed below the main job
+      information. Each destination will have its transfer status
+      displayed as it is transferred. By convention, the job
+      identifier of the routed jobs will have a suffix of the form
+      .N added; copies will have CN added as well. For example,
+      papowell@lprng2+707.1C2 will be the job sent to the first
+      destination, copy two.</p>
+
+      <p>Routed jobs can be held, removed, etc., just as normal
+      jobs. In addition, the individual destination jobs can be
+      manipulated as well. The LPC functionality has been extended
+      to recognize destination jobids as well as the main job id
+      for control and/or selection operations.</p>
+
+      <p>The optional <var class="LITERAL">destinations</var> entry
+      specifies the possible set of destinations that the job can
+      be sent to, and is for informational purposes only. In order
+      for <b class="APPLICATION">lpq</b> and <b class=
+      "APPLICATION">lprm</b> to find the job once it has been sent
+      to <b class="APPLICATION">lpd</b>, <b class=
+      "APPLICATION">lpq</b> and <b class="APPLICATION">lprm</b>
+      uses the list of printers in the <var class=
+      "LITERAL">destinations</var>, and iterates over list looking
+      for the job that you are interested in.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "translateformat.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "loadbalance.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Job Format
+          Translation</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Printer Load
+          Balancing</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

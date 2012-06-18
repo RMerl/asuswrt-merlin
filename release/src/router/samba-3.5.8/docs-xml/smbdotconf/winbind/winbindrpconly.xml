@@ -1,0 +1,16 @@
+<samba:parameter name="winbind rpc only"
+	context="G"
+	type="string"
+		 advanced="1" developer="0"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+	<para>
+	Setting this parameter to <value type="example">yes</value> forces 
+	winbindd to use RPC instead of LDAP to retrieve information from Domain
+        Controllers.
+	</para>
+	
+</description>
+<value type="default">no</value>
+</samba:parameter>

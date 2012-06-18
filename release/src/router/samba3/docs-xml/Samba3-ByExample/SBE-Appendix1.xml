@@ -1,0 +1,1622 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE appendix PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+
+<chapter id="appendix">
+  <title>A Collection of Useful Tidbits</title>
+
+	<para>
+	<indexterm><primary>material</primary></indexterm>
+	<indexterm><primary>domain</primary><secondary>joining</secondary></indexterm>
+	Information presented here is considered to be either basic or well-known material that is informative
+	yet helpful. Over the years, I have observed an interesting behavior. There is an expectation that
+	the process for joining a Windows client to a Samba-controlled Windows domain may somehow involve steps
+	different from doing so with Windows NT4 or a Windows ADS domain. Be assured that the steps are identical,
+	as shown in the example given below.
+	</para>
+
+<sect1 id="domjoin">
+<title>Joining a Domain: Windows 200x/XP Professional</title>
+
+	<para>
+	<indexterm><primary>joining a domain</primary></indexterm>
+	Microsoft Windows NT/200x/XP Professional platforms can participate in Domain Security.
+	This section steps through the process for making a Windows 200x/XP Professional machine a
+	member of a Domain Security environment. It should be noted that this process is identical
+	when joining a domain that is controlled by Windows NT4/200x as well as a Samba PDC.
+	</para>
+
+	<procedure>
+	<title>Steps to Join a Domain</title>
+
+		<step><para>
+		Click <guimenu>Start</guimenu>.
+		</para></step>
+
+		<step><para>
+		Right-click <guimenu>My Computer</guimenu>, and then select <guimenuitem>Properties</guimenuitem>.
+		</para></step>
+
+		<step><para>
+		The opening panel is the same one that can be reached by clicking <guimenu>System</guimenu> on the Control Panel.
+		See <link linkend="swxpp001"></link>.
+		<figure id="swxpp001"><imagefile>wxpp001</imagefile><title>The General Panel.</title></figure>
+		</para></step>
+
+		<step><para>
+		Click the <guimenu>Computer Name</guimenu> tab.
+		This panel shows the <guimenuitem>Computer Description</guimenuitem>, the <guimenuitem>Full computer name</guimenuitem>,
+		and the <guimenuitem>Workgroup</guimenuitem> or <guimenuitem>Domain name</guimenuitem>.
+		</para>
+
+		<para>
+		Clicking the <guimenu>Network ID</guimenu> button launches the configuration wizard. Do not use this with
+		Samba-3. If you wish to change the computer name, or join or leave the domain, click the <guimenu>Change</guimenu> button.
+		See <link linkend="swxpp004"></link>.
+		<figure id="swxpp004"><imagefile>wxpp004</imagefile><title>The Computer Name Panel.</title></figure>
+		</para></step>
+
+		<step><para>
+		Click on <guimenu>Change</guimenu>. This panel shows that our example machine (TEMPTATION) is in a workgroup called WORKGROUP.
+		We join the domain called MIDEARTH. See <link linkend="swxpp006"></link>.
+		<figure id="swxpp006"><imagefile>wxpp006</imagefile><title>The Computer Name Changes Panel</title></figure>
+		</para></step>
+
+		<step><para>
+		Enter the name <guimenu>MIDEARTH</guimenu> in the field below the Domain radio button.
+		</para>
+
+		<para>
+		This panel shows that our example machine (TEMPTATION) is set to join the domain called MIDEARTH. See <link linkend="swxpp007"></link>.
+		<figure id="swxpp007"><imagefile>wxpp007</imagefile><title>The Computer Name Changes Panel &smbmdash; Domain MIDEARTH</title></figure>
+		</para></step>
+
+		<step><para>
+		Now click the <guimenu>OK</guimenu> button. A dialog box should appear to allow you to provide the credentials (username and password)
+		of a domain administrative account that has the rights to add machines to the domain.
+		</para>
+
+		<para>
+		Enter the name <quote>root</quote> and the root password from your Samba-3 server. See <link linkend="swxpp008"></link>.
+		<figure id="swxpp008"><imagefile>wxpp008</imagefile><title>Computer Name Changes &smbmdash; User name and Password Panel</title></figure>
+		</para></step>
+
+		<step><para>
+		Click <guimenu>OK</guimenu>.
+		</para>
+
+		<para>
+		The <quote>Welcome to the MIDEARTH domain</quote> dialog box should appear. At this point, the machine must be rebooted.
+		Joining the domain is now complete.
+		</para></step>
+
+	</procedure>
+
+	<para>
+	<indexterm><primary>Active Directory</primary></indexterm>
+	<indexterm><primary>DNS</primary></indexterm>
+	The screen capture shown in <link linkend="swxpp007"/> has a button labeled <guimenu>More...</guimenu>. This button opens a
+	panel in which you can set (or change) the Primary DNS suffix of the computer. This is a parameter that mainly affects members
+	of Microsoft Active Directory. Active Directory is heavily oriented around the DNS namespace.
+	</para>
+
+	<para>
+	<indexterm><primary>Netlogon</primary></indexterm>
+	<indexterm><primary>DNS</primary><secondary>dynamic</secondary></indexterm>
+	Where NetBIOS technology uses WINS as well as UDP broadcast as key mechanisms for name resolution, Active Directory servers
+	register their services with the Microsoft Dynamic DNS server. Windows clients must be able to query the correct DNS server
+	to find the services (like which machines are domain controllers or which machines have the Netlogon service running).
+	</para>
+
+	<para>
+	<indexterm><primary>DNS</primary><secondary>suffix</secondary></indexterm>
+	The default setting of the Primary DNS suffix is the Active Directory domain name. When you change the Primary DNS suffix,
+	this does not affect domain membership, but it can break network browsing and the ability to resolve your computer name to
+	a valid IP address.
+	</para>
+
+	<para>
+	The Primary DNS suffix parameter principally affects MS Windows clients that are members of an Active Directory domain.
+	Where the client is a member of a Samba domain, it is preferable to leave this field blank.
+	</para>
+
+	<para>
+	<indexterm><primary>Group Policy</primary></indexterm>
+	According to Microsoft documentation, <quote>If this computer belongs to a group with <constant>Group Policy</constant>
+	enabled on <command>Primary DNS suffice of this computer</command>, the string specified in the Group Policy is used
+	as the primary DNS suffix and you might need to restart your computer to view the correct setting. The local setting is
+	used only if Group Policy is disabled or unspecified.</quote>
+	</para>
+
+</sect1>
+
+<sect1>
+	<title>Samba System File Location</title>
+
+      <para><indexterm>
+	  <primary>default installation</primary>
+	</indexterm><indexterm>
+	  <primary>/usr/local/samba</primary>
+	</indexterm><indexterm>
+	  <primary>/usr/local</primary>
+	</indexterm>
+	One of the frustrations expressed by subscribers to the Samba mailing lists revolves around the choice of where the default Samba Team
+	build and installation process locates its Samba files. The location, chosen in the early 1990s, for the default installation is
+	in the <filename>/usr/local/samba</filename> directory. This is a perfectly reasonable location, particularly given all the other
+	Open Source software that installs into the <filename>/usr/local</filename> subdirectories.
+	</para>
+
+	<para>
+	Several UNIX vendors, and Linux vendors in particular, elected to locate the Samba files in a location other than the Samba Team
+	default. 
+	</para>
+
+      <para><indexterm>
+	  <primary>Free Standards Group</primary>
+	  <see>FSG</see>
+	</indexterm><indexterm>
+	  <primary>FSG</primary>
+	</indexterm><indexterm>
+	  <primary>Linux Standards Base</primary>
+	  <see>LSB</see>
+	</indexterm><indexterm>
+	  <primary>LSB</primary>
+	</indexterm><indexterm>
+	  <primary>File Hierarchy System</primary>
+	  <see>FHS</see>
+	</indexterm><indexterm>
+	  <primary>FHS</primary>
+	</indexterm><indexterm>
+	  <primary>file locations</primary>
+	</indexterm><indexterm>
+	  <primary>/etc/samba</primary>
+	</indexterm><indexterm>
+	  <primary>/usr/sbin</primary>
+	</indexterm><indexterm>
+	  <primary>/usr/bin</primary>
+	</indexterm><indexterm>
+	  <primary>/usr/share</primary>
+	</indexterm><indexterm>
+	  <primary>/usr/share/swat</primary>
+	</indexterm><indexterm>
+	  <primary>/usr/lib/samba</primary>
+	</indexterm><indexterm>
+	  <primary>/usr/share/samba/swat</primary>
+	</indexterm><indexterm>
+	  <primary>SWAT</primary>
+	</indexterm><indexterm>
+	  <primary>VFS modules</primary>
+	</indexterm>
+	Linux vendors, working in conjunction with the Free Standards Group (FSG), Linux Standards Base (LSB), and File Hierarchy	
+	System (FHS), have elected to locate the configuration files under the <filename>/etc/samba</filename> directory, common binary
+	files (those used by users) in the <filename>/usr/bin</filename> directory, and the administrative files (daemons) in the
+	<filename>/usr/sbin</filename> directory. Support files for the Samba Web Admin Tool (SWAT) are located under the
+	<filename>/usr/share</filename> directory, either in <filename>/usr/share/samba/swat</filename> or in
+	<filename>/usr/share/swat</filename>. There are additional support files for <command>smbd</command> in the
+	<filename>/usr/lib/samba</filename> directory tree. The files located there include the dynamically loadable modules for the
+	passdb backend as well as for the VFS modules.
+	</para>
+
+      <para><indexterm>
+	  <primary>/var/lib/samba</primary>
+	</indexterm><indexterm>
+	  <primary>/var/log/samba</primary>
+	</indexterm><indexterm>
+	  <primary>run-time control files</primary>
+	</indexterm>
+	Samba creates runtime control files and generates log files. The runtime control files (tdb and dat files) are stored in
+	the <filename>/var/lib/samba</filename> directory. Log files are created in <filename>/var/log/samba.</filename>
+	</para>
+
+	<para>
+	When Samba is built and installed using the default Samba Team process, all files are located under the 
+	<filename>/usr/local/samba</filename> directory tree. This makes it simple to find the files that Samba owns.
+	</para>
+
+      <para><indexterm>
+	  <primary>smbd</primary>
+	  <secondary>location of files</secondary>
+	</indexterm>
+	One way to find the Samba files that are installed on your UNIX/Linux system is to search for the location
+	of all files called <command>smbd</command>. Here is an example:
+<screen>
+&rootprompt; find / -name smbd -print
+</screen>
+	You can find the location of the configuration files by running:
+<screen>
+&rootprompt; /path-to-binary-file/smbd -b | more
+...
+Paths:
+   SBINDIR: /usr/sbin
+   BINDIR: /usr/bin
+   SWATDIR: /usr/share/samba/swat
+   CONFIGFILE: /etc/samba/smb.conf
+   LOGFILEBASE: /var/log/samba
+   LMHOSTSFILE: /etc/samba/lmhosts
+   LIBDIR: /usr/lib/samba
+   SHLIBEXT: so
+   LOCKDIR: /var/lib/samba
+   PIDDIR: /var/run/samba
+   SMB_PASSWD_FILE: /etc/samba/smbpasswd
+   PRIVATE_DIR: /etc/samba
+...
+</screen>
+	If you wish to locate the Samba version, just run:
+<screen>
+&rootprompt; /path-to-binary-file/smbd -V
+Version 3.0.20-SUSE
+</screen>
+	</para>
+
+	<para>
+	Many people have been caught by installation of Samba using the default Samba Team process when it was already installed
+	by the platform vendor's method. If your platform uses RPM format packages, you can check to see if Samba is installed by
+	executing:<indexterm>
+	  <primary>rpm</primary>
+	</indexterm>
+<screen>
+&rootprompt; rpm -qa | grep samba
+samba3-pdb-3.0.20-1
+samba3-vscan-0.3.6-0
+samba3-winbind-3.0.20-1
+samba3-3.0.20-1
+samba3-python-3.0.20-1
+samba3-utils-3.0.20-1
+samba3-doc-3.0.20-1
+samba3-client-3.0.20-1
+samba3-cifsmount-3.0.20-1
+	</screen><indexterm>
+	  <primary>package names</primary>
+	</indexterm>
+	The package names, of course, vary according to how the vendor, or the binary package builder, prepared them.
+	</para>
+
+</sect1>
+
+<sect1>
+	<title>Starting Samba</title>
+
+      <para><indexterm>
+	  <primary>daemon</primary>
+	</indexterm>
+	Samba essentially consists of two or three daemons. A daemon is a UNIX application that runs in the background and provides services.
+	An example of a service is the Apache Web server for which the daemon is called <command>httpd</command>. In the case of Samba, there
+	are three daemons, two of which are needed as a minimum.
+	</para>
+
+	<para>
+	The Samba server is made up of the following daemons:
+	</para>
+
+<example id="ch12SL">
+<title>A Useful Samba Control Script for SUSE Linux</title>
+<screen>
+#!/bin/bash
+#
+# Script to start/stop samba
+# Locate this in /sbin as a file called 'samba'
+
+RCD=/etc/rc.d
+
+if [ z$1 == 'z' ]; then
+        echo $0 - No arguments given; must be start or stop.
+        exit
+fi
+
+if [ $1 == 'start' ]; then
+        ${RCD}/nmb start
+        ${RCD}/smb start
+        ${RCD}/winbind start
+
+fi
+if [ $1 == 'stop' ]; then
+        ${RCD}/smb stop
+        ${RCD}/winbind stop
+        ${RCD}/nmb stop
+fi
+if [ $1 == 'restart' ]; then
+        ${RCD}/smb stop
+        ${RCD}/winbind stop
+        ${RCD}/nmb stop
+        sleep 5
+        ${RCD}/nmb start
+        ${RCD}/smb start
+        ${RCD}/winbind start
+fi
+exit 0
+</screen>
+</example>
+
+	<variablelist>
+		<varlistentry><term>nmbd</term>
+			<listitem><para>
+			<indexterm><primary>smbd</primary></indexterm>
+			<indexterm><primary>starting samba</primary><secondary>smbd</secondary></indexterm>
+			This daemon handles all name registration and resolution requests. It is the primary vehicle involved
+			in network browsing. It handles all UDP-based protocols. The <command>nmbd</command> daemon should
+			be the first command started as part of the Samba startup process.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>smbd</term>
+			<listitem><para>
+			<indexterm><primary>nmbd</primary></indexterm>
+			<indexterm><primary>starting samba</primary><secondary>nmbd</secondary></indexterm>
+			This daemon handles all TCP/IP-based connection services for file- and print-based operations. It also
+			manages local authentication. It should be started immediately following the startup of <command>nmbd</command>.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>winbindd</term>
+			<listitem><para>
+			<indexterm><primary>winbindd</primary></indexterm>
+			<indexterm><primary>starting samba</primary><secondary>winbindd</secondary></indexterm>
+			This daemon should be started when Samba is a member of a Windows NT4 or ADS domain. It is also needed when
+			Samba has trust relationships with another domain. The <command>winbindd</command> daemon will check the
+			&smb.conf; file for the presence of the <parameter>idmap uid</parameter> and <parameter>idmap gid</parameter>
+			parameters. If they are not found, <command>winbindd</command> bails out and refuses to start.
+			</para></listitem>
+		</varlistentry>
+	</variablelist>
+
+	<para>
+	When Samba has been packaged by an operating system vendor, the startup process is typically a custom feature of its
+	integration into the platform as a whole. Please refer to your operating system platform administration manuals for
+	specific information pertaining to correct management of Samba startup.
+	</para>
+
+<example id="ch12RHscript">
+<title>A Sample Samba Control Script for Red Hat Linux</title>
+<screen>
+#!/bin/sh
+#
+# chkconfig: 345 81 35
+# description: Starts and stops the Samba smbd and nmbd daemons \
+#              used to provide SMB network services.
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+# Source networking configuration.
+. /etc/sysconfig/network
+# Check that networking is up.
+[ ${NETWORKING} = "no" ] &amp;&amp; exit 0
+CONFIG=/etc/samba/smb.conf
+# Check that smb.conf exists.
+[ -f $CONFIG ] || exit 0
+
+# See how we were called.
+case "$1" in
+  start)
+        echo -n "Starting SMB services: "
+        daemon smbd -D; daemon nmbd -D; echo;
+        touch /var/lock/subsys/smb
+        ;;
+  stop)
+        echo -n "Shutting down SMB services: "
+        smbdpids=`ps guax | grep smbd | grep -v grep | awk '{print $2}'`
+        for pid in $smbdpids; do
+                kill -TERM $pid
+        done
+        killproc nmbd -TERM; rm -f /var/lock/subsys/smb
+        echo ""
+        ;;
+  status)
+        status smbd; status nmbd;
+        ;;
+  restart)
+        echo -n "Restarting SMB services: "
+        $0 stop; $0 start;
+        echo "done."
+        ;;
+  *)
+        echo "Usage: smb {start|stop|restart|status}"
+        exit 1
+esac
+</screen>
+</example>
+
+      <para><indexterm>
+	  <primary>samba control script</primary>
+	</indexterm>
+	SUSE Linux implements individual control over each Samba daemon. A Samba control script that can be conveniently
+	executed from the command line is shown in <link linkend="ch12SL"/>. This can be located in the directory
+	<filename>/sbin</filename> in a file called <filename>samba</filename>. This type of control script should be
+	owned by user root and group root, and set so that only root can execute it.
+	</para>
+
+      <para><indexterm>
+	  <primary>startup script</primary>
+	</indexterm>
+	A sample startup script for a Red Hat Linux system is shown in <link linkend="ch12RHscript"/>.
+	This file could be located in the directory <filename>/etc/rc.d</filename> and can be called
+	<filename>samba</filename>. A similar startup script is required to control <command>winbind</command>.
+	If you want to find more information regarding startup scripts please refer to the packaging section of
+	the Samba source code distribution tarball. The packaging files for each platform include a
+	startup control file.
+	</para>
+
+</sect1>
+
+<sect1>
+	<title>DNS Configuration Files</title>
+
+	<para>
+	The following files are common to all DNS server configurations. Rather than repeat them multiple times, they
+	are presented here for general reference.
+	</para>
+
+	<sect2>
+	<title>The Forward Zone File for the Loopback Adaptor</title>
+
+	<para>
+	The forward zone file for the loopback address never changes. An example file is shown
+	in <link linkend="loopback"/>. All traffic destined for an IP address that is hosted on a
+	physical interface on the machine itself is routed to the loopback adaptor. This is
+	a fundamental design feature of the TCP/IP protocol implementation. The loopback adaptor
+	is called <constant>localhost</constant>.
+	</para>
+
+<example id="loopback">
+<title>DNS Localhost Forward Zone File: <filename>/var/lib/named/localhost.zone</filename></title>
+<screen>
+$TTL 1W
+@		IN SOA	@   root (
+				42		; serial
+				2D		; refresh
+				4H		; retry
+				6W		; expiry
+				1W )		; minimum
+
+		IN NS		@
+		IN A		127.0.0.1
+</screen>
+</example>
+
+	</sect2>
+
+	<sect2>
+	<title>The Reverse Zone File for the Loopback Adaptor</title>
+
+	<para>
+	The reverse zone file for the loopback address as shown in <link linkend="dnsloopy"/>
+	is necessary so that references to the address <constant>127.0.0.1</constant> can be
+	resolved to the correct name of the interface. 
+	</para>
+
+<example id="dnsloopy">
+<title>DNS Localhost Reverse Zone File: <filename>/var/lib/named/127.0.0.zone</filename></title>
+<screen>
+$TTL 1W
+@		IN SOA		localhost.   root.localhost. (
+				42		; serial
+				2D		; refresh
+				4H		; retry
+				6W		; expiry
+				1W )		; minimum
+
+		IN NS		localhost.
+1		IN PTR		localhost.
+</screen>
+</example>
+
+<example id="roothint">
+<title>DNS Root Name Server Hint File: <filename>/var/lib/named/root.hint</filename></title>
+<screen>
+; This file is made available by InterNIC under anonymous FTP as
+;       file                /domain/named.root
+;       on server           FTP.INTERNIC.NET
+; last update: Nov 5, 2002. Related version of root zone: 2002110501
+; formerly NS.INTERNIC.NET
+.                        3600000  IN  NS    A.ROOT-SERVERS.NET.
+A.ROOT-SERVERS.NET.      3600000      A     198.41.0.4
+; formerly NS1.ISI.EDU
+.                        3600000      NS    B.ROOT-SERVERS.NET.
+B.ROOT-SERVERS.NET.      3600000      A     128.9.0.107
+; formerly C.PSI.NET
+.                        3600000      NS    C.ROOT-SERVERS.NET.
+C.ROOT-SERVERS.NET.      3600000      A     192.33.4.12
+; formerly TERP.UMD.EDU
+.                        3600000      NS    D.ROOT-SERVERS.NET.
+D.ROOT-SERVERS.NET.      3600000      A     128.8.10.90
+; formerly NS.NASA.GOV
+.                        3600000      NS    E.ROOT-SERVERS.NET.
+E.ROOT-SERVERS.NET.      3600000      A     192.203.230.10
+; formerly NS.ISC.ORG
+.                        3600000      NS    F.ROOT-SERVERS.NET.
+F.ROOT-SERVERS.NET.      3600000      A     192.5.5.241
+; formerly NS.NIC.DDN.MIL
+.                        3600000      NS    G.ROOT-SERVERS.NET.
+G.ROOT-SERVERS.NET.      3600000      A     192.112.36.4
+; formerly AOS.ARL.ARMY.MIL
+.                        3600000      NS    H.ROOT-SERVERS.NET.
+H.ROOT-SERVERS.NET.      3600000      A     128.63.2.53
+; formerly NIC.NORDU.NET
+.                        3600000      NS    I.ROOT-SERVERS.NET.
+I.ROOT-SERVERS.NET.      3600000      A     192.36.148.17
+; operated by VeriSign, Inc. 
+.                        3600000      NS    J.ROOT-SERVERS.NET.
+J.ROOT-SERVERS.NET.      3600000      A     192.58.128.30
+; housed in LINX, operated by RIPE NCC
+.                        3600000      NS    K.ROOT-SERVERS.NET.
+K.ROOT-SERVERS.NET.      3600000      A     193.0.14.129 
+; operated by IANA
+.                        3600000      NS    L.ROOT-SERVERS.NET.
+L.ROOT-SERVERS.NET.      3600000      A     198.32.64.12
+; housed in Japan, operated by WIDE
+.                        3600000      NS    M.ROOT-SERVERS.NET.
+M.ROOT-SERVERS.NET.      3600000      A     202.12.27.33
+; End of File
+</screen>
+</example>
+	</sect2>
+
+	<sect2>
+	<title>DNS Root Server Hint File</title>
+
+	<para>
+	The content of the root hints file as shown in <link linkend="roothint"/>  changes slowly over time. 
+	Periodically this file should be updated from the source shown. Because
+	  of its size, this file is located at the end of this chapter.
+	</para>
+
+	</sect2>
+
+</sect1>
+
+<sect1 id="altldapcfg">
+	<title>Alternative LDAP Database Initialization</title>
+
+      <para><indexterm>
+	  <primary>LDAP</primary>
+	  <secondary>database</secondary>
+	</indexterm><indexterm>
+	  <primary>LDAP</primary>
+	  <secondary>initial configuration</secondary>
+	</indexterm>
+	The following procedure may be used as an alternative means of configuring
+	the initial LDAP database. Many administrators prefer to have greater control
+	over how system files get configured.
+	</para>
+
+	<sect2>
+	<title>Initialization of the LDAP Database</title>
+
+	<para><indexterm>
+	    <primary>LDIF</primary>
+	  </indexterm><indexterm>
+	    <primary>Domain Groups</primary>
+	    <secondary>well-known</secondary>
+	  </indexterm><indexterm>
+	    <primary>SID</primary>
+	  </indexterm>
+	The first step to get the LDAP server ready for action is to create the LDIF file from
+	which the LDAP database will be preloaded. This is necessary to create the containers
+	into which the user, group, and other accounts are written. It is also necessary to
+	preload the well-known Windows NT Domain Groups, as they must have the correct SID so
+	that they can be recognized as special NT Groups by the MS Windows clients.
+	</para>
+
+	<procedure id="ldapinit">
+	<title>LDAP Directory Pre-Load Steps</title>
+
+		<step><para>
+		Create a directory in which to store the files you use to generate
+		the LDAP LDIF file for your system. Execute the following:
+<screen>
+&rootprompt; mkdir /etc/openldap/SambaInit
+&rootprompt; chown root:root /etc/openldap/SambaInit
+&rootprompt; chmod 700 /etc/openldap/SambaInit
+</screen>
+		</para></step>
+
+		<step><para>
+		Install the files shown in <link linkend="sbehap-ldapreconfa"/>, <link linkend="sbehap-ldapreconfb"/>,
+		and <link linkend="sbehap-ldapreconfc"/> into the directory 
+		<filename>/etc/openldap/SambaInit/SMBLDAP-ldif-preconfig.sh.</filename> These three files are,
+		respectively, parts A, B, and C of the <filename>SMBLDAP-ldif-preconfig.sh</filename> file.
+		</para></step>
+
+		<step><para>
+		Install the files shown in <link linkend="sbehap-ldifpata"/> and <link linkend="sbehap-ldifpatb"/> into the directory
+		<filename>/etc/openldap/SambaInit/.</filename> These two files are
+                parts A and B, respectively, of the <filename>init-ldif.pat</filename> file.
+		</para></step>
+
+		<step><para>
+		Change to the <filename>/etc/openldap/SambaInit</filename> directory. Execute the following:
+<screen>
+&rootprompt; sh SMBLDAP-ldif-preconfig.sh
+
+How do you wish to refer to your organization?
+Suggestions:
+        Black Tire Company, Inc.
+        Cat With Hat Ltd.
+How would you like your organization name to appear?
+Your organization name is: My Organization
+Enter a new name is this is not what you want, press Enter to Continue.
+Name [My Organization]: Abmas Inc.
+
+Samba Config File Location [/etc/samba/smb.conf]:
+Enter a new full path or press Enter to continue.
+Samba Config File Location [/etc/samba/smb.conf]:
+Domain Name: MEGANET2
+Domain SID: S-1-5-21-3504140859-1010554828-2431957765
+
+The name of your Internet domain is now needed in a special format
+as follows, if your domain name is mydomain.org, what we need is
+the information in the form of:
+        Domain ID: mydomain
+        Top level: org
+If your fully qualified hostname is: snoopy.bazaar.garagesale.net
+where "snoopy" is the name of the machine,
+Then the information needed is:
+        Domain ID: garagesale
+        Top Level: net
+
+Found the following domain name: abmas.biz
+I think the bit we are looking for might be: abmas
+Enter the domain name or press Enter to continue:
+
+The top level organization name I will use is: biz
+Enter the top level org name or press Enter to continue:
+&rootprompt;
+</screen>
+		This creates a file called <filename>MEGANET2.ldif</filename>.
+		</para></step>
+
+		<step><para>
+		It is now time to preload the LDAP database with the following
+		command:
+<screen>
+&rootprompt; slapadd -v -l MEGANET2.ldif
+added: "dc=abmas,dc=biz" (00000001)
+added: "cn=Manager,dc=abmas,dc=biz" (00000002)
+added: "ou=People,dc=abmas,dc=biz" (00000003)
+added: "ou=Computers,dc=abmas,dc=biz" (00000004)
+added: "ou=Groups,dc=abmas,dc=biz" (00000005)
+added: "ou=Domains,dc=abmas,dc=biz" (00000006)
+added: "sambaDomainName=MEGANET2,ou=Domains,dc=abmas,dc=biz" (00000007)
+added: "cn=domadmins,ou=Groups,dc=abmas,dc=biz" (00000008)
+added: "cn=domguests,ou=Groups,dc=abmas,dc=biz" (00000009)
+added: "cn=domusers,ou=Groups,dc=abmas,dc=biz" (0000000a)
+</screen>
+		You should verify that the account information was correctly loaded by executing:
+<screen>
+&rootprompt; slapcat
+dn: dc=abmas,dc=biz
+objectClass: dcObject
+objectClass: organization
+dc: abmas
+o: Abmas Inc.
+description: Posix and Samba LDAP Identity Database
+structuralObjectClass: organization
+entryUUID: af552f8e-c4a1-1027-9002-9421e01bf474
+creatorsName: cn=manager,dc=abmas,dc=biz
+modifiersName: cn=manager,dc=abmas,dc=biz
+createTimestamp: 20031217055747Z
+modifyTimestamp: 20031217055747Z
+entryCSN: 2003121705:57:47Z#0x0001#0#0000
+...
+
+dn: cn=domusers,ou=Groups,dc=abmas,dc=biz
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 513
+cn: domusers
+sambaSID: S-1-5-21-3504140859-1010554828-2431957765-513
+sambaGroupType: 2
+displayName: Domain Users
+description: Domain Users
+structuralObjectClass: posixGroup
+entryUUID: af7e98ba-c4a1-1027-900b-9421e01bf474
+creatorsName: cn=manager,dc=abmas,dc=biz
+modifiersName: cn=manager,dc=abmas,dc=biz
+createTimestamp: 20031217055747Z
+modifyTimestamp: 20031217055747Z
+entryCSN: 2003121705:57:47Z#0x000a#0#0000
+</screen>
+		</para></step>
+
+		<step><para>
+		Your LDAP database is ready for testing. You can now start the LDAP server
+		using the system tool for your Linux operating system. For SUSE Linux, you can
+		do this as follows:
+<screen>
+&rootprompt; rcldap start
+</screen>
+		</para></step>
+
+		<step><para>
+		It is now a good idea to validate that the LDAP server is running correctly.
+		Execute the following:
+<screen>
+&rootprompt; ldapsearch -x -b "dc=abmas,dc=biz" "(ObjectClass=*)"
+# extended LDIF
+#
+# LDAPv3
+# base &lt;dc=abmas,dc=biz&gt; with scope sub
+# filter: (ObjectClass=*)
+# requesting: ALL
+#
+
+# abmas.biz
+dn: dc=abmas,dc=biz
+objectClass: dcObject
+objectClass: organization
+dc: abmas
+o: Abmas Inc.
+description: Posix and Samba LDAP Identity Database
+...
+# domusers, Groups, abmas.biz
+dn: cn=domusers,ou=Groups,dc=abmas,dc=biz
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 513
+cn: domusers
+sambaSID: S-1-5-21-3504140859-1010554828-2431957765-513
+sambaGroupType: 2
+displayName: Domain Users
+description: Domain Users
+
+# search result
+search: 2
+result: 0 Success
+
+# numResponses: 11
+# numEntries: 10
+</screen>
+		Your LDAP server is ready for creation of additional accounts.
+		</para></step>
+	</procedure>
+
+	</sect2>
+
+<example id="sbehap-ldapreconfa">
+<title>LDAP Pre-configuration Script: <filename>SMBLDAP-ldif-preconfig.sh</filename> &smbmdash; Part A</title>
+<screen>
+#!/bin/bash
+#
+# This script prepares the ldif LDAP load file only
+#
+
+# Pattern File Name
+file=init-ldif.pat
+
+# The name of my organization
+ORGNAME="My Organization"
+
+# My Internet domain. ie: if my domain is: buckets.org, INETDOMAIN="buckets"
+INETDOMAIN="my-domain"
+
+# In the above case, md domain is: buckets.org, TLDORG="org"
+TLDORG="org"
+
+# This is the Samba Domain/Workgroup Name
+DOMNAME="MYWORKGROUP"
+
+#
+# Here We Go ...
+#
+
+cat &lt;&lt;EOF
+
+How do you wish to refer to your organization?
+
+Suggestions:
+	Black Tire Company, Inc.
+	Cat With Hat Ltd.
+
+How would you like your organization name to appear?
+
+EOF
+
+echo "Your organization name is: $ORGNAME"
+echo
+echo "Enter a new name or, press Enter to Continue."
+echo
+</screen>
+</example>
+
+<example id="sbehap-ldapreconfb">
+<title>LDAP Pre-configuration Script: <filename>SMBLDAP-ldif-preconfig.sh</filename> &smbmdash; Part B</title>
+<screen>
+echo -e -n "Name [$ORGNAME]: "
+	read name
+
+if [ ! -z "$name" ]; then 
+	ORGNAME=${name}
+fi
+echo
+sed "s/ORGNAME/${ORGNAME}/g" &lt; $file &gt; $file.tmp1
+
+# Try to find smb.conf
+
+if [ -e /usr/local/samba/lib/smb.conf ]; then
+	CONF=/usr/local/samba/lib/smb.conf
+elif [ -e /etc/samba/smb.conf ]; then
+	CONF=/etc/samba/smb.conf
+fi
+
+echo "Samba Config File Location [$CONF]: "
+echo
+echo "Enter a new full path or press Enter to continue."
+echo
+echo -n "Samba Config File Location [$CONF]: "
+	read name
+if [ ! -z "$name" ]; then
+	CONF=$name
+fi
+echo
+
+# Find the name of our Domain/Workgroup
+DOMNAME=`grep -i workgroup ${CONF} | sed "s/ //g" | cut -f2 -d=`
+echo Domain Name: $DOMNAME
+echo
+
+sed "s/DOMNAME/${DOMNAME}/g" &lt; $file.tmp1 &gt; $file.tmp2
+
+DOMSID=`net getlocalsid ${DOMNAME} | cut -f2 -d: | sed "s/ //g"`
+echo Domain SID: $DOMSID
+
+sed "s/DOMSID/${DOMSID}/g" &lt; $file.tmp2 &gt; $file.tmp1
+</screen>
+</example>
+
+<example id="sbehap-ldapreconfc">
+<title>LDAP Pre-configuration Script: <filename>SMBLDAP-ldif-preconfig.sh</filename> &smbmdash; Part C</title>
+<screen>
+cat &lt;&lt;EOL
+The name of your Internet domain is now needed in a special format
+as follows, if your domain name is mydomain.org, what we need is
+the information in the form of:
+	Domain ID: mydomain
+	Top level: org
+
+If your fully qualified hostname is: snoopy.bazaar.garagesale.net
+where "snoopy" is the name of the machine,
+Then the information needed is:
+	Domain ID: garagesale
+	Top Level: net
+
+EOL
+INETDOMAIN=`hostname -d | cut -f1 -d.`
+echo Found the following domain name: `hostname -d`
+echo "I think the bit we are looking for might be: $INETDOMAIN"
+echo
+echo -n "Enter the domain name or press Enter to continue: "
+	read domnam
+if [ ! -z $domnam ]; then
+	INETDOMAIN=$domnam
+fi
+echo
+sed "s/INETDOMAIN/${INETDOMAIN}/g" &lt; $file.tmp1 &gt; $file.tmp2
+TLDORG=`hostname -d | sed "s/${INETDOMAIN}.//g"`
+echo "The top level organization name I will use is: ${TLDORG}"
+echo
+echo -n "Enter the top level org name or press Enter to continue: "
+	read domnam
+if [ ! -z $domnam ]; then
+        TLDORG=$domnam
+fi
+sed "s/TLDORG/${TLDORG}/g" &lt; $file.tmp2 &gt; $DOMNAME.ldif
+rm $file.tmp*
+exit 0
+</screen>
+</example>
+
+<example id="sbehap-ldifpata">
+<title>LDIF Pattern File Used to Pre-configure LDAP &smbmdash; Part A</title>
+<screen>
+dn: dc=INETDOMAIN,dc=TLDORG
+objectClass: dcObject
+objectClass: organization
+dc: INETDOMAIN
+o: ORGNAME
+description: Posix and Samba LDAP Identity Database
+
+dn: cn=Manager,dc=INETDOMAIN,dc=TLDORG
+objectClass: organizationalRole
+cn: Manager
+description: Directory Manager
+
+dn: ou=People,dc=INETDOMAIN,dc=TLDORG
+objectClass: top
+objectClass: organizationalUnit
+ou: People
+
+dn: ou=Computers,dc=INETDOMAIN,dc=TLDORG
+objectClass: top
+objectClass: organizationalUnit
+ou: Computers
+
+dn: ou=Groups,dc=INETDOMAIN,dc=TLDORG
+objectClass: top
+objectClass: organizationalUnit
+ou: Groups
+
+dn: ou=Idmap,dc=INETDOMAIN,dc=TLDORG
+objectClass: top
+objectClass: organizationalUnit
+ou: Idmap
+
+dn: ou=Domains,dc=INETDOMAIN,dc=TLDORG
+objectClass: top
+objectClass: organizationalUnit
+ou: Domains
+
+dn: sambaDomainName=DOMNAME,ou=Domains,dc=INETDOMAIN,dc=TLDORG
+objectClass: sambaDomain
+sambaDomainName: DOMNAME
+sambaSID: DOMSID
+sambaAlgorithmicRidBase: 1000
+structuralObjectClass: sambaDomain
+</screen>
+</example>
+
+<example id="sbehap-ldifpatb">
+<title>LDIF Pattern File Used to Pre-configure LDAP &smbmdash; Part B</title>
+<screen>
+dn: cn=domadmins,ou=Groups,dc=INETDOMAIN,dc=TLDORG
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 512
+cn: domadmins
+sambaSID: DOMSID-512
+sambaGroupType: 2
+displayName: Domain Admins
+description: Domain Administrators
+
+dn: cn=domguests,ou=Groups,dc=INETDOMAIN,dc=TLDORG
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 514
+cn: domguests
+sambaSID: DOMSID-514
+sambaGroupType: 2
+displayName: Domain Guests
+description: Domain Guests Users
+
+dn: cn=domusers,ou=Groups,dc=INETDOMAIN,dc=TLDORG
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+gidNumber: 513
+cn: domusers
+sambaSID: DOMSID-513
+sambaGroupType: 2
+displayName: Domain Users
+description: Domain Users
+</screen>
+</example>
+
+</sect1>
+
+<sect1>
+<title>The LDAP Account Manager</title>
+
+<para>
+<indexterm><primary>LAM</primary></indexterm>
+<indexterm><primary>LDAP Account Manager</primary><see>LAM</see></indexterm>
+<indexterm><primary>PHP</primary></indexterm>
+<indexterm><primary>unencrypted</primary></indexterm>
+<indexterm><primary>SSL</primary></indexterm>
+<indexterm><primary>Posix</primary></indexterm>
+<indexterm><primary>accounts</primary><secondary>manage</secondary></indexterm>
+The LDAP Account Manager (LAM) is an application suite that has been written in PHP.
+LAM can be used with any Web server that has PHP4 support. It connects to the LDAP
+server either using unencrypted connections or via SSL/TLS. LAM can be used to manage
+Posix accounts as well as SambaSAMAccounts for users, groups, and Windows machines
+(hosts).
+</para>
+
+<para>
+LAM is available from the <ulink url="http://sourceforge.net/projects/lam/">LAM</ulink>
+home page and from its mirror sites. LAM has been released under the GNU GPL version 2.
+The current version of LAM is 0.4.9. Release of version 0.5 is expected in the third quarter
+of 2005.
+</para>
+
+<para>
+<indexterm><primary>PHP4</primary></indexterm>
+<indexterm><primary>OpenLDAP</primary></indexterm>
+<indexterm><primary>Perl</primary></indexterm>
+Requirements:
+</para>
+
+<itemizedlist>
+	<listitem><para>A web server that will work with PHP4.</para></listitem>
+	<listitem><para>PHP4 (available from the <ulink url="http://www.php.net/">PHP</ulink> home page.)</para></listitem>
+	<listitem><para>OpenLDAP 2.0 or later.</para></listitem>
+	<listitem><para>A Web browser that supports CSS.</para></listitem>
+	<listitem><para>Perl.</para></listitem>
+	<listitem><para>The gettext package.</para></listitem>
+	<listitem><para>mcrypt + mhash (optional).</para></listitem>
+	<listitem><para>It is also a good idea to install SSL support.</para></listitem>
+</itemizedlist>
+
+<para>
+LAM is a useful tool that provides a simple Web-based device that can be used to
+manage the contents of the LDAP directory to:
+<indexterm><primary>organizational units</primary></indexterm>
+<indexterm><primary>operating profiles</primary></indexterm>
+<indexterm><primary>account policies</primary></indexterm>
+</para>
+
+<itemizedlist>
+	<listitem><para>Display user/group/host and Domain entries.</para></listitem>
+	<listitem><para>Manage entries (Add/Delete/Edit).</para></listitem>
+	<listitem><para>Filter and sort entries.</para></listitem>
+	<listitem><para>Store and use multiple operating profiles.</para></listitem>
+	<listitem><para>Edit organizational units (OUs).</para></listitem>
+	<listitem><para>Upload accounts from a file.</para></listitem>
+	<listitem><para>Is compatible with Samba-2.2.x and Samba-3.</para></listitem>
+</itemizedlist>
+
+<para>
+When correctly configured, LAM allows convenient management of UNIX (Posix) and Samba
+user, group, and windows domain member machine accounts.
+</para>
+
+<para>
+<indexterm><primary>default password</primary></indexterm>
+<indexterm><primary>secure connections</primary></indexterm>
+<indexterm><primary>LAM</primary></indexterm>
+<indexterm><primary>SSL</primary></indexterm>
+The default password is <quote>lam.</quote> It is highly recommended that you use only 
+an SSL connection to your Web server for all remote operations involving LAM. If you 
+want secure connections, you must configure your Apache Web server to permit connections 
+to LAM using only SSL.
+</para>
+
+<procedure id="sbehap-laminst">
+<title>Apache Configuration Steps for LAM</title>
+
+	<step><para>
+	Extract the LAM package by untarring it as shown here:
+<screen>
+&rootprompt; tar xzf ldap-account-manager_0.4.9.tar.gz
+</screen>
+	Alternatively, install the LAM DEB for your system using the following command:
+<screen>
+&rootprompt; dpkg -i ldap-account-manager_0.4.9.all.deb
+</screen>
+	</para></step>
+	
+	<step><para>
+	Copy the extracted files to the document root directory of your Web server.
+	For example, on SUSE Linux Enterprise Server 9, copy to the 
+	<filename>/srv/www/htdocs</filename> directory.
+	</para></step>
+
+	<step><para>
+	<indexterm><primary>file permissions</primary></indexterm>
+	Set file permissions using the following commands:
+<screen>
+&rootprompt; chown -R wwwrun:www /srv/www/htdocs/lam
+&rootprompt; chmod 755 /srv/www/htdocs/lam/sess
+&rootprompt; chmod 755 /srv/www/htdocs/lam/tmp
+&rootprompt; chmod 755 /srv/www/htdocs/lam/config
+&rootprompt; chmod 755 /srv/www/htdocs/lam/lib/*pl
+</screen>
+	</para></step>
+
+	<step><para>
+	<indexterm><primary>LAM</primary><secondary>configuration file</secondary></indexterm>
+       Using your favorite editor create the following <filename>config.cfg</filename>
+       LAM configuration file:
+<screen>
+&rootprompt; cd /srv/www/htdocs/lam/config
+&rootprompt; cp config.cfg_sample config.cfg
+&rootprompt; vi config.cfg
+</screen>
+	<indexterm><primary>LAM</primary><secondary>profile</secondary></indexterm>
+	<indexterm><primary>LAM</primary><secondary>wizard</secondary></indexterm>
+	An example file is shown in <link linkend="lamcfg"/>.
+	This is the minimum configuration that must be completed. The LAM profile
+	file can be created using a convenient wizard that is part of the LAM
+	configuration suite.
+	</para></step>
+
+	<step><para>
+	Start your Web server then, using your Web browser, connect to 
+	<ulink url="http://localhost/lam">LAM</ulink> URL. Click on the
+	the <parameter>Configuration Login</parameter> link then click on the
+	Configuration Wizard link to begin creation of the default profile so that 
+	LAM can connect to your LDAP server. Alternately, copy the 
+	<filename>lam.conf_sample</filename> file to a file called 
+	<filename>lam.conf</filename> then, using your favorite editor, 
+	change the settings to match local site needs.
+	</para></step>
+</procedure>
+
+	<para>
+	<indexterm><primary>pitfalls</primary></indexterm>
+	An example of a working file is shown here in <link linkend="lamconf"/>.
+	This file has been stripped of comments to keep the size small. The comments
+	and help information provided in the profile file that the wizard creates
+	is very useful and will help many administrators to avoid pitfalls.
+	Your configuration file obviously reflects the configuration options that
+	are preferred at your site.
+	</para>
+
+	<para>
+	<indexterm><primary>LAM</primary><secondary>login screen</secondary></indexterm>
+	It is important that your LDAP server is running at the time that LAM is 
+	being configured. This permits you to validate correct operation.
+	An example of the LAM login screen is provided in <link linkend="lam-login"/>.
+	</para>
+
+	<figure id="lam-login">
+		<title>The LDAP Account Manager Login Screen</title>
+		<imagefile scale="50">lam-login</imagefile>
+	</figure>
+
+	<para>
+	<indexterm><primary>LAM</primary><secondary>configuration editor</secondary></indexterm>
+	The LAM configuration editor has a number of options that must be managed correctly.
+	An example of use of the LAM configuration editor is shown in <link linkend="lam-config"/>.
+	It is important that you correctly set the minimum and maximum UID/GID values that are
+	permitted for use at your site. The default values may not be compatible with a need to
+	modify initial default account values for well-known Windows network users and groups.
+	The best work-around is to temporarily set the minimum values to zero (0) to permit
+	the initial settings to be made. Do not forget to reset these to sensible values before
+	using LAM to add additional users and groups.
+	</para>
+
+	<figure id="lam-config">
+		<title>The LDAP Account Manager Configuration Screen</title>
+		<imagefile scale="50">lam-config</imagefile>
+	</figure>
+
+	<para>
+	<indexterm><primary>PDF</primary></indexterm>
+	LAM has some nice, but unusual features. For example, one unexpected feature in most application
+	screens permits the generation of a PDF file that lists configuration information. This is a well
+	thought out facility. This option has been edited out of the following screen shots to conserve
+	space.
+	</para>
+
+	<para>
+	<indexterm><primary>LAM</primary><secondary>opening screen</secondary></indexterm>
+	When you log onto LAM the opening screen drops you right into the user manager as shown in
+	<link linkend="lam-user"/>. This is a logical action as it permits the most-needed facility
+	to be used immediately. The editing of an existing user, as with the addition of a new user,
+	is easy to follow and very clear in both layout and intent. It is a simple matter to edit
+	generic settings, UNIX specific parameters, and then Samba account requirements. Each step
+	involves clicking a button that intuitively drives you through the process. When you have
+	finished editing simply press the <guimenu>Final</guimenu> button.
+	</para>
+
+	<figure id="lam-user">
+		<title>The LDAP Account Manager User Edit Screen</title>
+		<imagefile scale="50">lam-users</imagefile>
+	</figure>
+
+	<para>
+	The edit screen for groups is shown in <link linkend="lam-group"/>. As with the edit screen
+	for user accounts, group accounts may be rapidly dealt with. <link linkend="lam-group-mem"/>
+	shows a sub-screen from the group editor that permits users to be assigned secondary group
+	memberships. 
+	</para>
+
+	<figure id="lam-group">
+		<title>The LDAP Account Manager Group Edit Screen</title>
+		<imagefile scale="50">lam-groups</imagefile>
+	</figure>
+
+	<figure id="lam-group-mem">
+		<title>The LDAP Account Manager Group Membership Edit Screen</title>
+		<imagefile scale="50">lam-group-members</imagefile>
+	</figure>
+
+	<para>
+	<indexterm><primary>smbldap-tools</primary></indexterm><indexterm><primary>scripts</primary></indexterm>
+	The final screen presented here is one that you should not normally need to use. Host accounts will
+	be automatically managed using the smbldap-tools scripts. This means that the screen <link linkend="lam-host"/>
+	will, in most cases, not be used.
+	</para>
+
+	<figure id="lam-host">
+		<title>The LDAP Account Manager Host Edit Screen</title>
+		<imagefile scale="50">lam-hosts</imagefile>
+	</figure>
+
+	<para>
+	One aspect of LAM that may annoy some users is the way it forces certain conventions on
+	the administrator. For example, LAM does not permit the creation of Windows user and group
+	accounts that contain spaces even though the underlying UNIX/Linux
+	operating system may exhibit no problems with them. Given the propensity for using upper-case
+	characters and spaces (particularly in the default Windows account names) this may cause
+	some annoyance. For the rest, LAM is a very useful administrative tool.
+	</para>
+	
+	<para>
+	The next major release, LAM 0.5, will have fewer restrictions and support the latest Samba features
+	(e.g., logon hours). The new plugin-based architecture also allows management of much more different
+	account types like plain UNIX accounts. The upload can now handle groups and hosts, too. Another
+	important point is the tree view which allows browsing and editing LDAP objects directly.
+	</para>
+
+<example id="lamcfg">
+<title>Example LAM Configuration File &smbmdash; <filename>config.cfg</filename></title>
+<screen>
+# password to add/delete/rename configuration profiles
+password: not24get
+
+# default profile, without ".conf"
+default: lam
+</screen>
+</example>
+
+<example id="lamconf">
+<title>LAM Profile Control File &smbmdash; <filename>lam.conf</filename></title>
+<screen>
+ServerURL: ldap://massive.abmas.org:389
+Admins: cn=Manager,dc=abmas,dc=biz
+Passwd: not24get
+usersuffix: ou=People,dc=abmas,dc=biz
+groupsuffix: ou=Groups,dc=abmas,dc=biz
+hostsuffix: ou=Computers,dc=abmas,dc=biz
+domainsuffix: ou=Domains,dc=abmas,dc=biz
+MinUID: 0
+MaxUID: 65535
+MinGID: 0
+MaxGID: 65535
+MinMachine: 20000
+MaxMachine: 25000
+userlistAttributes: #uid;#givenName;#sn;#uidNumber;#gidNumber
+grouplistAttributes: #cn;#gidNumber;#memberUID;#description
+hostlistAttributes: #cn;#description;#uidNumber;#gidNumber
+maxlistentries: 30
+defaultLanguage: en_GB:ISO-8859-1:English (Great Britain)
+scriptPath: 
+scriptServer: 
+samba3: yes
+cachetimeout: 5
+pwdhash: SSHA
+</screen>
+</example>
+
+</sect1>
+
+<sect1>
+	<title>IDEALX Management Console</title>
+
+	<para>
+	IMC (the IDEALX Mamagement Console) is a tool that can be used as the basis for a comprehensive
+	web-based management interface for UNIX and Linux systems.
+	</para>
+
+	<para>
+	The Samba toolset is the first console developped for IMC. It offers a simple and ergonomic
+	interface for managing a Samba domain controler. The goal is to give Linux administrators who
+	need to manage production Samba servers an effective, intuitive and consistent management 
+	experience. An IMC screenshot of the user management tool is shown in <link linkend="imcidealx"/>.
+	</para>
+
+	<figure id="imcidealx">
+        <title>The IMC Samba User Account Screen</title>
+        <imagefile scale="40">imc-usermanager2</imagefile>
+    </figure>
+
+	<para>
+	IMC is built on a set of Perl modules. Most modules are standard CPAN modules. Some are bundled with IMC,
+	but will soon to be hosted on the CPAN independently, like Struts4P, a port of Struts to the Perl language.
+	</para>
+
+	<para>
+	For further information regarding IMC refer to the web <ulink url="http://imc.sourceforge.net/">site.</ulink>
+	Prebuilt RPM packages are also <ulink url="http://imc.sourceforge.net/download.html">available.</ulink>
+	</para>
+
+</sect1>
+
+<sect1 id="ch12-SUIDSGID">
+	<title>Effect of Setting File and Directory SUID/SGID Permissions Explained</title>
+
+	<indexterm><primary>SUID</primary></indexterm>
+	<indexterm><primary>SGID</primary></indexterm>
+	<para>
+	The setting of the SUID/SGID bits on the file or directory permissions flag has particular
+	consequences. If the file is executable and the SUID bit is set, it executes with the privilege
+	of (with the UID of) the owner of the file. For example, if you are logged onto a system as
+	a normal user (let's say as the user <constant>bobj</constant>), and you execute a file that is owned
+	by the user <constant>root</constant> (uid = 0), and the file has the SUID bit set, then the file is
+	executed as if you had logged in as the user <constant>root</constant> and then executed the file.
+	The SUID bit effectively gives you (as <constant>bobj</constant>) administrative privilege for the
+	use of that executable file.
+	</para>
+
+	<para>
+	The setting of the SGID bit does precisely the same as the effect of the SUID bit, except that it
+	applies the privilege to the UNIX group setting. In other words, the file executes with the force
+	of capability of the group.
+	</para>
+
+	<para>
+	When the SUID/SGID permissions are set on a directory, all files that are created within that directory
+	are automatically given the ownership of the SUID user and the SGID group, as per the ownership
+	of the directory in which the file is created. This means that the system level <command>create()</command>
+	function executes with the SUID user and/or SGID group of the directory in which the file is
+	created.
+	</para>
+
+	<para>
+	If you want to obtain the SUID behavior, simply execute the following command:
+<screen>
+&rootprompt; chmod u+s file-or-directory
+</screen>
+	To set the SGID properties on a file or a directory, execute this command:
+<screen>
+&rootprompt; chmod g+s file-or-directory
+</screen>
+	And to set both SUID and SGID properties, execute the following:
+<screen>
+&rootprompt; chmod ug+s file-or-directory
+</screen>
+	</para>
+
+	<para>
+	Let's consider the example of a directory <filename>/data/accounts</filename>. The permissions on this
+	directory before setting both SUID and SGID on this directory are:
+<screen>
+&rootprompt; ls -al /data/accounts
+total 1
+drwxr-xr-x   10 root     root          232 Dec 18 17:08 .
+drwxr-xr-x   21 root     root          600 Dec 17 23:15 ..
+drwxrwxrwx    2 bobj     Domain Users  48 Dec 18 17:08 accounts/
+drwx------    2 root     root           48 Jan 26  2002 lost+found
+</screen>
+	In this example, if the user <constant>maryv</constant> creates a file, it is owned by her.
+	If <constant>maryv</constant> has the primary group of <constant>Accounts</constant>, the file is
+	owned by the group <constant>Accounts</constant>, as shown in this listing:
+<screen>
+&rootprompt; ls -al /data/accounts/maryvfile.txt
+drw-rw-r--    2 maryv    Accounts     12346 Dec 18 17:53
+</screen>
+	</para>
+
+	<para>
+	Now you set the SUID and SGID and check the result as follows:
+<screen>
+&rootprompt; chmod ug+s /data/accounts
+&rootprompt; ls -al /data/accounts
+total 1
+drwxr-xr-x   10 root     root          232 Dec 18 17:08 .
+drwxr-xr-x   21 root     root          600 Dec 17 23:15 ..
+drwsrwsr-x    2 bobj     Domain Users  48 Dec 18 17:08 accounts
+drwx------    2 root     root           48 Jan 26  2002 lost+found
+</screen>
+	If <constant>maryv</constant> creates a file in this directory after this change has been made, the
+	file is owned by the user <constant>bobj</constant>, and the group is set to the group
+	<constant>Domain Users</constant>, as shown here:
+<screen>
+&rootprompt; chmod ug+s /data/accounts
+&rootprompt; ls -al /data/accounts/maryvfile.txt
+total 1
+drw-rw-r--    2 bobj     Domain Users  12346 Dec 18 18:11 maryvfile.txt
+</screen>
+	</para>
+
+</sect1>
+
+<sect1 id="ch12dblck">
+	<title>Shared Data Integrity</title>
+
+      <para><indexterm>
+	  <primary>data integrity</primary>
+	</indexterm><indexterm>
+	  <primary>multi-user</primary>
+	  <secondary>data access</secondary>
+	</indexterm>
+	The integrity of shared data is often viewed as a particularly emotional issue, especially where
+	there are concurrent problems with multiuser data access. Contrary to the assertions of some who have
+	experienced problems in either area, the cause has nothing to do with the phases of the moons of Jupiter.
+	</para>
+
+	<para>
+	The solution to concurrent multiuser data access problems must consider three separate areas
+	from which the problem may stem:<indexterm>
+	  <primary>locking</primary>
+	  <secondary>Application level</secondary>
+	</indexterm><indexterm>
+	  <primary>locking</primary>
+	  <secondary>Client side</secondary>
+	</indexterm><indexterm>
+	  <primary>locking</primary>
+	  <secondary>Server side</secondary>
+	</indexterm>
+	</para>
+
+	<itemizedlist>
+		<listitem><para>application-level locking controls</para></listitem>
+		<listitem><para>client-side locking controls</para></listitem>
+		<listitem><para>server-side locking controls</para></listitem>
+	</itemizedlist>
+
+      <para><indexterm>
+	  <primary>database applications</primary>
+	</indexterm><indexterm>
+	  <primary>Microsoft Access</primary>
+	</indexterm>
+	Many database applications use some form of application-level access control. An example of one
+	well-known application that uses application-level locking is Microsoft Access. Detailed guidance
+	is provided here because this is the most common application for which problems have been reported.
+	</para>
+
+      <para><indexterm>
+	  <primary>Microsoft Excel</primary>
+	</indexterm><indexterm>
+	  <primary>Act!</primary>
+	</indexterm>
+	Common applications that are affected by client- and server-side locking controls include MS
+	Excel and Act!. Important locking guidance is provided here.
+	</para>
+
+
+	<sect2>
+	<title>Microsoft Access</title>
+
+	<para>
+	The best advice that can be given is to carefully read the Microsoft knowledgebase articles that
+	cover this area. Examples of relevant documents include:
+	</para>
+
+	<itemizedlist>
+	<listitem><para>http://support.microsoft.com/default.aspx?scid=kb;en-us;208778</para></listitem>
+	<listitem><para>http://support.microsoft.com/default.aspx?scid=kb;en-us;299373</para></listitem>
+	</itemizedlist>
+
+
+	<para><indexterm>
+	    <primary>multi-user</primary>
+	    <secondary>access</secondary>
+	  </indexterm><indexterm>
+	    <primary>exclusive open</primary>
+	  </indexterm>
+	Make sure that your MS Access database file is configured for multiuser access (not set for 
+	exclusive open). Open MS Access on each client workstation, then set the following: <menuchoice>
+	<guimenu>(Menu bar) Tools</guimenu><guimenu>Options</guimenu><guimenu>[tab] General</guimenu>
+	</menuchoice>.  Set network path to Default database folder: <filename>\\server\share\folder</filename>.
+	</para>
+
+	<para>
+        You can configure MS Access file sharing behavior as follows: click <guimenu>[tab] Advanced</guimenu>.
+	  Set:<indexterm>
+	    <primary>record locking</primary>
+	  </indexterm>
+	</para>
+
+	<itemizedlist>
+                <listitem><para>Default open mode: Shared</para></listitem>
+                <listitem><para>Default Record Locking: Edited Record</para></listitem>
+                <listitem><para>Open databases using record_level locking</para></listitem>
+	</itemizedlist>
+
+	<para><indexterm>
+	    <primary>MS Access</primary>
+	    <secondary>validate</secondary>
+	  </indexterm>
+        You must now commit the changes so that they will take effect. To do so, click 
+	<guimenu>Apply</guimenu><guimenu>Ok</guimenu>. At this point, you should exit MS Access, restart 
+	it, and then validate that these settings have not changed.
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>Act! Database Sharing</title>
+
+	<para><indexterm>
+	    <primary>ACT! database</primary>
+	  </indexterm><indexterm>
+	    <primary>data corruption</primary>
+	  </indexterm>
+	Where the server sharing the ACT! database(s) is running Samba,or Windows NT, 200x, or XP, you 
+	must disable opportunistic locking on the server and all workstations. Failure to do so
+	results in data corruption. This information is available from the Act! Web site
+	knowledgebase articles 
+	<ulink url="http://itdomino.saleslogix.com/act.nsf/docid/1998223162925">1998223162925</ulink>
+	as well as from article
+	<ulink url="http://itdomino.saleslogix.com/act.nsf/docid/200110485036">200110485036</ulink>.
+	</para>
+
+	<para><indexterm>
+	    <primary>opportunistic locking</primary>
+	  </indexterm><indexterm>
+	    <primary>Act!Diag</primary>
+	  </indexterm>
+	These documents clearly state that opportunistic locking must be disabled on both
+	the server (Samba in the case we are interested in here), as well as on every workstation
+	from which the centrally shared Act! database will be accessed. Act! provides
+	a tool called <command>Act!Diag</command> that may be used to disable all workstation
+	registry settings that may otherwise interfere with the operation of Act! 
+	Registered Act! users may download this utility from the Act! Web 
+	<ulink url="http://www.act.com/support/updates/index.cfm">site.</ulink>
+	</para>
+
+	</sect2>
+
+	<sect2>
+	<title>Opportunistic Locking Controls</title>
+
+	<para><indexterm>
+	    <primary>file caching</primary>
+	  </indexterm>
+	Third-party Windows applications may not be compatible with the use of opportunistic file
+	and record locking. For applications that are known not to be compatible,<footnote>Refer to
+	the application manufacturer's installation guidelines and knowledge base for specific
+	information regarding compatibility. It is often safe to assume that if the software
+	manufacturer does not specifically mention incompatibilities with opportunistic file
+	and record locking, or with Windows client file caching, the application is probably
+	compatible with Windows (as well as Samba) default settings.</footnote> oplock
+	support may need to be disabled both on the Samba server and on the Windows workstations.
+	</para>
+
+	<para><indexterm>
+	    <primary>cache</primary>
+	  </indexterm><indexterm>
+	    <primary>write lock</primary>
+	  </indexterm><indexterm>
+	    <primary>flush</primary>
+	    <secondary>cache memory</secondary>
+	  </indexterm>
+	Oplocks enable a Windows client to cache parts of a file that are being
+	edited. Another windows client may then request to open the file with the
+	ability to write to it. The server will then ask the original workstation
+	that had the file open with a write lock to release its lock. Before
+	doing so, that workstation must flush the file from cache memory to the
+	disk or network drive.
+	</para>
+
+	<para><indexterm>
+	    <primary>Oplocks</primary>
+	    <secondary>disabled</secondary>
+	  </indexterm>
+	Disabling of Oplocks usage may require server and client changes.
+	Oplocks may be disabled by file, by file pattern, on the share, or on the
+	Samba server.
+	</para>
+
+	<para>
+	The following are examples showing how Oplock support may be managed using
+	Samba &smb.conf; file settings:
+<screen>
+By file:        veto oplock files = myfile.mdb
+
+By Pattern:     veto oplock files = /*.mdb/
+
+On the Share:   oplocks = No
+                level2 oplocks = No
+
+On the server:
+(in [global])   oplocks = No
+                level2 oplocks = No
+</screen>
+	</para>
+
+	<para>
+	The following registry entries on Microsoft Windows XP Professional, 2000 Professional, and Windows NT4
+	workstation clients must be configured as shown here:
+<screen>
+REGEDIT4
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\
+            Services\LanmanServer\Parameters]
+      "EnableOplocks"=dword:00000000
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\
+            Services\LanmanWorkstation\Parameters]
+      "UseOpportunisticLocking"=dword:00000000
+</screen>
+	</para>
+
+	<para>
+	Comprehensive coverage of file and record-locking controls is provided in TOSHARG2, Chapter 13.
+	The information in that chapter was obtained from a wide variety of sources.
+	</para>
+
+	</sect2>
+
+</sect1>
+
+</chapter>
+

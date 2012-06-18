@@ -1,0 +1,11 @@
+cur_dir=`pwd`
+user=`echo $HOME`
+echo $cur_dir
+./configure --prefix=$cur_dir/_inst \
+--with-pcre \
+--with-smbdav-props \
+--with-openssl \
+--with-openssl-libs=/usr/lib \
+--with-smbdav-locks=yes \
+--with-libsmbclient=$user/samba-3.5.8/source3
+--disable-dependency-tracking

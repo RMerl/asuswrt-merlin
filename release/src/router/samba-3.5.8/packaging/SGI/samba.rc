@@ -1,0 +1,67 @@
+#! /bin/sh
+
+#
+# Samba server control
+#
+
+IS_ON=/etc/chkconfig
+KILLALL=/sbin/killall
+
+SAMBAD=/usr/samba/bin/smbd
+PROFILE_SAMBAD=/usr/samba/bin/smbd.profile
+#SAMBA_OPTS=-d2
+NMBD=/usr/samba/bin/nmbd
+PROFILE_NMBD=/usr/samba/bin/nmbd.profile
+#NMBD_OPTS=-d1
+
+SMBCONTROL=/usr/samba/bin/smbcontrol
+
+if test ! -x $IS_ON ; then
+    IS_ON=true
+fi
+
+if $IS_ON verbose ; then
+    ECHO=echo
+else		# For a quiet startup and shutdown
+    ECHO=:
+fi
+
+if $IS_ON sambaprofiling ; then
+        enable_profiling=yes
+fi
+
+if test "$enable_profiling" -o "$1" = "profile" ; then
+        SAMBAD=$PROFILE_SAMBAD
+        NMBD=$PROFILE_NMBD
+        enable_profiling="yes"
+fi
+
+case $1 in
+start|profile)
+	if $IS_ON samba && test -x $SAMBAD; then
+            /etc/init.d/samba stop
+	    $ECHO "Samba:\c"
+	    $SAMBAD $SAMBA_OPTS -D; $ECHO " smbd\c"
+	    $NMBD $NMBD_OPTS -D; $ECHO " nmbd\c"
+	    $ECHO "."
+	fi
+        if $IS_ON samba && test "$enable_profiling" ; then
+                if test -x $SMBCONTROL; then
+                    $ECHO "Enabling Samba profiling."
+                    $SMBCONTROL smbd profile on > /dev/null 2>&1
+                    $SMBCONTROL nmbd profile on > /dev/null 2>&1
+                fi
+                $KILLALL -HUP pmcd
+        fi
+	;;
+stop)
+	$ECHO "Stopping Samba Servers."
+	$KILLALL -15 smbd nmbd
+	$KILLALL -15 smbd.profile nmbd.profile
+	$KILLALL -15 pmdasamba
+	exit 0
+	;;
+*)
+	echo "usage: /etc/init.d/samba {start|stop|profile}"
+	;;
+esac

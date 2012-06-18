@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Management Strategies for Large Installations</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title=
+    "Single Printcap File for Large Installation " href=
+    "secoh.htm">
+    <link rel="NEXT" title=
+    "Using Programs To Get Printcap Information " href=
+    "secnis.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "secoh.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "secnis.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN6118">12.17. Management
+      Strategies for Large Installations</a></h1>
+
+      <p>One very effective way to organize print spooling is to
+      have a small number of print servers running a <b class=
+      "APPLICATION">lpd</b> daemon, and to have all the other
+      systems send their jobs directly to them. By using the above
+      methods of specifying the printer and server host you
+      eliminate the need for more complex management
+      strategies.</p>
+
+      <p>However, you still need to inform users of the names and
+      existence of these printers, and how to contact them. One
+      method is to use a common <tt class="FILENAME">printcap</tt>
+      file which is periodically updated and transfered to all
+      sites. Another method is to distribute the information using
+      the NIS or some other database. <b class=
+      "APPLICATION">LPRng</b> has provided a very flexible method
+      of obtaining and distributing database information: see <a
+      href="secnis.htm">Using Programs To Get Printcap
+      Information</a> for details.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "secoh.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "secnis.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Single Printcap
+          File for Large Installation</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Using Programs
+          To Get Printcap Information</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

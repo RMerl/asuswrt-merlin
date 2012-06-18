@@ -1,0 +1,168 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 8] 8.4 WinPopup Messages</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:35:55Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_03.html" TITLE="8.3 Internationalization">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 8.3 Internationalization" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch08_01.html" TITLE="8. Additional Samba Information ">
+Chapter 8<br>
+Additional Samba Information </a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_05.html" TITLE="8.5 Recently Added Options">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 8.5 Recently Added Options" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch08-82569">
+8.4 WinPopup Messages</a></h2><P CLASS="para">You can use the WinPopup tool (<I CLASS="filename">WINPOPUP.EXE</i>) in Windows to send messages to users, machines, or entire workgroups on the network. This tool is provided with Windows 95 OSR2 and comes standard with Windows 98. With either Windows 95 or 98, however, you need to be running WinPopup to receive and send WinPopup messages. With Windows NT, you can still receive messages without starting such a tool; they will automatically appear in a small dialog box on the screen when received. The WinPopup application is shown in <A CLASS="xref" HREF="ch08_04.html#ch08-66444">
+Figure 8.1</a>.   </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch08-66444">
+Figure 8.1: The WinPopup application</a></h4><IMG CLASS="graphic" SRC="figs/sam.0801.gif" ALT="Figure 8.1"><P CLASS="para">
+Samba has a single WinPopup messaging option, <CODE CLASS="literal">
+message</code> <CODE CLASS="literal">
+command</code>, as shown in <A CLASS="xref" HREF="ch08_04.html#ch08-18671">
+Table 8.7</a>.  </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch08-18671">
+Table 8.7: WinPopup Configuration Option </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Option</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Parameter</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Function</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Default</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Scope</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+message command</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">string (fully-qualified pathname)</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Sets a command to run on Unix when a WinPopup message is received.</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+None</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Global</p></td></tr></tbody></table><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch08-pgfId-958949">
+8.4.1 message command</a></h3><P CLASS="para">
+Samba's <CODE CLASS="literal">
+message</code> <CODE CLASS="literal">
+command</code> option sets the path to a program that will run on the server when a Windows popup message arrives at the server. The command will be executed using the <CODE CLASS="literal">
+guest</code> <CODE CLASS="literal">
+account</code> user. What to do with one of these is questionable since it's probably for the Samba administrator, and Samba doesn't know his or her name. If you know there's a human using the console, the Samba team once suggested the following:</p><PRE CLASS="programlisting">
+[global]
+	message command = /bin/csh -c 'xedit %s; rm %s' &amp;</pre><P CLASS="para">
+Note the use of variables here. The <CODE CLASS="literal">
+%s</code> variable will become the file that the message is in. This file should be deleted when the command is finished with it; otherwise, there will be a buildup of pop-up files collecting on the Samba server. In addition, the command must fork its own process (note the &amp; after the command); otherwise the client may suspend and wait for notification that the command was sent successfully before continuing.</p><P CLASS="para">
+In addition to the standard variables, <A CLASS="xref" HREF="ch08_04.html#ch08-29758">
+Table 8.8</a> shows the three unique variables that you can use in a <CODE CLASS="literal">
+message</code> <CODE CLASS="literal">
+command</code>.   </p><br>
+<TABLE CLASS="table" BORDER="1" CELLPADDING="3">
+<CAPTION CLASS="table">
+<A CLASS="title" NAME="ch08-29758">
+Table 8.8: Message Command Variables </a></caption><THEAD CLASS="thead">
+<TR CLASS="row" VALIGN="TOP">
+<TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Variable</p></th><TH CLASS="entry" ALIGN="LEFT" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+Definition</p></th></tr></thead><TBODY CLASS="tbody">
+<TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%s</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+The name of the file in which the message resides</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%</code>f</p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+The name of the client that sent the message</p></td></tr><TR CLASS="row" VALIGN="TOP">
+<TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+<CODE CLASS="literal">
+%t</code></p></td><TD CLASS="entry" ROWSPAN="1" COLSPAN="1">
+<P CLASS="para">
+The name of the machine that is the destination of the message </p></td></tr></tbody></table></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_03.html" TITLE="8.3 Internationalization">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 8.3 Internationalization" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch08_05.html" TITLE="8.5 Recently Added Options">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 8.5 Recently Added Options" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+8.3 Internationalization</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+8.5 Recently Added Options</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

@@ -1,0 +1,87 @@
+mailto(samba@samba.org)
+
+manpage(smbsh htmlcommand((1)))(1)(23 Oct 1998)(Samba)(SAMBA)
+
+label(NAME)
+manpagename(smbsh)(Allows access to Windows NT filesystem using UNIX commands)
+
+label(SYNOPSIS)
+manpagesynopsis()
+
+bf(smbsh)
+
+label(DESCRIPTION)
+manpagedescription()
+
+This program is part of the bf(Samba) suite.
+
+bf(smbsh) allows you to access an NT filesystem using UNIX commands
+such as bf(ls), bf(egrep), and bf(rcp). You must use a shell that
+is dynmanically linked in order for bf(smbsh) to work correctly.
+
+To use the bf(smbsh) command, execute bf(smbsh) from the prompt and
+enter the username and password that authenticate you to the
+machine running the Windows NT operating system.
+
+verb(
+system% smbsh
+Username: user
+Password:
+)
+
+Any dynamically linked command you execute from this shell will
+access the bf(/smb) directory using the smb protocol.
+For example, the command 
+
+tt(ls /smb)
+
+will show all the machines in your workgroup.
+The command 
+
+tt(ls /smb/<machine-name>)
+
+will show the share names for that machine. You could then, for example, use the 
+bf(cd) command to change directories, bf(vi) to edit files, and bf(rcp)
+ to copy files.
+
+label(VERSION)
+manpagesection(VERSION)
+
+This man page is correct for the 2.0.3 of the Samba suite.
+
+label(BUGS)
+manpagebugs()
+
+bf(smbsh) works by intercepting the standard libc calls with the dynamically loaded
+versions in bf(smbwrapper.o). Not all calls have been "wrapped" so some programs
+may not function correctly under bf(smbsh).
+
+Programs which are not dynamically linked cannot make use of bf(smbsh)'s 
+functionality. Most versions of UNIX have a bf(file) command that will describe how
+a program was linked.
+
+label(SEEALSO)
+manpageseealso()
+
+url(bf(smb.conf (5)))(smb.conf.5.html),
+url(bf(smbd (8)))(smbd.8.html).
+
+label(AUTHOR)
+manpageauthor()
+
+The original Samba software and related utilities were created by
+Andrew Tridgell (samba@samba.org). Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+
+The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+url(bf(ftp://ftp.icce.rug.nl/pub/unix/))(ftp://ftp.icce.rug.nl/pub/unix/))
+and updated for the Samba2.0 release by Jeremy Allison.
+email(samba@samba.org).
+
+See url(bf(samba (7)))(samba.7.html) to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+

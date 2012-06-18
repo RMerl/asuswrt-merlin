@@ -1,0 +1,100 @@
+#!/bin/sh
+# $Id: smbprint,v 1.1.1.1 2008/10/15 03:28:26 james26_jang Exp $
+#
+# Blatently lifted from some folks who blatently lifted it from
+# other folks,  who seem to have taken it from one of the very
+# first Samba distributions.
+#  Patrick ("Worse than a chain letter") Powell
+#
+# This script supports sending a print job to an SMB (Samba/Microsoft)
+# printer using the 'smbclient' from the Samba distribution.
+#
+# Variation 1: LPRng + smbclient -A auth
+#  smb:lp=|/.../smbprint
+#   :sd=/var/spool/lpd/%P
+#   :xfer_options=share=//host/share authfile=auth
+#    - user name and password in /var/spool/lpd/smb/auth file 
+#    - requires version of smbclient that uses -A authfile
+# Variation 2: LPRng + smbclient -U username password
+#  smb:lp=|/.../smbprint
+#   :sd=/var/spool/lpd/%P
+#   :xfer_options=share=//host/share authfile=auth
+#    - user name and password in /var/spool/lpd/smb/auth file 
+#    - requires version of smbclient that uses -A authfile
+# Variation 3: LPRng + used as filter
+#  smb:lp=/dev/null
+#   :if=/.../smbprint
+#   :sd=/var/spool/lpd/%P
+#   :xfer_options=share=//host/share authfile=auth
+#    - user name and password in /var/spool/lpd/smb/auth file 
+# Variation 4: pass options in $spooldir/general.cfg file
+#  smb:lp=/dev/null OR lp=|/.../smbprint OR :if=/.../smbprint
+#    - options in /var/spool/lpd/smb/general.cfg file 
+#
+#  The general.cfg file is used to set shell variables
+#
+#   share=//host/share   - share (required)
+#   hostip=              - host ip address (optional)
+#   workgroup=           - workgroup (required)
+#   authfile=auth        - authorization file (optional)
+#   translate=           - do translation (optional and DANGEROUS)
+#
+# The authentication file (authfile) holds the username and
+# password value.  You can put these in the general.cfg file
+# as well.  WARNING: smbclient requires the authentication file
+# to have the format:
+#     username=name
+#     password=xxxx
+# There are NO quotes allowed around the name and/or password
+# files so the password value xxxx must not contain shell
+# quote or metacharacters.
+# 
+
+PATH=/bin:/usr/bin:/usr/local/bin
+export PATH
+
+# get options from  general.cfg file
+if [ -f ./general.cfg ] ; then
+	source ./general.cfg
+fi
+
+# get options from $PRINTCAP_ENTRY environment variable
+options=`echo "${PRINTCAP_ENTRY}" | sed -n 's/:xfer_options=//p' `
+echo OPTIONS $options >&2
+if [ -n "$options" ] ; then
+	eval export $options
+fi
+
+# a brutal way to determine if smbclient takes the -A authfile option
+smbclientold=`smbclient -A /dev/null 2>&1 </dev/null | grep 'invalid option'`
+
+# check for smbclientold=yes and fix up authfile/password stuff
+if [ "$smbclientold" != "" -a "$authfile" != "" -a -f "$authfile" ] ; then
+	. $authfile
+	authfile=
+fi
+
+if [ "$translate" = "yes" ]; then
+ command="translate ; print -"
+else
+ command="print -"
+fi
+
+#echo $share $password $translate $x_command > /tmp/smbprint.log
+
+# use the -A or 
+if [ "$smbclientold" = "" ] ; then
+#	echo smbclient "$share" ${password:+password} -E \
+#	${username:+-U} ${username:+username} ${hostip:+-I} $hostip -N ${workgroup:+-W} $workgroup \
+#     ${authfile:+-A} $authfile -c "$command" >&2
+	smbclient "$share" ${password} -E \
+	${username:+-U} ${username} ${hostip:+-I} $hostip -N ${workgroup:+-W} $workgroup \
+     ${authfile:+-A} $authfile -c "$command" >&2
+else
+#	echo echo \"$command\" "|" smbclient "$share" ${password:+password} -E \
+#	${username:+-U} ${username:+username} ${hostip:+-I} $hostip -N ${workgroup:+-W} $workgroup \
+#		>&2
+	echo $command | smbclient "$share" ${password} -E \
+	${username:+-U} ${username} ${hostip:+-I} $hostip -N ${workgroup:+-W} $workgroup \
+		>&2
+fi

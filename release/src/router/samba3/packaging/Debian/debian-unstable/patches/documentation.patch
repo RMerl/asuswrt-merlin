@@ -1,0 +1,66 @@
+--- samba-3.0.4/docs/manpages/swat.8.orig	2004-05-05 10:22:50.000000000 -0400
++++ samba-3.0.4/docs/manpages/swat.8	2004-05-10 13:25:53.000000000 -0400
+@@ -80,6 +80,13 @@
+ .SH "INSTALLATION"
+ 
+ .PP
++\fBDebian-specific Note\fR: all these steps have already been done for
++you. However, by default, swat is not enabled. This has been done for
++security reasons. To enable swat you need to edit /etc/inetd.conf,
++uncomment the swat entry (usually at the end of the file), and then
++restart inetd.
++
++.PP
+ Swat is included as binary package with most distributions\&. The package manager in this case takes care of the installation and configuration\&. This section is only for those who have compiled swat from scratch\&.
+ 
+ .PP
+@@ -87,13 +94,13 @@
+ 
+ .TP 3
+ \(bu
+-/usr/local/samba/sbin/swat
++/usr/sbin/swat
+ .TP
+ \(bu
+-/usr/local/samba/swat/images/*
++/usr/share/samba/swat/images/*
+ .TP
+ \(bu
+-/usr/local/samba/swat/help/*
++/usr/share/samba/swat/help/*
+ .LP
+ 
+ .SS "Inetd Installation"
+@@ -102,7 +109,7 @@
+ You need to edit your \fI/etc/inetd\&.conf \fR and \fI/etc/services\fR to enable SWAT to be launched via \fBinetd\fR\&.
+ 
+ .PP
+-In \fI/etc/services\fR you need to add a line like this:
++In \fI/etc/services\fR you need to add a line like this (not needed for Debian):
+ 
+ .PP
+ \fBswat 901/tcp\fR
+@@ -114,10 +121,10 @@
+ the choice of port number isn't really important except that it should be less than 1024 and not currently used (using a number above 1024 presents an obscure security hole depending on the implementation details of your\fBinetd\fR daemon)\&.
+ 
+ .PP
+-In \fI/etc/inetd\&.conf\fR you should add a line like this:
++In \fI/etc/inetd\&.conf\fR you should add a line like this (not needed for Debian since the maintainer scripts do it automatically. You need to uncomment the line, though, because it is added commented out for security reasons):
+ 
+ .PP
+-\fBswat stream tcp nowait\&.400 root /usr/local/samba/sbin/swat swat\fR
++\fBswat stream tcp nowait\&.400 root /usr/sbin/swat swat\fR
+ 
+ .PP
+ Once you have edited \fI/etc/services\fR and \fI/etc/inetd\&.conf\fR you need to send a HUP signal to inetd\&. To do this use \fBkill \-1 PID \fR where PID is the process ID of the inetd daemon\&.
+@@ -141,8 +148,8 @@
+ This file must contain a mapping of service name (e\&.g\&., swat) to service port (e\&.g\&., 901) and protocol type (e\&.g\&., tcp)\&.
+ 
+ .TP
+-\fI/usr/local/samba/lib/smb\&.conf\fR
+-This is the default location of the \fBsmb\&.conf\fR(5) server configuration file that swat edits\&. Other common places that systems install this file are \fI /usr/samba/lib/smb\&.conf\fR and \fI/etc/smb\&.conf \fR\&. This file describes all the services the server is to make available to clients\&.
++\fI/etc/samba/smb\&.conf\fR
++This is the default location of the \fBsmb\&.conf\fR(5) server configuration file that swat edits\&. This file describes all the services the server is to make available to clients\&.
+ 
+ .SH "WARNINGS"
+ 

@@ -1,0 +1,21 @@
+#!/bin/sh
+ 
+# ----------------------------------------------------------------------
+# i.preserve
+#
+# copy only if file does not exists
+#
+
+while read src dest
+do
+  if [ ! -f $dest ] ; then
+    cp $src $dest
+  fi
+done
+
+exit 0
+
+#
+# end of file
+# ----------------------------------------------------------------------
+

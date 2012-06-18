@@ -1,0 +1,59 @@
+The following is a list of the systems that LPRng has been ported to.
+In addition,  there are a large number of others that it works on,
+but have not been reported.
+
+Sun Microsystems: SunOS 4.1.1, 4.1.3U, 4.1.4
+     Solaris/SunOS  2.2/5.2, 2.3/5.3, 2.4/5.4
+     Solaris 2.5, 2.5.1, 2.6, 2.7, 2.8
+BSDI (BSD/OS): BSDI 2.0.0, 2.0.1, 2.1.0, 3.0, 3.1,
+   4.0, 4.1, 4.1.1
+HPUX: 8.2, 9.4, 10.X, 11.X
+	Note: with HP's C compiler, please try:
+      configure CFLAGS=-Ae
+    or
+      configure CFLAGS=-Aa
+    for ANSI compatibilty.
+
+SGI:  IRIX5, IRIX6, IRIX7
+	Note: use ANSII C compiler,  gcc is preferred
+Linux:  All Linux system generated after 1998.
+	Note: should run on Linux with no problems
+DEC:     ULTRIX, DEC Alpha
+	Note: use GCC
+AIX:     1.06
+    See LPRng Refernce Manual for detailed instructions
+	Note: use GCC
+FreeBSD: 2.0.5, 2.x, 3.x, 4.x, 5.x
+
+POSIX Compatible Systems:
+   If your system is POSIX compatible,  then there should
+   be few,  if any,  problems.   Warnings and error messages
+   about conflicting pointer types are usually the result
+   of conflicts between LPRng and system default implementations
+   of some functions.  Check these carefully.
+
+Note:
+  Some systems do not have prototypes for all system functions used
+  by LPRng.  See the src/include/portable.h file for help - you
+  can enable a set of default prototypes.
+
+Note:
+Some systems appear to have conflicts in function definitions in
+different include files.  This is the target SYSTEMS fault,
+not LPRng's.
+
+Great effort has been made to accommodate these systems and to not
+include conflicting files by using the "configure" facility.  To
+make life worse,  these conflicts may appear in one version and
+get fixed in the next. This has led to the use of "configure" and
+the need to detect not only the operating system, but also the
+version of various libraries and functions.  See the #if statements
+in various files, i.e. - stty.c is a good example of insanity.
+
+If you have problems,  please contact me and I will see what can be done.
+
+Patrick Powell                 Astart Technologies
+papowell@astart.com            6741 Convoy Court
+Network and System             San Diego, CA 92111
+  Consulting                   858-874-6543 FAX 858-751-2435
+LPRng - Print Spooler (http://www.lprng.com)

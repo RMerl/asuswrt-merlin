@@ -1,0 +1,826 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Appendix E. Configure Options</h1>
+
+
+<p><a name="INDEX-1"/>As we
+explained in <a href="ch02.html">Chapter 2</a>, the
+<em class="emphasis">configure</em> program is run before the Samba source
+code is compiled to fit the compilation process to the local
+architecture. At this stage, it is possible to specify options to
+customize Samba's behavior further and include or
+exclude features. This is an example of specifying configure options:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>./configure --with-smbmount --with-configdir=/etc/samba --with-manpages-langs=ja</b></tt></pre></blockquote>
+
+<p>This example configures the Samba installation to support mounting
+SMB filesystems, look for the Samba configuration file in
+<em class="filename">/etc/samba</em> (instead of the default location of
+<em class="filename">/usr/local/samba/lib</em>), and install
+Japanese-language manual pages. We have picked these three configure
+options because they illustrate the usage of the three types of
+options that are included up to Samba 3.0. The
+<tt class="literal">--with-smbmount</tt> option is a Boolean option, which
+can take a value of <tt class="literal">yes</tt> or <tt class="literal">no</tt>.
+All the Boolean options are set to <tt class="literal">no</tt> by default,
+and it is only necessary to provide the option to turn it on. If you
+want to be more explicit, you can specify
+<tt class="literal">--with-smbmount=yes</tt>. To turn an option off
+explicitly, you can also specify
+<tt class="literal">--without-</tt><em class="replaceable">feature</em>
+rather than
+<tt class="literal">--with-</tt><em class="replaceable">feature</em><tt class="literal">=no</tt>.</p>
+
+<p>In the case of the other two options we have shown, an argument must
+be supplied after the equals (<tt class="literal">=</tt>) sign. Some of the
+options are used to specify the directories that Samba uses for
+various purposes. Only one option is in the last group, where
+something other than a directory is specified as an option argument.</p>
+
+<p>The supported configure options vary from release to release. For
+example, between Samba 2.2.x and Samba 3.0, many options were
+dropped, and a few were added. To get a list of the configure options
+for your release, use the following command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>./configure --help</b></tt></pre></blockquote>
+
+<p><a href="appe.html#samba2-APP-E-TABLE-1">Table E-1</a> lists Samba's configure
+options.</p>
+
+<a name="samba2-APP-E-TABLE-1"/><h4 class="head4">Table E-1. Configuration options</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Configuration option</p>
+</th>
+<th>
+<p>Description</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">--with-acl-support</tt></p>
+</td>
+<td>
+<p>Support Windows NT/2000/XP ACLs</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-afs</tt></p>
+</td>
+<td>
+<p>Support the Andrew Filesystem (AFS)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-automount</tt></p>
+</td>
+<td>
+<p>Support the NFS automounter</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-codepagedir=</tt><em class="replaceable">dir</em></p>
+</td>
+<td>
+<p>Location of codepage files</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-configdir=</tt><em class="replaceable">dir</em></p>
+</td>
+<td>
+<p>Location of configuration files</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-dce-dfs</tt></p>
+</td>
+<td>
+<p>Support DCE/DFS</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-fhs</tt></p>
+</td>
+<td>
+<p>Use FHS-compliant locations of files</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-included-popt</tt></p>
+</td>
+<td>
+<p>Use Samba's <em class="emphasis">popt(  )</em></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-krb4=base-</tt><em class="replaceable">dir</em></p>
+</td>
+<td>
+<p>Support Kerberos 4</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-krb5=base-</tt><em class="replaceable">dir</em></p>
+</td>
+<td>
+<p>Support Kerberos 5 (Microsoft ADS)</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-ldapsam</tt></p>
+</td>
+<td>
+<p>Support LDAP SAM</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-libiconv=</tt><em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Specify <em class="filename">iconv</em> library</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-libsmbclient</tt></p>
+</td>
+<td>
+<p>Build <em class="filename">smbclient</em> library</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-lockdir=</tt><em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Location of lock files</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-logfilebase=</tt><em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Location of log files</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-manpages-langs=</tt><em class="replaceable">language</em></p>
+</td>
+<td>
+<p>Specify language for manual pages</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-msdfs</tt></p>
+</td>
+<td>
+<p>Support Microsoft Dfs</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-nisplus-home</tt></p>
+</td>
+<td>
+<p>Support NIS+ home directories</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-nisplussam</tt></p>
+</td>
+<td>
+<p>Support NIS+ SAM</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-pam</tt></p>
+</td>
+<td>
+<p>Support PAM restrictions</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-pam_smbpass</tt></p>
+</td>
+<td>
+<p>Build <em class="filename">pam_smbpass.so</em> PAM module</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-piddir=</tt><em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Location of PID files</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-privatedir=</tt><em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Location of <em class="filename">smbpasswd</em> file</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-profiling-data</tt></p>
+</td>
+<td>
+<p>Support gathering of profiling information</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-quotas</tt></p>
+</td>
+<td>
+<p>Support disk quotas</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-readline=</tt><em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Specify readline library</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-sendfile-support</tt></p>
+</td>
+<td>
+<p>Support <em class="emphasis">sendfile</em>(  ) system call</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-smbmount</tt></p>
+</td>
+<td>
+<p>Support <em class="emphasis">smbmount</em> and smbfs</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-smbwrapper</tt></p>
+</td>
+<td>
+<p>Build <em class="filename">smbwrapper</em> library for
+<em class="emphasis">smbsh</em> support</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-spinlocks</tt></p>
+</td>
+<td>
+<p>Use spinlocks instead of fcntl locks</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-ssl</tt></p>
+</td>
+<td>
+<p>Support SSL</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-sslinc=</tt><em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Location of SSL include files</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-ssllib=</tt><em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Location of SSL libraries</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-swatdir=</tt><em class="replaceable">directory</em></p>
+</td>
+<td>
+<p>Location of SWAT files</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-syslog</tt></p>
+</td>
+<td>
+<p>Support syslog message logging</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-tdbsam</tt></p>
+</td>
+<td>
+<p>Support TDB database files for SAM</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-utmp</tt></p>
+</td>
+<td>
+<p>Support utmp file accounting</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">--with-winbind</tt></p>
+</td>
+<td>
+<p>Build winbind</p>
+</td>
+</tr>
+
+</table>
+
+<dl>
+<dt><b><tt class="literal">--with-acl-support</tt><a name="INDEX-2"/><a name="INDEX-3"/></b></dt>
+<dd>
+<p>Includes support for Windows NT/2000/XP access control lists
+(<a name="INDEX-4"/>ACLs). For this to work, you need
+to have POSIX ACL support in the host operating system. See <a href="ch08.html">Chapter 8</a> for details.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-afs</tt><a name="INDEX-5"/><a name="INDEX-6"/></b></dt>
+<dd>
+<p>Includes support for the <a name="INDEX-7"/>Andrew
+Filesystem (AFS), for authenticating users who are accessing files
+through AFS.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-automount</tt><a name="INDEX-8"/><a name="INDEX-9"/></b></dt>
+<dd>
+<p>Includes support for the automounter, a feature often used in
+conjunction with NFS, to mount <a name="INDEX-10"/><a name="INDEX-11"/>NFS shares automatically at the
+first attempt to access them. You might wish to enable this feature
+if any of the directories shared by your Samba server are (or
+include) NFS-mounted directories.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-codepagedir</tt><a name="INDEX-12"/><a name="INDEX-13"/>=<em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Specifies the directory in which to put codepage files for
+<a name="INDEX-14"/>internationalization
+support. See the
+&quot;Internationalization&quot; section
+earlier in this chapter for more information on this feature. By
+default, this directory is
+<em class="filename">/usr/local/samba/lib/codepages</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-configdir</tt><a name="INDEX-15"/><a name="INDEX-16"/>=<em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Specifies the directory in which Samba keeps its configuration file,
+usually called <em class="filename">smb.conf</em>. By default, this is
+<em class="filename">/usr/local/samba/lib</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-dce-dfs</tt><a name="INDEX-17"/><a name="INDEX-18"/></b></dt>
+<dd>
+<p>Includes support for the <a name="INDEX-19"/>Distributed Computing Environment
+Distributed Filesystem (DCE/DFS). This is a distributed filesystem
+included in some Unix variants and is not the same as
+Microsoft's Distributed Filesystem (Dfs).</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-fhs</tt><a name="INDEX-20"/><a name="INDEX-21"/></b></dt>
+<dd>
+<p>Adheres to the <a name="INDEX-22"/>Filesystem Hierarchy Standard when
+locating files. For details, see <a href="http://www.pathname.com/fhs">http://www.pathname.com/fhs</a>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-included-popt</tt><a name="INDEX-23"/><a name="INDEX-24"/></b></dt>
+<dd>
+<p>Includes Samba's own support for parsing
+<a name="INDEX-25"/>command-line options, instead of using
+the local system's <em class="emphasis">popt( )</em>
+C-library function.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-krb4</tt><a name="INDEX-26"/><a name="INDEX-27"/>=<em class="replaceable">base-dir</em></b></dt>
+<dd>
+<p>Includes support for <a name="INDEX-28"/>Kerberos Version 4.0, specifying the base
+directory of the Kerberos distribution. Kerberos is an authentication
+protocol developed at MIT that uses private-key cryptography to
+provide strong security between nodes. This version is not the same
+as Microsoft's adaptation of Kerberos in Active
+Directory, which is the preferred version for use with Samba. This
+option exists only in versions of Samba earlier than 3.0.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-krb5</tt><a name="INDEX-29"/><a name="INDEX-30"/>=<em class="replaceable">base-dir</em></b></dt>
+<dd>
+<p>Includes support for Kerberos Version 5.0, specifying the base
+directory of the Kerberos distribution. This version of Kerberos is
+compatible with the Kerberos authentication in
+Microsoft's Active Directory used in Windows 2000
+and Windows XP.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-ldapsam</tt><a name="INDEX-31"/><a name="INDEX-32"/></b></dt>
+<dd>
+<p>Includes support for using
+<a name="INDEX-33"/>LDAP instead of the
+<em class="filename">smbpasswd</em> file for maintaining
+Samba's equivalent to the Windows NT SAM database.
+This option is necessary to use the parameters
+<tt class="literal">ldap</tt> <tt class="literal">admin</tt>
+<tt class="literal">dn</tt>, <tt class="literal">ldap</tt>
+<tt class="literal">filter</tt>, <tt class="literal">ldap</tt>
+<tt class="literal">port</tt>, <tt class="literal">ldap</tt>
+<tt class="literal">server</tt>, <tt class="literal">ldap</tt>
+<tt class="literal">ssl</tt>, and <tt class="literal">ldap</tt>
+<tt class="literal">suffix</tt> in the Samba configuration file. It is
+necessary to specify <tt class="literal">--with-ldapsam</tt> only in Samba
+versions prior to 3.0.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-libiconv</tt><a name="INDEX-34"/><a name="INDEX-35"/>=<em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Specifies a location for <em class="emphasis">iconv( )</em> support. The
+<a name="INDEX-36"/><em class="emphasis">iconv( )</em> function
+exists in the C library to perform conversion between different
+character sets. This option allows Samba's default
+method of determining the location of the <em class="emphasis">iconv()</em> 
+library to be overridden. Ordinarily, the configuration
+process checks for support in the C library on the system and, if not
+found, uses code included in the Samba source tree. Using
+<tt class="literal">--with-libiconv</tt>, it is possible to specify
+explicitly where the support is located. The include files are
+assumed to be in
+<em class="replaceable">directory</em><em class="filename">/include</em>,
+and library files are assumed to be in
+<em class="replaceable">directory</em><em class="filename">/lib</em>. This
+option is new in Samba 3.0.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-libsmbclient</tt><a name="INDEX-37"/><a name="INDEX-38"/></b></dt>
+<dd>
+<p>Allows applications outside the
+<a name="INDEX-39"/>Samba
+suite to access Samba's features. When
+<tt class="literal">--with-libsmbclient</tt> is specified, the library is
+built during the compilation process.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-lockdir</tt><a name="INDEX-40"/><a name="INDEX-41"/>=<em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Specifies the directory in which Samba keeps
+<a name="INDEX-42"/>lock
+files. By default this directory is
+<em class="filename">/usr/local/samba/var/locks</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-logfilebase</tt><a name="INDEX-43"/><a name="INDEX-44"/>=<em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Specifies the directory in which Samba keeps <a name="INDEX-45"/>log files for the
+<em class="emphasis">smbd</em>, <em class="emphasis">nmbd</em>, and
+<em class="emphasis">winbindd</em> daemons. This defaults to
+<em class="filename">/usr/local/samba/var</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-manpages-langs</tt><a name="INDEX-46"/><a name="INDEX-47"/>=<em class="replaceable">language</em></b></dt>
+<dd>
+<p>Starting with Samba 3.0, <a name="INDEX-48"/><a name="INDEX-49"/>Samba's manual pages
+are available in different languages. The default is
+<tt class="literal">en</tt> for English, and the language can be specified
+as <tt class="literal">ja</tt> for Japanese or <tt class="literal">pl</tt> for
+Polish.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-msdfs</tt><a name="INDEX-50"/><a name="INDEX-51"/></b></dt>
+<dd>
+<p>Includes support for Microsoft Distributed Filesystem
+(<a name="INDEX-52"/>Dfs). See <a href="ch08.html">Chapter 8</a> for
+more information on this feature. Specifying this option is necessary
+only in Samba versions prior to 3.0.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-nisplus-home</tt><a name="INDEX-53"/><a name="INDEX-54"/></b></dt>
+<dd>
+<p>Includes support for locating the
+<a name="INDEX-55"/>NIS+ server that is
+serving a particular user's home directory and
+telling the client to connect to it. Use
+<tt class="literal">--with-automount</tt> along with this option.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-nisplussam</tt><a name="INDEX-56"/><a name="INDEX-57"/></b></dt>
+<dd>
+<p>Includes support for integrating
+<a name="INDEX-58"/>NIS+ into Samba's
+equivalent of the Windows NT password database.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-pam</tt><a name="INDEX-59"/><a name="INDEX-60"/></b></dt>
+<dd>
+<p>When this configure option is specified and the parameter
+<tt class="literal">obey</tt> <tt class="literal">pam</tt>
+<tt class="literal">restrictions</tt> in the Samba configuration file is
+set to <tt class="literal">yes</tt>, obeys PAM's
+configuration regarding account and session management. When
+encrypted passwords are in use, Samba uses the
+<em class="filename">smbpasswd</em> file for authentication, bypassing the
+PAM subsystem. Therefore, this option works only when
+<tt class="literal">encrypt</tt> <tt class="literal">passwords</tt> is set to
+<tt class="literal">no</tt>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-pam_smbpass</tt><a name="INDEX-61"/><a name="INDEX-62"/></b></dt>
+<dd>
+<p>When this option is specified, the compilation process builds a PAM
+module called <em class="filename">pam_smbpass.so</em> and places it in
+the <em class="filename">source/bin</em> directory. This module allows
+applications outside of the Samba suite to authenticate users with
+Samba's <em class="filename">smbpasswd</em> file. For
+more information, see the <em class="filename">README</em> file in the
+<em class="filename">source/pam_smbpass</em> directory of the Samba
+distribution and the file
+<em class="filename">PAM-Authentication-And-Samba.html</em> in the
+<em class="filename">docs/html</em> directory.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-piddir</tt><a name="INDEX-63"/><a name="INDEX-64"/>=<em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Specifies the directory in which Samba keeps files such as
+<a name="INDEX-65"/>browse lists, WINS
+data, and PID files for keeping track of the process IDs of the Samba
+daemons. The default is
+<em class="filename">/usr/local/samba/var/locks</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-privatedir</tt><a name="INDEX-66"/><a name="INDEX-67"/>=<em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Specifies the directory in which Samba keeps the
+<em class="filename">smbpasswd</em>, <em class="filename">secrets.tdb,</em> and
+related files for
+<a name="INDEX-68"/>authentication.
+The default is <em class="filename">/usr/local/samba/private</em>.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-profiling-data</tt><a name="INDEX-69"/><a name="INDEX-70"/></b></dt>
+<dd>
+<p>Includes support for analyzing the execution time of
+Samba's internal code. This is normally used only by
+the Samba developers.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-quotas</tt><a name="INDEX-71"/><a name="INDEX-72"/></b></dt>
+<dd>
+<p>Includes <a name="INDEX-73"/>disk-quota support. This is classified
+as an experimental option by the Samba developers.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-readline</tt><a name="INDEX-74"/><a name="INDEX-75"/>=<em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Specifies a location for
+<a name="INDEX-76"/><em class="emphasis">readline( )</em>
+support. The <em class="emphasis">readline( )</em> function exists in the
+C library to accept a line of input from an interactive user and
+provide support for editing and history. Samba uses these functions
+in <em class="emphasis">smbclient</em> and <em class="emphasis">rpcclient</em>.</p>
+
+<p>This option allows Samba's default method of
+determining the location of the <tt class="function">readline( )</tt>
+library to be overridden. Ordinarily, the configuration process
+checks for support in the C library on the system and, if not found,
+uses code included in the Samba source tree. Using
+<tt class="literal">--with-readline</tt>, it is possible to specify the
+directory explicitly in which the library containing
+<em class="emphasis">readline( )</em> is located.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-sendfile-support</tt><a name="INDEX-77"/><a name="INDEX-78"/></b></dt>
+<dd>
+<p>Checks to see if the Samba host operating system supports the
+<a name="INDEX-79"/><em class="emphasis">sendfile( )</em> system
+call, which speeds up file transfers by copying data directly to and
+from kernel buffers, avoiding the overhead of copying to and from
+buffers in user space. If the operating system has the
+<em class="emphasis">sendfile( )</em> system call, support is included in
+Samba for the <tt class="literal">use</tt> <tt class="literal">sendfile</tt>
+configuration file option. This is an experimental option included in
+Samba 2.2.5 and later versions.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-smbmount</tt><a name="INDEX-80"/><a name="INDEX-81"/></b></dt>
+<dd>
+<p>Must be specified if you want to mount SMB shares in your Unix
+filesystem using the <em class="filename"/><a name="INDEX-82"/>smbfs</em> filesystem and the
+<em class="emphasis">smbmount</em><a name="INDEX-83"/> command, as discussed in <a href="ch05.html">Chapter 5</a>. Currently, this works only with Linux.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-smbwrapper</tt><a name="INDEX-84"/><a name="INDEX-85"/></b></dt>
+<dd>
+<p>To use <a name="INDEX-86"/>smbsh to access SMB shares from Unix (as
+discussed in <a href="ch05.html">Chapter 5</a>), use this option to
+include the
+<em class="filename">smbwrapper</em><a name="INDEX-87"/> library.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-spinlocks</tt><a name="INDEX-88"/><a name="INDEX-89"/></b></dt>
+<dd>
+<p>Uses <a name="INDEX-90"/><a name="INDEX-91"/>spin locks instead of the normal method of
+file locking that uses the <em class="emphasis">fcntl( )</em> C-library
+function. Using this option results in a Samba installation that
+consumes much more CPU time on the host system. Use it only when
+absolutely necessary.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-ssl</tt><a name="INDEX-92"/><a name="INDEX-93"/></b></dt>
+<dd>
+<p>Includes support for running Samba with
+<a name="INDEX-94"/>SSL encryption. This little-used
+feature was dropped for Samba 3.0. It still works with Samba 2.2.x
+and before, but a better method is to use a <a name="INDEX-95"/>virtual private
+network (VPN).</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-sslinc</tt><a name="INDEX-96"/><a name="INDEX-97"/>=<em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Specifies the location of the SSL include files.
+<em class="filename">/usr/local/ssl/include</em> is the default location.
+This option exists in versions prior to Samba 3.0.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-ssllib</tt><a name="INDEX-98"/><a name="INDEX-99"/>=<em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Specifies the location of the SSL libraries. The default location is
+<em class="filename">/usr/local/ssl/lib</em>. This option exists in
+versions prior to Samba 3.0.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-swatdir</tt><a name="INDEX-100"/><a name="INDEX-101"/>=<em class="replaceable">directory</em></b></dt>
+<dd>
+<p>Specifies where to install the files for
+<a name="INDEX-102"/>SWAT.
+<em class="filename">/usr/local/samba/swat</em> is the default location.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-syslog</tt><a name="INDEX-103"/><a name="INDEX-104"/></b></dt>
+<dd>
+<p>Includes support for
+<a name="INDEX-105"/>syslog error
+logging. This option must be specified for the Samba configuration
+file parameters <tt class="literal">syslog</tt> and
+<tt class="literal">syslog</tt> <tt class="literal">only</tt> to work. This
+option is widely supported, but might not work correctly on all Samba
+host systems.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-tdbsam</tt><a name="INDEX-106"/><a name="INDEX-107"/></b></dt>
+<dd>
+<p>Includes support for keeping Samba's equivalent of
+the Windows NT SAM in a <em class="filename">.tdb</em> database file
+rather than in the <em class="filename">smbpasswd</em> file. This is an
+experimental feature.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-utmp</tt><a name="INDEX-108"/><a name="INDEX-109"/></b></dt>
+<dd>
+<p>Includes support for <a name="INDEX-110"/>user accounting in the
+system's
+<em class="filename">utmp</em><a name="INDEX-111"/> file. It is necessary for the
+<tt class="literal">utmp</tt> and <tt class="literal">utmp</tt>
+<tt class="literal">directory</tt> Samba configuration file options to
+work. This option is widely supported, but might not work correctly
+on all Samba host systems.</p>
+</dd>
+
+
+
+<dt><b><tt class="literal">--with-winbind</tt><a name="INDEX-112"/><a name="INDEX-113"/></b></dt>
+<dd>
+<p>Includes <a name="INDEX-114"/>winbind support in Samba.
+Instead of defaulting to <tt class="literal">no</tt>, as with other boolean
+options, <tt class="literal">--with-winbind</tt> is
+automatically set to <tt class="literal">yes</tt> on systems that support
+winbind functionality. The only time you would need to specify this
+option is to turn it off, like this:</p>
+
+
+<blockquote><pre class="code"># <tt class="userinput"><b>configure --without-winbind</b></tt></pre></blockquote>
+
+<p>This excludes winbind functionality from Samba even when the local
+operating system can support it. For more information on winbind, see
+<a href="ch09.html">Chapter 9</a>. <a name="INDEX-115"/></p>
+</dd>
+
+</dl>
+
+
+
+<hr/><h4 class="head4"><a href="toc.html">TOC</a></h4>
+</body></html>

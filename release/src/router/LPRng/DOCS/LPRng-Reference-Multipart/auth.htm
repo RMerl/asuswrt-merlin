@@ -1,0 +1,267 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Authentication Operations</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title="RFC1179 Protocol Extensions" href=
+    "x8980.htm">
+    <link rel="NEXT" title="Permission Checking" href="x9083.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x8980.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x9083.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AUTH">17.10. Authentication
+      Operations</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">auth=</var><span class=
+          "emphasis"><i class="EMPHASIS">client to server
+          authentication type</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">auth_forward=</var><span class=
+          "emphasis"><i class="EMPHASIS">server to server
+          authentication type</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">XX_id=</var><span class=
+          "emphasis"><i class="EMPHASIS">server
+          identification</i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">XX_forward_id=</var><span class=
+          "emphasis"><i class="EMPHASIS">Server
+          identification</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>A <b class="APPLICATION">LPRng</b> client <b class=
+      "APPLICATION">lpr</b>, <b class="APPLICATION">lpq</b>, <b
+      class="APPLICATION">lprm</b>, or <b class=
+      "APPLICATION">lpc</b> to <b class="APPLICATION">lpd</b>
+      server authenticated transfer proceeds as follows. If an
+      authenticated transfer is specified by the <var class=
+      "LITERAL">auth=protocol</var> entry in the printcap or
+      configuration information, the client sends a request for an
+      authenticated transfer to the server.</p>
+
+      <p>Part of the authentication request is the authentication
+      type. If authentication type <acronym class=
+      "ACRONYM">XX</acronym> is requested the server will examine
+      the information in the printcap and configuration entries for
+      an <var class="LITERAL">XX_id</var> value. If this value is
+      present then the server supports authentication of this type.
+      Further permission checks are carried out and finally the
+      server will accept or reject the authentication request. If
+      the request is accepted the server returns a positive
+      acknowledgment (single 0 byte) to the requester, otherwise it
+      returns a nonzero value and an error message.</p>
+
+      <p>If the request is accepted then an authentication specific
+      protocol exchange is carried out between client and server.
+      The commands and/or data files are encrypted and/or signed
+      and transferred to the server. The protocol specific software
+      on the server will then decrypt and/or check signatures,
+      perform the requested actions, and in turn generate a status
+      information. The status information is encrypted and/or
+      signed by the server and sent to the client, where the client
+      decrypts and/or checked for correct signature.</p>
+
+      <p>A <b class="APPLICATION">lpd</b> server to <b class=
+      "APPLICATION">lpd</b> server authenticated transfer proceeds
+      as follows. If an authenticated transfer is specified by the
+      <var class="LITERAL">auth_forward=protocol</var> entry in the
+      printcap or configuration information, the originating server
+      sends a request for an authenticated transfer to the
+      destination server. The originating server plays the part of
+      the client and performs the same set of actions.</p>
+
+      <p>The following printcap or user level information needs to
+      be provided for an authenticated exchange.</p>
+
+      <ol type="1">
+        <li>
+          <p>The <var class="LITERAL">auth</var> option specifies
+          the authentication type to be used for client to server
+          transfers. For example, <var class=
+          "LITERAL">auth=kerberos</var> or <var class=
+          "LITERAL">auth=kerberos5</var> or would specify Kerberos
+          5 authentication, <var class=
+          "LITERAL">auth=kerberos4</var> would specify Kerberos 4
+          authentication, <var class="LITERAL">auth=pgp</var> would
+          specify PGP authentication, <var class=
+          "LITERAL">auth=md5</var> would specify MD5
+          authentication, etc. The special form <var class=
+          "LITERAL">auth@</var> specifies no authentication.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">auth_forward</var> option
+          specifies the authentication type to be used for server
+          to server transfers. For example, <var class=
+          "LITERAL">auth_forward=kerberos5</var> would specify
+          Kerberos 5 authentication, etc. The special form <var
+          class="LITERAL">auth@</var> specifies no
+          authentication.</p>
+        </li>
+
+        <li>
+          <p>The authenticated transfer request sent to a server
+          has one of the following forms, depending on the
+          originator:</p>
+
+          <div class="INFORMALEXAMPLE">
+            <a name="AEN9050"></a>
+<pre class="SCREEN">
+    \008printer C user_id authtype \n  - for commands (lpq, lpc, etc.)
+    \008printer C user_id authtype size\n - for print jobs (lpr)
+    \008printer F server_id authtype \n - forwarded commands (lpq, lpc, etc.)
+    \008printer F server_id authtype size\n - forwarded print jobs (lpr)
+</pre>
+          </div>
+          &#13;<br>
+          <br>
+
+          <p>The single character with the <var class=
+          "LITERAL">\008</var> value signals that this is an
+          authentication request the <var class=
+          "LITERAL">printer</var> is the name of a print queue, and
+          the <var class="LITERAL">C</var> (client) or <var class=
+          "LITERAL">F</var> indicates that the request is from a
+          client program or is a forwarded request from a server.
+          The <var class="LITERAL">user_id</var> or <var class=
+          "LITERAL">server_id</var> field is an identifier supplied
+          by the originator and is discussed below. If the <var
+          class="LITERAL">size</var> value is present then the
+          request is for a job transfer and this value represents
+          the job size. It is used to determine if there is
+          sufficient space in the spool queue for the job.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">user_id</var> or <var class=
+          "LITERAL">server_id</var> fields in the authentication
+          request are obtained as follows. If the request
+          originates from a client, then the <var class=
+          "LITERAL">user_id</var> is the user name of the
+          originator obtained from password information. If the
+          request originates from a server, then the <var class=
+          "LITERAL">server_id</var> is the printcap or
+          configuration <var class="LITERAL">xx_id=server_id</var>
+          value, where <var class="LITERAL">xx</var> is the value
+          of the <var class="LITERAL">auth_forward=xx</var>
+          entry.</p>
+        </li>
+
+        <li>
+          <p>When the authenticated transfer request is received,
+          the destination will either return a single zero byte, or
+          a non-zero byte value followed by additional refusal
+          information. A refusal terminates the protocol
+          exchange.</p>
+        </li>
+
+        <li>
+          <p>Further exchanges are then determined by the
+          authentication protocol specific requirements.</p>
+        </li>
+
+        <li>
+          <p>Once the initial exchanges have been completed a user
+          file and/or command will be transferred to the
+          destination server.</p>
+        </li>
+
+        <li>
+          <p>An authentication protocol specific <acronym class=
+          "ACRONYM">AUTHFROM</acronym> and <acronym class=
+          "ACRONYM">AUTHUSER</acronym> strings will be supplied to
+          the lpd server for purposes of permission checking.</p>
+        </li>
+
+        <li>
+          <p>The lpd server then carries out the requested
+          operation, and will write error and status information
+          into a file.</p>
+        </li>
+
+        <li>
+          <p>After the requested activity has finished, protocol
+          specific module transfer the status information in the
+          file to the requesting system and terminate the protocol
+          exchange.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x8980.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x9083.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">RFC1179
+          Protocol Extensions</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Permission
+          Checking</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

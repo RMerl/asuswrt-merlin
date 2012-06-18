@@ -1,0 +1,16 @@
+all: pppgetpass.vt pppgetpass.gtk
+
+pppgetpass.vt: pppgetpass.vt.o
+
+pppgetpass.gtk: pppgetpass.gtk.o
+	$(CC) $(LDFLAGS) pppgetpass.gtk.o `gtk-config --libs` -o pppgetpass.gtk
+pppgetpass.gtk.o: pppgetpass.gtk.c
+	$(CC) $(CFLAGS) -c pppgetpass.gtk.c `gtk-config --cflags`
+
+install: all
+	install -m 755 pppgetpass.sh /usr/bin/pppgetpass
+	install -m 4755 -o root -g root pppgetpass.vt /usr/bin/
+	install -m 755 -o root -g root pppgetpass.gtk /usr/X11/bin/
+
+clean:
+	rm -f *.o pppgetpass.gtk pppgetpass.vt core

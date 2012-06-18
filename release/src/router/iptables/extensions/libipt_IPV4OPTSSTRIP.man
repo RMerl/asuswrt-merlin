@@ -1,0 +1,5 @@
+Strip all the IP options from a packet.
+
+The target doesn't take any option, and therefore is extremly easy to use :
+
+# iptables -t mangle -A PREROUTING -j IPV4OPTSSTRIP

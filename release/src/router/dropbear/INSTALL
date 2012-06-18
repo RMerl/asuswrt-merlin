@@ -1,0 +1,79 @@
+Basic Dropbear build instructions:
+
+- Edit options.h to set which features you want.
+- Edit debug.h if you want any debug options (not usually required).
+
+(If using a non-tarball copy, "autoconf; autoheader")
+
+./configure      (optionally with --disable-zlib or --disable-syslog,
+                  or --help for other options)
+
+Now compile:
+
+make PROGRAMS="dropbear dbclient dropbearkey dropbearconvert scp"
+
+And install (/usr/local/bin is usual default):
+
+make PROGRAMS="dropbear dbclient dropbearkey dropbearconvert scp" install
+
+(you can leave items out of the PROGRAMS list to avoid compiling them. If you
+recompile after changing the PROGRAMS list, you *MUST* "make clean" before
+recompiling - bad things will happen otherwise)
+
+See MULTI for instructions on making all-in-one binaries.
+
+If you want to compile statically, add "STATIC=1" to the make command-line.
+
+Binaries can be stripped with "make strip"
+
+============================================================================
+
+If you're compiling for a 386-class CPU, you will probably need to add
+CFLAGS=-DLTC_NO_BSWAP so that libtomcrypt doesn't use 486+ instructions.
+
+============================================================================
+
+Compiling with uClibc:
+
+Firstly, make sure you have at least uclibc 0.9.17, as getusershell() in prior
+versions is broken. Also note that you may get strange issues if your uClibc
+headers don't match the library you are running with, ie the headers might
+say that shadow password support exists, but the libraries don't have it.
+
+Compiling for uClibc should be the same as normal, just set CC to the magic
+uClibc toolchain compiler (ie export CC=i386-uclibc-gcc or whatever).
+You can use "make STATIC=1" to make statically linked binaries, and it is
+advisable to strip the binaries too. If you're looking to make a small binary,
+you should remove unneeded ciphers and MD5, by editing options.h
+
+It is possible to compile zlib in, by copying zlib.h and zconf.h into a
+subdirectory (ie zlibincludes), and 
+
+export CFLAGS="-Izlibincludes -I../zlibincludes"
+export LDFLAGS=/usr/lib/libz.a
+
+before ./configure and make.
+
+If you disable zlib, you must explicitly disable compression for the client -
+OpenSSH is possibly buggy in this regard, it seems you need to disable it
+globally in ~/.ssh/config, not just in the host entry in that file.
+
+You may want to manually disable lastlog recording when using uClibc, configure
+with --disable-lastlog.
+
+One common problem is pty allocation. There are a number of types of pty
+allocation which can be used -- if they work properly, the end result is the
+same for each type. Running configure should detect the best type to use
+automatically, however for some systems, this may be incorrect. Some
+things to note:
+
+    If your system expects /dev/pts to be mounted (this is a uClibc option),
+	make sure that it is.
+
+	Make sure that your libc headers match the library version you are using.
+
+	If openpty() is being used (HAVE_OPENPTY defined in config.h) and it fails,
+	you can try compiling with --disable-openpty. You will probably then need
+	to create all the /dev/pty?? and /dev/tty?? devices, which can be
+	problematic for devfs. In general, openpty() is the best way to allocate
+	PTYs, so it's best to try and get it working.

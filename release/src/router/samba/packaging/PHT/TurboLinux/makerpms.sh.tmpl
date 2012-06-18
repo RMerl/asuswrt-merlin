@@ -1,0 +1,14 @@
+#!/bin/sh
+# Copyright (C) 1998 John H Terpstra, 1999 K Spoon
+#
+SPECDIR=/usr/src/turbo/SPECS
+SRCDIR=/usr/src/turbo/SOURCES
+USERID=`id -u`
+GRPID=`id -g`
+
+( cd ../../../.. ; chown -R ${USERID}.${GRPID} ${SRCDIR}/samba-PVERSION )
+( cd ../../../.. ; tar czvf ${SRCDIR}/samba-PVERSION.tar.gz samba-PVERSION )
+cp -a *.spec $SPECDIR
+cp -a *.patch smb.* samba.log $SRCDIR
+cd $SPECDIR
+rpm -ba -v samba2.spec

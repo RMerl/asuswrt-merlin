@@ -1,0 +1,27 @@
+<%
+
+libinclude("management.js");
+libinclude("server_call.js");
+
+function serverInfo()
+{
+	var info = new Object();
+	info["NBT Server"]      = server_status("nbt");
+	info["WINS Server"]     = server_status("wins");
+	info["CLDAP Server"]    = server_status("cldap");
+	info["Kerberos Server"] = server_status("kdc");
+	info["SMB Server"]      = stream_server_status("smb");
+	info["LDAP Server"]     = stream_server_status("ldap");
+	info["RPC Server"]      = stream_server_status("rpc");
+
+	return info;
+}
+
+/* register a call for clients to make */
+var call = servCallObj();
+call.add('serverInfo', serverInfo);
+
+/* run the function that was asked for */
+call.run();
+
+%>

@@ -1,0 +1,170 @@
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+#    Developers do not need to manually edit POT or PO files.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2003-05-02 20:05-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Description
+#: ../templates:3
+msgid "The local IP address of the virtual connections"
+msgstr ""
+
+#. Description
+#: ../templates:3
+msgid "Specify the local IP address for the virtual connections."
+msgstr ""
+
+#. Description
+#: ../templates:3
+msgid ""
+"Please note that any address works as long as the local machine takes care "
+"of the routing. But if you want to use MS-Windows networking, you should use "
+"an IP address out of the LAN address space."
+msgstr ""
+
+#. Description
+#: ../templates:3
+msgid ""
+"You can give only one address or you can give multiple addresses if you want "
+"to, although they are really not needed. Multiple addresses can be given as "
+"either \"10.0.0.1,10.0.0.2,10.0.0.3\" or \"10.0.0.1-3\". No spaces should be "
+"used between commas or within addresses."
+msgstr ""
+
+#. Description
+#: ../templates:17
+msgid "A list of remote IP addresses for the virtual connections."
+msgstr ""
+
+#. Description
+#: ../templates:17
+msgid "Specify the remote IP addresses for the virtual connections."
+msgstr ""
+
+#. Description
+#: ../templates:17
+msgid ""
+"Please note that any addresses work as long as the local machine takes care "
+"of the routing. But if you want to use MS-Windows networking, you should use "
+"IP addresses out of the LAN address space."
+msgstr ""
+
+#. Description
+#: ../templates:17
+msgid ""
+"You have to give one address for every concurrent connection. This will "
+"depend on how many clients you expect to be online at the same time. "
+"Multiple addresses can be given as either \"10.0.0.1,10.0.0.2,10.0.0.3\" or "
+"\"10.0.0.1-3\". No spaces should be used between commas or within addresses."
+msgstr ""
+
+#. Description
+#: ../templates:31
+msgid "The netmask used for virtual connections."
+msgstr ""
+
+#. Description
+#: ../templates:31
+msgid ""
+"If you use IP addresses from the LAN address space, please use the same "
+"netmask as on your LAN."
+msgstr ""
+
+#. Description
+#: ../templates:37
+msgid "The IP address of your WINS server."
+msgstr ""
+
+#. Description
+#: ../templates:37
+msgid ""
+"A WINS server is used for browsing available Computers in MS-Windows "
+"networking. This address is transmitted to the clients,"
+msgstr ""
+
+#. Description
+#: ../templates:43
+msgid "The IP address of your DNS server."
+msgstr ""
+
+#. Description
+#: ../templates:43
+msgid "This address is transmitted to the clients."
+msgstr ""
+
+#. Description
+#: ../templates:49
+msgid "Do you want to use MPPE data encryption ?"
+msgstr ""
+
+#. Description
+#: ../templates:49
+msgid ""
+"The recommended way is to use the data encryption as it is one of the main "
+"benefits of a VPN. When you want to use MPPE (Microsoft Point-to-Point "
+"Encryption), you also  have to use CHAPMSv2 for authentication. . Note that "
+"you have to install the modified ppp packages if you want to use this data "
+"encryption."
+msgstr ""
+
+#. Description
+#: ../templates:58
+msgid "Warning: data encryption is disabled."
+msgstr ""
+
+#. Description
+#: ../templates:58
+msgid ""
+"All data transferred between the local network and the client will be "
+"transmitted without encryption ! This is a security hole."
+msgstr ""
+
+#. Description
+#: ../templates:58
+msgid "You have been warned. Now you loose your product warranty :)"
+msgstr ""
+
+#. Choices
+#: ../templates:66
+msgid "pap, chap, chapms, chapms-v2"
+msgstr ""
+
+#. Description
+#: ../templates:68
+msgid "Which authentication method do you want to use ?"
+msgstr ""
+
+#. Description
+#: ../templates:68
+msgid ""
+"Possible authentication methods are: - PAP - CHAP - CHAP with Microsoft "
+"extensions - CHAP with Microsoft extensions v2"
+msgstr ""
+
+#. Description
+#: ../templates:68
+msgid ""
+"The recommended authentication method is one of the CHAP methods. However, "
+"you have to use a separate database (/etc/ppp/chap-secrets) if you want to "
+"use these. If you use PAP, you can use the standard system passwords when "
+"the ppp-pam package is installed."
+msgstr ""

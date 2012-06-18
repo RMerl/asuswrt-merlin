@@ -1,0 +1,28 @@
+#!/bin/sh
+/usr/bin/perl -e '
+while ( ($m = <>) &&  !( $m =~ m/START/) ){
+	;
+}
+print "<P>\n";
+print "<TABLE ALIGN=ABSCENTER BORDER=1 CELLSPACING=0 CELLPADDING=0 >\n";
+print "<TR><TD>Option</TD><TD>Meaning</TD></TR>\n";
+while ( ($m = <>) &&  !( $m =~ m/END/) ){
+	chomp($m);
+	if ( $m =~ /{/ ){
+		$m =~ s/},$//;
+		$m =~ s/",//;
+		$m =~ s/{//;
+		$m =~ s/_K,.*,/_K /;
+		$m =~ s/"//;
+		$m =~ s/\s+/ /g;
+		$m =~ s/^\s+//;
+		$m =~ s/\s.*//;
+		print "<TR><TD><A HREF=\"LPRng-HOWTO-5.html#$m\"><CODE>$m</CODE></A></TD><TD>$title</TD></TR>\n";
+	} else {
+		$m =~ s:^\s*/\*\s*::;
+		$m =~ s:\*/::;
+		$title = $m;
+	}
+}
+print "</TABLE>\n";
+' $1

@@ -1,0 +1,27 @@
+#ifndef MIDLTESTS_C_CODE
+
+[
+  uuid("225b9fcb-eb3d-497b-8b0b-591f049a2507"),
+  pointer_default(unique)
+]
+interface midltests
+{
+	long midltests_fn(
+	);
+}
+
+#elif MIDLTESTS_C_CODE
+
+static void midltests(void)
+{
+	cli_midltests_fn();
+}
+
+long srv_midltests_fn(void)
+{
+	printf("srv_midltests_fn: Start\n");
+	printf("srv_midltests_fn: End\n");
+	return 0x65757254;
+}
+
+#endif

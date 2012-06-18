@@ -1,0 +1,7 @@
+[globals]
+	netbios name	= ${HOSTNAME}
+	workgroup	= ${DOMAIN}
+	realm		= ${REALM}
+	server role     = ${SERVERROLE}
+	${PRIVATEDIR_LINE}
+	${LOCKDIR_LINE}

@@ -1,0 +1,1695 @@
+<html>
+<body bgcolor="#ffffff">
+
+<img src="samba2_xs.gif" border="0" alt=" " height="100" width="76"
+hspace="10" align="left" />
+
+<h1 class="head0">Chapter 10. Printing</h1>
+
+
+
+<p><a name="INDEX-1"/>This
+chapter tackles the topic of setting up printers for use with Samba.
+Aside from the &quot;coolness factor&quot; of
+seeing documents from Windows word processing and graphics
+applications appearing in the output tray of the Unix printer, this
+facility can greatly increase the usefulness of your Samba server. In
+many organizations, using a Unix system as the print server has led
+to happier system administrators and users alike, due to the reduced
+frequency of problems.</p>
+
+<p>Samba allows client machines to share printers connected to the Samba
+host system, and Samba can also send Unix documents to printers
+shared by Windows systems. In this chapter, we discuss how to get
+printers configured to work in either direction.</p>
+
+<p>We focus in this chapter on getting Samba to serve up printers that
+are already functioning on the Unix host. We include just a few
+basics about setting up printers on Unix. Good references for this
+topic include <em class="citetitle">Network Printing</em>,
+<em class="citetitle">Essential System Administration</em>, and
+<em class="citetitle">Running Linux</em>, all by
+O'Reilly and Associates.</p>
+
+
+
+<div class="sect1"><a name="samba2-CHP-10-SECT-1"/>
+
+<h2 class="head1">Sending Print Jobs to Samba</h2>
+
+<p><a name="INDEX-2"/>A
+printer shared by the Samba server shows up in the list of shares
+offered in the Network Neighborhood. If the printer is registered on
+the client machine and the client has the correct printer driver
+installed, the client can effortlessly send print jobs to a printer
+attached to a Samba server. <a href="ch10.html#samba2-CHP-10-FIG-1">Figure 10-1</a> shows a
+Samba printer as it appears in the Network Neighborhood of a Windows
+client.</p>
+
+<div class="figure"><a name="samba2-CHP-10-FIG-1"/><img src="figs/sam2_1001.gif"/></div><h4 class="head4">Figure 10-1. A Samba printer in the Network Neighborhood</h4>
+
+<p>To administer printers with Samba, you should understand the basic
+process by which
+<a name="INDEX-3"/>printing
+takes place on a network. On the client system, the application
+software prints by utilizing the system's printer
+driver for the printer that will be creating the actual output. It is
+the printer driver software running on the client system that
+translates the application's high-level calls into a
+stream of binary data specific to the model of printer in use. In the
+case of a serial, parallel, or USB printer, the data is stored in a
+temporary file in the local system's printer queue
+and then sent through the respective port directly to the printer.
+For a network printer, the file is sent over the network.</p>
+
+<a name="samba2-CHP-10-NOTE-150"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>Because the data has already been processed through a printer driver
+by the time it reaches the Samba host, make sure the printer on the
+Unix system is configured without any printer driver and that it will
+print whatever data it receives in raw form. If you already have the
+printer configured for use by Unix applications, you might need to
+set up another queue for it to print documents received from Windows
+clients correctly.</p>
+</blockquote>
+
+<p>Sending a <a name="INDEX-4"/>print job to a printer on a
+<a name="INDEX-5"/>Samba server involves four steps:</p>
+
+<ol><li>
+<p>Opening and authenticating a connection to the printer share</p>
+</li><li>
+<p>Copying the file over the network</p>
+</li><li>
+<p>Closing the connection</p>
+</li><li>
+<p>Printing and deleting the copy of the file</p>
+</li></ol>
+<p>When a print job arrives at a Samba server, the print data is
+temporarily written to disk in the directory specified by the
+<tt class="literal">path</tt> option of the printer share. Samba then
+executes a Unix print command to send that datafile to the printer.
+The job is then printed as the authenticated user of the share. Note
+that this can be the guest user, depending on how the share is
+configured.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-10-SECT-1.1"/>
+
+<h3 class="head2">Print Commands</h3>
+
+<p><a name="INDEX-6"/>To print the
+document, you'll need to inform Samba of the command
+used to print and delete a file. On Linux, which uses a BSD-style
+printing system, a command that does this is:</p>
+
+<blockquote><pre class="code">lpr -r -P<em class="replaceable">printer</em> <em class="replaceable">file</em></pre></blockquote>
+
+<p>This command tells <a name="INDEX-7"/><em class="emphasis">lpr</em> to retrieve the
+name of the printer in the system configuration file
+(<em class="filename">/etc/printcap</em>) and interpret the rules it finds
+there to decide how to process the data and which physical device to
+send it to. Note that because the <em class="emphasis">-r</em> option has
+been specified, the file will be deleted after it has been printed.
+Of course, the file removed is just a copy stored on the Samba
+server; the original document on the client is unaffected.</p>
+
+<p>The process is similar on System V Unix. Here, printing and deleting
+become a compound command:</p>
+
+<blockquote><pre class="code">lp -d<em class="replaceable">printer</em> -s <em class="replaceable">file</em>; rm <em class="replaceable">file</em></pre></blockquote>
+
+<p>In this case, the <em class="filename">/etc/printcap</em> file is replaced
+with a different set of configuration files residing in
+<em class="filename">/usr/spool/lp</em>. Because the
+<em class="emphasis">lp</em> command has no option to delete the file
+after it is printed, we have added the <em class="emphasis">rm</em>
+command.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-10-SECT-1.2"/>
+
+<h3 class="head2">A Minimal Printing Setup</h3>
+
+<p>Let's start with a simple yet illustrative
+<a name="INDEX-8"/>printing
+share. Assuming that you're on a Linux system and
+you have a printer called <tt class="literal">netprinter</tt> listed in the
+printer capabilities file, the following addition to your
+<em class="filename">smb.conf</em> file makes the printer accessible
+through the network:</p>
+
+<blockquote><pre class="code">[printer1]
+    printable = yes
+    print command = /usr/bin/lpr -P%p -r %s
+    printer = netprinter
+    printing = BSD
+    path = /var/tmp</pre></blockquote>
+
+<p>The variable <tt class="literal">%s</tt> in the
+<tt class="literal">print</tt><a name="INDEX-9"/> <tt class="literal">command</tt>
+option is replaced with the name of the file to be printed when Samba
+executes the command. There are four Samba configuration-file
+variables specifically for use with
+<a name="INDEX-10"/>printing
+options. They are shown in <a href="ch10.html#samba2-CHP-10-TABLE-1">Table 10-1</a>.</p>
+
+<a name="samba2-CHP-10-TABLE-1"/><h4 class="head4">Table 10-1. Printing variables</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Variable</p>
+</th>
+<th>
+<p>Definition</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">%s</tt></p>
+</td>
+<td>
+<p>The full pathname of the file on the Samba server to be printed</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%f</tt></p>
+</td>
+<td>
+<p>The name of the file itself (without the preceding path) on the Samba
+server to be printed</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%p</tt></p>
+</td>
+<td>
+<p>The name of the Unix printer to use</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">%j</tt></p>
+</td>
+<td>
+<p>The number of the print job (for use with <tt class="literal">lprm</tt>,
+<tt class="literal">lppause</tt>, and <tt class="literal">lpresume</tt>)</p>
+</td>
+</tr>
+
+</table>
+
+<p>For other flavors of Unix, it is necessary to modify both the
+<tt class="literal">printing</tt> and <tt class="literal">print</tt>
+<tt class="literal">command</tt> options. For System V Unix, we would
+specify:</p>
+
+<blockquote><pre class="code">[printer1]
+    printing = SYSV
+    print command = lp -d%p -s %s; rm %s</pre></blockquote>
+
+<p>With the <tt class="literal">printing</tt> <tt class="literal">=</tt>
+<tt class="literal">SYSV</tt> parameter, we notify Samba that the local
+printing system uses the System V Unix method. As mentioned earlier,
+the <tt class="literal">%p</tt> variable resolves to the name of the
+printer, while the <tt class="literal">%s</tt> variable resolves to the
+name of the file.</p>
+
+<p>Clients might need to request the status of a print job sent to the
+Samba server. Because Samba sends print jobs to the Unix printing
+system for spooling, there might be a number of jobs in the queue at
+any given time. Consequently, Samba needs to communicate to the
+client not only the status of the current printing job, but also
+which documents are waiting to be printed on that printer. Samba also
+has to provide the client the ability to pause print jobs, resume
+print jobs, and remove print jobs from the printing queue. Samba
+provides options for each of these tasks. As you might expect, they
+borrow functionality from the following existing Unix commands:</p>
+
+<ul><li>
+<p><tt class="literal">lpq</tt><a name="INDEX-11"/></p>
+</li><li>
+<p><tt class="literal">lprm</tt><a name="INDEX-12"/></p>
+</li><li>
+<p><tt class="literal">lppause</tt><a name="INDEX-13"/></p>
+</li><li>
+<p><tt class="literal">lpresume</tt><a name="INDEX-14"/></p>
+</li></ul>
+<p>We cover these options in more detail later in this chapter. For the
+most part, Samba provides reasonable default values for them based on
+the value of the <tt class="literal">printing</tt> configuration option, so
+you can probably get by without having to formulate your own commands
+for them.</p>
+
+<p>Here are a few important items to remember about
+<a name="INDEX-15"/>printing shares:</p>
+
+<ul><li>
+<p>You must put
+<tt class="literal">printable</tt><a name="INDEX-16"/> <tt class="literal">=</tt>
+<tt class="literal">yes</tt> in all printer shares (even
+<tt class="literal">[printers]</tt>) so that Samba knows they are printer
+shares. If you forget, the shares will be unusable for printing and
+will instead be treated as disk shares.</p>
+</li><li>
+<p>If you set the <tt class="literal">path</tt> configuration option in the
+printer section, any files sent to the printer(s) will be copied to
+the directory you specify instead of to the default location of
+<em class="filename">/tmp</em>. Because the amount of disk space allocated
+to <em class="filename">/tmp</em> can be relatively small in some Unix
+operating systems, many administrators prefer to use
+<em class="filename">/var/tmp, /var/spool/tmp</em>, or some other
+directory instead.</p>
+</li><li>
+<p>If you set <tt class="literal">guest</tt> <tt class="literal">ok</tt>
+<tt class="literal">=</tt> <tt class="literal">yes</tt> in a printer share and
+Samba is configured for share-level security, anyone can send data to
+the printer as the <tt class="literal">guest</tt>
+<tt class="literal">account</tt> user.</p>
+</li></ul>
+<p>Using one or more Samba machines as a print server gives you a great
+deal of flexibility on your LAN. You can easily partition your
+available printers, restricting some to members of one department, or
+you can maintain a bank of printers available to all. In addition,
+you can restrict a printer to a select few by adding the
+<tt class="literal">valid</tt> <tt class="literal">users</tt> option to its share
+definition:</p>
+
+<blockquote><pre class="code">[deskjet]
+    printable = yes
+    path = /var/spool/samba/print
+    valid users = elizabeth cozy jack heather alexander lina emerald</pre></blockquote>
+
+<p>All the other share accessibility options work for printing shares as
+well.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-10-SECT-1.3"/>
+
+<h3 class="head2">The [printers] Share</h3>
+
+<p>If a share named
+<tt class="literal">[printers]</tt><a name="INDEX-17"/> is in the configuration file,
+Samba will automatically read in your printer capabilities file and
+create a printing share for each printer that appears in the file.
+For example, if the Samba server had <tt class="literal">lp</tt>,
+<tt class="literal">pcl</tt>, and <tt class="literal">ps</tt> printers in its
+printer capabilities file, Samba would provide three printer shares
+with those names, each configured with the options in the
+<tt class="literal">[printers]</tt> share.</p>
+
+<p>Recall that Samba obeys the following rules when a client requests a
+share that has not been created with an explicit share definition in
+the <em class="filename">smb.conf</em> file:</p>
+
+<ul><li>
+<p>If the share name matches a username in the system password file and
+a <tt class="literal">[homes]</tt> share exists, a new share is created
+with the name of the user and is initialized using the values given
+in the <tt class="literal">[homes]</tt> and <tt class="literal">[global]</tt>
+sections.</p>
+</li><li>
+<p>Otherwise, if the name matches a printer in the system printer
+capabilities file and a <tt class="literal">[printers]</tt> share exists, a
+new share is created with the name of the printer and initialized
+using the values given in the <tt class="literal">[printers]</tt> section.
+(Variables in the <tt class="literal">[global]</tt> section do not apply
+here.)</p>
+</li><li>
+<p>If neither of those succeeds, Samba looks for a
+<tt class="literal">default</tt> <tt class="literal">service</tt> share. If none
+is found, it returns an error.</p>
+</li></ul>
+<p>This brings to light an important point: be careful that you do not
+give a printer the same name as a user. Otherwise, users end up
+connecting to a disk share when they might have wanted a printer
+share instead.</p>
+
+<p>Here is an example
+<tt class="literal">[printers]</tt><a name="INDEX-18"/> share for a Linux system. Some of
+these options are already defaults; however, we have listed them
+anyway for illustrative purposes:</p>
+
+<blockquote><pre class="code">[printers]
+    printable = yes
+    printing = BSD
+    printcap name = /etc/printcap
+    print command = /usr/bin/lpr -P%p -r %s
+    path = /var/spool/lpd/tmp
+    min print space = 2000</pre></blockquote>
+
+<p>Here, we've given Samba global options that specify
+the printing type (BSD), a print command to send data to the printer
+and later remove the temporary file, the location of our printer
+capabilities file, and a minimum disk space for printing of 2MB.</p>
+
+<p>In addition, we've created a
+<tt class="literal">[printers]</tt> share for each system printer. Our
+temporary spooling directory is specified by the
+<tt class="literal">path</tt> option:
+<em class="filename">/var/spool/lpd/tmp</em>. Each share is marked as
+printable&mdash;this is a necessary option, even in the
+<tt class="literal">[printers]</tt> section.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-10-SECT-1.4"/>
+
+<h3 class="head2">Testing the Configuration</h3>
+
+<p><a name="INDEX-19"/>After running
+<em class="emphasis">testparm</em> and restarting the Samba daemons, you
+can check to make sure everything is set up correctly by using
+<em class="emphasis">smbclient</em><a name="INDEX-20"/><a name="INDEX-21"/> to send a file to the printer.
+Connect to the printer using the command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>smbclient /</b></tt><em class="replaceable">server</em><tt class="userinput"><b>/</b></tt><em class="replaceable">printshare</em></pre></blockquote>
+
+<p>and then use the <em class="emphasis">print</em> command to print a file:</p>
+
+<blockquote><pre class="code">smb: /&gt; <tt class="userinput"><b>print </b></tt><em class="replaceable">textfile</em></pre></blockquote>
+
+<a name="samba2-CHP-10-NOTE-151"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>If you connect to a print share served by a Windows 95/98/Me system
+configured to use user-mode security and cannot authenticate using
+what you know to be a correct username and password, try
+reconfiguring the Windows system to use share-mode security.</p>
+</blockquote>
+
+<p>When you print something through the Samba server via
+<em class="emphasis">smbclient</em>, the following actions should occur:</p>
+
+<ul><li>
+<p>The job appears (briefly) in the Samba spool directory specified by
+the path.</p>
+</li><li>
+<p>The job shows up in your print system's spool
+directory.</p>
+</li><li>
+<p>The job disappears from the spool directory that Samba used.</p>
+</li></ul>
+<p>If <em class="emphasis">smbclient</em> cannot print, you can reset the
+<tt class="literal">print</tt> <tt class="literal">command</tt> option to collect
+debugging information:</p>
+
+<blockquote><pre class="code">print command = echo &quot;printed %s on %p&quot; &gt;&gt;/tmp/printlog</pre></blockquote>
+
+<p>A <a name="INDEX-22"/>common
+problem with Samba printer configuration is forgetting to use the
+full pathnames for commands. Another frequent problem is not having
+the correct permissions on the spooling directory.<a name="FNPTR-1"/><a href="#FOOTNOTE-1">[1]</a> As usual,
+check your Samba log files and system log files for error messages.
+If you use BSD printing, you can change the <tt class="literal">lp</tt>
+keyword in the printer's printcap entry to something
+other than <em class="filename">/dev/null</em>, allowing you to collect
+error messages from the printing system.</p>
+
+<a name="samba2-CHP-10-NOTE-152"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>More information on
+<a name="INDEX-23"/>debugging printers is in the file
+<em class="filename">docs/textdocs/Printing.txt</em> in the Samba source
+distribution. The Unix print systems are covered in detail in
+<a name="INDEX-24"/>&AElig;leen
+Frisch's <em class="emphasis">Essential Systems
+Administration</em> (published by O'Reilly).</p>
+</blockquote>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-10-SECT-1.5"/>
+
+<h3 class="head2">Enabling SMB Printer Sharing in Mac OS X</h3>
+
+<p>With Samba preinstalled with
+<a name="INDEX-25"/><a name="INDEX-26"/>Mac OS X, sharing access to a printer
+among Windows clients is easy. First, of course, you should set up
+local access using the Print Center application (located in
+<em class="filename">/Applications/Utilities</em>). Under the Printers
+menu, select Add Printer..., and make the appropriate selection from
+the pop-up menu. For example, if the printer is directly attached,
+select USB; if the printer is powered on, it should appear in the
+list. Choose the printer, and press the Add button.</p>
+
+<p>Edit <em class="filename">/etc/smb.conf</em>, uncommenting the
+<tt class="literal">[printers]</tt> share and making any additional
+configuration changes you feel are necessary. Finally, enable the
+Samba startup item as described in <a href="ch02.html">Chapter 2</a>,
+either by checking Windows File Sharing in Sharing Preferences or by
+manually editing <em class="filename">/etc/hostconfig</em>. Now your
+printer can be used by remote Windows clients.</p>
+
+<p>On Mac OS X and some other BSD-based systems, you can test your
+configuration using
+<em class="emphasis">smbutil</em><a name="INDEX-27"/>. The following will send the
+file named <em class="filename">print_test_file</em> to the printer named
+<em class="filename">printshare</em> on the server
+<em class="emphasis">bsdserver</em> :</p>
+
+<blockquote><pre class="code">% <tt class="userinput"><b>smbutil print //bsdserver/printshare print_test_file</b></tt></pre></blockquote>
+
+<p>See <a href="ch05.html">Chapter 5</a> for more information on using
+<em class="emphasis">smbutil</em>.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-10-SECT-1.6"/>
+
+<h3 class="head2">Setting Up and Testing a Windows Client</h3>
+
+<p><a name="INDEX-28"/>Now that Samba is
+offering a workable printer, you can set up your access to it on a
+Windows client. Browse through the Samba server in the Network
+Neighborhood. It should now show each printer that is available. For
+example, in <a href="ch10.html#samba2-CHP-10-FIG-1">Figure 10-1</a>, we saw a printer called
+<tt class="literal">lp</tt>.</p>
+
+<p>Next, you need to have the Windows client recognize the printer.
+Double-click the printer icon to get started. If you try to select an
+uninstalled printer (as you just did), Windows will ask you if it
+should help configure it for the Windows system. Click the Yes or OK
+button, and the Printer Wizard will open.</p>
+
+<p>If you are installing a printer on Windows 95/98/Me, the first thing
+the wizard will ask is whether you need to print from DOS.
+Let's assume you don't, so choose
+the &quot;No&quot; radio button and press the
+Next &gt; button to get to the manufacturer/model window, as shown in
+<a href="ch10.html#samba2-CHP-10-FIG-2">Figure 10-2</a>.</p>
+
+<div class="figure"><a name="samba2-CHP-10-FIG-2"/><img src="figs/sam2_1002.gif"/></div><h4 class="head4">Figure 10-2. Setting the manufacturer and model of the printer</h4>
+
+<p>In this dialog box, you should see a large list of manufacturers and
+models for a huge number of printers. Select the manufacturer of your
+printer in the left side of the dialog box, and then the exact model
+of the printer in the list on the right side.</p>
+
+<p>In some cases, you might not find your printer in the list, or the
+version of the printer driver included with Windows might be out of
+date. In cases such as these, consult the printer
+manufacturer's documentation on how to install the
+driver. Typically, you will click the Have Disk... button to install
+the driver from a CD-ROM or disk file.</p>
+
+<p>If you don't see your printer on the list, but you
+know it's a PostScript printer, select Apple as the
+manufacturer and Apple LaserWriter as the model. This will give you
+the most basic PostScript printer setup&mdash;and arguably one of the
+most reliable. If you already have PostScript printers attached, you
+will be asked about replacing or reusing the existing driver. Be
+aware that if you replace it with a new one, you might make your
+other printers fail. Therefore, we recommend you keep using your
+existing printer drivers as long as they're working
+properly.</p>
+
+<p>Click the Next &gt; or OK button. On Windows 95/98/Me, the Printer
+Wizard asks you to name the printer. On Windows NT/2000/XP, you need
+to right-click the printer's icon and select
+Properties to assign the printer a name. <a href="ch10.html#samba2-CHP-10-FIG-3">Figure 10-3</a>
+shows how we've named our printer to show that
+it's shared by the <tt class="literal">mixtec</tt> Samba
+server.</p>
+
+<div class="figure"><a name="samba2-CHP-10-FIG-3"/><img src="figs/sam2_1003.gif"/></div><h4 class="head4">Figure 10-3. Setting the printer name</h4>
+
+<p>Finally, on Windows 95/98/Me the Printing Wizard asks if it should
+print a test page. Click the &quot;Yes&quot;
+radio button, then the Finish button, and you should be presented
+with the dialog box shown in <a href="ch10.html#samba2-CHP-10-FIG-4">Figure 10-4</a>. On Windows
+NT/2000/XP, the printer test function is also accessed through the
+printer's Properties dialog box.</p>
+
+<div class="figure"><a name="samba2-CHP-10-FIG-4"/><img src="figs/sam2_1004.gif"/></div><h4 class="head4">Figure 10-4. Sending a test page to the printer</h4>
+
+<p>If the test printing was unsuccessful, click the No button and the
+Printing Wizard will walk you through some debugging steps for the
+client side of the process. If the test printing does work, the
+remote printer will now be available to all Windows applications
+through the File and Print menu items.</p>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="sect1"><a name="samba2-CHP-10-SECT-2"/>
+
+<h2 class="head1">Printing to Windows Printers</h2>
+
+<p><a name="INDEX-29"/>If you have printers
+connected to systems running Windows 95/98/Me or Windows NT/2000/XP,
+the printers can also be accessed from your Unix system using tools
+that are part of the Samba distribution. First, it is necessary to
+create a printer share on the Windows system. Then set up the printer
+on the Unix side by configuring a new printer and using a Samba
+printing program as the printer's filter.</p>
+
+
+<div class="sect2"><a name="samba2-CHP-10-SECT-2.1"/>
+
+<h3 class="head2">Sharing Windows Printers</h3>
+
+<p>Sharing printers on Windows is not unlike sharing files. In fact, it
+is a little simpler. Open the Control Panel, then double-click the
+Printers icon to open the Printers window. Right-click the icon for
+the printer you want to share, and select Sharing.... This opens the
+dialog box shown in <a href="ch10.html#samba2-CHP-10-FIG-5">Figure 10-5</a> for a Windows 98
+system, or <a href="ch10.html#samba2-CHP-10-FIG-6">Figure 10-6</a> on a Windows 2000 system.
+(The dialog box appears slightly different on other Windows versions,
+but functions almost identically.)</p>
+
+<a name="samba2-CHP-10-NOTE-153"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>On Windows 95/98/Me systems, you may need to run file sharing in
+share-level (rather than user-level) access control mode to access a
+shared printer from Samba. To check or set this mode, go to Control
+Panel, then double-click on Network, then click on the Access Control
+tab. More detailed information on this can be found in <a href="ch05.html">Chapter 5</a>.</p>
+</blockquote>
+
+<div class="figure"><a name="samba2-CHP-10-FIG-5"/><img src="figs/sam2_1005.gif"/></div><h4 class="head4">Figure 10-5. Sharing printers on Windows 98</h4>
+
+<div class="figure"><a name="samba2-CHP-10-FIG-6"/><img src="figs/sam2_1006.gif"/></div><h4 class="head4">Figure 10-6. Sharing printers on Windows 2000</h4>
+
+<p>Click the &quot;Shared as&quot; radio button,
+then click the OK button. The printer is now accessible by other
+systems on the network.</p>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-10-SECT-2.2"/>
+
+<h3 class="head2">Adding a Unix Printer</h3>
+
+<p><a name="INDEX-30"/>The Samba distribution comes with
+three programs that assist with printing on shared printers. The
+<em class="emphasis">smbprint</em><a name="INDEX-31"/> program works with systems that use the
+BSD printing system,
+<em class="emphasis">smbprint.sysv</em><a name="INDEX-32"/>
+works with systems that use System V printing, and
+<em class="emphasis">smbspool</em><a name="INDEX-33"/>
+works with systems that use the Common Unix Printing System (CUPS).
+In the following sections we show you how to install printers for
+each system.</p>
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.2.1"/>
+
+<h3 class="head3">BSD printers</h3>
+
+<p><a name="INDEX-34"/><a name="INDEX-35"/>The
+BSD printing system is used by many Unix variants, including Red Hat
+Linux. With BSD printing, all the printers on the system have an
+entry in the <em class="filename">/etc/printcap</em> file, which is the
+database of printer capabilities used by the <em class="emphasis">lpd</em>
+line printer daemon and other programs that assist with printing. The
+Red Hat Linux implementation is a bit different in that
+<em class="filename">/etc/printcap</em> is a machine-generated file, which
+is re-created every time the <em class="emphasis">lpd</em> daemon is
+restarted by the <em class="emphasis">/etc/rc.d/init.d/lpd</em> script.
+Instead of editing <em class="filename">/etc/printcap</em>, we will add an
+entry for our printer in <em class="filename">/etc/printcap.local</em>,
+which the system automatically includes verbatim when creating
+<em class="filename">/etc/printcap</em>.</p>
+
+<a name="samba2-CHP-10-NOTE-154"/><blockquote class="note"><h4 class="objtitle">TIP</h4>
+<p>If you are using the version of Samba installed from an RPM file as
+on Red Hat Linux, you might be able to skip these directions and use
+the <em class="emphasis">printconf</em> tool, which has support for SMB
+printers. Unfortunately, this tool might not work correctly if you
+have installed Samba from the Samba source distribution.</p>
+</blockquote>
+
+<p>Here is the entry we added to our
+<em class="filename">/etc/printcap.local</em><a name="INDEX-36"/><a name="INDEX-37"/> file to support our Hewlett-Packard
+DeskJet 932C printer, which is shared by <tt class="literal">maya</tt>, a
+Windows 98 system:</p>
+
+<blockquote><pre class="code">lp|maya-hp932c:\
+    :cm=HP 932C on maya:\
+    :sd=/var/spool/lpd/maya:\
+    :af=/var/spool/lpd/maya/acct:\
+    :if=/usr/local/samba/bin/smbprint:\
+    :mx=0:\
+    :lp=/dev/null:</pre></blockquote>
+
+<p>The first line creates names for the printer. We are calling it both
+<tt class="literal">maya-hp932c</tt>, to describe its location on the
+network and the type of printer, and <tt class="literal">lp</tt> so that
+programs will use it as the default printer. The rest of the lines
+specify keywords and values. The <tt class="literal">cm</tt> keyword allows
+us to assign a comment string to the printer. The
+<tt class="literal">sd</tt> and <tt class="literal">af</tt> keywords assign the
+printer's spool directory and accounting files,
+respectively. The <tt class="literal">if</tt> keyword assigns the print
+filter. We are using the <em class="emphasis">smbprint</em> command to
+send the output to the shared SMB printer. The <tt class="literal">mx</tt>
+keyword is set to zero to allow any size file to be printed, and
+<tt class="literal">lp</tt> is set to <em class="filename">/dev/null</em> to
+discard error messages.</p>
+
+<p>You can follow our model to create an entry for your own printer. If
+you want to go beyond the capabilities we used, refer to your
+system's <em class="emphasis">printcap(5)</em> manual
+page for a complete listing of keywords.</p>
+
+<p>Go to your Samba source distribution's root
+directory, and install the <em class="emphasis">smbprint</em> program like
+this:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>cp examples/printing/smbprint /usr/local/samba/bin</b></tt></pre></blockquote>
+
+<p>We next create the printer's spool directory:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>cd /var/spool/lpd</b></tt>
+# <tt class="userinput"><b>mkdir maya</b></tt>
+# <tt class="userinput"><b>chown lp:lp maya</b></tt>
+# <tt class="userinput"><b>chmod 700 maya</b></tt></pre></blockquote>
+
+<p>The <em class="emphasis">smbprint</em> program looks for a file named
+<em class="filename">.config</em> in the printer's spool
+directory, which contains information on how to connect to the
+printer share. We create this file and then fill in the required
+information:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>cd maya</b></tt>
+# <tt class="userinput"><b>&gt;.config</b></tt>
+# <tt class="userinput"><b>chown lp:lp .config</b></tt>
+# <tt class="userinput"><b>chmod 600 .config</b></tt></pre></blockquote>
+
+<p>Use your preferred text editor to edit the
+<em class="filename">.config</em> file, and enter three lines, like this:</p>
+
+<blockquote><pre class="code">server=maya
+service=hp
+password=&quot;&quot;</pre></blockquote>
+
+<p>This is for our shared printer having a UNC of
+<em class="filename">\\maya\hp</em>. When we created the printer share, we
+did not give it a password, so we use a null password here. If your
+printer share is on a Windows NT/2000/XP system, use your domain
+password.</p>
+
+<p>Finally, restart the printer daemon:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>/etc/rc.d/init.d/lpd restart</b></tt></pre></blockquote>
+
+<p>You can now try printing something. Run the following command:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>lpr textfile</b></tt></pre></blockquote>
+
+<p>If you have everything set up correctly, the file prints on the
+shared printer. If you get &quot;stair
+stepping&quot; of text, caused by the printer not
+returning to the left margin at the beginning of every line, modify
+the <tt class="literal">if</tt> keyword in your printcap entry to run
+<em class="emphasis">smbprint</em> with the <em class="emphasis">-t</em>
+option. <a name="INDEX-38"/><a name="INDEX-39"/></p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.2.2"/>
+
+<h3 class="head3">System V printers</h3>
+
+<p><a name="INDEX-40"/><a name="INDEX-41"/>Sending print jobs from a System V Unix
+system is a little easier than with the BSD system. Here, you need to
+edit the <em class="filename">smbprint.sysv</em> script in the
+<em class="filename">examples/printing</em> directory of the Samba
+distribution and do the following:</p>
+
+<ol><li>
+<p>Change the <tt class="literal">server</tt>, <tt class="literal">service</tt>, and
+<tt class="literal">password</tt> parameters in the script to match the
+NetBIOS computer name, its shared printer service, and its password,
+respectively. For example, the following entries would be correct for
+the service in the previous example:</p>
+
+<blockquote><pre class="code">server = maya
+service = hp
+password = &quot;&quot;</pre></blockquote>
+</li>
+<li>
+<p>Run the following commands, which create a reference for the new
+printer (which we are naming <tt class="literal">hp_printer</tt>) in the
+printer capabilities file:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>lpadmin -p hp_printer -v /dev/null -i./smbprint.sysv</b></tt>
+# <tt class="userinput"><b>enable hp_printer</b></tt>
+# <tt class="userinput"><b>accept hp_printer</b></tt></pre></blockquote>
+</li></ol>
+<p>After you've done that, restart the Samba daemons
+and try printing to <tt class="literal">hp_printer</tt> using any standard
+Unix program.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.2.3"/>
+
+<h3 class="head3">CUPS printers</h3>
+
+<p><a name="INDEX-42"/><a name="INDEX-43"/><a name="INDEX-44"/>CUPS<a name="FNPTR-2"/><a href="#FOOTNOTE-2">[2]</a> uses
+a set of modules, called
+<em class="firstterm">backends</em><a name="INDEX-45"/>, to send print jobs to various
+destinations, such as local printers attached to parallel, serial, or
+Universal Serial Bus (USB) ports, or over the network using Unix line
+printer daemon (LPD) protocol, Internet Printing Protocol (IPP),
+AppleTalk Printer Access Protocol (PAP), and so on. The software
+package does not come with a backend for SMB; the Samba suite
+includes the <em class="emphasis">smbspool</em>
+<a name="INDEX-46"/>utility for this purpose.</p>
+
+<p>To enable printing to remote SMB printers using CUPS, create a
+symbolic link named <em class="filename">smb</em> in the CUPS backend
+directory pointing to <em class="emphasis">smbspool</em>. Depending on
+installation options, these could be in a number of places in the
+directory hierarchy, so be sure to check your system. Using a common
+default installation, the command would look like this:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>ln -s /usr/local/samba/bin/smbspool /usr/lib/cups/backend/smb</b></tt></pre></blockquote>
+
+<p>Issue a HUP signal to the CUPS daemon, <em class="emphasis">cupsd</em>,
+and check for the existence of SMB support with the <em class="emphasis">lpinfo
+-v</em> command. Its output should now include a line that says
+<tt class="literal">network</tt> <tt class="literal">smb</tt>.</p>
+
+<p>To add a printer, use the CUPS web interface, accessible on the local
+system at <em class="emphasis">http://localhost:631/</em>,
+or use the <em class="emphasis">lpadmin</em> command:</p>
+
+<blockquote><pre class="code"># <tt class="userinput"><b>lpadmin -p hp932c -E -v smb://maya/hp932c -D &quot;HP 932C on maya&quot;</b></tt></pre></blockquote>
+
+<p>This creates and enables the new print spool called
+<tt class="literal">hp932c</tt>. The <em class="emphasis">-v</em> argument
+specifies the printer device, which in this case is accessed over the
+network using an SMB URI. If the printer is not guest-accessible,
+you'll need to provide a username and password in
+the URI. The full format is as follows:</p>
+
+<blockquote><pre class="code">smb://[<em class="replaceable">username</em>[:<em class="replaceable">password</em>]@][<em class="replaceable">workgroup</em>/]<em class="replaceable">server</em>/<em class="replaceable">printshare</em></pre></blockquote>
+
+<p>The <em class="emphasis">lpadmin</em><a name="INDEX-47"/> command makes changes to
+<em class="filename">/etc/cups/printers.conf</em> and sends a HUP signal
+to the <em class="emphasis">cupsd</em> daemon, resulting in the creation
+of a local raw printer spool. In this example, print data is passed
+in raw format to the Windows system, which has the necessary printer
+drivers and printer description files to format the data
+appropriately. The <em class="emphasis">-D</em> option is used to give the
+printer a comment string.</p>
+
+<p>Once you have the printer set up, it's time to test
+it out. CUPS understands both BSD-style and System V-style printing
+commands, so you can use whichever is more comfortable. Using the BSD
+<em class="emphasis">lpr</em> command, try something like:</p>
+
+<blockquote><pre class="code">$ <tt class="userinput"><b>lpr -P hp932c textfile</b></tt></pre></blockquote>
+
+<p>You should now be set up to use the printer from any application on
+the Unix system. <a name="INDEX-48"/></p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="sect2"><a name="samba2-CHP-10-SECT-2.3"/>
+
+<h3 class="head2">Samba Printing Options</h3>
+
+<p><a href="ch10.html#samba2-CHP-10-TABLE-2">Table 10-2</a> summarizes the Samba <a name="INDEX-49"/><a name="INDEX-50"/>printing
+options.</p>
+
+<a name="samba2-CHP-10-TABLE-2"/><h4 class="head4">Table 10-2. Printing configuration options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>Parameters</p>
+</th>
+<th>
+<p>Function</p>
+</th>
+<th>
+<p>Default</p>
+</th>
+<th>
+<p>Scope</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">printing</tt></p>
+</td>
+<td>
+<p><tt class="literal">bsd</tt>, <tt class="literal">sysv</tt>,
+<tt class="literal">cups</tt>, <tt class="literal">hpux</tt>,
+<tt class="literal">aix</tt>, <tt class="literal">qnx</tt>,
+<tt class="literal">plp</tt>, <tt class="literal">softq</tt>, or
+<tt class="literal">lprng</tt></p>
+</td>
+<td>
+<p>Printing system type of the Samba host</p>
+</td>
+<td>
+<p>System-dependent</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">printable</tt> <tt class="literal">(print ok)</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>Marks a share as a printing share</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">printer</tt> <tt class="literal">(printer name)</tt></p>
+</td>
+<td>
+<p>string (Unix printer name)</p>
+</td>
+<td>
+<p>Name for the printer that is shown to clients</p>
+</td>
+<td>
+<p>System-dependent</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">lpq cache time</tt></p>
+</td>
+<td>
+<p>numeric (time in seconds)</p>
+</td>
+<td>
+<p>Amount of time in seconds that Samba will cache the printer queue
+status</p>
+</td>
+<td>
+<p><tt class="literal">10</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">postscript</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>Treats all print jobs as PostScript by prefixing
+<tt class="literal">%!</tt> at the beginning of each file</p>
+</td>
+<td>
+<p><tt class="literal">no</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">load printers</tt></p>
+</td>
+<td>
+<p>boolean</p>
+</td>
+<td>
+<p>If <tt class="literal">yes</tt>, automatically loads each printer in the
+<em class="emphasis">printcap</em> file as printing shares</p>
+</td>
+<td>
+<p><tt class="literal">yes</tt></p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">print command</tt></p>
+</td>
+<td>
+<p>string (shell command)</p>
+</td>
+<td>
+<p>Unix command to perform printing</p>
+</td>
+<td>
+<p>See below</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">lpq command</tt></p>
+</td>
+<td>
+<p>string (shell command)</p>
+</td>
+<td>
+<p>Unix command to return the status of the printing queue</p>
+</td>
+<td>
+<p>See below</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">lprm command</tt></p>
+</td>
+<td>
+<p>string (shell command)</p>
+</td>
+<td>
+<p>Unix command to remove a job from the printing queue</p>
+</td>
+<td>
+<p>See below</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">lppause command</tt></p>
+</td>
+<td>
+<p>string (shell command)</p>
+</td>
+<td>
+<p>Unix command to pause a job on the printing queue</p>
+</td>
+<td>
+<p>See below</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">lpresume</tt> <tt class="literal">command</tt></p>
+</td>
+<td>
+<p>string (shell command)</p>
+</td>
+<td>
+<p>Unix command to resume a paused job on the printing queue</p>
+</td>
+<td>
+<p>See below</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">printcap name</tt></p>
+
+<p><tt class="literal">(printcap)</tt></p>
+</td>
+<td>
+<p>string (filename)</p>
+</td>
+<td>
+<p>Location of the printer capabilities file</p>
+</td>
+<td>
+<p>System-dependent</p>
+</td>
+<td>
+<p>Global</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">min print space</tt></p>
+</td>
+<td>
+<p>numeric (size in kilobytes)</p>
+</td>
+<td>
+<p>Minimum amount of free disk space that must be present to print</p>
+</td>
+<td>
+<p><tt class="literal">0</tt></p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">queuepause</tt> <tt class="literal">command</tt></p>
+</td>
+<td>
+<p>string (shell command)</p>
+</td>
+<td>
+<p>Unix command to pause a queue</p>
+</td>
+<td>
+<p>See below</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">queueresume</tt> <tt class="literal">command</tt></p>
+</td>
+<td>
+<p>string (shell command)</p>
+</td>
+<td>
+<p>Unix command to resume a queue</p>
+</td>
+<td>
+<p>See below</p>
+</td>
+<td>
+<p>Share</p>
+</td>
+</tr>
+
+</table>
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.3.1"/>
+
+<h3 class="head3">printing</h3>
+
+<p>The <tt class="literal">printing</tt><a name="INDEX-51"/> configuration option tells
+Samba which <a name="INDEX-52"/>printing system to use. There are
+several different families of commands to control printing and print
+statusing. Samba supports seven different types, as shown in <a href="ch10.html#samba2-CHP-10-TABLE-3">Table 10-3</a>.</p>
+
+<a name="samba2-CHP-10-TABLE-3"/><h4 class="head4">Table 10-3. Printing system types</h4><table border="1">
+
+
+
+<tr>
+<th>
+<p>Variable</p>
+</th>
+<th>
+<p>Definition</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p>BSD</p>
+</td>
+<td>
+<p>Berkeley Unix system</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>SYSV</p>
+</td>
+<td>
+<p>System V</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>CUPS</p>
+</td>
+<td>
+<p>Common Unix Printing System</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>AIX</p>
+</td>
+<td>
+<p>IBM's AIX operating system</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>HPUX</p>
+</td>
+<td>
+<p>Hewlett-Packard Unix</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>QNX</p>
+</td>
+<td>
+<p>QNX Realtime Operating System</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>LPRNG</p>
+</td>
+<td>
+<p>LPR Next Generation</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>SOFTQ</p>
+</td>
+<td>
+<p>SOFTQ system</p>
+</td>
+</tr>
+<tr>
+<td>
+<p>PLP</p>
+</td>
+<td>
+<p>Portable Line Printer</p>
+</td>
+</tr>
+
+</table>
+
+<p>The value for this option must be one of these seven selections. For
+example:</p>
+
+<blockquote><pre class="code">printing = SYSV</pre></blockquote>
+
+<p>The default value of this option is system-dependent and is
+configured when Samba is first compiled. For most systems, the
+<em class="filename">configure</em> script automatically detects the
+printing system to be used and configures it properly in the Samba
+makefile. However, if your system is a PLP, LPRNG, or QNX printing
+system, you need to specify this explicitly in the makefile or the
+printing share.</p>
+
+<p>The most common system types are BSD, SYSV, and CUPS. Each printer on
+a BSD Unix server is described in the printer capabilities
+file&mdash;normally <em class="filename">/etc/printcap</em>. See the
+section on the <tt class="literal">printcap</tt> <tt class="literal">file</tt>
+parameter for more information on this topic.</p>
+
+<p>Setting the <tt class="literal">printing</tt> configuration option
+automatically sets at least three other printing options for the
+service in question: <tt class="literal">print</tt>
+<tt class="literal">command</tt>, <tt class="literal">lpq</tt>
+<tt class="literal">command</tt>, and <tt class="literal">lprm</tt>
+<tt class="literal">command</tt>. If you are running Samba on a system that
+doesn't support any of the printing styles listed in
+<a href="ch10.html#samba2-CHP-10-TABLE-3">Table 10-3</a>, simply set the commands for each of
+these manually.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.3.2"/>
+
+<h3 class="head3">printable</h3>
+
+<p>The <tt class="literal">printable</tt><a name="INDEX-53"/> option must be set to
+<tt class="literal">yes</tt> to flag a share as a printing service. If this
+option is not set, the share will be treated as a disk share instead.
+You can set the option as follows:</p>
+
+<blockquote><pre class="code">[printer1]
+    printable = yes</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.3.3"/>
+
+<a name="INDEX-54"/><h3 class="head3">printer</h3>
+
+<p>The option, also called
+<tt class="literal">printer</tt><a name="INDEX-55"/> <tt class="literal">name</tt>,
+specifies the name of the printer on the server to which the share
+points. This option has no default and should be set explicitly in
+the configuration file, even though Unix systems themselves often
+recognize a default name such as <tt class="literal">lp</tt> for a printer.
+For example:</p>
+
+<blockquote><pre class="code">[deskjet]
+    printer = hpdkjet1</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.3.4"/>
+
+<h3 class="head3">lpq cache time</h3>
+
+<p>The global <tt class="literal">lpq</tt><a name="INDEX-56"/> <tt class="literal">cache</tt>
+<tt class="literal">time</tt> option allows you to set the number of
+seconds for which Samba will remember the current printer status.
+After this time elapses, Samba will issue an <em class="emphasis">lpq</em>
+command (or whatever command you specify with the
+<tt class="literal">lpq</tt> <tt class="literal">command</tt> option) to get a
+more up-to-date status that it can report to users. This defaults to
+10 seconds, but can be increased if your <tt class="literal">lpq</tt>
+<tt class="literal">command</tt> takes an unusually long time to run or you
+have lots of clients. A time setting of 0 disables caching of queue
+status. The following example resets the time to 30 seconds:</p>
+
+<blockquote><pre class="code">[deskjet]
+    lpq cache time = 30</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.3.5"/>
+
+<h3 class="head3">postscript</h3>
+
+<p>The <tt class="literal">postscript</tt><a name="INDEX-57"/> option forces the
+printer to treat all data sent to it as PostScript. It does this by
+prefixing the characters <tt class="literal">%!</tt> to the beginning of
+the first line of each job. It is normally used with PCs that insert
+a <tt class="literal">^D</tt> (control-D or
+&quot;end-of-file&quot; mark) in front of the
+first line of a PostScript file. It will not, obviously, turn a
+non-PostScript printer into a PostScript one. The default value of
+this options is <tt class="literal">no</tt>. You can override it as
+follows:</p>
+
+<blockquote><pre class="code">[deskjet]
+    postscript = yes</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.3.6"/>
+
+<h3 class="head3">load printers</h3>
+
+<p>The <tt class="literal">load</tt><a name="INDEX-58"/> <tt class="literal">printers</tt>
+option tells Samba to create shares for all known printer names and
+load those shares into the browse list. Samba will create and list a
+printer share for each printer name in
+<em class="filename">/etc/printcap</em> (or the system equivalent). For
+example, if your
+<em class="filename">printcap</em><a name="INDEX-59"/> file looks
+like this:<a name="FNPTR-3"/><a href="#FOOTNOTE-3">[3]</a></p>
+
+<blockquote><pre class="code">lp:\
+  :sd=/var/spool/lpd/lp:\            <i class="lineannotation">spool directory</i>
+  :mx#0:\                            <i class="lineannotation">maximum file size (none)</i>
+  :sh:\                              <i class="lineannotation">supress burst header (no)</i>
+  :lp=/dev/lp1:\                     <i class="lineannotation">device name for output</i>
+  :if=/var/spool/lpd/lp/filter:      <i class="lineannotation">text filter</i>
+
+laser:\
+  :sd=/var/spool/lpd/laser:\         <i class="lineannotation">spool directory</i>
+  :mx#0:\                            <i class="lineannotation">maximum file size (none)</i>
+  :sh:\                              <i class="lineannotation">supress burst header (no)</i>
+  :lp=/dev/laser:\                   <i class="lineannotation">device name for output</i>
+  :if=/var/spool/lpd/lp/filter:      <i class="lineannotation">text filter</i></pre></blockquote>
+
+<p>the shares <tt class="literal">[lp]</tt> and <tt class="literal">[laser]</tt> are
+automatically created as valid print shares when Samba is started.
+Both shares borrow the configuration options specified in the
+<tt class="literal">[printers]</tt> section to configure themselves and are
+available in the browse list for the Samba server. The default value
+for this option is <tt class="literal">yes</tt>. If you prefer to specify
+each printer explicitly in your configuration file, use the
+following:</p>
+
+<blockquote><pre class="code">[global]
+    load printers = no</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.3.7"/>
+
+<a name="INDEX-60"/><a name="INDEX-61"/><a name="INDEX-62"/><a name="INDEX-63"/><a name="INDEX-64"/><h3 class="head3">print command, lpq command, lprm command,lppause command, lpresume command</h3>
+
+<p>These options tell Samba which Unix commands control and send data to
+the printer. The Unix commands involved are: <em class="emphasis">lpr</em>
+(send to Line PRinter), <em class="emphasis">lpq</em> (List Printer
+Queue), <em class="emphasis">lprm</em> (Line Printer ReMove), and
+optionally <em class="emphasis">lppause</em> and
+<em class="emphasis">lpresume</em>. Samba provides an option named after
+each command, in case you need to override any of the system
+defaults. For example, consider the following:</p>
+
+<blockquote><pre class="code">lpq command = /usr/ucb/lpq %p</pre></blockquote>
+
+<p>This would set <tt class="literal">lpq</tt> <tt class="literal">command</tt> to
+use <em class="filename">/usr/ucb/lpq</em>. Similarly:</p>
+
+<blockquote><pre class="code">lprm command = /usr/local/bin/lprm -P%p %j</pre></blockquote>
+
+<p>would set the Samba printer remove command to
+<em class="filename">/usr/local/bin/lprm</em> and provide it the print job
+number using the <tt class="literal">%j</tt> variable.</p>
+
+<p>The default values for each option are dependent on the value of the
+<tt class="literal">printing</tt> option. <a href="ch10.html#samba2-CHP-10-TABLE-4">Table 10-4</a>
+shows the default commands for each printing option. The most popular
+printing system is BSD.</p>
+
+<a name="samba2-CHP-10-TABLE-4"/><h4 class="head4">Table 10-4. Default commands for various printing options</h4><table border="1">
+
+
+
+
+
+
+<tr>
+<th>
+<p>Option</p>
+</th>
+<th>
+<p>BSD, AIX, PLP, LPRNG</p>
+</th>
+<th>
+<p>SYSV, HPUX</p>
+</th>
+<th>
+<p>QNX</p>
+</th>
+<th>
+<p>SOFTQ</p>
+</th>
+</tr>
+
+
+<tr>
+<td>
+<p><tt class="literal">print</tt> <tt class="literal">command</tt></p>
+</td>
+<td>
+<p><tt class="literal">lpr -r -P%p %s</tt></p>
+</td>
+<td>
+<p><tt class="literal">lp -c -d%p %s; rm</tt> <tt class="literal">%s</tt></p>
+</td>
+<td>
+<p><tt class="literal">lp -r -P%p %s</tt></p>
+</td>
+<td>
+<p><tt class="literal">lp -d%p -s %s; rm %s</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">lpq</tt> <tt class="literal">command</tt></p>
+</td>
+<td>
+<p><tt class="literal">lpq -P%p</tt></p>
+</td>
+<td>
+<p><tt class="literal">lpstat -o%p</tt></p>
+</td>
+<td>
+<p><tt class="literal">lpq -P%p</tt></p>
+</td>
+<td>
+<p><tt class="literal">lpstat -o%p</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">lprm</tt> <tt class="literal">command</tt></p>
+</td>
+<td>
+<p><tt class="literal">lprm -P%p %j</tt></p>
+</td>
+<td>
+<p><tt class="literal">cancel %p-%j</tt></p>
+</td>
+<td>
+<p><tt class="literal">cancel %p-%j</tt></p>
+</td>
+<td>
+<p><tt class="literal">cancel %p-%j</tt></p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">lppause</tt> <tt class="literal">command</tt></p>
+</td>
+<td>
+<p><tt class="literal">lp -i %p-%j -H</tt> <tt class="literal">hold</tt></p>
+
+<p>(SYSV only)</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>None</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><tt class="literal">lpresume</tt> <tt class="literal">command</tt></p>
+</td>
+<td>
+<p><tt class="literal">lp -i %p-%j -H</tt> <tt class="literal">resume</tt></p>
+
+<p>(SYSV only)</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p>None</p>
+</td>
+<td>
+<p><tt class="literal">qstat -s -j%j -r</tt></p>
+</td>
+</tr>
+
+</table>
+
+<p>It is usually unnecessary to reset these options in Samba, with the
+possible exception of the <tt class="literal">print</tt>
+<tt class="literal">command</tt>. This option might need to be set
+explicitly if your printing system doesn't have a
+<em class="emphasis">-r</em> (remove after printing) option on the
+printing command. For example:</p>
+
+<blockquote><pre class="code">print command = /usr/local/lpr -P%p %s; /bin/rm %s</pre></blockquote>
+
+<p>With a bit of judicious programming, these
+<em class="filename">smb.conf</em> options can also be used for debugging:</p>
+
+<blockquote><pre class="code">print command = cat %s &gt;&gt;/tmp/printlog; lpr -r -P%p %s</pre></blockquote>
+
+<p>Using the previous configuration, it is possible to verify that files
+are actually being delivered to the Samba server. If they are, their
+contents will show up in the file <em class="filename">/tmp/printlog</em>.</p>
+
+<p>After BSD, the next most popular kind of printing system is SYSV (or
+System V) printing, plus some SYSV variants for
+IBM's AIX and Hewlett-Packard's
+HP-UX. These systems do not have an
+<em class="filename">/etc/printcap</em> file. Instead, the
+<tt class="literal">printcap</tt> <tt class="literal">file</tt> option can be set
+to an appropriate <em class="emphasis">lpstat</em> command for the system.
+This tells Samba to get a list of printers from the
+<em class="emphasis">lpstat</em> command. Alternatively, you can set the
+global configuration option <tt class="literal">printcap</tt>
+<tt class="literal">name</tt> to the name of a dummy
+<em class="filename">printcap</em> file you provide. In the latter case,
+the file must contain a series of lines such as:</p>
+
+<blockquote><pre class="code">lp|print1|My Printer 1
+print2|My Printer 2
+print3|My Printer 3</pre></blockquote>
+
+<p>Each line names a printer followed by aliases for it. In this
+example, the first printer is called <tt class="literal">lp</tt>,
+<tt class="literal">print1</tt>, or <tt class="literal">My</tt>
+<tt class="literal">Printer</tt> <tt class="literal">1</tt>, whichever the user
+prefers to use. The first name is used in place of
+<tt class="literal">%p</tt> in any command Samba executes for that printer.</p>
+
+<p>Two additional printer types are also supported by Samba: LPRNG (LPR
+New Generation) and PLP (Public Line Printer). These are public
+domain and open source printing systems and are used by many sites to
+overcome problems with vendor-supplied software. Samba also supports
+the printing systems of the SOFTQ and QNX real-time operating
+systems.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.3.8"/>
+
+<h3 class="head3">printcap name</h3>
+
+<p>If the <tt class="literal">printcap</tt><a name="INDEX-65"/><a name="INDEX-66"/>
+<tt class="literal">name</tt> option (also called
+<tt class="literal">printcap</tt>) appears in a printing share, Samba uses
+the file specified as the system printer capabilities file (normally
+<em class="filename">/etc/printcap</em>). However, you can reset it to a
+file consisting of only the printers you want to share over the
+network. The value must be the filename (with its complete path
+specified) of a printer capabilities file on the server:</p>
+
+<blockquote><pre class="code">[deskjet]
+    printcap name = /usr/local/samba/lib/printcap</pre></blockquote>
+
+<p>The CUPS printing system uses its own method of determining printer
+capabilities, rather than the standard <em class="filename">printcap</em>
+file. In this case, set <tt class="literal">printcap</tt>
+<tt class="literal">name</tt> as follows:</p>
+
+<blockquote><pre class="code">[global]
+    printing = cups
+    printcap name = cups</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.3.9"/>
+
+<h3 class="head3">min print space</h3>
+
+<p>The <tt class="literal">min</tt><a name="INDEX-67"/> <tt class="literal">print</tt>
+<tt class="literal">space</tt> option sets the amount of space that must be
+available on the disk that contains the spool directory if printing
+is to be allowed. Setting it to zero (the default) turns the check
+off; setting it to any other number sets the amount of free space in
+kilobytes required. This option helps to avoid having print jobs fill
+up the remaining disk space on the server, which can cause other
+processes to fail:</p>
+
+<blockquote><pre class="code">[deskjet]
+    min print space = 4000</pre></blockquote>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.3.10"/>
+
+<a name="INDEX-68"/><h3 class="head3">queuepause command</h3>
+
+<p>This configuration option specifies a command that tells Samba how to
+pause an entire print queue, as opposed to a single job on the queue.
+The default value depends on the printing type chosen. You should not
+need to alter this option.</p>
+
+
+</div>
+
+
+
+<div class="sect3"><a name="samba2-CHP-10-SECT-2.3.11"/>
+
+<a name="INDEX-69"/><h3 class="head3">queueresume command</h3>
+
+<p>This configuration option specifies a command that tells Samba how to
+resume a paused print queue, as opposed to resuming a single job on
+the print queue. The default value depends on the printing type
+chosen. You should not need to alter this option. <a name="INDEX-70"/> <a name="INDEX-71"/> <a name="INDEX-72"/><a name="INDEX-73"/></p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<hr/><h4 class="head4">Footnotes</h4><blockquote><a name="FOOTNOTE-1"/> <p><a href="#FNPTR-1">[1]</a> If
+you are using Linux, you can use the <em class="emphasis">checkpc</em>
+command to check for this type of error.</p> <a name="FOOTNOTE-2"/>
+<p><a href="#FNPTR-2">[2]</a> CUPS is open source software (<a href="http://www.opensource.org">http://www.opensource.org</a>) developed by Easy
+Software Products. For more information, visit <a href="http://www.cups.org">http://www.cups.org</a>.</p> <a name="FOOTNOTE-3"/> <p><a href="#FNPTR-3">[3]</a> We have placed annotated comments off to
+the right in case you've never dealt with this file
+before.</p> </blockquote><hr/><h4 class="head4"><a href="toc.html">TOC</a></h4></body></html>

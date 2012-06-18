@@ -1,0 +1,212 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 1] 1.2 What Can Samba Do For Me?</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:29:50Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch01_01.html" TITLE="1.1 What is Samba?">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 1.1 What is Samba?" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch01_01.html" TITLE="1. Learning the Samba">
+Chapter 1<br>
+Learning the Samba</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch01_03.html" TITLE="1.3 Getting Familiar with a SMB/CIFS Network">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 1.3 Getting Familiar with a SMB/CIFS Network" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch01-pgfId-937232">
+1.2 What Can Samba Do For Me?</a></h2><P CLASS="para">
+As explained earlier, Samba can help Windows and Unix machines coexist in the same network. However, there are some specific reasons why you might want to set up a Samba server on your network:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-941390">
+</a>You don't want to pay for&nbsp;- or can't afford&nbsp;- a full-fledged Windows NT server, yet you still need the functionality that one provides.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-941391">
+</a>You want to provide a common area for data or user directories in order to transition from a Windows server to a Unix one, or vice versa.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-941394">
+</a>You want to be able to share printers across both Windows and Unix workstations.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch01-pgfId-941973">
+</a>You want to be able to access NT files from a Unix server.</p></li></ul><P CLASS="para">
+Let's take a quick tour of Samba in action. Assume that we have the following basic network configuration: a Samba-enabled Unix machine, to which we will assign the name <CODE CLASS="literal">
+hydra</code>, and a pair of Windows clients, to which we will assign the names <CODE CLASS="literal">
+phoenix</code> and <CODE CLASS="literal">
+chimaera</code>, all connected via a local area network (LAN). Let's also assume that <CODE CLASS="literal">
+hydra</code> also has a local inkjet printer connected to it, <CODE CLASS="literal">
+lp</code>, and a disk share named <CODE CLASS="literal">
+network</code>&nbsp;- both of which it can offer to the other two machines. A graphic of this network is shown in <A CLASS="xref" HREF="ch01_02.html#ch01-45964">
+Figure 1.1</a>. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch01-45964">
+Figure 1.1: A simple network setup with a Samba server</a></h4><IMG CLASS="graphic" SRC="figs/sam.0101.gif" ALT="Figure 1.1"><P CLASS="para">
+In this network, each of the computers listed share the same <I CLASS="firstterm">
+workgroup</i>. A workgroup is simply a group nametag that identifies an arbitrary collection of computers and their resources on an SMB network. There can be several workgroups on the network at any time, but for our basic network example, we'll have only one: the SIMPLE workgroup.</p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch01-pgfId-937316">
+1.2.1 Sharing a Disk Service</a></h3><P CLASS="para">If everything is properly configured, we should be able to see the Samba server, <CODE CLASS="literal">
+hydra</code>, through the Network Neighborhood of the <CODE CLASS="literal">
+phoenix</code> Windows desktop. In fact, <A CLASS="xref" HREF="ch01_02.html#ch01-60493">
+Figure 1.2</a> shows the Network Neighborhood of the <CODE CLASS="literal">
+phoenix</code> computer, including <CODE CLASS="literal">
+hydra</code> and each of the computers that reside in the SIMPLE workgroup. Note the Entire Network icon at the top of the list. As we just mentioned, there can be more than one workgroup on an SMB network at any given time. If a user clicks on the Entire Network icon, he or she will see a list of all the workgroups that currently exist on the network.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch01-60493">
+Figure 1.2: The Network Neighborhood directory</a></h4><IMG CLASS="graphic" SRC="figs/sam.0102.gif" ALT="Figure 1.2"><P CLASS="para">
+We can take a closer look at the <CODE CLASS="literal">
+hydra</code> server by double-clicking on its icon. This contacts <CODE CLASS="literal">
+hydra</code> itself and requests a list of its <I CLASS="firstterm">
+shares</i>&nbsp;- the file and printer resources&nbsp;- that the machine provides. In this case, there is a printer entitled <CODE CLASS="literal">
+lp</code> and a disk share entitled <CODE CLASS="literal">
+network</code> on the server, as shown in <A CLASS="xref" HREF="ch01_02.html#ch01-76011">
+Figure 1.3</a>. Note that the Windows display shows hostnames in mixed case (Hydra). Case is irrelevant in hostnames, so you may see hydra, Hydra, and HYDRA in various displays or command output, but they all refer to a single system. Thanks to Samba, Windows 98 sees the Unix server as a valid SMB server, and can access the <CODE CLASS="literal">
+network</code> folder as if it were just another system folder. </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch01-76011">
+Figure 1.3: Shares available on the hydra sever as viewed from phoenix</a></h4><IMG CLASS="graphic" SRC="figs/sam.0103.gif" ALT="Figure 1.3"><P CLASS="para">
+One popular feature of Windows 95/98/NT is that you can map a letter-drive to a known network directory using the Map Network Drive option in the Windows Explorer.[<A CLASS="footnote" HREF="#ch01-pgfId-941061">3</a>] Once you do so, your applications can access the folder across the network with a standard drive letter. Hence, you can store data on it, install and run programs from it, and even password-protect it against unwanted visitors. See <A CLASS="xref" HREF="ch01_02.html#ch01-55465">
+Figure 1.4</a> for an example of mapping a letter-drive to a network directory.  </p><BLOCKQUOTE CLASS="footnote">
+<DIV CLASS="footnote">
+<P CLASS="para">
+<A CLASS="footnote" NAME="ch01-pgfId-941061">[3]</a> You can also right-click on the shared resource in the Network Neighborhood, and then select the Map Network Drive menu item.</p></div></blockquote><H4 CLASS="figure">
+<A CLASS="title" NAME="ch01-55465">
+Figure 1.4: Mapping a network drive to a Windows letter-drive</a></h4><IMG CLASS="graphic" SRC="figs/sam.0104.gif" ALT="Figure 1.4"><P CLASS="para">
+Take a look at the Path: entry in the dialog box of <A CLASS="xref" HREF="ch01_02.html#ch01-55465">
+Figure 1.4</a>. An equivalent way to represent a directory on a network machine is by using two backslashes, followed by the name of the networked machine, another backslash, and the networked directory of the machine, as shown below:</p>
+
+<PRE><I>\\network-machine\directory</i></pre>
+
+<P CLASS="para">
+This is known as the <I CLASS="firstterm">
+UNC</i> (Universal Naming Convention) in the Windows world. For example, the dialog box in <A CLASS="xref" HREF="ch01_02.html#ch01-55465">
+Figure 1.4</a> represents the network directory on the <CODE CLASS="literal">
+hydra</code> server as:</p>
+
+<PRE CLASS="programlisting">\\HYDRA\<CODE CLASS="replaceable"><I>network</i></code></pre><P CLASS="para">
+
+If this looks somewhat familiar to you, you're probably thinking of <I CLASS="firstterm">
+uniform resource locators</i> (URLs), which are addresses that web browsers such as Netscape Navigator and Internet Explorer use to resolve machines across the Internet. Be sure not to confuse the two: web browsers typically use forward slashes instead of back slashes, and they precede the initial slashes with the data transfer protocol (i.e., ftp, http) and a colon (:). In reality, URLs and UNCs are two completely separate things.</p><P CLASS="para">
+Once the network drive is set up, Windows and its programs will behave as if the networked directory was a fixed disk. If you have any applications that support multiuser functionality on a network, you can install those programs on the network drive.[<A CLASS="footnote" HREF="#ch01-pgfId-952017">4</a>] <A CLASS="xref" HREF="ch01_02.html#ch01-32686">
+Figure 1.5</a> shows the resulting network drive as it would appear with other storage devices in the Windows 98 client. Note the pipeline attachment in the icon for the G: drive; this indicates that it is a network drive instead of a fixed drive.  </p><BLOCKQUOTE CLASS="footnote">
+<DIV CLASS="footnote">
+<P CLASS="para">
+<A CLASS="footnote" NAME="ch01-pgfId-952017">[4]</a> Be warned that many end-user license agreements forbid installing a program on a network such that multiple clients can access it. Check the legal agreements that accompany the product to be absolutely sure.</p></div></blockquote><H4 CLASS="figure">
+<A CLASS="title" NAME="ch01-32686">
+Figure 1.5: The Network directory mapped to the client letter-drive G</a></h4><IMG CLASS="graphic" SRC="figs/sam.0105.gif" ALT="Figure 1.5"><P CLASS="para">
+From our Windows NT Workstation machine, <CODE CLASS="literal">
+chimaera</code>, Samba looks almost identical to Windows 98. <A CLASS="xref" HREF="ch01_02.html#ch01-29255">
+Figure 1.6</a> shows the same view of the <CODE CLASS="literal">
+hydra</code> server from the Windows NT 4.0 Network Neighborhood. Setting up the network drive using the Map Network Drive option in Windows NT Workstation 4.0 would have identical results as well.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch01-29255">
+Figure 1.6: Shares available on hydra (viewed from chimaera) </a></h4><IMG CLASS="graphic" SRC="figs/sam.0106.gif" ALT="Figure 1.6"></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch01-pgfId-942088">
+1.2.2 Sharing a Printer</a></h3><P CLASS="para">You probably noticed that the printer <CODE CLASS="literal">
+lp</code> appeared under the available shares for <CODE CLASS="literal">
+hydra</code> in <A CLASS="xref" HREF="ch01_02.html#ch01-76011">
+Figure 1.3</a>. This indicates that the Unix server has a printer that can be shared by the various SMB clients in the workgroup. Data sent to the printer from any of the clients will be spooled on the Unix server and printed in the order it is received.</p><P CLASS="para">Setting up a Samba-enabled printer on the Windows side is even easier than setting up a disk share. By double-clicking on the printer and identifying the manufacturer and model, you can install a driver for this printer on the Windows client. Windows can then properly format any information sent to the network printer and access it as if it were a local printer (we show you how to do this later in the chapter). <A CLASS="xref" HREF="ch01_02.html#ch01-46265">
+Figure 1.7</a> shows the resulting network printer in the Printers window of Windows 98. Again, note the pipeline attachment below the printer, which identifies it as being on a network.  </p><H4 CLASS="figure">
+<A CLASS="title" NAME="ch01-46265">
+Figure 1.7: A network printer available on hydra (viewed from chimaera)</a></h4><IMG CLASS="graphic" SRC="figs/sam.0107.gif" ALT="Figure 1.7"><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch01-pgfId-937586">
+1.2.2.1 Seeing things from the Unix side</a></h4><P CLASS="para">
+As mentioned earlier, Samba appears in Unix as a set of daemon programs. You can view them with the Unix <CODE CLASS="literal">
+ps</code> and <CODE CLASS="literal">
+netstat</code> commands, you can read any messages they generate through custom debug files or the Unix <CODE CLASS="literal">
+syslog</code> (depending on how Samba is set up), and you can configure it from a single Samba properties file: <i>smb.conf</i>. In addition, if you want to get an idea of what each of the daemons are doing, Samba has a program called
+<i>smbstatus</i> that will lay it all on the line. Here is how it works:</p>
+
+<PRE CLASS="programlisting"><B CLASS="emphasis.bold"><CODE CLASS="literal">#</code> smbstatus</b>
+</pre><PRE CLASS="programlisting">
+Samba version 2.0.4
+Service      uid      gid      pid     machine
+----------------------------------------------
+network      davecb   davecb   7470   phoenix  (192.168.220.101) Sun May 16 
+network      davecb   davecb   7589   chimaera (192.168.220.102) Sun May 16 
+
+Locked files:
+Pid    DenyMode   R/W        Oplock          Name
+--------------------------------------------------
+7589   DENY_NONE  RDONLY     EXCLUSIVE+BATCH /home/samba/quicken/inet/common/system/help.bmp  Sun May 16 21:23:40 1999
+7470   DENY_WRITE RDONLY     NONE            /home/samba/word/office/findfast.exe             Sun May 16 20:51:08 1999
+7589   DENY_WRITE RDONLY     EXCLUSIVE+BATCH /home/samba/quicken/lfbmp70n.dll                 Sun May 16 21:23:39 1999
+7589   DENY_WRITE RDWR       EXCLUSIVE+BATCH /home/samba/quicken/inet/qdata/runtime.dat       Sun May 16 21:23:41 1999
+7470   DENY_WRITE RDONLY     EXCLUSIVE+BATCH /home/samba/word/office/osa.exe                  Sun May 16 20:51:09 1999
+7589   DENY_WRITE RDONLY     NONE            /home/samba/quicken/qversion.dll                 Sun May 16 21:20:33 1999
+7470   DENY_WRITE RDONLY     NONE            /home/samba/quicken/qversion.dll                 Sun May 16 20:51:11 1999
+
+Share mode memory usage (bytes):
+   1043432(99%) free + 4312(0%) used + 832(0%) overhead = 1048576(100%) total</pre><P CLASS="para">
+The Samba status from this output provides three sets of data, each divided into separate sections. The first section tells which systems have connected to the Samba server, identifying each client by its machine name (<CODE CLASS="literal">phoenix</code> and <CODE CLASS="literal">chimaera</code>) and IP address. The second section reports the name and status of the files that are currently in use on a share on the server, including the read/write status and any locks on the files. Finally, Samba reports the amount of memory it has currently allocated to the shares that it administers, including the amount actively used by the shares plus additional overhead. (Note that this is not the same as the total amount of memory that the <EM CLASS="emphasis">
+smbd</em> or <EM CLASS="emphasis">
+nmbd</em> processes are using.)</p><P CLASS="para">
+Don't worry if you don't understand these statistics; they will become easier to understand as you move through the book. </p></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch01_01.html" TITLE="1.1 What is Samba?">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 1.1 What is Samba?" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch01_03.html" TITLE="1.3 Getting Familiar with a SMB/CIFS Network">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 1.3 Getting Familiar with a SMB/CIFS Network" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+1.1 What is Samba?</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+1.3 Getting Familiar with a SMB/CIFS Network</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

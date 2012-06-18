@@ -1,0 +1,89 @@
+Dropbear contains a number of components from different sources, hence there
+are a few licenses and authors involved. All licenses are fairly 
+non-restrictive.
+
+
+The majority of code is written by Matt Johnston, under the license below.
+
+Portions of the client-mode work are (c) 2004 Mihnea Stoenescu, under the
+same license:
+
+Copyright (c) 2002-2008 Matt Johnston
+Portions copyright (c) 2004 Mihnea Stoenescu
+All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+=====
+
+LibTomCrypt and LibTomMath are written by Tom St Denis, and are Public Domain.
+
+=====
+
+sshpty.c is taken from OpenSSH 3.5p1, 
+  Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+                     All rights reserved
+ "As far as I am concerned, the code I have written for this software
+  can be used freely for any purpose.  Any derived versions of this
+  software must be clearly marked as such, and if the derived work is
+  incompatible with the protocol description in the RFC file, it must be
+  called by a name other than "ssh" or "Secure Shell". "
+
+=====
+
+loginrec.c
+loginrec.h
+atomicio.h
+atomicio.c
+and strlcat() (included in util.c) are from OpenSSH 3.6.1p2, and are licensed
+under the 2 point BSD license.
+
+loginrec is written primarily by Andre Lucas, atomicio.c by Theo de Raadt.
+
+strlcat() is (c) Todd C. Miller
+
+=====
+
+Import code in keyimport.c is modified from PuTTY's import.c, licensed as
+follows:
+
+PuTTY is copyright 1997-2003 Simon Tatham.
+
+Portions copyright Robert de Bath, Joris van Rantwijk, Delian
+Delchev, Andreas Schultz, Jeroen Massar, Wez Furlong, Nicolas Barry,
+Justin Bradford, and CORE SDI S.A.
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation files
+(the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT.  IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

@@ -1,0 +1,239 @@
+Documentation for /proc/sys/vm/*	kernel version 2.2.10
+	(c) 1998, 1999,  Rik van Riel <riel@nl.linux.org>
+
+For general info and legal blurb, please look in README.
+
+==============================================================
+
+This file contains the documentation for the sysctl files in
+/proc/sys/vm and is valid for Linux kernel version 2.2.
+
+The files in this directory can be used to tune the operation
+of the virtual memory (VM) subsystem of the Linux kernel and
+the writeout of dirty data to disk.
+
+Default values and initialization routines for most of these
+files can be found in mm/swap.c.
+
+Currently, these files are in /proc/sys/vm:
+- overcommit_memory
+- page-cluster
+- dirty_ratio
+- dirty_background_ratio
+- dirty_expire_centisecs
+- dirty_writeback_centisecs
+- max_map_count
+- min_free_kbytes
+- laptop_mode
+- block_dump
+- drop-caches
+- zone_reclaim_mode
+- min_unmapped_ratio
+- min_slab_ratio
+- panic_on_oom
+
+==============================================================
+
+dirty_ratio, dirty_background_ratio, dirty_expire_centisecs,
+dirty_writeback_centisecs, vfs_cache_pressure, laptop_mode,
+block_dump, swap_token_timeout, drop-caches:
+
+See Documentation/filesystems/proc.txt
+
+==============================================================
+
+overcommit_memory:
+
+This value contains a flag that enables memory overcommitment.
+
+When this flag is 0, the kernel attempts to estimate the amount
+of free memory left when userspace requests more memory.
+
+When this flag is 1, the kernel pretends there is always enough
+memory until it actually runs out.
+
+When this flag is 2, the kernel uses a "never overcommit"
+policy that attempts to prevent any overcommit of memory.  
+
+This feature can be very useful because there are a lot of
+programs that malloc() huge amounts of memory "just-in-case"
+and don't use much of it.
+
+The default value is 0.
+
+See Documentation/vm/overcommit-accounting and
+security/commoncap.c::cap_vm_enough_memory() for more information.
+
+==============================================================
+
+overcommit_ratio:
+
+When overcommit_memory is set to 2, the committed address
+space is not permitted to exceed swap plus this percentage
+of physical RAM.  See above.
+
+==============================================================
+
+page-cluster:
+
+The Linux VM subsystem avoids excessive disk seeks by reading
+multiple pages on a page fault. The number of pages it reads
+is dependent on the amount of memory in your machine.
+
+The number of pages the kernel reads in at once is equal to
+2 ^ page-cluster. Values above 2 ^ 5 don't make much sense
+for swap because we only cluster swap data in 32-page groups.
+
+==============================================================
+
+max_map_count:
+
+This file contains the maximum number of memory map areas a process
+may have. Memory map areas are used as a side-effect of calling
+malloc, directly by mmap and mprotect, and also when loading shared
+libraries.
+
+While most applications need less than a thousand maps, certain
+programs, particularly malloc debuggers, may consume lots of them,
+e.g., up to one or two maps per allocation.
+
+The default value is 65536.
+
+==============================================================
+
+min_free_kbytes:
+
+This is used to force the Linux VM to keep a minimum number 
+of kilobytes free.  The VM uses this number to compute a pages_min
+value for each lowmem zone in the system.  Each lowmem zone gets 
+a number of reserved free pages based proportionally on its size.
+
+=============================================================
+
+oom_kill_allocating_task
+
+This enables or disables killing the OOM-triggering task in
+out-of-memory situations.
+
+If this is set to zero, the OOM killer will scan through the entire
+tasklist and select a task based on heuristics to kill.  This normally
+selects a rogue memory-hogging task that frees up a large amount of
+memory when killed.
+
+If this is set to non-zero, the OOM killer simply kills the task that
+triggered the out-of-memory condition.  This avoids the expensive
+tasklist scan.
+
+If panic_on_oom is selected, it takes precedence over whatever value
+is used in oom_kill_allocating_task.
+
+The default value is 0.
+
+==============================================================
+
+percpu_pagelist_fraction
+
+This is the fraction of pages at most (high mark pcp->high) in each zone that
+are allocated for each per cpu page list.  The min value for this is 8.  It
+means that we don't allow more than 1/8th of pages in each zone to be
+allocated in any single per_cpu_pagelist.  This entry only changes the value
+of hot per cpu pagelists.  User can specify a number like 100 to allocate
+1/100th of each zone to each per cpu page list.
+
+The batch value of each per cpu pagelist is also updated as a result.  It is
+set to pcp->high/4.  The upper limit of batch is (PAGE_SHIFT * 8)
+
+The initial value is zero.  Kernel does not use this value at boot time to set
+the high water marks for each per cpu page list.
+
+===============================================================
+
+zone_reclaim_mode:
+
+Zone_reclaim_mode allows someone to set more or less aggressive approaches to
+reclaim memory when a zone runs out of memory. If it is set to zero then no
+zone reclaim occurs. Allocations will be satisfied from other zones / nodes
+in the system.
+
+This is value ORed together of
+
+1	= Zone reclaim on
+2	= Zone reclaim writes dirty pages out
+4	= Zone reclaim swaps pages
+
+zone_reclaim_mode is set during bootup to 1 if it is determined that pages
+from remote zones will cause a measurable performance reduction. The
+page allocator will then reclaim easily reusable pages (those page
+cache pages that are currently not used) before allocating off node pages.
+
+It may be beneficial to switch off zone reclaim if the system is
+used for a file server and all of memory should be used for caching files
+from disk. In that case the caching effect is more important than
+data locality.
+
+Allowing zone reclaim to write out pages stops processes that are
+writing large amounts of data from dirtying pages on other nodes. Zone
+reclaim will write out dirty pages if a zone fills up and so effectively
+throttle the process. This may decrease the performance of a single process
+since it cannot use all of system memory to buffer the outgoing writes
+anymore but it preserve the memory on other nodes so that the performance
+of other processes running on other nodes will not be affected.
+
+Allowing regular swap effectively restricts allocations to the local
+node unless explicitly overridden by memory policies or cpuset
+configurations.
+
+=============================================================
+
+min_unmapped_ratio:
+
+This is available only on NUMA kernels.
+
+A percentage of the total pages in each zone.  Zone reclaim will only
+occur if more than this percentage of pages are file backed and unmapped.
+This is to insure that a minimal amount of local pages is still available for
+file I/O even if the node is overallocated.
+
+The default is 1 percent.
+
+=============================================================
+
+min_slab_ratio:
+
+This is available only on NUMA kernels.
+
+A percentage of the total pages in each zone.  On Zone reclaim
+(fallback from the local zone occurs) slabs will be reclaimed if more
+than this percentage of pages in a zone are reclaimable slab pages.
+This insures that the slab growth stays under control even in NUMA
+systems that rarely perform global reclaim.
+
+The default is 5 percent.
+
+Note that slab reclaim is triggered in a per zone / node fashion.
+The process of reclaiming slab memory is currently not node specific
+and may not be fast.
+
+=============================================================
+
+panic_on_oom
+
+This enables or disables panic on out-of-memory feature.
+
+If this is set to 0, the kernel will kill some rogue process,
+called oom_killer.  Usually, oom_killer can kill rogue processes and
+system will survive.
+
+If this is set to 1, the kernel panics when out-of-memory happens.
+However, if a process limits using nodes by mempolicy/cpusets,
+and those nodes become memory exhaustion status, one process
+may be killed by oom-killer. No panic occurs in this case.
+Because other nodes' memory may be free. This means system total status
+may be not fatal yet.
+
+If this is set to 2, the kernel panics compulsorily even on the
+above-mentioned.
+
+The default value is 0.
+1 and 2 are for failover of clustering. Please select either
+according to your policy of failover.

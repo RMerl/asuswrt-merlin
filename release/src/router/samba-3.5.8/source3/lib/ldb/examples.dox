@@ -1,0 +1,16 @@
+/** \example ldbreader.c
+
+The code below shows a simple LDB application.
+
+It lists / dumps the records in a LDB database to standard output.
+
+*/
+
+
+/** \example ldifreader.c
+
+The code below shows a simple LDB application.
+
+It lists / dumps the entries in an LDIF file to standard output.
+
+*/

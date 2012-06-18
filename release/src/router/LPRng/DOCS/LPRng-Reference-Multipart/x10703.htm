@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>It was working normally, then I get connection refused
+    errors</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="The Most Frequently Asked Questions "
+    href="faq.htm">
+    <link rel="PREVIOUS" title=
+    "The Most Frequently Asked Questions " href="faq.htm">
+    <link rel="NEXT" title=
+    "Job is not in print queue, but it gets printed!" href=
+    "x10735.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "faq.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          20. The Most Frequently Asked Questions</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x10735.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN10703">20.2. It was working
+      normally, then I get connection refused errors</a></h1>
+
+      <p>This message usually appears when you have been sending a
+      large number of jobs to a network printer or a remote system.
+      The reason for this is a combination the above port 721-731
+      restriction and the TCP/IP timeouts. For details, see <a
+      href="rfc1179ref.htm">RFC1179 and <b class=
+      "APPLICATION">LPRng</b></a>, but here is a quick
+      explanation.</p>
+
+      <p>A TCP/IP connection is usually specified as between <var
+      class="LITERAL">srchost:srcport, desthost:destport</var>,
+      although in practice the order of source (src) and
+      destination (dest) is not important.</p>
+
+      <p>When a connection is established, each end of the
+      connection exchanges the necessary flow control and error
+      control information. When a connection is terminated, each
+      end of the connection will not accept another connection from
+      the same <var class="LITERAL">host:port</var> that was
+      previously active for a specified timeout period, usually 10
+      minutes.</p>
+
+      <p>Some TCP/IP implementations go further: they will not
+      allow <acronym class="ACRONYM">ANY</acronym> connection to be
+      <span class="emphasis"><i class=
+      "EMPHASIS">originated</i></span> (via the <code class=
+      "FUNCTION">bind()</code> system call or API) from a port that
+      was active, or accepted on a port that was active for this
+      timeout period.</p>
+
+      <p>Now let us see what happens when we have a client program,
+      which must originate a connection on port 721-731, connect to
+      the server, which waits for a connection on port 515. We
+      first try to make a connection from host:port <var class=
+      "LITERAL">1.1.1.1:721</var> to <var class=
+      "LITERAL">1.1.1.2:515</var>. The first time that we make the
+      connection (or the first connection) we succeed. We can
+      transfer a file, etc., and then close the connection. When we
+      try to reconnect from <var class="LITERAL">1.1.1.1:721</var>
+      to <var class="LITERAL">1.1.1.2:515</var> we get an error
+      such as "address already in use" or "connection refused".</p>
+
+      <p>Luckily, we can use port 722 to originate a connection,
+      and we can connect from <var class=
+      "LITERAL">1.1.1.1:722</var> to <var class=
+      "LITERAL">1.1.1.2:515</var>. We continue on, until we come to
+      port 731, and then we need to wait for our timeouts.</p>
+
+      <p>SOLUTION:</p>
+
+      <p>It appears that most RFC1179 implementations do not check
+      for the exact port range 721-731, but only that the
+      connection originates from a reserved port, i.e. - in the
+      range 1-1023. You can extend the range of ports used by <b
+      class="APPLICATION">LPRng</b> by changing the</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10727"></a>
+<pre class="SCREEN">
+    originate_port=721 731
+</pre>
+      </div>
+      value in the defaults (<tt class=
+      "FILENAME">LPRng/src/common/defaults.c</tt>) file or in the
+      <tt class="FILENAME">lpd.conf</tt> file. I recommend the
+      following: 
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10731"></a>
+<pre class="SCREEN">
+    originate_port=512 1022
+</pre>
+      </div>
+      This is, in fact, now the default in <b class=
+      "APPLICATION">LPRng</b> software. If you get the infamous
+      <var class="LITERAL">malformed from address</var> error
+      message from your spooler, then you will have to set
+      originate_port=721 731, and live with a delayed
+      throughput.<br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "faq.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x10735.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">The Most
+          Frequently Asked Questions</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "faq.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Job is not in
+          print queue, but it gets printed!</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,69 @@
+#!/usr/bin/python
+#
+# Adds a new user to a Samba4 server
+# Copyright Jelmer Vernooij 2008
+#
+# Based on the original in EJS:
+# Copyright Andrew Tridgell 2005
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#   
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#   
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import sys
+
+# Find right directory when running from source tree
+sys.path.insert(0, "bin/python")
+
+import samba.getopt as options
+import optparse
+
+from getpass import getpass
+from samba.auth import system_session
+from samba.samdb import SamDB
+
+parser = optparse.OptionParser("newuser [options] <username> [<password>]")
+sambaopts = options.SambaOptions(parser)
+parser.add_option_group(sambaopts)
+parser.add_option_group(options.VersionOptions(parser))
+credopts = options.CredentialsOptions(parser)
+parser.add_option_group(credopts)
+parser.add_option("-H", help="LDB URL for database or target server", type=str)
+parser.add_option("--unixname", help="Unix Username", type=str)
+parser.add_option("--must-change-at-next-login", help="Force password to be changed on next login", action="store_true")
+
+opts, args = parser.parse_args()
+
+if len(args) == 0:
+	parser.print_usage()
+	sys.exit(1)
+
+username = args[0]
+if len(args) > 1:
+	password = args[1]
+else:
+	password = getpass("New Password: ")
+
+if opts.unixname is None:
+	opts.unixname = username
+
+lp = sambaopts.get_loadparm()
+creds = credopts.get_credentials(lp)
+
+if opts.H is not None:
+	url = opts.H
+else:
+	url = lp.get("sam database")
+
+samdb = SamDB(url=url, session_info=system_session(), credentials=creds, lp=lp)
+
+samdb.newuser(username, opts.unixname, password, force_password_change_at_next_login_req=opts.must_change_at_next_login)

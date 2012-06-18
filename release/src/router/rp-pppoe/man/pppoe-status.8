@@ -1,0 +1,25 @@
+.\" LIC: GPL
+.TH PPPOE-STATUS 8 "16 March 2000"
+.UC 4
+.SH NAME
+pppoe-status \- Shell script to report on status of PPPoE link
+.SH SYNOPSIS
+.B pppoe-status \fR[\fIconfig_file\fR]
+
+.SH DESCRIPTION
+\fBpppoe-status\fR is a shell script which checks the status of the
+PPPoE link established by the Roaring Penguin user-space PPPoE client.
+If you omit \fIconfig_file\fR, the default file
+\fB/etc/ppp/pppoe.conf\fR is used.
+
+.SH AUTHOR
+\fBpppoe-status\fR was written by David F. Skoll <dfs@roaringpenguin.com>.
+
+The \fBpppoe\fR home page is \fIhttp://www.roaringpenguin.com/pppoe/\fR.
+
+.SH SEE ALSO
+pppoe(8), pppoe-start(8), pppoe-connect(8), pppd(8), pppoe.conf(5),
+pppoe-setup(8), pppoe-stop(8), pppoe-sniff(8), pppoe-relay(8),
+pppoe-server(8)
+
+

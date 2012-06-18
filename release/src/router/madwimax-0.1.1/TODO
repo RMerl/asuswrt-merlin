@@ -1,0 +1,11 @@
+Driver:
+ * Persistent network interface naming
+ * Use unix sockets to communicate with frontends (using dbus protocol maybe)
+ * (?) Add a target to build hald-addon and write hal rules
+ * (?) Do the same for DeviceKit
+Frontends:
+ 1. Dump current link status (perfect for use with conky)
+ 2. Get geographical information from GPS if available and write it to
+   the log along with connection status/parameters
+ 3. (?) Notify the user on state change via GUI
+ 4. (?) or write a network manager plugin

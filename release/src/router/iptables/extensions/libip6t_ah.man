@@ -1,0 +1,10 @@
+This module matches the parameters in Authentication header of IPsec packets.
+.TP
+.BR "--ahspi " "[!] \fIspi\fP[:\fIspi\fP]"
+Matches SPI.
+.TP
+.BR "--ahlen " "[!] \fIlength"
+Total length of this header in octets.
+.TP
+.BI "--ahres"
+Matches if the reserved field is filled with zero.

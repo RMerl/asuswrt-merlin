@@ -1,0 +1,328 @@
+!==
+!== DIAGNOSIS.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:	Andrew Tridgell
+Updated:	November 1, 1999
+
+Subject:	DIAGNOSING YOUR SAMBA SERVER
+===========================================================================
+
+This file contains a list of tests you can perform to validate your
+Samba server. It also tells you what the likely cause of the problem
+is if it fails any one of these steps. If it passes all these tests
+then it is probably working fine.
+
+You should do ALL the tests, in the order shown. I have tried to
+carefully choose them so later tests only use capabilities verified in
+the earlier tests.
+
+If you send me an email saying "it doesn't work" and you have not
+followed this test procedure then you should not be surprised if I
+ignore your email.
+
+
+ASSUMPTIONS
+-----------
+
+In all of the tests I assume you have a Samba server called BIGSERVER
+and a PC called ACLIENT both in workgroup TESTGROUP. I also assume the
+PC is running windows for workgroups with a recent copy of the
+microsoft tcp/ip stack. Alternatively, your PC may be running Windows
+95 or Windows NT (Workstation or Server).
+
+The procedure is similar for other types of clients.
+
+I also assume you know the name of an available share in your
+smb.conf. I will assume this share is called "tmp". You can add a
+"tmp" share like by adding the following to smb.conf:
+
+[tmp]
+ comment = temporary files 
+ path = /tmp
+ read only = yes
+
+
+THESE TESTS ASSUME VERSION 2.0.6 OR LATER OF THE SAMBA SUITE. SOME
+COMMANDS SHOWN DID NOT EXIST IN EARLIER VERSIONS
+
+Please pay attention to the error messages you receive. If any error message
+reports that your server is being unfriendly you should first check that you
+IP name resolution is correctly set up. eg: Make sure your /etc/resolv.conf
+file points to name servers that really do exist.
+
+Also, if you do not have DNS server access for name resolution please check
+that the settings for your smb.conf file results in "dns proxy = no". The
+best way to check this is with "testparm smb.conf"
+
+
+TEST 1:
+-------
+
+In the directory in which you store your smb.conf file, run the command
+"testparm smb.conf". If it reports any errors then your smb.conf
+configuration file is faulty.
+
+Note:	Your smb.conf file may be located in: /etc
+	Or in:   /usr/local/samba/lib
+
+
+TEST 2:
+-------
+
+run the command "ping BIGSERVER" from the PC and "ping ACLIENT" from
+the unix box. If you don't get a valid response then your TCP/IP
+software is not correctly installed. 
+
+Note that you will need to start a "dos prompt" window on the PC to
+run ping.
+
+If you get a message saying "host not found" or similar then your DNS
+software or /etc/hosts file is not correctly setup. It is possible to
+run samba without DNS entries for the server and client, but I assume
+you do have correct entries for the remainder of these tests. 
+
+Another reason why ping might fail is if your host is running firewall 
+software. You will need to relax the rules to let in the workstation
+in question, perhaps by allowing access from another subnet (on Linux
+this is done via the ipfwadm program.)
+
+
+TEST 3:
+-------
+
+Run the command "smbclient -L BIGSERVER" on the unix box. You
+should get a list of available shares back. 
+
+If you get a error message containing the string "Bad password" then
+you probably have either an incorrect "hosts allow", "hosts deny" or
+"valid users" line in your smb.conf, or your guest account is not
+valid. Check what your guest account is using "testparm" and
+temporarily remove any "hosts allow", "hosts deny", "valid users" or
+"invalid users" lines.
+
+If you get a "connection refused" response then the smbd server may
+not be running. If you installed it in inetd.conf then you probably edited
+that file incorrectly. If you installed it as a daemon then check that
+it is running, and check that the netbios-ssn port is in a LISTEN
+state using "netstat -a".
+
+If you get a "session request failed" then the server refused the
+connection. If it says "Your server software is being unfriendly" then
+its probably because you have invalid command line parameters to smbd,
+or a similar fatal problem with the initial startup of smbd. Also
+check your config file (smb.conf) for syntax errors with "testparm"
+and that the various directories where samba keeps its log and lock
+files exist.
+
+There are a number of reasons for which smbd may refuse or decline
+a session request. The most common of these involve one or more of
+the following smb.conf file entries:
+	hosts deny = ALL
+	hosts allow = xxx.xxx.xxx.xxx/yy
+	bind interfaces only = Yes
+
+In the above, no allowance has been made for any session requests that
+will automatically translate to the loopback adaptor address 127.0.0.1.
+To solve this problem change these lines to:
+	hosts deny = ALL
+	hosts allow = xxx.xxx.xxx.xxx/yy 127.
+Do NOT use the "bind interfaces only" parameter where you may wish to
+use the samba password change facility, or where smbclient may need to
+access local service for name resolution or for local resource
+connections. (Note: the "bind interfaces only" parameter deficiency
+where it will not allow connections to the loopback address will be
+fixed soon).
+
+Another common cause of these two errors is having something already running 
+on port 139, such as Samba (ie: smbd is running from inetd already) or
+something like Digital's Pathworks. Check your inetd.conf file before trying
+to start smbd as a daemon, it can avoid a lot of frustration!
+
+And yet another possible cause for failure of TEST 3 is when the subnet mask
+and / or broadcast address settings are incorrect. Please check that the
+network interface IP Address / Broadcast Address / Subnet Mask settings are
+correct and that Samba has correctly noted these in the log.nmb file.
+
+TEST 4:
+-------
+
+Run the command "nmblookup -B BIGSERVER __SAMBA__". You should get the
+IP address of your Samba server back.
+
+If you don't then nmbd is incorrectly installed. Check your inetd.conf
+if you run it from there, or that the daemon is running and listening
+to udp port 137.
+
+One common problem is that many inetd implementations can't take many
+parameters on the command line. If this is the case then create a
+one-line script that contains the right parameters and run that from
+inetd.
+
+
+TEST 5:
+-------
+
+run the command "nmblookup -B ACLIENT '*'"
+
+You should get the PCs IP address back. If you don't then the client
+software on the PC isn't installed correctly, or isn't started, or you
+got the name of the PC wrong. 
+
+If ACLIENT doesn't resolve via DNS then use the IP address of the
+client in the above test.
+
+
+TEST 6:
+-------
+
+Run the command "nmblookup -d 2 '*'"
+
+This time we are trying the same as the previous test but are trying
+it via a broadcast to the default broadcast address. A number of
+Netbios/TCPIP hosts on the network should respond, although Samba may
+not catch all of the responses in the short time it listens. You
+should see "got a positive name query response" messages from several
+hosts. 
+
+If this doesn't give a similar result to the previous test then
+nmblookup isn't correctly getting your broadcast address through its
+automatic mechanism. In this case you should experiment use the
+"interfaces" option in smb.conf to manually configure your IP
+address, broadcast and netmask. 
+
+If your PC and server aren't on the same subnet then you will need to
+use the -B option to set the broadcast address to the that of the PCs
+subnet.
+
+This test will probably fail if your subnet mask and broadcast address are
+not correct. (Refer to TEST 3 notes above).
+
+TEST 7:
+-------
+
+Run the command "smbclient //BIGSERVER/TMP". You should then be
+prompted for a password. You should use the password of the account
+you are logged into the unix box with. If you want to test with
+another account then add the -U <accountname> option to the end of
+the command line.  eg: smbclient //bigserver/tmp -Ujohndoe
+
+Note: It is possible to specify the password along with the username
+as follows:
+	smbclient //bigserver/tmp -Ujohndoe%secret
+
+Once you enter the password you should get the "smb>" prompt. If you
+don't then look at the error message. If it says "invalid network
+name" then the service "tmp" is not correctly setup in your smb.conf.
+
+If it says "bad password" then the likely causes are:
+
+- you have shadow passords (or some other password system) but didn't
+compile in support for them in smbd
+- your "valid users" configuration is incorrect
+- you have a mixed case password and you haven't enabled the "password
+level" option at a high enough level
+- the "path =" line in smb.conf is incorrect. Check it with testparm
+- you enabled password encryption but didn't create the SMB encrypted
+password file
+- The uid for the user in smbpasswd is different from that in /etc/passwd.
+
+If none of these causes appear to be the problem, check the
+samba logs in the log directory (typically /usr/local/samba/var) for more details.
+
+Once connected you should be able to use the commands "dir" "get"
+"put" etc. Type "help <command>" for instructions. You should
+especially check that the amount of free disk space shown is correct
+when you type "dir".
+
+
+TEST 8:
+-------
+
+On the PC type the command "net view \\BIGSERVER". You will need to do
+this from within a "dos prompt" window. You should get back a list of
+available shares on the server.
+
+If you get a "network name not found" or similar error then netbios
+name resolution is not working. This is usually caused by a problem in
+nmbd. To overcome it you could do one of the following (you only need
+to choose one of them):
+
+- fixup the nmbd installation
+- add the IP address of BIGSERVER to the "wins server" box in the
+advanced tcp/ip setup on the PC.
+- enable windows name resolution via DNS in the advanced section of
+the tcp/ip setup
+- add BIGSERVER to your lmhosts file on the PC.
+
+If you get a "invalid network name" or "bad password error" then the
+same fixes apply as they did for the "smbclient -L" test above. In
+particular, make sure your "hosts allow" line is correct (see the man
+pages)
+
+Also, do not overlook that fact that when the workstation requests the
+connection to the samba server it will attempt to connect using the 
+name with which you logged onto your Windows machine. You need to make
+sure that an account exists on your Samba server with that exact same
+name and password.
+
+If you get "specified computer is not receiving requests" or similar
+it probably means that the host is not contactable via tcp services.
+Check to see if the host is running tcp wrappers, and if so add an entry in
+the hosts.allow file for your client (or subnet, etc.)
+
+
+TEST 9:
+--------
+
+Run the command "net use x: \\BIGSERVER\TMP". You should be prompted
+for a password then you should get a "command completed successfully"
+message. If not then your PC software is incorrectly installed or your
+smb.conf is incorrect. make sure your "hosts allow" and other config
+lines in smb.conf are correct.
+
+It's also possible that the server can't work out what user name to
+connect you as. To see if this is the problem add the line "user =
+USERNAME" to the [tmp] section of smb.conf where "USERNAME" is the
+username corresponding to the password you typed. If you find this
+fixes things you may need the username mapping option.
+
+TEST 10:
+--------
+
+Run the command "nmblookup -M TESTGROUP" where TESTGROUP is the name
+of the workgroup that your Samba server and Windows PCs belong to. You
+should get back the IP address of the master browser for that
+workgroup.
+
+If you don't then the election process has failed. Wait a minute to
+see if it is just being slow then try again. If it still fails after
+that then look at the browsing options you have set in smb.conf. Make
+sure you have "preferred master = yes" to ensure that an election is
+held at startup.
+
+TEST 11:
+--------
+
+From file manager try to browse the server. Your samba server should
+appear in the browse list of your local workgroup (or the one you
+specified in smb.conf). You should be able to double click on the name
+of the server and get a list of shares. If you get a "invalid
+password" error when you do then you are probably running WinNT and it
+is refusing to browse a server that has no encrypted password
+capability and is in user level security mode. In this case either set
+"security = server" AND "password server = Windows_NT_Machine" in your
+smb.conf file, or enable encrypted passwords AFTER compiling in support
+for encrypted passwords (refer to the Makefile).
+
+
+Still having troubles?
+----------------------
+
+Try the mailing list or newsgroup, or use the tcpdump-smb utility to
+sniff the problem. The official samba mailing list can be reached at
+samba@samba.org. To find out more about samba and how to
+subscribe to the mailing list check out the samba web page at
+              http://samba.org/samba
+
+Also look at the other docs in the Samba package!
+

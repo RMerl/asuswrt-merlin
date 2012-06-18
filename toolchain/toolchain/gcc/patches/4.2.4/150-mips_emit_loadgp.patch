@@ -1,0 +1,47 @@
+http://gcc.gnu.org/viewcvs?view=revision&sortby=date&revision=136407
+
+2008-06-05  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* config/mips/mips.c (mips_emit_loadgp): Return early if
+	there is nothing do to, otherwise emit a blockage if
+	!TARGET_EXPLICIT_RELOCS || current_function_profile.
+	* config/mips/mips.md (loadgp_blockage): Use SI rather than DI.
+
+--- gcc-4_2-branch/gcc/config/mips/mips.c	2008/06/05 15:47:17	136406
++++ gcc-4_2-branch/gcc/config/mips/mips.c	2008/06/05 16:33:42	136407
+@@ -6709,13 +6709,16 @@
+       offset = mips_unspec_address (addr, SYMBOL_GOTOFF_LOADGP);
+       incoming_address = gen_rtx_REG (Pmode, PIC_FUNCTION_ADDR_REGNUM);
+       emit_insn (gen_loadgp (offset, incoming_address));
+-      if (!TARGET_EXPLICIT_RELOCS)
+-	emit_insn (gen_loadgp_blockage ());
+       break;
+ 
+     default:
+-      break;
++      return;
+     }
++  /* Emit a blockage if there are implicit uses of the GP register.
++     This includes profiled functions, because FUNCTION_PROFILE uses
++     a jal macro.  */
++  if (!TARGET_EXPLICIT_RELOCS || current_function_profile)
++    emit_insn (gen_loadgp_blockage ());
+ }
+ 
+ /* Set up the stack and frame (if desired) for the function.  */
+--- gcc-4_2-branch/gcc/config/mips/mips.md	2008/06/05 15:47:17	136406
++++ gcc-4_2-branch/gcc/config/mips/mips.md	2008/06/05 16:33:42	136407
+@@ -4037,12 +4037,11 @@
+ }
+   [(set_attr "length" "8")])
+ 
+-;; The use of gp is hidden when not using explicit relocations.
+ ;; This blockage instruction prevents the gp load from being
+ ;; scheduled after an implicit use of gp.  It also prevents
+ ;; the load from being deleted as dead.
+ (define_insn "loadgp_blockage"
+-  [(unspec_volatile [(reg:DI 28)] UNSPEC_BLOCKAGE)]
++  [(unspec_volatile [(reg:SI 28)] UNSPEC_BLOCKAGE)]
+   ""
+   ""
+   [(set_attr "type"	"unknown")

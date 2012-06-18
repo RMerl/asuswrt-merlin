@@ -1,0 +1,149 @@
+!==
+!== Printing.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:	Unknown <samba@samba.org>
+Date:		Unknown
+Status:		Current
+
+Subject:	Dubugging Printing Problems
+=============================================================================
+
+This is a short description of how to debug printing problems with
+Samba. This describes how to debug problems with printing from a SMB
+client to a Samba server, not the other way around. For the reverse
+see the examples/printing directory.
+
+Please send enhancements to this file to samba@samba.org
+
+Ok, so you want to print to a Samba server from your PC. The first
+thing you need to understand is that Samba does not actually do any
+printing itself, it just acts as a middleman between your PC client
+and your Unix printing subsystem. Samba receives the file from the PC
+then passes the file to a external "print command". What print command
+you use is up to you.
+
+The whole things is controlled using options in smb.conf. The most
+relevant options (which you should look up in the smb.conf man page)
+are:
+        print command
+        lpq command
+        lprm command
+
+Samba should set reasonable defaults for these depending on your
+system type, but it isn't clairvoyant. It is not uncommon that you
+have to tweak these for local conditions.
+
+On my system I use the following settings:
+
+        print command = lpr -r -P%p %s
+        lpq command = lpq -P%p
+        lprm command = lprm -P%p %j
+
+The % bits are "macros" that get dynamically replaced with variables
+when they are used. The %s gets replaced with the name of the spool
+file that Samba creates and the %p gets replaced with the name of the
+printer. The %j gets replaced with the "job number" which comes from
+the lpq output.
+
+When I'm debugging printing problems I often replace these command
+with pointers to shell scripts that record the arguments, and the
+contents of the print file. A simple example of this kind of things
+might be:
+
+	print command = cp %s /tmp/tmp.print
+
+then you print a file and look at the /tmp/tmp.print file to see what
+is produced. Try printing this file with lpr. Does it work? If not
+then the problem is with your lpr system, not with Samba. Often
+people have problems with their /etc/printcap file or permissions on
+various print queues. 
+
+Another common problem is that /dev/null is not world writeable. Yes,
+amazing as it may seem, some systems make /dev/null only writeable by
+root. Samba uses /dev/null as a place to discard output from external
+commands like the "print command" so if /dev/null is not writeable
+then nothing will work.
+
+Other really common problems:
+
+- lpr isn't in the search path when Samba tries to run it. Fix this by
+using the full path name in the "print command"
+
+- the user that the PC is trying to print as doesn't have permission
+to print. Fix your lpr system.
+
+- you get an extra blank page of output. Fix this in your lpr system,
+probably by editing /etc/printcap. It could also be caused by
+incorrect setting on your client. For example, under Win95 there is a
+option Printers|Printer Name|(Right
+Click)Properties|Postscript|Advanced| that allows you to choose if a
+Ctrl-D is appended to all jobs. This will affect if a blank page is
+output. 
+
+- you get raw postscript instead of nice graphics on the output. Fix
+this either by using a "print command" that cleans up the file before
+sending it to lpr or by using the "postscript" option in smb.conf.
+
+Note that you can do some pretty magic things by using your
+imagination with the "print command" option and some shell
+scripts. Doing print accounting is easy by passing the %U option to a
+print command shell script. You could even make the print command
+detect the type of output and its size and send it to an appropriate
+printer. 
+
+If the above debug tips don't help, then maybe you need to bring in
+the bug gun, system tracing. See Tracing.txt in this directory.
+
+=====================================================================
+From Caldera Inc., the following documentation has been
+contributed. Note that it contains stuff that is only relevant on some
+systems (specifically Caldera OpenLinux systems).
+
+
+8.6 Setting up a raw SAMBA printer.
+
+Note: this is not a guide on setting up SAMBA. It merely addresses
+creating a printer configuration that will allow the output of regular
+(i.e. not PostScript) Windows printer drivers to print through SAMBA.
+
+Regular Windows printer drivers can be used to print via SAMBA, but
+you must set up a raw printer entry in "/etc/printcap" to accomplish
+this. Also, a print command will need to be specified in
+"/etc/smb.conf" that forces binary printing.
+
+The best way to start is to use printtool under X to create a new
+entry specifically for this printer. All you really need for it to do
+is create the necessary directories and set the permissions correctly,
+so don't worry about setting up a filter for a specific printer.
+Filters are not going to be used at all for this entry.
+
+Next, go into "/etc" and edit the printcap entry you just created,
+changing it to look like this (if you named it something other than
+raw, the entry name and spool directory should be changed here to
+match):
+
+raw:\
+	:rw:sh: \
+	:lp=/dev/lp1: \
+	:sd=/var/spool/lpd/raw: \
+	:fx=flp:
+
+When this is done and saved, edit the section of the smb.conf file
+that applies to the printer. Make sure the name of the section
+(enclosed in brackets) matches the name of the raw printer you just
+set up, then go down a line or two and add this line:
+ 
+print command = lpr -b -P%p %s
+
+Save the file, change to "/etc/rc.d/init.d", and type the following
+commands to restart the necessary daemons:
+
+./lpd stop
+./lpd start
+./smb stop
+./smb start
+
+At this point you should be ready to use the various printer drivers on
+your Windows clients for printing.
+=============================================================================
+

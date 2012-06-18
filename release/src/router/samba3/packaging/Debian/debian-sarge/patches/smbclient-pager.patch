@@ -1,0 +1,12 @@
+diff -uNr samba-2.999+3.0cvs20020906.orig/source/include/local.h samba-2.999+3.0cvs20020906/source/include/local.h
+--- samba-2.999+3.0cvs20020906.orig/source/include/local.h	2002-09-04 14:13:06.000000000 -0500
++++ samba-2.999+3.0cvs20020906/source/include/local.h	2002-09-08 14:19:24.000000000 -0500
+@@ -109,7 +109,7 @@
+ /* the default pager to use for the client "more" command. Users can
+    override this with the PAGER environment variable */
+ #ifndef PAGER
+-#define PAGER "more"
++#define PAGER "/usr/bin/pager"
+ #endif
+ 
+ /* the size of the uid cache used to reduce valid user checks */

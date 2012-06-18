@@ -1,0 +1,167 @@
+mailto(samba@samba.org) 
+
+manpage(nmblookup htmlcommand((1)))(1)(23 Oct 1998)(Samba)(SAMBA)
+
+label(NAME)
+manpagename(nmblookup)(NetBIOS over TCP/IP client used to lookup NetBIOS names)
+
+label(SYNOPSIS)
+manpagesynopsis() 
+
+bf(nmblookup) [link(-M)(minusM)] [link(-R)(minusR)] [link(-S)(minusS)] [link(-r)(minusr)] [link(-A)(minusA)] [link(-h)(minush)] [link(-B broadcast address)(minusB)] [link(-U unicast address)(minusU)] [link(-d debuglevel)(minusd)] [link(-s smb config file)(minuss)] [link(-i NetBIOS scope)(minusi)] [link(-T)(minusT)] link(name)(name)
+
+label(DESCRIPTION)
+manpagedescription()
+
+This program is part of the bf(Samba) suite.
+
+bf(nmblookup) is used to query NetBIOS names and map them to IP
+addresses in a network using NetBIOS over TCP/IP queries. The options
+allow the name queries to be directed at a particular IP broadcast area
+or to a particular machine. All queries are done over UDP.
+
+label(OPTIONS)
+manpageoptions()
+
+startdit()
+
+label(minusM)
+dit(bf(-M)) Searches for a master browser by looking up the 
+NetBIOS name link(bf(name))(name) with a type of 0x1d. If link(bf(name))(name)
+is tt("-") then it does a lookup on the special name tt(__MSBROWSE__).
+
+label(minusR)
+dit(bf(-R)) Set the recursion desired bit in the packet to do a
+recursive lookup. This is used when sending a name query to a machine
+running a WINS server and the user wishes to query the names in the
+WINS server.  If this bit is unset the normal (broadcast responding)
+NetBIOS processing code on a machine is used instead. See rfc1001,
+rfc1002 for details.
+
+label(minusS)
+dit(bf(-S)) Once the name query has returned an IP address then do a
+node status query as well. A node status query returns the NetBIOS names 
+registered by a host.
+
+label(minusr)
+dit(bf(-r)) Try and bind to UDP port 137 to send and receive UDP
+datagrams. The reason for this option is a bug in Windows 95 where it
+ignores the source port of the requesting packet and only replies to
+UDP port 137. Unfortunately, on most UNIX systems root privilage is
+needed to bind to this port, and in addition, if the
+url(bf(nmbd))(nmbd.8.html) daemon is running on this machine it also
+binds to this port.
+
+label(minusA)
+dit(bf(-A)) Interpret <name> as an IP Address and do a node status
+query on this address.
+
+label(minush)
+dit(bf(-h)) Print a help (usage) message.
+
+label(minusB)
+dit(bf(-B broadcast address)) Send the query to the given broadcast
+address. Without this option the default behavior of nmblookup is to
+send the query to the broadcast address of the network
+interfaces as either auto-detected or defined in the 
+url(bf(interfaces))(smb.conf.5.html#interfaces) parameter of the 
+url(bf(smb.conf (5)))(smb.conf.5.html) file.
+
+label(minusU)
+dit(bf(-U unicast address)) Do a unicast query to the specified
+address or host tt("unicast address"). This option (along with the
+link(bf(-R))(minusR) option) is needed to query a WINS server.
+
+label(minusd)
+dit(bf(-d debuglevel)) debuglevel is an integer from 0 to 10.
+
+The default value if this parameter is not specified is zero.
+
+The higher this value, the more detail will be logged about the
+activities of bf(nmblookup). At level 0, only critical errors and
+serious warnings will be logged.
+
+Levels above 1 will generate considerable amounts of log data, and
+should only be used when investigating a problem. Levels above 3 are
+designed for use only by developers and generate HUGE amounts of
+data, most of which is extremely cryptic.
+
+Note that specifying this parameter here will override the url(bf(log
+level))(smb.conf.5.html#loglevel) parameter in the url(bf(smb.conf
+(5)))(smb.conf.5.html) file.
+
+label(minuss)
+dit(bf(-s smb.conf)) This parameter specifies the pathname to the
+Samba configuration file, url(bf(smb.conf))(smb.conf.5.html). 
+This file controls all aspects of
+the Samba setup on the machine.
+
+label(minusi)
+dit(bf(-i scope)) This specifies a NetBIOS scope that bf(nmblookup) will use
+to communicate with when generating NetBIOS names. For details on the
+use of NetBIOS scopes, see rfc1001.txt and rfc1002.txt. NetBIOS scopes
+are em(very) rarely used, only set this parameter if you are the
+system administrator in charge of all the NetBIOS systems you
+communicate with.
+
+label(minusT)
+dit(bf(-T)) This causes any IP addresses found in the lookup to be
+looked up via a reverse DNS lookup into a DNS name, and printed out
+before each tt("IP address   NetBIOS name") pair that is the normal
+output.
+
+label(name)
+dit(bf(name)) This is the NetBIOS name being queried. Depending upon
+the previous options this may be a NetBIOS name or IP address. If a
+NetBIOS name then the different name types may be specified by
+appending tt(#<type>) to the name. This name may also be tt("*"),
+which will return all registered names within a broadcast area.
+
+enddit()
+
+label(EXAMPLES)
+manpagesection(EXAMPLES)
+
+bf(nmblookup) can be used to query a WINS server (in the same way
+bf(nslookup) is used to query DNS servers). To query a WINS server,
+bf(nmblookup) must be called like this:
+
+tt(nmblookup -U server -R 'name')
+
+For example, running :
+
+tt(nmblookup -U samba.org -R IRIX#1B')
+
+would query the WINS server samba.org for the domain master
+browser (1B name type) for the IRIX workgroup.
+
+label(VERSION)
+manpagesection(VERSION)
+
+This man page is correct for version 2.0 of the Samba suite.
+
+label(SEEALSO)
+manpageseealso()
+
+url(bf(samba (7)))(samba.7.html), url(bf(nmbd (8)))(nmbd.8.html),
+url(bf(smb.conf (5)))(smb.conf.5.html)
+
+label(AUTHOR)
+manpageauthor()
+
+The original Samba software and related utilities were created by
+Andrew Tridgell email(samba@samba.org). Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+
+The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+url(bf(ftp://ftp.icce.rug.nl/pub/unix/))(ftp://ftp.icce.rug.nl/pub/unix/))
+and updated for the Samba2.0 release by Jeremy Allison.
+email(samba@samba.org).
+
+See url(bf(samba (7)))(samba.7.html) to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+

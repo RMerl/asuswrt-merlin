@@ -1,0 +1,202 @@
+#          KERBEROS 5 and the Horror!  Oh, the Horror!
+# 
+#   Patrick ("Don't go there... or carry a lute and sing very softly") Powell
+# 
+# OK, if you are reading this, you are tough enough to take it.
+# 
+# Get the latest version of kerberos
+# 
+#   http://web.mit.edu/kerberos/www/
+#     and follow links.
+# 
+# Compile/Install kerberos
+#   - this is for 1.2.4, but should be same
+# 
+#  tar xf krb5-1.2.4.tar       
+#      -- unpacks the dist and you get signature + dist
+#  tar zxf krb5-1.2.4.tar.gz      
+#  cd krb5-1.2.4
+# 
+# --- the README
+#  more README -- for latest dope, if any
+# 
+# --- the documents
+#  gv doc/install-guide.ps         -- the real stuff 
+#  gv doc/admin-guide.ps
+#  gv doc/user-guide.ps
+# 
+# ---- but since you have not read them, you will need to know:
+# a) your realm (I use 'LPRNG.COM')
+# b) the secret password for the key distribution server
+#        - write this down... :-)
+# c) a ready source of asprin or ibuprofin
+# 
+# -----
+#  USE GMAKE repeat GNU Make!!!
+# 
+#   cd src
+#   ./configure
+#   gmake           (and a LOOONG pause.  Coffee time)
+#   gmake check     (and an even longer pause)
+# 
+#   su
+#   gmake install
+# 
+# ----------
+# 
+# --- here is the default /etc/krb5.conf file:
+# 
+#      [libdefaults]
+#          ticket_lifetime = 600
+#          default_realm = ATHENA.MIT.EDU
+#          default_tkt_enctypes = des3-hmac-sha1 des-cbc-crc
+#          default_tgs_enctypes = des3-hmac-sha1 des-cbc-crc
+#  
+#      [realms]
+#          ATHENA.MIT.EDU = {
+#              kdc = kerberos.mit.edu:88
+#              kdc = kerberos-1.mit.edu:88
+#              kdc = kerberos-2.mit.edu:88
+#              admin_server = kerberos.mit.edu:749
+#              default_domain = mit.edu
+#          }
+#  
+#      [domain_realm]
+#          .mit.edu = ATHENA.MIT.EDU
+#          mit.edu = ATHENA.MIT.EDU
+#  
+#      [logging]
+#          kdc = FILE:/var/log/krb5kdc.log
+#          admin_server = FILE:/var/log/kadmin.log
+#          default = FILE:/var/log/krb5lib.log
+# ---- after editting:
+# 
+# [libdefaults]
+#  ticket_lifetime = 600
+#  default_realm = ASTART.COM
+#  default_tkt_enctypes = des3-hmac-sha1 des-cbc-crc
+#  default_tgs_enctypes = des3-hmac-sha1 des-cbc-crc
+# 
+# [realms]
+#  ASTART.COM = {
+# 	 kdc = h110.private:88
+# 	 admin_server = h110.private:749
+# 	 default_domain = private
+#  }
+# 
+# [domain_realm]
+#  .private = ASTART.COM
+#  private = ASTART.COM
+#  .astart.com = ASTART.COM
+#  astart.com = ASTART.COM
+# 
+# [logging]
+#  kdc = FILE:/var/log/krb5kdc.log
+#  admin_server = FILE:/var/log/kadmin.log
+#  default = FILE:/var/log/krb5lib.log
+# 
+# --------------- default /usr/local/var/krb5kdc/kdc.conf
+# 
+#      [kdcdefaults]
+#          kdc_ports = 88,750
+#  
+#      [realms]
+#          ATHENA.MIT.EDU = {
+#              database_name = /usr/local/var/krb5kdc/principal
+#              admin_keytab = /usr/local/var/krb5kdc/kadm5.keytab
+#              acl_file = /usr/local/var/krb5kdc/kadm5.acl
+#              dict_file = /usr/local/var/krb5kdc/kadm5.dict
+#              key_stash_file = /usr/local/var/krb5kdc/.k5.ATHENA.MIT.EDU
+#              kadmind_port = 749
+#              max_life = 10h 0m 0s
+#              max_renewable_life = 7d 0h 0m 0s
+#              master_key_type = des3-hmac-sha1
+#              supported_enctypes = des3-hmac-sha1:normal des-cbc-crc:normal
+#          }
+#  
+# To add Kerberos V4 support, add `des-cbc-crc:v4' to the
+# `supported_enctypes' line.
+# 
+# -------------- after editting it:
+# 
+# [kdcdefaults]
+#  kdc_ports = 88,750
+# 
+# [realms]
+#  ASTART.COM = {
+# 	 database_name = /usr/local/var/krb5kdc/principal
+# 	 admin_keytab = /usr/local/var/krb5kdc/kadm5.keytab
+# 	 acl_file = /usr/local/var/krb5kdc/kadm5.acl
+# 	 dict_file = /usr/local/var/krb5kdc/kadm5.dict
+# 	 key_stash_file = /usr/local/var/krb5kdc/.k5.ASTART.COM
+# 	 kadmind_port = 749
+# 	 max_life = 10h 0m 0s
+# 	 max_renewable_life = 7d 0h 0m 0s
+# 	 master_key_type = des3-hmac-sha1
+# 	 supported_enctypes = des3-hmac-sha1:normal des-cbc-crc:normal des-cbc-crc:v4
+#  }
+# 
+# -------- now create database:
+# 
+echo "create database"
+kdb5_util create -r ASTART.COM -s
+#    (you will need the password)
+# 
+# ------- create ACL
+# 
+echo "creating acl"
+echo "*/admin@ASTART.COM *" >/usr/local/var/krb5kdc/kadm5.acl
+# -- now run kadmin:
+#
+echo "
+Add principle commands.  Change papowell and host h110.private
+to the apprpriate ones for your site:
+
+addprinc admin/admin@ASTART.COM  
+addprinc papowell/admin@ASTART.COM  
+addprinc papowell
+
+--- for the host
+addprinc -randkey host/h110.private
+
+--- for kadmin to use
+ktadd host/h110.private
+
+ --- this is for the printer
+addprinc -randkey lpd/h110.private
+ktadd -k /etc/lpd.h110.private lpd/h110.private
+ktadd -k /usr/local/var/krb5kdc/kadm5.keytab  kadmin/admin kadmin/changepw
+quit
+"
+kadmin.local
+
+cp /etc/lpd.h110.private /etc/lpd.krb
+
+# change the perms on /etc/lpr.krb5
+# cp /etc/lpr.krb5 /etc/lpr.krb5.public
+# chown papowell /etc/lpr.krb5.public
+
+############
+echo "start servers"
+krb5kdc
+cat /var/log/krb5kdc.log
+kadmind
+cat /var/log/kadmind.log
+
+############
+#
+# Here is the printcap
+#
+# lp
+#  :auth=kerberos5
+#  :kerberos_id=lpd/h110.private
+#  :kerberos_keytab=/etc/lpd.krb
+#  :lp=/dev/null
+#  :sd=/var/spool/lpd
+#
+#  set this up, and then do:
+#     checkpc -f
+#     kinit   (you may have to specify a principle)
+#     lpq
+# Enjoy
+#

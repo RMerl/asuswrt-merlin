@@ -1,0 +1,200 @@
+.\"	$KAME: dhcp6ctl.8,v 1.4 2005/05/03 06:25:48 jinmei Exp $
+.\"
+.\" Copyright (C) 2004 WIDE Project.
+.\" All rights reserved.
+.\" 
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the project nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd September 7, 2004
+.Dt DHCP6CTL 8
+.Os KAME
+.Sh NAME
+.Nm dhcp6ctl
+.Nd DHCPv6 client and server control utility
+.\"
+.Sh SYNOPSIS
+.Nm
+.Op Fl C \(ba Fl S
+.Op Fl k Ar keyfile
+.Op Fl p Ar port
+.Op Fl s Ar address
+.Ic command
+.\"
+.Sh DESCRIPTION
+.Nm
+controls the operation of a DHCPv6 process,
+which is either
+.Nm dhcp6c
+or
+.Nm dhcp6s ,
+a DHCPv6 client or a server.
+By default,
+.Nm
+controls a client.
+The type of the process can also be specified explicitly by the
+.Fl C
+or
+.Fl S
+options.
+.Pp
+.Nm
+communicates with the DHCPv6 process over a TCP connection,
+sending commands authenticated with digital signatures.
+Currently,
+the only supported authentication algorithm is
+HMAC-MD5,
+which uses a shared secret on each end of the connection.
+.Pp
+Command line options are as below:
+.Bl -tag -width indent
+.\"
+.It Fl C
+Control a DHCPv6 client.
+This option is exclusive with the
+.Fl S
+option.
+.It Fl S
+Control a DHCPv6 server.
+This option is exclusive with the
+.Fl C
+option.
+.It Fl k Ar keyfile
+Use
+.Ar keyfile
+to provide the shared secret to communicate with the process.
+The default file name used when unspecified is
+.Pa /usr/local/etc/dhcp6cctlkey
+with a client,
+and
+.Pa /usr/local/etc/dhcp6sctlkey
+with a server.
+
+.It Fl p Ar port
+Specify
+.Ar port
+as the listening port of the process.
+The default port number used when unspecified is 5546 for a client,
+and 5547 for a server.
+.It Fl s Ar address
+Specify
+.A address
+as the listening address of the process.
+The default address used when unspecified is ::1.
+.El
+.\"
+.Sh KEY FILE
+Since the operation available with the
+.Nm
+command is powerful,
+the communication between the command and
+.Nm dhcp6c
+or
+.Nm dhcp6s
+must be authenticated.
+The supported algorithm for authentication is HMAC-MD5,
+which requires a shared secret,
+and the secret is stored in the key file.
+The key file must consist of a single line, in which the secret value
+is written in the form of BASE-64 encoding.
+.\"
+.Sh COMMANDS
+Each
+.Ic command
+specifies a single control operation.
+Supported commands are as follows:
+.Pp
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic reload
+.Xc
+This command specifies the process to reload the configuration file.
+Existing bindings, if any, are intact.
+.It Xo
+.Ic remove Ar arguments
+.Xc
+This command is only applicable to a server.
+This specifies the server to remove a run-time object
+specified by
+.Ar arguments
+from the server.
+Currently, the only possible object is one particular IA_NA or IA_PD
+binding, which is specified as
+.Ql Ic binding IA Ic IA_NA Ar IAID Ar DUID
+or
+.Ql Ic binding IA Ic IA_PD Ar IAID Ar DUID
+where
+.Ar IAID
+is a decimal number specifying the IAID of the IA,
+and
+.Ar DUID
+is a DHCP Unique Identifier of the binding.
+The format of
+.Ar DUID
+is the same as that specified in
+.Xr dhcp6s.conf 5 .
+.It Xo
+.Ic start Ic interface Ar ifname
+.Xc
+This command is only applicable to a client.
+It tells the client to release the current configuration information
+(if any) on the interface
+.Ar ifname
+and restart the DHCPv6 configuration process on the interface.
+.It Xo
+.Ic stop Ic interface Ar ifname
+.Xc
+This command is only applicable to a client.
+It tells the client to release the current configuration information
+(if any) on the interface
+.Ar ifname .
+Any timer running for the interface will be stopped,
+and no more DHCPv6 messages will be sent on the interface.
+The configuration process can later be restarted by the
+.Ic start
+command.
+.It Xo
+.Ic stop
+.Xc
+This command stops the specified process.
+If the process is a client, it will release all configuration
+information (if any) and exits.
+.El
+.\"
+.Sh FILES
+.Bl -tag -width /usr/local/etc/dhcp6cctlkey -compact
+.It Pa /usr/local/etc/dhcp6cctlkey
+is the default key file to communicate with a client.
+.It Pa /usr/local/etc/dhcp6sctlkey
+is the default key file to communicate with a server.
+.El
+.\"
+.Sh SEE ALSO
+.Xr dhcp6s.conf 5
+.Xr dhcp6s 8
+.\"
+.Sh HISTORY
+The
+.Nm
+command first appeared in WIDE/KAME IPv6 protocol stack kit.

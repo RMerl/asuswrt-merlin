@@ -1,0 +1,13 @@
+This is madWiMAX, a reverse-engineered Linux driver for mobile WiMAX
+(802.16e) devices based on Samsung CMC-730 chip.
+
+madWiMAX is provided "as is" with no warranty. The exact terms
+under which you may use and (re)distribute this program are detailed
+in the GNU General Public License, in the file COPYING.
+
+See the file INSTALL for compilation and installation instructions.
+
+See the file NEWS for a description of major changes in this release.
+
+See the file TODO for ideas on how you could help us improve madWiMAX.
+

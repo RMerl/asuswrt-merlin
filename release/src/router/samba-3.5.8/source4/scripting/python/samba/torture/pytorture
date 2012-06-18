@@ -1,0 +1,51 @@
+#!/usr/bin/python
+
+import sys
+from optparse import OptionParser
+
+# Parse command line
+
+parser = OptionParser()
+
+parser.add_option("-b", "--binding", action="store", type="string",
+                  dest="binding")
+
+parser.add_option("-d", "--domain", action="store", type="string",
+                  dest="domain")
+
+parser.add_option("-u", "--username", action="store", type="string",
+                  dest="username")
+
+parser.add_option("-p", "--password", action="store", type="string",
+                  dest="password")
+
+(options, args) = parser.parse_args()
+
+if not options.binding:
+   parser.error('You must supply a binding string')
+
+if not options.username or not options.password or not options.domain:
+   parser.error('You must supply a domain, username and password')
+
+binding = options.binding
+domain = options.domain
+username = options.username
+password = options.password
+
+if len(args) == 0:
+   parser.error('You must supply the name of a module to test')
+
+# Import and test
+
+for test in args:
+
+   try:
+      module = __import__('torture_%s' % test)
+   except ImportError:
+      print 'No such module "%s"' % test
+      sys.exit(1)
+
+   if not hasattr(module, 'runtests'):
+      print 'Module "%s" does not have a runtests function' % test
+
+   module.runtests(binding, (domain, username, password))

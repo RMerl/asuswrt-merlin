@@ -1,0 +1,39 @@
+#!/usr/bin/perl -spi
+# turn mirror list into http links
+
+BEGIN{
+	use FileHandle;
+	$f = <<'EOF' ;
+<!-- MIRRORSTART -->
+<para>Mirrors:<!-- <br> -->
+<simplelist type=vert columns=1>
+EOF
+
+	my $MIRRORS = shift;
+	if( not $MIRRORS or not $ARGV[0] ){
+		print STDERR "use: $0 Mirrorlist Updatefile\n";
+		exit 1;
+	}
+	my($m);
+	$m = FileHandle->new("<$MIRRORS") or die "cannot open $MIRRORS";
+	while( <$m> ){
+		my ($site,$where) = split;
+		$f .= <<EOF ;
+<member><ulink URL="$site">$site</ulink> $where </member>
+EOF
+	}
+	close($m);
+	$f .= <<'EOF' ;
+</simplelist>
+</para>
+<!-- MIRROREND -->
+EOF
+}
+
+if( /MIRRORSTART/../MIRROREND/ ){
+	$_ = "";
+	if( !$done ){
+		print $f;
+		$done = 1;
+	}
+}

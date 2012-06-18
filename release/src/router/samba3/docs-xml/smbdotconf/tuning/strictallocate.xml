@@ -1,0 +1,24 @@
+<samba:parameter name="strict allocate"
+                 context="S"
+				 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>This is a boolean that controls the handling of 
+    disk space allocation in the server. When this is set to <constant>yes</constant> 
+    the server will change from UNIX behaviour of not committing real
+    disk storage blocks when a file is extended to the Windows behaviour
+    of actually forcing the disk system to allocate real storage blocks
+    when a file is created or extended to be a given size. In UNIX
+    terminology this means that Samba will stop creating sparse files.
+    This can be slow on some systems.</para>
+
+    <para>When strict allocate is <constant>no</constant> the server does sparse
+    disk block allocation when a file is extended.</para>
+
+    <para>Setting this to <constant>yes</constant> can help Samba return
+    out of quota messages on systems that are restricting the disk quota
+    of users.</para>
+</description>
+
+<value type="default">no</value>
+</samba:parameter>

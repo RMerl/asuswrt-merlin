@@ -1,0 +1,20 @@
+#***********************************************************************
+#
+# Makefile
+#
+#***********************************************************************
+CC = gcc
+
+CFLAGS = -g -rdynamic
+LIBS = -lcurl -lxml2 -lssl -lcrypto
+
+all: asuswebstorage
+#all: inotify
+
+#https: https.o md5.o urlencode.o oauth.o oauth_http.o xmalloc.o
+asuswebstorage: asuswebstorage.o api.o function.o 
+	$(CC) $(CFLAGS) $(LIBS)  $^ -o $@ 
+
+.PHONY: clean
+clean:
+	-rm -rf *.o asuswebstorage

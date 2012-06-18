@@ -1,0 +1,59 @@
+{
+    IBClasses = (
+        {
+            ACTIONS = {
+                addBrowseDomainClicked = id; 
+                applyClicked = id; 
+                changeButtonPressed = id; 
+                closeMyCustomSheet = id; 
+                comboAction = id; 
+                enableBrowseDomainClicked = id; 
+                removeBrowseDomainClicked = id; 
+                revertClicked = id; 
+                wideAreaCheckBoxChanged = id; 
+            }; 
+            CLASS = DNSServiceDiscoveryPref; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                addBrowseDomainButton = NSButton; 
+                addBrowseDomainWindow = NSWindow; 
+                applyButton = NSButton; 
+                browseCancelButton = NSButton; 
+                browseDomainList = NSTableView; 
+                browseDomainsComboBox = NSComboBox; 
+                browseOKButton = NSButton; 
+                comboAuthButton = SFAuthorizationView; 
+                hostName = NSTextField; 
+                hostNameSharedSecretButton = NSButton; 
+                regDomainsComboBox = NSComboBox; 
+                registrationSharedSecretButton = NSButton; 
+                removeBrowseDomainButton = NSButton; 
+                revertButton = NSButton; 
+                secretCancelButton = NSButton; 
+                secretOKButton = NSButton; 
+                sharedSecretName = NSTextField; 
+                sharedSecretValue = NSSecureTextField; 
+                sharedSecretWindow = NSWindow; 
+                statusImageView = NSImageView; 
+                tabView = NSTabView; 
+                wideAreaCheckBox = NSButton; 
+            }; 
+            SUPERCLASS = NSPreferencePane; 
+        }, 
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {
+            CLASS = NSPreferencePane; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                "_firstKeyView" = id; 
+                "_initialKeyView" = id; 
+                "_lastKeyView" = id; 
+                "_window" = id; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {CLASS = NSSegmentedControl; LANGUAGE = ObjC; SUPERCLASS = NSControl; }, 
+        {CLASS = SFAuthorizationView; LANGUAGE = ObjC; SUPERCLASS = NSView; }
+    ); 
+    IBVersion = 1; 
+}

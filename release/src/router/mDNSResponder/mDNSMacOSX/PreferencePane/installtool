@@ -1,0 +1,107 @@
+#!/usr/bin/perl
+# Emacs settings: -*- tab-width: 4 -*-
+#
+# File: installtool
+# 
+# Abstract: Copy "ddnswriteconfig" to Application Support and make it setuid root.
+# 
+# Copyright: (c) Copyright 2005 Apple Computer, Inc. All rights reserved.
+# 
+# Disclaimer: IMPORTANT: This Apple software is supplied to you by Apple Computer, Inc.
+# ("Apple") in consideration of your agreement to the following terms, and your
+# use, installation, modification or redistribution of this Apple software
+# constitutes acceptance of these terms.  If you do not agree with these terms,
+# please do not use, install, modify or redistribute this Apple software.
+# 
+# In consideration of your agreement to abide by the following terms, and subject
+# to these terms, Apple grants you a personal, non-exclusive license, under Apple's
+# copyrights in this original Apple software (the "Apple Software"), to use,
+# reproduce, modify and redistribute the Apple Software, with or without
+# modifications, in source and/or binary forms; provided that if you redistribute
+# the Apple Software in its entirety and without modifications, you must retain
+# this notice and the following text and disclaimers in all such redistributions of
+# the Apple Software.  Neither the name, trademarks, service marks or logos of
+# Apple Computer, Inc. may be used to endorse or promote products derived from the
+# Apple Software without specific prior written permission from Apple.  Except as
+# expressly stated in this notice, no other rights or licenses, express or implied,
+# are granted by Apple herein, including but not limited to any patent rights that
+# may be infringed by your derivative works or by other works in which the Apple
+# Software may be incorporated.
+# 
+# The Apple Software is provided by Apple on an "AS IS" basis.  APPLE MAKES NO
+# WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE IMPLIED
+# WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND OPERATION ALONE OR IN
+# COMBINATION WITH YOUR PRODUCTS.
+# 
+# IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION, MODIFICATION AND/OR DISTRIBUTION
+# OF THE APPLE SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT, TORT
+# (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# Change History (most recent first):
+# 
+# $Log: installtool,v $
+# Revision 1.3  2006/09/05 20:00:13  cheshire
+# Moved Emacs settings to second line of file
+#
+# Revision 1.2  2006/08/14 23:15:14  cheshire
+# Added "tab-width" emacs header line
+#
+# Revision 1.1  2005/06/04 04:51:48  cheshire
+# <rdar://problem/4138070> ddnswriteconfig (Bonjour PreferencePane) vulnerability
+# Added separate "installtool" script instead of making ddnswriteconfig self-install
+#
+# Create the Bonjour subdirectory.
+# Copy ARGV[0] to $dest and set owner and suid permissions.
+#
+# This script will be run as root by the AEWP trampoline.
+#
+
+use File::Temp qw/ :mktemp /;
+
+$dest_dir = "/Library/Application Support/Bonjour";
+$dest = $dest_dir . "/ddnswriteconfig";
+
+$template = ".XXXXXX";
+
+# Perl seems to think this code is running setuid root, so it applies its security checks.
+# See <http://www.monster-submit.com/resources/docs/pod/perlsec.html>.
+# In fact this is NOT a setuid script. It is a normal unprivileged user-level script --
+# but it is run as root when properly authorized by a user with an admin password,
+# via the AuthorizationExecuteWithPrivileges() call.
+# We therefore have to do this trick pattern match to 'untaint' the source file specified in $ARGV[0].
+if ($ARGV[0] =~ /^(.+)$/) { $src = $1; }
+
+# Also clear $ENV{PATH} so we don't get "Insecure $ENV{PATH}" fatal errors
+$ENV{PATH} = "";
+
+if (! -d $dest_dir) {
+   $dest_tmp_dir = mkdtemp ($dest_dir . $template);
+   (chown 0, 80, $dest_tmp_dir) or cleanup_dir();
+   (chmod 0755, $dest_tmp_dir) or cleanup_dir();
+   (rename $dest_tmp_dir, $dest_dir) or cleanup_dir();
+}
+
+$dest_tmp = mktemp ($dest . $template);
+
+if ($src ne '') {
+   system ('/bin/cp', '-f', $src, $dest_tmp) and cleanup();
+   (chown 0, 80, $dest_tmp) or cleanup();
+   (chmod 04555, $dest_tmp) or cleanup();
+   (rename $dest_tmp, $dest) or cleanup();
+}
+exit (0);
+
+sub cleanup {
+   unlink $dest_tmp;
+   exit (1);
+}
+
+sub cleanup_dir {
+   unlink $dest_tmp_dir;
+   exit (1);
+}

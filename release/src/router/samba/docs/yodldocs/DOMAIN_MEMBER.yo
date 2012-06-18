@@ -1,0 +1,149 @@
+mailto(samba@samba.org)
+
+article(Joining an NT Domain with Samba 2.0)(Jeremy Allison, Samba Team)(7th October 1999)
+
+center(Joining an NT Domain with Samba 2.0)
+center(-----------------------------------)
+
+In order for a Samba-2 server to join an NT domain, you must first add
+the NetBIOS name of the Samba server to the NT domain on the PDC using
+Server Manager for Domains.  This creates the machine account in the
+domain (PDC) SAM. Note that you should add the Samba server as a "Windows
+NT Workstation or Server", em(NOT) as a Primary or backup domain controller.
+
+Assume you have a Samba-2 server with a NetBIOS name of tt(SERV1) and are
+joining an NT domain called tt(DOM), which has a PDC with a NetBIOS name
+of tt(DOMPDC) and two backup domain controllers with NetBIOS names tt(DOMBDC1)
+and tt(DOMBDC2).
+
+In order to join the domain, first stop all Samba daemons and run the
+command
+
+tt(smbpasswd -j DOM -r DOMPDC)
+
+as we are joining the domain DOM and the PDC for that domain (the only
+machine that has write access to the domain SAM database) is DOMPDC. If this is
+successful you will see the message:
+
+tt(smbpasswd: Joined domain DOM.)
+
+in your terminal window. See the url(bf(smbpasswd))(smbpasswd.8.html)
+man page for more details.
+
+This command goes through the machine account password change
+protocol, then writes the new (random) machine account password for
+this Samba server into a file in the same directory in which an
+smbpasswd file would be stored - normally :
+
+tt(/usr/local/samba/private)
+
+The filename looks like this:
+
+tt(<NT DOMAIN NAME>.<Samba Server Name>.mac)
+
+The tt(.mac) suffix stands for machine account password file. So in
+our example above, the file would be called:
+
+tt(DOM.SERV1.mac)
+
+This file is created and owned by root and is not readable by any
+other user. It is the key to the domain-level security for your
+system, and should be treated as carefully as a shadow password file.
+
+Now, before restarting the Samba daemons you must edit your
+url(bf(smb.conf))(smb.conf.5.html) file to tell Samba it should now
+use domain security.
+
+Change (or add) your 
+
+url(bf("security ="))(smb.conf.5.html#security)
+
+line in the url(bf([global]))(smb.conf.5.html#global) section of your
+url(bf(smb.conf))(smb.conf.5.html) to read:
+
+tt(security = domain)
+
+Next change the 
+
+url(bf("workgroup ="))(smb.conf.5.html#workgroup)
+
+line in the url(bf([global]))(smb.conf.5.html#global) section to read: 
+
+tt(workgroup = DOM)
+
+as this is the name of the domain we are joining. 
+
+You must also have the parameter url(bf("encrypt passwords"))(smb.conf.5.html#encryptpasswords)
+set to tt("yes") in order for your users to authenticate to the
+NT PDC.
+
+Finally, add (or modify) a:
+
+url(bf("password server ="))(smb.conf.5.html#passwordserver)
+
+line in the url(bf([global]))(smb.conf.5.html#global) section to read: 
+
+tt(password server = DOMPDC DOMBDC1 DOMBDC2)
+
+These are the primary and backup domain controllers Samba will attempt
+to contact in order to authenticate users. Samba will try to contact
+each of these servers in order, so you may want to rearrange this list
+in order to spread out the authentication load among domain
+controllers.
+
+Alternatively, if you want smbd to automatically determine the
+list of Domain controllers to use for authentication, you may set this line to be :
+
+tt(password server = *)
+
+This method, which is new in Samba 2.0.6 and above, allows Samba
+to use exactly the same mechanism that NT does. This method either broadcasts or
+uses a WINS database in order to find domain controllers to
+authenticate against.
+
+Finally, restart your Samba daemons and get ready for clients to begin
+using domain security!
+
+
+center(Why is this better than security = server?)
+center(------------------------------------------)
+
+Currently, domain security in Samba doesn't free you from having to
+create local Unix users to represent the users attaching to your
+server. This means that if domain user tt(DOM\fred) attaches to your
+domain security Samba server, there needs to be a local Unix user fred
+to represent that user in the Unix filesystem. This is very similar to
+the older Samba security mode url(bf("security=server"))(smb.conf.5.html#securityequalserver), where Samba would pass
+through the authentication request to a Windows NT server in the same
+way as a Windows 95 or Windows 98 server would.
+
+The advantage to domain-level security is that the authentication in
+domain-level security is passed down the authenticated RPC channel in
+exactly the same way that an NT server would do it. This means Samba
+servers now participate in domain trust relationships in exactly the
+same way NT servers do (i.e., you can add Samba servers into a
+resource domain and have the authentication passed on from a resource
+domain PDC to an account domain PDC.
+
+In addition, with url(bf("security=server"))(smb.conf.5.html#securityequalserver) every Samba daemon on a
+server has to keep a connection open to the authenticating server for
+as long as that daemon lasts. This can drain the connection resources
+on a Microsoft NT server and cause it to run out of available
+connections. With url(bf("security =domain"))(smb.conf.5.html#securityequaldomain), however, the Samba
+daemons connect to the PDC/BDC only for as long as is necessary to
+authenticate the user, and then drop the connection, thus conserving
+PDC connection resources.
+
+And finally, acting in the same manner as an NT server authenticating
+to a PDC means that as part of the authentication reply, the Samba
+server gets the user identification information such as the user SID,
+the list of NT groups the user belongs to, etc. All this information
+will allow Samba to be extended in the future into a mode the
+developers currently call appliance mode. In this mode, no local Unix
+users will be necessary, and Samba will generate Unix uids and gids
+from the information passed back from the PDC when a user is
+authenticated, making a Samba server truly plug and play in an NT
+domain environment. Watch for this code soon.
+
+em(NOTE:) Much of the text of this document was first published in the
+Web magazine url(bf("LinuxWorld"))(http://www.linuxworld.com) as the article url(bf("Doing the NIS/NT Samba"))(http://www.linuxworld.com/linuxworld/lw-1998-10/lw-10-samba.html).

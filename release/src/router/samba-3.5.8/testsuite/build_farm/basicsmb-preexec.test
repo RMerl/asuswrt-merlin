@@ -1,0 +1,28 @@
+. basicsmb.fns
+
+password=samba
+(test_smb_conf_setup && test_smbpasswd $password ) || exit 1
+
+rm -f $prefix/testdir/preexec_touch
+
+mode=PREEXEC
+(test_listfilesauth $mode) || exit 1
+
+if [ -f $prefix/testdir/preexec_touch ]; then
+	rm -f $prefix/testdir/preexec_touch
+else
+	exit 1;
+fi
+
+mode=PREEXEC_close
+(test_listfilesauth $mode) || exit 1
+
+if [ -f $prefix/testdir/preexec_touch ]; then
+	rm -f $prefix/testdir/preexec_touch
+else
+	exit 1;
+fi
+
+mode=PREEXEC_cl_fl
+(test_listfilesauth_should_deny $mode) || exit 1
+

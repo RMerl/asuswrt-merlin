@@ -1,0 +1,494 @@
+.\"     Title: smbcacls
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: User Commands
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "SMBCACLS" "1" "09/30/2009" "Samba 3\&.0" "User Commands"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+smbcacls \- Set or get ACLs on an NT file or directory names
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCsmbcacls\F[] {//server/share} {filename} [\-D\ acls] [\-M\ acls] [\-a\ acls] [\-S\ acls] [\-C\ name] [\-G\ name] [\-\-numeric] [\-t] [\-U\ username] [\-h] [\-d]
+.fam
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The
+\FCsmbcacls\F[]
+program manipulates NT Access Control Lists (ACLs) on SMB file shares\&.
+.SH "OPTIONS"
+.PP
+The following options are available to the
+\FCsmbcacls\F[]
+program\&. The format of ACLs is described in the section ACL FORMAT
+.PP
+\-a acls
+.RS 4
+Add the ACLs specified to the ACL list\&. Existing access control entries are unchanged\&.
+.RE
+.PP
+\-M acls
+.RS 4
+Modify the mask value (permissions) for the ACLs specified on the command line\&. An error will be printed for each ACL specified that was not already present in the ACL list
+.RE
+.PP
+\-D acls
+.RS 4
+Delete any ACLs specified on the command line\&. An error will be printed for each ACL specified that was not already present in the ACL list\&.
+.RE
+.PP
+\-S acls
+.RS 4
+This command sets the ACLs on the file with only the ones specified on the command line\&. All other ACLs are erased\&. Note that the ACL specified must contain at least a revision, type, owner and group for the call to succeed\&.
+.RE
+.PP
+\-U username
+.RS 4
+Specifies a username used to connect to the specified service\&. The username may be of the form "username" in which case the user is prompted to enter in a password and the workgroup specified in the
+\fBsmb.conf\fR(5)
+file is used, or "username%password" or "DOMAIN\eusername%password" and the password and workgroup names are used as provided\&.
+.RE
+.PP
+\-C name
+.RS 4
+The owner of a file or directory can be changed to the name given using the
+\fI\-C\fR
+option\&. The name can be a sid in the form S\-1\-x\-y\-z or a name resolved against the server specified in the first argument\&.
+.sp
+This command is a shortcut for \-M OWNER:name\&.
+.RE
+.PP
+\-G name
+.RS 4
+The group owner of a file or directory can be changed to the name given using the
+\fI\-G\fR
+option\&. The name can be a sid in the form S\-1\-x\-y\-z or a name resolved against the server specified n the first argument\&.
+.sp
+This command is a shortcut for \-M GROUP:name\&.
+.RE
+.PP
+\-\-numeric
+.RS 4
+This option displays all ACL information in numeric format\&. The default is to convert SIDs to names and ACE types and masks to a readable string format\&.
+.RE
+.PP
+\-t
+.RS 4
+Don\'t actually do anything, only validate the correctness of the arguments\&.
+.RE
+.PP
+\-h|\-\-help
+.RS 4
+Print a summary of command line options\&.
+.RE
+.PP
+\-d|\-\-debuglevel=level
+.RS 4
+\fIlevel\fR
+is an integer from 0 to 10\&. The default value if this parameter is not specified is 0\&.
+.sp
+The higher this value, the more detail will be logged to the log files about the activities of the server\&. At level 0, only critical errors and serious warnings will be logged\&. Level 1 is a reasonable level for day\-to\-day running \- it generates a small amount of information about operations carried out\&.
+.sp
+Levels above 1 will generate considerable amounts of log data, and should only be used when investigating a problem\&. Levels above 3 are designed for use only by developers and generate HUGE amounts of log data, most of which is extremely cryptic\&.
+.sp
+Note that specifying this parameter here will override the
+\m[blue]\fBlog level\fR\m[]
+parameter in the
+\FCsmb\&.conf\F[]
+file\&.
+.RE
+.PP
+\-V
+.RS 4
+Prints the program version number\&.
+.RE
+.PP
+\-s <configuration file>
+.RS 4
+The file specified contains the configuration details required by the server\&. The information in this file includes server\-specific information such as what printcap file to use, as well as descriptions of all the services that the server is to provide\&. See
+\FCsmb\&.conf\F[]
+for more information\&. The default configuration file name is determined at compile time\&.
+.RE
+.PP
+\-l|\-\-log\-basename=logdirectory
+.RS 4
+Base directory name for log/debug files\&. The extension
+\fB"\&.progname"\fR
+will be appended (e\&.g\&. log\&.smbclient, log\&.smbd, etc\&.\&.\&.)\&. The log file is never removed by the client\&.
+.RE
+.SH "ACL FORMAT"
+.PP
+The format of an ACL is one or more ACL entries separated by either commas or newlines\&. An ACL entry is one of the following:
+.PP
+.if n \{\
+.RS 4
+.\}
+.fam C
+.ps -1
+.nf
+.BB lightgray
+ 
+REVISION:<revision number>
+OWNER:<sid or name>
+GROUP:<sid or name>
+ACL:<sid or name>:<type>/<flags>/<mask>
+.EB lightgray
+.fi
+.fam
+.ps +1
+.if n \{\
+.RE
+.\}
+.PP
+The revision of the ACL specifies the internal Windows NT ACL revision for the security descriptor\&. If not specified it defaults to 1\&. Using values other than 1 may cause strange behaviour\&.
+.PP
+The owner and group specify the owner and group sids for the object\&. If a SID in the format S\-1\-x\-y\-z is specified this is used, otherwise the name specified is resolved using the server on which the file or directory resides\&.
+.PP
+ACLs specify permissions granted to the SID\&. This SID again can be specified in S\-1\-x\-y\-z format or as a name in which case it is resolved against the server on which the file or directory resides\&. The type, flags and mask values determine the type of access granted to the SID\&.
+.PP
+The type can be either 0 or 1 corresponding to ALLOWED or DENIED access to the SID\&. The flags values are generally zero for file ACLs and either 9 or 2 for directory ACLs\&. Some common flags are:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fB#define SEC_ACE_FLAG_OBJECT_INHERIT 0x1\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fB#define SEC_ACE_FLAG_CONTAINER_INHERIT 0x2\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fB#define SEC_ACE_FLAG_NO_PROPAGATE_INHERIT 0x4\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fB#define SEC_ACE_FLAG_INHERIT_ONLY 0x8\fR
+.sp
+.RE
+.PP
+At present flags can only be specified as decimal or hexadecimal values\&.
+.PP
+The mask is a value which expresses the access right granted to the SID\&. It can be given as a decimal or hexadecimal value, or by using one of the following text strings which map to the NT file permissions of the same name\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIR\fR
+\- Allow read access
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIW\fR
+\- Allow write access
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIX\fR
+\- Execute permission on the object
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fID\fR
+\- Delete the object
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIP\fR
+\- Change permissions
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIO\fR
+\- Take ownership
+.sp
+.RE
+.PP
+The following combined permissions can be specified:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIREAD\fR
+\- Equivalent to \'RX\' permissions
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fICHANGE\fR
+\- Equivalent to \'RXWD\' permissions
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIFULL\fR
+\- Equivalent to \'RWXDPO\' permissions
+.SH "EXIT STATUS"
+.PP
+The
+\FCsmbcacls\F[]
+program sets the exit status depending on the success or otherwise of the operations performed\&. The exit status may be one of the following values\&.
+.PP
+If the operation succeeded, smbcacls returns and exit status of 0\&. If
+\FCsmbcacls\F[]
+couldn\'t connect to the specified server, or there was an error getting or setting the ACLs, an exit status of 1 is returned\&. If there was an error parsing any command line arguments, an exit status of 2 is returned\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+\FCsmbcacls\F[]
+was written by Andrew Tridgell and Tim Potter\&.
+.PP
+The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.

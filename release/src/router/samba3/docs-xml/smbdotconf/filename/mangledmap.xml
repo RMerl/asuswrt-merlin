@@ -1,0 +1,33 @@
+<samba:parameter name="mangled map"
+				 type="string"
+                 context="S"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This is for those who want to directly map UNIX file names which cannot be represented on 
+	Windows/DOS.  The mangling of names is not always what is needed.  In particular you may have 
+	documents with file extensions that differ between DOS and UNIX. 
+	For example, under UNIX it is common to use <filename moreinfo="none">.html</filename> 
+	for HTML files, whereas under Windows/DOS <filename moreinfo="none">.htm</filename> 
+	is more commonly used.
+	</para>
+
+	<para>
+	So to map <filename moreinfo="none">html</filename> to <filename moreinfo="none">htm</filename> 
+	you would use:
+	</para>
+		
+	<para>
+	<smbconfoption name="mangled map">(*.html *.htm)</smbconfoption>.
+	</para>
+
+	<para>
+	One very useful case is to remove the annoying <filename moreinfo="none">;1</filename> off 
+	the ends of filenames on some CDROMs (only visible under some UNIXes). To do this use a map of 
+	(*;1 *;).
+	</para>
+</description>
+
+<value type="default"><comment>no mangled map</comment></value>
+<value type="example">(*;1 *;)</value>
+</samba:parameter>

@@ -1,0 +1,14 @@
+diff -urbB uClibc-0.9.29.orig/libc/sysdeps/linux/common/bits/types.h uClibc-0.9.29/libc/sysdeps/linux/common/bits/types.h
+--- uClibc-0.9.29.orig/libc/sysdeps/linux/common/bits/types.h	2006-03-01 03:48:08.000000000 +0300
++++ uClibc-0.9.29/libc/sysdeps/linux/common/bits/types.h	2008-06-28 12:55:16.000000000 +0400
+@@ -189,6 +189,10 @@
+ typedef __quad_t *__qaddr_t;
+ typedef char *__caddr_t;
+ 
++/* Used in XTI.  */
++typedef long int __t_scalar_t;
++typedef unsigned long int __t_uscalar_t;
++
+ /* Duplicates info from stdint.h but this is used in unistd.h.  */
+ __STD_TYPE __SWORD_TYPE __intptr_t;
+ 

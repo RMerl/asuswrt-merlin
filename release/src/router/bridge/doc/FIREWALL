@@ -1,0 +1,45 @@
+Bridging and firewalling
+------------------------
+It is possible to use bridging in combination with firewalling.  This is
+a blatant violation of the OSI model, but it's very useful, so we don't
+care.
+
+How do bridging and firewalling go together?  First of all, you need a
+kernel patch against the 2.4 kernel to actually make firewalling bridged
+packets possible.  You need to apply this patch to your kernel and recompile
+it, or alternatively, download a pre-patched Red Hat 7.2 kernel RPM and use
+that.  The patch and kernel RPM are located at:
+
+	http://bridge.sourceforge.net/devel/bridge-nf/
+
+Now if you boot with this kernel, you can use the regular iptables
+firewalling as if you were doing routing.  So, rules for forwarding are
+added to the FORWARD chain, rules for input to the local machine are
+added to the INPUT chain, etc.  Things will work like you expect them to.
+So a rule like
+
+	# iptables -A INPUT -i eth0 -j DROP
+
+will drop all traffic coming from 'eth0', even if the interface the packets
+are logically from is, say, 'br0'.
+
+
+
+Lennert Buytenhek, November 7th 2001
+<buytenh@gnu.org>
+
+
+
+--------------------------
+Bridge+firewalling with 2.2 kernels is also possible, but deprecated.  I
+would severely recommend against using a 2.2 kernel and ipchains for bridge
+firewalling.  But if there's really a need, it's still possible.  Apply the
+extra firewalling patch available from the 'patches' section to your
+already-patched-with-the-vanilla-bridge-patch 2.2 kernel, and recompile.  Now
+if you boot this kernel, the bridging code will check each to-be-forwarded
+packet against the ipchains chain which has the same name as the bridge. So..
+if a packet on eth0 is to be forwarded to eth1, and those interfaces are
+both part of the bridge group br0, the bridging code will check the packet
+against the chain called 'br0'.  If the chain does not exist, the packet will
+be forwarded. So if you want to do firewalling, you'll have to create the
+chain yourself. This is important!

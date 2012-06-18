@@ -1,0 +1,386 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Firefly playlist wizard</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link rel="stylesheet" type="text/css" href="firefly.css" />
+</head>
+<script language="JavaScript" type="text/javascript">
+
+function loadOpenerCriteria()
+{ 
+  objSpec = window.opener.document.getElementsByName("playlist_spec");
+  args = objSpec[0].value.split(" ");
+  comb = '';
+  // 1. Convert string params with spaces to single array entries
+  i = 2;
+  while (i<args.length)
+  { s = args[i];
+    cB = s.charAt(0);
+    cE = s.charAt(s.length-1);
+    if ( (cB=='"') & (cE!='"'))
+    { j = i;
+      do
+      { j++;
+        s += (" "+args[j]);
+        cE = s.charAt(s.length-1);
+      } while (cE!='"');
+      args.splice(i,(j-i+1),s);
+    }
+    i += 4;
+  }
+  // 2. Parse array into list
+  if (((args.length%4)==3))
+  { critIndex = Math.round(args.length / 4);
+    critMax = critIndex;
+    while (args.length>=3)
+    { eleData = args.pop();
+      eleComp = args.pop();
+      eleField = args.pop();
+      plSetCriterion(critIndex,eleField,eleComp,eleData);
+      
+      if (args.length>0)
+      { if (critIndex==critMax)
+        { comb = args.pop(); }
+        else { blub = args.pop(); }
+        critIndex--;
+      }
+    } 
+    if (comb=='AND') plSetCriteriaCombination(0);
+    else if (comb=='OR') plSetCriteriaCombination(1);
+  }
+}
+
+function blocking(nr)
+{
+	if (document.layers)
+	{
+		current = (document.layers[nr].display == 'none') ? 'block' : 'none';
+		document.layers[nr].display = current;
+	}
+	else if (document.all)
+	{
+		current = (document.all[nr].style.display == 'none') ? 'block' : 'none';
+		document.all[nr].style.display = current;
+	}
+	else if (document.getElementById)
+	{
+		vista = (document.getElementById(nr).style.display == 'none') ? 'block' : 'none';
+		document.getElementById(nr).style.display = vista;
+	}
+}
+
+function visi(nr)
+{
+	if (document.layers)
+	{
+		vista = (document.layers[nr].visibility == 'hide') ? 'show' : 'hide'
+		document.layers[nr].visibility = vista;
+	}
+	else if (document.all)
+	{
+		vista = (document.all[nr].style.visibility == 'hidden') ? 'visible'	: 'hidden';
+		document.all[nr].style.visibility = vista;
+	}
+	else if (document.getElementById)
+	{
+		vista = (document.getElementById(nr).style.visibility == 'hidden') ? 'visible' : 'hidden';
+		document.getElementById(nr).style.visibility = vista;
+
+	}
+}
+
+function plRowHide(x)
+{ //objRow = document.getElementById("rowcrit"+x);
+  //objRow.visible = false;
+  //visi("rowcrit"+x);
+}
+
+function plRowShow(x)
+{ //objRow = document.getElementById("rowcrit"+x);
+  //objRow.visible = true;
+  //visi("rowcrit"+x);
+  // vista = (document.getElementById("rowcrit"+x).style.visibility == 'hidden') ? 'visible' : 'hidden';
+  // vista = 'visible';
+	//	document.getElementById("rowcrit"+x).style.visibility = vista;
+}
+
+function plOutputRow(x,vis)
+{ document.write('<tr id="rowcrit',x,'" style="visibility:');
+  document.write(vis?'visible':'hidden');
+  document.write(';"><td>Criterion ',x,':<\/td>',
+'<td><select class="playlistfield" name="playlist_crit',x,'field" style="width:100%" onChange="javascript:plUpdateComp(\'',x,'\');plTemplateWizard()">',
+'<optgroup label="Basic">',
+'<option value="title">Title<\/option>',
+'<option value="artist">Artist<\/option>',
+'<option value="album">Album<\/option>',
+'<option value="genre">Genre<\/option>',
+'<option value="year">Year<\/option>',
+'<option value="rating">Rating<\/option>',
+'<option value="song_length">Length<\/option>',
+'<option value="play_count">Play count<\/option>',
+'<\/optgroup>',
+'<optgroup label="Advanced">',
+'<option value="track">Track<\/option>',
+'<option value="total_tracks">Tracks total<\/option>',
+'<option value="disc">Disc<\/option>',
+'<option value="total_discs">Discs total<\/option>',
+'<option value="comment">Comment<\/option>',
+'<option value="type">Type<\/option>',
+'<option value="composer">Composer<\/option>',
+'<option value="orchestra">Orchestra<\/option>',
+'<option value="grouping">Grouping<\/option>',
+'<option value="url">URL<\/option>',
+'<option value="description">Description<\/option>',
+'<\/optgroup>',
+'<optgroup label="Dates">',
+'<option value="time_added">Added<\/option>',
+'<option value="time_modified">Modified<\/option>',
+'<option value="time_played">Played<\/option>',
+'<\/optgroup>',
+'<optgroup label="Technical">',
+'<option value="bitrate">Bitrate<\/option>',
+'<option value="samplerate">Samplerate<\/option>',
+'<option value="file_size">Filesize<\/option>',
+'<option value="bpm">Beats per minute<\/option>',
+'<option value="compilation">Compilation<\/option>',
+'<option value="fname">Filename<\/option>',
+'<option value="path">Filepath<\/option>',
+'<\/optgroup>',
+'<\/select><\/td>',
+'<td><select class="playlistfield" name="playlist_crit',x,'comp" style="width:100%" onChange="javascript:plTemplateWizard()">',
+'<option value="=">=<\/option>',
+'<\/select><\/td>',
+'<td><input class="playlistfield" name="playlist_crit',x,'data" onChange="javascript:plTemplateWizard()" style="width:100%"/><\/td>');
+  document.write('<\/tr>');
+}
+
+function plGetCriterion(x)
+{ objField = document.getElementsByName("playlist_crit"+x+"field");
+  objComp = document.getElementsByName("playlist_crit"+x+"comp");
+  objData = document.getElementsByName("playlist_crit"+x+"data");
+  y = '';
+  if ((objField[0].value=='artist') 
+   || (objField[0].value=='title')
+   || (objField[0].value=='album')
+   || (objField[0].value=='genre')
+   || (objField[0].value=='comment')
+   || (objField[0].value=='type')
+   || (objField[0].value=='composer')
+   || (objField[0].value=='orchestra')
+   || (objField[0].value=='conductor')
+   || (objField[0].value=='grouping')
+   || (objField[0].value=='url')
+   || (objField[0].value=='fname')
+   || (objField[0].value=='path')
+   || (objField[0].value=='description')
+   || (objField[0].value=='codectype'))
+   y = '"';
+  return objField[0].value+' '+objComp[0].value+' '+y+objData[0].value+y;
+}
+
+function plSetCriterion(x,field,comp,data)
+{ objField = document.getElementsByName("playlist_crit"+x+"field");
+  objField[0].value = field;
+  plUpdateComp(x);
+  objComp = document.getElementsByName("playlist_crit"+x+"comp");
+  objData = document.getElementsByName("playlist_crit"+x+"data");
+  objComp[0].value = comp;
+  if (data.substr(0,1)=='"')
+    objData[0].value = data.substr(1, data.length-2);
+  else
+    objData[0].value = data;
+}
+
+function plSetCriteriaCombination(x)
+{ objSep = document.getElementsByName("playlist_combine");
+  objSep[x].checked = true;
+}
+
+function plIsUsed(x)
+{ objData = document.getElementsByName("playlist_crit"+x+"data");
+  if (objData[0].value!='') return true; else return false;
+}
+
+function plTemplateWizard()
+{ objSpec = window.opener.document.getElementsByName("playlist_spec");
+  objSep = document.getElementsByName("playlist_combine");
+  if (objSep[0].checked) sep = ' AND '; else sep = ' OR ';
+  criteria = plGetCriterion('1');
+  if (plIsUsed('2')) criteria = criteria + sep + plGetCriterion('2');
+  objSpec[0].value = criteria;
+}
+
+function plUpdateComp(x)
+{ objField = document.getElementsByName("playlist_crit"+x+"field");
+  objComp = document.getElementsByName("playlist_crit"+x+"comp");
+  objComp[0].options.length = 0;
+  objComp[0].options[0] = new Option('=','=');
+  objComp[0].options[1] = new Option('not =','not =');
+  if ((objField[0].value=='artist') 
+   || (objField[0].value=='title')
+   || (objField[0].value=='album')
+   || (objField[0].value=='genre')
+   || (objField[0].value=='comment')
+   || (objField[0].value=='type')
+   || (objField[0].value=='composer')
+   || (objField[0].value=='orchestra')
+   || (objField[0].value=='conductor')
+   || (objField[0].value=='grouping')
+   || (objField[0].value=='url')
+   || (objField[0].value=='fname')
+   || (objField[0].value=='path')
+   || (objField[0].value=='codectype'))
+  { objComp[0].options[2] = new Option('includes','includes');
+    objComp[0].options[3] = new Option('not includes','not includes');
+    objComp[0].options[4] = new Option('starts with','startswith');
+    objComp[0].options[5] = new Option('not starts with','not startswith');
+    objComp[0].options[6] = new Option('ends with','endswith');   
+    objComp[0].options[7] = new Option('not ends with','not endswith');   
+  } else if ((objField[0].value=='time_added')
+   || (objField[0].value=='time_modified')
+   || (objField[0].value=='time_played'))
+  { objComp[0].options[2] = new Option('before','before');
+    objComp[0].options[3] = new Option('after','after');
+  } else
+  { objComp[0].options[2] = new Option('>','>');
+    objComp[0].options[3] = new Option('>=','>=');
+    objComp[0].options[4] = new Option('<','<');
+    objComp[0].options[5] = new Option('<=','<=');
+  }
+}
+
+function plTemplatePlaylist()
+{ objSpec = window.opener.document.getElementsByName("playlist_spec");
+  objName = window.opener.document.getElementsByName("playlist_name");
+  objTemplate = document.getElementsByName("playlist_template");
+  switch (objTemplate[0].value)
+  { case "60s":
+      objSpec[0].value = 'year >= 1960 AND year <= 1970';
+      objName[0].value = 'Music from the 60s';
+      plSetCriterion(1,'year','>=','1960');
+      plSetCriterion(2,'year','<=','1970');
+      plSetCriterion(3,'title','=','');
+      plSetCriterion(4,'title','=','');
+      plSetCriterion(5,'title','=','');
+      plSetCriteriaCombination(0);
+      break;
+    case "70s":
+      objSpec[0].value = 'year >= 1970 AND year <= 1980';
+      objName[0].value = 'Music from the 70s';
+      plSetCriterion(1,'year','>=','1970');
+      plSetCriterion(2,'year','<=','1980');
+      plSetCriterion(3,'title','=','');
+      plSetCriterion(4,'title','=','');
+      plSetCriterion(5,'title','=','');
+      plSetCriteriaCombination(0);
+      break;
+    case "80s":
+      objSpec[0].value = 'year >= 1980 AND year <= 1990';
+      objName[0].value = 'Music from the 80s';
+      plSetCriterion(1,'year','>=','1980');
+      plSetCriterion(2,'year','<=','1990');
+      plSetCriterion(3,'title','=','');
+      plSetCriterion(4,'title','=','');
+      plSetCriterion(5,'title','=','');
+      plSetCriteriaCombination(0);
+      break;
+    case "90s":
+      objSpec[0].value = 'year >= 1990 AND year <= 2000';
+      objName[0].value = 'Music from the 90s';
+      plSetCriterion(1,'year','>=','1990');
+      plSetCriterion(2,'year','<=','2000');
+      plSetCriterion(3,'title','=','');
+      plSetCriterion(4,'title','=','');
+      plSetCriterion(5,'title','=','');
+      plSetCriteriaCombination(0);
+      break;
+    case "00s":
+      objSpec[0].value = 'year >= 2000';
+      objName[0].value = 'Music from today';
+      plSetCriterion(1,'year','>=','2000');
+      plSetCriterion(2,'title','=','');
+      plSetCriterion(3,'title','=','');
+      plSetCriterion(4,'title','=','');
+      plSetCriterion(5,'title','=','');
+      plSetCriteriaCombination(0);
+      break;
+    case "onemonth":
+      objSpec[0].value = 'time_added after 1 month before today';
+      objName[0].value = 'Recently added';
+      plSetCriterion(1,'time_added','after','1 month before today');
+      plSetCriterion(2,'title','=','');
+      plSetCriterion(3,'title','=','');
+      plSetCriterion(4,'title','=','');
+      plSetCriterion(5,'title','=','');
+      plSetCriteriaCombination(0);
+      break;
+    case "metal":
+      objSpec[0].value = 'genre includes "Metal" OR genre includes "Goth" OR genre includes "Hard"';
+      objName[0].value = 'Metalheads';
+      plSetCriterion(1,'genre','includes','Metal');
+      plSetCriterion(2,'genre','includes','Goth');
+      plSetCriterion(3,'genre','includes','Hard');
+      plSetCriterion(4,'title','=','');
+      plSetCriterion(5,'title','=','');
+      plSetCriteriaCombination(1);
+      break;
+    case "psych":
+      objSpec[0].value = 'genre includes "psych" OR genre includes "Psych" OR genre includes "Synth" OR ARTIST = "Pink Floyd"';
+      objName[0].value = 'Psychosynth';
+      plSetCriterion(1,'genre','includes','psych');
+      plSetCriterion(2,'genre','includes','Psych');
+      plSetCriterion(3,'genre','includes','Synth');
+      plSetCriterion(4,'artist','=','Pink Floyd');
+      plSetCriterion(5,'title','=','');
+      plSetCriteriaCombination(1);
+      break;
+    case "":
+      objName[0].value = 'Custom playlist';
+      break;
+  }
+}
+</script>
+
+<body onLoad="loadOpenerCriteria();">
+<form name="pleditor" action="">
+<input type="hidden" name="playlist_id"/>
+<table width="100%" cellspacing="0" style="font:icon;">
+
+<tr><th>Wizard</th><th colspan="3"></th></tr>
+<tr><td>Template:</td>
+<td colspan="3"><select class="playlistfield" name="playlist_template" style="width:100%" onChange="javascript:plTemplatePlaylist()">
+<option value="" selected="SELECTED">Custom playlist</option>
+<option value="60s">Music from the 60s</option>
+<option value="70s">Music from the 70s</option>
+<option value="80s">Music from the 80s</option>
+<option value="90s">Music from the 90s</option>
+<option value="00s">Music from today</option>
+<option value="onemonth">Recently added</option>
+<option value="metal">Metalheads</option>
+<option value="psych">Psychosynth</option>
+</select></td></tr>
+
+<script language="JavaScript" type="text/javascript">
+plOutputRow(1,true);
+plOutputRow(2,true);
+plOutputRow(3,true);
+plOutputRow(4,true);
+plOutputRow(5,true);
+</script>
+
+<tr><td>Combine:</td>
+<td colspan="3">
+<input type="radio" name="playlist_combine" value=" AND " checked="CHECKED" onChange="javascript:plTemplateWizard()"> match all 
+<input type="radio" name="playlist_combine" value=" OR " onChange="javascript:plTemplateWizard()"> match some 
+</td></tr>
+</table>
+</form>
+
+<script language="JavaScript" type="text/javascript">
+loadOpenerCriteria();
+</script>
+
+<div style="text-align: center;">Check out the <a href="http://trac.fireflymediaserver.org/wiki/SmartPlaylists" target="_blank">Firefly Wiki</a> for details.</div>
+
+</body></html>

@@ -1,0 +1,153 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Appendix A] Configuring Samba with SSL</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:41:36Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch09_03.html" TITLE="9.3 Extra Resources">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 9.3 Extra Resources" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+Appendix A</font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_02.html" TITLE="A.2 Requirements">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: A.2 Requirements" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div class="samplechapter">
+<H1 CLASS="appendix">
+<A CLASS="title" NAME="appa-73322">
+A. Configuring Samba with SSL</a></h1><DIV CLASS="htmltoc">
+<P>
+<B>
+Contents:</b><br>
+<A CLASS="sect1" HREF="#appa-pgfId-986440" TITLE="A.1 About Certificates">
+About Certificates</a><br>
+<A CLASS="sect1" HREF="appa_02.html" TITLE="A.2 Requirements">
+Requirements</a><br>
+<A CLASS="sect1" HREF="appa_03.html" TITLE="A.3 Installing SSLeay">
+Installing SSLeay</a><br>
+<A CLASS="sect1" HREF="appa_04.html" TITLE="A.4 Setting Up SSL Proxy">
+Setting Up SSL Proxy</a><br>
+<A CLASS="sect1" HREF="appa_05.html" TITLE="A.5 SSL Configuration Options">
+SSL Configuration Options</a></p><P>
+</p></div><P CLASS="para">This appendix describes how to set up Samba to use secure connections between the Samba server and its clients. The protocol used here is Netscape's Secure Sockets Layer (SSL). For this example, we will establish a secure connection between a Samba server and a Windows NT workstation. </p><P CLASS="para">
+Before we begin, we will assume that you are familiar with the fundamentals of public-key cryptography and X.509 certificates. If not, we highly recommend Bruce Schneier's <I CLASS="filename">
+Applied Cryptography, 2nd Edition</i> (Wiley) as the premiere source for learning the many secret faces of cryptography.</p><P CLASS="para">
+If you would like more information on Samba and SSL, be sure to look at the document <I CLASS="filename">
+SSLeay.txt</i> in the <I CLASS="filename">
+docs/textdocs</i> directory of the Samba distribution, which is the basis for this appendix.</p><DIV CLASS="sect1">
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="appa-pgfId-986440">
+A.1 About Certificates</a></h2><P CLASS="para">
+Here are a few quick questions and answers from the <I CLASS="filename">
+SSLeay.txt</i> file in the Samba documentation, regarding the benefits of SSL and certificates. This text was written by Christian Starkjohann for the Samba projects. </p><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-990471">
+A.1.1 What is a Certificate?</a></h3><P CLASS="para">
+A certifcate is issued by an issuer, usually a <EM CLASS="emphasis">
+Certification Authority</em> (CA), who confirms something by issuing the certificate. The subject of this confirmation depends on the CA's policy. CAs for secure web servers (used for shopping malls, etc.) usually attest only that the given public key belongs the given domain name. Company-wide CAs might attest that you are an employee of the company, that you have permissions to use a server, and so on. </p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-990473">
+A.1.2 What is an X.509 certificate, technically?</a></h3><P CLASS="para">
+Technically, the certificate is a block of data signed by the certificate issuer (the CA). The relevant fields are:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-990475">
+</a>Unique identifier (name) of the certificate issuer</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-990476">
+</a>Time range during which the certificate is valid</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-990477">
+</a>Unique identifier (name) of the certified object</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-990478">
+</a>Public key of the certified object</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-990479">
+</a>The issuer's signature over all the above</p></li></ul><P CLASS="para">
+If this certificate is to be verified, the verifier must have a table of the names and public keys of trusted CAs. For simplicity, these tables should list certificates issued by the respective CAs for themselves (self-signed certificates).</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="appa-pgfId-990481">
+A.1.3 What are the implications of this certificate structure?</a></h3><P CLASS="para">
+Four implications follow:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-990485">
+</a>Because the certificate contains the subjects's public key, the certificate and the private key together are all that is needed to encrypt and decrypt.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-990489">
+</a>To verify certificates, you need the certificates of all CAs you trust. </p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-990490">
+</a>The simplest form of a dummy-certificate is one that is signed by the subject.</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="appa-pgfId-990491">
+</a>A CA is needed. The client can't simply issue local certificates for servers it trusts because the server determines which certificate it presents. </p></li></ul></div></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch09_03.html" TITLE="9.3 Extra Resources">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 9.3 Extra Resources" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="appa_02.html" TITLE="A.2 Requirements">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: A.2 Requirements" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+9.3 Extra Resources</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+A.2 Requirements</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

@@ -1,0 +1,124 @@
+#!/bin/sh
+# Copyright 2009 by Denys Vlasenko
+# Licensed under GPL v2, see file LICENSE for details.
+
+. ./testing.sh
+
+rm -rf tar.tempdir 2>/dev/null
+mkdir tar.tempdir && cd tar.tempdir || exit 1
+
+# testing "test name" "script" "expected result" "file input" "stdin"
+
+optional FEATURE_TAR_CREATE FEATURE_LS_SORTFILES
+testing "tar hardlinks and repeated files" '\
+rm -rf input_* test.tar 2>/dev/null
+>input_hard1
+ln input_hard1 input_hard2
+mkdir input_dir
+>input_dir/file
+chmod -R 644 *
+chmod    755 input_dir
+tar cf test.tar input input_dir/ input_hard1 input_hard2 input_hard1 input_dir/ input
+tar tvf test.tar | sed "s/.*[0-9] input/input/"
+tar xf test.tar 2>&1
+echo Ok: $?
+ls -l . input_dir/* | grep input_ | sed "s/\\(^[^ ]*\\) .* input/\\1 input/"
+' "\
+input
+input_dir/
+input_dir/file
+input_hard1
+input_hard2 -> input_hard1
+input_hard1 -> input_hard1
+input_dir/
+input_dir/file
+input
+Ok: 0
+-rw-r--r-- input_dir/file
+drwxr-xr-x input_dir
+-rw-r--r-- input_hard1
+-rw-r--r-- input_hard2
+" \
+"" ""
+SKIP=
+
+optional FEATURE_TAR_CREATE FEATURE_LS_SORTFILES
+testing "tar hardlinks mode" '\
+rm -rf input_* test.tar 2>/dev/null
+>input_hard1
+chmod 741 input_hard1
+ln input_hard1 input_hard2
+mkdir input_dir
+chmod 550 input_dir
+ln input_hard1 input_dir
+ln input_hard2 input_dir
+tar cf test.tar input_*
+tar tvf test.tar | sed "s/.*[0-9] input/input/"
+tar xf test.tar 2>&1
+echo Ok: $?
+ls -l . input_dir/* | grep input_ | sed "s/\\(^[^ ]*\\) .* input/\\1 input/"
+' "\
+input_dir/
+input_dir/input_hard1
+input_dir/input_hard2 -> input_dir/input_hard1
+input_hard1 -> input_dir/input_hard1
+input_hard2 -> input_dir/input_hard1
+Ok: 0
+-rwxr----x input_dir/input_hard1
+-rwxr----x input_dir/input_hard2
+dr-xr-x--- input_dir
+-rwxr----x input_hard1
+-rwxr----x input_hard2
+" \
+"" ""
+SKIP=
+
+optional FEATURE_TAR_CREATE FEATURE_LS_SORTFILES
+testing "tar symlinks mode" '\
+rm -rf input_* test.tar 2>/dev/null
+>input_file
+chmod 741 input_file
+ln -s input_file input_soft
+mkdir input_dir
+chmod 550 input_dir
+ln input_file input_dir
+ln input_soft input_dir
+tar cf test.tar input_*
+tar tvf test.tar | sed "s/.*[0-9] input/input/" | sort
+tar xf test.tar 2>&1
+echo Ok: $?
+ls -l . input_dir/* | grep input_ | sed "s/\\(^[^ ]*\\) .* input/\\1 input/"
+' "\
+input_dir/
+input_dir/input_file
+input_dir/input_soft -> input_file
+input_file -> input_dir/input_file
+input_soft -> input_dir/input_soft
+Ok: 0
+-rwxr----x input_dir/input_file
+lrwxrwxrwx input_file
+dr-xr-x--- input_dir
+-rwxr----x input_file
+lrwxrwxrwx input_file
+" \
+"" ""
+SKIP=
+
+optional FEATURE_TAR_CREATE FEATURE_TAR_LONG_OPTIONS
+testing "tar --overwrite" "\
+rm -rf input_* test.tar 2>/dev/null
+ln input input_hard
+tar cf test.tar input_hard
+echo WRONG >input
+# --overwrite opens 'input_hard' without unlinking,
+# thus 'input_hard' still linked to 'input' and we write 'Ok' into it
+tar xf test.tar --overwrite 2>&1 && cat input
+" "\
+Ok
+" \
+"Ok\n" ""
+SKIP=
+
+cd .. && rm -rf tar.tempdir || exit 1
+
+exit $FAILCOUNT

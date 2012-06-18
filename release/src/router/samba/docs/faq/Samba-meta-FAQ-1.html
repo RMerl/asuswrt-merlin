@@ -1,0 +1,160 @@
+<HTML>
+<HEAD>
+<TITLE> Samba meta FAQ: Quick Reference Guides to Samba Documentation</TITLE>
+</HEAD>
+<BODY>
+Previous
+<A HREF="Samba-meta-FAQ-2.html">Next</A>
+<A HREF="Samba-meta-FAQ.html#toc1">Table of Contents</A>
+<HR>
+<H2><A NAME="s1">1. Quick Reference Guides to Samba Documentation</A></H2>
+
+<P>
+<A NAME="quickref"></A> 
+</P>
+<P>We are endeavouring to provide links here to every major class of
+information about Samba or things related to Samba. We cannot list every
+document, but we are aiming for all documents to be at most two
+referrals from those listed here. This needs constant maintaining, so
+please send the author your feedback.</P>
+
+<H2><A NAME="ss1.1">1.1 Samba for the Impatient</A></H2>
+
+<P>
+<A NAME="impatient"></A> 
+</P>
+<P>You know you should read the documentation but can't wait to start? What
+you need to do then is follow the instructions in the following
+documents in the order given. This should be enough to get a fairly
+simple site going quickly. If you have any problems, refer back to this
+meta-FAQ and follow the links to find more reading material.</P>
+<P>
+<DL>
+<P>
+<A NAME="ImpGet"></A> 
+</P>
+<DT><B>Getting Samba:</B><DD><P>The fastest way to get Samba
+going is and install it is to have an operating system for which the
+Samba team has put together an installation package. To see if your OS
+is included have a look at the directory
+/pub/samba/Binary_Packages/"OS_Vendor" on your nearest 
+<A HREF="../MIRRORS">mirror site</A>. If it is included follow the
+installation instructions in the README file there and then do some 
+<A HREF="#ImpTest">basic testing</A>. If you are not so fortunate, follow the normal 
+<A HREF="Samba-meta-FAQ-2.html#WhereFrom">download instructions</A> and then continue with 
+<A HREF="#ImpInst">building and installing Samba</A>.</P>
+<P>
+<A NAME="ImpInst"></A> 
+</P>
+<DT><B>Building and Installing Samba:</B><DD><P>At the moment
+there are two kinds of Samba server installs besides the prepackaged
+binaries mentioned in the previous step. You need to decide if you have a 
+<A HREF="../UNIX_INSTALL.txt">Unix or close relative</A> or 
+<A HREF="Samba-Server-FAQ.html#PortInfo">other supported operating system</A>.</P>
+<P>
+<A NAME="ImpTest"></A> 
+</P>
+<DT><B>Basic Testing:</B><DD><P>Try to connect using the
+supplied smbclient command-line program. You need to know the IP
+hostname of your server. A service name must be defined in smb.conf, as
+given in the examples (under many operating systems if there is a
+<F>homes</F> service you can just use a valid username.) Then type
+<CODE>smbclient \\hostname\servicename</CODE>
+Under most Unixes you will need to put the parameters within quotation
+marks. If this works, try connecting from one of the SMB clients you
+were planning to use with Samba.</P>
+<P>
+<A NAME="ImpDebug"></A> 
+</P>
+<DT><B>Debug sequence:</B><DD><P>If you think you have completed the 
+previous step and things aren't working properly work through 
+<A HREF="../DIAGNOSIS.txt">the diagnosis recipe.</A></P>
+<P>
+<A NAME="ImpExp"></A> 
+</P>
+<DT><B>Exporting files to SMB clients:</B><DD><P>You should read the manual pages
+for smb.conf, but here is a 
+<A HREF="Samba-Server-FAQ.html#Exporting">quick answer guide.</A></P>
+<P>
+<A NAME="ImpControl"></A> 
+</P>
+<DT><B>Controlling user access:</B><DD><P>the quickest and dirtiest way of sharing
+resources is to use 
+<A HREF="Samba-meta-FAQ-4.html#ShareModeSecurity">share level security.</A> If you want to spend more time and have a proper username
+and password database you must read the paragraph on 
+<A HREF="Samba-meta-FAQ-4.html#DomainModeSecurity">domain mode security.</A> If you want
+encryption (eg you are using Windows NT clients) follow the 
+<A HREF="Samba-Server-FAQ.html#SMBEncryptionSteps">SMB encryption instructions.</A></P>
+<P>
+<A NAME="ImpBrowse"></A> 
+</P>
+<DT><B>Browsing:</B><DD><P>if you are happy to type in "\\samba-server\sharename"
+at the client end then do not read any further. Otherwise you need to
+understand the 
+browsing terminology</A>
+and read 
+<A HREF="Samba-Server-FAQ.html#NameBrowsing">Samba-Server-FAQ.html#NameBrowsing</A>. </P>
+<P>
+<A NAME="ImpPrint"></A> 
+</P>
+<DT><B>Printing:</B><DD><P>See the 
+<A HREF="Samba-Server-FAQ.html#Printing">printing quick answer guide.</A></P>
+
+</DL>
+</P>
+<P>If you have got everything working to this point, you can expect Samba
+to be stable and secure: these are its greatest strengths. However Samba
+has a great deal to offer and to go further you must do some more
+reading. Speed and security optimisations, printer accounting, network
+logons, roving profiles, browsing across multiple subnets and so on are
+all covered either in this document or in those it refers to.</P>
+
+
+<H2><A NAME="ss1.2">1.2 All Samba Documentation</A></H2>
+
+<P>
+<A NAME="AllDocs"></A> 
+</P>
+<P>
+<UL>
+<LI> Meta-FAQ. This is the mother of all documents, and is the one you
+are reading now. The latest version is always at 
+<A HREF="http://samba.org/[.....]">http://samba.org/[.....]</A> but there is probably a much
+nearer 
+<A HREF="../MIRRORS">mirror site</A> which you should use
+instead.
+</LI>
+<LI> 
+<A HREF="Samba-Server-FAQ.html">Samba-Server-FAQ.html</A> is the best starting point for
+information about server-side issues. Includes configuration tips and
+pointers for Samba on particular operating systems (with 40 to choose
+from...)
+</LI>
+<LI> 
+<A HREF="Samba-Client-FAQ.html">Samba-Client-FAQ.html</A> is the best starting point for
+information about client-side issues, includes a list of all clients
+that are known to work with Samba.
+</LI>
+<LI> 
+<A HREF="samba-man-index.html">manual pages</A> contains
+descriptions of and links to all the Samba manual pages, in Unix man and
+postscript format.
+</LI>
+<LI> 
+<A HREF="samba-txt-index.html">samba-txt-index.html</A> has descriptions of and links to
+a large number of text files have been contributed to samba covering
+many topics. These are gradually being absorbed into the FAQs and HOWTOs
+but in the meantime you might find helpful answers here.
+</LI>
+<LI> 
+</LI>
+</UL>
+</P>
+
+
+<HR>
+Previous
+<A HREF="Samba-meta-FAQ-2.html">Next</A>
+<A HREF="Samba-meta-FAQ.html#toc1">Table of Contents</A>
+</BODY>
+</HTML>

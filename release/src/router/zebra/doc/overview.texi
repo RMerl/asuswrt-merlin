@@ -1,0 +1,353 @@
+@node Overview, Installation, Top, Top
+@comment  node-name,  next,  previous,  up
+@chapter Overview
+@cindex Overview
+
+  Zebra is a routing software that provides TCP/IP based routing
+protocols support such as RIPv1, RIPv2, RIPng, OSPFv2, OSPFv3, BGP-4,
+and BGP-4+ (@pxref{Supported RFC}).  Zebra supports both IPv4 and IPv6
+routing protocols.  Zebra also supports BGP Route Reflector and BGP
+Route Server functionality.  With SNMP daemon which has SMUX protocol,
+Zebra provides routing protocol MIBs (@pxref{SNMP Support}).
+
+  Zebra has an advanced module based software architecture.  It is
+built by collection of protocol modules.  Due to this design, you can
+easily add a new protocol module to Zebra.  You can dynamically add or
+remove a protocol module even if other modules are up and runing.
+Zebra library provides basic functions to implement a routing protocol
+module.
+
+  Zebra has advanced CLI (Command Line Interface).  User can examine
+current routing protocol status, change the configuration, save the
+configuration at anytime user want.
+
+  Zebra is a @sc{gnu} software and distributed under the @sc{gnu}
+General Public License.
+
+@menu
+* About Zebra::                 Basic information about Zebra
+* System Architecture::         The Zebra system architecture
+* Supported Platforms::         Supported platforms and future plans
+* Supported RFC::               Supported RFCs
+* How to get Zebra::            
+* Mailing List::                Mailing list information
+* Bug Reports::                 Mail address for bug data
+@end menu
+
+@node About Zebra, System Architecture, Overview, Overview
+@comment  node-name,  next,  previous,  up
+@section About Zebra
+@cindex About Zebra
+
+  Today, TCP/IP networks are covering all of the world.  The Internet
+has been deployed in many countries, companies, and to the home.  When
+you connect to the Internet your packet will pass many routers which
+have TCP/IP routing functionality.
+
+  A system with Zebra installed acts as a dedicated router.  With Zebra,
+your machine exchanges routing information with other routers using
+routing protocols.  Zebra uses this information to update the kernel
+routing table so that the right data goes to the right place.  You can
+dynamically change the configuration and you may view routing table
+information from the Zebra terminal interface.
+
+  Adding to routing protocol support, Zebra can setup interface's flags,
+interface's address, static routes and so on.  If you have a small
+network, or a stub network, or xDSL connection, configuring the Zebra
+routing software is very easy.  The only thing you have to do is to set
+up the interfaces and put a few commands about static routes and/or
+default routes.  If the network is rather large, or if the network
+structure changes frequently, you will want to take advantage of Zebra's
+dynamic routing protocol support for protocols such as RIP, OSPF or BGP.
+Zebra is with you.
+
+  Traditionally, UNIX based router configuration is done by
+@command{ifconfig} and @command{route} commands.  Status of routing
+table is displayed by @command{netstat} utility.  Almost of these
+commands work only if the user has root privileges.  Zebra has a different
+system administration method.  There are two user modes in Zebra.  One is
+normal mode, the other is enable mode.  Normal mode user can only view
+system status, enable mode user can change system configuration.  This
+UNIX account independent feature will be great help to the router
+administrator.
+
+  Currently, Zebra supports common unicast routing protocols.  Multicast
+routing protocols such as BGMP, PIM-SM, PIM-DM will be supported in
+Zebra 2.0.  MPLS support is going on.  In the future, TCP/IP filtering
+control, QoS control, diffserv configuration will be added to Zebra.
+Zebra project's final goal is making a productive, top-quality free TCP/IP
+routing software.
+
+@node System Architecture, Supported Platforms, About Zebra, Overview
+@comment  node-name,  next,  previous,  up
+@section System Architecture
+@cindex System architecture
+@cindex Software architecture
+@cindex Software internals
+
+  Traditional routing software is made as a one process program which
+provides all of the routing protocol functionalities.  Zebra takes a
+different approach.  It is made from a collection of several daemons
+that work together to build the routing table.  There may be several
+protocol-specific routing daemons and zebra the kernel routing manager.
+
+  The @command{ripd} daemon handles the RIP protocol, while
+@command{ospfd} is a daemon which supports OSPF version 2.
+@command{bgpd} supports the BGP-4 protocol.  For changing the kernel
+routing table and for redistribution of routes between different routing
+protocols, there is a kernel routing table manager @command{zebra}
+daemon.  It is easy to add a new routing protocol daemons to the entire
+routing system without affecting any other software.  You need to run only
+the protocol daemon associated with routing protocols in use.  Thus,
+user may run a specific daemon and send routing reports to a central
+routing console.
+
+  There is no need for these daemons to be running on the same machine.
+You can even run several same protocol daemons on the same machine.  This
+architecture creates new possibilities for the routing system.
+
+@example
+@group
++----+ +------+ +-----+ +------+ +----+
+|ripd| |ripngd| |ospfd| |ospf6d| |bgpd|
++----+ +------+ +-----+ +------+ +----+
+   |       |       |        |       |
+   +-------+-------+--------+--+----+
+                               |
++------------------------------v------+
+|                           +-----+   |
+|                zebra      | RIB |   |
+|                           +-----+   |
++------------------------------|------+
+                               |
++------------------------------v------+
+|                           +-----+   |
+|              UNIX Kernel  | FIB |   |
+|                           +-----+   |
++-------------------------------------+
+
+   Zebra Software Architecture
+@end group
+@end example
+
+  Multi-process architecture brings extensibility, modularity and
+maintainability.  At the same time it also brings many configuration
+files and terminal interfaces.  Each daemon has it's own configuration
+file and terminal interface.  When you configure a static route, it must
+be done in @command{zebra} configuration file.  When you configure BGP
+network it must be done in @command{bgpd} configuration file.  This can be a
+very annoying thing.  To resolve the problem, Zebra provides integrated
+user interface shell called @command{vtysh}.  @command{vtysh} connects to
+each daemon with UNIX domain socket and then works as a proxy for user input.
+
+  Zebra was planned to use multi-threaded mechanism when it runs with a
+kernel that supports multi-threads.  But at the moment, the thread
+library which comes with @sc{gnu}/Linux or FreeBSD has some problems with
+running reliable services such as routing software, so we don't use
+threads at all.  Instead we use the @command{select(2)} system call for
+multiplexing the events.
+
+  When @command{zebra} runs under a @sc{gnu} Hurd kernel it will act as a
+kernel routing table itself.  Under @sc{gnu} Hurd, all TCP/IP services are
+provided by user processes called @command{pfinet}.  Zebra will provide
+all the routing selection mechanisms for the process.  This feature will
+be implemented when @sc{gnu} Hurd becomes stable.
+
+@node Supported Platforms, Supported RFC, System Architecture, Overview
+@comment  node-name,  next,  previous,  up
+@section Supported Platforms
+
+@cindex Supported platforms
+@cindex Zebra on other systems
+@cindex Compatibility with other systems
+@cindex Operating systems that support Zebra
+
+  Currently Zebra supports @sc{gnu}/Linux, BSD and Solaris.  Below is a list
+of OS versions on which Zebra runs.  Porting Zebra to other platforms is
+not so too difficult.  Platform dependent codes exist only in
+@command{zebra} daemon.  Protocol daemons are platform independent.
+Please let us know when you find out Zebra runs on a platform which is not
+listed below.
+
+@sp 1
+@itemize @bullet
+@item
+GNU/Linux 2.2.x
+@item
+GNU/Linux 2.4.x
+@item
+FreeBSD 4.x
+@item
+FreeBSD 5.x
+@item
+NetBSD 1.6.x
+@item
+OpenBSD 3.x
+@item
+Solaris 8
+@end itemize
+
+@sp 1
+  Some IPv6 stacks are in development.  Zebra supports following IPv6
+stacks.  For BSD, we recommend KAME IPv6 stack.  Solaris IPv6 stack is
+not yet supported.
+@sp 1
+@itemize @bullet
+@item
+Linux IPv6 stack for GNU/Linux 2.2.x and higher.
+@item
+KAME BSD IPv6 stack
+@end itemize
+
+@node Supported RFC, How to get Zebra, Supported Platforms, Overview
+@comment  node-name,  next,  previous,  up
+@section Supported RFC
+
+  Below is the list of currently supported RFC's.
+
+@table @asis
+@item @asis{RFC1058}
+@cite{Routing Information Protocol. C.L. Hedrick. Jun-01-1988.}
+
+@item @asis{RF2082}
+@cite{RIP-2 MD5 Authentication. F. Baker, R. Atkinson. January 1997.}
+
+@item @asis{RFC2453}
+@cite{RIP Version 2. G. Malkin. November 1998.}
+
+@item @asis{RFC2080}
+@cite{RIPng for IPv6. G. Malkin, R. Minnear. January 1997.}
+
+@item @asis{RFC2328}
+@cite{OSPF Version 2. J. Moy. April 1998.}
+
+@item @asis{RFC2740}
+@cite{OSPF for IPv6. R. Coltun, D. Ferguson, J. Moy. December 1999.}
+
+@item @asis{RFC1771} 
+@cite{A Border Gateway Protocol 4 (BGP-4). Y. Rekhter & T. Li. March 1995.}
+
+@item @asis{RFC1965}
+@cite{Autonomous System Confederations for BGP. P. Traina. June 1996.}
+
+@item @asis{RFC1997}
+@cite{BGP Communities Attribute. R. Chandra, P. Traina & T. Li. August 1996.}
+
+@item @asis{RFC2545}
+@cite{Use of BGP-4 Multiprotocol Extensions for IPv6 Inter-Domain Routing. P. Marques, F. Dupont. March 1999.}
+
+@item @asis{RFC2796}
+@cite{BGP Route Reflection An alternative to full mesh IBGP. T. Bates & R. Chandrasekeran. June 1996.}
+
+@item @asis{RFC2858}
+@cite{Multiprotocol Extensions for BGP-4. T. Bates, Y. Rekhter, R. Chandra, D. Katz. June 2000.}
+
+@item @asis{RFC2842}
+@cite{Capabilities Advertisement with BGP-4. R. Chandra, J. Scudder. May 2000.}
+
+@end table
+
+  When SNMP support is enabled, below RFC is also supported.
+
+@table @asis
+
+@item @asis{RFC1227}
+@cite{SNMP MUX protocol and MIB. M.T. Rose. May-01-1991.}
+
+@item @asis{RFC1657}
+@cite{Definitions of Managed Objects for the Fourth Version of the
+Border Gateway Protocol (BGP-4) using SMIv2. S. Willis, J. Burruss,
+J. Chu, Editor. July 1994.}
+
+@item @asis{RFC1724}
+@cite{RIP Version 2 MIB Extension. G. Malkin & F. Baker. November 1994.}
+
+@item @asis{RFC1850}
+@cite{OSPF Version 2 Management Information Base. F. Baker, R. Coltun.
+November 1995.}
+
+@end table
+
+@node How to get Zebra, Mailing List, Supported RFC, Overview
+@comment  node-name,  next,  previous,  up
+@section How to get Zebra
+
+  Zebra is still beta software and there is no officially
+released version.  So currently Zebra is distributed from Zebra beta ftp
+site located at:
+
+@url{ftp://ftp.zebra.org/pub/zebra}
+
+  Once Zebra is released you can get it from @sc{gnu} FTP site and
+its mirror sites.  We are planning Zebra-1.0 as the first released
+version.
+
+  Zebra's official web page is located at:
+
+@url{http://www.gnu.org/software/zebra/zebra.html}.
+
+  There is a Zebra beta tester web page at: 
+
+@url{http://www.zebra.org/}.
+
+  You can get the latest beta software information from this page.
+
+@node Mailing List, Bug Reports, How to get Zebra, Overview
+@comment  node-name,  next,  previous,  up
+@section Mailing List
+@cindex How to get in touch with Zebra
+@cindex Mailing Zebra
+@cindex Contact information
+@cindex Mailing lists
+
+  There is a mailing list for discussions about Zebra.  If you have any
+comments or suggestions to Zebra, please send mail to
+@email{zebra@@zebra.org}.  New snapshot announcements, improvement
+notes, and patches are sent to the list.
+
+  To subscribe to the @email{zebra@@zebra.org, Zebra mailing list},
+please send a mail to @email{zebra-request@@ml.zebra.org} with a message with a subject:
+
+@quotation
+subscribe
+@end quotation
+
+  To unsubscribe from the list, please send a mail to
+@email{zebra-request@@ml.zebra.org} with a message body that includes only:
+
+@quotation
+unsubscribe
+@end quotation
+
+@node Bug Reports,  , Mailing List, Overview
+@comment  node-name,  next,  previous,  up
+@section Bug Reports
+
+@cindex Bug Reports
+@cindex Bug hunting
+@cindex Found a bug?
+@cindex Reporting bugs
+@cindex Reporting software errors
+@cindex Errors in the software
+
+  If you think you have found a bug, please send a bug report to
+@email{bug-zebra@@gnu.org}.  When you send a bug report, please be
+careful about the points below.
+
+@itemize @bullet
+@item 
+Please note what kind of OS you are using.  If you use the IPv6 stack
+please note that as well.
+@item
+Please show us the results of @code{netstat -rn} and @code{ifconfig -a}.
+Information from zebra's VTY command @code{show ip route} will also be
+helpful.
+@item
+Please send your configuration file with the report.  If you specify
+arguments to the configure script please note that too.
+@end itemize
+
+  Bug reports are very important for us to improve the quality of Zebra.
+Zebra is still in the development stage, but please don't hesitate to
+send a bug report to @email{bug-zebra@@gnu.org}.
+

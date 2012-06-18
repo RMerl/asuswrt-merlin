@@ -1,0 +1,20 @@
+<samba:parameter name="winbind normalize names"
+                 context="G"
+		 type="boolean"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter controls whether winbindd will replace
+	whitespace in user and group names with an underscore (_) character.
+	For example, whether the name &quot;Space Kadet&quot; should be
+	replaced with the string &quot;space_kadet&quot;.
+	Frequently Unix shell scripts will have difficulty with usernames 
+	contains whitespace due to the default field separator in the shell.
+	Do not enable this option if the underscore character is used in
+	account names within your domain
+	</para>
+</description>
+
+<value type="default">no</value>
+<value type="example">yes</value>
+</samba:parameter>

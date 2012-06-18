@@ -1,0 +1,36 @@
+Dnsmasq from version 2.52 has a couple of rather application-specific
+features designed to allow for implementation of the DHCP part of CPE
+WAN management protocol.
+
+http://www.broadband-forum.org/technical/download/TR-069_Amendment-2.pdf
+http://en.wikipedia.org/wiki/TR-069
+
+The relevant sections are F.2.1 "Gateway Requirements" and F.2.5 "DHCP
+Vendor Options".
+
+First, dnsmasq checks for DHCP requests which contain an option-125
+vendor-class option which in turn holds a vendor section for IANA
+enterprise number 3561 which contains sub-options codes 1 and 2. If
+this is present  then the network-tag "cpewan-id" is set. 
+This allows dnsmasq to be configured to reply with the correct 
+GatewayManufacturerOUI, GatewaySerialNumber and GatewayProductClass like this:
+
+dhcp-option=cpewan-id,vi-encap:3561,4,"<GatewayManufacturerOUI>"
+dhcp-option=cpewan-id,vi-encap:3561,5,"<SerialNumber>"
+dhcp-option=cpewan-id,vi-encap:3561,6,"<ProductClass>"
+
+Second, the received sub-options 1, 2, and 3 are passed to the DHCP
+lease-change script as the environment variables DNSMASQ_CPEWAN_OUI,
+DNSMASQ_CPEWAN_SERIAL, and DNSMASQ_CPEWAN_CLASS respectively. This allows
+the script to be used to maintain a ManageableDevice table as
+specified in F.2.1. Note that this data is not retained in dnsmasq's
+internal DHCP lease database, so it is not available on every call to 
+the script (this is the same as some other data such as vendor and
+user classes). It will however be available for at least the "add"
+call, and should be stored then against the IP address as primary 
+key for future use.
+
+
+This feature was added to dnsmasq under sponsorship from Ericsson.
+
+

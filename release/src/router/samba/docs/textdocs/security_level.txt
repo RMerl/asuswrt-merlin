@@ -1,0 +1,103 @@
+!==
+!== security_level.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributor:	Andrew Tridgell
+Updated:	June 27, 1997
+Status:		Current
+
+Subject:	Description of SMB security levels.
+===========================================================================
+
+Samba supports the following options to the global smb.conf parameter
+"security =":
+	share, user, server
+
+Note: Samba-2.0.0 now adds the "domain" security mode. Please refer to
+the smb.conf man page for usage information and to the document
+docs/textdocs/DOMAIN_MEMBER.txt for further background details.
+
+Of the above, "security = server" means that Samba reports to clients that
+it is running in "user mode" but actually passes off all authentication
+requests to another "user mode" server. This requires an additional
+parameter "password server =" that points to the real authentication server.
+That real authentication server can be another Samba server or can be a
+Windows NT server, the later natively capable of encrypted password support.
+
+Below is a more complete description of security levels.
+===========================================================================
+
+A SMB server tells the client at startup what "security level" it is
+running. There are two options "share level" and "user level". Which
+of these two the client receives affects the way the client then tries
+to authenticate itself. It does not directly affect (to any great
+extent) the way the Samba server does security. I know this is
+strange, but it fits in with the client/server approach of SMB. In SMB
+everything is initiated and controlled by the client, and the server
+can only tell the client what is available and whether an action is
+allowed. 
+
+I'll describe user level security first, as its simpler. In user level
+security the client will send a "session setup" command directly after
+the protocol negotiation. This contains a username and password. The
+server can either accept or reject that username/password
+combination. Note that at this stage the server has no idea what
+share the client will eventually try to connect to, so it can't base
+the "accept/reject" on anything other than:
+
+- the username/password
+- the machine that the client is coming from
+
+If the server accepts the username/password then the client expects to
+be able to mount any share (using a "tree connection") without
+specifying a password. It expects that all access rights will be as
+the username/password specified in the "session setup". 
+
+It is also possible for a client to send multiple "session setup"
+requests. When the server responds it gives the client a "uid" to use
+as an authentication tag for that username/password. The client can
+maintain multiple authentication contexts in this way (WinDD is an
+example of an application that does this)
+
+
+Ok, now for share level security. In share level security the client
+authenticates itself separately for each share. It will send a
+password along with each "tree connection" (share mount). It does not
+explicitly send a username with this operation. The client is
+expecting a password to be associated with each share, independent of
+the user. This means that samba has to work out what username the
+client probably wants to use. It is never explicitly sent the
+username. Some commercial SMB servers such as NT actually associate
+passwords directly with shares in share level security, but samba
+always uses the unix authentication scheme where it is a
+username/password that is authenticated, not a "share/password".
+
+Many clients send a "session setup" even if the server is in share
+level security. They normally send a valid username but no
+password. Samba records this username in a list of "possible
+usernames". When the client then does a "tree connection" it also adds
+to this list the name of the share they try to connect to (useful for
+home directories) and any users listed in the "user =" smb.conf
+line. The password is then checked in turn against these "possible
+usernames". If a match is found then the client is authenticated as
+that user.
+
+Finally "server level" security. In server level security the samba
+server reports to the client that it is in user level security. The
+client then does a "session setup" as described earlier. The samba
+server takes the username/password that the client sends and attempts
+to login to the "password server" by sending exactly the same
+username/password that it got from the client. If that server is in
+user level security and accepts the password then samba accepts the
+clients connection. This allows the samba server to use another SMB
+server as the "password server". 
+
+You should also note that at the very start of all this, where the
+server tells the client what security level it is in, it also tells
+the client if it supports encryption. If it does then it supplies the
+client with a random "cryptkey". The client will then send all
+passwords in encrypted form. You have to compile samba with encryption
+enabled to support this feature, and you have to maintain a separate
+smbpasswd file with SMB style encrypted passwords. It is
+cryptographically impossible to translate from unix style encryption
+to SMB style encryption, although there are some fairly simple management
+schemes by which the two could be kept in sync.

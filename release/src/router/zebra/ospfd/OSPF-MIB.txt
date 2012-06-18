@@ -1,0 +1,2723 @@
+OSPF-MIB DEFINITIONS ::= BEGIN
+
+    IMPORTS
+            MODULE-IDENTITY, OBJECT-TYPE, Counter32, Gauge32,
+            Integer32, IpAddress
+                FROM SNMPv2-SMI
+            TEXTUAL-CONVENTION, TruthValue, RowStatus
+                FROM SNMPv2-TC
+            MODULE-COMPLIANCE, OBJECT-GROUP          FROM SNMPv2-CONF
+            mib-2                                    FROM RFC1213-MIB;
+
+--  This MIB module uses the extended OBJECT-TYPE macro as
+--  defined in [9].
+
+ospf MODULE-IDENTITY
+        LAST-UPDATED "9501201225Z" -- Fri Jan 20 12:25:50 PST 1995
+        ORGANIZATION "IETF OSPF Working Group"
+        CONTACT-INFO
+       "       Fred Baker
+       Postal: Cisco Systems
+               519 Lado Drive
+               Santa Barbara, California 93111
+       Tel:    +1 805 681 0115
+       E-Mail: fred@cisco.com
+
+               Rob Coltun
+       Postal: RainbowBridge Communications
+       Tel:    (301) 340-9416
+       E-Mail: rcoltun@rainbow-bridge.com"
+    DESCRIPTION
+       "The MIB module to describe the OSPF Version 2
+       Protocol"
+    ::= { mib-2 14 }
+
+--  The Area ID, in OSPF, has the same format as an IP Address,
+--  but has the function of defining a summarization point for
+--  Link State Advertisements
+
+AreaID ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+       "An OSPF Area Identifier."
+    SYNTAX      IpAddress
+
+
+--  The Router ID, in OSPF, has the same format as an IP Address,
+--  but identifies the router independent of its IP Address.
+
+RouterID ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+       "A OSPF Router Identifier."
+    SYNTAX      IpAddress
+
+
+--  The OSPF Metric is defined as an unsigned value in the range
+
+Metric ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+       "The OSPF Internal Metric."
+    SYNTAX      Integer32 (0..'FFFF'h)
+
+BigMetric ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+       "The OSPF External Metric."
+    SYNTAX      Integer32 (0..'FFFFFF'h)
+
+--  Status Values
+
+Status ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+       "The status of an interface: 'enabled' indicates that
+       it is willing to communicate with other OSPF Routers,
+       while 'disabled' indicates that it is not."
+    SYNTAX      INTEGER { enabled (1), disabled (2) }
+
+--  Time Durations measured in seconds
+
+PositiveInteger ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+       "A positive integer. Values in excess are precluded as
+       unnecessary and prone to interoperability issues."
+    SYNTAX      Integer32 (0..'7FFFFFFF'h)
+
+HelloRange ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+       "The range of intervals on which hello messages are
+       exchanged."
+    SYNTAX      Integer32 (1..'FFFF'h)
+
+UpToMaxAge ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+       "The values that one might find or configure for
+       variables bounded by the maximum age of an LSA."
+    SYNTAX      Integer32 (0..3600)
+
+
+--  The range of ifIndex
+
+InterfaceIndex ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+       "The range of ifIndex."
+    SYNTAX      Integer32
+
+
+--  Potential Priorities for the Designated Router Election
+
+DesignatedRouterPriority ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+       "The values defined for the priority of a system for
+       becoming the designated router."
+    SYNTAX      Integer32 (0..'FF'h)
+
+TOSType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+       "Type of Service is defined as a mapping to the IP Type of
+       Service Flags as defined in the IP Forwarding Table MIB
+
+       +-----+-----+-----+-----+-----+-----+-----+-----+
+       |                 |                       |     |
+       |   PRECEDENCE    |    TYPE OF SERVICE    |  0  |
+       |                 |                       |     |
+       +-----+-----+-----+-----+-----+-----+-----+-----+
+
+                IP TOS                IP TOS
+           Field     Policy      Field     Policy
+
+           Contents    Code      Contents    Code
+           0 0 0 0  ==>   0      0 0 0 1  ==>   2
+           0 0 1 0  ==>   4      0 0 1 1  ==>   6
+           0 1 0 0  ==>   8      0 1 0 1  ==>  10
+           0 1 1 0  ==>  12      0 1 1 1  ==>  14
+           1 0 0 0  ==>  16      1 0 0 1  ==>  18
+           1 0 1 0  ==>  20      1 0 1 1  ==>  22
+           1 1 0 0  ==>  24      1 1 0 1  ==>  26
+           1 1 1 0  ==>  28      1 1 1 1  ==>  30
+
+       The remaining values are left for future definition."
+    SYNTAX      Integer32 (0..30)
+
+
+--  OSPF General Variables
+
+--      These parameters apply globally to the Router's
+--      OSPF Process.
+
+ospfGeneralGroup OBJECT IDENTIFIER ::= { ospf 1 }
+
+
+    ospfRouterId OBJECT-TYPE
+        SYNTAX   RouterID
+        MAX-ACCESS   read-write
+        STATUS   current
+        DESCRIPTION
+           "A  32-bit  integer  uniquely  identifying  the
+           router in the Autonomous System.
+
+           By  convention,  to  ensure  uniqueness,   this
+           should  default  to  the  value  of  one of the
+           router's IP interface addresses."
+       REFERENCE
+          "OSPF Version 2, C.1 Global parameters"
+      ::= { ospfGeneralGroup 1 }
+
+
+    ospfAdminStat OBJECT-TYPE
+        SYNTAX   Status
+        MAX-ACCESS   read-write
+        STATUS   current
+        DESCRIPTION
+           "The  administrative  status  of  OSPF  in  the
+           router.   The  value 'enabled' denotes that the
+           OSPF Process is active on at least  one  inter-
+           face;  'disabled'  disables  it  on  all inter-
+           faces."
+       ::= { ospfGeneralGroup 2 }
+
+    ospfVersionNumber OBJECT-TYPE
+        SYNTAX   INTEGER    { version2 (2) }
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The current version number of the OSPF  proto-
+           col is 2."
+       REFERENCE
+          "OSPF Version 2, Title"
+      ::= { ospfGeneralGroup 3 }
+
+
+    ospfAreaBdrRtrStatus OBJECT-TYPE
+        SYNTAX   TruthValue
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "A flag to note whether this router is an  area
+           border router."
+       REFERENCE
+          "OSPF Version 2, Section 3 Splitting the AS into
+          Areas"
+      ::= { ospfGeneralGroup 4 }
+
+
+    ospfASBdrRtrStatus OBJECT-TYPE
+        SYNTAX   TruthValue
+        MAX-ACCESS   read-write
+        STATUS   current
+        DESCRIPTION
+           "A flag to note whether this router is  config-
+           ured as an Autonomous System border router."
+       REFERENCE
+          "OSPF Version 2, Section 3.3  Classification  of
+          routers"
+      ::= { ospfGeneralGroup 5 }
+
+    ospfExternLsaCount OBJECT-TYPE
+        SYNTAX   Gauge32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The number of external (LS type 5)  link-state
+           advertisements in the link-state database."
+       REFERENCE
+          "OSPF Version 2, Appendix A.4.5 AS external link
+          advertisements"
+      ::= { ospfGeneralGroup 6 }
+
+
+    ospfExternLsaCksumSum OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The 32-bit unsigned sum of the LS checksums of
+           the  external  link-state  advertisements  con-
+           tained in the link-state  database.   This  sum
+           can  be  used  to determine if there has been a
+           change in a router's link state  database,  and
+           to  compare  the  link-state  database  of  two
+           routers."
+       ::= { ospfGeneralGroup 7 }
+
+
+    ospfTOSSupport OBJECT-TYPE
+        SYNTAX   TruthValue
+        MAX-ACCESS   read-write
+        STATUS   current
+        DESCRIPTION
+           "The router's support for type-of-service rout-
+           ing."
+       REFERENCE
+          "OSPF Version 2,  Appendix  F.1.2  Optional  TOS
+          support"
+      ::= { ospfGeneralGroup 8 }
+
+    ospfOriginateNewLsas OBJECT-TYPE
+        SYNTAX   Counter32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The number of  new  link-state  advertisements
+           that  have been originated.  This number is in-
+           cremented each time the router originates a new
+           LSA."
+       ::= { ospfGeneralGroup 9 }
+
+
+    ospfRxNewLsas OBJECT-TYPE
+        SYNTAX   Counter32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The number of  link-state  advertisements  re-
+           ceived  determined  to  be  new instantiations.
+           This number does not include  newer  instantia-
+           tions  of self-originated link-state advertise-
+           ments."
+       ::= { ospfGeneralGroup 10 }
+
+    ospfExtLsdbLimit OBJECT-TYPE
+        SYNTAX   Integer32 (-1..'7FFFFFFF'h)
+        MAX-ACCESS   read-write
+        STATUS   current
+        DESCRIPTION
+           "The  maximum   number   of   non-default   AS-
+           external-LSAs entries that can be stored in the
+           link-state database.  If the value is -1,  then
+           there is no limit.
+
+           When the number of non-default AS-external-LSAs
+           in   a  router's  link-state  database  reaches
+           ospfExtLsdbLimit, the router  enters  Overflow-
+           State.   The   router  never  holds  more  than
+           ospfExtLsdbLimit  non-default  AS-external-LSAs
+           in  its  database. OspfExtLsdbLimit MUST be set
+           identically in all routers attached to the OSPF
+           backbone  and/or  any regular OSPF area. (i.e.,
+           OSPF stub areas and NSSAs are excluded)."
+       DEFVAL { -1 }
+       ::= { ospfGeneralGroup 11 }
+
+    ospfMulticastExtensions OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS   read-write
+        STATUS   current
+        DESCRIPTION
+           "A Bit Mask indicating whether  the  router  is
+           forwarding  IP  multicast  (Class  D) datagrams
+           based on the algorithms defined in  the  Multi-
+           cast Extensions to OSPF.
+
+           Bit 0, if set, indicates that  the  router  can
+           forward  IP multicast datagrams in the router's
+           directly attached areas (called intra-area mul-
+           ticast routing).
+
+           Bit 1, if set, indicates that  the  router  can
+           forward  IP  multicast  datagrams  between OSPF
+           areas (called inter-area multicast routing).
+
+           Bit 2, if set, indicates that  the  router  can
+           forward  IP  multicast  datagrams between Auto-
+           nomous Systems (called inter-AS multicast rout-
+           ing).
+
+           Only certain combinations of bit  settings  are
+           allowed,  namely: 0 (no multicast forwarding is
+           enabled), 1 (intra-area multicasting  only),  3
+           (intra-area  and  inter-area  multicasting),  5
+           (intra-area and inter-AS  multicasting)  and  7
+           (multicasting  everywhere). By default, no mul-
+           ticast forwarding is enabled."
+       DEFVAL { 0 }
+       ::= { ospfGeneralGroup 12 }
+
+    ospfExitOverflowInterval OBJECT-TYPE
+        SYNTAX   PositiveInteger
+        MAX-ACCESS   read-write
+        STATUS   current
+        DESCRIPTION
+           "The number of  seconds  that,  after  entering
+           OverflowState,  a  router will attempt to leave
+           OverflowState. This allows the router to  again
+           originate  non-default  AS-external-LSAs.  When
+           set to 0, the router will not  leave  Overflow-
+           State until restarted."
+       DEFVAL { 0 }
+       ::= { ospfGeneralGroup 13 }
+
+
+    ospfDemandExtensions OBJECT-TYPE
+        SYNTAX   TruthValue
+        MAX-ACCESS   read-write
+        STATUS   current
+        DESCRIPTION
+           "The router's support for demand routing."
+       REFERENCE
+          "OSPF Version 2, Appendix on Demand Routing"
+      ::= { ospfGeneralGroup 14 }
+
+
+--      The OSPF Area Data Structure contains information
+--      regarding the various areas. The interfaces and
+--      virtual links are configured as part of these areas.
+--      Area 0.0.0.0, by definition, is the Backbone Area
+
+
+    ospfAreaTable OBJECT-TYPE
+        SYNTAX   SEQUENCE OF OspfAreaEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "Information describing the configured  parame-
+           ters  and cumulative statistics of the router's
+           attached areas."
+       REFERENCE
+          "OSPF Version 2, Section 6  The Area Data Struc-
+          ture"
+      ::= { ospf 2 }
+
+
+    ospfAreaEntry OBJECT-TYPE
+        SYNTAX   OspfAreaEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "Information describing the configured  parame-
+           ters  and  cumulative  statistics of one of the
+           router's attached areas."
+       INDEX { ospfAreaId }
+       ::= { ospfAreaTable 1 }
+
+OspfAreaEntry ::=
+    SEQUENCE {
+        ospfAreaId
+            AreaID,
+        ospfAuthType
+            Integer32,
+        ospfImportAsExtern
+            INTEGER,
+        ospfSpfRuns
+            Counter32,
+        ospfAreaBdrRtrCount
+            Gauge32,
+        ospfAsBdrRtrCount
+            Gauge32,
+        ospfAreaLsaCount
+            Gauge32,
+        ospfAreaLsaCksumSum
+            Integer32,
+        ospfAreaSummary
+            INTEGER,
+        ospfAreaStatus
+            RowStatus
+              }
+
+    ospfAreaId OBJECT-TYPE
+        SYNTAX   AreaID
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "A 32-bit integer uniquely identifying an area.
+           Area ID 0.0.0.0 is used for the OSPF backbone."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+      ::= { ospfAreaEntry 1 }
+
+
+    ospfAuthType OBJECT-TYPE
+        SYNTAX   Integer32
+                    -- none (0),
+                    -- simplePassword (1)
+                    -- md5 (2)
+                    -- reserved for specification by IANA (> 2)
+        MAX-ACCESS   read-create
+        STATUS   obsolete
+        DESCRIPTION
+           "The authentication type specified for an area.
+           Additional authentication types may be assigned
+           locally on a per Area basis."
+       REFERENCE
+          "OSPF Version 2, Appendix E Authentication"
+      DEFVAL { 0 }        -- no authentication, by default
+      ::= { ospfAreaEntry 2 }
+
+    ospfImportAsExtern OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    importExternal (1),
+                    importNoExternal (2),
+                    importNssa (3)
+                  }
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The area's support for importing  AS  external
+           link- state advertisements."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+      DEFVAL { importExternal }
+      ::= { ospfAreaEntry 3 }
+
+
+    ospfSpfRuns OBJECT-TYPE
+        SYNTAX   Counter32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The number of times that the intra-area  route
+           table  has  been  calculated  using this area's
+           link-state database.  This  is  typically  done
+           using Dijkstra's algorithm."
+       ::= { ospfAreaEntry 4 }
+
+
+    ospfAreaBdrRtrCount OBJECT-TYPE
+        SYNTAX   Gauge32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The total number of area border routers reach-
+           able within this area.  This is initially zero,
+           and is calculated in each SPF Pass."
+       ::= { ospfAreaEntry 5 }
+
+    ospfAsBdrRtrCount OBJECT-TYPE
+        SYNTAX   Gauge32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The total number of Autonomous  System  border
+           routers  reachable  within  this area.  This is
+           initially zero, and is calculated in  each  SPF
+           Pass."
+       ::= { ospfAreaEntry 6 }
+
+
+    ospfAreaLsaCount OBJECT-TYPE
+        SYNTAX   Gauge32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The total number of link-state  advertisements
+           in  this  area's link-state database, excluding
+           AS External LSA's."
+       ::= { ospfAreaEntry 7 }
+
+
+    ospfAreaLsaCksumSum OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The 32-bit unsigned sum of the link-state  ad-
+           vertisements'  LS  checksums  contained in this
+           area's link-state database.  This sum  excludes
+           external (LS type 5) link-state advertisements.
+           The sum can be used to determine if  there  has
+           been  a  change  in a router's link state data-
+           base, and to compare the link-state database of
+           two routers."
+       DEFVAL   { 0 }
+       ::= { ospfAreaEntry 8 }
+
+    ospfAreaSummary OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    noAreaSummary (1),
+                    sendAreaSummary (2)
+                  }
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The variable ospfAreaSummary controls the  im-
+           port  of  summary LSAs into stub areas.  It has
+           no effect on other areas.
+
+           If it is noAreaSummary, the router will neither
+           originate  nor  propagate summary LSAs into the
+           stub area.  It will rely entirely  on  its  de-
+           fault route.
+
+           If it is sendAreaSummary, the router will  both
+           summarize and propagate summary LSAs."
+       DEFVAL   { noAreaSummary }
+       ::= { ospfAreaEntry 9 }
+
+
+    ospfAreaStatus OBJECT-TYPE
+        SYNTAX   RowStatus
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "This variable displays the status of  the  en-
+           try.  Setting it to 'invalid' has the effect of
+           rendering it inoperative.  The internal  effect
+           (row removal) is implementation dependent."
+       ::= { ospfAreaEntry 10 }
+
+
+--  OSPF Area Default Metric Table
+
+--      The OSPF Area Default Metric Table describes the metrics
+--      that a default Area Border Router will advertise into a
+--      Stub area.
+
+
+    ospfStubAreaTable OBJECT-TYPE
+        SYNTAX   SEQUENCE OF OspfStubAreaEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "The set of metrics that will be advertised  by
+           a default Area Border Router into a stub area."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2, Area Parameters"
+      ::= { ospf 3 }
+
+
+    ospfStubAreaEntry OBJECT-TYPE
+        SYNTAX   OspfStubAreaEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "The metric for a given Type  of  Service  that
+           will  be  advertised  by  a default Area Border
+           Router into a stub area."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2, Area Parameters"
+      INDEX { ospfStubAreaId, ospfStubTOS }
+      ::= { ospfStubAreaTable 1 }
+
+OspfStubAreaEntry ::=
+    SEQUENCE {
+        ospfStubAreaId
+            AreaID,
+        ospfStubTOS
+            TOSType,
+        ospfStubMetric
+            BigMetric,
+        ospfStubStatus
+            RowStatus,
+        ospfStubMetricType
+            INTEGER
+              }
+
+    ospfStubAreaId OBJECT-TYPE
+        SYNTAX   AreaID
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The 32 bit identifier for the Stub  Area.   On
+           creation,  this  can  be  derived  from the in-
+           stance."
+       ::= { ospfStubAreaEntry 1 }
+
+
+    ospfStubTOS OBJECT-TYPE
+        SYNTAX   TOSType
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The  Type  of  Service  associated  with   the
+           metric.   On creation, this can be derived from
+           the instance."
+       ::= { ospfStubAreaEntry 2 }
+
+
+    ospfStubMetric OBJECT-TYPE
+        SYNTAX   BigMetric
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The metric value applied at the indicated type
+           of  service.  By default, this equals the least
+           metric at the type of service among the  inter-
+           faces to other areas."
+       ::= { ospfStubAreaEntry 3 }
+
+
+    ospfStubStatus OBJECT-TYPE
+        SYNTAX   RowStatus
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "This variable displays the status of  the  en-
+           try.  Setting it to 'invalid' has the effect of
+           rendering it inoperative.  The internal  effect
+           (row removal) is implementation dependent."
+       ::= { ospfStubAreaEntry 4 }
+
+    ospfStubMetricType OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    ospfMetric (1),                -- OSPF Metric
+                    comparableCost (2),        -- external type 1
+                    nonComparable  (3)        -- external type 2
+                  }
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "This variable displays the type of metric  ad-
+           vertised as a default route."
+       DEFVAL   { ospfMetric }
+       ::= { ospfStubAreaEntry 5 }
+
+--  OSPF Link State Database
+
+--      The Link State Database contains the Link State
+--      Advertisements from throughout the areas that the
+--      device is attached to.
+
+
+    ospfLsdbTable OBJECT-TYPE
+        SYNTAX   SEQUENCE OF OspfLsdbEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "The OSPF Process's Link State Database."
+       REFERENCE
+          "OSPF Version 2, Section 12  Link  State  Adver-
+          tisements"
+      ::= { ospf 4 }
+
+
+    ospfLsdbEntry OBJECT-TYPE
+        SYNTAX   OspfLsdbEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "A single Link State Advertisement."
+       INDEX { ospfLsdbAreaId, ospfLsdbType,
+               ospfLsdbLsid, ospfLsdbRouterId }
+       ::= { ospfLsdbTable 1 }
+
+OspfLsdbEntry ::=
+    SEQUENCE {
+        ospfLsdbAreaId
+            AreaID,
+        ospfLsdbType
+            INTEGER,
+        ospfLsdbLsid
+            IpAddress,
+        ospfLsdbRouterId
+            RouterID,
+        ospfLsdbSequence
+            Integer32,
+        ospfLsdbAge
+            Integer32,
+        ospfLsdbChecksum
+            Integer32,
+        ospfLsdbAdvertisement
+            OCTET STRING
+              }
+    ospfLsdbAreaId OBJECT-TYPE
+        SYNTAX   AreaID
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The 32 bit identifier of the Area  from  which
+           the LSA was received."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+      ::= { ospfLsdbEntry 1 }
+
+-- External Link State Advertisements are permitted
+-- for backward compatibility, but should be displayed in
+-- the ospfExtLsdbTable rather than here.
+
+    ospfLsdbType OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    routerLink (1),
+                    networkLink (2),
+                    summaryLink (3),
+                    asSummaryLink (4),
+                    asExternalLink (5), -- but see ospfExtLsdbTable
+                    multicastLink (6),
+                    nssaExternalLink (7)
+                  }
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The type  of  the  link  state  advertisement.
+           Each  link state type has a separate advertise-
+           ment format."
+       REFERENCE
+          "OSPF Version 2, Appendix A.4.1 The  Link  State
+          Advertisement header"
+      ::= { ospfLsdbEntry 2 }
+
+    ospfLsdbLsid OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The Link State ID is an LS Type Specific field
+           containing either a Router ID or an IP Address;
+           it identifies the piece of the  routing  domain
+           that is being described by the advertisement."
+       REFERENCE
+          "OSPF Version 2, Section 12.1.4 Link State ID"
+      ::= { ospfLsdbEntry 3 }
+    ospfLsdbRouterId OBJECT-TYPE
+        SYNTAX   RouterID
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The 32 bit number that uniquely identifies the
+           originating router in the Autonomous System."
+       REFERENCE
+          "OSPF Version 2, Appendix C.1 Global parameters"
+      ::= { ospfLsdbEntry 4 }
+
+--  Note that the OSPF Sequence Number is a 32 bit signed
+--  integer.  It starts with the value '80000001'h,
+--  or -'7FFFFFFF'h, and increments until '7FFFFFFF'h
+--  Thus, a typical sequence number will be very negative.
+
+    ospfLsdbSequence OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The sequence number field is a  signed  32-bit
+           integer.   It  is used to detect old and dupli-
+           cate link state advertisements.  The  space  of
+           sequence  numbers  is  linearly  ordered.   The
+           larger the sequence number the more recent  the
+           advertisement."
+       REFERENCE
+          "OSPF Version  2,  Section  12.1.6  LS  sequence
+          number"
+      ::= { ospfLsdbEntry 5 }
+
+
+    ospfLsdbAge OBJECT-TYPE
+        SYNTAX   Integer32    -- Should be 0..MaxAge
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "This field is the age of the link state adver-
+           tisement in seconds."
+       REFERENCE
+          "OSPF Version 2, Section 12.1.1 LS age"
+      ::= { ospfLsdbEntry 6 }
+
+    ospfLsdbChecksum OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "This field is the  checksum  of  the  complete
+           contents  of  the  advertisement, excepting the
+           age field.  The age field is excepted  so  that
+           an   advertisement's  age  can  be  incremented
+           without updating the  checksum.   The  checksum
+           used  is  the same that is used for ISO connec-
+           tionless datagrams; it is commonly referred  to
+           as the Fletcher checksum."
+       REFERENCE
+          "OSPF Version 2, Section 12.1.7 LS checksum"
+      ::= { ospfLsdbEntry 7 }
+
+
+    ospfLsdbAdvertisement OBJECT-TYPE
+        SYNTAX   OCTET STRING (SIZE (1..65535))
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The entire Link State Advertisement, including
+           its header."
+       REFERENCE
+          "OSPF Version 2, Section 12  Link  State  Adver-
+          tisements"
+      ::= { ospfLsdbEntry 8 }
+
+
+--  Address Range Table
+
+--      The Address Range Table acts as an adjunct to the Area
+--      Table; It describes those Address Range Summaries that
+--      are configured to be propagated from an Area to reduce
+--      the amount of information about it which is known beyond
+--      its borders.
+
+    ospfAreaRangeTable OBJECT-TYPE
+        SYNTAX   SEQUENCE OF OspfAreaRangeEntry
+        MAX-ACCESS   not-accessible
+        STATUS   obsolete
+        DESCRIPTION
+           "A range if IP addresses  specified  by  an  IP
+           address/IP  network  mask  pair.   For example,
+           class B address range of X.X.X.X with a network
+           mask  of  255.255.0.0 includes all IP addresses
+           from X.X.0.0 to X.X.255.255"
+       REFERENCE
+          "OSPF Version 2, Appendix C.2  Area parameters"
+      ::= { ospf 5 }
+    ospfAreaRangeEntry OBJECT-TYPE
+        SYNTAX   OspfAreaRangeEntry
+        MAX-ACCESS   not-accessible
+        STATUS   obsolete
+        DESCRIPTION
+           "A range if IP addresses  specified  by  an  IP
+           address/IP  network  mask  pair.   For example,
+           class B address range of X.X.X.X with a network
+           mask  of  255.255.0.0 includes all IP addresses
+           from X.X.0.0 to X.X.255.255"
+       REFERENCE
+          "OSPF Version 2, Appendix C.2  Area parameters"
+      INDEX { ospfAreaRangeAreaId, ospfAreaRangeNet }
+      ::= { ospfAreaRangeTable 1 }
+
+OspfAreaRangeEntry ::=
+    SEQUENCE {
+        ospfAreaRangeAreaId
+            AreaID,
+        ospfAreaRangeNet
+            IpAddress,
+        ospfAreaRangeMask
+            IpAddress,
+        ospfAreaRangeStatus
+            RowStatus,
+        ospfAreaRangeEffect
+            INTEGER
+              }
+
+    ospfAreaRangeAreaId OBJECT-TYPE
+        SYNTAX   AreaID
+        MAX-ACCESS   read-only
+        STATUS   obsolete
+        DESCRIPTION
+           "The Area the Address  Range  is  to  be  found
+           within."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+      ::= { ospfAreaRangeEntry 1 }
+
+
+    ospfAreaRangeNet OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   obsolete
+        DESCRIPTION
+           "The IP Address of the Net or Subnet  indicated
+           by the range."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+      ::= { ospfAreaRangeEntry 2 }
+
+
+    ospfAreaRangeMask OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-create
+        STATUS   obsolete
+        DESCRIPTION
+           "The Subnet Mask that pertains to  the  Net  or
+           Subnet."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+      ::= { ospfAreaRangeEntry 3 }
+
+    ospfAreaRangeStatus OBJECT-TYPE
+        SYNTAX   RowStatus
+        MAX-ACCESS   read-create
+        STATUS   obsolete
+        DESCRIPTION
+           "This variable displays the status of  the  en-
+           try.  Setting it to 'invalid' has the effect of
+           rendering it inoperative.  The internal  effect
+           (row removal) is implementation dependent."
+       ::= { ospfAreaRangeEntry 4 }
+
+
+    ospfAreaRangeEffect OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    advertiseMatching (1),
+                    doNotAdvertiseMatching (2)
+                  }
+        MAX-ACCESS   read-create
+        STATUS   obsolete
+        DESCRIPTION
+           "Subnets subsumed by ranges either trigger  the
+           advertisement  of the indicated summary (adver-
+           tiseMatching), or result in  the  subnet's  not
+           being advertised at all outside the area."
+       DEFVAL   { advertiseMatching }
+       ::= { ospfAreaRangeEntry 5 }
+
+
+
+--  OSPF Host Table
+
+--      The Host/Metric Table indicates what hosts are directly
+--      attached to the Router, and what metrics and types of
+--      service should be advertised for them.
+
+    ospfHostTable OBJECT-TYPE
+        SYNTAX   SEQUENCE OF OspfHostEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "The list of Hosts, and their metrics, that the
+           router will advertise as host routes."
+       REFERENCE
+          "OSPF Version 2, Appendix C.6  Host route param-
+          eters"
+      ::= { ospf 6 }
+
+
+    ospfHostEntry OBJECT-TYPE
+        SYNTAX   OspfHostEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "A metric to be advertised, for a given type of
+           service, when a given host is reachable."
+       INDEX { ospfHostIpAddress, ospfHostTOS }
+       ::= { ospfHostTable 1 }
+
+OspfHostEntry ::=
+    SEQUENCE {
+        ospfHostIpAddress
+            IpAddress,
+        ospfHostTOS
+            TOSType,
+        ospfHostMetric
+            Metric,
+        ospfHostStatus
+            RowStatus,
+        ospfHostAreaID
+            AreaID
+              }
+
+    ospfHostIpAddress OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The IP Address of the Host."
+       REFERENCE
+          "OSPF Version 2, Appendix C.6 Host route parame-
+          ters"
+      ::= { ospfHostEntry 1 }
+
+
+    ospfHostTOS OBJECT-TYPE
+        SYNTAX   TOSType
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The Type of Service of the route being config-
+           ured."
+       REFERENCE
+          "OSPF Version 2, Appendix C.6 Host route parame-
+          ters"
+      ::= { ospfHostEntry 2 }
+
+
+    ospfHostMetric OBJECT-TYPE
+        SYNTAX   Metric
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The Metric to be advertised."
+       REFERENCE
+          "OSPF Version 2, Appendix C.6 Host route parame-
+          ters"
+      ::= { ospfHostEntry 3 }
+
+    ospfHostStatus OBJECT-TYPE
+        SYNTAX   RowStatus
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "This variable displays the status of  the  en-
+           try.  Setting it to 'invalid' has the effect of
+           rendering it inoperative.  The internal  effect
+           (row removal) is implementation dependent."
+       ::= { ospfHostEntry 4 }
+
+
+    ospfHostAreaID OBJECT-TYPE
+        SYNTAX   AreaID
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The Area the Host Entry is to be found within.
+           By  default, the area that a subsuming OSPF in-
+           terface is in, or 0.0.0.0"
+       REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+      ::= { ospfHostEntry 5 }
+
+
+--  OSPF Interface Table
+
+--      The OSPF Interface Table augments the ipAddrTable
+--             with OSPF specific information.
+
+    ospfIfTable OBJECT-TYPE
+        SYNTAX   SEQUENCE OF OspfIfEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "The OSPF Interface Table describes the  inter-
+           faces from the viewpoint of OSPF."
+       REFERENCE
+          "OSPF Version 2, Appendix C.3  Router  interface
+          parameters"
+      ::= { ospf 7 }
+
+
+    ospfIfEntry OBJECT-TYPE
+        SYNTAX   OspfIfEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "The OSPF Interface Entry describes one  inter-
+           face from the viewpoint of OSPF."
+       INDEX { ospfIfIpAddress, ospfAddressLessIf }
+       ::= { ospfIfTable 1 }
+
+OspfIfEntry ::=
+    SEQUENCE {
+        ospfIfIpAddress
+            IpAddress,
+        ospfAddressLessIf
+            Integer32,
+        ospfIfAreaId
+            AreaID,
+        ospfIfType
+            INTEGER,
+        ospfIfAdminStat
+            Status,
+        ospfIfRtrPriority
+            DesignatedRouterPriority,
+        ospfIfTransitDelay
+            UpToMaxAge,
+        ospfIfRetransInterval
+            UpToMaxAge,
+        ospfIfHelloInterval
+            HelloRange,
+        ospfIfRtrDeadInterval
+            PositiveInteger,
+        ospfIfPollInterval
+            PositiveInteger,
+        ospfIfState
+            INTEGER,
+        ospfIfDesignatedRouter
+            IpAddress,
+        ospfIfBackupDesignatedRouter
+            IpAddress,
+        ospfIfEvents
+            Counter32,
+        ospfIfAuthType
+            INTEGER,
+        ospfIfAuthKey
+            OCTET STRING,
+        ospfIfStatus
+            RowStatus,
+        ospfIfMulticastForwarding
+            INTEGER,
+        ospfIfDemand
+            TruthValue
+              }
+
+    ospfIfIpAddress OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The IP address of this OSPF interface."
+       ::= { ospfIfEntry 1 }
+
+    ospfAddressLessIf OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "For the purpose of easing  the  instancing  of
+           addressed   and  addressless  interfaces;  This
+           variable takes the value 0 on  interfaces  with
+           IP  Addresses,  and  the corresponding value of
+           ifIndex for interfaces having no IP Address."
+       ::= { ospfIfEntry 2 }
+    ospfIfAreaId OBJECT-TYPE
+        SYNTAX   AreaID
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "A 32-bit integer uniquely identifying the area
+           to  which  the  interface  connects.   Area  ID
+           0.0.0.0 is used for the OSPF backbone."
+       DEFVAL   { '00000000'H }    -- 0.0.0.0
+       ::= { ospfIfEntry 3 }
+
+    ospfIfType OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    broadcast (1),
+                    nbma (2),
+                    pointToPoint (3),
+                    pointToMultipoint (5)
+                  }
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The OSPF interface type.
+
+           By way of a default, this field may be intuited
+           from the corresponding value of ifType.  Broad-
+           cast LANs, such as  Ethernet  and  IEEE  802.5,
+           take  the  value  'broadcast', X.25 and similar
+           technologies take the value 'nbma',  and  links
+           that  are  definitively point to point take the
+           value 'pointToPoint'."
+       ::= { ospfIfEntry 4 }
+
+
+    ospfIfAdminStat OBJECT-TYPE
+        SYNTAX   Status
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The OSPF  interface's  administrative  status.
+           The  value formed on the interface, and the in-
+           terface will be advertised as an internal route
+           to  some  area.   The  value 'disabled' denotes
+           that the interface is external to OSPF."
+       DEFVAL { enabled }
+       ::= { ospfIfEntry 5 }
+
+    ospfIfRtrPriority OBJECT-TYPE
+        SYNTAX   DesignatedRouterPriority
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The  priority  of  this  interface.   Used  in
+           multi-access  networks,  this  field is used in
+           the designated router election algorithm.   The
+           value 0 signifies that the router is not eligi-
+           ble to become the  designated  router  on  this
+           particular  network.   In the event of a tie in
+           this value, routers will use their Router ID as
+           a tie breaker."
+       DEFVAL { 1 }
+       ::= { ospfIfEntry 6 }
+
+
+    ospfIfTransitDelay OBJECT-TYPE
+        SYNTAX   UpToMaxAge
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The estimated number of seconds  it  takes  to
+           transmit  a  link state update packet over this
+           interface."
+       DEFVAL { 1 }
+       ::= { ospfIfEntry 7 }
+
+
+    ospfIfRetransInterval OBJECT-TYPE
+        SYNTAX   UpToMaxAge
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The number of seconds between  link-state  ad-
+           vertisement  retransmissions,  for  adjacencies
+           belonging to this  interface.   This  value  is
+           also used when retransmitting database descrip-
+           tion and link-state request packets."
+       DEFVAL { 5 }
+       ::= { ospfIfEntry 8 }
+
+
+    ospfIfHelloInterval OBJECT-TYPE
+        SYNTAX   HelloRange
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The length of time, in  seconds,  between  the
+           Hello  packets that the router sends on the in-
+           terface.  This value must be the same  for  all
+           routers attached to a common network."
+       DEFVAL { 10 }
+       ::= { ospfIfEntry 9 }
+
+
+    ospfIfRtrDeadInterval OBJECT-TYPE
+        SYNTAX   PositiveInteger
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The number of seconds that  a  router's  Hello
+           packets  have  not been seen before it's neigh-
+           bors declare the router down.  This  should  be
+           some  multiple  of  the  Hello  interval.  This
+           value must be the same for all routers attached
+           to a common network."
+       DEFVAL { 40 }
+       ::= { ospfIfEntry 10 }
+
+
+    ospfIfPollInterval OBJECT-TYPE
+        SYNTAX   PositiveInteger
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The larger time interval, in seconds,  between
+           the  Hello  packets  sent  to  an inactive non-
+           broadcast multi- access neighbor."
+       DEFVAL { 120 }
+       ::= { ospfIfEntry 11 }
+
+
+    ospfIfState OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    down (1),
+                    loopback (2),
+                    waiting (3),
+                    pointToPoint (4),
+                    designatedRouter (5),
+                    backupDesignatedRouter (6),
+                    otherDesignatedRouter (7)
+                  }
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The OSPF Interface State."
+       DEFVAL { down }
+       ::= { ospfIfEntry 12 }
+
+
+    ospfIfDesignatedRouter OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The IP Address of the Designated Router."
+       DEFVAL   { '00000000'H }    -- 0.0.0.0
+       ::= { ospfIfEntry 13 }
+
+
+    ospfIfBackupDesignatedRouter OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The  IP  Address  of  the  Backup   Designated
+           Router."
+       DEFVAL   { '00000000'H }    -- 0.0.0.0
+       ::= { ospfIfEntry 14 }
+
+    ospfIfEvents OBJECT-TYPE
+        SYNTAX   Counter32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The number of times this  OSPF  interface  has
+           changed its state, or an error has occurred."
+       ::= { ospfIfEntry 15 }
+
+
+    ospfIfAuthKey OBJECT-TYPE
+        SYNTAX   OCTET STRING (SIZE (0..256))
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The Authentication Key.  If the Area's Author-
+           ization  Type  is  simplePassword,  and the key
+           length is shorter than 8 octets, the agent will
+           left adjust and zero fill to 8 octets.
+
+           Note that unauthenticated  interfaces  need  no
+           authentication key, and simple password authen-
+           tication cannot use a key of more  than  8  oc-
+           tets.  Larger keys are useful only with authen-
+           tication mechanisms not specified in this docu-
+           ment.
+
+           When read, ospfIfAuthKey always returns an  Oc-
+           tet String of length zero."
+       REFERENCE
+          "OSPF Version 2, Section 9  The  Interface  Data
+          Structure"
+      DEFVAL   { '0000000000000000'H }    -- 0.0.0.0.0.0.0.0
+      ::= { ospfIfEntry 16 }
+
+    ospfIfStatus OBJECT-TYPE
+        SYNTAX   RowStatus
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "This variable displays the status of  the  en-
+           try.  Setting it to 'invalid' has the effect of
+           rendering it inoperative.  The internal  effect
+           (row removal) is implementation dependent."
+       ::= { ospfIfEntry 17 }
+
+
+    ospfIfMulticastForwarding OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                            blocked (1),        -- no multicast forwarding
+                            multicast (2),        -- using multicast address
+                            unicast (3)        -- to each OSPF neighbor
+                  }
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The way multicasts should  forwarded  on  this
+           interface;  not  forwarded,  forwarded  as data
+           link multicasts, or forwarded as data link uni-
+           casts.   Data link multicasting is not meaning-
+           ful on point to point and NBMA interfaces,  and
+           setting ospfMulticastForwarding to 0 effective-
+           ly disables all multicast forwarding."
+       DEFVAL { blocked }
+       ::= { ospfIfEntry 18 }
+
+
+    ospfIfDemand OBJECT-TYPE
+        SYNTAX   TruthValue
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "Indicates whether Demand OSPF procedures (hel-
+           lo supression to FULL neighbors and setting the
+           DoNotAge flag on proogated LSAs) should be per-
+           formed on this interface."
+       DEFVAL { false }
+       ::= { ospfIfEntry 19 }
+
+
+    ospfIfAuthType OBJECT-TYPE
+        SYNTAX   INTEGER (0..255)
+                    -- none (0),
+                    -- simplePassword (1)
+                    -- md5 (2)
+                    -- reserved for specification by IANA (> 2)
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The authentication type specified for  an  in-
+           terface.   Additional  authentication types may
+           be assigned locally."
+       REFERENCE
+          "OSPF Version 2, Appendix E Authentication"
+      DEFVAL { 0 }        -- no authentication, by default
+      ::= { ospfIfEntry 20 }
+
+
+--  OSPF Interface Metric Table
+
+--      The Metric Table describes the metrics to be advertised
+--      for a specified interface at the various types of service.
+--      As such, this table is an adjunct of the OSPF Interface
+--      Table.
+
+-- Types of service, as defined by RFC 791, have the ability
+-- to request low delay, high bandwidth, or reliable linkage.
+
+-- For the purposes of this specification, the measure of
+-- bandwidth
+
+--      Metric = 10^8 / ifSpeed
+
+-- is the default value.  For multiple link interfaces, note
+-- that ifSpeed is the sum of the individual link speeds.
+-- This yields a number having the following typical values:
+
+--      Network Type/bit rate   Metric
+
+--      >= 100 MBPS                 1
+--      Ethernet/802.3             10
+--      E1                         48
+--      T1 (ESF)                   65
+--       64 KBPS                 1562
+--       56 KBPS                 1785
+--       19.2 KBPS               5208
+--        9.6 KBPS              10416
+
+-- Routes that are not specified use the default (TOS 0) metric
+
+    ospfIfMetricTable OBJECT-TYPE
+        SYNTAX   SEQUENCE OF OspfIfMetricEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "The TOS metrics for  a  non-virtual  interface
+           identified by the interface index."
+       REFERENCE
+          "OSPF Version 2, Appendix C.3  Router  interface
+          parameters"
+      ::= { ospf 8 }
+
+    ospfIfMetricEntry OBJECT-TYPE
+        SYNTAX   OspfIfMetricEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "A particular TOS metric for a non-virtual  in-
+           terface identified by the interface index."
+       REFERENCE
+          "OSPF Version 2, Appendix C.3  Router  interface
+          parameters"
+      INDEX { ospfIfMetricIpAddress,
+  ospfIfMetricAddressLessIf,
+  ospfIfMetricTOS }
+      ::= { ospfIfMetricTable 1 }
+
+OspfIfMetricEntry ::=
+    SEQUENCE {
+        ospfIfMetricIpAddress
+            IpAddress,
+        ospfIfMetricAddressLessIf
+            Integer32,
+        ospfIfMetricTOS
+            TOSType,
+        ospfIfMetricValue
+            Metric,
+        ospfIfMetricStatus
+            RowStatus
+              }
+
+    ospfIfMetricIpAddress OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The IP address of this OSPF interface.  On row
+           creation,  this  can  be  derived  from the in-
+           stance."
+       ::= { ospfIfMetricEntry 1 }
+
+    ospfIfMetricAddressLessIf OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "For the purpose of easing  the  instancing  of
+           addressed   and  addressless  interfaces;  This
+           variable takes the value 0 on  interfaces  with
+           IP  Addresses, and the value of ifIndex for in-
+           terfaces having no IP Address.   On  row  crea-
+           tion, this can be derived from the instance."
+       ::= { ospfIfMetricEntry 2 }
+
+
+    ospfIfMetricTOS OBJECT-TYPE
+        SYNTAX   TOSType
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The type of service metric  being  referenced.
+           On  row  creation, this can be derived from the
+           instance."
+       ::= { ospfIfMetricEntry 3 }
+
+
+    ospfIfMetricValue OBJECT-TYPE
+        SYNTAX   Metric
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The metric of using this type  of  service  on
+           this interface.  The default value of the TOS 0
+           Metric is 10^8 / ifSpeed."
+       ::= { ospfIfMetricEntry 4 }
+
+    ospfIfMetricStatus OBJECT-TYPE
+        SYNTAX   RowStatus
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "This variable displays the status of  the  en-
+           try.  Setting it to 'invalid' has the effect of
+           rendering it inoperative.  The internal  effect
+           (row removal) is implementation dependent."
+       ::= { ospfIfMetricEntry 5 }
+
+
+--  OSPF Virtual Interface Table
+
+--      The Virtual Interface Table describes the virtual
+--      links that the OSPF Process is configured to
+--      carry on.
+
+    ospfVirtIfTable OBJECT-TYPE
+        SYNTAX   SEQUENCE OF OspfVirtIfEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "Information about this router's virtual inter-
+           faces."
+       REFERENCE
+          "OSPF Version  2,  Appendix  C.4   Virtual  link
+          parameters"
+      ::= { ospf 9 }
+
+
+    ospfVirtIfEntry OBJECT-TYPE
+        SYNTAX   OspfVirtIfEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "Information about a single Virtual Interface."
+       INDEX { ospfVirtIfAreaId, ospfVirtIfNeighbor }
+       ::= { ospfVirtIfTable 1 }
+
+OspfVirtIfEntry ::=
+    SEQUENCE {
+        ospfVirtIfAreaId
+            AreaID,
+        ospfVirtIfNeighbor
+            RouterID,
+        ospfVirtIfTransitDelay
+            UpToMaxAge,
+        ospfVirtIfRetransInterval
+            UpToMaxAge,
+        ospfVirtIfHelloInterval
+            HelloRange,
+        ospfVirtIfRtrDeadInterval
+            PositiveInteger,
+        ospfVirtIfState
+            INTEGER,
+        ospfVirtIfEvents
+            Counter32,
+        ospfVirtIfAuthType
+            INTEGER,
+        ospfVirtIfAuthKey
+            OCTET STRING,
+        ospfVirtIfStatus
+            RowStatus
+              }
+
+    ospfVirtIfAreaId OBJECT-TYPE
+        SYNTAX   AreaID
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The  Transit  Area  that  the   Virtual   Link
+           traverses.  By definition, this is not 0.0.0.0"
+       ::= { ospfVirtIfEntry 1 }
+
+
+    ospfVirtIfNeighbor OBJECT-TYPE
+        SYNTAX   RouterID
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The Router ID of the Virtual Neighbor."
+       ::= { ospfVirtIfEntry 2 }
+
+
+    ospfVirtIfTransitDelay OBJECT-TYPE
+        SYNTAX   UpToMaxAge
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The estimated number of seconds  it  takes  to
+           transmit  a link- state update packet over this
+           interface."
+       DEFVAL { 1 }
+       ::= { ospfVirtIfEntry 3 }
+
+
+    ospfVirtIfRetransInterval OBJECT-TYPE
+        SYNTAX   UpToMaxAge
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The number of seconds between  link-state  ad-
+           vertisement  retransmissions,  for  adjacencies
+           belonging to this  interface.   This  value  is
+           also used when retransmitting database descrip-
+           tion  and  link-state  request  packets.   This
+           value  should  be well over the expected round-
+           trip time."
+       DEFVAL { 5 }
+       ::= { ospfVirtIfEntry 4 }
+
+
+    ospfVirtIfHelloInterval OBJECT-TYPE
+        SYNTAX   HelloRange
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The length of time, in  seconds,  between  the
+           Hello  packets that the router sends on the in-
+           terface.  This value must be the same  for  the
+           virtual neighbor."
+       DEFVAL { 10 }
+       ::= { ospfVirtIfEntry 5 }
+
+
+    ospfVirtIfRtrDeadInterval OBJECT-TYPE
+        SYNTAX   PositiveInteger
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The number of seconds that  a  router's  Hello
+           packets  have  not been seen before it's neigh-
+           bors declare the router down.  This  should  be
+           some  multiple  of  the  Hello  interval.  This
+           value must be the same for the  virtual  neigh-
+           bor."
+       DEFVAL { 60 }
+       ::= { ospfVirtIfEntry 6 }
+
+
+    ospfVirtIfState OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    down (1),            -- these use the same encoding
+                    pointToPoint (4)     -- as the ospfIfTable
+                  }
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "OSPF virtual interface states."
+       DEFVAL   { down }
+       ::= { ospfVirtIfEntry 7 }
+
+
+    ospfVirtIfEvents OBJECT-TYPE
+        SYNTAX   Counter32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The number of state changes or error events on
+           this Virtual Link"
+       ::= { ospfVirtIfEntry 8 }
+
+
+    ospfVirtIfAuthKey OBJECT-TYPE
+        SYNTAX   OCTET STRING (SIZE(0..256))
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "If Authentication Type is simplePassword,  the
+           device  will left adjust and zero fill to 8 oc-
+           tets.
+
+           Note that unauthenticated  interfaces  need  no
+           authentication key, and simple password authen-
+           tication cannot use a key of more  than  8  oc-
+           tets.  Larger keys are useful only with authen-
+           tication mechanisms not specified in this docu-
+           ment.
+
+           When  read,  ospfVifAuthKey  always  returns  a
+           string of length zero."
+       REFERENCE
+          "OSPF Version 2, Section 9  The  Interface  Data
+          Structure"
+      DEFVAL   { '0000000000000000'H }    -- 0.0.0.0.0.0.0.0
+      ::= { ospfVirtIfEntry 9 }
+
+
+    ospfVirtIfStatus OBJECT-TYPE
+        SYNTAX   RowStatus
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "This variable displays the status of  the  en-
+           try.  Setting it to 'invalid' has the effect of
+           rendering it inoperative.  The internal  effect
+           (row removal) is implementation dependent."
+       ::= { ospfVirtIfEntry 10 }
+
+
+    ospfVirtIfAuthType OBJECT-TYPE
+        SYNTAX   INTEGER (0..255)
+                    -- none (0),
+                    -- simplePassword (1)
+                    -- md5 (2)
+                    -- reserved for specification by IANA (> 2)
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The authentication type specified for a virtu-
+           al  interface.  Additional authentication types
+           may be assigned locally."
+       REFERENCE
+          "OSPF Version 2, Appendix E Authentication"
+      DEFVAL { 0 }        -- no authentication, by default
+      ::= { ospfVirtIfEntry 11 }
+
+
+--  OSPF Neighbor Table
+
+--      The OSPF Neighbor Table describes all neighbors in
+--      the locality of the subject router.
+
+    ospfNbrTable OBJECT-TYPE
+        SYNTAX   SEQUENCE OF OspfNbrEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "A table of non-virtual neighbor information."
+       REFERENCE
+          "OSPF Version 2, Section 10  The  Neighbor  Data
+          Structure"
+      ::= { ospf 10 }
+
+
+    ospfNbrEntry OBJECT-TYPE
+        SYNTAX   OspfNbrEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "The information regarding a single neighbor."
+       REFERENCE
+          "OSPF Version 2, Section 10  The  Neighbor  Data
+          Structure"
+      INDEX { ospfNbrIpAddr, ospfNbrAddressLessIndex }
+      ::= { ospfNbrTable 1 }
+
+OspfNbrEntry ::=
+    SEQUENCE {
+        ospfNbrIpAddr
+            IpAddress,
+        ospfNbrAddressLessIndex
+            InterfaceIndex,
+        ospfNbrRtrId
+            RouterID,
+        ospfNbrOptions
+            Integer32,
+        ospfNbrPriority
+            DesignatedRouterPriority,
+        ospfNbrState
+            INTEGER,
+        ospfNbrEvents
+            Counter32,
+        ospfNbrLsRetransQLen
+            Gauge32,
+        ospfNbmaNbrStatus
+            RowStatus,
+        ospfNbmaNbrPermanence
+            INTEGER,
+        ospfNbrHelloSuppressed
+            TruthValue
+              }
+
+    ospfNbrIpAddr OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The IP address this neighbor is using  in  its
+           IP  Source  Address.  Note that, on addressless
+           links, this will not be 0.0.0.0,  but  the  ad-
+           dress of another of the neighbor's interfaces."
+       ::= { ospfNbrEntry 1 }
+
+
+    ospfNbrAddressLessIndex OBJECT-TYPE
+        SYNTAX   InterfaceIndex
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "On an interface having an  IP  Address,  zero.
+           On  addressless  interfaces,  the corresponding
+           value of ifIndex in the Internet Standard  MIB.
+           On  row  creation, this can be derived from the
+           instance."
+       ::= { ospfNbrEntry 2 }
+
+
+    ospfNbrRtrId OBJECT-TYPE
+        SYNTAX   RouterID
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "A 32-bit integer (represented as a type  IpAd-
+           dress)  uniquely  identifying  the  neighboring
+           router in the Autonomous System."
+       DEFVAL   { '00000000'H }    -- 0.0.0.0
+       ::= { ospfNbrEntry 3 }
+
+
+    ospfNbrOptions OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "A Bit Mask corresponding to the neighbor's op-
+           tions field.
+
+           Bit 0, if set, indicates that the  system  will
+           operate  on  Type of Service metrics other than
+           TOS 0.  If zero, the neighbor will  ignore  all
+           metrics except the TOS 0 metric.
+
+           Bit 1, if set, indicates  that  the  associated
+           area  accepts and operates on external informa-
+           tion; if zero, it is a stub area.
+
+           Bit 2, if set, indicates that the system is ca-
+           pable  of routing IP Multicast datagrams; i.e.,
+           that it implements the Multicast Extensions  to
+           OSPF.
+
+           Bit 3, if set, indicates  that  the  associated
+           area  is  an  NSSA.  These areas are capable of
+           carrying type 7 external advertisements,  which
+           are  translated into type 5 external advertise-
+           ments at NSSA borders."
+       REFERENCE
+          "OSPF Version 2, Section 12.1.2 Options"
+      DEFVAL { 0 }
+      ::= { ospfNbrEntry 4 }
+
+
+    ospfNbrPriority OBJECT-TYPE
+        SYNTAX   DesignatedRouterPriority
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "The priority of this neighbor in the designat-
+           ed router election algorithm.  The value 0 sig-
+           nifies that the neighbor is not eligible to be-
+           come  the  designated router on this particular
+           network."
+       DEFVAL { 1 }
+       ::= { ospfNbrEntry 5 }
+
+
+    ospfNbrState OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    down (1),
+                    attempt (2),
+                    init (3),
+                    twoWay (4),
+                    exchangeStart (5),
+                    exchange (6),
+                    loading (7),
+                    full (8)
+                  }
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The State of the relationship with this Neigh-
+           bor."
+       REFERENCE
+          "OSPF Version 2, Section 10.1 Neighbor States"
+      DEFVAL   { down }
+      ::= { ospfNbrEntry 6 }
+
+
+    ospfNbrEvents OBJECT-TYPE
+        SYNTAX   Counter32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The number of times this neighbor relationship
+           has changed state, or an error has occurred."
+       ::= { ospfNbrEntry 7 }
+
+
+    ospfNbrLsRetransQLen OBJECT-TYPE
+        SYNTAX   Gauge32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The  current  length  of  the   retransmission
+           queue."
+       ::= { ospfNbrEntry 8 }
+
+
+    ospfNbmaNbrStatus OBJECT-TYPE
+        SYNTAX   RowStatus
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "This variable displays the status of  the  en-
+           try.  Setting it to 'invalid' has the effect of
+           rendering it inoperative.  The internal  effect
+           (row removal) is implementation dependent."
+       ::= { ospfNbrEntry 9 }
+
+
+    ospfNbmaNbrPermanence OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    dynamic (1),        -- learned through protocol
+                    permanent (2)       -- configured address
+                  }
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "This variable displays the status of  the  en-
+           try.   'dynamic'  and  'permanent' refer to how
+           the neighbor became known."
+       DEFVAL { permanent }
+       ::= { ospfNbrEntry 10 }
+
+
+    ospfNbrHelloSuppressed OBJECT-TYPE
+        SYNTAX   TruthValue
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "Indicates whether Hellos are being  suppressed
+           to the neighbor"
+       ::= { ospfNbrEntry 11 }
+
+
+--  OSPF Virtual Neighbor Table
+
+--      This table describes all virtual neighbors.
+--      Since Virtual Links are configured in the
+--      virtual interface table, this table is read-only.
+
+    ospfVirtNbrTable OBJECT-TYPE
+        SYNTAX   SEQUENCE OF OspfVirtNbrEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "A table of virtual neighbor information."
+       REFERENCE
+          "OSPF Version 2, Section 15  Virtual Links"
+      ::= { ospf 11 }
+
+
+    ospfVirtNbrEntry OBJECT-TYPE
+        SYNTAX   OspfVirtNbrEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "Virtual neighbor information."
+       INDEX { ospfVirtNbrArea, ospfVirtNbrRtrId }
+       ::= { ospfVirtNbrTable 1 }
+
+OspfVirtNbrEntry ::=
+    SEQUENCE {
+        ospfVirtNbrArea
+            AreaID,
+        ospfVirtNbrRtrId
+            RouterID,
+        ospfVirtNbrIpAddr
+            IpAddress,
+        ospfVirtNbrOptions
+            Integer32,
+        ospfVirtNbrState
+            INTEGER,
+        ospfVirtNbrEvents
+            Counter32,
+        ospfVirtNbrLsRetransQLen
+            Gauge32,
+        ospfVirtNbrHelloSuppressed
+                TruthValue
+              }
+
+    ospfVirtNbrArea OBJECT-TYPE
+        SYNTAX   AreaID
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The Transit Area Identifier."
+       ::= { ospfVirtNbrEntry 1 }
+
+
+    ospfVirtNbrRtrId OBJECT-TYPE
+        SYNTAX   RouterID
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "A  32-bit  integer  uniquely  identifying  the
+           neighboring router in the Autonomous System."
+       ::= { ospfVirtNbrEntry 2 }
+
+
+    ospfVirtNbrIpAddr OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The IP address this Virtual  Neighbor  is  us-
+           ing."
+       ::= { ospfVirtNbrEntry 3 }
+
+
+    ospfVirtNbrOptions OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "A Bit Mask corresponding to the neighbor's op-
+           tions field.
+
+           Bit 1, if set, indicates that the  system  will
+           operate  on  Type of Service metrics other than
+           TOS 0.  If zero, the neighbor will  ignore  all
+           metrics except the TOS 0 metric.
+
+           Bit 2, if set, indicates  that  the  system  is
+           Network  Multicast  capable; ie, that it imple-
+           ments OSPF Multicast Routing."
+       ::= { ospfVirtNbrEntry 4 }
+    ospfVirtNbrState OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    down (1),
+                    attempt (2),
+                    init (3),
+                    twoWay (4),
+                    exchangeStart (5),
+                    exchange (6),
+                    loading (7),
+                    full (8)
+                  }
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The state of the  Virtual  Neighbor  Relation-
+           ship."
+       ::= { ospfVirtNbrEntry 5 }
+
+
+    ospfVirtNbrEvents OBJECT-TYPE
+        SYNTAX   Counter32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The number of  times  this  virtual  link  has
+           changed its state, or an error has occurred."
+       ::= { ospfVirtNbrEntry 6 }
+
+
+    ospfVirtNbrLsRetransQLen OBJECT-TYPE
+        SYNTAX   Gauge32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The  current  length  of  the   retransmission
+           queue."
+       ::= { ospfVirtNbrEntry 7 }
+
+
+    ospfVirtNbrHelloSuppressed OBJECT-TYPE
+        SYNTAX   TruthValue
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "Indicates whether Hellos are being  suppressed
+           to the neighbor"
+       ::= { ospfVirtNbrEntry 8 }
+
+--  OSPF Link State Database, External
+
+--      The Link State Database contains the Link State
+--      Advertisements from throughout the areas that the
+--      device is attached to.
+
+--             This table is identical to the OSPF LSDB Table in
+--      format, but contains only External Link State
+--             Advertisements.  The purpose is to allow external
+--      LSAs to be displayed once for the router rather
+--      than once in each non-stub area.
+
+    ospfExtLsdbTable OBJECT-TYPE
+        SYNTAX   SEQUENCE OF OspfExtLsdbEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "The OSPF Process's Links State Database."
+       REFERENCE
+          "OSPF Version 2, Section 12  Link  State  Adver-
+          tisements"
+      ::= { ospf 12 }
+
+
+    ospfExtLsdbEntry OBJECT-TYPE
+        SYNTAX   OspfExtLsdbEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "A single Link State Advertisement."
+       INDEX { ospfExtLsdbType, ospfExtLsdbLsid, ospfExtLsdbRouterId }
+       ::= { ospfExtLsdbTable 1 }
+
+OspfExtLsdbEntry ::=
+    SEQUENCE {
+        ospfExtLsdbType
+            INTEGER,
+        ospfExtLsdbLsid
+            IpAddress,
+        ospfExtLsdbRouterId
+            RouterID,
+        ospfExtLsdbSequence
+            Integer32,
+        ospfExtLsdbAge
+            Integer32,
+        ospfExtLsdbChecksum
+            Integer32,
+        ospfExtLsdbAdvertisement
+            OCTET STRING
+              }
+
+    ospfExtLsdbType OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    asExternalLink (5)
+                  }
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The type  of  the  link  state  advertisement.
+           Each  link state type has a separate advertise-
+           ment format."
+       REFERENCE
+          "OSPF Version 2, Appendix A.4.1 The  Link  State
+          Advertisement header"
+      ::= { ospfExtLsdbEntry 1 }
+
+
+    ospfExtLsdbLsid OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The Link State ID is an LS Type Specific field
+           containing either a Router ID or an IP Address;
+           it identifies the piece of the  routing  domain
+           that is being described by the advertisement."
+       REFERENCE
+          "OSPF Version 2, Section 12.1.4 Link State ID"
+      ::= { ospfExtLsdbEntry 2 }
+
+
+    ospfExtLsdbRouterId OBJECT-TYPE
+        SYNTAX   RouterID
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The 32 bit number that uniquely identifies the
+           originating router in the Autonomous System."
+       REFERENCE
+          "OSPF Version 2, Appendix C.1 Global parameters"
+      ::= { ospfExtLsdbEntry 3 }
+
+--  Note that the OSPF Sequence Number is a 32 bit signed
+--  integer.  It starts with the value '80000001'h,
+--  or -'7FFFFFFF'h, and increments until '7FFFFFFF'h
+--  Thus, a typical sequence number will be very negative.
+    ospfExtLsdbSequence OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The sequence number field is a  signed  32-bit
+           integer.   It  is used to detect old and dupli-
+           cate link state advertisements.  The  space  of
+           sequence  numbers  is  linearly  ordered.   The
+           larger the sequence number the more recent  the
+           advertisement."
+       REFERENCE
+          "OSPF Version  2,  Section  12.1.6  LS  sequence
+          number"
+      ::= { ospfExtLsdbEntry 4 }
+
+
+    ospfExtLsdbAge OBJECT-TYPE
+        SYNTAX   Integer32    -- Should be 0..MaxAge
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "This field is the age of the link state adver-
+           tisement in seconds."
+       REFERENCE
+          "OSPF Version 2, Section 12.1.1 LS age"
+      ::= { ospfExtLsdbEntry 5 }
+
+
+    ospfExtLsdbChecksum OBJECT-TYPE
+        SYNTAX   Integer32
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "This field is the  checksum  of  the  complete
+           contents  of  the  advertisement, excepting the
+           age field.  The age field is excepted  so  that
+           an   advertisement's  age  can  be  incremented
+           without updating the  checksum.   The  checksum
+           used  is  the same that is used for ISO connec-
+           tionless datagrams; it is commonly referred  to
+           as the Fletcher checksum."
+       REFERENCE
+          "OSPF Version 2, Section 12.1.7 LS checksum"
+      ::= { ospfExtLsdbEntry 6 }
+
+
+    ospfExtLsdbAdvertisement OBJECT-TYPE
+        SYNTAX   OCTET STRING (SIZE(36))
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The entire Link State Advertisement, including
+           its header."
+       REFERENCE
+          "OSPF Version 2, Section 12  Link  State  Adver-
+          tisements"
+      ::= { ospfExtLsdbEntry 7 }
+
+
+--  OSPF Use of the CIDR Route Table
+
+ospfRouteGroup           OBJECT IDENTIFIER ::= { ospf 13 }
+
+-- The IP Forwarding Table defines a number of objects for use by
+-- the routing protocol to externalize its information.  Most of
+-- the variables (ipForwardDest, ipForwardMask, ipForwardPolicy,
+-- ipForwardNextHop, ipForwardIfIndex, ipForwardType,
+-- ipForwardProto, ipForwardAge, and ipForwardNextHopAS) are
+-- defined there.
+
+-- Those that leave some discretion are defined here.
+
+-- ipCidrRouteProto is, of course, ospf (13).
+
+-- ipCidrRouteAge is the time since the route was first calculated,
+-- as opposed to the time since the last SPF run.
+
+-- ipCidrRouteInfo is an OBJECT IDENTIFIER for use by the routing
+-- protocol.  The following values shall be found there depending
+-- on the way the route was calculated.
+
+ospfIntraArea      OBJECT IDENTIFIER ::= { ospfRouteGroup 1 }
+ospfInterArea      OBJECT IDENTIFIER ::= { ospfRouteGroup 2 }
+ospfExternalType1  OBJECT IDENTIFIER ::= { ospfRouteGroup 3 }
+ospfExternalType2  OBJECT IDENTIFIER ::= { ospfRouteGroup 4 }
+
+-- ipCidrRouteMetric1 is, by definition, the primary routing
+-- metric.  Therefore, it should be the metric that route
+-- selection is based on.  For intra-area and inter-area routes,
+-- it is an OSPF metric.  For External Type 1 (comparable value)
+-- routes, it is an OSPF metric plus the External Metric.  For
+-- external Type 2 (non-comparable value) routes, it is the
+-- external metric.
+
+-- ipCidrRouteMetric2 is, by definition, a secondary routing
+-- metric.  Therefore, it should be the metric that breaks a tie
+-- among routes having equal metric1 values and the same
+-- calculation rule.  For intra-area, inter-area routes, and
+-- External Type 1 (comparable value) routes, it is unused.  For
+-- external Type 2 (non-comparable value) routes, it is the metric
+-- to the AS border router.
+
+-- ipCidrRouteMetric3, ipCidrRouteMetric4, and ipCidrRouteMetric5 are
+-- unused.
+
+--
+--      The OSPF Area Aggregate Table
+--
+--      This table replaces the OSPF Area Summary Table, being an
+--      extension of that for CIDR routers.
+
+    ospfAreaAggregateTable OBJECT-TYPE
+        SYNTAX   SEQUENCE OF OspfAreaAggregateEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "A range of IP addresses  specified  by  an  IP
+           address/IP  network  mask  pair.   For example,
+           class B address range of X.X.X.X with a network
+           mask  of  255.255.0.0 includes all IP addresses
+           from X.X.0.0  to  X.X.255.255.   Note  that  if
+           ranges  are configured such that one range sub-
+           sumes  another  range  (e.g.,   10.0.0.0   mask
+           255.0.0.0  and  10.1.0.0 mask 255.255.0.0), the
+           most specific match is the preferred one."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2  Area parameters"
+      ::= { ospf 14 }
+
+
+    ospfAreaAggregateEntry OBJECT-TYPE
+        SYNTAX   OspfAreaAggregateEntry
+        MAX-ACCESS   not-accessible
+        STATUS   current
+        DESCRIPTION
+           "A range of IP addresses  specified  by  an  IP
+           address/IP  network  mask  pair.   For example,
+           class B address range of X.X.X.X with a network
+           mask  of  255.255.0.0 includes all IP addresses
+           from X.X.0.0  to  X.X.255.255.   Note  that  if
+           ranges are range configured such that one range
+           subsumes another  range  (e.g.,  10.0.0.0  mask
+           255.0.0.0  and  10.1.0.0 mask 255.255.0.0), the
+           most specific match is the preferred one."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2  Area parameters"
+      INDEX { ospfAreaAggregateAreaID, ospfAreaAggregateLsdbType,
+              ospfAreaAggregateNet, ospfAreaAggregateMask }
+      ::= { ospfAreaAggregateTable 1 }
+
+
+OspfAreaAggregateEntry ::=
+    SEQUENCE {
+        ospfAreaAggregateAreaID
+            AreaID,
+        ospfAreaAggregateLsdbType
+            INTEGER,
+        ospfAreaAggregateNet
+            IpAddress,
+        ospfAreaAggregateMask
+            IpAddress,
+        ospfAreaAggregateStatus
+            RowStatus,
+        ospfAreaAggregateEffect
+            INTEGER
+              }
+
+    ospfAreaAggregateAreaID OBJECT-TYPE
+        SYNTAX   AreaID
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The Area the Address Aggregate is to be  found
+           within."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+      ::= { ospfAreaAggregateEntry 1 }
+
+
+    ospfAreaAggregateLsdbType OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    summaryLink (3),
+                    nssaExternalLink (7)
+                  }
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The type of the Address Aggregate.  This field
+           specifies  the  Lsdb type that this Address Ag-
+           gregate applies to."
+       REFERENCE
+          "OSPF Version 2, Appendix A.4.1 The  Link  State
+          Advertisement header"
+      ::= { ospfAreaAggregateEntry 2 }
+
+
+    ospfAreaAggregateNet OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The IP Address of the Net or Subnet  indicated
+           by the range."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+      ::= { ospfAreaAggregateEntry 3 }
+
+
+    ospfAreaAggregateMask OBJECT-TYPE
+        SYNTAX   IpAddress
+        MAX-ACCESS   read-only
+        STATUS   current
+        DESCRIPTION
+           "The Subnet Mask that pertains to  the  Net  or
+           Subnet."
+       REFERENCE
+          "OSPF Version 2, Appendix C.2 Area parameters"
+      ::= { ospfAreaAggregateEntry 4 }
+
+
+    ospfAreaAggregateStatus OBJECT-TYPE
+        SYNTAX   RowStatus
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "This variable displays the status of  the  en-
+           try.  Setting it to 'invalid' has the effect of
+           rendering it inoperative.  The internal  effect
+           (row removal) is implementation dependent."
+       ::= { ospfAreaAggregateEntry 5 }
+
+
+    ospfAreaAggregateEffect OBJECT-TYPE
+        SYNTAX   INTEGER    {
+                    advertiseMatching (1),
+                    doNotAdvertiseMatching (2)
+                  }
+        MAX-ACCESS   read-create
+        STATUS   current
+        DESCRIPTION
+           "Subnets subsumed by ranges either trigger  the
+           advertisement  of  the indicated aggregate (ad-
+           vertiseMatching), or result in the subnet's not
+           being advertised at all outside the area."
+       DEFVAL   { advertiseMatching }
+       ::= { ospfAreaAggregateEntry 6 }
+
+
+-- conformance information
+
+ospfConformance OBJECT IDENTIFIER ::= { ospf 15 }
+
+ospfGroups      OBJECT IDENTIFIER ::= { ospfConformance 1 }
+ospfCompliances OBJECT IDENTIFIER ::= { ospfConformance 2 }
+
+-- compliance statements
+
+    ospfCompliance MODULE-COMPLIANCE
+        STATUS  current
+        DESCRIPTION
+           "The compliance statement "
+       MODULE  -- this module
+       MANDATORY-GROUPS {
+                    ospfBasicGroup,
+                    ospfAreaGroup,
+                    ospfStubAreaGroup,
+                    ospfIfGroup,
+                    ospfIfMetricGroup,
+                    ospfVirtIfGroup,
+                    ospfNbrGroup,
+                    ospfVirtNbrGroup,
+                    ospfAreaAggregateGroup
+           }
+       ::= { ospfCompliances 1 }
+
+
+-- units of conformance
+
+    ospfBasicGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfRouterId,
+                    ospfAdminStat,
+                    ospfVersionNumber,
+                    ospfAreaBdrRtrStatus,
+                    ospfASBdrRtrStatus,
+                    ospfExternLsaCount,
+                    ospfExternLsaCksumSum,
+                    ospfTOSSupport,
+                    ospfOriginateNewLsas,
+                    ospfRxNewLsas,
+                    ospfExtLsdbLimit,
+                    ospfMulticastExtensions,
+                    ospfExitOverflowInterval,
+                    ospfDemandExtensions
+        }
+        STATUS  current
+        DESCRIPTION
+           "These objects are required for OSPF systems."
+       ::= { ospfGroups 1 }
+
+
+    ospfAreaGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfAreaId,
+                    ospfImportAsExtern,
+                    ospfSpfRuns,
+                    ospfAreaBdrRtrCount,
+                    ospfAsBdrRtrCount,
+                    ospfAreaLsaCount,
+                    ospfAreaLsaCksumSum,
+                    ospfAreaSummary,
+                    ospfAreaStatus
+        }
+        STATUS  current
+        DESCRIPTION
+           "These objects are required  for  OSPF  systems
+           supporting areas."
+       ::= { ospfGroups 2 }
+
+
+    ospfStubAreaGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfStubAreaId,
+                    ospfStubTOS,
+                    ospfStubMetric,
+                    ospfStubStatus,
+                    ospfStubMetricType
+        }
+        STATUS  current
+        DESCRIPTION
+           "These objects are required  for  OSPF  systems
+           supporting stub areas."
+       ::= { ospfGroups 3 }
+
+
+    ospfLsdbGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfLsdbAreaId,
+                    ospfLsdbType,
+                    ospfLsdbLsid,
+                    ospfLsdbRouterId,
+                    ospfLsdbSequence,
+                    ospfLsdbAge,
+                    ospfLsdbChecksum,
+                    ospfLsdbAdvertisement
+        }
+        STATUS  current
+        DESCRIPTION
+           "These objects are required  for  OSPF  systems
+           that display their link state database."
+       ::= { ospfGroups 4 }
+
+
+    ospfAreaRangeGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfAreaRangeAreaId,
+                    ospfAreaRangeNet,
+                    ospfAreaRangeMask,
+                    ospfAreaRangeStatus,
+                    ospfAreaRangeEffect
+        }
+        STATUS  obsolete
+        DESCRIPTION
+           "These objects are required for  non-CIDR  OSPF
+           systems that support multiple areas."
+       ::= { ospfGroups 5 }
+
+
+    ospfHostGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfHostIpAddress,
+                    ospfHostTOS,
+                    ospfHostMetric,
+                    ospfHostStatus,
+                    ospfHostAreaID
+        }
+        STATUS  current
+        DESCRIPTION
+           "These objects are required  for  OSPF  systems
+           that support attached hosts."
+       ::= { ospfGroups 6 }
+
+
+    ospfIfGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfIfIpAddress,
+                    ospfAddressLessIf,
+                    ospfIfAreaId,
+                    ospfIfType,
+                    ospfIfAdminStat,
+                    ospfIfRtrPriority,
+                    ospfIfTransitDelay,
+                    ospfIfRetransInterval,
+                    ospfIfHelloInterval,
+                    ospfIfRtrDeadInterval,
+                    ospfIfPollInterval,
+                    ospfIfState,
+                    ospfIfDesignatedRouter,
+                    ospfIfBackupDesignatedRouter,
+                    ospfIfEvents,
+                    ospfIfAuthType,
+                    ospfIfAuthKey,
+                    ospfIfStatus,
+                    ospfIfMulticastForwarding,
+                    ospfIfDemand
+        }
+        STATUS  current
+        DESCRIPTION
+           "These objects are required for OSPF systems."
+       ::= { ospfGroups 7 }
+
+
+    ospfIfMetricGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfIfMetricIpAddress,
+                    ospfIfMetricAddressLessIf,
+                    ospfIfMetricTOS,
+                    ospfIfMetricValue,
+                    ospfIfMetricStatus
+        }
+        STATUS  current
+        DESCRIPTION
+           "These objects are required for OSPF systems."
+       ::= { ospfGroups 8 }
+
+
+    ospfVirtIfGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfVirtIfAreaId,
+                    ospfVirtIfNeighbor,
+                    ospfVirtIfTransitDelay,
+                    ospfVirtIfRetransInterval,
+                    ospfVirtIfHelloInterval,
+                    ospfVirtIfRtrDeadInterval,
+                    ospfVirtIfState,
+                    ospfVirtIfEvents,
+                    ospfVirtIfAuthType,
+                    ospfVirtIfAuthKey,
+                    ospfVirtIfStatus
+        }
+        STATUS  current
+        DESCRIPTION
+           "These objects are required for OSPF systems."
+       ::= { ospfGroups 9 }
+
+
+    ospfNbrGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfNbrIpAddr,
+                    ospfNbrAddressLessIndex,
+                    ospfNbrRtrId,
+                    ospfNbrOptions,
+                    ospfNbrPriority,
+                    ospfNbrState,
+                    ospfNbrEvents,
+                    ospfNbrLsRetransQLen,
+                    ospfNbmaNbrStatus,
+                    ospfNbmaNbrPermanence,
+                    ospfNbrHelloSuppressed
+        }
+        STATUS  current
+        DESCRIPTION
+           "These objects are required for OSPF systems."
+       ::= { ospfGroups 10 }
+
+
+    ospfVirtNbrGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfVirtNbrArea,
+                    ospfVirtNbrRtrId,
+                    ospfVirtNbrIpAddr,
+                    ospfVirtNbrOptions,
+                    ospfVirtNbrState,
+                    ospfVirtNbrEvents,
+                    ospfVirtNbrLsRetransQLen,
+                    ospfVirtNbrHelloSuppressed
+        }
+        STATUS  current
+        DESCRIPTION
+           "These objects are required for OSPF systems."
+       ::= { ospfGroups 11 }
+
+
+    ospfExtLsdbGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfExtLsdbType,
+                    ospfExtLsdbLsid,
+                    ospfExtLsdbRouterId,
+                    ospfExtLsdbSequence,
+                    ospfExtLsdbAge,
+                    ospfExtLsdbChecksum,
+                    ospfExtLsdbAdvertisement
+        }
+        STATUS  current
+        DESCRIPTION
+           "These objects are required  for  OSPF  systems
+           that display their link state database."
+       ::= { ospfGroups 12 }
+
+
+    ospfAreaAggregateGroup    OBJECT-GROUP
+        OBJECTS {
+                    ospfAreaAggregateAreaID,
+                    ospfAreaAggregateLsdbType,
+                    ospfAreaAggregateNet,
+                    ospfAreaAggregateMask,
+                    ospfAreaAggregateStatus,
+                    ospfAreaAggregateEffect
+        }
+        STATUS  current
+        DESCRIPTION
+           "These objects are required for OSPF systems."
+       ::= { ospfGroups 13 }
+
+END

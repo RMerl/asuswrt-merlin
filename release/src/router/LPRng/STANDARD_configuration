@@ -1,0 +1,13 @@
+#!/bin/sh
+if [ -d /usr/share/man ] ; then
+	mandir="--mandir=/usr/share/man"
+fi
+sh ./configure --prefix=/usr --sysconfdir=/etc $mandir --disable-shared \
+ --disable-kerberos --enable-ssl --enable-force_localhost \
+# LDFLAGS="-L/usr/local/lib" CPPFLAGS="-I/usr/local/include" \
+# --enable-nls --with-included-gettext \
+# LDFLAGS="-L/usr/local/lib" CPPFLAGS="-I/usr/local/include" \
+# --enable-kerberos --enable-mit_kerberos4 \
+# --disable-ssl --disable-tcpwrappers \
+# --enable-nls --with-included-gettext \
+#	--with-chooser_routine=test_chooser  --with-user_objs=user_objs.o  --with-user_include=user_objs.h

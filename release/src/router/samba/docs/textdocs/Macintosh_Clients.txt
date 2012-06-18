@@ -1,0 +1,26 @@
+!==
+!== Macintosh_Clients.txt for Samba release 2.0.10 23 Jun 2001
+!==
+> Are there any Macintosh clients for Samba?
+
+Yes. Thursby now have a CIFS Client / Server called DAVE - see
+http://www.thursby.com/
+
+They test it against Windows 95, Windows NT and samba for
+compatibility issues.  At the time of writing, DAVE was at version
+1.0.1. The 1.0.0 to 1.0.1 update is available as a free download from
+the Thursby web site (the speed of finder copies has been greatly
+enhanced, and there are bug-fixes included).
+
+Alternatives - There are two free implementations of AppleTalk for
+several kinds of UNIX machnes, and several more commercial ones.
+These products allow you to run file services and print services
+natively to Macintosh users, with no additional support required on
+the Macintosh.  The two free omplementations are Netatalk,
+http://www.umich.edu/~rsug/netatalk/, and CAP,
+http://www.cs.mu.oz.au/appletalk/atalk.html.  What Samba offers MS
+Windows users, these packages offer to Macs.  For more info on these
+packages, Samba, and Linux (and other UNIX-based systems) see
+http://www.eats.com/linux_mac_win.html
+
+

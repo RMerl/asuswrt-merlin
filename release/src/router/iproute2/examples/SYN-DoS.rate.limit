@@ -1,0 +1,49 @@
+#! /bin/sh -x
+#
+# sample script on using the ingress capabilities
+# this script shows how one can rate limit incoming SYNs
+# Useful for TCP-SYN attack protection. You can use
+# IPchains to have more powerful additions to the SYN (eg 
+# in addition the subnet)
+#
+#path to various utilities;
+#change to reflect yours.
+#
+IPROUTE=/root/DS-6-beta/iproute2-990530-dsing
+TC=$IPROUTE/tc/tc
+IP=$IPROUTE/ip/ip
+IPCHAINS=/root/DS-6-beta/ipchains-1.3.9/ipchains
+INDEV=eth2
+#
+# tag all incoming SYN packets through $INDEV as mark value 1
+############################################################ 
+$IPCHAINS -A input -i $INDEV -y -m 1
+############################################################ 
+#
+# install the ingress qdisc on the ingress interface
+############################################################ 
+$TC qdisc add dev $INDEV handle ffff: ingress
+############################################################ 
+
+#
+# 
+# SYN packets are 40 bytes (320 bits) so three SYNs equals
+# 960 bits (approximately 1kbit); so we rate limit below
+# the incoming SYNs to 3/sec (not very sueful really; but
+#serves to show the point - JHS
+############################################################ 
+$TC filter add dev $INDEV parent ffff: protocol ip prio 50 handle 1 fw \
+police rate 1kbit burst 40 mtu 9k drop flowid :1
+############################################################ 
+
+
+#
+echo "---- qdisc parameters Ingress  ----------"
+$TC qdisc ls dev $INDEV
+echo "---- Class parameters Ingress  ----------"
+$TC class ls dev $INDEV
+echo "---- filter parameters Ingress ----------"
+$TC filter ls dev $INDEV parent ffff:
+
+#deleting the ingress qdisc
+#$TC qdisc del $INDEV ingress

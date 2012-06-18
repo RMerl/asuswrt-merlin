@@ -1,0 +1,11 @@
+<samba:parameter name="smb ports"
+                 context="G"
+				 type="list"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>Specifies which ports the server should listen on for SMB traffic.</para>
+</description>
+
+<value type="default">445 139</value>
+</samba:parameter>

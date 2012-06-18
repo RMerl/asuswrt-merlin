@@ -1,0 +1,26 @@
+From 5c7f9b252b2da317d8b3eb38038e0ddbd5f068dc
+From: Mike Frysinger
+Date: Wed, 22 Jul 2009 03:33:57 +0000
+Subject: linuxthreads.old: fix crash in debug code
+
+If pthread_join() is called and there is nothing to join, then the debug
+code will attempt to dereference a NULL pointer.
+
+Signed-off-by: Mike Frysinger <vapier@gentoo.org>
+Signed-off-by: Bernhard Reutner-Fischer <rep.dot.nop@gmail.com>
+---
+diff --git a/libpthread/linuxthreads.old/join.c b/libpthread/linuxthreads.old/join.c
+index a46d0b6..ad2dc27 100644
+--- a/libpthread/linuxthreads.old/join.c
++++ b/libpthread/linuxthreads.old/join.c
+@@ -77,7 +77,7 @@ void __pthread_do_exit(void *retval, char *currentframe)
+   THREAD_SETMEM(self, p_terminated, 1);
+   /* See if someone is joining on us */
+   joining = THREAD_GETMEM(self, p_joining);
+-  PDEBUG("joining = %p, pid=%d\n", joining, joining->p_pid);
++  PDEBUG("joining = %p, pid=%d\n", joining, joining ? joining->p_pid : 0);
+   __pthread_unlock(THREAD_GETMEM(self, p_lock));
+   /* Restart joining thread if any */
+   if (joining != NULL) restart(joining);
+--
+cgit v0.8.2.1

@@ -1,0 +1,15 @@
+[globals]
+	netbios name	= ${HOSTNAME}
+	workgroup	= ${DOMAIN}
+	realm		= ${REALM}
+	server role     = ${SERVERROLE}
+	${PRIVATEDIR_LINE}
+	${LOCKDIR_LINE}
+
+[netlogon]
+	path = ${NETLOGONPATH}
+	read only = no
+
+[sysvol]
+	path = ${SYSVOLPATH}
+	read only = no

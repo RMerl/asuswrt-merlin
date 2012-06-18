@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>User Identification</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title=
+    "LPRng Clients - lpr, lprm, lpq, lpc, lpstat " href=
+    "lprngclients.htm">
+    <link rel="PREVIOUS" title="Force Connection to Localhost "
+    href="forcelocalhost.htm">
+    <link rel="NEXT" title="lpr - Job Spooler Program" href=
+    "lpr.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "forcelocalhost.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 5.
+          <b class="APPLICATION">LPRng</b> Clients - lpr, lprm,
+          lpq, lpc, lpstat</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "lpr.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="ALLOWUSERSETTING">5.9. User
+      Identification</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">allow_user_setting=</var><span
+          class="emphasis"><i class="EMPHASIS">privileged
+          users</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>When an client program sends a command to the <b class=
+      "APPLICATION">lpd</b> server it may need to provide the name
+      of the user who is originating the request for service. This
+      name is obtained by looking up the UID of the user running
+      the client in the appropriate user information database; if
+      the information is not found the UID is used instead. Also,
+      the client machine hostname may also be needed. This is
+      usually determined by using a DNS lookup and trying to
+      determine if there is a canonical or Fully Qualified Domain
+      Name for the host and using this.</p>
+
+      <p>The <tt class="COMMAND">lpr -U name@host</tt> (and for <b
+      class="APPLICATION">lpq</b>, <b class="APPLICATION">lprm</b>,
+      and <b class="APPLICATION">lpc</b>) option allows privileged
+      users to cause the client software to use the <var class=
+      "LITERAL">name</var> value as the originator and <var class=
+      "LITERAL">host</var> as the machine name. This allows
+      privileged users to <span class="emphasis"><i class=
+      "EMPHASIS">impersonate</i></span> other users. This is most
+      useful for programs such as Samba and PCNFS, which need to
+      act as proxies for users.</p>
+
+      <p>By default, ROOT (UID 0) is the only user that can
+      masquerade as another user. The <var class=
+      "LITERAL">allow_user_setting=name,name...</var> configuration
+      option can be used to specify a list of names or UIDs that
+      can also perform masquerading. For example, if the Samba
+      server was running as user <var class="LITERAL">samba</var>,
+      then <var class="LITERAL">allow_user_setting=samba</var>
+      would allow it to specify the name of print job originator as
+      a remote user, and the remote user would not need a login
+      account on the system.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "forcelocalhost.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "lpr.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Force
+          Connection to Localhost</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "lprngclients.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top"><b class=
+          "APPLICATION">lpr</b> - Job Spooler Program</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

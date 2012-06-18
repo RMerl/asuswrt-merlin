@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Duplex Printing</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Tektronix Phaser Printers " href=
+    "p450.htm">
+    <link rel="NEXT" title="Solaris, Newsprint and FrameMaker"
+    href="x6263.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "p450.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x6263.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN6242">12.21. Duplex
+      Printing</a></h1>
+
+      <p>Duplex printing is when you print on both sides of a page.
+      Some printers which do duplex printing require that you send
+      them special commands to force this mode. This is usually
+      done by the FILTERS. The <b class="APPLICATION">ifhp</b>
+      filter makes a stab at sending the PJL or PostScript commands
+      to the printer. Many people have reported problems doing
+      duplex printing, so here is a check list.</p>
+
+      <ol type="1">
+        <li>
+          <p>Make sure you have enough memory for the worst case
+          print job. Usually the printer has to rasterize both
+          pages before it can produce an impression. It may require
+          much more memory than you expect.</p>
+        </li>
+
+        <li>
+          <p>Check your printer manual to discover the EXACT form
+          of the <var class="LITERAL">enter duplex mode</var>
+          command and make sure that either the command is part of
+          the job (PJL language at the start of the job, postscript
+          header, etc), or that the filter generates the correct
+          form.</p>
+
+          <p>Note there is a PostScript Printer Description file
+          (PPD) for most printers that support PostScript, and they
+          even have the PJL and PostScript code for this in the PPD
+          file.</p>
+        </li>
+
+        <li>
+          <p>It has been observed that even with what would
+          apparently be sufficient memory, that many duplex jobs
+          print 'oddly', that they are not aligned on the same side
+          in the same way, etc etc. This may not be the fault of
+          the software, but of the support for duplex
+          operation.</p>
+        </li>
+
+        <li>
+          <p>Read the <b class="APPLICATION">ifhp</b>
+          documentation, and create a configuration section in the
+          <tt class="FILENAME">ifhp.conf</tt> file for your
+          printer.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>I know this is painful, but until there is a uniform way
+      to get the correct commands extracted from either PPD or some
+      other database then this appears to be the only way to do it.
+      <a name="AEN6260"></a></p>
+
+      <blockquote class="BLOCKQUOTE">
+        <p><span class="emphasis"><i class="EMPHASIS">Patrick
+        Powell</i></span></p>
+      </blockquote>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "p450.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x6263.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Tektronix
+          Phaser Printers</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Solaris,
+          Newsprint and FrameMaker</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

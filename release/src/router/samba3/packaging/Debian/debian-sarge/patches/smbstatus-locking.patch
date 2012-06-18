@@ -1,0 +1,20 @@
+diff -uNr samba-2.999+3.0.alpha21.orig/source/utils/status.c samba-2.999+3.0.alpha21/source/utils/status.c
+--- samba-2.999+3.0.alpha21.orig/source/utils/status.c	2002-11-26 20:54:22.000000000 -0600
++++ samba-2.999+3.0.alpha21/source/utils/status.c	2002-12-16 23:37:14.000000000 -0600
+@@ -686,6 +686,16 @@
+ 	if (!shares_only) {
+ 		int ret;
+ 
++		tdb = tdb_open_log(lock_path("locking.tdb"), 0, TDB_DEFAULT, O_RDONLY, 0);
++
++		if (!tdb) {
++			d_printf("%s not initialised\n", lock_path("locking.tdb"));
++			d_printf("This is normal if an SMB client has never connected to your server.\n");
++			exit(0);
++		} else {
++			tdb_close(tdb);
++		}
++
+ 		if (!locking_init(1)) {
+ 			d_printf("Can't initialise locking module - exiting\n");
+ 			exit(1);

@@ -1,0 +1,5 @@
+dn: CN=Test,CN=Users,DC=schema,DC=test
+changetype: modify
+delete: description
+# this test must not fail
+

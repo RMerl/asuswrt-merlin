@@ -1,0 +1,18 @@
+Dear SuSE user,
+
+prebuilt Samba RPMs for all SuSE Linux versions are available at:
+ftp://ftp.SuSE.com/pub/projects/samba/
+
+The same package are also available at:
+http://download.Samba.org/samba/ftp/Binary_Packages/SuSE/
+
+Samba 3 is not supported by SuSE on SuSE Linux Enterprise Server 8. You find
+SerNet-supported packages on http://ftp.sernet.de/pub/samba/
+
+If you encounter any problem with these packages please don't blame the
+Samba Team.  Instead file a bug at https://bugzilla.Samba.org/ pick
+product Samba 3.0, then select 'component' Packaging and set 'assign to'
+to <lmuelle@suse.de>.
+
+Have a lot of fun...
+

@@ -1,0 +1,431 @@
+#!/bin/sh 
+# name:			mount.smb  --  interface between mount and smbmount
+# author:		Ch. L. Spiel (cspiel@physik.tu-muenchen.de)
+
+myname=`basename $0`
+passwd_filename="smb-pass"		# name of user smb-password file
+lock_file="/var/lock/$myname"
+log_file="/tmp/mount.smb.log"
+
+# check for an existing lock-file quickly(!)
+if [ -e "$lock_file" ]; then
+	# exit, but don´t touch lock-file
+	exit 0
+fi
+# set up new lock-file
+echo > $lock_file
+
+# initialise log-file
+echo "logging of $myname started at `date`" > $log_file
+chmod --silent 600 $log_file
+echo "called with: $@" >> $log_file
+exec >> $log_file 2>&1
+
+
+
+# set default and initial values
+verbose=false				# be silent
+fake=false				# really do the mount
+fmode="-f 600"				# default file mode
+dmode="-d 700"				# default dir mode
+
+#uid="-u `id | sed 's/^uid=\([0-9]*\).*$/\1/'`"
+uid="-u 0"
+#gid="-g `id | sed 's/^.*gid=\([0-9]*\).*$/\1/'`"
+gid="-g 0"
+
+
+#
+# functions
+#
+
+# exitproc(int exit_code)
+function exit_proc
+{
+	if [ -n "$lock_file" ]; then
+		# remove current lock-file
+		rm "$lock_file"
+	fi
+	# update log-file
+	echo "" >> $log_file
+	echo "$myname´s return value is $1." >> $log_file
+	echo "logging of $myname ended at `date`." >> $log_file
+	# done.
+	exit $1
+}
+
+
+# split_arg(arg)
+# arg ::= id '=' val
+# set id and val on return
+function split_arg
+{
+	id="$1"
+	val="$2"
+	extra="$3"
+} # end of split_arg
+
+
+# split_passwdline(uline)
+function split_passwdline
+{
+	user_name=$1
+	real_password=$2
+	user_id=$3
+	group_id=$4
+	full_name=$5
+	home_dir=$6
+	shell_name=$7
+}
+
+
+# get_homedir(username)
+function get_homedir
+{
+	local temp_ifs
+
+	temp_ifs="$IFS"
+	uline=`grep "^$1" /etc/passwd`
+	if [ -z "$uline" ]; then
+		echo "$myname: unknown user \"$1\""
+		exit_proc 1
+	fi
+	IFS=":"
+	split_passwdline $uline
+	if [ -z "$home_dir" ]; then
+		echo "$myname: user \"$1\" has no home directory"
+		exit_proc 1
+	fi
+	echo "$home_dir"
+	IFS="$temp_ifs"
+}
+
+
+# get_uid(username)
+function get_uid
+{
+	local temp_ifs
+
+	temp_ifs="$IFS"
+	uline=`grep "^$1" /etc/passwd`
+	if [ -z "$uline" ]; then
+		echo "$myname: unknown user \"$1\""
+		exit_proc 1
+	fi
+	IFS=":"
+	split_passwdline $uline
+	echo "$user_id"
+	IFS="$temp_ifs"
+}
+
+
+# get_gid(username)
+function get_gid
+{
+	local temp_ifs
+
+	temp_ifs="$IFS"
+	uline=`grep "^$1" /etc/passwd`
+	if [ -z "$uline" ]; then
+		echo "$myname: unknown user \"$1\""
+		exit_proc 1
+	fi
+	IFS=":"
+	split_passwdline $uline
+	echo "$group_id"
+	IFS="$temp_ifs"
+}
+
+
+# read_passwd_file(sharename)
+function read_passwd_file
+{
+	local pwd_filename pwd_entry temp_ifs share_name fmod
+
+	pwd_filename=`get_homedir $uuname`/$passwd_filename
+	# use uid and gid of user´s /etc/password entry
+	uid="-u `get_uid $uuname`"
+	gid="-g `get_gid $uuname`"
+	# check existence of password file
+	if [ ! -f "$pwd_filename" -o ! -r "$pwd_filename" ]; then
+		echo "$myname: cannot read from user password file \"$pwd_filename\""
+		exit_proc 1
+	fi
+	# check file permissions
+	for f in $pwd_filename{,~,%,.BAK,.bak,.new,.old,.orig,.sav}; do
+		if [ ! -f $f ]; then continue; fi
+		/bin/ls -l $f | grep -q -- "^-r\(w\|-\)------"
+		if [ $? = 1 ]; then
+			echo "$myname: Found security hole: mode of file \"$f\""
+			echo "$myname: Password file must have permission 400 or 600."
+			echo "$myname: Please fix the file´s mode."
+			exit_proc 1
+		fi
+	done
+
+	share_name="$1"		# sharename in smb-format!
+	pwd_entry=`grep -v '^#' "$pwd_filename" | grep -i "^$share_name"`
+	if [ -z "$pwd_entry" ]; then
+		# try uni*-like sharename
+		share_name=`echo $share_name | sed -e 's,^//,,' -e 's,/,:/,'`
+		pwd_entry=`grep -v '^#' "$pwd_filename" | grep -i "^$share_name"`
+	fi
+	if [ -z "$pwd_entry" ]; then
+		# sharename was not found in user´s password file
+		echo "$myname: cannot authentify share named \"$1\" via file \"$pwd_filename\""
+		exit_proc 1
+	fi
+	
+	# pwd_entry has the form:
+	# sharename username password
+	temp_ifs="$IFS"
+	IFS="	 "		# <tab> and <space>
+	split_arg $pwd_entry
+	options="$options -U $val"
+	password="$extra"
+	IFS="$temp_ifs"
+}
+
+
+# process_options(opt1, opt2, ..., optN)
+function process_options
+{
+	local temp_ifs
+
+	for j; do
+		temp_ifs="$IFS"	# save current internal-field separator
+		IFS="="		# set new separator
+		split_arg $j	# split argument into identifier and value
+		IFS="$temp_ifs"	# reset old separator
+		case "$id" in
+			port)
+				options="$options -p $val"
+				;;
+			debug)
+				options="$options -d $val"
+				;;
+			log)
+				options="$options -l $val"
+				;;
+			nbname)
+				options="$options -n $val"
+				;;
+			nopwd)
+				options="$options -N"
+				;;
+			maxproto)
+				options="$options -m $val"
+				;;
+			ip)
+				options="$options -I $val"
+				;;
+			uname)
+				options="$options -U $val"
+				;;
+			wrkgrp)
+				options="$options -W $val"
+				;;
+			term)
+				options="$options -t $val"
+				;;
+			sdir)
+				options="$options -D $val"
+				;;
+			pwd)
+				# DO NOT USE THIS OPTION!  It is a severe scurity hole.
+				password="$val"
+				;;
+			uuname)
+				# consult user´s smb-password file
+				uuname="$val"	# uni* user name
+				read_passwd_file "$server_service"
+				;;
+				
+			# ignored options
+			async)
+				# do nothing
+				;;
+			atime)
+				# do nothing
+				;;
+			auto)
+				# do nothing
+				;;
+			defaults)
+				# do nothing
+				;;
+			dev)
+				# do nothing
+				;;
+			exec)
+				# do nothing
+				;;
+			noatime)
+				# do nothing
+				;;
+			noauto)
+				# do nothing
+				;;
+			nodev)
+				# do nothing
+				;;
+			noexec)
+				# do nothing
+				;;
+			nosuid)
+				# do nothing
+				;;
+			nouser)
+				# do nothing
+				;;
+			ro)
+				# do nothing
+				;;
+			rw)
+				# do nothing
+				;;
+			suid)
+				# do nothing
+				;;
+			sync)
+				# do nothing
+				;;
+			user)
+				# do nothing
+				;;
+				
+			# fs options
+			fmod)
+				fmode="-f $val"
+				;;
+			dmod)
+				dmode="-d $val"
+				;;
+			uid)
+			        uid="-u $val"
+				;;
+			gid)
+				gid="-g $val"
+				;;
+			
+			# fallthrough
+			*)
+				echo "$myname: unrecognized option $id"
+				exit_proc 1
+				;;
+		esac
+	done
+} # end of split_options
+
+
+
+#
+# main
+#
+
+
+
+if [ "$verbose" != "false" ]; then
+	# show how we have been called
+	echo "$myname: $*"
+fi
+
+# some checks of the input parameters
+if [ "$#" -lt 2 ]; then
+	echo "$myname: need at least service and mountpoint"
+	exit_proc 1
+fi
+
+if `echo "$2" | grep -vq "^/"`; then
+	echo "$myname: mount point must be an absolut path"
+	exit_proc 1
+fi
+
+
+# copy arguments
+if `echo "$1" | grep -q ":/"`; then
+	# non--standard format, i.e., server:/service
+	server_service=`echo "//$1" | sed -e "sx:/x/x"`
+else
+	# standard format, i.e, //server/service
+	server_service="$1"
+fi
+mntpt="$2"
+
+# copy options
+shift 2		# skip arguments: //server/service and /mnt-point
+for i; do
+	case "$i" in
+		-f | --fake)
+			fake=true
+			;;
+		-h | --help)
+			echo "usage: mount.smb service [password] mountpoint [options]"
+			exit_proc 0
+			;;
+		-v | --verbose)
+			verbose=true
+			;;
+		-V | --version)
+		        echo "$myname: mount.smb-0.1.0"
+			exit_proc 0
+			;;
+		-o)
+			shift			# skip leading -o
+			temp_ifs="$IFS"		# save current internal-field separator
+			IFS=","			# set new separator
+			process_options $*
+			IFS="$temp_ifs"		# reset old separator
+			break			# mount places options at the end -> we are done
+			;;
+		*)
+			echo "$myname: unrecognized option $i"
+			exit_proc 1
+			;;
+	esac
+	shift
+done
+IFS=' '
+
+
+#
+# be careful...
+#
+
+
+# nmblookup server: is node up and running?
+srv=`echo $server_service | sed 's,^//\(.*\)/.*$,\1,'`	# server´s name
+nmblookup "$srv" | grep -q "failed to find name"
+if [ "$?" = 0 ]; then
+	echo "$myname: failed to find server \"$srv\"."
+	exit_proc 1
+fi
+
+
+#
+# perform mount
+#
+
+
+fs_options="$fmode $dmode $uid $gid"	# all options concerning the mounted fs
+if [ "$verbose" = "true" ]; then
+	# display what we would do.  Do not show the password, only show "xxx".
+	echo -n "smbmount $server_service "
+	if [ -n "$password" ]; then	# password is set
+		echo -n "xxx "		# ... but we don´t show it ;-)
+	fi
+	echo "-c \"mount $mntpt $fs_options\" $options"
+#else
+	# supress further messages
+#	exec > /dev/null 2>&1
+#:
+fi
+	
+if [ "$fake" != "true" ]; then
+	smbmount $server_service $password -c "mount $mntpt $fs_options" $options
+	echo "smbmount´s exit code was $?."
+fi
+
+# clean up and exit
+exit_proc 0
+

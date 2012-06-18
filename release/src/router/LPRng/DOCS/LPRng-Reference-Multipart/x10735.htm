@@ -1,0 +1,216 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Job is not in print queue, but it gets printed!</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="The Most Frequently Asked Questions "
+    href="faq.htm">
+    <link rel="PREVIOUS" title=
+    "It was working normally, then I get connection refused errors"
+    href="x10703.htm">
+    <link rel="NEXT" title=
+    "Job disappears and is never printed, but lpr works" href=
+    "x10790.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x10703.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          20. The Most Frequently Asked Questions</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x10790.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN10735">20.3. Job is not in
+      print queue, but it gets printed!</a></h1>
+
+      <p>In the original BSD <b class="APPLICATION">lpd</b>
+      implementation, the <b class="APPLICATION">lpr</b> program
+      copied users files to a special spool queue directory, and
+      then caused the <b class="APPLICATION">lpd</b> server to peek
+      in the directory and print the files.</p>
+
+      <p>This type of operation required spool directory space,
+      special SETUID programs, and a slew of headaches in system
+      security and management.</p>
+
+      <p>The LPR, <b class="APPLICATION">lpq</b>, and other user
+      programs in the <b class="APPLICATION">LPRng</b> suite use
+      TCP/IP connections and transfer jobs directly to a <b class=
+      "APPLICATION">lpd</b> server running on a remote host, or
+      even the local host if appropriate. Note that this type of
+      operation does not require a <b class="APPLICATION">lpd</b>
+      server to run on each local machine. In fact, you can have a
+      single host system performing all of your printing. This type
+      of operation is very similar to a central mail server versus
+      individual systems, each having their own mail server and
+      queues.</p>
+
+      <p>However, some users require or want their jobs to be
+      spooled on the local host system, and then transferred to the
+      remote printer. This is usually the case when some type of
+      processing (filtering) is needed in order to print the job
+      correctly. There are several methods that can be used to
+      force this.</p>
+
+      <p>Method 1: Explicit Printer Address</p>
+
+      <p>You can force a job to be sent directly to the <var class=
+      "LITERAL">pr</var> serviced by the <b class=
+      "APPLICATION">lpd</b> server on <var class=
+      "LITERAL">host</var> by using the form:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10753"></a>
+<pre class="SCREEN">
+    lpr -Ppr@host file
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>You can also set the <acronym class=
+      "ACRONYM">PRINTER</acronym> environment variable to a similar
+      form, and get the same effect:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10757"></a>
+<pre class="SCREEN">
+    PRINTER=pr@host; export PRINTER;
+    lpr file
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Method 2: User and Server Printcap Entries</p>
+
+      <p>If you want to have the benefits of a printcap file, i.e.
+      - you can use aliases or abbreviations for the names of
+      printers, then here is a couple of hints. First, the <b
+      class="APPLICATION">LPRng</b> software scans the <tt class=
+      "FILENAME">printcap</tt> file for printcap entries, combining
+      information for the same printer into a single entry.
+      Information found later in the printcap file will override
+      earlier information. In addition, you can tag entries as
+      either being used for all utilities or just for the <b class=
+      "APPLICATION">lpd</b> server. Here are a couple of
+      examples:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10764"></a>
+<pre class="SCREEN">
+    # for all utilities
+    pr:lp=pr@host
+    # just for lpd
+    pr:server
+      :lp=/dev/lp
+    # more information
+    pr:check_for_nonprintable@
+    # --- final result for LPR
+    pr:lp=pr@host:check_for_nonprintable@
+    # --- final result for lpd
+    pr:lp=/dev/lp:check_for_nonprintable@
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>As you can see, the <var class="LITERAL">server</var>
+      keyword indicates that the printcap entry is only for the
+      server. The <b class="APPLICATION">lpr</b> utility will send
+      the job to the host, while the <b class="APPLICATION">lpd</b>
+      server will print it on <tt class=
+      "FILENAME">/dev/lp</tt>.</p>
+
+      <p>Note that the <var class="LITERAL">lp=...</var>
+      information overrides the <var class="LITERAL">:rp:</var>
+      (remote printer) and <var class="LITERAL">:rm:</var> (remote
+      machine) fields if they are present.</p>
+
+      <p>Method 3: Force sending to server on <var class=
+      "LITERAL">localhost</var></p>
+
+      <p>The <var class="LITERAL">force_localhost</var> printcap or
+      configuration flag forces non-<b class="APPLICATION">lpd</b>
+      applications to send all requests and print jobs to the
+      server running on the local host.</p>
+
+      <p>This method is similar to the previous one, but has the
+      benefit that it can be configured as a global (i.e. - applies
+      to all printers) rather than printer specific. You can put
+      this in the <tt class="FILENAME">lpd.conf</tt> file for
+      general application, or have a printcap entry of the
+      following form:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10782"></a>
+<pre class="SCREEN">
+    # for all utilities
+    pr:lp=pr@host:force_localhost
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <b class="APPLICATION">lpd</b> server will ignore the
+      <var class="LITERAL">force_localhost</var> flag, and send
+      jobs to the <var class="LITERAL">pr</var> queue on the <var
+      class="LITERAL">host</var> machine. However, the LPR, <b
+      class="APPLICATION">lpq</b>, etc., utilities will send their
+      requests to the server running on the local host.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x10703.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x10790.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">It was working
+          normally, then I get connection refused errors</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "faq.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Job disappears
+          and is never printed, but lpr works</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

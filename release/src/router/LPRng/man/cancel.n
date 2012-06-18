@@ -1,0 +1,161 @@
+'\" e
+.\" @(#)lp.1 1.36 95/10/09 SMI; from SVr4
+.\" Copyright 1989 AT&T
+.\" Copyright (c) 1995, Sun Microsystems, Inc.
+.\" All Rights Reserved
+.\" Portions Copyright (c) 1992, X/Open Company Limited
+.\" Portions Copyright (c) 1996, Patrick Powell
+.\" All Rights Reserved
+.ig
+.EQ
+gsize 10
+delim $$
+.EN
+..
+.TH CANCEL 1 \*(VE "LPRng"
+.SH NAME
+cancel \- send cancel requests to an LPRng print service
+.SH SYNOPSIS
+.B cancel
+[
+.BI \-P " printer"
+] [
+.BI \-D " debug-options"
+]
+.if n .ti +5n
+[
+.IR request-ID \|.\|.\|.
+]
+.SH DESCRIPTION
+.IX "cancel command" "" "\fLcancel\fP \(em cancel requests to an LP print service"
+.IX "LPRng print services" "cancel requests" "" "cancel requests \(em \fLcancel\fP"
+.IX "printers" "cancel requests" "" "cancel requests \(em \fLcancel\fP"
+.LP
+The LPRng
+\f3lprm\fP
+client supports an \f3cancel\fP interface when invoked with an
+\f3cancel\fP
+program name.
+This is similar to the
+.BR ex (1)
+and
+.BR vi (1)
+programs.
+The supported form of the \f3cancel\fP command
+arranges for the named \f2jobs\fP to be removed
+from the specified print queues.
+The action is identical to that of
+.BR lprm (1) ,
+including the options,
+with the difference that the last argument on the
+command line can be an optional printer name.
+If the name does not appear in the LPRng
+printcap database,
+then the name is assumed to be a job identifier.
+.PP
+The format of
+.I request-ID
+should be either the identifier field value or the job number
+reported by LPQ.
+.br
+.ne 10
+.SH OPTIONS
+.LP
+.TP
+\f3\-P \f2printer\f1
+printer name.
+The destination printer
+is taken from
+the command line
+\f3\-P \f2printer\f1
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
+.TP
+.BI \-D " debug-options"
+Debug options for the program.
+.ne 10
+.SH OPERANDS
+The following operands are supported by
+.BR cancel :
+.TP 15
+.I ID
+A request
+.IR ID ,
+as returned by
+.BR lp .
+Specifying a request
+.I ID
+cancels the associated request even if it is currently printing.
+.TP
+.I printer
+A printer name
+(for a complete list of printer names, use
+.BR lpq ).
+This method may not be supported on all systems,
+and the
+.BI \-P " printer"
+form should be used instead.
+.SH ENVIRONMENT
+.PP
+By default,
+the destination printer
+is taken from
+the command line
+.I printer
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
+.SH "EXIT STATUS"
+.PP
+The following exit values are returned:
+.TP 15
+.B "zero (0)"
+Successful completion.
+.TP
+.B "non-zero (!=0)"
+An error occurred.
+.SH SEE ALSO
+lpd.conf(5),
+lpc(8),
+lpd(8),
+checkpc(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.perms(5),
+pr(1), lprng_certs(1), lprng_index_certs(1).
+.SH DIAGNOSTICS
+.nf
+Most of the diagnostics are self explanatory.
+If you are puzzled over the exact cause of failure,
+set the debugging level on (-D5) and run again.
+The debugging information will 
+help you to pinpoint the exact cause of failure.
+.fi
+.SH "HISTORY"
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+The LPRng mailing list is lprng@lprng.com;
+subscribe by sending mail to lprng-request@lprng.com with
+the word subscribe in the body.
+The software is available from ftp://ftp.lprng.com/pub/LPRng.
+.SH "AUTHOR"
+Patrick Powell <papowell@lprng.com>.

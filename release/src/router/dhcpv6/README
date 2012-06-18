@@ -1,0 +1,43 @@
+$KAME: README,v 1.3 2005/01/12 06:06:10 suz Exp $
+
+WIDE-DHCPv6
+
+	WIDE-DHCPv6 is an open-source implementation of Dynamic Host
+	Configuration Protocol for IPv6 (DHCPv6) developed by the KAME
+	project.
+
+	The implementation mainly conforms to the following standards:
+
+	- RFC3315: Dynamic Host Configuration Protocol for IPv6 (DHCPv6)
+	- RFC3319: Dynamic Host Configuration Protocol (DHCPv6) Options 
+         	   for Session Initiation Protocol (SIP) Servers
+	- RFC3633: IPv6 Prefix Options for Dynamic Host Configuration
+	           Protocol (DHCP)
+	- RFC3646: DNS Configuration options for Dynamic Host
+	           Configuration Protocol for IPv6 (DHCPv6)
+	- RFC4075: Simple Network Time Protocol (SNTP) Configuration
+	           Option for DHCPv6
+	- RFC4242: Information Refresh Time Option for Dynamic Host
+	           Configuration Protocol for IPv6 (DHCPv6)
+
+	All the components of the main protocol are provided, i.e.,
+	DHCPv6 clients, servers, and relay agents.
+
+	Supported message types are as follows:
+	  Solicit, Advertise, Request, Renew, Rebind, Release, Reply,
+	  Information-request, Relay-forward and Relay-reply.
+
+	Note that the current implementation does not support IPv6
+	temporary address allocation by DHCPv6, and there is no plan to
+	implement that feature at the moment.
+
+Bug Reports and Mailing Lists
+
+	Bugs reports should be put to the Bug Tracking System at 
+	sourceforge.net
+		http://sourceforge.net/projects/wide-dhcpv6/
+
+	Information on the mailing list, including how to subscribe
+	and browse archives, is available at the following URL:
+
+		http://sourceforge.net/mail/?group_id=153668

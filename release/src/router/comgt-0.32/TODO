@@ -1,0 +1,18 @@
+To Do
+=====
+Better error handling for built-in scripts. (non-existent at the moment)
+
+Old - unlikely to be addressed:
+Option: locking (uucp? What's the standard?) (Who cares?)
+
+Better testkey (Change stdin mode to raw, update input, system, exec & exit)
+
+getcomchar() (Get one byte from com so a dumb term could be written in a
+              script.  Should be done only after testkey)
+
+Polling sucks.  Could this be (major) changed to be interrupt-driven?
+(Do people still use non-16550s out there?)
+
+Error reporting doesn't display the line containing the error.
+
+$Id: TODO,v 1.1 2008-12-04 12:29:16 michael Exp $

@@ -1,0 +1,320 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Adding Authentication Support</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Permissions and Authentication " href=
+    "permsref.htm">
+    <link rel="PREVIOUS" title="Using MD5 for Authentication" href=
+    "x9489.htm">
+    <link rel="NEXT" title="Accounting " href="accountingref.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x9489.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          17. Permissions and Authentication</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "accountingref.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN9556">17.17. Adding
+      Authentication Support</a></h1>
+
+      <p>Additional types of authentication support can be added
+      very easily to <b class="APPLICATION">LPRng</b> by using the
+      following conventions and guidelines.</p>
+
+      <p>First, the authentication method can be connection based
+      or transfer based. Connection based authentication involves
+      the <b class="APPLICATION">LPRng</b> client or server opening
+      a connection to the remote server, having the authentication
+      protocol provide authentication information, and then having
+      no further interaction with the system. This is the easiest
+      to implement and understand method. Code needs to be provided
+      to do a simple authentication exchange between the two ends
+      of the connection, after which no other action needs to be
+      taken.</p>
+
+      <p>Transfer based authentication is more complex, but allows
+      encrypted transfers of information between the two systems. A
+      connection is established between client and server (or
+      server and server), and an initial protocol exchange is
+      performed. Then the authentication module transfers the
+      command or job information to the destination, where is it
+      unpacked and/or decrypted. The internal <b class=
+      "APPLICATION">lpd</b> server facilities are then invoked by
+      the authentication module, which also provides a destination
+      for any error message or information destined for the client.
+      The authentication module will encrypt or encode this
+      information and then send it to the client program. This type
+      of authentication is more complex, but provides a higher
+      degree of security and reliability than the simple connection
+      based system.</p>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9564">17.17.1. Printcap
+        Support</a></h2>
+
+        <p>By convention, printcap entries <var class=
+        "LITERAL">auth=XXX</var> and <var class=
+        "LITERAL">auth_forward=XXX</var> specifies that
+        authentication protocol <acronym class=
+        "ACRONYM">XXX</acronym> is to be used for client to server
+        and for server to server transfers respectively.</p>
+
+        <p>Similarly, the server receiving an authentication
+        request must have a <var class="LITERAL">XXX_id=name</var>
+        entry in the printcap or configuration information. This
+        allows several different authentication protocols to be
+        accepted by a server.</p>
+
+        <p>By convention, printcap and configuration entries of the
+        form <var class="LITERAL">XXX_key</var> contain
+        configuration information for the <acronym class=
+        "ACRONYM">XXX</acronym> authentication protocol. As part of
+        the authentication support process the <var class=
+        "LITERAL">XXX_key</var> values are extracted from the
+        printcap and configuration files and placed in a simple
+        database for the authentication support module.</p>
+
+        <p>If you are using a routing filter, then you can also
+        place <var class="LITERAL">XXX_key</var> information in the
+        routing entry for each file, and this will be used for
+        sending the job to the specified destination.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9578">17.17.2. Code
+        Support</a></h2>
+
+        <p>The <tt class=
+        "FILENAME">LPRng/src/common/sendauth.c</tt> file has the
+        following entries at the end.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9582"></a>
+<pre class="SCREEN">
+    #define SENDING
+    #include "user_auth.stub"
+    
+    struct security SendSecuritySupported[] = {
+      /* name,       config_tag, connect,    send,   receive */
+      { "kerberos4", "kerberos", Send_krb4_auth, 0, 0 },
+      { "kerberos*", "kerberos", 0,           Krb5_send },
+      { "pgp",       "pgp",      0,           Pgp_send },
+    #if defined(USER_SEND)
+     USER_SEND
+    #endif
+      {0}
+    };
+</pre>
+        </div>
+        This is an example of how to add user level authentication
+        support. The <tt class="FILENAME">user_auth.stub</tt> file
+        contains the source code for the various modules
+        authentication modules. You can replace this file with your
+        own version if desired. The following fields are used. 
+
+        <div class="VARIABLELIST">
+          <dl>
+            <dt>name</dt>
+
+            <dd>
+              <p>The authentication name. The <var class=
+              "LITERAL">auth=XXX</var> printcap or configuration
+              value will cause the <var class="LITERAL">name</var>
+              fields to be searched using a glob match.</p>
+            </dd>
+
+            <dt>config_tag</dt>
+
+            <dd>
+              <p>When a match is found, the <var class=
+              "LITERAL">config_tag</var> value is used to search
+              the printcap and configuration entries for
+              information. If the <var class=
+              "LITERAL">config_tag</var> field has value <acronym
+              class="ACRONYM">XXX</acronym>, then entries with keys
+              <var class="LITERAL">XXX_key</var> will be extracted
+              for use by the authentication code.</p>
+            </dd>
+
+            <dt>connect</dt>
+
+            <dd>
+              <p>Routine to call to support <var class=
+              "LITERAL">connection</var> level authentication. This
+              routine is responsible for connection establishment
+              and protocol handshake. If the value is 0, then the
+              <var class="LITERAL">send</var> field value will be
+              used.</p>
+            </dd>
+
+            <dt>send</dt>
+
+            <dd>
+              <p>Routine to call to support <var class=
+              "LITERAL">transfer</var> level authentication. The
+              <var class="LITERAL">send</var> routine is provided a
+              file and a connection to the remote server, and is
+              responsible for the transferring files.</p>
+            </dd>
+          </dl>
+        </div>
+        <br>
+        <br>
+
+        <p>The <tt class=
+        "FILENAME">LPRng/src/common/lpd_secure.c</tt> file has the
+        following information at the end:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9614"></a>
+<pre class="SCREEN">
+    #define RECEIVE 1
+    #include "user_auth.stub"
+    
+     struct security ReceiveSecuritySupported[] = {
+        /* name, config_tag, connect, send, receive */
+    #if defined(HAVE_KRB_H) &amp;&amp; defined(MIT_KERBEROS4)
+        { "kerberos4", "kerberos",  0, 0, 0 },
+    #endif
+    #if defined(HAVE_KRB5_H)
+        { "kerberos*", "kerberos",   0, 0, Krb5_receive },
+    #endif
+        { "pgp",       "pgp",   0, 0, Pgp_receive, },
+    #if defined(USER_RECEIVE)
+    /* this should have the form of the entries above */
+     USER_RECEIVE
+    #endif
+        {0}
+    };
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>This information matches the same information in the <tt
+        class="FILENAME">sendauth.c</tt> file. When the
+        authentication request arrives at the server, the <var
+        class="LITERAL">name</var> field values are searched for a
+        match, and then the <var class="LITERAL">config_tag</var>
+        value is used to get extract configuration information from
+        the database for the protocol.</p>
+
+        <p>The <var class="LITERAL">receive</var> routine is then
+        called and is expected to handle the remaining steps of the
+        authentication protocol. If the routine exits with a 0
+        value then the lpd server expects <var class=
+        "LITERAL">connection</var> level authentication has been
+        done and proceeds to simply transfer information using the
+        standard RFC1179 protocol steps. A non-zero return value
+        indicates an error and an error is reported to the other
+        end of the connection.</p>
+
+        <p>If the <var class="LITERAL">receive</var> module is to
+        perform <var class="LITERAL">transfer</var> level
+        authentication, then the module carries out the necessary
+        steps to transfer the command and/or job information. It
+        then calls the necessary internal <b class=
+        "APPLICATION">LPRng</b> routine to implement the desired
+        services. After finishing the requested work, these
+        routines return to the calling authentication module, which
+        then will transfer data, close the connection to the remote
+        system, and return to the calling system. The combination
+        of 0 return value and closed connection indicates
+        successful transfer level authentication to the server.</p>
+
+        <p>The <tt class="FILENAME">user_auth.stub</tt> file
+        contains the following code that sets the <var class=
+        "LITERAL">USER_SEND</var> variable:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN9630"></a>
+<pre class="SCREEN">
+    #if defined(SENDING)
+    extern int md5_send();
+    #  define USER_SEND \
+      { "md5", "md5", md5_send, 0, md5_receive },
+    #endif
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>If the <acronym class="ACRONYM">SENDING</acronym> value
+        has been defined, this causes the prototype for <code
+        class="FUNCTION">md5_send()</code> to be place in the file
+        and the <var class="LITERAL">USER_SEND</var> value to be
+        defined. This will cause the <var class="LITERAL">md5</var>
+        authentication information to be placed in the correct
+        table.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN9637">17.17.3. Connection and
+        Transfer Authentication</a></h2>
+
+        <p>Rather than go into a detailed description of the code,
+        the <tt class="FILENAME">user_auth.stub</tt> file contains
+        extremely detailed examples as well as several working
+        versions of authentication information. It is recommended
+        that the user start with one of these and then modify it to
+        suit themselves.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x9489.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "accountingref.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Using MD5 for
+          Authentication</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "permsref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">
+          Accounting</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

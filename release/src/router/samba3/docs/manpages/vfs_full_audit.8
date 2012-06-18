@@ -1,0 +1,626 @@
+.\"     Title: vfs_full_audit
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "VFS_FULL_AUDIT" "8" "09/30/2009" "Samba 3\&.0" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+vfs_full_audit \- record Samba VFS operations in the system log
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCvfs objects = full_audit\F[]
+.fam
+.SH "DESCRIPTION"
+.PP
+This VFS module is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+The
+\FCvfs_full_audit\F[]
+VFS module records selected client operations to the system log using
+\fBsyslog\fR(3)\&.
+.PP
+\FCvfs_full_audit\F[]
+is able to record the complete set of Samba VFS operations:
+.RS 4
+aio_cancel
+.RE
+.RS 4
+aio_error
+.RE
+.RS 4
+aio_fsync
+.RE
+.RS 4
+aio_read
+.RE
+.RS 4
+aio_return
+.RE
+.RS 4
+aio_suspend
+.RE
+.RS 4
+aio_write
+.RE
+.RS 4
+chdir
+.RE
+.RS 4
+chflags
+.RE
+.RS 4
+chmod
+.RE
+.RS 4
+chmod_acl
+.RE
+.RS 4
+chown
+.RE
+.RS 4
+close
+.RE
+.RS 4
+closedir
+.RE
+.RS 4
+connect
+.RE
+.RS 4
+disconnect
+.RE
+.RS 4
+disk_free
+.RE
+.RS 4
+fchmod
+.RE
+.RS 4
+fchmod_acl
+.RE
+.RS 4
+fchown
+.RE
+.RS 4
+fget_nt_acl
+.RE
+.RS 4
+fgetxattr
+.RE
+.RS 4
+flistxattr
+.RE
+.RS 4
+fremovexattr
+.RE
+.RS 4
+fset_nt_acl
+.RE
+.RS 4
+fsetxattr
+.RE
+.RS 4
+fstat
+.RE
+.RS 4
+fsync
+.RE
+.RS 4
+ftruncate
+.RE
+.RS 4
+get_nt_acl
+.RE
+.RS 4
+get_quota
+.RE
+.RS 4
+get_shadow_copy_data
+.RE
+.RS 4
+getlock
+.RE
+.RS 4
+getwd
+.RE
+.RS 4
+getxattr
+.RE
+.RS 4
+kernel_flock
+.RE
+.RS 4
+lgetxattr
+.RE
+.RS 4
+link
+.RE
+.RS 4
+linux_setlease
+.RE
+.RS 4
+listxattr
+.RE
+.RS 4
+llistxattr
+.RE
+.RS 4
+lock
+.RE
+.RS 4
+lremovexattr
+.RE
+.RS 4
+lseek
+.RE
+.RS 4
+lsetxattr
+.RE
+.RS 4
+lstat
+.RE
+.RS 4
+mkdir
+.RE
+.RS 4
+mknod
+.RE
+.RS 4
+open
+.RE
+.RS 4
+opendir
+.RE
+.RS 4
+pread
+.RE
+.RS 4
+pwrite
+.RE
+.RS 4
+read
+.RE
+.RS 4
+readdir
+.RE
+.RS 4
+readlink
+.RE
+.RS 4
+realpath
+.RE
+.RS 4
+removexattr
+.RE
+.RS 4
+rename
+.RE
+.RS 4
+rewinddir
+.RE
+.RS 4
+rmdir
+.RE
+.RS 4
+seekdir
+.RE
+.RS 4
+sendfile
+.RE
+.RS 4
+set_nt_acl
+.RE
+.RS 4
+set_quota
+.RE
+.RS 4
+setxattr
+.RE
+.RS 4
+stat
+.RE
+.RS 4
+statvfs
+.RE
+.RS 4
+symlink
+.RE
+.RS 4
+sys_acl_add_perm
+.RE
+.RS 4
+sys_acl_clear_perms
+.RE
+.RS 4
+sys_acl_create_entry
+.RE
+.RS 4
+sys_acl_delete_def_file
+.RE
+.RS 4
+sys_acl_free_acl
+.RE
+.RS 4
+sys_acl_free_qualifier
+.RE
+.RS 4
+sys_acl_free_text
+.RE
+.RS 4
+sys_acl_get_entry
+.RE
+.RS 4
+sys_acl_get_fd
+.RE
+.RS 4
+sys_acl_get_file
+.RE
+.RS 4
+sys_acl_get_perm
+.RE
+.RS 4
+sys_acl_get_permset
+.RE
+.RS 4
+sys_acl_get_qualifier
+.RE
+.RS 4
+sys_acl_get_tag_type
+.RE
+.RS 4
+sys_acl_init
+.RE
+.RS 4
+sys_acl_set_fd
+.RE
+.RS 4
+sys_acl_set_file
+.RE
+.RS 4
+sys_acl_set_permset
+.RE
+.RS 4
+sys_acl_set_qualifier
+.RE
+.RS 4
+sys_acl_set_tag_type
+.RE
+.RS 4
+sys_acl_to_text
+.RE
+.RS 4
+sys_acl_valid
+.RE
+.RS 4
+telldir
+.RE
+.RS 4
+unlink
+.RE
+.RS 4
+utime
+.RE
+.RS 4
+write
+.RE
+.PP
+In addition to these operations,
+\FCvfs_full_audit\F[]
+recognizes the special operation names "all" and "none ", which refer to all the VFS operations and none of the VFS operations respectively\&.
+.PP
+\FCvfs_full_audit\F[]
+records operations in fixed format consisting of fields separated by \'|\' characters\&. The format is:
+.sp
+.if n \{\
+.RS 4
+.\}
+.fam C
+.ps -1
+.nf
+.if t \{\
+.sp -1
+.\}
+.BB lightgray adjust-for-leading-newline
+.sp -1
+
+		smbd_audit: PREFIX|OPERATION|RESULT|FILE
+	
+.EB lightgray adjust-for-leading-newline
+.if t \{\
+.sp 1
+.\}
+.fi
+.fam
+.ps +1
+.if n \{\
+.RE
+.\}
+.PP
+The record fields are:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\FCPREFIX\F[]
+\- the result of the full_audit:prefix string after variable substitutions
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\FCOPERATION\F[]
+\- the name of the VFS operation
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\FCRESULT\F[]
+\- whether the operation succeeded or failed
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\FCFILE\F[]
+\- the name of the file or directory the operation was performed on
+.sp
+.RE
+.PP
+This module is stackable\&.
+.SH "OPTIONS"
+.PP
+vfs_full_audit:prefix = STRING
+.RS 4
+Prepend audit messages with STRING\&. STRING is processed for standard substitution variables listed in
+\fBsmb.conf\fR(5)\&. The default prefix is "%u|%I"\&.
+.RE
+.PP
+vfs_full_audit:success = LIST
+.RS 4
+LIST is a list of VFS operations that should be recorded if they succeed\&. Operations are specified using the names listed above\&.
+.RE
+.PP
+vfs_full_audit:failure = LIST
+.RS 4
+LIST is a list of VFS operations that should be recorded if they failed\&. Operations are specified using the names listed above\&.
+.RE
+.PP
+full_audit:facility = FACILITY
+.RS 4
+Log messages to the named
+\fBsyslog\fR(3)
+facility\&.
+.RE
+.PP
+full_audit:priority = PRIORITY
+.RS 4
+Log messages with the named
+\fBsyslog\fR(3)
+priority\&.
+.RE
+.SH "EXAMPLES"
+.PP
+Log file and directory open operations on the [records] share using the LOCAL7 facility and ALERT priority, including the username and IP address:
+.sp
+.if n \{\
+.RS 4
+.\}
+.fam C
+.ps -1
+.nf
+.if t \{\
+.sp -1
+.\}
+.BB lightgray adjust-for-leading-newline
+.sp -1
+
+        \fI[records]\fR
+	\m[blue]\fBpath = /data/records\fR\m[]
+	\m[blue]\fBvfs objects = full_audit\fR\m[]
+	\m[blue]\fBfull_audit:prefix = %u|%I\fR\m[]
+	\m[blue]\fBfull_audit:success = open opendir\fR\m[]
+	\m[blue]\fBfull_audit:failure = all\fR\m[]
+	\m[blue]\fBfull_audit:facility = LOCAL7\fR\m[]
+	\m[blue]\fBfull_audit:priority = ALERT\fR\m[]
+.EB lightgray adjust-for-leading-newline
+.if t \{\
+.sp 1
+.\}
+.fi
+.fam
+.ps +1
+.if n \{\
+.RE
+.\}
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0\&.25 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.

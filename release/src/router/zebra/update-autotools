@@ -1,0 +1,14 @@
+#! /bin/sh
+#
+# When local system does not have the latest autoconf/automake
+#        -- Kunihiro Ishiguro <kunihiro@zebra.org>
+#
+rm -f config.cache
+rm -f Makefile.in
+rm -f aclocal.m4
+rm -f config.h.in
+rm -f configure
+aclocal
+autoheader
+autoconf
+automake --foreign

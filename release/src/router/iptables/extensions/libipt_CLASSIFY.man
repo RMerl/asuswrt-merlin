@@ -1,0 +1,4 @@
+This module allows you to set the skb->priority value (and thus classify the packet into a specific CBQ class).
+.TP
+.BI "--set-class " "MAJOR:MINOR"
+Set the major and minor class value.

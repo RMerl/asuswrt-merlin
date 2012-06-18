@@ -1,0 +1,61 @@
+#! /bin/sh
+#
+# Reconfigure for a release, by updating the Makefile dependencies and
+# running the autotools.
+#
+# $Id: reconf,v 1.3 2004/04/23 10:06:17 quozl Exp $
+
+# make the existing config.h disappear temporarily
+if test -f config.h
+then
+  mv -f config.h config.h.TMP
+fi
+touch config.h
+
+# rebuild dependencies (makedepend)
+for makefile in Makefile.am Makefile.uClinux
+do
+  echo -n "Rebuilding $makefile..."
+  head -`grep -n 'DO NOT ADD BELOW THIS POINT' $makefile | \
+	cut -d: -f1` $makefile > $makefile.new
+  for file in *.c
+  do
+    if test "$makefile" = "Makefile.uClinux"
+    then
+      gcc -MM $file -include config.embed.h
+    else
+      gcc -MM $file -DHAVE_CONFIG_H
+    fi
+    echo ''
+  done >> $makefile.new
+  echo 'done.'
+  if ! cmp -s $makefile.new $makefile
+  then
+    echo "Changes: <=old >=new"
+    diff $makefile $makefile.new | grep '^[<>]'
+    mv -f $makefile.new $makefile
+  else
+    rm -f $makefile.new
+    echo "No change."
+  fi
+done
+
+# restore the previous config.h
+rm -f config.h
+if test -f config.h.TMP
+then
+  mv -f config.h.TMP config.h
+fi
+
+# show us what we do next
+set -x
+
+# reset the configuration
+rm -f config.cache
+rm -f config.log
+
+# run the build tools sequence
+aclocal
+autoconf
+automake -a --copy --verbose
+autoheader

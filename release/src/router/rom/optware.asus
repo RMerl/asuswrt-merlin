@@ -1,0 +1,84 @@
+Package: DM2_Utility
+Version: 2.0.3.0
+Depends: 
+OptionalUtility: 2.1.0.0+
+Section: net
+Architecture: mipsel
+Maintainer: ASUS
+Size: 
+Filename: DM2_2030.zip
+Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
+Description: Download tools
+URL: 
+
+
+Package: asuslighttpd
+Version: 1.0.0.1
+Depends: pcre, zlib, libstdc++, openssl, spawn-fcgi
+OptionalUtility: 1.0.0.2
+Section: net
+Architecture: mipsel
+Maintainer: ASUS
+Size: 142114
+Filename: asuslighttpd_1.0.0.1_mipsel.ipk
+Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
+Description: 
+URL: 
+
+
+Package: downloadmaster
+Version: 3.1.0.54
+Depends: uclibc-opt, openssl, zlib, libcurl, libevent, ncurses, libxml2, libuclibc++, libsigc++, libpar2, pcre, spawn-fcgi
+OptionalUtility: 1.0.0.2+
+Section: net
+Architecture: mipsel
+Maintainer: ASUS
+Size: 4285031
+Filename: downloadmaster_3.1.0.54_mipsel.ipk
+Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
+Description: Download tools
+URL: http://www.asusnetwork.net:8081/
+
+
+Package: mediaserver
+Version: 1.0.0.13
+Depends: uclibc-opt, zlib, gdbm, libid3tag, sqlite, libjpeg, libexif, libogg, flac, libvorbis, ffmpeg, e2fsprogs
+OptionalUtility: 1.0.0.2
+Section: net
+Architecture: mipsel
+Maintainer: ASUS
+Size: 4604963
+Filename: mediaserver_1.0.0.13_mipsel.ipk
+Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
+Description: 
+URL: http://www.asusnetwork.net:8081/mediaserverui/mediaserver.asp
+
+
+Package: cloudsync
+Version: 1.0.0.9
+Depends: uclibc-opt
+OptionalUtility: 1.0.0.2
+Section: net
+Architecture: mipsel
+Maintainer: ASUS
+Size: 2587214
+Filename: cloudsync_1.0.0.9_mipsel.ipk
+Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
+Description: 
+URL: http://www.asusnetwork.net:8081/cloudui/Setting.asp
+
+
+Package: lamp
+Version: 1.0.0.1
+Depends: uclibc-opt
+OptionalUtility: 1.0.0.2
+Section: net
+Architecture: mipsel
+Maintainer: ASUS
+Size: 10783108
+Filename: lamp_1.0.0.1_mipsel.ipk
+Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
+Description: 
+URL: 
+
+

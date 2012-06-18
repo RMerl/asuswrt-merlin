@@ -1,0 +1,339 @@
+
+
+
+
+
+
+Network Working Group                                            S. Cobb
+Request for Comments: 1877                                     Microsoft
+Category: Informational                                    December 1995
+
+
+         PPP Internet Protocol Control Protocol Extensions for
+                         Name Server Addresses
+
+Status of this Memo
+
+   This memo provides information for the Internet community.  This memo
+   does not specify an Internet standard of any kind.  Distribution of
+   this memo is unlimited.
+
+Abstract
+
+   The Point-to-Point Protocol (PPP) [1] provides a standard method for
+   transporting multi-protocol datagrams over point-to-point links.  PPP
+   defines an extensible Link Control Protocol and a family of Network
+   Control Protocols (NCPs) for establishing and configuring different
+   network-layer protocols.
+
+   This document extends the NCP for establishing and configuring the
+   Internet Protocol over PPP [2], defining the negotiation of primary
+   and secondary Domain Name System (DNS) [3] and NetBIOS Name Server
+   (NBNS) [4] addresses.
+
+Table of Contents
+
+     1.     Additional IPCP Configuration options .................    1
+        1.1         Primary DNS Server Address ....................    2
+        1.2         Primary NBNS Server Address ...................    3
+        1.3         Secondary DNS Server Address ..................    4
+        1.4         Secondary NBNS Server Address .................    5
+     REFRENCES ....................................................    6
+     SECURITY CONSIDERATIONS ......................................    6
+     CHAIR'S ADDRESS ..............................................    6
+     AUTHOR'S ADDRESS .............................................    6
+
+1.  Additional IPCP Configuration Options
+
+   The four name server address configuration options, 129 to 132,
+   provide a method of obtaining the addresses of Domain Name System
+   (DNS) servers and (NetBIOS Name Server (NBNS) nodes on the remote
+   network.
+
+
+
+
+
+
+Cobb                         Informational                      [Page 1]
+
+RFC 1877                  PPP IPCP Extensions              December 1995
+
+
+   Primary and secondary addresses are negotiated independently.  They
+   serve identical purposes, except that when both are present an
+   attempt SHOULD be made to resolve names using the primary address
+   before using the secondary address.
+
+   For implementational convenience, these options are designed to be
+   identical in format and behavior to option 3 (IP-Address) which is
+   already present in most IPCP implementations.
+
+   Since the usefulness of name server address information is dependent
+   on the topology of the remote network and local peer's application,
+   it is suggested that these options not be included in the list of
+   "IPCP Recommended Options".
+
+1.1.  Primary DNS Server Address
+
+   Description
+
+      This Configuration Option defines a method for negotiating with
+      the remote peer the address of the primary DNS server to be used
+      on the local end of the link.  If local peer requests an invalid
+      server address (which it will typically do intentionally) the
+      remote peer specifies the address by NAKing this option, and
+      returning the IP address of a valid DNS server.
+
+      By default, no primary DNS address is provided.
+
+   A summary of the Primary DNS Address Configuration Option format is
+   shown below.  The fields are transmitted from left to right.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |      Primary-DNS-Address
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      Primary-DNS-Address (cont)   |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      129
+
+   Length
+
+      6
+
+
+
+
+
+
+Cobb                         Informational                      [Page 2]
+
+RFC 1877                  PPP IPCP Extensions              December 1995
+
+
+   Primary-DNS-Address
+
+      The four octet Primary-DNS-Address is the address of the primary
+      DNS server to be used by the local peer.  If all four octets are
+      set to zero, it indicates an explicit request that the peer
+      provide the address information in a Config-Nak packet.
+
+   Default
+
+      No address is provided.
+
+1.2.  Primary NBNS Server Address
+
+   Description
+
+      This Configuration Option defines a method for negotiating with
+      the remote peer the address of the primary NBNS server to be used
+      on the local end of the link.  If local peer requests an invalid
+      server address (which it will typically do intentionally) the
+      remote peer specifies the address by NAKing this option, and
+      returning the IP address of a valid NBNS server.
+
+      By default, no primary NBNS address is provided.
+
+   A summary of the Primary NBNS Address Configuration Option format is
+   shown below.  The fields are transmitted from left to right.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |      Primary-NBNS-Address
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      Primary-NBNS-Address (cont)  |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      130
+
+   Length
+
+      6
+
+   Primary-NBNS-Address
+
+      The four octet Primary-NBNS-Address is the address of the primary
+      NBNS server to be used by the local peer.  If all four octets are
+      set to zero, it indicates an explicit request that the peer
+
+
+
+Cobb                         Informational                      [Page 3]
+
+RFC 1877                  PPP IPCP Extensions              December 1995
+
+
+      provide the address information in a Config-Nak packet.
+
+   Default
+
+      No address is provided.
+
+1.3.  Secondary DNS Server Address
+
+   Description
+
+      This Configuration Option defines a method for negotiating with
+      the remote peer the address of the secondary DNS server to be used
+      on the local end of the link.  If local peer requests an invalid
+      server address (which it will typically do intentionally) the
+      remote peer specifies the address by NAKing this option, and
+      returning the IP address of a valid DNS server.
+
+      By default, no secondary DNS address is provided.
+
+   A summary of the Secondary DNS Address Configuration Option format is
+   shown below.  The fields are transmitted from left to right.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |      Secondary-DNS-Address
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      Secondary-DNS-Address (cont) |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Type
+
+      131
+
+   Length
+
+      6
+
+   Secondary-DNS-Address
+
+      The four octet Secondary-DNS-Address is the address of the primary
+      NBNS server to be used by the local peer.  If all four octets are
+      set to zero, it indicates an explicit request that the peer
+      provide the address information in a Config-Nak packet.
+
+   Default
+
+      No address is provided.
+
+
+
+Cobb                         Informational                      [Page 4]
+
+RFC 1877                  PPP IPCP Extensions              December 1995
+
+
+1.4.  Secondary NBNS Server Address
+
+   Description
+
+      This Configuration Option defines a method for negotiating with
+      the remote peer the address of the secondary NBNS server to be
+      used on the local end of the link.  If local peer requests an
+      invalid server address (which it will typically do intentionally)
+      the remote peer specifies the address by NAKing this option, and
+      returning the IP address of a valid NBNS server.
+
+      By default, no secondary NBNS address is provided.
+
+   A summary of the Secondary NBNS Address Configuration Option format
+   is shown below.  The fields are transmitted from left to right.
+
+       0                   1                   2                   3
+       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |     Type      |    Length     |      Secondary-NBNS-Address
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        Secondary-NBNS-Address (cont) |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+      Type
+
+         132
+
+      Length
+
+         6
+
+      Secondary-NBNS-Address
+
+         The four octet Secondary-NBNS-Address is the address of the
+         secondary NBNS server to be used by the local peer.  If all
+         four octets are set to zero, it indicates an explicit request
+         that the peer provide the address information in a Config-Nak
+         packet.
+
+      Default
+
+         No address is provided.
+
+
+
+
+
+
+
+
+Cobb                         Informational                      [Page 5]
+
+RFC 1877                  PPP IPCP Extensions              December 1995
+
+
+References
+
+   [1] Simpson, W., Editor, "The Point-to-Point Protocol (PPP)", STD 51,
+       RFC 1661, Daydreamer, July 1994.
+
+   [2] McGregor, G., "PPP Internet Control Protocol", RFC 1332, Merit,
+       May 1992.
+
+   [3] Auerbach, K., and A. Aggarwal, "Protocol Standard for a NetBIOS
+       Service on a TCP/UDP Transport", STD 19, RFCs 1001 and 1002,
+       March 1987.
+
+   [4] Mockapetris, P., "Domain Names - Concepts and Facilities", STD
+       13, RFC 1034, USC/Information Sciences Institute, November 1987.
+
+   [5] Mockapetris, P., "Domain Names - Implementation and
+       Specification", STD 13, RFC 1035, USC/Information Sciences
+       Institute, November 1987.
+
+Security Considerations
+
+   Security issues are not discussed in this memo.
+
+Chair's Address
+
+   The working group can be contacted via the current chair:
+
+      Fred Baker
+      Cisco Systems
+      519 Lado Drive
+      Santa Barbara, California  93111
+
+      EMail: fred@cisco.com
+
+Author's Address
+
+   Questions about this memo can also be directed to:
+
+      Steve Cobb
+      Microsoft Corporation
+      One Microsoft Way
+      Redmond, WA  98052-6399
+
+      Phone: (206) 882-8080
+
+      EMail: stevec@microsoft.com
+
+
+
+
+
+Cobb                         Informational                      [Page 6]
+

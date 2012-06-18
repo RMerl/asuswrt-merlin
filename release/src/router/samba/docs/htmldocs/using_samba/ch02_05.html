@@ -1,0 +1,195 @@
+<HTML>
+<HEAD>
+<TITLE>
+[Chapter 2] 2.5 Starting the Samba Daemons</title><META NAME="DC.title" CONTENT=""><META NAME="DC.creator" CONTENT=""><META NAME="DC.publisher" CONTENT="O'Reilly &amp; Associates, Inc."><META NAME="DC.date" CONTENT="1999-11-05T21:29:11Z"><META NAME="DC.type" CONTENT="Text.Monograph"><META NAME="DC.format" CONTENT="text/html" SCHEME="MIME"><META NAME="DC.source" CONTENT="" SCHEME="ISBN"><META NAME="DC.language" CONTENT="en-US"><META NAME="generator" CONTENT="Jade 1.1/O'Reilly DocBook 3.0 to HTML 4.0"></head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_04.html" TITLE="2.4 A Basic Samba Configuration File">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 2.4 A Basic Samba Configuration File" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+<A CLASS="chapter" REL="up" HREF="ch02_01.html" TITLE="2. Installing Samba on a Unix System">
+Chapter 2<br>
+Installing Samba on a Unix System</a></font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_06.html" TITLE="2.6 Testing the Samba Daemons">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 2.6 Testing the Samba Daemons" BORDER="0"></a></td></tr></table>&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div>
+<H2 CLASS="sect1">
+<A CLASS="title" NAME="ch02-29069">
+2.5 Starting the Samba Daemons</a></h2><P CLASS="para">
+There are two Samba processes, <EM CLASS="emphasis">
+smbd</em> and <EM CLASS="emphasis">
+nmbd</em>, that need to be running for Samba to work correctly. There are three ways to start:</p><UL CLASS="itemizedlist">
+<LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch02-pgfId-943268">
+</a>By hand</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch02-pgfId-943266">
+</a>As stand-alone daemons</p></li><LI CLASS="listitem">
+<P CLASS="para">
+<A CLASS="listitem" NAME="ch02-pgfId-947794">
+</a>From <EM CLASS="emphasis">
+inetd</em></p></li></ul><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch02-pgfId-938883">
+2.5.1 Starting the Daemons by Hand</a></h3><P CLASS="para">
+If you're in a hurry, you can start the Samba daemons by hand. As root, simply enter the following commands:</p><PRE CLASS="programlisting">
+#<CODE CLASS="userinput"> <B>/usr/local/samba/bin/smbd -D</b></code>
+#<CODE CLASS="userinput"> <B>/usr/local/samba/bin/nmbd -D</b></code></pre><P CLASS="para">
+At this point, Samba will be running on your system and will be ready to accept connections.</p></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch02-pgfId-943275">
+2.5.2 Stand-alone Daemons</a></h3><P CLASS="para">
+To run the Samba processes as stand-alone daemons, you need to add the commands listed in the previous section to your standard Unix startup scripts. This varies depending on whether you have a BSD-style Unix system or a System V Unix.</p><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch02-pgfId-947593">
+2.5.2.1 BSD Unix</a></h4><P CLASS="para">
+WIth a BSD-style Unix, you need to append the following code to the <I CLASS="filename">
+rc.local </i>file, which is typically found in the <I CLASS="filename">
+/etc</i> or <I CLASS="filename">
+/etc/rc.d</i> directories:</p><PRE CLASS="programlisting">
+if [ -x /usr/local/samba/bin/smbd]; then
+	echo &quot;Starting smbd...&quot;
+	/usr/local/samba/bin/smbd -D
+	echo &quot;Starting nmbd...&quot;
+	/usr/local/samba/bin/nmbd -D
+fi</pre><P CLASS="para">
+This code is very simple; it checks to see if the <I CLASS="filename">
+smbd</i> file has execute permissions on it, and if it does, it starts up each of the Samba daemons on system boot.</p></div><DIV CLASS="sect3">
+<H4 CLASS="sect3">
+<A CLASS="title" NAME="ch02-pgfId-943333">
+2.5.2.2 System V Unix</a></h4><P CLASS="para">
+With System V, things can get a little more complex. System V typically uses scripts to start and stop daemons on the system. Hence, you need to instruct Samba how to operate when it starts and when it stops. You can modify the contents of the <I CLASS="filename">
+/etc/rc.local</i> directory and add something similar to the following program entitled <I CLASS="filename">
+smb</i>:</p><PRE CLASS="programlisting">
+#!/bin/sh
+
+# Contains the &quot;killproc&quot; function on Red Hat Linux
+./etc/rc.d/init.d/functions
+
+PATH=&quot;/usr/local/samba/bin:$PATH&quot;
+
+case $1 in 
+	'start')
+		echo &quot;Starting smbd...&quot;
+		smbd -D
+		echo &quot;Starting nmbd...&quot;
+		nmbd -D
+		;;
+	'stop')
+		echo &quot;Stopping smbd and nmbd...&quot;
+		killproc smbd
+		killproc nmbd
+		rm -f /usr/local/samba/var/locks/smbd.pid
+		rm -f /usr/local/samba/var/locks/nmbd.pid
+		;;
+	*)
+		echo &quot;usage: smb {start|stop}&quot;
+		;;
+esac</pre><P CLASS="para">
+With this script, you can start and stop the SMB service with the following commands:</p><PRE CLASS="programlisting">
+# /etc/rc.local/smb start
+Starting smbd...
+Starting nmbd...
+# /etc/rc.local/smb stop
+Stopping smbd and nmbd...</pre></div></div><DIV CLASS="sect2">
+<H3 CLASS="sect2">
+<A CLASS="title" NAME="ch02-pgfId-943302">
+2.5.3 Starting From Inetd</a></h3><P CLASS="para">
+The <EM CLASS="emphasis">
+inetd</em> daemon is a Unix system's Internet "super daemon." It listens on TCP ports defined in <I CLASS="filename">
+/etc/services</i> and executes the appropriate program for each port, which is defined in <I CLASS="filename">
+/etc/inetd.conf</i>. The advantage of this scheme is that you can have a large number of daemons ready to answer queries, but they don't all have to be running. Instead, the <EM CLASS="emphasis">
+inetd</em> daemon listens in places of all the others. The penalty is a small overhead cost of creating a new daemon process, and the fact that you need to edit two files rather than one to set things up. This is handy if you have only one or two users or your machine has too many daemons already. It's also easier to perform an upgrade without disturbing an existing connection.</p><P CLASS="para">
+If you wish to start from <I CLASS="filename">
+inetd</i>, first open <I CLASS="filename">
+/etc/services</i> in your text editor. If you don't already have them defined, add the following two lines:</p><PRE CLASS="programlisting">
+netbios-ssn     139/tcp
+netbios-ns      137/udp</pre><P CLASS="para">
+Next, edit <I CLASS="filename">
+/etc/inetd.conf</i>. Look for the following two lines and add them if they don't exist. If you already have <CODE CLASS="literal">
+smbd</code> and <CODE CLASS="literal">
+nmbd</code> lines in the file, edit them to point at the new <EM CLASS="emphasis">
+smbd</em> and <EM CLASS="emphasis">
+nmbd</em> you've installed. Your brand of Unix may use a slightly different syntax in this file; use the existing entries and the <I CLASS="filename">
+inetd.conf </i><KBD CLASS="command"></kbd>manual page <KBD CLASS="command"></kbd>as a guide:</p><PRE CLASS="programlisting">
+netbios-ssn stream tcp nowait root /usr/local/samba/bin/smbd smbd 
+netbios-ns  dgram  udp wait   root /usr/local/samba/bin/nmbd nmbd</pre><P CLASS="para">
+Finally, kill any <EM CLASS="emphasis">
+smbd</em> or <EM CLASS="emphasis">
+nmbd</em> processes and send the <EM CLASS="emphasis">
+inetd</em> process a hangup (HUP) signal. (The <EM CLASS="emphasis">
+inetd</em> daemon rereads its configuration file on a HUP signal.) To do this, use the <CODE CLASS="literal">
+ps</code> command to find its process ID, then signal it with the following command:</p><PRE CLASS="programlisting">
+# <CODE CLASS="userinput"><B>kill -HUP process_id</b></code></pre><P CLASS="para">
+After that, Samba should be up and running. </p></div></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_04.html" TITLE="2.4 A Basic Samba Configuration File">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: 2.4 A Basic Samba Configuration File" BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="sect1" HREF="ch02_06.html" TITLE="2.6 Testing the Samba Daemons">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: 2.6 Testing the Samba Daemons" BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+2.4 A Basic Samba Configuration File</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+2.6 Testing the Samba Daemons</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

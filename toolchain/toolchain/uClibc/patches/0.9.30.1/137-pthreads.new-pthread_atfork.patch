@@ -1,0 +1,42 @@
+Index: uClibc-0.9.30/libpthread/linuxthreads/Makefile.in
+===================================================================
+--- uClibc-0.9.30.orig/libpthread/linuxthreads/Makefile.in	2009-01-11 01:09:27.008515954 +0100
++++ uClibc-0.9.30/libpthread/linuxthreads/Makefile.in	2009-01-11 01:09:35.295181636 +0100
+@@ -45,7 +45,7 @@
+ pthread_SRC := \
+ 	attr barrier cancel condvar errno events join pthread \
+ 	lockfile manager mutex pt-machine ptcleanup \
+-	ptclock_gettime ptclock_settime ptfork pthandles \
++	ptclock_gettime ptclock_settime ptfork pthandles pthread_atfork \
+ 	pthread_setegid pthread_seteuid pthread_setgid pthread_setregid \
+ 	pthread_setresgid pthread_setresuid pthread_setreuid pthread_setuid \
+ 	rwlock semaphore sighandler signals specific spinlock
+Index: uClibc-0.9.30/libpthread/linuxthreads/pthread_atfork.c
+===================================================================
+--- uClibc-0.9.30.orig/libpthread/linuxthreads/pthread_atfork.c	2009-01-11 01:09:44.931848926 +0100
++++ uClibc-0.9.30/libpthread/linuxthreads/pthread_atfork.c	2009-01-11 01:12:49.926539743 +0100
+@@ -43,12 +43,8 @@
+ 
+ /* Hide the symbol so that no definition but the one locally in the
+    executable or DSO is used.  */
+-int
+-#ifndef __pthread_atfork
+-/* Don't mark the compatibility function as hidden.  */
+-attribute_hidden
+-#endif
+-__pthread_atfork (prepare, parent, child)
++
++int attribute_hidden __pthread_atfork (prepare, parent, child)
+      void (*prepare) (void);
+      void (*parent) (void);
+      void (*child) (void);
+@@ -56,8 +52,5 @@
+   return __register_atfork (prepare, parent, child,
+ 			    &__dso_handle == NULL ? NULL : __dso_handle);
+ }
+-#ifndef __pthread_atfork
+-extern int pthread_atfork (void (*prepare) (void), void (*parent) (void),
+-			   void (*child) (void)) attribute_hidden;
++
+ strong_alias (__pthread_atfork, pthread_atfork)
+-#endif

@@ -1,0 +1,299 @@
+	--- 20080615 tar ball released ---
+2008-05-01  SUZUKI, Shinsuke <suz@kame.net>
+	* common.c: fixed a memory leak (Bug-ID: 1847587)
+	* dhcp6s.c: fixed a potential NULL pointer access (Bug-ID: 1848304).
+		    used a val_statefuladdr, instead of val_prefix, to access 
+		    an address in IA in DHCP DECLINE handling.
+	* config.c: fixed a possible memory leak. (Bug-ID 1847588)
+	* dhcp6s.c: fixed a lifetime calculation failure in RENEW/REBIND 
+		    process for stateful-address. (Bug-ID: 1850457)
+	* common.c: fixed a improper handling of a domain-name ending with '.'.
+		    (Bug-ID: 1852869)
+
+2007-12-06  SUZUKI, Shinsuke <suz@kame.net>
+	* common.c: fixed a possible memory leak. (Bug-ID 1844676)
+	* common.c: fixed a possible double free. (Bug-ID 1844683)
+	* dhcp6s.c: fixed a bugthat dhcp6s cannot accept a relayed
+	  request message with authentication option. (Bug-ID 1814287)
+
+2007-07-25  SUZUKI, Shinsuke <suz@kame.net>
+	* config.c, lease.h, common.c: removed compilation warnings
+
+2007-07-24  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s.c, dhcp6c.c, dhcp6relay.c, configure*: use sig_atomic_t for
+	  a signal-handler variable (Bug-ID 1678874)
+	* common.c: fixed a buffer overrun in sprint_uint64()
+	  (Bug-ID 1714648)
+
+2007-07-10  SUZUKI, Shinsuke <suz@kame.net>
+	* common.c: fixed a singular-point detection failure in replay check.
+	  (Bug-ID 1714644)
+
+2007-06-28  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s.8: fixed a typo in a manual (program name "dhcp6sctl" should
+	  be "dhcp6ctl")
+
+	--- 20070507 tar ball released ---
+2007-05-03  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6relay.c: changes the destination port of a relayed DHCP packet
+	  from 546 to 547, when it is supposed to be bound for a relay,
+	  instead of a client.  (the situation occurs when DHCPv6-relays are
+	  cascased in a row)
+	* dhcp6s.c: fixed a Solicitation message validation error (introduced 
+	  on Mar 21 2007)
+
+2007-03-23  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6relay.c,dhcp6.c: in signal-receiving procedure, not uses 
+	a function that is not always designed to be signal-safe 
+	(Bug-ID 1678874)
+
+2007-03-21  SUZUKI, Shinsuke <suz@kame.net>
+	fixed several bugs found in IPv6-Ready-Logo DHCPv6 Self-Test script.
+	* dhcp6s.c, config.h, if.c: implemented DHCPv6 Confirm message processing
+	on DHCPv6 server.
+	* dhcp6s.c, lease.c: implemented DHCPv6 Decline message processing on DHCPv6 server.
+	* dhcp6s.c: fixed a Solicitation message validation as stated in RFC3315 15.2.
+	* dhcp6s.c: fixed a bug that Rebind does not work for IA-NA.
+	* config.c: supported an address pool that has only one entry.
+
+2007-03-20  SUZUKI, Shinsuke <suz@kame.net>
+	* common.c: fixed a bug that IA-PD/IA-NA cannot coexist in one DHCP message
+	  when they have the same IA-ID.
+
+2007-02-28  SUZUKI, Shinsuke <suz@kame.net>
+	* config.c: fixed a typo.
+
+2007-02-27  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6relay.c, dhcp6relay_script.c, common.[ch], dhcp6c_script.c,
+	  Makefile.in, dhcp6relay.8:
+	  supported script execution for dhcp6relay (contributed by Bruno STEVANT)
+
+	* Makefile.in, configure.in, configure, auth.h, common.c, control.h, dhcp6.h,
+	  dhcp6s.c, missing/{arc4random.h, daemon.c, err.h, getifaddrs.c, ifaddrs.h,
+	  sys/queue.h, warnx.c}
+	  supported compilation on Solaris (contributed by James Carlson)
+
+2007-02-12  SUZUKI, Shinsuke <suz@kame.net>
+	* cftoken.l: accepts interface names, such as eth0.100(Linux VLAN interface)
+	  or foobar (named by "ifconfig name" command).  (Bug-ID 1644637)
+	* configure.in, Makefile.in: allows a user to specify the owner/group for the
+	  installed files.  (suggested by Tsuyoshi MOMOSE and Tomofumi Hayashi)
+
+2007-01-11  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s.conf.5: fixed an incorrect descrption regarding NTP option.
+2006-12-04  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6c.8: clarified the behavior of the Info-req mode.
+	* addrconf.c, common.[ch], configure, configure.in, dhcp6relay.c,
+	prefixconf.c: introduced a HAVE_SA_LEN macro to support OSes 
+	(other than linux) without length field in sockaddr_*
+
+2006-11-15  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s.c: fixed an IA allocation failure from pool when it doubly
+	requested by the same client.  (patch submitted by Hajimu UMEMOTO)
+	* Makefile.in: creates man/man[58] in "make install" 
+	(suggested by Masahide NAKAMURA)
+
+2006-11-05  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s.c: dhcp6s recognizes "-P" option.
+	(patch submitted by Masahide NAKAMURA)
+
+	* dhcp6relay.c: accepts ULA (Bug-ID 1584704)
+
+	* Makefile.in: fixed a compilation error on SuSE and Debian Linux.
+	(patch submitted by Masahide NAKAMURA)
+
+	--- 20061016 tar ball released ---
+2006-10-13  SUZUKI, Shinsuke <suz@kame.net>
+	* Makefile.in: creates the target directory in "make install" 
+	(suggested by Masahide NAKAMURA)
+
+2006-10-08  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s.conf.sample: corrected a misleading comment (pointed out by
+	Hajimu UMEMOTO)
+
+2006-10-04  SUZUKI, Shinsuke <suz@kame.net>
+	* config.c: fixed a improper memory access when there is no free
+	  address in an address pool.  (Bug-ID 1563232)
+
+	  fixed a bug that a pooled address will never be reused even when
+	  it is released.
+
+2006-10-03  SUZUKI, Shinsuke <suz@kame.net>
+	* config.c: dhcp6s does not include a 0 refresh-time option in 
+	ADVERTISE/REPLY message, when "option refreshtime" configuration does 
+	not exist in its configuration.  (patch submitted by Jun-ya Kato)
+
+	* cftoken.l, cfparse.y: fixed a compilation failure by flex 2.5.4
+	 (patch submitted by Jun-ya Kato)
+
+2006-10-01  SUZUKI, Shinsuke <suz@kame.net>
+	* cftoken.l, dhcp6[cs].conf.5: accepted "nis-domain-name" and "nisp-
+	  domain-name" as a configuration keyword for NIS/NIS+ domain name,
+	  as well as nis/nisp-server-domain-name. (Bug-ID 1566494)
+
+	* cftoken.l: supported a declaration name (hostname, poolname,
+	  keyname, authname) including "-".  (Bug-ID 1566476)
+
+2006-09-20  SUZUKI, Shinsuke <suz@kame.net>
+	* common.c: fixed a bug that dhcp6s inserts SIP server addresses into
+	  DNS server address option (Bug-ID 1561202).  (degrade from 2006-07-30)
+	* common.c: fixed a bug that status-code option might include a unexpected
+	  garbage value.  (Bug-ID 1561202)
+	* dhcp6s.conf.5, dhcp6s.conf.sample: you need to provide a preferred-lifetime
+	  for each address-prefix.  (Bug-ID 1558811)
+
+2006-09-20  STEVANT, Bruno <bruno.stevant@enst-bretagne.fr>
+	* lease.c: Fix a memory violation in lease management.
+
+	--- 20060902 tar ball released ---
+2006-09-02  SUZUKI, Shinsuke <suz@kame.net>
+	* added a configure check routine to automatically detect a 
+	  difference in TAILQ_FOREACH_REVERSE macros (Suggested by Brute
+	  STEVANT)
+	* fixed a bug that dhcp6c cannot advertise an Option-Request-Option.
+	* fixed a compilation failure in freebsd4
+
+2006-07-30  SUZUKI, Shinsuke <suz@kame.net>
+	* supported the following options:
+		NIS server option, NIS domain option (RFC3898)
+		NIS+ server option, NIS+ domain option (RFC3898)
+		BCMCS server option, BCMCS domain option (RFC4280)
+	* changed the name of the enviromental variable for SIP server
+	  address (new_sip_servers).
+	* removed a configure option to control the NTP option number.
+	  (since one year has been passed since its official assignment)
+
+2006-07-29  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s and dhcp6relay dumps process-id file, like dhcp6c
+
+2006-05-05  SUZUKI, Shinsuke <suz@kame.net>
+	* fixed a compilation error on netbsd
+	* updated the list of the supported RFCs
+	* NTP option number has been already assigned by IANA
+	* added other official option numbers for future implementors
+
+2006-04-26  SUZUKI, Shinsuke <suz@kame.net>
+	* supported 'include' statement
+	(contributed by Bruno STEVANT)
+
+2006-04-11  SUZUKI, Shinsuke <suz@kame.net>
+	* removed 'ifdef USE_POOL' macros, since it is always ON
+	* rename some pool-related variables to prepare for the support of prefix-pool
+
+	--- 20060322 tar ball released ---
+2006-03-20  SUZUKI, Shinsuke <suz@kame.net>
+	* fixed a bug that dhcp6c cannot receive a DHCPv6 packet on linux.
+	(Request ID=1435976, and a patch proposed by Yasuyuki KOZAKAI)
+
+2006-03-08  SUZUKI, Shinsuke <suz@kame.net>
+	* added some missing queue-management macros to make it compilable on linux
+
+	--- 20060214 tar ball released ---
+2006-01-26  SUZUKI, Shinsuke <suz@kame.net>
+	* supported IA-NA address-pool (contributed by: WIDE Project Secure6-WG)
+		ToDo: IA-PD prefix-pool, write a manual
+
+2006-01-19  SUZUKI, Shinsuke <suz@kame.net>
+	* corrected the condition for detecting unwanted incoming messages
+	* missing initialization in dhcp6c
+	--- 20060114 tar ball released ---
+	--- 20051211 tar ball released ---
+2005-12-11  SUZUKI, Shinsuke <suz@kame.net>
+	* locate every files in /usr/local/xxx, instead of /usr/local/v6/xxx
+	* Assign an official option number for Information Refresh Timer
+	* Removed old prefix delegation options, since these options numbers
+	  coinsides with Information Refresh Timer.
+	--- 20050723a tar ball released ---
+
+2005-07-22  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/kame/dhcp6: fixed memory leak for renew/rebind event data.
+	(KAME PR 872 reported by Meng Huan Hsieh)
+
+2005-05-03  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/kame/dhcp6/dhcp6c_ia.c (ia_timo): kept the latest server's
+	DUID even in the REBIND state in case of sending a Release message
+	in that state.
+
+2005-05-03  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/kame/dhcp6/cfparse.y: corrected "address parameters" so
+	that we don't have to specify the meaningless (but mandatory)
+	prefix length in the context of IA_NA.
+
+2005-05-03  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/kame/dhcp6/config.c (configure_commit): made sure that
+	interface parameters are initialized with the default values even
+	if the interface is not explicitly configured in the configuration
+	file.  This particularly made sure that the preference option is
+	not included unless explicitly specified.  A memory leakage for
+	the client when specifying a script file was also fixed.
+
+2005-04-29  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/kame/dhcp6/dhcp6c.c (client6_mainloop): corrected error
+	handling for select(2) in order to avoid unexpected blocking when
+	receiving a signal.
+
+2005-04-27  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/sys/netinet6/in6.c (in6_update_ifa): always updated
+	ia6_updatetime regardless of whether the address is created or
+	updated.  This is necessary so that the expiration times will be
+	updated	correctly when the lifetiems of an existing address are
+	modified by hand or by a process such as a DHCPv6 client.
+
+2005-04-26  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/kame/dhcp6/addrconf.c (na_ifaddrconf): corrected lifetime
+	arguments to ifaddrconf().
+
+2005-03-30  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/kame/dhcp6/addrconf.c (update_address): make sure that
+	the lifetimes of addresses are updated when the client receives a
+	Reply in response to Renew or Rebind.
+
+2005-03-02  SUZUKI, Shinsuke <suz@kame.net>
+	* kame/kame/dhcp6/dhcp6.c: fixed a DHCPv6-client 
+	  initialization failure when a node has no IPv6 global address.
+
+2005-03-02  SUZUKI, Shinsuke <suz@kame.net>
+	* kame/kame/dhcp6/dhcp6relay.[c8]: supports multiple client-side 
+	  interfaces
+
+2005-01-12  suz@crl.hitachi.co.jp
+	* kame/kame/dhcp6: implemented stateful non-temporary address 
+	  assignment.
+
+2004-12-03  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/kame/dhcp6/common.c: silenced strict-aliasing warnings.
+	Otherwise dhcp6 could not be built with -O2 on FreeBSD 5.3.
+	(KAME-PR 851)
+
+2004-12-02  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/kame/dhcp6/config.c (configure_commit): corrected list
+	management operation.  (mostly harmless, but it was incorrect.)
+	From: Nicolas Dichtel
+
+2004-11-28  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/kame/dhcp6: catch up draft-ietf-dhc-lifetime-02.
+	Specifically,
+	- renamed "lifetime" to "refreshtime".  Note that configuration
+	  compatibility was lost
+	- implemented the default and minimum timer values
+	- clarified that the refresh time option can only be available for
+	  Information-request and reply exchanges
+
+2004-09-07  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/kame/dhcp6: provided a new command "dhcp6ctl", deprecating
+	dhcp6sctl.  This new command controls the client as well as the
+	server.  For the client, the "start" and "stop" (which can specify
+	a particular interface) commands are available.
+
+2004-09-04  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>
+	* kame/kame/dhcp6: added the ability of dhcp6c to work on multiple
+	interfaces simultaneously.
+
+	--- 20040903a tar ball released ---
+
+	--- 20040816a tar ball released ---
+
+2004-08-01  SUZUKI, Shinsuke <suz@crl.hitachi.co.jp>
+	* kame/freebsd5/usr.sbin/dhcp6: builds DHCPv6 in FreeBSD5
+
+	--- 20040731a tar ball released ---

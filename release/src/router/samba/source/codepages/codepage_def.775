@@ -1,0 +1,117 @@
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+# Codepage definition file for Code Page 775 - MS-DOS Baltic Rim
+# defines lower->upper mapping.
+# Written by Ded Marazm <DedMarazm@mail.lv>
+# The columns are :
+# lower    upper   map upper to lower    map lower to upper
+#
+   0x87     0x80   True                  True
+   0x81     0x9A   True                  True
+   0x82     0x90   True                  True
+   0x83     0xA0   True                  True
+   0x84     0x8E   True                  True
+   0x85     0x95   True                  True
+   0x86     0x8F   True                  True
+   0x88     0xAD   True                  True
+   0x89     0xED   True                  True
+   0x8B     0x8A   True                  True
+   0x8C     0xA1   True                  True
+   0xA5     0x8D   True                  True
+   0x91     0x92   True                  True
+   0x93     0xE2   True                  True
+   0x94     0x99   True                  True
+   0x98     0x97   True                  True
+   0x9B     0x9D   True                  True
+   0xA2     0xE0   True                  True
+   0xA4     0xA3   True                  True
+   0xD0     0xB5   True                  True
+   0xD1     0xB6   True                  True
+   0xD2     0xB7   True                  True
+   0xD3     0xB8   True                  True
+   0xD4     0xBD   True                  True
+   0xD5     0xBE   True                  True
+   0xD6     0xC6   True                  True
+   0xD7     0xC7   True                  True
+   0xD8     0xCF   True                  True
+   0xE7     0xE3   True                  True
+   0xE4     0xE5   True                  True
+   0xE9     0xE8   True                  True
+   0xEB     0xEA   True                  True
+   0xEC     0xEE   True                  True
+   0x96     0      False                 False
+   0x9C     0      False                 False
+   0x9E     0      False                 False
+   0x9F     0      False                 False
+   0xA6     0      False                 False
+   0xA7     0      False                 False
+   0xA8     0      False                 False
+   0xA9     0      False                 False
+   0xAA     0      False                 False
+   0xAB     0      False                 False
+   0xAC     0      False                 False
+   0xAE     0      False                 False
+   0xAF     0      False                 False
+   0xB0     0      False                 False
+   0xB1     0      False                 False
+   0xB2     0      False                 False
+   0xB3     0      False                 False
+   0xB4     0      False                 False
+   0xB9     0      False                 False
+   0xBA     0      False                 False
+   0xBB     0      False                 False
+   0xBC     0      False                 False
+   0xBF     0      False                 False
+   0xC0     0      False                 False
+   0xC1     0      False                 False
+   0xC2     0      False                 False
+   0xC3     0      False                 False
+   0xC4     0      False                 False
+   0xC5     0      False                 False
+   0xC8     0      False                 False
+   0xC9     0      False                 False
+   0xCA     0      False                 False
+   0xCB     0      False                 False
+   0xCC     0      False                 False
+   0xCD     0      False                 False
+   0xCE     0      False                 False
+   0xD9     0      False                 False
+   0xDA     0      False                 False
+   0xDB     0      False                 False
+   0xDC     0      False                 False
+   0xDD     0      False                 False
+   0xDE     0      False                 False
+   0xDF     0      False                 False
+   0xE1     0      False                 False
+   0xE6     0      False                 False
+   0xEF     0      False                 False
+   0xF0     0      False                 False
+   0xF1     0      False                 False
+   0xF2     0      False                 False
+   0xF3     0      False                 False
+   0xF4     0      False                 False
+   0xF5     0      False                 False
+   0xF6     0      False                 False
+   0xF7     0      False                 False
+   0xF8     0      False                 False
+   0xF9     0      False                 False
+   0xFA     0      False                 False
+   0xFB     0      False                 False
+   0xFC     0      False                 False
+   0xFD     0      False                 False
+   0xFE     0      False                 False
+   0xFF     0      False                 False

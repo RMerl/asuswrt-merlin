@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<TITLE>[Appendix E] Downloading Samba with CVS</title>
+</head>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" link="#990000" vlink="#0000CC">
+<table BORDER="0" CELLPADDING="0" CELLSPACING="0" width="90%">
+<tr>
+<td width="25%" valign="TOP">
+<img hspace=10 vspace=10 src="gifs/samba.s.gif" 
+alt="Using Samba" align=left valign=top border=0>
+</td>
+<td height="105" valign="TOP">
+<br>
+<H2>Using Samba</H2>
+<font size="-1">
+Robert Eckstein, David Collier-Brown, Peter Kelly
+<br>1st Edition November 1999
+<br>1-56592-449-5, Order Number: 4495
+<br>416 pages, $34.95
+</font>
+<p> <a href="http://www.oreilly.com/catalog/samba/">Buy the hardcopy</a>
+<p><a href="index.html">Table of Contents</a>
+</td>
+</tr>
+</table>
+<hr size=1 noshade>
+<!--sample chapter begins -->
+
+<center>
+<DIV CLASS="htmlnav">
+<TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appd_01.html" TITLE="">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: Appendix D." BORDER="0"></a></td>
+<TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<B>
+<FONT FACE="ARIEL,HELVETICA,HELV,SANSERIF" SIZE="-1">
+Appendix E</font></b></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appf_01.html" TITLE="">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: Appendix F." BORDER="0"></a></td></tr>
+</table>
+&nbsp;<hr noshade size=1></center>
+</div>
+<blockquote>
+<div class="samplechapter">
+<H1 CLASS="appendix"><A CLASS="title" NAME="appe-58937">Appendix E. Downloading Samba with CVS</a></h1>
+<P CLASS="para">This appendix contains information on how to download the latest source version of Samba using the Concurrent Versions System (CVS). CVS is a freely available configuration management tool available from Cyclic Software and is distributed under the GNU General Public License. You can download the latest copy from <A CLASS="systemitem.url" HREF="http://www.cyclic.com/">
+http://www.cyclic.com/</a>.</p><P CLASS="para">CVS works on top of the GNU Revision Control System (RCS). Many Unix systems come preinstalled with RCS. However, if you want to download the latest version of RCS, you can find it at <A CLASS="systemitem.url" HREF="http://ftp.gnu.org/gnu/rcs/">http://ftp.gnu.org/gnu/rcs/</a>.</p><P CLASS="para">
+One of the nicest things about CVS is its ability to handle remote logins. This means that people across the globe on the Internet can download and update various source files for any project that uses a CVS repository. Such is the case with Samba. Once you have RCS and CVS installed on your system, you must first log in to the Samba source server with the following command:</p><PRE CLASS="programlisting">
+cvs -d :pserver:cvs@cvs.samba.org:/cvsroot login</pre><P CLASS="para">
+This tells CVS to connect to the CVS server at <I CLASS="filename">
+cvs.samba.org</i>. Once you are connected, you can download the latest source tree with the following command:</p><PRE CLASS="programlisting">
+cvs -d :pserver:cvs@cvs.samba.org:/cvsroot co samba</pre><P CLASS="para">
+This will download the entire Samba distribution (file by file) into a directory entitled <I CLASS="filename">
+/samba</i>, which it will create on your hard drive. This directory will have the same structure as the Samba source distribution described in <a href="ch02_01.html"><b>Chapter 2, <CITE CLASS="chapter">Installing Samba on a Unix System</cite></b></a>. It includes source and header files, documentation, and sample configuration files to help get you started. After that is completed, you can follow the instructions in <a href="ch02_01.html"><b>Chapter 2</b></a> to configure and compile Samba on your server.</p></div></blockquote>
+<div>
+<center>
+<hr noshade size=1><TABLE WIDTH="515" BORDER="0" CELLSPACING="0" CELLPADDING="0">
+<TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appd_01.html" TITLE="">
+<IMG SRC="gifs/txtpreva.gif" ALT="Previous: Appendix D." BORDER="0"></a></td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="book" HREF="index.html" TITLE="">
+<IMG SRC="gifs/txthome.gif" ALT="" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+<A CLASS="appendix" HREF="appf_01.html" TITLE="">
+<IMG SRC="gifs/txtnexta.gif" ALT="Next: Appendix F." BORDER="0"></a></td></tr><TR>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH="172">
+Appendix D: Summary of Samba Daemons and Commands</td><TD ALIGN="CENTER" VALIGN="TOP" WIDTH="171">
+<A CLASS="index" HREF="inx.html" TITLE="Book Index">
+<IMG SRC="gifs/index.gif" ALT="Book Index" BORDER="0"></a></td><TD ALIGN="RIGHT" VALIGN="TOP" WIDTH="172">
+F. Sample Configuration File</td></tr></table><hr noshade size=1></center>
+</div>
+
+<!-- End of sample chapter -->
+<CENTER>
+<FONT SIZE="1" FACE="Verdana, Arial, Helvetica">
+<A HREF="http://www.oreilly.com/">
+<B>O'Reilly Home</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/sales/bookstores">
+<B>O'Reilly Bookstores</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/order_new/">
+<B>How to Order</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/contact.html">
+<B>O'Reilly Contacts<BR></B></A>
+<A HREF="http://www.oreilly.com/international/">
+<B>International</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/oreilly/about.html">
+<B>About O'Reilly</B></A> <B> | </B>
+<A HREF="http://www.oreilly.com/affiliates.html">
+<B>Affiliated Companies</B></A><p>
+<EM>&copy; 1999, O'Reilly &amp; Associates, Inc.</EM>
+</FONT>
+</CENTER>
+</BODY>
+</html>

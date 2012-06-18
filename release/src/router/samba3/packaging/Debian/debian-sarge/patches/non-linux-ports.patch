@@ -1,0 +1,64 @@
+diff -uNr samba-3.0.11.orig/source/configure.in samba-3.0.11/source/configure.in
+--- samba-3.0.11.orig/source/configure.in	2005-03-23 02:39:11.000000000 -0800
++++ samba-3.0.11/source/configure.in	2005-03-23 02:43:01.000000000 -0800
+@@ -573,6 +573,15 @@
+       fi
+     ;;
+ 
++# Systems with LFS support.
++#
++    gnu* | k*bsd*-gnu)
++	CPPFLAGS="-D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE $CPPFLAGS"
++	AC_DEFINE(_LARGEFILE64_SOURCE, 1, [Whether to enable large file support])
++	AC_DEFINE(_FILE_OFFSET_BITS, 64, [File offset bits])
++	AC_DEFINE(_GNU_SOURCE, 1, [Whether to use GNU libc extensions])
++	;;
++
+ # Tests for linux LFS support. Need kernel 2.4 and glibc2.2 or greater support.
+ #
+     *linux*)
+@@ -1040,7 +1049,7 @@
+ # 
+ #
+ case "$host_os" in
+-    *linux*)
++    linux*-gnu* | gnu* | k*bsd*-gnu)
+        # glibc <= 2.3.2 has a broken getgrouplist
+        AC_TRY_RUN([
+ #include <unistd.h>
+@@ -1172,7 +1181,10 @@
+ 
+   # and these are for particular systems
+   case "$host_os" in
+-		*linux*)   AC_DEFINE(LINUX,1,[Whether the host os is linux])
++		linux*-gnu* | gnu* | k*bsd*-gnu)
++			case "$host_os" in linux*)
++				AC_DEFINE(LINUX,1,[Whether the host os is linux]) ;;
++			esac
+ 			BLDSHARED="true"
+ 			if test "${ac_cv_gnu_ld_no_default_allow_shlib_undefined}" = "yes"; then
+ 				LDSHFLAGS="-shared -Wl,-Bsymbolic -Wl,--allow-shlib-undefined" 
+@@ -4044,7 +4056,7 @@
+ 	AC_MSG_RESULT(yes);
+ 
+ 	case "$host_os" in
+-	*linux*)
++	linux*-gnu* | gnu* | k*bsd*-gnu)
+ 		AC_CACHE_CHECK([for linux sendfile64 support],samba_cv_HAVE_SENDFILE64,[
+ 		AC_TRY_LINK([#include <sys/sendfile.h>],
+ [\
+@@ -4307,12 +4319,12 @@
+ WINBIND_NSS_LDSHFLAGS=$LDSHFLAGS
+ 
+ case "$host_os" in
+-	*linux*)
++	linux*-gnu* | gnu* | k*bsd*-gnu)
+		NSSSONAMEVERSIONSUFFIX=".2"
+ 		WINBIND_NSS_EXTRA_OBJS="nsswitch/winbind_nss_linux.o"
+ 		;;
+-	*freebsd[[5-9]]*)
++	freebsd5*|*freebsd[[6-9]]*)
+ 		# FreeBSD winbind client is implemented as a wrapper around
+ 		# the Linux version.
+		NSSSONAMEVERSIONSUFFIX=".1"
+ 		WINBIND_NSS_EXTRA_OBJS="nsswitch/winbind_nss_freebsd.o \

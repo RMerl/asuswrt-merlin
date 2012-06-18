@@ -1,0 +1,335 @@
+dnl Process this file with autoconf to produce a configure script.
+dnl LIC: GPL
+AC_INIT(pppoe.c)
+
+dnl pppd directory for kernel-mode PPPoE
+PPPD_DIR=ppp-2.4.1.pppoe2
+
+AC_CONFIG_HEADER(config.h)
+
+AC_PREFIX_DEFAULT(/usr)
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_RANLIB
+
+dnl Checks for libraries.
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(fcntl.h sys/dlpi.h sys/ioctl.h sys/time.h syslog.h unistd.h net/if_arp.h netinet/if_ether.h getopt.h sys/uio.h sys/param.h fcntl.h net/bpf.h netpacket/packet.h net/ethernet.h asm/types.h linux/if_packet.h linux/if_ether.h sys/socket.h sys/cdefs.h net/if.h net/if_dl.h net/if_ether.h net/if_types.h netinet/if_ether.h net/if_types.h net/if_dl.h)
+AC_CHECK_HEADERS(linux/if.h, [], [], [#include<sys/socket.h>])
+AC_CHECK_HEADERS(linux/if_pppox.h, [], [],
+[
+#include<sys/socket.h>
+#include<net/ethernet.h>
+#include<linux/if.h>
+#include<linux/in.h>
+])
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_PID_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+dnl Check for sockaddr_ll
+AC_MSG_CHECKING(for struct sockaddr_ll)
+AC_TRY_COMPILE([#include <asm/types.h>
+#include <linux/if_packet.h>
+#include <linux/if_ether.h>
+], [struct sockaddr_ll sa;],
+ac_cv_struct_sockaddr_ll=yes,
+ac_cv_struct_sockaddr_ll=no)
+AC_MSG_RESULT($ac_cv_struct_sockaddr_ll)
+
+if test "$ac_cv_struct_sockaddr_ll" = yes ; then
+AC_DEFINE(HAVE_STRUCT_SOCKADDR_LL)
+fi
+
+dnl Check for N_HDLC line discipline
+AC_MSG_CHECKING(for N_HDLC line discipline)
+AC_TRY_COMPILE([#include <linux/termios.h>],
+	[int x = N_HDLC;],
+	ac_cv_n_hdlc=yes,
+	ac_cv_n_hdlc=no)
+AC_MSG_RESULT($ac_cv_n_hdlc)
+if test "$ac_cv_n_hdlc" = yes ; then
+AC_DEFINE(HAVE_N_HDLC)
+fi
+
+AC_ARG_ENABLE(plugin, [  --enable-plugin=pppd_src_path   build pppd plugin], ac_cv_pluginpath=$enableval, ac_cv_pluginpath=no)
+AC_ARG_ENABLE(debugging, [  --disable-debugging             disable debugging code], ac_cv_debugging=$enableval, ac_cv_debugging=yes)
+dnl If we were given "--enable-plugin" without a path, take a stab at where
+dnl the pppd source code might be.
+
+if test "$ac_cv_pluginpath" = "yes" ; then
+    for i in /usr/include /usr/local/include ; do
+	if test -r $i/pppd/pppd.h; then
+	    ac_cv_pluginpath=$i
+	fi
+    done
+fi
+
+if test "$ac_cv_pluginpath" = "yes" ; then
+    echo "*** Could not fined pppd/pppd.h anywhere... not building plugin"
+    ac_cv_pluginpath=no
+fi
+
+AC_ARG_ENABLE(licenses, [  --enable-licenses=lic_path      build commercial version], ac_cv_licpath=$enableval, ac_cv_licpath=no)
+
+LIC_INCDIR=""
+LIC_LIBDIR=""
+LIC_LIB=""
+LIC_DEFINE=""
+LIC_MAKEFILE_INCLUDE=""
+PPPOE_SERVER_DEPS=""
+if test "$ac_cv_licpath" != "no" ; then
+	LIC_INCDIR="-I$ac_cv_licpath"
+	LIC_LIBDIR="-L$ac_cv_licpath -Llicensed-only"
+	if test -d "../../extra-libs" ; then
+	    LIC_LIB="-L../../extra-libs -ltwofish -llicensed-only -ltcl -ldl"
+	else
+	    LIC_LIB="-ltwofish -llicensed-only -ltcl -ldl"
+        fi
+	PPPOE_SERVER_DEPS="licensed-only/liblicensed-only.a ../../SERVPOET-VERSION"
+	LIC_DEFINE="-DHAVE_LICENSE=1 -DSERVPOET_VERSION='\"\$(SERVPOET_VERSION)\"'"
+	LIC_MAKEFILE_INCLUDE="include ../../SERVPOET-VERSION"
+fi
+
+dnl Determine whether or not to build Linux pppd plugin
+LINUX_KERNELMODE_PLUGIN=""
+PPPD_INCDIR=""
+if test "$ac_cv_header_linux_if_pppox_h" = yes ; then
+	if test "$ac_cv_pluginpath" != no ; then
+		LINUX_KERNELMODE_PLUGIN=rp-pppoe.so
+		AC_DEFINE(HAVE_LINUX_KERNEL_PPPOE)
+		PPPD_INCDIR=$ac_cv_pluginpath
+	fi
+fi
+
+if test "$PPPD_INCDIR" = "" ; then
+   PPPD_INCDIR=/usr/include
+fi
+
+if test "$ac_cv_debugging" = "yes" ; then
+   AC_DEFINE(DEBUGGING_ENABLED)
+fi
+
+AC_SUBST(LINUX_KERNELMODE_PLUGIN)
+AC_SUBST(PPPD_INCDIR)
+AC_SUBST(PPPD_H)
+
+dnl Determine whether or not to build PPPoE relay
+PPPOE_RELAY=""
+if test "`uname -s`" = "Linux" ; then
+	PPPOE_RELAY=pppoe-relay
+fi
+AC_SUBST(PPPOE_RELAY)
+
+dnl Checks for library functions.
+AC_FUNC_MEMCMP
+AC_FUNC_SETVBUF_REVERSED
+AC_TYPE_SIGNAL
+AC_CHECK_FUNCS(select socket strerror strtol)
+AC_PROG_INSTALL
+
+dnl Integer sizes
+AC_CHECK_SIZEOF(unsigned short)
+AC_CHECK_SIZEOF(unsigned int)
+AC_CHECK_SIZEOF(unsigned long)
+
+dnl Check for location of pppd
+AC_PATH_PROG(PPPD, pppd, NOTFOUND, $PATH:/sbin:/usr/sbin:/usr/local/sbin)
+AC_PATH_PROG(ECHO, echo, echo)
+
+dnl Check for setsid (probably Linux-specific)
+AC_PATH_PROG(SETSID, setsid, "", $PATH:/sbin:/usr/sbin:/usr/local/sbin)
+
+dnl Check for an "id" which accepts "-u" option -- hack for Solaris.
+AC_PATH_PROG(ID, id, "", /usr/xpg4/bin:$PATH)
+
+dnl Check for Linux-specific kernel support for PPPoE
+AC_MSG_CHECKING(for Linux 2.4.X kernel-mode PPPoE support)
+AC_CACHE_VAL(ac_cv_linux_kernel_pppoe,[
+if test "`uname -s`" = "Linux" ; then
+if test $cross_compiling = "no"; then
+
+dnl Do a bunch of modprobes.  Can't hurt; might help.
+modprobe ppp_generic > /dev/null 2>&1
+modprobe ppp_async > /dev/null 2>&1
+modprobe n_hdlc > /dev/null 2>&1
+modprobe ppp_synctty > /dev/null 2>&1
+modprobe pppoe > /dev/null 2>&1
+fi
+AC_TRY_RUN([#include <sys/socket.h>
+#include <net/ethernet.h>
+#include <linux/if.h>
+#include <linux/in.h>
+#include <linux/if_pppox.h>
+int main()
+{
+	if (socket(AF_PPPOX, SOCK_DGRAM, PX_PROTO_OE) >= 0) return 0; else return 1;
+}
+],
+ac_cv_linux_kernel_pppoe=yes, ac_cv_linux_kernel_pppoe=no, [ac_cv_linux_kernel_pppoe=no; $ECHO "cross-compiling, default: "])
+else
+	ac_cv_linux_kernel_pppoe=no
+fi
+])
+
+AC_MSG_RESULT($ac_cv_linux_kernel_pppoe)
+
+if test "$ac_cv_linux_kernel_pppoe" != yes ; then
+   if test "$LINUX_KERNELMODE_PLUGIN" = rp-pppoe.so; then
+      echo "*** Your kernel does not appear to have built-in PPPoE support,"
+      echo "*** but I will build the kernel-mode plugin anyway."
+   fi
+fi
+
+dnl GCC warning level
+if test "$GCC" = yes; then
+	CFLAGS="$CFLAGS -Wall -Wstrict-prototypes"
+fi
+
+dnl If we couldn't find pppd, die
+if test "$PPPD" = "NOTFOUND"; then
+        AC_MSG_WARN([*** Oops!  I couldn't find pppd, the PPP daemon anywhere.])
+	AC_MSG_WARN([*** You must install pppd, version 2.3.10 or later.])
+	AC_MSG_WARN([*** I will keep going, but it may not work.])
+	PPPD=pppd
+fi
+
+dnl Figure out pppd version.  2.3.7 to 2.3.9 -- issue warning.  Less than
+dnl 2.3.7 -- stop
+
+PPPD_VERSION=`$PPPD --version 2>&1 | awk ' /version/ {print $NF}'`
+
+case "$PPPD_VERSION" in
+1.*|2.0.*|2.1.*|2.2.*|2.3.0|2.3.1|2.3.2|2.3.3|2.3.4|2.3.5|2.3.6)
+	AC_MSG_WARN([*** Oops! Your version of pppd is $PPPD_VERSION, which is too old.])
+	AC_MSG_WARN([*** You need at least 2.3.7 (2.3.10 or newer recommended.])
+	AC_MSG_WARN([*** I will keep going, but it may not work.])
+	;;
+
+2.3.7|2.3.8|2.3.9)
+	AC_MSG_WARN([*** Warning.  Your version of pppd is $PPPD_VERSION.  You will])
+	AC_MSG_WARN([*** not be able to use connect-on-demand.  Upgrade to pppd])
+	AC_MSG_WARN([*** 2.3.10 or newer if you need connect-on-demand.])
+	;;
+
+2*|3*|4*|5*|6*|7*|8*|9*)
+	;;
+
+*)
+	AC_MSG_WARN([*** Oops.  I cannot figure out what version of pppd you have.])
+	AC_MSG_WARN([*** All I got back was '$PPPD_VERSION'])
+	AC_MSG_WARN([*** I will keep going, but it may not work.])
+	;;
+esac
+
+dnl Figure out packing order of structures
+AC_MSG_CHECKING([packing order of bit fields])
+AC_CACHE_VAL(rpppoe_cv_pack_bitfields,[
+AC_TRY_RUN([
+union foo {
+    struct bar {
+	unsigned int ver:4;
+	unsigned int type:4;
+    } bb;
+    unsigned char baz;
+};
+
+int
+main(void)
+{
+    union foo x;
+    x.bb.ver = 1;
+    x.bb.type = 2;
+    if (x.baz == 0x21) {
+	return 1;
+    } else if (x.baz == 0x12) {
+	return 0;
+    } else {
+	return 2;
+    }
+}], rpppoe_cv_pack_bitfields=normal, rpppoe_cv_pack_bitfields=rev,
+[$ECHO "no defaults for cross-compiling"; exit 1])
+])
+
+if test "$rpppoe_cv_pack_bitfields" = "rev" ; then
+	AC_MSG_RESULT(reversed)
+	AC_DEFINE(PACK_BITFIELDS_REVERSED)
+else
+	AC_MSG_RESULT(normal)
+fi
+
+# Sigh... got to fix this up for tcl
+test "x$prefix" = xNONE && prefix=$ac_default_prefix
+# Let make expand exec_prefix.
+test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
+
+# Fully resolve WRAPPER for Tcl script.
+WRAPPER=${sbindir}/pppoe-wrapper
+eval "WRAPPER=${WRAPPER}"
+eval "WRAPPER=${WRAPPER}"
+AC_SUBST(WRAPPER)
+
+# Determine what targets to build
+TARGETS="pppoe pppoe-server"
+
+# pppoe-sniff is built only on Linux and Solaris
+if test "$ac_cv_header_linux_if_packet_h" = "yes" -o "$ac_cv_header_sys_dlpi_h" = "yes" ; then
+	TARGETS="$TARGETS pppoe-sniff"
+fi
+
+# pppoe-relay is built only on Linux
+if test "$ac_cv_header_linux_if_packet_h" = "yes" ; then
+	TARGETS="$TARGETS pppoe-relay"
+fi
+
+# plugin is built only if we have kernel support
+if test -n "$LINUX_KERNELMODE_PLUGIN" ; then
+	TARGETS="$TARGETS $LINUX_KERNELMODE_PLUGIN"
+	mkdir plugin > /dev/null 2>&1
+fi
+
+EXTRACONFIGS=""
+# Licensed stuff only for commercial distro (for now)
+if test -n "$LIC_DEFINE" ; then
+	TARGETS="licensed-only $TARGETS"
+	EXTRACONFIGS="$EXTRACONFIGS licensed-only/Makefile"
+fi
+
+RDYNAMIC=""
+# L2TP is only in commercial distro (for now)
+if test -n "$LIC_DEFINE" ; then
+	TARGETS="l2tp $TARGETS"
+	EXTRACONFIGS="$EXTRACONFIGS l2tp/Makefile l2tp/handlers/Makefile"
+	LIC_DEFINE="$LIC_DEFINE -DHAVE_L2TP=1"
+	LIC_LIB="$LIC_LIB -Ll2tp -ll2tp"
+	PPPOE_SERVER_DEPS="$PPPOE_SERVER_DEPS l2tp/libl2tp.a"
+	RDYNAMIC="-rdynamic"
+fi
+
+LIBEVENT=../libevent
+AC_SUBST(TARGETS)
+AC_SUBST(LIC_INCDIR)
+AC_SUBST(LIC_LIBDIR)
+AC_SUBST(LIC_LIB)
+AC_SUBST(LIC_MAKEFILE_INCLUDE)
+AC_SUBST(LIC_DEFINE)
+AC_SUBST(PPPOE_SERVER_DEPS)
+AC_SUBST(RDYNAMIC)
+AC_SUBST(LIBEVENT)
+AC_SUBST(ECHO)
+
+datadir_evaluated=`eval echo $datadir`
+AC_SUBST(datadir_evaluated)
+
+AC_OUTPUT(Makefile libevent/Makefile ../scripts/pppoe-connect ../scripts/pppoe-start ../scripts/pppoe-stop ../scripts/pppoe-init ../scripts/pppoe-init-suse ../scripts/pppoe-init-turbolinux ../scripts/pppoe-setup ../gui/Makefile ../gui/tkpppoe $EXTRACONFIGS)
+
+AC_MSG_RESULT([On this platform, the following targets will be built:])
+AC_MSG_RESULT([$TARGETS])
+AC_MSG_RESULT([Type 'make' to compile the software.])

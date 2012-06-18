@@ -1,0 +1,125 @@
+
+These were the tests done to validate the Diffserv scripts.
+This document will be updated continously. If you do more
+thorough validation testing please post the details to the
+diffserv mailing list. 
+Nevertheless, these tests should serve for basic validation.
+
+AFCBQ, EFCBQ, EFPRIO
+----------------------
+
+generate all possible DSCPs and observe that they 
+get sent to the proper classes. In the case of AF also
+to the correct Virtual Queues.
+
+Edge1
+-----
+generate TOS values 0x0,0x10,0xbb each with IP addresses
+10.2.0.24 (mark 1), 10.2.0.3 (mark2) and 10.2.0.30 (mark 3)
+and observe that they get marked as expected.
+
+Edge2
+-----
+
+-Repeat the tests in Edge1
+-ftp with data direction from 10.2.0.2
+	*observe that the metering/policing works correctly (and the marking
+	as well). In this case the mark used will be 3
+
+Edge31-cb-chains
+----------------
+
+-ftp with data direction from 10.2.0.2
+
+	*observe that the metering/policing works correctly (and the marking
+	as well). In this case the mark used will be 1. 
+
+	Metering: The data throughput should not exceed 2*CIR1 + 2*CIR2
+	which is roughly: 5mbps
+
+	Marking: the should be a variation of marked packets:
+	AF41(TOS=0x88) AF42(0x90) AF43(0x98) and BE (0x0)
+
+More tests required to see the interaction of several sources (other
+than subnet 10.2.0.0/24).
+
+Edge31-ca-u32
+--------------
+
+Generate data using modified tcpblast from 10.2.0.2 (behind eth2) to the 
+discard port of 10.1.0.2 (behind eth1)
+
+1) generate with src tos = 0x88
+	Metering: Allocated throughput should not exceed 2*CIR1 + 2*CIR2
+	approximately 5mbps
+	Marking: Should vary between 0x88,0x90,0x98 and 0x0
+
+2) generate with src tos = 0x90
+	Metering: Allocated throughput should not exceed CIR1 + 2*CIR2
+	approximately 3.5mbps
+	Marking: Should vary between 0x90,0x98 and 0x0
+
+3) generate with src tos = 0x98
+	Metering: Allocated throughput should not exceed CIR1 + CIR2
+	approximately 2.5mbps
+	Marking: Should vary between 0x98 and 0x0
+
+4) generate with src tos any other than the above
+	Metering: Allocated throughput should not exceed CIR1 
+	approximately 1.5mbps
+	Marking: Should be consistent at 0x0
+
+TODO: Testing on how each color shares when all 4 types of packets
+are going through the edge device
+
+Edge32-cb-u32, Edge32-cb-chains
+-------------------------------
+
+-ftp with data direction from 10.2.0.2
+
+	*observe that the metering/policing works correctly (and the marking
+	as well). 
+
+	Metering: 
+        The data throughput should not exceed 2*CIR1 + 2*CIR2
+	+ 2*PIR2 + PIR1 for u32 which is roughly: 6mbps
+        The data throughput should not exceed 2*CIR1 + 5*CIR2
+	for chains which is roughly: 6mbps
+
+	Marking: the should be a variation of marked packets:
+	AF41(TOS=0x88) AF42(0x90) AF43(0x98) and BE (0x0)
+
+TODO:
+-More tests required to see the interaction of several sources (other
+than subnet 10.2.0.0/24).
+-More tests needed to capture stats on how many times the CIR was exceeded
+but the data was not remarked etc.
+
+Edge32-ca-u32
+--------------
+
+Generate data using modified tcpblast from 10.2.0.2 (behind eth2) to the 
+discard port of 10.1.0.2 (behind eth1)
+
+1) generate with src tos = 0x88
+	Metering: Allocated throughput should not exceed 2*CIR1 + 2*CIR2
+	+PIR1 -- approximately 4mbps
+	Marking: Should vary between 0x88,0x90,0x98 and 0x0
+
+2) generate with src tos = 0x90
+	Metering: Allocated throughput should not exceed CIR1 + 2*CIR2
+	+ 2* PIR2 approximately 3mbps
+	Marking: Should vary between 0x90,0x98 and 0x0
+
+3) generate with src tos = 0x98
+	Metering: Allocated throughput should not exceed PIR1+ CIR1 + CIR2
+	approximately 2.5mbps
+	Marking: Should vary between 0x98 and 0x0
+
+4) generate with src tos any other than the above
+	Metering: Allocated throughput should not exceed CIR1 
+	approximately 1mbps
+	Marking: Should be consistent at 0x0
+
+TODO: Testing on how each color shares when all 4 types of packets
+are going through the edge device

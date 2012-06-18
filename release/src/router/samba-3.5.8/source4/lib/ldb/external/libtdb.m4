@@ -1,0 +1,7 @@
+AC_SUBST(TDB_OBJ)
+AC_SUBST(TDB_CFLAGS)
+AC_SUBST(TDB_LIBS)
+
+AC_CHECK_HEADER(tdb.h,
+   [AC_CHECK_LIB(tdb, tdb_open, [TDB_LIBS="-ltdb"]) ],
+   [PKG_CHECK_MODULES(TDB, tdb >= 1.1.6)])

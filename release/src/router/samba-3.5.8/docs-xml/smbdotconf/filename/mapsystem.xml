@@ -1,0 +1,17 @@
+<samba:parameter name="map system"
+                 context="S"
+				 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>
+	This controls whether DOS style system files should be mapped to the UNIX group execute bit.
+	</para>
+
+	<para>
+	Note that this requires the <smbconfoption name="create mask"/>	to be set such that the group 
+	execute bit is not masked out (i.e. it must include 010). See the parameter 
+	<smbconfoption name="create mask"/> for details.
+	</para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

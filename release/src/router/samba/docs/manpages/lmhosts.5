@@ -1,0 +1,92 @@
+.TH LMHOSTS 5 "23 Jun 2001" "lmhosts 2.0.10"
+.PP 
+.SH "NAME" 
+lmhosts \- The Samba NetBIOS hosts file
+.PP 
+.SH "SYNOPSIS" 
+.PP 
+lmhosts is the \fBSamba\fP NetBIOS name to IP address mapping file\&.
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+This file is part of the \fBSamba\fP suite\&.
+.PP 
+\fBlmhosts\fP is the \fBSamba\fP NetBIOS name to IP address mapping file\&.  It
+is very similar to the \fB/etc/hosts\fP file format, except that the
+hostname component must correspond to the NetBIOS naming format\&.
+.PP 
+.SH "FILE FORMAT" 
+.PP 
+It is an ASCII file containing one line for NetBIOS name\&. The two
+fields on each line are separated from each other by white space\&. Any
+entry beginning with # is ignored\&. Each line in the lmhosts file
+contains the following information :
+.PP 
+.IP 
+.IP o 
+\fBIP Address\fP - in dotted decimal format\&.
+.IP 
+.IP o 
+\fBNetBIOS Name\fP - This name format is a maximum fifteen
+character host name, with an optional trailing \f(CW\'#\'\fP character
+followed by the NetBIOS name type as two hexadecimal digits\&.
+.IP 
+If the trailing \f(CW\'#\'\fP is omitted then the given IP address will be
+returned for all names that match the given name, whatever the NetBIOS
+name type in the lookup\&.
+.IP 
+.PP 
+An example follows :
+.PP 
+# 
+.br 
+# Sample Samba lmhosts file\&. 
+.br 
+# 
+.br 
+192\&.9\&.200\&.1	TESTPC 
+.br 
+192\&.9\&.200\&.20	NTSERVER#20 
+.br 
+192\&.9\&.200\&.21	SAMBASERVER 
+.br 
+.PP 
+Contains three IP to NetBIOS name mappings\&. The first and third will
+be returned for any queries for the names \f(CW"TESTPC"\fP and
+\f(CW"SAMBASERVER"\fP respectively, whatever the type component of the
+NetBIOS name requested\&.
+.PP 
+The second mapping will be returned only when the \f(CW"0x20"\fP name type
+for a name \f(CW"NTSERVER"\fP is queried\&. Any other name type will not be
+resolved\&.
+.PP 
+The default location of the \fBlmhosts\fP file is in the same directory
+as the \fBsmb\&.conf\fP file\&.
+.PP 
+.SH "VERSION" 
+.PP 
+This man page is correct for version 2\&.0 of the Samba suite\&.
+.PP 
+.SH "SEE ALSO" 
+.PP 
+\fBsmb\&.conf (5)\fP,
+\fBsmbclient (1)\fP,
+\fBsmbpasswd (8)\fP, \fBsamba (7)\fP\&.
+.PP 
+.SH "AUTHOR" 
+.PP 
+The original Samba software and related utilities were created by
+Andrew Tridgell samba@samba\&.org\&. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed\&.
+.PP 
+The original Samba man pages were written by Karl Auer\&. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+\fBftp://ftp\&.icce\&.rug\&.nl/pub/unix/\fP)
+and updated for the Samba2\&.0 release by Jeremy Allison\&.
+samba@samba\&.org\&.
+.PP 
+See \fBsamba (7)\fP to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc\&.

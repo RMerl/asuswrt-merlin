@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: dcerpc
+Description: DCE/RPC client library
+Requires: ndr
+Version: 0.0.1
+Libs: -L${libdir} -ldcerpc 
+Cflags: -I${includedir} -DHAVE_IMMEDIATE_STRUCTURES=1

@@ -1,0 +1,100 @@
+.TH MAKE_UNICODEMAP 1 "23 Jun 2001" "make_unicodemap 2.0.10"
+.PP 
+.SH "NAME" 
+make_unicodemap \- Construct a unicode map file for Samba
+.PP 
+.SH "SYNOPSIS" 
+.PP 
+\fBmake_unicodemap\fP codepage inputfile outputfile
+.PP 
+.SH "DESCRIPTION" 
+.PP 
+This program is part of the \fBSamba\fP suite\&.
+.PP 
+\fBmake_unicodemap\fP compiles text unicode map files into binary unicode
+map files for use with the internationalization features of Samba 2\&.0
+.PP 
+.SH "OPTIONS" 
+.PP 
+.IP 
+.IP "codepage" 
+This is the codepage or UNIX character set we are processing (a number, e\&.g\&. 850)\&.
+.IP 
+.IP "inputfile" 
+This is the input file to process\&. This is a text unicode map file
+such as the ones found in the Samba \fIsource/codepages\fP directory\&.
+.IP 
+.IP "outputfile" 
+This is the binary output file to produce\&.
+.IP 
+.PP 
+.SH "Samba Unicode Map Files" 
+.PP 
+A text Samba unicode map file is a description that tells
+Samba how to map characters from a specified DOS code page or UNIX character
+set to 16 bit unicode\&.
+.PP 
+A binary Samba unicode map file is a binary representation of
+the same information, including a value that specifies what codepage
+or UNIX character set this file is describing\&.
+.PP 
+.SH "FILES" 
+.PP 
+\fBCP<codepage>\&.TXT\fP
+.PP 
+These are the input (text) unicode map files provided in the Samba
+\fIsource/codepages\fP directory\&.
+.PP 
+A text unicode map file consists of multiple lines
+containing two fields\&. These fields are : 
+.PP 
+.IP 
+.IP o 
+\fBcharacter\fP: which is the (hex) character mapped on this
+line\&.
+.IP 
+.IP o 
+\fBunicode\fP: which is the (hex) 16 bit unicode character that the
+character will map to\&.
+.IP 
+.PP 
+\fBunicode_map\&.<codepage>\fP These are the output (binary) unicode map files
+produced and placed in the Samba destination \fIlib/codepage\fP
+directory\&.
+.PP 
+.SH "INSTALLATION" 
+.PP 
+The location of the server and its support files is a matter for
+individual system administrators\&. The following are thus suggestions
+only\&.
+.PP 
+It is recommended that the \fBmake_unicodemap\fP program be installed
+under the \fI/usr/local/samba\fP hierarchy, in a directory readable by
+all, writeable only by root\&. The program itself should be executable
+by all\&.  The program should NOT be setuid or setgid!
+.PP 
+.SH "VERSION" 
+.PP 
+This man page is correct for version 2\&.0 of the Samba suite\&.
+.PP 
+.SH "SEE ALSO" 
+.PP 
+\fBsmb\&.conf(5)\fP, \fBsmbd (8)\fP
+.PP 
+.SH "AUTHOR" 
+.PP 
+The original Samba software and related utilities were created by
+Andrew Tridgell samba@samba\&.org\&. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed\&.
+.PP 
+The original Samba man pages were written by Karl Auer\&. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+\fBftp://ftp\&.icce\&.rug\&.nl/pub/unix/\fP)
+and updated for the Samba2\&.0 release by Jeremy Allison\&.
+samba@samba\&.org\&.
+.PP 
+See \fBsamba (7)\fP to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc\&.

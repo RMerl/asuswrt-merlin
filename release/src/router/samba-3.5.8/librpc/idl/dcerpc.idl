@@ -1,0 +1,307 @@
+#include "idl_types.h"
+
+/*
+  the base dcerpc packet definitions - not traditionally coded as IDL,
+  but given that pidl can handle it nicely it simplifies things a lot
+  to do it this way
+
+  see http://www.opengroup.org/onlinepubs/9629399/chap12.htm for packet
+  layouts
+*/
+import "misc.idl";
+
+interface dcerpc
+{
+	typedef struct {
+		uint16 context_id;
+		uint8 num_transfer_syntaxes;
+		ndr_syntax_id abstract_syntax;
+		ndr_syntax_id transfer_syntaxes[num_transfer_syntaxes];
+	} dcerpc_ctx_list;
+
+	typedef struct {
+		uint16 max_xmit_frag;
+		uint16 max_recv_frag;
+		uint32 assoc_group_id;
+		uint8  num_contexts;
+		dcerpc_ctx_list ctx_list[num_contexts];
+		[flag(NDR_ALIGN4)]    DATA_BLOB _pad;
+		[flag(NDR_REMAINING)] DATA_BLOB auth_info;
+	} dcerpc_bind;
+
+	const uint8 DCERPC_REQUEST_LENGTH = 24;
+
+	typedef struct {
+	} dcerpc_empty;
+
+	typedef [nodiscriminant] union {
+		[default] dcerpc_empty empty;
+		[case(LIBNDR_FLAG_OBJECT_PRESENT)] GUID object;
+	} dcerpc_object;
+
+	typedef struct {
+		uint32 alloc_hint;
+		uint16 context_id;
+		uint16 opnum;
+		[switch_is(ndr->flags & LIBNDR_FLAG_OBJECT_PRESENT)] dcerpc_object object;
+		[flag(NDR_ALIGN8)]    DATA_BLOB _pad;
+		[flag(NDR_REMAINING)] DATA_BLOB stub_and_verifier;
+	} dcerpc_request;
+
+	const int DCERPC_BIND_REASON_ASYNTAX                 = 1;
+	const int DCERPC_BIND_PROVIDER_REJECT                = 2;
+	const int DECRPC_BIND_PROTOCOL_VERSION_NOT_SUPPORTED = 4;
+	const int DCERPC_BIND_REASON_INVALID_AUTH_TYPE       = 8;
+
+	typedef struct {
+		uint16 result;
+		uint16 reason;
+		ndr_syntax_id syntax;
+	} dcerpc_ack_ctx;
+
+	typedef struct {
+		uint16 max_xmit_frag;
+		uint16 max_recv_frag;
+		uint32 assoc_group_id;
+		[value(strlen(secondary_address)+1)] uint16 secondary_address_size;
+		[charset(DOS)] uint8 secondary_address[secondary_address_size];
+		[flag(NDR_ALIGN4)]    DATA_BLOB _pad1;
+		uint8 num_results;
+		dcerpc_ack_ctx ctx_list[num_results];
+		[flag(NDR_REMAINING)] DATA_BLOB auth_info;
+	} dcerpc_bind_ack;
+
+	typedef struct {
+		uint32 num_versions;
+		uint32 versions[num_versions];
+	} dcerpc_bind_nak_versions;
+
+	typedef [nodiscriminant] union {
+		[case(DECRPC_BIND_PROTOCOL_VERSION_NOT_SUPPORTED)] dcerpc_bind_nak_versions v;
+		[default] ;
+	} dcerpc_bind_nak_versions_ctr;
+
+	typedef struct {
+		uint16 reject_reason;
+		[switch_is(reject_reason)] dcerpc_bind_nak_versions_ctr versions;
+	} dcerpc_bind_nak;
+
+	const uint8 DCERPC_RESPONSE_LENGTH = 24;
+
+	typedef struct {
+		uint32 alloc_hint;
+		uint16 context_id;
+		uint8 cancel_count;
+		[flag(NDR_ALIGN8)]    DATA_BLOB _pad;
+		[flag(NDR_REMAINING)] DATA_BLOB stub_and_verifier;
+	} dcerpc_response;
+
+
+	const int DCERPC_FAULT_OP_RNG_ERROR       = 0x1c010002;
+	const int DCERPC_FAULT_UNK_IF             = 0x1c010003;
+	const int DCERPC_FAULT_NDR                = 0x000006f7;
+	const int DCERPC_FAULT_INVALID_TAG        = 0x1c000006;
+	const int DCERPC_FAULT_CONTEXT_MISMATCH   = 0x1c00001a;
+	const int DCERPC_FAULT_OTHER              = 0x00000001;
+	const int DCERPC_FAULT_ACCESS_DENIED      = 0x00000005;
+	const int DCERPC_FAULT_CANT_PERFORM       = 0x000006d8;
+	const int DCERPC_FAULT_SEC_PKG_ERROR      = 0x00000721;
+
+	/* we return this fault when we haven't yet run the test
+	   to see what fault w2k3 returns in this case */
+	const int DCERPC_FAULT_TODO         = 0x00000042;
+
+	typedef struct {
+		uint32 alloc_hint;
+		uint16 context_id;
+		uint8 cancel_count;
+		uint32 status;
+		[flag(NDR_REMAINING)] DATA_BLOB _pad;
+	} dcerpc_fault;
+
+	/* the auth types we know about */
+	typedef [enum8bit] enum {
+		DCERPC_AUTH_TYPE_NONE     = 0,
+		/* this seems to be not krb5! */
+		DCERPC_AUTH_TYPE_KRB5_1   = 1,
+		DCERPC_AUTH_TYPE_SPNEGO   = 9,
+		DCERPC_AUTH_TYPE_NTLMSSP  = 10,
+		DCERPC_AUTH_TYPE_KRB5     = 16,
+		DCERPC_AUTH_TYPE_DPA      = 17,
+		DCERPC_AUTH_TYPE_MSN      = 18,
+		DCERPC_AUTH_TYPE_DIGEST   = 21,
+		DCERPC_AUTH_TYPE_SCHANNEL = 68,
+		DCERPC_AUTH_TYPE_MSMQ     = 100
+	} dcerpc_AuthType;
+
+	typedef [enum8bit] enum {
+		DCERPC_AUTH_LEVEL_NONE      = 1,
+		DCERPC_AUTH_LEVEL_CONNECT   = 2,
+		DCERPC_AUTH_LEVEL_CALL      = 3,
+		DCERPC_AUTH_LEVEL_PACKET    = 4,
+		DCERPC_AUTH_LEVEL_INTEGRITY = 5,
+		DCERPC_AUTH_LEVEL_PRIVACY   = 6
+	} dcerpc_AuthLevel;
+
+	const uint8 DCERPC_AUTH_LEVEL_DEFAULT	= DCERPC_AUTH_LEVEL_CONNECT;
+
+	typedef [public] struct {
+		dcerpc_AuthType auth_type;
+		dcerpc_AuthLevel auth_level;
+		uint8  auth_pad_length;
+		uint8  auth_reserved;
+		uint32 auth_context_id;
+		[flag(NDR_REMAINING)] DATA_BLOB credentials;
+	} dcerpc_auth;
+
+	const uint8 DCERPC_AUTH_TRAILER_LENGTH = 8;
+
+	typedef [public] struct {
+		uint32 _pad;
+		[flag(NDR_REMAINING)] DATA_BLOB auth_info;
+	} dcerpc_auth3;
+
+	typedef [public] struct {
+		uint32 _pad;
+		[flag(NDR_REMAINING)] DATA_BLOB auth_info;
+	} dcerpc_orphaned;
+
+	typedef [public] struct {
+		uint32 _pad;
+		[flag(NDR_REMAINING)] DATA_BLOB auth_info;
+	} dcerpc_co_cancel;
+
+	typedef [public] struct {
+		uint32 version;
+		uint32 id;
+	} dcerpc_cl_cancel;
+
+	typedef [public] struct {
+		uint32 version;
+		uint32 id;
+		boolean32 server_is_accepting;
+	} dcerpc_cancel_ack;
+
+	typedef [public] struct {
+		uint32 version;
+		uint8 _pad1;
+		uint16 window_size;
+		uint32 max_tdsu;
+		uint32 max_frag_size;
+		uint16 serial_no;
+		uint16 selack_size;
+		uint32 selack[selack_size];
+	} dcerpc_fack;
+
+	typedef [public] struct {
+	} dcerpc_ack;
+
+	typedef [public] struct {
+	} dcerpc_ping;
+
+	typedef [public] struct {
+	} dcerpc_shutdown;
+
+	typedef [public] struct {
+	} dcerpc_working;
+
+	typedef [enum8bit] enum {
+		DCERPC_PKT_REQUEST     =  0,	/* Ordinary request. */
+		DCERPC_PKT_PING        =  1,	/* Connectionless is server alive ? */
+		DCERPC_PKT_RESPONSE    =  2,	/* Ordinary reply. */
+		DCERPC_PKT_FAULT       =  3,	/* Fault in processing of call. */
+		DCERPC_PKT_WORKING     =  4,	/* Connectionless reply to a ping when server busy. */
+		DCERPC_PKT_NOCALL      =  5,	/* Connectionless reply to a ping when server has lost part of clients call. */
+		DCERPC_PKT_REJECT      =  6,	/* Refuse a request with a code. */
+		DCERPC_PKT_ACK         =  7,	/* Connectionless client to server code. */
+		DCERPC_PKT_CL_CANCEL   =  8,	/* Connectionless cancel. */
+		DCERPC_PKT_FACK        =  9,	/* Connectionless fragment ack. Both client and server send. */
+		DCERPC_PKT_CANCEL_ACK  = 10,	/* Server ACK to client cancel request. */
+		DCERPC_PKT_BIND        = 11,	/* Bind to interface. */
+		DCERPC_PKT_BIND_ACK    = 12,	/* Server ack of bind. */
+		DCERPC_PKT_BIND_NAK    = 13,	/* Server nack of bind. */
+		DCERPC_PKT_ALTER       = 14,	/* Alter auth. */
+		DCERPC_PKT_ALTER_RESP  = 15,	/* Reply to alter auth. */
+		DCERPC_PKT_AUTH3       = 16, 	/* not the real name!  this is undocumented! */
+		DCERPC_PKT_SHUTDOWN    = 17,	/* Server to client request to shutdown. */
+		DCERPC_PKT_CO_CANCEL   = 18,	/* Connection-oriented cancel request. */
+		DCERPC_PKT_ORPHANED    = 19	/* Client telling server it's aborting a partially sent request or telling server to stop sending replies. */
+	} dcerpc_pkt_type;
+
+	typedef [nodiscriminant] union {
+		[case(DCERPC_PKT_REQUEST)]    dcerpc_request  request;
+		[case(DCERPC_PKT_PING)] 	  dcerpc_ping ping;
+		[case(DCERPC_PKT_RESPONSE)]   dcerpc_response response;
+		[case(DCERPC_PKT_FAULT)]	  dcerpc_fault fault;
+		[case(DCERPC_PKT_WORKING)]	  dcerpc_working working;
+		[case(DCERPC_PKT_NOCALL)]     dcerpc_fack nocall;
+		[case(DCERPC_PKT_REJECT)]     dcerpc_fault reject;
+		[case(DCERPC_PKT_ACK)]        dcerpc_ack ack;
+		[case(DCERPC_PKT_CL_CANCEL)]  dcerpc_cl_cancel cl_cancel;
+		[case(DCERPC_PKT_FACK)]       dcerpc_fack fack;
+		[case(DCERPC_PKT_CANCEL_ACK)] dcerpc_cancel_ack cancel_ack;
+		[case(DCERPC_PKT_BIND)]       dcerpc_bind     bind;
+		[case(DCERPC_PKT_BIND_ACK)]   dcerpc_bind_ack bind_ack;
+		[case(DCERPC_PKT_BIND_NAK)]   dcerpc_bind_nak bind_nak;
+		[case(DCERPC_PKT_ALTER)]      dcerpc_bind     alter;
+		[case(DCERPC_PKT_ALTER_RESP)] dcerpc_bind_ack alter_resp;
+		[case(DCERPC_PKT_SHUTDOWN)]   dcerpc_shutdown shutdown;
+		[case(DCERPC_PKT_CO_CANCEL)]  dcerpc_co_cancel co_cancel;
+		[case(DCERPC_PKT_ORPHANED)]   dcerpc_orphaned orphaned;
+		[case(DCERPC_PKT_AUTH3)]      dcerpc_auth3    auth3;
+	} dcerpc_payload;
+
+	/* pfc_flags values */
+	const uint8 DCERPC_PFC_FLAG_FIRST		= 0x01; /* First fragment */
+	const uint8 DCERPC_PFC_FLAG_LAST		= 0x02; /* Last fragment */
+	const uint8 DCERPC_PFC_FLAG_PENDING_CANCEL	= 0x04; /* Cancel was pending at sender */
+	const uint8 DCERPC_PFC_FLAG_SUPPORT_HEADER_SIGN	= DCERPC_PFC_FLAG_PENDING_CANCEL; /* depends on the pdu type */
+	const uint8 DCERPC_PFC_FLAG_CONC_MPX		= 0x10; /* supports concurrent multiplexing of a single connection. */
+	const uint8 DCERPC_PFC_FLAG_DID_NOT_EXECUTE	= 0x20; /* on a fault it means the server hasn't done anything */
+	const uint8 DCERPC_PFC_FLAG_MAYBE		= 0x40; /* `maybe' call semantics requested */
+	const uint8 DCERPC_PFC_FLAG_OBJECT_UUID		= 0x80; /* on valid guid is in the optional object field */
+
+	/* these offsets are needed by the signing code */
+	const uint8 DCERPC_PFC_OFFSET      =  3;
+	const uint8 DCERPC_DREP_OFFSET     =  4;
+	const uint8 DCERPC_FRAG_LEN_OFFSET =  8;
+	const uint8 DCERPC_AUTH_LEN_OFFSET = 10;
+
+	/* little-endian flag */
+	const uint8 DCERPC_DREP_LE  = 0x10;
+
+	typedef [public] struct {
+		uint8 rpc_vers;	        /* RPC version */
+		uint8 rpc_vers_minor;   /* Minor version */
+		dcerpc_pkt_type ptype;  /* Packet type */
+		uint8 pfc_flags;        /* Fragmentation flags */
+		uint8 drep[4];	        /* NDR data representation */
+		uint16 frag_length;     /* Total length of fragment */
+		uint16 auth_length;     /* authenticator length */
+		uint32 call_id;	        /* Call identifier */
+		[switch_is(ptype)] dcerpc_payload u;
+	} ncacn_packet;
+
+	typedef [public] struct {
+		uint8 rpc_vers;		/* RPC version (4) */
+		uint8 ptype;
+		uint8 pfc_flags;
+		uint8 ncadg_flags;
+		uint8 drep[3];
+		uint8 serial_high;
+		GUID object;
+		GUID iface;
+		GUID activity;
+		uint32 server_boot; /* Server boot time */
+		uint32 iface_version;
+		uint32 seq_num;
+		uint16 opnum;
+		uint16 ihint;
+		uint16 ahint;
+		uint16 len;
+		uint16 fragnum;
+		uint8 auth_proto;
+		uint8 serial_low;
+		[switch_is(ptype)] dcerpc_payload u;
+	} ncadg_packet;
+}

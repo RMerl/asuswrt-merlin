@@ -1,0 +1,171 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Enterprise Strength Printcap Example</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Using the Wildcard Printcap Entry"
+    href="x5758.htm">
+    <link rel="NEXT" title="Remote Printer Using RFC1179" href=
+    "x5787.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x5758.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x5787.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN5770">12.6. Enterprise Strength
+      Printcap Example</a></h1>
+
+      <p>Most system administrators want to have a single printcap
+      file that can be distributed or referenced from all the hosts
+      under their administrative control. The following show how
+      several large institutions have organized their printcap
+      information. It uses the following principles:</p>
+
+      <ul>
+        <li>
+          <p>Many times it is necessary to partition groups of
+          users into areas that have particular printing setups,
+          but use the same queue name for different printers. This
+          is done by using the <var class="LITERAL">:oh</var> (on
+          this host) option to select the printcap to be used.</p>
+        </li>
+
+        <li>
+          <p>Provide as little information as possible to the
+          systems that do not have print spoolers. This is because
+          they will simply forward their requests to a print
+          spooler and it is not necessary to have the information
+          for a printer. As we will see in an example below, this
+          can be very simple to do.</p>
+        </li>
+
+        <li>
+          <p>Provide a default printer so that when the user does
+          not have a printer explicitly selected then he will get
+          well behaved results.</p>
+        </li>
+
+        <li>
+          <p>For each family of printers, develop a standard method
+          of interfacing to them. This means that the filter,
+          options, and other things should be identical.</p>
+        </li>
+
+        <li>
+          <p>For each server, provide a uniform set of standards
+          for the spool queues for a printer. If the spool queue is
+          simply used to store and forward jobs, then provide a
+          standard default operation for this queue. If the spool
+          queue directly feeds a printer, use the default options
+          for the printer, and then refine them with printer
+          specific information.</p>
+        </li>
+      </ul>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5785"></a>
+<pre class="SCREEN">
+    # client setups; note brutality of this method that
+    #  assigns servers to clients based on their names
+    #  you could do this for IP addresses as well
+    # lp1 is default printer for Engineering
+    #   Default client information
+    .client=force_localhost@
+    #
+    lp1:oh=*.eng.com:lp=%P@server1.eng.com:tc=.client
+    *:oh=*.eng.com:lp=%P@server1.eng.com:tc=.client
+    color:oh-*.admin.com:lp=%P@server2.admin.com:tc=.client
+    *:oh=*.admin.com:lp=%P@server2.admin.com:tc=.client
+    lowres:lp=%P@general.services.com:tc=.client
+    *:lp=%P@general.services.com:tc=.client
+    
+    # Standard Printer Configurations
+    # this is for the HP4simx, we use a standard filter setup
+    .cf_hp4simx
+     :ifhp=model=hp4simx
+     :filter=/usr/local/libexec/filters/ifhp
+    .cf_hplj5000
+     :ifhp=model=hp5000
+     :filter=/usr/local/libexec/filters/ifhp
+    # now we define the printers that use them
+    .pr_eng1:cm=Engineering's Printer 1
+     :tc=.cf_hplj5000:lp=10.0.0.2%9100
+    .pr_eng2:cm=Engineering's Printer 2
+     :tc=.cf_hplj5000:lp=10.0.0.23%9100
+    
+    # now we define the server entries
+    # We set up server entries and then forward
+    #  to a single server that sends the the printer
+    
+    .server
+     :sd=/var/spool/lpd/%P
+     :mx=0
+    pr1:oh=!10.0.0.5:lp=%P@10.0.0.5:server:tc=.server
+    pr1:oh=10.0.0.5:tc=.server
+     :tc=.pr_eng1
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x5758.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x5787.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Using the
+          Wildcard Printcap Entry</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Remote Printer
+          Using RFC1179</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

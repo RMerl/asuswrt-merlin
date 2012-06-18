@@ -1,0 +1,77 @@
+This is a brief description of how to install and use the Samba Web
+Administration Tool on your machine.
+
+Installation
+------------
+
+After you compile SWAT you need to run "make install" to install the
+swat binary and the various help files and images. A default install
+would put these in:
+
+/usr/local/samba/bin/swat
+/usr/local/samba/swat/images/*
+/usr/local/samba/swat/help/*
+
+Running via inetd
+-----------------
+
+You then need to edit your /etc/inetd.conf and /etc/services to enable
+SWAT to be launched via inetd. 
+
+In /etc/services you need to add a line like this:
+
+swat            901/tcp
+
+the choice of port number isn't really important except that it should
+be less than 1024 and not currently used (using a number above 1024
+presents an obscure security hole depending on the implementation
+details of your inetd daemon).
+
+In /etc/inetd.conf you should add a line like this:
+
+swat    stream  tcp     nowait.400  root    /usr/local/samba/bin/swat swat
+
+One you have edited /etc/services and /etc/inetd.conf you need to send
+a HUP signal to inetd. On many systems "killall -1 inetd" will do this
+on others you will need to use "kill -1 PID" where PID is the process
+ID of the inetd daemon.
+
+
+
+Launching
+---------
+
+To launch SWAT just run your favourite web browser and point it at
+http://localhost:901/ 
+
+Note that you can attach to SWAT from any IP connected machine but
+connecting from a remote machine leaves your connection open to
+password sniffing as passwords will be sent in the clear over the
+wire.
+
+You should be prompted for a username/password when you connect. You
+will need to provide the username "root" and the correct root
+password. 
+
+Running
+-------
+
+Just follow your nose! If you can't work out how to use it then maybe
+you should use "vi smb.conf" instead.
+
+
+WARNINGS
+--------
+
+SWAT will rewrite your smb.conf file. It will rearrange the entries
+and delete all comments, include= and copy= options. If you have a
+carefully crafted smb.conf then back it up or don't use SWAT!
+
+
+Development
+-----------
+
+Please join the samba-technical mailing list if you want to discuss
+the development of SWAT. Note that this list is for technical developer
+discussions and is not a general help list.
+

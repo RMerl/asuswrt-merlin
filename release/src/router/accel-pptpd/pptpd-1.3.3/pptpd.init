@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# Startup script for pptpd
+#
+# chkconfig: - 85 15
+# description: PPTP server
+# processname: pptpd
+# config: /etc/pptpd.conf
+
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+# See how we were called.
+case "$1" in
+  start)
+        echo -n "Starting pptpd: "
+        if [ -f /var/lock/subsys/pptpd ] ; then
+                echo
+                exit 1
+        fi
+        daemon /usr/sbin/pptpd
+        echo
+        touch /var/lock/subsys/pptpd
+        ;;
+  stop)
+        echo -n "Shutting down pptpd: "
+        killproc pptpd
+        echo
+        rm -f /var/lock/subsys/pptpd
+        ;;
+  status)
+        status pptpd
+        ;;
+  condrestart)
+	if [ -f /var/lock/subsys/pptpd ]; then
+		$0 stop
+		$0 start
+	fi
+	;;
+  reload|restart)
+        $0 stop
+        $0 start
+        echo "Warning: a pptpd restart does not terminate existing "
+        echo "connections, so new connections may be assigned the same IP "
+        echo "address and cause unexpected results.  Use restart-kill to "
+        echo "destroy existing connections during a restart."
+        ;;
+  restart-kill)
+        $0 stop
+        ps -ef | grep pptpd | grep -v grep | grep -v rc.d | awk '{print $2}' | uniq | xargs kill 1> /dev/null 2>&1
+        $0 start
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart|restart-kill|status}"
+        exit 1
+esac
+
+exit 0

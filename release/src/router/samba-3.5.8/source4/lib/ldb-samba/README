@@ -1,0 +1,7 @@
+This directory contains Samba specific extensions to ldb. It also
+serves as example code on how to extend ldb for your own application.
+
+The main extension Samba uses is to provide ldif encode/decode
+routines for specific attributes, so users can get nice pretty
+printing of attributes in ldbedit, while the attributes are stored in
+the standard NDR format in the database.

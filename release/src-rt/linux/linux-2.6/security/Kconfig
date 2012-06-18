@@ -1,0 +1,99 @@
+#
+# Security configuration
+#
+
+menu "Security options"
+
+config KEYS
+	bool "Enable access key retention support"
+	help
+	  This option provides support for retaining authentication tokens and
+	  access keys in the kernel.
+
+	  It also includes provision of methods by which such keys might be
+	  associated with a process so that network filesystems, encryption
+	  support and the like can find them.
+
+	  Furthermore, a special type of key is available that acts as keyring:
+	  a searchable sequence of keys. Each process is equipped with access
+	  to five standard keyrings: UID-specific, GID-specific, session,
+	  process and thread.
+
+	  If you are unsure as to whether this is required, answer N.
+
+config KEYS_DEBUG_PROC_KEYS
+	bool "Enable the /proc/keys file by which keys may be viewed"
+	depends on KEYS
+	help
+	  This option turns on support for the /proc/keys file - through which
+	  can be listed all the keys on the system that are viewable by the
+	  reading process.
+
+	  The only keys included in the list are those that grant View
+	  permission to the reading process whether or not it possesses them.
+	  Note that LSM security checks are still performed, and may further
+	  filter out keys that the current process is not authorised to view.
+
+	  Only key attributes are listed here; key payloads are not included in
+	  the resulting table.
+
+	  If you are unsure as to whether this is required, answer N.
+
+config SECURITY
+	bool "Enable different security models"
+	depends on SYSFS
+	help
+	  This allows you to choose different security modules to be
+	  configured into your kernel.
+
+	  If this option is not selected, the default Linux security
+	  model will be used.
+
+	  If you are unsure how to answer this question, answer N.
+
+config SECURITY_NETWORK
+	bool "Socket and Networking Security Hooks"
+	depends on SECURITY
+	help
+	  This enables the socket and networking security hooks.
+	  If enabled, a security module can use these hooks to
+	  implement socket and networking access controls.
+	  If you are unsure how to answer this question, answer N.
+
+config SECURITY_NETWORK_XFRM
+	bool "XFRM (IPSec) Networking Security Hooks"
+	depends on XFRM && SECURITY_NETWORK
+	help
+	  This enables the XFRM (IPSec) networking security hooks.
+	  If enabled, a security module can use these hooks to
+	  implement per-packet access controls based on labels
+	  derived from IPSec policy.  Non-IPSec communications are
+	  designated as unlabelled, and only sockets authorized
+	  to communicate unlabelled data can send without using
+	  IPSec.
+	  If you are unsure how to answer this question, answer N.
+
+config SECURITY_CAPABILITIES
+	tristate "Default Linux Capabilities"
+	depends on SECURITY
+	help
+	  This enables the "default" Linux capabilities functionality.
+	  If you are unsure how to answer this question, answer Y.
+
+config SECURITY_ROOTPLUG
+	tristate "Root Plug Support"
+	depends on USB && SECURITY
+	help
+	  This is a sample LSM module that should only be used as such.
+	  It prevents any programs running with egid == 0 if a specific
+	  USB device is not present in the system.
+
+	  See <http://www.linuxjournal.com/article.php?sid=6279> for
+	  more information about this module.
+	  
+	  If you are unsure how to answer this question, answer N.
+
+source security/selinux/Kconfig
+
+endmenu
+

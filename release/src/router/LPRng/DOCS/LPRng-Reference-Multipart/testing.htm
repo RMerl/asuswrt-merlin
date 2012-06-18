@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Testing and Diagnostic Facilities</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="License" href="license.htm">
+    <link rel="NEXT" title=
+    "Setting Up The Test Version Spool Queues" href="x11663.htm">
+  </head>
+
+  <body class="APPENDIX" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "license.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x11663.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="APPENDIX">
+      <h1><a name="TESTING"></a>Appendix C. Testing and Diagnostic
+      Facilities</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>C.1. <a href="testing.htm#AEN11656">Compiling the
+          Test Version</a></dt>
+
+          <dt>C.2. <a href="x11663.htm">Setting Up The Test Version
+          Spool Queues</a></dt>
+
+          <dt>C.3. <a href="x11691.htm">Running the Test Version
+          Software</a></dt>
+        </dl>
+      </div>
+
+      <p>The <b class="APPLICATION">LPRng</b> code has the ability
+      to run as non-setuid software, and to use the non-default
+      TCP/IP ports for communication. This facility allows a <span
+      class="emphasis"><i class="EMPHASIS">Test Version</i></span>
+      to be run in parallel with the normal <b class=
+      "APPLICATION">LPRng</b> software.</p>
+
+      <p>To simplify testing and portability issues, a simple test
+      version of the spool queues and jobs has been supplied with
+      the <b class="APPLICATION">LPRng</b> distribution. These
+      queues can be placed in a suitable location (<tt class=
+      "FILENAME">/tmp</tt> is common) and the <b class=
+      "APPLICATION">LPRng</b> software tested.</p>
+
+      <p>The test version of the software will use the <var class=
+      "LITERAL">LPD_CONF</var> environment variable to specify the
+      location of the configuration file. It will read this
+      configuration file on startup and use the values to override
+      the normal defaults. Since a user could maliciously set up
+      their own configuration files with values that could
+      compromise system security, it is strongly recommended that
+      the test version is not made SETUID root. In fact, the <b
+      class="APPLICATION">LPRng</b> code will chatter messages when
+      the LPD_CONF ability is enabled and it is run as root.</p>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="AEN11656">C.1. Compiling the
+        Test Version</a></h1>
+
+        <p>Edit <tt class="FILENAME">src/Makefile</tt>, and
+        uncomment the indicated line. Then run <var class=
+        "LITERAL">make</var> to regenerate the distribution.</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN11661"></a>
+<pre class="SCREEN">
+    #### ****** TESTING AND SECURITY LOOPHOLE ******************************
+    # Define GETENV to allow the LPD_CONFIG environment
+    #  variable to be used as the name of a configuration file.  In non-testing
+    #  systems,  this is a security loophole.
+    #CF := $(CF) -DGETENV
+</pre>
+        </div>
+        <br>
+        <br>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "license.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x11663.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">License</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Setting Up The
+          Test Version Spool Queues</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,104 @@
+#!/bin/sh
+
+# Script for loading, unloading, etc. ppp modules.
+
+moddir=/usr/local/etc
+etcppp=/etc/ppp
+
+PATH=/usr/etc:/usr/bin
+
+# Check that we're superuser
+touch /tmp/su$$
+if chown root /tmp/su$$ >/dev/null; then :
+else
+    echo "$0: must be root."
+    rm -f /tmp/su$$
+    exit 1
+fi
+rm -f /tmp/su$$
+
+case "$0" in
+*ppp.INSTALL)
+    if [ ! -f ppp.INSTALL ]; then
+	echo "ppp.INSTALL: not found"
+	exit 1
+    fi
+    for n in INSTALL LOAD UNLOAD MKDEV RMDEV; do
+	if [ -h /dev/ppp.$n -o -f /dev/ppp.$n ]; then
+	    rm /dev/ppp.$n
+	fi
+    done
+    cp ppp.INSTALL /dev
+    for n in LOAD UNLOAD MKDEV RMDEV; do
+	ln -s ppp.INSTALL /dev/ppp.$n
+    done
+    ;;
+
+*ppp.LOAD)
+    if modstat | grep -w ppp >/dev/null; then
+	echo "ppp driver is already loaded."
+	exit 1
+    fi
+    if modstat | grep -w if_ppp >/dev/null; then
+	echo "if_ppp module already loaded: not reloading."
+    else
+	echo -n "if_ppp: "
+	modload $moddir/if_ppp_mod.o -sym -entry _if_ppp_vdcmd \
+	    -o $etcppp/if_ppp_mod
+    fi
+    echo -n "ppp: "
+    modload $moddir/ppp_mod.o -sym -entry _ppp_vdcmd -exec /dev/ppp.MKDEV \
+	-o $etcppp/ppp_mod
+    echo -n "ppp_comp: "
+    modload $moddir/ppp_comp_mod.o -sym -entry _ppp_comp_vdcmd \
+	-o $etcppp/ppp_comp
+    echo -n "ppp_ahdl: "
+    modload $moddir/ppp_ahdl_mod.o -sym -entry _ppp_ahdlc_vdcmd \
+	-o $etcppp/ppp_ahdl
+    exit 0
+    ;;
+
+*ppp.MKDEV)
+    # args: module number, type, b-major, c-major
+    if [ $# -ne 4 ]; then
+	echo "Usage: $0 module-id module-type b-major c-major"
+	exit 1
+    fi
+    if [ "$2" -ne "12345607" -a "$2" -ne "12345600" ]; then
+	echo "$0: $2: bad module type"
+	exit 1
+    fi
+    rm -f /dev/ppp
+    # we "just know" that 37 is the major number of the clone driver
+    mknod /dev/ppp c 37 $4
+    chmod 644 /dev/ppp
+    exit 0
+    ;;
+
+*ppp.UNLOAD)
+    stat=0
+    if modstat | grep -w if_ppp >/dev/null; then
+	echo "$0: not unloading if_ppp module."
+    fi
+    for mod in ppp ppp_comp ppp_ahdl; do
+	id=`modstat | grep -w $mod | awk '{print $1}'`
+	if [ x$id = x ]; then
+	    echo "$mod is not loaded."
+	    stat=1
+	else
+	    modunload -id $id
+	fi
+    done
+    exit $stat
+    ;;
+
+*ppp.RMDEV)
+    rm -f /dev/ppp
+    exit 0
+    ;;
+
+*)
+    echo "Invocation names: ppp.INSTALL ppp.LOAD ppp.UNLOAD ppp.MKDEV ppp.RMDEV"
+    exit 1
+    ;;
+esac

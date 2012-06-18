@@ -1,0 +1,58 @@
+
+  Introduction
+
+The Linux 2.4 hotplug interface works by executing binary whose path is written
+in /proc/sys/kernel/hotplug. This design has been abandoned for obvious 
+reason: if one gets too many events simultaneously, running out of resources
+is a significant risk.
+
+For this reason, udev and hotplug2 use netlink socket to read the events from
+kernel serially, and handle distribution of resources.
+
+However, this design has never been adopted by 2.4 Linux kernel series, and the
+obsolete method is still used. Since the hotplug subsystem of 2.4 is not as 
+advanced as the one of 2.6, it is not too much of an issue.
+
+For hotplug2, I have decided that 2.4 support would be reasonable. The 2.4 
+kernels support PF_NETLINK, however, kernel doesn't support sending of events
+through the netlink socket.
+
+The solution to this problem is a trivial application, hotplug2-dnode, which 
+is executed as the /proc/sys/kernel/hotplug application, processes the 
+environmental variables and arguments passed to it and sends it through 
+netlink so that the application on the other end (in this case, hotplug2) can 
+read it.
+
+
+  Why would we want serialization of events on 2.4, where hotplug is not as 
+  developed as on 2.6?
+
+Multiple scenarios come up in my mind:
+ * It may be desirable to be able to process events using rules, eg. skipping
+   some, executing an application for others.
+ * Serialization would help keeping resource demands low in resource constrained
+   environments.
+
+
+  What good does this do, while 2.4 doesn't have modalias?
+
+Although 2.4 does not have modalias internally, we can fake it. We can create
+modalias file (modules.alias) out of various bus maps (eg. modules.pcimap or 
+modules.isapnpmap). This will give us modaliases against which we can match 
+events. Since modutils do not use fnmatch, a trivial wrapping application
+has been written (hotplug2-modwrap) to allow matching against modalias.
+
+However, 2.4 hotplug interface doesn't export modaliases. Nevertheless, we can
+work this problem around as well. The hotplug2-dnode creates the correct
+modalias for the given event out of the informations provided.
+
+This allows us to use MODALIAS even on 2.4 series kernels.
+
+
+  Why do you create modalias with one hotplug2 application to match it with
+  another? Isn't this approach too indirect?
+
+Yes and no. Truth is, this approach is a bit indirect; on the other hand, it
+allows a way to identify hardware that is rather standardised within Linux and
+that is widely understood. Therefore, the benefits outweight the nearly
+negligible performance drawbacks.

@@ -1,0 +1,228 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Filter Exit Codes</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Filters " href="filters.htm">
+    <link rel="PREVIOUS" title="Filters " href="filters.htm">
+    <link rel="NEXT" title="Print Job Formats " href=
+    "printjobformats.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "filters.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          16. Filters</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "printjobformats.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="EXITCODES">16.2. Filter Exit
+      Codes</a></h1>
+
+      <p>When a filter exits, the exit code value is used by the
+      parent process to determine what actions to take. Since
+      filters are used in several places in the printing process,
+      not just to do format conversion, there is a large number of
+      recognized exit values.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN7780"></a>
+<pre class="SCREEN">
+    Key      Value   Meaning
+    JSUCC    0       Successful
+    JFAIL    1, 32   Failed - retry later
+    JABORT   2, 33   Abort - terminate queue processing
+    JREMOVE  3, 34   Failed - remove job
+    (Unused) 4, 35   (Unused)
+    (Unused) 5, 36   (Unused)
+    JHOLD    6, 37   Hold this job - reprint later
+    JNOSPOOL 7, 38   No spooling to this queue
+    JNOPRINT 8, 39   No printing from this queue
+    JSIGNAL  9,  40   Killed by unrecognized signal
+    JFAILNORETRY 10, 41 Failed, no retry
+    Other            Abort - terminate queue processing
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="JSUCC">16.2.1. JSUCC</a></h2>
+
+        <p>A zero or <acronym class="ACRONYM">JSUCC</acronym> exit
+        value always indicates success; a non-zero exit value
+        indicates failure or a problem condition and requires
+        special handling by the parent process.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="JFAIL">16.2.2. JFAIL</a></h2>
+
+        <p>When printing or performing some action that can be
+        repeated, such as connecting to a remote printer, a 1 or
+        <acronym class="ACRONYM">JFAIL</acronym> status indicates a
+        transient failure condition. Depending on various
+        configuration options, the printing or other operation can
+        be retried.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="JABORT">16.2.3. JABORT</a></h2>
+
+        <p>The 2 or <acronym class="ACRONYM">JABORT</acronym> is a
+        more serious error, and indicates that there is no
+        expectation that the operation would succeed if retried. It
+        may also indicate that no other similar operation should be
+        performed. Jobs whose print filters exit with <acronym
+        class="ACRONYM">JABORT</acronym> are usually unprintable,
+        and by default are removed from the print queue.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="JREMOVE">16.2.4.
+        JREMOVE</a></h2>
+
+        <p>The <acronym class="ACRONYM">JREMOVE</acronym> status
+        indicates that the job should be removed from the print
+        queue. This is a refinement of the <acronym class=
+        "ACRONYM">JFAIL</acronym> and <acronym class=
+        "ACRONYM">JABORT</acronym> status. The job is usually
+        unconditionally removed from the print queue, even if it is
+        normally kept in the queue for reprinting. This status is
+        usually returned by filters which are responsible for
+        permission checking and is returned when the user has no
+        permission to print.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="JHOLD">16.2.5. JHOLD</a></h2>
+
+        <p>The <acronym class="ACRONYM">JREMOVE</acronym> status
+        indicates that the job should be held and reprinted at a
+        later time. This status is returned by various filters
+        during the processing of a job, and usually indicates that
+        the resources needed for a job are not available. Held jobs
+        need to be explicitly released by the administrator.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="JNOSPOOL">16.2.6. JNOSPOOL and
+        JNOPRINT</a></h2>
+
+        <p>The <acronym class="ACRONYM">JNOSPOOL</acronym> and
+        <acronym class="ACRONYM">JNOPRINT</acronym> are used as
+        part of the management of load balancing queues and the
+        <span class="emphasis"><i class="EMPHASIS">check
+        idle</i></span> filter. <b class="APPLICATION">LPRng</b>
+        has the ability to run a program to check to see if a spool
+        queue is available for printing on a dynamic basis. If the
+        filter that does this checking exits with <acronym class=
+        "ACRONYM">JNOSPOOL</acronym> or <acronym class=
+        "ACRONYM">JNOPRINT</acronym> then jobs should not be sent
+        to the spool queue.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="JSIGNAL">16.2.7.
+        JSIGNAL</a></h2>
+
+        <p>This status is usually returned when the exiting process
+        is terminated by a signal or abort, and does not exit using
+        the <var class="LITERAL">exit</var> facility. It is usually
+        handled like a <acronym class="ACRONYM">JABORT</acronym>
+        exit status, and is the indication of a severe and possibly
+        non-restartable system failure.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="JNORETRY">16.2.8.
+        JFAILNORETRY</a></h2>
+
+        <p>This code is used under an extremely odd set of
+        circumstances and was used to support a sophisticated print
+        retry system.</p>
+
+        <p>Normally when a print filter or other filter returns
+        this code, it is treated as <acronym class=
+        "ACRONYM">JFAIL</acronym>. The job is marked as having an
+        error condition and is not <var class=
+        "LITERAL">immediately</var> retried. Other jobs can then be
+        tried for printing in the queue. It is not removed from the
+        print queue, but marked as <var class=
+        "LITERAL">unprintable</var>.</p>
+
+        <p>When a <span class="emphasis"><i class=
+        "EMPHASIS">round-robin retry</i></span> print scheduling
+        algorithm is used, if there are no other jobs available for
+        printing then the jobs that failed with <acronym class=
+        "ACRONYM">JFAILNORETRY</acronym> are retried. Thus, jobs
+        that are submitted go to the head of the queue for
+        printing, and jobs that are pending for repeat are printed
+        after them. This algorithm is deprecated, and that the
+        details of this algorithm are undocumented.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="JOTHER">16.2.9. Other
+        Values</a></h2>
+
+        <p>If a filter exits with other than the indicated value,
+        or a value inappropriate for its purpose, then the result
+        is treated like <acronym class=
+        "ACRONYM">JABORT</acronym>.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "filters.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "printjobformats.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Filters</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "filters.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Print Job
+          Formats</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

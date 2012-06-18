@@ -1,0 +1,284 @@
+# drivers/mtd/nand/Kconfig
+# $Id: Kconfig,v 1.35 2005/11/07 11:14:30 gleixner Exp $
+
+menuconfig MTD_NAND
+	tristate "NAND Device Support"
+	depends on MTD
+	select MTD_NAND_IDS
+	help
+	  This enables support for accessing all type of NAND flash
+	  devices. For further information see
+	  <http://www.linux-mtd.infradead.org/doc/nand.html>.
+
+if MTD_NAND
+
+config MTD_NAND_VERIFY_WRITE
+	bool "Verify NAND page writes"
+	help
+	  This adds an extra check when data is written to the flash. The
+	  NAND flash device internally checks only bits transitioning
+	  from 1 to 0. There is a rare possibility that even though the
+	  device thinks the write was successful, a bit could have been
+	  flipped accidentally due to device wear or something else.
+
+config MTD_NAND_ECC_SMC
+	bool "NAND ECC Smart Media byte order"
+	default n
+	help
+	  Software ECC according to the Smart Media Specification.
+	  The original Linux implementation had byte 0 and 1 swapped.
+
+config MTD_NAND_MUSEUM_IDS
+	bool "Enable chip ids for obsolete ancient NAND devices"
+	depends on MTD_NAND
+	default n
+	help
+	  Enable this option only when your board has first generation
+	  NAND chips (page size 256 byte, erase size 4-8KiB). The IDs
+	  of these chips were reused by later, larger chips.
+
+config MTD_NAND_AUTCPU12
+	tristate "SmartMediaCard on autronix autcpu12 board"
+	depends on ARCH_AUTCPU12
+	help
+	  This enables the driver for the autronix autcpu12 board to
+	  access the SmartMediaCard.
+
+config MTD_NAND_EDB7312
+	tristate "Support for Cirrus Logic EBD7312 evaluation board"
+	depends on ARCH_EDB7312
+	help
+	  This enables the driver for the Cirrus Logic EBD7312 evaluation
+	  board to access the onboard NAND Flash.
+
+config MTD_NAND_H1900
+	tristate "iPAQ H1900 flash"
+	depends on ARCH_PXA && MTD_PARTITIONS
+	help
+	  This enables the driver for the iPAQ h1900 flash.
+
+config MTD_NAND_SPIA
+	tristate "NAND Flash device on SPIA board"
+	depends on ARCH_P720T
+	help
+	  If you had to ask, you don't have one. Say 'N'.
+
+config MTD_NAND_AMS_DELTA
+	tristate "NAND Flash device on Amstrad E3"
+	depends on MACH_AMS_DELTA
+	help
+	  Support for NAND flash on Amstrad E3 (Delta).
+
+config MTD_NAND_TOTO
+	tristate "NAND Flash device on TOTO board"
+	depends on ARCH_OMAP && BROKEN
+	help
+	  Support for NAND flash on Texas Instruments Toto platform.
+
+config MTD_NAND_TS7250
+	tristate "NAND Flash device on TS-7250 board"
+	depends on MACH_TS72XX
+	help
+	  Support for NAND flash on Technologic Systems TS-7250 platform.
+
+config MTD_NAND_IDS
+	tristate
+
+config MTD_NAND_AU1550
+	tristate "Au1550/1200 NAND support"
+	depends on SOC_AU1200 || SOC_AU1550
+	help
+	  This enables the driver for the NAND flash controller on the
+	  AMD/Alchemy 1550 SOC.
+
+config MTD_NAND_RTC_FROM4
+	tristate "Renesas Flash ROM 4-slot interface board (FROM_BOARD4)"
+	depends on SH_SOLUTION_ENGINE
+	select REED_SOLOMON
+	select REED_SOLOMON_DEC8
+	select BITREVERSE
+	help
+	  This enables the driver for the Renesas Technology AG-AND
+	  flash interface board (FROM_BOARD4)
+
+config MTD_NAND_PPCHAMELEONEVB
+	tristate "NAND Flash device on PPChameleonEVB board"
+	depends on PPCHAMELEONEVB && BROKEN
+	help
+	  This enables the NAND flash driver on the PPChameleon EVB Board.
+
+config MTD_NAND_S3C2410
+	tristate "NAND Flash support for S3C2410/S3C2440 SoC"
+	depends on ARCH_S3C2410
+	help
+	  This enables the NAND flash controller on the S3C2410 and S3C2440
+	  SoCs
+
+	  No board specific support is done by this driver, each board
+	  must advertise a platform_device for the driver to attach.
+
+config MTD_NAND_S3C2410_DEBUG
+	bool "S3C2410 NAND driver debug"
+	depends on MTD_NAND_S3C2410
+	help
+	  Enable debugging of the S3C2410 NAND driver
+
+config MTD_NAND_S3C2410_HWECC
+	bool "S3C2410 NAND Hardware ECC"
+	depends on MTD_NAND_S3C2410
+	help
+	  Enable the use of the S3C2410's internal ECC generator when
+	  using NAND. Early versions of the chip have had problems with
+	  incorrect ECC generation, and if using these, the default of
+	  software ECC is preferable.
+
+config MTD_NAND_NDFC
+	tristate "NDFC NanD Flash Controller"
+	depends on 44x
+	select MTD_NAND_ECC_SMC
+	help
+	 NDFC Nand Flash Controllers are integrated in EP44x SoCs
+
+config MTD_NAND_S3C2410_CLKSTOP
+	bool "S3C2410 NAND IDLE clock stop"
+	depends on MTD_NAND_S3C2410
+	default n
+	help
+	  Stop the clock to the NAND controller when there is no chip
+	  selected to save power. This will mean there is a small delay
+	  when the is NAND chip selected or released, but will save
+	  approximately 5mA of power when there is nothing happening.
+
+config MTD_NAND_DISKONCHIP
+	tristate "DiskOnChip 2000, Millennium and Millennium Plus (NAND reimplementation) (EXPERIMENTAL)"
+	depends on EXPERIMENTAL
+	select REED_SOLOMON
+	select REED_SOLOMON_DEC16
+	help
+	  This is a reimplementation of M-Systems DiskOnChip 2000,
+	  Millennium and Millennium Plus as a standard NAND device driver,
+	  as opposed to the earlier self-contained MTD device drivers.
+	  This should enable, among other things, proper JFFS2 operation on
+	  these devices.
+
+config MTD_NAND_DISKONCHIP_PROBE_ADVANCED
+        bool "Advanced detection options for DiskOnChip"
+        depends on MTD_NAND_DISKONCHIP
+        help
+          This option allows you to specify nonstandard address at which to
+          probe for a DiskOnChip, or to change the detection options.  You
+          are unlikely to need any of this unless you are using LinuxBIOS.
+          Say 'N'.
+
+config MTD_NAND_DISKONCHIP_PROBE_ADDRESS
+        hex "Physical address of DiskOnChip" if MTD_NAND_DISKONCHIP_PROBE_ADVANCED
+        depends on MTD_NAND_DISKONCHIP
+        default "0"
+        ---help---
+        By default, the probe for DiskOnChip devices will look for a
+        DiskOnChip at every multiple of 0x2000 between 0xC8000 and 0xEE000.
+        This option allows you to specify a single address at which to probe
+        for the device, which is useful if you have other devices in that
+        range which get upset when they are probed.
+
+        (Note that on PowerPC, the normal probe will only check at
+        0xE4000000.)
+
+        Normally, you should leave this set to zero, to allow the probe at
+        the normal addresses.
+
+config MTD_NAND_DISKONCHIP_PROBE_HIGH
+        bool "Probe high addresses"
+        depends on MTD_NAND_DISKONCHIP_PROBE_ADVANCED
+        help
+          By default, the probe for DiskOnChip devices will look for a
+          DiskOnChip at every multiple of 0x2000 between 0xC8000 and 0xEE000.
+          This option changes to make it probe between 0xFFFC8000 and
+          0xFFFEE000.  Unless you are using LinuxBIOS, this is unlikely to be
+          useful to you.  Say 'N'.
+
+config MTD_NAND_DISKONCHIP_BBTWRITE
+	bool "Allow BBT writes on DiskOnChip Millennium and 2000TSOP"
+	depends on MTD_NAND_DISKONCHIP
+	help
+	  On DiskOnChip devices shipped with the INFTL filesystem (Millennium
+	  and 2000 TSOP/Alon), Linux reserves some space at the end of the
+	  device for the Bad Block Table (BBT).  If you have existing INFTL
+	  data on your device (created by non-Linux tools such as M-Systems'
+	  DOS drivers), your data might overlap the area Linux wants to use for
+	  the BBT.  If this is a concern for you, leave this option disabled and
+	  Linux will not write BBT data into this area.
+	  The downside of leaving this option disabled is that if bad blocks
+	  are detected by Linux, they will not be recorded in the BBT, which
+	  could cause future problems.
+	  Once you enable this option, new filesystems (INFTL or others, created
+	  in Linux or other operating systems) will not use the reserved area.
+	  The only reason not to enable this option is to prevent damage to
+	  preexisting filesystems.
+	  Even if you leave this disabled, you can enable BBT writes at module
+	  load time (assuming you build diskonchip as a module) with the module
+	  parameter "inftl_bbt_write=1".
+
+config MTD_NAND_SHARPSL
+	tristate "Support for NAND Flash on Sharp SL Series (C7xx + others)"
+	depends on ARCH_PXA
+
+config MTD_NAND_BASLER_EXCITE
+	tristate  "Support for NAND Flash on Basler eXcite"
+	depends on BASLER_EXCITE
+	help
+          This enables the driver for the NAND flash device found on the
+          Basler eXcite Smart Camera. If built as a module, the driver
+          will be named "excite_nandflash.ko".
+
+config MTD_NAND_CAFE
+	tristate "NAND support for OLPC CAFÉ chip"
+	depends on PCI
+	select REED_SOLOMON
+	select REED_SOLOMON_DEC16
+	help
+	  Use NAND flash attached to the CAFÉ chip designed for the $100
+	  laptop.
+
+config MTD_NAND_CS553X
+	tristate "NAND support for CS5535/CS5536 (AMD Geode companion chip)"
+	depends on X86_32 && (X86_PC || X86_GENERICARCH)
+	help
+	  The CS553x companion chips for the AMD Geode processor
+	  include NAND flash controllers with built-in hardware ECC
+	  capabilities; enabling this option will allow you to use
+	  these. The driver will check the MSRs to verify that the
+	  controller is enabled for NAND, and currently requires that
+	  the controller be in MMIO mode.
+
+	  If you say "m", the module will be called "cs553x_nand.ko".
+
+config MTD_NAND_AT91
+	bool "Support for NAND Flash / SmartMedia on AT91"
+	depends on ARCH_AT91
+	help
+	  Enables support for NAND Flash / Smart Media Card interface
+	  on Atmel AT91 processors.
+
+config MTD_NAND_CM_X270
+	tristate "Support for NAND Flash on CM-X270 modules"
+	depends on MTD_NAND && MACH_ARMCORE
+
+
+config MTD_NAND_NANDSIM
+	tristate "Support for NAND Flash Simulator"
+	depends on MTD_PARTITIONS
+	help
+	  The simulator may simulate various NAND flash chips for the
+	  MTD nand layer.
+
+config MTD_NAND_PLATFORM
+	tristate "Support for generic platform NAND driver"
+	depends on MTD_NAND
+	help
+	  This implements a generic NAND driver for on-SOC platform
+	  devices. You will need to provide platform-specific functions
+	  via platform_data.
+
+
+endif # MTD_NAND

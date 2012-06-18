@@ -1,0 +1,38 @@
+#!/sbin/runscript
+#
+# description: mt-daapd is a multi-threaded DAAP server for iTunes
+# processname: mt-daapd
+# Init script to start/stop mt-daapd for Gentoo Linux 2004.2
+#
+# This file needs to be in your /etc/init.d directory.
+# To start mt-daapd, type "/etc/init.d/mt-daapd start"
+# To stop it, type "/etc/init.d/mt-daapd stop"
+# To start it automagically, type "rc-update add mt-daapd default"
+#
+# 
+# rob@robnunn.com (31st July 2004)
+
+depend() {
+	# not much point having the daemon without a network
+	need net
+	# and if this goes according to plan, we provide daap
+	provide daap
+}
+
+# start the mt-daapd daemon. All fairly self-explanatory.
+# lock files aren't necessary (as far as i can tell) since gentoo
+# won't let us run multiple copies.
+start() {
+	ebegin "Starting mt-daapd DAAP server"
+	start-stop-daemon --start --quiet --exec /usr/local/sbin/mt-daapd
+	eend $?
+}
+
+# stop the daemon
+stop() {
+	ebegin "Stopping mt-daapd DAAP server"
+#	start-stop-daemon --stop --quiet --exec /usr/local/sbin/mt-daapd
+# 	I dunno if this works... try it:
+	start-stop-daemon --stop --quiet --pidfile /var/run/mt-daapd.pid --signal 2
+	eend $?
+}

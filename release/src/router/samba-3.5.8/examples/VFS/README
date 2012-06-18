@@ -1,0 +1,20 @@
+README for Samba Virtual File System (VFS) Example
+===================================================
+
+This directory contains skeleton VFS modules.  When used,
+this module simply passes all requests back to the disk functions
+(i.e it operates as a passthrough filter).  It should be
+useful as a starting point for developing new VFS
+modules. 
+
+Please look at skel_opaque.c when you want your module to provide
+final functions, like a database filesystem.
+
+Please look at skel_transport.c when you want your module to provide
+passthrough functions, like audit modules. 
+
+Please read the VFS chapter in the HOWTO collection for general help 
+on the usage of VFS modules.
+
+Further documentation on writing VFS modules for Samba can be found in
+Samba Developers Guide.

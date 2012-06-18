@@ -1,0 +1,113 @@
+#
+# Multimedia device configuration
+#
+
+menu "Multimedia devices"
+	depends on HAS_IOMEM
+
+config VIDEO_DEV
+	tristate "Video For Linux"
+	---help---
+	  Support for audio/video capture and overlay devices and FM radio
+	  cards. The exact capabilities of each device vary.
+
+	  This kernel includes support for the new Video for Linux Two API,
+	  (V4L2) as well as the original system. Drivers and applications
+	  need to be rewritten to use V4L2, but drivers for popular cards
+	  and applications for most video capture functions already exist.
+
+	  Additional info and docs are available on the web at
+	  <http://linuxtv.org>
+
+	  Documentation for V4L2 is also available on the web at
+	  <http://bytesex.org/v4l/>.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called videodev.
+
+config VIDEO_V4L1
+	bool "Enable Video For Linux API 1 (DEPRECATED)"
+	depends on VIDEO_DEV
+	select VIDEO_V4L1_COMPAT
+	default y
+	---help---
+	  Enables a compatibility API used by most V4L2 devices to allow
+	  its usage with legacy applications that supports only V4L1 api.
+
+	  If you are unsure as to whether this is required, answer Y.
+
+config VIDEO_V4L1_COMPAT
+	bool "Enable Video For Linux API 1 compatible Layer"
+	depends on VIDEO_DEV
+	default y
+	---help---
+	  This api were developed to be used at Kernel 2.2 and 2.4, but
+	  lacks support for several video standards. There are several
+	  drivers at kernel that still depends on it.
+
+	  Documentation for the original API is included in the file
+	  <Documentation/video4linux/API.html>.
+
+	  User tools for this are available from
+	  <ftp://ftp.uk.linux.org/pub/linux/video4linux/>.
+
+	  If you are unsure as to whether this is required, answer Y.
+
+config VIDEO_V4L2
+	bool
+	depends on VIDEO_DEV
+	default y
+
+source "drivers/media/video/Kconfig"
+
+source "drivers/media/radio/Kconfig"
+
+source "drivers/media/dvb/Kconfig"
+
+source "drivers/media/common/Kconfig"
+
+config VIDEO_TUNER
+	tristate
+	depends on I2C
+
+config VIDEO_BUF
+	depends on PCI
+	tristate
+
+config VIDEO_BUF_DVB
+	tristate
+
+config VIDEO_BTCX
+	tristate
+
+config VIDEO_IR
+	tristate
+
+config VIDEO_TVEEPROM
+	tristate
+	depends on I2C
+
+config DAB
+	boolean "DAB adapters"
+	default y
+	---help---
+	  Allow selecting support for for Digital Audio Broadcasting (DAB)
+	  Receiver adapters.
+
+if DAB
+config USB_DABUSB
+	tristate "DABUSB driver"
+	depends on USB
+	---help---
+	  A Digital Audio Broadcasting (DAB) Receiver for USB and Linux
+	  brought to you by the DAB-Team
+	  <http://wwwbode.cs.tum.edu/Par/arch/dab/>.  This driver can be taken
+	  as an example for URB-based bulk, control, and isochronous
+	  transactions. URB's are explained in
+	  <Documentation/usb/URB.txt>.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called dabusb.
+endif # DAB
+
+endmenu

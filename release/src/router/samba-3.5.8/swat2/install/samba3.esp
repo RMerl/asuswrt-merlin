@@ -1,0 +1,112 @@
+<% page_header("columns", "Upgrade", "install"); 
+
+ /* frontend to Samba3 upgrade.
+	Based on provision.esp
+	(C) Jelmer Vernooij 2005
+	Published under the GNU GPL
+  */
+
+  include("/scripting/forms.js");
+  libinclude("base.js");
+  libinclude("provision.js");
+  libinclude("upgrade.js");
+%>
+
+<h1>Import from Samba3</h1>
+
+<%
+if ((session.authinfo.user_class == "ADMINISTRATOR")
+	 || (session.authinfo.user_class == "SYSTEM")) {
+
+	if (form['submit'] == "Cancel") {
+		redirect("/");
+	}
+
+	function confirm_form()
+	{
+		var samba3 = samba3_read(form['LIBDIR'], form['SMBCONF']);
+
+		var subobj = upgrade_provision(samba3);
+		var f = FormObj("Import from Samba3", 0, 2);
+		subobj.ADMINPASS = "";
+
+		f.add("REALM", "Realm");
+		f.add("DOMAIN", "Domain Name");
+		f.add("HOSTNAME", "Hostname");
+		f.add("ADMINPASS", "Administrator Password", "password");
+		f.add("CONFIRM", "Confirm Password", "password");
+		f.add("DOMAINSID", "Domain SID");
+		f.add("HOSTGUID", "Host GUID");
+		f.add("HOSTIP", "Host IP");
+		f.add("DEFAULTSITE", "Default Site");
+
+		for (i=0;i<f.element.length;i++) {
+			f.element[i].value = subobj[f.element[i].name];
+		}
+
+		f.add("SMBCONF", "", "hidden", form['SMBCONF']);
+		f.add("LIBDIR", "", "hidden", form['LIBDIR']);
+
+		f.submit[0] = "Continue";
+		f.submit[1] = "Cancel";
+		f.display();	
+	}
+
+	if (form['submit'] == "Import") {
+		confirm_form();
+	} else if (form['submit'] == "Continue") {
+		var samba3 = samba3_read(form['LIBDIR'], form['SMBCONF']);
+		assert(samba3 != undefined);
+		var subobj = upgrade_provision(samba3);
+		for (r in form) {
+			subobj[r] = form[r];
+		}
+
+		var goodpass = (subobj.CONFIRM == subobj.ADMINPASS);
+
+		if (!goodpass) {
+			write("<h3>Passwords don't match.  Please try again.</h3>");
+			confirm_form();
+		} else if (subobj.ADMINPASS == "") {
+			write("<h3>You must choose an administrator password.  Please try again.</h3>");
+			confirm_form();
+		} else {
+			var paths = provision_default_paths(subobj);
+			if (!provision(subobj, writefln, true, paths, 
+				       session.authinfo.session_info, session.authinfo.credentials)) {
+				writefln("Provision failed!");
+			} else { 
+				var ret = upgrade(subobj,samba3,message,paths,
+						  session.authinfo.session_info, session.authinfo.credentials);
+				if (ret > 0) {
+					writefln("Failed to import %d entries\n", ret);
+				} else {
+					if (!provision_dns(subobj, writefln, paths,
+							   session.authinfo.session_info, session.authinfo.credentials)) {
+						writefln("DNS Provision failed!");
+					} else {
+						writefln("Reloading smb.conf\n");
+						var lp = loadparm_init();
+						lp.reload();
+						writefln("Upgrade Complete!");
+					}
+				}
+			}
+		}
+	} else {
+		var f = FormObj("Import from Samba3", 0, 2);
+
+		f.add("SMBCONF", "smb.conf file", "text", "/etc/samba/smb.conf");
+		f.add("LIBDIR", "Lib directory", "text", "/var/lib/samba");
+		f.submit[0] = "Import";
+		f.submit[1] = "Cancel";
+
+		write('<p>Warning: This will erase your current configuration!</p>');
+		f.display();
+	}
+} else {
+	redirect("/");
+}
+%>
+
+<% page_footer(); %>

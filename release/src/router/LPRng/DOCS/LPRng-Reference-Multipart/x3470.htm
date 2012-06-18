@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Print Job Classes, User Requested Job Priority, and Form
+    Support</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title=
+    "Moving Jobs From Queue to Queue and Redirecting Queues" href=
+    "x3423.htm">
+    <link rel="NEXT" title="Holding and Releasing Jobs" href=
+    "x3515.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x3423.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x3515.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN3470">4.15. Print Job Classes,
+      User Requested Job Priority, and Form Support</a></h1>
+
+      <p>The <b class="APPLICATION">LPRng</b> software allows users
+      to assign a class name to print jobs using the <tt class=
+      "COMMAND">lpr -Cname</tt> option. This causes the <b class=
+      "APPLICATION">lpr</b> command to put the line <var class=
+      "LITERAL">Cname</var> in the control file. By default, the
+      (upper cased) first letter of the class name is used to
+      assign a user requested priority to the job, with <var class=
+      "LITERAL">A</var> being the default lowest priority and <var
+      class="LITERAL">Z</var> being the highest.</p>
+
+      <p>The <var class=
+      "LITERAL">ignore_requested_user_priority</var> printcap
+      option can be used to ignore the user requested priority and
+      jobs will be printed in the normal first-in first-out
+      order.</p>
+
+      <p><b class="APPLICATION">LPRng</b> also makes use of the
+      class information to do form support and restrict printing to
+      a specific set of classes. By default the job class
+      information is ignored, but the <tt class="COMMAND">lpc
+      class</tt> command can be used to specify one or more classes
+      (actually glob patterns) to be printed. This facility can be
+      used to do support printing of jobs that require a specific
+      form setup. Here is a simple example of how to use this
+      facility.</p>
+
+      <p>Edit the printcap file so it has contents indicated below,
+      use <tt class="COMMAND">checkpc -f</tt> to check the
+      printcap, and then use <tt class="COMMAND">lpc reread</tt> to
+      restart the <b class="APPLICATION">lpd</b> server.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3488"></a>
+<pre class="SCREEN">
+    lp:force_localhost
+    lp:server
+      :sd=/var/spool/lpd/%P
+      :lp=lp2@localhost
+    lp2:force_localhost
+    lp2:server
+      :sd=/var/spool/lpd/%P
+      :lp=/tmp/lp2
+</pre>
+      </div>
+      Execute the following commands to print the <tt class=
+      "FILENAME">/tmp/hi</tt> file and observe the results: 
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3491"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {249} %</samp> <kbd class=
+"USERINPUT">lpc class lp red</kbd>
+    Printer: lp@h4
+    classes printed 'red'
+    lp@h4.private: class updated
+    <samp class="PROMPT">h4: {250} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (classes red)
+     Queue: no printable jobs in queue
+    <samp class="PROMPT">h4: {251} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {252} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (classes red)
+     Queue: no printable jobs in queue
+     Holding: 1 held jobs in queue
+     Server: no server active
+     Rank   Owner/ID           Class Job Files        Size Time
+    holdclass papowell@h4+82     A    82 /tmp/hi         3 09:29:52
+    <samp class="PROMPT">h4: {253} %</samp> <kbd class=
+"USERINPUT">lpr -Cred /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {254} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4  (classes red)
+     Queue: no printable jobs in queue
+     Holding: 1 held jobs in queue
+     Server: no server active
+     Status: job 'papowell@h4+89' removed at 09:30:13.569
+     Rank   Owner/ID           Class Job Files        Size Time
+    holdclass papowell@h4+82     A    82 /tmp/hi         3 09:29:52
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>As seen in the example, we set the queue class to <var
+      class="LITERAL">red</var>, and then sent a (default) class
+      <var class="LITERAL">A</var> job to the printer. It was not
+      printed, and is listed with <var class=
+      "LITERAL">holdclass</var> status. We sent another job which
+      was immediately printed.</p>
+
+      <p>We can change the print queue class at any time, and then
+      new class will then control what jobs are printed. To disable
+      the class selection, use the <tt class="COMMAND">lpc class
+      queue off</tt> command.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3511"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {255} %</samp> <kbd class=
+"USERINPUT">lpc class lp off</kbd>
+    Printer: lp@h4
+    all classes printed
+    lp@h4.private: class updated
+</pre>
+      </div>
+      <br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x3423.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x3515.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Moving Jobs
+          From Queue to Queue and Redirecting Queues</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Holding and
+          Releasing Jobs</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

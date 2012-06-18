@@ -1,0 +1,14 @@
+These extensions can be used if `--protocol udp' is specified.  It
+provides the following options:
+.TP
+.BR "--source-port " "[!] \fIport\fP[:\fIport\fP]"
+Source port or port range specification.
+See the description of the
+.B --source-port
+option of the TCP extension for details.
+.TP
+.BR "--destination-port " "[!] \fIport\fP[:\fIport\fP]"
+Destination port or port range specification.
+See the description of the
+.B --destination-port
+option of the TCP extension for details.

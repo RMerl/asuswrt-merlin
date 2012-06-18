@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<style>
+html{
+	margin:0 0;
+	padding:0px;
+}
+body{
+	display: block;
+	overflow: hidden;
+}
+</style>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript">
+var this_name;
+var this_url;
+var this_isdir;
+var m = new lang();
+var g_storage = new myStorage();
+
+$("document").ready(function() {
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	$('button#ok').text(m.getString('btn_ok'));
+	$('button#cancel').text(m.getString('btn_cancel'));
+	
+	this_name = getUrlVars()["o"];
+	this_url = getUrlVars()["f"];
+	this_isdir = getUrlVars()["d"];
+	
+	$("input#dir_name").attr("value",decodeURI(this_name));
+	
+	select_all();
+});
+
+function select_all(){
+	var text_val = $("input#dir_name");
+	text_val.focus();
+	text_val.select();
+}
+
+function doOK(e) {
+	
+	var oldFile = this_url;
+	var newName = $('input#dir_name').val();
+	
+	if(newName==''){		
+		alert(m.getString('blankchar'));
+		return;
+	}
+	
+	var regex = /[|\/\\?*"<>&:`]/g;
+	if(this_isdir==1)
+		regex = /[|\/\\?*"<>&:`.]/g;
+	
+ 	if(newName.match(regex)) {
+ 		alert(m.getString('illegalchar'));
+  	return;
+ 	}
+ 	
+	if(this_isdir==1){
+		if(oldFile.lastIndexOf('/')==oldFile.length-1)
+			oldFile = oldFile.substring(0, oldFile.length-1);
+	}
+	
+	parent.doRENAME(oldFile, newName);
+};
+
+function doCancel(e) {
+	parent.closeJqmWindow();
+};
+
+function onTextChange(e){
+	$('button#ok').attr("disabled", "");
+	
+	if(e.keyCode==13)
+		doOK(e);
+}
+
+function getUrlVars(){
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++){
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+}
+
+</script>
+</head>
+<body>
+
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="overflow:hidden;">
+	<tr>
+  	<td>
+    <div id="mainRegion" style="overflow:hidden">
+    	<input id='dir_name' type='text' value='' style='width:480px' 
+    		onKeyDown='onTextChange(event);' 
+    		maxlength='50'>
+		</div>
+    </td>    
+  </tr>
+  <tr style='height:20px'></tr>
+  <tr>
+  	<td>
+  	<div class="table_block_footer" style="text-align:right">
+    	<button id="ok" class='btnStyle' onClick="doOK();" disabled="true">OK</button>
+      <button id="cancel" class="btnStyle" onClick="doCancel();">Close</button>
+    </div>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,46 @@
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=38030
+
+2008-11-14  Jason Merrill  <jason@redhat.com>
+
+	PR c++/38030
+gcc/cp/
+	* semantics.c (finish_call_expr): Don't repeat arg-dep lookup
+	for a non-dependent call.
+gcc/testsuite/
+	* g++.dg/template/lookup8.C: New test.
+
+--- gcc-4_2-branch/gcc/cp/semantics.c	2008/11/14 22:28:54	141871
++++ gcc-4_2-branch/gcc/cp/semantics.c	2008/11/14 23:06:11	141872
+@@ -1886,7 +1886,9 @@
+     {
+       result = build3 (CALL_EXPR, TREE_TYPE (result), orig_fn,
+ 		       orig_args, NULL_TREE);
+-      KOENIG_LOOKUP_P (result) = koenig_p;
++      /* Don't repeat arg-dependent lookup at instantiation time if this call
++         is not type-dependent.  */
++      KOENIG_LOOKUP_P (result) = 0;
+     }
+   return result;
+ }
+--- gcc-4_2-branch/gcc/testsuite/g++.dg/template/lookup8.C	1970-01-01 03:00:00.000000000 +0300
++++ gcc-4_2-branch/gcc/testsuite/g++.dg/template/lookup8.C	2009-12-05 14:52:18.000000000 +0300
+@@ -0,0 +1,19 @@
++// PR c++/38030
++// The call to f should be resolved at template definition time.
++// { dg-do link }
++
++struct B { };
++struct D : public B { };
++D d;
++void f (B &) { }
++template < class T >
++void g ()
++{
++  return f (d);
++}
++void f (D &);
++int main ()
++{
++  g<int> ();
++  return 0;
++}

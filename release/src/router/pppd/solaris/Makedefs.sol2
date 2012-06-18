@@ -1,0 +1,59 @@
+#
+# Generic make definitions for Solaris 2
+#
+# $Id: Makedefs.sol2,v 1.2 2002/09/07 05:15:25 carlsonj Exp $
+#
+
+include ../Makedefs.com
+
+CPPFLAGS	= -D_KERNEL -DSVR4 -DSOL2 -DPRIOQ -DDEBUG -I../include
+CFLAGS		= $(CPPFLAGS) $(COPTS)
+
+# lint-specific variables
+LINT            = lint
+LINT_OPT_32     =
+LINT_OPT_64     = -Xarch=v9 -errchk=longptr64
+
+LINT_32     	=
+LINT_32     	+= -erroff=E_BAD_PTR_CAST_ALIGN
+LINT_32     	+= -erroff=E_SUPPRESSION_DIRECTIVE_UNUSED
+LINT_32     	+= -erroff=E_SUSPICIOUS_COMPARISON
+LINT_32     	+= -erroff=E_CAST_UINT_TO_SIGNED_INT
+LINT_32     	+= -erroff=E_PASS_UINT_TO_SIGNED_INT
+LINT_32     	+= -erroff=E_INVALID_ANNOTATION_NAME
+LINT_32     	+= -erroff=E_FUNC_ARG_UNUSED
+# This might be needed, but zlib.c and vjcompress.c will squawk 
+# when not ignored
+LINT_32		+= -erroff=E_CASE_FALLTHRU
+LINT_32		+= -erroff=E_RET_INT_IMPLICITLY
+LINT_32		+= -erroff=E_FUNC_NO_RET_VAL
+# Some STREAMS macros will be noisy too when this isn't ignored
+LINT_32		+= -erroff=E_CONSTANT_CONDITION
+LINT_32		+= -erroff=E_CONST_EXPR
+
+# Extra noise suppressant for 64-bit
+EXTRA_OFF 	=
+EXTRA_OFF 	+= -erroff=E_CAST_INT_TO_SMALL_INT
+EXTRA_OFF 	+= -erroff=E_CAST_INT_CONST_TO_SMALL_INT
+EXTRA_OFF 	+= -erroff=E_CAST_TO_PTR_FROM_INT
+EXTRA_OFF 	+= -erroff=E_ASSIGN_INT_TO_SMALL_INT
+EXTRA_OFF 	+= -erroff=E_ASSIGN_INT_FROM_BIG_CONST
+EXTRA_OFF 	+= -erroff=E_CONST_PROMOTED_UNSIGNED_LL
+EXTRA_OFF 	+= -erroff=E_CONST_PROMOTED_LONG_LONG
+EXTRA_OFF 	+= -erroff=E_CONST_TRUNCATED_BY_ASSIGN
+EXTRA_OFF 	+= -erroff=E_PASS_INT_FROM_BIG_CONST
+EXTRA_OFF 	+= -erroff=E_COMP_INT_WITH_LARGE_INT
+EXTRA_OFF 	+= -erroff=E_ASSIGN_UINT_TO_SIGNED_INT
+EXTRA_OFF 	+= -erroff=E_ASSIGN_NARROW_CONV
+EXTRA_OFF 	+= -erroff=E_PASS_INT_TO_SMALL_INT
+EXTRA_OFF 	+= -erroff=E_PTR_CONV_LOSES_BITS
+
+LINT_64     	= $(LINT_32)
+LINT_64     	+= $(EXTRA_OFF)
+
+LINTFLAGS64     = -Xa -nsxmuF -errtags=yes $(LINT_OPT_64) $(LINT_64)
+LINT64          = $(LINT) -c $(LINTFLAGS64) $(CPPFLAGS)
+
+LINTFLAGS32     = -Xa -nsxmuF -errtags=yes $(LINT_OPT_32) $(LINT_32)
+LINT32          = $(LINT) -c $(LINTFLAGS32) $(CPPFLAGS)
+

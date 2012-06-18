@@ -1,0 +1,18 @@
+!==
+!== CRLF-LF-Conversions.txt for Samba release 2.0.10 23 Jun 2001
+!==
+We get many requests for CRLF/LF format conversion handling by samba.
+The problem is that there is no clean way to determine which files
+should / could be converted and which MUST not be.
+
+Since Unix and DOS/Windows uses alike will use .txt to represent a
+file containing ASCII text we can not reliably use the file extension.
+The same applies to the .doc extension.
+
+Samba operates around the premise that we should leave all files unchanged.
+By not implmenting CRLF/LF conversions we can not be guilty of damaging
+anyone's files.
+
+When someone comes along with a sound implementation that guarrantees file
+integrity we will jump at the opportunity to implement this feature. Until
+such time there is no prospect for action on this topic.

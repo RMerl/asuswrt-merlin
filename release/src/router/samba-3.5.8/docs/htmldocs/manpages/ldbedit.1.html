@@ -1,0 +1,54 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>ldbedit</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="ldbedit.1"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>ldbedit &#8212; Edit LDB databases using your preferred editor</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">ldbedit</code> [-?] [--usage] [-s base|one|sub] [-b basedn] [-a] [-e editor] [-H LDB-URL] [expression] [attributes...]</p></div></div><div class="refsect1" lang="en"><a name="id2483348"></a><h2>DESCRIPTION</h2><p>ldbedit is a utility that allows you to edit LDB entries (in 
+	    tdb files, sqlite files or LDAP servers) using your preferred editor.
+	    ldbedit generates an LDIF file based on your query, allows you to edit
+	    the LDIF, and then merges that LDIF back into the LDB backend.
+	</p></div><div class="refsect1" lang="en"><a name="id2483363"></a><h2>OPTIONS</h2><div class="variablelist"><dl><dt><span class="term">-?, </span><span class="term">--help</span></dt><dd><p>
+			Show list of available options, and a phrase describing what that option
+			does.
+		    </p></dd><dt><span class="term">--usage</span></dt><dd><p>
+			Show list of available options. This is similar to the help option, 
+			however it does not provide any description, and is hence shorter.
+		    </p></dd><dt><span class="term">-H &lt;ldb-url&gt;</span></dt><dd><p>
+			LDB URL to connect to. For a tdb database,
+			this will be of the form
+			tdb://<em class="replaceable"><code>filename</code></em>.
+			For a LDAP connection over unix domain
+			sockets, this will be of the form
+			ldapi://<em class="replaceable"><code>socket</code></em>. For
+			a (potentially remote) LDAP connection over
+			TCP, this will be of the form
+			ldap://<em class="replaceable"><code>hostname</code></em>. For
+			an SQLite database, this will be of the form
+			sqlite://<em class="replaceable"><code>filename</code></em>.
+		    </p></dd><dt><span class="term">-s one|sub|base</span></dt><dd><p>Search scope to use. One-level, subtree or base.</p></dd><dt><span class="term">-a, </span><span class="term">-all</span></dt><dd><p>Edit all records. This allows you to
+			apply the same change to a number of records
+			at once. You probably want to combine this
+			with an expression of the form
+			"objectclass=*".
+		    </p></dd><dt><span class="term">-e editor, </span><span class="term">--editor editor</span></dt><dd><p>Specify the editor that should be used (overrides 
+			the VISUAL and EDITOR environment
+			variables). If this option is not used, and
+			neither VISUAL nor EDITOR environment variables
+			are set, then the vi editor will be used.
+		    </p></dd><dt><span class="term">-b basedn</span></dt><dd><p>Specify Base Distinguished Name to use.</p></dd><dt><span class="term">-v, </span><span class="term">--verbose</span></dt><dd><p>Make ldbedit more verbose about the
+			operations that are being performed. Without
+			this option, ldbedit will only provide a
+			summary change line.
+		    </p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2483647"></a><h2>ENVIRONMENT</h2><div class="variablelist"><dl><dt><span class="term">LDB_URL</span></dt><dd><p>LDB URL to connect to. This can be
+		    overridden by using the -H command-line option.)
+		    </p></dd><dt><span class="term">VISUAL and EDITOR</span></dt><dd><p>
+			Environment variables used to determine what 
+			editor to use. VISUAL takes precedence over
+			EDITOR, and both are overridden by the
+			-e command-line option.
+		    </p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2483688"></a><h2>VERSION</h2><p>This man page is correct for version 4.0 of the Samba suite.</p></div><div class="refsect1" lang="en"><a name="id2483699"></a><h2>SEE ALSO</h2><p>ldb(7), ldbmodify(1), ldbdel(1), ldif(5), vi(1)</p></div><div class="refsect1" lang="en"><a name="id2483710"></a><h2>AUTHOR</h2><p>
+	    ldb was written by 
+	    <a class="ulink" href="http://samba.org/~tridge/" target="_top">Andrew Tridgell</a>.
+	</p><p>
+	    If you wish to report a problem or make a suggestion then please see
+	    the <a class="ulink" href="http://ldb.samba.org/" target="_top">http://ldb.samba.org/</a> web site for
+	    current contact and maintainer information.
+	</p><p>
+	    This manpage was written by Jelmer Vernooij and updated
+	    by Brad Hards.
+	</p></div></div></body></html>

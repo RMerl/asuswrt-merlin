@@ -1,0 +1,19 @@
+#
+# Makefile for chat on suns
+#
+
+include ../sunos4/Makedefs
+
+CFLAGS = -DSUNOS $(COPTS)
+
+all:	chat
+
+chat: chat.o
+	$(CC) -o chat chat.o
+
+install: chat
+	$(INSTALL) -c chat $(BINDIR)/chat
+	$(INSTALL) -c -m 444 chat.8 $(MANDIR)/man8/chat.8
+
+clean:
+	rm -f *~ *.o chat

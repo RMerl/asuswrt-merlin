@@ -1,0 +1,218 @@
+!==
+!== BROWSING-Config.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Date:		July 5, 1998
+Contributor:	John H Terpstra <jht@samba.org>
+
+Subject:	Cross Subnet Browsing / Cross Workgroup Browsing
+===============================================================================
+
+OVERVIEW:
+=========
+
+This document should be read in conjunction with BROWSING.txt and may
+be taken as the fast track guide to implementing browsing across subnets
+and / or across workgroups (or domains). WINS is the best tool for resolution
+of NetBIOS names to IP addesses. WINS is NOT involved in browse list handling
+except by way of name to address mapping.
+
+
+DISCUSSION:
+===========
+
+Firstly, all MS Windows networking is based on SMB (Server Message
+Block) based messaging. SMB messaging is implemented using NetBIOS. Samba
+implements NetBIOS by encapsulating it over TCP/IP. MS Windows products can
+do likewise. NetBIOS based networking uses broadcast messaging to affect
+browse list management. When running NetBIOS over TCP/IP this uses UDP
+based messaging. UDP messages can be broadcast or unicast.
+
+Normally, only unicast UDP messaging can be forwarded by routers. The
+"remote announce" parameter to smb.conf helps to project browse announcements
+to remote network segments via unicast UDP. Similarly, the "remote browse sync"
+parameter of smb.conf implements browse list collation using unicast UDP.
+
+Secondly, in those networks where Samba is the only SMB server technology
+wherever possible nmbd should be configured on one (1) machine as the WINS
+server. This makes it easy to manage the browsing environment. If each network
+segment is configured with it's own Samba WINS server, then the only way to
+get cross segment browsing to work is by using the "remote announce" and
+the "remote browse sync" parameters to your smb.conf file.
+
+If only one WINS server is used then the use of the "remote announce" and the
+"remote browse sync" parameters should NOT be necessary.
+
+Samba WINS does not support MS-WINS replication. This means that when setting up
+Samba as a WINS server there must only be one nmbd configured as a WINS server
+on the network. Some sites have used multiple Samba WINS servers for redundancy
+(one server per subnet) and then used "remote browse sync" and "remote announce"
+to affect browse list collation across all segments. Note that this means
+clients will only resolve local names, and must be configured to use DNS to
+resolve names on other subnets in order to resolve the IP addresses of the
+servers they can see on other subnets. This setup is not recommended, but is
+mentioned as a practical consideration (ie: an 'if all else fails' scenario).
+
+Lastly, take note that browse lists are a collection of unreliable broadcast
+messages that are repeated at intervals of not more than 15 minutes. This means
+that it will take time to establish a browse list and it can take up to 45
+minutes to stabilise, particularly across network segments.
+
+
+A) Use of the "Remote Announce" parameter
+------------------------------------------
+The "remote announce" parameter of smb.conf can be used to forcibly ensure
+that all the NetBIOS names on a network get announced to a remote network.
+The syntax of the "remote announce" parameter is:
+
+	remote announce = a.b.c.d [e.f.g.h] ...
+_or_
+	remote announce = a.b.c.d/WORKGROUP [e.f.g.h/WORKGROUP] ...
+
+where:
+	a.b.c.d:	is either the LMB (Local Master Browser) IP address
+	e.f.g.h:	or the broadcst address of the remote network.
+			ie: the LMB is at 192.168.1.10, or the address
+			could be given as 192.168.1.255 where the netmask
+			is assumed to be 24 bits (255.255.255.0).
+			When the remote announcement is made to the broadcast
+			address of the remote network every host will receive
+			our announcements. This is noisy and therefore
+			undesirable but may be necessary if we do NOT know
+			the IP address of the remote LMB.
+
+	WORKGROUP:	is optional and can be either our own workgroup
+			or that of the remote network. If you use the
+			workgroup name of the remote network then our
+			NetBIOS machine names will end up looking like
+			they belong to that workgroup, this may cause
+			name resolution problems and should be avoided.
+
+
+B) Use of the "Remote Browse Sync" parameter
+--------------------------------------------
+
+The "remote browse sync" parameter of smb.conf is used to announce to
+another LMB that it must synchronise it's NetBIOS name list with our
+Samba LMB. It works ONLY if the Samba server that has this option is
+simultaneously the LMB on it's network segment.
+
+The syntax of the "remote browse  sync" parameter is:
+
+	remote browse sync = a.b.c.d
+
+where:
+	a.b.c.d:	is either the IP address of the remote LMB or else
+			is the network broadcast address of the remote segment.
+
+
+C) Use of WINS
+--------------
+
+Use of WINS (either Samba WINS _or_ MS Windows NT Server WINS) is highly
+recommended. Every NetBIOS machine registers it's name together with a
+name_type value for each of of several types of service it has available.
+eg: It registers it's name directly as a unique (the type 0x03) name.
+It also registers it's name if it is running the lanmanager compatible
+server service (used to make shares and printers available to other users)
+by registering the server (the type 0x20) name.
+
+All NetBIOS names are up to 15 characters in length. The name_type variable
+is added to the end of the name - thus creating a 16 character name. Any
+name that is shorter than 15 characters is padded with spaces to the 15th
+character. ie: All NetBIOS names are 16 characters long (including the
+name_type information).
+
+WINS can store these 16 character names as they get registered. A client
+that wants to log onto the network can ask the WINS server for a list
+of all names that have registered the NetLogon service name_type. This saves
+broadcast traffic and greatly expedites logon processing. Since broadcast
+name resolution can not be used across network segments this type of
+information can only be provided via WINS _or_ via statically configured
+"lmhosts" files that must reside on all clients in the absence of WINS.
+
+WINS also serves the purpose of forcing browse list synchronisation by all
+LMB's. LMB's must synchronise their browse list with the DMB (domain master
+browser) and WINS helps the LMB to identify it's DMB. By definition this
+will work only within a single workgroup. Note that the domain master browser
+has NOTHING to do with what is referred to as an MS Windows NT Domain. The
+later is a reference to a security environment while the DMB refers to the
+master controller for browse list information only.
+
+Use of WINS will work correctly only if EVERY client TCP/IP protocol stack
+has been configured to use the WINS server/s. Any client that has not been
+configured to use the WINS server will continue to use only broadcast based
+name registration so that WINS may NEVER get to know about it. In any case,
+machines that have not registered with a WINS server will fail name to address
+lookup attempts by other clients and will therefore cause workstation access
+errors.
+
+To configure Samba as a WINS server just add "wins support = yes" to the
+smb.conf file [globals] section.
+
+To configure Samba to register with a WINS server just add
+"wins server = a.b.c.d" to your smb.conf file [globals] section.
+
+DO NOT EVER use both "wins support = yes" together with "wins server = a.b.c.d"
+particularly not using it's own IP address.
+
+
+D) Do NOT use more than one (1) protocol on MS Windows machines
+---------------------------------------------------------------
+
+A very common cause of browsing problems results from installing more than
+one protocol on an MS Windows machine.
+
+Every NetBIOS machine take part in a process of electing the LMB (and DMB)
+every 15 minutes. A set of election criteria is used to determine the order
+of precidence for winning this election process. A machine running Samba or
+Windows NT will be biased so that the most suitable machine will predictably
+win and thus retain it's role.
+
+The election process is "fought out" so to speak over every NetBIOS network
+interface. In the case of a Windows 9x machine that has both TCP/IP and IPX
+installed and has NetBIOS enabled over both protocols the election will be
+decided over both protocols. As often happens, if the Windows 9x machine is
+the only one with both protocols then the LMB may be won on the NetBIOS
+interface over the IPX protocol. Samba will then lose the LMB role as Windows
+9x will insist it knows who the LMB is. Samba will then cease to function
+as an LMB and thus browse list operation on all TCP/IP only machines will
+fail.
+
+The safest rule of all to follow it this - USE ONLY ONE PROTOCOL!
+
+
+E) Name Resolution Order
+========================
+
+Resolution of NetBIOS names to IP addresses can take place using a number
+of methods. The only ones that can provide NetBIOS name_type information
+are:
+	WINS:		the best tool!
+	LMHOSTS:	is static and hard to maintain.
+	Broadcast:	uses UDP and can not resolve names across
+			remote segments.
+
+Alternative means of name resolution includes:
+	/etc/hosts:	is static, hard to maintain, and lacks name_type info.
+	DNS:		is a good choice but lacks essential name_type info.
+
+Many sites want to restrict DNS lookups and want to avoid broadcast name
+resolution traffic. The "name resolve order" parameter is of great help here.
+The syntax of the "name resolve order" parameter is:
+
+	name resolve order = wins lmhosts bcast host
+_or_
+	name resolve order = wins lmhosts  	(eliminates bcast and host)
+
+the default is:
+	name  resolve order = host lmhost wins bcast
+
+where:
+	"host" refers the the native methods used by the Unix system
+	to implement the gethostbyname() function call. This is normally
+	controlled by:
+		/etc/host.conf
+		/etc/nsswitch.conf
+		/etc/resolv.conf
+
+===============================================================================

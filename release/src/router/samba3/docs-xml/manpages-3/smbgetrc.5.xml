@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="smbgetrc.5">
+
+<refmeta>
+	<refentrytitle>smbgetrc</refentrytitle>
+	<manvolnum>5</manvolnum>
+	<refmiscinfo class="source">Samba</refmiscinfo>
+	<refmiscinfo class="manual">File Formats and Conventions</refmiscinfo>
+	<refmiscinfo class="version">3.0</refmiscinfo>
+</refmeta>
+
+
+<refnamediv>
+	<refname>smbgetrc</refname>
+	<refpurpose>configuration file for smbget</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<para><filename>smbgetrc</filename></para>
+</refsynopsisdiv>
+
+<refsect1>
+	<title>DESCRIPTION</title>
+
+	<para>
+		This manual page documents the format and options of the <emphasis>smbgetrc</emphasis> 
+		file. This is the configuration file used by the <citerefentry><refentrytitle>smbget</refentrytitle><manvolnum>1</manvolnum></citerefentry> 
+		utility. The file contains of key-value pairs, one pair on each line. The key 
+			and value should be separated by a space.
+	</para>
+
+	<para>By default, smbget reads its configuration from <emphasis>$HOME/.smbgetrc</emphasis>, though 
+		other locations can be specified using the command-line options.</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+
+	<para>
+	The following keys can be set:
+</para>
+
+	<variablelist>
+		<varlistentry><term>resume on|off</term>
+			<listitem><para>
+			Whether aborted downloads should be automatically resumed.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+			<term>recursive on|off</term>
+			<listitem><para>Whether directories should be downloaded recursively</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>username <replaceable>name</replaceable></term>
+			<listitem><para>Username to use when logging in to the remote server. Use an empty string for anonymous access.
+			</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>password <replaceable>pass</replaceable></term>
+			<listitem><para>Password to use when logging in.</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>workgroup <replaceable>wg</replaceable></term>
+			<listitem><para>Workgroup to use when logging in</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>nonprompt on|off</term>
+			<listitem><para>Turns off asking for username and password. Useful for scripts.</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>debuglevel <replaceable>int</replaceable></term>
+			<listitem><para>(Samba) debuglevel to run at. Useful for tracking down protocol level problems.</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>dots on|off</term>
+			<listitem><para>Whether a single dot should be printed for each block that has been downloaded, instead of the default progress indicator.</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>blocksize <replaceable>int</replaceable></term>
+			<listitem><para>Number of bytes to put in a block. </para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>VERSION</title>
+
+	<para>This man page is correct for version 3.0 of 
+	the Samba suite.</para>
+</refsect1>
+
+<refsect1>
+	<title>SEE ALSO</title>
+	<para><citerefentry><refentrytitle>smbget</refentrytitle>
+	<manvolnum>1</manvolnum></citerefentry> and <citerefentry><refentrytitle>Samba</refentrytitle>
+	<manvolnum>7</manvolnum></citerefentry>.
+	</para>
+</refsect1>
+
+<refsect1>
+	<title>AUTHOR</title>
+	
+	<para>The original Samba software and related utilities 
+	were created by Andrew Tridgell. Samba is now developed
+	by the Samba Team as an Open Source project similar 
+	to the way the Linux kernel is developed.</para>
+
+	<para>This manual page was written by Jelmer Vernooij</para>
+	
+</refsect1>
+
+</refentry>
+
+

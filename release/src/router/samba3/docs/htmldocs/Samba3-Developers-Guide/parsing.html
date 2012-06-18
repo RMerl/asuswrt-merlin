@@ -1,0 +1,114 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 11. The smb.conf file</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"><link rel="home" href="index.html" title="SAMBA Developers Guide"><link rel="up" href="pt03.html" title="Part III. Samba Subsystems"><link rel="prev" href="vfs.html" title="Chapter 10. VFS Modules"><link rel="next" href="wins.html" title="Chapter 12. Samba WINS Internals"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 11. The smb.conf file</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="vfs.html">Prev</a> </td><th width="60%" align="center">Part III. Samba Subsystems</th><td width="20%" align="right"> <a accesskey="n" href="wins.html">Next</a></td></tr></table><hr></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="parsing"></a>Chapter 11. The smb.conf file</h2></div><div><div class="author"><h3 class="author"><span class="firstname">Chris</span> <span class="surname">Hertel</span></h3></div></div><div><p class="pubdate">November 1997</p></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="parsing.html#id2560349">Lexical Analysis</a></span></dt><dd><dl><dt><span class="sect2"><a href="parsing.html#id2560422">Handling of Whitespace</a></span></dt><dt><span class="sect2"><a href="parsing.html#id2560466">Handling of Line Continuation</a></span></dt><dt><span class="sect2"><a href="parsing.html#id2560518">Line Continuation Quirks</a></span></dt></dl></dd><dt><span class="sect1"><a href="parsing.html#id2560595">Syntax</a></span></dt><dd><dl><dt><span class="sect2"><a href="parsing.html#id2560653">About params.c</a></span></dt></dl></dd></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2560349"></a>Lexical Analysis</h2></div></div></div><p>
+Basically, the file is processed on a line by line basis.  There are
+four types of lines that are recognized by the lexical analyzer
+(params.c):
+</p><div class="orderedlist"><ol type="1"><li><p>
+Blank lines - Lines containing only whitespace.
+</p></li><li><p>
+Comment lines - Lines beginning with either a semi-colon or a
+pound sign (';' or '#').
+</p></li><li><p>
+Section header lines - Lines beginning with an open square bracket ('[').
+</p></li><li><p>
+Parameter lines - Lines beginning with any other character.
+(The default line type.)
+</p></li></ol></div><p>
+The first two are handled exclusively by the lexical analyzer, which
+ignores them.  The latter two line types are scanned for
+</p><div class="orderedlist"><ol type="1"><li><p>
+  - Section names
+</p></li><li><p>
+  - Parameter names
+</p></li><li><p>
+  - Parameter values
+</p></li></ol></div><p>
+These are the only tokens passed to the parameter loader
+(loadparm.c).  Parameter names and values are divided from one
+another by an equal sign: '='.
+</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2560422"></a>Handling of Whitespace</h3></div></div></div><p>
+Whitespace is defined as all characters recognized by the isspace()
+function (see ctype(3C)) except for the newline character ('\n')
+The newline is excluded because it identifies the end of the line.
+</p><div class="orderedlist"><ol type="1"><li><p>
+The lexical analyzer scans past white space at the beginning of a line.
+</p></li><li><p>
+Section and parameter names may contain internal white space.  All
+whitespace within a name is compressed to a single space character. 
+</p></li><li><p>
+Internal whitespace within a parameter value is kept verbatim with 
+the exception of carriage return characters ('\r'), all of which
+are removed.
+</p></li><li><p>
+Leading and trailing whitespace is removed from names and values.
+</p></li></ol></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2560466"></a>Handling of Line Continuation</h3></div></div></div><p>
+Long section header and parameter lines may be extended across
+multiple lines by use of the backslash character ('\\').  Line
+continuation is ignored for blank and comment lines.
+</p><p>
+If the last (non-whitespace) character within a section header or on
+a parameter line is a backslash, then the next line will be
+(logically) concatonated with the current line by the lexical
+analyzer.  For example:
+</p><pre class="programlisting">
+	param name = parameter value string \
+	with line continuation.
+</pre><p>Would be read as</p><pre class="programlisting">
+    param name = parameter value string     with line continuation.
+</pre><p>
+Note that there are five spaces following the word 'string',
+representing the one space between 'string' and '\\' in the top
+line, plus the four preceeding the word 'with' in the second line.
+(Yes, I'm counting the indentation.)
+</p><p>
+Line continuation characters are ignored on blank lines and at the end
+of comments.  They are *only* recognized within section and parameter
+lines.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2560518"></a>Line Continuation Quirks</h3></div></div></div><p>Note the following example:</p><pre class="programlisting">
+	param name = parameter value string \
+    \
+    with line continuation.
+</pre><p>
+The middle line is *not* parsed as a blank line because it is first
+concatonated with the top line.  The result is
+</p><pre class="programlisting">
+param name = parameter value string         with line continuation.
+</pre><p>The same is true for comment lines.</p><pre class="programlisting">
+	param name = parameter value string \
+	; comment \
+    with a comment.
+</pre><p>This becomes:</p><pre class="programlisting">
+param name = parameter value string     ; comment     with a comment.
+</pre><p>
+On a section header line, the closing bracket (']') is considered a
+terminating character, and the rest of the line is ignored.  The lines
+</p><pre class="programlisting">
+	[ section   name ] garbage \
+    param  name  = value
+</pre><p>are read as</p><pre class="programlisting">
+	[section name]
+    param name = value
+</pre></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2560595"></a>Syntax</h2></div></div></div><p>The syntax of the smb.conf file is as follows:</p><pre class="programlisting">
+  &lt;file&gt;            :==  { &lt;section&gt; } EOF
+  &lt;section&gt;         :==  &lt;section header&gt; { &lt;parameter line&gt; }
+  &lt;section header&gt;  :==  '[' NAME ']'
+  &lt;parameter line&gt;  :==  NAME '=' VALUE NL
+</pre><p>Basically, this means that</p><div class="orderedlist"><ol type="1"><li><p>
+	a file is made up of zero or more sections, and is terminated by
+	an EOF (we knew that).
+</p></li><li><p>
+	A section is made up of a section header followed by zero or more
+	parameter lines.
+</p></li><li><p>
+	A section header is identified by an opening bracket and
+	terminated by the closing bracket.  The enclosed NAME identifies
+	the section.
+</p></li><li><p>
+	A parameter line is divided into a NAME and a VALUE.  The *first*
+	equal sign on the line separates the NAME from the VALUE.  The
+	VALUE is terminated by a newline character (NL = '\n').
+</p></li></ol></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2560653"></a>About params.c</h3></div></div></div><p>
+The parsing of the config file is a bit unusual if you are used to
+lex, yacc, bison, etc.  Both lexical analysis (scanning) and parsing
+are performed by params.c.  Values are loaded via callbacks to
+loadparm.c.
+</p></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="vfs.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="pt03.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="wins.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 10. VFS Modules </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 12. Samba WINS Internals</td></tr></table></div></body></html>

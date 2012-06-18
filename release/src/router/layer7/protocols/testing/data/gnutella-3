@@ -1,0 +1,26 @@
+GNUTELLA CONNECT/0.6
+User-Agent: Shareaza 2.1.0.0
+Remote-IP: 24.255.13.79
+Accept: application/x-gnutella2,application/x-gnutella-packets
+Accept-Encoding: deflate
+X-Ultrapeer: False
+
+GNUTELLA/0.6 200 OK
+User-Agent: Shareaza 2.1.0.0
+Listen-IP: 24.255.13.79:35229
+Remote-IP: 66.93.17.216
+Accept: application/x-gnutella2
+Content-Type: application/x-gnutella2
+Accept-Encoding: deflate
+Content-Encoding: deflate
+X-Ultrapeer: True
+X-Try-Ultrapeers: 24.78.174.19:35636 2005-08-31T02:32Z,67.160.30.114:6346 2005-08-31T02:32Z,84.119.62.85:6346 2005-08-31T02:32Z,155.207.25.147:6346 2005-08-31T02:32Z,69.157.122.198:15948 2005-08-31T02:32Z,68.12.90.229:6346 2005-08-31T02:32Z,196.206.193.128:28526 2005-08-31T02:32Z,84.222.62.111:6346 2005-08-31T02:32Z,86.128.128.208:16511 2005-08-31T02:32Z,82.234.123.135:6346 2005-08-31T02:32Z
+X-Ultrapeer-Needed: False
+
+GNUTELLA/0.6 200 OK
+Listen-IP: 66.93.17.216:6346
+Accept: application/x-gnutella2
+Content-Type: application/x-gnutella2
+Accept-Encoding: deflate
+Content-Encoding: deflate
+

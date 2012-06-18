@@ -1,0 +1,149 @@
+.\" -*- tab-width: 4 -*-
+.\" 
+.\" Copyright (c) 2003-2004 Apple Computer, Inc. All Rights Reserved.
+.\" 
+.\" Licensed under the Apache License, Version 2.0 (the "License");
+.\" you may not use this file except in compliance with the License.
+.\" You may obtain a copy of the License at
+.\" 
+.\"     http://www.apache.org/licenses/LICENSE-2.0
+.\" 
+.\" Unless required by applicable law or agreed to in writing, software
+.\" distributed under the License is distributed on an "AS IS" BASIS,
+.\" WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+.\" See the License for the specific language governing permissions and
+.\" limitations under the License.
+.\"
+.\" $Log: mDNSResponder.8,v $
+.\" Revision 1.10  2009/04/20 16:12:13  mcguire
+.\" <rdar://problem/6807798> manpage: roff errors
+.\"
+.\" Revision 1.9  2009/04/11 00:20:27  jessic2
+.\" <rdar://problem/4426780> Daemon: Should be able to turn on LogOperation dynamically
+.\"
+.\" Revision 1.8  2006/10/06 17:31:33  mkrochma
+.\" <rdar://problem/4769407> Typo in man page for mDNSResponder(8)
+.\"
+.\" Revision 1.7  2006/08/14 23:24:56  cheshire
+.\" Re-licensed mDNSResponder daemon source code under Apache License, Version 2.0
+.\"
+.\" Revision 1.6  2005/02/10 22:35:28  cheshire
+.\" <rdar://problem/3727944> Update name
+.\"
+.\" Revision 1.5  2004/06/29 02:41:38  cheshire
+.\" Add note that mDNSResponder is called mdnsd on some systems
+.\"
+.\" Revision 1.4  2004/05/18 18:14:36  cheshire
+.\" Minor wording update
+.\"
+.\" Revision 1.3  2004/04/22 02:56:08  cheshire
+.\" <rdar://problem/3619494>: mDNSResponder man page format error
+.\"
+.\" Revision 1.2  2004/04/12 18:03:24  ksekar
+.\" <rdar://problem/3619494>: mDNSResponder man page format error
+.\"
+.\" Revision 1.1  2003/11/13 03:21:38  cheshire
+.\" <rdar://problem/3086886>: No man page for mDNSResponder
+.\"
+.\"
+.\"
+.Dd April 2004              \" Date
+.Dt mDNSResponder 8         \" Document Title
+.Os Darwin                  \" Operating System
+.\"
+.Sh NAME
+.Nm mDNSResponder
+.Nd Multicast and Unicast DNS daemon    \" Name Description for whatis database
+.\" 
+.Sh SYNOPSIS
+.Nm
+.\"
+.Sh DESCRIPTION
+.Nm
+(also known as
+.Nm mdnsd
+on some systems)
+is a daemon invoked at boot time to implement Multicast DNS and DNS Service Discovery. On
+Mac OS X 10.6 (Snow Leopard), 
+.Nm 
+is also the system-wide Unicast DNS Resolver.
+.Pp
+.Nm
+listens on UDP port 5353 for Multicast DNS Query packets.
+When it receives a query for which it knows an answer,
+.Nm
+issues the appropriate Multicast DNS Reply packet.
+.Pp
+.Nm
+also performs Unicast and Multicast DNS Queries on behalf of client processes, and 
+maintains a cache of the replies.
+.Pp
+.Nm
+has no user-specifiable command-line argument, and users should not run
+.Nm
+manually.
+.Pp
+.Ss LOGGING
+There are several methods with which to examine 
+.Nm Ns 's internal state for debugging and diagnostic purposes. The syslog(1)
+logging levels map as follows:
+.Pp
+.Dl Error - Error messages
+.Dl Warning - Client-initiated operations
+.Dl Notice - Sleep proxy operations
+.Dl Info - Informational messages
+.Pp
+By default, only log level Error is logged.
+.Pp
+A SIGUSR1 signal toggles additional logging, with Warning and Notice
+enabled by default:
+.Pp
+.Dl % sudo killall -USR1 mDNSResponder
+.Pp
+Once this logging is enabled, users can additionally use syslog(1)
+to change the log filter for the process. For example, to enable log levels Emergency - Debug:
+.Pp
+.Dl % sudo syslog -c mDNSResponder -d
+.Pp
+A SIGUSR2 signal toggles packet logging:
+.Pp
+.Dl % sudo killall -USR2 mDNSResponder
+.Pp
+A SIGINFO signal will dump a snapshot summary of the internal state to 
+.Pa /var/log/system.log Ns :
+.Pp
+.Dl % sudo killall -INFO mDNSResponder
+.Sh FILES
+.Pa /usr/sbin/mDNSResponder \" Pathname
+.\"
+.Sh SEE ALSO
+.Xr mDNS 1
+.Pp
+For information on Multicast DNS, see
+.Pa http://www.multicastdns.org/
+.Pp
+For information on DNS Service Discovery, see
+.Pa http://www.dns-sd.org/
+.Pp
+For information on how to use the Multicast DNS and the
+DNS Service Discovery APIs on Mac OS X and other platforms, see
+.Pa http://developer.apple.com/bonjour/
+.Pp
+For the source code to
+.Nm , see
+.Pa http://developer.apple.com/darwin/projects/bonjour/
+.\"
+.Sh BUGS
+.Nm
+bugs are tracked in Apple Radar component "mDNSResponder".
+.\"
+.Sh HISTORY
+The
+.Nm
+daemon first appeared in Mac OS X 10.2 (Jaguar).
+.Pp
+Also available from the Darwin open source repository
+(though not officially supported by Apple) are 
+.Nm
+daemons for other platforms, including Mac OS 9, Microsoft Windows,
+Linux, FreeBSD, NetBSD, Solaris, and other POSIX systems.

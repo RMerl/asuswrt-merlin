@@ -1,0 +1,170 @@
+#! /bin/sh -x
+#
+# sample script on using the ingress capabilities using u32 classifier
+# This script tags tcindex based on metering on the ingress 
+# interface the result is used for fast classification and re-marking
+# on the egress interface
+# This is an example of a color aware mode marker with PIR configured
+# based on draft-wahjak-mcm-00.txt (section 3.1)
+#
+# The colors are defined using the Diffserv Fields
+#path to various utilities;
+#change to reflect yours.
+#
+IPROUTE=/usr/src/iproute2-current
+TC=$IPROUTE/tc/tc
+IP=$IPROUTE/ip/ip
+INDEV=eth0
+EGDEV="dev eth1"
+CIR1=1500kbit
+CIR2=1000kbit
+
+#The CBS is about 60 MTU sized packets
+CBS1=90k
+CBS2=90k
+
+############################################################ 
+#
+# install the ingress qdisc on the ingress interface
+$TC qdisc add dev $INDEV handle ffff: ingress
+############################################################ 
+#
+# Create u32 filters 
+$TC filter add dev $INDEV parent ffff: protocol ip prio 4 handle 1: u32 \
+divisor 1
+############################################################ 
+
+# The meters: Note that we have shared meters in this case as identified
+# by the index parameter
+meter1=" police index 1 rate $CIR1 burst $CBS1 "
+meter2=" police index 2 rate $CIR2 burst $CBS1 "
+meter3=" police index 3 rate $CIR2 burst $CBS2 "
+meter4=" police index 4 rate $CIR1 burst $CBS2 "
+meter5=" police index 5 rate $CIR1 burst $CBS2 "
+
+# All packets are marked with a tcindex value which is used on the egress
+# tcindex 1 maps to AF41, 2->AF42, 3->AF43, 4->BE
+
+# *********************** AF41 *************************** 
+#AF41 (DSCP 0x22) is passed on with a tcindex value 1
+#if it doesnt exceed its CIR/CBS 
+#policer 1  is used.
+#
+$TC filter add dev $INDEV parent ffff: protocol ip prio 4 u32 \
+match ip tos 0x88 0xfc \
+$meter1 \
+continue flowid :1
+#
+# if it exceeds the above but not the extra rate/burst below, it gets a 
+# tcindex value  of 2
+# policer 2 is used
+#
+$TC filter add dev $INDEV parent ffff: protocol ip prio 5 u32 \
+match ip tos 0x88 0xfc \
+$meter2 \
+continue flowid :2
+#
+# if it exceeds the above but not the rule below, it gets a tcindex value
+# of 3 (policer 3)
+#
+$TC filter add dev $INDEV parent ffff: protocol ip prio 6 u32 \
+match ip tos 0x88 0xfc \
+$meter3 \
+drop flowid :3
+#
+
+# *********************** AF42 *************************** 
+#AF42 (DSCP 0x24) from is passed on with a tcindex value 2
+#if it doesnt exceed its CIR/CBS 
+#policer 2 is used. Note that this is shared with the AF41
+#
+#
+$TC filter add dev $INDEV parent ffff: protocol ip prio 5 u32 \
+match ip tos 0x90 0xfc \
+$meter2 \
+continue flowid :2
+#
+# if it exceeds the above but not the rule below, it gets a tcindex value
+# of 3 (policer 3)
+#
+$TC filter add dev $INDEV parent ffff: protocol ip prio 6 u32 \
+match ip tos 0x90 0xfc \
+$meter3 \
+drop flowid :3
+#
+# *********************** AF43 *************************** 
+#
+#AF43 (DSCP 0x26) from is passed on with a tcindex value 3
+#if it doesnt exceed its CIR/CBS
+#policer 3 is used. Note that this is shared with the AF41 and AF42
+#
+$TC filter add dev $INDEV parent ffff: protocol ip prio 6 u32 \
+match ip tos 0x98 0xfc \
+$meter3 \
+drop flowid :3
+#
+# *********************** BE *************************** 
+#
+# Anything else (not from the AF4*) gets discarded if it 
+# exceeds 1Mbps and by default goes to BE if it doesnt
+# Note that the BE class is also used by the AF4* in the worst
+# case
+#
+$TC filter add dev $INDEV parent ffff: protocol ip prio 7 u32 \
+match ip src 0/0\
+$meter4 \
+drop flowid :4
+
+######################## Egress side ########################
+
+# attach a dsmarker
+#
+$TC qdisc add $EGDEV handle 1:0 root dsmark indices 64
+#
+# values of the DSCP to change depending on the class
+#note that the ECN bits are masked out
+#
+#AF41 (0x88 is 0x22 shifted to the right by two bits)
+#
+$TC class change $EGDEV classid 1:1 dsmark mask 0x3 \
+       value 0x88
+#AF42
+$TC class change $EGDEV classid 1:2 dsmark mask 0x3 \
+       value 0x90
+#AF43
+$TC class change $EGDEV classid 1:3 dsmark mask 0x3 \
+       value 0x98
+#BE
+$TC class change $EGDEV classid 1:3 dsmark mask 0x3 \
+       value 0x0
+#
+#
+# The class mapping
+#
+$TC filter add $EGDEV parent 1:0 protocol ip prio 1 \
+          handle 1 tcindex classid 1:1
+$TC filter add $EGDEV parent 1:0 protocol ip prio 1 \
+          handle 2 tcindex  classid 1:2
+$TC filter add $EGDEV parent 1:0 protocol ip prio 1 \
+          handle 3 tcindex  classid 1:3
+$TC filter add $EGDEV parent 1:0 protocol ip prio 1 \
+          handle 4 tcindex  classid 1:4
+#
+
+#
+echo "---- qdisc parameters Ingress  ----------"
+$TC qdisc ls dev $INDEV
+echo "---- Class parameters Ingress  ----------"
+$TC class ls dev $INDEV
+echo "---- filter parameters Ingress ----------"
+$TC filter ls dev $INDEV parent ffff:
+
+echo "---- qdisc parameters Egress  ----------"
+$TC qdisc ls $EGDEV
+echo "---- Class parameters Egress  ----------"
+$TC class ls $EGDEV
+echo "---- filter parameters Egress ----------"
+$TC filter ls $EGDEV parent 1:0
+#
+#deleting the ingress qdisc
+#$TC qdisc del $INDEV ingress

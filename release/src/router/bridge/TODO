@@ -1,0 +1,30 @@
+main code
+---------
+Add netlink based API?
+we have a tiny deviation from IEEE 802.1d: we don't kill the awaiting-tx skb
+  queue when a port leaves the FORWARDING state
+RH initscripts for setting up bridge interfaces automatically
+bridge ID change notifications
+
+move the spanning tree code to userspace
+to be MLT (Nortel Multi Link Trunking) compatible: send bpdu's on all
+  interfaces in the bonding bundle
+
+faster switch to forward mode
+  per-port STP disabling
+  'fast start': listening->learning->forwarding in 2*hello instead of 2*fd
+
+enslaved devs same MAC (like tap), then one changes
+
+managerial
+----------
+improve documentation..
+
+netfilter patch
+---------------
+sync MAC addresses DNAT/SNAT
+make src mac substitution configurable
+br_nf_pre_routing: ip_route_output -> output_key
+check: don't send unreachables
+stp state delay
+kernel panic on REDIRECT on bridge device w/o IP address

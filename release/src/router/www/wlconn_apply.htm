@@ -1,0 +1,77 @@
+﻿<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="shortcut icon" href="images/favicon.png">
+<link rel="icon" href="images/favicon.png">
+<script type="text/javascript">
+var page_modified = 0;
+var restart_time = 0;
+
+var current_page = '<% get_parameter("current_page"); %>';
+var next_page = '<% get_parameter("next_page"); %>';
+var action_script = '<% get_parameter("action_script"); %>';
+var group_id = '<% get_parameter("group_id"); %>';
+var getflag = '<% get_parameter("flag"); %>';
+
+function started_validating(){
+}
+
+function done_validating(action){
+	parent.done_validating(action, group_id);
+}
+
+function started_committing(){
+}
+
+function done_committing(){
+	page_modified = 1;
+}
+
+function no_changes_and_no_committing(){
+	parent.closePopup("connecting_table");
+}
+
+function invalid_variable_value(variable, bad_value, message){
+}
+
+function restart_needed_time(second){
+	restart_time = second;
+}
+
+function initial(){
+	// timeout 5 secs for waiting connecting, and send http request to get status after 5 secs.
+	if(page_modified == 1){
+		setTimeout("parent.ajaxGetStatus();", 5000);
+	}
+	else{ //page_modified == 0
+		if(parent.getConnectingStatus() == 2 || parent.getConnectingStatus() == 4){
+			alert("<#APSurvey_msg_connected#>");
+			parent.closePopup("connecting_table");
+		}
+		else if(parent.getConnectingStatus() == 3 || parent.getConnectingStatus() == 5){
+			parent.closePopup("connecting_table");
+			parent.showKeyPanel();
+			parent.$("#wl_key_table tbody td:first").html("<span style='color:#FFCC00;'><#APSurvey_action_ConnectingStatus35#></span>");			
+		}
+		else{
+			parent.closePopup('connecting_table');
+			alert("<#APSurvey_action_ConnectingStatus0#>");
+			parent.ajaxGetData();
+		}
+	}
+}
+</script>
+</head>
+
+<body onload="initial();">
+
+	<% update_variables(); %>
+	<% convert_asus_variables(); %>
+	<% asus_nvram_commit(); %>
+	<% notify_services(); %>
+	
+</body>
+</html>

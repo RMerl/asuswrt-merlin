@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Poptop MSCHAP2 ADS Howto</title>
+<style type="text/css">
+<!--
+.style1 {
+	font-family: "Courier New", Courier, mono;
+	font-size: 12px;
+}
+-->
+</style>
+</head>
+
+<body>
+<p><a name="network"><strong>5. Network Configuration </strong></a></p>
+<p>Microsoft AD depends heavily on DNS. You should have the DNS server working first. </p>
+<p>The pptp gateway should use the Active Directory DNS server instead of the one provided by your ISP. Otherwise, the gateway may have problems to locate the domain controller. Here is the /etc/resolv.conf in my test gateway. </p>
+<blockquote>
+<pre>search examplenet.org
+nameserver 10.0.0.1</pre>
+</blockquote><p></p>
+<hr>
+<a name="defaultroute"><strong>5.1 Default Gateway and Static Routes</strong></a>
+<p>The pptp gateway has two network cards. It is important that the default gateway is pointing to the Internet, your ISP router. Make sure that the internal network card does not have a default gateway address configured. Check the network card configuration files in /etc/sysconfig/network-scripts. </p>
+<p>In my test setup, eth0 is the internal card and eth1 is the external one. In the /etc/sysconfig/network-scripts/ifcfg-eth0, it does not have the line GATEWAY=&quot;x.x.x.x&quot;. In the ifcfg-eth1, it has an entry GATEWAY=&quot;x.x.x.x&quot; pointing to the ISP router ip address.</p>
+<p>My test internal network has multiple subnets, static routes are set up to direct traffic correctly. If you have a simple single segment internal network, you can skip the following step and go to <a href="#pforward">step 5.2</a>.</p>
+<p>To set up static routes in FC4, create a file static-routes in /etc/sysconfig directory. My static-routes file has one line: </p>
+<blockquote>
+  <pre>any net 172.16.0.0 netmask 255.255.255.0 dev eth0</pre>
+</blockquote>
+<p>The syntax of the line is important. The line must start with the word &quot;any&quot;.</p>
+<p>Check your routing table with the netstat command.</p>
+<blockquote>
+  <pre class="style1">[root@pptp sysconfig]# netstat -nr<br>Kernel IP routing table<br>Destination     Gateway         Genmask         Flags   MSS Window  irtt Iface
+192.168.0.0     0.0.0.0         255.255.255.0   U         0 0          0 eth1<br>172.16.0.0      0.0.0.0         255.255.255.0   U         0 0          0 eth0<br>10.0.0.0        0.0.0.0         255.255.255.0   U         0 0          0 eth0<br>169.254.0.0     0.0.0.0         255.255.0.0     U         0 0          0 eth0<br>0.0.0.0         192.168.0.2     0.0.0.0         UG        0 0          0 eth1</pre>
+</blockquote>
+<p><hr>
+<strong><a name="pforward"></a>5.2 Enable Packet Forwarding</strong>
+<p>For ppp to work, the packet forwarding must be enabled. Edit /etc/sysctl.conf with your favourite editor and change the line:</p>
+<blockquote>
+  <pre>net.ipv4.ip_forward = 0</pre><p></p>
+</blockquote>
+<p>to</p>
+<blockquote>
+  <pre>net.ipv4.ip_forward = 1 </pre>
+</blockquote>
+<p>The change will be effective on the next reboot. To enable it immediately:</p>
+<blockquote>
+  <pre>[root@pptp etc]# sysctl -p</pre>
+</blockquote><p></p>
+<hr>
+<a href="poptop_ads_howto_4.htm">Next</a> &nbsp;&nbsp;<a href="poptop_ads_howto_2.htm">Previous</a>&nbsp;&nbsp;<a href="poptop_ads_howto_1.htm#toc">Content</a>
+</body>
+
+</html>

@@ -1,0 +1,59 @@
+!==
+!== Application_Serving.txt for Samba release 2.0.10 23 Jun 2001
+!==
+Contributed:	January 7, 1997
+Updated:	March 24, 1998
+Contributor:	John H Terpstra <samba@samba.org>
+		Copyright (C) 1997 - John H Terpstra
+Status:		Current
+
+Subject: Using a Samba share as an administrative share for MS Office, etc.
+==============================================================================
+
+Problem:
+========
+Microsoft Office products can be installed as an administrative installation
+from which the application can either be run off the administratively installed
+product that resides on a shared resource, or from which that product can be
+installed onto workstation clients.
+
+The general mechanism for implementing an adminstrative installation involves
+running:
+	X:\setup /A, where X is the drive letter of either CDROM or floppy
+
+This installation process will NOT install the product for use per se, but
+rather results in unpacking of the compressed distribution files into a target
+shared folder. For this process you need write privilidge to the share and it
+is desirable to enable file locking and share mode operation during this
+process.
+
+Subsequent installation of MS Office from this share will FAIL unless certain
+precautions are taken. This failure will be caused by share mode operation
+which will prevent the MS Office installation process from re-opening various
+dynamic link library files and will cause sporadic file not found problems.
+
+Solution:
+=========
+1. As soon as the administrative installation (unpacking) has completed
+	set the following parameters on the share containing it:
+	[MSOP95]
+		path = /where_you_put_it
+		comment = Your comment
+		volume = "The_CD_ROM_Label"
+		read only = yes
+		available = yes
+		share modes = no
+		locking = no
+		browseable = yes
+		public = yes
+
+2. Now you are ready to run the setup program from the Microsoft Windows
+workstation as follows:-
+	\\"Server_Name"\MSOP95\msoffice\setup
+
+MS Office Sharing - Please note:
+================================
+
+Workgroup Templates should be stored on an ordinary writable or read-only share
+but USER templates MUST be stored on a writable share _OR_ on the users' local
+machine.

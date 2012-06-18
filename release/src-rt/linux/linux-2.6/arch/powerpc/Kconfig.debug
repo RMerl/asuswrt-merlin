@@ -1,0 +1,226 @@
+menu "Kernel hacking"
+
+source "lib/Kconfig.debug"
+
+config DEBUG_STACKOVERFLOW
+	bool "Check for stack overflows"
+	depends on DEBUG_KERNEL
+	help
+	  This option will cause messages to be printed if free stack space
+	  drops below a certain limit.
+
+config DEBUG_STACK_USAGE
+	bool "Stack utilization instrumentation"
+	depends on DEBUG_KERNEL
+	help
+	  Enables the display of the minimum amount of free stack which each
+	  task has ever had available in the sysrq-T and sysrq-P debug output.
+
+	  This option will slow down process creation somewhat.
+
+config DEBUG_PAGEALLOC
+        bool "Debug page memory allocations"
+        depends on DEBUG_KERNEL && !SOFTWARE_SUSPEND
+        help
+          Unmap pages from the kernel linear mapping after free_pages().
+          This results in a large slowdown, but helps to find certain types
+          of memory corruptions.
+
+
+config HCALL_STATS
+	bool "Hypervisor call instrumentation"
+	depends on PPC_PSERIES && DEBUG_FS
+	help
+	  Adds code to keep track of the number of hypervisor calls made and
+	  the amount of time spent in hypervisor calls.  Wall time spent in
+	  each call is always calculated, and if available CPU cycles spent
+	  are also calculated.  A directory named hcall_inst is added at the
+	  root of the debugfs filesystem.  Within the hcall_inst directory
+	  are files that contain CPU specific call statistics.
+
+	  This option will add a small amount of overhead to all hypervisor
+	  calls.
+
+config DEBUGGER
+	bool "Enable debugger hooks"
+	depends on DEBUG_KERNEL
+	help
+	  Include in-kernel hooks for kernel debuggers. Unless you are
+	  intending to debug the kernel, say N here.
+
+config KGDB
+	bool "Include kgdb kernel debugger"
+	depends on DEBUGGER && (BROKEN || PPC_GEN550 || 4xx)
+	select DEBUG_INFO
+	help
+	  Include in-kernel hooks for kgdb, the Linux kernel source level
+	  debugger.  See <http://kgdb.sourceforge.net/> for more information.
+	  Unless you are intending to debug the kernel, say N here.
+
+choice
+	prompt "Serial Port"
+	depends on KGDB
+	default KGDB_TTYS1
+
+config KGDB_TTYS0
+	bool "ttyS0"
+
+config KGDB_TTYS1
+	bool "ttyS1"
+
+config KGDB_TTYS2
+	bool "ttyS2"
+
+config KGDB_TTYS3
+	bool "ttyS3"
+
+endchoice
+
+config KGDB_CONSOLE
+	bool "Enable serial console thru kgdb port"
+	depends on KGDB && 8xx || CPM2
+	help
+	  If you enable this, all serial console messages will be sent
+	  over the gdb stub.
+	  If unsure, say N.
+
+config XMON
+	bool "Include xmon kernel debugger"
+	depends on DEBUGGER
+	help
+	  Include in-kernel hooks for the xmon kernel monitor/debugger.
+	  Unless you are intending to debug the kernel, say N here.
+	  Make sure to enable also CONFIG_BOOTX_TEXT on Macs. Otherwise
+	  nothing will appear on the screen (xmon writes directly to the
+	  framebuffer memory).
+	  The cmdline option 'xmon' or 'xmon=early' will drop into xmon
+	  very early during boot. 'xmon=on' will just enable the xmon
+	  debugger hooks.  'xmon=off' will disable the debugger hooks
+	  if CONFIG_XMON_DEFAULT is set.
+	  xmon will print a backtrace on the very first invocation.
+	  'xmon=nobt' will disable this autobacktrace.
+
+config XMON_DEFAULT
+	bool "Enable xmon by default"
+	depends on XMON
+	help
+	  xmon is normally disabled unless booted with 'xmon=on'.
+	  Use 'xmon=off' to disable xmon init during runtime.
+
+config XMON_DISASSEMBLY
+	bool "Include disassembly support in xmon"
+	depends on XMON
+	default y
+	help
+	  Include support for disassembling in xmon. You probably want
+	  to say Y here, unless you're building for a memory-constrained
+	  system.
+
+config IRQSTACKS
+	bool "Use separate kernel stacks when processing interrupts"
+	depends on PPC64
+	help
+	  If you say Y here the kernel will use separate kernel stacks
+	  for handling hard and soft interrupts.  This can help avoid
+	  overflowing the process kernel stacks.
+
+config BDI_SWITCH
+	bool "Include BDI-2000 user context switcher"
+	depends on DEBUG_KERNEL && PPC32
+	help
+	  Include in-kernel support for the Abatron BDI2000 debugger.
+	  Unless you are intending to debug the kernel with one of these
+	  machines, say N here.
+
+config BOOTX_TEXT
+	bool "Support for early boot text console (BootX or OpenFirmware only)"
+	depends PPC_OF
+	help
+	  Say Y here to see progress messages from the boot firmware in text
+	  mode. Requires either BootX or Open Firmware.
+
+config PPC_EARLY_DEBUG
+	bool "Early debugging (dangerous)"
+
+choice
+	prompt "Early debugging console"
+	depends on PPC_EARLY_DEBUG
+	help
+	  Use the selected console for early debugging. Careful, if you
+	  enable debugging for the wrong type of machine your kernel
+	  _will not boot_.
+
+config PPC_EARLY_DEBUG_LPAR
+	bool "LPAR HV Console"
+	depends on PPC_PSERIES
+	help
+	  Select this to enable early debugging for a machine with a HVC
+	  console on vterm 0.
+
+config PPC_EARLY_DEBUG_G5
+	bool "Apple G5"
+	depends on PPC_PMAC64
+	help
+	  Select this to enable early debugging for Apple G5 machines.
+
+config PPC_EARLY_DEBUG_RTAS_PANEL
+	bool "RTAS Panel"
+	depends on PPC_RTAS
+	help
+	  Select this to enable early debugging via the RTAS panel.
+
+config PPC_EARLY_DEBUG_RTAS_CONSOLE
+	bool "RTAS Console"
+	depends on PPC_RTAS
+	select UDBG_RTAS_CONSOLE
+	help
+	  Select this to enable early debugging via the RTAS console.
+
+config PPC_EARLY_DEBUG_MAPLE
+	bool "Maple real mode"
+	depends on PPC_MAPLE
+	help
+	  Select this to enable early debugging for Maple.
+
+config PPC_EARLY_DEBUG_ISERIES
+	bool "iSeries HV Console"
+	depends on PPC_ISERIES
+	help
+	  Select this to enable early debugging for legacy iSeries. You need
+	  to hit "Ctrl-x Ctrl-x" to see the messages on the console.
+
+config PPC_EARLY_DEBUG_PAS_REALMODE
+	bool "PA Semi real mode"
+	depends on PPC_PASEMI
+	help
+	  Select this to enable early debugging for PA Semi.
+	  Output will be on UART0.
+
+config PPC_EARLY_DEBUG_BEAT
+	bool "Beat HV Console"
+	depends on PPC_CELLEB
+	select PPC_UDBG_BEAT
+	help
+	  Select this to enable early debugging for Celleb with Beat.
+
+config PPC_EARLY_DEBUG_44x
+	bool "Early serial debugging for IBM/AMCC 44x CPUs"
+	depends on 44x
+	select PPC_UDBG_16550
+	help
+	  Select this to enable early debugging for IBM 44x chips via the
+	  inbuilt serial port.
+
+endchoice
+
+config PPC_EARLY_DEBUG_44x_PHYSLOW
+	hex "Low 32 bits of early debug UART physical address"
+	depends PPC_EARLY_DEBUG_44x
+	default "0x40000200"
+
+config PPC_EARLY_DEBUG_44x_PHYSHIGH
+	hex "EPRN of early debug UART physical address"
+	depends PPC_EARLY_DEBUG_44x
+	default "0x1"
+
+endmenu

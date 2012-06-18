@@ -1,0 +1,46 @@
+Contributor:	Unknown
+Date:		1994
+Status:		Mostly Current - refer man page
+
+Subject:	Smbtar
+============================================================================
+
+Intro
+-----
+
+sambatar is just a small extension to the smbclient program distributed with
+samba. A basic front end shell script, smbtar, is provided as an interface
+to the smbclient extensions.
+
+Extensions
+----------
+
+This release adds the following extensions to smbclient,
+
+tar [c|x] filename
+  creates or restores from a tar file. The tar file may be a tape
+or a unix tar file. tar's behaviour is modified with the newer and tarmode
+commands.
+
+tarmode [full|inc|reset|noreset]
+  With no arguments, tarmode prints the current tar mode (by default full,
+noreset). In full mode, every file is backed up during a tar command.
+In incremental, only files with the dos archive bit set are backed up.
+The archive bit is reset if in reset mode, or left untouched if in noreset.
+In reset mode, the share has to be writable, which makes sambatar even
+less secure. An alternative might be to use tarmode inc noreset which
+would implement an "expanding incremental" backup (which some may prefer
+anyway).
+
+setmode <setmode string> filename
+  This is a "freebie" - nothing really to do with sambatar. This 
+is a crude attrib like command (only the other way around). Setmode string
+is a combination of +-rhsa. So for example -rh would reset the read only
+bit on filename.
+
+newer filename
+  This is in fact part of the 1.9.13 samba distribution, but comes
+into its own with sambatar. This causes tar (or get, mget, etc) to
+only copy files newer than the specified file name. Could be used
+against the previous nights (or whatever) log file to implement incremental
+backups.

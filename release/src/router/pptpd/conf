@@ -1,0 +1,1 @@
+./configure --prefix=/usr --includedir=/opt/openwrt/mipsel-linux-uclibc/include --host=mips --libdir=/opt/openwrt/mipsel-linux-uclibc/lib/ --with-bcrelay CC=mipsel-linux-uclibc-gcc CFLAGS="-Os -mtune=mips32 -mips32 -pipe" host_alias=mips --no-recursion

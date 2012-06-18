@@ -1,0 +1,206 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Submitting Jobs and Service Requests</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Job Processing" href="jobsteps.htm">
+    <link rel="PREVIOUS" title="Job Processing" href=
+    "jobsteps.htm">
+    <link rel="NEXT" title="Job Reception " href="reception.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "jobsteps.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          15. Job Processing</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "reception.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="SUBMITTING">15.2. Submitting Jobs
+      and Service Requests</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><var class="LITERAL">lpd_port=</var><span class=
+          "emphasis"><i class="EMPHASIS">Listening Port for <b
+          class="APPLICATION">lpd</b></i></span></p>
+        </li>
+
+        <li>
+          <p><var class="LITERAL">unix_socket_path=</var><span
+          class="emphasis"><i class="EMPHASIS">Unix socket for <b
+          class="APPLICATION">lpd</b> connections</i></span></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>After the <b class="APPLICATION">lpd</b> server has done
+      its initialization, it will attempt to bind to the <b class=
+      "APPLICATION">lpd</b> listening port specified by the <var
+      class="LITERAL">lpd_port</var> value. This value has the
+      format <var class="LITERAL">[ipaddr%]port</var>. If the <var
+      class="LITERAL">ipaddr</var> is specified then the lpd server
+      binds to the interface with the specified address otherwise
+      it binds to all interfaces. The port value can be a number or
+      name the name of a service; The port corresponding to the
+      service name is used. The <var class="LITERAL">printer</var>
+      services port is 515. If the port binding operation is
+      successful and the server has not been request to run in
+      <span class="emphasis"><i class=
+      "EMPHASIS">foreground</i></span> mode by the <var class=
+      "LITERAL">-F</var> command line option, then a child process
+      is forked and the parent process will exit. The child process
+      then takes steps to disconnect itself from the control
+      terminal of the process that started it.</p>
+
+      <p>The <var class="LITERAL">unix_socket_path</var> option
+      specifies the pathname of a <span class="emphasis"><i class=
+      "EMPHASIS">fifo</i></span> socket that local processes can
+      use instead of the TCP/IP port.</p>
+
+      <p>The main <b class="APPLICATION">lpd</b> process will then
+      start a <span class="emphasis"><i class="EMPHASIS">queue
+      checking</i></span> process that will check all of the spool
+      queues used by the server for queues that have pending jobs.
+      This process sends a message to the main <b class=
+      "APPLICATION">lpd</b> process requesting that it start a
+      service process for this queue.</p>
+
+      <p>The <b class="APPLICATION">lpd</b> process will then sit
+      in a loop waiting for one of the following events:</p>
+
+      <ol type="1">
+        <li>
+          <p>An incoming connection request. If the maximum number
+          of children has not been exceeded, then a new process
+          will be forked to handle this connection.</p>
+        </li>
+
+        <li>
+          <p>A child process exiting. The server will check to see
+          if there is a pending request to start a server for a
+          queue that could not be accommodated due to too many
+          processes running.</p>
+        </li>
+
+        <li>
+          <p>A request to start a service process for a queue. If
+          the number of active processes is less than the maximum
+          allowed a service process will be started, otherwise the
+          request will be placed on a list for service when the
+          number of processes active decreases.</p>
+        </li>
+
+        <li>
+          <p>A timeout alarm for the queue rescanning operation.
+          This is discussed in the next section in detail.</p>
+        </li>
+      </ol>
+
+      <p>When connection is accepted by the <b class=
+      "APPLICATION">lpd</b> spooler, the following steps are taken
+      to processes the job.</p>
+
+      <ol type="1">
+        <li>
+          <p>First, a timeout is established for the transfer of
+          the information from client to the <b class=
+          "APPLICATION">lpd</b> server. This is done to prevent a
+          denial of service attack by processes that do not close
+          connections in a timely manner.</p>
+        </li>
+
+        <li>
+          <p>A single line is read into an internal buffer. This
+          line must be terminated with a <var class=
+          "LITERAL">NEWLINE</var> character.</p>
+        </li>
+
+        <li>
+          <p>The input line is parsed and the actions required are
+          determined.</p>
+        </li>
+
+        <li>
+          <p>If the activity requires access to the spool queue
+          information, then the current directory of the process is
+          changed to the spool directory. This allows all file
+          accesses to then be relative to this directory.</p>
+        </li>
+
+        <li>
+          <p>If the processing requires starting a spool queue
+          server process, a message is sent to the main <b class=
+          "APPLICATION">lpd</b> server process to start a spool
+          queue server process. By having all the processes serving
+          spool queues children of the main server process it is
+          possible to monitor and limit the total number of active
+          processes. This is important on systems with a very large
+          number of queues.</p>
+        </li>
+
+        <li>
+          <p>After the processing of the original request has been
+          completed, the process with then check to see if the
+          Spool Queue for the printer should be processed.</p>
+        </li>
+      </ol>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "jobsteps.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "reception.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Job
+          Processing</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "jobsteps.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Job
+          Reception</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

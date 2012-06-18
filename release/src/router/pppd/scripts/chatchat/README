@@ -1,0 +1,134 @@
+v 0.1 gpk@onramp.net 3/27/99
+
+I Intro
+
+   This document covers the use of the modified "chat" program and its 
+adjunct "chatchat" to login using the Security Dynamics SecurID card
+on a linux system.
+
+   This set of files comprises a modified version of the chat program
+(the one distributed with ppp-2.3.5) and a new program called chatchat
+that allows you to supply data from the keyboard to the chat program.
+
+   The SecurID card generates passwords that have a lifetime of one
+minute and are used as a first layer in dial up security. The only
+software I know of for this card is for windows, so I wrote my own. 
+This software allows you to type in the time-sensitive password right
+when your chat script is asked to supply the passcode by the remote
+system. 
+
+
+II How It Works
+
+   This version of chat his an additional command that can be put into
+its options that says "Don't reply with this string. Open this pipe,
+read the contents, and reply with that instead." Chatchat creates a
+pipe and lets you type your passcode into it, then chat picks that up
+and sends it out just as though the passcode was hardcoded into the
+options. 
+
+
+III Installation 
+
+  I've provided intel binaries and source code the the modified chat 
+program and the chatchat program. I'll recommend that you copy the 
+chat.c program into your ppp-2.3.5/chat directory (save your original 
+chat.c program first!) and re-make it using the Makefile that comes 
+with chat. Copy the new chat somewhere into your path. (On my system
+chat lives in /usr/sbin/chat, so I've copied the modified one into 
+/usr/sbin/chat.new and changed my dial in script to call chat.new
+instead of chat.
+
+  Second, compile chatchat.c and install it somewhere in your path:
+
+ gcc -g -o chatchat chatchat.c
+ cp chatchat /usr/sbin
+
+ Third, modify your chat script to use the chatchat program. Mine
+looks something like this:
+
+
+                       --------------------
+
+#!/bin/sh
+#
+# This is part 2 of the ppp-on script. It will perform the connection
+# protocol for the desired connection.
+# use atm0 to turn down the speaker volume on my sportster x2 voice modem
+# gpk 11/2/97
+
+exec /usr/sbin/chat.new  -V -v                       \
+         ABORT           "BUSY"                     \
+     ABORT              "NO DIAL TONE"      \
+         ABORT           "NO ANSWER"                \
+         TIMEOUT         50                             \
+         ""             "atm0"                  \
+         OK              ATDT$TELEPHONE                  \
+        CONNECT         ''       \
+    name:           \\da0xxxxxx  \
+    word:           @/var/tmp/p \
+        compress.       ''
+
+
+                     -----------------------
+
+ This is a standard chat script:
+
+* abort if the modem is busy, you don't get a dial tone, no one
+  answers, or 50 seconds elapses.
+
+* use atm0 to mute the modem
+
+* dial the modem, when it connects, wait to be asked for account name
+
+* when we see "name:" prompt, delay briefly then respond with your 
+  account name (fill in your account name)
+
+Now we get to the new stuff:
+
+* when we see "word:" in the password prompt, instead of responding
+  with "@/var/tmp/p", the modified chat program will open the pipe 
+  /var/tmp/p, read the passcode out of there, and send it
+
+* when we see "compress." (the last word before ppp starts), reply
+  with nothing. The script ends and we start ppp.
+
+Note:
+
+* Make sure there is some whitespace between the filename and the \.
+
+
+IV Usage
+
+   To use this install the modified chat and chatchat programs, and
+modify your chat script similar to the above. Before you dial in,
+start that chatchat program giving it the same pipe as in your config
+file. In the above case:
+
+chatchat /var/tmp/p
+
+   Wait until you have one or two tick marks left on your card's
+current number, then start your dial up process that eventually calls
+chat. When chat goes to open and read the pipe, chatchat will prompt:
+
+
+type PIN into SecurID card and 
+ enter resulting passcode:
+
+   At that point, type your PIN number into your Securid card, press
+the diamond, and type the resulting numbers in as your passcode. If
+you've left the -V -v options on your chat command you'll see
+everything so out, otherwise it works silently.
+
+   If you type the number wrong or run out of time, the server will 
+respond with an authentication failure. In that case you will have to 
+hang up and start again. I don't know how to build a conditional script 
+that says either expect "compress" next, but if you see "name:" again, 
+do this instead. 
+
+
+V Additional Information
+
+  You can obtain additional information about chat and ppp from the
+man pages for chat and pppd, as well as the PPP-HOWTO.
+

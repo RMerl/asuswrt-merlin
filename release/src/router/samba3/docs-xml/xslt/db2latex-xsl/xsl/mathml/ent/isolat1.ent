@@ -1,0 +1,89 @@
+
+<!--
+     File isolat1.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+<!ENTITY aacute           "&#x000E1;" ><!--=small a, acute accent -->
+<!ENTITY Aacute           "&#x000C1;" ><!--=capital A, acute accent -->
+<!ENTITY acirc            "&#x000E2;" ><!--=small a, circumflex accent -->
+<!ENTITY Acirc            "&#x000C2;" ><!--=capital A, circumflex accent -->
+<!ENTITY aelig            "&#x000E6;" ><!--=small ae diphthong (ligature) -->
+<!ENTITY AElig            "&#x000C6;" ><!--=capital AE diphthong (ligature) -->
+<!ENTITY agrave           "&#x000E0;" ><!--=small a, grave accent -->
+<!ENTITY Agrave           "&#x000C0;" ><!--=capital A, grave accent -->
+<!ENTITY aring            "&#x000E5;" ><!--=small a, ring -->
+<!ENTITY Aring            "&#x000C5;" ><!--=capital A, ring -->
+<!ENTITY atilde           "&#x000E3;" ><!--=small a, tilde -->
+<!ENTITY Atilde           "&#x000C3;" ><!--=capital A, tilde -->
+<!ENTITY auml             "&#x000E4;" ><!--=small a, dieresis or umlaut mark -->
+<!ENTITY Auml             "&#x000C4;" ><!--=capital A, dieresis or umlaut mark -->
+<!ENTITY ccedil           "&#x000E7;" ><!--=small c, cedilla -->
+<!ENTITY Ccedil           "&#x000C7;" ><!--=capital C, cedilla -->
+<!ENTITY eacute           "&#x000E9;" ><!--=small e, acute accent -->
+<!ENTITY Eacute           "&#x000C9;" ><!--=capital E, acute accent -->
+<!ENTITY ecirc            "&#x000EA;" ><!--=small e, circumflex accent -->
+<!ENTITY Ecirc            "&#x000CA;" ><!--=capital E, circumflex accent -->
+<!ENTITY egrave           "&#x000E8;" ><!--=small e, grave accent -->
+<!ENTITY Egrave           "&#x000C8;" ><!--=capital E, grave accent -->
+<!ENTITY eth              "&#x000F0;" ><!--=small eth, Icelandic -->
+<!ENTITY ETH              "&#x000D0;" ><!--=capital Eth, Icelandic -->
+<!ENTITY euml             "&#x000EB;" ><!--=small e, dieresis or umlaut mark -->
+<!ENTITY Euml             "&#x000CB;" ><!--=capital E, dieresis or umlaut mark -->
+<!ENTITY iacute           "&#x000ED;" ><!--=small i, acute accent -->
+<!ENTITY Iacute           "&#x000CD;" ><!--=capital I, acute accent -->
+<!ENTITY icirc            "&#x000EE;" ><!--=small i, circumflex accent -->
+<!ENTITY Icirc            "&#x000CE;" ><!--=capital I, circumflex accent -->
+<!ENTITY igrave           "&#x000EC;" ><!--=small i, grave accent -->
+<!ENTITY Igrave           "&#x000CC;" ><!--=capital I, grave accent -->
+<!ENTITY iuml             "&#x000EF;" ><!--=small i, dieresis or umlaut mark -->
+<!ENTITY Iuml             "&#x000CF;" ><!--=capital I, dieresis or umlaut mark -->
+<!ENTITY ntilde           "&#x000F1;" ><!--=small n, tilde -->
+<!ENTITY Ntilde           "&#x000D1;" ><!--=capital N, tilde -->
+<!ENTITY oacute           "&#x000F3;" ><!--=small o, acute accent -->
+<!ENTITY Oacute           "&#x000D3;" ><!--=capital O, acute accent -->
+<!ENTITY ocirc            "&#x000F4;" ><!--=small o, circumflex accent -->
+<!ENTITY Ocirc            "&#x000D4;" ><!--=capital O, circumflex accent -->
+<!ENTITY ograve           "&#x000F2;" ><!--=small o, grave accent -->
+<!ENTITY Ograve           "&#x000D2;" ><!--=capital O, grave accent -->
+<!ENTITY oslash           "&#x000F8;" ><!--latin small letter o with stroke -->
+<!ENTITY Oslash           "&#x000D8;" ><!--=capital O, slash -->
+<!ENTITY otilde           "&#x000F5;" ><!--=small o, tilde -->
+<!ENTITY Otilde           "&#x000D5;" ><!--=capital O, tilde -->
+<!ENTITY ouml             "&#x000F6;" ><!--=small o, dieresis or umlaut mark -->
+<!ENTITY Ouml             "&#x000D6;" ><!--=capital O, dieresis or umlaut mark -->
+<!ENTITY szlig            "&#x000DF;" ><!--=small sharp s, German (sz ligature) -->
+<!ENTITY thorn            "&#x000FE;" ><!--=small thorn, Icelandic -->
+<!ENTITY THORN            "&#x000DE;" ><!--=capital THORN, Icelandic -->
+<!ENTITY uacute           "&#x000FA;" ><!--=small u, acute accent -->
+<!ENTITY Uacute           "&#x000DA;" ><!--=capital U, acute accent -->
+<!ENTITY ucirc            "&#x000FB;" ><!--=small u, circumflex accent -->
+<!ENTITY Ucirc            "&#x000DB;" ><!--=capital U, circumflex accent -->
+<!ENTITY ugrave           "&#x000F9;" ><!--=small u, grave accent -->
+<!ENTITY Ugrave           "&#x000D9;" ><!--=capital U, grave accent -->
+<!ENTITY uuml             "&#x000FC;" ><!--=small u, dieresis or umlaut mark -->
+<!ENTITY Uuml             "&#x000DC;" ><!--=capital U, dieresis or umlaut mark -->
+<!ENTITY yacute           "&#x000FD;" ><!--=small y, acute accent -->
+<!ENTITY Yacute           "&#x000DD;" ><!--=capital Y, acute accent -->
+<!ENTITY yuml             "&#x000FF;" ><!--=small y, dieresis or umlaut mark -->

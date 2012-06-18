@@ -1,0 +1,7 @@
+# -*- Makefile -*-
+noinst_LTLIBRARIES += libmnote-canon.la
+libmnote_canon_la_SOURCES = \
+	canon/exif-mnote-data-canon.c canon/exif-mnote-data-canon.h \
+	canon/mnote-canon-entry.c canon/mnote-canon-entry.h \
+	canon/mnote-canon-tag.c canon/mnote-canon-tag.h
+libmnote_canon_la_LIBADD = $(LTLIBINTL)

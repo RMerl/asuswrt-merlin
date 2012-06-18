@@ -1,0 +1,69 @@
+#!/bin/sh
+# $Id: ncpprint,v 1.1.1.1 2008/10/15 03:28:26 james26_jang Exp $
+# This script is an input filter for printcap printing on a unix machine. It
+# uses the nprint program to print the file to the specified ncp-based 
+# server and queue.
+# For example you could have a printcap entry like this
+#
+# ncp:lp=/dev/null:sd=/usr/spool/ncp:sh:if=/usr/local/bin/ncpprint
+#
+# which would create a unix printer called "ncp" that will print via this 
+# script. You will need to create the spool directory /usr/spool/ncp with
+# appropriate permissions and ownerships for your system.
+
+#
+# This version reads from a ${SPOOLDIR}/general.cfg
+#  file or uses the PRINTCAP_ENTRY environment variable
+#  passed by LPRng,  and the 'ncp_options' value in it.
+#  The username and password information are in an 'authfile'
+#
+#
+# If you use the ${SPOOLDIR}/general.cfg file, it should contain:
+#   server=PC_SERVER
+#   printer=PRINTER_QUEUE
+#   authfile=auth
+#
+#
+# Example:
+#   server=NWSERVER
+#   printer=P_QUEUE1
+#   authfile=auth
+# authfile has:
+#   username=fred
+#   password=
+#
+# You can also  put options into the printcap ncp_options entry
+# ncp:lp=/dev/null:sd=/usr/spool/ncp:sh:if=/usr/local/bin/ncpprint
+#   ncp_options= server=NWSERVER printer=P_QUEUE1 authfile=authfile
+#
+
+if [ -f ./general.cfg ] ; then
+	. ./general.cfg
+fi
+options=`echo "${PRINTCAP_ENTRY}" | sed -n -e 's/:ncp_options=//' `
+if [ -n "$options" ] ; then
+	eval export $options
+fi
+
+# get username and password values
+if [ -n "$authfile' -a -f "$authfile" ] ; then
+	. $authfile
+fi
+
+usercmd=""
+if [ "$username" != "" ]; then
+   if [ "$password" != "" ]; then
+		usercmd="-U $username -P $password"
+   else
+        usercmd="-U $username -n"
+   fi
+fi
+
+#cat > /tmp/printout
+#x_command=""
+#case $translate in
+#  yes) x_command="translate" ;;
+#esac
+#echo $server $password $translate $x_command > /tmp/ncpprint.log
+
+/usr/bin/nprint -S $server -q $printer $usercmd -N - 2>/dev/null

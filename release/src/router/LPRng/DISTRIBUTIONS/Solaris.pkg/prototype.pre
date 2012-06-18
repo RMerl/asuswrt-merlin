@@ -1,0 +1,31 @@
+#
+# written by Willi Burmeister (wib@cs.uni-kiel.de) for LPRng
+#
+# prototype
+#
+i pkginfo
+i copyright
+i postinstall
+i preremove
+i postremove
+i i.preserve
+i r.preserve
+#
+# our default value
+#
+!default 0755 root bin 
+#
+# /etc
+#
+d none /etc ? ? ?
+#
+d none /etc/inet ? ? ?
+#
+e sed  /etc/inet/inetd.conf=inetd.conf ? ? ?
+#
+d none /etc/init.d ? ? ?
+d none /etc/rc2.d ? ? ?
+d none /etc/rc1.d ? ? ?
+d none /etc/rc0.d ? ? ?
+d none /etc/rcS.d ? ? ?
+#

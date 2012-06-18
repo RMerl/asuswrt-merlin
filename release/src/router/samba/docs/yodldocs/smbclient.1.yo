@@ -1,0 +1,746 @@
+mailto(samba@samba.org) 
+
+manpage(smbclient htmlcommand((1)))(1)(23 Oct 1998)(Samba)(SAMBA)
+
+label(NAME)
+manpagename(smbclient)(ftp-like client to access SMB/CIFS resources on servers)
+
+label(SYNOPSIS)
+manpagesynopsis()
+
+bf(smbclient) link(servicename)(servicename) [link(password)(password)] [link(-s smb.conf)(minuss)] [link(-O socket options)(minusO)][link(-R name resolve order)(minusR)] [link(-M NetBIOS name)(minusM)] [link(-i scope)(minusi)] [link(-N)(minusN)] [link(-n NetBIOS name)(minusn)] [link(-d debuglevel)(minusd)] [link(-P)(minusP)] [link(-p port)(minusp)] [link(-l log basename)(minusl)] [link(-h)(minush)] [link(-I dest IP)(minusI)] [link(-E)(minusE)] [link(-U username)(minusU)] [link(-L NetBIOS name)(minusL)] [link(-t terminal code)(minust)] [link(-m max protocol)(minusm)] [link(-b buffersize)(minusb)] [link(-W workgroup)(minusW)] [link(-T<c|x>IXFqgbNan)(minusT)] [link(-D directory)(minusD)] [link(-c command string)(minusc)]
+
+label(DESCRIPTION)
+manpagedescription()
+
+This program is part of the bf(Samba) suite.
+
+bf(smbclient) is a client that can 'talk' to an SMB/CIFS server. It
+offers an interface similar to that of the ftp program (see bf(ftp
+(1))).  Operations include things like getting files from the server
+to the local machine, putting files from the local machine to the
+server, retrieving directory information from the server and so on.
+
+label(OPTIONS)
+manpageoptions()
+
+startdit()
+
+label(servicename)
+dit(bf(servicename)) servicename is the name of the service you want
+to use on the server. A service name takes the form
+tt(//server/service) where em(server) is the NetBIOS name of the SMB/CIFS
+server offering the desired service and em(service) is the name
+of the service offered. Thus to connect to the service em(printer) on
+the SMB/CIFS server em(smbserver), you would use the servicename
+
+tt(//smbserver/printer)
+
+Note that the server name required is NOT necessarily the IP (DNS)
+host name of the server ! The name required is a NetBIOS server name,
+which may or may not be the same as the IP hostname of the machine
+running the server.
+
+The server name is looked up according to either the
+link(bf(-R))(minusR) parameter to bf(smbclient) or using the
+url(bf(name resolve order))(smb.conf.5.html#nameresolveorder)
+parameter in the smb.conf file, allowing an administrator to change
+the order and methods by which server names are looked up.
+
+label(password)
+dit(bf(password)) password is the password required to access the
+specified service on the specified server. If this parameter is
+supplied, the link(bf(-N))(minusN) option (suppress password prompt) is assumed.
+
+There is no default password. If no password is supplied on the
+command line (either by using this parameter or adding a password to
+the link(bf(-U))(minusU) option (see below)) and the link(bf(-N))(minusN) option is not specified,
+the client will prompt for a password, even if the desired service
+does not require one. (If no password is required, simply press ENTER
+to provide a null password.)
+
+Note: Some servers (including OS/2 and Windows for Workgroups) insist
+on an uppercase password. Lowercase or mixed case passwords may be
+rejected by these servers.
+
+Be cautious about including passwords in scripts.
+
+label(minuss)
+dit(bf(-s smb.conf)) This parameter specifies the pathname to the
+Samba configuration file, smb.conf. This file controls all aspects of
+the Samba setup on the machine and smbclient also needs to read this
+file.
+
+label(minusO)
+dit(bf(-O socket options)) TCP socket options to set on the client
+socket. See the url(socket options)(smb.conf.5.html#socketoptions)
+parameter in the url(bf(smb.conf (5)))(smb.conf.5.html) manpage for
+the list of valid options.
+
+label(minusR)
+dit(bf(-R name resolve order)) This option allows the user of
+smbclient to determine what name resolution services to use when
+looking up the NetBIOS name of the host being connected to.
+
+The options are :"lmhosts", "host", "wins" and "bcast". They cause
+names to be resolved as follows :
+
+startit()
+
+it() bf(lmhosts) : Lookup an IP address in the Samba lmhosts file.
+The lmhosts file is stored in the same directory as the
+url(bf(smb.conf))(smb.conf.5.html) file.
+
+it() bf(host) : Do a standard host name to IP address resolution,
+using the system /etc/hosts, NIS, or DNS lookups. This method of name
+resolution is operating system depended for instance on IRIX or
+Solaris this may be controlled by the em(/etc/nsswitch.conf) file).  
+
+it() bf(wins) : Query a name with the IP address listed in the url(bf(wins
+server))(smb.conf.5.html#winsserver) parameter in the smb.conf file. If 
+no WINS server has been specified this method will be ignored.
+
+it() bf(bcast) : Do a broadcast on each of the known local interfaces
+listed in the url(bf(interfaces))(smb.conf.5.html#interfaces) parameter
+in the smb.conf file. This is the least reliable of the name resolution
+methods as it depends on the target host being on a locally connected
+subnet. 
+
+endit()
+
+If this parameter is not set then the name resolve order defined
+in the url(bf(smb.conf))(smb.conf.5.html) file parameter 
+url((bf(name resolve order)))(smb.conf.5.html#nameresolveorder)
+will be used.
+
+The default order is lmhosts, host, wins, bcast and without this
+parameter or any entry in the url(bf("name resolve
+order"))(smb.conf.5.html#nameresolveorder) parameter of the
+url(bf(smb.conf))(smb.conf.5.html) file the name resolution methods
+will be attempted in this order.
+
+label(minusM)
+dit(bf(-M NetBIOS name)) This options allows you to send messages,
+using the "WinPopup" protocol, to another computer. Once a connection
+is established you then type your message, pressing ^D (control-D) to
+end.
+
+If the receiving computer is running WinPopup the user will receive
+the message and probably a beep. If they are not running WinPopup the
+message will be lost, and no error message will occur.
+
+The message is also automatically truncated if the message is over
+1600 bytes, as this is the limit of the protocol.
+
+One useful trick is to cat the message through bf(smbclient).
+For example:
+
+tt(cat mymessage.txt | smbclient -M FRED)
+
+will send the message in the file em(mymessage.txt) to the machine FRED.
+
+You may also find the link(bf(-U))(minusU) and link(bf(-I))(minusI) options useful, as they allow
+you to control the FROM and TO parts of the message.
+
+See the url(bf(message command))(smb.conf.5.html#messagecommand)
+parameter in the bf(smb.conf (5)) for a description of how to handle
+incoming WinPopup messages in Samba.
+
+Note: Copy WinPopup into the startup group on your WfWg PCs if you
+want them to always be able to receive messages.
+
+label(minusi)
+dit(bf(-i scope)) This specifies a NetBIOS scope that smbclient will use
+to communicate with when generating NetBIOS names. For details on the
+use of NetBIOS scopes, see rfc1001.txt and rfc1002.txt. NetBIOS scopes
+are em(very) rarely used, only set this parameter if you are the
+system administrator in charge of all the NetBIOS systems you
+communicate with.
+
+label(minusN)
+dit(bf(-N)) If specified, this parameter suppresses the normal
+password prompt from the client to the user. This is useful when
+accessing a service that does not require a password.
+
+Unless a password is specified on the command line or this parameter
+is specified, the client will request a password.
+
+label(minusn)
+dit(bf(-n NetBIOS name)) By default, the client will use the local
+machine's hostname (in uppercase) as its NetBIOS name. This parameter
+allows you to override the host name and use whatever NetBIOS name you
+wish.
+
+label(minusd)
+dit(bf(-d debuglevel)) debuglevel is an integer from 0 to 10, or the
+letter 'A'.
+
+The default value if this parameter is not specified is zero.
+
+The higher this value, the more detail will be logged to the log files
+about the activities of the client. At level 0, only critical errors
+and serious warnings will be logged. Level 1 is a reasonable level for
+day to day running - it generates a small amount of information about
+operations carried out.
+
+Levels above 1 will generate considerable amounts of log data, and
+should only be used when investigating a problem. Levels above 3 are
+designed for use only by developers and generate HUGE amounts of log
+data, most of which is extremely cryptic. If debuglevel is set to the
+letter 'A', then em(all) debug messages will be printed. This setting
+is for developers only (and people who em(really) want to know how the
+code works internally).
+
+Note that specifying this parameter here will override the url(bf(log
+level))(smb.conf.5.html#loglevel) parameter in the url(bf(smb.conf
+(5)))(smb.conf.5.html) file.
+
+label(minusP)
+dit(bf(-P)) This option is no longer used. The code in Samba2.0
+now lets the server decide the device type, so no printer specific
+flag is needed.
+
+label(minusp)
+dit(bf(-p port)) This number is the TCP port number that will be used
+when making connections to the server. The standard (well-known) TCP
+port number for an SMB/CIFS server is 139, which is the default.
+
+label(minusl)
+dit(bf(-l logfilename)) If specified, logfilename specifies a base
+filename into which operational data from the running client will be
+logged.
+
+The default base name is specified at compile time.
+
+The base name is used to generate actual log file names. For example,
+if the name specified was "log", the debug file would be
+tt(log.client).
+
+The log file generated is never removed by the client.
+
+label(minush)
+dit(bf(-h)) Print the usage message for the client.
+
+label(minusI)
+dit(bf(-I IP address)) IP address is the address of the server to
+connect to. It should be specified in standard "a.b.c.d" notation.
+
+Normally the client would attempt to locate a named SMB/CIFS server by
+looking it up via the NetBIOS name resolution mechanism described
+above in the link(bf(name resolve order))(minusR) parameter
+above. Using this parameter will force the client to assume that the
+server is on the machine with the specified IP address and the NetBIOS
+name component of the resource being connected to will be ignored.
+
+There is no default for this parameter. If not supplied, it will be
+determined automatically by the client as described above.
+
+label(minusE)
+dit(bf(-E)) This parameter causes the client to write messages to the
+standard error stream (stderr) rather than to the standard output
+stream.
+
+By default, the client writes messages to standard output - typically
+the user's tty.
+
+label(minusU)
+dit(bf(-U username)) This specifies the user name that will be used by
+the client to make a connection, assuming your server is not a downlevel
+server that is running a protocol level that uses passwords on shares,
+not on usernames.
+
+Some servers are fussy about the case of this name, and some insist
+that it must be a valid NetBIOS name.
+
+If no username is supplied, it will default to an uppercase version of
+the environment variable tt(USER) or tt(LOGNAME) in that order.  If no
+username is supplied and neither environment variable exists the
+username "GUEST" will be used.
+
+If the tt(USER) environment variable contains a '%' character,
+everything after that will be treated as a password. This allows you
+to set the environment variable to be tt(USER=username%password) so
+that a password is not passed on the command line (where it may be
+seen by the ps command).
+
+If the service you are connecting to requires a password, it can be
+supplied using the link(bf(-U))(minusU) option, by appending a percent symbol ("%")
+then the password to username.  For example, to attach to a service as
+user tt("fred") with password tt("secret"), you would specify. nl()
+
+tt(-U fred%secret) nl()
+
+on the command line. Note that there are no spaces around the percent
+symbol.
+
+If you specify the password as part of username then the link(bf(-N))(minusN) option
+(suppress password prompt) is assumed.
+
+If you specify the password as a parameter em(AND) as part of username
+then the password as part of username will take precedence. Putting
+nothing before or nothing after the percent symbol will cause an empty
+username or an empty password to be used, respectively.
+
+The password may also be specified by setting up an environment
+variable called tt(PASSWD) that contains the users password. Note
+that this may be very insecure on some systems but on others allows
+users to script smbclient commands without having a password appear in
+the command line of a process listing.
+
+Note: Some servers (including OS/2 and Windows for Workgroups) insist
+on an uppercase password. Lowercase or mixed case passwords may be
+rejected by these servers.
+
+Be cautious about including passwords in scripts or in the
+tt(PASSWD) environment variable. Also, on many systems the command
+line of a running process may be seen via the tt(ps) command to be
+safe always allow smbclient to prompt for a password and type it in
+directly.
+
+label(minusL)
+dit(bf(-L)) This option allows you to look at what services are
+available on a server. You use it as tt("smbclient -L host") and a
+list should appear.  The link(bf(-I))(minusI) option may be useful if your NetBIOS
+names don't match your tcp/ip dns host names or if you are trying to
+reach a host on another network.
+
+label(minust)
+dit(bf(-t terminal code)) This option tells smbclient how to interpret
+filenames coming from the remote server. Usually Asian language
+multibyte UNIX implementations use different character sets than
+SMB/CIFS servers (em(EUC) instead of em(SJIS) for example). Setting
+this parameter will let smbclient convert between the UNIX filenames
+and the SMB filenames correctly. This option has not been seriously
+tested and may have some problems.
+
+The terminal codes include tt(sjis), tt(euc), tt(jis7), tt(jis8),
+tt(junet), tt(hex), tt(cap). This is not a complete list, check the
+Samba source code for the complete list.
+
+label(minusm)
+dit(bf(-m max protocol level)) With the new code in Samba2.0,
+bf(smbclient) always attempts to connect at the maximum
+protocols level the server supports. This parameter is
+preserved for backwards compatibility, but any string
+following the bf(-m) will be ignored.
+
+label(minusb)
+dit(bf(-b buffersize)) This option changes the transmit/send buffer
+size when getting or putting a file from/to the server. The default
+is 65520 bytes. Setting this value smaller (to 1200 bytes) has been
+observed to speed up file transfers to and from a Win9x server.
+
+label(minusW)
+dit(bf(-W WORKGROUP)) Override the default workgroup specified in the
+url(bf(workgroup))(smb.conf.5.html#workgroup) parameter of the
+url(bf(smb.conf))(smb.conf.5.html) file for this connection. This may
+be needed to connect to some servers.
+
+label(minusT) dit(bf(-T tar options)) smbclient may be used to create
+bf(tar (1)) compatible backups of all the files on an SMB/CIFS
+share. The secondary tar flags that can be given to this option are :
+
+	startdit()
+
+	dit(bf(c)) Create a tar file on UNIX. Must be followed by the
+	name of a tar file, tape device or tt("-") for standard output. If
+	using standard output you must turn the log level to its lowest value
+    tt(-d0) to avoid corrupting your tar file. This flag is
+	mutually exclusive with the bf(x) flag.
+
+	dit(bf(x)) Extract (restore) a local tar file back to a
+	share. Unless the link(bf(-D))(minusD) option is given, the tar files will be
+	restored from the top level of the share. Must be followed by the name
+	of the tar file, device or tt("-") for standard input. Mutually exclusive
+	with the bf(c) flag. Restored files have their creation times (mtime)
+	set to the date saved in the tar file. Directories currently do not
+	get their creation dates restored properly.
+
+	dit(bf(I)) Include files and directories. Is the default
+	behavior when filenames are specified above. Causes tar files to
+	be included in an extract or create (and therefore everything else to
+	be excluded). See example below.  Filename globbing works 
+	in one of two ways.  See bf(r) below.
+
+	dit(bf(X)) Exclude files and directories. Causes tar files to
+	be excluded from an extract or create. See example below.  Filename
+	globbing works in one of two ways now. See bf(r) below.
+
+	dit(bf(b)) Blocksize. Must be followed by a valid (greater than
+	zero) blocksize.  Causes tar file to be written out in
+	blocksize*TBLOCK (usually 512 byte) blocks.
+
+	dit(bf(g)) Incremental. Only back up files that have the
+	archive bit set. Useful only with the bf(c) flag.
+
+	dit(bf(q)) Quiet. Keeps tar from printing diagnostics as it
+	works.  This is the same as tarmode quiet.
+
+	dit(bf(r)) Regular expression include or exclude.  Uses regular 
+	regular expression matching for excluding or excluding files if 
+	compiled with HAVE_REGEX_H. However this mode can be very slow. If 
+	not compiled with HAVE_REGEX_H, does a limited wildcard match on * and 
+	?.
+
+	dit(bf(N)) Newer than. Must be followed by the name of a file
+	whose date is compared against files found on the share during a
+	create. Only files newer than the file specified are backed up to the
+	tar file. Useful only with the bf(c) flag.
+
+	dit(bf(a)) Set archive bit. Causes the archive bit to be reset
+	when a file is backed up. Useful with the bf(g) and bf(c) flags.
+
+	enddit()
+
+em(Tar Long File Names)
+
+smbclient's tar option now supports long file names both on backup and
+restore. However, the full path name of the file must be less than
+1024 bytes.  Also, when a tar archive is created, smbclient's tar
+option places all files in the archive with relative names, not
+absolute names.
+
+em(Tar Filenames)
+
+All file names can be given as DOS path names (with tt(\) as the
+component separator) or as UNIX path names (with tt(/) as the
+component separator).
+
+em(Examples)
+
+startit()
+
+it() Restore from tar file backup.tar into myshare on mypc (no password on share).
+
+	tt(smbclient //mypc/myshare "" -N -Tx backup.tar)
+
+it() Restore everything except users/docs
+
+	tt(smbclient //mypc/myshare "" -N -TXx backup.tar users/docs)
+
+it() Create a tar file of the files beneath users/docs.
+
+	tt(smbclient //mypc/myshare "" -N -Tc backup.tar users/docs)
+
+it() Create the same tar file as above, but now use a DOS path name.
+
+	tt(smbclient //mypc/myshare "" -N -tc backup.tar users\edocs)
+
+it() Create a tar file of all the files and directories in the share.
+
+	tt(smbclient //mypc/myshare "" -N -Tc backup.tar *)
+
+endit()
+
+label(minusD)
+dit(bf(-D initial directory)) Change to initial directory before
+starting. Probably only of any use with the tar link(bf(-T))(minusT) option.
+
+label(minusc)
+dit(bf(-c command string)) command string is a semicolon separated
+list of commands to be executed instead of prompting from stdin.
+link(bf(-N))(minusN) is implied by bf(-c).
+
+This is particularly useful in scripts and for printing stdin to the
+server, e.g. tt(-c 'print -').
+
+enddit()
+
+label(OPERATIONS)
+manpagesection(OPERATIONS)
+
+Once the client is running, the user is presented with a prompt :
+
+tt(smb:\>)
+
+The backslash ("\") indicates the current working directory on the
+server, and will change if the current working directory is changed.
+
+The prompt indicates that the client is ready and waiting to carry out
+a user command. Each command is a single word, optionally followed by
+parameters specific to that command. Command and parameters are
+space-delimited unless these notes specifically state otherwise. All
+commands are case-insensitive.  Parameters to commands may or may not
+be case sensitive, depending on the command.
+
+You can specify file names which have spaces in them by quoting the
+name with double quotes, for example "a long file name".
+
+Parameters shown in square brackets (e.g., "[parameter]") are
+optional. If not given, the command will use suitable
+defaults. Parameters shown in angle brackets (e.g., "<parameter>") are
+required.
+
+Note that all commands operating on the server are actually performed
+by issuing a request to the server. Thus the behavior may vary from
+server to server, depending on how the server was implemented.
+
+The commands available are given here in alphabetical order.
+
+startdit()
+
+label(questionmark) dit(bf(? [command])) If "command" is specified,
+the bf(?) command will display a brief informative message about the
+specified command.  If no command is specified, a list of available
+commands will be displayed.
+
+label(exclaimationmark) dit(bf(! [shell command])) If "shell command"
+is specified, the bf(!)  command will execute a shell locally and run
+the specified shell command. If no command is specified, a local shell
+will be run.
+
+label(cd) dit(bf(cd [directory name])) If "directory name" is
+specified, the current working directory on the server will be changed
+to the directory specified. This operation will fail if for any reason
+the specified directory is inaccessible.
+
+If no directory name is specified, the current working directory on
+the server will be reported.
+
+label(del) dit(bf(del <mask>)) The client will request that the server
+attempt to delete all files matching "mask" from the current working
+directory on the server.
+
+label(dir) dit(bf(dir <mask>)) A list of the files matching "mask" in
+the current working directory on the server will be retrieved from the
+server and displayed.
+
+label(exit) dit(bf(exit)) Terminate the connection with the server and
+exit from the program.
+
+label(get) dit(bf(get <remote file name> [local file name])) Copy the
+file called "remote file name" from the server to the machine running
+the client. If specified, name the local copy "local file name".  Note
+that all transfers in smbclient are binary. See also the
+link(bf(lowercase))(lowercase) command.
+
+label(help) dit(bf(help [command])) See the link(bf(?))(questionmark)
+command above.
+
+label(lcd) dit(bf(lcd [directory name])) If "directory name" is
+specified, the current working directory on the local machine will
+be changed to the directory specified. This operation will fail if for
+any reason the specified directory is inaccessible.
+
+If no directory name is specified, the name of the current working
+directory on the local machine will be reported.
+
+label(lowercase) dit(bf(lowercase)) Toggle lowercasing of filenames
+for the link(bf(get))(get) and link(bf(mget))(mget) commands.
+
+When lowercasing is toggled ON, local filenames are converted to
+lowercase when using the link(bf(get))(get) and link(bf(mget))(mget)
+commands. This is often useful when copying (say) MSDOS files from a
+server, because lowercase filenames are the norm on UNIX systems.
+
+label(ls) dit(bf(ls <mask>)) See the link(bf(dir))(dir) command above.
+
+label(mask) dit(bf(mask <mask>)) This command allows the user to set
+up a mask which will be used during recursive operation of the
+link(bf(mget))(mget) and link(bf(mput))(mput) commands.
+
+The masks specified to the link(bf(mget))(mget) and
+link(bf(mput))(mput) commands act as filters for directories rather
+than files when recursion is toggled ON.
+
+The mask specified with the .B mask command is necessary to filter
+files within those directories. For example, if the mask specified in
+an link(bf(mget))(mget) command is "source*" and the mask specified
+with the mask command is "*.c" and recursion is toggled ON, the
+link(bf(mget))(mget) command will retrieve all files matching "*.c" in
+all directories below and including all directories matching "source*"
+in the current working directory.
+
+Note that the value for mask defaults to blank (equivalent to "*") and
+remains so until the mask command is used to change it. It retains the
+most recently specified value indefinitely. To avoid unexpected
+results it would be wise to change the value of .I mask back to "*"
+after using the link(bf(mget))(mget) or link(bf(mput))(mput) commands.
+
+label(md) dit(bf(md <directory name>)) See the link(bf(mkdir))(mkdir)
+command.
+
+label(mget) dit(bf(mget <mask>)) Copy all files matching mask from the
+server to the machine running the client.
+
+Note that mask is interpreted differently during recursive operation
+and non-recursive operation - refer to the link(bf(recurse))(recurse)
+and link(bf(mask))(mask) commands for more information. Note that all
+transfers in .B smbclient are binary. See also the
+link(bf(lowercase))(lowercase) command.
+
+label(mkdir) dit(bf(mkdir <directory name>)) Create a new directory on
+the server (user access privileges permitting) with the specified
+name.
+
+label(mput) dit(bf(mput <mask>)) Copy all files matching mask in
+the current working directory on the local machine to the current
+working directory on the server.
+
+Note that mask is interpreted differently during recursive operation
+and non-recursive operation - refer to the link(bf(recurse))(recurse)
+and link(bf(mask))(mask) commands for more information. Note that all
+transfers in .B smbclient are binary.
+
+label(print) dit(bf(print <file name>)) Print the specified file
+from the local machine through a printable service on the server.
+
+See also the link(bf(printmode))(printmode) command.
+
+label(printmode) dit(bf(printmode <graphics or text>)) Set the print
+mode to suit either binary data (such as graphical information) or
+text. Subsequent print commands will use the currently set print
+mode.
+
+label(prompt) dit(bf(prompt)) Toggle prompting for filenames during
+operation of the link(bf(mget))(mget) and link(bf(mput))(mput)
+commands.
+
+When toggled ON, the user will be prompted to confirm the transfer of
+each file during these commands. When toggled OFF, all specified files
+will be transferred without prompting.
+
+label(put) dit(bf(put <local file name> [remote file name])) Copy the
+file called "local file name" from the machine running the client to
+the server. If specified, name the remote copy "remote file name".
+Note that all transfers in smbclient are binary. See also the
+link(bf(lowercase))(lowercase) command.
+
+label(queue) dit(bf(queue)) Displays the print queue, showing the job
+id, name, size and current status.
+
+label(quit) dit(bf(quit)) See the link(bf(exit))(exit) command.
+
+label(rd) dit(bf(rd <directory name>)) See the link(bf(rmdir))(rmdir)
+command.
+
+label(recurse) dit(bf(recurse)) Toggle directory recursion for the
+commands link(bf(mget))(mget) and link(bf(mput))(mput).
+
+When toggled ON, these commands will process all directories in the
+source directory (i.e., the directory they are copying .IR from ) and
+will recurse into any that match the mask specified to the
+command. Only files that match the mask specified using the
+link(bf(mask))(mask) command will be retrieved. See also the
+link(bf(mask))(mask) command.
+
+When recursion is toggled OFF, only files from the current working
+directory on the source machine that match the mask specified to the
+link(bf(mget))(mget) or link(bf(mput))(mput) commands will be copied,
+and any mask specified using the link(bf(mask))(mask) command will be
+ignored.
+
+label(rm) dit(bf(rm <mask>)) Remove all files matching mask from
+the current working directory on the server.
+
+label(rmdir) dit(bf(rmdir <directory name>)) Remove the specified
+directory (user access privileges permitting) from the server.
+
+label(tar) dit(bf(tar <c|x>[IXbgNa])) Performs a tar operation - see
+the link(bf(-T))(minusT) command line option above. Behavior may be
+affected by the link(bf(tarmode))(tarmode) command (see below). Using
+g (incremental) and N (newer) will affect tarmode settings. Note that
+using the "-" option with tar x may not work - use the command line
+option instead.
+
+label(blocksize) dit(bf(blocksize <blocksize>)) Blocksize. Must be
+followed by a valid (greater than zero) blocksize. Causes tar file to
+be written out in blocksize*TBLOCK (usually 512 byte) blocks.
+
+label(tarmode) dit(bf(tarmode <full|inc|reset|noreset>)) Changes tar's
+behavior with regard to archive bits. In full mode, tar will back up
+everything regardless of the archive bit setting (this is the default
+mode). In incremental mode, tar will only back up files with the
+archive bit set. In reset mode, tar will reset the archive bit on all
+files it backs up (implies read/write share).
+
+label(setmode) dit(bf(setmode <filename> <perm=[+|\-]rsha>)) A version
+of the DOS attrib command to set file permissions. For example:
+
+tt(setmode myfile +r)
+
+would make myfile read only.
+
+enddit()
+
+label(NOTES)
+manpagesection(NOTES)
+
+Some servers are fussy about the case of supplied usernames,
+passwords, share names (AKA service names) and machine names. If you
+fail to connect try giving all parameters in uppercase.
+
+It is often necessary to use the link(bf(-n))(minusn) option when connecting to some
+types of servers. For example OS/2 LanManager insists on a valid
+NetBIOS name being used, so you need to supply a valid name that would
+be known to the server.
+
+smbclient supports long file names where the server supports the
+LANMAN2 protocol or above.
+
+label(ENVIRONMENTVARIABLES)
+manpagesection(ENVIRONMENT VARIABLES)
+
+The variable bf(USER) may contain the username of the person using the
+client.  This information is used only if the protocol level is high
+enough to support session-level passwords.
+
+The variable bf(PASSWD) may contain the password of the person using
+the client.  This information is used only if the protocol level is
+high enough to support session-level passwords.
+
+label(INSTALLATION)
+manpagesection(INSTALLATION)
+
+The location of the client program is a matter for individual system
+administrators. The following are thus suggestions only.
+
+It is recommended that the smbclient software be installed in the
+/usr/local/samba/bin or /usr/samba/bin directory, this directory
+readable by all, writeable only by root. The client program itself
+should be executable by all. The client should em(NOT) be setuid or
+setgid!
+
+The client log files should be put in a directory readable and
+writeable only by the user.
+
+To test the client, you will need to know the name of a running
+SMB/CIFS server. It is possible to run url(bf(smbd (8)))(smbd.8.html)
+an ordinary user - running that server as a daemon on a
+user-accessible port (typically any port number over 1024) would
+provide a suitable test server.
+
+label(DIAGNOSTICS)
+manpagesection(DIAGNOSTICS)
+
+Most diagnostics issued by the client are logged in a specified log
+file. The log file name is specified at compile time, but may be
+overridden on the command line.
+
+The number and nature of diagnostics available depends on the debug
+level used by the client. If you have problems, set the debug level to
+3 and peruse the log files.
+
+label(VERSION)
+manpagesection(VERSION)
+
+This man page is correct for version 2.0 of the Samba suite.
+
+label(AUTHOR)
+manpageauthor()
+
+The original Samba software and related utilities were created by
+Andrew Tridgell email(samba@samba.org). Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+
+The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+url(bf(ftp://ftp.icce.rug.nl/pub/unix/))(ftp://ftp.icce.rug.nl/pub/unix/))
+and updated for the Samba2.0 release by Jeremy Allison.
+email(samba@samba.org).
+
+See url(bf(samba (7)))(samba.7.html) to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.

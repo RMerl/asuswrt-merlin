@@ -1,0 +1,7 @@
+This is used to set the security mark value associated with the
+packet for use by security subsystems such as SELinux.  It is only
+valid in the
+.B mangle
+table.
+.TP
+.BI "--selctx " "security_context"

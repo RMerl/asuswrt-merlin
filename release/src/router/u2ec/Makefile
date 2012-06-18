@@ -1,0 +1,62 @@
+#
+# U2EC Makefile
+#
+# Copyright (C) 2008 ASUSTeK Corporation
+#
+#
+
+#ifeq ($(strip $(CROSS_COMPILE)),)
+#CROSS_COMPILE := mipsel-linux-
+#CC := $(CROSS_COMPILE)gcc
+#AR := $(CROSS_COMPILE)ar
+#AS := $(CROSS_COMPILE)as
+#LD := $(CROSS_COMPILE)ld
+#NM := $(CROSS_COMPILE)nm
+#RANLIB := $(CROSS_COMPILE)ranlib
+#STRIP := $(CROSS_COMPILE)strip
+#SIZE := $(CROSS_COMPILE)size
+#endif
+
+PROGS	= u2ec
+OBJS	= usbsock.o testusb.o
+DEBUG	= n
+
+ifeq ($(DEBUG),y)
+	DEBFLAGS = -O -g -DU2EC_DEBUG
+	DEBFLAGS += -DPDEBUG_SENDSECV
+	DEBFLAGS += -DPDEBUG_DECODE
+	OBJS += debug.o decode.o
+else
+	DEBFLAGS = -s -O2
+endif
+
+#ifeq ($(strip $(CROSS_COMPILE)),)
+#	CC = gcc
+#	DEBFLAGS += -DU2EC_ONPC
+#	LDFLAGS = -L/usr/local/lib -lusb -lpthread -Wl,--rpath -Wl,/usr/local/lib
+#else
+	CFLAGS = -DSUPPORT_LPRng
+	CFLAGS += -I. -I$(TOP)/shared
+	CFLAGS += -I$(LINUXDIR)/include -I$(SRCBASE)/include
+	LDFLAGS = -lpthread
+#	LDFLAGS += -L$(TOP)/libusb10/libusb/.libs -lusb-1.0
+#	LDFLAGS += -L$(TOP)/libusb/libusb/.libs -lusb
+#	LDFLAGS += -L$(TOP)/libusb-0.1.12/.libs -lusb
+	LDFLAGS += -L$(TOP)/shared -lshared
+	LDFLAGS += -L$(TOP)/nvram -lnvram
+#endif
+
+CFLAGS += -Wall -I.
+CFLAGS += $(DEBFLAGS)
+
+all: $(PROGS)
+	$(STRIP) $(PROGS)
+
+$(PROGS): $(OBJS) $(TOP)/libusb-0.1.12/.libs/libusb.a
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+install: $(PROGS)
+	install -D $(PROGS) $(INSTALLDIR)/usr/sbin/$(PROGS)
+
+clean:
+	rm -f $(PROGS) *.o *~

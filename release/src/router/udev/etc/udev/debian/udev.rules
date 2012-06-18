@@ -1,0 +1,101 @@
+# There are a number of modifiers that are allowed to be used in some
+# of the different fields. They provide the following subsitutions:
+#
+# %n the "kernel number" of the device.
+#    For example, 'sda3' has a "kernel number" of '3'
+# %k the kernel name for the device
+# %M the kernel major number for the device
+# %m the kernel minor number for the device
+# %b the bus id for the device
+# %c the string returned by the PROGRAM
+# %s{filename} the content of a sysfs attribute
+# %% the '%' char itself
+#
+
+# workaround for devices which do not report media changes
+SUBSYSTEMS=="ide", KERNEL=="hd[a-z]", ATTR{removable}=="1", \
+	ENV{ID_MODEL}=="IOMEGA_ZIP*",	NAME="%k", OPTIONS+="all_partitions"
+SUBSYSTEMS=="ide", KERNEL=="hd[a-z]", ATTRS{media}=="floppy", \
+	OPTIONS+="all_partitions"
+
+# SCSI devices
+SUBSYSTEMS=="scsi", KERNEL=="sr[0-9]*",	NAME="scd%n", SYMLINK+="sr%n"
+
+# USB devices
+SUBSYSTEMS=="usb", KERNEL=="auer[0-9]*",	NAME="usb/%k"
+SUBSYSTEMS=="usb", KERNEL=="cpad[0-9]*",	NAME="usb/%k"
+SUBSYSTEMS=="usb", KERNEL=="dabusb*",		NAME="usb/%k"
+SUBSYSTEMS=="usb", KERNEL=="hiddev*",		NAME="usb/%k"
+SUBSYSTEMS=="usb", KERNEL=="legousbtower*",	NAME="usb/%k"
+SUBSYSTEMS=="usb", KERNEL=="lp[0-9]*",		NAME="usb/%k"
+SUBSYSTEMS=="usb", KERNEL=="ttyUSB*", \
+	ATTRS{product}=="Palm Handheld*|Handspring Visor|palmOne Handheld", \
+					SYMLINK+="pilot"
+
+# usbfs-like devices
+SUBSYSTEM=="usb_device",	PROGRAM="/bin/sh -c 'K=%k; K=$${K#usbdev}; printf bus/usb/%%03i/%%03i $${K%%%%.*} $${K#*.}'", ACTION=="add", \
+				NAME="%c"
+
+# serial devices
+KERNEL=="capi",			NAME="capi20", SYMLINK+="isdn/capi20"
+KERNEL=="capi[0-9]*",		NAME="capi/%n"
+
+# video devices
+KERNEL=="dvb*",			PROGRAM="/bin/sh -c 'K=%k; K=$${K#dvb}; printf dvb/adapter%%i/%%s $${K%%%%.*} $${K#*.}", ACTION=="add", \
+				NAME="%c"
+KERNEL=="card[0-9]*",		NAME="dri/%k"
+
+# misc devices
+KERNEL=="hw_random",		NAME="hwrng"
+KERNEL=="tun",			NAME="net/%k"
+KERNEL=="evtchn",		NAME="xen/%k"
+
+KERNEL=="cdemu[0-9]*",		NAME="cdemu/%n"
+KERNEL=="pktcdvd[0-9]*",	NAME="pktcdvd/%n"
+KERNEL=="pktcdvd",		NAME="pktcdvd/control"
+
+KERNEL=="cpu[0-9]*",		NAME="cpu/%n/cpuid"
+KERNEL=="msr[0-9]*",		NAME="cpu/%n/msr"
+KERNEL=="microcode",		NAME="cpu/microcode"
+
+KERNEL=="umad*",		NAME="infiniband/%k"
+KERNEL=="issm*",		NAME="infiniband/%k"
+KERNEL=="uverbs*",		NAME="infiniband/%k"
+KERNEL=="ucm*",			NAME="infiniband/%k"
+
+# ALSA devices
+KERNEL=="controlC[0-9]*",	NAME="snd/%k"
+KERNEL=="hwC[D0-9]*",		NAME="snd/%k"
+KERNEL=="pcmC[D0-9cp]*",	NAME="snd/%k"
+KERNEL=="midiC[D0-9]*",		NAME="snd/%k"
+KERNEL=="timer",		NAME="snd/%k"
+KERNEL=="seq",			NAME="snd/%k"
+
+# ieee1394 devices       
+KERNEL=="dv1394*",		NAME="dv1394/%n"
+KERNEL=="video1394*",		NAME="video1394/%n"
+
+# input devices
+KERNEL=="mice",			NAME="input/%k"
+KERNEL=="mouse[0-9]*",		NAME="input/%k"
+KERNEL=="event[0-9]*",		NAME="input/%k"
+KERNEL=="js[0-9]*",		NAME="input/%k"
+KERNEL=="ts[0-9]*",		NAME="input/%k"
+KERNEL=="uinput",		NAME="input/%k"
+
+# Zaptel
+KERNEL=="zapctl",		NAME="zap/ctl"
+KERNEL=="zaptimer",		NAME="zap/timer"
+KERNEL=="zapchannel",		NAME="zap/channel"
+KERNEL=="zappseudo",		NAME="zap/pseudo"
+KERNEL=="zap[0-9]*",		NAME="zap/%n"
+
+# AOE character devices
+SUBSYSTEM=="aoe", KERNEL=="discover",	NAME="etherd/%k"
+SUBSYSTEM=="aoe", KERNEL=="err",	NAME="etherd/%k"
+SUBSYSTEM=="aoe", KERNEL=="interfaces",	NAME="etherd/%k"
+SUBSYSTEM=="aoe", KERNEL=="revalidate",	NAME="etherd/%k"
+
+# device mapper creates its own device nodes, so ignore these
+KERNEL=="device-mapper",	NAME="mapper/control"
+

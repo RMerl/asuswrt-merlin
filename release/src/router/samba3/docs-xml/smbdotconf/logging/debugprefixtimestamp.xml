@@ -1,0 +1,19 @@
+<samba:parameter name="debug prefix timestamp"
+                 context="G"
+                 developer="1"
+				 type="boolean"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>
+    With this option enabled, the timestamp message header is prefixed to the debug message without the
+    filename and function information that is included with the <smbconfoption name="debug timestamp"/> 
+    parameter. This gives timestamps to the messages without adding an additional line.
+    </para>
+
+    <para>
+    Note that this parameter overrides the <smbconfoption name="debug timestamp"/> parameter.
+    </para>
+
+</description>
+<value type="default">no</value>
+</samba:parameter>

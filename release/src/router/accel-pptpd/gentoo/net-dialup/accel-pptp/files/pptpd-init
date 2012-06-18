@@ -1,0 +1,21 @@
+#!/sbin/runscript
+
+depend() {
+	need net
+}
+
+start() {
+	ebegin "Starting pptpd"
+	modprobe pptp
+	start-stop-daemon --start --quiet --exec /usr/sbin/pptpd -- ${PPTPD_OPTS}
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping pptpd"
+	start-stop-daemon --stop --quiet --pidfile /var/run/pptpd.pid
+	result=$?
+	start-stop-daemon --stop --quiet --oknodo --exec /usr/sbin/pptpctrl
+	result=$(( $result + $? ))
+	eend $result
+}

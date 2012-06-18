@@ -1,0 +1,261 @@
+#!/bin/bash
+#
+# The ebtablesu/ebtablesd programs are deprecated,
+# they're mostly useful for debugging ebtables in daemon
+# mode. For fast population of tables, use ebtables-restore.
+# You should probably just ignore this script.
+#
+# This script can be used to compare the speed of
+# the different methods for adding rules in ebtables
+# chains.
+#
+# Apart from the standard method of adding rules with
+# the ebtables tool, rules can be added (faster) with
+# ebtablesd running in the background and accepting
+# commands through a pipe. The pipe can be written to
+# with the standard shell tools. The only restriction is
+# that spaces are only used to separate options and
+# commands, i.e. spaces are not allowed in strings, even
+# if they are between "". E.g.
+# ebtablesu -A --log-prefix "a space"
+# is not allowed, however
+# ebtablesu -A --log-prefix "a_space"
+# is allowed.
+#
+# Author: Bart De Schuymer
+#
+
+export PIPE=/tmp/ebtables-v2.0.7/ebtablesd_pipe
+export EBTABLES=/usr/local/sbin/ebtables
+export EBTABLESD=/usr/local/sbin/ebtablesd
+export EBTABLESU=/usr/local/sbin/ebtablesu
+
+if [[ $# = 0 ]]
+then
+
+rm -f iets niets iets.out niets.out
+MAXLIMIT=10000
+for ((LIMIT=10; LIMIT <= MAXLIMIT; LIMIT *= 10)) do
+  killall ebtablesd 2>/dev/null
+  $EBTABLES --init-table
+  export LIMIT
+  time $0 1
+  echo "added" $LIMIT "rules with echo"
+  $EBTABLES --atomic-file iets --atomic-save
+  $EBTABLES -F
+  time $0 2
+  echo "added" $LIMIT "rules with ebtables"
+  $EBTABLES --atomic-file niets --atomic-save
+  $EBTABLES --atomic-file iets -L > iets.out
+  $EBTABLES --atomic-file niets -L > niets.out
+  diff -purN iets.out niets.out
+  rm -f niets niets.out
+  killall ebtablesd 2>/dev/null
+  $EBTABLES -F
+  time $0 3
+  echo "added" $LIMIT "rules with ebtablesu"
+  $EBTABLES --atomic-file niets --atomic-save
+  $EBTABLES --atomic-file iets -L > iets.out
+  $EBTABLES --atomic-file niets -L > niets.out
+  diff -purN iets.out niets.out
+  rm -f niets niets.out
+  time $0 4
+  echo "added" $LIMIT "rules with atomic-file"
+  $EBTABLES --atomic-file niets --atomic-save
+  $EBTABLES --atomic-file niets -L > niets.out
+  diff -purN iets.out niets.out
+  rm -f niets niets.out
+  time $0 5
+  echo "added" $LIMIT "rules with one atomic-commit"
+  $EBTABLES --atomic-file niets --atomic-save
+  $EBTABLES --atomic-file niets -L > niets.out
+  diff -purN iets.out niets.out
+  rm -f iets iets.out niets niets.out
+done
+
+elif [[ $1 = "1" ]]
+then
+
+$EBTABLESD &
+pid=`jobs -p '$EBTABLESD'`
+sleep 1
+$EBTABLESU open filter
+# Add rules with ebtablesd
+echo "$EBTABLESU -F" >>$PIPE
+for ((a=1; a <= LIMIT; a++)) do
+  echo "$EBTABLESU -A FORWARD" >>$PIPE
+done
+$EBTABLESU commit filter
+$EBTABLESU quit
+wait $pid
+
+elif [[ $1 = "2" ]]
+then
+
+# Add rules with ebtables
+for ((a=1; a <= LIMIT; a++))
+do
+  $EBTABLES -A FORWARD
+done
+
+elif [[ $1 = "3" ]]
+then
+
+$EBTABLESD &
+pid=`jobs -p '$EBTABLESD'`
+sleep 1
+$EBTABLESU open filter
+# Add rules with ebtablesu
+for ((a=1; a <= LIMIT; a++))
+do
+  $EBTABLESU -A FORWARD
+done
+$EBTABLESU commit filter
+$EBTABLESU quit
+wait $pid
+
+elif [[ $1 = "4" ]]
+then
+
+# Add rules with ebtables --atomic-file
+$EBTABLES --atomic-file niets --atomic-init
+for ((a=1; a <= LIMIT; a++))
+do
+  $EBTABLES --atomic-file niets -A FORWARD
+done
+$EBTABLES --atomic-file niets --atomic-commit
+
+else
+
+# Add rules taken from a binary file containing a saved table
+$EBTABLES --atomic-file iets --atomic-commit
+
+fi
+
+
+# From the results below, we can conclude the following about
+# table constructions when speed is an issue.
+# For first-time fast construction of tables, it's best to use the
+#   echo + ebtablesd method. If the echo method is unwanted, it
+#   is best to use the ebtablesu + ebtablesd method.
+#   The echo method is much faster because echo is a bash
+#   built-in command.
+#   Perhaps intialize the kernel tables to empty chains with
+#   policy DROP before constructing the table in userspace.
+# For construction of tables that were constructed earlier, it
+#   is best to save those constructed tables to a binary file
+#   and then use --atomic-commit to get the table in the kernel
+#   (this is lightning fast compared with the other methods).
+#
+# System specs:
+# processor       : 0
+# vendor_id       : AuthenticAMD
+# cpu family      : 6
+# model           : 4
+# model name      : AMD Athlon(tm) processor
+# stepping        : 4
+# cpu MHz         : 1000.592
+# cache size      : 256 KB
+# MemTotal        : 515780 kB
+#
+####10 rules####
+#
+# real    0m0.078s
+# user    0m0.030s
+# sys     0m0.045s
+# added 10 rules with echo
+#
+# real    0m0.098s
+# user    0m0.031s
+# sys     0m0.063s
+# added 10 rules with ebtables
+#
+# real    0m0.275s
+# user    0m0.083s
+# sys     0m0.188s
+# added 10 rules with ebtablesu
+#
+# real    0m0.279s
+# user    0m0.082s
+# sys     0m0.192s
+# added 10 rules with atomic-file
+#
+# real    0m0.017s
+# user    0m0.009s
+# sys     0m0.008s
+# added 10 rules with one atomic-commit
+#
+# real    0m0.095s
+# user    0m0.050s
+# sys     0m0.043s
+# added 100 rules with echo
+#
+# real    0m0.936s
+# user    0m0.315s
+# sys     0m0.587s
+# added 100 rules with ebtables
+#
+# real    0m1.967s
+# user    0m0.449s
+# sys     0m1.479s
+# added 100 rules with ebtablesu
+#
+# real    0m2.472s
+# user    0m0.745s
+# sys     0m1.660s
+# added 100 rules with atomic-file
+#
+# real    0m0.018s
+# user    0m0.006s
+# sys     0m0.012s
+# added 100 rules with one atomic-commit
+#
+# real    0m0.740s
+# user    0m0.461s
+# sys     0m0.265s
+# added 1000 rules with echo
+#
+# real    0m12.471s
+# user    0m4.423s
+# sys     0m7.828s
+# added 1000 rules with ebtables
+#
+# real    0m17.715s
+# user    0m6.814s
+# sys     0m10.604s
+# added 1000 rules with ebtablesu
+#
+# real    0m28.176s
+# user    0m8.875s
+# sys     0m18.704s
+# added 1000 rules with atomic-file
+#
+# real    0m0.025s
+# user    0m0.015s
+# sys     0m0.010s
+# added 1000 rules with one atomic-commit
+#
+# real    1m11.474s
+# user    1m9.662s
+# sys     0m1.035s
+# added 10000 rules with echo
+#
+# real    10m9.418s
+# user    4m19.163s
+# sys     5m37.548s
+# added 10000 rules with ebtables
+#
+# real    2m32.119s
+# user    1m38.085s
+# sys     0m52.298s
+# added 10000 rules with ebtablesu
+#
+# real    13m23.396s
+# user    5m29.770s
+# sys     6m44.598s
+# added 10000 rules with atomic-file
+#
+# real    0m0.319s
+# user    0m0.037s
+# sys     0m0.057s
+# added 10000 rules with one atomic-commit

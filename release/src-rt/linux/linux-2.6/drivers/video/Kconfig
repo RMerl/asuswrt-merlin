@@ -1,0 +1,1884 @@
+#
+# Video configuration
+#
+
+menu "Graphics support"
+	depends on HAS_IOMEM
+
+source "drivers/video/backlight/Kconfig"
+source "drivers/video/display/Kconfig"
+
+config VGASTATE
+       tristate
+       default n
+
+config FB
+	tristate "Support for frame buffer devices"
+	---help---
+	  The frame buffer device provides an abstraction for the graphics
+	  hardware. It represents the frame buffer of some video hardware and
+	  allows application software to access the graphics hardware through
+	  a well-defined interface, so the software doesn't need to know
+	  anything about the low-level (hardware register) stuff.
+
+	  Frame buffer devices work identically across the different
+	  architectures supported by Linux and make the implementation of
+	  application programs easier and more portable; at this point, an X
+	  server exists which uses the frame buffer device exclusively.
+	  On several non-X86 architectures, the frame buffer device is the
+	  only way to use the graphics hardware.
+
+	  The device is accessed through special device nodes, usually located
+	  in the /dev directory, i.e. /dev/fb*.
+
+	  You need an utility program called fbset to make full use of frame
+	  buffer devices. Please read <file:Documentation/fb/framebuffer.txt>
+	  and the Framebuffer-HOWTO at
+	  <http://www.tahallah.demon.co.uk/programming/prog.html> for more
+	  information.
+
+	  Say Y here and to the driver for your graphics board below if you
+	  are compiling a kernel for a non-x86 architecture.
+
+	  If you are compiling for the x86 architecture, you can say Y if you
+	  want to play with it, but it is not essential. Please note that
+	  running graphical applications that directly touch the hardware
+	  (e.g. an accelerated X server) and that are not frame buffer
+	  device-aware may cause unexpected results. If unsure, say N.
+
+config FIRMWARE_EDID
+       bool "Enable firmware EDID"
+       depends on FB
+       default n
+       ---help---
+         This enables access to the EDID transferred from the firmware.
+	 On the i386, this is from the Video BIOS. Enable this if DDC/I2C
+	 transfers do not work for your driver and if you are using
+	 nvidiafb, i810fb or savagefb.
+
+	 In general, choosing Y for this option is safe.  If you
+	 experience extremely long delays while booting before you get
+	 something on your display, try setting this to N.  Matrox cards in
+	 combination with certain motherboards and monitors are known to
+	 suffer from this problem.
+
+config FB_DDC
+       tristate
+       depends on FB
+       select I2C_ALGOBIT
+       select I2C
+       default n
+
+config FB_CFB_FILLRECT
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Include the cfb_fillrect function for generic software rectangle
+	  filling. This is used by drivers that don't provide their own
+	  (accelerated) version.
+
+config FB_CFB_COPYAREA
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Include the cfb_copyarea function for generic software area copying.
+	  This is used by drivers that don't provide their own (accelerated)
+	  version.
+
+config FB_CFB_IMAGEBLIT
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Include the cfb_imageblit function for generic software image
+	  blitting. This is used by drivers that don't provide their own
+	  (accelerated) version.
+
+config FB_SYS_FILLRECT
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Include the sys_fillrect function for generic software rectangle
+	  filling. This is used by drivers that don't provide their own
+	  (accelerated) version and the framebuffer is in system RAM.
+
+config FB_SYS_COPYAREA
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Include the sys_copyarea function for generic software area copying.
+	  This is used by drivers that don't provide their own (accelerated)
+	  version and the framebuffer is in system RAM.
+
+config FB_SYS_IMAGEBLIT
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Include the sys_imageblit function for generic software image
+	  blitting. This is used by drivers that don't provide their own
+	  (accelerated) version and the framebuffer is in system RAM.
+
+config FB_SYS_FOPS
+       tristate
+       depends on FB
+       default n
+
+config FB_DEFERRED_IO
+	bool
+	depends on FB
+	default y
+
+config FB_SVGALIB
+	tristate
+	depends on FB
+	default n
+	---help---
+	  Common utility functions useful to fbdev drivers of VGA-based
+	  cards.
+
+config FB_MACMODES
+       tristate
+       depends on FB
+       default n
+
+config FB_BACKLIGHT
+	bool
+	depends on FB
+	select BACKLIGHT_LCD_SUPPORT
+	select BACKLIGHT_CLASS_DEVICE
+	default n
+
+config FB_MODE_HELPERS
+        bool "Enable Video Mode Handling Helpers"
+        depends on FB
+	default n
+	---help---
+	  This enables functions for handling video modes using the
+	  Generalized Timing Formula and the EDID parser. A few drivers rely
+          on this feature such as the radeonfb, rivafb, and the i810fb. If
+	  your driver does not take advantage of this feature, choosing Y will
+	  just increase the kernel size by about 5K.
+
+config FB_TILEBLITTING
+       bool "Enable Tile Blitting Support"
+       depends on FB
+       default n
+       ---help---
+         This enables tile blitting.  Tile blitting is a drawing technique
+	 where the screen is divided into rectangular sections (tiles), whereas
+	 the standard blitting divides the screen into pixels. Because the
+	 default drawing element is a tile, drawing functions will be passed
+	 parameters in terms of number of tiles instead of number of pixels.
+	 For example, to draw a single character, instead of using bitmaps,
+	 an index to an array of bitmaps will be used.  To clear or move a
+	 rectangular section of a screen, the rectangle will be described in
+	 terms of number of tiles in the x- and y-axis.
+
+	 This is particularly important to one driver, matroxfb.  If
+	 unsure, say N.
+
+comment "Frame buffer hardware drivers"
+	depends on FB
+
+config FB_CIRRUS
+	tristate "Cirrus Logic support"
+	depends on FB && (ZORRO || PCI)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  This enables support for Cirrus Logic GD542x/543x based boards on
+	  Amiga: SD64, Piccolo, Picasso II/II+, Picasso IV, or EGS Spectrum.
+
+	  If you have a PCI-based system, this enables support for these
+	  chips: GD-543x, GD-544x, GD-5480.
+
+	  Please read the file <file:Documentation/fb/cirrusfb.txt>.
+
+	  Say N unless you have such a graphics board or plan to get one
+	  before you next recompile the kernel.
+
+config FB_PM2
+	tristate "Permedia2 support"
+	depends on FB && ((AMIGA && BROKEN) || PCI)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the Permedia2 AGP frame
+	  buffer card from ASK, aka `Graphic Blaster Exxtreme'.  There is a
+	  product page at
+	  <http://www.ask.com.hk/product/Permedia%202/permedia2.htm>.
+
+config FB_PM2_FIFO_DISCONNECT
+	bool "enable FIFO disconnect feature"
+	depends on FB_PM2 && PCI
+	help
+	  Support the Permedia2 FIFO disconnect feature (see CONFIG_FB_PM2).
+
+config FB_ARMCLCD
+	tristate "ARM PrimeCell PL110 support"
+	depends on FB && ARM && ARM_AMBA
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This framebuffer device driver is for the ARM PrimeCell PL110
+	  Colour LCD controller.  ARM PrimeCells provide the building
+	  blocks for System on a Chip devices.
+
+	  If you want to compile this as a module (=code which can be
+	  inserted into and removed from the running kernel), say M
+	  here and read <file:Documentation/kbuild/modules.txt>.  The module
+	  will be called amba-clcd.
+
+choice
+
+	depends on FB_ARMCLCD && (ARCH_LH7A40X || ARCH_LH7952X)
+	prompt "LCD Panel"
+	default FB_ARMCLCD_SHARP_LQ035Q7DB02
+
+config FB_ARMCLCD_SHARP_LQ035Q7DB02_HRTFT
+	bool "LogicPD LCD 3.5\" QVGA w/HRTFT IC"
+	help
+	  This is an implementation of the Sharp LQ035Q7DB02, a 3.5"
+	  color QVGA, HRTFT panel.  The LogicPD device includes
+	  an integrated HRTFT controller IC.
+	  The native resolution is 240x320.
+
+config FB_ARMCLCD_SHARP_LQ057Q3DC02
+	bool "LogicPD LCD 5.7\" QVGA"
+	help
+	  This is an implementation of the Sharp LQ057Q3DC02, a 5.7"
+	  color QVGA, TFT panel.  The LogicPD device includes an
+	  The native resolution is 320x240.
+
+config FB_ARMCLCD_SHARP_LQ64D343
+	bool "LogicPD LCD 6.4\" VGA"
+	help
+	  This is an implementation of the Sharp LQ64D343, a 6.4"
+	  color VGA, TFT panel.  The LogicPD device includes an
+	  The native resolution is 640x480.
+
+config FB_ARMCLCD_SHARP_LQ10D368
+	bool "LogicPD LCD 10.4\" VGA"
+	help
+	  This is an implementation of the Sharp LQ10D368, a 10.4"
+	  color VGA, TFT panel.  The LogicPD device includes an
+	  The native resolution is 640x480.
+
+
+config FB_ARMCLCD_SHARP_LQ121S1DG41
+	bool "LogicPD LCD 12.1\" SVGA"
+	help
+	  This is an implementation of the Sharp LQ121S1DG41, a 12.1"
+	  color SVGA, TFT panel.  The LogicPD device includes an
+	  The native resolution is 800x600.
+
+	  This panel requires a clock rate may be an integer fraction
+	  of the base LCDCLK frequency.  The driver will select the
+	  highest frequency available that is lower than the maximum
+	  allowed.  The panel may flicker if the clock rate is
+	  slower than the recommended minimum.
+
+config FB_ARMCLCD_AUO_A070VW01_WIDE
+	bool "AU Optronics A070VW01 LCD 7.0\" WIDE"
+	help
+	  This is an implementation of the AU Optronics, a 7.0"
+	  WIDE Color.  The native resolution is 234x480.
+
+config FB_ARMCLCD_HITACHI
+	bool "Hitachi Wide Screen 800x480"
+	help
+	  This is an implementation of the Hitachi 800x480.
+
+endchoice
+
+
+config FB_ACORN
+	bool "Acorn VIDC support"
+	depends on (FB = y) && ARM && (ARCH_ACORN || ARCH_CLPS7500)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the Acorn VIDC graphics
+	  hardware found in Acorn RISC PCs and other ARM-based machines.  If
+	  unsure, say N.
+
+config FB_CLPS711X
+	bool "CLPS711X LCD support"
+	depends on (FB = y) && ARM && ARCH_CLPS711X
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  Say Y to enable the Framebuffer driver for the CLPS7111 and
+	  EP7212 processors.
+
+config FB_SA1100
+	bool "SA-1100 LCD support"
+	depends on (FB = y) && ARM && ARCH_SA1100
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is a framebuffer device for the SA-1100 LCD Controller.
+	  See <http://www.linux-fbdev.org/> for information on framebuffer
+	  devices.
+
+	  If you plan to use the LCD display with your SA-1100 system, say
+	  Y here.
+
+config FB_IMX
+	tristate "Motorola i.MX LCD support"
+	depends on FB && ARM && ARCH_IMX
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+
+config FB_CYBER2000
+	tristate "CyberPro 2000/2010/5000 support"
+	depends on FB && PCI && (BROKEN || !SPARC64)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This enables support for the Integraphics CyberPro 20x0 and 5000
+	  VGA chips used in the Rebel.com Netwinder and other machines.
+	  Say Y if you have a NetWinder or a graphics card containing this
+	  device, otherwise say N.
+
+config FB_APOLLO
+	bool
+	depends on (FB = y) && APOLLO
+	default y
+	select FB_CFB_FILLRECT
+	select FB_CFB_IMAGEBLIT
+
+config FB_Q40
+	bool
+	depends on (FB = y) && Q40
+	default y
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+
+config FB_AMIGA
+	tristate "Amiga native chipset support"
+	depends on FB && AMIGA
+	help
+	  This is the frame buffer device driver for the builtin graphics
+	  chipset found in Amigas.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called amifb.
+
+config FB_AMIGA_OCS
+	bool "Amiga OCS chipset support"
+	depends on FB_AMIGA
+	help
+	  This enables support for the original Agnus and Denise video chips,
+	  found in the Amiga 1000 and most A500's and A2000's. If you intend
+	  to run Linux on any of these systems, say Y; otherwise say N.
+
+config FB_AMIGA_ECS
+	bool "Amiga ECS chipset support"
+	depends on FB_AMIGA
+	help
+	  This enables support for the Enhanced Chip Set, found in later
+	  A500's, later A2000's, the A600, the A3000, the A3000T and CDTV. If
+	  you intend to run Linux on any of these systems, say Y; otherwise
+	  say N.
+
+config FB_AMIGA_AGA
+	bool "Amiga AGA chipset support"
+	depends on FB_AMIGA
+	help
+	  This enables support for the Advanced Graphics Architecture (also
+	  known as the AGA or AA) Chip Set, found in the A1200, A4000, A4000T
+	  and CD32. If you intend to run Linux on any of these systems, say Y;
+	  otherwise say N.
+
+config FB_FM2
+	bool "Amiga FrameMaster II/Rainbow II support"
+	depends on (FB = y) && ZORRO
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the Amiga FrameMaster
+	  card from BSC (exhibited 1992 but not shipped as a CBM product).
+
+config FB_ARC
+	tristate "Arc Monochrome LCD board support"
+	depends on FB && X86
+	select FB_SYS_FILLRECT
+	select FB_SYS_COPYAREA
+	select FB_SYS_IMAGEBLIT
+	select FB_SYS_FOPS
+	help
+	  This enables support for the Arc Monochrome LCD board. The board
+	  is based on the KS-108 lcd controller and is typically a matrix
+	  of 2*n chips. This driver was tested with a 128x64 panel. This
+	  driver supports it for use with x86 SBCs through a 16 bit GPIO
+	  interface (8 bit data, 8 bit control). If you anticipate using
+	  this driver, say Y or M; otherwise say N. You must specify the
+	  GPIO IO address to be used for setting control and data.
+
+config FB_ATARI
+	bool "Atari native chipset support"
+	depends on (FB = y) && ATARI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the builtin graphics
+	  chipset found in Ataris.
+
+config FB_OF
+	bool "Open Firmware frame buffer device support"
+	depends on (FB = y) && (PPC64 || PPC_OF) && (!PPC_PSERIES || PCI)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_MACMODES
+	help
+	  Say Y if you want support with Open Firmware for your graphics
+	  board.
+
+config FB_CONTROL
+	bool "Apple \"control\" display support"
+	depends on (FB = y) && PPC_PMAC && PPC32
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_MACMODES
+	help
+	  This driver supports a frame buffer for the graphics adapter in the
+	  Power Macintosh 7300 and others.
+
+config FB_PLATINUM
+	bool "Apple \"platinum\" display support"
+	depends on (FB = y) && PPC_PMAC && PPC32
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_MACMODES
+	help
+	  This driver supports a frame buffer for the "platinum" graphics
+	  adapter in some Power Macintoshes.
+
+config FB_VALKYRIE
+	bool "Apple \"valkyrie\" display support"
+	depends on (FB = y) && (MAC || (PPC_PMAC && PPC32))
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_MACMODES
+	help
+	  This driver supports a frame buffer for the "valkyrie" graphics
+	  adapter in some Power Macintoshes.
+
+config FB_CT65550
+	bool "Chips 65550 display support"
+	depends on (FB = y) && PPC32
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the Chips & Technologies
+	  65550 graphics chip in PowerBooks.
+
+config FB_ASILIANT
+	bool "Asiliant (Chips) 69000 display support"
+	depends on (FB = y) && PCI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the Asiliant 69030 chipset
+
+config FB_IMSTT
+	bool "IMS Twin Turbo display support"
+	depends on (FB = y) && PCI
+	select FB_CFB_IMAGEBLIT
+	select FB_MACMODES if PPC
+	help
+	  The IMS Twin Turbo is a PCI-based frame buffer card bundled with
+	  many Macintosh and compatible computers.
+
+config FB_VGA16
+	tristate "VGA 16-color graphics support"
+	depends on FB && (X86 || PPC)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select VGASTATE
+	select FONT_8x16 if FRAMEBUFFER_CONSOLE
+	help
+	  This is the frame buffer device driver for VGA 16 color graphic
+	  cards. Say Y if you have such a card.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called vga16fb.
+
+config FB_STI
+	tristate "HP STI frame buffer device support"
+	depends on FB && PARISC
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	default y
+	---help---
+	  STI refers to the HP "Standard Text Interface" which is a set of
+	  BIOS routines contained in a ROM chip in HP PA-RISC based machines.
+	  Enabling this option will implement the linux framebuffer device
+	  using calls to the STI BIOS routines for initialisation.
+	
+	  If you enable this option, you will get a planar framebuffer device
+	  /dev/fb which will work on the most common HP graphic cards of the
+	  NGLE family, including the artist chips (in the 7xx and Bxxx series),
+	  HCRX, HCRX24, CRX, CRX24 and VisEG series.
+
+	  It is safe to enable this option, so you should probably say "Y".
+
+config FB_MAC
+	bool "Generic Macintosh display support"
+	depends on (FB = y) && MAC
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_MACMODES
+
+#      bool '  Apple DAFB display support' CONFIG_FB_DAFB
+config FB_HP300
+	bool
+	depends on (FB = y) && HP300
+	select FB_CFB_FILLRECT
+	select FB_CFB_IMAGEBLIT
+	default y
+
+config FB_TGA
+	tristate "TGA/SFB+ framebuffer support"
+	depends on FB && (ALPHA || TC)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select BITREVERSE
+	---help---
+	  This is the frame buffer device driver for generic TGA and SFB+
+	  graphic cards.  These include DEC ZLXp-E1, -E2 and -E3 PCI cards,
+	  also known as PBXGA-A, -B and -C, and DEC ZLX-E1, -E2 and -E3
+	  TURBOchannel cards, also known as PMAGD-A, -B and -C.
+
+	  Due to hardware limitations ZLX-E2 and E3 cards are not supported
+	  for DECstation 5000/200 systems.  Additionally due to firmware
+	  limitations these cards may cause troubles with booting DECstation
+	  5000/240 and /260 systems, but are fully supported under Linux if
+	  you manage to get it going. ;-)
+
+	  Say Y if you have one of those.
+
+config FB_VESA
+	bool "VESA VGA graphics support"
+	depends on (FB = y) && X86
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select VIDEO_SELECT
+	help
+	  This is the frame buffer device driver for generic VESA 2.0
+	  compliant graphic cards. The older VESA 1.2 cards are not supported.
+	  You will get a boot time penguin logo at no additional cost. Please
+	  read <file:Documentation/fb/vesafb.txt>. If unsure, say Y.
+
+config FB_IMAC
+	bool "Intel-based Macintosh Framebuffer Support"
+	depends on (FB = y) && X86 && EFI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the Intel-based Macintosh
+
+config FB_HECUBA
+       tristate "Hecuba board support"
+       depends on FB && X86 && MMU
+       select FB_SYS_FILLRECT
+       select FB_SYS_COPYAREA
+       select FB_SYS_IMAGEBLIT
+       select FB_SYS_FOPS
+       select FB_DEFERRED_IO
+       help
+         This enables support for the Hecuba board. This driver was tested
+         with an E-Ink 800x600 display and x86 SBCs through a 16 bit GPIO
+         interface (8 bit data, 4 bit control). If you anticpate using
+         this driver, say Y or M; otherwise say N. You must specify the
+         GPIO IO address to be used for setting control and data.
+
+config FB_HGA
+	tristate "Hercules mono graphics support"
+	depends on FB && X86
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  Say Y here if you have a Hercules mono graphics card.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called hgafb.
+
+	  As this card technology is 15 years old, most people will answer N
+	  here.
+
+config FB_HGA_ACCEL
+	bool "Hercules mono Acceleration functions (EXPERIMENTAL)"
+	depends on FB_HGA && EXPERIMENTAL
+	---help---
+	This will compile the Hercules mono graphics with
+	acceleration functions.
+
+config FB_SGIVW
+	tristate "SGI Visual Workstation framebuffer support"
+	depends on FB && X86_VISWS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  SGI Visual Workstation support for framebuffer graphics.
+
+config FB_GBE
+	bool "SGI Graphics Backend frame buffer support"
+	depends on (FB = y) && (SGI_IP32 || X86_VISWS)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+ 	help
+	  This is the frame buffer device driver for SGI Graphics Backend.
+	  This chip is used in SGI O2 and Visual Workstation 320/540.
+
+config FB_GBE_MEM
+	int "Video memory size in MB"
+	depends on FB_GBE
+	default 4
+	help
+	  This is the amount of memory reserved for the framebuffer,
+	  which can be any value between 1MB and 8MB.
+
+config FB_SBUS
+	bool "SBUS and UPA framebuffers"
+	depends on (FB = y) && SPARC
+	help
+	  Say Y if you want support for SBUS or UPA based frame buffer device.
+
+config FB_BW2
+	bool "BWtwo support"
+	depends on (FB = y) && (SPARC && FB_SBUS)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the BWtwo frame buffer.
+
+config FB_CG3
+	bool "CGthree support"
+	depends on (FB = y) && (SPARC && FB_SBUS)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the CGthree frame buffer.
+
+config FB_CG6
+	bool "CGsix (GX,TurboGX) support"
+	depends on (FB = y) && (SPARC && FB_SBUS)
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the CGsix (GX, TurboGX)
+	  frame buffer.
+
+config FB_FFB
+	bool "Creator/Creator3D/Elite3D support"
+	depends on FB_SBUS && SPARC64
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the Creator, Creator3D,
+	  and Elite3D graphics boards.
+
+config FB_TCX
+	bool "TCX (SS4/SS5 only) support"
+	depends on FB_SBUS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the TCX 24/8bit frame
+	  buffer.
+
+config FB_CG14
+	bool "CGfourteen (SX) support"
+	depends on FB_SBUS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the CGfourteen frame
+	  buffer on Desktop SPARCsystems with the SX graphics option.
+
+config FB_P9100
+	bool "P9100 (Sparcbook 3 only) support"
+	depends on FB_SBUS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the P9100 card
+	  supported on Sparcbook 3 machines.
+
+config FB_LEO
+	bool "Leo (ZX) support"
+	depends on FB_SBUS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the SBUS-based Sun ZX
+	  (leo) frame buffer cards.
+
+config FB_IGA
+	bool "IGA 168x display support"
+	depends on (FB = y) && SPARC32
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the framebuffer device for the INTERGRAPHICS 1680 and
+	  successor frame buffer cards.
+
+config FB_XVR500
+	bool "Sun XVR-500 3DLABS Wildcat support"
+	depends on (FB = y) && PCI && SPARC64
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the framebuffer device for the Sun XVR-500 and similar
+	  graphics cards based upon the 3DLABS Wildcat chipset.  The driver
+	  only works on sparc64 systems where the system firwmare has
+	  mostly initialized the card already.  It is treated as a
+	  completely dumb framebuffer device.
+
+config FB_XVR2500
+	bool "Sun XVR-2500 3DLABS Wildcat support"
+	depends on (FB = y) && PCI && SPARC64
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the framebuffer device for the Sun XVR-2500 and similar
+	  graphics cards based upon the 3DLABS Wildcat chipset.  The driver
+	  only works on sparc64 systems where the system firwmare has
+	  mostly initialized the card already.  It is treated as a
+	  completely dumb framebuffer device.
+
+config FB_PVR2
+	tristate "NEC PowerVR 2 display support"
+	depends on FB && SH_DREAMCAST
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  Say Y here if you have a PowerVR 2 card in your box.  If you plan to
+	  run linux on your Dreamcast, you will have to say Y here.
+	  This driver may or may not work on other PowerVR 2 cards, but is
+	  totally untested.  Use at your own risk.  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called pvr2fb.
+
+	  You can pass several parameters to the driver at boot time or at
+	  module load time.  The parameters look like "video=pvr2:XXX", where
+	  the meaning of XXX can be found at the end of the main source file
+	  (<file:drivers/video/pvr2fb.c>). Please see the file
+	  <file:Documentation/fb/pvr2fb.txt>.
+
+config FB_EPSON1355
+	bool "Epson 1355 framebuffer support"
+	depends on (FB = y) && (SUPERH || ARCH_CEIVA)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  Build in support for the SED1355 Epson Research Embedded RAMDAC
+	  LCD/CRT Controller (since redesignated as the S1D13505) as a
+	  framebuffer.  Product specs at
+	  <http://www.erd.epson.com/vdc/html/products.htm>.
+
+config FB_S1D13XXX
+	tristate "Epson S1D13XXX framebuffer support"
+	depends on FB
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  Support for S1D13XXX framebuffer device family (currently only
+	  working with S1D13806). Product specs at
+	  <http://www.erd.epson.com/vdc/html/legacy_13xxx.htm>
+
+config FB_ATMEL
+	tristate "AT91/AT32 LCD Controller support"
+	depends on FB && (ARCH_AT91SAM9261 || ARCH_AT91SAM9263 || AVR32)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This enables support for the AT91/AT32 LCD Controller.
+
+config FB_INTSRAM
+	bool "Frame Buffer in internal SRAM"
+	depends on FB_ATMEL && ARCH_AT91SAM9261
+	help
+	  Say Y if you want to map Frame Buffer in internal SRAM. Say N if you want
+	  to let frame buffer in external SDRAM.
+
+config FB_NVIDIA
+	tristate "nVidia Framebuffer Support"
+	depends on FB && PCI
+	select FB_BACKLIGHT if FB_NVIDIA_BACKLIGHT
+	select FB_MODE_HELPERS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select BITREVERSE
+	select VGASTATE
+	help
+	  This driver supports graphics boards with the nVidia chips, TNT
+	  and newer. For very old chipsets, such as the RIVA128, then use
+	  the rivafb.
+	  Say Y if you have such a graphics board.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called nvidiafb.
+
+config FB_NVIDIA_I2C
+       bool "Enable DDC Support"
+       depends on FB_NVIDIA
+       select FB_DDC
+       help
+	  This enables I2C support for nVidia Chipsets.  This is used
+	  only for getting EDID information from the attached display
+	  allowing for robust video mode handling and switching.
+
+	  Because fbdev-2.6 requires that drivers must be able to
+	  independently validate video mode parameters, you should say Y
+	  here.
+
+config FB_NVIDIA_DEBUG
+	bool "Lots of debug output"
+	depends on FB_NVIDIA
+	default n
+	help
+	  Say Y here if you want the nVidia driver to output all sorts
+	  of debugging information to provide to the maintainer when
+	  something goes wrong.
+
+config FB_NVIDIA_BACKLIGHT
+	bool "Support for backlight control"
+	depends on FB_NVIDIA
+	default y
+	help
+	  Say Y here if you want to control the backlight of your display.
+
+config FB_RIVA
+	tristate "nVidia Riva support"
+	depends on FB && PCI
+	select FB_BACKLIGHT if FB_RIVA_BACKLIGHT
+	select FB_MODE_HELPERS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select BITREVERSE
+	select VGASTATE
+	help
+	  This driver supports graphics boards with the nVidia Riva/Geforce
+	  chips.
+	  Say Y if you have such a graphics board.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called rivafb.
+
+config FB_RIVA_I2C
+       bool "Enable DDC Support"
+       depends on FB_RIVA
+       select FB_DDC
+       help
+	  This enables I2C support for nVidia Chipsets.  This is used
+	  only for getting EDID information from the attached display
+	  allowing for robust video mode handling and switching.
+
+	  Because fbdev-2.6 requires that drivers must be able to
+	  independently validate video mode parameters, you should say Y
+	  here.
+
+config FB_RIVA_DEBUG
+	bool "Lots of debug output"
+	depends on FB_RIVA
+	default n
+	help
+	  Say Y here if you want the Riva driver to output all sorts
+	  of debugging information to provide to the maintainer when
+	  something goes wrong.
+
+config FB_RIVA_BACKLIGHT
+	bool "Support for backlight control"
+	depends on FB_RIVA
+	default y
+	help
+	  Say Y here if you want to control the backlight of your display.
+
+config FB_I810
+	tristate "Intel 810/815 support (EXPERIMENTAL)"
+	depends on FB && EXPERIMENTAL && PCI && X86_32
+	select AGP
+	select AGP_INTEL
+	select FB_MODE_HELPERS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select VGASTATE
+	help
+	  This driver supports the on-board graphics built in to the Intel 810 
+          and 815 chipsets.  Say Y if you have and plan to use such a board.
+
+          To compile this driver as a module, choose M here: the
+	  module will be called i810fb.
+
+          For more information, please read 
+	  <file:Documentation/fb/intel810.txt>
+
+config FB_I810_GTF
+	bool "use VESA Generalized Timing Formula"
+	depends on FB_I810
+	help
+	  If you say Y, then the VESA standard, Generalized Timing Formula 
+          or GTF, will be used to calculate the required video timing values
+	  per video mode.  Since the GTF allows nondiscrete timings 
+          (nondiscrete being a range of values as opposed to discrete being a
+          set of values), you'll be able to use any combination of horizontal 
+	  and vertical resolutions, and vertical refresh rates without having
+	  to specify your own timing parameters.  This is especially useful
+	  to maximize the performance of an aging display, or if you just 
+          have a display with nonstandard dimensions. A VESA compliant 
+	  monitor is recommended, but can still work with non-compliant ones.
+	  If you need or want this, then select this option. The timings may 
+	  not be compliant with Intel's recommended values. Use at your own 
+	  risk.
+
+          If you say N, the driver will revert to discrete video timings 
+	  using a set recommended by Intel in their documentation.
+  
+          If unsure, say N.
+
+config FB_I810_I2C
+	bool "Enable DDC Support"
+	depends on FB_I810 && FB_I810_GTF
+	select FB_DDC
+	help
+
+config FB_LE80578
+	tristate "Intel LE80578 (Vermilion) support"
+	depends on FB && PCI && X86
+	select FB_MODE_HELPERS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This driver supports the LE80578 (Vermilion Range) chipset
+
+config FB_CARILLO_RANCH
+	tristate "Intel Carillo Ranch support"
+	depends on FB_LE80578 && FB && PCI && X86
+	help
+	  This driver supports the LE80578 (Carillo Ranch) board
+
+config FB_INTEL
+	tristate "Intel 830M/845G/852GM/855GM/865G/915G/945G support (EXPERIMENTAL)"
+	depends on FB && EXPERIMENTAL && PCI && X86
+	select AGP
+	select AGP_INTEL
+	select FB_MODE_HELPERS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This driver supports the on-board graphics built in to the Intel
+          830M/845G/852GM/855GM/865G/915G/915GM/945G/945GM chipsets.
+          Say Y if you have and plan to use such a board.
+
+	  If you say Y here and want DDC/I2C support you must first say Y to
+	  "I2C support" and "I2C bit-banging support" in the character devices
+	  section.
+
+	  If you say M here then "I2C support" and "I2C bit-banging support"
+	  can be build either as modules or built-in.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called intelfb.
+
+	  For more information, please read <file:Documentation/fb/intelfb.txt>
+
+config FB_INTEL_DEBUG
+	bool "Intel driver Debug Messages"
+	depends on FB_INTEL
+	---help---
+	  Say Y here if you want the Intel driver to output all sorts
+	  of debugging information to provide to the maintainer when
+	  something goes wrong.
+
+config FB_INTEL_I2C
+	bool "DDC/I2C for Intel framebuffer support"
+	depends on FB_INTEL
+	select FB_DDC
+	default y
+	help
+	  Say Y here if you want DDC/I2C support for your on-board Intel graphics.
+
+config FB_MATROX
+	tristate "Matrox acceleration"
+	depends on FB && PCI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_TILEBLITTING
+	select FB_MACMODES if PPC_PMAC
+	---help---
+	  Say Y here if you have a Matrox Millennium, Matrox Millennium II,
+	  Matrox Mystique, Matrox Mystique 220, Matrox Productiva G100, Matrox
+	  Mystique G200, Matrox Millennium G200, Matrox Marvel G200 video,
+	  Matrox G400, G450 or G550 card in your box.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called matroxfb.
+
+	  You can pass several parameters to the driver at boot time or at
+	  module load time. The parameters look like "video=matrox:XXX", and
+	  are described in <file:Documentation/fb/matroxfb.txt>.
+
+config FB_MATROX_MILLENIUM
+	bool "Millennium I/II support"
+	depends on FB_MATROX
+	help
+	  Say Y here if you have a Matrox Millennium or Matrox Millennium II
+	  video card. If you select "Advanced lowlevel driver options" below,
+	  you should check 4 bpp packed pixel, 8 bpp packed pixel, 16 bpp
+	  packed pixel, 24 bpp packed pixel and 32 bpp packed pixel. You can
+	  also use font widths different from 8.
+
+config FB_MATROX_MYSTIQUE
+	bool "Mystique support"
+	depends on FB_MATROX
+	help
+	  Say Y here if you have a Matrox Mystique or Matrox Mystique 220
+	  video card. If you select "Advanced lowlevel driver options" below,
+	  you should check 8 bpp packed pixel, 16 bpp packed pixel, 24 bpp
+	  packed pixel and 32 bpp packed pixel. You can also use font widths
+	  different from 8.
+
+config FB_MATROX_G
+	bool "G100/G200/G400/G450/G550 support"
+	depends on FB_MATROX
+	---help---
+	  Say Y here if you have a Matrox G100, G200, G400, G450 or G550 based
+	  video card. If you select "Advanced lowlevel driver options", you
+	  should check 8 bpp packed pixel, 16 bpp packed pixel, 24 bpp packed
+	  pixel and 32 bpp packed pixel. You can also use font widths
+	  different from 8.
+
+	  If you need support for G400 secondary head, you must first say Y to
+	  "I2C support" in the character devices section, and then to
+	  "Matrox I2C support" and "G400 second head support" here in the
+	  framebuffer section. G450/G550 secondary head and digital output
+	  are supported without additional modules.
+
+	  The driver starts in monitor mode. You must use the matroxset tool 
+	  (available at <ftp://platan.vc.cvut.cz/pub/linux/matrox-latest/>) to 
+	  swap primary and secondary head outputs, or to change output mode.  
+	  Secondary head driver always start in 640x480 resolution and you 
+	  must use fbset to change it.
+
+	  Do not forget that second head supports only 16 and 32 bpp
+	  packed pixels, so it is a good idea to compile them into the kernel
+	  too. You can use only some font widths, as the driver uses generic
+	  painting procedures (the secondary head does not use acceleration
+	  engine).
+
+	  G450/G550 hardware can display TV picture only from secondary CRTC,
+	  and it performs no scaling, so picture must have 525 or 625 lines.
+
+config FB_MATROX_I2C
+	tristate "Matrox I2C support"
+	depends on FB_MATROX
+	select FB_DDC
+	---help---
+	  This drivers creates I2C buses which are needed for accessing the
+	  DDC (I2C) bus present on all Matroxes, an I2C bus which
+	  interconnects Matrox optional devices, like MGA-TVO on G200 and
+	  G400, and the secondary head DDC bus, present on G400 only.
+
+	  You can say Y or M here if you want to experiment with monitor
+	  detection code. You must say Y or M here if you want to use either
+	  second head of G400 or MGA-TVO on G200 or G400.
+
+	  If you compile it as module, it will create a module named
+	  i2c-matroxfb.
+
+config FB_MATROX_MAVEN
+	tristate "G400 second head support"
+	depends on FB_MATROX_G && FB_MATROX_I2C
+	---help---
+	  WARNING !!! This support does not work with G450 !!!
+
+	  Say Y or M here if you want to use a secondary head (meaning two
+	  monitors in parallel) on G400 or MGA-TVO add-on on G200. Secondary
+	  head is not compatible with accelerated XFree 3.3.x SVGA servers -
+	  secondary head output is blanked while you are in X. With XFree
+	  3.9.17 preview you can use both heads if you use SVGA over fbdev or
+	  the fbdev driver on first head and the fbdev driver on second head.
+
+	  If you compile it as module, two modules are created,
+	  matroxfb_crtc2 and matroxfb_maven. Matroxfb_maven is needed for
+	  both G200 and G400, matroxfb_crtc2 is needed only by G400. You must
+	  also load i2c-matroxfb to get it to run.
+
+	  The driver starts in monitor mode and you must use the matroxset
+	  tool (available at
+	  <ftp://platan.vc.cvut.cz/pub/linux/matrox-latest/>) to switch it to
+	  PAL or NTSC or to swap primary and secondary head outputs.
+	  Secondary head driver also always start in 640x480 resolution, you
+	  must use fbset to change it.
+
+	  Also do not forget that second head supports only 16 and 32 bpp
+	  packed pixels, so it is a good idea to compile them into the kernel
+	  too.  You can use only some font widths, as the driver uses generic
+	  painting procedures (the secondary head does not use acceleration
+	  engine).
+
+config FB_MATROX_MULTIHEAD
+	bool "Multihead support"
+	depends on FB_MATROX
+	---help---
+	  Say Y here if you have more than one (supported) Matrox device in
+	  your computer and you want to use all of them for different monitors
+	  ("multihead"). If you have only one device, you should say N because
+	  the driver compiled with Y is larger and a bit slower, especially on
+	  ia32 (ix86).
+
+	  If you said M to "Matrox unified accelerated driver" and N here, you
+	  will still be able to use several Matrox devices simultaneously:
+	  insert several instances of the module matroxfb into the kernel
+	  with insmod, supplying the parameter "dev=N" where N is 0, 1, etc.
+	  for the different Matrox devices. This method is slightly faster but
+	  uses 40 KB of kernel memory per Matrox card.
+
+	  There is no need for enabling 'Matrox multihead support' if you have
+	  only one Matrox card in the box.
+
+config FB_RADEON
+	tristate "ATI Radeon display support"
+	depends on FB && PCI
+	select FB_BACKLIGHT if FB_RADEON_BACKLIGHT
+	select FB_MODE_HELPERS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_MACMODES if PPC_OF
+	help
+	  Choose this option if you want to use an ATI Radeon graphics card as
+	  a framebuffer device.  There are both PCI and AGP versions.  You
+	  don't need to choose this to run the Radeon in plain VGA mode.
+
+	  If you say Y here and want DDC/I2C support you must first say Y to
+	  "I2C support" and "I2C bit-banging support" in the character devices
+	  section.
+
+	  If you say M here then "I2C support" and "I2C bit-banging support" 
+	  can be build either as modules or built-in.
+
+	  There is a product page at
+	  http://apps.ati.com/ATIcompare/
+
+config FB_RADEON_I2C
+	bool "DDC/I2C for ATI Radeon support"
+	depends on FB_RADEON
+	select FB_DDC
+	default y
+	help
+	  Say Y here if you want DDC/I2C support for your Radeon board. 
+
+config FB_RADEON_BACKLIGHT
+	bool "Support for backlight control"
+	depends on FB_RADEON
+	default y
+	help
+	  Say Y here if you want to control the backlight of your display.
+
+config FB_RADEON_DEBUG
+	bool "Lots of debug output from Radeon driver"
+	depends on FB_RADEON
+	default n
+	help
+	  Say Y here if you want the Radeon driver to output all sorts
+	  of debugging information to provide to the maintainer when
+	  something goes wrong.
+
+config FB_ATY128
+	tristate "ATI Rage128 display support"
+	depends on FB && PCI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_BACKLIGHT if FB_ATY128_BACKLIGHT
+	select FB_MACMODES if PPC_PMAC
+	help
+	  This driver supports graphics boards with the ATI Rage128 chips.
+	  Say Y if you have such a graphics board and read
+	  <file:Documentation/fb/aty128fb.txt>.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called aty128fb.
+
+config FB_ATY128_BACKLIGHT
+	bool "Support for backlight control"
+	depends on FB_ATY128
+	default y
+	help
+	  Say Y here if you want to control the backlight of your display.
+
+config FB_ATY
+	tristate "ATI Mach64 display support" if PCI || ATARI
+	depends on FB && !SPARC32
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_BACKLIGHT if FB_ATY_BACKLIGHT
+	select FB_MACMODES if PPC
+	help
+	  This driver supports graphics boards with the ATI Mach64 chips.
+	  Say Y if you have such a graphics board.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called atyfb.
+
+config FB_ATY_CT
+	bool "Mach64 CT/VT/GT/LT (incl. 3D RAGE) support"
+	depends on PCI && FB_ATY
+	default y if SPARC64 && PCI
+	help
+	  Say Y here to support use of ATI's 64-bit Rage boards (or other
+	  boards based on the Mach64 CT, VT, GT, and LT chipsets) as a
+	  framebuffer device.  The ATI product support page for these boards
+	  is at <http://support.ati.com/products/pc/mach64/>.
+
+config FB_ATY_GENERIC_LCD
+	bool "Mach64 generic LCD support (EXPERIMENTAL)"
+	depends on FB_ATY_CT
+	help
+	  Say Y if you have a laptop with an ATI Rage LT PRO, Rage Mobility,
+	  Rage XC, or Rage XL chipset.
+
+config FB_ATY_GX
+	bool "Mach64 GX support" if PCI
+	depends on FB_ATY
+	default y if ATARI
+	help
+	  Say Y here to support use of the ATI Mach64 Graphics Expression
+	  board (or other boards based on the Mach64 GX chipset) as a
+	  framebuffer device.  The ATI product support page for these boards
+	  is at
+	  <http://support.ati.com/products/pc/mach64/graphics_xpression.html>.
+
+config FB_ATY_BACKLIGHT
+	bool "Support for backlight control"
+	depends on FB_ATY
+	default y
+	help
+	  Say Y here if you want to control the backlight of your display.
+
+config FB_S3
+	tristate "S3 Trio/Virge support"
+	depends on FB && PCI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_TILEBLITTING
+	select FB_SVGALIB
+	select VGASTATE
+	select FONT_8x16 if FRAMEBUFFER_CONSOLE
+	---help---
+	  Driver for graphics boards with S3 Trio / S3 Virge chip.
+
+config FB_SAVAGE
+	tristate "S3 Savage support"
+	depends on FB && PCI && EXPERIMENTAL
+	select FB_MODE_HELPERS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select VGASTATE
+	help
+	  This driver supports notebooks and computers with S3 Savage PCI/AGP
+	  chips.
+
+	  Say Y if you have such a graphics card.
+
+	  To compile this driver as a module, choose M here; the module
+	  will be called savagefb.
+
+config FB_SAVAGE_I2C
+       bool "Enable DDC2 Support"
+       depends on FB_SAVAGE
+       select FB_DDC
+       help
+	  This enables I2C support for S3 Savage Chipsets.  This is used
+	  only for getting EDID information from the attached display
+	  allowing for robust video mode handling and switching.
+
+	  Because fbdev-2.6 requires that drivers must be able to
+	  independently validate video mode parameters, you should say Y
+	  here.
+
+config FB_SAVAGE_ACCEL
+       bool "Enable Console Acceleration"
+       depends on FB_SAVAGE
+       default n
+       help
+          This option will compile in console acceleration support. If
+          the resulting framebuffer console has bothersome glitches, then
+          choose N here.
+
+config FB_SIS
+	tristate "SiS/XGI display support"
+	depends on FB && PCI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the SiS 300, 315, 330
+	  and 340 series as well as XGI V3XT, V5, V8, Z7 graphics chipsets.
+	  Specs available at <http://www.sis.com> and <http://www.xgitech.com>.
+
+	  To compile this driver as a module, choose M here; the module
+	  will be called sisfb.
+
+config FB_SIS_300
+	bool "SiS 300 series support"
+	depends on FB_SIS
+	help
+	  Say Y here to support use of the SiS 300/305, 540, 630 and 730.
+
+config FB_SIS_315
+	bool "SiS 315/330/340 series and XGI support"
+	depends on FB_SIS
+	help
+	  Say Y here to support use of the SiS 315, 330 and 340 series
+	  (315/H/PRO, 55x, 650, 651, 740, 330, 661, 741, 760, 761) as well
+	  as XGI V3XT, V5, V8 and Z7.
+
+config FB_NEOMAGIC
+	tristate "NeoMagic display support"
+	depends on FB && PCI
+	select FB_MODE_HELPERS
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select VGASTATE
+	help
+	  This driver supports notebooks with NeoMagic PCI chips.
+	  Say Y if you have such a graphics card. 
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called neofb.
+
+config FB_KYRO
+	tristate "IMG Kyro support"
+	depends on FB && PCI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  Say Y here if you have a STG4000 / Kyro / PowerVR 3 based
+	  graphics board.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called kyrofb.
+
+config FB_3DFX
+	tristate "3Dfx Banshee/Voodoo3 display support"
+	depends on FB && PCI
+	select FB_CFB_IMAGEBLIT
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	help
+	  This driver supports graphics boards with the 3Dfx Banshee/Voodoo3
+	  chips. Say Y if you have such a graphics board.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called tdfxfb.
+
+config FB_3DFX_ACCEL
+	bool "3Dfx Banshee/Voodoo3 Acceleration functions (EXPERIMENTAL)"
+	depends on FB_3DFX && EXPERIMENTAL
+	---help---
+	This will compile the 3Dfx Banshee/Voodoo3 frame buffer device
+	with acceleration functions.
+
+
+config FB_VOODOO1
+	tristate "3Dfx Voodoo Graphics (sst1) support"
+	depends on FB && PCI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  Say Y here if you have a 3Dfx Voodoo Graphics (Voodoo1/sst1) or 
+	  Voodoo2 (cvg) based graphics card.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called sstfb.
+
+	  WARNING: Do not use any application that uses the 3D engine
+	  (namely glide) while using this driver.
+	  Please read the <file:Documentation/fb/README-sstfb.txt> for supported
+	  options and other important info  support.
+
+config FB_SMIVGX
+	tristate "Silicon Motion VoyagerGX support"
+	depends on FB && PCI && (MIPS || EXPERIMENTAL)
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  This drivers supports SMI VoyagerGX 501 based PCI boards
+	  The default settings drive both a CRT and LCD.  The CRT
+	  can be turned off by passing in the no_crt option
+
+config FB_VT8623
+	tristate "VIA VT8623 support"
+	depends on FB && PCI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_TILEBLITTING
+	select FB_SVGALIB
+	select VGASTATE
+	select FONT_8x16 if FRAMEBUFFER_CONSOLE
+	---help---
+	  Driver for CastleRock integrated graphics core in the
+	  VIA VT8623 [Apollo CLE266] chipset.
+
+config FB_CYBLA
+	tristate "Cyberblade/i1 support"
+	depends on FB && PCI && X86_32 && !64BIT
+	select FB_CFB_IMAGEBLIT
+	select VIDEO_SELECT
+	---help---
+	  This driver is supposed to support the Trident Cyberblade/i1
+	  graphics core integrated in the VIA VT8601A North Bridge,
+	  also known as VIA Apollo PLE133.
+
+	  Status:
+	   - Developed, tested and working on EPIA 5000 and EPIA 800.
+	   - Does work reliable on all systems with CRT/LCD connected to
+	     normal VGA ports.
+	   - Should work on systems that do use the internal LCD port, but
+	     this is absolutely not tested.
+
+	  Character imageblit, copyarea and rectangle fill are hw accelerated,
+	  ypan scrolling is used by default.
+
+	  Please do read <file:Documentation/fb/cyblafb/*>.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called cyblafb.
+
+config FB_TRIDENT
+	tristate "Trident support"
+	depends on FB && PCI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  This driver is supposed to support graphics boards with the
+	  Trident CyberXXXX/Image/CyberBlade chips mostly found in laptops
+	  but also on some motherboards. For more information, read
+	  <file:Documentation/fb/tridentfb.txt>
+
+	  Cyberblade/i1 support will be removed soon, use the cyblafb driver
+	  instead.
+
+	  Say Y if you have such a graphics board.
+
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called tridentfb.
+
+config FB_TRIDENT_ACCEL
+	bool "Trident Acceleration functions (EXPERIMENTAL)"
+	depends on FB_TRIDENT && EXPERIMENTAL
+	---help---
+	This will compile the Trident frame buffer device with
+	acceleration functions.
+
+config FB_ARK
+	tristate "ARK 2000PV support"
+	depends on FB && PCI
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	select FB_TILEBLITTING
+	select FB_SVGALIB
+	select VGASTATE
+	select FONT_8x16 if FRAMEBUFFER_CONSOLE
+	---help---
+	  Driver for PCI graphics boards with ARK 2000PV chip
+	  and ICS 5342 RAMDAC.
+
+config FB_PM3
+	tristate "Permedia3 support (EXPERIMENTAL)"
+	depends on FB && PCI && EXPERIMENTAL
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the 3DLabs Permedia3
+	  chipset, used in Formac ProFormance III, 3DLabs Oxygen VX1 &
+	  similar boards, 3DLabs Permedia3 Create!, Appian Jeronimo 2000
+	  and maybe other boards.
+
+config FB_AU1100
+	bool "Au1100 LCD Driver"
+	depends on FB && MIPS && SOC_AU1100
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the framebuffer driver for the AMD Au1100 SOC.  It can drive
+	  various panels and CRTs by passing in kernel cmd line option
+	  au1100fb:panel=<name>.
+
+config FB_AU1200
+	bool "Au1200 LCD Driver"
+	depends on FB && MIPS && SOC_AU1200
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the framebuffer driver for the AMD Au1200 SOC.  It can drive
+	  various panels and CRTs by passing in kernel cmd line option
+	  au1200fb:panel=<name>.
+
+config FB_AU1200
+	bool "Au1200 LCD Driver"
+	depends on (FB = y) && MIPS && SOC_AU1200
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the framebuffer driver for the AMD Au1200 SOC.  It can drive
+	  various panels and CRTs by passing in kernel cmd line option
+	  au1200fb:panel=<name>.
+
+source "drivers/video/geode/Kconfig"
+
+config FB_HIT
+	tristate "HD64461 Frame Buffer support"
+	depends on FB && HD64461
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  This is the frame buffer device driver for the Hitachi HD64461 LCD
+	  frame buffer card.
+
+config FB_PMAG_AA
+	bool "PMAG-AA TURBOchannel framebuffer support"
+	depends on (FB = y) && TC
+ 	select FB_CFB_FILLRECT
+ 	select FB_CFB_COPYAREA
+ 	select FB_CFB_IMAGEBLIT
+	help
+	  Support for the PMAG-AA TURBOchannel framebuffer card (1280x1024x1)
+	  used mainly in the MIPS-based DECstation series.
+
+config FB_PMAG_BA
+	tristate "PMAG-BA TURBOchannel framebuffer support"
+	depends on FB && TC
+ 	select FB_CFB_FILLRECT
+ 	select FB_CFB_COPYAREA
+ 	select FB_CFB_IMAGEBLIT
+	help
+	  Support for the PMAG-BA TURBOchannel framebuffer card (1024x864x8)
+	  used mainly in the MIPS-based DECstation series.
+
+config FB_PMAGB_B
+	tristate "PMAGB-B TURBOchannel framebuffer support"
+	depends on TC
+ 	select FB_CFB_FILLRECT
+ 	select FB_CFB_COPYAREA
+ 	select FB_CFB_IMAGEBLIT
+	help
+	  Support for the PMAGB-B TURBOchannel framebuffer card used mainly
+	  in the MIPS-based DECstation series. The card is currently only 
+	  supported in 1280x1024x8 mode.  
+
+config FB_MAXINE
+	bool "Maxine (Personal DECstation) onboard framebuffer support"
+	depends on (FB = y) && MACH_DECSTATION
+ 	select FB_CFB_FILLRECT
+ 	select FB_CFB_COPYAREA
+ 	select FB_CFB_IMAGEBLIT
+	help
+	  Support for the onboard framebuffer (1024x768x8) in the Personal
+	  DECstation series (Personal DECstation 5000/20, /25, /33, /50,
+	  Codename "Maxine").
+
+config FB_TX3912
+	bool "TMPTX3912/PR31700 frame buffer support"
+	depends on (FB = y) && NINO
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	help
+	  The TX3912 is a Toshiba RISC processor based on the MIPS 3900 core
+	  see <http://www.toshiba.com/taec/components/Generic/risc/tx3912.htm>.
+
+	  Say Y here to enable kernel support for the on-board framebuffer.
+
+config FB_G364
+	bool "G364 frame buffer support"
+	depends on (FB = y) && (MIPS_MAGNUM_4000 || OLIVETTI_M700)
+ 	select FB_CFB_FILLRECT
+ 	select FB_CFB_COPYAREA
+ 	select FB_CFB_IMAGEBLIT
+	help
+	  The G364 driver is the framebuffer used in MIPS Magnum 4000 and
+	  Olivetti M700-10 systems.
+
+config FB_68328
+	bool "Motorola 68328 native frame buffer support"
+	depends on (FB = y) && (M68328 || M68EZ328 || M68VZ328)
+ 	select FB_CFB_FILLRECT
+ 	select FB_CFB_COPYAREA
+ 	select FB_CFB_IMAGEBLIT
+	help
+	  Say Y here if you want to support the built-in frame buffer of
+	  the Motorola 68328 CPU family.
+
+config FB_PXA
+	tristate "PXA LCD framebuffer support"
+	depends on FB && ARCH_PXA
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  Frame buffer driver for the built-in LCD controller in the Intel
+	  PXA2x0 processor.
+
+	  This driver is also available as a module ( = code which can be
+	  inserted and removed from the running kernel whenever you want). The
+	  module will be called pxafb. If you want to compile it as a module,
+	  say M here and read <file:Documentation/kbuild/modules.txt>.
+
+	  If unsure, say N.
+
+config FB_PXA_PARAMETERS
+	bool "PXA LCD command line parameters"
+	default n
+	depends on FB_PXA
+	---help---
+	  Enable the use of kernel command line or module parameters
+	  to configure the physical properties of the LCD panel when
+	  using the PXA LCD driver.
+
+	  This option allows you to override the panel parameters
+	  supplied by the platform in order to support multiple
+	  different models of flatpanel. If you will only be using a
+	  single model of flatpanel then you can safely leave this
+	  option disabled.
+
+	  <file:Documentation/fb/pxafb.txt> describes the available parameters.
+
+config FB_MBX
+	tristate "2700G LCD framebuffer support"
+	depends on FB && ARCH_PXA
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  Framebuffer driver for the Intel 2700G (Marathon) Graphics
+	  Accelerator
+
+config FB_MBX_DEBUG
+       bool "Enable debugging info via debugfs"
+       depends on FB_MBX && DEBUG_FS
+       default n
+       ---help---
+         Enable this if you want debugging information using the debug
+         filesystem (debugfs)
+
+         If unsure, say N.
+
+config FB_W100
+	tristate "W100 frame buffer support"
+	depends on FB && PXA_SHARPSL
+ 	select FB_CFB_FILLRECT
+ 	select FB_CFB_COPYAREA
+ 	select FB_CFB_IMAGEBLIT
+	---help---
+	  Frame buffer driver for the w100 as found on the Sharp SL-Cxx series.
+
+	  This driver is also available as a module ( = code which can be
+	  inserted and removed from the running kernel whenever you want). The
+	  module will be called w100fb. If you want to compile it as a module,
+	  say M here and read <file:Documentation/kbuild/modules.txt>.
+
+	  If unsure, say N.
+
+config FB_S3C2410
+	tristate "S3C2410 LCD framebuffer support"
+	depends on FB && ARCH_S3C2410
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  Frame buffer driver for the built-in LCD controller in the Samsung
+	  S3C2410 processor.
+
+	  This driver is also available as a module ( = code which can be
+	  inserted and removed from the running kernel whenever you want). The
+	  module will be called s3c2410fb. If you want to compile it as a module,
+	  say M here and read <file:Documentation/kbuild/modules.txt>.
+
+	  If unsure, say N.
+config FB_S3C2410_DEBUG
+	bool "S3C2410 lcd debug messages"
+	depends on FB_S3C2410
+	help
+	  Turn on debugging messages. Note that you can set/unset at run time
+	  through sysfs
+
+config FB_SM501
+	tristate "Silicon Motion SM501 framebuffer support"
+	depends on FB && MFD_SM501
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  Frame buffer driver for the CRT and LCD controllers in the Silicon
+	  Motion SM501.
+
+	  This driver is also available as a module ( = code which can be
+	  inserted and removed from the running kernel whenever you want). The
+	  module will be called sm501fb. If you want to compile it as a module,
+	  say M here and read <file:Documentation/modules.txt>.
+
+	  If unsure, say N.
+
+
+config FB_PNX4008_DUM
+	tristate "Display Update Module support on Philips PNX4008 board"
+	depends on FB && ARCH_PNX4008
+	---help---
+	  Say Y here to enable support for PNX4008 Display Update Module (DUM)
+
+config FB_PNX4008_DUM_RGB
+	tristate "RGB Framebuffer support on Philips PNX4008 board"
+	depends on FB_PNX4008_DUM
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  Say Y here to enable support for PNX4008 RGB Framebuffer
+
+config FB_IBM_GXT4500
+	tristate "Framebuffer support for IBM GXT4500P adaptor"
+	depends on PPC
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  Say Y here to enable support for the IBM GXT4500P display
+	  adaptor, found on some IBM System P (pSeries) machines.
+
+config FB_PS3
+	bool "PS3 GPU framebuffer driver"
+	depends on (FB = y) && PS3_PS3AV
+	select FB_SYS_FILLRECT
+	select FB_SYS_COPYAREA
+	select FB_SYS_IMAGEBLIT
+	select FB_SYS_FOPS
+	---help---
+	  Include support for the virtual frame buffer in the PS3 platform.
+
+config FB_PS3_DEFAULT_SIZE_M
+	int "PS3 default frame buffer size (in MiB)"
+	depends on FB_PS3
+	default 18
+	---help---
+	  This is the default size (in MiB) of the virtual frame buffer in
+	  the PS3.
+	  The default value can be overridden on the kernel command line
+	  using the "ps3fb" option (e.g. "ps3fb=9M");
+
+config FB_XILINX
+	tristate "Xilinx frame buffer support"
+	depends on FB && XILINX_VIRTEX
+	select FB_CFB_FILLRECT
+	select FB_CFB_COPYAREA
+	select FB_CFB_IMAGEBLIT
+	---help---
+	  Include support for the Xilinx ML300/ML403 reference design
+	  framebuffer. ML300 carries a 640*480 LCD display on the board,
+	  ML403 uses a standard DB15 VGA connector.
+
+config FB_VIRTUAL
+	tristate "Virtual Frame Buffer support (ONLY FOR TESTING!)"
+	depends on FB
+	select FB_SYS_FILLRECT
+	select FB_SYS_COPYAREA
+	select FB_SYS_IMAGEBLIT
+	select FB_SYS_FOPS
+	---help---
+	  This is a `virtual' frame buffer device. It operates on a chunk of
+	  unswappable kernel memory instead of on the memory of a graphics
+	  board. This means you cannot see any output sent to this frame
+	  buffer device, while it does consume precious memory. The main use
+	  of this frame buffer device is testing and debugging the frame
+	  buffer subsystem. Do NOT enable it for normal systems! To protect
+	  the innocent, it has to be enabled explicitly at boot time using the
+	  kernel option `video=vfb:'.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called vfb. In order to load it, you must use
+	  the vfb_enable=1 option.
+
+	  If unsure, say N.
+
+if VT
+	source "drivers/video/console/Kconfig"
+endif
+
+if FB || SGI_NEWPORT_CONSOLE
+	source "drivers/video/logo/Kconfig"
+endif
+
+endmenu
+

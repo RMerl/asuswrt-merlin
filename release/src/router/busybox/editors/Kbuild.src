@@ -1,0 +1,16 @@
+# Makefile for busybox
+#
+# Copyright (C) 1999-2005 by Erik Andersen <andersen@codepoet.org>
+#
+# Licensed under the GPL v2, see the file LICENSE in this tarball.
+
+lib-y:=
+
+INSERT
+lib-$(CONFIG_AWK)       += awk.o
+lib-$(CONFIG_CMP)       += cmp.o
+lib-$(CONFIG_DIFF)      += diff.o
+lib-$(CONFIG_ED)        += ed.o
+lib-$(CONFIG_PATCH)     += patch.o
+lib-$(CONFIG_SED)       += sed.o
+lib-$(CONFIG_VI)        += vi.o

@@ -1,0 +1,70 @@
+/* $Id: CREDITS,v 1.1 2009-06-30 02:31:07 steven Exp $ */
+
+I've received lots of help from people on this project.
+
+These are the people who have contributed to whatever
+small success this project enjoys (in order of
+contribution).  If I've forgotten anyone, I apologize.
+
+Aubin Paul
+ * Patches for Debian package generation
+ * Precompiled Debian binaries
+
+Paul Forgey
+ * Tons of troubleshooting on Solaris
+ * Fixes for readdir_r
+
+Paul Hubbard
+ * T/S and patch testing to resolve scanning bugs
+
+David Buttrick
+ * Webmastering, FAQ maintenance, Doc maintenance
+
+Hans-Christoph Steiner
+ * Webmastering, FAQ maintenance, Doc maintenance
+ * Amazing amounts of troubleshooting, testing on OSX 10.2
+
+David Imhoff
+ * Code cleanup patches (_XOPEN_SOURCE, declaration problems)
+
+James Turner
+ * Fixes for OSX 10.2
+ * configure.in suggestions
+
+Hiren Joshi
+ * Dynamic art code
+
+David W. Berry
+ * Tons of protocol compliance fixes.
+ * Browse, query, and index support
+
+Paul Kim
+ * Dynamic art code for AAC
+ * Various AAC meta-info cleanups
+ * Compilation tag support (aac and mp3)
+ * ogg/vorbis tag handling
+
+Stephen Lee
+ * Patches for proper url decoding
+
+Rob Nunn
+ * gentoo rc script
+
+Frank Schwichtenberg
+ * patches for static playlist bug
+
+Gavin Shelley
+ * patches for Solaris strftime
+
+Stephen Rubner
+ * fixes for ulong ino_t
+
+Ciamac Moallemi
+ * gzip content-encoding
+
+Roger Mundt
+ * troubleshooting and debugging help
+
+dirkthedaring2 (?)
+ * fixes for inverted playlist
+ * speedups on connect

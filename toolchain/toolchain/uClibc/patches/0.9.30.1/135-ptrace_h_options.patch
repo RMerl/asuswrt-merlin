@@ -1,0 +1,69 @@
+From 6b4b6e8e2091ffa2eea48bb8f2d46b3f1632e52d
+From: Mike Frysinger
+Date: Thu, 11 Dec 2008 09:50:47 +0000
+Subject: update ptrace.h to latest from glibc
+
+Signed-off-by: Bernhard Reutner-Fischer <rep.dot.nop@gmail.com>
+---
+diff --git a/libc/sysdeps/linux/common/sys/ptrace.h b/libc/sysdeps/linux/common/sys/ptrace.h
+index b4aec4f..08658f9 100644
+--- a/libc/sysdeps/linux/common/sys/ptrace.h
++++ b/libc/sysdeps/linux/common/sys/ptrace.h
+@@ -1,5 +1,5 @@
+ /* `ptrace' debugger support interface.  Linux version.
+-   Copyright (C) 1996, 1997, 1998, 1999, 2000 Free Software Foundation, Inc.
++   Copyright (C) 1996-1999,2000,2006,2007 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+    The GNU C Library is free software; you can redistribute it and/or
+@@ -109,8 +109,47 @@ enum __ptrace_request
+ #define PT_SETFPXREGS PTRACE_SETFPXREGS
+ 
+   /* Continue and stop at the next (return from) syscall.  */
+-  PTRACE_SYSCALL = 24
++  PTRACE_SYSCALL = 24,
+ #define PT_SYSCALL PTRACE_SYSCALL
++
++  /* Set ptrace filter options.  */
++  PTRACE_SETOPTIONS = 0x4200,
++#define PT_SETOPTIONS PTRACE_SETOPTIONS
++
++  /* Get last ptrace message.  */
++  PTRACE_GETEVENTMSG = 0x4201,
++#define PT_GETEVENTMSG PTRACE_GETEVENTMSG
++
++  /* Get siginfo for process.  */
++  PTRACE_GETSIGINFO = 0x4202,
++#define PT_GETSIGINFO PTRACE_GETSIGINFO
++
++  /* Set new siginfo for process.  */
++  PTRACE_SETSIGINFO = 0x4203
++#define PT_SETSIGINFO PTRACE_SETSIGINFO
++};
++
++
++/* Options set using PTRACE_SETOPTIONS.  */
++enum __ptrace_setoptions {
++  PTRACE_O_TRACESYSGOOD	= 0x00000001,
++  PTRACE_O_TRACEFORK	= 0x00000002,
++  PTRACE_O_TRACEVFORK   = 0x00000004,
++  PTRACE_O_TRACECLONE	= 0x00000008,
++  PTRACE_O_TRACEEXEC	= 0x00000010,
++  PTRACE_O_TRACEVFORKDONE = 0x00000020,
++  PTRACE_O_TRACEEXIT	= 0x00000040,
++  PTRACE_O_MASK		= 0x0000007f
++};
++
++/* Wait extended result codes for the above trace options.  */
++enum __ptrace_eventcodes {
++  PTRACE_EVENT_FORK	= 1,
++  PTRACE_EVENT_VFORK	= 2,
++  PTRACE_EVENT_CLONE	= 3,
++  PTRACE_EVENT_EXEC	= 4,
++  PTRACE_EVENT_VFORK_DONE = 5,
++  PTRACE_EVENT_EXIT	= 6
+ };
+ 
+ /* Perform process tracing functions.  REQUEST is one of the values
+--
+cgit v0.8.2.1

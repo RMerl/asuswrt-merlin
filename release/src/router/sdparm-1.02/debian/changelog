@@ -1,0 +1,72 @@
+sdparm (1.02-0.1) unstable; urgency=low
+
+  * add block device characteristics VPD page
+
+ -- Douglas Gilbert <dgilbert@interlog.org>  Mon, 08 Oct 2007 10:00:00 -0400
+
+sdparm (1.01-0.1) unstable; urgency=low
+
+  * add element address assignment mode page (smc)
+
+ -- Douglas Gilbert <dgilbert@interlog.org>  Thu, 05 Apr 2007 23:00:00 -0400
+
+sdparm (1.00-0.1) unstable; urgency=low
+
+  * update Background control mode subpage, vendor specific mode pages
+
+ -- Douglas Gilbert <dgilbert@interlog.org>  Mon, 16 Oct 2006 11:00:00 -0400
+
+sdparm (0.99-0.1) unstable; urgency=low
+
+  * add old power condition page for disks
+
+ -- Douglas Gilbert <dgilbert@interlog.org>  Sat, 08 Jul 2006 12:00:00 -0400
+
+sdparm (0.98-0.1) unstable; urgency=low
+
+  * add medium configuration mode page
+
+ -- Douglas Gilbert <dgilbert@interlog.org>  Thu, 18 May 2006 22:00:00 -0400
+
+sdparm (0.97-0.1) unstable; urgency=low
+
+  * add SAT pATA control mode subpage
+
+ -- Douglas Gilbert <dgilbert@interlog.org>  Wed, 25 Jan 2006 20:00:00 +1000
+
+sdparm (0.96-0.1) unstable; urgency=low
+
+  * restructure sdparm.c; add capacity, sense and sync commands
+
+ -- Douglas Gilbert <dgilbert@interlog.org>  Sat, 19 Nov 2005 15:00:00 +1000
+
+sdparm (0.95-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Tomas Fasth <tomfa@debian.org>  Tue, 20 Sep 2005 17:17:39 +0000
+
+sdparm (0.95-0.1) unstable; urgency=low
+
+  * Add debian directory in original sdparm-0.95
+
+ -- Douglas Gilbert <dgilbert@interlog.org>  Tue, 20 Sep 2005 11:00:00 +1000
+
+sdparm (0.94-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Tomas Fasth <tomfa@debian.org>  Fri, 29 Jul 2005 13:31:13 +0000
+
+sdparm (0.94-0.1) unstable; urgency=low
+
+  * Track sdparm-0.94 original
+
+ -- Douglas Gilbert <dgilbert@interlog.org>  Thu, 28 Jul 2005 22:00:00 +1000
+
+sdparm (0.93-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Tomas Fasth <tomfa@debian.org>  Wed,  8 Jun 2005 23:48:13 +0000
+

@@ -1,0 +1,96 @@
+Backport of http://gcc.gnu.org/bugzilla/show_bug.cgi?id=36334
+
+	PR c++/36334
+	PR c++/37646
+gcc/cp/
+	* tree.c (lvalue_p_1): Handle BASELINK.  A COMPONENT_REF to
+	a function isn't necessarily an lvalue. Take tree, not const_tree.
+
+--- gcc-4_3-branch/gcc/cp/tree.c	2009/01/15 22:16:26	143412
++++ gcc-4_3-branch/gcc/cp/tree.c	2009/01/15 22:34:20	143413
+@@ -110,11 +110,13 @@
+       op1_lvalue_kind = lvalue_p_1 (TREE_OPERAND (ref, 0),
+ 				    treat_class_rvalues_as_lvalues);
+       /* Look at the member designator.  */
+-      if (!op1_lvalue_kind
+-	  /* The "field" can be a FUNCTION_DECL or an OVERLOAD in some
+-	     situations.  */
+-	  || TREE_CODE (TREE_OPERAND (ref, 1)) != FIELD_DECL)
++      if (!op1_lvalue_kind)
+ 	;
++      else if (is_overloaded_fn (TREE_OPERAND (ref, 1)))
++	/* The "field" can be a FUNCTION_DECL or an OVERLOAD in some
++	   situations.  */
++	op1_lvalue_kind = lvalue_p_1 (TREE_OPERAND (ref, 1),
++				      treat_class_rvalues_as_lvalues);
+       else if (DECL_C_BIT_FIELD (TREE_OPERAND (ref, 1)))
+ 	{
+ 	  /* Clear the ordinary bit.  If this object was a class
+@@ -194,6 +196,12 @@
+       return (DECL_NONSTATIC_MEMBER_FUNCTION_P (ref)
+ 	      ? clk_none : clk_ordinary);
+ 
++    case BASELINK:
++      /* We now represent a reference to a single static member function
++	 with a BASELINK.  */
++      return lvalue_p_1 (BASELINK_FUNCTIONS (ref),
++			 treat_class_rvalues_as_lvalues);
++
+     case NON_DEPENDENT_EXPR:
+       /* We must consider NON_DEPENDENT_EXPRs to be lvalues so that
+ 	 things like "&E" where "E" is an expression with a
+@@ -2071,8 +2079,10 @@
+   if (TREE_CODE (t) == VECTOR_TYPE)
+     return 1; /* vectors are (small) arrays of scalars */
+ 
+-  if (! CLASS_TYPE_P (t))
++  if (! IS_AGGR_TYPE_CODE (TREE_CODE (t)))
+     return 0; /* other non-class type (reference or function) */
++  if (! CLASS_TYPE_P (t))
++    return 1; /* struct created by the back end */
+   if (CLASSTYPE_NON_POD_P (t))
+     return 0;
+   return 1;
+--- gcc-4_2-branch.old/gcc/testsuite/g++.dg/conversion/memfn1.C	1970-01-01 03:00:00.000000000 +0300
++++ gcc-4_2-branch/gcc/testsuite/g++.dg/conversion/memfn1.C	2009-12-05 16:00:55.000000000 +0300
+@@ -0,0 +1,26 @@
++// PR c++/36334
++
++struct X
++{
++  typedef int* foobar();
++  static void foo(foobar&);
++};
++
++void X::foo(foobar&)
++{
++}
++
++struct Y : public X
++{
++  static foobar bar;
++  static void foo();
++};
++
++void Y::foo()
++{
++  X::foo(bar);
++}
++int* Y::bar()
++{
++  return 0;
++}
+--- gcc-4_2-branch.old/gcc/testsuite/g++.dg/conversion/memfn2.C	1970-01-01 03:00:00.000000000 +0300
++++ gcc-4_2-branch/gcc/testsuite/g++.dg/conversion/memfn2.C	2009-12-05 16:01:13.000000000 +0300
+@@ -0,0 +1,11 @@
++// PR c++/37646
++
++struct A
++{
++  void foo();
++
++  void bar(int i)
++  {
++    void (*p)() = i ? foo : foo; // { dg-error "invalid use of member" }
++  }
++};

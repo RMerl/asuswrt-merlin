@@ -1,0 +1,26 @@
+[SUBSYSTEM::LZXPRESS]
+
+LZXPRESS_OBJ_FILES = $(libcompressionsrcdir)/lzxpress.o
+
+[SUBSYSTEM::GENCACHE]
+PRIVATE_DEPENDENCIES = TDB_WRAP
+
+GENCACHE_OBJ_FILES = $(libgencachesrcdir)/gencache.o
+
+# PUBLIC_HEADERS += $(libgencachesrcdir)/gencache.h
+
+[SUBSYSTEM::LDB_WRAP]
+PUBLIC_DEPENDENCIES = LIBLDB
+PRIVATE_DEPENDENCIES = LDBSAMBA UTIL_LDB
+
+LDB_WRAP_OBJ_FILES = $(libsrcdir)/ldb_wrap.o
+PUBLIC_HEADERS += $(libsrcdir)/ldb_wrap.h
+
+[SUBSYSTEM::TDB_WRAP]
+PUBLIC_DEPENDENCIES = LIBTDB
+
+TDB_WRAP_OBJ_FILES = $(libsrcdir)/tdb_wrap.o
+PUBLIC_HEADERS += $(libsrcdir)/tdb_wrap.h
+
+SMBREADLINE_OBJ_LIST = $(SMBREADLINE_OBJ_FILES)
+

@@ -1,0 +1,4 @@
+this is a sample configuration file from Jim Doyle <doyle@oec.com> who
+did the DCE/DFS patches for Samba. It shows how to make DCE/DFS shares
+available. 
+

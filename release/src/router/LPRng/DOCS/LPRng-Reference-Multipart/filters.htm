@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Filters</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="PREVIOUS" title="Debugging " href="debugging.htm">
+    <link rel="NEXT" title="Filter Exit Codes " href=
+    "exitcodes.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "debugging.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "exitcodes.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="FILTERS"></a>Chapter 16. Filters</h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>16.1. <a href="filters.htm#AEN7758">Filter
+          Functions</a></dt>
+
+          <dt>16.2. <a href="exitcodes.htm">Filter Exit
+          Codes</a></dt>
+
+          <dt>16.3. <a href="printjobformats.htm">Print Job
+          Formats</a></dt>
+
+          <dt>16.4. <a href="ofdetails.htm">OF Filter</a></dt>
+
+          <dt>16.5. <a href="pr.htm"><b class="APPLICATION">lpr</b>
+          -p format</a></dt>
+
+          <dt>16.6. <a href="x7980.htm"><b class=
+          "APPLICATION">lpr</b> binary (-l) format</a></dt>
+
+          <dt>16.7. <a href="chainingfilters.htm">Chaining
+          Filters</a></dt>
+
+          <dt>16.8. <a href="filteroptions.htm">Filter Command Line
+          Options and Environment Variables</a></dt>
+
+          <dt>16.9. <a href="x8397.htm"><b class=
+          "APPLICATION">LPRng</b> Supported Filters</a></dt>
+
+          <dt>16.10. <a href="lpf.htm">lpf</a></dt>
+
+          <dt>16.11. <a href="ifhp.htm"><b class=
+          "APPLICATION">ifhp</b> Filter</a></dt>
+        </dl>
+      </div>
+
+      <p>This section gives an overview of how <b class=
+      "APPLICATION">LPRng</b> uses filter programs, and gives a
+      detailed discussion of how the printcap options and filters
+      interact.</p>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="AEN7758">16.1. Filter
+        Functions</a></h1>
+
+        <p>Print filters are one of the most powerful tools in
+        BSD-style printer systems.</p>
+
+        <p>In general UNIX terms, a <span class="emphasis"><i
+        class="EMPHASIS">filter</i></span> is a program that takes
+        its input file(s), does something with it, and sends the
+        result to its standard output. Most UNIX utilities are
+        designed as filters. (But since you are a system manager,
+        you should already know that :))</p>
+
+        <p>In the context of a BSD-style print spooler (and also <b
+        class="APPLICATION">LPRng</b>), the term <span class=
+        "emphasis"><i class="EMPHASIS">filter</i></span> refers to
+        a program that processes file while it is being transferred
+        to a printer.</p>
+
+        <p>The filter is executed with <acronym class=
+        "ACRONYM">STDIN</acronym> reading from the file to be
+        printed <acronym class="ACRONYM">STDOUT</acronym> to the
+        printer device or a temporary file. <acronym class=
+        "ACRONYM">STDERR</acronym> (file handle 2) is redirected to
+        the status file, and file handle3 to an accounting file or
+        program.</p>
+
+        <p>A filter can be as simple as a <acronym class=
+        "ACRONYM">LF</acronym> to <tt class="FILENAME">CR/LF</tt>
+        translator, or it can incorporate a complete accounting
+        system, automatic file type translations, or even redirect
+        the job to another printing system.</p>
+
+        <p>The <b class="APPLICATION">lpf</b> filter supplied as
+        part of the <b class="APPLICATION">LPRng</b> distribution
+        is a a very simple CR to CR/LF conversion filter. The <b
+        class="APPLICATION">ifhp</b> filter provides support for
+        more complex PostScript, PCL, and text printers.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "debugging.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "exitcodes.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Debugging</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top">Filter Exit
+          Codes</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

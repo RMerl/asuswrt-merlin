@@ -1,0 +1,5 @@
+dn: cn=Hampster Ursula,ou=Alumni Association,ou=People,o=University of Michigan,c=TEST
+changetype: modify
+add: jpegPhoto
+jpegPhoto:< file://tests/tmp/samba4.png
+

@@ -1,0 +1,49 @@
+
+<!--
+     File isoamsc.ent produced by the XSL script mmldtd.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to 
+     David Carlisle <davidc@nag.co.uk>.
+
+     The numeric character values assigned to each entity
+     (should) match either official Unicode assignments
+     or assignments provisionally allocated by the
+     Unicode Consortium based on the characters in the `STIX'
+     propsal for mathematics. Note that these assignments
+     have not been ratified by the corresponding ISO
+     committee and thus should be considered liable to
+     change.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1991
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+<!ENTITY dlcorn           "&#x0231E;" ><!--/llcorner O: lower left corner -->
+<!ENTITY drcorn           "&#x0231F;" ><!--/lrcorner C: lower right corner -->
+<!ENTITY gtlPar           "&#x02995;" ><!--dbl left parenthesis, greater -->
+<!ENTITY langd            "&#x02991;" ><!--left angle, dot -->
+<!ENTITY lbrke            "&#x0298B;" ><!--left bracket, equal -->
+<!ENTITY lbrksld          "&#x0298F;" ><!--left bracket, solidus bottom corner -->
+<!ENTITY lbrkslu          "&#x0298D;" ><!--left bracket, solidus top corner -->
+<!ENTITY lceil            "&#x02308;" ><!--/lceil O: left ceiling -->
+<!ENTITY lfloor           "&#x0230A;" ><!--/lfloor O: left floor -->
+<!ENTITY lmoust           "&#x02998;" ><!--/lmoustache -->
+<!ENTITY lparlt           "&#x02993;" ><!--O: left parenthesis, lt -->
+<!ENTITY ltrPar           "&#x02996;" ><!--dbl right parenthesis, less -->
+<!ENTITY rangd            "&#x02992;" ><!--right angle, dot -->
+<!ENTITY rbrke            "&#x0298C;" ><!--right bracket, equal -->
+<!ENTITY rbrksld          "&#x0298E;" ><!--right bracket, solidus bottom corner -->
+<!ENTITY rbrkslu          "&#x02990;" ><!--right bracket, solidus top corner -->
+<!ENTITY rceil            "&#x02309;" ><!--/rceil C: right ceiling -->
+<!ENTITY rfloor           "&#x0230B;" ><!--/rfloor C: right floor -->
+<!ENTITY rmoust           "&#x02997;" ><!--/rmoustache -->
+<!ENTITY rpargt           "&#x02994;" ><!--C: right paren, gt -->
+<!ENTITY ulcorn           "&#x0231C;" ><!--/ulcorner O: upper left corner -->
+<!ENTITY urcorn           "&#x0231D;" ><!--/urcorner C: upper right corner -->

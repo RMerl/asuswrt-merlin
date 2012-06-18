@@ -1,0 +1,10 @@
+This module matches the Hop Limit field in the IPv6 header.
+.TP
+.BR "--hl-eq " "[!] \fIvalue\fP"
+Matches if Hop Limit equals \fIvalue\fP.
+.TP
+.BI "--hl-lt " "value"
+Matches if Hop Limit is less than \fIvalue\fP.
+.TP
+.BI "--hl-gt " "value"
+Matches if Hop Limit is greater than \fIvalue\fP.

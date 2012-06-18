@@ -1,0 +1,563 @@
+2006-03-21  Stephen Hemminger  <shemminger@freekitty.pdx.osdl.net>
+
+	* Back out the 2.4 utsname patch
+
+2006-03-21  James Lentini <jlentini@netapp.com>
+	
+	* Increase size of hw address allowed for ip neigh to allow
+	  for IB.
+
+2006-03-14  Russell Stuart <russell-lartc@stuart.id.au>
+	
+	* Fix missing memset in tc sample
+	* Fixes for tc hash samples
+	* Add sample divisor
+
+2006-03-10  Alpt <alpt@freaknet.org>
+
+	* Add more rt_proto values
+
+2006-03-10 Dale Sedivec <darkness@caliginous.net>
+	
+	* Warn when using "handle" instead of "classid" with "tc class"
+
+2006-03-10  Jean Tourrilhes <jt@hpl.hp.com>
+
+	* Fix endless loop in netlink error handling
+
+
+2006-03-10  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Change default lnstat count to 1
+	* Update to 2.6.16 headers
+	* Add fake version of include/linux/socket.h to fix warnings
+
+2006-01-12  Patrick McHardy <kaber@trash.net>
+
+	* Handle DCCP in ipxfrm.c to allow using port numbers in the selector.
+
+2006-01-10  Masahide NAKAMURA <nakam@linux-ipv6.org>
+
+	* Add ip link ntable
+
+2006-01-10  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Update headers to santized kernel 2.6.15
+	* Fix ipv6 priority option in u32 
+	
+2006-01-03 Alpt <alpt@freaknet.org>
+
+	* Ip man page addition
+
+2006-01-03  Jamal Hadi Salim <hadi@znyx.com>
+
+	* Documentation for ifb
+
+2005-12-09  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add corrupt feature to netem
+
+2005-12-02  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Backout ambigious ip command matches
+
+2005-11-22  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Handle ambigious ip command matches
+
+2005-11-22  Patrick McHardy <kaber@trash.net>
+
+	* Add back ip command aliases
+
+2005-11-07  Masahide NAKAMURA <nakam@linux-ipv6.org>
+
+	* Updating for 2.6.14
+	- Show UPD{SA,POLICY} message information from kernel instead of error
+	- Add lengh check of deleting message from kernel
+	- Use macro for struct xfrm_user{sa,policy}_id
+
+	* Minor fix:
+	- Add fflush at the end of normal dump
+
+2005-11-01  Jamal Hadi Salim <hadi@znyx.com>
+
+	* Fix handling of XFRM monitor and state
+
+2005-11-01  Stephen Hemminger  <shemminger@osdl.org
+
+	* Update to 2.6.14 sanitized headers
+
+2005-10-24  Patrick McHardy <kaber@trash.net>
+
+	* Fix ip commnad shortcuts
+
+2005-10-12  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add more CBQ examples from Fedora Core
+	* Fix buffer overrun in iproute because of bits vs. bytes confusion
+	
+2005-10-12  Jamal Hadi Salim <hadi@znyx.com>
+
+	* Fix ip rule flush, need to reopen rtnl
+
+2005-10-07  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Reenable ip mroute
+
+2005-10-07  Mike Frysinger <vapier@gentoo.org>
+
+	* Handle pfifo_fast that has no qopt without segfaulting
+
+2005-10-05  Mads Martin Joergensen <mmj@suse.de>
+
+	* Trivial netem ccopts
+
+2005-10-04  Jerome Borsboom <j.borsboom@erasmusmc.nl>
+
+	* Fix regression in ip addr (libnetlink) handling
+
+2005-09-21  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Fix uninitialized memory and leaks with valgrind
+	  Reported by Redhat
+
+2005-09-01   Mike Frysinger <vapier@gentoo.org>
+
+	* Fix build issues with netem tables (parallel make and HOSTCC)
+	
+2005-09-01  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Integrate support for DCCP into 'ss' (from acme)
+	* Add -batch option to ip.
+	* Update to 2.6.14 headers
+
+2005-09-01  Eric Dumazet <dada1@cosmosbay.com>
+	
+	* Fix lnstat : First column should not be summed
+
+2005-08-16  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Limit ip route flush to 10 rounds.
+	* Cleanup ip rule flush error message
+	
+2005-08-08  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Update to 2.6.13+ kernel headers
+	* Fix array overrun in paretonormal
+	* Fix ematch to not include dropped fields from skb.
+	
+2005-07-14  Thomas Graf <tgraf@suug.ch>
+
+	* Make ematch bison/lex build with common flex
+	
+2005-07-10  Stephen Hemminger  <shemminger@osdl.org>
+	
+	* Fix Gcc 4.0 build warnings signed/unsigned
+
+2005-06-23  Jamal Hadi Salim <hadi@znyx.com>
+
+	* Fix for options process with ipt
+
+2005-06-23  Thomas Graf <tgraf@suug.ch>
+	
+	* Add extended matches (nbyte, cmp, u32, meta)
+	* Add basic classifier
+	* Fix clean/distclean makefile targets
+	* update local header file copies
+	* IPv4 multipath algorithm selection support
+	* cscope Makefile target
+	* Fix off-by-one while generating argument vector
+	  in batched mode.
+	* Assume stdin if no argument is given to -batch
+
+2005-06-22  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Update include files to 2.6.12
+	* Add ss support for TCP_CONG
+
+2005-06-13  Steven Whitehouse <steve@chygwyn.com>
+
+	* Decnet doc's update
+
+2005-06-07  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Fix 'ip link' map to handle case where device gets autoloaded
+	  by using if_nametoindex as fallback
+	* Device indices are unsigned not int.
+
+2005-06-07   Masahide NAKAMURA <nakam@linux-ipv6.org>
+	
+	* [ip] show timestamp when using '-t' option.
+	* [ip] remove duplicated code for expired message of xfrm.
+	* [ip] add "deleteall" command for xfrm;
+	  "flush" uses kernel's flush interface and
+	  "deleteall" uses legacy iproute2's flush feature like
+	   getting-and-deleting-for-each.
+
+2005-03-30  Stephen Hemminger  <shemminger@osdl.org>
+
+	* include/linux/netfilter_ipv4/ip_tables.h dont include compiler.h
+	  because it isn't needed and not on all systems
+	* Update rtnetlink.h and pkt_cls.h to be stripped versions
+	  of headers from 2.6.12-rc1
+
+2005-03-30  Jamal Hadi Salim <hadi@znyx.com>
+
+	* Proper verison of iptables headers (from 1.3.1)
+	* Set revision file in m_ipt
+	* Fix action_util naming in mirred
+	* don't call ll_init_map in mirred
+
+2005-03-19  Thomas Graf <tgraf@suug.ch>
+
+	* Warn about wildcard deletions and provide IFA_ADDRESS upon
+	  deletions to enforce prefix length validation for IPv4.
+	* Fix netlink message alignment when the last routing attribute added
+	  has a data length not aligned to RTA_ALIGNTO.
+	
+2005-03-30  Masahide NAKAMURA <nakam@linux-ipv6.org>
+	
+	* ipv6 xfrm allocspi and monitor support.
+	
+2005-03-29  Stephen Hemminger  <shemminger@osdl.org>
+
+	* switch to stack for netem tables
+
+2005-03-18  Stephen Hemminger  <shemminger@osdl.org>
+
+	* add -force option to batch mode
+	* handle midline comments in batch mode
+	* sum per cpu fields in lnstat correctly
+
+2005-03-14  Stephen Hemminger  <shemminger@osdl.org>
+
+	* cleanup batch mode, allow continuation, comments etc.
+	* recode reuse of netlink socket
+
+2005-03-14  Boian Bonev <boian@bonev.com>
+	
+	* enhancement to batch mode.
+	 it does not exit on error, just report it
+	 tc reuses the already open netlink socket for subsequent command(s)
+
+2005-03-14  Thomas Graf <tgraf@suug.ch>
+	
+	* ip link command
+	  print NO-CARRIER flag if there is no carrier and the link is up.
+
+2005-03-14  Patrick McHardy <kaber@trash.net>
+
+	* bug: Use USER_HZ where necessary
+
+2005-03-10  Jamal Hadi Salim <hadi@znyx.com>
+
+	* Fix bug with register_target
+
+2005-03-10  Stephen Hemminger  <shemminger@osdl.org>
+
+	* fix pkt_cls.h to have tc_u32_mark
+	* update include files to be stripped versions of 2.6.11
+	* add documentation about netem distributions [from nistnet]
+	* turn off nup in document make [from FC3]
+	* don't build with extra debug info (-g) [from FC3]
+	
+2005-03-10 Nix <nix@esperi.org.uk>
+
+	* make man3 directory
+	
+2005-03-10 Pasi <Pasi.Eronen@nokia.com>
+	
+	* add ESP-in-UDP encapsulation
+
+2005-03-10 Thomas Graf <tgraf@suug.ch>
+	* [NETEM] Fix off by one
+ 	* update local header file copies
+	* [NEIGH] print number of probes done so far (statistics mode only)
+	
+2005-03-10 Herbert Xu <herbert@gondor.apana.org.au>
+	* Trivial typo in ip help
+
+2005-02-09  Stephen Hemminger  <shemminger@osdl.org>
+
+	* netem distribution data reorganization
+
+2005-02-09  Roland Dreier <roland@topspin.com>
+
+	* ip over infiniband address display
+
+2005-02-09  Jim Gifford <lfs@jg555.com>
+
+	* make install fix for ip/
+
+2005-02-07 Mads Martin Joergensen <mmj@suse.de>
+	
+	* Don't mix address families when flushing	
+	
+2005-02-07  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Validate classid is not too large to cause loss of bits.
+
+2005-02-07 Jean-Marc Ranger <jmranger@sympatico.ca>
+
+	* need to call getline() with null for first usage
+	* don't overwrite const arg
+
+2005-02-07  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add experimental distribution
+
+2005-01-18  Yun Mao <maoy@cis.upenn.edu>
+
+	* typo in ss
+
+2005-01-18  Thomas Graf <tgraf@suug.ch>
+	
+	* tc pedit/action cleanups
+	* add addraw_l
+	* rtattr_parse cleanups
+
+2005-01-17  Jamal Hadi Salim <hadi@znyx.com>
+
+	* typo in m_mirred
+	* add support for pedit
+
+2005-01-13  Jim Gifford <lfs@jg555.com>
+	
+	* Fix allocation size error in nomal and paretonormal generation
+	  programs.
+
+2005-01-12  Masahide Nakamura <nakam@linux-ipv6.org>
+	
+	* ipmonitor shows IPv6 prefix list notification
+	* update to iproute2 xfrm for ipv6	
+	
+2005-01-12  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Fix compile warnings when building 64bit system since
+	  u64 is unsigned long, but format is %llu
+
+2005-01-12  "Catalin(ux aka Dino) BOIE" <util@deuroconsult.ro>
+
+	* Add the possibility to use fwmark in u32 filters
+	
+2005-01-12  Andi Kleen <ak@suse.de>
+
+	* Add netlink manual page
+
+2004-10-20  Stephen Hemminger  <shemminger@osdl.org>
+	
+	* Add warning about "ip route nat" no longer supported
+
+2005-01-12  Thomas Graf <tgraf@suug.ch>
+
+	* Tc testsuite
+
+2005-01-12  Jamal Hadi Salim <hadi@znyx.com>
+
+	* Add iptables tc support. This meant borrowing headers
+	  from iptables *ugh*
+
+2004-12-08  Jamal Hadi Salim <hadi@znyx.com>
+
+	* Add mirror and redirect actions
+
+2004-10-20  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Don't include <asm/byteorder.h> since then we get dependant on
+	  kernel headers on host machine
+	* Minor fix for building on old machine without IPPROTO_SCTP
+
+2004-10-19  Harald Welte <laforge@gnumonks.org>
+
+	* Replace rtstat (and ctstat) with new lnstat
+
+2004-10-19  Mads Martin Joergensen <mmj@suse.de>
+
+	* Ip is using the wrong structure in ipaddress.c when showing stats
+	* Make sure no buffer overflow in nstat
+
+2004-10-19  Michal <md@lnet.pl>
+
+	* fix scaling in print_rates (for bits)
+
+2004-09-28  Stephen Hemminger  <shemminger@osdl.org>
+
+	* fix build problems with arpd and pthread
+	* add pkt_sched.h
+
+2004-09-28  Mike Frysinger <vapier@gentoo.org>
+	
+	* make man8 directory
+	* install ifcfg and rtpr scripts
+
+2004-09-28  Andreas Haumer <andreas@xss.co.at>
+
+	* make install symlink fix.
+
+2004-09-28  Masahide Nakamura <nakam@linux-ipv6.org>
+
+	* ICMP/ICMPv6's type and code in IPsec selector.
+	* fixes `ip xfrm`'s algorithm key when using hexadecimal
+	* support 'ip xfrm' protocol types
+	* flush message types for XFRM's policy/state
+
+
+2004-09-01  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Fix ip command to not crash when interface name is too long.
+	  always use strncpy(.., IFNAMSIZ)
+
+2004-08-31  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add gact documentation from jamal
+	* Chang more arguments to rtnetlink API const
+	* Drop dead queuing disciplines
+	* Handle qdisc without xstats in core rather than
+	  putting stub's everywhere
+	* Add requeue to tc_stats and handle new/old ABI issues
+
+2004-08-30  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Make clean and install changes for man pages
+	* Patch from jamal to support gact
+	* Add support for loading distributions to netem
+	
+
+2004-08-23  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Update from jamal for all the parts that got broken in the
+	  last classification patch.
+	* Hfsc/sc patch from patrick
+
+2004-08-13  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add jamal's tc extensions for classification
+	* Get rid of old Patches/ directory for tcp_diag module
+	* Make get_rate table based.
+
+2004-08-11  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add xfrm message formatting from
+	  Masahide Nakamura <nakam@linux-ipv6.org>
+
+2004-08-09  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Fix netem scheduler to handle case where psched us != real us
+
+	* Remove configuration for everything that can depend on 
+	  extracted kernel headers
+	* Add kernel headers required to include/linux
+
+2004-08-04  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Get rid of old tcp_diag module, it is part of kernel.
+
+	* Add some kernel include files back (netlink, tcp_diag, pkt_sched)
+
+2004-07-30  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Make ip xfrm stuff config option since it doesn't exist on 2.4
+
+	* HFSC doesn't exist on older 2.4 kernels so make it configurable
+
+	* HTB API changed and won't build with mismatched version.
+	  Rather than sticking user with a build error, just don't
+	  build it in on mismatch.
+
+	* Change configure script to make sure netem is the correct
+	  version. I changed the structure def. a couple of times before
+	  settling on the final API
+
+2004-07-16  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add htb mpu support 
+	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_tc_overhead.diff
+	* Three small xfrm updates
+
+2004-07-07  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Fix if_ether.h to fix arpd build
+	* Add hfsc scheduler support
+	* Add ip xfrm support
+	* Add add jitter (instead of rate) to netem scheduler
+
+2004-07-02  Stephen Hemminger  <shemminger@osdl.org>
+
+	* use compile to test for ATM libraries
+	* put TC layered scheduler hooks in /usr/lib/tc as shared lib
+	  before it looked in standard search path (/lib;/usr/lib;...)
+	  which seems out of place.
+	* build netem as shared library (more for testing/example)
+	* build ATM as shared library since libatm may be on build
+	  machine but not on deployment machine
+	* fix make install to not install SCCS directories
+
+2004-07-01  Stephen Hemminger  <shemminger@osdl.org>
+
+	* add more link options to ip command (from Mark Smith
+	* add rate and duplicate arguments to tc command
+	* add -iec flag for tc printout
+	* rename delay scheduler to netem
+
+2004-06-25  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add loss parameter to delay
+	* Rename delay qdisc to netsim
+	* Add autoconfiguration by building a Config file
+	  and using it.
+
+2004-06-09  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Report rates in K=1000 (requested by several people)
+	* Add GNU long style options
+	* For HTB use get_hz to pick up value of system HZ at runtime
+	* Delete unused funcs.
+
+2004-06-08  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Cleanup ss
+	     - use const char and local functions where possible
+	* Add man pages from SuSe
+	* SuSE patches
+	     - path to db4.1
+	     - don't hardcode path to /tmp in ifstat
+	       Alternat fix: was to use TMPDIR
+	     - handle non-root user calling ip route flush going into
+	       an infinite loop.
+	       Alternate fix: was to timeout if route table doesn't empty.
+	* Try and get rid of dependency on kernel include files
+	  Get rid of having private glibc-include headers
+	
+2004-06-07  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Import patches that make sense from Fedora Core 2
+		- iproute2-2.4.7-hex
+		     print fwmark in hex
+		- iproute2-2.4.7-netlink
+		     handle getting right netlink mesg back
+		- iproute2-2.4.7-htb3-tc
+		     add HTB scheduler
+		- iproute2-2.4.7-default
+		     add entry default to rttable
+                    
+2004-06-04  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add support for vegas info to ss
+
+2004-06-02  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Use const char in utility routines where appropriate
+	* Rearrange include files so can build with standard headers
+	* For "tc qdisc ls" see the default queuing discpline "pfifo_fast"
+	  and understand it
+	* Get rid of private defintions of network headers which existed
+	  only to handle old glibc
+
+2004-04-15  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Add the delay (network simulation scheduler)
+
+2004-04-15  Stephen Hemminger  <shemminger@osdl.org>
+
+	* Starting point baseline based on iproute2-2.4.7-ss020116-try
+

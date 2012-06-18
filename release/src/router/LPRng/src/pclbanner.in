@@ -1,0 +1,190 @@
+#!@SHELL@
+# shell for PCL banner printing 
+#
+#   
+#  pr:bp=/usr/local/.../pclbanner
+#    :of=/usr/local/.../offilter
+#  
+#  Uses: printf
+
+PATH=/bin:/usr/bin
+
+Arglist=""
+Args=""
+vAr=""
+vAlue=""
+iI=""
+Args="$@"
+while expr "$1" : '-.*' >/dev/null ; do
+  vAr=`expr "$1" : '-\(.\).*'`;
+  vAlue=`expr "$1" : '-.\(.*\)'`;
+  case "$vAr" in
+    - ) break;;
+    c ) c=1;;
+    [a-zA-Z] )
+      if test "X$vAlue" = "X" ; then shift; vAlue=$1; fi;
+      eval $vAr='$vAlue';
+      #setvar $vAr "$vAlue"
+	  case "$vAr" in
+		J ) Title=$vAlue ;;
+		P ) Printer=$vAlue ;;
+		H ) Host=$vAlue ;;
+		n ) User=$vAlue ;;
+		C ) Class=$vAlue ;;
+		A ) Jobid=$vAlue ;;
+		D ) Date=$vAlue ;;
+		Q ) Queue=$vAlue ;;
+		N ) Filename=$vAlue ;;
+		f ) Format=$vAlue ;;
+	  esac
+      ;;
+  esac;
+  shift;
+done
+
+# set shell variables to the printcap options
+#  flag   ->  flag=1
+#  flag@  ->  flag=0
+#  option=value ->  option='value'
+#
+#for iI in `echo $PRINTCAP_ENTRY | sed -e "s/.*/\"&\"/"` ;  do
+for iI in $PRINTCAP_ENTRY ; do
+  # echo X $iI;
+  if expr "$iI" : " *\:" >/dev/null ; then
+    vAr=`expr "$iI" : " *\:\([^#=][^#=]*\)[#=].*"`;
+    vAlue=`expr "$iI" : " *\:[^#=][^#=]*[#=]\(.*\)"`;
+    if test "X$vAr" = "X" ; then
+      vAr=`expr "$iI" : " *:\(.*\)@"`;
+      vAlue=0;
+    fi
+    if test "X$vAr" = "X" ; then
+      vAr=`expr "$iI" : " *:\(.*\)"`;
+      vAlue=1;
+    fi
+    if test "X$vAr" != "X" ; then
+      eval $vAr='$vAlue';
+      #setvar $vAr "$vAlue"
+    fi
+  else
+    vAr=`expr "$iI" : " *\([^|][^|]*\).*"`;
+    if test "X$vAr" != "X" ; then
+      eval Printer="$vAr"
+    fi
+  fi;
+done
+
+# set shell variables to the printcap options
+#  flag   ->  flag=1
+#  flag@  ->  flag=0
+#  option=value ->  option='value'
+#
+for iI in $CONTROL ; do
+  # echo X $iI;
+  vAr=`expr "$iI" : " *\([A-Z]\).*"`;
+  vAlue=`expr "$iI" : " *[A-Z]\(.*\)"`;
+  if test "X$vAr" != "X" ; then
+    eval $vAr='$vAlue';
+    #setvar $vAr "$vAlue";
+  fi;
+done
+# 
+# restore argument list
+set -- $Args
+Args=""
+vAr=""
+vAlue=""
+iI=""
+
+xpos=0;
+ypos=0;
+incr=0;
+margins="\033&l0u0Z";
+lightbar="\033*c1800a100b45g2P";
+darkbar="\033*c1800a100b25g2P";
+fontchange="\033(8U\033(s1p%dv0s0b4148T";
+position="\033*p%dx%dY";
+UEL="\033%%-12345X";
+UELPJL="\033%%-12345X@PJL \n";
+PCLRESETSTR="\033E";
+CRLFSTR="\033&k2G";
+
+ moveto  () {
+     printf $position $1 $2;
+ }
+
+ fontsize  () {
+     incr=`expr "(" $1 "*" 300 "*" 11 ")" / 720`;
+     printf $fontchange $1;
+ }
+ 
+ argline  () {
+    key=$1
+	value=$2
+    if [ -n "$value" ] ; then
+ 	  textline "$key" 1 0
+ 	  textline ": " 0 0
+ 	  textline "$value" 0 1
+    fi
+ }
+ 
+ textline  () {
+	line=$1
+	start=$2
+	end=$3
+    if [ "$start" -gt 0 ] ; then
+ 		moveto $xpos $ypos
+    fi
+    printf '%s' "$line";
+    if [ "$end" -gt 0 ] ; then
+		ypos=`expr "$ypos" + "$incr"`
+	fi
+ }
+ 
+pcl_banner () {
+    printf "$UEL" ;
+    printf "$PCLRESETSTR" ;
+    # printf "$UELPJL" ;
+    printf "$CRLFSTR" ;
+    printf "$margins" ;
+
+    # do light bar 
+    xpos=0;
+    ypos=0;
+    moveto $xpos $ypos ;
+    printf $lightbar ;
+    ypos=`expr $ypos + 100`;
+
+    # set font size 
+    fontsize 24;
+    ypos=`expr $ypos + $incr`;
+    moveto $xpos $ypos ;
+
+	argline Title "$Title"
+
+	fontsize 14
+	argline Printer "$Printer"
+	argline Host "$Host"
+	argline User "$User"
+	argline Class "$Class"
+	argline Jobid "$Jobid"
+	argline Date "$Date"
+	argline Queue "$Queue"
+	argline Filename "$Filename"
+	argline Format "$Format"
+
+    # smaller font 
+    fontsize 12 ;
+
+    moveto $xpos $ypos ;
+    date=`date`;
+    textline 'Printed at: ' 0 1 ;
+    textline "$date" 0 1 ;
+
+    moveto $xpos $ypos ;
+    printf $darkbar ;
+
+    printf "$UEL" ;
+    printf "$PCLRESETSTR" ;
+}
+
+pcl_banner

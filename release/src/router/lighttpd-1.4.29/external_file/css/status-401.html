@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="/smb/css/appicon.png">
+<link rel="apple-touch-startup-image" href="/smb/css/startup.png">
+<title>AiCloud</title>
+<style>
+html{
+margin:0 0;
+padding:0px;
+}
+body{
+display: block;
+overflow: hidden;
+}
+fieldset {  
+width:320px;  
+font-family:Verdana, Arial, Helvetica, sans-serif;  
+font-size:14px;  
+}
+
+.inputtext{
+border:1px solid #bfcedc;
+line-height:15px !important;
+height:19px;
+}
+.gradientbg1{
+background: #206299; /* Old browsers */
+background: -moz-linear-gradient(left,  #206299 9%, #2268a3 24%, #164367 53%, #123754 100%); /* FF3.6+ */
+background: -webkit-gradient(linear, left top, right top, color-stop(9%,#206299), color-stop(24%,#2268a3), color-stop(53%,#164367), color-stop(100%,#123754)); /* Chrome,Safari4+ */
+background: -webkit-linear-gradient(left,  #206299 9%,#2268a3 24%,#164367 53%,#123754 100%); /* Chrome10+,Safari5.1+ */
+background: -o-linear-gradient(left,  #206299 9%,#2268a3 24%,#164367 53%,#123754 100%); /* Opera 11.10+ */
+background: -ms-linear-gradient(left,  #206299 9%,#2268a3 24%,#164367 53%,#123754 100%); /* IE10+ */
+background: linear-gradient(left,  #206299 9%,#2268a3 24%,#164367 53%,#123754 100%); /* W3C */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#206299', endColorstr='#123754',GradientType=1 ); /* IE6-9 */
+}
+</style>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type='text/javascript' src='/smb/js/davclient_tools.js'></script>
+<script type="text/javascript">
+var this_url;
+var m = new lang();
+var g_storage = new myStorage();
+
+$("document").ready(function() {
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	$('label#username').text(m.getString('title_username'));
+	$('label#password').text(m.getString('title_password'));
+	$('button#ok').text(m.getString('btn_ok'));
+	$('button#cancel').text(m.getString('btn_cancel'));
+	
+	//$('input#username').attr("disabled", "");
+	//$('input#password').attr("disabled", "");
+	
+	this_url = getUrlVars()["v"];
+	
+	var browserVer = navigator.userAgent.toLowerCase();
+	if( browserVer.indexOf("msie") != -1 && 
+			getInternetExplorerVersion() <= 7 ){
+		alert(m.getString('msg_browsersupport'));
+	}
+});
+
+function getInternetExplorerVersion(){
+   var rv = -1; // Return value assumes failure.
+   if (navigator.appName == 'Microsoft Internet Explorer')
+   {
+      var ua = navigator.userAgent;
+      var re  = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
+      if (re.exec(ua) != null)
+         rv = parseFloat( RegExp.$1 );
+   }
+   return rv;
+}
+
+function doOK(e) {
+	
+	var user = $('input#username').val();
+	var pass = $('input#password').val();
+	var auth = "Basic " + Base64.encode(user + ":" + pass);
+	
+	//$('input#username').attr("disabled", "disabled");
+	//$('input#password').attr("disabled", "disabled");
+	//alert(auth);
+	//parent.doLOGIN(this_url, auth);
+	
+	var client = new davlib.DavClient();
+	client.initialize();
+	
+	client.PROPFIND('/', auth, function(error, statusstring, content){
+		window.location.reload();
+	});
+};
+
+function doCancel(e) {
+	parent.closeJqmWindow(0);
+};
+
+function getUrlVars(){
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++){
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+}
+
+function onKeyHandler(e){
+	if(e.keyCode==13)
+		doOK(e);
+}
+</script>
+</head>
+<body class='gradientbg1' style='padding-top:20px;margin:0'>
+
+<table width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
+	<tbody><tr>
+		<td valign="middle" align="center"><img src="/smb/css/logo.png" width="250" height="84" alt=""></td>
+	</tr>
+</tbody></table>
+
+<table width="100%" height="100%">
+<tbody><tr>
+<td valign="middle" align="center">
+
+<table valign="middle" align="center" border="0" cellpadding="0" cellspacing="0">
+	<tbody>
+	
+	<tr>
+
+		<td align="left" background="" height="106" alt="">		
+			<!--<form name="loginForm">	  		-->
+	    	<table border="0" cellpadding="0" cellspacing="3">
+	            <tbody><tr> 
+	              <td><font color="white" size="2"><label id="username">Username :</label></font></td>
+	              <td><input id="username" name="username" type="text" size="20" style="width:120px;"></td>
+	            </tr>
+	            <tr> 
+	              <td><font color="white" size="2"><label id="password">Password :</label></font></td>
+	              <td><input id="password" name="password" type="password" size="20" style="width:120px;" onkeydown="return onKeyHandler(event)"></td>
+	            </tr>
+	            <tr> 
+	              <td colspan="2" align="center"><br><button id="ok" class='btnStyle' onClick="doOK();">OK</button></td>
+	            </tr>
+	          </tbody>
+	     	</table> 
+	    <!--</form>-->
+		</td>
+	</tr>
+	
+	<!--
+	<tr>
+		<td colspan="2">
+
+			<img src="/images/login_05.jpg" width="506" height="45" alt=""></td>
+	</tr>
+	-->
+	
+</tbody></table>
+
+
+</td>
+</tr>
+</tbody></table>
+
+
+</body>
+</html>

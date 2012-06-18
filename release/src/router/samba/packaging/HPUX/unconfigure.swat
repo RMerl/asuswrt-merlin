@@ -1,0 +1,29 @@
+# Unconfigure script for Samba.swat
+
+KillProcess()
+{
+  proc=$1
+  sig=$2
+
+  # Determine PID of process(es) to stop and kill it.  This routine
+  # is designed to work with bourne shell, ksh and posix shell.
+
+  Command=`basename $proc | cut -c1-8`     # Solaris ps limited to 8 chars.
+
+  pid=`ps -e | awk "\\$NF~/$Command/ {print \\$1}"`
+
+  if [ "X$pid" != "X" ]; then
+    kill -$sig $pid
+  fi
+}
+
+grep -v '^swat' /etc/services >/tmp/services$$
+mv /tmp/services$$ /etc/services
+
+grep -v '^swat' /etc/inetd.conf >/tmp/inetd.conf$$
+mv /tmp/inetd.conf$$ /etc/inetd.conf
+
+KillProcess inetd HUP
+
+exit 0
+

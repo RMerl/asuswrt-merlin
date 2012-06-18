@@ -1,0 +1,13 @@
+# 24 Spe 2001  Steve Langasek <vorlon@debian.org>
+
+# This file contains autoconf settings specific to the sparc-linux
+# platform that should be preloaded when building for this architecture.
+
+
+# Linux 2.2 on Sparc doesn't have setresgid() or setresuid(), but
+# Linux 2.4 does.  Ensure that packages compiled for woody remain
+# compatible with 2.2 kernels, even if the build machine is running 2.4.
+samba_cv_have_setresuid=${samba_cv_have_setresuid=no}
+samba_cv_have_setresgid=${samba_cv_have_setresgid=no}
+samba_cv_USE_SETRESUID=${samba_cv_USE_SETRESUID=no}
+samba_cv_USE_SETREUID=${samba_cv_USE_SETREUID=yes}

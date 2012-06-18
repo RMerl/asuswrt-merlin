@@ -1,0 +1,237 @@
+.\"     Title: umount.cifs
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
+.\"      Date: 09/30/2009
+.\"    Manual: System Administration tools
+.\"    Source: Samba 3.0
+.\"  Language: English
+.\"
+.TH "UMOUNT\&.CIFS" "8" "09/30/2009" "Samba 3\&.0" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * (re)Define some macros
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" toupper - uppercase a string (locale-aware)
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de toupper
+.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
+\\$*
+.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH-xref - format a cross-reference to an SH section
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de SH-xref
+.ie n \{\
+.\}
+.toupper \\$*
+.el \{\
+\\$*
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SH - level-one heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SH
+.\" put an extra blank line of space above the head in non-TTY output
+.if t \{\
+.sp 1
+.\}
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[an-margin]u
+.ti 0
+.HTML-TAG ".NH \\n[an-level]"
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+\." make the size of the head bigger
+.ps +3
+.ft B
+.ne (2v + 1u)
+.ie n \{\
+.\" if n (TTY output), use uppercase
+.toupper \\$*
+.\}
+.el \{\
+.nr an-break-flag 0
+.\" if not n (not TTY), use normal case (not uppercase)
+\\$1
+.in \\n[an-margin]u
+.ti 0
+.\" if not n (not TTY), put a border/line under subheading
+.sp -.6
+\l'\n(.lu'
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" SS - level-two heading that works better for non-TTY output
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de1 SS
+.sp \\n[PD]u
+.nr an-level 1
+.set-an-margin
+.nr an-prevailing-indent \\n[IN]
+.fi
+.in \\n[IN]u
+.ti \\n[SN]u
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.ps \\n[PS-SS]u
+\." make the size of the head bigger
+.ps +2
+.ft B
+.ne (2v + 1u)
+.if \\n[.$] \&\\$*
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BB/BE - put background/screen (filled box) around block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BB
+.if t \{\
+.sp -.5
+.br
+.in +2n
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EB
+.if t \{\
+.if "\\$2"adjust-for-leading-newline" \{\
+.sp -1
+.\}
+.br
+.di
+.in
+.ll
+.gcolor
+.nr BW \\n(.lu-\\n(.i
+.nr BH \\n(dn+.5v
+.ne \\n(BHu+.5v
+.ie "\\$2"adjust-for-leading-newline" \{\
+\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.el \{\
+\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
+.\}
+.in 0
+.sp -.5v
+.nf
+.BX
+.in
+.sp .5v
+.fi
+.\}
+..
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" BM/EM - put colored marker in margin next to block of text
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.de BM
+.if t \{\
+.br
+.ll -2n
+.gcolor red
+.di BX
+.\}
+..
+.de EM
+.if t \{\
+.br
+.di
+.ll
+.gcolor
+.nr BH \\n(dn
+.ne \\n(BHu
+\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
+.in 0
+.nf
+.BX
+.in
+.fi
+.\}
+..
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "Name"
+umount.cifs \- for normal, non\-root users, to unmount their own Common Internet File System (CIFS) mounts
+.SH "Synopsis"
+.fam C
+.HP \w'\ 'u
+\FCumount\&.cifs\F[] {mount\-point} [\-nVvhfle]
+.fam
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+umount\&.cifs unmounts a Linux CIFS filesystem\&. It can be invoked indirectly by the
+\fBumount\fR(8)
+command when umount\&.cifs is in /sbin directory, unless you specify the "\-i" option to umount\&. Specifying \-i to umount avoids execution of umount helpers such as umount\&.cifs\&. The umount\&.cifs command only works in Linux, and the kernel must support the cifs filesystem\&. The CIFS protocol is the successor to the SMB protocol and is supported by most Windows servers and many other commercial servers and Network Attached Storage appliances as well as by the popular Open Source server Samba\&.
+.PP
+The umount\&.cifs utility detaches the local directory
+\fImount\-point\fR
+from the corresponding UNC name (exported network resource) and frees the associated kernel resources\&. It is possible to set the mode for umount\&.cifs to setuid root (or equivalently update the /etc/permissions file) to allow non\-root users to umount shares to directories for which they have write permission\&. The umount\&.cifs utility is typically not needed if unmounts need only be performed by root users, or if user mounts and unmounts can rely on specifying explicit entries in /etc/fstab See
+.PP
+\fBfstab\fR(5)
+.SH "OPTIONS"
+.PP
+\-\-verbose
+.RS 4
+print additional debugging information
+.RE
+.PP
+\-\-no\-mtab
+.RS 4
+Do not update the mtab even if unmount completes successfully (/proc/mounts will still display the correct information)
+.RE
+.SH "NOTES"
+.PP
+This command is normally intended to be installed setuid (since root users can already run unmount)\&. An alternative to using umount\&.cifs is to add specfic entries for the user mounts that you wish a particular user or users to mount and unmount to /etc/fstab
+.SH "CONFIGURATION"
+.PP
+The primary mechanism for making configuration changes and for reading debug information for the cifs vfs is via the Linux /proc filesystem\&. In the directory
+\FC/proc/fs/cifs\F[]
+are various configuration files and pseudo files which can display debug information\&. For more information see the kernel file
+\FCfs/cifs/README\F[]\&.
+.SH "BUGS"
+.PP
+At this time umount\&.cifs does not lock the mount table using the same lock as the umount utility does, so do not attempt to do multiple unmounts from different processes (and in particular unmounts of a cifs mount and another type of filesystem mount at the same time)\&.
+.PP
+If the same mount point is mounted multiple times by cifs, umount\&.cifs will remove all of the matching entries from the mount table (although umount\&.cifs will actually only unmount the last one), rather than only removing the last matching entry in /etc/mtab\&. The pseudofile /proc/mounts will display correct information though, and the lack of an entry in /etc/mtab does not prevent subsequent unmounts\&.
+.PP
+Note that the typical response to a bug report is a suggestion to try the latest version first\&. So please try doing that first, and always include which versions you use of relevant software when reporting bugs (minimum: umount\&.cifs (try umount\&.cifs \-V), kernel (see /proc/version) and server type you are trying to contact\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 1\&.34 of the cifs vfs filesystem (roughly Linux kernel 2\&.6\&.12)\&.
+.SH "SEE ALSO"
+.PP
+Documentation/filesystems/cifs\&.txt and fs/cifs/README in the linux kernel source tree may contain additional options and information\&.
+.PP
+\fBmount.cifs\fR(8)
+.SH "AUTHOR"
+.PP
+Steve French
+.PP
+The syntax was loosely based on the umount utility and the manpage was loosely based on that of mount\&.cifs\&.8\&. The man page was created by Steve French
+.PP
+The maintainer of the Linux cifs vfs and the userspace tool
+\fIumount\&.cifs\fR
+is
+Steve French\&. The
+Linux CIFS Mailing list
+is the preferred place to ask questions regarding these programs\&.

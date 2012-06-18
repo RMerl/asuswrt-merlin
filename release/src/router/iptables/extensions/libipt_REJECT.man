@@ -1,0 +1,34 @@
+This is used to send back an error packet in response to the matched
+packet: otherwise it is equivalent to
+.B DROP
+so it is a terminating TARGET, ending rule traversal.
+This target is only valid in the
+.BR INPUT ,
+.B FORWARD
+and
+.B OUTPUT
+chains, and user-defined chains which are only called from those
+chains.  The following option controls the nature of the error packet
+returned:
+.TP
+.BI "--reject-with " "type"
+The type given can be
+.nf
+.B " icmp-net-unreachable"
+.B " icmp-host-unreachable"
+.B " icmp-port-unreachable"
+.B " icmp-proto-unreachable"
+.B " icmp-net-prohibited"
+.B " icmp-host-prohibited or"
+.B " icmp-admin-prohibited (*)"
+.fi
+which return the appropriate ICMP error message (\fBport-unreachable\fP is
+the default).  The option
+.B tcp-reset
+can be used on rules which only match the TCP protocol: this causes a
+TCP RST packet to be sent back.  This is mainly useful for blocking 
+.I ident
+(113/tcp) probes which frequently occur when sending mail to broken mail
+hosts (which won't accept your mail otherwise).
+.TP
+(*) Using icmp-admin-prohibited with kernels that do not support it will result in a plain DROP instead of REJECT

@@ -1,0 +1,69 @@
+<samba:parameter name="bind interfaces only"
+				type="boolean"
+                 context="G"
+                 advanced="1" wizard="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+        <para>This global parameter allows the Samba admin 
+        to limit what interfaces on a machine will serve SMB requests. It 
+        affects file service <citerefentry><refentrytitle>smbd</refentrytitle>
+        <manvolnum>8</manvolnum></citerefentry> and name service <citerefentry><refentrytitle>nmbd</refentrytitle>
+        <manvolnum>8</manvolnum></citerefentry> in a slightly different ways.</para>
+
+	<para>
+	For name service it causes <command moreinfo="none">nmbd</command> to bind to ports 137 and 138 on the
+	interfaces listed in the <smbconfoption name="interfaces"/> parameter. <command moreinfo="none">nmbd</command>
+	also binds to the &quot;all addresses&quot; interface (0.0.0.0) on ports 137 and 138 for the purposes of
+	reading broadcast messages.  If this option is not set then <command moreinfo="none">nmbd</command> will
+	service name requests on all of these sockets. If <smbconfoption name="bind interfaces only"/> is set then
+	 <command moreinfo="none">nmbd</command> will check the source address of any packets coming in on the
+	broadcast sockets and discard any that don't match the broadcast addresses of the interfaces in the
+	<smbconfoption name="interfaces"/> parameter list.  As unicast packets are received on the other sockets it
+	allows <command moreinfo="none">nmbd</command> to refuse to serve names to machines that send packets that
+	arrive through any interfaces not listed in the <smbconfoption name="interfaces"/> list.  IP Source address
+	spoofing does defeat this simple check, however, so it must not be used seriously as a security feature for
+	 <command moreinfo="none">nmbd</command>.
+	</para>
+
+	<para>
+	For file service it causes <citerefentry><refentrytitle>smbd</refentrytitle>
+	<manvolnum>8</manvolnum></citerefentry> to bind only to the interface list given in the <smbconfoption
+	name="interfaces"/> parameter. This restricts the networks that <command moreinfo="none">smbd</command> will
+	serve to packets coming in those interfaces.  Note that you should not use this parameter for machines that
+	are serving PPP or other intermittent or non-broadcast network interfaces as it will not cope with
+	non-permanent interfaces.
+	</para>
+
+	<para>
+	If <smbconfoption name="bind interfaces only"/> is set then unless the network address
+	 <emphasis>127.0.0.1</emphasis> is added to the <smbconfoption name="interfaces"/> parameter list
+	 <citerefentry><refentrytitle>smbpasswd</refentrytitle> <manvolnum>8</manvolnum></citerefentry> and
+	 <citerefentry><refentrytitle>swat</refentrytitle> <manvolnum>8</manvolnum></citerefentry> may not work as
+	expected due to the reasons covered below.
+	</para>
+
+	<para>
+	To change a users SMB password, the <command moreinfo="none">smbpasswd</command> by default connects to the
+	 <emphasis>localhost - 127.0.0.1</emphasis> address as an SMB client to issue the password change request. If
+	<smbconfoption name="bind interfaces only"/> is set then unless the network address
+	 <emphasis>127.0.0.1</emphasis> is added to the <smbconfoption name="interfaces"/> parameter list then <command
+	moreinfo="none"> smbpasswd</command> will fail to connect in it's default mode.  <command
+	moreinfo="none">smbpasswd</command> can be forced to use the primary IP interface of the local host by using
+	its <citerefentry><refentrytitle>smbpasswd</refentrytitle> <manvolnum>8</manvolnum></citerefentry>	<parameter
+	moreinfo="none">-r <replaceable>remote machine</replaceable></parameter> parameter, with <replaceable>remote
+	machine</replaceable> set to the IP name of the primary interface of the local host.
+	</para>
+
+	<para>
+	The <command moreinfo="none">swat</command> status page tries to connect with <command
+	moreinfo="none">smbd</command> and <command moreinfo="none">nmbd</command> at the address
+	<emphasis>127.0.0.1</emphasis> to determine if they are running.  Not adding <emphasis>127.0.0.1</emphasis>
+	will cause <command moreinfo="none"> smbd</command> and <command moreinfo="none">nmbd</command> to always show
+	&quot;not running&quot; even if they really are.  This can prevent <command moreinfo="none"> swat</command>
+	from starting/stopping/restarting <command moreinfo="none">smbd</command> and <command
+	moreinfo="none">nmbd</command>.
+	</para>
+
+</description>
+<value type="default">no</value>
+</samba:parameter>

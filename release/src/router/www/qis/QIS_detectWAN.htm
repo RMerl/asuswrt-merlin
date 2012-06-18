@@ -1,0 +1,233 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link type="text/css" rel="stylesheet" href="/qis/qis_style.css">
+<link type="text/css" rel="stylesheet" href="/form_style.css">
+<style>
+.test_css{
+	padding-left:10px;
+	font-size:13px;
+	font-weight:bolder;
+	color: #FFFFFF;
+}
+</style>
+<script type="text/JavaScript" src="/jquery.js"></script>
+<script type="text/javascript">
+<% wanlink(); %>
+
+var now_flag = '<% get_parameter("flag"); %>';
+
+var MAX_RUN_TIMES = 3, run_times = 0;
+
+var wantype = wanlink_type();
+
+var wanstate = -1;
+var wansbstate = -1;
+var wanauxstate = -1;
+
+<% wanstate(); %>
+
+function initial(){
+	parent.set_step("t1");
+
+	if(wanstate == 4 && wansbstate == 4){
+		gotoPage("/error_page.htm", "6", 1);
+		return;
+	}
+	
+	$("#string_obj1")[0].innerHTML = "<#QIS_autoMAC_desc3#>";
+	$("#string_obj2")[0].innerHTML = "<#QIS_autoMAC_result_desc3#>";
+	$("#string_obj3")[0].innerHTML = "<#QIS_detect2_desc4#>";
+	$("#string_obj4")[0].innerHTML = "<#QIS_autoMAC_desc3#>";
+	$("#string_obj5")[0].innerHTML = "<#QIS_detectWAN_desc2#>";
+	
+	if(parent.ifResetModem()){
+		$("#img_obj1")[0].src = "/images/button-close.gif";
+		$("#img_obj1")[0].style.width = 30;
+		$("#img_obj1")[0].style.height = 30;
+		$("#tr_obj1")[0].style.display = "";
+		
+		$("#img_obj2")[0].src = "/images/button-close.gif";
+		$("#img_obj2")[0].style.width = 30;
+		$("#img_obj2")[0].style.height = 30;
+		$("#tr_obj2")[0].style.display = "";
+		
+		$("#tr_obj3")[0].style.display = "";
+		
+		$("#tr_obj4")[0].style.display = "";
+		
+		$("#tr_obj5")[0].style.display = "";
+	}
+	else if(parent.ifAutoMAC()){
+		$("#img_obj1")[0].src = "/images/button-close.gif";
+		$("#img_obj1")[0].style.width = 30;
+		$("#img_obj1")[0].style.height = 30;
+		$("#tr_obj1")[0].style.display = "";
+		
+		$("#tr_obj2")[0].style.display = "";
+		
+		$("#tr_obj5")[0].style.display = "";
+	}
+	else{
+		$("#tr_obj1")[0].style.display = "";
+		
+		$("#tr_obj5")[0].style.display = "";
+	}
+	
+	setTimeout("ajax_detectWAN();", 2000);
+}
+
+function ajax_detectWAN(){
+	++run_times;
+	$("#verify_time")[0].innerHTML = "( "+run_times+" / "+MAX_RUN_TIMES+" )";
+	
+	$.ajax({
+		url: '/WAN_info.asp',
+		dataType: 'script',
+		
+		error: function(xhr){
+			--run_times;
+			setTimeout("ajax_detectWAN();", 1000);
+		},
+		success: function(response){
+			parent.set_detectWAN(wanauxstate);
+			
+			check_changed_status();
+		}
+	});
+}
+
+// Define of return value: 1st bit is NTP, 2nd bit is WAN DNS, 3rd bit is more DNS.
+function check_changed_status(){
+	if(wanstate == 4 && wansbstate == 4){
+		gotoPage("/error_page.htm", "6", 1);
+		return;
+	}
+	else if(wanstate != 2 || wanauxstate == 1){
+		if(run_times < MAX_RUN_TIMES){
+			setTimeout("ajax_detectWAN();", 1000);
+			return;
+		}
+	}
+	
+	setTimeout("successstatus();", 1000);
+}
+
+function successstatus(){
+	var ssid_2g = '<% nvram_char_to_ascii("WLANConfig11b", "wl0_ssid"); %>';
+	var ssid_5g = '<% nvram_char_to_ascii("WLANConfig11b", "wl1_ssid"); %>';
+	
+	if(wanstate == 2 && wanauxstate != 1){
+		if(ssid_2g == "ASUS" && ssid_5g == "ASUS_5G")
+			gotoPage('/qis/QIS_wireless.htm', '', 0);
+		else
+			gotoPage('/qis/QIS_finish.htm', '', 0);
+	}
+	else if(now_flag == "auto_way_static"){
+		document.redirectForm.prev_page.value = "/qis/QIS_detect.htm";
+		
+		gotoPage('/qis/QIS_internet_ip.htm', now_flag, 0);
+	}
+	else if(now_flag == "auto_way_vpn"){
+		document.redirectForm.prev_page.value = "start_apply.htm";
+		
+		gotoPage('/QIS_wizard.htm', now_flag, 1);
+	}
+	else if(now_flag == "auto_way"){
+		gotoPage('/qis/QIS_internet_ip.htm', now_flag, 0);
+	}
+	else
+		gotoPage('/qis/QIS_internet_success.htm', wantype+'_wrong_response', 0);
+}
+
+function gotoPage(dst_url, flag, isParent){
+	if(isParent && isParent == 1)
+		document.redirectForm.target = "_parent";
+	else
+		document.redirectForm.target = "";
+	document.redirectForm.action = dst_url;
+	document.redirectForm.flag.value = flag;
+	document.redirectForm.submit();
+}
+</script>
+</head>
+
+<body onLoad="initial();">
+<div class="QISmain">
+	<div id='waitarea'>
+		<div>
+			<table width="730px">
+				<tr>
+					<td align="left">
+						<span class="description_down"><#QIS_detectWAN_desc1#></span>
+					</td>
+					<td align="right">
+						<img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+
+		<br/><br/>
+		<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
+			<tr id="tr_obj1" style="display:none;">
+				<td align="right">
+					<img id="img_obj1" src="/images/checked_qis.gif" width="25" height="25"></span>
+				</td>
+				<td class="test_css">
+					<strong><span id="string_obj1"></span></strong>
+				</td>
+			</tr>
+			<tr id="tr_obj2" style="display:none;">
+				<td align="right">
+					<img id="img_obj2" src="/images/checked_qis.gif" width="25" height="25"></span>
+				</td>
+				<td class="test_css">
+					<strong><span id="string_obj2"></span></strong>
+				</td>
+			</tr>
+			<tr id="tr_obj3" style="display:none;">
+				<td align="right">
+					<img id="img_obj3" src="/images/checked_qis.gif" width="25" height="25"></span>
+				</td>
+				<td class="test_css">
+					<strong><span id="string_obj3"></span></strong>
+				</td>
+			</tr>
+			<tr id="tr_obj4" style="display:none;">
+				<td align="right">
+					<img id="img_obj4" src="/images/checked_qis.gif" width="25" height="25"></span>
+				</td>
+				<td class="test_css">
+					<strong><span id="string_obj4"></span></strong>
+				</td>
+			</tr>
+			<tr id="tr_obj5" style="display:none;">
+				<td align="right">
+					<img id="img_obj5" src="/images/InternetScan.gif" width="20" height="20"></span>
+				</td>
+				<td class="test_css">
+					<strong><span id="string_obj5"></span><span id="verify_time"></span></strong>
+				</td>
+			</tr>
+		</table>
+
+		<div class='apply_gen'>
+			<div id="fresharea" style="display:none">
+				<input type="button" class="button_gen" width="72" onclick="gotoPage('/qis/QIS_detect.htm', '', 0);" value="<#QKSet_detect_freshbtn#>">
+				<input type="button" class="button_gen" width="72" onclick="parent.location.href='/index.asp';" value="<#CTL_Setting#>">
+			</div>
+		</div>
+
+	</div>
+</div>
+
+<form method="post" name="redirectForm" action="" target="">
+<input type="hidden" name="flag" value="">
+<input type="hidden" name="prev_page" value="">
+</form>
+</body>

@@ -1,0 +1,21 @@
+#
+# Load environment variables
+#
+
+global tool
+
+if { [file exists "deja-$tool.tcl"] } {
+    source "deja-$tool.tcl"
+}
+
+# Required options
+
+if { ![info exists WORKGROUP] } {
+    error "\$WORKGROUP not set in config file"
+}
+
+if { ![info exists PDC] } {
+    error "\$PDC not set in config file"
+}
+
+set domain $WORKGROUP

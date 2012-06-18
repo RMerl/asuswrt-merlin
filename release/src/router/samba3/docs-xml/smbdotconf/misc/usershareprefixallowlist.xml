@@ -1,0 +1,24 @@
+<samba:parameter name="usershare prefix allow list"
+	         context="G"
+		 basic="1" advanced="1"
+		 type="string"
+		 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>This parameter specifies a list of absolute pathnames
+	the root of which are allowed to be exported by user defined share definitions.
+	If the pathname exported doesn't start with one of the strings in this
+	list the user defined share will not be allowed. This allows the Samba
+	administrator to restrict the directories on the system that can be
+	exported by user defined shares.
+	</para>
+	<para>
+	If there is a "usershare prefix deny list" and also a
+	"usershare prefix allow list" the deny list is processed
+	first, followed by the allow list, thus leading to the most
+	restrictive interpretation.
+	</para>
+
+</description>
+<value type="default">NULL</value>
+<value type="example">/home /data /space</value>
+</samba:parameter>

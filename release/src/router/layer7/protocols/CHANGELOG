@@ -1,0 +1,514 @@
+2010 10 25
+Improved Quake 3 Halflife protocol detection (added getstatus). See
+quake-halflife.pat for details.  Added RTMP protocol pattern (rtmp.pat).
+
+2009 05 28
+Improved sip. Removed incorrect comment from unset.  Made standard 
+number of iterations in test suite 100000 instead of 10000. Reran 
+benchmarks on my new hardware, adjusted boundaries and recategorized 
+patterns accordingly: 23 patterns were bumped one category slower for 
+the kernel version and 3 (non-overlapping) patterns were bumped one 
+category faster for the userspace version.
+
+2009 05 10
+Added runesofmagic, gtalk (in extra), dazhihui, tonghuashun.
+
+2008 12 18
+Improved/fixed rtp.
+
+2008 11 23
+Updated xunlei.  Added pplive, guildwars.
+
+2008 11 08
+Updates to xunlei, kugoo, bittorrent.  Added copyright lines to all 
+pattern files.
+
+2008 10 04
+Fixed minor bug in chikka. Added possible new pattern for xunlei in 
+comments.
+
+2008 04 23
+Testing for random matches with test_match.sh and the kernel library was 
+completely broken.  It now actually works.  Added includes to testing 
+programs for gcc 4.3 compatibility.  Updated qq.
+
+2008 02 20
+Added png.
+
+2008 02 10
+Added rtp (see comments in rtp.pat).
+
+2008 01 16
+Fixed and updated flash.  Added mp3.  Added possibly useful comments to kugoo.
+
+2008 01 09
+Fixed typo in skypeout.  This should slightly improve detection and prevent
+a warning message.
+
+2007 11 22
+Added battlefield2142.
+
+2007 11 03
+Simplified imesh pattern in an attempt to avoid the kernel crash that 
+some people have reported (but that I have not been able to duplicate).
+
+Improved shoutcast pattern.  Now should actually work.
+
+Reclassified imap, pop3, vnc, and irc to great.  (These haven't changed 
+in a long time, I think I understand them quite well, and I've heard no 
+complaints.)  Downgraded freenet to poor, since it almost certainly 
+doesn't work (but I haven't retested it).
+
+2007 10 10
+Added liveforspeed.
+
+2007 10 03
+Added teamfortress2.  Fixed name of http-freshdownload.  Removed symlink 
+tls.pat --> ssl.pat because it will be rejected when it checks the name.
+Updated some comments.  Re-benchmarked all patterns and updated meta-info
+in files.  Set boundaries for my 450MHz PIII at:
+
+* Very fast: 0–2 seconds.
+* Fast: 2–8 seconds.
+* Not so fast: 8–100 seconds.
+* Slow: >100 seconds
+
+2007 07 27
+Added documentation to ftp.  Added armagetron.
+
+2007 06 22
+Added replaytv-ivs.
+
+2007 05 09
+Fixed smtp pattern for userspace.
+
+2007 01 14
+Added cimd and chikka.  Added chikka data to testing suite.  Tweaks to testing
+suite.
+
+2007 01 13
+Updated test suite for new pattern format.
+
+Marked skypeout as an overmatch.
+
+2007 01 08
+Slightly improved performance of bittorrent pattern.  Fixed comment in 
+msn-filetransfer.  Added userspace pattern format lines to smtp and x11.
+The testing suite does NOT yet understand this format.
+
+2007 01 04
+Renamed testing to unset.
+
+2007 01 03
+Added radmin.
+
+2006 12 12
+Fixed some bugs in the testing programs.  Made rtf and skypeout valid 
+for both henry and gnu.
+
+2006 12 11
+Reduced equifax part of validcertssl to just "equifax secure" and made 
+sure it could match all of ssl if followed by a known certificate 
+authority. Upgraded socks quality to "good". Improved battlefield2 by 
+making it more liberal.
+
+Extended test suite to include use of the GNU library which is used in the
+new userspace version. Fixed a long-standing quoting bug which made it 
+impossible to see matches if the regex got mangled by bash.  Updated all
+speeds (included both libraries' speeds).  Noted several cases where the
+existing pattern is not valid for GNU regexps.
+
+2006 10 18
+Added tor. Added more standard/proprietary/open_source groups, but moved
+all such groups to the ends of the lines because they are less relevant
+than others.
+
+2006 09 24
+Added stun.  Updated comments in msn-filetransfer and added an example to 
+back them up.  Added ares and stun to testing/data/.
+
+2006 09 10
+Added some protocol categories.  Added skypeout data.  Added mohaa (Medal of
+Honor Allied Assault).
+
+2006 06 03
+Improved "lime" packet detection in gnutella.  Fixed and/or tested
+skypeout and skypetoskype, they now both work, at least with Skype
+1.2.0.18_API on Linux, although skypeout is a rather severe overmatch
+(but no longer an undermatch).
+
+2006 05 29
+Reformatted wiki links for webpage parsing.  Fixed gkrellm.  Moved
+pressplay to extra/.  Renamed "pattern quality" "pattern attributes". 
+Added the attributes "superset" and "subset".  Added http-freshdownload.
+Downgraded skypeout to "marginal".
+
+2006 05 21
+Added http-dap and imesh.
+
+2006 05 11
+Added subversion.  Removed stray backslash from edonkey.
+
+2006 04 09
+Updated edonkey for some (apparently) new packet types.
+
+2006 03 13
+Improved bittorrent.  It, of course, does not match the new encrypted
+streams, just more of the other stuff.  Edited edonkey, skypeout, tsp,
+xunlei, battlefield2 to remove warnings about control characters. 
+Mostly, this was just cosmetic, but in a few cases there were actually bugs.
+
+2006 02 12
+Updated WANTED.  Added uucp (ha!) and a VERY preliminary version of
+pcanywhere.  Improved msnmessenger. It now catches actual conversations
+and not just the logins.
+
+2006 01 22
+Modified dns and unknown so that they do not generate warnings about having
+control characters or nulls in hex.
+Improved dns.  Now it matches XXX.XXX.XXX.XXX.in-addr.arpa lookups and IPv6
+queries.
+Added thecircle.
+Updated msnmessenger to handle MSN Messenger 7.5's HTTP encapsulation.
+
+2006 01 17
+Improved msnmessenger pattern slightly.  (I don't think it was causing
+any problems, but it wasn't set up to catch connections that only
+specified one version of MSNP.  This does _not_ address the possible issue
+currently under discussion on the mailing list.)
+Fixed ares, it had a regexp syntax error.
+
+2006 01 15
+ventrilo ok -> good, skypetoskype good -> marginal.
+Improved gopher (it actually didn't work at all before, like anyone cared :-)).
+Added wiki links to every pattern file.
+Added http-rtsp.
+Improved msn-filetransfer: now should match MSNSLP.
+Updated comments in directconnect.
+
+2006 01 08 17
+Fixed stupid error in ventrilo.
+
+2006 01 08
+Socks marginal -> ok.  Added ventrilo.
+
+2005 12 16
+Tweaked "pattern group" metadata.  Reserved "networking" for protocols
+that are really nuts and bolts like DNS, DHCP and BGP.  Clarified "internet
+standard" (most actually aren't officially IETF standards).  Improved ares.
+
+2005 12 14
+Added teamspeak, worldofwarcraft.  Added preliminary "pattern group"
+metadata to all of the patterns.
+
+2005 11 20
+Improved xunlei.
+
+2005 11 05
+Added dayofdefeat-source.
+
+2005 09 12
+Improved xunlei, applejuice, http.
+
+2005 09 05
+Added citrix, whois.  Added x11 data for testing.
+
+2005 09 03
+irc now allows MIRC color codes. Fixed commented out dns and nntp
+patterns. Added a set of real data to speed testing program.
+Corrected/updated speed ratings of finger, dns, gopher, ftp, smtp. Made
+gnutella faster. Changed tls to ssl; it catches SSLv3 now. Improved
+validcertssl: it's faster and catches more. Added speed comments to
+napster and soulseek.
+
+2005 08 24
+Small improvements to napster (* --> +).
+Added UDP junk to bittorent, but commented out until it's confirmed.
+Added xunlei.
+
+2005 08 10
+Added soulseek. Noted that tsp can overmatch (saw it match soulseek).
+Cleaned up pattern file headers.
+
+2005 08 09
+Added napster.  Made dhcp faster.
+
+2005 08 06
+Added "overmatch" to skypeout.  Improved gnutella (is much faster and no 
+longer attempts to match gnutella web cache HTTP connections).
+
+2005 07 28
+Skypeout was too long, fixed.  Added checks in tests for this.  Added some
+info to HOWTO.  Improved gnutella (picks up limewire wierdness).
+
+2005 07 17
+Changed license to dual GPL/CC, since we're using CC on protocolinfo.org.
+Changed skypeout pattern to the scary long one, because the old one just
+doesn't work.  Added battlefield2.  Added protocolinfo advertisements.
+
+2005 06 17
+Added freenet pattern.  Commented out old pattern in ares.  Fixed minor
+typo in edonkey pattern.
+
+2005 06 04
+Improved ares.  Added note to ntp.
+
+2005 05 27
+Improved ntp.  Tinkered with the documentation.
+
+2005 05 26
+Added doom3 and ntp.  \0d --> \x0d in quicktime and msnmessenger.  Updated
+commented out version of vnc.  Made irc much faster.
+
+2005 05 25
+Improved counterstrike and renamed it counterstrike-source for clarity.
+
+2005 05 23
+Realizing that "\x7c" is treated _exactly_ like "|" (and so forth):
+\x7c --> \| in battlefield1942
+\x2b --> \+ in soribada
+\x2e --> \. in tesla
+Added halflife2-deathmatch.
+
+2005 05 19
+Fixed rar (had the zip pattern by accident).  Fixed what I think was a typo
+in finger '$' --> '^'.  Added trivial script, test_all.sh, to testing.
+
+2005 05 18
+Updated skype (split into skypeout and skypetoskype), counterstrike and
+flash.  gnutella should now match gnutella 2.  Added zip, rar and exe. 
+Fixed typo: rstp --> rtsp.  Tinkered with gopher.
+
+2005 04 29
+Reorganization.  No functional changes.
+
+2005 04 26
+Added soribada, ares.
+
+2005 03 13
+Added poco, qq, kugoo, 100bao (all Chinese things I've never heard of...).
+
+2005 02 06
+Added sip.  Tweaked "pattern quality" on a number of patterns.
+
+2005 01 29
+Improved ssh, it now matches both v1 and v2.
+
+Improved and tested fasttrack.  It was overmatching in some cases, now
+it isn't.
+
+Moved audiogalaxy to extra/ as, from what I can tell, no one uses it (the 
+program) anymore.
+
+2005 01 20
+- gnutella now matches UDP Gnutella packets as well as TCP.  
+- Removed bearshare and winmx (just use gnutella).  
+- Improved jabber.
+- Trivial change to x11.
+- Fixed httpaudio, httpvideo, httpcachehit and httpcachemiss, which were
+all missing a [\x09-\x0d ].
+- Added ssdp.
+- Improved shoutcast.  Now matches Icecast too.
+
+2005 01 17
+Fixed http-itunes and battlefield1942 (file names didn't match protocol 
+names in file...).  Improved yahoo.
+
+2005 01 05
+Added tls.
+
+2004 12 29
+Added xboxlive (or maybe just halo 2?).
+
+2004 12 21
+Obfuscated e-mail addresses and added some credits.
+
+2004 12 08
+Added battlefield1942.
+
+2004 11 28
+Added ^ to h323.
+
+2004 11 22
+Changed a \x18 to a . in h323.
+
+2004 10 29
+Removed "range: bytes=" from openft.  This caused false positives.
+Added a cert authority to validcertssl and changed a . to a \.
+
+2004 10 17
+Added subspace and skype (skype pattern could use work).
+
+2004 09 13
+Added http-itunes and shoutcast.
+
+2004 08 19
+Added ciscovpn.  Improved irc (it now matches BitchX connections).
+
+2004 07 07
+Added bgp.  Added Makefile and spec file.
+
+2004 07 05
+Added msn-filetransfer, zmaap, lpd.  Added a program to test for false
+matches. Removed mysql because it has too many false matches.
+
+2004 07 01 
+Cleaned up http (had an extraneous line).  Added httpaudio, httpvideo,
+httpcachehit and httpcachemiss to extras.  Improved quake-halflife,
+bittorrent.
+
+2004 06 27
+Fixed hddtemp.  Slight improvements to Yahoo, SMB.  Improvements to 
+msnmessenger.  Added TSP.  Small bugfix in timeit.sh
+
+2004 06 01
+RDP fixed.  Quicktime added.  Added "extra" directory and moved anything that
+was a subset of something else in there.
+
+2004 04 22
+The performance testing program didn't do \xHH escapes.  Now it does.
+
+2004 03 24
+Fixed gopher, openft.
+Added goboogy, tesla, hotline.
+Added performance testing program.
+
+2004 02 23
+Improved the speed of dns, aim, directconnect, gnutella, http, imap,
+nntp, ncp, msnmessenger, audiogalaxy, snmp.  Still slow are (starting
+with the worst):  ssh, fasttrack, validcertssl, aim, nbns, quake-halflife,
+http, openft.  All the rest are at least 30 times faster than the fastest
+of these.  (With Henry Spencer's regexp implementation, which is what we
+currently use.)
+
+2004 02 17
+Improved HTTP.  Fixed and improved gnutella.  Added hddtemp.
+
+2004 02 08
+Added MUTE and openFT.
+
+2004 01 06
+Added audiogalaxy.  Improved gnutella.
+
+2004 01 02
+Changed quakeworld.pat to quake-halflife.pat .  Improved it (still untested,
+though).
+
+Changed kazaa.pat to fasttrack.pat.  Improved it.
+
+2003 12 16
+Added H.323.  Improved NNTP, Ident, DNS.
+Added "pattern quality" lines to all patterns.
+
+2003 12 11
+Added VNC.
+
+2003 12 09
+Added jpg, gif, flash.  Updated file_types/README. 
+Made edonkey work and moved it to weakpatterns.
+
+2003 11 29
+Added CVS.
+
+2003 11 23
+Changed directory structure.  All patterns are now in subdirectories.
+Made sure that all filenames matched protocol names.  Noted patterns
+that require multipacket support.  General cleanup.
+
+2003 11 12
+Updated HOWTO to include Netfilter version, etc.
+Added comments regarding what I've learned from ipp2p (thanks to Eicke 
+Friedrich)
+Added applejuice, quake1, quakeworld.
+Improved (fixed?) bittorrent.  
+
+2003 10 24
+Reverted to single packet ftp pattern. Minor revisions to malware/*
+
+2003 10 08
+Added eDonkey2000 pattern.  Added file_type directory (with html, ogg,
+pdf, perl, ps, rpm, tar and rtf).  Added malware directory (with Code Red
+and Nimda).
+
+2003 09 26
+I need to remember to include http in all the releases!  Sorry about that.
+Added jabber.
+
+2003 09 24
+Added socks, nntp.
+
+2003 09 22
+Releases from here on should only be used with >=0.3.0 of the kernel patch
+Some significant speed improvements (gopher is no longer slow enough to bring
+down the machine when searching large strings) and some small accuracy 
+improvements. 
+Moved winmx and gopher to weakpatterns.  
+Added snmp, snmp-mon and snmp-trap
+
+2003 09 19
+Added Samba, telnet.
+Added weakpatterns directory, which now contains mysql, finger, netbios.  
+
+2003 09 18
+Added directconnect.
+
+2003 09 15
+Added biff.  Fixed pop3 again.  Improved SMTP.
+
+2003 09 14
+Added rlogin.
+
+2003 09 12
+Fixed pop3.  Improved HTTP.
+
+2003 09 10
+Added dns, gopher.
+
+2003 09 05 
+Improved x11, yahoo. Added bearshare.  Changed all patterns to use \xHH
+notation instead of non-printable characters.  This release, therefore,
+MUST be used only with version >= 0.2.0 of the kernel patch.
+
+2003 08 28
+Added irc, ident, x11.  Made a number of patterns more specific by adding
+a '^' at the beginning of the line.  Could have also added some $s at the end
+of lines, but in anticipation of matching across packets, didn't.
+Improved HOWTO.  
+
+2003 08 21
+Added counterstrike, live365, pressplay, winmx. Fixed gkrellm.
+Fixed several patterns that used uppercase letters, which can't ever
+match.  Will fix the kernel patch soon so that this doesn't matter.
+Got rid of the #s in files like this one.  They were annoying.  
+Just use "*.pat" in your scripts instead of "*".
+Added pattern writing HOWTO.
+ 
+2003 08 19
+Fixed ftp.  Added gkrellm. Simplified tftp.
+
+2003 08 09
+Fixed dhcp.  Added tftp.  Improved aim.
+
+2003 08 08
+Updated DHCP pattern. Improved pattern comments, including adding status
+information (i.e. how well they work) for all the patterns. Added
+LICENSE file so it's clear these are released as part of the code of the
+l7-filter project.
+
+2003 07 07
+Added rdp.
+
+2003 06 01
+Added aim, bittorrent, nbns, ncp, dhcp, rstp, ipp, msnmessenger,
+aimwebcontent.  Removed mohaa.
+
+2003 05 23
+Added gnucleuslan, validcertssl, counterstrike, gnutella, kazaa, smtp, mohaa.
+
+2003 05 09
+Cleaned up.
+
+2003 05 07
+This is the initial release.  Currently we have primitive detection of
+ftp, http, imap, kazaa, pop3, and ssh. Expect future releases to include
+both more patterns and better definitions for the above protocols.

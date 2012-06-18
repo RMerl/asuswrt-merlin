@@ -1,0 +1,11 @@
+compression - Various compression algorithms (MSZIP, lzxpress)
+nss_wrapper - Wrapper for the user and group NSS API allowing the use 
+              of other data sources.
+popt - Command-line option parsing library
+replace - Provides replacements for standard (POSIX, C99) functions 
+          not provided by the host platform.
+socket_wrapper - Wrapper library allowing TCP/IP traffic to be redirected 
+                 over Unix domain sockets.
+talloc - Hierarchical pool based memory allocator 
+tdb - Simple but fast key/value database library, supporting multiple writers
+torture - Simple unit testing helper library

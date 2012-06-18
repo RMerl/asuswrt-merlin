@@ -1,0 +1,206 @@
+
+
+ 
+
+
+
+<html><head><title>nmbd</title>
+
+<link rev="made" href="mailto:samba@samba.org">
+</head>
+<body>
+
+<hr>
+
+<h1>nmbd</h1>
+<h2>Samba</h2>
+<h2>23 Oct 1998</h2>
+
+
+    
+<p><a name="NAME"></a>
+<h2>NAME</h2>
+    nmbd - NetBIOS name server to provide NetBIOS over IP
+naming services to clients
+<p><a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+    
+<p><strong>nmbd</strong> [<a href="nmbd.8.html#minusD">-D</a>] [<a href="nmbd.8.html#minusa">-a</a>] [<a href="nmbd.8.html#minuso">-o</a>] [<a href="nmbd.8.html#minush">-h</a>] [<a href="nmbd.8.html#minusV">-V</a>] [<a href="nmbd.8.html#minusH">-H lmhosts file</a>] [<a href="nmbd.8.html#minusd">-d debuglevel</a>] [<a href="nmbd.8.html#minusl">-l log file basename</a>] [<a href="nmbd.8.html#minusn">-n primary NetBIOS name</a>] [<a href="nmbd.8.html#minusp">-p port number</a>] [<a href="nmbd.8.html#minuss">-s configuration file</a>]
+<p><a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+    
+<p>This program is part of the <strong>Samba</strong> suite.
+<p><strong>nmbd</strong> is a server that understands and can reply to NetBIOS over IP
+name service requests, like those produced by SMBD/CIFS clients such
+as Windows 95/98, Windows NT and LanManager clients. It also
+participates in the browsing protocols which make up the Windows
+"Network Neighborhood" view.
+<p>SMB/CIFS clients, when they start up, may wish to locate an SMB/CIFS
+server. That is, they wish to know what IP number a specified host is
+using.
+<p>Amongst other services, <strong>nmbd</strong> will listen for such requests,
+and if its own NetBIOS name is specified it will respond with the IP
+number of the host it is running on.  Its "own NetBIOS name" is by
+default the primary DNS name of the host it is running on, but this
+can be overridden with the <strong>-n</strong> option (see <a href="nmbd.8.html#OPTIONS">OPTIONS</a> below). Thus
+<strong>nmbd</strong> will reply to broadcast queries for its own name(s). Additional
+names for <strong>nmbd</strong> to respond on can be set via parameters in the
+<a href="smb.conf.5.html"><strong>smb.conf(5)</strong></a> configuration file.
+<p><strong>nmbd</strong> can also be used as a WINS (Windows Internet Name Server)
+server. What this basically means is that it will act as a WINS
+database server, creating a database from name registration requests
+that it receives and replying to queries from clients for these names.
+<p>In addition, <strong>nmbd</strong> can act as a WINS proxy, relaying broadcast queries
+from clients that do not understand how to talk the WINS protocol to a
+WIN server.
+<p><a name="OPTIONS"></a>
+<h2>OPTIONS</h2>
+    
+<p><dl>
+<p><a name="minusD"></a>
+<p></p><dt><strong><strong>-D</strong></strong><dd> If specified, this parameter causes <strong>nmbd</strong> to operate
+as a daemon. That is, it detaches itself and runs in the background,
+fielding requests on the appropriate port. By default, <strong>nmbd</strong> will
+NOT operate as a daemon. nmbd can also be operated from the inetd
+meta-daemon, although this is not recommended.
+<p><a name="minusa"></a>
+<p></p><dt><strong><strong>-a</strong></strong><dd> If this parameter is specified, each new connection will
+append log messages to the log file.  This is the default.
+<p><a name="minuso"></a>
+<p></p><dt><strong><strong>-o</strong></strong><dd> If this parameter is specified, the log files will be
+overwritten when opened.  By default, the log files will be appended
+to.
+<p><a name="minush"></a>
+<p></p><dt><strong><strong>-h</strong></strong><dd> Prints the help information (usage) for <strong>nmbd</strong>.
+<p><a name="minusV"></a>
+<p></p><dt><strong><strong>-V</strong></strong><dd> Prints the version number for <strong>nmbd</strong>.
+<p><a name="minusH"></a>
+<p></p><dt><strong><strong>-H filename</strong></strong><dd> NetBIOS lmhosts file.
+<p>The lmhosts file is a list of NetBIOS names to IP addresses that is
+loaded by the nmbd server and used via the name resolution mechanism
+<a href="smb.conf.5.html#nameresolveorder"><strong>name resolve order</strong></a> described in 
+<a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a> to resolve any
+NetBIOS name queries needed by the server. Note that the contents of
+this file are <em>NOT</em> used by <strong>nmbd</strong> to answer any name queries. Adding
+a line to this file affects name NetBIOS resolution from this host
+<em>ONLY</em>.
+<p>The default path to this file is compiled into Samba as part of the
+build process. Common defaults are <em>/usr/local/samba/lib/lmhosts</em>,
+<em>/usr/samba/lib/lmhosts</em> or <em>/etc/lmhosts</em>. See the 
+<a href="lmhosts.5.html"><strong>lmhosts (5)</strong></a> man page for details on the contents of this file.
+<p><a name="minusd"></a>
+<p></p><dt><strong><strong>-d debuglevel</strong></strong><dd> debuglevel is an integer from 0 to 10.
+<p>The default value if this parameter is not specified is zero.
+<p>The higher this value, the more detail will be logged to the log files
+about the activities of the server. At level 0, only critical errors
+and serious warnings will be logged. Level 1 is a reasonable level for
+day to day running - it generates a small amount of information about
+operations carried out.
+<p>Levels above 1 will generate considerable amounts of log data, and
+should only be used when investigating a problem. Levels above 3 are
+designed for use only by developers and generate HUGE amounts of log
+data, most of which is extremely cryptic.
+<p>Note that specifying this parameter here will override the <a href="smb.conf.5.html#loglevel"><strong>log
+level</strong></a> parameter in the <a href="smb.conf.5.html"><strong>smb.conf
+(5)</strong></a> file.
+<p><a name="minusl"></a>
+<p></p><dt><strong><strong>-l logfile</strong></strong><dd> The <strong>-l</strong> parameter specifies a path and base
+filename into which operational data from the running nmbd server will
+be logged.  The actual log file name is generated by appending the
+extension ".nmb" to the specified base name.  For example, if the name
+specified was "log" then the file log.nmb would contain the debugging
+data.
+<p>The default log file path is compiled into Samba as part of the
+build process. Common defaults are <em>/usr/local/samba/var/log.nmb</em>,
+<em>/usr/samba/var/log.nmb</em> or <em>/var/log/log.nmb</em>.
+<p><a name="minusn"></a>
+<p></p><dt><strong><strong>-n primary NetBIOS name</strong></strong><dd> This option allows you to override
+the NetBIOS name that Samba uses for itself. This is identical to
+setting the <a href="smb.conf.5.html#netbiosname"><strong>NetBIOS name</strong></a> parameter
+in the <a href="smb.conf.5.html"><strong>smb.conf</strong></a> file
+but will override the setting in the <a href="smb.conf.5.html"><strong>smb.conf</strong></a> file.
+<p><a name="minusp"></a>
+<p></p><dt><strong><strong>-p UDP port number</strong></strong><dd> UDP port number is a positive integer value.
+<p>This option changes the default UDP port number (normally 137) that
+<strong>nmbd</strong> responds to name queries on. Don't use this option unless you are
+an expert, in which case you won't need help!
+<p><a name="minuss"></a>
+<p></p><dt><strong><strong>-s configuration file</strong></strong><dd> The default configuration file name is
+set at build time, typically as <em>/usr/local/samba/lib/smb.conf</em>, but
+this may be changed when Samba is autoconfigured.
+<p>The file specified contains the configuration details required by the
+server. See <a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a> for more information.
+<p></dl>
+<p><a name="FILES"></a>
+<h2>FILES</h2>
+    
+<p><strong>/etc/inetd.conf</strong>
+<p>If the server is to be run by the inetd meta-daemon, this file must
+contain suitable startup information for the meta-daemon.
+<p><strong>/etc/rc</strong>
+<p>(or whatever initialization script your system uses).
+<p>If running the server as a daemon at startup, this file will need to
+contain an appropriate startup sequence for the server.
+<p><strong>/usr/local/samba/lib/smb.conf</strong>
+<p>This is the default location of the 
+<a href="smb.conf.5.html"><strong>smb.conf</strong></a> server configuration
+file. Other common places that systems install this file are
+<em>/usr/samba/lib/smb.conf</em> and <em>/etc/smb.conf</em>.
+<p>When run as a <strong>WINS</strong> server (see the <a href="smb.conf.5.html#winssupport"><strong>wins support</strong></a>
+parameter in the <a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a> man page), <strong>nmbd</strong> will
+store the WINS database in the file <code>wins.dat</code> in the <code>var/locks</code> directory
+configured under wherever Samba was configured to install itself.
+<p>If <strong>nmbd</strong> is acting as a <strong>browse master</strong> (see the <a href="smb.conf.5.html#localmaster"><strong>local master</strong></a>
+parameter in the <a href="smb.conf.5.html"><strong>smb.conf (5)</strong></a> man page), <strong>nmbd</strong> will
+store the browsing database in the file <code>browse.dat</code> in the <code>var/locks</code> directory
+configured under wherever Samba was configured to install itself.
+<p><a name="SIGNALS"></a>
+<h2>SIGNALS</h2>
+    
+<p>To shut down an <strong>nmbd</strong> process it is recommended that SIGKILL (-9)
+<em>NOT</em> be used, except as a last resort, as this may leave the name
+database in an inconsistent state. The correct way to terminate
+<strong>nmbd</strong> is to send it a SIGTERM (-15) signal and wait for it to die on
+its own.
+<p><strong>nmbd</strong> will accept SIGHUP, which will cause it to dump out it's
+namelists into the file <code>namelist.debug</code> in the
+<em>/usr/local/samba/var/locks</em> directory (or the <em>var/locks</em>
+directory configured under wherever Samba was configured to install
+itself). This will also cause <strong>nmbd</strong> to dump out it's server database in
+the log.nmb file. In addition, the debug log level of nmbd may be raised
+by sending it a SIGUSR1 (<code>kill -USR1 &lt;nmbd-pid&gt;</code>) and lowered by sending it a
+SIGUSR2 (<code>kill -USR2 &lt;nmbd-pid&gt;</code>). This is to allow transient
+problems to be diagnosed, whilst still running at a normally low log
+level.
+<p><a name="VERSION"></a>
+<h2>VERSION</h2>
+    
+<p>This man page is correct for version 2.0 of the Samba suite.
+<p><a name="SEEALSO"></a>
+<h2>SEE ALSO</h2>
+    
+<p><strong>inetd (8)</strong>, <a href="smbd.8.html"><strong>smbd (8)</strong></a>, <a href="smb.conf.5.html"><strong>smb.conf
+(5)</strong></a>, <a href="smbclient.1.html"><strong>smbclient (1)</strong></a>,
+<a href="testparm.1.html"><strong>testparm (1)</strong></a>, <a href="testprns.1.html"><strong>testprns
+(1)</strong></a>, and the Internet RFC's <strong>rfc1001.txt</strong>,
+<strong>rfc1002.txt</strong>. In addition the CIFS (formerly SMB) specification is
+available as a link from the Web page :
+<a href="http://samba.org/cifs/">http://samba.org/cifs/</a>.
+<p><a name="AUTHOR"></a>
+<h2>AUTHOR</h2>
+    
+<p>The original Samba software and related utilities were created by
+Andrew Tridgell <a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>. Samba is now developed
+by the Samba Team as an Open Source project similar to the way the
+Linux kernel is developed.
+<p>The original Samba man pages were written by Karl Auer. The man page
+sources were converted to YODL format (another excellent piece of Open
+Source software, available at
+<a href="ftp://ftp.icce.rug.nl/pub/unix/"><strong>ftp://ftp.icce.rug.nl/pub/unix/</strong></a>)
+and updated for the Samba2.0 release by Jeremy Allison.
+<a href="mailto:samba@samba.org"><em>samba@samba.org</em></a>.
+<p>See <a href="samba.7.html"><strong>samba (7)</strong></a> to find out how to get a full
+list of contributors and details on how to submit bug reports,
+comments etc.
+</body>
+</html>

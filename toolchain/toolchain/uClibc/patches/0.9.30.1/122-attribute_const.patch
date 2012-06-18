@@ -1,0 +1,15 @@
+--- uClibc-0.9.30.orig/include/sys/cdefs.h	2008-01-06 03:04:02.000000000 +0300
++++ uClibc/include/sys/cdefs.h	2010-02-21 18:46:31.000000000 +0300
+@@ -226,6 +226,12 @@
+ # define __attribute_pure__ /* Ignore */
+ #endif
+ 
++#if __GNUC_PREREQ (2,96)
++# define __attribute_const__ __attribute__((__const__))
++#else
++# define __attribute_const__     /* unimplemented */
++#endif
++
+ /* At some point during the gcc 3.1 development the `used' attribute
+    for functions was introduced.  We don't want to use it unconditionally
+    (although this would be possible) since it generates warnings.  */

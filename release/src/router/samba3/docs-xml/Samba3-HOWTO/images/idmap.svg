@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="8.1999998cm"
+   height="17.198cm"
+   viewBox="1.45 1.4 9.65 18.598"
+   id="svg2">
+  <defs
+     id="defs45" />
+  <rect
+     width="7.3000002"
+     height="2.5999999"
+     x="1.5"
+     y="1.7"
+     id="rect4"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="7.3000002"
+     height="2.5999999"
+     x="1.5"
+     y="1.7"
+     id="rect6"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <rect
+     width="5.9000001"
+     height="2.7"
+     x="2.3"
+     y="8.5"
+     id="rect8"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="5.9000001"
+     height="2.7"
+     x="2.3"
+     y="8.5"
+     id="rect10"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <text
+     x="2.7"
+     y="2.8"
+     id="text12"
+     style="font-size:0.80000001px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:sans">passdb backend</text>
+  <text
+     x="1.7"
+     y="3.7"
+     id="text14"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">contains samba users</text>
+  <text
+     x="4.5"
+     y="9.3999996"
+     id="text16"
+     style="font-size:0.80000001px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:sans">idmap</text>
+  <text
+     x="3.3"
+     y="10.2"
+     id="text18"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">maps unix to</text>
+  <text
+     x="3.3"
+     y="11"
+     id="text20"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">samba users</text>
+  <rect
+     width="7.6999998"
+     height="3"
+     x="1.9"
+     y="15.5"
+     id="rect22"
+     style="fill:#ffffff;stroke:none;stroke-width:0" />
+  <rect
+     width="7.6999998"
+     height="3"
+     x="1.9"
+     y="15.5"
+     id="rect24"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="4.675,7.35 4.675,5.45 4.2,5.45 5.15,4.5 6.1,5.45 5.625,5.45 5.625,7.35 6.1,7.35 5.15,8.3 4.2,7.35 4.675,7.35 "
+     id="polygon26"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="4.675,7.35 4.675,5.45 4.2,5.45 5.15,4.5 6.1,5.45 5.625,5.45 5.625,7.35 6.1,7.35 5.15,8.3 4.2,7.35 4.675,7.35 "
+     id="polygon28"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="4.675,7.35 4.675,5.45 4.2,5.45 5.15,4.5 6.1,5.45 5.625,5.45 5.625,7.35 6.1,7.35 5.15,8.3 4.2,7.35 4.675,7.35 "
+     id="polygon30"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <polygon
+     points="4.763,14.175 4.763,12.325 4.3,12.325 5.225,11.4 6.15,12.325 5.688,12.325 5.688,14.175 6.15,14.175 5.225,15.1 4.3,14.175 4.763,14.175 "
+     id="polygon32"
+     style="fill:#ffffff;stroke:none;stroke-width:0.1" />
+  <polygon
+     points="4.763,14.175 4.763,12.325 4.3,12.325 5.225,11.4 6.15,12.325 5.688,12.325 5.688,14.175 6.15,14.175 5.225,15.1 4.3,14.175 4.763,14.175 "
+     id="polygon34"
+     style="fill:none;stroke:#000000;stroke-width:0.1" />
+  <polygon
+     points="4.763,14.175 4.763,12.325 4.3,12.325 5.225,11.4 6.15,12.325 5.688,12.325 5.688,14.175 6.15,14.175 5.225,15.1 4.3,14.175 4.763,14.175 "
+     id="polygon36"
+     style="fill:none;stroke:#000000;stroke-width:0.01" />
+  <text
+     x="3.7"
+     y="16.299999"
+     id="text38"
+     style="font-size:0.80000001px;font-style:normal;font-weight:700;text-anchor:start;fill:#000000;font-family:sans">Unix users</text>
+  <text
+     x="2.4000001"
+     y="17.4"
+     id="text40"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">/etc/passwd</text>
+  <text
+     x="2.4000001"
+     y="18.200001"
+     id="text42"
+     style="font-size:0.80000001px;font-style:normal;font-weight:400;text-anchor:start;fill:#000000;font-family:sans">or other NSS backend</text>
+</svg>

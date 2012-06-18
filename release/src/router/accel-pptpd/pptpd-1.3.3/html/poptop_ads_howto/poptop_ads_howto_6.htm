@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Poptop MSCHAP2 ADS Howto</title>
+</head>
+
+<body>
+<p><strong>9. Samba
+</strong></p>
+<p>FC4 comes with samba v3.0.14a. The samba project released v3.0.20 on 20 August 2005. Here is a quote from the v3.0.20 release note about winbind.</p>
+<blockquote>
+  <p>-- quote --<br>
+    Winbindd has been completely rewritten in this release to support
+an almost completely non-blocking, asynchronous request/reply
+model.  This means that winbindd will scale much better in 
+large domain environments and on high latency networks.<br>
+-- quote --
+  </p>
+</blockquote>
+<p>It is highly recommended to upgrade samba to v3.0.20 or above. The latest samba v3.0.21c rpms for FC4 can be found in <a href="http://us5.samba.org/samba/ftp/Binary_Packages/Fedora/RPMS/i386/core/4/">here</a>. Download a copy and then update samba with command &quot;rpm -Uvh samba*.rpm&quot;. </p>
+<p><strong>Note: </strong>
+Samba v3.0.21 has a bug on the oplock code. Avoid this version. Use v3.0.21a or above. </p>
+<hr>
+<strong><a name="smbconf"></a>9.1 Configure Samba</strong>
+<p>No matter you choose to use winbind or freeradius to connect to Active Directory, you will have to configure samba properly. The configuration file of samba is in /etc/samba and is called smb.conf. The file should have at least the following lines. </p>
+<blockquote>
+  <pre>[global]
+# define the netbios name of the domain
+<strong>workgroup = EXAMPLE</strong>
+# define the pptp server netbios name
+<strong>netbios name = PPTPDSVR</strong>
+# define the AD domain name
+<strong>realm = EXAMPLENET.ORG</strong>
+# server description
+server string = pptpd Server
+# printer stuff
+printcap name = /etc/printcap
+load printers = no
+cups options = raw
+# log file stuff
+log file = /var/log/samba/%m.log
+max log size = 50
+# must set to ads
+<strong>security = ads</strong>                     
+# address of domain controller
+<strong>password server = 10.0.0.1</strong>
+# enable encrypt passwords
+<strong>encrypt passwords = yes</strong>
+# default setting
+socket options = TCP_NODELAY SO_RCVBUF=8192 SO_SNDBUF=8192
+# not to be a master browser
+domain master = no 
+preferred master = no
+# address of the WINS server
+<strong>wins server = 10.0.0.1</strong>
+dns proxy = no
+# require this line to join the domain
+<strong>client use spnego = yes</strong>
+# winbind stuff
+<strong>idmap uid = 50001-550000
+idmap gid = 50001-550000
+winbind separator = +
+winbind nested groups = Yes
+winbind enum users=yes
+winbind enum groups=yes</strong>
+template shell = /bin/false
+winbind use default domain = no</pre>
+</blockquote>
+<p>The lines in bold are the important ones that you should pay attention to. Execute &quot;testparm&quot; to check the configuration. Correct any errors before proceeding to the next step.</p>
+<hr>
+<a name="smbjoin"></a><strong>9.2 Join the AD Domain</strong>
+<p>Once the Kerberos and Samba are configured, it's time to add the pptpd server to the AD domain.</p>
+<blockquote>
+  <pre>[root@pptp ~]# net ads join -U skwok@EXAMPLENET.ORG &quot;Asiapac/Australia/Sydney/Servers&quot;<br>skwok@EXAMPLENET.ORG's password: <br>Using short domain name -- EXAMPLE<br>Joined 'PPTPDSVR' to realm 'EXAMPLENET.ORG'
+</pre>
+</blockquote>
+<p>The above net ads join command create the server in the container</p>
+<p>"OU=Servers,OU=Sydney,OU=Australia,OU=Asiapac,DC=EXAMPLENET,DC=ORG&quot;</p>
+<p>The user must have admin right on the container to create the server object. If the operation is successful, you will see a new server object created in the AD.</p>
+<p>Another test to see if the trust between the pptpd server and the domain is working is  smbclient.</p>
+<blockquote>
+  <pre>[root@pptp ~]# smbclient //dc1/c$ -k<br>OS=[Windows Server 2003 3790 Service Pack 1] Server=[Windows Server 2003 5.2]<br>smb: \&gt; dir<br>  AUTOEXEC.BAT                        A        0  Wed Jul 20 10:53:47 2005<br>  boot.ini                         AHSR      208  Fri Jul 22 10:41:57 2005<br>  CONFIG.SYS                          A        0  Wed Jul 20 10:53:47 2005<br>  Documents and Settings              D        0  Fri Jul 22 16:25:51 2005<br>  download                            D        0  Thu Aug  4 17:31:28 2005<br>  IO.SYS                           AHSR        0  Wed Jul 20 10:53:47 2005<br>  MSDOS.SYS                        AHSR        0  Wed Jul 20 10:53:47 2005<br>  NTDETECT.COM                     AHSR    47772  Fri Jul 22 10:16:32 2005<br>  ntldr                            AHSR   295536  Fri Jul 22 10:16:32 2005<br>  pagefile.sys                      AHS 805306368  Fri Aug 12 11:24:27 2005<br>  Program Files                      DR        0  Wed Jul 20 10:51:09 2005<br>  shared1                             D        0  Thu Jul 21 17:06:28 2005<br>  System Volume Information         DHS        0  Fri Jul 22 10:52:09 2005<br>  WINDOWS                             D        0  Tue Aug 16 14:33:36 2005<br>  wmpub                               D        0  Wed Jul 20 10:55:13 2005</pre>
+  <p> 39064 blocks of size 524288. 31129 blocks available<br>
+    smb: \&gt; </p>
+</blockquote>
+<p><strong>Note</strong>: With Samba v3.0.14a or v3.0.20, everytime I run &quot;net ads join&quot;, the command crash at the end with message &quot;*** glibc detected *** net: free(): invalid pointer: 0x001cddb0 ***&quot; and then a dump to the screen.  The join seems to be working fine though. Samba v3.0.21a does not have this problem. </p>
+<hr>
+<a href="poptop_ads_howto_7.htm">Next</a> &nbsp;&nbsp;<a href="poptop_ads_howto_5.htm">Previous</a>&nbsp;&nbsp;<a href="poptop_ads_howto_1.htm#toc">Content</a>
+<p>&nbsp; </p>
+</body>
+</html>

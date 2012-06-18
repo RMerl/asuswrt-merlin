@@ -1,0 +1,4 @@
+220 Welcome to ftp.kernel.org.
+USER anonymous
+331 Please specify the password.
+PASS -wget@

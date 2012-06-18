@@ -1,0 +1,18 @@
+/*
+  security configuration editor interface definitions
+*/
+
+[
+  uuid("93149ca2-973b-11d1-8c39-00c04fb984f9"),
+  version(0.0),
+  pointer_default(unique),
+  helpstring("Security Configuration Editor")
+]
+interface scerpc
+{
+
+	/*****************/
+	/* Function 0x00 */
+	WERROR scerpc_Unknown0();
+}
+

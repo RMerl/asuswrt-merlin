@@ -1,0 +1,61 @@
+Using these programs, you can:
+
+- test the speed of patterns.
+- test whether your pattern matches random data (which is bad!).
+
+Each test can be done with either the regular expression library that 
+the kernel version of l7-filter uses (written by Henry Spencer) or the 
+one that the userspace version of l7-filter uses (GNU).  Note that these 
+are fairly crude tests.  They are not certain to reflect actual network 
+performance.
+
+Start by saying "make".
+
+************************************************************************
+
+To test the speed of your pattern, use timeit.sh
+
+Run timeit.sh with no arguments for instructions.
+
+You'll find that the Henry Spencer (kernel) library has some performance 
+quirks.  Things we've noticed:
+
+- Branches are very expensive.  Testing for "foo|bar" takes much
+longer than twice as long as testing for "foo".  
+
+- Parentheses aren't optimized out.  "(foo)" takes much longer than "foo".
+
+- "^(foo|bar)" is much faster than "^foo|^bar".
+
+***********************************************************************
+
+To test whether your pattern matches random data, run test_match.sh
+
+Run test_match.sh with no arguments for instructions.
+
+***********************************************************************
+
+___DEVELOPER INFORMATION___
+
+1)
+
+The data directory holds packet captures to test against.  The file name
+format is: [protocol]-[optional letter]-[number].  The protocol is the
+protocol and possibly some information about the situation.  The letter
+denotes which session the capture is from if there are several.  The
+number denotes how many packets the file contains.  (To simulate what
+l7-filter sees, the first file has only the first packet, the second has
+the first two packets, and so on.)
+
+(The ares data is a bit of a cheat.  I let these files sit around for a
+long time before putting them here, so I'm not sure what they are
+exactly, except that they are Ares data and they clearly aren't in the
+1, 1-2, 1-2-3 form described above.)
+
+2) 
+
+Everything here is a kludge held together by chewing gum and masking 
+tape.  Note that test_speed-userspace is the backend for both timeit.sh 
+and test_match.sh for their userspace modes, but for their kernel 
+modes, they use the separate backends test_speed-kernel and 
+match_kernel.  Yuck.

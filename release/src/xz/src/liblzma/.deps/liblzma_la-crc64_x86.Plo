@@ -1,0 +1,1 @@
+liblzma_la-crc64_x86.lo: check/crc64_x86.S

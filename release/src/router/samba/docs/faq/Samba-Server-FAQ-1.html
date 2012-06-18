@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<TITLE> Samba Server FAQ: What is Samba?</TITLE>
+</HEAD>
+<BODY>
+Previous
+<A HREF="Samba-Server-FAQ-2.html">Next</A>
+<A HREF="Samba-Server-FAQ.html#toc1">Table of Contents</A>
+<HR>
+<H2><A NAME="s1">1. What is Samba?</A></H2>
+
+<P>
+<A NAME="WhatIsSamba"></A> 
+</P>
+<P>See the 
+<A HREF="Samba-meta-FAQ.html#introduction">meta FAQ introduction</A> if you don't have any idea what Samba does.</P>
+<P>Samba has many features that are not supported in other CIFS and SMB
+implementations, all of which are commercial. It approaches some
+problems from a different angle.</P>
+<P>Some of its features include:
+<UL>
+<LI>extremely dynamic runtime configuration</LI>
+<LI>host as well as username/password security</LI>
+<LI>scriptable SMB client</LI>
+<LI>automatic home directory exporting</LI>
+<LI>automatic printer exporting</LI>
+<LI>intelligent dead connection timeouts</LI>
+<LI>guest connections</LI>
+</UL>
+</P>
+<P>Look at the 
+<A HREF="samba-man-index.html">manual pages</A> included with the package for a full list of
+features. The components of the suite are (in summary):</P>
+<P>
+<DL>
+
+<DT><B>smbd</B><DD><P>the SMB server. This handles actual connections from clients,
+doing all the interfacing with the 
+<A HREF="Samba-meta-FAQ.html#DomainModeSecurity">authentication database</A> for file, permission and username work.</P>
+
+<DT><B>nmbd</B><DD><P>the NetBIOS name server, which helps clients locate servers,
+maintaining the 
+<A HREF="Samba-meta-FAQ.html#BrowseAndDomainDefs">authentication database</A> doing the browsing work and managing
+domains as this capability is being built into Samba.</P>
+
+<DT><B>smbclient</B><DD><P>the scriptable commandline SMB client program.
+Useful for automated work, printer filters and testing purposes. It is
+more CIFS-compliant than most commercial implementations. Note that this
+is not a filesystem. The Samba team does not supply a network filesystem
+driver, although the smbfs filesystem for Linux is derived from
+smbclient code.</P>
+
+<DT><B>smbrun</B><DD><P>a little 'glue' program to help the server run
+external programs.</P>
+
+<DT><B>testprns</B><DD><P>a program to test server access to printers</P>
+
+<DT><B>testparms</B><DD><P>a program to test the Samba configuration file
+for correctness</P>
+
+<DT><B>smb.conf</B><DD><P>the Samba configuration file</P>
+
+<DT><B>examples</B><DD><P>many examples have been put together for the different
+operating systems that Samba supports.</P>
+
+<DT><B>Documentation!</B><DD><P>DON'T neglect to read it - you will save a great
+deal of time!</P>
+
+</DL>
+</P>
+
+<HR>
+Previous
+<A HREF="Samba-Server-FAQ-2.html">Next</A>
+<A HREF="Samba-Server-FAQ.html#toc1">Table of Contents</A>
+</BODY>
+</HTML>

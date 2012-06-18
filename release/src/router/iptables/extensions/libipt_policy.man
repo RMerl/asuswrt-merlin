@@ -1,0 +1,48 @@
+This modules matches the policy used by IPsec for handling a packet.
+.TP
+.BI "--dir " "in|out"
+Used to select whether to match the policy used for decapsulation or the
+policy that will be used for encapsulation.
+.B in
+is valid in the
+.B PREROUTING, INPUT and FORWARD
+chains,
+.B out
+is valid in the
+.B POSTROUTING, OUTPUT and FORWARD
+chains.
+.TP
+.BI "--pol " "none|ipsec"
+Matches if the packet is subject to IPsec processing.
+.TP
+.BI "--strict"
+Selects whether to match the exact policy or match if any rule of
+the policy matches the given policy.
+.TP
+.BI "--reqid " "id"
+Matches the reqid of the policy rule. The reqid can be specified with
+.B setkey(8)
+using
+.B unique:id
+as level.
+.TP
+.BI "--spi " "spi"
+Matches the SPI of the SA.
+.TP
+.BI "--proto " "ah|esp|ipcomp"
+Matches the encapsulation protocol.
+.TP
+.BI "--mode " "tunnel|transport"
+Matches the encapsulation mode.
+.TP
+.BI "--tunnel-src " "addr[/mask]"
+Matches the source end-point address of a tunnel mode SA.
+Only valid with --mode tunnel.
+.TP
+.BI "--tunnel-dst " "addr[/mask]"
+Matches the destination end-point address of a tunnel mode SA.
+Only valid with --mode tunnel.
+.TP
+.BI "--next"
+Start the next element in the policy specification. Can only be used with
+--strict

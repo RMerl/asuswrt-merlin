@@ -1,0 +1,9 @@
+<samba:parameter name="default case"
+	context="S"
+	type="string" xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+	<para>See the section on <smbconfoption name="name mangling"/>.
+	Also note the <smbconfoption name="short preserve case"/> parameter.</para>
+</description>
+<value type="default">lower</value>
+</samba:parameter>

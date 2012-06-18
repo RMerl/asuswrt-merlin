@@ -1,0 +1,64 @@
+2006-08-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/28755
+	* expr.c (expand_expr_real_1) <case ARRAY_REF>: Make sure
+	the const array field optimization doesn't create an extra constant
+	MEM.
+
+	* gcc.dg/pr28755.c: New test.
+
+--- gcc-4_1-branch/gcc/expr.c	2006-08-09 17:54:03.000000000 +0200
++++ gcc-4_1-branch/gcc/expr.c	2006-08-17 13:00:33.000000000 +0200
+@@ -7105,13 +7105,25 @@ expand_expr_real_1 (tree exp, rtx target
+ 					      field, value)
+ 		      if (tree_int_cst_equal (field, index))
+ 			{
+-			  if (!TREE_SIDE_EFFECTS (value))
++			  if (TREE_SIDE_EFFECTS (value))
++			    break;
++
++			  if (TREE_CODE (value) != CONSTRUCTOR)
+ 			    return expand_expr (fold (value), target, tmode,
+ 						modifier);
++
++			  /* For CONSTRUCTOR this optimization is not always
++			     a win - if expand_expr creates a temporary
++			     constant, we just waste unnecessarily rodata
++			     space.  */
++			  temp = expand_expr (value, target, tmode, modifier);
++			  if (temp == target
++			      || (temp && GET_CODE (temp) != MEM))
++			    return temp;
+ 			  break;
+ 			}
+ 		  }
+-		else if(TREE_CODE (init) == STRING_CST)
++		else if (TREE_CODE (init) == STRING_CST)
+ 		  {
+ 		    tree index1 = index;
+ 		    tree low_bound = array_ref_low_bound (exp);
+--- gcc-4_1-branch/gcc/testsuite/gcc.dg/pr28755.c	2006-08-17 12:59:57.000000000 +0200
++++ gcc-4_1-branch/gcc/testsuite/gcc.dg/pr28755.c	2006-08-17 12:59:57.000000000 +0200
+@@ -0,0 +1,22 @@
++/* PR middle-end/28755 */
++/* { dg-do compile } */
++/* { dg-options "-Os" } */
++/* { dg-final { scan-assembler-times "2112543726\|7deadbee" 2 } } */
++
++struct S
++{
++  void *s1;
++  unsigned s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14;
++};
++
++const struct S array[] = {
++  { (void *) 0, 60, 640, 2112543726, 39682, 48, 16, 33, 10, 96, 2, 0, 0, 4 },
++  { (void *) 0, 60, 2112543726, 192, 18251, 16, 33, 10, 96, 2, 0, 0, 4, 212 }
++};
++
++void
++foo (struct S *x)
++{
++  x[0] = array[0];
++  x[5] = array[1];
++}

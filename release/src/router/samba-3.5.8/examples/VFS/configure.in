@@ -1,0 +1,359 @@
+dnl -*- mode: m4-mode -*-
+dnl Process this file with autoconf to produce a configure script.
+
+dnl We must use autotools 2.53 or above
+AC_PREREQ(2.53)
+AC_INIT(Makefile.in)
+
+AC_CONFIG_HEADER(module_config.h)
+#dnl To make sure that didn't get #define PACKAGE_* in modules_config.h
+#echo "" > confdefs.h
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_CANONICAL_HOST
+
+#################################################
+# Directory handling stuff to support both the
+# legacy SAMBA directories and FHS compliant
+# ones...
+AC_PREFIX_DEFAULT(/usr/local/samba)
+
+AC_ARG_WITH(fhs, 
+[  --with-fhs              Use FHS-compliant paths (default=no)],
+    libdir="\${prefix}/lib/samba",
+    libdir="\${prefix}/lib")
+
+AC_SUBST(libdir)
+
+SAMBA_SOURCE="../../source3"
+####################################################
+# set the location location of the samba source tree
+AC_ARG_WITH(samba-source,
+[  --with-samba-source=DIR Where is the samba source tree (../../source3)],
+[ case "$withval" in
+  yes|no)
+  #
+  # Just in case anybody calls it without argument
+  #
+    AC_MSG_WARN([--with-samba-source called without argument - will use default])
+  ;;
+  * )
+    SAMBA_SOURCE="$withval"
+    ;;
+  esac])
+
+AC_SUBST(SAMBA_SOURCE)
+
+dnl Unique-to-Samba variables we'll be playing with.
+AC_SUBST(CC)
+AC_SUBST(SHELL)
+AC_SUBST(LDSHFLAGS)
+AC_SUBST(SONAMEFLAG)
+AC_SUBST(SHLD)
+AC_SUBST(HOST_OS)
+AC_SUBST(PICFLAGS)
+AC_SUBST(PICSUFFIX)
+AC_SUBST(SHLIBEXT)
+AC_SUBST(INSTALLCLIENTCMD_SH)
+AC_SUBST(INSTALLCLIENTCMD_A)
+AC_SUBST(SHLIB_PROGS)
+AC_SUBST(EXTRA_BIN_PROGS)
+AC_SUBST(EXTRA_SBIN_PROGS)
+AC_SUBST(EXTRA_ALL_TARGETS)
+
+AC_ARG_ENABLE(debug, 
+[  --enable-debug          Turn on compiler debugging information (default=no)],
+    [if eval "test x$enable_debug = xyes"; then
+	CFLAGS="${CFLAGS} -g"
+    fi])
+
+AC_ARG_ENABLE(developer, [  --enable-developer      Turn on developer warnings and debugging (default=no)],
+    [if eval "test x$enable_developer = xyes"; then
+        developer=yes
+    	CFLAGS="${CFLAGS} -g -Wall -Wshadow -Wstrict-prototypes -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -DDEBUG_PASSWORD -DDEVELOPER"
+    fi])
+
+# compile with optimization and without debugging by default, but
+# allow people to set their own preference.
+if test "x$CFLAGS" = x
+then
+  CFLAGS="-O ${CFLAGS}"
+fi
+
+  #################################################
+  # check for krb5-config from recent MIT and Heimdal kerberos 5
+  AC_PATH_PROG(KRB5CONFIG, krb5-config)
+  AC_MSG_CHECKING(for working krb5-config)
+  if test -x "$KRB5CONFIG"; then
+    CFLAGS="$CFLAGS `$KRB5CONFIG --cflags | sed s/@INCLUDE_des@//`" 
+    CPPFLAGS="$CPPFLAGS `$KRB5CONFIG --cflags | sed s/@INCLUDE_des@//`"
+    FOUND_KRB5=yes
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(no. Fallback to previous krb5 detection strategy)
+  fi
+  
+  if test x$FOUND_KRB5 = x"no"; then
+  #################################################
+  # check for location of Kerberos 5 install
+  AC_MSG_CHECKING(for kerberos 5 install path)
+  AC_ARG_WITH(krb5,
+  [  --with-krb5=base-dir    Locate Kerberos 5 support (default=/usr)],
+  [ case "$withval" in
+    no)
+      AC_MSG_RESULT(no)
+      ;;
+    *)
+      AC_MSG_RESULT(yes)
+      CFLAGS="$CFLAGS -I$withval/include"
+      CPPFLAGS="$CPPFLAGS -I$withval/include"
+      FOUND_KRB5=yes
+      ;;
+    esac ],
+    AC_MSG_RESULT(no)
+  )
+  fi
+
+if test x$FOUND_KRB5 = x"no"; then
+#################################################
+# see if this box has the SuSE location for the heimdal kerberos implementation
+AC_MSG_CHECKING(for /usr/include/heimdal)
+if test -d /usr/include/heimdal; then
+    if test -f /usr/lib/heimdal/lib/libkrb5.a; then
+        CFLAGS="$CFLAGS -I/usr/include/heimdal"
+        CPPFLAGS="$CPPFLAGS -I/usr/include/heimdal"
+        AC_MSG_RESULT(yes)
+    else
+        CFLAGS="$CFLAGS -I/usr/include/heimdal"
+        CPPFLAGS="$CPPFLAGS -I/usr/include/heimdal"
+        AC_MSG_RESULT(yes)
+ 
+    fi
+else
+    AC_MSG_RESULT(no)
+fi
+fi
+
+
+if test x$FOUND_KRB5 = x"no"; then
+#################################################
+# see if this box has the RedHat location for kerberos
+AC_MSG_CHECKING(for /usr/kerberos)
+if test -d /usr/kerberos -a -f /usr/kerberos/lib/libkrb5.a; then
+    LDFLAGS="$LDFLAGS -L/usr/kerberos/lib"
+    CFLAGS="$CFLAGS -I/usr/kerberos/include"
+    CPPFLAGS="$CPPFLAGS -I/usr/kerberos/include"
+    AC_MSG_RESULT(yes)
+else
+    AC_MSG_RESULT(no)
+fi
+fi
+
+  # now check for krb5.h. Some systems have the libraries without the headers!
+  # note that this check is done here to allow for different kerberos
+  # include paths
+  AC_CHECK_HEADERS(krb5.h)
+
+  # now check for gssapi headers.  This is also done here to allow for
+  # different kerberos include paths
+  AC_CHECK_HEADERS(gssapi.h gssapi/gssapi_generic.h gssapi/gssapi.h com_err.h)
+
+#dnl Check if we use GNU ld
+#LD=ld
+#AC_PROG_LD_GNU
+
+#dnl look for executable suffix
+#AC_EXEEXT
+
+builddir=`pwd`
+AC_SUBST(builddir)
+
+# Assume non-shared by default and override below
+BLDSHARED="false"
+
+# these are the defaults, good for lots of systems
+HOST_OS="$host_os"
+LDSHFLAGS="-shared"
+SONAMEFLAG="#"
+SHLD="\${CC}"
+PICFLAGS=""
+PICSUFFIX="po"
+SHLIBEXT="so"
+
+# Since we are not embedded in the Samba tree, building shared modules is
+# really the only option.
+enable_shared=yes
+
+if test "$enable_shared" = "yes"; then
+  # this bit needs to be modified for each OS that is suported by
+  # smbwrapper. You need to specify how to created a shared library and
+  # how to compile C code to produce PIC object files
+
+  AC_MSG_CHECKING([ability to build shared libraries])
+
+  # and these are for particular systems
+  case "$host_os" in
+		*linux*)
+			BLDSHARED="true"
+			LDSHFLAGS="-shared" 
+			DYNEXP="-Wl,--export-dynamic"
+			PICFLAGS="-fPIC"
+			SONAMEFLAG="-Wl,-soname="
+			;;
+		*solaris*)
+			BLDSHARED="true"
+			LDSHFLAGS="-G"
+			SONAMEFLAG="-h "
+			if test "${GCC}" = "yes"; then
+				PICFLAGS="-fPIC"
+				if test "${ac_cv_prog_gnu_ld}" = "yes"; then
+					DYNEXP="-Wl,-E"
+				fi
+			else
+				PICFLAGS="-KPIC"
+				## ${CFLAGS} added for building 64-bit shared 
+				## libs using Sun's Compiler
+				LDSHFLAGS="-G \${CFLAGS}"
+				PICSUFFIX="po.o"
+			fi
+			;;
+		*sunos*)
+			BLDSHARED="true"
+			LDSHFLAGS="-G"
+			SONAMEFLAG="-Wl,-h,"
+			PICFLAGS="-KPIC"   # Is this correct for SunOS
+			;;
+		*netbsd* | *freebsd*)  BLDSHARED="true"
+			LDSHFLAGS="-shared"
+			DYNEXP="-Wl,--export-dynamic"
+			SONAMEFLAG="-Wl,-soname,"
+			PICFLAGS="-fPIC -DPIC"
+			;;
+		*openbsd*)  BLDSHARED="true"
+			LDSHFLAGS="-shared"
+			DYNEXP="-Wl,-Bdynamic"
+			SONAMEFLAG="-Wl,-soname,"
+			PICFLAGS="-fPIC"
+			;;
+		*irix*)
+			case "$host_os" in
+			*irix6*)
+			;;
+			esac
+			ATTEMPT_WRAP32_BUILD=yes
+			BLDSHARED="true"
+			LDSHFLAGS="-set_version sgi1.0 -shared"
+			SONAMEFLAG="-soname "
+			SHLD="\${LD}"
+			if test "${GCC}" = "yes"; then
+				PICFLAGS="-fPIC"
+			else 
+				PICFLAGS="-KPIC"
+			fi
+			;;
+		*aix*)
+			BLDSHARED="true"
+			LDSHFLAGS="-Wl,-bexpall,-bM:SRE,-bnoentry,-berok"
+			DYNEXP="-Wl,-brtl,-bexpall"
+			PICFLAGS="-O2"
+			if test "${GCC}" != "yes"; then
+				## for funky AIX compiler using strncpy()
+				CFLAGS="$CFLAGS -D_LINUX_SOURCE_COMPAT -qmaxmem=32000"
+			fi
+			;;
+		*hpux*)
+			SHLIBEXT="sl"
+			# Use special PIC flags for the native HP-UX compiler.
+			if test $ac_cv_prog_cc_Ae = yes; then
+				BLDSHARED="true"
+				SHLD="/usr/bin/ld"
+				LDSHFLAGS="-B symbolic -b -z"
+				SONAMEFLAG="+h "
+				PICFLAGS="+z"
+			fi
+			DYNEXP="-Wl,-E"
+			;;
+		*qnx*)
+			;;
+		*osf*)
+			BLDSHARED="true"
+			LDSHFLAGS="-shared"
+			SONAMEFLAG="-Wl,-soname,"
+			PICFLAGS="-fPIC"
+			;;
+		*sco*)
+			;;
+		*unixware*)
+			BLDSHARED="true"
+			LDSHFLAGS="-shared"
+			SONAMEFLAG="-Wl,-soname,"
+			PICFLAGS="-KPIC"
+			;;
+		*next2*)
+			;;
+		*dgux*) AC_CHECK_PROG( ROFF, groff, [groff -etpsR -Tascii -man])
+			;;
+		*sysv4*)
+			case "$host" in
+				*-univel-*)
+					LDSHFLAGS="-G"
+                             		DYNEXP="-Bexport"
+				;;
+				*mips-sni-sysv4*) 
+				;;
+			esac
+			;;
+
+		*sysv5*)
+			LDSHFLAGS="-G"
+			;;
+		*vos*)
+			BLDSHARED="false"
+			LDSHFLAGS=""
+			;;
+		*darwin*)
+			BLDSHARED="true"
+			LDSHFLAGS="-bundle -flat_namespace -undefined suppress"
+			SHLIBEXT="dylib"
+			;;
+		*)
+			;;
+  esac
+  AC_SUBST(DYNEXP)
+  AC_MSG_RESULT($BLDSHARED)
+  AC_MSG_CHECKING([linker flags for shared libraries])
+  AC_MSG_RESULT([$LDSHFLAGS])
+  AC_MSG_CHECKING([compiler flags for position-independent code])
+  AC_MSG_RESULT([$PICFLAGS])
+fi
+
+#######################################################
+# test whether building a shared library actually works
+if test $BLDSHARED = true; then
+AC_CACHE_CHECK([whether building shared libraries actually works], 
+               [ac_cv_shlib_works],[
+   ac_cv_shlib_works=no
+   # try building a trivial shared library
+   if test "$PICSUFFIX" = "po"; then
+     $CC $CPPFLAGS $CFLAGS $PICFLAGS -c -o shlib.po ${srcdir-.}/../../tests/shlib.c &&
+       $CC $CPPFLAGS $CFLAGS `eval echo $LDSHFLAGS` -o "shlib.$SHLIBEXT" shlib.po &&
+       ac_cv_shlib_works=yes
+   else
+     $CC $CPPFLAGS $CFLAGS $PICFLAGS -c -o shlib.$PICSUFFIX ${srcdir-.}/../../tests/shlib.c &&
+       mv shlib.$PICSUFFIX shlib.po &&
+       $CC $CPPFLAGS $CFLAGS `eval echo $LDSHFLAGS` -o "shlib.$SHLIBEXT" shlib.po &&
+       ac_cv_shlib_works=yes
+   fi
+   rm -f "shlib.$SHLIBEXT" shlib.po
+])
+if test $ac_cv_shlib_works = no; then
+   BLDSHARED=false
+fi
+fi
+
+
+
+
+AC_OUTPUT(Makefile)

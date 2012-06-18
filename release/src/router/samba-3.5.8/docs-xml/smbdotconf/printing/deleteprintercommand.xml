@@ -1,0 +1,36 @@
+<samba:parameter name="deleteprinter command"
+                 context="G"
+				 type="string"
+		 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+    <para>With the introduction of MS-RPC based printer
+    support for Windows NT/2000 clients in Samba 2.2, it is now 
+    possible to delete a printer at run time by issuing the
+    DeletePrinter() RPC call.</para>
+		
+    <para>For a Samba host this means that the printer must be 
+    physically deleted from the underlying printing system.  The
+    <smbconfoption name="deleteprinter command"/> defines a script to be run which 
+    will perform the necessary operations for removing the printer
+    from the print system and from <filename moreinfo="none">smb.conf</filename>.
+    </para>
+		
+    <para>The <smbconfoption name="deleteprinter command"/> is 
+    automatically called with only one parameter: <smbconfoption name="printer name"/>.
+	</para>
+		
+    <para>Once the <smbconfoption name="deleteprinter command"/> has 
+    been executed, <command moreinfo="none">smbd</command> will reparse the <filename moreinfo="none">
+    smb.conf</filename> to check that the associated printer no longer exists.
+    If the sharename is still valid, then <command moreinfo="none">smbd
+    </command> will return an ACCESS_DENIED error to the client.</para>
+</description>
+
+<related>addprinter command</related>
+<related>printing</related>
+<related>show add printer wizard</related>
+
+<value type="default"></value>
+<value type="example">/usr/bin/removeprinter</value>
+</samba:parameter>

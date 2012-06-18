@@ -1,0 +1,24 @@
+#
+# port-id-map
+#
+# This file describes the ttyname to port id mapping. The port id
+# is reported as part of a RADIUS authentication or accouting request.
+#
+#ttyname (as returned by ttyname(3))	port-id
+/dev/tty1	1
+/dev/tty2	2
+/dev/tty3	3
+/dev/tty4	4
+/dev/tty5	5
+/dev/tty6	6
+/dev/tty7	7
+/dev/tty8	8
+/dev/ttyS0	9
+/dev/ttyS1	10
+/dev/ttyS2	11
+/dev/ttyS3	12
+/dev/ttyS4	13
+/dev/ttyS5	14
+/dev/ttyS6	15
+/dev/ttyS7	16
+ 

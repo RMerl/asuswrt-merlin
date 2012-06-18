@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//Samba-Team//DTD DocBook V4.2-Based Variant V1.0//EN" "http://www.samba.org/samba/DTD/samba-doc">
+<refentry id="cifs.upcall.8">
+
+
+<refmeta>
+        <refentrytitle>cifs.upcall</refentrytitle>
+        <manvolnum>8</manvolnum>
+        <refmiscinfo class="source">Samba</refmiscinfo>
+        <refmiscinfo class="manual">System Administration tools</refmiscinfo>
+        <refmiscinfo class="version">3.2</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+        <refname>cifs.upcall</refname>
+        <refpurpose>Userspace upcall helper for Common Internet File System (CIFS)</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+        <cmdsynopsis>
+                <command>cifs.upcall</command>
+                <arg choice="opt">-c</arg>
+                <arg choice="opt">-v</arg>
+                <arg choice="req">keyid</arg>
+        </cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1>
+        <title>DESCRIPTION</title>
+
+        <para>This tool is part of the <citerefentry><refentrytitle>samba</refentrytitle>
+        <manvolnum>7</manvolnum></citerefentry> suite.</para>
+
+<para>cifs.upcall is a userspace helper program for the linux CIFS client
+filesystem. There are a number of activities that the kernel cannot easily
+do itself. This program is a callout program that does these things for the
+kernel and then returns the result.</para>
+
+<para>cifs.upcall is generally intended to be run when the kernel calls
+request-key<manvolnum>8</manvolnum> for a particular key type. While it
+can be run directly from the command-line, it's not generally intended
+to be run that way.</para>
+</refsect1>
+
+<refsect1>
+	<title>OPTIONS</title>
+	<variablelist>
+		<varlistentry>
+		<term>-c</term>
+		<listitem><para>When handling a kerberos upcall, use a service principal that starts with "cifs/". The default is to use the "host/" service principal.
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>-v</term>
+		<listitem><para>Print version number and exit.
+		</para></listitem>
+		</varlistentry>
+	</variablelist>
+</refsect1>
+
+<refsect1>
+	<title>CONFIGURATION FOR KEYCTL</title>
+	<para>cifs.upcall is designed to be called from the kernel via the request-key callout program. This requres that request-key be told where and how to call this program. The current cifs.upcall program handles two different key types:</para>
+
+	<variablelist>
+		<varlistentry>
+		<term>cifs.spnego</term>
+		<listitem><para>This keytype is for retrieving kerberos session keys
+		</para></listitem>
+		</varlistentry>
+
+		<varlistentry>
+		<term>dns_resolver</term>
+		<listitem><para>This key type is for resolving hostnames into IP addresses
+		</para></listitem>
+		</varlistentry>
+	</variablelist>
+
+	<para>To make this program useful for CIFS, you'll need to set up entries for them in request-key.conf<manvolnum>5</manvolnum>. Here's an example of an entry for each key type:</para>
+<programlisting>
+#OPERATION  TYPE           D C PROGRAM ARG1 ARG2...
+#=========  =============  = = ==========================================
+create	    cifs.spnego    * * /usr/local/sbin/cifs.upcall -c %k
+create      dns_resolver   * * /usr/local/sbin/cifs.upcall %k
+</programlisting>
+<para>
+See <citerefentry><refentrytitle>request-key.conf<manvolnum>5</manvolnum></refentrytitle></citerefentry> for more info on each field.
+</para>
+</refsect1>
+
+<refsect1>
+        <title>SEE ALSO</title>
+        <para>
+	<citerefentry><refentrytitle>request-key.conf</refentrytitle>
+        <manvolnum>5</manvolnum></citerefentry>,
+	<citerefentry><refentrytitle>mount.cifs</refentrytitle>
+        <manvolnum>8</manvolnum></citerefentry>
+	</para>
+</refsect1>
+
+<refsect1>
+        <title>AUTHOR</title>
+
+	<para>Igor Mammedov wrote the cifs.upcall program.</para>
+	<para>Jeff Layton authored this manpage.</para>
+	<para>The maintainer of the Linux CIFS VFS is Steve French.</para>
+        <para>The <ulink url="mailto:linux-cifs-client@lists.samba.org">Linux
+		CIFS Mailing list</ulink> is the preferred place to ask
+		questions regarding these programs.
+	</para>
+</refsect1>
+
+</refentry>

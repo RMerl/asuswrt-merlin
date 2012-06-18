@@ -1,0 +1,14 @@
+#
+# defines common to several Makefiles
+#
+
+INSTALL= /usr/sbin/install
+
+BINDIR = @DESTDIR@/bin
+MANDIR = @DESTDIR@/man
+ETCDIR = @SYSCONF@/ppp
+
+CC = /opt/SUNWspro/bin/cc
+COPTS = -O -Xa
+
+LD = /usr/ccs/bin/ld

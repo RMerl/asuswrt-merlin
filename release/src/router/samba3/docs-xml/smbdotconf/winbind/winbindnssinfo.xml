@@ -1,0 +1,40 @@
+<samba:parameter name="winbind nss info"
+                 context="G"
+				 type="boolean"
+                 advanced="1" developer="1"
+                 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<description>
+
+	<para>This parameter is designed to control how Winbind retrieves Name
+	Service Information to construct a user's home directory and login shell. 
+	Currently the following settings are available: 
+
+	<itemizedlist>
+		<listitem>
+			<para><parameter moreinfo="none">template</parameter> 
+			- The default, using the parameters of <parameter moreinfo="none">template 
+			shell</parameter> and <parameter moreinfo="none">template homedir</parameter>)
+			</para>
+		</listitem>
+			
+		<listitem>
+			<para><parameter moreinfo="none">&lt;sfu | rfc2307 &gt;</parameter>
+			- When Samba is running in security = ads and your Active Directory
+			Domain Controller does support the Microsoft "Services for Unix" (SFU)
+			LDAP schema, winbind can retrieve the login shell and the home
+			directory attributes directly from your Directory Server. Note that
+			retrieving UID and GID from your ADS-Server requires to 
+			use <parameter moreinfo="non">idmap backend</parameter> = ad 
+			or <parameter moreinfo="non">idmap config DOMAIN:backend</parameter> = ad 
+			as well.
+			</para>
+		</listitem>
+			
+	</itemizedlist>
+
+</para>
+</description>
+
+<value type="default">template</value>
+<value type="example">template sfu</value>
+</samba:parameter>

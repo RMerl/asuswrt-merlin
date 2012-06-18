@@ -1,0 +1,94 @@
+General Information
+===================
+
+This is libusb version @LIBUSB_VERSION@. libusb is a library which allows
+userspace application access to USB devices.
+
+The official ftp site is:
+  ftp://ftp.libusb.sourceforge.net/pub/libusb/
+
+The official web site is:
+  http://libusb.sourceforge.net/
+
+A mailing list is located at:
+  libusb-devel@lists.sourceforge.net
+
+Installation
+============
+
+See the file 'INSTALL'
+
+How to report bugs
+==================
+
+To report a bug, visit http://www.sourceforge.net/projects/libusb/ and fill
+out a bug report form.
+
+Please make sure to include:
+
+* The version of libusb
+
+* Information about your system. For instance:
+
+   - What operating system and version
+   - For Linux, what version of the C library
+
+  And anything else you think is relevant.
+
+* How to reproduce the bug. 
+
+  If you can reproduce it with the testlibusb program that is built 
+  in the libusb/ directory, that will be most convenient.  Otherwise, 
+  please include a short test program that exhibits the behavior. 
+  As a last resort, you can also provide a pointer to a larger piece 
+  of software that can be downloaded.
+
+* If the bug was a crash, the exact text that was printed out
+  when the crash occured.
+
+* Further information such as stack traces may be useful, but
+  is not necessary.
+
+Patches
+=======
+
+Patches can be sent to libusb-devel@lists.sourceforge.net.
+
+If the patch fixes a bug, it is usually a good idea to include
+all the information described in "How to Report Bugs".
+
+Building
+========
+
+It should be as simple as running these two commands:
+
+./configure
+make
+
+One common problem is building the SGML documentation. On some systems,
+like SuSE, you will need to set the SGML_CATALOG_FILES environment
+variable to something similar to this (actual paths may vary):
+
+export SGML_CATALOG_FILES="/usr/share/sgml/CATALOG.docbook_3:/usr/share/sgml/CATALOG.docbook-dsssl-stylesheets:/usr/share/sgml/openjade/catalog"
+
+On recent versions of Fedora Core (FC5 Test 2 atleast), this command may be
+needed:
+
+export SGML_CATALOG_FILES="/etc/sgml/catalog"
+
+or possibly:
+
+export SGML_CATALOG_FILES="/etc/sgml/docbook"
+
+C++ Support
+===========
+
+There are reasonable unit tests available - run "make check" to do the
+tests. Note that some of the tests will unexpectedly pass if you don't have
+a specfic type of Logitech mouse connected, and some are expected to fail
+unless you are running as root (or otherwise have permissions to access the
+device).
+
+Building the C++ documentation requires Doxygen
+(http://www.stack.nl/~dimitri/doxygen/) 
+

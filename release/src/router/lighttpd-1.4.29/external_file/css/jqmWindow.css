@@ -1,0 +1,90 @@
+/* jqModal base Styling courtesy of;
+	Brice Burgess <bhb@iceburg.net> */
+
+/* The Window's CSS z-index value is respected (takes priority). If none is supplied,
+	the Window's z-index value will be set to 3000 by default (via jqModal.js). */
+
+.jqmWindow {
+  display: none;
+  position: fixed;
+  background: #888888;
+	padding-left:0px;
+	padding-right:2px;
+}
+
+.jqmOverlay { 
+	background-color: #FFF; 
+}
+	
+/* Background iframe styling for IE6. Prevents ActiveX bleed-through (<select> form elements, etc.) 
+
+* iframe.jqm {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: expression(this.parentNode.offsetWidth+'px');
+  height: expression(this.parentNode.offsetHeight+'px');
+}*/
+
+/* Fixed posistioning emulation for IE6
+     Star selector used to hide definition from browsers other than IE6
+     For valid CSS, use a conditional include instead */
+* html .jqmWindow {
+  position: absolute;
+  top: expression((document.documentElement.scrollTop || document.body.scrollTop) + Math.round(17 * (document.documentElement.offsetHeight || document.body.clientHeight) / 100) + 'px');  
+}
+
+button.jqmClose {
+	background: none;
+	border: 0px solid #EAEAEB;
+	color: #000;
+	clear: right;
+	float: right;
+	padding: 0;
+	margin-top:5px;
+	margin-left:5px;
+	cursor: pointer;
+	font-size: 0.9em;
+	letter-spacing: 1px;
+}
+
+button.jqmClose:hover, 
+button.jqmClose:active {
+	color: #FFF;
+	border: 0px solid #FFF;
+}
+
+#jqmTitle {
+	background: transparent;
+	color: #ffffff;
+	text-transform: capitalize;
+	height: 15px;
+	padding: 5px 5px 0px 5px;
+	vertical-align: middle;
+	font: bold 80% "宋体",Arial,sans-serif;
+	/*white-space: nowrap;*/
+}
+
+#jqmMsg {
+	background: #FF6666;
+	color: #ffffff;
+	text-transform: capitalize;
+	height: 15px;
+	padding: 5px 5px 0px 5px;
+	vertical-align: middle;
+	font: bold 80% "宋体",Arial,sans-serif;
+	display: none;
+	/*white-space: nowrap;*/
+}
+
+#jqmContent {
+	width: 100%;
+	height: 100%;
+	display: block;
+	clear: both;
+	margin:0px;
+	margin-top:0px;
+	background: #e8e8e8;
+	border: 1px solid #888888;
+}

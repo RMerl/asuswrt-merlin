@@ -1,0 +1,107 @@
+# MiniDLNA translation template file
+# Copyright (C) 2010 NETGEAR
+# This file is distributed under the same license as the MiniDLNA package.
+# Justin Maggard <jmaggard@users.sourceforge.net>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: minidlna 1.0.18\n"
+"Report-Msgid-Bugs-To: jmaggard@users.sourceforge.net\n"
+"POT-Creation-Date: 2010-07-19 10:50-0700\n"
+"PO-Revision-Date: 2010-08-09 17:00-0700\n"
+"Last-Translator: super-poussin <ReadyNAS Forum User>\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: scanner.c:163
+msgid "Unknown Date"
+msgstr "Date Inconnue"
+
+#: scanner.c:191
+msgid "Unknown Camera"
+msgstr "Camera Inconnue"
+
+#: scanner.c:282
+msgid "- All Albums -"
+msgstr "- Tous les Albums -"
+
+#: scanner.c:290 scanner.c:297 scanner.c:300
+msgid "Unknown Album"
+msgstr "Album Inconnu"
+
+#: scanner.c:323
+msgid "- All Artists -"
+msgstr "- Tous les Artistes -"
+
+#: scanner.c:331 scanner.c:337 scanner.c:340
+msgid "Unknown Artist"
+msgstr "Artiste Inconnu"
+
+#: scanner.c:543
+msgid "Music"
+msgstr "Musique"
+
+#: scanner.c:544
+msgid "All Music"
+msgstr "Toute la Musique"
+
+#: scanner.c:545
+msgid "Genre"
+msgstr "Genre"
+
+#: scanner.c:546
+msgid "Artist"
+msgstr "Artiste"
+
+#: scanner.c:547
+msgid "Album"
+msgstr "Album"
+
+#: scanner.c:548 scanner.c:552 scanner.c:557
+msgid "Folders"
+msgstr "Dossiers"
+
+#: scanner.c:549
+msgid "Playlists"
+msgstr "Liste de Lecture"
+
+#: scanner.c:550
+msgid "Video"
+msgstr "Vidéo"
+
+#: scanner.c:551
+msgid "All Video"
+msgstr "Toutes les Vidéos"
+
+#: scanner.c:553
+msgid "Pictures"
+msgstr "Images"
+
+#: scanner.c:554
+msgid "All Pictures"
+msgstr "Toutes les Images"
+
+#: scanner.c:555
+msgid "Date Taken"
+msgstr "Date de Prise"
+
+#: scanner.c:556
+msgid "Camera"
+msgstr "Camera"
+
+#: scanner.c:558
+msgid "Browse Folders"
+msgstr "Parcourir les Dossiers"
+
+#: scanner.c:721
+#, c-format
+msgid "Scanning %s\n"
+msgstr "Analyse de %s\n"
+
+#: scanner.c:789
+#, c-format
+msgid "Scanning %s finished (%llu files)!\n"
+msgstr "Analyse réalisée à %s (%llu fichiers)!\n"

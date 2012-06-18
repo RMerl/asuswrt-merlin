@@ -1,0 +1,14 @@
+GET /css/digg2.css HTTP/1.1
+Host: digg.com
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.7.10) Gecko/20050716 Firefox/1.0.6
+Accept: text/css,*/*;q=0.1
+Accept-Language: en-us,en;q=0.5
+Accept-Encoding: gzip,deflate
+Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7
+Keep-Alive: 300
+Connection: keep-alive
+Referer: http://digg.com/
+Cookie: PHPSESSID=da7a8c093a0018337e27137925c855c9; style=null
+If-Modified-Since: Mon, 29 Aug 2005 14:03:43 GMT
+If-None-Match: "4dc09d-5d0a-3ff79f691adc0"
+

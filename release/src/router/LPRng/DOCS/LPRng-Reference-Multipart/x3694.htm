@@ -1,0 +1,283 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Routing Jobs To Print Queues</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title=
+    "Load Balance Queues and Printer Pools" href="x3593.htm">
+    <link rel="NEXT" title=
+    "Job Options and the Z Control File Entry" href="x3767.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x3593.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x3767.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN3694">4.18. Routing Jobs To
+      Print Queues</a></h1>
+
+      <p>A <span class="emphasis"><i class="EMPHASIS">routing
+      queue</i></span> is similar in concept to a load balance
+      queue in that it transfers a job to a (different) print
+      queue, but the job destination is chosen at the time the job
+      is submitted to the queue rather than at the time the job is
+      removed from the queue. A routing queue can modify the job
+      control file, multiple copies of the same job can be sent to
+      the same or different printers, and the job can be held,
+      rejected, or processed immediately.</p>
+
+      <p>Edit the printcap file so it have the contents indicated
+      below, create the <tt class="FILENAME">/tmp/lp2</tt> and <tt
+      class="FILENAME">/tmp/lp3</tt> files with <var class=
+      "LITERAL">0777</var> permissions. Create the <tt class=
+      "FILENAME">/tmp/router.script</tt> with the contents
+      indicated below, and give it <var class="LITERAL">0755</var>
+      (executable) permissions. Use <tt class="COMMAND">checkpc
+      -f</tt> to check the printcap, and then use <tt class=
+      "COMMAND">lpc reread</tt> to restart the <b class=
+      "APPLICATION">lpd</b> server.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3707"></a>
+<pre class="SCREEN">
+    # printcap
+    lp:force_localhost
+    lp:server
+      :lp=/dev/null
+      :sd=/var/spool/lpd/%P
+      :router=/tmp/router.script
+    lp2:force_localhost
+    lp2:server
+      :sd=/var/spool/lpd/%P
+      :lp=/tmp/lp2
+    lp3:force_localhost
+    lp3:server
+      :sd=/var/spool/lpd/%P
+      :lp=/tmp/lp2
+    
+    # /tmp/router.script
+    
+    #!/bin/sh
+    /bin/cat &lt;&lt;EOF
+    dest lp2
+    copies 2
+    Cred
+    end
+    dest lp3
+    end
+    EOF
+    exit 0
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <tt class="FILENAME">router.script</tt> will write the
+      routing information to its <acronym class=
+      "ACRONYM">STDOUT</acronym>. For our example, we want the
+      destination <var class="LITERAL">lp2</var> to get two copies
+      of the job and we want to change the class to <var class=
+      "LITERAL">red</var>. Now run the following commands:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3714"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {282} %</samp> <kbd class=
+"USERINPUT">lpc stop all</kbd>
+    Printer: lp@h4
+    lp@h4.private: stopped
+    Printer: lp2@h4
+    lp2@h4.private: stopped
+    Printer: lp3@h4
+    lp3@h4.private: stopped
+    <samp class="PROMPT">h4: {283} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4 (dest lp@localhost) (printing disabled) (dest lp2, lp3)
+     Queue: no printable jobs in queue
+    Printer: lp2@h4  (printing disabled)
+     Queue: no printable jobs in queue
+    Printer: lp3@h4  (printing disabled)
+     Queue: no printable jobs in queue
+    <samp class="PROMPT">h4: {284} %</samp> <kbd class=
+"USERINPUT">lpr /tmp/hi</kbd>
+    <samp class="PROMPT">h4: {285} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4 (dest lp@localhost) (printing disabled) (dest lp2, lp3)
+     Queue: 1 printable job
+     Server: no server active
+     Rank   Owner/ID           Class Job Files        Size Time
+    1      papowell@h4+235       A   235 /tmp/hi         3 16:14:22
+     -          papowell@h4+235.1       -&gt;lp2 &lt;cpy 0/2&gt;
+     -          papowell@h4+235.2       -&gt;lp3
+    Printer: lp2@h4  (printing disabled)
+     Queue: no printable jobs in queue
+    Printer: lp3@h4  (printing disabled)
+     Queue: no printable jobs in queue
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The status reported for the spooled job indicates that the
+      job is routed to <var class="LITERAL">lp2</var>, and that two
+      copies will be sent. The <var class=
+      "LITERAL">:destinations</var> option in the printcap entry
+      causes <b class="APPLICATION">lpq</b> to display the contents
+      of the specified queues. Now execute the following
+      commands:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3728"></a>
+<pre class="SCREEN">
+    <samp class="PROMPT">h4: {286} %</samp> <kbd class=
+"USERINPUT">lpc start</kbd>
+    Printer: lp@h4
+    lp@h4.private: started
+    <samp class="PROMPT">h4: {287} %</samp> <kbd class=
+"USERINPUT">lpq</kbd>
+    Printer: lp@h4 (dest lp@localhost) (destinations lp2, lp3)
+     Queue: no printable jobs in queue
+     Status: job 'papowell@h4+235' removed at 16:14:37.491
+    Printer: lp2@h4  (printing disabled)
+     Queue: 2 printable jobs
+     Server: no server active
+     Rank   Owner/ID           Class Job Files        Size Time
+    1      papowell@h4+235.1C1   A   235 /tmp/hi         3 16:14:36
+    2      papowell@h4+235.1C2   A   236 /tmp/hi         3 16:14:37
+    Printer: lp3@h4  (printing disabled)
+     Queue: 1 printable job
+     Server: no server active
+     Rank   Owner/ID           Class Job Files        Size Time
+    1      papowell@h4+235.2     A   237 /tmp/hi         3 16:14:37
+    <samp class="PROMPT">h4: {288} %</samp> <kbd class=
+"USERINPUT">more /var/spool/lpd/lp2/cfA235*</kbd>
+    Hh4.private
+    Ppapowell
+    J/tmp/hi
+    Cred
+    Lpapowell
+    Apapowell@h4+235.1C1
+    D2000-06-01-16:03:25.237
+    Qlp
+    N/tmp/hi
+    fdfA235h4.private
+    UdfA235h4.private
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>As you can see, two copies of the job has been transferred
+      to <var class="LITERAL">lp2</var> and one to <var class=
+      "LITERAL">lp3</var>, each with a different job number, If we
+      examine the control file for the jobs in the <var class=
+      "LITERAL">lp2</var> spool queue, we will find that the <var
+      class="LITERAL">C</var> or class information has been changed
+      to <var class="LITERAL">red</var>.</p>
+
+      <p>For details about all of the capabilities of the routing
+      filter, see <a href="destinations.htm">Dynamic Routing</a>.
+      Here is a summary of the information that the routing filter
+      can put into the routing file.</p>
+
+      <div class="VARIABLELIST">
+        <dl>
+          <dt>dest queue</dt>
+
+          <dd>
+            <p>Route this job to <var class="LITERAL">queue</var>.
+            The <var class="LITERAL">queue@host</var> form will
+            transfer the job to the queue on the named host.</p>
+          </dd>
+
+          <dt>copies N</dt>
+
+          <dd>
+            <p>Send N copies of this job to the destination.</p>
+          </dd>
+
+          <dt>priority C</dt>
+
+          <dd>
+            <p>Set the job priority letter to <var class=
+            "LITERAL">C</var>, where C is a single upper case
+            letter.</p>
+          </dd>
+
+          <dt>Cvalue</dt>
+
+          <dd>
+            <p>Set the control file line starting with <var class=
+            "LITERAL">C</var> to <var class=
+            "LITERAL">Cvalue</var>.</p>
+          </dd>
+        </dl>
+      </div>
+      <br>
+      <br>
+
+      <p>The exit status of the routing filter controls how the job
+      will be processed. If the exit code is JSUCC (0), then the
+      job will be processed normally, JHOLD will hold the job until
+      released, JREMOVE will remove the job, and so forth.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x3593.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x3767.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Load Balance
+          Queues and Printer Pools</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Job Options
+          and the Z Control File Entry</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

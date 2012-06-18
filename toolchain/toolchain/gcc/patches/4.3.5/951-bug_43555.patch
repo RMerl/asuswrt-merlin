@@ -1,0 +1,107 @@
+--- gcc-4_3-branch/gcc/cp/ChangeLog	2010/05/27 20:00:57	159944
++++ gcc-4_3-branch/gcc/cp/ChangeLog	2010/05/27 20:02:10	159945
+@@ -1,3 +1,9 @@
++2010-05-27  Jason Merrill  <jason@redhat.com>
++
++	PR c++/43555
++	* decl.c (grokdeclarator) [cdk_pointer et al]: Force evaluation of
++	anonymous VLA size.
++
+ 2010-05-22  Release Manager
+ 
+ 	* GCC 4.3.5 released.
+--- gcc-4_3-branch/gcc/cp/decl.c	2010/05/27 20:00:57	159944
++++ gcc-4_3-branch/gcc/cp/decl.c	2010/05/27 20:02:10	159945
+@@ -8248,6 +8248,40 @@
+ 	      memfn_quals = TYPE_UNQUALIFIED;
+ 	    }
+ 
++	  if (TREE_CODE (type) == FUNCTION_TYPE
++	      && cp_type_quals (type) != TYPE_UNQUALIFIED)
++	    error ("cannot declare %s to qualified function type %qT",
++		   declarator->kind == cdk_reference ? "reference" : "pointer",
++		   type);
++
++	  /* When the pointed-to type involves components of variable size,
++	     care must be taken to ensure that the size evaluation code is
++	     emitted early enough to dominate all the possible later uses
++	     and late enough for the variables on which it depends to have
++	     been assigned.
++
++	     This is expected to happen automatically when the pointed-to
++	     type has a name/declaration of it's own, but special attention
++	     is required if the type is anonymous.
++
++	     We handle the NORMAL and FIELD contexts here by inserting a
++	     dummy statement that just evaluates the size at a safe point
++	     and ensures it is not deferred until e.g. within a deeper
++	     conditional context (c++/43555).
++
++	     We expect nothing to be needed here for PARM or TYPENAME.
++	     Evaluating the size at this point for TYPENAME would
++	     actually be incorrect, as we might be in the middle of an
++	     expression with side effects on the pointed-to type size
++	     "arguments" prior to the pointer declaration point and the
++	     size evaluation could end up prior to the side effects.  */
++
++	  if (!TYPE_NAME (type)
++	      && (decl_context == NORMAL || decl_context == FIELD)
++	      && at_function_scope_p ()
++	      && variably_modified_type_p (type, NULL_TREE))
++	    finish_expr_stmt (TYPE_SIZE (type));
++
+ 	  if (declarator->kind == cdk_reference)
+ 	    {
+ 	      /* In C++0x, the type we are creating a reference to might be
+--- gcc-4_3-branch/gcc/testsuite/ChangeLog	2010/05/27 20:00:57	159944
++++ gcc-4_3-branch/gcc/testsuite/ChangeLog	2010/05/27 20:02:10	159945
+@@ -1,3 +1,8 @@
++2010-05-27  Jason Merrill  <jason@redhat.com>
++
++	PR c++/43555
++	* g++.dg/ext/vla9.C: New.
++
+ 2010-05-22  Release Manager
+ 
+ 	* GCC 4.3.5 released.
+--- /dev/null
++++ gcc-4_3-branch/gcc/testsuite/g++.dg/ext/vla9.C	2010/05/27 20:02:10	159945
+@@ -0,0 +1,38 @@
++// PR c++/43555
++// { dg-options "" }
++// { dg-do run }
++
++extern "C" void * malloc (__SIZE_TYPE__);
++extern "C" int printf (const char *, ...);
++extern "C" void abort(void);
++
++int nx,ny;
++
++void f(double *x1d,int choice)
++{
++  double (*x2d)[nx][ny]=(double(*)[nx][ny])x1d;
++  unsigned long delta;
++//  (*x2d)[0][0]=123; // <- this line affects the result
++  if (choice!=0)
++  {
++    delta=&(*x2d)[1][0]-x1d;
++  }
++  else
++  {
++    delta=&(*x2d)[1][0]-x1d;
++  }
++  printf("Choice: %d, Delta: %ld\n",choice,delta);
++  if (delta != ny)
++    abort ();
++}
++
++int main()
++{
++  double *data;
++  nx=100;
++  ny=100;
++  data=(double*)malloc(nx*ny*sizeof(double));
++  f(data,0);
++  f(data,1);
++  return 0;
++}

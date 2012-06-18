@@ -1,0 +1,91 @@
+@node Route Map, IPv6 Support, Filtering, Top
+@comment  node-name,  next,  previous,  up
+@chapter Route Map
+
+Route map is a very useful function in zebra.  There is a match and set
+statement permitted in a route map.
+
+@example
+@group
+route-map test permit 10
+ match ip address 10
+ set local-preference 200
+@end group
+@end example
+
+This means that if a route matches ip access-list number 10 it's
+local-preference value is set to 200.
+
+@menu
+* Route Map Command::           
+* Route Map Match Command::     
+* Route Map Set Command::       
+@end menu
+
+@node Route Map Command, Route Map Match Command, Route Map, Route Map
+@comment  node-name,  next,  previous,  up
+@subsection Route Map Command
+
+@deffn {Command} {route-map @var{route-map-name} permit @var{priority}} {}
+@end deffn
+
+@node Route Map Match Command, Route Map Set Command, Route Map Command, Route Map
+@comment  node-name,  next,  previous,  up
+@subsection Route Map Match Command
+
+@deffn {Route-map Command} {match ip address @var{access_list}} {}
+Matches the specified @var{access_list}
+@end deffn
+
+@deffn {Route-map Command} {match ip next-hop @var{ipv4_addr}} {}
+Matches the specified @var{ipv4_addr}.
+@end deffn
+
+@deffn {Route-map Command} {match aspath @var{as_path}} {}
+Matches the specified @var{as_path}.
+@end deffn
+
+@deffn {Route-map Command} {match metric @var{metric}} {}
+Matches the specified @var{metric}.
+@end deffn
+
+@deffn {Route-map Command} {match community @var{community_list}} {}
+Matches the specified  @var{community_list}
+@end deffn
+
+@node Route Map Set Command,  , Route Map Match Command, Route Map
+@comment  node-name,  next,  previous,  up
+@subsection Route Map Set Command
+
+@deffn {Route-map Command} {set ip next-hop @var{ipv4_address}} {}
+Set the BGP nexthop address.
+@end deffn
+
+@deffn {Route-map Command} {set local-preference @var{local_pref}} {}
+Set the BGP local preference.
+@end deffn
+
+@deffn {Route-map Command} {set weight @var{weight}} {}
+Set the route's weight.
+@end deffn
+
+@deffn {Route-map Command} {set metric @var{metric}} {}
+Set the BGP attribute MED.
+@end deffn
+
+@deffn {Route-map Command} {set as-path prepend @var{as_path}} {}
+Set the BGP AS path to prepend.
+@end deffn
+
+@deffn {Route-map Command} {set community @var{community}} {}
+Set the BGP community attribute.
+@end deffn
+
+@deffn {Route-map Command} {set ipv6 next-hop global @var{ipv6_address}} {}
+Set the BGP-4+ global IPv6 nexthop address.
+@end deffn
+
+@deffn {Route-map Command} {set ipv6 next-hop local @var{ipv6_address}} {}
+Set the BGP-4+ link local IPv6 nexthop address.
+@end deffn
+

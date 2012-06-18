@@ -1,0 +1,70 @@
+- See also SPEED
+
+Update 2nd Nov 2001
+ftp.redhat.com ran vsftpd for the RedHat 7.2 release. vsftpd achieved 4,000
+concurrent users on a single machine with 1Gb RAM. Even with this insane user
+count, bandwidth remained totally saturated. The user count could have been
+higher, but the machine ran out of processes.
+
+--
+Below are some quick benchmark figures vs. wu-ftpd. This is an untuned BETA
+version of vsftpd (0.0.10)
+
+The executive summary is that wu-ftpd got a thorough thrashing. The most
+telling statistic is wu-ftpd typically failing to sustain 400 users, whereas
+vsftpd copes with 1000 with room to spare.
+
+A 2.2.x kernel was used. A 2.4.x kernel should make vsftpd look even better
+relative to wu-ftpd thanks to the sendfile() boosts in 2.4.x. A 2.4.x kernel
+with zerocopy should be amazing.
+
+Many thanks to Andrew Anderson <andrew@redhat.com>
+--
+
+Here's some benchmarks that I did on vsftpd vs. wu-ftpd.  The tests were
+run with "dkftpbench -hftpserver -n500 -t600 -f/pub/dkftp/<file>".  The
+attached file are the summary output with time to reach the steady-state
+condition.
+
+The interesting things I noticed are:
+
+- In the raw test results, vsftpd had a much higher peak on the x10k.dat
+transfer run than wu-ftpd did.  Wu-ftpd peaked at ~150 connections and
+bled down to ~130 connections, while vsftpd peaked at ~400 connections and
+bled down to ~160 connections.  I tend to believe the peaks more than the
+final steady-state that dkftpbench reports, though.
+
+- For the other tests, our wu-ftpd setup was limited to 400 connections,
+but in about half of the x100k/x1000k runs could not even sustain 400
+connections, while vsftpd handled 500 easily on those runs.
+
+- During the peak runs at x10k, the machine load with vsftpd looked like
+this (I don't have this data still for the wu-ftpd runs):
+
+01:01:00 AM       all      4.92      0.00     21.23     73.85
+03:31:00 AM       all      4.89      0.00     19.53     75.58
+05:11:00 AM       all      4.19      0.00     16.89     78.92
+07:01:00 AM       all      5.61      0.00     22.47     71.92
+
+The steady-state loads were more in the 3-5% user, 10-15% system. For the
+x100/x1000 loads with vsftpd, the system load looked like this:
+
+x100k.dat:
+09:01:00 AM       all      2.27      0.00      9.79     87.94
+
+x1000k.dat:
+11:01:00 AM       all      0.42      0.00      5.75     93.83
+
+Not bad -- 500 concurrent users for ~7% system load.
+
+- Just for kicks I ran the x1000k test with 1000 users.  At peak load:
+
+X1000k.dat with 1000 users:
+04:41:00 PM       all      1.23      0.00     46.59     52.18
+
+Based on what I'm seeing, it looks like if a server had enough bandwidth,
+it could indeed sustain ~2000 users with the current 2 process model
+that's implemented in vsftpd.  I did notice that dkftpbench slowed down
+the connection rate after 800 connections.  I'm not sure if that was a
+dkftpbench issue, or if I ran into something other limit.
+

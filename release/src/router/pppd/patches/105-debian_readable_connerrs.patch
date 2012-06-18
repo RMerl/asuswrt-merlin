@@ -1,0 +1,12 @@
+diff -ruNp ppp-2.4.4b1.orig/pppd/main.c ppp-2.4.4b1/pppd/main.c
+--- ppp-2.4.4b1.orig/pppd/main.c	2005-12-04 15:22:00.000000000 +0100
++++ ppp-2.4.4b1/pppd/main.c	2005-12-04 15:21:54.000000000 +0100
+@@ -1619,7 +1619,7 @@ device_script(program, in, out, dont_wai
+     if (log_to_fd >= 0)
+ 	errfd = log_to_fd;
+     else
+-	errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0600);
++	errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0644);
+ 
+     ++conn_running;
+     pid = safe_fork(in, out, errfd);

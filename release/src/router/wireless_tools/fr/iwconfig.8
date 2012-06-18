@@ -1,0 +1,569 @@
+.\" Jean II - HPLB - 1996 => HPL - 2004
+.\" iwconfig.8
+.\"
+.\" Traduction 2003/07/15 Maxime CHARPENNE (voir
+.\" http://www.delafond.org/traducmanfr/)
+.\" 1ère traduction        : version 26
+.\" Mise à jour 2004/01/28 : version 27-pre9 (beta)
+.\" Mise à jour 2004/02/26 : version 27-pre11 (alpha)
+.\" Mise à jour 2004/08/23 : version 27-pre25
+.\"
+.TH IWCONFIG 8 "22 juin 2004" "wireless-tools" "Manuel du programmeur Linux"
+.\"
+.\" NAME part
+.\"
+.SH NOM
+iwconfig \- configure une interface réseau sans-fil (wireless)
+.\"
+.\" SYNOPSIS part
+.\"
+.SH SYNOPSIS
+.BI "iwconfig [" interface ]
+.br
+.BI "iwconfig " interface " [essid " X "] [nwid " N "] [freq " F "] [channel " C ]
+.br
+.BI "                   [sens " S "] [mode " M "] [ap " A "] [nick " NN ]
+.br
+.BI "                   [rate " R "] [rts " RT "] [frag " FT "] [txpower " T ]
+.br
+.BI "                   [enc " E "] [key " K "] [power " P "] [retry " R ]
+.br
+.BI "                   [commit]
+.br
+.BI "iwconfig --help"
+.br
+.BI "iwconfig --version"
+.\"
+.\" DESCRIPTION part
+.\"
+.SH DESCRIPTION
+.B Iwconfig
+est similaire à
+.IR ifconfig (8),
+mais est dédié aux interfaces wireless. Il est utilisé pour manier les
+paramètres des interfaces réseaux qui sont spécifiques aux opérations wireless
+(par exemple\ : la fréquence).
+.B Iwconfig
+peut aussi être utilisé pour afficher ces paramètres, et les statistiques
+concernant le sans fil (extraites de
+.IR /proc/net/wireless ).
+.PP
+Tous ces paramètres et statistiques dépendent du matériel. Chaque pilote ne
+fournira que quelques uns d'entre eux en fonction du support matériel, et
+l'étendue des valeurs peut changer. Veuillez vous référer aux pages man de
+chaque matériel pour plus de détails.
+.\"
+.\" PARAMETER part
+.\"
+.SH PARAMÈTRES
+.TP
+.B essid
+Positionne le ESSID ( ou Network Name - pour certains produits, il peut aussi
+être désigné comme Domain ID). L'ESSID est utilisé pour identifier les cellules
+qui font partie du même réseau virtuel.
+.br
+Par opposition à l'adresse de l'AP ou au NWID qui définissent une seule cellule,
+l'ESSID définit un groupe de cellules connectées via des répéteurs ou via
+l'infrastructure, où l'utilisateur peut «\ roamer\ » ou errer de manière
+transprente (c.-à-d. changer de cellule sans perdre sa connexion).
+.br
+Avec certaines cartes, vous pouvez désactiver le contrôle du ESSID (ESSID
+promiscuous) avec
+.IR off " ou " any " (et " on
+pour le réactiver).
+.br
+.B Exemples :
+.br
+.I "	iwconfig eth0 essid any"
+.br
+.I "	iwconfig eth0 essid ""Mon Reseau""
+.TP
+.BR nwid / domain
+Positionne le Network ID (pour certains produits, il peut aussi être appelé
+Domain ID). Comme tous les réseaux sans fil adjacents partagent le même médium,
+ce paramètre est utilisé pour les différencier (créer des réseaux logiques
+colocalisés) et pour identifier des noeuds appartenant à la même cellule.
+.br
+Ce paramètre est seulement utilisé par les matériels antérieurs à 802.11, la
+norme 802.11 se servant du ESSID et de l'adresse de l'AP pour cette fonction.
+.br
+Avec certaines cartes, vous pouvez désactiver le contrôle du Network ID (NWID
+promiscuous) avec
+.IR off " (et " on
+pour le réactiver).
+.br
+.B Exemples :
+.br
+.I "	iwconfig eth0 nwid AB34
+.br
+.I "	iwconfig eth0 nwid off"
+.TP
+.BR freq / channel
+Positionne la fréquence d'exploitation ou canal du périphérique. Une valeur
+inférieure à 1\ 000 indique un numéro de canal, une valeur supérieure à 1\ 000
+est une fréquence en Hz. Vous pouvez ajouter le suffixe k, M ou G à la valeur
+(par exemple, «\ 2.46G\ » pour la fréquence 2,46\ GHz), ou ajouter suffisamment
+de «\ 0\ ».
+.br
+Les canaux sont habituellement numérotés à partir de 1, et vous pouvez utiliser
+.IR iwlist (8)
+pour obtenir le nombre total de canaux, lister les fréquences disponibles, et
+afficher le fréquence courante comme un canal.
+Suivants les réglementations, certaines fréquences/canaux peuvent ne pas
+être disponibles.
+.br
+.B Exemples :
+.br
+.I "	iwconfig eth0 freq 2422000000"
+.br
+.I "	iwconfig eth0 freq 2.422G"
+.br
+.I "	iwconfig eth0 channel 3"
+.TP
+.B sens
+Positionne le seuil de sensibilité. C'est le niveau de signal le plus bas pour
+lequel le matériel essaye de réceptionner un paquet, les signaux plus bas sont
+ignorés. Ceci est utilisé pour éviter de recevoir le bruit de fond, donc vous
+devriez le positionner en fonction du niveau de bruit moyen. Les valeurs
+positives sont supposées être les valeurs brutes utilisées par le matériel ou
+un pourcentage, les valeurs négatives sont supposées être des dBm.
+.br
+Avec certains matériels, ce paramètre contrôle aussi le seuil de report
+(defer threshold) (signal le plus faible pour lequel le matériel considère le
+canal occupé) et le seuil de cession (handover threshold) (niveau de signal pour
+lequel le matériel commence à chercher un nouveau Point d'Accès).
+.br
+.B Exemple :
+.br
+.I "	iwconfig eth0 sens -80"
+.TP
+.B mode
+Positionne le mode de fonctionnement du matériel, qui dépend de la topologie du
+réseau. Le mode peut être
+.I Ad-Hoc
+(réseau composé d'une seule cellule et sans Point d'Accès),
+.I Managed
+(un noeud se connecte à un réseau composé de plusieurs Points d'Accès, avec
+roaming ou errance),
+.I Master
+(le noeud est le maître qui synchronise ou agit comme un Point d'Accès),
+.I Repeater
+(le noeud transmet les paquets entre les autres n½uds wireless),
+.I Secondary
+(le noeud agit comme un maître/répéteur supplémentaire),
+.I Monitor
+(le noeud agit comme un moniteur passif et ne fait que recevoir des paquets) ou
+.IR Auto .
+.br
+.B Exemple :
+.br
+.I "	iwconfig eth0 mode Managed"
+.br
+.I "	iwconfig eth0 mode Ad-Hoc"
+.TP
+.B ap
+Force la carte à s'enregistrer auprès du Point d'Accès donné par l'adresse,
+si c'est possible. Quand la qualité de la connexion devient trop mauvaise,
+le pilote peut revenir en mode automatique (la carte sélectionne le meilleur
+Point d'Accès à portée).
+.br
+Vous pouvez aussi utiliser
+.I off
+pour réactiver le mode automatique sans changer le Point d'Accès courant,
+ou vous pouvez utiliser
+.I any
+ou
+.I auto
+pour forcer la carte à se ré associer avec le meilleur Point d'Accès courant.
+.br
+.B Exemple :
+.br
+.I "	iwconfig eth0 ap 00:60:1D:01:23:45"
+.br
+.I "	iwconfig eth0 ap any"
+.br
+.I "	iwconfig eth0 ap off"
+.TP
+.BR nick [name]
+Positionne le surnom (nickname), ou nom de station. Quelques produits
+802.11 le définissent, mais il n'est pas utilisé dans la mesure où les
+protocoles les plus usités (MAC, IP, TCP) ne s'en servent pas en l'état.
+Seuls quelques outils de diagnostic peuvent l'utiliser.
+.br
+.B Exemple :
+.br
+.I "	iwconfig eth0 nickname ""My Linux Node""
+.TP
+.BR rate / bit [rate]
+Pour les cartes supportant plusieurs débits, positionne le débit en b/s. Le
+débit est la vitesse à laquelle les bits sont transmis sur le médium, la
+vitesse du lien pour l'utilisateur est inférieure à cause du partage du médium
+et des diverses entêtes.
+.br
+Vous pouvez ajouter le suffixe k, M ou G à la valeur (multiplicateur décimal\ :
+10^3, 10^6 et 10^9\ b/s), ou ajouter suffisamment de «\ 0\ ». Les valeurs
+en-dessous de 1000 sont spécifiques à la carte, habituellement un index de la
+liste des débit supportés. Utilisez
+.I auto
+pour sélectionner le mode débit automatique (repli à un débit moindre pour
+les canaux bruités), ce qui est le mode par défaut pour la plupart des cartes,
+et
+.I fixed
+pour revenir à des paramètres fixes. Si vous spécifiez une valeur de débit
+et ajoutez
+.IR auto ,
+le driver utilisera tous les débits inférieurs et égaux à cette valeur.
+.br
+.B Exemples :
+.br
+.I "	iwconfig eth0 rate 11M"
+.br
+.I "	iwconfig eth0 rate auto"
+.br
+.I "	iwconfig eth0 rate 5.5M auto"
+.TP
+.BR rts [_threshold]
+RTS/CTS ajoute une «\ poignée de main\ » avant chaque transmission de paquet
+pour être sûr que le canal est libre. Cela ajoute des entêtes (NDT\ : données de
+gestion), mais augmente les performances en cas de n½uds cachés ou
+d'un grand nombre de noeuds actifs. Ce paramètre fixe la taille du plus petit
+paquet pour lequel le noeud envoie un RTS\ ; une valeur égale à la taille
+maximale des paquets inhibe ce mécanisme. Vous pouvez aussi positionner
+ce paramètre sur
+.IR auto ", " fixed " ou " off .
+.br
+.B Exemples :
+.br
+.I "	iwconfig eth0 rts 250"
+.br
+.I "	iwconfig eth0 rts off"
+.TP
+.BR frag [mentation_threshold]
+La fragmentation permet de découper un paquet IP en une série de plus petits
+fragments transmis par le médium. Dans la plupart des cas, cela ajoute des
+entêtes, mais dans un environnement très bruité, cela réduit les coûts de
+transmission dus aux erreurs et permet aux paquets d'être acheminés malgré
+des séries d'interférences. Ce paramètre fixe la taille de fragment maximale\ ;
+une valeur égale à la taille maximale de paquet désactive ce procédé. Vous
+pouvez aussi mettre ce paramètre à
+.IR auto ", " fixed " ou " off .
+.br
+.B Exemples :
+.br
+.I "	iwconfig eth0 frag 512"
+.br
+.I "	iwconfig eth0 frag off"
+.TP
+.BR key / enc [ryption]
+Utilisé pour manipuler les clefs de cryptage ou brouillage et le mode de
+sécurité.
+.br
+Pour mettre la clef courante de cryptage, il suffit d'entrer la clef
+en hexadécimal telle que
+.IR XXXX-XXXX-XXXX-XXXX " ou " XXXXXXXX .
+Pour entrer une autre clef que la clef courante, ajoutez (au début ou à la
+fin)
+.I [index]
+à la clef elle-même (cela ne changera pas la clef active). Vous pouvez aussi
+entrer la clef comme une chaîne ASCII en utilisant le préfixe
+.IR s: .
+Les phrases en tant que mot de passe ne sont actuellement pas supportées.
+.br
+Pour changer la clef active parmi les clefs déjà entrées, il suffit d'entrer
+.RI l' "[index]"
+(sans entrer de valeur de clef).
+.br
+.IR off " et " on
+désactive et réactive le cryptage.
+.br
+Le mode de sécurité peut être
+.I open
+ou
+.IR restricted ,
+et sa signification dépend de la carte utilisée. Avec la plupart des cartes,
+le mode
+.I open
+n'utilise pas d'authentification et la carte accepte des sessions non cryptées,
+alors que le mode
+.I restricted
+n'accepte que des sessions cryptées et la carte utilisera l'authentification
+si disponible.
+.br
+Si vous avez besoin de mettre plusieurs clefs, ou de mettre une clef et de
+changer la clef active, vous avez besoin d'utiliser des instructions à clefs
+.RB ( "key" )
+multiples. Les arguments peuvent être mis dans n'importe quel ordre, le
+dernier sera prioritaire.
+.br
+.B Exemples :
+.br
+.I "	iwconfig eth0 key 0123-4567-89"
+.br
+.I "	iwconfig eth0 key [3] 0123-4567-89"
+.br
+.I "	iwconfig eth0 key s:password [2]"
+.br
+.I "	iwconfig eth0 key [2]"
+.br
+.I "	iwconfig eth0 key open"
+.br
+.I "	iwconfig eth0 key off"
+.br
+.I "	iwconfig eth0 key restricted [3] 0123456789"
+.br
+.I "	iwconfig eth0 key 01-23 key 45-67 [4] key [4]"
+.TP
+.BR power
+Utilisé pour manipuler les paramètres et le mode du procédé de gestion
+d'énergie.
+.br
+Pour fixer la période entre les éveils, entrez la
+.IR "period `valeur'" .
+Pour fixer la temporisation avant le retour en veille, entrez la
+.IR "timeout `valeur'" .
+Vous pouvez aussi ajouter les modificateurs
+.IR min " et " max ".
+Par défaut, ces valeurs sont exprimées en secondes, ajoutez le suffixe m ou u
+pour spécifier les valeurs en millisecondes ou microsecondes. Parfois, ces
+valeurs sont sans unité (nombre de périodes de beacon, dwell ou similaire).
+.br
+.IR off " et " on
+désactive et réactive la gestion d'énergie. Enfin, vous pouvez mettre la
+gestion d'énergie en mode
+.I all
+(reçoit tous les paquets),
+.I unicast
+(reçoit seulement les paquets unicast, ignore les paquets multicast et de
+broadcast) et
+.I multicast
+(reçoit seulement les paquets multicast et de broadcast, ignore l'unicast).
+.br
+.B Exemples :
+.br
+.I "	iwconfig eth0 power period 2"
+.br
+.I "	iwconfig eth0 power 500m unicast"
+.br
+.I "	iwconfig eth0 power timeout 300u all"
+.br
+.I "	iwconfig eth0 power off"
+.br
+.I "	iwconfig eth0 power min period 2 power max period 4"
+.TP
+.BR txpower
+Pour les cartes supportant plusieurs puissances de transmission, règle la
+puissance de transmission en dBm. Si
+.I W
+est la puissance en Watt, la puissance en dBm est
+.IR "P\ =\ 30\ +\ 10.log(W)" .
+Si la valeur est post fixée par
+.IR mW ,
+elle sera automatiquement convertie en dBm.
+.br
+De plus,
+.IR on " et " off
+active et désactive la radio, et
+.IR auto " et " fixed
+active et désactive le contrôle de puissance (si ces fonctions sont
+disponibles).
+.br
+.B Exemples :
+.br
+.I "	iwconfig eth0 txpower 15"
+.br
+.I "	iwconfig eth0 txpower 30mW"
+.br
+.I "	iwconfig eth0 txpower auto"
+.br
+.I "	iwconfig eth0 txpower off"
+.TP
+.BR retry
+La plupart des cartes supportent les retransmissions MAC (contrôle d'accès
+au médium), et certaines permettent le paramétrage du mécanisme des tentatives
+(en cas d'échec).
+.br
+Pour fixer le nombre maximum d'essais, entrez
+.IR "limit `valeur'" .
+C'est une valeur absolue (sans unité).
+Pour fixer le temps maximum autorisé au mécanisme MAC pour ses tentatives,
+entrez
+.IR "lifetime `valeur'" .
+Par défaut, cette valeur est en secondes, ajouter le suffixe m ou u pour
+spécifier les valeurs en millisecondes ou microsecondes.
+.br
+Vous pouvez aussi ajouter les modificateurs
+.IR min " et " max ".
+Si la carte supporte le mode automatique, ils définissent les limites du
+lifetime, ou les limites inférieure et supérieure (NDT\ : de l'intervalle
+temporel dans lequel le mécanisme MAC est autorisé à réitérer ses tentatives).
+D'autres cartes définissent des valeurs différentes en fonction de la taille
+des paquets, par exemple la norme 802.11 définit une
+.I min limit
+qui est la limite inférieure d'essai (paquets non RTS/CTS).
+.br
+.B Exemples :
+.br
+.I "	iwconfig eth0 retry 16"
+.br
+.I "	iwconfig eth0 retry lifetime 300m"
+.br
+.I "	iwconfig eth0 retry min limit 8"
+.TP
+.BR commit
+Certaines cartes peuvent ne pas appliquer immédiatement les changements
+effectués par les Wireless Extensions (elles peuvent attendre pour prendre en
+compte les changements ou les appliquer seulement quand la carte est montée via
+ifconfig). Cette commande (si disponible) force la carte à appliquer les
+changements en suspens.
+.br
+Cela n'est normalement pas nécessaire, car la carte appliquera éventuellement
+les changements, mais peut être utile pour débuggage.
+.\"
+.\" DISPLAY part
+.\"
+.SH AFFICHAGE
+Pour chaque matériel qui supporte les extensions wireless,
+.I iwconfig
+affiche le nom du
+.B protocole MAC
+utilisé (nom du matériel pour les protocoles propriétaires),
+.RB l' ESSID
+(Network Name), le
+.BR NWID ,
+la
+.B fréquence
+(ou canal), la
+.BR sensibilité ,
+le
+.B mode
+d'exploitation, l'adresse du
+.BR "Point d'Accès",
+le
+.BR débit ,
+le
+.BR "seuil RTS" " (" "RTS threshold" "), le "
+.BR "seuil de fragmentation" " (" "fragmentation threshold" "), la
+.B clef de cryptage
+et les paramètres de
+.BR "gestion de l'énergie" " (" "power management" ")"
+(en fonction de la disponibilité).
+.PP
+Les paramètres affichés ont la même signification et la même valeur que ceux
+que vous pouvez régler, veuillez vous reporter à la précédente partie pour
+leur explication détaillée.
+.br
+Quelques paramètres sont affichés seulement dans une forme abrégée (comme le
+cryptage). Vous devez utiliser
+.IR iwlist (8)
+pour avoir tous les détails.
+.br
+Certains paramètres ont deux modes (comme le débit). Si la valeur est préfixée
+par
+.RB «\ =\ »,
+cela veut dire que le paramètre est fixé et forcé à cette valeur, s'il est
+préfixé par
+.RB «\ :\ »,
+le paramètre est en mode automatique et la valeur courante est montrée (et peut
+changer).
+.TP
+.BR "Access Point" / Cell
+Une adresse égale à 00:00:00:00:00:00 signifie que la carte n'a pas réussi à
+s'associer avec un Point d'Accès (le plus souvent une question de
+configuration).
+Le paramètre
+.B Access Point
+sera montré comme une cellule
+.RB ( Cell )
+en mode ad hoc (pour des raisons évidentes), mais il fonctionne néanmoins
+de la même manière.
+.PP
+Si
+.I /proc/net/wireless
+existe,
+.I iwconfig
+affichera aussi son contenu. Il faut noter que ces valeurs dépendent des
+spécifications du pilote et de la carte, vous devrez donc vous référez à la
+documentation du pilote pour une interprétation correcte de ces valeurs.
+.TP
+.B Link quality
+Qualité globale du lien. Peut être basé sur le niveau de contention ou des
+interférences, le taux d'erreur de trame ou de bit, la qualité du signal reçu,
+des synchronisations temporelles, ou autre métrique matérielle. C'est une valeur
+agrégat, et dépend totalement du pilote et du matériel.
+.TP
+.B Signal level
+Force du signal reçu (RSSI - force du signal reçu). Cela peut être des unités
+arbitraires ou des dBm,
+.I iwconfig
+utilise des méta-informations du pilote pour interpréter les valeurs
+brutes données par
+.I /proc/net/wireless
+et affiche l'unité ou la valeur maximale correspondante (utilise l'arithmétique
+8 bits). En mode
+.I Ad-Hoc
+cela peut être indéfini et vous devriez utiliser
+.IR iwspy .
+.TP
+.B Noise level
+Niveau du bruit de fond (quand aucun paquet n'est transmis). Commentaires
+similaires à ceux de
+.BR "Signal level" .
+.TP
+.B Rx invalid nwid
+Nombre de paquets reçus avec un NWID ou ESSID différent. Utilisé pour détecter
+des problèmes de configuration ou l'existence de réseau adjacent (sur la même
+fréquence).
+.TP
+.B Rx invalid crypt
+Nombre de paquets que le matériel a été incapable de décrypter. Cela peut être
+utilisé pour détecter des mauvais paramètres de cryptage.
+.TP
+.B Rx invalid frag
+Nombre de paquets pour lesquels le matériel a été incapable de ré-assembler
+correctement les fragments de la couche liaison (le plus souvent, il en manque
+un).
+.TP
+.B Tx excessive retries
+Nombre de paquets que la carte n'a pas réussi à envoyer. La plupart des
+protocoles MAC réessaient un certain nombre de fois avant d'abandonner.
+.TP
+.B invalid misc
+Autres paquets perdus en relation avec les opérations spécifiques au sans fil.
+.TP
+.B Missed beacon
+Nombre de beacons périodiques émis par la Cellule ou le Point d'Accès que nous
+avons manqué. Les beacons sont envoyés à intervalles réguliers pour maintenir la
+coordination de la cellule, l'impossibilité de les recevoir indiquant souvent
+que la carte est hors de portée.
+.\"
+.\" AUTHOR part
+.\"
+.SH AUTEUR
+Jean Tourrilhes \- jt@hpl.hp.com
+.\"
+.\" TRADUCTION part
+.\"
+.SH TRADUCTION
+Maxime CHARPENNE, août 2004 (wireless_tools.27-pre25).
+.\"
+.\" AVERTISSEMENT part
+.\"
+.SH AVERTISSEMENT SUR LA TRADUCTION
+Il est possible que cette traduction soit imparfaite ou périmée. En cas de
+doute, veuillez vous reporter au document original en langue anglaise fourni
+avec le programme.
+.\"
+.\" FILES part
+.\"
+.SH FICHIERS
+.I /proc/net/wireless
+.\"
+.\" SEE ALSO part
+.\"
+.SH VOIR AUSSI
+.BR ifconfig (8),
+.BR iwspy (8),
+.BR iwlist (8),
+.BR iwevent (8),
+.BR iwpriv (8),
+.BR wireless (7).

@@ -1,0 +1,29 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="shortcut icon" href="images/favicon.png">
+<link rel="icon" href="images/favicon.png">
+<title>gotoHomePage.htm</title>
+<script>
+function initial(){
+	if(navigator.appName == "Netscape" && navigator.userAgent.indexOf("Safari") == -1) //The appName of Safari is Netscape the same as Firefox and mozilla.
+		setTimeout("window.home();", 1000);	//but safari is not support this method
+	else if(navigator.appName.indexOf("Opera") >= 0)
+		setTimeout("window.home();", 1000);
+	else if(navigator.appName.indexOf("Microsoft") >= 0){
+		window.opener=null;   //Lock add 2008.10.09 close the original windows of IE
+		window.open("","_self");   
+		window.close();
+ 	}
+	else  //So the Safari will re-direct to ASUS.
+		parent.parent.location = "http://www.asus.com";
+}
+</script>
+</head>
+
+<body onload="initial();">
+</body>
+</html>

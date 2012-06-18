@@ -1,0 +1,7 @@
+REGEDIT4
+
+; Contributor:	John H Terpstra <jht@samba.org>
+; Date:		Feb 15, 1999
+
+[HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\VxD\VREDIR]
+"DiscardCacheOnOpen"=string:00000001

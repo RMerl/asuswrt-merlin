@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>System and User Printcap, lpd.conf, and lpd.perms
+    files</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Installation" href="installation.htm">
+    <link rel="PREVIOUS" title="Configuration" href="x485.htm">
+    <link rel="NEXT" title=
+    "Checking System Installation with checkpc" href="x926.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x485.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 2.
+          Installation</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x926.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="REQUIRECONFIG">2.6. System and
+      User Printcap, lpd.conf, and lpd.perms files</a></h1>
+
+      <p>The system <tt class="FILENAME">printcap</tt> file
+      contains the definitions of the print queues used by <b
+      class="APPLICATION">LPRng</b>, and is located in the
+      directory specified by the configuration <var class=
+      "LITERAL">${sysconfdir}</var> value. For a complete
+      description of the <tt class="FILENAME">printcap</tt> file
+      see <a href="printcapref.htm">Printcap Database</a>. If your
+      system does not have an existing <tt class=
+      "FILENAME">printcap</tt> file then a <span class=
+      "emphasis"><i class="EMPHASIS">dummy</i></span> file similar
+      to the following is installed by default:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN893"></a>
+<pre class="SCREEN">
+    # dummy printcap file
+    lp:cm=Dummy Printcap Entry:
+     :lp=/dev/null
+     :sd=/var/spool/lpd/%P
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>In addition to the system <tt class=
+      "FILENAME">printcap</tt> file, each user can have a <var
+      class="LITERAL">${HOME}/.printcap</var> which contains
+      printcap entries as well. The the user <tt class=
+      "FILENAME">printcap</tt> file is in effect appended to the
+      system printcap file, and values in the user printcap file
+      override the system printcap file. However, in order to allow
+      users to specify a default printer after reading the printcap
+      file information the entries are sorted so that printcap
+      entries defined by users come first.</p>
+
+      <p>The <tt class="FILENAME">lpd.conf</tt> is located in the
+      <var class="LITERAL">${sysconfdir}</var> directory and
+      provides configuration settings for both the <b class=
+      "APPLICATION">LPRng</b> client and server programs. For a
+      complete description of the <tt class=
+      "FILENAME">lpd.conf</tt> file see <a href=
+      "configfile.htm">Configuration File, Defaults and
+      Overrides</a>. During installation the <tt class=
+      "FILENAME">${sysconfdir}/lpd.conf.template</tt> is created
+      with the default <b class="APPLICATION">LPRng</b> information
+      and if there is not an existing <tt class=
+      "FILENAME">${sysconfdir}/lpd.conf</tt> file is copied to
+      it.</p>
+
+      <p>The <tt class="FILENAME">lpd.perms</tt> is located in the
+      <var class="LITERAL">${sysconfdir}</var> directory and is
+      only by <b class="APPLICATION">lpd</b> to determine user
+      permissions for printing activities. For a complete
+      description of the <tt class="FILENAME">lpd.perms</tt> file
+      see <a href="permsref.htm">Permissions and Authentication</a>
+      for details. During installation the <tt class=
+      "FILENAME">lpd.perms.template</tt> file is installed in the
+      <tt class="FILENAME">${sysconfdir}/lpd.perms.template</tt>
+      and if there is not an existing <tt class=
+      "FILENAME">lpd.perms</tt> file is copied to it.</p>
+
+      <p>By default, the <b class="APPLICATION">LPRng</b> client
+      programs <b class="APPLICATION">lpr</b>, <b class=
+      "APPLICATION">lpq</b>, <b class="APPLICATION">lprm</b>, and
+      <b class="APPLICATION">lprc</b> will require a <tt class=
+      "FILENAME">lpd.conf</tt> and <tt class=
+      "FILENAME">printcap</tt> file to be installed on the local
+      host. You can relax this requirement by setting using the
+      <var class="LITERAL">--disable-require_configfile</var>
+      configuration option. You can also create empty files to
+      satisfy the program requirements.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x485.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x926.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">
+          Configuration</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "installation.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Checking
+          System Installation with <b class=
+          "APPLICATION">checkpc</b></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

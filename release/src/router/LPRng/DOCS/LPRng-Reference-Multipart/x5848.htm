@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Parallel Printer</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Remote Printer Using Socket API"
+    href="x5821.htm">
+    <link rel="NEXT" title="Serial Printer" href="serial.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x5821.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "serial.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN5848">12.9. Parallel
+      Printer</a></h1>
+
+      <p>The parallel printer printcap is very simple.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5851"></a>
+<pre class="SCREEN">
+    # parallel printer
+    lp:
+       :lp=/dev/lpr
+</pre>
+      </div>
+
+      <ol type="1">
+        <li>
+          <p>The <var class="LITERAL">lp=/dev/lpr</var> specifies
+          that <b class="APPLICATION">lpd</b> should open the
+          device for APPEND and simply transfer job files to
+          it.</p>
+        </li>
+
+        <li>
+          <p>The <var class="LITERAL">sh</var> and <var class=
+          "LITERAL">sf</var> will prevent <b class=
+          "APPLICATION">lpd</b> from trying to generate banner
+          pages or put form feeds between jobs.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>If you discover that UNIX print jobs result in a <span
+      class="emphasis"><i class="EMPHASIS">staircase</i></span>
+      appearance, then you need to force your printer to do
+      <acronym class="ACRONYM">LF</acronym> (linefeed) to <tt
+      class="FILENAME">CR/LF</tt> (carriage return/line feed)
+      translation, or do the translation yourself.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5867"></a>
+<pre class="SCREEN">
+    # Simple parallel printer
+    lp:
+       :lp=/dev/lpr
+       :filter=/usr/local/bin/lpf
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>By using the <var class="LITERAL">if=...lpf</var> filter,
+      the job will be passed through the <b class=
+      "APPLICATION">lpf</b> filter, which will do the <acronym
+      class="ACRONYM">LF</acronym> to <tt class=
+      "FILENAME">CR/LF</tt> translation.</p>
+
+      <p>If you have a more complex printer that handles
+      PostScript, PCL, and PJL, then you will need to use the more
+      powerful <b class="APPLICATION">ifhp</b> filter:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5876"></a>
+<pre class="SCREEN">
+    # Simple parallel printer
+    lp:
+       :lp=/dev/lpr
+       :ifhp=model=hp4,status@
+       :of=/usr/local/libexec/filters/ifhp
+       :filter=/usr/local/libexec/filters/ifhp
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>See <a href="ifhp.htm"><b class="APPLICATION">ifhp</b>
+      Filter</a> for details. This entry will specify that the
+      printer is an HP4, and that no status information is
+      available. This is usually the case with a parallel port.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x5821.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "serial.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Remote Printer
+          Using Socket API</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Serial
+          Printer</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

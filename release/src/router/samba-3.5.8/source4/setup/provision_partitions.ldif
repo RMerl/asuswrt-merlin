@@ -1,0 +1,13 @@
+dn: @PARTITION
+partition: ${SCHEMADN}:${SCHEMADN_LDB}
+partition: ${CONFIGDN}:${CONFIGDN_LDB}
+partition: ${DOMAINDN}:${DOMAINDN_LDB}
+replicateEntries: @ATTRIBUTES
+replicateEntries: @INDEXLIST
+replicateEntries: @OPTIONS
+modules:${SCHEMADN}:${SCHEMADN_MOD},${BACKEND_MOD}
+modules:${CONFIGDN}:${CONFIGDN_MOD},${BACKEND_MOD}
+modules:${DOMAINDN}:${DOMAINDN_MOD},${BACKEND_MOD}
+
+dn: @MODULES
+@LIST: ${MODULES_LIST}${TDB_MODULES_LIST},${MODULES_LIST2}

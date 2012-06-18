@@ -1,0 +1,20 @@
+<samba:parameter name="guest ok"
+				 type="boolean"
+                 context="S"
+                 basic="1" advanced="1" print="1" developer="1"
+				 xmlns:samba="http://www.samba.org/samba/DTD/samba-doc">
+<synonym>public</synonym>
+<description>
+    <para>If this parameter is <constant>yes</constant> for 
+    a service, then no password is required to connect to the service. 
+    Privileges will be those of the <smbconfoption name="guest account"/>.</para>
+
+    <para>This paramater nullifies the benifits of setting
+    <smbconfoption name="restrict anonymous">2</smbconfoption>
+	</para>
+
+    <para>See the section below on <smbconfoption name="security"/> for more information about this option.
+	</para>
+</description>
+<value type="default">no</value>
+</samba:parameter>

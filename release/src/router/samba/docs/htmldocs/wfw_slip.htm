@@ -1,0 +1,175 @@
+<HTML>
+<HEAD>
+<TITLE>Peter Karrer Announces SLIP for WFW</TITLE>
+</HEAD>
+<BODY>
+<H1><I>Winserve</I></H1>
+<HR>
+<H2><I>Peter Karrer Announces SLIP for WFW</I></H2>
+[NEW 03-22-95)
+<HR>
+<B>Hello,</B>
+<P>
+I've discovered a way to run WfW's TCP/IP-32 over a SLIP packet driver. This
+allows WfW users to do Windows networking over dialup lines just like it is
+possible with NT and the Windows 95 beta!
+<P>
+For instance, you can mount Microsoft's FTP server as a network drive in File
+Manager or connect to an MS Mail post office over the Internet.  Of course,
+the usual Internet stuff works as well.  Another interesting site is
+WINSERVE.001; check out www.winserve.com.
+<HR>
+This method should work with any class 1 (Ethernet II) packet driver. However,
+I'm not in a position to try anything else than SLIPPER/CSLIPPER. 
+<HR>
+<H3>Files you need:</H3>
+<B>WFWT32.EXE:</B>   ftp://ftp.microsoft.com/bussys/msclient/wfw/wfwt32.exe
+<P>
+  Microsoft's free TCP/IP for WfW.  It's a self-extracting archive which
+  should be executed in an empty directory.
+<P>
+<B>SLIPPER.EXE:</B>  ftp://biocserver.bioc.cwru.edu/pub/dos/slipper/slippr15.zip
+<P>
+  Peter Tattam's SLIP packet driver. CSLIPPER.EXE is a variant which supports
+  VJ header compression.
+<P>
+<B>PDETHER.EXE:</B>  ftp://sjf-lwp.idz.sjf.novell.com/odi/pdether/pde105.zip
+<P>
+  Don Provan's ODI-over-Packet Driver shim. This *must* be version 1.05 (or
+  above).
+<P>
+<B>LSL.COM:</B>
+<P>
+  Novell's LAN Support Layer.  If you're an owner of Windows 3.10, you'll
+  have it on one of your install disks.  Use "expand a:lsl.co_ lsl.com" to
+  expand it.  Microsoft has stopped bundling LSL.COM with WfW 3.11, though.
+  The newest version of LSL.COM can be downloaded as part of
+    ftp://ftp.novell.com/pub/netware/nwos/dosclnt12/vlms/vlmup2.exe.
+  However, it's not clear if this one may be legally used outside Netware
+  environments.
+<P>
+<B>NET.CFG:</B>
+<P>
+  A configuration file for LSL and PDETHER. It should contain the following
+  text:
+<P>
+<PRE>
+Link Support
+        Buffers 8 1600
+Link Driver PDETHER
+        Int 60
+        Frame Ethernet_II
+        Protocol IP   800  Ethernet_II
+        Protocol ARP  806  Ethernet_II
+        Protocol RARP 8035 Ethernet_II
+</PRE> 
+<P>
+<B>DISCOMX.COM:</B>
+<P>
+  A little hack of mine to disable the COM port used by the SLIP packet driver.
+  Usage is e.g. "discomx 2" to disable COM2.  This should be run before
+  starting WfW, otherwise you'll get "device conflict" messages. Here it is:
+<P><PRE>
+begin 644 discomx.com
+F,=N)V8H.@`"P(+^!`/.N3XH="=MT!DN`XP/1XS')!R:)CP`$S2``
+`
+end
+ </PRE>
+  (Save this text to disk as <I>filename</I>, then run "uudecode <I>filename</I>".
+   uudecode can be found, for instance, at
+     ftp://ftp.switch.ch/mirror/simtel/msdos/starter/uudecode.com )
+<P>
+<B>LMHOSTS:</B>
+ <P> 
+  An optional file which should be stored in your Windows subdirectory. It is
+  used to map NetBIOS computer names to IP addresses. Example:
+<P>
+<PRE>
+198.105.232.1   ftp             #PRE  # ftp.microsoft.com
+204.118.34.11   winserve.001    #PRE  # Winserve
+</PRE>
+<HR>
+<H3>How to install it:</H3>
+<P>
+<UL>
+<LI>Put the files mentioned above into a directory, e.g. C:\SLIP.
+<P>
+<LI>Put the following lines into AUTOEXEC.BAT:
+<P><PRE>
+  cd \slip
+  slipper com1 vec=60 baud=57600 ether	(may vary with your modem setup)
+  lsl
+  pdether
+  discomx 1				(must correspond to SLIPPER's COM port)
+</PRE>
+  (If you use another vec= setting, you must update that in NET.CFG as well.)
+  Use CSLIPPER instead of SLIPPER if your SLIP provider supports VJC.
+<P>
+<LI>Start WfW.
+<UL>
+<LI>Under Windows Setup, choose "Change Network Settings".
+<LI>Select  "Install Microsoft Windows Network".  
+<LI>In "Drivers...", choose "Add Adapter"
+  and install the "IPXODI Support driver (Ethernet) [ODI/NDIS3]".  
+<LI>In "Add Protocols...", select "Unlisted or Updated Protocol". When asked for a
+  driver disk, enter the directory where you expanded WFWT32.EXE. 
+<LI>Configure TCP/IP (IP address, enable LMHOSTS lookup, try 204.118.34.11 as primary
+  WINS server). Remove all other protocols (NetBEUI, IPX/SPX).
+</UL>
+<P>
+<LI>Windows will probably update the first lines of AUTOEXEC.BAT with
+<P>
+<PRE>
+  c:\windows\net start
+  c:\windows\odihlp.exe.
+</PRE>
+  The "odihlp" line must be moved behind the "pdether" line.
+<P>
+<LI>Windows will also update NET.CFG with some "Frame" lines. These must
+  be removed (except "Frame Ethernet_II").
+<P>
+<LI>Somehow, you will have to dial in to your SLIP provider.  I do it manually
+  before slipper (or cslipper) gets loaded, using a DOS-based terminal program.
+  But there are some automatic dialers around.  I've seen recommendations for
+    ftp://mvmpc9.ciw.uni-karlsruhe.de/x-slip/slip_it.exe. 
+<P>
+<LI>To connect to Microsoft's FTP server (or Winserve) go into File Manager,
+  choose "Connect Network drive" and enter "\\ftp" or "\\winserve.001" into
+  the "Path:" field.
+</UL>
+<HR>
+<H3>How it works:</H3>
+<P>
+Microsoft's TCP/IP-32 requires an NDIS3 interface. NDIS is Microsoft's way
+to interface with a network.
+<P>
+WfW also contains an NDIS3-over-ODI "shim", whose real mode component is
+ODIHLP.EXE.  ODI is Novell's way to interface with a network.
+<P>
+SLIPPER is a Packet Driver (PD) for use over serial lines.  PDs are everybody
+else's way to interface with a network.  SLIPPER's "ether" option makes it
+look like an Ethernet PD to applications using it. 
+<P>
+A "shim" is a program which simulates a network application programming
+interface on top of another.
+<P>
+There is no NDIS SLIP driver which would work with WfW.
+<P>
+There is no NDIS-over-PD shim.
+<P>
+However, there's an ODI-over-PD shim (PDETHER) and an NDIS-over-ODI shim
+(ODIHLP etc.)
+<P>
+OK, so let's do NDIS-over-ODI-over-PD!
+   <P>
+This should have worked all the time; however, a non-feature in PDETHER
+versions < 1.05 has prevented the method from functioning until now.
+<HR>
+<B>Questions, suggestions etc. please to
+<P>
+<PRE>
+Peter Karrer		pkarrer@ife.ee.ethz.ch
+</PRE>
+</B>
+</BODY>
+</HTML>

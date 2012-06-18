@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>RFC1179 (LPD) Connection</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.7">
+    <link rel="HOME" title=" LPRng Reference Manual" href=
+    "index.htm">
+    <link rel="UP" title="Printer Communication and Protocols "
+    href="printercomm.htm">
+    <link rel="PREVIOUS" title=
+    "Printer Communication and Protocols " href="printercomm.htm">
+    <link rel="NEXT" title="Socket API " href="socketapi.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng Reference Manual: 5
+          Sep 2003 (For LPRng-3.8.22)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "printercomm.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          11. Printer Communication and Protocols</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "socketapi.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN4867">11.2. RFC1179 (LPD)
+      Connection</a></h1>
+
+      <p>In this mode of operation the print server actually
+      operates as a very limited BSD print spooler. These
+      limitations include:</p>
+
+      <ol type="1">
+        <li>
+          <p>No error messages or status capability</p>
+        </li>
+
+        <li>
+          <p>Limited or very primitive banner printing. On some
+          systems it may be <span class="emphasis"><i class=
+          "EMPHASIS">impossible</i></span> to turn banner printing
+          off.</p>
+        </li>
+
+        <li>
+          <p>On most known print servers high connection activity
+          caused by multiple systems attempting to get status or
+          spool jobs may cause catastrophic failure of the
+          printer.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>For the above reasons, using RFC1179 to transfer jobs to a
+      printer should be regarded as the least desirable option.
+      Please see <a href="rfc1179ref.htm">The RFC1189 Protocol</a>
+      for a detailed discussion of the RFC1179 protocol.</p>
+
+      <p>In order to use the RFC1179 transfer operation you must
+      have a printcap entry for the printer that provides:</p>
+
+      <ul>
+        <li>
+          <p>The IP address or name of the printer that can be
+          resolved to an IP address</p>
+        </li>
+
+        <li>
+          <p>The name of the spool queue. In practice, this is
+          usually used only to determine which of several printer
+          ports on the print server the job will be sent to, or
+          what type of processing the print server will do. Most
+          cards usually do not do any processing and simply pass
+          the job through to the printer.</p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The following is an example of a simple printcap entry
+      that can be used to send a job to a remote printer using the
+      RFC1179 protocol:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN4887"></a>
+<pre class="SCREEN">
+    # <b class="APPLICATION">LPRng</b> syntax
+    # :lp value is 'where to print the job'
+    lp:
+      :lp=raw@10.0.0.1
+    
+    # OR Vintage BSD Print Spooler Syntax
+    # (<b class="APPLICATION">LPRng</b> supports this as well)
+    # :rp = remote printer, :rm = remote machine or host
+    lp:
+      :rp=raw:rm=10.0.0.1
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>If you wish to transfer jobs to a print spooler without
+      using the full <b class="APPLICATION">LPRng</b> <b class=
+      "APPLICATION">lpr</b> program, the Perl <var class=
+      "LITERAL">lpr_in_perl</var> program in the <b class=
+      "APPLICATION">LPRng</b> Distribution <acronym class=
+      "ACRONYM">UTILS</acronym> directory can be used for testing
+      and tutorial purposes.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "printercomm.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "socketapi.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Printer
+          Communication and Protocols</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printercomm.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Socket
+          API</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

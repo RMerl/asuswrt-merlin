@@ -1,0 +1,15 @@
+The LPRng software is an enhanced, extended, and portable implementation
+of the Berkeley LPR print spooler functionality.  While providing the
+same interface and meeting RFC1179 requirements, the implementation is
+completely different and provides support for the following features:
+lightweight (no databases needed) lpr, lpc, and lprm programs; dynamic
+redirection of print queues; automatic job holding; highly verbose
+diagnostics; multiple printers serving a single queue; client programs
+do not need to run SUID root; greatly enhanced security checks; and a
+greatly improved permission and authorization mechanism.
+
+WWW: http://www.lprng.com/
+FTP: ftp://ftp.lprng.com/
+
+ Patrick Powell  <papowell at astart.com>
+ LPRng - Print Spooler (http://www.lprng.com)

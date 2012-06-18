@@ -1,0 +1,70 @@
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#   
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#   
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+# Codepage definition file for IBM Code Page 437 - MS-DOS Latin US
+# defines lower->upper mapping.
+# Written by Jeremy Allison <jallison@whistle.com>
+
+# The columns are :
+# lower    upper   map upper to lower    map lower to upper
+#
+   0x87     0x80   True                  True
+   0x81     0x9A   True                  True
+   0x82     0x90   True                  True
+   0x83     0x41   True                  False
+   0x84     0x8E   True                  True
+   0x85     0x41   True                  False
+   0x86     0x8F   True                  True
+   0x88     0x45   True                  False
+   0x89     0x45   True                  False
+   0x8A     0x45   True                  False
+   0x8B     0x49   True                  False
+   0x8C     0x49   True                  False
+   0x8D     0x49   True                  False
+   0x91     0x92   True                  True
+   0x93     0x4F   True                  False
+   0x94     0x99   True                  True
+   0x95     0x4F   True                  False
+   0x96     0x55   True                  False
+   0x97     0x55   True                  False
+   0x9B     0      False                 False
+   0x9C     0      False                 False
+   0x9D     0      False                 False
+   0xA0     0x41   True                  False
+   0xA1     0x49   True                  False
+   0xA2     0x4F   True                  False
+   0xA3     0x55   True                  False
+   0xA4     0xA5   True                  True
+   0xA8     0      False                 False
+   0xAD     0      False                 False
+   0xAE     0      False                 False
+   0xAF     0      False                 False
+   0xE0     0      False                 False
+   0xE1     0      False                 False
+   0xE2     0      False                 False
+   0xE3     0      False                 False
+   0xE4     0      False                 False
+   0xE5     0      False                 False
+   0xE6     0      False                 False
+   0xE7     0      False                 False
+   0xE8     0      False                 False
+   0xE9     0      False                 False
+   0xEA     0      False                 False
+   0xEB     0      False                 False
+   0xEC     0      False                 False
+   0xED     0      False                 False
+   0xEE     0      False                 False
+   0xEF     0      False                 False

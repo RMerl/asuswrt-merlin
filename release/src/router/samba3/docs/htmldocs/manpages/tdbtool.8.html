@@ -1,0 +1,65 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>tdbtool</title><link rel="stylesheet" href="../samba.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.74.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="tdbtool.8"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>tdbtool &#8212; manipulate the contents TDB files</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="literal">tdbtool</code></p></div><div class="cmdsynopsis"><p><code class="literal">tdbtool</code>  
+		<em class="replaceable"><code>TDBFILE</code></em>
+		  [
+		<em class="replaceable"><code>COMMANDS</code></em>
+		...]</p></div></div><div class="refsect1" lang="en"><a name="id2522960"></a><h2>DESCRIPTION</h2><p>This tool is part of the
+	<a class="citerefentry" href="samba.1.html"><span class="citerefentry"><span class="refentrytitle">samba</span>(1)</span></a> suite.</p><p><code class="literal">tdbtool</code> a tool for displaying and
+	altering the contents of Samba TDB (Trivial DataBase) files. Each
+	of the commands listed below can be entered interactively or
+	provided on the command line.</p></div><div class="refsect1" lang="en"><a name="id2483362"></a><h2>COMMANDS</h2><div class="variablelist"><dl><dt><span class="term"><code class="option">create</code>
+		<em class="replaceable"><code>TDBFILE</code></em></span></dt><dd><p>Create a new database named
+		<em class="replaceable"><code>TDBFILE</code></em>.
+		</p></dd><dt><span class="term"><code class="option">open</code>
+		<em class="replaceable"><code>TDBFILE</code></em></span></dt><dd><p>Open an existing database named
+		<em class="replaceable"><code>TDBFILE</code></em>.
+		</p></dd><dt><span class="term"><code class="option">erase</code></span></dt><dd><p>Erase the current database.
+		</p></dd><dt><span class="term"><code class="option">dump</code></span></dt><dd><p>Dump the current database as strings.
+		</p></dd><dt><span class="term"><code class="option">cdump</code></span></dt><dd><p>Dump the current database as connection records.
+		</p></dd><dt><span class="term"><code class="option">keys</code></span></dt><dd><p>Dump the current database keys as strings.
+		</p></dd><dt><span class="term"><code class="option">hexkeys</code></span></dt><dd><p>Dump the current database keys as hex values.
+		</p></dd><dt><span class="term"><code class="option">info</code></span></dt><dd><p>Print summary information about the
+		current database.
+		</p></dd><dt><span class="term"><code class="option">insert</code>
+		<em class="replaceable"><code>KEY</code></em>
+		<em class="replaceable"><code>DATA</code></em>
+		</span></dt><dd><p>Insert a record into the
+		current database.
+		</p></dd><dt><span class="term"><code class="option">move</code>
+		<em class="replaceable"><code>KEY</code></em>
+		<em class="replaceable"><code>TDBFILE</code></em>
+		</span></dt><dd><p>Move a record from the 
+		current database into <em class="replaceable"><code>TDBFILE</code></em>.
+		</p></dd><dt><span class="term"><code class="option">store</code>
+		<em class="replaceable"><code>KEY</code></em>
+		<em class="replaceable"><code>DATA</code></em>
+		</span></dt><dd><p>Store (replace) a record in the
+		current database.
+		</p></dd><dt><span class="term"><code class="option">show</code>
+		<em class="replaceable"><code>KEY</code></em>
+		</span></dt><dd><p>Show a record by key.
+		</p></dd><dt><span class="term"><code class="option">delete</code>
+		<em class="replaceable"><code>KEY</code></em>
+		</span></dt><dd><p>Delete a record by key.
+		</p></dd><dt><span class="term"><code class="option">list</code>
+		</span></dt><dd><p>Print the current database hash table and free list.
+		</p></dd><dt><span class="term"><code class="option">free</code>
+		</span></dt><dd><p>Print the current database and free list.
+		</p></dd><dt><span class="term"><code class="option">!</code>
+		<em class="replaceable"><code>COMMAND</code></em>
+		</span></dt><dd><p>Execute the given system command.
+		</p></dd><dt><span class="term">
+		<code class="option">first</code>
+		</span></dt><dd><p>Print the first record in the current database.
+		</p></dd><dt><span class="term">
+		<code class="option">next</code>
+		</span></dt><dd><p>Print the next record in the current database.
+		</p></dd><dt><span class="term">
+		<code class="option">quit</code>
+		</span></dt><dd><p>Exit <code class="literal">tdbtool</code>.
+		</p></dd></dl></div></div><div class="refsect1" lang="en"><a name="id2483796"></a><h2>CAVEATS</h2><p>The contents of the Samba TDB files are private
+	to the implementation and should not be altered with
+	<code class="literal">tdbtool</code>.
+	</p></div><div class="refsect1" lang="en"><a name="id2481486"></a><h2>VERSION</h2><p>This man page is correct for version 3.0.25 of the Samba suite.</p></div><div class="refsect1" lang="en"><a name="id2481497"></a><h2>AUTHOR</h2><p> The original Samba software and related utilities were
+	created by Andrew Tridgell.  Samba is now developed by the
+	Samba Team as an Open Source project similar to the way the
+	Linux kernel is developed.</p></div></div></body></html>

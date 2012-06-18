@@ -1,0 +1,87 @@
+Developers Information
+
+
+Mailing List
+
+Subscribe to the pptpclient-devel mailing list if you intend to
+contribute to this project.  On this mailing list we discuss problems
+and changes.
+
+	https://lists.sourceforge.net/lists/listinfo/pptpclient-devel
+
+
+Patches
+
+You may send patches by e-mail, direct or to the mailing list, or if
+you have CVS commit rights, you may use them.
+
+Developers have permission (and encouragement) to adjust more than the
+file that they are submitting.  Other files that may be adjusted are:
+
+ChangeLog
+	documentation of changes at the code level.
+
+NEWS
+	a history of changes as far as an end user is concerned.
+
+AUTHORS
+	a list of people who want credit for contributions.
+
+TODO
+	a list of things yet to be done.
+
+See section two of Eric Raymond's Software Release Practice HOWTO for
+some useful information on good patching practice.
+
+	http://www.linuxdoc.org/HOWTO/Software-Release-Practice-HOWTO/
+
+
+CVS Commits Mailing List
+
+Subscribe to the pptpclient-commits mailing list and you will receive
+messages from the CVS server when another developer commits.
+
+	https://lists.sourceforge.net/lists/listinfo/pptpclient-commits
+
+
+CVS Tags
+
+There are two types of tags.  Upstream source and release tags.
+
+Upstream source tags are set by the person who brings in the upstream
+version of ppp or ppp-mppe, and are not expected to move.  This is
+because we are not the authoritative maintainer for those two
+packages; we're just generating a package ourselves.
+
+Upstream source tags at the moment are
+
+	openssl-0_9_6
+	openssl-mppe-0_9_6
+	ppp-2_4_0
+	ppp-2_4_1
+	ppp-mppe-2_4_0
+	ppp-mppe-2_4_1
+
+Release tags are set by the release engineer who makes the releases.
+Only he is to move these tags.
+
+Release tags at the moment are
+
+	pptp-linux-1_0_3-1
+	pptp-linux-1_1_0-rc1
+	pptp-linux-1_1_0-rc2
+	pptp-linux-1_1_0-rc3
+	ppp-mppe-2_4_0-3
+	ppp-mppe-2_4_1-rc1
+
+
+Internet Relay Chat
+
+Developers who use IRC on a regular basis are welcome to add the
+project's channel to their list of autojoin channels.
+
+	Server: irc.freenode.net
+	Channel: #pptp
+
+
+$Id: DEVELOPERS,v 1.4 2003/01/15 05:29:20 quozl Exp $

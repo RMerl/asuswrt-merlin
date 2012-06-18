@@ -1,0 +1,62 @@
+#!gmake
+#
+prefix = @prefix@
+datarootdir = @datarootdir@
+exec_prefix = @exec_prefix@
+includedir = @includedir@
+libdir = @libdir@
+mandir = @mandir@
+VPATH = @srcdir@:@libreplacedir@
+srcdir = @srcdir@
+builddir = @builddir@
+sharedbuilddir = @sharedbuilddir@
+XSLTPROC = @XSLTPROC@
+INSTALLCMD = @INSTALL@
+CC = @CC@
+CFLAGS = @CFLAGS@ -DHAVE_CONFIG_H= -I. -I@srcdir@
+EXTRA_TARGETS = @DOC_TARGET@
+PICFLAG = @PICFLAG@
+TALLOC_VERSION = @TALLOC_VERSION@
+TALLOC_VERSION_MAJOR = @TALLOC_VERSION_MAJOR@
+TALLOC_VERSION_MINOR = @TALLOC_VERSION_MINOR@
+TALLOC_VERSION_RELEASE = @TALLOC_VERSION_RELEASE@
+SHLIBEXT = @SHLIBEXT@
+SHLD = @SHLD@
+SHLD_FLAGS = @SHLD_FLAGS@
+tallocdir = @tallocdir@
+
+LIBOBJ = $(TALLOC_OBJ) @LIBREPLACEOBJ@
+
+SONAMEFLAG = @SONAMEFLAG@
+VERSIONSCRIPT = @VERSIONSCRIPT@
+EXPORTSFILE = @EXPORTSFILE@
+
+all:: showflags $(EXTRA_TARGETS)
+
+include $(tallocdir)/rules.mk
+include $(tallocdir)/talloc.mk
+
+@TALLOC_COMPAT1_MK@
+
+$(TALLOC_SOLIB): $(LIBOBJ)
+	$(SHLD) $(SHLD_FLAGS) -o $@ $(LIBOBJ) $(VERSIONSCRIPT) $(EXPORTSFILE) $(SONAMEFLAG)$(TALLOC_SONAME)
+
+shared-build: all
+	${INSTALLCMD} -d $(sharedbuilddir)/lib
+	${INSTALLCMD} -m 644 libtalloc.a $(sharedbuilddir)/lib
+	${INSTALLCMD} -m 755 $(TALLOC_SOLIB) $(sharedbuilddir)/lib
+	ln -sf $(TALLOC_SOLIB) $(sharedbuilddir)/lib/$(TALLOC_SONAME)
+	ln -sf $(TALLOC_SOLIB) $(sharedbuilddir)/lib/libtalloc.so
+	${INSTALLCMD} -d $(sharedbuilddir)/include
+	${INSTALLCMD} -m 644 $(srcdir)/talloc.h $(sharedbuilddir)/include
+
+check: test
+
+installcheck:: test install
+
+distclean:: clean
+	rm -f Makefile
+	rm -f config.log config.status config.h config.cache
+
+realdistclean:: distclean
+	rm -f configure config.h.in

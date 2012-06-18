@@ -1,0 +1,873 @@
+PoPToP HOWTO/FAQ
+----------------
+Last Updated: 20021024
+Send changes to: Richard de Vroede <r.devroede@linvision.com>
+
+HOWTO/FAQ mostly compiled from PoPToP help pages and the PoPToP Mailing List
+(hosted by Christopher Schulte) by Matthew Ramsay. Large contributions from
+Steve Rhodes and Michael Walter.
+
+
+Contents
+--------
+1.0 Introduction
+	1.1 About PoPToP
+	1.2 Credits
+2.0 System Requirements
+3.0 PPP with MSCHAPv2/MPPE Installation
+4.0 PoPToP Installation
+5.0 Windows Client Setup
+6.0 FAQ
+
+
+1.0 Introduction
+----------------
+1.1 About PoPToP
+PoPToP is the PPTP Server solution for Linux. PoPToP allows Linux servers to
+function seamlessly in the PPTP VPN environment. This enables administrators
+to leverage the considerable benefits of both Microsoft and Linux. The
+current pre-release version supports Windows 95/98/NT/2000 PPTP clients and
+PPTP Linux clients. PoPToP is free GNU software.
+
+PoPToP Home Page: http://www.moretonbay.com/vpn/pptp.html
+
+1.2 Credits
+PoPToP was originally started by Matthew Ramsay under the control of
+Moreton Bay Ventures (http://www.moretonbay.com). Around March 1999 PoPToP
+was publically released under the GNU GPL by Moreton Bay/Lineo.
+
+PoPToP is what it is today due to the help of a number of intelligent and
+experienced hackers. More specifically Kevin Thayer, David Luyer and
+Peter Galbavy.
+
+More contributors to PoPToP (in various forms) include Allan Clark, Seth
+Vidal, Harald Vogt and Ron O'Hara.
+
+And finally, credit to all the PoPToP followers who test and report
+problems.
+
+1.3 PopToP migrating from poptop.lineo.com
+March 18, 2002
+
+The main PoPToP developers left Lineo with the SnapGear spin-out. The ball 
+is being picked up by Daniel Djamludin. PoPToP has been actively developed 
+within SnapGear and a number of improvements need to be rolled out.
+
+Henceforth from this sentence onwards you should refer to "PoPToP" as 
+"Poptop" for ease of use and typing.
+
+Lineo have been asked to forward poptop.lineo.com to poptop.sourceforge.net
+
+The sources are being gathered to go into CVS, new binaries and dev images will follow.
+
+Source Forge looks like the best neutral ground to smooth out future upheavals.
+
+
+2.0 System Requirements
+-----------------------
+1. A modern Linux distribution (such as Debian, Red Hat, etc.) with a recent
+	kernel (2.4.x recommended, 2.2.x should be ok). Note: ports exist for
+	Solaris, BSD and others but are not supported in this HOWTO at this
+	time.
+2. PPP (2.4.1 recommended, 2.3.11 should be ok)
+	(and the MSCHAPv2/MPPE patch if you want enhanced Microsoft
+	compatible authentication and encryption).
+3. PoPToP v1.1.3 (or download the latest release at:
+	http://sourceforge.net/projects/poptop
+
+
+3.0 PoPToP Installation
+-----------------------
+Check out the documentation at http://sourceforge.net/docman/?group_id=44827
+
+
+4.0 Windows Client Setup
+------------------------
+
+Install it using the add-remove programs tool. Go to windows->communications
+and install VPN support.
+
+(If you do above you may *not* need to follow the instructions below as it
+will already be installed... ?
+
+follow the instructions: 
+
+   1.start->settings->control panel->network 
+   2.Click add 
+   3.choose adapter 
+   4.Click add 
+   5.select microsoft as the Manufactuarer 
+   6.select Microsoft Virtual Private Networking Adapter 
+   7.Click ok 
+   8.Insert any necessary disks 
+   9.Reboot your Machine 
+
+take a little nap here...
+
+Once your Machine is back 
+
+   1.go to dial-up networking (usually start->programs->Accessories->communications->Dial-up Networking) YMMV 
+   2.Click make new connection 
+   3.Name the Connection whatever you'd like. 
+   4.Select Microsoft VPN adapter as the device 
+   5.click next 
+   6.type in the ip address or hostname of your pptp server 
+   7.click next 
+   8.click finish 
+   9.Right-click on the intranet icon 
+  10.select properties 
+  11.choose server types 
+  12.check require encrypted password 
+  13.uncheck netbeui, ipx/spx compatible 
+  14.click tcp/ip settings 
+  15.turn off use IP header compression 
+  16.turn off use default gw on remote network 
+  17.click ok. 
+  18.start that connection 
+  19.type in your username and pw (yadda, yadda, yadda) 
+  20.once it finishes its connection your up. 
+
+
+Note that the Win95 routine is similar but requires Dial Up Networking Update 1.3 (free from Microsoft) to be installed first. 
+
+
+5.0 FAQ
+-------
+
+Q&A.
+INTRODUCTION
+
+After spending the better part of two weeks developing my configuration
+for a pptp sever for remote file access by Windows(tm) clients, I
+thought I would pass along these notes to those who may be interested.
+
+The basic configuration involves a Samba/PoPToP server behind a
+firewall, through which clients using Win98 machines will connect using
+the VPN facility built into that OS.  This is diagrammed below.
+
+ _____         ___         ______        ______
+|     |       |   \       | fire |      | file |
+| win | ---> / net \ ---> | wall | ---> | srvr |
+|_____|      \__/\_/      |______|      |______|
+
+
+The components of the system consist of the Win98 clients running the
+built-in VPN facility dialing in to their ISP's and connecting through
+the firewall to the Samba server on the internal network using the pptp
+protocol.  The firewall uses Network Address Translation to convert an
+open Internet IP address to an internal one.  Sounds simple enough
+right?
+
+SIMPLE TEST SETUP
+
+As a starting point, I configured a Win98 box to connect directly to a
+PoPToP server without any authentication or encryption.  This was just
+to get a feel for how pptp works and verify the setup.  Using the
+pre-packaged rpm's was a big help here.  You just rpm the thing onto the
+system and fire it up, and you're in business.  The diagram below
+represents this simple system.
+
+
+  192.168.56.142                192.168.56.11
+   _____                        ______
+  |     |                      | file |
+  | win | ------------------>  | srvr |
+  |_____|                      |______|
+
+Emboldend by my success, I set out to turn on MS authentication and
+encrytion, and this is where the fun started.
+
+AUTHENTICATION AND ENCRYPTION
+
+This is an area where Microsoft really shows its true colors.  Turning
+on password and data encryption on the Win98 VPN server configuration
+was quite the eye opening experience.  First with the authentication,
+you will have to go through a somewhat difficult compilation of the
+ppp-2.3.8 package.  The worst part here is getting all the pieces
+together, namely the rc4 files.  This process is well documented in this
+archive, so I won't go into it here.
+
+The next realization is that Microsoft prepends the domain name to the
+user name when submitting the login credentials. For example, srhodes is
+now DBNET\\srhodes.  If that wasn't bad enough, I found that the domain
+wasn't even the one I was logged into.  My best guess is that the first
+domain that the computer ever logs into is stuck with it for ever.  This
+is a real problem if you have multiple domains that you log into.  I
+modified the pppd.c code to strip out the domain on MSCHAP logins, but
+you can just set the user name in chap-secrets to match the windows
+version.
+
+Then I spent a whole day trying to figure out why data encryption does
+not work.  I tried just about everything I could think of that could be
+wrong.  That's when I discovered this archive, for which I am truly
+grateful.  It turns out that the Win9x implementation of encrytpion is
+FUBAR!  You have to download one of those patches from Microsoft,
+MSDUN 1.4 to get the thing to work. 
+
+Windows 95
+http://download.microsoft.com/download/win95/Update/17648/W95/EN-US/dun14-95.exe
+
+Windows 98
+http://download.microsoft.com/download/win98/Update/17648/W98/EN-US/dun14-98.exe
+
+Windows 98se
+http://download.microsoft.com/download/win98SE/Update/17648/W98/EN-US/dun14-SE.exe
+
+
+FIREWALL CONFIGURATION
+
+The issue with a firewall in this setup is that you need to cover two
+types of protocol communication.  There is one connection which is a tcp
+connection on port 1723 that handles the control functions and another
+connection using IP type 47, or GRE, which handles the actual data
+communication.  This second connection presents a problem for the
+convention linux firewall, ipfwadm.  You see, its only set up to handle
+tcp, udp and icmp protocols.  It doesn't know about GRE.
+
+The trick around this block is to use one of the new 2.2 kernels, which
+employ a new firewall called ipchains.  This tool willl handle arbitrary
+protocols, which can be specified by their numbers.
+
+
+  192.168.2.142                                    192.168.56.11
+   _____                   ______                   ______
+  |     |                 | fire | 192.168.56.1    | file |
+  | win | --------------->| wall | --------------> | srvr |
+  |_____|     192.168.2.1 |______|                 |______|
+
+
+
+You need to remember a few things before getting too deep into this.
+The default gateway on win is set to 192.168.2.1, and the default
+gateway on file srvr is set to 192.168.56.1.  The firewall has the two
+network interfaces spanning the two subnets and is configured for
+IP forwarding.  If you have not yet applied any firewall rules, this
+configuration will work as before.  The interesing part is to block out
+all other access to file srvr by implementing ipchains rules.
+
+The short story is:
+
+ipchains -F
+ipchains -P forward DENY
+ipchains -I forward -p tcp -d 192.168.56.11 1723 -j ACCEPT
+ipchains -A forward -p tcp -s 192.168.56.11 1723 -j ACCEPT
+ipchains -A forward -p 47 -d 192.168.56.11 -j ACCEPT
+ipchains -A forward -p 47 -s 192.168.56.11 -j ACCEPT
+
+
+NETWORK ADDRESS TRANSLATION
+
+The next hurdle is to configure the firewall so that it can run an open
+internet IP address on the outside and allow access to an internal
+address on the inside.  NAT is very well suited to this task, although
+you may hear otherwise from knowledgable sources.  It happens to be my
+preference, though certainly not the only way to skin this cat.  You can
+obtain the NAT software and some detailed information from
+
+http://www.csn.tu-chemnitz.de/HyperNews/get/linux-ip-nat.html
+
+But again, there is a problem with the GRE protocol of type 47.  The
+tool for configuring NAT, ipnatadm, like its half-brother ipfwadm, is
+not set up to handle arbitrary protocols.  Unfortunately, you'll have to
+go into the code and make a slight modification if you want to use it
+for this purpose.  There is a procedure called parse_protocol in the
+file routines.c that discriminates the type of protocol to be filtered.
+The basic idea is to accept a string representing a number and use that
+as the filter.  Since you have to recompile the kernel anyway to get the
+NAT functionality, maybe it's not so horrible, relatively speaking.
+
+For those ambitous enough, here is the diff for the routines file, copy
+this into a file called routines.diff and use the command patch -p0 <
+routines.diff from within the same directory.
+
+
+--- routines.c  Thu Mar 25 15:41:58 1999
++++ /mnt/zip/nat/routines.c     Wed Jul 21 21:09:28 1999
+@@ -112,11 +112,18 @@
+        else if (strncmp("icmp", s, strlen(s)) == 0)
+                nat_set.nat.protocol = IPPROTO_ICMP;
+        else {
++               int number;
++               char * end;
++               number = (int)strtol(s, &end, 10);
++               nat_set.nat.protocol = number;
++       }
++       /*
++       else {
+                fprintf(stderr, "ipnatadm: invalid protocol \"%s\"
+specified\n", s);
+                exit_tryhelp(2);
+-               /* make the compiler happy... */
+                return;
+        }
++       */
+ }
+
+ void parse_hostnetworkmask(char *name, struct in_addr **addrpp, __u32
+*maskp, int *naddrs)
+
+
+
+The patch is actually lifted from ipchains, which was derived from
+ipfwadm, which provides the basis for ipnatadm.
+
+Once you've got all that running, what you want to do is to set up the
+NAT rules so that the incoming client thinks its talking to the
+firewall, as does the outgoing file server.  The short of it is:
+
+ipnatadm -F
+ipnatadm -I -i -P 6 -D 192.168.2.1 1723 -N 192.168.56.11 1723
+ipnatadm -O -i -P 6 -S 192.168.56.11 1723 -M 192.168.2.1 1723
+ipnatadm -I -i -P 47 -D 192.168.2.1 -N 192.168.56.11
+ipnatadm -O -i -P 47 -S 192.168.56.11 -M 192.168.2.1
+
+
+Here, the -P argument sets the protocol, 6 is tcp and 47 is GRE.
+PPTP packets targeting the firewall are translated to the internal host
+inbound and vice-versa on the way out.  Very slick.
+
+SAMBA
+
+Here's a subject so complex you could probably devote a whole career to
+it.  We don't want to get too bogged down, so I'll be brief.  Samba
+implements the NetBIOS protocol, which has more quirks than you can
+shake a stick at.  One of the biggest problems is the use of subnet
+broadcasting.  Suffice it to say, if you want the best results, you
+should set your PoPToP IP addresses to reside within the subnet on which
+the file server ethernet is located.  I choose 192.168.56.12 for the
+server address, and it hands out IP's from 192.168.13-127.
+Setting the IP forwarding on the file server to true will give you
+access to other machines on the internal network.
+
+When you go at the samba sever from Win98, you have to use encrypted
+password.  Look at smbpasswd and related stuff.
+
+Finding shares on the server is not so easy.  The short story here is
+that browsing is implemented via broadcast packets, and broadcast
+packets will not travel down a PPP link.  The only way to get browsing
+to work over pptp is to set Samba up as a WINS server and a Domain login
+server, and configure the clients to use that WINS server and force them
+to login to that Domain.  Believe me, I tried just about everything to
+avoid that.  You will also want to set the samba server as the domain
+master and preferred master for the browsing.
+
+If you can't do that, you can set the ppp/options file to include a
+ms-wins setting for the samba server.  This will set the client up so
+they can at least resolve host names.  The only way to find a share
+under this configuration is to name it explicitly.  You can use the
+tools menu from the Win98 file browser and say find -> computer and
+enter in the name of the samba server and it will be found.  I have
+found that setting domain master = yes and preferred master = yes gives
+a rather nice boost to the speed of name lookups on the network.
+
+Here is my abbreviated smb.conf
+
+[global]
+   workgroup = VAULT
+   server string = acer
+   log file = /var/log/samba/log.%m
+   max log size = 50
+   security = user
+   encrypt passwords = yes
+   smb passwd file = /etc/smbpasswd
+   socket options = TCP_NODELAY
+   domain master = yes
+   preferred master = yes
+   domain logons = yes
+   wins support = yes
+   dns proxy = no
+[homes]
+   comment = Home Directories
+   browseable = no
+   writable = yes
+
+You should also use the lmhosts option for nmbd  (-H) and set up an
+lmhosts file on the samba server.  Make sure also the the samba server
+can resolve its own name, through either /etc/hosts or DNS.
+
+In all honesty , I went through the same simple test setup with samba as
+I did for PoPToP, although its not shown here explicitly.
+
+CONCLUSION
+
+PoPToP is a good program, as is Samba.  This configuration can work if
+you put a little effort into it.  I have seen a lot of questions here
+and in other places about these types of systems, so I would think that
+there is some demand on the part of users who want this type of
+functionality.  I hope these notes are useful to you if this is what you
+want to do.
+
+****************************************************************************
+Q&A
+I have a pptp server set up on my office LAN.  I can connect to the
+server and ping to it fine, but I can't ping any other hosts on the
+office subnet.  I have ip-forwarding turned on and I have proxyarp set
+in the ppp/options file.  What can be wrong?
+
+There seem to be a lot of questions floating around about routing and
+masq'ing associated with this issue.
+
+Well, my curiosity got the best of me, so I thought I would check this
+out.  Shown below is my test setup for investigating this problem.
+
+
+192.168.8.142     192.168.56.10    192.168.56.11   192.168.56.12
+ ________          _______           ______        _____
+|        |        |       |         |      |      |      |
+| client |------->| fire  |-------->| pptp |----->| host |
+|        |        | wall  |         | srvr |      |      |
+|________|        |_______|         |______|      |______|
+    H                                   H
+    H         192.168.8.10              H
+    H                                   H
+    H===================================H
+192.168.5.12     pptp connection     192.168.5.11
+
+
+For the sake of simplicity, we will ignore address translation issues
+associated with the firewall.  This assumes that the client at
+192.168.8.142 is going to use 192.168.56.11 as its target address for
+the pptp connection to pptp_srvr.  The firewall will block all access to
+
+the 192.168.56.0 subnet except for pptp connections associated with
+pptp_srvr.  This can be implemented with ipchains
+
+ipchains -P input DENY
+ipchains -P forward DENY
+ipchains -A input 192.168.56.0/24 -j ACCEPT    /* allow connections from
+
+inside */
+ipchains -A input -p tcp -d 192.168.56.11 1723 -j ACCEPT
+ipchains -A input -p 47 -d 192.168.56.11 -j ACCEPT
+ipchains -A forward -p tcp -d 192.168.56.11 1723 -j ACCEPT
+ipchains -A forward -p tcp -s 192.168.56.11 1723 -j ACCEPT
+ipchains -A forward -p 47 -d 192.168.56.11 -j ACCEPT
+ipchains -A forward -p 47 -s 192.168.56.11 -j ACCEPT
+
+When you connect from client to pptp_srvr, you will be able to complete
+the connection and ping to pptp_srvr.  However, if you attempt to ping
+host, at 192.168.56.12, this will fail.
+
+A clue to this problem can be found in the /var/tmp/messages file on
+pptp_srvr.  There, in the pppd messages, you will find
+
+Cannot determine ethernet address for proxy ARP
+
+This is due to an issue with the pppd program, which attempts to find a
+hardware interface on the subnet to which the pppd client has been
+assigned.  In this case its looking for a hardware interface on the
+192.168.5.0 subnet.  It will fail to find one, and will drop the
+proxyarp request.
+
+The simplest way around this problem, and the one that is suggested in
+the pppd documentation, is to set the pppd client IP assignment to be on
+
+the local subnet.  An example in this case might be 192.168.56.129.
+However, it may not be possible to do that.  In the case of a fully
+loaded subnet, there may not be any addresses to spare.  Or there may be
+
+some security issues with giving out local subnet addresses.  What to
+do?
+
+The place to look is in the arp table.  If you run tcpdump on host
+(192.168.56.12) during the time when client is pinging, you will see
+unanswered arp requests from host attempting to find the hardware
+address for 192.168.5.12.  You need to proxy the hardware address of the
+
+pptp_srvr for client in order for this request to be fulfilled.  This is
+
+the job of proxyarp.  However, proxyarp has let us down in this
+instance, and we need to find a workaround.
+
+This can be done manually using the arp command on pptp_srvr.  For
+example, if the hardware address of the ethernet card on pptp_srvr is
+00:60:08:98:14:14, you could force the arp to proxy the client pptp
+address by saying
+
+arp --set 192.168.5.12 00:60:08:98:14:13 pub
+
+You should now be able to ping from client to host through the pptp
+connection.
+
+This can be a problem, however, in a dynamic environment when clients
+are logging into and out of the pptp server on a continuous basis.  One
+way around this problem is to write a script that will execute upon the
+initiation of each ppp connection.
+
+The place to do this is in /etc/ppp/ip-up.  This script is executed each
+
+time a new ppp connection is started.  It gets some variables passed
+into it, one of which is the assigned IP address of the client.  Note
+that RedHat systems use ip-up.local as the place for you to make the
+script.  Don't forget to chmod +x !
+
+
+#! /bin/bash
+
+REMOTE_IP_ADDRESS=$5
+
+date > /var/run/ppp.up
+echo "REMOTE_IP_ADDRESS = " $REMOTE_IP_ADDRESS >> /var/run/ppp.up
+arp --set $REMOTE_IP_ADDRESS 00:60:08:98:14:14 pub >> /var/run/ppp.up
+
+exit 0
+
+
+This should put you in business for accessing the remote subnet under
+this scenario.  I am a little bit concerned, however, because I also
+built a script ip-down.local, that should remove the arp proxy when
+client disconnected.  It doesn't seem to do anything, however, and if I
+try to delete the arp entry manually, it just spits out a cryptic error
+message.  The arp entries remain persistent, as far as I can tell.  If
+this is a problem or not, I don't know.  The next few clients that log
+in are treated well, so I guess its OK.
+
+****************************************************************************
+Q.
+Also, after running pptpd and monitoring its log file and seeing that it
+failed to open ttyp1 - I chmod +rw /dev/ttyp[0-9] and it seemed to work
+somewhat.  But, after I rebooted, I had to do this again.  Is this normal?
+
+A.
+pptpd should be running as root (unless you have a system with a setuid 
+openpty() helper, which isn't very common).  If it fails to open a pty/tty
+pair as root then that is probably because it is in use.
+
+Other programs which use pty/tty's will change their permissions back to
+the standard ones.
+
+****************************************************************************
+Q.
+sometimes when I make a connection to my pptpd server I
+see a message like
+
+Jul  2 17:30:03 ape modprobe: can't locate module ppp-compress-21
+Jul  2 17:30:03 ape modprobe: can't locate module ppp-compress-26
+Jul  2 17:30:03 ape modprobe: can't locate module ppp-compress-24
+Jul  2 17:30:03 ape modprobe: can't locate module ppp-compress-21
+Jul  2 17:30:03 ape modprobe: can't locate module ppp-compress-26
+Jul  2 17:30:03 ape modprobe: can't locate module ppp-compress-24
+Jul  2 17:30:03 ape modprobe: can't locate module ppp-compress-26
+Jul  2 17:30:03 ape modprobe: can't locate module ppp-compress-24
+Jul  2 17:30:03 ape modprobe: can't locate module ppp-compress-21
+
+
+in /var/log/messages on the server.  Any idea what I 
+can do about it?  
+
+A.
+yeah, in your /lib/modules/<kernel version>/net/ directory, there should
+be files called bsd_comp.o and ppp_deflate.o.. insmod those files and
+you'll be good to go.
+
+****************************************************************************
+Q.
+Hi, I'm having trouble getting pptpd & mschap-v2 to work. I downloaded
+all of the patches and compiled everything but whenever i try to connect
+from my win98 machine, it says:
+
+Error 691:  The computer you have dialed in to has denied access because
+the username and/or password is invalid on the domain.
+
+What is this suppose to mean?
+
+A.
+Error 691 is an authentication problem probably due to the fact that MS
+chap uses the domain name and username combo to authenticate.  If you
+look at the logs you will probably see a message saying that MS chap is
+trying to authenticate user "domain\\username".  I got it to work by
+putting the full domain and user string in the client portion of the
+chap-secrets file.
+
+# Secrets for authentication using CHAP
+# client                        server          secret          IP
+addresses
+workgroup\\user         server          password         *    
+
+If anyone knows how to get it to default to a particular domain, I would
+like to know.
+
+****************************************************************************
+Q.
+how do I go about checking who is logged in via tunnel?
+
+I need some way of writing the pppd data to wtmp/utmp.
+(and not sessreg either)
+
+does anyone know of any way of doing this via ppp?
+
+A.
+pppd syslogs everything to /var/log/messages (that's the default on my box
+anyways) and it will say something like :
+pppd[15450]: CHAP peer authentication succeeded for <username>
+
+you could do a tail /var/log/messages -n2000 | grep CHAP if you wanted to
+see who has been logging in.
+
+other than that, there's not much i know of. all the authentication is
+provided by pppd (if you don't have an auth or a require-chap (or pap, etc.)
+option, it doesn't even ask for a username.
+
+****************************************************************************
+Q.
+My NT client won't connect!
+
+A.
+Try taking header and software compression off.
+
+
+****************************************************************************
+Q. PPTP *client* stops working.
+
+A.
+go to /var/run/pptp/ and look for a socket named x.x.x.x
+delete it and try it again.
+
+****************************************************************************
+Q.
+How many clients does PoPToP support?
+
+A.
+The limits under Linux are:
+
+  per-process filedescriptors
+          - one per client (would limit clients to 256 by default,
+		    or 1024 with kernel recompile, or more with major libc/kernel
+			hackery)
+          - no relevant limit
+
+  ttys    - currently, with a standard kernel, 256 clients
+          - with Unix98 ptys and a small amount of coding, 2048
+
+  ppp devices
+          - no limit in kernel source for ppp
+          - limit of 100 in dev_alloc_name() in 2.2.x
+
+        for(i=0;i<100;i++)
+        {
+                sprintf(dev->name,name,i);
+                if(dev_get(dev->name)==NULL)
+                        return i;
+        }
+
+            best fix is probably to keep a static int ppp_maxdev so you
+            don't end up doing 2000 dev_get's to allocated the 2001'th
+            device.
+
+  processes
+          - 2 per client plus system processes
+          - standard kernel max = 512 processes, ie 256 clients
+          - i386 max = 4096 processes, ie 2048 clients
+
+So it seems that 2048 will be the limit, if you fix a few things and
+with a minor kernel mod (I could do all of these pretty easily and send
+you a trivial kernel patch).  To go above 2048 the easiest approach would
+be to combine pptpctrl and pppd in one process, which would get you to
+4096.  Beyond there, you need to go for a select() based model, which would
+be significant coding effort and require large fd-set sizes and so on.
+So 4096 is the practical limit, and 2048 the easy limit.
+
+****************************************************************************
+Q.
+What authentication methods (PAP/CHAP) does PoPToP work with?
+
+A.
+PoPToP uses whatever authentication methods your PPPd provides (usually
+PAP and CHAP). With PPPd patches you can get MSCHAP and MSCHAPv2
+authentication as well.
+
+****************************************************************************
+Q. 
+When running PoPToP I get the following error:
+ 
+	Jun 11 08:29:04 server pptpd[4875]: MGR: No more free connection slots!
+ 
+What does this mean?
+
+A.
+I'd say at a guess you've only configured one IP address and you have 
+connected a client, and as such there are no more free connection slots should 
+any more clients wish to connect.
+
+****************************************************************************
+Q.
+Does PoPToP suffer from the same security flaws
+(http://www.counterpane.com/pptp.html) as the Windows NT PPTP server?
+
+A.
+An initial look at the article suggests that what the authors hammered was
+not the PPTP protocol, but the authentication that the PPTP VPN servers on
+NT offered access to via open internet.  PPTP seems initially to be just
+the path to the weakness, not the weakness itself.  Part of their
+observance of weakness deals with use of poor passwords as well, a cheap
+component, simple enough to fix.
+
+> While no flaws were found in PPTP itself, several serious flaws were
+> found in the Microsoft implementation of it.
+> (http://www.counterpane.com/pptp-pressrel.html)
+
+The authors do not specifically say "this is ONLY effective against NT",
+just that NT is affected.  This implies that they do not recognize PoPToP,
+and it may be included.  The fact that PoPToP has to interOp with MS DUN's
+VPN client means that it will have the same weaknesses.  It can only
+protect itself from DoS attacks, have immediate response to out-of-sequence
+packets or illogical packets, etc.
+
+The protocol is not considered weak in this analysis, but the weaknesses
+have to be replicated in apparent behavior by PoPToP.  The only thing the
+developers can do with PoPToP is make it a stronger server per se -- more
+able to handle the attacks when the come.
+
+In conclusion: PoPToP suffers the same security vulnerabilities as the NT
+sever (this is because it operates with Windows clients).
+
+Update: MSCHAPv2 has been released and addresses some of the security
+issues. PoPToP works with MSCHAPv2.
+
+****************************************************************************
+Q.
+Does PoPToP support data encryption?
+
+A.
+Yes.. with appropriate PPPd patches. Patches are available for PPPd to
+provide Microsoft compatible RC4 data encryption. The PPPd patch supports
+40 and 128 bit RC4 encryption.
+
+****************************************************************************
+Q.
+PoPToP or IPsec? Which is better suited to my needs?
+
+A.
+1. The difference between PoPToP and IPsec is that PoPToP is ready NOW..
+and requires *no* third party software on the Windows client end
+(Windows comes with a free PPTP client that is trivial to set up).
+
+2. PoPToP is a completely *free* solution.
+Update: Unfortunately not true for Mac *clients* though. The Mac client
+software is around $400 US a copy.
+
+3. PoPToP can be integrated with the latest PPPD patches that take
+advantage of MSCHAPv2 and MPPE (Microsoft encryption using RC4 - 40/128
+bits).
+
+More details follow from Emir Toktar:
+(Refs: A Comprehensive Guide to Virtual Private Networks, IBM.
+Virtual Private Networking: An Overview White Paper - DRAFT, 3/18/98
+Microsoft.)
+
+Neither network layer-based (L2TP, PPTP,...) nor application layer-based
+(IPSec,SSL,SSH) security techniques are the best choice for all
+situations. There will be trade-offs. Network layer security protects the
+information created by upper layer protocols, but it requires that IPSec
+be implemented in the communications stack.
+
+With network layer security, there is no need to modify existing upper
+layer applications. On the other hand, if security features are already
+imbedded within a given application, then the data for that specific
+application will be protected while it is in transit, even in the absence
+of network layer security. Therefore security functions must be imbedded
+on a per-application basis.
+
+There are still other considerations:
+Authentication is provided only for the identity of tunnel endpoints, but
+not for each individual packet that flows inside the tunnel. This can
+expose the tunnel to man-in-the-middle and spoofing attacks.
+
+Network layer security gives blanket protection, but this may not be as
+fine-grained as would be desired for a given application. It protects
+all traffic and is transparent to users and applications.
+
+Network layer security does not provide protection once the datagram has
+arrived at its destination host. That is, it is vulnerable to attack
+within the upper layers of the protocol stack at the destination machine.
+
+Application layer security can protect the information that has been
+generated within the upper layers of the stack, but it offers no
+protection against several common network layer attacks while the
+datagram is in transit. For example, a datagram in transit would be
+vulnerable to spoofing attacks against its source or destination address.
+
+Application layer security is more intelligent (as it knows the
+application) but also more complex and slower.
+
+IPSec provides for tunnel authentication, while PPTP does not.
+
+<User Authentication> Layer 2 tunneling protocols inherit the user
+authentication schemes of PPP, including the EAP methods discussed below.
+Many Layer 3 tunneling schemes assume that the endpoints were well
+known (and authenticated) before the tunnel was established. An exception
+to this is IPSec ISAKMP negotiation, which provides mutual authentication
+of the tunnel endpoints. (Note that most IPSec implementations support
+machine-based certificates only, rather than user certificates. As a
+result, any user with access to one of the endpoint machines can use
+the tunnel. This potential security weakness can be eliminated when
+IPSec is paired with a Layer 2 protocol such as L2TP.
+
+<Token card support> Using the Extensible Authentication Protocol
+(EAP), Layer 2 tunneling protocols can support a wide variety of
+authentication methods, including one-time passwords, cryptographic
+calculators, and smart cards. Layer 3 tunneling protocols (IPSec) can
+use similar methods; for example, IPSec defines public key certificate
+authentication in its ISAKMP/Oakley negotiation.
+
+<Dynamic address assignment> Layer 2 tunneling supports dynamic
+assignment of client addresses based on the Network Control Protocol
+(NCP) negotiation mechanism.
+
+Generally, Layer 3 tunneling schemes assume that an address has already
+been assigned prior to initiation of the tunnel. Schemes for assignment
+of addresses in IPSec tunnel mode are currently under development and
+are not yet available.
+
+<Data Compression> Layer 2 tunneling protocols support PPP-based
+compression schemes. For example, the Microsoft implementations of both
+PPTP and L2TP use Microsoft Point-to-Point Compression (MPPC). The IETF
+is investigating similar mechanisms (such as IP Compression) for the
+Layer 3 tunneling protocols.
+
+<Data Encryption> Layer 2 tunneling protocols support PPP-based data
+encryption mechanisms. Microsoft's implementation of PPTP supports
+optional use of Microsoft Point-to-Point Encryption (MPPE), based on
+the RSA/RC4 algorithm. Layer 3 tunneling protocols can use similar
+methods; for example, IPSec defines several optional data encryption
+methods which are negotiated during the ISAKMP/Oakley exchange.
+
+<Key Management> MPPE, a Layer 2 protocol, relies on the initial key
+generated during user authentication, and then refreshes it
+periodically. IPSec, explicitly negotiates a common key during the
+ISAKMP exchange, and also refreshes it periodically.
+
+<Multi-protocol support> Layer 2 tunneling supports multiple payload
+protocols, which makes it easy for tunneling clients to access their
+corporate networks using IP, IPX, NetBEUI, and so forth. In contrast,
+Layer 3 tunneling protocols, such as IPSec tunnel mode, typically
+support only target networks that use the IP protocol. IPSec is not
+multi-protocol.
+
+IPSec will be suported by Windows 2000.
+
+Many cases can occur, each of which needs to be examined on its own 
+merit. It may be desirable to employ a mix of both network layer
+security techniques and application layer techniques to achieve the
+desired overall level of protection. For example, you could use an upper
+layer mechanism such as Secure Sockets Layer (SSL) to encrypt upper
+layer data. SSL could then be supplemented with IPSec's AH protocol at
+the network layer to provide per-packet data origin authentication and
+protection against spoofing attacks.
+
+****************************************************************************
+Q.
+I get a 'createHostSocket: Address already in use' error! what gives?
+
+A.
+Address already in use in createHostSocket means something is already using
+TCP port 1723 - maybe another pptp daemon is running?
+
+****************************************************************************
+Q.
+Does PoPToP work with Windows 2000 clients?
+
+A.
+PoPToP v0.9.5 and above should work with Windows 2000 clients.
+
+****************************************************************************

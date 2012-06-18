@@ -1,0 +1,10 @@
+--- samba-2.0.0/source/smbwrapper/smbsh.in.orig	Mon Oct  5 22:37:01 1998
++++ samba-2.0.0/source/smbwrapper/smbsh.in	Mon Oct  5 22:37:51 1998
+@@ -1,6 +1,6 @@
+ #! /bin/sh
+ 
+-SMBW_LIBDIR=${SMBW_LIBDIR-@builddir@/smbwrapper}
++SMBW_LIBDIR=${SMBW_LIBDIR-/usr/bin}
+ 
+ if [ ! -f ${SMBW_LIBDIR}/smbwrapper.so ]; then
+     echo You need to set LIBDIR in smbsh

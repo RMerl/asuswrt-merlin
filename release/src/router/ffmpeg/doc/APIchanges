@@ -1,0 +1,239 @@
+Never assume the API of libav* to be stable unless at least 1 week has passed since
+the last major version increase.
+The last version increases were:
+libavcodec:  ?
+libavdevice: ?
+libavfilter: 2009-10-18
+libavformat: ?
+libpostproc: ?
+libswscale:  ?
+libavutil:   2009-03-08
+
+
+API changes, most recent first:
+
+2010-06-01 - r31301 - lsws 0.11.0 - convertPalette API
+  Add sws_convertPalette8ToPacked32 and sws_convertPalette8ToPacked24
+
+2010-05-26 - r23334 - lavc 52.72.0 - CODEC_CAP_EXPERIMENTAL
+  Add CODEC_CAP_EXPERIMENTAL flag.
+
+2010-05-18 - r23161 - lavf 52.63.0 - AVFMT_FLAG_RTP_HINT
+  Add AVFMT_FLAG_RTP_HINT as possible value for AVFormatContext.flags
+
+2010-05-01 - r23002 - lavf 52.62.0 - probe function
+  Add av_probe_input_format2 to API, it allows ignoring probe
+  results below given score and returns the actual probe score.
+
+2010-04-01 - r22806 - lavf 52.61.0 - metadata API
+  Add a flag for av_metadata_set2() to disable overwriting of
+  existing tags.
+
+2010-04-01 - r22753 - lavc 52.66.0
+  Add avcodec_get_edge_width()
+
+2010-03-31 - r22750 - lavc 52.65.0
+  Add avcodec_copy_context().
+
+2010-03-31 - r22748 - lavf 52.60.0 - av_match_ext()
+  Make av_match_ext() public.
+
+2010-03-31 - r22736 - lavu 50.14.0 - AVMediaType
+  Move AVMediaType enum from libavcodec to libavutil.
+
+2010-03-31 - r22735 - lavc 52.64.0 - AVMediaType
+  Define AVMediaType enum, and use it instead of enum CodecType, which
+  is deprecated and will be dropped at the next major bump.
+
+2010-03-25 - r22684 - lavu 50.13.0 - av_strerror()
+  Implement av_strerror().
+
+2010-03-23 - r22649 - lavc 52.60.0 - av_dct_init()
+  Support DCT-I and DST-I
+
+2010-03-15 - r22540 - lavf 52.56.0 - AVFormatContext.start_time_realtime
+  Add AVFormatContext.start_time_realtime field.
+
+2010-03-13 - r22506 - lavfi 1.18.0 - AVFilterPicRef.pos
+  Add AVFilterPicRef.pos field.
+
+2010-03-13 - r22501 - lavu 50.12.0 - error.h
+  Move error code definitions from libavcodec/avcodec.h to
+  the new public header libavutil/error.h.
+
+2010-03-07 - r22291 - lavc 52.56.0 - avfft.h
+  Add public FFT interface.
+
+2010-03-06 - r22251 - lavu 50.11.0 - av_stristr()
+  Add av_stristr().
+
+2010-03-03 - r22174 - lavu 50.10.0 - av_tree_enumerate()
+  Add av_tree_enumerate().
+
+2010-02-07 - r21673 - lavu 50.9.0 - av_compare_ts()
+  Add av_compare_ts().
+
+2010-02-05 - r30513 - lsws 0.10.0 - sws_getCoefficients()
+  Add sws_getCoefficients().
+
+2010-02-01 - r21587 - lavf 52.50.0 - metadata API
+  Add a list of generic tag names, change 'author' -> 'artist',
+  'year' -> 'date'.
+
+2010-01-30 - r21545 - lavu 50.8.0 - av_get_pix_fmt()
+  Add av_get_pix_fmt().
+
+2010-01-21 - r30381 - lsws 0.9.0 - sws_scale
+  Change constness attributes of sws_scale() parameters.
+
+2010-01-10 - r21121 - lavfi 1.15.0 - avfilter_graph_config_links()
+  Add a log_ctx parameter to avfilter_graph_config_links().
+
+2010-01-07 - r30236 - lsws 0.8.0 - sws_isSupported{In,Out}put
+  Add sws_isSupportedInput() and sws_isSupportedOutput() functions.
+
+2010-01-06 - r21035 - lavfi 1.14.0 - avfilter_add_colorspace()
+  Change the avfilter_add_colorspace() signature, make it accept an
+  (AVFilterFormats **) rather than an (AVFilterFormats *) as before.
+
+2010-01-03 - r21007 - lavfi 1.13.0 - avfilter_add_colorspace()
+  Add avfilter_add_colorspace().
+
+2010-01-02 - r20998 - lavf 52.46.0 - av_match_ext()
+  Add av_match_ext(), it should be used in place of match_ext().
+
+2010-01-01 - r20991 - lavf 52.45.0 - av_guess_format()
+  Add av_guess_format(), it should be used in place of guess_format().
+
+2009-12-13 - r20834 - lavf 52.43.0 - metadata API
+  Add av_metadata_set2(), AV_METADATA_DONT_STRDUP_KEY and AV_METADATA_DONT_STRDUP_VAL.
+
+2009-12-13 - r20829 - lavu 50.7.0 - avstring.h API
+  Add av_d2str().
+
+2009-12-13 - r20826 - lavc 52.42.0 - AVStream
+  Add avg_frame_rate.
+
+2009-12-12 - r20808 - lavu 50.6.0 - av_bmg_next()
+  Introduce the av_bmg_next() function.
+
+2009-12-05 - r20734 - lavfi 1.12.0 - avfilter_draw_slice()
+  Add a slice_dir parameter to avfilter_draw_slice().
+
+2009-11-26 - r20611 - lavfi 1.11.0 - AVFilter
+  Remove the next field from AVFilter, this is not anymore required.
+
+2009-11-25 - r20607 - lavfi 1.10.0 - avfilter_next()
+  Introduce the avfilter_next() function.
+
+2009-11-25 - r20605 - lavfi 1.9.0 - avfilter_register()
+  Change the signature of avfilter_register() to make it return an
+  int. This is required since now the registration operation may fail.
+
+2009-11-25 - r20603 - lavu 50.5.0 - pixdesc.h API
+  Make the pixdesc.h API public.
+
+2009-10-27 - r20385 - lavfi 1.5.0 - AVFilter.next
+  Add a next field to AVFilter, this is used for simplifying the
+  registration and management of the registered filters.
+
+2009-10-23 - r20356 - lavfi 1.4.1 - AVFilter.description
+  Add a description field to AVFilter.
+
+2009-10-19 - r20302 - lavfi 1.3.0 - avfilter_make_format_list()
+  Change the interface of avfilter_make_format_list() from
+  avfilter_make_format_list(int n, ...) to
+  avfilter_make_format_list(enum PixelFormat *pix_fmts).
+
+2009-10-18 - r20272 - lavfi 1.0.0 - avfilter_get_video_buffer()
+  Make avfilter_get_video_buffer() recursive and add the w and h
+  parameters to it.
+
+2009-10-07 - r20189 - lavfi 0.5.1 - AVFilterPic
+  Add w and h fields to AVFilterPic.
+
+2009-06-22 - r19250 - lavf 52.34.1 - AVFormatContext.packet_size
+  This is now an unsigned int instead of a signed int.
+
+2009-06-19 - r19222 - lavc 52.32.0 - AVSubtitle.pts
+  Add a pts field to AVSubtitle which gives the subtitle packet pts
+  in AV_TIME_BASE. Some subtitle de-/encoders (e.g. XSUB) will
+  not work right without this.
+
+2009-06-03 - r19078 - lavc 52.30.2 - AV_PKT_FLAG_KEY
+  PKT_FLAG_KEY has been deprecated and will be dropped at the next
+  major version. Use AV_PKT_FLAG_KEY instead.
+
+2009-06-01 - r19025 - lavc 52.30.0 - av_lockmgr_register()
+  av_lockmgr_register() can be used to register a callback function
+  that lavc (and in the future, libraries that depend on lavc) can use
+  to implement mutexes. The application should provide a callback function
+  that implements the AV_LOCK_* operations described in avcodec.h.
+  When the lock manager is registered, FFmpeg is guaranteed to behave
+  correctly in a multi-threaded application.
+
+2009-04-30 - r18719 - lavc 52.28.0 - av_free_packet
+  av_free_packet() is no longer an inline function. It is now exported.
+
+2009-04-11 - r18431 - lavc 52.25.0 - deprecate av_destruct_packet_nofree
+  Please use NULL instead. This has been supported since r16506
+  (lavf > 52.23.1, lavc > 52.10.0).
+
+2009-04-07 - r18351 - lavc 52.23.0 - avcodec_decode_video/audio/subtitle
+  The old decoding functions are deprecated, all new code should use the
+  new functions avcodec_decode_video2(), avcodec_decode_audio3() and
+  avcodec_decode_subtitle2(). These new functions take an AVPacket *pkt
+  argument instead of a const uint8_t *buf / int buf_size pair.
+
+2009-04-03 - r18321 - lavu 50.3.0 - av_fifo_space
+  Introduce the av_fifo_space() function.
+
+2009-04-02 - r18317 - lavc 52.23.0 - AVPacket
+  Move AVPacket declaration from libavformat/avformat.h to
+  libavcodec/avcodec.h.
+
+2009-03-22 - r18163 - lavu 50.2.0 - RGB32 pixel formats
+  Convert the pixel formats PIX_FMT_ARGB, PIX_FMT_RGBA, PIX_FMT_ABGR,
+  PIX_FMT_BGRA, which were defined as macros, into enum PixelFormat values.
+  Conversely PIX_FMT_RGB32, PIX_FMT_RGB32_1, PIX_FMT_BGR32 and
+  PIX_FMT_BGR32_1 are now macros.
+  avcodec_get_pix_fmt() now recognizes the "rgb32" and "bgr32" aliases.
+  Re-sort the enum PixelFormat list accordingly.
+  This change breaks API/ABI backward compatibility.
+
+2009-03-22 - r18133 - lavu 50.1.0 - PIX_FMT_RGB5X5 endian variants
+  Add the enum PixelFormat values:
+  PIX_FMT_RGB565BE, PIX_FMT_RGB565LE, PIX_FMT_RGB555BE, PIX_FMT_RGB555LE,
+  PIX_FMT_BGR565BE, PIX_FMT_BGR565LE, PIX_FMT_BGR555BE, PIX_FMT_BGR555LE.
+
+2009-03-21 - r18116 - lavu 50.0.0  - av_random*
+  The Mersenne Twister PRNG implemented through the av_random* functions
+  was removed. Use the lagged Fibonacci PRNG through the av_lfg* functions
+  instead.
+
+2009-03-08 - r17869 - lavu 50.0.0  - AVFifoBuffer
+  av_fifo_init, av_fifo_read, av_fifo_write and av_fifo_realloc were dropped
+  and replaced by av_fifo_alloc, av_fifo_generic_read, av_fifo_generic_write
+  and av_fifo_realloc2.
+  In addition, the order of the function arguments of av_fifo_generic_read
+  was changed to match av_fifo_generic_write.
+  The AVFifoBuffer/struct AVFifoBuffer may only be used in an opaque way by
+  applications, they may not use sizeof() or directly access members.
+
+2009-03-01 - r17682 - lavf 52.31.0 - Generic metadata API
+  Introduce a new metadata API (see av_metadata_get() and friends).
+  The old API is now deprecated and should not be used anymore. This especially
+  includes the following structure fields:
+    - AVFormatContext.title
+    - AVFormatContext.author
+    - AVFormatContext.copyright
+    - AVFormatContext.comment
+    - AVFormatContext.album
+    - AVFormatContext.year
+    - AVFormatContext.track
+    - AVFormatContext.genre
+    - AVStream.language
+    - AVStream.filename
+    - AVProgram.provider_name
+    - AVProgram.name
+    - AVChapter.title

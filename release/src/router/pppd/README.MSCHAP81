@@ -1,0 +1,65 @@
+PPP Support for Microsoft's CHAP-81
+===================================
+
+Frank Cusack		frank@google.com
+
+Some text verbatim from README.MSCHAP80,
+by Eric Rosenquist, rosenqui@strataware.com
+
+INTRODUCTION
+
+First, please read README.MSCHAP80; almost everything there applies here.
+MS-CHAP was basically devised by Microsoft because rather than store
+plaintext passwords, they (Microsoft) store the md4 hash of passwords.
+It provides no advantage over standard CHAP, since the hash is used
+as plaintext-equivalent.  (Well, the Change-Password packet is arguably
+an advantage.)  It does introduce a significant weakness if the LM hash
+is used.  Additionally, the format of the failure packet potentially
+gives information to an attacker.  The weakness of the LM hash is partly
+addressed in RFC 2433, which deprecates its use.
+
+MS-CHAPv2 adds 2 benefits to MS-CHAP.  (1) The LM hash is no longer
+used.  (2) Mutual authentication is required.  Note that the mutual
+authentication in MS-CHAPv2 is different than the case where both PPP
+peers require authentication from the other; the former proves that
+the server has access to the client's password, the latter proves that
+the server has access to a secret which the client also has -- which
+may or may not be the same as the client's password (but should not be
+the same, per RFC 1994).  Whether this provides any actual benefit is
+outside the scope of this document.  The details of MS-CHAPv2 can be
+found in the document:
+
+    <http://www.ietf.org/rfc/rfc2759.txt>
+
+
+BUILDING THE PPPD
+
+In addition to the requirements for MS-CHAP, MS-CHAPv2 uses the SHA-1
+hash algorithm.  A public domain implementation is provided with pppd.
+
+
+TROUBLESHOOTING
+
+Assuming that everything else has been configured correctly for PPP and
+CHAP, the MS-CHAPv2-specific problems you're likely to encounter are mostly
+related to your Windows NT account and its settings.  A Microsoft server
+returns error codes in its CHAP response.  The following are extracted from
+RFC 2759:
+
+ 646 ERROR_RESTRICTED_LOGON_HOURS
+ 647 ERROR_ACCT_DISABLED
+ 648 ERROR_PASSWD_EXPIRED
+ 649 ERROR_NO_DIALIN_PERMISSION
+ 691 ERROR_AUTHENTICATION_FAILURE
+ 709 ERROR_CHANGING_PASSWORD
+
+You'll see these in your pppd log as a line similar to:
+
+   Remote message: E=649 No dialin permission
+
+Previously, pppd would log this as:
+
+   Remote message: E=649 R=0
+
+Now, the text message is logged (both for MS-CHAP and MS-CHAPv2).
+

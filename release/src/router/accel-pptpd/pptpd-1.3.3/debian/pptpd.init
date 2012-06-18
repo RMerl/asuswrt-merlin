@@ -1,0 +1,56 @@
+#!/bin/sh
+# Copyright Rene Mayrhofer, ViaNova, 1999
+# This script is distibuted under the GPL
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+DAEMON=/usr/sbin/pptpd
+PIDFILE=/var/run/pptpd.pid
+FLAGS="defaults 50"
+
+case "$1" in
+  start)
+    echo -n "Starting PPTP Daemon: "
+    start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON \
+    	-- < /dev/null > /dev/null
+    echo "pptpd."
+    ;;
+  stop)
+    echo -n "Stopping PPTP: "
+    start-stop-daemon --stop --quiet --pidfile $PIDFILE --exec $DAEMON
+    echo "pptpd."
+    ;;
+  reload)
+    echo "Not implemented."
+    ;;
+  force-reload|restart)
+    echo "Restarting PPTP: "
+    sh $0 stop
+    sh $0 start
+    ;;
+    status)
+    	if [ ! -r $PIDFILE ]; then
+            # no pid file, process doesn't seem to be running correctly
+            exit 3
+        fi
+    	PID=`cat $PIDFILE | sed 's/ //g'`
+        EXE=/proc/$PID/exe
+        if [ -x "$EXE" ] && 
+        	[ "`ls -l \"$EXE\" | cut -d'>' -f2,2 | cut -d' ' -f2,2`" = \
+        	"$DAEMON" ]; then
+            # ok, process seems to be running
+            exit 0
+        elif [ -r $PIDFILE ]; then
+            # process not running, but pidfile exists
+            exit 1
+        else
+            # no lock file to check for, so simply return the stopped status
+            exit 3
+        fi
+        ;;
+  *)
+    echo "Usage: /etc/init.d/pptpd {start|stop|restart|force-reload|reload}"
+    exit 1
+    ;;
+esac
+
+exit 0

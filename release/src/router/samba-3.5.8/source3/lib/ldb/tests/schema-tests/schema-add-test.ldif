@@ -1,0 +1,66 @@
+dn: CN=Users,DC=schema,DC=test
+objectClass: top
+objectClass: container
+cn: Users
+description: Default container for upgraded user accounts
+instanceType: 4
+whenCreated: 20050116175504.0Z
+whenChanged: 20050116175504.0Z
+uSNCreated: 1
+uSNChanged: 1
+showInAdvancedViewOnly: FALSE
+name: Users
+objectGUID: b847056a-9934-d87b-8a1a-99fabe0863c8
+systemFlags: 0x8c000000
+objectCategory: CN=Container,CN=Schema,CN=Configuration,DC=schema,DC=test
+isCriticalSystemObject: TRUE
+nTSecurityDescriptor: foo
+
+dn: CN=Administrator,CN=Users,DC=schema,DC=test
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: Administrator
+description: Built-in account for administering the computer/domain
+instanceType: 4
+whenCreated: 20050116175504.0Z
+whenChanged: 20050116175504.0Z
+uSNCreated: 1
+memberOf: CN=Group Policy Creator Owners,CN=Users,DC=schema,DC=test
+memberOf: CN=Domain Admins,CN=Users,DC=schema,DC=test
+memberOf: CN=Enterprise Admins,CN=Users,DC=schema,DC=test
+memberOf: CN=Schema Admins,CN=Users,DC=schema,DC=test
+memberOf: CN=Administrators,CN=Builtin,DC=schema,DC=test
+uSNChanged: 1
+name: Administrator
+objectGUID: 6c02f98c-46c6-aa38-5f13-a510cac04e6c
+userAccountControl: 0x10200
+badPwdCount: 0
+codePage: 0
+countryCode: 0
+badPasswordTime: 0
+lastLogoff: 0
+lastLogon: 0
+pwdLastSet: 0
+primaryGroupID: 513
+objectSid: S-1-5-21-43662522-77495566-38969261-500
+adminCount: 1
+accountExpires: -1
+logonCount: 0
+sAMAccountName: Administrator
+sAMAccountType: 0x30000000
+objectCategory: CN=Person,CN=Schema,CN=Configuration,DC=schema,DC=test
+isCriticalSystemObject: TRUE
+unicodePwd: samba
+nTSecurityDescriptor: foo
+
+dn: CN=Test,CN=Users,DC=schema,DC=test
+objectClass: top
+objectClass: test
+cn: Test
+description: This is a test
+objectCategory: CN=Test,CN=Schema,CN=Configuration,DC=schema,DC=test
+nTSecurityDescriptor: foo
+instanceType: 4
+

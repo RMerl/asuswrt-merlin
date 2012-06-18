@@ -1,0 +1,185 @@
+.\" SH section heading
+.\" SS subsection heading
+.\" LP paragraph
+.\" IP indented paragraph
+.\" TP hanging label
+.TH PPTP 8
+.\" NAME should be all caps, SECTION should be 1-8, maybe w/ subsection
+.\" other parms are allowed: see man(7), man(1)
+.SH NAME
+pptp \- PPTP driver
+.SH SYNOPSIS
+.B pptp
+.I "<pptp-server-IP> <pptp-options> [ppp-options] ..."
+.SH "DESCRIPTION"
+.LP
+.B pptp
+establishes the client side of a Virtual Private Network (VPN) using
+the Point-to-Point Tunneling Protocol (PPTP).  Use this program to
+connect to an employer's PPTP based VPN, or to certain cable and ADSL
+service providers.
+.LP
+By default, \fBpptp\fR establishes the PPTP call to the PPTP server,
+and then starts an instance of \fBpppd\fR to manage the data transfer.
+However, \fBpptp\fR can also be run as a connection manager within
+\fBpppd\fR.
+.SH OPTIONS
+.LP
+The first non-option argument on the \fBpptp\fR command line must be the host
+name or IP address of the PPTP server.
+.LP
+All long options (starting with "--")
+are interpreted as pptp options, and a fatal error occurs if an 
+unrecognised option is used.
+.LP
+All command-line arguments which do not start
+with "-" are interpreted as ppp options, and passed as is to \fBpppd\fR unless
+\fB--nolaunchpppd\fR is given.
+.TP
+.B \--phone <number>
+Pass <number> to remote host as phone number
+.TP
+.B \--nolaunchpppd
+Do not launch
+.B pppd
+but use stdin as the network connection.  Use this flag when including
+.B pptp
+as a
+.B pppd
+connection process using the
+.B pty
+option.  See EXAMPLES.
+.TP
+.B \--quirks <quirk>
+Work around a buggy PPTP implementation, adopts special case handling for
+particular PPTP servers and ADSL modems.
+Currently recognised values are BEZEQ_ISRAEL only
+.TP
+.B \--debug
+Run in foreground (for debugging with gdb)
+.TP
+.B \--sync
+Enable Synchronous HDLC (pppd must use it too)
+.TP
+.B \--timeout <secs>
+Time to wait for reordered packets (0.01 to 10 secs)
+.TP
+.B \--nobuffer
+Completely disables buffering and reordering of packets.
+Any --timeout specified will be ignored.
+.TP
+.B \--idle-wait <secs>
+Time to wait before sending a control connection echo request.
+The RFC2637 default is 60 seconds.
+.TP
+.B \--max-echo-wait <secs>
+Time to wait for an echo reply before closing the control connection.
+The RFC2637 default is 60 seconds.
+.TP
+.B \--logstring <name>
+Use <name> instead of 'anon' in syslog messages
+.TP
+.B \--localbind <addr>
+Bind to specified IP address instead of wildcard
+.TP
+.B \--loglevel <level>
+Sets the debugging level (0=low, 1=default, 2=high)
+
+.SH "QUIRKS"
+
+.TP
+.B BEZEQ_ISRAEL
+modifies packets to interoperate with Orckit ADSL modems on the BEZEQ
+network in Israel.
+
+.SH "EXAMPLES"
+
+.B Connection to a Microsoft Windows VPN Server
+
+.BR
+pppd noauth nobsdcomp nodeflate mppe-40 mppe-128
+mppe-stateless name domain\\\\\\\\username remotename PPTP
+require-chapms-v2
+pty "pptp 10.0.0.5 --nolaunchpppd"
+.PP
+Note that the \fBchap-secrets\fR file used by \fBpppd\fR must include an entry for domain\\\\username
+
+.SH "STATISTICS"
+The pptp process collects statistics when sending and receiving
+GRE packets. They are intended to be useful for debugging poor PPTP
+performance and for general monitoring of link quality. The statistics
+are cumulative since the pptp process was started.
+.PP
+The statistics can be viewed by sending a SIGUSR1 signal to the
+"GRE-to-PPP Gateway" process, which will cause it to dump them
+to the system logs (at the LOG_NOTICE level). A better way to present
+the statistics to applications is being sought (e.g. SNMP?).
+.PP
+The following statistics are collected at the time of writing (April 2003):
+.TP
+.B rx accepted
+the number of GRE packets successfully passed to PPP
+.TP
+.B rx lost
+the number of packets never received, and presumed lost in the network
+.TP
+.B rx under win
+the number of packets which were duplicates or had old sequence numbers
+(this might be caused by a packet-reordering network if your reordering
+timeout is set too low)
+.TP
+.B rx over win
+the number of packets which were too far ahead in the sequence to be
+reordered (might be caused by loss of more than 300 packets in a row)
+.TP
+.B rx buffered
+the number of packets which were slightly ahead of sequence, and were
+either buffered for reordering, or if buffering is disabled, accepted
+immediately (resulting in the intermediate packets being discarded).
+.TP
+.B rx OS errors
+the number of times where the operating system reported an error when
+we tried to read a packet
+.TP
+.B rx truncated
+the number of times we received a packet which was shorter than the
+length implied by the GRE header
+.TP
+.B rx invalid
+the number of times we received a packet which had invalid or unsupported
+flags set in the header, wrong version, or wrong protocol.
+.TP
+.B rx acks
+the number of pure acknowledgements received (without data). Too many
+of these will waste bandwidth, and might be solved by tuning the remote host.
+.TP
+.B tx sent
+the number of GRE packets sent with data
+.TP
+.B tx failed
+the number of packets we tried to send, but the OS reported an error
+.TP
+.B tx short
+the number of times the OS would not let us write a complete packet
+.TP
+.B tx acks
+the number of times we sent a pure ack, without data
+.TP
+.B tx oversize
+the number of times we couldn't send a packet because it was over
+PACKET_MAX bytes long
+.TP
+.B round trip
+the estimated round-trip time in milliseconds
+
+.SH "SEE ALSO"
+.IR pppd (8)
+.PP
+Documentation in
+.IR /usr/share/doc/pptp
+.SH AUTHOR
+This manual page was written by James Cameron
+<james.cameron@hp.com> from text contributed by Thomas Quinot
+<thomas@debian.org>, for the Debian GNU/Linux system.
+The description of the available statistics was written by Chris Wilson
+<chris@netservers.co.uk>.

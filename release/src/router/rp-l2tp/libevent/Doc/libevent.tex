@@ -1,0 +1,549 @@
+% LIC: GPL
+\documentclass{article}
+\usepackage{epsfig}
+\usepackage[colorlinks]{hyperref}
+\input{style}
+\newcommand{\Le}{\textsf{LibEvent}}
+\newcommand{\Es}{\type{EventSelector}}
+\newcommand{\Eh}{\type{EventHandler}}
+
+\title{\Le{} Programmers Manual}
+\author{David F. Skoll\\\textit{Roaring Penguin Software Inc.}}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+\label{sec:introduction}
+
+Many UNIX programs are event-driven.  They spend most of their time
+waiting for an event, such as input from a file descriptor, expiration
+of a timer, or a signal, and then react to that event.
+
+The standard UNIX mechanisms for writing event-driven programs are
+the \name{select} and \name{poll} system calls, which wait for input
+on a set of file descriptors, optionally with a timeout.
+
+While \name{select} and \name{poll} can be used to write event-driven
+programs, their calling interface is awkward and their level of
+abstraction too low.  \Le{} is built around \name{select}, but
+provides a more pleasant interface for programmers.
+
+\Le{} provides the following mechanisms:
+\begin{itemize}
+\item \textit{Events}, which trigger under user-specified conditions,
+  such as readability/writability of a file descriptor or expiration of
+  a timer.
+\item \textit{Synchronous signal-handling}, which is the ability to
+  defer signal-handling to a safe point in the event-handling loop.
+\item \textit{Syncronous child cleanup}, which lets you defer calls
+  to \name{wait} or \name{waitpid} to a safe point in the event-handling
+  loop.
+\end{itemize}
+
+\section{Overview}
+\label{sec:overview}
+
+Figure~\ref{fig:flow} indicates the overall flow of programs using
+\Le{}.
+\begin{figure}[htbp]
+  \begin{center}
+    \epsfig{file=flow.\eps,width=3in}
+    \caption{\Le{} Flow}
+    \label{fig:flow}
+  \end{center}
+\end{figure}
+
+\begin{enumerate}
+\item Call \name{Event\_CreateSelector} once to create an \emph{Event
+    Selector}.  This is an object which manages event dispatch.
+\item Open file descriptors as required, and call \name{Event\_CreateHandler}
+  to create \emph{Event Handlers} for each descriptor of interest.  You
+  can call \name{Event\_CreateTimerHandler} to create timers which are
+  not associated with file descriptors.
+\item Call \name{Event\_HandleEvent} in a loop.  Presumably, some event
+  will cause the program to exit out of the infinite loop (unless the
+  program is designed never to exit.)
+\end{enumerate}
+
+To use \Le{}, you should \texttt{\#include} the file
+\incfile{libevent/event.h}
+
+\section{Types}
+
+\Le{} defines the following types:
+\begin{itemize}
+\item \Es{} -- a container object which manages event handlers.
+\item \Eh{} -- an object which triggers a callback function when an event
+  occurs.
+\item \type{EventCallbackFunc} -- a prototype for the callback function
+  called by an \Eh{}.
+\end{itemize}
+
+\section{Basic Functions}
+\label{sec:basic-functions}
+
+This section describes the basic \Le{} functions.  Each function is
+described in the following format:
+\function{type}{name}{(\type{type1} \param{arg1}, \type{type2} \param{arg2})}
+{A brief description of the function.  \type{type} is the type of the
+return value and \name{name} is the name of the function.}
+{What the function returns}
+\begin{itemize}
+\item \param{arg1} -- A description of the first argument.
+\item \param{arg2} -- A description of the second argument, etc.
+\end{itemize}
+
+\subsection{Event Selector Creation and Destruction}
+\function{EventSelector *}{Event\_CreateSelector}{(\type{void})}
+{Creates an \Es{} object and returns a pointer to it.
+An \Es{} is an object which keeps track of event handlers.
+You should treat it as an opaque type.}
+{A pointer to the \Es{}, or NULL if out of memory.}
+{None.}
+
+\function{void}{Event\_DestroySelector}{(\type{EventSelector *}\name{es})}
+{Destroys an \Es{} and all associated event handlers.}
+{Nothing.}
+\begin{itemize}
+\item \param{es} -- the \Es{} to destroy.
+\end{itemize}
+
+\subsection{Event Handler Creation and Destruction}
+
+An \Eh{} is an opaque object which contains information about an
+event.  An event may be \emph{triggered} by one or more of three things:
+
+\begin{enumerate}
+\item A file descriptor becomes readable.  That is, \name{select} for
+  readability would return.
+\item A file descriptor becomes writeable.
+\item A timeout elapses.
+\end{enumerate}
+
+When an event triggers, it calls an event callback function.  An
+event callback function looks like this:
+
+\function{void}{functionName}{(\=\type{EventSelector *}\param{es},\\
+\>\type{int} \param{fd},\\
+\>\type{unsigned int} \param{flags},\\
+\>\type{void *}\param{data})}
+{Called when an event handler triggers.}
+{Nothing}
+\begin{itemize}
+\item \param{es} -- the \Es{} to which the event handler belongs.
+\item \param{fd} -- the file descriptor (if any) associated with the event.
+\item \param{flags} -- a bitmask of one or more of the following values:
+  \begin{itemize}
+  \item \texttt{EVENT\_FLAG\_READABLE} -- the descriptor is readable.
+  \item \texttt{EVENT\_FLAG\_WRITEABLE} -- the descriptor is writeable.
+  \item \texttt{EVENT\_FLAG\_TIMEOUT} -- a timeout triggered.
+  \end{itemize}
+\item \param{data} -- an opaque pointer which was passed into
+  \name{Event\_AddHandler}.
+\end{itemize}
+
+\function{EventHandler *}{Event\_AddHandler}{(\=\type{EventSelector *}\param{es},\\
+\>\type{int} \param{fd},\\
+\>\type{unsigned int} \param{flags},\\
+\>\type{EventCallbackFunc} \param{fn},\\
+\>\type{void *}\param{data})}
+{Creates an \Eh{} to handle an event.}
+{An allocated \Eh{}, or NULL if out of memory.}
+\begin{itemize}
+\item \param{es} -- the event selector.
+\item \param{fd} -- the file descriptor to watch.  \param{fd} must be
+  a legal file descriptor for use inside \name{select}.
+\item \param{flags} -- a bitmask whose value is one of
+  \texttt{EVENT\_FLAG\_READABLE}, \texttt{EVENT\_FLAG\_WRITEABLE} or
+  \texttt{EVENT\_FLAG\_READABLE~|~EVENT\_FLAG\_WRITEABLE}.  \param{flags}
+  specifies the condition(s) under which to trigger the event.
+\item \param{fn} -- the callback function to invoke when the event triggers.
+\item \param{data} -- a pointer which is passed unchanged as the last
+  parameter of \param{fn} when the event triggers.
+\end{itemize}
+
+\function{EventHandler *}{Event\_AddTimerHandler}{(\=\type{EventSelector *}\param{es},\\
+\>\type{struct timeval} \param{t},\\
+\>\type{EventCallbackFunc} \param{fn},\\
+\>\type{void *}\param{data})}
+{Creates an \Eh{} to handle a timeout.  After the timeout elapses, the
+  callback function is called once only, and then the \Eh{} is automatically
+  destroyed.}
+{An allocated \Eh{}, or NULL if out of memory.}
+\begin{itemize}
+\item \param{es} -- the event selector.
+\item \param{t} -- the time after which to trigger the event.  \param{t}
+  specifies how long \emph{after} the current time to trigger the event.
+\item \param{fn} -- the callback function to invoke when the event triggers.
+  A timer handler function is always called with its \param{flags} set
+  to \texttt{EVENT\_FLAG\_TIMER~|~EVENT\_FLAG\_TIMEOUT}.
+\item \param{data} -- a pointer which is passed unchanged as the last
+  parameter of \param{fn} when the event triggers.
+\end{itemize}
+
+\function{EventHandler *}{Event\_AddHandlerWithTimeout}
+{(\=\type{EventSelector *}\param{es},\\
+\>\type{int} \param{fd},\\
+\>\type{unsigned int} \param{flags},\\
+\>\type{struct timeval} \param{t},\\
+\>\type{EventCallbackFunc} \param{fn},\\
+\>\type{void *}\param{data})}
+{Creates an \Eh{} to handle an event.  The event is called when a file
+  descriptor is ready or a timeout elapses.  This function may be viewed
+  as a combination of \name{Event\_AddHandler} and \name{Event\_AddTimerHandler}.}
+{An allocated \Eh{}, or NULL if out of memory.}
+\begin{itemize}
+\item \param{es} -- the event selector.
+\item \param{fd} -- the file descriptor to watch.  \param{fd} must be
+  a legal file descriptor for use inside \name{select}.
+\item \param{flags} -- a bitmask whose value is one of
+  \texttt{EVENT\_FLAG\_READABLE}, \texttt{EVENT\_FLAG\_WRITEABLE} or
+  \texttt{EVENT\_FLAG\_READABLE~|~EVENT\_FLAG\_WRITEABLE}.  \param{flags}
+  specifies the condition(s) under which to trigger the event.
+\item \param{t} -- the time after which to trigger the event.  If the event
+  is triggered because of a timeout, the callback function's \param{flags}
+  has the \texttt{EVENT\_FLAG\_TIMEOUT} bit set.
+\item \param{fn} -- the callback function to invoke when the event triggers.
+\item \param{data} -- a pointer which is passed unchanged as the last
+  parameter of \param{fn} when the event triggers.
+\end{itemize}
+
+\function{int}{Event\_DelHandler}
+{(\=\type{EventSelector *}\param{es},\\
+\>\type{EventHandler *}\param{eh})}
+{Deletes an \Eh{} and frees its memory.  A handler may be deleted from
+  inside a handler callback; \Le{} defers the actual deallocation of
+  resources to a safe time.}
+{0 if the handler was found and deleted, non-zero otherwise.  A non-zero
+  return value indicates a critical internal error.}
+\begin{itemize}
+\item \param{es} -- the event selector which contains \param{eh}.
+\item \param{eh} -- the event handler to delete.
+\end{itemize}
+
+\subsection{Event Handler Access Functions}
+
+The functions in this section access or modify fields in the
+\Eh{} structure.  You should \emph{never} access or modify fields
+in an \Eh{} except with these functions.
+
+\function{void}{Event\_ChangeTimeout}
+{(\=\type{EventHandler *}\param{eh},\\
+  \>\type{struct timeval} \param{t})}
+{Changes the timeout of \param{eh} to be \param{t} seconds from now.  If
+  \param{eh} was not created with \name{Event\_AddTimerHandler} or
+  \name{Event\_AddHandlerWithTimeout}, then this function has no effect.}
+{Nothing}
+\begin{itemize}
+\item \param{eh} -- the \Eh{} whose timeout is to be modified.
+\item \param{t} -- new value of timeout, relative to current time.
+\end{itemize}
+
+\function{EventCallbackFunc}{Event\_GetCallback}
+{(\type{EventHandler *}\param{eh})}
+{Returns the callback function associated with \param{eh}.}
+{A pointer to the callback function associated with \param{eh}.}
+\begin{itemize}
+\item \param{eh} -- the \Eh{} whose callback pointer is desired.
+\end{itemize}
+
+\function{void *}{Event\_GetData}
+{(\type{EventHandler *}\param{eh})}
+{Returns the data associated with \param{eh} (the \param{data} argument
+  to the \ldots{}AddHandler\ldots{} function.)}
+{The data pointer associated with \param{eh}.}
+\begin{itemize}
+\item \param{eh} -- the \Eh{} whose data pointer is desired.
+\end{itemize}
+
+\function{void}{Event\_SetCallbackAndData}
+{(\=\type{EventHandler *}\param{eh},\\
+  \>\type{EventCallbackFunc} \param{fn},\\
+  \>\type{void *}\param{data})}
+{Sets the callback function and data associated with \param{eh}.}
+{Nothing.}
+\begin{itemize}
+\item \param{eh} -- the \Eh{} whose callback function and data pointer are
+  to be set.
+\item \param{fn} -- the new value for the callback function.
+\item \param{data} -- the new value for the data pointer.
+\end{itemize}
+
+\section{Signal Handling}
+
+In UNIX, signals can arrive asynchronously, and a signal-handler
+function may be called at an unsafe time, leading to race conditions.
+\Le{} has a mechanism to call a handler function during
+\name{Event\_HandleEvent} so that the handler is dispatched just like
+any other event handler.  In this way, the signal handler knows that
+it is safe to access shared data without interference from another
+thread of control.
+
+\Le{} implements this \emph{synchronous signal handling} by setting up
+a UNIX pipe, and writing to the write-end inside the asynchronous
+handler.  The read end then becomes ready for reading, and triggers
+a normal event.  \Le{} encapsulates all the details for you in
+two functions.
+
+\function{int}{Event\_HandleSignal}
+{(\=\type{EventSelector *}\param{es},\\
+  \>\type{int} \param{sig},\\
+  \>\type{void (*}\param{handler}\type{)(int} \param{sig}\type{)})}
+{Arranges for the function \param{handler} to be called when signal
+  \param{sig} is received.  \param{sig} is typically a constant from
+  \incfile{signal.h}, such as \texttt{SIGHUP}, \texttt{SIGINT}, etc.
+  The \param{handler} function is not called in the context of a UNIX
+  signal handler; rather, it is called soon after the signal has been
+  received as part of the normal \name{Event\_HandleEvent} loop.
+
+  As a side-effect of calling this function, a UNIX signal handler
+  is established for \param{sig}.  Any existing signal disposition is
+  forgotten.  If \param{sig} is \texttt{SIGCHLD}, then the
+  \texttt{SA\_NOCLDSTOP} flag is set in the \param{struct sigaction} passed
+  to the low-level \name{sigaction} function.}
+{0 on success; -1 on failure.  Failure is usually due to a UNIX system
+  call failing or a lack of memory.}
+\begin{itemize}
+\item \param{es} -- the event selector.
+\item \param{sig} -- the signal we wish to handle.
+\item \param{handler} -- the function to call.  It is passed a single
+  argument---the signal which is being handled.
+\end{itemize}
+
+\function{int}{Event\_HandleChildExit}
+{(\=\type{EventSelector *}\param{es},\\
+  \>\type{pid\_t} \param{pid},\\
+  \>\type{void (*}\param{handler}\type{)(pid\_t} \param{pid}, \type{int} \param{status}, \type{void *}\param{data}\type{)},\\
+  \>\type{void *}\param{data})}
+{Arranges for \param{handler} to be called when the child process with
+  process-ID \param{pid} exits.  \param{pid} must be the return
+  value of a successful call to \name{fork}.
+
+  When the process with process-ID \param{pid} exits, \Le{} catches
+  the \texttt{SIGCHILD} signal and at some point in the event-handling
+  loop, calls \param{handler} with three arguments:  \param{pid} is
+  the process-ID of the process which terminated.  \param{status} is
+  the exit status as returned by the \name{waitpid} system call.  And
+  \param{data} is passed unchanged from the call to \name{Event\_HandleChildExit}.}
+{0 on success; -1 on failure.  Failure is the result of lack of memory or
+  the failure of a UNIX system call.}
+\begin{itemize}
+\item \param{es} -- the event selector.
+\item \param{pid} -- process-ID of the child process.
+\item \param{handler} -- the function to call when the process exits.
+\item \param{data} -- a pointer which is passed unchanged to \param{handler}
+  when the process exits.
+\end{itemize}
+
+\section{Stream-Oriented Functions}
+
+The functions presented in the previous sections are appropriate for
+simple events, especially those associated with datagram sockets.  A
+higher level of abstraction is required for stream-oriented descriptors.
+It would be nice for \Le{} to invoke a callback function when a certain
+number of bytes or a specific delimiter have been read from a stream,
+or when an entire buffer's worth of data has been written to a stream.
+
+The functions in this section all (unfortunately) have the string
+\texttt{Tcp} in their names, because they were originally used with TCP
+sockets.  However, they may be used with any stream-oriented sockets,
+including UNIX-domain sockets.
+
+All of the stream-oriented functions are built on the simpler event
+functions described previously.  They simply add an extra layer of
+convenience.  To use the stream-oriented functions,
+\texttt{\#include} the file \incfile{libevent/event\_tcp.h}.
+
+\section{Stream-Oriented Data Types}
+
+The stream-oriented functions use the following publicly-accessible type:
+\begin{itemize}
+\item \type{EventTcpState} -- an opaque object which records the state
+  of stream-oriented event handlers.
+\end{itemize}
+
+\section{Stream-Oriented Functions}
+\label{sec:basic-stream-oriented-functions}
+
+The stream-oriented functions may be broken into two main groups:
+Connection establishment, and data transfer.
+
+\subsection{Connection Establishment}
+
+\function{EventHandler *}{EventTcp\_CreateAcceptor}
+{(\=\type{EventSelector *}\param{es},\\
+  \>\type{int} \param{fd},\\
+  \>\type{EventTcpAcceptFunc} \param{f})}
+{Creates an event handler to accept incoming connections on the listening
+  descriptor \param{fd}.  Each time an incomming connection is accepted,
+  the function \param{f} is called.}
+{An \Eh{} on success; NULL on failure.}
+\begin{itemize}
+\item \param{es} -- the event selector.
+\item \param{fd} -- a listening socket (i.e., one for which the
+  \name{listen}(2) system call has been called.)
+\item \param{f} -- a function which is called each time an incoming
+  connection is accepted.  The function \param{f} should look like this:
+
+  \type{void} \name{f}{(\type{EventSelector *}\param{es}, \type{int} \param{fd})}
+
+  In this case, \param{es} is the \Es{}, and \param{fd} is the new file
+  descriptor returned by \name{accept}(2).
+\end{itemize}
+
+\function{void}{EventTcp\_Connect}
+{(\=\type{EventSelector *}\param{es},\\
+  \>\type{int} \param{fd},\\
+  \>\type{struct sockaddr const *}\param{addr},\\
+  \>\type{socklen\_t} \param{addrlen},\\
+  \>\type{EventTcpConnectFunc} \param{f},\\
+  \>\type{int} \param{timeout},\\
+  \>\type{void *}\param{data})}
+{Attempts to connect the socket \param{fd} to \param{addr} using the
+  \name{connect}(2) system call.}
+{Nothing.  See below for error-handling notes.}
+\begin{itemize}
+\item \param{es} -- the event selector.
+\item \param{fd} -- a socket which is suitable for passing to
+  \name{connect}(2).
+\item \param{addr} -- the server address to connect to.
+\item \param{addrlen} -- the length of the server address.  The
+  three parameters \param{fd}, \param{addr} and \param{addrlen} are passed
+  directly to \name{connect}(2).
+\item \param{f} -- A function which is called when the connection succeeds
+  (or if an error occurs.)  The function \param{f} looks like this:
+
+  \type{void} \name{f}{(\type{EventSelector *}\param{es}, \type{int} \param{fd}, \type{int} \param{flag}, \type{void *}\param{data})}
+
+  The parameters of \param{f} have the following meaning:
+  \begin{itemize}
+  \item \param{es} -- the event selector.
+  \item \param{fd} -- the descriptor.
+  \item \param{flag} -- a flag indicating what happened.  It may contain
+    one of the following values:
+    \begin{itemize}
+    \item \param{EVENT\_TCP\_FLAG\_IOERROR} -- the \name{connect} system call
+      failed.
+    \item \param{EVENT\_TCP\_FLAG\_COMPLETE} -- the \name{connect} system
+      call succeeded and the descriptor is now connected.
+    \item \param{EVENT\_TCP\_FLAG\_TIMEOUT} -- the \name{connect} system call
+      did not complete within the specified timeout.
+    \end{itemize}
+  \item \param{data} -- a copy of the \param{data} given to
+    \name{EventTcp\_Connect}.
+  \end{itemize}
+\item \param{timeout} -- a timeout value in seconds.  If \name{connect} does
+  not complete withing \param{timeout} seconds, the \param{f} is called
+  with a flag of \param{EVENT\_TCP\_FLAG\_TIMEOUT}.
+\item \param{data} -- an opaque pointer passed unchanged to \param{f}.
+\end{itemize}
+
+\subsection{Data Transfer}
+
+There are two stream-oriented functions for data transfer:  One for
+reading and one for writing.
+
+\function{EventTcpState *}{EventTcp\_ReadBuf}
+{(\=\type{EventSelector *}\param{es},\\
+  \>\type{int} \param{fd},\\
+  \>\type{int} \param{len},\\
+  \>\type{int} \param{delim},\\
+  \>\type{EventTcpIOFinishedFunc} \param{f},\\
+  \>\type{int} \param{timeout},\\
+  \>\type{void *}\param{data})}
+{Arranges events to read up to \param{len} characters from the file
+  descriptor \param{fd}.  If \param{delim} is non-negative, reading stops
+  when the characters \param{delim} is encountered.  After \param{len}
+  characters have been read (or \param{delim} has been encountered), or
+  after \param{timeout} seconds have elapsed, the function \param{f} is
+  called.}
+{An \type{EventTcpState} object on success; NULL on failure.  Failure
+  is usually due to failure of a UNIX system call or lack of memory.}
+\begin{itemize}
+\item \param{es} -- the event selector.
+\item \param{fd} -- the descriptor to read from.
+\item \param{len} -- the maximum number of bytes to read.
+\item \param{delim} -- if negative, reading continues until exactly
+  \param{len} bytes have been read or the operation times out.  If
+  non-negative, reading stops when \param{len} bytes have been read
+  or the characters \param{delim} is encountered, whichever comes first.
+  Note that supplying a non-negative \param{delim} causes \Le{} to
+  invoke the \name{read}(2) system call for \emph{each character}; if
+  you are expecting large amounts of data before the delimiter, this
+  could be inefficient.
+\item \param{f} -- a function which is called when reading has finished,
+  an error occurs, or the operation times out.  The function \param{f}
+  looks like this:
+
+  \type{void}~\name{f}{(\type{EventSelector~*}\param{es},~\type{int}~\param{fd},~\type{char~*}\param{int~buf},~\type{int}~\param{len},~\type{int}~\param{flag},~\type{void~*}\param{data})}
+
+  The arguments passed to \param{f} are:
+  \begin{itemize}
+  \item \param{es} -- the event selector.
+  \item \param{fd} -- the file descriptor that was passed to
+    \name{EventTcp\_ReadBuf}.  If no more activity on \param{fd} is
+    required, then you should \name{close} it inside \param{f}.
+  \item \param{buf} -- a dynamically-allocated buffer holding the data
+    which were read from \param{fd}.  \emph{Do not} free this buffer;
+    \Le{} will take care of it.  \emph{Do not} store the pointer value;
+    if you need a copy of the data, you must copy the whole buffer.
+  \item \param{len} -- the number of bytes actually read from \param{fd}.
+  \item \param{flag} -- a flag indicating what happened.  It can have
+    one of four values:
+    \begin{itemize}
+    \item \param{EVENT\_TCP\_FLAG\_COMPLETE} -- the operation completed
+      successfully.
+    \item \param{EVENT\_TCP\_FLAG\_IOERROR} -- an error occurred during
+      a \name{read}(2) or some other system call.
+    \item \param{EVENT\_TCP\_FLAG\_EOF} -- EOF was detected before all
+      bytes were read.  Nevertheless, \param{len} and \param{buf} have
+      valid contents.
+    \item \param{EVENT\_TCP\_FLAG\_TIMEOUT} -- the operation timed out
+      before all bytes were read.  Nevertheless, \param{len} and
+      \param{buf} have valid contents.
+    \end{itemize}
+  \item \param{data} -- a copy of the \param{data} pointer passed to
+    \name{EventTcp\_ReadBuf}.
+  \end{itemize}
+\item \param{timeout} -- if positive, \Le{} times the operation out
+  after \param{timeout} seconds.
+\item \param{data} -- an opaque pointer which is passed as-is to
+  \param{f}.
+\end{itemize}
+
+\function{EventTcpState *}{EventTcp\_WriteBuf}
+{(\=\type{EventSelector *}\param{es},\\
+  \>\type{int} \param{fd},\\
+  \>\type{char *}\param{buf},\\
+  \>\type{int} \param{len},\\
+  \>\type{EventTcpIOFinishedFunc} \param{f},\\
+  \>\type{int} \param{timeout},\\
+  \>\type{void *}\param{data})}
+{Arranges events to write \param{len} characters from the buffer
+  \param{buf} to the file
+  descriptor \param{fd}.  After \param{len}
+  characters have been written, an error occurs, or
+  \param{timeout} seconds have elapsed, the function \param{f} is
+  called.}
+{An \type{EventTcpState} object on success; NULL on failure.  Failure
+  is usually due to failure of a UNIX system call or lack of memory.}
+\begin{itemize}
+\item \param{es} -- the event selector.
+\item \param{fd} -- the descriptor to write to.
+\item \param{buf} -- buffer containing characters to write.
+  \name{EventTcp\_WriteBuf} allocates its own private copy of the buffer;
+  you may free or reuse the buffer once \name{EventTcp\_WriteBuf} returns.
+\item \param{len} -- the number of bytes to write.
+\item \param{f} -- a function which is called when reading has finished,
+  an error occurs, or the operation times out.  The function \param{f}
+  is as described in \name{EventTcp\_ReadBuf}.  As a special case,
+  you may supply NULL as the value for \param{f}.  In this case,
+  \name{EventTcp\_WriteBuf} calls \name{close}(2) on the descriptor
+  \param{fd} once writing has finished or timed out, or if an error
+  occurs.
+\item \param{timeout} -- if positive, \Le{} times the operation out
+  after \param{timeout} seconds.
+\item \param{data} -- an opaque pointer which is passed as-is to
+  \param{f}.
+\end{itemize}
+\end{document}

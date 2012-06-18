@@ -1,0 +1,15 @@
+Similar to SNAT/DNAT depending on chain: it takes a range of addresses
+(`--to 1.2.3.4-1.2.3.7') and gives a client the same
+source-/destination-address for each connection.
+.TP
+.BI "--to " "<ipaddr>-<ipaddr>"
+Addresses to map source to. May be specified more than once for
+multiple ranges.
+.TP
+.B "--nodst"
+Don't use the destination-ip in the calculations when selecting the
+new source-ip
+.TP
+.B "--random"
+Port mapping will be forcely randomized to avoid attacks based on 
+port prediction (kernel >= 2.6.21).

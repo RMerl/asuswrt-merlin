@@ -1,0 +1,66 @@
+ ***************************************************************************
+ * LPRng - An Extended Print Spooler System
+ *
+ * Copyright 1988-1995 Patrick Powell, San Diego State University
+ *     papowell@sdsu.edu
+ * See LICENSE for conditions of use.
+ *
+ ***************************************************************************
+ * MODULE: TESTSUPPORT/README
+ * PURPOSE: explains how to test LPRng
+ **************************************************************************/
+
+Patrick Powell
+Sun Jul  9 18:07:56 PDT 1995
+
+These files set up a mini-lpr system.  The following assumptions are made.
+
+1. You are going to install all the working files in /tmp/LPD.
+2. You will copy all of the lpd files as well to /tmp/LPD
+3. You will set your path to:
+    PATH=/tmp/LPD;$PATH    Bourne Shell
+    set path=(/tmp/LPD $path )  C Shell
+4. You can now run the LPD software in test mode.
+
+Rough Cut Installation:
+ This is for the adventurous!
+
+1. Go back to your executable directory,  and run checkpc -T /dev/<serialline>
+   Read the results of the tests.  If these do not work,  read the
+   instructions in src/Makefile or given by the checkpc output. These
+   tests must pass or the test version will not really work.
+   (Note: the SETUID and serial line locking are not really essential, but
+   help on systems).  See details in top level README.
+
+
+2. set HOST to the FQDN
+   set USER to your user name
+   Bourne Shell           C Shell
+    HOST=host.domail       setenv HOST host.domain
+    USER=yourname          setenv USER yourname
+
+3. run the Makefile in the TESTSUPPORT
+   cd TESTSUPPORT
+   make
+
+4. Set your path to have /tmp/LPD as the first entry
+   Bourne Shell           C Shell
+    PATH=/tmp/LPD;$PATH     set path=(/tmp/LPD $path)
+
+5. cd /tmp/LPD
+   Start up the server
+   lpd -F -D2  (in one window or whatever)         
+
+   Try out some utilities
+   lpq
+   lpq -a
+   echo hi |lpr
+   lpq
+
+6. Kill off the server
+   run:
+     checkpc -f
+   to update the ownerships, etc.
+   Repeat the previous step in testing.
+
+7. You can now play with the test setup: trying modify the lpd.perms

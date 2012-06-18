@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<style>
+html{
+	margin:0 0;
+	padding:0px;
+	width:100%;
+	height:100%;
+}
+body{
+	display: block;
+}
+</style>
+<script type="text/javascript" src="/smb/js/tools.js"></script>
+<script type="text/javascript">
+var m = new lang();
+var g_storage = new myStorage();
+
+$("document").ready(function() {
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	$('input#dir_name').attr("value", m.getString('default_dir_name'));
+	$('button#ok').text(m.getString('btn_ok'));
+	$('button#cancel').text(m.getString('btn_cancel'));
+	
+});
+
+function doOK(e) {
+	var name = $('input#dir_name').val();
+	
+	if(name==''){
+		alert(getErrorMsg('blankchar'));
+		return;
+	}
+	
+	var regex = /[|~\/\\?*"<>&:`.]/g;
+ 	if(name.match(regex)) {
+ 		alert(getErrorMsg('illegalchar'));
+  	return;
+ 	}
+ 	
+	parent.doMKDIR(name);
+};
+
+function doCancel(e) {
+	parent.closeJqmWindow();
+};
+
+function onKeyHandler(e){
+	if(e.keyCode==13)
+		doOK(e);
+}
+</script>
+</head>
+<body>
+
+<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+	<tr>
+  	<td>
+    <div id="mainRegion">
+    	<input id='dir_name' type='text' value='' style='width:180px' maxlength='50' onKeyDown='onKeyHandler(event);'>
+		</div>
+    </td>    
+  </tr>
+  <tr style='height:20px'></tr>
+  <tr>
+  	<td>
+  	<div class="table_block_footer" style="text-align:right">
+    	<button id="ok" class='btnStyle' onClick="doOK();">OK</button>
+      <button id="cancel" class="btnStyle" onClick="doCancel();">Close</button>
+    </div>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

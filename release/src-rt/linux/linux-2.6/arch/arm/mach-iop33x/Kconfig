@@ -1,0 +1,29 @@
+if ARCH_IOP33X
+
+menu "IOP33x Implementation Options"
+
+comment "IOP33x Platform Types"
+
+config ARCH_IQ80331
+	bool "Enable support for IQ80331"
+	help
+	  Say Y here if you want to run your kernel on the Intel IQ80331
+	  evaluation kit for the IOP331 chipset.
+
+config MACH_IQ80332
+	bool "Enable support for IQ80332"
+	help
+	  Say Y here if you want to run your kernel on the Intel IQ80332
+	  evaluation kit for the IOP332 chipset.
+
+config IOP3XX_ATU
+	bool "Enable the PCI Controller"
+	default y
+	help
+	  Say Y here if you want the IOP to initialize its PCI Controller.
+	  Say N if the IOP is an add in card, the host system owns the PCI
+	  bus in this case.
+
+endmenu
+
+endif

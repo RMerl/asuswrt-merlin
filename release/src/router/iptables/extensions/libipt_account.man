@@ -1,0 +1,47 @@
+Account traffic for all hosts in defined network/netmask.
+
+Features:
+
+- long (one counter per protocol TCP/UDP/IMCP/Other) and short statistics
+
+- one iptables rule for all hosts in network/netmask
+
+- loading/saving counters (by reading/writting to procfs entries)
+
+.TP
+.BI "--aaddr " "network/netmask"
+defines network/netmask for which make statistics.
+.TP
+.BI "--aname " "name"
+defines name of list where statistics will be kept. If no is
+specified DEFAULT will be used.
+.TP
+.B "--ashort"
+table will colect only short statistics (only total counters
+without splitting it into protocols.
+.P
+Example usage:
+
+account traffic for/to 192.168.0.0/24 network into table mynetwork:
+
+# iptables -A FORWARD -m account --aname mynetwork --aaddr 192.168.0.0/24
+
+account traffic for/to WWW serwer for 192.168.0.0/24 network into table mywwwserver:
+
+# iptables -A INPUT -p tcp --dport 80
+  -m account --aname mywwwserver --aaddr 192.168.0.0/24 --ashort
+
+# iptables -A OUTPUT -p tcp --sport 80
+  -m account --aname mywwwserver --aaddr 192.168.0.0/24 --ashort
+
+read counters:
+
+# cat /proc/net/ipt_account/mynetwork
+# cat /proc/net/ipt_account/mywwwserver
+
+set counters:
+
+# echo "ip = 192.168.0.1 packets_src = 0" > /proc/net/ipt_account/mywwserver
+
+Webpage:
+  http://www.barbara.eu.org/~quaker/ipt_account/

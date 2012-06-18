@@ -1,0 +1,29 @@
+--- gcc-4_3-branch/gcc/ChangeLog	2010/09/01 12:19:11	163729
++++ gcc-4_3-branch/gcc/ChangeLog	2010/09/01 12:20:15	163730
+@@ -1,3 +1,8 @@
++2010-09-01  Eric Botcazou  <ebotcazou@adacore.com>
++
++	* gimplify.c (gimplify_init_constructor): Do not create a temporary for
++	a volatile LHS if the constructor has only one element.
++
+ 2010-05-22  Release Manager
+ 
+ 	* GCC 4.3.5 released.
+--- gcc-4_3-branch/gcc/gimplify.c	2010/09/01 12:19:11	163729
++++ gcc-4_3-branch/gcc/gimplify.c	2010/09/01 12:20:15	163730
+@@ -3314,11 +3314,12 @@
+ 	      }
+ 	  }
+ 
+-	/* If the target is volatile and we have non-zero elements
+-	   initialize the target from a temporary.  */
++	/* If the target is volatile, we have non-zero elements and more than
++	   one field to assign, initialize the target from a temporary.  */
+ 	if (TREE_THIS_VOLATILE (object)
+ 	    && !TREE_ADDRESSABLE (type)
+-	    && num_nonzero_elements > 0)
++	    && num_nonzero_elements > 0
++	    && VEC_length (constructor_elt, elts) > 1)
+ 	  {
+ 	    tree temp = create_tmp_var (TYPE_MAIN_VARIANT (type), NULL);
+ 	    TREE_OPERAND (*expr_p, 0) = temp;

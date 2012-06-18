@@ -1,0 +1,300 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>                                     
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<meta HTTP-EQUIV="Expires" CONTENT="-1">
+<link rel="stylesheet" type="text/css" href="/form_style.css">
+<link rel="stylesheet" type="text/css" href="qis_style.css">
+<script type="text/JavaScript" src="/state.js"></script>
+<script type="text/JavaScript" src="/general.js"></script>
+<script type="text/JavaScript" src="/form.js"></script>
+<script type="text/JavaScript" src="/help.js"></script>
+<style type="text/css">
+.hintstyle:link{
+	cursor:help;
+	text-decoration: none;
+	color: white;
+}
+</style>
+<script type="text/JavaScript">
+function QKInternet_load_body(){
+	parent.document.title = "<#Web_Title#> - <#QKSet_ISP_head#>";
+	parent.set_step("t2");
+	display_lan_dns(<% nvram_get("lan_dnsenable_x"); %>);
+	change_ip_setting('<% nvram_get("lan_proto"); %>');
+	document.form.lan_proto_radio[0].checked = 1;
+	document.form.lan_proto_radio[1].checked = 0;
+	change_ip_setting('dhcp');
+	document.form.lan_dnsenable_x_radio[0].checked = 1;
+	document.form.lan_dnsenable_x_radio[1].checked = 0;
+	
+	document.getElementById("nextButton").focus();
+}
+
+function display_lan_dns(flag){
+	/*if(flag == "1")
+		document.form.lan_dnsenable_x_radio[0].focus();
+	else	
+		document.form.lan_dnsenable_x_radio[1].focus();*/
+	inputCtrl(document.form.lan_dns1_x, conv_flag(flag));
+	inputCtrl(document.form.lan_dns2_x, conv_flag(flag));
+}
+
+function change_ip_setting(flag){
+	if(flag == "dhcp"){
+		document.form.lan_proto_radio[0].focus();
+		inputCtrl(document.form.lan_dnsenable_x_radio[0], 1);
+		inputCtrl(document.form.lan_dnsenable_x_radio[1], 1);
+		flag = 1; 
+	}
+	else if(flag == "static"){
+		document.form.lan_proto_radio[1].focus();
+		document.form.lan_dnsenable_x_radio[1].checked = 1;
+		inputCtrl(document.form.lan_dnsenable_x_radio[0], 0);
+		inputCtrl(document.form.lan_dnsenable_x_radio[1], 0);
+		flag = 0; 
+		display_lan_dns(flag)
+	}
+
+	inputCtrl(document.form.lan_ipaddr, conv_flag(flag));
+	inputCtrl(document.form.lan_netmask, conv_flag(flag));
+	inputCtrl(document.form.lan_gateway, conv_flag(flag));
+}
+
+function conv_flag(_flag){
+	if(_flag == 0)
+		_flag = 1;
+	else
+		_flag = 0;		
+	return _flag;
+}
+
+function submitForm(){
+	if(validForm()){
+		parent.document.QKform.lan_ipaddr.value = document.form.lan_ipaddr.value;
+		parent.document.QKform.lan_proto.value = document.form.lan_proto.value;
+		parent.document.QKform.lan_netmask.value = document.form.lan_netmask.value;
+		parent.document.QKform.lan_gateway.value = document.form.lan_gateway.value;
+		parent.document.QKform.lan_dnsenable_x.value = document.form.lan_dnsenable_x.value;		
+		parent.document.QKform.lan_dns1_x.value = document.form.lan_dns1_x.value;
+		parent.document.QKform.lan_dns2_x.value = document.form.lan_dns2_x.value;
+		parent.document.QKform.sw_mode.value = 3;
+
+		if('<% nvram_get("sw_mode"); %>' == '1'){
+			parent.document.QKform.lan_ipaddr_rt.value = '<% nvram_get("lan_ipaddr"); %>';
+			parent.document.QKform.lan_netmask_rt.value = '<% nvram_get("lan_netmask"); %>';
+		}
+
+		location.href = document.form.next_page.value;
+	}
+}
+
+function validForm(){
+	// test if LAN IP is a private IP.
+	var A_class_start = inet_network("10.0.0.0");
+	var A_class_end = inet_network("10.255.255.255");
+	var B_class_start = inet_network("172.16.0.0");
+	var B_class_end = inet_network("172.31.255.255");
+	var C_class_start = inet_network("192.168.0.0");
+	var C_class_end = inet_network("192.168.255.255");
+	
+	var ip_obj = document.form.lan_ipaddr;
+	var ip_num = inet_network(ip_obj.value);
+	var ip_class = "";
+
+	if(document.form.lan_dnsenable_x_radio[0].checked == 1)
+		document.form.lan_dnsenable_x.value = 1;
+	else
+		document.form.lan_dnsenable_x.value = 0;
+
+	if(document.form.lan_proto_radio[0].checked == 1){
+		document.form.lan_proto.value = "dhcp";
+		return true;
+	}
+	else
+		document.form.lan_proto.value = "static";
+	
+	if(ip_num > A_class_start && ip_num < A_class_end)
+		ip_class = 'A';
+	else if(ip_num > B_class_start && ip_num < B_class_end)
+		ip_class = 'B';
+	else if(ip_num > C_class_start && ip_num < C_class_end)
+		ip_class = 'C';
+	else{
+		alert(ip_obj.value+" <#JS_validip#>");
+		ip_obj.value = "";
+		ip_obj.focus();
+		ip_obj.select();
+		return false;
+	}
+	
+	// test if netmask is valid.
+	var netmask_obj = document.form.lan_netmask;
+	var netmask_num = inet_network(netmask_obj.value);
+	var netmask_reverse_num = ~netmask_num;
+	var default_netmask = "";
+	var wrong_netmask = 0;
+
+	if(netmask_num < 0) wrong_netmask = 1;	
+
+	if(ip_class == 'A')
+		default_netmask = "255.0.0.0";
+	else if(ip_class == 'B')
+		default_netmask = "255.255.0.0";
+	else
+		default_netmask = "255.255.255.0";
+	
+	var test_num = netmask_reverse_num;
+	while(test_num != 0){
+		if((test_num+1)%2 == 0)
+			test_num = (test_num+1)/2-1;
+		else{
+			wrong_netmask = 1;
+			break;
+		}
+	}
+	if(wrong_netmask == 1){
+		alert(netmask_obj.value+" <#JS_validip#>");
+		netmask_obj.value = default_netmask;
+		netmask_obj.focus();
+		netmask_obj.select();
+		return false;
+	}
+	
+	var subnet_head = getSubnet(ip_obj.value, netmask_obj.value, "head");
+	var subnet_end = getSubnet(ip_obj.value, netmask_obj.value, "end");
+	
+	if(ip_num == subnet_head || ip_num == subnet_end){
+		alert(ip_obj.value+" <#JS_validip#>");
+		ip_obj.value = "";
+		ip_obj.focus();
+		ip_obj.select();
+		return false;
+	}
+	return true;
+}
+
+function done_validating(action){
+	refreshpage();
+}
+
+function back_to_Adv(){
+	parent.location.href = '/Advanced_OperationMode_Content.asp';
+}
+
+function submitenter(myfield,e)
+{	
+	var keycode;
+	if (window.event) keycode = window.event.keyCode;
+	else if (e) keycode = e.which;
+	else return true;
+
+	if (keycode == 13){
+		submitForm();
+   	return false;
+  }
+	else
+   	return true;
+}
+</script>
+</head>
+
+<body onLoad="QKInternet_load_body();" onunload="" onKeyPress="submitenter(this,event)">
+<form method="post" name="form" action="/start_apply.htm" onsubmit="return submitForm();">
+<input type="hidden" name="current_page" value="QIS_lanip.htm">
+<input type="hidden" name="next_page" value="QIS_wireless.htm">   
+<input type="hidden" name="prev_page" value="">
+<input type="hidden" name="flag" value="adv_ap_mode">
+<input type="hidden" name="lan_proto" value="<% nvram_get("lan_proto"); %>">
+<input type="hidden" name="lan_dnsenable_x" value="<% nvram_get("lan_dnsenable_x"); %>">
+<div class="QISmain">
+<div class="formfonttitle" style="padding:6 0 0 10;">
+		<div>
+			<table width="730px">
+				<tr>
+					<td align="left">
+						<!--span class="description_down">Configure the LAN IP of <% nvram_get("productid"); %></span-->
+						<span class="description_down"><#LANHostConfig_display1_sectionname#></span>
+					</td>
+					<td align="right">
+						<img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+</div>
+<br/>
+
+		<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="padding-left:100px;">
+			<tr>
+			<th width="50%"><#LANHostConfig_x_LAN_DHCP_itemname#></th>
+			<td>
+				<input type="radio" name="lan_proto_radio" class="input" onclick="change_ip_setting('dhcp')" value="dhcp"><#checkbox_Yes#>
+				<input type="radio" name="lan_proto_radio" class="input" onclick="change_ip_setting('static')" value="static"><#checkbox_No#>
+			</td>
+			</tr>
+            
+		  <tr>
+			<th>
+			  <a class="hintstyle" href="javascript:void(0);" onClick="openHint(4,1);"><#LANHostConfig_IPRouters_itemname#></a>
+			</th>			
+			<td>
+			  <input type="text" maxlength="15" class="input_15_table" id="lan_ipaddr" name="lan_ipaddr" value="<% nvram_get("lan_ipaddr"); %>" onKeyPress="return is_ipaddr(this, event);">
+			</td>
+		  </tr>
+		  
+		  <tr>
+			<th>
+			  <a class="hintstyle"  href="javascript:void(0);" onClick="openHint(4,2);"><#LANHostConfig_SubnetMask_itemname#></a>
+			</th>
+			<td>
+				<input type="text" maxlength="15" class="input_15_table" name="lan_netmask" value="<% nvram_get("lan_netmask"); %>" onkeypress="return is_ipaddr(this, event);">
+				<input type="hidden" name="dhcp_start" value="<% nvram_get("dhcp_start"); %>">
+				<input type="hidden" name="dhcp_end" value="<% nvram_get("dhcp_end"); %>">
+			</td>
+		  </tr>
+
+			<tr>
+			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,3);"><#IPConnection_x_ExternalGateway_itemname#></a></th>
+			<td>
+				<input type="text" name="lan_gateway" maxlength="15" class="input_15_table" value="<% nvram_get("lan_gateway"); %>" onKeyPress="return is_ipaddr(this, event);">
+			</td>
+			</tr>
+
+			<tr>
+      <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,12);"><#IPConnection_x_DNSServerEnable_itemname#></a></th>
+			<td>
+				<input type="radio" name="lan_dnsenable_x_radio" value="1" onclick="display_lan_dns(1)"><#checkbox_Yes#>
+			  <input type="radio" name="lan_dnsenable_x_radio" value="0" onclick="display_lan_dns(0)"><#checkbox_No#>
+			</td>
+      </tr>          		
+          		
+      <tr>
+      <th>
+				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,13);"><#IPConnection_x_DNSServer1_itemname#></a>
+			</th>
+      <td>
+				<input type="text" maxlength="15" class="input_15_table" name="lan_dns1_x" value="<% nvram_get("lan_dns1_x"); %>" onkeypress="return is_ipaddr(this, event)" >
+			</td>
+      </tr>
+
+      <tr>
+      <th>
+				<a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,14);"><#IPConnection_x_DNSServer2_itemname#></a>
+			</th>
+      <td>
+				<input type="text" maxlength="15" class="input_15_table" name="lan_dns2_x" value="<% nvram_get("lan_dns2_x"); %>" onkeypress="return is_ipaddr(this, event)" >
+			</td>
+      </tr>  
+		</table>
+
+<div class="apply_gen" style="margin-top:30px">
+	<!--input type="button" id="prevButton" value="<#CTL_prev#>" onclick="back_to_Adv();" class="button_gen"-->
+	<!--input type="submit" id="nextButton" value="<#CTL_next#>" class="button_gen"-->
+	<input type="button" id="nextButton" value="<#CTL_next#>" class="button_gen" onclick="submitForm();">
+</div>
+</div>
+</form>
+</body>

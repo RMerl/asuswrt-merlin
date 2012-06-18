@@ -1,0 +1,14 @@
+- Broadcast messaging
+- Profile Recovery
+- smbfs/cifsfs
+- Anti-Virus
+- Krb5 TGT usage
+- Static WINS entries
+- Disabling Roaming Profiles
+- BAD SID issues
+- VPN
+- incorporation in apache and squid (ntlm_auth)
+- smbldap-tools
+- kinit issues (you need to have kerberos updated in order to run win2k3, etc)
+- pam_smb and why not to use it
+- quotas

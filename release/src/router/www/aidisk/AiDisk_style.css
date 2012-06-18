@@ -1,0 +1,219 @@
+﻿/* Aidisk CSS Document */
+
+.accountBar{
+	width:740px;	/*740*/
+	/*margin:0px auto;*/
+	margin-top:10px; 
+	font-size:12px;	/*11*/
+	text-align:right;
+	letter-spacing:1px;
+	background-color:#1F2D35;
+	/*padding:3px 0px 0px 3px;*/
+}
+.accountBar td{		/*Viz add*/
+	margin-right:5px; 
+	font-size:12px;	
+	text-align:right;
+	letter-spacing:1px;
+	background-color:#1F2D35;
+ 	height:25px;
+ 	vertical-align:bottom;	
+}
+
+.accountName{
+	/*background:url(/images/AiDisk/user_icon0.gif) #F8F8F8; Viz Ban */
+	background:url(/images/New_ui/advancesetting/user_icon0.png);
+	background-repeat:no-repeat;
+	background-position:left;
+	
+	padding-left:30px;
+	height:30px;
+	line-height:25px;
+	/*border-bottom:1px solid #CCC; Viz Ban underline*/
+	position:relative;
+	
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-size:12px;
+	cursor:pointer;
+	overflow:hidden;
+}
+
+.folder_block{
+	border:1px solid #999999;
+	border-left:0px solid #999999;
+	width:100%;
+	height:200px;
+}
+
+.folderClicked{
+	color:#569AC7;
+	/*font-weight:bolder;*/
+	font-size:14px;
+	cursor:text;
+}
+.lastfolderClicked{
+	color:#FFFFFF;
+	cursor:pointer;
+}
+
+.FileStatus{
+	width:220px;
+	height:19px;
+	background-color:#475A5F;
+	text-align:center;
+	line-height:20px;
+	border-top:1px dotted #FFFFFF;
+	overflow:hidden;
+	float:right;
+	margin:0;
+}
+
+.FileStatus input{
+	margin-left:12px;
+	margin-right:12px;
+	width:18px;
+}
+
+.FileStatusTitle{
+	font-size:12px;
+	font-weight:bolder;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+
+#ftpURL{
+	padding:3px 6px 6px 6px;
+	border:1px dashed #666;
+	font-size:14px;
+	font-weight:bolder;
+	}
+
+.machineName{
+	/*background:url(/images/500icon.gif);*/
+	max-width:190px;
+	text-align:left;
+	background-repeat:no-repeat;
+	background-position: left;
+	/*margin-left:2px;
+	padding-left:23px;	*/
+}
+
+.vert_line{
+	max-width:25px;
+	width:19px;
+	line-height:25px;
+	vertical-align:top;
+	/*margin-left:2px;
+	padding-left:23px;	*/
+}
+
+#accountMask{
+	/*background-image:url(/images/popup_bg.gif);*/
+	z-index:10;
+	position: absolute;
+	margin-left:1px;
+	width:182px;
+	height:235px;
+	background-color:#475a5f;
+	filter:progid:DXImageTransform.Microsoft.Alpha(opacity=60);
+	opacity: .6;
+	-moz-opacity: 0.6;
+}
+
+#NoAccountHint{
+	font-size:12px;
+	color:#FFCC00;
+	height:25px;
+	line-height:25px;
+	vertical-align:middle;
+}
+
+#shareStatus{
+	display:block;
+	width:740px;
+	height:100%;
+	margin:0px auto;
+}
+
+.ShareClose{
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-size:12px;
+	font-weight:bolder;
+	color:#FFCC00;
+	width:100%;
+	text-align:center;
+}
+
+.sharelink{
+	border:1px dashed #999;
+	background-color: #ECF0F2;
+	margin:0 3px 0 3px;
+    padding:0 .20em 0 .20em;
+    width:auto;
+    overflow:visible;
+	font-family: Arial, Helvetica, sans-serif;	
+}
+.shareconfig{
+	margin:10px auto 0px auto;
+	border-bottom:1px dotted #999;	
+	background-color:#a7d2e2;
+	height:40px;	
+}
+
+.FdText{
+	width:190px;
+	text-align:left;
+	font-size:11px;
+	font-family:Arial, Verdana, Helvetica, sans-serif;
+	line-height:14px;
+	margin:0;
+}
+.FdText span{
+	vertical-align:top;
+	font-size:11px;
+	font-family:Arial, Verdana, Helvetica, sans-serif;
+	line-height:14px;
+}
+
+.noAccount{
+	/*background:url(/images/AiDisk/user_icon1.gif) #F8F8F8; Viz Ban */
+	background:url(/images/New_ui/advancesetting/user_icon1.png);	
+	background-repeat:no-repeat;
+	background-position:left;
+	height:25px;
+	line-height:25px;
+	
+	padding-left:30px;
+	font-size:12px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	color:#569AC7;
+	font-weight:bold;
+	margin:5px 0px 0px 5px;
+	overflow:hidden;
+	width:127px
+}
+
+
+/*aidisk_table*/
+.AiDiskTable{
+	font-size:12px;
+	font-family:Arial, Helvetica, sans-serif;
+	border: 1px solid #000000;
+	border-collapse: collapse;
+}
+.AiDiskTable th{
+	width:25%;
+	background-color:#475a5f;/*#a7d2e2;*/	
+	/*text-align:center;*/
+}
+.AiDiskTable td{
+	background-color:#475a5f;/*#a7d2e2;*/	
+	/*text-align:center;*/
+}
+
+.tree_table{
+ 	width:450px;
+ 	border-width:0;
+ 	border-spacing:0;
+ 	border-collapse: collapse;
+ 	line-height:25px;
+}

@@ -1,0 +1,54 @@
+#
+# @(#) Test se_access_check() function
+#
+
+#
+# Unix SMB/Netbios implementation.
+# Copyright (C) Tim Potter 2000
+#   
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#   
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#   
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+load_lib "compile.exp"
+load_lib "util-defs.exp"
+
+# Run tests from C source files
+
+set se_access_check_tests [list \
+  	{ "null security descriptor" "se_access_check_nullsd" } \
+  	{ "security descriptor allow everyone" "se_access_check_allowall" } \
+  	{ "security descriptor allow everyone" "se_access_check_allowall" } \
+  	{ "security descriptor deny everyone" "se_access_check_denyall" } \
+  	{ "empty security descriptor" "se_access_check_empty" } \
+	{ "allow some users access" "se_access_check_allowsome" } \
+	{ "deny some users access" "se_access_check_denysome" } \
+	{ "printer access permissions" "se_access_check_printer" } \
+	]
+
+foreach { test } $se_access_check_tests {
+    set test_desc [lindex $test 0]
+    set test_file [lindex $test 1]
+
+    simple_make "se_access_check" $test_file
+    set output [util_start "$srcdir/$subdir/$test_file" ]
+
+    if { [regexp "PASS" $output] } {
+        pass $test_desc
+        file delete "$srcdir/$subdir/$test_file" "$srcdir/$subdir/$test_file.o"
+    } else {
+        fail $test_desc
+        puts $output
+    }
+}
