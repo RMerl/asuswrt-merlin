@@ -1,3 +1,113 @@
+2012.55 - Wednesday 22 February 2012
+
+- Security: Fix use-after-free bug that could be triggered if command="..."
+  authorized_keys restrictions are used.  Could allow arbitrary code execution
+  or bypass of the command="..." restriction to an authenticated user.
+  This bug affects releases 0.52 onwards. Ref CVE-2012-0920.
+  Thanks to Danny Fullerton of Mantor Organization for reporting
+  the bug.
+
+- Compile fix, only apply IPV6 socket options if they are available in headers
+  Thanks to Gustavo Zacarias for the patch
+
+- Overwrite session key memory on exit
+
+- Fix minor memory leak in unusual PAM authentication configurations.
+  Thanks to Stathis Voukelatos
+
+- Other small code cleanups
+
+2011.54 - Tuesday 8 November 2011
+
+- Building statically works again, broke in 0.53 and 0.53.1
+
+- Fix crash when forwarding with -R
+
+- Fixed various leaks found by Klocwork analysis software, thanks to them for
+  running it
+
+- Set IPTOS_LOWDELAY for IPv6, thanks to Dave Taht
+
+- Bind to sockets with IPV6_V6ONLY so that it works properly on systems
+  regardless of the system-wide setting
+
+- Added ALLOW_BLANK_PASSWORD option. Dropbear also now allows public key logins
+  to accounts with a blank password. Thanks to Rob Landley
+
+- Fixed case where "-K 1" keepalive for dbclient would cause a SSH_MSG_IGNORE
+  packet to be sent
+
+- Avoid some memory allocations in big number maths routines, improves
+  performance slightly
+
+- Fix symlink target for installdropbearmulti with DESTDIR set, thanks to
+  Scottie Shore
+
+- When requesting server allocated remote ports (-R 0:host:port) print a
+  message informing what the port is, thanks to Ali Onur Uyar.
+
+- New version numbering scheme.
+
+Source repository has now migrated to Mercurial at 
+https://secure.ucc.asn.au/hg/dropbear/graph/default
+
+0.53.1 - Wednesday 2 March 2011
+
+- -lcrypt needs to be before object files for static linking
+
+- Compile fix when both client and agent forwarding are disabled
+
+- Fix DROPBEAR_PRNGD_SOCKET mode
+
+- Don't allow setting zlib memLevel since it seems buggy
+
+0.53 - Thurs 24 February 2011
+
+- Various performance/memory use improvements
+
+- Client agent forwarding now works, using OpenSSH's ssh-agent
+
+- Improve robustness of client multihop mode
+
+- Fix a prime generation bug in bundled libtommath. This is unlikely to have
+  generated any bad keys in the wild.
+  See 
+  https://bugzilla.redhat.com/show_bug.cgi?id=615088
+  http://bugs.gentoo.org/show_bug.cgi?id=328383
+  http://bugs.gentoo.org/show_bug.cgi?id=328409
+
+- Attempt to build against system libtomcrypt/libtommath if available. This
+  can be disabled with ./configure --enable-bundled-libtom
+
+- Make -K (keepalive) and -I (idle timeout) work together sensibly in the client.
+  The idle timeout is no longer reset by SSH_MSG_IGNORE packets.
+
+- Add diffie-hellman-group14-sha1 key exchange method
+
+- Compile fix if ENABLE_CLI_PROXYCMD is disabled
+
+- /usr/bin/X11/xauth is now the default path
+
+- Client remote forward (-L/-R) arguments now accept a listen address
+
+- In uClinux avoid trashing the parent process when a session exits
+
+- Blowfish is now disabled by default since it has large memory usage
+
+- Add option to change zlib windowbits/memlevel. Use less memory by default
+
+- DROPBEAR_SMALL_CODE is now disabled by default
+
+- SSH_ORIGINAL_COMMAND environment variable is set by the server when an
+  authorized_keys command is specified.
+
+- Set SSH_TTY and SSH_CONNECTION environment variables in the server
+
+- Client banner is now printed to standard error rather than standard output
+
+- Capitalisation in many log messages has been made consistent. This may affect
+  scripts that parse logfiles.
+
 0.52 - Wed 12 November 2008
 
 - Add "netcat-alike" option (-B) to dbclient, allowing Dropbear to tunnel

@@ -70,7 +70,7 @@ void recv_msg_kexdh_init() {
  * that, the session hash is calculated, and signed with RSA or DSS. The
  * result is sent to the client. 
  *
- * See the ietf-secsh-transport draft, section 6, for details */
+ * See the transport rfc 4253 section 8 for details */
 static void send_msg_kexdh_reply(mp_int *dh_e) {
 
 	DEF_MP_INT(dh_y);

@@ -44,6 +44,6 @@ typedef struct PacketType {
 #define PACKET_PADDING_OFF 4
 #define PACKET_PAYLOAD_OFF 5
 
-#define INIT_READBUF 200
+#define INIT_READBUF 128
 
 #endif /* _PACKET_H_ */

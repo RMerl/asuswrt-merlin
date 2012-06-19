@@ -77,22 +77,16 @@ int main(int argc, char ** argv)
 
 #ifdef INETD_MODE
 static void main_inetd() {
-
-	struct sockaddr_storage remoteaddr;
-	socklen_t remoteaddrlen;
-	char * addrstring = NULL;
+	char *host, *port = NULL;
 
 	/* Set up handlers, syslog, seed random */
 	commonsetup();
 
-	remoteaddrlen = sizeof(remoteaddr);
-	if (getpeername(0, (struct sockaddr*)&remoteaddr, &remoteaddrlen) < 0) {
-		dropbear_exit("Unable to getpeername: %s", strerror(errno));
-	}
-
 	/* In case our inetd was lax in logging source addresses */
-	addrstring = getaddrstring(&remoteaddr, 1);
-	dropbear_log(LOG_INFO, "Child connection from %s", addrstring);
+	get_socket_address(0, NULL, NULL, &host, &port, 0);
+	dropbear_log(LOG_INFO, "Child connection from %s:%s", host, port);
+	m_free(host);
+	m_free(port);
 
 	/* Don't check the return value - it may just fail since inetd has
 	 * already done setsid() after forking (xinetd on Darwin appears to do
@@ -102,7 +96,7 @@ static void main_inetd() {
 	/* Start service program 
 	 * -1 is a dummy childpipe, just something we can close() without 
 	 * mattering. */
-	svr_session(0, -1, getaddrhostname(&remoteaddr), addrstring);
+	svr_session(0, -1);
 
 	/* notreached */
 }
@@ -124,7 +118,6 @@ void main_noinetd() {
 	int childsock;
 	int childpipe[2];
 
-	memset(listensocks, 0, sizeof(listensocks));
 	/* Note: commonsetup() must happen before we daemon()ise. Otherwise
 	   daemon() will chdir("/"), and we won't be able to find local-dir
 	   hostkeys. */
@@ -134,7 +127,7 @@ void main_noinetd() {
 	for (i = 0; i < MAX_UNAUTH_CLIENTS; i++) {
 		childpipes[i] = -1;
 	}
-	bzero(preauth_addrs, sizeof(preauth_addrs));
+	memset(preauth_addrs, 0x0, sizeof(preauth_addrs));
 	
 	/* Set up the listening sockets */
 	listensockcount = listensockets(listensocks, MAX_LISTEN_ADDR, &maxsock);
@@ -219,14 +212,13 @@ void main_noinetd() {
 
 		/* handle each socket which has something to say */
 		for (i = 0; i < listensockcount; i++) {
-
-			struct sockaddr_storage remoteaddr;
-			socklen_t remoteaddrlen = 0;
 			size_t num_unauthed_for_addr = 0;
 			size_t num_unauthed_total = 0;
-			char * remote_addr_str = NULL;
+			char *remote_host = NULL, *remote_port = NULL;
 			pid_t fork_ret = 0;
 			size_t conn_idx = 0;
+			struct sockaddr_storage remoteaddr;
+			socklen_t remoteaddrlen;
 
 			if (!FD_ISSET(listensocks[i], &fds)) 
 				continue;
@@ -241,14 +233,14 @@ void main_noinetd() {
 			}
 
 			/* Limit the number of unauthenticated connections per IP */
-			remote_addr_str = getaddrstring(&remoteaddr, 0);
+			getaddrstring(&remoteaddr, &remote_host, NULL, 0);
 
 			num_unauthed_for_addr = 0;
 			num_unauthed_total = 0;
 			for (j = 0; j < MAX_UNAUTH_CLIENTS; j++) {
 				if (childpipes[j] >= 0) {
 					num_unauthed_total++;
-					if (strcmp(remote_addr_str, preauth_addrs[j]) == 0) {
+					if (strcmp(remote_host, preauth_addrs[j]) == 0) {
 						num_unauthed_for_addr++;
 					}
 				} else {
@@ -273,7 +265,7 @@ void main_noinetd() {
 			fork_ret = fork();
 #endif
 			if (fork_ret < 0) {
-				dropbear_log(LOG_WARNING, "error forking: %s", strerror(errno));
+				dropbear_log(LOG_WARNING, "Error forking: %s", strerror(errno));
 				goto out;
 
 			} else if (fork_ret > 0) {
@@ -281,21 +273,21 @@ void main_noinetd() {
 				/* parent */
 				childpipes[conn_idx] = childpipe[0];
 				m_close(childpipe[1]);
-				preauth_addrs[conn_idx] = remote_addr_str;
-				remote_addr_str = NULL;
+				preauth_addrs[conn_idx] = remote_host;
+				remote_host = NULL;
 
 			} else {
 
 				/* child */
-				char * addrstring = NULL;
 #ifdef DEBUG_FORKGPROF
 				extern void _start(void), etext(void);
 				monstartup((u_long)&_start, (u_long)&etext);
 #endif /* DEBUG_FORKGPROF */
 
-				m_free(remote_addr_str);
-				addrstring = getaddrstring(&remoteaddr, 1);
-				dropbear_log(LOG_INFO, "Child connection from %s", addrstring);
+				getaddrstring(&remoteaddr, NULL, &remote_port, 0);
+				dropbear_log(LOG_INFO, "Child connection from %s:%s", remote_host, remote_port);
+				m_free(remote_host);
+				m_free(remote_port);
 
 #ifndef DEBUG_NOFORK
 				if (setsid() < 0) {
@@ -311,9 +303,7 @@ void main_noinetd() {
 				m_close(childpipe[0]);
 
 				/* start the session */
-				svr_session(childsock, childpipe[1], 
-								getaddrhostname(&remoteaddr),
-								addrstring);
+				svr_session(childsock, childpipe[1]);
 				/* don't return */
 				dropbear_assert(0);
 			}
@@ -321,8 +311,8 @@ void main_noinetd() {
 out:
 			/* This section is important for the parent too */
 			m_close(childsock);
-			if (remote_addr_str) {
-				m_free(remote_addr_str);
+			if (remote_host) {
+				m_free(remote_host);
 			}
 		}
 	} /* for(;;) loop */
@@ -380,6 +370,7 @@ static void commonsetup() {
 	/* catch and reap zombie children */
 	sa_chld.sa_handler = sigchld_handler;
 	sa_chld.sa_flags = SA_NOCLDSTOP;
+	sigemptyset(&sa_chld.sa_mask);
 	if (sigaction(SIGCHLD, &sa_chld, NULL) < 0) {
 		dropbear_exit("signal() error");
 	}

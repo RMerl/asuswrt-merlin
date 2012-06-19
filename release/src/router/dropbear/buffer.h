@@ -55,6 +55,7 @@ void buf_putbyte(buffer* buf, unsigned char val);
 unsigned char* buf_getptr(buffer* buf, unsigned int len);
 unsigned char* buf_getwriteptr(buffer* buf, unsigned int len);
 unsigned char* buf_getstring(buffer* buf, unsigned int *retlen);
+buffer * buf_getstringbuf(buffer *buf);
 void buf_eatstring(buffer *buf);
 void buf_putint(buffer* buf, unsigned int val);
 void buf_putstring(buffer* buf, const unsigned char* str, unsigned int len);

@@ -52,8 +52,8 @@ struct KEXState {
 	unsigned sentkexinit : 1; /*set when we've sent/recv kexinit packet */
 	unsigned recvkexinit : 1;
 	unsigned firstfollows : 1; /* true when first_kex_packet_follows is set */
-	unsigned sentnewkeys : 1; /* set once we've send/recv'ed MSG_NEWKEYS*/
-	unsigned recvnewkeys : 1;
+	unsigned sentnewkeys : 1; /* set once we've send MSG_NEWKEYS (will be cleared once we have also received */
+	unsigned recvnewkeys : 1; /* set once we've received MSG_NEWKEYS (cleared once we have also sent */
 
 	unsigned donefirstkex : 1; /* Set to 1 after the first kex has completed,
 								  ie the transport layer has been set up */
@@ -64,6 +64,6 @@ struct KEXState {
 
 };
 
-#define MAX_KEXHASHBUF 3000
+#define MAX_KEXHASHBUF 2000
 
 #endif /* _KEX_H_ */

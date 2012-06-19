@@ -52,6 +52,8 @@ void process_packet() {
 
 	ses.lastpacket = type;
 
+    ses.last_packet_time = time(NULL);
+
 	/* These packets we can receive at any time */
 	switch(type) {
 
@@ -63,21 +65,19 @@ void process_packet() {
 		case SSH_MSG_UNIMPLEMENTED:
 			/* debugging XXX */
 			TRACE(("SSH_MSG_UNIMPLEMENTED"))
-			dropbear_exit("received SSH_MSG_UNIMPLEMENTED");
+			dropbear_exit("Received SSH_MSG_UNIMPLEMENTED");
 			
 		case SSH_MSG_DISCONNECT:
 			/* TODO cleanup? */
 			dropbear_close("Disconnect received");
 	}
 
-    ses.last_packet_time = time(NULL);
-
 	/* This applies for KEX, where the spec says the next packet MUST be
 	 * NEWKEYS */
 	if (ses.requirenext != 0) {
 		if (ses.requirenext != type) {
 			/* TODO send disconnect? */
-			dropbear_exit("unexpected packet type %d, expected %d", type,
+			dropbear_exit("Unexpected packet type %d, expected %d", type,
 					ses.requirenext);
 		} else {
 			/* Got what we expected */
@@ -99,7 +99,7 @@ void process_packet() {
 	 * NOTE: if the protocol changes and new types are added, revisit this 
 	 * assumption */
 	if ( !ses.authstate.authdone && type > MAX_UNAUTH_PACKET_TYPE ) {
-		dropbear_exit("received message %d before userauth", type);
+		dropbear_exit("Received message %d before userauth", type);
 	}
 
 	for (i = 0; ; i++) {

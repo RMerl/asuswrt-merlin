@@ -67,13 +67,13 @@ int mp_exptmod_fast (mp_int * G, mp_int * X, mp_int * P, mp_int * Y, int redmode
 
   /* init M array */
   /* init first cell */
-  if ((err = mp_init(&M[1])) != MP_OKAY) {
+  if ((err = mp_init_size(&M[1], P->alloc)) != MP_OKAY) {
      return err;
   }
 
   /* now init the second half of the array */
   for (x = 1<<(winsize-1); x < (1 << winsize); x++) {
-    if ((err = mp_init(&M[x])) != MP_OKAY) {
+    if ((err = mp_init_size(&M[x], P->alloc)) != MP_OKAY) {
       for (y = 1<<(winsize-1); y < x; y++) {
         mp_clear (&M[y]);
       }
@@ -133,7 +133,7 @@ int mp_exptmod_fast (mp_int * G, mp_int * X, mp_int * P, mp_int * Y, int redmode
   }
 
   /* setup result */
-  if ((err = mp_init (&res)) != MP_OKAY) {
+  if ((err = mp_init_size (&res, P->alloc)) != MP_OKAY) {
     goto LBL_M;
   }
 

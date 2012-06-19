@@ -33,28 +33,49 @@
 void startsyslog();
 #endif
 
-extern void (*_dropbear_exit)(int exitcode, const char* format, va_list param);
+#ifdef __GNUC__
+#define ATTRIB_PRINTF(fmt,args) __attribute__((format(printf, fmt, args))) 
+#else
+#define ATTRIB_PRINTF(fmt,args)
+#endif
+
+#ifdef __GNUC__
+#define ATTRIB_NORETURN __attribute__((noreturn))
+#else
+#define ATTRIB_NORETURN
+#endif
+
+extern void (*_dropbear_exit)(int exitcode, const char* format, va_list param) ATTRIB_NORETURN;
 extern void (*_dropbear_log)(int priority, const char* format, va_list param);
 
-void dropbear_exit(const char* format, ...);
-void dropbear_close(const char* format, ...);
-void dropbear_log(int priority, const char* format, ...);
-void fail_assert(const char* expr, const char* file, int line);
+void dropbear_exit(const char* format, ...) ATTRIB_PRINTF(1,2) ATTRIB_NORETURN;
+
+void dropbear_close(const char* format, ...) ATTRIB_PRINTF(1,2) ;
+void dropbear_log(int priority, const char* format, ...) ATTRIB_PRINTF(2,3) ;
+
+void fail_assert(const char* expr, const char* file, int line) ATTRIB_NORETURN;
+
 #ifdef DEBUG_TRACE
-void dropbear_trace(const char* format, ...);
+void dropbear_trace(const char* format, ...) ATTRIB_PRINTF(1,2);
 void printhex(const char * label, const unsigned char * buf, int len);
 extern int debug_trace;
 #endif
+
 char * stripcontrol(const char * text);
-unsigned char * getaddrstring(struct sockaddr_storage* addr, int withport);
+void get_socket_address(int fd, char **local_host, char **local_port,
+		char **remote_host, char **remote_port, int host_lookup);
+void getaddrstring(struct sockaddr_storage* addr, 
+		char **ret_host, char **ret_port, int host_lookup);
 int dropbear_listen(const char* address, const char* port,
 		int *socks, unsigned int sockcount, char **errstring, int *maxfd);
 int spawn_command(void(*exec_fn)(void *user_data), void *exec_data,
 		int *writefd, int *readfd, int *errfd, pid_t *pid);
 void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell);
+#ifdef ENABLE_CONNECT_UNIX
+int connect_unix(const char* addr);
+#endif
 int connect_remote(const char* remotehost, const char* remoteport,
 		int nonblocking, char ** errstring);
-char* getaddrhostname(struct sockaddr_storage * addr);
 int buf_readfile(buffer* buf, const char* filename);
 int buf_getline(buffer * line, FILE * authfile);
 
@@ -62,8 +83,7 @@ void m_close(int fd);
 void * m_malloc(size_t size);
 void * m_strdup(const char * str);
 void * m_realloc(void* ptr, size_t size);
-#define m_free(X) __m_free(X); (X) = NULL;
-void __m_free(void* ptr);
+#define m_free(X) free(X); (X) = NULL;
 void m_burn(void* data, unsigned int len);
 void setnonblocking(int fd);
 void disallow_core();

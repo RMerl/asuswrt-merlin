@@ -58,7 +58,7 @@ struct Channel {
 	unsigned int recvmaxpacket, transmaxpacket;
 	void* typedata; /* a pointer to type specific data */
 	int writefd; /* read from wire, written to insecure side */
-	int readfd; /* read from insecure size, written to wire */
+	int readfd; /* read from insecure side, written to wire */
 	int errfd; /* used like writefd or readfd, depending if it's client or server.
 				  Doesn't exactly belong here, but is cleaner here */
 	circbuffer *writebuf; /* data from the wire, for local consumption */
@@ -68,6 +68,10 @@ struct Channel {
 	/* whether close/eof messages have been exchanged */
 	int sent_close, recv_close;
 	int recv_eof, sent_eof;
+
+	/* Set after running the ChanType-specific close hander
+	 * to ensure we don't run it twice (nor type->checkclose()). */
+	int close_handler_done;
 
 	int initconn; /* used for TCP forwarding, whether the channel has been
 					 fully initialised */

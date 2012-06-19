@@ -82,7 +82,8 @@ AC_CHECK_DECL(__UCLIBC__,
 	],,,)
 
 # Checks for libraries.
-AC_CHECK_LIB(crypt, crypt, LIBS="$LIBS -lcrypt")
+AC_CHECK_LIB(crypt, crypt, CRYPTLIB="-lcrypt")
+AC_SUBST(CRYPTLIB)	
 
 # Check if zlib is needed
 AC_ARG_WITH(zlib,
@@ -145,6 +146,7 @@ AC_ARG_ENABLE(pam,
 		if test "x$enableval" = "xyes"; then
 			AC_CHECK_LIB(pam, pam_authenticate, , AC_MSG_ERROR([*** PAM missing - install first or check config.log ***]))
 			AC_MSG_NOTICE(Enabling PAM)
+			AC_CHECK_FUNCS(pam_fail_delay)
 		else
 			AC_DEFINE(DISABLE_PAM,, Use PAM)
 			AC_MSG_NOTICE(Disabling PAM)
@@ -360,6 +362,25 @@ AC_CHECK_FUNCS(utmpname)
 AC_CHECK_FUNCS(endutxent getutxent getutxid getutxline pututxline )
 AC_CHECK_FUNCS(setutxent utmpxname)
 AC_CHECK_FUNCS(logout updwtmp logwtmp)
+
+AC_ARG_ENABLE(bundled-libtom,
+	[  --enable-bundled-libtom       Use bundled libtomcrypt/libtommath even if a system version exists],
+	[ 
+		BUNDLED_LIBTOM=1
+		AC_MSG_NOTICE(Forcing bundled libtom*)
+	],
+	[
+		BUNDLED_LIBTOM=0
+		AC_CHECK_LIB(tomcrypt, register_cipher, , BUNDLED_LIBTOM=1)
+		AC_CHECK_LIB(tommath, mp_exptmod, , BUNDLED_LIBTOM=1)
+	]
+)
+
+if test $BUNDLED_LIBTOM = 1 ; then
+	AC_DEFINE(BUNDLED_LIBTOM,,Use bundled libtom) 
+fi
+
+AC_SUBST(BUNDLED_LIBTOM)
 
 dnl Added from OpenSSH 3.6.1p2's configure.ac
 
@@ -669,5 +690,13 @@ AC_CONFIG_HEADER(config.h)
 AC_OUTPUT(Makefile)
 AC_OUTPUT(libtomcrypt/Makefile)
 AC_OUTPUT(libtommath/Makefile)
+
+AC_MSG_NOTICE()
+if test $BUNDLED_LIBTOM = 1 ; then
+AC_MSG_NOTICE(Using bundled libtomcrypt and libtommath)
+else
+AC_MSG_NOTICE(Using system libtomcrypt and libtommath)
+fi
+
 AC_MSG_NOTICE()
 AC_MSG_NOTICE(Now edit options.h to choose features.)

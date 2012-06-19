@@ -68,7 +68,7 @@ algo_type * svr_buf_match_algo(buffer* buf, algo_type localalgos[],
 			remotealgos[count] = &algolist[i+1];
 			count++;
 		}
-		if (count == MAX_PROPOSED_ALGO) {
+		if (count >= MAX_PROPOSED_ALGO) {
 			break;
 		}
 	}

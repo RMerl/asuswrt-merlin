@@ -23,21 +23,34 @@
  * SOFTWARE. */
 #ifndef _AGENTFWD_H_
 #define _AGENTFWD_H_
-#ifndef DISABLE_AGENTFWD
 
 #include "includes.h"
 #include "chansession.h"
 #include "channel.h"
+#include "auth.h"
+#include "list.h"
 
-int agentreq(struct ChanSess * chansess);
-void agentsetauth(struct ChanSess *chansess);
-void agentcleanup(struct ChanSess * chansess);
-void agentset(struct ChanSess *chansess);
+/* An agent reply can be reasonably large, as it can
+ * contain a list of all public keys held by the agent.
+ * 10000 is arbitrary */
+#define MAX_AGENT_REPLY  10000
+
+int svr_agentreq(struct ChanSess * chansess);
+void svr_agentcleanup(struct ChanSess * chansess);
+void svr_agentset(struct ChanSess *chansess);
+
+/* client functions */
+void cli_load_agent_keys(m_list * ret_list);
+void agent_buf_sign(buffer *sigblob, sign_key *key, 
+    const unsigned char *data, unsigned int len);
+void cli_setup_agent(struct Channel *channel);
+
 
 #ifdef __hpux
 #define seteuid(a)       setresuid(-1, (a), -1)
 #define setegid(a)       setresgid(-1, (a), -1)
 #endif
 
-#endif /* DROPBEAR_AGENTFWD */
+extern const struct ChanType cli_chan_agent;
+
 #endif /* _AGENTFWD_H_ */

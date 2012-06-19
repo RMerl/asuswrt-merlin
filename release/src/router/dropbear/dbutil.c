@@ -57,11 +57,11 @@
 #define MAX_FMT 100
 
 static void generic_dropbear_exit(int exitcode, const char* format, 
-		va_list param);
+		va_list param) ATTRIB_NORETURN;
 static void generic_dropbear_log(int priority, const char* format, 
 		va_list param);
 
-void (*_dropbear_exit)(int exitcode, const char* format, va_list param) 
+void (*_dropbear_exit)(int exitcode, const char* format, va_list param) ATTRIB_NORETURN
 						= generic_dropbear_exit;
 void (*_dropbear_log)(int priority, const char* format, va_list param)
 						= generic_dropbear_log;
@@ -111,7 +111,7 @@ static void generic_dropbear_exit(int exitcode, const char* format,
 }
 
 void fail_assert(const char* expr, const char* file, int line) {
-	dropbear_exit("failed assertion (%s:%d): `%s'", file, line, expr);
+	dropbear_exit("Failed assertion (%s:%d): `%s'", file, line, expr);
 }
 
 static void generic_dropbear_log(int UNUSED(priority), const char* format, 
@@ -161,10 +161,12 @@ static void set_sock_priority(int sock) {
 	val = 1;
 	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void*)&val, sizeof(val));
 
-	/* set the TOS bit. note that this will fail for ipv6, I can't find any
-	 * equivalent. */
+	/* set the TOS bit for either ipv4 or ipv6 */
 #ifdef IPTOS_LOWDELAY
 	val = IPTOS_LOWDELAY;
+#if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS)
+	setsockopt(sock, IPPROTO_IPV6, IPV6_TCLASS, (void*)&val, sizeof(val));
+#endif
 	setsockopt(sock, IPPROTO_IP, IP_TOS, (void*)&val, sizeof(val));
 #endif
 
@@ -254,6 +256,16 @@ int dropbear_listen(const char* address, const char* port,
 		linger.l_linger = 5;
 		setsockopt(sock, SOL_SOCKET, SO_LINGER, (void*)&linger, sizeof(linger));
 
+#if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
+		if (res->ai_family == AF_INET6) {
+			int on = 1;
+			if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, 
+						&on, sizeof(on)) == -1) {
+				dropbear_log(LOG_WARNING, "Couldn't set IPV6_V6ONLY");
+			}
+		}
+#endif
+
 		set_sock_priority(sock);
 
 		if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
@@ -294,6 +306,29 @@ int dropbear_listen(const char* address, const char* port,
 	TRACE(("leave dropbear_listen: success, %d socks bound", nsock))
 	return nsock;
 }
+
+/* Connect to a given unix socket. The socket is blocking */
+#ifdef ENABLE_CONNECT_UNIX
+int connect_unix(const char* path) {
+	struct sockaddr_un addr;
+	int fd = -1;
+
+	memset((void*)&addr, 0x0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	strlcpy(addr.sun_path, path, sizeof(addr.sun_path));
+	fd = socket(PF_UNIX, SOCK_STREAM, 0);
+	if (fd < 0) {
+		TRACE(("Failed to open unix socket"))
+		return -1;
+	}
+	if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+		TRACE(("Failed to connect to '%s' socket", path))
+		m_close(fd);
+		return -1;
+	}
+	return fd;
+}
+#endif
 
 /* Connect via TCP to a host. Connection will try ipv4 or ipv6, will
  * return immediately if nonblocking is set. On failure, if errstring
@@ -341,15 +376,7 @@ int connect_remote(const char* remotehost, const char* remoteport,
 		}
 
 		if (nonblocking) {
-			if (fcntl(sock, F_SETFL, O_NONBLOCK) < 0) {
-				close(sock);
-				sock = -1;
-				if (errstring != NULL && *errstring == NULL) {
-					*errstring = m_strdup("Failed non-blocking");
-				}
-				TRACE(("Failed non-blocking: %s", strerror(errno)))
-				continue;
-			}
+			setnonblocking(sock);
 		}
 
 		if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
@@ -441,7 +468,7 @@ int spawn_command(void(*exec_fn)(void *user_data), void *exec_data,
 			(dup2(outfds[FDOUT], STDOUT_FILENO) < 0) ||
 			(ret_errfd && dup2(errfds[FDOUT], STDERR_FILENO) < 0)) {
 			TRACE(("leave noptycommand: error redirecting FDs"))
-			dropbear_exit("child dup2() failure");
+			dropbear_exit("Child dup2() failure");
 		}
 
 		close(infds[FDOUT]);
@@ -525,14 +552,47 @@ void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell) {
 	execv(usershell, argv);
 }
 
+void get_socket_address(int fd, char **local_host, char **local_port,
+						char **remote_host, char **remote_port, int host_lookup)
+{
+	struct sockaddr_storage addr;
+	socklen_t addrlen;
+	
+	if (local_host || local_port) {
+		addrlen = sizeof(addr);
+		if (getsockname(fd, (struct sockaddr*)&addr, &addrlen) < 0) {
+			dropbear_exit("Failed socket address: %s", strerror(errno));
+		}
+		getaddrstring(&addr, local_host, local_port, host_lookup);		
+	}
+	if (remote_host || remote_port) {
+		addrlen = sizeof(addr);
+		if (getpeername(fd, (struct sockaddr*)&addr, &addrlen) < 0) {
+			dropbear_exit("Failed socket address: %s", strerror(errno));
+		}
+		getaddrstring(&addr, remote_host, remote_port, host_lookup);		
+	}
+}
+
 /* Return a string representation of the socket address passed. The return
  * value is allocated with malloc() */
-unsigned char * getaddrstring(struct sockaddr_storage* addr, int withport) {
+void getaddrstring(struct sockaddr_storage* addr, 
+			char **ret_host, char **ret_port,
+			int host_lookup) {
 
-	char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-	char *retstring = NULL;
-	int ret;
+	char host[NI_MAXHOST+1], serv[NI_MAXSERV+1];
 	unsigned int len;
+	int ret;
+	
+	int flags = NI_NUMERICSERV | NI_NUMERICHOST;
+
+#ifndef DO_HOST_LOOKUP
+	host_lookup = 0;
+#endif
+	
+	if (host_lookup) {
+		flags = NI_NUMERICSERV;
+	}
 
 	len = sizeof(struct sockaddr_storage);
 	/* Some platforms such as Solaris 8 require that len is the length
@@ -550,67 +610,28 @@ unsigned char * getaddrstring(struct sockaddr_storage* addr, int withport) {
 #endif
 #endif
 
-	ret = getnameinfo((struct sockaddr*)addr, len, hbuf, sizeof(hbuf), 
-			sbuf, sizeof(sbuf), NI_NUMERICSERV | NI_NUMERICHOST);
+	ret = getnameinfo((struct sockaddr*)addr, len, host, sizeof(host)-1, 
+			serv, sizeof(serv)-1, flags);
 
 	if (ret != 0) {
-		/* This is a fairly bad failure - it'll fallback to IP if it
-		 * just can't resolve */
-		dropbear_exit("failed lookup (%d, %d)", ret, errno);
+		if (host_lookup) {
+			/* On some systems (Darwin does it) we get EINTR from getnameinfo
+			 * somehow. Eew. So we'll just return the IP, since that doesn't seem
+			 * to exhibit that behaviour. */
+			getaddrstring(addr, ret_host, ret_port, 0);
+			return;
+		} else {
+			/* if we can't do a numeric lookup, something's gone terribly wrong */
+			dropbear_exit("Failed lookup: %s", gai_strerror(ret));
+		}
 	}
 
-	if (withport) {
-		len = strlen(hbuf) + 2 + strlen(sbuf);
-		retstring = (char*)m_malloc(len);
-		snprintf(retstring, len, "%s:%s", hbuf, sbuf);
-	} else {
-		retstring = m_strdup(hbuf);
+	if (ret_host) {
+		*ret_host = m_strdup(host);
 	}
-
-	return retstring;
-
-}
-
-/* Get the hostname corresponding to the address addr. On failure, the IP
- * address is returned. The return value is allocated with strdup() */
-char* getaddrhostname(struct sockaddr_storage * addr) {
-
-	char hbuf[NI_MAXHOST];
-	char sbuf[NI_MAXSERV];
-	int ret;
-	unsigned int len;
-#ifdef DO_HOST_LOOKUP
-	const int flags = NI_NUMERICSERV;
-#else
-	const int flags = NI_NUMERICHOST | NI_NUMERICSERV;
-#endif
-
-	len = sizeof(struct sockaddr_storage);
-	/* Some platforms such as Solaris 8 require that len is the length
-	 * of the specific structure. */
-#ifdef HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
-	if (addr->ss_family == AF_INET) {
-		len = sizeof(struct sockaddr_in);
+	if (ret_port) {
+		*ret_port = m_strdup(serv);
 	}
-#ifdef AF_INET6
-	if (addr->ss_family == AF_INET6) {
-		len = sizeof(struct sockaddr_in6);
-	}
-#endif
-#endif
-
-
-	ret = getnameinfo((struct sockaddr*)addr, len, hbuf, sizeof(hbuf),
-			sbuf, sizeof(sbuf), flags);
-
-	if (ret != 0) {
-		/* On some systems (Darwin does it) we get EINTR from getnameinfo
-		 * somehow. Eew. So we'll just return the IP, since that doesn't seem
-		 * to exhibit that behaviour. */
-		return getaddrstring(addr, 0);
-	}
-
-	return m_strdup(hbuf);
 }
 
 #ifdef DEBUG_TRACE
@@ -779,12 +800,6 @@ void * m_strdup(const char * str) {
 	return ret;
 }
 
-void __m_free(void* ptr) {
-	if (ptr != NULL) {
-		free(ptr);
-	}
-}
-
 void * m_realloc(void* ptr, size_t size) {
 
 	void *ret;
@@ -809,7 +824,7 @@ void m_burn(void *data, unsigned int len) {
 	if (data == NULL)
 		return;
 	while (len--) {
-		*p++ = 0x66;
+		*p++ = 0x0;
 	}
 }
 

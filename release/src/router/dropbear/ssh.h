@@ -105,3 +105,14 @@
 #define SSH_SIGNKEY_DSS_LEN 7
 #define SSH_SIGNKEY_RSA "ssh-rsa"
 #define SSH_SIGNKEY_RSA_LEN 7
+
+/* Agent commands. These aren't part of the spec, and are defined
+ * only on the openssh implementation. */
+#define SSH_AGENT_FAILURE			5
+#define SSH_AGENT_SUCCESS			6
+#define SSH2_AGENTC_REQUEST_IDENTITIES		11
+#define SSH2_AGENT_IDENTITIES_ANSWER		12
+#define SSH2_AGENTC_SIGN_REQUEST		13
+#define SSH2_AGENT_SIGN_RESPONSE		14
+
+#define SSH2_AGENT_FAILURE			30

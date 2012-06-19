@@ -37,8 +37,16 @@ typedef struct runopts {
 	int listen_fwd_all;
 #endif
 	unsigned int recv_window;
-	unsigned int keepalive_secs;
-	unsigned int idle_timeout_secs;
+	time_t keepalive_secs;
+	time_t idle_timeout_secs;
+
+#ifndef DISABLE_ZLIB
+	/* TODO: add a commandline flag. Currently this is on by default if compression
+	 * is compiled in, but disabled for a client's non-final multihop stages. (The
+	 * intermediate stages are compressed streams, so are uncompressible. */
+	int enable_compress;
+#endif
+
 
 } runopts;
 
@@ -112,13 +120,20 @@ typedef struct cli_runopts {
 	int backgrounded;
 	int is_subsystem;
 #ifdef ENABLE_CLI_PUBKEY_AUTH
-	struct SignKeyList *privkeys; /* Keys to use for public-key auth */
+	m_list *privkeys; /* Keys to use for public-key auth */
 #endif
 #ifdef ENABLE_CLI_REMOTETCPFWD
-	struct TCPFwdList * remotefwds;
+	m_list * remotefwds;
 #endif
 #ifdef ENABLE_CLI_LOCALTCPFWD
-	struct TCPFwdList * localfwds;
+	m_list * localfwds;
+#endif
+#ifdef ENABLE_CLI_AGENTFWD
+	int agent_fwd;
+	int agent_keys_loaded; /* whether pubkeys has been populated with a 
+							  list of keys held by the agent */
+	int agent_fd; /* The agent fd is only set during authentication. Forwarded
+	                 agent sessions have their own file descriptors */
 #endif
 
 #ifdef ENABLE_CLI_NETCAT
@@ -128,7 +143,6 @@ typedef struct cli_runopts {
 #ifdef ENABLE_CLI_PROXYCMD
 	char *proxycmd;
 #endif
-
 } cli_runopts;
 
 extern cli_runopts cli_opts;

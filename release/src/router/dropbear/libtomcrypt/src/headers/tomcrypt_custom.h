@@ -78,7 +78,7 @@
 /* #define LTC_CLEAN_STACK */
 
 /* disable all file related functions */
-/* #define LTC_NO_FILE */
+#define LTC_NO_FILE
 
 /* disable all forms of ASM */
 /* #define LTC_NO_ASM */

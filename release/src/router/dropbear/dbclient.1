@@ -36,7 +36,7 @@ Read the identity from file
 .I idfile
 (multiple allowed).
 .TP
-.B \-L \fIlistenport\fR:\fIhost\fR:\fIport\fR
+.B \-L [\fIlistenaddress\fR]:\fIlistenport\fR:\fIhost\fR:\fIport\fR
 Local port forwarding.
 Forward the port
 .I listenport
@@ -45,7 +45,7 @@ on the local host through the SSH connection to port
 on the host
 .IR host .
 .TP
-.B \-R \fIlistenport\fR:\fIhost\fR:\fIport\fR
+.B \-R [\fIlistenaddress\fR]:\fIlistenport\fR:\fIhost\fR:\fIport\fR
 Remote port forwarding.
 Forward the port
 .I listenport
@@ -81,6 +81,11 @@ by the ssh server.
 .B \-y
 Always accept hostkeys if they are unknown. If a hostkey mismatch occurs the
 connection will abort as normal.
+.TP
+.B \-A
+Forward agent connections to the remote host. dbclient will use any
+OpenSSH-style agent program if available ($SSH_AUTH_SOCK will be set) for
+public key authentication.  Forwarding is only enabled if -A is specified.
 .TP
 .B \-W \fIwindowsize
 Specify the per-channel receive window buffer size. Increasing this 

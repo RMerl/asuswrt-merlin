@@ -206,10 +206,16 @@ static int svr_remotetcpreq() {
 	tcpinfo = (struct TCPListener*)m_malloc(sizeof(struct TCPListener));
 	tcpinfo->sendaddr = NULL;
 	tcpinfo->sendport = 0;
-	tcpinfo->listenaddr = bindaddr;
 	tcpinfo->listenport = port;
 	tcpinfo->chantype = &svr_chan_tcpremote;
 	tcpinfo->tcp_type = forwarded;
+
+	if (!opts.listen_fwd_all || (strcmp(bindaddr, "localhost") == 0) ) {
+        // NULL means "localhost only"
+		m_free(bindaddr);
+		bindaddr = NULL;
+	}
+	tcpinfo->listenaddr = bindaddr;
 
 	ret = listen_tcpfwd(tcpinfo);
 

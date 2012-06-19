@@ -175,7 +175,7 @@ void x11cleanup(struct ChanSess *chansess) {
 	m_free(chansess->x11authprot);
 	m_free(chansess->x11authcookie);
 
-	TRACE(("chansess %s", chansess))
+	TRACE(("chansess %x", chansess))
 	if (chansess->x11listener != NULL) {
 		remove_listener(chansess->x11listener);
 		chansess->x11listener = NULL;
@@ -233,7 +233,7 @@ static int bindport(int fd) {
 			continue;
 		}
 		/* otherwise it was an error we don't know about */
-		dropbear_log(LOG_DEBUG, "failed to bind x11 socket");
+		dropbear_log(LOG_DEBUG, "Failed to bind x11 socket");
 		break;
 	}
 	return -1;

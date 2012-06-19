@@ -7,7 +7,7 @@ dropbear \- lightweight SSH2 server
 .I banner\fR] [\-d
 .I dsskey\fR] [\-r
 .I rsakey\fR] [\-p
-.IR port ]
+.IR [address:]port ]
 .SH DESCRIPTION
 .B dropbear
 is a SSH 2 server designed to be small enough to be used in small memory
@@ -153,6 +153,34 @@ Message Of The Day
 By default the file /etc/motd will be printed for any login shell (unless 
 disabled at compile-time). This can also be disabled per-user
 by creating a file ~/.hushlogin .
+
+.SH ENVIRONMENT VARIABLES
+Dropbear sets the standard variables USER, LOGNAME, HOME, SHELL, PATH, and TERM.
+
+The variables below are set for sessions as appropriate. 
+
+.TP
+.B SSH_TTY
+This is set to the allocated TTY if a PTY was used.
+
+.TP
+.B SSH_CONNECTION
+Contains "<remote_ip> <remote_port> <local_ip> <local_port>".
+
+.TP
+.B DISPLAY
+Set X11 forwarding is used.
+
+.TP
+.B SSH_ORIGINAL_COMMAND
+If a 'command=' authorized_keys option was used, the original command is specified
+in this variable. If a shell was requested this is set to an empty value.
+
+.TP
+.B SSH_AUTH_SOCK
+Set to a forwarded ssh-agent connection.
+
+
 
 .SH AUTHOR
 Matt Johnston (matt@ucc.asn.au).

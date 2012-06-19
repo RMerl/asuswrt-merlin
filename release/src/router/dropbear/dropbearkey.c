@@ -23,7 +23,7 @@
  * SOFTWARE. */
 
 /* The format of the keyfiles is basically a raw dump of the buffer. Data types
- * are specified in the transport draft - string is a 32-bit len then the
+ * are specified in the transport rfc 4253 - string is a 32-bit len then the
  * non-null-terminated string, mp_int is a 32-bit len then the bignum data.
  * The actual functions are buf_put_rsa_priv_key() and buf_put_dss_priv_key()
 

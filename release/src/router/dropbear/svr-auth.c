@@ -33,6 +33,7 @@
 #include "packet.h"
 #include "auth.h"
 #include "runopts.h"
+#include "random.h"
 
 static void authclear();
 static int checkusername(unsigned char *username, unsigned int userlen);
@@ -210,9 +211,7 @@ out:
 static int checkusername(unsigned char *username, unsigned int userlen) {
 
 	char* listshell = NULL;
-#if 0	// shell check
 	char* usershell = NULL;
-#endif
 	TRACE(("enter checkusername"))
 	if (userlen > MAX_USERNAME_LEN) {
 		return DROPBEAR_FAILURE;
@@ -223,7 +222,7 @@ static int checkusername(unsigned char *username, unsigned int userlen) {
 		strcmp(username, ses.authstate.username) != 0) {
 			/* the username needs resetting */
 			if (ses.authstate.username != NULL) {
-				dropbear_log(LOG_WARNING, "client trying multiple usernames from %s",
+				dropbear_log(LOG_WARNING, "Client trying multiple usernames from %s",
 							svr_ses.addrstring);
 				m_free(ses.authstate.username);
 			}
@@ -236,7 +235,7 @@ static int checkusername(unsigned char *username, unsigned int userlen) {
 	if (!ses.authstate.pw_name) {
 		TRACE(("leave checkusername: user '%s' doesn't exist", username))
 		dropbear_log(LOG_WARNING,
-				"login attempt for nonexistent user from %s",
+				"Login attempt for nonexistent user from %s",
 				svr_ses.addrstring);
 		send_msg_userauth_failure(0, 1);
 		return DROPBEAR_FAILURE;
@@ -250,18 +249,8 @@ static int checkusername(unsigned char *username, unsigned int userlen) {
 		return DROPBEAR_FAILURE;
 	}
 
-	/* check for an empty password */
-	if (ses.authstate.pw_passwd[0] == '\0') {
-		TRACE(("leave checkusername: empty pword"))
-		dropbear_log(LOG_WARNING, "user '%s' has blank password, rejected",
-				ses.authstate.pw_name);
-		send_msg_userauth_failure(0, 1);
-		return DROPBEAR_FAILURE;
-	}
-
 	TRACE(("shell is %s", ses.authstate.pw_shell))
 
-#if 0	// shell check
 	/* check that the shell is set */
 	usershell = ses.authstate.pw_shell;
 	if (usershell[0] == '\0') {
@@ -283,11 +272,10 @@ static int checkusername(unsigned char *username, unsigned int userlen) {
 	/* no matching shell */
 	endusershell();
 	TRACE(("no matching shell"))
-	dropbear_log(LOG_WARNING, "user '%s' has invalid shell, rejected",
+	dropbear_log(LOG_WARNING, "User '%s' has invalid shell, rejected",
 				ses.authstate.pw_name);
 	send_msg_userauth_failure(0, 1);
 	return DROPBEAR_FAILURE;
-#endif	// shell check
 	
 goodshell:
 	endusershell();
@@ -341,7 +329,11 @@ void send_msg_userauth_failure(int partial, int incrfail) {
 	encrypt_packet();
 
 	if (incrfail) {
-		usleep(300000); /* XXX improve this */
+		unsigned int delay;
+		genrandom((unsigned char*)&delay, sizeof(delay));
+		/* We delay for 300ms +- 50ms, 0.1ms granularity */
+		delay = 250000 + (delay % 1000)*100;
+		usleep(delay);
 		ses.authstate.failcount++;
 	}
 

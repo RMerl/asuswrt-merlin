@@ -29,7 +29,7 @@
 
 #ifdef DROPBEAR_DSS
 
-dss_key * gen_dss_priv_key(unsigned int size);
+dropbear_dss_key * gen_dss_priv_key(unsigned int size);
 
 #endif /* DROPBEAR_DSS */
 

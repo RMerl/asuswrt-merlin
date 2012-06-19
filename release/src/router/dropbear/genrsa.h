@@ -29,7 +29,7 @@
 
 #ifdef DROPBEAR_RSA
 
-rsa_key * gen_rsa_priv_key(unsigned int size);
+dropbear_rsa_key * gen_rsa_priv_key(unsigned int size);
 
 #endif /* DROPBEAR_RSA */
 

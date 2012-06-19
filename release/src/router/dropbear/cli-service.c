@@ -72,7 +72,7 @@ void recv_msg_service_accept() {
 			&& strncmp(SSH_SERVICE_CONNECTION, servicename, len) == 0) {
 
 		if (ses.authstate.authdone != 1) {
-			dropbear_exit("request for connection before auth");
+			dropbear_exit("Request for connection before auth");
 		}
 
 		cli_ses.state = SERVICE_CONN_ACCEPT_RCVD;
@@ -81,5 +81,5 @@ void recv_msg_service_accept() {
 		return;
 	}
 
-	dropbear_exit("unrecognised service accept");
+	dropbear_exit("Unrecognised service accept");
 }

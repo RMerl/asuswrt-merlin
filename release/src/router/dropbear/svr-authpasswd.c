@@ -42,6 +42,7 @@ void svr_auth_password() {
 	char * passwdcrypt = NULL; /* the crypt from /etc/passwd or /etc/shadow */
 	char * testcrypt = NULL; /* crypt generated from the user's password sent */
 	unsigned char * password;
+	int success_blank = 0;
 	unsigned int passwordlen;
 
 	unsigned int changepw;
@@ -60,16 +61,6 @@ void svr_auth_password() {
 	passwdcrypt = DEBUG_HACKCRYPT;
 #endif
 
-	/* check for empty password - need to do this again here
-	 * since the shadow password may differ to that tested
-	 * in auth.c */
-	if (passwdcrypt[0] == '\0') {
-		dropbear_log(LOG_WARNING, "user '%s' has blank password, rejected",
-				ses.authstate.pw_name);
-		send_msg_userauth_failure(0, 1);
-		return;
-	}
-
 	/* check if client wants to change password */
 	changepw = buf_getbool(ses.payload);
 	if (changepw) {
@@ -85,21 +76,34 @@ void svr_auth_password() {
 	m_burn(password, passwordlen);
 	m_free(password);
 
-	if (strcmp(testcrypt, passwdcrypt) == 0) {
+	/* check for empty password */
+	if (passwdcrypt[0] == '\0') {
+#ifdef ALLOW_BLANK_PASSWORD
+		if (passwordlen == 0) {
+			success_blank = 1;
+		}
+#else
+		dropbear_log(LOG_WARNING, "User '%s' has blank password, rejected",
+				ses.authstate.pw_name);
+		send_msg_userauth_failure(0, 1);
+		return;
+#endif
+	}
+
+	if (success_blank || strcmp(testcrypt, passwdcrypt) == 0) {
 		/* successful authentication */
 		dropbear_log(LOG_NOTICE, 
-				"password auth succeeded for '%s' from %s",
+				"Password auth succeeded for '%s' from %s",
 				ses.authstate.pw_name,
 				svr_ses.addrstring);
 		send_msg_userauth_success();
 	} else {
 		dropbear_log(LOG_WARNING,
-				"bad password attempt for '%s' from %s",
+				"Bad password attempt for '%s' from %s",
 				ses.authstate.pw_name,
 				svr_ses.addrstring);
 		send_msg_userauth_failure(0, 1);
 	}
-
 }
 
 #endif

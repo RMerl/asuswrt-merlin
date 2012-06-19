@@ -38,7 +38,7 @@
 
 #ifdef DROPBEAR_RSA 
 
-static void rsa_pad_em(rsa_key * key,
+static void rsa_pad_em(dropbear_rsa_key * key,
 		const unsigned char * data, unsigned int len,
 		mp_int * rsa_em);
 
@@ -46,7 +46,7 @@ static void rsa_pad_em(rsa_key * key,
  * The key will have the same format as buf_put_rsa_key.
  * These should be freed with rsa_key_free.
  * Returns DROPBEAR_SUCCESS or DROPBEAR_FAILURE */
-int buf_get_rsa_pub_key(buffer* buf, rsa_key *key) {
+int buf_get_rsa_pub_key(buffer* buf, dropbear_rsa_key *key) {
 
     int ret = DROPBEAR_FAILURE;
 	TRACE(("enter buf_get_rsa_pub_key"))
@@ -67,7 +67,7 @@ int buf_get_rsa_pub_key(buffer* buf, rsa_key *key) {
 	}
 
 	if (mp_count_bits(key->n) < MIN_RSA_KEYLEN) {
-		dropbear_log(LOG_WARNING, "rsa key too short");
+		dropbear_log(LOG_WARNING, "RSA key too short");
 	    goto out;
 	}
 
@@ -84,7 +84,7 @@ out:
 /* Same as buf_get_rsa_pub_key, but reads private bits at the end.
  * Loads a private rsa key from a buffer
  * Returns DROPBEAR_SUCCESS or DROPBEAR_FAILURE */
-int buf_get_rsa_priv_key(buffer* buf, rsa_key *key) {
+int buf_get_rsa_priv_key(buffer* buf, dropbear_rsa_key *key) {
     int ret = DROPBEAR_FAILURE;
 
 	TRACE(("enter buf_get_rsa_priv_key"))
@@ -137,7 +137,7 @@ out:
 	
 
 /* Clear and free the memory used by a public or private key */
-void rsa_key_free(rsa_key *key) {
+void rsa_key_free(dropbear_rsa_key *key) {
 
 	TRACE(("enter rsa_key_free"))
 
@@ -175,7 +175,7 @@ void rsa_key_free(rsa_key *key) {
  * mp_int	e
  * mp_int	n
  */
-void buf_put_rsa_pub_key(buffer* buf, rsa_key *key) {
+void buf_put_rsa_pub_key(buffer* buf, dropbear_rsa_key *key) {
 
 	TRACE(("enter buf_put_rsa_pub_key"))
 	dropbear_assert(key != NULL);
@@ -189,7 +189,7 @@ void buf_put_rsa_pub_key(buffer* buf, rsa_key *key) {
 }
 
 /* Same as buf_put_rsa_pub_key, but with the private "x" key appended */
-void buf_put_rsa_priv_key(buffer* buf, rsa_key *key) {
+void buf_put_rsa_priv_key(buffer* buf, dropbear_rsa_key *key) {
 
 	TRACE(("enter buf_put_rsa_priv_key"))
 
@@ -213,7 +213,7 @@ void buf_put_rsa_priv_key(buffer* buf, rsa_key *key) {
 #ifdef DROPBEAR_SIGNKEY_VERIFY
 /* Verify a signature in buf, made on data by the key given.
  * Returns DROPBEAR_SUCCESS or DROPBEAR_FAILURE */
-int buf_rsa_verify(buffer * buf, rsa_key *key, const unsigned char* data,
+int buf_rsa_verify(buffer * buf, dropbear_rsa_key *key, const unsigned char* data,
 		unsigned int len) {
 
 	unsigned int slen;
@@ -270,7 +270,7 @@ out:
 
 /* Sign the data presented with key, writing the signature contents
  * to the buffer */
-void buf_put_rsa_sign(buffer* buf, rsa_key *key, const unsigned char* data,
+void buf_put_rsa_sign(buffer* buf, dropbear_rsa_key *key, const unsigned char* data,
 		unsigned int len) {
 
 	unsigned int nsize, ssize;
@@ -302,26 +302,26 @@ void buf_put_rsa_sign(buffer* buf, rsa_key *key, const unsigned char* data,
 
 	/* rsa_s used as a temp var*/
 	if (mp_exptmod(&rsa_tmp2, key->e, key->n, &rsa_s) != MP_OKAY) {
-		dropbear_exit("rsa error");
+		dropbear_exit("RSA error");
 	}
 	if (mp_invmod(&rsa_tmp2, key->n, &rsa_tmp3) != MP_OKAY) {
-		dropbear_exit("rsa error");
+		dropbear_exit("RSA error");
 	}
 	if (mp_mulmod(&rsa_tmp1, &rsa_s, key->n, &rsa_tmp2) != MP_OKAY) {
-		dropbear_exit("rsa error");
+		dropbear_exit("RSA error");
 	}
 
 	/* rsa_tmp2 is em' */
 	/* s' = (em')^d mod n */
 	if (mp_exptmod(&rsa_tmp2, key->d, key->n, &rsa_tmp1) != MP_OKAY) {
-		dropbear_exit("rsa error");
+		dropbear_exit("RSA error");
 	}
 
 	/* rsa_tmp1 is s' */
 	/* rsa_tmp3 is r^(-1) mod n */
 	/* s = (s')r^(-1) mod n */
 	if (mp_mulmod(&rsa_tmp1, &rsa_tmp3, key->n, &rsa_s) != MP_OKAY) {
-		dropbear_exit("rsa error");
+		dropbear_exit("RSA error");
 	}
 
 #else
@@ -329,7 +329,7 @@ void buf_put_rsa_sign(buffer* buf, rsa_key *key, const unsigned char* data,
 	/* s = em^d mod n */
 	/* rsa_tmp1 is em */
 	if (mp_exptmod(&rsa_tmp1, key->d, key->n, &rsa_s) != MP_OKAY) {
-		dropbear_exit("rsa error");
+		dropbear_exit("RSA error");
 	}
 
 #endif /* RSA_BLINDING */
@@ -351,7 +351,7 @@ void buf_put_rsa_sign(buffer* buf, rsa_key *key, const unsigned char* data,
 	}
 
 	if (mp_to_unsigned_bin(&rsa_s, buf_getwriteptr(buf, ssize)) != MP_OKAY) {
-		dropbear_exit("rsa error");
+		dropbear_exit("RSA error");
 	}
 	buf_incrwritepos(buf, ssize);
 	mp_clear(&rsa_s);
@@ -376,7 +376,7 @@ void buf_put_rsa_sign(buffer* buf, rsa_key *key, const unsigned char* data,
  *
  * rsa_em must be a pointer to an initialised mp_int.
  */
-static void rsa_pad_em(rsa_key * key,
+static void rsa_pad_em(dropbear_rsa_key * key,
 		const unsigned char * data, unsigned int len, 
 		mp_int * rsa_em) {
 

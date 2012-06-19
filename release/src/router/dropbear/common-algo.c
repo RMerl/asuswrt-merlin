@@ -31,7 +31,9 @@
 
 static int void_cipher(const unsigned char* in, unsigned char* out,
 		unsigned long len, void *cipher_state) {
-	memcpy(out, in, len);
+	if (in != out) {
+		memmove(out, in, len);
+	}
 	return CRYPT_OK;
 }
 
@@ -166,11 +168,16 @@ algo_type sshhashes[] = {
 	{NULL, 0, NULL, 0, NULL}
 };
 
-algo_type sshcompress[] = {
 #ifndef DISABLE_ZLIB
+algo_type ssh_compress[] = {
 	{"zlib", DROPBEAR_COMP_ZLIB, NULL, 1, NULL},
 	{"zlib@openssh.com", DROPBEAR_COMP_ZLIB_DELAY, NULL, 1, NULL},
+	{"none", DROPBEAR_COMP_NONE, NULL, 1, NULL},
+	{NULL, 0, NULL, 0, NULL}
+};
 #endif
+
+algo_type ssh_nocompress[] = {
 	{"none", DROPBEAR_COMP_NONE, NULL, 1, NULL},
 	{NULL, 0, NULL, 0, NULL}
 };
@@ -187,6 +194,7 @@ algo_type sshhostkey[] = {
 
 algo_type sshkex[] = {
 	{"diffie-hellman-group1-sha1", DROPBEAR_KEX_DH_GROUP1, NULL, 1, NULL},
+	{"diffie-hellman-group14-sha1", DROPBEAR_KEX_DH_GROUP14, NULL, 1, NULL},
 	{NULL, 0, NULL, 0, NULL}
 };
 
@@ -223,13 +231,13 @@ void crypto_init() {
 	
 	for (i = 0; regciphers[i] != NULL; i++) {
 		if (register_cipher(regciphers[i]) == -1) {
-			dropbear_exit("error registering crypto");
+			dropbear_exit("Error registering crypto");
 		}
 	}
 
 	for (i = 0; reghashes[i] != NULL; i++) {
 		if (register_hash(reghashes[i]) == -1) {
-			dropbear_exit("error registering crypto");
+			dropbear_exit("Error registering crypto");
 		}
 	}
 }

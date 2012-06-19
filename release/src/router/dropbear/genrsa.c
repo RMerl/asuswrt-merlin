@@ -37,14 +37,14 @@ static void getrsaprime(mp_int* prime, mp_int *primeminus,
 		mp_int* rsa_e, unsigned int size);
 
 /* mostly taken from libtomcrypt's rsa key generation routine */
-rsa_key * gen_rsa_priv_key(unsigned int size) {
+dropbear_rsa_key * gen_rsa_priv_key(unsigned int size) {
 
-	rsa_key * key;
+	dropbear_rsa_key * key;
 	DEF_MP_INT(pminus);
 	DEF_MP_INT(qminus);
 	DEF_MP_INT(lcm);
 
-	key = (rsa_key*)m_malloc(sizeof(rsa_key));
+	key = m_malloc(sizeof(*key));
 
 	key->e = (mp_int*)m_malloc(sizeof(mp_int));
 	key->n = (mp_int*)m_malloc(sizeof(mp_int));
@@ -58,7 +58,7 @@ rsa_key * gen_rsa_priv_key(unsigned int size) {
 	seedrandom();
 
 	if (mp_set_int(key->e, RSA_E) != MP_OKAY) {
-		fprintf(stderr, "rsa generation failed\n");
+		fprintf(stderr, "RSA generation failed\n");
 		exit(1);
 	}
 
@@ -66,20 +66,20 @@ rsa_key * gen_rsa_priv_key(unsigned int size) {
 	getrsaprime(key->q, &qminus, key->e, size/2);
 
 	if (mp_mul(key->p, key->q, key->n) != MP_OKAY) {
-		fprintf(stderr, "rsa generation failed\n");
+		fprintf(stderr, "RSA generation failed\n");
 		exit(1);
 	}
 
 	/* lcm(p-1, q-1) */
 	if (mp_lcm(&pminus, &qminus, &lcm) != MP_OKAY) {
-		fprintf(stderr, "rsa generation failed\n");
+		fprintf(stderr, "RSA generation failed\n");
 		exit(1);
 	}
 
 	/* de = 1 mod lcm(p-1,q-1) */
 	/* therefore d = (e^-1) mod lcm(p-1,q-1) */
 	if (mp_invmod(key->e, &lcm, key->d) != MP_OKAY) {
-		fprintf(stderr, "rsa generation failed\n");
+		fprintf(stderr, "RSA generation failed\n");
 		exit(1);
 	}
 
@@ -108,18 +108,18 @@ static void getrsaprime(mp_int* prime, mp_int *primeminus,
 
 		/* find the next integer which is prime, 8 round of miller-rabin */
 		if (mp_prime_next_prime(prime, 8, 0) != MP_OKAY) {
-			fprintf(stderr, "rsa generation failed\n");
+			fprintf(stderr, "RSA generation failed\n");
 			exit(1);
 		}
 
 		/* subtract one to get p-1 */
 		if (mp_sub_d(prime, 1, primeminus) != MP_OKAY) {
-			fprintf(stderr, "rsa generation failed\n");
+			fprintf(stderr, "RSA generation failed\n");
 			exit(1);
 		}
 		/* check relative primality to e */
 		if (mp_gcd(primeminus, rsa_e, &temp_gcd) != MP_OKAY) {
-			fprintf(stderr, "rsa generation failed\n");
+			fprintf(stderr, "RSA generation failed\n");
 			exit(1);
 		}
 	} while (mp_cmp_d(&temp_gcd, 1) != MP_EQ); /* while gcd(p-1, e) != 1 */

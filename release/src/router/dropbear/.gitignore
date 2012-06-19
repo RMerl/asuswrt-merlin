@@ -1,0 +1,8 @@
+*.o
+config.h
+dbclient
+dropbear
+dropbearkey
+dropbearmulti
+*.a
+scp

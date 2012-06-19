@@ -31,7 +31,7 @@
 void m_mp_init(mp_int *mp) {
 
 	if (mp_init(mp) != MP_OKAY) {
-		dropbear_exit("mem alloc error");
+		dropbear_exit("Mem alloc error");
 	}
 }
 
@@ -45,7 +45,7 @@ void m_mp_init_multi(mp_int *mp, ...)
     va_start(args, mp);        /* init args to next argument from caller */
     while (cur_arg != NULL) {
         if (mp_init(cur_arg) != MP_OKAY) {
-			dropbear_exit("mem alloc error");
+			dropbear_exit("Mem alloc error");
         }
         cur_arg = va_arg(args, mp_int*);
     }
@@ -55,7 +55,7 @@ void m_mp_init_multi(mp_int *mp, ...)
 void bytes_to_mp(mp_int *mp, const unsigned char* bytes, unsigned int len) {
 
 	if (mp_read_unsigned_bin(mp, (unsigned char*)bytes, len) != MP_OKAY) {
-		dropbear_exit("mem alloc error");
+		dropbear_exit("Mem alloc error");
 	}
 }
 

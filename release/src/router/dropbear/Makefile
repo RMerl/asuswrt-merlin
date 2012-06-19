@@ -1,5 +1,5 @@
 # This Makefile is for Dropbear SSH Server and Client
-# @configure_input@
+# Makefile.  Generated from Makefile.in by configure.
 
 # invocation:
 # make PROGRAMS="dropbear dbclient scp" MULTI=1 STATIC=1 SCPPROGRESS=1
@@ -16,7 +16,7 @@ endif
 LTC=libtomcrypt/libtomcrypt.a
 LTM=libtommath/libtommath.a
 
-ifeq (@BUNDLED_LIBTOM@, 1)
+ifeq (1, 1)
 LIBTOM_DEPS=$(LTC) $(LTM)
 CFLAGS+=-I$(srcdir)/libtomcrypt/src/headers/ 
 LIBS+=$(LTC) $(LTM)
@@ -56,31 +56,31 @@ HEADERS=options.h dbutil.h session.h packet.h algo.h ssh.h buffer.h kex.h \
 		loginrec.h atomicio.h x11fwd.h agentfwd.h tcpfwd.h compat.h \
 		listener.h fake-rfc2553.h
 
-dropbearobjs=$(COMMONOBJS) $(CLISVROBJS) $(SVROBJS) @CRYPTLIB@ 
+dropbearobjs=$(COMMONOBJS) $(CLISVROBJS) $(SVROBJS) -lcrypt 
 dbclientobjs=$(COMMONOBJS) $(CLISVROBJS) $(CLIOBJS)
 dropbearkeyobjs=$(COMMONOBJS) $(KEYOBJS)
 dropbearconvertobjs=$(COMMONOBJS) $(CONVERTOBJS)
 scpobjs=$(SCPOBJS)
 
-VPATH=@srcdir@
-srcdir=@srcdir@
 
-prefix=@prefix@
+srcdir=.
+
+prefix=/usr/local
 exec_prefix=${prefix}
 bindir=${exec_prefix}/bin
 sbindir=${exec_prefix}/sbin
 
-CC=@CC@
-AR=@AR@
-RANLIB=@RANLIB@
-STRIP=@STRIP@
-INSTALL=@INSTALL@
-CPPFLAGS=@CPPFLAGS@
-CFLAGS+=-I. -I$(srcdir) $(CPPFLAGS) @CFLAGS@
-LIBS+=@LIBS@
-LDFLAGS=@LDFLAGS@
+CC=mipsel-uclibc-gcc
+AR=mipsel-uclibc-ar
+RANLIB=mipsel-uclibc-ranlib
+STRIP=mipsel-uclibc-strip -R .note -R .comment
+INSTALL=install
+CPPFLAGS=
+CFLAGS+=-I. -I$(srcdir) $(CPPFLAGS) -Os -Wall -DLINUX26 -DCONFIG_BCMWL5 -DDEBUG_NOISY -DDEBUG_RCTEST -pipe -DBCMWPA2 -funit-at-a-time -Wno-pointer-sign -mtune=mips32 -mips32 -ffunction-sections -fdata-sections
+LIBS+=-lutil 
+LDFLAGS=-ffunction-sections -fdata-sections -Wl,--gc-sections
 
-EXEEXT=@EXEEXT@
+EXEEXT=
 
 # whether we're building client, server, or both for the common objects.
 # evilness so we detect 'dropbear' by itself as a word
@@ -169,7 +169,7 @@ scp: $(SCPOBJS)  $(HEADERS) Makefile
 # multi-binary compilation.
 MULTIOBJS=
 ifeq ($(MULTI),1)
-	MULTIOBJS=dbmulti.o $(sort $(foreach prog, $(PROGRAMS), $($(prog)objs))) @CRYPTLIB@ 
+	MULTIOBJS=dbmulti.o $(sort $(foreach prog, $(PROGRAMS), $($(prog)objs))) -lcrypt 
 	CFLAGS+=$(addprefix -DDBMULTI_, $(PROGRAMS)) -DDROPBEAR_MULTI
 endif
 

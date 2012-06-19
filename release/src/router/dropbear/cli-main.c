@@ -29,10 +29,12 @@
 #include "runopts.h"
 #include "session.h"
 
-static void cli_dropbear_exit(int exitcode, const char* format, va_list param);
+static void cli_dropbear_exit(int exitcode, const char* format, va_list param) ATTRIB_NORETURN;
 static void cli_dropbear_log(int priority, const char* format, va_list param);
 
+#ifdef ENABLE_CLI_PROXYCMD
 static void cli_proxy_cmd(int *sock_in, int *sock_out);
+#endif
 
 #if defined(DBMULTI_dbclient) || !defined(DROPBEAR_MULTI)
 #if defined(DBMULTI_dbclient) && defined(DROPBEAR_MULTI)
@@ -43,8 +45,6 @@ int main(int argc, char ** argv) {
 
 	int sock_in, sock_out;
 	char* error = NULL;
-	char* hostandport;
-	int len;
 
 	_dropbear_exit = cli_dropbear_exit;
 	_dropbear_log = cli_dropbear_log;
@@ -63,6 +63,7 @@ int main(int argc, char ** argv) {
 #ifdef ENABLE_CLI_PROXYCMD
 	if (cli_opts.proxycmd) {
 		cli_proxy_cmd(&sock_in, &sock_out);
+		m_free(cli_opts.proxycmd);
 	} else
 #endif
 	{
@@ -75,14 +76,7 @@ int main(int argc, char ** argv) {
 		dropbear_exit("%s", error);
 	}
 
-	/* Set up the host:port log */
-	len = strlen(cli_opts.remotehost);
-	len += 10; /* 16 bit port and leeway*/
-	hostandport = (char*)m_malloc(len);
-	snprintf(hostandport, len, "%s:%s", 
-			cli_opts.remotehost, cli_opts.remoteport);
-
-	cli_session(sock_in, sock_out, hostandport);
+	cli_session(sock_in, sock_out);
 
 	/* not reached */
 	return -1;
@@ -94,11 +88,11 @@ static void cli_dropbear_exit(int exitcode, const char* format, va_list param) {
 	char fmtbuf[300];
 
 	if (!sessinitdone) {
-		snprintf(fmtbuf, sizeof(fmtbuf), "exited: %s",
+		snprintf(fmtbuf, sizeof(fmtbuf), "Exited: %s",
 				format);
 	} else {
 		snprintf(fmtbuf, sizeof(fmtbuf), 
-				"connection to %s@%s:%s exited: %s", 
+				"Connection to %s@%s:%s exited: %s", 
 				cli_opts.username, cli_opts.remotehost, 
 				cli_opts.remoteport, format);
 	}
@@ -132,6 +126,7 @@ static void exec_proxy_cmd(void *user_data_cmd) {
 	dropbear_exit("Failed to run '%s'\n", cmd);
 }
 
+#ifdef ENABLE_CLI_PROXYCMD
 static void cli_proxy_cmd(int *sock_in, int *sock_out) {
 	int ret;
 
@@ -144,3 +139,4 @@ static void cli_proxy_cmd(int *sock_in, int *sock_out) {
 		*sock_in = *sock_out = -1;
 	}
 }
+#endif // ENABLE_CLI_PROXYCMD

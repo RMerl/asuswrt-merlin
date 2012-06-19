@@ -37,11 +37,12 @@
 #include "packet.h"
 #include "tcpfwd.h"
 #include "chansession.h"
+#include "dbutil.h"
 
 extern int sessinitdone; /* Is set to 0 somewhere */
 extern int exitflag;
 
-void common_session_init(int sock_in, int sock_out, char* remotehost);
+void common_session_init(int sock_in, int sock_out);
 void session_loop(void(*loophandler)());
 void common_session_cleanup();
 void session_identification();
@@ -51,51 +52,45 @@ const char* get_user_shell();
 void fill_passwd(const char* username);
 
 /* Server */
-void svr_session(int sock, int childpipe, char *remotehost, char *addrstring);
-void svr_dropbear_exit(int exitcode, const char* format, va_list param);
+void svr_session(int sock, int childpipe);
+void svr_dropbear_exit(int exitcode, const char* format, va_list param) ATTRIB_NORETURN;
 void svr_dropbear_log(int priority, const char* format, va_list param);
 
 /* Client */
-void cli_session(int sock_in, int sock_out, char *remotehost);
+void cli_session(int sock_in, int sock_out);
 void cli_session_cleanup();
 void cleantext(unsigned char* dirtytext);
 
-struct key_context {
-
-	const struct dropbear_cipher *recv_algo_crypt; /* NULL for none */
-	const struct dropbear_cipher *trans_algo_crypt; /* NULL for none */
-	const struct dropbear_cipher_mode *recv_crypt_mode;
-	const struct dropbear_cipher_mode *trans_crypt_mode;
-	const struct dropbear_hash *recv_algo_mac; /* NULL for none */
-	const struct dropbear_hash *trans_algo_mac; /* NULL for none */
-	char algo_kex;
-	char algo_hostkey;
-
-	char recv_algo_comp; /* compression */
-	char trans_algo_comp;
-	int allow_compress; /* whether compression has started (useful in 
-							zlib@openssh.com delayed compression case) */
+/* crypto parameters that are stored individually for transmit and receive */
+struct key_context_directional {
+	const struct dropbear_cipher *algo_crypt; /* NULL for none */
+	const struct dropbear_cipher_mode *crypt_mode;
+	const struct dropbear_hash *algo_mac; /* NULL for none */
+	int hash_index; /* lookup for libtomcrypt */
+	char algo_comp; /* compression */
 #ifndef DISABLE_ZLIB
-	z_streamp recv_zstream;
-	z_streamp trans_zstream;
+	z_streamp zstream;
 #endif
-
 	/* actual keys */
 	union {
 		symmetric_CBC cbc;
 #ifdef DROPBEAR_ENABLE_CTR_MODE
 		symmetric_CTR ctr;
 #endif
-	} recv_cipher_state;
-	union {
-		symmetric_CBC cbc;
-#ifdef DROPBEAR_ENABLE_CTR_MODE
-		symmetric_CTR ctr;
-#endif
-	} trans_cipher_state;
-	unsigned char recvmackey[MAX_MAC_KEY];
-	unsigned char transmackey[MAX_MAC_KEY];
+	} cipher_state;
+	unsigned char mackey[MAX_MAC_KEY];
+};
 
+struct key_context {
+
+	struct key_context_directional recv;
+	struct key_context_directional trans;
+
+	char algo_kex;
+	char algo_hostkey;
+
+	int allow_compress; /* whether compression has started (useful in 
+							zlib@openssh.com delayed compression case) */
 };
 
 struct packetlist;
@@ -116,8 +111,6 @@ struct sshsession {
 	int sock_in;
 	int sock_out;
 
-	unsigned char *remotehost; /* the peer hostname */
-
 	unsigned char *remoteident;
 
 	int maxfd; /* the maximum file descriptor to check with select() */
@@ -128,8 +121,7 @@ struct sshsession {
 							 throughout the code, as handlers fill out this
 							 buffer with the packet to send. */
 	struct Queue writequeue; /* A queue of encrypted packets to send */
-	buffer *readbuf; /* Encrypted */
-	buffer *decryptreadbuf; /* Post-decryption */
+	buffer *readbuf; /* From the wire, decrypted in-place */
 	buffer *payload; /* Post-decompression, the actual SSH packet */
 	unsigned int transseq, recvseq; /* Sequence IDs */
 
@@ -169,6 +161,9 @@ struct sshsession {
 	buffer* kexhashbuf; /* session hash buffer calculated from various packets*/
 	buffer* transkexinit; /* the kexinit packet we send should be kept so we
 							 can add it to the hash when generating keys */
+
+	/* Enables/disables compression */
+	algo_type *compress_algos;
 							
 	/* a list of queued replies that should be sent after a KEX has
 	   concluded (ie, while dataallowed was unset)*/
@@ -220,6 +215,13 @@ struct serversession {
 	/* The numeric address they connected from, used for logging */
 	char * addrstring;
 
+	/* The resolved remote address, used for lastlog etc */
+	char *remotehost;
+
+#ifdef __uClinux__
+	pid_t server_pid;
+#endif
+
 };
 
 typedef enum {
@@ -268,7 +270,7 @@ struct clientsession {
 									  info request from the server for
 									  interactive auth.*/
 #endif
-	struct SignKeyList *lastprivkey;
+	sign_key *lastprivkey;
 
 	int retval; /* What the command exit status was - we emulate it */
 #if 0

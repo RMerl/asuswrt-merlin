@@ -4,7 +4,7 @@
  *******************************************************************/
 
 #ifndef DROPBEAR_VERSION
-#define DROPBEAR_VERSION "0.52"
+#define DROPBEAR_VERSION "2012.55"
 #endif
 
 #define LOCAL_IDENT "SSH-2.0-dropbear_" DROPBEAR_VERSION
@@ -60,6 +60,7 @@
 
 /* various algorithm identifiers */
 #define DROPBEAR_KEX_DH_GROUP1 0
+#define DROPBEAR_KEX_DH_GROUP14 1
 
 #define DROPBEAR_SIGNKEY_ANY 0
 #define DROPBEAR_SIGNKEY_RSA 1
@@ -98,6 +99,7 @@
 #define MAX_PROPOSED_ALGO 20
 
 /* size/count limits */
+/* From transport rfc */
 #define MIN_PACKET_LEN 16
 
 #define RECV_MAX_PACKET_LEN (MAX(35000, ((RECV_MAX_PAYLOAD_LEN)+100)))
@@ -122,7 +124,7 @@
 #define MAX_PRIVKEY_SIZE 1700
 
 /* The maximum size of the bignum portion of the kexhash buffer */
-/* Sect. 8 of the transport draft, K_S + e + f + K */
+/* Sect. 8 of the transport rfc 4253, K_S + e + f + K */
 #define KEXHASHBUF_MAX_INTS (1700 + 130 + 130 + 130)
 
 #define DROPBEAR_MAX_SOCKS 2 /* IPv4, IPv6 are all we'll get for now. Revisit
@@ -146,10 +148,6 @@
 #define DISABLE_X11FWD
 #endif
 
-#ifndef ENABLE_AGENTFWD
-#define DISABLE_AGENTFWD
-#endif
-
 #if defined(ENABLE_CLI_REMOTETCPFWD) || defined(ENABLE_CLI_LOCALTCPFWD)
 #define ENABLE_CLI_ANYTCPFWD 
 #endif
@@ -160,17 +158,29 @@
 
 #if defined(ENABLE_CLI_REMOTETCPFWD) || defined(ENABLE_CLI_LOCALTCPFWD) || \
 	defined(ENABLE_SVR_REMOTETCPFWD) || defined(ENABLE_SVR_LOCALTCPFWD) || \
-	defined(ENABLE_AGENTFWD) || defined(ENABLE_X11FWD)
+	defined(ENABLE_SVR_AGENTFWD) || defined(ENABLE_X11FWD)
 #define USING_LISTENERS
+#endif
+
+#if defined(ENABLE_SVR_AGENTFWD) || defined(ENABLE_CLI_LOCALTCPFWD)
+#define ENABLE_AGENTFWD
 #endif
 
 #if defined(ENABLE_CLI_NETCAT) && defined(ENABLE_CLI_PROXYCMD)
 #define ENABLE_CLI_MULTIHOP
 #endif
 
+#if defined(ENABLE_CLI_AGENTFWD) || defined(DROPBEAR_PRNGD_SOCKET)
+#define ENABLE_CONNECT_UNIX
+#endif
+
 #if defined(DROPBEAR_CLIENT) || defined(ENABLE_SVR_PUBKEY_AUTH)
 #define DROPBEAR_KEY_LINES /* ie we're using authorized_keys or known_hosts */
 #endif
+
+/* Changing this is inadvisable, it appears to have problems
+ * with flushing compressed data */
+#define DROPBEAR_ZLIB_MEM_LEVEL 8
 
 #if defined(ENABLE_SVR_PASSWORD_AUTH) && defined(ENABLE_SVR_PAM_AUTH)
 #error "You can't turn on PASSWORD and PAM auth both at once. Fix it in options.h"
@@ -202,5 +212,8 @@
 #define IS_DROPBEAR_CLIENT 1
 
 #else
-#error You must compiled with either DROPBEAR_CLIENT or DROPBEAR_SERVER selected
+/* Just building key utils? */
+#define IS_DROPBEAR_SERVER 0
+#define IS_DROPBEAR_CLIENT 0
+
 #endif

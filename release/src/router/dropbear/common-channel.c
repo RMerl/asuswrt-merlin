@@ -138,6 +138,7 @@ struct Channel* newchannel(unsigned int remotechan,
 	newchan->index = i;
 	newchan->sent_close = newchan->recv_close = 0;
 	newchan->sent_eof = newchan->recv_eof = 0;
+	newchan->close_handler_done = 0;
 
 	newchan->remotechan = remotechan;
 	newchan->transwindow = transwindow;
@@ -270,7 +271,9 @@ static void check_close(struct Channel *channel) {
 				cbuf_getused(channel->writebuf),
 				channel->extrabuf ? cbuf_getused(channel->extrabuf) : 0))
 
-	if (!channel->flushing && channel->type->check_close
+	if (!channel->flushing 
+		&& !channel->close_handler_done
+		&& channel->type->check_close
 		&& channel->type->check_close(channel))
 	{
 		channel->flushing = 1;
@@ -281,7 +284,8 @@ static void check_close(struct Channel *channel) {
 	   channel, to ensure that the shell has exited (and the exit status 
 	   retrieved) before we close things up. */
 	if (!channel->type->check_close	
-			|| channel->type->check_close(channel)) {
+		|| channel->close_handler_done
+		|| channel->type->check_close(channel)) {
 		close_allowed = 1;
 	}
 
@@ -363,9 +367,11 @@ static void check_in_progress(struct Channel *channel) {
 /* Send the close message and set the channel as closed */
 static void send_msg_channel_close(struct Channel *channel) {
 
-	TRACE(("enter send_msg_channel_close"))
-	if (channel->type->closehandler) {
+	TRACE(("enter send_msg_channel_close %p", channel))
+	if (channel->type->closehandler 
+			&& !channel->close_handler_done) {
 		channel->type->closehandler(channel);
+		channel->close_handler_done = 1;
 	}
 	
 	CHECKCLEARTOWRITE();
@@ -568,16 +574,17 @@ void recv_msg_channel_request() {
 
 	struct Channel *channel;
 
-	TRACE(("enter recv_msg_channel_request"))
-	
 	channel = getchannel();
+
+	TRACE(("enter recv_msg_channel_request %p", channel))
 
 	if (channel->sent_close) {
 		TRACE(("leave recv_msg_channel_request: already closed channel"))
 		return;
 	}
 
-	if (channel->type->reqhandler) {
+	if (channel->type->reqhandler 
+			&& !channel->close_handler_done) {
 		channel->type->reqhandler(channel);
 	} else {
 		send_msg_channel_failure(channel);
@@ -688,7 +695,7 @@ void common_recv_msg_channel_data(struct Channel *channel, int fd,
 	TRACE(("enter recv_msg_channel_data"))
 
 	if (channel->recv_eof) {
-		dropbear_exit("received data after eof");
+		dropbear_exit("Received data after eof");
 	}
 
 	if (fd < 0) {
@@ -1006,7 +1013,7 @@ void recv_msg_channel_open_confirmation() {
 	channel = getchannel();
 
 	if (!channel->await_open) {
-		dropbear_exit("unexpected channel reply");
+		dropbear_exit("Unexpected channel reply");
 	}
 	channel->await_open = 0;
 
@@ -1038,7 +1045,7 @@ void recv_msg_channel_open_failure() {
 	channel = getchannel();
 
 	if (!channel->await_open) {
-		dropbear_exit("unexpected channel reply");
+		dropbear_exit("Unexpected channel reply");
 	}
 	channel->await_open = 0;
 

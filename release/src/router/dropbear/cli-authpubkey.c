@@ -30,6 +30,7 @@
 #include "ssh.h"
 #include "runopts.h"
 #include "auth.h"
+#include "agentfwd.h"
 
 #ifdef ENABLE_CLI_PUBKEY_AUTH
 static void send_msg_userauth_pubkey(sign_key *key, int type, int realsign);
@@ -37,30 +38,23 @@ static void send_msg_userauth_pubkey(sign_key *key, int type, int realsign);
 /* Called when we receive a SSH_MSG_USERAUTH_FAILURE for a pubkey request.
  * We use it to remove the key we tried from the list */
 void cli_pubkeyfail() {
-
-	struct SignKeyList *keyitem;
-	struct SignKeyList **previtem;
-
-	TRACE(("enter cli_pubkeyfail"))
-	previtem = &cli_opts.privkeys;
-
-	/* Find the key we failed with, and remove it */
-	for (keyitem = cli_opts.privkeys; keyitem != NULL; keyitem = keyitem->next) {
-		if (keyitem == cli_ses.lastprivkey) {
-			*previtem = keyitem->next;
+	m_list_elem *iter;
+	for (iter = cli_opts.privkeys->first; iter; iter = iter->next) {
+		sign_key *iter_key = (sign_key*)iter->item;
+		
+		if (iter_key == cli_ses.lastprivkey)
+		{
+			/* found the failing key */
+			list_remove(iter);
+			sign_key_free(iter_key);
+			cli_ses.lastprivkey = NULL;
+			return;
 		}
-		previtem = &keyitem;
 	}
-
-	sign_key_free(cli_ses.lastprivkey->key); /* It won't be used again */
-	m_free(cli_ses.lastprivkey);
-
-	TRACE(("leave cli_pubkeyfail"))
 }
 
 void recv_msg_userauth_pk_ok() {
-
-	struct SignKeyList *keyitem = NULL;
+	m_list_elem *iter;
 	buffer* keybuf = NULL;
 	char* algotype = NULL;
 	unsigned int algolen;
@@ -80,9 +74,9 @@ void recv_msg_userauth_pk_ok() {
 
 	/* Iterate through our keys, find which one it was that matched, and
 	 * send a real request with that key */
-	for (keyitem = cli_opts.privkeys; keyitem != NULL; keyitem = keyitem->next) {
-
-		if (keyitem->type != keytype) {
+	for (iter = cli_opts.privkeys->first; iter; iter = iter->next) {
+		sign_key *key = (sign_key*)iter->item;
+		if (key->type != keytype) {
 			/* Types differed */
 			TRACE(("types differed"))
 			continue;
@@ -90,7 +84,7 @@ void recv_msg_userauth_pk_ok() {
 
 		/* Now we compare the contents of the key */
 		keybuf->pos = keybuf->len = 0;
-		buf_put_pub_key(keybuf, keyitem->key, keytype);
+		buf_put_pub_key(keybuf, key, keytype);
 		buf_setpos(keybuf, 0);
 		buf_incrpos(keybuf, 4); /* first int is the length of the remainder (ie
 								   remotelen) which has already been taken from
@@ -114,16 +108,35 @@ void recv_msg_userauth_pk_ok() {
 	}
 	buf_free(keybuf);
 
-	if (keyitem != NULL) {
+	if (iter != NULL) {
 		TRACE(("matching key"))
 		/* XXX TODO: if it's an encrypted key, here we ask for their
 		 * password */
-		send_msg_userauth_pubkey(keyitem->key, keytype, 1);
+		send_msg_userauth_pubkey((sign_key*)iter->item, keytype, 1);
 	} else {
 		TRACE(("That was whacky. We got told that a key was valid, but it didn't match our list. Sounds like dodgy code on Dropbear's part"))
 	}
 	
 	TRACE(("leave recv_msg_userauth_pk_ok"))
+}
+
+void cli_buf_put_sign(buffer* buf, sign_key *key, int type, 
+			const unsigned char *data, unsigned int len)
+{
+	if (key->source == SIGNKEY_SOURCE_AGENT) {
+		/* Format the agent signature ourselves, as buf_put_sign would. */
+		buffer *sigblob;
+		sigblob = buf_new(MAX_PUBKEY_SIZE);
+		agent_buf_sign(sigblob, key, data, len);
+		buf_setpos(sigblob, 0);
+		buf_putstring(buf, buf_getptr(sigblob, sigblob->len),
+				sigblob->len);
+
+		buf_free(sigblob);
+	} else {
+		buf_put_sign(buf, key, type, data, len);
+	}
+	
 }
 
 /* TODO: make it take an agent reference to use as well */
@@ -161,7 +174,7 @@ static void send_msg_userauth_pubkey(sign_key *key, int type, int realsign) {
 		sigbuf = buf_new(4 + SHA1_HASH_SIZE + ses.writepayload->len);
 		buf_putstring(sigbuf, ses.session_id, SHA1_HASH_SIZE);
 		buf_putbytes(sigbuf, ses.writepayload->data, ses.writepayload->len);
-		buf_put_sign(ses.writepayload, key, type, sigbuf->data, sigbuf->len);
+		cli_buf_put_sign(ses.writepayload, key, type, sigbuf->data, sigbuf->len);
 		buf_free(sigbuf); /* Nothing confidential in the buffer */
 	}
 
@@ -169,20 +182,41 @@ static void send_msg_userauth_pubkey(sign_key *key, int type, int realsign) {
 	TRACE(("leave send_msg_userauth_pubkey"))
 }
 
+/* Returns 1 if a key was tried */
 int cli_auth_pubkey() {
 
 	TRACE(("enter cli_auth_pubkey"))
 
-	if (cli_opts.privkeys != NULL) {
+	if (!cli_opts.agent_keys_loaded) {
+		/* get the list of available keys from the agent */
+		cli_load_agent_keys(cli_opts.privkeys);
+		cli_opts.agent_keys_loaded = 1;
+	}
+
+	if (cli_opts.privkeys->first) {
+		sign_key * key = (sign_key*)cli_opts.privkeys->first->item;
 		/* Send a trial request */
-		send_msg_userauth_pubkey(cli_opts.privkeys->key,
-				cli_opts.privkeys->type, 0);
-		cli_ses.lastprivkey = cli_opts.privkeys;
+		send_msg_userauth_pubkey(key, key->type, 0);
+		cli_ses.lastprivkey = key;
 		TRACE(("leave cli_auth_pubkey-success"))
 		return 1;
 	} else {
+		/* no more keys left */
 		TRACE(("leave cli_auth_pubkey-failure"))
 		return 0;
+	}
+}
+
+void cli_auth_pubkey_cleanup() {
+
+#ifdef ENABLE_CLI_AGENTFWD
+	m_close(cli_opts.agent_fd);
+	cli_opts.agent_fd = -1;
+#endif
+
+	while (cli_opts.privkeys->first) {
+		sign_key * key = list_remove(cli_opts.privkeys->first);
+		sign_key_free(key);
 	}
 }
 #endif /* Pubkey auth */

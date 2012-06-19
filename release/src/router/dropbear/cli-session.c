@@ -35,6 +35,7 @@
 #include "service.h"
 #include "runopts.h"
 #include "chansession.h"
+#include "agentfwd.h"
 
 static void cli_remoteclosed();
 static void cli_sessionloop();
@@ -75,16 +76,19 @@ static const struct ChanType *cli_chantypes[] = {
 #ifdef ENABLE_CLI_REMOTETCPFWD
 	&cli_chan_tcpremote,
 #endif
+#ifdef ENABLE_CLI_AGENTFWD
+	&cli_chan_agent,
+#endif
 	NULL /* Null termination */
 };
 
-void cli_session(int sock_in, int sock_out, char* remotehost) {
+void cli_session(int sock_in, int sock_out) {
 
 	seedrandom();
 
 	crypto_init();
 
-	common_session_init(sock_in, sock_out, remotehost);
+	common_session_init(sock_in, sock_out);
 
 	chaninitialise(cli_chantypes);
 
@@ -209,7 +213,7 @@ static void cli_sessionloop() {
 				   is confusing, though stdout/stderr could be useful. */
 				devnull = open(_PATH_DEVNULL, O_RDONLY);
 				if (devnull < 0) {
-					dropbear_exit("opening /dev/null: %d %s",
+					dropbear_exit("Opening /dev/null: %d %s",
 							errno, strerror(errno));
 				}
 				dup2(devnull, STDIN_FILENO);
@@ -231,7 +235,7 @@ static void cli_sessionloop() {
 				cli_send_netcat_request();
 			} else 
 #endif
-				if (!cli_opts.no_cmd) {
+			if (!cli_opts.no_cmd) {
 				cli_send_chansess_request();
 			}
 			TRACE(("leave cli_sessionloop: running"))
@@ -294,7 +298,7 @@ static void cli_remoteclosed() {
 	m_close(ses.sock_out);
 	ses.sock_in = -1;
 	ses.sock_out = -1;
-	dropbear_exit("remote closed the connection");
+	dropbear_exit("Remote closed the connection");
 }
 
 /* Operates in-place turning dirty (untrusted potentially containing control
