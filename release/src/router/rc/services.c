@@ -2079,6 +2079,16 @@ start_rstats(int new)
 void
 restart_rstats()
 {
+	if (nvram_match("rstats_new", "1"))
+	{
+		start_rstats(1);
+		nvram_set("rstats_new", "0");
+	}
+	else
+	{
+		start_rstats(0);
+	}
+/*
 	if (nvram_match("rstats_bak", "1"))
 	{
 		nvram_set("rstats_path", "*nvram");
@@ -2095,6 +2105,7 @@ restart_rstats()
 		nvram_set("rstats_path", "");
 		start_rstats(0);
 	}
+*/
 }
 ////////^^^^^^^^^^^^^^^^^^^jerry5 2009.07
 
