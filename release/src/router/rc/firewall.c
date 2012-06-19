@@ -4120,6 +4120,8 @@ int start_firewall(int wanunit, int lanunit)
 	}
 #endif
 
+	run_custom_script("firewall-start");
+
 	return 0;
 }
 

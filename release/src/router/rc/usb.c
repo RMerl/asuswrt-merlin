@@ -838,6 +838,8 @@ int mount_partition(char *dev_name, int host_num, char *dsc_name, char *pt_name,
 	if(!is_valid_hostname(the_label))
 		memset(the_label, 0, 128);
 
+	run_custom_script_blocking("pre-mount", dev_name);
+
 	if (f_exists("/etc/fstab")) {
 		if (strcmp(type, "swap") == 0) {
 			_eval(swp_argv, NULL, 0, NULL);
@@ -1064,6 +1066,7 @@ _dprintf("cloudsync: finished.\n");
 			start_cloudsync();
 		}
 #endif
+		run_custom_script_blocking("post-mount", mountpoint);
 	}
 	return (ret == MOUNT_VAL_RONLY || ret == MOUNT_VAL_RW);
 }

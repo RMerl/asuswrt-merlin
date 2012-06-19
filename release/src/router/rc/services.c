@@ -2368,6 +2368,8 @@ start_services(void)
 	start_webdav();
 #endif
 
+	run_custom_script("services-start");
+
 	return 0;
 }
 
@@ -2383,6 +2385,8 @@ stop_logger(void)
 void
 stop_services(void)
 {
+
+	run_custom_script("services-stop");
 
 #ifdef RTCONFIG_WEBDAV
 	stop_webdav();
