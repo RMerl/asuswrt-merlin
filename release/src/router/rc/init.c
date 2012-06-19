@@ -1782,6 +1782,8 @@ int init_main(int argc, char *argv[])
 	start_jffs2();
 #endif
 
+	run_custom_script("init-start");
+
 	state = SIGUSR2;	/* START */
 
 	for (;;) {
