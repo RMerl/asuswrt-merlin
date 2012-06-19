@@ -2672,6 +2672,8 @@ function openLink(s){
 			tourl = "http://dnsomatic.com/create/";
 		else if (document.form.ddns_server_x.value == 'WWW.ASUS.COM')
 			tourl = "";
+		else if (document.form.ddns_server_x.value == 'WWW.NO-IP.COM')
+			tourl = "http://www.no-ip.com/newUser.php";
 		else	tourl = "";
 		link = window.open(tourl, "DDNSLink","toolbar=yes,location=yes,directories=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,copyhistory=no,width=640,height=480");
 	}

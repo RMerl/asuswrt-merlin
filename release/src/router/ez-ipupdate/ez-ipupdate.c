@@ -53,6 +53,10 @@
 #define EZIP_DEFAULT_PORT "80"
 #define EZIP_REQUEST "/members/update/"
 
+#define NOIP_DEFAULT_SERVER "dynupdate.no-ip.com"
+#define NOIP_DEFAULT_PORT "80"
+#define NOIP_REQUEST "/nic/update"
+
 #define PGPOW_DEFAULT_SERVER "www.penguinpowered.com"
 #define PGPOW_DEFAULT_PORT "2345"
 #define PGPOW_REQUEST "update"
@@ -313,6 +317,10 @@ int EZIP_update_entry(void);
 int EZIP_check_info(void);
 static char *EZIP_fields_used[] = { "server", "user", "address", "wildcard", "mx", "url", "host", NULL };
 
+int NOIP_update_entry(void);
+int NOIP_check_info(void);
+static char *NOIP_fields_used[] = { "server", "user", "host", "address", "wildcard", "mx", "offline", NULL };
+
 #ifdef CONFIG_PGP
 int PGPOW_update_entry(void);
 int PGPOW_check_info(void);
@@ -399,6 +407,16 @@ struct service_t services[] = {
     EZIP_DEFAULT_SERVER,
     EZIP_DEFAULT_PORT,
     EZIP_REQUEST
+  },
+  { "no-ip",
+    { "noip", "no-ip", 0, },
+    NULL,
+    NOIP_update_entry,
+    NOIP_check_info,
+    NOIP_fields_used,
+    NOIP_DEFAULT_SERVER,
+    NOIP_DEFAULT_PORT,
+    NOIP_REQUEST
   },
 #ifdef CONFIG_PGP
   { "justlinux v1.0 (penguinpowered)",
@@ -1948,6 +1966,161 @@ int EZIP_update_entry(void)
     btot += bytes;
     dprintf((stderr, "btot: %d\n", btot));
   }
+  close(client_sockfd);
+  buf[btot] = '\0';
+
+  dprintf((stderr, "server output: %s\n", buf));
+
+  if(sscanf(buf, " HTTP/1.%*c %3d", &ret) != 1)
+  {
+    ret = -1;
+  }
+
+  switch(ret)
+  {
+    case -1:
+      if(!(options & OPT_QUIET))
+      {
+        show_message("strange server response, are you connecting to the right server?\n");
+      }
+      return(UPDATERES_ERROR);
+      break;
+
+    case 200:
+      if(!(options & OPT_QUIET))
+      {
+        show_message("request successful\n");
+      }
+      break;
+
+    case 401:
+      if(!(options & OPT_QUIET))
+      {
+        show_message("authentication failure\n");
+      }
+      return(UPDATERES_SHUTDOWN);
+      break;
+
+    default:
+      if(!(options & OPT_QUIET))
+      {
+        // reuse the auth buffer
+        *auth = '\0';
+        sscanf(buf, " HTTP/1.%*c %*3d %255[^\r\n]", auth);
+        show_message("unknown return code: %d\n", ret);
+        show_message("server response: %s\n", auth);
+      }
+      return(UPDATERES_ERROR);
+      break;
+  }
+
+  return(UPDATERES_OK);
+}
+
+int NOIP_check_info(void)
+{
+  char buf[BUFSIZ+1];
+
+  if ((host == NULL) || (*host == '\0'))
+  {
+    if (options & OPT_DAEMON)
+    {
+      return(-1);
+    }
+    if(host) { free(host); }
+    get_input("host", buf, sizeof(buf));
+    host = strdup(buf);
+  }
+
+  if (interface == NULL && address == NULL)
+  {
+    if(options & OPT_DAEMON)
+    {
+      show_message("you must provide either an interface or an address\n");
+      return(-1);
+    }
+    if(interface) { free(interface); }
+    get_input("interface", buf, sizeof(buf));
+    option_handler(CMD_interface, buf);
+  }
+
+  warn_fields(service->fields_used);
+
+  return 0;
+}
+
+int NOIP_update_entry(void)
+{
+  char *buf = update_entry_buf;
+  char *bp;
+  int bytes;
+  int btot;
+  int ret;
+
+  buf[BUFFER_SIZE] = '\0';
+
+  if(do_connect((int*)&client_sockfd, server, port) != 0)
+  {
+    if(!(options & OPT_QUIET))
+    {
+      show_message("error connecting to %s:%s\n", server, port);
+    }
+    return(UPDATERES_ERROR);
+  }
+
+  snprintf(buf, BUFFER_SIZE, "GET %s?", request);
+  output(buf);
+
+  snprintf(buf, BUFFER_SIZE, "%s=%s", "hostname", host);
+  output(buf);
+
+  if (address)
+  {
+    snprintf(buf, BUFFER_SIZE, "&%s=%s", "myip", address);
+    output(buf);
+  }
+
+  if (options & OPT_OFFLINE)
+  {
+    snprintf(buf, BUFFER_SIZE, "&%s=%s", "offline", "yes");
+    output(buf);
+  }
+
+  snprintf(buf, BUFFER_SIZE, "&%s=%s", "wildcard", wildcard ? "yes" : "no");
+  output(buf);
+
+  snprintf(buf, BUFFER_SIZE, "&%s=%s", "mx", mx);
+  output(buf);
+
+  //snprintf(buf, BUFFER_SIZE, "&%s=%s", "url", url);
+  //output(buf);
+
+  snprintf(buf, BUFFER_SIZE, " HTTP/1.0\015\012");
+  output(buf);
+
+  snprintf(buf, BUFFER_SIZE, "Host: %s\015\012", server);
+  output(buf);
+
+  snprintf(buf, BUFFER_SIZE, "Authorization: Basic %s\015\012", auth);
+  output(buf);
+
+  snprintf(buf, BUFFER_SIZE, "User-Agent: %s-%s %s [%s] (%s)\015\012", 
+      "ez-update", VERSION, OS, (options & OPT_DAEMON) ? "daemon" : "", "by Angus Mackay");
+  output(buf);
+
+  snprintf(buf, BUFFER_SIZE, "\015\012");
+  output(buf);
+
+  bp = buf;
+  bytes = 0;
+  btot = 0;
+  while ((bytes=read_input(bp, BUFFER_SIZE-btot)) > 0)
+  {
+    bp += bytes;
+    btot += bytes;
+    dprintf((stderr, "btot: %d\n", btot));
+  }
+
   close(client_sockfd);
   buf[btot] = '\0';
 
