@@ -2473,44 +2473,39 @@ TRACE_PT("writing vts_enable_x\n");
 	if (is_nat_enabled() && nvram_match("vts_enable_x", "1"))
 	{
 		char *proto, *port, *lport, *dstip, *desc, *protono;
-		char dstips[256], dstports[256];
+		char *portv, *portp, *c;
 		// WAN/LAN filter		
-		nv = nvp = strdup(nvram_safe_get("vts_rulelist"));
-		
-		if(nv) {
-		while ((b = strsep(&nvp, "<")) != NULL) {
+
+		nvp = nv = strdup(nvram_safe_get("vts_rulelist"));
+		while (nv && (b = strsep(&nvp, "<")) != NULL) {
+
 			if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5)) continue;
 
-			if (lport!=NULL && strlen(lport)!=0)
-			{
-				sprintf(dstips, "%s:%s", dstip, lport);
-				sprintf(dstports, "%s", lport);
-			}
-			else
-			{
-				sprintf(dstips, "%s:%s", dstip, port);
-				sprintf(dstports, "%s", port);
-			}
+			portp = portv = strdup(port);
 
-			if (strcmp(proto, "TCP")==0 || strcmp(proto, "BOTH")==0)
-			{
-				fprintf(fp, "-A FORWARD -p tcp -m tcp -d %s --dport %s -j %s\n",  dstip, dstports, logaccept);  // add back for conntrack patch
-			}
+			// handle port = a, b, c
+			while (portv && (c = strsep(&portp, ",")) != NULL) {
 
-			if (strcmp(proto, "UDP")==0 || strcmp(proto, "BOTH")==0)
-			{
-				fprintf(fp, "-A FORWARD -p udp -m udp -d %s --dport %s -j %s\n", dstip, dstports, logaccept);	// add back for conntrack patch
-			}
+				if (strcmp(proto, "TCP")==0 || strcmp(proto, "BOTH")==0)
+				{
+					fprintf(fp, "-A FORWARD -p tcp -m tcp -d %s --dport %s -j %s\n",  dstip, c, logaccept);  // add back for conntrack patch
+				}
+
+				if (strcmp(proto, "UDP")==0 || strcmp(proto, "BOTH")==0)
+				{
+					fprintf(fp, "-A FORWARD -p udp -m udp -d %s --dport %s -j %s\n", dstip, c, logaccept);   // add back for conntrack patch
+				}
 
 #if 0
-			if (strcmp(proto, "OTHER")==0)
-			{
-				fprintf(fp, "-A FORWARD -p %s -d %s -j %s\n", protono, dstip, logaccept);	// add back for conntrack patch
-			}
+				if (strcmp(proto, "OTHER")==0)
+				{
+					fprintf(fp, "-A FORWARD -p %s -d %s -j %s\n", protono, dstip, logaccept);       // add back for conntrack patch
+				}
 #endif
+			}
+			free(portv);
 		}
 		free(nv);
-		}
 	}
 
 TRACE_PT("write porttrigger\n");
