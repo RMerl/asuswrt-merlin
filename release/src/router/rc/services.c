@@ -3385,12 +3385,21 @@ _dprintf("restart_nas_services(%d): test 12.\n", getpid());
 	{
 		if(action&RC_SERVICE_STOP) {
 			stop_telnetd();
+#ifdef RTCONFIG_SSH
+			stop_sshd();
+#endif
 			stop_logger();
 			stop_httpd();
 		}	
 		if(action&RC_SERVICE_START) {
 			refresh_ntpc();
 			start_logger();
+#ifdef RTCONFIG_SSH
+			if (nvram_match("sshd_enable", "1"))
+			{
+				start_sshd();
+			}
+#endif
 			start_telnetd();
 			start_httpd();
 			start_firewall(wan_primary_ifunit(), 0);
@@ -3539,6 +3548,18 @@ _dprintf("restart_nas_services(%d): test 12.\n", getpid());
 	else if (strcmp(script, "sh") == 0) {
 		_dprintf("%s: shell: %s\n", __FUNCTION__, cmd[1]);
 		if(cmd[1]) system(cmd[1]);
+	}
+
+	else if (strcmp(script, "rstats") == 0)
+	{
+		if(action&RC_SERVICE_STOP) stop_rstats();
+		if(action&RC_SERVICE_START) restart_rstats();
+	}
+	else if (strcmp(script, "conntrack") == 0)
+	{
+		setup_conntrack();
+		setup_udp_timeout(TRUE);
+//            start_firewall(wan_primary_ifunit(), 0);
 	}
 	else
 	{
