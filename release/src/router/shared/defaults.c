@@ -472,7 +472,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ct_tcp_timeout",		""},
 	{ "ct_udp_timeout",		"30 180"},
 	{ "ct_timeout",			""},
-	// { "ct_max",			""}, per model default value is assigned in init_nvram
+	{ "ct_max",			""}, per model default value is assigned in init_nvram
 
 #ifdef CONFIG_BCMWL5
 	{ "ctf_disable",		"0"		},
@@ -963,6 +963,7 @@ struct nvram_tuple router_defaults[] = {
 #ifdef RTCONFIG_JFFS2
 	{ "jffs2_on", "1" },
 	{ "jffs2_exec", "" },
+	{ "jffs2_format", "0" },
 #endif
 
 #ifdef RTCONFIG_USB
@@ -1064,6 +1065,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "asus_mfg_flash", ""},	// 2008.03 James.
 	{ "btn_rst", "0"},		// 2008.03 James.
 	{ "btn_ez", "0"},		// 2008.03 James.
+	{ "btn_ez_radiotoggle", "0"},	// Turn WPS into radio toggle
 
 	 /* APCLI/STA parameters */
 	#if 0
@@ -1107,7 +1109,7 @@ struct nvram_tuple router_defaults[] = {
 
 	/* traffic monitor - added by jerry5 2009/07 */
 	{"rstats_enable", "1"},
-	{"rstats_path", "*nvram"},
+	{"rstats_path", ""},
 	{"rstats_new", "0"},
 	{"rstats_stime", "1"},
 	{"rstats_offset", "1"},
@@ -1138,6 +1140,15 @@ struct nvram_tuple router_defaults[] = {
 	#else
 	{"telnetd", "1"},
 	#endif
+
+#if defined(RTCONFIG_SSH)
+	{"sshd_enable", "0"},
+	{"sshd_port", "22"},
+	{"sshd_pass","1"},
+	{"sshd_authkeys",""},
+	{"sshd_forwarding","0"},
+#endif
+
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 	{"pptpd_enable", 	"0"},
 	{"pptpd_broadcast", 	"disable"},
