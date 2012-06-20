@@ -359,3 +359,6 @@ enum BTNSETUP_STATE
 };
 #endif
 
+#define RTCONFIG_CROND y
+
+
