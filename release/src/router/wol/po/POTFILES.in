@@ -1,0 +1,10 @@
+# list of translatable files
+
+# library files
+lib/error.c
+lib/getopt.c
+lib/xmalloc.c
+
+# package files
+src/wol.c
+src/net.c

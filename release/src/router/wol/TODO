@@ -1,0 +1,84 @@
+-*- outline -*-
+
+* Bugs
+
+
+** fix translations
+
+** 255.255.255.255 doesn't work with HP-UX gethostbyname
+
+
+* New features
+
+
+** better resolving error output
+
+
+** add option for autoexecuting wol-*? -> install wol-* to ${libexecdir}
+
+
+** sitewide config (/etc/wol/wol.config) and user config ($HOME/.wolrc)?
+
+
+** MAC address checking
+
+check if macaddress is valid (look at http://standards.ieee.org/getieee802/)
+
+
+** merge multiple magic packets
+
+magic packets > 1 -> put several packets into one buffer for sending over the line
+
+
+** ipv6 support
+
+only for interest, cause there is no ipv6-only host out there, huh?
+
+
+** subnet mask parameter
+
+From james.m.gallagher3@boeing.com Sat Sep 27 01:10:19 2003
+Delivered-To: djmaecki@ull.at
+Delivered-To: krennwallner@aon.at
+Subject: WOL
+Date: Fri, 26 Sep 2003 16:17:23 -0700
+From: "Gallagher, James M" <james.m.gallagher3@boeing.com>
+To: <krennwallner@aon.at>
+X-Spam-Status: No, hits=1.5 required=5.0 tests=SUPERLONG_LINE,SUBJ_ALL_CAPS version=2.20
+X-Spam-Level: *
+Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=iso-8859-15
+Status: RO
+
+Hi,
+
+First, thanks for the making your software available via the GPL. I do have one
+suggestion to make it even better than it already is: Add an optional subnet
+mask parameter. Here's why: Most of the WOL utils use UDP broadcast packets.
+These packets work great for waking up devices on the local subnet, however, I
+think it is common that these will not get routed (at least that's the case on
+our network.) Your util does the opposite, it addresses the packet to the
+specific host. These packets get routed just fine, and wake up devices on other
+subnets, just as they should. However, they don't work on the local subnet
+because the OS will issue an ARP request to find out who has the IP address
+(unless the ARP info cached or in a static config file). Of course, the request
+fails, so the packet never goes out.  
+
+My thought is that if an optional subnet mask is specified, then both a
+broadcast and a directed packet are sent. One of them should get through :-)
+
+
+** WOL Proxy
+
+wolp (Wake On LAN proxy) support http://etherboot.sf.net/wolp, maybe a reimplementation
+
+
+** WOL GUI
+
+a graphical frontend with some cool gimmicks?
+
+
+** make check
+
+automate the testing process

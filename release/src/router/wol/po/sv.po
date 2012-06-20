@@ -1,0 +1,214 @@
+# Swedish messages for wol.
+# Copyright (C) 2004 Free Software Foundation, Inc.
+# Johan Fredin <griffin@legonet.org>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: wol 0.7.1\n"
+"Report-Msgid-Bugs-To: krennwallner@aon.at\n"
+"POT-Creation-Date: 2004-04-29 05:02+0200\n"
+"PO-Revision-Date: 2004-04-29 04:20+0200\n"
+"Last-Translator: Johan Fredin <griffin@legonet.org>\n"
+"Language-Team:\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8-bit\n"
+
+#: lib/error.c:127
+msgid "Unknown system error"
+msgstr "Okänt systemfel"
+
+#: lib/getopt.c:570 lib/getopt.c:589
+#, c-format
+msgid "%s: option `%s' is ambiguous\n"
+msgstr "%s: flaggan `%s' är tvetydig\n"
+
+#: lib/getopt.c:622 lib/getopt.c:626
+#, c-format
+msgid "%s: option `--%s' doesn't allow an argument\n"
+msgstr "%s: flaggan `--%s' tar inget argument\n"
+
+#: lib/getopt.c:635 lib/getopt.c:640
+#, c-format
+msgid "%s: option `%c%s' doesn't allow an argument\n"
+msgstr "%s: flaggan `%c%s' tar inget argument\n"
+
+#: lib/getopt.c:686 lib/getopt.c:708 lib/getopt.c:1039 lib/getopt.c:1061
+#, c-format
+msgid "%s: option `%s' requires an argument\n"
+msgstr "%s: flaggan `%s' kräver ett argument\n"
+
+#: lib/getopt.c:746 lib/getopt.c:749
+#, c-format
+msgid "%s: unrecognized option `--%s'\n"
+msgstr "%s: okänd flagga `--%s'\n"
+
+#: lib/getopt.c:757 lib/getopt.c:760
+#, c-format
+msgid "%s: unrecognized option `%c%s'\n"
+msgstr "%s: okänd flagga `%c%s'\n"
+
+#: lib/getopt.c:815 lib/getopt.c:818
+#, c-format
+msgid "%s: illegal option -- %c\n"
+msgstr "%s: otillåten flagga -- %c\n"
+
+#: lib/getopt.c:824 lib/getopt.c:827
+#, c-format
+msgid "%s: invalid option -- %c\n"
+msgstr "%s: felaktig flagga -- %c\n"
+
+#: lib/getopt.c:882 lib/getopt.c:901 lib/getopt.c:1114 lib/getopt.c:1135
+#, c-format
+msgid "%s: option requires an argument -- %c\n"
+msgstr "%s: flaggan kräver ett argument -- %c\n"
+
+#: lib/getopt.c:954 lib/getopt.c:973
+#, c-format
+msgid "%s: option `-W %s' is ambiguous\n"
+msgstr "%s: flaggan `-W %s' är tvetydig\n"
+
+#: lib/getopt.c:997 lib/getopt.c:1018
+#, c-format
+msgid "%s: option `-W %s' doesn't allow an argument\n"
+msgstr "%s: flaggan `-W %s' tar inget argument\n"
+
+#: lib/xmalloc.c:66
+msgid "memory exhausted"
+msgstr "minnet slut"
+
+#: src/wol.c:93
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Försök med \"%s --help\" för mer information.\n"
+
+#: src/wol.c:97
+#, c-format
+msgid ""
+"Usage: %s [OPTION] ... MAC-ADDRESS ...\n"
+"Wake On LAN client - wakes up magic packet compliant machines.\n"
+"\n"
+"    --help          display this help and exit\n"
+"-V, --version       output version information and exit\n"
+"-v, --verbose       verbose output\n"
+"-w, --wait=NUM      wait NUM millisecs after sending\n"
+"-h, --host=HOST     broadcast to this IP address or hostname\n"
+"-i, --ipaddr=HOST   same as --host\n"
+"-p, --port=NUM      broadcast to this UDP port\n"
+"-f, --file=FILE     read addresses from file FILE (\"-\" reads from stdin)\n"
+"    --passwd[=PASS] send SecureON password PASS (if no PASS is given, you\n"
+"                    will be prompted for the password)\n"
+"\n"
+"Each MAC-ADDRESS is written as x:x:x:x:x:x, where x is a hexadecimal number\n"
+"between 0 and ff which represents one byte of the address, which is in\n"
+"network byte order (big endian).\n"
+msgstr ""
+"Användning: %s [FLAGGA] ... MAC-ADRESS ...\n"
+"Wake On LAN-klient - väcker Magic Packet-kapabla datorer.\n"
+"\n"
+"    --help          visa denna hjälptext och avsluta\n"
+"-V, --version       visa versionsinformation och avsluta\n"
+"-v, --verbose       utförlig utskrift\n"
+"-w, --wait=NUM      vänta NUM millisekunder efter sändning\n"
+"-h, --host=HOST     basunera till IP-adressen eller värdnamnet HOST\n"
+"-i, --ipaddr=HOST   samma som --host\n"
+"-p, --port=NUM      basunera till UDP-porten NUM\n"
+"-f, --file=FILE     läs adresser från FILE (\"-\" läser från standard in)\n"
+"    --passwd[=PASS] skicka SecureON lösenord PASS (om inget lösenord anges,\n"
+"                    kommer du att efterfrågas det vid en lösenordsprompt)\n"
+"\n"
+"Varje MAC-ADRESS skrivs på formen x:x:x:x:x:x, där x är ett hexadecimalttal "
+"mellan 0 och ff som representerar en byte av adressen, och är i\n"
+"nätverksbyteordning (big endian).\n"
+
+#: src/wol.c:115
+#, c-format
+msgid ""
+"\n"
+"PASS is written as x-x-x-x-x-x, where x is a hexadecimal number between 0\n"
+"and ff which represents one byte of the password.\n"
+msgstr ""
+"\n"
+"PASS skrivs på formen x-x-x-x-x-x, där x är ett hexadecimalt tal\n"
+"mellan 0 och ff som representerar en byte av lösenordet.\n"
+
+#: src/wol.c:119
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <krennwallner@aon.at>\n"
+msgstr ""
+"\n"
+"Rapportera buggar (på engelska, med LC_ALL=C) till <krennwallner@aon.at>\n"
+
+#: src/wol.c:131
+#, c-format
+msgid ""
+"Copyright (C) 2000-2004 Thomas Krennwallner <krennwallner@aon.at>\n"
+"This is free software; see the source for copying conditions. There is NO\n"
+"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+msgstr ""
+"Copyright (C) 2000-2004 Thomas Krennwallner <krennwallner@aon.at>\n"
+"Detta är fri programvara.  Se källkoden för kopieringsvillkor.  Det\n"
+"finns INGEN garanti, även underförstådd garanti vid KÖP, eller\n"
+"LÄMPLIGHET FÖR NÅGOT SPECIELLT ÄNDAMÅL.\n"
+
+#: src/wol.c:166
+msgid "Too few arguments."
+msgstr "För få argument."
+
+#: src/wol.c:198
+msgid "Invalid time given"
+msgstr "Felaktig tid angiven"
+
+#: src/wol.c:217
+msgid "Invalid port given"
+msgstr "Felaktig port angiven"
+
+#: src/wol.c:236
+msgid "Password"
+msgstr "Lösenord"
+
+#: src/wol.c:256
+msgid "You must specify at least one MAC-ADDRESS."
+msgstr "Du måste ange åtminstone en MAC-ADRESSE."
+
+#: src/wol.c:301
+#, c-format
+msgid "Cannot assemble magic packet for '%s'"
+msgstr "Kan inte skapa Magic Packet för '%s'"
+
+#: src/wol.c:306
+#, c-format
+msgid "Invalid password given for '%s'"
+msgstr "Felaktigt lösenord angivet för '%s'"
+
+#: src/wol.c:313
+#, c-format
+msgid "Cannot send magic packet for '%s' to %s:%d"
+msgstr "Kan inte skicka Magic Packet för '%s' till %s:%d"
+
+#: src/wol.c:319
+#, c-format
+msgid "Waking up %s"
+msgstr "Väcker %s"
+
+#: src/wol.c:322
+#, c-format
+msgid " with %s:%d"
+msgstr " med %s:%d"
+
+#: src/wol.c:324
+#, c-format
+msgid "...\n"
+msgstr "...\n"
+
+#: src/net.c:121 src/net.c:167
+#, c-format
+msgid "Invalid IP address given: %s"
+msgstr "Felaktig IP-adress angiven: %s"
+
+#: src/net.c:137
+#, c-format
+msgid "Couldn't connect to %s:%hu: %s"
+msgstr "Kunde inte ansluta till %s:%hu: %s"

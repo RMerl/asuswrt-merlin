@@ -230,6 +230,9 @@ obj-y += ez-ipupdate
 #obj-y += lighttpd-1.4.28
 #obj-$(RTCONFIG_USB_WEBDAV) += lighttpd-1.4.29
 
+# Merlin addons
+obj-y += wol
+
 obj-clean := $(foreach obj, $(obj-y) $(obj-n) $(obj-), $(obj)-clean)
 obj-install := $(foreach obj,$(obj-y),$(obj)-install)
 
@@ -1823,6 +1826,22 @@ madwimax-0.1.1-clean:
 	-cd $(TOP)/madwimax-0.1.1 && rm -f `find -name Makefile`
 	-cd $(TOP)/madwimax-0.1.1 && rm -rf include/config.h scripts/udev/z60_madwimax.rules src/.deps
 
+wol/stamp-h1:
+	cd $(TOP)/wol && jm_cv_func_working_malloc=yes $(CONFIGURE) --host=mips --prefix=$(INSTALLDIR)/wol CC=mipsel-uclibc-gcc STR$
+	touch wol/stamp-h1
+
+wol: wol/stamp-h1
+
+wol-clean:
+	-@$(MAKE) -C wol distclean
+	@rm -f wol/stamp-h1
+
+wol-install: wol
+	install -D wol/src/wol $(INSTALLDIR)/wol/usr/sbin/wol
+	$(STRIP) $(INSTALLDIR)/wol/usr/sbin/wol
+
+wol: wol/Makefile
+	$(MAKE) -C $@
 
 #
 # Generic rules

@@ -1,0 +1,312 @@
+This is wol.info, produced by makeinfo version 4.6 from wol.texi.
+
+INFO-DIR-SECTION Net utilities
+START-INFO-DIR-ENTRY
+* Wol: (wol).              A Wake On LAN client.
+END-INFO-DIR-ENTRY
+
+   This file documents wol 0.7.1, the Wake On LAN client.
+
+   Copyright (C) 2001,2002,2003,2004 Thomas Krennwallner
+<krennwallner@aon.at>
+
+   This document may be distributed and modified under the terms of the
+GNU General Public License.
+
+   This manual is free software; you may redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2, or (at your option) any
+later version.
+
+   This manual is distributed in the hope that it will be useful, but
+without any warranty; without even the implied warranty of
+merchantability or fitness for a particular purpose. See the GNU
+General Public License for more details.
+
+   A copy of the GNU General Public License is available on the World
+Wide Web at the GNU website. You can also obtain it by writing to the
+Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+02111-1307, USA.
+
+
+File: wol.info,  Node: Top,  Next: Basics,  Prev: (dir),  Up: (dir)
+
+wol - Wake On LAN client
+************************
+
+This manual gives you an introduction into `wol', the Wake On LAN
+client.  It remotely turns on computers that supports Magic Packet
+technology (also known as Wake On LAN).
+
+   Some workstations support SecureON password feature. These machines
+only wake up if you provide the correct password. `wol' also provides
+this feature.
+
+   See <http://ahh.sourceforge.net/wol/> for updates and further
+readings.
+
+   Please report bugs to <krennwallner@aon.at>. Feel free to send bug
+reports, translations, improvement suggestions and patches to this email
+address.
+
+* Menu:
+
+* Basics::                        Wake On LAN basics
+* Description::                   Description
+* Options::                       Options to wol
+* Examples::                      Examples for program invocation
+
+
+File: wol.info,  Node: Basics,  Next: Description,  Prev: Top,  Up: Top
+
+Basics
+******
+
+This chapter explains the Wake On LAN basics.
+
+* Menu:
+
+* How does it work::              Technical explanation of Wake On LAN
+* Wake On LAN requirements::      What is needed to have Wake On LAN?
+* Magic Packet::                  How does a Magic Packet look like?
+
+
+File: wol.info,  Node: How does it work,  Next: Wake On LAN requirements,  Prev: Basics,  Up: Basics
+
+How does it work
+================
+
+If you are intending to switch on a computer, you need his
+"MAC-ADDRESS".  This is the 48 bit hardware address of the network card
+which is written as x:x:x:x:x:x, where x is a hexadecimal number
+between 0 and ff which represents one byte of the address, which is in
+network byte order (big-endian).
+
+   `wol' assembles a hardware address to a Magic Packet and sends it
+over the network. The Wake On LAN enabled computer provides enough
+power for the NIC to listen to the attached network and waits for
+arriving Wake On LAN packets. The NIC recognizes the wake up call and
+turns on.
+
+
+File: wol.info,  Node: Wake On LAN requirements,  Next: Magic Packet,  Prev: How does it work,  Up: Basics
+
+Wake On LAN requirements
+========================
+
+`wol' broadcasts so-called Magic Packet frames across a network to wake
+up hardware that understands such packets. These are normally NIC's with
+Wake On Lan function. To make use of this feature your motherboard and
+your power supply have to support Wake On LAN. But there are still some
+things needed to have a working Wake On LAN setup. Most PCI NIC's come
+with a so-called WOL-connector and a 3 pin wire. This wire has to be
+connected from the motherboards WOL connector to the NIC's. After this
+basic hardware requirements you have to enable Wake On LAN in your
+systems BIOS (or whatever called). If you have a builtin network card
+with WOL support, you don't have to wire, enabling WOL in the BIOS
+should be enough.
+
+
+File: wol.info,  Node: Magic Packet,  Prev: Wake On LAN requirements,  Up: Basics
+
+Magic Packet
+============
+
+A Magic Packet is any packet which contains a special sequence of a six
+byte header (six times 0xff) and then 16 times the repetition of the
+intent to wake up MAC-ADDRESS within this packet. The optional SecureON
+password is attached at the end of the packet. So if you want to wake
+up the computer with the hardware address `00:E0:98:13:45:E2' the
+corresponding Magic Packet looks like:
+
+*00* ff   ff   ff   ff   ff   ff
+*06* 00   E0   98   13   45   E2
+*12* 00   E0   98   13   45   E2
+****                          
+*96* 00   E0   98   13   45   E2
+
+   To simplify things `wol' encapsulates such Magic Packets inside an
+broadcast UDP packet. This gives various benefits over raw ethernet
+frames, one is OS interoperability. Another one is the fact that you
+don't need to be root to wake up a machine since sending raw ethernet
+packets requires superuser privileges.
+
+
+File: wol.info,  Node: Description,  Next: Options,  Prev: Basics,  Up: Top
+
+Description
+***********
+
+`wol' is a feature rich Wake On LAN utility. Beyond the basic Wake On
+LAN function it also provides the ability to send a SecureON password
+along with the Magic Packet. Another useful feature is the capability
+to read MAC addresses and the corresponding IP addresses/hostnames from
+a file or from standard input. You can optionally specify the
+corresponding UDP destination port and a SecureON password.
+
+   There are also additional `AWK' scripts provided that parse ISC
+dhcpd's `dhcpd.conf' and bootpc's `bootptab' and outputs them in `wol's'
+native fileformat.  They are called `wol-dhcpdconf' and `wol-bootptab'.
+You can invoke them as following: `wol-dhcpdconf < /etc/dhcpd.conf |
+wol -' or `wol-bootptab < /etc/bootptab | wol -'.
+
+   An example of usage is `wol MAC-ADDRESS' which assembles a Magic
+Packet which is intended to wake up the NIC with hardware address
+MAC-ADDRESS. See *Note Examples:: for additional examples.
+
+   If you do not provide the argument in MAC-ADDRESS syntax `wol' tries
+to lookup the ethernet address in the `ethers' file. See your systems
+documentation for setting up your `ethers' file.
+
+
+File: wol.info,  Node: Options,  Next: Examples,  Prev: Description,  Up: Top
+
+Options
+*******
+
+This is a list of `wol's' command line option.
+
+`--help'
+     Print a summary of the command line options.
+
+`-V'
+`--version'
+     Print the version number of `wol'.
+
+`-h HOST'
+`--host=HOST'
+`-i HOST'
+`--ipaddr=HOST'
+     Broadcast packet to this IP address or hostname. This is important
+     if your wol client is a multihomed host and you want to send only
+     to one subnet (default IP address is `255.255.255.255').
+
+`-p NUM'
+`--port=NUM'
+     Send packet with this destination port NUM. This option is
+     important if your packet filter would block the default
+     destination port `40000'.
+
+`-f FILE'
+`--file=FILE'
+     Read hardware addresses, IP addresses/hostnames, optional ports
+     and SecureON password from file `FILE'. If `FILE' is - `wol' reads
+     from stdin.
+
+`-'
+     Read hardware addresses, IP addresses, optional ports and optional
+     SecureON password from stdin. So you can extract MAC-ADDRESSES
+     from any source and pipe the data into `wol' so.
+
+`-v'
+`--verbose'
+     Turns on verbose output.
+
+`-w NUM'
+`--wait=NUM'
+     Waits NUM milliseconds between Magic Packets. Also known as fuse
+     health pack.
+
+`--passwd[=PASS]'
+     Send a magic packet with SecureON password feature. PASS is
+     written as x-x-x-x-x-x, where x is a hexadecimal number between 0
+     and ff which represents one byte of the password.
+
+     If you don't provide PASS `wol' prompts you for a password.
+
+     To set the password of your SecureON capable NIC, you can use
+     `ethtool' (<http://www.sourceforge.net/projects/gkernel/>).
+
+
+
+File: wol.info,  Node: Examples,  Prev: Options,  Up: Top
+
+Examples
+********
+
+`wol 00:4F:49:07:0B:5F 00:4F:50:06:12:4F'
+     Sends packets addressed to 255.255.255.255:40000 and is intended
+     to wake up the machines with hardware addresses 00:4F:49:07:0B:5F
+     and 00:4F:50:06:12:4F.
+
+`wol --host=192.168.3.255 -p 69 00:4F:49:07:0B:5F'
+     Sends packet addressed to 192.168.3.255:69 and is intended to wake
+     up the NIC with hardware address 00:4F:49:07:0B:5F.
+
+`wol --passwd=09-e6-f5-f3-dc-4e 00:4F:49:07:0B:5F'
+     Sends packet addressed to 255.255.255.255:40000 with SecureON
+     password 09-e6-f5-f3-dc-4e.
+
+`wol --passwd beblebroox'
+     Prompts you for a SecureON password and looks up your `ethers'
+     file for the ethernet address of host beblebroox.
+
+`wol -f /path/to/my/ethernet/addresses'
+     Read hardware addresses and corresponding IP addresses/hostnames
+     from file `/path/to/my/ethernet/addresses'.
+
+     File looks like:
+
+          # comments
+          MAC-ADDRESS  IP-ADDRESS
+          MAC-ADDRESS  HOSTNAME
+          MAC-ADDRESS  IP-ADDRESS:port
+          # even more comments
+          MAC-ADDRESS  IP-ADDRESS:port	SecureON-password
+
+`wol-dhcpdconf < /etc/dhcpd.conf | wol -'
+     `wol-dhcpdconf' filters MAC addresses and corresponding IP
+     addresses/hostnames from `/etc/dhcpd.conf' (config file of ISC
+     dhcpd) and outputs it in macfile format (native wol format). `wol'
+     sends the corresponding Magic Packets.
+
+     Valid dhcp entries:
+
+          host zaphod
+          {
+            hardware ethernet 11:ab:e3:5f:7f:8c;
+            fixed-address 10.0.0.1;
+          }
+          
+          host marvin
+          {
+            hardware ethernet 22:ba:3e:f5:f7:c8;
+            fixed-address marvin.is.depp.at;
+          }
+
+     `wol-dhcpdconf' will then generate following output:
+
+          11:ab:e3:5f:7f:8c 10.0.0.1
+          22:ba:3e:f5:f7:c8 marvin.is.depp.at
+
+`wol-bootptab < /etc/bootptab | wol -'
+     `wol-bootptab' filters MAC addresses and corresponding IP
+     addresses/hostnames from `/etc/bootptab' (config file of bootpc)
+     and outputs it in macfile format (native wol format). `wol' sends
+     the corresponding Magic Packets.
+
+     Valid bootp entries:
+
+          xterm1:ha=0x00e4ff76553e:ht=ethernet:bf=vmlinuz:ip=xterm1:tc=.default:
+          
+          xterm2:ha=0x00e5ee6744e3:ht=ethernet:bf=vmlinuz:ip=10.0.0.25:tc=.default:
+
+     `wol-bootptab' will then generate following output:
+
+          00:e4:ff:76:55:3e xterm1
+          00:e5:ee:67:44:e3 10.0.0.25
+
+
+
+
+Tag Table:
+Node: Top1122
+Node: Basics2027
+Node: How does it work2384
+Node: Wake On LAN requirements3107
+Node: Magic Packet3990
+Node: Description4972
+Node: Options6199
+Node: Examples7849
+
+End Tag Table

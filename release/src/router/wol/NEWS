@@ -1,0 +1,42 @@
+[0.7.1]
+* fix --disable-gettext bug
+* fix documentation
+* fix prerequisite-headers bug
+* add swedish translation
+[0.7.0]
+* add manpage
+* fixed german, italian and french translation
+* added spanish translation
+* can resolv names
+* added wol-bootptab: reads mac and host from bootptab file
+* wol-dhcpdconf now reads mac and host
+* fixed a parsing bug in wol-dhcpdconf
+* -h and --host is an alias for -i
+* /etc/ethers parsing support -> you now can specify ip-addresses and
+  hostnames on the commandline
+* fixed -f pathname bug
+* enhanced documentation
+* debianized package
+* wol.spec for rpm building
+[0.6.0]
+* wol-dhcpdconf reads mac and ip from dhcpd.conf file
+* can read macfiles from stdin
+* add SecureON(TM) support to magic packets(TM) and macfile
+* added french and italian translation
+* enhanced documentation
+[0.5.1]
+* fixed memory leak in option parsing
+* to simplify things default IP address is now 255.255.255.255
+[0.5.0]
+* complete rewrite
+* better auto* support, removed shtool
+* removed man page, added info page
+* removed -m option, multiple MAC-ADDRESSES can be given as command line
+	parameter
+* i18n support (german translation done)
+* new mac file syntax (can be mixed with old one)
+	e.g.: XX:XX:XX:XX:XX:XX x.x.x.x:port
+* removed -q/--quiet and added -v/--verbose
+[0.4.1]
+* -q, --quiet supresses most error messages
+* -w, --wait waits for x msecs between 2 magic packets (aka fuse health pack)

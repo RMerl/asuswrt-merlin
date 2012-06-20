@@ -1,0 +1,778 @@
+2004-04-29  Thomas Krennwallner  <djmaecki@ull.at>
+
+	* po/remove-potcdate.sed: New file.
+
+	* NEWS: Add swedish translation.
+
+	* configure.ac (ALL_LINGUAS): Add sv.
+
+	* po/sv.po: New file.
+	
+2004-04-23  Thomas Krennwallner  <djmaecki@ull.at>
+
+	* autogen.sh: Only call gettextize when invoked with --gettext.
+
+	* Makefile.am (MAINTAINERCLEANFILES): Add mkinstalldirs,
+	config.sub and config.guess.
+
+	* debian/changelog: Add new version.
+
+	* config.rpath: New file.
+	* intl/ChangeLog: Likewise.
+	* intl/VERSION: Likewise.
+	* intl/bindtextdom.c: Likewise.
+	* intl/config.charset: Likewise.
+	* intl/dcgettext.c: Likewise.
+	* intl/dcigettext.c: Likewise.
+	* intl/dcngettext.c: Likewise.
+	* intl/dgettext.c: Likewise.
+	* intl/dngettext.c: Likewise.
+	* intl/eval-plural.h: Likewise.
+	* intl/explodename.c: Likewise.
+	* intl/finddomain.c: Likewise.
+	* intl/gettext.c: Likewise.
+	* intl/gettextP.h: Likewise.
+	* intl/gmo.h: Likewise.
+	* intl/hash-string.h: Likewise.
+	* intl/intl-compat.c: Likewise.
+	* intl/l10nflist.c: Likewise.
+	* intl/libgnuintl.h.in: Likewise.
+	* intl/loadinfo.h: Likewise.
+	* intl/loadmsgcat.c: Likewise.
+	* intl/localcharset.c: Likewise.
+	* intl/localcharset.h: Likewise.
+	* intl/locale.alias: Likewise.
+	* intl/localealias.c: Likewise.
+	* intl/localename.c: Likewise.
+	* intl/log.c: Likewise.
+	* intl/ngettext.c: Likewise.
+	* intl/os2compat.c: Likewise.
+	* intl/os2compat.h: Likewise.
+	* intl/osdep.c: Likewise.
+	* intl/plural-exp.c: Likewise.
+	* intl/plural-exp.h: Likewise.
+	* intl/plural.c: Likewise.
+	* intl/plural.y: Likewise.
+	* intl/printf-args.c: Likewise.
+	* intl/printf-args.h: Likewise.
+	* intl/printf-parse.c: Likewise.
+	* intl/printf-parse.h: Likewise.
+	* intl/printf.c: Likewise.
+	* intl/ref-add.sin: Likewise.
+	* intl/ref-del.sin: Likewise.
+	* intl/relocatable.c: Likewise.
+	* intl/relocatable.h: Likewise.
+	* intl/textdomain.c: Likewise.
+	* intl/vasnprintf.c: Likewise.
+	* intl/vasnprintf.h: Likewise.
+	* intl/vasnwprintf.h: Likewise.
+	* intl/wprintf-parse.h: Likewise.
+	* intl/xsize.h: Likewise.
+	* po/Makevars.template: Likewise.
+	* po/Rules-quot: Likewise.
+	* po/boldquot.sed: Likewise.
+	* po/en@boldquot.header: Likewise.
+	* po/en@quot.header: Likewise.
+	* po/insert-header.sin: Likewise.
+	* po/quot.sed: Likewise.
+	* po/remove-potcdate.sin: Likewise.
+	
+2004-04-20  Thomas Krennwallner  <djmaecki@ull.at>
+
+	* NOTES: List current test machines.
+
+	* Makefile.am (dist-hook): Clean backup files.
+
+	* NEWS: Fix prerequisite-headers bug.
+
+	* TODO: Fix prerequisite-headers bug.
+
+	* src/net.c (tcp_open): Cast 2nd argument of connect() to (const
+	struct sockaddr *).
+
+	* configure.ac: Add checks for net/if.h and netinet/if_ether.h to
+	fix annoying prerequisite-headers bug.
+
+2004-04-18  Thomas Krennwallner  <djmaecki@ull.at>
+
+	* src/wol.c (parse_args): Disable proxy argument.
+
+	* m4/Makefile.am (EXTRA_DIST): Add getopt.m4 and strerror_r.m4.
+
+	* NEWS: Update user visible changes for 0.7.1.
+
+	* autogen.sh: Remove --force invocation of gettextize.
+
+	* po/de.po: Update messages.
+	* po/es.po: Likewise.
+	* po/fr.po: Likewise.
+	* po/it.po: Likewise.
+
+	* src/net.c (tcp_open): Gettextize error message.
+
+	* wol.spec: Bump version to 0.7.1.
+
+	* doc/wol.texi (Magic Packet): Fix byte offset
+	documentation (closes sf-bug #793030).
+
+	* m4/strerror_r.m4: New file.
+
+	* lib/error.c: Update from todays gnulib CVS to fix --disable-nls
+	configure option bug (due to a bugreport from Johan Fredin
+	<griffin@legonet.org>).
+	* lib/error.h: Likewise.
+	* m4/error.m4: Likewise.
+
+	* src/Makefile.am (wol_SOURCES): Comment out proxy.c since it's
+	not ready yet.
+
+	* src/proxy.c: Better error checks.
+
+	* po/Makefile.in.in: Update from gettext 0.14.1.
+	
+	* intl/Makefile.in: Update from gettext 0.14.1.
+	
+	* lib/gettext.h: Update from todays gnulib CVS.
+
+	* m4/gettext.m4: Update from todays gnulib CVS.
+	* m4/lib-ld.m4: Likewise.
+	* m4/ulonglong.m4: Likewise.
+	* m4/po.m4: Likewise.
+	* m4/lib-prefix.m4: Likewise.
+
+	* m4/xsize.m4: New file.
+	* m4/wint_t.m4: Likewise.
+	* m4/wchar_t.m4: Likewise.
+	* m4/size_max.m4: Likewise.
+	* m4/signed.m4: Likewise.
+	* m4/printf-posix.m4: Likewise.
+	* m4/longlong.m4: Likewise.
+	* m4/longdouble.m4: Likewise.
+	* m4/intmax.m4: Likewise.
+
+	* configure.ac: Add gl_GETOPT.
+	Add gl_ERROR.
+	Bump version to 0.7.1.
+
+	* lib/Makefile.am (libwrappers_a_SOURCES): Add getopt_int.h.
+
+	* m4/getopt.m4: New file.
+
+	* lib/getopt1.c: Update from todays gnulib CVS.
+	* lib/getopt.h: Likewise.
+	* lib/getopt.c: Likewise.
+
+	* lib/getopt_int.h: New file.
+
+	* TODO: error.c depends on libintl.h.
+	Remove disable-nls bug.
+	Remove document bug.
+	Add prerequisite-headers bug.
+	
+2004-04-17  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* TODO: Add disable-nls bug.
+
+2004-02-05  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* src/wol.c: Add preliminary non-functional proxy support.
+
+	* src/Makefile.am (wol_SOURCES): Add proxy.c.
+
+	* src/macfile.c: Only define _GNU_SOURCE if it is not defined.
+
+	* configure.ac: Bump version to 0.8.0.
+	Add support for md5.
+
+	* include/Makefile.am (noinst_HEADERS): Add proxy.h.
+
+	* src/net.c: Add support for tcp.
+
+	* include/net.h: Add support for tcp.
+
+	* lib/Makefile.am (libwrappers_a_SOURCES): Add md5.c, md5.h and unlocked-io.h.
+
+	* lib/md5.c: New file.
+
+	* lib/md5.h: New file.
+
+	* lib/unlocked-io.h: New file.
+
+	* m4/Makefile.am (EXTRA_DIST): Add md5.m4, unlocked-io.m4, extensions.m4 and onceonly.m4.
+
+	* m4/extensions.m4: New file.
+
+	* m4/md5.m4: New file.
+
+	* m4/onceonly.m4: New file.
+
+	* m4/unlocked-io.m4: New file.
+
+	* src/proxy.c: New file.
+
+	* include/proxy.h: New file.
+
+2003-09-27  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* TODO: Use emacs outline mode. Add new subnet mask
+	suggestion.
+
+2003-08-20  Thomas Krennwallner  <krennwallner@aon.at>
+
+	Release 0.7.0.
+
+	* debian/copyright: Fix lintian warning
+	copyright-lists-upstream-authors-with-dh_make-boilerplate.
+
+	* debian/control: Bump Standards-Version to 3.6.0.
+
+2003-08-16  Simon Walton  <simonw@matteworld.com>
+
+	* lib/ether.h: Reorder include statements ->
+	sys/types.h should be included before
+	net/ethernet.h to prevent warnings.
+
+2003-08-16  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* doc/wol.texi: Change documentation license to
+	GPL and some documentation enhancements.
+
+	* autogen.sh: Remove --ignore-deps from automake
+	invocation.
+
+	* TODO: Reorder TODO list.
+
+	* Makefile.am (AUTOMAKE_OPTIONS): Remove no-dependencies.
+
+2003-08-13  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* lib/ether.h: Include with guards all possible
+	ether_hostton header files.
+
+	* doc/texi2pod.pl: Add texi2pod.pl from	gcc cvs.
+
+	* doc/Makefile.am (wol.1): Run $(PERL) with arg
+	instead	of texi2pod.pl -> some machines don't
+	have perl in /usr/bin.
+
+	* configure.ac: Check for PERL, add patchlevel to
+	version string, do sane ether_hostton and struct
+	ether_addr checks.
+
+2003-08-12  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* m4/intdiv0.m4: New file, from gettext-0.12.1.
+	* m4/inttypes.m4: New file, from gettext-0.12.1.
+	* m4/inttypes_h.m4: New file, from gettext-0.12.1.
+	* m4/inttypes-pri.m4: New file, from gettext-0.12.1.
+	* m4/lib-ld.m4: New file, from gettext-0.12.1.
+	* m4/lib-link.m4: New file, from gettext-0.12.1.
+	* m4/lib-prefix.m4: New file, from gettext-0.12.1.
+	* m4/nls.m4: New file, from gettext-0.12.1.
+	* m4/po.m4: New file, from gettext-0.12.1.
+	* m4/stdint_h.m4: New file, from gettext-0.12.1.
+	* m4/uintmax_t.m4: New file, from gettext-0.12.1.
+	* m4/ulonglong.m4: New file, from gettext-0.12.1.
+
+	* intl: New direcotry to prevent gettextize annoyances.
+	* intl/Makefile.in: New file to prevent gettextize annoynces.
+	
+2003-08-11  Magin Lopez  <magin@giodental.com>
+
+	* po/es.po: Fix spanish translation.
+
+2003-08-11  Thomas Hager  <duke@bofh.at>
+
+	* wol.spec: Fix manpath.
+
+	* src/net.c (net_send): Fix net_resolv() parameter struct sockaddr_in.sin_addr
+
+2003-08-11  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* configure.ac (ALL_LINGUAS): Add es.
+
+	* ChangeLog: Fix whole file.
+
+2003-08-10  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* configure.ac: Check for gethostbyname, perl and pod2man.
+	* doc/Makefile.am: Disable manpage creation if there's no perl/pod2man there.
+
+	* include/magic.h: Add #include <sys/types.h> for size_t.
+
+	* lib/ether.h: Fix self declared struct ether_addr.
+
+	* src/wol.c (parse_args): Use size_t instead of int for getpass4.
+
+2003-08-09  Thomas Hager  <duke@bofh.at>
+
+	* wol.spec: New file.
+
+2003-08-09  Simon Walton  <simonw@matteworld.com>
+            Andrzej Tobola <san@iem.pw.edu.pl>
+
+	* src/magic.c (magic_assemble): Add /etc/ethers file parsing support.
+
+2003-08-09  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* configure.ac: Bump version to 0.7.0, check for various ethernet headers
+	and struct ether_addr members, gettext, explicetly set AC_PROG_AWK.
+	* Makefile.am: Use gettext 0.12.1, maintainer-clean configure.h.in~.
+	* autogen.sh: gettextize.
+	
+	* NEWS: Reflect all changes.
+	* README: Add FAQ entry.
+
+	* include/macfile.h (macfile_parse): Use unsigned int port.
+	* src/macfile.c (macfile_parse): Use unsigned int port.
+	* src/wol.c (port): Declare as unsigned int to enable bounds check
+
+	* doc/wol.texi: Date update, add wol-* scripts descriptions.
+
+	* lib/Makefile.am: Add ether_hostton wrappers, gettext.h, include
+	$(top_srcdir)/include.
+	* lib/ether_hostton.c: New file.
+	* lib/ether.h: New file.
+	* lib/gettext.h: New file.
+
+	* po/Makevars: New file.
+	* po/de.po: Add Password translation, --host update, beautifiers.
+	* po/fr.po: Fix copyright years, version info.
+	* po/it.po: Fix copyright years, version info.
+
+	* src/wol.c (parse_args): Fix pathname bug (-f FILE and a MAC-ADDRESS was a
+	nogo) due a bugreport from Michael D. Setzer II <mikes@kuentos.guam.net>.
+
+	* src/wol.c (parse_args): Add password prompting.
+
+	* src/wol.c (parse_args): Add (-h|--host) as -i alias.
+
+	* src/magic.c (magic_assemble): Return -2 on passwd parsing error.
+	* src/wol.c (assemble_and_send): Print invalid password string.
+
+	* src/wol-bootptab.in: Use @AWK@ in the sh-script.
+	* src/wol-dhcpdconf.in: Use @AWK@ in the sh-script.
+
+2003-08-08  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* config.guess: New file.
+	* config.sub: New file.
+	* config.rpath: New file.
+	* mkinstalldirs: New file.
+	* po/Makefile.in.in: New file.
+
+2003-08-07  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* configure.ac: Use AM_GNU_GETTEXT([external]).
+	* Makefile.am (SUBDIRS): Remove intl because of AM_GNU_GETTEXT([external]).
+	* src/Makefile.am (wol_LDADD): Use @LIBINTL@ instead of @INTLLIBS@.
+
+	* lib/getpass4.c: New file.
+	* lib/getpass4.h: New file.
+	* lib/Makefile.am: Add getpass4.c and getpass4.h.
+
+2002-04-23  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* src/wol-dhcpdconf.in: Fix a parsing bug: # doesn't always comment lines
+	out :-( (due a bugreport from Kurt Neufeld <kneufeld@usa.net>).
+
+2002-04-12  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* Makefile.am (dist-hook): Clean the debian dir.
+
+	* check/Makefile.am (TESTS): Add test1.sh test2.sh test3.sh scripts
+	use autoconf 2.53
+
+2002-04-09  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* src/net.c (net_resolv): Add support for resolving names.
+	* src/net.h (net_resolv): Add support for resolving names
+
+	* src/macfile.c (get_tokens): Add support for domain names.
+	* src/macfile.h (get_tokens): Add support for domain names.
+	* src/wol.c: Add support for domain names.
+	* src/wol-dhcpdconf.in: Add support for domain names
+
+	* src/wol-bootptab.in: Add support for parsing bootptab.
+	* configure.ac: Create wol-bootptab.
+	* src/Makefile.am (bin_SCRIPTS): Add wol-bootptab.
+
+2002-04-08  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* po/fr.po: Fix untranslated messages.
+
+2002-04-04  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* doc/wol.texi: Remove trademark infos.
+
+2002-04-03  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* check/nicfake.py: Fixes.
+
+2002-04-02  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* check/Makefile.am: Check testsuite Makefile.
+	* check/nic-fake.py: Add test script.
+	* check/test1.sh: New file.
+	* check/test2.sh: New file.
+	* check/test3.sh: New file.
+
+2002-03-28  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* doc/wol.texi: improvements
+
+2002-03-27  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* doc/texi2pod.pl: New file.
+	* doc/wol.texi: Include changes for manpage creation, direntry fix.
+	* doc/Makefile.am (EXTRA_DIST): Add wol.1.
+	* doc/Makefile.am: Remove wol.pod on make clean.
+
+	* po/it.po: fixes and improvements
+
+	* debian: initial debianisation ;-)
+
+2002-03-25  Thomas Krennwallner <krennwallner@aon.at>
+
+	Release 0.6.0.
+
+	* configure.ac: Schedule 0.6.1.
+
+	* src/macfile.c: whale should be size_t, not ssize_t -> fixed
+
+2002-03-21  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* doc/wol.texi: Add magic packet description.
+
+	* doc/Makefile.am: Add wol.pdf and wol.html.
+
+2002-03-20  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* m4/error.m4: New file.
+	* lib/error.c: New file (taken from glibc 2.2.5).
+	* lib/error.h: New file (taken from glibc 2.2.5).
+	* configure.ac: jm_PREREQ_ERROR
+	* src/wol.c: GNU error needs global program_name symbol -> rename name
+	to program_name and destatic it ;-)
+	* src/wol.c: use error() instead of fprintf(stderr, ...)
+	* src/net.c: use error() instead of fprintf(stderr, ...)
+
+	* lib/getline.c: Fix return values (int != ssize_t on
+	alphaev67-unknown-linux-gnu).
+
+	* doc/wol.texi: Fix.
+	* po/de.po: Fix error() usage.
+	* po/fr.po: Fix error() usage.
+	* po/it.po: Fix error() usage.
+	* po/tr.po: Fix error() usage.
+	* po/es.po: Fix error() usage.
+
+	* src/wol.c: Complain about missing MAC-ADDRESS arguments ;-).
+
+2002-03-19  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* demo/nic-fake.py: Add improvements.
+
+	* src/magic.c: Add improvements.
+
+	* src/macfile.c: Add passwd support through parser state.
+
+	* src/macfile.c: Fix a memory corruption bug.
+
+	* doc/wol.texi: Focumentation enhancements.
+
+2002-03-11  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* po/it.po: Fix a translation bug.
+
+	* configure.ac: Remove half-translated files tr.po and es.po.
+
+2002-02-26  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* po/it.po: Update italian translation.
+
+2002-02-25  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* demo/nic-fake.py: Add SecureON support and some improvements.
+
+	* src/macfile.c: Add bugfixes.
+
+	* src/magic.c: Add error return fixes.
+
+2002-02-23  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* src/macfile.l: Remove file.
+	* src/macfile.c: Add old version of my own parser with GNU getline
+	and SecureON password support.
+
+	* m4/getline.m4: New file.
+	* lib/getstr.c: New file.
+	* lib/getstr.h: New file.
+	* lib/getline.c: New file.
+	* lib/getline.h: New file.
+	* configure.ac: Add AM_FUNC_GETLINE.
+
+2002-02-21  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* src/wol-dhcpdconf.in: New file.
+	* src/Makefile.am: wol-dhcpdconf.
+	* configure.ac: Add searching support for awk binary.
+
+2002-02-15  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* doc/wol.texi: Fix trademark info and added info about ethtool.
+
+2002-02-14  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* doc/wol.texi: Fix -i option documentation error.
+
+2002-02-13  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* src/wol.c: Document stdin support in help mode.
+	* doc/wol.texi: Document stdin support.
+	
+	* po/de.po: Update translation.
+	* po/fr.po: Update translation.
+	* po/it.po: Update translation.
+	* po/es.po: Update translation.
+	* po/tr.po: Update translation.
+
+2002-02-12  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* src/wol.c: Add stdin support through `-f -' and `-', #include "xalloc.h".
+
+	* src/magic.c: Add #include "xalloc.h".
+
+	* lib/getopt.c: Update to newer GNU version.
+	* lib/getopt.h: Update to newer GNU version.
+	* lib/getopt1.c: Update to newer GNU version.
+	
+	* lib/xmalloc.c: New file.
+	* lib/xalloc.h: New file.
+	* lib/xmalloc.h: Remove file.
+	* m4/malloc.m4: New file.
+	* m4/realloc.m4: New file.
+	* configure.ac: Add jm_FUNC_MALLOC and jm_FUNC_REALLOC for GNU xmalloc.
+	* Makefile.am: add ACLOCAL_AMFLAGS to "-I m4" for the jm macros
+	* autogen.sh: add -I m4 to aclocal for the jm macros
+
+	* po/de.po: Add translation of lib/getopt.c and lib/xmalloc.c.
+	* po/fr.po: Add translation of lib/getopt.c and lib/xmalloc.c.
+	* po/it.po: Add translation of lib/getopt.c and lib/xmalloc.c.
+	* po/es.po: Add translation of lib/getopt.c and lib/xmalloc.c.
+	* po/tr.po: Add translation of lib/getopt.c and lib/xmalloc.c.
+
+	* README: Fix typo.
+	* doc/wol.texi: Fix typo.
+
+2002-02-11  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* po/fr.po: Fix french translation completed and fixed by Florian TrÅ‰xler.
+	* po/tr.po: Add initial turkish translation.
+
+2002-02-08  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* po/fr.po: Update french translation by Birgit Roenig and Brigitta Roenig
+	* po/es.po: Add initial spanish translation.
+	* po/it.po: Add initial italian translation.
+
+2002-02-07  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* po/de.po: Fix typo in german translation.
+	* po/fr.po: Add initial french translation.
+
+2002-01-10  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* NOTES: New file.
+
+	* README: Update.
+
+	* src/wol.c: Add beautifiers.
+
+2002-01-09  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* configure.ac: schedule 0.6.0.
+
+	* include/magic.h: Add support for SecureON passwords.
+	* src/magic.c: Add support for SecureON passwords.
+
+	* src/macfile.l: Add new macfile parser.
+	* include/macfile.h: Add new macfile parser.
+
+	* po/de.po: Update changes.
+
+	* doc/wol.texi: Document changes, fix typos.
+
+	Update copyright year in all files.
+
+2002-01-08  Thomas Krennwallner  <krennwallner@aon.at>
+
+	Release 0.5.1.
+
+	* src/wol.c (parse_args): Fix memory leak caused by braindead strdup usage.
+
+2001-11-20  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* include/wol.h: DEFAULT_IPADDR is now 255.255.255.255 and not 0.0.0.0 (due
+	a bugreport from Johan Rudholm <chm@ed.chalmers.se>).
+
+2001-11-13  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* configure.ac: schedule 0.5.1.
+
+	* Makefile.am: use AUTOMAKE_OPTIONS to make sure that at least automake 1.5
+	is being used (due a bugreport from SzabÅÛ PÅÈter <petike@inf.elte.hu>)
+	* configure.ac: use AC_PREREQ to make sure that at least autoconf 2.52 is
+	being used (due a bugreport from SzabÅÛ PÅÈter <petike@inf.elte.hu>)
+
+2001-11-06  Thomas Krennwallner  <krennwallner@aon.at>
+
+	Release 0.5.0.
+	
+	* NEWS: Update.
+
+	* demo/nic-fake.py: Give socket.bind method 1 arg and not 2 -> works now with
+	python >= 1.5.2.
+
+	tested on i386-unknown-freebsd4.4
+
+2001-11-05  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* doc/wol.texi: some renicers
+
+2001-11-04  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* src/macfile.c: Check fileptr after get_line looping to get the right file
+	status after the loop.
+
+	* lib/select.c: Add some renicers :-).
+	* lib/select.h: Add some renicers :-).
+
+	* include/wol.h: Add DEFAULT_IPADDR.
+	* src/wol.c: Use DEFAULT_IPADDR.
+
+2001-10-24  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* src/magic.c: Add #include <string.h>
+	-> suppresses warnings with memset() on HP-UX
+
+	* configure.ac: Add fix for compiling on solaris (inet_aton in libsocket)
+	and some improvements
+
+	Tested on sparc-sun-solaris2.8, hppa2.0w-hp-hpux11.00
+
+2001-10-23  Thomas Krennwallner  <krennwallner@aon.at>
+
+	Tested on following platforms: i586-pc-openbsd2.9, powerpc-apple-darwin1.4
+
+	* src/Makefile.am: Add @INTLLIBS@ to wol_LDADD to support
+	--with-included-gettext and for systems that doesn't have gettext
+
+2001-10-20  Thomas Krennwallner  <krennwallner@aon.at>
+
+	Check i18n support.
+
+	Edit all files in src to check the newly included config.h support.
+
+	* doc/wol.texi: Fix typos.
+
+2001-10-10  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* doc/wol.texi: New file.
+
+2001-09-30  Thomas Krennwallner  <krennwallner@aon.at>
+
+	Use autoconf 2.52, automake 1.5 and gettext 0.10.40.
+	
+	Rename configure.in to configure.ac to force using autoconf 2.50++
+
+2001-09-27  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* lib/Makefile.am: Include all sources.
+	* lib/wrappers.h: New file.
+	* src/xmalloc.c: New file.
+	* include/xmalloc.h: New file.
+	
+	* src/mac_file.c: Add support for new file format
+	-> XX:XX:XX:XX:XX:XX x.x.x.x:port
+
+2001-09-17  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* ChangeLog: Reformat in GNU format.
+
+	* Makefile.am: Add MAINTAINERCLEANFILES.
+
+	* autogen.sh: New file.
+
+	* demo/nic-fake.py: Add new output format.
+
+2001-08-02  Thomas Krennwallner  <krennwallner@aon.at>
+
+	* net.c: New file.
+	* magic.c: New file.
+	* wol.c: Remove -m option.
+
+	Add better auto* support
+
+	* shtool: Remove.
+
+	start complete rewrite
+
+2000-08-13  Thomas Krennwallner  <krennwallner@aon.at>
+
+	Release 0.4.1.
+	
+	Add code cleanups.
+
+	* wol.c (parse_args): Add -q for non verbose output.
+	* wol.c (parse_args): Added -w for waiting msecs between packet sends.
+	
+	You will never run out of file descriptors while waking up 50000 PC's ;-).
+
+	Add auto* improvements.
+
+	Updated man page.
+
+	Make static getopt lib and link it, when needed .
+
+2000-08-09  Thomas Krennwallner  <krennwallner@aon.at>
+
+	Release 0.4.0.
+
+	Fix a stupid bug in file reading mode.
+
+	Fix various auto* stuff.
+	
+	solaris support comes closer
+
+	Update man page.
+
+2000-07-30  Thomas Krennwallner  <krennwallner@aon.at>
+
+	Release 0.3.0.
+	
+	Compiles and works on FreeBSD.
+
+	Fix various auto* stuff.
+
+	Add input file support.
+
+	Add port to htons().
+
+2000-07-29  Thomas Krennwallner  <krennwallner@aon.at>
+
+	Release 0.2.0.
+	
+	Add initial port to FreeBSD (getopt_long).
+
+	Add better auto* support.
+
+	* shtool: version creates fresh version strings
+
+	Add initial documentation.
+
+2000-07-25  Thomas Krennwallner  <krennwallner@aon.at>
+
+	Works on linux.
+
+	Tested with Intel EtherExpress Pro 100 and Realtek 8139.

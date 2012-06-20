@@ -1,0 +1,217 @@
+# Spanish messages for wol.
+# Copyright (C) 2001-2003 Free Software Foundation, Inc.
+# Magin Lopez <magin@giodental.com>, 2001-2003.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: wol 0.7.1\n"
+"Report-Msgid-Bugs-To: krennwallner@aon.at\n"
+"POT-Creation-Date: 2004-04-29 05:02+0200\n"
+"PO-Revision-Date: 2004-04-18 11:27+0200\n"
+"Last-Translator: Magin Lopez <magin@giodental.com>\n"
+"Language-Team:\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8-bit\n"
+
+#: lib/error.c:127
+msgid "Unknown system error"
+msgstr "Error del sistema desconocido"
+
+#: lib/getopt.c:570 lib/getopt.c:589
+#, c-format
+msgid "%s: option `%s' is ambiguous\n"
+msgstr "%s: la opción `%s' es ambigua\n"
+
+#: lib/getopt.c:622 lib/getopt.c:626
+#, c-format
+msgid "%s: option `--%s' doesn't allow an argument\n"
+msgstr "%s: la opción `--%s' no acepta argumentos\n"
+
+#: lib/getopt.c:635 lib/getopt.c:640
+#, c-format
+msgid "%s: option `%c%s' doesn't allow an argument\n"
+msgstr "%s: la opción `%c%s' no acepta argumentos\n"
+
+#: lib/getopt.c:686 lib/getopt.c:708 lib/getopt.c:1039 lib/getopt.c:1061
+#, c-format
+msgid "%s: option `%s' requires an argument\n"
+msgstr "%s: la opción `%s' requiere un argumento\n"
+
+#: lib/getopt.c:746 lib/getopt.c:749
+#, c-format
+msgid "%s: unrecognized option `--%s'\n"
+msgstr "%s: opción `--%s' desconocida\n"
+
+#: lib/getopt.c:757 lib/getopt.c:760
+#, c-format
+msgid "%s: unrecognized option `%c%s'\n"
+msgstr "%s: opción `%c%s' desconocida\n"
+
+#: lib/getopt.c:815 lib/getopt.c:818
+#, c-format
+msgid "%s: illegal option -- %c\n"
+msgstr "%s: opción ilegal -- %c\n"
+
+#: lib/getopt.c:824 lib/getopt.c:827
+#, c-format
+msgid "%s: invalid option -- %c\n"
+msgstr "%s: opción no válida -- %c\n"
+
+#: lib/getopt.c:882 lib/getopt.c:901 lib/getopt.c:1114 lib/getopt.c:1135
+#, c-format
+msgid "%s: option requires an argument -- %c\n"
+msgstr "%s: la opción requiere un argumento -- %c\n"
+
+#: lib/getopt.c:954 lib/getopt.c:973
+#, c-format
+msgid "%s: option `-W %s' is ambiguous\n"
+msgstr "%s: la opción `-W %s' es ambigua\n"
+
+#: lib/getopt.c:997 lib/getopt.c:1018
+#, c-format
+msgid "%s: option `-W %s' doesn't allow an argument\n"
+msgstr "%s: la opción `-W %s' no acepta argumentos\n"
+
+#: lib/xmalloc.c:66
+msgid "memory exhausted"
+msgstr "memoria agotada"
+
+#: src/wol.c:93
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Usar `%s --help' para más información.\n"
+
+#: src/wol.c:97
+#, c-format
+msgid ""
+"Usage: %s [OPTION] ... MAC-ADDRESS ...\n"
+"Wake On LAN client - wakes up magic packet compliant machines.\n"
+"\n"
+"    --help          display this help and exit\n"
+"-V, --version       output version information and exit\n"
+"-v, --verbose       verbose output\n"
+"-w, --wait=NUM      wait NUM millisecs after sending\n"
+"-h, --host=HOST     broadcast to this IP address or hostname\n"
+"-i, --ipaddr=HOST   same as --host\n"
+"-p, --port=NUM      broadcast to this UDP port\n"
+"-f, --file=FILE     read addresses from file FILE (\"-\" reads from stdin)\n"
+"    --passwd[=PASS] send SecureON password PASS (if no PASS is given, you\n"
+"                    will be prompted for the password)\n"
+"\n"
+"Each MAC-ADDRESS is written as x:x:x:x:x:x, where x is a hexadecimal number\n"
+"between 0 and ff which represents one byte of the address, which is in\n"
+"network byte order (big endian).\n"
+msgstr ""
+"Uso: %s [OPCION] ... MAC-ADDRESS ...\n"
+"cliente Wake On LAN - enciende maquinas compatibles con magic packet.\n"
+"\n"
+"    --help          muestra esta ayuda y termina\n"
+"-V, --version       muestra información de la versión y termina\n"
+"-v, --verbose       verbose output\n"
+"-w, --wait=NUM      espera NUM de milisegundos después del envío\n"
+"-h, --host=HOST     broadcast a esta dirección ip o nombre de host\n"
+"-i, --ipaddr=HOST   igual que --host\n"
+"-p, --port=NUM      broadcast a este puerto UDP\n"
+"-f, --file=FILE     lee las direcciones del archivo FILE (\"-\" lee desde "
+"stdin)\n"
+"-P, --passwd[=PASS] envía SecureON con la contraseña PASS (si PASS no es\n"
+"                    proporcionado la contraseña le será solicitada)\n"
+"\n"
+"Cada MAC-ADDRESS es escrita como x:x:x:x:x:x, donde x es un valor "
+"hexadecimal\n"
+"entre 0 y ff el cual representa un byte de la dirección, la cual es byte de "
+"orden\n"
+"de red (big endian).\n"
+
+#: src/wol.c:115
+#, c-format
+msgid ""
+"\n"
+"PASS is written as x-x-x-x-x-x, where x is a hexadecimal number between 0\n"
+"and ff which represents one byte of the password.\n"
+msgstr ""
+"\n"
+"PASS está escrito como x-x-x-x-x-x, donde cada x es un valor hexadecimal \n"
+"entre 0 y ff el cual representa un byte de la contraseña.\n"
+
+#: src/wol.c:119
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <krennwallner@aon.at>\n"
+msgstr ""
+"\n"
+"Enviar los bugs a <krennwallner@aon.at>\n"
+
+#: src/wol.c:131
+#, c-format
+msgid ""
+"Copyright (C) 2000-2004 Thomas Krennwallner <krennwallner@aon.at>\n"
+"This is free software; see the source for copying conditions. There is NO\n"
+"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+msgstr ""
+"Copyright (C) 2000-2004 Thomas Krennwallner <krennwallner@aon.at>\n"
+"Este software es libre; mira el código fuente para las condiciones de "
+"copia.\n"
+"No existe garantía; ni para COMERCIALIZACIÓN ni PARA USO PARTICULAR.\n"
+
+#: src/wol.c:166
+msgid "Too few arguments."
+msgstr "Argumentos insuficientes."
+
+#: src/wol.c:198
+msgid "Invalid time given"
+msgstr "El tiempo introducido no es válido"
+
+#: src/wol.c:217
+msgid "Invalid port given"
+msgstr "El puerto introducido no es válido"
+
+#: src/wol.c:236
+msgid "Password"
+msgstr "Contraseña"
+
+#: src/wol.c:256
+msgid "You must specify at least one MAC-ADDRESS."
+msgstr "Debes especificar al menos una dirección MAC."
+
+#: src/wol.c:301
+#, c-format
+msgid "Cannot assemble magic packet for '%s'"
+msgstr "No se puede crear un  magic packet para '%s'"
+
+#: src/wol.c:306
+#, c-format
+msgid "Invalid password given for '%s'"
+msgstr "Contraseña no válida para '%s'"
+
+#: src/wol.c:313
+#, c-format
+msgid "Cannot send magic packet for '%s' to %s:%d"
+msgstr "No se puede enviar un magic packet para '%s' a '%s':%d"
+
+#: src/wol.c:319
+#, c-format
+msgid "Waking up %s"
+msgstr "Encendiendo %s"
+
+#: src/wol.c:322
+#, c-format
+msgid " with %s:%d"
+msgstr " con %s:%d"
+
+#: src/wol.c:324
+#, c-format
+msgid "...\n"
+msgstr "...\n"
+
+#: src/net.c:121 src/net.c:167
+#, c-format
+msgid "Invalid IP address given: %s"
+msgstr "Dirección IP no válida: %s"
+
+#: src/net.c:137
+#, c-format
+msgid "Couldn't connect to %s:%hu: %s"
+msgstr ""

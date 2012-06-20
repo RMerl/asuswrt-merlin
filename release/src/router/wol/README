@@ -1,0 +1,25 @@
+This is wol, the Wake On Lan client. It wakes up magic packet compliant
+machines such as boxes with wake-on-lan ethernet-cards. Some workstations
+provides SecureON which extends wake-on-lan with a password. This feature
+is also provided by wol.
+
+wol has a homepage at http://ahh.sourceforge.net/wol/
+
+For Frequently Asked Questions see http://ahh.sourceforge.net/wol/faq.html
+
+See the file COPYING for copying condition.
+
+See the file NEWS for a list of major changes in the current release.
+
+See the file ChangeLog for a detailed list of changes to wol.
+
+See the file INSTALL for compilation and installation instructions.
+
+See the file ABOUT-NLS for National Language Support. If your system doesn't
+provide nls support, configure wol with "./configure --with-included-gettext".
+Use "./configure --disable-nls" if you don't want NLS support.
+
+See the file TODO for a list of known features or bugs that should be fixed.
+Feel free to send me patches.
+
+Mail suggestions, patches and bugs to <krennwallner@aon.at>

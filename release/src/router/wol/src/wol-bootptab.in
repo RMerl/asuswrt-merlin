@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+#	wol-bootptab - parse a bootptab and output it in macfile format
+#
+#	$Id: wol-bootptab.in,v 1.4 2003/08/10 07:01:25 wol Exp $
+#
+#	Copyright (C) 2002 Thomas Krennwallner <krennwallner@aon.at>
+#
+#	This program is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; either version 2 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program; if not, write to the Free Software
+#	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+
+@AWK@ '
+
+BEGIN	{
+	RS = "\\"
+	FS = ":"
+	mac = "" # all MAC Addresses are stored in this string
+	ip = ""  # all IP Addresses are stored in this string
+}
+
+
+/ha=0x[0-9a-fA-F]+/	{
+	for (i = 1; i < NF; ++i)
+		{
+			if (match ($i, "ha=0x[0-9a-fA-F]+") != 0)
+				{
+					gsub ("ha=0x", "", $i)
+					gsub (/[0-9a-fA-F][0-9a-fA-F]/, ":&", $i)
+					mac = mac " " substr ($i, 2)
+				}
+			if (match ($i, "ip=[0-9.-_a-zA-Z]+") != 0)
+				{
+					gsub ("ip=", "", $i)
+					ip = ip " " $i
+				}
+		}
+}
+
+
+END	{
+	len = split (mac, MAC, " ")
+	split (ip, IP, " ")
+
+	for (i = 1; i <= len; ++i)
+		print MAC[i], IP[i]
+}'

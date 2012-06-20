@@ -1,0 +1,15 @@
+Source: wol
+Section: net
+Priority: extra
+Maintainer: Thomas Krennwallner <krennwallner@aon.at>
+Build-Depends: debhelper (>> 3.0.0)
+Standards-Version: 3.6.0
+
+Package: wol
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: Wake On LAN client
+ This is wol, the Wake On Lan client. It wakes up magic packet compliant
+ machines such as boxes with wake-on-lan ethernet-cards. Some workstations
+ provides SecureON which extends wake-on-lan with a password. This feature
+ is also provided by wol.
