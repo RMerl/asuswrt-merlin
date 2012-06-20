@@ -178,6 +178,7 @@ tabtitle[6] = new Array("", "<#menu5_5_1#>", "<#menu5_5_2#>", "<#menu5_5_5#>", "
 tabtitle[7] = new Array("", "<#menu5_6_1#>", "<#menu5_6_2#>", "<#menu5_6_3#>", "<#menu5_6_4#>", "Performance tuning", "<#menu_dsl_setting#>");
 tabtitle[8] = new Array("", "<#menu5_7_2#>", "<#menu5_7_3#>", "<#menu5_7_4#>", "<#menu5_7_5#>", "<#menu5_7_6#>", "<#menu_dsl_log#>");
 tabtitle[9] = new Array("", "QoS", "<#traffic_monitor#>");
+tabtitle[10] = new Array("", "WakeOnLAN", "Other Settings");
 
 var tablink = new Array();
 tablink[0] = new Array("", "Advanced_Wireless_Content.asp", "Advanced_WWPS_Content.asp", "Advanced_WMode_Content.asp", "Advanced_ACL_Content.asp", "Advanced_WSecurity_Content.asp", "Advanced_WAdvanced_Content.asp");
@@ -190,14 +191,15 @@ tablink[6] = new Array("", "Advanced_BasicFirewall_Content.asp", "Advanced_URLFi
 tablink[7] = new Array("", "Advanced_OperationMode_Content.asp", "Advanced_System_Content.asp", "Advanced_FirmwareUpgrade_Content.asp", "Advanced_SettingBackup_Content.asp", "Advanced_PerformanceTuning_Content.asp", "Advanced_ADSL_Content.asp");
 tablink[8] = new Array("", "Main_LogStatus_Content.asp", "Main_DHCPStatus_Content.asp", "Main_WStatus_Content.asp", "Main_IPTStatus_Content.asp", "Main_RouteStatus_Content.asp", "Main_AdslStatus_Content.asp");
 tablink[9] = new Array("", "QoS_EZQoS.asp", "Main_TrafficMonitor_realtime.asp", "Main_TrafficMonitor_last24.asp", "Main_TrafficMonitor_daily.asp", "Advanced_QOSUserSpec_Content.asp");
+tablink[10] = new Array("", "Main_WOL.asp", "Main_OtherSettings.asp");
 
 //Level 2 Menu
 menuL2_title = new Array("", "<#menu5_1#>", "<#menu5_2#>", "<#menu5_3#>", "<#menu5_4#>", "IPv6", "<#BOP_isp_heart_item#>", "<#menu5_5#>", "<#menu5_6#>", "<#menu5_7#>");
 menuL2_link  = new Array("", tablink[0][1], tablink[1][1], tablink[2][1], tablink[3][1], tablink[4][1], tablink[5][1], tablink[6][1], tablink[7][1], tablink[8][1]);
 
 //Level 1 Menu
-menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", "<#Menu_TrafficManager#>", "<#Parental_Control#>", "<#Menu_usb_application#>", "AiCloud", "<#menu5#>");
-menuL1_link = new Array("", "index.asp", "Guest_network.asp", "QoS_EZQoS.asp", "ParentalControl.asp", "APP_Installation.asp", "cloud_main.asp", "");
+menuL1_title = new Array("", "<#menu1#>", "<#Guest_Network#>", "<#Menu_TrafficManager#>", "<#Parental_Control#>", "<#Menu_usb_application#>", "AiCloud", "Tools", "<#menu5#>");
+menuL1_link = new Array("", "index.asp", "Guest_network.asp", "QoS_EZQoS.asp", "ParentalControl.asp", "APP_Installation.asp", "cloud_main.asp",  tablink[10][1], "");
 
 var rc_support = "<% nvram_get("rc_support"); %>"; 
 var wl_vifnames = "<% nvram_get("wl_vifnames"); %>";
@@ -373,9 +375,9 @@ function remove_url(){
 		tablink[3].splice(1, 1);	
 	}
 
-	if(cooler_support == -1){
-		remove_menu_item(7, "Advanced_PerformanceTuning_Content.asp");
-	}
+//	if(cooler_support == -1){
+//		remove_menu_item(7, "Advanced_PerformanceTuning_Content.asp");
+//	}
 
 	if(ParentalCtrl_support == -1){
 		if(sw_mode == 3){
@@ -482,8 +484,8 @@ function show_menu(){
 		}
 	}
 
-	// special case for Traffic Manager
-	if(L1 == traffic_L1_dx || L2 == traffic_L2_dx){
+	// special case for Traffic Manager and Tools menu
+	if(L1 == traffic_L1_dx || L2 == traffic_L2_dx || L1 == 7){
 		if(current_url.indexOf("Main_TrafficMonitor_") == 0){
 			L1 = traffic_L1_dx; 
 			L2 = traffic_L2_dx; 
@@ -499,6 +501,12 @@ function show_menu(){
 			L2 = traffic_L2_dx; 
 			L3 = 1;
 		}
+		else if(current_url.indexOf("Main_WOL") == 0){
+			L1 = 9;
+			L2 = 11;
+			L3 = 1;
+		}
+
 		else{
 			L1 = traffic_L1_dx; 
 			L2 = traffic_L2_dx; 
