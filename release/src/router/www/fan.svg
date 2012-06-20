@@ -166,19 +166,19 @@ function drawData(poly, data, mode, color){
 }
 
 function gen_svg(){
-	polyRx = E('polyRx');
+//	polyRx = E('polyRx');
 	polyCoreTmp_2 = E('polyCoreTmp_2');
 	polyCoreTmp_5 = E('polyCoreTmp_5');
 	top.coreTmp_2[top.coreTmp_2.length] = top.curr_coreTmp_2;
 	top.coreTmp_5[top.coreTmp_5.length] = top.curr_coreTmp_5;
-	rxData[rxData.length] = top.curr_rxData*5+40;
+//	rxData[rxData.length] = top.curr_rxData*5+40;
 	updateSVG();
 }
 
 function updateSVG(){
 	drawData(polyCoreTmp_2, top.coreTmp_2, 0, "#FF9000");
 	//drawData(polyCoreTmp_5, top.coreTmp_5, 0, "#33CCFF");
-	drawData(polyRx, rxData, 0, "#33CCFF");
+	//drawData(polyRx, rxData, 0, "#33CCFF");
 	setTimeout('gen_svg();', 5000);
 }
 ]]></script>
@@ -193,14 +193,14 @@ function updateSVG(){
 <line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="50%" y1="0%" x2="50%" y2="100%" />
 <line stroke-width="1" stroke-opacity="0.1" stroke="rgb(255,255,255)" x1="75%" y1="0%" x2="75%" y2="100%" />
 <text font-family="Verdana" fill="#FF9000" font-size="11" x="10" y="79%" id="xpst0" />
-<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="45" y="79%" id="xpstslash0" />
-<text font-family="Verdana" fill="#33CCFF" font-size="11" x="55" y="79%" id="xpstfan0" />
+<!--text font-family="Verdana" fill="#FFFFFF" font-size="11" x="45" y="79%" id="xpstslash0" /-->
+<!--text font-family="Verdana" fill="#33CCFF" font-size="11" x="55" y="79%" id="xpstfan0" /-->
 <text font-family="Verdana" fill="#FF9000" font-size="11" x="10" y="54%" id="xpst1" />
-<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="45" y="54%" id="xpstslash1" />
-<text font-family="Verdana" fill="#33CCFF" font-size="11" x="55" y="54%" id="xpstfan1" />
+<!--text font-family="Verdana" fill="#FFFFFF" font-size="11" x="45" y="54%" id="xpstslash1" /-->
+<!--text font-family="Verdana" fill="#33CCFF" font-size="11" x="55" y="54%" id="xpstfan1" /-->
 <text font-family="Verdana" fill="#FF9000" font-size="11" x="10" y="29%" id="xpst2" />
-<text font-family="Verdana" fill="#FFFFFF" font-size="11" x="45" y="29%" id="xpstslash2" />
-<text font-family="Verdana" fill="#33CCFF" font-size="11" x="55" y="29%" id="xpstfan2" />
+<!--text font-family="Verdana" fill="#FFFFFF" font-size="11" x="45" y="29%" id="xpstslash2" /-->
+<!--text font-family="Verdana" fill="#33CCFF" font-size="11" x="55" y="29%" id="xpstfan2" /-->
 <text font-family="Verdana" fill="#FFFFFF" font-size="11" x="74%" y="98%" id="xpst3" />
 <text font-family="Verdana" fill="#FFFFFF" font-size="11" x="48%" y="98%" id="xpst4" />
 <text font-family="Verdana" fill="#FFFFFF" font-size="11" x="23%" y="98%" id="xpst5" />
@@ -208,7 +208,7 @@ function updateSVG(){
 
 <polyline id="polyCoreTmp_2" style="stroke-width:1" stroke-opacity="0.9" points="" />
 <polyline id="polyCoreTmp_5" style="stroke-width:1" stroke-opacity="0.9" points="" />
-<polyline id="polyRx" style="stroke-width:1" stroke-opacity="0.9" points="" />
+<!--polyline id="polyRx" style="stroke-width:1" stroke-opacity="0.9" points="" /-->
 
 </svg>
 
