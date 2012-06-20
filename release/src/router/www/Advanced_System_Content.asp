@@ -646,7 +646,7 @@ function pullLANIPList(obj){
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="5">
-<input type="hidden" name="action_script" value="restart_time">
+<input type="hidden" name="action_script" value="restart_time;restart_httpd">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
@@ -710,6 +710,30 @@ function pullLANIPList(obj){
           </td>
         </tr>
       </table>
+
+
+      <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+                <thead>
+                <tr>
+          <td colspan="2">Persistent JFFS2 partition</td>
+        </tr>
+        </thead>
+           <tr>
+              <th>Enable JFFS partition</th>
+              <td>
+                  <input type="radio" name="jffs2_on" class="input" value="1" <% nvram_match_x("LANHostConfig", "jffs2_on", "1", "checked"); %>><#checkbox_Yes#>
+                  <input type="radio" name="jffs2_on" class="input" value="0" <% nvram_match_x("LANHostConfig", "jffs2_on", "0", "checked"); %>><#checkbox_No#>
+              </td>
+          </tr>
+          <tr>
+              <th>Format JFFS partition at next boot</th>
+              <td>
+                  <input type="radio" name="jffs2_format" class="input" value="1" <% nvram_match_x("LANHostConfig", "jffs2_format", "1", "checked"); %>><#checkbox_Yes#>
+                  <input type="radio" name="jffs2_format" class="input" value="0" <% nvram_match_x("LANHostConfig", "jffs2_format", "0", "checked"); %>><#checkbox_No#>
+              </td>
+          </tr>
+      </table>
+
       <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px;">
       	<thead>
 	  	<tr>
@@ -767,6 +791,46 @@ function pullLANIPList(obj){
 				    <input type="radio" name="telnetd_enable" class="input" value="0" <% nvram_match_x("LANHostConfig", "telnetd_enable", "0", "checked"); %>><#checkbox_No#>
 				  </td>
 				</tr>
+                                
+				<tr>
+					<th>Enable SSH</th>
+					<td>
+						<input type="radio" name="sshd_enable" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_enable", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_enable" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_enable", "0", "checked"); %>><#checkbox_No#>
+					</td>
+				</tr>
+        
+				<tr>
+					<th>Allow SSH Port Forwarding</th>
+					<td>
+						<input type="radio" name="sshd_forwarding" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_forwarding", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="sshd_forwarding" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_forwarding", "0", "checked"); %>><#checkbox_No#>
+           
+					</td>
+					</tr>
+
+					<tr id="ssh_lanport">
+						<th>SSH service port</th>
+						<td>
+							<input type="text" maxlength="5" class="input_6_table" name="sshd_port" value="<% nvram_get("sshd_port"); %>">
+						</td>        
+					</tr>
+
+					<tr>
+						<th>Allow SSH password login</th>
+						<td>
+							<input type="radio" name="sshd_pass" class="input" value="1" <% nvram_match_x("LANHostConfig", "sshd_pass", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="sshd_pass" class="input" value="0" <% nvram_match_x("LANHostConfig", "sshd_pass", "0", "checked"); %>><#checkbox_No#>
+						</td>
+					</tr>
+
+					<tr>
+						<th>SSH Authentication key</th>
+						<td>
+							<textarea rows="8" class="textarea_ssh_table" name="sshd_authkeys" cols="55" maxlength="512" onchange="this.value = this.value.replace(/[\r\n]+/g, '')"><% nvram_get("sshd_authkeys"); %></textarea>
+							<span id="ssh_alert_msg"></span>
+						</td>
+				</tr>
 
 		  	<tr id="https_tr">
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 5);"><#WLANConfig11b_AuthenticationMethod_itemname#></a></th>
@@ -796,6 +860,15 @@ function pullLANIPList(obj){
       </table>
 
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" id="http_client_table">
+			<tr>
+          
+				<th>WPS Button behavior</th>
+				<td>
+					<input type="radio" name="btn_ez_radiotoggle" class="input" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>>Toggle Radio
+					<input type="radio" name="btn_ez_radiotoggle" class="input" value="0" <% nvram_match_x("", "btn_ez_radiotoggle", "0", "checked"); %>>Activate WPS
+				</td>
+			</tr>
+
 				<thead>
 					<tr>
 						<td colspan="4">Specified IP</td>

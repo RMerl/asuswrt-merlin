@@ -1577,3 +1577,16 @@ padding-top:1px;
 	position:relative;
 	background-color:#4d595d;
 }
+.textarea_ssh_table{
+	margin-left:2px;
+	padding-left:0.4em;
+	width: 500px;
+	line-height:23px;    /*IE*/
+	font-size:12px;
+	font-family: Lucida Console;
+	background: #576D73;
+	border: 2px ridge #777;
+	border-style:bevel;
+	color:#FFFFFF;
+}
+
