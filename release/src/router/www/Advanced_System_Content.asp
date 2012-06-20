@@ -740,6 +740,14 @@ function pullLANIPList(obj){
           <td colspan="2"><#t2Misc#></td>
         </tr>
     	</thead>
+
+	<tr>
+	<th>WPS Button behavior</th>
+		<td>
+			<input type="radio" name="btn_ez_radiotoggle" class="input" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>>Toggle Radio
+			<input type="radio" name="btn_ez_radiotoggle" class="input" value="0" <% nvram_match_x("", "btn_ez_radiotoggle", "0", "checked"); %>>Activate WPS
+		</td>
+	</tr>
         <tr>
           <th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(11,1)"><#LANHostConfig_x_ServerLogEnable_itemname#></a></th>
           <td><input type="text" maxlength="15" class="input_15_table" name="log_ipaddr" value="<% nvram_get("log_ipaddr"); %>" onKeyPress="return is_ipaddr(this, event)" ></td>
@@ -860,15 +868,6 @@ function pullLANIPList(obj){
       </table>
 
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" id="http_client_table">
-			<tr>
-          
-				<th>WPS Button behavior</th>
-				<td>
-					<input type="radio" name="btn_ez_radiotoggle" class="input" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>>Toggle Radio
-					<input type="radio" name="btn_ez_radiotoggle" class="input" value="0" <% nvram_match_x("", "btn_ez_radiotoggle", "0", "checked"); %>>Activate WPS
-				</td>
-			</tr>
-
 				<thead>
 					<tr>
 						<td colspan="4">Specified IP</td>
