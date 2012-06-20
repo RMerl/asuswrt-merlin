@@ -136,6 +136,8 @@ function switchPage(page){
 		location.href = "/Main_TrafficMonitor_realtime.asp";
 	else if(page == "2")
 		location.href = "/Main_TrafficMonitor_last24.asp";
+	else if(page == "4")
+		location.href = "/Main_TrafficMonitor_monthly.asp";
 	else
 		return false;
 }
@@ -193,6 +195,8 @@ function switchPage(page){
 											<option value="1"><#menu4_2_1#></option>
 											<option value="2"><#menu4_2_2#></option>
 											<option value="3" selected><#menu4_2_3#></option>
+											<option value="4">Monthly</option>
+
 										</select>&nbsp;&nbsp;&nbsp;
 			    					<select class="input_option" style="width:100px" onchange='changeDate(this, "ymd")' id='dafm'>
 			    						<option value=0><#Date#>:</option>

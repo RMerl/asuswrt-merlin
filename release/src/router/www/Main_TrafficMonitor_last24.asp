@@ -135,10 +135,12 @@ function init()
 function switchPage(page){
 	if(page == "1")
 		location.href = "/Main_TrafficMonitor_realtime.asp";
-	else if(page == "2")
-		return false;
-	else
+	else if(page == "3")
 		location.href = "/Main_TrafficMonitor_daily.asp";
+	else if(page == "4")
+		location.href = "/Main_TrafficMonitor_monthly.asp";
+	else
+		return false;
 }
 
 function Zoom(func){
@@ -216,6 +218,7 @@ function Zoom(func){
 											<option value="1"><#menu4_2_1#></option>
 											<option value="2" selected><#menu4_2_2#></option>
 											<option value="3"><#menu4_2_3#></option>
+											<option value="4">Monthly</option>
 										</select>	
 									</div>
 								</td>
