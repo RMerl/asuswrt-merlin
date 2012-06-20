@@ -472,7 +472,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "ct_tcp_timeout",		""},
 	{ "ct_udp_timeout",		"30 180"},
 	{ "ct_timeout",			""},
-	{ "ct_max",			""}, per model default value is assigned in init_nvram
+	{ "ct_max",			""}, // per model default value is assigned in init_nvram
 
 #ifdef CONFIG_BCMWL5
 	{ "ctf_disable",		"0"		},
