@@ -232,7 +232,7 @@ obj-y += ez-ipupdate
 
 # Merlin addons
 obj-y += wol
-
+obj-y += netstat-nat
 obj-clean := $(foreach obj, $(obj-y) $(obj-n) $(obj-), $(obj)-clean)
 obj-install := $(foreach obj,$(obj-y),$(obj)-install)
 
@@ -1842,6 +1842,27 @@ wol-install: wol
 
 wol: wol/Makefile
 	$(MAKE) -C $@
+
+netstat-nat-clean:
+	-@$(MAKE) -C netstat-nat clean
+	@rm -f netstat-nat/Makefile
+	@rm -f netstat-nat/stamp-h1
+
+netstat-nat-install: netstat-nat
+	install -D netstat-nat/netstat-nat $(INSTALLDIR)/netstat-nat/usr/sbin/netstat-nat
+	$(STRIP) -s $(INSTALLDIR)/netstat-nat/usr/sbin/netstat-nat
+
+netstat-nat/stamp-h1:
+	cd netstat-nat && \
+	CC=$(CC) CFLAGS="-Os -Wall $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
+		LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections -fPIC" \
+		$(CONFIGURE)
+	touch netstat-nat/stamp-h1
+
+netstat-nat: netstat-nat/stamp-h1
+
+netstat-nat: netstat-nat/Makefile
+	$(MAKE) -C netstat-nat
 
 #
 # Generic rules
