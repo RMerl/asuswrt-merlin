@@ -1,0 +1,105 @@
+$Id: README,v 1.16 2007/11/24 13:18:48 danny Exp $
+
+
+Description:
+-------------------------------------------------------------------------------
+Netstat-nat is a small program written in C. It displays NAT connections, 
+managed by netfilter/iptables which comes with the > 2.4.x linux kernels. The 
+program reads its information from '/proc/net/ip_conntrack' or 
+'/proc/net/nf_conntrack', which is the temporary conntrack-storage of 
+netfilter. (http://www.netfilter.org/)
+For any program options see sector 'Usage' section below.
+
+-------------------------------------------------------------------------------
+
+
+Compiling:
+-------------------------------------------------------------------------------
+See the INSTALL file
+
+-------------------------------------------------------------------------------
+
+
+Changelog:
+-------------------------------------------------------------------------------
+See the CHANGELOG file
+
+-------------------------------------------------------------------------------
+
+
+Usage:
+-------------------------------------------------------------------------------
+netstat-nat -h			: displays help
+netstat-nat -n			: displays NAT connections without 
+				  host/portname-resolving.
+netstat-nat -p <protocol>       : diplays NAT connections with protocol 
+				  selection. (see /etc/protocols)
+netstat-nat -s <source-host>	: display connections by source IP/hostname
+netstat-nat -d <dest-host>	: display connections by destination IP/hostname
+netstat-nat -S			: display SNAT connections
+netstat-nat -D			: display DNAT connections
+				  (default: both) 
+netstat-nat -L			: display only connections to NAT box self 
+				  (doesn't show SNAT & DNAT connections) 
+netstat-nat -R			: display only connections routed through NAT box self 
+				  (doesn't show SNAT & DNAT connections) 
+netstat-nat -x 			: extend the view of the hostnames
+netstat-nat -r src|dst|src-port|dst-port|state : sort connections 
+netstat-nat -o			: strip output header
+netstat-nat -N 			: display NAT box connection information 
+				  (IP and port) for NATing iface 
+				  (only valid with SNAT & DNAT)
+netstat-nat -v     		: prints version
+
+-------------------------------------------------------------------------------
+
+
+Homepage:
+-------------------------------------------------------------------------------
+http://www.tweegy.nl/projects/netstat-nat/
+
+-------------------------------------------------------------------------------
+
+
+Files:
+-------------------------------------------------------------------------------
+netstat-nat.c
+netstat-nat.h
+netstat-nat.1
+netstat-nat.spec
+COPYING
+README
+INSTALL
+AUTHORS
+CHANGELOG
+Makefile
+
+-------------------------------------------------------------------------------
+
+
+Thanks:
+-------------------------------------------------------------------------------
+Marceln for writing the man-page and making the v1.2 .rpm and src.rpm, which can 
+be downloaded at his page. http://http://www.xs4all.nl/~marceln/rpm/
+and for submitting a patch for v1.4.1 which removes unused variables, included 
+a more understandable memory allocate error and making netstat-nat compatible
+with uLibC.
+
+Jose Pedro Oliveira <jpo@di.uminho.pt> for submitting a patch for the .spec file
+which fixes some rpmlint warnings.
+
+Gumundur D. Haraldsson <gdh@binhex.EU.org> for submitting a patch which does a
+more properly memory allocation and saver copies of variables. (merged in v1.4.3) 
+
+Supaflyster for submitting patch for proper read-in on some systems and 
+pointing out dnat over snat connections problem, which weren't shown in output.
+(v1.4.7)
+-------------------------------------------------------------------------------
+
+
+Contact:
+-------------------------------------------------------------------------------
+D.Wijsman danny@tweegy.nl
+
+-------------------------------------------------------------------------------
+

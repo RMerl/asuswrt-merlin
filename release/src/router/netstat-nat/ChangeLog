@@ -1,0 +1,85 @@
+$Id: ChangeLog,v 1.7 2010/01/09 19:34:24 danny Exp $
+
+
+Changelog:
+--------------------------------------------------------------------------------
+version: 1.4.10
+- fix for properly display DNAT over SNAT connection
+
+version: 1.4.9
+- Added '-R' option to show routed connections instead of showing them with '-L'
+- Some allocation & free bugs were squashed
+
+version: 1.4.8
+- Added 'nf_conntrack' support
+- Added NAT host connection information (used IP and port for NAT)
+
+version: 1.4.7
+- fix for read-in (ip_conntrack), previous versions could sometimes hang or 
+  segfault on some systems.
+- fix for displaying dnat over snat connections.
+- changed my email to danny@tweegy.nl and changed homepage url
+
+version: 1.4.6
+- gcc 2.96 compatability fix
+- enlarged readin of ip_conntrack line
+
+version: 1.4.5
+- Protocol resolving instead of 'raw'
+
+version: 1.4.4
+- Extraction of IPs and ports more dynamicly so it can be used with layer7 and 
+  maybe others when layout of ip_conntrack changes
+
+version: 1.4.3 
+- Memory allocation operations and copiing of variables have been made saver. 
+- Changed my e-mail to danny@tweegy.demon.nl 
+
+version: 1.4.2
+- Fixed hussle up displayed states when sorting 
+- Added support to display unknown protocols (displayed as 'raw')
+- Fixes rpmlint warnings in .spec for RPM users (1.4.1-2.src.rpm allready 
+  contains allready new .spec file)
+- Some more understandable memory alloaction errors, displays now how many bytes 
+  are allocated
+- Removed unused variables
+- Check in code to exit, when there are no NAT connections
+- Compatible with uLibC
+
+version: 1.4.1
+- Changed memory allocation of entries to be dynamic. (was only noticeble if you 
+  support large numbers NAT connections)
+- Added argument to display version
+
+version: 1.4
+- Option to display connections to NAT box self.
+- Option to sort output by selection.
+
+version: 1.3.1
+- Fixed segmentation fault when displaying icmp connections, was trying to 
+  display ports also, which only occured in version 1.3
+- Fixed bug, displayed wrong icmp connection with state REPLIED.
+- Option to strip output-header.
+
+version: 1.3
+- Resolves portnumbers to names if listed in 'services'.
+- Re-arranged layout, space is now being used more efficiently.
+- Added a Makefile and a header file.
+- Some small code changes.
+
+version: 1.2.1
+- Adds a nice manpage and a README update
+
+version: 1.2
+- display DNAT connection support
+- display by destination IP/hostname
+- display by SNAT or DNAT connections
+- extended view for hostnames
+
+version: 1.1
+- display by source IP/hostname
+
+version: 1.0
+- Initial release, with some basic features
+
+--------------------------------------------------------------------------------

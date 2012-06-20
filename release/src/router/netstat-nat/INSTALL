@@ -1,0 +1,20 @@
+$Id: INSTALL,v 1.2 2005/01/21 22:54:14 mardan Exp $
+
+
+Install:
+-------------------------------------------------------------------------------
+Unpack the source if you haven't allready done that by typing
+'tar xvzf netstat-nat-x.y.tar.gz'
+Go into the directory by typing 'cd netstat-nat-x.y'
+and do the following: 
+
+'configure'
+'make'
+'make install'
+
+And if all goes well try 'netstat-nat' 
+
+To uninstall netstat-nat type 'make uninstall' and it should remove all 
+installed components.
+
+-------------------------------------------------------------------------------

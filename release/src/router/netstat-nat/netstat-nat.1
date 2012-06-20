@@ -1,0 +1,66 @@
+.TH netstat-nat 1 "July 2002"
+.SH NAME
+netstat-nat \- Show the natted connections on a linux iptable firewall
+.SH SYNOPSIS
+.B netstat-nat [options]
+.br
+.SH DESCRIPTION
+.I netstat-nat
+Displays NAT connections managed by netfilter/iptables which comes
+with the > 2.4.x linux kernels.
+
+The program reads its information from '/proc/net/ip_conntrack' or '/proc/net/nf_conntrack', which is
+the temporary conntrack-storage of netfilter. 
+.SH OPTIONS
+.TP
+.B -h
+displays help
+.TP
+.B -n
+don't resolve IPs/portnumbers to host/portnames
+.TP
+.B -p <protocol>
+display NAT connections with protocol selection (see /etc/protocols)
+.TP
+.B -s <source host>
+display connections by source IP/hostname
+.TP
+.B -d <destination host>
+display connections by destination IP/hostname
+.TP
+.B -S
+display SNAT connections
+.TP
+.B -D
+display DNAT connections
+.TP
+.B -L
+display only connections to NAT box self (doesn't show SNAT & DNAT)
+.TP
+.B -R
+display only connections routed through the NAT box (doesn't show SNAT & DNAT)
+.TP
+.B -x
+extended view of hostnames
+.TP
+.B -r <src|dst|src-port|dst-port|state>
+sort connections
+.TP
+.B -o
+no output header
+.TP
+.B -N
+display NAT box connection information (only valid with SNAT & DNAT)
+.TP
+.B -v
+prints version
+.SH FILES
+/proc/net/ip_conntrack or /proc/net/nf_conntrack 
+.SH SEE ALSO
+http://www.tweegy.nl/projects/netstat-nat/
+.br
+http://www.netfilter.org/
+.SH AUTHOR
+netstat-nat has been written by D.Wijsman danny@tweegy.nl
+.br
+The manual page has been written by marceln@xs4all.nl

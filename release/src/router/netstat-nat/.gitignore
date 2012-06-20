@@ -1,0 +1,4 @@
+*.o
+Makefile
+netstat-nat
+.deps/
