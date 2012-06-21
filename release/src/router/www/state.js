@@ -860,7 +860,7 @@ function show_top_status(){
 	$("elliptic_ssid_2g").innerHTML = ssid_status_2g;
 	$("elliptic_ssid_5g").innerHTML = ssid_status_5g;	
 
-	showtext($("firmver"), document.form.firmver.value + "." + <% nvram_get("buildno"); %>);
+	showtext($("firmver"), document.form.firmver.value + "." + "<% nvram_get("buildno"); %>");
 	
 	// no_op_mode
 	if (dsl_support	== -1) {
