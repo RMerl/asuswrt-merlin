@@ -29,5 +29,5 @@ endif
 	install -m 0700 chpasswd.sh $(INSTALLDIR)/usr/sbin
 
 # Display active connections
-        install -m 0700 netstat-nat.sh $(INSTALLDIR)/usr/sbin/
+	install -m 0700 netstat-nat.sh $(INSTALLDIR)/usr/sbin/
 clean:
