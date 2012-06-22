@@ -2324,6 +2324,12 @@ start_services(void)
 
 	//init_spinlock();
 	start_telnetd();
+#ifdef RTCONFIG_SSH
+	if (nvram_match("sshd_enable", "1"))
+	{
+		start_sshd();
+	}
+#endif
 
 #ifdef CONFIG_BCMWL5
 	start_eapd();
@@ -2439,6 +2445,9 @@ _dprintf("restart_nas_services(%d): test 9.\n", getpid());
 #endif
 #ifdef CONFIG_BCMWL5
 	stop_acsd();
+#endif
+#ifdef RTCONFIG_SSH
+	stop_sshd();
 #endif
 	stop_telnetd();
 }
