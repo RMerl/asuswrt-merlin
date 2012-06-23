@@ -74,7 +74,7 @@ _dprintf("*** jffs2: %d, %d\n", part, size);
 		}
 	}
 
-	if ((statfs("/jffs", &sf) == 0) && (sf.f_type != 0x73717368 /* squashfs */)) {
+	if ((statfs("/jffs", &sf) == 0) && (sf.f_type != 0x71736873 /* squashfs */)) {
 		// already mounted
 		notice_set("jffs", format ? "Formatted" : "Loaded");
 		return;
