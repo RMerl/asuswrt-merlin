@@ -170,7 +170,7 @@ function done_validating(action){
 			       			<select name="rstats_location" class="input_option" onchange="hide_rstats_storage(this.value);">
 								<option value="0">RAM (Default)</option>
 								<option value="1">Custom location</option>
-								<option value="2">NVRAM (Disabled)</option>
+								<option value="2">NVRAM</option>
 							</select>
 			   			</td>
 					</tr>
@@ -179,7 +179,7 @@ function done_validating(action){
 						<th>Save frequency:</th>
 						<td>
 							<select name="rstats_stime" class="input_option" >
-									<option value="1" <% nvram_match("rstats_stime", "1","selected"); %>>Every 1 hour</option>
+								<option value="1" <% nvram_match("rstats_stime", "1","selected"); %>>Every 1 hour</option>
 			           				<option value="6" <% nvram_match("rstats_stime", "6","selected"); %>>Every 6 hours</option>
 			           				<option value="12" <% nvram_match("rstats_stime", "12","selected"); %>>Every 12 hours</option>
 			           				<option value="24" <% nvram_match("rstats_stime", "24","selected"); %>>Every 1 day</option>
