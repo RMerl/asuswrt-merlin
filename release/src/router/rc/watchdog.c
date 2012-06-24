@@ -89,6 +89,7 @@ int btn_count_setup = 0;
 int btn_count_timeout = 0;
 int wsc_timeout = 0;
 int btn_count_setup_second = 0;
+int btn_pressed_toggle_radio = 0;
 #endif
 
 #ifdef RTCONFIG_WIRELESS_SWITCH
@@ -295,6 +296,21 @@ void btn_check(void)
 #ifdef BTN_SETUP
 	}
 	if (btn_pressed != 0) return;
+
+	if (button_pressed(BTN_WPS) && nvram_match("btn_ez_radiotoggle", "1"))
+	{
+		if (btn_pressed_toggle_radio == 0  )
+		{
+			eval("radio","toggle");
+			btn_pressed_toggle_radio = 1;
+			return;
+		}
+	}
+	else
+	{
+		btn_pressed_toggle_radio = 0;
+	}
+
 
 	if (btn_pressed_setup < BTNSETUP_START)
 	{
