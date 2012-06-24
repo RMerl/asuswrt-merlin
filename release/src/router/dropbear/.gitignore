@@ -6,3 +6,5 @@ dropbearkey
 dropbearmulti
 *.a
 scp
+Makefile
+
