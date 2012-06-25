@@ -197,12 +197,17 @@ The "merlin" branch contains my modifications to the Asus firmware.
 History
 -------
 3.0.0.3.144.10:
-   - NEW: Rebased on 3.0.0.3.144.  Still using QoS code from 108.
+   - NEW: Rebased on 3.0.0.3.144.
    - NEW: Support for 64K NVRAM enabled.  ***First flash will
           wipe out ALL your settings!  And you cannot restore 
           from saved settings - you must manually reconfigure 
           everything.  Be warned!***
    - NEW: Enabled support for Broadcom Wimax devices
+   - FIXED: Router crashing when connecting to it over Wifi
+            and running the newer QoS code (disabled GRO)
+   - FIXED: Router crashing when connecting to a network 
+            device behind the router from over a VPN
+            connection (disabled GRO).
 
 
 3.0.0.3.130.9:
