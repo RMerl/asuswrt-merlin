@@ -208,6 +208,8 @@ History
    - FIXED: Router crashing when connecting to a network 
             device behind the router from over a VPN
             connection (disabled GRO).
+   - FIXED: Incorrect timezone set unless enabling
+            manual DST.
 
 
 3.0.0.3.130.9:

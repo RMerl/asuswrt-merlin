@@ -1204,8 +1204,9 @@ void time_zone_x_mapping(void)
 	if ((ptr=strchr(tmpstr, '_'))!=NULL) *ptr = 0x0;
 
 	/* check time_zone_dst for daylight saving */
-	if(!nvram_get_int("time_zone_dst") && gettzoffset(tmpstr,tmpstr1)) {
-		nvram_set("time_zone_x", tmpstr1);
+	if(!nvram_get_int("time_zone_dst") /*&& gettzoffset(tmpstr,tmpstr1)*/) {
+//		nvram_set("time_zone_x", tmpstr1);
+		nvram_set("time_zone_x",tmpstr);
 	}
 	else {
 		sprintf(tmpstr, "%s,%s", tmpstr, nvram_safe_get("time_zone_dstoff"));
