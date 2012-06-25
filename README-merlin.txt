@@ -253,6 +253,9 @@ good amount of the limited available nvram. ***
             code)
    - FIXED: WOL through webui wasn't working when IPv6 is enabled
    - FIXED: Memory leak in sit.ko (backported from Linux 2.6.25.3)
+   - IMPROVED: /jffs/scripts/ will be created automatically if it
+               doesn't exist (you must still make any new script 
+               executable using "chmod a+rx script_filename")
 
 
 3.0.0.3.108.7:
