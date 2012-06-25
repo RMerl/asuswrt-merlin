@@ -1,0 +1,17 @@
+.*
+*.o
+*.a
+*.lo
+*.la
+*.d
+stamp-h1
+Makefile
+brctl/Makefile
+brctl/brctl
+bridge-utils.spec
+config.log
+config.status
+doc/Makefile
+libbridge/Makefile
+libbridge/config.h
+libbridge/stamp-h1

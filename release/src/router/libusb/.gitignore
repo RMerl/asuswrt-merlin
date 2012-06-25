@@ -1,0 +1,16 @@
+.*
+*.o
+*.a
+*.lo
+*.la
+*.d
+stamp-h1
+Makefile
+config.h
+config.log
+config.status
+examples/Makefile
+libtool
+libusb-config
+libusb.pc
+libusb/Makefile

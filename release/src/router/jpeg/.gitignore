@@ -1,0 +1,12 @@
+.*
+*.o
+*.a
+*.so
+*.lo
+*.la
+*.d
+config.log
+config.status
+jconfig.h
+Makefile
+stamp-h1

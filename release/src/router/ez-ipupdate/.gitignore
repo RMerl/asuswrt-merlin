@@ -1,0 +1,8 @@
+.*
+*.o
+*.a
+*.lo
+*.la
+*.d
+ez-ipupdate
+test_hmac_md5

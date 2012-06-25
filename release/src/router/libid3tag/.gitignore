@@ -1,0 +1,17 @@
+.*
+*.o
+*.a
+*.lo
+*.la
+*.d
+stamp-h1
+Makefile
+config.h
+config.log
+config.status
+libid3tag.list
+libtool
+msvc++/Makefile
+config.h.in~
+compact.c
+autom4te.cache

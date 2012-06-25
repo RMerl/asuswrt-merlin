@@ -1,0 +1,7 @@
+.*
+*.o
+*.a
+*.lo
+*.la
+*.d
+CPP/7zip/Compress/LZMA_Alone/lzma

@@ -8,6 +8,7 @@
 *.s
 Kbuild
 Config.in
++!/Config.in
 
 #
 # Never ignore these

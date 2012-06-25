@@ -1,0 +1,15 @@
+.*
+*.o
+*.a
+*.lo
+*.la
+*.d
+*.so
+extensions/libip6t_matches.man
+extensions/libip6t_targets.man
+extensions/libipt_matches.man
+extensions/libipt_targets.man
+iptables
+iptables.8
+ip6tables
+ip6tables.8

@@ -1,0 +1,17 @@
+.*
+*.o
+*.a
+*.lo
+*.la
+*.d
+stamp-h1
+Makefile
+config.h
+config.log
+config.status
+doc/Makefile
+doc/igmpproxy.8
+doc/igmpproxy.conf.5
+src/Makefile
+src/igmpproxy
+src/os.h

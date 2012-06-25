@@ -1,0 +1,13 @@
+.*
+*.o
+*.a
+*.lo
+*.la
+*.d
+miniupnpd
+miniupnpdctl
+testgetifaddr
+testgetifstats
+testupnpdescgen
+testupnppermissions
+version.h

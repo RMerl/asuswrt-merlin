@@ -1,0 +1,15 @@
+.*
+*.o
+*.a
+*.lo
+*.la
+*.d
+stamp-h1
+Makefile
+config.h
+config.log
+config.status
+doc/Makefile
+src/Makefile
+src/sdparm
+autom4te.cache

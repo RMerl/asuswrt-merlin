@@ -1,0 +1,17 @@
+.*
+*.o
+*.a
+*.lo
+*.la
+*.d
+stamp-h1
+Makefile
+config.h
+config.log
+config.status
+doc/Makefile
+doc/doxygen.cfg
+examples/Makefile
+libtool
+libusb-1.0.pc
+libusb/Makefile

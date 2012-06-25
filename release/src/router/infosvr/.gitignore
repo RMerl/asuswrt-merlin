@@ -1,0 +1,7 @@
+.*
+*.o
+*.a
+*.lo
+*.la
+*.d
+infosvr

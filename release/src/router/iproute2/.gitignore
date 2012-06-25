@@ -1,0 +1,12 @@
+.*
+*.o
+*.a
+*.so
+*.lo
+*.la
+*.d
+ip/ip
+ip/rtmon
+tc/emp_ematch.yacc.h
+tc/emp_ematch.yacc.output
+tc/tc
