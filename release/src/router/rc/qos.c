@@ -307,34 +307,47 @@ int add_iQosRules(char *pcWANIF)
         if ((i < 0) || (i > 4)) i = 3;  // "lowest"
         class_num = i + 1;
 
-
-
-#ifndef RTCONFIG_RALINK // TODO: it is only for the case, eth0 as wan, vlanx as lan
-        fprintf(fn,
-		"-A QOSO -d %s -j CONNMARK --set-return 0x%x/0xFF\n" // for download (LAN or wireless)
-		"-A POSTROUTING -o br0 -j QOSO\n"  // for download, interface br0
-                "-A QOSO -j CONNMARK --set-return 0x%x\n"
-                "-A FORWARD -o %s -j QOSO\n"
-                "-A OUTPUT -o %s -j QOSO\n",
-                        lan_addr, down_class_num, class_num, pcWANIF, pcWANIF);
-#else
-        fprintf(fn,
-                "-A QOSO -j CONNMARK --set-return 0x%x\n"
-                "-A FORWARD -o %s -j QOSO\n"
-                "-A OUTPUT -o %s -j QOSO\n",
-                        class_num, pcWANIF, pcWANIF);
+#ifdef CONFIG_BCMWL5 // TODO: it is only for the case, eth0 as wan, vlanx as lan
+	if(strncmp(pcWANIF, "ppp", 3)==0){
+		// ppp related interface doesn't need physdev
+		// do nothing
+	}
+	else{
+		// for download (LAN or wireless)
+		fprintf(fn, "-A QOSO -d %s -j CONNMARK --set-return 0x%x/0xFF\n", lan_addr, down_class_num);
+		// for WLAN to LAN bridge issue
+		fprintf(fn, "-A POSTROUTING -d %s -m physdev --physdev-is-in -j CONNMARK --set-return 0x6/0xFF\n", lan_addr);
+		// for download, interface br0
+		fprintf(fn, "-A POSTROUTING -o br0 -j QOSO\n");
+	}
 #endif
-
+		fprintf(fn,
+			"-A QOSO -j CONNMARK --set-return 0x%x\n"
+	                "-A FORWARD -o %s -j QOSO\n"
+        	        "-A OUTPUT -o %s -j QOSO\n",
+                	        class_num, pcWANIF, pcWANIF);
 
 #ifdef RTCONFIG_IPV6
 	if (ipv6_enabled() && *wan6face) {
+#ifdef CONFIG_BCMWL5 // TODO: it is only for the case, eth0 as wan, vlanx as lan
+		if(strncmp(wan6face, "ppp", 3)==0){
+			// ppp related interface doesn't need physdev
+			// do nothing
+		}
+		else{
+			// for download (LAN or wireless)
+        		fprintf(fn_ipv6, "-A QOSO -d %s -j CONNMARK --set-return 0x%x/0xFF\n", lan_addr, down_class_num);
+			// for WLAN to LAN bridge issue
+			fprintf(fn_ipv6, "-A POSTROUTING -d %s -m physdev --physdev-is-in -j CONNMARK --set-return 0x6/0xFF\n", lan_addr);
+			// for download, interface br0
+			fprintf(fn_ipv6, "-A POSTROUTING -o br0 -j QOSO\n");
+		}
+#endif
         	fprintf(fn_ipv6,
-			"-A QOSO -d %s -j CONNMARK --set-return 0x%x/0xFF\n" // for download (LAN or wireless)
-			"-A POSTROUTING -o br0 -j QOSO\n"  // for download, interface br0
                 	"-A QOSO -j CONNMARK --set-return 0x%x\n"
                 	"-A FORWARD -o %s -j QOSO\n"
                 	"-A OUTPUT -o %s -j QOSO\n",
-                        	lan_addr, down_class_num, class_num, wan6face, wan6face);
+                        	class_num, wan6face, wan6face);
 	}
 #endif
 
@@ -373,6 +386,8 @@ int add_iQosRules(char *pcWANIF)
 	}
 #endif
 	fprintf(stderr, "[qos] iptables DONE!\n");
+
+	return 0;
 }
 
 
@@ -462,7 +477,7 @@ int start_iQos(void)
 			bw, bw, burst_root);
 
 	/* LAN protocol: 802.1q */
-#ifndef RTCONFIG_RALINK // TODO: it is only for the case, eth0 as wan, vlanx as lan
+#ifdef CONFIG_BCMWL5 // TODO: it is only for the case, eth0 as wan, vlanx as lan
 	protocol = strdup("802.1q");
 	fprintf(f,
 		"# download 1:2\n"
@@ -590,7 +605,6 @@ int start_iQos(void)
 					" fw police rate %ukbit burst %ukbit drop flowid ffff:%d\n",
 					i, rate, x, x, u, v, x);
 		}
-
 		free(buf);
 	}
 
@@ -612,6 +626,7 @@ int start_iQos(void)
 	eval((char *)qosfn, "start");
 	fprintf(stderr,"[qos] tc done!\n");
 
+	return 0;
 }
 
 
