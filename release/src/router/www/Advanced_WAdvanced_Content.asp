@@ -96,7 +96,7 @@ function applyRule(){
 			return false;
 		}
 	
-		if(parseInt(document.form.wl_TxPower.value) > 80 && flag < 2){
+		if(parseInt(document.form.wl_TxPower.value) > 80 && flag < 0){
 			document.form.wl_TxPower.focus();
 			flag++;
 			return false;
