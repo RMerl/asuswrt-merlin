@@ -36,7 +36,7 @@ var $j = jQuery.noConflict();
 var MaxTxPower_2;
 var MaxTxPower_5;
 var flag = 0;;
-var HW_MAX_LIMITATION_2 = 101;
+var HW_MAX_LIMITATION_2 = 501;
 var HW_MIN_LIMITATION_2 = 9;
 var HW_MAX_LIMITATION_5 = 251;
 var HW_MIN_LIMITATION_5 = 9;
@@ -122,23 +122,25 @@ function applyRule(){
 		document.form.wl1_TxPower.focus();
 		return false;
 	}
-
-	if(parseInt(document.form.wl0_TxPower.value) > 80 && flag < 0){
+/*
+	if(parseInt(document.form.wl0_TxPower.value) > 80 && flag < 2){
 		$("TxPowerHint_2").style.display = "";
 		document.form.wl0_TxPower.focus();
 		flag++;
 		return false;
 	}
 	else
+*/
 		$("TxPowerHint_2").style.display = "none";
-		
-	if(parseInt(document.form.wl1_TxPower.value) > 80 && flag < 0){
+/*
+	if(parseInt(document.form.wl1_TxPower.value) > 80 && flag < 2){
 		$("TxPowerHint_5").style.display = "";
 		document.form.wl1_TxPower.focus();
 		flag++;
 		return false;
 	}
 	else
+*/
 		$("TxPowerHint_5").style.display = "none";
 
 	if(parseInt(document.form.wl0_TxPower.value) > parseInt(document.form.wl0_TxPower_orig.value) 
