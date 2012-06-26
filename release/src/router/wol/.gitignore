@@ -16,3 +16,5 @@ po/POTFILES
 src/wol-bootptab
 src/wol-dhcpdconf
 doc/wol.1
+autom4te.cache
+
