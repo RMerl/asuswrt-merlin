@@ -1831,6 +1831,8 @@ wol/stamp-h1:
 	touch wol/stamp-h1
 
 wol: wol/stamp-h1
+	@$(SEP)
+	jm_cv_func_working_malloc=yes $(MAKE) -C $@
 
 wol-clean:
 	-@$(MAKE) -C wol distclean
@@ -1839,9 +1841,6 @@ wol-clean:
 wol-install: wol
 	install -D wol/src/wol $(INSTALLDIR)/wol/usr/sbin/wol
 	$(STRIP) $(INSTALLDIR)/wol/usr/sbin/wol
-
-wol: wol/Makefile
-	$(MAKE) -C $@
 
 netstat-nat-clean:
 	-@$(MAKE) -C netstat-nat clean
