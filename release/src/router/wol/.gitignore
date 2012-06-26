@@ -3,6 +3,8 @@
 Makefile
 wol
 config.h
+config.h.in
+configure
 doc/wol.pod
 intl/charset.alias
 intl/libgnuintl.h
