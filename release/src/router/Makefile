@@ -1827,7 +1827,7 @@ madwimax-0.1.1-clean:
 	-cd $(TOP)/madwimax-0.1.1 && rm -rf include/config.h scripts/udev/z60_madwimax.rules src/.deps
 
 wol/stamp-h1:
-	cd $(TOP)/wol && jm_cv_func_working_malloc=yes $(CONFIGURE) --host=mips --prefix=$(INSTALLDIR)/wol CC=mipsel-uclibc-gcc STR$
+	cd $(TOP)/wol && jm_cv_func_working_malloc=yes $(CONFIGURE) --host=mips --prefix=$(INSTALLDIR)/wol CC=mipsel-uclibc-gcc STRIP=mipsel-uclibc-strip AR=mipsel-uclibc-ar LD=mipsel-uclibc-ld NM=mipsel-uclibc-nm RANLIB=mipsel-uclibc-ranlib
 	touch wol/stamp-h1
 
 wol: wol/stamp-h1
