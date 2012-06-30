@@ -846,6 +846,10 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 					<input type="button" class="button_gen_long" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
 				</td>
         	</tr>
+                <tr>
+                <th>Additional DHCP options</th>
+                <td><input type="text" name="wan_dhcpc_options" class="input_32_table" maxlength="32" value="<% nvram_get("wan_dhcpc_options"); %>" onkeypress="return is_string(this, event)"></td>
+                </tr>
 		</table>
 	  <div class="apply_gen" style="height:auto">
 			<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>"/>

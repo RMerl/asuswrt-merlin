@@ -1404,11 +1404,14 @@ TRACE_PT("3g end.\n");
 		 * renew and release.
 		 */
 		else if (strcmp(wan_proto, "dhcp") == 0) {
+			char *dhcp_options = nvram_safe_get("wan_dhcpc_options");
 			char *wan_hostname = nvram_safe_get(strcat_r(prefix, "hostname", tmp));
 			char *dhcp_argv[] = { "udhcpc",
 					"-i", wan_ifname,
 					"-p", (sprintf(tmp, "/var/run/udhcpc%d.pid", unit), tmp),
 					"-s", "/tmp/udhcpc",
+					*dhcp_options ? "-c" : "",
+					dhcp_options,
 					*wan_hostname && is_valid_hostname(wan_hostname) ? "-H" : NULL,
 					wan_hostname,
 					NULL};

@@ -1,4 +1,4 @@
-Asus RT-N66U Modded Firmware - build 3.0.0.3.144.10 (xx-July-2012)
+Asus RT-N66U Modded Firmware - build 3.0.0.3.144.10 (30-June-2012)
 ==================================================================
 
 About
@@ -30,6 +30,7 @@ The list of changes (so far):
 - Fixed port forwarding where multiple ports are separated by a ","
 - Added CIFS client support (for mounting remote SMB share on the router)
 - Added layer7 iptables matching
+- Added user-defined options for DHCP requests (required by some ISPs)
 
 
 Installation
@@ -215,6 +216,7 @@ History
    - NEW: Enabled support for Broadcom Wimax devices
    - NEW: Added cifs kernel module (for mounting remote SMB shares)
    - NEW: Added layer7 iptables matching
+   - NEW: Added user-options for DHCP on the WAN page
    - FIXED: Router crashing when connecting to it over Wifi
             and running the newer QoS code (disabled GRO)
    - FIXED: Router crashing when connecting to a network 
