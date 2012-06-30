@@ -200,9 +200,7 @@ Source code
 The source code with all my modifications can be found 
 on Github, at:
 
-https://github.com/shantanugoel/asus-rt-n66u-merlin/tree/merlin
-
-The "merlin" branch contains my modifications to the Asus firmware.
+https://github.com/RMerl/asuswrt-merlin
 
 
 History
