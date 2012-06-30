@@ -1,5 +1,5 @@
-Asus RT-N66U Modded Firmware - build 3.0.0.3.144.10 (xx-Jun-2012)
-=================================================================
+Asus RT-N66U Modded Firmware - build 3.0.0.3.xxx.10 (xx-July-2012)
+==================================================================
 
 About
 -----
@@ -11,8 +11,7 @@ alternative for those who prefer to stay closer to the original firmware.
 
 The list of changes (so far):
 
-- Based on the source code of release 3.0.0.3.144 (with some code taken from
-  older versions)
+- Based on the source code of release 3.0.0.3.144
 - Added wol binary (wake-on-lan) (in addition to ether-wake already in the firmware)
 - Added Tools menu to web interface (with WakeOnLan page)
 - Added JFFS partition support (configurable under Administration->Advanced->System)
@@ -29,6 +28,7 @@ The list of changes (so far):
 - Display active/tracked network connections
 - Allows tweaking TCP/UDP connection tracking timeouts
 - Fixed port forwarding where multiple ports are separated by a ","
+- Added CIFS client support (for mounting remote SMB share on the router)
 
 
 Installation
@@ -176,6 +176,15 @@ values to make them more VoIP-friendly, by using smaller timeouts.
 Timeout values are in seconds.
 
 
+* Mounting remote CIFS shares on the router *
+You can mount remote SMB shares on your router.  The syntax will 
+be something like this:
+
+mount \\\\192.168.1.100\\ShareName /cifs1 -t cifs -o "username=User,password=Pass"
+
+(backslashes must be doubled.)
+
+
 
 Notes
 -----
@@ -203,6 +212,7 @@ History
           from saved settings - you must manually reconfigure 
           everything.  Be warned!***
    - NEW: Enabled support for Broadcom Wimax devices
+   - NEW: Added cifs kernel module (for mounting remote SMB shares)
    - FIXED: Router crashing when connecting to it over Wifi
             and running the newer QoS code (disabled GRO)
    - FIXED: Router crashing when connecting to a network 
