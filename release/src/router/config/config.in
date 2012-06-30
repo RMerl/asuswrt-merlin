@@ -60,7 +60,7 @@ config RTCONFIG_L7
 
 config RTCONFIG_L7PAT
 	bool "  Standard Layer 7 Patterns"
-	depends on TCONFIG_L7
+	depends on RTCONFIG_L7
 	default y
 
 config RTCONFIG_LZO
@@ -69,7 +69,7 @@ config RTCONFIG_LZO
 
 config RTCONFIG_OPENVPN
 	bool "OpenVPN"
-	depends on TCONFIG_LZO
+	depends on RTCONFIG_LZO
 	default n
 
 # !!TB
