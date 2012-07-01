@@ -1,4 +1,4 @@
-Asus RT-N16U Modded Firmware - build 3.0.0.3.144.10 (30-June-2012)
+Asus RT-N16U Modded Firmware - build 3.0.0.3.144.11 (xx-July-2012)
 ==================================================================
 
 About
@@ -205,6 +205,10 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
+3.0.0.3.144.11:
+   - CHANGED: Increased dhcp options from 32 to 128 characters
+
+
 3.0.0.3.144.10:
    - NEW: First release for the RT-N16.
    
