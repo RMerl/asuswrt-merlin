@@ -209,6 +209,7 @@ History
    - CHANGED: Increased dhcp options from 32 to 128 characters
    - FIXED: Brought max PPTPD password lenght back to 32 chars (Asus had reduced
      it to 16 in recent versions)
+   - FIXED: Retrieve dhcpc options for the correct wan interface
 
 
 3.0.0.3.144.10:
