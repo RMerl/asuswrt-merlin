@@ -515,7 +515,7 @@ function setEnd(){
 						              <input type="text" class="input_25_table" maxlength="32" name="pptpd_clientlist_username" onKeyPress="return is_string(this, event)">
 						            </td>
 						            <td width="40%">
-						            	<input type="text" class="input_25_table" maxlength="16" name="pptpd_clientlist_password" onKeyPress="return is_string(this, event)">
+						            	<input type="text" class="input_25_table" maxlength="32" name="pptpd_clientlist_password" onKeyPress="return is_string(this, event)">
 						            </td>
 						            <td width="20%">
 													<div><input type="button" class="add_btn" onClick="addRow_Group(16);" value=""></div>
