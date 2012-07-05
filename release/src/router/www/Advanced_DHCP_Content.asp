@@ -168,6 +168,7 @@ function addRow_Group(upper){
 		
 		addRow(document.form.dhcp_staticmac_x_0 ,1);
 		addRow(document.form.dhcp_staticip_x_0, 0);
+		addRow(document.form.dhcp_staticname_x_0, 0);
 		showdhcp_staticlist();		
 	}else{
 		return false;
@@ -198,6 +199,7 @@ function edit_Row(r){
 	var i=r.parentNode.parentNode.rowIndex;
 	document.form.dhcp_staticmac_x_0.value = $('dhcp_staticlist_table').rows[i].cells[0].innerHTML;
 	document.form.dhcp_staticip_x_0.value = $('dhcp_staticlist_table').rows[i].cells[1].innerHTML; 	
+	document.form.dhcp_staticname_x_0.value = $('dhcp_staticlist_table').rows[i].cells[2].innerHTML;
   del_Row(r);	
 }
 
@@ -213,9 +215,9 @@ function showdhcp_staticlist(){
 			code +='<tr id="row'+i+'">';
 			var dhcp_staticlist_col = dhcp_staticlist_row[i].split('&#62');
 				for(var j = 0; j < dhcp_staticlist_col.length; j++){
-					code +='<td width="40%">'+ dhcp_staticlist_col[j] +'</td>';		//IP  width="98"
+					code +='<td width="27%">'+ dhcp_staticlist_col[j] +'</td>';		//IP  width="98"
 				}
-				code +='<td width="20%"><!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->';
+				code +='<td width="19%"><!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->';
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 		}
 	}
@@ -384,7 +386,7 @@ function showLANIPList(){
 			show_name = client_list_col[1];	
 
 		//client_list_col[]  0:type 1:device 2:ip 3:mac 4: 5: 6:
-		code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_col[3]+'\', \''+client_list_col[2]+'\');"><strong>'+client_list_col[3]+'</strong> ';
+		code += '<a><div onmouseover="over_var=1;" onmouseout="over_var=0;" onclick="setClientIP(\''+client_list_col[3]+'\', \''+client_list_col[2]+'\', \''+client_list_col[1]+'\');"><strong>'+client_list_col[3]+'</strong> ';
 		
 		if(show_name && show_name.length > 0)
 				code += '( '+show_name+')';
@@ -394,9 +396,10 @@ function showLANIPList(){
 	$("ClientList_Block_PC").innerHTML = code;
 }
 
-function setClientIP(macaddr, ipaddr){
+function setClientIP(macaddr, ipaddr,name){
 	document.form.dhcp_staticmac_x_0.value = macaddr;
 	document.form.dhcp_staticip_x_0.value = ipaddr;
+        document.form.dhcp_staticname_x_0.value = name;
 	hideClients_Block();
 	over_var = 0;
 }
@@ -636,20 +639,24 @@ function check_vpn(){		//true: (DHCP ip pool & static ip ) conflict with VPN cli
 			  	<tr>
 		  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#LANHostConfig_ManualMac_itemname#></a></th>
         		<th><#LANHostConfig_ManualIP_itemname#></th>
+			<th>Name</th>
         		<th>Add / Delete</th>
 			  	</tr>			  
 			  	<tr>
 			  			<!-- client info -->
 							<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 			  		
-            			<td width="40%">
-                		<input type="text" class="input_20_table" maxlength="17" name="dhcp_staticmac_x_0" style="margin-left:-12px;width:255px;" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
+            			<td width="27%">
+                		<input type="text" class="input_20_table" maxlength="17" name="dhcp_staticmac_x_0" style="margin-left:-12px;width:170px;" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
                 		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="Select the device name of DHCP clients." onmouseover="over_var=1;" onmouseout="over_var=0;">
                 			</td>
-            			<td width="40%">
+            			<td width="27%">
             				<input type="text" class="input_15_table" maxlength="15" name="dhcp_staticip_x_0" onkeypress="return is_ipaddr(this,event)">
             			</td>
-            			<td width="20%">
+				<td width="27%">
+					<input type="text" class="input_15_table" maxlenght="15" name="dhcp_staticname_x_0">
+				</td>
+            			<td width="19%">
 										<div> 
 											<input type="button" class="add_btn" onClick="addRow_Group(32);" value="">
 										</div>

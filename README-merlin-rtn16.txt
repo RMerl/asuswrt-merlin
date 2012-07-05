@@ -31,6 +31,7 @@ The list of changes (so far):
 - Added CIFS client support (for mounting remote SMB share on the router)
 - Added layer7 iptables matching
 - Added user-defined options for DHCP requests (required by some ISPs)
+- Name field to the DHCP reservation list
 
 
 Installation
@@ -206,6 +207,7 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.3.144.11:
+   - NEW: Name field added to DHCP reservation list
    - CHANGED: Increased dhcp options from 32 to 128 characters
    - FIXED: Brought max PPTPD password lenght back to 32 chars (Asus had reduced
      it to 16 in recent versions)
