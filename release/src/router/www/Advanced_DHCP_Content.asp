@@ -217,6 +217,7 @@ function showdhcp_staticlist(){
 				for(var j = 0; j < dhcp_staticlist_col.length; j++){
 					code +='<td width="27%">'+ dhcp_staticlist_col[j] +'</td>';		//IP  width="98"
 				}
+				if (j !=3) code +='<td width="27%"></td>';
 				code +='<td width="19%"><!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->';
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 		}
