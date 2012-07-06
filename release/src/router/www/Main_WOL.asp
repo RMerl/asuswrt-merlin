@@ -182,13 +182,15 @@ function showwol_list(){
 			code +='<tr id="row'+i+'">';
 			var wol_list_col = wol_list_row[i].split('&#62');
 				for(var j = 0; j < wol_list_col.length; j++){
-					code +='<td width="40%"><a class="wol_entry" href="#" onclick="setTargetMAC(\''+wol_list_col[0]+'\');">'+ wol_list_col[j] +'</a></td>';
+//					code +='<td width="35%"><a class="wol_entry" href="#" onclick="setTargetMAC(\''+wol_list_col[0]+'\');">'+ wol_list_col[j] +'</a></td>';
+					code +='<td width="35%">'+ wol_list_col[j] +'</a></td>';
 				}
+				code +='<td width="10%"><a class="wol_entry" href="#" onclick="setTargetMAC(\''+wol_list_col[0]+'\');">Wake</a></td>';
 				code +='<td width="20%"><!--input class="edit_btn" onclick="edit_Row(this);" value=""/-->';
 				code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
 		}
 	}
-  code +='</table>';
+	code +='</table>';
 	$("wol_list_Block").innerHTML = code;
 }
 
@@ -200,9 +202,9 @@ function applyRule(){
 // TODO: Trim trailing spaces left by the networkmap client list
 	for(i=0; i<rule_num; i++){
 		tmp_value += "<"
-		for(j=0; j<item_num-1; j++){
+		for(j=0; j<item_num-2; j++){
 			tmp_value += $('wol_list_table').rows[i].cells[j].innerHTML;
-			if(j != item_num-2)
+			if(j != item_num-3)
 				tmp_value += ">";
 		}
 	}
@@ -381,24 +383,24 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 			<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
 			  	<thead>
 			  		<tr>
-						<td colspan="3" id="WOLList">WOL Targets</td>
+						<td colspan="4" id="WOLList">WOL Targets</td>
 			  		</tr>
 			  	</thead>
 
 			  	<tr>
 		  			<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#LANHostConfig_ManualMac_itemname#></a></th>
-        		<th>Name</th>
+        		<th colspan="2">Name</th>
         		<th>Add / Delete</th>
 			  	</tr>
 			  	<tr>
 			  			<!-- client info -->
 							<div id="ClientList_Block_PC" class="ClientList_Block_PC"></div>
 
-            			<td width="40%">
-                		<input type="text" class="input_20_table" maxlength="17" name="wol_mac_x_0" style="margin-left:-12px;width:220px;" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
+            			<td width="35%">
+                		<input type="text" class="input_20_table" maxlength="20" name="wol_mac_x_0" style="margin-left:-12px;width:220px;" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();">
                 		<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" style="position:absolute;" onclick="pullLANIPList(this);" title="Select the device name of WOL target" onmouseover="over_var=1;" onmouseout="over_var=0;">
                 			</td>
-				<td width="40%">
+				<td width="45%" colspan="2">
 					<input type="text" class="input_15_table" maxlenght="15" name="wol_name_x_0">
 				</td>
             			<td width="20%">
