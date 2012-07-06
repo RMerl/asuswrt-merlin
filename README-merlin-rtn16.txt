@@ -208,6 +208,7 @@ History
 -------
 3.0.0.3.144.11:
    - NEW: Name field added to DHCP reservation list
+   - NEW: Webui option to enable resolving IPs on the Connections tab
    - CHANGED: Increased dhcp options from 32 to 128 characters
    - FIXED: Brought max PPTPD password lenght back to 32 chars (Asus had reduced
      it to 16 in recent versions)

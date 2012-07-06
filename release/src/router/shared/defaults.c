@@ -1445,6 +1445,7 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "ddns_return_code", ""},
 	{ "ddns_return_code_chk", ""},
 	{ "reboot_time", "60"},	
+	{ "webui_resolve_conn", "0"},
 	{ NULL, NULL }
 };
 

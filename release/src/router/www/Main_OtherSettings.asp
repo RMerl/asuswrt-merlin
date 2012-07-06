@@ -189,24 +189,36 @@ function done_validating(action){
 						</td>
 					</tr>
 					<tr id="rstats_path_tr">
-					<th>Save history location:<br><i>Directory must end with a '/'.</i></th>
-	   	                <td><input type="text" id="rstats_path" size=32 maxlength=90 name="rstats_path" class="input_32_table" value="<% nvram_get("rstats_path"); %>"></td>
+						<th>Save history location:<br><i>Directory must end with a '/'.</i></th>
+						<td><input type="text" id="rstats_path" size=32 maxlength=90 name="rstats_path" class="input_32_table" value="<% nvram_get("rstats_path"); %>"></td>
 					</tr>
 					<tr id="rstats_new_tr">
-		        		<th>Create or reset data files:<br><i>Enable if using a new location</i></th>
-			        	<td>
-	               			<input type="radio" name="rstats_new" class="input" value="1" <% nvram_match_x("", "rstats_new", "1", "checked"); %>><#checkbox_Yes#>
-			                <input type="radio" name="rstats_new" class="input" value="0" <% nvram_match_x("", "rstats_new", "0", "checked"); %>><#checkbox_No#>
-	       	        	</td>
-	        		</tr>
+			        		<th>Create or reset data files:<br><i>Enable if using a new location</i></th>
+				        	<td>
+	        		       			<input type="radio" name="rstats_new" class="input" value="1" <% nvram_match_x("", "rstats_new", "1", "checked"); %>><#checkbox_Yes#>
+			        		        <input type="radio" name="rstats_new" class="input" value="0" <% nvram_match_x("", "rstats_new", "0", "checked"); %>><#checkbox_No#>
+			       	        	</td>
+	        			</tr>
 					<tr>
-				        <th>Starting day of monthly cycle</th>
-				        <td>
-	              			<input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>">
-				        </td>
-			        </tr>
+					        <th>Starting day of monthly cycle</th>
+				        	<td><input type="text" maxlength="2" class="input_3_table" name="rstats_offset" onKeyPress="return is_number(this,event);" onblur="validate_number_range(this, 1, 31)" value="<% nvram_get("rstats_offset"); %>"></td>
+				        </tr>
 				</table>
 
+				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
+                                        <thead>
+						<tr>
+							<td colspan="2">Miscellaneous Options</td>
+						</tr>
+					</thead>
+					<tr>
+						<th>Resolve IPs on active connections list:<br><i>Can considerably slow down the display</i></th>
+						<td>
+							<input type="radio" name="webui_resolve_conn" class="input" value="1" <% nvram_match_x("", "webui_resolve_conn", "1", "checked"); %>><#checkbox_Yes#>
+							<input type="radio" name="webui_resolve_conn" class="input" value="0" <% nvram_match_x("", "webui_resolve_conn", "0", "checked"); %>><#checkbox_No#>
+						</td>
+	                                </tr>
+				</table>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>
