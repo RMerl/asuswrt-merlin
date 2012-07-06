@@ -165,7 +165,7 @@ function done_validating(action){
 						</tr>
 					</thead>
 					<tr>
-						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(0, 5);">Traffic history location</a></th>
+						<th>Traffic history location</th>
 			        	<td>
 			       			<select name="rstats_location" class="input_option" onchange="hide_rstats_storage(this.value);">
 								<option value="0">RAM (Default)</option>
