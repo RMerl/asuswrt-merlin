@@ -1446,6 +1446,7 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "ddns_return_code_chk", ""},
 	{ "reboot_time", "60"},	
 	{ "webui_resolve_conn", "0"},
+	{ "wol_list", ""},	// WOL user-entered list
 	{ NULL, NULL }
 };
 

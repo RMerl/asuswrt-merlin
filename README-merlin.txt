@@ -91,10 +91,10 @@ firewall-start.
 
 
 * WakeOnLan *
-There's a new Tools section on the web interface.  From there you can enter a 
-target computer's MAC address to send it a WakeOnLan packet.  There is also a list 
-of recently seen clients on that page - you can click on an entry to automatically 
-enter it as your target.
+There's a new Tools section on the web interface.  From there you can enter a
+target computer's MAC address to send it a WakeOnLan packet.  You can also
+create a list of MAC addresses that will be stored in nvram, and on
+which you can click to automatically fill the target field.
 
 
 * SSHD *
@@ -209,6 +209,7 @@ History
 3.0.0.3.144.11:
    - NEW: Name field added to DHCP reservation list
    - NEW: Webui option to enable resolving IPs on the Connections tab
+   - NEW: Store a list of computer MACs to use as WOL targets
    - CHANGED: Increased dhcp options from 32 to 128 characters
    - FIXED: Brought max PPTPD password lenght back to 32 chars (Asus had reduced
      it to 16 in recent versions)
