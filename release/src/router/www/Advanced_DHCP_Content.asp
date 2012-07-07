@@ -400,7 +400,7 @@ function showLANIPList(){
 function setClientIP(macaddr, ipaddr,name){
 	document.form.dhcp_staticmac_x_0.value = macaddr;
 	document.form.dhcp_staticip_x_0.value = ipaddr;
-        document.form.dhcp_staticname_x_0.value = name;
+        document.form.dhcp_staticname_x_0.value = trim(name);
 	hideClients_Block();
 	over_var = 0;
 }
