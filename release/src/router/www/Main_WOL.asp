@@ -266,7 +266,7 @@ function showLANIPList(){
 
 function setClientMAC(macaddr, name){
 	document.form.wol_mac_x_0.value = macaddr;
-	document.form.wol_name_x_0.value = name;
+	document.form.wol_name_x_0.value = trim(name);
 	hideClients_Block();
 	over_var = 0;
 
