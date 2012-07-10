@@ -747,6 +747,9 @@ _dprintf("cloudsync: mounted_path=%s.\n", mounted_path);
 		stop_app();
 #endif
 
+	sync();
+	sleep(1);	// Give some time for buffers to be physically written to disk
+
 	count = 0;
 	while ((ret = umount(mnt->mnt_dir)) && (count < 2)) {
 		count++;
