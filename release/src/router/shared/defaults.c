@@ -961,7 +961,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "console_loglevel", "1"},	/* <= KERN_ALERT */
 
 #ifdef RTCONFIG_JFFS2
-	{ "jffs2_on", "1" },
+	{ "jffs2_on", "0" },
 	{ "jffs2_exec", "" },
 	{ "jffs2_format", "0" },
 #endif
