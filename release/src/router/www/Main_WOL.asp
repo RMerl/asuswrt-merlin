@@ -199,7 +199,6 @@ function applyRule(){
 	var item_num = $('wol_list_table').rows[0].cells.length;
 	var tmp_value = "";
 
-// TODO: Trim trailing spaces left by the networkmap client list
 	for(i=0; i<rule_num; i++){
 		tmp_value += "<"
 		for(j=0; j<item_num-2; j++){
@@ -208,7 +207,6 @@ function applyRule(){
 				tmp_value += ">";
 		}
 	}
-// TODO: What is this check for?
 	if(tmp_value == "<"+"<#IPConnection_VSList_Norule#>" || tmp_value == "<")
 		tmp_value = "";
 
