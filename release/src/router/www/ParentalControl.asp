@@ -68,6 +68,10 @@ var StopTimeCount;
 function initial(){
 	show_menu();
 	show_footer();
+
+	if(downsize_support != -1)
+		$("guest_image").parentNode.style.display = "none";
+
 	gen_mainTable();
 	showLANIPList();
 }
@@ -304,7 +308,7 @@ function corrected_timezone(){
 	if(StrIndex > 0){
 		if(timezone != today.toString().substring(StrIndex, StrIndex+5)){
 			$("timezone_hint").style.display = "";
-			$("timezone_hint").innerHTML = "<#LANHostConfig_x_TimeZone_itemhint#>";
+			$("timezone_hint").innerHTML = "* <#LANHostConfig_x_TimeZone_itemhint#>";
 		}
 		else
 			return;
@@ -323,7 +327,7 @@ function gen_lantowanTable(client){
 		code +='<thead><tr><td colspan="6" id="LWFilterList">Active schedule</td></tr></thead>';
 
 		code +='<tr><th width="20%"><#General_x_SystemTime_itemname#></th><td>';
-		code +='<input type="text" id="system_time" name="system_time" class="devicepin" value="" readonly="1" style="font-size:12px;width:200px;">';
+		code +='<input type="text" id="system_time" name="system_time" class="devicepin" value="" readonly="1" style="font-size:12px;width:200px;"><br>';
 		code +='<span id="timezone_hint" onclick="location.href=\'Advanced_System_Content.asp\'" style="display:none;text-decoration:underline;cursor:pointer;"></span></td></tr>';
 
 		code +='<tr>';

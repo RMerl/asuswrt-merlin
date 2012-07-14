@@ -219,11 +219,11 @@ function switchPage(page){
           				<td height="20"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
 
-        			<tr>
+        			<!--tr>
           				<td height="30" align="left" valign="middle" >
 										<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc#></p></div>
           				</td>
-        			</tr>
+        			</tr-->
 
 						<tr>
 							<td>		

@@ -183,6 +183,90 @@ int isValidSN(const char *sn)
 	return 1;
 }
 
+int
+Get_USB_Port_Info(int port_x)
+{
+        char output_buf[16];
+        char usb_pid[14];
+        char usb_vid[14];
+        sprintf(usb_pid, "usb_path%d_pid", port_x);
+        sprintf(usb_vid, "usb_path%d_vid", port_x);
+
+        if( strcmp(nvram_get(usb_pid),"") && strcmp(nvram_get(usb_vid),"") ) {
+                sprintf(output_buf, "%s/%s",nvram_get(usb_pid),nvram_get(usb_vid));
+                puts(output_buf);
+        }
+        else
+                puts("N/A");
+
+        return 1;
+}
+
+int
+Get_USB_Port_Folder(int port_x)
+{
+        char usb_folder[19];
+        sprintf(usb_folder, "usb_path%d_fs_path0", port_x);
+        if( strcmp(nvram_safe_get(usb_folder),"") )
+                puts(nvram_safe_get(usb_folder));
+        else
+                puts("N/A");
+
+        return 1;
+}
+
+int
+Get_SD_Card_Info(void)
+{
+        char check_cmd[48];
+        char sd_info_buf[128];
+        int get_sd_card = 1;
+        FILE *fp;
+
+        sprintf(check_cmd, "test_disk2 %s &> /var/sd_info.txt", nvram_get("usb_path3_fs_path0"));
+        system(check_cmd);
+
+        if(fp = fopen("/var/sd_info.txt", "r")) {
+                while(fgets(sd_info_buf, 128, fp)!=NULL) {
+                        if(strstr(sd_info_buf, "No partition")||strstr(sd_info_buf, "No disk"))
+                                get_sd_card=0;
+                }
+                if(get_sd_card)
+                        puts("1");
+                else
+                        puts("0");
+                fclose(fp);
+                eval("rm", "-rf", "/var/sd_info.txt");
+        }
+        else
+                puts("ATE_ERROR");
+
+        return 1;
+}
+
+int
+Get_SD_Card_Folder(void)
+{
+        if( strcmp(nvram_safe_get("usb_path3_fs_path0"),"") )
+                puts(nvram_safe_get("usb_path3_fs_path0"));
+        else
+                puts("N/A");
+
+        return 1;
+}
+
+int Ej_device(const char *dev_no)
+{
+        if( dev_no==NULL || *dev_no<'1' || *dev_no>'9' ) 
+                return 0;
+        else {
+                eval("ejusb", dev_no);
+                sleep(4);
+                puts("1");
+        }
+	return 1;
+}
+
 int asus_ate_command(const char *command, const char *value, const char *value2){
 	_dprintf("===[ATE %s %s]===\n", command, value);
 	if(!strcmp(command, "Set_StartATEMode")) {
@@ -222,7 +306,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
                 return setAllLedOff();
         }
         else if (!strcmp(command, "Set_AllLedOn_Half")) {
-                puts("Not support"); //Need to implement for EA-N66U
+                puts("ATE_ERROR"); //Need to implement for EA-N66U
                 return EINVAL;
         }
         else if (!strcmp(command, "Set_MacAddr_2G")) {
@@ -274,6 +358,10 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
                 return 0;
         }
+        else if (!strcmp(command, "Set_Commit")) {
+                setCommit();
+                return 0;
+        }
 #endif
 	else if (!strcmp(command, "Set_SerialNumber")) {
 		if(!setSN(value))
@@ -307,6 +395,17 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		}
                 return 0;
         }
+        else if (!strcmp(command, "Set_RestoreDefault")) {
+                ResetDefault();
+                return 0;
+        }
+        else if (!strcmp(command, "Set_Eject")) {
+                if( !Ej_device(value)) {
+                        puts("ATE_ERROR_INCORRECT_PARAMETER");
+                        return EINVAL;
+                }
+                return 0;
+        }
 #ifdef RTCONFIG_FANCTRL
         else if (!strcmp(command, "Set_FanOn")) {
                 setFanOn();
@@ -314,16 +413,6 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
         }
         else if (!strcmp(command, "Set_FanOff")) {
                 setFanOff();
-                return 0;
-        }
-#endif
-	else if (!strcmp(command, "Set_RestoreDefault")) {
-		ResetDefault();
-                return 0;
-        }
-#ifdef CONFIG_BCMWL5
-        else if (!strcmp(command, "Set_Commit")) {
-                setCommit();
                 return 0;
         }
 #endif
@@ -373,18 +462,6 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
                 Get_USB_Port_Folder(2);
                 return 0;
         }
-        else if (!strcmp(command, "Get_Usb3p0_Port1_Infor")) {
-                puts("Not support"); //Need to implement
-                return 0;
-        }
-        else if (!strcmp(command, "Get_Usb3p0_Port2_Infor")) {
-                puts("Not support"); //Need to implement
-                return 0;
-        }
-        else if (!strcmp(command, "Get_Usb3p0_Port3_Infor")) {
-                puts("Not support"); //Need to implement
-                return 0;
-        }
         else if (!strcmp(command, "Get_SD_Infor")) {
 		Get_SD_Card_Info();
                 return 0;
@@ -420,7 +497,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
                 return 0;
         }
         else if (!strcmp(command, "Get_WanLanStatus")) {
-                if( !GetPhyStatus())
+		if( !GetPhyStatus())
 			puts("ATE_ERROR");
 		return 0;
         }
@@ -443,35 +520,61 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
         }
 #endif
         else if (!strcmp(command, "Get_ChannelList_2G")) {
-                puts("Not support"); //Need to implement
-                return EINVAL;
+		if(!Get_channel_list(0))
+			puts("ATE_ERROR");
+		return 0;
         }
         else if (!strcmp(command, "Get_ChannelList_5G")) {
-                puts("Not support"); //Need to implement
-                return EINVAL;
+                if(!Get_channel_list(1))
+                        puts("ATE_ERROR");
+                return 0;
+        }
+        else if (!strcmp(command, "Get_Usb3p0_Port1_Infor")) {
+                puts("ATE_ERROR"); //Need to implement
+                return 0;
+        }
+        else if (!strcmp(command, "Get_Usb3p0_Port2_Infor")) {
+                puts("ATE_ERROR"); //Need to implement
+                return 0;
+        }
+        else if (!strcmp(command, "Get_Usb3p0_Port3_Infor")) {
+                puts("ATE_ERROR"); //Need to implement
+                return 0;
+        }
+        else if (!strcmp(command, "Get_Usb3p0_Port1_Infor")) {
+                puts("ATE_ERROR"); //Need to implement
+                return 0;
+        }
+        else if (!strcmp(command, "Get_Usb3p0_Port2_Infor")) {
+                puts("ATE_ERROR"); //Need to implement
+                return 0;
+        }
+        else if (!strcmp(command, "Get_Usb3p0_Port3_Infor")) {
+                puts("ATE_ERROR"); //Need to implement
+                return 0;
         }
         else if (!strcmp(command, "Get_Usb3p0_Port1_Folder")) {
-                puts("Not support"); //Need to implement
+                puts("ATE_ERROR"); //Need to implement
                 return EINVAL;
         }
         else if (!strcmp(command, "Get_Usb3p0_Port2_Folder")) {
-                puts("Not support"); //Need to implement
+                puts("ATE_ERROR"); //Need to implement
                 return EINVAL;
         }
-        else if (!strcmp(command, "Get_Usb3p0_Port3_Folder")) {
-                puts("Not support"); //Need to implement
+ 	else if (!strcmp(command, "Get_Usb3p0_Port3_Folder")) {
+                puts("ATE_ERROR"); //Need to implement
                 return EINVAL;
         }
         else if (!strcmp(command, "Get_Usb3p0_Port1_DataRate")) {
-                puts("Not support"); //Need to implement
+                puts("ATE_ERROR"); //Need to implement
                 return EINVAL;
         }
         else if (!strcmp(command, "Get_Usb3p0_Port2_DataRate")) {
-                puts("Not support"); //Need to implement
+                puts("ATE_ERROR"); //Need to implement
                 return EINVAL;
         }
         else if (!strcmp(command, "Get_Usb3p0_Port3_DataRate")) {
-                puts("Not support"); //Need to implement
+                puts("ATE_ERROR"); //Need to implement
                 return EINVAL;
         }
         else if (!strcmp(command, "Get_fail_ret")) {
@@ -496,11 +599,31 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
         else if (!strcmp(command, "Ra_Asuscfe_5G")) {
 		return asuscfe(value, WIF_5G);
         }
-
 #endif
+#ifdef RTCONFIG_DSL //For HW WiFi On/Off button check
+        else if (!strcmp(command, "Get_WifiSwStatus")) {
+                puts(nvram_safe_get("btn_wifi_sw"));
+                return 0;
+        }
+#endif
+        else if (!strcmp(command, "Get_ATEVersion")) {
+                puts(nvram_safe_get("Ate_version"));
+                return 0;
+        }
+        else if (!strcmp(command, "Get_XSetting")) {
+                puts(nvram_safe_get("x_Setting"));
+                return 0;
+        }
+        else if (!strcmp(command, "Set_Eject")) {
+		if( !Ej_device(value)) {
+                        puts("ATE_ERROR_INCORRECT_PARAMETER");
+                        return EINVAL;
+		}
+                return 0;
+        }
         else 
 	{
-		puts("ATE_ERROR");
+		puts("ATE_UNSUPPORT");
                 return EINVAL;
 	}
 

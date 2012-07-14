@@ -62,7 +62,7 @@ char *pptp_encode(char *str, char *output)
 	i=j=0;
 
 	while(*(str+i)) {
-		if(*(str+i)==' ' || *(str+i)=='\\' || *(str+i)=='\'' || *(str+i)=='"' || *(str+i)=='#') {
+		if(*(str+i)==' ' || *(str+i)=='\\' || *(str+i)=='*' || *(str+i)=='\'' || *(str+i)=='"' || *(str+i)=='#') {
 			*(output+j++)='\\';
 			*(output+j++)=*(str+i);
 		}
@@ -145,8 +145,8 @@ void start_pptpd(void)
 	fprintf(fp, "lock\n"
 		"name *\n"
 		"proxyarp\n"
-		"ipcp-accept-local\n"
-		"ipcp-accept-remote\n"
+//		"ipcp-accept-local\n"
+//		"ipcp-accept-remote\n"
 		"lcp-echo-failure 10\n"
 		"lcp-echo-interval 5\n"
 		"deflate 0\n" "auth\n" "-chap\n"

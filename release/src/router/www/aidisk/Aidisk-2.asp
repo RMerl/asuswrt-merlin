@@ -162,7 +162,7 @@ function checkPasswdValid(passwd){
 </head>
 
 <body onload="initial();">
-<form method="GET" name="smartForm" id="smartForm" action="Aidisk-3.asp">
+<form method="post" name="smartForm" id="smartForm" action="Aidisk-3.asp" onsubmit="return passTheResult();">
 <input type="hidden" name="accountNum" id="accountNum" value="">
 <input type="hidden" name="account0" id="account0" value="">
 <input type="hidden" name="passwd0" id="passwd0" value="">
@@ -170,7 +170,7 @@ function checkPasswdValid(passwd){
 <input type="hidden" name="account1" id="account1" value="">
 <input type="hidden" name="passwd1" id="passwd1" value="">
 <input type="hidden" name="permission1" id="permission1" value="">
-</form>
+<!--/form-->
 
 <div class="aidisk1_table">
 <table>	<!-- width="765" height="760" border="0" bgcolor="#4d595d" cellpadding="0"  cellspacing="0" style="padding:10px; padding-top:20px;"  //Viz-->
@@ -250,9 +250,13 @@ function checkPasswdValid(passwd){
     </tr>     
     
     <tr valign="bottom" align="center">
-    	<td width="20%">        	
-        	 <a href="javascript:go_pre_page();"><div class="titlebtn" align="center" style="margin-left:275px;_margin-left:137px;width:80px;"><span><#btn_pre#></span></div></a>
-        	 <a href="javascript:passTheResult();"><div class="titlebtn" align="center" style="width:80px;"><span><#btn_next#></span></div></a>	
+    	<td width="20%">
+    		<div class="apply_gen" style="margin-top:30px">
+  				<input type="button" id="prevButton" value="<#btn_pre#>" onclick="go_pre_page();" class="button_gen">
+  				<input type="submit" id="nextButton" value="<#btn_next#>" class="button_gen">  							
+        	<!--a href="javascript:go_pre_page();"><div class="titlebtn" align="center" style="margin-left:275px;_margin-left:137px;width:80px;"><span><#btn_pre#></span></div></a>
+        	<a href="javascript:passTheResult();"><div class="titlebtn" align="center" style="width:80px;"><span><#btn_next#></span></div></a-->
+        </div>	 
       </td>
     </tr>
     <!-- end -->    
@@ -261,6 +265,6 @@ function checkPasswdValid(passwd){
 </tr>  
 </table>
 </div>	<!--//Viz-->
-
+</form>
 </body>
 </html>

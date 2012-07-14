@@ -338,7 +338,7 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
 <input type="hidden" name="group_id" value="wl_wdslist">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_wait" value="3">
+<input type="hidden" name="action_wait" value="8">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="action_script" value="restart_wireless">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
@@ -398,12 +398,15 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
 						</select>			
 					</td>
 			  </tr>
+
 				<tr id="repeaterModeHint" style="display:none;">
 					<td colspan="2" style="color:#FFCC00;height:30px;" align="center"><#page_not_support_mode_hint#></td>
-				</tr>			
+			  </tr>
+			
 				<tr>
 					<th align="right">
-						<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(1,1);"><#WLANConfig11b_x_APMode_itemname#></a>						
+						<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(1,1);">
+						<#WLANConfig11b_x_APMode_itemname#></a>
 					</th>
 					<td>
 						<select name="wl_mode_x" class="input_option" onChange="return change_common(this, 'WLANConfig11b', 'wl_mode_x');">
@@ -413,56 +416,43 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
 					  	</select>
 					</td>
 				</tr>
+
 				<tr>
 					<th align="right">
-						<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(1,3);"><#WLANConfig11b_x_BRApply_itemname#></a>					
+						<a class="hintstyle" href="javascript:void(0);"  onClick="openHint(1,3);">
+						<#WLANConfig11b_x_BRApply_itemname#>
+						</a>
 					</th>
 					<td>
 						<input type="radio" value="1" name="wl_wdsapply_x" class="input" onClick="return change_common_radio(this, 'WLANConfig11b', 'wl_wdsapply_x', '1')" <% nvram_match("wl_wdsapply_x", "1", "checked"); %>><#checkbox_Yes#>
 						<input type="radio" value="0" name="wl_wdsapply_x" class="input" onClick="return change_common_radio(this, 'WLANConfig11b', 'wl_wdsapply_x', '0')" <% nvram_match("wl_wdsapply_x", "0", "checked"); %>><#checkbox_No#>
 					</td>
 				</tr>			
-<<<<<<< HEAD
-			  <tr style="display:none;">
-				 	<th><#WLANConfig11b_EChannel_itemname#></th>
-			  	<td>
-					<select name="wl_nctrlsb">
-						<option value="lower" <% nvram_match("wl_nctrlsb", "lower", "selected"); %>>lower</option>
-						<option value="upper"<% nvram_match("wl_nctrlsb", "upper", "selected"); %>>upper</option>
-					</select>
-					</td>
-			  </tr>
-=======
->>>>>>> 44a22006199ab8574c4a912e277a76e24d363223
 			</table>
 			
 			<table id="MainTable2" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable_table">
 			  <thead>
-				  <tr>
-					<td colspan="4"><#WLANConfig11b_RBRList_groupitemdesc#></td>
-				  </tr>
+			  <tr>
+				<td colspan="4"><#WLANConfig11b_RBRList_groupitemdesc#></td>
+			  </tr>
 			  </thead>		
+
           		<tr>
-<<<<<<< HEAD
-            		<th width="80%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);"><#WLANConfig11b_RBRList_groupitemdesc#></th>						
-					<th class="edit_table" width="20%">Add / Delete</th>
-=======
             		<th width="80%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,10);">
 								 <#WLANConfig11b_RBRList_groupitemdesc#>
 								</th>
 								<th class="edit_table" width="20%">Add / Delete</th>
 								
->>>>>>> 44a22006199ab8574c4a912e277a76e24d363223
           		</tr>
           		<tr>
             		<td width="80%">
               		<input type="text" style="margin-left:220px;float:left;" maxlength="17" class="input_macaddr_table" name="wl_wdslist_0" onKeyPress="return is_hwaddr(this,event)">
-					<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="Select the Access Point" onmouseover="over_var=1;" onmouseout="over_var=0;">
-					<div id="WDSAPList" class="WDSAPList">
-						<div style="width:98px">
-							<img height="15px" style="margin-left:5px;margin-top:2px;" src="/images/InternetScan.gif">
-						</div>
-					</div>
+									<img style="float:left;" id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="Select the Access Point" onmouseover="over_var=1;" onmouseout="over_var=0;">
+									<div id="WDSAPList" class="WDSAPList">
+										<div style="width:98px">
+											<img height="15px" style="margin-left:5px;margin-top:2px;" src="/images/InternetScan.gif">
+										</div>
+									</div>
               	</td>
               	<td width="20%">	
               		<input type="button" class="add_btn" onClick="addRow(document.form.wl_wdslist_0, 4);" value="">
@@ -470,7 +460,7 @@ function wl_bw_hint(){  //Control display chanspec hint when wl_bw=0 or not
           		</tr>
         		</table>
         		
-          		<div id="wl_wdslist_Block"></div>
+          			<div id="wl_wdslist_Block"></div>
           		
 				<div class="apply_gen">
 					<input class="button_gen" id="submitBtn" onclick="applyRule()" type="button" value="<#CTL_apply#>" />

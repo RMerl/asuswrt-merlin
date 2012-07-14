@@ -1,0 +1,44 @@
+#!/bin/sh
+
+#
+# First use sb1250-run to generate a hardware file.
+#
+
+    swarm-run \
+	-v \
+        --sim-check-undefined \
+        --add-hw flash2.m4 \
+        --with-boot-flash-file cfe.srec \
+        --with-boot-flash-type ram \
+        --no-file \
+        --with-swarm-devs \
+        --with-sample-pci-devs \
+        --with-swarm-ide \
+        --with-swarm-ide-disk0-file disk0.dsk \
+        --with-swarm-ide-disk0-size 60 \
+        --with-memory-config 2x32 \
+        --with-swarm-rtc-eeprom-file x1240rom.bin \
+	--dump-config cfe
+
+#
+# Now add some stuff to the generated GDB script
+# We add the "ss" command for single stepping instructions
+# in the rom, and we get into run mode by running to the boot vector.
+#
+
+cat >>cfe.gdbscript <<EOF       
+load
+break *0xffffffffbfc00000
+run
+del
+set \$pc=0xffffffffbfc00000
+define ss
+stepi
+x/5i \$pc
+end
+EOF
+
+#
+# Finally run the resulting script
+#
+sb1-elf-gdb --nx --command=cfe.gdbscript cfe

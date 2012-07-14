@@ -136,8 +136,8 @@ function gen_wcdma_list(){
 	}
 	else if(country == "SG"){
 		isplist = new Array("M1", "Singtel", "StarHub", "Power Grid");
-		apnlist = new Array("sunsurf", "e-ideas", "shinternet", "");
-		daillist = new Array("*99#", "*99***1#", "*99#", "*99***1#");
+		apnlist = new Array("sunsurf", "internet", "shinternet", "");
+		daillist = new Array("*99#", "*99#", "*99#", "*99***1#");
 		userlist = new Array("65", "", "", "");
 		passlist = new Array("user123", "", "", "");
 	}
@@ -228,7 +228,7 @@ function gen_wcdma_list(){
 	else if(country == "INDI"){
 		isplist = new Array("Reliance", "Tata", "MTS", "Airtel", "Idea", "MTNL");
 		apnlist = new Array("reliance", "TATA", "", "airtelgprs.com", "Internet", "gprsppsmum");
-		daillist = new Array("#777", "#777", "#777", "*99#", "*99***1#", "*99#");
+		daillist = new Array("#777", "#777", "#777", "*99#", "*99#", "*99#");
 		userlist = new Array("", "internet", "internet@internet.mtsindia.in", "", "", "mtnl");
 		passlist = new Array("", "internet", "mts", "", "", "mtnl123");
 	}

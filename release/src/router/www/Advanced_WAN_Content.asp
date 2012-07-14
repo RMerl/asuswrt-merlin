@@ -66,6 +66,7 @@ function initial(){
 	change_wan_type(document.form.wan_proto.value, 0);	
 	fixed_change_wan_type(document.form.wan_proto.value);
 	genWANSoption();
+	addOnlineHelp($("faq"), ["UPNP"]);
 	change_wan_type(document.form.wan_proto.value, 0);	
 	
 	if(document.form.wan_proto.value == "pppoe"
@@ -175,14 +176,16 @@ function validForm(){
 		//WAN IP conflict with LAN ip subnet
 		if(matchSubnet2(document.form.wan_ipaddr_x.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)){
 				document.form.wan_ipaddr_x.focus();
-				alert(Untranslated.conflict_LAN_subnet);
+				document.form.wan_ipaddr_x.select();
+				alert("<#IPConnection_x_WAN_LAN_conflict#>");
 				return false;
 		}
 						
 		//WAN IP conflict with LAN ip subnet
 		if(matchSubnet2(document.form.wan_gateway_x.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)){
 				document.form.wan_gateway_x.focus();
-				alert(Untranslated.conflict_LAN_subnet);
+				document.form.wan_gateway_x.select();
+				alert("<#IPConnection_x_WAN_LAN_conflict#>");
 				return false;
 		}				
 		
@@ -226,7 +229,7 @@ function validForm(){
 	
 	if(document.form.wan_dnsenable_x[1].checked == true && document.form.wan_proto.value != "dhcp" && document.form.wan_dns1_x.value == "" && document.form.wan_dns2_x.value == ""){
 		document.form.wan_dns1_x.focus();
-		alert(Untranslated.DNS_blank);
+		alert("<#IPConnection_x_DNSServer_blank#>");
 		return false;
 	}
 	
@@ -688,7 +691,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 							</tr>				
 
 							<tr>
-								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);"><#BasicConfig_EnableMediaServer_itemname#></a></th>                 
+								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,23);"><#BasicConfig_EnableMediaServer_itemname#></a>&nbsp<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">UPnP&nbspFAQ</a></th>                 
 								<td>
 									<input type="radio" name="wan_upnp_enable" class="input" value="1" onclick="return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '1')" <% nvram_match("wan_upnp_enable", "1", "checked"); %>><#checkbox_Yes#>
 									<input type="radio" name="wan_upnp_enable" class="input" value="0" onclick="return change_common_radio(this, 'LANHostConfig', 'wan_upnp_enable', '0')" <% nvram_match("wan_upnp_enable", "0", "checked"); %>><#checkbox_No#>

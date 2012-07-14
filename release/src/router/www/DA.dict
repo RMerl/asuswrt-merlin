@@ -25,6 +25,7 @@ tunnel_MTU=Tunnel MTU
 tunnel_TTL=Tunnel TTL
 [VPN server]
 vpn_setting=Grundkonfiguration
+vpn_Adv=VPN-oplysninger
 PPTP_desc=VPN serveren gør, at du fra alle steder altid kan få adgang til dit hjemmenetværk.
 PPTP_desc2=Anvend følgende skridt for at benytte VPN-serveren: <br>(1) Aktiver PPTP VPN-serveren<br>(2) Angiv IP-gruppen for klienternes IP-adresse (højest 10 klienter)<br>(3) Indstil brugernavn og adgangskode for VPN-klienten<br>(4) Åbn programmet til VPN-forbindelsen på computeren eller smarttelefonen<br>(5) Tilføj en ny PPTP VPN-forbindelse, og VPN-serveradressen er
 PPTP_desc3=(6) Klik her for at angive DDNS'en, <a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">hvis WAN IP-adressen er dynamisk.</a>
@@ -91,6 +92,19 @@ Low=Lav
 Lowest=Lavest
 traffic_monitor=Trafikovervågning
 traffic_monitor_desc=Trafikovervågning tillader dig at overvåge følgende typer netværkstrafik:<P>Internet: Al Internet-trafik.<P>Via kabel: Netværkstrafik fra kabelbaseret til trådløst netværk samt til Internet.<P>Trådløst: Netværkstrafik fra trådløst netværk til kabelbaseret netværk samt til Internet.
+traffic_monitor_desc1=Trafikovervågningen giver dig mulighed for, at overvåge ind- og udgående pakker på følgende :
+traffic_monitor_desc2=<b>BEMÆRK :</b> Pakker fra internettet fordele lige til kabeltilsluttede enheder og trådløse enheder.
+tm_internet=Internet
+tm_wired=Kabel-internet
+tm_wireless=Trådløst internet
+tm_reception=Modtagelse
+tm_transmission=Transmission
+tm_recp_int=Indgående internet-pakker
+tm_recp_wired=Indgående pakker fra kabel-internet
+tm_recp_wireless=Indgående pakker fra trådløst internet
+tm_trans_int=Udgående internet-pakker
+tm_trans_wired=Udgående pakker fra kabel-internet
+tm_trans_wireless=Udgående pakker fra trådløst internet
 ezqosDesw=Servicekvaliteten (QoS) sikrer, at netværkshastigheden er optimal. Standard regelsæt angiver Online gaming og surfing som den højeste prioritet og påvirkes ikke af P2P-applikationer (peer-to-peer applikationer som f.eks. BitTorrent). For at aktivere QoS-funktionen skal du klikke på QoS og udfylde felterne for båndbredden på upload og download. Du kan hente dine båndbreddeoplysninger hos din ISP.<p>Hvis du ønsker at prioritere bestemte netværksapplikationer og netværksenheder, skal du vælge din foretrukne prioritet blandt de brugerdefinerede QOS-regler.
 qos_automatic_mode=Automatisk tilstand
 source_ipmac=På kilde-eller destinations-IP-adresser, kan du:<p>(a) indtast en bestemt IP-adresse, såsom \"192.168.122.1\";<p>(b) indtast IP-adresser indenfor et undernet eller indenfor den samme IP-pulje, såsom \"192.168.123.*\", eller \"192.168.*.*\";<p>eller (c) indtast alle IP-adresser som  \"*.*.*.*\"<p>Formatet på MAC-adressen er seks grupper af to heksadecimale cifre, adskilt af kolonner (:), og i overførselsrækkefølge (f.eks. 12:34:56:aa:bc:ef )
@@ -257,8 +271,8 @@ wireless_router=Tilstanden Trådløs router
 BasicConfig_EnableiTunesServer_itemname=Enable iTunes Server?
 OP_GW_item=Tilstanden Trådløs router (standard)
 OP_GW_desc=Tilstanden Trådløs router, forbinder din ZVMODELVZ til internettet via PPPoE, DHCP, PPTP, L2TP eller via en statisk IP-adresse, og deler det trådløse netværk til LAN klienterne eller enhederne.  I denne funktion, er NAT, firewall og DHCP serveren som standard aktiveret. UPnP og Dynamisk DNS er understøttet til SOHO og hjemmebrugere. Vælg denne funktion, hvis du er førstegangsbruger, eller hvis du i øjeblikket ikke bruger en trådløs eller almindelig router.
-OP_RE_item=Repeater mode
-OP_RE_desc=In Repeater mode, ZVMODELVZ wirelessly connects to an existing wireless network to extend the wireless coverage. In this mode, the firewall, IP sharing, and NAT functions are disabled.
+OP_RE_item=Repeater-funktionen
+OP_RE_desc=I Repeater-funktionen, opretter ZVMODELVZ en trådløs forbindelse til det eksisterende trådløse netværk, så dækningen af det trådløse netværk udvides. I denne funktion er din firewall, IP-delingen og NAT-funktionerne deaktiveret.
 OP_AP_item=Tilstanden Adgangspunkt (AP)
 OP_AP_desc=Tilstanden Adgangspunkt (AP), forbinder din ZVMODELVZ til en trådløs router via en Ethernet kabel, for at sprede det trådløse signal til andre netværksklienter. I denne funktion, er din firewall, IP-deling og NAT funktioner alle som standard deaktiveret.
 OP_RT_item=Router (Deaktiver NAT)
@@ -279,6 +293,7 @@ RouterConfig_GWMulticast_Broadcast_itemname=Rundskrivelsesbe-stormningskontrol (
 [keyword_filter]
 menu5_5_5=Nøgleordsfilter
 FirewallConfig_KeywordFilterEnable_sectiondesc=Nøgleordsfiltret gør det muligt at blokere kundernes adgang til netsider, som indeholder de nærmere angivne nøgleord.
+FirewallConfig_KeywordFilterEnable_sectiondesc2=Begrænsninger på filtreringen af nøgleord :<ol><li>Komprimerede hjemmesider, som bruger HTTP-komprimering, kan ikke filtreres. <a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">Se her for yderligere oplysninger</a></li><li>Http-hjemmesider kan ikke filtreres.</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=Aktiver nøgleordsfiltret
 FirewallConfig_KeywordActiveDate_itemname=Hvornår:
 FirewallConfig_KeywordActiveTime_itemname=Klokkeslæt:
@@ -303,6 +318,7 @@ web_redirect_reason6=Der er konstateret en IP-konflikt. Klik på Næste for at f
 web_redirect_case6_desc1=Routerens opdaterede IP-adresse:
 web_redirect_case6_desc2=Når du har klikket på Next (næste), bedes du sørge for at opdaterer IP-adresseindstillingerne på hver relateret tjeneste, såsom Port Forwarding (port videresendelse) og DMZ.
 error_page_lanip_changed_desc1=IP-adressen fornyes. Hvis det tager mere end 2 minutter, så udfør disse 3 skridt til fornyelse af IP-adressen manuelt: (1) kobl netværkskablet fra; (2) vent i ca. 10 sekunder og (3) kobl kablet til igen for at få en ny IP-adresse.
+web_redirect_reason7=PIN-koden er forkert. Hvis en forkert PIN-kode indtastes tre gange i træk, bliver dit SIM-kort spærret.
 [QIS]
 QIS_autoMAC_desc1=Starter en kloning af computerens MAC-adresse til routeren…
 QIS_autoMAC_desc2=Vent et øjeblik...
@@ -393,9 +409,9 @@ ShareNode_Seeding_itemdesc=Giver mulighed for at aktivere eller deaktivere funkt
 ShareNode_MaxUpload_itemname=Maksimal upload-rate
 ShareNode_MaxUpload_itemdesc=Indtast en værdi mellem 0 og 999. Standardværdien er 0, hvilket angiver, at der ikke er nogen upload-begrænsning.
 [New item]
-HSDPAConfig_hsdpa_enable_hint1=De aktuelle 3G indstillinger står på 3G backup. Hvis du ændre forbindelsen til en anden WAN port, skifter netværksforbindelsen automatisk til 3G.
+HSDPAConfig_hsdpa_enable_hint1=De aktuelle 3G/4G indstillinger står på 3G/4G backup. Hvis du ændre forbindelsen til en anden WAN port, skifter netværksforbindelsen automatisk til 3G/4G.
 HSDPAConfig_hsdpa_enable_hint2=Hvis forbindelsestypen skal ændres, så gå til <a href="/Advanced_Modem_others.asp">USB Modem</a> for at deaktivere 3 G/3.5 G-adapteren.
-HSDPAConfig_USBAdapter_itemname=3 G/3.5 G USB-adapter
+HSDPAConfig_USBAdapter_itemname=USB-adapter
 HSDPAConfig_USBAdapter_itemdesc=Når USB Modem er aktiveret, vælges den adapter, som ZVMODELVZ\'en understøtter.
 APSurvey_msg_connected=Du er allerede tilsluttet dette adgangspunkt.
 APSurvey_msg_connect_suggest1=Vi foreslår at anvende et Ethernetkabel til at koble til ZVMODELVZ\'en for at få en stabil konfiguration og bedre udnyttelse.
@@ -947,7 +963,9 @@ IPConnection_x_DNSServer1_itemdesc=Dette felt angiver den DNS-servers IP-adresse
 IPConnection_x_DNSServer1_itemname=DNS-server 1:
 IPConnection_x_DNSServer2_itemdesc=Dette felt angiver den DNS-servers IP-adresse, som ZVMODELVZ\'en kontakter.
 IPConnection_x_DNSServer2_itemname=DNS-server 2:
+IPConnection_x_DNSServer_blank=Opsæt venligst DNS-serveren på klient-enheden.
 IPConnection_warning_WANIPEQUALGatewayIP=WAN-IP-adressen er indstillet som ZVMODELVZ'ens gateway, og ZVMODELVZ'en kunne muligvis ikke kobles til internettet. Angiv gatewayen korrekt.
+IPConnection_x_WAN_LAN_conflict=WAN og LAN skal have forskellige IP-adresser og undernet.
 [QIS_internet_isp.js]
 BOP_isp_host_desc=Dette felt gør det muligt at angive et værtsnavn for ZVMODELVZ\'en. Det er almindeligvis din internetudbyder, der anmoder om det.
 BOP_isp_host_item=Værtsnavn (valgfrit):
@@ -1051,6 +1069,7 @@ Main_alert_proceeding_desc1=Fortsætter
 Main_alert_proceeding_desc4=Vent et øjeblik,
 Main_alert_proceeding_desc3=Fuldført!
 Main_content_Login_Item7=Det tager ca. 60 sekunder at genstarte routeren. Er du sikker på, at du vil genstarte routeren nu?
+[###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=Det tager ca. 80 sekunder at genstarte routeren. Er du sikker på, at du vil genstarte routeren nu?
 [QIS-general.js] 
 JS_fieldblank=Felterne må ikke være tomme.
 JS_validip=er ikke en gyldig IP-adresse!
@@ -1103,11 +1122,13 @@ Setting_upload_itemname=Gendan indstillingen
 Setting_factorydefault_itemdesc=Klik på [Gendan] for at gendanne routeren indstillinger til fabriksindstillingerne og slette alle nuværende indstillinger. Vent lidt, mens routeren genstartes.
 Setting_save_itemdesc=Klik på [Gem] for at gemme ZVMODELVZ\'ens nuværende indstillinger i en fil. (Bemærk: Mens de nuværende indstillinger gemmes i en fil, gemmes de også på en Flashhukommelse).
 Setting_upload_itemdesc=Angiv indstillingsfilens sti og navn. Klik derefter på [Overfør] for at overføre filen til ZVMODELVZ\'en. Vent i 60 sekunder, mens ZVMODELVZ\'en genstartes.
+[###MODEL_DEP###][RT-N65U]Setting_upload_itemdesc=Angiv indstillingsfilens sti og navn. Klik derefter på [Overfør] for at overføre filen til ZVMODELVZ\'en. Vent i 80 sekunder, mens ZVMODELVZ\'en genstartes.
 Setting_upload_hint=Ugyldigt filformat eller sti!
 Setting_factorydefault_hint1=Alle nuværende indstillinger slettes, og routeren gendannes til fabriksindstillingerne.\n
 Setting_factorydefault_hint2=Er du sikker på, at du vil fortsætte?
 Setting_factorydefault_iphint=ZVMODELVZ'ens lokalnets standard IP-adresse er 192.168.1.1. \nHvis siden ikke kan sættes tilbage senere, så forny IP-konfigurationen på computeren.
 SET_ok_desc=Indstillingen overføres! Vent i 60 sekunder.
+[###MODEL_DEP###][RT-N65U]SET_ok_desc=Indstillingen overføres! Vent i 80 sekunder.
 SET_fail_title=Det lykkedes ikke at overføre indstillingsfilen!
 SET_fail_desc=Det lykkedes ikke at overføre indstillingsfilen. Det kan skyldes en forkert indstillingsfil eller en transmissionsfejl. Kontroller indstillingsfilens validering, og forsøg igen.
 RHELP_desc4=Det står for destinationsnetværket eller en vært i en regel for routing. Så det kunne være en værtsadresse, såsom 「192.168.123.11」 eller en netværksadresse, såsom 「192.168.0.0」.
@@ -1216,6 +1237,8 @@ PPPConnection_x_WANGateway_itemname=Gateway
 PPPConnection_x_WANDNSServer_itemname=DNS-servere
 PPPConnection_x_WANLink_itemname=Forbindelsesstatus:
 FirewallConfig_display1_sectiondesc=Netværkstjenestefilteret blokerer overførslerne fra LAN til WAN, og begrænser enheder i at bruge bestemte netværkstjenester.<p>For eksempel, hvis du ikke vil have at enheden skal bruge internettjenesten, skal du indtaste 80 i destinationsporten. Trafikken, som bruger port 80, blokeres.<p>Efterlad kilde IP feltet blank, hvis du ønsker at anvende denne regel til alle LAN enheder.
+FirewallConfig_display3_sectiondesc=<b>Sortlistens varighed :</b> I den planlagte periode, er det ikke muligt for klienterne på sortlisten, at bruge de bestemte netværkstjenester.  Når den planlagte periode er udløbet, er det muligt for alle klienterne på LAN-netværket, at få adgang til de bestemte netværkstjenester.<br><b>Hvidlistens varighed :</b> I den planlagte periode, er det kun muligt for klienterne på hvidlisten, at bruge de bestemte netværkstjenester.  Når den planlagte periode er udløbet, er det hverken muligt for klienterne på hvidlisten eller andre netværksklienter, at få adgang til internettet eller andre internettjenester.
+FirewallConfig_display4_sectiondesc=<b>BEMÆRK :</b> Hvis du opretter hvidlisten på undernettet, er det ikke muligt for IP-adresser udenfor undernettet, at få adgang til internettet eller andre internettjenester.
 FirewallConfig_LanWanActiveDate_itemname=Datoen for aktivering af LAN-til-WAN-filteret:
 FirewallConfig_LanWanActiveDate_itemdesc=Dette felt angiver datoen for, hvornår LAN-til-WAN-filteret aktiveres.
 FirewallConfig_LanWanActiveTime_itemname=Klokkeslæt for aktivering af LAN-til-WAN-filteret:
@@ -1378,6 +1401,7 @@ TZ81=Ny Kaledonien
 TZ82=Magadan, Fiji-øerne, Kamtjatka, Marshalløerne
 TZ83=Auckland, Wellington
 TZ84=Nuku'alofa
+TZ85=British Summer Time (BST)
 LANHostConfig_x_NTPServer_itemname=NTP-server
 LANHostConfig_x_NTPServer_itemdesc=Til synkronisering af systemtiden med NTP-serveren.
 LANHostConfig_x_DDNSEnable_sectionname=DDNS-indstilling
@@ -1494,6 +1518,7 @@ USB_Application_disk_miscellaneous_desc=Mere detaljerede indstillinger til USB d
 BasicConfig_EnableDownloadMachine_itemname=Skal Hent master aktiveres?
 BasicConfig_EnableDownloadShare_itemname=Skal Hent deling aktiveres?
 BasicConfig_EnableMediaServer_itemname=Skal UPnP aktiveres?
+DM_Install_partition=Vælg venligst USB-lagerenheden, som du ønsker at åbne.
 CTL_restore=Gendan
 CTL_onlysave=Gem
 CTL_clear=Nulstil
@@ -1525,6 +1550,7 @@ IPConnection_TriggerList_widzarddesc=Kendte applikationer:
 FirewallConfig_LWFilterList_widzarddesc=Kendte applikationer:
 LANHostConfig_x_DDNSServer_linkname=Prøv gratis
 SAVE_note=Bemærk: Det tager ca. 60 sekunder.
+[###MODEL_DEP###][RT-N65U]SAVE_note=Bemærk: Det tager ca. 80 sekunder.
 IPConnection_VServerPNo_itemname=Protokol-nr.
 LANHostConfig_ManualDHCPEnable_itemname=Skal manuel tildeling aktiveres?
 LANHostConfig_ManualDHCPList_groupitemdesc=Liste over manuelt tildelte IP-adresse omkring DHCP'en
@@ -1785,9 +1811,12 @@ step_use_aicloud=Please follow the steps below to use AiCloud:
 download_aicloud=Download ASUS AiCloud app to phone or pad from
 connect_through_wifi=Connect your iOS or Android devices to ZVMODELVZ through WiFi. The AiCloud app will automatically guide you through the process of setup.
 access_service=Now you can access your USB storage and Network place(Samba) enabled devices connected to ZVMODELVZ.
+aicloud_bandwidth1=For the best viewing/listening experience, we recommend the following upload bandwidth for different media format. A 768 Kbps is recommended for music, 5Mbps for SD video, 15Mbps for 720p video and 30Mbps or faster for 1080p HD video streaming.
+aicloud_bandwidth2=Internet upload speeds may vary depending on your ISP and other factors.
+aicloud_bandwidth3=If you are not sure what your Internet speed is, you can ask your ISP, or use an online broadband speed test from a computer connected to ZVMODELVZ.
 aicloud_for_privateIP1=We are going to support AiCloud with private IP later, in this moment, you can setup <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_VirtualServer_Content.asp" target="_blank">Port forwarding</a> or <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_Exposed_Content.asp" target="_blank">DMZ</a> to access private ip address remotely.
-aicloud_for_privateIP2= The AiCloud need to use 8082 and 443 port. you can change the port setting <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_BasicFirewall_Content.asp" target="_blank">here</a>.
-aicloud_for_privateIP3= For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
+aicloud_for_privateIP2=The AiCloud need to use 8082 and 443 port.
+aicloud_for_privateIP3=For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=To establish your cloud disk, you need to plug-in an USB storage into this router, then enable cloud disk.
 aicloud_disk2= Default cloud disk login account use the router login account.
 aicloud_disk_case0=The Cloud disk can be accessed via <a style="font-weight: bolder;text-decoration: underline;" href="http://www.asusnetwork.net:8082" target="_blank">http://www.asusnetwork.net:8082</a> when you connect to ZVMODELVZ in LAN.
@@ -1800,9 +1829,8 @@ smart_access2=You can also wake up your PCs in home remotely by WOL.
 smart_access3=What is <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="http://support.asus.com/Search.aspx?SLanguage=en&keyword=WOL&BIOS" target="_blank">WOL</a>?
 smart_sync1=To start smart sync, you need to sign up an <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asuswebstorage.com/" target="_blank">ASUS webstorage</a> account, then enable cloud disk and smart sync. (Make sure that you have plug-in an USB storage into this router.)
 smart_sync2=Open AiCloud APP. Choose a specific folder in cloud disk that you want to sync with ASUS web storage, then follow the steps show in the app.
-web_redirect_reason7=PIN code is not correct. After three failed attempts to enter the PIN code, your SIM card will be blocked.
-isp_br_gvt_note=If you are GVT users, please key in the user name ( turbonet@turbonet ) and password ( gvt25 ). Otherwise, please key in the user name and password provided by your ISP.
-pvc_del_alert_desc=Are you sure to delete this PVC?
-same_vpi_vci=VPI and VCI are duplicated.
-dns_server_no_set=DNS server not set! Please setup the DNS server on the client device.
-dsl_wan_page_desc=Click index number to edit PVC setting or click right icon to add or delete PVC
+isp_br_gvt_note=Hvis du er GVT-bruger, bedes du venligst indtaste brugernavnet <b>turbonet@turbonet</b> og adgangskoden <b>gvt25</b>.  Eller skal du indtaste brugernavnet og adgangskoden, som du har fået af din internetudbyder.
+pvc_del_alert_desc=Er du sikker på du vil slette denne PVC?
+same_vpi_vci=Dupliker eller samme VPI og VCI-indstillinger.
+dns_server_no_set=Opsæt venligst DNS-serveren på klient-enheden.
+dsl_wan_page_desc=Klik på nummerindekset for, at redigere PVC-indstillingerne. Klik på tilføj (+) eller slet (-) ikonerne for, at tilføje eller slette en PVC-indstilling.

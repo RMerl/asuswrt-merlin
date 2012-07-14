@@ -226,7 +226,7 @@ function applyRule(){
 	document.form.submit();
 }
 function get_disk_tree(){
-  $j("#test_panel").show(300);
+  $j("#test_panel").fadeIn(300);
 		get_layer_items("0");
 }
 function get_layer_items(layer_order){
@@ -513,12 +513,12 @@ function GetTree(layer_order, v){
 }
 function cancel_temp(){
 this.FromObject ="";
-$j("#test_panel").hide('fast');
+$j("#test_panel").fadeOut(300);
 }
 function confirm_temp(){
 	$('PATH').value = path_directory ;
 	this.FromObject ="";
-	$j("#test_panel").hide('fast');
+	$j("#test_panel").fadeOut(300);
 }
 </script>
 </head>

@@ -67,20 +67,16 @@ var usb_path2_index;
 function initial(){
 	show_menu();
 
-	//if (dualWAN_support == -1) {
-		default_apps_array = [["AiDisk", "aidisk.asp", "<#AiDiskWelcome_desp1#>", "Aidisk.png"],
-													["Servers Center", tablink[3][1], "<#UPnPMediaServer_Help#>", "server.png"],
-													["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer.png"],
-													["3G/WiMax", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png"]];
-	/*}
-	else {
-		default_apps_array = [["AiDisk", "aidisk.asp", "<#AiDiskWelcome_desp1#>", "Aidisk.png"],
-													["Servers Center", tablink[3][1], "<#UPnPMediaServer_Help#>", "server.png"],
-													["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer.png"],
-													["3G/WiMax", "Advanced_WANPort_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png"]];
-	}*/
-	
-	if(sw_mode == 3){
+	default_apps_array = [["AiDisk", "aidisk.asp", "<#AiDiskWelcome_desp1#>", "Aidisk.png"],
+												["Servers Center", tablink[3][1], "<#UPnPMediaServer_Help#>", "server.png"],
+												["<#Network_Printer_Server#>", "PrinterServer.asp", "<#Network_Printer_desc#>", "PrinterServer.png"],
+												["3G/WiMax", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png"]];
+  if(no_wimax_support >= 0){
+  	default_apps_array.splice(3, 1, ["3G", "Advanced_Modem_Content.asp", "<#HSDPAConfig_hsdpa_enable_hint1#>", "modem.png"]);  	
+  	//alert(default_apps_array);
+  }
+
+	if(sw_mode == 2 || sw_mode == 3){
 		default_apps_array.splice(3, 1);
 		default_apps_array.splice(0, 1);
 	}
@@ -222,6 +218,8 @@ function check_appstate(){
 			$("apps_state_desc").innerHTML = "Mount error!";
 		else if(apps_state_error == 3)
 			$("apps_state_desc").innerHTML = "Create Swap error!";
+        else if(apps_state_error == 8)
+            $("apps_state_desc").innerHTML = "Enable error!";
 		else{
 			$("loadingicon").style.display = "";
 			$("apps_state_desc").innerHTML = "Please wait...";
@@ -335,8 +333,12 @@ function show_apps(){
 	if(dm_http_port == "")
 		dm_http_port = "8081";
 
-	if(apps_array == "" && (appnet_support != -1 || appbase_support != -1))
-		apps_array = [["downloadmaster", "", "", "no", "no", "", "", "Download tools", "downloadmaster.png", "", "", ""],["mediaserver", "", "", "no", "no", "", "", "", "mediaserver.png", "", "", ""]];
+	if(apps_array == "" && (appnet_support != -1 || appbase_support != -1)){
+		apps_array = [["downloadmaster", "", "", "no", "no", "", "", "Download tools", "downloadmaster.png", "", "", ""],
+									["mediaserver", "", "", "no", "no", "", "", "", "mediaserver.png", "", "", ""]];
+		if(nodm_support != -1)
+			apps_array[1][0] = "mediaserver2";
+	}
 
 	if(nodm_support != -1){
 		var dm_idx = apps_array.getIndexByValue2D("downloadmaster");
@@ -344,11 +346,26 @@ function show_apps(){
 			apps_array.splice(dm_idx[0], 1);
 	}
 
-	if(media_support != -1){
+	if(media_support == -1){
+		if(nodm_support != -1)
+			var media_idx = apps_array.getIndexByValue2D("mediaserver");
+		else
+			var media_idx = apps_array.getIndexByValue2D("mediaserver2");
+
+		if(media_idx[1] != -1 && media_idx != -1)
+			apps_array.splice(media_idx[0], 1);
+	} 
+	else{
+		// remove mediaserver
 		var media_idx = apps_array.getIndexByValue2D("mediaserver");
 		if(media_idx[1] != -1 && media_idx != -1)
 			apps_array.splice(media_idx[0], 1);
-	}
+
+		// remove mediaserver2
+		var media2_idx = apps_array.getIndexByValue2D("mediaserver2");
+		if(media2_idx[1] != -1 && media2_idx != -1)
+			apps_array.splice(media2_idx[0], 1);
+  }
 
 	// calculate div height
 	htmlcode = '<table class="appsTable" align="center" style="margin:auto;border-collapse:collapse;">';
@@ -366,9 +383,9 @@ function show_apps(){
 		if(apps_array[i][0] == "DM2_Utility")
 			$("DMUtilityLink").href = apps_array[i][5]+ "/" + apps_array[i][12];
 
-		if(apps_array[i][0] != "downloadmaster" && apps_array[i][0] != "mediaserver") // discard unneeded apps
+		if(apps_array[i][0] != "downloadmaster" && apps_array[i][0] != "mediaserver" && apps_array[i][0] != "mediaserver2") // discard unneeded apps
 			continue;
-		else if((apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "cloudsync") && apps_array[i][3] == "yes" && apps_array[i][4] == "yes"){
+		else if((apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2" || apps_array[i][0] == "cloudsync") && apps_array[i][3] == "yes" && apps_array[i][4] == "yes"){
 			if(location.host.split(":").length > 1)
 				apps_array[i][6] = "http://" + location.host.split(":")[0] + ":" + dm_http_port;
 			else
@@ -376,7 +393,7 @@ function show_apps(){
 
 			if(apps_array[i][0] == "cloudsync") // append URL
 				apps_array[i][6] += "/cloudui/Setting.asp";
-			else if(apps_array[i][0] == "mediaserver")
+			else if(apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2")
 				apps_array[i][6] += "/mediaserverui/mediaserver.asp";
 		}
 		appnum++; // cal the needed height of applist table 
@@ -387,19 +404,27 @@ function show_apps(){
 		// apps_icon
 		htmlcode += '<tr><td class="app_table_radius_left" align="center" style="width:85px">\n';
 		if(apps_array[i][4] == "yes" && apps_array[i][3] == "yes"){
-			if(apps_array[i][6] != "")
-				htmlcode += '<img style="margin-top:0px;" src="/images/New_ui/USBExt/'+ apps_array[i][0] +'.png" style="cursor:pointer" onclick="location.href=\''+ apps_array[i][6] +'\';"></td>\n';
+			if(apps_array[i][6] != ""){
+				if(apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2")
+					htmlcode += '<img style="margin-top:0px;" src="/images/New_ui/USBExt/mediaserver.png" style="cursor:pointer" onclick="location.href=\''+ apps_array[i][6] +'\';"></td>\n';
+				else
+					htmlcode += '<img style="margin-top:0px;" src="/images/New_ui/USBExt/'+ apps_array[i][0] +'.png" style="cursor:pointer" onclick="location.href=\''+ apps_array[i][6] +'\';"></td>\n';
+			}
 			else
 				htmlcode += '<img style="margin-top:0px;" src="/images/New_ui/USBExt/'+ apps_array[i][0] +'.png"></td>\n';				
 		}	
-		else
-			htmlcode += '<img style="margin-top:0px;filter:gray" src="/images/New_ui/USBExt/'+ apps_array[i][0] +'.png"></td>\n';			
+		else{
+			if(apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2")
+				htmlcode += '<img style="margin-top:0px;filter:gray" src="/images/New_ui/USBExt/mediaserver.png"></td>\n';			
+			else
+				htmlcode += '<img style="margin-top:0px;filter:gray" src="/images/New_ui/USBExt/'+ apps_array[i][0] +'.png"></td>\n';			
+		}
 
 		// apps_name
 		htmlcode += '<td class="app_table_radius_right" style="width:350px;">\n';
 		if(apps_array[i][0] == "downloadmaster")
 			apps_array[i][0] = "Download Master";
-		else if(apps_array[i][0] == "mediaserver")
+		else if(apps_array[i][0] == "mediaserver" || apps_array[i][0] == "mediaserver2")
 			apps_array[i][0] = "Media Server";
 		else if(apps_array[i][0] == "cloudsync")
 			apps_array[i][0] = "Cloud Sync";
@@ -435,8 +460,12 @@ function show_apps(){
 
 		if(apps_array[i][0] == "Download Master")
 			apps_array[i][0] = "downloadmaster";
-		else if(apps_array[i][0] == "Media Server")
-			apps_array[i][0] = "mediaserver";
+		else if(apps_array[i][0] == "Media Server"){
+			if(nodm_support == -1)
+				apps_array[i][0] = "mediaserver";
+			else
+				apps_array[i][0] = "mediaserver2";
+		}
 		else if(apps_array[i][0] == "Cloud Sync")
 			apps_array[i][0] = "cloudsync";
 
@@ -462,7 +491,7 @@ function show_apps(){
 				htmlcode += '<span class="app_action" onclick="apps_form(\'upgrade\',\''+ apps_array[i][0] +'\',\'\');">Upgrade</span>\n';
 		}
 		else{
-			if(apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "cloudsync")
+			if(apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "cloudsync" || apps_array[i][0] == "mediaserver2")
 				htmlcode += '<span class="app_action" onclick="_appname=\''+apps_array[i][0]+'\';divdisplayctrl(\'none\', \'\', \'none\', \'none\');location.href=\'#\';">Install</span>\n';
 			else
 				htmlcode += '<span class="app_action" onclick="apps_form(\'install\',\''+ apps_array[i][0] +'\',\''+ partitions_array[i] +'\');">Install</span>\n';

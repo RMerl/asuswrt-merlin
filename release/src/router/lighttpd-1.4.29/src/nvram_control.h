@@ -30,6 +30,14 @@ char* nvram_get_router_mac();
 char* nvram_get_firmware_version();
 char* nvram_get_build_no();
 
+char* nvram_get_st_webdav_mode();
+char* nvram_get_webdav_http_port();
+char* nvram_get_webdav_https_port();
+
+char* nvram_get_misc_http_x();
+char* nvram_get_msie_http_port();
+
+
 
 
 

@@ -785,10 +785,7 @@ static int pptp_bind(struct socket *sock,struct sockaddr *uservaddr,int sockaddr
 
 	opt->src_addr=sp->sa_addr.pptp;
 	if (add_chan(po))
-	{
-	    release_sock(sk);
 		error=-EBUSY;
-	}
 #ifdef DEBUG
 	if (log_level>=1)
 		printk(KERN_INFO"PPTP: using call_id %i\n",opt->src_addr.call_id);
@@ -889,7 +886,7 @@ static int pptp_connect(struct socket *sock, struct sockaddr *uservaddr,
 	po->chan.mtu-=PPTP_HEADER_OVERHEAD;
 
 	po->chan.hdrlen=2+sizeof(struct pptp_gre_header);
-	po->chan.hdrlen += NET_SKB_PAD + sizeof(struct iphdr);
+	po->chan.hdrlen += LL_MAX_HEADER + sizeof(struct iphdr);
 	error = ppp_register_channel(&po->chan);
 	if (error){
 		printk(KERN_ERR "PPTP: failed to register PPP channel (%d)\n",error);
@@ -1097,8 +1094,8 @@ static int pptp_create(struct net *net, struct socket *sock)
 #endif
 	opt=&po->proto.pptp;
 
-	opt->seq_sent=0; opt->seq_recv=0;
-	opt->ack_recv=0; opt->ack_sent=0;
+	opt->seq_sent = 0; opt->seq_recv = 0xffffffff;
+	opt->ack_recv = 0; opt->ack_sent = 0xffffffff;
 
 	error = 0;
 out:

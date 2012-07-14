@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+libdir=@libdir@
+includedir=${prefix}/include
+
+Name: libdaemon
+Description: a lightweight C library that eases the writing of UNIX daemons
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -ldaemon
+Cflags: -D_REENTRANT -I${includedir}

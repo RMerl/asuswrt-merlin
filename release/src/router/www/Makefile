@@ -57,8 +57,43 @@ endif
 ifeq ($(RTCONFIG_4M_SFP),y)
 	rm -rf $(INSTALLDIR)/www/svghtc
 	rm -rf $(INSTALLDIR)/www/svg.js
+	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_daily.asp
+	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_last24.asp
+	rm -rf $(INSTALLDIR)/www/Main_TrafficMonitor_realtime.asp
+	rm -rf $(INSTALLDIR)/www/tm.svg
+	rm -rf $(INSTALLDIR)/www/tmcal.js
+	rm -rf $(INSTALLDIR)/www/tmhist.js
+	rm -rf $(INSTALLDIR)/www/tmmenu.css
+	rm -rf $(INSTALLDIR)/www/tmmenu.js
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/map-iconClient-d.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/map-iconInternet-d.png
+	rm -rf $(INSTALLDIR)/www/images/qis/android*
+	rm -rf $(INSTALLDIR)/www/images/qis/iOS*
+	rm -rf $(INSTALLDIR)/www/images/qis/mac.jpg
+	rm -rf $(INSTALLDIR)/www/images/qis/osx_network_icon.jpg
+	rm -rf $(INSTALLDIR)/www/images/qis/router_login.jpg
+	rm -rf $(INSTALLDIR)/www/images/qis/security_key.png
+	rm -rf $(INSTALLDIR)/www/images/qis/select_wireless.jpg
+	rm -rf $(INSTALLDIR)/www/images/qis/win7.jpg
+	rm -rf $(INSTALLDIR)/www/images/qis/win7_network_icon1.jpg
+	rm -rf $(INSTALLDIR)/www/images/qis/win7_network_icon2.jpg
+	rm -rf $(INSTALLDIR)/www/images/qis/winxp.jpg
+	rm -rf $(INSTALLDIR)/www/Advanced_WANPort_Content.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_PPTPAdvanced_Content.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_PPTP_Content.asp
+	rm -rf $(INSTALLDIR)/www/mediaserver.asp
+	rm -rf $(INSTALLDIR)/www/Advanced_PerformanceTuning_Content.asp
+	rm -rf $(INSTALLDIR)/www/ajax_coretmp.asp
+	rm -rf $(INSTALLDIR)/www/qis/QIS_tutorial.htm
+	rm -rf $(INSTALLDIR)/www/qis/QIS_internet_ruisp.htm
+	rm -rf $(INSTALLDIR)/www/qis/ruisp.js
+	rm -rf $(INSTALLDIR)/www/images/New_ui/network_config.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/parental-control.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/QoS.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/rt.jpg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/re.jpg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/ap.jpg
 endif
-
 ifneq ($(RTCONFIG_CLOUDSYNC),y)
 	rm -rf $(INSTALLDIR)/www/images/cloudsync
 	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt/*cloud*.png
@@ -66,8 +101,6 @@ ifneq ($(RTCONFIG_CLOUDSYNC),y)
 	rm -rf $(INSTALLDIR)/www/*cloud*.asp
 
 endif
-
-
 ifeq ($(RTCONFIG_NO_USBSTORAGE),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/USBExt
 	rm -rf $(INSTALLDIR)/www/images/New_ui/aidisk
@@ -101,12 +134,18 @@ ifneq ($(RTCONFIG_USB),y)
 	rm -rf $(INSTALLDIR)/www/cdma2000_list.js
 	rm -rf $(INSTALLDIR)/www/wcdma_list.js
 	rm -rf $(INSTALLDIR)/www/wimax_list.js
+	rm -rf $(INSTALLDIR)/www/td-scdma_list.js
 	rm -rf $(INSTALLDIR)/www/device-map/printer.asp
 	rm -rf $(INSTALLDIR)/www/device-map/modem.asp
 	rm -rf $(INSTALLDIR)/www/device-map/disk.asp
 	rm -rf $(INSTALLDIR)/www/getfoldertree.asp
 	rm -rf $(INSTALLDIR)/www/gettree.asp
+	rm -rf $(INSTALLDIR)/www/update_appstate.asp
 	rm -rf $(INSTALLDIR)/www/images/Tree
+	rm -rf $(INSTALLDIR)/www/images/New_ui/networkmap/devicebt_default.png
+	rm -rf $(INSTALLDIR)/www/switch_AiDisk_app.asp
+	rm -rf $(INSTALLDIR)/www/update_diskinfo.asp
+	rm -rf $(INSTALLDIR)/www/device-map/safely_remove_disk.asp
 endif
 endif
 	cd $(INSTALLDIR)/www && ln -sf ../tmp/settings Settings_$(BUILD_NAME).CFG && cd $(TOP)/www 

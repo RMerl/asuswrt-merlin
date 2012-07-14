@@ -368,6 +368,8 @@ function showfilter_lwlist(){
 		  				<div class="formfonttitle"><#menu5_5#> - <#menu5_5_4#></div>
 		  				<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		  				<div class="formfontdesc"><#FirewallConfig_display1_sectiondesc#></div>
+		  				<div class="formfontdesc"><#FirewallConfig_display3_sectiondesc#></div>
+		  				<div class="formfontdesc" style="color:#FFCC00;"><#FirewallConfig_display4_sectiondesc#></div>	
 
 						<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 						<thead>

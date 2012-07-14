@@ -2994,3 +2994,89 @@ ej_wl_scan_5g(int eid, webs_t wp, int argc, char_t **argv)
 {
 	return wl_scan(eid, wp, argc, argv, 1);
 }
+
+#ifdef RTCONFIG_PROXYSTA
+#define	MAX_STA_COUNT	256
+#define	NVRAM_BUFSIZE	100
+
+/* Output one row of the HTML authenticated STA list table */
+static int
+wl_autho(char *name, struct ether_addr *ea)
+{
+	char buf[sizeof(sta_info_t)];
+
+	strcpy(buf, "sta_info");
+	memcpy(buf + strlen(buf) + 1, (unsigned char *)ea, ETHER_ADDR_LEN);
+
+	if (!wl_ioctl(name, WLC_GET_VAR, buf, sizeof(buf))) {
+		char ea_str[ETHER_ADDR_STR_LEN];
+		sta_info_t *sta = (sta_info_t *)buf;
+		uint32 f = sta->flags;
+
+		if (f & WL_STA_AUTHO)
+			return 1;
+	}
+
+	return 0;
+}
+
+int
+ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv)
+{
+	char tmp[NVRAM_BUFSIZE], prefix[] = "wlXXXXXXXXXX_";
+	char *name;
+	struct maclist *mac_list;
+	int mac_list_size, i, unit;
+	int retval = 0, psta = 0;
+	struct ether_addr bssid;
+	unsigned char bssid_null[6] = {0x0,0x0,0x0,0x0,0x0,0x0};
+
+	unit = nvram_get_int("wlc_band");
+	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+	if (!nvram_match(strcat_r(prefix, "mode", tmp), "psta"))
+		goto PSTA_ERR;
+
+	name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+	if (wl_ioctl(name, WLC_GET_BSSID, &bssid, ETHER_ADDR_LEN) != 0)
+		goto PSTA_ERR;
+	else if (!memcmp(&bssid, bssid_null, 6))
+		goto PSTA_ERR;
+
+	/* buffers and length */
+	mac_list_size = sizeof(mac_list->count) + MAX_STA_COUNT * sizeof(struct ether_addr);
+	mac_list = malloc(mac_list_size);
+
+	if (!mac_list)
+		goto PSTA_ERR;
+
+	/* query wl for authenticated sta list */
+	strcpy((char*)mac_list, "authe_sta_list");
+	if (wl_ioctl(name, WLC_GET_VAR, mac_list, mac_list_size)) {
+		free(mac_list);
+		goto PSTA_ERR;
+	}
+
+	/* query sta_info for each STA and output one table row each */
+	if (mac_list->count)
+	{
+		if (nvram_match(strcat_r(prefix, "akm", tmp), ""))
+			psta = 1;
+		else
+		for (i = 0; i < mac_list->count; i++) {
+			if (wl_autho(name, &mac_list->ea[i]))
+			{
+				psta = 1;
+				break;
+			}
+		}
+	}
+
+	free(mac_list);
+PSTA_ERR:
+	retval += websWrite(wp, "wlc_state=%d", psta);
+
+	return retval;
+}
+#endif

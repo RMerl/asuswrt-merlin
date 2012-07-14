@@ -41,7 +41,7 @@
 int network_write_chunkqueue_solarissendfilev(server *srv, connection *con, int fd, chunkqueue *cq) {
 	chunk *c;
 	size_t chunks_written = 0;
-
+	
 	for(c = cq->first; c; c = c->next, chunks_written++) {
 		int chunk_finished = 0;
 

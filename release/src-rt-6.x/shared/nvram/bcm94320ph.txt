@@ -1,0 +1,28 @@
+# BCM94320ph board
+# $Copyright (C) 2003 Broadcom Corporation$
+# $Id: bcm94320ph.txt,v 1.27 2005-05-06 18:22:17 mtanner Exp $
+boardtype=0x045a
+boardnum=${serno}
+# Board revision 3.6
+boardrev=0x36
+# Flags: NOPCI, CCKHIPWR & ADCDIV.
+boardflags=0x648
+sromrev=2
+
+# Make the d11 i/f single band
+wl0id=0x4318
+
+# 4320 802.11g parameters
+il0macaddr=00:90:4c:82:${maclo}
+aa0=3
+ag0=0x82
+pa0maxpwr=76
+pa0itssit=62
+pa0b0=0x1665
+pa0b1=0xfa60
+pa0b2=0xfe83
+opo=8
+
+# Commons wireless parameters
+cctl=0
+ccode=0

@@ -88,16 +88,6 @@ extern char *get_line_from_buffer(const char *buf, char *line, const int line_si
 	return line;
 }
 
-extern int test_if_dir(const char *dir){
-	DIR *dp = opendir(dir);
-
-	if(dp == NULL)
-		return 0;
-
-	closedir(dp);
-	return 1;
-}
-
 extern char *get_upper_str(const char *const str, char **target){
 	int len, i;
 	char *ptr;

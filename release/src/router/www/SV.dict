@@ -25,6 +25,7 @@ tunnel_MTU=Tunnel MTU
 tunnel_TTL=Tunnel TTL
 [VPN server]
 vpn_setting=Grundläggande konfig
+vpn_Adv=VPN-detaljer
 PPTP_desc=VPN-servern ger dig åtkomst till hemmanätverk när som helst, var som helst.
 PPTP_desc2=Använda VPN-servern. Följ dessa steg.<br>(1)Aktivera PPTP VPN-servern<br>(2) Ställ in IP-pool för klient-IP. (Maximum 10 klienter)<br>(3) Ställ in användarnamnet och lösenrodet för VPN-klient.<br>(4) Öppna VPN anslutningsprogrammet på din dator eller smartphone.<br>(5) Lägg till en ny PPTP VPN anslutning och VPN serveradressen är
 PPTP_desc3=(6) Om din WAN IP-adress är dynamisk, <a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">klicka här för att ställa in DDNS.</a>
@@ -91,6 +92,19 @@ Low=Låg
 Lowest=Lägsta
 traffic_monitor=Trafikbevakning
 traffic_monitor_desc=Trafikbevakning hjälper dig bevaka följande typer av nätverkstrafik:<P>Internet: All Internet-trafik.<P>Trådansluten: Nätverkstrafik från trådanslutet till trådlöst nätverk samt till Internet.<P>Trådlöst: Nätverkstrafik från trådanslutet till trådlöst näverk samt till Internet.
+traffic_monitor_desc1=Trafikövervakning låter dig övervaka de inkommande och utgående paketen för följande :
+traffic_monitor_desc2=<b>Notera :</b> Paket från internet sänds jämnt till de trådanslutna och trådlösa enheterna.
+tm_internet=Internet
+tm_wired=Trådansluten
+tm_wireless=Trådlös
+tm_reception=Mottagning
+tm_transmission=Sändning
+tm_recp_int=Inkommande internetpaket
+tm_recp_wired=Inkommande paket från trådanslutet nätverk
+tm_recp_wireless=Inkommande paket från trådlöst nätverk
+tm_trans_int=Utgående internetpaket
+tm_trans_wired=Utgående paket från trådanslutet nätverk
+tm_trans_wireless=Utgående paket från trådlöst nätverk
 ezqosDesw=Quality of Service (QoS) garanterar nätverkets hastighetsprestanda. Standardregeln ger webbsurfning högsta prioritet och påverkas inte av P2P-applikationer (peer to peer-applikationer, t.ex. BitTorrent). Aktivera QoS-funktionen genom att klicka på Enable QoS (Aktivera QoS) och fylla i fälten för uppladdnings- och nedladdningsbandbredd. Bandbreddsinformation får du från din internetleverantör.<p>Om du vill prioritera specifika nätverksapplikationer och nätverksenheter, välj önskad prioritet i User-defined QOS rules (Användardefinierade QoS-regler).
 qos_automatic_mode=Automatiskt läge
 source_ipmac=För käll-eller mål-IP-adress kan du antingen:<p>(a) ange en specifik IP-adress, t.ex. \"192.168.122.1\";<p>(b) ange IP-adresser inom ett delnät eller inom samma IP-pool, t.ex. \"192.168.123.*\" eller \"192.168.*.*\",<p>eller c) ange alla IP-adresser som \"*.*.*.*\"<p>MAC-adressens format ges i sex grupper med två hexadecimaltecken, kolonseparerade (:) och i överföringsordning (t.ex. 12:34:56:aa:bc:ef )
@@ -258,8 +272,8 @@ wireless_router=Trådlös router
 BasicConfig_EnableiTunesServer_itemname=Enable iTunes Server?
 OP_GW_item=Trådlös router (standard)
 OP_GW_desc=Trådlös router, ansluter ZVMODELVZ till internet via PPPoE, DHCP, PPTP, L2TP, eller statisk IP och delar det trådlösa nätverket med LAN-klienter och -enheter. I detta läge är NAT, brandväggen och DHCP-servern aktiverade som standard. UPnP och dynamisk DNS stöds för SOHO- och hemanvändare. Välj detta läge om du är en förstagångsanvändare eller om du för tillfället inte använder tråd- eller trådlösa routrar.
-OP_RE_item=Repeater mode
-OP_RE_desc=In Repeater mode, ZVMODELVZ wirelessly connects to an existing wireless network to extend the wireless coverage. In this mode, the firewall, IP sharing, and NAT functions are disabled.
+OP_RE_item=Repeterarläge
+OP_RE_desc=I Repeterarläget ansluter ZVMODELVZ trådlöst till ett befintligt trådlöst nätverk för att utöka den trådlösa nätverkstäckningen. I detta läge är brandväggen, IP-delning och NAT-funktionerna avaktiverade.
 OP_AP_item=Access Point(AP/åtkomstpunkt) läge
 OP_AP_desc=I Access Point (AP) läge ansluter ZVMODELVZ till en trådlös router via en Ethernet-kabel för att förlänga den trådlösa signaltäckningen till andra nätverksklienter. I detta läge är brandväggs-, IP-delnings- och NAT-funktionerna inaktiverade som standard.
 OP_RT_item=Router (inaktivera NAT)
@@ -280,6 +294,7 @@ RouterConfig_GWMulticast_Broadcast_itemname=Sändningsstormkontroll (Mbps):
 [keyword_filter]
 menu5_5_5=Nyckelordsfilter
 FirewallConfig_KeywordFilterEnable_sectiondesc=Med nyckelordsfiltret kan du blockera klientens åtkomst av webbsidor som innehåller de angivna nyckelorden.
+FirewallConfig_KeywordFilterEnable_sectiondesc2=Begränsningar i filtreringsfunktionen med nyckelord :<ol><li>Komprimerade webbsidor som använder http komprimeringsteknologi kan inte filtreras. <a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">Se här för ytterligare detaljer</a></li><li>Https webbsidor kan inte filtreras.</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=Aktivera nyckelordsfiltret
 FirewallConfig_KeywordActiveDate_itemname=När:
 FirewallConfig_KeywordActiveTime_itemname=Tid:
@@ -304,6 +319,7 @@ web_redirect_reason6=IP-konflikt upptäcktes. Klicka på Nästa för att få en 
 web_redirect_case6_desc1=Routerns uppdaterade IP-adress:
 web_redirect_case6_desc2=När du klickat på Nästa, se till att du uppdaterar IP-adressinställningarna för varje relaterad tjänst, t.ex. portvidarebefordran eller DMZ.
 error_page_lanip_changed_desc1=IP-adressen uppdateras. Om denna process tar mer än två minuter, föj dessa tre steg för att uppdatera IP-numret manuellt: (1) dra ur nätverkskabeln; (2) vänta i c:a 10 sekunder, och (3) sätt i den igen för att få en ny IP-adress.
+web_redirect_reason7=Pinkoden är inte korrekt. Efter tre misslyckade försök att mata in Pinkoden kommer ditt SIM-kort att blockeras.
 [QIS]
 QIS_autoMAC_desc1=Börjar klona datorns MAC-adress in i routern…
 QIS_autoMAC_desc2=Vänta lite...
@@ -394,9 +410,9 @@ ShareNode_Seeding_itemdesc=Tillåter aktivering eller inaktivering av seedningsf
 ShareNode_MaxUpload_itemname=Max uppladdningshastighet
 ShareNode_MaxUpload_itemdesc=Ange ett värde mellan 0 och 999. Standardvärdet är 0, vilket innebär att uppladdningen inte begränsas.
 [New item]
-HSDPAConfig_hsdpa_enable_hint1=Nuvarande 3G-inställning är inställd på 3G säkerhetskopieringsläge. Om WAN-porten kopplats ifrån kommer nätverksläget automatiskt att ändras till 3G-läge.
-HSDPAConfig_hsdpa_enable_hint2=Om du vill byta anslutningstyp, gå till <a href="/Advanced_Modem_others.asp">USB Modem</a> för att inaktivera 3G/3.5G-adaptern.
-HSDPAConfig_USBAdapter_itemname=3G/3.5G USB-adapter
+HSDPAConfig_hsdpa_enable_hint1=Nuvarande 3G/4G-inställning är inställd på 3G/4G säkerhetskopieringsläge. Om WAN-porten kopplats ifrån kommer nätverksläget automatiskt att ändras till 3G/4G-läge.
+HSDPAConfig_hsdpa_enable_hint2=Om du vill byta anslutningstyp, gå till <a href="/Advanced_Modem_others.asp">USB Modem</a> för att inaktivera 3G/4G/3.5G-adaptern.
+HSDPAConfig_USBAdapter_itemname=USB-adapter
 HSDPAConfig_USBAdapter_itemdesc=När USB Modem aktiverats, välj den adapter som stöds av ZVMODELVZ.
 APSurvey_msg_connected=Du är redan ansluten till denna AP.
 APSurvey_msg_connect_suggest1=Vi föreslår att du använder en ethernetkabel för att ansluta till ZVMODELVZ för stabil konfiguration och en förbättrad upplevelse.
@@ -948,7 +964,9 @@ IPConnection_x_DNSServer1_itemdesc=Det här fältet indikerar den IP-adress för
 IPConnection_x_DNSServer1_itemname=DNS-server 1:
 IPConnection_x_DNSServer2_itemdesc=Det här fältet indikerar den IP-adress för DNS:en som ZVMODELVZ kontaktar.
 IPConnection_x_DNSServer2_itemname=DNS-server 2:
+IPConnection_x_DNSServer_blank=Ställ in DNS-servern på klientenheten.
 IPConnection_warning_WANIPEQUALGatewayIP=Du har angivit WAN-IP:n som ZVMODELVZ:s nätbrygga och ZVMODELVZ kan kanske inte anslutas till Internet. Ställ in korrekt värde för nätbryggan.
+IPConnection_x_WAN_LAN_conflict=WAN och LAN bör ha olika IP-adresser och subnet.
 [QIS_internet_isp.js]
 BOP_isp_host_desc=Det här fältet gör det möjligt att ange ett värdnamn för ZVMODELVZ. Det krävs normalt av Internetleverantören.
 BOP_isp_host_item=Värdnamn (tillval):
@@ -1052,6 +1070,7 @@ Main_alert_proceeding_desc1=Går vidare
 Main_alert_proceeding_desc4=Vänta, 
 Main_alert_proceeding_desc3=Avslutad!
 Main_content_Login_Item7=Det tar ungefär 60 sekunder att starta om routern. Är du säker på att du vill starta om routern nu?
+[###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=Det tar ungefär 80 sekunder att starta om routern. Är du säker på att du vill starta om routern nu?
 [QIS-general.js] 
 JS_fieldblank=Fältet får inte vara tomt.
 JS_validip=är inte en giltig IP-adress.
@@ -1104,11 +1123,13 @@ Setting_upload_itemname=Återställ inställningarna
 Setting_factorydefault_itemdesc=Klicka på [Återställ] för att återställa routerns fabriksinställningar och radera alla nuvarande inställningar. Vänta en stund medan routern startar om. 
 Setting_save_itemdesc=Klicka på [Spara] för att spara nuvarande ZVMODELVZ-inställningar i en fil. (Obs: när de nuvarande inställningarna sparas till en fil sparas de också i flashminnet.)
 Setting_upload_itemdesc=Ange sökväg och namn för inställningsfilen. Klicka sedan på [Ladda upp] för att skriva filen till ZVMODELVZ. Vänta i 60 sekunder medan ZVMODELVZ startar om.
+[###MODEL_DEP###][RT-N65U]Setting_upload_itemdesc=Ange sökväg och namn för inställningsfilen. Klicka sedan på [Ladda upp] för att skriva filen till ZVMODELVZ. Vänta i 80 sekunder medan ZVMODELVZ startar om.
 Setting_upload_hint=Ogiltigt filformat eller sökväg!
 Setting_factorydefault_hint1=Alla nuvarande inställningar raderas och routern kommer att återställas till dess fabriksinställningar.\n
 Setting_factorydefault_hint2=Är du säker på att du vill fortsätta?
 Setting_factorydefault_iphint=Standard LAN-IP för ZVMODELVZ är 192.168.1.1.\nOm du inte kan gå tillbaka till inställningssidan senare, uppdatera datorns IP-konfiguration.
 SET_ok_desc=Inställningarna laddas upp! Vänta i ungefär 60 sekunder.
+[###MODEL_DEP###][RT-N65U]SET_ok_desc=Inställningarna laddas upp! Vänta i ungefär 80 sekunder.
 SET_fail_title=Kunde inte ladda upp inställningsfilen!
 SET_fail_desc=Kunde inte ladda upp inställningsfilen. Det kan bero på felaktig inställningsfil eller felaktig överföring. Kontrollera verifieringen av den fasta programvaran och försök igen.
 RHELP_desc4=Det står för destinationsnätverk eller värd i en routerregel. Det kan därmed vara en värdadress, t.ex. ”192.168.123.11” eller en nätverksadress, t.ex. ”192.168.0.0”.
@@ -1217,6 +1238,8 @@ PPPConnection_x_WANGateway_itemname=Nätbrygga
 PPPConnection_x_WANDNSServer_itemname=DNS-servrar
 PPPConnection_x_WANLink_itemname=Anslutningsstatus:
 FirewallConfig_display1_sectiondesc=Filtret för nätverkstjänster blockerar LAN-till-WAN-paketutbyten och hindrar enheter från att använda angivna nätverkstjänster.<p>Om du till exempel inte vill att enheten ska ,kunna utnyttja internettjänsten, ange 80 i destinationsporten. Den trafik som utnyttjar port 80 kommer att blockeras.<p>Lämna käll-IP-fältet tomt för att tillämpa denna regel på alla LAN-enheter.
+FirewallConfig_display3_sectiondesc=<b>Svarta listan varaktighet :</b> Under den schemalagda tiden kan inte klienter i den svart listan använda de angivna nätverkstjänsterna.  Efter den angivna tiden kan alla klienter i LAN komma åt de angivna nätverkstjänsterna.<br><b>Vita listan varaktighet :</b> Under den schemalagda tiden kan klienter i den vita listan ENDAST använda de specificerade nätverkstjänsterna.  Efter den angivna tiden kommer klienter i den vita listan och andra nätverksklienter inte att kunna komma åt internet och andra nätverkstjänster.
+FirewallConfig_display4_sectiondesc=<b>Notera :</b> Om du ställer in subnätet för den vita listan kommer inte IP-adresser utanför subnätet att kunna komma åt internet eller någon internettjänst.
 FirewallConfig_LanWanActiveDate_itemname=Datum som LAN till WAN-filtret ska aktiveras:
 FirewallConfig_LanWanActiveDate_itemdesc=Detta fält anger de datum då LAN till WAN-filtret aktiveras.
 FirewallConfig_LanWanActiveTime_itemname=Tid på dagen som LAN till WAN-filtret ska aktiveras:
@@ -1379,6 +1402,7 @@ TZ81=Nya Kaledonien
 TZ82=Magadan, Fiji, Kamtjatka, Marshall Is.
 TZ83=Auckland, Wellington
 TZ84=Nuku'alofa
+TZ85=British Summer Time (BST)
 LANHostConfig_x_NTPServer_itemname=NTP-server
 LANHostConfig_x_NTPServer_itemdesc=Synkronisera ditt system med en NTP-server.
 LANHostConfig_x_DDNSEnable_sectionname=DDNS-inställningar
@@ -1495,6 +1519,7 @@ USB_Application_disk_miscellaneous_desc=Fler detaljerade inställningar för USB
 BasicConfig_EnableDownloadMachine_itemname=Aktivera nedladdningshanteraren?
 BasicConfig_EnableDownloadShare_itemname=Aktivera nedladdningsdelning?
 BasicConfig_EnableMediaServer_itemname=Aktivera UPnP?
+DM_Install_partition=Välj den USB-lagringsenhet som du vill komma åt.
 CTL_restore=Återställ
 CTL_onlysave=Spara
 CTL_clear=Rensa
@@ -1526,6 +1551,7 @@ IPConnection_TriggerList_widzarddesc=Välkända applikationer:
 FirewallConfig_LWFilterList_widzarddesc=Välkända applikationer:
 LANHostConfig_x_DDNSServer_linkname=Gratis prov
 SAVE_note=Obs: Det tar ungefär 60 sekunder.
+[###MODEL_DEP###][RT-N65U]SAVE_note=Obs: Det tar ungefär 80 sekunder.
 IPConnection_VServerPNo_itemname=Protokoll nr
 LANHostConfig_ManualDHCPEnable_itemname=Aktivera manuell tilldelning?
 LANHostConfig_ManualDHCPList_groupitemdesc=Manuellt tilldelad IP runt DHCP Lad
@@ -1778,7 +1804,11 @@ qis_simple_wls_recmd=(Rekommenderad)
 url_keyword_alert=Lösenord för webbadress
 Not_Listed=som inte nämns
 qis_service=Tjänst
-isp_br_gvt_note=If you are GVT users, please key in the user name ( turbonet@turbonet ) and password ( gvt25 ). Otherwise, please key in the user name and password provided by your ISP.
+isp_br_gvt_note=If you are GVT users, please key in the user name <b>turbonet@turbonet</b> and password <b>gvt25</b>. Otherwise, please key in the user name and password provided by your ISP.
+pvc_del_alert_desc=Är du säker på att du vill radera denna PVC?
+same_vpi_vci=Dubblett eller samma VPI- och VCI-inställningar.
+dns_server_no_set=Ställ in DNS-servern på klientenheten.
+dsl_wan_page_desc=Klicka på den numeriska indexet för att redigera en PVC-inställning. Klicka på lägg till (+) eller radera (-) ikonen för att lägga till eller radera en PVC-inställning.
 [adsl end]
 [untrans]
 prev_page=Previous page
@@ -1787,9 +1817,12 @@ step_use_aicloud=Please follow the steps below to use AiCloud:
 download_aicloud=Download ASUS AiCloud app to phone or pad from
 connect_through_wifi=Connect your iOS or Android devices to ZVMODELVZ through WiFi. The AiCloud app will automatically guide you through the process of setup.
 access_service=Now you can access your USB storage and Network place(Samba) enabled devices connected to ZVMODELVZ.
+aicloud_bandwidth1=For the best viewing/listening experience, we recommend the following upload bandwidth for different media format. A 768 Kbps is recommended for music, 5Mbps for SD video, 15Mbps for 720p video and 30Mbps or faster for 1080p HD video streaming.
+aicloud_bandwidth2=Internet upload speeds may vary depending on your ISP and other factors.
+aicloud_bandwidth3=If you are not sure what your Internet speed is, you can ask your ISP, or use an online broadband speed test from a computer connected to ZVMODELVZ.
 aicloud_for_privateIP1=We are going to support AiCloud with private IP later, in this moment, you can setup <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_VirtualServer_Content.asp" target="_blank">Port forwarding</a> or <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_Exposed_Content.asp" target="_blank">DMZ</a> to access private ip address remotely.
-aicloud_for_privateIP2= The AiCloud need to use 8082 and 443 port. you can change the port setting <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_BasicFirewall_Content.asp" target="_blank">here</a>.
-aicloud_for_privateIP3= For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
+aicloud_for_privateIP2=The AiCloud need to use 8082 and 443 port.
+aicloud_for_privateIP3=For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=To establish your cloud disk, you need to plug-in an USB storage into this router, then enable cloud disk.
 aicloud_disk2= Default cloud disk login account use the router login account.
 aicloud_disk_case0=The Cloud disk can be accessed via <a style="font-weight: bolder;text-decoration: underline;" href="http://www.asusnetwork.net:8082" target="_blank">http://www.asusnetwork.net:8082</a> when you connect to ZVMODELVZ in LAN.
@@ -1802,8 +1835,3 @@ smart_access2=You can also wake up your PCs in home remotely by WOL.
 smart_access3=What is <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="http://support.asus.com/Search.aspx?SLanguage=en&keyword=WOL&BIOS" target="_blank">WOL</a>?
 smart_sync1=To start smart sync, you need to sign up an <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asuswebstorage.com/" target="_blank">ASUS webstorage</a> account, then enable cloud disk and smart sync. (Make sure that you have plug-in an USB storage into this router.)
 smart_sync2=Open AiCloud APP. Choose a specific folder in cloud disk that you want to sync with ASUS web storage, then follow the steps show in the app.
-web_redirect_reason7=PIN code is not correct. After three failed attempts to enter the PIN code, your SIM card will be blocked.
-pvc_del_alert_desc=Are you sure to delete this PVC?
-same_vpi_vci=VPI and VCI are duplicated.
-dns_server_no_set=DNS server not set! Please setup the DNS server on the client device.
-dsl_wan_page_desc=Click index number to edit PVC setting or click right icon to add or delete PVC

@@ -42,7 +42,9 @@
 #define	DEFAULT_SSID_5G	"ASUS_5G"
 
 #define RTL8367M_DEV  "/dev/rtl8367m"
+#define RTL8367R_DEV  "/dev/rtl8367r" //Support RTL8367R switch
 #define LED_CONTROL(led, flag) ralink_gpio_write_bit(led, flag)
+
 
 typedef struct {
         unsigned int link[5];
@@ -227,106 +229,106 @@ setCountryCode_2G(const char *cc)
 	/* Please refer to ISO3166 code list for other countries and can be found at
 	 * http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html#sz
 	 */
-	else if (!strcasecmp(cc, "DB")) ;
+	else if (!strcasecmp(cc, "AE")) ;
 	else if (!strcasecmp(cc, "AL")) ;
-	else if (!strcasecmp(cc, "DZ")) ;
-	else if (!strcasecmp(cc, "AR")) ;
 	else if (!strcasecmp(cc, "AM")) ;
-	else if (!strcasecmp(cc, "AU")) ;
+	else if (!strcasecmp(cc, "AR")) ;
 	else if (!strcasecmp(cc, "AT")) ;
+	else if (!strcasecmp(cc, "AU")) ;
 	else if (!strcasecmp(cc, "AZ")) ;
-	else if (!strcasecmp(cc, "BH")) ;
-	else if (!strcasecmp(cc, "BY")) ;
 	else if (!strcasecmp(cc, "BE")) ;
-	else if (!strcasecmp(cc, "BZ")) ;
+	else if (!strcasecmp(cc, "BG")) ;
+	else if (!strcasecmp(cc, "BH")) ;
+	else if (!strcasecmp(cc, "BN")) ;
 	else if (!strcasecmp(cc, "BO")) ;
 	else if (!strcasecmp(cc, "BR")) ;
-	else if (!strcasecmp(cc, "BN")) ;
-	else if (!strcasecmp(cc, "BG")) ;
+	else if (!strcasecmp(cc, "BY")) ;
+	else if (!strcasecmp(cc, "BZ")) ;
 	else if (!strcasecmp(cc, "CA")) ;
+	else if (!strcasecmp(cc, "CH")) ;
 	else if (!strcasecmp(cc, "CL")) ;
 	else if (!strcasecmp(cc, "CN")) ;
 	else if (!strcasecmp(cc, "CO")) ;
 	else if (!strcasecmp(cc, "CR")) ;
-	else if (!strcasecmp(cc, "HR")) ;
 	else if (!strcasecmp(cc, "CY")) ;
 	else if (!strcasecmp(cc, "CZ")) ;
+	else if (!strcasecmp(cc, "DB")) ;
+	else if (!strcasecmp(cc, "DE")) ;
 	else if (!strcasecmp(cc, "DK")) ;
 	else if (!strcasecmp(cc, "DO")) ;
+	else if (!strcasecmp(cc, "DZ")) ;
 	else if (!strcasecmp(cc, "EC")) ;
-	else if (!strcasecmp(cc, "EG")) ;
-	else if (!strcasecmp(cc, "SV")) ;
 	else if (!strcasecmp(cc, "EE")) ;
+	else if (!strcasecmp(cc, "EG")) ;
+	else if (!strcasecmp(cc, "ES")) ;
 	else if (!strcasecmp(cc, "FI")) ;
 	else if (!strcasecmp(cc, "FR")) ;
+	else if (!strcasecmp(cc, "GB")) ;
 	else if (!strcasecmp(cc, "GE")) ;
-	else if (!strcasecmp(cc, "DE")) ;
 	else if (!strcasecmp(cc, "GR")) ;
 	else if (!strcasecmp(cc, "GT")) ;
-	else if (!strcasecmp(cc, "HN")) ;
 	else if (!strcasecmp(cc, "HK")) ;
+	else if (!strcasecmp(cc, "HN")) ;
+	else if (!strcasecmp(cc, "HR")) ;
 	else if (!strcasecmp(cc, "HU")) ;
-	else if (!strcasecmp(cc, "IS")) ;
-	else if (!strcasecmp(cc, "IN")) ;
 	else if (!strcasecmp(cc, "ID")) ;
-	else if (!strcasecmp(cc, "IR")) ;
 	else if (!strcasecmp(cc, "IE")) ;
 	else if (!strcasecmp(cc, "IL")) ;
+	else if (!strcasecmp(cc, "IN")) ;
+	else if (!strcasecmp(cc, "IR")) ;
+	else if (!strcasecmp(cc, "IS")) ;
 	else if (!strcasecmp(cc, "IT")) ;
-	else if (!strcasecmp(cc, "JP")) ;
 	else if (!strcasecmp(cc, "JO")) ;
-	else if (!strcasecmp(cc, "KZ")) ;
+	else if (!strcasecmp(cc, "JP")) ;
 	else if (!strcasecmp(cc, "KP")) ;
 	else if (!strcasecmp(cc, "KR")) ;
 	else if (!strcasecmp(cc, "KW")) ;
-	else if (!strcasecmp(cc, "LV")) ;
+	else if (!strcasecmp(cc, "KZ")) ;
 	else if (!strcasecmp(cc, "LB")) ;
 	else if (!strcasecmp(cc, "LI")) ;
 	else if (!strcasecmp(cc, "LT")) ;
 	else if (!strcasecmp(cc, "LU")) ;
-	else if (!strcasecmp(cc, "MO")) ;
-	else if (!strcasecmp(cc, "MK")) ;
-	else if (!strcasecmp(cc, "MY")) ;
-	else if (!strcasecmp(cc, "MX")) ;
-	else if (!strcasecmp(cc, "MC")) ;
+	else if (!strcasecmp(cc, "LV")) ;
 	else if (!strcasecmp(cc, "MA")) ;
+	else if (!strcasecmp(cc, "MC")) ;
+	else if (!strcasecmp(cc, "MK")) ;
+	else if (!strcasecmp(cc, "MO")) ;
+	else if (!strcasecmp(cc, "MX")) ;
+	else if (!strcasecmp(cc, "MY")) ;
 	else if (!strcasecmp(cc, "NL")) ;
-	else if (!strcasecmp(cc, "NZ")) ;
 	else if (!strcasecmp(cc, "NO")) ;
+	else if (!strcasecmp(cc, "NZ")) ;
 	else if (!strcasecmp(cc, "OM")) ;
-	else if (!strcasecmp(cc, "PK")) ;
 	else if (!strcasecmp(cc, "PA")) ;
 	else if (!strcasecmp(cc, "PE")) ;
 	else if (!strcasecmp(cc, "PH")) ;
+	else if (!strcasecmp(cc, "PK")) ;
 	else if (!strcasecmp(cc, "PL")) ;
-	else if (!strcasecmp(cc, "PT")) ;
 	else if (!strcasecmp(cc, "PR")) ;
+	else if (!strcasecmp(cc, "PT")) ;
 	else if (!strcasecmp(cc, "QA")) ;
 	else if (!strcasecmp(cc, "RO")) ;
 	else if (!strcasecmp(cc, "RU")) ;
 	else if (!strcasecmp(cc, "SA")) ;
-	else if (!strcasecmp(cc, "SG")) ;
-	else if (!strcasecmp(cc, "SK")) ;
-	else if (!strcasecmp(cc, "SI")) ;
-	else if (!strcasecmp(cc, "ZA")) ;
-	else if (!strcasecmp(cc, "ES")) ;
 	else if (!strcasecmp(cc, "SE")) ;
-	else if (!strcasecmp(cc, "CH")) ;
+	else if (!strcasecmp(cc, "SG")) ;
+	else if (!strcasecmp(cc, "SI")) ;
+	else if (!strcasecmp(cc, "SK")) ;
+	else if (!strcasecmp(cc, "SV")) ;
 	else if (!strcasecmp(cc, "SY")) ;
-	else if (!strcasecmp(cc, "TW")) ;
 	else if (!strcasecmp(cc, "TH")) ;
-	else if (!strcasecmp(cc, "TT")) ;
 	else if (!strcasecmp(cc, "TN")) ;
 	else if (!strcasecmp(cc, "TR")) ;
+	else if (!strcasecmp(cc, "TT")) ;
+	else if (!strcasecmp(cc, "TW")) ;
 	else if (!strcasecmp(cc, "UA")) ;
-	else if (!strcasecmp(cc, "AE")) ;
-	else if (!strcasecmp(cc, "GB")) ;
 	else if (!strcasecmp(cc, "US")) ;
 	else if (!strcasecmp(cc, "UY")) ;
 	else if (!strcasecmp(cc, "UZ")) ;
 	else if (!strcasecmp(cc, "VE")) ;
 	else if (!strcasecmp(cc, "VN")) ;
 	else if (!strcasecmp(cc, "YE")) ;
+	else if (!strcasecmp(cc, "ZA")) ;
 	else if (!strcasecmp(cc, "ZW")) ;
 	else
 	{
@@ -477,19 +479,23 @@ getPIN()
 	return 0;
 }
 
-//New ATE Command
+//Supports both RTL8367M and RTL8367R Realtek switch
 int
 GetPhyStatus(void)
 {
-#ifdef RTCONFIG_DSL // TODO: is it needed by ATE?
-	return 1;
-#else
         int fd;
         char buf[32];
+	char dev_path[32];
 
-        fd = open(RTL8367M_DEV, O_RDONLY);
+#ifdef RTCONFIG_DSL
+	strcpy(dev_path, RTL8367R_DEV);
+#else
+	strcpy(dev_path, RTL8367M_DEV);
+#endif
+
+        fd = open(dev_path, O_RDONLY);
         if (fd < 0) {
-                perror(RTL8367M_DEV);
+                perror(dev_path);
                 return 0;
         }
 
@@ -500,23 +506,32 @@ GetPhyStatus(void)
 
         if (ioctl(fd, 18, &pS) < 0)
         {
-                perror("rtl8367m ioctl");
+		sprintf(buf, "ioctl: %s", dev_path);
+                perror(buf);
                 close(fd);
                 return 0;
         }
 
         close(fd);
 
+#ifdef RTCONFIG_DSL
+        sprintf(buf, "W0=%C;L1=%C;L2=%C;L3=%C;L4=%C;",
+        	(pS.link[0] == 1) ? (pS.speed[0] == 2) ? 'G' : 'M': 'X',
+	        (pS.link[1] == 1) ? (pS.speed[1] == 2) ? 'G' : 'M': 'X',
+        	(pS.link[2] == 1) ? (pS.speed[2] == 2) ? 'G' : 'M': 'X',
+	        (pS.link[3] == 1) ? (pS.speed[3] == 2) ? 'G' : 'M': 'X',
+        	(pS.link[4] == 1) ? (pS.speed[4] == 2) ? 'G' : 'M': 'X');
+
+#else
         sprintf(buf, "W0=%C;L1=%C;L2=%C;L3=%C;L4=%C;",
                 (pS.link[4] == 1) ? (pS.speed[4] == 2) ? 'G' : 'M': 'X',
                 (pS.link[3] == 1) ? (pS.speed[3] == 2) ? 'G' : 'M': 'X',
                 (pS.link[2] == 1) ? (pS.speed[2] == 2) ? 'G' : 'M': 'X',
                 (pS.link[1] == 1) ? (pS.speed[1] == 2) ? 'G' : 'M': 'X',
                 (pS.link[0] == 1) ? (pS.speed[0] == 2) ? 'G' : 'M': 'X');
-
+#endif
         puts(buf);
 	return 1;
-#endif
 }
 
 int
@@ -535,14 +550,6 @@ setAllLedOn(void)
 	return 0;
 }
 
-#if 0
-int
-setAllLedOff(void)
-{
-	puts("Not support");
-	return 0;
-}
-#else
 setAllLedOff(void)
 {
         LED_CONTROL(RA_LED_POWER, RA_LED_OFF);
@@ -551,7 +558,6 @@ setAllLedOff(void)
         LED_CONTROL(RA_LED_USB, RA_LED_OFF);
         return 0;
 }
-#endif
 
 int 
 ResetDefault(void)
@@ -559,52 +565,6 @@ ResetDefault(void)
         eval("mtd-erase","-d","nvram");
         puts("1");
 	return 0;
-}
-
-int
-Get_USB_Port_Info(int port_x)
-{
-	char output_buf[16];
-	char usb_pid[14];
-	char usb_vid[14];
-	sprintf(usb_pid, "usb_path%d_pid", port_x);
-	sprintf(usb_vid, "usb_path%d_vid", port_x);
-
-	if( strcmp(nvram_get(usb_pid),"") && strcmp(nvram_get(usb_vid),"") ) {
-		sprintf(output_buf, "%s/%s",nvram_get(usb_pid),nvram_get(usb_vid));
-		puts(output_buf);
-	}
-	else
-		puts("N/A");
-
-	return 1;
-}
-
-int
-Get_USB_Port_Folder(int port_x)
-{
-        char usb_folder[19];
-        sprintf(usb_folder, "usb_path%d_fs_path0", port_x);
-        if( strcmp(nvram_safe_get(usb_folder),"") )
-                puts(nvram_safe_get(usb_folder));
-        else
-                puts("N/A");
-
-        return 1;
-}
-
-int
-Get_SD_Card_Info(int port_x)
-{
-	puts("Not support\n");
-	return 0;
-}
-
-int
-Get_SD_Card_Folder(void)
-{
-        puts("Not support\n");
-        return 0;
 }
 
 int
@@ -739,8 +699,11 @@ int gen_ralink_config(int band, int is_iNIC)
 	str = nvram_safe_get(strcat_r(prefix, "country_code", tmp));
 	if (str && strlen(str))
 	{
-		if (		(!strcasecmp(str, "AL")) ||
-				(!strcasecmp(str, "DZ")) ||
+		if (		(!strcasecmp(str, "AE")) ||
+				(!strcasecmp(str, "AL")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "AR")) ||
+#endif
 				(!strcasecmp(str, "AU")) ||
 				(!strcasecmp(str, "BH")) ||
 				(!strcasecmp(str, "BY")) ||
@@ -749,38 +712,51 @@ int gen_ralink_config(int band, int is_iNIC)
 				(!strcasecmp(str, "CO")) ||
 				(!strcasecmp(str, "CR")) ||
 				(!strcasecmp(str, "DO")) ||
+				(!strcasecmp(str, "DZ")) ||
 				(!strcasecmp(str, "EC")) ||
-				(!strcasecmp(str, "SV")) ||
 				(!strcasecmp(str, "GT")) ||
-				(!strcasecmp(str, "HN")) ||
 				(!strcasecmp(str, "HK")) ||
-				(!strcasecmp(str, "IN")) ||
+				(!strcasecmp(str, "HN")) ||
 				(!strcasecmp(str, "IL")) ||
+#ifndef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "IN")) ||
+#endif
 				(!strcasecmp(str, "JO")) ||
-				(!strcasecmp(str, "KZ")) ||
 				(!strcasecmp(str, "KW")) ||
+				(!strcasecmp(str, "KZ")) ||
 				(!strcasecmp(str, "LB")) ||
-				(!strcasecmp(str, "MO")) ||
-				(!strcasecmp(str, "MK")) ||
-				(!strcasecmp(str, "MY")) ||
-				(!strcasecmp(str, "MX")) ||
 				(!strcasecmp(str, "MA")) ||
-				(!strcasecmp(str, "NZ")) ||
+				(!strcasecmp(str, "MK")) ||
+#ifndef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "MO")) ||
+				(!strcasecmp(str, "MX")) ||
+#endif
+				(!strcasecmp(str, "MY")) ||
+#ifndef RTCONFIG_LOCALE2012
 				(!strcasecmp(str, "NO")) ||
+#endif
+				(!strcasecmp(str, "NZ")) ||
 				(!strcasecmp(str, "OM")) ||
-				(!strcasecmp(str, "PK")) ||
 				(!strcasecmp(str, "PA")) ||
+				(!strcasecmp(str, "PK")) ||
 				(!strcasecmp(str, "PR")) ||
 				(!strcasecmp(str, "QA")) ||
+#ifndef RTCONFIG_LOCALE2012
 				(!strcasecmp(str, "RO")) ||
 				(!strcasecmp(str, "RU")) ||
+#endif
 				(!strcasecmp(str, "SA")) ||
 				(!strcasecmp(str, "SG")) ||
+				(!strcasecmp(str, "SV")) ||
 				(!strcasecmp(str, "SY")) ||
 				(!strcasecmp(str, "TH")) ||
+#ifndef RTCONFIG_LOCALE2012
 				(!strcasecmp(str, "UA")) ||
-				(!strcasecmp(str, "AE")) ||
+#endif
 				(!strcasecmp(str, "US")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "UY")) ||
+#endif
 				(!strcasecmp(str, "VN")) ||
 				(!strcasecmp(str, "YE")) ||
 				(!strcasecmp(str, "ZW"))
@@ -788,72 +764,137 @@ int gen_ralink_config(int band, int is_iNIC)
 		{
 			fprintf(fp, "CountryRegionABand=%d\n", 0);
 		}
-		else if (	(!strcasecmp(str, "AT")) ||
+		else if (
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "AM")) ||
+#endif
+				(!strcasecmp(str, "AT")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "AZ")) ||
+#endif
 				(!strcasecmp(str, "BE")) ||
-				(!strcasecmp(str, "BR")) ||
 				(!strcasecmp(str, "BG")) ||
+#ifndef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "BR")) ||
+#endif
+				(!strcasecmp(str, "CH")) ||
 				(!strcasecmp(str, "CY")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "CZ")) ||
+#endif
+				(!strcasecmp(str, "DE")) ||
 				(!strcasecmp(str, "DK")) ||
 				(!strcasecmp(str, "EE")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "EG")) ||
+#endif
+				(!strcasecmp(str, "ES")) ||
 				(!strcasecmp(str, "FI")) ||
-				(!strcasecmp(str, "DE")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "FR")) ||
+#endif
+				(!strcasecmp(str, "GB")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "GE")) ||
+#endif
 				(!strcasecmp(str, "GR")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "HR")) ||
+#endif
 				(!strcasecmp(str, "HU")) ||
-				(!strcasecmp(str, "IS")) ||
 				(!strcasecmp(str, "IE")) ||
+				(!strcasecmp(str, "IS")) ||
 				(!strcasecmp(str, "IT")) ||
-				(!strcasecmp(str, "LV")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "JP")) ||
+				(!strcasecmp(str, "KP")) ||
+				(!strcasecmp(str, "KR")) ||
+#endif
 				(!strcasecmp(str, "LI")) ||
 				(!strcasecmp(str, "LT")) ||
 				(!strcasecmp(str, "LU")) ||
+				(!strcasecmp(str, "LV")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "MC")) ||
+#endif
 				(!strcasecmp(str, "NL")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "NO")) ||
+#endif
 				(!strcasecmp(str, "PL")) ||
 				(!strcasecmp(str, "PT")) ||
-				(!strcasecmp(str, "SK")) ||
-				(!strcasecmp(str, "SI")) ||
-				(!strcasecmp(str, "ZA")) ||
-				(!strcasecmp(str, "ES")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "RO")) ||
+#endif
 				(!strcasecmp(str, "SE")) ||
-				(!strcasecmp(str, "CH")) ||
-				(!strcasecmp(str, "GB")) ||
-				(!strcasecmp(str, "UZ"))
+				(!strcasecmp(str, "SI")) ||
+				(!strcasecmp(str, "SK")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "TN")) ||
+				(!strcasecmp(str, "TR")) ||
+				(!strcasecmp(str, "TT")) ||
+#endif
+				(!strcasecmp(str, "UZ")) ||
+				(!strcasecmp(str, "ZA"))
 		)
 		{
 			fprintf(fp, "CountryRegionABand=%d\n", 1);
 		}
-		else if (	(!strcasecmp(str, "AM")) ||
+		else if (
+#ifndef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "AM")) ||
 				(!strcasecmp(str, "AZ")) ||
-				(!strcasecmp(str, "HR")) ||
 				(!strcasecmp(str, "CZ")) ||
 				(!strcasecmp(str, "EG")) ||
 				(!strcasecmp(str, "FR")) ||
 				(!strcasecmp(str, "GE")) ||
+				(!strcasecmp(str, "HR")) ||
 				(!strcasecmp(str, "MC")) ||
-				(!strcasecmp(str, "TT")) ||
 				(!strcasecmp(str, "TN")) ||
-				(!strcasecmp(str, "TR"))
+				(!strcasecmp(str, "TR")) ||
+				(!strcasecmp(str, "TT"))
+#else
+				(!strcasecmp(str, "IN")) ||
+				(!strcasecmp(str, "MX"))
+#endif
 		)
 		{
 			fprintf(fp, "CountryRegionABand=%d\n", 2);
 		}
-		else if (	(!strcasecmp(str, "AR")) ||
+		else if (
+#ifndef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "AR")) ||
+#endif
 				(!strcasecmp(str, "TW"))
+				
 		)
 		{
 			fprintf(fp, "CountryRegionABand=%d\n", 3);
 		}
-		else if (	(!strcasecmp(str, "BZ")) ||
+		else if (
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "BR")) ||
+#endif
+				(!strcasecmp(str, "BZ")) ||
 				(!strcasecmp(str, "BO")) ||
 				(!strcasecmp(str, "BN")) ||
 				(!strcasecmp(str, "CN")) ||
 				(!strcasecmp(str, "ID")) ||
 				(!strcasecmp(str, "IR")) ||
+#ifdef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "MO")) ||
+#endif
 				(!strcasecmp(str, "PE")) ||
 				(!strcasecmp(str, "PH"))
+#ifdef RTCONFIG_LOCALE2012
+							 ||
+				(!strcasecmp(str, "VE"))
+#endif
 		)
 		{
 			fprintf(fp, "CountryRegionABand=%d\n", 4);
 		}
+#ifndef RTCONFIG_LOCALE2012
 		else if (	(!strcasecmp(str, "KP")) ||
 				(!strcasecmp(str, "KR")) ||
 				(!strcasecmp(str, "UY")) ||
@@ -862,11 +903,23 @@ int gen_ralink_config(int band, int is_iNIC)
 		{
 			fprintf(fp, "CountryRegionABand=%d\n", 5);
 		}
+#else
+		else if (!strcasecmp(str, "RU"))
+		{
+			fprintf(fp, "CountryRegionABand=%d\n", 6);
+		}
+#endif
 		else if (!strcasecmp(str, "DB"))
 		{
 			fprintf(fp, "CountryRegionABand=%d\n", 7);
 		}
-		else if (!strcasecmp(str, "JP"))
+		else if (
+#ifndef RTCONFIG_LOCALE2012
+				(!strcasecmp(str, "JP"))
+#else
+				(!strcasecmp(str, "UA"))
+#endif
+		)
 		{
 			fprintf(fp, "CountryRegionABand=%d\n", 9);
 		}
@@ -4615,4 +4668,8 @@ ate_commit_bootlog(char *err_code)
 	FWrite(fail_buffer, OFFSET_FAIL_RET, sizeof(fail_buffer));
 }
 
+int Get_channel_list(int unit)
+{
+	puts("ATE_ERROR"); //Need to implement
+}
 #endif

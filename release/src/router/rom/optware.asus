@@ -1,12 +1,12 @@
 Package: DM2_Utility
-Version: 2.0.3.0
+Version: 2.0.3.2
 Depends: 
 OptionalUtility: 2.1.0.0+
 Section: net
 Architecture: mipsel
 Maintainer: ASUS
 Size: 
-Filename: DM2_2030.zip
+Filename: DM2_2032.zip
 Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
 Description: Download tools
 URL: 
@@ -27,14 +27,14 @@ URL:
 
 
 Package: downloadmaster
-Version: 3.1.0.54
+Version: 3.1.0.58
 Depends: uclibc-opt, openssl, zlib, libcurl, libevent, ncurses, libxml2, libuclibc++, libsigc++, libpar2, pcre, spawn-fcgi
 OptionalUtility: 1.0.0.2+
 Section: net
 Architecture: mipsel
 Maintainer: ASUS
-Size: 4285031
-Filename: downloadmaster_3.1.0.54_mipsel.ipk
+Size: 4277555
+Filename: downloadmaster_3.1.0.58_mipsel.ipk
 Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
 Description: Download tools
 URL: http://www.asusnetwork.net:8081/
@@ -49,6 +49,20 @@ Architecture: mipsel
 Maintainer: ASUS
 Size: 4604963
 Filename: mediaserver_1.0.0.13_mipsel.ipk
+Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
+Description: 
+URL: http://www.asusnetwork.net:8081/mediaserverui/mediaserver.asp
+
+
+Package: mediaserver2
+Version: 1.0.0.15
+Depends: uclibc-opt, zlib, gdbm, libid3tag, sqlite, libjpeg, libexif, libogg, flac, libvorbis, ffmpeg, e2fsprogs, pcre, zlib, libstdc++, openssl, spawn-fcgi
+OptionalUtility: 1.0.0.2
+Section: net
+Architecture: mipsel
+Maintainer: ASUS
+Size: 4732195
+Filename: mediaserver2_1.0.0.15_mipsel.ipk
 Source: http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT
 Description: 
 URL: http://www.asusnetwork.net:8081/mediaserverui/mediaserver.asp

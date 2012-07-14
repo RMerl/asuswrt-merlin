@@ -30,4 +30,5 @@ endif
 
 # Display active connections
 	install -m 0700 netstat-nat.sh $(INSTALLDIR)/usr/sbin/
+
 clean:

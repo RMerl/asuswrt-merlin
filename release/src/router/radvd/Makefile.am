@@ -59,8 +59,12 @@ EXTRA_radvd_SOURCES = \
 	netlink.h \
 	privsep-linux.c
 
+radvd_CPPFLAGS = \
+	@DAEMON_CFLAGS@
+
 radvd_LDADD = \
-	@CONDITIONAL_SOURCES@
+	@CONDITIONAL_SOURCES@ \
+	@DAEMON_LIBS@
 
 radvd_DEPENDENCIES = \
 	@CONDITIONAL_SOURCES@

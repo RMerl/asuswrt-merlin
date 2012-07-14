@@ -449,6 +449,7 @@ static int connection_handle_write_prepare(server *srv, connection *con) {
 		case HTTP_METHOD_RESCANSMBPC:		
 		case HTTP_METHOD_GETROUTERMAC:
 		case HTTP_METHOD_GETFIRMVER:
+		case HTTP_METHOD_GETROUTERINFO:
 		   	//Cdbg(DBE,"http method= %s break;",connection_get_state(con->request.http_method));
 			break;
 		case HTTP_METHOD_OPTIONS:

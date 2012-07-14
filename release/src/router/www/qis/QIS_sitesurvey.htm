@@ -6,6 +6,33 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="stylesheet" type="text/css" href="/form_style.css">
 <link rel="stylesheet" type="text/css" href="qis_style.css">
+<style>
+#radio_0{
+  background: url(../images/survey/radio_status.png);
+  background-position: -0px -0px; width: 30px; height: 30px;
+}
+#radio_1{
+  background: url(../images/survey/radio_status.png);
+  background-position: -0px -30px; width: 30px; height: 30px;
+}	
+#radio_2{
+  background: url(../images/survey/radio_status.png);
+  background-position: -0px -60px; width: 30px; height: 30px;
+}	
+#radio_3{
+  background: url(../images/survey/radio_status.png);
+  background-position: -0px -90px; width: 30px; height: 30px;
+}	
+#radio_4{
+  background: url(../images/survey/radio_status.png);
+  background-position: -0px -120px; width: 30px; height: 30px;
+}	
+#radio_5{
+  background: url(../images/survey/radio_status.png);
+  background-position: -0px -150px; width: 30px; height: 30px;
+}	
+	
+</style>	
 <script language="JavaScript" type="text/javascript" src="/jquery.js"></script>
 <script type="text/JavaScript">
 
@@ -188,7 +215,9 @@ function showSiteTable(){
 					htmlCode +=	'<td width="10%" style="text-align:center;">5GHz</td>';
 				
 				// signal
-				htmlCode += '<td width="10%" style="text-align:center;"><img src="/images/survey/radio'+ Math.ceil(aplist[i][5]/20) +'.png"/></td></tr>';
+				//htmlCode += '<td width="10%" style="text-align:center;"><img src="/images/survey/radio'+ Math.ceil(aplist[i][5]/20) +'.png"/></td></tr>';
+				htmlCode += '<td width="10%" style="text-align:center;"><div style="margin-left:13px;" id="radio_'+ Math.ceil(aplist[i][5]/20) +'"></div></td></tr>';
+				
 			}
 		}
 	}
@@ -434,7 +463,7 @@ function rescan(){
 }
 
 function gotoPage(dst_url, flag){
-	if("<% nvram_get('sw_mode'); %>"){
+	if('<% nvram_get("sw_mode"); %>'){
 		location.href = dst_url;
 	}
 	else{

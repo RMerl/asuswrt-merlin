@@ -84,6 +84,35 @@
 	background-image:url(images/Tree/bg_01.png);
 	background-repeat:no-repeat;
 }
+#status_gif_Img_L{
+	background-image:url(images/cloudsync/left_right_trans.gif);
+	background-position: 10px -0px; width: 59px; height: 38px;
+}
+#status_gif_Img_LR{
+	background-image:url(images/cloudsync/left_right_trans.gif);
+	background-position: 10px -47px; width: 59px; height: 38px;
+}
+#status_gif_Img_R{
+	background-image:url(images/cloudsync/left_right_trans.gif);
+	background-position: 10px -97px; width: 59px; height: 38px;
+}
+
+#status_png_Img_error{
+	background-image:url(images/cloudsync/left_right_done.png);
+	background-position: -0px -0px; width: 59px; height: 38px;
+}
+#status_png_Img_L_ok{
+	background-image:url(images/cloudsync/left_right_done.png);
+	background-position: -0px -47px; width: 59px; height: 38px;
+}
+#status_png_Img_R_ok{
+	background-image:url(images/cloudsync/left_right_done.png);
+	background-position: -0px -95px; width: 59px; height: 38px;
+}
+#status_png_Img_LR_ok{
+	background-image:url(images/cloudsync/left_right_done.png);
+	background-position: -0px -142px; width: 59px; height: 38px;
+}
 </style>
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
@@ -245,11 +274,11 @@ function showcloud_synclist(){
 					else if(j == 4){
 						curRule = cloud_synclist_col[j];
 						if(cloud_synclist_col[j] == 2)
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img id="statusImg" width="45px" src="/images/cloudsync/left.gif"></td>';
+							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="status_image"><div id="status_gif_Img_L"></div></div></td>';//code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img id="statusImg" width="45px" src="/images/cloudsync/left.gif"></td>';
 						else if(cloud_synclist_col[j] == 1)
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img id="statusImg" width="45px" src="/images/cloudsync/right.gif"></td>';
+							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="status_image"><div id="status_gif_Img_R"></div></div></td>';
 						else
-							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><img id="statusImg" width="45px" src="/images/cloudsync/left_right.gif"></td>';
+							code +='<td width="'+wid[j]+'%"><span style="display:none">'+ cloud_synclist_col[j] +'</span><div id="status_image"><div id="status_gif_Img_LR"></div></div></td>';
 					}
 					else if(j == 6){
 						code +='<td width="'+wid[j]+'%" id="cloudStatus"></td>';
@@ -278,25 +307,33 @@ function updateCloudStatus(){
     	success: function(response){
 					if(cloud_status.toUpperCase() == "DOWNUP"){
 						cloud_status = "SYNC";
-						$("statusImg").src = "/images/cloudsync/left_right.gif";
+						$("status_image").firstChild.id="status_gif_Img_LR";
+						//$("statusImg").src = "/images/cloudsync/left_right.gif";
 					}
 					else if(cloud_status.toUpperCase() == "ERROR"){
-						$("statusImg").src = "/images/cloudsync/left_right_Error.png";
+						$("status_image").firstChild.id="status_png_Img_error";
+						//$("statusImg").src = "/images/cloudsync/left_right_Error.png";
 					}
-					else if(cloud_status.toUpperCase() == "UPLOAD"){					
-						$("statusImg").src = "/images/cloudsync/left.gif";
+					else if(cloud_status.toUpperCase() == "UPLOAD"){
+						$("status_image").firstChild.id="status_gif_Img_L";
+						//$("statusImg").src = "/images/cloudsync/left.gif";
 					}
 					else if(cloud_status.toUpperCase() == "DOWNLOAD"){
-						$("statusImg").src = "/images/cloudsync/right.gif";
+						$("status_image").firstChild.id="status_gif_Img_R";
+						//$("statusImg").src = "/images/cloudsync/right.gif";
 					}
 					else if(cloud_status.toUpperCase() == "SYNC"){
 						cloud_status = "Finish";
-						if(curRule == 2)
-							$("statusImg").src = "/images/cloudsync/left_ok.png";
-						else if(curRule == 1)
-							$("statusImg").src = "/images/cloudsync/right_ok.png";
-						else
-							$("statusImg").src = "/images/cloudsync/left_right_ok.png";
+						if(curRule == 2){
+							$("status_image").firstChild.id="status_png_Img_L_ok";
+							//$("statusImg").src = "/images/cloudsync/left_ok.png";
+						}else if(curRule == 1){
+							$("status_image").firstChild.id="status_png_Img_R_ok";
+							//$("statusImg").src = "/images/cloudsync/right_ok.png";
+						}else{
+							$("status_image").firstChild.id="status_png_Img_LR_ok";
+							//$("statusImg").src = "/images/cloudsync/left_right_ok.png";
+						}	
 					}
 
 					// handle msg
@@ -536,7 +573,7 @@ function initial_dir_status(data,node){
 	}
 }
 function get_disk_tree(){
-  $j("#test_panel").show(300);
+  $j("#test_panel").fadeIn(300);
 		get_layer_items("0");
 }
 function get_layer_items(layer_order){
@@ -826,12 +863,12 @@ function GetTree(layer_order, v){
 }
 function cancel_temp(){
 this.FromObject ="";
-$j("#test_panel").hide('fast');
+$j("#test_panel").fadeOut(300);
 }
 function confirm_temp(){
 	$('PATH').value = path_directory ;
 	this.FromObject ="";
-	$j("#test_panel").hide('fast');
+	$j("#test_panel").fadeOut(300);
 }
 </script>
 </head>

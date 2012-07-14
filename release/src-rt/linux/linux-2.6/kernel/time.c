@@ -149,6 +149,7 @@ static inline void warp_clock(void)
  * various programs will get confused when the clock gets warped.
  */
 
+#define DEBUG_TZ 0
 int do_sys_settimeofday(struct timespec *tv, struct timezone *tz)
 {
 	static int firsttime = 1;
@@ -175,8 +176,32 @@ int do_sys_settimeofday(struct timespec *tv, struct timezone *tz)
 		/* SMP safe, again the code in arch/foo/time.c should
 		 * globally block out interrupts when it runs.
 		 */
-		return do_settimeofday(tv);
+#if DEBUG_TZ
+		error = do_settimeofday(tv);
 	}
+	if (tz || tv) {
+		static int minutes = 0xdeadbeef;
+		if (tv) {
+			unsigned int s = tv->tv_sec % 86400;
+			unsigned int m = s / 60;
+			minutes = -sys_tz.tz_minuteswest;
+			printk(KERN_WARNING "set timezone %s%02d:%02d "
+			       "time %02d:%02d:%02d UTC\n",
+				minutes < 0 ? "" : "+",
+				minutes / 60, minutes % 60,
+				m / 60, m % 60, s % 60);
+			return error;
+		} else if (minutes != -sys_tz.tz_minuteswest) {
+			minutes = -sys_tz.tz_minuteswest;
+			printk(KERN_WARNING "set timezone %s%02d:%02d\n",
+				minutes < 0 ? "" : "+",
+				minutes / 60, minutes % 60);
+		}
+#else
+		return do_settimeofday(tv);
+#endif
+	}
+
 	return 0;
 }
 

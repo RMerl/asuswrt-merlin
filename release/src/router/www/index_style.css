@@ -62,7 +62,7 @@ body {
 	margin-top: -2px;
 	background: url(images/New_ui/lefttabdown_n.png);
 }
-.menu:hover {
+.menu:hover, .menu:active{
 	background: url(images/New_ui/lefttabdown_o.png);
 }
 .menu a {height:44px; text-decoration:none;	position:relative;}
@@ -85,6 +85,45 @@ body {
 #option1 a:hover, #option1 a:active {background: url(images/New_ui/lefttabdown_o.png)}
 #option1 div#option_str1 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
 
+#option2 {height:52px;}
+#option2 a:link,  #option1 a:visited {height:52px; background: url(images/New_ui/lefttabdown_n.png);}
+#option2 a:hover, #option1 a:active {background: url(images/New_ui/lefttabdown_o.png)}
+#option2 div#option_str1 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
+
+#option3 {height:52px;}
+#option3 a:link,  #option1 a:visited {height:52px; background: url(images/New_ui/lefttabdown_n.png);}
+#option3 a:hover, #option1 a:active {background: url(images/New_ui/lefttabdown_o.png)}
+#option3 div#option_str1 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
+
+#option4 {height:52px;}
+#option4 a:link,  #option1 a:visited {height:52px; background: url(images/New_ui/lefttabdown_n.png);}
+#option4 a:hover, #option1 a:active {background: url(images/New_ui/lefttabdown_o.png)}
+#option4 div#option_str1 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
+
+#option5 {height:52px;}
+#option5 a:link,  #option1 a:visited {height:52px; background: url(images/New_ui/lefttabdown_n.png);}
+#option5 a:hover, #option1 a:active {background: url(images/New_ui/lefttabdown_o.png)}
+#option5 div#option_str1 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
+
+#option6 {height:52px;}
+#option6 a:link,  #option1 a:visited {height:52px; background: url(images/New_ui/lefttabdown_n.png);}
+#option6 a:hover, #option1 a:active {background: url(images/New_ui/lefttabdown_o.png)}
+#option6 div#option_str1 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
+
+#option7 {height:52px;}
+#option7 a:link,  #option1 a:visited {height:52px; background: url(images/New_ui/lefttabdown_n.png);}
+#option7 a:hover, #option1 a:active {background: url(images/New_ui/lefttabdown_o.png)}
+#option7 div#option_str1 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
+
+#option8 {height:52px;}
+#option8 a:link,  #option1 a:visited {height:52px; background: url(images/New_ui/lefttabdown_n.png);}
+#option8 a:hover, #option1 a:active {background: url(images/New_ui/lefttabdown_o.png)}
+#option8 div#option_str1 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
+
+#option9 {height:52px;}
+#option9 a:link,  #option1 a:visited {height:52px; background: url(images/New_ui/lefttabdown_n.png);}
+#option9 a:hover, #option1 a:active {background: url(images/New_ui/lefttabdown_o.png)}
+#option9 div#option_str1 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
 
 .m_qis_r {width:189px;height: 55px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(images/New_ui/item1.png) no-repeat; color:#ffffff;padding-left:0px; position:relative; font-weight: bolder; text-shadow: 1px 1px 0px black;}
 .m_qis_r:hover {width:189px;height: 55px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(images/New_ui/item1_hover.png) no-repeat; color:#ffffff;padding-left:0px; position:relative; font-weight: bolder; text-shadow: 1px 1px 0px black;}
@@ -102,8 +141,12 @@ body {
 .m5_r div#menu_string5 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
 .m6_r {margin-top: -2px; width:203px;height: 52px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(images/New_ui/lefttabdown_f.png) no-repeat; color:#ffffff;font-weight:bold;	padding-left:0px; position:relative;text-shadow: 1px 1px 0px black;}
 .m6_r div#menu_string6 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
-.m7_r {margin-top: -2px; width:203px;height: 52px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(images/New_ui/lefttabdown_f.png) no-repeat; color:#ffffff;font-weight:bold;       padding-left:0px; position:relative;text-shadow: 1px 1px 0px black;}
-.m7_r div#menu_string7 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
+.m7_r {margin-top: -2px; width:203px;height: 52px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(images/New_ui/lefttabdown_f.png) no-repeat; color:#ffffff;font-weight:bold;	padding-left:0px; position:relative;text-shadow: 1px 1px 0px black;}
+.m7_r div#menu_string6 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
+.m8_r {margin-top: -2px; width:203px;height: 52px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(images/New_ui/lefttabdown_f.png) no-repeat; color:#ffffff;font-weight:bold;	padding-left:0px; position:relative;text-shadow: 1px 1px 0px black;}
+.m8_r div#menu_string6 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
+.m9_r {margin-top: -2px; width:203px;height: 52px;font-family:Verdana ;font-size : 12px;color: #94ccf2;background:url(images/New_ui/lefttabdown_f.png) no-repeat; color:#ffffff;font-weight:bold;	padding-left:0px; position:relative;text-shadow: 1px 1px 0px black;}
+.m9_r div#menu_string6 {filter: progid:DXImageTransform.Microsoft.DropShadow(OffX=1, OffY=1, Color=#000000);}
 
 .submenu {width:187px; font-family:Verdana; font-size:11px; line-height:20px;}
 .submenu a {height:26px; text-decoration:none; }
@@ -333,14 +376,14 @@ body {
 	behavior: url(/PIE.htc);
 	border-radius: 10px 10px 10px 10px;
 	border: 0px;
-	margin-top:200px;
+	*margin-top:200px;
 	width:400px;
 	font-size:20px;
 	color:#FFFFFF;
 	font-weight:bolder;
 	background-color:#000000;
-	position:fixed;
-	left:35%;
+	position:absolute;
+	/*left:35%;*/
 	top:0;Hot 
 	z-index:200;
 	_position:absolute;

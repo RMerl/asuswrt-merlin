@@ -35,6 +35,7 @@ typedef u_int8_t __u8;
 #include <linux/sockios.h>
 #include <linux/ethtool.h>
 #include <ctype.h>
+#include <wlutils.h>
 
 //This define only used for switch 53125
 #define SWITCH_PORT_0_UP	0x0001
@@ -941,78 +942,6 @@ getRegrev_5G(void) {
 	return 0;
 }
 
-int
-Get_USB_Port_Info(int port_x)
-{
-	char output_buf[16];
-	char usb_pid[14];
-	char usb_vid[14];
-	sprintf(usb_pid, "usb_path%d_pid", port_x);
-	sprintf(usb_vid, "usb_path%d_vid", port_x);
-
-	if( strcmp(nvram_get(usb_pid),"") && strcmp(nvram_get(usb_vid),"") ) {
-		sprintf(output_buf, "%s/%s",nvram_get(usb_pid),nvram_get(usb_vid));
-		puts(output_buf);
-	}
-	else
-		puts("N/A");
-
-	return 1;
-}
-
-int
-Get_USB_Port_Folder(int port_x)
-{
-        char usb_folder[19];
-        sprintf(usb_folder, "usb_path%d_fs_path0", port_x);
-	if( strcmp(nvram_safe_get(usb_folder),"") ) 
-		puts(nvram_safe_get(usb_folder));
-        else
-                puts("N/A");
-
-        return 1;
-}
-
-int
-Get_SD_Card_Info(int port_x)
-{
-        char check_cmd[48];
-	char sd_info_buf[128];
-	int get_sd_card = 1;
-	FILE *fp;
-
-        sprintf(check_cmd, "test_disk2 %s &> /var/sd_info.txt", nvram_get("usb_path3_fs_path0"));
-	system(check_cmd);
-
-	if(fp = fopen("/var/sd_info.txt", "r")) {
-		while(fgets(sd_info_buf, 128, fp)!=NULL) {
-			if(strstr(sd_info_buf, "No partition")||strstr(sd_info_buf, "No disk"))
-				get_sd_card=0;
-		}
-		if(get_sd_card)
-			puts("1");
-		else
-			puts("0");
-		fclose(fp);
-		eval("rm", "-rf", "/var/sd_info.txt");
-	}
-	else
-		puts("ATE_ERROR");
-
-        return 1;
-}
-
-int
-Get_SD_Card_Folder(void)
-{
-        if( strcmp(nvram_safe_get("usb_path3_fs_path0"),"") ) 
-                puts(nvram_safe_get("usb_path3_fs_path0"));
-        else
-                puts("N/A");
-
-        return 1;
-}
-
 int setSN(const char *SN)
 {
 	char cmd_l[64];
@@ -1061,3 +990,47 @@ void ate_commit_bootlog(char *err_code) {
 	nvram_set("asuscfecommit=", "1");
 }
 
+int Get_channel_list(int unit)
+{
+        int i, retval = 0;
+        char buf[4096];
+        wl_channels_in_country_t *cic = (wl_channels_in_country_t *)buf;
+        char tmp[256], prefix[] = "wlXXXXXXXXXX_";
+        char *country_code;
+        char *name;
+        channel_info_t ci;
+
+        snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+        country_code = nvram_safe_get(strcat_r(prefix, "country_code", tmp));
+        name = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+        cic->buflen = sizeof(buf);
+        strcpy(cic->country_abbrev, country_code);
+        if (!unit)
+                cic->band = WLC_BAND_2G;
+        else
+                cic->band = WLC_BAND_5G;
+        cic->count = 0;
+
+        if (wl_ioctl(name, WLC_GET_CHANNELS_IN_COUNTRY, cic, cic->buflen) != 0)
+                return retval;
+
+        if (cic->count == 0)
+                return retval;
+        else
+        {
+                memset(tmp, 0x0, sizeof(tmp));
+
+                for (i = 0; i < cic->count; i++)
+                {
+                        if (i == 0)
+                                sprintf(tmp, "%d", cic->channel[i]);
+                        else
+                                sprintf(tmp,  "%s, %d", tmp, cic->channel[i]);
+                }
+
+                puts(tmp);
+        }
+
+        return 1;
+}

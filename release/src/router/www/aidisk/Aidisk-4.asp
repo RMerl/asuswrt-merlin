@@ -28,6 +28,7 @@ function initial(){
 	showDDNS();
 	clickevent();
 	parent.restore_help_td();	
+	$("finish").focus();
 }
 
 function show_dummyshareway(){
@@ -132,7 +133,7 @@ function clickevent(){
 </script>
 </head>
 <body onload="initial();">
-<form method="post" name="redirectForm" action=""></form>
+<form method="post" name="redirectForm" action=""><!--/form-->
 
 <div class="aidisk1_table">
 <table>	<!-- width="765" height="760" border="0" bgcolor="#4d595d" cellpadding="0"  cellspacing="0" style="padding:10px; padding-top:20px;"  //Viz-->
@@ -199,8 +200,12 @@ function clickevent(){
 
     <tr valign="bottom">
   		<td width="20%">
-	    	<a href="Aidisk-3.asp"><div class="titlebtn" align="center" style="margin-left:275px;_margin-left:137px;width:80px;"><span><#btn_pre#></span></div></a>
-	    	<a href="javascript:;"><div id="finish" class="titlebtn" align="center" style="width:80px;"><span><#CTL_finish#></span></div></a>
+  			<div class="apply_gen" style="margin-top:30px">
+  				<input type="button" id="prevButton" value="<#btn_pre#>" onclick="go_pre_page();" class="button_gen">
+  				<input type="submit" id="finish" value="<#CTL_finish#>" class="button_gen">
+	    		<!--a href="Aidisk-3.asp"><div class="titlebtn" align="center" style="margin-left:275px;_margin-left:137px;width:80px;"><span><#btn_pre#></span></div></a>
+	    		<a href="javascript:;"><div id="finish" class="titlebtn" align="center" style="width:80px;"><span><#CTL_finish#></span></div></a-->
+	    	</div>	
 	    </td>
     </tr>
     <!-- end -->
@@ -209,6 +214,6 @@ function clickevent(){
 </tr>  
 </table>
 </div>	<!--  //Viz-->
-
+</form>
 </body>
 </html>

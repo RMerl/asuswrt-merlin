@@ -14,17 +14,20 @@ var wlc_scan_state = '<% nvram_get("wlc_scan_state"); %>';
 var aplist = new Array();
 var waitingTime = 50;
 
+function QKInternet_load_body(){
+	parent.set_step("t2");
+	changeAuthMode("open");
+
+	if(parent.getBand != "" && parseInt(parent.getBand) < document.form._wlc_band.length && parseInt(parent.getBand) > -1)
+		document.form._wlc_band[parseInt(parent.getBand)].selected = true;
+
+	document.form._wlc_ssid.focus();
+}
+
 function key_event(evt){
 	if(evt.keyCode == 13)
 		gen_aplist();
 	return;
-}
-
-function QKInternet_load_body(){
-	parent.set_step("t2");
-	changeAuthMode("open");
-	document.form._wlc_ssid.focus();
-	// document.getElementById("deviceDiscorvy").innerHTML = "<#deviceDiscorvy#>";
 }
 
 function is_string(o, event){
@@ -161,6 +164,11 @@ function submitForm(_idx){
 }
 
 function changeAuthMode(_val){
+	if(_val == "psk2" || (_val == "open" && document.form.__wlc_crypto.value == "None"))
+		document.getElementById("wl_nmode_x_hint").style.display = "none";
+	else
+		document.getElementById("wl_nmode_x_hint").style.display = "";
+
 	if(_val == "psk" || _val == "psk2"){
 		document.getElementById("__wlc_crypto_tr").style.display = "none";
 		document.getElementById("sta_key_index_tr").style.display = "none";
@@ -182,10 +190,12 @@ function changeAuthMode(_val){
 
 function changeCrypto(_val){
 	if(_val == "None"){
+		document.getElementById("wl_nmode_x_hint").style.display = "none";
 		document.getElementById("thekey_tr").style.display = "none";
 		document.getElementById("sta_key_index_tr").style.display = "none";
 	}
 	else{
+		document.getElementById("wl_nmode_x_hint").style.display = "";
 		document.getElementById("thekey_tr").style.display = "";
 		document.getElementById("sta_key_index_tr").style.display = "";
 	}
@@ -233,7 +243,7 @@ function changeCrypto(_val){
 						<span class="description_down"><#APSurvey_main_title#></span>
 					</td>
 					<td align="right">
-						<img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+						<img onclick="parent.location.href = '/index.asp'" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
 					</td>
 				</tr>
 			</table>
@@ -253,7 +263,7 @@ function changeCrypto(_val){
 		<br><br>
 		<table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0" style="padding-left:100px;">
 			<tr id="wl_unit_field">
-				<th><#Interface#></th>
+				<th width="25%"><#Interface#></th>
 				<td>
 					<select name="_wlc_band" class="input_option">
 						<option class="content_input_fd" value="2G">2.4GHz</option>
@@ -282,6 +292,9 @@ function changeCrypto(_val){
 					<option value="wpa2">WPA2-Enterprise</option>
 					-->
 	  		</select>
+				<div id="wl_nmode_x_hint" style="margin-top:5px;color:#FC0;">
+					Under WEP or WPA-Personal encryption, the maximum transmission rate of RT-AC66U is 54Mbps. Please change to WPA2-Personal.
+				</div>
 			</td>
 	  	</tr>
 
@@ -318,7 +331,7 @@ function changeCrypto(_val){
 		</table>
 </div>
 
-<div class="apply_gen" style="margin-top:10px">
+<div class="apply_gen" style="margin-top:30px">
 	<input type="button" value="<#CTL_Add_enrollee#>" onclick="gen_aplist();" class="button_gen" >
 	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 </div> 

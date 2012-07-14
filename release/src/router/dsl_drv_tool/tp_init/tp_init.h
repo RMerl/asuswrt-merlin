@@ -44,7 +44,7 @@
 #define SET_ADSL_MODE "sys tpset wan adsl mode "
 #define SET_ADSL_TYPE "sys tpset wan adsl type "
 #define SHOW_ADSL_STATS "sys tpget wan adsl statistics\x0d\x0a"
-#define SHOW_ADSL_ACTUAL_ANNEX_MODE "w ghs show op\x0d\x0a"
+#define SHOW_ADSL_ACTUAL_ANNEX_MODE "w ghs show op\x0d\x0a" //Paul add 2012/4/21
 
 #define SYSVER "sys ver\x0d\x0a"
 

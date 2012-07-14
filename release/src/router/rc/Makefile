@@ -187,6 +187,9 @@ ifeq ($(RTCONFIG_PARENTALCTRL),y)
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wlcscan
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wlcconnect
+ifeq ($(RTCONFIG_BCMWL6),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc acsd_restart_wl
+endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc setup_dnsmq
 	@cd $(INSTALLDIR)/sbin && ln -sf rc add_multi_routes
 

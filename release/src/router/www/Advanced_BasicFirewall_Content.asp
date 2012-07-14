@@ -41,12 +41,10 @@ function initial(){
 }
 
 function hideAll(_value){
-	$("st_webdav_mode_tr").style.display = (_value == 0) ? "none" : "";
-
 	/* not allow user to change HTTP/HTTPS port */
 	return false;
 
-	// $("st_webdav_mode_tr").style.display = (_value == 0) ? "none" : "";
+	$("st_webdav_mode_tr").style.display = (_value == 0) ? "none" : "";
 	$("webdav_http_port_tr").style.display = (_value == 0) ? "none" : "";
 	$("webdav_https_port_tr").style.display = (_value == 0) ? "none" : "";
 
@@ -79,17 +77,9 @@ function showPortItem(_value){
 }
 
 function applyRule(){
-	if(validForm()){
-	
+	if(validForm()){	
 		inputRCtrl1(document.form.misc_http_x, 1);
-		
-		if(isModel() != "WL520gc" && isModel() != "SnapAP"){
-			if(isFlash() != '2MB' && isModel() != "WL331"){
-				//inputRCtrl1(document.form.misc_lpr_x, 1);
-			}
-			
-			inputRCtrl1(document.form.misc_ping_x, 1);
-		}
+		inputRCtrl1(document.form.misc_ping_x, 1);
 
 		showLoading();
 		document.form.submit();	

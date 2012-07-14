@@ -103,7 +103,7 @@ function submitForm(){
 
 function gotoHome() {
 	if (w_Setting == "0") {
-		alert("<#QIS_recommand_encryption#>");	
+		alert("<#QIS_recommand_encryption#>");
 		location.href = '/qis/QIS_wireless.htm';
 	}
 	else {
@@ -153,13 +153,13 @@ function gotoHome() {
 				<img onclick="gotoHome();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
 			</td>
 		</tr>
-	</table>		
+	</table>
 	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img style="width: 700px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 	<br/>
 
 <table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
   <tr>
-     &nbsp;&nbsp;&nbsp;<#pvccfg_PVC_type#> <script>document.write(prctl_str)</script>. <b>VPI/VCI = <% nvram_get("dsltmp_autodet_vpi"); %>/<% nvram_get("dsltmp_autodet_vci"); %><script>document.write(encap_str)</script></b><br>
+     &nbsp;&nbsp;&nbsp;<#pvccfg_PVC_type#> <script>document.write(prctl_str);</script>. <b>VPI/VCI = <% nvram_get("dsltmp_autodet_vpi"); %>/<% nvram_get("dsltmp_autodet_vci"); %><script>document.write(encap_str);</script></b><br>
      &nbsp;&nbsp;&nbsp;<#PPP_cfg_usersel_desc#>
      <div id=hint_msg></div>
      <br><br>

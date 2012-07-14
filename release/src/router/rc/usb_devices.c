@@ -1136,7 +1136,299 @@ int write_3g_conf(FILE *fp, int dno, int aut, char *vid, char *pid){
 			fprintf(fp, "TargetProduct=  0x8401\n");
 			fprintf(fp, "MessageContent=\"5553424312345678000000000000061b000000ff0000000000000000000000\"\n");
 			break;
-		default:
+        /* 0818 add */
+        case SN_SU_8000U:
+                fprintf(fp, "DefaultVendor=  0x2020\n");
+                fprintf(fp, "DefaultProduct= 0xf00e\n");
+                fprintf(fp, "TargetVendor=   0x2020\n");
+                fprintf(fp, "TargetProduct=  0x1005\n");
+                fprintf(fp, "MessageContent=\"5553424312345678000000000000061b000000020000000000000000000000\"\n");
+                break;
+        case SN_Cisco_AM10:
+                fprintf(fp, "DefaultVendor=  0x1307\n");
+                fprintf(fp, "DefaultProduct= 0x1169\n");
+                fprintf(fp, "TargetVendor=   0x13b1\n");
+                fprintf(fp, "TargetProduct=  0x0031\n");
+                fprintf(fp, "CiscoMode=      1\n");
+                break;
+        case SN_Huawei_EC122:
+                fprintf(fp, "DefaultVendor=  0x12d1\n");
+                fprintf(fp, "DefaultProduct= 0x1446\n");
+                fprintf(fp, "TargetVendor=   0x12d1\n");
+                fprintf(fp, "TargetProduct=  0x140c\n");
+                fprintf(fp, "MessageContent=\"55534243123456780000000000000011060000000000000000000000000000\"\n");
+                break;
+        case SN_Huawei_EC1262:
+                fprintf(fp, "DefaultVendor=  0x12d1\n");
+                fprintf(fp, "DefaultProduct= 0x1446\n");
+                fprintf(fp, "TargetVendor=   0x12d1\n");
+                fprintf(fp, "TargetProduct= \"1001,1406,140b,140c,1412,141b,14ac\"\n");
+                fprintf(fp, "CheckSuccess=   20\n");
+                fprintf(fp, "MessageContent=\"55534243123456780000000000000011062000000100000000000000000000\"\n");
+                break;
+        case SN_HUAWEI_EC306:
+                fprintf(fp, "DefaultVendor= 0x12d1\n");
+                fprintf(fp, "DefaultProduct=0x1505\n");
+                fprintf(fp, "TargetVendor=  0x12d1\n");
+                fprintf(fp, "TargetProduct= 0x1506\n");
+                fprintf(fp, "MessageContent=\"55534243123456780000000000000011062000000100000000000000000000\"\n");
+                break;
+        case SN_Sierra_U598:
+                fprintf(fp, "DefaultVendor=  0x1199\n");
+                fprintf(fp, "DefaultProduct= 0x0fff\n");
+                fprintf(fp, "TargetVendor=   0x1199\n");
+                fprintf(fp, "TargetProduct=  0x0025\n");
+                fprintf(fp, "SierraMode=     1\n");
+                break;
+        case SN_NovatelU720:
+                fprintf(fp, "DefaultVendor=  0x1410\n");
+                fprintf(fp, "DefaultProduct= 0x2110\n");
+                fprintf(fp, "MessageContent=\"5553424312345678000000000000061b000000020000000000000000000000\"\n");
+                fprintf(fp, "CheckSuccess=   20\n");            // tmp test
+                fprintf(fp, "NeedResponse=   1\n");
+                break;
+        case SN_Pantech_UM150:                                  // tmp test
+                fprintf(fp, "DefaultVendor=  0x106c\n");
+                fprintf(fp, "DefaultProduct= 0x3711\n");
+                fprintf(fp, "MessageContent=\"555342431234567824000000800008ff024445564348470000000000000000\"\n");
+                break;
+        case SN_Pantech_UM175:                                  // tmp test
+                fprintf(fp, "DefaultVendor=  0x106c\n");
+                fprintf(fp, "DefaultProduct= 0x3714\n");
+                fprintf(fp, "MessageContent=\"555342431234567824000000800008ff024445564348470000000000000000\"\n");
+                break;
+        case SN_Sierra_U595:
+                fprintf(fp, "DefaultVendor=  0x1199\n");
+                fprintf(fp, "DefaultProduct= 0x0120\n");
+                fprintf(fp, "CheckSuccess=   10\n");            // tmp test
+                fprintf(fp, "SierraMode=     1\n");
+                fprintf(fp, "NoDriverLoading=1\n");
+                break;
+	/* 120703 add */
+        case SN_Qisda_H21:                                     
+                fprintf(fp, "DefaultVendor=  0x1da5\n");
+                fprintf(fp, "DefaultProduct= 0xf000\n");
+                fprintf(fp, "TargetVendor=   0x1da5\n");
+                fprintf(fp, "TargetProduct=  0x4512\n");
+                fprintf(fp, "QisdaMode=1\n");
+                break;
+        case SN_StrongRising_Air_FlexiNet:
+                fprintf(fp, "DefaultVendor=  0x21f5\n");
+                fprintf(fp, "DefaultProduct= 0x1000\n");
+                fprintf(fp, "TargetVendor=   0x21f5\n");
+                fprintf(fp, "TargetProduct=  0x2008\n");
+                fprintf(fp, "MessageContent=\"5553424312345678c000000080000671010000000000000000000000000000\"\n");
+                break;
+        case SN_BandLuxe_C339:
+                fprintf(fp, "DefaultVendor=  0x1a8d\n");
+                fprintf(fp, "DefaultProduct= 0x2000\n");
+                fprintf(fp, "TargetVendor=   0x1a8d\n");
+                fprintf(fp, "TargetProduct=  0x2006\n");
+                fprintf(fp, "MessageContent=\"5553424312345678000000000000061e000000000000000000000000000000\"\n");
+                fprintf(fp, "MessageContent2=\"5553424312345679000000000000061b000000020000000000000000000000\"\n");
+                fprintf(fp, "NeedResponse=   1\n");
+                break;
+        case SN_Celot_CT680:
+                fprintf(fp, "DefaultVendor=  0x05c6\n");
+                fprintf(fp, "DefaultProduct= 0x1000\n");
+                fprintf(fp, "TargetVendor=   0x211f\n");
+                fprintf(fp, "TargetProduct=  0x6802\n");
+                fprintf(fp, "MessageContent=\"5553424312345678c000000080000671010000000000000000000000000000\"\n");
+                break;
+        case SN_Huawei_E353:
+                fprintf(fp, "DefaultVendor=  0x12d1\n");
+                fprintf(fp, "DefaultProduct= 0x1f01\n");
+                fprintf(fp, "TargetVendor=   0x12d1\n");
+                fprintf(fp, "TargetProduct=  0x14db\n");
+                fprintf(fp, "MessageContent=\"55534243123456780000000000000a11062000000000000100000000000000\"\n");
+                fprintf(fp, "NoDriverLoading=1\n");
+                break;
+        case SN_Haier_CE682:
+                fprintf(fp, "DefaultVendor=  0x201e\n");
+                fprintf(fp, "DefaultProduct= 0x1023\n");
+                fprintf(fp, "TargetVendor=   0x201e\n");
+                fprintf(fp, "TargetProduct=  0x1022\n");
+                fprintf(fp, "MessageContent=\"55534243123456780000000000000600000000000000000000000000000000\"\n");
+                fprintf(fp, "MessageContent2=\"5553424312345679c000000080000671030000000000000000000000000000\"\n");
+                fprintf(fp, "NeedResponse=   1\n");
+                break;
+        case SN_LG_L_02C_LTE:
+                fprintf(fp, "DefaultVendor=  0x1004\n");
+                fprintf(fp, "DefaultProduct= 0x61dd\n");
+                fprintf(fp, "TargetVendor=   0x1004\n");
+                fprintf(fp, "TargetProduct=  0x618f\n");
+                fprintf(fp, "MessageContent=\"5553424312345678000000000000061b000000020000000000000000000000\"\n");
+                fprintf(fp, "NeedResponse=   1\n");
+                break;
+        case SN_LG_SD711:
+                fprintf(fp, "DefaultVendor=  0x1004\n");
+                fprintf(fp, "DefaultProduct= 0x61e7\n");
+                fprintf(fp, "TargetVendor=   0x1004\n");
+                fprintf(fp, "TargetProduct=  0x61e6\n");
+                fprintf(fp, "MessageContent=\"5553424312345678000000000000061b000000020000000000000000000000\"\n");
+                break;
+        case SN_LG_L_08C:
+                fprintf(fp, "DefaultVendor=  0x1004\n");
+                fprintf(fp, "DefaultProduct= 0x61eb\n");
+                fprintf(fp, "TargetVendor=   0x1004\n");
+                fprintf(fp, "TargetProduct=  0x61ea\n");
+                fprintf(fp, "MessageContent=\"5553424312345678000000000000061b000000020000000000000000000000\"\n");
+                fprintf(fp, "NeedResponse=   1\n");
+                break;
+        case SN_IODATA_WMX2_U:
+                fprintf(fp, "DefaultVendor=  0x04bb\n");
+                fprintf(fp, "DefaultProduct= 0xbccd\n");
+                fprintf(fp, "TargetVendor=   0x04bb\n");
+                fprintf(fp, "TargetProduct=  0x0949\n");
+                fprintf(fp, "MessageContent=\"55534243f0298d8124000000800006bc626563240000000000000000000000\"\n");
+                break;
+        case SN_Option_GI1515:
+                fprintf(fp, "DefaultVendor=  0x0af0\n");
+                fprintf(fp, "DefaultProduct= 0xd001\n");
+                fprintf(fp, "TargetVendor=   0x0af0\n");
+                fprintf(fp, "TargetProduct=  0xd157\n");
+                fprintf(fp, "MessageContent=\"55534243785634120100000080000601000000000000000000000000000000\"\n");
+                break;
+        case SN_LG_L_07A:
+                fprintf(fp, "DefaultVendor=  0x1004\n");
+                fprintf(fp, "DefaultProduct= 0x614e\n");
+                fprintf(fp, "TargetVendor=   0x1004\n");
+                fprintf(fp, "TargetProduct=  0x6135\n");
+                fprintf(fp, "MessageContent=\"5553424312345678000000000000061e000000000000000000000000000000\"\n");
+                fprintf(fp, "MessageContent2=\"5553424312345679000000000000061b000000020000000000000000000000\"\n");
+                fprintf(fp, "NeedResponse=   1\n");
+                break;
+        case SN_ZTE_A371B:
+                fprintf(fp, "DefaultVendor=  0x19d2\n");
+                fprintf(fp, "DefaultProduct= 0x0169\n");
+                fprintf(fp, "TargetVendor=   0x19d2\n");
+                fprintf(fp, "TargetProduct=  0x0170\n");
+                fprintf(fp, "MessageContent=\"5553424312345678000000000000061b000000020000000000000000000000\"\n");
+                fprintf(fp, "NeedResponse=   1\n");
+                break;
+        case SN_ZTE_MF652:
+                fprintf(fp, "DefaultVendor=  0x19d2\n");
+                fprintf(fp, "DefaultProduct= 0x1520\n");
+                fprintf(fp, "TargetVendor=   0x19d2\n");
+                fprintf(fp, "TargetProduct=  0x0142\n");
+                fprintf(fp, "MessageContent=\"5553424312345679000000000000061b000000020000000000000000000000\"\n");
+                fprintf(fp, "NeedResponse=   1\n");
+                break;
+        case SN_ZTE_MF652_VAR:
+                fprintf(fp, "DefaultVendor=  0x19d2\n");
+                fprintf(fp, "DefaultProduct= 0x0146\n");
+                fprintf(fp, "TargetVendor=   0x19d2\n");
+                fprintf(fp, "TargetProduct=  0x0143\n");
+                fprintf(fp, "MessageContent=\"5553424312345679000000000000061b000000020000000000000000000000\"\n");
+                fprintf(fp, "NeedResponse=   1\n");
+                break;
+        case SN_T_W_WU160:
+                fprintf(fp, "DefaultVendor=  0x2077\n");
+                fprintf(fp, "DefaultProduct= 0xf000\n");
+                fprintf(fp, "TargetVendor=   0x2077\n");
+                fprintf(fp, "TargetProduct=  0x9000\n");
+                fprintf(fp, "MessageContent=\"5553424308902082000000000000061b000000020000000000000000000000\"\n");
+                break;
+        case SN_Nokia_CS_21M_02:
+                fprintf(fp, "DefaultVendor=  0x0421\n");
+                fprintf(fp, "DefaultProduct= 0x0637\n");
+                fprintf(fp, "TargetVendor=   0x0421\n");
+                fprintf(fp, "TargetProduct=  0x0638\n");
+                fprintf(fp, "MessageContent=\"5553424312345678000000000000061b000000020000000000000000000000\"\n");
+                break;
+        case SN_Telewell_TW_3G:
+                fprintf(fp, "DefaultVendor=  0x1c9e\n");
+                fprintf(fp, "DefaultProduct= 0x98ff\n");
+                fprintf(fp, "TargetVendor=   0x1c9e\n");
+                fprintf(fp, "TargetProduct=  0x9801\n");
+                fprintf(fp, "MessageContent=\"55534243123456780000000080000606f50402527000000000000000000000\"\n");
+                break;
+        case SN_ZTE_MF637_2:
+                fprintf(fp, "DefaultVendor=  0x19d2\n");
+                fprintf(fp, "DefaultProduct= 0x0031\n");
+                fprintf(fp, "TargetVendor=   0x19d2\n");
+                fprintf(fp, "TargetProduct=  0x0094\n");
+                fprintf(fp, "MessageContent=\"5553424312345678000000000000061b000000020000000000000000000000\"\n");
+                fprintf(fp, "NeedResponse=   1\n");
+                break;
+        case SN_Samsung_GT_B1110:
+                fprintf(fp, "DefaultVendor=  0x04e8\n");
+                fprintf(fp, "DefaultProduct= 0x680c\n");
+                fprintf(fp, "TargetVendor=   0x04e8\n");
+                fprintf(fp, "TargetProduct=  0x6792\n");
+                fprintf(fp, "MessageContent=\"0902200001010080fa0904000002080650000705010200020007058102000200\"\n");
+                break;
+        case SN_ZTE_MF192_VAR:
+                fprintf(fp, "DefaultVendor=  0x19d2\n");
+                fprintf(fp, "DefaultProduct= 0x1514\n");
+                fprintf(fp, "TargetVendor=   0x19d2\n");
+                fprintf(fp, "TargetProduct=  0x1515\n");
+                fprintf(fp, "MessageContent=\"5553424348c4758600000000000010ff000000000000000000000000000000\"\n");
+                break;
+        case SN_MediaTek_MT6276M:
+                fprintf(fp, "DefaultVendor=  0x0e8d\n");
+                fprintf(fp, "DefaultProduct= 0x0002\n");
+                fprintf(fp, "TargetVendor=   0x0e8d\n");
+                fprintf(fp, "TargetProductList=\"00a1,00a2\"\n");
+                fprintf(fp, "MessageContent=\"555342431234567800000000000006f0010300000000000000000000000000\"\n");
+                break;
+        case SN_Tata_Photon_plus:
+                fprintf(fp, "DefaultVendor=  0x22f4\n");
+                fprintf(fp, "DefaultProduct= 0x0021\n");
+                fprintf(fp, "TargetClass=    0xff\n");
+                fprintf(fp, "MessageContent=\"555342439f000000000000000000061b000000020000000000000000000000\"\n");
+                break;
+        case SN_Option_Globetrotter:
+                fprintf(fp, "DefaultVendor=  0x0af0\n");
+                fprintf(fp, "DefaultProduct= 0x8006\n");
+                fprintf(fp, "TargetVendor=   0x0af0\n");
+                fprintf(fp, "TargetProduct=  0x9100\n");
+                fprintf(fp, "MessageContent=\"55534243785634120100000080000601000000000000000000000000000000\"\n");
+                break;
+        case SN_Option_ICON_711:
+                fprintf(fp, "DefaultVendor=  0x0af0\n");
+                fprintf(fp, "DefaultProduct= 0x4007\n");
+                fprintf(fp, "TargetVendor=   0x0af0\n");
+                fprintf(fp, "TargetProduct=  0x4005\n");
+                fprintf(fp, "SierraMode=     1\n");
+                break;
+        case SN_Celot_K300:
+                fprintf(fp, "DefaultVendor=  0x05c6\n");
+                fprintf(fp, "DefaultProduct= 0x1000\n");
+                fprintf(fp, "TargetVendor=   0x211f\n");
+                fprintf(fp, "TargetProduct=  0x6801\n");
+                fprintf(fp, "MessageContent=\"5553424312345678000000000000061b000000020000000000000000000000\"\n");
+                break;
+        case SN_HISENSE_E910:
+                fprintf(fp, "DefaultVendor=  0x109b\n");
+                fprintf(fp, "DefaultProduct= 0xf009\n");
+                fprintf(fp, "TargetVendor=   0x109b\n");
+                fprintf(fp, "TargetProduct=  0x9114\n");
+                fprintf(fp, "MessageContent=\"5553424312345678000000000000061b000000020000000000000000000000\"\n");
+                fprintf(fp, "NeedResponse=   1\n");
+                break;
+        case SN_Huawei_K5005:
+                fprintf(fp, "DefaultVendor=  0x12d1\n");
+                fprintf(fp, "DefaultProduct= 0x14c3\n");
+                fprintf(fp, "TargetVendor=   0x12d1\n");
+                fprintf(fp, "TargetProduct=  0x14c8\n");
+                fprintf(fp, "MessageContent=\"55534243123456780000000000000011062000000100000000000000000000\"\n");
+                break;
+        case SN_Huawei_E173_MoiveStar:
+                fprintf(fp, "DefaultVendor=  0x12d1\n");
+                fprintf(fp, "DefaultProduct= 0x1c24\n");
+                fprintf(fp, "TargetVendor=   0x12d1\n");
+                fprintf(fp, "TargetProduct=  0x1c12\n");
+                fprintf(fp, "MessageContent=\"55534243123456780000000000000011062000000100000000000000000000\"\n");
+                break;
+        case SN_Onda_MSA14_4:
+                fprintf(fp, "DefaultVendor=  0x1ee8\n");
+                fprintf(fp, "DefaultProduct= 0x0060\n");
+                fprintf(fp, "TargetVendor=   0x1ee8\n");
+                fprintf(fp, "TargetProduct=  0x005f\n");
+                fprintf(fp, "MessageContent=\"555342431234567800000000000008ff00000000000003000000000000000\"\n");
+                break;
+	default:
 			fprintf(fp, "\n");
 			if(vid && pid){
 				fprintf(fp, "DefaultVendor=  0x%s\n", vid);
@@ -1447,6 +1739,76 @@ usb_dbg("3G: Auto setting.\n");
 			write_3g_conf(fp, SN_UTStarcom_UM185E, 1, vid, pid);
 		else if((strcmp(vid, "057c")==0) && (strcmp(pid, "84ff")==0))	
 			write_3g_conf(fp, SN_AVM_Fritz, 1, vid, pid);
+                /* 0818 add */
+                else if((strcmp(vid, "2020")==0) && (strcmp(pid, "f00e")==0))
+                        write_3g_conf(fp, SN_SU_8000U, 1, vid, pid);
+                else if((strcmp(vid, "1307")==0) && (strcmp(pid, "1169")==0))
+                        write_3g_conf(fp, SN_Cisco_AM10, 1, vid, pid);
+                else if((strcmp(vid, "1410")==0) && (strcmp(pid, "2110")==0))
+                        write_3g_conf(fp, SN_NovatelU720, 1, vid, pid);
+                else if((strcmp(vid, "106c")==0) && (strcmp(pid, "3711")==0))
+                        write_3g_conf(fp, SN_Pantech_UM150, 1, vid, pid);
+                else if((strcmp(vid, "106c")==0) && (strcmp(pid, "3714")==0))
+                        write_3g_conf(fp, SN_Pantech_UM175, 1, vid, pid);
+                else if((strcmp(vid, "1199")==0) && (strcmp(pid, "0120")==0))
+                        write_3g_conf(fp, SN_Sierra_U595, 1, vid, pid);
+                /* 120703 add */
+                else if((strcmp(vid, "1da5")==0) && (strcmp(pid, "f000")==0))
+                        write_3g_conf(fp, SN_Qisda_H21, 1, vid, pid);
+                else if((strcmp(vid, "21f5")==0) && (strcmp(pid, "1000")==0))
+                        write_3g_conf(fp, SN_StrongRising_Air_FlexiNet, 1, vid, pid);
+                else if((strcmp(vid, "1a8d")==0) && (strcmp(pid, "2000")==0))
+                        write_3g_conf(fp, SN_BandLuxe_C339, 1, vid, pid);
+                else if((strcmp(vid, "12d1")==0) && (strcmp(pid, "1f01")==0))
+                        write_3g_conf(fp, SN_Huawei_E353, 1, vid, pid);
+                else if((strcmp(vid, "201e")==0) && (strcmp(pid, "1023")==0))
+                        write_3g_conf(fp, SN_Haier_CE682, 1, vid, pid);
+                else if((strcmp(vid, "1004")==0) && (strcmp(pid, "61dd")==0))
+                        write_3g_conf(fp, SN_LG_L_02C_LTE, 1, vid, pid);
+                else if((strcmp(vid, "1004")==0) && (strcmp(pid, "61e7")==0))
+                        write_3g_conf(fp, SN_LG_SD711, 1, vid, pid);
+                else if((strcmp(vid, "1004")==0) && (strcmp(pid, "61eb")==0))
+                        write_3g_conf(fp, SN_LG_L_08C, 1, vid, pid);
+                else if((strcmp(vid, "04bb")==0) && (strcmp(pid, "bccd")==0))
+                        write_3g_conf(fp, SN_IODATA_WMX2_U, 1, vid, pid);
+                else if((strcmp(vid, "0af0")==0) && (strcmp(pid, "d001")==0))
+                        write_3g_conf(fp, SN_Option_GI1515, 1, vid, pid);
+                else if((strcmp(vid, "1004")==0) && (strcmp(pid, "614e")==0))
+                        write_3g_conf(fp, SN_LG_L_07A, 1, vid, pid);
+                else if((strcmp(vid, "19d2")==0) && (strcmp(pid, "0169")==0))
+                        write_3g_conf(fp, SN_ZTE_A371B, 1, vid, pid);
+                else if((strcmp(vid, "19d2")==0) && (strcmp(pid, "1520")==0))
+                        write_3g_conf(fp, SN_ZTE_MF652, 1, vid, pid);
+                else if((strcmp(vid, "19d2")==0) && (strcmp(pid, "0146")==0))
+                        write_3g_conf(fp, SN_ZTE_MF652_VAR, 1, vid, pid);
+                else if((strcmp(vid, "2077")==0) && (strcmp(pid, "f000")==0))
+                        write_3g_conf(fp, SN_T_W_WU160, 1, vid, pid);
+                else if((strcmp(vid, "0421")==0) && (strcmp(pid, "0637")==0))
+                        write_3g_conf(fp, SN_Nokia_CS_21M_02, 1, vid, pid);
+                else if((strcmp(vid, "1c9e")==0) && (strcmp(pid, "98ff")==0))
+                        write_3g_conf(fp, SN_Telewell_TW_3G, 1, vid, pid);
+                else if((strcmp(vid, "19d2")==0) && (strcmp(pid, "0031")==0))
+                        write_3g_conf(fp, SN_ZTE_MF637_2, 1, vid, pid);
+                else if((strcmp(vid, "04e8")==0) && (strcmp(pid, "680c")==0))
+                        write_3g_conf(fp, SN_Samsung_GT_B1110, 1, vid, pid);
+                else if((strcmp(vid, "19d2")==0) && (strcmp(pid, "1514")==0))
+                        write_3g_conf(fp, SN_ZTE_MF192_VAR, 1, vid, pid);
+                else if((strcmp(vid, "0e8d")==0) && (strcmp(pid, "0002")==0))
+                        write_3g_conf(fp, SN_MediaTek_MT6276M, 1, vid, pid);
+                else if((strcmp(vid, "22f4")==0) && (strcmp(pid, "0021")==0))
+                        write_3g_conf(fp, SN_Tata_Photon_plus, 1, vid, pid);
+                else if((strcmp(vid, "0af0")==0) && (strcmp(pid, "8006")==0))
+                        write_3g_conf(fp, SN_Option_Globetrotter, 1, vid, pid);
+                else if((strcmp(vid, "0af0")==0) && (strcmp(pid, "4007")==0))
+                        write_3g_conf(fp, SN_Option_ICON_711, 1, vid, pid);
+                else if((strcmp(vid, "109b")==0) && (strcmp(pid, "f009")==0))
+                        write_3g_conf(fp, SN_HISENSE_E910, 1, vid, pid);
+                else if((strcmp(vid, "12d1")==0) && (strcmp(pid, "14c3")==0))
+                        write_3g_conf(fp, SN_Huawei_K5005, 1, vid, pid);
+                else if((strcmp(vid, "12d1")==0) && (strcmp(pid, "1c24")==0))
+                        write_3g_conf(fp, SN_Huawei_E173_MoiveStar, 1, vid, pid);
+                else if((strcmp(vid, "1ee8")==0) && (strcmp(pid, "0060")==0))
+                        write_3g_conf(fp, SN_Onda_MSA14_4, 1, vid, pid);
 		/*else
 			write_3g_conf(fp, UNKNOWNDEV, 1, vid, pid);//*/
 		else{
@@ -1613,6 +1975,10 @@ usb_dbg("3G: manaul setting.\n");
 			write_3g_conf(fp, SN_Vodafone_MD950, 0, vid, pid);
 		} else if (strcmp(nvram_safe_get("Dev3G"), "Siptune-LM-75") == 0){
 			write_3g_conf(fp, SN_Siptune_LM75, 0, vid, pid);
+                } else if (strcmp(nvram_safe_get("Dev3G"), "Celot_CT-680") == 0){               // 0703 add 
+                        write_3g_conf(fp, SN_Celot_CT680, 0, vid, pid);
+                } else if (strcmp(nvram_safe_get("Dev3G"), "Celot_CT-K300") == 0){              // 0703 add 
+                        write_3g_conf(fp, SN_Celot_K300, 0, vid, pid);
 		} else if (strncmp(nvram_safe_get("Dev3G"), "Huawei-", 7) == 0 && !strcmp(vid, "12d1")){
 			write_3g_conf(fp, UNKNOWNDEV, 0, vid, pid);
 		} else{
@@ -3235,7 +3601,7 @@ int asus_usb_interface(const char *device_name, const char *action){
 
 		memset(rndis_path, 0, 1024);
 		sprintf(rndis_path, "%s/%s", SYS_RNDIS_PATH, device_name);
-		if(!test_if_dir(rndis_path)){
+		if(!check_if_dir_exist(rndis_path)){
 			usb_dbg("(%s): Runing USB ACM...\n", device_name);
 			modprobe("cdc-acm");
 			sleep(1);

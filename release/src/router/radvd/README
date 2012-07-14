@@ -2,6 +2,8 @@
 Installation:
 =============
 
+Install 'pkg-config' and 'libdaemon'.
+
 Run configure, e.g.
 
 ./configure --prefix=/usr/local --sysconfdir=/etc --mandir=/usr/share/man

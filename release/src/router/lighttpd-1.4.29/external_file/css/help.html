@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title></title>
+<style>
+html{
+	margin:0px;
+	padding:0px;
+}
+</style>
+<script type='text/javascript' src='/smb/js/tools.js'></script>
+<script type="text/javascript">
+var m = new lang();
+var g_storage = new myStorage();
+
+function getUrlVars()
+{
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++)
+    {
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+}
+
+$("document").ready(function() {
+	var loc_lan = String(window.navigator.userLanguage || window.navigator.language).toLowerCase();		
+	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
+	m.setLanguage(lan);
+	
+	var this_showbutton = getUrlVars()["showbutton"];
+	
+	var bg_img_file = "help_" + lan + ".jpg";
+		
+	document.write("<body width='100%' height='100%' style='margin:0px;padding:0px'>");		
+		
+	if(this_showbutton==1)	
+		document.write("<div id='errorpage' style='overflow:none;background-image:url("+bg_img_file+");background-repeat:no-repeat;width:100%; height:94%'>");
+	else
+		document.write("<div id='errorpage' style='background-image:url("+bg_img_file+");background-repeat:no-repeat;width:100%; height:100%'>");
+		
+	document.write("</div></body>");
+		
+	if(this_showbutton==1){
+		document.write("<div width='100%'><button id='btnClose' style='position: relative;float:right;right:5px;' onclick='parent.closeJqmWindow(0);'>close</button><div>");			
+	}
+		
+	document.write("</body>");
+		
+	$('button#btnClose').text(m.getString("btn_close"));
+});
+
+function closeWindow(){
+	parent.closeJqmWindow(0);
+}
+
+$(document).keydown(function(e) {
+	alert(e.keyCode);
+    if (e.keyCode == 27) return false;
+});
+
+</script>
+</head>
+<body id='main' width='100%' height='100%' style='margin:0px;padding:0px'>
+</body>
+</html>

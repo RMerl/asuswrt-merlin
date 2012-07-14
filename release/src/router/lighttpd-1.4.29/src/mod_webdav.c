@@ -1386,6 +1386,11 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 		depth = strtol(ds->value->ptr, NULL, 10);
 	}
 
+	Cdbg(DBE, "http_method=[%d][%s], depth=[%d]", 
+		con->request.http_method, get_http_method_name(con->request.http_method), 
+		depth );	
+	Cdbg(DBE, "con->url->path = %s", con->url.path->ptr);
+	
 	switch (con->request.http_method) {
 	case HTTP_METHOD_PROPFIND:
 		/* they want to know the properties of the directory */
@@ -1928,7 +1933,6 @@ URIHANDLER_FUNC(mod_webdav_subrequest_handler) {
 			if (-1 == (fd = open(con->physical.path->ptr, O_WRONLY, WEBDAV_FILE_MODE))) {
 				switch (errno) {
 				case ENOENT:
-					Cdbg(1,"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxxxxxx");
 					con->http_status = 404; /* not found */
 					break;
 				default:
@@ -3118,6 +3122,85 @@ propmatch_cleanup:
 		buffer_append_string(b,".");
 		buffer_append_string(b,build_no);
 		buffer_append_string_len(b,CONST_STR_LEN("</version>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("</result>\n"));
+		
+		con->file_finished = 1;
+		return HANDLER_FINISHED;
+	}
+
+	case HTTP_METHOD_GETROUTERINFO:{
+		Cdbg(DBE, "do HTTP_METHOD_GETROUTERINFO....................");
+		
+		char stime[1024]="\0";
+		time_t server_time = time(NULL);
+		sprintf(stime, "%ld", server_time);
+		
+#if EMBEDDED_EANBLE
+		char* router_mac = nvram_get_router_mac();
+		
+		char* firmware_version = nvram_get_firmware_version();
+		char* build_no = nvram_get_build_no();
+				
+		//- Computer Name
+		char* computer_name = nvram_get_computer_name();
+		char* st_webdav_mode = nvram_get_st_webdav_mode();
+		char* webdav_http_port = nvram_get_webdav_http_port();
+		char* webdav_https_port = nvram_get_webdav_https_port();
+		char* misc_http_x = nvram_get_misc_http_x();
+		char* misc_http_port = nvram_get_msie_http_port();
+#else
+		char router_mac[20]="\0";
+		get_mac_address("eth0", &router_mac); 
+
+		char* firmware_version = "1.0.0";
+		char* build_no = "0";
+
+		//- Computer Name
+		char* computer_name = "WebDAV";
+		char* st_webdav_mode = "0";
+		char* webdav_http_port = "8082";
+		char* webdav_https_port = "443";
+		char* misc_http_x = "0";
+		char* misc_http_port = "8080";
+#endif
+
+		con->http_status = 200;
+		
+		response_header_overwrite(srv, con, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml; charset=\"utf-8\""));
+		
+		b = chunkqueue_get_append_buffer(con->write_queue);
+		
+		buffer_copy_string_len(b, CONST_STR_LEN("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("<result>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("<servertime>\n"));
+		buffer_append_string(b,stime);
+		buffer_append_string_len(b,CONST_STR_LEN("</servertime>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("<mac>\n"));
+		buffer_append_string(b,router_mac);
+		buffer_append_string_len(b,CONST_STR_LEN("</mac>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("<version>\n"));
+		buffer_append_string(b,firmware_version);
+		buffer_append_string(b,".");
+		buffer_append_string(b,build_no);
+		buffer_append_string_len(b,CONST_STR_LEN("</version>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("<computername>\n"));
+		buffer_append_string(b,computer_name);
+		buffer_append_string_len(b,CONST_STR_LEN("</computername>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("<webdav_mode>\n"));
+		buffer_append_string(b,st_webdav_mode);
+		buffer_append_string_len(b,CONST_STR_LEN("</webdav_mode>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("<http_port>\n"));
+		buffer_append_string(b,webdav_http_port);
+		buffer_append_string_len(b,CONST_STR_LEN("</http_port>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("<https_port>\n"));
+		buffer_append_string(b,webdav_https_port);
+		buffer_append_string_len(b,CONST_STR_LEN("</https_port>\n"));
+		buffer_append_string_len(b,CONST_STR_LEN("<misc_http_enable>"));
+		buffer_append_string(b,misc_http_x);
+		buffer_append_string_len(b,CONST_STR_LEN("</misc_http_enable>"));
+		buffer_append_string_len(b,CONST_STR_LEN("<misc_http_port>"));
+		buffer_append_string(b,misc_http_port);
+		buffer_append_string_len(b,CONST_STR_LEN("</misc_http_port>"));
 		buffer_append_string_len(b,CONST_STR_LEN("</result>\n"));
 		
 		con->file_finished = 1;

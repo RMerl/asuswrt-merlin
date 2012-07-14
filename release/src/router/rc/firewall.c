@@ -52,6 +52,8 @@ const int allowed_icmpv6[] = { 1, 2, 3, 4, 128, 129 };
 
 char *mac_conv(char *mac_name, int idx, char *buf);	// oleg patch
 
+void write_porttrigger(FILE *fp, char *wan_if, int is_nat);
+void write_upnp_filter(FILE *fp, char *wan_if);
 #ifdef WEB_REDIRECT
 void redirect_setting();
 #endif
@@ -180,7 +182,7 @@ void nvram_unsets(char *name, int count)
 
 char *proto_conv(char *proto, char *buf)
 {			
-	if (!strncasecmp(proto, "Both", 3)) strcpy(buf, "both");
+	if (!strncasecmp(proto, "BOTH", 3)) strcpy(buf, "both");
 	else if (!strncasecmp(proto, "TCP", 3)) strcpy(buf, "tcp");
 	else if (!strncasecmp(proto, "UDP", 3)) strcpy(buf, "udp");
 	else if (!strncasecmp(proto, "OTHER", 5)) strcpy(buf, "other");
@@ -1039,7 +1041,6 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	char dstips[64];
 	char *proto, *protono, *port, *lport, *dstip, *desc;
 	char *nv, *nvp, *b;
-	char *portv, *portp, *c;
 
 	if ((fp=fopen("/tmp/nat_rules", "w"))==NULL) return;
 
@@ -1096,33 +1097,32 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	{
 		nvp = nv = strdup(nvram_safe_get("vts_rulelist"));
 		while (nv && (b = strsep(&nvp, "<")) != NULL) {
-			if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5)) continue;
+			char *portv, *portp, *c;
 
+			if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5))
+				continue;
+
+			// Handle port1,port2,port3 format
 			portp = portv = strdup(port);
-
-			// handle port = a, b, c
 			while (portv && (c = strsep(&portp, ",")) != NULL) {
-			if (lport && *lport)
-				snprintf(dstips, sizeof(dstips), "--to-destination %s:%s", dstip, lport);
-			else
-				snprintf(dstips, sizeof(dstips), "--to %s", dstip);
+				if (lport && *lport)
+					snprintf(dstips, sizeof(dstips), "--to-destination %s:%s", dstip, lport);
+				else
+					snprintf(dstips, sizeof(dstips), "--to %s", dstip);
 
-
-	_dprintf("writting pre %s %s %s\n", proto, dstip, port);
-
-
-			if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
-				fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT %s\n", c, dstips);
-			if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
-				fprintf(fp, "-A VSERVER -p udp -m udp --dport %s -j DNAT %s\n", c, dstips);
-#if 0
-			if (strcmp(proto, "OTHER") == 0)
-				fprintf(fp, "-A VSERVER -p %s -j DNAT --to %s\n", protono, dstip);
-#endif
-		 	}
+				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
+					fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT %s\n", c, dstips);
+				if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
+					fprintf(fp, "-A VSERVER -p udp -m udp --dport %s -j DNAT %s\n", c, dstips);
+				// Handle raw protocol in port field, no val1:val2 allowed
+				if (strcmp(proto, "OTHER") == 0) {
+					protono = strsep(&c, ":");
+					fprintf(fp, "-A VSERVER -p %s -j DNAT --to %s\n", protono, dstip);
+				}
+			}
 			free(portv);
-		 }
-		 free(nv);
+		}
+		free(nv);
 	}
 
 	if (is_nat_enabled() && nvram_match("autofw_enable_x", "1"))
@@ -1200,14 +1200,13 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	char *wanx_if, *wanx_ip;
 	int unit;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
-	char *portv, *portp, *c;
 
 	if ((fp=fopen("/tmp/nat_rules", "w"))==NULL) return;
 
 	fprintf(fp, "*nat\n"
 		":PREROUTING ACCEPT [0:0]\n"
 		":POSTROUTING ACCEPT [0:0]\n"
-	  ":OUTPUT ACCEPT [0:0]\n"
+		":OUTPUT ACCEPT [0:0]\n"
 		":VSERVER - [0:0]\n"
 		":VUPNP - [0:0]\n");
 
@@ -1280,32 +1279,32 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	{
 		nvp = nv = strdup(nvram_safe_get("vts_rulelist"));
 		while (nv && (b = strsep(&nvp, "<")) != NULL) {
-			if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5)) continue;
+			char *portv, *portp, *c;
 
+			if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5))
+				continue;
+
+			// Handle port1,port2,port3 format
 			portp = portv = strdup(port);
-
-			// handle port = a, b, c
 			while (portv && (c = strsep(&portp, ",")) != NULL) {
-			if (lport && *lport)
-				snprintf(dstips, sizeof(dstips), "--to-destination %s:%s", dstip, lport);
-			else
-				snprintf(dstips, sizeof(dstips), "--to %s", dstip);
+				if (lport && *lport)
+					snprintf(dstips, sizeof(dstips), "--to-destination %s:%s", dstip, lport);
+				else
+					snprintf(dstips, sizeof(dstips), "--to %s", dstip);
 
-	_dprintf("writting pre 2 %s %s %s\n", proto, dstip, port);
-
-
-			if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
-				fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT %s\n", c, dstips);
-			if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
-				fprintf(fp, "-A VSERVER -p udp -m udp --dport %s -j DNAT %s\n", c, dstips);
-#if 0
-			if (strcmp(proto, "OTHER") == 0)
-				fprintf(fp, "-A VSERVER -p %s -j DNAT --to %s\n", protono, dstip);
-#endif
-		 	}
+				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
+					fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %s -j DNAT %s\n", c, dstips);
+				if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
+					fprintf(fp, "-A VSERVER -p udp -m udp --dport %s -j DNAT %s\n", c, dstips);
+				// Handle raw protocol in port field, no val1:val2 allowed
+				if (strcmp(proto, "OTHER") == 0) {
+					protono = strsep(&c, ":");
+					fprintf(fp, "-A VSERVER -p %s -j DNAT --to %s\n", protono, dstip);
+				}
+			}
 			free(portv);
-		 }
-		 free(nv);
+		}
+		free(nv);
 	}
 
 	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
@@ -2462,66 +2461,70 @@ TRACE_PT("writing Parental Control\n");
 	}
 
 TRACE_PT("writing vts_enable_x\n");
-	
-	/* Write forward chain rules of NAT */
-	//if ((fp1 = fopen("/tmp/nat_forward_rules", "r"))!=NULL)
-	// oleg patch ~
-	/* Enable Virtual Servers */
-	// fprintf(fp, "-A FORWARD -m conntrack --ctstate DNAT -j %s\n", logaccept);	// disable for tmp 
 
-	// add back vts forward rules
+#if 0
+/* Drop forward and upnp rules, conntrack module is used now
 	if (is_nat_enabled() && nvram_match("vts_enable_x", "1"))
 	{
 		char *proto, *port, *lport, *dstip, *desc, *protono;
-		char *portv, *portp, *c;
-		// WAN/LAN filter		
+		char dstports[256];
 
 		nvp = nv = strdup(nvram_safe_get("vts_rulelist"));
 		while (nv && (b = strsep(&nvp, "<")) != NULL) {
+			char *portv, *portp, *c;
 
-			if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5)) continue;
+			if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5))
+				continue;
 
+			// Handle port1,port2,port3 format
 			portp = portv = strdup(port);
-
-			// handle port = a, b, c
 			while (portv && (c = strsep(&portp, ",")) != NULL) {
+				if (lport && *lport)
+					snprintf(dstports, sizeof(dstports), "%s", lport);
+				else
+					snprintf(dstports, sizeof(dstports), "%s", c);
 
-				if (strcmp(proto, "TCP")==0 || strcmp(proto, "BOTH")==0)
-				{
-					fprintf(fp, "-A FORWARD -p tcp -m tcp -d %s --dport %s -j %s\n",  dstip, c, logaccept);  // add back for conntrack patch
+				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
+					fprintf(fp, "-A FORWARD -p tcp -m tcp -d %s --dport %s -j %s\n", dstip, dstports, logaccept);
+				if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
+					fprintf(fp, "-A FORWARD -p udp -m udp -d %s --dport %s -j %s\n", dstip, dstports, logaccept);
+				// Handle raw protocol in port field, no val1:val2 allowed
+				if (strcmp(proto, "OTHER") == 0) {
+					protono = strsep(&c, ":");
+					fprintf(fp, "-A FORWARD -p %s -d %s -j %s\n", protono, dstip, logaccept);
 				}
-
-				if (strcmp(proto, "UDP")==0 || strcmp(proto, "BOTH")==0)
-				{
-					fprintf(fp, "-A FORWARD -p udp -m udp -d %s --dport %s -j %s\n", dstip, c, logaccept);   // add back for conntrack patch
-				}
-
-#if 0
-				if (strcmp(proto, "OTHER")==0)
-				{
-					fprintf(fp, "-A FORWARD -p %s -d %s -j %s\n", protono, dstip, logaccept);       // add back for conntrack patch
-				}
-#endif
 			}
 			free(portv);
 		}
 		free(nv);
 	}
+//*/
+#endif
 
 TRACE_PT("write porttrigger\n");
 
 	if (is_nat_enabled() && nvram_match("autofw_enable_x", "1"))
 		write_porttrigger(fp, wan_if, 0);
 
+#if 0
+/* Drop forward and upnp rules, conntrack module is used now
 	if (is_nat_enabled())
 		write_upnp_filter(fp, wan_if);
-	// ~ add back
+//*/
+#endif
+
 #if 0
 	if (is_nat_enabled() && !nvram_match("sp_battle_ips", "0"))
 	{
 		fprintf(fp, "-A FORWARD -p udp --dport %d -j %s\n", BASEPORT, logaccept);	// oleg patch
 	}
 #endif
+
+	/* Enable Virtual Servers
+	 * Accepts all DNATed connection, including VSERVER, UPNP, BATTLEIPs, etc
+	 * Don't bother to do explicit dst checking, 'coz it's done in PREROUTING */
+	if (is_nat_enabled())
+		fprintf(fp, "-A FORWARD -m conntrack --ctstate DNAT -j %s\n", logaccept);
 
 TRACE_PT("write wl filter\n");
 
@@ -2532,10 +2535,11 @@ TRACE_PT("write wl filter\n");
 			nvram_match("filter_wl_default_x", "DROP") ? logdrop : logaccept);
 #ifdef RTCONFIG_IPV6
 		if (ipv6_enabled() && *wan6face)
-		fprintf(fp_ipv6, "-A FORWARD -i %s -o %s -j %s\n", *wan6face, lan_if, 
+		fprintf(fp_ipv6, "-A FORWARD -i %s -o %s -j %s\n", wan6face, lan_if, 
 			nvram_match("filter_wl_default_x", "DROP") ? logdrop : logaccept);
 #endif
 	}
+
 	// logaccept chain
 	fprintf(fp, "-A logaccept -m state --state NEW -j LOG --log-prefix \"ACCEPT \" "
 		  "--log-tcp-sequence --log-tcp-options --log-ip-options\n"
@@ -3447,80 +3451,79 @@ TRACE_PT("writing Parental Control\n");
 	}
 
 TRACE_PT("writing vts_enable_x\n");
-	
-	/* Write forward chain rules of NAT */
-	//if ((fp1 = fopen("/tmp/nat_forward_rules", "r"))!=NULL)
-	// oleg patch ~
-	/* Enable Virtual Servers */
-	// fprintf(fp, "-A FORWARD -m conntrack --ctstate DNAT -j %s\n", logaccept);	// disable for tmp 
 
+#if 0
+/* Drop forward and upnp rules, conntrack module is used now
 	// add back vts forward rules
 	if (is_nat_enabled() && nvram_match("vts_enable_x", "1"))
 	{
 		char *proto, *port, *lport, *dstip, *desc, *protono;
-		char dstips[256], dstports[256];
-		// WAN/LAN filter		
-		nv = nvp = strdup(nvram_safe_get("vts_rulelist"));
-		
-		if(nv) {
-		while ((b = strsep(&nvp, "<")) != NULL) {
-			if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5)) continue;
+		char dstports[256];
 
-			if (lport!=NULL && strlen(lport)!=0)
-			{
-				sprintf(dstips, "%s:%s", dstip, lport);
-				sprintf(dstports, "%s", lport);
-			}
-			else
-			{
-				sprintf(dstips, "%s:%s", dstip, port);
-				sprintf(dstports, "%s", port);
-			}
+		nvp = nv = strdup(nvram_safe_get("vts_rulelist"));
+		while (nv && (b = strsep(&nvp, "<")) != NULL) {
+			char *portv, *portp, *c;
 
-			if (strcmp(proto, "TCP")==0 || strcmp(proto, "BOTH")==0)
-			{
-				fprintf(fp, "-A FORWARD -p tcp -m tcp -d %s --dport %s -j %s\n",  dstip, dstports, logaccept);  // add back for conntrack patch
-			}
+			if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5))
+				continue;
 
-			if (strcmp(proto, "UDP")==0 || strcmp(proto, "BOTH")==0)
-			{
-				fprintf(fp, "-A FORWARD -p udp -m udp -d %s --dport %s -j %s\n", dstip, dstports, logaccept);	// add back for conntrack patch
-			}
+			// Handle port1,port2,port3 format
+			portp = portv = strdup(port);
+			while (portv && (c = strsep(&portp, ",")) != NULL) {
+				if (lport && *lport)
+					snprintf(dstports, sizeof(dstports), "%s", lport);
+				else
+					snprintf(dstports, sizeof(dstports), "%s", c);
 
-#if 0
-			if (strcmp(proto, "OTHER")==0)
-			{
-				fprintf(fp, "-A FORWARD -p %s -d %s -j %s\n", protono, dstip, logaccept);	// add back for conntrack patch
+				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
+					fprintf(fp, "-A FORWARD -p tcp -m tcp -d %s --dport %s -j %s\n", dstip, dstports, logaccept);
+				if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
+					fprintf(fp, "-A FORWARD -p udp -m udp -d %s --dport %s -j %s\n", dstip, dstports, logaccept);
+				// Handle raw protocol in port field, no val1:val2 allowed
+				if (strcmp(proto, "OTHER") == 0) {
+					protono = strsep(&c, ":");
+					fprintf(fp, "-A FORWARD -p %s -d %s -j %s\n", protono, dstip, logaccept);
+				}
 			}
-#endif
+			free(portv);
 		}
 		free(nv);
-		}
 	}
+//*/
+#endif
 
 TRACE_PT("write porttrigger\n");
 
-	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+	if (is_nat_enabled())
+	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-		if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
+		if (nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
 			continue;
 
 		wan_if = get_wan_ifname(unit);
 
-		if(is_nat_enabled()){
-			if(nvram_match("autofw_enable_x", "1"))
-				write_porttrigger(fp, wan_if, 0);
+		if (nvram_match("autofw_enable_x", "1"))
+			write_porttrigger(fp, wan_if, 0);
 
-			write_upnp_filter(fp, wan_if);
-		}
+#if 0
+/* Drop forward and upnp rules, conntrack module is used now
+		write_upnp_filter(fp, wan_if);
+//*/
+#endif
 	}
-	// ~ add back
+
 #if 0
 	if (is_nat_enabled() && !nvram_match("sp_battle_ips", "0"))
 	{
 		fprintf(fp, "-A FORWARD -p udp --dport %d -j %s\n", BASEPORT, logaccept);	// oleg patch
 	}
 #endif
+
+	/* Enable Virtual Servers
+	 * Accepts all DNATed connection, including VSERVER, UPNP, BATTLEIPs, etc
+	 * Don't bother to do explicit dst checking, 'coz it's done in PREROUTING */
+	if (is_nat_enabled())
+		fprintf(fp, "-A FORWARD -m conntrack --ctstate DNAT -j %s\n", logaccept);
 
 TRACE_PT("write wl filter\n");
 
@@ -3539,7 +3542,7 @@ TRACE_PT("write wl filter\n");
 #ifdef RTCONFIG_IPV6
 		if ((unit == wan_primary_ifunit()) &&
 			ipv6_enabled() && *wan6face)
-			fprintf(fp_ipv6, "-A FORWARD -i %s -o %s -j %s\n", *wan6face, lan_if, nvram_match("filter_wl_default_x", "DROP") ? logdrop : logaccept);
+			fprintf(fp_ipv6, "-A FORWARD -i %s -o %s -j %s\n", wan6face, lan_if, nvram_match("filter_wl_default_x", "DROP") ? logdrop : logaccept);
 #endif
 	}
 
@@ -3668,13 +3671,11 @@ write_porttrigger(FILE *fp, char *wan_if, int is_nat)
 	}
 
 	nvp = nv = strdup(nvram_safe_get("autofw_rulelist"));
+	while (nv && (b = strsep(&nvp, "<")) != NULL) {
+		if ((vstrsep(b, ">", &desc, &out_port, &out_proto, &in_port, &in_proto) != 5))
+			continue;
 
-	if (!nv) return;
-
-	while ((b = strsep(&nvp, "<")) != NULL) {
-		if ((vstrsep(b, ">", &desc, &out_port, &out_proto, &in_port, &in_proto) != 5)) continue;
-
-		if(first) {
+		if (first) {
 			fprintf(fp, ":triggers - [0:0]\n");
 			fprintf(fp, "-A FORWARD -o %s -j triggers\n", wan_if);
 			fprintf(fp, "-A FORWARD -i %s -j TRIGGER --trigger-type in\n", wan_if);
@@ -3682,7 +3683,6 @@ write_porttrigger(FILE *fp, char *wan_if, int is_nat)
 		}
 		(void)proto_conv(in_proto, in_protoptr);
 		(void)proto_conv(out_proto, out_protoptr);
-
 
 		fprintf(fp, "-A FORWARD -p %s -m %s --dport %s "
 			"-j TRIGGER --trigger-type out --trigger-proto %s --trigger-match %s --trigger-relate %s\n",
@@ -3709,40 +3709,21 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	/* mark connect to bypass CTF */		
 	if(nvram_match("ctf_disable", "0")) {
 		/* mark 80 port connection */
-		if(nvram_match("url_enable_x", "1")) {
-			eval("iptables", "-t", "mangle", "-A", "FORWARD", "-p", "tcp", "--dport", "80", "-j", "MARK", "--set-mark", "0x01");
+		if (nvram_match("url_enable_x", "1")) {
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+			     "-p", "tcp", "--dport", "80",
+			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
 
-#if 0
-		// Port forwarding or Virtual Server
-		if (is_nat_enabled() && nvram_match("vts_enable_x", "1"))
-		{
-			char *nvp, *nv, *b;
-			char *portp, *portv, *c;
-			char portstr[32];
-			char *proto, *protono, *port, *lport, *dstip, *desc;
+		/* mark VTS loopback connections */
+		if (nvram_match("vts_enable_x", "1")) {
+			char lan_class[32];
 
-			nvp = nv = strdup(nvram_safe_get("vts_rulelist"));
-
-			while (nv && (b = strsep(&nvp, "<")) != NULL) {
-				if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5)) continue;
-
-				portp = portv = strdup(port);
-
-				// handle port = a, b, c
-				while (portv && (c = strsep(&portp, ",")) != NULL) {
-					snprintf(portstr, sizeof(portstr), "%s", c);
-
-				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
-					eval("iptables", "-t", "mangle", "-A", "FORWARD", "-p", "tcp", "--dport", portstr, "-j", "MARK", "--set-mark", "0x01");	
-				if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
-					eval("iptables", "-t", "mangle", "-A", "FORWARD", "-p", "udp", "--dport", portstr, "-j", "MARK", "--set-mark", "0x01");
-				}
-				free(portv);
-		 	}
-		 	free(nv);
+			ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+			     "-o", lan_if, "-s", lan_class, "-d", lan_class,
+			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
-#endif
 	}
 #endif
 }
@@ -3777,40 +3758,22 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 	/* mark connect to bypass CTF */		
 	if(nvram_match("ctf_disable", "0")) {
 		/* mark 80 port connection */
-		if(nvram_match("url_enable_x", "1")) {
-			eval("iptables", "-t", "mangle", "-A", "FORWARD", "-p", "tcp", "--dport", "80", "-j", "MARK", "--set-mark", "0x01");
+		if (nvram_match("url_enable_x", "1")) {
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+			     "-p", "tcp", "--dport", "80",
+			     "-m", "state", "--state NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
-		
-#if 0
-		// Port forwarding or Virtual Server
-		if (is_nat_enabled() && nvram_match("vts_enable_x", "1"))
-		{
-			char *nvp, *nv, *b;
-			char *portp, *portv, *c;
-			char portstr[32];
-			char *proto, *protono, *port, *lport, *dstip, *desc;
 
-			nvp = nv = strdup(nvram_safe_get("vts_rulelist"));
-			while (nv && (b = strsep(&nvp, "<")) != NULL) {
-				if ((vstrsep(b, ">", &desc, &port, &dstip, &lport, &proto) != 5)) continue;
+		/* mark VTS loopback connections */
+		if (nvram_match("vts_enable_x", "1")) {
+			char lan_class[32];
 
-				portp = portv = strdup(port);
-
-				// handle port = a, b, c
-				while (portv && (c = strsep(&portp, ",")) != NULL) {
-					snprintf(portstr, sizeof(portstr), "%s", c);
-
-				if (strcmp(proto, "TCP") == 0 || strcmp(proto, "BOTH") == 0)
-					eval("iptables", "-t", "mangle", "-A", "FORWARD", "-p", "tcp", "--dport", portstr, "-j", "MARK", "--set-mark", "0x01");	
-				if (strcmp(proto, "UDP") == 0 || strcmp(proto, "BOTH") == 0)
-					eval("iptables", "-t", "mangle", "-A", "FORWARD", "-p", "udp", "--dport", portstr, "-j", "MARK", "--set-mark", "0x01");
-				}
-				free(portv);
-		 	}
-		 	free(nv);
+			ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+			     "-o", lan_if, "-s", lan_class, "-d", lan_class,
+			     "-m", "state", "--state NEW", "-j", "MARK", "--set-mark", "0x01");
 		}
-#endif
-	}	
+	}
 #endif
 }
 #endif // RTCONFIG_DUALWAN
@@ -3826,9 +3789,9 @@ int start_firewall(int wanunit, int lanunit)
 	//oleg patch ~
 	char logaccept[32], logdrop[32];
 	char *mcast_ifname;
-	char wan_if[IFNAMSIZ+1], wan_ip[32], *lan_if[IFNAMSIZ+1], lan_ip[32];
+	char wan_if[IFNAMSIZ+1], wan_ip[32], lan_if[IFNAMSIZ+1], lan_ip[32];
 	char wanx_if[IFNAMSIZ+1], wanx_ip[32], wan_proto[16];
-	char prefix[]="wanXXXXXX_", tmp[100];
+	char prefix[] = "wanXXXXXXXXXX_", tmp[100];
 
 	if (!is_routing_enabled())
 		return -1;

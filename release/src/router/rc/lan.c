@@ -289,6 +289,13 @@ soc_req(const char *name, int action, struct ifreq *ifr)
 	return rv;
 }
 
+/* Check NVRam to see if "name" is explicitly enabled */
+static inline int
+wl_vif_enabled(const char *name, char *tmp)
+{
+	return (atoi(nvram_safe_get(strcat_r(name, "_bss_enabled", tmp))));
+}
+
 /* Set the HW address for interface "name" if present in NVRam */
 static void
 wl_vif_hwaddr_set(const char *name)
@@ -469,36 +476,6 @@ static void check_afterburner(void)
 		nvram_set("boardflags", s);
 	}
 */
-}
-
-static void reload_wl(void)
-{
-	char word[256], *next;
-	char *lan_ifname = nvram_safe_get("lan_ifname");
-
-	foreach (word, nvram_safe_get("wl_ifnames"), next)
-		eval("wlconf", word, "down");
-
-	foreach (word, nvram_safe_get("wl_ifnames"), next)
-		eval("brctl", "delif", lan_ifname, word);
-
-	foreach (word, nvram_safe_get("wl_ifnames"), next)
-		eval("ifconfig", word, "down");
-
-	modprobe_r("wl");
-	modprobe("wl");
-
-	foreach (word, nvram_safe_get("wl_ifnames"), next)
-		eval("ifconfig", word, "up");
-
-	foreach (word, nvram_safe_get("wl_ifnames"), next)
-		eval("brctl", "addif", lan_ifname, word);
-
-	foreach (word, nvram_safe_get("wl_ifnames"), next)
-		eval("wlconf", word, "up");
-
-	foreach (word, nvram_safe_get("wl_ifnames"), next)
-		eval("wlconf", word, "start");
 }
 #endif
 
@@ -693,7 +670,7 @@ set_wlpara_ra(const char* wif, int band)
 			doSystem("iwpriv %s set HtBw=%d", wif, 1);
 	}
 
-	if (atoi(nvram_safe_get(strcat_r(prefix, "mrate", tmp))))
+	if (nvram_get_int(strcat_r(prefix, "mrate", tmp)))
 		doSystem("iwpriv %s set IgmpSnEnable=1", wif);
 }
 
@@ -767,9 +744,11 @@ void set_intf_ipv6_accept_ra(const char *ifname, int flag)
 		f_write_string(s, "2", 0, 0);
 
 		sprintf(s, "/proc/sys/net/ipv6/conf/%s/forwarding", ifname);
+#if 0
 		if (!strncmp(ifname, "ppp", 3))
 			f_write_string(s, "0", 0, 0);
 		else
+#endif
 			f_write_string(s, "2", 0, 0);
 	}
 	else
@@ -880,6 +859,7 @@ void start_lan(void)
 	char eabuf[32];
 	char word[256], *next;
 	int match;
+	char tmp[100];
 
 	update_lan_state(LAN_STATE_INITIALIZING, 0);
 
@@ -939,7 +919,14 @@ void start_lan(void)
 			while ((ifname = strsep(&p, " ")) != NULL) {
 				while (*ifname == ' ') ++ifname;
 				if (*ifname == 0) break;
-
+#ifdef CONFIG_BCMWL5
+				if (strncmp(ifname, "wl", 2) == 0) {
+					if (!wl_vif_enabled(ifname, tmp)) {
+						continue; /* Ignore disabled WL VIF */
+					}
+					wl_vif_hwaddr_set(ifname);
+				}
+#endif
 #ifdef RTCONFIG_IPV6
 				match = 0;
 				foreach (word, nvram_safe_get("wl_ifnames"), next) {
@@ -999,7 +986,6 @@ void start_lan(void)
 #ifdef CONFIG_BCMWL5
 					if (get_ifname_unit(ifname, &unit, &subunit) < 0)
 						continue;
-					wl_vif_hwaddr_set(ifname);
 #endif
 				}
 #ifdef CONFIG_BCMWL5
@@ -1150,12 +1136,8 @@ void start_lan(void)
 	start_wanduck();
 #endif
 
-#ifdef CONFIG_BCMWL5
-	set_acs_ifnames();
 #ifdef RTCONFIG_BCMWL6
-	if (!strlen(nvram_safe_get("acs_ifnames")))
-		reload_wl();
-#endif
+	set_acs_ifnames();
 #endif
 
 #ifdef RTCONFIG_WIRELESSREPEATER
@@ -1331,7 +1313,7 @@ wl_send_dif_event(const char *ifname, uint32 event)
 	to.sin_port = htons(EAPD_WKSP_DIF_UDP_PORT);
 
 	n = sendto(s, data, len, 0, (struct sockaddr *)&to,
-	           sizeof(struct sockaddr_in));
+		sizeof(struct sockaddr_in));
 
 	if (n != len) {
 		perror("udp send failed\n");
@@ -1398,7 +1380,7 @@ void hotplug_net(void)
 		ifconfig(interface, IFUP, NULL, NULL);
 
 #ifdef RTCONFIG_EMF
-		if (nvram_match("emf_enable", "1")) {
+		if (nvram_get_int("emf_enable")) {
 			eval("emf", "add", "iface", lan_ifname, interface);
 			emf_mfdb_update(lan_ifname, interface, 1);
 			emf_uffp_update(lan_ifname, interface, 1);
@@ -1435,7 +1417,7 @@ void hotplug_net(void)
 		wl_send_dif_event(interface, 1);
 
 #ifdef RTCONFIG_EMF
-		if (nvram_match("emf_enable", "1"))
+		if (nvram_get_int("emf_enable"))
 			eval("emf", "del", "iface", lan_ifname, interface);
 #endif /* RTCONFIG_EMF */
 	}
@@ -2064,6 +2046,7 @@ void start_lan_wl(void)
 	char *wl_ifnames, *ifname, *p;
 	uint32 ip;
 	int unit, subunit, sta;
+	char tmp[100];
 
 #ifdef CONFIG_BCMWL5
 	if (get_model() == MODEL_RTN66U)
@@ -2092,7 +2075,14 @@ void start_lan_wl(void)
 			while ((ifname = strsep(&p, " ")) != NULL) {
 				while (*ifname == ' ') ++ifname;
 				if (*ifname == 0) break;
-
+#ifdef CONFIG_BCMWL5
+				if (strncmp(ifname, "wl", 2) == 0) {
+					if (!wl_vif_enabled(ifname, tmp)) {
+						continue; /* Ignore disabled WL VIF */
+					}
+					wl_vif_hwaddr_set(ifname);
+				}
+#endif
 				unit = -1; subunit = -1;
 
 				// ignore disabled wl vifs
@@ -2138,7 +2128,6 @@ void start_lan_wl(void)
 #ifdef CONFIG_BCMWL5
 					if (get_ifname_unit(ifname, &unit, &subunit) < 0)
 						continue;
-					wl_vif_hwaddr_set(ifname);
 #endif
 				}
 #ifdef CONFIG_BCMWL5
@@ -2181,12 +2170,8 @@ void start_lan_wl(void)
 		}
 	}
 
-#ifdef CONFIG_BCMWL5
-	set_acs_ifnames();
 #ifdef RTCONFIG_BCMWL6
-	if (!strlen(nvram_safe_get("acs_ifnames")))
-		reload_wl();
-#endif
+	set_acs_ifnames();
 #endif
 
 	free(lan_ifname);
@@ -2309,6 +2294,8 @@ void lanaccess_wl()
 
 void restart_wireless()
 {
+	nvram_set("wlready", "0");
+
 	stop_wps();
 #ifdef CONFIG_BCMWL5
 	stop_nas();
@@ -2316,7 +2303,7 @@ void restart_wireless()
 #elif defined RTCONFIG_RALINK
 	stop_8021x();
 #endif
-#ifdef CONFIG_BCMWL5
+#ifdef RTCONFIG_BCMWL6
 	stop_acsd();
 #endif
 	// inform watchdog to stop WPS LED
@@ -2338,12 +2325,62 @@ void restart_wireless()
 	start_8021x();
 #endif
 	start_wps();
-#ifdef CONFIG_BCMWL5
+#ifdef RTCONFIG_BCMWL6
 	start_acsd();
 #endif
 
 	restart_wl();
 	lanaccess_wl();
+
+#ifdef CONFIG_BCMWL5
+	/* for MultiSSID */
+	if(!strcmp(nvram_safe_get("qos_enable"), "1")){
+		del_EbtablesRules(); // flush ebtables nat table
+		add_EbtablesRules();
+	}
+#endif
+
+	nvram_set("wlready", "1");
+}
+
+void restart_wireless_acsd()
+{
+	nvram_set("wlready", "0");
+
+	stop_wps();
+#ifdef CONFIG_BCMWL5
+	stop_nas();
+	stop_eapd();
+#elif defined RTCONFIG_RALINK
+	stop_8021x();
+#endif
+#ifdef RTCONFIG_BCMWL6
+	stop_acsd();
+#endif
+	// inform watchdog to stop WPS LED
+	kill_pidfile_s("/var/run/watchdog.pid", SIGUSR2);
+
+	stop_lan_wl();
+	init_nvram();	// init nvram lan_ifnames
+	wl_defaults();	// init nvram wlx_ifnames & lan_ifnames
+	start_lan_wl();
+
+#ifdef RTCONFIG_RALINK
+	reinit_hwnat();
+#endif
+
+#ifdef CONFIG_BCMWL5
+	start_eapd();
+	start_nas();
+#elif defined RTCONFIG_RALINK
+	start_8021x();
+#endif
+	start_wps();
+
+	restart_wl();
+	lanaccess_wl();
+
+	nvram_set("wlready", "1");
 }
 
 /* for WPS Reset */
@@ -2356,7 +2393,7 @@ void restart_wireless_wps()
 #elif defined RTCONFIG_RALINK
 	stop_8021x();
 #endif
-#ifdef CONFIG_BCMWL5
+#ifdef RTCONFIG_BCMWL6
 	stop_acsd();
 #endif
 	// inform watchdog to stop WPS LED
@@ -2377,9 +2414,6 @@ void restart_wireless_wps()
 	start_8021x();
 #endif
 	start_wps();
-#ifdef CONFIG_BCMWL5
-	start_acsd();
-#endif
 
 	restart_wl();
 	lanaccess_wl();

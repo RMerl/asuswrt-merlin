@@ -258,12 +258,22 @@ apps_info_t *get_apps_list(char *argv){
 	}
 
 	// Get the name and version of the installed packages from APPS_STATUS.
-	pkg_head = apps_info = read_whole_file(APPS_STATUS);
-	while(pkg_head != NULL && (pkg_tail = strstr(pkg_head, APPS_FILE_END)) != NULL){
-		pkg_tail[0] = '\0';
+	if((fp = fopen(APPS_STATUS, "r")) == NULL)
+		return apps_info_list;
 
-		if((tmp_apps_name = get_status_field(pkg_head, FIELD_PACKAGE)) == NULL)
+	memset(line, 0, sizeof(line));
+	while(fgets(line, 128, fp) != NULL){
+		if((tmp_apps_name = get_status_field(line, FIELD_PACKAGE)) == NULL)
 			continue;
+
+		memset(buf, 0, sizeof(buf));
+		pkg_tail = pkg_head = buf;
+		do{
+			sprintf(pkg_tail, "%s", line);
+			pkg_tail += strlen(line);
+
+			memset(line, 0, sizeof(line));
+		}while(fgets(line, 128, fp) != NULL && strlen(line) > 1);
 
 		follow_apps_info = apps_info_list;
 		got_apps = 0;
@@ -298,10 +308,9 @@ apps_info_t *get_apps_list(char *argv){
 			(*follow_apps_info_list)->from_owner = alloc_string(APP_OWNER_OTHERS);
 		}
 
-		pkg_tail[0] = '\n';
-		pkg_head = pkg_tail+strlen(APPS_FILE_END);
+		memset(line, 0, sizeof(line));
 	}
-	free(apps_info);
+	fclose(fp);
 
 	follow_apps_info = apps_info_list;
 	while(follow_apps_info != NULL){

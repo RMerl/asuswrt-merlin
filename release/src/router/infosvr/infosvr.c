@@ -150,6 +150,8 @@ int main(int argc , char* argv[])
 	serv_addr.sin_addr.s_addr	= htonl(INADDR_ANY);
 	serv_addr.sin_port		= htons(SRV_PORT);
 
+	int flag=1;
+    	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(flag));
 	if (bind(sockfd,(struct sockaddr *)&serv_addr , sizeof(serv_addr)) < 0 )
 	{
 		PRINT("can't bind\n");

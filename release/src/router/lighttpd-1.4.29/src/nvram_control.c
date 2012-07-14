@@ -27,6 +27,11 @@
 #define ETHMACADDR "et0macaddr"
 #define FIRMVER "firmver"
 #define BUILDNO "buildno"
+#define ST_WEBDAV_MODE "st_webdav_mode"
+#define WEBDAV_HTTP_PORT "webdav_http_port"
+#define WEBDAV_HTTPS_PORT "webdav_https_port"
+#define MISC_HTTP_X "misc_http_x"
+#define MISC_HTTP_PORT "misc_httpport_x"
 
 #define DBE 0
 
@@ -171,4 +176,30 @@ char* nvram_get_build_no()
 {
 	return nvram_get(BUILDNO);
 }
+
+char* nvram_get_st_webdav_mode()
+{
+	return nvram_get(ST_WEBDAV_MODE);
+}
+
+char* nvram_get_webdav_http_port()
+{
+	return nvram_get(WEBDAV_HTTP_PORT);
+}
+
+char* nvram_get_webdav_https_port()
+{
+	return nvram_get(WEBDAV_HTTPS_PORT);
+}
+
+char* nvram_get_misc_http_x()
+{
+	return nvram_get(MISC_HTTP_X);
+}
+
+char* nvram_get_msie_http_port()
+{
+	return nvram_get(MISC_HTTP_PORT);
+}
+
 #endif

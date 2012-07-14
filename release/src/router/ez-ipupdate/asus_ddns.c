@@ -10,7 +10,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#define USE_MD5				// ASUS DDNS Services need MD5
 #include "md5.h"
 #include "asus_ddns.h"
 #if 0

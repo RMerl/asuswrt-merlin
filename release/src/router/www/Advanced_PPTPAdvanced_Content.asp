@@ -486,7 +486,7 @@ function check_dns_wins(){
 								<tr>
 								  <td bgcolor="#4D595D" valign="top">
 								  <div>&nbsp;</div>
-								  <div class="formfonttitle"><#BOP_isp_heart_item#> - VPN Details<!-- Untranslated --></div>
+								  <div class="formfonttitle"><#BOP_isp_heart_item#> - <#vpn_Adv#></div>
 								  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 								  <div class="formfontdesc"><#PPTP_desc#></div>
 								  <!--div class="formfontdesc"><#PPTP_desc2#> <% nvram_get("wan0_ipaddr"); %></div>
@@ -516,7 +516,7 @@ function check_dns_wins(){
 											<th><#vpn_broadcast#></th>
 											<td>
 												<select name="pptpd_broadcast" class="input_option">
-													<option class="content_input_fd" value="disable" <% nvram_match("pptpd_broadcast", "0","selected"); %>><#btn_disable#></option>
+													<option class="content_input_fd" value="disable" <% nvram_match("pptpd_broadcast", "disable","selected"); %>><#btn_disable#></option>
 													<option class="content_input_fd" value="br0"<% nvram_match("pptpd_broadcast", "br0","selected"); %>>LAN to VPN Client</option>
                           <option class="content_input_fd" value="ppp" <% nvram_match("pptpd_broadcast", "ppp","selected"); %>>VPN Client to LAN</option>
 													<option class="content_input_fd" value="br0ppp"<% nvram_match("pptpd_broadcast", "br0ppp","selected"); %>>Both</option>

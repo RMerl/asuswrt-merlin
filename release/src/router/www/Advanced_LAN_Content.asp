@@ -60,6 +60,10 @@ function initial(){
 
 function applyRule(){
 	if(validForm()){
+
+		if(wl6_support != -1)
+			document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
+
 		showLoading();
 		document.form.submit();
 	}
@@ -76,8 +80,7 @@ function valid_IP(obj_name, obj_flag){
 		var B_class_start = inet_network("127.0.0.0");
 		var B_class_end = inet_network("127.255.255.255");
 		var C_class_start = inet_network("128.0.0.0");
-		var C_class_end = inet_network("255.255.255.255");
-		
+		var C_class_end = inet_network("255.255.255.255");		
 		var ip_obj = obj_name;
 		var ip_num = inet_network(ip_obj.value);
 
@@ -108,7 +111,7 @@ function valid_IP(obj_name, obj_flag){
 }
 
 function validForm(){
-	if(sw_mode == 3){
+	if(sw_mode == 2 || sw_mode == 3){
 		if(document.form.lan_dnsenable_x_radio[0].checked == 1)
 			document.form.lan_dnsenable_x.value = 1;
 		else
@@ -122,21 +125,28 @@ function validForm(){
 			document.form.lan_proto.value = "static";
 			if(!valid_IP(document.form.lan_ipaddr, "")) return false;  //AP LAN IP 
 			if(!valid_IP(document.form.lan_gateway, "GW"))return false;  //AP Gateway IP		
+
 			if(document.form.lan_gateway.value == document.form.lan_ipaddr.value){
 					alert("<#IPConnection_warning_WANIPEQUALGatewayIP#>");
 					document.form.lan_gateway.focus();
 					document.form.lan_gateway.select();					
 					return false;
 			}				
+
+			return true;
 		}	
 	}else
 		document.form.lan_proto.value = "static";		
 	
-	if(matchSubnet(document.form.lan_ipaddr.value, document.form.wan_ipaddr_x.value, 3) && sw_mode == 1){
-			alert("<#JS_validip#>");
-			document.form.lan_ipaddr.focus();
-			document.form.lan_ipaddr.select();
-			return false;
+	//router mode : WAN IP conflict with LAN ip subnet
+	if(sw_mode == 1 && document.form.wan_ipaddr_x.value != "0.0.0.0" && document.form.wan_ipaddr_x.value != "" 
+		&& document.form.wan_netmask_x.value != "0.0.0.0" && document.form.wan_netmask_x.value != ""){
+		if(matchSubnet2(document.form.wan_ipaddr_x.value, document.form.wan_netmask_x, document.form.lan_ipaddr.value, document.form.lan_netmask)){
+					document.form.lan_ipaddr.focus();
+					document.form.lan_ipaddr.select();
+					alert("<#IPConnection_x_WAN_LAN_conflict#>");
+					return false;
+		}	
 	}	
 	
 	var ip_obj = document.form.lan_ipaddr;
@@ -319,7 +329,7 @@ function check_vpn(){		//true: lAN ip & VPN client ip conflict
 
 <body onload="initial();" onunLoad="return unload_body();">
 <div id="TopBanner"></div>
-<div id="hiddenMask" class="popup_bg">
+<div id="hiddenMask" class="popup_bg" style="z-index:10000;">
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center">
 		<tr>
 		<td>

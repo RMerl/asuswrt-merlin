@@ -56,7 +56,7 @@ target_v1(struct sk_buff **pskb,
 	{
 		enum ip_conntrack_info ctinfo;
 		struct nf_conn *ct = nf_ct_get(*pskb, &ctinfo);
-		ct->ctf_flags |= CTF_FLAGS_EXCLUDED;
+		if(ct) ct->ctf_flags |= CTF_FLAGS_EXCLUDED;
 	}
 #endif  /* HNDCTF */
 

@@ -73,18 +73,42 @@ function showLoading(seconds, flag){
 	htmlbodyforIE[0].style.overflow = "hidden";	  //hidden the Y-scrollbar for preventing from user scroll it.
 	
 	winW_H();
-
-	/*
- 	//unuse
+	
 	var blockmarginTop;
-	var sheight = document.documentElement.scrollHeight;
-	var cheight = document.documentElement.clientHeight
-	// alert("document.documentElement.scrollTop: "+document.documentElement.scrollTop + "\ndocument.documentElement.scrollHeight: "+ document.documentElement.scrollHeight + "\ndocument.documentElement.clientHeight: "+ document.documentElement.clientHeight);
-	blockmarginTop = (navigator.userAgent.indexOf("Safari")>=0)?document.documentElement.scrollHeight - document.documentElement.clientHeight+200:document.documentElement.scrollTop+200;
-	blockmarginTop = (navigator.userAgent.indexOf("Safari")>=0)?(sheight-cheight<=0)?200:sheight-cheight+200:document.documentElement.scrollTop+200;	
-	// Lock modified it for Safari4 display issue.
+	var blockmarginLeft;
+	if (window.innerWidth)
+	winWidth = window.innerWidth;
+	else if ((document.body) && (document.body.clientWidth))
+	winWidth = document.body.clientWidth;
+	
+	if (window.innerHeight)
+		winHeight = window.innerHeight;
+	else if ((document.body) && (document.body.clientHeight))
+		winHeight = document.body.clientHeight;
+	
+	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
+		winHeight = document.documentElement.clientHeight;
+		winWidth = document.documentElement.clientWidth;
+	}
+
+	if(winWidth >1050){
+	
+		winPadding = (winWidth-1050)/2;	
+		winWidth = 1105;
+		blockmarginLeft= (winWidth*0.35)+winPadding;
+	}
+	else if(winWidth <=1050){
+		blockmarginLeft= (winWidth)*0.35+document.body.scrollLeft;	
+
+	}
+	
+	if(winHeight >660)
+		winHeight = 660;
+	
+	blockmarginTop= winHeight*0.3	
+	
 	$("loadingBlock").style.marginTop = blockmarginTop+"px";
-	*/
+	$("loadingBlock").style.marginLeft = blockmarginLeft+"px";
 
 	$("Loading").style.width = winW+"px";
 	$("Loading").style.height = winH+"px";

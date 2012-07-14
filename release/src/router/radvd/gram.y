@@ -648,7 +648,7 @@ prefixparms	: T_AdvOnLink SWITCH ';'
 		{
 			if (prefix) {
 				if (prefix->AutoSelected) {
-					flog(LOG_ERR, "automatically selecting the prefix and Base6to4Interface are mutually exclusive");
+					flog(LOG_ERR, "automatically selecting the prefix and Base6Interface are mutually exclusive");
 					ABORT;
 				} /* fallthrough */
 				dlog(LOG_DEBUG, 4, "using prefixes on interface %s for prefixes on interface %s", $2, iface->Name);

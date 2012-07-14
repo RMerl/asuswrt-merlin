@@ -294,7 +294,7 @@ function _change_wl_unit(val){
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_wireless">
-<input type="hidden" name="action_wait" value="3">
+<input type="hidden" name="action_wait" value="8">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="wl_country_code" value="<% nvram_get("wl0_country_code"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">

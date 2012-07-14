@@ -89,6 +89,7 @@ int btn_count_setup = 0;
 int btn_count_timeout = 0;
 int wsc_timeout = 0;
 int btn_count_setup_second = 0;
+int no_check_wps_button = 0;
 int btn_pressed_toggle_radio = 0;
 #endif
 
@@ -118,37 +119,7 @@ alarmtimer(unsigned long sec, unsigned long usec)
 	setitimer(ITIMER_REAL, &itv, NULL);
 }
 
-int no_need_to_start_wps()
-{
-	if (nvram_match("wps_band", "0"))
-	{
-		if (	nvram_match("wl0_auth_mode_x", "shared") ||
-			nvram_match("wl0_auth_mode_x", "wpa") ||
-			nvram_match("wl0_auth_mode_x", "wpa2") ||
-			nvram_match("wl0_auth_mode_x", "wpawpa2") ||
-			nvram_match("wl0_auth_mode_x", "radius") /*||
-			nvram_match("wl0_radio", "0")*/ ||
-			!nvram_match("sw_mode", "1"))
-		{
-			return 1;
-		}
-	}
-	else
-	{
-		if (	nvram_match("wl1_auth_mode_x", "shared") ||
-			nvram_match("wl1_auth_mode_x", "wpa") ||
-			nvram_match("wl1_auth_mode_x", "wpa2") ||
-			nvram_match("wl1_auth_mode_x", "wpawpa2") ||
-			nvram_match("wl1_auth_mode_x", "radius") /*||
-			nvram_match("wl1_radio", "0")*/ ||
-			!nvram_match("sw_mode", "1"))
-		{
-			return 1;
-		}
-	}
-
-	return 0;
-}
+extern int no_need_to_start_wps();
  
 void btn_check(void)
 {
@@ -295,6 +266,7 @@ void btn_check(void)
 
 #ifdef BTN_SETUP
 	}
+
 	if (btn_pressed != 0) return;
 
 	if (button_pressed(BTN_WPS) && nvram_match("btn_ez_radiotoggle", "1"))
@@ -314,7 +286,8 @@ void btn_check(void)
 
 	if (btn_pressed_setup < BTNSETUP_START)
 	{
-		if (button_pressed(BTN_WPS) && /*!no_need_to_start_wps(0)*/ !no_need_to_start_wps())
+		if (!no_need_to_start_wps() &&
+			!no_check_wps_button && button_pressed(BTN_WPS))
 		{
 			TRACE_PT("button WPS pressed\n");
 
@@ -338,10 +311,15 @@ void btn_check(void)
 						btn_pressed_setup = BTNSETUP_START;
 						btn_count_setup = 0;
 						btn_count_setup_second = 0;
+						no_check_wps_button = 1;
 #if 0
 						start_wps_pbc(nvram_get_int("wps_band"));
 #else
+#if 0
 						start_wps_pbc(0);	// always 2.4G
+#else
+						kill_pidfile_s("/var/run/usbled.pid", SIGTSTP);
+#endif
 #endif
 						wsc_timeout = 120*20;
 					}
@@ -358,7 +336,8 @@ void btn_check(void)
 	}
 	else 
 	{
-		if (button_pressed(BTN_WPS) && /*!no_need_to_start_wps(0)*/ !no_need_to_start_wps())
+		if (!no_need_to_start_wps() &&
+			!no_check_wps_button && button_pressed(BTN_WPS))
 		{
 			/* Whenever it is pushed steady, again... */
 			if (++btn_count_setup_second > SETUP_WAIT_COUNT)
@@ -368,7 +347,11 @@ void btn_check(void)
 #if 0
 				start_wps_pbc(nvram_get_int("wps_band"));
 #else
+#if 0
 				start_wps_pbc(0);	// always 2.4G
+#else
+				kill_pidfile_s("/var/run/usbled.pid", SIGTSTP);
+#endif
 #endif
 				wsc_timeout = 120*20;
 			}
@@ -380,6 +363,8 @@ void btn_check(void)
 
 			btn_pressed_setup = BTNSETUP_NONE;
 			btn_count_setup = 0;
+			btn_count_setup_second = 0;
+			no_check_wps_button = 0;
 
 			led_control_normal();
 
@@ -662,19 +647,22 @@ static void catch_sig(int sig)
 {
 	if (sig == SIGUSR1)
 	{
-		fprintf(stderr, "[watchdog] Handle WPS LED for WPS Start\n");
+		dbG("[watchdog] Handle WPS LED for WPS Start\n");
 
 		alarmtimer(NORMAL_PERIOD, 0);
 
 		btn_pressed_setup = BTNSETUP_START;
 		btn_count_setup = 0;
 		btn_count_setup_second = 0;
+		no_check_wps_button = 0;
 		wsc_timeout = 120*20;
 		alarmtimer(0, RUSHURGENT_PERIOD);
 	}
 	else if (sig == SIGUSR2)
 	{
-		fprintf(stderr, "[watchdog] Handle WPS LED for WPS Stop\n");
+		if (no_check_wps_button) return;
+
+		dbG("[watchdog] Handle WPS LED for WPS Stop\n");
 
 		btn_pressed_setup = BTNSETUP_NONE;
 		btn_count_setup = 0;
@@ -838,7 +826,7 @@ void ddns_check(void)
 				return;
 		}
                 logmessage("watchdog", "start ddns.");
-		eval("rm", "-rf", "/tmp/ddns.cache");
+		unlink("/tmp/ddns.cache");
                 notify_rc("start_ddns");
         }
 	return;
@@ -919,6 +907,12 @@ watchdog_main(int argc, char *argv[])
 	signal(SIGTSTP, catch_sig);
 	signal(SIGALRM, watchdog);
 	signal(SIGTTIN, catch_sig);
+
+#ifdef RTCONFIG_DSL //Paul add 2012/6/27
+	nvram_set("btn_rst", "0");
+	nvram_set("btn_ez", "0");
+	nvram_set("btn_wifi_sw", "0");
+#endif
 
 	if (!pids("ots"))
 		start_ots();

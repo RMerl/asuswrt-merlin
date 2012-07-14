@@ -22,8 +22,8 @@ config RTCONFIG_PPTPD
 	default n
 
 config RTCONFIG_ACCEL_PPTPD
-        bool "ACCEL_PPTPD"
-        default n
+	bool "ACCEL_PPTPD"
+	default n
 
 config RTCONFIG_HTTPS
 	bool "HTTPS"
@@ -42,7 +42,7 @@ config RTCONFIG_JFFS2
 	default y
 
 config RTCONFIG_JFFSV1
-	bool "  Use JFFSv1 (if not selected, JFFS2 is used)"
+	bool "Use JFFSv1 (if not selected, JFFS2 is used)"
 	depends on RTCONFIG_JFFS2
 	default y
 
@@ -59,7 +59,7 @@ config RTCONFIG_L7
 	default y
 
 config RTCONFIG_L7PAT
-	bool "  Standard Layer 7 Patterns"
+	bool "Standard Layer 7 Patterns"
 	depends on RTCONFIG_L7
 	default y
 
@@ -101,7 +101,7 @@ config RTCONFIG_WIRELESSREPEATER
 	bool "Repeater Mode"
 	default n
 
-config RTCONFIG_PSTA
+config RTCONFIG_PROXYSTA
 	bool "Proxy STA"
 	default n
 
@@ -136,83 +136,83 @@ config RTCONFIG_CLOUDSYNC
 	default n
 
 config RTCONFIG_FTP
-	bool "  FTP Server"
+	bool "FTP Server"
 	depends on RTCONFIG_USB
 	default y
 
 config RTCONFIG_FTP_SSL
-	bool "    FTP SSL Support"
+	bool "FTP SSL Support"
 	depends on RTCONFIG_USB && RTCONFIG_FTP
 	default n
 
 config RTCONFIG_WEBDAV
-	bool "	  WebDav Support"
+	bool "WebDav Support"
 	depends on RTCONFIG_USB
 	default n
 
 config RTCONFIG_SAMBASRV
-	bool "  Samba File Sharing"
+	bool "Samba File Sharing"
 	depends on RTCONFIG_USB
 	default y
 
 config RTCONFIG_SAMBA3
-       bool "    Compile with Samba 3"
-       depends on RTCONFIG_SAMBASRV
-       default n
+	bool "Compile with Samba 3"
+	depends on RTCONFIG_SAMBASRV
+	default n
 
 config RTCONFIG_USB_EXTRAS
-	bool "  Additional modules and utilities"
+	bool "Additional modules and utilities"
 	depends on RTCONFIG_USB
 	default n
 
 config RTCONFIG_NTFS
-	bool "  NTFS Support"
+	bool "NTFS Support"
 	depends on RTCONFIG_USB
 	default n
 
 config RTCONFIG_NTFS3G
-	bool "  NTFS-3G Support"
+	bool "NTFS-3G Support"
 	depends on RTCONFIG_USB
 	default n
 
 config RTCONFIG_USB_PRINTER
-	bool "  USB Printer Support"
+	bool "USB Printer Support"
 	depends on RTCONFIG_USB
 	default n
 
 config RTCONFIG_USB_MODEM
-	bool "  USB Modem Support"
+	bool "USB Modem Support"
 	depends on RTCONFIG_USB
 	default n
 
 config RTCONFIG_USB_MODEM_PIN
-	bool "  USB Modem pin code Support"
+	bool "USB Modem pin code Support"
 	depends on RTCONFIG_USB_MODEM
 	default n
 
 config RTCONFIG_USB_BECEEM
-	bool "  BECEEM USB dongle Support"
+	bool "BECEEM USB dongle Support"
 	depends on RTCONFIG_USB_MODEM
 	default n
 
 config RTCONFIG_BRCM_USBAP
-	bool "  USB AP Support"
+	bool "USB AP Support"
 	depends on RTCONFIG_USB
 	default n
 
 config RTCONFIG_APP_PREINSTALLED
-	bool " Preinstalled APP Packages Support"
+	bool "Preinstalled APP Packages Support"
 	depends on RTCONFIG_USB
 	default n
 
 config RTCONFIG_APP_NETINSTALLED
-	bool " Install APP Packages through Network Support"
+	bool "Install APP Packages through Network Support"
 	depends on RTCONFIG_USB
 	default n
 
 config RTCONFIG_DNSMASQ
-        bool "Dnsmasq"
-        default y
+	bool "Dnsmasq"
+	default y
 
 config RTCONFIG_RALINK
 	bool "Ralink Chip Support"
@@ -228,6 +228,11 @@ config RTCONFIG_RALINK_RT3052
 	depends on RTCONFIG_RALINK
 	default n
 
+config RTCONFIG_LOCALE2012
+	bool "Wireless Locale 2012"
+	depends on RTCONFIG_RALINK_RT3883
+	default n
+
 config CONFIG_LIBBCM
 	bool "Broadcom shared library functions"
 	default n
@@ -240,13 +245,9 @@ config RTCONFIG_WPS
 	bool "WPS Support"
 	default y
 
-config RTCONFIG_DNSMASQ
-        bool "Dnsmasq"
-        default n
-
 config RTCONFIG_SHP
-        bool "Special Handler Process"
-        default n
+	bool "Special Handler Process"
+	default n
 
 config RTCONFIG_SFP
 	bool "Small Footprint"
@@ -277,8 +278,8 @@ config RTCONFIG_AUTODICT
 	default n
 
 config RTCONFIG_ISP_METER
-        bool "ISP_METER"
-        default n
+	bool "ISP_METER"
+	default n
 
 config RTCONFIG_NVRAM_64K
 	bool "NVRAM_64K"

@@ -43,6 +43,10 @@ function initial(){
 	show_menu();	
 	insertExtChannelOption();		
 	wl_auth_mode_change(1);
+
+	if(downsize_support != -1)
+		$("guest_image").parentNode.style.display = "none";
+
 	mbss_display_ctrl();
 	gen_gntable();
 	if(modify_mode == 1)
@@ -228,6 +232,9 @@ function applyRule(){
 			document.form.wl_expire.value = document.form.wl_expire_hr.value*3600 + document.form.wl_expire_min.value*60;
 		else
 			document.form.wl_expire.value = 0;
+
+		if(wl6_support != -1)
+			document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
 
 		document.form.submit();
 	}

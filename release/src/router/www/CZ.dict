@@ -25,6 +25,7 @@ tunnel_MTU=Tunel MTU
 tunnel_TTL=Tunel TTL
 [VPN server]
 vpn_setting=Základní nastavení
+vpn_Adv=Podrobnosti p VPN
 PPTP_desc=Server VPN vám umožňuje přistupovat k vaší domácí síti kdykoli a kdekoli.
 PPTP_desc2=Použití serveru VPN. Proveďte následující kroky.<br>(1) Aktivujte server PPTP VPN.<br>(2) Nastavte pool adres IP pro IP klienta (maximálně 10 klientů).<br>(3) Nastavte uživatelské jméno a heslo klienta VPN.<br>(4) Otevřete program při připojení k VPN v počítači nebo chytrém telefonu.<br>(5) Přidejte nové připojení PPTP VPN. Adresa serveru VPN je
 PPTP_desc3=(6) Je-li vaše adresa WAN IP dynamická, <a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">kliknutím zde nastavte DDNS.</a>
@@ -91,6 +92,19 @@ Low=Nízké
 Lowest=Nejnižší
 traffic_monitor=Monitor provozu
 traffic_monitor_desc=Monitor provozu pomáhá sledovat následující typy síťového provozu:<P>Internet: Veškerý internetový provoz.<P>Pevné připojení: Síťový provoz z pevné do bezdrátové sítě a do Internetu.<P>Bezdrát: Síťový provoz z bezdrátové do pevné sítě a do Internetu.
+traffic_monitor_desc1=Monitor provozu umožňuje sledovat následující příchozí nebo odchozí pakety :
+traffic_monitor_desc2=<b>POZNÁMKA :</b> Pakety z Internetu jsou rovnoměrně přenášeny do zařízení s pevným a bezdrátovým připojením.
+tm_internet=Internet
+tm_wired=Pevné spojení
+tm_wireless=Bezdrátové spojení
+tm_reception=Příjem
+tm_transmission=Odesílání
+tm_recp_int=Příchozí internetové pakety
+tm_recp_wired=Příchozí pakety z pevné sítě
+tm_recp_wireless=Příchozí pakety z bezdrátové sítě
+tm_trans_int=Odchozí internetové pakety
+tm_trans_wired=Odchozí pakety z pevné sítě
+tm_trans_wireless=Odchozí pakety z bezdrátové sítě
 ezqosDesw=Služba Quality of Service (QoS) zajišťuje rychlost sítě. Výchozí pravidlo stanoví hraní online a procházení webu jako nejvyšší prioritu a není ovlivněno aplikacemi P2P (aplikace peer-to-peer, například BitTorrent). Chcete-li aktivovat funkci QoS, klepněte na přepínač QoS a vyplňte políčka šířky pásma odesílání a přijímání. Získejte informace o šířce pásma od vašeho ISP.<p>Chcete-li upřednostnit konkrétní síťové aplikace a síťová zařízení, vyberte upřednostňovanou prioritu z uživatelem definovaných pravidel QOS.
 qos_automatic_mode=automatický režim
 source_ipmac=Co se týče zdrojové nebo cílové adresy IP, můžete:<p>(a) zadat konkrétní adresu IP, například \"192.168.122.1\";<p>(b) zadat adresu IP v rámci jedné podsítě nebo v rámci stejného fondu adres IP, například \"192.168.123.*\" nebo \"192.168.*.*\";<p>nebo (c) zadat všechny adresy IP jako \"*.*.*.*\"<p>Formát adresy MAC je šest skupin dvou hexadecimálních číslic oddělených dvojtečkou (:), v pořadí přenášení (například 12:34:56:aa:bc:ef)
@@ -279,6 +293,7 @@ RouterConfig_GWMulticast_Broadcast_itemname=Řízení bouře vysílání (Mb/s):
 [keyword_filter]
 menu5_5_5=Filtr klíčových slov
 FirewallConfig_KeywordFilterEnable_sectiondesc=Filtr klíčových slov umožňuje blokovat přístup klientů k webovým stránkám obsahujícím specifikovaná klíčová slova.
+FirewallConfig_KeywordFilterEnable_sectiondesc2=Omezení funkce filtrování podle klíčových slo :<ol><li>Komprimované webové stránky, které využívají komprimační technologii HTTP, nelze filtrovat. <a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">Další podrobnosti viz zde</a></li><li>Webové stránky https nelze filtrovat.</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=Povolit filtr klíčových slov
 FirewallConfig_KeywordActiveDate_itemname=Kdy:
 FirewallConfig_KeywordActiveTime_itemname=Čas:
@@ -394,7 +409,7 @@ ShareNode_Seeding_itemdesc=Umožňuje povolit nebo zakázat funkci ohlašování
 ShareNode_MaxUpload_itemname=Maximální rychlost ukládání
 ShareNode_MaxUpload_itemdesc=Zadejte hodnotu mezi 0 až 999. Výchozí hodnota je 0, což označuje, že není žádné omezení ukládání.
 [New item]
-HSDPAConfig_hsdpa_enable_hint1=3G je aktuálně nastaveno na volbu Záloha připojení přes síť 3G. Dojde-li k odpojení portu WAN, síť se automaticky přepne do režimu 3G.
+HSDPAConfig_hsdpa_enable_hint1=3G/4G je aktuálně nastaveno na volbu Záloha připojení přes síť 3G/4G. Dojde-li k odpojení portu WAN, síť se automaticky přepne do režimu 3G/4G.
 HSDPAConfig_hsdpa_enable_hint2=Chcete-li změnit typ připojení, přejděte na <a href="/Advanced_Modem_others.asp">USB Modem</a> a deaktivujte adaptér.
 HSDPAConfig_USBAdapter_itemname=USB adaptér
 HSDPAConfig_USBAdapter_itemdesc=Po aktivaci USB Modem, vyberte adaptér, který ZVMODELVZ podporuje.
@@ -948,7 +963,9 @@ IPConnection_x_DNSServer1_itemdesc=Toto pole naznačuje IP adresu DNS, se kterou
 IPConnection_x_DNSServer1_itemname=DNS Server1:
 IPConnection_x_DNSServer2_itemdesc=Toto pole naznačuje IP adresu DNS, se kterou ZVMODELVZ spojil.
 IPConnection_x_DNSServer2_itemname=DNS Server2:
+IPConnection_x_DNSServer_blank=Nastavte server DNS v klientském zařízení.
 IPConnection_warning_WANIPEQUALGatewayIP=Nastavili jste WAN IP jako bránu pro ZVMODELVZ a ten se nemusí připojit k internetu. Prosím nastavte bránu na správnou hodnotu.
+IPConnection_x_WAN_LAN_conflict=Bezdrátová síť WAN a místní síť LAN musí mít odlišné adresy IP a masku podsítě.
 [QIS_internet_isp.js]		
 BOP_isp_host_desc=Toto pole je určeno pro jméno hostitele ZVMODELVZ. Obvykle je vyžadováno vaším ISP.
 BOP_isp_host_item=Jméno hostitele(volitelné):
@@ -1052,6 +1069,7 @@ Main_alert_proceeding_desc1=Zpracovává se
 Main_alert_proceeding_desc4=Prosím vyčkejte,
 Main_alert_proceeding_desc3=Hotovo!
 Main_content_Login_Item7=Restartování routeru potrvá přibližně 60 vteřin. Opravdu chcete nyní restartovat router?
+[###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=Restartování routeru potrvá přibližně 80 vteřin. Opravdu chcete nyní restartovat router?
 [QIS-general.js]
 JS_fieldblank=Pole nemohou být prázdná.
 JS_validip=není platná IP adresa!
@@ -1104,11 +1122,13 @@ Setting_upload_itemname=Obnovit nastavení
 Setting_factorydefault_itemdesc=Klikněte na [Obnovit], abyste vrátili router do jeho továrního nastavení a smazali veškerá současná nastavení. Počkejte, dokud se router nerestartuje.
 Setting_save_itemdesc=Klikněte na tlačítko [Uložit], abyste uložili současné nastavení ZVMODELVZ do souboru. (Poznámka: Zatímco ukládáte současné nastavení do souboru, bude zároveň uloženo i na flash.)
 Setting_upload_itemdesc=Specifikujte cestu a jméno souboru nastavení. Poté klikněte na [Nahrát] pro uložení souboru do ZVMODELVZ. Prosím vyčkejte 60 sekund, dokud se ZVMODELVZ nerestartuje.
+[###MODEL_DEP###][RT-N65U]Setting_upload_itemdesc=Specifikujte cestu a jméno souboru nastavení. Poté klikněte na [Nahrát] pro uložení souboru do ZVMODELVZ. Prosím vyčkejte 80 sekund, dokud se ZVMODELVZ nerestartuje.
 Setting_upload_hint=Formát souboru nebo cesta jsou neplatné!
 Setting_factorydefault_hint1=Všechna současná nastavení budou smazána a router bude nakonfigurován do továrního nastavení.\n
 Setting_factorydefault_hint2=Opravdu chcete pokračovat?
 Setting_factorydefault_iphint=Původní nastavení LAN IP ZVMODELVZ je 192.168.1.1.\n Pokud se později nebudete moci vrátit na tuto stránku, prosím ověřte IP konfiguraci svého PC.
 SET_ok_desc=Nastavení se nahrává! Prosím počkejte přibližně 60 vteřin.
+[###MODEL_DEP###][RT-N65U]SET_ok_desc=Nastavení se nahrává! Prosím počkejte přibližně 80 vteřin.
 SET_fail_title=Nahrání souboru nastavení nebylo úspěšné!
 SET_fail_desc=Nahrání souboru nastavení nebylo úspěšné. Mohlo se tak stát nesprávným souborem nastavení, nebo chybou v přenosu. Prosím zkontrolujte platnost souboru nastavení a zkuste to znovu.
 RHELP_desc4=Značí cílovou síť nebo hostitele pravidla routování. Mohlo by se tedy jednat o adresu hostitele jako 「192.168.123.11」nebo sítovou adresu jako 「192.168.0.0」.
@@ -1217,6 +1237,8 @@ PPPConnection_x_WANGateway_itemname=Brána
 PPPConnection_x_WANDNSServer_itemname=Servery DNS
 PPPConnection_x_WANLink_itemname=Stav připojení:
 FirewallConfig_display1_sectiondesc=Filtr síťových služeb blokuje výměny paketů ze sítě LAN do sítě WAN a omezuje zařízením používání konkrétních síťových služeb.<p>Například pokud nechcete, aby zařízení používalo službu Internet, zadejte 80 do cílového portu. Provoz, který používá port 80, bude zablokován.<p>Ponecháte-li pole zdroje IP prázdné, bude toto pravidlo platit pro všechna zařízení v místní síti LAN.
+FirewallConfig_display3_sectiondesc=<b>Doba trvání - černá listina :</b> Během plánované doby trvání nemohou klienti na černé listině používat určené síťové služby. Po uplynutí určené doby trvání mohou všichni klienti v místní síti LAN přistupovat k určeným síťovým službám.<br><b>Doba trvání - bílá listina :</b> Během plánované doby trvání nemohou určené síťové služby používat POUZE klienti na bílé listině. Po uplynutí určené dob trvání nebudou moci klienti na bílé listině a ostatní síťoví klienti přistupovat k Internetu ani k žádné internetové službě.
+FirewallConfig_display4_sectiondesc=<b>POZNÁMKA :</b> Nastavíte-li masku podsítě pro bílou listinu, adresy IP mimo podsíť nebudou moci přistupovat k Internetu ani k žádné internetové službě.
 FirewallConfig_LanWanActiveDate_itemname=Datum pro povolení filtru LAN do WAN:
 FirewallConfig_LanWanActiveDate_itemdesc=Toto pole definuje datum, kdy bude filtr LAN do WAN povolen.
 FirewallConfig_LanWanActiveTime_itemname=Denní doba pro povolení filtru LAN do WAN:
@@ -1231,6 +1253,7 @@ FirewallConfig_LanWanDstIP_itemname=Cílová IP
 FirewallConfig_LanWanDstPort_itemname=Rozsah portu
 FirewallConfig_LanWanProFlag_itemname=Protokol
 FirewallConfig_UrlFilterEnable_sectiondesc=Zadejte klíčová slova pro servery, které chcete blokovat.<p>Například zadejte "XXX" v seznamu. Filtr adres URL bude blokovat adresy http://www.abcXXX.com, http://www.XXXbbb.com atd.
+FirewallConfig_UrlFilterEnable_itemname2=Aktivovat filtr adres URL?
 FirewallConfig_URLActiveTime_itemname=Denní doba pro povolení filtru URL
 FirewallConfig_URLActiveTime_itemhint4=Zadaný časový interval se nemohou překrývat.
 FirewallConfig_URLActiveTime_itemhint=Čas zahájení je pozdější, než čas ukončení.
@@ -1378,6 +1401,7 @@ TZ81=Nová Kaledonie
 TZ82=Magadan, Fiji, Kamčatka, Marshallovy ostrovy
 TZ83=Auckland, Wellington
 TZ84=Nuku'alofa
+TZ85=British Summer Time (BST)
 LANHostConfig_x_NTPServer_itemname=NTP Server
 LANHostConfig_x_NTPServer_itemdesc=Synchronizovat váš systémpvý čas s NTP serverem.
 LANHostConfig_x_DDNSEnable_sectionname=Nastavení DDNS
@@ -1494,6 +1518,7 @@ USB_Application_disk_miscellaneous_desc=Podrobnější nastavení pro disk USB.
 BasicConfig_EnableDownloadMachine_itemname=Povolit Download Master?
 BasicConfig_EnableDownloadShare_itemname=Povolit Download Share?
 BasicConfig_EnableMediaServer_itemname=Povolit UPnP?
+DM_Install_partition=Vyberte paměťové zařízení USB, ke kterému chcete přistupovat.
 CTL_restore=Obnovit
 CTL_onlysave=Uložit
 CTL_clear=Vyčistit
@@ -1525,6 +1550,7 @@ IPConnection_TriggerList_widzarddesc=Známé aplikace:
 FirewallConfig_LWFilterList_widzarddesc=Známé aplikace:
 LANHostConfig_x_DDNSServer_linkname=Zkušební verze
 SAVE_note=Poznámka: Toto zabere asi 60 vteřin.
+[###MODEL_DEP###][RT-N65U]SAVE_note=Poznámka: Toto zabere asi 80 vteřin.
 IPConnection_VServerPNo_itemname=Protokol číslo
 LANHostConfig_ManualDHCPEnable_itemname=Povolit manuální přiřazování?
 LANHostConfig_ManualDHCPList_groupitemdesc=Manuálně přiřadit IP k seznamu DHCP
@@ -1677,7 +1703,7 @@ HSDPAConfig_password_itemdesc=Zadejte vaše heslo.
 HSDPAConfig_usbadaptor_itemdesc=Vyberte váš usb adaptér.
 confirm_disableftp_dm=Deaktivací položky sdílené okolními počítači bude deaktivován správce stahování.
 LANHostConfig_IPRouters_itemdesc=Adresa IP místní sítě LAN zařízení ZVMODELVZ. Výchozí hodnota je 192.168.1.1. V sítích založených na adresách IP jsou datové pakety odesílány na specifické adresy IP síťových zařízení.<p>Směrovače ASUS používají desítkově vyjádřenou adresu IP, která odkazuje na řetězec číslic, které jsou zapsány jako čtyři oktety a odděleny tečkami (například 192.168.1.1).<p>Existují tři rozsahy adres IP, které mohou místní sítě používat: 192.168.0.1 - 192.168.255.254, 172.16.0.1 - 172.31.255.254, 10.0.0.1 - 10.255.255.254.
-HSDPAConfig_hsdpa_mode_itemdesc=Choose the USB Modem mode according by your requirements and enviroments. We provide four mode below: Backup, Equal weight, Always high and Always low. Chcete-li bezpečně odebrat USB Modem adaptér, viz Rejstřík a klepněte na tlačítko adaptéru.
+HSDPAConfig_hsdpa_mode_itemdesc=Nainstalujte 3G USB adaptér do ZVMODELVZ a přeměňte jej na mobilní směrovač.
 Not_authpage_login_again=Chcete-li se znovu přihlásit, nejdříve zavřete toto okno.
 GO_HSDPA_SETTING=Přejít na USB Modem nastavení
 [new strings - translated]
@@ -1777,6 +1803,11 @@ qis_simple_wls_recmd=(doporučené)
 url_keyword_alert=URL klíčových slov
 Not_Listed=není uveden
 qis_service=Service (Služba)
+isp_br_gvt_note=Používáte-li GVT, zadejte uživatelské jméno <b>turbonet@turbonet</b> a heslo <b>gvt25</b>. V opačném případě zadejte uživatelské jméno a heslo, které vám poskytl váš ISP.
+pvc_del_alert_desc=Opravdu chcete odstranit tento PVC?
+same_vpi_vci=Duplicitní nebo stejná nastavení VPI a VCI.
+dns_server_no_set=Nastavte server DNS v klientském zařízení.
+dsl_wan_page_desc=Klepnutím na číselný index upravte nastavení PVC. Klepnutím na ikonu pro přidání (+) nebo odstranění (-) přidejte nebo odstraňte nastavení PVC.
 [adsl end]
 [untrans]
 prev_page=Previous page
@@ -1785,9 +1816,12 @@ step_use_aicloud=Please follow the steps below to use AiCloud:
 download_aicloud=Download ASUS AiCloud app to phone or pad from
 connect_through_wifi=Connect your iOS or Android devices to ZVMODELVZ through WiFi. The AiCloud app will automatically guide you through the process of setup.
 access_service=Now you can access your USB storage and Network place(Samba) enabled devices connected to ZVMODELVZ.
+aicloud_bandwidth1=For the best viewing/listening experience, we recommend the following upload bandwidth for different media format. A 768 Kbps is recommended for music, 5Mbps for SD video, 15Mbps for 720p video and 30Mbps or faster for 1080p HD video streaming.
+aicloud_bandwidth2=Internet upload speeds may vary depending on your ISP and other factors.
+aicloud_bandwidth3=If you are not sure what your Internet speed is, you can ask your ISP, or use an online broadband speed test from a computer connected to ZVMODELVZ.
 aicloud_for_privateIP1=We are going to support AiCloud with private IP later, in this moment, you can setup <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_VirtualServer_Content.asp" target="_blank">Port forwarding</a> or <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_Exposed_Content.asp" target="_blank">DMZ</a> to access private ip address remotely.
-aicloud_for_privateIP2= The AiCloud need to use 8082 and 443 port. you can change the port setting <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_BasicFirewall_Content.asp" target="_blank">here</a>.
-aicloud_for_privateIP3= For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
+aicloud_for_privateIP2=The AiCloud need to use 8082 and 443 port.
+aicloud_for_privateIP3=For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=To establish your cloud disk, you need to plug-in an USB storage into this router, then enable cloud disk.
 aicloud_disk2= Default cloud disk login account use the router login account.
 aicloud_disk_case0=The Cloud disk can be accessed via <a style="font-weight: bolder;text-decoration: underline;" href="http://www.asusnetwork.net:8082" target="_blank">http://www.asusnetwork.net:8082</a> when you connect to ZVMODELVZ in LAN.
@@ -1800,9 +1834,3 @@ smart_access2=You can also wake up your PCs in home remotely by WOL.
 smart_access3=What is <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="http://support.asus.com/Search.aspx?SLanguage=en&keyword=WOL&BIOS" target="_blank">WOL</a>?
 smart_sync1=To start smart sync, you need to sign up an <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asuswebstorage.com/" target="_blank">ASUS webstorage</a> account, then enable cloud disk and smart sync. (Make sure that you have plug-in an USB storage into this router.)
 smart_sync2=Open AiCloud APP. Choose a specific folder in cloud disk that you want to sync with ASUS web storage, then follow the steps show in the app.
-FirewallConfig_UrlFilterEnable_itemname2=Enable URL Filter?
-isp_br_gvt_note=If you are GVT users, please key in the user name ( turbonet@turbonet ) and password ( gvt25 ). Otherwise, please key in the user name and password provided by your ISP.
-pvc_del_alert_desc=Are you sure to delete this PVC?
-same_vpi_vci=VPI and VCI are duplicated.
-dns_server_no_set=DNS server not set! Please setup the DNS server on the client device.
-dsl_wan_page_desc=Click index number to edit PVC setting or click right icon to add or delete PVC

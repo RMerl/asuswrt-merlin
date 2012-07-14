@@ -29,7 +29,7 @@ var RetryCountDown_fail = 5;
 function QKDetect_load_body(){
 	parent.set_step("t1");
 	parent.document.title = "<#Web_Title#> - <#QKSet_detect_sanglass#>";
-	getWANStatus();
+	setTimeout("getWANStatus();", 2000);
 }
 
 function getWANStatus(){
@@ -48,6 +48,11 @@ function getWANStatus(){
 		},
 		success: function(response){
 			RetryCountDown_fail = 5;
+			if(wanstate == 6){
+				setTimeout("getWANStatus();", 2000);
+				return true;
+			}
+
 			if(wanstate == -1 || wanstate == 0 || wanstate == 1){
 				if(wanauxstate == 3 && wanstate == 1){ // PPP_AUTH_FAIL
 					alert("<#QKSet_Internet_Setup_fail_reason2#>");
@@ -121,7 +126,7 @@ function redirect_page(redirect_flag){
 								<span class="description_down"><#QKSet_detect_desc2#></span>
 							</td>
 							<td align="right">
-								<img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
+								<!--img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'"-->
 							</td>
 						</tr>
 					</table>

@@ -15,6 +15,7 @@ html{
 }
 </style>
 <script type='text/javascript' src='/smb/js/tools.js'></script>
+<script type='text/javascript' src='/smb/js/VLCcontrols/jquery-vlc.js'></script>
 <script type="text/javascript">
 var m = new lang();
 var g_storage = new myStorage();
@@ -85,7 +86,9 @@ $("document").ready(function() {
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
 	
+	var this_showbutton = getUrlVars()["showbutton"];
 	var this_video = getUrlVars()["v"];
+	
 	var val = navigator.userAgent.toLowerCase();
 	var isIE = false;
 	if(val.indexOf("msie") > -1) isIE = true;
@@ -105,18 +108,31 @@ $("document").ready(function() {
 	}
 	 	
 	if(!detectVLCInstalled()){
-		document.write("<body width='100%' height='100%' style='margin:0px;padding:0px'>");
-		document.write("<div id='errorpage' style='background-image:url(vlc_bg_img.jpg);background-repeat:no-repeat;width:100%; height:100%'>");
+		
+		document.write("<body width='100%' height='100%' style='margin:0px;padding:0px'>");		
+		
+		if(this_showbutton==1)	
+			document.write("<div id='errorpage' style='overflow:none;background-image:url(vlc_bg_img.jpg);background-repeat:no-repeat;width:100%; height:94%'>");
+		else
+			document.write("<div id='errorpage' style='background-image:url(vlc_bg_img.jpg);background-repeat:no-repeat;width:100%; height:100%'>");
 		document.write("<p style='position:relative;left:54px;top:60px;width:500px;font-size:20px;color:#ffffff'>" + m.getString('msg_installvlc') + "</p>");
 		document.write("<p style='position:relative;left:54px;top:80px;width:550px;font-size:16px;color:#ffffff;text-align:left'>" + m.getString('msg_installvlc2') + "</p>");
 		document.write("<p style='position:relative;left:216px;top:100px;width:350px;font-size:14px;color:#ffffff;text-align:left'>" + m.getString('msg_installvlc3') + "</p>");
 		document.write("<a href='http://www.videolan.org/vlc/' target='_blank'><div style='width:123px;height:30px;background-image:url(downloadvlc.png);position:relative;left:456px;top:100px;cursor:pointer'></div></a>");
 		document.write("</div></body>");
+		
+		if(this_showbutton==1){
+			document.write("<div width='100%'><button id='btnClose' style='position: relative;float:right;right:5px;' onclick='parent.closeJqmWindow(0);'>close</button><div>");			
+		}
+		
+		document.write("</body>");
+		
 		window.resizeTo( 640, 460 );
 		return;
 	}
 	
 	if(isIE){
+		
 		/*if(getInternetExplorerVersion()<=8){
 			document.write("<body width='100%' height='100%' style='margin:0px;padding:0px'>");
 			document.write("<OBJECT classid='clsid:9BE31822-FDAD-461B-AD51-BE1D1C159921'");
@@ -132,7 +148,8 @@ $("document").ready(function() {
 			document.write("</OBJECT>");
 			document.write("</body>");
 		}
-		else*/{
+		else*///{
+			
 			document.write("<body width='100%' height='100%' style='margin:0px;padding:0px'>");
 			document.write("<OBJECT classid='clsid:E23FE9C6-778E-49D4-B537-38FCDE4887D8'");
 			document.write(" codebase='http://downloads.videolan.org/pub/videolan/vlc/latest/win32/axvlc.cab'");
@@ -146,7 +163,9 @@ $("document").ready(function() {
 			document.write("<param name='ToolBar' value='True'/>");
 			document.write("</OBJECT>");
 			document.write("</body>");
-		}
+			
+			//http://192.168.123.125:8082/AICLOUD1492337110/HELLRAISER%20_6_%20HELLSEEKER%20%5B2002%5D.avi
+		//}
 	}
 	else{		
 		document.write("<body width='100%' height='100%' style='margin:0px;padding:0px'>");
@@ -154,13 +173,17 @@ $("document").ready(function() {
 		document.write(" pluginspage='http://www.videolan.org'");
 		document.write(" src='");
 		document.write(this_video);
-		document.write("' width='100%' height='100%' id='vlcPlayer' name='vlcPlayer'/>");
 		
+		if(this_showbutton==1){
+			document.write("' width='100%' height='94%' id='vlcPlayer' name='vlcPlayer'/>");
+			document.write("<div width='100%'><button id='btnClose' style='position: relative;float:right;right:5px;' onclick='parent.closeJqmWindow(0);'>close</button><div>");			
+		}
+		else
+			document.write("' width='100%' height='100%' id='vlcPlayer' name='vlcPlayer'/>");
+			
 		document.write("</body>");
-		
-		
 	}
-	
+	/*
 	var vlcPlayer = document.getElementById("vlcPlayer");	
 	if(vlcPlayer){	
 		//alert("b");	
@@ -173,10 +196,36 @@ $("document").ready(function() {
 		//vlcPlayer.video.toggleFullscreen();
 		//vlcPlayer.pause();
 	}
+	*/
+	
+	$('button#btnClose').text(m.getString("btn_close"));
+});
+
+function closeWindow(){
+	parent.closeJqmWindow(0);
+}
+
+$(document).keydown(function(e) {
+	alert(e.keyCode);
+    if (e.keyCode == 27) return false;
 });
 
 </script>
 </head>
-<body>
+<body id='main' width='100%' height='100%' style='margin:0px;padding:0px'>
+	<!--
+	<div id='vlc1' width='100%' height='100%'/>
+	
+			<OBJECT classid='clsid:E23FE9C6-778E-49D4-B537-38FCDE4887D8'
+			codebase='http://downloads.videolan.org/pub/videolan/vlc/latest/win32/axvlc.cab'
+			 id='vlcPlayer' name='vlcPlayer' width='100%' height='94%'>
+			<param name='Src' value='http://192.168.123.125:8082/AICLOUD1492337110/HELLRAISER%20_6_%20HELLSEEKER%20%5B2002%5D.avi'/>
+			<param name='ShowDisplay' value='True'/>
+			<param name='AutoLoop' value='False'/>
+			<param name='AutoPlay' value='True'/>
+			<param name='ToolBar' value='True'/>
+			</OBJECT>
+			<div width='100%'><button style='position: relative;float:right;right:5px;' onclick='parent.closeJqmWindow(0);'>close</button><div>
+			-->
 </body>
 </html>

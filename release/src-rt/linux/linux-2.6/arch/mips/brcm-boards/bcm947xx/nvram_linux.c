@@ -49,6 +49,9 @@ char __initdata ram_nvram_buf[NVRAM_SPACE] __attribute__((aligned(PAGE_SIZE)));
 /* In BSS to minimize text size and page aligned so it can be mmap()-ed */
 static char nvram_buf[NVRAM_SPACE] __attribute__((aligned(PAGE_SIZE)));
 static char *nvram_commit_buf = NULL;
+#ifdef RTN66U_NVRAM_64K_SUPPORT /*Only for RT-N66U upgrade from nvram 32K -> 64K*/
+int nvram_32_reset = 0;
+#endif
 
 #define CFE_UPDATE  1 // added by Chen-I for mac/regulation update
 #ifdef CFE_UPDATE
@@ -394,8 +397,10 @@ early_nvram_init(void)
 	header = (struct nvram_header *) KSEG1ADDR(base + lim - 0x8000);
 	if(header->magic==0xffffffff) {
         	header = (struct nvram_header *) KSEG1ADDR(base + 1 KB);
-	        if (nvram_valid(header))
+	        if (nvram_valid(header)) {
+			nvram_32_reset=1;
         	        goto found;
+		}
 	}
 #endif
 
@@ -526,10 +531,19 @@ _nvram_read(char *buf)
 			offset = nvram_mtd->size - NVRAM_SPACE;
 	}
 
+#ifdef RTN66U_NVRAM_64K_SUPPORT /*Only for RT-N66U upgrade from nvram 32K -> 64K*/
+	if (nvram_32_reset==1 || 
+	    !nvram_mtd ||
+            nvram_mtd->read(nvram_mtd, offset, NVRAM_SPACE, &len, buf) ||
+            len != NVRAM_SPACE ||
+            !nvram_valid(header)) {
+		nvram_32_reset=0;
+#else
 	if (!nvram_mtd ||
 	    nvram_mtd->read(nvram_mtd, offset, NVRAM_SPACE, &len, buf) ||
 	    len != NVRAM_SPACE ||
 	    !nvram_valid(header)) {
+#endif
 		/* Maybe we can recover some data from early initialization */
 		memcpy(buf, nvram_buf, NVRAM_SPACE);
 	}
@@ -1136,45 +1150,6 @@ dev_nvram_init(void)
 		nvram_mtd = NULL;
 #endif
 
-#ifdef RTN66U_NVRAM_64K_SUPPORT
-        int ret32;
-        char *log_buf;
-        u_int32_t offset_t;
-        size_t log_len;
-        DECLARE_WAITQUEUE(wait, current);
-        wait_queue_head_t wait_q;
-        struct erase_info erase;
-
-        offset_t = 0x18000;
-        ret32 = nvram_mtd->read(nvram_mtd, offset_t, 4, &log_len, &log_buf);
-        if(log_buf==0xffffffff) {
-	        /* Erase sector blocks */
-                init_waitqueue_head(&wait_q);
-
-                erase.mtd = nvram_mtd;
-                erase.addr = 0;
-                erase.len = nvram_mtd->erasesize;
-                erase.callback = erase_callback;
-                erase.priv = (u_long) &wait_q;
-                set_current_state(TASK_INTERRUPTIBLE);
-                add_wait_queue(&wait_q, &wait);
-
-                /* Unlock sector blocks */
-                if (nvram_mtd->unlock)
-                        nvram_mtd->unlock(nvram_mtd, 0, nvram_mtd->erasesize);
-
-                if ((ret = nvram_mtd->erase(nvram_mtd, &erase))) {
-                        set_current_state(TASK_RUNNING);
-                        remove_wait_queue(&wait_q, &wait);
-                        printk("nvram mtd erase error\n");
-                }
-
-                /* Wait for erase to finish */
-                schedule();
-                remove_wait_queue(&wait_q, &wait);
-        }
-#endif
-
 	/* Initialize hash table lock */
 	spin_lock_init(&nvram_lock);
 
@@ -1197,6 +1172,7 @@ dev_nvram_init(void)
 		si_setosh(sih, osh);
 	}
 
+printk("dev_nvram_init: _nvram_init\n");
         /* Initialize hash table */
         _nvram_init(sih);
 

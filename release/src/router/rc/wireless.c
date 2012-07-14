@@ -52,7 +52,7 @@ int wds_enable(void)
 int
 start_nas(void)
 {
-	int ret = eval("nas");;
+	int ret = eval("nas");
 
 #ifdef __CONFIG_MEDIA_IPTV__
 

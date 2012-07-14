@@ -96,8 +96,8 @@ int ntp_main(int argc, char *argv[])
 		sleep(3);
 		setup_timezone();
 		
-		// only dst_timezone 
-		if(nvram_safe_get("time_zone_dst")){
+		// when time_zone has "DST" ,will ntp syn every hour
+		if(strstr(nvram_safe_get("time_zone_x"), "DST")){
 			struct tm local;
 			time_t now;
 			int diff_sec;

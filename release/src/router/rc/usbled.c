@@ -77,6 +77,11 @@ static void no_blink(int sig)
 	usb_busy = 0;
 }
 
+static void wps_pbc(int sig)
+{
+	start_wps_pbc(0);
+}
+
 static void blink(int sig)
 {
 //	dbG("\n\n\nreceive SIGUSR1 to usbled\n\n\n");
@@ -161,6 +166,7 @@ usbled_main(int argc, char *argv[])
 	signal(SIGTERM, usbled_exit);
 	signal(SIGUSR1, blink);
 	signal(SIGUSR2, no_blink);
+	signal(SIGTSTP, wps_pbc);
 
 	alarmtimer(USBLED_NORMAL_PERIOD, 0);
 

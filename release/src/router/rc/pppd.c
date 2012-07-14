@@ -48,7 +48,7 @@ int check_process_exist(int pid){
 	memset(path, 0, 32);
 	sprintf(path, "/proc/%d", pid);
 
-	return test_if_dir(path);
+	return check_if_dir_exist(path);
 }
 
 int start_pppd(int unit)
@@ -58,8 +58,8 @@ int start_pppd(int unit)
 	FILE *fp;
 	char options[80];
 	char *pppd_argv[] = { "/usr/sbin/pppd", "file", options, NULL};
-	char *l2tpd_argv[] = { "/usr/sbin/l2tpd", "-f", NULL};
-	char tmp[100], tmp1[32], prefix[] = "wanXXXXXXXXXX_";
+	char *l2tpd_argv[] = { "/usr/sbin/l2tpd", NULL};
+	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	mode_t mask;
 	int pid;
 

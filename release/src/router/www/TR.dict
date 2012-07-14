@@ -25,6 +25,7 @@ tunnel_MTU=Tünel MTU
 tunnel_TTL=Tünel TTL
 [VPN server]
 vpn_setting=Temel Yapılandırma
+vpn_Adv=VPN Ayrıntıları
 PPTP_desc=VPN sunucusu ev ağınıza herhangi bir yerden herhangi bir zamanda erişmenize olanak sağlar.
 PPTP_desc2=VPN sunucusunu kullanmak içindir. Lütfen şu adımları izleyin.<br>(1) PPTP VPN sunucusunu etkinleştirin<br>(2) İstemci IP'si için IP havuzunu ayarlayın. (Maksimum 10 istemci) <br>(3) VPN istemcisinin kullanıcı adını ve şifresini ayarlayın.<br>(4) Bilgisayarınızda veya akıllı telefonunuzda VPN bağlantısı programını açın.<br>(5) Yeni bir PPTP VPN bağlantısı ekleyin, VPN sunucu adresi
 PPTP_desc3=(6) WAN IP adresiniz dinamiktir, <a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">lütfen DDNS'yi ayarlamak için burayı tıklatın.</a>
@@ -91,6 +92,19 @@ Low=Düşük
 Lowest=En düşük
 traffic_monitor=Trafik İzleyicisi
 traffic_monitor_desc=Trafik İzleyicisi aşağıdaki ağ trafiği türlerini izlemenize yardım eder:<P>İnternet: Tüm İnternet trafiği.<P>Kablolu: Kabloludan kablosuza ve internete ağ trafiği.<P>Kablosuz: Kablosuzdan kabloluya ve internete ağ trafiği.
+traffic_monitor_desc1=Trafik Monitörü aşağıdaki gelen veya giden paketleri izlemenize olanak sağlar :
+traffic_monitor_desc2=<b>NOT :</b> İnternetten gelen paketler kablolu ve kablosuz aygıtlara düzgün bir şekilde aktarılır.
+tm_internet=Internet
+tm_wired=Kablolu
+tm_wireless=Kablosuz
+tm_reception=Yayın alımı
+tm_transmission=Aktarım
+tm_recp_int=Gelen internet paketleri
+tm_recp_wired=Kablolu ağdan gelen paketler
+tm_recp_wireless=Kablosuz ağdan gelen paketler
+tm_trans_int=Giden internet paketleri
+tm_trans_wired=Kablolu ağdan giden paketler
+tm_trans_wireless=Kablosuz ağdan giden paketler
 ezqosDesw=Hizmet Kalitesi [Quality of Service (QoS)] ağın hız performansını sağlar. Varsayılan kural çevrimiçi oyun ve web gezintisini en yüksek öncelikte ayarlar ve Uçbirimden Uçbirime [Peer-To-Peer (P2P)] uygulamalardan (BitTorrent gibi uçbirimden uçbirime uygulamalar) etkilenmez. Hizmet Kalitesi fonksiyonunu etkinleştirmek için Hizmet Kalitesi kaydırmalı düğmesine tıklayın ve yükleme ve indirme bant aralığı alanlarını doldurun.  ISP'den bant aralığı bilgilerini alın.<p>Eğer belirli ağ uygulamalarını ve ağ cihazlarını önceliklendirmek isterseniz, Kullanıcı tarafından belirlenen Hizmet Kalitesi kurallarından tercih edilen önceliğinizi seçin.
 qos_automatic_mode=Otomatik mod
 source_ipmac=Kaynak veya hedef IP adresi için şunları yapabilirsiniz :<p>(a) \"192.168.122.1\" gibi özel bir IP adresi girmek;<p>(b) \"192.168.123.*\" veya \"192.168.*.*\" gibi bir alt ağ veya aynı IP havuzu içine IP adreslerini girmek veya;<p>(c) tüm IP adreslerini \"*.*.*.*\" olarak girmek<p>MAC adresi için format, aktarım sırasına göre sütunlarla (:) ayrılmış iki tane on altılı sayıdan oluşan altı gruptur (örnek, 12:34:56:aa:bc:ef )
@@ -279,6 +293,7 @@ RouterConfig_GWMulticast_Broadcast_itemname=Yayın fırtına kontrolü (Mbps):
 [keyword_filter]
 menu5_5_5=Anahtar Kelime Filtresi
 FirewallConfig_KeywordFilterEnable_sectiondesc=Anahtar Kelime Filtresi, belirlenen anahtar kelimeleri içeren web sayfalarına kullanıcıların erişimini engellemenize izin verir.
+FirewallConfig_KeywordFilterEnable_sectiondesc2=Klavye filtreleme işlevinin sınırlandırmaları :<ol><li>HTTP sıkıştırma teknolojisini kullanan sıkıştırılmış web sayfaları filtrelenemez. <a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">Ayrıntılı bilgi için buraya bakınız</a></li><li>Https web sayfaları filtrelenemez.</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=Anahtar Kelime Filtesini Etkinleştir
 FirewallConfig_KeywordActiveDate_itemname=Tarih:
 FirewallConfig_KeywordActiveTime_itemname=Saat:
@@ -394,7 +409,7 @@ ShareNode_Seeding_itemdesc=Tohumlama fonksiyonunu etkinleştirmenize veya devre 
 ShareNode_MaxUpload_itemname=Maksimum Yükleme Hızı
 ShareNode_MaxUpload_itemdesc=0 ila 999 arasında bir değer girin. Varsayılan değer herhangi bir yükleme sınırı olmadığını gösteren 0'dır.
 [New item]
-HSDPAConfig_hsdpa_enable_hint1=Geçerli 3G ayarı 3G Yedek moduna ayarlı. WAN bağlantı noktası bağlantısı kesildi, ağ modu otomatik olarak 3G moduna dönecek.
+HSDPAConfig_hsdpa_enable_hint1=Geçerli 3G/4G ayarı 3G/4G Yedek moduna ayarlı. WAN bağlantı noktası bağlantısı kesildi, ağ modu otomatik olarak 3G/4G moduna dönecek.
 HSDPAConfig_hsdpa_enable_hint2=Bağlantı türünü değiştirmek isterseniz, lütfen USB adaptörünü devreden çıkarmak için <a href="/Advanced_Modem_others.asp">USB Modem</a>'ya gidin.
 HSDPAConfig_USBAdapter_itemname=USB Adaptör
 HSDPAConfig_USBAdapter_itemdesc=USB Modem etkinleştirildikten sonra, ZVMODELVZ'nin desteklediği adaptörü seçin.
@@ -948,7 +963,9 @@ IPConnection_x_DNSServer1_itemdesc=Bu alan, ZVMODELVZ yönlendiricisinin irtibat
 IPConnection_x_DNSServer1_itemname=DNS Sunucusu1:
 IPConnection_x_DNSServer2_itemdesc=Bu alan, ZVMODELVZ yönlendiricisinin irtibat sağladığı DNS IP adresini gösterir.
 IPConnection_x_DNSServer2_itemname=DNS Sunucusu2:
+IPConnection_x_DNSServer_blank=Lütfen istemci aygıtında DNS sunucusunu kurun.
 IPConnection_warning_WANIPEQUALGatewayIP=WAN IP'sini ZVMODELVZ Ağ Geçidi olarak ayarladınız ve ZVMODELVZ Internet bağlanamayabilir. Lütfen Ağ Geçidini doğru değerde ayarlayın.
+IPConnection_x_WAN_LAN_conflict=WAN ve LAN farklı IP adreslerine ve altağına sahiptir.
 [QIS_internet_isp.js]
 BOP_isp_host_desc=Bu alan size ZVMODELVZ ana bilgisayar adını verir. Genellikle ISS'nız tarafından istenir.
 BOP_isp_host_item=Ana Bilgisayar Adı (isteğe bağlı):
@@ -1052,6 +1069,7 @@ Main_alert_proceeding_desc1=İşlem Devam Ediyor
 Main_alert_proceeding_desc4=Lütfen bekleyin, 
 Main_alert_proceeding_desc3=Tamamlandı!
 Main_content_Login_Item7=Yönlendiricinin yeniden başlatılması yaklaşık 60 saniye sürer. Yönlendiriciyi şimdi yeniden başlatmak istediğinizden emin misiniz?
+[###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=Yönlendiricinin yeniden başlatılması yaklaşık 80 saniye sürer. Yönlendiriciyi şimdi yeniden başlatmak istediğinizden emin misiniz?
 [QIS-general.js]
 JS_fieldblank=Alanlar boş olamaz.
 JS_validip=geçerli bir IP adresi değil!
@@ -1104,11 +1122,13 @@ Setting_upload_itemname=Ayarları geri yükle
 Setting_factorydefault_itemdesc=Yönlendiriciyi fabrika varsayılan ayarlarına geri yükleyip o anki tüm ayarları silmek için [Geri yükle]'nı tıklatın. Yönlendirici yeniden başlatılıncaya kadar bir süre bekleyin. 
 Setting_save_itemdesc=ZVMODELVZ yönlendiricisinin o anki ayarlarını bir dosyaya kaydetmek için [Kaydet]'i tıklatın. (Not: O anki ayarlar dosyaya kaydedilirken, aynı zamanda anlık belleğe de kaydedilir.)
 Setting_upload_itemdesc=Ayar dosyasının yol ve adını belirtin. Dosyayı ZVMODELVZ yönlendiricisine yazmak için [Karşıya Yükle]'yi tıklatın. Lütfen ZVMODELVZ yeniden başlatılıncaya kadar 60 saniye bekleyin.
+[###MODEL_DEP###][RT-N65U]Setting_upload_itemdesc=Ayar dosyasının yol ve adını belirtin. Dosyayı ZVMODELVZ yönlendiricisine yazmak için [Karşıya Yükle]'yi tıklatın. Lütfen ZVMODELVZ yeniden başlatılıncaya kadar 80 saniye bekleyin.
 Setting_upload_hint=Dosya biçimi veya yol geçersiz!
 Setting_factorydefault_hint1=O anki tüm ayarlar silinir ve yönlendirici fabrika varsayılan ayarlarına geri yüklenir.\n
 Setting_factorydefault_hint2=Devam etmek istediğinizden emin misiniz?
 Setting_factorydefault_iphint=ZVMODELVZ varsayılan Yerel Ağ IP'si 192.168.1.1'dir.\nDaha sonra ayar sayfasına geri dönemezseniz, lütfen bilgisayarınızın IP yapılandırmasını yenileyin.
 SET_ok_desc=Ayarlar karşıya yükleniyor! Lütfen 60 saniye kadar bekleyin.
+[###MODEL_DEP###][RT-N65U]SET_ok_desc=Ayarlar karşıya yükleniyor! Lütfen 80 saniye kadar bekleyin.
 SET_fail_title=Ayar Dosyası Karşıya Yükleme İşlemi Başarısız!
 SET_fail_desc=Ayar Dosyası karşıya yükleme işlemi başarısız. Yanlış Ayar Dosyası veya hatalı aktarımdan kaynaklanabilir. Lütfen Ayar Dosyası doğrulamasını kontrol edip yeniden deneyin.
 RHELP_desc4=Rota hedef ağı veya ana bilgisayarı demektir. Yani, 「192.168.123.11」 gibi bir ana bilgisayar adresi ya da 「192.168.0.0」gibi bir ağ adresi olabilir.
@@ -1217,6 +1237,8 @@ PPPConnection_x_WANGateway_itemname=Ağ Geçidi
 PPPConnection_x_WANDNSServer_itemname=DNS Sunucuları
 PPPConnection_x_WANLink_itemname=Bağlantı Durumu:
 FirewallConfig_display1_sectiondesc=Ağ Hizmetleri filtresi LAN'dan WAN'a paket değişimini engeller ve cihazların belirli ağ hizmetlerini kullanmalarını kısıtlar.<p>Örneğin, cihazın İnternet hizmetini kullanmasını istemiyorsanız hedef porta 80 girin. Port 80'i kullanan trafik engellenecektir.<p>Bu kuralı tüm LAN cihazlarına uygulamak için IP alanını boş bırakın.
+FirewallConfig_display3_sectiondesc=<b>Kara Liste Süresi :</b> Planlanan süre boyunca, Kara Listedeki istemciler belirlenen ağ hizmetlerini kullanamaz. Belirlenen sürenin ardından, LAN’daki tüm istemciler belirlenen ağ hizmetlerine erişim sağlayabilir.<br><b>Beyaz Liste Süresi :</b> Planlanan süre boyunca, Beyaz Listedeki istemciler SADECE belirlenen ağ hizmetlerini kullanabilir. Belirlenen sürenin ardından, Beyaz Listedeki istemciler ve diğer ağ istemcileri internete veya internet hizmetlerine rişim sağlayamayacaklardır.
+FirewallConfig_display4_sectiondesc=<b>NOT :</b> Eğer Beyaz Liste için bir ağ ağ ayarlarsanız, alt ağın dışındaki IP adresleri internete veya herhangi bir internet hizmetine erişim sağlayamayacaklar.
 FirewallConfig_LanWanActiveDate_itemname=LAN - WAN filtresini Etkinleştirme Tarihi:
 FirewallConfig_LanWanActiveDate_itemdesc=Bu alanda LAN - WAN filtresinin etkinleştirileceği tarihler tanımlanır.
 FirewallConfig_LanWanActiveTime_itemname=LAN - WAN filtresini Etkinleştirme Zamanı:
@@ -1379,6 +1401,7 @@ TZ81=Yeni Kaledonya
 TZ82=Magadan, Fiji, Kamchatka, Marshall Ad.
 TZ83=Auckland, Wellington
 TZ84=Nuku'alofa
+TZ85=British Summer Time (BST)
 LANHostConfig_x_NTPServer_itemname=NTP Sunucusu
 LANHostConfig_x_NTPServer_itemdesc=Sistem zamanınızı NTP Sunucusuyla eşleştirmek için.
 LANHostConfig_x_DDNSEnable_sectionname=DDNS Ayarı
@@ -1495,6 +1518,7 @@ USB_Application_disk_miscellaneous_desc=USB Disk için daha ayrıntılı ayarlar
 BasicConfig_EnableDownloadMachine_itemname=Download Master etkinleştirilsin mi?
 BasicConfig_EnableDownloadShare_itemname=Download Share etkinleştirilsin mi?
 BasicConfig_EnableMediaServer_itemname=UPnP etkinleştirilsin mi?
+DM_Install_partition=Lütfen erişmek istediğiniz USB depolama aygıtını seçin.
 CTL_restore=Geri yükle
 CTL_onlysave=Kaydet
 CTL_clear=Temizle
@@ -1526,6 +1550,7 @@ IPConnection_TriggerList_widzarddesc=Tanınmış Uygulamalar:
 FirewallConfig_LWFilterList_widzarddesc=Tanınmış Uygulamalar:
 LANHostConfig_x_DDNSServer_linkname=Ücretsiz Deneme
 SAVE_note=Not: Yaklaşık 60 saniye sürer.
+[###MODEL_DEP###][RT-N65U]SAVE_note=Not: Yaklaşık 80 saniye sürer.
 IPConnection_VServerPNo_itemname=Protokol No.
 LANHostConfig_ManualDHCPEnable_itemname=El İle Atama Etkinleştirilsin mi?
 LANHostConfig_ManualDHCPList_groupitemdesc=DHCP Listesi Çevresinde El İle Atanmış IP
@@ -1678,7 +1703,7 @@ HSDPAConfig_password_itemdesc=Lütfen şifrenizi giriniz.
 HSDPAConfig_usbadaptor_itemdesc=Lütfen usb adaptörünüzü seçiniz.
 confirm_disableftp_dm=Ağ Komşu Paylaşımının engellenmesi Download Master'ı engelleyecektir.
 LANHostConfig_IPRouters_itemdesc=ZVMODELVZ'nun LAN IP adresi. Varsayılan değer 192.168.1.1. IP temelli ağlarda veri paketleri ağ cihazlarının özel IP adreslerine gönderilir.<p>ASUS yönlendiriciler dört sekizli olarak yazılan ve noktalarla ayrılan sayı dizisini (192.168.1.1 gibi) ifade eden noktalı ondalık göstrimli IP adresi kullanır.<p>Yerel ağların kullanabileceği üç IP aralığı vardır: 192.168.0.1 - 192.168.255.254, 172.16.0.1 - 172.31.255.254, 10.0.0.1 - 10.255.255.254.
-HSDPAConfig_hsdpa_mode_itemdesc=Gereksinim ve koşullarınıza uygun olarak USB Modem modunu seçin. Aşağıda size dört mod sunuyoruz: Backup (Yedekleme), Equal weight (Eşit ağırlık), Always high (Daima yüksek) ve Always low (Daima düşük). USB Modem adaptörünü güvenilir bir şekilde çıkarmak için lütfen Endekse gidin ve adaptör düğmesine tıklayın.
+HSDPAConfig_hsdpa_mode_itemdesc=Bir 3G USB adaptörünü ZVMODELVZ'ye takın ve bir mobil yönlendiricide açın.
 Not_authpage_login_again=Tekrar oturum açmak isterseniz, lütfen ilk önce bu pencereyi kapatın.  
 GO_HSDPA_SETTING=USB Modem Ayarlara Git
 [new strings - translated]
@@ -1778,6 +1803,11 @@ qis_simple_wls_recmd=(Önerilen)
 url_keyword_alert=URL anahtar kelime
 Not_Listed=Listede olmayan
 qis_service=Hizmet
+isp_br_gvt_note=Eğer bir GVT kullanıcısı iseniz, lütfen <b>turbonet@turbonet</b> kullanıcı adını ve <b>gvt25</b> parolasını girin. Aksi halde, ISP'niz tarafından verilen kullanıcı adını ve parolayı girin.
+pvc_del_alert_desc=Bu PVC'yi silmek istediğinizden emin misiniz?
+same_vpi_vci=Kopya veya aynı VPI ve VCI ayarları.
+dns_server_no_set=Lütfen istemci aygıtında DNS sunucusunu kurun.
+dsl_wan_page_desc=Bir PVC ayarını düzenlemek için sayısal endekse tıklayın. Bir PVC ayarı eklemek veya silmek için ekle (+) veya sil (-) simgesine tıklayın.
 [adsl end]
 [untrans]
 prev_page=Previous page
@@ -1786,9 +1816,12 @@ step_use_aicloud=Please follow the steps below to use AiCloud:
 download_aicloud=Download ASUS AiCloud app to phone or pad from
 connect_through_wifi=Connect your iOS or Android devices to ZVMODELVZ through WiFi. The AiCloud app will automatically guide you through the process of setup.
 access_service=Now you can access your USB storage and Network place(Samba) enabled devices connected to ZVMODELVZ.
+aicloud_bandwidth1=For the best viewing/listening experience, we recommend the following upload bandwidth for different media format. A 768 Kbps is recommended for music, 5Mbps for SD video, 15Mbps for 720p video and 30Mbps or faster for 1080p HD video streaming.
+aicloud_bandwidth2=Internet upload speeds may vary depending on your ISP and other factors.
+aicloud_bandwidth3=If you are not sure what your Internet speed is, you can ask your ISP, or use an online broadband speed test from a computer connected to ZVMODELVZ.
 aicloud_for_privateIP1=We are going to support AiCloud with private IP later, in this moment, you can setup <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_VirtualServer_Content.asp" target="_blank">Port forwarding</a> or <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_Exposed_Content.asp" target="_blank">DMZ</a> to access private ip address remotely.
-aicloud_for_privateIP2= The AiCloud need to use 8082 and 443 port. you can change the port setting <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_BasicFirewall_Content.asp" target="_blank">here</a>.
-aicloud_for_privateIP3= For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
+aicloud_for_privateIP2=The AiCloud need to use 8082 and 443 port.
+aicloud_for_privateIP3=For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=To establish your cloud disk, you need to plug-in an USB storage into this router, then enable cloud disk.
 aicloud_disk2= Default cloud disk login account use the router login account.
 aicloud_disk_case0=The Cloud disk can be accessed via <a style="font-weight: bolder;text-decoration: underline;" href="http://www.asusnetwork.net:8082" target="_blank">http://www.asusnetwork.net:8082</a> when you connect to ZVMODELVZ in LAN.
@@ -1801,8 +1834,3 @@ smart_access2=You can also wake up your PCs in home remotely by WOL.
 smart_access3=What is <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="http://support.asus.com/Search.aspx?SLanguage=en&keyword=WOL&BIOS" target="_blank">WOL</a>?
 smart_sync1=To start smart sync, you need to sign up an <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asuswebstorage.com/" target="_blank">ASUS webstorage</a> account, then enable cloud disk and smart sync. (Make sure that you have plug-in an USB storage into this router.)
 smart_sync2=Open AiCloud APP. Choose a specific folder in cloud disk that you want to sync with ASUS web storage, then follow the steps show in the app.
-isp_br_gvt_note=If you are GVT users, please key in the user name ( turbonet@turbonet ) and password ( gvt25 ). Otherwise, please key in the user name and password provided by your ISP.
-pvc_del_alert_desc=Are you sure to delete this PVC?
-same_vpi_vci=VPI and VCI are duplicated.
-dns_server_no_set=DNS server not set! Please setup the DNS server on the client device.
-dsl_wan_page_desc=Click index number to edit PVC setting or click right icon to add or delete PVC

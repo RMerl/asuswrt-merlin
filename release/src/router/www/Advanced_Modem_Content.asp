@@ -77,13 +77,21 @@ function initial(){
 		$("option5").className = "m5_r";
 	}
 
+  if(no_wimax_support >= 0){  	
+  	/*document.form.modem_enable_option.remove(3);	//remove WiMAX  	*/
+  	for (var i = 0; i < document.form.modem_enable_option.options.length; i++) {
+			if (document.form.modem_enable_option.options[i].value == "4") {
+				document.form.modem_enable_option.options.remove(i);
+				break;
+			}
+		}
+  }
+
 	//pin code
 	if(pin_opt) {
 		document.form.modem_pincode.disabled = false;
-		inputHideCtrl(document.form.modem_pincode, 1);
 	} else {
 		document.form.modem_pincode.disabled = true;
-		inputHideCtrl(document.form.modem_pincode, 0);
 	}
 }
 
@@ -200,7 +208,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_country, 1);
 		inputCtrl(document.form.modem_isp, 1);
 		inputCtrl(document.form.modem_apn, 1);
-		//inputCtrl(document.form.wan_3g_pin, 1);
+		if(pin_opt) inputCtrl(document.form.modem_pincode, 1);
 		inputCtrl(document.form.modem_dialnum, 1);
 		inputCtrl(document.form.modem_user, 1);
 		inputCtrl(document.form.modem_pass, 1);
@@ -212,7 +220,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_country, 1);
 		inputCtrl(document.form.modem_isp, 1);
 		inputCtrl(document.form.modem_apn, 1);
-		//inputCtrl(document.form.wan_3g_pin, 1);
+		if(pin_opt) inputCtrl(document.form.modem_pincode, 1);
 		inputCtrl(document.form.modem_dialnum, 1);
 		inputCtrl(document.form.modem_user, 1);
 		inputCtrl(document.form.modem_pass, 1);
@@ -224,7 +232,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_country, 1);
 		inputCtrl(document.form.modem_isp, 1);
 		inputCtrl(document.form.modem_apn, 1);
-		//inputCtrl(document.form.wan_3g_pin, 1);
+		if(pin_opt) inputCtrl(document.form.modem_pincode, 1);
 		inputCtrl(document.form.modem_dialnum, 1);
 		inputCtrl(document.form.modem_user, 1);
 		inputCtrl(document.form.modem_pass, 1);
@@ -248,7 +256,7 @@ function switch_modem_mode(mode){
 		inputCtrl(document.form.modem_country, 0);
 		inputCtrl(document.form.modem_isp, 0);
 		inputCtrl(document.form.modem_apn, 0);
-		//inputCtrl(document.form.wan_3g_pin, 0);
+		if(pin_opt) inputCtrl(document.form.modem_pincode, 0);
 		inputCtrl(document.form.modem_dialnum, 0);
 		inputCtrl(document.form.modem_user, 0);
 		inputCtrl(document.form.modem_pass, 0);
@@ -265,7 +273,7 @@ function switch_modem_mode_enable(mode){
 		inputCtrl(document.form.modem_country, 0);
 		inputCtrl(document.form.modem_isp, 0);
 		inputCtrl(document.form.modem_apn, 0);
-		//inputCtrl(document.form.wan_3g_pin, 0);
+		if(pin_opt) inputCtrl(document.form.modem_pincode, 0);
 		inputCtrl(document.form.modem_dialnum, 0);
 		inputCtrl(document.form.modem_user, 0);
 		inputCtrl(document.form.modem_pass, 0);

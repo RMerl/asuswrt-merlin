@@ -303,18 +303,15 @@ void enable_jumbo_frame()
 
 void init_switch()
 {
-	int model;
-
 	generate_switch_para();
-
-	// disable ctf in rt-n53 temporarily
-	model = get_model();
 
 #ifdef CONFIG_BCMWL5
 	// ctf should be disabled when some functions are enabled
-	if(nvram_get_int("qos_enable") || nvram_get_int("vts_enable_x") || nvram_get_int("url_enable_x") || nvram_get_int("keyword_enable_x") || nvram_get_int("ctf_disable_force")
+	if(nvram_get_int("qos_enable") || nvram_get_int("url_enable_x") || nvram_get_int("keyword_enable_x") || nvram_get_int("ctf_disable_force")
 #ifdef RTCONFIG_WIRELESSREPEATER
+#ifndef RTCONFIG_PROXYSTA
 	|| nvram_get_int("sw_mode") == SW_MODE_REPEATER
+#endif
 #endif
 	) {
 		nvram_set("ctf_disable", "1");
@@ -325,12 +322,14 @@ void init_switch()
 	if (nvram_get_int("ctf_disable") == 0)
 		modprobe("ctf");
 
+/* Requires bridge netfilter, but slows down and breaks EMF/IGS IGMP IPTV Snooping
 	if(nvram_get_int("sw_mode") == SW_MODE_ROUTER && nvram_get_int("qos_enable")) {
 		// enable netfilter bridge only when phydev is used
 		f_write_string("/proc/sys/net/bridge/bridge-nf-call-iptables", "1", 0, 0);
 		f_write_string("/proc/sys/net/bridge/bridge-nf-call-ip6tables", "1", 0, 0);
 		f_write_string("/proc/sys/net/bridge/bridge-nf-filter-vlan-tagged", "1", 0, 0);
 	}
+*/
 #endif
 
 #ifdef RTCONFIG_SHP
@@ -485,7 +484,7 @@ void init_syspara(void)
 	nvram_set("productid", rt_buildname);	
 	nvram_set("buildno", rt_serialno);
 	nvram_set("buildinfo", rt_buildinfo);
-	ptr = NULL;//nvram_safe_get("sb/1/macaddr");
+	ptr = nvram_get("regulation_domain");
 
 	model = get_model();
 	switch(model) {
@@ -501,10 +500,10 @@ void init_syspara(void)
 				nvram_set("et0macaddr", "00:22:15:A5:03:00");
 			if (!nvram_get("0:macaddr")) //eth2(5G)
 				nvram_set("0:macaddr", "00:22:15:A5:03:04");
-			if(nvram_get("regulation_domain_5G")) { // by ate command from asuswrt, prior than ui 2.0
+			if (nvram_get("regulation_domain_5G")) { // by ate command from asuswrt, prior than ui 2.0
 				nvram_set("wl1_country_code", nvram_get("regulation_domain_5G"));
 				nvram_set("0:ccode", nvram_get("regulation_domain_5G"));
-			} else if(nvram_get("regulation_domain_5g")) { // by ate command from ui 2.0
+			} else if (nvram_get("regulation_domain_5g")) { // by ate command from ui 2.0
 				nvram_set("wl1_country_code", nvram_get("regulation_domain_5g"));
 				nvram_set("0:ccode", nvram_get("regulation_domain_5g"));
 			}
@@ -513,9 +512,18 @@ void init_syspara(void)
 				nvram_set("0:ccode", "US");
 			}
 			nvram_set("sb/1/macaddr", nvram_safe_get("et0macaddr"));
-			if(nvram_get("regulation_domain")) {
-				nvram_set("wl0_country_code", nvram_get("regulation_domain"));
-				nvram_set("sb/1/ccode", nvram_get("regulation_domain"));
+			if (ptr && *ptr) {
+				if ((strlen(ptr) == 6) && /* legacy format */
+					!strncasecmp(ptr, "0x", 2))
+				{
+					nvram_set("wl0_country_code", ptr+4);
+					nvram_set("sb/1/ccode", ptr+4);
+				}
+				else
+				{
+					nvram_set("wl0_country_code", ptr);
+					nvram_set("sb/1/ccode", ptr);
+				}
 			}else {
 				nvram_set("wl0_country_code", "US");
 				nvram_set("sb/1/ccode", "US");
@@ -527,7 +535,7 @@ void init_syspara(void)
 				nvram_set("et0macaddr", "00:22:15:A5:03:00");
 			if (!nvram_get("pci/2/1/macaddr")) //eth2(5G)
 				nvram_set("pci/2/1/macaddr", "00:22:15:A5:03:04");
-			if(nvram_get("regulation_domain_5G")) {
+			if (nvram_get("regulation_domain_5G")) {
 				nvram_set("wl1_country_code", nvram_get("regulation_domain_5G"));
 				nvram_set("pci/2/1/ccode", nvram_get("regulation_domain_5G"));
 			}else {
@@ -535,9 +543,9 @@ void init_syspara(void)
 				nvram_set("pci/2/1/ccode", "US");
 			}
 			nvram_set("pci/1/1/macaddr", nvram_safe_get("et0macaddr"));
-			if(nvram_get("regulation_domain")) {
-				nvram_set("wl0_country_code", nvram_get("regulation_domain"));
-				nvram_set("pci/1/1/ccode", nvram_get("regulation_domain"));
+			if (ptr) {
+				nvram_set("wl0_country_code", ptr);
+				nvram_set("pci/1/1/ccode", ptr);
 			}else {
 				nvram_set("wl0_country_code", "US");
 				nvram_set("pci/1/1/ccode", "US");
@@ -1035,7 +1043,7 @@ int is_ure(int unit)
 }
 #endif
 
-#ifdef RTCONFIG_PSTA
+#ifdef RTCONFIG_PROXYSTA
 int is_psta(int unit)
 {
        	if ((nvram_get_int("sw_mode") == SW_MODE_AP) &&
@@ -1126,7 +1134,7 @@ void generate_wl_para(int unit, int subunit)
 	//TODO: recover nvram from repeater
 	else
 #endif
-#ifdef RTCONFIG_PSTA
+#ifdef RTCONFIG_PROXYSTA
 	if (is_psta(unit))
 	{
 		if (subunit == -1)
@@ -1232,7 +1240,7 @@ void generate_wl_para(int unit, int subunit)
 		if (is_ure(unit)) nvram_set(strcat_r(prefix, "mode", tmp), "wet");
 		else
 #endif
-#ifdef RTCONFIG_PSTA
+#ifdef RTCONFIG_PROXYSTA
 		if (is_psta(unit))
 		{
 			nvram_set(strcat_r(prefix, "mode", tmp), "psta");
@@ -1411,11 +1419,14 @@ void generate_wl_para(int unit, int subunit)
 			nvram_set(strcat_r(prefix, "nctrlsb", tmp), "lower");
 #endif
 
+#ifdef RTCONFIG_EMF
 		/* overwrite if emf is enabled */
-		if(nvram_match("emf_enable", "1")) {
-			nvram_set(strcat_r(prefix, "mrate", tmp), "54000000");
+		if (nvram_get_int("emf_enable") ||
+		    nvram_get_int(strcat_r(prefix, "mrate", tmp))) {
+			//nvram_set(strcat_r(prefix, "mrate", tmp), "54000000");
 			nvram_set(strcat_r(prefix, "wmf_bss_enable", tmp), "1");
 		}
+#endif
 
 		dbG("bw: %s\n", nvram_safe_get(strcat_r(prefix, "bw", tmp)));
 #ifdef RTCONFIG_BCMWL6

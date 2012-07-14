@@ -37,6 +37,7 @@
 #include<wlioctl.h>
 #include<sys/time.h>
 #include<sys/ioctl.h>
+#include <sys/sysinfo.h>
 #include<syslog.h>
 #include<stdarg.h>
 #include <arpa/inet.h>	// oleg patch
@@ -277,7 +278,7 @@ void init_switch_mode()
 		nvram_set("wan_nat_x", "1");
 		nvram_set("wan_route_x", "IP_Routed");
 		nvram_set("wl_mode_ex", "ap");
-#ifdef RTCONFIG_PSTA
+#ifdef RTCONFIG_PROXYSTA
 		nvram_set("wlc_psta", "0");
 #endif
 	}
@@ -286,7 +287,7 @@ void init_switch_mode()
 		nvram_set("wan_nat_x", "0");
 		nvram_set("wan_route_x", "IP_Routed");
 		nvram_set("wl_mode_ex", "ap");
-#ifdef RTCONFIG_PSTA
+#ifdef RTCONFIG_PROXYSTA
 		nvram_set("wlc_psta", "0");
 #endif
 	}
@@ -322,7 +323,7 @@ void init_switch_mode()
 		nvram_set("wl0.1_wme", nvram_safe_get("wl_wme"));
 		nvram_set("wl0.1_wme_bss_disable", nvram_safe_get("wl_wme_bss_disable"));
 		nvram_set("wl0.1_wmf_bss_enable", nvram_safe_get("wl_wmf_bss_enable"));
-#ifdef RTCONFIG_PSTA
+#ifdef RTCONFIG_PROXYSTA
 		nvram_set("wlc_psta", "0");
 #endif
 	}
@@ -340,7 +341,7 @@ void init_switch_mode()
 		nvram_set("wan_nat_x", "1");
 		nvram_set("wan_route_x", "IP_Routed");
 		nvram_set("wl_mode_ex", "ap");
-#ifdef RTCONFIG_PSTA
+#ifdef RTCONFIG_PROXYSTA
 		nvram_set("wlc_psta", "0");
 #endif
 	}
@@ -1158,37 +1159,41 @@ long fappend_file(const char *path, const char *fname)
 	return r;
 }
 
-int doSystem(char *fmt, ...);
-
-int gettzoffset(char *tzstr, char *tzstr1)
+/* uclibc accepts any of following:
+ * [STD][Offset][DST], where
+ * [STD] ~ any [a-zA-Z]
+ * [DST] ~ any [a-zA-Z] */
+#define CONVERT_TZ_TO_GMT_DST
+#ifdef CONVERT_TZ_TO_GMT_DST
+int gettzoffset(char *tzstr, char *tzstr1, int size1)
 {
-	int ret=0;
 	char offstr[32];
-	char *tzptr, *offptr;
+	char *tzptr = tzstr;
+	char *offptr = offstr;
+	int ret = 0;
+	int dst = 0;
 
-	tzptr = tzstr;
-	offptr = offstr;
 	memset(offstr, 0, sizeof(offstr));
-
-	while(*tzptr)
-	{
-		if(*tzptr=='-'||*tzptr=='+'||*tzptr==':'||(*tzptr>='0'&&*tzptr<='9')) {
+	for ( ; *tzptr; tzptr++) {
+		if (*tzptr=='-'||*tzptr=='+'||*tzptr==':'||isdigit(*tzptr)) {
 			*offptr++ = *tzptr;
-			ret=1;
-		}
-		else if(ret) {
+			ret = 1;
+		} else if (ret) {
+			dst = isalpha(*tzptr);
 			break;
 		}
-		tzptr++;
 	}
 
-	if(ret) sprintf(tzstr1, "GMT%s", offstr);
+	if (ret)
+		snprintf(tzstr1, size1, "GMT%s%s", offstr, dst ? "DST" : "");
 	return ret;
 }
+#endif
 
 void time_zone_x_mapping(void)
 {
-	char tmpstr[32], tmpstr1[32];
+	FILE *fp;
+	char tmpstr[32];
 	char *ptr;
 
 	/* pre mapping */
@@ -1197,21 +1202,20 @@ void time_zone_x_mapping(void)
 	else if (nvram_match("time_zone", "RFT-9RFTDST"))
 		nvram_set("time_zone", "UCT-9_2");
 
-	strcpy(tmpstr, nvram_safe_get("time_zone"));
+	snprintf(tmpstr, sizeof(tmpstr), "%s", nvram_safe_get("time_zone"));
 	/* replace . with : */
-	if ((ptr=strchr(tmpstr, '.'))!=NULL) *ptr = ':';
+	while ((ptr=strchr(tmpstr, '.'))!=NULL) *ptr = ':';
 	/* remove *_? */
-	if ((ptr=strchr(tmpstr, '_'))!=NULL) *ptr = 0x0;
+	while ((ptr=strchr(tmpstr, '_'))!=NULL) *ptr = 0x0;
 
 	/* check time_zone_dst for daylight saving */
-	if(!nvram_get_int("time_zone_dst") /*&& gettzoffset(tmpstr,tmpstr1)*/) {
-//		nvram_set("time_zone_x", tmpstr1);
-		nvram_set("time_zone_x",tmpstr);
-	}
-	else {
+	if (nvram_get_int("time_zone_dst"))
 		sprintf(tmpstr, "%s,%s", tmpstr, nvram_safe_get("time_zone_dstoff"));
-		nvram_set("time_zone_x", tmpstr);
-	}
+#ifdef CONVERT_TZ_TO_GMT_DST
+	else	gettzoffset(tmpstr, tmpstr, sizeof(tmpstr));
+#endif
+
+	nvram_set("time_zone_x", tmpstr);
 
 #if 0
 	/* special mapping */
@@ -1223,9 +1227,11 @@ void time_zone_x_mapping(void)
 		nvram_set("time_zone_x", "UCT-9:30");
 #endif
 
-	doSystem("echo %s > /etc/TZ", nvram_safe_get("time_zone_x"));
+	if ((fp = fopen("/etc/TZ", "w")) != NULL) {
+		fprintf(fp, "%s\n", tmpstr);
+		fclose(fp);
+	}
 }
-
 
 /* Get the timezone from NVRAM and set the timezone in the kernel
  * and export the TZ variable 
@@ -1233,9 +1239,13 @@ void time_zone_x_mapping(void)
 void
 setup_timezone(void)
 {
+#ifndef RC_BUILDTIME
+#define RC_BUILDTIME	1293840000	// Jan 1 00:00:00 GMT 2011
+#endif
 	time_t now;
 	struct tm gm, local;
 	struct timezone tz;
+	struct timeval tv = { RC_BUILDTIME, 0 };
 	struct timeval *tvp = NULL;
 
 	/* Export TZ variable for the time libraries to 
@@ -1248,25 +1258,20 @@ setup_timezone(void)
 	time(&now);
 	gmtime_r(&now, &gm);
 	localtime_r(&now, &local);
+	gm.tm_isdst = local.tm_isdst;
 	tz.tz_minuteswest = (mktime(&gm) - mktime(&local)) / 60;
-	if(local.tm_isdst)
-		tz.tz_minuteswest -= 60;
-	settimeofday(tvp, &tz);
 
-#ifndef RC_BUILDTIME
-#define RC_BUILDTIME	1293840000	// Jan 1 00:00:00 GMT 2011
-#endif
-#include <sys/sysinfo.h>
-
-	if (now < RC_BUILDTIME)
-	{
+	/* Setup sane start time */
+	if (now < RC_BUILDTIME) {
 		struct sysinfo info;
-		sysinfo(&info);
-		struct timeval tv = {RC_BUILDTIME + info.uptime, 0};
-		settimeofday(&tv, NULL);
-	}
-}
 
+		sysinfo(&info);
+		tv.tv_sec += info.uptime;
+		tvp = &tv;
+	}
+
+	settimeofday(tvp, &tz);
+}
 
 int
 is_invalid_char_for_hostname(char c)

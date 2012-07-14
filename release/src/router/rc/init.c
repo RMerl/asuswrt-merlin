@@ -198,6 +198,7 @@ virtual_radio_restore_defaults(void)
 		}
 	}
 
+#ifdef RTCONFIG_RALINK
 	char word[256], *next;
 	int unit = 0, subunit;
 	char macaddr_str[18], macbuf[13];
@@ -236,6 +237,7 @@ virtual_radio_restore_defaults(void)
 
 		unit++;
 	}
+#endif
 }
 
 /* assign none-exist value */
@@ -341,11 +343,11 @@ wl_defaults(void)
 				nvram_set(strcat_r(prefix, "wep", tmp), "disabled");
 				nvram_set(strcat_r(prefix, "crypto", tmp), "aes");
 				nvram_set(strcat_r(prefix, "key", tmp), "1");
-                                nvram_set(strcat_r(prefix, "key1", tmp), "");
-                                nvram_set(strcat_r(prefix, "key2", tmp), "");
-                                nvram_set(strcat_r(prefix, "key3", tmp), "");
-                                nvram_set(strcat_r(prefix, "key4", tmp), "");
-                                nvram_set(strcat_r(prefix, "wpa_psk", tmp), "");
+				nvram_set(strcat_r(prefix, "key1", tmp), "");
+				nvram_set(strcat_r(prefix, "key2", tmp), "");
+				nvram_set(strcat_r(prefix, "key3", tmp), "");
+				nvram_set(strcat_r(prefix, "key4", tmp), "");
+				nvram_set(strcat_r(prefix, "wpa_psk", tmp), "");
 
 				nvram_set(strcat_r(prefix, "ap_isolate", tmp), "0");
 				nvram_set(strcat_r(prefix, "bridge", tmp), "");
@@ -365,7 +367,12 @@ wl_defaults(void)
 				nvram_set(strcat_r(prefix, "wfi_pinmode", tmp), "0");
 				nvram_set(strcat_r(prefix, "wme", tmp), "on");
 				nvram_set(strcat_r(prefix, "wme_bss_disable", tmp), "0");
+#ifdef RTCONFIG_EMF
+				nvram_set(strcat_r(prefix, "wmf_bss_enable", tmp),
+					nvram_get("emf_enable"));
+#else
 				nvram_set(strcat_r(prefix, "wmf_bss_enable", tmp), "0");
+#endif
 				nvram_set(strcat_r(prefix, "wpa_gtk_rekey", tmp), "0");
 				nvram_set(strcat_r(prefix, "wps_mode", tmp), "disabled");
 
@@ -1004,7 +1011,7 @@ int init_nvram(void)
 		nvram_set("ehci_ports", "1-1 1-2");
 		nvram_set("ohci_ports", "2-1 2-2");
 		if(!nvram_get("ct_max")) 
-			nvram_set("ct_max", "30000");
+			nvram_set("ct_max", "300000");
 
 		if (nvram_get("wl_mssid") && nvram_match("wl_mssid", "1"))
 		add_rc_support("mssid");
@@ -1051,7 +1058,7 @@ int init_nvram(void)
 			}
 		}
 		else {
-		        //dsl/usb, lan/usb
+			//dsl/usb, lan/usb
 			if (get_dualwan_primary()==WANS_DUALWAN_IF_DSL) {
 				nvram_set("wan_ifnames", "eth2.1.1");
 			}
@@ -1074,8 +1081,8 @@ int init_nvram(void)
 		nvram_set_int("btn_wifi_gpio", 1|GPIO_ACTIVE_LOW);
 #endif
 
-		nvram_set("ehci_ports", "1-1 1-2");		
-		nvram_set("ohci_ports", "2-2 2-1");
+		nvram_set("ehci_ports", "1-1 1-2");
+		nvram_set("ohci_ports", "2-1 2-2");
 
 		if(!nvram_get("ct_max")) 
 			nvram_set("ct_max", "30000");
@@ -1270,7 +1277,7 @@ int init_nvram(void)
 #endif
 
 		nvram_set("wl_ifnames", "eth1");
-		nvram_set("wl0_vifnames", "");
+		nvram_set("wl0_vifnames", "wl0.1");
 		nvram_set("wl1_vifnames", "");
 		nvram_set_int("btn_rst_gpio", 6|GPIO_ACTIVE_LOW);
 		nvram_set_int("btn_wps_gpio", 8|GPIO_ACTIVE_LOW);
@@ -1281,7 +1288,7 @@ int init_nvram(void)
 		nvram_set("ohci_ports", "2-2 2-1");
 		if(!nvram_get("ct_max")) 
 			nvram_set("ct_max", "300000");
-		add_rc_support("2.4G update usbX2");
+		add_rc_support("2.4G update usbX2 mssid");
 		add_rc_support("switchctrl"); // broadcom: for jumbo frame only
 		add_rc_support("manual_stb");
 		break;
@@ -1304,12 +1311,12 @@ int init_nvram(void)
 		nvram_set_int("led_2g_gpio", 0|GPIO_ACTIVE_LOW);
 		nvram_set_int("led_5g_gpio", 1|GPIO_ACTIVE_LOW);
 		nvram_set("sb/1/ledbh0", "2");
-                /* change lan interface to vlan0 */
-                nvram_set("vlan0hwname", "et0");
-                nvram_set("landevs", "vlan0 wl0 wl1");
-                nvram_unset("vlan2ports");
-                nvram_unset("vlan2hwname");
-                /* end */
+		/* change lan interface to vlan0 */
+		nvram_set("vlan0hwname", "et0");
+		nvram_set("landevs", "vlan0 wl0 wl1");
+		nvram_unset("vlan2ports");
+		nvram_unset("vlan2hwname");
+		/* end */
 		if(!nvram_get("ct_max")) 
 			nvram_set("ct_max", "8192");
 
@@ -1443,6 +1450,7 @@ int init_nvram(void)
 			nvram_set("ct_max", "8192");
 		add_rc_support("2.4G mssid usbX1");
 		break;
+
 	case MODEL_RTN10D:
 		nvram_set("lan_ifname", "br0");
 		nvram_set("lan_ifnames", "vlan0 eth1");
@@ -1572,8 +1580,11 @@ int init_nvram(void)
 #ifdef RTCONFIG_WIRELESSREPEATER
 	add_rc_support("repeater");
 #endif
-#ifdef RTCONFIG_PSTA
-        add_rc_support("psta");
+#ifdef RTCONFIG_PROXYSTA
+	add_rc_support("psta");
+#endif
+#ifdef RTCONFIG_BCMWL6
+	add_rc_support("wl6");
 #endif
 #ifdef RTCONFIG_SFP
 	add_rc_support("sfp");
@@ -1645,9 +1656,9 @@ POOL_MOUNT_ROOT,
 	}
 
 	// LPRng support
-        mkdir("/var/state", 0777);
-        mkdir("/var/state/parport", 0777);
-        mkdir("/var/state/parport/svr_statue", 0777);
+	mkdir("/var/state", 0777);
+	mkdir("/var/state/parport", 0777);
+	mkdir("/var/state/parport/svr_statue", 0777);
 
 	mkdir("/var/lock", 0777);
 	mkdir("/var/tmp/dhcp", 0777);
@@ -1729,6 +1740,9 @@ POOL_MOUNT_ROOT,
 	f_write_string("/proc/sys/kernel/panic", "3", 0, 0);
 	f_write_string("/proc/sys/kernel/panic_on_oops", "3", 0, 0);
 
+	// be precise about vm commit
+	f_write_string("/proc/sys/vm/overcommit_memory", "2", 0, 0);
+
 #ifdef RTCONFIG_IPV6
 	// disable IPv6 by default on all interfaces
 	f_write_string("/proc/sys/net/ipv6/conf/default/disable_ipv6", "1", 0, 0);
@@ -1766,7 +1780,7 @@ int init_main(int argc, char *argv[])
 {
 	int state, i;
 	sigset_t sigset;
-        int rc_check, dev_check, boot_check; //Power on/off test
+	int rc_check, dev_check, boot_check; //Power on/off test
 	int boot_fail, dev_fail, dev_fail_count, total_fail_check;
 	char dev_status[20], reboot_log[128], dev_log[128];
 	sysinit();
@@ -1823,13 +1837,13 @@ int init_main(int argc, char *argv[])
 		case SIGUSR2:		/* START */
 			start_logger();
 			if(nvram_match("Ate_power_on_off_enable", "1")) {
-                                rc_check = nvram_get_int("Ate_rc_check");
+				rc_check = nvram_get_int("Ate_rc_check");
 				boot_check = nvram_get_int("Ate_boot_check");
 				boot_fail = nvram_get_int("Ate_boot_fail");
 				total_fail_check = nvram_get_int("Ate_total_fail_check");
 dbG("rc/boot/total chk= %d/%d/%d, boot/total fail= %d/%d\n", rc_check,boot_check,total_fail_check, boot_fail,total_fail_check);
 
-                                if (rc_check != boot_check) {
+				if (rc_check != boot_check) {
 					if(nvram_get("Ate_reboot_log")==NULL)
 						sprintf(reboot_log, "%d,", rc_check);
 					else
@@ -1841,33 +1855,33 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 					if(boot_fail >= nvram_get_int("Ate_continue_fail")) { //Show boot fail!!
 						ate_commit_bootlog("4");
 						dbG("*** boot fail continuelly: %s ***\n", reboot_log);
-                                        	while(1) {
+						while(1) {
 							led_control(LED_POWER, LED_OFF);
-                                        		sleep(1);
+							sleep(1);
 							led_control(LED_POWER, LED_ON);
-                                        		sleep(1);
-                                        	}
+							sleep(1);
+						}
 					}
 					else
 					dbg("rc OK\n");
-                                }
+				}
 
 				if(total_fail_check == nvram_get_int("Ate_total_fail")) {
 					ate_commit_bootlog("5");
 					dbG("*** Total reboot fail: %d times!!!! ***\n", total_fail_check);
-                                        while(1) {
-                                                led_control(LED_POWER, LED_OFF);
-                                                sleep(1);
-                                                led_control(LED_POWER, LED_ON);
-                                                sleep(1);
-                                        }
+					while(1) {
+						led_control(LED_POWER, LED_OFF);
+						sleep(1);
+						led_control(LED_POWER, LED_ON);
+						sleep(1);
+					}
 				}
 
-                                rc_check++;
-                                nvram_set_int("Ate_rc_check", rc_check);
-                                nvram_commit();
+				rc_check++;
+				nvram_set_int("Ate_rc_check", rc_check);
+				nvram_commit();
 				dbG("*** Start rc: %d\n",rc_check);
-                        }
+			}
 #ifdef RTCONFIG_USB
 			int fd = -1;
 			fd = file_lock("usb");	// hold off automount processing
@@ -1896,7 +1910,6 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			start_wan();
 			start_services();
 			start_wl();
-			lanaccess_wl();
 #ifdef CONFIG_BCMWL5
 			if (restore_defaults_g)
 			{
@@ -1908,41 +1921,42 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 					restart_wireless();
 			}
 #endif
+			lanaccess_wl();
 #ifdef RTCONFIG_USB_PRINTER
-                        start_usblpsrv();
+			start_usblpsrv();
 #endif
 
 #ifdef REMOVE
 // TODO: is it a special case need to handle?
-                        if (wds_enable()) {
-                                /* Restart NAS one more time - for some reason without
-                                 * this the new driver doesn't always bring WDS up.
-                                 */
-                                stop_nas();
-                                start_nas();
-                        }
+			if (wds_enable()) {
+				/* Restart NAS one more time - for some reason without
+				 * this the new driver doesn't always bring WDS up.
+				 */
+				stop_nas();
+				start_nas();
+			}
 #endif
 
 			if(nvram_match("Ate_power_on_off_enable", "3")|| //Show alert light
 				nvram_match("Ate_power_on_off_enable", "4")||
-                                nvram_match("Ate_power_on_off_enable", "5")  ) {
-                                start_telnetd();
-                                while(1) {
-                                        led_control(LED_POWER, LED_OFF);
-                                        sleep(1);
-                                        led_control(LED_POWER, LED_ON);
-                                        sleep(1);
-                                }
-                        }
+				nvram_match("Ate_power_on_off_enable", "5")  ) {
+				start_telnetd();
+				while(1) {
+					led_control(LED_POWER, LED_OFF);
+					sleep(1);
+					led_control(LED_POWER, LED_ON);
+					sleep(1);
+				}
+			}
 
-                        ate_dev_status();
+			ate_dev_status();
 
 			//For 66U normal boot & check device
 			if((get_model()==MODEL_RTN66U) && nvram_match("Ate_power_on_off_enable", "0")) {
 			    if(nvram_get_int("dev_fail_reboot")!=0) {
-                                if (strchr(nvram_get("Ate_dev_status"), 'X')) {
+				if (strchr(nvram_get("Ate_dev_status"), 'X')) {
 					dev_fail_count = nvram_get_int("dev_fail_count");
-                                        dev_fail_count++;
+					dev_fail_count++;
 					if(dev_fail_count < nvram_get_int("dev_fail_reboot")) {
 						nvram_set_int("dev_fail_count", dev_fail_count);
 						nvram_commit();
@@ -1964,57 +1978,57 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			    }
 			}
 
-                        if(nvram_match("Ate_power_on_off_enable", "1")) {
-                                dev_check = nvram_get_int("Ate_dev_check");
-                                dev_fail = nvram_get_int("Ate_dev_fail");
+			if(nvram_match("Ate_power_on_off_enable", "1")) {
+				dev_check = nvram_get_int("Ate_dev_check");
+				dev_fail = nvram_get_int("Ate_dev_fail");
 
-                                if (strchr(nvram_get("Ate_dev_status"), 'X')) {
-                                        nvram_set_int("Ate_dev_fail", ++dev_fail);
+				if (strchr(nvram_get("Ate_dev_status"), 'X')) {
+					nvram_set_int("Ate_dev_fail", ++dev_fail);
 					nvram_set_int("Ate_total_fail_check", ++total_fail_check);
 					if(nvram_get("Ate_dev_log")==NULL)
 						sprintf(dev_log, "%d,", dev_check);
 					else
-                                        	sprintf(dev_log, "%s%d,", nvram_get("Ate_dev_log"), dev_check);
-                                        nvram_set("Ate_dev_log", dev_log);
+						sprintf(dev_log, "%s%d,", nvram_get("Ate_dev_log"), dev_check);
+					nvram_set("Ate_dev_log", dev_log);
 					dbG("dev Fail at %d, status= %s\n", dev_check, nvram_get("Ate_dev_status"));
 					dbG("dev/total fail= %d/%d\n", dev_fail, total_fail_check);
-                                        if(dev_fail== nvram_get_int("Ate_continue_fail")) {
-                                                ate_commit_bootlog("3");
-                                                dbG("*** dev fail continuelly: %s ***\n", dev_log);
-                                                while(1) {
-                                                led_control(LED_POWER, LED_OFF);
-                                                sleep(1);
-                                                led_control(LED_POWER, LED_ON);
-                                                sleep(1);
-                                                }
-                                        }
-                                }
-                                else {
-                                        dev_check++;
-                                        nvram_set_int("Ate_dev_check", dev_check);
-                                        nvram_set("Ate_dev_fail", "0");
+					if(dev_fail== nvram_get_int("Ate_continue_fail")) {
+						ate_commit_bootlog("3");
+						dbG("*** dev fail continuelly: %s ***\n", dev_log);
+						while(1) {
+						led_control(LED_POWER, LED_OFF);
+						sleep(1);
+						led_control(LED_POWER, LED_ON);
+						sleep(1);
+						}
+					}
+				}
+				else {
+					dev_check++;
+					nvram_set_int("Ate_dev_check", dev_check);
+					nvram_set("Ate_dev_fail", "0");
 					dbG("*** dev Up: %d\n", dev_check);
 				}
 
-                                boot_check = nvram_get_int("Ate_boot_check");
-                                boot_check++;
-                                nvram_set_int("Ate_boot_check", boot_check);
+				boot_check = nvram_get_int("Ate_boot_check");
+				boot_check++;
+				nvram_set_int("Ate_boot_check", boot_check);
 				nvram_set_int("Ate_rc_check", boot_check);
 				nvram_set("Ate_boot_fail", "0");
 
 				if(boot_check < nvram_get_int("Ate_reboot_count")) {
 					nvram_commit();
-                                        dbG("System boot up %d times, reboot...\n", boot_check);
-                                        sleep(1);
-                                        reboot(RB_AUTOBOOT);
-                                }
-                                else {
+					dbG("System boot up %d times, reboot...\n", boot_check);
+					sleep(1);
+					reboot(RB_AUTOBOOT);
+				}
+				else {
 					dbG("System boot up success %d times\n", boot_check);
 					ate_commit_bootlog("2");
 					sleep(5);
 					setAllLedOn();
-                                }
-                        }
+				}
+			}
 			nvram_set("success_start_service", "1");
 
 			force_free_caches();		

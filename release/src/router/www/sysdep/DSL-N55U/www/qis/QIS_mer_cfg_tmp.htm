@@ -39,19 +39,29 @@ if (iptv_num_pvc_val != "0" && iptv_num_pvc_val != "") iptv_num_pvc_str = iptv_n
 function QKfinish_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_all_title#>";
 	parent.set_step("t2");
-	
+
 	document.form.x_DHCPClient[0].checked = 0;
 	document.form.x_DHCPClient[1].checked = 1;
 	document.form.wan_dnsenable_x[0].checked = 0;
 	document.form.wan_dnsenable_x[1].checked = 1;
 	show_dhcpenable(1);
-	
+
 	if (country_str == "Denmark")
 	{
-		//denmark ISP need input MAC address
+		//Denmark ISP might need to use MAC clone
 		document.getElementById("mac_addr1").style.display = "";
 		document.getElementById("mac_addr2").style.display = "";
-	}	
+	}
+
+	if (country_str == "United Kingdom" && ispname_str == "SKY (MER)")
+	{
+		//UK ISP SKY Broadband, MER requires some tweak.
+		//PPP Username and Password needs to be added into DHCP option 61.
+		document.getElementById("ppp_username1").style.display = "";
+		document.getElementById("ppp_username2").style.display = "";
+		document.getElementById("ppp_password1").style.display = "";
+		document.getElementById("ppp_password2").style.display = "";
+	}
 }
 
 function validate_ip(){
@@ -166,20 +176,24 @@ function submitForm(){
 			//alert("dsltmp_qis_dnsenable: "+ document.getElementById("dsltmp_qis_dnsenable").value);
 		}
 	}
+
+	document.form.dslx_dhcp_clientid.value = document.form.ppp_username.value + "|" + document.form.ppp_password.value;
+	document.form.ppp_username.disabled = true;
+	document.form.ppp_password.disabled = true;
+
 	document.form.next_page.value = "/qis/QIS_wireless.htm";
 	document.form.submit();
 }
 
 function gotoHome() {
 	if (w_Setting == "0") {
-		alert("<#QIS_recommand_encryption#>");	
+		alert("<#QIS_recommand_encryption#>");
 		location.href = '/qis/QIS_wireless.htm';
 	}
 	else {
 		parent.location.href = '/index.asp';
 	}
 }
-
 </script>
 </head>
 
@@ -215,6 +229,7 @@ function gotoHome() {
 <input type="hidden" name="dsltmp_qis_scr" id="dsltmp_qis_scr" value="0">
 <input type="hidden" name="dsltmp_qis_mbs" id="dsltmp_qis_mbs" value="0">
 <input type="hidden" name="dsltmp_qis_dsl_pvc_set" value="1">
+<input type="hidden" name="dslx_dhcp_clientid" value="">
 <!-- dsltmp_qis_hwaddr is in the HTML code -->
 
 <div class="QISmain">
@@ -225,15 +240,15 @@ function gotoHome() {
 				<img onclick="gotoHome();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
 			</td>
 		</tr>
-	</table>		
+	</table>
 	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img style="width: 700px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
 	<br/>
 
 
 <table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
   <tr>
-		&nbsp;&nbsp;&nbsp;<#pvccfg_PVC_type#> MER. <b>VPI/VCI = <% nvram_get("dsltmp_cfg_vpi"); %>/<% nvram_get("dsltmp_cfg_vci"); %><script>document.write(encap_str)</script></b><br>
-		&nbsp;&nbsp;&nbsp;<b><script>document.write(iptv_num_pvc_str)</script></b>
+		&nbsp;&nbsp;&nbsp;<#pvccfg_PVC_type#> MER. <b>VPI/VCI = <% nvram_get("dsltmp_cfg_vpi"); %>/<% nvram_get("dsltmp_cfg_vci"); %><script>document.write(encap_str);</script></b><br>
+		&nbsp;&nbsp;&nbsp;<b><script>document.write(iptv_num_pvc_str);</script></b>
   </tr>
 </table>
 
@@ -458,18 +473,35 @@ function gotoHome() {
   </table>
   </fieldset>
   <table>
-  <tr>
 	  <tr>
-		<th width="120"><span id="mac_addr1" style="display:none"><#PPPConnection_x_MacAddressForISP_itemname#></span></th>
+		<th width="120"><span id="mac_addr1" style="display:none"><#BOP_isp_mac_item#></span></th>
 		<td>
 		  <span id="mac_addr2" style="display:none">
-		  <input type='text' name='dsltmp_qis_hwaddr' value='' maxlength="17" size='17'>&nbsp;<#BOP_isp_mac_item#>&nbsp;example: 00:11:22:33:44:55
+		  <input type="text" name="dsltmp_qis_hwaddr" value="" maxlength="17" size="17">&nbsp;e.g., 00:11:22:33:44:55
 		  </span>
 		</td>
-	  </tr>		
-  </tr>		
-  </table>  
+	  </tr>
+  </table>
+  <table>
+	  <tr>
+		<th width="120"><span id="ppp_username1" style="display:none">PPP <#HSDPAConfig_Username_itemname#>:</span></th>
+		<td>
+		  <span id="ppp_username2" style="display:none">
+		  <input type="text" name="ppp_username" value="" maxlength="32" size="20">
+		  </span>
+		</td>
+	  </tr>
+	  <tr>
+		<th width="120"><span id="ppp_password1" style="display:none">PPP <#HSDPAConfig_Password_itemname#>:</span></th>
+		<td>
+		  <span id="ppp_password2" style="display:none">
+		  <input type="text" name="ppp_password" value="" maxlength="32" size="20">
+		  </span>
+		</td>
+	  </tr>
+  </table>
 </div>
+
 
 	<div class="apply_gen" style="margin-top:30px">
 		<input type="button" id="prevButton" value="<#Manual_Setting_btn#>" onclick="gotoprev(document.form);" class="button_gen" >

@@ -103,8 +103,8 @@ function QKfinish_load_body(){
 		$("#key2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
 		$("#key2")[0].innerHTML = decodeURIComponent(document.form.wl0_wpa_psk.value);
 	}*/
-	else if(auth_mode2 == "pskpsk2"){
-		$("#security2")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
+	else if(auth_mode2 == "psk2"){
+		$("#security2")[0].innerHTML = "WPA2-Personal - AES";
 		$("#key2_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
 		$("#key2")[0].innerHTML = decodeURIComponent("<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>");
 	}
@@ -160,8 +160,8 @@ function QKfinish_load_body(){
 			$("#key5_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
 			$("#key5")[0].innerHTML = decodeURIComponent(document.form.wl1_wpa_psk.value);
 		}*/
-		else if(auth_mode == "pskpsk2"){
-			$("#security5")[0].innerHTML = "WPA-Auto-Personal - TKIP + AES";
+		else if(auth_mode == "psk2"){
+			$("#security5")[0].innerHTML = "WPA2-Personal - AES";
 			$("#key5_item")[0].innerHTML = "<#QIS_finish_wireless_item3#>";
 			$("#key5")[0].innerHTML = decodeURIComponent("<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>");
 		}
@@ -217,7 +217,7 @@ function QKfinish_load_body(){
 			tmp_str += "/VC";
 		else
 			tmp_str += "/LLC";
-			
+
 		$("#wanvpivci")[0].innerHTML = tmp_str;
 	}
 
@@ -285,7 +285,7 @@ function redirect_page(redirect_flag){
 
 function gotoHome(){
 	if (w_Setting == "0") {
-		alert("<#QIS_recommand_encryption#>");	
+		alert("<#QIS_recommand_encryption#>");
 		location.href = '/qis/QIS_wireless.htm';
 	}
 	else {

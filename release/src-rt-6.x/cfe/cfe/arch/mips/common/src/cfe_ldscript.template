@@ -1,0 +1,84 @@
+/*
+ * This is the "template" linker script.  It gets run through the C preprocessor
+ * (via cpp) to construct the real linker script.
+ */
+
+/* our toolchain defines 'mips'.  Undefine it so it doesn't get expanded */
+#undef mips
+
+OUTPUT_ARCH(mips)
+ENTRY(vec_reset)
+SECTIONS
+{
+  . = CFE_TEXT_START;
+  .text : 
+
+/* 
+ * Neither RAMAPP (CFE as app) nor BOOTRAM (ROM area is writeable) implies
+ * a boot ROM.
+ */
+
+#if (!CFG_RAMAPP) && !(CFG_BOOTRAM)
+   AT ( CFE_ROM_START )
+#endif
+   {
+     _ftext = . ;
+    *(.init)
+     eprol  =  .;
+    *(.text)
+
+/*
+ * Embedded PIC mode provides an extra segment of goo for relocation tables.
+ */
+#if CFG_EMBEDDED_PIC
+    PROVIDE (__runtime_reloc_start = .);
+    *(.rel.sdata)
+    PROVIDE (__runtime_reloc_stop = .);
+#endif
+/*
+ * When using function-sections, each fucntion has its own section with
+ * a name like .text.myfunction.
+ */
+    *(.text.*)
+    *(.fini)
+    *(.rodata)
+    *(.rodata.*)
+     _etext  =  .;
+   }
+
+/*
+ * If ROM, locate a copy of the data segment in the ROM area.  Otherwise,
+ * we are loading like a regular application so take data segment from
+ * current value of "dot".
+ */
+#if (CFG_XIP)
+  .data CFE_DATA_START :
+    AT ( LOADADDR(.text) + SIZEOF ( .text ) )
+#elif ((!CFG_RAMAPP) && (!CFG_BOOTRAM))
+  .data CFE_DATA_START :
+    AT ( (LOADADDR(.text) + SIZEOF ( .text ) + 15) & 0xFFFFFFF0)
+#else
+  .data :
+#endif
+  {
+    _gp = ALIGN(16) + 0x8000;
+    _fdata = .;
+    *(.rdata)
+    *(.data)
+    CONSTRUCTORS
+    *(.sdata)
+  }
+   . = ALIGN(16);
+   _edata  =  .;
+   _fbss = .;
+  .sbss : {
+    *(.sbss)
+    *(.scommon)
+  }
+  .bss : {
+    *(.bss)
+    *(COMMON)
+  }
+  . = ALIGN(16);
+   _end = .;
+}

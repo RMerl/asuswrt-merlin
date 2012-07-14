@@ -25,6 +25,7 @@ tunnel_MTU=MTU Terowong
 tunnel_TTL=TTL Terowong
 [VPN server]
 vpn_setting=Konfigurasi Asas
+vpn_Adv=Butiran VPN
 PPTP_desc=Pelayan VPN membolehkan anda untuk mengakses rangkaian rumah anda pada bila-bila masa dan di mana-mana.
 PPTP_desc2=Untuk menggunakan pelayan VPN . Sila ikuti langkah-langkah ini.<br>(1) Dayakan pelayan PPTP VPN<br>(2) Tetapkan pangkalan IP untuk IP pelanggan. (Maksimum 10 pelanggan)<br>(3) Sediakan nama pengguna dan kata laluan untuk pelanggan VPN.<br>(4) Buka program sambungan VPN pada komputer atau telefon pintar anda.<br>(5) Tambah sambungan PPTP VPN baru dan alamat pelayan VPN adalah
 PPTP_desc3=(6) Jika alamat IP WAN anda dinamik, <a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">sila klik di sini untuk menetapkan DDNS.</a>
@@ -91,6 +92,19 @@ Low=Rendah
 Lowest=Terendah
 traffic_monitor=Pemantau Trafik
 traffic_monitor_desc=Pemantau Trafik membantu anda untuk memantau jenis trafik rangkaian yang berikut:<P>Internet: Semua trafik Internet.<P>Berwayar: Trafik rangkaian daripada rangkaian berwayar kepada berwayar dan kepada Internet.<P>Berwayar: Trafik rangkaian daripada rangkaian wayarles kepada berwayar dan kepada Internet.
+traffic_monitor_desc1=Pemantau Trafik membenarkan anda untuk memantau paket masuk atau keluar yang berikut :
+traffic_monitor_desc2=<b>NOTA :</b> Paket daripada Internet dihantar dengan sekata ke peranti terdawai dan wayarles.
+tm_internet=Internet
+tm_wired=Terdawai
+tm_wireless=Wayarles
+tm_reception=Penerimaan
+tm_transmission=Penghantar
+tm_recp_int=Paket Internet Masuk
+tm_recp_wired=Paket masuk daripada rangkaian terdawai
+tm_recp_wireless=Paket masuk daripada rangkaian wayarles
+tm_trans_int=Paket Internet keluar
+tm_trans_wired=Paket keluar daripada rangkaian terdawai
+tm_trans_wireless=Paket keluar daripada rangkaian wayarles
 ezqosDesw=Quality of Service (Kualiti Perkhidmatan) (QoS) memastikan prestasi kelajuan rangkaian. Peraturan lalai menetapkan permainan dan pelayaran web daalm talian sebagai perhatian paling utama dan tidak dipengaruhi oleh aplikasi P2P (aplikasi rakan ke rakan seperti BitTorrent). Untuk mendayakan fungsi QoS, Klik suis gelangsar QoS, dan isikan medan lebar jalur muat naik dan muat turun. Dapatkan maklumat lebar jalur daripada ISP anda.<p>Jika anda mahu mengutamakan aplikasi rangkaian dan peranti rangkaian tertentu, pilih keutamaan utama anda daripada Peraturan QoS takrifan pengguna.
 qos_automatic_mode=Mod automatik
 source_ipmac=Untuk sumber atau destinasi alamat IP, anda boleh :<p>(a) masukkan alamat IP tertentu, seperti \"192.168.122.1\";<p>(b) masukkan alamat IP dalam satu subnet atau dalam himpunan IP, seperti \"192.168.123.*\", atau \"192.168.*.*\";<p>atau (c) masukkan semua alamat IP seperti \"*.*.*.*\"<p>Format untuk alamat MAC adalah enam kumpulan bagi dua digit perenambelasan, diasingkan dengan tanda titik bertindih (:), dalam turutan penghantaran (cth. 12:34:56:aa:bc:ef )
@@ -279,6 +293,7 @@ RouterConfig_GWMulticast_Broadcast_itemname=Kawalan ribut siaran(Mbps):
 [keyword_filter]
 menu5_5_5=Penapis Kata kunci
 FirewallConfig_KeywordFilterEnable_sectiondesc=Penapis Kata kunci membolehkan ana menyekat akses pelanggan kepada halaman web yang mengandungi kata kunci yang ditetapkan.
+FirewallConfig_KeywordFilterEnable_sectiondesc2=Pengehadan fungsi penapisan kata kekunci :<ol><li>Laman web termampat yang menggunakan teknologi pemampatan HTTP yang tidak boleh ditapis. <a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">Lihat di sini untuk butiran lanjut</a></li><li>Laman web Http tidak boleh ditapis.</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=Dayakan Penapis Kata kunci
 FirewallConfig_KeywordActiveDate_itemname=Bila:
 FirewallConfig_KeywordActiveTime_itemname=Masa:
@@ -306,6 +321,7 @@ web_redirect_case6_desc2=Selepas mengklik Next (Seterusnya), sila pastikan bahaw
 error_page_lanip_changed_desc1=Alamat IP sedang diperbaharui. Jika proses ini mengambil lebih daripada dua minit, sila ikuti tiga langkah ini untuk memperbaharui IP secara manual: (1) tanggalkan kabel rangkaian; (2) tunggu selama kira-kira sepuluh saat; dan (3) pasang kabelnya untuk mendapatkan alamat IP baru.
 [QIS]
 QIS_autoMAC_desc1=Memulakan untuk mengklon alamat MAC komputer anda ke dalam penghala??QIS_autoMAC_desc2=Sila tunggu sebentar ...
+QIS_autoMAC_desc2=Sila tunggu...
 QIS_autoMAC_desc3=Sahkan alamat IP WAN
 QIS_autoMAC_result_desc1=AJAX gagal dijalankan. Tunggu selama kira-kira tiga saat untuk AJAX berjalan semula.
 QIS_autoMAC_result_desc2=Berjaya mendapatkan alamat IP WAN.
@@ -393,7 +409,7 @@ ShareNode_Seeding_itemdesc=Membenarkan anda untuk mendayakan atau menyahdayakan 
 ShareNode_MaxUpload_itemname=Kadar Muat Naik Maksimum
 ShareNode_MaxUpload_itemdesc=Masukkan nilai antara 0 hingga 999. Nilai lalai adalah 0, yang menandakan bahawa tiada had muat naik.
 [New item]
-HSDPAConfig_hsdpa_enable_hint1=Tetapan 3G semasa kini ditetapkan kepada mod Sandaran 3G. Jika port WAN ditanggalkan mod rangkaian akan secara automatik berubah kepada mod 3G.
+HSDPAConfig_hsdpa_enable_hint1=Tetapan 3G/4G semasa kini ditetapkan kepada mod Sandaran 3G/4G. Jika port WAN ditanggalkan mod rangkaian akan secara automatik berubah kepada mod 3G/4G.
 HSDPAConfig_hsdpa_enable_hint2=Jika anda hendak menukar jenis sambungan, sila pergi ke <a href="/Advanced_Modem_others.asp">USB Modem</a> untuk menyahdaya penyesuai USB.
 HSDPAConfig_USBAdapter_itemname=Penyesuai USB
 HSDPAConfig_USBAdapter_itemdesc=Selepas mendayakan USB Modem, pilih penyesuai yang ZVMODELVZ sokong.
@@ -947,7 +963,9 @@ IPConnection_x_DNSServer1_itemdesc=Medan ini menunjukkan alamat IP bagi DNS yang
 IPConnection_x_DNSServer1_itemname=Pelayan DNS 1:
 IPConnection_x_DNSServer2_itemdesc=Medan ini menunjukkan alamat IP bagi DNS yang ZVMODELVZ berhubung.
 IPConnection_x_DNSServer2_itemname=Pelayan DNS 2:
+IPConnection_x_DNSServer_blank=Sila sediakan pelayan DNS pada peranti klien.
 IPConnection_warning_WANIPEQUALGatewayIP=Anda telah menetapkan IP WAN sebagai Get Laluan ZVMODELVZ dan ZVMODELVZ mungkin tidak boleh menyambung kepada Internet. Sila setkan Get Laluan dengan nilai yang betul.
+IPConnection_x_WAN_LAN_conflict=WAN dan LAN perlu mempunyai alamat dan subnet IP yang berlainan.
 [QIS_internet_isp.js]
 BOP_isp_host_desc=Medan ini membenarkan anda untuk memberikan nama hos untuk ZVMODELVZ. Ia biasanya diminta oleh ISP anda.
 BOP_isp_host_item=Nama Hos(pilihan):
@@ -1051,6 +1069,7 @@ Main_alert_proceeding_desc1=Meneruskan
 Main_alert_proceeding_desc4=Sila tunggu, 
 Main_alert_proceeding_desc3=Selesai!
 Main_content_Login_Item7=Membut penghala mengambil masa kira-kira 60 saat. Adakah anda pasti mahu membut semula penghala sekarang?
+[###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=Membut penghala mengambil masa kira-kira 80 saat. Adakah anda pasti mahu membut semula penghala sekarang?
 [QIS-general.js]
 JS_fieldblank=Medan tidak boleh kosong.
 JS_validip=  adalah alamat IP yang tidak sah!
@@ -1103,11 +1122,13 @@ Setting_upload_itemname=Menyimpan semula seting
 Setting_factorydefault_itemdesc=Klik [Simpan Semula] untuk menyimpan semula penghala kepada seting lalai kilang dan padam semua seting semasa. Tunggu sebentar sehingga penghalaan mengebut semula.
 Setting_save_itemdesc=Klik butang [Simpan] untuk menyimpan seting ZVMODELVZ ke dalam fail. (Nota: Apabila anda menyimpan seting semasa kepada fail, ia juga akan disimpan pada denyar.)
 Setting_upload_itemdesc=Tentukan laluan dan nama fail seting. Kemudian, klik [Muat naik] untuk menulis fail kepada ZVMODELVZ. Sila tunggu selama 60 saat sehingga ZVMODELVZ mengebut semula.
+[###MODEL_DEP###][RT-N65U]Setting_upload_itemdesc=Tentukan laluan dan nama fail seting. Kemudian, klik [Muat naik] untuk menulis fail kepada ZVMODELVZ. Sila tunggu selama 80 saat sehingga ZVMODELVZ mengebut semula.
 Setting_upload_hint=Format atau laluan fail tidak sah!
 Setting_factorydefault_hint1=Semua seting semasa dipadam dan penghala akan disimpan semula ke seting lalai kilang.\n
 Setting_factorydefault_hint2=Adakah anda pasti mahu teruskan?
 Setting_factorydefault_iphint=IP LAN lalai bagi ZVMODELVZ adalah 192.168.1.1.\nJika anda tidak boleh setkan kembali halaman kemudian, sila perbaharui konfigurasi IP bagi komputer anda.
 SET_ok_desc=Seting sedang memuat naik! Sila tunggu kira-kira 60 saat.
+[###MODEL_DEP###][RT-N65U]SET_ok_desc=Seting sedang memuat naik! Sila tunggu kira-kira 80 saat.
 SET_fail_title=Muat Naik Fail Seting Gagal!
 SET_fail_desc=Muat naik Fail Seting gagal. Ia mungkin disebabkan oleh Fail Seting salah atau ralat penghantaran. Sila semak pengesahan bagi Fail Seting dan cuba lagi.
 RHELP_desc4=Ia bertujuan untuk rangkaian destinasi atau hos bagi peraturan arah. Maka, ia mungkin alamat hos seperti '192.168.123.11' atau alamat rangkaian seperti '192.168.0.0'.
@@ -1216,6 +1237,8 @@ PPPConnection_x_WANGateway_itemname=Get laluan
 PPPConnection_x_WANDNSServer_itemname=Pelayan DNS
 PPPConnection_x_WANLink_itemname=Status Sambungan:
 FirewallConfig_display1_sectiondesc=Penapis Perkhidmatan Rangkaian menyekat LAN ke pertukaran bingkisan WAN dan menyekat peranti daripada menggunakan perkhidmatan rangkaian tertentu.<p>Sebagai contoh, jika anda tidak mahu peranti menggunakan perkhidmatan Internet, masukkan 80 dalam port destinasi. Trafik yang menggunakan port 80 akan disekat.<p>Biarkan medan sumber IP kosong untuk menggunakan peraturan ini ke semua peranti LAN.
+FirewallConfig_display3_sectiondesc=<b>Tempoh Senarai Hitam :</b> Semasa tempoh yang dijadualkan, klien dalam Senarai Hitam tidak boleh menggunakan perkhidmatan rangkaian yang ditentukan. Selepas tempoh yang ditentukan, semua klien dalam LAN boleh mengakses perkhidmatan rangkaian yang ditentukan.<br><b>Tempoh Senarai Putih :</b> Semasa tempoh yang dijadualkan, klien dalam Senarai Putih HANYA boleh menggunakan perkhidmatan rangkaian yang ditentukan. Selepas tempoh yang ditentukan, klien dalam Senarai Putih dan klien rangkaian lain tidak boleh mengakses Internet atau mana-mana perkhidmatan Internet yang lain.
+FirewallConfig_display4_sectiondesc=<b>NOTA :</b> Jik anda menetapkan subnet untuk Senarai Putih, alamat IP diluar subnet tidak boleh mengakses Internet atau mana-mana perkhidmatan Internet.
 FirewallConfig_LanWanActiveDate_itemname=Tarikh untuk Mendayakan Penapis LAN ke WAN:
 FirewallConfig_LanWanActiveDate_itemdesc=Medan ini menentukan tarikh penapis LAN ke WAN akan didayakan.
 FirewallConfig_LanWanActiveTime_itemname=Masa bagi Hari untuk Mendayakan Penapis LAN ke WAN:
@@ -1378,6 +1401,7 @@ TZ81=New Caledonia
 TZ82=Magadan, Fiji, Kamchatka, Marshall Is.
 TZ83=Auckland, Wellington
 TZ84=Nuku'alofa
+TZ85=British Summer Time (BST)
 LANHostConfig_x_NTPServer_itemname=Pelayan NTP
 LANHostConfig_x_NTPServer_itemdesc=Untuk menyegerakkan masa sistem anda dengan Pelayan NTP.
 LANHostConfig_x_DDNSEnable_sectionname=Seting DDNS
@@ -1494,6 +1518,7 @@ USB_Application_disk_miscellaneous_desc=Tetapan perincian lanjut untuk USB Disk 
 BasicConfig_EnableDownloadMachine_itemname=Mendayakan Muat Turun Utama?
 BasicConfig_EnableDownloadShare_itemname=Mendayakan Muat Turun Perkongsian?
 BasicConfig_EnableMediaServer_itemname=Mendayakan UPnP?
+DM_Install_partition=Sila pilih peranti storan USB yang anda mahu akses.
 CTL_restore=Simpan Semula
 CTL_onlysave=Simpan
 CTL_clear=Bersihkan
@@ -1525,6 +1550,7 @@ IPConnection_TriggerList_widzarddesc=Aplikasi Yang Diketahui:
 FirewallConfig_LWFilterList_widzarddesc=Aplikasi Yang Diketahui:
 LANHostConfig_x_DDNSServer_linkname=Percubaan Percuma
 SAVE_note=Nota: Ia mengambil kira-kira 60 saat
+[###MODEL_DEP###][RT-N65U]SAVE_note=Nota: Ia mengambil kira-kira 80 saat
 IPConnection_VServerPNo_itemname=No. Protokol
 LANHostConfig_ManualDHCPEnable_itemname=Dayakan Tugasan Manual?
 LANHostConfig_ManualDHCPList_groupitemdesc=Peruntukkan IP secara manual di sekitar Senarai DHCP
@@ -1677,7 +1703,7 @@ HSDPAConfig_password_itemdesc=Sila masukkan kata laluan anda.
 HSDPAConfig_usbadaptor_itemdesc=Sila pilih penyesuai usb Modem anda.
 confirm_disableftp_dm=Menyahdayakan Perkongsian Sekitar Rangkaian akan menyahdayakan Muat Turun Utama.
 LANHostConfig_IPRouters_itemdesc=Alamat IP LAN bagi ZVMODELVZ. Nilai lalai adalah 192.168.1.1. Dalam rangkaian berasaskan IP, bingkisan data dihantar ke alamat IP tertentu peranti rangkaian.<p>Penghala ASUS menggunakan alamat tatatanda perpuluhan bertitik, yang merujuk kepada nombor rentetan yang ditulis sebagai empat oktet dan diasingkan dengan titik (seperti 192.168.1.1).<p>Terdapat tiga julat IP yang boleh digunakan oleh rangkaian setempat: 192.168.0.1 - 192.168.255.254, 172.16.0.1 - 172.31.255.254, 10.0.0.1 - 10.255.255.254.
-HSDPAConfig_hsdpa_mode_itemdesc=Pilih mod USB Modem mengikut keperluan dan persekitaran anda. Kami memberikan empat mod di bawah: Sandaran, Sama berat, Sentiasa tinggi dan Sentiasa rendah.Untuk mengeluarkan penyesuai USB Modem, sila rujuk pada Indeks dan klik butang penyesuai.
+HSDPAConfig_hsdpa_mode_itemdesc=Pasang penyesuai USB 3G ke ZVMODELVZ dan jadikannya penghala mudah alih.
 Not_authpage_login_again=Jika anda hendak log masuk kembali, sila tutup tetingkap ini dahulu.
 GO_HSDPA_SETTING=Pergi ke Seting USB Modem
 [new strings - translated]
@@ -1777,6 +1803,11 @@ qis_simple_wls_recmd=(lawatan)
 url_keyword_alert=Kata kunci URL
 Not_Listed=tidak disenaraikan
 qis_service=Perkhidmatan
+isp_br_gvt_note=Jika anda adalah pengguna GVT, sila masukkan nama pengguna <b>turbonet@turbonet</b> dan kata laluan <b>gvt25</b>. Jika tidak, sila masukkan nama pengguna dan kata laluan yang diberikan oleh ISP anda.
+pvc_del_alert_desc=Adakah anda pasti anda mahu memadam PVC ini?
+same_vpi_vci=Pendua atau tetapan VPI dan VCI yang sama.
+dns_server_no_set=Sila sediakan pelayan DNS pada peranti klien.
+dsl_wan_page_desc=Klik indeks berangka untuk mengedit tetapan PVC. Klik ikon tambah (+) atau padam (-) untuk menambah atau memadam tetapan PVC.
 [adsl end]
 [untrans]
 prev_page=Previous page
@@ -1785,9 +1816,12 @@ step_use_aicloud=Please follow the steps below to use AiCloud:
 download_aicloud=Download ASUS AiCloud app to phone or pad from
 connect_through_wifi=Connect your iOS or Android devices to ZVMODELVZ through WiFi. The AiCloud app will automatically guide you through the process of setup.
 access_service=Now you can access your USB storage and Network place(Samba) enabled devices connected to ZVMODELVZ.
+aicloud_bandwidth1=For the best viewing/listening experience, we recommend the following upload bandwidth for different media format. A 768 Kbps is recommended for music, 5Mbps for SD video, 15Mbps for 720p video and 30Mbps or faster for 1080p HD video streaming.
+aicloud_bandwidth2=Internet upload speeds may vary depending on your ISP and other factors.
+aicloud_bandwidth3=If you are not sure what your Internet speed is, you can ask your ISP, or use an online broadband speed test from a computer connected to ZVMODELVZ.
 aicloud_for_privateIP1=We are going to support AiCloud with private IP later, in this moment, you can setup <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_VirtualServer_Content.asp" target="_blank">Port forwarding</a> or <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_Exposed_Content.asp" target="_blank">DMZ</a> to access private ip address remotely.
-aicloud_for_privateIP2= The AiCloud need to use 8082 and 443 port. you can change the port setting <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_BasicFirewall_Content.asp" target="_blank">here</a>.
-aicloud_for_privateIP3= For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
+aicloud_for_privateIP2=The AiCloud need to use 8082 and 443 port.
+aicloud_for_privateIP3=For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=To establish your cloud disk, you need to plug-in an USB storage into this router, then enable cloud disk.
 aicloud_disk2= Default cloud disk login account use the router login account.
 aicloud_disk_case0=The Cloud disk can be accessed via <a style="font-weight: bolder;text-decoration: underline;" href="http://www.asusnetwork.net:8082" target="_blank">http://www.asusnetwork.net:8082</a> when you connect to ZVMODELVZ in LAN.
@@ -1800,9 +1834,3 @@ smart_access2=You can also wake up your PCs in home remotely by WOL.
 smart_access3=What is <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="http://support.asus.com/Search.aspx?SLanguage=en&keyword=WOL&BIOS" target="_blank">WOL</a>?
 smart_sync1=To start smart sync, you need to sign up an <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asuswebstorage.com/" target="_blank">ASUS webstorage</a> account, then enable cloud disk and smart sync. (Make sure that you have plug-in an USB storage into this router.)
 smart_sync2=Open AiCloud APP. Choose a specific folder in cloud disk that you want to sync with ASUS web storage, then follow the steps show in the app.
-QIS_autoMAC_desc2=Please wait...
-isp_br_gvt_note=If you are GVT users, please key in the user name ( turbonet@turbonet ) and password ( gvt25 ). Otherwise, please key in the user name and password provided by your ISP.
-pvc_del_alert_desc=Are you sure to delete this PVC?
-same_vpi_vci=VPI and VCI are duplicated.
-dns_server_no_set=DNS server not set! Please setup the DNS server on the client device.
-dsl_wan_page_desc=Click index number to edit PVC setting or click right icon to add or delete PVC

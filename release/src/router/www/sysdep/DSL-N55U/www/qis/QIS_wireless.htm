@@ -137,7 +137,7 @@ function setIptvPvc(idx) {
 						document.form.dsl3_vci.value = ISP_List_IPTV[i][2];
 						document.form.dsl3_encap.value = ISP_List_IPTV[i][4];
 						break;
-					}					
+					}
 				}
 				pvc_cnt++;
 			}
@@ -148,9 +148,9 @@ function setIptvPvc(idx) {
 function QKWireless_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_wireless_webtitle#>";
 	parent.set_step("t3");
-	
+
 	if (cfg_iptv_num_pvc == "1") {
-		setIptvPvc(0);	
+		setIptvPvc(0);
 		disable_iptv_pvc1();
 		disable_iptv_pvc2();
 	}
@@ -169,14 +169,14 @@ function QKWireless_load_body(){
 		disable_iptv_pvc1();
 		disable_iptv_pvc2();
 	}
-	
+
 	if (is_admin_pswd_set == "1") {
 		document.form.http_passwd.value="<% nvram_get("dsltmp_qis_admin_passwd"); %>";
 	}
 	else {
-		document.form.http_passwd.disabled = true;		
+		document.form.http_passwd.disabled = true;
 	}
-	
+
 	if (is_dsl_pvc_set == "0") {
 		disable_dsl_pvc();
 	}
@@ -185,7 +185,7 @@ function QKWireless_load_body(){
 	document.form.wl0_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl0_wpa_psk"); %>');
 	document.form.wl1_ssid.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_ssid"); %>');
 	document.form.wl1_wpa_psk.value = decodeURIComponent('<% nvram_char_to_ascii("", "wl1_wpa_psk"); %>');
-	
+
 	if(band5g_support == -1){
 		$("wl_unit_field_1").style.display = "none";
 		$("wl_unit_field_2").style.display = "none";
@@ -208,7 +208,7 @@ function submitForm(){
 		return false;
 
 	if(document.form.wl1_wpa_psk.value.length > 0){
-		document.form.wl1_auth_mode_x.value = "pskpsk2";
+		document.form.wl1_auth_mode_x.value = "psk2";
 		/*if(!validate_wlpsk(document.form.wl1_wpa_psk))
 			return false;*/
 		if(!validate_psk(document.form.wl1_wpa_psk))
@@ -218,7 +218,7 @@ function submitForm(){
 		document.form.wl1_auth_mode_x.value = "open";
 
 	if(document.form.wl0_wpa_psk.value.length > 0){
-		document.form.wl0_auth_mode_x.value = "pskpsk2";
+		document.form.wl0_auth_mode_x.value = "psk2";
 		/*if(!validate_wlpsk(document.form.wl0_wpa_psk))
 			return false;*/
 		if(!validate_psk(document.form.wl0_wpa_psk))
@@ -317,12 +317,12 @@ function validate_wlpsk(psk_obj){
 
 function gotoHome(){
 	if (w_Setting == "0") {
-		alert("<#QIS_recommand_encryption#>");	
+		alert("<#QIS_recommand_encryption#>");
 		location.href = '/qis/QIS_wireless.htm';
 	}
 	else {
 		parent.location.href = '/index.asp';
-	}	
+	}
 }
 </script>
 </head>
@@ -342,12 +342,12 @@ function gotoHome(){
 <input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 <input type="hidden" name="wl0_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl0_ssid"); %>">
 <input type="hidden" name="wl0_auth_mode_x" value="">
-<input type="hidden" name="wl0_crypto" value="tkip+aes">
+<input type="hidden" name="wl0_crypto" value="aes">
 <input type="hidden" name="wl0_wep_x" value="0">
 <input type="hidden" name="wl0_wpa_mode" value="0">
 <input type="hidden" name="wl1_ssid2" value="<% nvram_char_to_ascii("WLANConfig11b", "wl1_ssid"); %>">
 <input type="hidden" name="wl1_auth_mode_x" value="">
-<input type="hidden" name="wl1_crypto" value="tkip+aes">
+<input type="hidden" name="wl1_crypto" value="aes">
 <input type="hidden" name="wl1_wep_x" value="0">
 <input type="hidden" name="wl1_wpa_mode" value="0">
 <input type="hidden" name="lan_ipaddr" value="" disabled>

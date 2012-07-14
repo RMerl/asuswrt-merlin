@@ -299,11 +299,7 @@ conf_file.o: conf_file.c config.h conf_file.h
 ez-ipupdate.o: ez-ipupdate.c config.h error.h md5.h dprintf.h \
 	conf_file.h cache_file.h pid_file.h
 
-#2007.03.15 Yau add
-#md5.o: md5.c config.h md5.h
-# for ASUS DDNS, asus_ddns.c need md5 implementation and I don't want to enable gnuip support.
-md5.o: md5.c md5.h
-	$(CC) $(CFLAGS) -DUSE_MD5 -c -o $@ $<
+md5.o: md5.c config.h md5.h
 
 pid_file.o: pid_file.c config.h error.h dprintf.h
 

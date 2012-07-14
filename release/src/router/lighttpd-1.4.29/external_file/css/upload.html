@@ -16,20 +16,19 @@ margin:0px;
 overflow:hidden;
 }
 #uploadRegion {
-border: 0px solid #BBB;
-border-bottom: 1px solid #BBB;
 -moz-border-radius: 5px;
 -webkit-border-radius: 5px;
 border-radius: 5px;
 padding: 0px;
 text-align: center;
-font: 20pt bold 'Vollkorn';
-color: #BBB;
+font: 20pt bold;
+font-family:"Segoe UI";
+color: #ffffff;
 left:0px;
 top:0px;
 width:100%;
 height:350px;
-background:#d8eaf6;
+background:#009A95;
 }
 #uploadOption{
 background-color:#f1f1ef;
@@ -48,9 +47,9 @@ background:#d8eaf6;
 }
 #upload_file_list{
 display: inline;
-font: 12pt bold 'Vollkorn';
+font: 12pt bold;
+font-family:"Segoe UI";
 text-align: left;
-color: #676965;
 }
 .upload-dropzone-parent {
 height: 100%;
@@ -75,7 +74,7 @@ position: relative;
 .upload-drop-here {
 font-weight: bold;
 font-size: 15px;
-color: #868584;
+color: #fff;
 padding: 0 10px;
 display: none;
 }
@@ -84,12 +83,12 @@ display: none;
 padding: 15px 0 5px;
 font-weight: bold;
 font-size: 15px;
-color: #868584;
+color: #fff;
 }
 .upload-select-here {
 font-weight: bold;
 font-size: 15px;
-color: #868584;
+color: #fff;
 padding: 0 10px;
 }
 #nav {
@@ -114,7 +113,42 @@ text-indent: 2em;
 #files{
 font-weight: bold;
 font-size: 15px;
-color: #868584;
+color: #fff;
+}
+.ml-btn-1 {
+display: inline-block;
+text-decoration: none;
+font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+font-size: 13px;
+font-weight: bold;
+line-height: 240%;
+color:#666;
+text-align: center;
+text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.5);
+background-color: #FBFBFB;
+background-image: -moz-linear-gradient(53% 100% 90deg,#EBEBEB 0%,#FEFEFE 100%);
+background-image: -webkit-gradient(linear,53% 100%,53% 3%,color-stop(0, #EBEBEB),color-stop(1, #FEFEFE));
+background-image: -webkit-linear-gradient(90deg,#EBEBEB 0%,#FEFEFE 100%);
+background-image: -o-linear-gradient(90deg,#EBEBEB 0%,#FEFEFE 100%);
+background-image: -ms-linear-gradient(90deg,#EBEBEB 0%,#FEFEFE 100%);
+background-image: linear-gradient(90deg,#EBEBEB 0%,#FEFEFE 100%);
+/*width: 120px;
+height: 30px;*/
+border-color: #B4B4B4;
+border-width: 1px;
+-moz-border-radius: 3px;
+-webkit-border-radius: 3px;
+border-radius: 3px;
+border-style: solid;
+-moz-box-shadow: 0px 0px 0px 3px rgba(0,0,0,0.05) ,inset 0px 1px 0px rgba(255,255,255,0.5);
+-webkit-box-shadow: 0px 0px 0px 3px 
+rgba(0, 0, 0, 0.05) ,inset 0px 1px 0px 
+rgba(255, 255, 255, 0.5);
+box-shadow: 0px 0px 0px 3px 
+rgba(0, 0, 0, 0.05) ,inset 0px 1px 0px 
+rgba(255, 255, 255, 0.5);
+-ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr=#fffefefe,endColorstr=#ffebebeb,GradientType=0) progid:DXImageTransform.Microsoft.Glow(Color=#ff000000,Strength=3)";
+filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#fffefefe,endColorstr=#ffebebeb,GradientType=0) progid:DXImageTransform.Microsoft.Glow(Color=#ff000000,Strength=3);
 }
 </style>
 </head>
@@ -185,6 +219,13 @@ function utf8encode(string) {
   return utftext;
 }
 */
+function adjustLayout(){	
+	//alert($("table#main_table").height());
+	var h = parent.getFileViewHeight();
+	$("#main_table").css("height", h);
+	$("#uploadRegion").css("height", h-120);
+}
+
 $("document").ready(function() {
 	
 	var this_upload_index = 0;
@@ -203,9 +244,12 @@ $("document").ready(function() {
 	$('.upload-drop-here').text(m.getString('hint_selfile1'));
 	$('.upload-drop-alt').text(m.getString('hint_selfile2'));
 	$('.upload-select-here').text(m.getString('hint_selfile3'));
-	$('button#upload').text(m.getString('btn_upload'));
-	$('button#cancel').text(m.getString('btn_cancel'));
-      
+	$('#upload').text(m.getString('btn_upload'));
+	$('#cancel').text(m.getString('btn_cancel'));
+   
+  adjustLayout();
+  //////////////////////////////////////////////////////////////
+     
 	// Check for the various File API support.
 	if (window.File && window.FileReader && window.FileList && window.Blob) {
 	  // Great success! All the File APIs are supported.
@@ -257,9 +301,8 @@ $("document").ready(function() {
 		//this_upload_count++;
 		if( uploadFile() == 0 ){	
 			showUploadProgress(m.getString('msg_upload_complete'), 100);				
-			//alert(m.getString('upload_sucess') + this_upload_files.length);
-			g_storage.set('onUploading', "0");
-			parent.closeJqmWindow(1);
+			g_storage.set('stopLogoutTimer', "0");
+			parent.closeUploadPanel(1);
 		}
 	}
 	var this_file_loaded_size = 0;
@@ -344,7 +387,7 @@ $("document").ready(function() {
 		// If we use onloadend, we need to check the readyState.
 		reader.onloadend = function(evt) {
 			if (evt.target.readyState == FileReader.DONE) { // DONE == 2      	
-			var tURL = this_url + pfile.name;			
+			var tURL = this_url + pfile.name;
 			webdav_client.PUT(tURL, evt.target.result, bSliceAsBinary, start, stop, filesize,
 				  webdav_put_callbackfunction, webdav_put_progress_callbackfunction  );
 			}
@@ -366,8 +409,7 @@ $("document").ready(function() {
 	//var segment_size = 5*1024*1024;
 	var segment_size = 50*1024;
 	var loop_cnt =0;
-	function send_segment_data(f, filesize)
-	{
+	function send_segment_data(f, filesize){
 		var start = f_offset;
 		var stop = start+ segment_size-1;
 		if(stop>= filesize){
@@ -375,11 +417,12 @@ $("document").ready(function() {
 			f.status ="done";
 		}
 		f_offset = stop+1;
+		
 		PutToWeb(f.thefile, start, stop, filesize);
 	}
 	
 	var current_file_size;	
-	function uploadFile(){  	
+	function uploadFile(){
 		for (var i = 0, f; f = this_upload_files[i]; i++) {
 			loop_cnt =  Math.ceil(f.thefile.size/segment_size);
 			current_file_size = f.thefile.size;		
@@ -406,7 +449,7 @@ $("document").ready(function() {
 			this_upload_total = this_upload_files.length;
 			f_offset =0;
 			
-			g_storage.set('onUploading', "1");
+			g_storage.set('stopLogoutTimer', "1");
 			uploadFile();			
     }
   }, false);
@@ -473,18 +516,22 @@ $("document").ready(function() {
   	if (this_upload_files&&this_upload_files.length>0) {
 			this_upload_files.splice(0,this_upload_files.length);
 		}
-		parent.closeJqmWindow();
+		
+		parent.closeUploadPanel();
   });
+  
+  $(window).resize(adjustLayout);
+  	
 });
 
 </script>
 
 <body>
 	
-<table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
-	<tr style='height:325px'>
+<table id="main_table" width="100%" height="auto" border="0" align="center" cellpadding="0" cellspacing="0">
+	<tr>
   	<td>
-    <div id='uploadRegion' style='height:325px'>	
+    <div id='uploadRegion' style='height:auto'>	
     	<table id="upload-container" cellpadding="0" cellspacing="0" class="upload-dropzone-parent drag-drop-supported">
     		<tbody>
     			<tr>
@@ -507,11 +554,8 @@ $("document").ready(function() {
     			</tr>
     		</tbody>
     	</table>
-    	    	
-    	<output id='upload_file_list'></output> 
-    	
+    	<output id='upload_file_list'></output>    	
 		</div>
-		
     </td>    
   </tr>
   <tr style='height:25px'>
@@ -527,12 +571,12 @@ $("document").ready(function() {
     	</div>
   	</td>
   </tr>
-  <tr style='height:10px'></tr>
+  <!--<tr style='height:10px'></tr>-->
   <tr>
   	<td>
   	<div class="table_block_footer" style="text-align:right">
-    	<button id="upload" class='readBytesButtons'>Upload</button>
-      <button id="cancel" class="btnStyle">Close</button> 
+  		<button id="upload" class='ml-btn-1 readBytesButtons'>Upload</button>
+      <button id="cancel" class="ml-btn-1 btnStyle">Close</button> 
     </div>
     </td>
   </tr>

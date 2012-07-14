@@ -195,7 +195,7 @@ function submitForm(){
 	document.form.http_passwd.value = parent.document.QKform.http_passwd.value;
 	document.form.wan_nat_x.value = parent.document.QKform.wan_nat_x.value;
 	document.form.target = "hidden_frame";
-	document.form.next_page.value = "/QIS_wizard.htm";	
+	document.form.next_page.value = "/qis/QIS_finish.htm";	
 	document.form.submit();
 }
 
@@ -331,6 +331,7 @@ function submitenter(myfield,e)
 <input type="hidden" name="w_Setting" value="1">
 <!-- wireless client -->
 <input type="hidden" name="wlc_ure_ssid_org" value="<% nvram_char_to_ascii("WLANConfig11b", "wlc_ure_ssid"); %>" disabled>
+<input type="hidden" name="wlc_psta" value="0">
 <input type="hidden" name="wlc_band" value="<% nvram_get("wlc_band"); %>">
 <input type="hidden" name="wlc_ssid" value="<% nvram_char_to_ascii("", "wlc_ssid"); %>">
 <input type="hidden" name="wlc_wep" value="<% nvram_get("wlc_wep"); %>">

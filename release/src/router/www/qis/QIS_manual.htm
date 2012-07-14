@@ -18,6 +18,11 @@ function QKInternet_load_body(){
 	parent.set_step("t2");
 	if(repeater_support < 0)
 		$("repeaterMode").style.display = "none";
+	else{
+		if(parent.psta_support != -1)
+			$("repeaterMode_desc").innerHTML = "Media bridge";
+	}
+	
 		
 	document.getElementById("nextButton").focus();	
 }
@@ -30,9 +35,22 @@ function setScenerion(mode){
 		document.form.sw_mode_radio[0].focus();
 	}	
 	else if(mode == '2'){
+		var pstaDesc = "";
+
+		if(parent.psta_support == -1){
+			pstaDesc = "<#OP_RE_desc#>";
+		}
+		else{
+			pstaDesc += "The RT-AC66U can be configured in Media bridge mode.";
+			pstaDesc += "This mode provide multiple entertainment devices fastest 802.11ac wifi connection simultaneously.";
+			pstaDesc += "To setup the Media bridge mode, you need two RT-AC66U routers, one configured as the Media station and the other as a router.";
+			pstaDesc += "Setup the first RT-AC66U as router then configure the second RT-AC66U as 802.11ac Media bridge and you can simply connect PCs, Smart TV, game console, DVR, media player to Media bridge via Ethernet cable.";
+			pstaDesc += "<br><br><br>";
+		}
+
 		parent.document.QKform.sw_mode.value = 2;
 		$j("#Senario").attr("src", "/images/New_ui/re.jpg");
-		$j("#mode_desc").html("<#OP_RE_desc#>");
+		$j("#mode_desc").html(pstaDesc);
 		document.form.sw_mode_radio[1].focus();
 	}
 	else if(mode == '3'){
@@ -49,11 +67,8 @@ function submitForm(){
 		document.form.submit();
 	}
 	else if(parent.document.QKform.sw_mode.value == "2"){
-		// 
 		document.form.action = "/qis/QIS_sitesurvey.htm";
 		document.form.submit();
-		//using domain name
-		//parent.location.href = 'http://www.asusnetwork.net/QIS_wizard.htm?flag=sitesurvey';
 	}
 	else{
 		document.form.action = "/qis/QIS_lanip.htm";
@@ -61,8 +76,7 @@ function submitForm(){
 	}
 }
 
-function submitenter(myfield,e)
-{	
+function submitenter(myfield,e){	
 	var keycode;
 	if (window.event) keycode = window.event.keyCode;
 	else if (e) keycode = e.which;
@@ -105,7 +119,10 @@ function submitenter(myfield,e)
 		<span style="font-size:16px; font-weight:bold;color:white;text-shadow: 1px 1px 0px black">
 			<input type="radio" name="sw_mode_radio" class="input" value="1" onclick="setScenerion(1);" <% nvram_match("sw_mode", "1", "checked"); %>><#OP_GW_item#>
 			&nbsp;&nbsp;
-			<span id="repeaterMode"><input type="radio" name="sw_mode_radio" class="input" value="2" onclick="setScenerion(2);" <% nvram_match("sw_mode", "2", "checked"); %>><#OP_RE_item#></span>
+			<span id="repeaterMode">
+				<input type="radio" name="sw_mode_radio" class="input" value="2" onclick="setScenerion(2);" <% nvram_match("sw_mode", "2", "checked"); %>>
+				<span id="repeaterMode_desc"><#OP_RE_item#></span>
+			</span>
 			&nbsp;&nbsp;
 			<input type="radio" name="sw_mode_radio" class="input" value="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><#OP_AP_item#>
 		</span>

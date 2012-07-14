@@ -147,24 +147,18 @@ function inet_network(ip_str){
 							  <td bgcolor="#4D595D" valign="top">
 									<div>&nbsp;</div>
 									<div class="formfonttitle">AiCloud</div>
-									<!--div style="margin-top:-40px;margin-left:520px;">
-										<a href="https://play.google.com/store/apps/details?id=com.asustek.aicloud&feature=search_result#?t=W251bGwsMSwyLDEsImNvbS5hc3VzdGVrLmFpY2xvdWQiXQ" target="_blank"><img border="0" src="/images/cloudsync/googleplay.png" width="100px"></a>
-										<a href="http://www.apple.com/search/?q=aicloud" target="_blank"><img src="/images/cloudsync/AppStore.png" border="0"  width="100px"></a>
-									</div-->
 									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  						<!--div class="formfontdesc">
-									</div-->
 									<table width="100%" height="550px" style="border-collapse:collapse;">
 
 									  <tr bgcolor="#444f53">
 									    <td colspan="5" bgcolor="#444f53" class="cloud_main_radius">
 												<div style="padding:10px;width:95%;font-style:italic;font-size:14px;word-break:break-all;">
 													<#step_use_aicloud#>
-												  <ol style="-webkit-margin-after: 0em;">
+												  <ol style="-webkit-margin-after: 0em;word-break:normal;">
 										        <li style="margin-bottom:7px;">
 															<#download_aicloud#> 
-															<a href="https://play.google.com/store/apps/details?id=com.asustek.aicloud&feature=search_result#?t=W251bGwsMSwyLDEsImNvbS5hc3VzdGVrLmFpY2xvdWQiXQ" target="_blank"><img border="0" src="/images/cloudsync/googleplay.png" width="100px"></a>
-															<a href="http://itunes.apple.com/tw/app/aicloud-lite/id527118674?l=zh&mt=8" target="_blank"><img src="/images/cloudsync/AppStore.png" border="0"  width="100px"></a>
+															<a href="http://event.asus.com/2012/nw/aicloud/edm/" target="_blank"><img border="0" src="/images/cloudsync/googleplay.png" width="100px"></a>
+															<a href="http://event.asus.com/2012/nw/aicloud/edm/" target="_blank"><img src="/images/cloudsync/AppStore.png" border="0"  width="100px"></a>
 														</li>
 										        <li style="margin-bottom:7px;">															
 															<#connect_through_wifi#>
@@ -174,15 +168,24 @@ function inet_network(ip_str){
 														</li>
 												  </ol>
 
-												  <ul style="-webkit-margin-after: 0em;" id="privateIpOnly">
+												  <ul style="-webkit-margin-after: 0em;word-break:normal;" id="privateIpOnly">
 										        <li style="margin-top:-5px;">
 															<span>
-																<#aicloud_for_privateIP1#>
-																<#aicloud_for_privateIP2#>
+																<#aicloud_for_privateIP1#>&nbsp;
+																<#aicloud_for_privateIP2#>&nbsp;
 	       												<#aicloud_for_privateIP3#>
 															</span>
 														</li>
 												  </ul>
+												  <ul style="-webkit-margin-after: 0em;word-break:normal;">
+										        <li style="margin-top:-5px;">
+															<span>
+																<#aicloud_bandwidth1#>&nbsp;
+																<#aicloud_bandwidth2#>&nbsp;
+	       												<#aicloud_bandwidth3#>
+															</span>
+														</li>
+												  </ul>												  
 
 												</div>
 											</td>

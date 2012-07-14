@@ -32,365 +32,46 @@
 
 #include <bcmnvram.h>
 #include <shutils.h>
+#include <shared.h>
 #include <stdarg.h>
 
-/*#define vstrsep(buf, sep, args...) _vstrsep(buf, sep, args, NULL)
-int _vstrsep(char *buf, const char *sep, ...)
-{
-	va_list ap;
-	char **p;
-	int n;
+extern char *read_whole_file2(const char *target){
+	FILE *fp;
+	char *buffer, *new_str;
+	int i;
+	unsigned int read_bytes = 0;
+	unsigned int each_size = 1024;
 
-	n = 0;
-	va_start(ap, sep);
-	while ((p = va_arg(ap, char **)) != NULL) {
-		if ((*p = strsep(&buf, sep)) == NULL) break;
-		++n;
+	if((fp = fopen(target, "r")) == NULL)
+		return NULL;
+
+	buffer = (char *)malloc(sizeof(char)*each_size);
+	if(buffer == NULL){
+		usb_dbg("No memory \"buffer\".\n");
+		fclose(fp);
+		return NULL;
 	}
-	va_end(ap);
-	return n;
+	memset(buffer, 0, each_size);
+
+	while ((i = fread(buffer+read_bytes, each_size*sizeof(char), 1, fp)) == 1){
+		read_bytes += each_size;
+		new_str = (char *)malloc(sizeof(char)*(each_size+read_bytes));
+		if(new_str == NULL){
+			usb_dbg("No memory \"new_str\".\n");
+			free(buffer);
+			fclose(fp);
+			return NULL;
+		}
+		memset(new_str, 0, sizeof(char)*(each_size+read_bytes));
+		memcpy(new_str, buffer, read_bytes);
+
+		free(buffer);
+		buffer = new_str;
+	}
+
+	fclose(fp);
+	return buffer;
 }
-
-// Success: return value is account number. Fail: return value is -1.
-int get_account_list(int *acc_num, char ***account_list) {
-	char **tmp_account_list, **tmp_account;
-	int len, i, j;
-	char *nv, *nvp, *b;
-	char *account, *passwd;
-
-	*acc_num = atoi(nvram_safe_get("acc_num"));
-	if(*acc_num <= 0)
-		return 0;
-
-	nv = nvp = strdup(nvram_safe_get("acc_list"));
-	i = 0;
-	if(nv && strlen(nv) > 0){
-		while((b = strsep(&nvp, "<")) != NULL){
-dbg("b=%s.\n", b);
-			if(vstrsep(b, ">", &account, &passwd) != 2)
-				continue;
-
-			tmp_account = (char **)malloc(sizeof(char *)*(i+1));
-			if(tmp_account == NULL){
-				usb_dbg("Can't malloc \"tmp_account\".\n");
-				free(nv);
-				return -1;
-			}
-
-			len = strlen(account);
-			tmp_account[i] = (char *)malloc(sizeof(char)*(len+1));
-			if(tmp_account[i] == NULL){
-				usb_dbg("Can't malloc \"tmp_account[%d]\".\n", i);
-				free(tmp_account);
-				free(nv);
-				return -1;
-			}
-			strcpy(tmp_account[i], account);
-			tmp_account[i][len] = 0;
-
-			if(i != 0){
-				for(j = 0; j < i; ++j)
-					tmp_account[j] = tmp_account_list[j];
-
-				free(tmp_account_list);
-				tmp_account_list = tmp_account;
-			}
-			else
-				tmp_account_list = tmp_account;
-
-			if(++i >= *acc_num)
-				break;
-		}
-		free(nv);
-
-		*account_list = tmp_account_list;
-
-		return *acc_num;
-	}
-
-	if(nv)
-		free(nv);
-
-	return 0;
-}
-
-int add_account(const char *const account, const char *const password){
-	disk_info_t *disk_list, *follow_disk;
-	partition_info_t *follow_partition;
-	int acc_num;
-	int result, len;
-	char nvram_value[PATH_MAX], *ptr;
-
-	if(account == NULL || strlen(account) <= 0){
-		usb_dbg("No input, \"account\".\n");
-		return -1;
-	}
-	if(password == NULL || strlen(password) <= 0){
-		usb_dbg("No input, \"password\".\n");
-		return -1;
-	}
-	if(test_if_exist_account(account)){
-		usb_dbg("\"%s\" is already created.\n", account);
-		return -1;
-	}
-
-	acc_num = atoi(nvram_safe_get("acc_num"));
-	if(acc_num < 0)
-		acc_num = 0;
-	if(acc_num >= MAX_ACCOUNT_NUM){
-		usb_dbg("Too many accounts are created.\n");
-		return -1;
-	}
-
-	memset(nvram_value, 0, PATH_MAX);
-	strcpy(nvram_value, nvram_safe_get("acc_list"));
-	len = strlen(nvram_value);
-	if(len > 0){
-		ptr = nvram_value+len;
-		sprintf(ptr, "<%s>%s", account, password);
-		nvram_set("acc_list", nvram_value);
-
-		sprintf(nvram_value, "%d", acc_num+1);
-		nvram_set("acc_num", nvram_value);
-	}
-	else{
-		sprintf(nvram_value, "%s>%s", account, password);
-		nvram_set("acc_list", nvram_value);
-
-		nvram_set("acc_num", "1");
-	}
-
-	spinlock_lock(SPINLOCK_NVRAMCommit);
-	nvram_commit();
-	spinlock_unlock(SPINLOCK_NVRAMCommit);
-
-	disk_list = read_disk_data();
-	if(disk_list == NULL){
-		usb_dbg("Couldn't read the disk list out.\n");
-		return -1;
-	}
-
-	for(follow_disk = disk_list; follow_disk != NULL; follow_disk = follow_disk->next){			
-		for(follow_partition = follow_disk->partitions; follow_partition != NULL; follow_partition = follow_partition->next){
-			if(follow_partition->mount_point == NULL)
-				continue;
-			
-			result = initial_var_file(account, follow_partition->mount_point);
-			if(result != 0)
-				usb_dbg("Can't initial the var file of \"%s\".\n", account);
-		}
-	}
-	free_disk_data(&disk_list);
-
-	return 0;
-}
-
-int del_account(const char *const account){
-	disk_info_t *disk_list, *follow_disk;
-	partition_info_t *follow_partition;
-	int acc_num, i, len;
-	char nvram_value[PATH_MAX], *ptr;
-	char *var_file;
-	char *nv, *nvp, *b;
-	char *tmp_account, *tmp_passwd;
-
-	if(account == NULL || strlen(account) <= 0){
-		usb_dbg("No input, \"account\".\n");
-		return -1;
-	}
-
-	acc_num = atoi(nvram_safe_get("acc_num"));
-	if(acc_num <= 0)
-		return 0;
-
-	memset(nvram_value, 0, PATH_MAX);
-	nv = nvp = strdup(nvram_safe_get("acc_list"));
-	i = 0;
-	if(nv && strlen(nv) > 0){
-		while((b = strsep(&nvp, "<")) != NULL){
-			if(vstrsep(b, ">", &tmp_account, &tmp_passwd) != 2)
-				continue;
-
-			if(!strcmp(account, tmp_account)){
-				if(--acc_num == 0){
-					nvram_set("acc_num", "0");
-					nvram_set("acc_list", "");
-
-					free(nv);
-					return 0;
-				}
-
-				continue;
-			}
-
-			len = strlen(nvram_value);
-			if(len > 0){
-				ptr = nvram_value+len;
-				sprintf(ptr, "<%s>%s", tmp_account, tmp_passwd);
-			}
-			else
-				sprintf(nvram_value, "%s>%s", tmp_account, tmp_passwd);
-
-			if(++i >= acc_num)
-				break;
-		}
-		free(nv);
-	}
-	nvram_set("acc_list", nvram_value);
-
-	memset(nvram_value, 0, PATH_MAX);
-	sprintf(nvram_value, "%d", i);
-	nvram_set("acc_num", nvram_value);
-
-	if(i <= 0){
-		nvram_set("st_samba_mode", "1");
-		nvram_set("st_ftp_mode", "1");
-#ifdef RTCONFIG_WEBDAV_OLD
-		nvram_set("st_webdav_mode", "1");
-#endif
-	}
-
-	spinlock_lock(SPINLOCK_NVRAMCommit);
-	nvram_commit();
-	spinlock_unlock(SPINLOCK_NVRAMCommit);
-
-	disk_list = read_disk_data();
-	if(disk_list == NULL){
-		usb_dbg("Couldn't read the disk list out.\n");
-		return -1;
-	}
-
-	for(follow_disk = disk_list; follow_disk != NULL; follow_disk = follow_disk->next){			
-		for(follow_partition = follow_disk->partitions; follow_partition != NULL; follow_partition = follow_partition->next){
-			if(follow_partition->mount_point == NULL)
-				continue;
-
-			if(get_var_file_name(account, follow_partition->mount_point, &var_file)){
-				usb_dbg("Can't malloc \"var_file\".\n");
-				free_disk_data(&disk_list);
-				return -1;
-			}
-
-			unlink(var_file);
-
-			free(var_file);
-		}
-	}
-	free_disk_data(&disk_list);
-
-	return 0;
-}
-
-// "new_account" can be the same with "account" and only change the password!
-int mod_account(const char *const account, const char *const new_account, const char *const new_password){
-	disk_info_t *disk_list, *follow_disk;
-	partition_info_t *follow_partition;
-	int acc_num;
-	int i, len;
-	char nvram_value[PATH_MAX], *ptr;
-	char *var_file, *new_var_file;
-	char *nv, *nvp, *b;
-	char *tmp_account, *tmp_passwd;
-
-	if(account == NULL || strlen(account) <= 0){
-		usb_dbg("No input, \"account\".\n");
-		return -1;
-	}
-	if(new_account == NULL || strlen(new_account) <= 0){
-		usb_dbg("No input, \"new_account\".\n");
-		return -1;
-	}
-	if(new_password == NULL || strlen(new_password) <= 0){
-		usb_dbg("No input, \"new_password\".\n");
-		return -1;
-	}
-	if(!test_if_exist_account(account)){
-		usb_dbg("\"%s\" is not existed.\n", account);
-		return -1;
-	}
-	if(test_if_exist_account(new_account)){
-		usb_dbg("\"%s\" is already created.\n", new_account);
-		return -1;
-	}
-
-	acc_num = atoi(nvram_safe_get("acc_num"));
-	if(acc_num <= 0)
-		return 0;
-
-	memset(nvram_value, 0, PATH_MAX);
-	nv = nvp = strdup(nvram_safe_get("acc_list"));
-	i = 0;
-	if(nv && strlen(nv) > 0){
-		while((b = strsep(&nvp, "<")) != NULL){
-			if(vstrsep(b, ">", &tmp_account, &tmp_passwd) != 2)
-				continue;
-
-			len = strlen(nvram_value);
-			if(!strcmp(account, tmp_account)){
-				if(len == 0)
-					sprintf(nvram_value, "%s>%s", new_account, new_password);
-				else{
-					ptr = nvram_value+len;
-					sprintf(ptr, "<%s>%s", new_account, new_password);
-				}
-			}
-			else{
-				if(len == 0)
-					sprintf(nvram_value, "%s>%s", tmp_account, tmp_passwd);
-				else{
-					ptr = nvram_value+len;
-					sprintf(ptr, "<%s>%s", tmp_account, tmp_passwd);
-				}
-			}
-
-			if(++i >= acc_num)
-				break;
-		}
-		free(nv);
-	}
-	nvram_set("acc_list", nvram_value);
-
-	spinlock_lock(SPINLOCK_NVRAMCommit);
-	nvram_commit();
-	spinlock_unlock(SPINLOCK_NVRAMCommit);
-
-	if(!strcmp(new_account, account))
-		goto rerun;
-
-	disk_list = read_disk_data();
-	if(disk_list == NULL){
-		usb_dbg("Couldn't read the disk list out.\n");
-		return -1;
-	}
-
-	for(follow_disk = disk_list; follow_disk != NULL; follow_disk = follow_disk->next){			
-		for(follow_partition = follow_disk->partitions; follow_partition != NULL; follow_partition = follow_partition->next){
-			if(follow_partition->mount_point == NULL)
-				continue;
-
-			if(get_var_file_name(account, follow_partition->mount_point, &var_file)){
-				usb_dbg("Can't malloc \"var_file\".\n");
-				free_disk_data(&disk_list);
-				return -1;
-			}
-
-			if(get_var_file_name(new_account, follow_partition->mount_point, &new_var_file)){
-				usb_dbg("Can't malloc \"new_var_file\".\n");
-				free_disk_data(&disk_list);
-				return -1;
-			}
-
-			rename(var_file, new_var_file);
-
-			free(var_file);
-			free(new_var_file);
-		}
-	}
-
-rerun:
-
-	return 0;
-}//*/
 
 int main(int argc, char *argv[]){
 	char *command;
@@ -605,6 +286,10 @@ int main(int argc, char *argv[]){
 			usb_dbg("Can't count the layer with %s.\n", argv[1]);
 		else
 			usb_dbg("done: %d layers, share=%s, mount_path=%s.\n", layer, share, mount_path);
+	}
+	else if(!strcmp(command, "test_size")){
+		unsigned long file_size = f_size(argv[1]);
+		_dprintf("size: %lu.\n", file_size);
 	}
 	else
 		usb_dbg("test_share(ver. %d): Need to link the command name from test_share first.\n", VERSION);

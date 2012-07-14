@@ -215,10 +215,9 @@ void acceptIgmp(int recvlen) {
                 } /* else fall through */
             case IGMPV3_MODE_IS_EXCLUDE:
             case IGMPV3_CHANGE_TO_EXCLUDE:
-                acceptGroupReport(src, group, IGMP_V2_MEMBERSHIP_REPORT);
-                break;
             case IGMPV3_ALLOW_NEW_SOURCES:
             case IGMPV3_BLOCK_OLD_SOURCES:
+                acceptGroupReport(src, group, IGMP_V2_MEMBERSHIP_REPORT);
                 break;
             default:
                 my_log(LOG_INFO, 0,
@@ -228,7 +227,7 @@ void acceptIgmp(int recvlen) {
                 break;
             }
             grec = (struct igmpv3_grec *)
-                (&grec->grec_src[nsrcs] + ntohs(grec->grec_auxwords) * 4);
+                (&grec->grec_src[nsrcs] + grec->grec_auxwords * 4);
         }
         return;
     

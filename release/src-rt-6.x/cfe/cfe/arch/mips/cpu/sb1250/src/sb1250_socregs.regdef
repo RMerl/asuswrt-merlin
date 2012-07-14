@@ -1,0 +1,492 @@
+
+; Fields
+; 
+; 1 : Address of register.  $ is replaced by the instance index from the !agent line
+; 2 : Subinstance of subsystem (DMA chan within MAC), '*' if only one subinstance
+; 3 : Printing function name suffix (print_subsystem_suffix)
+; 4 : Description string
+;
+;
+; note: if you add new agents, add them at the *end* of this file.
+; If you don't do that, you'll need to rebuild all of the VAPI
+; diagnostics since the bitmask will be different.
+;
+
+
+!agent MC 0,1 
+A_MC_REGISTER($,R_MC_CONFIG)		*	NULL		"Config"
+A_MC_REGISTER($,R_MC_DRAMCMD)		*	NULL		"DRAM Config"
+A_MC_REGISTER($,R_MC_DRAMMODE)		*	NULL		"DRAM Mode"
+A_MC_REGISTER($,R_MC_TIMING1)		*	NULL		"DRAM Timing #1"
+A_MC_REGISTER($,R_MC_TIMING2)		*	NULL		"DRAM Timing #2"
+A_MC_REGISTER($,R_MC_CS_START)		*	NULL		"CS Start
+A_MC_REGISTER($,R_MC_CS_END)		*	NULL		"CS End"
+A_MC_REGISTER($,R_MC_CS_INTERLEAVE)	*	NULL		"CS Interleave"
+A_MC_REGISTER($,R_MC_CS0_ROW)		*	NULL		"CS0 Rows"
+A_MC_REGISTER($,R_MC_CS0_COL)		*	NULL		"CS0 Columns"
+A_MC_REGISTER($,R_MC_CS0_BA)		*	NULL		"CS0 Banks"
+A_MC_REGISTER($,R_MC_CS1_ROW)		*	NULL		"CS1 Rows"
+A_MC_REGISTER($,R_MC_CS1_COL)		*	NULL		"CS1 Columns"
+A_MC_REGISTER($,R_MC_CS1_BA)		*	NULL		"CS1 Banks"
+A_MC_REGISTER($,R_MC_CS2_ROW)		*	NULL		"CS2 Rows"
+A_MC_REGISTER($,R_MC_CS2_COL)		*	NULL		"CS2 Columns"
+A_MC_REGISTER($,R_MC_CS2_BA)		*	NULL		"CS2 Banks"
+A_MC_REGISTER($,R_MC_CS3_ROW)		*	NULL		"CS3 Rows"
+A_MC_REGISTER($,R_MC_CS3_COL)		*	NULL		"CS3 Columns"
+A_MC_REGISTER($,R_MC_CS3_BA)		*	NULL		"CS3 Banks"
+A_MC_REGISTER($,R_MC_CS_ATTR)		*	NULL		"Attributes"
+A_MC_REGISTER($,R_MC_TEST_DATA)		*	NULL		"ECC Test Data"
+A_MC_REGISTER($,R_MC_TEST_ECC)		*	NULL		"ECC Test"
+A_MC_REGISTER($,R_MC_MCLK_CFG)		*	NULL		"MCLK Config"
+!endagent
+
+!agent L2
+A_L2_READ_TAG				*	NULL		"Read Tag"
+A_L2_ECC_TAG				*	NULL		"ECC Tag"
+A_L2_READ_MISC				*	NULL		"Read Misc (pass3+/112x)"
+!endagent
+
+!agent MACDMA 0,1,2
+A_MAC_DMA_REGISTER($,DMA_TX,0,R_MAC_DMA_CONFIG0)        TX0   NULL      "Config 0"
+A_MAC_DMA_REGISTER($,DMA_TX,0,R_MAC_DMA_CONFIG1)        TX0   NULL      "Config 1"
+A_MAC_DMA_REGISTER($,DMA_TX,0,R_MAC_DMA_DSCR_BASE)      TX0   NULL      "Descriptor Base"
+A_MAC_DMA_REGISTER($,DMA_TX,0,R_MAC_DMA_DSCR_CNT)       TX0   NULL      "Descriptor Count"
+A_MAC_DMA_REGISTER($,DMA_TX,0,R_MAC_DMA_CUR_DSCRA)      TX0   NULL      "Cur DSCR_A"
+A_MAC_DMA_REGISTER($,DMA_TX,0,R_MAC_DMA_CUR_DSCRB)      TX0   NULL      "Cur DSCR_B"
+A_MAC_DMA_REGISTER($,DMA_TX,0,R_MAC_DMA_CUR_DSCRADDR)   TX0   NULL      "Cur Dscr Addr"
+
+A_MAC_DMA_REGISTER($,DMA_TX,1,R_MAC_DMA_CONFIG0)        TX1   NULL      "Config 0"
+A_MAC_DMA_REGISTER($,DMA_TX,1,R_MAC_DMA_CONFIG1)        TX1   NULL      "Config 1"
+A_MAC_DMA_REGISTER($,DMA_TX,1,R_MAC_DMA_DSCR_BASE)      TX1   NULL      "Descriptor Base"
+A_MAC_DMA_REGISTER($,DMA_TX,1,R_MAC_DMA_DSCR_CNT)       TX1   NULL      "Descriptor Count"
+A_MAC_DMA_REGISTER($,DMA_TX,1,R_MAC_DMA_CUR_DSCRA)      TX1   NULL      "Cur DSCR_A"
+A_MAC_DMA_REGISTER($,DMA_TX,1,R_MAC_DMA_CUR_DSCRB)      TX1   NULL      "Cur DSCR_B"
+A_MAC_DMA_REGISTER($,DMA_TX,1,R_MAC_DMA_CUR_DSCRADDR)   TX1   NULL      "Cur Dscr Addr"
+
+A_MAC_DMA_REGISTER($,DMA_RX,0,R_MAC_DMA_CONFIG0)        RX0   NULL      "Config 0"
+A_MAC_DMA_REGISTER($,DMA_RX,0,R_MAC_DMA_CONFIG1)        RX0   NULL      "Config 1"
+A_MAC_DMA_REGISTER($,DMA_RX,0,R_MAC_DMA_DSCR_BASE)      RX0   NULL      "Descriptor Base"
+A_MAC_DMA_REGISTER($,DMA_RX,0,R_MAC_DMA_DSCR_CNT)       RX0   NULL      "Descriptor Count"
+A_MAC_DMA_REGISTER($,DMA_RX,0,R_MAC_DMA_CUR_DSCRA)      RX0   NULL      "Cur DSCR_A"
+A_MAC_DMA_REGISTER($,DMA_RX,0,R_MAC_DMA_CUR_DSCRB)      RX0   NULL      "Cur DSCR_B"
+A_MAC_DMA_REGISTER($,DMA_RX,0,R_MAC_DMA_CUR_DSCRADDR)   RX0   NULL      "Cur Dscr Addr"
+
+A_MAC_DMA_REGISTER($,DMA_RX,1,R_MAC_DMA_CONFIG0)        RX1   NULL      "Config 0"
+A_MAC_DMA_REGISTER($,DMA_RX,1,R_MAC_DMA_CONFIG1)        RX1   NULL      "Config 1"
+A_MAC_DMA_REGISTER($,DMA_RX,1,R_MAC_DMA_DSCR_BASE)      RX1   NULL      "Descriptor Base"
+A_MAC_DMA_REGISTER($,DMA_RX,1,R_MAC_DMA_DSCR_CNT)       RX1   NULL      "Descriptor Count"
+A_MAC_DMA_REGISTER($,DMA_RX,1,R_MAC_DMA_CUR_DSCRA)      RX1   NULL      "Cur DSCR_A"
+A_MAC_DMA_REGISTER($,DMA_RX,1,R_MAC_DMA_CUR_DSCRB)      RX1   NULL      "Cur DSCR_B"
+A_MAC_DMA_REGISTER($,DMA_RX,1,R_MAC_DMA_CUR_DSCRADDR)   RX1   NULL      "Cur Dscr Addr"
+!endagent
+
+
+!agent MACRMON 0,1,2
+A_MAC_REGISTER($,R_MAC_RMON_TX_BYTES)		*	NULL	"RMON TX Bytes"
+A_MAC_REGISTER($,R_MAC_RMON_COLLISIONS)		*	NULL	"RMON Collisions"
+A_MAC_REGISTER($,R_MAC_RMON_LATE_COL)		*	NULL	"RMON Late Coll"
+A_MAC_REGISTER($,R_MAC_RMON_EX_COL)		*	NULL	"RMON Excess Coll"
+A_MAC_REGISTER($,R_MAC_RMON_FCS_ERROR)		*	NULL	"RMON FCS Error"
+A_MAC_REGISTER($,R_MAC_RMON_TX_ABORT)		*	NULL	"RMON TX Abort"
+A_MAC_REGISTER($,R_MAC_RMON_TX_BAD)		*	NULL	"RMON TX Bad"
+A_MAC_REGISTER($,R_MAC_RMON_TX_GOOD)		*	NULL	"RMON TX Good"
+A_MAC_REGISTER($,R_MAC_RMON_TX_RUNT)		*	NULL	"RMON TX Runt"
+A_MAC_REGISTER($,R_MAC_RMON_TX_OVERSIZE)	*	NULL	"RMON TX Oversize"
+A_MAC_REGISTER($,R_MAC_RMON_RX_BYTES)		*	NULL	"RMON RX Bytes"
+A_MAC_REGISTER($,R_MAC_RMON_RX_MCAST)		*	NULL	"RMON RX Mcast"
+A_MAC_REGISTER($,R_MAC_RMON_RX_BCAST)		*	NULL	"RMON RX Bcast"
+A_MAC_REGISTER($,R_MAC_RMON_RX_BAD)		*	NULL	"RMON RX Bad"
+A_MAC_REGISTER($,R_MAC_RMON_RX_GOOD)		*	NULL	"RMON RX Good"
+A_MAC_REGISTER($,R_MAC_RMON_RX_RUNT)		*	NULL	"RMON RX Runt"
+A_MAC_REGISTER($,R_MAC_RMON_RX_OVERSIZE)	*	NULL	"RMON RX Oversize"
+A_MAC_REGISTER($,R_MAC_RMON_RX_FCS_ERROR)	*	NULL	"RMON RX FCS Error"
+A_MAC_REGISTER($,R_MAC_RMON_RX_LENGTH_ERROR)	*	NULL	"RMON RX Length Error"
+A_MAC_REGISTER($,R_MAC_RMON_RX_CODE_ERROR)	*	NULL	"RMON RX Code Error"
+A_MAC_REGISTER($,R_MAC_RMON_RX_ALIGN_ERROR)	*	NULL	"RMON RX Align Error"
+!endagent
+
+!agent MAC 0,1,2
+A_MAC_REGISTER($,R_MAC_CFG)			*	NULL	"MAC Config"
+A_MAC_REGISTER($,R_MAC_THRSH_CFG)		*	NULL	"MAC Thresh Config"
+A_MAC_REGISTER($,R_MAC_VLANTAG)			*	NULL	"VLAN Tag"
+A_MAC_REGISTER($,R_MAC_FRAMECFG)		*	NULL	"Frame Config"
+A_MAC_REGISTER($,R_MAC_EOPCNT)			*	NULL	"EOP Count"
+A_MAC_REGISTER($,R_MAC_FIFO_PTRS)		*	NULL	"FIFO Pointers"
+A_MAC_REGISTER($,R_MAC_ADFILTER_CFG)		*	NULL	"Address Filter"
+A_MAC_REGISTER($,R_MAC_ETHERNET_ADDR)		*	NULL	"Ethernet Addr"
+A_MAC_REGISTER($,R_MAC_PKT_TYPE)		*	NULL	"Packet Type"
+A_MAC_REGISTER($,R_MAC_HASH_BASE+0)		*	NULL	"Hash 0"
+A_MAC_REGISTER($,R_MAC_HASH_BASE+8)		*	NULL	"Hash 1"
+A_MAC_REGISTER($,R_MAC_HASH_BASE+16)		*	NULL	"Hash 2"
+A_MAC_REGISTER($,R_MAC_HASH_BASE+24)		*	NULL	"Hash 3"
+A_MAC_REGISTER($,R_MAC_HASH_BASE+32)		*	NULL	"Hash 4"
+A_MAC_REGISTER($,R_MAC_HASH_BASE+40)		*	NULL	"Hash 5"
+A_MAC_REGISTER($,R_MAC_HASH_BASE+48)		*	NULL	"Hash 6"
+A_MAC_REGISTER($,R_MAC_HASH_BASE+56)		*	NULL	"Hash 7"
+A_MAC_REGISTER($,R_MAC_ADDR_BASE+0)		*	NULL	"Addr 0"
+A_MAC_REGISTER($,R_MAC_ADDR_BASE+8)		*	NULL	"Addr 1"
+A_MAC_REGISTER($,R_MAC_ADDR_BASE+16)		*	NULL	"Addr 2"
+A_MAC_REGISTER($,R_MAC_ADDR_BASE+24)		*	NULL	"Addr 3"
+A_MAC_REGISTER($,R_MAC_ADDR_BASE+32)		*	NULL	"Addr 4"
+A_MAC_REGISTER($,R_MAC_ADDR_BASE+40)		*	NULL	"Addr 5"
+A_MAC_REGISTER($,R_MAC_ADDR_BASE+48)		*	NULL	"Addr 6"
+A_MAC_REGISTER($,R_MAC_ADDR_BASE+56)		*	NULL	"Addr 7"
+A_MAC_REGISTER($,R_MAC_CHLO0_BASE+0)		*	NULL	"CHLO 0"
+A_MAC_REGISTER($,R_MAC_CHLO0_BASE+8)		*	NULL	"CHLO 1"
+A_MAC_REGISTER($,R_MAC_CHLO0_BASE+16)		*	NULL	"CHLO 2"
+A_MAC_REGISTER($,R_MAC_CHLO0_BASE+24)		*	NULL	"CHLO 3"
+A_MAC_REGISTER($,R_MAC_CHUP0_BASE+0)		*	NULL	"CHUP 0"
+A_MAC_REGISTER($,R_MAC_CHUP0_BASE+8)		*	NULL	"CHUP 1"
+A_MAC_REGISTER($,R_MAC_CHUP0_BASE+16)		*	NULL	"CHUP 2"
+A_MAC_REGISTER($,R_MAC_CHUP0_BASE+24)		*	NULL	"CHUP 3"
+A_MAC_REGISTER($,R_MAC_ENABLE)			*	NULL	"MAC Enable"
+A_MAC_REGISTER($,R_MAC_STATUS)			*	NULL	"MAC Status"
+A_MAC_REGISTER($,R_MAC_INT_MASK)		*	NULL	"Interrupt Mask"
+A_MAC_REGISTER($,R_MAC_TXD_CTL)			*	NULL	"TXD Control"
+A_MAC_REGISTER($,R_MAC_MDIO)			*	NULL	"MDIO"
+A_MAC_REGISTER($,R_MAC_DEBUG_STATUS)		*	NULL	"Debug Status"
+!endagent
+
+!agent DUART
+A_DUART_MODE_REG_1_A        *	NULL		"Mode Register 1A"
+A_DUART_MODE_REG_2_A        *	NULL		"Mode Register 2A"
+A_DUART_STATUS_A            *	NULL		"Status A"
+A_DUART_CLK_SEL_A           *	NULL		"Clock Select A"
+A_DUART_CMD_A               *	NULL		"Command A"
+A_DUART_RX_HOLD_A           *	NULL		"RX Hold A"
+A_DUART_TX_HOLD_A           *	NULL		"TX Hold A"
+
+A_DUART_MODE_REG_1_B        *	NULL		"Mode Register 1B"
+A_DUART_MODE_REG_2_B        *	NULL		"Mode Register 2B"
+A_DUART_STATUS_B            *	NULL		"Status B"
+A_DUART_CLK_SEL_B           *	NULL		"Clock Select B"
+A_DUART_CMD_B               *	NULL		"Command B"
+A_DUART_RX_HOLD_B           *	NULL		"RX Hold B"
+A_DUART_TX_HOLD_B           *	NULL		"TX Hold B"
+
+A_DUART_INPORT_CHNG         *	NULL		"Input Port Change"
+A_DUART_AUX_CTRL	    *	NULL		"Aux Control"
+A_DUART_ISR_A               *	NULL		"ISR A"
+A_DUART_IMR_A               *	NULL		"IMR A"
+A_DUART_ISR_B               *	NULL		"ISR B"
+A_DUART_IMR_B               *	NULL		"IMR B"
+A_DUART_OUT_PORT            *	NULL		"Output Port"
+A_DUART_OPCR		    *	NULL		"OPCR"
+A_DUART_IN_PORT             *	NULL		"Input Port"
+A_DUART_ISR                 *	NULL		"ISR Combined"
+A_DUART_IMR                 *	NULL		"IMR Combined"
+A_DUART_SET_OPR             *	NULL		"Set output port"
+A_DUART_CLEAR_OPR           *	NULL		"Clear output port"
+A_DUART_INPORT_CHNG_A       *	NULL		"Input Port Change A"
+A_DUART_INPORT_CHNG_B       *	NULL		"Input Port Change B"
+!endagent
+
+
+;
+; GENCS is done as a single instance to avoid using up mask bits
+;
+!agent GENCS
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_CFG,0))          0   NULL	"Config"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_MULT_SIZE,0))    0   NULL	"Region Size"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_START_ADDR,0))   0   NULL	"Start Addr"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG0,0))    0   NULL	"Time Config0"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG1,0))    0   NULL	"Time Config1"
+
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_CFG,1))          1   NULL	"Config"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_MULT_SIZE,1))    1   NULL	"Region Size"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_START_ADDR,1))   1   NULL	"Start Addr"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG0,1))    1   NULL	"Time Config0"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG1,1))    1   NULL	"Time Config1"
+
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_CFG,2))          2   NULL	"Config"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_MULT_SIZE,2))    2   NULL	"Region Size"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_START_ADDR,2))   2   NULL	"Start Addr"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG0,2))    2   NULL	"Time Config0"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG1,2))    2   NULL	"Time Config1"
+
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_CFG,3))          3   NULL	"Config"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_MULT_SIZE,3))    3   NULL	"Region Size"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_START_ADDR,3))   3   NULL	"Start Addr"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG0,3))    3   NULL	"Time Config0"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG1,3))    3   NULL	"Time Config1"
+
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_CFG,4))          4   NULL	"Config"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_MULT_SIZE,4))    4   NULL	"Region Size"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_START_ADDR,4))   4   NULL	"Start Addr"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG0,4))    4   NULL	"Time Config0"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG1,4))    4   NULL	"Time Config1"
+
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_CFG,5))          5   NULL	"Config"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_MULT_SIZE,5))    5   NULL	"Region Size"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_START_ADDR,5))   5   NULL	"Start Addr"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG0,5))    5   NULL	"Time Config0"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG1,5))    5   NULL	"Time Config1"
+
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_CFG,6))          6   NULL	"Config"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_MULT_SIZE,6))    6   NULL	"Region Size"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_START_ADDR,6))   6   NULL	"Start Addr"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG0,6))    6   NULL	"Time Config0"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG1,6))    6   NULL	"Time Config1"
+
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_CFG,7))          7   NULL	"Config"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_MULT_SIZE,7))    7   NULL	"Region Size"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_START_ADDR,7))   7   NULL	"Start Addr"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG0,7))    7   NULL	"Time Config0"
+A_IO_EXT_REG(R_IO_EXT_REG(R_IO_EXT_TIME_CFG1,7))    7   NULL	"Time Config1"
+!endagent
+
+!agent GEN
+A_IO_INTERRUPT_STATUS       *	NULL	"Interrupt Status"
+A_IO_INTERRUPT_DATA0        *	NULL	"Interrupt Data0"
+A_IO_INTERRUPT_DATA1        *	NULL	"Interrupt Data1"
+A_IO_INTERRUPT_DATA2        *	NULL	"Interrupt Data2"
+A_IO_INTERRUPT_DATA3        *	NULL	"Interrupt Data3"
+A_IO_INTERRUPT_ADDR0        *	NULL	"Interrupt Addr0"
+A_IO_INTERRUPT_ADDR1        *	NULL	"Interrupt Addr1"
+A_IO_INTERRUPT_PARITY       *	NULL	"Interrupt Parity"
+A_IO_PCMCIA_CFG             *	NULL	"PCMCIA Config"
+A_IO_PCMCIA_STATUS          *	NULL	"PCMCIA Status"
+A_IO_DRIVE_0                *   NULL    "IO Drive 0"
+A_IO_DRIVE_1                *   NULL    "IO Drive 1"
+A_IO_DRIVE_2                *   NULL    "IO Drive 2"
+A_IO_DRIVE_3                *   NULL    "IO Drive 3"
+!endagent
+
+!agent GPIO
+A_GPIO_CLR_EDGE             *	NULL	"Clear Edge"
+A_GPIO_INT_TYPE             *	NULL	"Int Type"
+A_GPIO_INPUT_INVERT         *	NULL	"Input Invert"
+A_GPIO_GLITCH               *	NULL	"Glitch"
+A_GPIO_READ                 *	NULL	"Read Data"
+A_GPIO_DIRECTION            *	NULL	"Direction"
+A_GPIO_PIN_CLR              *	NULL	"Pin Clear"
+A_GPIO_PIN_SET              *	NULL	"Pin Set"
+!endagent
+
+
+!agent SMBUS 0,1
+A_SMB_REGISTER($,R_SMB_XTRA)	*	NULL	"Extra"
+A_SMB_REGISTER($,R_SMB_FREQ)	*	NULL	"Frequency"
+A_SMB_REGISTER($,R_SMB_STATUS)	*	NULL	"Status"
+A_SMB_REGISTER($,R_SMB_CMD)	*	NULL	"Command"
+A_SMB_REGISTER($,R_SMB_START)	*	NULL	"Start"
+A_SMB_REGISTER($,R_SMB_DATA)	*	NULL	"Data"
+A_SMB_REGISTER($,R_SMB_CONTROL)	*	NULL	"Control"
+A_SMB_REGISTER($,R_SMB_PEC)	*	NULL	"PEC"
+!endagent
+
+
+!agent TIMER
+A_SCD_WDOG_INIT_0           WD0		NULL	"Init"
+A_SCD_WDOG_CNT_0            WD0		NULL	"Count"
+A_SCD_WDOG_CFG_0            WD0		NULL	"Config"
+
+A_SCD_WDOG_INIT_1           WD1		NULL	"Init"
+A_SCD_WDOG_CNT_1            WD1		NULL	"Count"
+A_SCD_WDOG_CFG_1            WD1		NULL	"Config"
+
+A_SCD_TIMER_INIT_0          TMR0	NULL	"Init"
+A_SCD_TIMER_CNT_0           TMR0	NULL	"Count"
+A_SCD_TIMER_CFG_0           TMR0	NULL	"Config"
+
+A_SCD_TIMER_INIT_1          TMR1	NULL	"Init"
+A_SCD_TIMER_CNT_1           TMR1	NULL	"Count"
+A_SCD_TIMER_CFG_1           TMR1	NULL	"Config"
+
+A_SCD_TIMER_INIT_2          TMR2	NULL	"Init"
+A_SCD_TIMER_CNT_2           TMR2	NULL	"Count"
+A_SCD_TIMER_CFG_2           TMR2	NULL	"Config"
+
+A_SCD_TIMER_INIT_3          TMR3	NULL	"Init"
+A_SCD_TIMER_CNT_3           TMR3	NULL	"Count"
+A_SCD_TIMER_CFG_3           TMR3	NULL	"Config"
+!endagent
+
+!agent SCD
+A_SCD_SYSTEM_REVISION       *	NULL	"System Revision"
+A_SCD_SYSTEM_CFG            *	NULL	"System Config"
+A_SCD_PERF_CNT_CFG          *	NULL	"Perf Cnt Config"
+A_SCD_PERF_CNT_0            *	NULL	"Perf Counter 0"
+A_SCD_PERF_CNT_1            *	NULL	"Perf Counter 1"
+A_SCD_PERF_CNT_2            *	NULL	"Perf Counter 2"
+A_SCD_PERF_CNT_3            *	NULL	"Perf Counter 3"
+!endagent
+
+
+!agent BUSERR
+A_SCD_BUS_ERR_STATUS        *	NULL	"Bus Err Status"
+A_BUS_ERR_DATA_0            *	NULL	"Bus Err Data0"
+A_BUS_ERR_DATA_1            *	NULL	"Bus Err Data1"
+A_BUS_ERR_DATA_2            *	NULL	"Bus Err Data2"
+A_BUS_ERR_DATA_3            *	NULL	"Bus Err Data3"
+A_BUS_L2_ERRORS             *	NULL	"Bus L2 Errors"
+A_BUS_MEM_IO_ERRORS         *	NULL	"Bus IOMEM Errors"
+!endagent
+
+
+!agent DM
+A_DM_REGISTER(0,R_DM_DSCR_BASE)		0	NULL	"Descr Base"
+A_DM_REGISTER(0,R_DM_DSCR_COUNT)	0	NULL	"Descr Count"
+A_DM_REGISTER(0,R_DM_CUR_DSCR_ADDR)	0	NULL	"Descr Addr"
+A_DM_REGISTER(0,R_DM_DSCR_BASE_DEBUG)	0	NULL	"Descr Base Debug"
+
+A_DM_REGISTER(1,R_DM_DSCR_BASE)		1	NULL	"Descr Base"
+A_DM_REGISTER(1,R_DM_DSCR_COUNT)	1	NULL	"Descr Count"
+A_DM_REGISTER(1,R_DM_CUR_DSCR_ADDR)	1	NULL	"Descr Addr"
+A_DM_REGISTER(1,R_DM_DSCR_BASE_DEBUG)	1	NULL	"Descr Base Debug"
+
+A_DM_REGISTER(2,R_DM_DSCR_BASE)		2	NULL	"Descr Base"
+A_DM_REGISTER(2,R_DM_DSCR_COUNT)	2	NULL	"Descr Count"
+A_DM_REGISTER(2,R_DM_CUR_DSCR_ADDR)	2	NULL	"Descr Addr"
+A_DM_REGISTER(2,R_DM_DSCR_BASE_DEBUG)	2	NULL	"Descr Base Debug"
+
+A_DM_REGISTER(3,R_DM_DSCR_BASE)		3	NULL	"Descr Base"
+A_DM_REGISTER(3,R_DM_DSCR_COUNT)	3	NULL	"Descr Count"
+A_DM_REGISTER(3,R_DM_CUR_DSCR_ADDR)	3	NULL	"Descr Addr"
+A_DM_REGISTER(3,R_DM_DSCR_BASE_DEBUG)	3	NULL	"Descr Base Debug"
+!endagent
+
+!agent IMR 0,1
+A_IMR_REGISTER($,R_IMR_INTERRUPT_DIAG)			*	NULL	"Diag"
+A_IMR_REGISTER($,R_IMR_INTERRUPT_MASK)			*	NULL	"Mask"
+A_IMR_REGISTER($,R_IMR_INTERRUPT_TRACE)			*	NULL	"Trace"
+A_IMR_REGISTER($,R_IMR_INTERRUPT_SOURCE_STATUS)		*	NULL	"Source Status"
+A_IMR_REGISTER($,R_IMR_LDT_INTERRUPT_SET)		*	NULL	"LDT Interrupt Set"
+A_IMR_REGISTER($,R_IMR_LDT_INTERRUPT)			*	NULL	"LDT Interrupt"
+A_IMR_REGISTER($,R_IMR_LDT_INTERRUPT_CLR)		*	NULL	"LDT Interrupt Clear"
+A_IMR_REGISTER($,R_IMR_MAILBOX_CPU)			*	NULL	"Mailbox"
+; A_IMR_REGISTER($,R_IMR_ALIAS_MAILBOX_CPU)		*	NULL	"Alias Mailbox"
+A_IMR_REGISTER($,R_IMR_MAILBOX_SET_CPU)			*	NULL	"Mailbox Set"
+; A_IMR_REGISTER($,R_IMR_ALIAS_MAILBOX_SET_CPU)		*	NULL	"Alias Mailbox Set"
+A_IMR_REGISTER($,R_IMR_MAILBOX_CLR_CPU)			*	NULL	"Mailbox Clear"
+A_IMR_REGISTER($,R_IMR_INTERRUPT_STATUS_BASE+0)		*	NULL	"Status 0"
+A_IMR_REGISTER($,R_IMR_INTERRUPT_STATUS_BASE+8)		*	NULL	"Status 1"
+A_IMR_REGISTER($,R_IMR_INTERRUPT_STATUS_BASE+16)	*	NULL	"Status 2"
+A_IMR_REGISTER($,R_IMR_INTERRUPT_STATUS_BASE+24)	*	NULL	"Status 3"
+A_IMR_REGISTER($,R_IMR_INTERRUPT_STATUS_BASE+32)	*	NULL	"Status 4"
+A_IMR_REGISTER($,R_IMR_INTERRUPT_STATUS_BASE+40)	*	NULL	"Status 5"
+A_IMR_REGISTER($,R_IMR_INTERRUPT_STATUS_BASE+48)	*	NULL	"Status 6"
+A_IMR_REGISTER($,R_IMR_INTERRUPT_STATUS_BASE+56)	*	NULL	"Status 7"
+
+; What to do about these?  64 registers?
+; A_IMR_REGISTER($,R_IMR_INTERRUPT_MAP_BASE)	*	NULL	""
+; R_IMR_INTERRUPT_MAP_COUNT       64
+!endagent
+
+
+;
+; Not implemented in functional sim
+;
+; !agent ADDRTRAP
+; A_ADDR_TRAP_INDEX           *	NULL	"Addr Trap Index"
+; A_ADDR_TRAP_REG             *	NULL	"Addr Trap Reg"
+; A_ADDR_TRAP_UP_0            *	NULL	"Addr Trap UP0"
+; A_ADDR_TRAP_UP_1            *	NULL	"Addr Trap UP1"
+; A_ADDR_TRAP_UP_2            *	NULL	"Addr Trap UP2"
+; A_ADDR_TRAP_UP_3            *	NULL	"Addr Trap UP3"
+; A_ADDR_TRAP_DOWN_0          *	NULL	"Addr Trap DOWN0"
+; A_ADDR_TRAP_DOWN_1          *	NULL	"Addr Trap DOWN1"
+; A_ADDR_TRAP_DOWN_2          *	NULL	"Addr Trap DOWN2"
+; A_ADDR_TRAP_DOWN_3          *	NULL	"Addr Trap DOWN3"
+; A_ADDR_TRAP_CFG_0           *	NULL	"Addr Trap CFG0"
+; A_ADDR_TRAP_CFG_1           *	NULL	"Addr Trap CFG1"
+; A_ADDR_TRAP_CFG_2           *	NULL	"Addr Trap CFG2"
+; A_ADDR_TRAP_CFG_3           *	NULL	"Addr Trap CFG3"
+; !endagent
+
+; 
+; Not implemented in functional simulator
+; 
+; !agent TRACE
+; A_SCD_TRACE_CFG             *	NULL	"Trace Config"
+; A_SCD_TRACE_READ            *	NULL	"Trace Read"
+; A_SCD_TRACE_EVENT_0         *	NULL	"Trace Event0"
+; A_SCD_TRACE_EVENT_1         *	NULL	"Trace Event1"
+; A_SCD_TRACE_EVENT_2         *	NULL	"Trace Event2"
+; A_SCD_TRACE_EVENT_3         *	NULL	"Trace Event3"
+; A_SCD_TRACE_EVENT_4         *	NULL	"Trace Event4"
+; A_SCD_TRACE_EVENT_5         *	NULL	"Trace Event5"
+; A_SCD_TRACE_EVENT_6         *	NULL	"Trace Event6"
+; A_SCD_TRACE_EVENT_7         *	NULL	"Trace Event7"
+; A_SCD_TRACE_SEQUENCE_0      *	NULL	"Trace Seq0"
+; A_SCD_TRACE_SEQUENCE_1      *	NULL	"Trace Seq1"
+; A_SCD_TRACE_SEQUENCE_2      *	NULL	"Trace Seq2"
+; A_SCD_TRACE_SEQUENCE_3      *	NULL	"Trace Seq3"
+; A_SCD_TRACE_SEQUENCE_4      *	NULL	"Trace Seq4"
+; A_SCD_TRACE_SEQUENCE_5      *	NULL	"Trace Seq5"
+; A_SCD_TRACE_SEQUENCE_6      *	NULL	"Trace Seq6"
+; A_SCD_TRACE_SEQUENCE_7      *	NULL	"Trace Seq7"
+; !endagent
+
+
+!agent SYNCSER 0,1
+A_SER_REGISTER($,R_SER_MODE)		*	NULL	"Mode Config"
+A_SER_REGISTER($,R_SER_LINE_MODE)	*	NULL	"Line Interface Mode"
+; A_SER_REGISTER($,R_SER_STATUS)		*	NULL	"Status"
+A_SER_REGISTER($,R_SER_STATUS_DEBUG)	*	NULL	"Status"
+A_SER_REGISTER($,R_SER_DMA_ENABLE)	*	NULL	"DMA Enable"
+A_SER_REGISTER($,R_SER_INT_MASK)	*	NULL	"Interrupt Mask"
+A_SER_REGISTER($,R_SER_MINFRM_SZ)	*	NULL	"Minimum Frame Size"
+A_SER_REGISTER($,R_SER_MAXFRM_SZ)	*	NULL	"Maximum Frame Size"
+A_SER_REGISTER($,R_SER_TX_RD_THRSH)	*	NULL	"Tx Read Threshold"
+A_SER_REGISTER($,R_SER_TX_WR_THRSH)	*	NULL	"Tx Write Threshold"
+A_SER_REGISTER($,R_SER_RX_RD_THRSH)	*	NULL	"Rx Read Threshold"
+A_SER_REGISTER($,R_SER_ADDR)		*	NULL	"Address Mask"
+A_SER_REGISTER($,R_SER_USR0_ADDR)	*	NULL	"Address Match 0"
+A_SER_REGISTER($,R_SER_USR1_ADDR)	*	NULL	"Address Match 1"
+A_SER_REGISTER($,R_SER_USR2_ADDR)	*	NULL	"Address Match 2"
+A_SER_REGISTER($,R_SER_USR3_ADDR)	*	NULL	"Address Match 3"
+
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+0)		*	NULL	"Rx Sequencer 0"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+8)		*	NULL	"Rx Sequencer 1"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+16)	*	NULL	"Rx Sequencer 2"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+24)	*	NULL	"Rx Sequencer 3"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+32)	*	NULL	"Rx Sequencer 4"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+40)	*	NULL	"Rx Sequencer 5"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+48)	*	NULL	"Rx Sequencer 6"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+56)	*	NULL	"Rx Sequencer 7"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+64)	*	NULL	"Rx Sequencer 8"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+72)	*	NULL	"Rx Sequencer 9"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+80)	*	NULL	"Rx Sequencer 10"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+88)	*	NULL	"Rx Sequencer 11"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+96)	*	NULL	"Rx Sequencer 12"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+104)	*	NULL	"Rx Sequencer 13"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+112)	*	NULL	"Rx Sequencer 14"
+A_SER_REGISTER($,R_SER_RX_TABLE_BASE+120)	*	NULL	"Rx Sequencer 15"
+
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+0)		*	NULL	"Tx Sequencer 0"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+8)		*	NULL	"Tx Sequencer 1"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+16)	*	NULL	"Tx Sequencer 2"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+24)	*	NULL	"Tx Sequencer 3"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+32)	*	NULL	"Tx Sequencer 4"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+40)	*	NULL	"Tx Sequencer 5"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+48)	*	NULL	"Tx Sequencer 6"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+56)	*	NULL	"Tx Sequencer 7"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+64)	*	NULL	"Tx Sequencer 8"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+72)	*	NULL	"Tx Sequencer 9"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+80)	*	NULL	"Tx Sequencer 10"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+88)	*	NULL	"Tx Sequencer 11"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+96)	*	NULL	"Tx Sequencer 12"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+104)	*	NULL	"Tx Sequencer 13"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+112)	*	NULL	"Tx Sequencer 14"
+A_SER_REGISTER($,R_SER_TX_TABLE_BASE+120)	*	NULL	"Tx Sequencer 15"
+!endagent
+
+
+!agent SERDMA 0,1
+A_SER_DMA_REGISTER($,DMA_TX,R_SER_DMA_CONFIG0)        TX   NULL      "Config 0"
+A_SER_DMA_REGISTER($,DMA_TX,R_SER_DMA_CONFIG1)        TX   NULL      "Config 1"
+A_SER_DMA_REGISTER($,DMA_TX,R_SER_DMA_DSCR_BASE)      TX   NULL      "Descriptor Base"
+A_SER_DMA_REGISTER($,DMA_TX,R_SER_DMA_DSCR_CNT)       TX   NULL      "Descriptor Count"
+A_SER_DMA_REGISTER($,DMA_TX,R_SER_DMA_CUR_DSCRA)      TX   NULL      "Cur DSCR_A"
+A_SER_DMA_REGISTER($,DMA_TX,R_SER_DMA_CUR_DSCRB)      TX   NULL      "Cur DSCR_B"
+A_SER_DMA_REGISTER($,DMA_TX,R_SER_DMA_CUR_DSCRADDR)   TX   NULL      "Cur Dscr Addr"
+
+A_SER_DMA_REGISTER($,DMA_RX,R_SER_DMA_CONFIG0)        RX   NULL      "Config 0"
+A_SER_DMA_REGISTER($,DMA_RX,R_SER_DMA_CONFIG1)        RX   NULL      "Config 1"
+A_SER_DMA_REGISTER($,DMA_RX,R_SER_DMA_DSCR_BASE)      RX   NULL      "Descriptor Base"
+A_SER_DMA_REGISTER($,DMA_RX,R_SER_DMA_DSCR_CNT)       RX   NULL      "Descriptor Count"
+A_SER_DMA_REGISTER($,DMA_RX,R_SER_DMA_CUR_DSCRA)      RX   NULL      "Cur DSCR_A"
+A_SER_DMA_REGISTER($,DMA_RX,R_SER_DMA_CUR_DSCRB)      RX   NULL      "Cur DSCR_B"
+A_SER_DMA_REGISTER($,DMA_RX,R_SER_DMA_CUR_DSCRADDR)   RX   NULL      "Cur Dscr Addr"
+!endagent

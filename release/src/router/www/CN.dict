@@ -25,6 +25,7 @@ tunnel_MTU=通道 MTU
 tunnel_TTL=通道 TTL
 [VPN server]
 vpn_setting=基本设置
+vpn_Adv=VPN 详细设置
 PPTP_desc=无论您在何处，都可以通过 VPN 服务器来访问您家里的网络内容
 PPTP_desc2=请按照以下步骤来使用 VPN 服务器：<br>(1) 开启 PPTP VPN 服务器<br>(2) 为客户端设置 IP Pool（最多可设置 10 个客户端）<br>(3) 为 VPN 客户端设置帐号与密码<br>(4) 开启您个人电脑或智能手机上的 VPN 连接应用程序<br>(5) 添加一个 PPTP VPN 连接，VPN 服务器地址为
 PPTP_desc3=(6) 如果您的外部网络为动态 IP，<a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">请点击这里来设置 DDNS</a>
@@ -91,6 +92,19 @@ Low=低
 Lowest=最低
 traffic_monitor=流量监控
 traffic_monitor_desc=流量监控功能可帮助您监控以下类型的网络流量：<P>互联网：所有互联网流量。<P>有线网络：从有线网络至无线网络与互联网的网络流量。<P>无线网络：从无线网络至有线网络与互联网的网络流量。
+traffic_monitor_desc1=Traffic Monitor 功能用来监控以下网络连接方式的传入与传出封包：
+traffic_monitor_desc2=<b>注意：</b>来自互联网的数据封包会几乎相等于传送至有线与无线设备装置的封包总和。
+tm_internet=互联网
+tm_wired=有线连接
+tm_wireless=无线连接
+tm_reception=接收
+tm_transmission=传送
+tm_recp_int=传入的互联网封包
+tm_recp_wired=来自有线网络的传入封包
+tm_recp_wireless=来自无线网络的传入封包
+tm_trans_int=传出的互联网封包
+tm_trans_wired=来自有线网络的传出封包
+tm_trans_wireless=来自无线网络的传出封包
 ezqosDesw=QoS 服务质量保证网络速度性能。初始规定将网页浏览设置为最优先级，并不会受到 P2P 应用程序的影响（点对点应用程序如 BitTorrent）。欲开启QoS功能，点选 开启 QoS，并填写上传与下载带宽栏。请从您的ISP获取带宽信息。若您想要优先个别网络应用程序与网络设备，请从用户定义 QoS 规定中选择您想要的优先权。
 qos_automatic_mode=自动模式
 source_ipmac=关于资源或目标 IP 地址，您可以：<p>（a）输入一个具体的IP地址，如 \"192.168.122.1\"；<p>（b）输入带有一个子网或相同IP pool的IP 地址，如 \"192.168.123.*\" 或 \"192.168.*.*\"；<p>（c）输入所有IP 地址，如 \"*.*.*.*\"。<p>MAC 地址的格式为六组十六进制的数字组成，每组两个，以冒号分开，依照传送顺序编写。 (e.g. 12:34:56:aa:bc:ef)
@@ -279,6 +293,7 @@ RouterConfig_GWMulticast_Broadcast_itemname=广播风暴控制（Mbps）：
 [keyword_filter]
 menu5_5_5=关键词过滤器
 FirewallConfig_KeywordFilterEnable_sectiondesc=关键词过滤器允许您阻止客户端访问含有特定关键词的网页。
+FirewallConfig_KeywordFilterEnable_sectiondesc2=关键字过滤功能限制：<ol><li>使用 HTTP 压缩技术的压缩网页无法被过滤。<a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">点击这里了解详细信息</a></li><li>Https 网页无法被过滤。</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=开启关键词过滤器
 FirewallConfig_KeywordActiveDate_itemname=日期：
 FirewallConfig_KeywordActiveTime_itemname=时间：
@@ -395,9 +410,9 @@ ShareNode_Seeding_itemdesc=启用允许作种，ZVMODELVZ 会在下载完成后�
 ShareNode_MaxUpload_itemname=最大上传速率
 ShareNode_MaxUpload_itemdesc=请输入介于0到999的数值，默认值是0，代表没有上传速率的限制。
 [New item]
-HSDPAConfig_hsdpa_enable_hint1=当前 3G 设置处于 3G Backup 模式，当 WAN 接口不通时，会自动切换到 3G 模式。
+HSDPAConfig_hsdpa_enable_hint1=当前 3G/4G 设置处于 3G/4G Backup 模式，当 WAN 接口不通时，会自动切换到 3G/4G 模式。
 HSDPAConfig_hsdpa_enable_hint2=若要更改联机类型，请先至<a href="/Advanced_Modem_others.asp">USB Modem设定</a>停用USB网卡
-HSDPAConfig_USBAdapter_itemname=USB网络卡
+HSDPAConfig_USBAdapter_itemname=USB 网络卡
 HSDPAConfig_USBAdapter_itemdesc=启用USB Modem后，请由选单中选择 ZVMODELVZ 支持的数据卡。
 APSurvey_msg_connected=您已经连上此基地台。
 APSurvey_msg_connect_suggest1=建议您使用「<span style="font-weight:bold; font-size:16px;">有线</span>」方式连接 ZVMODELVZ 进行设定，以获得稳定的设定过程与使用体验。
@@ -951,7 +966,9 @@ IPConnection_x_DNSServer1_itemdesc=设置 ZVMODELVZ 第一组DNS的IP地址。
 IPConnection_x_DNSServer1_itemname=DNS 服务器1：
 IPConnection_x_DNSServer2_itemdesc=手动设置的第二组DNS IP地址。
 IPConnection_x_DNSServer2_itemname=DNS 服务器2：
+IPConnection_x_DNSServer_blank=请在客户端设备上设置 DNS 服务器。
 IPConnection_warning_WANIPEQUALGatewayIP=你已将互联网IP设置为网关IP，ZVMODELVZ 也许因此无法正确的连接到互联网，请重新设置正确的网关IP。
+IPConnection_x_WAN_LAN_conflict=WAN 与 LAN 须使用不同的 IP 地址与子网掩码。
 [QIS_internet_isp.js]		
 BOP_isp_host_desc=本栏可让您提供 ZVMODELVZ 所使用的主机名称。通常是您ISP运营商要求的名称。
 BOP_isp_host_item=主机名称(选填)：
@@ -1055,6 +1072,7 @@ Main_alert_proceeding_desc1=处理中
 Main_alert_proceeding_desc4=请稍候, 
 Main_alert_proceeding_desc3=完成
 Main_content_Login_Item7=重新启动 ZVMODELVZ 可能会耗费您约60秒的时间，您确定要现在重新启动吗?
+[###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=重新启动 ZVMODELVZ 可能会耗费您约80秒的时间，您确定要现在重新启动吗?
 [QIS-general.js]		
 JS_fieldblank=栏位不能为空白
 JS_validip=不是有效的IP地址！
@@ -1107,11 +1125,13 @@ Setting_upload_itemname=上传设置
 Setting_factorydefault_itemdesc=点选「恢复」键将清除目前的设置值并恢复成原厂默认值。接着，请等待 ZVMODELVZ 重新启动。
 Setting_save_itemdesc=点选「保存」，将目前 ZVMODELVZ 的设置值另存成文件。（注：在您将目前的设置值存成文件时，亦同样会存入闪存内。）
 Setting_upload_itemdesc=请将设置文件的路径及名称指定到此字段，然后点选「上传」将文件写入到 ZVMODELVZ 上。请等候约60秒的时间直到系统重新启动完毕。
+[###MODEL_DEP###][RT-N65U]Setting_upload_itemdesc=请将设置文件的路径及名称指定到此字段，然后点选「上传」将文件写入到 ZVMODELVZ 上。请等候约80秒的时间直到系统重新启动完毕。
 Setting_upload_hint=文件格式或路径不正确！
 Setting_factorydefault_hint1=所有设置值将会恢复成原厂默认状态。\n
 Setting_factorydefault_hint2=您确定要继续吗？
 Setting_factorydefault_iphint=内部网络地址将恢复为192.168.1.1。\n若您稍后无法连上此设置画面，请更新您计算机的IP地址。
 SET_ok_desc=设置文件上传中！过程大约需要60秒...
+[###MODEL_DEP###][RT-N65U]SET_ok_desc=设置文件上传中！过程大约需要80秒...
 SET_fail_title=设置文件上传失败！
 SET_fail_desc=设置文件上传失败。原因可能出自设置文件错误或传输出现问题。请确认设置文件的有效性后再做尝试。
 RHELP_desc4=其代表的是一路由规则的目的网络或目的主机。因此它可以是一主机地址，如「192.168.123.11」或是一网络地址「192.168.0.0」。
@@ -1220,6 +1240,8 @@ PPPConnection_x_WANGateway_itemname=网关
 PPPConnection_x_WANDNSServer_itemname=DNS服务器
 PPPConnection_x_WANLink_itemname=连线状态
 FirewallConfig_display1_sectiondesc=网络服务过滤阻止 LAN 或 WAN 分组交换或转移设备以使用特定网络服务。<p>例如，若您不想此装置使用网络服务，在目标端口输入 80。使用端口 80 的交通将堵塞。请勿填写原始 IP 栏以在所有 LAN 设备上运用此规定。
+FirewallConfig_display3_sectiondesc=<b>黑名单限制时间：</b>在设置的时间内，黑名单中的客户端无法使用特定的网络服务。在设置时间外，局域网中的所有客户端都可以访问特定的网络服务。<br><b>白名单限制时间：</b>在设置的时间内，白名单中的客户端仅可以使用特定的网络服务。在设置的时间外，白名单中的客户端与其他网络客户端都无法访问因特网或任何网络服务。
+FirewallConfig_display4_sectiondesc=<b>注意：</b>若您在白名单中设置了某一网段，此网段外的 IP 地址都无法访问因特网或任何网络服务。
 FirewallConfig_LanWanActiveDate_itemname=封包过滤程序启用日期：
 FirewallConfig_LanWanActiveDate_itemdesc=指定每周当中封包过滤程序启用的日期。
 FirewallConfig_LanWanActiveTime_itemname=封包过滤程序启用时间：
@@ -1236,8 +1258,9 @@ FirewallConfig_LanWanProFlag_itemname=通信协议
 FirewallConfig_URLActiveTime_itemhint4=指定的时段不可重叠。
 FirewallConfig_URLActiveTime_itemhint=您所设置的开始时间晚于结束时间。 
 FirewallConfig_URLActiveTime_itemdesc=指定网址过滤程序启用当日的时间。请设置不同的开始与结束时间。
-FirewallConfig_UrlFilterEnable_sectiondesc=输入您想要阻止的网址的关键词。如，在清单中输入 "XXX"，URL 过滤器将会阻止http://www.abcXXX.com、 http://www.XXXbbb.com 或其他。
 FirewallConfig_UrlFilterEnable_itemname=启用网址过滤程序
+FirewallConfig_UrlFilterEnable_sectiondesc=输入您想要阻止的网址的关键词。如，在清单中输入 "XXX"，URL 过滤器将会阻止http://www.abcXXX.com、 http://www.XXXbbb.com 或其他。
+FirewallConfig_UrlFilterEnable_itemname2=是否开启网址过滤？
 FirewallConfig_URLActiveDate_itemname=网址过滤程序启用日期：
 FirewallConfig_URLActiveDate_itemdesc=指定每周当中网址过滤器开启的日期。
 FirewallConfig_URLActiveTime_itemname=网址过滤程序启用当日时间
@@ -1382,6 +1405,7 @@ TZ81=新卡伦多尼亚
 TZ82=马加丹，斐济，勘察加，马歇尔群岛
 TZ83=奥克兰，威灵顿
 TZ84=努瓜娄发
+TZ85=英国夏令时间 (BST)
 LANHostConfig_x_NTPServer_itemname=NTP服务器
 LANHostConfig_x_NTPServer_itemdesc=ZVMODELVZ 可与 NTP服务器同步，维持系统时间的正确。
 LANHostConfig_x_DDNSEnable_sectionname=DDNS设置：
@@ -1498,6 +1522,7 @@ USB_Application_disk_miscellaneous_desc=USB 磁盘的更多具体设置
 BasicConfig_EnableDownloadMachine_itemname=启动 Download Master？
 BasicConfig_EnableDownloadShare_itemname=启动 Download Share？
 BasicConfig_EnableMediaServer_itemname=启动 UPnP？
+DM_Install_partition=请选择您要访问的 USB 存储设备。
 CTL_restore=恢复
 CTL_onlysave=保存
 CTL_clear=清除
@@ -1529,6 +1554,7 @@ IPConnection_TriggerList_widzarddesc=常见的应用：
 FirewallConfig_LWFilterList_widzarddesc=常见的应用：
 LANHostConfig_x_DDNSServer_linkname=免费试用
 SAVE_note=注：需时约60秒。
+[###MODEL_DEP###][RT-N65U]SAVE_note=注：需时约80秒。
 IPConnection_VServerPNo_itemname=通信协议编号
 LANHostConfig_ManualDHCPEnable_itemname=启用手动指定功能？
 LANHostConfig_ManualDHCPList_groupitemdesc=手动指定IP的DHCP列表
@@ -1680,7 +1706,7 @@ HSDPAConfig_username_itemdesc=请输入您的帐号。
 HSDPAConfig_password_itemdesc=请输入您的密码。
 HSDPAConfig_usbadaptor_itemdesc=请选择您要使用的USB网卡。
 confirm_disableftp_dm=停用网路芳邻功能，将会暂时无法使用下载大师。
-HSDPAConfig_hsdpa_mode_itemdesc=您可依据您的需求及环境来选择USB Modem的使用模式，我们提供四种：Backup(备援)、Equal weight(平行)、Always high(主要)及 Always low(次要)。若需移除数据卡，请至首页，点选数据卡图示，选择安全移除，以避免功能异常。
+HSDPAConfig_hsdpa_mode_itemdesc=在 ZVMODELVZ 中安装一张 3G USB 网卡，将它变为一台移动路由器。
 Not_authpage_login_again=请先关闭视窗，再重新登入。
 GO_HSDPA_SETTING=到USB Modem设置
 [new strings - translated]
@@ -1780,15 +1806,23 @@ qis_simple_wls_recmd=(建议设置)
 url_keyword_alert=URL关键词
 Not_Listed=未列出
 qis_service=服务
+isp_br_gvt_note=若您是 GVT 用户，请输入用户名 <b>turbonet@turbonet</b> 与密码 <b>gvt25</b>。或者，输入由您的网络服务供应商提供的用户名与密码。
+pvc_del_alert_desc=您确定要删除此 PVC 吗？
+same_vpi_vci=VPI 与 VCI 设置相同。
+dns_server_no_set=请在客户端设备上设置 DNS 服务器。
+dsl_wan_page_desc=点击数字索引来编辑 PVC 设置。点击添加（+）或删除（-）图标来添加或删除 PVC 设置。
 [adsl end]
 [untrans]
 step_use_aicloud=Please follow the steps below to use AiCloud:
 download_aicloud=Download ASUS AiCloud app to phone or pad from
 connect_through_wifi=Connect your iOS or Android devices to ZVMODELVZ through WiFi. The AiCloud app will automatically guide you through the process of setup.
 access_service=Now you can access your USB storage and Network place(Samba) enabled devices connected to ZVMODELVZ.
+aicloud_bandwidth1=For the best viewing/listening experience, we recommend the following upload bandwidth for different media format. A 768 Kbps is recommended for music, 5Mbps for SD video, 15Mbps for 720p video and 30Mbps or faster for 1080p HD video streaming.
+aicloud_bandwidth2=Internet upload speeds may vary depending on your ISP and other factors.
+aicloud_bandwidth3=If you are not sure what your Internet speed is, you can ask your ISP, or use an online broadband speed test from a computer connected to ZVMODELVZ.
 aicloud_for_privateIP1=We are going to support AiCloud with private IP later, in this moment, you can setup <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_VirtualServer_Content.asp" target="_blank">Port forwarding</a> or <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_Exposed_Content.asp" target="_blank">DMZ</a> to access private ip address remotely.
-aicloud_for_privateIP2= The AiCloud need to use 8082 and 443 port. you can change the port setting <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_BasicFirewall_Content.asp" target="_blank">here</a>.
-aicloud_for_privateIP3= For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
+aicloud_for_privateIP2=The AiCloud need to use 8082 and 443 port.
+aicloud_for_privateIP3=For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=To establish your cloud disk, you need to plug-in an USB storage into this router, then enable cloud disk.
 aicloud_disk2= Default cloud disk login account use the router login account.
 aicloud_disk_case0=The Cloud disk can be accessed via <a style="font-weight: bolder;text-decoration: underline;" href="http://www.asusnetwork.net:8082" target="_blank">http://www.asusnetwork.net:8082</a> when you connect to ZVMODELVZ in LAN.
@@ -1801,9 +1835,3 @@ smart_access2=You can also wake up your PCs in home remotely by WOL.
 smart_access3=What is <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="http://support.asus.com/Search.aspx?SLanguage=en&keyword=WOL&BIOS" target="_blank">WOL</a>?
 smart_sync1=To start smart sync, you need to sign up an <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asuswebstorage.com/" target="_blank">ASUS webstorage</a> account, then enable cloud disk and smart sync. (Make sure that you have plug-in an USB storage into this router.)
 smart_sync2=Open AiCloud APP. Choose a specific folder in cloud disk that you want to sync with ASUS web storage, then follow the steps show in the app.
-isp_br_gvt_note=If you are GVT users, please key in the user name ( turbonet@turbonet ) and password ( gvt25 ). Otherwise, please key in the user name and password provided by your ISP.
-FirewallConfig_UrlFilterEnable_itemname2=Enable URL Filter?
-pvc_del_alert_desc=Are you sure to delete this PVC?
-same_vpi_vci=VPI and VCI are duplicated.
-dns_server_no_set=DNS server not set! Please setup the DNS server on the client device.
-dsl_wan_page_desc=Click index number to edit PVC setting or click right icon to add or delete PVC

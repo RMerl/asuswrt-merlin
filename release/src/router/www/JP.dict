@@ -25,7 +25,8 @@ tunnel_MTU=トンネルの MTU
 tunnel_TTL=トンネルの TTL
 [VPN server]
 vpn_setting=基本設定
-PPTP_desc=VPNサーバーにより、いつでもどこからでも自宅のネットワークに接続することが可能になります。
+vpn_Adv=VPN の詳細
+PPTP_desc=VPN サーバーにより、いつでもどこからでも自宅のネットワークに接続することが可能になります。
 PPTP_desc2=VPN サーバーを使用するには、次の手順を行ってください。<br>(1) PPTP VPN サーバーを有効にする。<br>(2) クライアント IP 用の IP プールを設定する。(最大10クライアント) <br>(3) VPN クライアントのユーザー名とパスワードを設定する。<br>(4) コンピューターまたはスマートフォンで VPN 接続プログラムを起動する。<br>(5) 新しい PPTP VPN 接続を追加する。VPN サーバーアドレスは
 PPTP_desc3=(6) WAN 側 IP アドレスが動的 IP アドレスの場合、<a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">ここをクリックしDDNSを設定する</a>。
 vpn_enable=PPTPサーバーを有効にする
@@ -91,6 +92,19 @@ Low=低
 Lowest=最低
 traffic_monitor=トラフィックモニター
 traffic_monitor_desc=トラフィックモニターは次のタイプのネットワークトラフィックを監視します。<p>インターネット：全てのインターネットトラフィック。<p>有線ネットワーク：有線ネットワークから無線ネットワークとインターネットへのネットワークトラフィック。<p>無線ネットワーク：無線ネットワークから有線ネットワークとインターネットへのネットワークトラフィック。
+traffic_monitor_desc1=Traffic Monitor では、次の受信パケットと送信パケットを監視することができます。
+traffic_monitor_desc2=<b>注意：</b>インターネットからのパケットは有線デバイスと無線デバイスに均等に送信されます。
+tm_internet=インターネット
+tm_wired=有線
+tm_wireless=無線
+tm_reception=受信
+tm_transmission=送信
+tm_recp_int=インターネット 受信パケット
+tm_recp_wired=有線ネットワーク 受信パケット
+tm_recp_wireless=無線ネットワーク 受信パケット
+tm_trans_int=インターネット 送信パケット
+tm_trans_wired=有線ネットワーク 送信パケット
+tm_trans_wireless=無線ネットワーク 送信パケット
 ezqosDesw=Quality of Service (QoS) はネットワーク速度のパフォーマンスを強化します。デフォルトの規則はオンラインゲームとネットサーフィンを優先するように設定されており、P2P アプリケーション（BitTorrent等）の影響を受けません。QoS 機能を有効にするには、QoS スライドスイッチをクリックし、アップロード/ダウンロードの帯域の欄を入力します。帯域に関する情報はご契約の ISP にご確認ください。<p>特定のネットアプリケーションとネットワークデバイスを優先したい場合は、User-defined QOS の規則から優先度を選択します。
 qos_automatic_mode=自動モード
 source_ipmac=ソースまたは宛先 IP アドレスには、<p>(a) 特定の IP アドレスを入力する（\"192.168.122.1\"）<p>(b) サブネットマスク内または同じ IP プール内の IP アドレスを入力する（\"192.168.123.*\"、または  \"192.168.*.*\"）<p>(c) 全てのIPアドレスを「\"*.*.*.*\"」と入力します。<p>MAC アドレスのフォーマットは、16進数2桁で6グループ、ダブルコロン(:)で区切り、転送順序に即して作成されます。(例：12:34:56:aa:bc:ef)
@@ -129,9 +143,9 @@ Enable_WAN=WAN を有効
 Enable_NAT=NAT を有効
 [New_QIS]
 QIS_Previous_WLKey=前回設定した無線セキュリティ設定を使用しますか？
-QIS_recommand_encryption=We strongly recommend that you set the encryption type first.
-QIS_confirm_recommand_encryp=We strongly recommend that you set the encryption type first, do you want to continue?
-QIS_auto_ip_conn_Setup=Automatic IP connection setup
+QIS_recommand_encryption=はじめに暗号化方式を設定することを推奨します。
+QIS_confirm_recommand_encryp=はじめに暗号化方式を設定することを推奨します。続行しますか?
+QIS_auto_ip_conn_Setup=IP アドレスの自動割り当て
 Select_ISPfile=ISP のプロファイルを選択
 Router_Login_Name=ルータのログイン名
 QIS_step1=準備
@@ -140,32 +154,32 @@ QIS_step3=ネットワークの設定
 QIS_step4=ルータの設定
 QIS_welcome_title=ASUS 製品をお買い上げ頂き、誠にありがとうございます。
 QIS_welcome_desc1=ZVMODELVZ の設定を行います。「次へ」をクリックし、セットアップウィザードを開始してください。
-QIS_welcome_feature1=Simultaneous 450+450 dual-band connection.
+QIS_welcome_feature1=デュアルバンド同時通信(450Mbps + 450Mbps)。
 [###MODEL_DEP###][RT-AC66U]QIS_welcome_feature1=デュアルバンド同時通信に対応。(5GHz帯/ 1300 Mbps と 2.4GHz帯/ 450 Mbps)
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature1=デュアルバンド同時通信に対応。(5GHz帯/ 450 Mbps と 2.4GHz帯/ 300 Mbps)
 [###MODEL_DEP###][RT-N56U][RT-N53]QIS_welcome_feature1=デュアルバンド同時通信に対応。(5GHz帯/ 300 Mbps と 2.4GHz帯/ 300 Mbps)
-[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature1=Dual-band for lag-free entertainment.
+[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature1=デュアルバンド同時通信により高品質なエンターテインメントコンテンツもスムーズに再生可能。
 [###MODEL_DEP###][RT-N16]QIS_welcome_feature1=高性能CPUの採用により、高速スループットを実現。
 [###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1][RT-N10U]QIS_welcome_feature1=300 Mbpsの高速通信。(2.4GHz帯/ シングルバンド)
-QIS_welcome_feature2=Twin USB port for USB storage and Multi-functional printer.
+QIS_welcome_feature2=USB ストレージデバイスや多機能プリンターに対応した USB ポートを2基搭載。
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature2=ギガビット イーサネットポートを4基搭載。
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature2=ギガビット イーサネットポートを4基搭載。 ストレージやプリンターの共有が可能な USB 2.0ポートを2基搭載。
-[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature2=Twin USB ports enable multi-role usability.
+[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature2=USB ポート2基搭載で優れた拡張性を提供。
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature2=10/100 Mbps イーサネットポートを4基搭載。
 [###MODEL_DEP###][RT-N15U]QIS_welcome_feature2=ギガビット イーサネットポートを4基搭載。 ストレージやプリンターの共有が可能な USB 2.0ポートを1基搭載。
 [###MODEL_DEP###][RT-N12B1][RT-N12C1]QIS_welcome_feature2=10/100 Mbps イーサネットポートを4基搭載。 通信距離を大幅に拡大する 5dBiハイパワーアンテナを2基搭載。
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature2=10/100 Mbps イーサネットポートを4基搭載。 プリンターの共有が可能な USB 2.0ポートを1基搭載。
-QIS_welcome_feature3=Gigabit internet surfing with turbo NAT.
+QIS_welcome_feature3=高性能 NAT によるギガビットクラスの快適なインターネットサーフィンを提供。
 [###MODEL_DEP###][RT-N65U]QIS_welcome_feature3=ストレージやプリンターの共有が可能な USB 3.0ポートを2基搭載。
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature3=ビームフォーミング技術により広範囲をカバー。
-[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature3=Gigabit internet surfing with hardware NAT. (While ISP support)
+[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature3=ハードウェア NAT によるギガビットクラスの快適なインターネットサーフィンを提供。(インターネット接続タイプにより異なる)
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature3=最大 3 つのゲスト用 SSID が設定可能。
 [###MODEL_DEP###][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature3=最大 3 つのゲスト用 SSID が設定可能。
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature3=通信距離を大幅に拡大する 5dBi ハイパワーアンテナを1基搭載。
-QIS_welcome_feature4=20X data sessions for stable connection when P2P downloading.
+QIS_welcome_feature4=通常の20倍のデータセッションにより P2P ダウンロードで安定した接続を実現。
 [###MODEL_DEP###][RT-N65U][RT-N15U][RT-N12B1][RT-N12C1]QIS_welcome_feature4=設定や操作が簡単なグラフィカルユーザーインターフェイス。
 [###MODEL_DEP###][RT-N56U]QIS_welcome_feature4=ハードウェア方式 NAT により WAN から LAN へのスループット速度が5倍に。
-[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature4=Powerful Online Multitasking at up to 300,000 Data Sessions.
+[###MODEL_DEP###][DSL-N55U][DSL-N55U-B]QIS_welcome_feature4=最大同時セッション数 300,000 のパワフルなオンライン・マルチタスク性能。
 [###MODEL_DEP###][RT-N53]QIS_welcome_feature4=ペアレンタルコントロール対応。
 [###MODEL_DEP###][RT-N10U]QIS_welcome_feature4=最大4つのゲスト用 SSID が設定可能。
 QIS_pass_title=ルーターへのログインパスワードのセットアップ
@@ -247,6 +261,8 @@ NAT_PPTP_Passthrough=PPTP パススルー
 NAT_L2TP_Passthrough=L2TP パススルー
 NAT_IPSec_Passthrough=IPSec パススルー
 NAT_RTSP_Passthrough=RTSP パススルー
+NAT_passthrough_itemname=NAT パススルー
+NAT_passthrough_desc=NAT パススルーを有効にすることで、Virtual Private Network (VPN) クライアントのパケットをインターネット側に通過させることができます。
 [AiDisk account alert]
 enable_noaccount_alert=有効にすると、アカウントが存在しない場合はSambaサーバーとダウンロードマスターで接続の問題が発生します。
 [iTunes]
@@ -255,15 +271,15 @@ iTunesMediaServer=iTunes Media Server
 wireless_router=無線ルータ
 BasicConfig_EnableiTunesServer_itemname=iTunes Server を有効にしますか？
 OP_GW_item=無線ルータモード（デフォルト）
-OP_GW_desc=無線ルータモードでは、ZVMODELVZ はPPPoE、Automatic IP、PPTP、L2TP、Static IPを通じてインターネットに接続されます。ワイヤレス信号を提供します。LANクライアント用のブロードバンド共有サービス、ファイアウォール、NATが有効です。また、SOHOまたはホームユーザー用のDynamic DNS、UPnPもサポートしています。
-OP_RE_item=Repeater mode
-OP_RE_desc=In Repeater mode, ZVMODELVZ wirelessly connects to an existing wireless network to extend the wireless coverage. In this mode, the firewall, IP sharing, and NAT functions are disabled.
+OP_GW_desc=無線ルータモードでは、ZVMODELVZ は PPPoE、Automatic IP、PPTP、L2TP、Static IP を通じてインターネットに接続されます。ワイヤレス信号を提供します。LANクライアント用のブロードバンド共有サービス、ファイアウォール、NATが有効です。また、SOHOまたはホームユーザー用のDynamic DNS、UPnPもサポートしています。
+OP_RE_item=リピーターモード
+OP_RE_desc=リピーターモードでは、ZVMODELVZ は既存のアクセスポイントと無線 LAN アダプターとの電波を中継し、直接電波が届かない場所でも無線によるアクセスを可能にします。このモードでは、ファイアウォール、IP の共有、NAT 機能は無効になります。
 OP_AP_item=アクセスポイント（AP）モード
-OP_AP_desc=アクセスポイント（AP）モードでは、ZVMODELVZ はイーサネットケーブルを通じてLANに接続します。接続するとコンピューターはZVMODELVZへのワイヤレスネットワークを構築します。このモードでは、ファイアウォール、IPの共有、NAT機能は無効になります。
-OP_RT_item=ルーター（NAT無効）
-OP_RT_desc=ルーターモードでは、ZVMODELVZをイーサネットケーブルでコンピューターに接続し、ワイヤレスネットワーク接続を構築し、構築後ワイヤレスネットワーク接続を選択します。ZVMODELVZはワイヤレス信号の受信範囲を拡張し、静的経路プロトコルを設定します。<p>NAT機能は無効になり、LANクライアントとWANクライアント間のコミュニケーションと共有サービスを可能にします。注：経路設定ルールをホストルーターで指定する必要があります。
-deviceDiscorvy=アクセスポイント(AP)モードでは、DHCPによって割り当てられるIPアドレスは毎回変更される可能性があります。ワイヤレスルーターのIPアドレスを検出できるように、<a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery Utility</a> をインストールしてください。
-IPConnection_VSList_ftpport=FTPサーバーポート
+OP_AP_desc=アクセスポイント（AP）モードでは、ZVMODELVZ はイーサネットケーブルを通じて LAN に接続します。接続するとコンピューターはZVMODELVZへのワイヤレスネットワークを構築します。このモードでは、ファイアウォール、IP の共有、NAT 機能は無効になります。
+OP_RT_item=ルーター（NAT 無効）
+OP_RT_desc=ルーターモードでは、ZVMODELVZ をイーサネットケーブルでコンピューターに接続し、ワイヤレスネットワーク接続を構築し、構築後ワイヤレスネットワーク接続を選択します。ZVMODELVZ はワイヤレス信号の受信範囲を拡張し、静的経路プロトコルを設定します。<p>NAT 機能は無効になり、LANクライアントとWANクライアント間のコミュニケーションと共有サービスを可能にします。注：経路設定ルールをホストルーターで指定する必要があります。
+deviceDiscorvy=アクセスポイント(AP)モードでは、DHCP によって割り当てられる IP アドレスは毎回変更される可能性があります。ワイヤレスルーターのIPアドレスを検出できるように、<a href=\"http://dlcdnet.asus.com/pub/ASUS/wireless/ASUSWRT/Discovery.zip\" style=\"font-family:Lucida Console;text-decoration:underline;color:#FC0;\">Device Discovery Utility</a> をインストールしてください。
+IPConnection_VSList_ftpport=FTP サーバーポート
 Adm_System_telnetd=Telnet Serverを有効にしますか？
 wps_start_btn=開始
 USB_Application_account_alert=ユーザーのアカウントには「root」、「guest」等を使用できませ。有効なアカウントを入力してください。
@@ -278,6 +294,7 @@ RouterConfig_GWMulticast_Broadcast_itemname=ブロードキャストストーム
 [keyword_filter]
 menu5_5_5=キーワードフィルター
 FirewallConfig_KeywordFilterEnable_sectiondesc=指定した語を含むウェブページへのクライアントのアクセスをブロックします。
+FirewallConfig_KeywordFilterEnable_sectiondesc2=キーワードフィルター機能の制限：<ol><li>HTTP 圧縮されたウェブページをフィルタリングすることはできません。<a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">詳細はこちらをご参照ください</a></li><li>セキュアな HTTPS 接続のウェブページをフィルタリングすることはできません。</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=キーワードフィルターを有効にします。
 FirewallConfig_KeywordActiveDate_itemname=いつ：
 FirewallConfig_KeywordActiveTime_itemname=時間：
@@ -302,6 +319,7 @@ web_redirect_reason6=IPの衝突を検出しました。「次へ」をクリッ
 web_redirect_case6_desc1=ルーターの更新済み IPアドレス：
 web_redirect_case6_desc2=「Next」をクリックした後は、関連するサービス（仮想サーバーやDMZ）のIPアドレス設定を更新してください。
 error_page_lanip_changed_desc1=IPアドレスが更新しています。更新作業に2分以上かかる場合は、次の手順でIPを手動で更新してください。(1) ネットワークケーブルを抜く。 (2) 10秒ほど待機する。 (3) ケーブルを再度接続し新しいIPアドレスを取得する。
+web_redirect_reason7=PIN コードが正しくありません。正しくないコードを3回連続で入力すると、SIM がロックされます。
 [QIS]
 QIS_autoMAC_desc1=コンピューターのMACアドレスをルーターにこれからクローンします…
 QIS_autoMAC_desc2=お待ちください。
@@ -392,10 +410,10 @@ ShareNode_Seeding_itemdesc=シーディング機能の有効/無効を設定し�
 ShareNode_MaxUpload_itemname=最大アップロード率
 ShareNode_MaxUpload_itemdesc=数値は0 ～999で設定します。初期設定値は0で、アップロードの制限はありません。
 [New item]
-HSDPAConfig_hsdpa_enable_hint1=現在の3G設定は3G バックアップモードに設定されています。接続を他のWANポートに変更すると、ネットワーク接続は自動的に3G モードに切り替わります。
+HSDPAConfig_hsdpa_enable_hint1=現在の 3G/4G 設定は 3G/4G バックアップモードに設定されています。接続を他の WAN ポートに変更すると、ネットワーク接続は自動的に 3G/4G モードに切り替わります。
 HSDPAConfig_hsdpa_enable_hint2=接続タイプを変更したい場合は、<a href="/Advanced_Modem_others.asp">USB Modem</a> でUSBアダプターを無効にします。
-HSDPAConfig_USBAdapter_itemname=USBアダプター
-HSDPAConfig_USBAdapter_itemdesc=USBモデムを有効にした後、ZVMODELVZ がサポートするアダプターを選択します。
+HSDPAConfig_USBAdapter_itemname=USB アダプター
+HSDPAConfig_USBAdapter_itemdesc=USB モデムを有効にした後、ZVMODELVZ がサポートするアダプターを選択します。
 APSurvey_msg_connected=このAPに接続済みです。
 APSurvey_msg_connect_suggest1=イーサネットケーブルで ZVMODELVZ を接続することをお勧めします。設定が安定しパフォーマンスが向上します。
 APSurvey_msg_connect_suggest2=[<span style="font-weight:bold; font-size:16px;">OK</span>] をクリックし、設定を継続します。セットアップ中は、 クライアントはネットワークから切断される場合があります。ZVMODELVZ がリモートアクセスポイントに接続されていることをご確認ください。
@@ -913,7 +931,7 @@ QKSet_detect_waitdesc=接続タイプの検出を開始.
 QKSet_detect_timedesc1=&nbsp;
 QKSet_detect_timedesc2=回目の検出の実行
 [QIS_finish.js]
-QIS_finish_Desc=ZVMODELVZ is set up with these Internet and wireless settings.
+QIS_finish_Desc=ZVMODELVZ はこれらのインターネットおよびワイヤレスネットワークがすでに設定がされています。
 QKSet_all_title=クイックスタート
 QKSet_finishpre_webtitle=設定が全て完了しました。「終了」をクリックすれば、デフォルトのホームページにリダイレクトします。「前へ」をクリックすると設定画面に戻ります。
 QKSet_finishpre_rebootnow=終了
@@ -929,6 +947,7 @@ QKSet_account_nameblank=アカウント名は必ず入力します。
 [QIS_internet_ip.js]
 Layer3Forwarding_x_DHCPClient_itemname=WAN IP を自動取得しますか?
 Layer3Forwarding_x_UseStaticIP_itemname=次の IP アドレスを使用：
+qis_dns=次の DNS サーバーアドレスを使用
 IPConnection_ExternalIPAddress_itemdesc=リモートネットワークに表示されているように、これは ZVMODELVZ の IP アドレスです。
 IPConnection_ExternalIPAddress_itemname=IPアドレス
 IPConnection_x_ExternalSubnetMask_itemdesc=リモートネットワークに表示されているよう、これは ZVMODELVZ のサブネットマスクです。
@@ -945,11 +964,13 @@ IPConnection_x_DNSServer1_itemdesc=このフィールドは ZVMODELVZ が通信�
 IPConnection_x_DNSServer1_itemname=DNS サーバー1：
 IPConnection_x_DNSServer2_itemdesc=このフィールドは ZVMODELVZ が通信する DNS の IP アドレスが表示されます。
 IPConnection_x_DNSServer2_itemname=DNS サーバー2：
+IPConnection_x_DNSServer_blank=クライアントデバイス上で DNS サーバーを設定してください。
 IPConnection_warning_WANIPEQUALGatewayIP=WAN IP を ZVMODELVZ のゲートウェイとして設定したため、ZVMODELVZ はインターネットに接続できません。ゲートウェイは正しい数値で入力してください。
+IPConnection_x_WAN_LAN_conflict=WAN と LAN には、異なる IP アドレスとサブネットを割り当てる必要があります。
 [QIS_internet_isp.js]
 BOP_isp_host_desc=このフィールドでは、ZVMODELVZ のホスト名を設定します。ホスト名は ISP が通常要求する情報です。
 BOP_isp_host_item=ホスト名（オプション）：
-PPPConnection_x_MacAddressForISP_itemdesc=このフィールドでは、ZVMODELVZ をインターネットに接続する際に　使用する独自の MAC アドレスを設定します。MAC アドレスは ISP が通常要求する情報です。
+PPPConnection_x_MacAddressForISP_itemdesc=MAC (Media Access Control) アドレスはネットワーク内のコンピューターやデバイスを識別する識別子で、1つのネットワーク内に同一の MAC アドレスは存在しません。 ISP は ISP 提供のサービスに接続されたデバイスの MAC アドレスを監視し、新しい MAC アドレスにはインターネット接続を許可しません。 次のいずれかの方法でこの問題を解決してください。<p>* ご契約の ISP に問い合わせ、登録した MAC アドレスの更新を行います<p>* 元のデバイスの MAC アドレスに一致するよう、 新しいデバイスの MAC アドレスを複製または変更します。
 BOP_isp_mac_item=MACアドレス（オプション）：
 BOP_isp_MACclone=MACクローン
 [QIS_internet_success.htm]
@@ -1049,6 +1070,7 @@ Main_alert_proceeding_desc1=実行中
 Main_alert_proceeding_desc4=お待ちください。
 Main_alert_proceeding_desc3=完了!
 Main_content_Login_Item7=ルーターの再起動には約60秒かかります。今すぐ再起動しますか?
+[###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=ルーターの再起動には約80秒かかります。今すぐ再起動しますか?
 [QIS-general.js]
 JS_fieldblank=必ず入力してください
 JS_validip=は有効なIPアドレスではありません!
@@ -1101,11 +1123,13 @@ Setting_upload_itemname=設定の復元
 Setting_factorydefault_itemdesc=「復元」をクリックし、ルーターをク工場出荷時の設定に戻します。この作業を実行すると現在の設定は全て削除されます。ルーターが再起動するまでしばらくお待ちください。
 Setting_save_itemdesc=「保存」ボタンを押し、ZVMODELVZ の現在の設定をファイルに保存します。（注：現在の設定をファイルに保存すると、フラッシュにも保存されます）
 Setting_upload_itemdesc=設定ファイルの名前とパスを指定します。続いて「アップロード」をクリックし、ZVMODELVZ にファイルを書き込みます。ZVMODELVZ が再起動するまで60秒間ほどお待ちください。
+[###MODEL_DEP###][RT-N65U]Setting_upload_itemdesc=設定ファイルの名前とパスを指定します。続いて「アップロード」をクリックし、ZVMODELVZ にファイルを書き込みます。ZVMODELVZ が再起動するまで80秒間ほどお待ちください。
 Setting_upload_hint=ファイルフォーマットまたはパスに誤りがあります。!
 Setting_factorydefault_hint1=現在の設定は全て削除され、ルーターは工場出荷時の設定に踊ります。\n
 Setting_factorydefault_hint2=続行しますか？
 Setting_factorydefault_iphint=ZVMODELVZ のデフォルトのLAN IPは192.168.1.1です。\n設定画面に戻れない場合は、コンピューターのIP設定を更新してください。
 SET_ok_desc=設定をアップロード中です！60秒間ほどお待ちください。
+[###MODEL_DEP###][RT-N65U]SET_ok_desc=設定をアップロード中です！80秒間ほどお待ちください。
 SET_fail_title=設定ファイルのアップロードに失敗しました!
 SET_fail_desc=設定ファイルのアップロードに失敗しました！不適切な設定ファイルまたは転送エラーが原因です。設定ファイルを確認後、再試行してください。
 RHELP_desc4=宛先ネットワークまたは経路設定のルールを意味します。「192.168.123.11」のようなホストアドレス、または「192.168.0.0」のようなネットワークアドレスとなります。
@@ -1214,6 +1238,8 @@ PPPConnection_x_WANGateway_itemname=ゲートウェイ
 PPPConnection_x_WANDNSServer_itemname=DNS サーバー
 PPPConnection_x_WANLink_itemname=接続状態：
 FirewallConfig_display1_sectiondesc=LAN から WAN フィルターは、特定の LAN から WAN へのパケット交換をブロックします。この機能を使用するには、フィルター機能を有効にする日と時間を指定し、両方向のデフォルトフィルターアクションを設定し、例外等のルールを設定します。
+FirewallConfig_display3_sectiondesc=<b>ブラックリスト：</b>指定されたクライアントは指定された時間内、ブラックリストで指定されたネットワークサービスを利用することができなくなります。指定時間外は、すべてのクライアントでクライアントはブラックリストで指定されたネットワークサービスにアクセスすることができます。<br><b>ホワイトリスト：</b>指定されたクライアントは、指定された時間内だけホワイトリストで指定されたネットワークサービスを利用することができます。指定時間外は、すべてのクライアントはホワイトリストで指定されたネットワークサービスにアクセスすることはできません。
+FirewallConfig_display4_sectiondesc=<b>注意：</b>ホワイトリストにサブネットを設定する場合、サブネット外の IP アドレスではインターネットサービスにアクセスすることはできません。
 FirewallConfig_LanWanActiveDate_itemname=LAN から WAN フィルターを有効にする日：
 FirewallConfig_LanWanActiveDate_itemdesc=このフィールドはLANから WAN フィルターを有効にする日を指定します。
 FirewallConfig_LanWanActiveTime_itemname=LAN から WAN フィルターを有効にする時間：
@@ -1376,6 +1402,7 @@ TZ81=ニューカレドニア
 TZ82=マガダン、フィジー、カムチャッカ、マーシャル諸島
 TZ83=オークランド、ウェリントン
 TZ84=ヌクアロファ
+TZ85=英国夏時間 (BST)
 LANHostConfig_x_NTPServer_itemname=NTP サーバー
 LANHostConfig_x_NTPServer_itemdesc=システム時間と NTP サーバーを同期
 LANHostConfig_x_DDNSEnable_sectionname=DDNS設定
@@ -1492,6 +1519,7 @@ USB_Application_disk_miscellaneous_desc=USB ディスクの詳細設定
 BasicConfig_EnableDownloadMachine_itemname=Download Master を有効にしますか？
 BasicConfig_EnableDownloadShare_itemname=Download Share を有効にしますか？
 BasicConfig_EnableMediaServer_itemname=UPnP を有効にしますか？
+DM_Install_partition=アクセスする USB ストレージデバイスを選択してください。
 CTL_restore=復元
 CTL_onlysave=保存
 CTL_clear=クリア
@@ -1523,6 +1551,7 @@ IPConnection_TriggerList_widzarddesc=よく使用されるアプリケーショ�
 FirewallConfig_LWFilterList_widzarddesc=よく使用されるアプリケーション：
 LANHostConfig_x_DDNSServer_linkname=無料お試し
 SAVE_note=注：約60秒かかります
+[###MODEL_DEP###][RT-N65U]SAVE_note=注：約80秒かかります
 IPConnection_VServerPNo_itemname=プロトコルナンバー
 LANHostConfig_ManualDHCPEnable_itemname=手動割り当てを有効にしますか？
 LANHostConfig_ManualDHCPList_groupitemdesc=DHCP リスト周辺で手動で割り当てた IP アドレス
@@ -1773,7 +1802,13 @@ date_Sat_itemdesc=土
 alert_of_Workgroup=スペースは使用できません。
 qis_simple_wls_recmd=（推奨）
 url_keyword_alert=URL キーワード
+qis_service=サービス
 Not_Listed=リストになし
+isp_br_gvt_note=あなたが GVT ユーザーの場合は、ユーザー名に <b>turbonet@turbonet</b>、パスワードに <b>gvt25</b> を入力してください。または、ISP 提供のユーザ名とパスワードを入力してください。
+pvc_del_alert_desc=この PVC を削除してもよろしいですか？
+same_vpi_vci=VPI 設定と VCI 設定が重複しています。
+dns_server_no_set=クライアントデバイス上で DNS サーバーを設定してください。
+dsl_wan_page_desc=PVC設定を編集するには数字インデックスをクリックします。設定を追加・削除するには(+)または (-) アイコンをクリックします。
 [adsl end]
 [untrans]
 prev_page=Previous page
@@ -1782,9 +1817,12 @@ step_use_aicloud=Please follow the steps below to use AiCloud:
 download_aicloud=Download ASUS AiCloud app to phone or pad from
 connect_through_wifi=Connect your iOS or Android devices to ZVMODELVZ through WiFi. The AiCloud app will automatically guide you through the process of setup.
 access_service=Now you can access your USB storage and Network place(Samba) enabled devices connected to ZVMODELVZ.
+aicloud_bandwidth1=For the best viewing/listening experience, we recommend the following upload bandwidth for different media format. A 768 Kbps is recommended for music, 5Mbps for SD video, 15Mbps for 720p video and 30Mbps or faster for 1080p HD video streaming.
+aicloud_bandwidth2=Internet upload speeds may vary depending on your ISP and other factors.
+aicloud_bandwidth3=If you are not sure what your Internet speed is, you can ask your ISP, or use an online broadband speed test from a computer connected to ZVMODELVZ.
 aicloud_for_privateIP1=We are going to support AiCloud with private IP later, in this moment, you can setup <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_VirtualServer_Content.asp" target="_blank">Port forwarding</a> or <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_Exposed_Content.asp" target="_blank">DMZ</a> to access private ip address remotely.
-aicloud_for_privateIP2= The AiCloud need to use 8082 and 443 port. you can change the port setting <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_BasicFirewall_Content.asp" target="_blank">here</a>.
-aicloud_for_privateIP3= For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
+aicloud_for_privateIP2=The AiCloud need to use 8082 and 443 port.
+aicloud_for_privateIP3=For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=To establish your cloud disk, you need to plug-in an USB storage into this router, then enable cloud disk.
 aicloud_disk2= Default cloud disk login account use the router login account.
 aicloud_disk_case0=The Cloud disk can be accessed via <a style="font-weight: bolder;text-decoration: underline;" href="http://www.asusnetwork.net:8082" target="_blank">http://www.asusnetwork.net:8082</a> when you connect to ZVMODELVZ in LAN.
@@ -1797,13 +1835,3 @@ smart_access2=You can also wake up your PCs in home remotely by WOL.
 smart_access3=What is <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="http://support.asus.com/Search.aspx?SLanguage=en&keyword=WOL&BIOS" target="_blank">WOL</a>?
 smart_sync1=To start smart sync, you need to sign up an <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asuswebstorage.com/" target="_blank">ASUS webstorage</a> account, then enable cloud disk and smart sync. (Make sure that you have plug-in an USB storage into this router.)
 smart_sync2=Open AiCloud APP. Choose a specific folder in cloud disk that you want to sync with ASUS web storage, then follow the steps show in the app.
-web_redirect_reason7=PIN code is not correct. After three failed attempts to enter the PIN code, your SIM card will be blocked.
-NAT_passthrough_itemname=NAT Passthrough
-NAT_passthrough_desc=Enable NAT Passthrough to allow a Virtual Private Network (VPN) connection to pass through the router to the network clients.
-qis_dns=Use the following DNS server addresses
-qis_service=Service
-isp_br_gvt_note=If you are GVT users, please key in the user name ( turbonet@turbonet ) and password ( gvt25 ). Otherwise, please key in the user name and password provided by your ISP.
-pvc_del_alert_desc=Are you sure to delete this PVC?
-same_vpi_vci=VPI and VCI are duplicated.
-dns_server_no_set=DNS server not set! Please setup the DNS server on the client device.
-dsl_wan_page_desc=Click index number to edit PVC setting or click right icon to add or delete PVC

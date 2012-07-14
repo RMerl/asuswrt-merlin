@@ -147,8 +147,10 @@ void convert_dsl_wan()
 			nvram_set("wan0_proto","static");
 		}
 		else if (nvram_match("dsl0_proto","bridge")) {
+			// by Chen-I to disable wan complete3ly
 			// disable nat
-			nvram_set("wan0_nat_x","0");		
+			// nvram_set("wan0_nat_x","0");	
+			nvram_set("wan0_proto", "disabled");	
 		}
 		else if (nvram_match("dsl0_proto","mer")) {
 			if (nvram_match("dslx_DHCPClient","1")) {
@@ -169,8 +171,10 @@ void convert_dsl_wan()
 			nvram_set("wan1_proto","static");
 		}
 		else if (nvram_match("dsl0_proto","bridge")) {
+			// by Chen-I to disable wan completely
 			// disable nat
-			nvram_set("wan1_nat_x","0");		
+			// nvram_set("wan1_nat_x","0");	
+			nvram("wan1_proto", "disabled");
 		}
 		else if (nvram_match("dsl0_proto","mer")) {
 			if (nvram_match("dslx_DHCPClient","1")) {

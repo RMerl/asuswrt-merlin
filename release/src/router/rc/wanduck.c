@@ -66,11 +66,10 @@ static void safe_leave(int signo){
 		FILE *fp = fopen("/tmp/nat_rules", "r");
 
 		memset(buf, 0, 16);
-		sprintf(buf, "nat_state=%d", NAT_STATE_NORMAL);
-
 		if(fp != NULL){
 			fclose(fp);
 
+			sprintf(buf, "nat_state=%d", NAT_STATE_NORMAL);
 			eval("nvram", "set", buf);
 
 			_dprintf("%s: apply the nat_rules: %s!\n", __FUNCTION__, buf);
@@ -80,6 +79,13 @@ static void safe_leave(int signo){
 			setup_udp_timeout(TRUE);
 
 			eval("iptables-restore", "/tmp/nat_rules");
+		}
+		else{
+			sprintf(buf, "nat_state=%d", NAT_STATE_INITIALIZING);
+			eval("nvram", "set", buf);
+
+			_dprintf("%s: initial the nat_rules: %s!\n", __FUNCTION__, buf);
+			logmessage("wanduck exit", "initial the nat_rules!");
 		}
 #endif
 	}
@@ -782,7 +788,7 @@ void handle_wan_line(int wan_unit, int action){
 		notify_rc("start_nat_rules");
 
 #if defined(RTCONFIG_APP_PREINSTALLED) || defined(RTCONFIG_APP_NETINSTALLED)
-		if(test_if_dir("/opt/lib/ipkg")){
+		if(check_if_dir_exist("/opt/lib/ipkg")){
 _dprintf("wanduck: update the APP's lists...\n");
 			notify_rc("start_apps_update");
 		}

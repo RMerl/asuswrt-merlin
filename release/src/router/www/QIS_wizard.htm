@@ -47,12 +47,7 @@ var return_btn = 0;
 var flag_manual = 0;
 var issubmit = 0;
 var isrescan = 0;
-
-// redirect to DomainName
-/*
-if('<% nvram_get("x_Setting"); %>' == 0 && location.href.search("www.asusnetwork.net") < 0)
-	location.href = "http://www.asusnetwork.net/QIS_wizard.htm?flag=welcome";
-*/
+var getBand = '<% get_parameter("band"); %>';
 
 function set_step(focus_id){
 	/*if(focus_id == "t0")
@@ -81,6 +76,12 @@ function QIS_load_body(){
 	showCase = $("flag").value;
 	get_args();
 	winW_H();
+
+	if(psta_support != -1){
+		if(document.QKform.sw_mode.value == 3 && '<% nvram_get("wlc_psta"); %>' == 1)
+			document.QKform.sw_mode.value = 2;
+	}
+
 	if(navigator.appName.indexOf("Microsoft") >= 0){
 			$("contentM").width = "105%";
 			$("contentM").style.marginLeft = "-45px";			

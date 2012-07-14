@@ -68,6 +68,7 @@ function initial(){
 	//*/	//Viz marked 2012.04 
 
 	addOnlineHelp($("faq"), ["ASUSWRT", "VPN"]);
+	check_pptpd_broadcast();
 }
 
 function changeMppe(){
@@ -230,10 +231,6 @@ function validForm(){
 }
 
 function addRow_Group(upper){
-if(validForm()){
-	if('<% nvram_get("pptpd_enable"); %>' != "1")
-		document.form.pptpd_enable[0].checked = true;
-	
 	var rule_num = $('pptpd_clientlist_table').rows.length;
 	var item_num = $('pptpd_clientlist_table').rows[0].cells.length;		
 	if(rule_num >= upper){
@@ -255,8 +252,7 @@ if(validForm()){
 		
 		addRow(document.form.pptpd_clientlist_username ,1);
 		addRow(document.form.pptpd_clientlist_password, 0);
-		showpptpd_clientlist();	
-	}	
+		showpptpd_clientlist();		
 }
 
 function del_Row(r){
@@ -269,9 +265,9 @@ function del_Row(r){
 			if(j == 0)	
 				pptpd_clientlist_value += "<";
 			else{
-			pptpd_clientlist_value += $('pptpd_clientlist_table').rows[k].cells[0].innerHTML;
+			pptpd_clientlist_value += $('pptpd_clientlist_table').rows[k].cells[0].firstChild.innerHTML;
 			pptpd_clientlist_value += ">";
-			pptpd_clientlist_value += $('pptpd_clientlist_table').rows[k].cells[1].innerHTML;
+			pptpd_clientlist_value += $('pptpd_clientlist_table').rows[k].cells[1].firstChild.innerHTML;
 			}
 		}
 	}
@@ -366,6 +362,30 @@ function setEnd(){
 	
 	document.form._pptpd_clients_end.value = end;		
 }
+function check_pptpd_broadcast(){
+	if(document.form.pptpd_broadcast.value =="ppp" || document.form.pptpd_broadcast.value =="br0ppp")
+		$('pptpd_broadcast_ppp_yes').checked="true";
+	else
+		$('pptpd_broadcast_ppp_no').checked="true";	
+}
+
+function set_pptpd_broadcast(obj){
+	var pptpd_temp;	
+	pptpd_temp = document.form.pptpd_broadcast.value;
+
+	if(obj.value ==1){
+		if(pptpd_temp == "br0")
+			document.form.pptpd_broadcast.value="br0ppp";
+		else	
+			document.form.pptpd_broadcast.value="ppp";
+	}
+	else{
+		if(pptpd_temp == "br0ppp")
+			document.form.pptpd_broadcast.value="br0";
+		else	
+			document.form.pptpd_broadcast.value="disable";
+	}
+}
 </script>
 </head>
 
@@ -398,7 +418,7 @@ function setEnd(){
 			<input type="hidden" name="pptpd_clientlist" value="<% nvram_char_to_ascii("","pptpd_clientlist"); %>">
 			<input type="hidden" name="pptpd_clients" value="<% nvram_get("pptpd_clients"); %>">
 			<input type="hidden" name="pptpd_mppe" value="<% nvram_get("pptpd_mppe"); %>">	
-
+			<input type="hidden" name="pptpd_broadcast" value="<% nvram_get("pptpd_broadcast"); %>">	
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
 					<td valign="top" >
@@ -435,19 +455,13 @@ function setEnd(){
 												</select-->			
 											</td>
 									  </tr>
-							
-										<tr class="vpndetails">
+										<tr>
 											<th><#vpn_broadcast#></th>
 											<td>
-												<select name="pptpd_broadcast" class="input_option">
-													<option class="content_input_fd" value="disable" <% nvram_match("pptpd_broadcast", "0","selected"); %>><#btn_disable#></option>
-													<option class="content_input_fd" value="br0"<% nvram_match("pptpd_broadcast", "br0","selected"); %>>LAN to VPN Client</option>
-                          <option class="content_input_fd" value="ppp" <% nvram_match("pptpd_broadcast", "ppp","selected"); %>>VPN Client to LAN</option>
-													<option class="content_input_fd" value="br0ppp"<% nvram_match("pptpd_broadcast", "br0ppp","selected"); %>>Both</option>
-												</select>			
+												<input type="radio" value="1" id="pptpd_broadcast_ppp_yes" name="pptpd_broadcast_ppp" onchange="set_pptpd_broadcast(this);"/><#checkbox_Yes#>
+												<input type="radio" value="0" id="pptpd_broadcast_ppp_no" name="pptpd_broadcast_ppp" onchange="set_pptpd_broadcast(this);"/><#checkbox_No#>										
 											</td>
-									  </tr>
-							
+										</tr>																
 										<tr class="vpndetails">
 											<th><#PPPConnection_Authentication_itemname#></th>
 											<td>

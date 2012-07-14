@@ -1,0 +1,12 @@
+Makefile
+*.o
+*.lo
+*.la
+config.h
+doc/doxygen.conf
+examples/.libs/
+examples/testd
+libdaemon/.libs/
+libtool
+pkgconfig/libdaemon-uninstalled.pc
+pkgconfig/libdaemon.pc

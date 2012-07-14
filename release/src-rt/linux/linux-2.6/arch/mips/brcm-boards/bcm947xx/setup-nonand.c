@@ -389,7 +389,7 @@ init_mtd_partitions(struct mtd_info *mtd, size_t size)
 				bcm947xx_parts[PART_JFFS2].size = boardoff - off - trxsize;
 			len = PART_JFFS2_MIN * mtd->erasesize;
 			if (bcm947xx_parts[PART_JFFS2].size >= len) {
-#if 1 /* Gap jffs2 from rootfs up to 256K */
+#if 0 /* Gap jffs2 from rootfs up to 256K */
 				bcm947xx_parts[PART_JFFS2].size -= len;
 				bcm947xx_parts[PART_JFFS2].size &= ~(PART_JFFS2_GAP - 1); // round down
 				bcm947xx_parts[PART_JFFS2].size += len;

@@ -42,6 +42,7 @@ function switch_ddns(){
 	}
 	else{
 		parent.setASUSDDNS_enable("0");
+		document.form.check_asus_ddns[1].focus();
 		document.form.ddns_server_x.value = this.ddns_server_x;
 		
 		if(parent.show_iframe_page("statusframe").indexOf("ASUS_DDNS_TOS.asp") > 0)
@@ -271,7 +272,7 @@ function cleandef(){
 
 <body onload="initial();">
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
-<form method="GET" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
+<form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame" onsubmit="return go_next_page();">
 <input type="hidden" name="current_page" value="">
 <input type="hidden" name="next_page" value="">
 <input type="hidden" name="group_id" value="">
@@ -338,9 +339,13 @@ function cleandef(){
 
 		<tr valign="bottom">
   		<td width="20%">
-	    	<a href="javascript:go_pre_page();"><div class="titlebtn" align="center" style="margin-left:275px;_margin-left:137px;width:80px;"><span><#btn_pre#></span></div></a>
-	    	<a href="javascript:go_next_page();"><div class="titlebtn" align="center" style="width:80px;"><span><#btn_next#></span></div></a>
-				<img id="loadingIcon" style="display:none;margin-top:7px" src="/images/InternetScan.gif"></span>
+  			<div class="apply_gen" style="margin-top:30px">	
+  				<input type="button" id="prevButton" value="<#btn_pre#>" onclick="go_pre_page();" class="button_gen">
+	    		<input type="submit" id="nextButton" value="<#btn_next#>" class="button_gen">
+					<!--a href="javascript:go_pre_page();"><div class="titlebtn" align="center" style="margin-left:275px;_margin-left:137px;"><span><#btn_pre#></span></div></a-->
+	    		<!--a href="javascript:go_next_page();"><div class="titlebtn" align="center"><span><#btn_next#></span></div></a-->
+					<img id="loadingIcon" style="display:none;margin-top:7px" src="/images/InternetScan.gif"></span>
+				</div>
 	    </td>
 	  </tr>
 	  <!-- end -->
@@ -349,5 +354,6 @@ function cleandef(){
 </tr>  
 </table>
 </div>
+</form>
 </body>
 </html>

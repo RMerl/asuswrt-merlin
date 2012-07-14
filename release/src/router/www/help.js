@@ -1,8 +1,4 @@
-﻿var Untranslated = {
-	appInstall_partition : 'Please select the partition you want to install.',
-	DNS_blank : 'DNS server not set! Please setup the DNS server on the client device.',
-	conflict_LAN_subnet : 'It is not allow to set the same subnet with router\'s LAN.',
-	VPNAdv : 'VPN Details',
+﻿var Untranslated = {	
 	illegal_MAC : 'It\'s an illegal MAC address!',
 	vpn_clients_max : 'VPN server only allows max 10 clients!',
 	vpn_clients_over : 'This value should be higher than ',
@@ -11,7 +7,8 @@
 	wireless_psk_fillin : 'Please type password',
 	reboot_manually : 'Firmware upgrade is done. Please reboot <Router> manually.',
 	ddns_nochange : 'Both hostname & IP address have not changed since the last update.',
-	fw_not_support : 'Not support'
+	fw_not_support : 'Not support',
+	Adj_dst : 'Manual daylight saving time'
 };
 
 var helptitle = new Array(19);
@@ -220,6 +217,12 @@ helptitle[22] = [["", ""],
 				["Repeater(<#OP_RE_item#>)", ""],
 				["AP(<#OP_AP_item#>)", ""]];
 
+/*
+if(psta_support != -1){
+	helptitle[22] = [["", ""],["Router(<#OP_GW_item#>)", ""],["Media bridge", ""],["AP(<#OP_AP_item#>)", ""]];
+}
+*/
+
 helptitle[23] = [["", ""],
 				["5GHz SSID:", "ssid_5g"],
 				["2.4GHz SSID:", "ssid_2g"]];
@@ -243,7 +246,7 @@ helpcontent[0] = new Array("",
 						   "<#WLANConfig11b_EChannel_itemdesc#>",
 							 "",
 							 "<#WLANConfig11b_TxPower_itemdesc#>(<#JS_validrange#> 0 <#JS_validrange_to#> 100)",
-							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
+							 "WEP-64bits: <#WLANConfig11b_WEPKey_itemtype1#><br/>WEP-128bits: <#WLANConfig11b_WEPKey_itemtype2#>",
 							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
 							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
 							 "<#WLANConfig11b_WEPKey_itemtype1#><br/><#WLANConfig11b_WEPKey_itemtype2#>",
@@ -702,7 +705,10 @@ function openHint(hint_array_id, hint_show_id, flag){
 				}
 			}
 			else if(sw_mode == 2){
-				statusmenu = "<span class='StatusClickHint' onclick='top.location.href=\"http://www.asusnetwork.net/QIS_wizard.htm?flag=sitesurvey\";' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#APSurvey_action_search_again_hint2#></span>";
+				if(psta_support == -1)
+					statusmenu = "<span class='StatusClickHint' onclick='top.location.href=\"http://www.asusnetwork.net/QIS_wizard.htm?flag=sitesurvey\";' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#APSurvey_action_search_again_hint2#></span>";
+				else
+					statusmenu = "<span class='StatusClickHint' onclick='top.location.href=\"/QIS_wizard.htm?flag=sitesurvey\";' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#APSurvey_action_search_again_hint2#></span>";
 			}
 			_caption = "Internet Status";
 		}

@@ -20,16 +20,45 @@ wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
 
-function clearLog(){
-	document.form1.target = "hidden_frame";
-	document.form1.action_mode.value = " Clear ";
-	document.form1.submit();
-	location.href = location.href;
+function initial(){
+	replace_Content("Modulation : 0", "Modulation : T1.413");
+	replace_Content("Modulation : 1", "Modulation : G.lite");
+	replace_Content("Modulation : 2", "Modulation : G.Dmt");
+	replace_Content("Modulation : 3", "Modulation : ADSL2");
+	replace_Content("Modulation : 4", "Modulation : ADSL2+");
+	replace_Content("Modulation : 5", "Modulation : Multiple Mode");
+
+	replace_Content("Line State : 0", "Line State : down");
+	replace_Content("Line State : 1", "Line State : wait for init");
+	replace_Content("Line State : 2", "Line State : init");
+	replace_Content("Line State : 3", "Line State : up");
+
+	replace_ContentAnnex("Annex Mode : Annex A ", "Annex Mode : Annex A/L");
+}
+
+function replace_Content(oldMod, newMod){
+	var tb = document.form2.textarea1;
+	if(tb.value.indexOf(oldMod)!= -1)
+	{
+		var startString = tb.value.substr(0, tb.value.indexOf(oldMod));
+		var endString = tb.value.substring(tb.value.indexOf(oldMod)+14);
+		tb.value = startString+newMod+endString;
+	}
+}
+
+function replace_ContentAnnex(oldMod, newMod){
+	var tb = document.form2.textarea1;
+	if(tb.value.indexOf(oldMod)!= -1)
+	{
+		var startString = tb.value.substr(0, tb.value.indexOf(oldMod));
+		var endString = tb.value.substring(tb.value.indexOf(oldMod)+21);
+		tb.value = startString+newMod+endString;
+	}
 }
 </script>
 </head>
 
-<body onload="show_menu();load_body();showclock(); showbootTime();" onunLoad="return unload_body();">
+<body onload="show_menu();load_body(); initial();" onunLoad="return unload_body();">
 <div id="TopBanner"></div>
 
 <div id="Loading" class="popup_bg"></div>
@@ -83,7 +112,7 @@ function clearLog(){
 								<td>
 									<% nvram_dump("adsl/tc_ras_ver.txt",""); %>
 								</td>
-							</tr>							
+							</tr>
 							<tr>
 								<th width="20%"><#adsl_link_sts_itemname#></th>
 								<td>
@@ -91,15 +120,15 @@ function clearLog(){
 								</td>
 							</tr>
 						</table>
+					<form method="post" name="form2" action="dsllog.cgi">
 						<div style="margin-top:8px">
-							<textarea cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("adsl/adsllog.log",""); %></textarea>
+							<textarea name="textarea1" cols="63" rows="27" wrap="off" readonly="readonly" id="textarea" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"><% nvram_dump("adsl/adsllog.log",""); %></textarea>
 						</div>
 					</td>
 			</tr>
 
 			<tr class="apply_gen" valign="top">
 				<td width="20%" align="center">
-					<form method="post" name="form2" action="dsllog.cgi">
 						<input type="hidden" name="next_host" value="">
 						<input type="submit" onClick="document.form2.next_host.value = location.host; onSubmitCtrl(this, ' Save ')" value="<#CTL_onlysave#>" class="button_gen">
 					</form>

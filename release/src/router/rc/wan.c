@@ -750,6 +750,9 @@ void update_wan_state(char *prefix, int state, int reason)
 		// keep ip info if it is stopped from connected
 		nvram_set_int(strcat_r(prefix, "sbstate_t", tmp), reason);
 	}
+	else if(state == WAN_STATE_STOPPING){
+		unlink("/tmp/wanstatus.log");
+	}
         else if (state == WAN_STATE_CONNECTED) {
                 run_custom_script("wan-start");
         }
@@ -996,7 +999,6 @@ start_wan_if(int unit)
 
 	update_wan_state(prefix, WAN_STATE_INITIALIZING, 0);
 
-
 #ifdef RTCONFIG_DUALWAN
 	wan_type = get_dualwan_by_unit(unit);
 #endif
@@ -1196,6 +1198,13 @@ TRACE_PT("3g end.\n");
 		wan_proto = nvram_get(strcat_r(prefix, "proto", tmp));
 		if (!wan_proto || !strcmp(wan_proto, "disabled")) {
 			update_wan_state(prefix, WAN_STATE_DISABLED, 0);
+		
+#ifdef RTCONFIG_DSL
+			// by Chen-I, to remain running pppoe relay if dsl is bridge mode
+			snprintf(prefix, sizeof(prefix), "dsl%d_", unit);
+			if(strcmp(nvram_safe_get(strcat_r(prefix, "proto", tmp)),"bridge") && unit == wan_primary_ifunit())
+				start_pppoe_relay(wan_ifname);
+#endif
 			return;
 		}
 
@@ -1404,14 +1413,26 @@ TRACE_PT("3g end.\n");
 		 * renew and release.
 		 */
 		else if (strcmp(wan_proto, "dhcp") == 0) {
-			char *dhcp_options = nvram_safe_get(strcat_r(prefix,"dhcpc_options",tmp));
 			char *wan_hostname = nvram_safe_get(strcat_r(prefix, "hostname", tmp));
+#ifdef RTCONFIG_DSL
+			char *clientid = nvram_safe_get("dslx_dhcp_clientid");
+			int need_clientid = 0;
+			if(strlen(clientid) > 0) 
+				need_clientid = 1;
+#else
+			char *dhcp_options = nvram_safe_get(strcat_r(prefix,"dhcpc_options",tmp));
+#endif
 			char *dhcp_argv[] = { "udhcpc",
+#ifdef RTCONFIG_DSL
+					need_clientid ? "-c" : "",
+					need_clientid ? clientid : "",
+#else
+					*dhcp_options ? "-c" : "",
+					dhcp_options,
+#endif
 					"-i", wan_ifname,
 					"-p", (sprintf(tmp, "/var/run/udhcpc%d.pid", unit), tmp),
 					"-s", "/tmp/udhcpc",
-					*dhcp_options ? "-c" : "",
-					dhcp_options,
 					*wan_hostname && is_valid_hostname(wan_hostname) ? "-H" : NULL,
 					wan_hostname,
 					NULL};
@@ -1474,6 +1495,9 @@ TRACE_PT("3g end.\n");
 void
 stop_wan_if(int unit)
 {
+#ifdef RTCONFIG_DUALWAN
+	int wan_type;
+#endif
 	char *wan_ifname;
 	char tmp[100], prefix[] = "wanXXXXXXXXXX_";
 	char *wan_proto, active_proto[32];
@@ -1481,6 +1505,8 @@ stop_wan_if(int unit)
 	int pid;
 
 	snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+
+	update_wan_state(prefix, WAN_STATE_STOPPING, WAN_STOPPED_REASON_NONE);
 
 	/* Backup active wan_proto for later restore, if it have been updated by ui */
 	wan_proto = nvram_safe_get(strcat_r(prefix, "proto", tmp));
@@ -1593,9 +1619,13 @@ _dprintf("%s: kill pppd(%d).\n", __FUNCTION__, pid);
 		}
 	}
 
+#ifdef RTCONFIG_DUALWAN
+	wan_type = get_dualwan_by_unit(unit);
+#endif
+
 #ifdef RTCONFIG_DSL
 #ifdef RTCONFIG_DUALWAN
-	if(get_dualwan_by_unit(unit) == WANS_DUALWAN_IF_DSL)
+	if(wan_type == WANS_DUALWAN_IF_DSL)
 #endif
 		if (nvram_match("dsl0_proto", "ipoa"))
 		{
@@ -1644,7 +1674,7 @@ int update_resolvconf()
 		perror("/tmp/resolv.conf");
 		return errno;
 	}
-
+#if 0
 #ifdef RTCONFIG_IPV6
 	/* Handle IPv6 DNS before IPv4 ones */
 	if (ipv6_enabled()) {
@@ -1660,7 +1690,7 @@ int update_resolvconf()
 		}
 	}
 #endif
-
+#endif
 	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
 		char *wan_dns, *wan_xdns;
 	
@@ -2075,11 +2105,9 @@ void wan6_up(const char *wan_ifname)
 	switch (service) {
         case IPV6_NATIVE:
 	case IPV6_NATIVE_DHCP:
+	case IPV6_MANUAL:
 		if ((nvram_get_int("ipv6_accept_ra") & 1) != 0)
 			set_intf_ipv6_accept_ra(wan_ifname, 1);
-		break;
-	case IPV6_MANUAL:
-		set_intf_ipv6_accept_ra(wan_ifname, 0);
 		break;
 	}
 
@@ -2144,6 +2172,7 @@ void wan6_up(const char *wan_ifname)
 	if (!strncmp(nvram_safe_get("ipv6_ifdev"), "eth", 3) ||
 		(get_ipv6_service() != IPV6_NATIVE_DHCP))
 	{
+#if 0
 		// wait for RA
 		if ((get_ipv6_service() == IPV6_NATIVE) ||
 			(get_ipv6_service() == IPV6_NATIVE_DHCP))
@@ -2159,6 +2188,7 @@ void wan6_up(const char *wan_ifname)
 					return;
 			}
 		}
+#endif
 		start_radvd();
 	}
 }
@@ -2168,7 +2198,6 @@ void wan6_down(const char *wan_ifname)
 	stop_radvd();
 	stop_ipv6_tunnel();
 	stop_dhcp6c();
-	nvram_set("ipv6_get_dns", "");
 
 #ifdef OVERWRITE_DNS
 	update_resolvconf();

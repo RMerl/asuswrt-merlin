@@ -19,35 +19,42 @@
 
 
 /* Transfer Char to ASCII */
-void char_to_ascii(char *output, char *input)
+int char_to_ascii_safe(const char *output, const char *input, int outsize)
 {
-	int i;
-	char *ptr;
+	char *src = (char *)input;
+	char *dst = (char *)output;
+	char *end = (char *)output + outsize - 1;
+	char *escape = "[]"; // shouldn't be more?
 
-	ptr = output;
+	if (src == NULL || dst == NULL || outsize <= 0)
+		return 0;
 
-	for ( i=0; i<strlen(input); i++ )
-	{
-		if ( input[i] == '[' || input[i] == ']' ) {
-			*ptr = '\\';
-			ptr ++;
-			*ptr = input[i];
-			ptr ++;
-		}
-		else if ( (input[i] >='0' && input[i] <='9')
-			||(input[i] >='A' && input[i] <='Z')
-			||(input[i] >='a' && input[i] <='z'))
-		{
-			*ptr = input[i];
-			ptr ++;
-		}
-		else
-		{
-			sprintf(ptr, "%%%.02X", input[i]);
-			ptr += strlen(ptr);
+	for ( ; *src && dst < end; src++) {
+		if ((*src >='0' && *src <='9') ||
+		    (*src >='A' && *src <='Z') ||
+		    (*src >='a' && *src <='z')) {
+			*dst++ = *src;
+		} else if (strchr(escape, *src)) {
+			if (dst + 2 > end)
+				break;
+			*dst++ = '\\';
+			*dst++ = *src;
+		} else {
+			if (dst + 3 > end)
+				break;
+			dst += sprintf(dst, "%%%.02X", *src);
 		}
 	}
-	*(ptr) = '\0';
+	if (dst <= end)
+		*dst = '\0';
+
+	return dst - output;
+}
+
+void char_to_ascii(const char *output, const char *input)
+{
+	int outlen = strlen(input)*3 + 1;
+	char_to_ascii_safe(output, input, outlen);
 }
 
 const char *find_word(const char *buffer, const char *word)

@@ -444,6 +444,12 @@ int main(int argc, char **argv)
 		return setup_dnsmq(atoi(argv[1]));
 	}
 #endif
+#ifdef RTCONFIG_BCMWL6
+        else if (!strcmp(base, "acsd_restart_wl")) {
+		restart_wireless_acsd();
+		return 0;
+        }
+#endif
 	else if (!strcmp(base, "add_multi_routes")) {
 		return add_multi_routes();
 	}

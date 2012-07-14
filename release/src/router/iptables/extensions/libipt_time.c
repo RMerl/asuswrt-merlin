@@ -304,7 +304,7 @@ parse_date_string(const char *str_to_parse)
         if (split_date(year, month, day, hour, minute, second, str_to_parse) == 1)
         {
 		memset((void *)&t, 0, sizeof(struct tm));
-		t.tm_isdst = -1;
+		t.tm_isdst = 0;
 		t.tm_mday = 1;
 		if (!((parse_number(year, 1900, 2037, &(t.tm_year)) == -1) ||
 		      (parse_number(month, 1, 12, &(t.tm_mon)) == -1) ||

@@ -65,8 +65,13 @@ var client_list_array = '<% get_client_detail_info(); %>';
 var $j = jQuery.noConflict();	
 
 function initial(){
-	show_menu();	
-	show_middle_status(document.form.wl_auth_mode_x.value, document.form.wl_wpa_mode.value, parseInt(document.form.wl_wep_x.value));
+	show_menu();
+
+	if(psta_support != -1 && sw_mode == 2)
+		show_middle_status('<% nvram_get("wlc_auth_mode"); %>', "", 0);		
+	else
+		show_middle_status(document.form.wl_auth_mode_x.value, document.form.wl_wpa_mode.value, parseInt(document.form.wl_wep_x.value));
+
 	set_default_choice();
 	show_client_status();		
 
@@ -144,21 +149,29 @@ function getCookie(c_name)
 
 function set_default_choice(){
 	var icon_name;
-	if(flag && flag.length > 0 && wan_route_x != "IP_Bridged"){
-		if(flag == "Internet")
-			$("statusframe").src = "/device-map/internet.asp";
-		else if(flag == "Client")
-			$("statusframe").src = "/device-map/clients.asp";
-		else if(flag == "Router2g")
-			$("statusframe").src = "/device-map/router.asp";
+	if(flag && flag.length > 0){
+		if(flag == "Internet"){
+			$("iconRouter").style.backgroundPosition = '0% 0%';
+			clickEvent($("iconInternet"));
+		}
+		else if(flag == "Client"){
+			$("iconRouter").style.backgroundPosition = '0% 0%';
+			clickEvent($("iconClient"));
+		}
+		else if(flag == "USBdisk"){
+			$("iconRouter").style.backgroundPosition = '0% 0%';
+			clickEvent($("iconUSBdisk"));
+		}
 		else{
 			clickEvent($("iconRouter"));
 			return;
 		}
+
 		if(flag == "Router2g")
 			icon_name = "iconRouter";
 		else
 			icon_name = "icon"+flag;
+
 		clickEvent($(icon_name));
 	}
 	else
@@ -435,11 +448,6 @@ function clickEvent(obj){
 		icon = "iconPrinter";
 		stitle = "<#statusTitle_Printer#>";
 	}
-	else if(obj.id.indexOf("Remote") > 0){
-		icon = "iconRemote";
-		stitle = "<#statusTitle_AP#>";
-		$("statusframe").src = "/device-map/remote.asp";
-	}	
 	else if(obj.id.indexOf("No") > 0){
 		icon = "iconNo";
 	}

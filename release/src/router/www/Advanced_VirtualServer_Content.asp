@@ -27,7 +27,9 @@ var wItem = new Array(new Array("", "", "TCP"),
 											new Array("HTTP", "80", "TCP"),
 											new Array("POP3", "110", "TCP"),
 											new Array("SNMP", "161", "UDP"),
-											new Array("SNMP TRAP", "162", "UDP"));
+											new Array("SNMP TRAP", "162", "UDP"),
+											new Array("GRE", "47", "OTHER"),
+											new Array("IPv6 Tunnel", "41", "OTHER"));
 
 var wItem2 = new Array(new Array("", "", "TCP"),
 											 new Array("Age of Empires", "2302:2400,6073", "BOTH"),
@@ -158,8 +160,8 @@ function change_wizard(o, id){
 					document.form.vts_proto_x_0.options[1].selected = 1;
 				else if(wItem[i][2] == "BOTH")
 					document.form.vts_proto_x_0.options[2].selected = 1;
-				//else
-					//document.form.vts_proto_x_0.options[3].selected = 1;
+				else if(wItem[i][2] == "OTHER")
+					document.form.vts_proto_x_0.options[3].selected = 1;
 				
 				document.form.vts_ipaddr_x_0.value = client_ip;
 				document.form.vts_port_x_0.value = wItem[i][1];
@@ -192,8 +194,8 @@ function change_wizard(o, id){
 					document.form.vts_proto_x_0.options[1].selected = 1;
 				else if(wItem2[i][2] == "BOTH")
 					document.form.vts_proto_x_0.options[2].selected = 1;
-				//else
-					//document.form.vts_proto_x_0.options[3].selected = 1;
+				else if(wItem2[i][2] == "OTHER")
+					document.form.vts_proto_x_0.options[3].selected = 1;
 				
 				document.form.vts_ipaddr_x_0.value = client_ip;
 				document.form.vts_port_x_0.value = wItem2[i][1];
@@ -277,8 +279,14 @@ function validForm(){
 	if(!Block_chars(document.form.vts_port_x_0, ["<" ,">"])){
 				return false;		
 	}	
-			
-	if(!Check_multi_range(document.form.vts_port_x_0, 1, 65535)){
+
+	if(document.form.vts_proto_x_0.value=="OTHER"){
+		document.form.vts_lport_x_0.value = "";
+		if (!check_multi_range(document.form.vts_port_x_0, 1, 255, false))
+			return false;
+	}
+
+	if(!check_multi_range(document.form.vts_port_x_0, 1, 65535, true)){
 		return false;
 	}
 	
@@ -390,13 +398,12 @@ function validate_single_range(val, min, max) {
 		return true;
 }	
 var parse_port="";
-function Check_multi_range(obj, mini, maxi){
+function check_multi_range(obj, mini, maxi, allow_range){
 	obj.value = document.form.vts_port_x_0.value.replace(/[-~]/gi,":");	// "~-" to ":"
-	var PortSplit = obj.value.split(",");			
+	var PortSplit = obj.value.split(",");
 	for(i=0;i<PortSplit.length;i++){
 		PortSplit[i] = PortSplit[i].replace(/(^\s*)|(\s*$)/g, ""); 		// "\space" to ""
 		PortSplit[i] = PortSplit[i].replace(/(^0*)/g, ""); 		// "^0" to ""	
-		
 		
 		if(PortSplit[i] == "" ||PortSplit[i] == 0){
 			alert("<#JS_ipblank1#>");
@@ -404,7 +411,10 @@ function Check_multi_range(obj, mini, maxi){
 			obj.select();			
 			return false;
 		}
-		if(!validate_multi_range(PortSplit[i], mini, maxi)){
+		if(allow_range)
+			res = validate_multi_range(PortSplit[i], mini, maxi);
+		else	res = validate_single_range(PortSplit[i], mini, maxi);
+		if(!res){
 			obj.focus();
 			obj.select();
 			return false;
@@ -442,9 +452,9 @@ function del_Row(r){
 	for(k=0; k<$('vts_rulelist_table').rows.length; k++){
 		for(j=0; j<$('vts_rulelist_table').rows[k].cells.length-1; j++){
 			if(j == 0)	
-				vts_rulelist_value += "&#60";
+				vts_rulelist_value += "<";
 			else
-				vts_rulelist_value += "&#62";
+				vts_rulelist_value += ">";
 				
 			if($('vts_rulelist_table').rows[k].cells[j].innerHTML.lastIndexOf("...")<0){
 				vts_rulelist_value += $('vts_rulelist_table').rows[k].cells[j].innerHTML;
@@ -563,7 +573,7 @@ function changeBgColor(obj, num){
 		</div>		
 			
 		<div class="formfontdesc" style="margin-top:-10px;">
-			<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;"><#menu5_3_4#> FAQ</a>
+			<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;"><#menu5_3_4#>&nbspFAQ</a>
 		</div>
 
 		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
@@ -641,6 +651,7 @@ function changeBgColor(obj, num){
 						<option value="TCP">TCP</option>
 						<option value="UDP">UDP</option>
 						<option value="BOTH">BOTH</option>
+						<option value="OTHER">OTHER</option>
 					</select>
 				</td>
 				<td width="14%">

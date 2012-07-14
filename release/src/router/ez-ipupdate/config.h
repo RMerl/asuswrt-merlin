@@ -10,8 +10,7 @@
 #define HAVE_GETPASS 1
 #define HAVE_SYS_ERRLIST 1
 #define OS "unknown"
-//#define USE_MD5 1
-//#undef USE_MD5 //2007.03.14 Yau del
+#define USE_MD5 1
 #define DEF_SERVICE "NULL"
 
 /* Define if you have the fork function.  */

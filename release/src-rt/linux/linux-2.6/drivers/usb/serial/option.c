@@ -107,6 +107,9 @@ static int  option_send_setup(struct usb_serial_port *port);
 #define OPTION_PRODUCT_ETNA_KOI_MODEM		0x7100
 #define OPTION_PRODUCT_ETNA_KOI_NETWORK		0x7111
 #define OPTION_PRODUCT_GTM380_MODEM             0x7201
+#define OPTION_PRODUCT_GI1515                   0xD157          // 0703 add
+#define OPTION_PRODUCT_GLOBETROTTER             0x9100          // 0703 add
+#define OPTION_PRODUCT_ICON_711                 0x4005          // 0703 add
 
 #define DATANG_VENDOR_ID			0x1AB7
 #define DATANG_PRODUCT_M5731			0x5731
@@ -181,6 +184,9 @@ static int  option_send_setup(struct usb_serial_port *port);
 #define HUAWEI_PRODUCT_K4505			0x1464
 #define HUAWEI_PRODUCT_K3765			0x1465
 #define HUAWEI_PRODUCT_E14AC			0x14AC
+#define HUAWEI_PRODUCT_E353_SE                  0x14DB          // 0703 add 
+#define HUAWEI_PRODUCT_K5005                    0x14C8          // 0703 add 
+#define HUAWEI_PRODUCT_E173_MSTAR               0x1C12          // 0703 add 
 #define HUAWEI_PRODUCT_ETS1220			0x1803
 #define HUAWEI_PRODUCT_E353			0x1506
 
@@ -324,6 +330,7 @@ static int  option_send_setup(struct usb_serial_port *port);
 #define BANDRICH_PRODUCT_1010			0x1010
 #define BANDRICH_PRODUCT_1011			0x1011
 #define BANDRICH_PRODUCT_1012			0x1012
+#define BANDRICH_PRODUCT_C339                   0x2006          // 0703 add
 
 #define QUALCOMM_VENDOR_ID			0x05C6
 
@@ -344,6 +351,7 @@ static int  option_send_setup(struct usb_serial_port *port);
 #define ZTE_PRODUCT_AC8710			0xfff1
 #define ZTE_PRODUCT_AC2726			0xfff5
 #define ZTE_PRODUCT_AC8710T			0xffff
+#define ZTE_PRODUCT_A371B                       0x0170          // 0703 add
 
 /* ZTE PRODUCTS -- alternate vendor ID */
 #define ZTE_VENDOR_ID2				0x1d6b
@@ -403,6 +411,12 @@ static int  option_send_setup(struct usb_serial_port *port);
 #define AIRPLUS_VENDOR_ID			0x1011
 #define AIRPLUS_PRODUCT_MCD650			0x3198
 
+/* Dlink products */
+#define DLINK_VENDOR_ID2                        0x2001
+#define DLINK_VENDOR_ID3                        0x07d1
+#define DLINK_PRODUCT_156DWM                    0xa80b
+#define DLINK_PRODUCT_DWM156                    0x3e02
+
 /* Longcheer/Longsung vendor ID; makes whitelabel devices that
  * many other vendors like 4G Systems, Alcatel, ChinaBird,
  * Mobidata, etc sell under their own brand names.
@@ -420,6 +434,7 @@ static int  option_send_setup(struct usb_serial_port *port);
 /* Haier products */
 #define HAIER_VENDOR_ID				0x201e
 #define HAIER_PRODUCT_CE100			0x2009
+#define HAIER_PRODUCT_CE682                     0x1022          // 0703 add
 
 /* Cinterion (formerly Siemens) products */
 #define SIEMENS_VENDOR_ID			0x0681
@@ -439,12 +454,14 @@ static int  option_send_setup(struct usb_serial_port *port);
 /* Celot products */
 #define CELOT_VENDOR_ID				0x211f
 #define CELOT_PRODUCT_CT680M			0x6801
+#define CELOT_PRODUCT_CT680                     0x6802                  // 0703 add
 
 /* ONDA Communication vendor id */
 #define ONDA_VENDOR_ID				0x1ee8
 
 /* ONDA MT825UP HSDPA 14.2 modem */
 #define ONDA_MT825UP				0x000b
+#define ONDA_PRODUCT_MSA14_4                    0x005f                  // 0703 add 
 
 /* Ericsson products */
 #define ERICSSON_VENDOR_ID			0x0bdb
@@ -454,6 +471,7 @@ static int  option_send_setup(struct usb_serial_port *port);
 /* Samsung products */
 #define SAMSUNG_VENDOR_ID			0x04e8
 #define SAMSUNG_PRODUCT_GT_B3730		0x6889
+#define SAMSUNG_PRODUCT_GT_B1110                0x6792
 
 /* PANTECH PRODUCTS */
 #define PANTECH_VENDOR_ID			0x106c          
@@ -465,6 +483,50 @@ static int  option_send_setup(struct usb_serial_port *port);
 #define SIERRA_PRODUCT_U595			0x0120          
 #define SIERRA_PRODUCT_U597			0x0023          
 #define SIERRA_PRODUCT_U598			0x0025
+
+/* STRONGRISING PRODUCTS*/                                              // 0703 add
+#define STRONGRISING_VENDOR_ID                  0x21f5
+#define STRONGRISING_PRODUCT_FLEXINET           0x2008        
+
+/* LG PRODUCTS*/
+#define LG_VENDOR_ID                            0x1004
+#define LG_PRODUCT_L02C                         0x618f
+#define LG_PRODUCT_SD711                        0x61e6
+#define LG_PRODUCT_L08C                         0x61ea
+#define LG_PRODUCT_L07A                         0x6135
+
+/* I-O DATA PRODUCTS */
+#define IODATA_VENDOR_ID                        0x04bb
+#define IODATA_PRODUCT_WMX2_U                   0x0949
+
+/* Telenet PRODUCTS */
+#define TELENET_VENDOR_ID                       0x2077
+#define TELENET_PRODUCT_WU160                   0x9000
+
+/* Nokia PRODUCTS */
+#define NOKIA_VENDOR_ID                         0x0421
+#define NOKIA_PRODUCT_CS21M02                   0x0638
+
+/* Telewell PRODUCTS */
+#define TELEWELL_VENDOR_ID                      0x1c9e
+#define TELEWELL_PRODUCT_TW3G                   0x9801
+
+/* MediaTek PRODUCTS */
+#define MEDIATEK_VENDOR_ID                      0x0e8d
+#define MEDIATEK_PRODUCT_MT6276M                0x00a1
+#define MEDIATEK_PRODUCT_MT6276M_2              0x00a2
+
+/* TATA PRODUCTS */
+#define TATA_VENDOR_ID                          0x22f4
+#define TATA_PRODUCT_TATAPHONE                  0x0021
+
+/* HISENSE PRODUCTS */
+#define HISENSE_VENDOR_ID                       0x109b
+#define HISENSE_PRODUCT_E910                    0x9114
+
+/* ASUS PRODUCTS */
+#define ASUS_VENDOR_ID                          0x0b05
+#define ASUS_PRODUCT_T500                       0x0302
 
 /* some devices interfaces need special handling due to a number of reasons */
 enum option_blacklist_reason {
@@ -526,6 +588,9 @@ static struct usb_device_id option_ids[] = {
 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_ETNA_MODEM_EX) },
 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_ETNA_KOI_MODEM) },
 	{ USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_GTM380_MODEM) },
+        { USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_GI1515) },
+        { USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_GLOBETROTTER) },
+        { USB_DEVICE(OPTION_VENDOR_ID, OPTION_PRODUCT_ICON_711) },
 	{ USB_DEVICE(QUANTA_VENDOR_ID, QUANTA_PRODUCT_Q101) },
 	{ USB_DEVICE(QUANTA_VENDOR_ID, QUANTA_PRODUCT_Q111) },
 	{ USB_DEVICE(QUANTA_VENDOR_ID, QUANTA_PRODUCT_GLX) },
@@ -602,6 +667,9 @@ static struct usb_device_id option_ids[] = {
 	{ USB_DEVICE_AND_INTERFACE_INFO(HUAWEI_VENDOR_ID, HUAWEI_PRODUCT_K3765, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(HUAWEI_VENDOR_ID, HUAWEI_PRODUCT_ETS1220, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(HUAWEI_VENDOR_ID, HUAWEI_PRODUCT_E14AC, 0xff, 0xff, 0xff) },
+        { USB_DEVICE_AND_INTERFACE_INFO(HUAWEI_VENDOR_ID, HUAWEI_PRODUCT_E353_SE, 0xff, 0xff, 0xff) },
+        { USB_DEVICE_AND_INTERFACE_INFO(HUAWEI_VENDOR_ID, HUAWEI_PRODUCT_K5005, 0xff, 0xff, 0xff) },
+        { USB_DEVICE_AND_INTERFACE_INFO(HUAWEI_VENDOR_ID, HUAWEI_PRODUCT_E173_MSTAR, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(HUAWEI_VENDOR_ID, HUAWEI_PRODUCT_E353, 0xff, 0x01, 0x01) },
 	{ USB_DEVICE(NOVATELWIRELESS_VENDOR_ID, NOVATELWIRELESS_PRODUCT_V640) },
 	{ USB_DEVICE(NOVATELWIRELESS_VENDOR_ID, NOVATELWIRELESS_PRODUCT_V620) },
@@ -687,6 +755,7 @@ static struct usb_device_id option_ids[] = {
 	{ USB_DEVICE(BANDRICH_VENDOR_ID, BANDRICH_PRODUCT_1010) },
 	{ USB_DEVICE(BANDRICH_VENDOR_ID, BANDRICH_PRODUCT_1011) },
 	{ USB_DEVICE(BANDRICH_VENDOR_ID, BANDRICH_PRODUCT_1012) },
+        { USB_DEVICE(BANDRICH_VENDOR_ID, BANDRICH_PRODUCT_C339) },              /* 0703 add */
 	{ USB_DEVICE(KYOCERA_VENDOR_ID, KYOCERA_PRODUCT_KPC650) },
 	{ USB_DEVICE(KYOCERA_VENDOR_ID, KYOCERA_PRODUCT_KPC680) },
 	{ USB_DEVICE(QUALCOMM_VENDOR_ID, 0x6000)}, /* ZTE AC8700 */
@@ -772,6 +841,7 @@ static struct usb_device_id option_ids[] = {
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x0083, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x0086, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x0087, 0xff, 0xff, 0xff) },
+        { USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x0094, 0xff, 0xff, 0xff) },     // 0703 add
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x0104, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x0105, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x0106, 0xff, 0xff, 0xff) },
@@ -989,6 +1059,7 @@ static struct usb_device_id option_ids[] = {
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x0073, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x0130, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x0141, 0xff, 0xff, 0xff) },
+        { USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x1515, 0xff, 0xff, 0xff) },     // 0703 add
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x2002, 0xff,
 	  0xff, 0xff), .driver_info = (kernel_ulong_t)&zte_k3765_z_blacklist },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, 0x2003, 0xff, 0xff, 0xff) },
@@ -996,6 +1067,7 @@ static struct usb_device_id option_ids[] = {
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, ZTE_PRODUCT_AC8710, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, ZTE_PRODUCT_AC2726, 0xff, 0xff, 0xff) },
 	{ USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, ZTE_PRODUCT_AC8710T, 0xff, 0xff, 0xff) },
+        { USB_DEVICE_AND_INTERFACE_INFO(ZTE_VENDOR_ID, ZTE_PRODUCT_A371B, 0xff, 0xff, 0xff) },          // 0703 add
 	{ USB_DEVICE(ZTE_VENDOR_ID2, ZTE_PRODUCT_MF_330) },
 	{ USB_DEVICE(BENQ_VENDOR_ID, BENQ_PRODUCT_H10) },
 	{ USB_DEVICE(DLINK_VENDOR_ID, DLINK_PRODUCT_DWM_652) },
@@ -1014,11 +1086,14 @@ static struct usb_device_id option_ids[] = {
 	{ USB_DEVICE(ALCATEL_VENDOR_ID, ALCATEL_PRODUCT_X060S_X200),
 	  .driver_info = (kernel_ulong_t)&alcatel_x200_blacklist },
 	{ USB_DEVICE(AIRPLUS_VENDOR_ID, AIRPLUS_PRODUCT_MCD650) },
+        { USB_DEVICE(DLINK_VENDOR_ID2, DLINK_PRODUCT_156DWM) },
+        { USB_DEVICE(DLINK_VENDOR_ID3, DLINK_PRODUCT_DWM156) },
 	{ USB_DEVICE(TLAYTECH_VENDOR_ID, TLAYTECH_PRODUCT_TEU800) },
 	{ USB_DEVICE(LONGCHEER_VENDOR_ID, FOUR_G_SYSTEMS_PRODUCT_W14),
 	  .driver_info = (kernel_ulong_t)&four_g_w14_blacklist },
 	{ USB_DEVICE(LONGCHEER_VENDOR_ID, ZOOM_PRODUCT_4597) },
 	{ USB_DEVICE(HAIER_VENDOR_ID, HAIER_PRODUCT_CE100) },
+        { USB_DEVICE(HAIER_VENDOR_ID, HAIER_PRODUCT_CE682) },           // 0703 add
 	{ USB_DEVICE(ERICSSON_VENDOR_ID, ERICSSON_PRODUCT_F3507G_1) },
 	{ USB_DEVICE(ERICSSON_VENDOR_ID, ERICSSON_PRODUCT_F3507G_2) },
 	/* Pirelli  */
@@ -1052,13 +1127,30 @@ static struct usb_device_id option_ids[] = {
 
 	{ USB_DEVICE(OLIVETTI_VENDOR_ID, OLIVETTI_PRODUCT_OLICARD100) },
 	{ USB_DEVICE(CELOT_VENDOR_ID, CELOT_PRODUCT_CT680M) }, /* CT-650 CDMA 450 1xEVDO modem */
+        { USB_DEVICE(CELOT_VENDOR_ID, CELOT_PRODUCT_CT680)},   /* Celot CT-680 */       // 0703 add
 	{ USB_DEVICE(ONDA_VENDOR_ID, ONDA_MT825UP) }, /* ONDA MT825UP modem */
+        { USB_DEVICE(ONDA_VENDOR_ID, ONDA_PRODUCT_MSA14_4) },   // 0703 add
 	{ USB_DEVICE_AND_INTERFACE_INFO(SAMSUNG_VENDOR_ID, SAMSUNG_PRODUCT_GT_B3730, USB_CLASS_CDC_DATA, 0x00, 0x00) }, /* Samsung GT-B3730 LTE USB modem.*/
+        { USB_DEVICE_AND_INTERFACE_INFO(SAMSUNG_VENDOR_ID, SAMSUNG_PRODUCT_GT_B1110, USB_CLASS_CDC_DATA, 0x00, 0x00) }, /* Samsung GT-B1110 LTE USB modem.*/
 	{ USB_DEVICE(PANTECH_VENDOR_ID, PANTECH_PRODUCT_UM150) },       
 	{ USB_DEVICE(PANTECH_VENDOR_ID, PANTECH_PRODUCT_UM175) },
 	{ USB_DEVICE(SIERRA_VENDOR_ID, SIERRA_PRODUCT_U595) },          
 	{ USB_DEVICE(SIERRA_VENDOR_ID, SIERRA_PRODUCT_U597) },          
 	{ USB_DEVICE(SIERRA_VENDOR_ID, SIERRA_PRODUCT_U598) },          
+        { USB_DEVICE(STRONGRISING_VENDOR_ID, STRONGRISING_PRODUCT_FLEXINET) },
+        { USB_DEVICE(LG_VENDOR_ID, LG_PRODUCT_L02C) },                  // 0703 add 
+        { USB_DEVICE(LG_VENDOR_ID, LG_PRODUCT_SD711) },                 // 0703 add 
+        { USB_DEVICE(LG_VENDOR_ID, LG_PRODUCT_L08C) },                  // 0703 add 
+        { USB_DEVICE(LG_VENDOR_ID, LG_PRODUCT_L07A) },                  // 0703 add 
+        { USB_DEVICE(IODATA_VENDOR_ID, IODATA_PRODUCT_WMX2_U) },
+        { USB_DEVICE(TELENET_VENDOR_ID, TELENET_PRODUCT_WU160) },
+        { USB_DEVICE(NOKIA_VENDOR_ID, NOKIA_PRODUCT_CS21M02) },
+        { USB_DEVICE(TELEWELL_VENDOR_ID, TELEWELL_PRODUCT_TW3G) },
+        { USB_DEVICE(MEDIATEK_VENDOR_ID, MEDIATEK_PRODUCT_MT6276M) },
+        { USB_DEVICE(MEDIATEK_VENDOR_ID, MEDIATEK_PRODUCT_MT6276M_2) },
+        { USB_DEVICE(TATA_VENDOR_ID, TATA_PRODUCT_TATAPHONE) },
+        { USB_DEVICE(HISENSE_VENDOR_ID, HISENSE_PRODUCT_E910) },
+        { USB_DEVICE(ASUS_VENDOR_ID, ASUS_PRODUCT_T500) },
 
 	{ },    /* Reserved element for user specified VID/PID */
 	{ } /* Terminating entry */
@@ -1201,7 +1293,8 @@ static int option_probe(struct usb_serial *serial,
 
 	/* Don't bind network interface on Samsung GT-B3730, it is handled by a separate module */
 	if (serial->dev->descriptor.idVendor == SAMSUNG_VENDOR_ID &&
-		serial->dev->descriptor.idProduct == SAMSUNG_PRODUCT_GT_B3730 &&
+                (serial->dev->descriptor.idProduct == SAMSUNG_PRODUCT_GT_B3730 ||
+                serial->dev->descriptor.idProduct == SAMSUNG_PRODUCT_GT_B1110) &&
 		serial->interface->cur_altsetting->desc.bInterfaceClass != USB_CLASS_CDC_DATA)
 		return -ENODEV;
 

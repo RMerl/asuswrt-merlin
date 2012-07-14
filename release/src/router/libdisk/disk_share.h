@@ -47,6 +47,9 @@
 #define DEFAULT_WEBDAV_RIGHT 3
 #endif
 
+extern void set_file_integrity(const char *const file_name);
+extern int check_file_integrity(const char *const file_name);
+
 extern int get_account_list(int *, char ***);
 extern int get_folder_list(const char *const, int *, char ***);
 extern int get_all_folder(const char *const, int *, char ***);

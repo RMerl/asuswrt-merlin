@@ -12,32 +12,40 @@
 html{
 margin:0 0;
 padding:0px;
+font-family:"Segoe UI";
 }
 body{
 display: block;
 overflow: hidden;
 }
-fieldset {  
-width:320px;  
-font-family:Verdana, Arial, Helvetica, sans-serif;  
-font-size:14px;  
+
+#logo, #ok {
+background:transparent url("/smb/css/style-metro.png") no-repeat top left;
 }
 
-.inputtext{
-border:1px solid #bfcedc;
-line-height:15px !important;
-height:19px;
+#logo{
+background-position: 0 0;
+width:240px;
+height:60px;
 }
-.gradientbg1{
-background: #206299; /* Old browsers */
-background: -moz-linear-gradient(left,  #206299 9%, #2268a3 24%, #164367 53%, #123754 100%); /* FF3.6+ */
-background: -webkit-gradient(linear, left top, right top, color-stop(9%,#206299), color-stop(24%,#2268a3), color-stop(53%,#164367), color-stop(100%,#123754)); /* Chrome,Safari4+ */
-background: -webkit-linear-gradient(left,  #206299 9%,#2268a3 24%,#164367 53%,#123754 100%); /* Chrome10+,Safari5.1+ */
-background: -o-linear-gradient(left,  #206299 9%,#2268a3 24%,#164367 53%,#123754 100%); /* Opera 11.10+ */
-background: -ms-linear-gradient(left,  #206299 9%,#2268a3 24%,#164367 53%,#123754 100%); /* IE10+ */
-background: linear-gradient(left,  #206299 9%,#2268a3 24%,#164367 53%,#123754 100%); /* W3C */
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#206299', endColorstr='#123754',GradientType=1 ); /* IE6-9 */
+
+#ok{
+background-position: -120px -95px;
+width:40px;
+height:40px;
+float:right;
 }
+
+#title1{
+color:#fff;
+font-size:30px
+}
+
+#title2{
+color:#fff;
+font-size:15px
+}
+
 </style>
 <script type="text/javascript" src="/smb/js/tools.js"></script>
 <script type='text/javascript' src='/smb/js/davclient_tools.js'></script>
@@ -51,13 +59,8 @@ $("document").ready(function() {
 	var lan = ( g_storage.get('lan') == undefined ) ? loc_lan : g_storage.get('lan');
 	m.setLanguage(lan);
 	
-	$('label#username').text(m.getString('title_username'));
-	$('label#password').text(m.getString('title_password'));
-	$('button#ok').text(m.getString('btn_ok'));
-	$('button#cancel').text(m.getString('btn_cancel'));
-	
-	//$('input#username').attr("disabled", "");
-	//$('input#password').attr("disabled", "");
+	$('label#username').text(m.getString('title_username2'));
+	$('label#password').text(m.getString('title_password2'));
 	
 	this_url = getUrlVars()["v"];
 	
@@ -99,10 +102,6 @@ function doOK(e) {
 	});
 };
 
-function doCancel(e) {
-	parent.closeJqmWindow(0);
-};
-
 function getUrlVars(){
     var vars = [], hash;
     var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
@@ -118,60 +117,67 @@ function onKeyHandler(e){
 	if(e.keyCode==13)
 		doOK(e);
 }
+
+
 </script>
 </head>
-<body class='gradientbg1' style='padding-top:20px;margin:0'>
+<body style='padding-top:20px;margin:0;background-color:#014051'>
 
 <table width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
 	<tbody><tr>
-		<td valign="middle" align="center"><img src="/smb/css/logo.png" width="250" height="84" alt=""></td>
-	</tr>
-</tbody></table>
+		<!--<td valign="middle" align="center"><img src="/smb/css/logo.png" width="280" height="84" alt=""></td>-->
+		<td valign="middle" align="center"><div id="logo"></div></td>
+	</tr></tbody>
+</table>
+
+<table width="100%" border="0" valign="middle" align="center" cellpadding="0" cellspacing="0">
+	<tbody><tr>
+		<td valign="middle" align="center">
+			<div style="width:240px;height:88px;background-color:#01536B;padding-top:10px">
+				<div id="title1">Welcome.</div>
+				<div id="title2">Who’s coming home?</div>
+			</div>
+		</td>
+	</tr></tbody>
+</table>
 
 <table width="100%" height="100%">
-<tbody><tr>
-<td valign="middle" align="center">
+	<tbody><tr>
+		<td valign="middle" align="center">
 
-<table valign="middle" align="center" border="0" cellpadding="0" cellspacing="0">
-	<tbody>
-	
-	<tr>
+			<table valign="middle" align="center" border="0" cellpadding="0" cellspacing="0">
+				<tbody><tr>
+					<td align="left" background="" height="106" alt="">		
+						<div style="width:240px;height:360px;background-color:#008F6D">
+							<table border="0" cellpadding="0" cellspacing="3" style="padding-left:15px;padding-top:20px">
+									<tbody>
+										<tr>
+											<td><font color="white" size="4"><label id="username">Username :</label></font></td>
+										</tr>
+										<tr>
+					          	<td><input id="username" name="username" type="text" size="20" style="font-size:20px;width:200px;height:33px"></td>
+					          </tr>
+					          <tr style="height:20px"></tr>
+					          <tr> 
+					            <td><font color="white" size="4"><label id="password">Password :</label></font></td>
+					          </tr>					          
+					          <tr> 
+					            <td><input id="password" name="password" type="password" size="20" style="font-size:20px;width:200px;height:33px" onkeydown="return onKeyHandler(event)"></td>
+					          </tr>
+					          <tr style="height:20px"></tr>
+					          <tr> 
+					          	<td colspan="2" align="center"><div id="ok" onClick="doOK();"></div></td>
+					        	</tr>
+					        </tbody>
+					    </table>
+				    </div>
+					</td>
+				</tr></tbody>
+			</table>
 
-		<td align="left" background="" height="106" alt="">		
-			<!--<form name="loginForm">	  		-->
-	    	<table border="0" cellpadding="0" cellspacing="3">
-	            <tbody><tr> 
-	              <td><font color="white" size="2"><label id="username">Username :</label></font></td>
-	              <td><input id="username" name="username" type="text" size="20" style="width:120px;"></td>
-	            </tr>
-	            <tr> 
-	              <td><font color="white" size="2"><label id="password">Password :</label></font></td>
-	              <td><input id="password" name="password" type="password" size="20" style="width:120px;" onkeydown="return onKeyHandler(event)"></td>
-	            </tr>
-	            <tr> 
-	              <td colspan="2" align="center"><br><button id="ok" class='btnStyle' onClick="doOK();">OK</button></td>
-	            </tr>
-	          </tbody>
-	     	</table> 
-	    <!--</form>-->
 		</td>
-	</tr>
-	
-	<!--
-	<tr>
-		<td colspan="2">
-
-			<img src="/images/login_05.jpg" width="506" height="45" alt=""></td>
-	</tr>
-	-->
-	
-</tbody></table>
-
-
-</td>
-</tr>
-</tbody></table>
-
+	</tr></tbody>
+</table>
 
 </body>
 </html>

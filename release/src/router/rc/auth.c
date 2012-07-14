@@ -50,8 +50,8 @@ start_wpa_supplicant(int unit, int restart)
 	cli_argv[3] = wpa_argv[4];
 
 	/* Get driver, wired default */
+#ifndef RTCONFIG_RALINK /* Both BCM 5.x and 6.x */
 	switch (get_model()) {
-#ifdef CONFIG_BCMWL5
 	case MODEL_RTN66U:
 	case MODEL_RTAC66U:
 	case MODEL_RTN16:
@@ -59,8 +59,8 @@ start_wpa_supplicant(int unit, int restart)
 		break;
 	default:
 		wpa_argv[6] = "roboswitch";
-#endif
 	}
+#endif
 
 	/* Generate options file */
 	if ((fp = fopen(options, "w")) == NULL) {

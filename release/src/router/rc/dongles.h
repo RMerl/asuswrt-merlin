@@ -168,6 +168,50 @@
 #define SN_UTStarcom_UM185E			0x0271
 #define SN_AVM_Fritz				0x0272
 #define SN_Beceem_BCSM250_ASUS			0x0273
-#define SN_ZTEAX320			0x0274
+#define SN_ZTEAX320				0x0274
+
+/* 0818 add */
+#define SN_SU_8000U                             0x0275
+#define SN_Cisco_AM10                           0x0276
+#define SN_Huawei_EC122                         0x0277
+#define SN_HUAWEI_EC306                         0x0278
+#define SN_Sierra_U598                          0x0279
+#define SN_NovatelU720                          0x027a
+#define SN_Pantech_UM150                        0x027b
+#define SN_Pantech_UM175                        0x027c
+#define SN_Sierra_U595                          0x027d
+#define SN_Huawei_EC1262                        0x027e
+
+/* 120703 add */
+#define SN_Qisda_H21                            0x0300
+#define SN_StrongRising_Air_FlexiNet            0x0301
+#define SN_BandLuxe_C339                        0x0302
+#define SN_Celot_CT680                          0x0303
+#define SN_Huawei_E353                          0x0304
+#define SN_Haier_CE682                          0x0305
+#define SN_LG_L_02C_LTE                         0x0306
+#define SN_LG_SD711                             0x0307
+#define SN_LG_L_08C                             0x0308
+#define SN_IODATA_WMX2_U                        0x0309
+#define SN_Option_GI1515                        0x030a
+#define SN_LG_L_07A                             0x030b
+#define SN_ZTE_A371B                            0x030c
+#define SN_ZTE_MF652                            0x030d
+#define SN_ZTE_MF652_VAR                        0x030e
+#define SN_T_W_WU160                            0x030f
+#define SN_Nokia_CS_21M_02                      0x0310
+#define SN_Telewell_TW_3G                       0x0311
+#define SN_ZTE_MF637_2                          0x0312
+#define SN_Samsung_GT_B1110                     0x0313
+#define SN_ZTE_MF192_VAR                        0x0314
+#define SN_MediaTek_MT6276M                     0x0315
+#define SN_Tata_Photon_plus                     0x0316
+#define SN_Option_Globetrotter                  0x0317
+#define SN_Option_ICON_711                      0x0318
+#define SN_Celot_K300                           0x0319
+#define SN_HISENSE_E910                         0x031a
+#define SN_Huawei_K5005                         0x031b
+#define SN_Huawei_E173_MoiveStar                0x031c
+#define SN_Onda_MSA14_4                         0x031d
 
 #endif

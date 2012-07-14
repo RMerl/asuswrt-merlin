@@ -34,6 +34,7 @@
 int network_write_chunkqueue_linuxsendfile(server *srv, connection *con, int fd, chunkqueue *cq) {
 	chunk *c;
 	size_t chunks_written = 0;
+
 Cdbg(DBE, "enter..mode=[%d]", con->mode);
 	for(c = cq->first; c; c = c->next, chunks_written++) {
 		int chunk_finished = 0;
@@ -242,7 +243,12 @@ Cdbg(DBE, "\t\tfilename=[%s]", c->file.name->ptr);
 			off_t offset;
 			size_t toSend;
 			stat_cache_entry *sce = NULL;
-#define BUFF_SIZE 2*1024
+
+			//#define BUFF_SIZE 2*1024
+
+			//- 256K
+			#define BUFF_SIZE 256*1024
+
 			char buff[BUFF_SIZE]={0};
 //			offset = c->file.start + c->offset;
 			/* limit the toSend to 2^31-1 bytes in a chunk */
@@ -255,6 +261,7 @@ Cdbg(DBE, "\t\tfilename=[%s]", c->file.name->ptr);
 			/* open file if not already opened */
 Cdbg(DBE, " fn =[%s]", c->file.name->ptr);			
 			if (-1 == c->file.fd) {
+				Cdbg(DBE, "start to open file[%s]", c->file.name->ptr);
 				//if (-1 == (c->file.fd = smbc_wrapper_open(con,c->file.name->ptr, O_RDONLY, 0755))) {
 				if (-1 == (c->file.fd = smbc_wrapper_open(con,c->file.name->ptr, O_RDONLY, 0755))) {
 					log_error_write(srv, __FILE__, __LINE__, "ss", "open failed: ", strerror(errno));

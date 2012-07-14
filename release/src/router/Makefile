@@ -154,6 +154,7 @@ else
 obj-$(RTCONFIG_NTFS) += ufsd
 endif
 obj-$(RTCONFIG_EBTABLES) += ebtables
+obj-$(RTCONFIG_IPV6) += libdaemon
 obj-$(RTCONFIG_IPV6) += radvd
 obj-$(RTCONFIG_IPV6) += dhcpv6
 
@@ -405,7 +406,7 @@ endif
 	@mkdir $(PLATFORMDIR)/extras
 	@mv $(TARGETDIR)/lib/modules/*/kernel/net/ipv4/ip_gre.*o $(PLATFORMDIR)/extras/ || true
 
-	$(if $(RTCONFIG_OPENVPN),@cp -f,$(if $(RTCONFIG_USB_EXTRAS),@cp -f,@mv)) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/tun.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_OPENVPN),@cp -f,$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv)) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/tun.*o $(PLATFORMDIR)/extras/ || true
 	$(if $(RTCONFIG_EBTABLES),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/net/bridge/netfilter/ebt*.*o $(PLATFORMDIR)/extras/ || true
 
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/net/ifb.*o $(PLATFORMDIR)/extras/ || true
@@ -425,12 +426,19 @@ endif
 #	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/scsi/sr_mod.*o $(PLATFORMDIR)/extras/ || true
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/scanner.*o $(PLATFORMDIR)/extras/ || true
 
-	$(if $(NEED_EX_USB),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/usbserial.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(NEED_EX_USB),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/option.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(NEED_EX_USB),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/sierra.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(NEED_EX_USB),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/*acm.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(NEED_EX_USB),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/ftdi_sio.*o $(PLATFORMDIR)/extras/ || true
-	$(if $(NEED_EX_USB),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/pl2303.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/usbserial.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/option.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/*acm.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/usbnet.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/asix.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_ether.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/net1080.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/rndis_host.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/zaurus.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/sierra.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_subset.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/ftdi_sio.*o $(PLATFORMDIR)/extras/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/pl2303.*o $(PLATFORMDIR)/extras/ || true
 
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/usbkbd.*o $(PLATFORMDIR)/extras/ || true
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/usbmouse.*o $(PLATFORMDIR)/extras/ || true
@@ -441,10 +449,6 @@ endif
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/pwc*.*o $(PLATFORMDIR)/extras/ || true
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/usb/emi*.*o $(PLATFORMDIR)/extras/ || true
 	@cp -f $(TARGETDIR)/lib/modules/*/kernel/drivers/net/mii.*o $(PLATFORMDIR)/extras/ || true
-	@cp -f $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_ether.*o $(PLATFORMDIR)/extras/ || true
-	@cp -f $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/cdc_subset.*o $(PLATFORMDIR)/extras/ || true
-	@cp -f $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/usbnet.*o $(PLATFORMDIR)/extras/ || true
-	@cp -f $(TARGETDIR)/lib/modules/*/kernel/drivers/net/usb/rndis_host.*o $(PLATFORMDIR)/extras/ || true
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/media/* $(PLATFORMDIR)/extras/ || true
 	@rm -rf $(TARGETDIR)/lib/modules/*/kernel/drivers/media || true
 	@mv $(TARGETDIR)/lib/modules/*/kernel/drivers/sound/* $(PLATFORMDIR)/extras/ || true
@@ -510,16 +514,7 @@ endif
 	$(if $(RTCONFIG_RALINK),@mv,@cp -f)  $(TARGETDIR)/usr/sbin/robocfg $(PLATFORMDIR)/extras/apps/ || true
 
 	$(if $(NEED_EX_USB),@cp -f,@mv) $(TARGETDIR)/usr/lib/libusb* $(PLATFORMDIR)/extras/lib/ || true
-	$(if $(NEED_EX_USB),@cp -f,@mv) $(TARGETDIR)/usr/sbin/usb_modeswitch $(PLATFORMDIR)/extras/apps/ || true
-	@cp usbmodeswitch/usb_modeswitch.conf $(PLATFORMDIR)/extras/apps/usb_modeswitch.conf || true
-	@cp usbmodeswitch/usb_modeswitch.setup $(PLATFORMDIR)/extras/apps/usb_modeswitch.setup || true
-	@mkdir -p $(PLATFORMDIR)/extras/apps/usb_modeswitch.d
-	@cp -f usbmodeswitch/data/usb_modeswitch.d/* $(PLATFORMDIR)/extras/apps/usb_modeswitch.d || true
-ifneq ($(NEED_EX_USB),y)
-	@rm -rf $(TARGETDIR)/rom/etc/usb_modeswitch.d || true
-	@rm -f  $(TARGETDIR)/rom/etc/usb_modeswitch.conf || true
-endif
-	$(if $(NEED_EX_USB),@cp -f,@mv) $(TARGETDIR)/usr/sbin/chat $(PLATFORMDIR)/extras/apps/ || true
+	$(if $(RTCONFIG_USB_MODEM),@cp -f,@mv) $(TARGETDIR)/usr/sbin/chat $(PLATFORMDIR)/extras/apps/ || true
 
 	@mkdir -p $(TARGETDIR)/rom/etc/l7-protocols
 ifeq ($(RTCONFIG_L7PAT),y)
@@ -781,6 +776,7 @@ iptables:
 iptables-install:
 	install -D iptables/iptables $(INSTALLDIR)/iptables/usr/sbin/iptables
 	cd $(INSTALLDIR)/iptables/usr/sbin && \
+		ln -sf iptables iptables-save && \
 		ln -sf iptables iptables-restore
 
 	install -d $(INSTALLDIR)/iptables/usr/lib/iptables
@@ -796,6 +792,7 @@ ifeq ($(RTCONFIG_IPV6),y)
 	install iptables/ip6tables $(INSTALLDIR)/iptables/usr/sbin/ip6tables
 	$(STRIP) $(INSTALLDIR)/iptables/usr/sbin/ip6tables
 	cd $(INSTALLDIR)/iptables/usr/sbin && \
+		ln -sf ip6tables ip6tables-save && \
 		ln -sf ip6tables ip6tables-restore
 endif
 
@@ -945,14 +942,33 @@ libusb-0.1.12-install: libusb-0.1.12
 libusb-0.1.12-clean:
 	-@$(MAKE) -C libusb-0.1.12 distclean
 
+libdaemon: libdaemon/Makefile
+	$(MAKE) -C $@
+
+libdaemon/Makefile: libdaemon/Makefile.in
+	cd libdaemon && $(CONFIGURE) ac_cv_func_setpgrp_void=yes \
+	--disable-dependency-tracking
+
+libdaemon-install: libdaemon
+	install -D libdaemon/libdaemon/.libs/libdaemon.so.0.5.0 $(INSTALLDIR)/libdaemon/usr/lib/libdaemon.so.0.5.0
+	$(STRIP) $(INSTALLDIR)/libdaemon/usr/lib/*.so.*
+	cd $(INSTALLDIR)/libdaemon/usr/lib && \
+		ln -sf libdaemon.so.0.5.0 libdaemon.so && \
+		ln -sf libdaemon.so.0.5.0 libdaemon.so.0
+
+libdaemon-clean:
+	-@$(MAKE) -C libdaemon distclean
+
 radvd/stamp-h1:
 	cd radvd && CFLAGS="-Os $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
 	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
-	$(CONFIGURE) --prefix="" --disable-dependency-tracking
+	$(CONFIGURE) --prefix="" --disable-dependency-tracking \
+	DAEMON_CFLAGS="-I$(TOP)/libdaemon" \
+	DAEMON_LIBS="-ldaemon -L$(TOP)/libdaemon/libdaemon/.libs"
 	@$(MAKE) -C radvd clean
 	@touch radvd/stamp-h1
 
-radvd: radvd/stamp-h1
+radvd: libdaemon radvd/stamp-h1
 
 radvd-clean:
 	-@$(MAKE) -C radvd distclean

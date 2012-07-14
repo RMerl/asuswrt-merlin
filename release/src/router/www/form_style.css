@@ -625,18 +625,6 @@ textarea{
 	padding:5px 5px 5px 0px;
 }
 
-.domore{
-	font-size:12px;
-	font-family:Verdana, Arial, Helvetica, sans-serif;
-	background-color: #EEEEEE;
-	color: #006699;
-	float:right;
-	margin:8px 7px 0 0;
-}
-.domore option{
-	text-decoration:underline;
-}
-
 .short_btn {
 	width: 105px;
 	font-family:Verdana ;
@@ -1577,6 +1565,101 @@ padding-top:1px;
 	position:relative;
 	background-color:#4d595d;
 }
+
+/* 整體設置*/ 
+.navigation {
+	margin-left:790px;
+	*margin-left:45px;
+	margin-top:13px;
+	width:100px;
+	list-style-type:none; 
+	font:12px Arial, Helvetica, sans-serif; 
+	position:absolute;
+	z-index:80;	
+	}
+ 
+.navigation li {
+	/*float:left; */
+	width:145px;
+	*width:145px;
+	}
+ 
+/* 設置選單區塊*/
+.navigation li dl { 
+    margin:0; 
+	padding:0;
+	
+/*	border:solid 2px #666; */	
+/*	background-color:#fff;*/
+
+	}
+ 
+.navigation li dt a , .navigation li dd a{ 
+	display:block;
+	}
+ 
+ 
+/* 設置主選單dt */
+.navigation li dt {	
+	background-image:url('/images/New_ui/dropdown_bt.png');
+	padding-top:8px;
+	padding-right:8px;
+	text-align:center;
+	/*background-color:transparent;*/
+	font-size: 13px;
+	font-weight: bold;
+	height:24px;
+	overflow:hidden;	
+	}
+ 
+.navigation li dt:hover{
+	background-image:url('/images/New_ui/dropdown_btover.png');
+	background-color:transparent;
+}
+ 
+.navigation li dt a ,.navigation  li dt a:visited {
+	display:block; 
+    color:#fff;
+	}
+ 
+/* 設置子選單dd */
+.navigation li dd { 
+	margin:0;
+	/*padding:0;*/
+	color: #fff; 
+	background-color:#333;
+	border-bottom:solid 1px #666;
+	width:140px;
+	}
+ 
+.navigation li dd.last {
+	border-bottom:0;
+	}	
+ 
+.navigation li dd a, .navigation  li dd a:visited {
+	display:block; 
+	color:#fff; 
+	padding:4px 5px 4px 5px;
+    }
+ 
+ 
+/*隱藏子選單*/
+.navigation li dd { 
+	display:none;
+	}
+ 
+ 
+/* 滑鼠滑入顯示子選單 */
+.navigation li:hover dd, .navigation li a:hover dd { 
+	cursor:pointer;
+	display:block;
+}
+
+.navigation li dd:hover{
+	text-decoration:underline;
+	background-color:#065280;
+}
+
 .textarea_ssh_table{
 	margin-left:2px;
 	padding-left:0.4em;

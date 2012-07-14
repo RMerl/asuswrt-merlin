@@ -432,3 +432,35 @@ table.fields {
 	padding:5px; 
 }
 /*Viz Add  20110223   --- end */
+/*Viz Add  20120709   --- start */
+.DescTable{
+	font-size:12px;
+	font-family:Arial, Helvetica, sans-serif;
+	border: 1px solid #000000;
+	border-collapse: collapse;
+}
+.DescTable th{
+	font-family:Arial, Helvetica, sans-serif;
+	background-color:#1F2D35;
+	color:#FFFFFF	;
+	font-weight:normal;
+	line-height:15px;
+	height: 30px;
+	text-align:left;
+	font-size:12px;
+	padding-left: 10px;
+	border: 1px solid #222;
+	border-collapse: collapse;
+	background: url(/images/general_th.gif) repeat;
+}
+.DescTable td{
+	padding-left: 10px;
+	background-color:#475a5f;
+	border: 1px solid #222;
+	border-collapse: collapse;
+}
+.DescTable td span{
+	background-color:#475a5f;
+	color:#FFCC00;
+}
+/*Viz Add  20120709   ---  end  */

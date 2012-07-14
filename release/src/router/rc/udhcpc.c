@@ -502,8 +502,8 @@ static int env2nv(char *env, char *nv)
 {
 	char *value;
 	if ((value = getenv(env)) != NULL) {
-		if (!nvram_match(nv, value)) {
-			nvram_set(nv, value);
+		if (!nvram_match(nv, trim_r(value))) {
+			nvram_set(nv, trim_r(value));
 			return 1;
 		}
 	}
@@ -544,7 +544,7 @@ int dhcp6c_state_main(int argc, char **argv)
 		add_ns(NULL);
 #endif
 	}
-
+#if 0
 	// wait for RA
 	if (!is_intf_up(get_wan6face())) return 0;
 	wait_count = 10;
@@ -555,7 +555,7 @@ int dhcp6c_state_main(int argc, char **argv)
 		else
 			return 0;
 	}
-
+#endif
 	// (re)start radvd and httpd
 	start_radvd();
 	start_httpd();

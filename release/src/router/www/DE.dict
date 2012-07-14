@@ -25,6 +25,7 @@ tunnel_MTU=Tunnel MTU
 tunnel_TTL=Tunnel TTL
 [VPN server]
 vpn_setting=Basiskonfiguration
+vpn_Adv=VPN-Details
 PPTP_desc=Der VPN-Server ermöglicht Ihnen den Zugriff auf Ihr Heimnetzwerk von überall und zu jeder Zeit.
 PPTP_desc2=Um den VPN-Server zu benutzen, folgen Sie bitte diesen Schritten.<br>(1) PPTP VPN-Server aktivieren<br>(2) IP-Bereich für Client-IP einstellen. (Maximal 10 Clients) <br>(3) benutzername und Kennwort für den VPN-Client einrichten.<br>(4) VPN-Verbindungsprogramm in Ihren Computer oder Smartphone öffnen.<br>(5) Eine neue PPTP VPN-Verbindung hinzufügen. Die VPN-Serveradresse lautet
 PPTP_desc3=(6) Falls Ihre WAN-Adresse dynamisch ist, <a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">klicken Sie bitte zur Einrichtung des DDNS hier.</a>
@@ -91,6 +92,19 @@ Low=Niedrig
 Lowest=Sehr niedrig
 traffic_monitor=Datenvolumen-Monitor
 traffic_monitor_desc=Der Datenvolumen-Monitor hilft Ihnen, den Datenverkehr für die folgenden Aktionen zu überwachen:<P>Internet: Gesamter Internetverkehr.<P>Kabelnetzwerk: Netzwerkverkehr vom Kabelnetzwerk zum Wireless-Netzwerk und zum Internet.<P>Wireless: Netzwerkverkehr vom Wireless-Netzwerk zum Kabelnetzwerk und zum Internet.
+traffic_monitor_desc1=Mit dem Datenverkehrmonitor können Sie ankommende und abgehende Pakete folgender Dienste überwachen :
+traffic_monitor_desc2=<b>HINWEIS :</b> Pakete aus dem Internet werden gleichmäßig an verkabelte und kabellose Geräte übertragen.
+tm_internet=Internet
+tm_wired=Kabelverbindungen
+tm_wireless=WLAN
+tm_reception=Empfang
+tm_transmission=Übertragung
+tm_recp_int=Ankommende Internetpakete
+tm_recp_wired=Ankommende Kabelnetzwerkpakete
+tm_recp_wireless=Ankommende WLAN-Pakete
+tm_trans_int=Abgehende Internetpakete
+tm_trans_wired=Abgehende Kabelnetzwerkpakete
+tm_trans_wireless=Abgehende WLAN-Pakete
 ezqosDesw=Quality of Service (QoS) gewährleistet adäquate Netzwerkgeschwindigkeit. Die Standardeinstellung gewährt Online Spiele und Web-Surfen die höchste Priorität, ungestört von P2P-Anwendungen (Peer-to-Peer-Anwendungen wie BitTorrent). Um die QoS-Funktion zu aktivieren, klicken Sie auf den QoS Schieberegler und füllen Sie die Felder für Upload-/Download-Bandbreite aus. Diese Infos können Sie von Ihren Internetdienstanbieter (ISP) beziehen. <p>Falls Sie bestimmten Netzwerkanwendungen oder Netzwerkgeräten Prioritäten zuweisen möchten, wählen in den benutzerdefinierten QOS-Regeln Ihre bevorzugten Prioritäten.
 qos_automatic_mode=Automatischer Modus
 source_ipmac=Bei Quell-oder Ziel-IP-Adressen können Sie:<p>(a) Eine bestimmte IP-Adresse eingeben, wie \"192.168.122.1\";<p>(b) Eine IP-Adresse innerhalb eines gleichen Subnetzes oder IP-Pools eingeben, wie \"192.168.123.*\" oder  \"192.168.*.*\";<p>(c) Alle IP-Adressen eingeben, wie \"*.*.*.*\"<p>Der MAC-Adressformat besteht aus sechs Gruppen von zwei hexadezimalen Ziffern, durch Doppelpunkte (:) getrennt, in Übertragungsabfolge (z.B. 12:34:56:aa:bc:ef)
@@ -279,6 +293,7 @@ RouterConfig_GWMulticast_Broadcast_itemname=Broadcast-Überflutungskontrolle (Mb
 [keyword_filter]
 menu5_5_5=Schlüsselwortfilter
 FirewallConfig_KeywordFilterEnable_sectiondesc=Mit Schlüsselwortfilter können Sie Clients daran hindern, auf Webseiten, welche die festgelegten Schlüsselwörter enthalten, zugreifen zu können.
+FirewallConfig_KeywordFilterEnable_sectiondesc2=Einschränkungen der Schlüsselwortfilterung :<ol><li>Webseiten, die HTTP-Komprimierungstechnologie nutzen, können nicht gefiltert werden. <a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">Weitere Details finden Sie hier</a></li><li>HTTPS-Webseiten können nicht gefiltert werden.</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=Schlüsselwortfilter aktivieren
 FirewallConfig_KeywordActiveDate_itemname=Wann:
 FirewallConfig_KeywordActiveTime_itemname=Zeit:
@@ -394,7 +409,7 @@ ShareNode_Seeding_itemdesc=Hier können Sie die Seeding-Funktion aktivieren/deak
 ShareNode_MaxUpload_itemname=Maximale Upload-Rate
 ShareNode_MaxUpload_itemdesc=Geben Sie einen Wert zwischen 0 und 999 ein. Der Standardwert ist 0, welcher bedeutet, dass es keine Upload-Beschränkung gibt.
 [New item]
-HSDPAConfig_hsdpa_enable_hint1=Die derzeitigen 3G-Einstellungen sind auf 3G-Sicherungsmodus eingestellt. Wenn Sie die Verbindung zu einen anderen WAN-Anschluss wechseln, wird die Verbindung automatisch in den 3G-Modus umgeschaltet.
+HSDPAConfig_hsdpa_enable_hint1=Die derzeitigen 3G/4G-Einstellungen sind auf 3G/4G-Sicherungsmodus eingestellt. Wenn Sie die Verbindung zu einen anderen WAN-Anschluss wechseln, wird die Verbindung automatisch in den 3G/4G-Modus umgeschaltet.
 HSDPAConfig_hsdpa_enable_hint2=Wenn Sie die Verbindungsart ändern wollen, gehen Sie bitte zu <a href="/Advanced_Modem_others.asp">USB Modem</a>, um den USB-Adapter zu deaktivieren.
 HSDPAConfig_USBAdapter_itemname=USB-Adapter
 HSDPAConfig_USBAdapter_itemdesc=Nach der USB Modem-Aktivierung wählen Sie den Adapter, der den ZVMODELVZ unterstützt.
@@ -948,7 +963,9 @@ IPConnection_x_DNSServer1_itemdesc=Dieses Feld zeigt die IP-Adresse des DNS, mit
 IPConnection_x_DNSServer1_itemname=DNS-Server 1:
 IPConnection_x_DNSServer2_itemdesc=Dieses Feld zeigt die IP-Adresse des DNS, mit dem sich der ZVMODELVZ verbindet.
 IPConnection_x_DNSServer2_itemname=DNS-Server 2:
+IPConnection_x_DNSServer_blank=Bitte richten Sie den DNS-Server am Client-Gerät ein.
 IPConnection_warning_WANIPEQUALGatewayIP=Sie haben die WAN-IP als ZVMODELVZ-Gateway festgelegt; der ZVMODELVZ kann sich eventuell nicht mit dem Internet verbinden. Bitte stellen Sie den richtigen Gateway-Wert ein.
+IPConnection_x_WAN_LAN_conflict=WAN und LAN sollten unterschiedliche IP-Adressen und Subnetze aufweisen.
 [QIS_internet_isp.js]
 BOP_isp_host_desc=In diesem Feld können Sie dem ZVMODELVZ einen Hostnamen zuweisen. Dies wird gewöhnlich von Ihrem Internetanbieter gefordert.
 BOP_isp_host_item=Hostname:
@@ -1052,6 +1069,7 @@ Main_alert_proceeding_desc1=Fortfahren
 Main_alert_proceeding_desc4=Bitte warten, 
 Main_alert_proceeding_desc3=Abgeschlossen!
 Main_content_Login_Item7=Der Neustart des Routers braucht etwa 60 Sekunden. Mochten Sie den Router wirklich neu starten?
+[###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=Der Neustart des Routers braucht etwa 80 Sekunden. Mochten Sie den Router wirklich neu starten?
 [QIS-general.js]
 JS_fieldblank=Die Felder dürfen nicht leer bleiben.
 JS_validip=ist keine gültige IP-Adresse!
@@ -1104,11 +1122,13 @@ Setting_upload_itemname=Einstellungen wiederherstellen
 Setting_factorydefault_itemdesc=Durch Anklicken von [Werkseinstellungen] setzen Sie den Router wieder auf den Auslieferungszustand zurück und löschen sämtliche aktuellen Einstellungen. Warten Sie den Neustart des Routers ab. 
 Setting_save_itemdesc=Zum Speichern der aktuellen Einstellungen des ZVMODELVZ in eine Datei klicken Sie auf die [Speichern]-Schaltfläche. (Hinweis: Wenn Sie die aktuellen Einstellungen in einer Datei speichern, werden diese ebenfalls im Flash-Speicher gesichert.)
 Setting_upload_itemdesc=Geben Sie den Pfad und den Namen der Einstellungsdatei an. Anschließend klicken Sie zum Übertragen der Datei in den ZVMODELVZ auf [Hochladen]. Bitte warten Sie den Neustart des ZVMODELVZ ab; dies dauert etwa 60 Sekunden.
+[###MODEL_DEP###][RT-N65U]Setting_upload_itemdesc=Geben Sie den Pfad und den Namen der Einstellungsdatei an. Anschließend klicken Sie zum Übertragen der Datei in den ZVMODELVZ auf [Hochladen]. Bitte warten Sie den Neustart des ZVMODELVZ ab; dies dauert etwa 80 Sekunden.
 Setting_upload_hint=Dateiformat oder Pfad ungültig!
 Setting_factorydefault_hint1=Sämtliche aktuellen Einstellungen werden gelöscht, der Router wird auf die Werkseinstellungen zurückgesetzt.\n
 Setting_factorydefault_hint2=Mochten Sie wirklich fortfahren?
 Setting_factorydefault_iphint=Die Standard-LAN-IP-Adresse ZVMODELVZ lautet 192.168.1.1.\nFalls Sie die Einstellungsseite nicht wiederherstellen können, erneuern Sie bitte die IP-Konfiguration Ihres Computers.
 SET_ok_desc=Einstellungen werden hochgeladen! Bitte warten Sie etwa 60 Sekunden.
+[###MODEL_DEP###][RT-N65U]SET_ok_desc=Einstellungen werden hochgeladen! Bitte warten Sie etwa 80 Sekunden.
 SET_fail_title=Hochladen der Einstellungsdatei fehlgeschlagen!
 SET_fail_desc=Hochladen der Einstellungsdatei fehlgeschlagen! Dies kann an einer defekten Einstellungsdatei oder einem Übertragungsfehler liegen. Bitte überprüfen Sie die Unversehrtheit der Einstellungsdatei und versuchen Sie es noch einmal.
 RHELP_desc4=Dies steht für das Zielnetzwerk oder einen Host mit einer Routerregel. Also kann dies eine Hostadresse wie 「192.168.123.11」 oder eine Netzwerkadresse wie 「192.168.0.0」 sein.
@@ -1217,6 +1237,8 @@ PPPConnection_x_WANGateway_itemname=Gateway
 PPPConnection_x_WANDNSServer_itemname=DNS-Server
 PPPConnection_x_WANLink_itemname=Verbindungsstatus:
 FirewallConfig_display1_sectiondesc=Netzwerkdienstfilter (Network Service Filter) blockiert LAN zu WAN Paketübertragung und hindert Geräte daran, bestimmte Netzwerk-Services zu verwenden. <p>Falls z.B. Geräten der Zugang zum Internet blockiert werden soll, geben Sie 80 für den Zielport ein. Jeglicher Netzwerkverkehr über Port 80 wird blockiert. <p>Um diese Regel auf alle LAN-Geräte zu erweitern, belassen Sie das Quell IP-Feld leer.
+FirewallConfig_display3_sectiondesc=<b>Schwarzlistendauer :</b> Während der geplanten Dauer können die angegebenen Netzwerkdienste nicht von in der Schwarzliste geführten Clients genutzt werden. Nach Ablauf der festgelegten Dauer können sämtliche Clients im LAN wieder auf die angegebenen Netzwerkdienste zugreifen.<br><b>Weißlistendauer :</b> Während der geplanten Dauer können die in der Weißliste geführten Clients AUSSCHLIESSLICH die angegebenen Netzwerkdienste nutzen. Nach Ablauf der festgelegten Dauer können in der Weißliste geführte Clients weder auf das Internet noch auf Internetdienste zugreifen.
+FirewallConfig_display4_sectiondesc=<b>HINWEIS :</b> Wenn Sie eine Weißliste für das Subnetz erstellen, können IP-Adressen außerhalb des Subnetzes weder auf Internet noch auf Internetdienste zugreifen. 
 FirewallConfig_LanWanActiveDate_itemname=Datum zum Aktivieren des LAN-zu-WAN-Filters:
 FirewallConfig_LanWanActiveDate_itemdesc=Dieses Feld definiert das Datum, zu dem der LAN-zu-WAN-Filter aktiviert wird.
 FirewallConfig_LanWanActiveTime_itemname=Uhrzeit zum Aktivieren des LAN-zu-WAN-Filters:
@@ -1233,6 +1255,7 @@ FirewallConfig_LanWanProFlag_itemname=Protokoll
 FirewallConfig_URLActiveTime_itemhint4=Bestimmten Zeitintervall nicht überlappen können.
 FirewallConfig_URLActiveTime_itemhint=Die Startzeit liegt nach der Endzeit.
 FirewallConfig_UrlFilterEnable_sectiondesc=Geben Sie Stichwörter für Webseiten ein, die blockiert werden sollen. <p>Falls Sie z.B. "XXX" eingeben, wird der URL-Filter Seiten wie http://www.abcXXX.com, http://www.XXXbbb.com usw. blockieren.
+FirewallConfig_UrlFilterEnable_itemname2=URL-Filter aktivieren?
 FirewallConfig_UrlFilterEnable_itemname=URL-Filter aktivieren
 FirewallConfig_URLActiveDate_itemname=Datum zum Aktivieren des URL-Filters:
 FirewallConfig_URLActiveDate_itemdesc=Dieses Feld definiert das Datum, zu dem der URL-Filter aktiviert wird.
@@ -1378,6 +1401,7 @@ TZ81=Neukaledonien
 TZ82=Magadan, Fidschi, Kamtschatka, Marshallinseln
 TZ83=Auckland, Wellington
 TZ84=Nuku'alofa
+TZ85=British Summer Time (BST)
 LANHostConfig_x_NTPServer_itemname=NTP-Server
 LANHostConfig_x_NTPServer_itemdesc=Zur Synchronisierung Ihrer Systemzeit mit einem NTP-Server.
 LANHostConfig_x_DDNSEnable_sectionname=DDNS-Einstellungen
@@ -1494,6 +1518,7 @@ USB_Application_disk_miscellaneous_desc=Erweiterte Einstellungen für USB-Speich
 BasicConfig_EnableDownloadMachine_itemname=Download Master aktivieren?
 BasicConfig_EnableDownloadShare_itemname=Download-Freigabe aktivieren?
 BasicConfig_EnableMediaServer_itemname=UPnP aktivieren?
+DM_Install_partition=Bitte wählen Sie das USB-Speichergerät, auf das Sie zugreifen möchten.
 CTL_restore=Wiederherstellen
 CTL_onlysave=Speichern
 CTL_clear=Leeren
@@ -1525,6 +1550,7 @@ IPConnection_TriggerList_widzarddesc=Bekannte Anwendungen:
 FirewallConfig_LWFilterList_widzarddesc=Bekannte Anwendungen:
 LANHostConfig_x_DDNSServer_linkname=Kostenlose Probe
 SAVE_note=Hinweis: Dies dauert etwa 60 Sekunden.
+[###MODEL_DEP###][RT-N65U]SAVE_note=Hinweis: Dies dauert etwa 80 Sekunden.
 IPConnection_VServerPNo_itemname=Protokollnummer
 LANHostConfig_ManualDHCPEnable_itemname=Manuelle Zuweisung aktivieren?
 LANHostConfig_ManualDHCPList_groupitemdesc=Manuell zugewiesene IP zur DHCP-Liste
@@ -1634,6 +1660,7 @@ BM_GB=Gaming Blaster
 BM_IA=Internetanwendung
 BM_FTPS=AiDisk
 BM_VVS=VoIP/Videostreaming
+BM_NoChange=Bitte wählen Sie Ihre bevorzugten Anwendungen.
 t2QOS2=Benutzerdefinierte Dienste
 ShareNode_FTPLANG_itemname=Sprache am FTP-Server
 ShareNode_FTPLANG_optionname1=Englisch
@@ -1676,7 +1703,7 @@ HSDPAConfig_password_itemdesc=Bitten geben Sie das Passwort ein.
 HSDPAConfig_usbadaptor_itemdesc=Bitte wählen Sie Ihren USB-Adapter.
 LANHostConfig_IPRouters_itemdesc=LAN IP-Adresse des ZVMODELVZ. Der Standardwert ist 192.168.1.1. In IP-Netzwerken werden Datenpakete an die festen IP-Adressen der Netzwerkgeräte gesendet. <p>ASUS verwendet für IP-Adressen die punktierte Dezimalschreibweise, wobei eine Nummer-String mit vier Oktetten, durch Punkte getrennt, verwendet wird (z.B. 192.168.1.1). <p>Lokale Netzwerke können drei IP-Bereiche verwenden: 192.168.0.1 - 192.168.255.254, 172.16.0.1 - 172.31.255.254 und 10.0.0.1 - 10.255.255.254.
 confirm_disableftp_dm=Das Deaktivieren der Freigabe für die Netzwerkumgebung wird den Download Master deaktivieren.
-HSDPAConfig_hsdpa_mode_itemdesc=Wählen Sie den USB Modem-Modus umfassend zu Anforderungen und Umgebung. Vier Modi können ausgewählt werden: Ausfallsicherung, Ausgewogen, Immer hoch und Immer niedrig. Um den USB Modem-Adapter sicher zu entfernen, beziehen Sie sich auf Index und klicken Sie auf die Adapter-Schaltfläche.
+HSDPAConfig_hsdpa_mode_itemdesc=Installieren Sie einen 3G-USB-Adapter im ZVMODELVZ, verwandeln Sie das Gerät in einen mobilen Router.
 Not_authpage_login_again=Falls Sie sich wieder anmelden möchten, schließen Sie zuerst dieses Fenster.
 GO_HSDPA_SETTING=USB Modem Einstellungen aufrufen
 [new strings - translated]
@@ -1776,6 +1803,11 @@ qis_simple_wls_recmd=(Empfohlene)
 url_keyword_alert=URL Keyword
 Not_Listed=nicht gelistet
 qis_service=Service
+isp_br_gvt_note=Wählen Sie GVT nutzen, geben Sie als Benutzername <b>turbonet@turbonet</b>, als Kennwort <b>gvt25</b> ein.  Andernfalls geben Sie die Benutzername/Kennwort-Kombination ein, die Sie von Ihrem Internetanbieter erhalten haben.
+pvc_del_alert_desc=Möchten Sie diesen PVC wirklich löschen?
+same_vpi_vci=Doppelte oder identische VPI- und VCI-Einstellungen.
+dns_server_no_set=Bitte richten Sie den DNS-Server am Client-Gerät ein.
+dsl_wan_page_desc=Klicken Sie zum Bearbeiten einer PVC-Einstellung auf den numerischen Index. Klicken Sie zum Zufügen oder Löschen einer PVC-Einstellung auf die Zufügen- oder Löschen-Symbole (+ / -).
 [adsl end]
 [untrans]
 prev_page=Previous page
@@ -1784,9 +1816,12 @@ step_use_aicloud=Please follow the steps below to use AiCloud:
 download_aicloud=Download ASUS AiCloud app to phone or pad from
 connect_through_wifi=Connect your iOS or Android devices to ZVMODELVZ through WiFi. The AiCloud app will automatically guide you through the process of setup.
 access_service=Now you can access your USB storage and Network place(Samba) enabled devices connected to ZVMODELVZ.
+aicloud_bandwidth1=For the best viewing/listening experience, we recommend the following upload bandwidth for different media format. A 768 Kbps is recommended for music, 5Mbps for SD video, 15Mbps for 720p video and 30Mbps or faster for 1080p HD video streaming.
+aicloud_bandwidth2=Internet upload speeds may vary depending on your ISP and other factors.
+aicloud_bandwidth3=If you are not sure what your Internet speed is, you can ask your ISP, or use an online broadband speed test from a computer connected to ZVMODELVZ.
 aicloud_for_privateIP1=We are going to support AiCloud with private IP later, in this moment, you can setup <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_VirtualServer_Content.asp" target="_blank">Port forwarding</a> or <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_Exposed_Content.asp" target="_blank">DMZ</a> to access private ip address remotely.
-aicloud_for_privateIP2= The AiCloud need to use 8082 and 443 port. you can change the port setting <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_BasicFirewall_Content.asp" target="_blank">here</a>.
-aicloud_for_privateIP3= For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
+aicloud_for_privateIP2=The AiCloud need to use 8082 and 443 port.
+aicloud_for_privateIP3=For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=To establish your cloud disk, you need to plug-in an USB storage into this router, then enable cloud disk.
 aicloud_disk2= Default cloud disk login account use the router login account.
 aicloud_disk_case0=The Cloud disk can be accessed via <a style="font-weight: bolder;text-decoration: underline;" href="http://www.asusnetwork.net:8082" target="_blank">http://www.asusnetwork.net:8082</a> when you connect to ZVMODELVZ in LAN.
@@ -1799,10 +1834,3 @@ smart_access2=You can also wake up your PCs in home remotely by WOL.
 smart_access3=What is <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="http://support.asus.com/Search.aspx?SLanguage=en&keyword=WOL&BIOS" target="_blank">WOL</a>?
 smart_sync1=To start smart sync, you need to sign up an <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asuswebstorage.com/" target="_blank">ASUS webstorage</a> account, then enable cloud disk and smart sync. (Make sure that you have plug-in an USB storage into this router.)
 smart_sync2=Open AiCloud APP. Choose a specific folder in cloud disk that you want to sync with ASUS web storage, then follow the steps show in the app.
-FirewallConfig_UrlFilterEnable_itemname2=Enable URL Filter?
-BM_NoChange=Please select the applications that match your situation.
-isp_br_gvt_note=If you are GVT users, please key in the user name ( turbonet@turbonet ) and password ( gvt25 ). Otherwise, please key in the user name and password provided by your ISP.
-pvc_del_alert_desc=Are you sure to delete this PVC?
-same_vpi_vci=VPI and VCI are duplicated.
-dns_server_no_set=DNS server not set! Please setup the DNS server on the client device.
-dsl_wan_page_desc=Click index number to edit PVC setting or click right icon to add or delete PVC

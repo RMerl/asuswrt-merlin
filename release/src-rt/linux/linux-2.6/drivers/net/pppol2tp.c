@@ -7,7 +7,7 @@
  *
  * Version:    0.18.3
  *
- * 230504 :	Added ASUS backports from 2.6.3x.
+ * 230411 :	Added ASUS backports from 2.6.3x.
  * 251003 :	Copied from pppoe.c version 0.6.9.
  *
  * Authors:	Martijn van Oosterhout <kleptog@svana.org>
@@ -131,7 +131,7 @@
 #define L2TP_HDR_VER_MASK  0x000F
 #define L2TP_HDR_VER	   0x0002
 
-/* Space for UDP, L2TP and PPP headers */
+/* Space for IP, UDP, L2TP and PPP headers */
 #define PPPOL2TP_HEADER_OVERHEAD	40
 
 /* Just some random numbers */
@@ -184,8 +184,8 @@
  * Unfortunately the size is different depending on whether sequence numbers
  * are enabled.
  */
-#define PPPOL2TP_L2TP_HDR_SIZE_SEQ		10
-#define PPPOL2TP_L2TP_HDR_SIZE_NOSEQ		6
+#define PPPOL2TP_L2TP_HDR_SIZE_SEQ		12
+#define PPPOL2TP_L2TP_HDR_SIZE_NOSEQ		8
 
 struct pppol2tp_tunnel;
 
@@ -224,8 +224,9 @@ struct pppol2tp_session
 						 * control of LNS. */
 	int			debug;		/* bitmask of debug message
 						 * categories */
-	int			reorder_timeout; /* configured reorder timeout
-						  * (in jiffies) */
+	int			reorder_timeout;/* configured reorder timeout
+						 * (in jiffies) */
+	int			reorder_skip;	/* set if skip to next nr */
 	u16			nr;		/* session NR state (receive) */
 	u16			ns;		/* session NR state (send) */
 	struct sk_buff_head	reorder_q;	/* receive reorder queue */
@@ -436,6 +437,7 @@ static void pppol2tp_recv_dequeue_skb(struct pppol2tp_session *session, struct s
 	} else {
 		PRINTK(session->debug, PPPOL2TP_MSG_DATA, KERN_INFO,
 		       "%s: socket not bound\n", session->name);
+#ifndef UDP_ENCAP_L2TPINUDP
 		/* Not bound. Queue it now */
 		if (sock_queue_rcv_skb(session_sock, skb) < 0) {
 			session->stats.rx_errors++;
@@ -443,6 +445,11 @@ static void pppol2tp_recv_dequeue_skb(struct pppol2tp_session *session, struct s
 			if (!sock_flag(session_sock, SOCK_DEAD))
 				session_sock->sk_data_ready(session_sock, 0);
 		}
+#else
+		/* Not bound. Nothing we can do, so discard. */
+		session->stats.rx_errors++;
+		kfree_skb(skb);
+#endif
 	}
 
 	DPRINTK(session->debug, "calling sock_put; refcnt=%d\n",
@@ -476,6 +483,7 @@ static void pppol2tp_recv_dequeue(struct pppol2tp_session *session)
 			       session->name, PPPOL2TP_SKB_CB(skb)->ns,
 			       PPPOL2TP_SKB_CB(skb)->length, session->nr,
 			       skb_queue_len(&session->reorder_q));
+			session->reorder_skip = 1;
 			__skb_unlink(skb, &session->reorder_q);
 			kfree_skb(skb);
 			sock_put(session->sock);
@@ -483,6 +491,14 @@ static void pppol2tp_recv_dequeue(struct pppol2tp_session *session)
 		}
 
 		if (PPPOL2TP_SKB_CB(skb)->has_seq) {
+			if (session->reorder_skip) {
+				PRINTK(session->debug, PPPOL2TP_MSG_SEQ, KERN_DEBUG,
+					"%s: advancing nr to next pkt: %hu -> %hu\n",
+					session->name, session->nr,
+					PPPOL2TP_SKB_CB(skb)->ns);
+				session->reorder_skip = 0;
+				session->nr = PPPOL2TP_SKB_CB(skb)->ns;
+			}
 			if (PPPOL2TP_SKB_CB(skb)->ns != session->nr) {
 				PRINTK(session->debug, PPPOL2TP_MSG_SEQ, KERN_DEBUG,
 				       "%s: holding oos pkt %hu len %d, "
@@ -692,7 +708,7 @@ static int pppol2tp_recv_core(struct sock *sock, struct sk_buff *skb)
 	if (!pskb_may_pull(skb, 2))
 		goto discard;
 
-	if ((skb->data[0] == 0xff) && (skb->data[1] == 0x03))
+	if ((skb->data[0] == PPP_ALLSTATIONS) && (skb->data[1] == PPP_UI))
 		__skb_pull(skb, 2);
 
 	/* Prepare skb for adding to the session's reorder_q.  Hold
@@ -884,15 +900,14 @@ static inline int pppol2tp_l2tp_header_len(struct pppol2tp_session *session)
 
 /* Build an L2TP header for the session into the buffer provided.
  */
-static void pppol2tp_build_l2tp_header(struct pppol2tp_session *session,
+static inline void pppol2tp_build_l2tp_header(struct pppol2tp_session *session,
 				      void *buf)
 {
 	u16 *bufp = buf;
-	u16 flags = L2TP_HDR_VER;
+	u16 flags = L2TP_HDR_VER | L2TP_HDRFLAG_O;
 
-	if (session->send_seq) {
+	if (session->send_seq)
 		flags |= L2TP_HDRFLAG_S;
-	}
 
 	/* Setup L2TP header.
 	 * FIXME: Can this ever be unaligned? Is direct dereferencing of
@@ -908,6 +923,7 @@ static void pppol2tp_build_l2tp_header(struct pppol2tp_session *session,
 		PRINTK(session->debug, PPPOL2TP_MSG_SEQ, KERN_DEBUG,
 		       "%s: updated ns to %hu\n", session->name, session->ns);
 	}
+	*bufp++ = 0;
 }
 
 /* This is the sendmsg for the PPPoL2TP pppol2tp_session socket.  We come here
@@ -917,18 +933,18 @@ static void pppol2tp_build_l2tp_header(struct pppol2tp_session *session,
 static int pppol2tp_sendmsg(struct kiocb *iocb, struct socket *sock, struct msghdr *m,
 			    size_t total_len)
 {
-	static const u8 ppph[2] = { 0xff, 0x03 };
+	struct pppol2tp_session *session;
+	struct pppol2tp_tunnel *tunnel;
 	struct sock *sk = sock->sk;
 	struct sock *sk_tun;
+	struct dst_entry *dst;
+	struct inet_sock *inet;
+	struct udphdr *uh;
 	struct sk_buff *skb;
+	unsigned int len;
 	int error;
 	int hdr_len;
 	u16 udp_len;
-	struct pppol2tp_session *session;
-	struct pppol2tp_tunnel *tunnel;
-	struct inet_sock *inet;
-	struct udphdr *uh;
-	unsigned int len;
 
 	ENTER_FUNCTION;
 
@@ -946,24 +962,26 @@ static int pppol2tp_sendmsg(struct kiocb *iocb, struct socket *sock, struct msgh
 	hdr_len = pppol2tp_l2tp_header_len(session);
 
 	/* Allocate a socket buffer */
-	skb = sock_wmalloc(sk_tun, NET_SKB_PAD + sizeof(struct iphdr) +
-			   sizeof(struct udphdr) + hdr_len +
-			   sizeof(ppph) + total_len,
-			   0, GFP_KERNEL);
+	dst = __sk_dst_get(sk_tun);
+	skb = sock_wmalloc(sk_tun,
+		(dst ? LL_RESERVED_SPACE(dst->dev) : NET_SKB_PAD) +
+		sizeof(struct iphdr) +
+		sizeof(struct udphdr) + hdr_len + 2 + total_len,
+		0, GFP_KERNEL);
 	if (!skb) {
 		error = -ENOMEM;
 		goto end;
 	}
 
 	/* Reserve space for headers. */
-	skb_reserve(skb, NET_SKB_PAD);
+	skb_reserve(skb, dst ? LL_RESERVED_SPACE(dst->dev) : NET_SKB_PAD);
 	skb_reset_network_header(skb);
 	skb_reserve(skb, sizeof(struct iphdr));
 	skb_reset_transport_header(skb);
 
 	/* Build UDP header */
 	inet = inet_sk(sk_tun);
-	udp_len = hdr_len + sizeof(ppph) + total_len;
+	udp_len = sizeof(struct udphdr) + hdr_len + 2 + total_len;
 	uh = (struct udphdr *) skb->data;
 	uh->source = inet->sport;
 	uh->dest = inet->dport;
@@ -976,8 +994,8 @@ static int pppol2tp_sendmsg(struct kiocb *iocb, struct socket *sock, struct msgh
 	skb_put(skb, hdr_len);
 
 	/* Add PPP header */
-	skb->data[0] = ppph[0];
-	skb->data[1] = ppph[1];
+	skb->data[0] = PPP_ALLSTATIONS;
+	skb->data[1] = PPP_UI;
 	skb_put(skb, 2);
 
 	/* Copy user data into skb */
@@ -1013,6 +1031,9 @@ static int pppol2tp_sendmsg(struct kiocb *iocb, struct socket *sock, struct msgh
 		}
 		printk("\n");
 	}
+
+	/* Get routing info from the tunnel socket */
+	skb->dst = dst_clone(dst);
 
 	/* Queue the packet to IP for output */
 	len = skb->len;
@@ -1068,21 +1089,19 @@ static inline void pppol2tp_skb_set_owner_w(struct sk_buff *skb, struct sock *sk
  */
 static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
 {
-	static const u8 ppph[2] = { 0xff, 0x03 };
- 	struct sock *sk = (struct sock *) chan->private;
- 	struct sock *sk_tun;
-	int error;
-	u16 udp_len;
-	int hdr_len;
-	int headroom;
-	int data_len = skb->len;
 	struct pppol2tp_session *session;
 	struct pppol2tp_tunnel *tunnel;
+	struct sock *sk = (struct sock *) chan->private;
+	struct sock *sk_tun;
+	struct dst_entry *dst;
 	struct inet_sock *inet;
 	struct udphdr *uh;
+	unsigned int data_len = skb->len;
+	unsigned int headroom;
 	unsigned int len;
-	int old_headroom;
-	int new_headroom;
+	int error;
+	int hdr_len;
+	u16 udp_len;
 
 	ENTER_FUNCTION;
 
@@ -1104,29 +1123,31 @@ static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
 	 * UDP and L2TP and PPP headers. If not enough, expand it to
 	 * make room. Adjust truesize.
 	 */
-	headroom = NET_SKB_PAD + sizeof(struct iphdr) +
-		sizeof(struct udphdr) + hdr_len + sizeof(ppph);
-	old_headroom = skb_headroom(skb);
+	dst = __sk_dst_get(sk_tun);
+	len = skb_headroom(skb);
+	headroom = (dst ? LL_RESERVED_SPACE(dst->dev) : NET_SKB_PAD) +
+		sizeof(struct iphdr) +
+		sizeof(struct udphdr) + hdr_len + 2;
 	if (skb_cow_head(skb, headroom)) {
 		error = -ENOMEM;
 		goto end;
 	}
-	new_headroom = skb_headroom(skb);
+	headroom = skb_headroom(skb);
 	skb_orphan(skb);
-	skb->truesize += new_headroom - old_headroom;
+	skb->truesize += headroom - len;
 
 	/* Setup PPP header */
-	__skb_push(skb, sizeof(ppph));
-	skb->data[0] = ppph[0];
-	skb->data[1] = ppph[1];
+	__skb_push(skb, 2);
+	skb->data[0] = PPP_ALLSTATIONS;
+	skb->data[1] = PPP_UI;
 
 	/* Setup L2TP header */
 	pppol2tp_build_l2tp_header(session, __skb_push(skb, hdr_len));
 
 	/* Build UDP header */
 	inet = inet_sk(sk_tun);
-	udp_len = sizeof(struct udphdr) + hdr_len + sizeof(ppph) + data_len;
-	__skb_push(skb, sizeof(*uh));
+	udp_len = sizeof(struct udphdr) + hdr_len + 2 + data_len;
+	__skb_push(skb, sizeof(struct udphdr));
 	skb_reset_transport_header(skb);
 	uh = udp_hdr(skb);
 	uh->source = inet->sport;
@@ -1160,6 +1181,7 @@ static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
 		printk("\n");
 	}
 
+
 	/* Reset skb netfilter state */
 	memset(&(IPCB(skb)->opt), 0, sizeof(IPCB(skb)->opt));
 	IPCB(skb)->flags &= ~(IPSKB_XFRM_TUNNEL_SIZE | IPSKB_XFRM_TRANSFORMED |
@@ -1168,7 +1190,7 @@ static int pppol2tp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
 
 	/* Get routing info from the tunnel socket */
 	dst_release(skb->dst);
-	skb->dst = dst_clone(__sk_dst_get(sk_tun));
+	skb->dst = dst_clone(dst);
 	pppol2tp_skb_set_owner_w(skb, sk_tun);
 
 	/* Queue the packet to IP for output */
@@ -1594,13 +1616,11 @@ static struct sock *pppol2tp_prepare_tunnel_socket(pid_t pid, int fd,
 	/* This socket is available and needs prepping. Create a new tunnel
 	 * context and init it.
 	 */
-	sk->sk_user_data = tunnel = kmalloc(sizeof(struct pppol2tp_tunnel), GFP_KERNEL);
+	sk->sk_user_data = tunnel = kzalloc(sizeof(struct pppol2tp_tunnel), GFP_KERNEL);
 	if (sk->sk_user_data == NULL) {
 		err = -ENOMEM;
 		goto err;
 	}
-
-	memset(tunnel, 0, sizeof(struct pppol2tp_tunnel));
 
 	tunnel->magic = L2TP_TUNNEL_MAGIC;
 	sprintf(&tunnel->name[0], "tunl %hu", tunnel_id);
@@ -1746,13 +1766,11 @@ int pppol2tp_connect(struct socket *sock, struct sockaddr *uservaddr,
 
 	/* Allocate and initialize a new session context.
 	 */
-	session = kmalloc(sizeof(struct pppol2tp_session), GFP_KERNEL);
+	session = kzalloc(sizeof(struct pppol2tp_session), GFP_KERNEL);
 	if (session == NULL) {
 		error = -ENOMEM;
 		goto end;
 	}
-
-	memset(session, 0, sizeof(struct pppol2tp_session));
 
 	skb_queue_head_init(&session->reorder_q);
 
@@ -1827,7 +1845,7 @@ int pppol2tp_connect(struct socket *sock, struct sockaddr *uservaddr,
 	 * whether sequence numbers are enabled for the data channel.
 	 */
 	po->chan.hdrlen = PPPOL2TP_L2TP_HDR_SIZE_NOSEQ;
-	po->chan.hdrlen += NET_SKB_PAD + sizeof(struct iphdr) +
+	po->chan.hdrlen += LL_MAX_HEADER + sizeof(struct iphdr) +
 		sizeof(struct udphdr) + 2;
 
 	po->chan.private = sk;
@@ -2199,7 +2217,7 @@ static int pppol2tp_session_setsockopt(struct sock *sk,
 			struct pppox_sock *po = pppox_sk(sk);
 			po->chan.hdrlen = val ? PPPOL2TP_L2TP_HDR_SIZE_SEQ :
 				PPPOL2TP_L2TP_HDR_SIZE_NOSEQ;
-			po->chan.hdrlen += NET_SKB_PAD + sizeof(struct iphdr) +
+			po->chan.hdrlen += LL_MAX_HEADER + sizeof(struct iphdr) +
 				sizeof(struct udphdr) + 2;
 		}
 		PRINTK(session->debug, PPPOL2TP_MSG_CONTROL, KERN_INFO,
@@ -2670,8 +2688,10 @@ static int __init pppol2tp_init(void)
 out:
 	return err;
 
+#ifdef CONFIG_PROC_FS
 out_unregister_pppox_proto:
 	unregister_pppox_proto(PX_PROTO_OL2TP);
+#endif /* CONFIG_PROC_FS */
 
 out_unregister_pppol2tp_proto:
 	proto_unregister(&pppol2tp_sk_proto);
@@ -2684,7 +2704,7 @@ static void __exit pppol2tp_exit(void)
 
 #ifdef CONFIG_PROC_FS
 	remove_proc_entry("pppol2tp", proc_net);
-#endif
+#endif /* CONFIG_PROC_FS */
 	proto_unregister(&pppol2tp_sk_proto);
 }
 

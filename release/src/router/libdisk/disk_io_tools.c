@@ -24,6 +24,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <shared.h>
+
 #include "usb_info.h"
 #include "disk_io_tools.h"
 
@@ -45,7 +47,7 @@ extern char *read_whole_file(const char *target){
 	}
 	memset(buffer, 0, each_size);
 
-	while ((i = fread(buffer+read_bytes, each_size * sizeof(char), 1, fp)) == each_size){
+	while ((i = fread(buffer+read_bytes, each_size*sizeof(char), 1, fp)) == 1){
 		read_bytes += each_size;
 		new_str = (char *)malloc(sizeof(char)*(each_size+read_bytes));
 		if(new_str == NULL){
@@ -111,32 +113,12 @@ extern int mkdir_if_none(const char *path){
 }
 
 extern int delete_file_or_dir(char *target){
-	if(test_if_dir(target))
+	if(check_if_dir_exist(target))
 		rmdir(target);
 	else
 		unlink(target);
 
 	return 0;
-}
-
-extern int test_if_file(const char *file){
-	FILE *fp = fopen(file, "r");
-
-	if(fp == NULL)
-		return 0;
-
-	fclose(fp);
-	return 1;
-}
-
-extern int test_if_dir(const char *dir){
-	DIR *dp = opendir(dir);
-
-	if(dp == NULL)
-		return 0;
-
-	closedir(dp);
-	return 1;
 }
 
 extern int test_if_mount_point_of_pool(const char *dirname){
@@ -163,7 +145,7 @@ extern int test_if_mount_point_of_pool(const char *dirname){
 	if(mount_dir[0] == '.')
 		return 0;
 
-	if(!test_if_dir(dirname))
+	if(!check_if_dir_exist(dirname))
 		return 0;
 
 	return layer;
@@ -231,7 +213,7 @@ extern void strntrim(char *str){
 	return;
 }
 
-extern void write_escaped_value(FILE *fp, const char *value){
+/*extern void write_escaped_value(FILE *fp, const char *value){
 	const char *follow_value;
 
 	follow_value = value;
@@ -291,4 +273,4 @@ extern void write_escaped_value(FILE *fp, const char *value){
 		}
 		++follow_value;
 	}
-}
+}//*/

@@ -209,7 +209,7 @@ function corrected_timezone(){
 		//alert('dstoffset='+dstoffset+', 設定時區='+timezone+' , 當地時區='+today.toString().substring(StrIndex, StrIndex+5))
 		if(timezone != today.toString().substring(StrIndex, StrIndex+5)){
 			$("timezone_hint").style.display = "block";
-			$("timezone_hint").innerHTML = "<#LANHostConfig_x_TimeZone_itemhint#>";
+			$("timezone_hint").innerHTML = "* <#LANHostConfig_x_TimeZone_itemhint#>";
 		}
 		else
 			return;			
@@ -223,6 +223,7 @@ function show_dst_chk(){
 	// match "[std name][offset][dst name]"
 	if(document.form.time_zone_select.value.match(tzdst)){
 		document.getElementById("chkbox_time_zone_dst").style.display="";	
+		document.getElementById("adj_dst").innerHTML = Untranslated.Adj_dst;
 		if(!document.getElementById("time_zone_dst_chk").checked){
 				document.form.time_zone_dst.value=0;
 				document.getElementById("dst_start").style.display="none";
@@ -271,6 +272,7 @@ var timezones = [
 	["UTC1",	"(GMT-01:00) <#TZ26#>"],
 	["GMT0DST_1",	"(GMT) <#TZ27#>"],
 	["GMT0DST_2",	"(GMT) <#TZ28#>"],
+	/*["GMT0DST_3",	"(GMT) <#TZ85#>"],	use adj_dst to desc*/
 	["UTC-1DST_1",	"(GMT+01:00) <#TZ29#>"],
 	["UTC-1_1_1",	"(GMT+01:00) <#TZ30#>"],
 	["UTC-1_2",	"(GMT+01:00) <#TZ31#>"],
@@ -754,7 +756,7 @@ function pullLANIPList(obj){
           	<div>
           		<span id="chkbox_time_zone_dst" style="color:white;display:none;">
           			<input type="checkbox" name="time_zone_dst_chk" id="time_zone_dst_chk" <% nvram_match("time_zone_dst", "1", "checked"); %> class="input" onClick="return change_common(this,'LANHostConfig','time_zone_dst_chk')">
-          			<label for="time_zone_dst_chk">Manual daylight saving time.</label>
+          			<label for="time_zone_dst_chk"><span id="adj_dst"></span></label>
           			<br>
           		</span>	
           		<span id="dst_start" style="color:white;display:none;">

@@ -263,8 +263,12 @@ struct sk_buff {
 
 	unsigned int		len,
 				data_len;
-	__u16			mac_len,
-				hdr_len;
+#ifdef HNDCTF
+        unsigned int            ctf_mac_len;    /* This field is used by Broadcom CTF driver! */
+#else
+        __u16                   mac_len,
+                                hdr_len;
+#endif
 	union {
 		__wsum		csum;
 		struct {
@@ -302,6 +306,10 @@ struct sk_buff {
 	struct sk_buff		*nfct_reasm;
 	/* Cache info */
 	__u32			nfcache;
+#endif
+#ifdef HNDCTF
+        __u16                   mac_len,
+                                hdr_len;
 #endif
 #ifdef CONFIG_BRIDGE_NETFILTER
 	struct nf_bridge_info	*nf_bridge;

@@ -117,6 +117,9 @@ function applyRule(){
 		if(document.form.qos_enable.value != document.form.qos_enable_orig.value)
     	FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
     	
+		if(wl6_support != -1)
+			document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
+
 		showLoading();	 	
 		document.form.submit();
 	}
@@ -760,7 +763,7 @@ function pullQoSList(obj){
 	if(isMenuopen == 0){
 		obj.src = "/images/arrow-top.gif"
 		$("QoSList_Block").style.display = 'block';
-		document.form.qos_service_name_x_0.focus();		
+		//document.form.qos_service_name_x_0.focus();		
 		isMenuopen = 1;
 	}
 	else{
@@ -938,7 +941,7 @@ function valid_IPorMAC(obj){
 							</tr>							
 							<tr>
 								<td width="20%">							
-									<input type="text" class="input_12_table" style="float:left;width:110px;" value="<#Select_menu_default#>" name="qos_service_name_x_0" onKeyPress="return is_string(this, event)">
+									<input type="text" class="input_12_table" style="float:left;width:105px;" value="<#Select_menu_default#>" name="qos_service_name_x_0" onKeyPress="return is_string(this, event)">
 									<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullQoSList(this);" title="Select the device name of DHCP clients." >
 									<div id="QoSList_Block" class="QoSList_Block" onclick="hideClients_Block()"></div>
 								</td>

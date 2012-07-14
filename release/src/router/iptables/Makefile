@@ -12,7 +12,7 @@ endif
 
 DO_MULTI = 1
 
-DO_SAVE = 0
+DO_SAVE = 1
 
 ######################################################################
 # YOU SHOULD NOT NEED TO TOUCH ANYTHING BELOW THIS LINE

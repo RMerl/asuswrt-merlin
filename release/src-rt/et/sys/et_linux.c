@@ -105,6 +105,7 @@ typedef struct et_info {
 	void		*osh;		/* pointer to os handle */
 #ifdef HNDCTF
 	ctf_t		*cih;		/* ctf instance handle */
+	ctf_brc_hot_t	*brc_hot;	/* hot bridge cache entry */
 #endif /* HNDCTF */
 	struct semaphore sem;		/* use semaphore to allow sleep */
 	spinlock_t	lock;		/* per-device perimeter lock */
@@ -452,8 +453,7 @@ et_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 #ifdef HNDCTF
 	et->cih = ctf_attach(osh, dev->name, &et_msg_level, et_ctf_detach, et);
 
-	if ((ctf_dev_register(et->cih, dev, FALSE) != BCME_OK) ||
-	    (ctf_enable(et->cih, dev, TRUE, NULL) != BCME_OK)) {
+	if (ctf_dev_register(et->cih, dev, FALSE) != BCME_OK) {
 		ET_ERROR(("et%d: ctf_dev_register() failed\n", unit));
 		goto fail;
 	}
@@ -524,6 +524,13 @@ et_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	/* print hello string */
 	(*et->etc->chops->longname)(et->etc->ch, name, sizeof(name));
 	printf("%s: %s %s\n", dev->name, name, EPI_VERSION_STR);
+
+#ifdef HNDCTF
+	if (ctf_enable(et->cih, dev, TRUE, &et->brc_hot) != BCME_OK) {
+		ET_ERROR(("et%d: ctf_enable() failed\n", unit));
+		goto fail;
+	}
+#endif
 
 #ifdef PLC
 	/* read plc_vifs to initialize the vids to use for receiving
@@ -1480,6 +1487,7 @@ et_rxevent(osl_t *osh, et_info_t *et, struct chops *chops, void *ch, int quota)
 
 	/* read the buffers first */
 	while ((p = (*chops->rx)(ch))) {
+		PKTSETLINK(p, NULL);
 		if (t == NULL)
 			h = t = p;
 		else {
@@ -1556,10 +1564,10 @@ et_dpc(ulong data)
 	if (et->events & INTR_RX)
 		nrx = et_rxevent(osh, et, chops, ch, quota);
 
-	if (et->events & INTR_TX) {
+	if (et->events & INTR_TX)
 		(*chops->txreclaim)(ch, FALSE);
-		(*chops->rxfill)(ch);
-	}
+
+	(*chops->rxfill)(ch);
 
 	/* handle error conditions, if reset required leave interrupts off! */
 	if (et->events & INTR_ERROR) {
@@ -1709,6 +1717,9 @@ et_ctf_forward(et_info_t *et, struct sk_buff *skb)
 	/* re-init the hijacked field */
 	CTFPOOLPTR(et->osh, skb) = NULL;
 #endif /* CTFPOOL */
+
+	/* map the unmapped buffer memory before sending up */
+	PKTCTFMAP(et->osh, skb);
 
 	return (BCME_ERROR);
 }

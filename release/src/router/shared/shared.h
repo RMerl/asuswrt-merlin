@@ -85,7 +85,6 @@ typedef struct {
 
 extern char *read_whole_file(const char *target);
 extern char *get_line_from_buffer(const char *buf, char *line, const int line_size);
-extern int test_if_dir(const char *dir);
 extern char *get_upper_str(const char *const str, char **target);
 extern int upper_strcmp(const char *const str1, const char *const str2);
 extern int upper_strncmp(const char *const str1, const char *const str2, int count);
@@ -290,6 +289,8 @@ extern int base64_decoded_len(int len);										// maximum possible, not actual
 
 
 // strings.c
+extern int char_to_ascii_safe(const char *output, const char *input, int outsize);
+extern void char_to_ascii(const char *output, const char *input);
 extern const char *find_word(const char *buffer, const char *word);
 extern int remove_word(char *buffer, const char *word);
 

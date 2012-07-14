@@ -155,6 +155,9 @@ time_t request_timestamp = 0;
 time_t turn_off_auth_timestamp = 0;
 int temp_turn_off_auth = 0;	// for QISxxx.htm pages
 
+/* Const vars */
+const int int_1 = 1;
+
 void http_login(unsigned int ip, char *url);
 void http_login_timeout(unsigned int ip);
 void http_logout(unsigned int ip);
@@ -207,8 +210,7 @@ initialize_listen_socket( usockaddr* usaP )
 	return -1;
 	}
     (void) fcntl( listen_fd, F_SETFD, FD_CLOEXEC );
-    i = 1;
-    if ( setsockopt( listen_fd, SOL_SOCKET, SO_REUSEADDR, (char*) &i, sizeof(i) ) < 0 )
+    if ( setsockopt( listen_fd, SOL_SOCKET, SO_REUSEADDR, &int_1, sizeof(int_1) ) < 0 )
 	{
 	close(listen_fd);	// 1104 chk
 	perror( "setsockopt" );
@@ -854,15 +856,14 @@ void http_login(unsigned int ip, char *url) {
 	char *login_ip_str;
 	char login_ipstr[32], login_timestampstr[32];
 
-	if (
-#ifndef RTCONFIG_HTTPS
-        	http_port != SERVER_PORT
-#else
-        	((http_port != SERVER_PORT)&&(http_port != SERVER_PORT_SSL))
+	if ((http_port != SERVER_PORT
+#ifdef RTCONFIG_HTTPS
+	  && http_port != SERVER_PORT_SSL
+	  && http_port != nvram_get_int("https_lanport")
 #endif
-		|| ip == 0x100007f)
+	    ) || ip == 0x100007f)
 		return;
-	
+
 	login_ip = ip;
 	last_login_ip = 0;
 	
@@ -899,17 +900,17 @@ int http_client_ip_check(void) {
 }
 
 // 0: can not login, 1: can login, 2: loginer, 3: not loginer
-int http_login_check(void) {
-	if (
-#ifndef RTCONFIG_HTTPS
-		http_port != SERVER_PORT 
-#else
-		((http_port != SERVER_PORT)&&(http_port != SERVER_PORT_SSL))
+int http_login_check(void)
+{
+	if ((http_port != SERVER_PORT
+#ifdef RTCONFIG_HTTPS
+	  && http_port != SERVER_PORT_SSL
+	  && http_port != nvram_get_int("https_lanport")
 #endif
-		|| login_ip_tmp == 0x100007f)
+	    ) || login_ip_tmp == 0x100007f)
 		//return 1;
 		return 0;	// 2008.01 James.
-	
+
 	if (login_ip == 0)
 		return 1;
 	else if (login_ip == login_ip_tmp)
@@ -958,8 +959,8 @@ int is_auth(void)
 {
 	if (http_port==SERVER_PORT ||
 #ifdef RTCONFIG_HTTPS
-                http_port==SERVER_PORT_SSL ||
-                http_port==nvram_get_int("https_lanport") ||
+	    http_port==SERVER_PORT_SSL ||
+	    http_port==nvram_get_int("https_lanport") ||
 #endif
 		strcmp(nvram_get_x("PrinterStatus", "usb_webhttpcheck_x"), "1")==0) return 1;
 	else return 0;
@@ -1377,7 +1378,8 @@ int main(int argc, char **argv)
 	signal(SIGCHLD, reapchild);	// 0527 add
 
 #ifdef RTCONFIG_HTTPS
-	if (do_ssl) start_ssl();
+	if (do_ssl)
+		start_ssl();
 #endif
 
 	/* Initialize listen socket */
@@ -1423,7 +1425,6 @@ int main(int argc, char **argv)
 		tv.tv_usec = 0;
 		while ((count = select(max_fd + 1, &rfds, NULL, NULL, &tv)) < 0 && errno == EINTR)
 			continue;
-		
 		if (count < 0) {
 			perror("select");
 			return errno;
@@ -1436,13 +1437,16 @@ int main(int argc, char **argv)
 				perror("malloc");
 				return errno;
 			}
-			while ((item->fd = accept(listen_fd, &item->usa.sa, &sz)) < 0 && item->fd == EINTR)
+			while ((item->fd = accept(listen_fd, &item->usa.sa, &sz)) < 0 && errno == EINTR)
 				continue;
-		
 			if (item->fd < 0) {
 				perror("accept");
-				return errno;
+				free(item);
+				continue;
 			}
+
+			/* Set the KEEPALIVE option to cull dead connections */
+			setsockopt(item->fd, SOL_SOCKET, SO_KEEPALIVE, &int_1, sizeof(int_1));
 
 			/* Add to active connections */
 			FD_SET(item->fd, &active_rfds);
@@ -1462,55 +1466,51 @@ int main(int argc, char **argv)
 			FD_CLR(item->fd, &active_rfds);
 			TAILQ_REMOVE(&pool.head, item, entry);
 			pool.count--;
-			/* Process request if any or close timed out */
+
+			/* Process request if any */
 			if (count) {
 #ifdef RTCONFIG_HTTPS
 				if (do_ssl) {
 					ssl_stream_fd = item->fd;
-					//_dprintf("[httpd] item->fd : %d\n", item->fd); // tmp test
-					conn_fp = ssl_server_fopen(item->fd);
-					if(conn_fp == NULL) {
+					if (!(conn_fp = ssl_server_fopen(item->fd))) {
 						perror("fdopen(ssl)");
-						return errno;
+						goto skip;
 					}
-
-				}
-				else
+				} else
 #endif
 				if (!(conn_fp = fdopen(item->fd, "r+"))) {
 					perror("fdopen");
-					return errno;
+					goto skip;
+				} else {
+					/* Will be closed by fclose */
+					item->fd = -1;
 				}
 
 				http_login_cache(&item->usa);
-				if(http_client_ip_check())
+				if (http_client_ip_check())
 					handle_request();
-#ifdef RTCONFIG_HTTPS
-				if(conn_fp!=NULL) {
-					fflush(conn_fp);
-					fclose(conn_fp);
-					conn_fp = NULL;
-				}
-				// ssl must close fd
-				if (item->fd != -1) {
-					close(item->fd);
-					item->fd = -1;
-				}
-#else
+
 				fflush(conn_fp);
 				fclose(conn_fp);
-#endif
+
+			skip:
 				/* Skip the rest of */
 				if (--count == 0) {
 					next = NULL;
 				}
-			} else
+			}
+
+			/* Close timed out and/or still alive */
+			if (item->fd >= 0)
 				close(item->fd);
+
 			free(item);
 		}
 	}
+
 	shutdown(listen_fd, 2);
 	close(listen_fd);
+
 	return 0;
 }
 
@@ -1571,7 +1571,7 @@ void start_ssl(void)
 				// browsers seems to like this when the ip address moves...	-- zzz
 				f_read("/dev/urandom", &sn, sizeof(sn));
 
-				sprintf(t, "%llu", sn & 0x7FFFFFFFFFFFFFFFUL);
+				sprintf(t, "%llu", sn & 0x7FFFFFFFFFFFFFFFULL);
 				eval("gencert.sh", t);
 			}
 		}

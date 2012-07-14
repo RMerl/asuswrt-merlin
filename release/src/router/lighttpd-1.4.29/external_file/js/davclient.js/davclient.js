@@ -494,6 +494,14 @@ global.davlib = new function() {
 			request.send('');
 		};
 		
+		this.DavClient.prototype.GETROUTERINFO = function(path,handler,context,locktoken){			
+			var request = this._getRequest('GETROUTERINFO',path,handler,context);			
+			if(locktoken){
+				request.setRequestHeader('If','<'+locktoken+'>');
+			};
+			request.send('');
+		};
+		
 		this.DavClient.prototype.GETFIRMVER = function(path,handler,context,locktoken){			
 			var request = this._getRequest('GETFIRMVER',path,handler,context);			
 			if(locktoken){

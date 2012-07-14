@@ -33,9 +33,19 @@ export SRCBASEDIR := $(shell pwd | sed 's/.*release\///g')
 RELEASEDIR := $(shell (cd $(SRCBASE)/.. && pwd -P))
 PATH := $(RELEASEDIR)/tools:$(PATH)
 
+ifeq ($(ASUSWRTTARGETMAKDIR),)
 include ./target.mak
-include ./platform.mak
+else
+include $(ASUSWRTTARGETMAKDIR)/target.mak
+endif
+
+ifeq ($(ASUSWRTVERSIONCONFDIR),)
 include ./version.conf
+else
+include $(ASUSWRTVERSIONCONFDIR)/version.conf
+endif
+
+include ./platform.mak
 include ./dsl.mak
 
 export PLATFORM := mipsel-uclibc
@@ -273,9 +283,13 @@ define RouterOptions
 		sed -i "/RTCONFIG_WIRELESSREPEATER/d" $(1); \
 		echo "RTCONFIG_WIRELESSREPEATER=y" >>$(1); \
 	fi; \
-	if [ "$(PSTA)" = "y" ]; then \
-		sed -i "/RTCONFIG_PSTA/d" $(1); \
-		echo "RTCONFIG_PSTA=y" >>$(1); \
+	if [ "$(PROXYSTA)" = "y" ]; then \
+		sed -i "/RTCONFIG_PROXYSTA/d" $(1); \
+		echo "RTCONFIG_PROXYSTA=y" >>$(1); \
+	fi; \
+	if [ "$(LOCALE2012)" = "y" ]; then \
+		sed -i "/RTCONFIG_LOCALE2012/d" $(1); \
+		echo "RTCONFIG_LOCALE2012=y" >>$(1); \
 	fi; \
 	if [ "$(SFP)" = "y" ]; then \
 		sed -i "/RTCONFIG_SFP/d" $(1); \
@@ -303,10 +317,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_WIRELESS_SWITCH/d" $(1); \
 		echo "RTCONFIG_WIRELESS_SWITCH=y" >>$(1); \
 	fi; \
-        if [ "$(ACCEL_PPTPD)" = "y" ]; then \
-                sed -i "/RTCONFIG_ACCEL_PPTPD/d" $(1); \
-                echo "RTCONFIG_ACCEL_PPTPD=y" >>$(1); \
-        fi; \
+	if [ "$(ACCEL_PPTPD)" = "y" ]; then \
+		sed -i "/RTCONFIG_ACCEL_PPTPD/d" $(1); \
+		echo "RTCONFIG_ACCEL_PPTPD=y" >>$(1); \
+	fi; \
 	if [ "$(SHP)" = "y" ]; then \
 		sed -i "/RTCONFIG_SHP/d" $(1); \
 		echo "RTCONFIG_SHP=y" >>$(1); \
@@ -451,18 +465,18 @@ define RouterOptions
 		sed -i "/RTCONFIG_APP_NETINSTALLED/d" $(1); \
 		echo "# RTCONFIG_APP_NETINSTALLED is not set" >>$(1); \
 	fi; \
-        if [ "$(DNSMASQ)" = "y" ]; then \
-                sed -i "/RTCONFIG_DNSMASQ/d" $(1); \
-                echo "RTCONFIG_DNSMASQ=y" >>$(1); \
-        fi; \
-        if [ "$(ISP_METER)" = "y" ]; then \
-                sed -i "/RTCONFIG_ISP_METER/d" $(1); \
-                echo "RTCONFIG_ISP_METER=y" >>$(1); \
-        fi; \
-        if [ "$(NVRAM_64K)" = "y" ]; then \
-                sed -i "/RTCONFIG_NVRAM_64K/d" $(1); \
-                echo "RTCONFIG_NVRAM_64K=y" >>$(1); \
-        fi; \
+	if [ "$(DNSMASQ)" = "y" ]; then \
+		sed -i "/RTCONFIG_DNSMASQ/d" $(1); \
+		echo "RTCONFIG_DNSMASQ=y" >>$(1); \
+	fi; \
+	if [ "$(ISP_METER)" = "y" ]; then \
+		sed -i "/RTCONFIG_ISP_METER/d" $(1); \
+		echo "RTCONFIG_ISP_METER=y" >>$(1); \
+	fi; \
+	if [ "$(NVRAM_64K)" = "y" ]; then \
+		sed -i "/RTCONFIG_NVRAM_64K/d" $(1); \
+		echo "RTCONFIG_NVRAM_64K=y" >>$(1); \
+	fi; \
 	)
 	$(call platformRouterOptions, $(1))
 endef
@@ -751,11 +765,17 @@ define KernelConfig
 			echo "CONFIG_BRIDGE_EBT_IP6=m" >>$(1); \
 		fi; \
 	fi; \
-        sed -i "/CONFIG_NVRAM_64K/d" $(1); \
-        if [ "$(NVRAM_64K)" = "y" ]; then \
-                echo "CONFIG_NVRAM_64K=y" >>$(1); \
-        else \
-                echo "# CONFIG_NVRAM_64K is not set" >>$(1); \
+	sed -i "/CONFIG_NVRAM_64K/d" $(1); \
+	if [ "$(NVRAM_64K)" = "y" ]; then \
+		echo "CONFIG_NVRAM_64K=y" >>$(1); \
+	else \
+		echo "# CONFIG_NVRAM_64K is not set" >>$(1); \
+	fi; \
+	sed -i "/CONFIG_LOCALE2012/d" $(1); \
+	if [ "$(LOCALE2012)" = "y" ]; then \
+		echo "CONFIG_LOCALE2012=y" >>$(1); \
+	else \
+		echo "# CONFIG_LOCALE2012 is not set" >>$(1); \
 	fi \
 	)
 	$(call platformKernelConfig, $(1))
@@ -779,7 +799,6 @@ endif
 
 	@$(MAKE) setprofile
 	@$(MAKE) all
-
 
 rt-%:
 	@$(MAKE) bin $($(shell echo $@ | tr a-z A-Z))

@@ -87,7 +87,15 @@ function initial(){
 		parent.errCount = 0;
 		parent.parent.$("LoadingBar").style.visibility = "visible";
 		parent.parent.showLoadingBar(parent.waitingTime);
-		parent.setTimeout("update_site_info();", parseInt(parent.waitingTime)*1000);
+		
+		if(parent.psta_support == -1){
+			parent.setTimeout("update_site_info();", parseInt(parent.waitingTime)*1000);
+		}
+		else{
+			parent.parent.$('drword').innerHTML = "<#LANConfig_ChangedLANIP#>";
+			setTimeout("parent.parent.hideLoading();	",50000);
+			setTimeout("parent.parent.dr_advise();",50000);
+		}
 	}
 	else if(page_modified == 1){
 		if(parent.parent.isWLclient()){
@@ -96,7 +104,8 @@ function initial(){
 		}
 		else if(getflag == "finish"){
 			if(parent.$("hidden_frame")){			
-				setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000);
+				//setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000); // Post
+				setTimeout("parent.location.href='/qis/QIS_finish.htm';", restart_time*1000);  // Get
 			}
 			else{
 				parent.parent.showLoading(restart_time, "waiting");
@@ -110,8 +119,11 @@ function initial(){
 		}
 		else{
 			parent.showLoading(restart_time);
-			if(navigator.userAgent.indexOf("Safari")  >= 0)
+			if(navigator.userAgent.indexOf("Safari") >= 0){
+				if(document.redirectForm.flag.value != "")
+					next_page += "?flag=" + document.redirectForm.flag.value;
 				setTimeout("parent.parent.location.href='"+next_page+"';", restart_time*1000);
+			}
 			else
 				setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
 		}
@@ -120,13 +132,12 @@ function initial(){
 		parent.showLoading(restart_time);
 		setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
 	}
-	else{
-		
-		if(next_page == "/QIS_wizard.htm"){
+	else{		
+		if(next_page == "/QIS_wizard.htm" || next_page == "/qis/QIS_finish.htm"){
 			if(navigator.userAgent.indexOf("Opera")  >= 0)
-					setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000);
+				setTimeout("qis_delay_redirect('/qis/QIS_finish.htm');", restart_time*1000);
 			else	
-					setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
+				setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
 		}
 		else{
 			parent.parent.location.href = next_page;

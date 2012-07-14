@@ -35,7 +35,13 @@ $("document").ready(function() {
 	while( this_url.indexOf('%3Cbr%3E') != -1 )
 		this_url = this_url.replace('%3Cbr%3E','\n');
 	
-	$("#sharelink").text(this_url);
+	var content = "";
+	
+	content += m.getString('msg_sharelink_desc1');
+	content += 	this_url;
+	content += m.getString('msg_sharelink_desc2');
+		
+	$("#sharelink").text(content);
 	
 	select_all();
 });

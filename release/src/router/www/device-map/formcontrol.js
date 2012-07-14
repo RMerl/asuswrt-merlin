@@ -1,9 +1,4 @@
 ﻿// JavaScript Document 2007_12_20 Add by lock
-function domore_link(obj){
-	parent.showLoading();
-	parent.location.href = obj.value;
-}
-
 function add_options_x2(o, arr, varr, orig){
 	free_options(o);
 	

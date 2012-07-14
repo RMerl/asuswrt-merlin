@@ -18,6 +18,7 @@
 #include <signal.h>
 #include <semaphore_mfp.h>
 #include "endianness.h"
+#include <iboxcom.h>
 
 extern int scan_count;//from networkmap;
 
@@ -1535,6 +1536,109 @@ SMBretry:
 
 /******** End of SMB function **********/
 
+/* ASUS Device Discovery */
+int PackGetInfo(char *pdubuf)
+{
+        IBOX_COMM_PKT_HDR_EX *hdr;
+
+        hdr=(IBOX_COMM_PKT_HDR_EX *)pdubuf;
+        hdr->ServiceID = NET_SERVICE_ID_IBOX_INFO;
+        hdr->PacketType = NET_PACKET_TYPE_CMD;
+        hdr->OpCode = NET_CMD_ID_GETINFO;
+        hdr->Info = 0;
+
+        return (0);
+}
+
+int UnpackGetInfo(char *pdubuf, PKT_GET_INFO *Info)
+{
+        IBOX_COMM_PKT_RES_EX *hdr;
+
+        hdr = (IBOX_COMM_PKT_RES_EX *)pdubuf;
+
+        if (hdr->ServiceID!=NET_SERVICE_ID_IBOX_INFO ||
+            hdr->PacketType!=NET_PACKET_TYPE_RES ||
+            hdr->OpCode!=NET_CMD_ID_GETINFO)
+            return 0;
+
+
+        memcpy(Info, pdubuf+sizeof(IBOX_COMM_PKT_RES), sizeof(PKT_GET_INFO));
+        return 1;
+}
+
+int
+Asus_Device_Discovery(unsigned char *src_ip, unsigned char *dest_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail_info_tab)
+{
+    	struct sockaddr_in my_addr, other_addr1, other_addr2;
+    	int sock_dd, status, other_addr_len1, other_addr_len2, sendlen, recvlen, retry=3;
+    	char txPdubuf[512] = {0};
+    	char *other_ptr;
+    	struct timeval timeout={1, 500};
+	PKT_GET_INFO get_info;
+        fd_set  fdvar;
+        int res;
+
+    	sock_dd = socket(AF_INET, SOCK_DGRAM, 0);
+    	if (-1 == sock_dd)
+    	{
+        	NMP_DEBUG("DD: socket error.\n");
+        	return -1;
+    	}
+
+    	memset(&my_addr, 0, sizeof(my_addr));
+    	my_addr.sin_family = AF_INET;
+    	my_addr.sin_port = htons(9999); //infosvr port
+	my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+        int flag=1;
+        if (setsockopt(sock_dd, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(flag)) < 0)
+        {
+                NMP_DEBUG_M("DD: SO_REUSEADDR failed: %s\n", strerror(errno));
+                return -1;
+        }
+
+    	status = bind(sock_dd, (struct sockaddr *)&my_addr, sizeof(my_addr));
+    	if (-1 == status)
+    	{
+        	NMP_DEBUG_M("DD: bind error.\n");
+        	return -1;
+    	}
+
+    	setsockopt(sock_dd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));//set timeout
+    	memset(&other_addr1, 0, sizeof(other_addr1));
+    	other_addr1.sin_family = AF_INET;
+    	other_addr1.sin_port = htons(9999);  // infosvr port
+    	memcpy(&other_addr1.sin_addr, dest_ip, 4);  // dist ip
+    	other_ptr = inet_ntoa(other_addr1.sin_addr);
+    	other_addr_len1 = sizeof(other_addr1);
+
+    	while (retry > 0 /*&& ED*/)
+    	{
+		PackGetInfo(txPdubuf);
+        	sendlen = sendto(sock_dd, txPdubuf, sizeof(txPdubuf), 0, (struct sockaddr*)&other_addr1, other_addr_len1);
+
+	        bzero(txPdubuf, 512);
+	        other_addr_len2 = sizeof(other_addr2);
+		recvlen = recv(sock_dd, txPdubuf, sizeof(txPdubuf), 0);
+
+	        if( recvlen > 0 ) {
+			if(UnpackGetInfo(txPdubuf, &get_info)) {
+				NMP_DEBUG_M("DD: productID= %s\n", get_info.ProductID);
+				memcpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], get_info.ProductID, 16);
+				p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 3;
+				break;
+			}
+			else 
+				retry--;
+        	}
+	        else 
+        	    	retry--;
+    	}
+	close(sock_dd);
+	return 1;
+}
+/* End of discovery */
+
 void toLowerCase(char *str) {
     char *p;
 
@@ -1571,12 +1675,9 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
         memcpy(nativeOS, "Linux", 5);
         memcpy(nativeLanMan, "Samba", 5);
 
-        //nbns name query
-        NMP_DEBUG("NBNS Name Query...\n");
-        Nbns_query(src_ip, dest_ip, p_client_detail_info_tab);
-        if(scan_count==0) //leave when click refresh
-                return 0;
-       
+	//ASUS Device Discovery
+	Asus_Device_Discovery(src_ip, dest_ip, p_client_detail_info_tab);
+
         //http service detect
         ret = SendHttpReq(dest_ip);
 	spinlock_lock(SPINLOCK_Networkmap);
@@ -1631,9 +1732,9 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
         if(scan_count==0) //leave when click refresh
                 return 0;
 
-        //UPNP detect
-        if( ctrlpt(dest_ip) )
-        {
+	if(p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num]==0) {
+            if( ctrlpt(dest_ip) )//UPNP detect
+            {
 		spinlock_lock(SPINLOCK_Networkmap);
 		NMP_DEBUG("Find UPnP device: description= %s, modelname= %s\n",description.description, description.modelname);
 	        //parse description
@@ -1641,48 +1742,39 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
         	if( strstr(description.description, "router")!=NULL ) 
         	{
                 	p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 2;
-			found_type = 1;
         	}
 	        else if( (strstr(description.description, "ap")!=NULL) ||
         	         (strstr(description.description, "access pointer")!=NULL) ||
 			 (strstr(description.description, "wireless device")!=NULL) ) 
 	        {
         	        p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 3;
-			found_type = 1;
 	        }
         	else if( (strstr(description.description, "nas")!=NULL) )
         	{
                 	p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 4;
-			found_type = 1;
         	}
 	        else if( (strstr(description.description, "cam")!=NULL) )
 	        {	
         	        p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 5;
-			found_type = 1;
 	        }
                 else if( (strstr(description.description, "xbox")!=NULL))
                 {
                         p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 8;
-                        found_type = 1;
                 }
                 else if( (strstr(description.description, "ps")!=NULL) ) 
                 {
                         p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num] = 8;
-                        found_type = 1;
                 }
 
 		//Copy modelname to device name if exist.
-		if(strcmp("",description.modelname)) {
-			if(!strcmp("Wireless Router", description.modelname)||//ASUS Router
-			   !strcmp("ADSL Router", description.modelname))
-				strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], description.modelnumber, 15);
-			else 
-				strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], description.modelname, 15);
+		if(strcmp("",description.modelname) &&
+		  !strcmp("",p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num])) {
+			strncpy(p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num], description.modelname, 15);
 			p_client_detail_info_tab->device_name[p_client_detail_info_tab->detail_info_num][15]='\0';
 		}
 		spinlock_unlock(SPINLOCK_Networkmap);
-	}
-	else {
+	    }
+	    else 
 		NMP_DEBUG("UPnP no response!\n");
 	}
         if(scan_count==0) //leave when click refresh
@@ -1694,7 +1786,7 @@ int FindAllApp(unsigned char *src_ip, P_CLIENT_DETAIL_INFO_TABLE p_client_detail
         if(scan_count==0) //leave when click refresh
                 return 0;
 
-	if(found_type == 0)
+	if(p_client_detail_info_tab->type[p_client_detail_info_tab->detail_info_num]==0)
 	{
         	//Check SMB data
         	NMP_DEBUG("Check Samba... \n");

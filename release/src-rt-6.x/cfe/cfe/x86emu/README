@@ -1,0 +1,12 @@
+
+This is a simple X86 emulator.  The original source for this
+was taken from the XFree86 project.  This code is used to
+interpret the X86 instructions in the ROM on the VGA
+adapter to initialize the card to text mode.  Once initialized,
+this emulator is no longer needed.
+
+** Read the 'LICENSE' file before using this in production code **
+
+The XFree86 license is similar to the BSD license.
+
+

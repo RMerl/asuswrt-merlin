@@ -30,6 +30,7 @@ function initial(){
 	show_menu(); 
 	load_body(); 
 	showautofw_rulelist();
+	addOnlineHelp($("faq"), ["ASUSWRT", "port", "trigger"]);
 }
 
 function applyRule(){
@@ -281,6 +282,9 @@ function trigger_validate_duplicate(o, v, l, off){
 		<div class="formfonttitle"><#menu5_3#> - <#menu5_3_3#></div>
 		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		<div class="formfontdesc"><#IPConnection_porttrigger_sectiondesc#></div>
+		<div class="formfontdesc" style="margin-top:-10px;">
+			<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;"><#menu5_3_3#>&nbspFAQ</a>
+		</div>			
 
 	    		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
 					  <thead>
@@ -328,7 +332,7 @@ function trigger_validate_duplicate(o, v, l, off){
               		<input type="text" maxlength="18" class="input_15_table" name="autofw_desc_x_0" onKeyPress="return is_string(this, event)">
             	</td>
             	<td width="21%">            		
-              		<input type="text" maxlength="5" class="input_6_table"  name="autofw_outport_x_0" onKeyPress="return is_portrange(this,event)">
+              		<input type="text" maxlength="11" class="input_12_table"  name="autofw_outport_x_0" onKeyPress="return is_portrange(this,event)">
             	</td>
             	<td width="10%">
               		<select name="autofw_outproto_x_0" class="input_option">
@@ -338,7 +342,7 @@ function trigger_validate_duplicate(o, v, l, off){
               		</div>
             	</td>
             	<td width="21%">
-              		<input type="text" maxlength="5" class="input_6_table" name="autofw_inport_x_0" onKeyPress="return is_portrange(this,event)">
+              		<input type="text" maxlength="11" class="input_12_table" name="autofw_inport_x_0" onKeyPress="return is_portrange(this,event)">
             	</td>
             	<td width="10%">
               		<select name="autofw_inproto_x_0" class="input_option">

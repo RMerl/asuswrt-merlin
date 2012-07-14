@@ -521,7 +521,7 @@ void br_fdb_update(struct net_bridge *br, struct net_bridge_port *source,
 			 * one bridge to another or to a different port under
 			 * the same bridge.
 			 */
-			if (source->state == BR_STATE_FORWARDING)
+			if ((fdb->dst != source) && (source->state == BR_STATE_FORWARDING))
 				br_brc_update((unsigned char *)addr, source->dev);
 #endif /* HNDCTF */
 

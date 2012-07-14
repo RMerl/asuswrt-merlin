@@ -44,6 +44,10 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 
 function initial(){
 	show_menu();
+
+	if(downsize_support != -1)
+		$("guest_image").parentNode.style.display = "none";
+
 	if(document.form.qos_enable.value==1){
 		document.form.qos_obw.parentNode.parentNode.style.display = "";
 		document.form.qos_ibw.parentNode.parentNode.style.display = "";		
@@ -101,6 +105,9 @@ function submitQoS(){
 	if(document.form.qos_enable.value != document.form.qos_enable_orig.value)
     	FormActions("start_apply.htm", "apply", "reboot", "<% get_default_reboot_time(); %>");
 			
+	if(wl6_support != -1)
+		document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
+
 	parent.showLoading();
 	document.form.submit();	
 	

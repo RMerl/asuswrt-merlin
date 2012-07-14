@@ -1,0 +1,35 @@
+# BCM94333U board
+# $Copyright (C) 2003 Broadcom Corporation$
+# $Id: bcm94333u.txt,v 1.3 2004-12-15 21:09:27 rtrask Exp $
+
+# XXX For all practical purposes
+boardtype=bcm94710ap
+boardnum=${serno}
+
+# 4333 CPU clock frequency in Mhz
+# Only valid value is 125, anything else defaults to 100Mhz
+clkfreq=125
+
+# 4333 SDRAM controller parameters
+sdram_init=0x0439
+sdram_config=0x0000
+sdram_refresh=0x8040
+sdram_ncdl=0
+
+# PMON variables
+dl_ram_addr=a0001000
+os_ram_addr=80001000
+os_flash_addr=bfc40000
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+scratch=a0180000
+boot_wait=on
+
+# USB and RNDIS variables
+manf=Broadcom
+productname=Remote NDIS 802.11 Wireless Adapter
+vendor_id=0x0a5c
+product_id=0xd11b
+
+# watchdog set to 3 sec
+watchdog=3000

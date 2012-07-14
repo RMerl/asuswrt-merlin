@@ -1,0 +1,8 @@
+libdir=@abs_top_builddir@/libdaemon/.libs
+includedir=@abs_top_srcdir@
+
+Name: libdaemon
+Description: a lightweight C library that eases the writing of UNIX daemons
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -R${libdir} -ldaemon
+Cflags: -D_REENTRANT -I${includedir}

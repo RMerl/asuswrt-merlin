@@ -188,6 +188,7 @@ function goQIS(){
 <form method="post" name="internetForm" id="form" action="/start_apply2.htm">
 <input type="hidden" name="current_page" value="/index.asp">
 <input type="hidden" name="next_page" value="/index.asp">
+<input type="hidden" name="flag" value="Internet">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_wan_if">
 <input type="hidden" name="action_wait" value="5">
@@ -349,14 +350,5 @@ function goQIS(){
 </table>
 
 </form>
-<select id="domore" class="input_option_left" onchange="domore_link(this);" style="display:none">
-  <option selected="selected"><#MoreConfig#>...</option>
-  <option value="../Advanced_WAN_Content.asp"><#menu5_3_1#></option>
-  <option value="../Advanced_PortTrigger_Content.asp"><#menu5_3_3#></option>
-  <option value="../Advanced_VirtualServer_Content.asp"><#menu5_3_4#></option>
-  <option value="../Advanced_Exposed_Content.asp"><#menu5_3_5#></option>  
-  <option value="../Advanced_ASUSDDNS_Content.asp"><#menu5_3_6#></option>
-  <option value="../Main_IPTStatus_Content.asp"><#menu5_7_5#></option>
-</select>
 </body>
 </html>

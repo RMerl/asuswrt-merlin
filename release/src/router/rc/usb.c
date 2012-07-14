@@ -865,7 +865,7 @@ int mount_partition(char *dev_name, int host_num, char *dsc_name, char *pt_name,
 		sprintf(mountpoint, "%s/%s", POOL_MOUNT_ROOT, the_label);
 
 		int the_same_name = 0;
-		while(test_if_file(mountpoint) || test_if_dir(mountpoint)){
+		while(check_if_file_exist(mountpoint) || check_if_dir_exist(mountpoint)){
 			++the_same_name;
 			sprintf(mountpoint, "%s/%s(%d)", POOL_MOUNT_ROOT, the_label, the_same_name);
 		}
@@ -936,7 +936,7 @@ _dprintf("%s: max_ports=%d.\n", __FUNCTION__, max_ports);
 			memset(buff2, 0, 64);
 			sprintf(buff2, "%s/asusware/.asusrouter.disabled", mountpoint);
 
-			if(test_if_file(buff1) && !test_if_file(buff2)){
+			if(check_if_file_exist(buff1) && !check_if_file_exist(buff2)){
 				// fsck the partition.
 				if(!strcmp(type, "ext2") || !strcmp(type, "ext3")
 						|| !strcmp(type, "vfat") || !strcmp(type, "msdos")
@@ -1035,7 +1035,7 @@ _dprintf("cloudsync: enable=%d, type=%d, user=%s, dir=%s.\n", enable, type, user
 		sprintf(cloud_token, "%s/.__cloudsync_%d_%s.txt", mountpoint, type, username);
 _dprintf("cloudsync: cloud_token=%s.\n", cloud_token);
 
-		if(test_if_file(cloud_token)){
+		if(check_if_file_exist(cloud_token)){
 			char mounted_path[PATH_MAX], *other_path;
 			char true_cloud_setting[PATH_MAX];
 
@@ -1460,10 +1460,16 @@ void write_ftpd_conf()
 			modprobe("nls_cp950");	
 		}
 		else if (nvram_match("ftp_lang", "CN")) {
-			fprintf(fp, "remote_charset=cp936\n");	
+			fprintf(fp, "remote_charset=cp936\n");
 			modprobe("nls_cp936");
 		}
 	}
+
+	if(!strcmp(nvram_safe_get("enable_ftp_log"), "1")){
+		fprintf(fp, "xferlog_enable=YES\n");
+		fprintf(fp, "xferlog_file=/var/log/vsftpd.log\n");
+	}
+
 	fclose(fp);
 }
 

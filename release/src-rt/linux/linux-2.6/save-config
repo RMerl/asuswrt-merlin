@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.22.19
-# Sun Jun 24 18:29:54 2012
+# Fri Jun 15 17:02:46 2012
 #
 CONFIG_MIPS=y
 
@@ -1289,7 +1289,7 @@ CONFIG_USB_PRINTER=m
 #
 # USB modem driver of Beceem
 #
-CONFIG_USB_BECEEM=m
+# CONFIG_USB_BECEEM is not set
 
 #
 # NOTE: USB_STORAGE enables SCSI, and 'SCSI disk support'

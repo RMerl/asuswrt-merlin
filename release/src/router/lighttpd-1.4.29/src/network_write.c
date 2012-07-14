@@ -31,6 +31,7 @@
 int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqueue *cq) {
 	chunk *c;
 	size_t chunks_written = 0;
+	fprintf(stderr,"network_write_chunkqueue_write");
 
 	for(c = cq->first; c; c = c->next) {
 		int chunk_finished = 0;
@@ -199,7 +200,9 @@ int network_write_chunkqueue_write(server *srv, connection *con, int fd, chunkqu
 			size_t toSend;
 			off_t rest_len;
 			stat_cache_entry *sce = NULL;
-#define BUFF_SIZE 2048			
+//#define BUFF_SIZE 2048			
+#define BUFF_SIZE 100*1024
+
 		
 			char buff[BUFF_SIZE];
 //			char *buff=NULL;

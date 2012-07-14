@@ -124,7 +124,7 @@ uint32_t get_phy_speed(uint32_t portmask)
 		vecarg[1] = tmp;
 	}
 
-	_dprintf("get_phy_speed %x %x\n", vecarg[1], portmask);
+	//_dprintf("get_phy_speed %x %x\n", vecarg[1], portmask);
 
 	return (vecarg[1] & portmask);
 }

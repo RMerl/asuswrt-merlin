@@ -266,6 +266,10 @@ function applyRule(){
 	}
 	
 	if(validForm()){
+
+		if(wl6_support != -1)
+			document.form.action_wait.value = parseInt(document.form.action_wait.value)+10;			// extend waiting time for BRCM new driver
+
 		if(document.form.udpxy_enable_x.value != 0 && document.form.udpxy_enable_x.value != ""){
 			if(!validate_range(document.form.udpxy_enable_x, 1024, 65535)){
 					document.form.udpxy_enable_x.focus();

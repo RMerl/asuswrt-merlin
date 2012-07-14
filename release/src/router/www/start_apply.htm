@@ -75,7 +75,7 @@ function initial(){
 		if(navigator.appName.indexOf("Microsoft") >= 0)
 			parent.parent.location.reload();
 		else
-			parent.parent.location.href = parent.parent.location.href;
+			parent.parent.location.href = parent.parent.location.href.split('#')[0];
 	}
 	else if(next_page.indexOf("QIS_") >= 0){
 		if(dsl_support != -1){
@@ -160,9 +160,9 @@ function initial(){
 			else if(getflag == "nodetect"){
 				setTimeout("top_delay_redirect('"+current_page+"');", restart_time*1000);
 			}
-			/*else if(action_script == "restart_webdav"){
-				setTimeout("top_delay_redirect('"+current_page+"');", restart_time*1000);
-			}*/
+			else if(current_page.indexOf("Advanced_System_Content") >= 0){
+				setTimeout("parent.parent.location.href='"+current_page+"';", restart_time*1000);
+			}
 			else{
 				setTimeout("parent.parent.detectLANstatus('"+current_page+"', '');", restart_time*1000);
 			}

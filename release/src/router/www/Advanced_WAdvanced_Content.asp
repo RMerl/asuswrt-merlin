@@ -83,12 +83,12 @@ function applyRule(){
 		var wlcountry = '<% nvram_get("wl0_country_code"); %>';
 		if(wlcountry == 'US' || wlcountry == 'CN' || wlcountry == 'TW'){
 			if(document.form.wl_unit.value == 0)
-				var maxPower = 500;
+				var maxPower = 501;
 			else
-				var maxPower = 250;
+				var maxPower = 251;
 		}
 		else
-			var maxPower = 100;
+			var maxPower = 101;
 
 		if(parseInt(document.form.wl_TxPower.value) > maxPower){
 			alert('<#JS_validrange#> 1 <#JS_validrange_to#> ' + maxPower + '.');

@@ -1123,13 +1123,13 @@ chipinit(ch_t *ch, uint options)
 	/* enable/disable promiscuous mode */
 	gmac_promisc(ch, etc->promisc);
 
-	if (!etc->promisc) {
-		/* set our local address */
-		W_REG(ch->osh, &regs->macaddrhigh,
-		      hton32(*(uint32 *)&etc->cur_etheraddr.octet[0]));
-		W_REG(ch->osh, &regs->macaddrlow,
-		      hton16(*(uint16 *)&etc->cur_etheraddr.octet[4]));
+	/* set our local address */
+	W_REG(ch->osh, &regs->macaddrhigh,
+	      hton32(*(uint32 *)&etc->cur_etheraddr.octet[0]));
+	W_REG(ch->osh, &regs->macaddrlow,
+	      hton16(*(uint16 *)&etc->cur_etheraddr.octet[4]));
 
+	if (!etc->promisc) {
 		/* gmac doesn't have a cam, hence do the multicast address filtering
 		 * in the software
 		 */
@@ -1280,18 +1280,22 @@ chiprx(ch_t *ch)
 			continue;
 		}
 
-		/* skip the rx header */
-		PKTPULL(ch->osh, p, HWRXOFF);
-
-		/* do filtering only for multicast packets when allmulti is false */
-		da = (struct ether_addr *)PKTDATA(ch->osh, p);
-		if (!ETHER_ISMULTI(da) || ch->etc->allmulti ||
-		    (gmac_mf_lkup(ch, da) == SUCCESS) || ETHER_ISBCAST(da)) {
-			PKTPUSH(ch->osh, p, HWRXOFF);
+		if (ch->etc->allmulti) {
 			return (p);
 		}
+		else {
+			/* skip the rx header */
+			PKTPULL(ch->osh, p, HWRXOFF);
 
-		PKTFREE(ch->osh, p, FALSE);
+			/* do filtering only for multicast packets when allmulti is false */
+			da = (struct ether_addr *)PKTDATA(ch->osh, p);
+			if (!ETHER_ISMULTI(da) ||
+			    (gmac_mf_lkup(ch, da) == SUCCESS) || ETHER_ISBCAST(da)) {
+				PKTPUSH(ch->osh, p, HWRXOFF);
+				return (p);
+			}
+			PKTFREE(ch->osh, p, FALSE);
+		}
 	}
 
 	ch->intstatus &= ~I_RI;

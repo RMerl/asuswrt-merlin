@@ -227,13 +227,25 @@ function Zoom(func){
         			<tr>
           				<td height="20"><img src="images/New_ui/export/line_export.png" /></td>
         			</tr>
-
         			<tr>
           				<td height="30" align="left" valign="middle" >
-										<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc#></p></div>
+										<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc1#></p></div>										
           				</td>
         			</tr>
-
+        			<tr>
+          				<td align="left" valign="middle">
+										<table width="95%" border="1" align="left" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="DescTable">
+											<tr><th width="16%"></th><th width="26%"><#tm_internet#></th><th width="29%"><#tm_wired#></th><th width="29%"><#tm_wireless#></th></tr>
+											<tr><th><#tm_reception#></th><td><#tm_recp_int#></td><td><#tm_recp_wired#></td><td><#tm_recp_wireless#></td></tr>
+											<tr><th><#tm_transmission#></th><td><#tm_trans_int#></td><td><#tm_trans_wired#></td><td><#tm_trans_wireless#></td></tr>
+										</table>	
+          				</td>
+        			</tr>
+        			<tr>
+          				<td height="30" align="left" valign="middle" >
+										<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc2#></p></div>										
+          				</td>
+        			</tr>
 
         					<tr>
         						<td>

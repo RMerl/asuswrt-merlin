@@ -63,15 +63,15 @@
 #define SMB_SESSON_ANDX_RSP     6
 
 #ifdef DEBUG
-	//#define NMP_DEBUG(fmt, args...) printf(fmt, ## args)
-	#define NMP_DEBUG(fmt, args...) syslog(LOG_NOTICE, fmt, ## args)
+	#define NMP_DEBUG(fmt, args...) printf(fmt, ## args)
+	//#define NMP_DEBUG(fmt, args...) syslog(LOG_NOTICE, fmt, ## args)
 #else
 	#define NMP_DEBUG(fmt, args...)
 #endif
 
 #ifdef DEBUG_MORE
-        //#define NMP_DEBUG_M(fmt, args...) printf(fmt, ## args)
-	#define NMP_DEBUG_M(fmt, args...) syslog(LOG_NOTICE, fmt, ## args)
+        #define NMP_DEBUG_M(fmt, args...) printf(fmt, ## args)
+	//#define NMP_DEBUG_M(fmt, args...) syslog(LOG_NOTICE, fmt, ## args)
 #else
         #define NMP_DEBUG_M(fmt, args...)
 #endif

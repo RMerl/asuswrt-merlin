@@ -241,7 +241,7 @@ function setScenerion(mode){
 			&nbsp;&nbsp;
 			<input type="radio" name="sw_mode_radio" class="input" value="3" onclick="setScenerion(3);" <% nvram_match("sw_mode", "3", "checked"); %>><#OP_AP_item#>
 		</span>
-		<div id="mode_desc" style="position:relative;display:block;margin-top:10px;margin-left:5px;height:60px;z-index:90;">
+		<div id="mode_desc" style="position:relative;display:block;margin-top:10px;margin-left:5px;height:60px;z-index:75;">
 			<#OP_GW_desc#>
 		</div>
 		<br/>

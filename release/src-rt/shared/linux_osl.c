@@ -67,10 +67,10 @@ struct osl_info {
 	uint magic;
 	void *pdev;
 	atomic_t malloced;
+	atomic_t pktalloced; 	/* Number of allocated packet buffers */
 	uint failed;
 	uint bustype;
 	bcm_mem_link_t *dbgmem_list;
-	spinlock_t dbgmem_lock;
 #if defined(DSLCPE_DELAY)
 	shared_osl_t *oshsh; /* osh shared */
 #endif
@@ -78,6 +78,7 @@ struct osl_info {
 	spinlock_t pktlist_lock;
 	pktlist_info_t pktlist;
 #endif  /* BCMDBG_PKT */
+	spinlock_t dbgmem_lock;
 	spinlock_t pktalloc_lock;
 };
 
@@ -414,8 +415,8 @@ osl_pktfastget(osl_t *osh, uint len)
 
 	/* Init skb struct */
 	skb->next = skb->prev = NULL;
-	skb->data = skb->head + 16;
-	skb->tail = skb->head + 16;
+	skb->data = skb->head + NET_SKB_PAD_ALLOC;
+	skb->tail = skb->data;
 
 	skb->len = 0;
 	skb->cloned = 0;

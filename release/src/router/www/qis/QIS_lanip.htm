@@ -21,22 +21,36 @@
 function QKInternet_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_ISP_head#>";
 	parent.set_step("t2");
-	display_lan_dns(<% nvram_get("lan_dnsenable_x"); %>);
-	change_ip_setting('<% nvram_get("lan_proto"); %>');
-	document.form.lan_proto_radio[0].checked = 1;
-	document.form.lan_proto_radio[1].checked = 0;
-	change_ip_setting('dhcp');
-	document.form.lan_dnsenable_x_radio[0].checked = 1;
-	document.form.lan_dnsenable_x_radio[1].checked = 0;
 	
+	// protocol checkbox
+        if('<% nvram_get("lan_proto"); %>' == 'static'){
+                change_ip_setting('static');
+                document.form.lan_proto_radio[0].checked = 0;
+                document.form.lan_proto_radio[1].checked = 1;
+        }
+        else{
+                change_ip_setting('dhcp');
+                document.form.lan_proto_radio[0].checked = 1;
+                document.form.lan_proto_radio[1].checked = 0;
+        }
+	
+	// dns checkbox
+        if('<% nvram_get("lan_dnsenable_x"); %>' == '0'){
+                display_lan_dns(0);
+                document.form.lan_dnsenable_x_radio[0].checked = 0;
+                document.form.lan_dnsenable_x_radio[1].checked = 1;
+        }
+        else{
+                display_lan_dns(1);
+                document.form.lan_dnsenable_x_radio[0].checked = 1;
+                document.form.lan_dnsenable_x_radio[1].checked = 0;
+        }
+	
+
 	document.getElementById("nextButton").focus();
 }
 
 function display_lan_dns(flag){
-	/*if(flag == "1")
-		document.form.lan_dnsenable_x_radio[0].focus();
-	else	
-		document.form.lan_dnsenable_x_radio[1].focus();*/
 	inputCtrl(document.form.lan_dns1_x, conv_flag(flag));
 	inputCtrl(document.form.lan_dns2_x, conv_flag(flag));
 }

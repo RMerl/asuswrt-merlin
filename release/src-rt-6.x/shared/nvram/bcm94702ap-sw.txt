@@ -1,0 +1,39 @@
+# BCM94702AP board as l2 switch
+# $Copyright Open Broadcom Corporation$
+# $Id: bcm94702ap-sw.txt,v 1.2 2004-12-15 21:09:29 rtrask Exp $
+boardtype=bcm94710ap
+boardnum=${serno}
+
+# 4702 CPU clock frequency in Mhz
+# Only valid value is 125, anything else defaults to 100Mhz
+clkfreq=125
+
+# 4702 SDRAM controller parameters
+sdram_init=0x0419
+sdram_config=0x0000
+sdram_refresh=0x8040
+sdram_ncdl=0
+
+# 4702 MAC and PHY parameters
+et0macaddr=00:90:4c:49:${maclo}
+et0phyaddr=30
+et0mdcport=0
+et1macaddr=00:90:4c:4a:${maclo}
+et1phyaddr=5
+et1mdcport=1
+
+# PMON variables
+dl_ram_addr=a0001000
+os_ram_addr=80001000
+os_flash_addr=bfc40000
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+scratch=a0180000
+boot_wait=on
+
+# watchdog set to 3 sec
+watchdog=3000
+
+# glue between bootloader and firmware
+landevs=et0 et1 wl0 wl1
+wandevs=

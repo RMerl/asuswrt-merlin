@@ -52,8 +52,9 @@ sbin_PROGRAMS = radvd$(EXEEXT) radvdump$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
-	$(top_srcdir)/configure TODO config.guess config.sub depcomp \
-	gram.c gram.h install-sh missing scanner.c ylwrap
+	$(top_srcdir)/configure $(top_srcdir)/redhat/radvd.spec.in \
+	TODO config.guess config.sub depcomp gram.c gram.h install-sh \
+	missing scanner.c ylwrap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -62,25 +63,31 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = redhat/radvd.spec
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(man5dir)" \
 	"$(DESTDIR)$(man8dir)"
 PROGRAMS = $(sbin_PROGRAMS)
-am__objects_1 = log.$(OBJEXT) recv.$(OBJEXT) socket.$(OBJEXT) \
-	util.$(OBJEXT)
-am_radvd_OBJECTS = $(am__objects_1) device-common.$(OBJEXT) \
-	gram.$(OBJEXT) interface.$(OBJEXT) process.$(OBJEXT) \
-	radvd.$(OBJEXT) scanner.$(OBJEXT) send.$(OBJEXT) \
-	timer.$(OBJEXT)
+am__objects_1 = radvd-log.$(OBJEXT) radvd-recv.$(OBJEXT) \
+	radvd-socket.$(OBJEXT) radvd-util.$(OBJEXT)
+am_radvd_OBJECTS = $(am__objects_1) radvd-device-common.$(OBJEXT) \
+	radvd-gram.$(OBJEXT) radvd-interface.$(OBJEXT) \
+	radvd-process.$(OBJEXT) radvd-radvd.$(OBJEXT) \
+	radvd-scanner.$(OBJEXT) radvd-send.$(OBJEXT) \
+	radvd-timer.$(OBJEXT)
 radvd_OBJECTS = $(am_radvd_OBJECTS)
-am_radvdump_OBJECTS = $(am__objects_1) radvdump.$(OBJEXT)
+am__objects_2 = log.$(OBJEXT) recv.$(OBJEXT) socket.$(OBJEXT) \
+	util.$(OBJEXT)
+am_radvdump_OBJECTS = $(am__objects_2) radvdump.$(OBJEXT)
 radvdump_OBJECTS = $(am_radvdump_OBJECTS)
 radvdump_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 AM_V_CC = $(am__v_CC_$(V))
@@ -161,6 +168,8 @@ CONDITIONAL_SOURCES = @CONDITIONAL_SOURCES@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
+DAEMON_CFLAGS = @DAEMON_CFLAGS@
+DAEMON_LIBS = @DAEMON_LIBS@
 DEFS = \
 	-DINET6=1 \
 	-DLOG_FACILITY=$(LOG_FACILITY) \
@@ -205,6 +214,9 @@ PATH_RADVD_CONF = @PATH_RADVD_CONF@
 PATH_RADVD_LOG = @PATH_RADVD_LOG@
 PATH_RADVD_PID = @PATH_RADVD_PID@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RM = @RM@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -303,8 +315,12 @@ EXTRA_radvd_SOURCES = \
 	netlink.h \
 	privsep-linux.c
 
+radvd_CPPFLAGS = \
+	@DAEMON_CFLAGS@
+
 radvd_LDADD = \
-	@CONDITIONAL_SOURCES@
+	@CONDITIONAL_SOURCES@ \
+	@DAEMON_LIBS@
 
 radvd_DEPENDENCIES = \
 	@CONDITIONAL_SOURCES@
@@ -410,6 +426,8 @@ $(srcdir)/config.h.in:  $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
+redhat/radvd.spec: $(top_builddir)/config.status $(top_srcdir)/redhat/radvd.spec.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 install-sbinPROGRAMS: $(sbin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(sbindir)" || $(MKDIR_P) "$(DESTDIR)$(sbindir)"
@@ -465,22 +483,26 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/device-bsd44.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/device-common.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/device-linux.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gram.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/interface.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/netlink.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/privsep-linux.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/process.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-device-bsd44.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-device-common.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-device-linux.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-gram.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-interface.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-netlink.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-privsep-linux.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-process.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-radvd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-recv.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-scanner.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-send.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-socket.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-timer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvd-util.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radvdump.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/recv.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scanner.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/send.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/socket.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Po@am__quote@
 
 .c.o:
@@ -498,6 +520,262 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+radvd-log.o: log.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-log.o -MD -MP -MF $(DEPDIR)/radvd-log.Tpo -c -o radvd-log.o `test -f 'log.c' || echo '$(srcdir)/'`log.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-log.Tpo $(DEPDIR)/radvd-log.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='log.c' object='radvd-log.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-log.o `test -f 'log.c' || echo '$(srcdir)/'`log.c
+
+radvd-log.obj: log.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-log.obj -MD -MP -MF $(DEPDIR)/radvd-log.Tpo -c -o radvd-log.obj `if test -f 'log.c'; then $(CYGPATH_W) 'log.c'; else $(CYGPATH_W) '$(srcdir)/log.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-log.Tpo $(DEPDIR)/radvd-log.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='log.c' object='radvd-log.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-log.obj `if test -f 'log.c'; then $(CYGPATH_W) 'log.c'; else $(CYGPATH_W) '$(srcdir)/log.c'; fi`
+
+radvd-recv.o: recv.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-recv.o -MD -MP -MF $(DEPDIR)/radvd-recv.Tpo -c -o radvd-recv.o `test -f 'recv.c' || echo '$(srcdir)/'`recv.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-recv.Tpo $(DEPDIR)/radvd-recv.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='recv.c' object='radvd-recv.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-recv.o `test -f 'recv.c' || echo '$(srcdir)/'`recv.c
+
+radvd-recv.obj: recv.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-recv.obj -MD -MP -MF $(DEPDIR)/radvd-recv.Tpo -c -o radvd-recv.obj `if test -f 'recv.c'; then $(CYGPATH_W) 'recv.c'; else $(CYGPATH_W) '$(srcdir)/recv.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-recv.Tpo $(DEPDIR)/radvd-recv.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='recv.c' object='radvd-recv.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-recv.obj `if test -f 'recv.c'; then $(CYGPATH_W) 'recv.c'; else $(CYGPATH_W) '$(srcdir)/recv.c'; fi`
+
+radvd-socket.o: socket.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-socket.o -MD -MP -MF $(DEPDIR)/radvd-socket.Tpo -c -o radvd-socket.o `test -f 'socket.c' || echo '$(srcdir)/'`socket.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-socket.Tpo $(DEPDIR)/radvd-socket.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='socket.c' object='radvd-socket.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-socket.o `test -f 'socket.c' || echo '$(srcdir)/'`socket.c
+
+radvd-socket.obj: socket.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-socket.obj -MD -MP -MF $(DEPDIR)/radvd-socket.Tpo -c -o radvd-socket.obj `if test -f 'socket.c'; then $(CYGPATH_W) 'socket.c'; else $(CYGPATH_W) '$(srcdir)/socket.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-socket.Tpo $(DEPDIR)/radvd-socket.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='socket.c' object='radvd-socket.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-socket.obj `if test -f 'socket.c'; then $(CYGPATH_W) 'socket.c'; else $(CYGPATH_W) '$(srcdir)/socket.c'; fi`
+
+radvd-util.o: util.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-util.o -MD -MP -MF $(DEPDIR)/radvd-util.Tpo -c -o radvd-util.o `test -f 'util.c' || echo '$(srcdir)/'`util.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-util.Tpo $(DEPDIR)/radvd-util.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='util.c' object='radvd-util.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-util.o `test -f 'util.c' || echo '$(srcdir)/'`util.c
+
+radvd-util.obj: util.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-util.obj -MD -MP -MF $(DEPDIR)/radvd-util.Tpo -c -o radvd-util.obj `if test -f 'util.c'; then $(CYGPATH_W) 'util.c'; else $(CYGPATH_W) '$(srcdir)/util.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-util.Tpo $(DEPDIR)/radvd-util.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='util.c' object='radvd-util.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-util.obj `if test -f 'util.c'; then $(CYGPATH_W) 'util.c'; else $(CYGPATH_W) '$(srcdir)/util.c'; fi`
+
+radvd-device-common.o: device-common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-device-common.o -MD -MP -MF $(DEPDIR)/radvd-device-common.Tpo -c -o radvd-device-common.o `test -f 'device-common.c' || echo '$(srcdir)/'`device-common.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-device-common.Tpo $(DEPDIR)/radvd-device-common.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='device-common.c' object='radvd-device-common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-device-common.o `test -f 'device-common.c' || echo '$(srcdir)/'`device-common.c
+
+radvd-device-common.obj: device-common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-device-common.obj -MD -MP -MF $(DEPDIR)/radvd-device-common.Tpo -c -o radvd-device-common.obj `if test -f 'device-common.c'; then $(CYGPATH_W) 'device-common.c'; else $(CYGPATH_W) '$(srcdir)/device-common.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-device-common.Tpo $(DEPDIR)/radvd-device-common.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='device-common.c' object='radvd-device-common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-device-common.obj `if test -f 'device-common.c'; then $(CYGPATH_W) 'device-common.c'; else $(CYGPATH_W) '$(srcdir)/device-common.c'; fi`
+
+radvd-gram.o: gram.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-gram.o -MD -MP -MF $(DEPDIR)/radvd-gram.Tpo -c -o radvd-gram.o `test -f 'gram.c' || echo '$(srcdir)/'`gram.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-gram.Tpo $(DEPDIR)/radvd-gram.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gram.c' object='radvd-gram.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-gram.o `test -f 'gram.c' || echo '$(srcdir)/'`gram.c
+
+radvd-gram.obj: gram.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-gram.obj -MD -MP -MF $(DEPDIR)/radvd-gram.Tpo -c -o radvd-gram.obj `if test -f 'gram.c'; then $(CYGPATH_W) 'gram.c'; else $(CYGPATH_W) '$(srcdir)/gram.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-gram.Tpo $(DEPDIR)/radvd-gram.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='gram.c' object='radvd-gram.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-gram.obj `if test -f 'gram.c'; then $(CYGPATH_W) 'gram.c'; else $(CYGPATH_W) '$(srcdir)/gram.c'; fi`
+
+radvd-interface.o: interface.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-interface.o -MD -MP -MF $(DEPDIR)/radvd-interface.Tpo -c -o radvd-interface.o `test -f 'interface.c' || echo '$(srcdir)/'`interface.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-interface.Tpo $(DEPDIR)/radvd-interface.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='interface.c' object='radvd-interface.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-interface.o `test -f 'interface.c' || echo '$(srcdir)/'`interface.c
+
+radvd-interface.obj: interface.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-interface.obj -MD -MP -MF $(DEPDIR)/radvd-interface.Tpo -c -o radvd-interface.obj `if test -f 'interface.c'; then $(CYGPATH_W) 'interface.c'; else $(CYGPATH_W) '$(srcdir)/interface.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-interface.Tpo $(DEPDIR)/radvd-interface.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='interface.c' object='radvd-interface.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-interface.obj `if test -f 'interface.c'; then $(CYGPATH_W) 'interface.c'; else $(CYGPATH_W) '$(srcdir)/interface.c'; fi`
+
+radvd-process.o: process.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-process.o -MD -MP -MF $(DEPDIR)/radvd-process.Tpo -c -o radvd-process.o `test -f 'process.c' || echo '$(srcdir)/'`process.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-process.Tpo $(DEPDIR)/radvd-process.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='process.c' object='radvd-process.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-process.o `test -f 'process.c' || echo '$(srcdir)/'`process.c
+
+radvd-process.obj: process.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-process.obj -MD -MP -MF $(DEPDIR)/radvd-process.Tpo -c -o radvd-process.obj `if test -f 'process.c'; then $(CYGPATH_W) 'process.c'; else $(CYGPATH_W) '$(srcdir)/process.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-process.Tpo $(DEPDIR)/radvd-process.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='process.c' object='radvd-process.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-process.obj `if test -f 'process.c'; then $(CYGPATH_W) 'process.c'; else $(CYGPATH_W) '$(srcdir)/process.c'; fi`
+
+radvd-radvd.o: radvd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-radvd.o -MD -MP -MF $(DEPDIR)/radvd-radvd.Tpo -c -o radvd-radvd.o `test -f 'radvd.c' || echo '$(srcdir)/'`radvd.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-radvd.Tpo $(DEPDIR)/radvd-radvd.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='radvd.c' object='radvd-radvd.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-radvd.o `test -f 'radvd.c' || echo '$(srcdir)/'`radvd.c
+
+radvd-radvd.obj: radvd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-radvd.obj -MD -MP -MF $(DEPDIR)/radvd-radvd.Tpo -c -o radvd-radvd.obj `if test -f 'radvd.c'; then $(CYGPATH_W) 'radvd.c'; else $(CYGPATH_W) '$(srcdir)/radvd.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-radvd.Tpo $(DEPDIR)/radvd-radvd.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='radvd.c' object='radvd-radvd.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-radvd.obj `if test -f 'radvd.c'; then $(CYGPATH_W) 'radvd.c'; else $(CYGPATH_W) '$(srcdir)/radvd.c'; fi`
+
+radvd-scanner.o: scanner.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-scanner.o -MD -MP -MF $(DEPDIR)/radvd-scanner.Tpo -c -o radvd-scanner.o `test -f 'scanner.c' || echo '$(srcdir)/'`scanner.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-scanner.Tpo $(DEPDIR)/radvd-scanner.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='scanner.c' object='radvd-scanner.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-scanner.o `test -f 'scanner.c' || echo '$(srcdir)/'`scanner.c
+
+radvd-scanner.obj: scanner.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-scanner.obj -MD -MP -MF $(DEPDIR)/radvd-scanner.Tpo -c -o radvd-scanner.obj `if test -f 'scanner.c'; then $(CYGPATH_W) 'scanner.c'; else $(CYGPATH_W) '$(srcdir)/scanner.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-scanner.Tpo $(DEPDIR)/radvd-scanner.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='scanner.c' object='radvd-scanner.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-scanner.obj `if test -f 'scanner.c'; then $(CYGPATH_W) 'scanner.c'; else $(CYGPATH_W) '$(srcdir)/scanner.c'; fi`
+
+radvd-send.o: send.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-send.o -MD -MP -MF $(DEPDIR)/radvd-send.Tpo -c -o radvd-send.o `test -f 'send.c' || echo '$(srcdir)/'`send.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-send.Tpo $(DEPDIR)/radvd-send.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='send.c' object='radvd-send.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-send.o `test -f 'send.c' || echo '$(srcdir)/'`send.c
+
+radvd-send.obj: send.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-send.obj -MD -MP -MF $(DEPDIR)/radvd-send.Tpo -c -o radvd-send.obj `if test -f 'send.c'; then $(CYGPATH_W) 'send.c'; else $(CYGPATH_W) '$(srcdir)/send.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-send.Tpo $(DEPDIR)/radvd-send.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='send.c' object='radvd-send.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-send.obj `if test -f 'send.c'; then $(CYGPATH_W) 'send.c'; else $(CYGPATH_W) '$(srcdir)/send.c'; fi`
+
+radvd-timer.o: timer.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-timer.o -MD -MP -MF $(DEPDIR)/radvd-timer.Tpo -c -o radvd-timer.o `test -f 'timer.c' || echo '$(srcdir)/'`timer.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-timer.Tpo $(DEPDIR)/radvd-timer.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='timer.c' object='radvd-timer.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-timer.o `test -f 'timer.c' || echo '$(srcdir)/'`timer.c
+
+radvd-timer.obj: timer.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-timer.obj -MD -MP -MF $(DEPDIR)/radvd-timer.Tpo -c -o radvd-timer.obj `if test -f 'timer.c'; then $(CYGPATH_W) 'timer.c'; else $(CYGPATH_W) '$(srcdir)/timer.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-timer.Tpo $(DEPDIR)/radvd-timer.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='timer.c' object='radvd-timer.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-timer.obj `if test -f 'timer.c'; then $(CYGPATH_W) 'timer.c'; else $(CYGPATH_W) '$(srcdir)/timer.c'; fi`
+
+radvd-device-bsd44.o: device-bsd44.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-device-bsd44.o -MD -MP -MF $(DEPDIR)/radvd-device-bsd44.Tpo -c -o radvd-device-bsd44.o `test -f 'device-bsd44.c' || echo '$(srcdir)/'`device-bsd44.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-device-bsd44.Tpo $(DEPDIR)/radvd-device-bsd44.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='device-bsd44.c' object='radvd-device-bsd44.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-device-bsd44.o `test -f 'device-bsd44.c' || echo '$(srcdir)/'`device-bsd44.c
+
+radvd-device-bsd44.obj: device-bsd44.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-device-bsd44.obj -MD -MP -MF $(DEPDIR)/radvd-device-bsd44.Tpo -c -o radvd-device-bsd44.obj `if test -f 'device-bsd44.c'; then $(CYGPATH_W) 'device-bsd44.c'; else $(CYGPATH_W) '$(srcdir)/device-bsd44.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-device-bsd44.Tpo $(DEPDIR)/radvd-device-bsd44.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='device-bsd44.c' object='radvd-device-bsd44.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-device-bsd44.obj `if test -f 'device-bsd44.c'; then $(CYGPATH_W) 'device-bsd44.c'; else $(CYGPATH_W) '$(srcdir)/device-bsd44.c'; fi`
+
+radvd-device-linux.o: device-linux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-device-linux.o -MD -MP -MF $(DEPDIR)/radvd-device-linux.Tpo -c -o radvd-device-linux.o `test -f 'device-linux.c' || echo '$(srcdir)/'`device-linux.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-device-linux.Tpo $(DEPDIR)/radvd-device-linux.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='device-linux.c' object='radvd-device-linux.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-device-linux.o `test -f 'device-linux.c' || echo '$(srcdir)/'`device-linux.c
+
+radvd-device-linux.obj: device-linux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-device-linux.obj -MD -MP -MF $(DEPDIR)/radvd-device-linux.Tpo -c -o radvd-device-linux.obj `if test -f 'device-linux.c'; then $(CYGPATH_W) 'device-linux.c'; else $(CYGPATH_W) '$(srcdir)/device-linux.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-device-linux.Tpo $(DEPDIR)/radvd-device-linux.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='device-linux.c' object='radvd-device-linux.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-device-linux.obj `if test -f 'device-linux.c'; then $(CYGPATH_W) 'device-linux.c'; else $(CYGPATH_W) '$(srcdir)/device-linux.c'; fi`
+
+radvd-netlink.o: netlink.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-netlink.o -MD -MP -MF $(DEPDIR)/radvd-netlink.Tpo -c -o radvd-netlink.o `test -f 'netlink.c' || echo '$(srcdir)/'`netlink.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-netlink.Tpo $(DEPDIR)/radvd-netlink.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netlink.c' object='radvd-netlink.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-netlink.o `test -f 'netlink.c' || echo '$(srcdir)/'`netlink.c
+
+radvd-netlink.obj: netlink.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-netlink.obj -MD -MP -MF $(DEPDIR)/radvd-netlink.Tpo -c -o radvd-netlink.obj `if test -f 'netlink.c'; then $(CYGPATH_W) 'netlink.c'; else $(CYGPATH_W) '$(srcdir)/netlink.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-netlink.Tpo $(DEPDIR)/radvd-netlink.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netlink.c' object='radvd-netlink.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-netlink.obj `if test -f 'netlink.c'; then $(CYGPATH_W) 'netlink.c'; else $(CYGPATH_W) '$(srcdir)/netlink.c'; fi`
+
+radvd-privsep-linux.o: privsep-linux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-privsep-linux.o -MD -MP -MF $(DEPDIR)/radvd-privsep-linux.Tpo -c -o radvd-privsep-linux.o `test -f 'privsep-linux.c' || echo '$(srcdir)/'`privsep-linux.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-privsep-linux.Tpo $(DEPDIR)/radvd-privsep-linux.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='privsep-linux.c' object='radvd-privsep-linux.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-privsep-linux.o `test -f 'privsep-linux.c' || echo '$(srcdir)/'`privsep-linux.c
+
+radvd-privsep-linux.obj: privsep-linux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT radvd-privsep-linux.obj -MD -MP -MF $(DEPDIR)/radvd-privsep-linux.Tpo -c -o radvd-privsep-linux.obj `if test -f 'privsep-linux.c'; then $(CYGPATH_W) 'privsep-linux.c'; else $(CYGPATH_W) '$(srcdir)/privsep-linux.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/radvd-privsep-linux.Tpo $(DEPDIR)/radvd-privsep-linux.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='privsep-linux.c' object='radvd-privsep-linux.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(radvd_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o radvd-privsep-linux.obj `if test -f 'privsep-linux.c'; then $(CYGPATH_W) 'privsep-linux.c'; else $(CYGPATH_W) '$(srcdir)/privsep-linux.c'; fi`
 
 .l.c:
 	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)

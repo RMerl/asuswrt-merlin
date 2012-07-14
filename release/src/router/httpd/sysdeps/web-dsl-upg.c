@@ -337,6 +337,11 @@ int check_tc_firmware_crc()
 			{
 				tc_ras_ver_diff = 1;
 			}
+			//check Annex mode, Sam 2012/06/20
+			if(buf_tc_fw_ver[10] != 'B') {	//ASUS_Annex'B'_..
+				RetVal = -1;
+				goto exit;
+			}
 #else
 			if(strcmp(buf_tc_fw_ver, TC_DSL_RAS_VER_FROM_MODEM) == 0)
 			{
@@ -345,7 +350,12 @@ int check_tc_firmware_crc()
 			else
 			{
 				tc_ras_ver_diff = 1;
-			}			
+			}
+			//check Annex mode, Sam 2012/06/20
+			if(buf_tc_fw_ver[10] != 'A') {	//ASUS_ANNEX'A'IJLM_..
+				RetVal = -1;
+				goto exit;
+			}
 #endif
 		}		
 

@@ -1,0 +1,48 @@
+# BCM94704mpcb board
+# $Copyright (C) 2003 Broadcom Corporation$
+# $Id: bcm94704cbonly.txt,v 1.2 2005-09-08 02:07:17 scottw Exp $
+boardtype=0x0472
+boardnum=${serno}
+# Board revision 2.3
+boardrev=0x23
+# BCM5325 RoboSwitch requires reverse MII initialization
+boardflags=0x10
+
+# With cardbus flag set, mPCI will NOT work.
+cardbus=1
+
+# MIPS clock frequency in MHz
+clkfreq=264
+
+# 64 MB DDR SDRAM (4 Meg x 16 x 2)
+sdram_init=0x0009
+sdram_config=0x0062
+sdram_refresh=0x0000
+sdram_ncdl=0
+
+# BCM5325F
+et0macaddr=00:90:4c:a0:${maclo}
+et0phyaddr=30
+et0mdcport=0
+
+# BCM5325F Wan port
+et1macaddr=00:90:4c:a1:${maclo}
+et1phyaddr=4
+et1mdcport=0
+
+# BCM5325F reset
+gpio0=robo_reset
+
+# SES Button on GPIO 6
+gpio6=ses_button
+
+# Bootloader variables
+lan_ipaddr=192.168.1.1
+lan_netmask=255.255.255.0
+boot_wait=on
+
+# Watchdog timer in ms
+watchdog=3000
+
+# Reset 
+reset_gpio=7

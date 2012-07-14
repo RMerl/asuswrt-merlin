@@ -74,8 +74,6 @@ var networkmap_scanning;
 var macfilter_rulelist_array = '<% nvram_get("macfilter_rulelist"); %>';
 var macfilter_rulelist_row = macfilter_rulelist_array.split('&#60'); 
 var macfilter_enable =  '<% nvram_get("macfilter_enable_x"); %>';
-var listFlag = 0;
-var itemperpage = 13;
 
 /* get client info form dhcp lease log */
 loadXMLDoc("/getdhcpLeaseInfo.asp");
@@ -173,35 +171,41 @@ function gotoMACFilter(){
 }
 
 function initial(){
-	$("loadingBarBlock").style.display = "none";
-	$("LoadingBar").style.display = "none";
-	update_clients();
+	setTimeout("update_clients();", 1000);
 	
 	if((macfilter_enable != 0 || ParentalCtrl_support != -1) && sw_mode == 1)
 			$("macFilterHint").style.display = "";
 }
 
+var listFlag = 0;
+var itemperpage = 14;
 function _showNextItem(num){
-	var _client_list_row_length = client_list_row.length - 1;
-	if(_client_list_row_length < parseInt(itemperpage)+2){
+	var _client_list_row_length = client_list_row.length-1;
+
+	if(_client_list_row_length < parseInt(itemperpage)+1){
 		$("leftBtn").style.visibility = "hidden";
 		$("rightBtn").style.visibility = "hidden";
 		return false;
 	}
 
-	for(var i=1; i<_client_list_row_length; i++){
+	for(var i=1; i<client_list_row.length; i++){
 		$("row"+i).style.display = "none";
 	}
 
-	var startNum = parseInt(num)*itemperpage+1;
-	if(num == Math.round(_client_list_row_length/itemperpage))
-		var endNum = _client_list_row_length;
+	if(num == 0)
+		var startNum = 1;
 	else
-		var endNum = itemperpage*(parseInt(num)+1);
+		var startNum = parseInt(num)*itemperpage+1;
+
+	if(num == Math.floor(_client_list_row_length/itemperpage))  // last page
+		var endNum = client_list_row.length;
+	else
+		var endNum = startNum + itemperpage;
 
 	for(i=startNum; i<endNum; i++){
 		$("row"+i).style.display = "";
 	}
+
 	// start
 	if(startNum == 1){
 		$("leftBtn").style.visibility = "hidden";
@@ -209,8 +213,9 @@ function _showNextItem(num){
 		$("leftBtn").style.visibility = "";
 		$("leftBtn").title = "<#prev_page#>";
 	}	
+
 	// end
-	if(endNum == _client_list_row_length){
+	if(endNum == client_list_row.length){
 		$("rightBtn").style.visibility = "hidden";
 	}else{
 		$("rightBtn").style.visibility = "";
@@ -219,15 +224,15 @@ function _showNextItem(num){
 }
 
 function showNextItem(act){
-	if(act == 1)
+	if(act == 1) // next page
 		listFlag++;
-	else
+	else  // previous page
 		listFlag--;
 
 	if(listFlag < 0)
 		listFlag = 0;
-	else if(listFlag > Math.round(client_list_row.length/itemperpage))
-		listFlag = Math.round(client_list_row.length/itemperpage);
+	else if(listFlag > Math.floor(client_list_row.length/itemperpage))
+		listFlag = Math.floor(client_list_row.length/itemperpage);
 
 	_showNextItem(listFlag);
 }
@@ -241,8 +246,6 @@ function showclient_list(list){
 	
 	if(list)
 		$("isblockdesc").innerHTML = "<#btn_remove#>";
-	//else
-		//$("isblockdesc").innerHTML = "<#Block#>";	not to show <th>
 
 	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="client_list_table">';
 	if(client_list_row.length == 1)
@@ -455,12 +458,6 @@ function getOUIFromMAC(mac) {
 
 <iframe name="applyFrame" id="applyFrame" src="" width="0" height="0" frameborder="0" scrolling="no"></iframe>
 
-<div id="LoadingBar" class="popup_bar_bg"><#Device_Searching#>
-<!--[if lte IE 6.5]><iframe class="hackiframe"></iframe><![endif]-->
-</div>
-<div id="loadingBarBlock" class="loadingBarBlock" align="center">
-</div>
-
 <form method="post" name="form" id="refreshForm" action="/start_apply.htm" target="">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="action_mode" value="">
@@ -491,7 +488,11 @@ function getOUIFromMAC(mac) {
 		<table width="95%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="table1px">
   		<tr>
     			<td style="padding:3px 3px 5px 5px;">
-						<div id="client_list_Block"></div>
+						<div id="client_list_Block">
+							<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table" id="client_list_table">
+								<tr><td style="color:#FFCC00;font-size:12px; border-collapse: collapse;border:1;" colspan="4"><span style="line-height:25px;"><#Device_Searching#></span>&nbsp;<img style="margin-top:10px;" src="/images/InternetScan.gif"></td></tr>
+							</table>
+						</div>
     			</td>
   		</tr>
  		</table>
@@ -506,8 +507,8 @@ function getOUIFromMAC(mac) {
 </table>
 
 <br/>
-<img height="20" id="leftBtn" onclick="showNextItem(0);" style="cursor:pointer;margin-left:10px;" src="/images/arrow-left.png">
+<img height="25" id="leftBtn" onclick="showNextItem(0);" style="visibility:hidden;cursor:pointer;margin-left:10px;" src="/images/arrow-left.png">
 <input type="button" id="refresh_list" class="button_gen" onclick="networkmap_update();" value="<#CTL_refresh#>" style="margin-left:70px;">
-<img height="20" id="rightBtn" onclick="showNextItem(1);" style="cursor:pointer;margin-left:60px;" src="/images/arrow-right.png">
+<img height="25" id="rightBtn" onclick="showNextItem(1);" style="visibility:hidden;cursor:pointer;margin-left:50px;" src="/images/arrow-right.png">
 </body>
 </html>

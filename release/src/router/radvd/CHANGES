@@ -1,11 +1,28 @@
+19/06/2012	Fixing bashism '==' in configure
+		Updating to 1.9.1 and releasing
+
+14/06/2012	Version 1.9 release
+
+02/06/2012	Fixing Dabian bug #634485 (GheRivero)
+
+10/04/2012	Using libdaemon
+		bumping version to 1.9
+
+22/02/2012	include the prefix option in the RA packets even when
+		AdvPreferredLifetime equals 0, and set AdvPreferredLifetime
+		as user specified(zero).  Li Wei <lw@cn.fujitsu.com>
+
+07/02/2012	NETLINK_NO_ENOBUFS set on netlink socket to prevent
+		endless error loop.  Patch by Ulrich Weber
+
 25/01/2012	PID in PID file is now correct
-			1.8.5rc1
+		1.8.5rc1
 
 21/01/2012	1.8.4 released
 
 12/01/2012	renaming configure.in to configure.ac
-			removing CVS keywords
-			1.8.4rc1
+		removing CVS keywords
+		1.8.4rc1
 
 07/01/2012	Always do privsep on linux.  Validate the PID file contents.
 

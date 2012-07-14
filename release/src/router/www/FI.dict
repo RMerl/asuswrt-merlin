@@ -25,6 +25,7 @@ tunnel_MTU=Tunneli-MTU
 tunnel_TTL=Tunneli-TTL
 [VPN server]
 vpn_setting=Perusmääritys
+vpn_Adv=VPN-tiedot
 PPTP_desc=VPN-palvelin mahdollistaa kotiverkon käytön missä ja milloin tahansa.
 PPTP_desc2=VPN-palvelimen käyttö. Toimi näiden vaiheiden mukaisesti.<br>(1) Ota PPTP VPN -palvelin käyttöön<br>(2) Aseta asiakas-IP:n IP-ryhmä. (Enintään 10 asiakasta)<br>(3) Aseta VPN-asiakkaan käyttäjänimi ja salasana.<br>(4) Avaa VPN-yhteysohjelma tietokoneessa tai älypuhelimessa.<br>(5) Lisää uusi PPTP VPN -yhteys, jolloin VPN-palvelinosoite on
 PPTP_desc3=(6) Jos WAN IP -osoitteesi on dynaaminen, <a href="../Advanced_ASUSDDNS_Content.asp" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">napsauta tätä asettaaksesi DDNS:n.</a>
@@ -91,6 +92,19 @@ Low=Matala
 Lowest=Matalin
 traffic_monitor=Liikenteen valvonta
 traffic_monitor_desc=Liikenteen valvonta auttaa sinua valvomaan seuraavia verkkoliikennetyyppejä:<P>Internet: Kaikki internet-liikenne.<P>Langallinen: Verkkoliikenne langallisesta langattomaan verkkoon ja internetiin.<P>Langaton: Verkkoliikenne langattomasta langalliseen verkkoon ja internetiin.
+traffic_monitor_desc1=Liikennemonitori sallii seuraavien saapuvien tai lähtevien pakettien tarkkailun :
+traffic_monitor_desc2=<b>HUOMAUTUS :</b> Internetistä saapuvat paketit lähetetään tasaisesti langallisiin ja langattomiin laitteisiin.
+tm_internet=Internet
+tm_wired=Langallinen
+tm_wireless=Langaton
+tm_reception=Vastaanotto
+tm_transmission=Lähettäminen
+tm_recp_int=Saapuvat internet-paketit
+tm_recp_wired=Saapuvat paketit langallisesta verkosta
+tm_recp_wireless=Saapuvat paketit langattomasta verkosta
+tm_trans_int=Lähtevät internet-paketit
+tm_trans_wired=Lähtevät paketit langallisesta verkosta
+tm_trans_wireless=Lähtevät paketit langattomasta verkosta
 ezqosDesw=Quality of Service (Palvelun laatu) (QoS) varmistaa verkon nopeussuorituskyvyn. Oletussääntö asettaa online-pelaamisen ja web-surffauksen korkeimpaan ensisijaisuuteen, eivätkä P2P-sovellukset (vertaissovellukset, kuten BitTorrent) vaikuta siihen. Ota QoS-toiminto käyttöön napsauttamalla QOS-liukusäädintä ja täyttämällä lähettämis- ja lataamiskaistanleveyskentät. Pyydä kaistanleveyskentät internetpalveluntarjoajaltasi.<p>Jos haluat tehdä määrätyt verkkosovellukset ja verkkolaitteet ensisijaisiksi, valitse haluamasi ensisijaisuus käyttäjän määrittämistä QOS-säännöistä.
 qos_automatic_mode=Automaattinen tila
 source_ipmac=Lähde-ja kohde-IP-osoitteeksi voit:<p>(a) antaa määrätyn IP-osoitteen, kuten \"192.168.122.1\";<p>(b) antaa IP-osoitteet jonkin aliverkon sisällä tai saman IP-ryhmän sisällä, kuten \"192.168.123.*\" tai \"192.168.*.*\";<p>tai (c) antaa kaikki IP-osoitteet muodossa \"*.*.*.*\"<p>MAC-osoitemuoto on kuusi kaksoispiseellä (:) erotetun kahden heksadesimaalinumeron ryhmää lähetysjärjestyksessä (esim. 12:34:56:aa:bc:ef )
@@ -257,8 +271,8 @@ wireless_router=Langaton reititin
 BasicConfig_EnableiTunesServer_itemname=Enable iTunes Server?
 OP_GW_item=Langaton reititin (Oletus)
 OP_GW_desc=Langaton reititin, ZVMODELVZ muodostaa yhteyden internetiin PPPoE-, DHCP-, PPTP-, L2TP- tai staattisella IP-protokollalla ja jakaa langattoman verkon LAN-asiakkaiden tai laitteiden kanssa.  Tässä tilassa NAT, palomuuri ja DHCP-palvelin ovat käytössä oletuksena. UPnP ja dynaaminen DNS ovat tuettuja SOHO- ja kotikäyttäjille. Valitse tämä tila, jos olet ensikertalainen käyttäjä tai jos käytössäsi ei ole langallista/langatonta reititintä.
-OP_RE_item=Repeater mode
-OP_RE_desc=In Repeater mode, ZVMODELVZ wirelessly connects to an existing wireless network to extend the wireless coverage. In this mode, the firewall, IP sharing, and NAT functions are disabled.
+OP_RE_item=Toistintila
+OP_RE_desc=Toistintilassa ZVMODELVZ muodostaa langattomanyhteyden olemassa olevaan langattomaan verkkoon langattoman verkkopeiton laajentamiseksi. Tässä tilassa palomuuri, IP-jakaminen ja NAT-toiminto ovat pois päältä.
 OP_AP_item=Tukiasema (AP) -tila
 OP_AP_desc=Tukiasema (AP) -tila, ZVMODELVZ muodostaa yhteyden langattomaan reitittimeen Ethernet-kaapelilla langattoman signaalipeiton laajentamiseksi muille verkkoasiakkaille. Tässä tilassa palomuuri, IP-jakaminen ja NAT-toiminto ovat pois päältä oletuksena.
 OP_RT_item=Reititin (Ota NAT pois käytöstä)
@@ -279,6 +293,7 @@ RouterConfig_GWMulticast_Broadcast_itemname=Lähetysmyrskyn hallinta (Mbps):
 [keyword_filter]
 menu5_5_5=Avainsanasuodatin
 FirewallConfig_KeywordFilterEnable_sectiondesc=Avainsanasuodattimella voi estää asiakkailta määritettyjä avainsanoja sisältävien web-sivujen käytön.
+FirewallConfig_KeywordFilterEnable_sectiondesc2=Suodatustoiminnon avainsanarajoitukset :<ol><li>HTTP-pakkausteknologiaa käyttäviä pakattuja web-sivuja ei voi suodattaa. <a href="http://en.wikipedia.org/wiki/HTTP_compression" target="_blank" style="text-decoration: underline; font-family:Lucida Console;">Katso tästä lisätietoja</a></li><li>Https-web-sivuja ei voi suodattaa.</li></ol>
 FirewallConfig_KeywordFilterEnable_itemname=Ota avainsanasuodatin käyttöön
 FirewallConfig_KeywordActiveDate_itemname=Milloin:
 FirewallConfig_KeywordActiveTime_itemname=Aika:
@@ -303,6 +318,7 @@ web_redirect_reason6=Havaittiin IP-ristiriita. Hae uusi IP-osoite napsauttamalla
 web_redirect_case6_desc1=Reitittimen päivitetty IP-osoite:
 web_redirect_case6_desc2=Kun olet napsauttanut Seuraava-painiketta, varmista, että päivität kaikkien asiaankuuluvien palvelujen, kuten Portinsiirto tai DMZ, IP-osoiteasetukset.
 error_page_lanip_changed_desc1=IP-osoite uudistetaan. Jos tämä toimenpide kestää yli kaksi minuuttia, uudista IP manuaalisesti näiden kolmen vaiheen mukaisesti. (1) irrota verkkokaapeli; (2) odota noin kymmenen sekuntia; ja (3) liitä kaapeli takaisin saadaksesi uuden IP-osoitteen.
+web_redirect_reason7=PIN-koodi ei ole oikea. SIM-kortti estetään kolmen epäonnistuneen PIN-koodin antamisyrityksen jälkeen.
 [QIS]
 QIS_autoMAC_desc1=Aloitetaan tietokoneen MAC-osoitteen kloonaaminen reitittimeen…
 QIS_autoMAC_desc2=Odota...
@@ -393,9 +409,9 @@ ShareNode_Seeding_itemdesc=Antaa ottaa käyttöön tai pois käytöstä alustust
 ShareNode_MaxUpload_itemname=Maksiminopeus palvelimeen lataamiseen
 ShareNode_MaxUpload_itemdesc=Anna arvo välillä 0-999. Oletusarvo on 0, mikä tarkoittaa, palvelimelle lataamisella ei ole ylärajaa.
 [New item]
-HSDPAConfig_hsdpa_enable_hint1=Nykyinen 3G-asetus on asetettu 3G-varmuuskopiotilaksi. Jos WAN-portin yhteys katkaistiin, verkkotila muuttuu automaattisesti 3G-tilaksi
-HSDPAConfig_hsdpa_enable_hint2=Jos haluat muuttaa yhteystyyppiä, siirry kohtaan <a href="/Advanced_Modem_others.asp">USB Modem</a> ottaaksesi 3G/3.5G-sovittimen pois käytöstä.
-HSDPAConfig_USBAdapter_itemname=3G/3.5G USB -sovitin
+HSDPAConfig_hsdpa_enable_hint1=Nykyinen 3G/4G-asetus on asetettu 3G/4G-varmuuskopiotilaksi. Jos WAN-portin yhteys katkaistiin, verkkotila muuttuu automaattisesti 3G/4G-tilaksi
+HSDPAConfig_hsdpa_enable_hint2=Jos haluat muuttaa yhteystyyppiä, siirry kohtaan <a href="/Advanced_Modem_others.asp">USB Modem</a> ottaaksesi 3G/4G/3.5G-sovittimen pois käytöstä.
+HSDPAConfig_USBAdapter_itemname=USB -sovitin
 HSDPAConfig_USBAdapter_itemdesc=Kun USB Modem on otettu käyttöön, valitse sovitin, jota ZVMODELVZ tukee.
 APSurvey_msg_connected=Olet jo muodostanut yhteyden tähän tukiasemaan.
 APSurvey_msg_connect_suggest1=On suositeltavaa käyttää Ethernet-kaapelia ZVMODELVZ:n liittämiseen vakaamman konfiguraation ja paremman käytön varmistamiseksi.
@@ -947,7 +963,9 @@ IPConnection_x_DNSServer1_itemdesc=Tämä kenttä ilmaisee DNS-palvelimen IP-oso
 IPConnection_x_DNSServer1_itemname=DNS-palvelin1:
 IPConnection_x_DNSServer2_itemdesc=Tämä kenttä ilmaisee DNS-palvelimen IP-osoitteen, johon ZVMODELVZ-reititin muodostaa yhteyden.
 IPConnection_x_DNSServer2_itemname=DNS-palvelin2:
+IPConnection_x_DNSServer_blank=Aseta asiakaslaitteelle DNS-palvelin.
 IPConnection_warning_WANIPEQUALGatewayIP=Olet asettanut WAN IP:n ZVMODELVZ-reitittimen yhdyskäytäväksi, eikä ZVMODELVZ ehkä pysty muodostamaan yhteyttä internetiin. Aseta yhdyskäytävälle oikea arvo.
+IPConnection_x_WAN_LAN_conflict=WAN- ja LAN-verkolla tulee olla eri IP-osoite ja aliverkko.
 [QIS_internet_isp.js]
 BOP_isp_host_desc=Tässä kentässä voi ZVMODELVZ-palvelimelle antaa isäntänimen. Yleensä internet-palveluntarjoaja kysyy sitä.
 BOP_isp_host_item=Host Name (Isäntänimi) (valinnainen):
@@ -1051,6 +1069,7 @@ Main_alert_proceeding_desc1=Jatketaan
 Main_alert_proceeding_desc4=Odota, 
 Main_alert_proceeding_desc3=Valmis!
 Main_content_Login_Item7=Reitittimen uudelleenkäynnistys kestää 60 sekuntia. Haluatko varmasti käynnistää reitittimen uudelleen?
+[###MODEL_DEP###][RT-N65U]Main_content_Login_Item7=Reitittimen uudelleenkäynnistys kestää 80 sekuntia. Haluatko varmasti käynnistää reitittimen uudelleen?
 [QIS-general.js]
 JS_fieldblank=Kentät eivät voi olla tyhjiä.
 JS_validip=ei ole kelvollinen IP-osoite!
@@ -1103,11 +1122,13 @@ Setting_upload_itemname=Palauta asetus
 Setting_factorydefault_itemdesc=Napsauta [Restore] (Palauta) palauttaaksesi reitittimen tehdasasetuksiinsa ja poistaaksesi kaikki nykyiset asetukset. Odota hetki. Reititin käynnistyy uudelleen. 
 Setting_save_itemdesc=Napsauta [Save] (Tallenna) -painiketta tallentaaksesi ZVMODELVZ-reitittimen nykyisen asetuksen tiedostoon. (Huomautus: Kun tallennat nykyiset asetukset tiedostoon, se tallennetaan myös flash-muistiin.)
 Setting_upload_itemdesc=Määritä asetustiedoston polku ja nimi. Napsauta sitten [Upload] (Lähetä) -painiketta kirjoittaaksesi tiedoston ZVMODELVZ-reitittimeen. Odota 60 sekuntia, kunnes ZVMODELVZ käynnistyy uudelleen.
+[###MODEL_DEP###][RT-N65U]Setting_upload_itemdesc=Määritä asetustiedoston polku ja nimi. Napsauta sitten [Upload] (Lähetä) -painiketta kirjoittaaksesi tiedoston ZVMODELVZ-reitittimeen. Odota 80 sekuntia, kunnes ZVMODELVZ käynnistyy uudelleen.
 Setting_upload_hint=Tiedostomuoto tai polku ei kelpaa!
 Setting_factorydefault_hint1=Kaikki nykyiset asetukset poistetaan ja reititin palautetaan tehtaan oletusasetuksiin.\n
 Setting_factorydefault_hint2=Haluatko varmasti jatkaa?
 Setting_factorydefault_iphint=ZVMODELVZ-reitittimen oletus-LAN IP on 192.168.1.1.\nJos et voi palata asetussivulle myöhemmin, uudista tietokoneesi IP-konfiguraatio.
 SET_ok_desc=Asetusta lähetetään! Odota noin 60 sekuntia.
+[###MODEL_DEP###][RT-N65U]SET_ok_desc=Asetusta lähetetään! Odota noin 80 sekuntia.
 SET_fail_title=Asetustiedoston lähetys epäonnistui!
 SET_fail_desc=Asetustiedoston lähetys epäonnistui. Se voi johtua väärästä asetustiedostosta tai lähetysvirheestä. Tarkista laiteohjelmiston oikeellisuus ja yritä uudelleen.
 RHELP_desc4=Se tarkoittaa kohdeverkkoa tai reittisäännön isäntää. Joten se voisi olla isäntäosoite, kuten 「192.168.123.11」 tai verkko-osoite, kuten 「192.168.0.0」.
@@ -1216,6 +1237,8 @@ PPPConnection_x_WANGateway_itemname=Yhdyskäytävä
 PPPConnection_x_WANDNSServer_itemname=DNS-nimipalvelimet
 PPPConnection_x_WANLink_itemname=Connection Status (Yhteyden tila):
 FirewallConfig_display1_sectiondesc=Verkkopalvelut-suodatin estää LAN-verkosta WAN-verkkoon -pakettien vaihdon ja rajoittaa laitteiden tiettyjen verkkopalvelujen käyttöä.<p>Jos esimerkiksi et halua laitteen käyttävän internetpalvelua, näppäile kohdeportiksi 80. Porttia 80 käyttävä liikenne estetään.<p>Jätä lähde-IP-kenttä tyhjäksi soveltaaksesi tätä sääntöä kaikkiin LAN-laitteisiin.
+FirewallConfig_display3_sectiondesc=<b>Kielletyt-luettelon kesto :</b> Aikataulun mukaisen keston aikana Kielletyt-luettelossa olevat asiakkaat eivät voi käyttää määritettyjä verkkopalveluita. Määritetyn keston jälkeen kaikki LAN-verkossa olevat asiakkaat voivat käyttää määritettyjä verkkopalveluita.<br><b>Sallitut-luettelon kesto :</b> Aikataulun mukaisen keston aikana Sallitut-luettelossa olevat asiakkaat voivat käyttää VAIN määritettyjä verkkopalveluita. Määritetyn keston jälkeen Sallitut-luettelossa olevat asiakkaat ja muut verkkoasiakkaat eivät pysty käyttämään internetiä tai mitään internet-palveluja.
+FirewallConfig_display4_sectiondesc=<b>HUOMAUTUS :</b> Jos asetat Sallitut-luettelolle aliverkon, aliverkon ulkopuolella olevat IP-osoitteet eivät voi käyttää internetiä tai mitään internet-palveluita.
 FirewallConfig_LanWanActiveDate_itemname=Päivämäärä LAN-WAN-suodattimen käyttöön-ottamiseksi:
 FirewallConfig_LanWanActiveDate_itemdesc=Tässä kentässä määritetään päivämäärät, jolloin LAN-WAN-suodatin on käytössä.
 FirewallConfig_LanWanActiveTime_itemname=Kellonaika LAN-WAN-suodattimen käyttöön-ottamiseksi:
@@ -1378,6 +1401,7 @@ TZ81=Uusi-Kaledonia
 TZ82=Magadan, Fidzisaaret, Kamt?atka, Marshall-saaret
 TZ83=Auckland, Wellington
 TZ84=Nuku'alofa
+TZ85=British Summer Time (BST)
 LANHostConfig_x_NTPServer_itemname=NTP Server (NTP-palvelin)
 LANHostConfig_x_NTPServer_itemdesc=Järjestelmäajan synkronointiin NTP-palvelimen kanssa.
 LANHostConfig_x_DDNSEnable_sectionname=DDNS-asetus
@@ -1494,6 +1518,7 @@ USB_Application_disk_miscellaneous_desc=USB-levyn yksityiskohtaisemmat asetukset
 BasicConfig_EnableDownloadMachine_itemname=Otetaanko Latausisäntä käyttöön?
 BasicConfig_EnableDownloadShare_itemname=Otetaanko Latauksen jakaminen käyttöön?
 BasicConfig_EnableMediaServer_itemname=Otetaanko UPnP käyttöön?
+DM_Install_partition=Valitse USB-tallennuslaite, jota haluat käyttää.
 CTL_restore=Palauta
 CTL_onlysave=Tallenna
 CTL_clear=Tyhjennä
@@ -1525,6 +1550,7 @@ IPConnection_TriggerList_widzarddesc=Well-Known Applications (Hyvin tunnetut sov
 FirewallConfig_LWFilterList_widzarddesc=Well-Known Applications (Hyvin tunnetut sovellukset):
 LANHostConfig_x_DDNSServer_linkname=Ilmainen kokeilu
 SAVE_note=Huomaa: Se kestää noin 60 sekuntia.
+[###MODEL_DEP###][RT-N65U]SAVE_note=Huomaa: Se kestää noin 80 sekuntia.
 IPConnection_VServerPNo_itemname=Protokollanro
 LANHostConfig_ManualDHCPEnable_itemname=Otetaanko manuaalinen määritys käyttöön?
 LANHostConfig_ManualDHCPList_groupitemdesc=Manuaalisesti määritetty IP DHCP-luettelon ulkopuolella
@@ -1785,9 +1811,12 @@ step_use_aicloud=Please follow the steps below to use AiCloud:
 download_aicloud=Download ASUS AiCloud app to phone or pad from
 connect_through_wifi=Connect your iOS or Android devices to ZVMODELVZ through WiFi. The AiCloud app will automatically guide you through the process of setup.
 access_service=Now you can access your USB storage and Network place(Samba) enabled devices connected to ZVMODELVZ.
+aicloud_bandwidth1=For the best viewing/listening experience, we recommend the following upload bandwidth for different media format. A 768 Kbps is recommended for music, 5Mbps for SD video, 15Mbps for 720p video and 30Mbps or faster for 1080p HD video streaming.
+aicloud_bandwidth2=Internet upload speeds may vary depending on your ISP and other factors.
+aicloud_bandwidth3=If you are not sure what your Internet speed is, you can ask your ISP, or use an online broadband speed test from a computer connected to ZVMODELVZ.
 aicloud_for_privateIP1=We are going to support AiCloud with private IP later, in this moment, you can setup <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_VirtualServer_Content.asp" target="_blank">Port forwarding</a> or <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_Exposed_Content.asp" target="_blank">DMZ</a> to access private ip address remotely.
-aicloud_for_privateIP2= The AiCloud need to use 8082 and 443 port. you can change the port setting <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="/Advanced_BasicFirewall_Content.asp" target="_blank">here</a>.
-aicloud_for_privateIP3= For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
+aicloud_for_privateIP2=The AiCloud need to use 8082 and 443 port.
+aicloud_for_privateIP3=For more detail, you can also refer to the <a id="faq1" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">Port forwarding</a> and <a id="faq2" href="" target="_blank" style="font-weight: bolder;text-decoration:underline;">DMZ FAQ</a>.
 aicloud_disk1=To establish your cloud disk, you need to plug-in an USB storage into this router, then enable cloud disk.
 aicloud_disk2= Default cloud disk login account use the router login account.
 aicloud_disk_case0=The Cloud disk can be accessed via <a style="font-weight: bolder;text-decoration: underline;" href="http://www.asusnetwork.net:8082" target="_blank">http://www.asusnetwork.net:8082</a> when you connect to ZVMODELVZ in LAN.
@@ -1800,9 +1829,8 @@ smart_access2=You can also wake up your PCs in home remotely by WOL.
 smart_access3=What is <a style="font-weight: bolder;text-decoration:underline;" class="hyperlink" href="http://support.asus.com/Search.aspx?SLanguage=en&keyword=WOL&BIOS" target="_blank">WOL</a>?
 smart_sync1=To start smart sync, you need to sign up an <a style="font-weight: bolder;text-decoration: underline;" href="https://www.asuswebstorage.com/" target="_blank">ASUS webstorage</a> account, then enable cloud disk and smart sync. (Make sure that you have plug-in an USB storage into this router.)
 smart_sync2=Open AiCloud APP. Choose a specific folder in cloud disk that you want to sync with ASUS web storage, then follow the steps show in the app.
-web_redirect_reason7=PIN code is not correct. After three failed attempts to enter the PIN code, your SIM card will be blocked.
-isp_br_gvt_note=If you are GVT users, please key in the user name ( turbonet@turbonet ) and password ( gvt25 ). Otherwise, please key in the user name and password provided by your ISP.
-pvc_del_alert_desc=Are you sure to delete this PVC?
-same_vpi_vci=VPI and VCI are duplicated.
-dns_server_no_set=DNS server not set! Please setup the DNS server on the client device.
-dsl_wan_page_desc=Click index number to edit PVC setting or click right icon to add or delete PVC
+isp_br_gvt_note=Jos olet GVT-käyttäjä, näppäile käyttäjänimi <b>turbonet@turbonet</b> ja salasana <b>gvt25</b>. Muuten näppäile internet-palveluntarjoalta saamasi käyttäjänimi ja salasana.
+pvc_del_alert_desc=Haluatko varmasti poistaa tämän PVC:n?
+same_vpi_vci=Kaksinkertaiset tai samat VPI- Ja VCI-asetukset.
+dns_server_no_set=Aseta asiakaslaitteelle DNS-palvelin.
+dsl_wan_page_desc=Napsauta numeerista hakemistoa muokataksesi PVC-asetusta. Napsauta lisää (+) - tai poista (-) -kuvaketta lisätäksesi tai poistaaksesi PVC-asetuksen.

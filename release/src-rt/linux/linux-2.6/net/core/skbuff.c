@@ -214,6 +214,10 @@ struct sk_buff *__alloc_skb(unsigned int size, gfp_t gfp_mask,
 	skb->nfct = NULL;
 	skb->nfcache = 0;
 #endif
+#ifdef HNDCTF
+        skb->mac_len = 0;
+        skb->hdr_len = 0;
+#endif
 #ifdef CONFIG_BRIDGE_NETFILTER
 	skb->nf_bridge = NULL;
 #endif
@@ -536,6 +540,9 @@ struct sk_buff *skb_clone(struct sk_buff *skb, gfp_t gfp_mask)
 	C(len);
 	C(data_len);
 	C(mac_len);
+#ifdef HNDCTF
+	C(ctf_mac_len);
+#endif
 	n->hdr_len = skb->nohdr ? skb_headroom(skb) : skb->hdr_len;
 	n->cloned = 1;
 	n->nohdr = 0;
@@ -2233,6 +2240,9 @@ struct sk_buff *skb_segment(struct sk_buff *skb, int features)
 
 		__copy_skb_header(nskb, skb);
 		nskb->mac_len = skb->mac_len;
+#ifdef HNDCTF
+		nskb->ctf_mac_len = skb->ctf_mac_len;
+#endif
 
 		skb_reserve(nskb, headroom);
 		skb_reset_mac_header(nskb);
@@ -2343,6 +2353,9 @@ int BCMFASTPATH_HOST skb_gro_receive(struct sk_buff **head, struct sk_buff *skb)
 
 	__copy_skb_header(nskb, p);
 	nskb->mac_len = p->mac_len;
+#ifdef HNDCTF
+	nskb->ctf_mac_len = p->ctf_mac_len;
+#endif
 
 	skb_reserve(nskb, headroom);
 	__skb_put(nskb, skb_gro_offset(p));

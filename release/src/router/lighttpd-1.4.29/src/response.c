@@ -27,7 +27,7 @@
 #include "sys-socket.h"
 #include "version.h"
 
-#define DBE 0
+#define DBE 1
 #include "nvram_control.h"
 
 int http_response_write_header(server *srv, connection *con) {

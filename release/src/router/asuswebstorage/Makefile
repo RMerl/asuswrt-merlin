@@ -24,7 +24,7 @@ else
 all: asuswebstorage
 endif
 
-asuswebstorage: asuswebstorage.o api.o function.o 
+asuswebstorage: asuswebstorage.o api.o function.o list.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBS)  $^ -o $@ 
 
 

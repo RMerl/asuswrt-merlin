@@ -70,14 +70,14 @@
 #include <utime.h>
 #include <netdb.h>
 #include <bcmnvram.h>	// Jiahao
-// 2007.05 James {
+
+#include <shared.h>
 #include <shutils.h>
 #include "secbuf.h"
 #include "defs.h"
 #include <usb_info.h>
 #include <disk_io_tools.h>
 #include <disk_share.h>
-// 2007.05 James }
 
 /* Private variables to this file */
 /* Current umask() */
@@ -1013,13 +1013,13 @@ vsf_sysutil_next_dirent(const char* session_user, const char *base_dir, struct v
 	if(layer <= BASE_LAYER)
 		return DENIED_DIR;
 	else if(layer == MOUNT_LAYER){
-		if(!test_if_dir(truepath)){
+		if(!check_if_dir_exist(truepath)){
 			free(mount_path);
 			return DENIED_DIR;
 		}
 	}
 	else if(layer == SHARE_LAYER){
-		if(!test_if_dir(truepath)){
+		if(!check_if_dir_exist(truepath)){
 			free(mount_path);
 			free(share_name);
 			return DENIED_DIR;

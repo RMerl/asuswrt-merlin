@@ -1257,11 +1257,12 @@ int HandleAdslStats(ADSL_STATS* pStats)
     return 0;
 }
 
-
+//Paul add 2012/4/21
 typedef struct {
     char annexMode[10];
 } ADSL_ACTUAL_ANNEX_MODE;
 
+//Paul add 2012/4/21
 int HandleAdslActualAnnexMode(ADSL_ACTUAL_ANNEX_MODE* pStats)
 {
     declare_resp_handling_vars(pRespBuf, pRespLen, RespPktNum, tok, pRespStr);
@@ -1356,7 +1357,7 @@ void GetLinkSts(char* buf, int max_len)
 static ADSL_SYS_TRAFFIC m_SysTraffic;
 static ADSL_STATS m_Stats;    
 static ADSL_SYS_STATUS m_SysSts;
-static ADSL_ACTUAL_ANNEX_MODE m_AnnexSts;
+static ADSL_ACTUAL_ANNEX_MODE m_AnnexSts; //Paul add 2012/4/21
 
 void UpdateAllAdslSts(int cnt, int from_ate)
 {
@@ -1365,7 +1366,7 @@ void UpdateAllAdslSts(int cnt, int from_ate)
         memset(&m_SysTraffic, 0, sizeof(m_SysTraffic));    
         HandleAdslSysTraffic(&m_SysTraffic);
         memset(&m_AnnexSts, 0, sizeof(m_AnnexSts));
-        HandleAdslActualAnnexMode(&m_AnnexSts);
+        HandleAdslActualAnnexMode(&m_AnnexSts); //Paul add 2012/4/21
     }
     memset(&m_Stats, 0, sizeof(m_Stats));    
     HandleAdslStats(&m_Stats);
@@ -1438,12 +1439,12 @@ void UpdateAllAdslSts(int cnt, int from_ate)
     }
     else if (strcmp(m_SysSts.LineState,"1") == 0)
     {
-		nvram_adslsts("down");	
+		nvram_adslsts("wait for init"); //Paul modify 2012/6/19
 		nvram_adslsts_detail("wait_for_init");	
     }
     else if (strcmp(m_SysSts.LineState,"2") == 0)
     {
-		nvram_adslsts("down");	
+		nvram_adslsts("init"); //Paul modify 2012/6/19
 		nvram_adslsts_detail("init");		
     }
     else if (strcmp(m_SysSts.LineState,"3") == 0)
@@ -1465,8 +1466,14 @@ void UpdateAllAdslSts(int cnt, int from_ate)
     char buf[64];
     sprintf(buf, "Update Counter : %d\n", cnt);
     fputs(buf,fp);
-    fputs("Annex Mode : ",fp);
-    fputs(m_AnnexSts.annexMode,fp);
+    fputs("Modulation : ",fp);
+    fputs(m_SysSts.Modulation,fp);
+    fputs("\n",fp);
+    fputs("Annex Mode : Annex ",fp);
+    fputs(m_AnnexSts.annexMode,fp); //Paul add 2012/4/21
+    fputs("\n",fp);
+    fputs("Line State : ",fp);
+    fputs(m_SysSts.LineState,fp);
     fputs("\n",fp);
     fputs("Lan Tx : ",fp);
     fputs(m_SysTraffic.LanTx,fp);
@@ -1497,12 +1504,6 @@ void UpdateAllAdslSts(int cnt, int from_ate)
     fputs("\n",fp);    
     fputs("HEC Up : ",fp);                        
     fputs(m_Stats.HecUp,fp);    
-    fputs("\n",fp);    
-    fputs("Line State : ",fp);                            
-    fputs(m_SysSts.LineState,fp);
-    fputs("\n",fp);    
-    fputs("Modulation : ",fp);                                
-    fputs(m_SysSts.Modulation,fp);
     fputs("\n",fp);    
     fputs("SNR Up : ",fp);                                    
     fputs(m_SysSts.SnrMarginUp,fp);

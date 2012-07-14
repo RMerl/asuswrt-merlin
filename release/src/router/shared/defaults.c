@@ -318,7 +318,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_TxPower",			"80"	},
 #endif
 
-#if defined (RTCONFIG_WIRELESSREPEATER) || defined (RTCONFIG_PSTA)
+#if defined (RTCONFIG_WIRELESSREPEATER) || defined (RTCONFIG_PROXYSTA)
 	{ "wlc_list",			""	},
 	{ "wlc_band",			""	},
 	{ "wlc_ssid", 			""	},
@@ -335,7 +335,7 @@ struct nvram_tuple router_defaults[] = {
 #endif
 	{ "wlc_ure_ssid",		""	},
 #endif
-#ifdef RTCONFIG_PSTA
+#ifdef RTCONFIG_PROXYSTA
 	{ "wlc_psta",			"0"	},
 #endif
 
@@ -401,7 +401,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "wl_wds_timeout",		"1"		},	// WDS link detection interval defualt 1 sec*/
 
 	{ "wl_mode_x", "0"},   					// 0/1/2(ap/wds/hybrid)
-	{ "wl_wdsapply_x", "0"},
+	{ "wl_wdsapply_x", "1"},
 	{ "wl_wdslist", ""}, 					// xxxxxxxxxxxx ...
 
 
@@ -626,7 +626,8 @@ struct nvram_tuple router_defaults[] = {
 	{ "wan_desc", ""},		/* WAN connection description */
 	{ "wan_upnp_enable", "1"}, 	// upnp igd
 	{ "wan_pppoe_relay", "0" },
-	{ "wan_dhcpc_options",""},	// Optional arguments for udhcpc
+	{ "wan_dhcpc_options",""},  // Optional arguments for udhcpc
+
 	// VPN+DHCP, a sperated nvram to control this function
 	{ "wan_vpndhcp", "1"},
 
@@ -668,6 +669,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "dslx_upnp_enable", "1" },	
 	{ "dslx_link_enable", "1" },	
 	{ "dslx_DHCPClient", "1" },
+	{ "dslx_dhcp_clientid", "" },	//Required by some ISP using RFC 1483 MER.
 	{ "dslx_ipaddr", "0.0.0.0"},	/* IP address */
 	{ "dslx_netmask", "0.0.0.0"},	/* netmask */
 	{ "dslx_gateway", "0.0.0.0"},	/* gateway */
@@ -1065,7 +1067,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "asus_mfg_flash", ""},	// 2008.03 James.
 	{ "btn_rst", "0"},		// 2008.03 James.
 	{ "btn_ez", "0"},		// 2008.03 James.
-	{ "btn_ez_radiotoggle", "0"},	// Turn WPS into radio toggle
+	{ "btn_ez_radiotoggle", "0"},  // Turn WPS into radio toggle
 
 	 /* APCLI/STA parameters */
 	#if 0
@@ -1218,6 +1220,7 @@ struct nvram_tuple router_defaults[] = {
 	{ "isp_limit_time",		"0"},
 	{ "isp_connect_time",		"0"},
 #endif
+	{ "Ate_version",	      "1.0"},
 	{ "Ate_power_on_off_ver",     "2.2"},
 	{ "Ate_power_on_off_enable",	"0"},
 	{ "Ate_reboot_count",	      "100"},
@@ -1231,6 +1234,10 @@ struct nvram_tuple router_defaults[] = {
 	{ "Ate_continue_fail",		"3"},
 	{ "dev_fail_reboot",		"3"},
 	// Wireless parameters
+
+        { "webui_resolve_conn", "0"},
+        { "wol_list", ""},  // WOL user-entered list
+
 	{ NULL, NULL    }
 };
 
@@ -1269,7 +1276,7 @@ struct nvram_tuple router_state_defaults[] = {
 	{ "autodet_auxstate", "0"},
 	{ "invoke_later", "0"},
 
-#if defined (RTCONFIG_WIRELESSREPEATER) || defined (RTCONFIG_PSTA)
+#if defined (RTCONFIG_WIRELESSREPEATER) || defined (RTCONFIG_PROXYSTA)
 	// Wireless Client State
 	{ "wlc_state", "0"},
 	{ "wlc_sbstate", "0"},
@@ -1444,9 +1451,7 @@ struct nvram_tuple router_state_defaults[] = {
 #endif
 	{ "ddns_return_code", ""},
 	{ "ddns_return_code_chk", ""},
-	{ "reboot_time", "60"},	
-	{ "webui_resolve_conn", "0"},
-	{ "wol_list", ""},	// WOL user-entered list
+	{ "reboot_time", "60"},
 	{ NULL, NULL }
 };
 

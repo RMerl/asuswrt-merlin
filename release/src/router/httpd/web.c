@@ -109,6 +109,9 @@ extern int ej_wl_scan_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_scan_5g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_channel_list_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_channel_list_5g(int eid, webs_t wp, int argc, char_t **argv);
+#ifdef RTCONFIG_PROXYSTA
+int ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv);
+#endif
 
 extern int ej_get_default_reboot_time(int eid, webs_t wp, int argc, char_t **argv);
 
@@ -757,17 +760,32 @@ static int
 ej_nvram_char_to_ascii(int eid, webs_t wp, int argc, char_t **argv)
 {
 	char *sid, *name;
-	int ret = 0;
+	char tmp[MAX_LINE_SIZE];
+	char *buf = tmp, *str;
+	int ret;
 
 	if (ejArgs(argc, argv, "%s %s", &sid, &name) < 2) {
 		websError(wp, 400, "Insufficient args\n");
 		return -1;
 	}
 
-	char tmpstr[1024];
-	memset(tmpstr, 0x0, sizeof(tmpstr));
-	char_to_ascii(tmpstr, nvram_safe_get_x(sid, name));
-	ret += websWrite(wp, "%s", tmpstr);
+	str = nvram_safe_get_x(sid, name);
+
+	/* each char expands to %XX at max */
+	ret = strlen(str) * sizeof(char)*3 + sizeof(char);
+	if (ret > sizeof(tmp)) {
+		buf = (char *)malloc(ret);
+		if (buf == NULL) {
+			csprintf("No memory.\n");
+			return 0;
+		}
+	}
+
+	char_to_ascii_safe(buf, str, ret);
+	ret = websWrite(wp, "%s", buf);
+
+	if (buf != tmp)
+		free(buf);
 
 	return ret;
 }
@@ -2719,7 +2737,7 @@ ej_route_table(int eid, webs_t wp, int argc, char_t **argv)
 			break;
 		}
 	}
-	close(fp);
+	fclose(fp);
 
 	if (found)
 		INET6_displayroutes(wp);
@@ -2768,7 +2786,7 @@ static int ej_get_ap_info(int eid, webs_t wp, int argc, char_t **argv)
 {
 	FILE *fp;
 	char buf[MAX_LINE_SIZE];
-	int ret_l;
+	int ret_l = 0;
 	unsigned int i_l, len_l;
 	int i;
 
@@ -3235,7 +3253,7 @@ static int ej_available_disk_names_and_sizes(int eid, webs_t wp, int argc, char_
 		else
 			websWrite(wp, ", ");
 
-		websWrite(wp, "\"%s\"", follow_disk->tag);
+		websWrite(wp, "'%s'", follow_disk->tag); /* Paul modify 2012/7/4, fix Toshiba HDD issue */
 	}
 	websWrite(wp, "];\n");
 	websWrite(wp, "}\n\n");
@@ -3266,7 +3284,7 @@ static int ej_available_disk_names_and_sizes(int eid, webs_t wp, int argc, char_
 		else
 			websWrite(wp, ", ");
 
-		websWrite(wp, "\"");
+		websWrite(wp, "'"); /* Paul modify 2012/5/23, fix Toshiba HDD issue */
 
 		if (follow_disk->vendor != NULL)
 			websWrite(wp, "%s", follow_disk->vendor);
@@ -3276,7 +3294,7 @@ static int ej_available_disk_names_and_sizes(int eid, webs_t wp, int argc, char_
 
 			websWrite(wp, "%s", follow_disk->model);
 		}
-		websWrite(wp, "\"");
+		websWrite(wp, "'"); /* Paul modify 2012/5/23, fix Toshiba HDD issue */
 	}
 	websWrite(wp, "];\n");
 	websWrite(wp, "}\n\n");
@@ -3471,6 +3489,67 @@ int ej_shown_time(int eid, webs_t wp, int argc, char **argv){
 	return 0;
 }
 
+int ej_shown_language_css(int eid, webs_t wp, int argc, char **argv){
+	struct language_table *pLang = NULL;
+	char lang[4];
+	int i, len;
+#ifdef RTCONFIG_AUTODICT
+	FILE *fp = fopen("Lang_Hdr.txt", "r");
+#else
+	FILE *fp = fopen("Lang_Hdr", "r");
+#endif
+	char buffer[1024], key[16], target[16];
+	char *follow_info, *follow_info_end;
+
+	if (fp == NULL){
+		fprintf(stderr, "No English dictionary!\n");
+		return 0;
+	}
+
+#ifdef RTCONFIG_AUTODICT
+	// skip <feff>
+	fread(key, 1, 3, fp);
+#endif
+
+	memset(lang, 0, 4);
+	strcpy(lang, nvram_safe_get("preferred_lang"));
+	websWrite(wp, "<li><dl><dt id=\"selected_lang\"></dt>\\n");
+	while (1) {
+		memset(buffer, 0, sizeof(buffer));
+		if ((follow_info = fgets(buffer, sizeof(buffer), fp)) != NULL){
+			if (strncmp(follow_info, "LANG_", 5))    // 5 = strlen("LANG_")
+				continue;
+
+			follow_info += 5;
+			follow_info_end = strstr(follow_info, "=");
+			len = follow_info_end-follow_info;
+			memset(key, 0, sizeof(key));
+			strncpy(key, follow_info, len);
+			
+			for (pLang = language_tables; pLang->Lang != NULL; ++pLang){
+				if (strcmp(key, pLang->Target_Lang))
+					continue;
+				follow_info = follow_info_end+1;
+				follow_info_end = strstr(follow_info, "\n");
+				len = follow_info_end-follow_info;
+				memset(target, 0, sizeof(target));
+				strncpy(target, follow_info, len);
+
+				if(strcmp(key,lang))
+					websWrite(wp, "<dd><a onclick=\"submit_language(this)\" id=\"%s\">%s</a></dd>\\n", key, target);
+				break;
+			}
+		}
+		else
+			break;
+		
+	}
+	websWrite(wp, "</dl></li>\\n");	
+	fclose(fp);
+
+	return 0;
+}
+
 int ej_shown_language_option(int eid, webs_t wp, int argc, char **argv){
 	struct language_table *pLang = NULL;
 	char lang[4];
@@ -3521,6 +3600,7 @@ int ej_shown_language_option(int eid, webs_t wp, int argc, char **argv){
 					websWrite(wp, "<option value=\"%s\" selected>%s</option>\\n", key, target);
 				else
 					websWrite(wp, "<option value=\"%s\">%s</option>\\n", key, target);
+
 				break;
 			}
 		}
@@ -4082,8 +4162,8 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 
 #ifdef RTCONFIG_DSL
 // unclear logic
-	if(dsl_check_imagefile_str(upload_fifo))
-	{
+//	if(dsl_check_imagefile_str(upload_fifo))
+//	{
 		// 1 = valid
 		// 0 = invalid		
 		int ret_val_sep;
@@ -4091,10 +4171,10 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 		// should router update tc fw?
 		if (ret_val_sep)
 		{
-			check_tc_firmware_crc();
-			upgrade_err = 0;			
+			if(!check_tc_firmware_crc())
+				upgrade_err = 0;			
 		}
-	}
+//	}
 #else		
 	if(check_imagefile(upload_fifo))
 		upgrade_err = 0;
@@ -4442,7 +4522,7 @@ struct mime_handler mime_handlers[] = {
 	{ "applyapp.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
 	{ "upgrade.cgi*", "text/html", no_cache_IE7, do_upgrade_post, do_upgrade_cgi, do_auth},
 	{ "upload.cgi*", "text/html", no_cache_IE7, do_upload_post, do_upload_cgi, do_auth },
- 	{ "syslog.cgi*", "text/txt", no_cache_IE7, do_html_post_and_get, do_log_cgi, do_auth },
+ 	{ "syslog.cgi*", "application/force-download", no_cache_IE7, do_html_post_and_get, do_log_cgi, do_auth },
 #ifdef RTCONFIG_DSL
  	{ "dsllog.cgi*", "text/txt", no_cache_IE7, do_html_post_and_get, do_adsllog_cgi, do_auth },
 #endif
@@ -4985,7 +5065,7 @@ int ej_get_folder_tree(int eid, webs_t wp, int argc, char **argv){
 			else
 				websWrite(wp, ", ");
 
-			websWrite(wp, "\"%s#%u#%u\"", follow_disk->tag, disk_count, partition_count);
+			websWrite(wp, "'%s#%u#%u'", follow_disk->tag, disk_count, partition_count);
 		}
 
 		if (layer > 0 && disk_count == disk_order)
@@ -5088,7 +5168,7 @@ int ej_get_share_tree(int eid, webs_t wp, int argc, char **argv){
 			else
 				websWrite(wp, ", ");
 
-			websWrite(wp, "\"%s#%u#%u\"", follow_disk->tag, disk_count, partition_count);
+			websWrite(wp, "'%s#%u#%u'", follow_disk->tag, disk_count, partition_count);
 		}
 
 		if (layer > 0 && disk_count == disk_order)
@@ -7026,6 +7106,7 @@ struct ej_handler ej_handlers[] = {
 	{ "get_changed_status", ej_get_changed_status},
 	{ "shown_time", ej_shown_time},
 	{ "shown_language_option", ej_shown_language_option},
+	{ "shown_language_css", ej_shown_language_css},
 #ifndef RTCONFIG_RALINK
 #ifdef RTCONFIG_WIRELESSWAN
 	{ "sitesurvey", ej_SiteSurvey},
@@ -7085,6 +7166,9 @@ struct ej_handler ej_handlers[] = {
 	{ "wl_scan_5g", ej_wl_scan_5g},
 	{ "channel_list_2g", ej_wl_channel_list_2g},
 	{ "channel_list_5g", ej_wl_channel_list_5g},
+#ifdef RTCONFIG_PROXYSTA
+	{ "wlc_psta_state", ej_wl_auth_psta},
+#endif	
 	{ "get_default_reboot_time", ej_get_default_reboot_time},	
 	{ NULL, NULL }
 };
