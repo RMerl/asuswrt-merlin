@@ -212,7 +212,10 @@ https://github.com/RMerl/asuswrt-merlin
 History
 -------
 3.0.0.3.157.12:
-   - NEW: Rebased on 3.0.0.3.157.
+   - NEW: Rebased on 3.0.0.3.157.  Noteworthy:
+      . IPv6 tunnel memory leak fixed
+      . They fixed various issues I had fixed on my
+        side like timezone DST, https auth, etc...
    - CHANGED: Merged this file with the RT-N16 version.
 
 
