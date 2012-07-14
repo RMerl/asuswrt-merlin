@@ -18,3 +18,5 @@ scanner.c
 aclocal.m4
 configure
 autom4te.cache
+redhat/radvd.spec
+

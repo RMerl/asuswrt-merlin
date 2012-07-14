@@ -4,6 +4,7 @@ Makefile
 *.la
 config.h
 doc/doxygen.conf
+doc/README.html
 examples/.libs/
 examples/testd
 libdaemon/.libs/
