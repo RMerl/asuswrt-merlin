@@ -216,7 +216,12 @@ History
       . IPv6 tunnel memory leak fixed
       . They fixed various issues I had fixed on my
         side like timezone DST, https auth, etc...
+      . Many additional 3G USB devices supported
    - CHANGED: Merged this file with the RT-N16 version.
+   - CHANGED: Re-enabled Dual WAN (was disabled in RM10-11
+              since it was broken in build 144)
+   - CHANGED: Made tracked connections load async from rest of the page
+   - CHANGED: Increased hostname width on Connection status page
 
 
 3.0.0.3.144.11 Beta:

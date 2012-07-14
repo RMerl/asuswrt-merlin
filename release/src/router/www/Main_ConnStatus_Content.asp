@@ -19,10 +19,17 @@
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
 wan_proto = '<% nvram_get("wan_proto"); %>';
+
+function initial() {
+	show_menu();
+	setTimeout('$("conn_frame").src = "conn_status.asp"',100);
+}
+
+
 </script>
 </head>
 
-<body onload="show_menu();">
+<body onload="initial();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
@@ -60,9 +67,7 @@ wan_proto = '<% nvram_get("wan_proto"); %>';
 		  		<div class="formfonttitle"><#System_Log#> - Active Connections</div>
 		  		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 		  		<div class="formfontdesc">This is a list of tracked connections.</div>
-					<div style="margin-top:8px">   
-						<textarea style="width:99%; font-family:'Courier New', Courier, mono; font-size:13px;background:#475A5F;color:#FFFFFF;" cols="63" rows="25" readonly="readonly" wrap=off ><% nvram_dump("syscmd.log","../usr/sbin/netstat-nat.sh > /tmp/syscmd.log 2>&1"); %></textarea></td>
-					</div>
+				<iframe width=100% style="height:600px;"  frameborder=0 scrolling=NO src="" name="conn_frame" id="conn_frame"></iframe>
 				</td>
 			</tr>
               
