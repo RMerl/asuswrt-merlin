@@ -200,19 +200,12 @@ function switchPage(page){
 	        				<tr>
 	          					<td height="20"><img src="images/New_ui/export/line_export.png" /></td>
 	        				</tr>
-
-	        				<tr>
-	          					<td height="30" align="left" valign="middle" >
-										<div class="formfontcontent"><p class="formfontcontent"><#traffic_monitor_desc#></p></div>
-	          					</td>
-	        				</tr>
-
-							<tr>
-								<td>
-									<div id='bwm-monthly-grid' style='float:left'></div>
-								</td>
-							</tr>
-						</table>
+						<tr>
+							<td>
+								<div id='bwm-monthly-grid' style='float:left'></div>
+							</td>
+						</tr>
+					</table>
      				</td>
 	     		</tr>
 				</tbody>
