@@ -74,6 +74,7 @@ a.wol_entry:active {
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
+<script language="JavaScript" type="text/javascript" src="/detect.js"></script>
 <script>
 wan_route_x = '<% nvram_get("wan_route_x"); %>';
 wan_nat_x = '<% nvram_get("wan_nat_x"); %>';
@@ -288,7 +289,7 @@ function pullLANIPList(obj){
         if(isMenuopen == 0){
                 obj.src = "/images/arrow-top.gif"
                 $("ClientList_Block_PC").style.display = 'block';
-                document.form.macaddr.focus();
+                document.form.wol_mac_x_0.focus();
                 isMenuopen = 1;
         }
         else
