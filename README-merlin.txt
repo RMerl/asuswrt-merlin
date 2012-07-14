@@ -1,17 +1,22 @@
-Asus RT-N66U Modded Firmware - build 3.0.0.3.144.11 (6-July-2012)
-=================================================================
+Asuswrt-Merlin - build 3.0.0.3.157.12 (xx-July-2012)
+====================================================
 
 About
 -----
-These builds of the RT-N66U (Rev B1) firmware are versions I have modified and 
-recompiled.  The goal is to do some minor improvements to Asus' firmware, 
+Asuswrt is the firmware developped by Asus for their newer routers.
+
+Asuswrt-merlin is my customized version, which I have modified and compiled.
+Originally developped for the RT-N66U, there is now also a version available 
+for the RT-N16.
+
+The goal is to do some minor improvements to Asus' firmware, 
 without targeting at full-blown featuresets such as provided by excellent 
 projects such as Tomato or DD-WRT.  This aims to be a more restrained 
 alternative for those who prefer to stay closer to the original firmware.
 
 The list of changes (so far):
 
-- Based on the source code of release 3.0.0.3.144
+- Based on the source code of release 3.0.0.3.157
 - Added wol binary (wake-on-lan) (in addition to ether-wake already in the firmware)
 - Added Tools menu to web interface (with WakeOnLan page)
 - Added JFFS partition support (configurable under Administration->Advanced->System)
@@ -24,7 +29,7 @@ The list of changes (so far):
 - Optionally turn the WPS button into a radio enable/disable switch
 - Optionally save traffic stats to disk (USB or JFFS partition)
 - Display monthly traffic reports
-- Monitor your router's temperature (under Administration -> Performance Tuning)
+- RT-N66U: Monitor your router's temperature (under Administration -> Performance Tuning)
 - Display active/tracked network connections
 - Allows tweaking TCP/UDP connection tracking timeouts
 - Fixed port forwarding where multiple ports are separated by a ","
@@ -206,7 +211,12 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.3.144.11:
+3.0.0.3.157.12:
+   - NEW: Rebased on 3.0.0.3.157.
+   - CHANGED: Merged this file with the RT-N16 version.
+
+
+3.0.0.3.144.11 Beta:
    - NEW: Name field added to DHCP reservation list
    - NEW: Webui option to enable resolving IPs on the Connections tab
    - NEW: Store a list of computer MACs to use as WOL targets
