@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.157.12 (xx-July-2012)
+Asuswrt-Merlin - build 3.0.0.3.157.12 (14-July-2012)
 ====================================================
 
 About
@@ -9,16 +9,15 @@ Asuswrt-merlin is my customized version, which I have modified and compiled.
 Originally developped for the RT-N66U, there is now also a version available 
 for the RT-N16.
 
-The goal is to do some minor improvements to Asus' firmware, 
-without targeting at full-blown featuresets such as provided by excellent 
-projects such as Tomato or DD-WRT.  This aims to be a more restrained 
+The goal is to do some minor improvements to Asus's firmware, 
+without targeting at full-blown advanced featuresets such as provided by 
+excellent projects such as Tomato or DD-WRT.  This aims to be a more restrained 
 alternative for those who prefer to stay closer to the original firmware.
 
 The list of changes (so far):
 
 - Based on the source code of release 3.0.0.3.157
-- Added wol binary (wake-on-lan) (in addition to ether-wake already in the firmware)
-- Added Tools menu to web interface (with WakeOnLan page)
+- WakeOnLan web interface (with user-entered preset targets)
 - Added JFFS partition support (configurable under Administration->Advanced->System)
 - Added user scripts that run on specific events
 - Added SSHD (dropbear, configurable under Administration->Advanced->System)
@@ -32,7 +31,6 @@ The list of changes (so far):
 - RT-N66U: Monitor your router's temperature (under Administration -> Performance Tuning)
 - Display active/tracked network connections
 - Allows tweaking TCP/UDP connection tracking timeouts
-- Fixed port forwarding where multiple ports are separated by a ","
 - Added CIFS client support (for mounting remote SMB share on the router)
 - Added layer7 iptables matching
 - Added user-defined options for DHCP requests (required by some ISPs)
@@ -46,6 +44,10 @@ factory defaults, unless coming from a newer or a buggy version of Asus'
 original firmware.  You can revert back at any time by re-flashing an 
 original Asus firmware.
 
+NOTE: If you were still running a 32KB nvram firmware on an RT-N66U, the
+first time you flash a 64KB-enabled firmware (such as Asuswrt-merlin) it 
+will wipe ALL your current settings and revert back to factory default!
+This is required to upgrade the nvram storage to 64 KB.
 
 
 Usage
@@ -142,18 +144,14 @@ to save your traffic history to disk, preserving it between
 router reboots (by default it is currently kept in RAM, 
 so it will disappear when you reboot).
 
-While possible to also save it to nvram, I have kept this 
-option disabled, as nvram is currently too limited, 
-and filling it up would cause people to lose all their 
-settings.
-
 You can save it to a custom location (for 
 example, "/jffs/" if you have jffs enabled), or 
 /mnt/sda1/ if you have a USB disk plugged in.
 Save frequency is also configurable - it is recommended 
 to keep that frequency lower (for example, once a day) 
 if you are saving to jffs, to reduce wearing out 
-your flash RAM.
+your flash RAM.  Make sure not to forget the trailing 
+slash ad the end of the path.
 
 Also, a new "Monthly" page has been added to the Traffic 
 Monitor pages.
@@ -162,16 +160,10 @@ Monitor pages.
 * Display active connections *
 There is a new page under System Log called "Connections".
 This page will list the currently tracked network connections.
-You can enable name resolution for IPs by setting the 
-webui_resolve_conn setting to "1" in nvram:
-
-	nvram set webui_resolve_conn=1
-	nvram commit
-
-This option will be added to the WebUI at a later time.
-Note that name resolution can slow down the loading of 
-this page, especially if you have a lot of tracked 
-connections (for instance while torrenting).
+You can enable name resolution for IPs on the Tools menu,
+under "Other Settings".  Note that name resolution can 
+slow down the loading of this page, especially if you have 
+a lot of tracked connections (for instance while torrenting).
 
 
 
@@ -211,12 +203,19 @@ https://github.com/RMerl/asuswrt-merlin
 
 History
 -------
-3.0.0.3.157.12:
-   - NEW: Rebased on 3.0.0.3.157.  Noteworthy:
+3.0.0.3.157.12 Beta:
+This is based on unreleased Asus code, which they have 
+graciously provided me with.  So treat this build as 
+more experimental than my usual betas.  Also, 
+the sources won't be published until they make an 
+official newer release.
+
+   - NEW: Rebased on 3.0.0.3.157.  Notable changes from Asus:
       . IPv6 tunnel memory leak fixed
-      . They fixed various issues I had fixed on my
-        side like timezone DST, https auth, etc...
+      . They fixed many issues, making some of my patches 
+        no longer necessary, such as timezone DST, https auth, etc...
       . Many additional 3G USB devices supported
+      . Upgraded radvd
    - CHANGED: Merged this file with the RT-N16 version.
    - CHANGED: Re-enabled Dual WAN (was disabled in RM10-11
               since it was broken in build 144)
