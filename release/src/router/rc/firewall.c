@@ -1174,8 +1174,9 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 			fprintf(fp, "-A POSTROUTING %s -o %s ! -s %s -j MASQUERADE\n", p, wanx_if, wanx_ip);
 
 		/* masquerade lan to lan */
-		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
-		fprintf(fp, "-A POSTROUTING %s -o %s -s %s -d %s -j MASQUERADE\n", p, lan_if, lan_class, lan_class);
+		fprintf(fp, "-A POSTROUTING %s -m mark --mark 0xd001 -j MASQUERADE\n" , p);
+//		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
+//		fprintf(fp, "-A POSTROUTING %s -o %s -s %s -d %s -j MASQUERADE\n", p, lan_if, lan_class, lan_class);
 	}
 
 	fprintf(fp, "COMMIT\n");
@@ -1381,8 +1382,11 @@ TRACE_PT("writing dmz\n");
 		}
 
 		// masquerade lan to lan
-		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
-		fprintf(fp, "-A POSTROUTING %s -o %s -s %s -d %s -j MASQUERADE\n", p, lan_if, lan_class, lan_class);
+
+ 		fprintf(fp, "-A POSTROUTING %s -m mark --mark 0xd001 -j MASQUERADE\n", p);
+
+//		ip2class(lan_ip, nvram_safe_get("lan_netmask"), lan_class);
+//		fprintf(fp, "-A POSTROUTING %s -o %s -s %s -d %s -j MASQUERADE\n", p, lan_if, lan_class, lan_class);
 	}
 
 	fprintf(fp, "COMMIT\n");
@@ -3705,6 +3709,10 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 #endif
 	}
 
+/* For NAT loopback */
+	eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-i", "!", wan_if, 
+	     "-d", wan_ip, "-j", "MARK", "--set-mark", "0xd001");
+
 #ifdef CONFIG_BCMWL5
 	/* mark connect to bypass CTF */		
 	if(nvram_match("ctf_disable", "0")) {
@@ -3754,6 +3762,20 @@ mangle_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 #endif
 	}
 
+/* For NAT loopback */
+// TODO: Need wan_ip
+/*
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit){
+		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+		if(nvram_get_int(strcat_r(prefix, "state_t", tmp)) != WAN_STATE_CONNECTED)
+			continue;
+
+		wan_if = get_wan_ifname(unit);
+
+		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-i", "!", wan_if,
+		     "-d", wan_ip, "-j", "MARK", "--set-mark", "0xd001");
+	}
+*/
 #ifdef CONFIG_BCMWL5
 	/* mark connect to bypass CTF */		
 	if(nvram_match("ctf_disable", "0")) {

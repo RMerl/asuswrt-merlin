@@ -216,6 +216,11 @@ official newer release.
         no longer necessary, such as timezone DST, https auth, etc...
       . Many additional 3G USB devices supported
       . Upgraded radvd
+   - FIXED: NAT loopback rules would actual NAT every lan to lan
+            connections instead of only those needing the loopback
+            (bug in Asus's code)
+   - FIXED: GRO compatibility with PPTPD (related to NAT loopback)
+   - CHANGED: Re-enabled GRO support
    - CHANGED: Merged this file with the RT-N16 version.
    - CHANGED: Re-enabled Dual WAN (was disabled in RM10-11
               since it was broken in build 144)
