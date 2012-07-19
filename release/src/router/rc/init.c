@@ -1291,6 +1291,7 @@ int init_nvram(void)
 		add_rc_support("2.4G update usbX2 mssid");
 		add_rc_support("switchctrl"); // broadcom: for jumbo frame only
 		add_rc_support("manual_stb");
+		add_rc_support("pwrctrl");
 		break;
 
 	case MODEL_RTN53:
