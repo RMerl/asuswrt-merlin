@@ -261,6 +261,7 @@ void sys_script(char *name)
 	   {
 		sprintf(SystemCmd, "%s > /tmp/syscmd.log 2>&1\n", SystemCmd);	// oleg patch
 	   	system(SystemCmd);
+		strcpy(SystemCmd,""); // Ensure we don't re-execute it again
 	   }	
 	   else
 	   {
