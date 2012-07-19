@@ -183,7 +183,6 @@ function showwol_list(){
 			code +='<tr id="row'+i+'">';
 			var wol_list_col = wol_list_row[i].split('&#62');
 				for(var j = 0; j < wol_list_col.length; j++){
-//					code +='<td width="35%"><a class="wol_entry" href="#" onclick="setTargetMAC(\''+wol_list_col[0]+'\');">'+ wol_list_col[j] +'</a></td>';
 					code +='<td width="35%">'+ wol_list_col[j] +'</a></td>';
 				}
 				code +='<td width="10%"><a class="wol_entry" href="#" onclick="setTargetMAC(\''+wol_list_col[0]+'\');">Wake</a></td>';
@@ -273,6 +272,8 @@ function setClientMAC(macaddr, name){
 
 function setTargetMAC(macaddr){
 	document.form.wakemac.value = macaddr;
+	wakeup();
+	return false;
 }
 
 var over_var = 0;
@@ -308,6 +309,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		$("check_mac").style.display = "";
 		obj.focus();
 		obj.select();
+                $("wake").disabled=true;
 		return false;
 	}else if(flag == 2){
 		var childsel=document.createElement("div");
@@ -318,9 +320,11 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		$("check_mac").style.display = "";
 		obj.focus();
 		obj.select();
+		$("wake").disabled=true;
 		return false;
 	}else{
 		$("check_mac") ? $("check_mac").style.display="none" : true;
+                $("wake").disabled=false;
 		return true;
 	}
 }
@@ -373,7 +377,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 			<tr>
 	        		<th>Target MAC address:</th>
-			        <td><input type="text" id="wakemac" size=17 maxlength=17 name="wakemac" class="input_macaddr_table" value="" onKeyPress="return is_hwaddr(this,event)" onClick="hideClients_Block();" onblur="check_macaddr(this,check_hwaddr_temp(this))">
+			        <td><input type="text" id="wakemac" size=17 maxlength=17 name="wakemac" class="input_macaddr_table" value="" onKeyPress="return is_hwaddr(this,event)" onblur="check_macaddr(this,check_hwaddr_flag(this))">
 			        <input type="button" id="wake" name="Wake" class="button_gen" onclick="wakeup();" value="Wake" />
 			        </td>
 		        </tr>
