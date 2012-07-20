@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.157.12 (14-July-2012)
+Asuswrt-Merlin - build 3.0.0.3.157.12 (20-July-2012)
 ====================================================
 
 About
@@ -16,33 +16,33 @@ alternative for those who prefer to stay closer to the original firmware.
 
 The list of changes (so far):
 
-- Based on the source code of release 3.0.0.3.157
+- Based on the source code of release 3.0.0.3.157 (unreleased by Asus)
 - WakeOnLan web interface (with user-entered preset targets)
-- Added JFFS partition support (configurable under Administration->Advanced->System)
-- Added user scripts that run on specific events
-- Added SSHD (dropbear, configurable under Administration->Advanced->System)
+- Persistent JFFS partition
+- User scripts that run on specific events
+- SSHD (thrugh dropbear)
+- HTTPS web interface
+- Crond
 - Clicking on the MAC address of an unidentified client will do a lookup in
   the OUI database (ported from DD-WRT).
-- Enabled HTTPS access to web interface
-- Start crond at boot time
 - Optionally turn the WPS button into a radio enable/disable switch
 - Optionally save traffic stats to disk (USB or JFFS partition)
 - Display monthly traffic reports
 - RT-N66U: Monitor your router's temperature (under Administration -> Performance Tuning)
 - Display active/tracked network connections
 - Allows tweaking TCP/UDP connection tracking timeouts
-- Added CIFS client support (for mounting remote SMB share on the router)
-- Added layer7 iptables matching
-- Added user-defined options for DHCP requests (required by some ISPs)
+- CIFS client support (for mounting remote SMB share on the router)
+- Layer7 iptables matching
+- User-defined options for DHCP requests (required by some ISPs)
 - Name field to the DHCP reservation list
 
 
 Installation
 ------------
 Simply flash it like any regular update.  You should not need to reset to 
-factory defaults, unless coming from a newer or a buggy version of Asus' 
-original firmware.  You can revert back at any time by re-flashing an 
-original Asus firmware.
+factory defaults, unless coming from a version that used a different 
+nvram size.  You can revert back to an original Asus firmware at any time just
+by flashing one.
 
 NOTE: If you were still running a 32KB nvram firmware on an RT-N66U, the
 first time you flash a 64KB-enabled firmware (such as Asuswrt-merlin) it 
@@ -58,7 +58,7 @@ JFFS is a writable section of the flash memory (around 12 MB) which will
 allow you to store small files (such as scripts) inside the router without 
 needing to have a USB disk plugged in.  This space will survive reboot (but 
 it *MIGHT NOT survive firmware flashing*, so back it up first before flashing!).  
-It will also be available fairly early at boot (unlike a USB disk).
+It will also be available fairly early at boot (before USB disks).
 
 To enable this option, go to the Administration page, under the System tab.
 
@@ -69,49 +69,44 @@ JFFS requires a reboot to take effect.
 
 *User scripts:*
 These are shell scripts that you can create, and which will be run when 
-certain events occur:
+certain events occur.  Those scripts must be saved in /jffs/scripts/ 
+(so, JFFS must be enabled and formatted).  Available scripts:
 
-- Services are started (boot): /jffs/scripts/services-start
-- Services are stopped (reboot): /jffs/scripts/services-stop
-- WAN interface comes up (includes if it went down and 
-  back up): /jffs/scripts/wan-start
-- Firewall is started (rules are applied): /jffs/scripts/firewall-start.
-- Right after jffs is mounted, before any of the services get started:
-  /jffs/scripts/init-start
-- Just before a partition is mounted: /jffs/scripts/pre-mount (Be careful with 
+- services-start: Services are started (boot)
+- services-stop: Services are stopped (reboot)
+- wan-start: WAN interface just come up (includes if it went down and back up)
+- firewall-start: Firewall is started (rules have been applied)
+- init-start: Right after jffs is mounted, before any of the services get started
+- pre-mount: Just before a partition is mounted.  Be careful with 
   this script. This is run in a blocking call and will block the mounting of the 
   partition  for which it is invoked till its execution is complete. This is done 
   so that it can be used for things like running e2fsck on the partition before 
   mounting. This script is also passed the device path being mounted as an 
-  argument which can be used in the script using $1)
-- Just after a partition is mounted: /jffs/scripts/post-mount
+  argument which can be used in the script using $1.
+- post-mount: Just after a partition is mounted
 
-Those scripts must all be located under /jffs/scripts/ (so JFFS support 
-must be enabled first).  Don't forget to set them as executable:
+Don't forget to set them as executable:
 
    chmod a+rx /jffs/scripts/*
 
-The wan-start script for example is perfect for using an IPv6 tunnel 
-update script (such as the script I posted on my website to use with 
-HE's TunnelBroker).  You could then put your IPv6 rules inside 
-firewall-start.
+And like any Linux script, they need to start with a shebang:
+
+   #!/bin/sh
 
 
 * WakeOnLan *
 There's a new Tools section on the web interface.  From there you can enter a
 target computer's MAC address to send it a WakeOnLan packet.  You can also
 create a list of MAC addresses that will be stored in nvram, and on
-which you can click to automatically fill the target field.
+which you can click afterward to wake up one of the listed computers, without 
+having to remember their MAC addresses.
 
 
 * SSHD *
 SSH support (through Dropbear) was re-enabled.  Password-based login will use 
 the "admin" username (like telnet), and the same password as used to log on  
 the web interface.  You can also optionally insert a RSA public key there 
-for keypair-based authentication.  Note that to ensure you do not accidentally 
-enter too much data there (and potentially filling the already overcrowded 
-NVRAM space - what the hell was Asus thinking when they went with 32KB?), 
-I am limiting this field to 512 characters max.
+for keypair-based authentication.
 
 
 * HTTPS management *
@@ -125,17 +120,17 @@ or both.  You can also change the https port to a different one
 You can configure the router so pressing the WPS button will 
 toggle the radio on/off instead of starting WPS mode.
 The option to enable this feature can be found on the 
-Administration page, under the System tab.
+Tools page, under the Other Settings tab.
 
 
 * Crond *
 Crond will automatically start at boot time.  You can 
-put your cron batch in /var/spool/cron/crontabs/ .  The file 
+put your cron tasks in /var/spool/cron/crontabs/ .  The file 
 must be named "admin" as this is the name of the system user.
 Note that this location resides in RAM, so you would have to 
 put your cron script somewhere such as in the jffs partition, 
 and at boot time copy it to /var/spool/cron/crontabs/ using 
-a init-start user script.
+an init-start user script.
 
 
 * Traffic history saving *
@@ -150,7 +145,7 @@ example, "/jffs/" if you have jffs enabled), or
 Save frequency is also configurable - it is recommended 
 to keep that frequency lower (for example, once a day) 
 if you are saving to jffs, to reduce wearing out 
-your flash RAM.  Make sure not to forget the trailing 
+your flash memory.  Make sure not to forget the trailing 
 slash ad the end of the path.
 
 Also, a new "Monthly" page has been added to the Traffic 
@@ -158,7 +153,7 @@ Monitor pages.
 
 
 * Display active connections *
-There is a new page under System Log called "Connections".
+There is a new tab under System Log called "Connections".
 This page will list the currently tracked network connections.
 You can enable name resolution for IPs on the Tools menu,
 under "Other Settings".  Note that name resolution can 
@@ -214,18 +209,21 @@ official newer release.
       . IPv6 tunnel memory leak fixed
       . They fixed many issues, making some of my patches 
         no longer necessary, such as timezone DST, https auth, etc...
-      . Many additional 3G USB devices supported
       . Upgraded radvd
-   - FIXED: NAT loopback rules would actual NAT every lan to lan
+   - FIXED: (Beta 2) NAT loopback rules would actually NAT every lan to lan
             connections instead of only those needing the loopback
-            (bug in Asus's code)
-   - FIXED: GRO compatibility with PPTPD (related to NAT loopback)
-   - CHANGED: Re-enabled GRO support
-   - CHANGED: Merged this file with the RT-N16 version.
+            (bug in Asus's code).  Replaced with new code based on a
+            suggestion from Phuzi0n on the DD-WRT forums.
+   - FIXED: (Beta 2) GRO compatibility with PPTPD (related to NAT loopback)
+   - FIXED: (Beta 2) Accessing the WOL page would make it resend the last
+            WOL request.
+   - CHANGED: (Beta 2) Re-enabled GRO support
    - CHANGED: Re-enabled Dual WAN (was disabled in RM10-11
               since it was broken in build 144)
+   - CHANGED: (Beta 2) Enabled DUal WAN on the RT-N16 (experimental)
    - CHANGED: Made tracked connections load async from rest of the page
    - CHANGED: Increased hostname width on Connection status page
+   - CHANGED: (Beta 2) Improved WOL page functionality.
 
 
 3.0.0.3.144.11 Beta:
