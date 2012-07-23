@@ -69,20 +69,21 @@ function initial(){
 	gen_svg();
 	
 	xpst = [];
-	xpstslash = [];
-	xpstfan = [];
+//	xpstslash = [];
+//	xpstfan = [];
 
 	for (n=0; n<6; ++n){
 		xpst[n] = E('xpst' + n);
 		setText(xpst[n], xps(n+1));
 	}
-
+/*
 	for (n=0; n<4; ++n){
 		xpstslash[n] = E('xpstslash' + n);
 		setText(xpstslash[n], xpsslash(n+1));
 		xpstfan[n] = E('xpstfan' + n);
 		setText(xpstfan[n], xpsfan(n+1));
 	}
+*/
 }
 
 function setText(e, text){
