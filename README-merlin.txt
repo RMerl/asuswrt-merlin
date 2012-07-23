@@ -1,4 +1,4 @@
-Asuswrt-Merlin - build 3.0.0.3.157.12 (20-July-2012)
+Asuswrt-Merlin - build 3.0.0.3.157.12 (23-July-2012)
 ====================================================
 
 About
@@ -35,6 +35,8 @@ The list of changes (so far):
 - Layer7 iptables matching
 - User-defined options for DHCP requests (required by some ISPs)
 - Name field to the DHCP reservation list
+- Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
+- Dual WAN support (both failover and load balancing supported)
 
 
 Installation
@@ -72,18 +74,18 @@ These are shell scripts that you can create, and which will be run when
 certain events occur.  Those scripts must be saved in /jffs/scripts/ 
 (so, JFFS must be enabled and formatted).  Available scripts:
 
-- services-start: Services are started (boot)
-- services-stop: Services are stopped (reboot)
-- wan-start: WAN interface just come up (includes if it went down and back up)
-- firewall-start: Firewall is started (rules have been applied)
-- init-start: Right after jffs is mounted, before any of the services get started
-- pre-mount: Just before a partition is mounted.  Be careful with 
-  this script. This is run in a blocking call and will block the mounting of the 
+- services-start:  Services are started (boot)
+- services-stop:  Services are stopped (reboot)
+- wan-start:  WAN interface just come up (includes if it went down and back up)
+- firewall-start:  Firewall is started (rules have been applied)
+- init-start:  Right after jffs is mounted, before any of the services get started
+- pre-mount:  Just before a partition is mounted.  Be careful with 
+  this script.  This is run in a blocking call and will block the mounting of the 
   partition  for which it is invoked till its execution is complete. This is done 
   so that it can be used for things like running e2fsck on the partition before 
   mounting. This script is also passed the device path being mounted as an 
   argument which can be used in the script using $1.
-- post-mount: Just after a partition is mounted
+- post-mount:  Just after a partition is mounted
 
 Don't forget to set them as executable:
 
@@ -95,7 +97,7 @@ And like any Linux script, they need to start with a shebang:
 
 
 * WakeOnLan *
-There's a new Tools section on the web interface.  From there you can enter a
+There's a WOL tab under the new Tools menu.  From there you can enter a
 target computer's MAC address to send it a WakeOnLan packet.  You can also
 create a list of MAC addresses that will be stored in nvram, and on
 which you can click afterward to wake up one of the listed computers, without 
@@ -180,6 +182,23 @@ mount \\\\192.168.1.100\\ShareName /cifs1 -t cifs -o "username=User,password=Pas
 (backslashes must be doubled.)
 
 
+* Dual WAN *
+Asuswrt originally supports using a USB 3G/4G modem to use as a 
+failover Internet connection.  Dual WAN is the next step, also 
+developped by Asus but left disabled so far in their official releases 
+(probably because this is still work in progress).  
+
+The first improvement over USB failover is that it works not only 
+with USB but with other ethernet devices, which can be plugged 
+on one of the LAN ports that you will select as the secondary WAN 
+interface.  The second difference is that in addition to failover 
+mode, Dual WAN also supports a load balancing mode, allowing 
+you to share both connections at once.
+
+Keep in mind that Dual WAN is still an experimental feature, until 
+the time Asus finishes developping and testing it.
+
+
 
 Notes
 -----
@@ -195,32 +214,41 @@ on Github, at:
 
 https://github.com/RMerl/asuswrt-merlin
 
+Note: Asuswrt-merlin releases based on unreleased Asus 
+code (such as 3.0.0.3.157) won't be publised on Github until 
+Asus makes a newer official release of the GPL code.  Once 
+they do, all unpublished changes will be pushed go Github.
+
+
 
 History
 -------
 3.0.0.3.157.12 Beta:
 This is based on unreleased Asus code, which they have 
-graciously provided me with.  So treat this build as 
-more experimental than my usual betas.  Also, 
-the sources won't be published until they make an 
-official newer release.
+graciously provided me with.  Due to this, the sources won't 
+be published until they make an official newer release.
 
    - NEW: Rebased on 3.0.0.3.157.  Notable changes from Asus:
       . IPv6 tunnel memory leak fixed
       . They fixed many issues, making some of my patches 
         no longer necessary, such as timezone DST, https auth, etc...
       . Upgraded radvd
+   - NEW: (Beta 2) Added link to the command shell page in Tools menu.
+   - NEW: (Beta 2) Enabled power settings (RT-N16) (Experimental)
+   - NEW: (Beta 3) Added "tee" command.
    - FIXED: (Beta 2) NAT loopback rules would actually NAT every lan to lan
             connections instead of only those needing the loopback
             (bug in Asus's code).  Replaced with new code based on a
             suggestion from Phuzi0n on the DD-WRT forums.
-   - FIXED: (Beta 2) GRO compatibility with PPTPD (related to NAT loopback)
+   - FIXED: (Beta 2) GRO compatibility with PPTPD (related to NAT loopback) (RT-N66U)
    - FIXED: (Beta 2) Accessing the WOL page would make it resend the last
             WOL request.
-   - CHANGED: (Beta 2) Re-enabled GRO support
+   - FIXED: (Beta 3) CTF compatibility with new NAT loopback
+   - FIXED: (Beta 3) 'cru' was using 'root' instead of 'admin'
+   - FIXED: (Beta 3) Re-disabled GRO, was still causing issues with
+            NAT loopback.
    - CHANGED: Re-enabled Dual WAN (was disabled in RM10-11
               since it was broken in build 144)
-   - CHANGED: (Beta 2) Enabled DUal WAN on the RT-N16 (experimental)
    - CHANGED: Made tracked connections load async from rest of the page
    - CHANGED: Increased hostname width on Connection status page
    - CHANGED: (Beta 2) Improved WOL page functionality.
