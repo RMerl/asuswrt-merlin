@@ -28,7 +28,6 @@ The list of changes (so far):
 - Optionally turn the WPS button into a radio enable/disable switch
 - Optionally save traffic stats to disk (USB or JFFS partition)
 - Display monthly traffic reports
-- RT-N66U: Monitor your router's temperature (under Administration -> Performance Tuning)
 - Display active/tracked network connections
 - Allows tweaking TCP/UDP connection tracking timeouts
 - CIFS client support (for mounting remote SMB share on the router)
@@ -36,7 +35,7 @@ The list of changes (so far):
 - User-defined options for DHCP requests (required by some ISPs)
 - Name field to the DHCP reservation list
 - Improved NAT loopback (based on code from phuzi0n from the DD-WRT forums)
-- Dual WAN support (both failover and load balancing supported)
+- Dual WAN support (both failover and load balancing supported) (EXPERIMENTAL)
 
 
 Installation
@@ -55,7 +54,7 @@ This is required to upgrade the nvram storage to 64 KB.
 Usage
 -----
 
-*JFFS*
+* JFFS *
 JFFS is a writable section of the flash memory (around 12 MB) which will 
 allow you to store small files (such as scripts) inside the router without 
 needing to have a USB disk plugged in.  This space will survive reboot (but 
@@ -69,7 +68,7 @@ the web page, same page where you enable it.  Enabling/Disabling/Formating
 JFFS requires a reboot to take effect.
 
 
-*User scripts:*
+* User scripts *
 These are shell scripts that you can create, and which will be run when 
 certain events occur.  Those scripts must be saved in /jffs/scripts/ 
 (so, JFFS must be enabled and formatted).  Available scripts:
@@ -182,11 +181,11 @@ mount \\\\192.168.1.100\\ShareName /cifs1 -t cifs -o "username=User,password=Pas
 (backslashes must be doubled.)
 
 
-* Dual WAN *
+* Dual WAN (EXPERIMENTAL) *
 Asuswrt originally supports using a USB 3G/4G modem to use as a 
 failover Internet connection.  Dual WAN is the next step, also 
-developped by Asus but left disabled so far in their official releases 
-(probably because this is still work in progress).  
+developped by Asus but left disabled so far in their official 
+releases (probably because this is still work in progress).  
 
 The first improvement over USB failover is that it works not only 
 with USB but with other ethernet devices, which can be plugged 
@@ -223,7 +222,7 @@ they do, all unpublished changes will be pushed go Github.
 
 History
 -------
-3.0.0.3.157.12 Beta:
+3.0.0.3.157.12:
 This is based on unreleased Asus code, which they have 
 graciously provided me with.  Due to this, the sources won't 
 be published until they make an official newer release.
@@ -233,25 +232,20 @@ be published until they make an official newer release.
       . They fixed many issues, making some of my patches 
         no longer necessary, such as timezone DST, https auth, etc...
       . Upgraded radvd
-   - NEW: (Beta 2) Added link to the command shell page in Tools menu.
-   - NEW: (Beta 2) Enabled power settings (RT-N16) (Experimental)
-   - NEW: (Beta 3) Added "tee" command.
-   - FIXED: (Beta 2) NAT loopback rules would actually NAT every lan to lan
+   - NEW: Added link to the command shell page in Tools menu.
+   - NEW: (RT-N16) Enabled power settings (EXPERIMENTAL)
+   - NEW: Added "tee" command.
+   - FIXED: NAT loopback rules would actually NAT every lan to lan
             connections instead of only those needing the loopback
             (bug in Asus's code).  Replaced with new code based on a
             suggestion from Phuzi0n on the DD-WRT forums.
-   - FIXED: (Beta 2) GRO compatibility with PPTPD (related to NAT loopback) (RT-N66U)
-   - FIXED: (Beta 2) Accessing the WOL page would make it resend the last
+   - FIXED: Accessing the WOL page would make it resend the last
             WOL request.
-   - FIXED: (Beta 3) CTF compatibility with new NAT loopback
-   - FIXED: (Beta 3) 'cru' was using 'root' instead of 'admin'
-   - FIXED: (Beta 3) Re-disabled GRO, was still causing issues with
-            NAT loopback.
-   - CHANGED: Re-enabled Dual WAN (was disabled in RM10-11
-              since it was broken in build 144)
+   - FIXED: 'cru' was using 'root' instead of 'admin'
+   - CHANGED: Re-enabled Dual WAN (EXPERIMENTAL)
    - CHANGED: Made tracked connections load async from rest of the page
    - CHANGED: Increased hostname width on Connection status page
-   - CHANGED: (Beta 2) Improved WOL page functionality.
+   - CHANGED: Improved WOL page functionality.
 
 
 3.0.0.3.144.11 Beta:
