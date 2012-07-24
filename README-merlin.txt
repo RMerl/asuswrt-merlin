@@ -20,7 +20,7 @@ The list of changes (so far):
 - WakeOnLan web interface (with user-entered preset targets)
 - Persistent JFFS partition
 - User scripts that run on specific events
-- SSHD (thrugh dropbear)
+- SSHD (through dropbear)
 - HTTPS web interface
 - Crond
 - Clicking on the MAC address of an unidentified client will do a lookup in
