@@ -174,6 +174,7 @@ static int wlconf(char *ifname, int unit, int subunit)
 			model = get_model();
 			switch (model) {
 				case MODEL_RTN66U:
+				case MODEL_RTN16:
 
 					if (unit == 0)
 					{
