@@ -1,1 +1,0 @@
-../src-rt/target.mak
