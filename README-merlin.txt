@@ -213,19 +213,13 @@ on Github, at:
 
 https://github.com/RMerl/asuswrt-merlin
 
-Note: Asuswrt-merlin releases based on unreleased Asus 
-code (such as 3.0.0.3.157) won't be publised on Github until 
-Asus makes a newer official release of the GPL code.  Once 
-they do, all unpublished changes will be pushed go Github.
-
 
 
 History
 -------
 3.0.0.3.157.12:
 This is based on unreleased Asus code, which they have 
-graciously provided me with.  Due to this, the sources won't 
-be published until they make an official newer release.
+graciously provided me with.
 
    - NEW: Rebased on 3.0.0.3.157.  Notable changes from Asus:
       . IPv6 tunnel memory leak fixed
