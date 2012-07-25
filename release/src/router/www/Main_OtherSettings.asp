@@ -211,13 +211,6 @@ function done_validating(action){
 							<td colspan="2">Miscellaneous Options</td>
 						</tr>
 					</thead>
-					<tr>
-						<th>WPS Button behavior</th>
-						<td>
-							<input type="radio" name="btn_ez_radiotoggle" class="input" value="1" <% nvram_match_x("", "btn_ez_radiotoggle", "1", "checked"); %>>Toggle Radio
-							<input type="radio" name="btn_ez_radiotoggle" class="input" value="0" <% nvram_match_x("", "btn_ez_radiotoggle", "0", "checked"); %>>Activate WPS
-						</td>
-					</tr>
 
 					<tr>
 						<th>Resolve IPs on active connections list:<br><i>Can considerably slow down the display</i></th>
