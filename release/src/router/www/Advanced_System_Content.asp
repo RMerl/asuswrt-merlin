@@ -100,7 +100,7 @@ function initial(){
 		document.form.http_username.disabled = true;
 		document.getElementById('http_username').style.display = "none";
 	}
-	
+/*	
 	if(wifi_hw_sw_support != -1){
 			document.getElementById('btn_ez_radiotoggle_tr').style.display = "";
 	}else{
@@ -108,6 +108,7 @@ function initial(){
 			document.form.btn_ez_radiotoggle[1].disabled = true;
 			document.getElementById('btn_ez_radiotoggle_tr').style.display = "none";
 	}
+*/
 }
 
 var time_zone_tmp="";
